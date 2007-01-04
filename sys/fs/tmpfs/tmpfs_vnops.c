@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.34 2007/01/02 11:02:19 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.35 2007/01/04 15:42:37 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.34 2007/01/02 11:02:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.35 2007/01/04 15:42:37 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -222,7 +222,8 @@ tmpfs_lookup(void *v)
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
 				if ((dnode->tn_mode & S_ISTXT) != 0 &&
-				    kauth_cred_geteuid(cnp->cn_cred) != 0 &&
+				    kauth_authorize_generic(cnp->cn_cred,
+				     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
 				    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
 				    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
 					return EPERM;
