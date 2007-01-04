@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.859 2007/01/04 15:46:33 jmcneill Exp $
+$NetBSD: pcidevs,v 1.860 2007/01/04 18:04:26 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2748,7 +2748,7 @@ product NVIDIA	GEFORCE2_IGP	0x01a0	GeForce2 Integrated GPU
 product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
 product NVIDIA	NFORCE_ATA100	0x01bc	nForce ATA100 IDE
 product NVIDIA	NFORCE_USB	0x01c2	nForce USB
-product NVIDIA	NFORCE_LAN	0x01c3	nForce Ethetnet
+product NVIDIA	NFORCE_LAN	0x01c3	nForce Ethernet
 product NVIDIA	NFORCE2_PCHB	0x01e0	nForce2 Host-PCI Bridge
 product NVIDIA	NFORCE2_PPB2	0x01e8	nForce2 PCI-PCI Bridge
 product NVIDIA	NFORCE2_MEM1	0x01eb	nForce2 Memory Controller
