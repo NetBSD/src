@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.110 2006/12/27 18:49:40 alc Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.111 2007/01/04 19:07:04 elad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.110 2006/12/27 18:49:40 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.111 2007/01/04 19:07:04 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1454,7 +1454,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 	optlen = m ? m->m_len : 0;
 	error = optval = 0;
 	privileged = (l == 0 || kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) ? 0 : 1;
+	    KAUTH_GENERIC_ISSUSER, NULL)) ? 0 : 1;
 	uproto = (int)so->so_proto->pr_protocol;
 
 	if (level == IPPROTO_IPV6) {
@@ -2175,7 +2175,7 @@ ip6_pcbopts(pktopt, m, so)
 
 	/*  set options specified by user. */
 	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag))
+	    NULL))
 		priv = 1;
 	if ((error = ip6_setpktopts(m, opt, NULL, priv,
 	    so->so_proto->pr_protocol)) != 0) {
@@ -2556,7 +2556,7 @@ ip6_setmoptions(optname, im6op, m)
 			 * to do this.
 			 */
 			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+			    KAUTH_GENERIC_ISSUSER, NULL))
 			{
 				error = EACCES;
 				break;
