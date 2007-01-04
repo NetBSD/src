@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.47 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.48 2007/01/04 16:55:29 elad Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.47 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.48 2007/01/04 16:55:29 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -597,7 +597,7 @@ found:
 		 * implements append-only directories.
 		 */
 		if ((dp->i_e2fs_mode & ISVTX) &&
-		    kauth_cred_geteuid(cred) != 0 &&
+		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) &&
 		    kauth_cred_geteuid(cred) != dp->i_e2fs_uid &&
 		    VTOI(tdp)->i_e2fs_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);

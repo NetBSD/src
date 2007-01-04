@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.293 2007/01/03 23:20:58 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.294 2007/01/04 17:38:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.293 2007/01/03 23:20:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.294 2007/01/04 17:38:26 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -550,7 +550,7 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	 */
 	if ((mp->mnt_stat.f_owner != kauth_cred_geteuid(l->l_cred)) &&
 	    (error = kauth_authorize_generic(l->l_cred,
-	 	KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0) {
+	 	KAUTH_GENERIC_ISSUSER, NULL)) != 0) {
 		vput(vp);
 		return (error);
 	}
@@ -2659,8 +2659,7 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 	 * Non-superusers cannot change the flags on devices, even if they
 	 * own them.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
 			goto out;
 		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
@@ -3679,7 +3678,7 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 		goto out;
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
 	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 	if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
 		goto out;

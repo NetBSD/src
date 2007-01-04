@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.18 2006/11/25 21:40:05 christos Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.19 2007/01/04 17:38:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.18 2006/11/25 21:40:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.19 2007/01/04 17:38:26 elad Exp $");
 
 #include "opt_sysv.h"
 
@@ -72,7 +72,7 @@ ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
 	mode_t mask;
 	int ismember = 0;
 
-	if (kauth_cred_geteuid(cred) == 0)
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
 		return (0);
 
 	if (mode == IPC_M) {
