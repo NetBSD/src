@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320 2006/11/29 04:34:37 alc Exp $
+.\"	$NetBSD: main,v 1.321 2007/01/04 00:19:45 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,8 +68,8 @@
 .Pp
 .
 This document describes the installation procedure for
-.Nx \*V
-on the
+.Nx
+\*V on the
 .Em \*M
 platform.
 It is available in four different formats titled
@@ -109,8 +109,8 @@ version.
 .Pp
 This section contains some brief notes describing what you need to
 install
-.Nx \*V
-on a machine of the \*M architecture.
+.Nx
+\*V on a machine of the \*M architecture.
 .Bl -bullet
 .It
 Fetch the
@@ -401,8 +401,8 @@ featuring seventeen machine architectures
 across fifteen distinct CPU families,
 and is being ported to more.
 The
-.Nx \*V
-release contains complete binary releases for many different
+.Nx
+\*V release contains complete binary releases for many different
 system architectures.
 (A few ports are not fully supported at this time 
 and are thus not part of the binary distribution.
@@ -443,8 +443,8 @@ production use that rivals most commercially available systems.
 .Pp
 It is impossible to completely summarize a year of development that
 went into the
-.Nx \*V
-release.
+.Nx
+\*V release.
 Some highlights include:
 .
 .Ss2 Kernel
@@ -611,8 +611,8 @@ Refer to
 .Pp
 .
 The root directory of the
-.Nx \*V
-release is organized as follows:
+.Nx
+\*V release is organized as follows:
 .ie \n[FOR_RELEASE] \{\
 .Pp
 .Pa .../NetBSD-\*V/
@@ -625,8 +625,8 @@ releases.
 Last minute changes.
 .It Li MIRRORS
 A list of sites that mirror the
-.Nx \*V
-distribution.
+.Nx
+\*V distribution.
 .It Li README.files
 README describing the distribution's contents.
 .It Li TODO
@@ -640,8 +640,8 @@ Source distribution sets; see below.
 .Pp
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
-.Nx \*V
-has a binary distribution.
+.Nx
+\*V has a binary distribution.
 .Pp
 The source distribution sets can be found in subdirectories of the
 .Pa source
@@ -669,8 +669,8 @@ set; the dictionaries; and more.
 .showsize 5 20
 .It Sy src
 This set contains all of the base
-.Nx \*V
-sources which are not in
+.Nx
+\*V sources which are not in
 .Sy gnusrc ,
 .Sy sharesrc ,
 or
@@ -678,8 +678,8 @@ or
 .showsize 37 176
 .It Sy syssrc
 This set contains the sources to the
-.Nx \*V
-kernel for all architectures;
+.Nx
+\*V kernel for all architectures;
 .Xr config 1 ;
 and
 .Xr dbsym 8 .
@@ -811,7 +811,8 @@ Users upgrading from previous versions of
 .Nx
 may wish to bear the
 following problems and compatibility issues in mind when upgrading to
-.Nx \*V .
+.Nx
+\*V .
 .
 .Ss2 Issues affecting an upgrade from NetBSD 1.6
 The following issues can generally be resolved by extracting the
