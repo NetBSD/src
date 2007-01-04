@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.29 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.30 2007/01/04 15:42:37 elad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.29 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.30 2007/01/04 15:42:37 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -237,7 +237,7 @@ filecore_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_ACCESS(devvp, VREAD, l->l_cred, l);
 		VOP_UNLOCK(devvp, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.31 2007/01/02 11:18:56 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.32 2007/01/04 15:42:37 elad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.31 2007/01/02 11:18:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.32 2007/01/04 15:42:37 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1006,9 +1006,9 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    NULL)))
 		return error;
-	if (kauth_cred_geteuid(cred) == 0) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
 		/* The super-user is only allowed to change flags if the file
 		 * wasn't protected before and the securelevel is zero. */
 		if ((node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -1067,9 +1067,9 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    NULL)))
 		return error;
-	if (kauth_cred_geteuid(cred) != 0) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return EFTYPE;
 
@@ -1131,7 +1131,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0))
+	    NULL)) != 0))
 		return error;
 
 	node->tn_uid = uid;
@@ -1233,7 +1233,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
+	    NULL)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
 	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 		return error;
 
