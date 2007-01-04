@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.28 2007/01/03 14:28:33 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.29 2007/01/04 09:30:14 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2265,6 +2265,13 @@ sys/dist/ipf/netinet/ip_state.c			1.16 via patch
 
 sys/arch/i386/conf/INSTALL			1.300 via patch
 
-	Remove ppp(4) from the INSTALL kernel to reduce its size.
+	Remove ppp(4) from the i386 INSTALL kernel to reduce its size.
 	[tron, ticket #1614]
+
+sys/arch/amd64/conf/INSTALL			1.63 via patch
+sys/arch/i386/conf/INSTALL_LAPTOP		1.113 via patch
+
+	Remove ppp(4) from the i386 INSTALL_LAPTOP and amd64 INSTALL kernels to
+	reduce their size.
+	[tron, ticket #1615]
 
