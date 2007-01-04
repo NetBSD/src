@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.297 2006/12/18 12:10:42 christos Exp $
+#	$NetBSD: files.i386,v 1.298 2007/01/04 18:16:43 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -15,6 +15,9 @@ defflag	opt_cputype.h	I386_CPU I486_CPU I586_CPU I686_CPU
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
+
+# Xbox support
+defflag			XBOX
 
 # VM86 emulation
 defflag			VM86
@@ -340,6 +343,15 @@ file	arch/i386/i386/apmcall.S	apmbios
 device cpu
 attach cpu at cpubus
 file	arch/i386/i386/cpu.c		cpu
+
+# XBox LED & X3LCD support (*very* rudimentary)
+file	arch/i386/xbox/xboxlcd.c		xbox
+file	arch/i386/xbox/pic16l.S			xbox
+
+# XBox framebuffer support
+device xboxfb: wsemuldisplaydev, rasops32, vcons
+attach xboxfb at pci
+file	arch/i386/xbox/xboxfb.c			xboxfb needs-flag
 
 #
 # Compatibility modules
