@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.102 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.103 2007/01/04 19:07:03 elad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.102 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.103 2007/01/04 19:07:03 elad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -309,7 +309,7 @@ slopen(dev_t dev, struct tty *tp)
 	int s;
 
 	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    NULL)) != 0)
 		return error;
 
 	if (tp->t_linesw == &slip_disc)
