@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.8 2006/11/22 02:02:51 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.8.2.1 2007/01/04 18:54:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -100,7 +100,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
                        CTLFLAG_PERMANENT,
                        CTLTYPE_NODE, "security", NULL,
                        NULL, 0, NULL, 0,
-                       CTL_CREATE, CTL_EOL);
+                       CTL_SECURITY, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,

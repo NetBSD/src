@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.3 2007/01/04 18:49:30 bouyer Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.4 2007/01/04 18:54:30 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.3 2007/01/04 18:49:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.4 2007/01/04 18:54:30 bouyer Exp $");
 
 #include "opt_veriexec.h"
 
@@ -153,7 +153,7 @@ sysctl_kern_veriexec(SYSCTLFN_ARGS)
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
+SYSCTL_SETUP(sysctl_kern_veriexec_setup, "sysctl kern.veriexec setup")
 {
 	const struct sysctlnode *rnode = NULL;
 
@@ -161,7 +161,7 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_CREATE, CTL_EOL);
+		       CTL_KERN, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, &rnode,
 		       CTLFLAG_PERMANENT,
