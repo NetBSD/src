@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.856 2006/12/31 12:48:00 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.857 2007/01/04 15:47:00 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.857 2006/12/10 23:43:13 bouyer Exp
+ *	NetBSD: pcidevs,v 1.859 2007/01/04 15:46:33 jmcneill Exp
  */
 
 /*
@@ -9356,6 +9356,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce3 250 Serial ATA Controller",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_NFORCE,
+	    "Xbox nForce",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
 	    "Aladdin TNT2",
 	},
@@ -9630,6 +9634,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U,
 	    "GeForce FX 5800 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOXFB,
+	    "Xbox Frame Buffer",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800,
@@ -12616,4 +12624,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2560;
+const int pci_nproducts = 2562;
