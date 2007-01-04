@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.112 2006/11/28 17:27:10 elad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.113 2007/01/04 17:38:26 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.112 2006/11/28 17:27:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.113 2007/01/04 17:38:26 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -1079,7 +1079,8 @@ ktrops(struct lwp *curl, struct proc *p, int ops, int facs,
 			ktradref(p);
 		}
 		p->p_traceflag |= facs;
-		if (kauth_cred_geteuid(curl->l_cred) == 0)
+		if (kauth_authorize_generic(curl->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL) == 0)
 			p->p_traceflag |= KTRFAC_ROOT;
 	} else {
 		/* KTROP_CLEAR */

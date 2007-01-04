@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.277 2006/12/27 12:22:14 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.278 2007/01/04 17:38:27 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.277 2006/12/27 12:22:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.278 2007/01/04 17:38:27 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2120,7 +2120,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	 * Super-user always gets read/write access, but execute access depends
 	 * on at least one execute bit being set.
 	 */
-	if (kauth_cred_geteuid(cred) == 0) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
 		if ((acc_mode & VEXEC) && type != VDIR &&
 		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
 			return (EACCES);

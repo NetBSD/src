@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.224 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.225 2007/01/04 16:55:30 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.224 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.225 2007/01/04 16:55:30 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -428,7 +428,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
+	if (error == 0 && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.105 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.106 2007/01/04 16:55:29 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.105 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.106 2007/01/04 16:55:29 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -317,7 +317,8 @@ ext2fs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
+	if (error == 0 && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :

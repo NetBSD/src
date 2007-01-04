@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.81 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.82 2007/01/04 16:55:30 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.81 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.82 2007/01/04 16:55:30 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -539,7 +539,8 @@ found:
 		 * implements append-only directories.
 		 */
 		if ((dp->i_mode & ISVTX) &&
-		    kauth_cred_geteuid(cred) != 0 &&
+		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		     NULL) != 0 &&
 		    kauth_cred_geteuid(cred) != dp->i_uid &&
 		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);

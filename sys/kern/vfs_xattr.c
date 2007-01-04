@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.9 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.10 2007/01/04 17:38:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.9 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.10 2007/01/04 17:38:26 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ extattr_check_cred(struct vnode *vp, int attrnamespace,
 		 * these requests come from kernel code (NOCRED case above)?
 		 */
 		return (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag));
+		    NULL));
 
 	case EXTATTR_NAMESPACE_USER:
 		return (VOP_ACCESS(vp, access, cred, l));

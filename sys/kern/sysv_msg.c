@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.46 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.47 2007/01/04 17:38:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.46 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.47 2007/01/04 17:38:26 elad Exp $");
 
 #define SYSVMSG
 
@@ -270,7 +270,8 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
 			return (error);
 		if (msqbuf->msg_qbytes > msqptr->msg_qbytes &&
-		    kauth_cred_geteuid(cred) != 0)
+		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0)
 			return (EPERM);
 		if (msqbuf->msg_qbytes > msginfo.msgmnb) {
 			MSG_PRINTF(("can't increase msg_qbytes beyond %d "

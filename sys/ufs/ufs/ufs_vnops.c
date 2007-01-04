@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.146 2007/01/02 11:18:57 elad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.147 2007/01/04 16:55:30 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.146 2007/01/02 11:18:57 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.147 2007/01/04 16:55:30 elad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -389,9 +389,10 @@ ufs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)))
+		    NULL)))
 			return (error);
-		if (kauth_cred_geteuid(cred) == 0) {
+		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0) {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
 			    kauth_authorize_system(l->l_cred,
 			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
@@ -464,7 +465,7 @@ ufs_setattr(void *v)
 			return (EPERM);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) &&
+		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -508,10 +509,9 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	ip = VTOI(vp);
 	if (kauth_cred_geteuid(cred) != ip->i_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)))
 		return (error);
-	if (kauth_cred_geteuid(cred)) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
 		if ((kauth_cred_ismember_gid(cred, ip->i_gid, &ismember) != 0 ||
@@ -560,7 +560,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
 	    ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0))
+	    NULL)) != 0))
 		return (error);
 
 #ifdef QUOTA
@@ -1084,7 +1084,9 @@ ufs_rename(void *v)
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((dp->i_mode & S_ISTXT) && kauth_cred_geteuid(tcnp->cn_cred) != 0 &&
+		if ((dp->i_mode & S_ISTXT) &&
+		    kauth_authorize_generic(tcnp->cn_cred,
+		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
 		    kauth_cred_geteuid(tcnp->cn_cred) != dp->i_uid &&
 		    xp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
 			error = EPERM;

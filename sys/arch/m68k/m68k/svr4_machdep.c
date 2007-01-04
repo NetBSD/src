@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.22 2006/07/23 22:06:05 ad Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.23 2007/01/04 17:50:00 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.22 2006/07/23 22:06:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.23 2007/01/04 17:50:00 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 	switch (SCARG(uap, op)) {
 	case SVR4_SYSARCH_SETNAME:
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		if ((error = copyinstr(SCARG(uap, a1), tmp, sizeof (tmp), &len))
 		    != 0)
