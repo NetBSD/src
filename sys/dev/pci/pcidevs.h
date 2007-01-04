@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.857 2006/12/31 12:48:00 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.858 2007/01/04 15:47:00 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.857 2006/12/10 23:43:13 bouyer Exp
+ *	NetBSD: pcidevs,v 1.859 2007/01/04 15:46:33 jmcneill Exp
  */
 
 /*
@@ -2722,6 +2722,7 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_MCPT_AC	0x00ea		/* nForce3 250 MCP-T AC-97 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_PPB	0x00ed		/* nForce3 250 PCI-PCI bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2	0x00ee		/* nForce3 250 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_XBOX_NFORCE	0x02a5		/* Xbox nForce */
 #define	PCI_PRODUCT_NVIDIA_ALADDINTNT2	0x00a0		/* Aladdin TNT2 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_280NVS2	0x00fd		/* Quadro4 280 NVS */
 #define	PCI_PRODUCT_NVIDIA_QUADROFX3400SLI	0x00fd		/* Quadro FX 3400 SLI */
@@ -2791,6 +2792,7 @@
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_980_XGL	0x0288		/* Quadro4 980 XGL */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL	0x0289		/* Quadro4 780 XGL */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U	0x0301		/* GeForce FX 5800 Ultra */
+#define	PCI_PRODUCT_NVIDIA_XBOXFB	0x02a0		/* Xbox Frame Buffer */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE_FX5800	0x0302		/* GeForce FX 5800 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_2000	0x0308		/* Quadro FX 2000 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_1000	0x0309		/* Quadro FX 1000 */
