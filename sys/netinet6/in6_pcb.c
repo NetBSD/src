@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.80 2006/12/15 21:18:55 joerg Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.81 2007/01/04 19:07:04 elad Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.80 2006/12/15 21:18:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.81 2007/01/04 19:07:04 elad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -289,7 +289,7 @@ in6_pcbbind(v, nam, l)
 			 * privilege check!  do not rewrite it into SS_PRIV.
 			 */
 			priv = (l && !kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) ? 1 : 0;
+			    KAUTH_GENERIC_ISSUSER, NULL)) ? 1 : 0;
 			/* GROSS */
 			if (ntohs(lport) < IPV6PORT_RESERVED && !priv)
 				return (EACCES);

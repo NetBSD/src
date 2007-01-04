@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.79 2006/12/02 18:59:17 dyoung Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.80 2007/01/04 19:07:04 elad Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.79 2006/12/02 18:59:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.80 2007/01/04 19:07:04 elad Exp $");
 
 #include "opt_ipsec.h"
 
@@ -401,7 +401,7 @@ rip6_output(m, va_alist)
 
 	priv = 0;
 	if (curlwp && !kauth_authorize_generic(curlwp->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag))
+	    KAUTH_GENERIC_ISSUSER, NULL))
 		priv = 1;
 
 	dst = &dstsock->sin6_addr;
@@ -614,7 +614,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 
 	priv = 0;
 	if (l && !kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+	    KAUTH_GENERIC_ISSUSER, NULL))
 		priv++;
 
 	if (req == PRU_CONTROL)
