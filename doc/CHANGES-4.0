@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.30 2007/01/04 19:10:05 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.31 2007/01/04 19:57:07 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -536,4 +536,59 @@ sys/kern/kern_verifiedexec.c			1.87
 
 	Veriexec should not explicitly allow anything (raw disk access).
 	[elad, ticket #315]
+
+sys/arch/vax/vax/in4_cksum.c			1.11
+sys/arch/vax/vax/in_cksum.c			1.10
+
+	GCC constraints error for inline assembler, causing in_cksum to
+	calculate the checksum wrong in the non-optimized case.
+	Fix provided in PR#14614 by Rhialto, so this solves this PR.
+	[ragge, ticket #321]
+
+sys/arch/hppa/hppa/trap.c			1.39
+sys/uvm/uvm_unix.c				1.37
+
+	Update uvm_grow to support stacks that grow upwards.
+	Use on hppa and fix a bug in the hppa trap handler.
+	[skrll, ticket #323]
+
+sys/dev/cgdvar.h				1.6-1.8
+
+	int -> size_t, fix build on 64-bit architectures
+	[jdc, ticket #326]
+
+share/man/man4/iwi.4				1.6
+
+	Reflect changed name of the firmware package after the update to
+	version 3.
+	[joerg, ticket #328]
+
+sys/arch/i386/conf/INSTALL_XEN2_DOMU		1.10
+
+	Having ppp(4) and sl(4) enabled in this kernel configuration is
+	completely pointless because it doesn't support any serial interfaces.
+	[tron, ticket #330]
+
+sys/arch/amd64/conf/INSTALL			1.63
+sys/arch/i386/conf/INSTALL_LAPTOP		1.113
+
+	Disable ppp(4) because pppd(8) isn't on the installation image anyway.
+	[tron, ticket #331]
+
+sys/fs/udf/udf.h				1.9
+sys/fs/udf/udf_subr.c				1.26
+sys/fs/udf/udf_vfsops.c				1.19
+
+	Implement read-only access to UDF 2.50 and UDF 2.60 discs that use
+	metadata partition mappings. This brings the NetBSD implementation
+	to read all discs upto date and will read all discs currently
+	defined by OSTA.
+	[reinoud, ticket #332]
+
+sys/fs/udf/ecma167-udf.h			1.6
+sys/fs/udf/udf_subr.c				1.27-1.29
+sys/fs/udf/udf_vnops.c				1.9
+
+	Fix various issues related to ticket #332
+	[reinoud, ticket #333]
 
