@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.2 2006/12/17 21:41:13 riz Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.3 2007/01/04 18:49:30 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.2 2006/12/17 21:41:13 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.3 2007/01/04 18:49:30 bouyer Exp $");
 
 #include "opt_veriexec.h"
 
@@ -472,10 +472,16 @@ veriexec_table_lookup(struct mount *mp)
 	return (fileassoc_tabledata_lookup(mp, veriexec_hook));
 }
 
-struct veriexec_file_entry *
-veriexec_lookup(struct vnode *vp)
+static struct veriexec_file_entry *
+veriexec_get(struct vnode *vp)
 {
 	return (fileassoc_lookup(vp, veriexec_hook));
+}
+
+boolean_t
+veriexec_lookup(struct vnode *vp)
+{
+	return (veriexec_get(vp) == NULL ? FALSE : TRUE);
 }
 
 /*
@@ -496,7 +502,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 		return (0);
 
 	/* Lookup veriexec table entry, save pointer if requested. */
-	vfe = veriexec_lookup(vp);
+	vfe = veriexec_get(vp);
 	if (found != NULL) {
 		if (vfe != NULL)
 			*found = TRUE;
@@ -671,7 +677,7 @@ veriexec_removechk(struct vnode *vp, const char *pathbuf, struct lwp *l)
 	struct veriexec_file_entry *vfe;
 	struct veriexec_table_entry *vte;
 
-	vfe = veriexec_lookup(vp);
+	vfe = veriexec_get(vp);
 	if (vfe == NULL) {
 		/* Lockdown mode: Deny access to non-monitored files. */
 		if (veriexec_strict >= VERIEXEC_LOCKDOWN)
@@ -712,10 +718,10 @@ veriexec_renamechk(struct vnode *fromvp, const char *fromname,
 		return (EPERM);
 	}
 
-	vfe = veriexec_lookup(fromvp);
+	vfe = veriexec_get(fromvp);
 	tvfe = NULL;
 	if (tovp != NULL)
-		tvfe = veriexec_lookup(tovp);
+		tvfe = veriexec_get(tovp);
 
 	if ((vfe != NULL) || (tvfe != NULL)) {
 		if (veriexec_strict >= VERIEXEC_IPS) {
@@ -790,7 +796,7 @@ veriexec_purge(struct vnode *vp)
 {
 	struct veriexec_file_entry *vfe;
 
-	vfe = veriexec_lookup(vp);
+	vfe = veriexec_get(vp);
 
 	if (vfe == NULL)
 		return;
@@ -1006,7 +1012,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	 * See if we already have an entry for this file. If we do, then
 	 * let the user know and silently pretend to succeed.
 	 */
-	hh = veriexec_lookup(nid.ni_vp);
+	hh = veriexec_get(nid.ni_vp);
 	if (hh != NULL) {
 		boolean_t fp_mismatch;
 
@@ -1146,7 +1152,7 @@ veriexec_convert(struct vnode *vp, prop_dictionary_t rdict)
 {
 	struct veriexec_file_entry *vfe;
 
-	vfe = veriexec_lookup(vp);
+	vfe = veriexec_get(vp);
 	if (vfe == NULL)
 		return (ENOENT);
 
