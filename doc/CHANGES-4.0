@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.29 2007/01/04 18:38:53 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.30 2007/01/04 19:10:05 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -498,4 +498,42 @@ sys/sys/kauth.h					1.27
 	pullup KAUTH_REQ_PROCESS_CANPROCFS_CTL and associated changes,
 	to make the netbsd-4 branch build again.
 	[hubert, ticket #334]
+
+share/man/man9/veriexec.9			1.11
+sys/kern/kern_verifiedexec.c			1.85
+sys/sys/verified_exec.h				1.47
+
+	veriexec_lookup() should not return an internal data-structure, but
+	rather just a boolean value.
+	[elad, ticket #310]
+
+lib/libc/arch/sparc64/sys/__clone.S		1.6
+
+	After discussing this further with uwe, rearange stack usage slightly
+	and replace a comment with words suggested by him.
+	[martin, ticket #311]
+
+lib/libc/arch/sparc/gen/setjmp.S		1.10
+lib/libc/arch/sparc/sys/__clone.S		1.4
+lib/libc/arch/sparc/sys/cerror.S		1.9
+
+	Use CCFSZ instead of 96 for standard save operations.
+	[martin, ticket #312]
+
+lib/libc/arch/sparc/sys/__clone.S		1.5
+
+	Provide a full frame stack space in the clone'd child.
+	[martin, ticket #313]
+
+sys/kern/kern_pax.c				1.11
+sys/kern/kern_verifiedexec.c			1.86
+
+	Fix copy/paste error: Veriexec's sysctl setup routine was named after
+	PaX's.
+	[elad, ticket #314]
+
+sys/kern/kern_verifiedexec.c			1.87
+
+	Veriexec should not explicitly allow anything (raw disk access).
+	[elad, ticket #315]
 
