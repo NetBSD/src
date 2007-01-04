@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.19 2007/01/04 02:02:40 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.20 2007/01/04 15:42:38 elad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.19 2007/01/04 02:02:40 reinoud Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.20 2007/01/04 15:42:38 elad Exp $");
 #endif /* not lint */
 
 
@@ -321,7 +321,7 @@ udf_mount(struct mount *mp, const char *path,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
