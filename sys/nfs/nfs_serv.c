@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.121 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.122 2007/01/04 20:24:08 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.121 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.122 2007/01/04 20:24:08 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1506,7 +1506,7 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
 			    (error = kauth_authorize_generic(cred,
-			    KAUTH_GENERIC_ISSUSER, (u_short *)0))) {
+			    KAUTH_GENERIC_ISSUSER, NULL))) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1701,7 +1701,7 @@ abort:
 	} else {
 		if (va.va_type != VFIFO &&
 		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, (u_short *)0))) {
+		    KAUTH_GENERIC_ISSUSER, NULL))) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
@@ -1799,7 +1799,7 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 		vp = nd.ni_vp;
 		if (vp->v_type == VDIR &&
 		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, (u_short *)0)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			goto out;
 		/*
 		 * The root of a mounted filesystem cannot be deleted.
@@ -2096,7 +2096,7 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 		return (0);
 	}
 	if (vp->v_type == VDIR && (error = kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, (u_short *)0)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out1;
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;

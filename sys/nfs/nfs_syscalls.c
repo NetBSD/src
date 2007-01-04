@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.102 2006/12/28 00:39:03 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.103 2007/01/04 20:24:08 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.102 2006/12/28 00:39:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.103 2007/01/04 20:24:08 elad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -165,7 +165,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 	 * Must be super user
 	 */
 	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	    NULL);
 	if (error)
 		return (error);
 
