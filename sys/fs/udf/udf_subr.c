@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.27 2007/01/04 02:42:19 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.28 2007/01/04 04:15:43 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.27 2007/01/04 02:42:19 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.28 2007/01/04 04:15:43 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2143,11 +2143,13 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	case UDF_ICB_FILETYPE_SYMLINK :
 		nvp->v_type = VLNK;
 		break;
+	case UDF_ICB_FILETYPE_VAT :
 	case UDF_ICB_FILETYPE_META_MAIN :
 	case UDF_ICB_FILETYPE_META_MIRROR :
 		nvp->v_type = VNON;
 		break;
 	case UDF_ICB_FILETYPE_RANDOMACCESS :
+	case UDF_ICB_FILETYPE_REALTIME :
 		nvp->v_type = VREG;
 		break;
 	default:
