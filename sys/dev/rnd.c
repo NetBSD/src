@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.57 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: rnd.c,v 1.58 2007/01/04 18:44:45 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.57 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.58 2007/01/04 18:44:45 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -513,7 +513,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 
 	case RNDGETPOOLSTAT:
 		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (ret);
 
 		s = splsoftclock();
@@ -523,7 +523,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 
 	case RNDGETSRCNUM:
 		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (ret);
 
 		rst = (rndstat_t *)addr;
@@ -567,7 +567,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 
 	case RNDGETSRCNAME:
 		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (ret);
 
 		/*
@@ -591,7 +591,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 
 	case RNDCTL:
 		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (ret);
 
 		/*
@@ -636,7 +636,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 
 	case RNDADDDATA:
 		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (ret);
 
 		rnddata = (rnddata_t *)addr;
