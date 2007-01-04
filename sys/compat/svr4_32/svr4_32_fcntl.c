@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.14 2006/07/23 22:06:10 ad Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.15 2007/01/04 18:27:36 elad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.14 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.15 2007/01/04 18:27:36 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ fd_revoke(l, fd, retval)
 
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
 	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 
 	if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)

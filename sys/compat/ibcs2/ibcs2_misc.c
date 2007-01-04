@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.81 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.82 2007/01/04 18:27:36 elad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.81 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.82 2007/01/04 18:27:36 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1195,7 +1195,7 @@ ibcs2_sys_plock(struct lwp *l, void *v, register_t *retval)
 #define IBCS2_DATALOCK	4
 
         if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	    NULL) != 0)
                 return EPERM;
 	switch(SCARG(uap, cmd)) {
 	case IBCS2_UNLOCK:
@@ -1237,7 +1237,7 @@ ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
 
 	/* XXX: is this the right place for this call? */
 	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 
 	switch(SCARG(uap, cmd)) {

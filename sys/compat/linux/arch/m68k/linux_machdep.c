@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28 2006/07/23 22:06:09 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.29 2007/01/04 18:27:36 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29 2007/01/04 18:27:36 elad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -849,7 +849,7 @@ linux_sys_cacheflush(l, v, retval)
 	 */
 	if (scope == LINUX_FLUSH_SCOPE_ALL) {
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return error;
 #if defined(M68040) || defined(M68060)
 		/* entire cache */
