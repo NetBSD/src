@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.586 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.587 2007/01/04 18:16:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.587 2007/01/04 18:16:44 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586 2006/11/16 01:32:38 christos Exp $
 #include "opt_realmem.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
+#include "opt_xbox.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +159,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586 2006/11/16 01:32:38 christos Exp $
 
 #ifdef VM86
 #include <machine/vm86.h>
+#endif
+
+#ifdef XBOX
+#include <machine/xbox.h>
+
+int arch_i386_is_xbox = 0;
+uint32_t arch_i386_xbox_memsize = 0;
 #endif
 
 #include "acpi.h"
@@ -458,6 +466,24 @@ cpu_startup()
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
+
+#ifdef XBOX
+#define XBOX_NFORCE_NIC	0xfef00000
+	/* XXX jmcneill: Hack to workaround Cromwell bugs, from FreeBSD */
+	if (arch_i386_is_xbox) {
+		bus_space_handle_t h;
+		char *nicbase;
+		int rv;
+
+		rv = bus_space_map(X86_BUS_SPACE_MEM, XBOX_NFORCE_NIC,
+		    0x400, 0, &h);
+		if (!rv) {
+			nicbase = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
+			*(uint32_t *)(nicbase + 0x188) = 0;
+			bus_space_unmap(X86_BUS_SPACE_MEM, h, 0x400);
+		}
+	}
+#endif
 }
 
 /*
@@ -876,6 +902,12 @@ haltsys:
 #endif
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#ifdef XBOX
+		if (arch_i386_is_xbox) {
+			pic16l_poweroff();
+			for (;;);
+		}
+#endif
 #if NACPI > 0
 		if (acpi_softc != NULL) {
 			delay(500000);
@@ -1486,6 +1518,32 @@ init386(paddr_t first_avail)
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;
 	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
+
+#ifdef XBOX
+	/*
+	 * The following code queries the PCI ID of 0:0:0. For the XBOX,
+	 * This should be 0x10de / 0x02a5.
+	 *
+	 * This is exactly what Linux does.
+	 */
+	outl(0xcf8, 0x80000000);
+	if (inl(0xcfc) == 0x02a510de) {
+		arch_i386_is_xbox = 1;
+		xbox_lcd_init();
+		xbox_lcd_writetext("NetBSD/i386 ");
+		pic16l_setled(XBOX_LED_RED);
+		delay(500000);
+		pic16l_setled(XBOX_LED_GREEN);
+
+		/*
+		 * We are an XBOX, but we may have either 64MB or 128MB of
+		 * memory. The PCI host bridge should be programmed for this,
+		 * so we just query it. 
+		 */
+		outl(0xcf8, 0x80000084);
+		arch_i386_xbox_memsize = (inl(0xcfc) == 0x7FFFFFF) ? 128 : 64;
+	}
+#endif /* XBOX */
 
 	x86_bus_space_init();
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
@@ -2154,6 +2212,13 @@ cpu_reset()
 	struct region_descriptor region;
 
 	disable_intr();
+
+#ifdef XBOX
+	if (arch_i386_is_xbox) {
+		pic16l_reboot();
+		for (;;);
+	}
+#endif
 
 	/*
 	 * Ensure the NVRAM reset byte contains something vaguely sane.
