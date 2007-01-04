@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.195 2007/01/03 02:42:23 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.196 2007/01/04 16:55:30 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.195 2007/01/03 02:42:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.196 2007/01/04 16:55:30 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1427,7 +1427,7 @@ lfs_fcntl(void *v)
 	l = ap->a_l;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
 	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    NULL)) != 0)
 		return (error);
 
 	fs = VTOI(ap->a_vp)->i_lfs;
@@ -1517,7 +1517,7 @@ lfs_fcntl(void *v)
 	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;

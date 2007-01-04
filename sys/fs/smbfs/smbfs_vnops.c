@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.57 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.58 2007/01/04 17:26:12 elad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.57 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.58 2007/01/04 17:26:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,7 +453,7 @@ smbfs_setattr(v)
                 if (kauth_cred_geteuid(ap->a_cred) !=
 		    VTOSMBFS(vp)->sm_args.uid &&
                     (error = kauth_authorize_generic(ap->a_cred,
-		    KAUTH_GENERIC_ISSUSER, &ap->a_l->l_acflag)) &&
+		    KAUTH_GENERIC_ISSUSER, NULL)) &&
                     ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
                     (error = VOP_ACCESS(ap->a_vp, VWRITE, ap->a_cred, ap->a_l))))
                         return (error);
