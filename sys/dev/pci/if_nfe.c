@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.11 2007/01/01 04:13:25 tsutsui Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.12 2007/01/05 01:33:57 jmcneill Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.11 2007/01/01 04:13:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.12 2007/01/05 01:33:57 jmcneill Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -497,6 +497,8 @@ nfe_intr(void *arg)
 
 	DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
 
+	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
+
 	if (r & NFE_IRQ_LINK) {
 		NFE_READ(sc, NFE_PHY_STATUS);
 		NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
@@ -510,6 +512,12 @@ nfe_intr(void *arg)
 		/* check Tx ring */
 		nfe_txeof(sc);
 	}
+
+	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
+
+	if (ifp->if_flags & IFF_RUNNING &&
+	    !IF_IS_EMPTY(&ifp->if_snd))
+		nfe_start(ifp);
 
 	return 1;
 }
@@ -1102,6 +1110,7 @@ nfe_init(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 	uint32_t tmp;
+	int s;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
@@ -1166,6 +1175,10 @@ nfe_init(struct ifnet *ifp)
 	tmp = NFE_READ(sc, NFE_PWR_STATE);
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
+	s = splnet();
+	nfe_intr(sc); /* XXX clear IRQ status registers */
+	splx(s);
+
 #if 1
 	/* configure interrupts coalescing/mitigation */
 	NFE_WRITE(sc, NFE_IMTIMER, NFE_IM_DEFAULT);
@@ -1193,6 +1206,8 @@ nfe_init(struct ifnet *ifp)
 	nfe_setmulti(sc);
 
 	nfe_ifmedia_upd(ifp);
+
+	nfe_tick(sc);
 
 	/* enable Rx */
 	NFE_WRITE(sc, NFE_RX_CTL, NFE_RX_START);
