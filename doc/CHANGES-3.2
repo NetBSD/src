@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.31 2007/01/05 14:31:43 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.32 2007/01/05 14:47:57 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2381,4 +2381,39 @@ dist/dhcp/server/dhcp.c				1.10
 	Fix get-lease-hostnames option in dhcpd.conf(5) to make dhcpd(8) use
 	the DNS hostname as the DHCP hostname given to the client.
 	[drochner, ticket #1619]
+
+src/gnu/dist/postfix/AAAREADME
+src/gnu/dist/postfix/HISTORY
+src/gnu/dist/postfix/README_FILES/ADDRESS_REWRITING_README
+src/gnu/dist/postfix/conf/post-install
+src/gnu/dist/postfix/html/ADDRESS_REWRITING_README.html
+src/gnu/dist/postfix/html/bounce.5.html
+src/gnu/dist/postfix/man/man5/bounce.5
+src/gnu/dist/postfix/proto/ADDRESS_REWRITING_README.html
+src/gnu/dist/postfix/proto/bounce
+src/gnu/dist/postfix/src/bounce/bounce_cleanup.c
+src/gnu/dist/postfix/src/bounce/bounce_templates.c
+src/gnu/dist/postfix/src/cleanup/cleanup_message.c
+src/gnu/dist/postfix/src/cleanup/cleanup_milter.c
+src/gnu/dist/postfix/src/cleanup/cleanup_out.c
+src/gnu/dist/postfix/src/global/dict_proxy.c
+src/gnu/dist/postfix/src/global/mail_version.h
+src/gnu/dist/postfix/src/global/pipe_command.c
+src/gnu/dist/postfix/src/global/resolve_clnt.c
+src/gnu/dist/postfix/src/global/rewrite_clnt.c
+src/gnu/dist/postfix/src/global/scache_clnt.c
+src/gnu/dist/postfix/src/global/verify_clnt.c
+src/gnu/dist/postfix/src/milter/milter8.c
+src/gnu/dist/postfix/src/oqmgr/qmgr_entry.c
+src/gnu/dist/postfix/src/qmgr/qmgr_job.c
+src/gnu/dist/postfix/src/qmgr/qmgr_message.c
+src/gnu/dist/postfix/src/smtp/smtp_chat.c
+src/gnu/dist/postfix/src/smtp/smtp_connect.c
+src/gnu/dist/postfix/src/smtp/smtp_proto.c
+src/gnu/dist/postfix/src/util/msg.c
+src/gnu/dist/postfix/src/util/msg_output.c
+src/gnu/dist/postfix/src/util/vbuf_print.c
+
+	Update Postfix to version 2.3.5.
+	[ghen, ticket #1618]
 
