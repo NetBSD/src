@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.14 2006/12/18 20:28:38 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.15 2007/01/05 15:11:16 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -114,4 +114,10 @@ sys/dev/vnd.c					1.153
 	Don't accept a compressed vnd(4) image with block size 0 to avoid a
 	kernel panic.
 	[cube, ticket #1530]
+
+dist/dhcp/server/dhcp.c				1.10
+
+	Fix get-lease-hostnames option in dhcpd.conf(5) to make dhcpd(8) use
+	the DNS hostname as the DHCP hostname given to the client.
+	[drochner, ticket #1619]
 
