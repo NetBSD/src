@@ -67,6 +67,7 @@ port-sun3
 port-vax
 port-x68k
 port-xen
+port-zaurus
 security
 standards
 toolchain
