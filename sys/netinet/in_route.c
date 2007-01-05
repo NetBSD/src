@@ -1,4 +1,4 @@
-/*	$NetBSD: in_route.c,v 1.1 2006/12/09 05:33:04 dyoung Exp $	*/
+/*	$NetBSD: in_route.c,v 1.2 2007/01/05 15:47:33 joerg Exp $	*/
 
 /*
  * Copyright (c) 2006 David Young.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.1 2006/12/09 05:33:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.2 2007/01/05 15:47:33 joerg Exp $");
 
 #include "opt_inet.h"
 #include "opt_in_route.h"
@@ -137,9 +137,7 @@ in_rtflushall(void)
 
 	while ((ro = LIST_FIRST(&in_rtcache_head)) != NULL) {
 		KASSERT(ro->ro_rt != NULL);
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = NULL;
-		in_rtflush(ro);
+		rtcache_free(ro);
 	}
 	splx(s);
 }
