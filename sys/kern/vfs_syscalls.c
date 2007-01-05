@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.294 2007/01/04 17:38:26 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.295 2007/01/05 13:34:17 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.294 2007/01/04 17:38:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.295 2007/01/05 13:34:17 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -544,13 +544,9 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 
-	/*
-	 * Only root, or the user that did the original mount is
-	 * permitted to unmount this filesystem.
-	 */
-	if ((mp->mnt_stat.f_owner != kauth_cred_geteuid(l->l_cred)) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	 	KAUTH_GENERIC_ISSUSER, NULL)) != 0) {
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT, mp, NULL, NULL);
+	if (error) {
 		vput(vp);
 		return (error);
 	}
