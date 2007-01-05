@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.3 2006/11/16 01:33:09 christos Exp $ */
+/* $NetBSD: if_msk.c,v 1.4 2007/01/05 09:23:41 msaitoh Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.11 2006/08/17 22:07:40 brad Exp $	*/
 
 /*
@@ -269,7 +269,7 @@ msk_marv_miibus_writereg(struct device *dev, int phy, int reg, int val)
 
 	for (i = 0; i < SK_TIMEOUT; i++) {
 		DELAY(1);
-		if (SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY)
+		if (!(SK_YU_READ_2(sc_if, YUKON_SMICR) & YU_SMICR_BUSY))
 			break;
 	}
 
