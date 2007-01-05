@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.13 2006/10/01 21:36:11 bouyer Exp $
+#	$NetBSD: files.compat,v 1.14 2007/01/05 17:53:53 jmcneill Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -50,3 +50,6 @@ defflag	opt_largepages.h		XXXLARGEPAGES
 
 # kernel stack debug
 defflag	opt_kstack_dr0.h		XXXKSTACK_CHECK_DR0
+
+# Microsoft Xbox support
+defflag	opt_xbox.h			XXXXBOX
