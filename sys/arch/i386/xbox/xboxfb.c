@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.1 2007/01/04 18:16:44 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.2 2007/01/05 02:09:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Andrew Gillham
@@ -59,6 +59,8 @@
 
 #include "opt_wsemul.h"
 
+MALLOC_DEFINE(M_XBOXFB, "xboxfb", "xboxfb shadow framebuffer");
+
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	480
 #define SCREEN_BPP	32
@@ -96,6 +98,8 @@ struct xboxfb_softc {
 
 	int sc_mode;
 	uint32_t sc_bg;
+
+	char *sc_shadowbits;
 };
 
 static struct vcons_screen xboxfb_console_screen;
@@ -200,22 +204,33 @@ xboxfb_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->fbva == 0)
 		return;
 
+	sc->sc_shadowbits = malloc(XBOX_FB_SIZE, M_XBOXFB, M_NOWAIT);
+	if (sc->sc_shadowbits == NULL) {
+		aprint_error(": unable to allocate %d bytes for shadowfb\n",
+		    XBOX_FB_SIZE);
+		return;
+	}
+
+	ri = &xboxfb_console_screen.scr_ri;
+	memset(ri, 0, sizeof(struct rasops_info));
+
 	vcons_init(&sc->vd, sc, &xboxfb_defaultscreen, &xboxfb_accessops);
 	sc->vd.init_screen = xboxfb_init_screen;
 
 	/* yes, we're the console */
 	console = 1;
 
-	ri = &xboxfb_console_screen.scr_ri;
 	if (console) {
+		xboxfb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 		vcons_init_screen(&sc->vd, &xboxfb_console_screen, 1,
 			&defattr);
-		xboxfb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+		vcons_redraw_screen(&xboxfb_console_screen);
 
 		xboxfb_defaultscreen.textops = &ri->ri_ops;
 		xboxfb_defaultscreen.capabilities = ri->ri_caps;
 		xboxfb_defaultscreen.nrows = ri->ri_rows;
 		xboxfb_defaultscreen.ncols = ri->ri_cols;
+		xboxfb_defaultscreen.modecookie = NULL;
 		wsdisplay_cnattach(&xboxfb_defaultscreen, ri, 0, 0, defattr);
 	} 
 
@@ -286,10 +301,10 @@ xboxfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->width;
 	ri->ri_height = sc->height;
 	ri->ri_stride = sc->width * (sc->bits_per_pixel / 8);
-	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
+	ri->ri_flg = RI_CENTER;
 
-	ri->ri_bits = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
-	memset(ri->ri_bits, 0, XBOX_FB_SIZE);
+	ri->ri_hwbits = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+	ri->ri_bits = sc->sc_shadowbits;
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
