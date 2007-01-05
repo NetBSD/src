@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.12 2006/08/13 20:22:27 jmcneill Exp $	*/
+/*	$NetBSD: consinit.c,v 1.13 2007/01/05 02:39:50 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.12 2006/08/13 20:22:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.13 2007/01/05 02:39:50 jmcneill Exp $");
 
 #include "opt_kgdb.h"
 
@@ -75,6 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.12 2006/08/13 20:22:27 jmcneill Exp $
 #include "vesafb.h"
 #if (NVESAFB > 0)
 #include <arch/i386/bios/vesafbvar.h>
+#endif
+#endif
+
+#ifdef __i386__
+#include "xboxfb.h"
+#if (NXBOXFB > 0)
+#include <machine/xbox.h>
 #endif
 #endif
 
@@ -162,11 +169,15 @@ consinit()
 #endif
 		consinfo = &default_consinfo;
 
-#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0) || (NVESAFB > 0)
+#if (NPC > 0) || (NVGA > 0) || (NEGA > 0) || (NPCDISPLAY > 0) || (NVESAFB > 0) || (NXBOXFB > 0)
 	if (!strcmp(consinfo->devname, "pc")) {
 		int error;
 #if (NVESAFB > 0)
 		if (!vesafb_cnattach())
+			goto dokbd;
+#endif
+#if (NXBOXFB > 0)
+		if (!xboxfb_cnattach())
 			goto dokbd;
 #endif
 #if (NVGA > 0)
@@ -201,7 +212,7 @@ dokbd:
 			       error);
 		return;
 	}
-#endif /* PC | VT | VGA | PCDISPLAY | VESAFB */
+#endif /* PC | VT | VGA | PCDISPLAY | VESAFB | XBOXFB */
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
 		bus_space_tag_t tag = X86_BUS_SPACE_IO;
