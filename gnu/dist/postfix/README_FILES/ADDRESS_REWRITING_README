@@ -787,14 +787,14 @@ mailbox, or delivery to non-Postfix command.
     Content-Description: Notification
     Content-Type: text/plain
 
-    This is the Postfix program at host spike.porcupine.org.
+    This is the mail system at host spike.porcupine.org.
 
     Enclosed is the mail delivery report that you requested.
 
-                            The Postfix program
+                            The mail system
 
     <postfix-users@postfix.org>: delivery via mail.cloud9.net[168.100.1.4]: 250
-    Ok
+    2.1.5 Ok
 
 The second part of the report is in machine-readable form, and includes the
 following information:
@@ -814,13 +814,13 @@ version 2.3 and later.
     Reporting-MTA: dns; spike.porcupine.org
     X-Postfix-Queue-ID: 84863BC0E5
     X-Postfix-Sender: rfc822; wietse@porcupine.org
-    Arrival-Date: Tue, 13 Apr 2004 19:27:43 -0400 (EDT)
+    Arrival-Date: Sun, 26 Nov 2006 17:01:01 -0500 (EST)
 
     Final-Recipient: rfc822; postfix-users@postfix.org
     Action: deliverable
-    Status: 2.0.0
+    Status: 2.1.5
     Remote-MTA: dns; mail.cloud9.net
-    Diagnostic-Code: smtp; 250 Ok
+    Diagnostic-Code: smtp; 250 2.1.5 Ok
 
 The third part of the report contains the message that Postfix would have
 delivered, including From: and To: message headers, so that you can see any
@@ -831,10 +831,10 @@ no body content so none is shown in the example below.
     Content-Type: message/rfc822
 
     Received: by spike.porcupine.org (Postfix, from userid 1001)
-            id 84863BC0E5; Tue, 13 Apr 2004 19:27:43 -0400 (EDT)
+            id 84863BC0E5; Sun, 26 Nov 2006 17:01:01 -0500 (EST)
     Subject: probe
     To: postfix-users@postfix.org
-    Message-Id: <20040413232743.84863BC0E5@spike.porcupine.org>
-    Date: Tue, 13 Apr 2004 19:27:43 -0400 (EDT)
+    Message-Id: <20061126220101.84863BC0E5@spike.porcupine.org>
+    Date: Sun, 26 Nov 2006 17:01:01 -0500 (EST)
     From: wietse@porcupine.org (Wietse Venema)
 
