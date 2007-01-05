@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.3 2007/01/05 04:13:09 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.4 2007/01/05 04:58:32 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Andrew Gillham
@@ -241,14 +241,14 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;
-/*	struct xboxfb_softc *sc = vd->cookie; */
+	struct xboxfb_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
 		case WSDISPLAYIO_GTYPE:
 			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
-			return (0);
+			return 0;
 
 		case WSDISPLAYIO_GINFO:
 			wdf = (void *)data;
@@ -256,16 +256,28 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
 			wdf->width = ms->scr_ri.ri_width;
 			wdf->depth = ms->scr_ri.ri_depth;
 			wdf->cmsize = 256;
-			return (0);
+			return 0;
 
 		case WSDISPLAYIO_GETCMAP:
-			return (0);
+			return EINVAL;
 
 		case WSDISPLAYIO_PUTCMAP:
-			return (0);
+			return EINVAL;
+
+		case WSDISPLAYIO_LINEBYTES:
+			*(u_int *)data = SCREEN_WIDTH * 4;
+			return 0;
 
 		case WSDISPLAYIO_SMODE:
-			return (0);
+			{
+				int new_mode = *(int *)data;
+				if (new_mode != sc->sc_mode) {
+					sc->sc_mode = new_mode;
+					if (new_mode == WSDISPLAYIO_MODE_EMUL)
+						vcons_redraw_screen(vd->active);
+				}
+			}
+			return 0;
 	}
 	return EPASSTHROUGH;
 }
@@ -273,7 +285,19 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
 static paddr_t
 xboxfb_mmap(void *v, void *vs, off_t offset, int prot)
 {
-	aprint_normal(": mmap called.");
+	struct vcons_data *vd;
+	struct xboxfb_softc *sc;
+	paddr_t pa;
+
+	vd = (struct vcons_data *)v;
+	sc = (struct xboxfb_softc *)vd->cookie;
+
+	if (offset >= 0 && offset < XBOX_FB_SIZE) {
+		pa = bus_space_mmap(X86_BUS_SPACE_MEM, XBOX_FB_START,
+		    offset, prot, BUS_SPACE_MAP_LINEAR);
+		return pa;
+	}
+		    
 	return (-1);
 }
 
