@@ -1,4 +1,4 @@
-/* $NetBSD: if_srt.c,v 1.2 2006/12/29 10:40:48 wiz Exp $ */
+/* $NetBSD: if_srt.c,v 1.3 2007/01/05 06:32:48 mouse Exp $ */
 /* This file is in the public domain. */
 
 #include "opt_inet.h"
@@ -10,6 +10,13 @@
 #ifndef SRT_MAXUNIT
 #define SRT_MAXUNIT 255
 #endif
+
+/* include-file bug workarounds */
+#include <sys/types.h> /* sys/conf.h */
+#include <sys/resource.h> /* sys/resourcevar.h (uvm/uvm_param.h, sys/mbuf.h) */
+#include <netinet/in.h> /* netinet/ip.h */
+#include <sys/param.h> /* sys/mbuf.h */
+#include <netinet/in_systm.h> /* netinet/ip.h */
 
 #include <sys/conf.h>
 #include <sys/mbuf.h>
