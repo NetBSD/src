@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_lastlog.c,v 1.6.2.2 2005/07/11 11:23:34 tron Exp $	*/
+/*	$NetBSD: pam_lastlog.c,v 1.6.2.3 2007/01/05 14:14:53 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -47,7 +47,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
 #else
-__RCSID("$NetBSD: pam_lastlog.c,v 1.6.2.2 2005/07/11 11:23:34 tron Exp $");
+__RCSID("$NetBSD: pam_lastlog.c,v 1.6.2.3 2007/01/05 14:14:53 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -104,6 +104,9 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 	const struct sockaddr_storage *ss;
 	int pam_err;
 	char pwbuf[1024];
+#ifdef LOGIN_CAP
+	login_cap_t *lc;
+#endif
 
 	pam_err = pam_get_user(pamh, &user, NULL);
 	if (pam_err != PAM_SUCCESS)
@@ -153,11 +156,17 @@ pam_sm_open_session(pam_handle_t *pamh, int flags,
 
 	if (openpam_get_option(pamh, "no_nested") == NULL || nuser == NULL) {
 		int quiet;
+		if ((flags & PAM_SILENT) != 0)
+			quiet = 1;
+		else {
 #ifdef LOGIN_CAP
-		quiet = login_getcapbool(login_getpwclass(pwd), "hushlogin", 0);
+			lc = login_getpwclass(pwd);
+			quiet = login_getcapbool(lc, "hushlogin", 0);
+			login_close(lc);
 #else
-		quiet = 0;
+			quiet = 0;
 #endif
+		}
 #ifdef SUPPORT_UTMPX
 		doutmpx(user, rhost, tty, ss, &now);
 		dolastlogx(pamh, quiet, pwd, rhost, tty, ss, &now);

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.2.1 2006/04/17 23:11:11 tron Exp $
+# $NetBSD: Makefile,v 1.5.2.2 2007/01/05 14:14:53 tron Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -157,7 +157,7 @@ STATIC_MODULES=	pam_chroot pam_deny pam_echo pam_exec pam_ftpusers pam_group \
     pam_rhosts pam_rootok pam_securetty pam_self pam_unix
 
 .if (${MKKERBEROS} != "no")
-STATIC_MODULES+= pam_krb5 pam_ksu
+STATIC_MODULES+= pam_afslog pam_krb5 pam_ksu
 .endif
 
 .if (${MKSKEY} != "no")

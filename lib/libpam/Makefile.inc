@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.3 2005/01/08 08:39:48 christos Exp $
+# $NetBSD: Makefile.inc,v 1.3.2.1 2007/01/05 14:14:53 tron Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -31,8 +31,9 @@ CPPFLAGS+= -DOPENPAM_STATIC_MODULES
 # Enable the static module macros.
 CPPFLAGS+= -DOPENPAM_STATIC_MODULE
 
-# Enable debugging for now
-CPPFLAGS+= -DDEBUG
+CPPFLAGS+= -DOPENPAM_MODULES_DIR=\"/usr/lib/security\"
+# No debugging
+#CPPFLAGS+= -DDEBUG
 
 # ...and don't do either of those on the shared library.
 # XXX CSHLIBFLAGS isn't perfect, but it'll do for now.

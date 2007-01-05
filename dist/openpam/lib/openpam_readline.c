@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_readline.c#2 $
+ * $P4: //depot/projects/openpam/lib/openpam_readline.c#3 $
  */
 
 #include <ctype.h>
@@ -52,7 +52,7 @@
 char *
 openpam_readline(FILE *f, int *lineno, size_t *lenp)
 {
-	char *line;
+	unsigned char *line;
 	size_t len, size;
 	int ch;
 
@@ -63,7 +63,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 
 #define line_putch(ch) do { \
 	if (len >= size - 1) { \
-		char *tmp = realloc(line, size *= 2); \
+		unsigned char *tmp = realloc(line, size *= 2); \
 		if (tmp == NULL) \
 			goto fail; \
 		line = tmp; \
@@ -124,7 +124,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 
 	if (lenp != NULL)
 		*lenp = len;
-	return (line);
+	return ((char *)line);
  fail:
 	FREE(line);
 	return (NULL);
