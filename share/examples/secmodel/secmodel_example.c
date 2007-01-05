@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.11 2007/01/02 10:47:29 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.12 2007/01/05 13:23:22 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.11 2007/01/02 10:47:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.12 2007/01/05 13:23:22 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -353,10 +353,8 @@ secmodel_example_machdep_cb(kauth_cred_t cred, kauth_action_t action,
     void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
 {
         int result;
-	enum kauth_machdep_req req;
 
         result = KAUTH_RESULT_DENY;
-	req = (enum kauth_machdep_req)arg0;
 
         switch (action) {
 	case KAUTH_MACHDEP_IOPERM_GET:
