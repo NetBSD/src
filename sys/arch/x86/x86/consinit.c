@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.13 2007/01/05 02:39:50 jmcneill Exp $	*/
+/*	$NetBSD: consinit.c,v 1.14 2007/01/05 04:13:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.13 2007/01/05 02:39:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.14 2007/01/05 04:13:09 jmcneill Exp $");
 
 #include "opt_kgdb.h"
 
@@ -177,8 +177,16 @@ consinit()
 			goto dokbd;
 #endif
 #if (NXBOXFB > 0)
-		if (!xboxfb_cnattach())
+		switch (xboxfb_cnattach()) {
+		case 0:
 			goto dokbd;
+		case 1:
+			break;
+		case -1:
+			/* defer initialization until later */
+			initted = 0;
+			return;
+		}
 #endif
 #if (NVGA > 0)
 		if (!vga_cnattach(X86_BUS_SPACE_IO, X86_BUS_SPACE_MEM,

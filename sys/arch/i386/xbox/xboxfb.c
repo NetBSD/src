@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.2 2007/01/05 02:09:13 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.3 2007/01/05 04:13:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Andrew Gillham
@@ -78,6 +78,9 @@ MALLOC_DEFINE(M_XBOXFB, "xboxfb", "xboxfb shadow framebuffer");
 #define XBOX_FB_START		(0xF0000000 | (XBOX_RAM_SIZE - XBOX_FB_SIZE))
 #define XBOX_FB_START_PTR	(0xFD600800)
 */
+
+static char *xboxfb_console_shadowbits;
+static bus_space_handle_t xboxfb_console_memh;
 
 struct xboxfb_softc {
 	struct device sc_dev;
@@ -176,35 +179,28 @@ static void
 xboxfb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xboxfb_softc *sc = (void *)self;
-	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
 	int console;
-/*	int width, height; */
 	ulong defattr = 0;
 	uint32_t bg, fg, ul;
 
-	sc->sc_memt = pa->pa_memt;
+	sc->sc_memt = X86_BUS_SPACE_MEM;
+	sc->sc_memh = xboxfb_console_memh;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	sc->width = SCREEN_WIDTH;
 	sc->height = SCREEN_HEIGHT;
 	sc->bits_per_pixel = SCREEN_BPP;
 	sc->fbpa = XBOX_FB_START;
 
-	aprint_normal(": %dx%d, %d bit framebuffer enabled.\n",
+	aprint_normal(": %dx%d, %d bit framebuffer console\n",
 		sc->width, sc->height, sc->bits_per_pixel);
-
-	if (bus_space_map(sc->sc_memt, XBOX_FB_START, XBOX_FB_SIZE,
-		BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
-		aprint_error(": failed to map memory.\n");
-		return;
-	}
 
 	sc->fbva = (vaddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 	if (sc->fbva == 0)
 		return;
 
-	sc->sc_shadowbits = malloc(XBOX_FB_SIZE, M_XBOXFB, M_NOWAIT);
+	sc->sc_shadowbits = xboxfb_console_shadowbits;
 	if (sc->sc_shadowbits == NULL) {
 		aprint_error(": unable to allocate %d bytes for shadowfb\n",
 		    XBOX_FB_SIZE);
@@ -212,7 +208,6 @@ xboxfb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ri = &xboxfb_console_screen.scr_ri;
-	memset(ri, 0, sizeof(struct rasops_info));
 
 	vcons_init(&sc->vd, sc, &xboxfb_defaultscreen, &xboxfb_accessops);
 	sc->vd.init_screen = xboxfb_init_screen;
@@ -221,18 +216,10 @@ xboxfb_attach(struct device *parent, struct device *self, void *aux)
 	console = 1;
 
 	if (console) {
-		xboxfb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 		vcons_init_screen(&sc->vd, &xboxfb_console_screen, 1,
 			&defattr);
-		vcons_redraw_screen(&xboxfb_console_screen);
-
-		xboxfb_defaultscreen.textops = &ri->ri_ops;
-		xboxfb_defaultscreen.capabilities = ri->ri_caps;
-		xboxfb_defaultscreen.nrows = ri->ri_rows;
-		xboxfb_defaultscreen.ncols = ri->ri_cols;
-		xboxfb_defaultscreen.modecookie = NULL;
-		wsdisplay_cnattach(&xboxfb_defaultscreen, ri, 0, 0, defattr);
-	} 
+		xboxfb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+	}
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
 	sc->sc_bg = ri->ri_devcmap[bg];
@@ -297,14 +284,20 @@ xboxfb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct xboxfb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 
+	if (scr == &xboxfb_console_screen)
+		return;
+
 	ri->ri_depth = sc->bits_per_pixel;
 	ri->ri_width = sc->width;
 	ri->ri_height = sc->height;
 	ri->ri_stride = sc->width * (sc->bits_per_pixel / 8);
 	ri->ri_flg = RI_CENTER;
 
-	ri->ri_hwbits = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
-	ri->ri_bits = sc->sc_shadowbits;
+	if (xboxfb_console_shadowbits != NULL) {
+		ri->ri_hwbits = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+		ri->ri_bits = sc->sc_shadowbits;
+	} else
+		ri->ri_bits = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
@@ -322,6 +315,64 @@ xboxfb_init_screen(void *cookie, struct vcons_screen *scr,
 int
 xboxfb_cnattach(void)
 {
-	/* XXX: we should really setup the graphics console early. */
-	return (0);
+	static int ncalls = 0;
+	struct rasops_info *ri = &xboxfb_console_screen.scr_ri;
+	long defattr;
+
+	/* We can't attach if we're not running on an Xbox... */
+	if (!arch_i386_is_xbox)
+		return 1;
+
+	/* XXX jmcneill
+	 *  Console initialization is called multiple times on i386; the first
+	 *  two being too early for us to use malloc or bus_space_map. Defer
+	 *  initialization under these subsystems are ready.
+	 */
+	++ncalls;
+	if (ncalls < 3)
+		return -1;
+
+	xboxfb_console_shadowbits = malloc(XBOX_FB_SIZE, M_XBOXFB, M_NOWAIT);
+
+	if (xboxfb_console_shadowbits == NULL)
+		aprint_error("xboxfb_cnattach: failed to allocate shadowfb\n");
+
+	if (bus_space_map(X86_BUS_SPACE_MEM, XBOX_FB_START, XBOX_FB_SIZE,
+	    BUS_SPACE_MAP_LINEAR, &xboxfb_console_memh)) {
+		aprint_error("xboxfb_cnattach: failed to map memory.\n");
+		return 1;
+	}
+
+	wsfont_init();
+	ri->ri_width = SCREEN_WIDTH;
+	ri->ri_height = SCREEN_HEIGHT;
+	ri->ri_depth = SCREEN_BPP;
+	ri->ri_stride = ri->ri_width * ri->ri_depth / 8;
+	ri->ri_flg = RI_CENTER;
+	ri->ri_bits = xboxfb_console_shadowbits;
+	ri->ri_hwbits = bus_space_vaddr(X86_BUS_SPACE_MEM,
+	    xboxfb_console_memh);
+	if (ri->ri_hwbits == NULL) {
+		aprint_error("xboxfb_cnattach: bus_space_vaddr failed\n");
+		return 1;
+	}
+
+	/* clear screen */
+	memset(ri->ri_bits, 0, XBOX_FB_SIZE);
+	memset(ri->ri_hwbits, 0, XBOX_FB_SIZE);
+
+	rasops_init(ri, ri->ri_height / 8, ri->ri_width / 8);
+	ri->ri_caps = WSSCREEN_WSCOLORS;
+	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
+	    ri->ri_width / ri->ri_font->fontwidth);
+
+	xboxfb_defaultscreen.nrows = ri->ri_rows;
+	xboxfb_defaultscreen.ncols = ri->ri_cols;
+	xboxfb_defaultscreen.textops = &ri->ri_ops;
+	xboxfb_defaultscreen.capabilities = ri->ri_caps;
+	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
+
+	wsdisplay_preattach(&xboxfb_defaultscreen, ri, 0, 0, defattr);
+
+	return 0;
 }
