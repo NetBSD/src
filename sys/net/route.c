@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.83 2006/12/15 21:18:53 joerg Exp $	*/
+/*	$NetBSD: route.c,v 1.84 2007/01/05 16:40:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.83 2006/12/15 21:18:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.84 2007/01/05 16:40:08 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1085,31 +1085,101 @@ rt_timer_timer(void *arg)
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 }
 
+#ifdef RTCACHE_DEBUG
+#ifndef	RTCACHE_DEBUG_SIZE 
+#define	RTCACHE_DEBUG_SIZE (1024 * 1024)
+#endif
+static const char *cache_caller[RTCACHE_DEBUG_SIZE];
+static struct route *cache_entry[RTCACHE_DEBUG_SIZE];
+size_t cache_cur;
+#endif
+
+#ifdef RTCACHE_DEBUG
+static void
+_rtcache_init_debug(const char *caller, struct route *ro, int flag)
+#else
+static void
+_rtcache_init(struct route *ro, int flag)
+#endif
+{
+#ifdef RTCACHE_DEBUG
+	size_t i;
+	for (i = 0; i < cache_cur; ++i) {
+		if (cache_entry[i] == ro)
+			panic("Reinit of route %p, initialised from %s", ro, cache_caller[i]);
+	}
+#endif
+
+	ro->ro_rt = rtalloc1(&ro->ro_dst, flag);
+	if (ro->ro_rt != NULL) {
+#ifdef RTCACHE_DEBUG
+		if (cache_cur == RTCACHE_DEBUG_SIZE)
+			panic("Route cache debug overflow");
+		cache_caller[cache_cur] = caller;
+		cache_entry[cache_cur] = ro;
+		++cache_cur;
+#endif
+		rtcache(ro);
+	}
+}
+
+#ifdef RTCACHE_DEBUG
+void
+rtcache_init_debug(const char *caller, struct route *ro)
+{
+	_rtcache_init_debug(caller, ro, 1);
+}
+
+void
+rtcache_init_noclone_debug(const char *caller, struct route *ro)
+{
+	_rtcache_init_debug(caller, ro, 0);
+}
+
+#else
 void
 rtcache_init(struct route *ro)
 {
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
-	if (ro->ro_rt != NULL)
-		rtcache(ro);
+	_rtcache_init(ro, 1);
 }
 
 void
 rtcache_init_noclone(struct route *ro)
 {
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 0);
-	if (ro->ro_rt != NULL)
-		rtcache(ro);
+	_rtcache_init(ro, 0);
 }
+#endif
 
+#ifdef RTCACHE_DEBUG
+void
+rtcache_copy_debug(const char *caller, struct route *new, const struct route *old, size_t new_len)
+#else
 void
 rtcache_copy(struct route *new, const struct route *old, size_t new_len)
+#endif
 {
+#ifdef RTCACHE_DEBUG
+	size_t i;
+
+	for (i = 0; i < cache_cur; ++i) {
+		if (cache_entry[i] == new)
+			panic("Copy to initalised route %p (before %s)", new, cache_caller[i]);
+	}
+#endif
+
 	bzero(new, new_len);
 	if (old->ro_dst.sa_len + offsetof(struct route, ro_dst) > new_len)
 		panic("rtcache_copy: dst address will overflow new route");
 	bcopy(&old->ro_dst, &new->ro_dst, old->ro_dst.sa_len);
 	new->ro_rt = old->ro_rt;
 	if (new->ro_rt != NULL) {
+#ifdef RTCACHE_DEBUG
+		if (cache_cur == RTCACHE_DEBUG_SIZE)
+			panic("Route cache debug overflow");
+		cache_caller[cache_cur] = caller;
+		cache_entry[cache_cur] = new;
+		++cache_cur;
+#endif
 		rtcache(new);
 		++new->ro_rt->rt_refcnt;
 	}
@@ -1118,13 +1188,27 @@ rtcache_copy(struct route *new, const struct route *old, size_t new_len)
 void
 rtcache_free(struct route *ro)
 {
-	if (ro->ro_rt != NULL) {
-#if 0
-		rtfree(ro->ro_rt);
-#else
-		rtflush(ro);
-#endif
+#ifdef RTCACHE_DEBUG
+	size_t j, i = cache_cur;
+	for (i = j = 0; i < cache_cur; ++i, ++j) {
+		if (cache_entry[i] == ro) {
+			if (ro->ro_rt == NULL)
+				panic("Route cache manipulated (allocated by %s)", cache_caller[i]);
+			--j;
+		} else {
+			cache_caller[j] = cache_caller[i];
+			cache_entry[j] = cache_entry[i];
+		}
 	}
+	if (ro->ro_rt != NULL) {
+		if (i != j + 1)
+			panic("Wrong entries after rtcache_free: %zu (expected %zu)", j, i - 1);
+		--cache_cur;
+	}
+#endif
+
+	if (ro->ro_rt != NULL)
+		rtflush(ro);
 	ro->ro_rt = NULL;
 }
 
