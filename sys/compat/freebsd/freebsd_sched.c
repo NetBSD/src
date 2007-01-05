@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.6 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.7 2007/01/05 15:43:51 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.6 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.7 2007/01/05 15:43:51 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -92,7 +92,7 @@ freebsd_sys_sched_setparam(struct lwp *l, void *v, register_t *retval)
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
@@ -126,7 +126,7 @@ freebsd_sys_sched_getparam(struct lwp *l, void *v, register_t *retval)
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
@@ -167,7 +167,7 @@ freebsd_sys_sched_setscheduler(struct lwp *l, void *v,
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
@@ -206,7 +206,7 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 		if (!(l->l_proc == p ||
-		      kauth_cred_geteuid(pc) == 0 ||
+		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
 		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
 		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
