@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.72 2006/10/31 22:21:17 joerg Exp $
+#	$NetBSD: files.usb,v 1.73 2007/01/05 17:16:22 jmcneill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -267,3 +267,8 @@ file	dev/usb/if_rum.c		rum
 device	utoppy
 attach	utoppy at usbdevif
 file	dev/usb/utoppy.c		utoppy
+
+# Microsoft Xbox controller (gamepad)
+device	xboxcontroller: wsmousedev
+attach	xboxcontroller at usbdevif
+file	dev/usb/xboxcontroller.c	xboxcontroller
