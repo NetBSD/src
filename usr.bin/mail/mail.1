@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.48 2007/01/02 03:09:13 christos Exp $
+.\"	$NetBSD: mail.1,v 1.49 2007/01/05 03:52:35 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -232,7 +232,7 @@ as described below.
 These message
 .Dq specs
 may be combined by the usual binary boolean operations
-.Ql \&& ,
+.Ql \*[Am] ,
 .Ql \&| ,
 and
 .Ql \&^ ,
@@ -347,7 +347,7 @@ from 1 12 3-5
 .Pp
 would display the headers from messages 1, 3, 4, 5, and 12.
 .Bd -literal -offset indent
-from anon & ( /foo | /bar )
+from anon \*[Am] ( /foo | /bar )
 .Ed
 .Pp
 would display all headers that had
@@ -766,7 +766,7 @@ For example, one use might be something like:
 if headersonly
   set header-format="%P%Q%3i %-21.20f %m/%d %R %3K \\"%q\\""
 else
-  set header-format="%P%Q%?& ?%3i %-21.20f %a %b %e %R %3K/%-5O \\"%q\\""
+  set header-format="%P%Q%?\*[Am] ?%3i %-21.20f %a %b %e %R %3K/%-5O \\"%q\\""
 endif
 .Ed
 .It Ic ifdef
@@ -1413,7 +1413,7 @@ command or redirected to a file.
 The pipe/redirection is signaled by the first occurrence of a
 .Ql |
 or
-.Ql >
+.Ql \*[Gt]
 character that is not in a quoted string or in a parenthetical
 group.
 This character terminates the mail command line and the remaining
@@ -1427,7 +1427,7 @@ could be used to count how may replies were made by senders with
 .Ql john@
 in their address and
 .Bd -literal -offset indent
-  from john@ >> /tmp/john
+  from john@ \*[Gt]\*[Gt] /tmp/john
 .Ed
 .Pp
 would append all the headers from such senders to /tmp/john.
@@ -1735,7 +1735,7 @@ substitute
 times.
 This is intended to be used when displaying an
 .Dq exposed thread .
-.It Ar \&%?&string?
+.It Ar \&%?\*[Am]string?
 Like
 .Ar \&%?*string? ,
 but uses the depth relative to the current depth rather than the
@@ -1809,7 +1809,7 @@ the letters above will be displayed in lower case if the property is
 that of a hidden child with the case
 .Ql \&*
 being displayed as
-.Ql \&& .
+.Ql \*[Am] .
 .Pp
 Note 2:
 .Ar \&%n
@@ -1956,7 +1956,7 @@ in the user's home directory.
 .It Ar prompt
 If defined, it specifies the prompt to use when in command mode.
 Otherwise, the default
-.Ql &
+.Ql \*[Am]
 is used.
 The format syntax is the same as for
 .Ar header-format .
