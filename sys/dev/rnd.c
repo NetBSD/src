@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.59 2007/01/05 16:23:04 elad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.60 2007/01/05 16:38:13 elad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.59 2007/01/05 16:23:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.60 2007/01/05 16:38:13 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -512,7 +512,6 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 		break;
 	default:
 		return (EINVAL);
-		break;
 	}
 
 	switch (cmd) {
