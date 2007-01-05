@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.30 2007/01/05 14:29:37 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.31 2007/01/05 14:31:43 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2375,4 +2375,10 @@ distrib/sets/lists/man/mi			1.827
 	Update OpenPAM to 20050616 ("Figwort") and add the pam_afslog(8)
 	authentication module.
 	[ghen, ticket #1617]
+
+dist/dhcp/server/dhcp.c				1.10
+
+	Fix get-lease-hostnames option in dhcpd.conf(5) to make dhcpd(8) use
+	the DNS hostname as the DHCP hostname given to the client.
+	[drochner, ticket #1619]
 
