@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.33 2006/12/25 18:31:18 wiz Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.34 2007/01/05 15:40:51 elad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.33 2006/12/25 18:31:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.34 2007/01/05 15:40:51 elad Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -185,7 +185,7 @@ irix_sys_prctl(l, v, retval)
 			return 0;
 
 		pc = l->l_cred;
-		if (!(kauth_cred_geteuid(pc) == 0 || \
+		if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
 		    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 		    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
 		    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
@@ -580,7 +580,7 @@ irix_sys_procblk(l, v, retval)
 
 	/* May we stop it? */
 	pc = l->l_cred;
-	if (!(kauth_cred_geteuid(pc) == 0 || \
+	if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
 	    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 	    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
 	    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
