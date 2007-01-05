@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.587 2007/01/04 18:16:44 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.588 2007/01/05 04:07:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.587 2007/01/04 18:16:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.588 2007/01/05 04:07:23 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -409,6 +409,12 @@ cpu_startup()
 	char pbuf[9];
 
 	/*
+	 * For console drivers that require uvm and pmap to be initialized,
+	 * we'll give them one more chance here...
+	 */
+	consinit();
+
+	/*
 	 * Initialize error message buffer (et end of core).
 	 */
 	msgbuf_vaddr = uvm_km_alloc(kernel_map, x86_round_page(MSGBUFSIZE), 0,
@@ -468,20 +474,17 @@ cpu_startup()
 	x86_bus_space_mallocok();
 
 #ifdef XBOX
-#define XBOX_NFORCE_NIC	0xfef00000
-	/* XXX jmcneill: Hack to workaround Cromwell bugs, from FreeBSD */
-	if (arch_i386_is_xbox) {
+#define XBOX_NFORCE_NIC 0xfef00000
+	{
 		bus_space_handle_t h;
 		char *nicbase;
 		int rv;
 
 		rv = bus_space_map(X86_BUS_SPACE_MEM, XBOX_NFORCE_NIC,
-		    0x400, 0, &h);
-		if (!rv) {
-			nicbase = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
-			*(uint32_t *)(nicbase + 0x188) = 0;
-			bus_space_unmap(X86_BUS_SPACE_MEM, h, 0x400);
-		}
+		    0x400, BUS_SPACE_MAP_LINEAR, &h);
+		nicbase = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
+		*(uint32_t *)(nicbase + 0x188) = 0;
+		bus_space_unmap(X86_BUS_SPACE_MEM, h, 0x400);
 	}
 #endif
 }
