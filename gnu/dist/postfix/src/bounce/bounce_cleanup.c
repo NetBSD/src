@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_cleanup.c,v 1.1.1.2.2.1 2006/11/20 13:30:19 tron Exp $	*/
+/*	$NetBSD: bounce_cleanup.c,v 1.1.1.2.2.2 2007/01/05 14:43:12 tron Exp $	*/
 
 /*++
 /* NAME
@@ -131,7 +131,7 @@ static void bounce_cleanup_sig(int sig)
      */
     if (bounce_cleanup_path)
 	(void) unlink(vstring_str(bounce_cleanup_path));
-    exit(sig);
+    _exit(sig);
 }
 
 /* bounce_cleanup_register - register logfile to clean up */

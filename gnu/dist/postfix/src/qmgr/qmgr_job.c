@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_job.c,v 1.1.1.2.2.1 2006/11/20 13:30:47 tron Exp $	*/
+/*	$NetBSD: qmgr_job.c,v 1.1.1.2.2.2 2007/01/05 14:43:12 tron Exp $	*/
 
 /*++
 /* NAME
@@ -765,6 +765,16 @@ static QMGR_PEER *qmgr_job_peer_select(QMGR_JOB *job)
     QMGR_PEER *peer;
     QMGR_MESSAGE *message = job->message;
 
+    /*
+     * Workaround to prevent queue manager starvation until the last slow
+     * batch of multi-recipient mail is finished. Postfix 2.4 has a final
+     * solution, but that involves major changes.
+     */
+    if (message->rcpt_offset != 0
+	&& message->rcpt_limit > message->rcpt_count + 100
+	&& message->refcount > 0) {
+	qmgr_message_realloc(message);
+    }
     if (HAS_ENTRIES(job) && (peer = qmgr_peer_select(job)) != 0)
 	return (peer);
 

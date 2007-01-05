@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.12.2.2 2006/11/20 13:30:47 tron Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.12.2.3 2007/01/05 14:43:12 tron Exp $	*/
 
 /*++
 /* NAME
@@ -363,6 +363,9 @@ static int qmgr_message_read(QMGR_MESSAGE *message)
 	if (recipient_limit < message->rcpt_limit)
 	    recipient_limit = message->rcpt_limit;
     }
+    /* Keep interrupt latency in check. */
+    if (recipient_limit > 5000)
+	recipient_limit = 5000;
     if (recipient_limit <= 0)
 	msg_panic("%s: no recipient slots available", message->queue_id);
 
