@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.2 2006/12/29 15:28:11 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.3 2007/01/06 18:22:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -110,11 +110,9 @@ struct puffs_putreq {
 };
 
 __BEGIN_DECLS
-struct puffs_cc		*puffs_cc_create(struct puffs_usermount *,
-					 struct puffs_req *);
-void			puffs_cc_destroy(struct puffs_cc *);
 
-void			puffs_calldispatcher(struct puffs_cc *);
+void	puffs_calldispatcher(struct puffs_cc *);
+
 __END_DECLS
 
 #endif /* _PUFFS_PRIVATE_H_ */
