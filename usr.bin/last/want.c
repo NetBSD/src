@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.8 2007/01/06 14:00:36 cbiere Exp $	*/
+/*	$NetBSD: want.c,v 1.9 2007/01/06 14:11:20 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -134,7 +134,7 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	offset -= offset % (off_t) sizeof(*buf);
 	
 	while (offset >= (off_t) sizeof(*buf)) {
-		ssize_t ret;
+		ssize_t ret, i;
 		size_t size;
 
 		size = MIN(len, offset);
@@ -145,8 +145,10 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 		} else if ((size_t) ret < size) {
 			err(EXIT_FAILURE, "%s: Unexpected end of file", file);
 		}
-		
-		for (bp = &buf[ret / sizeof(*buf) - 1]; bp >= buf; --bp) {
+
+		for (i = ret / sizeof(*buf) - 1; i >= 0; i--) {
+			bp = &buf[i];
+
 			NULTERM(name);
 			NULTERM(line);
 			NULTERM(host);
