@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_gpioreg.h,v 1.1 2007/01/06 00:58:04 christos Exp $ */
+/*	$NetBSD: omap_gpioreg.h,v 1.2 2007/01/06 16:10:32 christos Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -56,5 +56,17 @@
 #define	GPIO_MODULE(pin)	((pin) / GPIO_NPINS)
 #define	GPIO_RELNUM(pin)	((pin) & (GPIO_NPINS - 1))
 #define	GPIO_BIT(pin)		(1 << GPIO_RELNUM(pin))
+
+/* GPIO_SYSCONFIG bits of interest */
+
+#define GPIO_SYSCONFIG_IDLEMODE		3
+#define GPIO_SYSCONFIG_ENAWAKEUP	2
+#define GPIO_SYSCONFIG_SOFTRESET	1
+#define GPIO_SYSCONFIG_AUTOIDLE		0
+
+/* GPIO_SYSCONFIG IDLEMODE values */
+
+#define GPIO_SYSCONFIG_IDLEMODE_MASK	0x3
+#define GPIO_SYSCONFIG_SMARTIDLE	0x2
 
 #endif /* _ARM_OMAP_OMAP_GPIOREG_H_ */
