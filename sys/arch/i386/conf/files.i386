@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.298 2007/01/04 18:16:43 jmcneill Exp $
+#	$NetBSD: files.i386,v 1.299 2007/01/06 18:42:36 jmcneill Exp $
 #
 # new style config file for i386 architecture
 #
@@ -344,9 +344,11 @@ device cpu
 attach cpu at cpubus
 file	arch/i386/i386/cpu.c		cpu
 
-# XBox LED & X3LCD support (*very* rudimentary)
+# XBox LED & system support
+file	arch/i386/xbox/xbox.c			xbox
+
+# XBox X3LCD support (*very* rudimentary)
 file	arch/i386/xbox/xboxlcd.c		xbox
-file	arch/i386/xbox/pic16l.S			xbox
 
 # XBox framebuffer support
 device xboxfb: wsemuldisplaydev, rasops32, vcons
