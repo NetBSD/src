@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.18.2.2 2007/01/06 13:18:16 bouyer Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.18.2.3 2007/01/06 13:27:54 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.18.2.2 2007/01/06 13:18:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.18.2.3 2007/01/06 13:27:54 bouyer Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -97,8 +97,8 @@ secmodel_bsd44_securelevel_init(void)
 #endif /* INSECURE */
 }
 
-SYSCTL_SETUP(sysctl_secmodel_bsd44_securelevel_setup,
-    "sysctl secmodel bsd44 securelevel setup")
+SYSCTL_SETUP(sysctl_security_bsd44_securelevel_setup,
+    "sysctl security bsd44 securelevel setup")
 {
 	/*
 	 * For compatibility, we create a kern.securelevel variable.
