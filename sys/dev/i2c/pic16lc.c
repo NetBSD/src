@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.1 2007/01/06 02:44:16 jmcneill Exp $ */
+/* $NetBSD: pic16lc.c,v 1.2 2007/01/06 16:57:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.2 2007/01/06 16:57:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
