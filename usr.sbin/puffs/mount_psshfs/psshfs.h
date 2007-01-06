@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.1 2006/12/29 15:35:39 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.2 2007/01/06 18:25:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -139,6 +139,8 @@ struct psshfs_ctx {
 	TAILQ_HEAD(, psbuf) outbufq;
 	TAILQ_HEAD(, psbuf) req_queue;
 };
+
+int	psshfs_domount(struct puffs_usermount *);
 
 struct psbuf 	*psbuf_make(int);
 void		psbuf_destroy(struct psbuf *);

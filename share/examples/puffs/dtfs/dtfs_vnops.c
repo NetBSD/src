@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.11 2007/01/01 21:32:12 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.12 2007/01/06 18:25:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -182,6 +182,8 @@ dtfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	return 0;
 }
 
+#include <err.h>
+
 int
 dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 	struct dirent *dent, const struct puffs_cred *pcr, off_t *readoff,
@@ -193,7 +195,7 @@ dtfs_node_readdir(struct puffs_cc *pcc, void *opc,
 
 	if (pn->pn_va.va_type != VDIR)
 		return ENOTDIR;
-
+	
 	dtfs_updatetimes(pn, 1, 0, 0);
 
  again:
@@ -237,7 +239,9 @@ dtfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 
 	/* if there's a target file, nuke it for atomic replacement */
 	if (pn_tfile) {
-		assert(pn_tfile->pn_va.va_type != VDIR); /* XXX? */
+		if (pn_tfile->pn_va.va_type == VDIR) {
+			assert(/*CONSTCOND*/0); /* XXX FIXME */
+		}
 		dtfs_nukenode(pn_tfile, pn_sdir, pcn_targ->pcn_name);
 	}
 
