@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.62 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.63 2007/01/06 20:38:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.62 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.63 2007/01/06 20:38:15 christos Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -103,7 +103,7 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0
+	if (!(scdebug & SCDEBUG_ALL || (int)code < 0
 #ifndef __HAVE_MINIMAL_EMUL
 	    || code >= em->e_nsysent
 #endif
@@ -112,7 +112,7 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 
 	KERNEL_PROC_LOCK(l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0
+	if ((int)code < 0
 #ifndef __HAVE_MINIMAL_EMUL
 	    || code >= em->e_nsysent
 #endif
@@ -146,14 +146,14 @@ scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
 	sy = &em->e_sysent[code];
 	if (!(scdebug & SCDEBUG_ALL || code < 0
 #ifndef __HAVE_MINIMAL_EMUL
-	    || code >= em->e_nsysent
+	    || (int)code >= em->e_nsysent
 #endif
 	    || sy->sy_call == sys_nosys))
 		return;
 
 	KERNEL_PROC_LOCK(l);
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0
+	if ((int)code < 0
 #ifndef __HAVE_MINIMAL_EMUL
 	    || code >= em->e_nsysent
 #endif
