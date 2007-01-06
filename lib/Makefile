@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.111 2006/11/08 22:07:23 christos Exp $
+#	$NetBSD: Makefile,v 1.112 2007/01/06 20:54:37 bouyer Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -84,7 +84,7 @@ SUBDIR+=	libgssapi libhdb .WAIT libkadm5srv libkadm5clnt libkafs libsl libss
 .endif
 
 .if (${MKPAM} != "no")
-SUBDIR+=	libpam		# depends on libkrb5 and more
+SUBDIR+=	.WAIT libpam		# depends on libkrb5, libkafs and more
 .endif
 
 .include <bsd.subdir.mk>
