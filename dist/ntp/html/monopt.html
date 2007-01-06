@@ -13,7 +13,7 @@
 		<h3>Monitoring Options</h3>
 		<img src="pic/pogo8.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Pogo</i>, Walt Kelly</a>
 		<p>The pig watches the logs.</p>
-		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">18:43</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="246">Thursday, July 28, 2005</csobj></p>
+		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">00:40</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="290">Sunday, December 24, 2006</csobj></p>
 		<br clear="left">
 		<h4>Related Links</h4>
 		<script type="text/javascript" language="javascript" src="scripts/links7.txt"></script>
@@ -34,7 +34,7 @@
 					<dd>The first two fields show the date (Modified Julian Day) and time (seconds and fraction past UTC midnight). The next field shows the peer address in dotted-quad notation, The final <tt><i>message</i></tt> field includes the message type and certain ancillary information. See the <a href="authopt.html">Authentication Options</a> page for further information.
 					<dt><tt>loopstats</tt>
 					<dd>Enables recording of loop filter statistics information. Each update of the local clock outputs a line of the following form to the file generation set named <tt>loopstats</tt>:
-					<dd><tt>50935 75440.031 0.000006019 13.778190 0.000351733 0.0133806</tt>
+					<dd><tt>50935 75440.031 0.000006019 13.778190 0.000351733 0.0133806	6</tt>
 					<dd>The first two fields show the date (Modified Julian Day) and time (seconds and fraction past UTC midnight). The next five fields show time offset (seconds), frequency offset (parts per million - PPM), RMS jitter (seconds), Allan deviation (PPM) and clock discipline time constant.
 					<dt><tt>peerstats</tt>
 					<dd>Enables recording of peer statistics information. This includes statistics records of all peers of a NTP server and of special signals, where present and configured. Each valid update appends a line of the following form to the current element of a file generation set named <tt>peerstats</tt>:
@@ -70,6 +70,10 @@
 							<dt>Rate exceeded <tt>147</tt>
 							<dd>Number of packets discarded due to rate limitation.
 						</dl>
+					<dt><tt>timingstats</tt>
+					<dd><b>ONLY</b> available when the deamon is compiled with process time debugging support (--enable-debug-timing - costs performance). Enables recording of <tt>ntpd</tt> processing time information for various selected code paths:
+	                                <dd><tt>53876 36.920 10.0.3.5 1 0.000014592 input processing delay</tt>
+	                                <dd>The first two fields show the date (Modified Julian Day) and time (seconds and fraction past UTC midnight). The next field is a potential <tt>peer address</tt>, <tt>-</tt> or <tt>-REFCLOCK-</tt> depending on the associated io source. Then an event count for the number of processed events in the code path follows. The fifth field is the total time spend for the events. The rest of the line denotes the code path description (see source for more information).
 					<dt><tt>statsdir <i>directory_path</i></tt>
 					<dd>Indicates the full path of a directory where statistics files should be created (see below). This keyword allows the (otherwise constant) <tt>filegen</tt> filename prefix to be modified for file generation sets, which is useful for handling statistics logs.
 					<dt><tt>filegen <i>name</i> [file <i>filename</i>] [type <i>typename</i>] [link | nolink] [enable | disable]</tt>

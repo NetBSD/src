@@ -3,7 +3,7 @@
 BUILD_ARGS="$@"
 PARSE="--enable-parse-clocks"
 #PARSE=
-STD="--with-sntp --enable-simulator"
+STD="--enable-simulator"
 
 # Backroom:
 #   beauregard	   freebsd-4
@@ -47,6 +47,7 @@ do
 	;;
      1) ssh $i "cd $c_d ; \
 ./build $SIG $PARSE $STD $BUILD_ARGS ; \
+./build $SIG $PARSE $STD --disable-debugging $BUILD_ARGS ; \
 ./build $SIG $PARSE $STD --without-crypto $BUILD_ARGS ; \
 ./build $SIG        $STD --disable-all-clocks $BUILD_ARGS" \
 &

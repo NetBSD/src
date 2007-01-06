@@ -13,7 +13,7 @@
 		<h3><tt>ntpdc</tt> - special NTP query program</h3>
 		<img src="pic/alice31.gif" alt="gif" align="left"><a href="http://www.eecis.udel.edu/~mills/pictures.html">from <i>Alice's Adventures in Wonderland</i>, Lewis Carroll</a>
 		<p>This program is a big puppy.</p>
-		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="61">18:45</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="246">Thursday, July 28, 2005</csobj></p>
+		<p>Last update: <csobj format="ShortTime" h="25" locale="00000409" region="0" t="DateTime" w="99">04:11 AM</csobj> UTC <csobj format="LongDate" h="25" locale="00000409" region="0" t="DateTime" w="294">Monday, November 27, 2006</csobj></p>
 		<br clear="left">
 		<h4>More Help</h4>
 		<script type="text/javascript" language="javascript" src="scripts/links12.txt"></script>
@@ -62,12 +62,12 @@
 			<dt><tt>keyid <i>keyid</i></tt>
 			<dd>This command allows the specification of a
 		key number to be used to authenticate configuration
-		requests from ntpdc to the <NOBR>host(s).</NOBR> This must
+		requests from ntpdc to the host(s). This must
 		correspond to a key number which the host/server has
 		been configured to use for this purpose (server
 		options: <tt>trustedkey</tt>, and
 		<tt>requestkey</tt>).  If authentication is not
-		enabled on the <NOBR>host(s)</NOBR> for ntpdc
+		enabled on the host(s) for ntpdc
 		commands, the command
 		<tt>"keyid 0"</tt> should be given; otherwise the
 		<i>keyid</i> of the next subsequent <tt>addpeer/addserver/broadcast
@@ -77,7 +77,7 @@
 			<dd>Exit <tt>ntpdc</tt>.
 			<dt><tt>passwd</tt>
 			<dd>This command prompts you to type in a password (which will not be echoed) which will be used to authenticate configuration requests. The password must correspond to the key configured for use by the NTP server for this purpose if such requests are to be successful.
-			<dt><tt>timeout <i>millseconds</i></tt>
+			<dt><tt>timeout <i>milliseconds</i></tt>
 			<dd>Specify a timeout period for responses to server queries. The default is about 8000 milliseconds. Note that since <tt>ntpdc</tt> retries each query once after a timeout, the total waiting time for a timeout will be twice the timeout value set.
 		</dl>
 		<h4>Control Message Commands</h4>
@@ -104,7 +104,7 @@
 			<dt><tt>sysinfo</tt>
 			<dd>Print a variety of system state variables, i.e., state related to the local server. All except the last four lines are described in the NTP Version 3 specification, RFC-1305.
 				<p>The <tt>system flags</tt> show various system flags, some of which can be set and cleared by the <tt>enable</tt> and <tt>disable</tt> configuration commands, respectively. These are the <tt>auth</tt>, <tt>bclient</tt>, <tt>monitor</tt>, <tt>pll</tt>, <tt>pps</tt> and <tt>stats</tt> flags. See the <tt>ntpd</tt> documentation for the meaning of these flags. There are two additional flags which are read only, the <tt>kernel_pll</tt> and <tt>kernel_pps</tt>. These flags indicate the synchronization status when the precision time kernel modifications are in use. The <tt>kernel_pll</tt> indicates that the local clock is being disciplined by the kernel, while the kernel_pps indicates the kernel discipline is provided by the PPS signal.</p>
-				<p>The <tt>stability</tt> is the residual frequency error remaining afterthe system frequency correction is applied and is intended for maintenance and debugging. In most architectures, this value will initially decrease from as high as 500 ppm to a nominal value in the range .01 to 0.1 ppm. If it remains high for some time after starting the daemon, something may be wrong with the local clock, or the value of the kernel variable <tt>tick</tt> may be incorrect.</p>
+				<p>The <tt>stability</tt> is the residual frequency error remaining after the system frequency correction is applied and is intended for maintenance and debugging. In most architectures, this value will initially decrease from as high as 500 ppm to a nominal value in the range .01 to 0.1 ppm. If it remains high for some time after starting the daemon, something may be wrong with the local clock, or the value of the kernel variable <tt>tick</tt> may be incorrect.</p>
 				<p>The <tt>broadcastdelay</tt> shows the default broadcast delay, as set by the <tt>broadcastdelay</tt> configuration command.</p>
 				<p>The <tt>authdelay</tt> shows the default authentication delay, as set by the <tt>authdelay</tt> configuration command.</p>
 			<dt><tt>sysstats</tt>
@@ -117,6 +117,10 @@
 			<dd>Print statistics counters maintained in the timer/event queue support code.
 			<dt><tt>reslist</tt>
 			<dd>Obtain and print the server's restriction list. This list is (usually) printed in sorted order and may help to understand how the restrictions are applied.
+			<dt><tt>ifstats</tt>
+			<dd>List interface statistics for interfaces used by ntpd for network communication.</dd>
+			<dt><tt>ifreload</tt>
+			<dd>Force rescan of current system interfaces. Outputs interface statistics for interfaces that could possibly change. Marks unchanged interfaces with <b>.</b>, added interfaces with <b>+</b> and deleted interfaces with <b>-</b>.</dd>
 			<dt><tt>monlist [ <i>version</i> ]</tt>
 			<dd>Obtain and print traffic counts collected and maintained by the monitor facility. The version number should not normally need to be specified.
 			<dt><tt>clkbug <i>clock_peer_address</i> [...]</tt>
@@ -130,7 +134,7 @@
 		<dt><tt>addpeer <i>peer_address</i> [
 		<i>keyid</i> ] [ <i>version</i> ] [
 		<tt>minpoll# | prefer | iburst  | burst | minpoll
-		<i>N</i> | <tt>maxpoll</tt> <i>N</i> [...] ]</tt>
+		<i>N</i> | <tt>maxpoll</tt> <i>N</i> [ <i>dynamic</i> ] [...] ]</tt>
 		<dt><tt>addpeer <i>peer_address</i> [
 		<tt>prefer | iburst | burst | minpoll
 		<i>N</i> | <tt>maxpoll</tt> <i>N</i> | <tt>keyid</tt>
@@ -159,6 +163,7 @@
 			ntpd.  See the <a href="confopt.html">Server Options</a> page for further information.
 			Each flag (or its absence) replaces the
 			previous setting. The <tt>prefer</tt> keyword indicates a preferred peer (and thus will be used primarily for clock synchronisation if possible). The preferred peer also determines the validity of the PPS signal - if the preferred peer is suitable for synchronisation so is the PPS signal.
+			The <tt>dynamic</tt> keyword allows association configuration even when no suitable network interface is found at configuration time. The dynamic interface update mechanism may complete the configuration when new interfaces appear (e.g. WLAN/PPP interfaces) at a later time and thus render the association operable.
 			<dt><tt>addserver <i>peer_address</i> [
 		<i>keyid</i> ] [ <i>version</i> ] [
 		<tt>minpoll# | prefer | iburst  | burst | minpoll
@@ -166,8 +171,7 @@
 		<dt><tt>addserver <i>peer_address</i> [
 		<tt>prefer | iburst | burst | minpoll
 		<i>N</i> | <tt>maxpoll</tt> <i>N</i> | <tt>keyid</tt>
-			<i>N</i> | <tt>version</tt> <i>N</i> [...] ]</tt>
-
+			<i>N</i> | <tt>version</tt> <i>N</i> [...] [ <i>dynamic</i> ] ]</tt>
 			<dd>Identical to the addpeer command, except that the operating mode is client.
 			<dt><tt>broadcast <i>peer_address</i> [
 			<i>keyid</i> ] [ <i>version</i> ] [ <i>prefer</i> ]</tt>
