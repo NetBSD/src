@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.307 2007/01/04 22:10:52 pavel Exp $
+# $NetBSD: GENERIC,v 1.308 2007/01/06 08:49:34 pavel Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.307 $"
+ident		"GENERIC-$Revision: 1.308 $"
 
 maxusers 32
 
@@ -268,9 +268,9 @@ px*	at	tc? slot ? offset ?
 pxg*	at	tc? slot ? offset ?
 
 # TURBOchannel serial attachments
-zstty0  at      zsc0 channel ?                  # serial port on B channels
+zstty0  at	zsc0 channel ?                  # serial port on B channels
 # /dev/ttyB1 has minor number 2 for historical reasons
-zstty2  at      zsc1 channel ?                  # serial port on B channels
+zstty2  at	zsc1 channel ?                  # serial port on B channels
 lkkbd0	at	zsc1 channel ?			# keyboard port on A channels
 vsms0	at	zsc0 channel ?			# mouse port on A channels
 
