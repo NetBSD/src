@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.8 2006/12/29 15:37:06 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.9 2007/01/06 18:25:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/resource.h>
 
 #include <err.h>
+#include <errno.h>
 #include <puffs.h>
 #include <string.h>
 #include <unistd.h>
@@ -40,9 +41,9 @@
 #include "dtfs.h"
 
 int
-dtfs_fs_mount(struct puffs_usermount *pu, void **rootcookie,
-	struct statvfs *sbp)
+dtfs_domount(struct puffs_usermount *pu)
 {
+	struct statvfs sb;
 	struct dtfs_mount *dtm;
 	struct dtfs_file *dff;
 	struct puffs_node *pn;
@@ -71,9 +72,12 @@ dtfs_fs_mount(struct puffs_usermount *pu, void **rootcookie,
 
 	pu->pu_pn_root = pn;
 	puffs_setrootpath(pu, ".");
-	*rootcookie = pn;
 
-	memset(sbp, 0, sizeof(struct statvfs));
+	/* XXX: should call dtfs_fs_statvfs */
+	puffs_zerostatvfs(&sb);
+
+	if (puffs_start(pu, pn, &sb) == -1)
+		return errno;
 
 	return 0;
 }

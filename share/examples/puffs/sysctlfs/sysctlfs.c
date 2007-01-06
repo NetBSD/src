@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.10 2006/12/29 15:37:06 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.11 2007/01/06 18:25:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -42,9 +42,11 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <mntopts.h>
 #include <puffs.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <util.h>
 
 PUFFSOP_PROTOS(sysctlfs)
@@ -67,20 +69,41 @@ ino_t nextid = 3;
 #define ISADIR(a) ((SYSCTL_TYPE(a->sctln.sysctl_flags) == CTLTYPE_NODE))
 #define SFS_MAXFILE 8192
 
+static int sysctlfs_domount(struct puffs_usermount *);
+
 int
 main(int argc, char *argv[])
 {
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
+	mntoptparse_t mp;
+	int mntflags, pflags;
+	int ch;
 
 	setprogname(argv[0]);
 
 	if (argc < 2)
-		errx(1, "usage: %s mountpath", getprogname());
+		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
+
+	mntflags = pflags = 0;
+	while ((ch = getopt(argc, argv, "o:")) != -1) {
+		switch (ch) {
+		case 'o':
+			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
+			break;
+		}
+	}
+	argv += optind;
+	argc -= optind;
+
+	if (argc != 1)
+		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
 
 	PUFFSOP_INIT(pops);
 
-	PUFFSOP_SET(pops, sysctlfs, fs, mount);
 	PUFFSOP_SETFSNOP(pops, unmount);
 	PUFFSOP_SETFSNOP(pops, sync);
 	PUFFSOP_SETFSNOP(pops, statvfs);
@@ -93,34 +116,37 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, sysctlfs, node, read);
 	PUFFSOP_SET(pops, sysctlfs, node, write);
 
-	if ((pu = puffs_mount(pops, argv[1], 0, "sysctlfs", NULL,
-	    PUFFS_FLAG_OPDUMP, 0)) == NULL)
+	if ((pu = puffs_mount(pops, argv[0], mntflags, "sysctlfs", NULL,
+	    pflags, 0)) == NULL)
 		err(1, "mount");
 
 	puffs_setstacksize(pu, 1024*1024);
-	if (puffs_mainloop(pu, 0) == -1)
+	if (sysctlfs_domount(pu) != 0)
+		errx(1, "domount");
+	if (puffs_mainloop(pu, PUFFSLOOP_NODAEMON) == -1)
 		err(1, "mainloop");
 
 	return 0;
 }
 
-int
-sysctlfs_fs_mount(struct puffs_usermount *pu, void **rootcookie,
-	struct statvfs *sbp)
+static int
+sysctlfs_domount(struct puffs_usermount *pu)
 {
 	struct timeval tv_now;
+	struct statvfs sb;
 
 	rn.dotdot = NULL;
 	rn.hierlen = 0;
 	rn.myid = 2;
 	rn.sctln.sysctl_flags = CTLTYPE_NODE;
 	rn.refcount = 2;
-	*rootcookie = &rn;
 
 	gettimeofday(&tv_now, NULL);
 	TIMEVAL_TO_TIMESPEC(&tv_now, &fstime);
 
-	puffs_fsnop_statvfs(NULL, sbp, 0);
+	puffs_zerostatvfs(&sb);
+	if (puffs_start(pu, &rn, &sb) == -1)
+		return errno;
 
 	return 0;
 }

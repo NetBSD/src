@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.1 2006/12/29 15:35:39 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.1 2006/12/29 15:35:39 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -44,9 +44,9 @@ __RCSID("$NetBSD: fs.c,v 1.1 2006/12/29 15:35:39 pooka Exp $");
 #include "sftp_proto.h"
 
 int
-psshfs_fs_mount(struct puffs_usermount *pu, void **rootcookie,
-	struct statvfs *sbp)
+psshfs_domount(struct puffs_usermount *pu)
 {
+	struct statvfs sb;
 	struct psshfs_ctx *pctx = pu->pu_privdata;
 	struct psshfs_node *root = &pctx->psn_root;
 	struct vattr va;
@@ -133,8 +133,9 @@ psshfs_fs_mount(struct puffs_usermount *pu, void **rootcookie,
 	rva->va_fileid = pctx->nextino++;
 	rva->va_nlink = 0156; /* XXX */
 
-	puffs_fsnop_statvfs(NULL, sbp, 0);
-	*rootcookie = pu->pu_pn_root;
+	puffs_zerostatvfs(&sb);
+	if (puffs_start(pu, pu->pu_pn_root, &sb) != 0)
+		return errno;
 
 	return 0;
 }

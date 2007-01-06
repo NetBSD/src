@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.1 2006/12/29 15:35:39 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.1 2006/12/29 15:35:39 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -65,6 +65,7 @@ __RCSID("$NetBSD: psshfs.c,v 1.1 2006/12/29 15:35:39 pooka Exp $");
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <mntopts.h>
 #include <poll.h>
 #include <puffs.h>
 #include <signal.h>
@@ -76,8 +77,16 @@ __RCSID("$NetBSD: psshfs.c,v 1.1 2006/12/29 15:35:39 pooka Exp $");
 
 static void	psshfs_eventloop(struct puffs_usermount *, struct psshfs_ctx *);
 static void	pssh_connect(struct psshfs_ctx *, char **);
+static void	usage(void);
 
 #define SSH_PATH "/usr/bin/ssh"
+
+static void
+usage()
+{
+
+	errx(1, "usage: %s [-o opts] user@host:path mountpath", getprogname());
+}
 
 int
 main(int argc, char *argv[])
@@ -85,18 +94,40 @@ main(int argc, char *argv[])
 	struct psshfs_ctx pctx;
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
+	mntoptparse_t mp;
 	char *sshargs[16];
 	char *userhost;
 	char *hostpath;
+	int mntflags, pflags, ch;
 
 	setprogname(argv[0]);
 
-	if (argc != 3)
-		errx(1, "usage: %s user@host:path mountpath", getprogname());
+	if (argc < 3)
+		usage();
+
+	mntflags = 0;
+	pflags = PUFFS_KFLAG_NOCACHE;
+	while ((ch = getopt(argc, argv, "o:")) != -1) {
+		switch (ch) {
+		case 'o':
+			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
+			break;
+		default:
+			usage();
+			/*NOTREACHED*/
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 2)
+		usage();
 
 	PUFFSOP_INIT(pops);
 
-	PUFFSOP_SET(pops, psshfs, fs, mount);
 	PUFFSOP_SET(pops, psshfs, fs, unmount);
 	PUFFSOP_SETFSNOP(pops, sync); /* XXX */
 	PUFFSOP_SETFSNOP(pops, statvfs);
@@ -123,7 +154,7 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&pctx.outbufq);
 	TAILQ_INIT(&pctx.req_queue);
 
-	userhost = argv[1];
+	userhost = argv[0];
 	hostpath = strchr(userhost, ':');
 	if (hostpath) {
 		*hostpath++ = '\0';
@@ -133,7 +164,7 @@ main(int argc, char *argv[])
 
 	/* xblah */
 	sshargs[0] = SSH_PATH;
-	sshargs[1] = argv[1];
+	sshargs[1] = argv[0];
 	sshargs[2] = "-oClearAllForwardings=yes";
 	sshargs[3] = "-a";
 	sshargs[4] = "-x";
@@ -142,12 +173,14 @@ main(int argc, char *argv[])
 	sshargs[7] = 0;
 	pssh_connect(&pctx, sshargs);
 
-	if ((pu = puffs_mount(pops, argv[2], 0, "psshfs", &pctx,
-	    PUFFS_FLAG_BUILDPATH | PUFFS_KFLAG_NOCACHE, 0))==NULL)
+	if ((pu = puffs_mount(pops, argv[1], mntflags, "psshfs", &pctx,
+	    PUFFS_FLAG_BUILDPATH | pflags, 0))==NULL)
 		err(1, "puffs_mount");
 
 	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
 		err(1, "setblockingmode");
+	if (psshfs_domount(pu) != 0)
+		errx(1, "domount");
 
 	daemon(0, 0);
 
@@ -300,8 +333,6 @@ psshfs_eventloop(struct puffs_usermount *pu, struct psshfs_ctx *pctx)
 		pfds[PFD_PUFFS].fd = puffs_getselectable(pu);
 		pfds[PFD_PUFFS].events = POLLIN;
 
-		puffs_resetputreq(ppr);
-
 		if (poll(pfds, 2, INFTIM) == -1)
 			err(1, "poll");
 
@@ -326,6 +357,7 @@ psshfs_eventloop(struct puffs_usermount *pu, struct psshfs_ctx *pctx)
 		/* stuff all replies from both of the above into kernel */
 		if (puffs_putputreq(ppr) == -1)
 			err(1, "putputreq");
+		puffs_resetputreq(ppr);
 	}
 
 	puffs_destroygetreq(pgr);
