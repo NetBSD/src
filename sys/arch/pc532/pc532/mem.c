@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.41 2006/07/23 22:06:06 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.41.8.1 2007/01/06 13:18:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41 2006/07/23 22:06:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.41.8.1 2007/01/06 13:18:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -209,8 +209,8 @@ mmmmap(dev_t dev, off_t off, int prot)
 	if (minor(dev) != DEV_MEM)
 		return (-1);
 
-	if ((u_int)off > ctob(physmem) && kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0)
+	if ((u_int)off > ctob(physmem) && kauth_authorize_machdep(l->l_cred,
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0)
 		return (-1);
 	return (ns532_btop((u_int)off));
 }
