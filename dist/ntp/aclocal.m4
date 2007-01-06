@@ -885,6 +885,8 @@ AC_SUBST([am__tar])
 AC_SUBST([am__untar])
 ]) # _AM_PROG_TAR
 
+m4_include([libopts/m4/libopts.m4])
+m4_include([libopts/m4/libtool.m4])
 m4_include([m4/define_dir.m4])
 m4_include([m4/hs_ulong_const.m4])
 m4_include([m4/os_cflags.m4])
