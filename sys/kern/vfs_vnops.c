@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.129 2006/11/30 01:09:47 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.129.2.1 2007/01/06 13:22:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.129 2006/11/30 01:09:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.129.2.1 2007/01/06 13:22:04 bouyer Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -104,29 +104,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	kauth_cred_t cred = l->l_cred;
 	struct vattr va;
 	int error;
-#if NVERIEXEC > 0
-	const char *pathbuf;
-	char *tmppathbuf;
-	boolean_t veriexec_monitored = FALSE;
-#endif /* NVERIEXEC > 0 */
-
-#if NVERIEXEC > 0
-	if (ndp->ni_segflg == UIO_USERSPACE) {	
-		tmppathbuf = PNBUF_GET();
-		error = copyinstr(ndp->ni_dirp, tmppathbuf, MAXPATHLEN,
-		    NULL);
-		if (error) {
-			if (veriexec_verbose >= 1)
-				log(LOG_NOTICE, "Veriexec: Can't copy path."
-				    " (error=%d)\n", error);
-			goto bad2;
-		}
-		pathbuf = tmppathbuf;
-	} else {
-		tmppathbuf = NULL;
-		pathbuf = ndp->ni_dirp;
-	}
-#endif /* NVERIEXEC > 0 */
+	pathname_t pn = NULL;
 
 restart:
 	if (fmode & O_CREAT) {
@@ -135,23 +113,33 @@ restart:
 		if ((fmode & O_EXCL) == 0 &&
 		    ((fmode & O_NOFOLLOW) == 0))
 			ndp->ni_cnd.cn_flags |= FOLLOW;
-		if ((error = namei(ndp)) != 0)
-			goto bad2;
-		if (ndp->ni_vp == NULL) {
+	} else {
+		ndp->ni_cnd.cn_nameiop = LOOKUP;
+		ndp->ni_cnd.cn_flags = LOCKLEAF;
+		if ((fmode & O_NOFOLLOW) == 0)
+			ndp->ni_cnd.cn_flags |= FOLLOW;
+	}
 #if NVERIEXEC > 0
-			/* Lockdown mode: Prevent creation of new files. */
-			if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
-				VOP_ABORTOP(ndp->ni_dvp, &ndp->ni_cnd);
+	error = pathname_get(ndp->ni_dirp, ndp->ni_segflg, &pn);
+	if (error)
+		goto bad2;
+	ndp->ni_dirp = pathname_path(pn);
+	ndp->ni_segflg = UIO_SYSSPACE;
+#endif /* NVERIEXEC > 0 */
+	error = namei(ndp);
+	if (error)
+		goto bad2;
 
-				log(LOG_ALERT, "Veriexec: Preventing "
-				    "new file creation in %s.\n", pathbuf);
+	vp = ndp->ni_vp;
 
-				vp = ndp->ni_dvp;
-				error = EPERM;
-				goto bad;
-			}
+#if NVERIEXEC > 0
+	error = veriexec_openchk(l, ndp->ni_vp, ndp->ni_dirp, fmode);
+	if (error)
+		goto bad;
 #endif /* NVERIEXEC > 0 */
 
+	if (fmode & O_CREAT) {
+		if (ndp->ni_vp == NULL) {
 			VATTR_NULL(&va);
 			va.va_type = VREG;
 			va.va_mode = cmode;
@@ -188,12 +176,6 @@ restart:
 			fmode &= ~O_CREAT;
 		}
 	} else {
-		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		ndp->ni_cnd.cn_flags = LOCKLEAF;
-		if ((fmode & O_NOFOLLOW) == 0)
-			ndp->ni_cnd.cn_flags |= FOLLOW;
-		if ((error = namei(ndp)) != 0)
-			goto bad2;
 		vp = ndp->ni_vp;
 	}
 	if (vp->v_type == VSOCK) {
@@ -206,12 +188,6 @@ restart:
 	}
 
 	if ((fmode & O_CREAT) == 0) {
-#if NVERIEXEC > 0
-		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
-		    &veriexec_monitored)) != 0)
-			goto bad;
-#endif /* NVERIEXEC > 0 */
-
 		if (fmode & FREAD) {
 			if ((error = VOP_ACCESS(vp, VREAD, cred, l)) != 0)
 				goto bad;
@@ -225,45 +201,10 @@ restart:
 			if ((error = vn_writechk(vp)) != 0 ||
 			    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0)
 				goto bad;
-#if NVERIEXEC > 0
-			if (veriexec_monitored) {
-				veriexec_report("Write access request.",
-				    pathbuf, l, REPORT_ALWAYS|REPORT_ALARM);
-
-				/* IPS mode: Deny writing to monitored files. */
-				if (veriexec_strict >= VERIEXEC_IPS) {
-					error = EPERM;
-					goto bad;
-				} else {
-					veriexec_purge(vp);
-				}
-			}
-#endif /* NVERIEXEC > 0 */
 		}
 	}
 
 	if (fmode & O_TRUNC) {
-#if NVERIEXEC > 0 
-		if ((error = veriexec_verify(l, vp, pathbuf, VERIEXEC_FILE,
-		    &veriexec_monitored)) != 0) {
-			/*VOP_UNLOCK(vp, 0);*/
-			goto bad;
-		}
-
-		if (veriexec_monitored) {
-			veriexec_report("Truncate access request.", pathbuf, l,
-			    REPORT_VERBOSE | REPORT_ALARM);
-
-			/* IPS mode: Deny truncating monitored files. */
-			if (veriexec_strict >= 2) {
-				error = EPERM;
-				goto bad;
-			} else {
-				veriexec_purge(vp);
-			}
-		}
-#endif /* NVERIEXEC > 0 */
-
 		VOP_UNLOCK(vp, 0);			/* XXX */
 
 		if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0) {
@@ -294,10 +235,7 @@ bad:
 		vput(vp);
 
 bad2:
-#if NVERIEXEC > 0
-	if (tmppathbuf != NULL)
-		PNBUF_PUT(tmppathbuf);
-#endif /* NVERIEXEC > 0 */
+	pathname_put(pn);
 
 	return (error);
 }
