@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.12 2006/12/29 15:37:06 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.13 2007/01/06 18:25:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,9 @@
 #include <sys/types.h>
 
 #include <err.h>
+#include <mntopts.h>
 #include <puffs.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -56,7 +58,8 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-abcds] mountpath", getprogname());
+	errx(1, "usage: %s [-bs] [-o mntopt] [-o puffsopt] mountpath",
+	    getprogname());
 }
 
 int
@@ -67,25 +70,23 @@ main(int argc, char *argv[])
 	struct dtfs_mount dtm;
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
-	int pflags, lflags;
+	mntoptparse_t mp;
+	int pflags, lflags, mntflags;
 	int ch;
 
 	setprogname(argv[0]);
 
-	pflags = lflags = 0;
-	while ((ch = getopt(argc, argv, "abcds")) != -1) {
+	pflags = lflags = mntflags = 0;
+	while ((ch = getopt(argc, argv, "bo:s")) != -1) {
 		switch (ch) {
-		case 'a': /* all ops */
-			pflags |= PUFFS_KFLAG_ALLOPS;
-			break;
-		case 'b': /* build paths */
+		case 'b': /* build paths, for debugging the feature */
 			pflags |= PUFFS_FLAG_BUILDPATH;
 			break;
-		case 'c': /* no cache */
-			pflags |= PUFFS_KFLAG_NOCACHE;
-			break;
-		case 'd': /* dump ops */
-			pflags |= PUFFS_FLAG_OPDUMP;
+		case 'o':
+			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
+			if (mp == NULL)
+				err(1, "getmntopts");
+			freemntopts(mp);
 			break;
 		case 's': /* stay on top */
 			lflags |= PUFFSLOOP_NODAEMON;
@@ -103,7 +104,6 @@ main(int argc, char *argv[])
 
 	PUFFSOP_INIT(pops);
 
-	PUFFSOP_SET(pops, dtfs, fs, mount);
 	PUFFSOP_SET(pops, dtfs, fs, statvfs);
 	PUFFSOP_SETFSNOP(pops, unmount);
 	PUFFSOP_SETFSNOP(pops, sync);
@@ -126,9 +126,13 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, dtfs, node, inactive);
 	PUFFSOP_SET(pops, dtfs, node, reclaim);
 
-	if ((pu = puffs_mount(pops, argv[0], 0, FSNAME, &dtm, pflags, 0))
+	if ((pu = puffs_mount(pops, argv[0], mntflags, FSNAME, &dtm, pflags, 0))
 	    == NULL)
 		err(1, "mount");
+
+	/* init & call puffs_start() */
+	if (dtfs_domount(pu) != 0)
+		errx(1, "dtfs_domount failed");
 
 	if (puffs_mainloop(pu, lflags) == -1)
 		err(1, "mainloop");
