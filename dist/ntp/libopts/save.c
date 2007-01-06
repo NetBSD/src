@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.1.1.1 2007/01/06 16:06:11 kardel Exp $	*/
+/*	$NetBSD: save.c,v 1.2 2007/01/06 19:45:22 kardel Exp $	*/
 
 
 /*
@@ -287,7 +287,7 @@ printEntry(
      *  THEN the char pointer is really the number
      */
     if (OPTST_GET_ARGTYPE(p->fOptState) == OPARG_TYPE_NUMERIC)
-        fprintf( fp, "  %d\n", (t_word)pzLA );
+        fprintf( fp, "  %ld\n", (long)pzLA );
 
     /*
      *  OTHERWISE, FOR each line of the value text, ...

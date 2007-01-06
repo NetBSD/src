@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2005/03/09 03:11:23 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2007/01/06 19:45:29 kardel Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -7,7 +7,7 @@ NTP_MAKEFILE_INC=1
 
 DIST=		${NETBSDSRCDIR}/dist/ntp
 
-CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -DHAVE_CONFIG_H
+CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -I${DIST}/libopts -DHAVE_CONFIG_H
 
 .if (${MKCRYPTO} != "no")
 CPPFLAGS+=	-DOPENSSL
@@ -22,8 +22,9 @@ CPPFLAGS+=	-DISC_PLATFORM_NEEDIN6ADDRANY
 .if defined(PROG)
 LIBNTP!=	cd ${.CURDIR}/../libntp && ${PRINTOBJDIR}
 LIBISC!=	cd ${.CURDIR}/../libisc && ${PRINTOBJDIR}
-LDADD+=		-L${LIBNTP} -lntp
-DPADD+=		${LIBNTP}/libntp.a
+LIBOPTS!=	cd ${.CURDIR}/../libopts && ${PRINTOBJDIR}
+LDADD+=		-L${LIBNTP} -lntp -L${LIBOPTS} -lopts
+DPADD+=		${LIBNTP}/libntp.a ${LIBOPTS}/libopts.a
 
 .if (${MKCRYPTO} != "no")
 LDADD+=		-lcrypto -lcrypt

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.6 2006/06/11 19:34:20 kardel Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.7 2007/01/06 19:45:23 kardel Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -1484,7 +1484,7 @@ findserver(
 		server = (struct server *)emalloc(sizeof(struct server));
 		memset((char *)server, 0, sizeof(struct server));
 
-		memcpy(&server->srcadr, &addr, sizeof(struct sockaddr_storage));
+		memcpy(&server->srcadr, addr, sizeof(struct sockaddr_storage));
 
 		server->event_time = ++sys_numservers;
 

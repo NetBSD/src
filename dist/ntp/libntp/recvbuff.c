@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.4 2007/01/06 19:45:22 kardel Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -79,18 +79,19 @@ initialise_buffer(recvbuf_t *buff)
 static int
 create_buffers(int nbufs)
 {
-	register recvbuf_t *buf;
+	register recvbuf_t *bufp;
 	int i;
-	buf = (recvbuf_t *) emalloc(nbufs*sizeof(recvbuf_t));
+
+	bufp = (recvbuf_t *) emalloc(nbufs*sizeof(recvbuf_t));
 	/*
 	 * If no memory available, Bail
 	 */
-	if (buf == NULL)
+	if (bufp == NULL)
 		return (0);
 	for (i = 0; i < nbufs; i++)
 	{
-		ISC_LIST_APPEND(free_list, buf, link);
-		buf++;
+		ISC_LIST_APPEND(free_list, bufp, link);
+		bufp++;
 		free_recvbufs++;
 		total_recvbufs++;
 	}
