@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2004/01/04 00:06:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2007/01/06 19:45:29 kardel Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	libisc libntp libparse .WAIT
+SUBDIR=	libopts libisc libntp libparse .WAIT
 SUBDIR+= ntpd ntpdate ntpdc ntpq ntptime
 SUBDIR+= ntptrace
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.3 2006/06/11 19:34:12 kardel Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.4 2007/01/06 19:45:23 kardel Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <sys/socket.h>
 
 #include "ntpd.h"
 #include "ntp_io.h"
