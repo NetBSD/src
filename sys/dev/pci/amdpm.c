@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.23 2007/01/06 01:20:39 jmcneill Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.24 2007/01/06 20:25:01 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.23 2007/01/06 01:20:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.24 2007/01/06 20:25:01 jmcneill Exp $");
 
 #include "opt_amdpm.h"
 
@@ -159,7 +159,9 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 #ifdef __HAVE_TIMECOUNTER
-	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0) {
+	/* don't attach a timecounter on nforce boards */
+	if ((confreg & AMDPM_TMRRST) == 0 && (confreg & AMDPM_STOPTMR) == 0 &&
+	    !sc->sc_nforce) {
 		acpipmtimer_attach(&sc->sc_dev, sc->sc_iot, sc->sc_ioh,
 		  AMDPM_TMR, ((confreg & AMDPM_TMR32) ? ACPIPMT_32BIT : 0));
 	}
