@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.12 2007/01/05 23:17:32 christos Exp $	*/
+/*	$NetBSD: uniq.c,v 1.13 2007/01/06 02:18:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.12 2007/01/05 23:17:32 christos Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.13 2007/01/06 02:18:24 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -52,8 +52,6 @@ __RCSID("$NetBSD: uniq.c,v 1.12 2007/01/05 23:17:32 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#define	MAXLINELEN	(8 * 1024)
 
 static int cflag, dflag, uflag;
 static int numchars, numfields, repeats;
@@ -71,6 +69,7 @@ main (int argc, char *argv[])
 	FILE *ifp, *ofp;
 	int ch;
 	char *prevline, *thisline, *p;
+	size_t prevlinesize, thislinesize, psize;
 
 	setprogname(argv[0]);
 	ifp = ofp = NULL;
@@ -132,15 +131,27 @@ done:	argc -= optind;
 		usage();
 	}
 
-	prevline = malloc(MAXLINELEN);
-	thisline = malloc(MAXLINELEN);
-	if (prevline == NULL || thisline == NULL)
+	if ((p = fgetln(ifp, &psize)) == NULL)
+		return 0;
+	prevlinesize = psize;
+	if ((prevline = malloc(prevlinesize + 1)) == NULL)
+		err(1, "malloc");
+	(void)memcpy(prevline, p, prevlinesize);
+	prevline[prevlinesize] = '\0';
+
+	thislinesize = psize;
+	if ((thisline = malloc(thislinesize + 1)) == NULL)
 		err(1, "malloc");
 
-	if (fgets(prevline, MAXLINELEN, ifp) == NULL)
-		return 0;
+	while ((p = fgetln(ifp, &psize)) != NULL) {
+		if (psize > thislinesize) {
+			if ((thisline = realloc(thisline, psize + 1)) == NULL)
+				err(1, "realloc");
+			thislinesize = psize;
+		}
+		(void)memcpy(thisline, p, psize);
+		thisline[psize] = '\0';
 
-	while (fgets(thisline, MAXLINELEN, ifp)) {
 		/* If requested get the chosen fields + character offsets. */
 		if (numfields || numchars) {
 			t1 = skip(thisline);
@@ -153,15 +164,22 @@ done:	argc -= optind;
 		/* If different, print; set previous to new value. */
 		if (strcmp(t1, t2)) {
 			char *t;
+			size_t ts;
+
 			show(ofp, prevline);
 			t = prevline;
 			prevline = thisline;
 			thisline = t;
+			ts = prevlinesize;
+			prevlinesize = thislinesize;
+			thislinesize = ts;
 			repeats = 0;
 		} else
 			++repeats;
 	}
 	show(ofp, prevline);
+	free(prevline);
+	free(thisline);
 	return 0;
 }
 
