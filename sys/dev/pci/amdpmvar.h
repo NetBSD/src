@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpmvar.h,v 1.2 2006/04/30 18:46:18 xtraeme Exp $	*/
+/*	$NetBSD: amdpmvar.h,v 1.3 2007/01/06 00:14:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,6 +61,8 @@ struct amdpm_softc {
 	struct evcnt sc_rnd_miss;
 	struct evcnt sc_rnd_data[256];
 #endif
+
+	char sc_nforce;
 };
 
 #endif /* _DEV_PCI_AMDPMVAR_H_ */
