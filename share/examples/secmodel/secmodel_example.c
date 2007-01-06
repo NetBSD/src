@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.7 2006/11/22 12:12:51 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.7.2.1 2007/01/06 13:18:16 bouyer Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.7 2006/11/22 12:12:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.7.2.1 2007/01/06 13:18:16 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -340,39 +340,18 @@ secmodel_example_machdep_cb(kauth_cred_t cred, kauth_action_t action,
         result = KAUTH_RESULT_DENY;
 
         switch (action) {
-	case KAUTH_MACHDEP_ALPHA:
-		switch ((u_long)arg0) {
-		case KAUTH_REQ_MACHDEP_ALPHA_UNMANAGEDMEM:
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
-        case KAUTH_MACHDEP_X86:
-                switch ((u_long)arg0) {
-                case KAUTH_REQ_MACHDEP_X86_IOPL:
-                case KAUTH_REQ_MACHDEP_X86_IOPERM:
-                case KAUTH_REQ_MACHDEP_X86_MTRR_SET:
-		case KAUTH_REQ_MACHDEP_X86_UNMANAGEDMEM:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-
-                break;
-
-        case KAUTH_MACHDEP_X86_64:
-                switch ((u_long)arg0) {
-                case KAUTH_REQ_MACHDPE_X86_64_MTRR_GET:
-                default:
-                        result = KAUTH_RESULT_DEFER;
-                        break;
-                }
-                break;
-
-        default:
-                result = KAUTH_RESULT_DEFER;
-                break;
-        }
+	case KAUTH_MACHDEP_IOPERM_GET:
+	case KAUTH_MACHDEP_IOPERM_SET:
+	case KAUTH_MACHDEP_IOPL:
+	case KAUTH_MACHDEP_LDT_GET:
+	case KAUTH_MACHDEP_LDT_SET:
+	case KAUTH_MACHDEP_MTRR_GET:
+	case KAUTH_MACHDEP_MTRR_SET:
+	case KAUTH_MACHDEP_UNMANAGEDMEM:
+	default:
+		result = KAUTH_RESULT_DEFER;
+		break;
+	}
 
         return (result);
 }

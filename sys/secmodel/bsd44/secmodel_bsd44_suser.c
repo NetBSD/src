@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.17.2.1 2007/01/03 22:16:12 tron Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.17.2.2 2007/01/06 13:18:16 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.17.2.1 2007/01/03 22:16:12 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.17.2.2 2007/01/06 13:18:16 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -477,39 +477,28 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
 {
         boolean_t isroot;
         int result;
-	enum kauth_machdep_req req;
 
         isroot = (kauth_cred_geteuid(cred) == 0);
         result = KAUTH_RESULT_DENY;
-	req = (enum kauth_machdep_req)arg0;
 
         switch (action) {
-	case KAUTH_MACHDEP_X86:
-		switch (req) {
-		case KAUTH_REQ_MACHDEP_X86_IOPL:
-		case KAUTH_REQ_MACHDEP_X86_IOPERM:
-		case KAUTH_REQ_MACHDEP_X86_MTRR_SET:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
+	case KAUTH_MACHDEP_IOPERM_GET:
+	case KAUTH_MACHDEP_LDT_GET:
+	case KAUTH_MACHDEP_LDT_SET:
+	case KAUTH_MACHDEP_MTRR_GET:
+		result = KAUTH_RESULT_ALLOW;
 		break;
 
-	case KAUTH_MACHDEP_X86_64:
-		switch (req) {
-		case KAUTH_REQ_MACHDEP_X86_64_MTRR_GET:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
+	case KAUTH_MACHDEP_IOPERM_SET:
+	case KAUTH_MACHDEP_IOPL:
+	case KAUTH_MACHDEP_MTRR_SET:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		break;
 
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
-		}
+	case KAUTH_MACHDEP_UNMANAGEDMEM:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
 		break;
 
 	default:
