@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.860 2007/01/04 18:04:26 jmcneill Exp $
+$NetBSD: pcidevs,v 1.861 2007/01/06 00:07:46 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2715,7 +2715,8 @@ product NVIDIA	NFORCE3_250_EHCI	0x00e8	nForce3 250 USB2 Host Controller
 product NVIDIA	NFORCE3_250_MCPT_AC	0x00ea	nForce3 250 MCP-T AC-97
 product NVIDIA	NFORCE3_250_PPB		0x00ed	nForce3 250 PCI-PCI bridge
 product NVIDIA	NFORCE3_250_SATA2	0x00ee	nForce3 250 Serial ATA Controller
-product NVIDIA	XBOX_NFORCE	0x02a5	Xbox nForce
+product NVIDIA	XBOX_SMBUS	0x01b4	Xbox nForce SMBus Controller
+product NVIDIA	XBOX_PCHB	0x02a5	Xbox nForce Host-PCI bridge
 product NVIDIA	ALADDINTNT2	0x00a0	Aladdin TNT2
 product NVIDIA	QUADRO4_280NVS2	0x00fd	Quadro4 280 NVS
 product NVIDIA	QUADROFX3400SLI	0x00fd	Quadro FX 3400 SLI
