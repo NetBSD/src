@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.3 2007/01/06 18:38:28 jmcneill Exp $ */
+/* $NetBSD: pic16lc.c,v 1.4 2007/01/06 19:11:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.3 2007/01/06 18:38:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.4 2007/01/06 19:11:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,7 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 {
 	struct pic16lc_softc *sc;
 	struct i2c_attach_args *ia;
+	u_char ver[4];
 
 	sc = (struct pic16lc_softc *)self;
 	ia = (struct i2c_attach_args *)opaque;
@@ -172,7 +173,16 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 		return;
 	}
 
-	aprint_normal(": Xbox System Management Controller\n");
+	aprint_normal(": Xbox System Management Controller");
+
+	/* find the PIC version */
+	pic16lc_write_1(sc, PIC16LC_REG_VER, 0x00);
+	pic16lc_read_1(sc, PIC16LC_REG_VER, &ver[0]);
+	pic16lc_read_1(sc, PIC16LC_REG_VER, &ver[1]);
+	pic16lc_read_1(sc, PIC16LC_REG_VER, &ver[2]);
+	ver[3] = '\0';
+
+	aprint_normal(" (rev. %s)\n", ver);
 
 	pic16lc_setled(0xff);	/* orange */
 
