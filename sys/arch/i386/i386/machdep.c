@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.590 2007/01/06 16:22:46 pavel Exp $	*/
+/*	$NetBSD: machdep.c,v 1.591 2007/01/06 18:42:36 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.590 2007/01/06 16:22:46 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.591 2007/01/06 18:42:36 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -917,7 +917,7 @@ haltsys:
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifdef XBOX
 		if (arch_i386_is_xbox) {
-			pic16l_poweroff();
+			xbox_poweroff();
 			for (;;);
 		}
 #endif
@@ -1544,9 +1544,6 @@ init386(paddr_t first_avail)
 		arch_i386_is_xbox = 1;
 		xbox_lcd_init();
 		xbox_lcd_writetext("NetBSD/i386 ");
-		pic16l_setled(XBOX_LED_RED);
-		delay(500000);
-		pic16l_setled(XBOX_LED_GREEN);
 
 		/*
 		 * We are an XBOX, but we may have either 64MB or 128MB of
@@ -2237,7 +2234,7 @@ cpu_reset()
 
 #ifdef XBOX
 	if (arch_i386_is_xbox) {
-		pic16l_reboot();
+		xbox_reboot();
 		for (;;);
 	}
 #endif
