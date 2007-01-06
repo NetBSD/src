@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.141 2006/12/10 11:39:43 is Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.142 2007/01/06 20:38:14 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.141 2006/12/10 11:39:43 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.142 2007/01/06 20:38:14 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1021,7 +1021,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			break;
 #endif /* ISO */
+#if defined (ISO) || defined (NETATALK)
 		dropanyway:
+#endif
 		default:
 			m_freem(m);
 			return;
