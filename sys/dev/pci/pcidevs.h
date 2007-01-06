@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.859 2007/01/04 18:04:39 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.860 2007/01/06 00:08:00 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.860 2007/01/04 18:04:26 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.861 2007/01/06 00:07:46 jmcneill Exp
  */
 
 /*
@@ -2722,7 +2722,8 @@
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_MCPT_AC	0x00ea		/* nForce3 250 MCP-T AC-97 */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_PPB	0x00ed		/* nForce3 250 PCI-PCI bridge */
 #define	PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2	0x00ee		/* nForce3 250 Serial ATA Controller */
-#define	PCI_PRODUCT_NVIDIA_XBOX_NFORCE	0x02a5		/* Xbox nForce */
+#define	PCI_PRODUCT_NVIDIA_XBOX_SMBUS	0x01b4		/* Xbox nForce SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_XBOX_PCHB	0x02a5		/* Xbox nForce Host-PCI bridge */
 #define	PCI_PRODUCT_NVIDIA_ALADDINTNT2	0x00a0		/* Aladdin TNT2 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4_280NVS2	0x00fd		/* Quadro4 280 NVS */
 #define	PCI_PRODUCT_NVIDIA_QUADROFX3400SLI	0x00fd		/* Quadro FX 3400 SLI */

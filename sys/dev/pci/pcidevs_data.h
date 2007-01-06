@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.858 2007/01/04 18:04:39 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.859 2007/01/06 00:08:00 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.860 2007/01/04 18:04:26 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.861 2007/01/06 00:07:46 jmcneill Exp
  */
 
 /*
@@ -9356,8 +9356,12 @@ static const struct pci_product pci_products[] = {
 	    "nForce3 250 Serial ATA Controller",
 	},
 	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_NFORCE,
-	    "Xbox nForce",
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_SMBUS,
+	    "Xbox nForce SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_PCHB,
+	    "Xbox nForce Host-PCI bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
@@ -12624,4 +12628,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2562;
+const int pci_nproducts = 2563;
