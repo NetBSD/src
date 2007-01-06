@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.11 2006/12/29 15:28:11 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.12 2007/01/06 18:22:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.11 2006/12/29 15:28:11 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.12 2007/01/06 18:22:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -110,6 +110,17 @@ puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp,
 	sbp->f_ffree=sbp->f_favail=sbp->f_fresvd=sbp->f_files = (fsfilcnt_t)0;
 
 	return 0;
+}
+
+/*
+ * Just a wrapper to make calling the above nicer without having to pass
+ * NULLs from application code
+ */
+void
+puffs_zerostatvfs(struct statvfs *sbp)
+{
+
+	puffs_fsnop_statvfs(NULL, sbp, 0);
 }
 
 /*
