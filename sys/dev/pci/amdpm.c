@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.22 2007/01/06 00:14:21 jmcneill Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.23 2007/01/06 01:20:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.22 2007/01/06 00:14:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.23 2007/01/06 01:20:39 jmcneill Exp $");
 
 #include "opt_amdpm.h"
 
@@ -140,6 +140,8 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_nforce) {
 		pmptrreg = pci_conf_read(pa->pa_pc, pa->pa_tag, NFORCE_PMPTR);
+		aprint_normal("%s: power management at 0x%04x\n",
+		    sc->sc_dev.dv_xname, NFORCE_PMBASE(pmptrreg));
 		if (bus_space_map(sc->sc_iot, NFORCE_PMBASE(pmptrreg),
 		    AMDPM_PMSIZE, 0, &sc->sc_ioh)) {
 			aprint_error("%s: failed to map PMxx space\n",
