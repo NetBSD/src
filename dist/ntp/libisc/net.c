@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.2 2006/06/11 14:59:46 kardel Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.3 2007/01/06 16:05:57 kardel Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -79,13 +79,13 @@ try_proto(int domain) {
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 	if (domain == PF_INET6) {
 		struct sockaddr_in6 sin6;
-		unsigned int len;
+		GETSOCKNAME_SOCKLEN_TYPE len;
 
 		/*
 		 * Check to see if IPv6 is broken, as is common on Linux.
 		 */
 		len = sizeof(sin6);
-		if (getsockname(s, (struct sockaddr *)&sin6, (void *)&len) < 0)
+		if (getsockname(s, (struct sockaddr *)&sin6, &len) < 0)
 		{
 			result = ISC_R_NOTFOUND;
 		} else {

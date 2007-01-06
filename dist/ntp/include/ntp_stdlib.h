@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.1.1.4 2006/06/11 14:59:29 kardel Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.1.1.5 2007/01/06 16:05:48 kardel Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -102,7 +102,7 @@ extern	const char *	FindConfig	P((const char *));
 
 extern	void	signal_no_reset P((int, RETSIGTYPE (*func)(int)));
 
-extern	void	getauthkeys 	P((char *));
+extern	void	getauthkeys 	P((const char *));
 extern	void	auth_agekeys	P((void));
 extern	void	rereadkeys	P((void));
 

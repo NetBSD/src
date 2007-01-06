@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.3 2006/07/29 07:15:53 kardel Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.4 2007/01/06 16:08:02 kardel Exp $	*/
 
 /*  Copyright (C) 1996, 2000 N.M. Maclaren
     Copyright (C) 1996, 2000 The University of Cambridge
@@ -112,6 +112,8 @@ void display_sock_in_hex (struct sockaddr_in *sock) {
 }
 #endif
 
+extern int unprivport;
+
 #ifdef HAVE_IPV6
 
 void open_socket (int which, char *hostname, int timespan) {
@@ -147,7 +149,7 @@ be reset before use in server mode. */
 
     memset(&here[which], 0, sizeof(struct sockaddr_storage));
     here[which] = anywhere;
-    if (operation != op_listen)
+    if (operation != op_listen || unprivport)
         ((struct sockaddr_in6 *)&here[which])->sin6_port = 0;
     memset(&there[which], 0, sizeof(struct sockaddr_storage));
     there[which] = address;
@@ -212,7 +214,7 @@ number is in network format. */
     memset(&here[which],0,sizeof(struct sockaddr_in));
     here[which].sin_family = AF_INET;
     here[which].sin_port =
-        (operation == op_listen ? port : 0);
+        (operation == op_listen || !unprivport ? port : 0);
     here[which].sin_addr = anywhere;
     memset(&there[which],0,sizeof(struct sockaddr_in));
     there[which].sin_family = AF_INET;

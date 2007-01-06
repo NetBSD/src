@@ -41,7 +41,7 @@
 					<dd>Specifies a mode number which is interpreted in a device-specific fashion. For instance, it selects a dialing protocol in the ACTS driver and a device subtype in the <tt>parse</tt> drivers.
 					<dt><tt>minpoll <i>int</i></tt>
 					<dt><tt>maxpoll <i>int</i></tt>
-					<dd>These options specify the minimum and maximum polling interval for reference clock messages, in seconds to the power of two. For most directly connected reference clocks, both <tt>minpoll</tt> and <tt>maxpoll</tt> default to 6 (64 s). For modem reference clocks, <tt>minpoll</tt> defaults to 10 (17.1 m) and <tt>maxpoll</tt> defaults to 14 (4.5 h). The allowable range is 4 (16 s) to 17 (36.4 h) inclusive.
+					<dd>These options specify the minimum and maximum polling interval for reference clock messages in seconds, interpreted as dual logarithms (2 ^ x). For most directly connected reference clocks, both <tt>minpoll</tt> and <tt>maxpoll</tt> default to 6 (2^16 = 64 s). For modem reference clocks, <tt>minpoll</tt> defaults to 10 (2^10 = 1024 s = 17.1 m) and <tt>maxpoll</tt> defaults to 14 (2^14 = 16384 s = 4.5 h). The allowable range is 4 (16 s) to 17 (36.4 h) inclusive.
 				</dl>
 			<dt><tt>fudge 127.127.<i>t.u</i> [time1 <i>sec</i>] [time2 <i>sec</i>] [stratum <i>int</i>] [refid <i>string</i>] [mode <i>int</i>] [flag1 0|1] [flag2 0|1] [flag3 0|1] [flag4 0|1]</tt>
 			<dd>This command can be used to configure reference clocks in special ways. It must immediately follow the <tt>server</tt> command which configures the driver. Note that the same capability is possible at run time using the <tt><a href="ntpdc.html">ntpdc</a></tt> program. The options are interpreted as follows:

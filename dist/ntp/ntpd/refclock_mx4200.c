@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_mx4200.c,v 1.1.1.3 2006/06/11 15:01:06 kardel Exp $	*/
+/*	$NetBSD: refclock_mx4200.c,v 1.1.1.4 2007/01/06 16:06:42 kardel Exp $	*/
 
 /*
  * This software was developed by the Computer Systems Engineering group
@@ -1574,6 +1574,7 @@ mx4200_debug(peer, fmt, va_alist)
      char *fmt;
 #endif /* __STDC__ */
 {
+#ifdef DEBUG
 	va_list ap;
 	struct refclockproc *pp;
 	struct mx4200unit *up;
@@ -1598,6 +1599,7 @@ mx4200_debug(peer, fmt, va_alist)
 
 		va_end(ap);
 	}
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.1.1.2 2006/06/11 14:59:25 kardel Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.1.1.3 2007/01/06 16:05:45 kardel Exp $	*/
 
 /*
  * Configuration file name
@@ -79,6 +79,7 @@
 #define CONF_MOD_NOSELECT 	11
 #define CONF_MOD_TRUE		12
 #define	CONF_MOD_PREEMPT	13
+#define CONF_MOD_DYNAMIC	14
 
 /*
  * "restrict" modifier keywords

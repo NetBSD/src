@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.1.1.4 2006/06/11 15:00:27 kardel Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.1.1.5 2007/01/06 16:06:33 kardel Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -251,7 +251,9 @@ ntp_intres(void)
 	readconf(in, req_file);
 	(void) fclose(in);
 
+#ifdef DEBUG
 	if (!debug )
+#endif
 		(void) unlink(req_file);
 
 	/*
@@ -787,8 +789,10 @@ request(
 		}
 		else if (n == 0)
 		{
+#ifdef DEBUG
 			if (debug)
 			    msyslog(LOG_INFO, "select() returned 0.");
+#endif
 			return 0;
 		}
 
