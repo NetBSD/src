@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.c,v 1.1.1.1 2007/01/06 16:06:07 kardel Exp $	*/
+/*	$NetBSD: autoopts.c,v 1.2 2007/01/06 19:45:22 kardel Exp $	*/
 
 
 /*
@@ -95,7 +95,7 @@ ao_malloc( size_t sz )
 {
     void * res = malloc(sz);
     if (res == NULL) {
-        fprintf( stderr, "malloc of %d bytes failed\n", sz );
+        fprintf( stderr, "malloc of %ld bytes failed\n", (long)sz );
         exit( EXIT_FAILURE );
     }
     return res;
@@ -107,7 +107,7 @@ ao_realloc( void *p, size_t sz )
 {
     void * res = realloc(p, sz);
     if (res == NULL) {
-        fprintf( stderr, "realloc of %d bytes at 0x%p failed\n", sz, p );
+        fprintf( stderr, "realloc of %ld bytes at 0x%p failed\n", (long)sz, p );
         exit( EXIT_FAILURE );
     }
     return res;
@@ -127,7 +127,7 @@ ao_strdup( char const *str )
 {
     char * res = strdup(str);
     if (res == NULL) {
-        fprintf( stderr, "strdup of %d byte string failed\n", strlen(str) );
+        fprintf( stderr, "strdup of %ld byte string failed\n", (long)strlen(str) );
         exit( EXIT_FAILURE );
     }
     return res;

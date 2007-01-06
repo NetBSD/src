@@ -1,4 +1,4 @@
-/*	$NetBSD: putshell.c,v 1.1.1.1 2007/01/06 16:06:11 kardel Exp $	*/
+/*	$NetBSD: putshell.c,v 1.2 2007/01/06 19:45:22 kardel Exp $	*/
 
 
 /*
@@ -133,7 +133,7 @@ optionPutShell( tOptions* pOpts )
 {
     int  optIx = 0;
     tSCC zOptCtFmt[]  = "OPTION_CT=%d\nexport OPTION_CT\n";
-    tSCC zOptNumFmt[] = "%1$s_%2$s=%3$d # 0x%3$X\nexport %1$s_%2$s\n";
+    tSCC zOptNumFmt[] = "%1$s_%2$s=%3$ld # 0x%3$lX\nexport %1$s_%2$s\n";
     tSCC zOptDisabl[] = "%1$s_%2$s=%3$s\nexport %1$s_%2$s\n";
     tSCC zOptValFmt[] = "%s_%s=";
     tSCC zOptEnd[]    = "\nexport %s_%s\n";
@@ -181,7 +181,7 @@ optionPutShell( tOptions* pOpts )
             char const * pz;
             uintptr_t val = 1;
             printf( zOptNumFmt, pOpts->pzPROGNAME, pOD->pz_NAME,
-                    (uintptr_t)(pOD->optCookie) );
+                    (long)(uintptr_t)(pOD->optCookie) );
             pOD->optCookie = (void*)(uintptr_t)~0UL;
             (*(pOD->pOptProc))( (tOptions*)2UL, pOD );
 
@@ -258,7 +258,7 @@ optionPutShell( tOptions* pOpts )
          */
         else if (OPTST_GET_ARGTYPE(pOD->fOptState) == OPARG_TYPE_NUMERIC)
             printf( zOptNumFmt, pOpts->pzPROGNAME, pOD->pz_NAME,
-                    (int)pOD->optArg.argInt );
+                    (long)pOD->optArg.argInt );
 
         /*
          *  If the argument type is an enumeration, then it is much
@@ -289,7 +289,7 @@ optionPutShell( tOptions* pOpts )
                 || (pOD->optArg.argString[0] == NUL) )
 
             printf( zOptNumFmt, pOpts->pzPROGNAME, pOD->pz_NAME,
-                    (int)pOD->optOccCt );
+                    (long)pOD->optOccCt );
 
         /*
          *  This option has a text value

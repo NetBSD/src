@@ -1,4 +1,4 @@
-/*	$NetBSD: configfile.c,v 1.1.1.1 2007/01/06 16:06:08 kardel Exp $	*/
+/*	$NetBSD: configfile.c,v 1.2 2007/01/06 19:45:22 kardel Exp $	*/
 
 /*
  *  Id: configfile.c,v 1.15 2006/09/28 01:26:33 bkorb Exp
@@ -708,7 +708,7 @@ handleStructure(
     char* pzName = ++pzText;
     char* pcNulPoint;
 
-    while (ISNAMECHAR( *pzText ))  pzText++;
+    while (ISNAMECHAR( (int)*pzText ))  pzText++;
     pcNulPoint = pzText;
     valu.valType = OPARG_TYPE_STRING;
 
@@ -1137,7 +1137,7 @@ parseValueType(
     {
         size_t len = strlen(zLtypeBool);
         if (strncmp( pzText, zLtypeBool, len ) == 0) {
-            if ((pzText[len] == '>') || isspace(pzText[len])) {
+            if ((pzText[len] == '>') || isspace((int)pzText[len])) {
                 pType->valType = OPARG_TYPE_BOOLEAN;
                 return pzText + len;
             }

@@ -1,4 +1,4 @@
-/*	$NetBSD: enumeration.c,v 1.1.1.1 2007/01/06 16:06:05 kardel Exp $	*/
+/*	$NetBSD: enumeration.c,v 1.2 2007/01/06 19:45:22 kardel Exp $	*/
 
 
 /*
@@ -139,7 +139,7 @@ enumError(
         int   ent_no = 0;
         char  zFmt[16];  /* format for all-but-last entries on a line */
 
-        sprintf( zFmt, "%%-%ds", max_len );
+        sprintf( zFmt, "%%-%lds", (long)max_len );
         max_len = 78 / max_len; /* max_len is now max entries on a line */
         fputs( "  ", option_usage_fp );
 

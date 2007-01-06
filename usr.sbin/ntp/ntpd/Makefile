@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.15 2006/08/26 18:15:39 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2007/01/06 19:45:29 kardel Exp $
 
 PROG=	ntpd
 MAN=	ntpd.8
 SRCS=	cmd_args.c ntp_config.c ntp_control.c ntp_crypto.c ntp_filegen.c \
 	ntp_intres.c ntp_io.c ntp_loopfilter.c ntp_monitor.c \
 	ntp_peer.c ntp_proto.c ntp_refclock.c ntp_request.c \
-	ntp_restrict.c ntp_timer.c ntp_util.c ntpd.c refclock_acts.c \
+	ntp_restrict.c ntp_timer.c ntp_util.c ntpd-opts.c ntpd.c \
+	refclock_acts.c \
 	refclock_arbiter.c refclock_arc.c refclock_as2201.c \
 	refclock_atom.c refclock_bancomm.c refclock_chronolog.c \
 	refclock_chu.c refclock_conf.c refclock_datum.c \
