@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.36.2.3 2007/01/06 13:18:16 bouyer Exp $
+.\" $NetBSD: kauth.9,v 1.36.2.4 2007/01/06 13:27:00 bouyer Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 19, 2006
+.Dd January 1, 2007
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -926,7 +926,10 @@ during authorization on the scope.
 .It Ft void Fn kauth_deregister_scope "kauth_scope_t scope"
 Deregister
 .Ar scope
-from the scopes available on the system.
+from the scopes available on the system, and free the
+.Ft kauth_scope_t
+object
+.Ar scope .
 .El
 .Ss Listener Management
 Listeners in
@@ -952,17 +955,17 @@ Create a new listener on the scope with the id
 .Ar id ,
 setting the default listener to
 .Ar cb .
-.\".Ar cookie
-.\"is optional user-data that will be passed to the listener when called
-.\"during an authorization request.
+.Ar cookie
+is optional user-data that will be passed to the listener when called
+during an authorization request.
 .It Ft void Fn kauth_unlisten_scope "kauth_listener_t listener"
-Remove
+Removes
 .Ar listener
-from the scope which it belongs to.
-.Pp
-Effectively what this does is is remove the callback from the chain of
-functions to be called when an authorization request is made, preventing
-from the listener from being entered in the future.
+from the scope which it belongs to, ensuring it won't be called again,
+and frees the
+.Ft kauth_listener_t
+object
+.Ar listener .
 .El
 .Pp
 .Nm
