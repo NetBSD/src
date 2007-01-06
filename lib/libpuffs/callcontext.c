@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.1 2006/12/29 15:28:11 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.2 2007/01/06 18:22:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.1 2006/12/29 15:28:11 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.2 2007/01/06 18:22:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -57,7 +57,6 @@ puffs_cc_yield(struct puffs_cc *pcc)
 	swapcontext(&pcc->pcc_uc, &pcc->pcc_uc_ret);
 }
 
-/* this alone doesn't really make any sense, but let's keep cc stuff here */
 void
 puffs_cc_continue(struct puffs_cc *pcc)
 {
@@ -73,31 +72,8 @@ puffs_cc_getusermount(struct puffs_cc *pcc)
 	return pcc->pcc_pu;
 }
 
-#if 0
-void *
-puffs_cc_getpriv(struct puffs_cc *pcc)
-{
-
-	return pcc->pcc_priv;
-}
-
-void
-puffs_cc_setpriv(struct puffs_cc *pcc, void *priv, int freepriv)
-{
-
-	pcc->pcc_priv = priv;
-
-	if (freepriv)
-		pcc->pcc_flags |= PCC_FREEPRIV;
-}
-#endif
-
-/*
- * implementation private helpers
- */
-
 struct puffs_cc *
-puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq)
+puffs_cc_create(struct puffs_usermount *pu)
 {
 	struct puffs_cc *volatile pcc;
 	stack_t *st;
@@ -145,15 +121,6 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_req *preq)
 	makecontext(&pcc->pcc_uc, (void *)puffs_calldispatcher,
 	    1, (uintptr_t)pcc);
 
-	/* and finally duplicate the request */
-	pcc->pcc_preq = malloc(preq->preq_buflen);
-	if (pcc->pcc_preq == NULL) {
-		free(st->ss_sp);
-		free(pcc);
-		return NULL;
-	}
-	(void) memcpy(pcc->pcc_preq, preq, preq->preq_buflen);
-
 	return pcc;
 }
 
@@ -161,9 +128,8 @@ void
 puffs_cc_destroy(struct puffs_cc *pcc)
 {
 
-	if (pcc->pcc_flags & PCC_FREEPRIV)
-		free(pcc->pcc_priv);
-	free(pcc->pcc_preq);
+	if (pcc->pcc_preq)
+		free(pcc->pcc_preq);
 	free(pcc->pcc_stack);
 	free(pcc);
 }

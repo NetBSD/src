@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.18 2007/01/02 15:53:05 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.19 2007/01/06 18:22:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,7 @@
 
 #include <fs/puffs/puffs_msgif.h>
 
+#include <mntopts.h>
 #include <string.h>
 
 /* forwards */
@@ -96,16 +97,26 @@ struct puffs_cn {
 #define pcn_name	pcn_pkcnp->pkcn_name
 #define pcn_namelen	pcn_pkcnp->pkcn_namelen
 
+
+/*
+ * Puffs options to mount
+ */
+/* kernel */
+#define	PUFFSMOPT_CACHE		{ "cache", 1, PUFFS_KFLAG_NOCACHE, 1 }
+#define PUFFSMOPT_ALLOPS	{ "allops", 0, PUFFS_KFLAG_ALLOPS, 1 }
+
+/* libpuffs */
+#define PUFFSMOPT_DUMP		{ "dump", 0, PUFFS_FLAG_OPDUMP, 1 }
+
+#define PUFFSMOPT_STD							\
+	PUFFSMOPT_CACHE,						\
+	PUFFSMOPT_ALLOPS,						\
+	PUFFSMOPT_DUMP
+
+extern const struct mntopt puffsmopts[]; /* puffs.c */
+
 /* callbacks for operations */
 struct puffs_ops {
-	/*
-	 * XXX: mount does not currently allow for sleeping and therefore
-	 * cannot call any of the other backends with need cc context.
-	 * I hope to change this in the future after some restructuring.
-	 */
-	int (*puffs_fs_mount)(struct puffs_usermount *, void **,
-	    struct statvfs *);
-
 	int (*puffs_fs_unmount)(struct puffs_cc *, int, pid_t);
 	int (*puffs_fs_statvfs)(struct puffs_cc *,
 	    struct statvfs *, pid_t);
@@ -191,7 +202,6 @@ struct puffs_usermount {
 
 	struct puffs_node	*pu_pn_root;
 
-	fsid_t			pu_fsidx;
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
 
 	int	pu_wcnt;
@@ -206,8 +216,8 @@ enum {
 #define PUFFS_FLAG_KERN(a)	((a) & 0x0000ffff)
 #define PUFFS_FLAG_LIB(a)	((a) & 0xffff0000)
 
-#define PUFFS_FLAG_OPDUMP	0x80000000	/* dump all operations */
-#define PUFFS_FLAG_BUILDPATH	0x40000000	/* node paths in pnode */
+#define PUFFS_FLAG_BUILDPATH	0x80000000	/* node paths in pnode */
+#define PUFFS_FLAG_OPDUMP	0x40000000	/* dump all operations */
 
 /* blocking mode argument */
 #define PUFFSDEV_BLOCK 0
@@ -216,9 +226,10 @@ enum {
 /* mainloop flags */
 #define PUFFSLOOP_NODAEMON 0x01
 
-int puffs_fsnop_unmount(struct puffs_cc *, int, pid_t);
-int puffs_fsnop_statvfs(struct puffs_cc *, struct statvfs *, pid_t);
-int puffs_fsnop_sync(struct puffs_cc *, int waitfor,
+int  puffs_fsnop_unmount(struct puffs_cc *, int, pid_t);
+int  puffs_fsnop_statvfs(struct puffs_cc *, struct statvfs *, pid_t);
+void puffs_zerostatvfs(struct statvfs *);
+int  puffs_fsnop_sync(struct puffs_cc *, int waitfor,
 		      const struct puffs_cred *, pid_t);
 
 #define		DENT_DOT	0
@@ -343,7 +354,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 0
+#define PUFFS_DEVEL_LIBVERSION 1
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -351,6 +362,8 @@ __BEGIN_DECLS
 
 struct puffs_usermount *_puffs_mount(int, struct puffs_ops *, const char *, int,
 				    const char *, void *, uint32_t, size_t);
+int		puffs_start(struct puffs_usermount *, void *, struct statvfs *);
+int		puffs_exit(struct puffs_usermount *, int);
 int		puffs_mainloop(struct puffs_usermount *, int);
 
 
@@ -391,11 +404,9 @@ void			puffs_destroyputreq(struct puffs_putreq *);
 
 void			puffs_cc_yield(struct puffs_cc *);
 void			puffs_cc_continue(struct puffs_cc *);
-
-void			*puffs_cc_getpriv(struct puffs_cc *);
-void			puffs_cc_setpriv(struct puffs_cc *, void *, int);
-
 struct puffs_usermount	*puffs_cc_getusermount(struct puffs_cc *);
+struct puffs_cc 	*puffs_cc_create(struct puffs_usermount *);
+void			puffs_cc_destroy(struct puffs_cc *);
 
 /*
  * Execute or continue a request

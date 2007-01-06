@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.20 2007/01/02 15:53:05 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.21 2007/01/06 18:22:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.20 2007/01/02 15:53:05 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.21 2007/01/06 18:22:09 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: puffs.c,v 1.20 2007/01/02 15:53:05 pooka Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <mntopts.h>
 #include <puffs.h>
 #include <puffsdump.h>
 #include <stdarg.h>
@@ -54,6 +55,13 @@ __RCSID("$NetBSD: puffs.c,v 1.20 2007/01/02 15:53:05 pooka Exp $");
 #include <unistd.h>
 
 #include "puffs_priv.h"
+
+/* Most file systems want this for opts, so just give it to them */
+const struct mntopt puffsmopts[] = {
+	MOPT_STDOPTS,
+	PUFFSMOPT_STD,
+	MOPT_NULL,
+};
 
 static int do_buildpath(struct puffs_cn *, void *);
 
@@ -162,19 +170,13 @@ struct puffs_usermount *
 _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 	const char *puffsname, void *priv, uint32_t pflags, size_t maxreqlen)
 {
-	struct puffs_startreq sreq;
 	struct puffs_args pargs;
 	struct puffs_usermount *pu;
-	int fd = 0, rv;
+	int fd = 0;
 
 	if (develv != PUFFS_DEVEL_LIBVERSION) {
 		warnx("puffs_mount: mounting with lib version %d, need %d",
 		    develv, PUFFS_DEVEL_LIBVERSION);
-		errno = EINVAL;
-		return NULL;
-	}
-
-	if (pops->puffs_fs_mount == NULL) {
 		errno = EINVAL;
 		return NULL;
 	}
@@ -199,7 +201,7 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 
 	pu->pu_flags = pflags;
 	pu->pu_ops = *pops;
-	free(pops);
+	free(pops); /* XXX */
 	pu->pu_fd = fd;
 	pu->pu_privdata = priv;
 	pu->pu_cc_stacksize = PUFFS_CC_STACKSIZE_DEFAULT;
@@ -210,17 +212,6 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 		goto failfree;
 	pu->pu_maxreqlen = pargs.pa_maxreqlen;
 
-	if ((rv = pops->puffs_fs_mount(pu, &sreq.psr_cookie,
-	    &sreq.psr_sb)) != 0) {
-		errno = rv;
-		goto failfree;
-	}
-
-	/* tell kernel we're flying */
-	if (ioctl(pu->pu_fd, PUFFSSTARTOP, &sreq) == -1)
-		goto failfree;
-
-	pu->pu_state = PUFFS_STATE_RUNNING;
 	return pu;
 
  failfree:
@@ -229,6 +220,45 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 		close(fd);
 	free(pu);
 	return NULL;
+}
+
+int
+puffs_start(struct puffs_usermount *pu, void *rootcookie, struct statvfs *sbp)
+{
+	struct puffs_startreq sreq;
+
+	memset(&sreq, 0, sizeof(struct puffs_startreq));
+	sreq.psr_cookie = rootcookie;
+	sreq.psr_sb = *sbp;
+
+	/* tell kernel we're flying */
+	if (ioctl(pu->pu_fd, PUFFSSTARTOP, &sreq) == -1)
+		return -1;
+
+	pu->pu_state = PUFFS_STATE_RUNNING;
+
+	return 0;
+}
+
+/*
+ * XXX: there's currently no clean way to request unmount from
+ * within the user server, so be very brutal about it.
+ */
+/*ARGSUSED*/
+int
+puffs_exit(struct puffs_usermount *pu, int force)
+{
+
+	force = 1; /* currently */
+
+	if (pu->pu_fd)
+		close(pu->pu_fd);
+
+	/* XXX: should free all contents like pnodes */
+
+	free(pu);
+
+	return 0; /* always succesful for now, WILL CHANGE */
 }
 
 int
@@ -307,7 +337,14 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_putreq *ppr,
 	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 		puffsdump_req(preq);
 
-	pcc = puffs_cc_create(pu, preq);
+	pcc = puffs_cc_create(pu);
+
+	/* XXX: temporary kludging */
+	pcc->pcc_preq = malloc(preq->preq_buflen);
+	if (pcc->pcc_preq == NULL)
+		return -1;
+	(void) memcpy(pcc->pcc_preq, preq, preq->preq_buflen);
+
 	rv = puffs_docc(ppr, pcc);
 
 	if ((pcc->pcc_flags & PCC_DONE) == 0)
@@ -334,8 +371,10 @@ puffs_docc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
 	case PUFFCALL_ANSWER:
 		puffs_putreq_cc(ppr, pcc);
 		break;
-	case PUFFCALL_AGAIN:
 	case PUFFCALL_IGNORE:
+		puffs_cc_destroy(pcc);
+		break;
+	case PUFFCALL_AGAIN:
 		break;
 	default:
 		assert(/*CONSTCOND*/0);
