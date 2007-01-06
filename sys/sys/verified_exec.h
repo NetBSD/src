@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.45.2.1 2007/01/04 18:49:31 bouyer Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.45.2.2 2007/01/06 13:22:04 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -122,6 +122,7 @@ int veriexec_removechk(struct vnode *, const char *, struct lwp *l);
 int veriexec_renamechk(struct vnode *, const char *, struct vnode *,
     const char *, struct lwp *);
 int veriexec_unmountchk(struct mount *);
+int veriexec_openchk(struct lwp *, struct vnode *, const char *, int);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_VERIFIED_EXEC_H_ */
