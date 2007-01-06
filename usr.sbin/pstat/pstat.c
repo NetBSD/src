@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.97 2006/12/28 04:17:51 xtraeme Exp $	*/
+/*	$NetBSD: pstat.c,v 1.98 2007/01/06 23:06:18 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.97 2006/12/28 04:17:51 xtraeme Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.98 2007/01/06 23:06:18 daniel Exp $");
 #endif
 #endif /* not lint */
 
@@ -514,12 +514,15 @@ int
 ext2fs_print(struct vnode *vp, int ovflw)
 {
 	struct inode inode, *ip = &inode;
+	struct ext2fs_dinode dip;
 	char flags[sizeof(ufs_flags) / sizeof(ufs_flags[0])];
 	char dev[4 + 1 + 7 + 1]; /* 12bit marjor + 20bit minor */
 	char *name;
 	mode_t type;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
+	KGETRET(ip->i_din.e2fs_din, &dip, sizeof (struct ext2fs_dinode),
+	    "inode's dinode");
 
 	/*
 	 * XXX need to to locking state.
@@ -528,17 +531,17 @@ ext2fs_print(struct vnode *vp, int ovflw)
 	(void)getflags(ufs_flags, flags, ip->i_flag);
 	PRWORD(ovflw, " %*llu", 7, 1, (unsigned long long)ip->i_number);
 	PRWORD(ovflw, " %*s", 6, 1, flags);
-	type = ip->i_e2fs_mode & S_IFMT;
-	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode)) {
+	type = dip.e2di_mode & S_IFMT;
+	if (S_ISCHR(dip.e2di_mode) || S_ISBLK(dip.e2di_mode)) {
 		if (usenumflag ||
-		    (name = devname(ip->i_e2fs_rdev, type)) == NULL) {
+		    (name = devname(dip.e2di_rdev, type)) == NULL) {
 			snprintf(dev, sizeof(dev), "%d,%d",
-			    major(ip->i_e2fs_rdev), minor(ip->i_e2fs_rdev));
+			    major(dip.e2di_rdev), minor(dip.e2di_rdev));
 			name = dev;
 		}
 		PRWORD(ovflw, " %*s", 8, 1, name);
 	} else
-		PRWORD(ovflw, " %*u", 8, 1, (u_int)ip->i_e2fs_size);
+		PRWORD(ovflw, " %*u", 8, 1, (u_int)dip.e2di_size);
 	return (0);
 }
 
