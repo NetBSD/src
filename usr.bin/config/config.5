@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.6 2006/11/24 19:47:00 christos Exp $
+.\" $NetBSD: config.5,v 1.7 2007/01/06 21:58:54 cube Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -76,6 +76,10 @@ or simply the
 .Em kernel configuration file .
 The developer is responsible for describing the options in the relevant files
 from the kernel source tree.
+.Pp
+Statements are separated by new-line characters.
+However, new-line characters can appear in the middle of a given statement,
+with the value of a space character.
 .Ss OBJECTS AND NAMES
 .Xr config 1
 is a rather complicated piece of software that tries to comply with any
@@ -437,12 +441,28 @@ It is usually used for
 whose number can be specified by the user in the
 .Ic pseudo-device
 statement.
+Countable objects are devices and pseudo-devices.
+For the former, the count is the number of declared instances.
+For the latter, it is the number specified by the user, defaulting to 1.
 The
 .Ic needs-flag
 options requires that a flag indicating the selection of an attribute to
 be created, but the precise number isn't needed.
 This is useful for source files that only partly depend on the attribute,
 and thus need to add pre-processor statements for it.
+.Pp
+.Ic needs-count
+and
+.Ic needs-flag
+both produce a header file for each of the considered attributes.
+The name of that file is
+.Pa \*[Lt]attribute\*[Gt].h .
+It contains one pre-processor defintion of
+.Ic NATTRIBUTE
+set to 0 if the attribute was not selected by the user, or to the number of
+instances of the device in the
+.Ic needs-count
+case, or to 1 in all the other cases. 
 .Pp
 The
 .Ar rule
