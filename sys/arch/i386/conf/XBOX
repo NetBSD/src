@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.4 2007/01/06 02:45:42 jmcneill Exp $
+# $NetBSD: XBOX,v 1.5 2007/01/06 18:05:20 jmcneill Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -125,6 +125,7 @@ wsdisplay*	at xboxfb? console ?
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 iic*	at amdpm?
 pic16lc*	at iic? addr 0x10
+xbseeprom*	at iic? addr 0x54
 
 #attimer0	at isa?
 
