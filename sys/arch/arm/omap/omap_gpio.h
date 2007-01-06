@@ -56,6 +56,12 @@ extern void *omap_gpio_intr_establish(u_int, int, int,
      const char *, int (*)(void *), void *);
 extern void omap_gpio_intr_disestablish(void *);
 
+/* Mask/unmask GPIO interrupt, enable/disable sleep wakeups */
+
+extern void omap_gpio_intr_mask(void *);
+extern void omap_gpio_intr_unmask(void *);
+extern void omap_gpio_intr_wakeup(void *cookie, int enable);
+
 /*
  * Read/write
  */
