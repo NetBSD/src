@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.33 2007/01/04 20:31:48 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.34 2007/01/06 13:29:01 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -605,4 +605,61 @@ sys/fs/tmpfs/tmpfs_vnops.c			1.34
 	* reorder some checks in rmdir avoid problems if trying to rmdir ".."
 	* add a test to check that unlink of "." is not succesful
 	[pooka, ticket #324]
+
+share/examples/secmodel/secmodel_example.c	1.10 via patch
+share/man/man9/kauth.9				1.43 via patch
+share/man/man9/secmodel_bsd44.9			1.9
+sys/arch/alpha/alpha/machdep.c			1.291
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.31
+sys/arch/amd64/amd64/sys_machdep.c		1.10
+sys/arch/arm/arm32/mem.c			1.17 via patch
+sys/arch/i386/i386/sys_machdep.c		1.79
+sys/arch/pc532/pc532/mem.c			1.43 via patch
+sys/arch/powerpc/powerpc/mem.c			1.27 via patch
+sys/arch/sh3/sh3/mem.c				1.23 via patch
+sys/arch/sh5/sh5/mem.c				1.14 via patch
+sys/arch/vax/vax/mem.c				1.34 via patch
+sys/arch/x86/x86/x86_machdep.c			1.5
+sys/arch/xen/i386/sys_machdep.c			1.10
+sys/kern/kern_auth.c				1.35
+sys/secmodel/bsd44/secmodel_bsd44_securelevel.c	1.20
+sys/secmodel/bsd44/secmodel_bsd44_suser.c	1.22 via patch
+sys/sys/kauth.h					1.29 via patch
+
+	Make machdep scope architecture-agnostic by removing all arch-specific
+	requests and centralizing them all. The result is that some of these
+	are not used on some architectures, but the documentation was updated
+	to reflect that.
+	[elad, ticket #316]
+
+sys/compat/linux/arch/i386/linux_machdep.c	1.120
+sys/dev/wscons/wsdisplay_compat_usl.c		1.38
+
+	Adapt to recent machdep scope changes.
+	[elad, ticket #317]
+
+sys/kern/kern_verifiedexec.c			1.88
+sys/kern/vfs_vnops.c				1.130
+sys/sys/verified_exec.h				1.48
+
+	Avoid TOCTOU in Veriexec by introducing veriexec_openchk() to enforce
+	the policy and using a single namei() call in vn_open().
+	[elad, ticket #318]
+
+share/man/man9/veriexec.9			1.12
+
+	Document veriexe_openchk().
+	[elad, ticket #320]
+
+share/man/man9/kauth.9				1.44
+sys/kern/kern_auth.c				1.36
+
+	Make kauth_deregister_scope() and kauth_unlisten_scope() free the
+	passed kauth_scope_t and kauth_listener_t objects, respectively.
+	[elad, ticket #322]
+
+sys/secmodel/bsd44/secmodel_bsd44_securelevel.c	1.25
+
+	Consistent naming in sysctl(9) setup routines.
+	[elad, ticket #325]
 
