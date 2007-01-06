@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2006/10/29 23:00:44 uwe Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2007/01/06 18:54:32 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -599,7 +599,7 @@ deffilesystem(const char *fname, struct nvlist *fses, struct nvlist *deps)
 	 * Mark these options as ones to skip when creating the Makefile.
 	 */
 	for (nv = fses; nv != NULL; nv = nv->nv_next) {
-		if (ht_insert(defopttab, nv->nv_name, nv)) {
+		if (DEFINED_OPTION(nv->nv_name)) {
 			error("file system or option `%s' already defined",
 			    nv->nv_name);
 			return;
