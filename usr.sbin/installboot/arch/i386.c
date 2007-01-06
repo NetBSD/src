@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.22 2006/02/18 10:08:07 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.23 2007/01/06 10:21:24 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,12 +42,17 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.22 2006/02/18 10:08:07 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.23 2007/01/06 10:21:24 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
+#ifndef HAVE_NBTOOL_CONFIG_H
+#include <sys/ioctl.h>
+#include <sys/dkio.h>
+#endif
 
 #include <assert.h>
+#include <errno.h>
 #include <err.h>
 #include <md5.h>
 #include <stddef.h>
@@ -78,6 +83,106 @@ struct ib_mach ib_mach_amd64 =
 		IB_RESETVIDEO | IB_CONSOLE | IB_CONSPEED | IB_CONSADDR |
 		IB_KEYMAP | IB_PASSWORD | IB_TIMEOUT };
 
+/*
+ * Attempting to write the 'labelsector' (or a sector near it - within 8k?)
+ * using the non-raw disk device fails silently.  This can be detected (today)
+ * by doing a fsync() and a read back.
+ * This is very likely to affect installboot, indeed the code may need to
+ * be written into the 'labelsector' itself - especially on non-512 byte media.
+ * We do all writes with a read verify.
+ * If EROFS is returned we also try to enable writes to the label sector.
+ * (Maybe these functions should be in the generic part of installboot.)
+ */
+static int
+pwrite_validate(int fd, const void *buf, size_t n_bytes, off_t offset)
+{
+	void *r_buf;
+	ssize_t rv;
+
+	r_buf = malloc(n_bytes);
+	if (r_buf == NULL)
+		return -1;
+	rv = pwrite(fd, buf, n_bytes, offset);
+	if (rv == -1) {
+		free(r_buf);
+		return -1;
+	}
+	fsync(fd);
+	if (pread(fd, r_buf, rv, offset) == rv && memcmp(r_buf, buf, rv) == 0)
+		return rv;
+	errno = EROFS;
+	return -1;
+}
+
+static int
+write_boot_area(ib_params *params, void *v_buf, int len)
+{
+	int rv, i;
+	uint8_t *buf = v_buf;
+
+	/*
+	 * Writing the 'label' sector (likely to be bytes 512-1023) could
+	 * fail, so we try to avoid writing that area.
+	 * Unfortunately, if we are accessing the raw disk, and the sector
+	 * size is larger than 512 bytes that is also doomed.
+	 * See how we get on....
+	 *
+	 * NB: Even if the physical sector size is not 512, the space for
+	 * the label is 512 bytes from the start of the disk.
+	 * So all the '512' constants in these functions are correct.
+	 */
+
+	/* Write out first 512 bytes - the pbr code */
+	rv = pwrite_validate(params->fsfd, buf, 512, 0);
+	if (rv == 512) {
+		/* That worked, do the rest */
+		if (len == 512)
+			return 1;
+		len -= 512 * 2;
+		rv = pwrite_validate(params->fsfd, buf + 512 * 2, len, 512 * 2);
+		if (rv != len)
+			goto bad_write;
+		return 1;
+	}
+	if (rv != -1 || (errno != EINVAL && errno != EROFS))
+		goto bad_write;
+
+	if (errno == EINVAL) {
+		/* Assume the failure was due to to the sector size > 512 */
+		rv = pwrite_validate(params->fsfd, buf, len, 0);
+		if (rv == len)
+			return 1;
+		if (rv != -1 || (errno != EROFS))
+			goto bad_write;
+	}
+
+#ifdef DIOCWLABEL
+	/* Pesky label is protected, try to unprotect it */
+	i = 1;
+	rv = ioctl(params->fsfd, DIOCWLABEL, &i);
+	if (rv != 0) {
+		warn("Cannot enable writes to the label sector");
+		return 0;
+	}
+	/* Try again with label write-enabled */
+	rv = pwrite_validate(params->fsfd, buf, len, 0);
+
+	/* Reset write-protext */
+	i = 0;
+	ioctl(params->fsfd, DIOCWLABEL, &i);
+	if (rv == len)
+		return 1;
+#endif
+
+  bad_write:
+	if (rv == -1)
+		warn("Writing `%s'", params->filesystem);
+	else 
+		warnx("Writing `%s': short write, %u bytes",
+			params->filesystem, rv);
+	return 0;
+}
+
 static void
 show_i386_boot_params(struct x86_boot_params  *bpp)
 {
@@ -95,6 +200,12 @@ show_i386_boot_params(struct x86_boot_params  *bpp)
 		printf("console %d\n", i);
 	if (bpp->bp_keymap[0])
 		printf("                     keymap %s\n", bpp->bp_keymap);
+}
+
+static int
+is_zero(const uint8_t *p, unsigned int len)
+{
+	return len == 0 || (p[0] == 0 && memcmp(p, p + 1, len - 1) == 0);
 }
 
 static int
@@ -156,9 +267,7 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 		show_i386_boot_params(&bp);
 
 	/* Check we aren't trying to set anything we can't save */
-	if (bplen < sizeof bp && memcmp((char *)&bp + bplen,
-					(char *)&bp + bplen + 1,
-					sizeof bp - bplen - 1) != 0) {
+	if (!is_zero((char *)&bp + bplen, sizeof bp - bplen)) {
 		warnx("Patch area in stage1 bootstrap is too small");
 		return 1;
 	}
@@ -169,13 +278,13 @@ update_i386_boot_params(ib_params *params, struct x86_boot_params  *bpp)
 static int
 i386_setboot(ib_params *params)
 {
-	int		retval, i, bpbsize;
-	uint8_t		*bootstrapbuf;
-	u_int		bootstrapsize;
+	unsigned int	u;
 	ssize_t		rv;
-	uint32_t	magic;
-	struct x86_boot_params	*bpp;
-	struct mbr_sector	mbr;
+	uint32_t	*magic, expected_magic;
+	union {
+	    struct mbr_sector	mbr;
+	    uint8_t		b[8192];
+	} disk_buf, bootstrap;
 
 	assert(params != NULL);
 	assert(params->fsfd != -1);
@@ -183,157 +292,149 @@ i386_setboot(ib_params *params)
 	assert(params->s1fd != -1);
 	assert(params->stage1 != NULL);
 
-	retval = 0;
-	bootstrapbuf = NULL;
-
 	/*
 	 * There is only 8k of space in a UFSv1 partition (and ustarfs)
 	 * so ensure we don't splat over anything important.
 	 */
-	if (params->s1stat.st_size > 8192) {
-		warnx("stage1 bootstrap `%s' is larger than 8192 bytes",
-			params->stage1);
-		goto done;
+	if (params->s1stat.st_size > sizeof bootstrap) {
+		warnx("stage1 bootstrap `%s' (%u bytes) is larger than 8192 bytes",
+			params->stage1, (unsigned int)params->s1stat.st_size);
+		return 0;
+	}
+	if (params->s1stat.st_size < 3 * 512 && params->s1stat.st_size != 512) {
+		warnx("stage1 bootstrap `%s' (%u bytes) is too small",
+			params->stage1, (unsigned int)params->s1stat.st_size);
+		return 0;
 	}
 
-	/*
-	 * Read in the existing MBR.
-	 */
-	rv = pread(params->fsfd, &mbr, sizeof(mbr), MBR_BBSECTOR);
-	if (rv == -1) {
-		warn("Reading `%s'", params->filesystem);
-		goto done;
-	} else if (rv != sizeof(mbr)) {
-		warnx("Reading `%s': short read", params->filesystem);
-		goto done;
+	/* Read in the existing disk header and boot code */
+	rv = pread(params->fsfd, &disk_buf, sizeof (disk_buf), 0);
+	if (rv != sizeof (disk_buf)) {
+		if (rv == -1)
+			warn("Reading `%s'", params->filesystem);
+		else
+			warnx("Reading `%s': short read, %d bytes",
+				    params->filesystem, rv);
+		return 0;
 	}
-	if (mbr.mbr_magic != le16toh(MBR_MAGIC)) {
+
+	if (disk_buf.mbr.mbr_magic != le16toh(MBR_MAGIC)) {
 		if (params->flags & IB_VERBOSE) {
 			printf(
-		    "Ignoring MBR with invalid magic in sector 0 of `%s'\n",
+		    "Ignoring PBR with invalid magic in sector 0 of `%s'\n",
 			    params->filesystem);
 		}
-		memset(&mbr, 0, sizeof(mbr));
+		memset(&disk_buf, 0, 512);
+	}
+
+	/* Read the new bootstrap code. */
+	rv = pread(params->s1fd, &bootstrap, params->s1stat.st_size, 0);
+	if (rv != params->s1stat.st_size) {
+		if (rv == -1)
+			warn("Reading `%s'", params->stage1);
+		else
+			warnx("Reading `%s': short read, %d bytes",
+				params->stage1, rv);
+		return 0;
 	}
 
 	/*
-	 * Allocate a buffer, with space to round up the input file
-	 * to the next block size boundary, and with space for the boot
-	 * block.
+	 * The bootstrap code is either 512 bytes for booting FAT16, or best
+	 * part of 8k (with bytes 512-1023 all zeros).
 	 */
-	bootstrapsize = roundup(params->s1stat.st_size, 512);
-
-	bootstrapbuf = malloc(bootstrapsize);
-	if (bootstrapbuf == NULL) {
-		warn("Allocating %u bytes",  bootstrapsize);
-		goto done;
-	}
-	memset(bootstrapbuf, 0, bootstrapsize);
-
-	/*
-	 * Read the file into the buffer.
-	 */
-	rv = pread(params->s1fd, bootstrapbuf, params->s1stat.st_size, 0);
-	if (rv == -1) {
-		warn("Reading `%s'", params->stage1);
-		goto done;
-	} else if (rv != params->s1stat.st_size) {
-		warnx("Reading `%s': short read", params->stage1);
-		goto done;
-	}
-
-	magic = *(uint32_t *)(bootstrapbuf + 512 * 2 + 4);
-	if (magic != htole32(X86_BOOT_MAGIC_1)) {
-		warnx("Invalid magic in stage1 bootstrap %x != %x",
-			magic, htole32(X86_BOOT_MAGIC_1));
-		goto done;
-	}
-
-	/*
-	 * Determine size of BIOS Parameter Block (BPB) to copy from
-	 * original MBR to the temporary buffer by examining the first
-	 * few instruction in the new bootblock.  Supported values:
-	 *	eb 3c 90	jmp ENDOF(mbr_bpbFAT16)+1, nop
-	 *	eb 58 90	jmp ENDOF(mbr_bpbFAT32)+1, nop
-	 *      (anything else)	; don't preserve
-	 */
-	bpbsize = 0;
-	if (bootstrapbuf[0] == 0xeb && bootstrapbuf[2] == 0x90 &&
-	    (bootstrapbuf[1] == 0x3c || bootstrapbuf[1] == 0x58))
-		bpbsize = bootstrapbuf[1] + 2 - MBR_BPB_OFFSET;
-
-	/*
-	 * Ensure bootxx hasn't got any code or data (i.e, non-zero bytes) in
-	 * the partition table.
-	 */
-	for (i = 0; i < sizeof(mbr.mbr_parts); i++) {
-		if (*(uint8_t *)(bootstrapbuf + MBR_PART_OFFSET + i) != 0) {
-			warnx(
-		    "Partition table has non-zero byte at offset %d in `%s'",
-			    MBR_PART_OFFSET + i, params->stage1);
-			goto done;
+	if (params->s1stat.st_size == 512) {
+		/* Magic number is at end of pbr code */
+		magic = (void *)(bootstrap.b + 512 - 16 + 4);
+		expected_magic = htole32(X86_BOOT_MAGIC_FAT);
+	} else {
+		/* Magic number is at start of sector following label */
+		magic = (void *)(bootstrap.b + 512 * 2 + 4);
+		expected_magic = htole32(X86_BOOT_MAGIC_1);
+		/*
+		 * For a variety of reasons we restrict our 'normal' partition
+		 * boot code to a size which enable it to be used as mbr code.
+		 * IMHO this is bugus (dsl).
+		 */
+		if (!is_zero(bootstrap.b + 512-2-64, 64)) {
+			warnx("Data in mbr partition table of new bootstrap");
+			return 0;
 		}
+		if (!is_zero(bootstrap.b + 512, 512)) {
+			warnx("Data in label part of new bootstrap");
+			return 0;
+		}
+		/* Copy mbr table and label from existing disk buffer */
+		memcpy(bootstrap.b + 512-2-64, disk_buf.b + 512-2-64, 64);
+		memcpy(bootstrap.b + 512, disk_buf.b + 512, 512);
+	}
+
+	/* Validate the 'magic number' that marks the parameter block */
+	if (*magic != expected_magic) {
+		warnx("Invalid magic in stage1 bootstrap %x != %x",
+				*magic, expected_magic);
+		return 0;
 	}
 
 	/*
-	 * Copy the BPB and the partition table from the original MBR to the
-	 * temporary buffer so that they're written back to the fs.
+	 * For FAT compatibility, the pbr code starts 'jmp xx; nop' followed
+	 * by the BIOS Parameter Block (BPB).
+	 * The 2nd byte (jump offset) is the size of the nop + BPB.
 	 */
-	if (bpbsize != 0) {
-		if (params->flags & IB_VERBOSE)
-			printf("Preserving %d (%#x) bytes of the BPB\n",
-			    bpbsize, bpbsize);
-		memcpy(bootstrapbuf + MBR_BPB_OFFSET, &mbr.mbr_bpb, bpbsize);
+	if (bootstrap.b[0] != 0xeb || bootstrap.b[2] != 0x90) {
+		warnx("No BPB in new bootstrap %02x:%02x:%02x",
+			bootstrap.b[0], bootstrap.b[1], bootstrap.b[2]);
+		return 0;
 	}
-	memcpy(bootstrapbuf + MBR_PART_OFFSET, &mbr.mbr_parts,
-	    sizeof(mbr.mbr_parts));
+
+	/* Find size of old BPB, and copy into new bootcode */
+	if (!is_zero(disk_buf.b + 3 + 8, disk_buf.b[1] - 1 - 8)) {
+		struct mbr_bpbFAT16 *bpb = (void *)(disk_buf.b + 3 + 8);
+		/* Check enough space before first FAT for the bootcode */
+		u = le16toh(bpb->bpbBytesPerSec) * le16toh(bpb->bpbResSectors);
+		if (u != 0 && u < params->s1stat.st_size) {
+			warnx("Insufficient reserved space (%u bytes)", u);
+			return 0;
+		}
+		/* Check we have enough space for the old bpb */
+		if (disk_buf.b[1] > bootstrap.b[1]) {
+			/* old BPB is larger, allow if extra zeros */
+			if (!is_zero(disk_buf.b + 2 + bootstrap.b[1],
+			    disk_buf.b[1] - bootstrap.b[1])) {
+				warnx("Old BPB too big");
+				    return 0;
+			}
+			u = bootstrap.b[1];
+		} else {
+			/* Old BPB is shorter, leave zero filled */
+			u = disk_buf.b[1];
+		}
+		memcpy(bootstrap.b + 2, disk_buf.b + 2, u);
+	}
 
 	/*
 	 * Fill in any user-specified options into the
 	 *      struct x86_boot_params
-	 * that's 8 bytes in from the start of the third sector.
+	 * that follows the magic number.
 	 * See sys/arch/i386/stand/bootxx/bootxx.S for more information.
 	 */
-	bpp = (void *)(bootstrapbuf + 512 * 2 + 8);
-	if (update_i386_boot_params(params, bpp))
-		goto done;
+	if (update_i386_boot_params(params, (void *)(magic + 1)))
+		return 0;
 
 	if (params->flags & IB_NOWRITE) {
-		retval = 1;
-		goto done;
+		return 1;
 	}
 
-	/*
-	 * Write MBR code to sector zero.
-	 */
-	rv = pwrite(params->fsfd, bootstrapbuf, 512, 0);
-	if (rv == -1) {
-		warn("Writing `%s'", params->filesystem);
-		goto done;
-	} else if (rv != 512) {
-		warnx("Writing `%s': short write", params->filesystem);
-		goto done;
+	/* Copy new bootstrap data into disk buffer, ignoring label area */
+	memcpy(&disk_buf, &bootstrap, 512);
+	if (params->s1stat.st_size > 512 * 2) {
+		memcpy(disk_buf.b + 2 * 512, bootstrap.b + 2 * 512,
+		    params->s1stat.st_size - 2 * 512);
+		/* Zero pad to 512 byte sector boundary */
+		memset(disk_buf.b + params->s1stat.st_size, 0,
+			(8192 - params->s1stat.st_size) & 511);
 	}
 
-	/*
-	 * Skip disklabel in sector 1 and write bootxx to sectors 2..N.
-	 */
-	rv = pwrite(params->fsfd, bootstrapbuf + 512 * 2,
-		    bootstrapsize - 512 * 2, 512 * 2);
-	if (rv == -1) {
-		warn("Writing `%s'", params->filesystem);
-		goto done;
-	} else if (rv != bootstrapsize - 512 * 2) {
-		warnx("Writing `%s': short write", params->filesystem);
-		goto done;
-	}
-
-	retval = 1;
-
- done:
-	if (bootstrapbuf)
-		free(bootstrapbuf);
-	return retval;
+	return write_boot_area(params, &disk_buf, sizeof disk_buf);
 }
 
 static int
