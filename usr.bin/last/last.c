@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.29 2006/01/22 15:47:10 christos Exp $	*/
+/*	$NetBSD: last.c,v 1.30 2007/01/06 13:31:06 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -40,13 +40,14 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.29 2006/01/22 15:47:10 christos Exp $");
+__RCSID("$NetBSD: last.c,v 1.30 2007/01/06 13:31:06 cbiere Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <signal.h>
@@ -141,7 +142,7 @@ void usage(void)
 	    ""
 #endif
 	);
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -179,9 +180,13 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			file = optarg;
+			if ('\0' == file[0])
+				usage();
 			break;
 		case 'H':
 			hostsize = atoi(optarg);
+			if (hostsize < 1)
+				usage();
 			break;
 		case 'h':
 			hostconv(optarg);
@@ -189,9 +194,13 @@ main(int argc, char *argv[])
 			break;
 		case 'L':
 			linesize = atoi(optarg);
+			if (linesize < 1)
+				usage();
 			break;
 		case 'N':
 			namesize = atoi(optarg);
+			if (namesize < 1)
+				usage();
 			break;
 		case 'n':
 			numeric = 1;
@@ -233,14 +242,14 @@ main(int argc, char *argv[])
 #endif
 		if (file == NULL)
 #if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
-			errx(1, "Cannot access `%s' or `%s'", _PATH_WTMPX,
+			errx(EXIT_FAILURE, "Cannot access `%s' or `%s'", _PATH_WTMPX,
 			    _PATH_WTMP);
 #elif defined(SUPPORT_UTMPX)
-			errx(1, "Cannot access `%s'", _PATH_WTMPX);
+			errx(EXIT_FAILURE, "Cannot access `%s'", _PATH_WTMPX);
 #elif defined(SUPPORT_UTMP)
-			errx(1, "Cannot access `%s'", _PATH_WTMP);
+			errx(EXIT_FAILURE, "Cannot access `%s'", _PATH_WTMP);
 #else
-			errx(1, "No utmp or utmpx support compiled in.");
+			errx(EXIT_FAILURE, "No utmp or utmpx support compiled in.");
 #endif
 	}
 #if defined(SUPPORT_UTMPX) && defined(SUPPORT_UTMP)
@@ -253,9 +262,9 @@ main(int argc, char *argv[])
 #elif defined(SUPPORT_UTMP)
 	wtmp(file, namesize, linesize, hostsize, numeric);
 #else
-	errx(1, "No utmp or utmpx support compiled in.");
+	errx(EXIT_FAILURE, "No utmp or utmpx support compiled in.");
 #endif
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 
@@ -268,8 +277,8 @@ addarg(int type, char *arg)
 {
 	ARG *cur;
 
-	if (!(cur = (ARG *)malloc((u_int)sizeof(ARG))))
-		err(1, "malloc failure");
+	if (!(cur = (ARG *)malloc(sizeof(ARG))))
+		err(EXIT_FAILURE, "malloc failure");
 	cur->next = arglist;
 	cur->type = type;
 	cur->name = arg;
@@ -285,8 +294,8 @@ addtty(const char *ttyname)
 {
 	TTY *cur;
 
-	if (!(cur = (TTY *)malloc((u_int)sizeof(TTY))))
-		err(1, "malloc failure");
+	if (!(cur = (TTY *)malloc(sizeof(TTY))))
+		err(EXIT_FAILURE, "malloc failure");
 	cur->next = ttylist;
 	cur->logout = currentout;
 	memmove(cur->tty, ttyname, sizeof(cur->tty));
@@ -311,7 +320,7 @@ hostconv(char *arg)
 	if (first) {
 		first = 0;
 		if (gethostname(name, sizeof(name)))
-			err(1, "gethostname");
+			err(EXIT_FAILURE, "gethostname");
 		name[sizeof(name) - 1] = '\0';
 		hostdot = strchr(name, '.');
 	}
@@ -328,21 +337,19 @@ ttyconv(char *arg)
 {
 	char *mval;
 
+	if (!strcmp(arg, "co"))
+		return ("console");
 	/*
 	 * kludge -- we assume that all tty's end with
 	 * a two character suffix.
 	 */
 	if (strlen(arg) == 2) {
-		if (!strcmp(arg, "co"))
-			mval = strdup("console");
-		else
-			asprintf(&mval, "tty%s", arg);
-		if (!mval)
-			err(1, "malloc failure");
+		if (asprintf(&mval, "tty%s", arg) == -1)
+			err(EXIT_FAILURE, "malloc failure");
 		return (mval);
 	}
 	if (!strncmp(arg, _PATH_DEV, sizeof(_PATH_DEV) - 1))
-		return (arg + 5);
+		return (&arg[sizeof(_PATH_DEV) - 1]);
 	return (arg);
 }
 
