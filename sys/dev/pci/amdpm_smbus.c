@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.8 2007/01/06 01:20:39 jmcneill Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.9 2007/01/06 02:16:22 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.8 2007/01/06 01:20:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.9 2007/01/06 02:16:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,21 +114,31 @@ amdpm_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 {
         struct amdpm_softc *sc  = (struct amdpm_softc *) cookie;
 	sc->sc_smbus_slaveaddr  = addr;
+	u_int8_t *p = vbuf;
+	int rv;
 	
 	if (I2C_OP_READ_P(op) && (cmdlen == 0) && (buflen == 1)) {
-	  return (amdpm_smbus_receive_1(sc));    
+	  rv = amdpm_smbus_receive_1(sc);
+	  if (rv == -1)
+		return -1;
+	  *p = (u_int8_t)rv;
+	  return 0;
 	}
 	
 	if ( (I2C_OP_READ_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-	  return (amdpm_smbus_read_1(sc, *(const uint8_t*)cmd));
+	  rv = amdpm_smbus_read_1(sc, *(const uint8_t*)cmd);
+	  if (rv == -1)
+		return -1;
+	  *p = (u_int8_t)rv;
+	  return 0;
 	}
 	
 	if ( (I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 1)) {
-	  return (amdpm_smbus_send_1(sc, *(uint8_t*)vbuf));
+	  return amdpm_smbus_send_1(sc, *(uint8_t*)vbuf);
 	}
 	
 	if ( (I2C_OP_WRITE_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-	  return (amdpm_smbus_write_1(sc,  *(const uint8_t*)cmd, *(uint8_t*)vbuf));
+	  return amdpm_smbus_write_1(sc,  *(const uint8_t*)cmd, *(uint8_t*)vbuf);
 	}
 	
 	return (-1);  
@@ -261,6 +271,7 @@ static int
 amdpm_smbus_read_1(struct amdpm_softc *sc, u_int8_t cmd)
 {
 	u_int16_t data = 0;
+	u_int8_t ret;
 	int off = (sc->sc_nforce ? 0xe0 : 0);
 
         /* first clear gsr */
@@ -287,6 +298,6 @@ amdpm_smbus_read_1(struct amdpm_softc *sc, u_int8_t cmd)
 	/* store data */    
 	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 	    AMDPM_8111_SMBUS_HOSTDATA - off);
-	u_int8_t ret = (u_int8_t)(data & 0x00FF);
+	ret = (u_int8_t)(data & 0x00FF);
 	return (ret);
 }
