@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.7 2006/12/27 18:03:26 pooka Exp $	*/
+/*	$NetBSD: want.c,v 1.8 2007/01/06 14:00:36 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -69,9 +69,8 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	struct utmp	*bp;		/* current structure */
 	TTY	*T;			/* tty list entry */
 	struct stat	stb;		/* stat of file for sz */
-	time_t	delta;			/* time difference */
-	off_t	bl;
-	int	bytes, wfd;
+	off_t	offset;
+	int	wfd;
 	char	*ct, *crmsg;
 	size_t  len = sizeof(*buf) * MAXUTMP;
 	char namebuf[sizeof(bp->ut_name) + 1], *namep;
@@ -82,54 +81,72 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	int checkhost = hostsz > sizeof(bp->ut_host);
 
 	if ((buf = malloc(len)) == NULL)
-		err(1, "Cannot allocate utmp buffer");
+		err(EXIT_FAILURE, "Cannot allocate utmp buffer");
 
 	crmsg = NULL;
 
 	if (!strcmp(file, "-")) {
-		if (lseek(STDIN_FILENO, 0, SEEK_CUR) < 0) {
-			char tfile[] = _PATH_TMP "last.XXXXXX";
-			ssize_t len;
-
-			wfd = mkstemp(tfile);
-			if (wfd < 0) {
-				err(1, "mkstemp");
-			}
-			unlink(tfile);
-			for (;;) {
-			   	len = read(STDIN_FILENO, buf, sizeof(buf));
-				if (len < 0) {
-					err(1, "stdin: read");
-				}
-				if (len == 0) {
-					break;
-				}
-				len = write(wfd, buf, len);
-				if (len < 0) {
-					err(1, "%s: write", tfile);
-				}
-			}
-		} else {
-			wfd = STDIN_FILENO;
-		}
+		wfd = STDIN_FILENO;
 		file = "<stdin>";
 	} else if ((wfd = open(file, O_RDONLY, 0)) < 0) {
-		err(1, "%s", file);
+		err(EXIT_FAILURE, "%s", file);
+	}
+
+	if (lseek(wfd, 0, SEEK_CUR) < 0) {
+		char tfile[] = _PATH_TMP "last.XXXXXX";
+		int tempfd;
+		ssize_t tlen;
+
+		if (ESPIPE != errno) {
+			err(EXIT_FAILURE, "lseek");
+		}
+		tempfd = mkstemp(tfile);
+		if (tempfd < 0) {
+			err(EXIT_FAILURE, "mkstemp");
+		}
+		unlink(tfile);
+		for (;;) {
+		   	tlen = read(wfd, buf, len);
+			if (tlen < 0) {
+				err(1, "%s: read", file);
+			}
+			if (tlen == 0) {
+				break;
+			}
+			if (write(tempfd, buf, tlen) != tlen) {
+				err(1, "%s: write", tfile);
+			}
+		}
+		wfd = tempfd;
 	}
 
 	if (fstat(wfd, &stb) == -1)
-		err(1, "%s: fstat", file);
-	bl = (stb.st_size + len - 1) / len;
+		err(EXIT_FAILURE, "%s: fstat", file);
+	if (!S_ISREG(stb.st_mode))
+		errx(EXIT_FAILURE, "%s: Not a regular file", file);
 
 	buf[FIRSTVALID].ut_timefld = time(NULL);
 	(void)signal(SIGINT, onintr);
 	(void)signal(SIGQUIT, onintr);
 
-	while (--bl >= 0) {
-		if (lseek(wfd, bl * len, SEEK_SET) == -1 ||
-		    (bytes = read(wfd, buf, len)) == -1)
-			err(1, "%s", file);
-		for (bp = &buf[bytes / sizeof(*buf) - 1]; bp >= buf; --bp) {
+	offset = stb.st_size;
+	/* Ignore trailing garbage or partial record */
+	offset -= offset % (off_t) sizeof(*buf);
+	
+	while (offset >= (off_t) sizeof(*buf)) {
+		ssize_t ret;
+		size_t size;
+
+		size = MIN(len, offset);
+		offset -= size; /* Always a multiple of sizeof(*buf) */
+		ret = pread(wfd, buf, size, offset);
+		if (ret < 0) {
+			err(EXIT_FAILURE, "%s: pread", file);
+		} else if ((size_t) ret < size) {
+			err(EXIT_FAILURE, "%s: Unexpected end of file", file);
+		}
+		
+		for (bp = &buf[ret / sizeof(*buf) - 1]; bp >= buf; --bp) {
 			NULTERM(name);
 			NULTERM(line);
 			NULTERM(host);
@@ -197,6 +214,8 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 				if (!T->logout)
 					puts("  still logged in");
 				else {
+					time_t	delta;			/* time difference */
+
 					if (T->logout < 0) {
 						T->logout = -T->logout;
 						printf("- %s", crmsg);
@@ -277,10 +296,10 @@ want(struct utmp *bp, int check)
 static void
 onintr(int signo)
 {
-
+	/* FIXME: None of this is allowed in a signal handler */
 	printf("\ninterrupted %s\n", fmttime(buf[FIRSTVALID].ut_timefld,
 	    FULLTIME));
 	if (signo == SIGINT)
-		exit(1);
+		exit(EXIT_FAILURE);
 	(void)fflush(stdout);		/* fix required for rsh */
 }
