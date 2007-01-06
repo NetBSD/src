@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.5 2007/01/04 18:55:18 bouyer Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.6 2007/01/06 13:22:04 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.5 2007/01/04 18:55:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.6 2007/01/06 13:22:04 bouyer Exp $");
 
 #include "opt_veriexec.h"
 
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.5 2007/01/04 18:55:18 b
 #include <sys/conf.h>
 #include <miscfs/specfs/specdev.h>
 #include <prop/proplib.h>
+#include <sys/fcntl.h>
 
 MALLOC_DEFINE(M_VERIEXEC, "Veriexec", "Veriexec data-structures");
 
@@ -1203,5 +1204,48 @@ veriexec_unmountchk(struct mount *mp)
 		break;
 	}
 
+	return (error);
+}
+
+int
+veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
+{
+	boolean_t monitored = FALSE;
+	int error = 0;
+
+	if (vp == NULL) {
+		/* If no creation requested, let this fail normally. */
+		if (!(fmode & O_CREAT)) {
+			error = 0;
+			goto out;
+		}
+
+		/* Lockdown mode: Prevent creation of new files. */
+		if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
+			log(LOG_ALERT, "Veriexec: Preventing new file "
+			    "creation in `%s'.\n", path);
+			error = EPERM;
+		}
+
+		goto out;
+	}
+
+	error = veriexec_verify(l, vp, path, VERIEXEC_FILE,
+	    &monitored);
+	if (error)
+		goto out;
+
+	if (monitored && ((fmode & FWRITE) || (fmode & O_TRUNC))) {
+		veriexec_report("Write access request.", path, l,
+		    REPORT_ALWAYS | REPORT_ALARM);
+
+		/* IPS mode: Deny writing to/truncating monitored files. */
+		if (veriexec_strict >= VERIEXEC_IPS)
+			error = EPERM;
+		else
+			veriexec_purge(vp);
+	}
+
+ out:
 	return (error);
 }
