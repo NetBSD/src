@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.34 2007/01/06 13:29:01 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.35 2007/01/06 13:39:59 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -662,4 +662,10 @@ sys/secmodel/bsd44/secmodel_bsd44_securelevel.c	1.25
 
 	Consistent naming in sysctl(9) setup routines.
 	[elad, ticket #325]
+
+sys/arch/mac68k/dev/if_ae.c			1.79
+
+	If we have a single byte left over after filling in all mbuf data, we
+	need to increase the "totlen" count too. From Sungwon Chung.
+	[martin, ticket #335]
 
