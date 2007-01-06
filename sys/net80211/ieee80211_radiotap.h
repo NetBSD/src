@@ -1,5 +1,5 @@
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.5 2005/01/22 20:12:05 sam Exp $ */
-/* $NetBSD: ieee80211_radiotap.h,v 1.15 2006/03/12 03:22:02 dyoung Exp $ */
+/* $NetBSD: ieee80211_radiotap.h,v 1.16 2007/01/06 05:51:15 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
@@ -81,7 +81,7 @@ struct ieee80211_radiotap_header {
 					 * Additional extensions are made
 					 * by setting bit 31.
 					 */
-} __attribute__((__packed__));
+} __attribute__((__packed__, __aligned__(8)));
 
 /*
  * Name                                 Data type       Units
