@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.81 2006/11/16 01:32:52 christos Exp $ */
+/* $NetBSD: rtw.c,v 1.82 2007/01/06 06:07:55 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.81 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.82 2007/01/06 06:07:55 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1481,6 +1481,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 
 		/* still belongs to NIC */
 		if ((hstat & RTW_RXSTAT_OWN) != 0) {
+			rtw_rxdescs_sync(rdb, next, 1, BUS_DMASYNC_PREREAD);
 			if (nproc > 1)
 				break;
 
@@ -1488,8 +1489,11 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			rtw_rxdescs_sync(rdb, 0, 1,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 			rd = &rdb->rdb_desc[0];
-			if ((rd->rd_stat & htole32(RTW_RXSTAT_OWN)) != 0)
+			if ((rd->rd_stat & htole32(RTW_RXSTAT_OWN)) != 0) {
+				rtw_rxdescs_sync(rdb, 0, 1,
+				    BUS_DMASYNC_PREREAD);
 				break;
+			}
 			RTW_DPRINTF(RTW_DEBUG_BUGS,
 			    ("%s: NIC skipped from rxdesc[%u] to rxdesc[0]\n",
 			     sc->sc_dev.dv_xname, next));
@@ -1771,8 +1775,11 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 			rtw_txdescs_sync(tdb, ts->ts_first, ndesc,
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		} else if ((tdb->tdb_desc[ts->ts_last].td_stat &
-		    htole32(RTW_TXSTAT_OWN)) != 0)
+		    htole32(RTW_TXSTAT_OWN)) != 0) {
+			rtw_txdescs_sync(tdb, ts->ts_last, 1,
+			    BUS_DMASYNC_PREREAD);
 			break;
+		}
 
 		rtw_collect_txpkt(sc, tdb, ts, ndesc);
 		SIMPLEQ_REMOVE_HEAD(&tsb->tsb_dirtyq, ts_q);
