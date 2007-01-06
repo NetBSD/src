@@ -1,4 +1,4 @@
-/*	$NetBSD: makeshell.c,v 1.1.1.1 2007/01/06 16:06:10 kardel Exp $	*/
+/*	$NetBSD: makeshell.c,v 1.2 2007/01/06 19:45:22 kardel Exp $	*/
 
 
 /*
@@ -636,7 +636,7 @@ emitUsage( tOptions* pOpts )
         char* pzPN = zTimeBuf;
         tCC*  pz   = pOpts->pzPROGNAME;
         for (;;) {
-            if ((*pzPN++ = tolower( *pz++ )) == '\0')
+            if ((*pzPN++ = tolower( (int)*pz++ )) == '\0')
                 break;
         }
     }
@@ -852,8 +852,8 @@ emitMatchExpr( tCC* pzMatchName, tOptDesc* pCurOpt, tOptions* pOpts )
          *  They must not be the same.  They cannot be, because it would
          *  not compile correctly if they were.
          */
-        while (  toupper( pOD->pz_Name[matchCt] )
-              == toupper( pzMatchName[matchCt] ))
+        while (  toupper( (int)pOD->pz_Name[matchCt] )
+                 == toupper( (int)pzMatchName[matchCt] ))
             matchCt++;
 
         if (matchCt > min)
@@ -864,8 +864,8 @@ emitMatchExpr( tCC* pzMatchName, tOptDesc* pCurOpt, tOptions* pOpts )
          */
         if (pOD->pz_DisableName != NULL) {
             matchCt = 0;
-            while (  toupper( pOD->pz_DisableName[matchCt] )
-                  == toupper( pzMatchName[matchCt] ))
+            while (  toupper( (int)pOD->pz_DisableName[matchCt] )
+                     == toupper( (int)pzMatchName[matchCt] ))
                 matchCt++;
             if (matchCt > min)
                 min = matchCt;
@@ -1079,7 +1079,7 @@ genshelloptUsage( tOptions*  pOpts, int exitCode )
         AGDUPSTR( pz, pShellParseOptions->pzPROGNAME, "program name" );
         pShellParseOptions->pzProgName = pz;
         while (*pz != NUL) {
-            *pz = tolower( *pz );
+            *pz = tolower( (int)*pz );
             pz++;
         }
     }
