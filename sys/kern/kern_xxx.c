@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.63 2007/01/06 20:38:15 christos Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.64 2007/01/06 20:40:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.63 2007/01/06 20:38:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.64 2007/01/06 20:40:58 christos Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -144,7 +144,7 @@ scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0
+	if (!(scdebug & SCDEBUG_ALL || (int)code < 0
 #ifndef __HAVE_MINIMAL_EMUL
 	    || (int)code >= em->e_nsysent
 #endif
