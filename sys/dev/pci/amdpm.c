@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.21 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.22 2007/01/06 00:14:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.21 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.22 2007/01/06 00:14:21 jmcneill Exp $");
 
 #include "opt_amdpm.h"
 
@@ -75,13 +75,18 @@ amdpm_match(struct device *parent, struct cfdata *match,
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_AMD)
-		return (0);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_AMD_PBC768_PMC:
-	case PCI_PRODUCT_AMD_PBC8111_ACPI:
-		return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_AMD_PBC768_PMC:
+		case PCI_PRODUCT_AMD_PBC8111_ACPI:
+			return (1);
+		}
+	}
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_NVIDIA) {
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_NVIDIA_XBOX_SMBUS:
+			return (1);
+		}
 	}
 
 	return (0);
@@ -102,6 +107,11 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_NVIDIA_XBOX_SMBUS)
+		sc->sc_nforce = 1;
+	else
+		sc->sc_nforce = 0;
+
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
@@ -112,8 +122,9 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	confreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_CONFREG);
-	/* enable pm i/o space for AMD-8111 */
-	if (PCI_PRODUCT(pa->pa_id)  == PCI_PRODUCT_AMD_PBC8111_ACPI)
+	/* enable pm i/o space for AMD-8111 and nForce */
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI ||
+	    sc->sc_nforce)
 		confreg |= AMDPM_PMIOEN;
 
 	/* Enable random number generation for everyone */
@@ -127,12 +138,22 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pmptrreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
-	if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(pmptrreg), AMDPM_PMSIZE,
-	    0, &sc->sc_ioh)) {
-		aprint_error("%s: failed to map PMxx space\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	if (sc->sc_nforce) {
+		pmptrreg = pci_conf_read(pa->pa_pc, pa->pa_tag, NFORCE_PMPTR);
+		if (bus_space_map(sc->sc_iot, NFORCE_PMBASE(pmptrreg),
+		    AMDPM_PMSIZE, 0, &sc->sc_ioh)) {
+			aprint_error("%s: failed to map PMxx space\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+	} else {
+		pmptrreg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMDPM_PMPTR);
+		if (bus_space_map(sc->sc_iot, AMDPM_PMBASE(pmptrreg),
+		    AMDPM_PMSIZE, 0, &sc->sc_ioh)) {
+			aprint_error("%s: failed to map PMxx space\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
 	}
 
 #ifdef __HAVE_TIMECOUNTER
@@ -143,9 +164,9 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	/* try to attach devices on the smbus */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI) {
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI ||
+	    sc->sc_nforce)
 		amdpm_smbus_attach(sc);
-	}
 
 	if (confreg & AMDPM_RNGEN) {
 		/* Check to see if we can read data from the RNG. */
