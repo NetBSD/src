@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.194 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.195 2007/01/06 15:29:02 pavel Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2007/01/06 15:29:02 pavel Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -445,9 +445,6 @@ u_int pmap_pdp_cache_generation;
 int	pmap_pdp_ctor(void *, void *, int);
 
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
-
-extern vaddr_t msgbuf_vaddr;
-extern paddr_t msgbuf_paddr;
 
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
@@ -982,9 +979,6 @@ pmap_bootstrap(kva_start)
 	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
 	vmmap = (char *)virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE;
-
-	msgbuf_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += round_page(MSGBUFSIZE);
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE;
