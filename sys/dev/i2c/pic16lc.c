@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.2 2007/01/06 16:57:19 jmcneill Exp $ */
+/* $NetBSD: pic16lc.c,v 1.3 2007/01/06 18:38:28 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.2 2007/01/06 16:57:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.3 2007/01/06 18:38:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,15 @@ __KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.2 2007/01/06 16:57:19 jmcneill Exp $")
 static int	pic16lc_match(struct device *, struct cfdata *, void *);
 static void	pic16lc_attach(struct device *, struct device *, void *);
 
+void		pic16lc_reboot(void);
+void		pic16lc_poweroff(void);
+void		pic16lc_setled(uint8_t);
+
 #define	PIC16LC_REG_VER			0x01
 #define PIC16LC_REG_POWER		0x02
+#define		PIC16LC_REG_POWER_RESET		0x01
+#define		PIC16LC_REG_POWER_CYCLE		0x40
+#define		PIC16LC_REG_POWER_SHUTDOWN	0x80
 #define PIC16LC_REG_TRAYSTATE		0x03
 #define PIC16LC_REG_AVPACK		0x04
 #define PIC16LC_REG_FANMODE		0x05
@@ -79,6 +86,8 @@ struct pic16lc_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
+static struct pic16lc_softc *pic16lc = NULL;
+
 #define XBOX_SENSOR_CPU		0
 #define XBOX_SENSOR_BOARD	1
 #define XBOX_NSENSORS		2
@@ -102,8 +111,15 @@ CFATTACH_DECL(pic16lc, sizeof(struct pic16lc_softc),
 static int
 pic16lc_match(struct device *parent, struct cfdata *cf, void *opaque)
 {
+	struct i2c_attach_args *ia;
 
-	/* sure, why not... */
+	ia = (struct i2c_attach_args *)opaque;
+
+	if (pic16lc != NULL) /* we can only have one... */
+		return 0;
+	if (ia->ia_addr != 0x10) /* must live at 0x10 on xbox */
+		return 0;
+
 	return 1;
 }
 
@@ -118,6 +134,8 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
+
+	pic16lc = sc;
 
 	/* initialize CPU sensor */
 	sc->sc_data[XBOX_SENSOR_CPU].sensor =
@@ -156,8 +174,7 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 
 	aprint_normal(": Xbox System Management Controller\n");
 
-	pic16lc_write_1(sc, PIC16LC_REG_LEDSEQ, 0xff);
-	pic16lc_write_1(sc, PIC16LC_REG_LEDMODE, 0x01);
+	pic16lc_setled(0xff);	/* orange */
 
 	iic_release_bus(sc->sc_tag, I2C_F_POLL);
 
@@ -227,4 +244,35 @@ pic16lc_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *info)
 	info->validflags = 0;
 
 	return 0;
+}
+
+void
+pic16lc_reboot(void)
+{
+	if (pic16lc == NULL) {
+		printf("pic16lc_reboot: driver not attached!\n");
+		return;
+	}
+	pic16lc_write_1(pic16lc, PIC16LC_REG_POWER, PIC16LC_REG_POWER_RESET);
+}
+
+void
+pic16lc_poweroff(void)
+{
+	if (pic16lc == NULL) {
+		printf("pic16lc_poweroff: driver not attached!\n");
+		return;
+	}
+	pic16lc_write_1(pic16lc, PIC16LC_REG_POWER, PIC16LC_REG_POWER_SHUTDOWN);
+}
+
+void
+pic16lc_setled(uint8_t val)
+{
+	if (pic16lc == NULL) {
+		printf("pic16lc_setled: driver not attached!\n");
+		return;
+	}
+	pic16lc_write_1(pic16lc, PIC16LC_REG_LEDSEQ, val);
+	pic16lc_write_1(pic16lc, PIC16LC_REG_LEDMODE, 0x01);
 }
