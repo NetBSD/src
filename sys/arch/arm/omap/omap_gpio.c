@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_gpio.c,v 1.1 2007/01/06 00:58:04 christos Exp $ */
+/*	$NetBSD: omap_gpio.c,v 1.2 2007/01/06 16:08:54 christos Exp $ */
 
 /*
  * The OMAP GPIO Controller interface is inspired by pxa2x0_gpio.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.1 2007/01/06 00:58:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.2 2007/01/06 16:08:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,10 +126,24 @@ omapgpio_attach(struct device *parent, struct device *self, void *aux)
 	memset(sc->sc_handlers, 0, sizeof(sc->sc_handlers));
 
 	/* Reset the module and wait for it to come back online. */
-	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_SYSCONFIG, 0x3);
+	reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, GPIO_SYSCONFIG);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_SYSCONFIG,
+			  reg | (1 << GPIO_SYSCONFIG_SOFTRESET));
 	do {
-		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, GPIO_SYSSTATUS);
+		reg = bus_space_read_4(sc->sc_bust, sc->sc_bush,
+				       GPIO_SYSSTATUS);
 	} while ((reg & 1) == 0);
+
+	/* Enable sleep wakeups, and need "smart idle" mode for that, plus
+	   autoidle the OCP interface clock. */
+
+	reg = bus_space_read_4(sc->sc_bust, sc->sc_bush, GPIO_SYSCONFIG);
+	reg &= ~(GPIO_SYSCONFIG_IDLEMODE_MASK << GPIO_SYSCONFIG_IDLEMODE);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_SYSCONFIG,
+			  reg | (1 << GPIO_SYSCONFIG_ENAWAKEUP) |
+			  (GPIO_SYSCONFIG_SMARTIDLE <<
+			   GPIO_SYSCONFIG_IDLEMODE) |
+			  (1 << GPIO_SYSCONFIG_AUTOIDLE));
 
 	/* Install our ISR. */
 	sc->sc_irqcookie = omap_intr_establish(tipb->tipb_intr, IPL_BIO,
@@ -324,8 +338,8 @@ omap_gpio_intr_establish(u_int gpio, int level, int spl,
 	levelreg |= levelctrl << off;
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, levelreg);
 
-	/* Set the wakeup enable for this pin. */
-	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_SET_WAKEUPENA,
+	/* Disable sleep wakeups for this pin unless enabled later. */
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_CLEAR_WAKEUPENA,
 	    bit);
 
 	/* Enable interrupt generation for that pin. */
@@ -362,7 +376,75 @@ omap_gpio_intr_disestablish(void *cookie)
 	sc->sc_mask &= ~bit;
 	sc->sc_handlers[relnum] = NULL;
 
+
 	FREE(gh, M_DEVBUF);
+}
+
+void
+omap_gpio_intr_mask(void *cookie)
+{
+	struct omapgpio_softc *sc;
+	struct gpio_irq_handler *gh = cookie;
+	u_int32_t bit;
+	u_int gpio, relnum;
+
+	KDASSERT(cookie != NULL);
+
+	gpio = gh->gh_gpio;
+	sc = omapgpio_units[GPIO_MODULE(gpio)];
+	bit = GPIO_BIT(gpio);
+	relnum = GPIO_RELNUM(gpio);
+
+	/* Disable interrupt generation for that gpio. */
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_CLEAR_IRQENABLE,
+	    bit);
+
+	sc->sc_mask &= ~bit;
+}
+
+void
+omap_gpio_intr_unmask(void *cookie)
+{
+	struct omapgpio_softc *sc;
+	struct gpio_irq_handler *gh = cookie;
+	u_int32_t bit;
+	u_int gpio, relnum;
+
+	KDASSERT(cookie != NULL);
+
+	gpio = gh->gh_gpio;
+	sc = omapgpio_units[GPIO_MODULE(gpio)];
+	bit = GPIO_BIT(gpio);
+	relnum = GPIO_RELNUM(gpio);
+
+	/* Enable interrupt generation for that pin. */
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_SET_IRQENABLE,
+	    bit);
+
+	sc->sc_mask |= bit;
+}
+
+void
+omap_gpio_intr_wakeup(void *cookie, int enable)
+{
+	struct omapgpio_softc *sc;
+	struct gpio_irq_handler *gh = cookie;
+	u_int32_t bit;
+	u_int gpio, relnum;
+
+	KDASSERT(cookie != NULL);
+
+	gpio = gh->gh_gpio;
+	sc = omapgpio_units[GPIO_MODULE(gpio)];
+	bit = GPIO_BIT(gpio);
+	relnum = GPIO_RELNUM(gpio);
+
+	if (enable)
+		bus_space_write_4(sc->sc_bust, sc->sc_bush,
+				  GPIO_SET_WAKEUPENA, bit);
+	else
+		bus_space_write_4(sc->sc_bust, sc->sc_bush,
+				  GPIO_CLEAR_WAKEUPENA, bit);
 }
 
 static int
@@ -370,13 +452,13 @@ omapgpio_intr(void *arg)
 {
 	struct omapgpio_softc *sc = arg;
 	struct gpio_irq_handler *gh;
-	u_int32_t gedr;
+	u_int32_t irqs;
 	int idx, handled, s, nattempts;
 
 	/* Fetch the GPIO interrupts pending.  */
-	gedr = bus_space_read_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS);
-	gedr &= GPIO_REG_MASK;
- 	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS, gedr);
+	irqs = bus_space_read_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS);
+	irqs &= GPIO_REG_MASK;
+ 	bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS, irqs);
 
 	/*
 	 * Since IRQSTATUS can change out from under us while we are busy
@@ -390,14 +472,14 @@ omapgpio_intr(void *arg)
 		 * regardless of the IRQENABLE status.  Just mask off the ones that we
 		 * care about when processing the ISR.
 		 */
-		gedr &= sc->sc_mask;
-		if (gedr == 0) {
+		irqs &= sc->sc_mask;
+		if (irqs == 0) {
 			/* Pretend that we handled everything. */
 			return (1);
 		}
 
-		for (idx = 0; idx < GPIO_NPINS; idx++, gedr >>= 1) {
-			if ((gedr & 1) == 0)
+		for (idx = 0; idx < GPIO_NPINS; idx++, irqs >>= 1) {
+			if ((irqs & 1) == 0)
 				continue;
 
 			if ((gh = sc->sc_handlers[idx]) == NULL) {
@@ -413,9 +495,9 @@ omapgpio_intr(void *arg)
 		}
 
 		/* Check IRQSTATUS again. */
-		gedr = bus_space_read_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS);
-		gedr &= GPIO_REG_MASK;
-		if (gedr == 0) {
+		irqs = bus_space_read_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS);
+		irqs &= GPIO_REG_MASK;
+		if (irqs == 0) {
 			/* Done servicing interrupts. */
 			break;
 		} else if (nattempts++ == 10000) {
@@ -426,7 +508,7 @@ omapgpio_intr(void *arg)
 			panic("%s: Stuck in GPIO interrupt service routine.",
 			    sc->sc_dev.dv_xname);
 		}
-		bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS, gedr);
+		bus_space_write_4(sc->sc_bust, sc->sc_bush, GPIO_IRQSTATUS, irqs);
 	}
 
 	return (handled);
