@@ -1,4 +1,4 @@
-/*	$NetBSD: want.c,v 1.9 2007/01/06 14:11:20 cbiere Exp $	*/
+/*	$NetBSD: want.c,v 1.10 2007/01/06 14:29:44 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -93,13 +93,17 @@ wtmp(const char *file, int namesz, int linesz, int hostsz, int numeric)
 	}
 
 	if (lseek(wfd, 0, SEEK_CUR) < 0) {
-		char tfile[] = _PATH_TMP "last.XXXXXX";
+		const char *dir;
+		char *tfile;
 		int tempfd;
 		ssize_t tlen;
 
 		if (ESPIPE != errno) {
 			err(EXIT_FAILURE, "lseek");
 		}
+		dir = getenv("TMPDIR");
+		if (asprintf(&tfile, "%s/last.XXXXXX", dir ? dir : _PATH_TMP) == -1)
+			err(EXIT_FAILURE, "asprintf");
 		tempfd = mkstemp(tfile);
 		if (tempfd < 0) {
 			err(EXIT_FAILURE, "mkstemp");
