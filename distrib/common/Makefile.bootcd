@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.5 2006/11/04 12:06:28 hubertf Exp $
+#	$NetBSD: Makefile.bootcd,v 1.6 2007/01/07 18:34:48 dsl Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -24,8 +24,6 @@ BOOT?=		${DESTDIR}/usr/mdec/boot
 BOOTXX_CD9660?=	${DESTDIR}/usr/mdec/bootxx_cd9660
 CDRELEASE?=	false
 CDROMS_RELEASEDIR?=	installation/cdrom
-
-CDINSTALLBOOT=	"${TOOL_INSTALLBOOT} ${CDBOOTOPTIONS} -m${MACHINE} @IMAGE@ ${MDEC}/bootxx_cd9660"
 
 # Stuff that should come from elsewhere - XXX where? - HF
 CP?=		cp
@@ -56,9 +54,7 @@ prepare:
 	${RM} -f bootxx
 	${CP} ${DESTDIR}/usr/mdec/bootxx_cd9660 bootxx
 	${CHMOD} +w bootxx
-	${TOOL_INSTALLBOOT} \
-		-t raw ${CDBOOTOPTIONS} -m${MACHINE} \
-		bootxx ${DESTDIR}/usr/mdec/bootxx_cd9660
+	${TOOL_INSTALLBOOT} -m${MACHINE} -e ${CDBOOTOPTIONS} bootxx
 
 # Copy $RELEASEDIR/${MACHINE} in the CDROM dir
 #
