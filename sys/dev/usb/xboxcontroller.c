@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.2 2007/01/07 16:54:32 jmcneill Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.3 2007/01/07 19:08:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.2 2007/01/07 16:54:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.3 2007/01/07 19:08:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ xboxcontroller_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 {
 	struct xboxcontroller_softc *sc;
 	unsigned char *data;
-	int16_t x, y, z, w;
+	int16_t x, y;
 	char btnmask;
 	uint32_t len;
 	int s;
@@ -223,23 +223,28 @@ xboxcontroller_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	x = (int16_t)(((int16_t)data[13] << 8) | data[12]);
 	y = (int16_t)(((int16_t)data[15] << 8) | data[14]);
-	z = (int16_t)(((int16_t)data[17] << 8) | data[16]);
-	w = (int16_t)(((int16_t)data[19] << 8) | data[18]);
+	/* z = (int16_t)(((int16_t)data[17] << 8) | data[16]); */
+	/* w = (int16_t)(((int16_t)data[19] << 8) | data[18]); */
+
+	/* de-jitter */
+	if (x < 8192 && x > -8192)
+		x = 0;
+	if (y < 8192 && y > -8192)
+		y = 0;
 
 	switch (sc->sc_drvmode) {
 	case XBOX_CONTROLLER_MODE_MOUSE:
 		if (sc->sc_wsmousedev == NULL)
 			goto done;
 		btnmask = 0;
-		if (data[4]) btnmask |= 0x01;	/* A button */
-		if (data[5]) btnmask |= 0x04;	/* B button */
-		if (data[6]) btnmask |= 0x02;	/* X button */
-		if (data[7]) btnmask |= 0x08;	/* Y button */
+		if (data[2] & 0x40) btnmask |= 0x01;	/* thumb press left */
+		if (data[2] & 0x80) btnmask |= 0x04;	/* thumb press right */
+		if (data[2] & 0x10) btnmask |= 0x02;	/* start button */
 
 		s = spltty();
 		wsmouse_input(sc->sc_wsmousedev, btnmask,
 			      x / 4096, y / 4096,
-			      z / 4096, w / 4096,
+			      0, 0, /* z / 4096, w / 4096, */
 			      WSMOUSE_INPUT_DELTA);
 		splx(s);
 		break;
