@@ -1,4 +1,4 @@
-/* $NetBSD: xboxlcd.c,v 1.1 2007/01/04 18:16:44 jmcneill Exp $ */
+/* $NetBSD: xboxlcd.c,v 1.2 2007/01/07 02:32:10 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2006 Andrew Gillham
@@ -26,6 +26,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ */
+
+/*
+ *  Driver for Xecuter X3 LCD add-on
  */
 #include <sys/param.h>
 #include <sys/systm.h>
