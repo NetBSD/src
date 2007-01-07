@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.17 2007/01/02 15:51:22 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.18 2007/01/07 19:28:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.17 2007/01/02 15:51:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.18 2007/01/07 19:28:48 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -398,16 +398,64 @@ int
 puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 	struct lwp *l)
 {
-	int error;
+	struct vnode *vp, *nvp;
+	int error, rv;
 
 	PUFFS_VFSREQ(sync);
 
+	error = 0;
+
+	/*
+	 * Sync all data from nodes.  The user server can still cache
+	 * metadata and control its syncing with VFS_SYNC.  However,
+	 * we just push all data with VOP_FSYNC already here to avoid
+	 * an extra pingpong query from userspace requesting that
+	 * data (and besides, there's no framework yet to handle it).
+	 */
+	simple_lock(&mntvnode_slock);
+ loop:
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+		/* check if we're on the right list */
+		if (vp->v_mount != mp)
+			goto loop;
+
+		simple_lock(&vp->v_interlock);
+		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+
+		/* XXX: this doesn't really work */
+		if (vp->v_type != VREG || vp->v_uobj.uo_npages == 0) {
+			simple_unlock(&vp->v_interlock);
+			continue;
+		}
+
+		simple_unlock(&mntvnode_slock);
+		/* XXX: PNODE_INACTIVE is b0rked */
+		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
+		if (rv) {
+			simple_lock(&mntvnode_slock);
+			if (rv == ENOENT)
+				goto loop;
+			continue;
+		}
+
+		if ((rv = VOP_FSYNC(vp, cred,
+		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0,
+		    0, 0, l)) != 0)
+			error = rv;
+		vput(vp);
+		simple_lock(&mntvnode_slock);
+	}
+	simple_unlock(&mntvnode_slock);
+
+	/* sync fs */
 	sync_arg.pvfsr_waitfor = waitfor;
 	puffs_credcvt(&sync_arg.pvfsr_cred, cred);
 	sync_arg.pvfsr_pid = puffs_lwp2pid(l);
 
-	error = puffs_vfstouser(MPTOPUFFSMP(mp), PUFFS_VFS_SYNC,
+	rv = puffs_vfstouser(MPTOPUFFSMP(mp), PUFFS_VFS_SYNC,
 	    &sync_arg, sizeof(sync_arg));
+	if (rv)
+		error = rv;
 
 	return error;
 }
