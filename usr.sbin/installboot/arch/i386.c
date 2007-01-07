@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.23 2007/01/06 10:21:24 dsl Exp $ */
+/* $NetBSD: i386.c,v 1.24 2007/01/07 04:16:57 dogcow Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.23 2007/01/06 10:21:24 dsl Exp $");
+__RCSID("$NetBSD: i386.c,v 1.24 2007/01/07 04:16:57 dogcow Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -309,12 +309,13 @@ i386_setboot(ib_params *params)
 
 	/* Read in the existing disk header and boot code */
 	rv = pread(params->fsfd, &disk_buf, sizeof (disk_buf), 0);
-	if (rv != sizeof (disk_buf)) {
+	if (rv != sizeof(disk_buf)) {
 		if (rv == -1)
 			warn("Reading `%s'", params->filesystem);
 		else
-			warnx("Reading `%s': short read, %d bytes",
-				    params->filesystem, rv);
+			warnx("Reading `%s': short read, %ld bytes"
+			    " (should be %ld)", params->filesystem, (long)rv,
+			    (long)sizeof(disk_buf));
 		return 0;
 	}
 
@@ -333,8 +334,9 @@ i386_setboot(ib_params *params)
 		if (rv == -1)
 			warn("Reading `%s'", params->stage1);
 		else
-			warnx("Reading `%s': short read, %d bytes",
-				params->stage1, rv);
+			warnx("Reading `%s': short read, %ld bytes"
+			    " (should be %ld)", params->stage1, (long)rv,
+			    (long)params->s1stat.st_size);
 		return 0;
 	}
 
@@ -506,7 +508,8 @@ i386_editboot(ib_params *params)
 		warn("Writing `%s'", params->filesystem);
 		goto done;
 	} else if (rv != sizeof buf) {
-		warnx("Writing `%s': short write", params->filesystem);
+		warnx("Writing `%s': short write, %ld bytes (should be %ld)",
+		    params->filesystem, (long)rv, (long)sizeof(buf));
 		goto done;
 	}
 
