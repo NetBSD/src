@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.591 2007/01/06 18:42:36 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.592 2007/01/07 01:04:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.591 2007/01/06 18:42:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.592 2007/01/07 01:04:26 jmcneill Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -419,6 +419,10 @@ cpu_startup()
 	 */
 	consinit();
 
+#ifdef XBOX
+	xbox_startup();
+#endif
+
 	/*
 	 * Initialize error message buffer (et end of core).
 	 */
@@ -482,21 +486,6 @@ cpu_startup()
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	x86_bus_space_mallocok();
-
-#ifdef XBOX
-#define XBOX_NFORCE_NIC 0xfef00000
-	{
-		bus_space_handle_t h;
-		char *nicbase;
-		int rv;
-
-		rv = bus_space_map(X86_BUS_SPACE_MEM, XBOX_NFORCE_NIC,
-		    0x400, BUS_SPACE_MAP_LINEAR, &h);
-		nicbase = bus_space_vaddr(X86_BUS_SPACE_MEM, h);
-		*(uint32_t *)(nicbase + 0x188) = 0;
-		bus_space_unmap(X86_BUS_SPACE_MEM, h, 0x400);
-	}
-#endif
 }
 
 /*

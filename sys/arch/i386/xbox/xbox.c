@@ -1,4 +1,4 @@
-/* $NetBSD: xbox.c,v 1.1 2007/01/06 18:42:36 jmcneill Exp $ */
+/* $NetBSD: xbox.c,v 1.2 2007/01/07 01:04:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,11 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.1 2007/01/06 18:42:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.2 2007/01/07 01:04:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <machine/bus.h>
 
 #include <arch/i386/include/xbox.h>
 
@@ -52,6 +54,27 @@ extern void pic16lc_setled(uint8_t);
 extern void pic16lc_reboot(void);
 extern void pic16lc_poweroff(void);
 #endif
+
+#define XBOX_NFORCE_NIC	0xfef00000
+
+void
+xbox_startup(void)
+{
+	bus_space_handle_t h;
+	int rv;
+
+	if (!arch_i386_is_xbox)
+		return;
+
+	rv = bus_space_map(X86_BUS_SPACE_MEM, XBOX_NFORCE_NIC,
+	    0x400, 0, &h);
+	if (!rv) {
+		bus_space_write_4(X86_BUS_SPACE_MEM, h, 0x188, 0);
+		bus_space_unmap(X86_BUS_SPACE_MEM, h, 0x400);
+	}
+
+	
+}
 
 void
 xbox_setled(uint8_t val)
