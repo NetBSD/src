@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.6 2007/01/07 04:53:29 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.7 2007/01/07 16:34:32 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -309,7 +309,7 @@ xboxfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = console_ri->ri_width;
 	ri->ri_height = console_ri->ri_height;
 	ri->ri_stride = console_ri->ri_stride;
-	ri->ri_flg = console_ri->ri_flg;
+	ri->ri_flg = 0;
 
 	ri->ri_hwbits = console_ri->ri_hwbits;
 	ri->ri_bits = console_ri->ri_bits;
