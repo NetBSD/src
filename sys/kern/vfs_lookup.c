@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.78 2007/01/07 20:43:59 pooka Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.79 2007/01/07 21:33:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.78 2007/01/07 20:43:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.79 2007/01/07 21:33:24 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -486,12 +486,11 @@ namei_hash(const char *name, const char **ep)
  * When CREATE, RENAME, or DELETE is specified, information usable in
  * creating, renaming, or deleting a directory entry may be calculated.
  * If flag has LOCKPARENT or'ed into it, the parent directory is returned
- * locked. If flag has WANTPARENT or'ed into it, the parent directory is
- * returned unlocked. Otherwise the parent directory is not returned. If
- * the target of the pathname exists and LOCKLEAF is or'ed into the flag
- * the target is returned locked, otherwise it is returned unlocked.
- * When creating or renaming and LOCKPARENT is specified, the target may not
- * be ".".  When deleting and LOCKPARENT is specified, the target may be ".".
+ * locked.  Otherwise the parent directory is not returned. If the target
+ * of the pathname exists and LOCKLEAF is or'ed into the flag the target
+ * is returned locked, otherwise it is returned unlocked.  When creating
+ * or renaming and LOCKPARENT is specified, the target may not be ".".
+ * When deleting and LOCKPARENT is specified, the target may be ".".
  *
  * Overall outline of lookup:
  *
@@ -500,14 +499,13 @@ namei_hash(const char *name, const char **ep)
  *	handle degenerate case where name is null string
  *	if .. and crossing mount points and on mounted filesys, find parent
  *	call VOP_LOOKUP routine for next component name
- *	    directory vnode returned in ni_dvp, unlocked unless LOCKPARENT set
+ *	    directory vnode returned in ni_dvp, locked.
  *	    component vnode returned in ni_vp (if it exists), locked.
  *	if result vnode is mounted on and crossing mount points,
  *	    find mounted on vnode
  *	if more components of name, do next level at dirloop
  *	return the answer in ni_vp, locked if LOCKLEAF set
  *	    if LOCKPARENT set, return locked parent in ni_dvp
- *	    if WANTPARENT set, return unlocked parent in ni_dvp
  */
 int
 lookup(struct nameidata *ndp)
