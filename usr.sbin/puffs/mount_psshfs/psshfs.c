@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.3 2007/01/07 19:33:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.3 2007/01/07 19:33:23 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -105,8 +105,7 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	mntflags = 0;
-	pflags = PUFFS_KFLAG_NOCACHE;
+	mntflags = pflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
 		case 'o':
