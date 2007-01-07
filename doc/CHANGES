@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.776 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.777 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -18,6 +18,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	nfs: Remove NQNFS support from kernel. [yamt 20061227]
   	zaurus: add support for Sharp C3x00 PDA. [ober 20070105]
 	i386: add support for Microsoft Xbox. [jmcneill 20070105]
-	ntp:	Import ntp 4.2.4 (20070101). [kardel 20070106]
+	ntp: Import ntp 4.2.4 (20061228). Tracking of network interface address
+	     changes is now supported - no more ntpd restarts when interface
+	     addresses are re-configured (WLAN/DSL/ppp/...). [kardel 20070106]
 	ug(4): driver for the Abit uGuru hardware system monitor,
 		contributed by Mihai Chelaru. [xtraeme 20070106]
