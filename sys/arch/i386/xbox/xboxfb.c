@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.4 2007/01/05 04:58:32 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.5 2007/01/07 01:12:42 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2006 Andrew Gillham
@@ -57,14 +57,20 @@
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
+#include <dev/i2c/pic16lcreg.h>
+
 #include "opt_wsemul.h"
 
 MALLOC_DEFINE(M_XBOXFB, "xboxfb", "xboxfb shadow framebuffer");
 
-#define SCREEN_WIDTH	640
-#define SCREEN_HEIGHT	480
-#define SCREEN_BPP	32
-#define SCREEN_SIZE	(SCREEN_WIDTH*SCREEN_HEIGHT*SCREEN_BPP)
+#define SCREEN_WIDTH_SDTV	640
+#define SCREEN_HEIGHT_SDTV	480
+#define SCREEN_WIDTH_HDTV	720
+#define SCREEN_HEIGHT_HDTV	480
+#define SCREEN_WIDTH_VGA	800
+#define SCREEN_HEIGHT_VGA	600
+#define SCREEN_BPP		32
+#define SCREEN_SIZE(sc)		((sc)->width * (sc)->height * SCREEN_BPP)
 
 #define FONT_HEIGHT	16
 #define FONT_WIDTH	8
@@ -109,6 +115,8 @@ static struct vcons_screen xboxfb_console_screen;
 
 static int	xboxfb_match(struct device *, struct cfdata *, void *);
 static void	xboxfb_attach(struct device *, struct device *, void *);
+
+static uint8_t	xboxfb_get_avpack(void);
 
 CFATTACH_DECL(xboxfb, sizeof(struct xboxfb_softc), xboxfb_match,
 	xboxfb_attach, NULL, NULL);
@@ -185,11 +193,13 @@ xboxfb_attach(struct device *parent, struct device *self, void *aux)
 	ulong defattr = 0;
 	uint32_t bg, fg, ul;
 
+	ri = &xboxfb_console_screen.scr_ri;
+
 	sc->sc_memt = X86_BUS_SPACE_MEM;
 	sc->sc_memh = xboxfb_console_memh;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-	sc->width = SCREEN_WIDTH;
-	sc->height = SCREEN_HEIGHT;
+	sc->width = ri->ri_width;
+	sc->height = ri->ri_height;
 	sc->bits_per_pixel = SCREEN_BPP;
 	sc->fbpa = XBOX_FB_START;
 
@@ -206,8 +216,6 @@ xboxfb_attach(struct device *parent, struct device *self, void *aux)
 		    XBOX_FB_SIZE);
 		return;
 	}
-
-	ri = &xboxfb_console_screen.scr_ri;
 
 	vcons_init(&sc->vd, sc, &xboxfb_defaultscreen, &xboxfb_accessops);
 	sc->vd.init_screen = xboxfb_init_screen;
@@ -265,7 +273,7 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
 			return EINVAL;
 
 		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = SCREEN_WIDTH * 4;
+			*(u_int *)data = sc->width * 4;
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
@@ -336,12 +344,54 @@ xboxfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_hw = scr;
 }
 
+/*
+ * Gross hack to determine the display resolution based on the type of
+ * AV cable attached at boot. Since we don't have the capability of changing
+ * the display resolution yet, we need to rely on Cromwell/Xromwell to
+ * set this up for us.
+ */
+#define XBOX_SMBUS_BA	0xc000
+#define XBOX_PIC_ADDR	0x10
+
+static uint8_t
+xboxfb_smbus_pic_read(bus_space_tag_t t, bus_space_handle_t h, uint8_t cmd)
+{
+
+	bus_space_write_1(t, h, 0x04, (XBOX_PIC_ADDR << 1) | 1);
+	bus_space_write_1(t, h, 0x08, cmd);
+	bus_space_write_2(t, h, 0x00, bus_space_read_2(t, h, 0x00));
+	bus_space_write_1(t, h, 0x02, 0x0a);
+	while ((bus_space_read_1(t, h, 0x00) & 0x36) == 0)
+		;
+	return bus_space_read_1(t, h, 0x06);
+}
+
+static uint8_t
+xboxfb_get_avpack(void)
+{
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	uint8_t rv;
+
+	t = X86_BUS_SPACE_IO;
+	rv = bus_space_map(t, XBOX_SMBUS_BA, 16, 0, &h);
+	if (rv)
+		return PIC16LC_REG_AVPACK_COMPOSITE; /* shouldn't happen */
+
+	xboxfb_smbus_pic_read(t, h, PIC16LC_REG_AVPACK);
+
+	bus_space_unmap(t, h, 16);
+
+	return rv;
+}
+
 int
 xboxfb_cnattach(void)
 {
 	static int ncalls = 0;
 	struct rasops_info *ri = &xboxfb_console_screen.scr_ri;
 	long defattr;
+	uint8_t avpack;
 
 	/* We can't attach if we're not running on an Xbox... */
 	if (!arch_i386_is_xbox)
@@ -368,8 +418,27 @@ xboxfb_cnattach(void)
 	}
 
 	wsfont_init();
-	ri->ri_width = SCREEN_WIDTH;
-	ri->ri_height = SCREEN_HEIGHT;
+
+	/*
+	 * We need to ask the pic16lc for the avpack type to determine
+	 * which video mode the loader has setup for us
+	 */
+	avpack = xboxfb_get_avpack();
+	switch (avpack) {
+	case PIC16LC_REG_AVPACK_HDTV:
+		ri->ri_width = SCREEN_WIDTH_HDTV;
+		ri->ri_height = SCREEN_HEIGHT_HDTV;
+		break;
+	case PIC16LC_REG_AVPACK_VGA:
+	case PIC16LC_REG_AVPACK_VGA_SOG:
+		ri->ri_width = SCREEN_WIDTH_VGA;
+		ri->ri_height = SCREEN_HEIGHT_VGA;
+		break;
+	default:
+		ri->ri_width = SCREEN_WIDTH_SDTV;
+		ri->ri_height = SCREEN_HEIGHT_SDTV;
+		break;
+	}
 	ri->ri_depth = SCREEN_BPP;
 	ri->ri_stride = ri->ri_width * ri->ri_depth / 8;
 	ri->ri_flg = RI_CENTER;
