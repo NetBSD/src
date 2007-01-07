@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.7 2007/01/06 21:58:54 cube Exp $
+.\" $NetBSD: config.5,v 1.8 2007/01/07 23:22:04 cube Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -67,7 +67,9 @@ files spread all around the kernel source tree, the main one being
 .Pp
 Thus, the kernel configuration file contains two parts:
 the description of the compilation options, and the selection of those options.
-However, a few statements belong to any of the two sections.
+However, it begins with a small preamble that controls a couple of options of
+.Xr config 1 ,
+and a few statements belong to any of the two sections.
 .Pp
 The user controls the options selection part, which is located in a file
 commonly referenced as the
@@ -269,13 +271,30 @@ The
 .Ar path
 argument is either absolute or relative to the current defined prefix, which
 defaults to the top of ther kernel source tree.
-.It Ic package Ar path
-Simpler version of:
-.Bd -literal -offset indent
-prefix PATH
-include FILE
-prefix
-.Ed
+.El
+.Ss PREAMBLE
+In addition to
+.Ic include, cinclude
+and
+.Ic prefix ,
+the preamble may contain the following optional statements:
+.Bl -ohang
+.It Ic build Ar path
+Defines the build directory for the compilation of the kernel.
+It replaces the default of
+.Pa ../compile/\*[Lt]config-file\*[Gt]
+and is superseded by the
+.Fl b
+parameter of
+.Xr config 1 .
+.It Ic source Ar path
+Defines the directory in which the source of the kernel lives.
+It replaces the default of
+.Pa ../../../..
+and is superseded by the
+.Fl s
+parameter of
+.Xr config 1 .
 .El
 .Ss OPTIONS DESCRIPTION
 The user will not usually have to use descriptive statements, as they are meant
@@ -525,6 +544,13 @@ for each defined sub-architecture
 .It
 .Pa arch/${MACHINE}/conf/files.${MACHINE}
 .El
+.It Ic package Ar path
+Simpler version of:
+.Bd -literal -offset indent
+prefix PATH
+include FILE
+prefix
+.Ed
 .It Ic ident Ar string
 Defines the indentification string of the kernel.
 This statement is optional, and the name of the main configuration file will be
