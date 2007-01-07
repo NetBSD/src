@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.77 2006/12/27 23:21:02 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.78 2007/01/07 20:43:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.77 2006/12/27 23:21:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.78 2007/01/07 20:43:59 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -527,7 +527,7 @@ lookup(struct nameidata *ndp)
 	 * Setup: break out flag bits into variables.
 	 */
 	docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
-	if (cnp->cn_nameiop != CREATE)
+	if (cnp->cn_nameiop == DELETE)
 		docache = 0;
 	rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
