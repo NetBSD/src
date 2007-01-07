@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lcreg.h,v 1.1 2007/01/07 01:02:34 jmcneill Exp $ */
+/* $NetBSD: pic16lcreg.h,v 1.2 2007/01/07 01:08:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -44,11 +44,10 @@
 #define PIC16LC_REG_AVPACK              0x04
 #define         PIC16LC_REG_AVPACK_SCART        0x00
 #define         PIC16LC_REG_AVPACK_HDTV         0x01
-#define         PIC16LC_REG_AVPACK_VGA          0x02
-#define         PIC16LC_REG_AVPACK_RFU          0x03
+#define         PIC16LC_REG_AVPACK_VGA_SOG      0x02
 #define         PIC16LC_REG_AVPACK_SVIDEO       0x04
 #define         PIC16LC_REG_AVPACK_COMPOSITE    0x06
-#define         PIC16LC_REG_AVPACK_DISCONNECTED 0x07
+#define         PIC16LC_REG_AVPACK_VGA          0x07
 #define PIC16LC_REG_FANMODE             0x05
 #define PIC16LC_REG_FANSPEED            0x06
 #define PIC16LC_REG_LEDMODE             0x07
