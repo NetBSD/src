@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.191 2007/01/04 16:55:29 elad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.192 2007/01/07 09:33:18 isaki Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.191 2007/01/04 16:55:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.192 2007/01/07 09:33:18 isaki Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -746,7 +746,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fstype = 0;
 
 	/*
-	 * Try reading the superblock in each of its possible locations.		 */
+	 * Try reading the superblock in each of its possible locations.
+	 */
 	for (i = 0; ; i++) {
 		if (bp != NULL) {
 			bp->b_flags |= B_NOCACHE;
