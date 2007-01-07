@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.92 2006/05/20 10:31:59 mrg Exp $	*/
+/*	$NetBSD: login.c,v 1.93 2007/01/07 10:36:56 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.92 2006/05/20 10:31:59 mrg Exp $");
+__RCSID("$NetBSD: login.c,v 1.93 2007/01/07 10:36:56 isaki Exp $");
 #endif /* not lint */
 
 /*
@@ -298,8 +298,8 @@ main(int argc, char *argv[])
 	if (issetugid()) {
 		nested = strdup(user_from_uid(getuid(), 0));
 		if (nested == NULL) {
-                	syslog(LOG_ERR, "strdup: %m");
-                	sleepexit(1);
+			syslog(LOG_ERR, "strdup: %m");
+			sleepexit(1);
 		}
 	}
 
@@ -502,17 +502,17 @@ main(int argc, char *argv[])
 
 	/* if user not super-user, check for disabled logins */
 #ifdef LOGIN_CAP
-        if (!login_getcapbool(lc, "ignorenologin", rootlogin))
+	if (!login_getcapbool(lc, "ignorenologin", rootlogin))
 		checknologin(login_getcapstr(lc, "nologin", NULL, NULL));
 #else
-        if (!rootlogin)
-                checknologin(NULL);
+	if (!rootlogin)
+		checknologin(NULL);
 #endif
 
 #ifdef LOGIN_CAP
-        quietlog = login_getcapbool(lc, "hushlogin", 0);
+	quietlog = login_getcapbool(lc, "hushlogin", 0);
 #else
-        quietlog = 0;
+	quietlog = 0;
 #endif
 	/* Temporarily give up special privileges so we can change */
 	/* into NFS-mounted homes that are exported for non-root */
@@ -527,10 +527,10 @@ main(int argc, char *argv[])
 	
 	if (chdir(pwd->pw_dir) < 0) {
 #ifdef LOGIN_CAP
-                if (login_getcapbool(lc, "requirehome", 0)) {
+		if (login_getcapbool(lc, "requirehome", 0)) {
 			(void)printf("Home directory %s required\n",
 			    pwd->pw_dir);
-                        sleepexit(1);
+			sleepexit(1);
 		}
 #endif	
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
@@ -549,9 +549,9 @@ main(int argc, char *argv[])
 	(void)setegid(saved_gid);
 
 #ifdef LOGIN_CAP
-        pw_warntime = login_getcaptime(lc, "password-warn",
-            _PASSWORD_WARNDAYS * SECSPERDAY,
-            _PASSWORD_WARNDAYS * SECSPERDAY);
+	pw_warntime = login_getcaptime(lc, "password-warn",
+		_PASSWORD_WARNDAYS * SECSPERDAY,
+		_PASSWORD_WARNDAYS * SECSPERDAY);
 #endif
 
 	(void)gettimeofday(&now, (struct timezone *)NULL);
@@ -626,8 +626,8 @@ main(int argc, char *argv[])
 #ifdef LOGIN_CAP
 	if ((shell = login_getcapstr(lc, "shell", NULL, NULL)) != NULL) {
 		if ((shell = strdup(shell)) == NULL) {
-                	syslog(LOG_ERR, "Cannot alloc mem");
-                	sleepexit(1);
+			syslog(LOG_ERR, "Cannot alloc mem");
+			sleepexit(1);
 		}
 		pwd->pw_shell = shell;
 	}
@@ -688,11 +688,11 @@ main(int argc, char *argv[])
 			(void)printf("%s", copyrightstr);
 
 #ifdef LOGIN_CAP
-                fname = login_getcapstr(lc, "welcome", NULL, NULL);
-                if (fname == NULL || access(fname, F_OK) != 0)
+		fname = login_getcapstr(lc, "welcome", NULL, NULL);
+		if (fname == NULL || access(fname, F_OK) != 0)
 #endif
-                        fname = _PATH_MOTDFILE;
-                motd(fname);
+			fname = _PATH_MOTDFILE;
+		motd(fname);
 
 		(void)snprintf(tbuf,
 		    sizeof(tbuf), "%s/%s", _PATH_MAILDIR, pwd->pw_name);
