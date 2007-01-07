@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.1 2007/01/05 17:16:22 jmcneill Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.2 2007/01/07 16:54:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.1 2007/01/05 17:16:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.2 2007/01/07 16:54:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,8 @@ USB_MATCH(xboxcontroller)
 
 	if (uaa->vendor == USB_VENDOR_MICROSOFT) {
 		switch (uaa->product) {
-		case USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S:
+		case USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S10:
+		case USB_PRODUCT_MICROSOFT_XBOX_CONTROLLER_S12:
 			return UMATCH_VENDOR_PRODUCT;
 		}
 	}
