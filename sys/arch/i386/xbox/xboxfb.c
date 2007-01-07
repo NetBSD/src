@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.7 2007/01/07 16:34:32 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.8 2007/01/07 16:51:44 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -93,8 +93,6 @@ MALLOC_DEFINE(M_XBOXFB, "xboxfb", "xboxfb shadow framebuffer");
 #define XBOX_FB_START_PTR	(0xFD600800)
 */
 
-static bus_space_handle_t xboxfb_console_memh;
-
 struct xboxfb_softc {
 	struct device sc_dev;
 	struct vcons_data vd;
@@ -110,12 +108,17 @@ struct xboxfb_softc {
 	uint32_t sc_bg;
 };
 
+static bus_space_handle_t xboxfb_console_memh;
 static struct vcons_screen xboxfb_console_screen;
+static uint8_t *xboxfb_console_bits;
+static int xboxfb_console_width;
+static int xboxfb_console_height;
 
 static int	xboxfb_match(struct device *, struct cfdata *, void *);
 static void	xboxfb_attach(struct device *, struct device *, void *);
 
 static uint8_t	xboxfb_get_avpack(void);
+static void	xboxfb_clear_fb(struct xboxfb_softc *);
 
 CFATTACH_DECL(xboxfb, sizeof(struct xboxfb_softc), xboxfb_match,
 	xboxfb_attach, NULL, NULL);
@@ -199,7 +202,7 @@ xboxfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 
 	aprint_normal(": %dx%d, %d bit framebuffer console\n",
-		ri->ri_width, ri->ri_height, ri->ri_depth);
+	    xboxfb_console_width, xboxfb_console_height, ri->ri_depth);
 
 	vcons_init(&sc->vd, sc, &xboxfb_defaultscreen, &xboxfb_accessops);
 	sc->vd.init_screen = xboxfb_init_screen;
@@ -244,8 +247,8 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
 
 		case WSDISPLAYIO_GINFO:
 			wdf = (void *)data;
-			wdf->height = ms->scr_ri.ri_height;
-			wdf->width = ms->scr_ri.ri_width;
+			wdf->height = xboxfb_console_height;
+			wdf->width = xboxfb_console_width;
 			wdf->depth = ms->scr_ri.ri_depth;
 			wdf->cmsize = 256;
 			return 0;
@@ -257,7 +260,7 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
 			return EINVAL;
 
 		case WSDISPLAYIO_LINEBYTES:
-			*(u_int *)data = ms->scr_ri.ri_width * 4;
+			*(u_int *)data = ms->scr_ri.ri_stride;
 			return 0;
 
 		case WSDISPLAYIO_SMODE:
@@ -265,8 +268,10 @@ xboxfb_ioctl(void *v, void*vs, u_long cmd, caddr_t data, int flag,
 				int new_mode = *(int *)data;
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
-					if (new_mode == WSDISPLAYIO_MODE_EMUL)
+					if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+						xboxfb_clear_fb(sc);
 						vcons_redraw_screen(vd->active);
+					}
 				}
 			}
 			return 0;
@@ -324,6 +329,18 @@ xboxfb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_width / ri->ri_font->fontwidth);
 
 	ri->ri_hw = scr;
+}
+
+static void
+xboxfb_clear_fb(struct xboxfb_softc *sc)
+{
+	struct rasops_info *ri;
+	uint32_t fbsize;
+
+	ri = &xboxfb_console_screen.scr_ri;
+	fbsize = ri->ri_height * ri->ri_stride;
+
+	memset(xboxfb_console_bits, 0, fbsize);
 }
 
 /*
@@ -434,15 +451,17 @@ xboxfb_cnattach(void)
 
 	ri->ri_depth = SCREEN_BPP;
 	ri->ri_stride = ri->ri_width * ri->ri_depth / 8;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = 0; /* RI_CENTER does not work with shadowfb */
 	if (xboxfb_console_shadowbits) {
 		ri->ri_bits = xboxfb_console_shadowbits;
 		ri->ri_hwbits = bus_space_vaddr(X86_BUS_SPACE_MEM,
 		    xboxfb_console_memh);
+		xboxfb_console_bits = ri->ri_hwbits;
 	} else {
 		ri->ri_bits = bus_space_vaddr(X86_BUS_SPACE_MEM,
 		    xboxfb_console_memh);
 		ri->ri_hwbits = NULL;
+		xboxfb_console_bits = ri->ri_bits;
 	}
 
 	/* clear screen */
@@ -451,7 +470,10 @@ xboxfb_cnattach(void)
 	if (ri->ri_hwbits != NULL)
 		memset(ri->ri_hwbits, 0, fbsize);
 
-#if notyet
+
+	xboxfb_console_width = ri->ri_width;
+	xboxfb_console_height = ri->ri_height;
+
 	/* Define a TV safe area where applicable */
 	if (sa_left > 0) {
 		ri->ri_hwbits += (sa_left * 4);
@@ -461,7 +483,6 @@ xboxfb_cnattach(void)
 		ri->ri_hwbits += (ri->ri_stride * sa_top);
 		ri->ri_height -= (sa_top * 2);
 	}
-#endif
 
 	rasops_init(ri, ri->ri_height / 8, ri->ri_width / 8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
