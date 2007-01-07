@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.8 2007/01/07 16:51:44 jmcneill Exp $ */
+/* $NetBSD: xboxfb.c,v 1.9 2007/01/07 19:40:50 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -64,13 +64,15 @@
 
 MALLOC_DEFINE(M_XBOXFB, "xboxfb", "xboxfb shadow framebuffer");
 
-#define SCREEN_WIDTH_SDTV	640
-#define SCREEN_HEIGHT_SDTV	480
-#define SCREEN_WIDTH_HDTV	720
-#define SCREEN_HEIGHT_HDTV	480
-#define SCREEN_WIDTH_VGA	800
-#define SCREEN_HEIGHT_VGA	600
-#define SCREEN_BPP		32
+#define SCREEN_WIDTH_SDTV		640
+#define SCREEN_HEIGHT_SDTV		480
+#define SCREEN_WIDTH_SDTVWS_CONEXANT	1024
+#define SCREEN_HEIGHT_SDTVWS_CONEXANT	576
+#define SCREEN_WIDTH_HDTV		720
+#define SCREEN_HEIGHT_HDTV		480
+#define SCREEN_WIDTH_VGA		800
+#define SCREEN_HEIGHT_VGA		600
+#define SCREEN_BPP			32
 
 /*
  * Define a safe area border for TV displays.
@@ -353,16 +355,78 @@ xboxfb_clear_fb(struct xboxfb_softc *sc)
 #define XBOX_PIC_ADDR	0x10
 
 static uint8_t
-xboxfb_smbus_pic_read(bus_space_tag_t t, bus_space_handle_t h, uint8_t cmd)
+xboxfb_smbus_read(bus_space_tag_t t, bus_space_handle_t h, uint8_t addr,
+    uint8_t cmd)
 {
+	uint8_t val;
 
-	bus_space_write_1(t, h, 0x04, (XBOX_PIC_ADDR << 1) | 1);
+	bus_space_write_1(t, h, 0x04, (addr << 1) | 1);
 	bus_space_write_1(t, h, 0x08, cmd);
 	bus_space_write_2(t, h, 0x00, bus_space_read_2(t, h, 0x00));
 	bus_space_write_1(t, h, 0x02, 0x0a);
-	while ((bus_space_read_1(t, h, 0x00) & 0x36) == 0)
+	while (((val = bus_space_read_1(t, h, 0x00)) & 0x36) == 0)
 		;
+	if (((val & 0x10) == 0) || (val & 0x24))
+		return 0xff;
 	return bus_space_read_1(t, h, 0x06);
+}
+
+static uint8_t
+xboxfb_smbus_pic_read(bus_space_tag_t t, bus_space_handle_t h, uint8_t cmd)
+{
+	return xboxfb_smbus_read(t, h, XBOX_PIC_ADDR, cmd);
+}
+
+/*
+ * Detect the TV encoder type; used to help determine which mode has been
+ * setup by the bootloader.
+ */
+#define XBOXFB_ENCODER_CONEXANT	1
+#define XBOXFB_ENCODER_FOCUS	2
+#define XBOXFB_ENCODER_XCALIBUR	3
+
+static uint8_t
+xboxfb_get_encoder(void)
+{
+	bus_space_tag_t t = X86_BUS_SPACE_IO;
+	bus_space_handle_t h;
+	uint8_t rv;
+
+	rv = bus_space_map(t, XBOX_SMBUS_BA, 16, 0, &h);
+	if (rv)
+		return XBOXFB_ENCODER_XCALIBUR; /* shouldn't happen */
+
+	if (xboxfb_smbus_read(t, h, 0x45, 0x00) != 0xff)
+		rv = XBOXFB_ENCODER_CONEXANT;
+	else if (xboxfb_smbus_read(t, h, 0x6a, 0x00) != 0xff)
+		rv = XBOXFB_ENCODER_FOCUS;
+	else
+		rv = XBOXFB_ENCODER_XCALIBUR;
+
+	bus_space_unmap(t, h, 16);
+
+	return rv;
+}
+
+/*
+ * Detect widescreen settings from the EEPROM
+ */
+static uint8_t
+xboxfb_is_widescreen(void)
+{
+	bus_space_tag_t t = X86_BUS_SPACE_IO;
+	bus_space_handle_t h;
+	uint8_t rv;
+
+	rv = bus_space_map(t, XBOX_SMBUS_BA, 16, 0, &h);
+	if (rv)
+		return 0;
+
+	rv = xboxfb_smbus_read(t, h, 0x54, 0x96) & 1;
+
+	bus_space_unmap(t, h, 16);
+
+	return rv;
 }
 
 static uint8_t
@@ -429,8 +493,18 @@ xboxfb_cnattach(void)
 		sa_top = sa_left = 0;
 		break;
 	default:
-		ri->ri_width = SCREEN_WIDTH_SDTV;
-		ri->ri_height = SCREEN_HEIGHT_SDTV;
+		/* Ugh, Cromwell puts Xboxes w/ Conexant encoders that are
+		 * configured for widescreen mode into a different resolution.
+		 * compensate for that here.
+		 */
+		if (xboxfb_is_widescreen() &&
+		    xboxfb_get_encoder() == XBOXFB_ENCODER_CONEXANT) {
+			ri->ri_width = SCREEN_WIDTH_SDTVWS_CONEXANT;
+			ri->ri_height = SCREEN_HEIGHT_SDTVWS_CONEXANT;
+		} else {
+			ri->ri_width = SCREEN_WIDTH_SDTV;
+			ri->ri_height = SCREEN_HEIGHT_SDTV;
+		}
 		sa_top = XBOXFB_SAFE_AREA_SDTV_TOP;
 		sa_left = XBOXFB_SAFE_AREA_SDTV_LEFT;
 		break;
