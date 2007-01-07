@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.1 2006/12/29 15:35:39 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.2 2007/01/07 19:31:48 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.1 2006/12/29 15:35:39 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.2 2007/01/07 19:31:48 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -308,12 +308,9 @@ psbuf_put_vattr(struct psbuf *pb, const struct vattr *va)
 		flags |= SSH_FILEXFER_ATTR_UIDGID;
 	if (va->va_mode != PUFFS_VNOVAL)
 		flags |= SSH_FILEXFER_ATTR_PERMISSIONS;
+
 	if (va->va_atime.tv_sec != PUFFS_VNOVAL)
 		flags |= SSH_FILEXFER_ATTR_ACCESSTIME;
-	if (va->va_ctime.tv_sec != PUFFS_VNOVAL)
-		flags |= SSH_FILEXFER_ATTR_CREATETIME;
-	if (va->va_mtime.tv_sec != PUFFS_VNOVAL)
-		flags |= SSH_FILEXFER_ATTR_MODIFYTIME;
 
 	psbuf_put_4(pb, flags);
 	if (flags & SSH_FILEXFER_ATTR_SIZE)
@@ -324,12 +321,12 @@ psbuf_put_vattr(struct psbuf *pb, const struct vattr *va)
 	}
 	if (flags & SSH_FILEXFER_ATTR_PERMISSIONS)
 		psbuf_put_4(pb, va->va_mode);
-	if (flags & SSH_FILEXFER_ATTR_ACCESSTIME)
+
+	/* XXX: this is totally wrong for protocol v3, see OpenSSH */
+	if (flags & SSH_FILEXFER_ATTR_ACCESSTIME) {
 		psbuf_put_4(pb, va->va_atime.tv_sec);
-	if (flags & SSH_FILEXFER_ATTR_CREATETIME)
-		psbuf_put_4(pb, va->va_ctime.tv_sec);
-	if (flags & SSH_FILEXFER_ATTR_MODIFYTIME)
 		psbuf_put_4(pb, va->va_mtime.tv_sec);
+	}
 
 	return 1;
 }
