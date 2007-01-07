@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.2 2007/01/01 21:32:12 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.3 2007/01/07 19:31:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.2 2007/01/01 21:32:12 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.3 2007/01/07 19:31:48 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -118,18 +118,37 @@ psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
 {
 	PSSHFSAUTOVAR(pcc);
+	struct vattr kludgeva;
 	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
 
 	psbuf_req_str(pb, SSH_FXP_SETSTAT, reqid, pn->pn_path);
-	psbuf_put_vattr(pb, va);
+
+	memcpy(&kludgeva, va, sizeof(struct vattr));
+
+	/* XXX: kludge due to openssh server implementation */
+	if (va->va_atime.tv_sec != PUFFS_VNOVAL
+	    && va->va_mtime.tv_sec == PUFFS_VNOVAL) {
+		if (pn->pn_va.va_mtime.tv_sec != PUFFS_VNOVAL)
+			kludgeva.va_mtime.tv_sec = pn->pn_va.va_mtime.tv_sec;
+		else
+			kludgeva.va_mtime.tv_sec = va->va_atime.tv_sec;
+	}
+	if (va->va_mtime.tv_sec != PUFFS_VNOVAL
+	    && va->va_atime.tv_sec == PUFFS_VNOVAL) {
+		if (pn->pn_va.va_atime.tv_sec != PUFFS_VNOVAL)
+			kludgeva.va_atime.tv_sec = pn->pn_va.va_atime.tv_sec;
+		else
+			kludgeva.va_atime.tv_sec = va->va_mtime.tv_sec;
+	}
+			
+	psbuf_put_vattr(pb, &kludgeva);
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
 	puffs_cc_yield(pcc);
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0)
-		psn->hasvattr = 0;
+		puffs_setvattr(&pn->pn_va, &kludgeva);
 
 	PSSHFSRETURN(rv);
 }
@@ -275,13 +294,33 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	struct puffs_node *pn = opc;
 	char *fhand = NULL;
 	size_t fhandlen;
-	struct vattr va;
+	struct vattr va, kludgeva1, kludgeva2;
 	uint32_t writelen, oflags;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
 		goto out;
 	}
+
+	/*
+	 * XXXX: this is wrong - we shouldn't muck the file permissions
+	 * at this stage any more.  However, we need this, since currently
+	 * we can't tell the sftp server "hey, this data was already
+	 * authenticated to UBC, it's ok to let us write this".  Yes, it
+	 * will fail e.g. if we don't own the file.  Tough love.
+	 * 
+	 * TODO-point: Investigate solving this with open filehandles
+	 * or something like that.
+	 */
+	kludgeva1 = pn->pn_va;
+
+	puffs_vattr_null(&kludgeva2);
+	kludgeva2.va_mode = 0700;
+	rv = psshfs_node_setattr(pcc, opc, &kludgeva2, cred, 0);
+	if (rv)
+		goto out;
+
+	/* XXXcontinuation: ok, file is mode 700 now, we can open it rw */
 
 	oflags = SSH_FXF_WRITE;
 #if 0
@@ -296,8 +335,6 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		offset = pn->pn_va.va_size;
 
 	puffs_vattr_null(&va);
-	va.va_mode = 0666;
-
 	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, pn->pn_path);
 	psbuf_put_4(pb, oflags);
 	psbuf_put_vattr(pb, &va);
@@ -308,6 +345,13 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
 	if (rv)
 		goto out;
+
+	/* moreXXX: file is open, revert old creds for crying out loud! */
+	rv = psshfs_node_setattr(pcc, opc, &kludgeva1, cred, 0);
+
+	/* are we screwed a la royal jelly? */
+	if (rv)
+		goto closefile;
 
 	writelen = *resid;
 	reqid = NEXTREQ(pctx);
@@ -326,6 +370,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (pn->pn_va.va_size < offset + writelen)
 		pn->pn_va.va_size = offset + writelen;
 
+ closefile:
 	reqid = NEXTREQ(pctx);
 	psbuf_recycle(pb, PSB_OUT);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
