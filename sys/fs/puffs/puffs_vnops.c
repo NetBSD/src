@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.28 2007/01/02 00:14:15 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.29 2007/01/07 00:53:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.28 2007/01/02 00:14:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.29 2007/01/07 00:53:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -899,6 +899,11 @@ puffs_readdir(void *v)
 
 	/* bouncy-wouncy with the directory data */
 	howmuch = uio->uio_resid - readdir_argp->pvnr_resid;
+	/* XXX: we could let userlandia tell its opinion first time 'round */
+	if (howmuch == 0) {
+		*ap->a_eofflag = 1;
+		goto out;
+	}
 	error = uiomove(readdir_argp->pvnr_dent, howmuch, uio);
 	if (error)
 		goto out;
