@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.2 2007/01/07 19:29:55 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.3 2007/01/07 21:59:27 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.2 2007/01/07 19:29:55 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.3 2007/01/07 21:59:27 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -168,6 +168,8 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 			testd = lookup(olddir, nent, psn->dir[idx].entryname);
 			if (testd) {
 				psn->dir[idx].entry = testd->entry;
+				psn->dir[idx].va.va_fileid
+				    = testd->va.va_fileid;
 			} else {
 				psn->dir[idx].entry = NULL;
 				psn->dir[idx].va.va_fileid = pctx->nextino++;
@@ -229,6 +231,7 @@ allocnode(struct puffs_usermount *pu, struct puffs_node *parent,
 {
 	struct psshfs_ctx *pctx = pu->pu_privdata;
 	struct psshfs_dir *pd;
+	struct puffs_node *pn;
 
 	pd = direnter(parent, entryname);
 
@@ -240,7 +243,11 @@ allocnode(struct puffs_usermount *pu, struct puffs_node *parent,
 		pd->va.va_nlink = 1;
 	}
 
-	return makenode(pu, parent, pd, vap);
+	pn = makenode(pu, parent, pd, vap);
+	if (pn)
+		pd->va.va_fileid = pn->pn_va.va_fileid;
+
+	return pn;
 }
 
 struct psshfs_dir *
