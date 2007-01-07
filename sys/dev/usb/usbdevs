@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.446 2007/01/05 13:14:30 jmcneill Exp $
+$NetBSD: usbdevs,v 1.447 2007/01/07 16:54:01 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1376,8 +1376,9 @@ product MICROSOFT MN510		0x006e	MN510 Wireless
 product MICROSOFT MN110		0x007a	10/100 USB NIC
 product MICROSOFT XBOX_MEMORY_UNIT	0x0280	Xbox Memory Unit
 product MICROSOFT XBOX_DVD_PLAYBACK	0x0284	Xbox DVD Movie Playback Kit
+product MICROSOFT XBOX_CONTROLLER_S10	0x0285	Xbox Controller S (1.0)
 product MICROSOFT XBOX_CONTROLLER_HUB	0x0288	Xbox Controller Hub
-product MICROSOFT XBOX_CONTROLLER_S	0x0289	Xbox Controller S
+product MICROSOFT XBOX_CONTROLLER_S12	0x0289	Xbox Controller S (1.2)
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	USB-SCSI-DB25
