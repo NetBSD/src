@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.965 2007/01/07 03:16:02 xtraeme Exp $
+# $NetBSD: mi,v 1.966 2007/01/07 19:59:55 pooka Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2065,6 +2065,7 @@
 ./usr/share/man/cat8/mount_overlay.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_portal.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_procfs.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/mount_psshfs.0		man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/mount_ptyfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_smbfs.0		man-smbfs-catman	.cat
 ./usr/share/man/cat8/mount_sysvbfs.0		man-sysutil-catman	.cat
@@ -4473,6 +4474,7 @@
 ./usr/share/man/man8/mount_overlay.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_portal.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_procfs.8		man-sysutil-man		.man
+./usr/share/man/man8/mount_psshfs.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/mount_ptyfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_smbfs.8		man-smbfs-man		.man
 ./usr/share/man/man8/mount_sysvbfs.8		man-sysutil-man		.man
