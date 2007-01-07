@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.23 2006/01/17 12:30:01 xtraeme Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.24 2007/01/07 16:44:44 drochner Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -133,7 +133,6 @@ typedef struct ehci_softc {
 
 	struct lock sc_doorbell_lock;
 
-	usb_callout_t sc_tmo_pcd;
 	usb_callout_t sc_tmo_intrlist;
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
