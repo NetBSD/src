@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.1 2006/12/29 15:35:40 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.2 2007/01/07 19:29:55 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.1 2006/12/29 15:35:40 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.2 2007/01/07 19:29:55 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -233,10 +233,12 @@ allocnode(struct puffs_usermount *pu, struct puffs_node *parent,
 	pd = direnter(parent, entryname);
 
 	pd->va.va_fileid = pctx->nextino++;
-	if (vap->va_type == VDIR)
+	if (vap->va_type == VDIR) {
 		pd->va.va_nlink = 2;
-	else
+		parent->pn_va.va_nlink++;
+	} else {
 		pd->va.va_nlink = 1;
+	}
 
 	return makenode(pu, parent, pd, vap);
 }
