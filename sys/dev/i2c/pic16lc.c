@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.4 2007/01/06 19:11:08 jmcneill Exp $ */
+/* $NetBSD: pic16lc.c,v 1.5 2007/01/07 01:02:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,15 +40,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.4 2007/01/06 19:11:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.5 2007/01/07 01:02:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <machine/xbox.h>
+
 #include <dev/sysmon/sysmonvar.h>
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/pic16lcreg.h>
 
 static int	pic16lc_match(struct device *, struct cfdata *, void *);
 static void	pic16lc_attach(struct device *, struct device *, void *);
@@ -56,24 +59,6 @@ static void	pic16lc_attach(struct device *, struct device *, void *);
 void		pic16lc_reboot(void);
 void		pic16lc_poweroff(void);
 void		pic16lc_setled(uint8_t);
-
-#define	PIC16LC_REG_VER			0x01
-#define PIC16LC_REG_POWER		0x02
-#define		PIC16LC_REG_POWER_RESET		0x01
-#define		PIC16LC_REG_POWER_CYCLE		0x40
-#define		PIC16LC_REG_POWER_SHUTDOWN	0x80
-#define PIC16LC_REG_TRAYSTATE		0x03
-#define PIC16LC_REG_AVPACK		0x04
-#define PIC16LC_REG_FANMODE		0x05
-#define PIC16LC_REG_FANSPEED		0x06
-#define PIC16LC_REG_LEDMODE		0x07
-#define PIC16LC_REG_LEDSEQ		0x08
-#define PIC16LC_REG_CPUTEMP		0x09
-#define PIC16LC_REG_BOARDTEMP		0x0a
-#define PIC16LC_REG_TRAYEJECT		0x0c
-#define PIC16LC_REG_INTSTATUS		0x11
-#define PIC16LC_REG_RESETONEJECT	0x19
-#define PIC16LC_REG_INTEN		0x1a
 
 struct pic16lc_softc {
 	struct device	sc_dev;
