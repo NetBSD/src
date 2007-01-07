@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.27 2006/06/08 10:56:49 hannken Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.28 2007/01/07 12:10:18 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.27 2006/06/08 10:56:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.28 2007/01/07 12:10:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ wb_match(sc)
 		printf(": W83627THF\n");
 		break;
 	default:
-		printf(": unknow winbond chip ID 0x%x\n", j);
+		printf(": unknown winbond chip ID 0x%x\n", j);
 		/* handle as a standart lm7x */
 		lm_common_match(sc);
 		return 1;
