@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.17 2007/01/08 20:51:54 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.18 2007/01/08 22:32:57 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -133,4 +133,9 @@ sys/arch/xen/xen/xbd_xenbus.c			1.16
 	Fixes a Xen3 xbd panic at boot when more than one xbd device is
 	configured.
 	[bouyer, ticket #1624]
+
+sys/arch/xen/xen/xencons.c			1.20
+
+	Fix Xen console hangs.
+	[bouyer, ticket #1625]
 
