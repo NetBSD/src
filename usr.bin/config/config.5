@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.8 2007/01/07 23:22:04 cube Exp $
+.\" $NetBSD: config.5,v 1.9 2007/01/08 07:18:25 wiz Exp $
 .\"
 .\"  Copyright (c) 2006 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -30,7 +30,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 4, 2006
+.Dd January 7, 2007
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -274,7 +274,7 @@ defaults to the top of ther kernel source tree.
 .El
 .Ss PREAMBLE
 In addition to
-.Ic include, cinclude
+.Ic include , cinclude ,
 and
 .Ic prefix ,
 the preamble may contain the following optional statements:
@@ -476,12 +476,12 @@ and
 both produce a header file for each of the considered attributes.
 The name of that file is
 .Pa \*[Lt]attribute\*[Gt].h .
-It contains one pre-processor defintion of
-.Ic NATTRIBUTE
+It contains one pre-processor definition of
+.Dv NATTRIBUTE
 set to 0 if the attribute was not selected by the user, or to the number of
 instances of the device in the
 .Ic needs-count
-case, or to 1 in all the other cases. 
+case, or to 1 in all the other cases.
 .Pp
 The
 .Ar rule
