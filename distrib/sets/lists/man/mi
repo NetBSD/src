@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.38 2007/01/05 14:14:52 tron Exp $
+# $NetBSD: mi,v 1.768.2.39 2007/01/08 16:36:20 ghen Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -922,6 +922,7 @@
 ./usr/share/man/cat4/ipip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ipkdb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipl.0			man-sys-catman		ipfilter,.cat
+./usr/share/man/cat4/ipmi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipnat.0			man-sys-catman		ipfilter,.cat
 ./usr/share/man/cat4/ippp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ipsec.0			man-sys-catman		.cat
@@ -3165,6 +3166,7 @@
 ./usr/share/man/man4/ipip.4			man-obsolete		obsolete
 ./usr/share/man/man4/ipkdb.4			man-sys-man		.man
 ./usr/share/man/man4/ipl.4			man-sys-man		ipfilter,.man
+./usr/share/man/man4/ipmi.4			man-sys-man		.man
 ./usr/share/man/man4/ipnat.4			man-sys-man		ipfilter,.man
 ./usr/share/man/man4/ippp.4			man-sys-man		.man
 ./usr/share/man/man4/ipsec.4			man-sys-man		.man

@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.12 2004/10/20 04:20:05 thorpej Exp $
+#	$NetBSD: files.x86,v 1.12.10.1 2007/01/08 16:36:20 ghen Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -8,6 +8,7 @@ defflag opt_mpacpi.h MPACPI MPACPI_SCANPCI
 defflag                 MTRR
 
 define  cpubus { [apid = -1] }
+define  ipmibus {}
 
 file	arch/x86/x86/apic.c		ioapic | lapic
 file	arch/x86/x86/bus_dma.c
@@ -42,3 +43,8 @@ file	arch/x86/pci/pci_machdep.c	pci
 file	arch/x86/isa/isa_machdep.c	isa
 
 file	arch/x86/pci/pciide_machdep.c	pciide_common
+
+#IPMI device
+device ipmi : sysmon_envsys, sysmon_wdog
+attach ipmi at ipmibus
+file	arch/x86/x86/ipmi.c		ipmi needs-flag
