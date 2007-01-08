@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.36 2007/01/07 10:53:35 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.37 2007/01/08 22:29:13 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -673,4 +673,19 @@ sys/kern/kern_auth.c				1.34
 
 	Allocate space for scopes and listeners with kmem.
 	[elad, ticket #339]
+
+sys/net/if_ethersubr.c				1.142
+
+	Make kernel without ISO or NETATALK build. This fixes PR kern/35364.
+	[bouyer, ticket #337]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.16
+
+	Avoid kernel panic at boot if more than one xbd device is configured.
+	[bouyer, ticket #338]
+
+sys/arch/xen/xen/xencons.c			1.20
+
+	Fix Xen console hangs.
+	[bouyer, ticket #342]
 
