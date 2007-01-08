@@ -93,7 +93,7 @@ nop_out(uint64_t target, int lun, int length, int ping, const char *data)
 	(void) memset(&nop_cmd, 0x0, sizeof(iscsi_nop_out_args_t));
 	RETURN_GREATER("length", length, 4096, NO_CLEANUP, -1);
 	nop_cmd.length = length;
-	nop_cmd.data = data;
+	nop_cmd.data = (const uint8_t *) data;
 	nop_cmd.lun = lun;
 	if (!ping) {
 		nop_cmd.tag = 0xffffffff;
@@ -200,12 +200,15 @@ read_capacity(uint64_t target, uint32_t lun, uint32_t *max_lba, uint32_t *block_
 int 
 write_read_test(uint64_t target, uint32_t lun, int type)
 {
-	uint32_t        max_lba, block_len;
-	uint8_t   data[4096], cdb[16];
-	initiator_cmd_t cmd;
-	iscsi_scsi_cmd_args_t args;
-	int16_t             len = 1;
-	int             i, j;
+	iscsi_scsi_cmd_args_t	args;
+	initiator_cmd_t		cmd;
+	uint32_t        	max_lba;
+	uint32_t        	block_len;
+	uint32_t		i;
+	uint16_t		len = 1;
+	uint8_t   		data[4096];
+	uint8_t   		cdb[16];
+	int             	j;
 
 	if ((type != 6) && (type != 10)) {
 		iscsi_trace_error(__FILE__, __LINE__, "bad type, select 6 or 10\n");
