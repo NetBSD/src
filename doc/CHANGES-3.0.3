@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.13 2007/01/05 15:10:58 ghen Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.14 2007/01/08 20:46:35 ghen Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -115,4 +115,10 @@ dist/dhcp/server/dhcp.c				1.10
 	Fix get-lease-hostnames option in dhcpd.conf(5) to make dhcpd(8) use
 	the DNS hostname as the DHCP hostname given to the client.
 	[drochner, ticket #1619]
+
+sys/net/if_ethersubr.c				1.142
+
+	Don't define dropanyway: label unless ISO or NETATALK is defined.
+	Fixes a build failure for certain kernel configurations.
+	[bouyer, ticket #1623]
 
