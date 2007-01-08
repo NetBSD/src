@@ -72,6 +72,7 @@ main(int argc, char **argv)
 	char			hostname[1024];
 	char		       *host;
 	char		       *user;
+	int			address_family;
 	int             	tgtlo = 0;
 	int             	tgthi = CONFIG_INITIATOR_NUM_TARGETS;
 	int             	target = -1;
@@ -84,6 +85,7 @@ main(int argc, char **argv)
 
 	/* Check args */
 
+	address_family = ISCSI_UNSPEC;
 	iterations = 1;
 	user = NULL;
 	(void) gethostname(host = hostname, sizeof(hostname));
@@ -91,8 +93,14 @@ main(int argc, char **argv)
 	auth_type = AuthNone;
 	mutual_auth = 0;
 
-	while ((i = getopt(argc, argv, "a:d:h:l:n:t:u:")) != -1) {
+	while ((i = getopt(argc, argv, "46a:d:h:l:n:t:u:")) != -1) {
 		switch(i) {
+		case '4':
+			address_family = ISCSI_IPv4;
+			break;
+		case '6':
+			address_family = ISCSI_IPv6;
+			break;
 		case 'a':
 			if (strcasecmp(optarg, "chap") == 0) {
 				auth_type = AuthCHAP;
@@ -159,7 +167,7 @@ main(int argc, char **argv)
 
 	for (i = optind ; i < argc ; i++) {
 		/* Initialize Initiator */
-		if (initiator_init(host, user, auth_type, mutual_auth, digest_type) == -1) {
+		if (initiator_init(host, address_family, user, auth_type, mutual_auth, digest_type) == -1) {
 			iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
 			exit(EXIT_FAILURE);
 		}
