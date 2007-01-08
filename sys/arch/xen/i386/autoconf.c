@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9.2.1 2006/04/07 12:51:25 tron Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.2.2 2007/01/08 16:45:57 ghen Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.1 2006/04/07 12:51:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.2.2 2007/01/08 16:45:57 ghen Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -135,9 +135,12 @@ cpu_configure(void)
 
 	startrtclock();
 
-#if NBIOS32 > 0
-	bios32_init();
+#if NBIOS32 > 0 && defined(DOM0OPS)
+#ifdef XEN3
+	if (xen_start_info.flags & SIF_INITDOMAIN)
 #endif
+		bios32_init();
+#endif /* NBIOS32 > 0 && DOM0OPS */
 #ifdef PCIBIOS
 	pcibios_init();
 #endif
