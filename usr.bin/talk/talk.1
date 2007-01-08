@@ -1,4 +1,4 @@
-.\"	$NetBSD: talk.1,v 1.8 2003/08/07 11:16:05 agc Exp $
+.\"	$NetBSD: talk.1,v 1.9 2007/01/08 17:10:59 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)talk.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd January 7, 2007
 .Dt TALK 1
 .Os
 .Sh NAME
@@ -105,6 +105,17 @@ and
 .Xr pr 1 ,
 disallow messages in order to
 prevent messy output.
+.Sh ENVIRONMENT
+If the
+.Ev TALKHOST
+environment variable is set, its value is used as the
+.Ar hostname
+the
+.Nm
+packets appear to be originating from.
+This is useful if you wish to talk to someone on another machine and
+your internal hostname does not resolve to the address of your
+external interface as seen from the other machine.
 .Sh FILES
 .Bl -tag -width /var/run/utmp -compact
 .It Pa /etc/hosts
@@ -124,7 +135,7 @@ command appeared in
 .Bx 4.2 .
 .Sh BUGS
 The version of
-.Xr talk 1
+.Nm
 released with
 .Bx 4.3
 uses a protocol that
