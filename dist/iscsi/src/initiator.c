@@ -3070,7 +3070,7 @@ initiator_discover(char *host, uint64_t target, int lun)
 	(void) strlcpy(cmd.targetname, host, sizeof(cmd.targetname));
 	(void) memset(&discover_cmd, 0x0, sizeof(iscsi_nop_out_args_t));
 	discover_cmd.length = 1;
-	discover_cmd.data = "";
+	discover_cmd.data = (const uint8_t *) "";
 	discover_cmd.lun = lun;
 	discover_cmd.tag = 0xffffffff;
 	if (initiator_command(&cmd) != 0) {
