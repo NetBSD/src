@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.32 2007/01/05 14:47:57 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.33 2007/01/08 17:04:09 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2416,4 +2416,49 @@ src/gnu/dist/postfix/src/util/vbuf_print.c
 
 	Update Postfix to version 2.3.5.
 	[ghen, ticket #1618]
+
+distrib/sets/lists/man/mi			1.936 via patch
+share/man/man4/Makefile				1.407 via patch
+share/man/man4/ipmi.4				1.1 via patch
+sys/arch/i386/conf/GENERIC			1.787 via patch
+sys/arch/i386/conf/files.i386			1.293 via patch
+sys/arch/i386/i386/bios32.c			1.11 via patch
+sys/arch/i386/i386/mainbus.c			1.65 via patch
+sys/arch/x86/conf/files.x86			1.20 via patch
+sys/arch/x86/include/ipmivar.h			1.1 via patch
+sys/arch/x86/include/smbiosvar.h		1.1 via patch
+sys/arch/x86/x86/ipmi.c				1.1 via patch
+sys/dev/DEVNAMES				1.221 via patch
+
+	Add ipmi(4) driver for i386, from OpenBSD. This requires SMBios
+	support, so add SMBios detection and mapping to bios32.c, also from
+	OpenBSD (for now this is only compiled in if ipmi(4) is configured).
+	The sensors and watchdog are accessible though envsys(4).
+	[bouyer, ticket #1621]
+
+sys/arch/i386/conf/XEN2_DOM0			1.9 via patch
+sys/arch/xen/conf/files.compat			1.13 via patch
+sys/arch/xen/conf/files.xen			1.49 via patch
+sys/arch/xen/i386/autoconf.c			1.19 via patch
+sys/arch/xen/i386/bios32.c			1.1 via patch
+sys/arch/xen/i386/locore.S			1.19 via patch
+sys/arch/xen/i386/mainbus.c			1.10 via patch
+
+	Map the ISA hole on Xen, which allows us to access the SMBios, which
+	allows us to find the IPMI address. Add IPMI support on Xen (commented
+	out for now)
+	[bouyer, ticket #1622]
+
+sys/net/if_ethersubr.c				1.142
+
+	Don't define dropanyway: label unless ISO or NETATALK is defined.
+	Fixes a build failure for certain kernel configurations.
+	[bouyer, ticket #1623]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.16
+
+	Don't try to handle xbd interrupts if the device is not yet connected.
+	Fixes a Xen3 xbd panic at boot when more than one xbd device is
+	configured.
+	[bouyer, ticket #1624]
 
