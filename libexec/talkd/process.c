@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.11 2004/10/01 12:27:09 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.12 2007/01/08 17:51:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: process.c,v 1.11 2004/10/01 12:27:09 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.12 2007/01/08 17:51:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,9 +141,12 @@ do_announce(mp, rp)
 	CTL_MSG *mp;
 	CTL_RESPONSE *rp;
 {
-	struct hostent *hp;
 	CTL_MSG *ptr;
 	int result;
+	char hostname[NI_MAXHOST];
+	struct sockaddr sa;
+
+	tsa2sa(&sa, &mp->ctl_addr);
 
 	/* see if the user is logged */
 	result = find_user(mp->r_name, mp->r_tty, sizeof(mp->r_tty));
@@ -151,17 +154,15 @@ do_announce(mp, rp)
 		rp->answer = result;
 		return;
 	}
-#define	satosin(sa)	((struct sockaddr_in *)(sa))
-	hp = gethostbyaddr((char *)&satosin(&mp->ctl_addr)->sin_addr,
-		sizeof (struct in_addr), AF_INET);
-	if (hp == (struct hostent *)0) {
+	if (getnameinfo(&sa, sa.sa_len, hostname, sizeof(hostname), NULL,
+	    0, 0)) {
 		rp->answer = MACHINE_UNKNOWN;
 		return;
 	}
 	ptr = find_request(mp);
 	if (ptr == (CTL_MSG *) 0) {
 		insert_table(mp, rp);
-		rp->answer = announce(mp, hp->h_name);
+		rp->answer = announce(mp, hostname);
 		return;
 	}
 	if (mp->id_num > ptr->id_num) {
@@ -171,7 +172,7 @@ do_announce(mp, rp)
 		 */
 		ptr->id_num = new_id();
 		rp->id_num = htonl(ptr->id_num);
-		rp->answer = announce(mp, hp->h_name);
+		rp->answer = announce(mp, hostname);
 	} else {
 		/* a duplicated request, so ignore it */
 		rp->id_num = htonl(ptr->id_num);

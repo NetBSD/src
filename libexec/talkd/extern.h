@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 2002/09/19 14:39:51 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 2007/01/08 17:51:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -52,3 +52,4 @@ int delete_invite __P((int));
 /* talkd.c */
 extern int debug;
 extern int logging;
+void tsa2sa __P((struct sockaddr *, const struct talkd_sockaddr *));
