@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.15 2007/01/05 15:11:16 ghen Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.16 2007/01/08 20:50:04 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -120,4 +120,17 @@ dist/dhcp/server/dhcp.c				1.10
 	Fix get-lease-hostnames option in dhcpd.conf(5) to make dhcpd(8) use
 	the DNS hostname as the DHCP hostname given to the client.
 	[drochner, ticket #1619]
+
+sys/net/if_ethersubr.c				1.142
+
+	Don't define dropanyway: label unless ISO or NETATALK is defined.
+	Fixes a build failure for certain kernel configurations.
+	[bouyer, ticket #1623]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.16
+
+	Don't try to handle xbd interrupts if the device is not yet connected.                                                                                                                                       
+	Fixes a Xen3 xbd panic at boot when more than one xbd device is                                                                                                                                              
+	configured.                                                                                                                                                                                                  
+	[bouyer, ticket #1624]
 
