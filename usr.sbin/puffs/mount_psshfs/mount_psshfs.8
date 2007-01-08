@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_psshfs.8,v 1.1 2007/01/07 19:56:26 pooka Exp $
+.\"	$NetBSD: mount_psshfs.8,v 1.2 2007/01/08 07:26:40 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -43,7 +43,7 @@ local directory tree.
 .Pp
 The mandatory parameters are the target host name and local mount
 point.
-The target host parameter can optionally contain a username who's
+The target host parameter can optionally contain a username whose
 credentials will be used by the remote sshd, and a relative or
 absolute path for the remote mountpoint's root.
 If no user is given, the credentials of the user issuing the mount
@@ -56,23 +56,23 @@ The
 flag can be used to give standard mount options and options to puffs.
 The most notable of these is
 .Fl o Ar nocache ,
-which disables the name cache and page cache for the file system.  It
-slows operations down, but will behave better when multiple entities
-are accessing the same directory tree via various routes.
+which disables the name cache and page cache for the file system.
+It slows operations down, but will behave better when multiple
+entities are accessing the same directory tree via various routes.
 .Sh SEE ALSO
-.Xr mount 8 ,
+.Xr sftp 1 ,
 .Xr puffs 3 ,
 .Xr puffs 4 ,
-.Xr sftp 1 ,
+.Xr mount 8 ,
 .Xr sshd 8
 .Sh HISTORY
 The
 .Nm
 utility first appeared in
-.Nx 5.0.
+.Nx 5.0 .
 .Sh CAVEATS
-Permissions are not handled.  Do not expect the file system to
-behave except for a single user.
+Permissions are not handled.
+Do not expect the file system to behave except for a single user.
 .Pp
 The implementation does not currently behave if the file system is
 being accessed from other locations besides through the mounting
