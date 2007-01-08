@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2007/01/08 16:08:08 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2007/01/08 17:50:43 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -320,7 +320,7 @@ main(int argc, char **argv)
 		if (yyparse())
 			stop();
 
-		printf("include \"%s%s\"\n", resolvedname);
+		printf("include \"%s\"\n", resolvedname);
 
 		emit_params();
 		emit_options();
