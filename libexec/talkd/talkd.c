@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.17 2003/08/07 09:46:51 agc Exp $	*/
+/*	$NetBSD: talkd.c,v 1.18 2007/01/08 17:51:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.17 2003/08/07 09:46:51 agc Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.18 2007/01/08 17:51:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,9 +133,7 @@ main(argc, argv)
 		lastmsgtime = time(0);
 		process_request(mp, &response);
 
-		(void)memcpy(&ctl_addr, &mp->ctl_addr, sizeof(ctl_addr));
-		ctl_addr.sa_family = mp->ctl_addr.sa_family;
-		ctl_addr.sa_len = sizeof(ctl_addr);
+		tsa2sa(&ctl_addr, &mp->ctl_addr);
 		if (ctl_addr.sa_family != AF_INET)
 			continue;
 
@@ -157,4 +155,12 @@ timeout(n)
 		_exit(0);
 	alarm(TIMEOUT);
 	errno = save_errno;
+}
+
+void
+tsa2sa(struct sockaddr *sa, const struct talkd_sockaddr *tsa)
+{
+	(void)memcpy(sa, tsa, sizeof(*tsa));
+	sa->sa_len = sizeof(*tsa);
+	sa->sa_family = tsa->sa_family;
 }
