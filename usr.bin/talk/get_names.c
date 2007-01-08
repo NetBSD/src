@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.12 2006/03/17 21:19:24 ginsbach Exp $	*/
+/*	$NetBSD: get_names.c,v 1.13 2007/01/08 17:10:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,14 +34,16 @@
 #if 0
 static char sccsid[] = "@(#)get_names.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_names.c,v 1.12 2006/03/17 21:19:24 ginsbach Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.13 2007/01/08 17:10:59 christos Exp $");
 #endif /* not lint */
 
 #include "talk.h"
+#include <err.h>
 #include <sys/param.h>
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 extern	CTL_MSG msg;
 
@@ -77,8 +79,13 @@ get_names(argc, argv)
 		}
 		my_name = pw->pw_name;
 	}
-	gethostname(hostname, sizeof (hostname));
-	hostname[sizeof(hostname) - 1] = '\0';
+	if ((cp = getenv("TALKHOST")) != NULL)
+		(void)estrlcpy(hostname, cp, sizeof(hostname));
+	else {
+		if (gethostname(hostname, sizeof(hostname)) == -1)
+			err(EXIT_FAILURE, "gethostname");
+		hostname[sizeof(hostname) - 1] = '\0';
+	}
 	my_machine_name = hostname;
 	/* check for, and strip out, the machine name of the target */
 	names = strdup(argv[1]);
