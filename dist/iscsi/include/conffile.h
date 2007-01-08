@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.h,v 1.3 2006/08/03 20:21:59 agc Exp $ */
+/* $NetBSD: conffile.h,v 1.4 2007/01/08 21:44:47 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -58,6 +58,7 @@ typedef struct ent_t {
 } ent_t;
 
 int conffile_open(conffile_t *, const char *, const char *, const char *, const char *);
+int conffile_split(conffile_t *, ent_t *, char *);
 int conffile_getent(conffile_t *, ent_t *);
 int conffile_get_by_field(conffile_t *, ent_t *, int, char *);
 int conffile_putent(conffile_t *, int, char *, char *);
