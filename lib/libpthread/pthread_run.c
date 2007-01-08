@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.20 2006/12/24 18:39:46 ad Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.21 2007/01/08 20:54:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.20 2006/12/24 18:39:46 ad Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.21 2007/01/08 20:54:42 drochner Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -62,6 +62,8 @@ extern pthread_spin_t pthread__deadqueue_lock;
 extern struct pthread_queue_t *pthread__reidlequeue;
 
 extern int pthread__concurrency, pthread__maxconcurrency;
+
+__strong_alias(__libc_thr_yield,sched_yield)
 
 int
 sched_yield(void)
