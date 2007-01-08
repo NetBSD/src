@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.25 2006/11/09 20:42:45 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.26 2007/01/08 16:08:08 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,6 @@ static const char *concat(const char *, int);
 static char *extend(char *, const char *);
 static int split(const char *, size_t, char *, size_t, int *);
 static void selectbase(struct devbase *, struct deva *);
-static int onlist(struct nvlist *, void *);
 static const char **fixloc(const char *, struct attr *, struct nvlist *);
 static const char *makedevstr(int, int);
 static const char *major2name(int);
@@ -1678,7 +1677,7 @@ selectbase(struct devbase *d, struct deva *da)
 /*
  * Is the given pointer on the given list of pointers?
  */
-static int
+int
 onlist(struct nvlist *nv, void *ptr)
 {
 	for (; nv != NULL; nv = nv->nv_next)

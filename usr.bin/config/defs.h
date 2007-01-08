@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.16 2006/09/27 19:05:46 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.17 2007/01/08 16:08:08 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -473,6 +473,11 @@ const char *intern(const char *);
 typedef int (*ht_callback)(const char *, void *, void *);
 int	ht_enumerate(struct hashtab *, ht_callback, void *);
 
+/* lint.c */
+void	emit_instances(void);
+void	emit_options(void);
+void	emit_params(void);
+
 /* main.c */
 void	addoption(const char *, const char *);
 void	addfsoption(const char *);
@@ -529,6 +534,7 @@ int	include(const char *, int, int, int);
 
 /* sem.c, other than for yacc actions */
 void	initsem(void);
+int	onlist(struct nvlist *, void *);
 
 /* util.c */
 void	*ecalloc(size_t, size_t);
