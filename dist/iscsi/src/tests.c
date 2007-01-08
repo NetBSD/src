@@ -172,10 +172,10 @@ read_capacity(uint64_t target, uint32_t lun, uint32_t *max_lba, uint32_t *block_
 		iscsi_trace_error(__FILE__, __LINE__, "READ_CAPACITY failed (status %#x)\n", args.status);
 		return -1;
 	}
-	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "Max LBA (lun %u):   %u\n", lun, *max_lba);
-	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "Block Len (lun %u): %u\n", lun, *block_len);
 	*max_lba = ISCSI_NTOHL(*((uint32_t *) (data)));
 	*block_len = ISCSI_NTOHL(*((uint32_t *) (data + 4)));
+	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "Max LBA (lun %u):   %u\n", lun, *max_lba);
+	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "Block Len (lun %u): %u\n", lun, *block_len);
 	if (*max_lba == 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "Device returned Maximum LBA of zero\n");
 		return -1;
