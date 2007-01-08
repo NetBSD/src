@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.7.2.4 2006/07/30 17:50:25 tron Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.7.2.5 2007/01/08 17:02:50 ghen Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7.2.4 2006/07/30 17:50:25 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.7.2.5 2007/01/08 17:02:50 ghen Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -468,6 +468,8 @@ xbd_handler(void *arg)
 
 	DPRINTF(("xbd_handler(%s)\n", sc->sc_dev.dv_xname));
 
+	if (__predict_false(sc->sc_backend_status != BLKIF_STATE_CONNECTED))
+		return 0;
 again:
 	resp_prod = sc->sc_ring.sring->rsp_prod;
 	x86_lfence(); /* ensure we see replies up to resp_prod */
