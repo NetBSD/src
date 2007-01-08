@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2007/01/06 18:54:32 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2007/01/08 16:08:08 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +81,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 
 int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */
+int	Lflag;				/* lint config generation */
 
 int	yyparse(void);
 
@@ -146,7 +147,7 @@ main(int argc, char **argv)
 
 	pflag = 0;
 	xflag = 0;
-	while ((ch = getopt(argc, argv, "DPgpvb:s:x")) != -1) {
+	while ((ch = getopt(argc, argv, "DLPgpvb:s:x")) != -1) {
 		switch (ch) {
 
 #ifndef MAKE_BOOTSTRAP
@@ -154,6 +155,10 @@ main(int argc, char **argv)
 			yydebug = 1;
 			break;
 #endif
+
+		case 'L':
+			Lflag = 1;
+			break;
 
 		case 'P':
 			Pflag = 1;
@@ -213,9 +218,14 @@ main(int argc, char **argv)
 	}
 
 	if (xflag && (builddir != NULL || srcdir != NULL || Pflag || pflag ||
-	    vflag)) {
+	    vflag || Lflag)) {
 		(void)fprintf(stderr, "config: -x must be used alone\n");
 		exit(1);
+	}
+	if (Lflag && (builddir != NULL || Pflag || pflag)) {
+		(void)fprintf(stderr,
+		    "config: -L can only be used with -s and -v\n");
+		exit(EXIT_FAILURE);
 	}
 
 	if (xflag) {
@@ -300,6 +310,24 @@ main(int argc, char **argv)
 		(void)sprintf(p, "../compile/%s", last_component);
 	}
 	defbuilddir = (argc == 0) ? "." : p;
+
+	if (Lflag) {
+		char resolvedname[MAXPATHLEN];
+
+		if (realpath(conffile, resolvedname) == NULL)
+			err(EXIT_FAILURE, "realpath(%s)", conffile);
+
+		if (yyparse())
+			stop();
+
+		printf("include \"%s%s\"\n", resolvedname);
+
+		emit_params();
+		emit_options();
+		emit_instances();
+
+		exit(EXIT_SUCCESS);
+	}
 
 	removeit = 0;
 	if (is_elf(conffile)) {
@@ -1205,6 +1233,12 @@ setupdirs(void)
 	if ((builddir || strcmp(defbuilddir, ".") == 0) && !srcdir) {
 		error("source directory must be specified");
 		exit(1);
+	}
+
+	if (Lflag) {
+		if (srcdir == NULL)
+			srcdir = "../../..";
+		return;
 	}
 
 	if (srcdir == NULL)
