@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.18 2007/01/07 19:28:48 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.19 2007/01/09 18:01:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.18 2007/01/07 19:28:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.19 2007/01/09 18:01:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -422,8 +422,7 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 		simple_lock(&vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 
-		/* XXX: this doesn't really work */
-		if (vp->v_type != VREG || vp->v_uobj.uo_npages == 0) {
+		if (vp->v_type != VREG || UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
