@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.16 2007/01/09 18:14:31 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.17 2007/01/09 21:59:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -267,7 +267,9 @@ struct puffs_flush {
 #define PUFFSPUTOP		_IOWR('p', 3, struct puffs_reqh_put)
 #define PUFFSSIZEOP		_IOWR('p', 4, struct puffs_sizeop)
 #define PUFFSFLUSHOP		_IOW ('p', 5, struct puffs_flush)
+#if 0
 #define PUFFSFLUSHMULTIOP	_IOW ('p', 6, struct puffs_flushmulti)
+#endif
 
 
 /*
