@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.20 2007/01/09 18:14:31 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.21 2007/01/09 23:10:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.20 2007/01/09 18:14:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.21 2007/01/09 23:10:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -396,10 +396,14 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 {
 	struct vnode *vp, *nvp;
 	int error, rv;
+	int ppflags;
 
 	PUFFS_VFSREQ(sync);
 
 	error = 0;
+	ppflags = PGO_CLEANIT | PGO_ALLPAGES;
+	if (waitfor == MNT_WAIT)
+		ppflags |= PGO_SYNCIO;
 
 	/*
 	 * Sync all data from nodes.  The user server can still cache
@@ -424,7 +428,22 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 		}
 
 		simple_unlock(&mntvnode_slock);
-		/* XXX: PNODE_INACTIVE is b0rked */
+
+		/*
+		 * Here we try to get a reference to the vnode and to
+		 * lock it.  This is mostly cargo-culted, but I will
+		 * offer an explanation to why I believe this might
+		 * actually do the right thing.
+		 *
+		 * If the vnode is a goner, we quite obviously don't need
+		 * to sync it.
+		 *
+		 * If the vnode was busy, we don't need to sync it because
+		 * this is never called with MNT_WAIT except from
+		 * dounmount(), when we are wait-flushing all the dirty
+		 * vnodes through other routes in any case.  So there,
+		 * sync() doesn't actually sync.  Happy now?
+		 */
 		rv = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (rv) {
 			simple_lock(&mntvnode_slock);
@@ -433,9 +452,9 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 			continue;
 		}
 
-		if ((rv = VOP_FSYNC(vp, cred,
-		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0,
-		    0, 0, l)) != 0)
+		simple_lock(&vp->v_interlock);
+		rv = VOP_PUTPAGES(vp, 0, 0, ppflags);
+		if (rv)
 			error = rv;
 		vput(vp);
 		simple_lock(&mntvnode_slock);
