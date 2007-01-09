@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.146 2007/01/09 15:34:59 cube Exp $
+#	$NetBSD: files.isa,v 1.147 2007/01/09 19:19:09 cube Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -290,10 +290,6 @@ file	dev/isa/if_tr_isa.c		tr_isa
 attach	tr at isa with tr_isa: tr_isa, elink
 file	dev/isa/if_tribm_isa.c		tr_isa
 file	dev/isa/if_trtcm_isa.c		tr_isa
-
-# ISA NCR/AT&T/Lucent WaveLAN (non-802.11) card
-attach	wl at isa with wl_isa: i82586, wavelan
-file	dev/isa/if_wl_isa.c		wl_isa
 
 #
 # ISA Sound hardware
