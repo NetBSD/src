@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/12/08 20:20:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2007/01/09 17:49:56 ginsbach Exp $
 
 .include <bsd.own.mk>
 
@@ -13,11 +13,19 @@ CLEANFILES+=	lorder
 
 .include <bsd.hostprog.mk>
 
+BUILD_OSTYPE!=	uname -s
+BUILD_OSVERSION!= uname -r | sed -e 's,\([0-9]*\.[0-9]*\.*,\1,'
+
 install: ${TIMESTAMP}
 ${TIMESTAMP}: lorder
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
 
 lorder: lorder.sh
+.if ${BUILD_OSTYPE} == "Darwin" && ${BUILD_OSVERSION} < 8.0
+	sed -e "s,/bin/sh,${HOST_BSHELL},g" \
+	    -e "/join/s/,/ /g" < ${.ALLSRC} > ${.TARGET}
+.else
 	sed -e "s,/bin/sh,${HOST_BSHELL},g" < ${.ALLSRC} > ${.TARGET}
+.endif
 
 realall: lorder
