@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.34 2007/01/08 22:33:07 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.35 2007/01/09 22:30:35 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2466,4 +2466,9 @@ sys/arch/xen/xen/xencons.c			1.20
 
 	Fix Xen console hangs.
 	[bouyer, ticket #1625]
+
+sys/arch/mac68k/mac68k/locore.s			1.146
+
+	Avoid kernel panic before reboot. This fixes PR port-mac68k/35068.
+	[chs, ticket #1626]
 
