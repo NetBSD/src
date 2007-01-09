@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.17 2007/01/08 16:08:08 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.18 2007/01/09 13:03:47 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20060904
+#define CONFIG_VERSION		20070109
 #define CONFIG_MINVERSION	0
 
 /*
@@ -409,6 +409,7 @@ struct	hashtab *fsopttab;	/* table of configured file systems */
 struct	hashtab *defopttab;	/* options that have been "defopt"'d */
 struct	hashtab *defflagtab;	/* options that have been "defflag"'d */
 struct	hashtab *defparamtab;	/* options that have been "defparam"'d */
+struct	hashtab *defoptlint;	/* lint values for options */
 struct	hashtab *deffstab;	/* defined file systems */
 struct	hashtab *optfiletab;	/* "defopt"'d option .h files */
 struct	hashtab *attrtab;	/* attributes (locators, etc.) */
