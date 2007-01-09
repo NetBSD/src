@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.16 2006/11/26 17:31:32 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.17 2007/01/09 09:36:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -924,7 +924,7 @@ struct atw_txdesc {
 	volatile uint32_t	at_flags;
 	volatile uint32_t	at_buf1;
 	volatile uint32_t	at_buf2;
-};
+} __attribute__((__packed__, __aligned__(4)));
 
 #define ATW_TXCTL_OWN		__BIT(31)	/* 1: ready to transmit */
 #define ATW_TXCTL_DONE		__BIT(30)	/* 0: not processed */
@@ -957,7 +957,7 @@ struct atw_rxdesc {
 	volatile uint32_t	ar_ctl;
 	volatile uint32_t	ar_buf1;
 	volatile uint32_t	ar_buf2;
-};
+} __attribute__((__packed__, __aligned__(4)));
 
 #define	ar_rssi	ar_ctl
 
