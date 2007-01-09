@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.14 2006/03/29 06:47:06 thorpej Exp $	*/
+/*	$NetBSD: cir.c,v 1.15 2007/01/09 15:35:53 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.14 2006/03/29 06:47:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.15 2007/01/09 15:35:53 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,7 +258,7 @@ cirpoll(dev_t dev, int events, struct proc *p)
 #if 0
 	/* How about write? */
 	if (events & (POLLOUT | POLLWRNORM))
-		if (???)
+		if (/* ??? */)
 			revents |= events & (POLLOUT | POLLWRNORM);
 #endif
 
