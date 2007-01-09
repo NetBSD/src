@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2007/01/08 17:50:43 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2007/01/09 13:03:47 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -282,6 +282,7 @@ main(int argc, char **argv)
 	deffstab = ht_new();
 	defopttab = ht_new();
 	defparamtab = ht_new();
+	defoptlint = ht_new();
 	defflagtab = ht_new();
 	optfiletab = ht_new();
 	obsopttab = ht_new();
@@ -730,6 +731,19 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 	 */
 	for (nv = opts; nv != NULL; nv = nextnv) {
 		nextnv = nv->nv_next;
+
+		if (*(nv->nv_name) == '\0') {
+			if (nextnv == NULL)
+				panic("invalid option chain");
+			/*
+			 * If an entry already exists, then we are about to
+			 * complain, so no worry.
+			 */
+			(void) ht_insert(defoptlint, nextnv->nv_name,
+			    nv);
+			nv = nextnv;
+			nextnv = nextnv->nv_next;
+		}
 
 		/* An option name can be declared at most once. */
 		if (DEFINED_OPTION(nv->nv_name)) {
