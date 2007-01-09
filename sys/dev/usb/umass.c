@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.122 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: umass.c,v 1.123 2007/01/09 16:46:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.122 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.123 2007/01/09 16:46:02 christos Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1314,6 +1314,12 @@ umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen,
 	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
 		("sc->sc_wire == 0x%02x wrong for umass_cbi_adsc\n",
 		sc->sc_wire));
+
+	if ((sc->sc_cmd == UMASS_CPROTO_RBC) &&
+	    (sc->sc_quirks & UMASS_QUIRK_RBC_PAD_TO_12) != 0 && buflen < 12) {
+		(void)memset(buffer + buflen, 0, 12 - buflen);
+		buflen = 12;
+	}
 
 	sc->sc_req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	sc->sc_req.bRequest = UR_CBI_ADSC;
