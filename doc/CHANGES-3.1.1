@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.18 2007/01/08 22:32:57 tron Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.19 2007/01/09 12:12:47 ghen Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -138,4 +138,10 @@ sys/arch/xen/xen/xencons.c			1.20
 
 	Fix Xen console hangs.
 	[bouyer, ticket #1625]
+
+sys/dist/ipf/netinet/ip_state.c			1.16 via patch
+
+	TCP window scaling was being recognised but the recorded settins were
+	being clobbered and thus effectively disabled.
+	[darrenr, ticket #1610]
 
