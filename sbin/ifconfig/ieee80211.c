@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.8 2007/01/09 09:19:02 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.9 2007/01/09 09:24:14 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.8 2007/01/09 09:19:02 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.9 2007/01/09 09:24:14 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -116,7 +116,7 @@ setifnwid(const char *val, int d)
 	estrlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (void *)&nwid;
 	if (ioctl(s, SIOCS80211NWID, &ifr) == -1)
-		warn("SIOCS80211NWID");
+		err(EXIT_FAILURE, "SIOCS80211NWID");
 }
 
 void
@@ -131,7 +131,7 @@ setifbssid(const char *val, int d)
 	} else {
 		ea = ether_aton(val);
 		if (ea == NULL) {
-			warnx("malformed BSSID: %s", val);
+			errx(EXIT_FAILURE, "malformed BSSID: %s", val);
 			return;
 		}
 		memcpy(&bssid.i_bssid, ea->ether_addr_octet,
@@ -139,7 +139,7 @@ setifbssid(const char *val, int d)
 	}
 	estrlcpy(bssid.i_name, name, sizeof(bssid.i_name));
 	if (ioctl(s, SIOCS80211BSSID, &bssid) == -1)
-		warn("SIOCS80211BSSID");
+		err(EXIT_FAILURE, "SIOCS80211BSSID");
 }
 
 void
@@ -176,15 +176,14 @@ setifchan(const char *val, int d)
 	else {
 		chan = atoi(val);
 		if (chan < 0 || chan > 0xffff) {
-			warnx("invalid channel: %s", val);
-			return;
+			errx(EXIT_FAILURE, "invalid channel: %s", val);
 		}
 	}
 
 	estrlcpy(channel.i_name, name, sizeof(channel.i_name));
 	channel.i_channel = (u_int16_t) chan;
 	if (ioctl(s, SIOCS80211CHANNEL, &channel) == -1)
-		warn("SIOCS80211CHANNEL");
+		err(EXIT_FAILURE, "SIOCS80211CHANNEL");
 }
 
 void
@@ -228,8 +227,7 @@ setifnwkey(const char *val, int d)
 					return;
 			}
 			if (*val != '\0') {
-				warnx("SIOCS80211NWKEY: too many keys.");
-				return;
+				errx(EXIT_FAILURE, "SIOCS80211NWKEY: too many keys.");
 			}
 		} else {
 			val = get_string(val, NULL, keybuf[0],
@@ -243,7 +241,7 @@ setifnwkey(const char *val, int d)
 		nwkey.i_key[i].i_keylen = 0;
 	estrlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	if (ioctl(s, SIOCS80211NWKEY, &nwkey) == -1)
-		warn("SIOCS80211NWKEY");
+		err(EXIT_FAILURE, "SIOCS80211NWKEY");
 }
 
 void
@@ -253,13 +251,12 @@ setifpowersave(const char *val, int d)
 
 	estrlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, &power) == -1) {
-		warn("SIOCG80211POWER");
-		return;
+		err(EXIT_FAILURE, "SIOCG80211POWER");
 	}
 
 	power.i_enabled = d;
 	if (ioctl(s, SIOCS80211POWER, &power) == -1)
-		warn("SIOCS80211POWER");
+		err(EXIT_FAILURE, "SIOCS80211POWER");
 }
 
 void
@@ -269,13 +266,12 @@ setifpowersavesleep(const char *val, int d)
 
 	estrlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, &power) == -1) {
-		warn("SIOCG80211POWER");
-		return;
+		err(EXIT_FAILURE, "SIOCG80211POWER");
 	}
 
 	power.i_maxsleep = atoi(val);
 	if (ioctl(s, SIOCS80211POWER, &power) == -1)
-		warn("SIOCS80211POWER");
+		err(EXIT_FAILURE, "SIOCS80211POWER");
 }
 
 void
@@ -399,8 +395,7 @@ ieee80211_status(void)
 	if (ioctl(s, SIOCG80211NWID, &ifr) == -1)
 		return;
 	if (nwid.i_len > IEEE80211_NWID_LEN) {
-		warnx("SIOCG80211NWID: wrong length of nwid (%d)", nwid.i_len);
-		return;
+		errx(EXIT_FAILURE, "SIOCG80211NWID: wrong length of nwid (%d)", nwid.i_len);
 	}
 	printf("\tssid ");
 	print_string(nwid.i_nwid, nwid.i_len);
