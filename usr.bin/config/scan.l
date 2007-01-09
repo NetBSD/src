@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.5 2006/08/26 18:17:13 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.6 2007/01/09 13:03:47 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,6 +132,7 @@ version 	return VERSION;
 with		return WITH;
 
 \+=		return PLUSEQ;
+:=		return COLONEQ;
 
 include[ \t]+{FILENAME}	{
 		if (getincludepath()) {

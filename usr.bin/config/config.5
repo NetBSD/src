@@ -1,6 +1,6 @@
-.\" $NetBSD: config.5,v 1.9 2007/01/08 07:18:25 wiz Exp $
+.\" $NetBSD: config.5,v 1.10 2007/01/09 13:03:47 cube Exp $
 .\"
-.\"  Copyright (c) 2006 The NetBSD Foundation.
+.\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
 .\"
 .\"  This code is derived from software contributed to the NetBSD Foundation
@@ -30,7 +30,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 7, 2007
+.Dd January 9, 2007
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -331,14 +331,23 @@ Several options can be combined in one header file, for convenience.
 The header file is created in the compilation directory, making them directly
 accessible by source files.
 .It Ic defparam Oo Ar file Oc Ar option Oo = Ar value Oc \
-    Oo Ar option Oo Ar ... Oc Oc Op : Ar dependencies
+    Oo := Ar lint-value Oc Oo Ar option Oo Ar ... Oc Oc Op : Ar dependencies
 Behaves like
 .Ic defflag ,
 except the defined option must have a value.
 Such options are not typed:
 they can have either a numeric or a string value.
-If a value is specified, it is treated as a default, and the option is
+If a
+.Ar value
+is specified, it is treated as a default, and the option is
 always defined in the corresponding header file.
+If a
+.Ar lint-value
+is specified,
+.Xr config 1
+will use it as a value when generating a lint configuration with
+.Fl L ,
+and ignore it in all other cases.
 .It Ic deffs Oo Ar file Oc Ar name Op Ar name Op Ar ...
 Defines a file-system name.
 It is no more than a regular option, as defined by

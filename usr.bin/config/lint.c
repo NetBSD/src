@@ -1,7 +1,7 @@
-/*	$NetBSD: lint.c,v 1.2 2007/01/08 18:08:24 cube Exp $	*/
+/*	$NetBSD: lint.c,v 1.3 2007/01/09 13:03:47 cube Exp $	*/
 
 /*
- *  Copyright (c) 2006 The NetBSD Foundation.
+ *  Copyright (c) 2007 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  This code is derived from software contributed to the NetBSD Foundation
@@ -80,8 +80,12 @@ do_emit_option(const char *name, void *value, void *v)
 		return 0;
 
 	printf("%s\t%s", ot->ot_name, nv->nv_name);
-	if (ot->ot_type == OT_PARAM)
-		printf("=%s", nv->nv_str ? nv->nv_str : "1");
+	if (ot->ot_type == OT_PARAM) {
+		struct nvlist *nv2  = ht_lookup(defoptlint, nv->nv_name);
+		if (nv2 == NULL)
+			nv2 = nv;
+		printf("=\"%s\"", nv2->nv_str ? nv2->nv_str : "1");
+	}
 	printf("\n");
 
 	return 1;
