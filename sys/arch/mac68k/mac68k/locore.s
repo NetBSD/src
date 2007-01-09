@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.24.1 2007/01/09 22:36:04 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -1211,6 +1211,7 @@ Lbootcode:
 	jra	Ldoboot1
 LmotommuF:
 #endif
+	lea	_ASM_LABEL(longscratch),%a3
 	movl	#0,%a3@			| value for pmove to %TC (turn off MMU)
 	pmove	%a3@,%tc		| disable MMU
 
