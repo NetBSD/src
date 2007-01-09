@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.222 2006/10/07 14:17:12 peter Exp $
+#	$NetBSD: DEVNAMES,v 1.223 2007/01/09 21:53:53 cube Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -306,7 +306,7 @@ cy			MI
 cy82c693		MI
 cypide			MI
 cz			MI
-daic			MI
+#daic			MI
 dbri			sparc
 dcm			hp300
 ddc			MI
@@ -1402,7 +1402,6 @@ vsms			alpha
 vt			i386
 vtpbc			algor
 vz			vax
-wavelan			MI		Attribute
 wd			MI
 wd33c93			MI		Attribute
 wdc			MI
@@ -1415,7 +1414,6 @@ we			MI
 wesc			amiga
 wesc			amigappc
 wi			MI
-wl			MI
 wlan			MI		Attribute
 wm			MI
 ws			luna68k
