@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.10 2006/09/04 06:45:14 dsl Exp $	*/
+/*	$NetBSD: gram.y,v 1.11 2007/01/09 13:03:47 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,6 +72,7 @@ static	int	adepth;
 #define	new_p(p)	new0(NULL, NULL, p, 0, NULL)
 #define	new_px(p, x)	new0(NULL, NULL, p, 0, x)
 #define	new_sx(s, x)	new0(NULL, s, NULL, 0, x)
+#define	new_nsx(n,s,x)	new0(n, s, NULL, 0, x)
 
 #define	fx_atom(s)	new0(s, NULL, NULL, FX_ATOM, NULL)
 #define	fx_not(e)	new0(NULL, NULL, NULL, FX_NOT, e)
@@ -101,7 +102,7 @@ static	struct nvlist *mk_ns(const char *, struct nvlist *);
 
 %token	AND AT ATTACH
 %token	BLOCK BUILD
-%token	CHAR COMPILE_WITH CONFIG
+%token	CHAR COLONEQ COMPILE_WITH CONFIG
 %token	DEFFS DEFINE DEFOPT DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS
 %token	DEVICE_MAJOR
 %token	ENDFILE
@@ -332,8 +333,18 @@ defopts:
 	defopt				{ $$ = $1; };
 
 defopt:
-	WORD				{ $$ = new_n($1); } | ;
-	WORD '=' value			{ $$ = new_ns($1, $3); };
+	WORD				{ $$ = new_n($1); } |
+	WORD '=' value			{ $$ = new_ns($1, $3); } |
+	WORD COLONEQ value		{
+						struct nvlist *__nv =
+						    new_n($1);
+						$$ = new_nsx("", $3, __nv);
+					} |
+	WORD '=' value COLONEQ value	{
+						struct nvlist *__nv =
+						    new_n($1);
+						$$ = new_nsx("", $5, __nv);
+					};
 
 devbase:
 	WORD				{ $$ = getdevbase($1); };
