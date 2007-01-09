@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.50 2007/01/07 13:55:17 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.51 2007/01/09 12:49:37 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -13,10 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Brett Lymn and Elad Efrat.
- * 4. The name of the authors may not be used to endorse or promote products
+ * 3. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
