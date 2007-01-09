@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.13 2006/12/30 01:29:03 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.14 2007/01/09 18:14:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.13 2006/12/30 01:29:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.14 2007/01/09 18:14:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -255,10 +255,11 @@ puffs_putvnode(struct vnode *vp)
  * XXX: lists, although lookup cache mostly shields us from this
  */
 struct vnode *
-puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie)
+puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 {
 	struct puffs_node *pnode;
 	struct vnode *vp;
+	int vgetflags;
 
 	simple_lock(&pmp->pmp_lock);
 	LIST_FOREACH(pnode, &pmp->pmp_pnodelist, pn_entries) {
@@ -266,17 +267,20 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie)
 			break;
 	}
 	simple_unlock(&pmp->pmp_lock);
+
+	/* XXX: what lock controls this? */
 	if (!pnode)
 		return NULL;
 	vp = pnode->pn_vp;
 
-	if (pnode->pn_stat & PNODE_INACTIVE) {
-		if (vget(vp, LK_EXCLUSIVE | LK_RETRY))
-			return NULL;
-	} else {
-		vref(vp);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	}
+	if (lock)
+		vgetflags = LK_EXCLUSIVE | LK_RETRY;
+	else
+		vgetflags = 0;
+
+	if (vget(vp, vgetflags))
+		return NULL;
+
 	return vp;
 }
 

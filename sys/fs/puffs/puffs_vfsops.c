@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.19 2007/01/09 18:01:05 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.20 2007/01/09 18:14:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.19 2007/01/09 18:01:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.20 2007/01/09 18:14:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -289,21 +289,17 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 
 	/*
 	 * pmp_lock must be held if vref()'ing or vrele()'ing the
-	 * root vnode.
+	 * root vnode.  the latter is controlled by puffs_inactive().
 	 */
 	simple_lock(&pmp->pmp_lock);
 	vp = pmp->pmp_root;
 	if (vp) {
 		pn = VPTOPP(vp);
-		if (pn->pn_stat & PNODE_INACTIVE)  {
-			if (vget(vp, LK_NOWAIT)) {
-				pmp->pmp_root = NULL;
-				goto grabnew;
-			}
-		} else
-			vref(vp);
+		if (vget(vp, LK_EXCLUSIVE | LK_RETRY)) {
+			pmp->pmp_root = NULL;
+			goto grabnew;
+		}
 		simple_unlock(&pmp->pmp_lock);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		*vpp = vp;
 		return 0;
 	}

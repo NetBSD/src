@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.17 2007/01/02 15:51:22 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.18 2007/01/09 18:14:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -150,9 +150,8 @@ struct puffs_mount {
 #define PUFFSTAT_RUNNING	2
 #define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
-#define PNODE_INACTIVE	0x01
-#define PNODE_LOCKED	0x02
-#define PNODE_WANTED	0x04	
+#define PNODE_LOCKED	0x01
+#define PNODE_WANTED	0x02	
 struct puffs_node {
 	struct genfs_node pn_gnode;	/* genfs glue			*/
 
@@ -179,7 +178,7 @@ int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 int	puffs_newnode(struct mount *, struct vnode *, struct vnode **,
 		      void *, struct componentname *, enum vtype, dev_t);
 void	puffs_putvnode(struct vnode *);
-struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *);
+struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *, int);
 void	puffs_makecn(struct puffs_kcn *, const struct componentname *);
 void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);
 pid_t	puffs_lwp2pid(struct lwp *);

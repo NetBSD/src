@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.15 2007/01/07 19:28:48 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.16 2007/01/09 18:14:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -85,7 +85,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	1
+#define PUFFSVERSION	2
 #define PUFFSNAMESIZE	32
 struct puffs_args {
 	unsigned int	pa_vers;
@@ -232,6 +232,45 @@ struct puffs_sizeop {
 };
 
 /*
+ * Flush operation.  This can be used to invalidate:
+ * 1) name cache for one node
+ * 2) name cache for all children 
+ * 3) name cache for the entire mount
+ * 4) page cache for a set of ranges in one node
+ * 5) page cache for one entire node
+ *
+ * It can be used to flush:
+ * 1) page cache for a set of ranges in one node
+ * 2) page cache for one entire node
+ */
+
+/* XXX: only namecache DIR and ALL are currently implemented */
+struct puffs_flush {
+	void		*pf_cookie;
+
+	int		pf_op;
+};
+#define PUFFS_INVAL_NAMECACHE_NODE		0
+#define PUFFS_INVAL_NAMECACHE_DIR		1
+#define PUFFS_INVAL_NAMECACHE_ALL		2
+#define PUFFS_INVAL_PAGECACHE_NODE_RANGE	3
+#define PUFFS_INVAL_PAGECACHE_NODE		4
+#define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	5
+#define PUFFS_FLUSH_PAGECACHE_NODE		6
+
+
+/*
+ * Available ioctl operations
+ */
+#define PUFFSSTARTOP		_IOWR('p', 1, struct puffs_startreq)
+#define PUFFSGETOP		_IOWR('p', 2, struct puffs_reqh_get)
+#define PUFFSPUTOP		_IOWR('p', 3, struct puffs_reqh_put)
+#define PUFFSSIZEOP		_IOWR('p', 4, struct puffs_sizeop)
+#define PUFFSFLUSHOP		_IOW ('p', 5, struct puffs_flush)
+#define PUFFSFLUSHMULTIOP	_IOW ('p', 6, struct puffs_flushmulti)
+
+
+/*
  * Credentials for an operation.  Can be either struct uucred for
  * ops called from a credential context or NOCRED/FSCRED for ops
  * called from within the kernel.  It is up to the implementation
@@ -244,15 +283,8 @@ struct puffs_cred {
 };
 #define PUFFCRED_TYPE_UUC	1
 #define PUFFCRED_TYPE_INTERNAL	2
-
 #define PUFFCRED_CRED_NOCRED	1
 #define PUFFCRED_CRED_FSCRED	2
-
-
-#define PUFFSSTARTOP	_IOWR('p', 1, struct puffs_startreq)
-#define PUFFSGETOP	_IOWR('p', 2, struct puffs_reqh_get)
-#define PUFFSPUTOP	_IOWR('p', 3, struct puffs_reqh_put)
-#define PUFFSSIZEOP	_IOWR('p', 4, struct puffs_sizeop)
 
 /*
  * 4x MAXPHYS is the max size the system will attempt to copy,
@@ -284,8 +316,8 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
 #define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
 
-#define PUFFSLOOKUP_FOLLOW	0x04	/* follow symlinks */
-#define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow symlinks */
+#define PUFFSLOOKUP_FOLLOW	0x04	/* follow final symlink */
+#define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow final symlink */
 #define PUFFSLOOKUP_OPTIONS	0x0c
 
 /*
