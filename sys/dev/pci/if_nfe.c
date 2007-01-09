@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.12 2007/01/05 01:33:57 jmcneill Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.13 2007/01/09 10:29:27 tsutsui Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.12 2007/01/05 01:33:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.13 2007/01/09 10:29:27 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -319,12 +319,12 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ethercom.ec_capabilities |=
 			ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 #endif
-#ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM) {
-		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-		    IFCAP_CSUM_UDPv4;
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	}
-#endif
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = nfe_miibus_readreg;
@@ -809,19 +809,31 @@ nfe_rxeof(struct nfe_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_pkthdr.rcvif = ifp;
 
-#ifdef notyet
-		if (sc->sc_flags & NFE_HW_CSUM) {
-			if (flags & NFE_RX_IP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
-			if (flags & NFE_RX_UDP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
-			if (flags & NFE_RX_TCP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+		if ((sc->sc_flags & NFE_HW_CSUM) != 0) {
+			/*
+			 * XXX
+			 * no way to check M_CSUM_IPv4_BAD or non-IPv4 packets?
+			 */
+			if (flags & NFE_RX_IP_CSUMOK) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				DPRINTFN(3, ("%s: ip4csum-rx ok\n",
+				    sc->sc_dev.dv_xname));
+			}
+			/*
+			 * XXX
+			 * no way to check M_CSUM_TCP_UDP_BAD or
+			 * other protocols?
+			 */
+			if (flags & NFE_RX_UDP_CSUMOK) {
+				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+				DPRINTFN(3, ("%s: udp4csum-rx ok\n",
+				    sc->sc_dev.dv_xname));
+			} else if (flags & NFE_RX_TCP_CSUMOK) {
+				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+				DPRINTFN(3, ("%s: tcp4csum-rx ok\n",
+				    sc->sc_dev.dv_xname));
+			}
 		}
-#elif defined(NFE_CSUM)
-		if ((sc->sc_flags & NFE_HW_CSUM) && (flags & NFE_RX_CSUMOK))
-			m->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
-#endif
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -937,7 +949,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	struct nfe_desc64 *desc64;
 	struct nfe_tx_data *data;
 	bus_dmamap_t map;
-	uint16_t flags;
+	uint16_t flags, csumflags;
 #if NVLAN > 0
 	struct m_tag *mtag;
 	uint32_t vtag = 0;
@@ -949,6 +961,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	data = NULL;
 
 	flags = 0;
+	csumflags = 0;
 	first = sc->txq.cur;
 
 	map = sc->txq.data[first].map;
@@ -970,12 +983,12 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL)
 		vtag = NFE_TX_VTAG | VLAN_TAG_VALUE(mtag);
 #endif
-#ifdef NFE_CSUM
-	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-		flags |= NFE_TX_IP_CSUM;
-	if (m0->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
-		flags |= NFE_TX_TCP_CSUM;
-#endif
+	if ((sc->sc_flags & NFE_HW_CSUM) != 0) {
+		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4)
+			csumflags |= NFE_TX_IP_CSUM;
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4))
+			csumflags |= NFE_TX_TCP_CSUM;
+	}
 
 	for (i = 0; i < map->dm_nsegs; i++) {
 		data = &sc->txq.data[sc->txq.cur];
@@ -990,9 +1003,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			    htole32(map->dm_segs[i].ds_addr & 0xffffffff);
 			desc64->length = htole16(map->dm_segs[i].ds_len - 1);
 			desc64->flags = htole16(flags);
-#if NVLAN > 0
-			desc64->vtag = htole32(vtag);
-#endif
+			desc64->vtag = 0;
 		} else {
 			desc32 = &sc->txq.desc32[sc->txq.cur];
 
@@ -1001,21 +1012,11 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			desc32->flags = htole16(flags);
 		}
 
-		if (map->dm_nsegs > 1) {
-			/*
-			 * Checksum flags and vtag belong to the first fragment
-			 * only.
-			 */
-			flags &= ~(NFE_TX_IP_CSUM | NFE_TX_TCP_CSUM);
-#if NVLAN > 0
-			vtag = 0;
-#endif
-			/*
-			 * Setting of the valid bit in the first descriptor is
-			 * deferred until the whole chain is fully setup.
-			 */
-			flags |= NFE_TX_VALID;
-		}
+		/*
+		 * Setting of the valid bit in the first descriptor is
+		 * deferred until the whole chain is fully setup.
+		 */
+		flags |= NFE_TX_VALID;
 
 		sc->txq.queued++;
 		sc->txq.cur = (sc->txq.cur + 1) % NFE_TX_RING_COUNT;
@@ -1027,6 +1028,12 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		flags |= NFE_TX_LASTFRAG_V2;
 		desc64->flags = htole16(flags);
 
+		/* Checksum flags and vtag belong to the first fragment only. */
+#if NVLAN > 0
+		sc->txq.desc64[first].vtag = htole32(vtag);
+#endif
+		sc->txq.desc64[first].flags |= htole16(csumflags);
+
 		/* finally, set the valid bit in the first descriptor */
 		sc->txq.desc64[first].flags |= htole16(NFE_TX_VALID);
 	} else {
@@ -1036,6 +1043,9 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		else
 			flags |= NFE_TX_LASTFRAG_V1;
 		desc32->flags = htole16(flags);
+
+		/* Checksum flags belong to the first fragment only. */
+		sc->txq.desc32[first].flags |= htole16(csumflags);
 
 		/* finally, set the valid bit in the first descriptor */
 		sc->txq.desc32[first].flags |= htole16(NFE_TX_VALID);
@@ -1125,10 +1135,8 @@ nfe_init(struct ifnet *ifp)
 		sc->rxtxctl |= NFE_RXTX_V3MAGIC;
 	else if (sc->sc_flags & NFE_JUMBO_SUP)
 		sc->rxtxctl |= NFE_RXTX_V2MAGIC;
-#ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM)
 		sc->rxtxctl |= NFE_RXTX_RXCSUM;
-#endif
 #if NVLAN > 0
 	/*
 	 * Although the adapter is capable of stripping VLAN tags from received
