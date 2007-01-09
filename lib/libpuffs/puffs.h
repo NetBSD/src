@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.20 2007/01/09 18:15:08 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.21 2007/01/09 18:19:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -423,8 +423,8 @@ int	puffs_docc(struct puffs_putreq *, struct puffs_cc *);
  * Flushing / invalidation routines
  */
 
-int	puffs_inval_name_dir(struct puffs_usermount *, void *);
-int	puffs_inval_name_all(struct puffs_usermount *);
+int	puffs_inval_namecache_dir(struct puffs_usermount *, void *);
+int	puffs_inval_namecache_all(struct puffs_usermount *);
 
 __END_DECLS
 
