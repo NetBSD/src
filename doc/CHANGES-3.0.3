@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.15 2007/01/09 12:11:16 ghen Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.16 2007/01/09 22:33:51 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -127,4 +127,9 @@ sys/dist/ipf/netinet/ip_state.c			1.16 via patch
 	TCP window scaling was being recognised but the recorded settins were
 	being clobbered and thus effectively disabled.
 	[darrenr, ticket #1610]
+
+sys/arch/mac68k/mac68k/locore.s			1.146
+
+	Avoid kernel panic before reboot. This fixes PR port-mac68k/35068.
+	[chs, ticket #1626]
 
