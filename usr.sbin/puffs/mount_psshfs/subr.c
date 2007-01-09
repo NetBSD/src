@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.3 2007/01/07 21:59:27 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.4 2007/01/09 12:34:20 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.3 2007/01/07 21:59:27 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.4 2007/01/09 12:34:20 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -265,6 +265,7 @@ direnter(struct puffs_node *parent, const char *entryname)
 	pd = &psn_parent->dir[i];
 	pd->entryname = estrdup(entryname);
 	pd->valid = 1;
+	puffs_vattr_null(&pd->va);
 	psn_parent->dentnext++;
 
 	return pd;
