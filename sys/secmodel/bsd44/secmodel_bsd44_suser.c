@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.30 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.31 2007/01/09 16:19:27 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.30 2007/01/09 12:57:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.31 2007/01/09 16:19:27 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -279,24 +279,22 @@ proc_uidmatch(kauth_cred_t cred, kauth_cred_t target)
 {
 	int r = 0;
 
-	/*
-	 * suid proc of ours or proc not ours
-	 */
 	if (kauth_cred_getuid(cred) != kauth_cred_getuid(target) ||
-	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target))
+	    kauth_cred_getuid(cred) != kauth_cred_getsvuid(target)) {
+		/*
+		 * suid proc of ours or proc not ours
+		 */
 		r = EPERM;
-
-	/*
-	 * sgid proc has sgid back to us temporarily
-	 */
-	else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target))
+	} else if (kauth_cred_getgid(target) != kauth_cred_getsvgid(target)) {
+		/*
+		 * sgid proc has sgid back to us temporarily
+		 */
 		r = EPERM;
-
-	/*
-	 * our rgid must be in target's group list (ie,
-	 * sub-processes started by a sgid process)
-	 */
-	else {
+	} else {
+		/*
+		 * our rgid must be in target's group list (ie,
+		 * sub-processes started by a sgid process)
+		 */
 		int ismember = 0;
 
 		if (kauth_cred_ismember_gid(cred,
