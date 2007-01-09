@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.147 2007/01/09 19:19:09 cube Exp $
+#	$NetBSD: files.isa,v 1.148 2007/01/09 21:59:08 cube Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -6,7 +6,7 @@
 
 # ports should specify appropriate major numbers for the following
 # devices:
-#	mcd, scd, wd, wt
+#	mcd, wd, wt
 
 device	isa {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
@@ -144,11 +144,6 @@ device	mcd: disk
 attach	mcd at isa
 file	dev/isa/mcd.c			mcd			needs-flag
 defflag			MCD_PROMISC		# enable "promiscuous" match
-
-# Sony CDU-3[13]A CD-ROM drives
-device	scd: disk
-attach	scd at isa
-file	dev/isa/scd.c			scd			needs-flag
 
 attach	wdc at isa with wdc_isa
 file	dev/isa/wdc_isa.c		wdc_isa

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sandpoint,v 1.18 2006/11/24 22:04:24 wiz Exp $
+#	$NetBSD: majors.sandpoint,v 1.19 2007/01/09 21:59:08 cube Exp $
 #
 # Device majors for sandpoint
 #
@@ -14,7 +14,7 @@ device-major	log		char 7
 device-major	com		char 8			com
 device-major	fd		char 9   block 2	fdc
 device-major	wt		char 10  block 3	wt
-device-major	scd		char 11  block 15	scd
+#device-major	scd		char 11  block 15	scd
 
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st
