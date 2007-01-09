@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.29 2007/01/07 00:53:13 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.30 2007/01/09 18:14:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.29 2007/01/07 00:53:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.30 2007/01/09 18:14:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -448,6 +448,7 @@ puffs_lookup(void *v)
 	 */
 	if (PUFFS_DOCACHE(pmp)) {
 		error = cache_lookup(dvp, ap->a_vpp, cnp);
+
 		if (error >= 0)
 			return error;
 	}
@@ -491,7 +492,7 @@ puffs_lookup(void *v)
 		goto errout;
 	}
 
-	vp = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode);
+	vp = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode, 1);
 	if (!vp) {
 		error = puffs_getvnode(dvp->v_mount,
 		    lookup_arg.pvnr_newnode, lookup_arg.pvnr_vtype,
@@ -765,7 +766,6 @@ puffs_inactive(void *v)
 	 * when going to userspace
 	 */
 	pnode = ap->a_vp->v_data;
-	pnode->pn_stat |= PNODE_INACTIVE;
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 

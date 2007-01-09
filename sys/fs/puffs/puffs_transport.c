@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.3 2006/12/10 23:43:55 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.4 2007/01/09 18:14:31 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.3 2006/12/10 23:43:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.4 2007/01/09 18:14:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/malloc.h>
+#include <sys/namei.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
 
@@ -297,6 +298,59 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 }
 
 static int
+puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
+{
+	struct vnode *vp;
+	int rv;
+
+	/* XXX: slurry */
+	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
+		cache_purgevfs(PMPTOMP(pmp));
+		return 0;
+	}
+
+	rv = 0;
+
+	/*
+	 * Get vnode, don't lock it.  Namecache is protected by its own lock
+	 * and we have a reference to protect against premature harvesting.
+	 *
+	 * The node we want here might be locked and the op is in
+	 * userspace waiting for us to complete ==> deadlock.  Another
+	 * reason we need to eventually bump locking to userspace, as we
+	 * will need to lock the node if we wish to do flushes.
+	 */
+	vp = puffs_pnode2vnode(pmp, pf->pf_cookie, 0);
+	if (vp == NULL)
+		return ENOENT;
+
+	switch (pf->pf_op) {
+#if 0
+	/* not quite ready, yet */
+	case PUFFS_INVAL_NAMECACHE_NODE:
+	struct componentname *pf_cn;
+	char *name;
+		/* get comfortab^Wcomponentname */
+		MALLOC(pf_cn, struct componentname *,
+		    sizeof(struct componentname), M_PUFFS, M_WAITOK | M_ZERO);
+		memset(pf_cn, 0, sizeof(struct componentname));
+		break;
+
+#endif
+	case PUFFS_INVAL_NAMECACHE_DIR:
+		cache_purge1(vp, NULL, PURGE_CHILDREN);
+		break;
+
+	default:
+		rv = EINVAL;
+	}
+
+	vrele(vp);
+
+	return rv;
+}
+
+static int
 puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
 	struct puffs_mount *pmp = FPTOPMP(fp);
@@ -324,6 +378,10 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case PUFFSSTARTOP:
 		rv = puffs_start2(pmp, data);
+		break;
+
+	case PUFFSFLUSHOP:
+		rv = puffs_flush(pmp, data);
 		break;
 
 	/* already done in sys_ioctl() */
