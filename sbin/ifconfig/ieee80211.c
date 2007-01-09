@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.9 2007/01/09 09:24:14 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.10 2007/01/09 09:25:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.9 2007/01/09 09:24:14 dyoung Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.10 2007/01/09 09:25:56 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -304,7 +304,7 @@ ieee80211_statistics(void)
 	STAT_PRINT(is_rx_ctl, "rx discard ctrl frames");
 	STAT_PRINT(is_rx_beacon, "rx beacon frames");
 	STAT_PRINT(is_rx_rstoobig, "rx rate set truncated");
-	STAT_PRINT(is_rx_elem_missing, "rx required element missin");
+	STAT_PRINT(is_rx_elem_missing, "rx required element missing");
 	STAT_PRINT(is_rx_elem_toobig, "rx element too big");
 	STAT_PRINT(is_rx_elem_toosmall, "rx element too small");
 	STAT_PRINT(is_rx_elem_unknown, "rx element unknown");
@@ -346,6 +346,8 @@ ieee80211_statistics(void)
 	STAT_PRINT(is_tx_badcipher, "tx failed 'cuz key type");
 	STAT_PRINT(is_tx_nodefkey, "tx failed 'cuz no defkey");
 	STAT_PRINT(is_tx_noheadroom, "tx failed 'cuz no space");
+	STAT_PRINT(is_tx_fragframes, "tx frames fragmented");
+	STAT_PRINT(is_tx_frags, "tx fragments created");
 
 	STAT_PRINT(is_scan_active, "active scans started");
 	STAT_PRINT(is_scan_passive, "passive scans started");
@@ -371,6 +373,12 @@ ieee80211_statistics(void)
 	STAT_PRINT(is_ps_unassoc, "ps-poll for unassoc. sta");
 	STAT_PRINT(is_ps_badaid, "ps-poll w/ incorrect aid");
 	STAT_PRINT(is_ps_qempty, "ps-poll w/ nothing to send");
+	STAT_PRINT(is_ff_badhdr, "fast frame rx'd w/ bad hdr");
+	STAT_PRINT(is_ff_tooshort, "fast frame rx decap error");
+	STAT_PRINT(is_ff_split, "fast frame rx split error");
+	STAT_PRINT(is_ff_decap, "fast frames decap'd");
+	STAT_PRINT(is_ff_encap, "fast frames encap'd for tx");
+	STAT_PRINT(is_rx_badbintval, "rx frame w/ bogus bintval");
 }
 
 void
