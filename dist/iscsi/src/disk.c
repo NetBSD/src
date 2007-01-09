@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.21 2006/08/03 20:49:11 agc Exp $ */
+/* $NetBSD: disk.c,v 1.22 2007/01/09 19:08:08 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -1029,7 +1029,8 @@ device_command(target_session_t * sess, target_cmd_t * cmd)
 				cp[0] = (INQUIRY_DEVICE_ISCSI_PROTOCOL << 4) | INQUIRY_DEVICE_CODESET_UTF8;
 				cp[1] = (INQUIRY_DEVICE_PIV << 7) | (INQUIRY_DEVICE_ASSOCIATION_TARGET_DEVICE << 4) | INQUIRY_IDENTIFIER_TYPE_T10;
 				strpadcpy(&cp[4], 8, ISCSI_VENDOR, strlen(ISCSI_VENDOR), ' ');
-				len = (uint8_t) snprintf((char *)&cp[8 + 4], (int)(cdb[8 + 4] - 7), "0x%8.8s%4.4s%4.4s",
+				len = 8;
+				len += (uint8_t) snprintf((char *)&cp[8 + 4], (int)(cdb[4] - 7), "0x%8.8s%4.4s%4.4s",
 								disks.v[sess->d].uuid_string,
 								&disks.v[sess->d].uuid_string[9],
 								&disks.v[sess->d].uuid_string[14]);
