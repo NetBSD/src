@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.7 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.8 2007/01/09 09:19:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ieee80211.c,v 1.7 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: ieee80211.c,v 1.8 2007/01/09 09:19:02 dyoung Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -140,6 +140,29 @@ setifbssid(const char *val, int d)
 	estrlcpy(bssid.i_name, name, sizeof(bssid.i_name));
 	if (ioctl(s, SIOCS80211BSSID, &bssid) == -1)
 		warn("SIOCS80211BSSID");
+}
+
+void
+setiffrag(const char *val, int d)
+{
+	struct ieee80211req ireq;
+	int thr;
+
+	if (d != 0)
+		thr = IEEE80211_FRAG_MAX;
+	else {
+		thr = atoi(val);
+		if (thr < IEEE80211_FRAG_MIN || thr > IEEE80211_FRAG_MAX) {
+			errx(EXIT_FAILURE, "invalid fragmentation threshold: %s", val);
+			return;
+		}
+	}
+
+	(void)strncpy(ireq.i_name, name, sizeof(ireq.i_name));
+	ireq.i_type = IEEE80211_IOC_FRAGTHRESHOLD;
+	ireq.i_val = thr;
+	if (ioctl(s, SIOCS80211, &ireq) == -1)
+		err(EXIT_FAILURE, "IEEE80211_IOC_FRAGTHRESHOLD");
 }
 
 void
@@ -400,6 +423,15 @@ ieee80211_status(void)
 				printf(" -apbridge");
 		}
         }
+
+	estrlcpy(ireq.i_name, name, sizeof(ireq.i_name));
+	ireq.i_type = IEEE80211_IOC_FRAGTHRESHOLD;
+	if (ioctl(s, SIOCG80211, &ireq) == -1)
+		;
+	else if (ireq.i_val < IEEE80211_FRAG_MAX)
+		printf(" frag %d", ireq.i_val);
+	else if (vflag)
+		printf(" -frag");
 
 	memset(&nwkey, 0, sizeof(nwkey));
 	estrlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));

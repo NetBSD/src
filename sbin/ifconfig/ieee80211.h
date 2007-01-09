@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.2 2006/04/29 21:32:29 rpaulo Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.3 2007/01/09 09:19:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,6 +35,7 @@ void	setifnwid(const char *, int);
 void	setifnwkey(const char *, int);  
 void	setifbssid(const char *, int);
 void	setifchan(const char *, int);
+void	setiffrag(const char *, int);
 void	setifpowersave(const char *, int);
 void	setifpowersavesleep(const char *, int);
 
