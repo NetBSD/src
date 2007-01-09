@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.57 2006/10/12 16:19:06 christos Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.58 2007/01/09 17:34:27 ginsbach Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -146,7 +146,7 @@ struct passwd;
 /* Type substitutes. */
 
 #if !HAVE_ID_T
-typedef unsigned long id_t;
+typedef unsigned int id_t;
 #endif
 
 #if !HAVE_SOCKLEN_T
