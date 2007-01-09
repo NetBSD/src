@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.681 2006/12/29 15:52:20 pooka Exp $
+# $NetBSD: mi,v 1.682 2007/01/09 12:33:21 kleink Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3265,6 +3265,7 @@
 ./usr/share/zoneinfo/Africa/Accra		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Addis_Ababa		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Algiers		base-sys-share		share
+./usr/share/zoneinfo/Africa/Asmara		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Asmera		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Bamako		base-sys-share		share
 ./usr/share/zoneinfo/Africa/Bangui		base-sys-share		share
@@ -3575,6 +3576,7 @@
 ./usr/share/zoneinfo/Atlantic/Bermuda		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Canary		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Cape_Verde	base-sys-share		share
+./usr/share/zoneinfo/Atlantic/Faroe		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Faeroe		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Jan_Mayen		base-sys-share		share
 ./usr/share/zoneinfo/Atlantic/Madeira		base-sys-share		share
@@ -3590,6 +3592,7 @@
 ./usr/share/zoneinfo/Australia/Canberra		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Currie		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Darwin		base-sys-share		share
+./usr/share/zoneinfo/Australia/Eucla		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Hobart		base-sys-share		share
 ./usr/share/zoneinfo/Australia/LHI		base-sys-share		share
 ./usr/share/zoneinfo/Australia/Lindeman		base-sys-share		share
