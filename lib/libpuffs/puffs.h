@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.19 2007/01/06 18:22:09 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.20 2007/01/09 18:15:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -354,7 +354,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 1
+#define PUFFS_DEVEL_LIBVERSION 2
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -418,6 +418,13 @@ int	puffs_handlereqs(struct puffs_usermount *, struct puffs_getreq *,
 int	puffs_dopreq(struct puffs_usermount *, struct puffs_putreq *,
 		     struct puffs_req *);
 int	puffs_docc(struct puffs_putreq *, struct puffs_cc *);
+
+/*
+ * Flushing / invalidation routines
+ */
+
+int	puffs_inval_name_dir(struct puffs_usermount *, void *);
+int	puffs_inval_name_all(struct puffs_usermount *);
 
 __END_DECLS
 
