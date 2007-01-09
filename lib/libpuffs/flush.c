@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.1 2007/01/09 18:15:08 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.2 2007/01/09 18:19:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.1 2007/01/09 18:15:08 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.2 2007/01/09 18:19:01 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: flush.c,v 1.1 2007/01/09 18:15:08 pooka Exp $");
 
 #if 0
 int
-puffs_inval_name_node(struct puffs_usermount *pu, void *cookie,
+puffs_inval_namecache_node(struct puffs_usermount *pu, void *cookie,
 	const char *name)
 {
 
@@ -53,7 +53,7 @@ puffs_inval_name_node(struct puffs_usermount *pu, void *cookie,
 #endif
 
 int
-puffs_inval_name_dir(struct puffs_usermount *pu, void *cookie)
+puffs_inval_namecache_dir(struct puffs_usermount *pu, void *cookie)
 {
 	struct puffs_flush pf;
 
@@ -64,7 +64,7 @@ puffs_inval_name_dir(struct puffs_usermount *pu, void *cookie)
 }
 
 int
-puffs_inval_name_all(struct puffs_usermount *pu)
+puffs_inval_namecache_all(struct puffs_usermount *pu)
 {
 	struct puffs_flush pf;
 
