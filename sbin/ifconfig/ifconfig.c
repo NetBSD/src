@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.179 2006/11/23 19:43:52 yamt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.180 2007/01/09 09:19:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.179 2006/11/23 19:43:52 yamt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.180 2007/01/09 09:19:02 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -222,6 +222,8 @@ const struct cmd {
 	{ "-bssid",	-1,		0,		setifbssid },
 	{ "chan",	NEXTARG,	0,		setifchan },
 	{ "-chan",	-1,		0,		setifchan },
+	{ "frag",	NEXTARG,	0,		setiffrag },
+	{ "-frag",	-1,		0,		setiffrag },
 	{ "ssid",	NEXTARG,	0,		setifnwid },
 	{ "nwid",	NEXTARG,	0,		setifnwid },
 	{ "nwkey",	NEXTARG,	0,		setifnwkey },
