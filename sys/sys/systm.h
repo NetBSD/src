@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.191 2006/12/31 10:35:53 elad Exp $	*/
+/*	$NetBSD: systm.h,v 1.192 2007/01/10 11:20:20 elad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -61,7 +61,6 @@ struct uio;
 struct vnode;
 struct vmspace;
 
-extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
 
