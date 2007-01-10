@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.23 2007/01/10 18:04:31 agc Exp $ */
+/* $NetBSD: disk.c,v 1.24 2007/01/10 22:40:31 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -148,18 +148,18 @@ enum {
 
 /* this struct describes an iscsi disk */
 typedef struct iscsi_disk_t {
-	int		 type;					/* type of disk - fs/mmap and fs */
-	char		 filename[MAXPATHLEN];			/* filename for the disk itself */
-	uint8_t		 buffer[CONFIG_DISK_MAX_LUNS][MB(1)];	/* buffer for fs and fs/mmap options */
-	uint64_t	 blockc;				/* # of blocks */
-	uint64_t	 blocklen;				/* block size */
-	uint64_t	 luns;					/* # of luns */
-	uint64_t	 size;					/* size of complete disk */
-	uuid_t		 uuid;					/* disk's uuid */
-	char		*uuid_string;				/* uuid string */
-	targv_t		*tv;					/* the component devices and extents */
-	uint32_t	 resc;					/* # of reservation keys */
-	uint64_t	 reskeys[MAX_RESERVATIONS];		/* the reservation keys */
+	int		 type;				/* type of disk - fs/mmap and fs */
+	char		 filename[MAXPATHLEN];		/* filename for the disk itself */
+	uint8_t		 **buffer;			/* buffer for fs and fs/mmap options */
+	uint64_t	 blockc;			/* # of blocks */
+	uint64_t	 blocklen;			/* block size */
+	uint64_t	 luns;				/* # of luns */
+	uint64_t	 size;				/* size of complete disk */
+	uuid_t		 uuid;				/* disk's uuid */
+	char		*uuid_string;			/* uuid string */
+	targv_t		*tv;				/* the component devices and extents */
+	uint32_t	 resc;				/* # of reservation keys */
+	uint64_t	 reskeys[MAX_RESERVATIONS];	/* the reservation keys */
 } iscsi_disk_t;
 
 DEFINE_ARRAY(disks_t, iscsi_disk_t);
@@ -876,6 +876,10 @@ device_init(globals_t *gp, targv_t *tvp, disc_target_t *tp)
 	}
 	disks.v[disks.c].size = de_getsize(&tp->de);
 	disks.v[disks.c].blockc = disks.v[disks.c].size / disks.v[disks.c].blocklen;
+	NEWARRAY(uint8_t *, disks.v[disks.c].buffer, CONFIG_DISK_MAX_LUNS, "buffer1", ;);
+	for (i = 0 ; i < CONFIG_DISK_MAX_LUNS ; i++) {
+		NEWARRAY(uint8_t, disks.v[disks.c].buffer[i], MB(1), "buffer2", ;);
+	}
 	switch(disks.v[disks.c].blocklen) {
 	case 512:
 	case 1024:
