@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.240 2006/11/22 02:02:51 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.241 2007/01/10 07:53:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.240 2006/11/22 02:02:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.241 2007/01/10 07:53:26 enami Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -2435,10 +2435,8 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 
 	MALLOC(waitset, sigset_t *, sizeof(sigset_t), M_TEMP, M_WAITOK);
 
-	if ((error = copyin(SCARG(uap, set), waitset, sizeof(sigset_t)))) {
-		FREE(waitset, M_TEMP);
-		return (error);
-	}
+	if ((error = copyin(SCARG(uap, set), waitset, sizeof(sigset_t))))
+		goto free_waitset;
 
 	/*
 	 * Silently ignore SA_CANTMASK signals. psignal() would
@@ -2474,15 +2472,18 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	if (SCARG(uap, timeout)) {
 		uint64_t ms;
 
-		if ((error = (*fetch_timeout)(SCARG(uap, timeout), &ts, sizeof(ts))))
-			return (error);
+		if ((error = (*fetch_timeout)(SCARG(uap, timeout),
+		    &ts, sizeof(ts))))
+			goto free_waitset;
 
 		ms = (ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
 		timo = mstohz(ms);
 		if (timo == 0 && ts.tv_sec == 0 && ts.tv_nsec > 0)
 			timo = 1;
-		if (timo <= 0)
-			return (EAGAIN);
+		if (timo <= 0) {
+			error = EAGAIN;
+			goto free_waitset;
+		}
 
 		/*
 		 * Remember current uptime, it would be used in
@@ -2572,9 +2573,10 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	return (*put_info)(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
 
  fail:
-	FREE(waitset, M_TEMP);
 	ksiginfo_free(ksi);
 	p->p_sigctx.ps_sigwait = NULL;
+ free_waitset:
+	FREE(waitset, M_TEMP);
 
 	return (error);
 }
