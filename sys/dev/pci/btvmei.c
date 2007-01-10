@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.15 2006/11/24 22:04:25 wiz Exp $ */
+/* $NetBSD: btvmei.c,v 1.16 2007/01/10 20:36:28 cube Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.15 2006/11/24 22:04:25 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.16 2007/01/10 20:36:28 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ b3_617_slaveconfig(dev, va)
 	struct b3_617_softc *sc = (struct b3_617_softc *)dev;
 	vme_chipset_tag_t vmect;
 	int i, res;
-	char *name = 0; /* XXX gcc! */
+	const char *name = 0; /* XXX gcc! */
 
 	vmect = &sc->sc_vct;
 	if (!va)
