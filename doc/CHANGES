@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.778 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.779 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -23,3 +23,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		addresses are re-configured (WLAN/DSL/ppp/...). [kardel 20070106]
 	ug(4): driver for the Abit uGuru hardware system monitor,
 		contributed by Mihai Chelaru. [xtraeme 20070106]
+	kernel: global 'securelevel' variable removed; it is now internal to
+		the secmodel. [elad 20070110]
