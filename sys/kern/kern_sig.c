@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.241 2007/01/10 07:53:26 enami Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.242 2007/01/10 07:58:27 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.241 2007/01/10 07:53:26 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.242 2007/01/10 07:58:27 enami Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ktrace.h"
@@ -2519,7 +2519,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	} else if (!error && p->p_sigctx.ps_sigwaited) {
 		/* spurious wakeup - arrange for syscall restart */
 		error = ERESTART;
-		goto fail;
+		goto free_ksiginfo;
 	}
 
 	/*
@@ -2549,7 +2549,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 
 			if (ts.tv_sec < 0) {
 				error = EAGAIN;
-				goto fail;
+				goto free_ksiginfo;
 			}
 /* XXX double check the previous change */
 
@@ -2557,11 +2557,11 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 			if ((err = (*put_timeout)(&ts, SCARG(uap, timeout),
 			    sizeof(ts)))) {
 				error = err;
-				goto fail;
+				goto free_ksiginfo;
 			}
 		}
 
-		goto fail;
+		goto free_ksiginfo;
 	}
 
 	/*
@@ -2570,9 +2570,11 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
  sig:
-	return (*put_info)(&ksi->ksi_info, SCARG(uap, info), sizeof(ksi->ksi_info));
+	error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),
+	    sizeof(ksi->ksi_info));
+	/* FALLTHROUGH */
 
- fail:
+ free_ksiginfo:
 	ksiginfo_free(ksi);
 	p->p_sigctx.ps_sigwait = NULL;
  free_waitset:
