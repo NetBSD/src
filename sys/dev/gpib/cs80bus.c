@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.7 2006/05/14 21:42:27 elad Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.8 2007/01/10 21:18:44 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.7 2006/05/14 21:42:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.8 2007/01/10 21:18:44 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ cs80busattach(parent, self, aux)
 }
 
 int
-cs80bussearch(parent, cf, aux)
+cs80bussearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	const int *ldesc;
