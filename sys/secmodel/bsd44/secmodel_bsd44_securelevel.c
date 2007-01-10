@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.28 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_securelevel.c,v 1.29 2007/01/10 11:20:21 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.28 2007/01/09 12:57:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.29 2007/01/10 11:20:21 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_securelevel.c,v 1.28 2007/01/09 12:57
 
 #include <secmodel/bsd44/securelevel.h>
 
-int securelevel;
+static int securelevel;
 
 static kauth_listener_t l_system, l_process, l_network, l_machdep, l_device;
 
