@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.21 2007/01/06 18:22:09 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.22 2007/01/10 23:02:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.21 2007/01/06 18:22:09 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.22 2007/01/10 23:02:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -280,7 +280,7 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	}
 
 	if ((flags & PUFFSLOOP_NODAEMON) == 0)
-		if (daemon(0, 0) == -1)
+		if (daemon(1, 0) == -1)
 			goto out;
 
 	/* XXX: should be a bit more robust with errors here */
@@ -714,9 +714,17 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
+			if (buildpath) {
+				error = do_buildpath(&pcn, preq->preq_cookie);
+				if (error)
+					break;
+			}
 
 			error = pops->puffs_node_link(pcc,
 			    preq->preq_cookie, auxt->pvnr_cookie_targ, &pcn);
+			if (buildpath)
+				free(pcn.pcn_fullpath);
+
 			break;
 		}
 
