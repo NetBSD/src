@@ -1,4 +1,4 @@
-/* $NetBSD: scsi_cmd_codes.h,v 1.9 2006/08/03 20:49:11 agc Exp $ */
+/* $NetBSD: scsi_cmd_codes.h,v 1.10 2007/01/10 18:04:31 agc Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -114,6 +114,12 @@ enum {
 	SCSI_VERSION_SPC = 0x03,
 	SCSI_VERSION_SPC2 = 0x04,
 	SCSI_VERSION_SPC3 = 0x05
+};
+
+/* device return codes */
+enum {
+	SCSI_SUCCESS = 0x0,
+	SCSI_CHECK_CONDITION = 0x02
 };
 
 #endif /* !SCSI_CMD_CODES_H_ */
