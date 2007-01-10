@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.3 2007/01/09 13:03:47 cube Exp $	*/
+/*	$NetBSD: lint.c,v 1.4 2007/01/10 15:17:43 cube Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -47,7 +47,7 @@ emit_params()
 	printf("version\t%d\n", CONFIG_VERSION);
 	printf("ident\t\"LINT_%s\"\n", conffile);
 	printf("maxusers\t%d\n", defmaxusers);
-	printf("config lint root on ?\n");
+	printf("config netbsdlint root on ?\n");
 	printf("\n");
 }
 
@@ -111,6 +111,12 @@ do_emit_instances(struct devbase *d, struct attr *at)
 	struct attr *a;
 	struct deva *da;
 
+	/*
+	 * d_isdef is used to check whether a deva has been seen or not,
+	 * for there are devices that can be their own ancestor (e.g.
+	 * uhub, pci).
+	 */
+
 	if (at != NULL) {
 		for (da = d->d_ahead; da != NULL; da = da->d_bsame)
 			if (onlist(da->d_atlist, at))
@@ -138,6 +144,10 @@ do_emit_instances(struct devbase *d, struct attr *at)
 		printf("\n");
 	}
 
+	/*
+	 * Children attachments are found the same way as in the orphan
+	 * detection code in main.c.
+	 */
 	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
 		a = nv->nv_ptr;
 		for (nv1 = a->a_devs; nv1 != NULL; nv1 = nv1->nv_next)
