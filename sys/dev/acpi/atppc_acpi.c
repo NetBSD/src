@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_acpi.c,v 1.7 2006/02/20 12:17:49 kochi Exp $ */
+/* $NetBSD: atppc_acpi.c,v 1.8 2007/01/10 18:55:22 cube Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.7 2006/02/20 12:17:49 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_acpi.c,v 1.8 2007/01/10 18:55:22 cube Exp $");
 
 #include "opt_atppc.h"
 
@@ -165,7 +165,7 @@ atppc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length, 0,
 		&sc->sc_ioh) != 0) {
-		aprintf_error("%s: attempt to map bus space failed, device not "
+		aprint_error("%s: attempt to map bus space failed, device not "
 			"properly attached.\n", self->dv_xname);
 		goto out;
 	}
