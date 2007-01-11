@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.12 2007/01/01 20:56:59 ad Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.13 2007/01/11 17:24:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -294,8 +294,6 @@
  * AMD K8 (Opteron) MSRs.
  */
 #define	MSR_SYSCFG	0xc0000010
-#define	MSR_HRCR	0x00000015
-#define		HWCR_FFDIS		0x00000040
 
 #define MSR_EFER	0xc0000080		/* Extended feature enable */
 #define 	EFER_SCE		0x00000001	/* SYSCALL extension */
@@ -315,6 +313,9 @@
 /*
  * These require a 'passcode' for access.  See cpufunc.h.
  */
+#define	MSR_HWCR	0xc0010015
+#define		HWCR_FFDIS		0x00000040
+
 #define	MSR_NB_CFG	0xc001001f
 #define		NB_CFG_DISIOREQLOCK	0x0000000000000004ULL
 #define		NB_CFG_DISDATMSK	0x0000001000000000ULL
