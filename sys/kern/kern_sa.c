@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.83.4.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.83.4.6 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.6 2007/01/11 22:22:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,11 +1001,10 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 	size_t ucsize;
 
 	if (l) {
-		lwp_lock(l);
-		l->l_flag |= L_SA_SWITCHING;
+		l->l_pflag |= LP_SA_SWITCHING;
 		(*l->l_proc->p_emul->e_sa->sae_getucontext)(l,
 		    (void *)&ss->ss_captured.ss_ctx);
-		l->l_flag &= ~L_SA_SWITCHING;
+		l->l_pflag &= ~LP_SA_SWITCHING;
 		sp = (*l->l_proc->p_emul->e_sa->sae_ucsp)
 		    (&ss->ss_captured.ss_ctx);
 		/* XXX COMPAT_NETBSD32: _UC_UCONTEXT_ALIGN */
@@ -1016,7 +1015,6 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 		    (ucontext_t *)STACK_ALLOC(sp, ucsize);
 		ss->ss_captured.ss_sa.sa_id = l->l_lid;
 		ss->ss_captured.ss_sa.sa_cpu = l->l_savp->savp_id;
-		lwp_unlock(l);
 	} else
 		ss->ss_captured.ss_sa.sa_context = NULL;
 }
@@ -1184,11 +1182,11 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 * We do this only here since we need l's ucontext to
 		 * get l's userspace stack. sa_upcall0 above has saved
 		 * it for us.
-		 * The L_SA_PAGEFAULT flag is set in the MD
+		 * The LP_SA_PAGEFAULT flag is set in the MD
 		 * pagefault code to indicate a pagefault.  The MD
 		 * pagefault code also saves the faultaddr for us.
 		 */
-		if ((l->l_flag & L_SA_PAGEFAULT) && sa_pagefault(l,
+		if ((l->l_pflag & LP_SA_PAGEFAULT) && sa_pagefault(l,
 		    &sau->sau_event.ss_captured.ss_ctx) != 0) {
 			cpu_setfunc(l2, sa_switchcall, NULL);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
@@ -1490,7 +1488,7 @@ sa_unblock_userret(struct lwp *l)
 	mutex_exit(&sa->sa_mutex);
 
 	SA_LWP_STATE_UNLOCK(l, f);
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 }
 
 void
@@ -1523,7 +1521,7 @@ sa_upcall_userret(struct lwp *l)
 		if (sast == NULL) {
 			mutex_exit(&sa->sa_mutex);
 			SA_LWP_STATE_UNLOCK(l, f);
-			(void)KERNEL_UNLOCK(1, l);
+			KERNEL_UNLOCK_LAST(l);
 			preempt(1);
 			return;
 		}
@@ -1581,7 +1579,7 @@ sa_upcall_userret(struct lwp *l)
 	}
 
 	mutex_exit(&sa->sa_mutex);
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 	return;
 }
 

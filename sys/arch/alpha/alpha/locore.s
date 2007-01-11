@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.108 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: locore.s,v 1.108.20.1 2007/01/11 22:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,54 +74,11 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.108 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.108.20.1 2007/01/11 22:22:56 ad Exp $");
 
 #include "assym.h"
 
 .stabs	__FILE__,132,0,0,kernel_text
-
-#if defined(MULTIPROCESSOR)
-
-/*
- * Get various per-cpu values.  A pointer to our cpu_info structure
- * is stored in SysValue.  These macros clobber v0, t0, t8..t11.
- *
- * All return values are in v0.
- */
-#define	GET_CPUINFO		call_pal PAL_OSF1_rdval
-
-#define	GET_CURLWP							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURLWP, v0
-
-#define	GET_FPCURLWP							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_FPCURLWP, v0
-
-#define	GET_CURPCB							\
-	call_pal PAL_OSF1_rdval					;	\
-	addq	v0, CPU_INFO_CURPCB, v0
-
-#define	GET_IDLE_PCB(reg)						\
-	call_pal PAL_OSF1_rdval					;	\
-	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(v0)
-
-#else	/* if not MULTIPROCESSOR... */
-
-IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
-
-#define	GET_CPUINFO		lda v0, cpu_info_primary
-
-#define	GET_CURLWP		lda v0, cpu_info_primary + CPU_INFO_CURLWP
-
-#define	GET_FPCURLWP		lda v0, cpu_info_primary + CPU_INFO_FPCURLWP
-
-#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
-
-#define	GET_IDLE_PCB(reg)						\
-	lda	reg, cpu_info_primary				;	\
-	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(reg)
-#endif
 
 /*
  * Perform actions necessary to switch to a new context.  The
@@ -320,8 +277,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	/* GET_CPUINFO clobbers v0, t0, t8...t11. */
 	GET_CPUINFO
 	ldq	t1, CPU_INFO_CURLWP(v0)
-	ldq	t2, L_PROC(t1)
-	ldl	t3, P_MD_ASTPENDING(t2)		/* AST pending? */
+	ldl	t3, L_MD_ASTPENDING(t1)		/* AST pending? */
 	bne	t3, 6f				/* yes */
 	/* no: return & deal with FP */
 
@@ -358,7 +314,7 @@ LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	2b
 
 	/* We've got an AST */
-6:	stl	zero, P_MD_ASTPENDING(t2)	/* no AST pending */
+6:	stl	zero, L_MD_ASTPENDING(t1)	/* no AST pending */
 
 	ldiq	a0, ALPHA_PSL_IPL_0		/* drop IPL to zero */
 	call_pal PAL_OSF1_swpipl
@@ -734,7 +690,7 @@ LEAF(idle, 0)
 	mov	zero, s0			/* no outgoing proc */
 1:
 #endif
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	CALL(sched_unlock_idle)			/* release sched_lock */
 #endif
 	mov	zero, a0			/* enable all interrupts */
@@ -749,7 +705,7 @@ LEAF(idle, 0)
 	beq	t0, 2b
 4:	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	CALL(sched_lock_idle)			/* acquire sched_lock */
 #endif
 	jmp	zero, cpu_switch_queuescan	/* jump back into the fire */
@@ -870,15 +826,6 @@ switch_resume:
 
 	ldiq	s4, 1				/* note that we switched */
 7:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, and we have fully switched
-	 * to the new process.  Release the scheduler lock, but keep
-	 * interrupts out.
-	 */
-	CALL(sched_unlock_idle)
-#endif
-
 	/*
 	 * Now that the switch is done, update curlwp and other
 	 * globals.  We must do this even if switching to ourselves
@@ -897,6 +844,15 @@ switch_resume:
 #endif
 	stq	s2, CPU_INFO_CURLWP(v0)		/* curlwp = l */
 	stq	zero, CPU_INFO_WANT_RESCHED(v0)	/* we've rescheduled */
+
+	/*
+	 * Done mucking with the run queues, and we have fully switched
+	 * to the new process.  Release the scheduler lock, but keep
+	 * interrupts out.
+	 */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+	CALL(sched_unlock_idle)			/* release sched_lock */
+#endif
 
 	/*
 	 * Now running on the new u struct.
@@ -1016,7 +972,7 @@ LEAF(switch_exit, 1)
 	mov	s2, a0
 	CALL((pv))
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	CALL(sched_lock_idle)			/* acquire sched_lock */
 #endif
 

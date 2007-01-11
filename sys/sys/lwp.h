@@ -1,7 +1,7 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.6 2006/12/29 20:27:45 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.7 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -161,7 +161,6 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SINTR		0x00000080 /* Sleep is interruptible. */
 #define	L_SYSTEM	0x00000200 /* Kernel thread */
 #define	L_SA		0x00000400 /* Scheduler activations LWP */
-#define	L_TIMER		0x00010000 /* Pending itimer */
 #define	L_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	L_WCORE		0x00080000 /* Stop for core dump on return to user */
 #define	L_WEXIT		0x00100000 /* Exit before return to user */
@@ -169,11 +168,9 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SA_BLOCKING	0x00400000 /* Blocking in tsleep() */
 #define	L_PENDSIG	0x01000000 /* Pending signal for us */
 #define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
-#define	L_SA_PAGEFAULT	0x04000000 /* SA LWP in pagefault handler */
 #define	L_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
 #define	L_SA_IDLE	0x20000000 /* VP is idle */
-#define	L_SA_SWITCHING	0x80000000 /* SA LWP in context switch */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -181,6 +178,8 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
 #define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
+#define	LP_SA_SWITCHING	0x00000020 /* SA LWP in context switch */
+#define	LP_SA_PAGEFAULT	0x00000040 /* SA LWP in pagefault handler */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.37.6.1 2006/11/18 21:39:15 ad Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.37.6.2 2007/01/11 22:22:59 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.37.6.1 2006/11/18 21:39:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.37.6.2 2007/01/11 22:22:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1240,7 +1240,7 @@ svr4_32_sys_waitsys(l, v, retval)
 			return 0;
 		}
 
-		proc_free(child);
+		proc_free(child, NULL);
 		return 0;
 	}
 

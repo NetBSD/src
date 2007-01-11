@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.3 2006/11/18 21:29:03 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.4 2007/01/11 22:22:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.3 2006/11/18 21:29:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.4 2007/01/11 22:22:56 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -357,6 +357,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 		syscallarg(netbsd32_sigcontextp_t) sigcntxp;
 	} */ *uap = v;
 	struct netbsd32_sigcontext *scp, context;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	int error;
 
@@ -397,14 +398,15 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	tf->tf_rsp = context.sc_esp;
 	tf->tf_ss = context.sc_ss;
 
+	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
 		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
-
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }
@@ -796,6 +798,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg32_t *gr = mcp->__gregs;
+	struct proc *p = l->l_proc;
 	int error;
 
 	/* Restore register context, if any. */
@@ -838,10 +841,14 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		/* If not set already. */
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
+
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
+
 	return (0);
 }
 

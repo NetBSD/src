@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.129.2.2 2006/11/17 16:34:33 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.129.2.3 2007/01/11 22:22:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,6 +72,7 @@ struct pmap;
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
+	void	*ci_self150;		/* self + 0x150, see lock_stubs.S */
 	void	*ci_tlog_base;		/* Trap log base */
 	int32_t ci_tlog_offset;		/* Trap log current offset */
 	struct cpu_info *ci_next;	/* next cpu */

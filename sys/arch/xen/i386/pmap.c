@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2006/05/15 12:47:42 dogcow Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20.8.1 2007/01/11 22:22:58 ad Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2006/05/15 12:47:42 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20.8.1 2007/01/11 22:22:58 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2197,9 +2197,9 @@ pmap_load()
 
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 
-	KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
+	KERNEL_LOCK(1, NULL);
 	pmap_reference(pmap);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 
 	/*
 	 * mark the pmap in use by this processor.
@@ -2233,9 +2233,9 @@ pmap_load()
 
 	ci->ci_want_pmapload = 0;
 
-	KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
+	KERNEL_LOCK(1, NULL);
 	pmap_destroy(oldpmap);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*

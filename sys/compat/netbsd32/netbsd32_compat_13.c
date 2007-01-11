@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.15.20.1 2006/10/21 15:20:48 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.15.20.2 2007/01/11 22:22:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.15.20.1 2006/10/21 15:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.15.20.2 2007/01/11 22:22:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,5 +145,5 @@ compat_13_netbsd32_sigsuspend(l, v, retval)
 
 	ess = SCARG(uap, mask);
 	native_sigset13_to_sigset(&ess, &bss);
-	return (sigsuspend1(l->l_proc, &bss));
+	return (sigsuspend1(l, &bss));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.29.2.2 2006/11/18 21:29:18 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.29.2.3 2007/01/11 22:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.2 2006/11/18 21:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.3 2007/01/11 22:22:56 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -145,12 +145,14 @@ struct tlog tlog_primary;
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
+	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
 	.ci_tlog_base = &tlog_primary,
 };
 #else  /* TRAPLOG */
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
+	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
 };
 #endif /* !TRAPLOG */
 
@@ -285,6 +287,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ci->ci_self = ci;
+	ci->ci_self150 = (uint8_t *)ci + 0x150;
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;

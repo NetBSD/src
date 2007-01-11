@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.6 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.7 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -127,9 +127,6 @@
  *
  *	LWPs may transition states in the following ways:
  *
- *	 IDL -------> SUSPENDED
- *		    > RUN
- *
  *	 RUN -------> ONPROC		ONPROC -----> RUN
  *	            > STOPPED			    > SLEEP
  *	            > SUSPENDED			    > STOPPED
@@ -139,9 +136,9 @@
  *	 STOPPED ---> RUN		SUSPENDED --> RUN
  *	            > SLEEP			    > SLEEP
  *
- *	 SLEEP -----> ONPROC
- *		    > RUN
- *		    > STOPPED
+ *	 SLEEP -----> ONPROC		IDL --------> RUN
+ *		    > RUN		            > SUSPENDED
+ *		    > STOPPED                       > STOPPED
  *		    > SUSPENDED
  *
  * Locking
@@ -206,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.6 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.7 2007/01/11 22:22:59 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -674,12 +671,6 @@ lwp_exit(struct lwp *l)
 	l->l_stat = LSZOMB;
 	lwp_unlock(l);
 	p->p_nrlwps--;
-
-	/*
-	 * Add our run time to the process' base value.  Once we're off
-	 * p_lwps, we won't be found by calcru().
-	 */
-	timeradd(&l->l_rtime, &p->p_rtime, &p->p_rtime);
 	mutex_exit(&p->p_smutex);
 
 	/*
@@ -697,7 +688,13 @@ lwp_exit(struct lwp *l)
 	 * Release the kernel lock, signal another LWP to collect us,
 	 * and switch away into oblivion.
 	 */
-	(void)KERNEL_UNLOCK(0, l);	/* XXXSMP assert count == 1 */
+#ifdef notyet
+	/* XXXSMP hold in lwp_userret() */
+	KERNEL_UNLOCK_LAST(l);
+#else
+	KERNEL_UNLOCK_ALL(l, NULL);
+#endif
+
 	cv_broadcast(&p->p_lwpcv);
 	cpu_exit(l);
 }
@@ -728,6 +725,12 @@ lwp_free(struct lwp *l, int recycle, int last)
 	 * counters and unlock.
 	 */
 	if (!last) {
+		/*
+		 * Add the LWP's run time to the process' base value.
+		 * This needs to co-incide with coming off p_lwps.
+		 */
+		timeradd(&l->l_rtime, &p->p_rtime, &p->p_rtime);
+
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
 		p->p_nzlwps--;
@@ -744,7 +747,7 @@ lwp_free(struct lwp *l, int recycle, int last)
 		 */
 		if (l->l_cpu->ci_curlwp == l) {
 			int count;
-			count = KERNEL_UNLOCK(0, l);
+			KERNEL_UNLOCK_ALL(l, &count);
 			while (l->l_cpu->ci_curlwp == l)
 				SPINLOCK_BACKOFF_HOOK;
 			KERNEL_LOCK(count, l);
@@ -930,9 +933,9 @@ lwp_update_creds(struct lwp *l)
 	l->l_cred = p->p_cred;
 	mutex_exit(&p->p_mutex);
 	if (oc != NULL) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
+		KERNEL_LOCK(1, l);	/* XXXSMP */
 		kauth_cred_free(oc);
-		(void)KERNEL_UNLOCK(1, l);	/* XXXSMP */
+		KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 	}
 }
 
@@ -1077,7 +1080,7 @@ lwp_userret(struct lwp *l)
 			while ((sig = issignal(l)) != 0)
 				postsig(sig);
 			mutex_exit(&p->p_smutex);
-			(void)KERNEL_UNLOCK(0, l);	/* XXXSMP */
+			KERNEL_UNLOCK_LAST(l);	/* XXXSMP */
 		}
 
 		/*

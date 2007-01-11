@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.45.4.4 2006/12/29 20:27:41 ad Exp $
+#	$NetBSD: genassym.cf,v 1.45.4.5 2007/01/11 22:22:56 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -284,6 +284,7 @@ define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
 endif
 
+define	CPU_INFO_SELF150	offsetof(struct cpu_info, ci_self150)
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)

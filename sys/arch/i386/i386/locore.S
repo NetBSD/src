@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43.4.4 2006/12/29 20:27:41 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.4.5 2007/01/11 22:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -880,9 +880,7 @@ ENTRY(cpu_switch)
 	sti
 idle_unlock:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	pushl	$_C_LABEL(sched_mutex)
-	call	_C_LABEL(smutex_exit)
-	addl	$4,%esp
+	call	_C_LABEL(sched_unlock_idle)
 #endif
 	/* Interrupts are okay again. */
 	pushl	$IPL_NONE		# spl0()
@@ -911,9 +909,7 @@ idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 	sti
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	pushl	$_C_LABEL(sched_mutex)
-	call	_C_LABEL(smutex_enter)
-	addl	$4,%esp
+	call	_C_LABEL(sched_lock_idle)
 #endif
 	movl	_C_LABEL(sched_whichqs),%ecx
 	bsfl	%ecx,%ebx
@@ -1067,9 +1063,7 @@ switch_restored:
 
 switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	pushl	$_C_LABEL(sched_mutex)
-	call    _C_LABEL(smutex_exit)
-	addl	$4,%esp
+	call    _C_LABEL(sched_unlock_idle)
 #endif
 	cmpl	$0,CPUVAR(IPENDING)
 	jz	3f

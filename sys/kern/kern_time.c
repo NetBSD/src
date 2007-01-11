@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105.4.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.6 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.6 2007/01/11 22:23:00 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1086,7 +1086,7 @@ timerupcall(struct lwp *l)
 	if (pt->pts_fired == 0)
 		l->l_proc->p_timerpend = 0;
 
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 }
 
 /*

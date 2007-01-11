@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.111 2006/07/23 22:06:04 ad Exp $ */
+/* $NetBSD: trap.c,v 1.111.4.1 2007/01/11 22:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111.4.1 2007/01/11 22:22:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,9 +266,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		 * and per-process unaligned-access-handling flags).
 		 */
 		if (user) {
-			KERNEL_PROC_LOCK(l);
+			KERNEL_LOCK(1, l);
 			i = unaligned_fixup(a0, a1, a2, l);
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			if (i == 0)
 				goto out;
 
@@ -363,9 +363,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			break;
 
 		case ALPHA_IF_CODE_OPDEC:
-			KERNEL_PROC_LOCK(l);
+			KERNEL_LOCK(1, l);
 			i = handle_opdec(l, &ucode);
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			KSI_INIT_TRAP(&ksi);
 			if (i == 0)
 				goto out;
@@ -396,9 +396,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		case ALPHA_MMCSR_FOE:
 		case ALPHA_MMCSR_FOW:
 			if (user)
-				KERNEL_PROC_LOCK(l);
+				KERNEL_LOCK(1, l);
 			else
-				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+				KERNEL_LOCK(1, NULL);
 
 			if (pmap_emulate_reference(l, a0, user, a1)) {
 				ftype = VM_PROT_EXECUTE;
@@ -406,9 +406,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			}
 
 			if (user)
-				KERNEL_PROC_UNLOCK(l);
+				KERNEL_UNLOCK_LAST(l);
 			else
-				KERNEL_UNLOCK();
+				KERNEL_UNLOCK_ONE(NULL);
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:
@@ -439,10 +439,10 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 			}
 
 			if (user) {
-				KERNEL_PROC_LOCK(l);
+				KERNEL_LOCK(1, l);
 				if (l->l_flag & L_SA) {
 					l->l_savp->savp_faultaddr = (vaddr_t)a0;
-					l->l_flag |= L_SA_PAGEFAULT;
+					l->l_pflag |= LP_SA_PAGEFAULT;
 				}
 			} else {
 				struct cpu_info *ci = curcpu();
@@ -480,7 +480,7 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 				if (ci->ci_intrdepth != 0)
 					goto dopanic;
 
-				KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+				KERNEL_LOCK(1, NULL);
 			}
 
 			/*
@@ -521,15 +521,15 @@ do_fault:
 			}
 			if (rv == 0) {
 				if (user) {
-					l->l_flag &= ~L_SA_PAGEFAULT;
-					KERNEL_PROC_UNLOCK(l);
+					l->l_pflag &= ~LP_SA_PAGEFAULT;
+					KERNEL_UNLOCK_LAST(l);
 				} else
-					KERNEL_UNLOCK();
+					KERNEL_UNLOCK_ONE(NULL);
 				goto out;
 			}
 
 			if (user == 0) {
-				KERNEL_UNLOCK();
+				KERNEL_UNLOCK_ONE(NULL);
 
 				/* Check for copyin/copyout fault */
 				if (l != NULL &&
@@ -558,8 +558,8 @@ do_fault:
 				ksi.ksi_code = SEGV_ACCERR;
 			else
 				ksi.ksi_code = SEGV_MAPERR;
-			l->l_flag &= ~L_SA_PAGEFAULT;
-			KERNEL_PROC_UNLOCK(l);
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
+			KERNEL_UNLOCK_LAST(l);
 			break;
 		    }
 
@@ -576,9 +576,9 @@ do_fault:
 #ifdef DEBUG
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 out:
 	if (user)
 		userret(l);
@@ -684,14 +684,14 @@ ast(struct trapframe *framep)
 	if (l == NULL)
 		return;
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 
 	uvmexp.softs++;
 	l->l_md.md_tf = framep;
 
-	if (l->l_proc->p_flag & P_OWEUPC) {
-		l->l_proc->p_flag &= ~P_OWEUPC;
-		ADDUPROF(l->l_proc);
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
 	}
 
 	if (curcpu()->ci_want_resched) {
@@ -701,7 +701,7 @@ ast(struct trapframe *framep)
 		preempt(0);
 	}
 
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -1256,7 +1256,7 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -1266,7 +1266,7 @@ startlwp(void *arg)
 void
 upcallret(struct lwp *l)
 {
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
 }

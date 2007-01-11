@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_trap.c,v 1.5.20.1 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.1 2007/01/11 22:22:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,21 +36,72 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.5.20.1 2007/01/11 22:22:56 ad Exp $");
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
-#include <sys/signal.h>
-#include <sys/syscall.h>
+#include <machine/asm.h>
 
-#include <compat/linux/common/linux_exec.h>
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.1 2007/01/11 22:22:56 ad Exp $");
 
-void
-linux_trapsignal(struct lwp *l, ksiginfo_t *ksi) {
-	trapsignal(l, ksi);
-}
+#include "assym.h"
+
+#if defined(MULTIPROCESSOR)
+#define	MB		mb
+#else
+#define	MB		/* nothing */
+#endif
+
+/*
+ * int	_lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new)
+ */
+LEAF(_lock_cas, 3)
+1:	ldq_l	t1, 0(a0)
+	mov	a3, v0
+	cmpeq	t1, a1, t0
+	bne	t0, 2f
+	stq_c	v0, 0(a0)
+	beq	v0, 3f
+	MB
+	RET
+2:	mov	zero, v0
+	MB
+	RET
+3:	br	1b
+END(_lock_cas)
+
+#if !defined(LOCKDEBUG)
+
+/*
+ * void mutex_enter(kmutex_t *mtx);
+ */
+LEAF(mutex_enter, 1)
+	GET_CURLWP
+1:	ldq	t1, 0(v0)
+	ldq_l	t2, 0(a0)
+	bne	t2, 2f
+	stq_c	t1, 0(a0)
+	beq	t1, 3f
+	MB
+	RET
+2:	br	mutex_vector_enter
+3:	br	1b
+END(mutex_enter)
+
+/*
+ * void mutex_exit(kmutex_t *mtx);
+ */
+LEAF(mutex_exit, 1)
+	MB
+	GET_CURLWP
+1:	ldq	t1, 0(v0)
+	ldq_l	t2, 0(a0)
+	cmpeq	t1, t2, t2
+	bne	t2, 2f
+	stq_c	t1, 0(a0)
+	beq	t1, 3f
+	RET
+2:	br	mutex_vector_exit
+3:	br	1b
+END(mutex_exit)
+
+#endif	/* !LOCKDEBUG */

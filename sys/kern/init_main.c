@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276.4.5 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.6 2007/01/11 22:22:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.5 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.6 2007/01/11 22:22:59 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -757,7 +757,7 @@ start_init(void *arg)
 		 */
 		error = sys_execve(l, &args, retval);
 		if (error == 0 || error == EJUSTRETURN) {
-			(void)KERNEL_UNLOCK(1, l);
+			KERNEL_UNLOCK_LAST(l);
 			return;
 		}
 		printf("exec %s: error %d\n", path, error);

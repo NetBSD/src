@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.36.1 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.2 2007/01/11 22:22:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
+#include <machine/param.h>
 #include <machine/asm.h>
 
 #include "assym.h"
@@ -46,8 +47,12 @@
 #undef CURLWP
 #if defined(MULTIPROCESSOR)
 #define	CURLWP	(CPUINFO_VA+CI_CURLWP)
+#define	MB_READ	membar #LoadLoad
+#define	MB_MEM	membar #LoadLoad | #StoreLoad | #LoadStore	
 #else
 #define	CURLWP	_C_LABEL(curlwp)
+#define	MB_READ	/* nothing */
+#define	MB_MEM	/* nothing */
 #endif
 
 #ifdef __arch64__
@@ -64,9 +69,8 @@
  * void _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
 _ENTRY(_C_LABEL(_lock_cas))
-	membar	#LoadLoad
 	CASPTR	[%o0], %o1, %o2			! compare-and-swap
-	membar	#LoadLoad | #StoreLoad | #LoadStore
+	MB_MEM
 	cmp	%o1, %o2			! expected == actual?
 	bne	1f				! nope
 	 or	%g0, 1, %o0
@@ -84,7 +88,7 @@ _ENTRY(_C_LABEL(mutex_enter))
 	sethi	%hi(CURLWP), %o3
 	LDPTR	[%o3 + %lo(CURLWP)], %o3	! current thread
 	CASPTR	[%o0], %g0, %o3			! compare-and-swap
-	membar	#LoadLoad
+	MB_READ
 	tst	%o3				! lock was unowned?
 	bnz	_C_LABEL(mutex_vector_enter)	! nope, hard case
 	 nop
@@ -94,13 +98,13 @@ _ENTRY(_C_LABEL(mutex_enter))
 /*
  * void mutex_exit(kmutex_t *);
  *
- * XXX This should use an unlocked sequence.  See amd64/lock_stubs.S
+ * XXX This should use a restartable sequence.  See mutex_vector_enter().
  */
 _ENTRY(_C_LABEL(mutex_exit))
 	sethi	%hi(CURLWP), %o3
 	LDPTR	[%o3 + %lo(CURLWP)], %o3	! current thread
 	mov	%g0, %o4			! new value (0)
-	membar	#LoadLoad | #StoreLoad | #LoadStore
+	MB_MEM
 	CASPTR	[%o0], %o3, %o4			! compare-and-swap
 	cmp	%o3, %o4			! were they the same?
 	bne	_C_LABEL(mutex_vector_exit)	! nope, hard case

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.23 2006/02/11 17:57:32 cdi Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.23.14.1 2007/01/11 22:22:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.23 2006/02/11 17:57:32 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.23.14.1 2007/01/11 22:22:58 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -225,8 +225,10 @@ sunos_sys_sigreturn(l, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
+	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sunos_sigreturn: %s[%d], sigcntxp %p\n",
@@ -276,14 +278,15 @@ sunos_sys_sigreturn(l, v, retval)
 	}
 #endif
 
+	mutex_enter(&p->p_smutex);
 	if (scp->sc_onstack & SS_ONSTACK)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
 		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

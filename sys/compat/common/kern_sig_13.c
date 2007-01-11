@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.11.20.1 2006/10/21 15:20:48 ad Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.11.20.2 2007/01/11 22:22:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.11.20.1 2006/10/21 15:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.11.20.2 2007/01/11 22:22:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -189,13 +189,16 @@ compat_13_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) how;
 		syscallarg(int) mask;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	sigset13_t ness, oess;
 	sigset_t nbss, obss;
 	int error;
 
 	ness = SCARG(uap, mask);
 	native_sigset13_to_sigset(&ness, &nbss);
+	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, SCARG(uap, how), &nbss, &obss);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	native_sigset_to_sigset13(&obss, &oess);

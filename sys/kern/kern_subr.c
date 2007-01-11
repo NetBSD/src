@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.143.2.2 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.143.2.3 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.2 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.3 2007/01/11 22:23:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -149,9 +149,11 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
+#ifdef MULTIPROCESSOR
 	int hold_count;
+#endif
 
-	hold_count = KERNEL_UNLOCK(0, NULL);
+	KERNEL_UNLOCK_ALL(NULL, &hold_count);
 
 	ASSERT_SLEEPABLE(NULL, "uiomove");
 
@@ -1411,7 +1413,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_LOCK(1, l);
 		ktrsysret(l, code, error, rval);
-		LOCK_ASSERT(KERNEL_UNLOCK(1, l) == 1);
+		KERNEL_UNLOCK_LAST(l);
 	}
 #endif /* KTRACE */
 	
@@ -1425,7 +1427,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
 		KERNEL_LOCK(1, l);
 		systrace_exit(l, code, args, rval, error);
-		LOCK_ASSERT(KERNEL_UNLOCK(1, l) == 1);
+		KERNEL_UNLOCK_LAST(l);
 	}
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */

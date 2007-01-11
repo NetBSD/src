@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.28.8.4 2006/11/17 16:34:40 ad Exp $ */
+/* $NetBSD: sched.h,v 1.28.8.5 2007/01/11 22:23:00 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -237,6 +237,9 @@ sched_unlock(int heldmutex)
 }
 
 #endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
+
+void	sched_lock_idle(void);
+void	sched_unlock_idle(void);
 
 /*
  * Synchronisation object operations set.

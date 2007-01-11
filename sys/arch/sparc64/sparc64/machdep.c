@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189.2.1 2006/11/18 21:29:33 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.189.2.2 2007/01/11 22:22:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.1 2006/11/18 21:29:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.2 2007/01/11 22:22:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -451,18 +451,17 @@ void *
 getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
-	struct sigctx *ctx = &p->p_sigctx;
 	struct trapframe64 *tf = l->l_md.md_tf;
 
 	/*
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		return ((caddr_t)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size);
+		return ((caddr_t)l->l_sigstk->ss_sp + l->l_sigstk->ss_size);
 	else
 		return (void *)((uintptr_t)tf->tf_out[6] + STACK_OFFSET);
 }
@@ -478,7 +477,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	ucontext_t uc;
 	long ucsz;
@@ -502,11 +501,14 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	uc.uc_flags = _UC_SIGMASK |
-	    ((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	    ((l->l_sigstk->ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = NULL;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);	
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 	ucsz = (char *)&uc.__uc_pad - (char *)&uc;
 
@@ -520,10 +522,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * C stack frame.
 	 */
 	newsp = (struct rwindow *)((u_long)fp - CCFSZ);
-	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
+	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
 	    copyout(&uc, &fp->sf_uc, ucsz) != 0 ||
 	    copyout(&tf->tf_out[6], &newsp->rw_in[6],
-	    sizeof(tf->tf_out[6])) != 0) {
+	    sizeof(tf->tf_out[6])) != 0);
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -542,7 +547,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -1799,8 +1804,10 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if ((l->l_flag & L_SA_SWITCHING) == 0 && rwindow_save(l))
+	if ((l->l_pflag & LP_SA_SWITCHING) == 0 && rwindow_save(l)) {
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
+	}
 
 	/* For now: Erase any random indicators for optional state. */
 	(void)memset(mcp, 0, sizeof (*mcp));
@@ -1884,11 +1891,14 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	const __greg_t *gr = mcp->__gregs;
 	struct trapframe64 *tf = l->l_md.md_tf;
+	struct proc *p = l->l_proc;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
+	}
 
 	if ((flags & _UC_CPU) != 0) {
 		/*
@@ -1961,16 +1971,17 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
 		mcp->__fpregs.__fpu_qcnt = 0 /*fs.fs_qsize*/; /* See above */
 #endif
-
 	}
 
 	/* XXX mcp->__xrs */
 	/* XXX mcp->__asrs */
 
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }

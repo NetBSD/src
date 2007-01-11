@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.6 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.6 2007/01/11 22:22:59 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -143,15 +143,7 @@ RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
 
 #ifndef __HAVE_RW_STUBS
 __strong_alias(rw_enter, rw_vector_enter);
-
-void
-rw_exit(krwlock_t *rw)
-{
-	krw_t op;
-	op = ((rw->rw_owner & RW_WRITE_LOCKED) ? RW_WRITER : RW_READER);
-	RW_UNLOCKED(rw, op);
-	rw_vector_exit(rw, op);
-}
+__strong_alias(rw_exit, rw_vector_exit);
 #endif
 
 void	rw_dump(volatile void *);
@@ -322,7 +314,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
  *	Release a rwlock.
  */
 void
-rw_vector_exit(krwlock_t *rw, const krw_t op)
+rw_vector_exit(krwlock_t *rw)
 {
 	uintptr_t curthread, owner, decr, new;
 	turnstile_t *ts;
@@ -346,37 +338,33 @@ rw_vector_exit(krwlock_t *rw, const krw_t op)
 	 * them, which makes the read-release and write-release path
 	 * the same.
 	 */
-	switch (op) {
-	case RW_READER:
+	owner = rw->rw_owner;
+	if (__predict_false((owner & RW_WRITE_LOCKED) != 0)) {
+		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
+		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
+		if (__predict_false((owner & RW_DOWNGRADING) != 0)) {
+			/* RW_UNLOCKED() is already done */
+			dcnt = 1;
+			decr = (curthread | RW_WRITE_LOCKED) - RW_READ_INCR;
+		} else {
+			RW_UNLOCKED(rw, RW_WRITER);
+			dcnt = 0;
+			decr = curthread | RW_WRITE_LOCKED;
+		}
+	} else {
 		RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
 		RW_ASSERT(rw, RW_COUNT(rw) != 0);
+		RW_UNLOCKED(rw, RW_READER);
 		dcnt = 0;
 		decr = RW_READ_INCR;
-		break;
-	case RW_WRITER:
-		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
-		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
-		dcnt = 0;
-		decr = curthread | RW_WRITE_LOCKED;
-		break;
-	case __RW_DOWNGRADE:
-		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
-		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
-		dcnt = 1;
-		decr = (curthread | RW_WRITE_LOCKED) - RW_READ_INCR;
-		break;
-	default:
-		RW_DASSERT(rw, "XXXgcc");
-		return;
 	}
 
-	for (;;) {
+	for (;; owner = rw->rw_owner) {
 		/*
 		 * Compute what we expect the new value of the lock to be. 
 		 * Only proceed to do direct handoff if there are waiters,
 		 * and if the lock would become unowned.
 		 */
-		owner = rw->rw_owner;
 		new = (owner - decr) & ~RW_WRITE_WANTED;
 		if ((new & (RW_THREAD | RW_HAS_WAITERS)) != RW_HAS_WAITERS) {
 			if (RW_RELEASE(rw, owner, new))
@@ -390,13 +378,6 @@ rw_vector_exit(krwlock_t *rw, const krw_t op)
 		 * waiter bits.
 		 */
 		ts = turnstile_lookup(rw);
-
-		/*
-		 * Adjust the waiter bits.  If we are releasing a write
-		 * lock or downgrading a write lock to read, then wake all
-		 * outstanding readers.  If we are releasing a read lock,
-		 * then wake one writer.
-		 */
 		RW_DASSERT(rw, ts != NULL);
 
 		wcnt = TS_WAITERS(ts, TS_WRITER_Q);
@@ -404,9 +385,13 @@ rw_vector_exit(krwlock_t *rw, const krw_t op)
 
 		/*
 		 * Give the lock away.
+		 *
+		 * If we are releasing a write lock or downgrading a write
+		 * lock to read, then wake all outstanding readers.  If we
+		 * are releasing a read lock, then wake one writer.
 		 */
 		if (dcnt == 0 &&
-		    (rcnt == 0 || (op == RW_READER && wcnt != 0))) {
+		    (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0))) {
 			RW_DASSERT(rw, wcnt != 0);
 
 			/*
@@ -520,7 +505,9 @@ rw_downgrade(krwlock_t *rw)
 
 		/* If there are waiters we need to do this the hard way. */
 		if ((owner & RW_HAS_WAITERS) != 0) {
-			rw_vector_exit(rw, __RW_DOWNGRADE);
+			if (!RW_RELEASE(rw, owner, owner | RW_DOWNGRADING))
+				continue;
+			rw_vector_exit(rw);
 			break;
 		}
 

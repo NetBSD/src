@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.102.2.4 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.102.2.5 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.4 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.5 2007/01/11 22:22:59 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -894,7 +894,7 @@ hardclock(struct clockframe *frame)
 			spllowersoftclock();
 			KERNEL_LOCK(1, NULL);
 			softclock(NULL);
-			(void)KERNEL_UNLOCK(1, NULL);
+			KERNEL_UNLOCK_ONE(NULL);
 		} else {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			softintr_schedule(softclock_si);

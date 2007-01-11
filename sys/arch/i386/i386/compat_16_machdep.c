@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.8.20.1 2006/10/24 21:10:22 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.8.20.2 2007/01/11 22:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8.20.1 2006/10/24 21:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8.20.2 2007/01/11 22:22:56 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -144,16 +144,13 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	/* Restore signal stack. */
 	mutex_enter(&p->p_smutex);
-
 	if (context.sc_onstack & SS_ONSTACK)
 		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
 		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
-
-	mutex_exit(&p->p_smutex);	/* XXXAD carry to sigprocmask */
-
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

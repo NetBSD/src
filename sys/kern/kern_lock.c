@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99.2.6 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.7 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.6 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.7 2007/01/11 22:22:59 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1447,6 +1447,16 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
     LOCKDEBUG_ABORT(kernel_lock_id, &kernel_lock, &_kernel_lock_ops,	\
         __FUNCTION__, msg)
 
+#ifdef LOCKDEBUG
+#define	_KERNEL_LOCK_ASSERT(cond)					\
+do {									\
+	if (!(cond))							\
+		_KERNEL_LOCK_ABORT("assertion failed: " #cond);		\
+} while (/* CONSTCOND */ 0)
+#else
+#define	_KERNEL_LOCK_ASSERT(cond)	/* nothing */
+#endif
+
 void	_kernel_lock_dump(volatile void *);
 
 lockops_t _kernel_lock_ops = {
@@ -1485,7 +1495,7 @@ _kernel_lock_dump(volatile void *junk)
  * acquisition is from process context.
  */
 void
-_kernel_lock(u_int nlocks, struct lwp *l)
+_kernel_lock(int nlocks, struct lwp *l)
 {
 	struct cpu_info *ci = curcpu();
 	LOCKSTAT_TIMER(spintime);
@@ -1497,12 +1507,14 @@ _kernel_lock(u_int nlocks, struct lwp *l)
 
 	(void)l;
 
-	KASSERT(nlocks > 0);
+	if (nlocks == 0)
+		return;
+	_KERNEL_LOCK_ASSERT(nlocks > 0);
 
 	s = splbiglock();
 
 	if (ci->ci_biglock_count != 0) {
-		KDASSERT(__cpu_simple_lock_held(&kernel_lock));
+		_KERNEL_LOCK_ASSERT(kernel_lock == __SIMPLELOCK_LOCKED);
 		ci->ci_biglock_count += nlocks;
 		splx(s);
 		return;
@@ -1540,7 +1552,7 @@ _kernel_lock(u_int nlocks, struct lwp *l)
 		(void)splbiglock();
 	}
 
-	ci->ci_biglock_wanted--;
+	ci->ci_biglock_wanted = owant;
 	ci->ci_biglock_count += nlocks;
 	LOCKSTAT_STOP_TIMER(spintime);
 	LOCKDEBUG_LOCKED(kernel_lock_id,
@@ -1550,7 +1562,6 @@ _kernel_lock(u_int nlocks, struct lwp *l)
 	/*
 	 * Again, another store fence is required (see kern_mutex.c).
 	 */
-	ci->ci_biglock_wanted = owant;
 	mb_write();
 	LOCKSTAT_EVENT(&kernel_lock, LB_KERNEL_LOCK | LB_SPIN, 1, spintime);
 }
@@ -1559,8 +1570,8 @@ _kernel_lock(u_int nlocks, struct lwp *l)
  * Release 'nlocks' holds on the kernel lock.  If 'nlocks' is zero, release
  * all holds.  If 'l' is non-null, the release is from process context.
  */
-u_int
-_kernel_unlock(u_int nlocks, struct lwp *l)
+void
+_kernel_unlock(int nlocks, struct lwp *l, int *countp)
 {
 	struct cpu_info *ci = curcpu();
 	u_int olocks;
@@ -1568,19 +1579,25 @@ _kernel_unlock(u_int nlocks, struct lwp *l)
 
 	(void)l;
 
-	KASSERT(nlocks < 2);
+	_KERNEL_LOCK_ASSERT(nlocks < 2);
 
 	olocks = ci->ci_biglock_count;
 
 	if (olocks == 0) {
-		KASSERT(nlocks == 0);
-		return 0;
+		_KERNEL_LOCK_ASSERT(nlocks <= 0);
+		if (countp != NULL)
+			*countp = 0;
+		return;
 	}
 
-	KDASSERT(__cpu_simple_lock_held(&kernel_lock));
+	_KERNEL_LOCK_ASSERT(kernel_lock == __SIMPLELOCK_LOCKED);
 
 	if (nlocks == 0)
 		nlocks = olocks;
+	else if (nlocks == -1) {
+		nlocks = 1;
+		_KERNEL_LOCK_ASSERT(olocks == 1);
+	}
 
 	s = splbiglock();
 	if ((ci->ci_biglock_count -= nlocks) == 0) {
@@ -1590,7 +1607,8 @@ _kernel_unlock(u_int nlocks, struct lwp *l)
 	}
 	splx(s);
 
-	return olocks;
+	if (countp != NULL)
+		*countp = olocks;
 }
 
 #if defined(DEBUG)

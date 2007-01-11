@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.69 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: interrupt.c,v 1.69.20.1 2007/01/11 22:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.69 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.69.20.1 2007/01/11 22:22:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,14 +296,14 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		atomic_add_ulong(&sc->sc_evcnt_device.ev_count, 1);
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
 
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 
 		uvmexp.intrs++;
 
 		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
 		(*scb->scb_func)(scb->scb_arg, a1);
 
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 
 		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
@@ -571,7 +571,7 @@ softintr_dispatch()
 		panic("softintr_dispatch: entry at ipl %ld", n);
 #endif
 
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 
 #ifdef DEBUG
 	n = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
@@ -611,7 +611,7 @@ softintr_dispatch()
 		}
 	}
 
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
