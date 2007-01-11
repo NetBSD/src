@@ -84,10 +84,12 @@
 ;; Return 1 if op is a register that is not special.
 (define_predicate "gpc_reg_operand"
    (and (match_operand 0 "register_operand")
-	(match_test "GET_CODE (op) != REG
-		     || (REGNO (op) >= ARG_POINTER_REGNUM
-			 && !XER_REGNO_P (REGNO (op)))
-		     || REGNO (op) < MQ_REGNO")))
+	(match_test "(GET_CODE (op) != REG
+		      || (REGNO (op) >= ARG_POINTER_REGNUM
+			  && !XER_REGNO_P (REGNO (op)))
+		      || REGNO (op) < MQ_REGNO)
+		     && !((TARGET_E500_DOUBLE || TARGET_SPE)
+			  && invalid_e500_subreg (op, mode))")))
 
 ;; Return 1 if op is a register that is a condition register field.
 (define_predicate "cc_reg_operand"
@@ -719,6 +721,12 @@
       && easy_vector_constant (op, mode))
     return 1;
 
+  /* Do not allow invalid E500 subregs.  */
+  if ((TARGET_E500_DOUBLE || TARGET_SPE)
+      && GET_CODE (op) == SUBREG
+      && invalid_e500_subreg (op, mode))
+    return 0;
+
   /* For floating-point or multi-word mode, the only remaining valid type
      is a register.  */
   if (GET_MODE_CLASS (mode) == MODE_FLOAT
@@ -753,7 +761,7 @@
 (define_predicate "rs6000_nonimmediate_operand"
   (match_code "reg,subreg,mem")
 {
-  if (TARGET_E500_DOUBLE
+  if ((TARGET_E500_DOUBLE || TARGET_SPE)
       && GET_CODE (op) == SUBREG
       && invalid_e500_subreg (op, mode))
     return 0;
