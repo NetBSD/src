@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.22 2007/01/10 23:02:50 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.23 2007/01/11 18:18:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.22 2007/01/10 23:02:50 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.23 2007/01/11 18:18:36 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -381,6 +381,54 @@ puffs_docc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
 	}
 
 	return 0;
+}
+
+/* XXX: not here, john */
+struct pathinfo {
+	char *old;
+	size_t oldlen;
+	char *new;
+	size_t newlen;
+};
+
+/* substitute all (child) patch prefixes.  needed with paths & rename */
+
+#define SPATHERR ((void *)-1)
+static void *
+spathprefix(struct puffs_node *pn, void *arg)
+{
+	struct pathinfo *pi = arg;
+	char *p, *pnew;
+	size_t plen, pnewlen;
+
+	/* len includes terminating nul */
+	if (strncmp(pn->pn_path, pi->old, pi->oldlen-1) != 0)
+		return NULL;
+
+	/* otherwise we'd have two nodes with an equal path */
+	assert(pn->pn_plen > pi->oldlen);
+
+	/* not a complete directory prefix? */
+	if (*(pn->pn_path + pi->oldlen-1) != '/')
+		return NULL;
+
+	/* found a matching prefix */
+	p = pn->pn_path + pi->oldlen;
+	plen = strlen(p);
+
+	pnewlen = pi->newlen + plen + 1;
+	pnew = malloc(pnewlen);
+	if (pnew == NULL)
+		return SPATHERR; /* XXX: can't recover, should die */
+	strcpy(pnew, pi->new);
+	strcat(pnew, "/");
+	strcat(pnew, p);
+
+	free(pn->pn_path);
+	pn->pn_path = pnew;
+	pn->pn_plen = pnewlen;
+
+	return NULL;
 }
 
 /* library private, but linked from callcontext.c */
@@ -761,9 +809,30 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				if (error) {
 					free(pcn_targ.pcn_fullpath);
 				} else {
-					free(pn_src->pn_path);
+					struct pathinfo pi;
+					char *oldpath;
+
+					/* handle this node */
+					oldpath = pn_src->pn_path;
+
 					pn_src->pn_path = pcn_targ.pcn_fullpath;
 					pn_src->pn_plen = pcn_targ.pcn_fullplen;
+
+					if (pn_src->pn_va.va_type != VDIR) {
+						free(oldpath);
+						break;
+					}
+
+					/* handle all child nodes for DIRs */
+					pi.old = pcn_src.pcn_fullpath;
+					pi.oldlen = pcn_src.pcn_fullplen;
+					pi.new = pcn_targ.pcn_fullpath;
+					pi.newlen = pcn_targ.pcn_fullplen;
+
+					if (puffs_pn_nodewalk(pu,
+					    spathprefix, &pi) == SPATHERR)
+						error = ENOMEM;
+					free(oldpath);
 				}
 			}
 			break;
