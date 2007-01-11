@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.23 2007/01/11 01:01:55 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.24 2007/01/11 17:48:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -78,6 +78,9 @@ struct puffs_usermount;
 #define PUFFS_VNOVAL (-1)
 #define PUFFS_ISDOTDOT 0x2000
 #define PUFFS_IO_APPEND 0x20
+
+#define PUFFS_FSYNC_DATAONLY 0x0002
+#define PUFFS_FSYNC_CACHE    0x0100
 
 /*
  * Magic constants
