@@ -738,30 +738,37 @@ iscsi_sock_close(iscsi_socket_t sock)
 int 
 iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 {
-	struct sockaddr_in addr;
+	struct addrinfo	hints;
+	struct addrinfo	*res;
 	int             rc = 0;
 	int             i;
 
-	(void) memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-	addr.sin_port = ISCSI_HTONS(port);
-	addr.sin_family = AF_INET;
+	(void) memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
 
 	for (i = 0; i < ISCSI_SOCK_CONNECT_TIMEOUT; i++) {
 
 		/* Attempt connection */
 
-		addr.sin_addr.s_addr = inet_addr(hostname);
+		rc = getaddrinfo(hostname, "iscsi", &hints, &res);
+		if (rc != 0) {
+			iscsi_trace_error(__FILE__, __LINE__, "getaddrinfo() failed");
+			return -1;
+		}
+
 #if ISCSI_SOCK_CONNECT_NONBLOCK == 1
 		if (fcntl(sock, F_SETFL, O_NONBLOCK) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "fcntl() failed");
+			iscsi_trace_error(__FILE__, __LINE__, "fcntl O_NONBLOCK failed");
+			freeaddrinfo(res);
 			return -1;
 		}
 #endif
-		rc = connect(sock, (struct sockaddr *) (void *) &addr, sizeof(addr));
+		rc = connect(sock, res->ai_addr, res->ai_addrlen);
 #if ISCSI_SOCK_CONNECT_NONBLOCK == 1
 		if (fcntl(sock, F_SETFL, O_SYNC) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "fcntl() failed\n");
+			iscsi_trace_error(__FILE__, __LINE__, "fcntl O_SYNC failed\n");
+			freeaddrinfo(res);
 			return -1;
 		}
 #endif
@@ -781,6 +788,7 @@ iscsi_sock_connect(iscsi_socket_t sock, char *hostname, int port)
 			break;
 		}
 	}
+	freeaddrinfo(res);
 	if (rc < 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "connect() to %s:%d failed (errno %d)\n", hostname, port, errno);
 	}
