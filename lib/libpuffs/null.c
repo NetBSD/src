@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.1 2007/01/11 01:01:55 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.2 2007/01/11 14:59:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.1 2007/01/11 01:01:55 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.2 2007/01/11 14:59:35 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -64,17 +64,17 @@ pathcmp(struct puffs_node *pn, void *arg)
  * set attributes to what is specified.  XXX: no rollback in case of failure
  */
 static int
-processvattr(const char *path, const struct vattr *va)
+processvattr(const char *path, const struct vattr *va, int regular)
 {
 	struct timeval tv[2];
 
 	/* XXX: -1 == PUFFS_VNOVAL, but shouldn't trust that */
 	if (va->va_uid != (unsigned)-1 || va->va_gid != (unsigned)-1)
-		if (chown(path, va->va_uid, va->va_gid) == -1)
+		if (lchown(path, va->va_uid, va->va_gid) == -1)
 			return errno;
 
 	if (va->va_mode != (unsigned)PUFFS_VNOVAL)
-		if (chmod(path, va->va_mode) == -1)
+		if (lchmod(path, va->va_mode) == -1)
 			return errno;
 
 	/* sloppy */
@@ -87,7 +87,7 @@ processvattr(const char *path, const struct vattr *va)
 			return errno;
 	}
 
-	if (va->va_type == VREG && va->va_size != (unsigned)PUFFS_VNOVAL)
+	if (regular && va->va_size != (u_quad_t)PUFFS_VNOVAL)
 		if (truncate(path, (off_t)va->va_size) == -1)
 			return errno;
 
@@ -194,7 +194,7 @@ puffs_null_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (fd == -1)
 		return errno;
 	close(fd);
-	if ((rv = processvattr(pcn->pcn_fullpath, va)) != 0) {
+	if ((rv = processvattr(pcn->pcn_fullpath, va, 1)) != 0) {
 		unlink(pcn->pcn_fullpath);
 		return rv;
 	}
@@ -222,7 +222,7 @@ puffs_null_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (mknod(pcn->pcn_fullpath, va->va_mode, va->va_rdev) == -1)
 		return errno;
 
-	if ((rv = processvattr(pcn->pcn_fullpath, va)) != 0) {
+	if ((rv = processvattr(pcn->pcn_fullpath, va, 0)) != 0) {
 		unlink(pcn->pcn_fullpath);
 		return rv;
 	}
@@ -261,7 +261,7 @@ puffs_null_node_setattr(struct puffs_cc *pcc, void *opc,
 	struct puffs_node *pn = opc;
 	int rv;
 
-	rv = processvattr(pn->pn_path, va);
+	rv = processvattr(pn->pn_path, va, pn->pn_va.va_type == VREG);
 	if (rv)
 		return rv;
 
@@ -321,7 +321,7 @@ puffs_null_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (mkdir(pcn->pcn_fullpath, va->va_mode) == -1)
 		return errno;
 
-	if ((rv = processvattr(pcn->pcn_fullpath, va)) != 0) {
+	if ((rv = processvattr(pcn->pcn_fullpath, va, 0)) != 0) {
 		unlink(pcn->pcn_fullpath);
 		return rv;
 	}
@@ -363,7 +363,7 @@ puffs_null_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (symlink(linkname, pcn->pcn_fullpath) == -1)
 		return errno;
 
-	if ((rv = processvattr(pcn->pcn_fullpath, va)) != 0) {
+	if ((rv = processvattr(pcn->pcn_fullpath, va, 0)) != 0) {
 		unlink(pcn->pcn_fullpath);
 		return rv;
 	}
@@ -491,8 +491,33 @@ puffs_null_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	rv = 0;
 	fd = open(pn->pn_path, O_WRONLY);
-	if (fd == -1)
-		return errno;
+	if (fd == -1) {
+		/*
+		 * XXXkludge: try again with better perms.  need to fix
+		 * this better somehow
+		 */
+		if (errno == EACCES) {
+			struct stat sb;
+			mode_t origmode;
+			int sverr = 0;
+
+			if (stat(pn->pn_path, &sb) == -1)
+				return errno;
+			origmode = sb.st_mode & ALLPERMS;
+
+			if (chmod(pn->pn_path, 0200) == -1)
+				return errno;
+
+			fd = open(pn->pn_path, O_WRONLY);
+			if (fd == -1)
+				sverr = errno;
+
+			chmod(pn->pn_path, origmode);
+			if (sverr)
+				return sverr;
+		} else
+			return errno;
+	}
 	off = lseek(fd, offset, SEEK_SET);
 	if (off == -1) {
 		rv = errno;
