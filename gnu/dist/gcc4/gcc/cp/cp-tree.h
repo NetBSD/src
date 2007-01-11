@@ -2835,8 +2835,14 @@ extern void decl_shadowed_for_var_insert (tree, tree);
    indicates the type of specializations:
 
      1=implicit instantiation
-     2=explicit specialization, e.g. int min<int> (int, int);
-     3=explicit instantiation, e.g. template int min<int> (int, int);
+
+     2=partial or explicit specialization, e.g.:
+
+        template <> int min<int> (int, int),
+
+     3=explicit instantiation, e.g.:
+  
+        template int min<int> (int, int);
 
    Note that NODE will be marked as a specialization even if the
    template it is instantiating is not a primary template.  For
@@ -3430,7 +3436,8 @@ enum overload_flags { NO_SPECIAL = 0, DTOR_FLAG, OP_FLAG, TYPENAME_FLAG };
 #define WANT_ENUM	4 /* enumerated types */
 #define WANT_POINTER	8 /* pointer types */
 #define WANT_NULL      16 /* null pointer constant */
-#define WANT_ARITH	(WANT_INT | WANT_FLOAT)
+#define WANT_VECTOR    32 /* vector types */
+#define WANT_ARITH	(WANT_INT | WANT_FLOAT | WANT_VECTOR)
 
 /* Used with comptypes, and related functions, to guide type
    comparison.  */
@@ -4120,6 +4127,7 @@ extern tree build_non_dependent_args		(tree);
 extern bool reregister_specialization		(tree, tree, tree);
 extern tree fold_non_dependent_expr		(tree);
 extern tree fold_decl_constant_value		(tree);
+extern bool explicit_class_specialization_p     (tree);
 
 /* in repo.c */
 extern void init_repo				(void);
