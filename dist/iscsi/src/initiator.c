@@ -610,7 +610,10 @@ discovery_phase(int target, strv_t *svp)
 
 	if (param_val(sess->params, "TargetAddress")) {
 		ptr = param_val(sess->params, "TargetAddress");
-printf("ptr is ,%s,\n", ptr);
+		if (*ptr == 0x0) {
+			iscsi_trace_error(__FILE__, __LINE__, "Target is not allowing access\n");
+			DP_ERROR;
+		}
 		colon_ptr = strchr(ptr, ':');
 		if ((comma_ptr = strchr(ptr, ',')) == NULL) {
 			iscsi_trace_error(__FILE__, __LINE__, "portal group tag is missing in \"%s\"\n", param_val(sess->params, "TargetAddress"));
