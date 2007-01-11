@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.102 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.103 2007/01/11 14:26:07 elad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.102 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.103 2007/01/11 14:26:07 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -413,8 +413,8 @@ sys_mmap(l, v, retval)
 		 * exists.
 		 */
 		if (prot & VM_PROT_EXECUTE) {
-			if (veriexec_verify(l, vp, "[mmap]",
-			    VERIEXEC_INDIRECT, NULL) != 0)
+			if (veriexec_verify(l, vp, "(mmap)", VERIEXEC_INDIRECT,
+			    NULL) != 0)
 				return (EPERM);
 		}
 #endif /* NVERIEXEC > 0 */
