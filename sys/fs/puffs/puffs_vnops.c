@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.30 2007/01/09 18:14:31 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.31 2007/01/11 16:08:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.30 2007/01/09 18:14:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.31 2007/01/11 16:08:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -118,7 +118,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_write_desc, puffs_checkop },		/* write */
         { &vop_fcntl_desc, puffs_checkop },		/* fcntl */
         { &vop_ioctl_desc, puffs_checkop },		/* ioctl */
-        { &vop_fsync_desc, puffs_checkop },		/* fsync */
+        { &vop_fsync_desc, puffs_fsync },		/* REAL fsync */
         { &vop_seek_desc, puffs_checkop },		/* seek */
         { &vop_remove_desc, puffs_checkop },		/* remove */
         { &vop_link_desc, puffs_checkop },		/* link */
@@ -385,12 +385,7 @@ puffs_checkop(void *v)
 			CHECKOP_SUCCESS(ACCESS);
 			CHECKOP_SUCCESS(SEEK);
 
-		/* putpages & fsync doesn't make sense if there's no write */
-		case VOP_FSYNC_DESCOFFSET:
-			if (!EXISTSOP(pmp, WRITE))
-				return genfs_eopnotsupp(v);
-			break;
-
+		/* XXXfixme: read w/o write && cache == bad bad bad */
 		case VOP_GETPAGES_DESCOFFSET:
 			if (!EXISTSOP(pmp, READ))
 				return genfs_eopnotsupp(v);
@@ -945,6 +940,7 @@ puffs_fsync(void *v)
 		off_t a_offhi;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct puffs_mount *pmp;
 	struct puffs_vnreq_fsync *fsync_argp;
 	struct vnode *vp;
 	int pflags, error;
@@ -952,17 +948,11 @@ puffs_fsync(void *v)
 	PUFFS_VNREQ(fsync);
 
 	vp = ap->a_vp;
+	pmp = MPTOPUFFSMP(vp->v_mount);
 
 	pflags = PGO_CLEANIT;
-	if (ap->a_flags & FSYNC_WAIT) {
+	if (ap->a_flags & FSYNC_WAIT)
 		pflags |= PGO_SYNCIO;
-		fsync_argp = &fsync_arg;
-	} else {
-		fsync_argp = malloc(sizeof(struct puffs_vnreq_fsync),
-		    M_PUFFS, M_ZERO | M_NOWAIT);
-		if (fsync_argp == NULL)
-			return ENOMEM;
-	}
 
 	/*
 	 * flush pages to avoid being overly dirty
@@ -972,6 +962,24 @@ puffs_fsync(void *v)
 	    round_page(ap->a_offhi), pflags);
 	if (error)
 		return error;
+
+	/*
+	 * HELLO!  We exit already here if the user server does not
+	 * support fsync.  Otherwise we continue to issue fsync()
+	 * forward.
+	 */
+
+	if (!EXISTSOP(pmp, FSYNC))
+		return 0;
+
+	if (ap->a_flags & FSYNC_WAIT) {
+		fsync_argp = &fsync_arg;
+	} else {
+		fsync_argp = malloc(sizeof(struct puffs_vnreq_fsync),
+		    M_PUFFS, M_ZERO | M_NOWAIT);
+		if (fsync_argp == NULL)
+			return ENOMEM;
+	}
 
 	puffs_credcvt(&fsync_argp->pvnr_cred, ap->a_cred);
 	fsync_argp->pvnr_flags = ap->a_flags;
@@ -1912,7 +1920,7 @@ puffs_generic(void *v)
 
 
 /*
- * spec & fifo.  These call the micsfs spec and fifo vectors, but issue
+ * spec & fifo.  These call the miscfs spec and fifo vectors, but issue
  * FAF update information for the puffs node first.
  */
 int
