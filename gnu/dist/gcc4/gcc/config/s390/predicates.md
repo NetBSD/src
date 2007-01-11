@@ -62,7 +62,8 @@
 ;; Allow SYMBOL_REFs and @PLT stubs.
 
 (define_special_predicate "bras_sym_operand"
-  (ior (match_code "symbol_ref")
+  (ior (and (match_code "symbol_ref")
+	    (match_test "!flag_pic || SYMBOL_REF_LOCAL_P (op)"))
        (and (match_code "const")
 	    (and (match_test "GET_CODE (XEXP (op, 0)) == UNSPEC")
 		 (match_test "XINT (XEXP (op, 0), 1) == UNSPEC_PLT")))))
@@ -125,8 +126,8 @@
       if (GET_CODE (XEXP (op, 1)) != CONST_INT
           || (INTVAL (XEXP (op, 1)) & 1) != 0)
         return false;
-      if (INTVAL (XEXP (op, 1)) >= (HOST_WIDE_INT)1 << 32
-	  || INTVAL (XEXP (op, 1)) < -((HOST_WIDE_INT)1 << 32))
+      if (INTVAL (XEXP (op, 1)) >= (HOST_WIDE_INT)1 << 31
+	  || INTVAL (XEXP (op, 1)) < -((HOST_WIDE_INT)1 << 31))
         return false;
       op = XEXP (op, 0);
     }
