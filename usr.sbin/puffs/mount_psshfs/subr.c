@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.5 2007/01/09 18:23:21 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.6 2007/01/11 18:50:42 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.5 2007/01/09 18:23:21 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.6 2007/01/11 18:50:42 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -274,7 +274,7 @@ direnter(struct puffs_node *parent, const char *entryname)
 }
 
 void
-nukenode(struct puffs_node *node, const char *entryname)
+nukenode(struct puffs_node *node, const char *entryname, int destroy)
 {
 	struct psshfs_node *psn, *psn_parent;
 	struct psshfs_dir *pd;
@@ -290,6 +290,10 @@ nukenode(struct puffs_node *node, const char *entryname)
 
 	if (node->pn_va.va_type == VDIR) {
 		psn->parent->pn_va.va_nlink--;
-		freedircache(psn->dir, psn->dentnext);
+		if (destroy)
+			freedircache(psn->dir, psn->dentnext);
 	}
+
+	if (destroy)
+		puffs_pn_put(node);
 }

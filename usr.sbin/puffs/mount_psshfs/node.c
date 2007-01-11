@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.3 2007/01/07 19:31:48 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.4 2007/01/11 18:50:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.3 2007/01/07 19:31:48 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.4 2007/01/11 18:50:42 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -192,7 +192,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (rv == 0)
 		*newnode = pn_new;
 	else
-		nukenode(pn_new, pcn->pcn_name);
+		nukenode(pn_new, pcn->pcn_name, 1);
 
  out:
 	free(fhand);
@@ -442,7 +442,7 @@ psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	rv = psbuf_expect_status(pb);
 
 	if (rv == 0)
-		nukenode(pn_targ, pcn->pcn_name);
+		nukenode(pn_targ, pcn->pcn_name, 1);
 
  out:
 	PSSHFSRETURN(rv);
@@ -473,7 +473,7 @@ psshfs_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (rv == 0)
 		*newnode = pn_new;
 	else
-		nukenode(pn_new, pcn->pcn_name);
+		nukenode(pn_new, pcn->pcn_name, 1);
 
  out:
 	PSSHFSRETURN(rv);
@@ -493,7 +493,7 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0)
-		nukenode(pn_targ, pcn->pcn_name);
+		nukenode(pn_targ, pcn->pcn_name, 1);
 
 	PSSHFSRETURN(rv);
 }
@@ -532,7 +532,7 @@ psshfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (rv == 0)
 		*newnode = pn_new;
 	else
-		nukenode(pn_new, pcn->pcn_name);
+		nukenode(pn_new, pcn->pcn_name, 1);
 
  out:
 	PSSHFSRETURN(rv);
@@ -574,7 +574,7 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 		 * XXX: interfaces didn't quite work with rename..
 		 * the song remains the same.  go figure .. ;)
 		 */
-		nukenode(pn_sf, pcn_src->pcn_name);
+		nukenode(pn_sf, pcn_src->pcn_name, 0);
 		pd = direnter(pn_td, pcn_targ->pcn_name);
 		pd->entry = pn_sf;
 		puffs_setvattr(&pd->va, &pn_sf->pn_va);
