@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.51 2007/01/09 12:49:37 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.52 2007/01/11 15:10:25 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -83,7 +83,6 @@ typedef void (*veriexec_fpop_final_t)(u_char *, void *);
 #if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
 MALLOC_DECLARE(M_VERIEXEC);
 
-extern int veriexec_verbose;
 extern int veriexec_strict;
 
 /* Readable values for veriexec_report(). */

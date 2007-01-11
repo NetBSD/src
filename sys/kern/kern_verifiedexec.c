@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.92 2007/01/09 12:49:36 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.93 2007/01/11 15:10:25 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.92 2007/01/09 12:49:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.93 2007/01/11 15:10:25 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -95,7 +95,7 @@ struct veriexec_table_entry {
 	const struct sysctlnode *vte_node;
 };
 
-int veriexec_verbose;
+static int veriexec_verbose;
 int veriexec_strict;
 
 static char *veriexec_fp_names;
