@@ -904,6 +904,7 @@ Optional Packages:
   --with-newlib           assume newlib as a system C library
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
   --with-pic              try to use only PIC/non-PIC objects default=use both
+  --with-libiconv-prefix=DIR  search for libiconv in DIR/include and DIR/lib
   --with-gxx-include-dir=DIR
                           installation directory for include files
 
@@ -4458,7 +4459,7 @@ test x"$pic_mode" = xno && libtool_flags="$libtool_flags --prefer-non-pic"
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4461 "configure"' > conftest.$ac_ext
+  echo '#line 4462 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -5078,7 +5079,7 @@ fi;
     #
     # Fake what AC_TRY_COMPILE does.  XXX Look at redoing this new-style.
     cat > conftest.$ac_ext << EOF
-#line 5081 "configure"
+#line 5082 "configure"
 struct S { ~S(); };
 void bar();
 void foo()
@@ -8278,12 +8279,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -28384,6 +28387,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -28675,84 +28698,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -28865,7 +28812,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -28878,6 +28824,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -51289,6 +51236,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -51580,84 +51547,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -51770,7 +51661,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -51783,6 +51673,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -53117,12 +53008,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -73223,6 +73116,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -73514,84 +73427,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -73704,7 +73541,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -73717,6 +73553,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -74449,12 +74286,14 @@ done
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -75079,6 +74918,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -75370,84 +75229,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -75560,7 +75343,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -75573,6 +75355,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -75944,12 +75727,14 @@ done
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -76574,6 +76359,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -76865,84 +76670,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -77055,7 +76784,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -77068,6 +76796,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -77315,12 +77044,14 @@ done
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -77945,6 +77676,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -78236,84 +77987,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -78426,7 +78101,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -78439,6 +78113,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -79473,12 +79148,14 @@ done
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -80096,513 +79773,6 @@ done
     need_libmath=yes
   fi
 
-
-
-
-  enable_iconv=no
-  # Only continue checking if the ISO C99 headers exist and support is on.
-  if test x"$enable_wchar_t" = xyes; then
-
-    # Use iconv for wchar_t to char conversions. As such, check for
-    # X/Open Portability Guide, version 2 features (XPG2).
-    if test "${ac_cv_header_iconv_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for iconv.h" >&5
-echo $ECHO_N "checking for iconv.h... $ECHO_C" >&6
-if test "${ac_cv_header_iconv_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_iconv_h" >&5
-echo "${ECHO_T}$ac_cv_header_iconv_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking iconv.h usability" >&5
-echo $ECHO_N "checking iconv.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <iconv.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking iconv.h presence" >&5
-echo $ECHO_N "checking iconv.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <iconv.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: iconv.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: iconv.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: iconv.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: iconv.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: iconv.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: iconv.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: iconv.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: iconv.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: iconv.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: iconv.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: iconv.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: iconv.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: iconv.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: iconv.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: iconv.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: iconv.h: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ----------------------------------------- ##
-## Report this to the package-unused lists.  ##
-## ----------------------------------------- ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for iconv.h" >&5
-echo $ECHO_N "checking for iconv.h... $ECHO_C" >&6
-if test "${ac_cv_header_iconv_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_iconv_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_iconv_h" >&5
-echo "${ECHO_T}$ac_cv_header_iconv_h" >&6
-
-fi
-if test $ac_cv_header_iconv_h = yes; then
-  ac_has_iconv_h=yes
-else
-  ac_has_iconv_h=no
-fi
-
-
-    if test "${ac_cv_header_langinfo_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for langinfo.h" >&5
-echo $ECHO_N "checking for langinfo.h... $ECHO_C" >&6
-if test "${ac_cv_header_langinfo_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_langinfo_h" >&5
-echo "${ECHO_T}$ac_cv_header_langinfo_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking langinfo.h usability" >&5
-echo $ECHO_N "checking langinfo.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <langinfo.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking langinfo.h presence" >&5
-echo $ECHO_N "checking langinfo.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <langinfo.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: langinfo.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: langinfo.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: langinfo.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: langinfo.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: langinfo.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: langinfo.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: langinfo.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: langinfo.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: langinfo.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: langinfo.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: langinfo.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: langinfo.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: langinfo.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: langinfo.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: langinfo.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: langinfo.h: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ----------------------------------------- ##
-## Report this to the package-unused lists.  ##
-## ----------------------------------------- ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for langinfo.h" >&5
-echo $ECHO_N "checking for langinfo.h... $ECHO_C" >&6
-if test "${ac_cv_header_langinfo_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_langinfo_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_langinfo_h" >&5
-echo "${ECHO_T}$ac_cv_header_langinfo_h" >&6
-
-fi
-if test $ac_cv_header_langinfo_h = yes; then
-  ac_has_langinfo_h=yes
-else
-  ac_has_langinfo_h=no
-fi
-
-
-
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
-    ac_save_LIBS="$LIBS"
-    LIBS="$LIBS $LIBICONV"
-
-
-
-
-
-
-for ac_func in iconv_open iconv_close iconv nl_langinfo
-do
-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
-echo "$as_me:$LINENO: checking for $ac_func" >&5
-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6
-if eval "test \"\${$as_ac_var+set}\" = set"; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define $ac_func innocuous_$ac_func
-
-/* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char $ac_func (); below.
-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
-    <limits.h> exists even on freestanding compilers.  */
-
-#ifdef __STDC__
-# include <limits.h>
-#else
-# include <assert.h>
-#endif
-
-#undef $ac_func
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char $ac_func ();
-/* The GNU C library defines this for functions which it implements
-    to always fail with ENOSYS.  Some functions are actually named
-    something starting with __ and the normal name is an alias.  */
-#if defined (__stub_$ac_func) || defined (__stub___$ac_func)
-choke me
-#else
-char (*f) () = $ac_func;
-#endif
-#ifdef __cplusplus
-}
-#endif
-
-int
-main ()
-{
-return f != $ac_func;
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  eval "$as_ac_var=yes"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-eval "$as_ac_var=no"
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: `eval echo '${'$as_ac_var'}'`" >&5
-echo "${ECHO_T}`eval echo '${'$as_ac_var'}'`" >&6
-if test `eval echo '${'$as_ac_var'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
- ac_XPG2funcs=yes
-else
-  ac_XPG2funcs=no
-fi
-done
-
-
-    LIBS="$ac_save_LIBS"
-
-    if test x"$ac_has_iconv_h" = xyes &&
-       test x"$ac_has_langinfo_h" = xyes &&
-       test x"$ac_XPG2funcs" = xyes;
-    then
-
-cat >>confdefs.h <<\_ACEOF
-#define _GLIBCXX_USE_ICONV 1
-_ACEOF
-
-      enable_iconv=yes
-    fi
-  fi
-  echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
-echo $ECHO_N "checking for enabled iconv specializations... $ECHO_C" >&6
-  echo "$as_me:$LINENO: result: $enable_iconv" >&5
-echo "${ECHO_T}$enable_iconv" >&6
 
     ;;
   *-netbsd*)
@@ -80797,12 +79967,14 @@ done
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -81427,6 +80599,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -81718,84 +80910,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -81908,7 +81024,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -81921,6 +81036,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -82170,12 +81286,14 @@ done
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -82800,6 +81918,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -83091,84 +82229,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -83281,7 +82343,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -83294,6 +82355,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -83935,12 +82997,14 @@ echo "${ECHO_T}$glibcxx_cv_WRITEV" >&6
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -84565,6 +83629,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -84856,84 +83940,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -85046,7 +84054,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -85059,6 +84066,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -85124,6 +84132,136 @@ _ACEOF
     #    os_include_dir="os/solaris/solaris2.6"
     #    ;;
       *-solaris2.7 | *-solaris2.8 | *-solaris2.9 | *-solaris2.10)
+
+  # If we're not using GNU ld, then there's no point in even trying these
+  # tests.  Check for that first.  We should have already tested for gld
+  # by now (in libtool), but require it now just to be safe...
+  test -z "$SECTION_LDFLAGS" && SECTION_LDFLAGS=''
+  test -z "$OPT_LDFLAGS" && OPT_LDFLAGS=''
+
+
+
+  # The name set by libtool depends on the version of libtool.  Shame on us
+  # for depending on an impl detail, but c'est la vie.  Older versions used
+  # ac_cv_prog_gnu_ld, but now it's lt_cv_prog_gnu_ld, and is copied back on
+  # top of with_gnu_ld (which is also set by --with-gnu-ld, so that actually
+  # makes sense).  We'll test with_gnu_ld everywhere else, so if that isn't
+  # set (hence we're using an older libtool), then set it.
+  if test x${with_gnu_ld+set} != xset; then
+    if test x${ac_cv_prog_gnu_ld+set} != xset; then
+      # We got through "ac_require(ac_prog_ld)" and still not set?  Huh?
+      with_gnu_ld=no
+    else
+      with_gnu_ld=$ac_cv_prog_gnu_ld
+    fi
+  fi
+
+  # Start by getting the version number.  I think the libtool test already
+  # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
+
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
+
+  # Set --gc-sections.
+  if test "$with_gnu_ld" = "notbroken"; then
+    # GNU ld it is!  Joy and bunny rabbits!
+
+    # All these tests are for C++; save the language and the compiler flags.
+    # Need to do this so that g++ won't try to link in libstdc++
+    ac_test_CFLAGS="${CFLAGS+set}"
+    ac_save_CFLAGS="$CFLAGS"
+    CFLAGS='-x c++  -Wl,--gc-sections'
+
+    # Check for -Wl,--gc-sections
+    # XXX This test is broken at the moment, as symbols required for linking
+    # are now in libsupc++ (not built yet).  In addition, this test has
+    # cored on solaris in the past.  In addition, --gc-sections doesn't
+    # really work at the moment (keeps on discarding used sections, first
+    # .eh_frame and now some of the glibc sections for iconv).
+    # Bzzzzt.  Thanks for playing, maybe next time.
+    echo "$as_me:$LINENO: checking for ld that supports -Wl,--gc-sections" >&5
+echo $ECHO_N "checking for ld that supports -Wl,--gc-sections... $ECHO_C" >&6
+    if test "$cross_compiling" = yes; then
+  ac_sectionLDflags=yes
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+     int main(void)
+     {
+       try { throw 1; }
+       catch (...) { };
+       return 0;
+     }
+
+_ACEOF
+rm -f conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_sectionLDflags=yes
+else
+  echo "$as_me: program exited with status $ac_status" >&5
+echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+( exit $ac_status )
+ac_sectionLDflags=no
+fi
+rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
+fi
+    if test "$ac_test_CFLAGS" = set; then
+      CFLAGS="$ac_save_CFLAGS"
+    else
+      # this is the suspicious part
+      CFLAGS=''
+    fi
+    if test "$ac_sectionLDflags" = "yes"; then
+      SECTION_LDFLAGS="-Wl,--gc-sections $SECTION_LDFLAGS"
+    fi
+    echo "$as_me:$LINENO: result: $ac_sectionLDflags" >&5
+echo "${ECHO_T}$ac_sectionLDflags" >&6
+  fi
+
+  # Set -z,relro.
+  # Note this is only for shared objects
+  ac_ld_relro=no
+  if test x"$with_gnu_ld" = x"yes"; then
+    echo "$as_me:$LINENO: checking for ld that supports -Wl,-z,relro" >&5
+echo $ECHO_N "checking for ld that supports -Wl,-z,relro... $ECHO_C" >&6
+    cxx_z_relo=`$LD -v --help 2>/dev/null | grep "z relro"`
+    if test -n "$cxx_z_relo"; then
+      OPT_LDFLAGS="-Wl,-z,relro"
+      ac_ld_relro=yes
+    fi
+    echo "$as_me:$LINENO: result: $ac_ld_relro" >&5
+echo "${ECHO_T}$ac_ld_relro" >&6
+  fi
+
+  # Set linker optimization flags.
+  if test x"$with_gnu_ld" = x"yes"; then
+    OPT_LDFLAGS="-Wl,-O1 $OPT_LDFLAGS"
+  fi
+
+
+
+
          cat >>confdefs.h <<\_ACEOF
 #define HAVE_GETPAGESIZE 1
 _ACEOF
@@ -85183,6 +84321,26 @@ _ACEOF
   enable_iconv=no
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
+
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
 
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
@@ -85475,84 +84633,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -85665,7 +84747,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -85678,6 +84759,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
@@ -86021,12 +85103,14 @@ done
 
   # Start by getting the version number.  I think the libtool test already
   # does some of this, but throws away the result.
+  if test x"$with_gnu_ld" = x"yes"; then
 
-  ldver=`$LD --version 2>/dev/null | head -1 | \
-         sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
+    ldver=`$LD --version 2>/dev/null | head -1 | \
+           sed -e 's/GNU ld version \([0-9.][0-9.]*\).*/\1/'`
 
-  glibcxx_gnu_ld_version=`echo $ldver | \
-         $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+    glibcxx_gnu_ld_version=`echo $ldver | \
+           $AWK -F. '{ if (NF<3) $3=0; print ($1*100+$2)*100+$3 }'`
+  fi
 
   # Set --gc-sections.
   if test "$with_gnu_ld" = "notbroken"; then
@@ -86651,6 +85735,26 @@ done
   # Only continue checking if the ISO C99 headers exist and support is on.
   if test x"$enable_wchar_t" = xyes; then
 
+    # From Bruno Haible's AM_ICONV, but without link tests.
+    # Check for existence of libiconv.a providing XPG2 wchar_t support.
+    # Some systems have iconv in libc, some have it in libiconv (OSF/1 and
+    # those with the standalone portable GNU libiconv installed).
+
+# Check whether --with-libiconv-prefix or --without-libiconv-prefix was given.
+if test "${with_libiconv_prefix+set}" = set; then
+  withval="$with_libiconv_prefix"
+    for dir in `echo "$withval" | tr : ' '`; do
+      if test -d $dir/include; then CPPFLAGS="$CPPFLAGS -I$dir/include"; fi
+      if test -d $dir/lib; then LIBICONV="$LIBICONV -L$dir/lib"; fi
+    done
+    LIBICONV="$LIBICONV -liconv"
+
+fi;
+   if test x"$LIBICONV" != x; then
+     { echo "$as_me:$LINENO: --with-libiconv-prefix is $LIBICONV" >&5
+echo "$as_me: --with-libiconv-prefix is $LIBICONV" >&6;}
+   fi
+
     # Use iconv for wchar_t to char conversions. As such, check for
     # X/Open Portability Guide, version 2 features (XPG2).
     if test "${ac_cv_header_iconv_h+set}" = set; then
@@ -86942,84 +86046,8 @@ fi
 
 
 
-    # Check for existence of libiconv.a providing XPG2 wchar_t support.
-    echo "$as_me:$LINENO: checking for iconv in -liconv" >&5
-echo $ECHO_N "checking for iconv in -liconv... $ECHO_C" >&6
-if test "${ac_cv_lib_iconv_iconv+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-liconv  $LIBS"
-if test x$gcc_no_link = xyes; then
-  { { echo "$as_me:$LINENO: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&5
-echo "$as_me: error: Link tests are not allowed after GCC_NO_EXECUTABLES." >&2;}
-   { (exit 1); exit 1; }; }
-fi
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char iconv ();
-int
-main ()
-{
-iconv ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_iconv_iconv=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_iconv_iconv=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_iconv_iconv" >&5
-echo "${ECHO_T}$ac_cv_lib_iconv_iconv" >&6
-if test $ac_cv_lib_iconv_iconv = yes; then
-  LIBICONV="-liconv"
-fi
-
     ac_save_LIBS="$LIBS"
     LIBS="$LIBS $LIBICONV"
-
-
 
 
 
@@ -87132,7 +86160,6 @@ else
 fi
 done
 
-
     LIBS="$ac_save_LIBS"
 
     if test x"$ac_has_iconv_h" = xyes &&
@@ -87145,6 +86172,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
       enable_iconv=yes
+
     fi
   fi
   echo "$as_me:$LINENO: checking for enabled iconv specializations" >&5
