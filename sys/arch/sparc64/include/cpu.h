@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54.6.2 2006/12/29 20:27:42 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.54.6.3 2007/01/11 22:22:58 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,6 +115,9 @@ struct cpu_info {
 
 	void			*ci_eintstack;
 	struct pcb		*ci_idle_u;
+
+	int			ci_mtx_count;
+	int			ci_mtx_oldspl;
 
 	/* Spinning up the CPU */
 	void			(*ci_spinup)(void);

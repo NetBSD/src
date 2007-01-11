@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.2.4 2006/12/29 20:27:41 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.5 2007/01/11 22:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.4 2006/12/29 20:27:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.5 2007/01/11 22:22:56 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -1629,6 +1629,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct proc *p = l->l_proc;
 	int error;
 	int err, trapno;
 	int64_t rflags;
@@ -1659,10 +1660,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		    sizeof (mcp->__fpregs));
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
+
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	return 0;
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.6 2006/12/29 20:27:41 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.7 2007/01/11 22:22:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,9 +53,6 @@
 
 #include "assym.h"
 
-#undef	_ALIGN_TEXT
-#define	_ALIGN_TEXT	.align 32
-
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 #define	FULL
 #endif
@@ -66,19 +63,6 @@
 #define	LOCK		/* nothing */
 #endif
 
-/*
- * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
- *
- * Perform an atomic compare-and-set operation.
- */
-NENTRY(_lock_cas)
-	movq	%rsi, %rax
-	LOCK
-	cmpxchgq %rdx, (%rdi)
-	movq	$0, %rax
-	setz	%al				/* = 1 if success */
-	ret
-
 #ifndef LOCKDEBUG
 
 /*
@@ -86,7 +70,9 @@ NENTRY(_lock_cas)
  *
  * Acquire a mutex and post a load fence.
  */
-NENTRY(mutex_enter)
+	.align	64
+
+NENTRY(mutex_enter)				/* 0x0000, 25 bytes */
 	movq	CPUVAR(CURLWP), %rcx
 	xorq	%rax, %rax
 	LOCK
@@ -103,7 +89,9 @@ NENTRY(mutex_enter)
  * on multiprocessor systems, and comments in arch/x86/include/lock.h about
  * memory ordering on Intel x86 systems.
  */
-NENTRY(mutex_exit)
+	.align	32
+
+NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
 	movq	CPUVAR(CURLWP), %rax
 	xorq	%rdx, %rdx
 	cmpxchgq %rdx, MTX_OWNER(%rdi)
@@ -115,13 +103,15 @@ NENTRY(mutex_exit)
  *
  * Acquire a spin mutex and post a load fence.
  */
-NENTRY(smutex_enter)
+	.align	64
+
+NENTRY(smutex_enter)				/* 0x0040, 61 bytes */
+	movq	CPUVAR(SELF200), %r8
 	movzbl	MTX_MINSPL(%rdi), %ecx		/* new SPL */
-	movl	CPUVAR(ILEVEL), %esi		/* %rsi for vector_enter */
+	movl	(CPU_INFO_ILEVEL-0x200)(%r8), %esi/* %esi for vector_enter */
 	cmpl	%ecx, %esi			/* higher? */
 	cmovgl	%esi, %ecx
-	movl	%ecx, CPUVAR(ILEVEL)		/* splraiseipl() */
-
+	movl	%ecx, (CPU_INFO_ILEVEL-0x200)(%r8) /* splraiseipl() */
 #if defined(FULL)
 	movl	$0x0100, %eax			/* new + expected value */
 	LOCK
@@ -129,10 +119,9 @@ NENTRY(smutex_enter)
 	movq	(%rsp), %rdx			/* for vector_enter */
 	jnz	_C_LABEL(smutex_vector_enter)	/* failed; hard case */
 #endif
-
-	subl	$1, CPUVAR(MTX_COUNT)		/* decl doesnt set CF */
-	cmovncl	CPUVAR(MTX_OLDSPL), %esi
-	movl	%esi, CPUVAR(MTX_OLDSPL)
+	subl	$1, (CPU_INFO_MTX_COUNT-0x200)(%r8)/* decl doesnt set CF */
+	cmovncl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %esi
+	movl	%esi, (CPU_INFO_MTX_OLDSPL-0x200)(%r8)
 	ret
 
 /*
@@ -140,16 +129,26 @@ NENTRY(smutex_enter)
  *
  * Release a spin mutex and post a load fence.
  */
-NENTRY(smutex_exit)
+	.align	64
+
+NENTRY(smutex_exit)				/* 0x0080, 63 bytes */
+	movq	CPUVAR(SELF200), %r8
 #if defined(FULL)
 	movl	$0x0001, %eax			/* new + expected value */
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* unlock */
 	jnz	_C_LABEL(mutex_vector_exit)	/* hard case if problems */
 #endif
-	incl	CPUVAR(MTX_COUNT)
-	movl	CPUVAR(MTX_OLDSPL), %edi
+	movl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %edi
+	incl	(CPU_INFO_MTX_COUNT-0x200)(%r8)
 	jnz	1f
-	SPLLOWER(_C_LABEL(Xspllower))		/* splx */
+	cmpl	(CPU_INFO_ILEVEL-0x200)(%r8), %edi
+	jae	1f
+	movl	(CPU_INFO_IUNMASK-0x200)(%r8,%rdi,4), %esi
+	cli	
+	testl	(CPU_INFO_IPENDING-0x200)(%r8), %esi
+	jnz	_C_LABEL(Xspllower)
+	movl	%edi, (CPU_INFO_ILEVEL-0x200)(%r8)
+	sti
 1:	ret					/* double ret as branch */
 	ret					/* target: see AMD docs */
 
@@ -158,7 +157,9 @@ NENTRY(smutex_exit)
  *
  * Acquire one hold on a RW lock.
  */
-NENTRY(rw_enter)
+	.align	64
+
+NENTRY(rw_enter)				/* 0x00c0, 63 bytes */
 	cmpl	$RW_READER, %esi
 	movq	RW_OWNER(%rdi), %rax
 	jne	2f
@@ -168,7 +169,7 @@ NENTRY(rw_enter)
 	 */
 1:	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
-	jnz	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz	1b
@@ -177,25 +178,27 @@ NENTRY(rw_enter)
 	/*
 	 * Writer: if the compare-and-set fails, don't bother retrying.
 	 */
-	_ALIGN_TEXT
-
 2:	testq	%rax, %rax
 	movq	%rax, %rcx
-	jnz	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	addq	CPUVAR(CURLWP), %rcx
 	leaq	RW_WRITE_LOCKED(%rcx), %rcx
-	jz	_C_LABEL(rw_vector_enter)
+	jz	3f
 	LOCK
 	cmpxchgq %rcx, RW_OWNER(%rdi)
-	jnz	_C_LABEL(rw_vector_enter)
+	jnz	3f
 	ret
+
+3:	jmp	_C_LABEL(rw_vector_enter)
 
 /*
  * void	rw_exit(krwlock_t *rwl);
  *
  * Release one hold on a RW lock.
  */
-NENTRY(rw_exit)
+	.align	64
+
+NENTRY(rw_exit)					/* 0x0100, 60 bytes */
 	movq	RW_OWNER(%rdi), %rax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
@@ -204,11 +207,10 @@ NENTRY(rw_exit)
 	 * Reader
 	 */
 1:	testb	$RW_HAS_WAITERS, %al
-	movq	$RW_READER, %rsi
-	jnz	_C_LABEL(rw_vector_exit)
-	testq	$RW_THREAD, %rax
+	jnz	3f
+	cmpq	$RW_READ_INCR, %rax
 	leaq	-RW_READ_INCR(%rax), %rdx
-	jz	_C_LABEL(rw_vector_exit)
+	jb	3f
 	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz	1b
@@ -217,16 +219,30 @@ NENTRY(rw_exit)
 	/*
 	 * Writer
 	 */
-	_ALIGN_TEXT
-
 2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
 	subq	CPUVAR(CURLWP), %rdx
-	movq	$RW_WRITER, %rsi
-	jnz	_C_LABEL(rw_vector_exit)
+	jnz	3f
 	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
-	jnz	_C_LABEL(rw_vector_exit)
+	jnz	3f
 	ret
 
+3:	jmp	_C_LABEL(rw_vector_exit)
+
 #endif	/* LOCKDEBUG */
+
+/*
+ * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ *
+ * Perform an atomic compare-and-set operation.
+ */
+	.align	32
+
+NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
+	movq	%rsi, %rax
+	LOCK
+	cmpxchgq %rdx, (%rdi)
+	movq	$0, %rax
+	setz	%al				/* = 1 if success */
+	ret
 

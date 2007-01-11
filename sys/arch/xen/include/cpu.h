@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.14.1 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.14.2 2007/01/11 22:22:58 ad Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -108,6 +108,8 @@ struct cpu_info {
 
 	struct iplsource *ci_isources[NIPL];
 	u_int32_t	ci_ipending;
+	int		ci_mtx_count;
+	int		ci_mtx_oldspl;
 	int		ci_ilevel;
 	int		ci_idepth;
 #if 0

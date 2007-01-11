@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.4 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.5 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.4 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.5 2007/01/11 22:23:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,8 +254,8 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	}
 
 	/*
-	 * Suspend the LWP.  If it's on a different CPU, we need to wait for
-	 * it to be preempted, where it will put itself to sleep. 
+	 * Suspend the LWP.  XXX If it's on a different CPU, we should wait
+	 * for it to be preempted, where it will put itself to sleep. 
 	 *
 	 * Suspension of the current LWP will happen on return to userspace.
 	 */

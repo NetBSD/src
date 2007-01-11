@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.4 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.5 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -82,11 +82,14 @@
  *
  * Otherwise, the following must be defined:
  *
- *	MUTEX_INITIALIZE_SPIN(mtx, minipl)
+ *	MUTEX_INITIALIZE_SPIN(mtx, id, minipl)
  *		Initialize a spin mutex.
  *
- *	MUTEX_INITIALIZE_ADAPTIVE(mtx)
+ *	MUTEX_INITIALIZE_ADAPTIVE(mtx, id)
  *		Initialize an adaptive mutex.
+ *
+ *	MUTEX_DESTROY(mtx)
+ *		Tear down a mutex.
  *
  *	MUTEX_ADAPTIVE_P(mtx)
  *		Evaluates to true if the mutex is an adaptive mutex.
@@ -114,10 +117,6 @@
  *	MUTEX_RELEASE(mtx)
  *		Release the lock and clear the "has waiters" indication.
  *		Must be interrupt atomic, need not be MP safe.
- *
- *	MUTEX_SETID(rw, id)
- *		Set the debugging ID for the mutex, an integer.  Only
- *		used in the LOCKDEBUG case.
  *
  *	MUTEX_GETID(rw)
  *		Get the debugging ID for the mutex, an integer.  Only

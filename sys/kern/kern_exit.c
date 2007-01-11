@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.6 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.7 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.6 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.7 2007/01/11 22:22:59 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -600,7 +600,12 @@ exit1(struct lwp *l, int rv)
 	pmap_deactivate(l);
 
 	/* This process no longer needs to hold the kernel lock. */
-	(void)KERNEL_UNLOCK(0, l);	/* XXXSMP assert count == 1 */
+#ifdef notyet
+	/* XXXSMP hold in lwp_userret() */
+	KERNEL_UNLOCK_LAST(l);
+#else
+	KERNEL_UNLOCK_ALL(l, NULL);
+#endif
 
 	/*
 	 * Finally, call machine-dependent code to switch to a new
@@ -875,6 +880,7 @@ proc_free(struct proc *p, struct rusage **ru)
 {
 	struct plimit *plim;
 	struct pstats *pstats;
+	struct rusage *rup;
 	struct proc *parent;
 	struct lwp *l;
 	ksiginfo_t ksi;
@@ -948,7 +954,9 @@ proc_free(struct proc *p, struct rusage **ru)
 	uid = kauth_cred_getuid(p->p_cred);
 	vp = p->p_textvp;
 	cred = p->p_cred;
-	*ru = p->p_ru;
+	rup = p->p_ru;
+	if (ru != NULL)
+		*ru = rup;
 
 	/* Release any SA state. */
 	if (p->p_sa)
@@ -965,7 +973,7 @@ proc_free(struct proc *p, struct rusage **ru)
 	if (l->l_cpu->ci_curlwp == l) {
 		int count;
 		rw_exit(&proclist_lock);
-		count = KERNEL_UNLOCK(0, l);
+		KERNEL_UNLOCK_ALL(l, &count);
 		while (l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
 		KERNEL_LOCK(count, l);
@@ -1021,6 +1029,9 @@ proc_free(struct proc *p, struct rusage **ru)
 	 * Collect child u-areas.
 	 */
 	uvm_uarea_drain(FALSE);
+
+	if (ru == NULL)
+		pool_put(&rusage_pool, rup);
 }
 
 /*

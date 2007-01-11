@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.288.20.1 2006/11/18 21:28:59 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.288.20.2 2007/01/11 22:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.20.1 2006/11/18 21:28:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.20.2 2007/01/11 22:22:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1435,18 +1435,15 @@ void *
 getframe(const struct lwp *l, int sig, int *onstack)
 {
 	void * frame;
-	struct proc *p;
-
-	p = l->l_proc;
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		frame = (void *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					p->p_sigctx.ps_sigstk.ss_size);
+		frame = (void *)((caddr_t)l->l_sigstk->ss_sp +
+					l->l_sigstk->ss_size);
 	else
 		frame = (void *)(alpha_pal_rdusp());
 	return (frame);
@@ -1473,7 +1470,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack, sig = ksi->ksi_signo;
+	int onstack, sig = ksi->ksi_signo, error;
 	struct sigframe_siginfo *fp, frame;
 	struct trapframe *tf;
 	sig_t catcher = SIGACTION(p, ksi->ksi_signo).sa_handler;
@@ -1509,9 +1506,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -1546,7 +1547,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)

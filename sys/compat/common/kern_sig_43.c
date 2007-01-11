@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.23.4.1 2006/10/21 15:20:48 ad Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.23.4.2 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.23.4.1 2006/10/21 15:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_43.c,v 1.23.4.2 2007/01/11 22:22:59 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -151,13 +151,16 @@ compat_43_sys_sigblock(struct lwp *l, void *v, register_t *retval)
 	struct compat_43_sys_sigblock_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int nsm, osm;
 	sigset_t nss, oss;
 	int error;
 
 	nsm = SCARG(uap, mask);
 	compat_43_sigmask_to_sigset(&nsm, &nss);
+	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, SIG_BLOCK, &nss, &oss);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	compat_43_sigset_to_sigmask(&oss, &osm);
@@ -171,13 +174,16 @@ compat_43_sys_sigsetmask(struct lwp *l, void *v, register_t *retval)
 	struct compat_43_sys_sigsetmask_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int nsm, osm;
 	sigset_t nss, oss;
 	int error;
 
 	nsm = SCARG(uap, mask);
 	compat_43_sigmask_to_sigset(&nsm, &nss);
+	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, SIG_SETMASK, &nss, &oss);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	compat_43_sigset_to_sigmask(&oss, &osm);

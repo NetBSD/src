@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133.4.1 2006/11/18 21:29:33 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.133.4.2 2007/01/11 22:22:58 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.1 2006/11/18 21:29:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.2 2007/01/11 22:22:58 ad Exp $");
 
 #define NEW_FPSTATE
 
@@ -862,10 +862,10 @@ badtrap:
 		break;
 	}
 	if (sig != 0) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ksi.ksi_signo = sig;
 		trapsignal(l, &ksi);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
@@ -1136,7 +1136,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		l->l_md.md_tf = tf;
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = addr;
-			l->l_flag |= L_SA_PAGEFAULT;
+			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 	}
 
@@ -1236,7 +1236,7 @@ kfault:
 		trapsignal(l, &ksi);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
-		l->l_flag &= ~L_SA_PAGEFAULT;
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}

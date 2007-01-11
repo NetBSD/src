@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.12.4.1 2006/10/20 19:25:41 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.12.4.2 2007/01/11 22:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.4.1 2006/10/20 19:25:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.4.2 2007/01/11 22:22:56 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -272,6 +272,7 @@ cpu_attach(parent, self, aux)
 	}
 
 	ci->ci_self = ci;
+	ci->ci_self200 = (uint8_t *)ci + 0x200;
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;

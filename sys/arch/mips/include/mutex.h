@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_trap.c,v 1.5.20.1 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.1 2007/01/11 22:22:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,21 +36,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.5.20.1 2007/01/11 22:22:56 ad Exp $");
+#ifndef _MIPS_MUTEX_H_
+#define	_MIPS_MUTEX_H_
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
-#include <sys/signal.h>
-#include <sys/syscall.h>
+#include <machine/lock.h>
 
-#include <compat/linux/common/linux_exec.h>
+struct kmutex {
+	volatile uintptr_t	mtx_owner;
+	uint32_t		mtx_minspl;
+	__cpu_simple_lock_t	mtx_lock;
+	volatile uint32_t	mtx_id;
+};
 
-void
-linux_trapsignal(struct lwp *l, ksiginfo_t *ksi) {
-	trapsignal(l, ksi);
-}
+#ifdef __MUTEX_PRIVATE
+
+#define	__HAVE_SIMPLE_MUTEXES		1
+
+#define	MUTEX_RECEIVE(mtx)		mb_read()
+#define	MUTEX_GIVE(mtx)			mb_memory()
+
+#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
+
+int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+
+#endif	/* __MUTEX_PRIVATE */
+
+#endif /* _MIPS_MUTEX_H_ */
+

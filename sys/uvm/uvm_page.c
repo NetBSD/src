@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.112.8.2 2006/11/18 21:39:50 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.112.8.3 2007/01/11 22:23:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.112.8.2 2006/11/18 21:39:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.112.8.3 2007/01/11 22:23:02 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1556,7 +1556,7 @@ uvm_pageidlezero(void)
 				    pg, pageq);
 				uvmexp.free--;
 				uvm_unlock_fpageq(s);
-				(void)KERNEL_UNLOCK(1, NULL);
+				KERNEL_UNLOCK_LAST(NULL);
 #ifdef PMAP_PAGEIDLEZERO
 				if (!PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg))) {
 
@@ -1594,7 +1594,7 @@ uvm_pageidlezero(void)
 	} while (nextbucket != firstbucket);
 quit:
 	uvm_unlock_fpageq(s);
-	(void)KERNEL_UNLOCK(1, NULL);
+	KERNEL_UNLOCK_LAST(NULL);
 }
 
 /*

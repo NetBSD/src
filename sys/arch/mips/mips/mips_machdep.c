@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.187.2.2 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.187.2.3 2007/01/11 22:22:57 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.187.2.2 2006/12/29 20:27:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.187.2.3 2007/01/11 22:22:57 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -1700,6 +1700,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -1770,6 +1771,7 @@ cpu_setmcontext(l, mcp, flags)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct proc *p = l->l_proc;
 
 	/* Restore register context, if any. */
 	if (flags & _UC_CPU) {
@@ -1801,10 +1803,12 @@ cpu_setmcontext(l, mcp, flags)
 		l->l_addr->u_pcb.pcb_fpregs.r_regs[32] = mcp->__fpregs.__fp_csr;
 	}
 
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }

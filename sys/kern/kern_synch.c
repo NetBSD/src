@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.7 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.8 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.7 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.8 2007/01/11 22:23:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -640,7 +640,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 {
 	struct schedstate_percpu *spc;
 	struct timeval tv;
+#ifdef MULTIPROCESSOR
 	int hold_count;
+#endif
 	int retval, oldspl;
 	long s, u;
 #if PERFCTRS
@@ -652,7 +654,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	/*
 	 * Release the kernel_lock, as we are about to yield the CPU.
 	 */
-	hold_count = KERNEL_UNLOCK(0, l);
+	KERNEL_UNLOCK_ALL(l, &hold_count);
 
 #ifdef LOCKDEBUG
 	spinlock_switchcheck();

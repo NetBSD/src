@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5.14.4 2006/12/29 20:27:41 ad Exp $
+#	$NetBSD: genassym.cf,v 1.5.14.5 2007/01/11 22:22:56 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,6 +220,7 @@ define	FRAMESIZE		sizeof(struct trapframe)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
 define  CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define  CPU_INFO_SELF200	offsetof(struct cpu_info, ci_self200)
 define  CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define  CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define  CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)

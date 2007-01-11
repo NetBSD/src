@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.19.20.1 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.19.20.2 2007/01/11 22:22:57 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -610,12 +610,24 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
-	REG_L	k0, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
+	REG_L	k1, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	COP0_SYNC
 	mtlo	t0
 	mthi	t1
-	_MTC0	k0, MIPS_COP_0_EXC_PC		# set return address
+
+#ifdef notyet
+	/* Check for restartable sequences. */
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, k1
+	bne	t1, t0, 1f
+	jal	_C_LABEL(_lock_ras)
+	nop
+#endif
+
+1:	_MTC0	k1, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
 	REG_L	AT, TF_BASE+TF_REG_AST(sp)
 	REG_L	v0, TF_BASE+TF_REG_V0(sp)
@@ -1116,7 +1128,21 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	COP0_SYNC
 	mtlo	t0
 	mthi	t1
-	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
+
+#ifdef notyet
+	/* Check for restartable sequences. */
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, v0
+	bne	t1, t0, 1f
+	move	k1, v0
+	jal	_C_LABEL(_lock_ras)
+	nop
+	mov	v0, k1
+#endif
+
+1:	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
 
 	REG_L	AT, TF_BASE+TF_REG_AST(sp)
@@ -1439,6 +1465,17 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	nop
 	nop
 	nop
+
+#ifdef notyet
+	/* Check for kernel restartable atomic sequences. */
+	_MFC0	k1, MIPS_COP_0_EXC_PC
+	lui	k0, %hi(_C_LABEL(_lock_ras_start))
+	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
+	xor	k0, k0, k1
+	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
+	bne	k0, zero, 2f
+	nop
+#endif
 	eret
 
 KernTLBIOdd:
@@ -1471,7 +1508,43 @@ KernTLBIOdd:
 	nop
 	nop
 	nop
+
+#ifdef notyet
+	/* Check for kernel restartable atomic sequences. */
+	_MFC0	k1, MIPS_COP_0_EXC_PC
+	lui	k0, %hi(_C_LABEL(_lock_ras_start))
+	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
+	xor	k0, k0, k1
+	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
+	bne	k0, zero, 2f
+	nop
+#endif
 	eret
+
+#ifdef notyet
+	/*
+	 * We faulted in the middle of a RAS.  Patch up the return
+	 * address.  After the call to _lock_ras(), the new address
+	 * will be in k1.
+	 */
+2:	lui	k0, %hi(_C_LABEL(curlwp))
+	lw	k0, (%lo(_C_LABEL(curlwp)))(k0)
+	nop
+	REG_S	t0, L_MD_RAS_T0(k0)
+	REG_S	t1, L_MD_RAS_T1(k0)
+	REG_S	t2, L_MD_RAS_T2(k0)
+	REG_S	ra, L_MD_RAS_RA(k0)
+	jal	_C_LABEL(_lock_ras)
+	nop
+	_MTC0	k1, MIPS_COP_0_EXC_PC
+	COP0_SYNC
+	REG_L	ra, L_MD_RAS_RA(k0)
+	REG_L	t2, L_MD_RAS_T2(k0)
+	REG_L	t1, L_MD_RAS_T1(k0)
+	REG_L	t0, L_MD_RAS_T1(k0)
+	eret
+#endif
+
 END(MIPSX(TLBInvalidException))
 
 /*----------------------------------------------------------------------------
@@ -1532,6 +1605,17 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	nop
 	nop
 	nop
+
+#ifdef notyet
+	/* Check for kernel restartable atomic sequences. */
+	_MFC0	k1, MIPS_COP_0_EXC_PC
+	lui	k0, %hi(_C_LABEL(_lock_ras_start))
+	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
+	xor	k0, k0, k1
+	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
+	bne	k0, zero, 2f
+	nop
+#endif
 	eret
 
 outofworld:
@@ -1551,6 +1635,30 @@ outofworld:
 	la	sp, start			# set sp to a valid place
 1:	la	a0, 9f				# string
 	eret
+
+#ifdef notyet
+	/*
+	 * We faulted in the middle of a RAS.  Patch up the return
+	 * address.  After the call to _lock_ras(), the new address
+	 * will be in k1.
+	 */
+2:	lui	k0, %hi(_C_LABEL(curlwp))
+	lw	k0, (%lo(_C_LABEL(curlwp)))(k0)
+	nop
+	REG_S	t0, L_MD_RAS_T0(k0)
+	REG_S	t1, L_MD_RAS_T1(k0)
+	REG_S	t2, L_MD_RAS_T2(k0)
+	REG_S	ra, L_MD_RAS_RA(k0)
+	jal	_C_LABEL(_lock_ras)
+	nop
+	_MTC0	k1, MIPS_COP_0_EXC_PC
+	COP0_SYNC
+	REG_L	ra, L_MD_RAS_RA(k0)
+	REG_L	t2, L_MD_RAS_T2(k0)
+	REG_L	t1, L_MD_RAS_T1(k0)
+	REG_L	t0, L_MD_RAS_T1(k0)
+	eret
+#endif
 
 	.set	at
 END(MIPSX(TLBMissException))
@@ -1845,6 +1953,7 @@ LEAF_NOPROFILE(MIPSX(VCED))
 	addu	k0, 1
 	sw	k0, 0(k1)
 #endif
+	/* XXXAD needs RAS? */
 	eret
 	.set	at
 
@@ -1880,6 +1989,7 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 	addu	k0, 1
 	sw	k0, 0(k1)
 #endif
+	/* XXXAD needs RAS? */
 	eret
 	.set	at
 

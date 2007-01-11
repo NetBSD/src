@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.53.20.3 2006/11/18 21:39:14 ad Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.53.20.4 2007/01/11 22:22:59 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.53.20.3 2006/11/18 21:39:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_signal.c,v 1.53.20.4 2007/01/11 22:22:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,7 @@ svr4_sys_signal(l, v, retval)
 		syscallarg(svr4_sig_t) handler;
 	} */ *uap = v;
 	int signum = svr4_to_native_signo[SVR4_SIGNO(SCARG(uap, signum))];
+	struct proc *p = l->l_proc;
 	struct sigaction nbsa, obsa;
 	sigset_t ss;
 	int error;
@@ -316,12 +317,18 @@ svr4_sys_signal(l, v, retval)
 	sighold:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(l, SIG_BLOCK, &ss, 0));
+		mutex_enter(&p->p_smutex);
+		error = sigprocmask1(l, SIG_BLOCK, &ss, 0);
+		mutex_exit(&p->p_smutex);
+		return error;
 
 	case SVR4_SIGRELSE_MASK:
 		sigemptyset(&ss);
 		sigaddset(&ss, signum);
-		return (sigprocmask1(l, SIG_UNBLOCK, &ss, 0));
+		mutex_enter(&p->p_smutex);
+		error = sigprocmask1(l, SIG_UNBLOCK, &ss, 0);
+		mutex_exit(&p->p_smutex);
+		return error;
 
 	case SVR4_SIGIGNORE_MASK:
 		nbsa.sa_handler = SIG_IGN;
@@ -347,6 +354,7 @@ svr4_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const svr4_sigset_t *) set;
 		syscallarg(svr4_sigset_t *) oset;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	svr4_sigset_t nsss, osss;
 	sigset_t nbss, obss;
 	int how;
@@ -380,8 +388,10 @@ svr4_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 			return error;
 		svr4_to_native_sigset(&nsss, &nbss);
 	}
+	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, how,
 	    SCARG(uap, set) ? &nbss : NULL, SCARG(uap, oset) ? &obss : NULL);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return error;
 	if (SCARG(uap, oset)) {
@@ -473,12 +483,12 @@ svr4_getcontext(l, uc)
 
 	svr4_getmcontext(l, &uc->uc_mcontext, &uc->uc_flags);
 	uc->uc_link = l->l_ctxlink;
+
 	/*
 	 * The (unsupplied) definition of the `current execution stack'
 	 * in the System V Interface Definition appears to allow returning
 	 * the main context stack.
 	 */
-	mutex_enter(&p->p_smutex);
 	if ((l->l_sigstk->ss_flags & SS_ONSTACK) == 0) {
 		uc->uc_stack.ss_sp = (void *)USRSTACK;
 		uc->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
@@ -489,11 +499,9 @@ svr4_getcontext(l, uc)
 		uc->uc_stack.ss_size = l->l_sigstk->ss_size;
 		uc->uc_stack.ss_flags = l->l_sigstk->ss_flags;
 	}
-	mutex_exit(&p->p_smutex);
-
 	(void)sigprocmask1(l, 0, NULL, &mask);
-	native_to_svr4_sigset(&mask, &uc->uc_sigmask);
 
+	native_to_svr4_sigset(&mask, &uc->uc_sigmask);
 	uc->uc_flags |= _UC_SIGMASK | _UC_STACK;
 }
 
@@ -503,11 +511,14 @@ svr4_setcontext(l, uc)
 	struct lwp *l;
 	struct svr4_ucontext *uc;
 {
+	struct proc *p = l->l_proc;
 	sigset_t mask;
 
 	if (uc->uc_flags & _UC_SIGMASK) {
 		svr4_to_native_sigset(&uc->uc_sigmask, &mask);
+		mutex_enter(&p->p_smutex);
 		sigprocmask1(l, SIG_SETMASK, &mask, NULL);
+		mutex_exit(&p->p_smutex);
 	}
 
 	/* Ignore the stack; see comment in svr4_getcontext. */

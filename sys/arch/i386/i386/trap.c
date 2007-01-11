@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.213.4.4 2006/12/29 20:27:41 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.213.4.5 2007/01/11 22:22:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213.4.4 2006/12/29 20:27:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213.4.5 2007/01/11 22:22:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -506,7 +506,7 @@ copyfault:
 			l->l_pflag &= ~LP_OWEUPC;
 			KERNEL_LOCK(1, l);
 			ADDUPROF(l);
-			(void)KERNEL_UNLOCK(1, l);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched) /* XXX CSE me? */
@@ -576,7 +576,7 @@ copyfault:
 			goto we_re_toast;
 #endif
 		cr2 = rcr2();
-		KERNEL_LOCK(1, l);
+		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -591,7 +591,7 @@ copyfault:
 		KERNEL_LOCK(1, l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
-			l->l_flag |= L_SA_PAGEFAULT;
+			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 	faultcommon:
 		vm = p->p_vmspace;
@@ -633,7 +633,7 @@ copyfault:
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
-				(void)KERNEL_UNLOCK(1, l);
+				KERNEL_UNLOCK_ONE(NULL);
 
 				/*
 				 * we need to switch pmap now if we're in
@@ -648,8 +648,8 @@ copyfault:
 					pmap_load();
 				return;
 			}
-			l->l_flag &= ~L_SA_PAGEFAULT;
-			(void)KERNEL_UNLOCK(1, l);
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
+			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -664,7 +664,7 @@ copyfault:
 
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0) {
-				(void)KERNEL_UNLOCK(1, l);
+				KERNEL_UNLOCK_ONE(NULL);
 				goto copyfault;
 			}
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
@@ -681,9 +681,12 @@ copyfault:
 			ksi.ksi_signo = SIGSEGV;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		if (type != T_PAGEFLT)
-			l->l_flag &= ~L_SA_PAGEFAULT;
-		(void)KERNEL_UNLOCK(1, l);
+		if (type != T_PAGEFLT) {
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
+			KERNEL_UNLOCK_LAST(l);
+		} else {
+			KERNEL_UNLOCK_ONE(NULL);
+		}
 		break;
 	}
 
@@ -717,7 +720,7 @@ copyfault:
 			ksi.ksi_addr = (void *)frame->tf_eip;
 			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			(void)KERNEL_UNLOCK(1, l);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
@@ -762,7 +765,7 @@ trapsignal:
 	ksi.ksi_trap = type & ~T_USER;
 	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -818,7 +821,7 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -828,6 +831,6 @@ startlwp(arg)
 void
 upcallret(struct lwp *l)
 {
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }

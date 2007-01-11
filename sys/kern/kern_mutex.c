@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.7 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.8 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.7 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.8 2007/01/11 22:22:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -149,21 +149,30 @@ do {									\
 #define	MUTEX_HAS_WAITERS(mtx)						\
 	(((int)(mtx)->mtx_owner & MUTEX_BIT_WAITERS) != 0)
 
-#define	MUTEX_INITIALIZE_ADAPTIVE(mtx)	/* will be zeroed */
+#define	MUTEX_INITIALIZE_ADAPTIVE(mtx, id)				\
+do {									\
+	(mtx)->mtx_id = (id);						\
+} while (/* CONSTCOND */ 0);
 
-#define	MUTEX_INITIALIZE_SPIN(mtx, ipl)					\
+#define	MUTEX_INITIALIZE_SPIN(mtx, id, ipl)				\
 do {									\
 	(mtx)->mtx_owner = MUTEX_BIT_SPIN;				\
 	(mtx)->mtx_minspl = (ipl);					\
+	(mtx)->mtx_id = (id);						\
 	__cpu_simple_lock_init(&(mtx)->mtx_lock);			\
 } while (/* CONSTCOND */ 0)
+
+#define	MUTEX_DESTROY(mtx)						\
+do {									\
+	(mtx)->mtx_owner = MUTEX_THREAD;				\
+	(mtx)->mtx_id = -1;						\
+} while (/* CONSTCOND */ 0);
 
 #define	MUTEX_SPIN_P(mtx)		\
     (((mtx)->mtx_owner & MUTEX_BIT_SPIN) != 0)
 #define	MUTEX_ADAPTIVE_P(mtx)		\
     (((mtx)->mtx_owner & MUTEX_BIT_SPIN) == 0)
 
-#define	MUTEX_SETID(mtx, id)		((mtx)->mtx_id = id)
 #define	MUTEX_GETID(mtx)		((mtx)->mtx_id)
 
 static inline int
@@ -267,19 +276,17 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 	case MUTEX_ADAPTIVE:
 	case MUTEX_DEFAULT:
 		KASSERT(ipl == IPL_NONE);
-		MUTEX_INITIALIZE_ADAPTIVE(mtx);
 		id = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops);
+		MUTEX_INITIALIZE_ADAPTIVE(mtx, id);
 		break;
 	case MUTEX_SPIN:
-		MUTEX_INITIALIZE_SPIN(mtx, ipl);
 		id = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops);
+		MUTEX_INITIALIZE_SPIN(mtx, id, ipl);
 		break;
 	default:
 		panic("mutex_init: impossible type");
 		break;
 	}
-
-	MUTEX_SETID(mtx, id);
 }
 
 /*
@@ -298,7 +305,7 @@ void mutex_destroy(kmutex_t *mtx)
 	}
 
 	LOCKDEBUG_FREE(mtx, MUTEX_GETID(mtx));
-	MUTEX_SETID(mtx, -1);
+	MUTEX_DESTROY(mtx);
 }
 
 /*
@@ -389,15 +396,21 @@ mutex_vector_enter(kmutex_t *mtx)
 		LOCKSTAT_START_TIMER(spintime);
 		count = SPINLOCK_BACKOFF_MIN;
 
-		while (!__cpu_simple_lock_try(&mtx->mtx_lock)) {
-			SPINLOCK_BACKOFF(count); 
-			if (panicstr != NULL)
-				break;
+		/*
+		 * Spin testing the lock word and do exponential backoff
+		 * to reduce cache line ping-ponging between CPUs.
+		 */
+		do {
+			while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
+				SPINLOCK_BACKOFF(count); 
+				if (panicstr != NULL)
+					break;
 #ifdef LOCKDEBUG
-			if (SPINLOCK_SPINOUT(spins))
-				MUTEX_ABORT(mtx, "spinout");
+				if (SPINLOCK_SPINOUT(spins))
+					MUTEX_ABORT(mtx, "spinout");
 #endif	/* LOCKDEBUG */
-		}
+			}
+		} while (!__cpu_simple_lock_try(&mtx->mtx_lock));
 
 		if (count != SPINLOCK_BACKOFF_MIN) {
 			LOCKSTAT_STOP_TIMER(spintime);
@@ -711,6 +724,8 @@ mutex_tryenter(kmutex_t *mtx)
 		}
 		splx(s);
 #else
+		MUTEX_SPIN_SPLSAVE(mtx, s);
+		MUTEX_LOCKED(mtx);
 		return 1;
 #endif
 	} else {
@@ -726,7 +741,7 @@ mutex_tryenter(kmutex_t *mtx)
 	return 0;
 }
 
-#ifdef __HAVE_SMUTEX_STUBS
+#if defined(__HAVE_SMUTEX_STUBS) || defined(FULL)
 /*
  * smutex_vector_enter:
  *
@@ -745,26 +760,70 @@ smutex_vector_enter(kmutex_t *mtx, int s, uintptr_t callsite)
 	LOCKSTAT_START_TIMER(spintime);
 	count = SPINLOCK_BACKOFF_MIN;
 
-	while (!__cpu_simple_lock_try(&mtx->mtx_lock)) {
-		SPINLOCK_BACKOFF(count); 
-		if (panicstr != NULL)
-			break;
+	/*
+	 * Spin testing the lock word and do exponential backoff
+	 * to reduce cache line ping-ponging between CPUs.
+	 */
+	do {
+		while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
+			SPINLOCK_BACKOFF(count); 
+			if (panicstr != NULL)
+				break;
 #ifdef LOCKDEBUG
-		if (SPINLOCK_SPINOUT(spins))
-			MUTEX_ABORT(mtx, "spinout");
+			if (SPINLOCK_SPINOUT(spins))
+				MUTEX_ABORT(mtx, "spinout");
 #endif	/* LOCKDEBUG */
-	}
+		}
+	} while (!__cpu_simple_lock_try(&mtx->mtx_lock));
 
 	if (count != SPINLOCK_BACKOFF_MIN) {
 		LOCKSTAT_STOP_TIMER(spintime);
 		LOCKSTAT_EVENT_RA(mtx, LB_SPIN_MUTEX | LB_SPIN, 1,
 		    spintime, callsite);
 	}
-	MUTEX_SPIN_SPLSAVE(mtx, s);
 	MUTEX_LOCKED(mtx);
 #else	/* FULL */
 	panic("smutex_vector_enter");
 #endif	/* FULL */
 }
-#endif	/* __HAVE_MUTEX_SCHED */
+#endif	/* defined(__HAVE_SMUTEX_STUBS) || defined(FULL) */
 
+#ifdef FULL
+/*
+ * sched_lock_idle:
+ *
+ *	XXX Ugly hack for cpu_switch().
+ */
+void
+sched_lock_idle(void)
+{
+	kmutex_t *mtx = &sched_mutex;
+
+	MUTEX_SPIN_SPLSAVE(mtx, 0);
+
+	if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
+		MUTEX_LOCKED(mtx);
+		return;
+	}
+	
+	smutex_vector_enter(mtx, 0, (uintptr_t)__builtin_return_address(0));
+}
+
+/*
+ * sched_unlock_idle:
+ *
+ *	XXX Ugly hack for cpu_switch().
+ */
+void
+sched_unlock_idle(void)
+{
+	kmutex_t *mtx = &sched_mutex;
+
+	if (mtx->mtx_lock != __SIMPLELOCK_LOCKED)
+		MUTEX_ABORT(mtx, "sched_unlock_idle");
+
+	curcpu()->ci_mtx_count++;
+	MUTEX_UNLOCKED(mtx);
+	__cpu_simple_unlock(&mtx->mtx_lock);
+}
+#endif	/* FULL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.7.2.1 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.7.2.2 2007/01/11 22:22:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7.2.1 2006/12/29 20:27:42 ad Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7.2.2 2007/01/11 22:22:57 ad Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -270,17 +270,14 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 #endif
 
 	mutex_enter(&p->p_smutex);
-
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
 		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
 		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
-
-	mutex_exit(&p->p_smutex);
-
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

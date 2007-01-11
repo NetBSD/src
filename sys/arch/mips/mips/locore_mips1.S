@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.60.18.1 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.60.18.2 2007/01/11 22:22:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -237,17 +237,27 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 #endif
 	jal	_C_LABEL(trap)
 	sw	a3,	KERNFRAME_RA(sp)	# for debugging
-
+/*
+ * Check for kernel restartable atomic sequences.
+ */
+	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
+#ifdef notyet
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, k1
+	bne	t1, t0, 1f
+	jal	_C_LABEL(_lock_ras)
+#endif
 /*
  * Restore registers and return from the exception.
  */
-	lw	a0, TF_BASE+TF_REG_SR(sp)
+1:	lw	a0, TF_BASE+TF_REG_SR(sp)
 	lw	t0, TF_BASE+TF_REG_MULLO(sp)
 	lw	t1, TF_BASE+TF_REG_MULHI(sp)
 	mtc0	a0, MIPS_COP_0_STATUS
 	mtlo	t0
 	mthi	t1
-	lw	k0, TF_BASE+TF_REG_EPC(sp)
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)
@@ -268,20 +278,20 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
 #ifdef DDBnotyet
-	la	k1, _C_LABEL(kdbaux)
-	lw	s0, SF_REG_S0(k1)
-	lw	s1, SF_REG_S1(k1)
-	lw	s2, SF_REG_S2(k1)
-	lw	s3, SF_REG_S3(k1)
-	lw	s4, SF_REG_S4(k1)
-	lw	s5, SF_REG_S5(k1)
-	lw	s6, SF_REG_S6(k1)
-	lw	s7, SF_REG_S7(k1)
-	lw	sp, SF_REG_SP(k1)
-	lw	s8, SF_REG_S8(k1)
-	lw	gp, SF_REG_RA(k1)
+	la	k0, _C_LABEL(kdbaux)
+	lw	s0, SF_REG_S0(k0)
+	lw	s1, SF_REG_S1(k0)
+	lw	s2, SF_REG_S2(k0)
+	lw	s3, SF_REG_S3(k0)
+	lw	s4, SF_REG_S4(k0)
+	lw	s5, SF_REG_S5(k0)
+	lw	s6, SF_REG_S6(k0)
+	lw	s7, SF_REG_S7(k0)
+	lw	sp, SF_REG_SP(k0)
+	lw	s8, SF_REG_S8(k0)
+	lw	gp, SF_REG_RA(k0)
 #endif
-	j	k0				# return to interrupted point
+	j	k1				# return to interrupted point
 	rfe
 	.set	at
 END(mips1_KernGenException)
@@ -528,15 +538,26 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	jal	_C_LABEL(cpu_intr)
 	nop
 /*
+ * Check for kernel restartable atomic sequences.
+ */
+	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
+#ifdef notyet
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, k1
+	bne	t1, t0, 1f
+	jal	_C_LABEL(_lock_ras)
+#endif
+/*
  * Restore registers and return from the interrupt.
  */
-	lw	a0, TF_BASE+TF_REG_SR(sp)
+1:	lw	a0, TF_BASE+TF_REG_SR(sp)
 	lw	t0, TF_BASE+TF_REG_MULLO(sp)
 	lw	t1, TF_BASE+TF_REG_MULHI(sp)
 	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
 	mtlo	t0
 	mthi	t1
-	lw	k0, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)
@@ -556,7 +577,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	lw	t9, TF_BASE+TF_REG_T9(sp)
 	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ		# restore kernel SP
-	j	k0				# return to interrupted point
+	j	k1				# return to interrupted point
 	rfe
 	.set	at
 END(mips1_KernIntr)
@@ -796,10 +817,44 @@ LEAF_NOPROFILE(mips1_TLBMissException)
 	mtc0	k0, MIPS_COP_0_TLB_LOW		# save PTE entry
 	and	k0, k0, MIPS1_PG_V		# check for valid entry
 	beq	k0, zero, _C_LABEL(mips1_KernGenException) # PTE invalid
+
+#ifdef notyet
+	/* Check for kernel restartable atomic sequences. */
+	lui	k0, %hi(_C_LABEL(_lock_ras_start))
+	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
+	xor	k0, k0, k1
+	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
+	bne	k0, zero, 2f
 	nop
-	tlbwr					# update TLB
+#endif
+
+1:	tlbwr					# update TLB
 	j	k1
 	rfe
+
+#ifdef notyet
+	/*
+	 * We faulted in the middle of a RAS.  Patch up the return
+	 * address.  After the call to _lock_ras(), the new address
+	 * will be in k1.
+	 */
+2:	tlbwr
+	lui	k0, %hi(_C_LABEL(curlwp))
+	lw	k0, (%lo(_C_LABEL(curlwp)))(k0)
+	nop
+	sw	t0, L_MD_RAS_T0(k0)
+	sw	t1, L_MD_RAS_T1(k0)
+	sw	t2, L_MD_RAS_T2(k0)
+	sw	ra, L_MD_RAS_RA(k0)
+	jal	_C_LABEL(_lock_ras)
+	nop
+	lw	ra, L_MD_RAS_RA(k0)
+	lw	t2, L_MD_RAS_T2(k0)
+	lw	t1, L_MD_RAS_T1(k0)
+	lw	t0, L_MD_RAS_T1(k0)
+	j	k1
+	rfe
+#endif
 
 outofworld:
 	/* Ensure we have a valid sp so panic has a chance */

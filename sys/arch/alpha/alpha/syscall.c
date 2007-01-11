@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.23 2006/07/19 21:11:39 ad Exp $ */
+/* $NetBSD: syscall.c,v 1.23.4.1 2007/01/11 22:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2006/07/19 21:11:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23.4.1 2007/01/11 22:22:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,11 +213,11 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	needlock = (callp->sy_flags & SYCALL_MPSAFE) == 0;
 	if (needlock) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 	}
 	error = (*callp->sy_call)(l, args, rval);
 	if (needlock) {
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 
 	switch (error) {
@@ -253,7 +253,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	LWP_CACHE_CREDS(l, p);
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -285,7 +285,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		    (nargs - 6) * sizeof(u_int64_t));
 		if (error) {
 			args = copyargs;
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			goto bad;
 		}
 	case 6:	
@@ -315,7 +315,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, args, rval);
 out:
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		framep->tf_regs[FRAME_V0] = rval[0];
@@ -354,13 +354,13 @@ child_return(void *arg)
 	 * Return values in the frame set by cpu_fork().
 	 */
 
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 #endif
 }

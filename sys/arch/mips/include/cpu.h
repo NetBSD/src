@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.77.8.1 2006/12/29 20:27:42 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.77.8.2 2007/01/11 22:22:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -181,8 +181,12 @@ extern u_int mips3_pg_shift;
 #define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
 #define	MIPS_NOT_SUPP			0x8000
 
-#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 1
-#ifdef MIPS1
+#endif	/* !_LOCORE */
+
+#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 1) || defined(_LOCORE)
+
+#if defined(MIPS1)
+
 # define CPUISMIPS3		0
 # define CPUIS64BITS		0
 # define CPUISMIPS32		0
@@ -191,9 +195,9 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	0
 # define MIPS_HAS_CLOCK		0
 # define MIPS_HAS_LLSC		0
-#endif /* MIPS1 */
 
-#if defined(MIPS3) || defined(MIPS4)
+#elif defined(MIPS3) || defined(MIPS4)
+
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
 # define CPUISMIPS32		0
@@ -201,10 +205,18 @@ extern u_int mips3_pg_shift;
 # define CPUISMIPSNN		0
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
-# define MIPS_HAS_LLSC		(mips_has_llsc)
-#endif /* MIPS3 || MIPS4 */
+# if defined(_LOCORE)
+#  if !defined(MIPS3_5900) && !defined(MIPS3_4100)
+#   define MIPS_HAS_LLSC	1
+#  else
+#   define MIPS_HAS_LLSC	0
+#  endif
+# else	/* _LOCORE */
+#  define MIPS_HAS_LLSC		(mips_has_llsc)
+# endif	/* _LOCORE */
 
-#ifdef MIPS32
+#elif defined(MIPS32)
+
 # define CPUISMIPS3		1
 # define CPUIS64BITS		0
 # define CPUISMIPS32		1
@@ -213,9 +225,9 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-#endif /* MIPS32 */
 
-#ifdef MIPS64
+#elif define(MIPS64)
+
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
 # define CPUISMIPS32		0
@@ -224,9 +236,12 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-#endif /* MIPS64 */
+
+#endif
 
 #else /* run-time test */
+
+#ifndef	_LOCORE
 
 #define	MIPS_HAS_R4K_MMU	(mips_has_r4k_mmu)
 #define	MIPS_HAS_LLSC		(mips_has_llsc)
@@ -243,8 +258,16 @@ extern u_int mips3_pg_shift;
 	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64)) != 0)
 
 #define	MIPS_HAS_CLOCK	(cpu_arch >= CPU_ARCH_MIPS3)
+
+#else	/* !_LOCORE */
+
+#define	MIPS_HAS_LLSC	0
+
+#endif	/* !_LOCORE */
+
 #endif /* run-time test */
 
+#ifndef	_LOCORE
 
 /*
  * definitions of cpu-dependent requirements

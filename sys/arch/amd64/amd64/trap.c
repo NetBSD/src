@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.27.4.5 2006/12/29 20:27:41 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.27.4.6 2007/01/11 22:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.4.5 2006/12/29 20:27:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.27.4.6 2007/01/11 22:22:56 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -374,7 +374,7 @@ copyfault:
 			p->p_flag &= ~LP_OWEUPC;
 			KERNEL_LOCK(1, l);
 			ADDUPROF(l);
-			(void)KERNEL_UNLOCK(1, l);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched)
@@ -446,7 +446,7 @@ copyfault:
 		KERNEL_LOCK(1, l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
-			l->l_flag |= L_SA_PAGEFAULT;
+			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 faultcommon:
 		vm = p->p_vmspace;
@@ -489,11 +489,11 @@ faultcommon:
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
-				(void)KERNEL_UNLOCK(1, NULL);
+				KERNEL_UNLOCK_ONE(NULL);
 				return;
 			}
-			l->l_flag &= ~L_SA_PAGEFAULT;
-			(void)KERNEL_UNLOCK(1, l);
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
+			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -507,7 +507,7 @@ faultcommon:
 
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0) {
-				(void)KERNEL_UNLOCK(1, l);
+				KERNEL_UNLOCK_LAST(l);
 				goto copyfault;
 			}
 			printf("uvm_fault(%p, 0x%lx, %d) -> %x\n",
@@ -530,10 +530,10 @@ faultcommon:
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		if (type == T_PAGEFLT)
-			(void)KERNEL_UNLOCK(1, NULL);
+			KERNEL_UNLOCK_ONE(NULL);
 		else {
-			l->l_flag &= ~L_SA_PAGEFAULT;
-			(void)KERNEL_UNLOCK(1, l);
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
+			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 	}
@@ -566,7 +566,7 @@ faultcommon:
 				ksi.ksi_code = TRAP_TRACE;
 			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			(void)KERNEL_UNLOCK(1, l);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
@@ -602,7 +602,7 @@ out:
 trapsignal:
 	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -616,7 +616,7 @@ startlwp(void *arg)
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	pool_put(&lwp_uc_pool, uc);
 
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
 }
@@ -624,7 +624,7 @@ startlwp(void *arg)
 void
 upcallret(struct lwp *l)
 {
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
 }

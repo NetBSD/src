@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.4.2 2006/11/17 16:34:32 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.4.3 2007/01/11 22:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,7 @@
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
+	void *ci_self200;		/* self + 0x200, see lock_stubs.S */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
 	struct cpu_info *ci_next;

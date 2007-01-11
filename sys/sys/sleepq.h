@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.4 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.5 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -126,10 +126,13 @@ sleepq_enter(sleepq_t *sq, struct lwp *l)
 	 * Acquire the per-LWP mutex and lend it ours (the sleep queue
 	 * lock).  Once that's done we're interlocked, and so can release
 	 * the kernel lock.
+	 *
+	 * XXXSMP we need to do the lock-swap here because some broken
+	 * code (selwakeup()?) uses setrunnable() to synchronise.
 	 */
 	lwp_lock(l);
 	lwp_unlock_to(l, sq->sq_mutex);
-	l->l_biglocks = KERNEL_UNLOCK(0, l);
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 #endif
 }
 

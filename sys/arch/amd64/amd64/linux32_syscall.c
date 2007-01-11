@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.6.4.2 2006/11/18 21:29:02 ad Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.6.4.3 2007/01/11 22:22:56 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.6.4.2 2006/11/18 21:29:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.6.4.3 2007/01/11 22:22:56 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -124,7 +124,7 @@ linux32_syscall_plain(frame)
 #endif
 	KERNEL_LOCK(1, l);
 	error = (*callp->sy_call)(l, args, rval);
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 
 out:
 	switch (error) {
@@ -264,7 +264,7 @@ linux32_syscall_fancy(frame)
 #if defined(KTRACE) || defined(SYSTRACE)
 out:
 #endif
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];

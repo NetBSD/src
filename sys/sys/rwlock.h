@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.36.4 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.36.5 2007/01/11 22:23:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@
 typedef enum krw_t {
 	RW_READER = 0,
 	RW_WRITER = 1,
-	__RW_DOWNGRADE = 2
 } krw_t;
 
 typedef struct krwlock krwlock_t;
@@ -141,7 +140,7 @@ typedef struct krwlock krwlock_t;
 #define	RW_HAS_WAITERS		0x01UL	/* lock has waiters */
 #define	RW_WRITE_WANTED		0x02UL	/* >= 1 waiter is a writer */
 #define	RW_WRITE_LOCKED		0x04UL	/* lock is currently write locked */
-#define	RW_SPARE		0x08UL	/* not used yet */
+#define	RW_DOWNGRADING		0x08UL	/* pending release a downgrade */
 
 #define	RW_READ_COUNT_SHIFT	4
 #define	RW_READ_INCR		(1UL << RW_READ_COUNT_SHIFT)
@@ -151,7 +150,7 @@ typedef struct krwlock krwlock_t;
 #define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
 
 void	rw_vector_enter(krwlock_t *, const krw_t);
-void	rw_vector_exit(krwlock_t *, const krw_t);
+void	rw_vector_exit(krwlock_t *);
 #endif	/* __RWLOCK_PRIVATE */
 
 #include <machine/rwlock.h>

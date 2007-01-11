@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.6 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.7 2007/01/11 22:22:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.6 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.7 2007/01/11 22:22:59 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -682,8 +682,9 @@ siginfo_free(void *arg)
 void
 getucontext(struct lwp *l, ucontext_t *ucp)
 {
+	struct proc *p = l->l_proc;
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 
 	ucp->uc_flags = 0;
 	ucp->uc_link = l->l_ctxlink;
@@ -707,18 +708,18 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 		ucp->uc_stack = *l->l_sigstk;
 	}
 	ucp->uc_flags |= _UC_STACK;
-
-	lwp_lock(l);
+	mutex_exit(&p->p_smutex);
 	cpu_getmcontext(l, &ucp->uc_mcontext, &ucp->uc_flags);
-	lwp_unlock(l);
+	mutex_enter(&p->p_smutex);
 }
 
 int
 setucontext(struct lwp *l, const ucontext_t *ucp)
 {
-	int		error;
+	struct proc *p = l->l_proc;
+	int error;
 
-	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 
 	if ((ucp->uc_flags & _UC_SIGMASK) != 0) {
 		error = sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
@@ -726,9 +727,9 @@ setucontext(struct lwp *l, const ucontext_t *ucp)
 			return error;
 	}
 
-	lwp_lock(l);
+	mutex_exit(&p->p_smutex);
 	error = cpu_setmcontext(l, &ucp->uc_mcontext, ucp->uc_flags);
-	lwp_unlock(l);
+	mutex_enter(&p->p_smutex);
 	if (error != 0)
 		return (error);
 
@@ -1814,7 +1815,7 @@ postsig(int signo)
 		mutex_exit(&p->p_smutex);
 		KERNEL_LOCK(1, l);
 		ktrpsig(l, signo, action, returnmask, NULL);
-		(void)KERNEL_UNLOCK(1, l);
+		KERNEL_UNLOCK_ONE(l);
 		mutex_enter(&p->p_smutex);
 	}
 #endif
@@ -1905,6 +1906,9 @@ sigexit(struct lwp *l, int signo)
 	 * L_WCORE will prevent us from coming back this way.
 	 */
 	if ((p->p_sflag & PS_WCORE) != 0) {
+		lwp_lock(l);
+		l->l_flag |= (L_WCORE | L_WEXIT | L_WSUSPEND);
+		lwp_unlock(l);
 		mutex_exit(&p->p_smutex);
 		lwp_userret(l);
 #ifdef DIAGNOSTIC
