@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.1 2007/01/11 01:03:03 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.2 2007/01/11 11:52:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@ main(int argc, char *argv[])
 	struct statvfs svfsb;
 	struct stat sb;
 	mntoptparse_t mp;
-	int mntflags, pflags;
+	int mntflags, pflags, lflags;
 	int ch;
 
 	setprogname(argv[0]);
@@ -65,7 +65,7 @@ main(int argc, char *argv[])
 	if (argc < 3)
 		usage();
 
-	mntflags = 0;
+	pflags = lflags = mntflags = 0;
 	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
 		case 'o':
@@ -79,6 +79,9 @@ main(int argc, char *argv[])
 	pflags |= PUFFS_FLAG_BUILDPATH;
 	argv += optind;
 	argc -= optind;
+
+	if (pflags & PUFFS_FLAG_OPDUMP)
+		lflags = PUFFSLOOP_NODAEMON;
 
 	if (argc != 2)
 		usage();
@@ -123,7 +126,7 @@ main(int argc, char *argv[])
 	if (puffs_start(pu, pu->pu_pn_root, &svfsb) == -1)
 		err(1, "puffs_start");
 
-	if (puffs_mainloop(pu, PUFFSLOOP_NODAEMON) == -1)
+	if (puffs_mainloop(pu, lflags) == -1)
 		err(1, "mainloop");
 
 	return 0;
