@@ -4313,20 +4313,9 @@ handle_externally_visible_attribute (tree *pnode, tree name,
 	       "%qE attribute have effect only on public objects", name);
       *no_add_attrs = true;
     }
-  else if (TREE_CODE (node) == FUNCTION_DECL)
-    {
-      struct cgraph_node *n = cgraph_node (node);
-      n->local.externally_visible = true;
-      if (n->local.finalized)
-	cgraph_mark_needed_node (n);
-    }
-  else if (TREE_CODE (node) == VAR_DECL)
-    {
-      struct cgraph_varpool_node *n = cgraph_varpool_node (node);
-      n->externally_visible = true;
-      if (n->finalized)
-	cgraph_varpool_mark_needed_node (n);
-    }
+  else if (TREE_CODE (node) == FUNCTION_DECL
+	   || TREE_CODE (node) == VAR_DECL)
+    ;
   else
     {
       warning (OPT_Wattributes, "%qE attribute ignored", name);
@@ -5231,6 +5220,8 @@ handle_vector_size_attribute (tree *node, tree name, tree args,
   orig_mode = TYPE_MODE (type);
 
   if (TREE_CODE (type) == RECORD_TYPE
+      || TREE_CODE (type) == UNION_TYPE
+      || TREE_CODE (type) == VECTOR_TYPE
       || (GET_MODE_CLASS (orig_mode) != MODE_FLOAT
 	  && GET_MODE_CLASS (orig_mode) != MODE_INT)
       || !host_integerp (TYPE_SIZE_UNIT (type), 1))
