@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.2 2007/01/11 14:59:35 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.3 2007/01/11 17:48:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.2 2007/01/11 14:59:35 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.3 2007/01/11 17:48:21 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -92,6 +92,45 @@ processvattr(const char *path, const struct vattr *va, int regular)
 			return errno;
 
 	return 0;
+}
+
+/*
+ * Kludge to open files which aren't writable *any longer*.  This kinda
+ * works because the vfs layer does validation checks based on the file's
+ * permissions to allow writable opening before opening them.  However,
+ * the problem arises if we want to create a file, write to it (cache),
+ * adjust permissions and then flush the file.
+ */
+static int
+writeableopen(const char *path)
+{
+	struct stat sb;
+	mode_t origmode;
+	int sverr = 0;
+	int fd;
+
+	fd = open(path, O_WRONLY);
+	if (fd == -1) {
+		if (errno == EACCES) {
+			if (stat(path, &sb) == -1)
+				return errno;
+			origmode = sb.st_mode & ALLPERMS;
+
+			if (chmod(path, 0200) == -1)
+				return errno;
+
+			fd = open(path, O_WRONLY);
+			if (fd == -1)
+				sverr = errno;
+
+			chmod(path, origmode);
+			if (sverr)
+				errno = sverr;
+		} else
+			return errno;
+	}
+
+	return fd;
 }
 
 /*ARGSUSED*/
@@ -268,6 +307,36 @@ puffs_null_node_setattr(struct puffs_cc *pcc, void *opc,
 	puffs_setvattr(&pn->pn_va, va);
 
 	return 0;
+}
+
+/*ARGSUSED*/
+int
+puffs_null_node_fsync(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cred *pcred, int how,
+	off_t offlo, off_t offhi, pid_t pid)
+{
+	struct puffs_node *pn = opc;
+	int fd, rv;
+	int fflags;
+
+	rv = 0;
+	fd = writeableopen(pn->pn_path);
+	if (fd == -1)
+		return errno;
+
+	if (how & PUFFS_FSYNC_DATAONLY)
+		fflags = FDATASYNC;
+	else
+		fflags = FFILESYNC;
+	if (how & PUFFS_FSYNC_CACHE)
+		fflags |= FDISKSYNC;
+
+	if (fsync_range(fd, fflags, offlo, offhi - offlo) == -1)
+		rv = errno;
+
+	close(fd);
+
+	return rv;
 }
 
 /*ARGSUSED*/
@@ -490,34 +559,10 @@ puffs_null_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	int fd, rv;
 
 	rv = 0;
-	fd = open(pn->pn_path, O_WRONLY);
-	if (fd == -1) {
-		/*
-		 * XXXkludge: try again with better perms.  need to fix
-		 * this better somehow
-		 */
-		if (errno == EACCES) {
-			struct stat sb;
-			mode_t origmode;
-			int sverr = 0;
+	fd = writeableopen(pn->pn_path);
+	if (fd == -1)
+		return errno;
 
-			if (stat(pn->pn_path, &sb) == -1)
-				return errno;
-			origmode = sb.st_mode & ALLPERMS;
-
-			if (chmod(pn->pn_path, 0200) == -1)
-				return errno;
-
-			fd = open(pn->pn_path, O_WRONLY);
-			if (fd == -1)
-				sverr = errno;
-
-			chmod(pn->pn_path, origmode);
-			if (sverr)
-				return sverr;
-		} else
-			return errno;
-	}
 	off = lseek(fd, offset, SEEK_SET);
 	if (off == -1) {
 		rv = errno;
