@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.93 2007/01/11 15:10:25 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.94 2007/01/11 16:24:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.93 2007/01/11 15:10:25 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.94 2007/01/11 16:24:48 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1139,7 +1139,7 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 }
 
 int
-veriexec_table_delete(struct mount *mp) {
+veriexec_table_delete(struct lwp *l, struct mount *mp) {
 	struct veriexec_table_entry *vte;
 
 	vte = veriexec_table_lookup(mp);
@@ -1150,7 +1150,7 @@ veriexec_table_delete(struct mount *mp) {
 }
 
 int
-veriexec_file_delete(struct vnode *vp) {
+veriexec_file_delete(struct lwp *l, struct vnode *vp) {
 	struct veriexec_table_entry *vte;
 	int error;
 
