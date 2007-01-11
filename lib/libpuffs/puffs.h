@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.22 2007/01/10 20:11:04 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.23 2007/01/11 01:01:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 
@@ -235,11 +236,6 @@ int  puffs_fsnop_sync(struct puffs_cc *, int waitfor,
 #define		DENT_DOT	0
 #define		DENT_DOTDOT	1
 #define		DENT_ADJ(a)	((a)-2)	/* nth request means dir's n-2th */
-int		puffs_gendotdent(struct dirent **, ino_t, int, size_t *);
-int		puffs_nextdent(struct dirent **, const char *, ino_t,
-			       uint8_t, size_t *);
-int		puffs_vtype2dt(enum vtype);
-enum vtype	puffs_mode2vt(mode_t);
 
 
 /*
@@ -373,11 +369,25 @@ int	puffs_getstate(struct puffs_usermount *);
 int	puffs_setrootpath(struct puffs_usermount *, const char *);
 void	puffs_setstacksize(struct puffs_usermount *, size_t);
 
-struct puffs_node *	puffs_pn_new(struct puffs_usermount *, void *);
+struct puffs_node	*puffs_pn_new(struct puffs_usermount *, void *);
 void			puffs_pn_put(struct puffs_node *);
-struct vattr 		*puffs_pn_getvattrp(struct puffs_node *);
+void			*puffs_pn_nodewalk(struct puffs_usermount *pu,
+					  void*(*fn)(struct puffs_node*,void*),
+					  void *);
+
 void			puffs_setvattr(struct vattr *, const struct vattr *);
 void			puffs_vattr_null(struct vattr *);
+
+/*
+ * Subroutine stuff
+ */
+
+int		puffs_gendotdent(struct dirent **, ino_t, int, size_t *);
+int		puffs_nextdent(struct dirent **, const char *, ino_t,
+			       uint8_t, size_t *);
+int		puffs_vtype2dt(enum vtype);
+enum vtype	puffs_mode2vt(mode_t);
+void		puffs_stat2vattr(struct vattr *va, const struct stat *);
 
 /*
  * Requests

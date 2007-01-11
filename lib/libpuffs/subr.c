@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.12 2007/01/06 18:22:09 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.13 2007/01/11 01:01:55 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.12 2007/01/06 18:22:09 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.13 2007/01/11 01:01:55 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -235,4 +235,29 @@ puffs_mode2vt(mode_t mode)
 	default:
 		return VBAD; /* XXX: not really true, but ... */
 	}
+}
+
+void
+puffs_stat2vattr(struct vattr *va, const struct stat *sb)
+{
+
+	va->va_type = puffs_mode2vt(sb->st_mode);
+	va->va_mode = sb->st_mode;
+	va->va_nlink = sb->st_nlink;
+	va->va_uid = sb->st_uid;
+	va->va_gid = sb->st_gid;
+	va->va_fsid = sb->st_dev;
+	va->va_fileid = sb->st_ino;
+	va->va_size = sb->st_size;
+	va->va_blocksize = sb->st_blksize;
+	va->va_atime = sb->st_atimespec;
+	va->va_ctime = sb->st_ctimespec;
+	va->va_mtime = sb->st_mtimespec;
+	va->va_birthtime = sb->st_birthtimespec;
+	va->va_gen = sb->st_gen;
+	va->va_flags = sb->st_flags;
+	va->va_rdev = sb->st_rdev;
+	va->va_bytes = sb->st_blocks * sb->st_blksize;
+	va->va_filerev = 0;
+	va->va_vaflags = 0;
 }
