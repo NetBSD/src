@@ -190,7 +190,6 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 	g_target[isid].has_session = 1;
 
 	/* Create socket */
-
 	if (!iscsi_sock_create(&s->sock)) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_create() failed\n");
 		return -1;
@@ -199,6 +198,7 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_setsockopt() failed\n");
 		return -1;
 	}
+
 	/* Initialize wait queues */
 
 	ISCSI_MUTEX_INIT(&s->tx_worker.work_mutex, return -1);
@@ -1947,18 +1947,15 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 				LIR_ERROR;
 			}
 
-#if ISCSI_DEBUG
-			printf("*********************************************\n");
-			printf("*              LOGIN SUCCESSFUL             *\n");
-			printf("*                                           *\n");
-			printf("* %20s:%20u *\n", "CID", sess->cid);
-			printf("* %20s:%20llu *\n", "ISID", sess->isid);
-			printf("* %20s:%20u *\n", "TSIH", sess->tsih);
-			printf("* %20s:%20u *\n", "CmdSN", sess->CmdSN);
-			printf("* %20s:%20u *\n", "MaxCmdSN", sess->MaxCmdSN);
-			printf("* %20s:%20u *\n", "ExpStatSN", sess->ExpStatSN);
-			printf("*********************************************\n");
-#endif
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "*********************************************\n");
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "*              LOGIN SUCCESSFUL             *\n");
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "CID", sess->cid);
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20llu *\n", "ISID", sess->isid);
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "TSIH", sess->tsih);
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "CmdSN", sess->CmdSN);
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "MaxCmdSN", sess->MaxCmdSN);
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "ExpStatSN", sess->ExpStatSN);
+			iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "*********************************************\n");
 			break;
 		default:
 			LIR_ERROR;
@@ -2020,7 +2017,7 @@ logout_command_i(initiator_cmd_t * cmd)
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sending logout command\n");
 	if (iscsi_logout_cmd_encap(header, logout_cmd) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "(iscsi_logout_cmd_encap() failed\n");
+		iscsi_trace_error(__FILE__, __LINE__, "iscsi_logout_cmd_encap() failed\n");
 		return -1;
 	}
 	if (iscsi_sock_msg(sess->sock, 1, ISCSI_HEADER_LEN, header, 0) != ISCSI_HEADER_LEN) {
@@ -2077,15 +2074,12 @@ callback:
 		return -1;
 	}
 
-#if ISCSI_DEBUG
-	printf("*********************************************\n");
-	printf("*             LOGOUT SUCCESSFUL             *\n");
-	printf("*                                           *\n");
-	printf("* %20s:%20u *\n", "CID", sess->cid);
-	printf("* %20s:%20llu *\n", "ISID", sess->isid);
-	printf("* %20s:%20u *\n", "TSIH", sess->tsih);
-	printf("*********************************************\n");
-#endif
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "*********************************************\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "*             LOGOUT SUCCESSFUL             *\n");
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "CID", sess->cid);
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20llu *\n", "ISID", sess->isid);
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "TSIH", sess->tsih);
+	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "*********************************************\n");
 
 	return 0;
 }
