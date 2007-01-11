@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.55 2007/01/09 12:49:36 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.56 2007/01/11 15:08:47 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.55 2007/01/09 12:49:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.56 2007/01/11 15:08:47 elad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.55 2007/01/09 12:49:36 elad Exp $\n$NetBSD: verified_exec.c,v 1.55 2007/01/09 12:49:36 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.56 2007/01/11 15:08:47 elad Exp $\n$NetBSD: verified_exec.c,v 1.56 2007/01/11 15:08:47 elad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -99,33 +99,26 @@ static int veriexec_delete(prop_dictionary_t, struct lwp *);
 static unsigned int veriexec_dev_usage;
 
 void
-veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self,
-    void *aux)
+veriexecattach(DEVPORT_DEVICE *parent, DEVPORT_DEVICE *self, void *aux)
 {
 	veriexec_dev_usage = 0;
 
-	if (veriexec_verbose >= 2)
-		log(LOG_DEBUG, "Veriexec: Pseudo-device attached.\n");
+	veriexec_report("Pseudo-device attached.", "(internal)", NULL,
+	    REPORT_DEBUG);
 }
 
 int
-veriexecopen(dev_t dev, int flags,
-		 int fmt, struct lwp *l)
+veriexecopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
-	if (veriexec_verbose >= 2) {
-		log(LOG_DEBUG, "Veriexec: Pseudo-device open attempt by "
-		    "uid=%u, pid=%u. (dev=%u)\n",
-		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid,
-		    dev);
-	}
+	veriexec_report("Pseudo-device open attempt.", "(internal)", l,
+	    REPORT_DEBUG | REPORT_ALARM);
 
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
 		return (EPERM);
 
 	if (veriexec_dev_usage > 0) {
-		if (veriexec_verbose >= 2)
-			log(LOG_ERR, "Veriexec: pseudo-device already in "
-			    "use.\n");
+		veriexec_report("Pseudo-device already in use.", "(internal)",
+		    NULL, REPORT_DEBUG);
 
 		return(EBUSY);
 	}
