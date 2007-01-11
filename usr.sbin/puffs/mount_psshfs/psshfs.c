@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.3 2007/01/07 19:33:23 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.4 2007/01/11 18:52:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.3 2007/01/07 19:33:23 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.4 2007/01/11 18:52:26 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -85,7 +85,8 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-o opts] user@host:path mountpath", getprogname());
+	errx(1, "usage: %s [-s] [-o opts] user@host:path mountpath",
+	    getprogname());
 }
 
 int
@@ -99,6 +100,7 @@ main(int argc, char *argv[])
 	char *userhost;
 	char *hostpath;
 	int mntflags, pflags, ch;
+	int detach;
 
 	setprogname(argv[0]);
 
@@ -106,13 +108,17 @@ main(int argc, char *argv[])
 		usage();
 
 	mntflags = pflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != -1) {
+	detach = 1;
+	while ((ch = getopt(argc, argv, "o:s")) != -1) {
 		switch (ch) {
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
+			break;
+		case 's':
+			detach = 0;
 			break;
 		default:
 			usage();
@@ -121,6 +127,9 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (pflags & PUFFS_FLAG_OPDUMP)
+		detach = 0;
 
 	if (argc != 2)
 		usage();
@@ -170,18 +179,20 @@ main(int argc, char *argv[])
 	sshargs[5] = "-s";
 	sshargs[6] = "sftp";
 	sshargs[7] = 0;
-	pssh_connect(&pctx, sshargs);
 
 	if ((pu = puffs_mount(pops, argv[1], mntflags, "psshfs", &pctx,
 	    PUFFS_FLAG_BUILDPATH | pflags, 0))==NULL)
 		err(1, "puffs_mount");
+
+	pssh_connect(&pctx, sshargs);
 
 	if (puffs_setblockingmode(pu, PUFFSDEV_NONBLOCK) == -1)
 		err(1, "setblockingmode");
 	if (psshfs_domount(pu) != 0)
 		errx(1, "domount");
 
-	daemon(0, 0);
+	if (detach)
+		daemon(1, 0);
 
 	psshfs_eventloop(pu, &pctx);
 	return 0;
