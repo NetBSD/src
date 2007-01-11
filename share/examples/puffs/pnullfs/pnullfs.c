@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.2 2007/01/11 11:52:53 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.3 2007/01/11 17:50:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -46,7 +46,8 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-o mntopts] nullpath mountpath", getprogname());
+	errx(1, "usage: %s [-s] [-o mntopts] nullpath mountpath",
+	    getprogname());
 }
 
 int
@@ -66,13 +67,16 @@ main(int argc, char *argv[])
 		usage();
 
 	pflags = lflags = mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != -1) {
+	while ((ch = getopt(argc, argv, "o:s")) != -1) {
 		switch (ch) {
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
+			break;
+		case 's':
+			lflags |= PUFFSLOOP_NODAEMON;
 			break;
 		}
 	}
@@ -97,6 +101,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, puffs_null, node, mknod);
 	PUFFSOP_SET(pops, puffs_null, node, getattr);
 	PUFFSOP_SET(pops, puffs_null, node, setattr);
+	PUFFSOP_SET(pops, puffs_null, node, fsync);
 	PUFFSOP_SET(pops, puffs_null, node, remove);
 	PUFFSOP_SET(pops, puffs_null, node, link);
 	PUFFSOP_SET(pops, puffs_null, node, rename);
