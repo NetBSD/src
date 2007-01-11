@@ -501,7 +501,7 @@ case "${target}" in
     noconfigdirs="$noconfigdirs target-libiberty target-libstdc++-v3 ${libgcj}"
     ;;
   bfin-*-*)
-    noconfigdirs="$noconfigdirs target-libgloss gdb"
+    noconfigdirs="$noconfigdirs gdb"
     if test x${is_cross_compiler} != xno ; then
       target_configdirs="${target_configdirs} target-bsp target-cygmon"
     fi
@@ -1065,7 +1065,13 @@ AC_ARG_WITH(mpfr-dir, [  --with-mpfr-dir=PATH    Specify source directory for MP
 
 if test "x$with_mpfr_dir" != x; then
   gmpinc="-I$with_mpfr_dir"
-  gmplibs="$with_mpfr_dir/libmpfr.a"
+  if test -f "$with_mpfr_dir/.libs/libmpfr.a"; then
+    gmplibs="$with_mpfr_dir/.libs/libmpfr.a"
+  elif test -f "$with_mpfr_dir/_libs/libmpfr.a"; then
+    gmplibs="$with_mpfr_dir/_libs/libmpfr.a"
+  else
+    gmplibs="$with_mpfr_dir/libmpfr.a"
+  fi
 else
   gmplibs="-lmpfr"
 fi
