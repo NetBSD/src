@@ -65,15 +65,7 @@
 #include "iscsi.h"
 #include "initiator.h"
 
-/*
- * Add Targets here. Format {<ip>, <port>, <TargetName>, NULL, 0}
- * Use TargetName "" to invoke discovery (e.g., {"127.0.0.1", ISCSI_PORT, "", NULL, 0})
- */
-
-static initiator_target_t	g_target[CONFIG_INITIATOR_NUM_TARGETS] = {
-	{"", "127.0.0.1", ISCSI_PORT, "", NULL, 0}
-};
-
+static initiator_target_t	g_target[CONFIG_INITIATOR_NUM_TARGETS];
 
 /*
  * Globals
@@ -85,7 +77,7 @@ static iscsi_worker_t g_enqueue_worker;
 static iscsi_queue_t g_enqueue_q;
 static iscsi_queue_t g_session_q;
 static int      g_initiator_state;
-char           *gfilename;
+static char           *gfilename;
 
 /* Testing of initiator_abort */
 
@@ -159,7 +151,6 @@ static int
 get_target_config(const char *hostname)
 {
 	(void) strlcpy(g_target[0].name, hostname, sizeof(g_target[0].name));
-	(void) strlcpy(g_target[0].ip, "10.4.0.42", sizeof(g_target[0].ip));
 	return 0;
 }
 
@@ -542,6 +533,8 @@ full_feature_negotiation_phase_i(initiator_session_t * sess, char *text, int tex
 	return 0;
 }
 
+#define DISCOVERY_PHASE_TEXT_LEN	1024
+
 static int 
 discovery_phase(int target, strv_t *svp)
 {
@@ -553,7 +546,7 @@ discovery_phase(int target, strv_t *svp)
 	char           *text = NULL;
 	int             text_len = 0;
 
-	if ((text = iscsi_malloc_atomic(1024)) == NULL) {
+	if ((text = iscsi_malloc_atomic(DISCOVERY_PHASE_TEXT_LEN)) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
@@ -563,7 +556,7 @@ discovery_phase(int target, strv_t *svp)
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "entering Discovery login phase with target %d (sock %#x)\n", target, (int) sess->sock);
 	text[0] = 0x0;
-	if (params_out(sess, text, &text_len, 1024, SESS_TYPE_DISCOVERY, IS_SECURITY) != 0) {
+	if (params_out(sess, text, &text_len, DISCOVERY_PHASE_TEXT_LEN, SESS_TYPE_DISCOVERY, IS_SECURITY) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "params_out() failed\n");
 		DP_ERROR;
 	}
@@ -577,8 +570,8 @@ discovery_phase(int target, strv_t *svp)
 
 	text_len = 0;
 	text[0] = 0x0;
-	PARAM_TEXT_ADD(sess->params, "SendTargets", "all", text, &text_len, 1024, 1, DP_ERROR);
-	PARAM_TEXT_PARSE(sess->params, &sess->sess_params.cred, text, text_len, NULL, NULL, 1024, 1, DP_ERROR);
+	PARAM_TEXT_ADD(sess->params, "SendTargets", "all", text, &text_len, DISCOVERY_PHASE_TEXT_LEN, 1, DP_ERROR);
+	PARAM_TEXT_PARSE(sess->params, &sess->sess_params.cred, text, text_len, NULL, NULL, DISCOVERY_PHASE_TEXT_LEN, 1, DP_ERROR);
 	if (full_feature_negotiation_phase_i(sess, text, text_len) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "full_feature_negotiation_phase_i() failed\n");
 		DP_ERROR;
@@ -649,13 +642,15 @@ discovery_phase(int target, strv_t *svp)
 	return 0;
 }
 
+#define FULL_FEATURE_PHASE_TEXT_LEN	1024
+
 static int 
 full_feature_phase(initiator_session_t * sess)
 {
 	char           *text;
 	int             text_len;
 
-	if ((text = iscsi_malloc_atomic(1024)) == NULL) {
+	if ((text = iscsi_malloc_atomic(FULL_FEATURE_PHASE_TEXT_LEN)) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		return -1;
 	}
@@ -665,7 +660,7 @@ full_feature_phase(initiator_session_t * sess)
 
 	text[0] = 0x0;
 	text_len = 0;
-	if (params_out(sess, text, &text_len, 1024, SESS_TYPE_NORMAL, IS_SECURITY) != 0) {
+	if (params_out(sess, text, &text_len, FULL_FEATURE_PHASE_TEXT_LEN, SESS_TYPE_NORMAL, IS_SECURITY) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "params_out() failed\n");
 		FFP_ERROR;
 	}
@@ -1739,6 +1734,9 @@ login_phase_i(initiator_session_t * sess, char *text, int text_len)
 	return 0;
 }
 
+
+#define TEXT_RESPONSE_TEXT_LEN	2048
+
 static int 
 text_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *header)
 {
@@ -1780,7 +1778,7 @@ text_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *head
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 			TI_ERROR;
 		}
-		if ((text_out = iscsi_malloc_atomic(2048)) == NULL) {
+		if ((text_out = iscsi_malloc_atomic(TEXT_RESPONSE_TEXT_LEN)) == NULL) {
 			iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 			if (text_in != NULL)
 				iscsi_free_atomic(text_in);
@@ -1805,23 +1803,19 @@ text_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *head
 		}
 		/* Parse the incoming answer */
 
-		PARAM_TEXT_PARSE(l, &sess->sess_params.cred, text_in, len_in, text_out, &len_out, 2048, 0, TI_ERROR);
+		PARAM_TEXT_PARSE(l, &sess->sess_params.cred, text_in, len_in, text_out, &len_out, TEXT_RESPONSE_TEXT_LEN, 0, TI_ERROR);
 
 		if (len_out) {
 
 			RETURN_NOT_EQUAL("text_rsp.final", text_rsp.final, 0, TI_ERROR, -1);
 
 			/*
-			 * Copy response text into text_cmd->text and update
-			 * the
-			 */
-			/*
-			 * length text_cmd->length.  This will be sent out on
-			 * the
-			 */
-			/* next text command. */
+			 * Copy response text into text_cmd->text and
+			 * update the length text_cmd->length.  This
+			 * will be sent out on the next text command. 
+			 * */
 
-			PARAM_TEXT_PARSE(l, &sess->sess_params.cred, text_out, len_out, NULL, NULL, 2048, 1, TI_ERROR);
+			PARAM_TEXT_PARSE(l, &sess->sess_params.cred, text_out, len_out, NULL, NULL, TEXT_RESPONSE_TEXT_LEN, 1, TI_ERROR);
 
 			iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "need to send %d bytes response back to target\n", len_out);
 			text_cmd->length = len_out;
@@ -1846,6 +1840,8 @@ callback:
 	return ret;
 }
 
+#define LOGIN_RESPONSE_TEXT_LEN	2048
+
 static int 
 login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *header)
 {
@@ -1857,7 +1853,7 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 	int             len_in = 0;
 	int             len_out = 0;
 
-	if ((text_out = iscsi_malloc_atomic(2048)) == NULL) {
+	if ((text_out = iscsi_malloc_atomic(LOGIN_RESPONSE_TEXT_LEN)) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc_atomic() failed\n");
 		cmd->status = -1;
 		goto callback;
@@ -1891,7 +1887,7 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 			LIR_ERROR;
 		}
 		text_in[len_in] = 0x0;
-		PARAM_TEXT_PARSE(l, &sess->sess_params.cred, text_in, len_in, text_out, &len_out, 2048, 0, LIR_ERROR);
+		PARAM_TEXT_PARSE(l, &sess->sess_params.cred, text_in, len_in, text_out, &len_out, LOGIN_RESPONSE_TEXT_LEN, 0, LIR_ERROR);
 		if (login_rsp.transit) {
 			WARN_NOT_EQUAL("len_out", len_out, 0);
 		}
@@ -1919,7 +1915,7 @@ login_response_i(initiator_session_t * sess, initiator_cmd_t * cmd, uint8_t *hea
 		case ISCSI_LOGIN_STAGE_NEGOTIATE:
 			login_cmd->csg = login_cmd->nsg;
 			login_cmd->nsg = ISCSI_LOGIN_STAGE_FULL_FEATURE;
-			if (params_out(sess, text_out, &len_out, 2048, SESS_TYPE_NONE, !IS_SECURITY) != 0) {
+			if (params_out(sess, text_out, &len_out, LOGIN_RESPONSE_TEXT_LEN, SESS_TYPE_NONE, !IS_SECURITY) != 0) {
 				iscsi_trace_error(__FILE__, __LINE__, "params_out() failed\n");
 				LIR_ERROR;
 			}
