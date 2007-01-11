@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.4 2007/01/02 16:57:54 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.5 2007/01/11 17:24:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.4 2007/01/02 16:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.5 2007/01/11 17:24:30 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -69,8 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.4 2007/01/02 16:57:54 ad Exp $");
 #include <x86/cpuvar.h>
 #include <x86/cputypes.h>
 
-/* XXX Causes GPFs on some models of CPU. */
-#if (defined(I686_CPU) || defined(__x86_64__)) && defined(notyet)
+#if defined(I686_CPU) || defined(__x86_64__)
 
 typedef struct errata {
 	u_short		e_num;
@@ -236,7 +235,7 @@ static errata_t errata[] = {
 	 * Multiprocessor Systems
 	 */
 	{
-		122, FALSE, MSR_HRCR, x86_errata_set4,
+		122, FALSE, MSR_HWCR, x86_errata_set4,
 		x86_errata_setmsr, HWCR_FFDIS
 	},
 #endif	/* MULTIPROCESSOR */
