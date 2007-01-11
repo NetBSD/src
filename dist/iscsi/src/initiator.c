@@ -147,9 +147,6 @@ static int      session_init_i(initiator_session_t **, uint64_t );
 static int      session_destroy_i(initiator_session_t *);
 static int      wait_callback_i(void *);
 
-static int      get_target_config(const char *);
-
-
 
 /*
  * Private Functions
@@ -162,6 +159,7 @@ static int
 get_target_config(const char *hostname)
 {
 	(void) strlcpy(g_target[0].name, hostname, sizeof(g_target[0].name));
+	(void) strlcpy(g_target[0].ip, "10.4.0.42", sizeof(g_target[0].ip));
 	return 0;
 }
 
@@ -247,7 +245,7 @@ session_init_i(initiator_session_t ** sess, uint64_t isid)
 	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_NUMERICAL, "MaxConnections", "1", "1", return -1);
 	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_DECLARATIVE, "SendTargets", "", "", return -1);
 	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_DECLARE_MULTI, "TargetName", "", "", return -1);
-	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_DECLARATIVE, "InitiatorName", "iqn.1993-03.org.NetBSD:iscsi-initiator", "", return -1);
+	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_DECLARATIVE, "InitiatorName", "iqn.1994-04.org.NetBSD:iscsi-initiator", "", return -1);
 	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_DECLARATIVE, "TargetAlias", "", "", return -1);
 	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_DECLARATIVE, "InitiatorAlias", "", "", return -1);
 	PARAM_LIST_ADD(l, ISCSI_PARAM_TYPE_DECLARE_MULTI, "TargetAddress", "", "", return -1);
@@ -414,7 +412,7 @@ static int
 params_out(initiator_session_t * sess, char *text, int *len, int textsize, int sess_type, int security)
 {
 	if (security == IS_SECURITY) {
-		PARAM_TEXT_ADD(sess->params, "InitiatorName", "iqn.1993-03.org.NetBSD.iscsi-initiator:agc", text, len, textsize, 1, return -1);
+		PARAM_TEXT_ADD(sess->params, "InitiatorName", "iqn.1994-04.org.NetBSD.iscsi-initiator:agc", text, len, textsize, 1, return -1);
 		PARAM_TEXT_ADD(sess->params, "InitiatorAlias", "NetBSD", text, len, textsize, 1, return -1);
 		PARAM_TEXT_ADD(sess->params, "AuthMethod", "CHAP,None", text, len, textsize, 1, return -1);
 	} else {
@@ -612,6 +610,7 @@ discovery_phase(int target, strv_t *svp)
 
 	if (param_val(sess->params, "TargetAddress")) {
 		ptr = param_val(sess->params, "TargetAddress");
+printf("ptr is ,%s,\n", ptr);
 		colon_ptr = strchr(ptr, ':');
 		if ((comma_ptr = strchr(ptr, ',')) == NULL) {
 			iscsi_trace_error(__FILE__, __LINE__, "portal group tag is missing in \"%s\"\n", param_val(sess->params, "TargetAddress"));
@@ -632,7 +631,7 @@ discovery_phase(int target, strv_t *svp)
 	}
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "Discovered \"%s\" at \"%s:%u\"\n",
-	    g_target[target].TargetName, g_target[target].ip, g_target[target].port);
+	    g_target[target].TargetName, g_target[target].name, g_target[target].port);
 
 	/* Logout from target */
 
@@ -1141,9 +1140,9 @@ tx_worker_proc_i(void *arg)
 	/* Connect to target */
 
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "tx_worker[%d]: connecting to %s:%d\n",
-	      me->id, g_target[me->id].ip, g_target[me->id].port);
+	      me->id, g_target[me->id].name, g_target[me->id].port);
 	sess->state = INITIATOR_SESSION_STATE_CONNECTING;
-	if (iscsi_sock_connect(sess->sock, g_target[me->id].ip, g_target[me->id].port) != 0) {
+	if (iscsi_sock_connect(sess->sock, g_target[me->id].name, g_target[me->id].port) != 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_connect() failed\n");
 
 		ISCSI_LOCK(&me->exit_mutex, return -1);
@@ -1155,7 +1154,7 @@ tx_worker_proc_i(void *arg)
 	}
 	sess->state = INITIATOR_SESSION_STATE_CONNECTED;
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "tx_worker[%d]: connected to %s:%d\n",
-	      me->id, g_target[me->id].ip, g_target[me->id].port);
+	      me->id, g_target[me->id].name, g_target[me->id].port);
 
 	/* Start Rx worker */
 
