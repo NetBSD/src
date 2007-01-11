@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.824 2007/01/09 19:19:09 cube Exp $
+#	$NetBSD: files,v 1.825 2007/01/11 00:00:41 cube Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -170,6 +170,7 @@ obsolete defflag		HDLC		# obsolete
 obsolete defflag		LLC		# obsolete
 obsolete defflag opt_ns.h	NS NSIP		# obsolete
 obsolete defflag		IPX		# obsolete
+obsolete defflag opt_iso.h	TPCONS
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
