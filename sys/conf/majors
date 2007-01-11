@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.31 2006/10/22 22:44:32 pooka Exp $
+# $NetBSD: majors,v 1.32 2007/01/11 05:36:30 mouse Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -28,4 +28,5 @@ device-major	bthub		char 175		bthub
 device-major	amr		char 176		amr
 device-major	lockstat	char 177		lockstat
 device-major	puffs		char 178		puffs
+device-major	srt		char 179		srt
 device-major	twa		char 187		twa
