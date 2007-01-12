@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.23.14.1 2007/01/12 01:47:51 ad Exp $ */
+/*	$NetBSD: lock.h,v 1.23.14.2 2007/01/12 02:12:54 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
 
+#ifndef sparc64
 static inline void
 mb_read(void)
 {
@@ -144,5 +145,6 @@ mb_memory(void)
 	__insn_barrier();
 	junk = 1;
 }
+#endif	/* !sparc64 */
 
 #endif /* _MACHINE_LOCK_H */
