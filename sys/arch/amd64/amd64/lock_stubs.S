@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.8 2007/01/12 14:24:17 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.9 2007/01/12 20:18:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -105,23 +105,24 @@ NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
  */
 	.align	64
 
-NENTRY(smutex_enter)				/* 0x0040, 61 bytes */
+NENTRY(smutex_enter)				/* 0x0040, 58 bytes */
 	movq	CPUVAR(SELF200), %r8
+#if defined(FULL)
+	movl	$0x0100, %eax			/* new + expected value */
+#endif
+	movl	(CPU_INFO_ILEVEL-0x200)(%r8), %esi
+	subl	$1, (CPU_INFO_MTX_COUNT-0x200)(%r8)/* decl doesnt set CF */
 	movzbl	MTX_IPL(%rdi), %ecx		/* new SPL */
-	movl	(CPU_INFO_ILEVEL-0x200)(%r8), %esi/* %esi for vector_enter */
+	cmovncl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %esi
 	cmpl	%ecx, %esi			/* higher? */
+	movl	%esi, (CPU_INFO_MTX_OLDSPL-0x200)(%r8)
 	cmovgl	%esi, %ecx
 	movl	%ecx, (CPU_INFO_ILEVEL-0x200)(%r8) /* splraiseipl() */
 #if defined(FULL)
-	movl	$0x0100, %eax			/* new + expected value */
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
-	movq	(%rsp), %rdx			/* for vector_enter */
 	jnz	_C_LABEL(smutex_vector_enter)	/* failed; hard case */
 #endif
-	subl	$1, (CPU_INFO_MTX_COUNT-0x200)(%r8)/* decl doesnt set CF */
-	cmovncl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %esi
-	movl	%esi, (CPU_INFO_MTX_OLDSPL-0x200)(%r8)
 	ret
 
 /*
@@ -132,11 +133,13 @@ NENTRY(smutex_enter)				/* 0x0040, 61 bytes */
 	.align	64
 
 NENTRY(smutex_exit)				/* 0x0080, 63 bytes */
-	movq	CPUVAR(SELF200), %r8
 #if defined(FULL)
 	movl	$0x0001, %eax			/* new + expected value */
+	movq	CPUVAR(SELF200), %r8
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* unlock */
 	jnz	_C_LABEL(mutex_vector_exit)	/* hard case if problems */
+#else
+	movq	CPUVAR(SELF200), %r8
 #endif
 	movl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %edi
 	incl	(CPU_INFO_MTX_COUNT-0x200)(%r8)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.6 2007/01/12 01:04:24 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.7 2007/01/12 20:18:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ typedef struct kmutex kmutex_t;
 
 void	mutex_vector_enter(kmutex_t *);
 void	mutex_vector_exit(kmutex_t *);
-void	smutex_vector_enter(kmutex_t *, int, uintptr_t);
+void	smutex_vector_enter(kmutex_t *);
 
 #endif	/* __MUTEX_PRIVATE */
 

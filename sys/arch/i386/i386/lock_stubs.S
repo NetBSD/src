@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.8 2007/01/12 01:00:50 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.9 2007/01/12 20:18:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 64 bytes */
  */
 	ALIGN64
 
-STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 64 bytes */
+STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 51 bytes */
 	movl	CPUVAR(SELF150), %eax
 	movl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
 	subl	$1, (CPU_INFO_MTX_COUNT-0x150)(%eax)/* decl does not set CF */
@@ -237,6 +237,7 @@ STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 64 bytes */
 	movl	%ecx, (CPU_INFO_MTX_OLDSPL-0x150)(%eax)
 1:	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
+	B_NL
 	jg	2f
 	movb	%ch, (CPU_INFO_ILEVEL-0x150)(%eax)/* splraiseipl() */
 2:
@@ -244,19 +245,10 @@ STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 64 bytes */
 	mov	$0x0100, %eax			/* new + expected value */
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
-	jnz	3f
+	B_NL
+	jnz	_C_LABEL(smutex_vector_enter)
 #endif
 	ret
-3:	andl	$0x0f, %ecx
-	movl	(%esp), %eax
-	pushl	%ebp
-	movl	%esp, %ebp
-	pushl	%eax
-	pushl	%ecx
-	pushl	%edx
-	call	_C_LABEL(smutex_vector_enter)
-	leave
- 	ret
 
 /*
  * void smutex_exit(kmutex_t *mtx);
@@ -326,6 +318,7 @@ _80386_lock_cas:
 	sti
 	ret
 
-1:	xorl	%eax, %eax
+1:	sti
+	xorl	%eax, %eax
 	ret
 #endif	/* I386_CPU */
