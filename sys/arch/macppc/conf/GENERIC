@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.248 2007/01/12 19:30:35 uwe Exp $
+# $NetBSD: GENERIC,v 1.249 2007/01/12 21:24:40 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.248 $"
+#ident 		"GENERIC-$Revision: 1.249 $"
 
 maxusers	32
 
@@ -274,6 +274,7 @@ ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 # OFB_ENABLE_CACHE speeds up the console on many machines, but should
 # not be enabled on some older machines, such as the rev. A-D iMacs.
 #options 	OFB_ENABLE_CACHE	# Speed up console in ofb
+#options 	OFB_FAKE_VGA_FB		# Allow X to mmap VGA regs
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
 
