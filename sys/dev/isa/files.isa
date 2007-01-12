@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.144 2006/05/13 09:02:19 xtraeme Exp $
+#	$NetBSD: files.isa,v 1.144.12.1 2007/01/12 23:13:21 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -468,6 +468,11 @@ file	dev/isa/lm_isa.c		lm_isa
 device	it: sysmon_envsys
 attach	it at isa with it_isa
 file	dev/isa/it.c			it_isa
+
+# Abit uGuru hardware monitor
+device ug: sysmon_envsys
+attach ug at isa with ug_isa
+file   dev/isa/ug.c                    ug_isa
 
 # ISDN devices
 attach	isic at isa with isic_isa
