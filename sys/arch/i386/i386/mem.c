@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.63.2.1 2006/11/18 21:29:19 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.63.2.2 2007/01/12 01:00:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,9 +77,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63.2.1 2006/11/18 21:29:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63.2.2 2007/01/12 01:00:50 ad Exp $");
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_freebsd.h"
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -89,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.63.2.1 2006/11/18 21:29:19 ad Exp $");
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
+#include <sys/kauth.h>
 
 #include <machine/cpu.h>
 
@@ -117,11 +119,18 @@ mmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 
 	switch (minor(dev)) {
-#ifdef COMPAT_10
+#if defined(COMPAT_10) || defined(COMPAT_FREEBSD)
 	/* This is done by i386_iopl(3) now. */
 	case DEV_IO:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
+			int error;
+
+			error = kauth_authorize_machdep(l->l_cred,
+			    KAUTH_MACHDEP_IOPL, NULL, NULL, NULL, NULL);
+			if (error)
+				return (error);
+
 			fp = curlwp->l_md.md_regs;
 			fp->tf_eflags |= PSL_IOPL;
 		}

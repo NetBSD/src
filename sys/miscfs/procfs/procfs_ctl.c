@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.34.2.4 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.34.2.5 2007/01/12 01:04:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.4 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.34.2.5 2007/01/12 01:04:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,13 +126,15 @@ static const vfs_namemap_t signames[] = {
 	{ NULL,		0 },
 };
 
-int procfs_control(struct lwp *, struct lwp *, int, int);
+static int procfs_control(struct lwp *, struct lwp *, int, int,
+    struct pfsnode *);
 
 int
-procfs_control(curl, l, op, sig)
+procfs_control(curl, l, op, sig, pfs)
 	struct lwp *curl;
 	struct lwp *l;
 	int op, sig;
+	struct pfsnode *pfs;
 {
 	struct proc *curp = curl->l_proc;
 	struct proc *p = l->l_proc;
@@ -165,24 +167,12 @@ procfs_control(curl, l, op, sig)
 		}
 
 		/*
-		 *      (3) it's not owned by you, or is set-id on exec
-		 *          (unless you're root), or...
+		 *      (3) the security model prevents it.
 		 */
-		if ((kauth_cred_getuid(p->p_cred) !=
-		    kauth_cred_getuid(curl->l_cred) ||
-		    ISSET(p->p_flag, P_SUGID)) &&
-		    (error = kauth_authorize_generic(curl->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &curl->l_acflag)) != 0)
-			break;
-
-		/*
-		 *      (4) ...it's init, which controls the security level
-		 *          of the entire system, and the system was not
-		 *          compiled with permanently insecure mode turned
-		 *          on.
-		 */
-		if (p == initproc && securelevel > -1)
-			error = EPERM;
+		if ((error = kauth_authorize_process(curl->l_cred,
+		    KAUTH_PROCESS_CANPROCFS, p, pfs,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANPROCFS_CTL), NULL)) != 0)
+		    	break;
 
 		break;
 
@@ -401,14 +391,14 @@ procfs_doctl(
 
 	nm = vfs_findname(ctlnames, msg, xlen);
 	if (nm) {
-		error = procfs_control(curl, l, nm->nm_val, 0);
+		error = procfs_control(curl, l, nm->nm_val, 0, pfs);
 	} else {
 		nm = vfs_findname(signames, msg, xlen);
 		if (nm) {
 			if (ISSET(p->p_slflag, PSL_TRACED) &&
 			    p->p_pptr == p)
 				error = procfs_control(curl, l, PROCFS_CTL_RUN,
-				    nm->nm_val);
+				    nm->nm_val, pfs);
 			else {
 				psignal(p, nm->nm_val);
 				error = 0;

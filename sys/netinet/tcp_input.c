@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.244.2.1 2006/11/18 21:39:36 ad Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.244.2.2 2007/01/12 01:04:14 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.244.2.1 2006/11/18 21:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.244.2.2 2007/01/12 01:04:14 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -374,6 +374,8 @@ extern struct evcnt tcp_reass_fragdup;
 
 #endif /* TCP_REASS_COUNTERS */
 
+static int tcp_reass(struct tcpcb *, const struct tcphdr *, struct mbuf *,
+    int *);
 static int tcp_dooptions(struct tcpcb *, const u_char *, int,
     const struct tcphdr *, struct mbuf *, int, struct tcp_opt_info *);
 
@@ -385,6 +387,10 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 #endif
 
 #define	TRAVERSE(x) while ((x)->m_next) (x) = (x)->m_next
+
+#if defined(MBUFTRACE)
+struct mowner tcp_reass_mowner = MOWNER_INIT("tcp", "reass");
+#endif /* defined(MBUFTRACE) */
 
 static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
     NULL);
@@ -412,8 +418,8 @@ tcpipqent_free(struct ipqent *ipqe)
 	splx(s);
 }
 
-int
-tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
+static int
+tcp_reass(struct tcpcb *tp, const struct tcphdr *th, struct mbuf *m, int *tlen)
 {
 	struct ipqent *p, *q, *nq, *tiqe = NULL;
 	struct socket *so = NULL;
@@ -441,6 +447,8 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 	 */
 	if (th == 0)
 		goto present;
+
+	m_claimm(m, &tcp_reass_mowner);
 
 	rcvoobyte = *tlen;
 	/*
@@ -3200,8 +3208,7 @@ do {									\
 do {									\
 	if ((sc)->sc_ipopts)						\
 		(void) m_free((sc)->sc_ipopts);				\
-	if ((sc)->sc_route4.ro_rt != NULL)				\
-		RTFREE((sc)->sc_route4.ro_rt);				\
+	rtcache_free(&(sc)->sc_route4);					\
 	if (callout_invoking(&(sc)->sc_timer))				\
 		(sc)->sc_flags |= SCF_DEAD;				\
 	else								\
@@ -3616,13 +3623,17 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	/*
 	 * Give the new socket our cached route reference.
 	 */
-	if (inp)
-		inp->inp_route = sc->sc_route4;		/* struct assignment */
+	if (inp) {
+		rtcache_copy(&inp->inp_route, &sc->sc_route4, sizeof(inp->inp_route));
+		rtcache_free(&sc->sc_route4);
+	}
 #ifdef INET6
-	else
-		in6p->in6p_route = sc->sc_route6;
+	else {
+		rtcache_copy((struct route *)&in6p->in6p_route,
+		    (struct route *)&sc->sc_route6, sizeof(in6p->in6p_route));
+		rtcache_free((struct route *)&sc->sc_route6);
+	}
 #endif
-	sc->sc_route4.ro_rt = NULL;
 
 	am = m_get(M_DONTWAIT, MT_SONAME);	/* XXX */
 	if (am == NULL)

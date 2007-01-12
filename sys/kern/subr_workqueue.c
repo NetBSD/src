@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.3.10.2 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.3.10.3 2007/01/12 01:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.2 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.3 2007/01/12 01:04:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct workqueue {
 	void *wq_arg;
 	const char *wq_name;
 	int wq_prio;
-	int wq_ipl;
+	ipl_cookie_t wq_ipl;
 };
 
 #define	POISON	0xaabbccdd
@@ -121,7 +121,7 @@ workqueue_init(struct workqueue *wq, const char *name,
     int prio, int ipl)
 {
 
-	wq->wq_ipl = ipl;
+	wq->wq_ipl = makeiplcookie(ipl);
 	wq->wq_prio = prio;
 	wq->wq_name = name;
 	wq->wq_func = callback_func;
@@ -129,12 +129,12 @@ workqueue_init(struct workqueue *wq, const char *name,
 }
 
 static int
-workqueue_initqueue(struct workqueue *wq)
+workqueue_initqueue(struct workqueue *wq, int ipl)
 {
 	struct workqueue_queue *q = &wq->wq_queue;
 	int error;
 
-	mutex_init(&q->q_mutex, MUTEX_SPIN, wq->wq_ipl);
+	mutex_init(&q->q_mutex, MUTEX_SPIN, ipl);
 	SIMPLEQ_INIT(&q->q_queue);
 	error = kthread_create1(workqueue_worker, wq, &q->q_worker,
 	    wq->wq_name);
@@ -209,7 +209,7 @@ workqueue_create(struct workqueue **wqp, const char *name,
 
 	workqueue_init(wq, name, callback_func, callback_arg, prio, ipl);
 
-	error = workqueue_initqueue(wq);
+	error = workqueue_initqueue(wq, ipl);
 	if (error) {
 		kmem_free(wq, sizeof(*wq));
 		return error;

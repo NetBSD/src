@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.18 2006/03/29 04:16:47 thorpej Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.18.8.1 2007/01/12 01:00:59 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.18 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.18.8.1 2007/01/12 01:00:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,8 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 
+	sc->sc_ramsize = 1024 * 1024;	/* All our cgsix's are 1MB */
+
 	/*
 	 * Dunno what the PROM has mapped, though obviously it must have
 	 * the video RAM mapped.  Just map what we care about for ourselves
@@ -209,10 +211,9 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 		isconsole = 0;
 
 	if (isconsole && cgsix_use_rasterconsole) {
-		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
 		if (bus_space_map(oba->oba_bustag,
 				  oba->oba_paddr + CGSIX_RAM_OFFSET,
-				  ramsize,
+				  sc->sc_ramsize,
 				  BUS_SPACE_MAP_LINEAR,
 				  &bh) != 0) {
 			printf("%s: cannot map pixels\n", self->dv_xname);

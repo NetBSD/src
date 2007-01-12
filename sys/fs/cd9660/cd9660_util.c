@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.7 2006/08/28 00:28:51 christos Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.7.2.1 2007/01/12 01:04:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.7 2006/08/28 00:28:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.7.2.1 2007/01/12 01:04:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +226,7 @@ wget(const u_char **str, size_t *sz, int joliet_level)
 		 */
 		u_int16_t c = *str[0];
 		(*str)++;
+		(*sz)--;
 
 		return c;
 	}

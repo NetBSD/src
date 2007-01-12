@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.16.4.1 2006/11/18 21:39:20 ad Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.16.4.2 2007/01/12 01:04:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.16.4.1 2006/11/18 21:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.16.4.2 2007/01/12 01:04:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,21 +381,18 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) != 0)
+		    NULL)) != 0)
 			return error;
+		/* Immutable and append-only flags are not supported on ptyfs. */
+		if (vap->va_flags & (IMMUTABLE | APPEND))
+			return EINVAL;
 		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
-			if ((ptyfs->ptyfs_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-			    securelevel > 0)
-				return EPERM;
 			/* Snapshot flag cannot be set or cleared */
 			if ((vap->va_flags & SF_SNAPSHOT) !=
 			    (ptyfs->ptyfs_flags & SF_SNAPSHOT))
 				return EPERM;
 			ptyfs->ptyfs_flags = vap->va_flags;
 		} else {
-			if ((ptyfs->ptyfs_flags & (SF_IMMUTABLE | SF_APPEND)) ||
-			    (vap->va_flags & UF_SETTABLE) != vap->va_flags)
-				return EPERM;
 			if ((ptyfs->ptyfs_flags & SF_SETTABLE) !=
 			    (vap->va_flags & SF_SETTABLE))
 				return EPERM;
@@ -403,11 +400,8 @@ ptyfs_setattr(void *v)
 			ptyfs->ptyfs_flags |= (vap->va_flags & UF_SETTABLE);
 		}
 		ptyfs->ptyfs_flag |= PTYFS_CHANGE;
-		if (vap->va_flags & (IMMUTABLE | APPEND))
-			return 0;
 	}
-	if (ptyfs->ptyfs_flags & (IMMUTABLE | APPEND))
-		return EPERM;
+
 	/*
 	 * Go through the fields and update iff not VNOVAL.
 	 */
@@ -429,7 +423,7 @@ ptyfs_setattr(void *v)
 			return EPERM;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) &&
+		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0))
 			return (error);
@@ -474,7 +468,7 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 
 	if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    NULL)) != 0)
 		return error;
 	ptyfs->ptyfs_mode &= ~ALLPERMS;
 	ptyfs->ptyfs_mode |= (mode & ALLPERMS);
@@ -507,7 +501,7 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	    !(kauth_cred_getegid(cred) == gid ||
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0))
+	    NULL)) != 0))
 		return error;
 
 	ptyfs->ptyfs_gid = gid;
@@ -553,13 +547,9 @@ ptyfs_access(void *v)
  * If we're looking up ".", just vref the parent & return it.
  *
  * If we're looking up "..", unlock the parent, and lock "..". If everything
- * went ok, and we're on the last component and the caller requested the
- * parent locked, try to re-lock the parent. We do this to prevent lock
- * races.
+ * went ok, try to re-lock the parent. We do this to prevent lock races.
  *
- * For anything else, get the needed node. Then unlock the parent if not
- * the last component or not LOCKPARENT (i.e. if we wouldn't re-lock the
- * parent in the .. case).
+ * For anything else, get the needed node.
  *
  * We try to exit with the parent locked in error cases.
  */
@@ -576,10 +566,9 @@ ptyfs_lookup(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	const char *pname = cnp->cn_nameptr;
 	struct ptyfsnode *ptyfs;
-	int pty, error, wantpunlock;
+	int pty, error;
 
 	*vpp = NULL;
-	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return EROFS;
@@ -590,7 +579,6 @@ ptyfs_lookup(void *v)
 		return 0;
 	}
 
-	wantpunlock = ~cnp->cn_flags & (LOCKPARENT | ISLASTCN);
 	ptyfs = VTOPTYFS(dvp);
 	switch (ptyfs->ptyfs_type) {
 	case PTYFSroot:
@@ -607,10 +595,6 @@ ptyfs_lookup(void *v)
 
 		error = ptyfs_allocvp(dvp->v_mount, vpp, PTYFSpts, pty,
 		    curlwp);
-		if (error == 0 && wantpunlock) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
 		return error;
 
 	default:

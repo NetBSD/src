@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.267.2.1 2006/11/18 21:34:29 ad Exp $
+#	$NetBSD: files.pci,v 1.267.2.2 2007/01/12 00:57:41 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -132,6 +132,11 @@ file	dev/pci/bha_pci.c		bha_pci
 attach	isp at pci with isp_pci
 file	dev/pci/isp_pci.c		isp_pci
 
+# LSILogic MegaRAID SAS
+# device declaration in sys/conf/files
+attach	mfi at pci with mfi_pci
+file	dev/pci/mfi_pci.c		mfi_pci
+
 # LSILogic Fusion-MPT I/O Processor family
 # device declaration in sys/conf/files
 attach	mpt at pci with mpt_pci
@@ -210,6 +215,11 @@ file dev/pci/pciide_common.c pciide_common
 device	pciide: ata, pciide_common, wdc_common
 attach	pciide at pci
 file	dev/pci/pciide.c		pciide
+
+# AHCI SATA controllers
+device	ahcisata: ata, ata_dma, ata_udma, sata
+attach	ahcisata at pci
+file	dev/pci/ahcisata.c		ahcisata
 
 # Acard IDE controllers
 device	acardide: ata, ata_dma, ata_udma, pciide_common, wdc_common
@@ -600,6 +610,11 @@ file	dev/pci/if_wm.c			wm
 device	bge: ether, ifnet, arp, mii, mii_bitbang
 attach	bge at pci
 file	dev/pci/if_bge.c		bge
+
+# Broadcom NetXtreme II
+device	bnx: ether, ifnet, arp, mii
+attach	bnx at pci
+file	dev/pci/if_bnx.c		bnx
 
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci

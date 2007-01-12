@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_proto.c,v 1.20.2.1 2006/11/18 21:39:43 ad Exp $	*/
+/*	$NetBSD: iso_proto.c,v 1.20.2.2 2007/01/12 01:04:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.20.2.1 2006/11/18 21:39:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_proto.c,v 1.20.2.2 2007/01/12 01:04:19 ad Exp $");
 
 
 #include <sys/param.h>
@@ -174,19 +174,22 @@ const struct protosw  isosw[] = {
 extern struct ifqueue clnlintrq;
 
 struct domain   isodomain = {
-	PF_ISO,			/* family */
-	"iso-domain",		/* name */
-	0,			/* initialize routine */
-	0,			/* externalize access rights */
-	0,			/* dispose of internalized rights */
-	isosw,			/* protosw */
-	&isosw[sizeof(isosw) / sizeof(isosw[0])],	/* NPROTOSW */
-	rn_inithead,		/* rtattach */
-	48,			/* rtoffset */
-	sizeof(struct sockaddr_iso),	/* maxkeylen */
-	0,
-	0,
-	{ &clnlintrq, NULL },		/* ifqueues */
-	{ NULL },
-	MOWNER_INIT("",""),
+	.dom_family = PF_ISO,
+	.dom_name = "iso-domain",
+	.dom_init = NULL,
+	.dom_externalize = NULL,
+	.dom_dispose = NULL,
+	.dom_protosw = isosw,
+	.dom_protoswNPROTOSW = &isosw[sizeof(isosw) / sizeof(isosw[0])],
+	.dom_rtattach = rn_inithead,		/* rtattach */
+	.dom_rtoffset = 48,			/* rtoffset */
+	.dom_maxrtkey = sizeof(struct sockaddr_iso),	/* maxkeylen */
+	.dom_ifattach = NULL,
+	.dom_ifdetach = NULL,
+	.dom_ifqueues = { &clnlintrq, NULL },		/* ifqueues */
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("",""),
+	.dom_rtcache = NULL,
+	.dom_rtflush = NULL,
+	.dom_rtflushall = NULL
 };

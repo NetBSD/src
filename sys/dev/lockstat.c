@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.2.2.3 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.2.2.4 2007/01/12 00:57:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,10 +39,12 @@
 /*
  * Lock statistics driver, providing kernel support for the lockstat(8)
  * command.
+ *
+ * XXX Timings for contention on sleep locks are currently incorrect.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.2.2.3 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.2.2.4 2007/01/12 00:57:34 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -239,9 +241,9 @@ lockstat_start(lsenable_t *le)
 	lockstat_csstart = le->le_csstart;
 	lockstat_csend = le->le_csend;
 	lockstat_lockstart = le->le_lockstart;
+	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockend = le->le_lockend;
 	mb_memory();
-
 	getnanotime(&lockstat_stime);
 	lockstat_enabled = le->le_mask;
 	mb_write();

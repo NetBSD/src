@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.4.20.1 2006/11/18 21:39:49 ad Exp $
+#	$NetBSD: files.uvm,v 1.4.20.2 2007/01/12 01:04:25 ad Exp $
 
 #
 # UVM options
@@ -25,7 +25,7 @@ file	uvm/uvm_map.c
 file	uvm/uvm_meter.c
 file	uvm/uvm_mmap.c
 file	uvm/uvm_mremap.c		compat_linux
-#file	uvm/uvm_object.c
+file	uvm/uvm_object.c
 file	uvm/uvm_page.c
 file	uvm/uvm_pager.c
 file	uvm/uvm_pdaemon.c

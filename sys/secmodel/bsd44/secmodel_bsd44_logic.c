@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_logic.c,v 1.2.6.1 2006/11/18 21:39:46 ad Exp $ */
+/* $NetBSD: secmodel_bsd44_logic.c,v 1.2.6.2 2007/01/12 01:04:22 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Elad Efrat.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.2.6.1 2006/11/18 21:39:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_logic.c,v 1.2.6.2 2007/01/12 01:04:22 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.16.2.1 2006/11/18 21:34:50 ad Exp $	*/
+/*	$NetBSD: ubt.c,v 1.16.2.2 2007/01/12 00:57:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16.2.1 2006/11/18 21:34:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.16.2.2 2007/01/12 00:57:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -152,9 +152,6 @@ SYSCTL_SETUP(sysctl_hw_ubt_debug_setup, "sysctl hw.ubt_debug setup")
 #define UBT_BUFSIZ_CMD		(HCI_CMD_PKT_SIZE - 1)
 #define UBT_BUFSIZ_ACL		(2048 - 1)
 #define UBT_BUFSIZ_EVENT	(HCI_EVENT_PKT_SIZE - 1)
-
-/* Interrupt Interval from (Bluetooth spec) */
-#define UBT_EVENT_INTERVAL	1	/* 1ms */
 
 /* Transmit timeouts */
 #define UBT_CMD_TIMEOUT		USBD_DEFAULT_TIMEOUT
@@ -459,7 +456,7 @@ USB_ATTACH(ubt)
 	sc->sc_unit.hci_start_cmd = ubt_xmit_cmd_start;
 	sc->sc_unit.hci_start_acl = ubt_xmit_acl_start;
 	sc->sc_unit.hci_start_sco = ubt_xmit_sco_start;
-	sc->sc_unit.hci_ipl = IPL_USB;	/* XXX: IPL_SOFTUSB ?? */
+	sc->sc_unit.hci_ipl = makeiplcookie(IPL_USB); /* XXX: IPL_SOFTUSB ?? */
 	hci_attach(&sc->sc_unit);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -834,7 +831,7 @@ ubt_enable(struct hci_unit *unit)
 				  sc->sc_evt_buf,
 				  UBT_BUFSIZ_EVENT,
 				  ubt_recv_event,
-				  UBT_EVENT_INTERVAL);
+				  USBD_DEFAULT_INTERVAL);
 	if (err != USBD_NORMAL_COMPLETION) {
 		error = EIO;
 		goto bad;

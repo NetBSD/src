@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.16.4.1 2006/11/18 21:39:44 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.16.4.2 2007/01/12 01:04:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.16.4.1 2006/11/18 21:39:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.16.4.2 2007/01/12 01:04:19 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -193,9 +193,6 @@ nfs_export_unmount(struct mount *mp)
 		netexport_wrunlock();
 		return;
 	}
-
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 	netexport_clear(ne);
 	netexport_remove(ne);
 	netexport_wrunlock();
@@ -227,7 +224,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	size_t fid_size;
 
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	    NULL) != 0)
 		return EPERM;
 
 	/* Lookup the file system path. */
@@ -238,12 +235,6 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 
-	/* The selected file system may not support NFS exports, so ensure
-	 * it does. */
-	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL) {
-		error = EOPNOTSUPP;
-		goto out_locked;
-	}
 	fid_size = 0;
 	if ((error = VFS_VPTOFH(vp, NULL, &fid_size)) == E2BIG) {
 		fid = malloc(fid_size, M_TEMP, M_NOWAIT);
@@ -256,8 +247,6 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		error = EOPNOTSUPP;
 		goto out_locked;
 	}
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 
 	/* Mark the file system busy. */
 	error = vfs_busy(mp, LK_NOWAIT, NULL);
@@ -308,7 +297,6 @@ out_locked2:
 
 out_locked:
 	vput(vp);
-
 	return error;
 }
 
@@ -465,8 +453,6 @@ init_exports(struct mount *mp, struct netexport **nep)
 	struct netexport *ne;
 
 	KASSERT(mp != NULL);
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 
 	/* Ensure that we do not already have this mount point. */
 	KASSERT(netexport_lookup(mp) == NULL);

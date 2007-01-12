@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225.4.6 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.7 2007/01/12 01:04:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -362,6 +362,7 @@ struct proc {
 #define	P_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
 #define	P_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
 #define	P_SYSTRACE	0x00200000 /* Process system call tracing active */
+#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
 #define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
 #define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
 #define	P_MARKER	0x80000000 /* Is a dummy marker process */

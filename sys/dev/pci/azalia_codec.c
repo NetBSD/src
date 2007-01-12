@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.25.2.1 2006/11/18 21:34:28 ad Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.25.2.2 2007/01/12 00:57:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.25.2.1 2006/11/18 21:34:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.25.2.2 2007/01/12 00:57:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,6 +121,7 @@ static int	ad1981hd_mixer_init(codec_t *);
 static int	cmi9880_init_dacgroup(codec_t *);
 static int	cmi9880_mixer_init(codec_t *);
 static int	stac9221_init_dacgroup(codec_t *);
+static int	stac9221_mixer_init(codec_t *);
 static int	stac9220_mixer_init(codec_t *);
 
 
@@ -180,6 +181,7 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x83847680:
 		this->name = "Sigmatel STAC9221";
 		this->init_dacgroup = stac9221_init_dacgroup;
+		this->mixer_init = stac9221_mixer_init;
 		break;
 	case 0x83847683:
 		this->name = "Sigmatel STAC9221D";
@@ -899,9 +901,7 @@ generic_mixer_default(codec_t *this)
 	}
 
 	/*
-	 * For bidirectional pins,
-	 *   Output: lineout, speaker, headphone, spdifout, digitalout, other
-	 *   Input: others
+	 * For bidirectional pins, make the default `output'
 	 */
 	DPRINTF(("%s: process bidirectional pins\n", __func__));
 	for (i = 0; i < this->nmixers; i++) {
@@ -912,18 +912,7 @@ generic_mixer_default(codec_t *this)
 			continue;
 		mc.dev = i;
 		mc.type = AUDIO_MIXER_ENUM;
-		switch (this->w[m->nid].d.pin.device) {
-		case CORB_CD_LINEOUT:
-		case CORB_CD_SPEAKER:
-		case CORB_CD_HEADPHONE:
-		case CORB_CD_SPDIFOUT:
-		case CORB_CD_DIGITALOUT:
-		case CORB_CD_DEVICE_OTHER:
-			mc.un.ord = 1;
-			break;
-		default:
-			mc.un.ord = 0;
-		}
+		mc.un.ord = 1;	/* output */
 		generic_mixer_set(this, m->nid, m->target, &mc);
 	}
 
@@ -2522,6 +2511,8 @@ cmi9880_init_dacgroup(codec_t *this)
  * Sigmatel STAC9221 and STAC9221D
  * ---------------------------------------------------------------- */
 
+#define STAC9221_MAC	0x76808384
+
 static int
 stac9221_init_dacgroup(codec_t *this)
 {
@@ -2537,6 +2528,33 @@ stac9221_init_dacgroup(codec_t *this)
 
 	this->dacs = dacs;
 	this->adcs = adcs;
+	return 0;
+}
+
+static int
+stac9221_mixer_init(codec_t *this)
+{
+	int err;
+
+	err = generic_mixer_init(this);
+	if (err)
+		return err;
+#if 0
+	if (this->subid == STAC9221_MAC) {
+		uint32_t data, mask, dir;
+		this->comresp(this, 0, CORB_GET_GPIO_DATA, 0, &data);
+		this->comresp(this, 0, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
+		this->comresp(this, 0, CORB_GET_GPIO_DIRECTION, 0, &dir);
+		data |= 0x3;
+		mask |= 0x3;
+		dir |= 0x3;
+		this->comresp(this, 0, 0x7e7, 0, NULL);
+		this->comresp(this, 0, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
+		this->comresp(this, 0, CORB_SET_GPIO_DIRECTION, dir, NULL);
+		DELAY(1000);
+		this->comresp(this, 0, CORB_SET_GPIO_DATA, data, NULL);
+	}
+#endif
 	return 0;
 }
 

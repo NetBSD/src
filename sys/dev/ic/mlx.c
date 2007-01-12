@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.45.2.1 2006/11/18 21:34:13 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.45.2.2 2007/01/12 00:57:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45.2.1 2006/11/18 21:34:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.45.2.2 2007/01/12 00:57:36 ad Exp $");
 
 #include "ld.h"
 
@@ -798,7 +798,8 @@ mlxioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 		return (0);
 
 	case MLX_COMMAND:
-		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
 		if (rv)
 			return (rv);
 

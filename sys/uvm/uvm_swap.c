@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.105.2.1 2006/11/18 21:39:50 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.105.2.2 2007/01/12 01:04:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.105.2.1 2006/11/18 21:39:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.105.2.2 2007/01/12 01:04:25 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -371,7 +371,6 @@ swaplist_find(struct vnode *vp, boolean_t remove)
 	}
 	return (NULL);
 }
-
 
 /*
  * swaplist_trim: scan priority list for empty priority entries and kill

@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.2.14.1 2006/11/18 21:39:47 ad Exp $ */
+/* $NetBSD: pax.h,v 1.2.14.2 2007/01/12 01:04:24 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Elad Efrat.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -37,8 +34,12 @@
 
 struct lwp;
 
+void pax_init(void);
+void pax_adjust(struct lwp *, int);
+
 void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
-void pax_mprotect_adjust(struct lwp *, int);
+
+int pax_segvguard(struct lwp *, struct vnode *, const char *, boolean_t);
 
 #endif /* !__SYS_PAX_H__ */
 

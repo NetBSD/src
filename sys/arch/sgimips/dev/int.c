@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.12 2006/09/01 03:33:41 rumble Exp $	*/
+/*	$NetBSD: int.c,v 1.12.2.1 2007/01/12 01:00:57 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.12 2006/09/01 03:33:41 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.12.2.1 2007/01/12 01:00:57 ad Exp $");
 
 #include "opt_cputype.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/timetc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -64,12 +65,31 @@ struct int_softc {
 
 static int	int_match(struct device *, struct cfdata *, void *);
 static void	int_attach(struct device *, struct device *, void *);
-void 		int_local0_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-void		int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-int 		int_mappable_intr(void *);
-void		*int_intr_establish(int, int, int (*)(void *), void *);
-unsigned long	int_cal_timer(void);
-void		int_8254_cal(void);
+static void 	int_local0_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	int_local1_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static int 	int_mappable_intr(void *);
+static void    *int_intr_establish(int, int, int (*)(void *), void *);
+static void	int_8254_cal(void);
+static u_int	int_8254_get_timecount(struct timecounter *);
+static void	int_8254_intr0(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	int_8254_intr1(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+
+#ifdef MIPS3
+static u_long	int_cal_timer(void);
+#endif
+
+static struct timecounter int_8254_timecounter = {
+	int_8254_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	500000,			/* frequency */
+	"int i8254",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static u_long int_8254_tc_count;
 
 CFATTACH_DECL(int, sizeof(struct int_softc),
 	int_match, int_attach, NULL, NULL);
@@ -102,7 +122,7 @@ int_attach(struct device *parent, struct device *self, void *aux)
 	} else
 		panic("\nint0: passed match, but failed attach?");
 
-	printf(" addr 0x%x", address);
+	printf(" addr 0x%x\n", address);
 
 	bus_space_map(iot, address, 0, 0, &ioh);
 	iot = SGIMIPS_BUS_SPACE_NORMAL;
@@ -120,7 +140,10 @@ int_attach(struct device *parent, struct device *self, void *aux)
 		case MACH_SGI_IP12:
 			platform.intr1 = int_local0_intr;
 			platform.intr2 = int_local1_intr;
+			platform.intr3 = int_8254_intr0;
+			platform.intr4 = int_8254_intr1;
 			int_8254_cal();
+			tc_init(&int_8254_timecounter);
 			break;
 #ifdef MIPS3
 		case MACH_SGI_IP20:
@@ -148,8 +171,8 @@ int_attach(struct device *parent, struct device *self, void *aux)
 
 			cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
 
-			printf(": bus %luMHz, CPU %luMHz",
-			    cps / 10000, cps / 5000);
+			printf("%s: bus %luMHz, CPU %luMHz\n",
+			    self->dv_xname, cps / 10000, cps / 5000);
 
 			/* R4k/R4400/R4600/R5k count at half CPU frequency */
 			curcpu()->ci_cpu_freq = 2 * cps * hz;
@@ -161,8 +184,6 @@ int_attach(struct device *parent, struct device *self, void *aux)
 			panic("int0: unsupported machine type %i\n", mach_type);
 			break;
 	}
-
-	printf("\n");
 
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
@@ -334,7 +355,7 @@ int_intr_establish(int level, int ipl, int (*handler) (void *), void *arg)
 }
 
 #ifdef MIPS3
-unsigned long
+static u_long
 int_cal_timer(void)
 {
 	int s;
@@ -380,6 +401,14 @@ int_cal_timer(void)
 }
 #endif /* MIPS3 */
 
+/*
+ * A 1.000MHz master clock is wired to TIMER2, which in turn clocks the two
+ * other timers. On IP12 TIMER1 interrupts on MIPS interrupt 1 and TIMER2
+ * on MIPS interrupt 2.
+ *
+ * Apparently int2 doesn't like counting down from one, but two works, so
+ * we get a good 500000Hz.
+ */
 void
 int_8254_cal(void)
 {
@@ -389,17 +418,75 @@ int_8254_cal(void)
 
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
 	    TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) % 256);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (500000 / hz) % 256);
 	wbflush();
 	delay(4);
-	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (20000 / hz) / 256);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 3, (500000 / hz) / 256);
+
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
+	    TIMER_SEL1|TIMER_RATEGEN|TIMER_16BIT);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 7, 0xff);
+	wbflush();
+	delay(4);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 7, 0xff);
 
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
 	    TIMER_SEL2|TIMER_RATEGEN|TIMER_16BIT);
-	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 50);
+	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 2);
 	wbflush();
 	delay(4);
 	bus_space_write_1(iot, ioh, INT2_TIMER_0 + 11, 0);
+
+	splx(s);
+}
+
+
+static u_int
+int_8254_get_timecount(struct timecounter *tc)
+{
+	int s;
+	u_int count;
+	u_char lo, hi;
+
+	s = splhigh();
+
+        bus_space_write_1(iot, ioh, INT2_TIMER_0 + 15,
+	    TIMER_SEL1 | TIMER_LATCH);
+	lo = bus_space_read_1(iot, ioh, INT2_TIMER_0 + 7);
+	hi = bus_space_read_1(iot, ioh, INT2_TIMER_0 + 7);
+	count = 0xffff - ((hi << 8) | lo);
+
+	splx(s);
+
+	return (int_8254_tc_count + count);
+}
+
+static void
+int_8254_intr0(u_int32_t status, u_int32_t cause, u_int32_t pc,
+    u_int32_t ipending)
+{
+	struct clockframe cf;
+
+	cf.pc = pc;
+	cf.sr = status;
+
+	hardclock(&cf);
+
+	bus_space_write_4(iot, ioh, INT2_TIMER_CLEAR, 1);
+}
+
+
+static void
+int_8254_intr1(u_int32_t status, u_int32_t cause, u_int32_t pc,
+    u_int32_t ipending)
+{
+	int s;
+
+	s = splhigh();
+
+	int_8254_tc_count += 0xffff;
+	bus_space_write_4(iot, ioh, INT2_TIMER_CLEAR, 2);
+
 	splx(s);
 }
 

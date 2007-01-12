@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.36.2.1 2006/11/18 21:34:43 ad Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.36.2.2 2007/01/12 00:57:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.36.2.1 2006/11/18 21:34:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.36.2.2 2007/01/12 00:57:47 ad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1034,6 +1034,26 @@ cnw_ioctl(ifp, cmd, data)
 	int s, error = 0;
 	struct lwp *l = curlwp;	/*XXX*/
 
+	switch (cmd) {
+	case SIOCSIFADDR:
+	case SIOCSIFFLAGS:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+	case SIOCGCNWDOMAIN:
+	case SIOCGCNWSTATS:
+		break;
+	case SIOCSCNWDOMAIN:
+	case SIOCSCNWKEY:
+	case SIOCGCNWSTATUS:
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL);
+		if (error)
+			return (error);
+		break;
+	default:
+		return (EINVAL);
+	}
+
 	s = splnet();
 
 	switch (cmd) {
@@ -1093,26 +1113,14 @@ cnw_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSCNWDOMAIN:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
-		if (error)
-			break;
 		error = cnw_setdomain(sc, ifr->ifr_domain);
 		break;
 
 	case SIOCSCNWKEY:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
-		if (error)
-			break;
 		error = cnw_setkey(sc, ifr->ifr_key);
 		break;
 
 	case SIOCGCNWSTATUS:
-		error = kauth_authorize_generic(l->l_cred,
-		     KAUTH_GENERIC_ISSUSER, &l->l_acflag);
-		if (error)
-			break;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			break;
 		bus_space_read_region_1(sc->sc_memt, sc->sc_memh,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.229.2.1 2006/11/18 21:39:36 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.229.2.2 2007/01/12 01:04:14 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.229.2.1 2006/11/18 21:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.229.2.2 2007/01/12 01:04:14 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -461,7 +461,7 @@ ipintr(void)
 	int s;
 	struct mbuf *m;
 
-	while (1) {
+	while (!IF_IS_EMPTY(&ipintrq)) {
 		s = splnet();
 		IF_DEQUEUE(&ipintrq, m);
 		splx(s);
@@ -1679,19 +1679,19 @@ ip_rtaddr(struct in_addr dst)
 
 	sin = satosin(&ipforward_rt.ro_dst);
 
-	if (ipforward_rt.ro_rt == 0 || !in_hosteq(dst, sin->sin_addr)) {
-		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
-		}
+	if (!in_hosteq(dst, sin->sin_addr))
+		rtcache_free(&ipforward_rt);
+	else
+		rtcache_check(&ipforward_rt);
+	if (ipforward_rt.ro_rt == NULL) {
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = dst;
 
-		rtalloc(&ipforward_rt);
+		rtcache_init(&ipforward_rt);
+		if (ipforward_rt.ro_rt == NULL)
+			return NULL;
 	}
-	if (ipforward_rt.ro_rt == 0)
-		return ((struct in_ifaddr *)0);
 	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
 }
 
@@ -1728,10 +1728,10 @@ ip_srcroute(void)
 	struct mbuf *m;
 
 	if (ip_nhops == 0)
-		return ((struct mbuf *)0);
+		return NULL;
 	m = m_get(M_DONTWAIT, MT_SOOPTS);
 	if (m == 0)
-		return ((struct mbuf *)0);
+		return NULL;
 
 	MCLAIM(m, &inetdomain.dom_mowner);
 #define OPTSIZ	(sizeof(ip_srcrt.nop) + sizeof(ip_srcrt.srcopt))
@@ -1873,23 +1873,22 @@ ip_forward(struct mbuf *m, int srcrt)
 	}
 
 	sin = satosin(&ipforward_rt.ro_dst);
-	if ((rt = ipforward_rt.ro_rt) == 0 ||
-	    !in_hosteq(ip->ip_dst, sin->sin_addr)) {
-		if (ipforward_rt.ro_rt) {
-			RTFREE(ipforward_rt.ro_rt);
-			ipforward_rt.ro_rt = 0;
-		}
+	if (!in_hosteq(ip->ip_dst, sin->sin_addr))
+		rtcache_free(&ipforward_rt);
+	else
+		rtcache_check(&ipforward_rt);
+	if (ipforward_rt.ro_rt == NULL) {
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(struct sockaddr_in);
 		sin->sin_addr = ip->ip_dst;
 
-		rtalloc(&ipforward_rt);
-		if (ipforward_rt.ro_rt == 0) {
+		rtcache_init(&ipforward_rt);
+		if (ipforward_rt.ro_rt == NULL) {
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 			return;
 		}
-		rt = ipforward_rt.ro_rt;
 	}
+	rt = ipforward_rt.ro_rt;
 
 	/*
 	 * Save at most 68 bytes of the packet in case
@@ -1935,7 +1934,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		}
 	}
 
-	error = ip_output(m, (struct mbuf *)0, &ipforward_rt,
+	error = ip_output(m, NULL, &ipforward_rt,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
 	    (struct ip_moptions *)NULL, (struct socket *)NULL);
 
@@ -1978,7 +1977,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 #if !defined(IPSEC) && !defined(FAST_IPSEC)
-		if (ipforward_rt.ro_rt)
+		if (ipforward_rt.ro_rt != NULL)
 			destmtu = ipforward_rt.ro_rt->rt_ifp->if_mtu;
 #else
 		/*
@@ -1987,7 +1986,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
 		 * XXX quickhack!!!
 		 */
-		if (ipforward_rt.ro_rt) {
+		if (ipforward_rt.ro_rt != NULL) {
 			struct secpolicy *sp;
 			int ipsecerror;
 			size_t ipsechdr;

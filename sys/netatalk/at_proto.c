@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.9.2.1 2006/11/18 21:39:35 ad Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.9.2.2 2007/01/12 01:04:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.9.2.1 2006/11/18 21:39:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.9.2.2 2007/01/12 01:04:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,13 +71,22 @@ const struct protosw atalksw[] = {
 };
 
 struct domain		atalkdomain = {
-    PF_APPLETALK,	"appletalk",	NULL,	NULL,	NULL,
-    atalksw, &atalksw[sizeof(atalksw)/sizeof(atalksw[0])],
-    rn_inithead,
-    32,
-    sizeof(struct sockaddr_at),
-    NULL, NULL,
-    { &atintrq1, &atintrq2 },
-    { NULL },
-    MOWNER_INIT("","")
+	.dom_family = PF_APPLETALK,
+	.dom_name = "appletalk",
+	.dom_init = NULL,
+	.dom_externalize = NULL,
+	.dom_dispose = NULL,
+	.dom_protosw = atalksw,
+	.dom_protoswNPROTOSW = &atalksw[sizeof(atalksw)/sizeof(atalksw[0])],
+	.dom_rtattach = rn_inithead,
+	.dom_rtoffset = 32,
+	.dom_maxrtkey = sizeof(struct sockaddr_at),
+	.dom_ifattach = NULL,
+	.dom_ifdetach = NULL,
+	.dom_ifqueues = { &atintrq1, &atintrq2 },
+	.dom_link = { NULL },
+	.dom_mowner = MOWNER_INIT("",""),
+	.dom_rtcache = NULL,
+	.dom_rtflush = NULL,
+	.dom_rtflushall = NULL
 };

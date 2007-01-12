@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.26 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.26.4.1 2007/01/12 01:04:15 ad Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.26 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.26.4.1 2007/01/12 01:04:15 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -138,7 +138,7 @@ udp6_output(in6p, m, addr6, control, l)
 
 	priv = 0;
 	if (l && !kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag))
+	    NULL))
 		priv = 1;
 
 	if (addr6) {

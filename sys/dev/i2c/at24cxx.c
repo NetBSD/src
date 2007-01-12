@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.5 2006/03/29 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.5.8.1 2007/01/12 00:57:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -89,7 +89,7 @@ dev_type_write(seeprom_write);
 
 const struct cdevsw seeprom_cdevsw = {
 	seeprom_open, seeprom_close, seeprom_read, seeprom_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int seeprom_wait_idle(struct seeprom_softc *);

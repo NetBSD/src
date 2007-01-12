@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.38.2.1 2006/11/18 21:39:43 ad Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.38.2.2 2007/01/12 01:04:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.38.2.1 2006/11/18 21:39:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.38.2.2 2007/01/12 01:04:19 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -549,7 +549,7 @@ snpac_ioctl(
 
 	if (cmd == SIOCSSTYPE) {
 		if (l == NULL || kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+		    KAUTH_GENERIC_ISSUSER, NULL))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);

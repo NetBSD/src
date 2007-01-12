@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.213.2.1 2006/11/18 21:34:46 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.213.2.2 2007/01/12 00:57:47 ad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.213.2.1 2006/11/18 21:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.213.2.2 2007/01/12 00:57:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -471,7 +471,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 				}
 			} else {
 				/* The autoconfig didn't work :( */
-#if DEBUG
+#ifdef DEBUG
 				printf("Autoconfig failed with code %d for raid%d\n", retcode, raidID);
 #endif
 				rf_release_all_vps(cset);
@@ -488,6 +488,12 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		rf_cleanup_config_set(cset);
 		cset = next_cset;
 	}
+
+	/* if the user has specified what the root device should be
+	   then we don't touch booted_device or boothowto... */
+
+	if (rootspec != NULL)
+		return;
 
 	/* we found something bootable... */
 
@@ -1081,7 +1087,7 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		   */
 
 		raidid = raidPtr->raidid;
-#if DEBUG
+#ifdef DEBUG
 		printf("raid%d: Got component label:\n", raidid);
 		printf("raid%d: Version: %d\n", raidid, clabel->version);
 		printf("raid%d: Serial Number: %d\n", raidid, clabel->serial_number);
@@ -2638,7 +2644,7 @@ oomem:
 		    /* Got the label.  Does it look reasonable? */
 		    if (rf_reasonable_label(clabel) && 
 			(clabel->partitionSize <= size)) {
-#if DEBUG
+#ifdef DEBUG
 			    printf("Component on: %s: %llu\n",
 				cname, (unsigned long long)size);
 			    rf_print_component_label(clabel);
@@ -2828,7 +2834,7 @@ rf_reasonable_label(RF_ComponentLabel_t *clabel)
 }
 
 
-#if DEBUG
+#ifdef DEBUG
 void
 rf_print_component_label(RF_ComponentLabel_t *clabel)
 {
@@ -3029,7 +3035,7 @@ rf_have_enough_components(RF_ConfigSet_t *cset)
 			if ((ac->clabel->column == c) &&
 			    (ac->clabel->mod_counter == mod_counter)) {
 				/* it's this one... */
-#if DEBUG
+#ifdef DEBUG
 				printf("Found: %s at %d\n",
 				       ac->devname,c);
 #endif
@@ -3258,7 +3264,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 	int raidID;
 	int retcode;
 
-#if DEBUG
+#ifdef DEBUG
 	printf("RAID autoconfigure\n");
 #endif
 
@@ -3313,7 +3319,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset, int *unit)
 		return(1);
 	}
 
-#if DEBUG
+#ifdef DEBUG
 	printf("Configuring raid%d:\n",raidID);
 #endif
 

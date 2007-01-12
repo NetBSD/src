@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.3.4.1 2006/11/18 21:39:36 ad Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.3.4.2 2007/01/12 01:04:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.3.4.1 2006/11/18 21:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.3.4.2 2007/01/12 01:04:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -414,7 +414,6 @@ hci_acl_send(struct mbuf *m, struct hci_link *link,
 
 nomem:
 	if (m) m_freem(m);
-	if (n) m_freem(n);
 	if (pdu) {
 		MBUFQ_DRAIN(&pdu->lp_data);
 		pool_put(&l2cap_pdu_pool, pdu);

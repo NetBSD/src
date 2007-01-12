@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.30 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.30.4.1 2007/01/12 01:04:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.30 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.30.4.1 2007/01/12 01:04:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -146,7 +146,7 @@ adosfs_mount(mp, path, data, ndp, l)
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
@@ -864,5 +864,7 @@ struct vfsops adosfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	adosfs_vnodeopv_descs,
+	0,
+	{ NULL, NULL },
 };
 VFS_ATTACH(adosfs_vfsops);

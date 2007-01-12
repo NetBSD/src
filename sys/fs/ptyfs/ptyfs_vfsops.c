@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.19.2.1 2006/11/18 21:39:20 ad Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.19.2.2 2007/01/12 01:04:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.19.2.1 2006/11/18 21:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.19.2.2 2007/01/12 01:04:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,8 +408,8 @@ struct vfsops ptyfs_vfsops = {
 	ptyfs_statvfs,
 	ptyfs_sync,
 	ptyfs_vget,
-	NULL,				/* vfs_fhtovp */
-	NULL,				/* vfs_vptofp */
+	(void *)eopnotsupp,		/* vfs_fhtovp */
+	(void *)eopnotsupp,		/* vfs_vptofp */
 	ptyfs_init,
 	ptyfs_reinit,
 	ptyfs_done,

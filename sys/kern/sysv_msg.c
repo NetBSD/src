@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.44.4.2 2006/11/09 02:31:43 ad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.44.4.3 2007/01/12 01:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.2 2006/11/09 02:31:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.3 2007/01/12 01:04:07 ad Exp $");
 
 #define SYSVMSG
 
@@ -282,7 +282,8 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 		if ((error = ipcperm(cred, &msqptr->msg_perm, IPC_M)))
 			break;
 		if (msqbuf->msg_qbytes > msqptr->msg_qbytes &&
-		    kauth_cred_geteuid(cred) != 0) {
+		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
 			error = EPERM;
 			break;
 		}

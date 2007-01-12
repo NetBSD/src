@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16.4.1 2006/11/18 21:29:38 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.4.2 2007/01/12 01:01:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.4.1 2006/11/18 21:29:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.4.2 2007/01/12 01:01:01 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,6 +118,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.4.1 2006/11/18 21:29:38 ad Exp 
 #include <machine/mpconfig.h>
 
 #include "opt_pci_conf_mode.h"
+
+#ifdef __i386__
+#include "opt_xbox.h"
+#ifdef XBOX
+#include <machine/xbox.h>
+#endif
+#endif
 
 int pci_mode = -1;
 
@@ -250,6 +257,19 @@ pci_attach_hook(struct device *parent, struct device *self,
 int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
+
+#if defined(__i386__) && defined(XBOX)
+	/*
+	 * Scanning above the first device is fatal on the Microsoft Xbox.
+	 * If busno=1, only allow for one device.
+	 */
+	if (arch_i386_is_xbox) {
+		if (busno == 1)
+			return 1;
+		else if (busno > 1)
+			return 0;
+	}
+#endif
 
 	/*
 	 * Bus number is irrelevant.  If Configuration Mechanism 2 is in

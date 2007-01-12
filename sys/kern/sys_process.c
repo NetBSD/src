@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110.2.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.6 2007/01/12 01:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.6 2007/01/12 01:04:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,14 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			rw_exit(&proclist_lock);
 			return (ESRCH);
 		}
+
+		/* XXX elad - this should be in pfind(). */
+		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		    t, NULL, NULL, NULL);
+		if (error) {
+			rw_exit(&proclist_lock);
+			return (ESRCH);
+		}
 	}
 
 	/*
@@ -208,29 +216,8 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		}
 
 		/*
-		 *	(4) it's not owned by you, or is set-id on exec
-		 *	    (unless you're root), or...
-		 */
-		if ((kauth_cred_getuid(t->p_cred) !=
-		    kauth_cred_getuid(l->l_cred) ||
-		    ISSET(t->p_flag, P_SUGID)) &&
-		    (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			break;
-
-		/*
-		 *	(5) ...it's init, which controls the security level
-		 *	    of the entire system, and the system was not
-		 *	    compiled with permanently insecure mode turned on
-		 */
-		if (t == initproc && securelevel > -1) {
-			error = EPERM;
-			break;
-		}
-
-		/*
-		 * (6) the tracer is chrooted, and its root directory is
-		 * not at or above the root directory of the tracee
+		 * 	(4) the tracer is chrooted, and its root directory is
+		 * 	    not at or above the root directory of the tracee
 		 */
 		mutex_exit(&t->p_mutex);	/* XXXSMP */
 		tmp = proc_isunder(t, l);
@@ -239,25 +226,13 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			error = EPERM;
 			break;
 		}
-
 		break;
 
 	case  PT_READ_I:
 	case  PT_READ_D:
 	case  PT_WRITE_I:
 	case  PT_WRITE_D:
-	case  PT_CONTINUE:
 	case  PT_IO:
-	case  PT_KILL:
-	case  PT_DETACH:
-	case  PT_LWPINFO:
-	case  PT_SYSCALL:
-#ifdef COREDUMP
-	case  PT_DUMPCORE:
-#endif
-#ifdef PT_STEP
-	case  PT_STEP:
-#endif
 #ifdef PT_GETREGS
 	case  PT_GETREGS:
 #endif
@@ -270,11 +245,34 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 #endif
-
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
 #endif
+		/*
+		 * You can't read/write the memory or registers of a process
+		 * if the tracer is chrooted, and its root directory is not at
+		 * or above the root directory of the tracee.
+		 */
+		mutex_exit(&t->p_mutex);	/* XXXSMP */
+		tmp = proc_isunder(t, l);
+		mutex_enter(&t->p_mutex);	/* XXXSMP */
+		if (!tmp) {
+			error = EPERM;
+			break;
+		}
+		/*FALLTHROUGH*/
 
+	case  PT_CONTINUE:
+	case  PT_KILL:
+	case  PT_DETACH:
+	case  PT_LWPINFO:
+	case  PT_SYSCALL:
+#ifdef COREDUMP
+	case  PT_DUMPCORE:
+#endif
+#ifdef PT_STEP
+	case  PT_STEP:
+#endif
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -319,6 +317,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		break;
 	}
 
+	if (error == 0)
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
+		    NULL, NULL);
+
 	if (error != 0) {
 		rw_exit(&proclist_lock);
 		proc_delref(t);
@@ -346,6 +349,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		pheld = 0;
 		break;
 	}
+
 
 	/* Do single-step fixup if needed. */
 	FIX_SSTEP(t);
@@ -403,6 +407,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		uio.uio_resid = sizeof(tmp);
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		UIO_SETUP_SYSSPACE(&uio);
+
 		error = process_domem(l, lt, &uio);
 		if (!write)
 			*retval = tmp;
@@ -412,16 +417,6 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
 		if (error)
 			break;
-		iov.iov_base = piod.piod_addr;
-		iov.iov_len = piod.piod_len;
-		uio.uio_iov = &iov;
-		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
-		uio.uio_resid = piod.piod_len;
-		error = proc_vmspace_getref(l->l_proc, &vm);
-		if (error)
-			break;
-		uio.uio_vmspace = vm;
 		switch (piod.piod_op) {
 		case PIOD_READ_D:
 		case PIOD_READ_I:
@@ -429,6 +424,15 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			break;
 		case PIOD_WRITE_D:
 		case PIOD_WRITE_I:
+#if defined(__HAVE_RAS)
+			/*
+			 * Can't write to a RAS
+			 */
+			if (!LIST_EMPTY(&t->p_raslist) &&
+			    (ras_lookup(t, SCARG(uap, addr)) != (caddr_t)-1)) {
+				return (EACCES);
+			}
+#endif
 			uio.uio_rw = UIO_WRITE;
 			break;
 		default:
@@ -437,6 +441,17 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		}
 		if (error)
 			break;
+		error = proc_vmspace_getref(l->l_proc, &vm);
+		if (error)
+			break;
+		iov.iov_base = piod.piod_addr;
+		iov.iov_len = piod.piod_len;
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = (off_t)(unsigned long)piod.piod_offs;
+		uio.uio_resid = piod.piod_len;
+		uio.uio_vmspace = vm;
+
 		error = process_domem(l, lt, &uio);
 		piod.piod_len -= uio.uio_resid;
 		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
@@ -669,6 +684,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			uio.uio_resid = sizeof(struct reg);
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
+
 			error = process_doregs(l, lt, &uio);
 			uvmspace_free(vm);
 		}
@@ -711,6 +727,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			uio.uio_resid = sizeof(struct fpreg);
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
+
 			error = process_dofpregs(l, lt, &uio);
 			uvmspace_free(vm);
 		}
@@ -747,7 +764,6 @@ process_doregs(struct lwp *curl /*tracer*/,
     struct uio *uio)
 {
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
-	struct proc *p = l->l_proc;
 	int error;
 	struct reg r;
 	char *kv;
@@ -755,12 +771,6 @@ process_doregs(struct lwp *curl /*tracer*/,
 
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
-
-	mutex_enter(&p->p_mutex);
-	error = process_checkioperm(curl, p);
-	mutex_exit(&p->p_mutex);
-	if (error != 0)
-		return error;
 
 	kl = sizeof(r);
 	kv = (char *)&r;
@@ -808,7 +818,6 @@ process_dofpregs(struct lwp *curl /*tracer*/,
     struct uio *uio)
 {
 #if defined(PT_GETFPREGS) || defined(PT_SETFPREGS)
-	struct proc *p = l->l_proc;
 	int error;
 	struct fpreg r;
 	char *kv;
@@ -816,12 +825,6 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 
 	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)sizeof(r))
 		return EINVAL;
-
-	mutex_enter(&p->p_mutex);
-	error = process_checkioperm(curl, p);
-	mutex_exit(&p->p_mutex);
-	if (error != 0)
-		return error;
 
 	kl = sizeof(r);
 	kv = (char *)&r;
@@ -879,6 +882,7 @@ process_domem(struct lwp *curl /*tracer*/,
 	vaddr_t	addr;
 #endif
 
+	error = 0;
 	len = uio->uio_resid;
 
 	if (len == 0)
@@ -887,12 +891,6 @@ process_domem(struct lwp *curl /*tracer*/,
 #ifdef PMAP_NEED_PROCWR
 	addr = uio->uio_offset;
 #endif
-
-	mutex_enter(&p->p_mutex);
-	error = process_checkioperm(curl, p);
-	mutex_exit(&p->p_mutex);
-	if (error != 0)
-		return error;
 
 	vm = p->p_vmspace;
 
@@ -914,51 +912,6 @@ process_domem(struct lwp *curl /*tracer*/,
 	return (error);
 }
 #endif /* KTRACE || PTRACE || SYSTRACE */
-
-#if defined(KTRACE) || defined(PTRACE)
-/*
- * Ensure that a process has permission to perform I/O on another.
- * Arguments:
- *	p	The process wishing to do the I/O (the tracer).
- *	t	The process who's memory/registers will be read/written.
- */
-int
-process_checkioperm(struct lwp *l, struct proc *t)
-{
-	int error, tmp;
-
-	LOCK_ASSERT(mutex_owned(&t->p_mutex));
-
-	/*
-	 *	(2) it's not owned by you, or is set-id on exec
-	 *	    (unless you're root), or...
-	 */
-	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(l->l_cred) ||
-	    ISSET(t->p_flag, P_SUGID)) &&
-	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
-		return (error);
-
-	/*
-	 *	(3) ...it's init, which controls the security level
-	 *	    of the entire system, and the system was not
-	 *	    compiled with permanetly insecure mode turned on.
-	 */
-	if (t == initproc && securelevel > -1)
-		return (EPERM);
-
-	/*
-	 *	(4) the tracer is chrooted, and its root directory is
-	 * 	    not at or above the root directory of the tracee
-	 */
-	mutex_exit(&t->p_mutex);	/* XXXSMP */
-	tmp = proc_isunder(t, l);
-	mutex_enter(&t->p_mutex);	/* XXXSMP */
-	if (!tmp)
-		return (EPERM);
-
-	return (0);
-}
 
 void
 process_stoptrace(struct lwp *l)
@@ -983,6 +936,7 @@ process_stoptrace(struct lwp *l)
 	mi_switch(l, NULL);
 }
 
+#if defined(KTRACE) || defined(PTRACE)
 /*
  * Put process 'p' into the stopped state and optionally, notify the parent.
  */

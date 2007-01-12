@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.14 2005/12/11 12:22:48 christos Exp $ */
+/* $NetBSD: btvmei.c,v 1.14.20.1 2007/01/12 00:57:40 ad Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.14 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmei.c,v 1.14.20.1 2007/01/12 00:57:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ b3_617_slaveconfig(dev, va)
 	struct b3_617_softc *sc = (struct b3_617_softc *)dev;
 	vme_chipset_tag_t vmect;
 	int i, res;
-	char *name = 0; /* XXX gcc! */
+	const char *name = 0; /* XXX gcc! */
 
 	vmect = &sc->sc_vct;
 	if (!va)
@@ -389,7 +389,7 @@ b3_617_vmeintr(sc, lstat)
 				/*
 				 * We should raise the interrupt level
 				 * to ih->ih_prior here. How to do this
-				 * machine-independantly?
+				 * machine-independently?
 				 * To be safe, raise to the maximum.
 				 */
 				s = splhigh();

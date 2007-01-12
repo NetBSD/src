@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.7 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.8 2007/01/12 01:00:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -235,7 +235,7 @@ STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 64 bytes */
 	subl	$1, (CPU_INFO_MTX_COUNT-0x150)(%eax)/* decl does not set CF */
 	jnc	1f
 	movl	%ecx, (CPU_INFO_MTX_OLDSPL-0x150)(%eax)
-1:	movb	MTX_MINSPL(%edx), %ch
+1:	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
 	jg	2f
 	movb	%ch, (CPU_INFO_ILEVEL-0x150)(%eax)/* splraiseipl() */

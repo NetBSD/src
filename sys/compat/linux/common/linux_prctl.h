@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_prctl.h,v 1.2 2005/12/11 12:20:19 christos Exp $ */
+/*	$NetBSD: linux_prctl.h,v 1.2.20.1 2007/01/12 01:04:03 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -34,7 +34,7 @@
 #ifndef _LINUX_PRCTL_H
 #define _LINUX_PRCTL_H
 
-/* arch independant prctl(2): not yet implemnted */
+/* arch independent prctl(2): not yet implemnted */
 
 /* arch specific arch_prctl(2): only on amd64 so far */
 #if defined(__amd64__)

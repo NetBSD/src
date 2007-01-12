@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.235.2.1 2006/11/18 21:29:24 ad Exp $
+# $NetBSD: GENERIC,v 1.235.2.2 2007/01/12 01:00:53 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.235.2.1 $"
+#ident 		"GENERIC-$Revision: 1.235.2.2 $"
 
 maxusers	32
 
@@ -276,7 +276,10 @@ ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console in ofb
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
+
 radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
+options		RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
+
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 
 # make sure the console display is always wsdisplay0
@@ -323,6 +326,7 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs

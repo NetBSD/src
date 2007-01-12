@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.3.2.1 2006/11/18 21:39:36 ad Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.3.2.2 2007/01/12 01:04:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.3.2.1 2006/11/18 21:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.3.2.2 2007/01/12 01:04:14 ad Exp $");
 
 #include "opt_bluetooth.h"
 #ifdef BLUETOOTH_DEBUG
@@ -333,10 +333,8 @@ hci_usrreq(struct socket *up, int req, struct mbuf *m,
 		up->so_pcb = pcb;
 		pcb->hp_socket = up;
 
-		if (l == NULL
-		    || kauth_authorize_generic(l->l_cred,
-						KAUTH_GENERIC_ISSUSER,
-						&l->l_acflag) == 0)
+		if (l == NULL || kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL) == 0)
 			pcb->hp_flags |= HCI_PRIVILEGED;
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.46 2006/03/29 04:16:47 thorpej Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.46.8.1 2007/01/12 01:00:59 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -66,7 +66,7 @@
  * enabled by allowing any user to map the control registers for the
  * cg14 into their space.
  */
-#define CG14_MAP_REGS
+#undef CG14_MAP_REGS
 
 /*
  * The following enables 24-bit operation: when opened, the framebuffer

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577.4.5 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.4.6 2007/01/12 01:00:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.5 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.6 2007/01/12 01:00:50 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.5 2007/01/11 22:22:56 ad Exp $")
 #include "opt_realmem.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
+#include "opt_xbox.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +159,13 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.5 2007/01/11 22:22:56 ad Exp $")
 
 #ifdef VM86
 #include <machine/vm86.h>
+#endif
+
+#ifdef XBOX
+#include <machine/xbox.h>
+
+int arch_i386_is_xbox = 0;
+uint32_t arch_i386_xbox_memsize = 0;
 #endif
 
 #include "acpi.h"
@@ -240,7 +248,11 @@ int	i386_has_sse2;
 int	tmx86_has_longrun;
 
 vaddr_t	msgbuf_vaddr;
-paddr_t msgbuf_paddr;
+struct {
+	paddr_t paddr;
+	psize_t sz;
+} msgbuf_p_seg[VM_PHYSSEG_MAX];
+unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
@@ -396,25 +408,41 @@ native_loader(int bl_boothowto, int bl_bootdev,
 void
 cpu_startup()
 {
-	int x;
+	int x, y;
 	vaddr_t minaddr, maxaddr;
+	psize_t sz;
 	char pbuf[9];
+
+	/*
+	 * For console drivers that require uvm and pmap to be initialized,
+	 * we'll give them one more chance here...
+	 */
+	consinit();
+
+#ifdef XBOX
+	xbox_startup();
+#endif
 
 	/*
 	 * Initialize error message buffer (et end of core).
 	 */
-	msgbuf_vaddr = uvm_km_alloc(kernel_map, x86_round_page(MSGBUFSIZE), 0,
-	    UVM_KMF_VAONLY);
+	if (msgbuf_p_cnt == 0)
+		panic("msgbuf paddr map has not been set up");
+	for (x = 0, sz = 0; x < msgbuf_p_cnt; sz += msgbuf_p_seg[x++].sz)
+		continue;
+	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
 	/* msgbuf_paddr was init'd in pmap */
-	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
-		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
+		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
+			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
+			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+	}
 	pmap_update(pmap_kernel());
 
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+	initmsgbuf((caddr_t)msgbuf_vaddr, sz);
 
 	printf("%s%s", copyright, version);
 
@@ -886,6 +914,12 @@ haltsys:
 #endif
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+#ifdef XBOX
+		if (arch_i386_is_xbox) {
+			xbox_poweroff();
+			for (;;);
+		}
+#endif
 #if NACPI > 0
 		if (acpi_softc != NULL) {
 			delay(500000);
@@ -1497,6 +1531,29 @@ init386(paddr_t first_avail)
 	lwp0.l_addr = proc0paddr;
 	cpu_info_primary.ci_curpcb = &lwp0.l_addr->u_pcb;
 
+#ifdef XBOX
+	/*
+	 * The following code queries the PCI ID of 0:0:0. For the XBOX,
+	 * This should be 0x10de / 0x02a5.
+	 *
+	 * This is exactly what Linux does.
+	 */
+	outl(0xcf8, 0x80000000);
+	if (inl(0xcfc) == 0x02a510de) {
+		arch_i386_is_xbox = 1;
+		xbox_lcd_init();
+		xbox_lcd_writetext("NetBSD/i386 ");
+
+		/*
+		 * We are an XBOX, but we may have either 64MB or 128MB of
+		 * memory. The PCI host bridge should be programmed for this,
+		 * so we just query it. 
+		 */
+		outl(0xcf8, 0x80000084);
+		arch_i386_xbox_memsize = (inl(0xcfc) == 0x7FFFFFF) ? 128 : 64;
+	}
+#endif /* XBOX */
+
 	x86_bus_space_init();
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
 	/*
@@ -1823,6 +1880,7 @@ init386(paddr_t first_avail)
 		psize_t sz = round_page(MSGBUFSIZE);
 		psize_t reqsz = sz;
 
+	search_again:
 		for (x = 0; x < vm_nphysseg; x++) {
 			vps = &vm_physmem[x];
 			if (ptoa(vps->avail_end) == avail_end)
@@ -1837,7 +1895,8 @@ init386(paddr_t first_avail)
 
 		vps->avail_end -= atop(sz);
 		vps->end -= atop(sz);
-		msgbuf_paddr = ptoa(vps->avail_end);
+		msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+		msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
 
 		/* Remove the last segment if it now has no pages. */
 		if (vps->start == vps->end) {
@@ -1851,10 +1910,17 @@ init386(paddr_t first_avail)
 				avail_end = vm_physmem[x].avail_end;
 		avail_end = ptoa(avail_end);
 
+		if (sz != reqsz) {
+			reqsz -= sz;
+			if (msgbuf_p_cnt != VM_PHYSSEG_MAX) {
+		/* if still segments available, get memory from next one ... */
+				sz = reqsz;
+				goto search_again;
+			}
 		/* Warn if the message buffer had to be shrunk. */
-		if (sz != reqsz)
 			printf("WARNING: %ld bytes not available for msgbuf "
-			    "in last cluster (%ld used)\n", reqsz, sz);
+			       "in last cluster (%ld used)\n", (long)MSGBUFSIZE, MSGBUFSIZE - reqsz);
+		}
 	}
 
 	/*
@@ -2164,6 +2230,13 @@ cpu_reset()
 	struct region_descriptor region;
 
 	disable_intr();
+
+#ifdef XBOX
+	if (arch_i386_is_xbox) {
+		xbox_reboot();
+		for (;;);
+	}
+#endif
 
 	/*
 	 * Ensure the NVRAM reset byte contains something vaguely sane.

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.4.4.1 2006/11/18 21:34:28 ad Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.4.4.2 2007/01/12 00:57:40 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.4.4.1 2006/11/18 21:34:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.4.4.2 2007/01/12 00:57:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,21 +114,31 @@ amdpm_smbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 {
         struct amdpm_softc *sc  = (struct amdpm_softc *) cookie;
 	sc->sc_smbus_slaveaddr  = addr;
+	u_int8_t *p = vbuf;
+	int rv;
 	
 	if (I2C_OP_READ_P(op) && (cmdlen == 0) && (buflen == 1)) {
-	  return (amdpm_smbus_receive_1(sc));    
+	  rv = amdpm_smbus_receive_1(sc);
+	  if (rv == -1)
+		return -1;
+	  *p = (u_int8_t)rv;
+	  return 0;
 	}
 	
 	if ( (I2C_OP_READ_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-	  return (amdpm_smbus_read_1(sc, *(const uint8_t*)cmd));
+	  rv = amdpm_smbus_read_1(sc, *(const uint8_t*)cmd);
+	  if (rv == -1)
+		return -1;
+	  *p = (u_int8_t)rv;
+	  return 0;
 	}
 	
 	if ( (I2C_OP_WRITE_P(op)) && (cmdlen == 0) && (buflen == 1)) {
-	  return (amdpm_smbus_send_1(sc, *(uint8_t*)vbuf));
+	  return amdpm_smbus_send_1(sc, *(uint8_t*)vbuf);
 	}
 	
 	if ( (I2C_OP_WRITE_P(op)) && (cmdlen == 1) && (buflen == 1)) {
-	  return (amdpm_smbus_write_1(sc,  *(const uint8_t*)cmd, *(uint8_t*)vbuf));
+	  return amdpm_smbus_write_1(sc,  *(const uint8_t*)cmd, *(uint8_t*)vbuf);
 	}
 	
 	return (-1);  
@@ -154,35 +164,45 @@ static void
 amdpm_smbus_clear_gsr(struct amdpm_softc *sc)
 {
         /* clear register */
-        u_int16_t data = 0xFFFF;     
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_STAT, data);
+        u_int16_t data = 0xFFFF;
+	int off = (sc->sc_nforce ? 0xe0 : 0);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_STAT - off, data);
 }
 
 static u_int16_t
 amdpm_smbus_get_gsr(struct amdpm_softc *sc)
 {
-        return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_STAT));  
+	int off = (sc->sc_nforce ? 0xe0 : 0);
+        return (bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_STAT - off));  
 }
 
 static int
 amdpm_smbus_send_1(struct amdpm_softc *sc,  u_int8_t val)
 {
+	u_int16_t data = 0;
+	int off = (sc->sc_nforce ? 0xe0 : 0);
+
         /* first clear gsr */
         amdpm_smbus_clear_gsr(sc);
 
 	/* write smbus slave address to register */
-	u_int16_t data = 0;
 	data = sc->sc_smbus_slaveaddr;
 	data <<= 1;
 	data |= AMDPM_8111_SMBUS_SEND;    
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTADDR, data);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTADDR - off, data);
 	
 	data = val;    
 	/* store data */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTDATA, data);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTDATA - off, data);
 	/* host start */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_CTRL,
-			  AMDPM_8111_SMBUS_GSR_SB);	
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_CTRL - off,
+	    AMDPM_8111_SMBUS_GSR_SB);	
+
 	return(amdpm_smbus_check_done(sc));    
 }
 
@@ -190,22 +210,28 @@ amdpm_smbus_send_1(struct amdpm_softc *sc,  u_int8_t val)
 static int
 amdpm_smbus_write_1(struct amdpm_softc *sc, u_int8_t cmd, u_int8_t val)
 {
+	u_int16_t data = 0;
+	int off = (sc->sc_nforce ? 0xe0 : 0);
+
         /* first clear gsr */
         amdpm_smbus_clear_gsr(sc);  
   
-	u_int16_t data = 0;
 	data = sc->sc_smbus_slaveaddr;
 	data <<= 1;
 	data |= AMDPM_8111_SMBUS_WRITE;    
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTADDR, data);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTADDR - off, data);
 	
 	data = val;    
 	/* store cmd */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTCMD, cmd);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTCMD - off, cmd);
 	/* store data */    
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTDATA, data);    
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTDATA - off, data);    
 	/* host start */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_CTRL, AMDPM_8111_SMBUS_GSR_WB);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_CTRL - off, AMDPM_8111_SMBUS_GSR_WB);
 	
 	return (amdpm_smbus_check_done(sc));    
 }
@@ -213,53 +239,65 @@ amdpm_smbus_write_1(struct amdpm_softc *sc, u_int8_t cmd, u_int8_t val)
 static int
 amdpm_smbus_receive_1(struct amdpm_softc *sc)
 {
+	u_int16_t data = 0;
+	int off = (sc->sc_nforce ? 0xe0 : 0);
+
         /* first clear gsr */
         amdpm_smbus_clear_gsr(sc);  
 
 	/* write smbus slave address to register */
-	u_int16_t data = 0;
 	data = sc->sc_smbus_slaveaddr;
 	data <<= 1;
 	data |= AMDPM_8111_SMBUS_RX;    
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTADDR, data);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTADDR - off, data);
 	
 	/* start smbus cycle */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_CTRL, AMDPM_8111_SMBUS_GSR_RXB);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_CTRL - off, AMDPM_8111_SMBUS_GSR_RXB);
 	
 	/* check for errors */
 	if (amdpm_smbus_check_done(sc) < 0)
 	  return (-1);
 	
 	/* read data */
-	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTDATA);    
+	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTDATA - off);
 	u_int8_t ret = (u_int8_t)(data & 0x00FF);
 	return (ret);
 }
 
 static int
 amdpm_smbus_read_1(struct amdpm_softc *sc, u_int8_t cmd)
-{  
+{
+	u_int16_t data = 0;
+	u_int8_t ret;
+	int off = (sc->sc_nforce ? 0xe0 : 0);
+
         /* first clear gsr */
         amdpm_smbus_clear_gsr(sc);  
 
 	/* write smbus slave address to register */
-	u_int16_t data = 0;
 	data = sc->sc_smbus_slaveaddr;
 	data <<= 1;
 	data |= AMDPM_8111_SMBUS_READ;    
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTADDR, data);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTADDR - off, data);
 	
 	/* store cmd */
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTCMD, cmd);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTCMD - off, cmd);
 	/* host start */
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_CTRL, AMDPM_8111_SMBUS_GSR_RB);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_CTRL - off, AMDPM_8111_SMBUS_GSR_RB);
 	
 	/* check for errors */
 	if (amdpm_smbus_check_done(sc) < 0)
 	  return (-1);
 	
 	/* store data */    
-	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh, AMDPM_8111_SMBUS_HOSTDATA);
-	u_int8_t ret = (u_int8_t)(data & 0x00FF);
+	data = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
+	    AMDPM_8111_SMBUS_HOSTDATA - off);
+	ret = (u_int8_t)(data & 0x00FF);
 	return (ret);
 }

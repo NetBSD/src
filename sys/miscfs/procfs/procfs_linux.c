@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.25.4.3 2006/11/18 21:39:29 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.25.4.4 2007/01/12 01:04:11 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.3 2006/11/18 21:39:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.25.4.4 2007/01/12 01:04:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,8 @@ procfs_dodevices(struct lwp *curl, struct proc *p,
 	char *bf;
 	int offset = 0;
 	int i, error = ENAMETOOLONG;
+
+	/* XXX elad - may need filtering. */
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
@@ -357,6 +359,8 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	struct mount *mp, *nmp;
 	struct statvfs *sfs;
 	int error = 0;
+
+	/* XXX elad - may need filtering. */
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 	simple_lock(&mountlist_slock);

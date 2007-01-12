@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.50.4.1 2006/11/18 21:34:43 ad Exp $
+#	$NetBSD: files.pcmcia,v 1.50.4.2 2007/01/12 00:57:47 ad Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -42,12 +42,6 @@ file	dev/pcmcia/spc_pcmcia.c			spc_pcmcia
 
 attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia
-
-# Digital RoamAbout / Lucent WaveLAN PCMCIA card
-#attach	wl at pcmcia with wl_pcmcia
-#file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
-#defflag	opt_wl_pcmcia.h	WL_TIMER WLP_CC_DEBUG WL_DEBUG MMC_STATUS
-#				WL_IFCNTRS WL_TIMING
 
 # PCMCIA IDE controller
 attach	wdc at pcmcia with wdc_pcmcia
@@ -96,6 +90,8 @@ file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
 # Lucent & Intersil WaveLan IEEE (802.11)
 attach	wi at pcmcia with wi_pcmcia
 file	dev/pcmcia/if_wi_pcmcia.c		wi_pcmcia
+# The spectrun24t firmware for symbol LA4100 cards is 70k, allow its exclusion
+defparam	opt_if_wi_pcmcia.h	WI_PCMCIA_SPECTRUM24T_FW=1
 
 # Xircom Ethernet and Ethernet+Modem cards
 device	xirc { }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.5 2007/01/11 22:23:00 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.6 2007/01/12 01:04:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  *		through macros.  However, machine-independent code must
  *		be able to access the following members:
  *
- *		integer			mtx_minspl
+ *		ipl_cookie_t		mtx_ipl
  *		__cpu_simple_lock_t	mtx_lock
  *
  * If an architecture can be considered 'simple' (no interlock required in
@@ -163,7 +163,7 @@ typedef struct kmutex kmutex_t;
 #define	MUTEX_BIT_SPIN			0x01
 #define	MUTEX_BIT_WAITERS		0x02
 
-#define	MUTEX_SPIN_MINSPL(mtx)		((mtx)->mtx_minspl)
+#define	MUTEX_SPIN_IPL(mtx)		((mtx)->mtx_ipl)
 #define	MUTEX_SPIN_OLDSPL(ci)		((ci)->ci_mtx_oldspl)
 
 void	mutex_vector_enter(kmutex_t *);
@@ -172,6 +172,7 @@ void	smutex_vector_enter(kmutex_t *, int, uintptr_t);
 
 #endif	/* __MUTEX_PRIVATE */
 
+#include <machine/intr.h>
 #include <machine/mutex.h>
 
 #ifdef _KERNEL

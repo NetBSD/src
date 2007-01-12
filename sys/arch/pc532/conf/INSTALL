@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.39.14.1 2006/11/18 21:29:27 ad Exp $
+#	$NetBSD: INSTALL,v 1.39.14.2 2007/01/12 01:00:55 ad Exp $
 #
 # INSTALL -- install kernel
 #
@@ -28,7 +28,7 @@ file-system 	NFS				# Network File System client
 #file-system	PTYFS				# /dev/pts/N support
 
 # Filesystem options
-#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 
 options 	KMEMSTATS			# saves about 50k

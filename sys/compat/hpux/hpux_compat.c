@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.79.4.3 2006/11/18 21:39:04 ad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.79.4.4 2007/01/12 01:04:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.79.4.3 2006/11/18 21:39:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.79.4.4 2007/01/12 01:04:02 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -539,18 +539,19 @@ hpux_sys_ulimit(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct hpux_sys_ulimit_args *uap = v;
-	struct rlimit *limp;
+	struct rlimit *limp, alim;
 	int error = 0;
 
 	limp = &p->p_rlimit[RLIMIT_FSIZE];
 	switch (SCARG(uap, cmd)) {
 	case 2:
 		SCARG(uap, newlimit) *= 512;
-		if (SCARG(uap, newlimit) > limp->rlim_max &&
-		    (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		alim.rlim_cur = alim.rlim_max = SCARG(uap, newlimit);
+
+		error = dosetrlimit(l, l->l_proc, RLIMIT_FSIZE, &alim);
+		if (error)
 			break;
-		limp->rlim_cur = limp->rlim_max = SCARG(uap, newlimit);
+
 		/* else fall into... */
 
 	case 1:

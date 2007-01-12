@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.31.2.1 2006/11/18 21:39:43 ad Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.31.2.2 2007/01/12 01:04:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.31.2.1 2006/11/18 21:39:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.31.2.2 2007/01/12 01:04:19 ad Exp $");
 
 #include "opt_iso.h"
 
@@ -224,7 +224,7 @@ iso_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		suf.s = ntohs(suf.s);
 		if (suf.s < ISO_PORT_RESERVED &&
 		    (l == NULL || kauth_authorize_generic(l->l_cred,
-		     KAUTH_GENERIC_ISSUSER, &l->l_acflag)))
+		     KAUTH_GENERIC_ISSUSER, NULL)))
 			return EACCES;
 	} else {
 		char  *cp;
@@ -511,8 +511,7 @@ iso_pcbdetach(void *v)
 		printf("iso_pcbdetach 3 \n");
 	}
 #endif
-	if (isop->isop_route.ro_rt)
-		rtfree(isop->isop_route.ro_rt);
+	rtcache_free((struct route *)&isop->isop_route);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
 		printf("iso_pcbdetach 3.1\n");

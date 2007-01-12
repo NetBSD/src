@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.37.2.1 2006/11/18 21:29:24 ad Exp $	*/
+/*	$NetBSD: zs.c,v 1.37.2.2 2007/01/12 01:00:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -47,14 +47,14 @@
  * help from Allen Briggs and Gordon Ross <gwr@NetBSD.org>. Noud de
  * Brouwer field-tested the driver at a local ISP.
  *
- * Bill Studenmund and Gordon Ross then ported the machine-independant
+ * Bill Studenmund and Gordon Ross then ported the machine-independent
  * z8530 driver to work with port-mac68k. NetBSD 1.2 contained an
  * intermediate version (mac68k using a local, patched version of
  * the m.i. drivers), with NetBSD 1.3 containing a full version.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37.2.1 2006/11/18 21:29:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37.2.2 2007/01/12 01:00:53 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

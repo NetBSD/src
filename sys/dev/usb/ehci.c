@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.111.2.1 2006/11/18 21:34:50 ad Exp $ */
+/*	$NetBSD: ehci.c,v 1.111.2.2 2007/01/12 00:57:48 ad Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.111.2.1 2006/11/18 21:34:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.111.2.2 2007/01/12 00:57:48 ad Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -188,8 +188,6 @@ Static void		ehci_noop(usbd_pipe_handle pipe);
 
 Static int		ehci_str(usb_string_descriptor_t *, int, const char *);
 Static void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
-Static void		ehci_pcd_able(ehci_softc_t *, int);
-Static void		ehci_pcd_enable(void *);
 Static void		ehci_disown(ehci_softc_t *, int, int);
 
 Static ehci_soft_qh_t  *ehci_alloc_sqh(ehci_softc_t *);
@@ -494,7 +492,6 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_async_head = sqh;
 	EOWRITE4(sc, EHCI_ASYNCLISTADDR, sqh->physaddr | EHCI_LINK_QH);
 
-	usb_callout_init(sc->sc_tmo_pcd);
 	usb_callout_init(sc->sc_tmo_intrlist);
 
 	lockinit(&sc->sc_doorbell_lock, PZERO, "ehcidb", 0, 0);
@@ -607,13 +604,6 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 	if (eintrs & EHCI_STS_PCD) {
 		ehci_pcd(sc, sc->sc_intrxfer);
-		/*
-		 * Disable PCD interrupt for now, because it will be
-		 * on until the port has been reset.
-		 */
-		ehci_pcd_able(sc, 0);
-		/* Do not allow RHSC interrupts > 1 per second */
-                usb_callout(sc->sc_tmo_pcd, hz, ehci_pcd_enable, sc);
 		eintrs &= ~EHCI_STS_PCD;
 	}
 
@@ -630,24 +620,6 @@ ehci_intr1(ehci_softc_t *sc)
 	return (1);
 }
 
-void
-ehci_pcd_able(ehci_softc_t *sc, int on)
-{
-	DPRINTFN(4, ("ehci_pcd_able: on=%d\n", on));
-	if (on)
-		sc->sc_eintrs |= EHCI_STS_PCD;
-	else
-		sc->sc_eintrs &= ~EHCI_STS_PCD;
-	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
-}
-
-void
-ehci_pcd_enable(void *v_sc)
-{
-	ehci_softc_t *sc = v_sc;
-
-	ehci_pcd_able(sc, 1);
-}
 
 void
 ehci_pcd(ehci_softc_t *sc, usbd_xfer_handle xfer)
@@ -773,7 +745,6 @@ ehci_idone(struct ehci_xfer *ex)
 	ehci_soft_qtd_t *sqtd, *lsqtd;
 	u_int32_t status = 0, nstatus = 0;
 	int actlen;
-	uint pkts_left;
 
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p\n", ex));
 #ifdef DIAGNOSTIC
@@ -823,24 +794,19 @@ ehci_idone(struct ehci_xfer *ex)
 	 * If there are left over TDs we need to update the toggle.
 	 * The default pipe doesn't need it since control transfers
 	 * start the toggle at 0 every time.
+	 * For a short transfer we need to update the toggle for the missing
+	 * packets within the qTD.
 	 */
-	if (sqtd != lsqtd->nextqtd &&
+	if ((sqtd != lsqtd->nextqtd || EHCI_QTD_GET_BYTES(status)) &&
 	    xfer->pipe->device->default_pipe != xfer->pipe) {
-		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
+		DPRINTFN(2, ("ehci_idone: need toggle update "
+			     "status=%08x nstatus=%08x\n", status, nstatus));
 #if 0
 		ehci_dump_sqh(epipe->sqh);
 		ehci_dump_sqtds(ex->sqtdstart);
 #endif
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
-
-	/*
-	 * For a short transfer we need to update the toggle for the missing
-	 * packets within the qTD.
-	 */
-	pkts_left = EHCI_QTD_GET_BYTES(status) /
-	    UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
-	epipe->nexttoggle ^= pkts_left % 2;
 
 	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, status=0x%x\n",
 			   xfer->length, actlen, status));
@@ -957,7 +923,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 		return (rv);
 
 	usb_uncallout(sc->sc_tmo_intrlist, ehci_intrlist_timeout, sc);
-	usb_uncallout(sc->sc_tmo_pcd, ehci_pcd_enable, sc);
 
 	if (sc->sc_powerhook != NULL)
 		powerhook_disestablish(sc->sc_powerhook);
@@ -1399,7 +1364,7 @@ ehci_open(usbd_pipe_handle pipe)
 	naks = 8;		/* XXX */
 	sqh = ehci_alloc_sqh(sc);
 	if (sqh == NULL)
-		goto bad0;
+		return (USBD_NOMEM);
 	/* qh_link filled when the QH is added */
 	sqh->qh.qh_endp = htole32(
 		EHCI_QH_SET_ADDR(addr) |
@@ -1435,7 +1400,7 @@ ehci_open(usbd_pipe_handle pipe)
 			printf("ehci_open: usb_allocmem()=%d\n", err);
 #endif
 		if (err)
-			goto bad1;
+			goto bad;
 		pipe->methods = &ehci_device_ctrl_methods;
 		s = splusb();
 		ehci_add_qh(sqh, sc->sc_async_head);
@@ -1450,21 +1415,36 @@ ehci_open(usbd_pipe_handle pipe)
 	case UE_INTERRUPT:
 		pipe->methods = &ehci_device_intr_methods;
 		ival = pipe->interval;
-		if (ival == USBD_DEFAULT_INTERVAL)
-			ival = ed->bInterval;
-		return (ehci_device_setintr(sc, sqh, ival));
+		if (ival == USBD_DEFAULT_INTERVAL) {
+			if (speed == EHCI_QH_SPEED_HIGH) {
+				if (ed->bInterval > 16) {
+					/*
+					 * illegal with high-speed, but there
+					 * were documentation bugs in the spec,
+					 * so be generous
+					 */
+					ival = 256;
+				} else
+					ival = (1 << (ed->bInterval - 1)) / 8;
+			} else
+				ival = ed->bInterval;
+		}
+		err = ehci_device_setintr(sc, sqh, ival);
+		if (err)
+			goto bad;
+		break;
 	case UE_ISOCHRONOUS:
 		pipe->methods = &ehci_device_isoc_methods;
-		return (USBD_INVAL);
+		/* FALLTHROUGH */
 	default:
-		return (USBD_INVAL);
+		err = USBD_INVAL;
+		goto bad;
 	}
 	return (USBD_NORMAL_COMPLETION);
 
- bad1:
+ bad:
 	ehci_free_sqh(sc, sqh);
- bad0:
-	return (USBD_NOMEM);
+	return (err);
 }
 
 /*
@@ -1626,7 +1606,7 @@ Static usb_endpoint_descriptor_t ehci_endpd = {
 	UE_DIR_IN | EHCI_INTR_ENDPT,
 	UE_INTERRUPT,
 	{8, 0},			/* max packet */
-	255
+	12
 };
 
 Static usb_hub_descriptor_t ehci_hubd = {
@@ -1899,10 +1879,6 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 		case UHF_C_PORT_SUSPEND:
 		case UHF_C_PORT_OVER_CURRENT:
 		case UHF_C_PORT_RESET:
-			/* Enable RHSC interrupt if condition is cleared. */
-			if ((OREAD4(sc, port) >> 16) == 0)
-				ehci_pcd_able(sc, 1);
-			break;
 		default:
 			break;
 		}

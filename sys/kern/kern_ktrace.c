@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.4.3 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.4 2007/01/12 01:04:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.3 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.4 2007/01/12 01:04:06 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -1141,7 +1141,8 @@ ktrops(struct lwp *curl, struct proc *p, int ops, int facs,
 			ktradref(p);
 		}
 		p->p_traceflag |= facs;
-		if (kauth_cred_geteuid(curl->l_cred) == 0)
+		if (kauth_authorize_generic(curl->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL) == 0)
 			p->p_traceflag |= KTRFAC_ROOT;
 	} else {
 		/* KTROP_CLEAR */
@@ -1352,19 +1353,11 @@ ktrace_thread(void *arg)
 int
 ktrcanset(struct lwp *calll, struct proc *targetp)
 {
-	kauth_cred_t caller = calll->l_cred;
-	kauth_cred_t target = targetp->p_cred;
-
 	LOCK_ASSERT(mutex_owned(&targetp->p_mutex));
 	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
 
-	if ((kauth_cred_geteuid(caller) == kauth_cred_getuid(target) &&
-	    kauth_cred_getuid(target) == kauth_cred_getsvuid(target) &&
-	    kauth_cred_getgid(caller) == kauth_cred_getgid(target) &&	/* XXX */
-	    kauth_cred_getgid(target) == kauth_cred_getsvgid(target) &&
-	    (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
-	    (targetp->p_flag & P_SUGID) == 0) ||
-	    kauth_cred_geteuid(caller) == 0)
+	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_CANKTRACE,
+	    targetp, NULL, NULL, NULL) == 0)
 		return (1);
 
 	return (0);

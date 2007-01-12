@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90.8.1 2006/11/18 21:29:37 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90.8.2 2007/01/12 01:01:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90.8.1 2006/11/18 21:29:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90.8.2 2007/01/12 01:01:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -886,7 +886,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * (Cacheable is implied by default).  Unfortunately, the last bytes
 	 * of kernel text and the first bytes of kernel data will often be
 	 * sharing the same page.  Therefore, the last page of kernel text
-	 * has to be mapped as read/write, to accomodate the data.
+	 * has to be mapped as read/write, to accommodate the data.
 	 */
 	eva = m68k_trunc_page((vaddr_t)etext);
 	for (; va < eva; va += PAGE_SIZE, pa += PAGE_SIZE)

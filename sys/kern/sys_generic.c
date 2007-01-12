@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.92.2.4 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92.2.5 2007/01/12 01:04:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.4 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.5 2007/01/12 01:04:07 ad Exp $");
 
 #include "opt_ktrace.h"
 

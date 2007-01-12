@@ -1,4 +1,4 @@
-/* $NetBSD: bt3c.c,v 1.3.2.1 2006/11/18 21:34:43 ad Exp $ */
+/* $NetBSD: bt3c.c,v 1.3.2.2 2007/01/12 00:57:47 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Iain D. Hibbert,
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.3.2.1 2006/11/18 21:34:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt3c.c,v 1.3.2.2 2007/01/12 00:57:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -572,6 +572,7 @@ bt3c_load_firmware(struct bt3c_softc *sc)
 	if (size > 10 * 1024) {	/* sanity check */
 		printf("%s: firmware file seems WAY too big!\n",
 			sc->sc_dev.dv_xname);
+		firmware_close(fh);
 		return EFBIG;
 	}
 #endif
@@ -880,7 +881,7 @@ bt3c_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_unit.hci_start_cmd = bt3c_start;
 	sc->sc_unit.hci_start_acl = bt3c_start;
 	sc->sc_unit.hci_start_sco = bt3c_start;
-	sc->sc_unit.hci_ipl = IPL_TTY;
+	sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
 	hci_attach(&sc->sc_unit);
 
 	/* establish a power change hook */
@@ -968,7 +969,7 @@ bt3c_power(int why, void *arg)
 			sc->sc_unit.hci_start_cmd = bt3c_start;
 			sc->sc_unit.hci_start_acl = bt3c_start;
 			sc->sc_unit.hci_start_sco = bt3c_start;
-			sc->sc_unit.hci_ipl = IPL_TTY;
+			sc->sc_unit.hci_ipl = makeiplcookie(IPL_TTY);
 			hci_attach(&sc->sc_unit);
 		}
 		break;

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.61.4.1 2006/11/18 21:29:28 ad Exp $
+# 	$NetBSD: INSTALL,v 1.61.4.2 2007/01/12 01:00:56 ad Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -53,7 +53,7 @@ file-system 	KERNFS			# kernel data-structure filesystem
 #file-system	PTYFS			# /dev/pts/N support
 
 # Filesystem options
-#options 	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code to save space
+#options 	NFS_V2_ONLY		# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 
 

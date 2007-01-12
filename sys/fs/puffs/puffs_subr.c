@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.9.2.2 2006/11/18 21:39:20 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.9.2.3 2007/01/12 01:04:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.9.2.2 2006/11/18 21:39:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.9.2.3 2007/01/12 01:04:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -52,6 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.9.2.2 2006/11/18 21:39:20 ad Exp $"
 
 POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
     &pool_allocator_nointr);
+
+#ifdef DEBUG
+int puffsdebug;
+#endif
 
 
 static void puffs_gop_size(struct vnode *, off_t, off_t *, int);
@@ -198,6 +202,7 @@ int
 puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	void *cookie, struct componentname *cnp, enum vtype type, dev_t rdev)
 {
+	struct puffs_mount *pmp = MPTOPUFFSMP(mp);
 	struct vnode *vp;
 	int error;
 
@@ -214,6 +219,9 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 	vp->v_type = type;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	*vpp = vp;
+
+	if ((cnp->cn_flags & MAKEENTRY) && PUFFS_DOCACHE(pmp))
+		cache_enter(dvp, vp, cnp);
 
 	return 0;
 }
@@ -247,10 +255,11 @@ puffs_putvnode(struct vnode *vp)
  * XXX: lists, although lookup cache mostly shields us from this
  */
 struct vnode *
-puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie)
+puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 {
 	struct puffs_node *pnode;
 	struct vnode *vp;
+	int vgetflags;
 
 	simple_lock(&pmp->pmp_lock);
 	LIST_FOREACH(pnode, &pmp->pmp_pnodelist, pn_entries) {
@@ -258,32 +267,35 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie)
 			break;
 	}
 	simple_unlock(&pmp->pmp_lock);
+
+	/* XXX: what lock controls this? */
 	if (!pnode)
 		return NULL;
 	vp = pnode->pn_vp;
 
-	if (pnode->pn_stat & PNODE_INACTIVE) {
-		if (vget(vp, LK_EXCLUSIVE | LK_RETRY))
-			return NULL;
-	} else {
-		vref(vp);
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	}
+	if (lock)
+		vgetflags = LK_EXCLUSIVE | LK_RETRY;
+	else
+		vgetflags = 0;
+
+	if (vget(vp, vgetflags))
+		return NULL;
+
 	return vp;
 }
 
 void
-puffs_makecn(struct puffs_cn *pcn, const struct componentname *cn)
+puffs_makecn(struct puffs_kcn *pkcn, const struct componentname *cn)
 {
 
-	pcn->pcn_nameiop = cn->cn_nameiop;
-	pcn->pcn_flags = cn->cn_flags;
-	pcn->pcn_pid = cn->cn_lwp->l_proc->p_pid;
-	puffs_credcvt(&pcn->pcn_cred, cn->cn_cred);
+	pkcn->pkcn_nameiop = cn->cn_nameiop;
+	pkcn->pkcn_flags = cn->cn_flags;
+	pkcn->pkcn_pid = cn->cn_lwp->l_proc->p_pid;
+	puffs_credcvt(&pkcn->pkcn_cred, cn->cn_cred);
 
-	(void)memcpy(&pcn->pcn_name, cn->cn_nameptr, cn->cn_namelen);
-	pcn->pcn_name[cn->cn_namelen] = '\0';
-	pcn->pcn_namelen = cn->cn_namelen;
+	(void)memcpy(&pkcn->pkcn_name, cn->cn_nameptr, cn->cn_namelen);
+	pkcn->pkcn_name[cn->cn_namelen] = '\0';
+	pkcn->pkcn_namelen = cn->cn_namelen;
 }
 
 /*
@@ -372,4 +384,51 @@ puffs_updatenode(struct vnode *vp, int flags)
 	/* setattr_arg ownership shifted to callee */
 	puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_SETATTR,
 	    setattr_arg, sizeof(struct puffs_vnreq_setattr), VPTOPNC(vp));
+}
+
+void
+puffs_updatevpsize(struct vnode *vp)
+{
+	struct vattr va;
+
+	if (VOP_GETATTR(vp, &va, FSCRED, NULL))
+		return;
+
+	if (va.va_size != VNOVAL)
+		vp->v_size = va.va_size;
+}
+
+/*
+ * We're dead, kaput, RIP, slightly more than merely pining for the
+ * fjords, belly-up, fallen, lifeless, finished, expired, gone to meet
+ * our maker, ceased to be, etcetc.  YASD.  It's a dead FS!
+ */
+void
+puffs_userdead(struct puffs_mount *pmp)
+{
+	struct puffs_park *park;
+
+	simple_lock(&pmp->pmp_lock);
+
+	/*
+	 * Mark filesystem status as dying so that operations don't
+	 * attempt to march to userspace any longer.
+	 */
+	pmp->pmp_status = PUFFSTAT_DYING;
+
+	/* and wakeup processes waiting for a reply from userspace */
+	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
+		park->park_preq->preq_rv = ENXIO;
+		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
+		wakeup(park);
+	}
+
+	/* wakeup waiters for completion of vfs/vnode requests */
+	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
+		park->park_preq->preq_rv = ENXIO;
+		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
+		wakeup(park);
+	}
+
+	simple_unlock(&pmp->pmp_lock);
 }

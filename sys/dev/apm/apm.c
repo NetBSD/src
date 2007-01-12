@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.5.4.1 2006/11/18 21:34:03 ad Exp $ */
+/*	$NetBSD: apm.c,v 1.5.4.2 2007/01/12 00:57:34 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5.4.1 2006/11/18 21:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.5.4.2 2007/01/12 00:57:34 ad Exp $");
 
 #include "opt_apm.h"
 
@@ -613,21 +613,21 @@ apm_set_ver(struct apm_softc *sc)
 		apm_minver = 0;
 	}
 ok:
-	printf("Power Management spec V%d.%d", apm_majver, apm_minver);
+	aprint_normal("Power Management spec V%d.%d", apm_majver, apm_minver);
 	apm_inited = 1;
 	if (sc->sc_detail & APM_IDLE_SLOWS) {
 #ifdef DIAGNOSTIC
 		/* not relevant often */
-		printf(" (slowidle)");
+		aprint_normal(" (slowidle)");
 #endif
 		/* leave apm_do_idle at its user-configured setting */
 	} else
 		apm_do_idle = 0;
 #ifdef DIAGNOSTIC
 	if (sc->sc_detail & APM_BIOS_PM_DISABLED)
-		printf(" (BIOS mgmt disabled)");
+		aprint_normal(" (BIOS mgmt disabled)");
 	if (sc->sc_detail & APM_BIOS_PM_DISENGAGED)
-		printf(" (BIOS managing devices)");
+		aprint_normal(" (BIOS managing devices)");
 #endif
 }
 
@@ -645,7 +645,7 @@ apm_attach(struct apm_softc *sc)
 	u_int numbatts, capflags;
 	int error;
 
-	printf(": ");
+	aprint_normal(": ");
 
 	switch ((APM_MAJOR_VERS(sc->sc_vers) << 8) + APM_MINOR_VERS(sc->sc_vers)) {
 	case 0x0100:
@@ -661,7 +661,7 @@ apm_attach(struct apm_softc *sc)
 	}
 
 	apm_set_ver(sc);	/* prints version info */
-	printf("\n");
+	aprint_normal("\n");
 	if (apm_minver >= 2)
 		(*sc->sc_ops->aa_get_capabilities)(sc->sc_cookie, &numbatts,
 		    &capflags);

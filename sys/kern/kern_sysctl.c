@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.201.2.2 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.201.2.3 2007/01/12 01:04:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201.2.2 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201.2.3 2007/01/12 01:04:06 ad Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_ktrace.h"
@@ -1479,7 +1479,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	if (l != NULL && newp != NULL &&
 	    !(rnode->sysctl_flags & CTLFLAG_ANYWRITE) &&
 	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 
 	/*

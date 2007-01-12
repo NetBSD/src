@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138.2.1 2006/11/18 21:29:24 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138.2.2 2007/01/12 01:00:53 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138.2.1 2006/11/18 21:29:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138.2.2 2007/01/12 01:00:53 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138.2.1 2006/11/18 21:29:24 ad Exp $")
 #endif
 
 #include "ksyms.h"
+#include "wsdisplay.h"
 
 extern int ofmsr;
 extern struct consdev consdev_ofcons;
@@ -183,6 +184,14 @@ initppc(startkernel, endkernel, args)
 	 * but I really think the console should be initialized
 	 * as early as possible.
 	 */
+#if NKSYMS || defined(DDB) || defined(LKM)
+	/* get info of kernel symbol table from bootloader */
+	memcpy(&startsym, args + strlen(args) + 1, sizeof(startsym));
+	memcpy(&endsym, args + strlen(args) + 1 + sizeof(startsym),
+	    sizeof(endsym));
+	if (startsym == NULL || endsym == NULL)
+		startsym = endsym = NULL;
+#endif
 	consinit();
 
 	oea_init(ext_intr);
@@ -203,13 +212,6 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Parse arg string.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
-	memcpy(&startsym, args + strlen(args) + 1, sizeof(startsym));
-	memcpy(&endsym, args + strlen(args) + 5, sizeof(endsym));
-	if (startsym == NULL || endsym == NULL)
-		startsym = endsym = NULL;
-#endif
-	
 	if (args) {
 	strcpy(bootpath, args);
 		args = bootpath;
@@ -785,7 +787,9 @@ kbd_found:;
 	 * XXX wskbd_cnattach() twice.
 	 */
 	ofkbd_ihandle = stdin;
+#if NWSDISPLAY > 0
 	wsdisplay_set_cons_kbd(ofkbd_cngetc, NULL, NULL);
+#endif
 #endif
 }
 #endif

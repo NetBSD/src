@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.7 2007/01/11 22:22:59 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.8 2007/01/12 01:04:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,13 +73,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.7 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.8 2007/01/12 01:04:06 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
+#include "opt_multiprocessor.h"
+#include "opt_compat_sunos.h"
+#include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
+#include "opt_pax.h"
 
 #define	SIGPROP		/* include signal properties table */
-
 #include <sys/param.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
@@ -99,6 +103,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.7 2007/01/11 22:22:59 ad Exp $"
 #include <sys/acct.h>
 
 #include <machine/cpu.h>
+
+#ifdef PAX_SEGVGUARD
+#include <sys/pax.h>
+#endif /* PAX_SEGVGUARD */
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -1980,6 +1988,10 @@ sigexit(struct lwp *l, int signo)
 				log(LOG_INFO, logcoredump, p->p_pid,
 				    p->p_comm, uid, signo);
 		}
+
+#ifdef PAX_SEGVGUARD
+		pax_segvguard(l, p->p_textvp, p->p_comm, TRUE);
+#endif /* PAX_SEGVGUARD */
 	}
 
 	/* Acquire the sched state mutex.  exit1() will release it. */

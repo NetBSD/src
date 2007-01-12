@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.94.2.1 2006/11/18 21:34:57 ad Exp $ */
+/* $NetBSD: wskbd.c,v 1.94.2.2 2007/01/12 00:57:52 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.94.2.1 2006/11/18 21:34:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.94.2.2 2007/01/12 00:57:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1024,7 +1024,7 @@ getbell:
 
 	case WSKBDIO_SETDEFAULTBELL:
 		if (p && (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		kbdp = &wskbd_default_bell_data;
 		goto setbell;
@@ -1063,7 +1063,7 @@ getkeyrepeat:
 
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		kkdp = &wskbd_default_keyrepeat_data;
 		goto setkeyrepeat;

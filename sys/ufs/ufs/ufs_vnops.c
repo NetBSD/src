@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.142.4.1 2006/11/18 21:39:49 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.142.4.2 2007/01/12 01:04:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.142.4.1 2006/11/18 21:39:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.142.4.2 2007/01/12 01:04:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -389,11 +389,13 @@ ufs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)))
+		    NULL)))
 			return (error);
-		if (kauth_cred_geteuid(cred) == 0) {
+		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0) {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-			    securelevel > 0)
+			    kauth_authorize_system(l->l_cred,
+			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
 				return (EPERM);
 			/* Snapshot flag cannot be set or cleared */
 			if ((vap->va_flags & SF_SNAPSHOT) !=
@@ -463,7 +465,7 @@ ufs_setattr(void *v)
 			return (EPERM);
 		if (kauth_cred_geteuid(cred) != ip->i_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) &&
+		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -507,10 +509,9 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	ip = VTOI(vp);
 	if (kauth_cred_geteuid(cred) != ip->i_uid &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)))
 		return (error);
-	if (kauth_cred_geteuid(cred)) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
 		if ((kauth_cred_ismember_gid(cred, ip->i_gid, &ismember) != 0 ||
@@ -559,7 +560,7 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 &&
 	    ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0))
+	    NULL)) != 0))
 		return (error);
 
 #ifdef QUOTA
@@ -910,8 +911,9 @@ ufs_rename(void *v)
 		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		if ((error = relookup(fdvp, &fvp, fcnp))){
-			/* relookup blew away fdvp */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
 			return (error);
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
@@ -949,7 +951,6 @@ ufs_rename(void *v)
 		doingdirectory = 1;
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
-	/* vrele(fdvp); */
 
 	/*
 	 * When the target exists, both the directory
@@ -996,14 +997,18 @@ ufs_rename(void *v)
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
-		vref(tdvp);	/* compensate for the ref checkpath looses */
+		vref(tdvp);	/* compensate for the ref checkpath loses */
 		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0) {
 			vrele(tdvp);
 			goto out;
 		}
 		tcnp->cn_flags &= ~SAVESTART;
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
+		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+		error = relookup(tdvp, &tvp, tcnp);
+		if (error != 0) {
+			vput(tdvp);
 			goto out;
+		}
 		dp = VTOI(tdvp);
 		xp = NULL;
 		if (tvp)
@@ -1079,7 +1084,9 @@ ufs_rename(void *v)
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((dp->i_mode & S_ISTXT) && kauth_cred_geteuid(tcnp->cn_cred) != 0 &&
+		if ((dp->i_mode & S_ISTXT) &&
+		    kauth_authorize_generic(tcnp->cn_cred,
+		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
 		    kauth_cred_geteuid(tcnp->cn_cred) != dp->i_uid &&
 		    xp->i_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
 			error = EPERM;
@@ -1155,7 +1162,9 @@ ufs_rename(void *v)
 	 */
 	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		vput(fdvp);
 		vrele(ap->a_fvp);
 		return (error);
 	}
@@ -1439,9 +1448,10 @@ ufs_rmdir(void *v)
 	 * No rmdir "." or of mounted directories please.
 	 */
 	if (dp == ip || vp->v_mountedhere != NULL) {
-		vrele(dvp);
-		if (vp->v_mountedhere != NULL)
-			VOP_UNLOCK(dvp, 0);
+		if (dp == ip)
+			vrele(vp);
+		else
+			vput(vp);
 		vput(vp);
 		return (EINVAL);
 	}
@@ -1588,6 +1598,8 @@ ufs_readdir(void *v)
 	int		error;
 	size_t		count, ccount, rcount;
 	off_t		off, *ccp;
+	off_t		startoff;
+	size_t		skipbytes;
 	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
 	int nswap = UFS_MPNEEDSWAP(ump);
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -1602,9 +1614,13 @@ ufs_readdir(void *v)
 	if (rcount < _DIRENT_MINSIZE(cdp) || count < _DIRENT_MINSIZE(ndp))
 		return EINVAL;
 
+	startoff = uio->uio_offset & ~(ump->um_dirblksiz - 1);
+	skipbytes = uio->uio_offset - startoff;
+	rcount += skipbytes;
+
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = uio->uio_offset;
+	auio.uio_offset = startoff;
 	auio.uio_resid = rcount;
 	UIO_SETUP_SYSSPACE(&auio);
 	auio.uio_rw = UIO_READ;
@@ -1617,7 +1633,7 @@ ufs_readdir(void *v)
 		return error;
 	}
 
-	rcount = rcount - auio.uio_resid;
+	rcount -= auio.uio_resid;
 
 	cdp = (struct direct *)(void *)cdbuf;
 	ecdp = (struct direct *)(void *)&cdbuf[rcount];
@@ -1639,6 +1655,18 @@ ufs_readdir(void *v)
 
 	while (cdp < ecdp) {
 		cdp->d_reclen = ufs_rw16(cdp->d_reclen, nswap);
+		if (skipbytes > 0) {
+			if (cdp->d_reclen <= skipbytes) {
+				skipbytes -= cdp->d_reclen;
+				cdp = _DIRENT_NEXT(cdp);
+				continue;
+			}
+			/*
+			 * invlid cookie.
+			 */
+			error = EINVAL;
+			goto out;
+		}
 		if (cdp->d_reclen == 0) {
 			struct dirent *ondp = ndp;
 			ndp->d_reclen = _DIRENT_MINSIZE(ndp);
@@ -1671,12 +1699,9 @@ ufs_readdir(void *v)
 		cdp = _DIRENT_NEXT(cdp);
 	}
 
-	if (cdp >= ecdp)
-		off = uio->uio_offset + rcount;
-
 	count = ((char *)(void *)ndp - ndbuf);
 	error = uiomove(ndbuf, count, uio);
-
+out:
 	if (ap->a_cookies) {
 		if (error)
 			free(*(ap->a_cookies), M_TEMP);

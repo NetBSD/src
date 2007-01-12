@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.1.2.2 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.1.2.3 2007/01/12 00:57:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.

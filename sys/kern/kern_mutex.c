@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.8 2007/01/11 22:22:59 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.9 2007/01/12 01:04:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.8 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.9 2007/01/12 01:04:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -157,7 +157,7 @@ do {									\
 #define	MUTEX_INITIALIZE_SPIN(mtx, id, ipl)				\
 do {									\
 	(mtx)->mtx_owner = MUTEX_BIT_SPIN;				\
-	(mtx)->mtx_minspl = (ipl);					\
+	(mtx)->mtx_ipl = makeiplcookie((ipl));				\
 	(mtx)->mtx_id = (id);						\
 	__cpu_simple_lock_init(&(mtx)->mtx_lock);			\
 } while (/* CONSTCOND */ 0)
@@ -247,10 +247,9 @@ mutex_dump(volatile void *cookie)
 {
 	volatile kmutex_t *mtx = cookie;
 
-	printf_nolog("owner field  : %#018lx wait/spin: %16d/%d\n"
-	    "minspl       : %#018x\n",
+	printf_nolog("owner field  : %#018lx wait/spin: %16d/%d\n",
 	    (long)MUTEX_OWNER(mtx), MUTEX_HAS_WAITERS(mtx),
-	    MUTEX_SPIN_P(mtx), (int)mtx->mtx_minspl);
+	    MUTEX_SPIN_P(mtx));
 }
 
 /*
@@ -380,10 +379,9 @@ mutex_vector_enter(kmutex_t *mtx)
 #if defined(LOCKDEBUG) && defined(MULTIPROCESSOR)
 		u_int spins = 0;
 #endif
-		int minspl, s;
+		int s;
 
-		minspl = mtx->mtx_minspl;
-		s = splraiseipl(minspl);
+		s = splraiseipl(mtx->mtx_ipl);
 #ifdef FULL
 		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
 			MUTEX_SPIN_SPLSAVE(mtx, s);
@@ -715,7 +713,7 @@ mutex_tryenter(kmutex_t *mtx)
 	 * Handle spin mutexes.
 	 */
 	if (MUTEX_SPIN_P(mtx)) {
-		s = splraiseipl(MUTEX_SPIN_MINSPL(mtx));
+		s = splraiseipl(mtx->mtx_ipl);
 #ifdef FULL
 		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
 			MUTEX_SPIN_SPLSAVE(mtx, s);

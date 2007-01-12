@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.38.2.1 2006/11/18 21:34:28 ad Exp $	*/
+/*	$NetBSD: amr.c,v 1.38.2.2 2007/01/12 00:57:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38.2.1 2006/11/18 21:34:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.38.2.2 2007/01/12 00:57:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	 *
 	 * The standard mailbox structure needs to be aligned on a 16-byte
 	 * boundary.  The 64-bit mailbox has one extra field, 4 bytes in
-	 * size, which preceeds the standard mailbox.
+	 * size, which precedes the standard mailbox.
 	 */
 	size = AMR_SGL_SIZE * AMR_MAX_CMDS + 0x2000;
 	amr->amr_dmasize = size;
@@ -1377,7 +1377,8 @@ amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 		*(int *)data = AMR_IO_VERSION_NUMBER;
 		return 0;
 	case AMR_IO_COMMAND:
-		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
 		if (error)
 			return (error);
 

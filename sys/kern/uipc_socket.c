@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.122.4.1 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.122.4.2 2007/01/12 01:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.122.4.1 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.122.4.2 2007/01/12 01:04:07 ad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1422,6 +1422,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 {
 	int		error;
 	struct mbuf	*m;
+	struct linger	*l;
 
 	error = 0;
 	m = m0;
@@ -1438,13 +1439,18 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				error = EINVAL;
 				goto bad;
 			}
-			if (mtod(m, struct linger *)->l_linger < 0 ||
-			    mtod(m, struct linger *)->l_linger > (INT_MAX / hz)) {
+			l = mtod(m, struct linger *);
+			if (l->l_linger < 0 || l->l_linger > USHRT_MAX ||
+			    l->l_linger > (INT_MAX / hz)) {
 				error = EDOM;
 				goto bad;
 			}
-			so->so_linger = mtod(m, struct linger *)->l_linger;
-			/* fall thru... */
+			so->so_linger = l->l_linger;
+			if (l->l_onoff)
+				so->so_options |= SO_LINGER;
+			else
+				so->so_options &= ~SO_LINGER;
+			break;
 
 		case SO_DEBUG:
 		case SO_KEEPALIVE:
@@ -1584,7 +1590,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_LINGER:
 			m->m_len = sizeof(struct linger);
 			mtod(m, struct linger *)->l_onoff =
-				so->so_options & SO_LINGER;
+			    (so->so_options & SO_LINGER) ? 1 : 0;
 			mtod(m, struct linger *)->l_linger = so->so_linger;
 			break;
 
@@ -1597,7 +1603,7 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 		case SO_BROADCAST:
 		case SO_OOBINLINE:
 		case SO_TIMESTAMP:
-			*mtod(m, int *) = so->so_options & optname;
+			*mtod(m, int *) = (so->so_options & optname) ? 1 : 0;
 			break;
 
 		case SO_TYPE:

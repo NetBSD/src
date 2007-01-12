@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN2_DOMU,v 1.2.2.1 2006/11/18 21:29:18 ad Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.2.2.2 2007/01/12 01:00:49 ad Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -6,7 +6,8 @@ options 	XEN
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -march=pentiumpro -mtune=i486"
+makeoptions	CPUFLAGS="-march=i686"
+makeoptions	COPTS="-Os"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -99,7 +100,7 @@ file-system 	KERNFS		# /kern
 # Filesystem options
 #options 	QUOTA		# UFS quotas
 #options 	NFSSERVER	# Network File System server
-#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -155,8 +156,8 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp			# Point-to-Point Protocol
-pseudo-device	sl			# Serial Line IP
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel

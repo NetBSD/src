@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.6 2006/07/23 22:06:10 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.6.4.1 2007/01/12 01:04:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.6 2006/07/23 22:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.6.4.1 2007/01/12 01:04:05 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,7 +133,8 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
+	if (error == 0 && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) {
 		int accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :

@@ -1,4 +1,6 @@
-#	$NetBSD: mk.nslu2,v 1.1 2006/02/28 20:40:33 scw Exp $
+#	$NetBSD: mk.nslu2,v 1.1.20.1 2007/01/12 01:00:46 ad Exp $
+
+.include "$S/arch/arm/xscale/ixp425-fw.mk"
 
 SYSTEM_FIRST_OBJ=	nslu2_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/nslu2/nslu2_start.S

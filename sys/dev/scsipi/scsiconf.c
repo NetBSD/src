@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.238.2.1 2006/11/18 21:34:49 ad Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.238.2.2 2007/01/12 00:57:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.238.2.1 2006/11/18 21:34:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.238.2.2 2007/01/12 00:57:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -572,6 +572,8 @@ static const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	/* Broken IBM disk */
 	{{T_DIRECT, T_FIXED,
 	 ""	   , "DFRSS2F",		 ""},	  PQUIRK_AUTOSAVE},
+	{{T_DIRECT, T_FIXED,
+	 "Initio  ", "",		 ""},	  PQUIRK_NOBIGMODESENSE},
 	{{T_DIRECT, T_REMOV,
 	 "MPL     ", "MC-DISK-        ", ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,

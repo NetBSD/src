@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.4 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: spl.h,v 1.4.16.1 2007/01/12 01:04:24 ad Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,6 +28,10 @@
 
 /*
  * this header is intended to be included by MD header.
+ *
+ * an assumption: makeiplcookie() is reasonably fast.
+ * if it isn't the case for your port, it's better to have MD optimized
+ * splxxx() functions, rather than using this header.
  */
 
 #if !defined(_KERNEL)
@@ -35,7 +39,9 @@
 #endif /* !defined(_KERNEL) */
 
 #define	_SPL_DECL(x, X)	\
-	static __inline int spl##x(void) { return splraiseipl(IPL_##X); }
+	static __inline int \
+	spl##x(void) \
+	{ return splraiseipl(makeiplcookie(IPL_##X)); }
 
 #if defined(IPL_SOFTCLOCK)
 _SPL_DECL(softclock, SOFTCLOCK)

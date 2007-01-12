@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.188.2.1 2006/11/18 21:39:49 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.188.2.2 2007/01/12 01:04:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.188.2.1 2006/11/18 21:39:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.188.2.2 2007/01/12 01:04:25 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -746,9 +746,10 @@ lfs_rmdir(void *v)
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	if ((error = SET_DIROP_REMOVE(ap->a_dvp, ap->a_vp)) != 0) {
-		vrele(ap->a_dvp);
-		if (ap->a_vp != ap->a_dvp)
-			VOP_UNLOCK(ap->a_dvp, 0);
+		if (ap->a_dvp == vp)
+			vrele(ap->a_dvp);
+		else
+			vput(ap->a_dvp);
 		vput(vp);
 		return error;
 	}
@@ -847,8 +848,9 @@ lfs_rename(void *v)
 		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 		fcnp->cn_nameiop = DELETE;
-		if ((error = relookup(fdvp, &fvp, fcnp))){
-			/* relookup blew away fdvp */
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
 			return (error);
 		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
@@ -1425,7 +1427,7 @@ lfs_fcntl(void *v)
 	l = ap->a_l;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
 	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    NULL)) != 0)
 		return (error);
 
 	fs = VTOI(ap->a_vp)->i_lfs;
@@ -1515,7 +1517,7 @@ lfs_fcntl(void *v)
 	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
@@ -1906,9 +1908,12 @@ lfs_putpages(void *v)
 	 */
 	if (vp->v_uobj.uo_npages == 0) {
 		s = splbio();
-		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-		    (vp->v_flag & VONWORKLST))
+		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
+		    (vp->v_flag & VONWORKLST) &&
+		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+			vp->v_flag &= ~VWRITEMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
+		}
 		splx(s);
 		simple_unlock(&vp->v_interlock);
 		

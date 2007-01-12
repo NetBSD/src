@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1030.c,v 1.6 2006/03/29 06:41:24 thorpej Exp $	*/
+/*	$NetBSD: adm1030.c,v 1.6.10.1 2007/01/12 00:57:35 ad Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.6 2006/03/29 06:41:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.6.10.1 2007/01/12 00:57:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: adm1030.c,v 1.6 2006/03/29 06:41:24 thorpej Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
-#include <machine/autoconf.h>
 #include <dev/sysmon/sysmonvar.h>
 #include "sysmon_envsys.h"
 #include <dev/i2c/adm1030var.h>

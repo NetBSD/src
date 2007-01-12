@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.2.4.2 2006/11/18 21:29:25 ad Exp $ */
+/* $NetBSD: arspi.c,v 1.2.4.3 2007/01/12 01:00:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.2.4.2 2006/11/18 21:29:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.2.4.3 2007/01/12 01:00:53 ad Exp $");
 
 #include "locators.h"
 
@@ -371,7 +371,7 @@ arspi_done(struct arspi_softc *sc, int err)
 		} else if (err == 0) {
 			/*
 			 * When breaking up write jobs, we have to wait until
-			 * the WIP bit is clear, and we have to seperately
+			 * the WIP bit is clear, and we have to separately
 			 * send WREN for each chunk.  These flags facilitate
 			 * that.
 			 */

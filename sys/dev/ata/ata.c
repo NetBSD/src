@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.76.2.1 2006/11/18 21:34:03 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.76.2.2 2007/01/12 00:57:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76.2.1 2006/11/18 21:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.76.2.2 2007/01/12 00:57:34 ad Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1109,7 +1109,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 
 	(*atac->atac_set_modes)(chp);
 	ata_print_modes(chp);
-	/* reset the channel, which will shedule all drives for setup */
+	/* reset the channel, which will schedule all drives for setup */
 	ata_reset_channel(chp, flags | AT_RST_NOCMD);
 	return 1;
 }

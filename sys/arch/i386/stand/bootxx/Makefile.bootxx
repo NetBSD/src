@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.24.4.1 2006/11/18 21:29:20 ad Exp $
+# $NetBSD: Makefile.bootxx,v 1.24.4.2 2007/01/12 01:00:51 ad Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -69,6 +69,8 @@ COPTS+=    -ffreestanding
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes
 CPPFLAGS+= -nostdinc -D_STANDALONE
 CPPFLAGS+= -I$S
+
+CPPFLAGS+= -DUNALIGNED_ACCESS
 
 CPPFLAGS+= -DLIBSA_SINGLE_FILESYSTEM=xxfs \
 		-DLIBSA_NO_TWIDDLE \

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.21.4.1 2006/11/18 21:34:14 ad Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.21.4.2 2007/01/12 00:57:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -132,6 +132,10 @@ struct rtk_mii_frame {
  */
 #define RE_RING_ALIGN		256
 
+/*
+ * Size of descriptors and TX queue.
+ * These numbers must be power of two to simplify RE_NEXT_*() macro.
+ */
 #define RE_RX_DESC_CNT		64
 #define RE_TX_DESC_CNT_8139	64
 #define RE_TX_DESC_CNT_8169	1024
@@ -148,6 +152,7 @@ struct re_txq {
 	struct mbuf *txq_mbuf;
 	bus_dmamap_t txq_dmamap;
 	int txq_descidx;
+	int txq_nsegs;
 };
 
 struct re_list_data {
@@ -224,12 +229,12 @@ struct rtk_softc {
 
 #define RE_TX_DESC_CNT(sc)	((sc)->re_ldata.re_tx_desc_cnt)
 #define RE_TX_LIST_SZ(sc)	(RE_TX_DESC_CNT(sc) * sizeof(struct re_desc))
-#define RE_NEXT_TX_DESC(sc, x)	(((x) + 1) % RE_TX_DESC_CNT(sc))
+#define RE_NEXT_TX_DESC(sc, x)	(((x) + 1) & (RE_TX_DESC_CNT(sc) - 1))
 
 #define RE_RX_LIST_SZ		(RE_RX_DESC_CNT * sizeof(struct re_desc))
-#define RE_NEXT_RX_DESC(sc, x)	(((x) + 1) % RE_RX_DESC_CNT)
+#define RE_NEXT_RX_DESC(sc, x)	(((x) + 1) & (RE_RX_DESC_CNT - 1))
 
-#define RE_NEXT_TXQ(sc, x)	(((x) + 1) % RE_TX_QLEN)
+#define RE_NEXT_TXQ(sc, x)	(((x) + 1) & (RE_TX_QLEN - 1))
 
 #define RE_TXDESCSYNC(sc, idx, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat,					\
@@ -243,6 +248,23 @@ struct rtk_softc {
 	    sizeof(struct re_desc) * (idx),				\
 	    sizeof(struct re_desc),					\
 	    (ops))
+
+/*
+ * re(4) hardware ip4csum-tx could be mangled with 28 byte or less IP packets
+ */
+#define RE_IP4CSUMTX_MINLEN	28                                
+#define RE_IP4CSUMTX_PADLEN	(ETHER_HDR_LEN + RE_IP4CSUMTX_MINLEN)
+/*
+ * XXX
+ * We are allocating pad DMA buffer after RX DMA descs for now
+ * because RE_TX_LIST_SZ(sc) always occupies whole page but
+ * RE_RX_LIST_SZ is less than PAGE_SIZE so there is some unused region.
+ */
+#define RE_RX_DMAMEM_SZ		(RE_RX_LIST_SZ + RE_IP4CSUMTX_PADLEN)
+#define RE_TXPADOFF		RE_RX_LIST_SZ
+#define RE_TXPADDADDR(sc)	\
+	((sc)->re_ldata.re_rx_list_map->dm_segs[0].ds_addr + RE_TXPADOFF)
+
 
 #define RTK_ATTACHED 0x00000001 /* attach has succeeded */
 #define RTK_ENABLED  0x00000002 /* chip is enabled	*/

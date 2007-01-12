@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.15 2006/05/17 05:15:26 mrg Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.15.8.1 2007/01/12 01:00:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.15 2006/05/17 05:15:26 mrg Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.15.8.1 2007/01/12 01:00:42 ad Exp $");
 
 #include "opt_irqstats.h"
 
@@ -175,7 +175,7 @@ footbridge_intr_calculate_masks(void)
 	footbridge_imask[IPL_SOFTNET] |= footbridge_imask[IPL_SOFTCLOCK];
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
@@ -204,7 +204,7 @@ footbridge_intr_calculate_masks(void)
 	footbridge_imask[IPL_CLOCK] |= footbridge_imask[IPL_AUDIO];
 
 	/*
-	 * footbridge has seperate statclock.
+	 * footbridge has separate statclock.
 	 */
 	footbridge_imask[IPL_STATCLOCK] |= footbridge_imask[IPL_CLOCK];
 

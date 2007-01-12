@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.121.2.1 2006/11/18 21:39:37 ad Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.121.2.2 2007/01/12 01:04:15 ad Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.121.2.1 2006/11/18 21:39:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.121.2.2 2007/01/12 01:04:15 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2066,9 +2066,7 @@ icmp6_reflect(m, off)
 
 		bzero(&ro, sizeof(ro));
 		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
-		if (ro.ro_rt) { /* XXX: see comments in icmp6_mtudisc_update */
-			RTFREE(ro.ro_rt); /* XXX: we could use this */
-		}
+		rtcache_free((struct route *)&ro);
 		if (src == NULL) {
 			nd6log((LOG_DEBUG,
 			    "icmp6_reflect: source can't be determined: "

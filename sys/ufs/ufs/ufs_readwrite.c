@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.68.8.1 2006/11/18 21:39:49 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.68.8.2 2007/01/12 01:04:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68.8.1 2006/11/18 21:39:49 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68.8.2 2007/01/12 01:04:25 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -494,7 +494,7 @@ WRITE(void *v)
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred &&
-	    kauth_cred_geteuid(ap->a_cred) != 0) {
+	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		ip->i_mode &= ~(ISUID | ISGID);
 		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}

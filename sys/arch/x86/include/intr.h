@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2006/07/04 00:30:22 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.4.1 2007/01/12 01:01:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -179,8 +179,26 @@ spllower(int nlevel)
  * Miscellaneous
  */
 #define	spl0()		spllower(IPL_NONE)
-#define splraiseipl(x) 	splraise(x)
 #define	splx(x)		spllower(x)
+
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
+static inline ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._ipl = ipl};
+}
+
+static inline int
+splraiseipl(ipl_cookie_t icookie)
+{
+
+	return splraise(icookie._ipl);
+}
 
 #include <sys/spl.h>
 

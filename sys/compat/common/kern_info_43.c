@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.23.4.1 2006/11/18 21:39:04 ad Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.23.4.2 2007/01/12 01:04:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.23.4.1 2006/11/18 21:39:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.23.4.2 2007/01/12 01:04:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ compat_43_sys_sethostid(struct lwp *l, void *v, register_t *retval)
 	int error;
 
 	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 	hostid = SCARG(uap, hostid);
 	return (0);

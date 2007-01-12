@@ -1,4 +1,4 @@
-# $NetBSD: files.gio,v 1.8 2006/08/30 23:58:13 rumble Exp $
+# $NetBSD: files.gio,v 1.8.2.1 2007/01/12 01:00:57 ad Exp $
 
 device	gio {[slot = -1], [addr = -1]}
 attach	gio at giobus
@@ -20,6 +20,11 @@ file	arch/sgimips/gio/newport.c	newport needs-flag
 device	grtwo: wsemuldisplaydev
 attach	grtwo at gio
 file	arch/sgimips/gio/grtwo.c	grtwo needs-flag
+
+# LG1/LG2 graphics
+device	light: wsemuldisplaydev
+attach	light at gio
+file	arch/sgimips/gio/light.c	light needs-flag
 
 # PCI cards glued to the GIO bus
 device	giopci: pcibus

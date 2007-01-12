@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.50.2.1 2006/11/18 21:34:10 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.50.2.2 2007/01/12 00:57:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.50.2.1 2006/11/18 21:34:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.50.2.2 2007/01/12 00:57:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1155,7 +1155,8 @@ dptioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case DPT_EATAUSRCMD:
-		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
 		if (rv)
 			return (rv);
 

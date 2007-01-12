@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ntoskrnl.c,v 1.43.2.5 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.3.18.1 2006/11/18 21:39:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ntoskrnl.c,v 1.3.18.2 2007/01/12 01:04:03 ad Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2764,7 +2764,7 @@ DbgBreakPoint(void)
 	Debugger("DbgBreakPoint(): breakpoint");
 #elif defined(__FreeBSD__) && __FreeBSD_version >= 502113
 	kdb_enter("DbgBreakPoint(): breakpoint");
-#else /* Netbsd case */
+#else /* NetBSD case */
     ; /* TODO Search how to go into debugger without panic */
 #endif
 }

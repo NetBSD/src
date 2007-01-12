@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.7 2007/01/11 22:22:59 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.8 2007/01/12 01:04:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.7 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.8 2007/01/12 01:04:06 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.7 2007/01/11 22:22:59 ad Exp $
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/kernel.h>
-#include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/wait.h>
@@ -115,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.7 2007/01/11 22:22:59 ad Exp $
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
+#include <sys/ktrace.h>
 
 #include <machine/cpu.h>
 
@@ -136,7 +136,7 @@ static void
 exit_psignal(struct proc *p, struct proc *pp, ksiginfo_t *ksi)
 {
 
-	(void)memset(ksi, 0, sizeof(ksiginfo_t));
+	KSI_INIT(ksi);
 	if ((ksi->ksi_signo = P_EXITSIG(p)) == SIGCHLD) {
 		if (WIFSIGNALED(p->p_xstat)) {
 			if (WCOREDUMP(p->p_xstat))
@@ -289,10 +289,8 @@ exit1(struct lwp *l, int rv)
 	sigactsfree(p->p_sigacts);
 
 	/*
-	 * Collect accounting flags from the last remaining LWP (this one),
-	 * and write out accounting data.
+	 * Write out accounting data.
 	 */
-	p->p_acflag |= l->l_acflag;
 	(void)acct_process(l);
 
 #ifdef KTRACE

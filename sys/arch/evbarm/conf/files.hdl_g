@@ -1,6 +1,6 @@
-#	$NetBSD: files.hdl_g,v 1.1 2006/04/16 02:22:33 nonaka Exp $
+#	$NetBSD: files.hdl_g,v 1.1.18.1 2007/01/12 01:00:46 ad Exp $
 #
-# Intel I-O DATA HDL-G configuration info
+# I-O DATA HDL-G configuration info
 #
 
 # Use the generic ARM soft interrupt code.

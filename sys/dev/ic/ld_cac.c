@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.13.8.1 2006/11/18 21:34:13 ad Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.13.8.2 2007/01/12 00:57:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.13.8.1 2006/11/18 21:34:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.13.8.2 2007/01/12 00:57:36 ad Exp $");
 
 #include "rnd.h"
 
@@ -190,18 +190,24 @@ ld_cac_done(struct device *dv, void *context, int error)
 {
 	struct buf *bp;
 	struct ld_cac_softc *sc;
+	int rv;
 
 	bp = context;
+	rv = 0;
 
-	if ((error & CAC_RET_HARD_ERROR) != 0) {
+	if ((error & CAC_RET_CMD_REJECTED) == CAC_RET_CMD_REJECTED) {
+		printf("%s: command rejected\n", dv->dv_xname);
+		rv = EIO;
+	}
+	if (rv == 0 && (error & CAC_RET_INVAL_BLOCK) != 0) {
+		printf("%s: invalid request block\n", dv->dv_xname);
+		rv = EIO;
+	}
+	if (rv == 0 && (error & CAC_RET_HARD_ERROR) != 0) {
 		printf("%s: hard error\n", dv->dv_xname);
-		error = EIO;
+		rv = EIO;
 	}
-	if ((error & CAC_RET_CMD_REJECTED) != 0) {
-		printf("%s: invalid request\n", dv->dv_xname);
-		error = EIO;
-	}
-	if ((error & CAC_RET_SOFT_ERROR) != 0) {
+	if (rv == 0 && (error & CAC_RET_SOFT_ERROR) != 0) {
 		sc = (struct ld_cac_softc *)dv;
 		sc->sc_serrcnt++;
 		if (ratecheck(&sc->sc_serrtm, &ld_cac_serrintvl)) {
@@ -209,12 +215,11 @@ ld_cac_done(struct device *dv, void *context, int error)
 			    dv->dv_xname, sc->sc_serrcnt);
 			sc->sc_serrcnt = 0;
 		}
-		error = 0;
 	}
 
-	if (error) {
+	if (rv) {
 		bp->b_flags |= B_ERROR;
-		bp->b_error = error;
+		bp->b_error = rv;
 		bp->b_resid = bp->b_bcount;
 	} else
 		bp->b_resid = 0;

@@ -1,6 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.8 2002/04/28 17:10:34 uch Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.8.58.1 2007/01/12 01:00:58 ad Exp $	*/
 
-#ifndef _BYTE_ORDER
+#if !defined(_BYTE_ORDER) && !defined(HAVE_NBTOOL_CONFIG_H)
 #error Define _BYTE_ORDER!
 #endif
 
