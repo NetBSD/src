@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.67 2006/11/11 18:47:11 jmmv Exp $
+#	$NetBSD: GENERIC,v 1.67.2.1 2007/01/12 23:45:48 bouyer Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.67 $"
+#ident		"GENERIC-$Revision: 1.67.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -254,7 +254,8 @@ pckbc*		at ofisa?
 pckbd*		at pckbc?
 pms*		at pckbc?
 vga*		at ofbus?
-wsdisplay*	at vga?
+igsfb*		at ofbus?
+wsdisplay*	at wsemuldisplaydev?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
