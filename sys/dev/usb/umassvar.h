@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.24 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.24.20.1 2007/01/12 00:57:49 ad Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -176,8 +176,9 @@ struct umass_softc {
 #define UMASS_CPROTO_ISD_ATA	5
 
 	u_int32_t		sc_quirks;
-#define	UMASS_QUIRK_WRONG_CSWSIG         0x00000001
-#define	UMASS_QUIRK_WRONG_CSWTAG         0x00000002
+#define	UMASS_QUIRK_WRONG_CSWSIG	0x00000001
+#define	UMASS_QUIRK_WRONG_CSWTAG	0x00000002
+#define	UMASS_QUIRK_RBC_PAD_TO_12	0x00000004
 
 	u_int32_t		sc_busquirks;
 

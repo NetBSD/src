@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.29 2006/09/06 23:58:20 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.29.2.1 2007/01/12 01:00:53 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29.2.1 2007/01/12 01:00:53 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -188,7 +188,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	InstFmt i;
 	int stacksize;
 	db_addr_t offset;
-	char *name;
+	const char *name;
 	extern char verylocore[];
 
 	pc = ddb_regs.f_regs[_R_PC];

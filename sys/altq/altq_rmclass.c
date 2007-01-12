@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.13.8.1 2006/11/18 21:39:03 ad Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.13.8.2 2007/01/12 01:04:02 ad Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,9 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.13.8.1 2006/11/18 21:39:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.13.8.2 2007/01/12 01:04:02 ad Exp $");
 
-#ident "@(#)rm_class.c  1.48     97/12/05 SMI"
+/* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"

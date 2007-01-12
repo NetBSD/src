@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.5.4.1 2006/11/18 21:39:46 ad Exp $ */
+/* $NetBSD: kauth.h,v 1.5.4.2 2007/01/12 01:04:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Elad Efrat.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -83,10 +80,12 @@ enum {
 enum {
 	KAUTH_SYSTEM_ACCOUNTING=1,
 	KAUTH_SYSTEM_CHROOT,
+	KAUTH_SYSTEM_CHSYSFLAGS,
 	KAUTH_SYSTEM_DEBUG,
 	KAUTH_SYSTEM_FILEHANDLE,
 	KAUTH_SYSTEM_LKM,
 	KAUTH_SYSTEM_MKNOD,
+	KAUTH_SYSTEM_MOUNT,
 	KAUTH_SYSTEM_REBOOT,
 	KAUTH_SYSTEM_SETIDCORE,
 	KAUTH_SYSTEM_SWAPCTL,
@@ -101,6 +100,10 @@ enum kauth_system_req {
 	KAUTH_REQ_SYSTEM_CHROOT_CHROOT=1,
 	KAUTH_REQ_SYSTEM_CHROOT_FCHROOT,
 	KAUTH_REQ_SYSTEM_DEBUG_IPKDB,
+	KAUTH_REQ_SYSTEM_MOUNT_GET,
+	KAUTH_REQ_SYSTEM_MOUNT_NEW,
+	KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT,
+	KAUTH_REQ_SYSTEM_MOUNT_UPDATE,
 	KAUTH_REQ_SYSTEM_SYSCTL_ADD,
 	KAUTH_REQ_SYSTEM_SYSCTL_DELETE,
 	KAUTH_REQ_SYSTEM_SYSCTL_DESC,
@@ -116,18 +119,27 @@ enum kauth_system_req {
  * Process scope - actions.
  */
 enum {
-	KAUTH_PROCESS_CANSEE=1,
+	KAUTH_PROCESS_CANKTRACE=1,
+	KAUTH_PROCESS_CANPROCFS,
+	KAUTH_PROCESS_CANPTRACE,
+	KAUTH_PROCESS_CANSEE,
 	KAUTH_PROCESS_CANSIGNAL,
+	KAUTH_PROCESS_CANSYSTRACE,
 	KAUTH_PROCESS_CORENAME,
 	KAUTH_PROCESS_RESOURCE,
-	KAUTH_PROCESS_SETID
+	KAUTH_PROCESS_SETID,
+	KAUTH_PROCESS_STOPFLAG
 };
 
 /*
  * Process scope - sub-actions.
  */
-enum {
-	KAUTH_REQ_PROCESS_RESOURCE_NICE=1,
+enum kauth_process_req {
+	KAUTH_REQ_PROCESS_CANPROCFS_CTL=1,
+	KAUTH_REQ_PROCESS_CANPROCFS_READ,
+	KAUTH_REQ_PROCESS_CANPROCFS_RW,
+	KAUTH_REQ_PROCESS_CANPROCFS_WRITE,
+	KAUTH_REQ_PROCESS_RESOURCE_NICE,
 	KAUTH_REQ_PROCESS_RESOURCE_RLIMIT
 };
 
@@ -177,18 +189,14 @@ enum kauth_network_req {
  * Machdep scope - actions.
  */
 enum {
-	KAUTH_MACHDEP_X86=1,
-	KAUTH_MACHDEP_X86_64
-};
-
-/*
- * Machdep scope - sub-actions.
- */
-enum kauth_machdep_req {
-	KAUTH_REQ_MACHDEP_X86_64_MTRR_GET=1, /* ridiculous. */
-	KAUTH_REQ_MACHDEP_X86_IOPERM,
-	KAUTH_REQ_MACHDEP_X86_IOPL,
-	KAUTH_REQ_MACHDEP_X86_MTRR_SET
+	KAUTH_MACHDEP_IOPERM_GET=1,
+	KAUTH_MACHDEP_IOPERM_SET,
+	KAUTH_MACHDEP_IOPL,
+	KAUTH_MACHDEP_LDT_GET,
+	KAUTH_MACHDEP_LDT_SET,
+	KAUTH_MACHDEP_MTRR_GET,
+	KAUTH_MACHDEP_MTRR_SET,
+	KAUTH_MACHDEP_UNMANAGEDMEM
 };
 
 /*
@@ -205,13 +213,25 @@ enum {
  * Device scope - sub-actions.
  */
 enum kauth_device_req {
-	KAUTH_REQ_DEVICE_RAWIO_SPEC_READ,
+	KAUTH_REQ_DEVICE_RAWIO_SPEC_READ=1,
 	KAUTH_REQ_DEVICE_RAWIO_SPEC_WRITE,
 	KAUTH_REQ_DEVICE_RAWIO_SPEC_RW,
 };
 
+/*
+ * Device scope, passthru request - identifiers.
+ */
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ		0x00000001
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE		0x00000002
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF	0x00000004
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF	0x00000008
+#define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL		0x0000000F
+
 #define NOCRED ((kauth_cred_t)-1)	/* no credential available */
 #define FSCRED ((kauth_cred_t)-2)	/* filesystem credential */
+
+/* Macro to help passing arguments to authorization wrappers. */
+#define	KAUTH_ARG(arg)	((void *)(unsigned long)(arg))
 
 /*
  * Prototypes.
@@ -233,11 +253,13 @@ int kauth_authorize_process(kauth_cred_t, kauth_action_t, struct proc *,
 int kauth_authorize_network(kauth_cred_t, kauth_action_t,
     enum kauth_network_req, void *, void *, void *);
 int kauth_authorize_machdep(kauth_cred_t, kauth_action_t,
-    enum kauth_machdep_req, void *, void *, void *);
+    void *, void *, void *, void *);
+int kauth_authorize_device(kauth_cred_t, kauth_action_t,
+    void *, void *, void *, void *);
 int kauth_authorize_device_tty(kauth_cred_t, kauth_action_t, struct tty *);
 int kauth_authorize_device_spec(kauth_cred_t, enum kauth_device_req,
     struct vnode *);
-int kauth_authorize_device_passthru(kauth_cred_t, dev_t, void *);
+int kauth_authorize_device_passthru(kauth_cred_t, dev_t, u_long, void *);
 
 /* Kauth credentials management routines. */
 kauth_cred_t kauth_cred_alloc(void);

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.58.2.1 2006/11/18 21:29:30 ad Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.58.2.2 2007/01/12 01:00:57 ad Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.58.2.1 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.58.2.2 $"
 
 maxusers	32
 
@@ -221,11 +221,14 @@ hpc0 		at gio? addr 0x1fb80000
 hpc1 		at gio? addr 0x1fb00000
 hpc2 		at gio? addr 0x1f980000
 
-newport*	at gio? slot ?
+newport*	at gio?			# Newport (NG1) graphics
 wsdisplay* 	at newport? console ?
 
-grtwo*		at gio? slot ?
+grtwo*		at gio?			# Express (GR2) graphics
 wsdisplay*	at grtwo? console ?
+
+light*		at gio?			# Light/Starter/Entry (LG1/LG2) graphics
+wsdisplay*	at light? console ?
 
 # PCI Fast Ethernet cards glued to the GIO bus
 giopci*		at gio? slot?
@@ -235,12 +238,12 @@ options		PCI_NETBSD_CONFIGURE
 tlp*		at pci? dev ? function ? # Phobos G100/130/160 Fast Ethernet
 lxtphy*		at mii? phy ?		 # Level One LXT-970 PHYs 
 
-#XXX tl(4) appears to have an issue with bulk transmits on this board.
-#tl*		at pci? dev ? function ? # Set Engineering GIO Fast Ethernet
-#nsphy*		at mii? phy ?		 # NS83840 PHYs
+tl*		at pci? dev ? function ? # Set Engineering GIO Fast Ethernet
+nsphy*		at mii? phy ?		 # NS83840 PHYs
+tlphy*		at mii? phy ?		 # ThunderLAN PHY (unused)
 
 # HPC devices
-sq* 		at hpc0 offset ?
+sq* 		at hpc? offset ?	# On-board ethernet / E++ adapter
 wdsc* 		at hpc0 offset ?
 dpclock*	at hpc0 offset ?	# IP12 / IP20
 dsclock*	at hpc0 offset ?	# IP22 / 24

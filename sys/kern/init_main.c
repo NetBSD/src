@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276.4.6 2007/01/11 22:22:59 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.7 2007/01/12 01:04:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.6 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.7 2007/01/12 01:04:06 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -82,7 +82,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.6 2007/01/11 22:22:59 ad Exp $
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
+#include "opt_fileassoc.h"
 #include "opt_ktrace.h"
+#include "opt_pax.h"
 
 #include "rnd.h"
 #include "veriexec.h"
@@ -117,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.6 2007/01/11 22:22:59 ad Exp $
 #include <sys/event.h>
 #include <sys/mbuf.h>
 #include <sys/sleepq.h>
+#include <sys/sleepq.h>
+#include <sys/iostat.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -157,10 +161,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.6 2007/01/11 22:22:59 ad Exp $
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 
-#ifdef FILEASSOC
-#include <sys/fileassoc.h>
-#endif /* FILEASSOC */
-
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+#include <sys/pax.h>
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 #include <ufs/ufs/quota.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -311,6 +314,9 @@ main(void)
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
 
+	/* Initialize I/O statistics. */
+	iostat_init();
+
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
 	/*
@@ -387,17 +393,16 @@ main(void)
 	/* Initialize default security model. */
 	secmodel_start();
 
-#ifdef FILEASSOC
-	fileassoc_init();
-#endif /* FILEASSOC */
-
 #if NVERIEXEC > 0
-	  /*
-	   * Initialise the fingerprint operations vectors before
-	   * fingerprints can be loaded.
-	   */
-	veriexec_init_fp_ops();
+	/*
+	 * Initialise the Veriexec subsystem.
+	 */
+	veriexec_init();
 #endif /* NVERIEXEC > 0 */
+
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+	pax_init();
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
@@ -554,8 +559,8 @@ main(void)
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
-	if (kthread_create1(uvm_aiodone_daemon, NULL, &uvm.aiodoned_proc,
-	    "aiodoned"))
+	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
+	    uvm_aiodone_worker, NULL, PVM, IPL_BIO, 0))
 		panic("fork aiodoned");
 
 #if defined(MULTIPROCESSOR)
@@ -764,14 +769,4 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
-}
-
-/*
- * Machine-independent per-CPU initialization.
- */
-void
-mi_cpu_init(struct cpu_info *ci)
-{
-
-	mutex_init(&ci->ci_sched_mutex, MUTEX_SPIN, IPL_SCHED);
 }

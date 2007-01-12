@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.6.2.3 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.6.2.4 2007/01/12 01:04:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 
 struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
-#include <sys/mutex.h>
 
 /*
  * MI per-cpu data
@@ -73,7 +72,6 @@ struct cpu_data {
 	u_long		cpu_spin_locks;		/* # of spinlockmgr locks */
 	u_long		cpu_simple_locks;	/* # of simple locks held */
 	void		*cpu_lockstat;		/* lockstat private tables */
-	kmutex_t	cpu_sched_mutex;	/* per-CPU sched mutex */
 	u_int		cpu_spin_locks2;	/* # of spin locks held XXX */
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
 };
@@ -85,7 +83,6 @@ struct cpu_data {
 #define	ci_spin_locks		ci_data.cpu_spin_locks
 #define	ci_simple_locks		ci_data.cpu_simple_locks
 #define	ci_lockstat		ci_data.cpu_lockstat
-#define	ci_sched_mutex		ci_data.cpu_sched_mutex
 #define	ci_spin_locks2		ci_data.cpu_spin_locks2
 #define	ci_lkdebug_recurse	ci_data.cpu_lkdebug_recurse
 

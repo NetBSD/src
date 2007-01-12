@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2007/01/12 01:00:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ struct kmutex {
 		volatile uintptr_t	mtxa_owner;
 		struct {
 			volatile uint8_t	mtxs_flags;
-			volatile uint8_t	mtxs_minspl;
+			ipl_cookie_t		mtxs_ipl;
 			volatile uint16_t	mtxs_unused;
 		} s;
 	} u;
@@ -56,7 +56,7 @@ struct kmutex {
 
 #define	mtx_owner 			u.mtxa_owner
 #define	mtx_flags 			u.s.mtxs_flags
-#define	mtx_minspl 			u.s.mtxs_minspl
+#define	mtx_ipl 			u.s.mtxs_ipl
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1

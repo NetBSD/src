@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.68.14.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.68.14.6 2007/01/12 01:04:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.6 2007/01/12 01:04:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.68.14.5 2006/12/29 20:27:44 ad Exp
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -199,9 +200,11 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 
 	switch (pfs_type) {
 	case PFSroot:	/* /proc = dr-xr-xr-x */
+		vp->v_flag = VROOT;
+		/*FALLTHROUGH*/
+	case PFSproc:	/* /proc/N = dr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VDIR;
-		vp->v_flag = VROOT;
 		break;
 
 	case PFScurproc:	/* /proc/curproc = lr-xr-xr-x */
@@ -213,7 +216,6 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 		vp->v_type = VLNK;
 		break;
 
-	case PFSproc:	/* /proc/N = dr-xr-xr-x */
 	case PFSfd:
 		if (fd == -1) {	/* /proc/N/fd = dr-xr-xr-x */
 			pfs->pfs_mode = S_IRUSR|S_IXUSR;
@@ -352,27 +354,28 @@ procfs_rw(v)
 	if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH)) != 0)
 		return error;
 
+	curl = curlwp;
+
 	/*
 	 * Do not allow init to be modified while in secure mode; it
 	 * could be duped into changing the security level.
 	 */
-	if (uio->uio_rw == UIO_WRITE && p == initproc && securelevel > -1)
-		return EPERM;
+#define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_CANPROCFS_READ : \
+		 KAUTH_REQ_PROCESS_CANPROCFS_WRITE)
+	mutex_enter(&p->p_mutex);
+	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_CANPROCFS,
+	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
+	mutex_exit(&p->p_mutex);
+	if (error) {
+		procfs_proc_unlock(p);
+		return (error);
+	}
+#undef	M2K
 
-	/*
-	 * Pick a suitable LWP to represent the process, and acquire a
-	 * reference on it so that it does not exit.
-	 *
-	 * XXX The entire procfs interface needs work to be useful to a
-	 * process with multiple LWPs.  For the moment, we'll just kluge
-	 * this and fail on others.
-	 */
 	mutex_enter(&p->p_smutex);
 	l = proc_representative_lwp(p, NULL, 1);
 	lwp_addref(l);
 	mutex_exit(&p->p_smutex);
-
-	curl = curlwp;
 
 	switch (pfs->pfs_type) {
 	case PFSnote:

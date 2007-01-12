@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.15.4.3 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.15.4.4 2007/01/12 01:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.15.4.3 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.15.4.4 2007/01/12 01:04:07 ad Exp $");
 
 #include "opt_posix.h"
 
@@ -277,7 +277,7 @@ ksem_perm(struct lwp *l, struct ksem *ks)
 	if ((kauth_cred_geteuid(uc) == ks->ks_uid && (ks->ks_mode & S_IWUSR) != 0) ||
 	    (kauth_cred_getegid(uc) == ks->ks_gid && (ks->ks_mode & S_IWGRP) != 0) ||
 	    (ks->ks_mode & S_IWOTH) != 0 ||
-	    kauth_authorize_generic(uc, KAUTH_GENERIC_ISSUSER, &l->l_acflag) == 0)
+	    kauth_authorize_generic(uc, KAUTH_GENERIC_ISSUSER, NULL) == 0)
 		return (0);
 	return (EPERM);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.9 2006/04/10 03:36:03 simonb Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.9.8.1 2007/01/12 01:00:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.9 2006/04/10 03:36:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.9.8.1 2007/01/12 01:00:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct intrhand {
 };
 #endif
 
-static struct {
+static struct intrhandler {
 #ifdef MULTIPLE_HANDLERS_ON_ONE_IRQ
 	TAILQ_HEAD(,intrhand) list;
 #else
@@ -250,7 +250,7 @@ pxa2x0_update_intr_masks(int irqno, int level)
 		pxa2x0_imask[i] &= ~mask; /* Disable itnerrupt at upper level */
 
 	/*
-	 * Enforce a heirarchy that gives "slow" device (or devices with
+	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
@@ -350,13 +350,13 @@ pxa2x0_do_pending(void)
 
 #if 1
 #define	DO_SOFTINT(si,ipl)						\
-	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {	\
+	if ((softint_pending & intr_mask) & SI_TO_IRQBIT(si)) {		\
 		softint_pending &= ~SI_TO_IRQBIT(si);			\
 		__raise(ipl);						\
 		restore_interrupts(oldirqstate);			\
 		softintr_dispatch(si);					\
 		oldirqstate = disable_interrupts(I32_bit);		\
-		pxa2x0_setipl(spl_save);					\
+		pxa2x0_setipl(spl_save);				\
 	}
 
 	do {
@@ -432,10 +432,32 @@ pxa2x0_intr_establish(int irqno, int level,
 	pxa2x0_update_intr_masks(irqno, level);
 
 	intr_mask = pxa2x0_imask[current_spl_level];
-	
+
 	restore_interrupts(psw);
 
 	return (&handler[irqno]);
+}
+
+void
+pxa2x0_intr_disestablish(void *cookie)
+{
+	struct intrhandler *lhandler = cookie, *ih;
+	int irqmin = CPU_IS_PXA250 ? PXA250_IRQ_MIN : PXA270_IRQ_MIN;
+	int irqno = lhandler - handler;
+	int psw;
+
+	if (irqno < irqmin || irqno >= ICU_LEN)
+		panic("intr_disestablish: bogus irq number %d", irqno);
+
+	psw = disable_interrupts(I32_bit);
+
+	ih = &handler[irqno];
+	ih->func = stray_interrupt;
+	ih->cookie = (void *)(intptr_t)irqno;
+	extirq_level[irqno] = IPL_SERIAL;
+	pxa2x0_update_intr_masks(irqno, IPL_SERIAL);
+
+	restore_interrupts(psw);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.100.6.1 2006/11/18 21:34:20 ad Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.100.6.2 2007/01/12 00:57:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.6.1 2006/11/18 21:34:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.6.2 2007/01/12 00:57:37 ad Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.100.6.1 2006/11/18 21:34:20 ad Exp $");
 #include <dev/ieee1394/fwohcireg.h>
 #include <dev/ieee1394/fwohcivar.h>
 #include <dev/ieee1394/firewire_phy.h>
+
+#include "ioconf.h"
 #endif
 
 #undef OHCI_DEBUG
@@ -336,7 +338,6 @@ int fwohci_print(void *, const char *);
 #if defined(__FreeBSD__)
 d_ioctl_t fwohci_ioctl;
 #elif defined(__NetBSD__)
-extern struct cfdriver fwohci_cd;
 dev_type_ioctl(fwohci_ioctl);
 #endif
 
@@ -2722,9 +2723,11 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 	int dsiz[2];
 
 	ir = &dbch->xferq;
-	if (db_tr->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
-		db_tr->buf = fwdma_malloc_size(dbch->dmat, &db_tr->dma_map,
-			ir->psize, &dbuf[0], BUS_DMA_NOWAIT);
+	if (ir->buf == NULL && (dbch->xferq.flag & FWXFERQ_EXTBUF) == 0) {
+		if (db_tr->buf == NULL)
+			db_tr->buf = fwdma_malloc_size(
+			    dbch->dmat, &db_tr->dma_map,
+			    ir->psize, &dbuf[0], BUS_DMA_NOWAIT);
 		if (db_tr->buf == NULL)
 			return(ENOMEM);
 		db_tr->dbcnt = 1;
@@ -2738,7 +2741,7 @@ fwohci_add_rx_buf(struct fwohci_dbch *dbch, struct fwohcidb_tr *db_tr,
 			dbuf[db_tr->dbcnt++] = dummy_dma->bus_addr;
 		}
 		dsiz[db_tr->dbcnt] = ir->psize;
-		if (db_tr->buf != NULL) {
+		if (ir->buf != NULL) {
 			db_tr->buf = fwdma_v_addr(ir->buf, poffset);
 			dbuf[db_tr->dbcnt] = fwdma_bus_addr( ir->buf, poffset);
 		}

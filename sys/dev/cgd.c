@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.37.4.1 2006/11/18 21:34:03 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.37.4.2 2007/01/12 00:57:34 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.37.4.1 2006/11/18 21:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.37.4.2 2007/01/12 00:57:34 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -726,7 +726,7 @@ cgd_cipher(struct cgd_softc *cs, caddr_t dst, caddr_t src,
 	struct uio	srcuio;
 	struct iovec	dstiov[2];
 	struct iovec	srciov[2];
-	int		blocksize = cs->sc_cdata.cf_blocksize;
+	size_t		blocksize = cs->sc_cdata.cf_blocksize;
 	char		sink[blocksize];
 	char		zero_iv[blocksize];
 	char		blkno_buf[blocksize];

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99.2.7 2007/01/11 22:22:59 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.8 2007/01/12 01:04:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.7 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.8 2007/01/12 01:04:06 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -471,6 +471,8 @@ lockstatus(struct lock *lkp)
 			lock_type = LK_EXCLOTHER;
 	} else if (lkp->lk_sharecount != 0)
 		lock_type = LK_SHARED;
+	else if (lkp->lk_flags & (LK_WANT_EXCL | LK_WANT_UPGRADE))
+		lock_type = LK_EXCLOTHER;
 	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
 	return (lock_type);
 }

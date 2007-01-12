@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.72.2.1 2006/11/18 21:39:28 ad Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.72.2.2 2007/01/12 01:04:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.72.2.1 2006/11/18 21:39:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.72.2.2 2007/01/12 01:04:11 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -290,8 +290,8 @@ struct vfsops kernfs_vfsops = {
 	kernfs_statvfs,
 	kernfs_sync,
 	kernfs_vget,
-	NULL,				/* vfs_fhtovp */
-	NULL,				/* vfs_vptofh */
+	(void *)eopnotsupp,		/* vfs_fhtovp */
+	(void *)eopnotsupp,		/* vfs_vptofh */
 	kernfs_init,
 	kernfs_reinit,
 	kernfs_done,

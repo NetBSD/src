@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.4 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.5 2007/01/12 01:00:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.4 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.5 2007/01/12 01:00:40 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -134,7 +134,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 
-	l->l_proc->p_flag |= P_32;
+	p->p_flag |= P_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
@@ -617,11 +617,10 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	/* XXX this looks like a copy/paste error. */
-	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86_64,
-	    KAUTH_REQ_MACHDEP_X86_64_MTRR_GET, NULL, NULL, NULL);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &args32, sizeof args32);
 	if (error != 0)
@@ -685,10 +684,10 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
-	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_X86,
-	    KAUTH_REQ_MACHDEP_X86_MTRR_SET, NULL, NULL, NULL);
-	if (error != 0)
-		return error;
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
+	    NULL, NULL, NULL, NULL);
+	if (error)
+		return (error);
 
 	error = copyin(args, &args32, sizeof args32);
 	if (error != 0)

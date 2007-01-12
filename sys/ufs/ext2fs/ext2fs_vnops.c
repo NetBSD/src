@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.67.4.1 2006/11/18 21:39:47 ad Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.67.4.2 2007/01/12 01:04:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.67.4.1 2006/11/18 21:39:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.67.4.2 2007/01/12 01:04:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,12 +350,15 @@ ext2fs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)))
+		    NULL)))
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
-		if (kauth_cred_geteuid(cred) == 0) {
+		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0) {
 			if ((ip->i_e2fs_flags &
-			    (EXT2_APPEND | EXT2_IMMUTABLE)) && securelevel > 0)
+			    (EXT2_APPEND | EXT2_IMMUTABLE)) &&
+			    kauth_authorize_system(l->l_cred,
+			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
 				return (EPERM);
 			ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
 			ip->i_e2fs_flags |=
@@ -411,7 +414,7 @@ ext2fs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, 
-			&l->l_acflag)) &&
+			NULL)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 			(error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -447,9 +450,9 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    NULL)))
 		return (error);
-	if (kauth_cred_geteuid(cred)) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
 		if ((kauth_cred_ismember_gid(cred, ip->i_e2fs_gid, &ismember) != 0 ||
@@ -488,8 +491,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
  	    (gid != ip->i_e2fs_gid &&
 	    !(kauth_cred_getegid(cred) == gid ||
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
 	ouid = ip->i_e2fs_uid;
@@ -498,9 +500,11 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	ip->i_e2fs_uid = uid;
 	if (ouid != uid || ogid != gid)
 		ip->i_flag |= IN_CHANGE;
-	if (ouid != uid && kauth_cred_geteuid(cred) != 0)
+	if (ouid != uid && kauth_authorize_generic(cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		ip->i_e2fs_mode &= ~ISUID;
-	if (ogid != gid && kauth_cred_geteuid(cred) != 0)
+	if (ogid != gid && kauth_authorize_generic(cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		ip->i_e2fs_mode &= ~ISGID;
 	return (0);
 }
@@ -699,14 +703,15 @@ abortit:
 		vput(tvp);
 
 		/* Delete source. */
-		vrele(fdvp);
 		vrele(fvp);
-		fcnp->cn_flags &= ~MODMASK;
+		fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 		fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-		if ((fcnp->cn_flags & SAVESTART) == 0)
-			panic("ext2fs_rename: lost from startdir");
 		fcnp->cn_nameiop = DELETE;
-		(void) relookup(fdvp, &fvp, fcnp);
+		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(fdvp, &fvp, fcnp))) {
+			vput(fdvp);
+			return (error);
+		}
 		return (VOP_REMOVE(fdvp, fvp, fcnp));
 	}
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
@@ -739,7 +744,7 @@ abortit:
 		 */
 		if ((fcnp->cn_namelen == 1 && fcnp->cn_nameptr[0] == '.') ||
 		    dp == ip ||
-		    (fcnp->cn_flags&ISDOTDOT) ||
+		    (fcnp->cn_flags & ISDOTDOT) ||
 		    (tcnp->cn_flags & ISDOTDOT) ||
 		    (ip->i_flag & IN_RENAME)) {
 			VOP_UNLOCK(fvp, 0);
@@ -748,10 +753,9 @@ abortit:
 		}
 		ip->i_flag |= IN_RENAME;
 		oldparent = dp->i_number;
-		doingdirectory++;
+		doingdirectory = 1;
 	}
 	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXXLUKEM/XXX: right place? */
-	vrele(fdvp);
 
 	/*
 	 * When the target exists, both the directory
@@ -794,13 +798,18 @@ abortit:
 			goto bad;
 		if (xp != NULL)
 			vput(tvp);
+		vref(tdvp);     /* compensate for the ref checkpath loses */
 		error = ext2fs_checkpath(ip, dp, tcnp->cn_cred);
-		if (error != 0)
+		if (error != 0) {
+			vrele(tdvp);
 			goto out;
-		if ((tcnp->cn_flags & SAVESTART) == 0)
-			panic("ext2fs_rename: lost to startdir");
-		if ((error = relookup(tdvp, &tvp, tcnp)) != 0)
+		}
+		tcnp->cn_flags &= ~SAVESTART;
+		vn_lock(tdvp, LK_EXCLUSIVE | LK_RETRY);
+		if ((error = relookup(tdvp, &tvp, tcnp)) != 0) {
+			vput(tdvp);
 			goto out;
+		}
 		dp = VTOI(tdvp);
 		xp = NULL;
 		if (tvp)
@@ -858,7 +867,9 @@ abortit:
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((dp->i_e2fs_mode & S_ISTXT) && kauth_cred_geteuid(tcnp->cn_cred) != 0 &&
+		if ((dp->i_e2fs_mode & S_ISTXT) &&
+		    kauth_authorize_generic(tcnp->cn_cred,
+		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
 		    kauth_cred_geteuid(tcnp->cn_cred) != dp->i_e2fs_uid &&
 		    xp->i_e2fs_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
 			error = EPERM;
@@ -897,8 +908,6 @@ abortit:
 			dp->i_e2fs_nlink--;
 			dp->i_flag |= IN_CHANGE;
 		}
-		VN_KNOTE(tdvp, NOTE_WRITE);
-		vput(tdvp);
 		/*
 		 * Adjust the link count of the target to
 		 * reflect the dirrewrite above.  If this is
@@ -917,6 +926,8 @@ abortit:
 			    tcnp->cn_cred, tcnp->cn_lwp->l_proc);
 		}
 		xp->i_flag |= IN_CHANGE;
+		VN_KNOTE(tdvp, NOTE_WRITE);
+		vput(tdvp);
 		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
 		xp = NULL;
@@ -925,11 +936,14 @@ abortit:
 	/*
 	 * 3) Unlink the source.
 	 */
-	fcnp->cn_flags &= ~MODMASK;
+	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
-	if ((fcnp->cn_flags & SAVESTART) == 0)
-		panic("ext2fs_rename: lost from startdir");
-	(void) relookup(fdvp, &fvp, fcnp);
+	vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		vput(fdvp);
+		vrele(ap->a_fvp);
+		return (error);
+	}
 	if (fvp != NULL) {
 		xp = VTOI(fvp);
 		dp = VTOI(fdvp);
@@ -998,11 +1012,11 @@ abortit:
 		xp->i_flag &= ~IN_RENAME;
 	}
 	VN_KNOTE(fvp, NOTE_RENAME);
-	vput(fdvp);
+	if (dp)
+		vput(fdvp);
 	if (xp)
 		vput(fvp);
-	if (dp)
-		vrele(ap->a_fvp);
+	vrele(ap->a_fvp);
 	return (error);
 
 bad:
@@ -1018,6 +1032,7 @@ out:
 		vput(fvp);
 	} else
 		vrele(fvp);
+	vrele(fdvp);
 	return (error);
 }
 

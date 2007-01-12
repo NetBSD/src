@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.10.20.1 2007/01/12 01:00:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -61,9 +61,6 @@ void	enablertclock(void);
 void	cpu_initclocks(void);
 void	setstatclockrate(int);
 void	disablertclock(void);
-u_long	clkread(void);
-void	inittodr(time_t);
-void	resettodr(void);
 void	mac68k_calibrate_delay(void);
 void	startrtclock(void);
 

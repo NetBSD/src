@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.67 2006/05/17 04:22:46 mrg Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.67.8.1 2007/01/12 01:00:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.67 2006/05/17 04:22:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.67.8.1 2007/01/12 01:00:46 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -433,7 +433,7 @@ initarm(void *arg)
 #endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
-	/* XXX must make the memory description h/w independant */
+	/* XXX must make the memory description h/w independent */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = memstart;
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;

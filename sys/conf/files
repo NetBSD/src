@@ -1,8 +1,8 @@
-#	$NetBSD: files,v 1.810.2.3 2006/11/18 21:39:15 ad Exp $
+#	$NetBSD: files,v 1.810.2.4 2007/01/12 01:04:03 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20060830
+version 	20070109
 
 #
 # device classes
@@ -90,9 +90,9 @@ defflag opt_syscall_stats.h	SYSCALL_TIMES_HASCOUNTER: SYSCALL_TIMES
 file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
+				PAX_SEGVGUARD
 
 defflag	opt_fileassoc.h		FILEASSOC
-defparam opt_fileassoc.h	FILEASSOC_NHOOKS
 
 defflag	opt_gre.h		GRE_DEBUG
 
@@ -170,6 +170,7 @@ obsolete defflag		HDLC		# obsolete
 obsolete defflag		LLC		# obsolete
 obsolete defflag opt_ns.h	NS NSIP		# obsolete
 obsolete defflag		IPX		# obsolete
+obsolete defflag opt_iso.h	TPCONS
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
@@ -236,7 +237,7 @@ defparam opt_md.h		MEMORY_DISK_SERVER MEMORY_DISK_ROOT_SIZE
 #
 defflag	opt_perfctrs.h		PERFCTRS
 
-# Machine-independant device majors assignements
+# Machine-independent device majors assignements
 include "conf/majors"
 
 # generic attributes
@@ -477,6 +478,11 @@ device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_netbsd.c		isp
 file	dev/ic/isp_target.c		isp & isp_target_mode
+
+# LSILogic MegaRAID SAS
+#
+device	mfi: scsi
+file	dev/ic/mfi.c			mfi
 
 # LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
 #
@@ -874,12 +880,6 @@ file	dev/ic/wdc_upc.c		wdc_upc
 file	dev/ic/com_upc.c		com_upc
 file	dev/ic/lpt_upc.c		lpt_upc
 
-# Common code for ISA/PCMCIA (non 802.11) WaveLAN adapters
-#
-define	wavelan
-device	wl: ether, ifnet, arp
-file	dev/ic/wavelan.c		wavelan
-
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 #
 device	tlp: arp, ether, ifnet, mii, mii_bitbang
@@ -1108,8 +1108,8 @@ file	dev/ic/isic_bchan.c		isic
 
 # (old) Diehl active ISDN cards
 #
-device	daic: isdndev
-file	dev/ic/daic.c			daic
+#device	daic: isdndev
+#file	dev/ic/daic.c			daic
 
 # AWM B1/T1
 # XXX: passive_isdn
@@ -1144,9 +1144,11 @@ defpseudo strip:	ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
+defpseudo srt:		ifnet
 defpseudo stf:		ifnet
 defpseudo tap { }:	ifnet, ether, arp, bpf_filter
 defpseudo carp:		ifnet, ether, arp, bpf_filter
+defpseudo etherip { }:	ifnet, ether, arp, bpf_filter
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1292,7 +1294,7 @@ file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_mutex.c
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
-file	kern/kern_pax.c			pax_mprotect
+file	kern/kern_pax.c			pax_mprotect | pax_segvguard
 file	kern/kern_physio.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
@@ -1394,6 +1396,7 @@ file	net/if_atmsubr.c		atm
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
 file	net/if_ecosubr.c		eco
+file	net/if_etherip.c		etherip			needs-flag
 file	net/if_ethersubr.c		ether | fddi | netatalk | token |
 					    wlan
 file	net/if_faith.c			faith & inet & inet6	needs-flag
@@ -1405,6 +1408,7 @@ file	net/if_ieee1394subr.c		ieee1394
 file	net/if_loop.c			loop			needs-flag
 file	net/if_media.c
 file	net/if_ppp.c			ppp			needs-flag
+file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
@@ -1430,7 +1434,9 @@ file	netinet/in_gif.c		gif & inet
 file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
 file	netinet/ip_encap.c		inet | inet6
+file	netinet/ip_etherip.c		etherip & inet
 file	netinet/ip_gre.c		inet & gre
+file	netinet6/ip6_etherip.c		etherip & inet6
 file	netinet6/in6_gif.c		gif & inet6
 
 file	netisdn/i4b_ctl.c		isdnctl			needs-flag

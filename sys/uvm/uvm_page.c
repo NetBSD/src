@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.112.8.3 2007/01/11 22:23:02 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.112.8.4 2007/01/12 01:04:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.112.8.3 2007/01/11 22:23:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.112.8.4 2007/01/12 01:04:25 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -413,7 +413,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	simple_lock_init(&uvm.pagedaemon_lock);
-	simple_lock_init(&uvm.aiodoned_lock);
 
 	/*
 	 * init various thresholds.
@@ -1346,7 +1345,10 @@ uvm_pagefree(struct vm_page *pg)
 		pg->owner_tag = NULL;
 #endif
 		if (pg->loan_count) {
-			uvm_pagedequeue(pg);
+			KASSERT(pg->uobject == NULL);
+			if (pg->uanon == NULL) {
+				uvm_pagedequeue(pg);
+			}
 			return;
 		}
 	}
@@ -1508,12 +1510,12 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 		    "page (%p)\n", pg);
 		panic("uvm_page_own");
 	}
-	KASSERT(uvmpdpol_pageisqueued_p(pg) ||
-	    (pg->uanon == NULL && pg->uobject == NULL) ||
-	    pg->uobject == uvm.kernel_object ||
-	    pg->wire_count > 0 ||
-	    (pg->loan_count == 1 && pg->uanon == NULL) ||
-	    pg->loan_count > 1);
+	if (!uvmpdpol_pageisqueued_p(pg)) {
+		KASSERT((pg->uanon == NULL && pg->uobject == NULL) ||
+		    pg->wire_count > 0);
+	} else {
+		KASSERT(pg->wire_count == 0);
+	}
 	pg->owner_tag = NULL;
 }
 #endif

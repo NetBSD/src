@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.165.4.1 2006/11/18 21:39:36 ad Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.165.4.2 2007/01/12 01:04:14 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165.4.1 2006/11/18 21:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165.4.2 2007/01/12 01:04:14 ad Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -169,38 +169,6 @@ int	ip_do_loopback_cksum = 0;
 	(((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
 	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
 	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
-
-struct ip_tso_output_args {
-	struct ifnet *ifp;
-	struct sockaddr *sa;
-	struct rtentry *rt;
-};
-
-static int ip_tso_output_callback(void *, struct mbuf *);
-static int ip_tso_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-    struct rtentry *);
-
-static int
-ip_tso_output_callback(void *vp, struct mbuf *m)
-{
-	struct ip_tso_output_args *args = vp;
-	struct ifnet *ifp = args->ifp;
-
-	return (*ifp->if_output)(ifp, m, args->sa, args->rt);
-}
-
-static int
-ip_tso_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
-    struct rtentry *rt)
-{
-	struct ip_tso_output_args args;
-
-	args.ifp = ifp;
-	args.sa = sa;
-	args.rt = rt;
-
-	return tcp4_segment(m, ip_tso_output_callback, &args);
-}
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -319,7 +287,7 @@ ip_output(struct mbuf *m0, ...)
 	/*
 	 * Route packet.
 	 */
-	if (ro == 0) {
+	if (ro == NULL) {
 		ro = &iproute;
 		bzero((caddr_t)ro, sizeof (*ro));
 	}
@@ -331,13 +299,12 @@ ip_output(struct mbuf *m0, ...)
 	 * The address family should also be checked in case of sharing the
 	 * cache with IPv6.
 	 */
-	if (ro->ro_rt && ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	    dst->sin_family != AF_INET ||
-	    !in_hosteq(dst->sin_addr, ip->ip_dst))) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = (struct rtentry *)0;
-	}
-	if (ro->ro_rt == 0) {
+	if (dst->sin_family != AF_INET ||
+	    !in_hosteq(dst->sin_addr, ip->ip_dst))
+		rtcache_free(ro);
+	else
+		rtcache_check(ro);
+	if (ro->ro_rt == NULL) {
 		bzero(dst, sizeof(*dst));
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
@@ -363,9 +330,9 @@ ip_output(struct mbuf *m0, ...)
 		mtu = ifp->if_mtu;
 		IFP_TO_IA(ifp, ia);
 	} else {
-		if (ro->ro_rt == 0)
-			rtalloc(ro);
-		if (ro->ro_rt == 0) {
+		if (ro->ro_rt == NULL)
+			rtcache_init(ro);
+		if (ro->ro_rt == NULL) {
 			ipstat.ips_noroute++;
 			error = EHOSTUNREACH;
 			goto bad;
@@ -853,6 +820,7 @@ spd_done:
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
+	ip_len = ntohs(ip->ip_len);
 #endif /* PFIL_HOOKS */
 
 	m->m_pkthdr.csum_data |= hlen << 16;
@@ -997,10 +965,8 @@ spd_done:
 	if (error == 0)
 		ipstat.ips_fragmented++;
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0 && ro->ro_rt) {
-		RTFREE(ro->ro_rt);
-		ro->ro_rt = 0;
-	}
+	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0)
+		rtcache_free(ro);
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -1395,7 +1361,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 #ifdef __NetBSD__
 			if (l == 0 || kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+			    KAUTH_GENERIC_ISSUSER, NULL))
 				priv = 0;
 			else
 				priv = 1;
@@ -1796,18 +1762,17 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
 			bzero((caddr_t)&ro, sizeof(ro));
-			ro.ro_rt = NULL;
 			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
 			dst->sin_family = AF_INET;
 			dst->sin_addr = mreq->imr_multiaddr;
-			rtalloc(&ro);
+			rtcache_init(&ro);
 			if (ro.ro_rt == NULL) {
 				error = EADDRNOTAVAIL;
 				break;
 			}
 			ifp = ro.ro_rt->rt_ifp;
-			rtfree(ro.ro_rt);
+			rtcache_free(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);
 		}

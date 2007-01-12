@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.30.6.1 2006/11/18 21:39:47 ad Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.30.6.2 2007/01/12 01:04:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.30.6.1 2006/11/18 21:39:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.30.6.2 2007/01/12 01:04:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,8 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
 #endif /* DIAGNOSTIC */
 	if (fs->e2fs.e2fs_fbcount == 0)
 		goto nospace;
-	if (kauth_cred_geteuid(cred) != 0 && freespace(fs) <= 0)
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
+	    freespace(fs) <= 0)
 		goto nospace;
 	if (bpref >= fs->e2fs.e2fs_bcount)
 		bpref = 0;
@@ -441,6 +442,8 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 	int error, start, len, loc, map, i;
 
 	ipref--; /* to avoid a lot of (ipref -1) */
+	if (ipref == -1)
+		ipref = 0;
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
 		return (0);
@@ -554,7 +557,7 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
-	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
+	if ((u_int)ino > fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
 		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
 			pip->i_dev, (unsigned long long)ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);

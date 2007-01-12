@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.124.20.1 2006/11/18 21:34:21 ad Exp $	*/
+/*	$NetBSD: isa.c,v 1.124.20.2 2007/01/12 00:57:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.124.20.1 2006/11/18 21:34:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.124.20.2 2007/01/12 00:57:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ isamatch(struct device *parent, struct cfdata *cf,
 {
 	/* XXX check other indicators */
 
-        return (1);
+	return (1);
 }
 
 void
@@ -145,7 +145,7 @@ isarescan(struct device *self, const char *ifattr, const int *locators)
 	memcpy(locs, locators, sizeof(locs));
 
 	/*
-	 * XXX Bus independant code calling this function does not
+	 * XXX Bus independent code calling this function does not
 	 * know the locator default values. It assumes "-1" for now.
 	 * (should be made available by "config" one day)
 	 * So fixup where the "-1" is not correct.
@@ -454,13 +454,13 @@ isa_intr_typename(int type)
 {
 
 	switch (type) {
-        case IST_NONE :
+	case IST_NONE:
 		return ("none");
-        case IST_PULSE:
+	case IST_PULSE:
 		return ("pulsed");
-        case IST_EDGE:
+	case IST_EDGE:
 		return ("edge-triggered");
-        case IST_LEVEL:
+	case IST_LEVEL:
 		return ("level-triggered");
 	default:
 		panic("isa_intr_typename: invalid type %d", type);

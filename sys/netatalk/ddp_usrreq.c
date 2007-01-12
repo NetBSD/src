@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.17.4.1 2006/11/18 21:39:36 ad Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.17.4.2 2007/01/12 01:04:12 ad Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.17.4.1 2006/11/18 21:39:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.17.4.2 2007/01/12 01:04:12 ad Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -274,8 +274,7 @@ at_pcbsetaddr(ddp, addr, l)
 
 			if (sat->sat_port < ATPORT_RESERVED && l &&
 			    kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER,
-			    &l->l_acflag))
+			    KAUTH_GENERIC_ISSUSER, NULL))
 				return (EACCES);
 		}
 	} else {
@@ -365,7 +364,8 @@ at_pcbconnect(ddp, addr, l)
          * If we've changed our address, we may have an old "good looking"
          * route here.  Attempt to detect it.
          */
-	if (ro->ro_rt) {
+	rtcache_check(ro);
+	if (ro->ro_rt != NULL) {
 		if (hintnet) {
 			net = hintnet;
 		} else {
@@ -385,16 +385,13 @@ at_pcbconnect(ddp, addr, l)
 		if (aa == NULL || (satosat(&ro->ro_dst)->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
 		    satosat(&ro->ro_dst)->sat_addr.s_node !=
-		    sat->sat_addr.s_node)) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *) 0;
-		}
+		    sat->sat_addr.s_node))
+			rtcache_free(ro);
 	}
 	/*
          * If we've got no route for this interface, try to find one.
          */
-	if (ro->ro_rt == (struct rtentry *) 0 ||
-	    ro->ro_rt->rt_ifp == (struct ifnet *) 0) {
+	if (ro->ro_rt == NULL) {
 		bzero(&ro->ro_dst, sizeof(struct sockaddr_at));
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_at);
 		ro->ro_dst.sa_family = AF_APPLETALK;
@@ -405,7 +402,7 @@ at_pcbconnect(ddp, addr, l)
 			    sat->sat_addr.s_net;
 		}
 		satosat(&ro->ro_dst)->sat_addr.s_node = sat->sat_addr.s_node;
-		rtalloc(ro);
+		rtcache_init(ro);
 	}
 	/*
          * Make sure any route that we have has a valid interface.

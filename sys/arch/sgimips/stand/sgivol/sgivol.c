@@ -1,4 +1,4 @@
-/*	$NetBSD: sgivol.c,v 1.13 2006/07/03 01:21:50 mrg Exp $	*/
+/*	$NetBSD: sgivol.c,v 1.13.4.1 2007/01/12 01:00:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -620,10 +620,12 @@ checksum_vol(void)
 void
 usage(void)
 {
-	printf("Usage:	sgivol [-qf] [-i] [-h vhsize] device\n"
-	       "	sgivol [-qf] [-r vhfilename diskfilename] device\n"
-	       "	sgivol [-qf] [-w vhfilename diskfilename] device\n"
-	       "	sgivol [-qf] [-d vhfilename] device\n"
+	printf("Usage:	sgivol [-qf] -i [-h vhsize] device\n"
+	       "	sgivol [-qf] -r vhfilename diskfilename device\n"
+	       "	sgivol [-qf] -w vhfilename diskfilename device\n"
+	       "	sgivol [-qf] -d vhfilename device\n"
+	       "	sgivol [-qf] -p partno partfirst partblocks "
+	       "parttype device\n"
 	       );
 	exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.145.2.3 2006/11/18 21:39:21 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.145.2.4 2007/01/12 01:04:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145.2.3 2006/11/18 21:39:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.145.2.4 2007/01/12 01:04:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1891,7 +1891,7 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
-	memset(&ksi, 0, sizeof(ksi));
+	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;

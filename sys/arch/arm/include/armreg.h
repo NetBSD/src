@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.35 2006/04/14 09:28:17 nonaka Exp $	*/
+/*	$NetBSD: armreg.h,v 1.35.8.1 2007/01/12 01:00:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -174,7 +174,7 @@
 /* ARM7 CPUs -- [15:12] == 7 */
 #define CPU_ID_ARM700		0x41007000 /* XXX This is a guess. */
 #define CPU_ID_ARM710		0x41007100
-#define CPU_ID_ARM7500		0x41027100 /* XXX This is a guess. */
+#define CPU_ID_ARM7500		0x41027100
 #define CPU_ID_ARM710A		0x41047100 /* inc ARM7100 */
 #define CPU_ID_ARM7500FE	0x41077100
 #define CPU_ID_ARM710T		0x41807100
@@ -186,6 +186,7 @@
 #define CPU_ID_ARM810		0x41018100
 #define CPU_ID_ARM920T		0x41129200
 #define CPU_ID_ARM922T		0x41029220
+#define CPU_ID_ARM926EJS	0x41069260
 #define CPU_ID_ARM940T		0x41029400 /* XXX no MMU */
 #define CPU_ID_ARM946ES		0x41049460 /* XXX no MMU */
 #define	CPU_ID_ARM966ES		0x41049660 /* XXX no MMU */

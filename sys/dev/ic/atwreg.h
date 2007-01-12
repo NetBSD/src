@@ -1,4 +1,4 @@
-/*	$NetBSD: atwreg.h,v 1.15 2006/08/31 19:24:37 dyoung Exp $	*/
+/*	$NetBSD: atwreg.h,v 1.15.2.1 2007/01/12 00:57:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.  All rights reserved.
@@ -919,12 +919,12 @@
 
 /* Tx descriptor */
 struct atw_txdesc {
-	u_int32_t	at_ctl;
+	volatile uint32_t	at_ctl;
 #define at_stat at_ctl
-	u_int32_t	at_flags;
-	u_int32_t	at_buf1;
-	u_int32_t	at_buf2;
-};
+	volatile uint32_t	at_flags;
+	volatile uint32_t	at_buf1;
+	volatile uint32_t	at_buf2;
+} __attribute__((__packed__, __aligned__(4)));
 
 #define ATW_TXCTL_OWN		__BIT(31)	/* 1: ready to transmit */
 #define ATW_TXCTL_DONE		__BIT(30)	/* 0: not processed */
@@ -953,11 +953,11 @@ struct atw_txdesc {
 
 /* Rx descriptor */
 struct atw_rxdesc {
-    u_int32_t	ar_stat;
-    u_int32_t	ar_ctl;
-    u_int32_t	ar_buf1;
-    u_int32_t	ar_buf2;
-};
+	volatile uint32_t	ar_stat;
+	volatile uint32_t	ar_ctl;
+	volatile uint32_t	ar_buf1;
+	volatile uint32_t	ar_buf2;
+} __attribute__((__packed__, __aligned__(4)));
 
 #define	ar_rssi	ar_ctl
 

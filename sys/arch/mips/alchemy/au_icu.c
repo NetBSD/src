@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.19.8.1 2006/11/18 21:29:25 ad Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.19.8.2 2007/01/12 01:00:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.19.8.1 2006/11/18 21:29:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_icu.c,v 1.19.8.2 2007/01/12 01:00:53 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -138,11 +138,11 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTSERIAL */
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
+	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_0,
+	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_0,
 };
 
 #define	NIRQS		64

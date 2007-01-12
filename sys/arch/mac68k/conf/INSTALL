@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.38.14.1 2006/11/18 21:29:23 ad Exp $
+#	$NetBSD: INSTALL,v 1.38.14.2 2007/01/12 01:00:52 ad Exp $
 #
 # INSTALL
 
@@ -59,7 +59,7 @@ file-system 	KERNFS		# /kern
 #file-system	PTYFS		# /dev/pts/N support
 
 # Filesystem options
-#options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
+#options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

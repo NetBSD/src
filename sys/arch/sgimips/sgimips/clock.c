@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17.2.1 2006/11/18 21:29:30 ad Exp $	*/
+/*	$NetBSD: clock.c,v 1.17.2.2 2007/01/12 01:00:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.2.1 2006/11/18 21:29:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.2.2 2007/01/12 01:00:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -98,7 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.17.2.1 2006/11/18 21:29:30 ad Exp $");
 u_int32_t next_clk_intr;
 u_int32_t missed_clk_intrs;
 
-void mips1_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 
 /*
@@ -125,28 +124,24 @@ void
 cpu_initclocks()
 {
 
-#if defined(MIPS3)
-	if (mach_type != MACH_SGI_IP12) {
-		mips3_initclocks();
-	}
-#endif /* MIPS3 */
-}
-
-void
-mips1_clock_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
-		 u_int32_t ipending)
-{
-	struct clockframe cf;
-
-	cf.pc = pc;
-	cf.sr = status;
-
-	hardclock(&cf);
-
 	switch (mach_type) {
+#if defined(MIPS1)
 	case MACH_SGI_IP12:
-		/* XXX - we need to strobe on ip12. abstract me?! */
-		*(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fb801e0) = 1;
+		/* int(4) will take care of our clocks */
+		/* enable hardware interrupts including hardclock(9) */
+		_splnone();
+		break;
+#endif /* MIPS1 */
+#if defined(MIPS3)
+	case MACH_SGI_IP20:
+	case MACH_SGI_IP22:
+	case MACH_SGI_IP30:
+	case MACH_SGI_IP32:
+		mips3_initclocks();
+		break;
+#endif /* MIPS3 */
+	default:
+		panic("cpu_initclocks(): unknown mach_type IP%d", mach_type);
 		break;
 	}
 }

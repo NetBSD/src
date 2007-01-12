@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.185.2.1 2006/11/18 21:39:49 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.185.2.2 2007/01/12 01:04:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.185.2.1 2006/11/18 21:39:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.185.2.2 2007/01/12 01:04:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -262,7 +262,8 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
+	if (error == 0 && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
@@ -745,7 +746,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fstype = 0;
 
 	/*
-	 * Try reading the superblock in each of its possible locations.		 */
+	 * Try reading the superblock in each of its possible locations.
+	 */
 	for (i = 0; ; i++) {
 		if (bp != NULL) {
 			bp->b_flags |= B_NOCACHE;

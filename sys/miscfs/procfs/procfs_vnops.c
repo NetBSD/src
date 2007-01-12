@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.133.6.6 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.133.6.7 2007/01/12 01:04:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.6 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.7 2007/01/12 01:04:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.133.6.6 2006/12/29 20:27:44 ad Ex
 #include <sys/resourcevar.h>
 #include <sys/stat.h>
 #include <sys/ptrace.h>
-#include <sys/sysctl.h> /* XXX for curtain */
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
@@ -178,7 +177,7 @@ static const struct proc_target {
 	{ DT_REG, N("map"),	PFSmap,		procfs_validmap },
 	{ DT_REG, N("maps"),	PFSmaps,	procfs_validmap },
 	{ DT_REG, N("cmdline"), PFScmdline,	NULL },
-	{ DT_REG, N("exe"),	PFSexe,		procfs_validfile_linux },
+	{ DT_REG, N("exe"),	PFSexe,		procfs_validfile },
 	{ DT_LNK, N("cwd"),	PFScwd,		NULL },
 	{ DT_LNK, N("root"),	PFSchroot,	NULL },
 	{ DT_LNK, N("emul"),	PFSemul,	NULL },
@@ -323,6 +322,20 @@ procfs_open(v)
 
 	l1 = ap->a_l;				/* tracer */
 
+#define	M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? \
+		 KAUTH_REQ_PROCESS_CANPROCFS_RW : \
+		 (m) & FWRITE ? KAUTH_REQ_PROCESS_CANPROCFS_WRITE : \
+		 KAUTH_REQ_PROCESS_CANPROCFS_READ)
+
+	mutex_enter(&p2->p_mutex);
+	error = kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_CANPROCFS,
+	    p2, pfs, KAUTH_ARG(M2K(ap->a_mode)), NULL);
+	mutex_exit(&p2->p_mutex);
+	if (error)
+		return (error);
+
+#undef M2K
+
 	switch (pfs->pfs_type) {
 	case PFSmem:
 		if (((pfs->pfs_flags & FWRITE) && (ap->a_mode & O_EXCL)) ||
@@ -331,14 +344,18 @@ procfs_open(v)
 			break;
 		}
 
-		mutex_enter(&p2->p_mutex);
-		error = process_checkioperm(l1, p2);
-		mutex_exit(&p2->p_mutex);
-		if (error != 0)
-			break;
+		if (!proc_isunder(p2, l1))
+			return (EPERM);
 
 		if (ap->a_mode & FWRITE)
 			pfs->pfs_flags = ap->a_mode & (FWRITE|O_EXCL);
+
+		break;
+
+	case PFSregs:
+	case PFSfpregs:
+		if (!proc_isunder(p2, l1))
+			return (EPERM);
 
 		break;
 
@@ -958,10 +975,9 @@ procfs_lookup(v)
 	struct pfsnode *pfs;
 	struct proc *p = NULL;
 	struct lwp *l = NULL;
-	int i, error, wantpunlock, iscurproc = 0, isself = 0;
+	int i, error, iscurproc = 0, isself = 0;
 
 	*vpp = NULL;
-	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
@@ -972,7 +988,6 @@ procfs_lookup(v)
 		return (0);
 	}
 
-	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 	pfs = VTOPFS(dvp);
 	switch (pfs->pfs_type) {
 	case PFSroot:
@@ -988,10 +1003,6 @@ procfs_lookup(v)
 		if (iscurproc || isself) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
 			    iscurproc ? PFScurproc : PFSself, -1, NULL);
-			if ((error == 0) && (wantpunlock)) {
-				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
 			return (error);
 		}
 
@@ -1007,10 +1018,6 @@ procfs_lookup(v)
 		if (i != nproc_root_targets) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
 			    pt->pt_pfstype, -1, NULL);
-			if ((error == 0) && (wantpunlock)) {
-				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
 			return (error);
 		}
 
@@ -1020,11 +1027,6 @@ procfs_lookup(v)
 			break;
 
 		error = procfs_allocvp(dvp->v_mount, vpp, pid, PFSproc, -1, p);
-		if ((error == 0) && (wantpunlock)) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
-
 		procfs_proc_unlock(p);
 		return (error);
 
@@ -1037,11 +1039,8 @@ procfs_lookup(v)
 		 */
 		if (cnp->cn_flags & ISDOTDOT) {
 			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
 			error = procfs_root(dvp->v_mount, vpp);
-			if ((error == 0) && (wantpunlock == 0) &&
-				    ((error = vn_lock(dvp, LK_EXCLUSIVE)) == 0))
-				cnp->cn_flags &= ~PDIRUNLOCK;
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 
@@ -1062,21 +1061,12 @@ procfs_lookup(v)
 			/* We already checked that it exists. */
 			VREF(fvp);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
-			if (wantpunlock) {
-				VOP_UNLOCK(dvp, 0);
-				cnp->cn_flags |= PDIRUNLOCK;
-			}
 			*vpp = fvp;
 			return (0);
 		}
 
 		error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 		    pt->pt_pfstype, -1, p);
-		if ((error == 0) && (wantpunlock)) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
-
 		procfs_proc_unlock(p);
 		return (error);
 
@@ -1090,18 +1080,14 @@ procfs_lookup(v)
 		/*
 		 * do the .. dance. We unlock the directory, and then
 		 * get the proc dir. That will automatically return ..
-		 * locked. Then if the caller wanted dvp locked, we
-		 * re-lock.
+		 * locked. Then re-lock the directory.
 		 */
 		if (cnp->cn_flags & ISDOTDOT) {
 			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 			    PFSproc, -1, p);
-			if ((error == 0) && (wantpunlock == 0) &&
-				    ((error = vn_lock(dvp, LK_EXCLUSIVE)) == 0))
-				cnp->cn_flags &= ~PDIRUNLOCK;
 			procfs_proc_unlock(p);
+			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 			return (error);
 		}
 		fd = atoi(pname, cnp->cn_namelen);
@@ -1138,11 +1124,6 @@ procfs_lookup(v)
 			    PFSfd, fd, p);
 			break;
 		}
-		if ((error == 0) && (wantpunlock)) {
-			VOP_UNLOCK(dvp, 0);
-			cnp->cn_flags |= PDIRUNLOCK;
-		}
-
 		procfs_proc_unlock(p);
 		return error;
 	}
@@ -1167,7 +1148,8 @@ procfs_validfile_linux(l, mp)
 	int flags;
 
 	flags = VFSTOPROC(mp)->pmnt_flags;
-	return (flags & PROCFSMNT_LINUXCOMPAT) && procfs_validfile(l, mp);
+	return (flags & PROCFSMNT_LINUXCOMPAT) &&
+	    (l == NULL || l->l_proc == NULL || procfs_validfile(l, mp));
 }
 
 struct procfs_root_readdir_ctx {

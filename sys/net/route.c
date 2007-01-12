@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.71.2.1 2006/11/18 21:39:30 ad Exp $	*/
+/*	$NetBSD: route.c,v 1.71.2.2 2007/01/12 01:04:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,8 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71.2.1 2006/11/18 21:39:30 ad Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.71.2.2 2007/01/12 01:04:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +137,49 @@ static int rtdeletemsg(struct rtentry *);
 static int rtflushclone1(struct radix_node *, void *);
 static void rtflushclone(struct radix_node_head *, struct rtentry *);
 
+struct ifaddr *
+rt_get_ifa(struct rtentry *rt)
+{
+	struct ifaddr *ifa;
+
+	if ((ifa = rt->rt_ifa) == NULL)
+		return ifa;
+	else if (ifa->ifa_getifa == NULL)
+		return ifa;
+#if 0
+	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
+		return ifa;
+#endif
+	else {
+		ifa = (*ifa->ifa_getifa)(ifa, rt_key(rt));
+		rt_replace_ifa(rt, ifa);
+		return ifa;
+	}
+}
+
+static void
+rt_set_ifa1(struct rtentry *rt, struct ifaddr *ifa)
+{
+	rt->rt_ifa = ifa;
+	if (ifa->ifa_seqno != NULL)
+		rt->rt_ifa_seqno = *ifa->ifa_seqno;
+}
+
+void
+rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
+{
+	IFAREF(ifa);
+	IFAFREE(rt->rt_ifa);
+	rt_set_ifa1(rt, ifa);
+}
+
+static void
+rt_set_ifa(struct rtentry *rt, struct ifaddr *ifa)
+{
+	IFAREF(ifa);
+	rt_set_ifa1(rt, ifa);
+}
+
 void
 rtable_init(void **table)
 {
@@ -156,6 +198,42 @@ route_init(void)
 	rtable_init((void **)rt_tables);
 }
 
+void
+rtflushall(int family)
+{
+	struct domain *dom;
+
+	if ((dom = pffinddomain(family)) != NULL && dom->dom_rtflushall != NULL)
+		(*dom->dom_rtflushall)();
+}
+
+void
+rtflush(struct route *ro)
+{
+	struct domain *dom;
+
+	KASSERT(ro->ro_rt != NULL);
+
+	RTFREE(ro->ro_rt);
+	ro->ro_rt = NULL;
+
+	if ((dom = pffinddomain(ro->ro_dst.sa_family)) != NULL &&
+	    dom->dom_rtflush != NULL)
+		(*dom->dom_rtflush)(ro);
+}
+
+void
+rtcache(struct route *ro)
+{
+	struct domain *dom;
+
+	KASSERT(ro->ro_rt != NULL);
+
+	if ((dom = pffinddomain(ro->ro_dst.sa_family)) != NULL &&
+	    dom->dom_rtcache != NULL)
+		(*dom->dom_rtcache)(ro);
+}
+
 /*
  * Packet routing routines.
  */
@@ -166,9 +244,11 @@ rtalloc(struct route *ro)
 		if (ro->ro_rt->rt_ifp != NULL &&
 		    (ro->ro_rt->rt_flags & RTF_UP) != 0)
 			return;
-		RTFREE(ro->ro_rt);
+		rtflush(ro);
 	}
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
+	if ((ro->ro_rt = rtalloc1(&ro->ro_dst, 1)) == NULL)
+		return;
+	rtcache(ro);
 }
 
 struct rtentry *
@@ -240,7 +320,9 @@ rtfree(struct rtentry *rt)
 		}
 		rt_timer_remove_all(rt, 0);
 		ifa = rt->rt_ifa;
+		rt->rt_ifa = NULL;
 		IFAFREE(ifa);
+		rt->rt_ifp = NULL;
 		Free(rt_key(rt));
 		pool_put(&rtentry_pool, rt);
 	}
@@ -543,7 +625,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 	struct radix_node *rn;
 	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
-	struct sockaddr *ndst;
 	struct sockaddr_storage deldst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
@@ -622,11 +703,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			pool_put(&rtentry_pool, rt);
 			senderr(ENOBUFS);
 		}
-		ndst = rt_key(rt);
 		if (netmask) {
-			rt_maskedcopy(dst, ndst, netmask);
+			rt_maskedcopy(dst, rt_key(rt), netmask);
 		} else
-			Bcopy(dst, ndst, dst->sa_len);
+			Bcopy(dst, rt_key(rt), dst->sa_len);
 		rt_set_ifa(rt, ifa);
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
@@ -634,12 +714,12 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt->rt_parent = *ret_nrt;
 			rt->rt_parent->rt_refcnt++;
 		}
-		rn = rnh->rnh_addaddr(ndst, netmask, rnh, rt->rt_nodes);
-		if (rn == NULL && (crt = rtalloc1(ndst, 0)) != NULL) {
+		rn = rnh->rnh_addaddr(rt_key(rt), netmask, rnh, rt->rt_nodes);
+		if (rn == NULL && (crt = rtalloc1(rt_key(rt), 0)) != NULL) {
 			/* overwrite cloned route */
 			if ((crt->rt_flags & RTF_CLONED) != 0) {
 				rtdeletemsg(crt);
-				rn = rnh->rnh_addaddr(ndst,
+				rn = rnh->rnh_addaddr(rt_key(rt),
 				    netmask, rnh, rt->rt_nodes);
 			}
 			RTFREE(crt);
@@ -664,6 +744,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			/* clean up any cloned children */
 			rtflushclone(rnh, rt);
 		}
+		rtflushall(dst->sa_family);
 		break;
 	}
 bad:
@@ -1002,4 +1083,138 @@ rt_timer_timer(void *arg)
 	splx(s);
 
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
+}
+
+#ifdef RTCACHE_DEBUG
+#ifndef	RTCACHE_DEBUG_SIZE 
+#define	RTCACHE_DEBUG_SIZE (1024 * 1024)
+#endif
+static const char *cache_caller[RTCACHE_DEBUG_SIZE];
+static struct route *cache_entry[RTCACHE_DEBUG_SIZE];
+size_t cache_cur;
+#endif
+
+#ifdef RTCACHE_DEBUG
+static void
+_rtcache_init_debug(const char *caller, struct route *ro, int flag)
+#else
+static void
+_rtcache_init(struct route *ro, int flag)
+#endif
+{
+#ifdef RTCACHE_DEBUG
+	size_t i;
+	for (i = 0; i < cache_cur; ++i) {
+		if (cache_entry[i] == ro)
+			panic("Reinit of route %p, initialised from %s", ro, cache_caller[i]);
+	}
+#endif
+
+	ro->ro_rt = rtalloc1(&ro->ro_dst, flag);
+	if (ro->ro_rt != NULL) {
+#ifdef RTCACHE_DEBUG
+		if (cache_cur == RTCACHE_DEBUG_SIZE)
+			panic("Route cache debug overflow");
+		cache_caller[cache_cur] = caller;
+		cache_entry[cache_cur] = ro;
+		++cache_cur;
+#endif
+		rtcache(ro);
+	}
+}
+
+#ifdef RTCACHE_DEBUG
+void
+rtcache_init_debug(const char *caller, struct route *ro)
+{
+	_rtcache_init_debug(caller, ro, 1);
+}
+
+void
+rtcache_init_noclone_debug(const char *caller, struct route *ro)
+{
+	_rtcache_init_debug(caller, ro, 0);
+}
+
+#else
+void
+rtcache_init(struct route *ro)
+{
+	_rtcache_init(ro, 1);
+}
+
+void
+rtcache_init_noclone(struct route *ro)
+{
+	_rtcache_init(ro, 0);
+}
+#endif
+
+#ifdef RTCACHE_DEBUG
+void
+rtcache_copy_debug(const char *caller, struct route *new, const struct route *old, size_t new_len)
+#else
+void
+rtcache_copy(struct route *new, const struct route *old, size_t new_len)
+#endif
+{
+#ifdef RTCACHE_DEBUG
+	size_t i;
+
+	for (i = 0; i < cache_cur; ++i) {
+		if (cache_entry[i] == new)
+			panic("Copy to initalised route %p (before %s)", new, cache_caller[i]);
+	}
+#endif
+
+	bzero(new, new_len);
+	if (old->ro_dst.sa_len + offsetof(struct route, ro_dst) > new_len)
+		panic("rtcache_copy: dst address will overflow new route");
+	bcopy(&old->ro_dst, &new->ro_dst, old->ro_dst.sa_len);
+	new->ro_rt = old->ro_rt;
+	if (new->ro_rt != NULL) {
+#ifdef RTCACHE_DEBUG
+		if (cache_cur == RTCACHE_DEBUG_SIZE)
+			panic("Route cache debug overflow");
+		cache_caller[cache_cur] = caller;
+		cache_entry[cache_cur] = new;
+		++cache_cur;
+#endif
+		rtcache(new);
+		++new->ro_rt->rt_refcnt;
+	}
+}
+
+void
+rtcache_free(struct route *ro)
+{
+#ifdef RTCACHE_DEBUG
+	size_t j, i = cache_cur;
+	for (i = j = 0; i < cache_cur; ++i, ++j) {
+		if (cache_entry[i] == ro) {
+			if (ro->ro_rt == NULL)
+				panic("Route cache manipulated (allocated by %s)", cache_caller[i]);
+			--j;
+		} else {
+			cache_caller[j] = cache_caller[i];
+			cache_entry[j] = cache_entry[i];
+		}
+	}
+	if (ro->ro_rt != NULL) {
+		if (i != j + 1)
+			panic("Wrong entries after rtcache_free: %zu (expected %zu)", j, i - 1);
+		--cache_cur;
+	}
+#endif
+
+	if (ro->ro_rt != NULL)
+		rtflush(ro);
+	ro->ro_rt = NULL;
+}
+
+void
+rtcache_update(struct route *ro)
+{
+	rtcache_free(ro);
+	rtcache_init(ro);
 }

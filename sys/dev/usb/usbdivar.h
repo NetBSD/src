@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.77.20.1 2006/11/18 21:34:52 ad Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.77.20.2 2007/01/12 00:57:49 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -73,9 +73,11 @@ struct usbd_pipe_methods {
 	void		      (*done)(usbd_xfer_handle xfer);
 };
 
+#if 0 /* notyet */
 struct usbd_tt {
 	struct usbd_hub	       *hub;
 };
+#endif
 
 struct usbd_port {
 	usb_port_status_t	status;
@@ -86,7 +88,9 @@ struct usbd_port {
 	u_int8_t		reattach;
 	struct usbd_device     *device;	/* Connected device */
 	struct usbd_device     *parent;	/* The ports hub */
+#if 0
 	struct usbd_tt	       *tt; /* Transaction translator (if any) */
+#endif
 };
 
 struct usbd_hub {

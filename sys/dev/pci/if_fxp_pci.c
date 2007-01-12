@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.47.4.1 2006/11/18 21:34:30 ad Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.47.4.2 2007/01/12 00:57:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.47.4.1 2006/11/18 21:34:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.47.4.2 2007/01/12 00:57:41 ad Exp $");
 
 #include "rnd.h"
 
@@ -136,6 +136,8 @@ static const struct fxp_pci_product {
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_6,
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VE_7,
+	  "Intel PRO/100 VE Network Controller" },
+	{ PCI_PRODUCT_INTEL_PRO_100_VE_8,
 	  "Intel PRO/100 VE Network Controller" },
 	{ PCI_PRODUCT_INTEL_PRO_100_VM_0,
 	  "Intel PRO/100 VM Network Controller" },

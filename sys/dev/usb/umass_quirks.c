@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.70 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.70.20.1 2007/01/12 00:57:49 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.70 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.70.20.1 2007/01/12 00:57:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	 */
 	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_DSC },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
-	  0,
+	  UMASS_QUIRK_RBC_PAD_TO_12,
 	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, umass_fixup_sony
@@ -242,5 +242,5 @@ umass_fixup_sony(struct umass_softc *sc)
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 	if (id->bInterfaceSubClass == 0xff)
-		sc->sc_cmd = UMASS_CPROTO_SCSI;
+		sc->sc_cmd = UMASS_CPROTO_RBC;
 }

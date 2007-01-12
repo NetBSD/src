@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.15.4.1 2006/11/18 21:34:14 ad Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.15.4.2 2007/01/12 00:57:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -123,14 +123,17 @@
 /*
  * Registers specific to the 8169 gigE chip
  */
+#define RTK_GTXSTART		0x0038	/* 16 bits */
 #define RTK_TIMERINT_8169	0x0058	/* different offset than 8139 */
 #define RTK_PHYAR		0x0060
 #define RTK_TBICSR		0x0064
 #define RTK_TBI_ANAR		0x0068
 #define RTK_TBI_LPAR		0x006A
 #define RTK_GMEDIASTAT		0x006C	/* 8 bits */
+#define RTK_LDPS		0x0082	/* Link Down Power Saving */
 #define RTK_MAXRXPKTLEN		0x00DA	/* 16 bits, chip multiplies by 8 */
-#define RTK_GTXSTART		0x0038	/* 16 bits */
+#define RTK_IM			0x00E2
+
 /*
  * TX config register bits
  */
@@ -146,10 +149,16 @@
 #define RTK_LOOPTEST_ON		0x00020000
 #define RTK_LOOPTEST_ON_CPLUS	0x00060000
 
+/* Known revision codes. */
 #define RTK_HWREV_8169		0x00000000
-#define RTK_HWREV_8169S		0x04000000
-#define RTK_HWREV_8169SB	0x10000000
 #define RTK_HWREV_8110S		0x00800000
+#define RTK_HWREV_8169S		0x04000000
+#define RTK_HWREV_8169_8110SB	0x10000000
+#define RTK_HWREV_8169_8110SC	0x18000000
+#define RTK_HWREV_8168_SPIN1	0x30000000
+#define RTK_HWREV_8100E		0x30800000
+#define RTK_HWREV_8101E		0x34000000
+#define RTK_HWREV_8168_SPIN2	0x38000000
 #define RTK_HWREV_8139		0x60000000
 #define RTK_HWREV_8139A		0x70000000
 #define RTK_HWREV_8139AG	0x70800000
@@ -160,8 +169,6 @@
 #define RTK_HWREV_8139CPLUS	0x74800000
 #define RTK_HWREV_8101		0x74c00000
 #define RTK_HWREV_8100		0x78800000
-#define RTK_HWREV_8168		0x30000000
-#define RTK_HWREV_8168_2	0x38000000
 
 #define RTK_TXDMA_16BYTES	0x00000000
 #define RTK_TXDMA_32BYTES	0x00000100
@@ -425,6 +432,12 @@
 #define RTK_RXCFG_CONFIG 	(RTK_RX_FIFOTHRESH|RTK_RX_MAXDMA|RTK_RX_BUF_SZ)
 #define RTK_TXCFG_CONFIG	(RTK_TXCFG_IFG|RTK_TX_MAXDMA)
 
+#define RE_RX_FIFOTHRESH	RTK_RXFIFO_NOTHRESH
+#define RE_RX_MAXDMA		RTK_RXDMA_UNLIMITED
+#define RE_TX_MAXDMA		RTK_TXDMA_2048BYTES
+
+#define RE_RXCFG_CONFIG		(RE_RX_FIFOTHRESH|RE_RX_MAXDMA|RTK_RX_BUF_SZ)
+#define RE_TXCFG_CONFIG		(RTK_TXCFG_IFG|RE_TX_MAXDMA)
 
 /*
  * RX/TX descriptor definition. When large send mode is enabled, the

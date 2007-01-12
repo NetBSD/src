@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.148.4.1 2006/11/18 21:39:47 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.148.4.2 2007/01/12 01:04:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -45,6 +45,7 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/statvfs.h>
+#include <sys/specificdata.h>
 
 /*
  * file system statistics
@@ -112,6 +113,8 @@ struct mount {
 	struct simplelock mnt_slock;		/* mutex for wcnt and
 						   writeops counters */
 	struct mount	*mnt_leaf;		/* leaf fs we mounted on */
+	specificdata_reference
+			mnt_specdataref;	/* subsystem specific data */
 };
 
 /*
@@ -329,6 +332,13 @@ void	vfs_opv_free(const struct vnodeopv_desc * const *);
 #ifdef DEBUG
 void	vfs_bufstats(void);
 #endif
+
+int	mount_specific_key_create(specificdata_key_t *, specificdata_dtor_t);
+void	mount_specific_key_delete(specificdata_key_t);
+void 	mount_initspecific(struct mount *);
+void 	mount_finispecific(struct mount *);
+void *	mount_getspecific(struct mount *, specificdata_key_t);
+void	mount_setspecific(struct mount *, specificdata_key_t, void *);
 
 /*
  * syscall helpers

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.54 2006/07/13 12:00:25 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.54.4.1 2007/01/12 01:04:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green

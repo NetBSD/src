@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.109.6.1 2006/11/18 21:34:29 ad Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.109.6.2 2007/01/12 00:57:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.109.6.1 2006/11/18 21:34:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.109.6.2 2007/01/12 00:57:41 ad Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -270,9 +270,9 @@ int	bge_tso_debug = 0;
  * (defined here until the thought is done).
  */
 #define BGE_IS_5714_FAMILY(sc) \
-	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 ||	\
+	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714_A0 || \
 	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5780 ||	\
-	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5715 )
+	 BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5714 )
 
 #define BGE_IS_5750_OR_BEYOND(sc)  \
 	(BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5750 || \
@@ -1881,6 +1881,10 @@ static const struct bge_revision {
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
 	  "BCM5700 B2" },
 
+	{ BGE_CHIPID_BCM5700_B3,
+	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
+	  "BCM5700 B3" },
+
 	/* This is treated like a BCM5700 Bx */
 	{ BGE_CHIPID_BCM5700_ALTIMA,
 	  BGE_QUIRK_LINK_STATE_BROKEN|BGE_QUIRK_5700_COMMON,
@@ -1899,7 +1903,7 @@ static const struct bge_revision {
 	  "BCM5701 B0" },
 
 	{ BGE_CHIPID_BCM5701_B2,
-	  BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_PCIX_DMA_ALIGN_BUG,
 	  "BCM5701 B2" },
 
 	{ BGE_CHIPID_BCM5701_B5,
@@ -1921,6 +1925,10 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5703_A3,
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5703 A3" },
+
+	{ BGE_CHIPID_BCM5703_B0,
+	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5703 B0" },
 
 	{ BGE_CHIPID_BCM5704_A0,
   	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_FEWER_MBUFS,
@@ -1956,7 +1964,7 @@ static const struct bge_revision {
 
 	{ BGE_CHIPID_BCM5750_A0,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
-	  "BCM5750 A1" },
+	  "BCM5750 A0" },
 
 	{ BGE_CHIPID_BCM5750_A1,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
@@ -1965,6 +1973,18 @@ static const struct bge_revision {
 	{ BGE_CHIPID_BCM5751_A1,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "BCM5751 A1" },
+
+	{ BGE_CHIPID_BCM5752_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A0" },
+
+	{ BGE_CHIPID_BCM5752_A1,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A1" },
+
+	{ BGE_CHIPID_BCM5752_A2,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "BCM5752 A2" },
 
 	{ 0, 0, NULL }
 };
@@ -1998,6 +2018,10 @@ static const struct bge_revision bge_majorrevs[] = {
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM575x family" },
 
+	{ BGE_ASICREV_BCM5714_A0,
+	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
+	  "unknown BCM5714" },
+
 	{ BGE_ASICREV_BCM5714,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5714" },
@@ -2010,10 +2034,6 @@ static const struct bge_revision bge_majorrevs[] = {
 	{ BGE_ASICREV_BCM5780,
 	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
 	  "unknown BCM5780" },
-
-	{ BGE_ASICREV_BCM5715,
-	  BGE_QUIRK_ONLY_PHY_1|BGE_QUIRK_5705_CORE,
-	  "unknown BCM5715" },
 
 	{ 0,
 	  0,
@@ -2097,8 +2117,8 @@ static const struct bge_product {
 	  "Broadcom BCM5703X Gigabit Ethernet",
 	  },
 	{ PCI_VENDOR_BROADCOM,
-	  PCI_PRODUCT_BROADCOM_BCM5703A3,
-	  "Broadcom BCM5703A3 Gigabit Ethernet",
+	  PCI_PRODUCT_BROADCOM_BCM5703_ALT,
+	  "Broadcom BCM5703 Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
@@ -2119,11 +2139,11 @@ static const struct bge_product {
 	  "Broadcom BCM5705K Gigabit Ethernet",
 	  },
    	{ PCI_VENDOR_BROADCOM,
-	  PCI_PRODUCT_BROADCOM_BCM5705_ALT,
-	  "Broadcom BCM5705 Gigabit Ethernet",
+	  PCI_PRODUCT_BROADCOM_BCM5705M,
+	  "Broadcom BCM5705M Gigabit Ethernet",
 	  },
    	{ PCI_VENDOR_BROADCOM,
-	  PCI_PRODUCT_BROADCOM_BCM5705M,
+	  PCI_PRODUCT_BROADCOM_BCM5705M_ALT,
 	  "Broadcom BCM5705M Gigabit Ethernet",
 	  },
 
@@ -2164,6 +2184,11 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5752,
 	  "Broadcom BCM5752 Gigabit Ethernet",
+	  },
+
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5752M,
+	  "Broadcom BCM5752M Gigabit Ethernet",
 	  },
 
    	{ PCI_VENDOR_BROADCOM,
@@ -2691,6 +2716,13 @@ bge_reset(struct bge_softc *sc)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
 	    BGE_HIF_SWAP_OPTIONS|BGE_PCIMISCCTL_PCISTATE_RW);
+
+	/*
+	 * Disable the firmware fastboot feature on 5752 ASIC
+	 * to avoid firmware timeout.
+	 */
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5752)
+		CSR_WRITE_4(sc, BGE_FASTBOOT_PC, 0);
 
 	val = BGE_MISCCFG_RESET_CORE_CLOCKS | (65<<1);
 	/*
@@ -3429,7 +3461,7 @@ static int
 bge_encap(struct bge_softc *sc, struct mbuf *m_head, u_int32_t *txidx)
 {
 	struct bge_tx_bd	*f = NULL;
-	u_int32_t		frag, cur, cnt = 0;
+	u_int32_t		frag, cur;
 	u_int16_t		csum_flags = 0;
 	u_int16_t		txbd_tso_flags = 0;
 	struct txdmamap_pool_entry *dma;
@@ -3627,6 +3659,16 @@ doit:
 	if (error) {
 		return(ENOBUFS);
 	}
+	/*
+	 * Sanity check: avoid coming within 16 descriptors
+	 * of the end of the ring.
+	 */
+	if (dmamap->dm_nsegs > (BGE_TX_RING_CNT - sc->bge_txcnt - 16)) {
+		BGE_TSO_PRINTF(("%s: "
+		    " dmamap_load_mbuf too close to ring wrap\n",
+		    sc->bge_dev.dv_xname));
+		goto fail_unload;
+	}
 
 	mtag = sc->ethercom.ec_nvlans ?
 	    m_tag_find(m_head, PACKET_TAG_VLAN, NULL) : NULL;
@@ -3667,25 +3709,14 @@ doit:
 		} else {
 			f->bge_vlan_tag = 0;
 		}
-		/*
-		 * Sanity check: avoid coming within 16 descriptors
-		 * of the end of the ring.
-		 */
-		if ((BGE_TX_RING_CNT - (sc->bge_txcnt + cnt)) < 16) {
-			BGE_TSO_PRINTF(("%s: "
-			    " dmamap_load_mbuf too close to ring wrap\n",
-			    sc->bge_dev.dv_xname));
-			return(ENOBUFS);
-		}
 		cur = frag;
 		BGE_INC(frag, BGE_TX_RING_CNT);
-		cnt++;
 	}
 
 	if (i < dmamap->dm_nsegs) {
 		BGE_TSO_PRINTF(("%s: reached %d < dm_nsegs %d\n",
 		    sc->bge_dev.dv_xname, i, dmamap->dm_nsegs));
-		return ENOBUFS;
+		goto fail_unload;
 	}
 
 	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize,
@@ -3695,18 +3726,23 @@ doit:
 		BGE_TSO_PRINTF(("%s: frag %d = wrapped id %d?\n",
 		    sc->bge_dev.dv_xname, frag, sc->bge_tx_saved_considx));
 
-		return(ENOBUFS);
+		goto fail_unload;
 	}
 
 	sc->bge_rdata->bge_tx_ring[cur].bge_flags |= BGE_TXBDFLAG_END;
 	sc->bge_cdata.bge_tx_chain[cur] = m_head;
 	SLIST_REMOVE_HEAD(&sc->txdma_list, link);
 	sc->txdma[cur] = dma;
-	sc->bge_txcnt += cnt;
+	sc->bge_txcnt += dmamap->dm_nsegs;
 
 	*txidx = frag;
 
 	return(0);
+
+ fail_unload:
+	bus_dmamap_unload(sc->bge_dmatag, dmamap);
+
+	return ENOBUFS;
 }
 
 /*

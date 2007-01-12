@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.1.22.1 2006/11/18 21:29:39 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.1.22.2 2007/01/12 01:01:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.22.1 2006/11/18 21:29:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.22.2 2007/01/12 01:01:01 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kcore.h>
 #include <sys/errno.h>
+#include <sys/kauth.h>
 
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
@@ -98,7 +99,8 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 	extern int mem_cluster_cnt;
 	int i;
 
-	if (securelevel <= 0) {
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) == 0) {
 		return 0;
 	}
 

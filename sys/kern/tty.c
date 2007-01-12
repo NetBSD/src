@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.187.4.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.187.4.6 2007/01/12 01:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.6 2007/01/12 01:04:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1135,10 +1135,13 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		splx(s);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (kauth_cred_geteuid(l->l_cred) && (flag & FREAD) == 0)
-			return (EPERM);
-		if (kauth_cred_geteuid(l->l_cred) && !isctty(p, tp))
-			return (EACCES);
+		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
+			if (!ISSET(flag, FREAD))
+				return (EPERM);
+			if (!isctty(p, tp))
+				return (EACCES);
+		}
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
 	case TIOCSTOP:			/* stop output, like ^S */

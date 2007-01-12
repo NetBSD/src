@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.34.2.1 2006/11/18 21:34:50 ad Exp $	*/
+/*	$NetBSD: stic.c,v 1.34.2.2 2007/01/12 00:57:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.34.2.1 2006/11/18 21:34:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.34.2.2 2007/01/12 00:57:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1459,7 +1459,8 @@ sticopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct stic_info *si;
 	int s, error;
 
-	error = kauth_authorize_device_passthru(l->l_cred, dev, NULL);
+	error = kauth_authorize_device_passthru(l->l_cred, dev,
+	    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, NULL);
 	if (error)
 		return (error);
 	if (minor(dev) >= STIC_MAXDV)

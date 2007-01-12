@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58.2.6 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.7 2007/01/12 01:04:07 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.6 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.7 2007/01/12 01:04:07 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -593,7 +593,7 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 	TAILQ_INIT(&fst->policies);
 
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) == 0)
+	    NULL) == 0)
 		fst->issuser = 1;
 	fst->p_ruid = kauth_cred_getuid(l->l_cred);
 	fst->p_rgid = kauth_cred_getgid(l->l_cred);
@@ -1231,6 +1231,11 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	uio.uio_resid = io->strio_len;
 	uio.uio_vmspace = l->l_proc->p_vmspace;
 
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSYSTRACE,
+	    t, NULL, NULL, NULL);
+	if (error)
+		return (error);
+
 #ifdef __NetBSD__
 	{
 		struct lwp *tl;
@@ -1299,43 +1304,14 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	}
 
 	/*
-	 *	(4) it's not owned by you, or the last exec
-	 *	    gave us setuid/setgid privs (unless
-	 *	    you're root), or...
-	 *
-	 *      [Note: once P_SUGID gets set in execve(), it stays
-	 *	set until the process does another execve(). Hence
-	 *	this prevents a setuid process which revokes its
-	 *	special privileges using setuid() from being
-	 *	traced. This is good security.]
+	 *	(4) the security model prevents it it.
 	 */
-	mutex_enter(&proc->p_mutex);
-
-	if (kauth_cred_getuid(proc->p_cred) != kauth_cred_getuid(l->l_cred) ||
-	    ISSET(proc->p_flag, P_SUGID)) {
-	    	error = kauth_authorize_generic(l->l_cred,
-	    	    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
-	    	if (error != 0) {
-	    		mutex_exit(&proc->p_mutex);
-	    		goto out;
-		}
-	}
-
-	/*
-	 *	(5) ...it's init, which controls the security level
-	 *	    of the entire system, and the system was not
-	 *          compiled with permanently insecure mode turned
-	 *	    on.
-	 */
-	if ((proc->p_pid == 1) && (securelevel > -1)) {
-		mutex_exit(&proc->p_mutex);
-		error = EPERM;
+	error = kauth_authorize_process(kauth_cred_get(),
+	    KAUTH_PROCESS_CANSYSTRACE, proc, NULL, NULL, NULL);
+	if (error)
 		goto out;
-	}
 
 	error = systrace_insert_process(fst, proc, NULL);
-
-	mutex_exit(&proc->p_mutex);
 
 #if defined(__NetBSD__) && defined(__HAVE_SYSCALL_INTERN)
 	/*

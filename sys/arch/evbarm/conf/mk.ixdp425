@@ -1,4 +1,6 @@
-#	$NetBSD: mk.ixdp425,v 1.2 2003/05/24 01:55:56 ichiro Exp $
+#	$NetBSD: mk.ixdp425,v 1.2.48.1 2007/01/12 01:00:46 ad Exp $
+
+.include "$S/arch/arm/xscale/ixp425-fw.mk"
 
 SYSTEM_FIRST_OBJ=	ixdp425_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/ixdp425/ixdp425_start.S

@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.3.8.1 2006/11/18 21:29:12 ad Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.3.8.2 2007/01/12 01:00:47 ad Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.3.8.1 2006/11/18 21:29:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.3.8.2 2007/01/12 01:00:47 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -132,12 +132,13 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	bios_board_init(info_block, startkernel);
 	memsize = bios_board_memsize_get();
 
-	/* Linear map whole physmem. */
-	for (va = 0; va < memsize; va += TLB_PG_SIZE)
+	/* Linear map kernel memory. */
+	for (va = 0; va < endkernel; va += TLB_PG_SIZE)
 		ppc4xx_tlb_reserve(va, va, TLB_PG_SIZE, TLB_EX);
 
-	/* Map console right after RAM. */
-	ppc4xx_tlb_reserve(OBS405_CONADDR, va, TLB_PG_SIZE, TLB_I | TLB_G);
+	/* Map console after physmem (see pmap_tlbmiss()). */
+	ppc4xx_tlb_reserve(OBS405_CONADDR, roundup(memsize, TLB_PG_SIZE),
+	    TLB_PG_SIZE, TLB_I | TLB_G);
 
 	/* Initialize IBM405GPr CPU */
 	ibm40x_memsize_init(memsize, startkernel);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.14.20.1 2006/11/18 21:39:41 ad Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.14.20.2 2007/01/12 01:04:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.14.20.1 2006/11/18 21:39:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.14.20.2 2007/01/12 01:04:19 ad Exp $");
 
 /*
  * IPsec output processing.
@@ -621,7 +621,7 @@ ipsec6_encapsulate(struct mbuf *m, struct secasvar *sav)
 
 
 	/*
-	 * grow the mbuf to accomodate the new IPv6 header.
+	 * grow the mbuf to accommodate the new IPv6 header.
 	 */
 	plen = m->m_pkthdr.len;
 	if (M_LEADINGSPACE(m->m_next) < sizeof(struct ip6_hdr)) {
@@ -741,24 +741,22 @@ ipsec6_output_tunnel(
 		state->ro = &isr->sav->sah->sa_route;
 		state->dst = (struct sockaddr *)&state->ro->ro_dst;
 		dst6 = (struct sockaddr_in6 *)state->dst;
-		if (state->ro->ro_rt
-		 && ((state->ro->ro_rt->rt_flags & RTF_UP) == 0
-		  || !IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))) {
-			RTFREE(state->ro->ro_rt);
-			state->ro->ro_rt = NULL;
-		}
-		if (state->ro->ro_rt == 0) {
+		if (!IN6_ARE_ADDR_EQUAL(&dst6->sin6_addr, &ip6->ip6_dst))
+			rtcache_free(state->ro);
+		else
+			rtcache_check(state->ro);
+		if (state->ro->ro_rt == NULL) {
 			bzero(dst6, sizeof(*dst6));
 			dst6->sin6_family = AF_INET6;
 			dst6->sin6_len = sizeof(*dst6);
 			dst6->sin6_addr = ip6->ip6_dst;
-			rtalloc(state->ro);
-		}
-		if (state->ro->ro_rt == 0) {
-			ip6stat.ip6s_noroute++;
-			newipsecstat.ips_out_noroute++;
-			error = EHOSTUNREACH;
-			goto bad;
+			rtcache_init(state->ro);
+			if (state->ro->ro_rt == NULL) {
+				ip6stat.ip6s_noroute++;
+				newipsecstat.ips_out_noroute++;
+				error = EHOSTUNREACH;
+				goto bad;
+			}
 		}
 
 		/* adjust state->dst if tunnel endpoint is offlink */

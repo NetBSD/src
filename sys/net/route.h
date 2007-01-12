@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.43.20.1 2006/11/18 21:39:30 ad Exp $	*/
+/*	$NetBSD: route.h,v 1.43.20.2 2007/01/12 01:04:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,8 +52,9 @@
  * in their control blocks, e.g. inpcb.
  */
 struct route {
-	struct	rtentry *ro_rt;
-	struct	sockaddr ro_dst;
+	struct	rtentry		*ro_rt;
+	struct	sockaddr	ro_dst;
+	LIST_ENTRY(route)	ro_rtcache_next;
 };
 
 /*
@@ -270,14 +271,6 @@ struct rttimer_queue {
 
 
 #ifdef _KERNEL
-#define	RTFREE(rt) \
-do { \
-	if ((rt)->rt_refcnt <= 1) \
-		rtfree(rt); \
-	else \
-		(rt)->rt_refcnt--; \
-} while (/*CONSTCOND*/ 0)
-
 extern	struct	route_cb route_cb;
 extern	struct	rtstat	rtstat;
 extern	struct	radix_node_head *rt_tables[AF_MAX+1];
@@ -312,6 +305,9 @@ unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
 void	 rtable_init(void **);
 void	 rtalloc(struct route *);
+void	 rtcache(struct route *);
+void	 rtflushall(int);
+void	 rtflush(struct route *);
 struct rtentry *
 	 rtalloc1(const struct sockaddr *, int);
 void	 rtfree(struct rtentry *);
@@ -326,47 +322,45 @@ int	 rtrequest(int, const struct sockaddr *,
 	    struct rtentry **);
 int	 rtrequest1(int, struct rt_addrinfo *, struct rtentry **);
 
-static inline void
-rt_set_ifa1(struct rtentry *rt, struct ifaddr *ifa)
-{
-	rt->rt_ifa = ifa;
-	if (ifa->ifa_seqno != NULL)
-		rt->rt_ifa_seqno = *ifa->ifa_seqno;
-}
+struct ifaddr	*rt_get_ifa(struct rtentry *);
+void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
 
-static inline void
-rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
-{
-	IFAREF(ifa);
-	IFAFREE(rt->rt_ifa);
-	rt_set_ifa1(rt, ifa);
-}
+struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 
-static inline struct ifaddr *
-rt_get_ifa(struct rtentry *rt)
-{
-	struct ifaddr *ifa;
-
-	if ((ifa = rt->rt_ifa) == NULL)
-		return ifa;
-	else if (ifa->ifa_getifa == NULL)
-		return ifa;
-#if 0
-	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
-		return ifa;
+#ifdef RTCACHE_DEBUG
+#define	rtcache_init(ro)		rtcache_init_debug(__func__, ro)
+#define	rtcache_init_noclone(ro)	rtcache_init_noclone_debug(__func__, ro)
+#define	rtcache_copy(ro, oro, len)	rtcache_copy_debug(__func__, ro, oro, len)
+void	rtcache_init_debug(const char *, struct route *);
+void	rtcache_init_noclone_debug(const char *, struct route *);
+void	rtcache_copy_debug(const char *, struct route *, const struct route *, size_t);
+#else
+void	rtcache_init(struct route *);
+void	rtcache_init_noclone(struct route *);
+void	rtcache_copy(struct route *, const struct route *, size_t);
 #endif
-	else {
-		ifa = (*ifa->ifa_getifa)(ifa, rt_key(rt));
-		rt_replace_ifa(rt, ifa);
-		return ifa;
-	}
+
+void	rtcache_update(struct route *);
+void	rtcache_free(struct route *);
+
+static inline void
+rtcache_check(struct route *ro)
+{
+	/* XXX The rt_ifp check should be asserted. */
+	if (ro->ro_rt != NULL &&
+	    ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
+	     ro->ro_rt->rt_ifp == NULL))
+		rtcache_update(ro);
+	KASSERT(ro->ro_rt == NULL || ro->ro_rt->rt_ifp != NULL);
 }
 
 static inline void
-rt_set_ifa(struct rtentry *rt, struct ifaddr *ifa)
+RTFREE(struct rtentry *rt)
 {
-	IFAREF(ifa);
-	rt_set_ifa1(rt, ifa);
+	if (rt->rt_refcnt <= 1)
+		rtfree(rt);
+	else
+		rt->rt_refcnt--;
 }
 
 #endif /* _KERNEL */

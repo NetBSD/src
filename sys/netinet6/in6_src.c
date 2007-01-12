@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.28.2.1 2006/11/18 21:39:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.28.2.2 2007/01/12 01:04:15 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -93,9 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.28.2.1 2006/11/18 21:39:37 ad Exp $");
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/route.h>
-#ifdef RADIX_MPATH
-#include <net/radix_mpath.h>
-#endif
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -667,32 +664,19 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		 * by that address must be a neighbor of the sending host.
 		 */
 		ron = &opts->ip6po_nextroute;
-		if ((ron->ro_rt &&
-		    (ron->ro_rt->rt_flags & (RTF_UP | RTF_GATEWAY)) !=
-		    RTF_UP) ||
-		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
-		    &sin6_next->sin6_addr)) {
-			if (ron->ro_rt) {
-				RTFREE(ron->ro_rt);
-				ron->ro_rt = NULL;
-			}
-			*satosin6(&ron->ro_dst) = *sin6_next;
-		}
+		if (!IN6_ARE_ADDR_EQUAL(&satosin6(&ron->ro_dst)->sin6_addr,
+		    &sin6_next->sin6_addr))
+			rtcache_free((struct route *)ron);
+		else
+			rtcache_check((struct route *)ron);
 		if (ron->ro_rt == NULL) {
-			rtalloc((struct route *)ron); /* multi path case? */
-			if (ron->ro_rt == NULL ||
-			    (ron->ro_rt->rt_flags & RTF_GATEWAY)) {
-				if (ron->ro_rt) {
-					RTFREE(ron->ro_rt);
-					ron->ro_rt = NULL;
-				}
-				error = EHOSTUNREACH;
-				goto done;
-			}
+			*satosin6(&ron->ro_dst) = *sin6_next;
+			rtcache_init((struct route *)ron);
 		}
-		if (!nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
-			RTFREE(ron->ro_rt);
-			ron->ro_rt = NULL;
+		if (ron->ro_rt == NULL ||
+		    (ron->ro_rt->rt_flags & RTF_GATEWAY) != 0 ||
+		    !nd6_is_addr_neighbor(sin6_next, ron->ro_rt->rt_ifp)) {
+			rtcache_free((struct route *)ron);
 			error = EHOSTUNREACH;
 			goto done;
 		}
@@ -713,16 +697,13 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 	 * a new one.  Note that we should check the address family of the
 	 * cached destination, in case of sharing the cache with IPv4.
 	 */
-	if (ro) {
-		if (ro->ro_rt &&
-		    (!(ro->ro_rt->rt_flags & RTF_UP) ||
-		     ((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
-		     !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr,
-		     dst))) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
-		if (ro->ro_rt == (struct rtentry *)NULL) {
+	if (ro != NULL) {
+		if (((struct sockaddr *)(&ro->ro_dst))->sa_family != AF_INET6 ||
+		    !IN6_ARE_ADDR_EQUAL(&satosin6(&ro->ro_dst)->sin6_addr, dst))
+			rtcache_free((struct route *)ro);
+		else
+			rtcache_check((struct route *)ro);
+		if (ro->ro_rt == NULL) {
 			struct sockaddr_in6 *sa6;
 
 			/* No route yet, so try to acquire one */
@@ -730,22 +711,10 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 			sa6 = (struct sockaddr_in6 *)&ro->ro_dst;
 			*sa6 = *dstsock;
 			sa6->sin6_scope_id = 0;
-			if (clone) {
-#ifdef RADIX_MPATH
-				rtalloc_mpath((struct route *)ro,
-				    ntohl(sa6->sin6_addr.s6_addr32[3]));
-#else
-				rtalloc((struct route *)ro);
-#endif /* RADIX_MPATH */
-			} else {
-#ifdef RADIX_MPATH
-				rtalloc_mpath((struct route *)ro,
-				    ntohl(sa6->sin6_addr.s6_addr32[3]));
-#else
-				ro->ro_rt = rtalloc1(&((struct route *)ro)
-						     ->ro_dst, 0);
-#endif /* RADIX_MPATH */
-			}
+			if (clone)
+				rtcache_init((struct route *)ro);
+			else
+				rtcache_init_noclone((struct route *)ro);
 		}
 
 		/*
@@ -755,16 +724,10 @@ selectroute(dstsock, opts, mopts, ro, retifp, retrt, clone, norouteok)
 		if (opts && opts->ip6po_nexthop)
 			goto done;
 
-		if (ro->ro_rt) {
-			ifp = ro->ro_rt->rt_ifp;
-
-			if (ifp == NULL) { /* can this really happen? */
-				RTFREE(ro->ro_rt);
-				ro->ro_rt = NULL;
-			}
-		}
 		if (ro->ro_rt == NULL)
 			error = EHOSTUNREACH;
+		else
+			ifp = ro->ro_rt->rt_ifp;
 		rt = ro->ro_rt;
 
 		/*
@@ -914,7 +877,7 @@ in6_pcbsetport(laddr, in6p, l)
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
 		if (l == 0 || (kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag) != 0))
+		    KAUTH_GENERIC_ISSUSER, NULL) != 0))
 			return (EACCES);
 #endif
 		minport = ip6_lowportmin;

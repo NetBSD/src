@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.112.8.1 2006/11/18 21:29:19 ad Exp $	*/
+/*	$NetBSD: npx.c,v 1.112.8.2 2007/01/12 01:00:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.112.8.1 2006/11/18 21:29:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.112.8.2 2007/01/12 01:00:50 ad Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -345,12 +345,11 @@ npxattach(struct npx_softc *sc)
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
 int
-npxintr(void *arg, struct intrframe iframe)
+npxintr(void *arg, struct intrframe *frame)
 {
 	struct cpu_info *ci = curcpu();
 	struct lwp *l = ci->ci_fpcurlwp;
 	union savefpu *addr;
-	struct intrframe *frame = &iframe;
 	struct npx_softc *sc;
 	ksiginfo_t ksi;
 

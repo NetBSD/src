@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.17.6.1 2006/11/18 21:34:50 ad Exp $ */
+/*	$NetBSD: if_atu.c,v 1.17.6.2 2007/01/12 00:57:48 ad Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.17.6.1 2006/11/18 21:34:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.17.6.2 2007/01/12 00:57:48 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -803,7 +803,7 @@ atu_internal_firmware(struct device *arg)
 	 * Uploading firmware is done with the DFU (Device Firmware Upgrade)
 	 * interface. See "Universal Serial Bus - Device Class Specification
 	 * for Device Firmware Upgrade" pdf for details of the protocol.
-	 * Maybe this could be moved to a seperate 'firmware driver' once more
+	 * Maybe this could be moved to a separate 'firmware driver' once more
 	 * device drivers need it... For now we'll just do it here.
 	 *
 	 * Just for your information, the Atmel's DFU descriptor looks like

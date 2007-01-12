@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.96.4.1 2006/11/18 21:39:44 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.96.4.2 2007/01/12 01:04:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.96.4.1 2006/11/18 21:39:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.96.4.2 2007/01/12 01:04:19 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.96.4.1 2006/11/18 21:39:44 ad Exp
 #include <nfs/nfsrvcache.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nfsnode.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfsrtt.h>
 #include <nfs/nfs_var.h>
 
@@ -91,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.96.4.1 2006/11/18 21:39:44 ad Exp
 extern int32_t (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 						struct nfssvc_sock *,
 						struct lwp *, struct mbuf **));
-extern time_t nqnfsstarttime;
 extern int nfsrvw_procrastinate;
 
 struct nfssvc_sock *nfs_udpsock;
@@ -105,8 +103,6 @@ int nuidhash_max = NFS_MAXUIDHASH;
 int nfsd_waiting = 0;
 #ifdef NFSSERVER
 static int nfs_numnfsd = 0;
-static int notstarted = 1;
-static int modify_flag = 0;
 static struct nfsdrt nfsdrt;
 #endif
 
@@ -154,11 +150,6 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 		syscallarg(caddr_t) argp;
 	} */ *uap = v;
 	int error;
-#ifdef NFS
-	struct nameidata nd;
-	struct nfsmount *nmp;
-	struct nfsd_cargs ncd;
-#endif
 #ifdef NFSSERVER
 	int s;
 	struct file *fp;
@@ -174,7 +165,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 	 * Must be super user
 	 */
 	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	    NULL);
 	if (error)
 		return (error);
 
@@ -199,30 +190,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 		error = ENOSYS;
 #endif
 	} else if (SCARG(uap, flag) & NFSSVC_MNTD) {
-#ifndef NFS
 		error = ENOSYS;
-#else
-		error = copyin(SCARG(uap, argp), (caddr_t)&ncd, sizeof (ncd));
-		if (error)
-			return (error);
-		NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-			ncd.ncd_dirp, l);
-		error = namei(&nd);
-		if (error)
-			return (error);
-		if ((nd.ni_vp->v_flag & VROOT) == 0)
-			error = EINVAL;
-		nmp = VFSTONFS(nd.ni_vp->v_mount);
-		vput(nd.ni_vp);
-		if (error)
-			return (error);
-		if ((nmp->nm_iflag & NFSMNT_MNTD) &&
-			(SCARG(uap, flag) & NFSSVC_GOTAUTH) == 0)
-			return (0);
-		nmp->nm_iflag |= NFSMNT_MNTD;
-		error = nqnfs_clientd(nmp, l->l_cred, &ncd, SCARG(uap, flag),
-			SCARG(uap, argp), l);
-#endif /* NFS */
 	} else if (SCARG(uap, flag) & NFSSVC_ADDSOCK) {
 #ifndef NFSSERVER
 		error = ENOSYS;
@@ -660,28 +628,7 @@ nfssvc_nfsd(nsd, argp, l)
 			} else
 				cacherep = nfsrv_getcache(nd, slp, &mreq);
 
-			/*
-			 * Check for just starting up for NQNFS and send
-			 * fake "try again later" replies to the NQNFS clients.
-			 */
-			if (notstarted && nqnfsstarttime <= time_second) {
-				if (modify_flag) {
-					nqnfsstarttime =
-					    time_second + nqsrv_writeslack;
-					modify_flag = 0;
-				} else
-					notstarted = 0;
-			}
-			if (notstarted) {
-				if ((nd->nd_flag & ND_NQNFS) == 0)
-					cacherep = RC_DROPIT;
-				else if (nd->nd_procnum != NFSPROC_WRITE) {
-					nd->nd_procnum = NFSPROC_NOOP;
-					nd->nd_repstat = NQNFS_TRYLATER;
-					cacherep = RC_DOIT;
-				} else
-					modify_flag = 1;
-			} else if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
+			if (nfsd->nfsd_flag & NFSD_AUTHFAIL) {
 				nfsd->nfsd_flag &= ~NFSD_AUTHFAIL;
 				nd->nd_procnum = NFSPROC_NOOP;
 				nd->nd_repstat =
@@ -717,7 +664,7 @@ nfssvc_nfsd(nsd, argp, l)
 				if (writes_todo || nd == NULL ||
 				     (!(nd->nd_flag & ND_NFSV3) &&
 				     nd->nd_procnum == NFSPROC_WRITE &&
-				     nfsrvw_procrastinate > 0 && !notstarted))
+				     nfsrvw_procrastinate > 0))
 					error = nfsrv_writegather(&nd, slp,
 					    l, &mreq);
 				else
@@ -754,8 +701,7 @@ nfssvc_nfsd(nsd, argp, l)
 					break;
 				}
 				if (error) {
-					if (nd->nd_procnum != NQNFSPROC_VACATED)
-						nfsstats.srv_errs++;
+					nfsstats.srv_errs++;
 					nfsrv_updatecache(nd, FALSE, mreq);
 					if (nd->nd_nam2)
 						m_freem(nd->nd_nam2);
@@ -1023,9 +969,7 @@ nfsd_rt(sotype, nd, cacherep)
 		rt->flag = DRT_CACHEDROP;
 	if (sotype == SOCK_STREAM)
 		rt->flag |= DRT_TCP;
-	if (nd->nd_flag & ND_NQNFS)
-		rt->flag |= DRT_NQNFS;
-	else if (nd->nd_flag & ND_NFSV3)
+	if (nd->nd_flag & ND_NFSV3)
 		rt->flag |= DRT_NFSV3;
 	rt->proc = nd->nd_procnum;
 	if (mtod(nd->nd_nam, struct sockaddr *)->sa_family == AF_INET)

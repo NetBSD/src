@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.40 2006/04/05 00:38:51 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.40.8.1 2007/01/12 01:00:41 ad Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.40 2006/04/05 00:38:51 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.40.8.1 2007/01/12 01:00:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -462,6 +462,10 @@ branch_taken(u_int insn, u_int pc, db_regs_t *regs)
 	case 0x7:	/* ldr pc, [pc, reg, lsl #2] */
 		addr = db_fetch_reg(insn & 0xf, regs);
 		addr = pc + 8 + (addr << 2);
+		db_read_bytes(addr, 4, (char *)&addr);
+		return (addr);
+	case 0x5:	/* ldr pc, [reg] */
+		addr = db_fetch_reg((insn >> 16) & 0xf, regs);
 		db_read_bytes(addr, 4, (char *)&addr);
 		return (addr);
 	case 0x1:	/* mov pc, reg */

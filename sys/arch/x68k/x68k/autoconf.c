@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47.14.1 2006/11/18 21:29:38 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.47.14.2 2007/01/12 01:01:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47.14.1 2006/11/18 21:29:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47.14.2 2007/01/12 01:01:01 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -199,7 +199,7 @@ device_register(struct device *dev, void *aux)
 
 	/*
 	 * Handle network interfaces here, the attachment information is
-	 * not available driver independantly later.
+	 * not available driver independently later.
 	 * For disks, there is nothing useful available at attach time.
 	 */
 	if (device_class(dev) == DV_IFNET) {

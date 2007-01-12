@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.142.2.1 2006/11/18 21:39:43 ad Exp $	*/
+/*	$NetBSD: key.c,v 1.142.2.2 2007/01/12 01:04:19 ad Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142.2.1 2006/11/18 21:39:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142.2.2 2007/01/12 01:04:19 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2829,10 +2829,7 @@ key_delsah(sah)
 		return;
 	}
 
-	if (sah->sa_route.ro_rt) {
-		RTFREE(sah->sa_route.ro_rt);
-		sah->sa_route.ro_rt = (struct rtentry *)NULL;
-	}
+	rtcache_free(&sah->sa_route);
 
 	/* remove from tree of SA index */
 	if (__LIST_CHAINED(sah))
@@ -8234,11 +8231,9 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (ro->ro_rt && dst->sa_len == ro->ro_dst.sa_len &&
-		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0) {
-			RTFREE(ro->ro_rt);
-			ro->ro_rt = (struct rtentry *)NULL;
-		}
+		if (dst->sa_len == ro->ro_dst.sa_len &&
+		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+			rtcache_free(ro);
 	}
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.35 2006/07/23 22:06:07 ad Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.35.4.1 2007/01/12 01:00:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.35 2006/07/23 22:06:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.35.4.1 2007/01/12 01:00:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1175,7 +1175,7 @@ tctrlioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	case TCTRL_CMD_REQ:
 		reqn = (struct tctrl_req *)data;
 		if ((i = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0 &&
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0 &&
 		    (reqn->cmdbuf[0] == TS102_OP_CTL_BITPORT ||
 		    (reqn->cmdbuf[0] >= TS102_OP_CTL_WATCHDOG &&
 		    reqn->cmdbuf[0] <= TS102_OP_CTL_SECURITY_KEY) ||

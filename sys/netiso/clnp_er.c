@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.18 2006/08/29 23:40:14 christos Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.18.2.1 2007/01/12 01:04:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.18 2006/08/29 23:40:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.18.2.1 2007/01/12 01:04:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -378,8 +378,7 @@ bad:
 
 done:
 	/* free route if it is a temp */
-	if (route.ro_rt != NULL)
-		RTFREE(route.ro_rt);
+	rtcache_free((struct route *)&route);
 }
 
 int

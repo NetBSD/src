@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.11.2.1 2006/11/18 21:39:22 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.11.2.2 2007/01/12 01:04:07 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11.2.1 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11.2.2 2007/01/12 01:04:07 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -129,7 +129,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 		return error;
 
 	if (l != NULL && (error = kauth_authorize_generic(l->l_cred, 
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 
 	/* XXX locking */

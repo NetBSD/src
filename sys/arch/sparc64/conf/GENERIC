@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.65.2.1 2006/11/18 21:29:32 ad Exp $
+# $NetBSD: GENERIC,v 1.65.2.2 2007/01/12 01:00:59 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.65.2.1 $"
+#ident 		"GENERIC-$Revision: 1.65.2.2 $"
 
 maxusers	64
 
@@ -503,13 +503,14 @@ sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
+vge*	at pci? dev ? function ?	# VIA VT612X Gigabit Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Lucent/Intersil WaveLAN/IEEE
 wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # MII/PHY support
-# XXX: only nsphy and igphy "tested"
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
+ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
@@ -671,7 +672,7 @@ pseudo-device	tun
 pseudo-device	tap			# virtual Ethernet
 
 ## Generic L3 over IP tunnel
-#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	gre			# generic L3 over IP tunnel
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
@@ -883,7 +884,6 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	fss		4	# file system snapshot device
 
 options		FILEASSOC		# fileassoc(9) - required for Veriexec 
-#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 #
@@ -904,4 +904,5 @@ options VERIFIED_EXEC_FP_MD5
 # a pseudo device needed for SMBFS
 pseudo-device   nsmb		# experimental - SMB requester
 
-options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+					# (for static binaries only for now)

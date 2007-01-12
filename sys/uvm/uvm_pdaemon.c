@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.76.14.1 2006/11/18 21:39:50 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.76.14.2 2007/01/12 01:04:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76.14.1 2006/11/18 21:39:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.76.14.2 2007/01/12 01:04:25 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -315,67 +315,31 @@ uvm_pageout(void *arg)
 
 
 /*
- * uvm_aiodone_daemon:  main loop for the aiodone daemon.
+ * uvm_aiodone_worker: a workqueue callback for the aiodone daemon.
  */
 
 void
-uvm_aiodone_daemon(void *arg)
+uvm_aiodone_worker(struct work *wk, void *dummy)
 {
 	int s, free;
-	struct buf *bp, *nbp;
-	UVMHIST_FUNC("uvm_aiodoned"); UVMHIST_CALLED(pdhist);
+	struct buf *bp = (void *)wk;
 
-	for (;;) {
+	KASSERT(&bp->b_work == wk);
 
-		/*
-		 * carefully attempt to go to sleep (without losing "wakeups"!).
-		 * we need splbio because we want to make sure the aio_done list
-		 * is totally empty before we go to sleep.
-		 */
+	/*
+	 * process an i/o that's done.
+	 */
 
-		s = splbio();
-		simple_lock(&uvm.aiodoned_lock);
-		if (TAILQ_FIRST(&uvm.aio_done) == NULL) {
-			UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
-			UVM_UNLOCK_AND_WAIT(&uvm.aiodoned,
-			    &uvm.aiodoned_lock, FALSE, "aiodoned", 0);
-			UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
-
-			/* relock aiodoned_lock, still at splbio */
-			simple_lock(&uvm.aiodoned_lock);
-		}
-
-		/*
-		 * check for done aio structures
-		 */
-
-		bp = TAILQ_FIRST(&uvm.aio_done);
-		if (bp) {
-			TAILQ_INIT(&uvm.aio_done);
-		}
-
-		simple_unlock(&uvm.aiodoned_lock);
-		splx(s);
-
-		/*
-		 * process each i/o that's done.
-		 */
-
-		free = uvmexp.free;
-		while (bp != NULL) {
-			nbp = TAILQ_NEXT(bp, b_freelist);
-			(*bp->b_iodone)(bp);
-			bp = nbp;
-		}
-		if (free <= uvmexp.reserve_kernel) {
-			s = uvm_lock_fpageq();
-			wakeup(&uvm.pagedaemon);
-			uvm_unlock_fpageq(s);
-		} else {
-			simple_lock(&uvm.pagedaemon_lock);
-			wakeup(&uvmexp.free);
-			simple_unlock(&uvm.pagedaemon_lock);
-		}
+	free = uvmexp.free;
+	(*bp->b_iodone)(bp);
+	if (free <= uvmexp.reserve_kernel) {
+		s = uvm_lock_fpageq();
+		wakeup(&uvm.pagedaemon);
+		uvm_unlock_fpageq(s);
+	} else {
+		simple_lock(&uvm.pagedaemon_lock);
+		wakeup(&uvmexp.free);
+		simple_unlock(&uvm.pagedaemon_lock);
 	}
 }
 
@@ -728,6 +692,7 @@ uvmpd_scan_queue(void)
 #endif /* defined(READAHEAD_STATS) */
 
 		if ((p->pqflags & PQ_SWAPBACKED) == 0) {
+			KASSERT(uobj != NULL);
 			uvm_unlock_pageq();
 			(void) (uobj->pgops->pgo_put)(uobj, p->offset,
 			    p->offset + PAGE_SIZE, PGO_CLEANIT|PGO_FREE);

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.435.2.1 2006/11/18 21:34:51 ad Exp $
+$NetBSD: usbdevs,v 1.435.2.2 2007/01/12 00:57:49 ad Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -381,6 +381,7 @@ vendor ATI2		0x0b6f	ATI
 vendor ZEEVO		0x0b7a	Zeevo, Inc.
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
+vendor O2MICRO		0x0b97	O2 Micro
 vendor USR		0x0baf	U.S. Robotics
 vendor REALTEK		0x0bda	Realtek
 vendor ADDONICS2	0x0bf6	Addonics Technology
@@ -402,6 +403,7 @@ vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
 vendor PILOTECH		0x0eaf	Pilotech
 vendor EGALAX		0x0eef	eGalax
+vendor TOD		0x0ede	TOD
 vendor AIRPRIME		0x0f3d	AirPrime, Incorporated
 vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications GmbH
@@ -1372,6 +1374,11 @@ product MICROSOFT INTELLIEYE	0x0025	IntelliEye mouse
 product MICROSOFT INETPRO2	0x002b	Internet Keyboard Pro
 product MICROSOFT MN510		0x006e	MN510 Wireless
 product MICROSOFT MN110		0x007a	10/100 USB NIC
+product MICROSOFT XBOX_MEMORY_UNIT	0x0280	Xbox Memory Unit
+product MICROSOFT XBOX_DVD_PLAYBACK	0x0284	Xbox DVD Movie Playback Kit
+product MICROSOFT XBOX_CONTROLLER_S10	0x0285	Xbox Controller S (1.0)
+product MICROSOFT XBOX_CONTROLLER_HUB	0x0288	Xbox Controller Hub
+product MICROSOFT XBOX_CONTROLLER_S12	0x0289	Xbox Controller S (1.2)
 
 /* Microtech products */
 product MICROTECH SCSIDB25	0x0004	USB-SCSI-DB25
@@ -1669,6 +1676,7 @@ product RALINK RT2570_2		0x2570	RT2570
 product RALINK RT2570_3		0x9020	RT2570
 product RALINK_2 RT2570		0x2570	RT2570
 product RALINK RT2573		0x2573	RT2573
+product RALINK_2 RT2573		0x2573	RT2573
 product RALINK RT2671		0x2671	RT2671
 
 /* RATOC Systems products */
@@ -1935,6 +1943,9 @@ product TI NEXII		0x5409	Nex II Digital
 
 /* Thrustmaster products */
 product THRUST FUSION_PAD	0xa0a3	Fusion Digital Gamepad
+
+/* TOD Co. Ltd products */
+product TOD DOOGI_SLIM 		0x0411	DOOGI SLIM USB Keyboard
 
 /* Todos Data System products */
 product TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard Reader

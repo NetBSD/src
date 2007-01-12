@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.45 2006/07/21 16:48:45 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.45.4.1 2007/01/12 01:04:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -103,7 +103,6 @@ struct nameidata {
  */
 #define	LOCKLEAF	0x0004	/* lock inode on return */
 #define	LOCKPARENT	0x0008	/* want parent vnode returned locked */
-#define	WANTPARENT	0x0010	/* want parent vnode returned unlocked */
 #define	NOCACHE		0x0020	/* name must not be left in cache */
 #define	FOLLOW		0x0040	/* follow symbolic links */
 #define	NOFOLLOW	0x0000	/* do not follow symbolic links (pseudo) */
@@ -134,8 +133,7 @@ struct nameidata {
 #define	ISWHITEOUT	0x0020000	/* found whiteout */
 #define	DOWHITEOUT	0x0040000	/* do whiteouts */
 #define	REQUIREDIR	0x0080000	/* must be a directory */
-#define	PDIRUNLOCK	0x0100000	/* vfs_lookup() unlocked parent dir */
-#define	CREATEDIR	0x0200000	/* creating entry is a directory */
+#define	CREATEDIR	0x0200000	/* trailing slashes are ok */
 #define	PARAMASK	0x03fff00	/* mask of parameter descriptors */
 /*
  * Initialization of an nameidata structure.
@@ -184,6 +182,8 @@ extern struct pool_cache pnbuf_cache;	/* pathname buffer cache */
 #define	PNBUF_GET()	pool_cache_get(&pnbuf_cache, PR_WAITOK)
 #define	PNBUF_PUT(pnb)	pool_cache_put(&pnbuf_cache, (pnb))
 
+typedef struct pathname_internal *pathname_t;
+
 int	namei(struct nameidata *);
 uint32_t namei_hash(const char *, const char **);
 int	lookup(struct nameidata *);
@@ -201,6 +201,10 @@ void	nchinit(void);
 void	nchreinit(void);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...));
+
+int pathname_get(const char *, enum uio_seg, pathname_t *);
+const char *pathname_path(pathname_t);
+void pathname_put(pathname_t);
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.32 2006/07/23 22:06:08 ad Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.32.4.1 2007/01/12 01:04:03 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.32 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.32.4.1 2007/01/12 01:04:03 ad Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -185,7 +185,7 @@ irix_sys_prctl(l, v, retval)
 			return 0;
 
 		pc = l->l_cred;
-		if (!(kauth_cred_geteuid(pc) == 0 || \
+		if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
 		    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 		    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
 		    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
@@ -309,7 +309,7 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 		printf("Warning: unimplemented IRIX sproc flag PR_SDIR\n");
 
 	/*
-	 * If revelant, initialize the share group structure
+	 * If relevant, initialize the share group structure
 	 */
 	ied = (struct irix_emuldata *)(p->p_emuldata);
 	if (ied->ied_share_group == NULL) {
@@ -580,7 +580,7 @@ irix_sys_procblk(l, v, retval)
 
 	/* May we stop it? */
 	pc = l->l_cred;
-	if (!(kauth_cred_geteuid(pc) == 0 || \
+	if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
 	    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 	    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
 	    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \

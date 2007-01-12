@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46.8.1 2006/11/18 21:29:26 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46.8.2 2007/01/12 01:00:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.8.1 2006/11/18 21:29:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46.8.2 2007/01/12 01:00:54 ad Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -160,8 +160,6 @@ void prom_halt __P((int)) __attribute__((__noreturn__));
 void zs_kgdb_init __P((void));
 void kgdb_connect __P((int));
 #endif
-
-struct evcnt soft_evcnt[IPL_NSOFT];
 
 /*
  *  Local functions.

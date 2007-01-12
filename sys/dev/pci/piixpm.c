@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.7.2.1 2006/11/18 21:34:33 ad Exp $ */
+/* $NetBSD: piixpm.c,v 1.7.2.2 2007/01/12 00:57:43 ad Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -134,13 +134,17 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	pcireg_t pmmisc;
 #endif
 	pci_intr_handle_t ih;
+	char devinfo[256];
 	const char *intrstr = NULL;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
 	aprint_naive("\n");
-	aprint_normal(": Power Management Controller\n");
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
+		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
 	    piixpm_powerhook, sc);

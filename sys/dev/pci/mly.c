@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.29.2.1 2006/11/18 21:34:31 ad Exp $	*/
+/*	$NetBSD: mly.c,v 1.29.2.2 2007/01/12 00:57:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.29.2.1 2006/11/18 21:34:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.29.2.2 2007/01/12 00:57:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2318,7 +2318,8 @@ mlyioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 
 	switch (cmd) {
 	case MLYIO_COMMAND:
-		rv = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		rv = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
 		if (rv)
 			break;
 

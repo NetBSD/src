@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.213.4.5 2007/01/11 22:22:57 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.213.4.6 2007/01/12 01:00:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213.4.5 2007/01/11 22:22:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.213.4.6 2007/01/12 01:00:50 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,9 +135,6 @@ int trapwrite(unsigned);
 #endif
 
 #ifdef KVM86
-#ifdef MULTIPROCESSOR
-#error KVM86 needs a rewrite to support MP systems.
-#endif
 #include <machine/kvm86.h>
 #define KVM86MODE (kvm86_incall)
 #else
@@ -437,9 +434,11 @@ copyfault:
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
+		KERNEL_LOCK(1, l);
 #ifdef VM86
 		if (frame->tf_eflags & PSL_VM) {
 			vm86_gpfault(l, type & ~T_USER);
+			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 #endif
@@ -447,12 +446,14 @@ copyfault:
 		/* If pmap_exec_fixup does something, let's retry the trap. */
 		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
 		    &l->l_addr->u_pcb)) {
+			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_addr = (void *)rcr2();
 		ksi.ksi_code = SEGV_ACCERR;
+		KERNEL_UNLOCK_LAST(l);
 		goto trapsignal;
 
 	case T_TSSFLT|T_USER:

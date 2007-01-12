@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.20 2006/08/31 19:24:38 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.20.2.1 2007/01/12 00:57:36 ad Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -144,12 +144,12 @@
 #define RTW_INTR_ROK	__BIT(0)/* Rx OK */
 
 /* Convenient interrupt conjunctions. */
-#define RTW_INTR_RX	(RTW_INTR_RER|RTW_INTR_ROK)
+#define RTW_INTR_RX	(RTW_INTR_RER|RTW_INTR_ROK|RTW_INTR_RDU|RTW_INTR_RXFOVW)
 #define RTW_INTR_TX	(RTW_INTR_TLPDER|RTW_INTR_TLPDOK|RTW_INTR_THPDER|\
 			 RTW_INTR_THPDOK|RTW_INTR_TNPDER|RTW_INTR_TNPDOK|\
 			 RTW_INTR_TBDER|RTW_INTR_TBDOK)
 #define RTW_INTR_BEACON	(RTW_INTR_BCNINT|RTW_INTR_TBDER|RTW_INTR_TBDOK)
-#define RTW_INTR_IOERROR	(RTW_INTR_TXFOVW|RTW_INTR_RXFOVW|RTW_INTR_RDU)
+#define RTW_INTR_IOERROR	(RTW_INTR_TXFOVW)
 
 #define	RTW_TCR		0x40	/* Transmit Configuration Register, 32b */
 #define RTW_TCR_CWMIN	__BIT(31)/* 1: CWmin = 8, 0: CWmin = 32. */
@@ -834,13 +834,13 @@
 
 /* Tx descriptor */
 struct rtw_txdesc {
-	uint32_t	td_ctl0;
-	uint32_t	td_ctl1;
-	uint32_t	td_buf;
-	uint32_t	td_len;
-	uint32_t	td_next;
-	uint32_t	td_rsvd[3];
-};
+	volatile uint32_t	td_ctl0;
+	volatile uint32_t	td_ctl1;
+	volatile uint32_t	td_buf;
+	volatile uint32_t	td_len;
+	volatile uint32_t	td_next;
+	volatile uint32_t	td_rsvd[3];
+} __attribute__((__packed__, __aligned__(4)));
 
 #define td_stat td_ctl0
 
@@ -897,11 +897,11 @@ struct rtw_txdesc {
 
 /* Rx descriptor */
 struct rtw_rxdesc {
-    uint32_t	rd_ctl;
-    uint32_t	rd_rsvd0;
-    uint32_t	rd_buf;
-    uint32_t	rd_rsvd1;
-};
+	volatile uint32_t	rd_ctl;
+	volatile uint32_t	rd_rsvd0;
+	volatile uint32_t	rd_buf;
+	volatile uint32_t	rd_rsvd1;
+} __attribute__((__packed__, __aligned__(4)));
 
 #define rd_stat rd_ctl
 #define rd_rssi rd_rsvd0

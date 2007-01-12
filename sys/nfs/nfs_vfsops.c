@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.164.2.1 2006/11/18 21:39:44 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.164.2.2 2007/01/12 01:04:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.164.2.1 2006/11/18 21:39:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.164.2.2 2007/01/12 01:04:20 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.164.2.1 2006/11/18 21:39:44 ad Exp 
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfsdiskless.h>
-#include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
 extern struct nfsstats nfsstats;
@@ -546,11 +545,8 @@ nfs_decode_args(nmp, argp, l)
 	if ((argp->flags & NFSMNT_READAHEAD) && argp->readahead >= 0 &&
 		argp->readahead <= NFS_MAXRAHEAD)
 		nmp->nm_readahead = argp->readahead;
-	if ((argp->flags & NFSMNT_LEASETERM) && argp->leaseterm >= 2 &&
-		argp->leaseterm <= NQ_MAXLEASE)
-		nmp->nm_leaseterm = argp->leaseterm;
 	if ((argp->flags & NFSMNT_DEADTHRESH) && argp->deadthresh >= 1 &&
-		argp->deadthresh <= NQ_NEVERDEAD)
+		argp->deadthresh <= NFS_NEVERDEAD)
 		nmp->nm_deadthresh = argp->deadthresh;
 
 	adjsock |= ((nmp->nm_sotype != argp->sotype) ||
@@ -625,7 +621,7 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		args.retrans = nmp->nm_retry;
 		args.maxgrouplist = nmp->nm_numgrps;
 		args.readahead = nmp->nm_readahead;
-		args.leaseterm = nmp->nm_leaseterm;
+		args.leaseterm = 0; /* dummy */
 		args.deadthresh = nmp->nm_deadthresh;
 		args.hostname = NULL;
 		return (copyout(&args, data, sizeof(args)));
@@ -633,9 +629,9 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 
 	if (args.version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
-#ifdef NFS_V2_ONLY
-	if (args.flags & NFSMNT_NQNFS)
+	if (args.flags & (NFSMNT_NQNFS|NFSMNT_KERB))
 		return (EPROGUNAVAIL);
+#ifdef NFS_V2_ONLY
 	if (args.flags & NFSMNT_NFSV3)
 		return (EPROGMISMATCH);
 #endif
@@ -644,12 +640,10 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 			return (EIO);
 		/*
 		 * When doing an update, we can't change from or to
-		 * v3 and/or nqnfs, or change cookie translation
+		 * v3, or change cookie translation
 		 */
-		args.flags = (args.flags &
-		    ~(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE)) |
-		    (nmp->nm_flag &
-			(NFSMNT_NFSV3|NFSMNT_NQNFS|NFSMNT_XLATECOOKIE));
+		args.flags = (args.flags & ~(NFSMNT_NFSV3|NFSMNT_XLATECOOKIE)) |
+		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_XLATECOOKIE));
 		nfs_decode_args(nmp, &args, l);
 		return (0);
 	}
@@ -735,11 +729,6 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	nmp->nm_mountp = mp;
 
 #ifndef NFS_V2_ONLY
-	if (argp->flags & NFSMNT_NQNFS)
-		mp->mnt_iflag |= IMNT_DTYPE;
-#endif
-
-#ifndef NFS_V2_ONLY
 	if ((argp->flags & NFSMNT_NFSV3) == 0)
 #endif
 	{
@@ -760,10 +749,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	nmp->nm_readdirsize = NFS_READDIRSIZE;
 	nmp->nm_numgrps = NFS_MAXGRPS;
 	nmp->nm_readahead = NFS_DEFRAHEAD;
-	nmp->nm_leaseterm = NQ_DEFLEASE;
-	nmp->nm_deadthresh = NQ_DEADTHRESH;
-	CIRCLEQ_INIT(&nmp->nm_timerhead);
-	nmp->nm_inprog = NULLVP;
+	nmp->nm_deadthresh = NFS_DEFDEADTHRESH;
 	error = set_statvfs_info(pth, UIO_SYSSPACE, hst, UIO_SYSSPACE, mp, l);
 	if (error)
 		goto bad;
@@ -872,16 +858,9 @@ nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		return (EBUSY);
 	}
 
-	/*
-	 * Must handshake with nqnfs_clientd() if it is active.
-	 */
-	nmp->nm_iflag |= NFSMNT_DISMINPROG;
-	while (nmp->nm_inprog != NULLVP)
-		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfsdism", 0);
 	error = vflush(mp, vp, flags);
 	if (error) {
 		vput(vp);
-		nmp->nm_iflag &= ~NFSMNT_DISMINPROG;
 		return (error);
 	}
 
@@ -909,11 +888,7 @@ nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 
-	/*
-	 * For NQNFS, let the server daemon free the nfsmount structure.
-	 */
-	if ((nmp->nm_flag & (NFSMNT_NQNFS | NFSMNT_KERB)) == 0)
-		free((caddr_t)nmp, M_NFSMNT);
+	free(nmp, M_NFSMNT);
 	return (0);
 }
 

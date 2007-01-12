@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.h,v 1.1.4.2 2006/11/18 21:34:50 ad Exp $ */
+/* $NetBSD: spiflash.h,v 1.1.4.3 2007/01/12 00:57:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -76,7 +76,7 @@
 
 /*
  * Some parts can stream bytes with the program command, whereas others require
- * a seperate command sequence for each byte.
+ * a separate command sequence for each byte.
  */
 #define	SPIFLASH_CMD_PROGRAM		0x02	/* page or byte program */
 #define	SPIFLASH_CMD_PROGRAM_AA		0xad	/* program (autoincrement) */
@@ -102,7 +102,7 @@
 #define	SPIFLASH_SR_SRP			0x80	/* SR write protected */
 
 /*
- * This needs to change to accomodate boot-sectored devices.
+ * This needs to change to accommodate boot-sectored devices.
  */
 
 typedef struct spiflash_softc *spiflash_handle_t;

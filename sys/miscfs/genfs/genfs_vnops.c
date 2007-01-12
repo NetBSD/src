@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.128.4.1 2006/11/18 21:39:28 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.128.4.2 2007/01/12 01:04:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,11 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.128.4.1 2006/11/18 21:39:28 ad Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.128.4.2 2007/01/12 01:04:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,14 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.128.4.1 2006/11/18 21:39:28 ad Exp
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pager.h>
-
-#ifdef NFSSERVER
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
-#include <nfs/nfs.h>
-#include <nfs/nqnfs.h>
-#include <nfs/nfs_var.h>
-#endif
 
 static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
@@ -375,31 +363,13 @@ genfs_noislocked(void *v)
 }
 
 /*
- * Local lease check for NFS servers.  Just set up args and let
- * nqsrv_getlease() do the rest.  If NFSSERVER is not in the kernel,
- * this is a null operation.
+ * Local lease check.
  */
 int
 genfs_lease_check(void *v)
 {
-#ifdef NFSSERVER
-	struct vop_lease_args /* {
-		struct vnode *a_vp;
-		struct lwp *a_l;
-		kauth_cred_t a_cred;
-		int a_flag;
-	} */ *ap = v;
-	u_int32_t duration = 0;
-	int cache;
-	u_quad_t frev;
 
-	(void) nqsrv_getlease(ap->a_vp, &duration, ND_CHECK | ap->a_flag,
-	    NQLOCALSLP, ap->a_l, (struct mbuf *)0, &cache, &frev, ap->a_cred);
 	return (0);
-#else
-	(void) v;
-	return (0);
-#endif /* NFSSERVER */
 }
 
 int
@@ -999,15 +969,12 @@ out:
  * Write the given range of pages to backing store.
  *
  * => "offhi == 0" means flush all pages at or after "offlo".
- * => object should be locked by caller.   we may _unlock_ the object
- *	if (and only if) we need to clean a page (PGO_CLEANIT), or
- *	if PGO_SYNCIO is set and there are pages busy.
- *	we return with the object locked.
+ * => object should be locked by caller.  we return with the
+ *      object unlocked.
  * => if PGO_CLEANIT or PGO_SYNCIO is set, we may block (due to I/O).
  *	thus, a caller might want to unlock higher level resources
  *	(e.g. vm_map) before calling flush.
- * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, then we will neither
- *	unlock the object nor block.
+ * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, we will not block
  * => if PGO_ALLPAGES is set, then all pages in the object will be processed.
  * => NOTE: we rely on the fact that the object's memq is a TAILQ and
  *	that new pages are inserted on the tail end of the list.   thus,
@@ -1062,7 +1029,7 @@ genfs_putpages(void *v)
 	off_t off;
 	int flags = ap->a_flags;
 	/* Even for strange MAXPHYS, the shift rounds down to a page */
-	const int maxpages = MAXPHYS >> PAGE_SHIFT;
+#define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
@@ -1337,8 +1304,7 @@ genfs_putpages(void *v)
 				pg = tpg;
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
-			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0
-			    && tpg->loan_count == 0) {
+			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
 				(void) pmap_clear_reference(tpg);
 				uvm_pagedeactivate(tpg);
 			} else if (flags & PGO_FREE) {
@@ -1457,7 +1423,7 @@ skip_scan:
 		}
 		splx(s);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	simple_unlock(slock);
 	return (error);
 }
 

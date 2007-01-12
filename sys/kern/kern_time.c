@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105.4.6 2007/01/11 22:23:00 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.7 2007/01/12 01:04:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,11 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.6 2007/01/11 22:23:00 ad Exp $");
-
-#include "fs_nfs.h"
-#include "opt_nfs.h"
-#include "opt_nfsserver.h"
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.7 2007/01/12 01:04:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -95,13 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.6 2007/01/11 22:23:00 ad Exp $
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
-
-#if defined(NFS) || defined(NFSSERVER)
-#include <nfs/rpcv2.h>
-#include <nfs/nfsproto.h>
-#include <nfs/nfs.h>
-#include <nfs/nfs_var.h>
-#endif
 
 #include <machine/cpu.h>
 
@@ -205,9 +194,6 @@ settime(struct proc *p, struct timespec *ts)
 	ci = curcpu();
 	timeradd(&ci->ci_schedstate.spc_runtime, &delta,
 	    &ci->ci_schedstate.spc_runtime);
-#if (defined(NFS) && !defined (NFS_V2_ONLY)) || defined(NFSSERVER)
-	nqnfs_lease_updatetime(delta.tv_sec);
-#endif
 	splx(s);
 	resettodr();
 	return (0);
@@ -1467,7 +1453,7 @@ itimerfire(struct ptimer *pt)
 			pt->pt_overruns++;
 		else {
 			ksiginfo_t ksi;
-			(void)memset(&ksi, 0, sizeof(ksi));
+			KSI_INIT(&ksi);
 			ksi.ksi_signo = pt->pt_ev.sigev_signo;
 			ksi.ksi_code = SI_TIMER;
 			ksi.ksi_sigval = pt->pt_ev.sigev_value;

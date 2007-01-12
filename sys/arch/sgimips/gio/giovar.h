@@ -1,4 +1,4 @@
-/*	$NetBSD: giovar.h,v 1.7 2006/08/30 23:48:55 rumble Exp $	*/
+/*	$NetBSD: giovar.h,v 1.7.2.1 2007/01/12 01:00:57 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -53,10 +53,10 @@ struct gio_attach_args {
 	bus_space_handle_t ga_ioh;
 	bus_dma_tag_t	ga_dmat;
 
-	int		ga_slot; /* (?) */
-	u_int32_t	ga_addr; /* (?) */
+	int		ga_slot;	/* not valid if graphics */
+	u_int32_t	ga_addr;
 
-	u_int32_t	ga_product;
+	u_int32_t	ga_product;	/* not valid if graphics */
 };
 
 

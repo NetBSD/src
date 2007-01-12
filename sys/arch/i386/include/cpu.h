@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.129.2.3 2007/01/11 22:22:57 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.129.2.4 2007/01/12 01:00:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,6 +114,7 @@ struct cpu_info {
 	int		ci_idepth;
 	uint32_t	ci_imask[NIPL];
 	uint32_t	ci_iunmask[NIPL];
+	void *		ci_intrstack;
 
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	uint32_t ci_flags;		/* flags; see below */
@@ -262,7 +263,7 @@ struct clockframe {
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
 #define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
-#define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+#define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
  * This is used during profiling to integrate system time.  It can safely

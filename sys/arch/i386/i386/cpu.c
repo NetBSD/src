@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.29.2.3 2007/01/11 22:22:56 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.29.2.4 2007/01/12 01:00:49 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.3 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29.2.4 2007/01/12 01:00:49 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -402,8 +402,6 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname, pcb, pcb->pcb_esp);
 	}
 #endif
-
-	mi_cpu_init(ci);
 }
 
 /*
@@ -724,7 +722,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 
 #if defined(DDB) && defined(MULTIPROCESSOR)
 	/*
-	 * Set up seperate handler for the DDB IPI, so that it doesn't
+	 * Set up separate handler for the DDB IPI, so that it doesn't
 	 * stomp on a possibly corrupted stack.
 	 *
 	 * XXX overwriting the gate set in db_machine_init.

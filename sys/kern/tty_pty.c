@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.93.4.4 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.93.4.5 2007/01/12 01:04:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.4.4 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.93.4.5 2007/01/12 01:04:07 ad Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -328,8 +328,8 @@ ptsopen(dev_t dev, int flag, int devtype, struct lwp *l)
 		tp->t_cflag = TTYDEF_CFLAG;
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		ttsetwater(tp);		/* would be done in xxparam() */
-	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
-	    kauth_cred_geteuid(l->l_cred) != 0)
+	} else if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN,
+	    tp) != 0)
 		return (EBUSY);
 	if (tp->t_oproc)			/* Ctrlr still around. */
 		SET(tp->t_state, TS_CARR_ON);

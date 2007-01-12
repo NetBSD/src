@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.28.8.5 2007/01/11 22:23:00 ad Exp $ */
+/* $NetBSD: sched.h,v 1.28.8.6 2007/01/12 01:04:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,9 @@
 #define	_SYS_SCHED_H_
 
 #include <sys/featuretest.h>
+#if 0
 #include <sys/mutex.h>
+#endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -197,49 +199,6 @@ int	sched_kpri(struct lwp *);
 
 void scheduler_fork_hook(struct proc *, struct proc *);
 void scheduler_wait_hook(struct proc *, struct proc *);
-
-/*
- * Once we have per-CPU run queues and a modular scheduler interface,
- * we should provide real stubs for the below that LKMs can use.
- */
-extern kmutex_t	sched_mutex;
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-
-static inline void
-sched_lock(const int heldmutex)
-{
-	(void)heldmutex;
-	mutex_enter(&sched_mutex);
-}
-
-static inline void
-sched_unlock(const int heldmutex)
-{
-	(void)heldmutex;
-	mutex_exit(&sched_mutex);
-}
-
-#else	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
-
-static inline void
-sched_lock(const int heldmutex)
-{
-	if (!heldmutex)
-		mutex_enter(&sched_mutex);
-}
-
-static inline void
-sched_unlock(int heldmutex)
-{
-	if (!heldmutex)
-		mutex_exit(&sched_mutex);
-}
-
-#endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
-
-void	sched_lock_idle(void);
-void	sched_unlock_idle(void);
 
 /*
  * Synchronisation object operations set.

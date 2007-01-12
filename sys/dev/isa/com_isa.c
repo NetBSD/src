@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.25.4.1 2006/11/18 21:34:21 ad Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.25.4.2 2007/01/12 00:57:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.25.4.1 2006/11/18 21:34:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.25.4.2 2007/01/12 00:57:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ com_isa_isHAYESP(bus_space_handle_t hayespioh, struct com_softc *sc)
 {
 	char	val, dips;
 	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
-	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_regs.cr_iot;
 
 	/*
 	 * Hayes ESP cards have two iobases.  One is for compatibility with

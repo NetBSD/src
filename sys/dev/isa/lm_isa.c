@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.11.20.1 2006/11/18 21:34:21 ad Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.11.20.2 2007/01/12 00:57:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.11.20.1 2006/11/18 21:34:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.11.20.2 2007/01/12 00:57:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Bus-independant attachment */
+	/* Bus-independent attachment */
 	lmsc->lm_writereg = lm_isa_writereg;
 	lmsc->lm_readreg = lm_isa_readreg;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.39.8.1 2006/11/18 21:39:29 ad Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.39.8.2 2007/01/12 01:04:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.39.8.1 2006/11/18 21:39:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.39.8.2 2007/01/12 01:04:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,7 @@ umap_lookup(v)
 	struct vnode *dvp, *vp, *ldvp;
 	struct mount *mp;
 	int error;
-	int i, flags, cnf = cnp->cn_flags;
+	int flags, cnf = cnp->cn_flags;
 
 	dvp = ap->a_dvp;
 	mp = dvp->v_mount;
@@ -403,9 +403,6 @@ umap_lookup(v)
 		error = EROFS;
 
 	/* Do locking fixup as appropriate. See layer_lookup() for info */
-	if ((cnp->cn_flags & PDIRUNLOCK)) {
-		LAYERFS_UPPERUNLOCK(dvp, 0, i);
-	}
 	if (ldvp == vp) {
 		*ap->a_vpp = dvp;
 		VREF(dvp);
@@ -414,10 +411,6 @@ umap_lookup(v)
 		error = layer_node_create(mp, vp, ap->a_vpp);
 		if (error) {
 			vput(vp);
-			if (cnp->cn_flags & PDIRUNLOCK) {
-				if (vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY) == 0)
-					cnp->cn_flags &= ~PDIRUNLOCK;
-			}
 		}
 	}
 

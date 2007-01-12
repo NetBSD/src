@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.78.2.1 2006/11/18 21:34:33 ad Exp $	*/
+/*	$NetBSD: twe.c,v 1.78.2.2 2007/01/12 00:57:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.78.2.1 2006/11/18 21:34:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.78.2.2 2007/01/12 00:57:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1773,7 +1773,8 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 	/* This is intended to be compatible with the FreeBSD interface. */
 	switch (cmd) {
 	case TWEIO_COMMAND:
-		error = kauth_authorize_device_passthru(l->l_cred, dev, data);
+		error = kauth_authorize_device_passthru(l->l_cred, dev,
+		    KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_ALL, data);
 		if (error)
 			return (error);
 

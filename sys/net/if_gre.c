@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.65.2.1 2006/11/18 21:39:29 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.65.2.2 2007/01/12 01:04:11 ad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65.2.1 2006/11/18 21:39:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65.2.2 2007/01/12 01:04:11 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -208,15 +208,21 @@ gre_clone_create(struct if_clone *ifc, int unit)
 static int
 gre_clone_destroy(struct ifnet *ifp)
 {
+	int s;
 	struct gre_softc *sc = ifp->if_softc;
 
 	LIST_REMOVE(sc, sc_list);
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
-	if_detach(ifp);
+	s = splnet();
+	ifp->if_flags &= ~IFF_UP;
 	gre_wakeup(sc);
+	splx(s);
 	gre_join(&sc->sc_thread);
+	s = splnet();
+	if_detach(ifp);
+	splx(s);
 	if (sc->sc_fp != NULL) {
 		closef(sc->sc_fp, curlwp);
 		sc->sc_fp = NULL;
@@ -776,10 +782,16 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			gre_wakeup(sc);
 			error = 0;
 		}
-	} else {
+		goto end;
+	}
+	rtcache_check(&sc->route);
+	if (sc->route.ro_rt == NULL)
+		goto end;
+	if (sc->route.ro_rt->rt_ifp->if_softc != sc)
+		rtcache_free(&sc->route);
+	else
 		error = ip_output(m, NULL, &sc->route, 0,
 		    (struct ip_moptions *)NULL, (struct socket *)NULL);
-	}
   end:
 	if (error)
 		ifp->if_oerrors++;
@@ -883,7 +895,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int s;
 	struct sockaddr_in si;
 	struct sockaddr *sa = NULL;
-	int error;
+	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
@@ -901,7 +913,6 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			return (EPERM);
 		break;
 	default:
-		error = 0;
 		break;
 	}
 
@@ -909,7 +920,8 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
-		error = gre_kick(sc);
+		if ((error = gre_kick(sc)) != 0)
+			ifp->if_flags &= ~IFF_UP;
 		break;
 	case SIOCSIFDSTADDR:
 		break;
@@ -1015,10 +1027,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				closef(sc->sc_fp, l);
 				sc->sc_fp = NULL;
 			}
-			if (sc->route.ro_rt != NULL) {
-				RTFREE(sc->route.ro_rt);
-				sc->route.ro_rt = NULL;
-			}
+			rtcache_free(&sc->route);
 			if (sc->sc_proto == IPPROTO_UDP)
 				error = gre_kick(sc);
 			else if (gre_compute_route(sc) == 0)
@@ -1135,15 +1144,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 /*
- * computes a route to our destination that is not the one
- * which would be taken by ip_output(), as this one will loop back to
- * us. If the interface is p2p as  a--->b, then a routing entry exists
- * If we now send a packet to b (e.g. ping b), this will come down here
- * gets src=a, dst=b tacked on and would from ip_output() sent back to
- * if_gre.
- * Goal here is to compute a route to b that is less specific than
- * a-->b. We know that this one exists as in normal operation we have
- * at least a default route which matches.
+ * Compute a route to our destination.
  */
 static int
 gre_compute_route(struct gre_softc *sc)
@@ -1157,28 +1158,13 @@ gre_compute_route(struct gre_softc *sc)
 	ro->ro_dst.sa_family = AF_INET;
 	ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 
-	/*
-	 * toggle last bit, so our interface is not found, but a less
-	 * specific route. I'd rather like to specify a shorter mask,
-	 * but this is not possible. Should work though. XXX
-	 * there is a simpler way ...
-	 */
-	if ((sc->sc_if.if_flags & IFF_LINK1) == 0) {
-		satosin(&ro->ro_dst)->sin_addr.s_addr
-		    = sc->g_dst.s_addr ^ htonl(0x1);
-	}
-
 #ifdef DIAGNOSTIC
 	printf("%s: searching for a route to %s", sc->sc_if.if_xname,
 	    inet_ntoa(satosin(&ro->ro_dst)->sin_addr));
 #endif
 
-	rtalloc(ro);
+	rtcache_init(ro);
 
-	/*
-	 * check if this returned a route at all and this route is no
-	 * recursion to ourself
-	 */
 	if (ro->ro_rt == NULL || ro->ro_rt->rt_ifp->if_softc == sc) {
 #ifdef DIAGNOSTIC
 		if (ro->ro_rt == NULL)
@@ -1186,20 +1172,9 @@ gre_compute_route(struct gre_softc *sc)
 		else
 			printf(" - route loops back to ourself!\n");
 #endif
+		rtcache_free(ro);
 		return EADDRNOTAVAIL;
 	}
-
-	/*
-	 * now change it back - else ip_output will just drop
-	 * the route and search one to this interface ...
-	 */
-	if ((sc->sc_if.if_flags & IFF_LINK1) == 0)
-		satosin(&ro->ro_dst)->sin_addr = sc->g_dst;
-
-#ifdef DIAGNOSTIC
-	printf(", choosing %s with gateway %s\n", ro->ro_rt->rt_ifp->if_xname,
-	    inet_ntoa(satosin(ro->ro_rt->rt_gateway)->sin_addr));
-#endif
 
 	return 0;
 }

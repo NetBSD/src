@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.119.2.1 2006/11/18 21:39:29 ad Exp $	*/
+/*	$NetBSD: if.h,v 1.119.2.2 2007/01/12 01:04:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -364,6 +364,7 @@ struct ifnet {				/* and the entries */
 #define	IFCAP_CSUM_TCPv6_Tx	0x08000	/* can do IPv6/TCP checksums (Tx) */
 #define	IFCAP_CSUM_UDPv6_Rx	0x10000	/* can do IPv6/UDP checksums (Rx) */
 #define	IFCAP_CSUM_UDPv6_Tx	0x20000	/* can do IPv6/UDP checksums (Tx) */
+#define	IFCAP_TSOv6		0x40000	/* can do TCPv6 segmentation offload */
 
 #define	IFCAPBITS		\
 	"\020"			\
@@ -377,7 +378,8 @@ struct ifnet {				/* and the entries */
 	"\17TCP6CSUM_Rx"	\
 	"\20TCP6CSUM_Tx"	\
 	"\21UDP6CSUM_Rx"	\
-	"\22UDP6CSUM_Tx"
+	"\22UDP6CSUM_Tx"	\
+	"\23TSO6"
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
