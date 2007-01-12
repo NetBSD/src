@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.56 2006/12/21 15:55:21 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.57 2007/01/12 00:55:40 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ struct scbvec {
 
 typedef int ipl_t;
 typedef struct {
-	int _psl;
+	uint8_t _psl;
 } ipl_cookie_t;
 
 ipl_cookie_t makeiplcookie(ipl_t);
