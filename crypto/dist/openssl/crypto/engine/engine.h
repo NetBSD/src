@@ -292,6 +292,7 @@ void ENGINE_load_chil(void);
 void ENGINE_load_atalla(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_ubsec(void);
+void ENGINE_load_padlock(void);
 void ENGINE_load_aep(void);
 void ENGINE_load_sureware(void);
 void ENGINE_load_4758cca(void);

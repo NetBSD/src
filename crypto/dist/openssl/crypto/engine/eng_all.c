@@ -98,6 +98,9 @@ void ENGINE_load_builtin_engines(void)
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__NetBSD__)
 	ENGINE_load_cryptodev();
 #endif
+#ifndef OPENSSL_NO_HW_PADLOCK
+	ENGINE_load_padlock();
+#endif
 #endif
 	}
 
