@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.18 2007/01/09 13:03:47 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.19 2007/01/12 21:49:51 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -558,6 +558,7 @@ __dead void panic(const char *, ...)
 struct nvlist *newnv(const char *, const char *, void *, int, struct nvlist *);
 void	nvfree(struct nvlist *);
 void	nvfreel(struct nvlist *);
+struct nvlist *nvcat(struct nvlist *, struct nvlist *);
 
 /* liby */
 void	yyerror(const char *);

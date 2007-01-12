@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.11 2007/01/09 13:03:47 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.12 2007/01/12 21:49:51 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -329,7 +329,7 @@ optdep:
 	WORD				{ $$ = $1; };
 
 defopts:
-	defopts defopt			{ $2->nv_next = $1; $$ = $2; } |
+	defopts defopt			{ $$ = nvcat($2, $1); } |
 	defopt				{ $$ = $1; };
 
 defopt:
