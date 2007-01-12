@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2006/09/03 07:45:40 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2007/01/12 21:49:51 cube Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -233,6 +233,20 @@ nvfreel(struct nvlist *nv)
 		next = nv->nv_next;
 		free(nv);
 	}
+}
+
+struct nvlist *
+nvcat(struct nvlist *nv1, struct nvlist *nv2)
+{
+	struct nvlist *nv;
+
+	if (nv1 == NULL)
+		return nv2;
+
+	for (nv = nv1; nv->nv_next != NULL; nv = nv->nv_next);
+
+	nv->nv_next = nv2;
+	return nv1;
 }
 
 void
