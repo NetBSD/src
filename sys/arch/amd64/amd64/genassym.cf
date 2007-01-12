@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5.14.5 2007/01/11 22:22:56 ad Exp $
+#	$NetBSD: genassym.cf,v 1.5.14.6 2007/01/12 14:24:17 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -227,7 +227,6 @@ define  CPU_INFO_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define  CPU_INFO_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
 define  CPU_INFO_IDLE_TSS_SEL	offsetof(struct cpu_info, ci_idle_tss_sel)
 define  CPU_INFO_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
-define	CPU_INFO_SCHED_MUTEX	offsetof(struct cpu_info, ci_sched_mutex)
 
 define  CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define  CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
@@ -275,7 +274,7 @@ define	IS_PIN		offsetof(struct intrsource, is_pin)
 define	IS_TYPE		offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
 
-define	MTX_MINSPL		offsetof(struct kmutex, u.s.mtxs_minspl)
+define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
 define	MTX_LOCK		offsetof(struct kmutex, u.s.mtxs_lock)
 define	MTX_OWNER		offsetof(struct kmutex, u.mtxa_owner)
 
