@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.14 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: pom.c,v 1.15 2007/01/12 22:43:05 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pom.c,v 1.14 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: pom.c,v 1.15 2007/01/12 22:43:05 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,9 +92,7 @@ time_t	parsetime(char *);
 void	badformat(void) __attribute__((__noreturn__));
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	time_t tmpt, now;
 	double days, today, tomorrow;
@@ -142,7 +140,8 @@ main(argc, argv)
 				    today);
 		}
 	}
-	exit(0);
+
+	return EXIT_SUCCESS;
 }
 
 /*
@@ -150,8 +149,7 @@ main(argc, argv)
  *	return phase of the moon
  */
 double
-potm(days)
-	double days;
+potm(double days)
 {
 	double N, Msol, Ec, LambdaSol, l, Mm, Ev, Ac, A3, Mmprime;
 	double A4, lprime, V, ldprime, D, Nm;
@@ -187,8 +185,7 @@ potm(days)
  *	convert degrees to radians
  */
 double
-dtor(deg)
-	double deg;
+dtor(double deg)
 {
 	return(deg * PI / 180);
 }
@@ -198,8 +195,7 @@ dtor(deg)
  *	adjust value so 0 <= deg <= 360
  */
 void
-adj360(deg)
-	double *deg;
+adj360(double *deg)
 {
 	for (;;)
 		if (*deg < 0)
@@ -212,8 +208,7 @@ adj360(deg)
 
 #define	ATOI2(ar)	((ar)[0] - '0') * 10 + ((ar)[1] - '0'); (ar) += 2;
 time_t
-parsetime(p)
-	char *p;
+parsetime(char *p)
 {
 	struct tm *lt;
 	int bigyear;
@@ -274,9 +269,9 @@ parsetime(p)
 }
 
 void
-badformat()
+badformat(void)
 {
 	warnx("illegal time format");
 	(void)fprintf(stderr, "usage: pom [[[[[cc]yy]mm]dd]HH]\n");
-	exit(1);
+	exit(EXIT_FAILURE);
 }
