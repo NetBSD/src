@@ -1,4 +1,4 @@
-$NetBSD: newlock2-TODO,v 1.1.2.5 2007/01/11 22:22:56 ad Exp $
+$NetBSD: newlock2-TODO,v 1.1.2.6 2007/01/12 01:47:50 ad Exp $
 
 Goals:
 
@@ -22,6 +22,7 @@ Goals:
 
 TODO:
 
+	- sparc mutex implementation may need tweaks for Mr Coffee / JS
 	- Fix SA
 	- Fix ptrace/gdb interaction with signals
 	- Test ptrace fully

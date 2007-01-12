@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.4 2006/02/16 20:17:15 perry Exp $ */
+/*	$NetBSD: userret.h,v 1.4.16.1 2007/01/12 01:47:51 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -62,14 +62,15 @@ static __inline void
 userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
-	int sig;
+	
+ again:
 	mi_userret(l);
 
 	if (cpuinfo.want_ast) {
 		cpuinfo.want_ast = 0;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 	}
 	if (cpuinfo.want_resched) {
@@ -77,15 +78,14 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
 		 * We are being preempted.
 		 */
 		preempt(0);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
+		goto again;
 	}
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL)
-		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+	if (p->p_stflag & PST_PROFIL)
+		addupc_task(l, pc, (int)(p->p_sticks - oticks));
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.77.20.1 2007/01/11 22:22:57 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.77.20.2 2007/01/12 01:47:51 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,7 +152,7 @@ extern void *softnet_cookie;
  * process as soon as possible.
  */
 #define cpu_signotify(l) do {						\
-	struct cpu_info _ci = (l)->l_cpu;				\
+	struct cpu_info *_ci = (l)->l_cpu;				\
 	_ci->want_ast = 1;						\
 									\
 	/* Just interrupt the target CPU, so it can notice its AST */	\

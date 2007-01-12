@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2005/12/11 12:19:08 christos Exp $
+#	$NetBSD: genassym.cf,v 1.48.20.1 2007/01/12 01:47:51 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@ include <sys/user.h>
 include <sys/device.h>
 include <sys/disklabel.h>
 include <sys/disk.h>
+include <sys/mutex.h>
 
 include <uvm/uvm.h>
 
@@ -265,3 +266,5 @@ define	FDC_NSTAT	offsetof(struct fdcio, fdcio_nstat)
 define	FDC_DATA	offsetof(struct fdcio, fdcio_data)
 define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
 define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
+
+define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)

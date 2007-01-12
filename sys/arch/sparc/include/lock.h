@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.23 2006/03/04 03:39:02 uwe Exp $ */
+/*	$NetBSD: lock.h,v 1.23.14.1 2007/01/12 01:47:51 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -121,6 +121,28 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 	 */
 	__insn_barrier();
 	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static inline void
+mb_read(void)
+{
+	static volatile int junk;
+	__insn_barrier();
+	junk = 1;
+}
+
+static inline void
+mb_write(void)
+{
+	__insn_barrier();
+}
+
+static inline void
+mb_memory(void)
+{
+	static volatile int junk;
+	__insn_barrier();
+	junk = 1;
 }
 
 #endif /* _MACHINE_LOCK_H */
