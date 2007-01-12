@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.6 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: max6900.c,v 1.7 2007/01/12 19:33:21 cube Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@ dev_type_write(maxrtc_write);
 
 const struct cdevsw maxrtc_cdevsw = {
 	maxrtc_open, maxrtc_close, maxrtc_read, maxrtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int maxrtc_clock_read(struct maxrtc_softc *, struct clock_ymdhms *);

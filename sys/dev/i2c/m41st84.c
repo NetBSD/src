@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.8 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.9 2007/01/12 19:33:21 cube Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@ dev_type_write(strtc_write);
 
 const struct cdevsw strtc_cdevsw = {
 	strtc_open, strtc_close, strtc_read, strtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int strtc_clock_read(struct strtc_softc *, struct clock_ymdhms *);
