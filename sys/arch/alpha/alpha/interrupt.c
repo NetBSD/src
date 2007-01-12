@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.70 2006/12/21 15:55:21 yamt Exp $ */
+/* $NetBSD: interrupt.c,v 1.71 2007/01/12 00:55:40 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.70 2006/12/21 15:55:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.71 2007/01/12 00:55:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -700,7 +700,7 @@ rlprintf(struct timeval *t, const char *fmt, ...)
 		vprintf(fmt, ap);
 }
 
-const static int ipl2psl_table[] = {
+const static uint8_t ipl2psl_table[] = {
 	[IPL_NONE] = ALPHA_PSL_IPL_0,
 	[IPL_SOFT] = ALPHA_PSL_IPL_SOFT,
 	[IPL_SOFTCLOCK] = IPL_SOFT,
