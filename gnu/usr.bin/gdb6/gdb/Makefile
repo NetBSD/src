@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/10/21 21:05:57 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2007/01/12 13:24:30 skrll Exp $
 
 .include "../Makefile.inc"
 
@@ -77,9 +77,6 @@ LDADD+=                -lpthread_dbg
 .endif
 
 .include <bsd.prog.mk>
-
-# Don't run yacc/bison.
-.y.c .y.h:
 
 .PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
     ${DIST}/gdb/signals ${DIST}/gdb/doc ${.CURDIR}/../arch/${MACHINE_ARCH}
