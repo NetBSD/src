@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.9 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.10 2007/01/12 20:18:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.9 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.10 2007/01/12 20:18:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -293,7 +293,8 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
  *
  *	Tear down a mutex.
  */
-void mutex_destroy(kmutex_t *mtx)
+void
+mutex_destroy(kmutex_t *mtx)
 {
 
 	if (MUTEX_ADAPTIVE_P(mtx)) {
@@ -399,10 +400,10 @@ mutex_vector_enter(kmutex_t *mtx)
 		 * to reduce cache line ping-ponging between CPUs.
 		 */
 		do {
+			if (panicstr != NULL)
+				break;
 			while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
 				SPINLOCK_BACKOFF(count); 
-				if (panicstr != NULL)
-					break;
 #ifdef LOCKDEBUG
 				if (SPINLOCK_SPINOUT(spins))
 					MUTEX_ABORT(mtx, "spinout");
@@ -743,10 +744,11 @@ mutex_tryenter(kmutex_t *mtx)
 /*
  * smutex_vector_enter:
  *
- *	Support routine for smutex_enter().
+ *	Support routine for smutex_enter().  Assumes that the caller
+ *	has already raised the SPL, and adjusted counters.
  */
 void
-smutex_vector_enter(kmutex_t *mtx, int s, uintptr_t callsite)
+smutex_vector_enter(kmutex_t *mtx)
 {
 #ifdef FULL
 	u_int count;
@@ -763,10 +765,10 @@ smutex_vector_enter(kmutex_t *mtx, int s, uintptr_t callsite)
 	 * to reduce cache line ping-ponging between CPUs.
 	 */
 	do {
+		if (panicstr != NULL)
+			break;
 		while (mtx->mtx_lock == __SIMPLELOCK_LOCKED) {
 			SPINLOCK_BACKOFF(count); 
-			if (panicstr != NULL)
-				break;
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins))
 				MUTEX_ABORT(mtx, "spinout");
@@ -776,8 +778,7 @@ smutex_vector_enter(kmutex_t *mtx, int s, uintptr_t callsite)
 
 	if (count != SPINLOCK_BACKOFF_MIN) {
 		LOCKSTAT_STOP_TIMER(spintime);
-		LOCKSTAT_EVENT_RA(mtx, LB_SPIN_MUTEX | LB_SPIN, 1,
-		    spintime, callsite);
+		LOCKSTAT_EVENT(mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
 	}
 	MUTEX_LOCKED(mtx);
 #else	/* FULL */
@@ -799,12 +800,12 @@ sched_lock_idle(void)
 
 	MUTEX_SPIN_SPLSAVE(mtx, 0);
 
-	if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
-		MUTEX_LOCKED(mtx);
+	if (!__cpu_simple_lock_try(&mtx->mtx_lock)) {
+		smutex_vector_enter(mtx);
 		return;
 	}
-	
-	smutex_vector_enter(mtx, 0, (uintptr_t)__builtin_return_address(0));
+
+	MUTEX_LOCKED(mtx);
 }
 
 /*
