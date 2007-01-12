@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.10 2007/01/01 20:56:59 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11 2007/01/12 20:22:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 static __inline void
 x86_pause(void)
 {
-	/* nothing */
+	__asm volatile("pause");
 }
 
 /*
