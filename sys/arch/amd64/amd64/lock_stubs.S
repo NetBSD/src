@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.7 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.8 2007/01/12 14:24:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
 
 NENTRY(smutex_enter)				/* 0x0040, 61 bytes */
 	movq	CPUVAR(SELF200), %r8
-	movzbl	MTX_MINSPL(%rdi), %ecx		/* new SPL */
+	movzbl	MTX_IPL(%rdi), %ecx		/* new SPL */
 	movl	(CPU_INFO_ILEVEL-0x200)(%r8), %esi/* %esi for vector_enter */
 	cmpl	%ecx, %esi			/* higher? */
 	cmovgl	%esi, %ecx

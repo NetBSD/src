@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.8.3 2006/12/29 20:27:41 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.4 2007/01/12 14:24:17 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -850,8 +850,7 @@ ENTRY(cpu_switch)
 	sti
 idle_unlock:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	leaq	_C_LABEL(sched_mutex)(%rip), %rdi
-	call	_C_LABEL(smutex_exit)
+	call	_C_LABEL(sched_unlock_idle)
 #endif
 	/* Interrupts are okay again. */
 	movl	$IPL_NONE,%edi
@@ -876,14 +875,11 @@ idle_start:
 	cmpl	$0,_C_LABEL(sched_whichqs)(%rip)
 	jz	idle_loop
 idle_exit:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	leaq	_C_LABEL(sched_mutex)(%rip), %rdi
-	call	_C_LABEL(smutex_enter)
-#else
-	movl	$IPL_SCHED,CPUVAR(ILEVEL)
-#endif
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	sti
-	movq	$0,CPUVAR(CURLWP)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+	call	_C_LABEL(sched_lock_idle)
+#endif
 	movl	_C_LABEL(sched_whichqs)(%rip),%ecx
 	bsfl	%ecx,%r8d
 	jz	idle_unlock
@@ -936,8 +932,7 @@ switch_resume:
 	movb	$LSONPROC,L_STAT(%r12)	# l->l_stat = SONPROC
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	leaq	_C_LABEL(sched_mutex)(%rip), %rdi
-	call	_C_LABEL(smutex_exit)
+	call	_C_LABEL(sched_unlock_idle)
 #endif 
 
 	/* Skip context switch if same lwp. */
@@ -1044,7 +1039,7 @@ switch_restored:
 switch_return:
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(Xspllower)
-	movl	$IPL_SCHED,CPUVAR(ILEVEL)
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 
 	movl	%ebx,%eax
 
@@ -1068,9 +1063,6 @@ ENTRY(cpu_switchto)
 	movq	%rsi,%r12
 
 	movq	$0,CPUVAR(CURLWP)
-	xorq	%rax,%rax
-	movq	%rax,L_BACK(%r12)
-	movl	%eax,CPUVAR(RESCHED)
 	jmp	switch_resume
 
 
