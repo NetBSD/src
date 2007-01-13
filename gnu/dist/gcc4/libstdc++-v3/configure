@@ -79788,9 +79788,10 @@ done
 
 
 
-for ac_header in nan.h ieeefp.h endian.h sys/isa_defs.h \
+for ac_header in nan.h ieeefp.h endian.h sys/param.h \
       machine/endian.h machine/param.h sys/machine.h sys/types.h \
-      fp.h locale.h float.h inttypes.h
+      fp.h locale.h float.h inttypes.h sys/resource.h sys/stat.h \
+      sys/time.h unistd.h sys/sem.h sys/ipc.h
 do
 as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
 if eval "test \"\${$as_ac_Header+set}\" = set"; then
