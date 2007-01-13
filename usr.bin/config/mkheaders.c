@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.9 2006/10/04 20:34:48 dsl Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.10 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,6 +52,7 @@
 #include <string.h>
 #include <time.h>
 #include <util.h>
+#include <err.h>
 #include "defs.h"
 
 #ifdef notyet
@@ -174,20 +175,21 @@ static void
 fprintstr(FILE *fp, const char *str)
 {
 
-	if (strncmp(str, "\\\"", 2)) {
-		fprintf(fp, "\t%s", str);
+	if (strncmp(str, "\\\"", 2) != 0) {
+		(void)fprintf(fp, "\t%s", str);
 		return;
 	}
 
-	fputc('\t', fp);
+	(void)fputc('\t', fp);
 	
 	for (; *str; str++) {
 		switch (*str) {
 		case '\\':
 			if (!*++str)				/* XXX */
 				str--;
+			/*FALLTHROUGH*/
 		default:
-			fputc(*str, fp);
+			(void)fputc(*str, fp);
 			break;
 		}
 	}
@@ -198,6 +200,7 @@ fprintstr(FILE *fp, const char *str)
  * the options defined for this file.
  */
 static int
+/*ARGSUSED*/
 defopts_print(const char *name, void *value, void *arg)
 {
 	char tfname[BUFSIZ];
@@ -484,8 +487,7 @@ static int
 herr(const char *what, const char *fname, FILE *fp)
 {
 
-	(void)fprintf(stderr, "%s: error %sing %s: %s\n",
-	    getprogname(), what, fname, strerror(errno));
+	warn("error %sing %s", what, fname);
 	if (fp)
 		(void)fclose(fp);
 	return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.5 2007/01/12 21:49:51 cube Exp $	*/
+/*	$NetBSD: util.c,v 1.6 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,77 +51,15 @@
 #include <string.h>
 #include <stdarg.h>
 #include <util.h>
+#include <err.h>
 #include "defs.h"
 
-static void nomem(void);
-static void vxerror(const char *, int, const char *, va_list)
+static void cfgvxerror(const char *, int, const char *, va_list)
 	     __attribute__((__format__(__printf__, 3, 0)));
-static void vxwarn(const char *, int, const char *, va_list)
+static void cfgvxwarn(const char *, int, const char *, va_list)
 	     __attribute__((__format__(__printf__, 3, 0)));
-static void vxmsg(const char *fname, int line, const char *class, 
-		  const char *fmt, va_list)
+static void cfgvxmsg(const char *, int, const char *, const char *, va_list)
      __attribute__((__format__(__printf__, 4, 0)));
-
-/*
- * Calloc, with abort on error.
- */
-void *
-ecalloc(size_t nelem, size_t size)
-{
-	void *p;
-
-	if ((p = calloc(nelem, size)) == NULL)
-		nomem();
-	return (p);
-}
-
-/*
- * Malloc, with abort on error.
- */
-void *
-emalloc(size_t size)
-{
-	void *p;
-
-	if ((p = malloc(size)) == NULL)
-		nomem();
-	return (p);
-}
-
-/*
- * Realloc, with abort on error.
- */
-void *
-erealloc(void *p, size_t size)
-{
-	void *q;
-
-	if ((q = realloc(p, size)) == NULL)
-		nomem();
-	p = q;
-	return (p);
-}
-
-/*
- * Strdup, with abort on error.
- */
-char *
-estrdup(const char *p)
-{
-	char *cp;
-
-	if ((cp = strdup(p)) == NULL)
-		nomem();
-	return (cp);
-}
-
-static void
-nomem(void)
-{
-
-	(void)fprintf(stderr, "config: out of memory\n");
-	exit(1);
-}
 
 /*
  * Push a prefix onto the prefix stack.
@@ -156,7 +94,7 @@ prefix_pop(void)
 	struct prefix *pf;
 
 	if ((pf = SLIST_FIRST(&prefixes)) == NULL) {
-		error("no prefixes on the stack to pop");
+		cfgerror("no prefixes on the stack to pop");
 		return;
 	}
 
@@ -250,30 +188,30 @@ nvcat(struct nvlist *nv1, struct nvlist *nv2)
 }
 
 void
-warn(const char *fmt, ...)
+cfgwarn(const char *fmt, ...)
 {
 	va_list ap;
 	extern const char *yyfile;
 
 	va_start(ap, fmt);
-	vxwarn(yyfile, currentline(), fmt, ap);
+	cfgvxwarn(yyfile, currentline(), fmt, ap);
 	va_end(ap);
 }
 
 void
-xwarn(const char *file, int line, const char *fmt, ...)
+cfgxwarn(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	vxwarn(file, line, fmt, ap);
+	cfgvxwarn(file, line, fmt, ap);
 	va_end(ap);
 }
 
 static void
-vxwarn(const char *file, int line, const char *fmt, va_list ap)
+cfgvxwarn(const char *file, int line, const char *fmt, va_list ap)
 {
-	vxmsg(file, line, "warning: ", fmt, ap);
+	cfgvxmsg(file, line, "warning: ", fmt, ap);
 }
 
 /*
@@ -281,13 +219,13 @@ vxwarn(const char *file, int line, const char *fmt, va_list ap)
  * and line number.
  */
 void
-error(const char *fmt, ...)
+cfgerror(const char *fmt, ...)
 {
 	va_list ap;
 	extern const char *yyfile;
 
 	va_start(ap, fmt);
-	vxerror(yyfile, currentline(), fmt, ap);
+	cfgvxerror(yyfile, currentline(), fmt, ap);
 	va_end(ap);
 }
 
@@ -296,12 +234,12 @@ error(const char *fmt, ...)
  * find out about it until later).
  */
 void
-xerror(const char *file, int line, const char *fmt, ...)
+cfgxerror(const char *file, int line, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	vxerror(file, line, fmt, ap);
+	cfgvxerror(file, line, fmt, ap);
 	va_end(ap);
 }
 
@@ -309,9 +247,9 @@ xerror(const char *file, int line, const char *fmt, ...)
  * Internal form of error() and xerror().
  */
 static void
-vxerror(const char *file, int line, const char *fmt, va_list ap)
+cfgvxerror(const char *file, int line, const char *fmt, va_list ap)
 {
-	vxmsg(file, line, "", fmt, ap);
+	cfgvxmsg(file, line, "", fmt, ap);
 	errors++;
 }
 
@@ -325,7 +263,7 @@ panic(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void)fprintf(stderr, "config: panic: ");
+	(void)fprintf(stderr, "%s: panic: ", getprogname());
 	(void)vfprintf(stderr, fmt, ap);
 	(void)putc('\n', stderr);
 	va_end(ap);
@@ -336,7 +274,7 @@ panic(const char *fmt, ...)
  * Internal form of error() and xerror().
  */
 static void
-vxmsg(const char *file, int line, const char *msgclass, const char *fmt,
+cfgvxmsg(const char *file, int line, const char *msgclass, const char *fmt,
       va_list ap)
 {
 

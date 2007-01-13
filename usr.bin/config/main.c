@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2007/01/09 13:03:47 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ static struct nvlist **nextmkopt;
 static struct nvlist **nextappmkopt;
 static struct nvlist **nextfsopt;
 
-static	void	usage(void);
+static	void	usage(void) __attribute__((__noreturn__));
 static	void	dependopts(void);
 static	void	do_depend(struct nvlist *);
 static	void	stop(void);
@@ -171,9 +171,9 @@ main(int argc, char **argv)
 			 * do that for you, but you really should just
 			 * put them in the config file.
 			 */
-			(void)fprintf(stderr,
-		    "config: -g is obsolete (use makeoptions DEBUG=\"-g\")\n");
+			warnx("-g is obsolete (use makeoptions DEBUG=\"-g\")");
 			usage();
+			/*NOTREACHED*/
 
 		case 'p':
 			/*
@@ -218,44 +218,30 @@ main(int argc, char **argv)
 	}
 
 	if (xflag && (builddir != NULL || srcdir != NULL || Pflag || pflag ||
-	    vflag || Lflag)) {
-		(void)fprintf(stderr, "config: -x must be used alone\n");
-		exit(1);
-	}
-	if (Lflag && (builddir != NULL || Pflag || pflag)) {
-		(void)fprintf(stderr,
-		    "config: -L can only be used with -s and -v\n");
-		exit(EXIT_FAILURE);
-	}
+	    vflag || Lflag))
+		errx(EXIT_FAILURE, "-x must be used alone");
+	if (Lflag && (builddir != NULL || Pflag || pflag))
+		errx(EXIT_FAILURE, "-L can only be used with -s and -v");
 
 	if (xflag) {
 #ifdef __NetBSD__
 		conffile = (argc == 1) ? argv[0] : _PATH_UNIX;
 #else
-		if (argc == 0) {
-			(void)fprintf(stderr, "config: no kernel supplied\n");
-			exit(1);
-		}
+		if (argc == 0)
+			errx(EXIT_FAILURE, "no kernel supplied");
 #endif
-		if (!is_elf(conffile)) {
-			(void)fprintf(stderr,
-			    "config: %s: not a binary kernel\n",
+		if (!is_elf(conffile))
+			errx(EXIT_FAILURE, "%s: not a binary kernel",
 			    conffile);
-			exit(1);
-		}
-		if (!extract_config(conffile, "stdout", STDOUT_FILENO)) {
-			(void)fprintf(stderr,
-			    "config: %s does not contain embedded "
-			    "configuration data\n", conffile);
-			exit(2);
-		}
+		if (!extract_config(conffile, "stdout", STDOUT_FILENO))
+			errx(EXIT_FAILURE, "%s does not contain embedded "
+			    "configuration data", conffile);
 		exit(0);
 	}
 
 	conffile = (argc == 1) ? argv[0] : "CONFIG";
 	if (firstfile(conffile)) {
-		(void)fprintf(stderr, "config: cannot read %s: %s\n",
-		    conffile, strerror(errno));
+		err(EXIT_FAILURE, "Cannot read `%s'", conffile);
 		exit(2);
 	}
 
@@ -335,12 +321,9 @@ main(int argc, char **argv)
 		const char *tmpdir;
 		int cfd;
 
-		if (builddir == NULL) {
-			(void)fprintf(stderr,
-			    "config: build directory must be specified with "
-			    "binary kernels\n");
-			exit(1);
-		}
+		if (builddir == NULL)
+			errx(EXIT_FAILURE, "Build directory must be specified "
+			    "with binary kernels");
 
 		/* Open temporary configuration file */
 		tmpdir = getenv("TMPDIR");
@@ -348,19 +331,13 @@ main(int argc, char **argv)
 			tmpdir = "/tmp";
 		snprintf(cname, sizeof(cname), "%s/config.tmp.XXXXXX", tmpdir);
 		cfd = mkstemp(cname);
-		if (cfd == -1) {
-			fprintf(stderr, "config: cannot create %s: %s", cname,
-			    strerror(errno));
-			exit(2);
-		}
+		if (cfd == -1)
+			err(EXIT_FAILURE, "Cannot create `%s'", cname);
 
 		printf("Using configuration data embedded in kernel...\n");
-		if (!extract_config(conffile, cname, cfd)) {
-			(void)fprintf(stderr,
-			    "config: %s does not contain embedded "
-			    "configuration data\n", conffile);
-			exit(2);
-		}
+		if (!extract_config(conffile, cname, cfd))
+			errx(EXIT_FAILURE, "%s does not contain embedded "
+			    "configuration data", conffile);
 
 		removeit = 1;
 		close(cfd);
@@ -421,14 +398,12 @@ main(int argc, char **argv)
 			    defmaxusers);
 			maxusers = defmaxusers;
 		} else {
-			(void)fprintf(stderr,
-			    "config: need \"maxusers\" line\n");
+			warnx("need \"maxusers\" line");
 			errors++;
 		}
 	}
 	if (fsoptions == NULL) {
-		(void)fprintf(stderr,
-		    "config: need at least one \"file-system\" line\n");
+		warnx( "need at least one \"file-system\" line");
 		errors++;
 	}
 	if (crosscheck() || errors)
@@ -450,15 +425,16 @@ main(int argc, char **argv)
 		stop();
 	(void)printf("Build directory is %s\n", builddir);
 	(void)printf("Don't forget to run \"make depend\"\n");
-	exit(0);
+	return 0;
 }
 
 static void
 usage(void)
 {
-	(void)fputs("usage: config [-Ppv] [-s srcdir] [-b builddir] "
-		"[sysname]\n", stderr);
-	(void)fputs("       config -x [kernel-file]\n", stderr);
+	(void)fprintf(stderr, "Usage: %s [-Ppv] [-s srcdir] [-b builddir] "
+	    "[config-file]\n\t%s -x [kernel-file]\n"
+	    "\t%s -L [-v] [-s srcdir] [config-file]\n", 
+	    getprogname(), getprogname(), getprogname());
 	exit(1);
 }
 
@@ -516,6 +492,18 @@ do_depend(struct nvlist *nv)
 	}
 }
 
+static int
+recreate(const char *p, const char *q)
+{
+	int ret;
+
+	if ((ret = unlink(q)) == -1 && errno != ENOENT)
+		warn("unlink(%s)\n", q);
+	if ((ret = symlink(p, q)) == -1)
+		warn("symlink(%s -> %s)", q, p);
+	return ret;
+}
+
 /*
  * Make a symlink for "machine" so that "#include <machine/foo.h>" works,
  * and for the machine's CPU architecture, so that works as well.
@@ -530,14 +518,7 @@ mksymlinks(void)
 
 	snprintf(buf, sizeof(buf), "arch/%s/include", machine);
 	p = sourcepath(buf);
-	ret = unlink("machine");
-	if (ret && errno != ENOENT)
-		(void)fprintf(stderr, "config: unlink(machine): %s\n",
-		    strerror(errno));
-	ret = symlink(p, "machine");
-	if (ret)
-		(void)fprintf(stderr, "config: symlink(machine -> %s): %s\n",
-		    p, strerror(errno));
+	ret = recreate(p, "machine");
 	free(p);
 
 	if (machinearch != NULL) {
@@ -548,28 +529,15 @@ mksymlinks(void)
 		p = estrdup("machine");
 		q = machine;
 	}
-	ret = unlink(q);
-	if (ret && errno != ENOENT)
-		(void)fprintf(stderr, "config: unlink(%s): %s\n",
-		    q, strerror(errno));
-	ret = symlink(p, q);
-	if (ret)
-		(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
-		    q, p, strerror(errno));
+
+	ret = recreate(p, q);
 	free(p);
 
 	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
 		q = nv->nv_name;
 		snprintf(buf, sizeof(buf), "arch/%s/include", q);
 		p = sourcepath(buf);
-		ret = unlink(q);
-		if (ret && errno != ENOENT)
-			(void)fprintf(stderr, "config: unlink(%s): %s\n",
-			    q, strerror(errno));
-		ret = symlink(p, q);
-		if (ret)
-			(void)fprintf(stderr, "config: symlink(%s -> %s): %s\n",
-		    	q, p, strerror(errno));
+		ret = recreate(p, q);
 		free(p);
 	}
 
@@ -599,14 +567,14 @@ add_dependencies(struct nvlist *nv, struct nvlist *deps)
 		 */
 		if ((a = ht_lookup(attrtab, dep->nv_name)) != NULL) {
 			if (a->a_iattr)
-				error("option `%s' dependency `%s' "
+				cfgerror("option `%s' dependency `%s' "
 				    "is an interface attribute",
 				    nv->nv_name, a->a_name);
 		} else if (OPT_OBSOLETE(dep->nv_name)) {
-			error("option `%s' dependency `%s' "
+			cfgerror("option `%s' dependency `%s' "
 			    "is obsolete", nv->nv_name, dep->nv_name);
 		} else if (find_declared_option(dep->nv_name) == NULL) {
-			error("option `%s' dependency `%s' "
+			cfgerror("option `%s' dependency `%s' "
 			    "is an unknown option",
 			    nv->nv_name, dep->nv_name);
 		}
@@ -629,7 +597,7 @@ deffilesystem(const char *fname, struct nvlist *fses, struct nvlist *deps)
 	 */
 	for (nv = fses; nv != NULL; nv = nv->nv_next) {
 		if (DEFINED_OPTION(nv->nv_name)) {
-			error("file system or option `%s' already defined",
+			cfgerror("file system or option `%s' already defined",
 			    nv->nv_name);
 			return;
 		}
@@ -648,13 +616,13 @@ deffilesystem(const char *fname, struct nvlist *fses, struct nvlist *deps)
 			 * Only one file system allowed in this case.
 			 */
 			if (nv->nv_next != NULL) {
-				error("only one file system per option "
+				cfgerror("only one file system per option "
 				    "file may be specified");
 				return;
 			}
 
 			if (ht_insert(optfiletab, fname, nv)) {
-				error("option file `%s' already exists",
+				cfgerror("option file `%s' already exists",
 				    fname);
 				return;
 			}
@@ -677,11 +645,11 @@ badfilename(const char *fname)
 	 * check the file name.
 	 */
 	if (strchr(fname, '/') != NULL) {
-		error("option file name contains a `/'");
+		cfgerror("option file name contains a `/'");
 		return 1;
 	}
 	if ((n = strrchr(fname, '.')) == NULL || strcmp(n, ".h") != 0) {
-		error("option file name does not end in `.h'");
+		cfgerror("option file name does not end in `.h'");
 		return 1;
 	}
 	return 0;
@@ -747,13 +715,13 @@ defopt(struct hashtab *ht, const char *fname, struct nvlist *opts,
 
 		/* An option name can be declared at most once. */
 		if (DEFINED_OPTION(nv->nv_name)) {
-			error("file system or option `%s' already defined",
+			cfgerror("file system or option `%s' already defined",
 			    nv->nv_name);
 			return;
 		}
 
 		if (ht_insert(ht, nv->nv_name, nv)) {
-			error("file system or option `%s' already defined",
+			cfgerror("file system or option `%s' already defined",
 			    nv->nv_name);
 			return;
 		}
@@ -812,7 +780,7 @@ void
 defoption(const char *fname, struct nvlist *opts, struct nvlist *deps)
 {
 
-	warn("The use of `defopt' is deprecated");
+	cfgwarn("The use of `defopt' is deprecated");
 	defopt(defopttab, fname, opts, deps, 0);
 }
 
@@ -847,7 +815,7 @@ void
 addoption(const char *name, const char *value)
 {
 	const char *n;
-	int is_fs, is_param, is_flag, is_opt, is_undecl, is_obs;
+	int is_fs, is_param, is_flag, is_undecl, is_obs;
 
 	/* 
 	 * Figure out how this option was declared (if at all.)
@@ -856,35 +824,34 @@ addoption(const char *name, const char *value)
 	 */
 	is_fs = OPT_FSOPT(name);
 	is_param = OPT_DEFPARAM(name);
-	is_opt = OPT_DEFOPT(name);
 	is_flag =  OPT_DEFFLAG(name);
 	is_obs = OPT_OBSOLETE(name);
 	is_undecl = !DEFINED_OPTION(name);
 
 	/* Warn and pretend the user had not selected the option  */
 	if (is_obs) {
-		warn("obsolete option `%s' will be ignored", name);
+		cfgwarn("obsolete option `%s' will be ignored", name);
 		return;
 	}
 
 	/* Make sure this is not a defined file system. */
 	if (is_fs) {
-		error("`%s' is a defined file system", name);
+		cfgerror("`%s' is a defined file system", name);
 		return;
 	}
 	/* A defparam must have a value */
 	if (is_param && value == NULL) {
-		error("option `%s' must have a value", name);
+		cfgerror("option `%s' must have a value", name);
 		return;
 	}
 	/* A defflag must not have a value */
 	if (is_flag && value != NULL) {
-		error("option `%s' must not have a value", name);
+		cfgerror("option `%s' must not have a value", name);
 		return;
 	}
 
 	if (is_undecl && vflag) {
-		warn("undeclared option `%s' added to IDENT", name);
+		cfgwarn("undeclared option `%s' added to IDENT", name);
 	}
 
 	if (do_option(opttab, &nextopt, name, value, "options"))
@@ -892,7 +859,7 @@ addoption(const char *name, const char *value)
 
 	/* make lowercase, then add to select table */
 	n = strtolower(name);
-	(void)ht_insert(selecttab, n, (void *)n);
+	(void)ht_insert(selecttab, n, (void *)__UNCONST(n));
 }
 
 void
@@ -917,7 +884,7 @@ addfsoption(const char *name)
 
 	/* Make sure this is a defined file system. */
 	if (!OPT_FSOPT(name)) {
-		error("`%s' is not a defined file system", name);
+		cfgerror("`%s' is not a defined file system", name);
 		return;
 	}
 
@@ -935,11 +902,11 @@ addfsoption(const char *name)
 	 * Add a lower-case version to the table for root file system
 	 * verification.
 	 */
-	if (ht_insert(fsopttab, n, (void *)n))
+	if (ht_insert(fsopttab, n, __UNCONST(n)))
 		panic("addfsoption: already in table");
 
 	/* Add to select table. */
-	(void)ht_insert(selecttab, n, (void *)n);
+	(void)ht_insert(selecttab, n, __UNCONST(n));
 }
 
 void
@@ -1039,9 +1006,9 @@ do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
 	if ((nv = ht_lookup(ht, name)) == NULL)
 		panic("do_option");
 	if (nv->nv_str != NULL && !OPT_FSOPT(name))
-		error("already have %s `%s=%s'", type, name, nv->nv_str);
+		cfgerror("already have %s `%s=%s'", type, name, nv->nv_str);
 	else
-		error("already have %s `%s'", type, name);
+		cfgerror("already have %s `%s'", type, name);
 	return (1);
 }
 
@@ -1056,7 +1023,7 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 	struct nvlist *nv;
 	
 	if (ht_remove(ht, name)) {
-		error("%s `%s' is not defined", type, name);
+		cfgerror("%s `%s' is not defined", type, name);
 		return (1);
 	}
 	if (npp == NULL)
@@ -1149,7 +1116,7 @@ cfcrosscheck(struct config *cf, const char *what, struct nvlist *nv)
 		if (has_attr(dev->d_attrs, s_ifnet))
 			devunit = nv->nv_ifunit;	/* XXX XXX XXX */
 		else
-			devunit = minor(nv->nv_int) / maxpartitions;
+			devunit = minor((uint32_t)nv->nv_int) / maxpartitions;
 		if (devbase_has_instances(dev, devunit))
 			continue;
 		if (devbase_has_instances(dev, STAR) &&
@@ -1184,8 +1151,7 @@ crosscheck(void)
 
 	errs = 0;
 	if (TAILQ_EMPTY(&allcf)) {
-		(void)fprintf(stderr, "%s has no configurations!\n",
-		    conffile);
+		warnx("%s has no configurations!", conffile);
 		errs++;
 	}
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
@@ -1218,8 +1184,7 @@ badstar(void)
 		continue;
  aybabtu:
 		if (ht_lookup(needcnttab, d->d_name)) {
-			(void)fprintf(stderr,
-		    "config: %s's cannot be *'d until its driver is fixed\n",
+			warnx("%s's cannot be *'d until its driver is fixed",
 			    d->d_name);
 			errs++;
 			continue;
@@ -1245,7 +1210,7 @@ setupdirs(void)
 	/* srcdir must be specified if builddir is not specified or if
 	 * no configuration filename was specified. */
 	if ((builddir || strcmp(defbuilddir, ".") == 0) && !srcdir) {
-		error("source directory must be specified");
+		cfgerror("source directory must be specified");
 		exit(1);
 	}
 
@@ -1260,27 +1225,17 @@ setupdirs(void)
 	if (builddir == NULL)
 		builddir = defbuilddir;
 
-	if (stat(builddir, &st) != 0) {
-		if (mkdir(builddir, 0777)) {
-			(void)fprintf(stderr, "config: cannot create %s: %s\n",
-			    builddir, strerror(errno));
-			exit(2);
-		}
-	} else if (!S_ISDIR(st.st_mode)) {
-		(void)fprintf(stderr, "config: %s is not a directory\n",
-			      builddir);
-		exit(2);
-	}
-	if (chdir(builddir) != 0) {
-		(void)fprintf(stderr, "config: cannot change to %s\n",
-			      builddir);
-		exit(2);
-	}
-	if (stat(srcdir, &st) != 0 || !S_ISDIR(st.st_mode)) {
-		(void)fprintf(stderr, "config: %s is not a directory\n",
-			      srcdir);
-		exit(2);
-	}
+	if (stat(builddir, &st) == -1) {
+		if (mkdir(builddir, 0777) == -1)
+			errx(EXIT_FAILURE, "cannot create %s", builddir);
+	} else if (!S_ISDIR(st.st_mode))
+		errx(EXIT_FAILURE, "%s is not a directory", builddir);
+	if (chdir(builddir) == -1)
+		err(EXIT_FAILURE, "cannot change to %s", builddir);
+	if (stat(srcdir, &st) == -1)
+		err(EXIT_FAILURE, "cannot stat %s", srcdir);
+	if (!S_ISDIR(st.st_mode))
+		errx(EXIT_FAILURE, "%s is not a directory", srcdir);
 }
 
 /*
@@ -1299,8 +1254,7 @@ mkident(void)
 		return (0);
 	
 	if ((fp = fopen("ident", "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write ident: %s\n",
-		    strerror(errno));
+		warn("cannot write ident");
 		return (1);
 	}
 	if (vflag)
@@ -1330,17 +1284,17 @@ logconfig_start(void)
 	tmpdir = getenv("TMPDIR");
 	if (tmpdir == NULL)
 		tmpdir = "/tmp";
-	snprintf(line, sizeof(line), "%s/config.tmp.XXXXXX", tmpdir);
+	(void)snprintf(line, sizeof(line), "%s/config.tmp.XXXXXX", tmpdir);
 	if ((fd = mkstemp(line)) == -1 ||
 	    (cfg = fdopen(fd, "r+")) == NULL) {
 		if (fd != -1) {
-			unlink(line);
-			close(fd);
+			(void)unlink(line);
+			(void)close(fd);
 		}
 		cfg = NULL;
 		return;
 	}
-	unlink(line);
+	(void)unlink(line);
 
 	(void)fprintf(cfg, "#include <sys/cdefs.h>\n\n");
 	(void)fprintf(cfg, "#include \"opt_config.h\"\n");
@@ -1425,8 +1379,7 @@ logconfig_include(FILE *cf, const char *filename)
 	}
 	if (missingeol) {
 		(void)fprintf(cfg, "\\n\"\n");
-		(void)fprintf(stderr,
-		    "config: %s: newline missing at EOF\n",
+		warnx("%s: newline missing at EOF",
 		    filename != NULL ? filename : conffile);
 	}
 	if (filename)
@@ -1496,17 +1449,11 @@ is_elf(const char *file)
 	char hdr[4];
 
 	kernel = open(file, O_RDONLY);
-	if (kernel == -1) {
-		fprintf(stderr, "config: cannot open %s: %s\n", file,
-		    strerror(errno));
-		exit(2);
-	}
-	if (read(kernel, hdr, 4) == -1) {
-		fprintf(stderr, "config: cannot read from %s: %s\n", file,
-		    strerror(errno));
-		exit(2);
-	}
-	close(kernel);
+	if (kernel == -1)
+		err(EXIT_FAILURE, "cannot open %s", file);
+	if (read(kernel, hdr, 4) != 4)
+		err(EXIT_FAILURE, "Cannot read from %s", file);
+	(void)close(kernel);
 
 	return memcmp("\177ELF", hdr, 4) == 0 ? 1 : 0;
 }
@@ -1522,23 +1469,14 @@ extract_config(const char *kname, const char *cname, int cfd)
 
 	/* mmap(2) binary kernel */
 	kfd = open(conffile, O_RDONLY);
-	if (kfd == -1) {
-		fprintf(stderr, "config: cannot open %s: %s\n", kname,
-		    strerror(errno));
-		exit(2);
-	}
-	if ((fstat(kfd, &st) == -1)) {
-		fprintf(stderr, "config: cannot stat %s: %s\n", kname,
-		    strerror(errno));
-		exit(2);
-	}
-	ptr = (char *)mmap(0, st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
+	if (kfd == -1)
+		err(EXIT_FAILURE, "cannot open %s", kname);
+	if (fstat(kfd, &st) == -1)
+		err(EXIT_FAILURE, "cannot stat %s", kname);
+	ptr = mmap(0, st.st_size, PROT_READ, MAP_FILE | MAP_SHARED,
 	    kfd, 0);
-	if (ptr == MAP_FAILED) {
-		fprintf(stderr, "config: cannot mmap %s: %s\n", kname,
-		    strerror(errno));
-		exit(2);
-	}
+	if (ptr == MAP_FAILED)
+		err(EXIT_FAILURE, "cannot mmap %s", kname);
 
 	/* Scan mmap(2)'ed region, extracting kernel configuration */
 	for (i = 0; i < st.st_size; i++) {
@@ -1551,30 +1489,25 @@ extract_config(const char *kname, const char *cname, int cfd)
 			found = 1;
 
 			oldptr = (ptr += 5);
-			while (*ptr != '\n' && *ptr != '\0') ptr++;
-			if (ptr - oldptr > LINE_MAX) {
-				fprintf(stderr, "config: line too long\n");
-				exit(2);
-			}
+			while (*ptr != '\n' && *ptr != '\0')
+				ptr++;
+			if (ptr - oldptr > LINE_MAX)
+				errx(EXIT_FAILURE, "line too long");
 			i += ptr - oldptr + 5;
-			memcpy(line, oldptr, (ptr - oldptr));
+			(void)memcpy(line, oldptr, (size_t)(ptr - oldptr));
 			line[ptr - oldptr] = '\0';
 			j = strunvis(uline, line);
-			if (j == -1) {
-				fprintf(stderr, "config: unvis: invalid "
-				    "encoded sequence\n");
-				exit(2);
-			}
+			if (j == -1)
+				errx(EXIT_FAILURE, "unvis: invalid "
+				    "encoded sequence");
 			uline[j] = '\n';
-			if (write(cfd, uline, j + 1) == -1) {
-				fprintf(stderr, "config: cannot write to %s: "
-				    "%s\n", cname, strerror(errno));
-				exit(2);
-			}
-		} else ptr++;
+			if (write(cfd, uline, (size_t)j + 1) == -1)
+				err(EXIT_FAILURE, "cannot write to %s", cname);
+		} else
+			ptr++;
 	}
 
-	close(kfd);
+	(void)close(kfd);
 
 	return found;
 }
@@ -1780,6 +1713,7 @@ do_kill_orphans(struct devbase *d, struct attr *at, struct devbase *parent,
 }
 
 static int
+/*ARGSUSED*/
 kill_orphans_cb(const char *key, void *value, void *aux)
 {
 	do_kill_orphans((struct devbase *)value, NULL, NULL, DEVI_ACTIVE);
@@ -1787,7 +1721,7 @@ kill_orphans_cb(const char *key, void *value, void *aux)
 }
 
 static void
-kill_orphans()
+kill_orphans(void)
 {
 	ht_enumerate(devroottab, kill_orphans_cb, NULL);
 }

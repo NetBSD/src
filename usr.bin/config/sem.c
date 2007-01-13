@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.26 2007/01/08 16:08:08 cube Exp $	*/
+/*	$NetBSD: sem.c,v 1.27 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,7 +146,8 @@ setdefmaxusers(int min, int def, int max)
 {
 
 	if (min < 1 || min > def || def > max)
-		error("maxusers must have 1 <= min (%d) <= default (%d) <= max (%d)", min, def, max);
+		cfgerror("maxusers must have 1 <= min (%d) <= default (%d) "
+		    "<= max (%d)", min, def, max);
 	else {
 		minmaxusers = min;
 		defmaxusers = def;
@@ -159,18 +160,19 @@ setmaxusers(int n)
 {
 
 	if (maxusers == n) {
-		error("duplicate maxusers parameter");
+		cfgerror("duplicate maxusers parameter");
 		return;
 	}
 	if (vflag && maxusers != 0)
-		warn("maxusers already defined");
+		cfgwarn("warning: maxusers already defined");
 	maxusers = n;
 	if (n < minmaxusers) {
-		error("warning: minimum of %d maxusers assumed", minmaxusers);
+		cfgerror("warning: minimum of %d maxusers assumed",
+		    minmaxusers);
 		errors--;	/* take it away */
 		maxusers = minmaxusers;
 	} else if (n > maxmaxusers) {
-		error("warning: maxusers (%d) > %d", n, maxmaxusers);
+		cfgerror("warning: maxusers (%d) > %d", n, maxmaxusers);
 		errors--;
 	}
 }
@@ -212,8 +214,8 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
 	for (nv = deps; nv != NULL; nv = nv->nv_next) {
 		dep = nv->nv_ptr;
 		if (dep->a_iattr) {
-			error("`%s' dependency `%s' is an interface attribute",
-			    name, dep->a_name);
+			cfgerror("`%s' dependency `%s' is an interface "
+			    "attribute", name, dep->a_name);
 			return (1);
 		}
 	}
@@ -221,7 +223,7 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
 	a = ecalloc(1, sizeof *a);
 	if (ht_insert(attrtab, name, a)) {
 		free(a);
-		error("attribute `%s' already defined", name);
+		cfgerror("attribute `%s' already defined", name);
 		nvfreel(locs);
 		return (1);
 	}
@@ -244,7 +246,8 @@ defattr(const char *name, struct nvlist *locs, struct nvlist *deps,
 			if (!errored &&
 			    (!isalnum((unsigned char)*cp) ||
 			      (isalpha((unsigned char)*cp) && !islower((unsigned char)*cp)))) {
-				error("device class names must be lower-case alphanumeric characters");
+				cfgerror("device class names must be "
+				    "lower-case alphanumeric characters");
 				errored = 1;
 			}
 			*cp = toupper((unsigned char)*cp);
@@ -327,7 +330,7 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 	if (dev == &errdev)
 		goto bad;
 	if (dev->d_isdef) {
-		error("redefinition of `%s'", dev->d_name);
+		cfgerror("redefinition of `%s'", dev->d_name);
 		goto bad;
 	}
 
@@ -383,7 +386,8 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 			a->a_refs = addtoattr(a->a_refs, dev);
 		if (a->a_devclass != NULL) {
 			if (dev->d_classattr != NULL) {
-				error("device `%s' has multiple classes (`%s' and `%s')",
+				cfgerror("device `%s' has multiple classes "
+				    "(`%s' and `%s')",
 				    dev->d_name, dev->d_classattr->a_name,
 				    a->a_name);
 			}
@@ -403,10 +407,10 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 struct devbase *
 getdevbase(const char *name)
 {
-	u_char *p;
+	const u_char *p;
 	struct devbase *dev;
 
-	p = (u_char *)name;
+	p = (const u_char *)name;
 	if (!isalpha(*p))
 		goto badname;
 	while (*++p) {
@@ -415,7 +419,7 @@ getdevbase(const char *name)
 	}
 	if (isdigit(*--p)) {
  badname:
-		error("bad device base name `%s'", name);
+		cfgerror("bad device base name `%s'", name);
 		return (&errdev);
 	}
 	dev = ht_lookup(devbasetab, name);
@@ -456,15 +460,15 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 	if (deva == &errdeva)
 		goto bad;
 	if (!dev->d_isdef) {
-		error("attaching undefined device `%s'", dev->d_name);
+		cfgerror("attaching undefined device `%s'", dev->d_name);
 		goto bad;
 	}
 	if (deva->d_isdef) {
-		error("redefinition of `%s'", deva->d_name);
+		cfgerror("redefinition of `%s'", deva->d_name);
 		goto bad;
 	}
 	if (dev->d_ispseudo) {
-		error("pseudo-devices can't attach");
+		cfgerror("pseudo-devices can't attach");
 		goto bad;
 	}
 
@@ -476,7 +480,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 		if (a == &errattr)
 			continue;		/* already complained */
 		if (a->a_iattr || a->a_devclass != NULL)
-			error("`%s' is not a plain attribute", a->a_name);
+			cfgerror("`%s' is not a plain attribute", a->a_name);
 	}
 
 	/* Committed!  Set up fields. */
@@ -505,7 +509,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 		 */
 		for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
 			if (onlist(da->d_atlist, a))
-				error("attach at `%s' already done by `%s'",
+				cfgerror("attach at `%s' already done by `%s'",
 				     a ? a->a_name : "root", da->d_name);
 
 		if (a == NULL) {
@@ -513,7 +517,7 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 			continue;		/* at root; don't add */
 		}
 		if (!a->a_iattr)
-			error("%s cannot be at plain attribute `%s'",
+			cfgerror("%s cannot be at plain attribute `%s'",
 			    dev->d_name, a->a_name);
 		else
 			a->a_devs = addtoattr(a->a_devs, dev);
@@ -535,10 +539,10 @@ defdevattach(struct deva *deva, struct devbase *dev, struct nvlist *atlist,
 struct deva *
 getdevattach(const char *name)
 {
-	u_char *p;
+	const u_char *p;
 	struct deva *deva;
 
-	p = (u_char *)name;
+	p = (const u_char *)name;
 	if (!isalpha(*p))
 		goto badname;
 	while (*++p) {
@@ -547,7 +551,7 @@ getdevattach(const char *name)
 	}
 	if (isdigit(*--p)) {
  badname:
-		error("bad device attachment name `%s'", name);
+		cfgerror("bad device attachment name `%s'", name);
 		return (&errdeva);
 	}
 	deva = ht_lookup(devatab, name);
@@ -577,7 +581,7 @@ getattr(const char *name)
 	struct attr *a;
 
 	if ((a = ht_lookup(attrtab, name)) == NULL) {
-		error("undefined attribute `%s'", name);
+		cfgerror("undefined attribute `%s'", name);
 		a = &errattr;
 	}
 	return (a);
@@ -594,7 +598,7 @@ expandattr(struct attr *a, void (*callback)(struct attr *))
 	struct attr *dep;
 
 	if (a->a_expanding) {
-		error("circular dependency on attribute `%s'", a->a_name);
+		cfgerror("circular dependency on attribute `%s'", a->a_name);
 		return;
 	}
 
@@ -622,7 +626,7 @@ setmajor(struct devbase *d, int n)
 {
 
 	if (d != &errdev && d->d_major != NODEV)
-		error("device `%s' is already major %d",
+		cfgerror("device `%s' is already major %d",
 		    d->d_name, d->d_major);
 	else
 		d->d_major = n;
@@ -669,14 +673,14 @@ dev2major(struct devbase *dev)
 static const char *
 makedevstr(int maj, int min)
 {
-	const char *devname;
+	const char *devicename;
 	char buf[32];
 
-	devname = major2name(maj);
-	if (devname == NULL)
+	devicename = major2name(maj);
+	if (devicename == NULL)
 		(void)snprintf(buf, sizeof(buf), "<%d/%d>", maj, min);
 	else
-		(void)snprintf(buf, sizeof(buf), "%s%d%c", devname,
+		(void)snprintf(buf, sizeof(buf), "%s%d%c", devicename,
 		    min / maxpartitions, (min % maxpartitions) + 'a');
 
 	return (intern(buf));
@@ -747,12 +751,12 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	}
 	cp = nv->nv_str;
 	if (split(cp, l, buf, sizeof buf, &unit)) {
-		error("%s: invalid %s device name `%s'", name, what, cp);
+		cfgerror("%s: invalid %s device name `%s'", name, what, cp);
 		return (1);
 	}
 	dev = ht_lookup(devbasetab, intern(buf));
 	if (dev == NULL) {
-		error("%s: device `%s' does not exist", name, buf);
+		cfgerror("%s: device `%s' does not exist", name, buf);
 		return (1);
 	}
 
@@ -766,7 +770,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	} else {
 		maj = dev2major(dev);
 		if (maj == NODEV) {
-			error("%s: can't make %s device from `%s'",
+			cfgerror("%s: can't make %s device from `%s'",
 			    name, what, nv->nv_str);
 			return (1);
 		}
@@ -789,7 +793,7 @@ addconf(struct config *cf0)
 	name = cf0->cf_name;
 	cf = ecalloc(1, sizeof *cf);
 	if (ht_insert(cfhashtab, name, cf)) {
-		error("configuration `%s' already defined", name);
+		cfgerror("configuration `%s' already defined", name);
 		free(cf);
 		goto bad;
 	}
@@ -799,7 +803,7 @@ addconf(struct config *cf0)
 	 * Resolve the root device.
 	 */
 	if (cf->cf_root == NULL) {
-		error("%s: no root device specified", name);
+		cfgerror("%s: no root device specified", name);
 		goto bad;
 	}
 	if (cf->cf_root && cf->cf_root->nv_str != s_qmark) {
@@ -843,7 +847,7 @@ setconf(struct nvlist **npp, const char *what, struct nvlist *v)
 {
 
 	if (*npp != NULL) {
-		error("duplicate %s specification", what);
+		cfgerror("duplicate %s specification", what);
 		nvfreel(v);
 	} else
 		*npp = v;
@@ -855,7 +859,7 @@ delconf(const char *name)
 	struct config *cf;
 
 	if (ht_lookup(cfhashtab, name) == NULL) {
-		error("configuration `%s' undefined", name);
+		cfgerror("configuration `%s' undefined", name);
 		return;
 	}
 	(void)ht_remove(cfhashtab, name);
@@ -874,12 +878,12 @@ setfstype(const char **fstp, const char *v)
 {
 
 	if (*fstp != NULL) {
-		error("multiple fstype specifications");
+		cfgerror("multiple fstype specifications");
 		return;
 	}
 
 	if (v != s_qmark && OPT_FSOPT(v)) {
-		error("\"%s\" is not a configured file system", v);
+		cfgerror("\"%s\" is not a configured file system", v);
 		return;
 	}
 
@@ -951,14 +955,14 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 				break;
 			}
 		if (!hit) {
-			error("`%s' cannot attach to the root", ib->d_name);
+			cfgerror("`%s' cannot attach to the root", ib->d_name);
 			i->i_active = DEVI_BROKEN;
 			goto bad;
 		}
 		attr = &errattr;	/* a convenient "empty" attr */
 	} else {
 		if (split(at, strlen(at), atbuf, sizeof atbuf, &atunit)) {
-			error("invalid attachment name `%s'", at);
+			cfgerror("invalid attachment name `%s'", at);
 			/* (void)getdevi(name); -- ??? */
 			goto bad;
 		}
@@ -1006,7 +1010,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 		 * nonesuch is not even a device).
 		 */
 		if (ab == NULL) {
-			error("%s at %s: `%s' unknown",
+			cfgerror("%s at %s: `%s' unknown",
 			    name, at, atbuf);
 			i->i_active = DEVI_BROKEN;
 			goto bad;
@@ -1021,7 +1025,7 @@ adddev(const char *name, const char *at, struct nvlist *loclist, int flags)
 			if (onlist(attr->a_devs, ib))
 				goto findattachment;
 		}
-		error("`%s' cannot attach to `%s'", ib->d_name, atbuf);
+		cfgerror("`%s' cannot attach to `%s'", ib->d_name, atbuf);
 		i->i_active = DEVI_BROKEN;
 		goto bad;
 
@@ -1070,20 +1074,20 @@ deldevi(const char *name, const char *at)
 	char base[NAMESIZE];
 
 	if (split(name, strlen(name), base, sizeof base, &unit)) {
-		error("invalid device name `%s'", name);
+		cfgerror("invalid device name `%s'", name);
 		return;
 	}
 	d = ht_lookup(devbasetab, intern(base));
 	if (d == NULL) {
-		error("%s: unknown device `%s'", name, base);
+		cfgerror("%s: unknown device `%s'", name, base);
 		return;
 	}
 	if (d->d_ispseudo) {
-		error("%s: %s is a pseudo-device", name, base);
+		cfgerror("%s: %s is a pseudo-device", name, base);
 		return;
 	}
 	if ((firsti = ht_lookup(devitab, name)) == NULL) {
-		error("`%s' not defined", name);
+		cfgerror("`%s' not defined", name);
 		return;
 	}
 	if (at == NULL && firsti->i_at == NULL) {
@@ -1096,7 +1100,7 @@ deldevi(const char *name, const char *at)
 				remove_devi(i);
 				return;
 			}
-	error("`%s' at `%s' not found", name, at ? at : "root");
+	cfgerror("`%s' at `%s' not found", name, at ? at : "root");
 }
 
 static void
@@ -1272,7 +1276,7 @@ deldeva(const char *at)
 			char base[NAMESIZE];
 
 			if (split(at, l+1, base, sizeof base, &unit)) {
-				error("invalid attachment name `%s'", at);
+				cfgerror("invalid attachment name `%s'", at);
 				return;
 			}
 			cp = intern(base);
@@ -1284,12 +1288,12 @@ deldeva(const char *at)
 		ad = ht_lookup(devbasetab, cp);
 		a = ht_lookup(attrtab, cp);
 		if (a == NULL) {
-			error("unknown attachment attribute or device `%s'",
+			cfgerror("unknown attachment attribute or device `%s'",
 			    cp);
 			return;
 		}
 		if (!a->a_iattr) {
-			error("plain attribute `%s' cannot have children",
+			cfgerror("plain attribute `%s' cannot have children",
 			    a->a_name);
 			return;
 		}
@@ -1355,7 +1359,7 @@ deldev(const char *name)
 		/* `no mydev0' or `no mydev*' */
 		firsti = ht_lookup(devitab, name);
 		if (firsti == NULL) {
-			error("unknown instance %s", name);
+			cfgerror("unknown instance %s", name);
 			return;
 		}
 		for (i = firsti; i != NULL; i = i->i_alias)
@@ -1364,11 +1368,11 @@ deldev(const char *name)
 		struct devbase *d = ht_lookup(devbasetab, name);
 
 		if (d == NULL) {
-			error("unknown device %s", name);
+			cfgerror("unknown device %s", name);
 			return;
 		}
 		if (d->d_ispseudo) {
-			error("%s is a pseudo-device; "
+			cfgerror("%s is a pseudo-device; "
 			    "use \"no pseudo-device %s\" instead", name,
 			    name);
 			return;
@@ -1393,15 +1397,15 @@ addpseudo(const char *name, int number)
 
 	d = ht_lookup(devbasetab, name);
 	if (d == NULL) {
-		error("undefined pseudo-device %s", name);
+		cfgerror("undefined pseudo-device %s", name);
 		return;
 	}
 	if (!d->d_ispseudo) {
-		error("%s is a real device, not a pseudo-device", name);
+		cfgerror("%s is a real device, not a pseudo-device", name);
 		return;
 	}
 	if (ht_lookup(devitab, name) != NULL) {
-		error("`%s' already defined", name);
+		cfgerror("`%s' already defined", name);
 		return;
 	}
 	i = newdevi(name, number - 1, d);	/* foo 16 => "foo0..foo15" */
@@ -1421,15 +1425,15 @@ delpseudo(const char *name)
 
 	d = ht_lookup(devbasetab, name);
 	if (d == NULL) {
-		error("undefined pseudo-device %s", name);
+		cfgerror("undefined pseudo-device %s", name);
 		return;
 	}
 	if (!d->d_ispseudo) {
-		error("%s is a real device, not a pseudo-device", name);
+		cfgerror("%s is a real device, not a pseudo-device", name);
 		return;
 	}
 	if ((i = ht_lookup(devitab, name)) == NULL) {
-		error("`%s' not defined", name);
+		cfgerror("`%s' not defined", name);
 		return;
 	}
 	d->d_umax = 0;		/* clear neads-count entries */
@@ -1447,18 +1451,18 @@ adddevm(const char *name, int cmajor, int bmajor, struct nvlist *options)
 	struct devm *dm;
 
 	if (cmajor < -1 || cmajor >= 4096) {
-		error("character major %d is invalid", cmajor);
+		cfgerror("character major %d is invalid", cmajor);
 		nvfreel(options);
 		return;
 	}
 
 	if (bmajor < -1 || bmajor >= 4096) {
-		error("block major %d is invalid", bmajor);
+		cfgerror("block major %d is invalid", bmajor);
 		nvfreel(options);
 		return;
 	}
 	if (cmajor == -1 && bmajor == -1) {
-		error("both character/block majors are not specified");
+		cfgerror("both character/block majors are not specified");
 		nvfreel(options);
 		return;
 	}
@@ -1492,14 +1496,14 @@ fixdevis(void)
 			 * i_at or i_pspec are NULL.
 			 */
 			++error;
-			xerror(i->i_srcfile, i->i_lineno,
+			cfgxerror(i->i_srcfile, i->i_lineno,
 			    "`%s at %s' is orphaned (%s `%s' found)", 
 			    i->i_name, i->i_at, i->i_pspec->p_atunit == WILD ?
 			    "nothing matching" : "no", i->i_at);
 		} else if (vflag && i->i_active == DEVI_IGNORED)
-			xwarn(i->i_srcfile, i->i_lineno, "ignoring explicitely"
-			    " orphaned instance `%s at %s'", i->i_name,
-			    i->i_at);
+			cfgxwarn(i->i_srcfile, i->i_lineno, "ignoring "
+			    "explicitly orphaned instance `%s at %s'",
+			    i->i_name, i->i_at);
 
 	if (error)
 		return error;
@@ -1550,16 +1554,16 @@ getdevi(const char *name)
 	char base[NAMESIZE];
 
 	if (split(name, strlen(name), base, sizeof base, &unit)) {
-		error("invalid device name `%s'", name);
+		cfgerror("invalid device name `%s'", name);
 		return (NULL);
 	}
 	d = ht_lookup(devbasetab, intern(base));
 	if (d == NULL) {
-		error("%s: unknown device `%s'", name, base);
+		cfgerror("%s: unknown device `%s'", name, base);
 		return (NULL);
 	}
 	if (d->d_ispseudo) {
-		error("%s: %s is a pseudo-device", name, base);
+		cfgerror("%s: %s is a pseudo-device", name, base);
 		return (NULL);
 	}
 	firsti = ht_lookup(devitab, name);
@@ -1582,12 +1586,12 @@ getdevi(const char *name)
 static const char *
 concat(const char *name, int c)
 {
-	int len;
+	size_t len;
 	char buf[NAMESIZE];
 
 	len = strlen(name);
 	if (len + 2 > sizeof(buf)) {
-		error("device name `%s%c' too long", name, c);
+		cfgerror("device name `%s%c' too long", name, c);
 		len = sizeof(buf) - 2;
 	}
 	memmove(buf, name, len);
@@ -1619,7 +1623,8 @@ static int
 split(const char *name, size_t nlen, char *base, size_t bsize, int *aunit)
 {
 	const char *cp;
-	int c, l;
+	int c;
+	size_t l;
 
 	l = nlen;
 	if (l < 2 || l >= bsize || isdigit((unsigned char)*name))
@@ -1647,7 +1652,7 @@ void
 selectattr(struct attr *a)
 {
 
-	(void)ht_insert(selecttab, a->a_name, (char *)a->a_name);
+	(void)ht_insert(selecttab, a->a_name, __UNCONST(a->a_name));
 }
 
 /*
@@ -1660,13 +1665,13 @@ selectbase(struct devbase *d, struct deva *da)
 	struct attr *a;
 	struct nvlist *nv;
 
-	(void)ht_insert(selecttab, d->d_name, (char *)d->d_name);
+	(void)ht_insert(selecttab, d->d_name, __UNCONST(d->d_name));
 	for (nv = d->d_attrs; nv != NULL; nv = nv->nv_next) {
 		a = nv->nv_ptr;
 		expandattr(a, selectattr);
 	}
 	if (da != NULL) {
-		(void)ht_insert(selecttab, da->d_name, (char *)da->d_name);
+		(void)ht_insert(selecttab, da->d_name, __UNCONST(da->d_name));
 		for (nv = da->d_attrs; nv != NULL; nv = nv->nv_next) {
 			a = nv->nv_ptr;
 			expandattr(a, selectattr);
@@ -1689,7 +1694,7 @@ onlist(struct nvlist *nv, void *ptr)
 static char *
 extend(char *p, const char *name)
 {
-	int l;
+	size_t l;
 
 	l = strlen(name);
 	memmove(p, name, l);
@@ -1763,16 +1768,16 @@ fixloc(const char *name, struct attr *attr, struct nvlist *got)
 	}
 	if (nextra) {
 		ep[-2] = 0;	/* kill ", " */
-		error("%s: extraneous locator%s: %s",
+		cfgerror("%s: extraneous locator%s: %s",
 		    name, nextra > 1 ? "s" : "", extra);
 	}
 	if (nmissing) {
 		mp[-2] = 0;
-		error("%s: must specify %s", name, missing);
+		cfgerror("%s: must specify %s", name, missing);
 	}
 	if (nnodefault) {
 		ndp[-2] = 0;
-		error("%s: cannot wildcard %s", name, nodefault);
+		cfgerror("%s: cannot wildcard %s", name, nodefault);
 	}
 	if (nmissing || nnodefault) {
 		free(lp);
@@ -1785,10 +1790,10 @@ void
 setversion(int newver)
 {
 	if (newver > CONFIG_VERSION)
-		error("your sources require a newer version of config(1) "
+		cfgerror("your sources require a newer version of config(1) "
 		    "-- please rebuild it.");
 	else if (newver < CONFIG_MINVERSION)
-		error("your sources are out of date -- please update.");
+		cfgerror("your sources are out of date -- please update.");
 	else
 		version = newver;
 }

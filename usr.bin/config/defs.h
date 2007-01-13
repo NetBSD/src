@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.19 2007/01/12 21:49:51 cube Exp $	*/
+/*	$NetBSD: defs.h,v 1.20 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -440,7 +440,7 @@ SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
 SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 
 struct	devi **packed;		/* arrayified table for packed devi's */
-int	npacked;		/* size of packed table, <= ndevi */
+size_t	npacked;		/* size of packed table, <= ndevi */
 
 struct {			/* loc[] table for config */
 	const char **vec;
@@ -538,20 +538,16 @@ void	initsem(void);
 int	onlist(struct nvlist *, void *);
 
 /* util.c */
-void	*ecalloc(size_t, size_t);
-void	*emalloc(size_t);
-void	*erealloc(void *, size_t);
-char	*estrdup(const char *);
 void	prefix_push(const char *);
 void	prefix_pop(void);
 char	*sourcepath(const char *);
-void	warn(const char *, ...)				/* immediate warns */
+void	cfgwarn(const char *, ...)			/* immediate warns */
      __attribute__((__format__(__printf__, 1, 2)));	
-void	xwarn(const char *, int, const char *, ...)	/* delayed warns */
+void	cfgxwarn(const char *, int, const char *, ...)	/* delayed warns */
      __attribute__((__format__(__printf__, 3, 4)));
-void	error(const char *, ...)			/* immediate errs */
+void	cfgerror(const char *, ...)			/* immediate errs */
      __attribute__((__format__(__printf__, 1, 2)));
-void	xerror(const char *, int, const char *, ...)	/* delayed errs */
+void	cfgxerror(const char *, int, const char *, ...)	/* delayed errs */
      __attribute__((__format__(__printf__, 3, 4)));
 __dead void panic(const char *, ...)
      __attribute__((__format__(__printf__, 1, 2)));

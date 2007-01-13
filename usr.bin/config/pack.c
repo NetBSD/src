@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.4 2006/08/26 18:17:13 christos Exp $	*/
+/*	$NetBSD: pack.c,v 1.5 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -124,7 +124,7 @@ pack(void)
 	}
 
 	/* Allocate and pack loc[]. */
-	locators.vec = ecalloc(locspace, sizeof(*locators.vec));
+	locators.vec = ecalloc((size_t)locspace, sizeof(*locators.vec));
 	locators.used = 0;
 	packlocs();
 }
@@ -172,7 +172,7 @@ packdevi(void)
 		}
 	}
 
-	packed = ecalloc(ndevi + 1, sizeof *packed);
+	packed = ecalloc((size_t)ndevi + 1, sizeof *packed);
 	n = 0;
 	TAILQ_FOREACH(d, &allbases, d_next) {
 		/*
@@ -320,13 +320,13 @@ addlocs(const char **locs, int len)
 static int
 loclencmp(const void *a, const void *b)
 {
-	struct pspec *p1, *p2;
+	const struct pspec *p1, *p2;
 	int l1, l2;
 
-	p1 = (*(struct devi **)a)->i_pspec;
+	p1 = (*(const struct devi **)a)->i_pspec;
 	l1 = p1 != NULL ? p1->p_iattr->a_loclen : 0;
 
-	p2 = (*(struct devi **)b)->i_pspec;
+	p2 = (*(const struct devi **)b)->i_pspec;
 	l2 = p2 != NULL ? p2->p_iattr->a_loclen : 0;
 
 	return (l2 - l1);

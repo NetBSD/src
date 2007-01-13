@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.2 2006/10/04 20:34:48 dsl Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.3 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "defs.h"
 #include "sem.h"
 
@@ -94,8 +95,7 @@ mkoneswap(struct config *cf)
 	(void)snprintf(fname, sizeof(fname), "swap%s.c", cf->cf_name);
 	(void)snprintf(tname, sizeof(tname), "swap%s.c.tmp", cf->cf_name);
 	if ((fp = fopen(tname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    fname, strerror(errno));
+		warn("cannot open %s", fname);
 		return (1);
 	}
 	fputs("#include <sys/param.h>\n"
@@ -148,17 +148,17 @@ mkoneswap(struct config *cf)
 		goto wrerror;
 	}
 	if (moveifchanged(tname, fname) != 0) {
-		(void)fprintf(stderr, "config: error renaming %s: %s\n",
-		    fname, strerror(errno));
+		warn("error renaming %s", fname);
 		return (1);
 	}
 	return (0);
 
  wrerror:
-	(void)fprintf(stderr, "config: error writing %s: %s\n",
-	    fname, strerror(errno));
+	warn("error writing %s", fname);
 	if (fp != NULL)
 		(void)fclose(fp);
-	/* (void)unlink(fname); */
+#if 0
+	(void)unlink(fname);
+#endif
 	return (1);
 }

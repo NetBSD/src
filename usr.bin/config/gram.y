@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.12 2007/01/12 21:49:51 cube Exp $	*/
+/*	$NetBSD: gram.y,v 1.13 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
 #define	FORMAT(n) (((n).fmt == 8 && (n).val != 0) ? "0%llo" : \
     ((n).fmt == 16) ? "0x%llx" : "%lld")
 
-#define	stop(s)	error(s), exit(1)
+#define	stop(s)	cfgerror(s), exit(1)
 
 static	struct	config conf;	/* at most one active at a time */
 
@@ -596,7 +596,7 @@ void
 yyerror(const char *s)
 {
 
-	error("%s", s);
+	cfgerror("%s", s);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.5 2006/10/04 20:34:48 dsl Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.6 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "defs.h"
 #include "sem.h"
 
@@ -98,14 +99,12 @@ mkmakefile(void)
 		ifp = fopen(ifname, "r");
 	}
 	if (ifp == NULL) {
-		(void)fprintf(stderr, "config: cannot read %s: %s\n",
-		    ifname, strerror(errno));
+		warn("cannot read %s", ifname);
 		goto bad2;
 	}
 
 	if ((ofp = fopen("Makefile.tmp", "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write Makefile: %s\n",
-		    strerror(errno));
+		warn("cannot write Makefile");
 		goto bad1;
 	}
 
@@ -133,7 +132,7 @@ mkmakefile(void)
 		else if (strcmp(line, "%MAKEOPTIONSAPPEND\n") == 0)
 			fn = emitappmkoptions;
 		else {
-			xerror(ifname, lineno,
+			cfgxerror(ifname, lineno,
 			    "unknown %% construct ignored: %s", line);
 			continue;
 		}
@@ -145,9 +144,7 @@ mkmakefile(void)
 		goto wrerror;
 
 	if (ferror(ifp)) {
-		(void)fprintf(stderr,
-		    "config: error reading %s (at line %d): %s\n",
-		    ifname, lineno, strerror(errno));
+		warn("error reading %s (at line %d)", ifname, lineno);
 		goto bad;
 	}
 
@@ -158,17 +155,14 @@ mkmakefile(void)
 	(void)fclose(ifp);
 
 	if (moveifchanged("Makefile.tmp", "Makefile") != 0) {
-		(void)fprintf(stderr,
-		    "config: error renaming Makefile: %s\n",
-		    strerror(errno));
+		warn("error renaming Makefile");
 		goto bad2;
 	}
 	free(ifname);
 	return (0);
 
  wrerror:
-	(void)fprintf(stderr, "config: error writing Makefile: %s\n",
-	    strerror(errno));
+	warn("error writing Makefile");
  bad:
 	if (ofp != NULL)
 		(void)fclose(ofp);
@@ -198,7 +192,7 @@ srcpath(struct files *fi)
 	if (have_source || (fi->fi_flags & FI_ALWAYSSRC) != 0)
 		return (fi->fi_path);
 	if (objpath == NULL) {
-		error("obj-directory not set");
+		cfgerror("obj-directory not set");
 		return (NULL);
 	}
 	(void)snprintf(buf, sizeof buf, "%s/%s.o", objpath, fi->fi_base);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.3 2006/10/04 20:34:48 dsl Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.4 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <err.h>
 
 #include "defs.h"
 
@@ -57,8 +58,7 @@ mkdevsw(void)
 	FILE *fp;
 
 	if ((fp = fopen("devsw.c.tmp", "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write devsw.c: %s\n",
-			      strerror(errno));
+		warn("cannot create devsw.c");
 		return (1);
 	}
 
@@ -69,8 +69,7 @@ mkdevsw(void)
 
 	fflush(fp);
 	if (ferror(fp)) {
-		(void)fprintf(stderr, "config: error writing devsw.c: %s\n",
-			      strerror(errno));
+		warn("error writing devsw.c");
 		fclose(fp);
 		return 1;
 	}
@@ -78,8 +77,7 @@ mkdevsw(void)
 	(void)fclose(fp);
 
 	if (moveifchanged("devsw.c.tmp", "devsw.c") != 0) {
-		(void)fprintf(stderr, "config: error renaming devsw.c: %s\n",
-			      strerror(errno));
+		warn("error renaming devsw.c");
 		return (1);
 	}
 
