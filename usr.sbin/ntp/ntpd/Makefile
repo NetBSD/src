@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2007/01/06 19:45:29 kardel Exp $
+#	$NetBSD: Makefile,v 1.17 2007/01/13 19:27:50 kardel Exp $
 
 PROG=	ntpd
 MAN=	ntpd.8
@@ -20,9 +20,11 @@ SRCS=	cmd_args.c ntp_config.c ntp_control.c ntp_crypto.c ntp_filegen.c \
 	refclock_ripencc.c refclock_shm.c refclock_tpro.c \
 	refclock_trak.c refclock_true.c refclock_tt560.c \
 	refclock_ulink.c refclock_wwv.c refclock_wwvb.c \
-	refclock_zyfer.c
+	refclock_zyfer.c emalloc.c
 
 .include <bsd.own.mk>
+
+.PATH:	${NETBSDSRCDIR}/dist/ntp/libntp
 
 LIBPARSE!=	cd ${.CURDIR}/../libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -lisc
