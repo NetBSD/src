@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.173 2007/01/08 04:14:54 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.174 2007/01/13 23:13:46 joerg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.173 2007/01/08 04:14:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.174 2007/01/13 23:13:46 joerg Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -287,10 +287,9 @@ ip_output(struct mbuf *m0, ...)
 	/*
 	 * Route packet.
 	 */
-	if (ro == NULL) {
+	bzero(&iproute, sizeof(iproute));
+	if (ro == NULL)
 		ro = &iproute;
-		bzero((caddr_t)ro, sizeof (*ro));
-	}
 	dst = satosin(&ro->ro_dst);
 	/*
 	 * If there is a cached route,
@@ -965,8 +964,7 @@ spd_done:
 	if (error == 0)
 		ipstat.ips_fragmented++;
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0)
-		rtcache_free(ro);
+	rtcache_free(&iproute);
 
 #ifdef IPSEC
 	if (sp != NULL) {
