@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.5 2006/12/26 00:07:18 alc Exp $	*/
+/*	$NetBSD: files.c,v 1.6 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,11 +97,12 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule)
 	needc = flags & FI_NEEDSCOUNT;
 	needf = flags & FI_NEEDSFLAG;
 	if (needc && needf) {
-		error("cannot mix needs-count and needs-flag");
+		cfgerror("cannot mix needs-count and needs-flag");
 		goto bad;
 	}
 	if (optx == NULL && (needc || needf)) {
-		error("nothing to %s for %s", needc ? "count" : "flag", path);
+		cfgerror("nothing to %s for %s", needc ? "count" : "flag",
+		    path);
 		goto bad;
 	}
 
@@ -114,7 +115,7 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule)
 	dotp = strrchr(tail, '.');
 	if (dotp == NULL || dotp[1] == 0 ||
 	    (baselen = dotp - tail) >= sizeof(base)) {
-		error("invalid pathname `%s'", path);
+		cfgerror("invalid pathname `%s'", path);
 		goto bad;
 	}
 
@@ -141,8 +142,8 @@ addfile(const char *path, struct nvlist *optx, int flags, const char *rule)
 			fi->fi_mkrule = rule;
 			return;
 		}
-		error("duplicate file %s", path);
-		xerror(fi->fi_srcfile, fi->fi_srcline,
+		cfgerror("duplicate file %s", path);
+		cfgxerror(fi->fi_srcfile, fi->fi_srcline,
 		    "here is the original definition");
 		goto bad;
 	}
@@ -179,8 +180,8 @@ addobject(const char *path, struct nvlist *optx, int flags)
 		free(oi);
 		if ((oi = ht_lookup(pathtab, path)) == NULL)
 			panic("addfile: ht_lookup(%s)", path);
-		error("duplicate file %s", path);
-		xerror(oi->oi_srcfile, oi->oi_srcline,
+		cfgerror("duplicate file %s", path);
+		cfgxerror(oi->oi_srcfile, oi->oi_srcline,
 		    "here is the original definition");
 	} 
 	oi->oi_srcfile = yyfile;
@@ -226,7 +227,7 @@ checkaux(const char *name, void *context)
 	struct files *fi = context;
 
 	if (ht_lookup(devbasetab, name) == NULL) {
-		xerror(fi->fi_srcfile, fi->fi_srcline,
+		cfgxerror(fi->fi_srcfile, fi->fi_srcline,
 		    "`%s' is not a countable device",
 		    name);
 		/* keep fixfiles() from complaining again */
@@ -287,10 +288,10 @@ fixfiles(void)
 				ofi->fi_flags &= ~FI_SEL;
 				ofi->fi_flags |= FI_HIDDEN;
 			} else {
-				xerror(fi->fi_srcfile, fi->fi_srcline,
+				cfgxerror(fi->fi_srcfile, fi->fi_srcline,
 				    "object file collision on %s.o, from %s",
 				    fi->fi_base, fi->fi_path);
-				xerror(ofi->fi_srcfile, ofi->fi_srcline,
+				cfgxerror(ofi->fi_srcfile, ofi->fi_srcline,
 				    "here is the previous file: %s",
 				    ofi->fi_path);
 				err = 1;
@@ -352,18 +353,18 @@ fixdevsw(void)
 		if (res != NULL) {
 			if (res->dm_cmajor != dm->dm_cmajor ||
 			    res->dm_bmajor != dm->dm_bmajor) {
-				xerror(res->dm_srcfile, res->dm_srcline,
+				cfgxerror(res->dm_srcfile, res->dm_srcline,
 				       "device-major '%s' is inconsistent: "
 				       "block %d, char %d", res->dm_name,
 				       res->dm_bmajor, res->dm_cmajor);
-				xerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major '%s' is inconsistent: "
 				       "block %d, char %d", dm->dm_name,
 				       dm->dm_bmajor, dm->dm_cmajor);
 				error = 1;
 				goto out;
 			} else {
-				xerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major '%s' is duplicated: "
 				       "block %d, char %d",
 				       dm->dm_name, dm->dm_bmajor,
@@ -383,7 +384,7 @@ fixdevsw(void)
 
 		if (dm->dm_cmajor != -1) {
 			if (ht_lookup(cdevmtab, intern(dm->dm_name)) != NULL) {
-				xerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of character device '%s' "
 				       "is already defined", dm->dm_name);
 				error = 1;
@@ -391,7 +392,7 @@ fixdevsw(void)
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_cmajor);
 			if (ht_lookup(cdevmtab, intern(mstr)) != NULL) {
-				xerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of character major '%d' "
 				       "is already defined", dm->dm_cmajor);
 				error = 1;
@@ -405,7 +406,7 @@ fixdevsw(void)
 		}
 		if (dm->dm_bmajor != -1) {
 			if (ht_lookup(bdevmtab, intern(dm->dm_name)) != NULL) {
-				xerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of block device '%s' "
 				       "is already defined", dm->dm_name);
 				error = 1;
@@ -413,7 +414,7 @@ fixdevsw(void)
 			}
 			(void)snprintf(mstr, sizeof(mstr), "%d", dm->dm_bmajor);
 			if (ht_lookup(bdevmtab, intern(mstr)) != NULL) {
-				xerror(dm->dm_srcfile, dm->dm_srcline,
+				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
 				       "device-major of block major '%d' "
 				       "is already defined", dm->dm_bmajor);
 				error = 1;
@@ -480,6 +481,7 @@ fixfsel(const char *name, void *context)
  * As for fixfsel above, but we do not need the flat list.
  */
 static int
+/*ARGSUSED*/
 fixsel(const char *name, void *context)
 {
 
