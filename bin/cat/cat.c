@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.45 2006/10/08 21:52:56 elad Exp $	*/
+/* $NetBSD: cat.c,v 1.46 2007/01/13 11:51:59 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.45 2006/10/08 21:52:56 elad Exp $");
+__RCSID("$NetBSD: cat.c,v 1.46 2007/01/13 11:51:59 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ main(int argc, char *argv[])
 		case '?':
 			(void)fprintf(stderr,
 			    "usage: cat [-beflnstuv] [-] [file ...]\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 			/* NOTREACHED */
 		}
 	argv += optind;
@@ -132,9 +132,8 @@ main(int argc, char *argv[])
 	else
 		raw_args(argv);
 	if (fclose(stdout))
-		err(1, "stdout");
-	exit(rval);
-	/* NOTREACHED */
+		err(EXIT_FAILURE, "stdout");
+	return (rval);
 }
 
 void
@@ -151,7 +150,7 @@ cook_args(char **argv)
 			else if ((fp = fopen(*argv,
 			    fflag ? "rf" : "r")) == NULL) {
 				warn("%s", *argv);
-				rval = 1;
+				rval = EXIT_FAILURE;
 				++argv;
 				continue;
 			}
@@ -232,11 +231,11 @@ cook_buf(FILE *fp)
 	}
 	if (ferror(fp)) {
 		warn("%s", filename);
-		rval = 1;
+		rval = EXIT_FAILURE;
 		clearerr(fp);
 	}
 	if (ferror(stdout))
-		err(1, "stdout");
+		err(EXIT_FAILURE, "stdout");
 }
 
 void
@@ -270,7 +269,7 @@ raw_args(char **argv)
 skip:
 				warn("%s", *argv);
 skipnomsg:
-				rval = 1;
+				rval = EXIT_FAILURE;
 				++argv;
 				continue;
 			}
@@ -289,28 +288,29 @@ raw_cat(int rfd)
 	static char fb_buf[BUFSIZ];
 	static size_t bsize;
 
-	struct stat sbuf;
 	ssize_t nr, nw, off;
 	int wfd;
 
 	wfd = fileno(stdout);
 	if (buf == NULL) {
-		if (fstat(wfd, &sbuf) == 0) {
-			bsize = sbuf.st_blksize > BUFSIZ ?
-			    sbuf.st_blksize : BUFSIZ;
+		struct stat sbuf;
+
+		if (fstat(wfd, &sbuf) == 0 &&
+		    sbuf.st_blksize > sizeof(fb_buf)) {
+			bsize = sbuf.st_blksize;
 			buf = malloc(bsize);
 		}
 		if (buf == NULL) {
+			bsize = sizeof(fb_buf);
 			buf = fb_buf;
-			bsize = BUFSIZ;
 		}
 	}
 	while ((nr = read(rfd, buf, bsize)) > 0)
 		for (off = 0; nr; nr -= nw, off += nw)
 			if ((nw = write(wfd, buf + off, (size_t)nr)) < 0)
-				err(1, "stdout");
+				err(EXIT_FAILURE, "stdout");
 	if (nr < 0) {
 		warn("%s", filename);
-		rval = 1;
+		rval = EXIT_FAILURE;
 	}
 }
