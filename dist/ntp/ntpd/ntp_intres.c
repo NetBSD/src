@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_intres.c,v 1.7 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: ntp_intres.c,v 1.8 2007/01/13 11:41:05 kardel Exp $	*/
 
 /*
  * ripped off from ../ntpres/ntpres.c by Greg Troxel 4/2/92
@@ -1065,7 +1065,7 @@ readconf(
 		}
 
 		if ((intval[TOK_FLAGS] & ~(FLAG_AUTHENABLE | FLAG_PREFER |
-		    FLAG_NOSELECT | FLAG_BURST | FLAG_IBURST | FLAG_SKEY))
+		    FLAG_NOSELECT | FLAG_BURST | FLAG_IBURST | FLAG_SKEY | FLAG_DYNAMIC))
 		    != 0) {
 			msyslog(LOG_ERR, "invalid flags (%ld) in file %s",
 				intval[TOK_FLAGS], name);
@@ -1085,6 +1085,8 @@ readconf(
 		    flags |= CONF_FLAG_IBURST;
 		if (intval[TOK_FLAGS] & FLAG_SKEY)
 		    flags |= CONF_FLAG_SKEY;
+		if (intval[TOK_FLAGS] & FLAG_DYNAMIC)
+		    flags |= CONF_FLAG_DYNAMIC;
 
 		/*
 		 * This is as good as we can check it.  Add it in.
