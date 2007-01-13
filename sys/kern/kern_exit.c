@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.8 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.9 2007/01/13 17:54:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.8 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.9 2007/01/13 17:54:48 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -1021,7 +1021,7 @@ proc_free(struct proc *p, struct rusage **ru)
 	/*
 	 * Free the last LWP's resources.
 	 */
-	lwp_free(LIST_FIRST(&p->p_lwps), 0, 1);
+	lwp_free(l, 0, 1);
 
 	/*
 	 * Collect child u-areas.
