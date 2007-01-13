@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.779 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.780 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -25,3 +25,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		contributed by Mihai Chelaru. [xtraeme 20070106]
 	kernel: global 'securelevel' variable removed; it is now internal to
 		the secmodel. [elad 20070110]
+	GCC: Updated to version 4.1.2-20070110.  [mrg 20070111]
