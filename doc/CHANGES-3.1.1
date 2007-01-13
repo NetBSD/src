@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.22 2007/01/12 22:57:10 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.23 2007/01/13 20:59:19 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -158,11 +158,13 @@ xfree/xc/programs/Xserver/render/render.c	1.3
 	[tron, ticket #1631]
 
 usr.sbin/etcupdate/etcupdate			1.29 - 1.30
+usr.sbin/etcupdate/etcupdate.8			1.12
 
 	Use "stty size" to acquire screen width reliably.
 	The fields of the first line of "stty -a" is not fixed.
 	Fix PR bin/32343.
 	Clean ${SRCDIR}/etc when done. Patch provided by rudolf.
 	http://mail-index.netbsd.org/tech-toolchain/2007/01/11/0001.html
+	Xref postinstall(8)
 	[martti, ticket #1630]
 
