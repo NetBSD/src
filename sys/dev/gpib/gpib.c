@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.8 2006/03/29 06:33:50 thorpej Exp $	*/
+/*	$NetBSD: gpib.c,v 1.9 2007/01/13 18:46:37 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.8 2006/03/29 06:33:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.9 2007/01/13 18:46:37 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ dev_type_poll(gpibpoll);
 
 const struct cdevsw gpib_cdevsw = {
 	gpibopen, gpibclose, gpibread, gpibwrite, gpibioctl,
-	nostop, notty, gpibpoll, nommap, nokqfilter,
+	nostop, notty, gpibpoll, nommap, nokqfilter, D_OTHER
 };
 
 extern struct cfdriver gpib_cd;
@@ -175,7 +175,7 @@ gpibsubmatch1(parent, cf, ldesc, aux)
 }
 
 int
-gpibsubmatch2(parent, cf, aux)
+gpibsubmatch2(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	const int *ldesc;
@@ -525,10 +525,10 @@ recverror:
  */
 
 int
-gpibopen(dev, flags, mode, p)
+gpibopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct gpib_softc *sc;
 
@@ -546,10 +546,10 @@ gpibopen(dev, flags, mode, p)
 }
 
 int
-gpibclose(dev, flag, mode, p)
+gpibclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct gpib_softc *sc;
 
@@ -599,12 +599,12 @@ gpibwrite(dev, uio, flags)
 }
 
 int
-gpibioctl(dev, cmd, data, flag, p)
+gpibioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct gpib_softc *sc;
 
@@ -625,10 +625,10 @@ gpibioctl(dev, cmd, data, flag, p)
 }
 
 int
-gpibpoll(dev, events, p)
+gpibpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct gpib_softc *sc;
 
