@@ -1,4 +1,4 @@
-/*	$NetBSD: puccn.c,v 1.8 2005/12/11 12:22:50 christos Exp $ */
+/*	$NetBSD: puccn.c,v 1.9 2007/01/13 18:59:31 cube Exp $ */
 
 /*
  * Derived from  pci.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.8 2005/12/11 12:22:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puccn.c,v 1.9 2007/01/13 18:59:31 cube Exp $");
 
 #include "opt_kgdb.h"
 
@@ -103,8 +103,8 @@ pucprobe_doit(struct consdev *cn)
 	struct pci_attach_args pa;
 	int bus;
 	static int dev = 0, func = 0;
-	int maxdev, nfunctions, i;
-	pcireg_t reg, bhlcr, subsys;
+	int maxdev, nfunctions = 0, i; /* XXX */
+	pcireg_t reg, bhlcr, subsys = 0; /* XXX */
 	int foundport = 0;
 	const struct puc_device_description *desc;
 	pcireg_t base;
