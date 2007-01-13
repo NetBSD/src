@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.63 2006/04/26 14:30:27 rpaulo Exp $ */
+/* $NetBSD: tga.c,v 1.64 2007/01/13 18:42:45 cube Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.63 2006/04/26 14:30:27 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.64 2007/01/13 18:42:45 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ struct wsdisplay_emulops tga_emulops = {
 	tga_copyrows,
 	tga_eraserows,
 	NULL,
+	NULL,
 };
 
 struct wsscreen_descr tga_stdscreen = {
@@ -128,7 +129,8 @@ struct wsscreen_descr tga_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	&tga_emulops,
 	0, 0,
-	WSSCREEN_REVERSE
+	WSSCREEN_REVERSE,
+	NULL,
 };
 
 const struct wsscreen_descr *_tga_scrlist[] = {
@@ -146,7 +148,9 @@ struct wsdisplay_accessops tga_accessops = {
 	tga_alloc_screen,
 	tga_free_screen,
 	tga_show_screen,
-	0 /* load_font */
+	NULL, /* load_font */
+	NULL,
+	NULL,
 };
 
 static void	tga_blank(struct tga_devconfig *);
