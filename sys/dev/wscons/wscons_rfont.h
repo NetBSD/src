@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rfont.h,v 1.3 2005/12/11 12:24:12 christos Exp $ */
+/* $NetBSD: wscons_rfont.h,v 1.4 2007/01/13 18:42:45 cube Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -890,7 +890,8 @@ static u_int32_t gallant19_126_pixels[] = {
 };
 static struct raster gallant19_126 = { 12, 22, 1, 1, gallant19_126_pixels, 0 };
 
-#define	null2 {0}, {0}
+#define	null1 {0, 0, 0, 0, 0}
+#define	null2 null1, null1
 #define	null4 null2, null2
 #define	null8 null4, null4
 #define	null16 null8, null8
@@ -997,7 +998,7 @@ struct raster_font gallant19 = {
 	{ &gallant19_124, 0, -15, 12, 0 },
 	{ &gallant19_125, 0, -15, 12, 0 },
 	{ &gallant19_126, 0, -15, 12, 0 },
-	{ 0 },
+	null1,
 	null128
     },
 #ifdef COLORFONT_CACHE
