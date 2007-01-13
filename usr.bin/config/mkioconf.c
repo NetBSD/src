@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.8 2006/10/04 20:34:48 dsl Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.9 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,8 +85,7 @@ mkioconf(void)
 
 	qsort(packed, npacked, sizeof *packed, cforder);
 	if ((fp = fopen("ioconf.c.tmp", "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write ioconf.c: %s\n",
-		    strerror(errno));
+		warn("cannot write ioconf.c");
 		return (1);
 	}
 
@@ -104,18 +103,17 @@ mkioconf(void)
 
 	fflush(fp);
 	if (ferror(fp)) {
-		(void)fprintf(stderr,
-		    "config: error writing ioconf.c: %s\n",
-		    strerror(errno));
+		warn("error writing ioconf.c");
 		(void)fclose(fp);
-		/* (void)unlink("ioconf.c.tmp"); */
+#if 0
+		(void)unlink("ioconf.c.tmp");
+#endif
 		return (1);
 	}
 
 	(void)fclose(fp);
 	if (moveifchanged("ioconf.c.tmp", "ioconf.c") != 0) {
-		(void)fprintf(stderr, "config: error renaming ioconf.c: %s\n",
-		    strerror(errno));
+		warn("error renaming ioconf.c");
 		return (1);
 	}
 	return (0);
@@ -126,8 +124,8 @@ cforder(const void *a, const void *b)
 {
 	int n1, n2;
 
-	n1 = (*(struct devi **)a)->i_cfindex;
-	n2 = (*(struct devi **)b)->i_cfindex;
+	n1 = (*(const struct devi **)a)->i_cfindex;
+	n2 = (*(const struct devi **)b)->i_cfindex;
 	return (n1 - n2);
 }
 
@@ -150,7 +148,7 @@ emithdr(FILE *ofp)
 	ifn = sourcepath(ifnbuf);
 	if ((ifp = fopen(ifn, "r")) != NULL) {
 		while ((n = fread(buf, 1, sizeof(buf), ifp)) > 0)
-			fwrite(buf, 1, n, ofp);
+			(void)fwrite(buf, 1, n, ofp);
 		if (ferror(ifp))
 			err(EXIT_FAILURE, "error reading %s", ifn);
 		(void)fclose(ifp);
@@ -449,9 +447,7 @@ emitroots(FILE *fp)
 			continue;
 		if (i->i_unit != 0 &&
 		    (i->i_unit != STAR || i->i_base->d_umax != 0))
-			(void)fprintf(stderr,
-			    "config: warning: `%s at root' is not unit 0\n",
-			    i->i_name);
+			warnx("warning: `%s at root' is not unit 0", i->i_name);
 		fprintf(fp, "\t%2d /* %s */,\n",
 		    i->i_cfindex, i->i_name);
 	}

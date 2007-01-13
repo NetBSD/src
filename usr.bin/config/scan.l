@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.6 2007/01/09 13:03:47 cube Exp $	*/
+/*	$NetBSD: scan.l,v 1.7 2007/01/13 23:47:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -178,7 +178,7 @@ package[ \t]+{FILENAME}	{
 \"{QCHARS}	{
 		tok = input();  /* eat closing quote */
 		if (tok != '"') {
-			error("closing quote missing\n");
+			cfgerror("closing quote missing\n");
 			unput(tok);
 		}
 		yylval.str = intern(yytext + 1);
@@ -215,7 +215,7 @@ package[ \t]+{FILENAME}	{
 		/* Detect NUL characters in the config file and
 		 * error out.
 		 */
-		error("NUL character detected at line %i\n", yyline);
+		cfgerror("NUL character detected at line %i\n", yyline);
 	}
 #.*	{ /* ignored (comment) */; }
 [ \t]+	{ /* ignored (white space) */; }
@@ -355,16 +355,16 @@ include(const char *fname, int ateof, int conditional, int direct)
 		s = sourcepath(fname);
 	if ((fp = fopen(s, "r")) == NULL) {
 		if (conditional == 0)
-			error("cannot open %s for reading: %s\n", s,
+			cfgerror("cannot open %s for reading: %s\n", s,
 			    strerror(errno));
 		else if (vflag)
-			warn("cannot open conditional include file %s: %s",
+			cfgwarn("cannot open conditional include file %s: %s",
 			     s, strerror(errno));
 		free(s);
 		return (-1);
 	}
 	if (curdir_push(s) == -1) {
-		error("cannot record current working directory for %s\n", s);
+		cfgerror("cannot record current working directory for %s\n", s);
 		fclose(fp);
 		free(s);
 		return (-1);
