@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.63 2006/10/16 00:36:19 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.64 2007/01/13 18:58:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.63 2006/10/16 00:36:19 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.64 2007/01/13 18:58:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -572,10 +572,9 @@ simplecmd(union node **rpp, union node *redir)
 			/* We have a function */
 			if (readtoken() != TRP)
 				synexpect(TRP);
-#ifdef notdef
-			if (! goodname(n->narg.text))
+			rmescapes(n->narg.text);
+			if (!goodname(n->narg.text))
 				synerror("Bad function name");
-#endif
 			n->type = NDEFUN;
 			n->narg.next = command();
 			goto checkneg;
