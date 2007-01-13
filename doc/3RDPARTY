@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.500 2007/01/09 12:34:46 kleink Exp $
+#	$NetBSD: 3RDPARTY,v 1.501 2007/01/13 21:19:12 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -269,9 +269,9 @@ Newer flex will be found in:
 	http://sourceforge.net/projects/lex/
 
 Package:	gcc
-Version:	3.3.6/4.1.2-20061021
-Current Vers:	3.3.6/4.1.1
-Maintainer:	cygnus
+Version:	4.1.2-20070110
+Current Vers:	4.1.1
+Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	http://www.gnu.org/software/gcc/
 Mailing List:	gcc-bugs@gnu.org
