@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.38 2007/01/12 22:58:48 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.39 2007/01/13 20:57:55 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2496,11 +2496,13 @@ crypto/dist/openssl/crypto/engine/hw_padlock.c	patch
 	[danieldk, ticket #1628]
 
 usr.sbin/etcupdate/etcupdate			1.29 - 1.30
+usr.sbin/etcupdate/etcupdate.8			1.12
 
 	Use "stty size" to acquire screen width reliably.
 	The fields of the first line of "stty -a" is not fixed.
 	Fix PR bin/32343.
 	Clean ${SRCDIR}/etc when done. Patch provided by rudolf.
 	http://mail-index.netbsd.org/tech-toolchain/2007/01/11/0001.html
+	Xref postinstall(8)
 	[martti, ticket #1630]
 
