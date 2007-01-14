@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.265 2006/10/25 07:04:13 he Exp $ */
+/*	$NetBSD: machdep.c,v 1.266 2007/01/14 11:19:44 jdc Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2006/10/25 07:04:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.266 2007/01/14 11:19:44 jdc Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -273,7 +273,7 @@ cpu_startup(void)
 	 * to cut down on VM space allocated for the buffer caches that
 	 * would lead to MMU resource shortage.
 	 */
-	if (CPU_ISSUN4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/* Clip UBC windows */
 		if (cpuinfo.mmu_nsegment <= 128) {
 			/*
