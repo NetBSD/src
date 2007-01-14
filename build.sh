@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.155 2006/12/16 02:59:33 ober Exp $
+#	$NetBSD: build.sh,v 1.156 2007/01/14 17:02:56 dsl Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -148,7 +148,7 @@ set_HOST_SH()
 
 initdefaults()
 {
-	cd "$(dirname $0)"
+	[ -d usr.bin/make ] || cd "$(dirname $0)"
 	[ -d usr.bin/make ] ||
 	    bomb "build.sh must be run from the top source level"
 	[ -f share/mk/bsd.own.mk ] ||
@@ -396,7 +396,7 @@ validatearch()
 raw_getmakevar()
 {
 	[ -x "${make}" ] || bomb "raw_getmakevar $1: ${make} is not executable"
-	"${make}" -m ${TOP}/share/mk -s -f- _x_ <<EOF
+	"${make}" -m ${TOP}/share/mk -s -f- _x_ <<EOF || bomb "raw_getmakevar $1: ${make} failed"
 _x_:
 	echo \${$1}
 .include <bsd.prog.mk>
@@ -968,7 +968,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.155 2006/12/16 02:59:33 ober Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.156 2007/01/14 17:02:56 dsl Exp $
 # with these arguments: ${_args}
 #
 EOF
