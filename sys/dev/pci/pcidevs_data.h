@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.859 2007/01/06 00:08:00 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.860 2007/01/14 21:00:33 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.861 2007/01/06 00:07:46 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.862 2007/01/14 20:48:53 rpaulo Exp
  */
 
 /*
@@ -8940,6 +8940,10 @@ static const struct pci_product pci_products[] = {
 	    "Video",
 	},
 	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO2,
+	    "Video II",
+	},
+	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
 	    "USB Host Controller",
 	},
@@ -12628,4 +12632,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2563;
+const int pci_nproducts = 2564;
