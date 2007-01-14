@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2007/01/11 15:10:08 ginsbach Exp $
+#	$NetBSD: Makefile,v 1.9 2007/01/14 16:32:23 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -21,11 +21,11 @@ ${TIMESTAMP}: lorder
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
 
 lorder: lorder.sh
-.if ${BUILD_OSTYPE} == "Darwin" && ${BUILD_OSVERSION} < 8.0
-	sed -e "s,/bin/sh,${HOST_BSHELL},g" \
-	    -e "/join/s/,/ /g" < ${.ALLSRC} > ${.TARGET}
-.else
-	sed -e "s,/bin/sh,${HOST_BSHELL},g" < ${.ALLSRC} > ${.TARGET}
-.endif
+	sed -e "s,/bin/sh,"${HOST_BSHELL:Q}",g" \
+	    -e "s,{JOIN:=.*},{JOIN:="${TOOL_JOIN:Q}"}," \
+	    -e "s,{MKTEMP:=.*},{MKTEMP:="${TOOL_MKTEMP:Q}"}," \
+	    -e "s,{NM:=.*},{NM:="${NM:Q}"}," \
+	    -e "s,{SED:=.*},{SED:="${TOOL_SED:Q}"}," \
+	    < ${.ALLSRC} > ${.TARGET}
 
 realall: lorder
