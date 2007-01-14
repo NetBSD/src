@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.140 2006/11/11 06:28:49 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.141 2007/01/14 16:19:55 apb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -123,6 +123,7 @@ TOOL_HEXDUMP?=		hexdump
 TOOL_INDXBIB?=		indxbib
 TOOL_INSTALLBOOT?=	installboot
 TOOL_INSTALL_INFO?=	install-info
+TOOL_JOIN?=		join
 TOOL_M4?=		m4
 TOOL_MAKEFS?=		makefs
 TOOL_MAKEINFO?=		makeinfo
