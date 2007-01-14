@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.24 2005/12/11 12:18:29 christos Exp $
+#	$NetBSD: files.ofppc,v 1.25 2007/01/14 22:18:02 aymeric Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -81,6 +81,8 @@ file	arch/ofppc/ofppc/mainbus.c		mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/ofppc/ofppc/cpu.c			cpu
+
+include "arch/powerpc/conf/files.rtas"
 
 #
 # Support for generic OpenFirmware driver configurations.  This is
