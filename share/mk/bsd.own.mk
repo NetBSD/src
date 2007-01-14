@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.491 2006/12/29 15:52:20 pooka Exp $
+#	$NetBSD: bsd.own.mk,v 1.492 2007/01/14 16:19:55 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -243,6 +243,7 @@ TOOL_HP300MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp300-mkboot
 TOOL_INDXBIB=		${TOOLDIR}/bin/${_TOOL_PREFIX}indxbib
 TOOL_INSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}installboot
 TOOL_INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
+TOOL_JOIN=		${TOOLDIR}/bin/${_TOOL_PREFIX}join
 TOOL_M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
 TOOL_MACPPCFIXCOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc-fixcoff
 TOOL_MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
