@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.8.20.2 2007/01/12 01:00:40 ad Exp $	*/
+/*	$NetBSD: vector.S,v 1.8.20.3 2007/01/14 13:57:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -227,14 +227,14 @@ calltrap:
 #endif /* DIAGNOSTIC */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
+	movq	CPUVAR(CURLWP),%r14
 2:	/* Check for ASTs on exit to user mode. */
-	movq	CPUVAR(CURLWP),%r11
 	cli
-	CHECK_ASTPENDING(%r11)
+	CHECK_ASTPENDING(%r14)
 	je	1f
 	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	1f
-5:	CLEAR_ASTPENDING(%r11)
+	CLEAR_ASTPENDING(%r14)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%rsp)
 	movq	%rsp,%rdi
