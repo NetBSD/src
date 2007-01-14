@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.966 2007/01/07 19:59:55 pooka Exp $
+# $NetBSD: mi,v 1.967 2007/01/14 04:47:47 christos Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1731,6 +1731,7 @@
 ./usr/share/man/cat8/acorn32/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/boot32.0		man-sys-catman		.cat
 ./usr/share/man/cat8/acorn32/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/acpidump.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/adduser.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/afterboot.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/algor/MAKEDEV.0		man-obsolete		obsolete
@@ -1752,6 +1753,7 @@
 ./usr/share/man/cat8/amiga/grfconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/installboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/amldb.0			man-sysutil-catman	.man
 ./usr/share/man/cat8/amq.0			man-amd-catman		.cat
 ./usr/share/man/cat8/amrctl.0			man-sysutil-man		.cat
 ./usr/share/man/cat8/anvil.0			man-postfix-catman	postfix,.cat
@@ -4139,6 +4141,7 @@
 ./usr/share/man/man8/acorn32/boot.8		man-sys-man		.man
 ./usr/share/man/man8/acorn32/boot32.8		man-sys-man		.man
 ./usr/share/man/man8/acorn32/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/acpidump.8			man-sysutil-man		.man
 ./usr/share/man/man8/adduser.8			man-sysutil-man		.man
 ./usr/share/man/man8/afterboot.8		man-sysutil-man		.man
 ./usr/share/man/man8/algor/MAKEDEV.8		man-obsolete		obsolete
@@ -4160,6 +4163,7 @@
 ./usr/share/man/man8/amiga/grfconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/amiga/installboot.8	man-sysutil-man		.man
 ./usr/share/man/man8/amiga/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/amldb.8			man-sysutil-man		.man
 ./usr/share/man/man8/amq.8			man-amd-man		.man
 ./usr/share/man/man8/amrctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/anvil.8			man-postfix-man		postfix,.man
