@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.191 2006/12/30 04:45:13 rumble Exp $
+#	$NetBSD: bsd.README,v 1.192 2007/01/14 16:19:55 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -1320,6 +1320,8 @@ TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
 TOOL_INSTALLBOOT	Install disk bootstrap software.  [installboot]
 
 TOOL_INSTALL_INFO	Update info/dir entries.  [install-info]
+
+TOOL_JOIN		Relational database operator.  [join]
 
 TOOL_M4			M4 macro language processor.  [m4]
 
