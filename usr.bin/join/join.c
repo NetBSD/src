@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.26 2006/01/04 01:44:06 perry Exp $	*/
+/*	$NetBSD: join.c,v 1.27 2007/01/14 16:15:26 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -33,6 +33,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
@@ -44,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.26 2006/01/04 01:44:06 perry Exp $");
+__RCSID("$NetBSD: join.c,v 1.27 2007/01/14 16:15:26 apb Exp $");
 #endif
 #endif /* not lint */
 
