@@ -1,4 +1,4 @@
-/*	$NetBSD: strndup.c,v 1.2 2007/01/14 18:48:28 cbiere Exp $	*/
+/*	$NetBSD: strndup.c,v 1.3 2007/01/14 23:41:24 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strndup.c,v 1.2 2007/01/14 18:48:28 cbiere Exp $");
+__RCSID("$NetBSD: strndup.c,v 1.3 2007/01/14 23:41:24 cbiere Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,9 +60,9 @@ strndup(const char *str, size_t n)
 	for (len = 0; len < n && str[len]; len++)
 		continue;
 
-	if ((copy = malloc(len + 1))) {
-		memcpy(copy, str, len);
-		copy[len] = '\0';
-	}
+	if (!(copy = malloc(len + 1)))
+		return (NULL);
+	memcpy(copy, str, len);
+	copy[len] = '\0';
 	return (copy);
 }
