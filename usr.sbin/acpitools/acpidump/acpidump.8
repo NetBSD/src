@@ -1,4 +1,4 @@
-.\" $NetBSD: acpidump.8,v 1.1 2007/01/14 04:36:13 christos Exp $
+.\" $NetBSD: acpidump.8,v 1.2 2007/01/14 12:25:42 wiz Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
@@ -121,52 +121,52 @@ formats it as ASL.
 The following options are supported by
 .Nm :
 .Bl -tag -width indent
-.It Fl o Ar dsdt_file_for_output
-Stores DSDT data block from physical memory into a file specified in
-.Ar dsdt_file_for_output
-in addition to behavior with no option.
 .It Fl f Ar dsdt_file_for_input
 Interprets AML data in DSDT from a file specified in
 .Ar dsdt_file_for_input
 and dumps them in ASL to standard output.
+.It Fl h
+Displays usage and exits.
+.It Fl o Ar dsdt_file_for_output
+Stores DSDT data block from physical memory into a file specified in
+.Ar dsdt_file_for_output
+in addition to behavior with no option.
 .It Fl r
-Additionally outputs commented ResourceTemplate() macros for Buffer
+Additionally outputs commented
+.Fn ResourceTemplate
+macros for Buffer
 objects that contain valid resource streams.
 These macros are defined in the ACPI 2.0 specification section
 16.2.4.
-.It Fl h
-Displays usage and exit.
+.El
+.Sh FILES
+.Bl -tag -width /dev/mem
+.It Pa /dev/mem
 .El
 .Sh EXAMPLES
 This is an example to get a dump of SDTs and a DSDT data file
 simultaneously on a machine that supports ACPI BIOS.
 .Bd -literal -offset indent
-# acpidump -o foo.dsdt > foo.asl
+# acpidump -o foo.dsdt \*[Gt] foo.asl
 .Ed
-.Sh BUGS
-In the current implementation,
-.Nm
-doesn't dump any information of Firmware ACPI Control Structure
-(FACS)
-specified by a pointer in FACP.
-.Sh FILES
-.Bl -tag -width /dev/mem
-.It Pa /dev/mem
-.El
 .Sh SEE ALSO
 .Xr acpi 4 ,
-.Xr mem 4 ,
-.Xr acpiconf 8 ,
+.\" .Xr mem 4 ,
+.\" .Xr acpiconf 8 ,
 .Xr amldb 8
 .Pp
-.Dq Advanced Configuration and Power Interface Specification
-.Bd -literal -offset indent -compact
-Intel
-Microsoft
-Toshiba
-Revision 1.0b, 2.0
-.Ed
-<URL:http://www.teleport.com/~acpi/>
+.Rs
+.%T Advanced Configuration and Power Interface Specification
+.%Q Intel
+.%Q Microsoft
+.%Q Toshiba
+.%O Revision 1.0b, 2.0
+.Re
+.Sh HISTORY
+The
+.Nm
+utility appeared in
+.Fx 5.0 .
 .Sh AUTHORS
 .An Doug Rabson Aq dfr@FreeBSD.org
 .An Mitsuru IWASAKI Aq iwasaki@FreeBSD.org
@@ -181,8 +181,9 @@ Some contributions made by
 .An Michael Lucas Aq mwlucas@blackhelicopters.org
 and
 .An Michael Smith Aq msmith@FreeBSD.org .
-.Sh HISTORY
-The
+.Sh BUGS
+In the current implementation,
 .Nm
-utility appeared in
-.Fx 5.0 .
+doesn't dump any information of Firmware ACPI Control Structure
+(FACS)
+specified by a pointer in FACP.
