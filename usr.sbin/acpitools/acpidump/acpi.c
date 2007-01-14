@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.4 2001/10/22 17:25:25 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -135,7 +135,7 @@ init_namespace(void)
 	struct	aml_environ env;
 	struct	aml_name *newname;
 
-	aml_new_name_group(AML_NAME_GROUP_OS_DEFINED);
+	aml_new_name_group((void *)AML_NAME_GROUP_OS_DEFINED);
 	env.curname = aml_get_rootname();
 	newname = aml_create_name(&env, (const unsigned char *)"\\_OS_");
 	newname->property = aml_alloc_object(aml_t_string, NULL);
@@ -156,7 +156,7 @@ acpi_dump_dsdt(u_int8_t *dp, u_int8_t *end)
 
 	/* 1st stage: parse only w/o printing */
 	init_namespace();
-	aml_new_name_group((int)dp);
+	aml_new_name_group(dp);
 	bzero(&asl_env, sizeof(asl_env));
 
 	asl_env.dp = dp;

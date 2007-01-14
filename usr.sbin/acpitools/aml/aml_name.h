@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_name.h,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_name.h,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -52,7 +52,7 @@ struct aml_name {
 #define AML_NAME_GROUP_IN_METHOD	2
 
 struct	aml_name_group {
-	int	id;			/* DSDT address or DBHANDLE */
+	void	*id;			/* DSDT address or DBHANDLE */
 	struct	aml_name *head;
 	struct	aml_name_group *next;
 };
@@ -68,7 +68,7 @@ struct	aml_local_stack {
 struct aml_envrion;
 
 struct aml_name		*aml_get_rootname(void);
-struct aml_name_group	*aml_new_name_group(int);
+struct aml_name_group	*aml_new_name_group(void *);
 void			 aml_delete_name_group(struct aml_name_group *);
 
 struct aml_name		*aml_find_from_namespace(struct aml_name *, const char *);

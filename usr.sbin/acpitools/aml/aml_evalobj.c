@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_evalobj.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: aml_evalobj.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_evalobj.c,v 1.4 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_evalobj.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: aml_evalobj.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
 
 #include <sys/param.h>
 
@@ -366,7 +366,7 @@ aml_execute_method(struct aml_environ *env)
 	struct	aml_name *name;
 	struct	aml_name_group *newgrp;
 
-	newgrp = aml_new_name_group(AML_NAME_GROUP_IN_METHOD);
+	newgrp = aml_new_name_group((void *)AML_NAME_GROUP_IN_METHOD);
 
 	AML_DEBUGPRINT("[");
 	aml_print_curname(env->curname);
