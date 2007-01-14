@@ -1,4 +1,4 @@
-/*	$NetBSD: asl_dump.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: asl_dump.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.7 2002/03/02 15:05:26 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: asl_dump.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: asl_dump.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
 
 #include <sys/param.h>
 
@@ -412,7 +412,8 @@ restart:
 				break;
 
 			case 0x82:	/* Register() */
-				printf("Register(%s, %d, %d, 0x%016llx)\n",
+				printf("Register(%s, %d, %d, 0x%016"
+				       PRIx64 "\n",
 				       *p == 0x00 ? "SystemMemory" :
 				       *p == 0x01 ? "SystemIO" :
 				       *p == 0x02 ? "PCIConfigSpace" :
@@ -492,7 +493,7 @@ restart:
 					       "Max%sFixed, "
 					       "%s, "
 					       "Read%s, "
-					       "0x%llx, 0x%llx, 0x%llx, 0x%llx, 0x%llx, "
+					       "0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", "
 					       "%d, '%.*s', "
 					       "AddressRange%s, "
 					       "Type%s)\n",
@@ -520,7 +521,7 @@ restart:
 					       "Max%sFixed, "
 					       "%sDecode, "
 					       "%s, "
-					       "0x%llx, 0x%llx, 0x%llx, 0x%llx, 0x%llx, "
+					       "0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", "
 					       "%d, '%.*s', "
 					       "Type%s, "
 					       "%sTranslation)\n",
@@ -543,7 +544,7 @@ restart:
 					       "%sDecode, "
 					       "Min%sFixed, "
 					       "Max%sFixed, "
-					       "0x%llx, 0x%llx, 0x%llx, 0x%llx, 0x%llx, "
+					       "0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", 0x%" PRIx64 ", "
 						"%d, '%.*s')\n",
 					       size, 
 					       *(p + 1) & 0x01 ? "Consumer" : "Producer",
