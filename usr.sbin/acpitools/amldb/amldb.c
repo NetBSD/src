@@ -1,4 +1,4 @@
-/*	$NetBSD: amldb.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: amldb.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/amldb.c,v 1.3 2001/10/22 17:25:32 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: amldb.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: amldb.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -64,7 +64,7 @@ aml_init_namespace(void)
 	struct	aml_environ env;
 	struct	aml_name *newname;
 
-	aml_new_name_group(AML_NAME_GROUP_OS_DEFINED);
+	aml_new_name_group((void *)AML_NAME_GROUP_OS_DEFINED);
 	env.curname = aml_get_rootname();
 	newname = aml_create_name(&env, (const u_int8_t *)"\\_OS_");
 	newname->property = aml_alloc_object(aml_t_string, NULL);
@@ -97,7 +97,7 @@ load_dsdt(const char *dsdtfile)
 	}
 	aml_init_namespace();
 
-	aml_new_name_group((int)code);
+	aml_new_name_group(code);
 	bzero(&env, sizeof(env));
 
 #define SIZEOF_SDT_HDR 36	/* struct size except body */
