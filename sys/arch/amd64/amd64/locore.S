@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.8.4 2007/01/12 14:24:17 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.5 2007/01/14 13:57:13 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -909,31 +909,23 @@ switch_dequeue:
 	btrl	%r8d,%ecx		# yes, clear to indicate empty
 	movl	%ecx,_C_LABEL(sched_whichqs)(%rip) # update q status
 
-3:
-switch_resume:
-
-	/* Isolate lwp. */
+3:	/* We just did it. */
 	xorq	%rax,%rax
-	movq	%rax,L_BACK(%r12)
-
-	/* Record it as being picked by this CPU. */
-	SET_CURLWP(%r12,%rcx)
-
-	/* We just did it. */
 	movl	%eax,CPUVAR(RESCHED)
-
+switch_resume:
 #ifdef DIAGNOSTIC
 	cmpq	%rax,L_WCHAN(%r12)
 	jne	_C_LABEL(switch_error2)
 	cmpb	$LSRUN,L_STAT(%r12)
 	jne	_C_LABEL(switch_error3)
 #endif
+
+	/* Isolate lwp. */
+	movq	%rax,L_BACK(%r12)
+
 	/* Record new lwp. */
 	movb	$LSONPROC,L_STAT(%r12)	# l->l_stat = SONPROC
-
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-	call	_C_LABEL(sched_unlock_idle)
-#endif 
+	SET_CURLWP(%r12,%rcx)
 
 	/* Skip context switch if same lwp. */
 	xorl	%ebx,%ebx
@@ -1037,6 +1029,10 @@ switch_restored:
 	movl	$1,%ebx
 
 switch_return:
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+	call	_C_LABEL(sched_unlock_idle)
+#endif 
+
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(Xspllower)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
@@ -1063,6 +1059,8 @@ ENTRY(cpu_switchto)
 	movq	%rsi,%r12
 
 	movq	$0,CPUVAR(CURLWP)
+
+	xorq	%rax,%rax
 	jmp	switch_resume
 
 
@@ -1288,19 +1286,18 @@ osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	sti
-	movq	CPUVAR(CURLWP),%rdx
-	movq	%rsp,L_MD_REGS(%rdx)	# save pointer to frame
-	movq	L_PROC(%rdx),%rdx
+	movq	CPUVAR(CURLWP),%r14
+	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
+	movq	L_PROC(%r14),%rdx
 	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	movq	CPUVAR(CURLWP),%rdx
-	CHECK_ASTPENDING(%rdx)
+	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%rdx)
+	CLEAR_ASTPENDING(%r14)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
