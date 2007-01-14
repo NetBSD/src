@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.222 2006/12/29 15:52:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.223 2007/01/14 04:39:34 christos Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp \
+SUBDIR=	ac accton acpitools altq amd apm apmd arp bad144 bind bootp \
 	btconfig btdevctl bthcid catman \
 	chown chroot chrtbl cnwctl cron dev_mkdb \
 	dhcp diskpart dumpfs dumplfs edquota eeprom \
