@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.501 2007/01/13 21:19:12 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.502 2007/01/14 08:46:45 martti Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -390,7 +390,7 @@ Notes:
 
 Package:	ipf
 Version:	4.1.13
-Current Vers:	4.1.13
+Current Vers:	4.1.16
 Maintainer:	Darren Reed
 Archive Site:	http://coombs.anu.edu.au/~avalon/
 Home Page:	http://coombs.anu.edu.au/~avalon/
