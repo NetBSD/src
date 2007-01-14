@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.860 2007/01/06 00:08:00 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.861 2007/01/14 21:00:33 rpaulo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.861 2007/01/06 00:07:46 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.862 2007/01/14 20:48:53 rpaulo Exp
  */
 
 /*
@@ -2598,6 +2598,7 @@
 /* Parallels products */
 #define	PCI_PRODUCT_PARALLELS_TOOLS	0x1112		/* Tools */
 #define	PCI_PRODUCT_PARALLELS_VIDEO	0x1121		/* Video */
+#define	PCI_PRODUCT_PARALLELS_VIDEO2	0x1131		/* Video II */
 
 /* NEC products */
 #define	PCI_PRODUCT_NEC_USB	0x0035		/* USB Host Controller */
