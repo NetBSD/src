@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: lorder.sh,v 1.14 2006/06/27 12:28:43 christos Exp $
+#	$NetBSD: lorder.sh,v 1.15 2007/01/14 16:29:35 apb Exp $
 #
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -36,38 +36,31 @@
 #
 
 # If the user has set ${NM} then we use it, otherwise we use 'nm'.
-# We try to find the compiler in the user's path, and if that fails we
-# try to find it in the default path.  If we can't find it, we punt.
-# Once we find it, we canonicalize its name and set the path to the
-# default path so that other commands we use are picked properly.
+# Similarly for JOIN, MKTEMP, SED, and SORT.
+#
+# For each of these, we try to find the command in the user's path, and
+# if that fails we try to find it in the default path.  If we can't
+# find it, we punt.  Once we find it, we canonicalize its name and set
+# the path to the default path so that other commands we use are picked
+# properly.
 
-if [ "x${NM}" = "x" ]; then
-	NM=nm
-fi
-if ! type "${NM}" > /dev/null 2>&1; then
-	PATH=/bin:/usr/bin
-	export PATH
-	if ! type "${NM}" > /dev/null 2>&1; then
-		echo "lorder: ${NM}: not found" >&2
-		exit 1
+: ${JOIN:=join}
+: ${MKTEMP:=mktemp}
+: ${NM:=nm}
+: ${SED:=sed}
+: ${SORT:=sort}
+for var in JOIN MKTEMP NM SED SORT ; do
+	if ! eval type "\$${var}" >/dev/null 2>&1 ; then
+		PATH=/bin:/usr/bin
+		export PATH
+		if ! eval type "\$${var}" > /dev/null 2>&1; then
+			eval echo "lorder: \$${var}: not found" >&2
+			exit 1
+		fi
 	fi
-fi
-cmd='set `type "${NM}"` ; eval echo \$$#'
-NM=`eval $cmd`
-
-if [ "x${MKTEMP}" = "x" ]; then
-	MKTEMP=mktemp
-fi
-if ! type "${MKTEMP}" > /dev/null 2>&1; then
-	PATH=/bin:/usr/bin
-	export PATH
-	if ! type "${MKTEMP}" > /dev/null 2>&1; then
-		echo "lorder: ${MKTEMP}: not found" >&2
-		exit 1
-	fi
-fi
-cmd='set `type "${MKTEMP}"` ; eval echo \$$#'
-MKTEMP=`eval $cmd`
+	cmd='set $(eval type "\$${var}") ; eval echo \$$#'
+	eval "${var}=\$(eval \${cmd})"
+done
 
 # only one argument is a special case, just output the name twice
 case $# in
@@ -80,9 +73,9 @@ case $# in
 esac
 
 # temporary files
-N=`${MKTEMP} /tmp/_nm_.XXXXXX` || exit 1
-R=`${MKTEMP} /tmp/_reference_.XXXXXX` || exit 1
-S=`${MKTEMP} /tmp/_symbol_.XXXXXX` || exit 1
+N=$("${MKTEMP}" /tmp/_nm_.XXXXXX) || exit 1
+R=$("${MKTEMP}" /tmp/_reference_.XXXXXX) || exit 1
+S=$("${MKTEMP}" /tmp/_symbol_.XXXXXX) || exit 1
 
 # remove temporary files on exit
 trap "rm -f $N $R $S; exit 0" 0
@@ -98,12 +91,12 @@ trap "rm -f $N $R $S; exit 1" HUP INT QUIT PIPE TERM 2>/dev/null || \
 # if the line has " U " it's a globally undefined symbol, put it into
 # the reference file.
 (for file in $* ; do echo $file":" ; done ; $NM -go $*) >$N
-sed -ne '/:$/{s/://;s/.*/& &/;p;}' <$N
-sed -ne 's/:.* [TDGR] / /p' <$N >$S
-sed -ne 's/:.* U / /p' <$N >$R
+"${SED}" -ne '/:$/{s/://;s/.*/& &/;p;}' <$N
+"${SED}" -ne 's/:.* [TDGR] / /p' <$N >$S
+"${SED}" -ne 's/:.* U / /p' <$N >$R
 
 # sort symbols and references on the second field (the symbol)
 # join on that field, and print out the file names.
-sort -k2 $R -o $R
-sort -k2 $S -o $S
-join -j 2 -o 1.1,2.1 $R $S
+"${SORT}" -k2 $R -o $R
+"${SORT}" -k2 $S -o $S
+"${JOIN}" -j 2 -o 1.1,2.1 $R $S
