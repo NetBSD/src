@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.861 2007/01/06 00:07:46 jmcneill Exp $
+$NetBSD: pcidevs,v 1.862 2007/01/14 20:48:53 rpaulo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2589,8 +2589,9 @@ product SYMBIOS MEGARAID_VERDE_ZCR	0x0413	MegaRAID Verde ZCR
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 
 /* Parallels products */
-product PARALLELS TOOLS	0x1112	Tools
-product PARALLELS VIDEO	0x1121	Video
+product PARALLELS TOOLS		0x1112	Tools
+product PARALLELS VIDEO		0x1121	Video
+product	PARALLELS VIDEO2	0x1131	Video II
 
 /* NEC products */
 product NEC USB		0x0035	USB Host Controller
