@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 2006/10/15 13:35:15 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.14 2007/01/14 17:20:32 ad Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -52,11 +52,15 @@
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 
+#ifdef _KERNEL
+void	x86_pause(void);
+#else
 static __inline void
 x86_pause(void)
 {
 	__asm volatile("pause");
 }
+#endif
 
 static __inline void
 x86_lfence(void)
