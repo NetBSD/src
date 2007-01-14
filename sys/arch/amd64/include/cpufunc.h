@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.11 2007/01/12 20:22:04 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.12 2007/01/14 14:03:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,11 +49,7 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 
-static __inline void
-x86_pause(void)
-{
-	__asm volatile("pause");
-}
+void	x86_pause(void);
 
 /*
  * XXX if lfence isn't available...
