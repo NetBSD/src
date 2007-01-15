@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.31 2007/01/09 16:19:27 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.32 2007/01/15 17:47:06 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.31 2007/01/09 16:19:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.32 2007/01/15 17:47:06 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -515,7 +515,8 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 				break;
 			}
 
-			if (proc_uidmatch(cred, p->p_cred) != 0) {
+			if ((p != curlwp->l_proc) &&
+			    (proc_uidmatch(cred, p->p_cred) != 0)) {
 				result = KAUTH_RESULT_DENY;
 				break;
 			}
