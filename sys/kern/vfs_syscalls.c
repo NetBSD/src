@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.295 2007/01/05 13:34:17 elad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.296 2007/01/15 19:13:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.295 2007/01/05 13:34:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.296 2007/01/15 19:13:30 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -333,6 +333,7 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		goto out;
 	}
 
+	TAILQ_INIT(&mp->mnt_vnodelist);
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);

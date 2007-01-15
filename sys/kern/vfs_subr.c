@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.278 2007/01/04 17:38:27 elad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.279 2007/01/15 19:13:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.278 2007/01/04 17:38:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.279 2007/01/15 19:13:30 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -661,13 +661,8 @@ insmntque(struct vnode *vp, struct mount *mp)
 	/*
 	 * Insert into list of vnodes for the new mount point, if available.
 	 */
-	if ((vp->v_mount = mp) != NULL) {
-		if (TAILQ_EMPTY(&mp->mnt_vnodelist)) {
-			TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
-		} else {
-			TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-		}
-	}
+	if ((vp->v_mount = mp) != NULL)
+		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	simple_unlock(&mntvnode_slock);
 }
 
