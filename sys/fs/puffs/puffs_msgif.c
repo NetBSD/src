@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.13 2006/12/29 01:37:11 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.14 2007/01/15 23:29:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.13 2006/12/29 01:37:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.14 2007/01/15 23:29:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -55,7 +55,7 @@ static int touser(struct puffs_mount *, struct puffs_park *, uint64_t,
 uint64_t
 puffs_getreqid(struct puffs_mount *pmp)
 {
-	unsigned int rv;
+	uint64_t rv;
 
 	simple_lock(&pmp->pmp_lock);
 	rv = pmp->pmp_nextreq++;
