@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.126 2007/01/15 19:11:48 degroote Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.127 2007/01/15 21:49:56 dyoung Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.126 2007/01/15 19:11:48 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.127 2007/01/15 21:49:56 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -615,7 +615,8 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 			}
 			m_freem(n0);
 		}
-        IP6_EXTHDR_GET(nicmp6,struct icmp6_hdr *, n, off, sizeof(*nicmp6));
+		IP6_EXTHDR_GET(nicmp6, struct icmp6_hdr *, n, off,
+		    sizeof(*nicmp6));
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
