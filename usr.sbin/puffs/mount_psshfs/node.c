@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.4 2007/01/11 18:50:42 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.5 2007/01/15 00:42:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.4 2007/01/11 18:50:42 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.5 2007/01/15 00:42:21 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -95,7 +95,7 @@ psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 	/* XXX: expire by time */
 	if (!psn->hasvattr) {
-		psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, pn->pn_path);
+		psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, PNPATH(pn));
 		pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 		puffs_cc_yield(pcc);
 
@@ -121,7 +121,7 @@ psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	struct vattr kludgeva;
 	struct puffs_node *pn = opc;
 
-	psbuf_req_str(pb, SSH_FXP_SETSTAT, reqid, pn->pn_path);
+	psbuf_req_str(pb, SSH_FXP_SETSTAT, reqid, PNPATH(pn));
 
 	memcpy(&kludgeva, va, sizeof(struct vattr));
 
@@ -169,8 +169,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 		goto out;
 	}
 
-	psbuf_req_data(pb, SSH_FXP_OPEN, reqid, pcn->pcn_fullpath,
-	    strlen(pcn->pcn_fullpath));
+	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PCNPATH(pcn));
 	psbuf_put_4(pb, SSH_FXF_WRITE | SSH_FXF_CREAT | SSH_FXF_TRUNC);
 	psbuf_put_vattr(pb, va);
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
@@ -245,7 +244,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	}
 
 	puffs_vattr_null(&va);
-	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, pn->pn_path);
+	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
 	psbuf_put_4(pb, SSH_FXF_READ);
 	psbuf_put_vattr(pb, &va);
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
@@ -335,7 +334,7 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		offset = pn->pn_va.va_size;
 
 	puffs_vattr_null(&va);
-	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, pn->pn_path);
+	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
 	psbuf_put_4(pb, oflags);
 	psbuf_put_vattr(pb, &va);
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
@@ -398,7 +397,7 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 		goto out;
 	}
 
-	psbuf_req_str(pb, SSH_FXP_READLINK, reqid, pn->pn_path);
+	psbuf_req_str(pb, SSH_FXP_READLINK, reqid, PNPATH(pn));
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
 	puffs_cc_yield(pcc);
@@ -434,7 +433,7 @@ psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 		goto out;
 	}
 
-	psbuf_req_str(pb, SSH_FXP_REMOVE, reqid, pn_targ->pn_path);
+	psbuf_req_str(pb, SSH_FXP_REMOVE, reqid, PNPATH(pn_targ));
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
 	puffs_cc_yield(pcc);
@@ -462,7 +461,7 @@ psshfs_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 		goto out;
 	}
 
-	psbuf_req_str(pb, SSH_FXP_MKDIR, reqid, pcn->pcn_fullpath);
+	psbuf_req_str(pb, SSH_FXP_MKDIR, reqid, PCNPATH(pcn));
 	psbuf_put_vattr(pb, va);
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
@@ -486,7 +485,7 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn_targ = targ;
 
-	psbuf_req_str(pb, SSH_FXP_RMDIR, reqid, pn_targ->pn_path);
+	psbuf_req_str(pb, SSH_FXP_RMDIR, reqid, PNPATH(pn_targ));
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
 	puffs_cc_yield(pcc);
@@ -523,7 +522,7 @@ psshfs_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	 * Let's go with openssh and build quirk tables later if we care
 	 */
 	psbuf_req_str(pb, SSH_FXP_SYMLINK, reqid, link_target);
-	psbuf_put_str(pb, pcn->pcn_fullpath);
+	psbuf_put_str(pb, PCNPATH(pcn));
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
 	puffs_cc_yield(pcc);
@@ -560,8 +559,8 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 			goto out;
 	}
 
-	psbuf_req_str(pb, SSH_FXP_RENAME, reqid, pcn_src->pcn_fullpath);
-	psbuf_put_str(pb, pcn_targ->pcn_fullpath);
+	psbuf_req_str(pb, SSH_FXP_RENAME, reqid, PCNPATH(pcn_src));
+	psbuf_put_str(pb, PCNPATH(pcn_targ));
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
 	puffs_cc_yield(pcc);
