@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.5 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.6 2007/01/15 11:58:00 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.5 2007/01/09 12:57:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.6 2007/01/15 11:58:00 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,7 +152,7 @@ SYSCTL_SETUP(sysctl_security_overlay_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel",
 		       SYSCTL_DESCR("System security level"),
-		       secmodel_bsd44_sysctl_securelevel, 0, &securelevel, 0,
+		       secmodel_bsd44_sysctl_securelevel, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,
