@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.31 2007/01/11 16:08:58 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.32 2007/01/15 20:40:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.31 2007/01/11 16:08:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.32 2007/01/15 20:40:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -418,6 +418,7 @@ puffs_lookup(void *v)
 	struct puffs_mount *pmp;
 	struct componentname *cnp;
 	struct vnode *vp, *dvp;
+	struct puffs_node *dpn;
 	int isdot;
 	int error;
 
@@ -487,6 +488,17 @@ puffs_lookup(void *v)
 		goto errout;
 	}
 
+	/*
+	 * Check that we don't get our parent node back, that would cause
+	 * a pretty obvious deadlock.
+	 */
+	dpn = dvp->v_data;
+	if (lookup_arg.pvnr_newnode == dpn->pn_cookie) {
+		error = EINVAL;
+		goto errout;
+	}
+
+	/* XXX: race here */
 	vp = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode, 1);
 	if (!vp) {
 		error = puffs_getvnode(dvp->v_mount,
