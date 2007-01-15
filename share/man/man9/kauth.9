@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.46 2007/01/09 12:49:36 elad Exp $
+.\" $NetBSD: kauth.9,v 1.47 2007/01/15 17:45:32 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 2, 2007
+.Dd January 15, 2007
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -852,10 +852,8 @@ One such case is during a
 .Xr fork 2
 where the child process and its LWPs inherit the credentials of the parent.
 .Pp
-To prevent freeing a
-.Ft kauth_cred_t
-while it is still referenced, the following routines are available to maintain
-its reference count:
+The following routines are available for managing credentials reference
+counting and inheritance:
 .Bl -tag
 .It Ft void Fn kauth_cred_hold "kauth_cred_t cred"
 Increases reference count to
@@ -869,6 +867,10 @@ by one.
 If the reference count dropped to zero, the memory used by
 .Ar cred
 will be returned back to the memory pool.
+.It Ft void kauth_proc_fork "struct proc *parent" "struct proc *child"
+Called during a
+.Xr fork 2
+to perform credential inheritance.
 .El
 .Ss Credentials Memory Management
 Data-structures for credentials, listeners, and scopes are allocated from

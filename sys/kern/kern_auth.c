@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.37 2007/01/09 12:49:36 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.38 2007/01/15 17:45:32 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.37 2007/01/09 12:49:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.38 2007/01/15 17:45:32 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -197,6 +197,15 @@ kauth_cred_copy(kauth_cred_t cred)
 	kauth_cred_free(cred);
 
 	return (new_cred);
+}
+
+void
+kauth_proc_fork(struct proc *parent, struct proc *child)
+{
+	/* mutex_enter(&parent->p_mutex); */
+	kauth_cred_hold(parent->p_cred);
+	child->p_cred = parent->p_cred;
+	/* mutex_exit(&parent->p_mutex); */
 }
 
 uid_t
