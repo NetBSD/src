@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.3 2007/01/15 00:42:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.2 2007/01/06 18:25:19 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.3 2007/01/15 00:42:21 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -49,6 +49,7 @@ psshfs_domount(struct puffs_usermount *pu)
 	struct statvfs sb;
 	struct psshfs_ctx *pctx = pu->pu_privdata;
 	struct psshfs_node *root = &pctx->psn_root;
+	struct puffs_pathobj *po_root;
 	struct vattr va;
 	struct vattr *rva;
 	struct psbuf *pb;
@@ -125,8 +126,12 @@ psshfs_domount(struct puffs_usermount *pu)
 
 	memset(root, 0, sizeof(struct psshfs_node));
 	pu->pu_pn_root = puffs_pn_new(pu, root);
-	puffs_setrootpath(pu, rootpath);
-	free(rootpath);
+
+	po_root = puffs_getrootpathobj(pu);
+	if (po_root == NULL)
+		err(1, "getrootpathobj");
+	po_root->po_path = rootpath;
+	po_root->po_len = strlen(rootpath);
 
 	rva = &pu->pu_pn_root->pn_va;
 	puffs_setvattr(rva, &va);
