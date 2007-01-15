@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.23 2007/01/13 20:59:19 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.24 2007/01/15 21:16:33 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -167,4 +167,9 @@ usr.sbin/etcupdate/etcupdate.8			1.12
 	http://mail-index.netbsd.org/tech-toolchain/2007/01/11/0001.html
 	Xref postinstall(8)
 	[martti, ticket #1630]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.17
+
+	Fix occasional panics in NetBSD domUs caused by a race condition.
+	[bouyer, ticket #1632]
 
