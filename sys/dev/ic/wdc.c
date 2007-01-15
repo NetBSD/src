@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.243 2006/11/29 21:37:42 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.243.2.1 2007/01/15 22:15:13 pavel Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.243 2006/11/29 21:37:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.243.2.1 2007/01/15 22:15:13 pavel Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1814,6 +1814,13 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
+#ifndef __NO_STRICT_ALIGNMENT
+	if ((uintptr_t)bf & 1)
+		goto unaligned;
+	if ((flags & DRIVE_CAP32) && ((uintptr_t)bf & 3))
+		goto unaligned;
+#endif
+
 	if (flags & DRIVE_NOSTREAM) {
 		if (flags & DRIVE_CAP32) {
 			bus_space_read_multi_4(wdr->data32iot,
@@ -1837,12 +1844,44 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 			    wdr->cmd_iohs[wd_data], 0, bf, len >> 1);
 		}
 	}
+	return;
+
+#ifndef __NO_STRICT_ALIGNMENT
+unaligned:
+	if (flags & DRIVE_CAP32) {
+		while (len > 3) {
+			uint32_t val;
+
+			val = bus_space_read_4(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0);
+			memcpy(bf, &val, 4);
+			bf = (char*)bf+4;
+			len -= 4;
+		}
+	}
+	while (len > 1) {
+		uint16_t val;
+
+		val = bus_space_read_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_data], 0);
+		memcpy(bf, &val, 2);
+		bf = (char*)bf+2;
+		len -= 2;
+	}
+#endif
 }
 
 static void
 wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
+
+#ifndef __NO_STRICT_ALIGNMENT
+	if ((uintptr_t)bf & 1)
+		goto unaligned;
+	if ((flags & DRIVE_CAP32) && ((uintptr_t)bf & 3))
+		goto unaligned;
+#endif
 
 	if (flags & DRIVE_NOSTREAM) {
 		if (flags & DRIVE_CAP32) {
@@ -1867,4 +1906,29 @@ wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 			    wdr->cmd_iohs[wd_data], 0, bf, len >> 1);
 		}
 	}
+	return;
+
+#ifndef __NO_STRICT_ALIGNMENT
+unaligned:
+	if (flags & DRIVE_CAP32) {
+		while (len > 3) {
+			uint32_t val;
+
+			memcpy(&val, bf, 4);
+			bus_space_write_4(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0, val);
+			bf = (char*)bf+4;
+			len -= 4;
+		}
+	}
+	while (len > 1) {
+		uint16_t val;
+
+		memcpy(&val, bf, 2);
+		bus_space_write_2(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_data], 0, val);
+		bf = (char*)bf+2;
+		len -= 2;
+	}
+#endif
 }
