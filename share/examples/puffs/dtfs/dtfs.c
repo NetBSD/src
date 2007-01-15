@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.13 2007/01/06 18:25:19 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.14 2007/01/15 00:41:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -69,6 +69,7 @@ main(int argc, char *argv[])
 	extern int optind;
 	struct dtfs_mount dtm;
 	struct puffs_usermount *pu;
+	struct puffs_pathobj *po_root;
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
 	int pflags, lflags, mntflags;
@@ -133,6 +134,11 @@ main(int argc, char *argv[])
 	/* init & call puffs_start() */
 	if (dtfs_domount(pu) != 0)
 		errx(1, "dtfs_domount failed");
+
+	/* XXX: wrong order, but I need to refactor this further anyway */
+	po_root = puffs_getrootpathobj(pu);
+	po_root->po_path = argv[0];
+	po_root->po_len = strlen(argv[0]);
 
 	if (puffs_mainloop(pu, lflags) == -1)
 		err(1, "mainloop");

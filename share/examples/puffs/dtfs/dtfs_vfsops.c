@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.9 2007/01/06 18:25:19 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.10 2007/01/15 00:41:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -71,7 +71,6 @@ dtfs_domount(struct puffs_usermount *pu)
 	va->va_nlink = 2;
 
 	pu->pu_pn_root = pn;
-	puffs_setrootpath(pu, ".");
 
 	/* XXX: should call dtfs_fs_statvfs */
 	puffs_zerostatvfs(&sb);
