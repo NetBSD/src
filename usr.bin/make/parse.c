@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.128 2007/01/02 23:22:37 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.129 2007/01/15 01:26:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.128 2007/01/02 23:22:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.129 2007/01/15 01:26:32 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.128 2007/01/02 23:22:37 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.129 2007/01/15 01:26:32 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2454,11 +2454,13 @@ Parse_File(const char *name, int fd)
 		     * in a dependency spec, add the command to the list of
 		     * commands of all targets in the dependency spec
 		     */
-		    cp = estrdup(cp);
-		    Lst_ForEach(targets, ParseAddCmd, cp);
+		    if (targets) {
+			cp = estrdup(cp);
+			Lst_ForEach(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
-		    Lst_AtEnd(targCmds, cp);
+			Lst_AtEnd(targCmds, cp);
 #endif
+		    }
 		}
 		continue;
 	    }
