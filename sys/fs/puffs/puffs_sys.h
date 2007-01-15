@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.18 2007/01/09 18:14:31 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.19 2007/01/15 20:40:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -178,6 +178,7 @@ int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 int	puffs_newnode(struct mount *, struct vnode *, struct vnode **,
 		      void *, struct componentname *, enum vtype, dev_t);
 void	puffs_putvnode(struct vnode *);
+struct puffs_node *puffs_cookie2pnode(struct puffs_mount *, void *);
 struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *, int);
 void	puffs_makecn(struct puffs_kcn *, const struct componentname *);
 void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);
