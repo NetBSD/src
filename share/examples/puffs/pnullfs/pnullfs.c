@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.3 2007/01/11 17:50:35 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.4 2007/01/15 00:43:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -55,6 +55,7 @@ main(int argc, char *argv[])
 {
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
+	struct puffs_pathobj *po_root;
 	struct statvfs svfsb;
 	struct stat sb;
 	mntoptparse_t mp;
@@ -123,7 +124,12 @@ main(int argc, char *argv[])
 	pu->pu_pn_root = puffs_pn_new(pu, NULL);
 	if (pu->pu_pn_root == NULL)
 		err(1, "puffs_pn_new");
-	puffs_setrootpath(pu, argv[0]);
+
+	po_root = puffs_getrootpathobj(pu);
+	if (po_root == NULL)
+		err(1, "getrootpathobj");
+	po_root->po_path = argv[0];
+	po_root->po_len = strlen(argv[0]);
 	if (stat(argv[0], &sb) == -1)
 		err(1, "stat %s", argv[0]);
 	puffs_stat2vattr(&pu->pu_pn_root->pn_va, &sb);
