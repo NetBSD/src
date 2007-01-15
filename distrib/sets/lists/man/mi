@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.967 2007/01/14 04:47:47 christos Exp $
+# $NetBSD: mi,v 1.968 2007/01/15 21:49:17 tron Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1753,7 +1753,7 @@
 ./usr/share/man/cat8/amiga/grfconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/installboot.0	man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/amldb.0			man-sysutil-catman	.man
+./usr/share/man/cat8/amldb.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/amq.0			man-amd-catman		.cat
 ./usr/share/man/cat8/amrctl.0			man-sysutil-man		.cat
 ./usr/share/man/cat8/anvil.0			man-postfix-catman	postfix,.cat
