@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.24 2007/01/11 17:48:21 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.25 2007/01/15 00:39:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -52,20 +52,30 @@ struct puffs_cc;
 struct puffs_getreq;
 struct puffs_putreq;
 
-/* XXX: might disappear from here */
+/* paths */
+struct puffs_pathobj {
+	void 	*po_path;
+	size_t	po_len;
+};
+
+/* for prefix rename */
+struct puffs_pathinfo {
+	struct puffs_pathobj *pi_old;
+	struct puffs_pathobj *pi_new;
+};
+
+/* XXX: might disappear from here into a private header */
 struct puffs_node {
-	off_t		pn_size;
-	int		pn_flag;
-	struct vattr	pn_va;
+	off_t			pn_size;
+	int			pn_flag;
+	struct vattr		pn_va;
 
-	void		*pn_data;		/* private data		*/
+	void			*pn_data;	/* private data		*/
 
-	char 		*pn_path;		/* PUFFS_FLAG_BUILDPATH */
-	size_t		pn_plen;
+	struct puffs_pathobj	pn_po;		/* PUFFS_FLAG_BUILDPATH */
 
-	struct puffs_usermount *pn_mnt;
-
-	LIST_ENTRY(puffs_node) pn_entries;
+	struct puffs_usermount 	*pn_mnt;
+	LIST_ENTRY(puffs_node)	pn_entries;
 };
 
 
@@ -89,10 +99,7 @@ struct puffs_usermount;
 
 struct puffs_cn {
 	struct puffs_kcn	*pcn_pkcnp;	/* kernel input */
-
-	/* XXX: this will be a more complex object some day */
-	char			*pcn_fullpath;	/* if PUFFS_FLAG_BUILDPATH */
-	size_t			pcn_fullplen;
+	struct puffs_pathobj	pcn_po_full;	/* PUFFS_FLAG_BUILDPATH */
 };
 #define pcn_nameiop	pcn_pkcnp->pkcn_nameiop
 #define pcn_flags	pcn_pkcnp->pkcn_flags
@@ -100,7 +107,6 @@ struct puffs_cn {
 #define pcn_cred	pcn_pkcnp->pkcn_cred
 #define pcn_name	pcn_pkcnp->pkcn_name
 #define pcn_namelen	pcn_pkcnp->pkcn_namelen
-
 
 /*
  * Puffs options to mount
@@ -194,6 +200,20 @@ struct puffs_ops {
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 };
 
+typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *, struct puffs_pathobj *,
+			       struct puffs_pathobj *, size_t,
+			       struct puffs_pathobj *);
+typedef int (*pu_pathtransform_fn)(struct puffs_usermount *,
+				   struct puffs_pathobj *,
+				   const struct puffs_cn *,
+				   struct puffs_pathobj *);
+typedef int (*pu_pathcmp_fn)(struct puffs_usermount *, struct puffs_pathobj *,
+			  struct puffs_pathobj *, size_t);
+typedef void (*pu_pathfree_fn)(struct puffs_usermount *,
+			       struct puffs_pathobj *);
+typedef int (*pu_namemod_fn)(struct puffs_usermount *,
+			     struct puffs_pathobj *, struct puffs_cn *);
+
 struct puffs_usermount {
 	struct puffs_ops	pu_ops;
 
@@ -208,7 +228,14 @@ struct puffs_usermount {
 
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
 
-	int	pu_wcnt;
+	struct puffs_node	*(*pu_cmap)(void *);
+
+	pu_pathbuild_fn		pu_pathbuild;
+	pu_pathtransform_fn	pu_pathtransform;
+	pu_pathcmp_fn		pu_pathcmp;
+	pu_pathfree_fn		pu_pathfree;
+	pu_namemod_fn		pu_namemod;
+
 	void	*pu_privdata;
 };
 
@@ -353,9 +380,15 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 2
+#define PUFFS_DEVEL_LIBVERSION 3
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
+
+
+#define PNPATH(pnode)	((pnode)->pn_po.po_path)
+#define PNPLEN(pnode)	((pnode)->pn_po.po_len)
+#define PCNPATH(pcnode)	((pcnode)->pcn_po_full.po_path)
+#define PCNPLEN(pcnode)	((pcnode)->pcn_po_full.po_len)
 
 __BEGIN_DECLS
 
@@ -369,14 +402,17 @@ int		puffs_mainloop(struct puffs_usermount *, int);
 int	puffs_getselectable(struct puffs_usermount *);
 int	puffs_setblockingmode(struct puffs_usermount *, int);
 int	puffs_getstate(struct puffs_usermount *);
-int	puffs_setrootpath(struct puffs_usermount *, const char *);
 void	puffs_setstacksize(struct puffs_usermount *, size_t);
+
+struct puffs_pathobj	*puffs_getrootpathobj(struct puffs_usermount *);
 
 struct puffs_node	*puffs_pn_new(struct puffs_usermount *, void *);
 void			puffs_pn_put(struct puffs_node *);
-void			*puffs_pn_nodewalk(struct puffs_usermount *pu,
-					  void*(*fn)(struct puffs_node*,void*),
-					  void *);
+
+typedef		void *	(*puffs_nodewalk_fn)(struct puffs_usermount *,
+					     struct puffs_node *, void *);
+void			*puffs_pn_nodewalk(struct puffs_usermount *,
+					   puffs_nodewalk_fn, void *);
 
 void			puffs_setvattr(struct vattr *, const struct vattr *);
 void			puffs_vattr_null(struct vattr *);
@@ -438,6 +474,33 @@ int	puffs_docc(struct puffs_putreq *, struct puffs_cc *);
 
 int	puffs_inval_namecache_dir(struct puffs_usermount *, void *);
 int	puffs_inval_namecache_all(struct puffs_usermount *);
+
+/*
+ * Path constructicons
+ */
+
+int	puffs_path_buildpath(struct puffs_usermount *, struct puffs_pathobj *,
+			     struct puffs_pathobj *, size_t,
+			     struct puffs_pathobj *);
+int	puffs_path_cmppath(struct puffs_usermount *, struct puffs_pathobj *,
+			   struct puffs_pathobj *, size_t);
+int	puffs_path_transformpath(struct puffs_usermount *,
+			   struct puffs_pathobj *, const struct puffs_cn *,
+			   struct puffs_pathobj *);
+void	puffs_path_freepath(struct puffs_usermount *, struct puffs_pathobj *);
+int	puffs_path_modname(struct puffs_usermount *, struct puffs_pathobj *,
+			   struct puffs_cn *);
+
+void	*puffs_path_prefixadj(struct puffs_usermount *,
+			      struct puffs_node *, void *);
+int	puffs_path_pcnbuild(struct puffs_usermount *,
+			    struct puffs_cn *, void *);
+
+void	puffs_set_pathbuild(struct puffs_usermount *, pu_pathbuild_fn);
+void	puffs_set_pathtransform(struct puffs_usermount *, pu_pathtransform_fn);
+void	puffs_set_pathcmp(struct puffs_usermount *, pu_pathcmp_fn);
+void	puffs_set_pathfree(struct puffs_usermount *, pu_pathfree_fn);
+void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
 
 __END_DECLS
 
