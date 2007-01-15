@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.23 2007/01/11 18:18:36 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.24 2007/01/15 00:39:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.23 2007/01/11 18:18:36 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.24 2007/01/15 00:39:02 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -62,8 +62,6 @@ const struct mntopt puffsmopts[] = {
 	PUFFSMOPT_STD,
 	MOPT_NULL,
 };
-
-static int do_buildpath(struct puffs_cn *, void *);
 
 #define FILLOP(lower, upper)						\
 do {									\
@@ -139,30 +137,55 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 	pu->pu_cc_stacksize = ss;
 }
 
-/*
- * in case the server wants to use some other scheme for paths, it
- * can (*must*) call this in mount.
- */
-int
-puffs_setrootpath(struct puffs_usermount *pu, const char *rootpath)
+struct puffs_pathobj *
+puffs_getrootpathobj(struct puffs_usermount *pu)
 {
 	struct puffs_node *pnr;
 
 	pnr = pu->pu_pn_root;
 	if (pnr == NULL) {
 		errno = ENOENT;
-		return -1;
+		return NULL;
 	}
 
-	free(pnr->pn_path);
-	pnr->pn_path = strdup(rootpath);
-	if (pnr->pn_path == NULL)
-		return -1;
-	pnr->pn_plen = strlen(pnr->pn_path) + 1; /* yes, count nul */
-
-	return 0;
+	return &pnr->pn_po;
 }
 
+
+void
+puffs_set_pathbuild(struct puffs_usermount *pu, pu_pathbuild_fn fn)
+{
+
+	pu->pu_pathbuild = fn;
+}
+
+void
+puffs_set_pathtransform(struct puffs_usermount *pu, pu_pathtransform_fn fn)
+{
+
+	pu->pu_pathtransform = fn;
+}
+
+void
+puffs_set_pathcmp(struct puffs_usermount *pu, pu_pathcmp_fn fn)
+{
+
+	pu->pu_pathcmp = fn;
+}
+
+void
+puffs_set_pathfree(struct puffs_usermount *pu, pu_pathfree_fn fn)
+{
+
+	pu->pu_pathfree = fn;
+}
+
+void
+puffs_set_namemod(struct puffs_usermount *pu, pu_namemod_fn fn)
+{
+
+	pu->pu_namemod = fn;
+}
 
 enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
 
@@ -207,6 +230,15 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 	pu->pu_cc_stacksize = PUFFS_CC_STACKSIZE_DEFAULT;
 	LIST_INIT(&pu->pu_pnodelst);
 
+	/* defaults for some user-settable translation functions */
+	pu->pu_cmap = NULL; /* identity translation */
+
+	pu->pu_pathbuild = puffs_path_buildpath;
+	pu->pu_pathfree = puffs_path_freepath;
+	pu->pu_pathcmp = puffs_path_cmppath;
+	pu->pu_pathtransform = NULL;
+	pu->pu_namemod = NULL;
+
 	pu->pu_state = PUFFS_STATE_MOUNTING;
 	if (mount(MOUNT_PUFFS, dir, mntflags, &pargs) == -1)
 		goto failfree;
@@ -248,14 +280,19 @@ puffs_start(struct puffs_usermount *pu, void *rootcookie, struct statvfs *sbp)
 int
 puffs_exit(struct puffs_usermount *pu, int force)
 {
+	struct puffs_node *pn, *pn_next;
 
 	force = 1; /* currently */
 
 	if (pu->pu_fd)
 		close(pu->pu_fd);
 
-	/* XXX: should free all contents like pnodes */
-
+	pn = LIST_FIRST(&pu->pu_pnodelst);
+	while (pn) {
+		pn_next = LIST_NEXT(pn, pn_entries);
+		puffs_pn_put(pn);
+		pn = pn_next;
+	}
 	free(pu);
 
 	return 0; /* always succesful for now, WILL CHANGE */
@@ -383,54 +420,6 @@ puffs_docc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
 	return 0;
 }
 
-/* XXX: not here, john */
-struct pathinfo {
-	char *old;
-	size_t oldlen;
-	char *new;
-	size_t newlen;
-};
-
-/* substitute all (child) patch prefixes.  needed with paths & rename */
-
-#define SPATHERR ((void *)-1)
-static void *
-spathprefix(struct puffs_node *pn, void *arg)
-{
-	struct pathinfo *pi = arg;
-	char *p, *pnew;
-	size_t plen, pnewlen;
-
-	/* len includes terminating nul */
-	if (strncmp(pn->pn_path, pi->old, pi->oldlen-1) != 0)
-		return NULL;
-
-	/* otherwise we'd have two nodes with an equal path */
-	assert(pn->pn_plen > pi->oldlen);
-
-	/* not a complete directory prefix? */
-	if (*(pn->pn_path + pi->oldlen-1) != '/')
-		return NULL;
-
-	/* found a matching prefix */
-	p = pn->pn_path + pi->oldlen;
-	plen = strlen(p);
-
-	pnewlen = pi->newlen + plen + 1;
-	pnew = malloc(pnewlen);
-	if (pnew == NULL)
-		return SPATHERR; /* XXX: can't recover, should die */
-	strcpy(pnew, pi->new);
-	strcat(pnew, "/");
-	strcat(pnew, p);
-
-	free(pn->pn_path);
-	pn->pn_path = pnew;
-	pn->pn_plen = pnewlen;
-
-	return NULL;
-}
-
 /* library private, but linked from callcontext.c */
 
 void
@@ -505,7 +494,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				if (pcn.pcn_flags & PUFFS_ISDOTDOT) {
 					buildpath = 0;
 				} else {
-					error = do_buildpath(&pcn,
+					error = puffs_path_pcnbuild(pu, &pcn,
 					    preq->preq_cookie);
 					if (error)
 						break;
@@ -519,7 +508,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			if (buildpath) {
 				if (error) {
-					free(pcn.pcn_fullpath);
+					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
 					struct puffs_node *pn;
 
@@ -528,12 +517,12 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					 * recycled node?
 					 * XXX: mapping assumption
 					 */
-					pn = auxt->pvnr_newnode;
-					if (pn->pn_path == NULL) {
-						pn->pn_path = pcn.pcn_fullpath;
-						pn->pn_plen
-						    = pcn.pcn_fullplen;
-					}
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+					if (pn->pn_po.po_path == NULL)
+						pn->pn_po = pcn.pcn_po_full;
+					else
+						pu->pu_pathfree(pu,
+						    &pcn.pcn_po_full);
 				}
 			}
 
@@ -551,7 +540,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			if (buildpath) {
-				error = do_buildpath(&pcn, preq->preq_cookie);
+				error = puffs_path_pcnbuild(pu, &pcn,
+				    preq->preq_cookie);
 				if (error)
 					break;
 			}
@@ -562,13 +552,12 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			if (buildpath) {
 				if (error) {
-					free(pcn.pcn_fullpath);
+					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
 					struct puffs_node *pn;
 
-					pn = auxt->pvnr_newnode;
-					pn->pn_path = pcn.pcn_fullpath;
-					pn->pn_plen = pcn.pcn_fullplen;
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
@@ -586,7 +575,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			if (buildpath) {
-				error = do_buildpath(&pcn, preq->preq_cookie);
+				error = puffs_path_pcnbuild(pu, &pcn,
+				    preq->preq_cookie);
 				if (error)
 					break;
 			}
@@ -597,13 +587,12 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			if (buildpath) {
 				if (error) {
-					free(pcn.pcn_fullpath);
+					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
 					struct puffs_node *pn;
 
-					pn = auxt->pvnr_newnode;
-					pn->pn_path = pcn.pcn_fullpath;
-					pn->pn_plen = pcn.pcn_fullplen;
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
@@ -763,7 +752,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			if (buildpath) {
-				error = do_buildpath(&pcn, preq->preq_cookie);
+				error = puffs_path_pcnbuild(pu, &pcn,
+				    preq->preq_cookie);
 				if (error)
 					break;
 			}
@@ -771,7 +761,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			error = pops->puffs_node_link(pcc,
 			    preq->preq_cookie, auxt->pvnr_cookie_targ, &pcn);
 			if (buildpath)
-				free(pcn.pcn_fullpath);
+				pu->pu_pathfree(pu, &pcn.pcn_po_full);
 
 			break;
 		}
@@ -791,10 +781,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			pcn_targ.pcn_pkcnp = &auxt->pvnr_cn_targ;
 			if (buildpath) {
 				pn_src = auxt->pvnr_cookie_src;
-				pcn_src.pcn_fullpath = pn_src->pn_path;
-				pcn_src.pcn_fullplen = pn_src->pn_plen;
+				pcn_src.pcn_po_full = pn_src->pn_po;
 
-				error = do_buildpath(&pcn_targ,
+				error = puffs_path_pcnbuild(pu, &pcn_targ,
 				    auxt->pvnr_cookie_targdir);
 				if (error)
 					break;
@@ -807,32 +796,29 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			if (buildpath) {
 				if (error) {
-					free(pcn_targ.pcn_fullpath);
+					pu->pu_pathfree(pu,
+					    &pcn_targ.pcn_po_full);
 				} else {
-					struct pathinfo pi;
-					char *oldpath;
+					struct puffs_pathinfo pi;
+					struct puffs_pathobj po_old;
 
 					/* handle this node */
-					oldpath = pn_src->pn_path;
-
-					pn_src->pn_path = pcn_targ.pcn_fullpath;
-					pn_src->pn_plen = pcn_targ.pcn_fullplen;
+					po_old = pn_src->pn_po;
+					pn_src->pn_po = pcn_targ.pcn_po_full;
 
 					if (pn_src->pn_va.va_type != VDIR) {
-						free(oldpath);
+						pu->pu_pathfree(pu, &po_old);
 						break;
 					}
 
 					/* handle all child nodes for DIRs */
-					pi.old = pcn_src.pcn_fullpath;
-					pi.oldlen = pcn_src.pcn_fullplen;
-					pi.new = pcn_targ.pcn_fullpath;
-					pi.newlen = pcn_targ.pcn_fullplen;
+					pi.pi_old = &pcn_src.pcn_po_full;
+					pi.pi_new = &pcn_targ.pcn_po_full;
 
 					if (puffs_pn_nodewalk(pu,
-					    spathprefix, &pi) == SPATHERR)
+					    puffs_path_prefixadj, &pi) != NULL)
 						error = ENOMEM;
-					free(oldpath);
+					pu->pu_pathfree(pu, &po_old);
 				}
 			}
 			break;
@@ -849,7 +835,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			if (buildpath) {
-				error = do_buildpath(&pcn, preq->preq_cookie);
+				error = puffs_path_pcnbuild(pu, &pcn,
+				    preq->preq_cookie);
 				if (error)
 					break;
 			}
@@ -860,13 +847,12 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			if (buildpath) {
 				if (error) {
-					free(pcn.pcn_fullpath);
+					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
 					struct puffs_node *pn;
 
-					pn = auxt->pvnr_newnode;
-					pn->pn_path = pcn.pcn_fullpath;
-					pn->pn_plen = pcn.pcn_fullplen;
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
@@ -900,7 +886,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			if (buildpath) {
-				error = do_buildpath(&pcn, preq->preq_cookie);
+				error = puffs_path_pcnbuild(pu, &pcn,
+				    preq->preq_cookie);
 				if (error)
 					break;
 			}
@@ -911,13 +898,12 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			if (buildpath) {
 				if (error) {
-					free(pcn.pcn_fullpath);
+					pu->pu_pathfree(pu, &pcn.pcn_po_full);
 				} else {
 					struct puffs_node *pn;
 
-					pn = auxt->pvnr_newnode;
-					pn->pn_path = pcn.pcn_fullpath;
-					pn->pn_plen = pcn.pcn_fullplen;
+					pn = PU_CMAP(pu, auxt->pvnr_newnode);
+					pn->pn_po = pcn.pcn_po_full;
 				}
 			}
 
@@ -1123,30 +1109,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 	pcc->pcc_rv = rv;
 	pcc->pcc_flags |= PCC_DONE;
-}
-
-static int
-do_buildpath(struct puffs_cn *pcn, void *parent)
-{
-	struct puffs_node *pn_parent;
-	size_t plen;
-
-	pn_parent = parent; /* XXX */
-	assert(pn_parent->pn_path != NULL);
-
-	/* +1 not for nul but for / */
-	plen = pn_parent->pn_plen + pcn->pcn_namelen + 1;
-	pcn->pcn_fullpath = malloc(plen);
-	if (!pcn->pcn_fullpath)
-		return errno;
-
-	strcpy(pcn->pcn_fullpath, pn_parent->pn_path);
-	strcat(pcn->pcn_fullpath, "/");
-	strcat(pcn->pcn_fullpath, pcn->pcn_name);
-	pcn->pcn_fullpath[plen-1] = '\0'; /* paranoia */
-	pcn->pcn_fullplen = plen;
-
-	return 0;
 }
 
 

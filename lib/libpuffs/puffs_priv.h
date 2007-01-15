@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.3 2007/01/06 18:22:09 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.4 2007/01/15 00:39:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,8 @@
 
 #include <puffs.h>
 #include <ucontext.h>
+
+#define PU_CMAP(pu, c)	(pu->pu_cmap ? pu->pu_cmap(c) : (struct puffs_node *)c)
 
 /* call context */
 
