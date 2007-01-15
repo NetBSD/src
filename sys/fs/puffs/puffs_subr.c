@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.15 2007/01/15 20:40:29 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.16 2007/01/15 23:29:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,10 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.15 2007/01/15 20:40:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.16 2007/01/15 23:29:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
+#include <sys/hash.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socketvar.h>
@@ -57,6 +58,9 @@ POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
 int puffsdebug;
 #endif
 
+static __inline struct puffs_node_hashlist
+	*puffs_cookie2hashlist(struct puffs_mount *, void *);
+static struct puffs_node *puffs_cookie2pnode(struct puffs_mount *, void *);
 
 static void puffs_gop_size(struct vnode *, off_t, off_t *, int);
 static void puffs_gop_markupdate(struct vnode *, int);
@@ -80,6 +84,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	struct puffs_mount *pmp;
 	struct vnode *vp, *nvp;
 	struct puffs_node *pnode;
+	struct puffs_node_hashlist *plist;
 	int error;
 
 	pmp = MPTOPUFFSMP(mp);
@@ -121,10 +126,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 
 	/* So it's not dead yet.. good.. inform new vnode of its master */
 	simple_lock(&mntvnode_slock);
-	if (TAILQ_EMPTY(&mp->mnt_vnodelist))
-		TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	else
-		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	simple_unlock(&mntvnode_slock);
 	vp->v_mount = mp;
 
@@ -183,7 +185,8 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
 	pnode->pn_cookie = cookie;
 	pnode->pn_stat = 0;
-	LIST_INSERT_HEAD(&pmp->pmp_pnodelist, pnode, pn_entries);
+	plist = puffs_cookie2hashlist(pmp, cookie);
+	LIST_INSERT_HEAD(plist, pnode, pn_hashent);
 	vp->v_data = pnode;
 	vp->v_type = type;
 	pnode->pn_vp = vp;
@@ -254,23 +257,34 @@ puffs_putvnode(struct vnode *vp)
 		panic("puffs_putvnode: %p not a puffs vnode", vp);
 #endif
 
-	LIST_REMOVE(pnode, pn_entries);
+	LIST_REMOVE(pnode, pn_hashent);
 	pool_put(&puffs_pnpool, vp->v_data);
 	vp->v_data = NULL;
 
 	return;
 }
 
+static __inline struct puffs_node_hashlist *
+puffs_cookie2hashlist(struct puffs_mount *pmp, void *cookie)
+{
+	uint32_t hash;
+
+	hash = hash32_buf(&cookie, sizeof(void *), HASH32_BUF_INIT);
+	return &pmp->pmp_pnodehash[hash % pmp->pmp_npnodehash];
+}
+
 /*
  * Translate cookie to puffs_node.  Caller must hold mountpoint
  * lock and it will be held upon return.
  */
-struct puffs_node *
+static struct puffs_node *
 puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
 {
+	struct puffs_node_hashlist *plist;
 	struct puffs_node *pnode;
 
-	LIST_FOREACH(pnode, &pmp->pmp_pnodelist, pn_entries) {
+	plist = puffs_cookie2hashlist(pmp, cookie);
+	LIST_FOREACH(pnode, plist, pn_hashent) {
 		if (pnode->pn_cookie == cookie)
 			break;
 	}

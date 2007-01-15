@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.19 2007/01/15 20:40:29 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.20 2007/01/15 23:29:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -119,6 +119,7 @@ extern int puffsdebug; /* puffs_subr.c */
 #define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
 
 TAILQ_HEAD(puffs_wq, puffs_park);
+LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
 	struct simplelock		pmp_lock;
 
@@ -133,14 +134,15 @@ struct puffs_mount {
 	struct puffs_wq			pmp_req_replywait;
 	TAILQ_HEAD(, puffs_sizepark)	pmp_req_sizepark;
 
-	LIST_HEAD(, puffs_node)		pmp_pnodelist;
+	struct puffs_node_hashlist	*pmp_pnodehash;
+	size_t				pmp_npnodehash;
 
 	struct mount			*pmp_mp;
 	struct vnode			*pmp_root;
 	void				*pmp_rootcookie;
 	struct selinfo			*pmp_sel;	/* in puffs_instance */
 
-	unsigned int			pmp_nextreq;
+	uint64_t			pmp_nextreq;
 	uint8_t				pmp_status;
 	uint8_t				pmp_unmounting;
 };
@@ -159,7 +161,7 @@ struct puffs_node {
 	struct vnode	*pn_vp;		/* backpointer to vnode		*/
 	uint32_t	pn_stat;	/* node status			*/
 
-	LIST_ENTRY(puffs_node) pn_entries;
+	LIST_ENTRY(puffs_node) pn_hashent;
 };
 
 int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
@@ -178,7 +180,6 @@ int	puffs_getvnode(struct mount *, void *, enum vtype, voff_t, dev_t,
 int	puffs_newnode(struct mount *, struct vnode *, struct vnode **,
 		      void *, struct componentname *, enum vtype, dev_t);
 void	puffs_putvnode(struct vnode *);
-struct puffs_node *puffs_cookie2pnode(struct puffs_mount *, void *);
 struct vnode *puffs_pnode2vnode(struct puffs_mount *, void *, int);
 void	puffs_makecn(struct puffs_kcn *, const struct componentname *);
 void	puffs_credcvt(struct puffs_cred *, kauth_cred_t);

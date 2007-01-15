@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.21 2007/01/09 23:10:23 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.22 2007/01/15 23:29:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.21 2007/01/09 23:10:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.22 2007/01/15 23:29:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -53,14 +53,22 @@ VFS_PROTOS(puffs);
 
 MALLOC_DEFINE(M_PUFFS, "puffs", "pass-to-userspace file system structures");
 
+#ifndef PUFFS_PNODEBUCKETS
+#define PUFFS_PNODEBUCKETS 256
+#endif
+#ifndef PUFFS_MAXPNODEBUCKETS
+#define PUFFS_MAXPNODEBUCKETS 65536
+#endif
+int puffs_pnodebuckets = PUFFS_PNODEBUCKETS;
+
 int
 puffs_mount(struct mount *mp, const char *path, void *data,
 	    struct nameidata *ndp, struct lwp *l)
 {
-	struct puffs_mount *pmp;
+	struct puffs_mount *pmp = NULL;
 	struct puffs_args *args;
 	char namebuf[PUFFSNAMESIZE+sizeof(PUFFS_NAMEPREFIX)+1]; /* spooky */
-	int error = 0;
+	int error = 0, i;
 
 	if (mp->mnt_flag & MNT_GETARGS) {
 		pmp = MPTOPUFFSMP(mp);
@@ -129,13 +137,24 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	pmp->pmp_req_maxsize = args->pa_maxreqlen;
 	pmp->pmp_args = *args;
 
+	/* puffs_node hash buckets */
+	pmp->pmp_npnodehash = puffs_pnodebuckets;
+	if (pmp->pmp_npnodehash < 1)
+		pmp->pmp_npnodehash = 1;
+	if (pmp->pmp_npnodehash > PUFFS_MAXPNODEBUCKETS)
+		pmp->pmp_npnodehash = PUFFS_MAXPNODEBUCKETS;
+	pmp->pmp_pnodehash = malloc
+	    (sizeof(struct puffs_pnode_hashlist *) * pmp->pmp_npnodehash,
+	    M_PUFFS, M_WAITOK);
+	for (i = 0; i < pmp->pmp_npnodehash; i++)
+		LIST_INIT(&pmp->pmp_pnodehash[i]);
+
 	/*
 	 * Inform the fileops processing code that we have a mountpoint.
 	 * If it doesn't know about anyone with our pid/fd having the
 	 * device open, punt
 	 */
 	if (puffs_setpmp(l->l_proc->p_pid, args->pa_fd, pmp)) {
-		FREE(pmp, M_PUFFS);
 		error = ENOENT;
 		goto out;
 	}
@@ -151,6 +170,10 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	vfs_getnewfsid(mp);
 
  out:
+	if (error && pmp && pmp->pmp_pnodehash)
+		free(pmp->pmp_pnodehash, M_PUFFS);
+	if (error && pmp)
+		FREE(pmp, M_PUFFS);
 	FREE(args, M_PUFFS);
 	return error;
 }
@@ -264,6 +287,7 @@ puffs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		pmp->pmp_status = PUFFSTAT_DYING;
 		puffs_nukebypmp(pmp);
 		simple_unlock(&pmp->pmp_lock);
+		free(pmp->pmp_pnodehash, M_PUFFS);
 		FREE(pmp, M_PUFFS);
 		error = 0;
 	} else {
