@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.14 2007/01/09 18:14:31 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.15 2007/01/15 20:40:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.14 2007/01/09 18:14:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.15 2007/01/15 20:40:29 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -212,6 +212,20 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		return error;
 	}
 
+	/*
+	 * Check for previous node with the same designation.
+	 *
+	 * XXX: technically this error check should punish the fs,
+	 * not the caller.
+	 */
+	simple_lock(&pmp->pmp_lock);
+	if (puffs_cookie2pnode(pmp, cookie) != NULL) {
+		simple_unlock(&pmp->pmp_lock);
+		error = EEXIST;
+		return error;
+	}
+	simple_unlock(&pmp->pmp_lock);
+
 	error = puffs_getvnode(dvp->v_mount, cookie, type, 0, rdev, &vp);
 	if (error)
 		return error;
@@ -248,6 +262,23 @@ puffs_putvnode(struct vnode *vp)
 }
 
 /*
+ * Translate cookie to puffs_node.  Caller must hold mountpoint
+ * lock and it will be held upon return.
+ */
+struct puffs_node *
+puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
+{
+	struct puffs_node *pnode;
+
+	LIST_FOREACH(pnode, &pmp->pmp_pnodelist, pn_entries) {
+		if (pnode->pn_cookie == cookie)
+			break;
+	}
+
+	return pnode;
+}
+
+/*
  * Locate the in-kernel vnode based on the cookie received given
  * from userspace.  Returns a locked & referenced vnode, if found,
  * NULL otherwise.
@@ -262,16 +293,14 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 	int vgetflags;
 
 	simple_lock(&pmp->pmp_lock);
-	LIST_FOREACH(pnode, &pmp->pmp_pnodelist, pn_entries) {
-		if (pnode->pn_cookie == cookie)
-			break;
-	}
-	simple_unlock(&pmp->pmp_lock);
+	pnode = puffs_cookie2pnode(pmp, cookie);
 
-	/* XXX: what lock controls this? */
-	if (!pnode)
+	if (pnode == NULL) {
+		simple_unlock(&pmp->pmp_lock);
 		return NULL;
+	}
 	vp = pnode->pn_vp;
+	simple_unlock(&pmp->pmp_lock);
 
 	if (lock)
 		vgetflags = LK_EXCLUSIVE | LK_RETRY;
