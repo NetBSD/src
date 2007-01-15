@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.128 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.129 2007/01/15 17:45:33 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.128 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.129 2007/01/15 17:45:33 elad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -305,8 +305,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);
 
-	kauth_cred_hold(p1->p_cred);
-	p2->p_cred = p1->p_cred;
+	kauth_proc_fork(p1, p2);
 
 	LIST_INIT(&p2->p_raslist);
 #if defined(__HAVE_RAS)
