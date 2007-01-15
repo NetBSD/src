@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.6 2007/01/11 18:50:42 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.7 2007/01/15 00:42:21 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.6 2007/01/11 18:50:42 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.7 2007/01/15 00:42:21 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -106,7 +106,7 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	puffs_inval_namecache_dir(puffs_cc_getusermount(pcc), pn);
 
 	pb = psbuf_make(PSB_OUT);
-	psbuf_req_str(pb, SSH_FXP_OPENDIR, reqid, pn->pn_path);
+	psbuf_req_str(pb, SSH_FXP_OPENDIR, reqid, PNPATH(pn));
 	pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 
 	puffs_cc_yield(pcc);

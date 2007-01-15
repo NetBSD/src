@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.2 2007/01/06 18:25:19 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.3 2007/01/15 00:42:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -190,6 +190,6 @@ struct puffs_node *makenode(struct puffs_usermount *, struct puffs_node *,
 struct puffs_node *allocnode(struct puffs_usermount *, struct puffs_node *,
 			    const char *, const struct vattr *);
 struct psshfs_dir *direnter(struct puffs_node *, const char *);
-void nukenode(struct puffs_node *, const char *);
+void nukenode(struct puffs_node *, const char *, int);
 
 #endif /* PSSHFS_H_ */
