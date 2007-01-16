@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.33 2007/01/15 17:45:32 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.34 2007/01/16 11:51:22 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -301,5 +301,8 @@ void kauth_cred_topcred(kauth_cred_t, struct pcred *);
 kauth_cred_t kauth_cred_get(void);
 
 void kauth_proc_fork(struct proc *, struct proc *);
+
+void secmodel_register(void);
+void secmodel_deregister(void);
 
 #endif	/* !_SYS_KAUTH_H_ */

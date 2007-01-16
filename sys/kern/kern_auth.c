@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.38 2007/01/15 17:45:32 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.39 2007/01/16 11:51:22 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.38 2007/01/15 17:45:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.39 2007/01/16 11:51:22 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,7 +94,7 @@ static kauth_scope_t kauth_builtin_scope_network;
 static kauth_scope_t kauth_builtin_scope_machdep;
 static kauth_scope_t kauth_builtin_scope_device;
 
-static boolean_t listeners_have_been_loaded = FALSE;
+static unsigned int nsecmodels = 0;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
@@ -706,8 +706,6 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 	scope->nlisteners++;
 	listener->scope = scope;
 
-	listeners_have_been_loaded = TRUE;
-
 	return (listener);
 }
 
@@ -758,14 +756,9 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 
 	KASSERT(scope != NULL);
 
-	if (!listeners_have_been_loaded) {
-		KASSERT(SIMPLEQ_EMPTY(&scope->listenq));
-
-		return (0);
-	}
-
 	fail = 0;
 	allow = 0;
+
 	SIMPLEQ_FOREACH(listener, &scope->listenq, listener_next) {
 		error = listener->func(cred, action, scope->cookie, arg0,
 				       arg1, arg2, arg3);
@@ -776,7 +769,16 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 			fail = 1;
 	}
 
-	return ((allow && !fail) ? 0 : EPERM);
+	if (fail)
+		return (EPERM);
+
+	if (allow)
+		return (0);
+
+	if (!nsecmodels)
+		return (0);
+
+	return (EPERM);
 };
 
 /*
@@ -861,4 +863,20 @@ kauth_authorize_device_passthru(kauth_cred_t cred, dev_t dev, u_long bits,
 	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
 	    KAUTH_DEVICE_RAWIO_PASSTHRU, (void *)bits, (void *)(u_long)dev,
 	    data, NULL));
+}
+
+void
+secmodel_register(void)
+{
+	KASSERT(nsecmodels + 1 != 0);
+
+	nsecmodels++;
+}
+
+void
+secmodel_deregister(void)
+{
+	KASSERT(nsecmodels != 0);
+
+	nsecmodels--;
 }
