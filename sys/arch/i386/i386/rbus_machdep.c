@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.19 2007/01/12 20:34:09 gdt Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.20 2007/01/16 18:46:03 gdt Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.19 2007/01/12 20:34:09 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.20 2007/01/16 18:46:03 gdt Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -105,15 +105,18 @@ rbus_min_start_hint(size_t ram)
 
 	if (ram >= 1024*1024*1024UL) {
 	  /*
-	   * >= 1GB, so try 2 GB.
+	   * > 1GB, so try 2 GB.
 	   */
 	  rbus_min_start =  2 * 1024 * 1024 * 1024UL;
 	}
 
-	/*
-	 * XXX For machines with more than 2G, the right choice is not
-	 * clear.
-	 */
+	/* XXX not tested. */
+	if (ram > 2 * 1024*1024*1024UL) {
+	  /*
+	   * > 2 GB, so try 3 GB.
+	   */
+	  rbus_min_start =  3 * 1024 * 1024 * 1024UL;
+	}
 
 	printf("rbus: rbus_min_start set to 0x%0lx\n", rbus_min_start);
 #endif
