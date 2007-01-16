@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.111 2006/09/02 11:10:24 yamt Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.112 2007/01/16 17:32:04 hubertf Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.111 2006/09/02 11:10:24 yamt Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.112 2007/01/16 17:32:04 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -85,7 +85,6 @@ __RCSID("$NetBSD: mountd.c,v 1.111 2006/09/02 11:10:24 yamt Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <netgroup.h>
 #include <err.h>
 #include <util.h>
 #include "pathnames.h"

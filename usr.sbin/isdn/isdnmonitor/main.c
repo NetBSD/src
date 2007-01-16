@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7 2003/11/12 13:31:07 grant Exp $ */
+/* $NetBSD: main.c,v 1.8 2007/01/16 17:32:05 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #else
-#include <stdarg.h>
 #include <windows.h>
 extern char	*optarg;
 int getopt(int nargc, char * const nargv[], const char *ostr);

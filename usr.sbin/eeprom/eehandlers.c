@@ -1,4 +1,4 @@
-/*	$NetBSD: eehandlers.c,v 1.12 2006/11/20 20:36:12 christos Exp $	*/
+/*	$NetBSD: eehandlers.c,v 1.13 2007/01/16 17:32:04 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

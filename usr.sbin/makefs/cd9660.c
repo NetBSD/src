@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.17 2006/12/18 21:03:29 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.18 2007/01/16 17:32:05 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -97,22 +97,19 @@
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
+#else
+#include <sys/mount.h>
 #endif
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.17 2006/12/18 21:03:29 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.18 2007/01/16 17:32:05 hubertf Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
 #include <ctype.h>
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/queue.h>
-
-#if !HAVE_NBTOOL_CONFIG_H
-#include <sys/mount.h>
-#endif
 
 #include "makefs.h"
 #include "cd9660.h"
