@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.9 2003/08/07 11:25:46 agc Exp $	*/
+/*	$NetBSD: globals.h,v 1.10 2007/01/16 12:08:23 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -45,7 +45,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <syslog.h>
 #include <syslog.h>
 #include <unistd.h>
 
