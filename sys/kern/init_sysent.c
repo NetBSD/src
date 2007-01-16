@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.181.2.3 2007/01/11 22:22:59 ad Exp $ */
+/* $NetBSD: init_sysent.c,v 1.181.2.4 2007/01/16 01:28:27 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.181.2.3 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.181.2.4 2007/01/16 01:28:27 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -890,11 +890,11 @@ struct sysent sysent[] = {
 	    sys__lwp_kill },			/* 318 = _lwp_kill */
 	{ 1, s(struct sys__lwp_detach_args), 0,
 	    sys__lwp_detach },			/* 319 = _lwp_detach */
-	{ 2, s(struct sys__lwp_park_args), 0,
+	{ 3, s(struct sys__lwp_park_args), 0,
 	    sys__lwp_park },			/* 320 = _lwp_park */
-	{ 1, s(struct sys__lwp_unpark_args), 0,
+	{ 2, s(struct sys__lwp_unpark_args), 0,
 	    sys__lwp_unpark },			/* 321 = _lwp_unpark */
-	{ 2, s(struct sys__lwp_unpark_all_args), 0,
+	{ 3, s(struct sys__lwp_unpark_all_args), 0,
 	    sys__lwp_unpark_all },		/* 322 = _lwp_unpark_all */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 323 = unimplemented */

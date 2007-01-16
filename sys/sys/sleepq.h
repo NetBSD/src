@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.5 2007/01/11 22:23:00 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.6 2007/01/16 01:28:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -136,9 +136,12 @@ sleepq_enter(sleepq_t *sq, struct lwp *l)
 #endif
 }
 
-/*
- * Release the sleep queue interlock as acquired by sleeptab_lookup().
- */
+static inline void
+sleepq_lock(sleepq_t *sq)
+{
+	smutex_enter(sq->sq_mutex);
+}
+
 static inline void
 sleepq_unlock(sleepq_t *sq)
 {

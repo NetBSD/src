@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.156.2.4 2007/01/11 22:23:00 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.156.2.5 2007/01/16 01:28:27 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -1398,15 +1398,18 @@ struct sys__lwp_detach_args {
 struct sys__lwp_park_args {
 	syscallarg(const struct timespec *) ts;
 	syscallarg(struct __ucontext *) ucp;
+	syscallarg(void *) hint;
 };
 
 struct sys__lwp_unpark_args {
 	syscallarg(lwpid_t) target;
+	syscallarg(void *) hint;
 };
 
 struct sys__lwp_unpark_all_args {
 	syscallarg(const lwpid_t *) targets;
 	syscallarg(size_t) ntargets;
+	syscallarg(void *) hint;
 };
 
 struct sys_sa_register_args {
