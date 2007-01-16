@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.52 2007/01/01 20:56:58 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.53 2007/01/16 15:43:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.52 2007/01/01 20:56:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.53 2007/01/16 15:43:44 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -148,6 +148,7 @@ static void amd_family6_probe(struct cpu_info *);
 static void intel_family_new_probe(struct cpu_info *);
 
 static const char *intel_family6_name(struct cpu_info *);
+static const char *amd_amd64_name(struct cpu_info *);
 
 static void transmeta_cpu_info(struct cpu_info *);
 
@@ -339,7 +340,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Unknown K7 (Athlon)"	/* Default */
+				"Unknown K8 (Athlon)"	/* Default */
 			},
 			NULL,
 			amd_family6_probe,
@@ -733,6 +734,131 @@ intel_family6_name(struct cpu_info *ci)
 			}
 			if (ret == NULL)
 				ret = i386_intel_brand[ci->ci_brand_id];
+		}
+	}
+
+	return ret;
+}
+
+/*
+ * Identify AMD64 CPU names from cpuid.
+ *
+ * Based on "Revision Guide for AMD Athlon 64 and AMD Opteron Processors"
+ * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf
+ * miscellaneous reports.
+ */
+const char *
+amd_amd64_name(struct cpu_info *ci)
+{
+	int extfamily, extmodel, model;
+	const char *ret = NULL;
+
+	model = CPUID2MODEL(ci->ci_signature);
+	extfamily = CPUID2EXTFAMILY(ci->ci_signature);
+	extmodel  = CPUID2EXTMODEL(ci->ci_signature);
+
+	if (extfamily == 0x00) {
+		switch (model) {
+		case 0x1:
+			switch (extmodel) {
+			case 0x2:	/* rev JH-E1/E6 */
+				ret = "Dual-Core Opteron";
+				break;
+			}
+			break;
+		case 0x3:
+			switch (extmodel) {
+			case 0x2:	/* rev JH-E6 (Toledo) */
+				ret = "Dual-Core Opteron or Athlon 64 X2";
+				break;
+			case 0x4:	/* rev JH-F2 (Windsor) */
+				ret = "Athlon 64 FX or Athlon 64 X2";
+				break;
+			}
+			break;
+		case 0x4:
+			switch (extmodel) {
+			case 0x0:	/* rev SH-B0/C0/CG (ClawHammer) */
+			case 0x1:	/* rev SH-D0 */
+				ret = "Athlon 64";
+				break;
+			case 0x2:	/* rev SH-E5 (Lancaster?) */
+				ret = "Mobile Athlon 64 or Turion 64";
+				break;
+			}
+			break;
+		case 0x5:
+			switch (extmodel) {
+			case 0x0:	/* rev SH-B0/B3/C0/CG (SledgeHammer?) */
+				ret = "Opteron or Athlon 64 FX";
+				break;
+			case 0x1:	/* rev SH-D0 */
+			case 0x2:	/* rev SH-E4 */
+				ret = "Opteron";
+				break;
+			}
+			break;
+		case 0x7:
+			switch (extmodel) {
+			case 0x0:	/* rev SH-CG (ClawHammer) */
+			case 0x1:	/* rev SH-D0 */
+				ret = "Athlon 64";
+				break;
+			case 0x2:	/* rev DH-E4, SH-E4 */
+				ret = "Athlon 64 or Athlon 64 FX or Opteron";
+				break;
+			}
+			break;
+		case 0x8:
+			switch (extmodel) {
+			case 0x0:	/* rev CH-CG */
+			case 0x1:	/* rev CH-D0 */
+				ret = "Athlon 64 or Sempron";
+				break;
+			}
+			break;
+		case 0xb:
+			switch (extmodel) {
+			case 0x0:	/* rev CH-CG */
+			case 0x1:	/* rev CH-D0 */
+				ret = "Athlon 64";
+				break;
+			case 0x2:	/* rev BH-E4 (Manchester) */
+			case 0x4:	/* rev BH-F2 (Windsor) */
+				ret = "Athlon 64 X2";
+				break;
+			}
+			break;
+		case 0xc:
+			switch (extmodel) {
+			case 0x0:	/* rev DH-CG (Newcastle) */
+			case 0x1:	/* rev DH-D0 (Winchester) */
+				ret = "Athlon 64 or Sempron";
+				break;
+			case 0x2:	/* rev DH-E3/E6 */
+				ret = "Sempron";
+				break;
+			}
+			break;
+		case 0xe:
+			switch (extmodel) {
+			case 0x0:	/* rev DH-CG (Newcastle?) */
+				ret = "Athlon 64 or Sempron";
+				break;
+			}
+			break;
+		case 0xf:
+			switch (extmodel) {
+			case 0x0:	/* rev DH-CG (Newcastle/Paris) */
+			case 0x1:	/* rev DH-D0 (Winchester/Victoria) */
+			case 0x2:	/* rev DH-E3/E6 (Venice/Palermo) */
+			case 0x4:	/* rev DH-F2 (Orleans/Manila) */
+				ret = "Athlon 64 or Sempron";
+				break;
+			}
+			break;
+		default:
+			ret = "Unknown AMD64 CPU";
 		}
 	}
 
@@ -1365,17 +1491,30 @@ identifycpu(struct cpu_info *ci)
 					     i386_intel_brand[ci->ci_brand_id];
 			}
 
-			if (vendor == CPUVENDOR_AMD && family == 6 &&
-			    model >= 6) {
-				if (ci->ci_brand_id == 1)
-					/* 
-					 * It's Duron. We override the 
-					 * name, since it might have been 
-					 * misidentified as Athlon.
+			if (vendor == CPUVENDOR_AMD) {
+				if (family == 6 && model >= 6) {
+					if (ci->ci_brand_id == 1)
+						/* 
+						 * It's Duron. We override the 
+						 * name, since it might have
+						 * been misidentified as Athlon.
+						 */
+						name =
+						    amd_brand[ci->ci_brand_id];
+					else
+						brand = amd_brand_name;
+				}
+				if (CPUID2FAMILY(ci->ci_signature) == 0xf) {
+					/*
+					 * Identify AMD64 CPU names.
+					 * Note family value is clipped by
+					 * CPU_MAXFAMILY.
 					 */
-					name = amd_brand[ci->ci_brand_id];
-				else
-					brand = amd_brand_name;
+					const char *tmp;
+					tmp = amd_amd64_name(ci);
+					if (tmp != NULL)
+						name = tmp;
+				}
 			}
 			
 			if (vendor == CPUVENDOR_IDT && family >= 6)
