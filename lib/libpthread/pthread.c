@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.54 2007/01/16 04:19:02 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.55 2007/01/16 05:22:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.54 2007/01/16 04:19:02 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.55 2007/01/16 05:22:55 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -858,6 +858,7 @@ pthread_join(pthread_t thread, void **valptr)
 		}
 		thread->pt_state = PT_STATE_DEAD;
 		pthread_spinunlock(self, &thread->pt_join_lock);
+		(void)_lwp_detach(thread->pt_lid);
 		break;
 	default:
 		pthread_spinunlock(self, &thread->pt_join_lock);
