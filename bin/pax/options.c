@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.98 2006/10/16 00:11:22 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.99 2007/01/16 19:06:41 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.98 2006/10/16 00:11:22 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.99 2007/01/16 19:06:41 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -816,6 +816,14 @@ struct option tar_longopts[] = {
 };
 
 static void
+tar_set_action(int op)
+{
+	if (act != ERROR && act != op)
+		tar_usage();
+	act = op;
+}
+
+static void
 tar_options(int argc, char **argv)
 {
 	int c;
@@ -857,7 +865,7 @@ tar_options(int argc, char **argv)
 			/*
 			 * create an archive
 			 */
-			act = ARCHIVE;
+			tar_set_action(ARCHIVE);
 			break;
 		case 'e':
 			/*
@@ -954,7 +962,7 @@ tar_options(int argc, char **argv)
 			/*
 			 * append to the archive
 			 */
-			act = APPND;
+			tar_set_action(APPND);
 			break;
 		case 's':
 			/*
@@ -969,7 +977,7 @@ tar_options(int argc, char **argv)
 			/*
 			 * list contents of the tape
 			 */
-			act = LIST;
+			tar_set_action(LIST);
 			break;
 		case 'v':
 			/*
@@ -988,7 +996,7 @@ tar_options(int argc, char **argv)
 			 * extract an archive, preserving mode,
 			 * and mtime if possible.
 			 */
-			act = EXTRACT;
+			tar_set_action(EXTRACT);
 			pmtime = 1;
 			break;
 		case 'z':
@@ -1419,6 +1427,17 @@ struct option cpio_longopts[] = {
 	{ 0,			0,			0,	0 },
 };
 
+static void
+cpio_set_action(int op)
+{
+	if ((act == APPND && op == ARCHIVE) || (act == ARCHIVE && op == APPND))
+		act = APPND;
+	else if (act != ERROR && act != op)
+		cpio_usage();
+	else
+		act = op;
+}
+
 /*
  * cpio_options()
  *	look at the user specified flags. set globals as required and check if
@@ -1488,7 +1507,7 @@ cpio_options(int argc, char **argv)
 			/*
 			 * read the archive
 			 */
-			act = EXTRACT;
+			cpio_set_action(EXTRACT);
 			flg |= RF;
 			break;
 #ifdef notyet
@@ -1513,7 +1532,7 @@ cpio_options(int argc, char **argv)
 			/*
 			 * write an archive
 			 */
-			act = ARCHIVE;
+			cpio_set_action(ARCHIVE);
 			frmt = &(fsub[F_SV4CRC]);
 			flg |= WF;
 			break;
@@ -1521,7 +1540,7 @@ cpio_options(int argc, char **argv)
 			/*
 			 * cpio -p is like pax -rw
 			 */
-			act = COPY;
+			cpio_set_action(COPY);
 			flg |= RF | WF;
 			break;
 		case 'r':
@@ -1542,7 +1561,7 @@ cpio_options(int argc, char **argv)
 			/*
 			 * list contents of archive
 			 */
-			act = LIST;
+			cpio_set_action(LIST);
 			listf = stdout;
 			flg &= ~RF;
 			break;
@@ -1571,7 +1590,7 @@ cpio_options(int argc, char **argv)
 			/*
 			 * append to an archive
 			 */
-			act = APPND;
+			cpio_set_action(APPND);
 			flg |= AF;
 			break;
 		case 'B':
