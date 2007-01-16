@@ -1,4 +1,4 @@
-/*	$NetBSD: ophandlers.c,v 1.8 2000/11/28 22:31:37 mrg Exp $	*/
+/*	$NetBSD: ophandlers.c,v 1.9 2007/01/16 17:32:04 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

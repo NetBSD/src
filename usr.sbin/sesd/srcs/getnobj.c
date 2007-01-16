@@ -1,4 +1,4 @@
-/* $NetBSD: getnobj.c,v 1.2 2000/02/22 06:06:07 mjacob Exp $ */ 
+/* $NetBSD: getnobj.c,v 1.3 2007/01/16 17:32:05 hubertf Exp $ */ 
 /* $FreeBSD: $ */
 /* $OpenBSD: $ */
 /*
@@ -34,7 +34,6 @@
  * mjacob@feral.com
  */
 
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
