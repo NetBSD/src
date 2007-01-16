@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.14 2004/03/28 20:49:22 pooka Exp $ 
+ *	$Id: isdnd.h,v 1.15 2007/01/16 12:07:08 hubertf Exp $ 
  *
  * $FreeBSD$
  *
@@ -48,7 +48,6 @@
 #include <syslog.h>
 #include <regex.h>
 #include <time.h>
-#include <errno.h>
 
 #ifdef USE_CURSES
 #include <curses.h>
