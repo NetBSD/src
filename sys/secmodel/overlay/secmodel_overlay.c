@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.7 2007/01/16 00:11:39 elad Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.8 2007/01/16 11:53:00 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.7 2007/01/16 00:11:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.8 2007/01/16 11:53:00 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,6 +184,8 @@ secmodel_overlay_start(void)
 	    secmodel_overlay_machdep_cb, NULL);
 	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    secmodel_overlay_device_cb, NULL);
+
+	secmodel_register();
 }
 
 void
