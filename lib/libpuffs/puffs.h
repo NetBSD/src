@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.25 2007/01/15 00:39:02 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.26 2007/01/16 22:37:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -152,7 +152,6 @@ struct puffs_ops {
 	    void *, const struct vattr *, const struct puffs_cred *, pid_t);
 	int (*puffs_node_poll)(struct puffs_cc *,
 	    void *, struct puffs_vnreq_poll *);
-	int (*puffs_node_revoke)(struct puffs_cc *, void *, int);
 	int (*puffs_node_mmap)(struct puffs_cc *,
 	    void *, int, const struct puffs_cred *, pid_t);
 	int (*puffs_node_fsync)(struct puffs_cc *,
@@ -323,7 +322,6 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 	    pid_t);							\
 	int fsname##_node_poll(struct puffs_cc *,			\
 	    void *, struct puffs_vnreq_poll *);				\
-	int fsname##_node_revoke(struct puffs_cc *, void *, int);	\
 	int fsname##_node_mmap(struct puffs_cc *,			\
 	    void *, int, const struct puffs_cred *, pid_t);		\
 	int fsname##_node_fsync(struct puffs_cc *,			\
@@ -380,7 +378,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 3
+#define PUFFS_DEVEL_LIBVERSION 4
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 

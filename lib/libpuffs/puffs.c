@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.24 2007/01/15 00:39:02 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.25 2007/01/16 22:37:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.24 2007/01/15 00:39:02 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.25 2007/01/16 22:37:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -82,7 +82,6 @@ fillvnopmask(struct puffs_ops *pops, uint8_t *opmask)
 	FILLOP(getattr,  GETATTR);
 	FILLOP(setattr,  SETATTR);
 	FILLOP(poll,     POLL); /* XXX: not ready in kernel */
-	FILLOP(revoke,   REVOKE);
 	FILLOP(mmap,     MMAP);
 	FILLOP(fsync,    FSYNC);
 	FILLOP(seek,     SEEK);
@@ -680,19 +679,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			error = pops->puffs_node_mmap(pcc,
 			    preq->preq_cookie, auxt->pvnr_fflags,
 			    &auxt->pvnr_cred, auxt->pvnr_pid);
-			break;
-		}
-
-		case PUFFS_VN_REVOKE:
-		{
-			struct puffs_vnreq_revoke *auxt = auxbuf;
-			if (pops->puffs_node_revoke == NULL) {
-				error = 0;
-				break;
-			}
-
-			error = pops->puffs_node_revoke(pcc,
-			    preq->preq_cookie, auxt->pvnr_flags);
 			break;
 		}
 
