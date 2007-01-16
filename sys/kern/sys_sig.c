@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.6 2007/01/16 02:17:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.6 2007/01/16 02:17:45 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -743,14 +743,11 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 			/* spurious wakeup - arrange for syscall restart */
 			error = ERESTART;
 		}
+		l->l_sigwaited = NULL;
+		LIST_REMOVE(l, l_sigwaiter);
 	}
 
-	/*
-	 * Clear the sigwait indication and unlock.
-	 */
 	l->l_sigwait = NULL;
-	l->l_sigwaited = NULL;
-	LIST_REMOVE(l, l_sigwaiter);
 	mutex_exit(&p->p_smutex);
 
 	/*

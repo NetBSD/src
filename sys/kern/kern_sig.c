@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.8 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.9 2007/01/16 02:17:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.8 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.9 2007/01/16 02:17:45 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1154,6 +1154,7 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 	if (l != NULL) {
 		l->l_sigwaited->ksi_info = ksi->ksi_info;
 		l->l_sigwaited = NULL;
+		LIST_REMOVE(l, l_sigwaiter);
 		wakeup_one(&l->l_sigwait);
 		return 1;
 	}
