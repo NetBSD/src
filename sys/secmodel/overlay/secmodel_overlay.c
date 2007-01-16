@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.6 2007/01/15 11:58:00 elad Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.7 2007/01/16 00:11:39 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.6 2007/01/15 11:58:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.7 2007/01/16 00:11:39 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,7 +168,7 @@ SYSCTL_SETUP(sysctl_security_overlay_setup,
  * Start the overlay security model.
  */
 void
-secmodel_start(void)
+secmodel_overlay_start(void)
 {
 	secmodel_overlay_init();
 
@@ -184,6 +184,12 @@ secmodel_start(void)
 	    secmodel_overlay_machdep_cb, NULL);
 	kauth_listen_scope(KAUTH_SCOPE_DEVICE,
 	    secmodel_overlay_device_cb, NULL);
+}
+
+void
+secmodel_start(void)
+{
+	secmodel_overlay_start();
 }
 
 /*
