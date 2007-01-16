@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.6 2007/01/16 01:28:27 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.7 2007/01/16 05:22:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.6 2007/01/16 01:28:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.7 2007/01/16 05:22:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,14 +420,36 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	if (l->l_lid == target)
 		t = l;
-	else
-		t = lwp_find(p, target);
-	if (t != NULL) {
+	else {
+		/*
+		 * We can't use lwp_find() here because the target might
+		 * be a zombie.
+		 */
+		LIST_FOREACH(t, &p->p_lwps, l_sibling)
+			if (t->l_lid == target)
+				break;
+	}
+
+	/*
+	 * If the LWP is already detached, there's nothing to do.
+	 * If it's a zombie, we need to clean up after it.  LSZOMB
+	 * is visible with the proc mutex held.
+	 *
+	 * After we have detached or released the LWP, kick any
+	 * other LWPs that may be sitting in _lwp_wait(), waiting
+	 * for the target LWP to exit.
+	 */
+	if (t != NULL && t->l_stat != LSIDL &&
+	    (t->l_prflag & LPR_DETACHED) == 0) {
 		p->p_ndlwps++;
 		t->l_prflag |= LPR_DETACHED;
+		if (t->l_stat == LSZOMB) {
+			lwp_free(t, 0, 0);	/* releases proc mutex */
+			cv_broadcast(&p->p_lwpcv);
+			return 0;
+		}
 	}
 	mutex_exit(&p->p_smutex);
-	cv_broadcast(&p->p_lwpcv);
 
 	return (t == NULL ? ESRCH : 0);
 }
