@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.33 2007/01/15 23:29:08 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.34 2007/01/16 21:58:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.33 2007/01/15 23:29:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.34 2007/01/16 21:58:49 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -56,7 +56,6 @@ int	puffs_open(void *);
 int	puffs_close(void *);
 int	puffs_getattr(void *);
 int	puffs_setattr(void *);
-int	puffs_revoke(void *);
 int	puffs_reclaim(void *);
 int	puffs_readdir(void *);
 int	puffs_poll(void *);
@@ -133,7 +132,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_pathconf_desc, puffs_checkop },		/* pathconf */
         { &vop_advlock_desc, puffs_checkop },		/* advlock */
         { &vop_strategy_desc, puffs_strategy },		/* REAL strategy */
-        { &vop_revoke_desc, puffs_revoke },		/* REAL revoke */
+        { &vop_revoke_desc, genfs_revoke },		/* REAL revoke */
         { &vop_abortop_desc, genfs_abortop },		/* REAL abortop */
         { &vop_inactive_desc, puffs_inactive },		/* REAL inactive */
         { &vop_reclaim_desc, puffs_reclaim },		/* REAL reclaim */
@@ -726,36 +725,6 @@ puffs_setattr(void *v)
 }
 
 int
-puffs_revoke(void *v)
-{
-	struct vop_revoke_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct puffs_mount *pmp;
-
-	PUFFS_VNREQ(revoke);
-
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-
-	revoke_arg.pvnr_flags = ap->a_flags;
-
-	/* don't really care if userspace doesn't want to play along */
-	if (EXISTSOP(pmp, REVOKE))
-		puffs_vntouser(pmp, PUFFS_VN_REVOKE,
-		    &revoke_arg, sizeof(revoke_arg), VPTOPNC(ap->a_vp),
-		    NULL, NULL);
-
-	return genfs_revoke(v);
-}
-
-/*
- * There is no technical need to have this travel to userspace
- * synchronously.  So once async reply support is in place, make this
- * async.
- */
-int
 puffs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
@@ -804,6 +773,10 @@ puffs_inactive(void *v)
 	return 0;
 }
 
+/*
+ * always FAF, we don't really care if the server wants to fail to
+ * reclaim the node or not
+ */
 int
 puffs_reclaim(void *v)
 {
@@ -813,9 +786,7 @@ puffs_reclaim(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
-	int error;
-
-	PUFFS_VNREQ(reclaim);
+	struct puffs_vnreq_reclaim *reclaim_argp;
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
@@ -834,29 +805,21 @@ puffs_reclaim(void *v)
 		simple_unlock(&pmp->pmp_lock);
 #endif
 		pmp->pmp_root = NULL;
-		puffs_putvnode(ap->a_vp);
-		return 0;
+		goto out;
 	}
 
-	reclaim_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	if (!EXISTSOP(pmp, RECLAIM))
+		goto out;
 
-	if (EXISTSOP(pmp, RECLAIM))
-		error = puffs_vntouser(pmp, PUFFS_VN_RECLAIM,
-		    &reclaim_arg, sizeof(reclaim_arg), VPTOPNC(ap->a_vp),
-		    NULL, NULL);
-	else
-		error = 0;
-#if 0
-	/*
-	 * XXX: if reclaim fails for any other reason than the userspace
-	 * being dead, we should consider unmounting the filesystem, since
-	 * we can't trust it to be in a consistent state anymore.  But for
-	 * now, just ignore all errors.
-	 */
-	if (error)
-		return error;
-#endif
+	reclaim_argp = malloc(sizeof(struct puffs_vnreq_reclaim),
+	    M_PUFFS, M_WAITOK | M_ZERO);
+	reclaim_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
 
+	puffs_vntouser_faf(pmp, PUFFS_VN_RECLAIM,
+	    reclaim_argp, sizeof(struct puffs_vnreq_reclaim),
+	    VPTOPNC(ap->a_vp));
+
+ out:
 	if (PUFFS_DOCACHE(pmp))
 		cache_purge(ap->a_vp);
 	puffs_putvnode(ap->a_vp);
