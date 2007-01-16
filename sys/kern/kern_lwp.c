@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.9 2007/01/16 01:26:20 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.10 2007/01/16 05:21:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.9 2007/01/16 01:26:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.10 2007/01/16 05:21:30 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -658,11 +658,16 @@ lwp_exit(struct lwp *l)
 	}
 
 	/*
-	 * Clear any private, pending signals.  XXXLWP Small chance that
-	 * we may defer process-wide signals by taking L_PENDSIG with us
-	 * to the grave.
+	 * Clear any private, pending signals.  If we find a pending signal
+	 * for the process and we have been asked to check for signals, then
+	 * we loose badly: arrange to have all other LWPs in the process check
+	 * for signals.
 	 */
 	sigclear(&l->l_sigpend, NULL);
+	if ((l->l_flag & L_PENDSIG) != 0 &&
+	    firstsig(&p->p_sigpend.sp_set) != 0)
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
+			l2->l_flag |= L_PENDSIG;
 
 	lwp_lock(l);
 	l->l_stat = LSZOMB;
