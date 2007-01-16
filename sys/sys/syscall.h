@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.174.2.4 2007/01/11 22:23:00 ad Exp $ */
+/* $NetBSD: syscall.h,v 1.174.2.5 2007/01/16 01:28:27 ad Exp $ */
 
 /*
  * System call numbers.
@@ -934,13 +934,13 @@
 /* syscall: "_lwp_detach" ret: "int" args: "lwpid_t" */
 #define	SYS__lwp_detach	319
 
-/* syscall: "_lwp_park" ret: "int" args: "const struct timespec *" "struct __ucontext *" */
+/* syscall: "_lwp_park" ret: "int" args: "const struct timespec *" "struct __ucontext *" "void *" */
 #define	SYS__lwp_park	320
 
-/* syscall: "_lwp_unpark" ret: "int" args: "lwpid_t" */
+/* syscall: "_lwp_unpark" ret: "int" args: "lwpid_t" "void *" */
 #define	SYS__lwp_unpark	321
 
-/* syscall: "_lwp_unpark_all" ret: "int" args: "const lwpid_t *" "size_t" */
+/* syscall: "_lwp_unpark_all" ret: "int" args: "const lwpid_t *" "size_t" "void *" */
 #define	SYS__lwp_unpark_all	322
 
 /* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" "int" "ssize_t" */
