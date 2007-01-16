@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.1 2007/01/16 05:28:45 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.2 2007/01/16 20:12:40 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,11 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.1 2007/01/16 05:28:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.2 2007/01/16 20:12:40 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int
