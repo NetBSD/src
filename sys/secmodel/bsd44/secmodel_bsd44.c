@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.8 2007/01/09 12:57:56 elad Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.9 2007/01/16 00:11:39 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.8 2007/01/09 12:57:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.9 2007/01/16 00:11:39 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,16 +94,30 @@ SYSCTL_SETUP(sysctl_security_bsd44_setup,
 		       CTL_CREATE, CTL_EOL);
 }
 
-#if !defined(_LKM)
-/*
- * Start the traditional NetBSD security model.
- */
 void
-secmodel_start(void)
+secmodel_bsd44_start(void)
 {
 	secmodel_bsd44_init();
 
 	secmodel_bsd44_suser_start();
 	secmodel_bsd44_securelevel_start();
 }
+
+#if defined(_LKM)
+void
+secmodel_bsd44_stop(void)
+{
+	secmodel_bsd44_suser_stop();
+	secmodel_bsd44_securelevel_stop();
+}
+#endif /* _LKM */
+
+#if !defined(_LKM)
+void
+secmodel_start(void)
+{
+	secmodel_bsd44_start();
+}
 #endif /* !_LKM */
+
+
