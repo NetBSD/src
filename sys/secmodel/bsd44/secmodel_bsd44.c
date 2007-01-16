@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44.c,v 1.9 2007/01/16 00:11:39 elad Exp $ */
+/* $NetBSD: secmodel_bsd44.c,v 1.10 2007/01/16 11:53:00 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.9 2007/01/16 00:11:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44.c,v 1.10 2007/01/16 11:53:00 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,6 +101,8 @@ secmodel_bsd44_start(void)
 
 	secmodel_bsd44_suser_start();
 	secmodel_bsd44_securelevel_start();
+
+	secmodel_register();
 }
 
 #if defined(_LKM)
@@ -109,6 +111,8 @@ secmodel_bsd44_stop(void)
 {
 	secmodel_bsd44_suser_stop();
 	secmodel_bsd44_securelevel_stop();
+
+	secmodel_deregister();
 }
 #endif /* _LKM */
 
