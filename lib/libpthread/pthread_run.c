@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.21 2007/01/08 20:54:42 drochner Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.22 2007/01/16 07:09:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.21 2007/01/08 20:54:42 drochner Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.22 2007/01/16 07:09:17 ad Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -303,15 +303,7 @@ pthread__sched_bulk(pthread_t self, pthread_t qhead)
 
 #else	/* PTHREAD_SA */
 
-void	pthread__sched_yield(void);
-
-__strong_alias(__libc_thr_yield,pthread__sched_yield)
-
-void
-pthread__sched_yield(void)
-{
-	sched_yield();
-}
+__strong_alias(__libc_thr_yield,_sys_sched_yield)
 
 #endif	/* PTHREAD_SA */
 
