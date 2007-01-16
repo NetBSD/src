@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.160 2006/10/17 15:06:18 christos Exp $
+	$NetBSD: syscalls.master,v 1.161 2007/01/16 01:30:45 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -650,12 +650,22 @@
 315	STD		{ int sys__lwp_wakeup(lwpid_t target); }
 316	STD		{ void *sys__lwp_getprivate(void); }
 317	STD		{ void sys__lwp_setprivate(void *ptr); }
-; Syscalls 318-329 reserved for remaining Solaris-compatible LWP calls.
-318	UNIMPL
-319	UNIMPL
-320	UNIMPL
-321	UNIMPL
-322	UNIMPL
+#if !defined(_KERNEL)
+318	STD		{ int sys__lwp_kill(lwpid_t target, int signo); }
+319	STD		{ int sys__lwp_detach(lwpid_t target); }
+320	STD		{ int sys__lwp_park(const struct timespec *ts, \
+				struct __ucontext *ucp, const void *hint); }
+321	STD 		{ int sys__lwp_unpark(lwpid_t target, const void *hint); }
+322	STD 		{ int sys__lwp_unpark_all(const lwpid_t *targets, \
+				size_t ntargets, const void *hint); }
+#else
+318	EXCL		sys__lwp_kill
+319	EXCL		sys__lwp_detach
+320	EXCL		sys__lwp_park
+321	EXCL		sys__lwp_unpark
+322	EXCL		sys__lwp_unpark_all
+#endif
+; Syscalls 323-329 reserved for remaining Solaris-compatible LWP calls.
 323	UNIMPL
 324	UNIMPL
 325	UNIMPL
@@ -698,7 +708,11 @@
 347	UNIMPL		sys_sched_getparam
 348	UNIMPL		sys_sched_setscheduler
 349	UNIMPL		sys_sched_getscheduler
-350	UNIMPL		sys_sched_yield
+#if !defined(KERNEL)
+350	STD		{ int sys_sched_yield(void); }
+#else
+350	EXCL		sys_sched_yield
+#endif
 351	UNIMPL		sys_sched_get_priority_max
 352	UNIMPL		sys_sched_get_priority_min
 353	UNIMPL		sys_sched_rr_get_interval
