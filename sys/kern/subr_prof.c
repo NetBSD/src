@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33.20.5 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.33.20.6 2007/01/16 01:26:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.5 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.6 2007/01/16 01:26:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,6 +293,7 @@ addupc_intr(struct lwp *l, u_long pc)
 	addr = prof->pr_base + i;
 	mutex_exit(&p->p_stmutex);
 	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + 1) == -1) {
+		/* XXXSMP */
 		prof->pr_addr = pc;
 		prof->pr_ticks++;
 		cpu_need_proftick(l);
@@ -330,13 +331,14 @@ addupc_task(struct lwp *l, u_long pc, u_int ticks)
 	}
 
 	addr = prof->pr_base + i;
+	mutex_exit(&p->p_stmutex);
 	if ((error = copyin(addr, (caddr_t)&v, sizeof(v))) == 0) {
 		v += ticks;
 		error = copyout((caddr_t)&v, addr, sizeof(v));
 	}
-
-	if (error != 0)
+	if (error != 0) {
+		mutex_enter(&p->p_stmutex);
 		stopprofclock(p);
-
-	mutex_exit(&p->p_stmutex);
+		mutex_exit(&p->p_stmutex);
+	}
 }

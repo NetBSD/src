@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.9 2007/01/12 20:18:29 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.10 2007/01/16 01:26:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 	movl	4(%esp), %edx ;					\
 	je	_C_LABEL(alternate)
 #define	ALIGN64		.align	16	/* don't bother */
-#define	ALIGN34		.align	16	/* don't bother */
+#define	ALIGN32		.align	16	/* don't bother */
 #else
 #define	STUB(name, alternate)					\
 	NENTRY(name) ;						\
