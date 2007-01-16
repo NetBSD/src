@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.4 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: lwp.h,v 1.5 2007/01/16 01:36:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
+#include <sys/time.h>
 
 __BEGIN_DECLS
 lwpid_t	_lwp_self(void);
@@ -55,6 +56,11 @@ void	_lwp_makecontext(ucontext_t *, void (*)(void *), void *, void *,
 	    caddr_t, size_t);
 void	*_lwp_getprivate(void);
 void	_lwp_setprivate(void *);
+int	_lwp_kill(lwpid_t, int);
+int	_lwp_detach(lwpid_t);
+int	_lwp_park(const struct timespec *, ucontext_t *, const void *);
+int	_lwp_unpark(lwpid_t, const void *);
+int	_lwp_unpark_all(const lwpid_t *, size_t, const void *);
 __END_DECLS
 
 #endif /* !_LWP_H_ */
