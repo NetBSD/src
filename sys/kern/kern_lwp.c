@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.8 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.9 2007/01/16 01:26:20 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.8 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.9 2007/01/16 01:26:20 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -511,7 +511,6 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	}
 
 	l2->l_stat = LSIDL;
-	l2->l_forw = l2->l_back = NULL;
 	l2->l_proc = p2;
 	l2->l_refcnt = 1;
 	l2->l_priority = l1->l_priority;
@@ -610,7 +609,6 @@ lwp_exit(struct lwp *l)
 	 * Note: the last LWP's specificdata will be deleted here.
 	 */
 	mutex_enter(&p->p_smutex);
-
 	if (p->p_nlwps - p->p_nzlwps == 1) {
 		DPRINTF(("lwp_exit: %d.%d calling exit1()\n",
 		    p->p_pid, l->l_lid));
@@ -650,15 +648,6 @@ lwp_exit(struct lwp *l)
 	mutex_enter(&p->p_smutex);
 	lwp_drainrefs(l);
 
-	if ((p->p_sflag & PS_SA) == 0) {
-		/*
-		 * Clear any private, pending signals.  XXXLWP Small
-		 * chance that we may defer process-wide signals by
-		 * taking L_PENDSIG with us to the grave.
-		 */
-		sigclear(&l->l_sigpend, NULL);
-	}
-
 	if ((l->l_prflag & LPR_DETACHED) != 0) {
 		while ((l2 = p->p_zomblwp) != NULL) {
 			p->p_zomblwp = NULL;
@@ -667,6 +656,14 @@ lwp_exit(struct lwp *l)
 		}
 		p->p_zomblwp = l;
 	}
+
+	/*
+	 * Clear any private, pending signals.  XXXLWP Small chance that
+	 * we may defer process-wide signals by taking L_PENDSIG with us
+	 * to the grave.
+	 */
+	sigclear(&l->l_sigpend, NULL);
+
 	lwp_lock(l);
 	l->l_stat = LSZOMB;
 	lwp_unlock(l);
@@ -747,10 +744,10 @@ lwp_free(struct lwp *l, int recycle, int last)
 		 */
 		if (l->l_cpu->ci_curlwp == l) {
 			int count;
-			KERNEL_UNLOCK_ALL(l, &count);
+			KERNEL_UNLOCK_ALL(curlwp, &count);
 			while (l->l_cpu->ci_curlwp == l)
 				SPINLOCK_BACKOFF_HOOK;
-			KERNEL_LOCK(count, l);
+			KERNEL_LOCK(count, curlwp);
 		}
 #endif
 	}
