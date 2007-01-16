@@ -1,4 +1,4 @@
-/* $NetBSD: veriexecgen.c,v 1.13 2007/01/09 13:53:31 mjf Exp $ */
+/* $NetBSD: veriexecgen.c,v 1.14 2007/01/16 17:32:04 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,11 +39,9 @@
 
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: veriexecgen.c,v 1.13 2007/01/09 13:53:31 mjf Exp $");
+__RCSID("$NetBSD: veriexecgen.c,v 1.14 2007/01/16 17:32:04 hubertf Exp $");
 #endif
 #endif /* not lint */
-
-#include <sys/types.h>
 
 #include <sys/param.h>
 #include <sys/types.h>

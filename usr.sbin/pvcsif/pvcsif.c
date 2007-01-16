@@ -1,4 +1,4 @@
-/*	$NetBSD: pvcsif.c,v 1.3 2001/05/07 14:00:23 kleink Exp $	*/
+/*	$NetBSD: pvcsif.c,v 1.4 2007/01/16 17:32:05 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1998
@@ -36,7 +36,6 @@
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/ioctl.h>
 #include <net/if.h>
 
 #include <net/if_atm.h>
@@ -51,7 +50,7 @@ void usage(void)
 	exit(1);
 }
 
-int 
+int
 main(int argc, char **argv)
 {
 	struct ifreq ifr;
@@ -91,7 +90,7 @@ main(int argc, char **argv)
 	else
 		printf("created a pvc subinterface %s (bound to %s)\n",
 		       ifr.ifr_name, argv[1]);
-    
+
 	return (0);
 }
 

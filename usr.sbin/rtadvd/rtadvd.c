@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.33 2006/10/07 17:27:57 elad Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.34 2007/01/16 17:32:04 hubertf Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <err.h>
 #include <errno.h>
 #include <string.h>

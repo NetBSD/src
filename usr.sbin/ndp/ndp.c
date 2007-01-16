@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.36 2006/10/22 21:24:44 christos Exp $	*/
+/*	$NetBSD: ndp.c,v 1.37 2007/01/16 17:32:04 hubertf Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -104,7 +104,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <err.h>
 #include "gmt2local.h"
 
 /* packing rule for routing socket */

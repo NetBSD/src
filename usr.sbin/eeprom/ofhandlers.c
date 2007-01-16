@@ -1,4 +1,4 @@
-/*	$NetBSD: ofhandlers.c,v 1.2 2006/12/10 03:06:25 macallan Exp $	*/
+/*	$NetBSD: ofhandlers.c,v 1.3 2007/01/16 17:32:04 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
