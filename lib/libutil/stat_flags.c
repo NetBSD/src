@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.1 2006/12/14 19:18:01 christos Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.2 2007/01/16 17:34:02 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.1 2006/12/14 19:18:01 christos Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.2 2007/01/16 17:34:02 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,10 +68,8 @@ __RCSID("$NetBSD: stat_flags.c,v 1.1 2006/12/14 19:18:01 christos Exp $");
 char *
 flags_to_string(u_long flags, const char *def)
 {
-	char *string;
+	char string[128];
 	const char *prefix;
-	if ((string = malloc(128)) == NULL)
-		return NULL;
 
 	string[0] = '\0';
 	prefix = NULL;
@@ -96,9 +94,7 @@ flags_to_string(u_long flags, const char *def)
 #endif
 #endif
 	if (prefix != NULL)
-		return string;
-/*###99 [cc] warning: implicit declaration of function 'free'%%%*/
-	free(string);
+		return strdup(string);
 	return strdup(def);
 }
 
