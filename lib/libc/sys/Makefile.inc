@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.170 2006/11/08 20:58:23 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.171 2007/01/16 07:07:45 ad Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -69,8 +69,9 @@ ASM=	access.S acct.S \
 		_ksem_open.S \
 	lchflags.S lchmod.S lchown.S lfs_bmapv.S lfs_markv.S lfs_segclean.S \
 		lfs_segwait.S link.S listen.S __lstat30.S lutimes.S \
-		_lwp_create.S _lwp_exit.S _lwp_self.S _lwp_wait.S \
-		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S \
+		_lwp_create.S _lwp_exit.S _lwp_kill.S _lwp_park.S \
+		_lwp_self.S _lwp_wait.S _lwp_unpark.S _lwp_unpark_all.S \
+		_lwp_suspend.S _lwp_continue.S _lwp_wakeup.S _lwp_detach.S \
 		_lwp_getprivate.S _lwp_setprivate.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
 		mlock.S mlockall.S mount.S mprotect.S __msgctl13.S msgget.S \
@@ -100,7 +101,7 @@ WEAKASM= accept.S close.S connect.S execve.S \
 	fcntl.S fdatasync.S fsync.S fsync_range.S \
 	kill.S msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S pollts.S pselect.S read.S readv.S \
-	select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	sched_yield.S select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	wait4.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
