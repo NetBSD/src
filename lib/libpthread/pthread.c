@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.53 2007/01/16 01:35:16 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.54 2007/01/16 04:19:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.53 2007/01/16 01:35:16 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.54 2007/01/16 04:19:02 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -456,8 +456,14 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	makecontext(newthread->pt_uc, pthread__create_tramp, 2,
 	    startfunc, arg);
 
+	/* 5. Add to list of all threads. */
+	pthread_spinlock(self, &pthread__allqueue_lock);
+	PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
+	nthreads++;
+	pthread_spinunlock(self, &pthread__allqueue_lock);
+
 #ifndef PTHREAD_SA
-	/* 4a. Create the new LWP. */
+	/* 5a. Create the new LWP. */
 	flag = 0;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
 		flag |= LWP_SUSPENDED;
@@ -467,18 +473,18 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	if (ret != 0) {
 		SDPRINTF(("(pthread_create %p) _lwp_create: %s\n",
 		    strerror(errno)));
-		/* XXXLWP what else? */
 		free(name);
+		pthread_spinlock(self, &pthread__allqueue_lock);
+		PTQ_REMOVE(&pthread__allqueue, newthread, pt_allq);
+		nthreads--;
+		pthread_spinunlock(self, &pthread__allqueue_lock);
+		pthread_spinlock(self, &pthread__deadqueue_lock);
+		PTQ_INSERT_HEAD(&pthread__deadqueue, newthread, pt_allq);
+		pthread_spinunlock(self, &pthread__deadqueue_lock);
 		return ret;
 	}
 	newthread->pt_sleeponq = 0;
 #endif
-
-	/* 5. Add to list of all threads. */
-	pthread_spinlock(self, &pthread__allqueue_lock);
-	PTQ_INSERT_HEAD(&pthread__allqueue, newthread, pt_allq);
-	nthreads++;
-	pthread_spinunlock(self, &pthread__allqueue_lock);
 
 #ifdef PTHREAD_SA
 	SDPRINTF(("(pthread_create %p) new thread %p (name pointer %p).\n",
