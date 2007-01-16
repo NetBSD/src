@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.102.2.2 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.102.2.3 2007/01/16 07:10:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102.2.2 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102.2.3 2007/01/16 07:10:07 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -538,9 +538,9 @@ sendit(struct lwp *l, int s, struct msghdr *mp, int flags, register_t *retsize)
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
 		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
-			rw_enter(&proclist_lock, RW_READER);
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_mutex);
 		}
 	}
 	if (error == 0)

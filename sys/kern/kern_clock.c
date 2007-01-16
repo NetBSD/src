@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.102.2.5 2007/01/11 22:22:59 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.102.2.6 2007/01/16 07:10:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.5 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.6 2007/01/16 07:10:07 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1142,7 +1142,7 @@ proftick(struct clockframe *frame)
 #ifdef PROC_PC
 		if (p != NULL) {
 			mutex_enter(&p->p_stmutex);
-			if (p->p_flag & P_PROFIL))
+			if (p->p_stflag & PST_PROFIL))
 				addupc_intr(l, PROC_PC(p));
 			mutex_exit(&p->p_stmutex);
 		}
@@ -1188,8 +1188,11 @@ statclock(struct clockframe *frame)
 
 		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
-		if (--spc->spc_pscnt > 0)
+		if (--spc->spc_pscnt > 0) {
+			mutex_exit(&p->p_stmutex);
 			return;
+		}
+
 		/*
 		 * Came from user mode; CPU was in user state.
 		 * If this process is being profiled record the tick.
@@ -1217,8 +1220,11 @@ statclock(struct clockframe *frame)
 		if (p && profsrc == PROFSRC_CLOCK && (p->p_stflag & PST_PROFIL))
 			addupc_intr(l, LWP_PC(l));
 #endif
-		if (--spc->spc_pscnt > 0)
+		if (--spc->spc_pscnt > 0) {
+			if (p != NULL)
+				mutex_exit(&p->p_stmutex);
 			return;
+		}
 		/*
 		 * Came from kernel mode, so we were:
 		 * - handling an interrupt,
