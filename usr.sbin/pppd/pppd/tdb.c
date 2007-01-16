@@ -1,4 +1,4 @@
-/*	$NetBSD: tdb.c,v 1.5 2006/05/25 01:22:53 christos Exp $	*/
+/*	$NetBSD: tdb.c,v 1.6 2007/01/16 17:32:05 hubertf Exp $	*/
 
 /* 
  * Database functions
@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tdb.c,v 1.5 2006/05/25 01:22:53 christos Exp $");
+__RCSID("$NetBSD: tdb.c,v 1.6 2007/01/16 17:32:05 hubertf Exp $");
 #endif
 
 #include <stdlib.h>
@@ -29,7 +29,6 @@ __RCSID("$NetBSD: tdb.c,v 1.5 2006/05/25 01:22:53 christos Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <sys/mman.h>
 #include <sys/stat.h>

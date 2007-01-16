@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.102 2007/01/02 16:00:46 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.103 2007/01/16 17:32:05 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.102 2007/01/02 16:00:46 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.103 2007/01/16 17:32:05 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -1880,7 +1880,6 @@ discard_dg(int s, struct servtab *sep)	/* Discard service -- ignore data */
 	(void) read(s, buffer, sizeof(buffer));
 }
 
-#include <ctype.h>
 #define LINESIZ 72
 char ring[128];
 char *endring;
