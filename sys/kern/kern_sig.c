@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.9 2007/01/16 02:17:45 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.10 2007/01/17 00:44:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.9 2007/01/16 02:17:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.10 2007/01/17 00:44:30 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1130,16 +1130,11 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 		 * Signal came via _lwp_kill().  Find the LWP and see if
 		 * it's interested.
 		 */
-		l = lwp_find(p, ksi->ksi_lid);
-
-		if (l == NULL)
+		if ((l = lwp_find(p, ksi->ksi_lid)) == NULL)
 			return 0;
-
 		if (l->l_sigwaited == NULL ||
-		    !sigismember(l->l_sigwait, signo)) {
-			lwp_unlock(l);
+		    !sigismember(l->l_sigwait, signo))
 			return 0;
-		}
 	} else {
 		/*
 		 * Look for any LWP that may be interested.
