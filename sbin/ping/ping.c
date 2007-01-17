@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.85 2006/09/28 16:01:16 elad Exp $	*/
+/*	$NetBSD: ping.c,v 1.86 2007/01/17 21:59:49 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.85 2006/09/28 16:01:16 elad Exp $");
+__RCSID("$NetBSD: ping.c,v 1.86 2007/01/17 21:59:49 hubertf Exp $");
 #endif
 
 #include <stdio.h>
@@ -89,7 +89,6 @@ __RCSID("$NetBSD: ping.c,v 1.85 2006/09/28 16:01:16 elad Exp $");
 #endif
 #else
 #define cap_socket socket
-#include <err.h>
 #endif
 
 #include <netinet/in_systm.h>

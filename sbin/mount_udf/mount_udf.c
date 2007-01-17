@@ -1,4 +1,4 @@
-/* $NetBSD: mount_udf.c,v 1.7 2007/01/17 21:21:12 reinoud Exp $ */
+/* $NetBSD: mount_udf.c,v 1.8 2007/01/17 21:59:50 hubertf Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,17 +36,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_udf.c,v 1.7 2007/01/17 21:21:12 reinoud Exp $");
+__RCSID("$NetBSD: mount_udf.c,v 1.8 2007/01/17 21:59:50 hubertf Exp $");
 #endif /* not lint */
 
 
-/* main includes; strip me! */
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
+
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -55,10 +56,6 @@ __RCSID("$NetBSD: mount_udf.c,v 1.7 2007/01/17 21:21:12 reinoud Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
-#include <assert.h>
-#include <pwd.h>
-#include <errno.h>
-#include <grp.h>
 
 
 /* mount specific options */

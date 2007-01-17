@@ -1,4 +1,4 @@
-/* $NetBSD: ttyflags.c,v 1.15 2005/01/19 20:48:13 xtraeme Exp $ */
+/* $NetBSD: ttyflags.c,v 1.16 2007/01/17 21:59:49 hubertf Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,11 +41,10 @@ __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ttyflags.c,v 1.15 2005/01/19 20:48:13 xtraeme Exp $");
+__RCSID("$NetBSD: ttyflags.c,v 1.16 2007/01/17 21:59:49 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <sys/ioctl.h>
 
 #include <err.h>

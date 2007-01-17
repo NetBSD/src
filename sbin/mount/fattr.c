@@ -1,4 +1,4 @@
-/* $NetBSD: fattr.c,v 1.5 2006/02/02 23:42:00 christos Exp $ */
+/* $NetBSD: fattr.c,v 1.6 2007/01/17 21:59:50 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,10 +35,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fattr.c,v 1.5 2006/02/02 23:42:00 christos Exp $");
+__RCSID("$NetBSD: fattr.c,v 1.6 2007/01/17 21:59:50 hubertf Exp $");
 #endif /* not lint */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>

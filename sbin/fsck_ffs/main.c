@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.62 2006/11/14 22:51:11 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.63 2007/01/17 21:59:49 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.62 2006/11/14 22:51:11 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.63 2007/01/17 21:59:49 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: main.c,v 1.62 2006/11/14 22:51:11 apb Exp $");
 #include <fstab.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

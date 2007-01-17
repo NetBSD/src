@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.32 2006/12/01 06:38:39 tls Exp $	 */
+/* $NetBSD: main.c,v 1.33 2007/01/17 21:59:50 hubertf Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -33,7 +33,6 @@
 #include <sys/time.h>
 #include <sys/mount.h>
 #include <ufs/ufs/dinode.h>
-#include <sys/mount.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/lfs/lfs.h>
 
