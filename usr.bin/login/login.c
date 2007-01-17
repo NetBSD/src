@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.93 2007/01/07 10:36:56 isaki Exp $	*/
+/*	$NetBSD: login.c,v 1.94 2007/01/17 00:21:43 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.93 2007/01/07 10:36:56 isaki Exp $");
+__RCSID("$NetBSD: login.c,v 1.94 2007/01/17 00:21:43 hubertf Exp $");
 #endif /* not lint */
 
 /*
@@ -758,7 +758,6 @@ main(int argc, char *argv[])
  * This routine handles cleanup stuff, and the like.
  * It exists only in the child process.
  */
-#include <sys/wait.h>
 void
 dofork(void)
 {
