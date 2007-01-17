@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.10 2006/03/19 01:44:48 christos Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.11 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetpath.c,v 1.10 2006/03/19 01:44:48 christos Exp $");
+__RCSID("$NetBSD: getnetpath.c,v 1.11 2007/01/17 23:24:22 hubertf Exp $");
 #endif
 #endif
 
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: getnetpath.c,v 1.10 2006/03/19 01:44:48 christos Exp $");
  */
 
 #include "namespace.h"
-#include <sys/cdefs.h>
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>

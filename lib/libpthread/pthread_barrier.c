@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.8 2006/12/24 18:39:46 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.8 2006/12/24 18:39:46 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $");
 
 #include <errno.h>
-#include <sys/cdefs.h>
 
 #include "pthread.h"
 #include "pthread_int.h"

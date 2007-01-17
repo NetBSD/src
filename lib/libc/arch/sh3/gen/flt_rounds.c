@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.3 2006/02/25 02:28:55 wiz Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.4 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: flt_rounds.c,v 1.3 2006/02/25 02:28:55 wiz Exp $");
+__RCSID("$NetBSD: flt_rounds.c,v 1.4 2007/01/17 23:24:22 hubertf Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -71,8 +71,6 @@ static const int map[] = {
  * This could change in the future with new floating point emulators or
  * soft float FP libraries.
  */
-
-#include <sys/cdefs.h>
 
 extern int __flt_rounds __P((void));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv4.c,v 1.9 2004/11/24 11:57:09 blymn Exp $	*/
+/*	$NetBSD: type_ipv4.c,v 1.10 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_ipv4.c,v 1.9 2004/11/24 11:57:09 blymn Exp $");
+__RCSID("$NetBSD: type_ipv4.c,v 1.10 2007/01/17 23:24:22 hubertf Exp $");
 
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <limits.h>
 #include "form.h"
 #include "internals.h"

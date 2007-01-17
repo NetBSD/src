@@ -1,4 +1,4 @@
-/*	$NetBSD: siglist.c,v 1.16 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: siglist.c,v 1.17 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,10 @@
 #if 0
 static char sccsid[] = "@(#)siglist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: siglist.c,v 1.16 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: siglist.c,v 1.17 2007/01/17 23:24:22 hubertf Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
 #include <signal.h>
 
 static const char *const __siglist14[] = {

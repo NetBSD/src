@@ -1,4 +1,4 @@
-/*	$NetBSD: md5crypt.c,v 1.8 2004/07/02 00:05:23 sjg Exp $	*/
+/*	$NetBSD: md5crypt.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: md5crypt.c,v 1.8 2004/07/02 00:05:23 sjg Exp $");
+__RCSID("$NetBSD: md5crypt.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $");
 #endif /* not lint */
 
 /*
@@ -32,7 +32,6 @@ __RCSID("$NetBSD: md5crypt.c,v 1.8 2004/07/02 00:05:23 sjg Exp $");
 #else
 #include <md5.h>
 #endif
-#include <string.h>
 
 #include "crypt.h"
 
