@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.29 2007/01/04 04:18:00 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.30 2007/01/17 12:49:01 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.29 2007/01/04 04:18:00 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.30 2007/01/17 12:49:01 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: udf_subr.c,v 1.29 2007/01/04 04:18:00 reinoud Exp $");
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <dev/clock_subr.h>
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
@@ -2308,75 +2309,29 @@ unix_to_udf_name(char *result, char *name,
 
 /* --------------------------------------------------------------------- */
 
-/*       
- * Timestamp to timespec conversion code is taken with small modifications
- * from FreeBSDs /sys/fs/udf by Scott Long <scottl@freebsd.org>. Added with
- * permission from Scott.
- */
-
-static int mon_lens[2][12] = {
-	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
-};
-
-
-static int
-udf_isaleapyear(int year)
-{       
-	int i;
-	
-	i  = (year % 4) ? 0 : 1;
-	i &= (year % 100) ? 1 : 0;
-	i |= (year % 400) ? 0 : 1;
-	
-	return i;
-}
-
-
 void
 udf_timestamp_to_timespec(struct udf_mount *ump,
 			  struct timestamp *timestamp,
-		          struct timespec  *timespec)
+			  struct timespec  *timespec)
 {
+	struct clock_ymdhms ymdhms;
 	uint32_t usecs, secs, nsecs;
 	uint16_t tz;
-	int i, lpyear, daysinyear, year;
 
-	timespec->tv_sec  = secs  = 0;
-	timespec->tv_nsec = nsecs = 0;
+	/* fill in ymdhms structure from timestamp */
+	memset(&ymdhms, 0, sizeof(ymdhms));
+	ymdhms.dt_year = udf_rw16(timestamp->year);
+	ymdhms.dt_mon  = timestamp->month;
+	ymdhms.dt_day  = timestamp->day;
+	ymdhms.dt_wday = 0; /* ? */
+	ymdhms.dt_hour = timestamp->hour;
+	ymdhms.dt_min  = timestamp->minute;
+	ymdhms.dt_sec  = timestamp->second;
 
-       /*
-	* DirectCD seems to like using bogus year values.
-	*
-	* Distrust time->month especially, since it will be used for an array
-	* index.
-	*/
-	year = udf_rw16(timestamp->year);
-	if ((year < 1970) || (timestamp->month > 12)) {
-		return;
-	}
-	
-	/* Calculate the time and day
-	 * Day is 1-31, Month is 1-12
-	 */
-
+	secs = clock_ymdhms_to_secs(&ymdhms);
 	usecs = timestamp->usec +
 		100*timestamp->hund_usec + 10000*timestamp->centisec;
 	nsecs = usecs * 1000;
-	secs  = timestamp->second; 
-	secs += timestamp->minute * 60;
-	secs += timestamp->hour * 3600;
-	secs += (timestamp->day-1) * 3600 * 24;
-	
-	/* Calclulate the month */
-	lpyear = udf_isaleapyear(year);
-	for (i = 1; i < timestamp->month; i++)
-		secs += mon_lens[lpyear][i-1] * 3600 * 24;
- 
-	for (i = 1970; i < year; i++) { 
-		daysinyear = udf_isaleapyear(i) + 365 ;
-		secs += daysinyear * 3600 * 24;
-	}
 
 	/*
 	 * Calculate the time zone.  The timezone is 12 bit signed 2's
