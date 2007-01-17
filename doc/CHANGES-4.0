@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.43 2007/01/16 08:50:08 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.44 2007/01/17 22:12:28 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -818,4 +818,27 @@ lib/Makefile					1.112
 	take into account that libpam depends on libkafs, fixes parallel
 	builds.
 	[bouyer, ticket #364]
+
+dist/ipf/ipsend/sock.c				1.10
+sys/dist/ipf/netinet/ip_nat.c			1.20
+sys/dist/ipf/netinet/ip_scan.c			1.7
+
+	Fix IPF bugs found by Coverty scans.
+	[martti, ticket #356]
+
+sys/ufs/ufs/ufs_vnops.c				1.145
+
+	Avoids problems while reading directories on an UFS volume if the
+	caller provided invalid offsets.
+	[yamt, ticket #357]
+
+sys/arch/xen/i386/autoconf.c			1.21
+
+	Fix wedge handling under NetBSD-xen.
+	[yamt, ticket #358]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.17
+
+	Fix occasional panics in NetBSD domUs caused by a race condition.
+	[bouyer, ticket #365]
 
