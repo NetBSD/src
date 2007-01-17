@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.7 2007/01/16 05:22:10 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.8 2007/01/17 20:24:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.7 2007/01/16 05:22:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.8 2007/01/17 20:24:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,6 +450,7 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 		}
 	}
 	mutex_exit(&p->p_smutex);
+	cv_broadcast(&p->p_lwpcv);
 
 	return (t == NULL ? ESRCH : 0);
 }
