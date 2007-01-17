@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.14 2007/01/17 02:12:19 chuck Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.15 2007/01/17 02:35:28 chuck Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.14 2007/01/17 02:12:19 chuck Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.15 2007/01/17 02:35:28 chuck Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -94,6 +94,12 @@ startup()
 		flags.nonull = 1;	/* this should be a termcap flag */
 	if (t_getent(&info, term) < 1)
 		error("Unknown terminal type: %s.", term);
+	BC_BS = t_agetstr(info, "bc");
+	if (!BC_BS) {
+		if (!t_getflag(info, "bs"))
+			error("Terminal must backspace.");
+		BC_BS = "\b";
+	}
 	HO = t_agetstr(info, "ho");
 	CO = t_getnum(info, "co");
 	LI = t_getnum(info, "li");
@@ -125,9 +131,6 @@ startup()
 	if (!SO || !SE || (SG > 0))
 		SO = SE = 0;
 	CD = t_agetstr(info, "cd");
-	BC_BS = t_agetstr(info, "bc");
-	if (!BC_BS)
-		BC_BS = "\b";
 	set_whole_screen();	/* uses LI and CD */
 }
 
