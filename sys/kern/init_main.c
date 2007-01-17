@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.286 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.287 2007/01/17 12:27:24 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.286 2006/12/21 15:55:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.287 2007/01/17 12:27:24 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -202,6 +202,14 @@ __stack_chk_fail(void)
 	panic("stack overflow detected; terminated");
 }
 #endif
+
+void __secmodel_none(void);
+__weak_alias(secmodel_start, __secmodel_none);
+void
+__secmodel_none(void)
+{
+	return;
+}
 
 /*
  * System startup; initialize the world, create process 0, mount root
