@@ -10,13 +10,12 @@
  * ====================================================
  */
 
-#if 0
 #include <sys/cdefs.h>
+#if 0
 __FBSDID("$FreeBSD: src/lib/msun/src/s_trunc.c,v 1.1 2004/06/20 09:25:43 das Exp $");
 #endif
-#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_trunc.c,v 1.1 2006/03/25 16:41:12 xtraeme Exp $");
+__RCSID("$NetBSD: s_trunc.c,v 1.2 2007/01/17 23:24:22 hubertf Exp $");
 #endif
 
 /*
