@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.143 2006/10/03 19:04:25 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.143.2.1 2007/01/17 22:04:09 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.143 2006/10/03 19:04:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.143.2.1 2007/01/17 22:04:09 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1588,6 +1588,8 @@ ufs_readdir(void *v)
 	int		error;
 	size_t		count, ccount, rcount;
 	off_t		off, *ccp;
+	off_t		startoff;
+	size_t		skipbytes;
 	struct ufsmount	*ump = VFSTOUFS(vp->v_mount);
 	int nswap = UFS_MPNEEDSWAP(ump);
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -1602,9 +1604,13 @@ ufs_readdir(void *v)
 	if (rcount < _DIRENT_MINSIZE(cdp) || count < _DIRENT_MINSIZE(ndp))
 		return EINVAL;
 
+	startoff = uio->uio_offset & ~(ump->um_dirblksiz - 1);
+	skipbytes = uio->uio_offset - startoff;
+	rcount += skipbytes;
+
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	auio.uio_offset = uio->uio_offset;
+	auio.uio_offset = startoff;
 	auio.uio_resid = rcount;
 	UIO_SETUP_SYSSPACE(&auio);
 	auio.uio_rw = UIO_READ;
@@ -1617,7 +1623,7 @@ ufs_readdir(void *v)
 		return error;
 	}
 
-	rcount = rcount - auio.uio_resid;
+	rcount -= auio.uio_resid;
 
 	cdp = (struct direct *)(void *)cdbuf;
 	ecdp = (struct direct *)(void *)&cdbuf[rcount];
@@ -1639,6 +1645,18 @@ ufs_readdir(void *v)
 
 	while (cdp < ecdp) {
 		cdp->d_reclen = ufs_rw16(cdp->d_reclen, nswap);
+		if (skipbytes > 0) {
+			if (cdp->d_reclen <= skipbytes) {
+				skipbytes -= cdp->d_reclen;
+				cdp = _DIRENT_NEXT(cdp);
+				continue;
+			}
+			/*
+			 * invlid cookie.
+			 */
+			error = EINVAL;
+			goto out;
+		}
 		if (cdp->d_reclen == 0) {
 			struct dirent *ondp = ndp;
 			ndp->d_reclen = _DIRENT_MINSIZE(ndp);
@@ -1671,12 +1689,9 @@ ufs_readdir(void *v)
 		cdp = _DIRENT_NEXT(cdp);
 	}
 
-	if (cdp >= ecdp)
-		off = uio->uio_offset + rcount;
-
 	count = ((char *)(void *)ndp - ndbuf);
 	error = uiomove(ndbuf, count, uio);
-
+out:
 	if (ap->a_cookies) {
 		if (error)
 			free(*(ap->a_cookies), M_TEMP);
