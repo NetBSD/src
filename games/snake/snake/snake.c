@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.21 2006/03/17 23:22:59 abs Exp $	*/
+/*	$NetBSD: snake.c,v 1.22 2007/01/17 00:30:23 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.21 2006/03/17 23:22:59 abs Exp $");
+__RCSID("$NetBSD: snake.c,v 1.22 2007/01/17 00:30:23 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -59,7 +59,6 @@ __RCSID("$NetBSD: snake.c,v 1.21 2006/03/17 23:22:59 abs Exp $");
 #include <curses.h>
 #include <fcntl.h>
 #include <pwd.h>
-#include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
