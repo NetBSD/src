@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.103 2007/01/04 20:24:08 elad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.104 2007/01/17 12:40:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.103 2007/01/04 20:24:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.104 2007/01/17 12:40:36 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -812,6 +812,7 @@ nfsrv_zapsock(slp)
 	struct nfsuid *nuidp, *nnuidp;
 	struct nfsrv_descript *nwp, *nnwp;
 	struct socket *so;
+	struct mbuf *m;
 	int s;
 
 	if (nfsdsock_drain(slp)) {
@@ -833,7 +834,14 @@ nfsrv_zapsock(slp)
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);
 	m_freem(slp->ns_raw);
-	m_freem(slp->ns_rec);
+	m = slp->ns_rec;
+	while (m != NULL) {
+		struct mbuf *n;
+
+		n = m->m_nextpkt;
+		m_freem(m);
+		m = n;
+	}
 	for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
 	    nuidp = nnuidp) {
 		nnuidp = TAILQ_NEXT(nuidp, nu_lru);
