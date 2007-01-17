@@ -1,7 +1,7 @@
-/*	$NetBSD: mutex.h,v 1.1.36.7 2007/01/12 20:18:29 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.8 2007/01/17 20:26:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,6 +57,7 @@
  *		through macros.  However, machine-independent code must
  *		be able to access the following members:
  *
+ *		uintptr_t		mtx_owner
  *		ipl_cookie_t		mtx_ipl
  *		__cpu_simple_lock_t	mtx_lock
  *
@@ -66,7 +67,7 @@
  *
  *	struct mutex
  *
- *		volatile uintptr_t	mtx_owner
+ *		[additionally:]
  *		volatile integer	mtx_id
  *
  *	MUTEX_RECEIVE(mtx)
@@ -97,8 +98,8 @@
  *	MUTEX_SPIN_P(mtx)
  *		Evaluates to true if the mutex is a spin mutex.
  *
- *	MUTEX_OWNER(mtx)
- *		Returns the owner of the adaptive mutex (struct lwp *).
+ *	MUTEX_OWNER(owner)
+ *		Returns the owner of the adaptive mutex (LWP address).
  *
  *	MUTEX_HAS_WAITERS(mtx)
  *		Returns true if the mutex has waiters.
@@ -158,7 +159,7 @@ typedef struct kmutex kmutex_t;
 
 #if defined(__MUTEX_PRIVATE)
 
-#define	MUTEX_THREAD		((uintptr_t)-16L)
+#define	MUTEX_THREAD			((uintptr_t)-16L)
 
 #define	MUTEX_BIT_SPIN			0x01
 #define	MUTEX_BIT_WAITERS		0x02
