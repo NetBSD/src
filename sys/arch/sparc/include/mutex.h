@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2007/01/12 01:47:51 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2007/01/17 20:26:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -106,12 +106,12 @@ struct kmutex {
 #define	mtx_dummy	u.s.mtxs_dummy
 #define	mtx_ipl		u.s.mtxs_ipl
 
-static uintptr_t	MUTEX_OWNER(volatile kmutex_t *) __attribute((unused));
+static uintptr_t	MUTEX_OWNER(uintptr_t) __attribute((unused));
 
 static uintptr_t
-MUTEX_OWNER(volatile kmutex_t *mtx)
+MUTEX_OWNER(uintptr_t owner)
 {
-	return mtx->mtx_owner << 4;
+	return owner << 4;
 }
 
 static inline int
@@ -124,10 +124,9 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 static inline int
 MUTEX_HAS_WAITERS(volatile kmutex_t *mtx)
 {
- 	if (mtx->mtx_lock == __SIMPLELOCK_UNLOCKED)
- 		return 0;
- 	mb_read();
- 	return mtx->mtx_owner != 0;
+	if (mtx->mtx_owner == 0)
+		return 0;
+	return mtx->mtx_lock == __SIMPLELOCK_LOCKED;
 }
 
 static inline void
