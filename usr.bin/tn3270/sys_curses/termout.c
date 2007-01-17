@@ -1,4 +1,4 @@
-/*	$NetBSD: termout.c,v 1.14 2003/08/07 11:16:37 agc Exp $	*/
+/*	$NetBSD: termout.c,v 1.15 2007/01/17 00:21:44 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termout.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termout.c,v 1.14 2003/08/07 11:16:37 agc Exp $");
+__RCSID("$NetBSD: termout.c,v 1.15 2007/01/17 00:21:44 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,7 +42,6 @@ __RCSID("$NetBSD: termout.c,v 1.14 2003/08/07 11:16:37 agc Exp $");
 #include <signal.h>
 #include <termios.h>
 #include <unistd.h>
-#include <stdlib.h>
 #ifdef __NetBSD__
 #include <termcap.h>
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.37 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.38 2007/01/17 00:21:44 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.37 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.38 2007/01/17 00:21:44 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: rlogin.c,v 1.37 2006/05/09 20:18:09 mrg Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/wait.h>
-#include <sys/ioctl.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

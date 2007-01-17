@@ -1,4 +1,4 @@
-/*	$NetBSD: paste.c,v 1.12 2006/04/01 06:36:58 rtr Exp $	*/
+/*	$NetBSD: paste.c,v 1.13 2007/01/17 00:21:44 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n"
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)paste.c	8.1 (Berkeley) 6/6/93";*/
-__RCSID("$NetBSD: paste.c,v 1.12 2006/04/01 06:36:58 rtr Exp $");
+__RCSID("$NetBSD: paste.c,v 1.13 2007/01/17 00:21:44 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: paste.c,v 1.12 2006/04/01 06:36:58 rtr Exp $");
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
 #include <unistd.h>
 
