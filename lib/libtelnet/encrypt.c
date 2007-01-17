@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.c,v 1.13 2005/02/06 05:53:07 perry Exp $	*/
+/*	$NetBSD: encrypt.c,v 1.14 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)encrypt.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: encrypt.c,v 1.13 2005/02/06 05:53:07 perry Exp $");
+__RCSID("$NetBSD: encrypt.c,v 1.14 2007/01/17 23:24:22 hubertf Exp $");
 #endif /* not lint */
 
 /*
@@ -71,8 +71,6 @@ __RCSID("$NetBSD: encrypt.c,v 1.13 2005/02/06 05:53:07 perry Exp $");
 #else
 #include <string.h>
 #endif
-
-#include <sys/cdefs.h>
 
 /*
  * These functions pointers point to the current routines

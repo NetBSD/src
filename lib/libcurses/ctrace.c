@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.15 2005/02/18 22:16:27 dsl Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.16 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.15 2005/02/18 22:16:27 dsl Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.16 2007/01/17 23:24:22 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -45,7 +45,6 @@ __RCSID("$NetBSD: ctrace.c,v 1.15 2005/02/18 22:16:27 dsl Exp $");
 
 #include <sys/time.h>
 #include <string.h>
-#include <stdlib.h>
 
 #include "curses.h"
 #include "curses_private.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.25 2006/11/25 17:55:48 freza Exp $	*/
+/*	$NetBSD: crypt.c,v 1.26 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.25 2006/11/25 17:55:48 freza Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.26 2007/01/17 23:24:22 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: crypt.c,v 1.25 2006/11/25 17:55:48 freza Exp $");
 #include <pwd.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifdef DEBUG
+#if defined(DEBUG) || defined(MAIN) || defined(UNIT_TEST)
 #include <stdio.h>
 #endif
 
@@ -991,7 +991,6 @@ prtab(s, t, num_rows)
 #endif
 
 #if defined(MAIN) || defined(UNIT_TEST)
-#include <stdio.h>
 #include <err.h>
 
 int
