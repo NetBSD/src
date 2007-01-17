@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.30 2007/01/17 12:49:01 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.31 2007/01/17 13:02:44 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.30 2007/01/17 12:49:01 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.31 2007/01/17 13:02:44 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -2432,8 +2432,17 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 
 	found = 0;
 	diroffset = dir_node->last_diroffset;
+
+	/*
+	 * if the directory is trunced or if we have never visited it yet,
+	 * start at the end.
+	 */
+	if ((diroffset >= file_size) || (diroffset == 0)) {
+		diroffset = dir_node->last_diroffset = file_size;
+	}
+
 	while (!found) {
-		/* if not found in this track, turn trough zero */
+		/* if at the end, go trough zero */
 		if (diroffset >= file_size)
 			diroffset = 0;
 
