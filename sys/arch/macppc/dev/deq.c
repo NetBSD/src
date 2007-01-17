@@ -1,4 +1,4 @@
-/*	$NetBSD: deq.c,v 1.2 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: deq.c,v 1.3 2007/01/17 23:05:49 macallan Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -32,7 +32,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.2 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deq.c,v 1.3 2007/01/17 23:05:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,5 +87,5 @@ deq_attach(parent, self, aux)
 	sc->sc_parent = parent;
 	sc->sc_address = ka->ka_addr & 0xfe;
 	sc->sc_i2c = ka->ka_tag;
-	printf(" Apple Digital Equalizer, addr %x\n", sc->sc_address);
+	printf(" Apple Digital Equalizer, addr 0x%x\n", sc->sc_address);
 }
