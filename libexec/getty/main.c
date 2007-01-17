@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2006/11/16 04:31:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2007/01/17 21:44:51 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.51 2006/11/16 04:31:24 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2007/01/17 21:44:51 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: main.c,v 1.51 2006/11/16 04:31:24 christos Exp $");
 #include <fcntl.h>
 #include <time.h>
 #include <ctype.h>
-#include <fcntl.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -222,7 +221,7 @@ main(int argc, char *argv[], char *envp[])
 	 * The following is a work around for vhangup interactions
 	 * which cause great problems getting window systems started.
 	 * If the tty line is "-", we do the old style getty presuming
-	 * that the file descriptors are already set up for us. 
+	 * that the file descriptors are already set up for us.
 	 * J. Gettys - MIT Project Athena.
 	 */
 	if (argc <= 2 || strcmp(argv[2], "-") == 0) {
@@ -240,7 +239,7 @@ main(int argc, char *argv[], char *envp[])
 				sizeof(lockfile));
 			    (void)strlcat(lockfile, argv[2],
 				sizeof(lockfile));
-			    /* 
+			    /*
 			     * wait for lockfiles to go away before we try
 			     * to open
 			     */
@@ -337,9 +336,9 @@ main(int argc, char *argv[], char *envp[])
 			putpad(CL);
 		edithost(HE);
 
-                /* 
+                /*
                  * If this is the first time through this, and an
-                 * issue file has been given, then send it. 
+                 * issue file has been given, then send it.
                  */
 		if (first_time != 0 && IF != NULL) {
 			char buf[_POSIX2_LINE_MAX];
@@ -352,7 +351,7 @@ main(int argc, char *argv[], char *envp[])
 			}
 		}
 		first_time = 0;
-                    
+
 		if (IM && *IM)
 			putf(IM);
 		oflush();
@@ -387,7 +386,7 @@ main(int argc, char *argv[], char *envp[])
 		        (void)execle(PP, "ppplogin", ttyn, (char *) 0, env);
 		        syslog(LOG_ERR, "%s: %m", PP);
 		        exit(1);
-		} 
+		}
 		
 		if (rval || AL || NN) {
 			int i;
@@ -546,7 +545,7 @@ getname(void)
 			continue;
 		*np++ = c;
 		putchr(cs);
- 
+
 		/*
 		 * An MS-Windows direct connect PPP "client" won't send its
 		 * first PPP packet until we respond to its "CLIENT" poll
