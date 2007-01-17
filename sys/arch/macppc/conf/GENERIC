@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.249 2007/01/12 21:24:40 uwe Exp $
+# $NetBSD: GENERIC,v 1.250 2007/01/17 22:45:51 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.249 $"
+#ident 		"GENERIC-$Revision: 1.250 $"
 
 maxusers	32
 
@@ -81,7 +81,7 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
 #options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
 #options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
@@ -194,7 +194,9 @@ options 	FONT_GALLANT12x22
 # events when Fn is not held down and send function key events when it
 # is.  This option transforms the non-keyboard "button" events back
 # into function key events.
-#options 	FORCE_FUNCTION_KEYS
+# enabled by default since trying to control brightness with those causes
+# trouble on pretty much all halfway recent Apple laptops
+options 	FORCE_FUNCTION_KEYS
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -272,7 +274,8 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # Display devices
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 # OFB_ENABLE_CACHE speeds up the console on many machines, but should
-# not be enabled on some older machines, such as the rev. A-D iMacs.
+# not be enabled on some older machines, such as the rev. A-D iMacs or any
+# O'Hare based machine that uses external cache like the PowerBook 3400c
 #options 	OFB_ENABLE_CACHE	# Speed up console in ofb
 #options 	OFB_FAKE_VGA_FB		# Allow X to mmap VGA regs
 chipsfb*	at pci?	function ?	# C&T 65550
