@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.14 2007/01/17 02:12:19 chuck Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.14 2007/01/17 02:12:19 chuck Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $");
 #include "def.flag.h"		/* for flags.nonull */
 
 static struct tinfo *info;
-static char    *HO, *CL, *CE, *CM, *ND, *XD, *SO, *SE, *TI, *TE;
+static char    *HO, *CL, *CE, *CM, *ND, *XD, *BC_BS, *SO, *SE, *TI, *TE;
 static char    *VS, *VE;
 static int      SG;
 char           *CD;		/* tested in pri.c: docorner() */
@@ -125,6 +125,9 @@ startup()
 	if (!SO || !SE || (SG > 0))
 		SO = SE = 0;
 	CD = t_agetstr(info, "cd");
+	BC_BS = t_agetstr(info, "bc");
+	if (!BC_BS)
+		BC_BS = "\b";
 	set_whole_screen();	/* uses LI and CD */
 }
 
@@ -210,7 +213,7 @@ nocmov(x, y)
 			}
 	} else if (curx > x) {
 		while (curx > x) {	/* Go to the left. */
-			xputs(BC);
+			xputs(BC_BS);
 			curx--;
 		}
 	}
@@ -301,7 +304,7 @@ standoutend()
 void
 backsp()
 {
-	xputs(BC);
+	xputs(BC_BS);
 	curx--;
 }
 
