@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 2007/01/17 23:00:31 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145 2007/01/17 23:27:59 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2007/01/17 23:00:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2007/01/17 23:27:59 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2007/01/17 23:00:31 macallan Exp $
 #include <dev/usb/ukbdvar.h>
 
 #include <macppc/dev/adbvar.h>
+#include <macppc/dev/pmuvar.h>
+#include <macppc/dev/cudavar.h>
 
 #include <sys/tty.h>
 #include <dev/ic/comreg.h>
@@ -109,6 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2007/01/17 23:00:31 macallan Exp $
 #endif
 
 #include "ksyms.h"
+#include "pmu.h"
+#include "cuda.h"
 #include "wsdisplay.h"
 
 extern int ofmsr;
@@ -582,6 +586,7 @@ lcsplx(ipl)
 
 #include "akbd.h"
 #include "ukbd.h"
+#include "adbkbd.h"
 #include "ofb.h"
 #include "zstty.h"
 
