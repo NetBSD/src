@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.8 2007/01/16 01:26:20 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.9 2007/01/17 20:24:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.8 2007/01/16 01:26:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.9 2007/01/17 20:24:33 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -434,7 +434,7 @@ sleepq_timeout(void *arg)
 		return;
 	}
 
-	sleepq_unsleep(l);
+	lwp_unsleep(l);
 }
 
 /*
