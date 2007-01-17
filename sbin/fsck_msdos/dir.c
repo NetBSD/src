@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.20 2006/06/05 16:51:18 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.21 2007/01/17 21:59:49 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -37,14 +37,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.20 2006/06/05 16:51:18 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.21 2007/01/17 21:59:49 hubertf Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <assert.h>
 #include <time.h>
