@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.5 2005/01/12 05:27:48 christos Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.6 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.5 2005/01/12 05:27:48 christos Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.6 2007/01/17 23:24:22 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: pw_gensalt.c,v 1.5 2005/01/12 05:27:48 christos Exp $");
 #include <util.h>
 #include <time.h>
 #include <errno.h>
-#include <pwd.h>
 
 #include "crypt.h"
 

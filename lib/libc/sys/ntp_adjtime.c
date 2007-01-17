@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_adjtime.c,v 1.8 2006/10/07 20:02:01 kardel Exp $ */
+/*	$NetBSD: ntp_adjtime.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,14 +33,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ntp_adjtime.c,v 1.8 2006/10/07 20:02:01 kardel Exp $");
+__RCSID("$NetBSD: ntp_adjtime.c,v 1.9 2007/01/17 23:24:22 hubertf Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <errno.h>
-#include <fcntl.h>
-#include <paths.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/timex.h>
@@ -49,14 +45,15 @@ __RCSID("$NetBSD: ntp_adjtime.c,v 1.8 2006/10/07 20:02:01 kardel Exp $");
 
 #include <sys/clockctl.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <string.h>
 #include <unistd.h>
- 
+
 #ifdef __weak_alias
 __weak_alias(ntp_adjtime,_ntp_adjtime)
-#endif 
+#endif
 
 extern int __clockctl_fd;
 
@@ -81,7 +78,7 @@ ntp_adjtime(tp)
 		    || /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
 			rv = (int)q;
 		else
-			rv = (int)((u_quad_t)q >> 32); 
+			rv = (int)((u_quad_t)q >> 32);
 	
 		/*
 		 * if we fail with EPERM we try the clockctl device
@@ -91,7 +88,7 @@ ntp_adjtime(tp)
 
 		/*
 		 * If this fails, it means that we are not root
-		 * and we cannot open clockctl. This is a true 
+		 * and we cannot open clockctl. This is a true
 		 * failure.
 		 */
 		__clockctl_fd = open(_PATH_CLOCKCTL, O_WRONLY, 0);
@@ -104,7 +101,7 @@ ntp_adjtime(tp)
 		(void) fcntl(__clockctl_fd, F_SETFD, FD_CLOEXEC);
 	}
 
-	/* 
+	/*
 	 * If __clockctl_fd >=0, clockctl has already been open
 	 * and used, so we carry on using it.
 	 */

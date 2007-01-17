@@ -1,4 +1,4 @@
-/*	$NetBSD: plural_parser.c,v 1.1 2005/05/14 17:58:57 tshiozak Exp $	*/
+/*	$NetBSD: plural_parser.c,v 1.2 2007/01/17 23:24:22 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Citrus Project,
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: plural_parser.c,v 1.1 2005/05/14 17:58:57 tshiozak Exp $");
+__RCSID("$NetBSD: plural_parser.c,v 1.2 2007/01/17 23:24:22 hubertf Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -246,7 +246,6 @@ unget_token(struct tokenizer_context *tcx,
 }
 
 #ifdef TEST_TOKENIZER
-#include <stdio.h>
 
 int
 main(int argc, char **argv)
