@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_term.c,v 1.43 2005/05/05 01:28:57 lukem Exp $	*/
+/*	$NetBSD: sys_term.c,v 1.44 2007/01/17 21:44:50 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_term.c,v 1.43 2005/05/05 01:28:57 lukem Exp $");
+__RCSID("$NetBSD: sys_term.c,v 1.44 2007/01/17 21:44:50 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: sys_term.c,v 1.43 2005/05/05 01:28:57 lukem Exp $");
 
 #include <util.h>
 #include <vis.h>
-
-#include <sys/cdefs.h>
 
 #include <utmp.h>
 struct	utmp wtmp;
@@ -190,7 +188,7 @@ static int ptyslavefd; /* for cleanopen() */
 
 int
 getpty(int *ptynum)
-{                   
+{
 	int ptyfd;
 
 	ptyfd = openpty(ptynum, &ptyslavefd, line, NULL, NULL);
