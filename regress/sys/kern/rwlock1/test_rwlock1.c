@@ -1,4 +1,4 @@
-/*	$NetBSD: test_rwlock1.c,v 1.1 2007/01/17 20:56:49 ad Exp $	*/
+/*	$NetBSD: test_rwlock1.c,v 1.2 2007/01/17 21:00:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: test_rwlock1.c,v 1.1 2007/01/17 20:56:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: test_rwlock1.c,v 1.2 2007/01/17 21:00:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -98,7 +98,7 @@ thread1(void *cookie)
 		else
 			op = RW_READER;
 		rw_enter(&test_rwlock, op);
-		if ((count % *(int *)cookie) == 0)
+		if ((arc4random() % 11) == 0)
 			yield();
 		rw_exit(&test_rwlock);
 	}
