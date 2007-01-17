@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.20 2006/09/23 10:06:57 wiz Exp $
+.\"	$NetBSD: who.1,v 1.21 2007/01/17 16:37:41 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)who.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd September 19, 2006
+.Dd January 17, 2007
 .Dt WHO 1
 .Os
 .Sh NAME
@@ -55,13 +55,13 @@ Available options:
 Same as
 .Fl -bdlprTtuv .
 .It Fl b
-Time of last system boot (unsupported).
+Time of last system boot.
 .It Fl d
 Print dead processes.
 .It Fl H
 Write column headings above the regular output.
 .It Fl l
-Print system login processes (unsupported).
+Print system login processes.
 .It Fl m
 Only print information about the current terminal.
 This is the
@@ -71,14 +71,34 @@ way of saying
 .Ar am i .
 .It Fl p
 Print active processes spawned by
-.Xr init 8
-(unsupported).
+.Xr init 8 .
 .It Fl q
 .Dq Quick mode :
 List only the names and the number of users currently logged on.
 When this option is used, all other options are ignored.
 .It Fl r
-Print the current runlevel (unsupported).
+Print the current runlevel.
+Supported runlevels are:
+.Bl -tag -width "s (SINGLE_USER)"
+.It Dv d (DEATH)
+The system has halted.
+.It Dv s (SINGLE_USER)
+The system is running in single user mode.
+.It Dv r (RUNCOM)
+The system is executing
+.Pa /etc/rc .
+.It Dv t (READ_TTYS)
+The system is processing
+.Pa /etc/ttys .
+.It Dv m (MULTI_USER)
+The system is running in multi-user mode.
+.It Dv T (CLEAN_TTYS)
+The system is in the process of stopping processes
+associated with terminal devices.
+.It Dv c (CATATONIA)
+The system is in the process of shutting down and will
+not create new processes.
+.El
 .It Fl s
 List only the name, line and time fields.
 This is the default.
@@ -93,7 +113,7 @@ and
 .Sq \&?
 if a bad line is encountered.
 .It Fl t
-Print last system clock change (unsupported).
+Print last system clock change.
 .It Fl u
 Print the idle time for each user, and the associated process ID.
 .It Fl v
