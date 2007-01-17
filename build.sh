@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.156 2007/01/14 17:02:56 dsl Exp $
+#	$NetBSD: build.sh,v 1.157 2007/01/17 03:43:18 rillig Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -968,7 +968,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.156 2007/01/14 17:02:56 dsl Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.157 2007/01/17 03:43:18 rillig Exp $
 # with these arguments: ${_args}
 #
 EOF
@@ -1064,6 +1064,8 @@ buildkernel()
 		    bomb "Failed to make cleandir in ${kernelbuildpath}"
 		${runcmd} cd "${TOP}"
 	fi
+	[ -x "${TOOLDIR}/bin/${toolprefix}config" ] \
+	|| bomb "${TOOLDIR}/bin/${toolprefix}config does not exist. You need to \"$0 tools\" first."
 	${runcmd} "${TOOLDIR}/bin/${toolprefix}config" -b "${kernelbuildpath}" \
 		-s "${TOP}/sys" "${kernelconfpath}" ||
 	    bomb "${toolprefix}config failed for ${kernelconf}"
