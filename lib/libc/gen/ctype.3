@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.15 2007/01/18 08:33:34 rillig Exp $
+.\"	$NetBSD: ctype.3,v 1.16 2007/01/18 11:33:13 cbiere Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctype.3	6.5 (Berkeley) 4/19/91
 .\"
-.Dd January 18, 2006
+.Dd January 18, 2007
 .Dt CTYPE 3
 .Os
 .Sh NAME
@@ -46,10 +46,8 @@
 .Nm isgraph ,
 .Nm iscntrl ,
 .Nm isblank ,
-.Nm isascii ,
 .Nm toupper ,
 .Nm tolower ,
-.Nm toascii
 .Nd character classification and mapping functions
 .Sh LIBRARY
 .Lb libc
@@ -69,10 +67,8 @@
 .Fn isgraph c
 .Fn iscntrl c
 .Fn isblank c
-.Fn isascii c
 .Fn toupper c
 .Fn tolower c
-.Fn toascii c
 .Sh DESCRIPTION
 The above functions perform character tests and conversions on the integer
 .Ar c .
@@ -84,6 +80,7 @@ restricted subset is actually valid as an argument.
 The argument must either be the value of the macro
 .Dv EOF
 or representable as an unsigned char.
+Otherwise the behavior is undefined.
 When testing an expression having the type
 .Tn plain char ,
 the argument should be cast to an unsigned char.
@@ -100,7 +97,6 @@ while (*s != '\\0') {
 .Sh SEE ALSO
 .Xr isalnum 3 ,
 .Xr isalpha 3 ,
-.Xr isascii 3 ,
 .Xr isblank 3 ,
 .Xr iscntrl 3 ,
 .Xr isdigit 3 ,
@@ -111,15 +107,11 @@ while (*s != '\\0') {
 .Xr isspace 3 ,
 .Xr isupper 3 ,
 .Xr isxdigit 3 ,
-.Xr toascii 3 ,
 .Xr tolower 3 ,
 .Xr toupper 3 ,
 .Xr ascii 7
 .Sh STANDARDS
 These functions, with the exception of
 .Fn isblank ,
-.Fn isascii ,
-and
-.Fn toascii ,
 conform to
 .St -ansiC .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: toascii.3,v 1.10 2007/01/18 08:35:07 rillig Exp $
+.\"	$NetBSD: toascii.3,v 1.11 2007/01/18 11:33:13 cbiere Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,8 +44,7 @@
 .Sh DESCRIPTION
 The
 .Fn toascii
-function strips all but the low 7 bits from a letter,
-including parity or other marker bits.
+function returns the argument with all but the lower 7 bits cleared.
 .Sh RETURN VALUES
 The
 .Fn toascii
@@ -73,11 +72,3 @@ The
 .Fn toascii
 function conforms to
 .St -xpg4 .
-.Sh CAVEATS
-The argument to
-.Fn toascii
-must be
-.Dv EOF
-or representable as an
-.Li unsigned char ;
-otherwise, the behavior is undefined.
