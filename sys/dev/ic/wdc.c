@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.244 2007/01/14 09:18:39 martin Exp $ */
+/*	$NetBSD: wdc.c,v 1.245 2007/01/18 21:42:57 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.244 2007/01/14 09:18:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.245 2007/01/18 21:42:57 bouyer Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1848,25 +1848,48 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 
 #ifndef __NO_STRICT_ALIGNMENT
 unaligned:
-	if (flags & DRIVE_CAP32) {
-		while (len > 3) {
-			uint32_t val;
+	if (flags & DRIVE_NOSTREAM) {
+		if (flags & DRIVE_CAP32) {
+			while (len > 3) {
+				uint32_t val;
 
-			val = bus_space_read_4(wdr->cmd_iot,
-			    wdr->cmd_iohs[wd_data], 0);
-			memcpy(bf, &val, 4);
-			bf = (char*)bf+4;
-			len -= 4;
+				val = bus_space_read_4(wdr->data32iot,
+				    wdr->data32ioh, 0);
+				memcpy(bf, &val, 4);
+				bf = (char *)bf + 4;
+				len -= 4;
+			}
 		}
-	}
-	while (len > 1) {
-		uint16_t val;
+		while (len > 1) {
+			uint16_t val;
 
-		val = bus_space_read_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_data], 0);
-		memcpy(bf, &val, 2);
-		bf = (char*)bf+2;
-		len -= 2;
+			val = bus_space_read_2(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0);
+			memcpy(bf, &val, 2);
+			bf = (char *)bf + 2;
+			len -= 2;
+		}
+	} else {
+		if (flags & DRIVE_CAP32) {
+			while (len > 3) {
+				uint32_t val;
+
+				val = bus_space_read_stream_4(wdr->data32iot,
+				    wdr->data32ioh, 0);
+				memcpy(bf, &val, 4);
+				bf = (char *)bf + 4;
+				len -= 4;
+			}
+		}
+		while (len > 1) {
+			uint16_t val;
+
+			val = bus_space_read_stream_2(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0);
+			memcpy(bf, &val, 2);
+			bf = (char *)bf + 2;
+			len -= 2;
+		}
 	}
 #endif
 }
@@ -1910,25 +1933,48 @@ wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 
 #ifndef __NO_STRICT_ALIGNMENT
 unaligned:
-	if (flags & DRIVE_CAP32) {
-		while (len > 3) {
-			uint32_t val;
+	if (flags & DRIVE_NOSTREAM) {
+		if (flags & DRIVE_CAP32) {
+			while (len > 3) {
+				uint32_t val;
 
-			memcpy(&val, bf, 4);
-			bus_space_write_4(wdr->cmd_iot,
-			    wdr->cmd_iohs[wd_data], 0, val);
-			bf = (char*)bf+4;
-			len -= 4;
+				memcpy(&val, bf, 4);
+				bus_space_write_4(wdr->data32iot,
+				    wdr->data32ioh, 0, val);
+				bf = (char *)bf + 4;
+				len -= 4;
+			}
 		}
-	}
-	while (len > 1) {
-		uint16_t val;
+		while (len > 1) {
+			uint16_t val;
 
-		memcpy(&val, bf, 2);
-		bus_space_write_2(wdr->cmd_iot,
-		    wdr->cmd_iohs[wd_data], 0, val);
-		bf = (char*)bf+2;
-		len -= 2;
+			memcpy(&val, bf, 2);
+			bus_space_write_2(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0, val);
+			bf = (char *)bf + 2;
+			len -= 2;
+		}
+	} else {
+		if (flags & DRIVE_CAP32) {
+			while (len > 3) {
+				uint32_t val;
+
+				memcpy(&val, bf, 4);
+				bus_space_write_stream_4(wdr->data32iot,
+				    wdr->data32ioh, 0, val);
+				bf = (char *)bf + 4;
+				len -= 4;
+			}
+		}
+		while (len > 1) {
+			uint16_t val;
+
+			memcpy(&val, bf, 2);
+			bus_space_write_stream_2(wdr->cmd_iot,
+			    wdr->cmd_iohs[wd_data], 0, val);
+			bf = (char *)bf + 2;
+			len -= 2;
+		}
 	}
 #endif
 }
