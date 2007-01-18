@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.59.4.2 2007/01/12 01:04:03 ad Exp $ */
+/*	$NetBSD: mach_task.c,v 1.59.4.3 2007/01/18 00:15:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.2 2007/01/12 01:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.3 2007/01/18 00:15:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -571,7 +571,6 @@ mach_task_suspend(args)
 		case LSSLEEP:
 		case LSSUSPENDED:
 		case LSZOMB:
-		case LSDEAD:
 			break;
 		default:
 			return mach_msg_error(args, 0);
