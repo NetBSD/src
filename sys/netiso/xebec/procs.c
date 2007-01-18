@@ -1,4 +1,4 @@
-/*	$NetBSD: procs.c,v 1.11 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: procs.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.11 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procs.c,v 1.12 2007/01/18 12:43:38 cbiere Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -177,15 +177,15 @@ statetable(string, oldstate, newstate, action, event)
 }
 
 void
-stateentry(index, oldstate, newstate, action)
-	int index, action;
+stateentry(idx, oldstate, newstate, action)
+	int idx, action;
 	int oldstate, newstate;
 {
 	extern FILE *statevalfile;
 
 	IFDEBUG(a)
 		fprintf(OUT,"stateentry(0x%x,0x%x,0x%x,0x%x) Statelist@%p, val %p\n",
-			index, oldstate, newstate,action, &Statelist, Statelist);
+			idx, oldstate, newstate,action, &Statelist, Statelist);
 	ENDDEBUG
 
 
@@ -202,6 +202,7 @@ predtable(os, oe, str, action, newstate)
 	register int event, state;
 	register struct Object *e, *s;
 	struct Object *firste;
+	extern FILE *statevalfile;
 
 	if (oe == (struct Object *)0 ) {
 		Ndefevent++;
@@ -306,10 +307,11 @@ dump_predtable(f)
 	register int e,s, hadapred;
 	int defaultindex;
 	int defaultItrans;
+
+#ifdef notdef
 	extern int bytesmalloced;
 	extern int byteswasted;
 
-#ifdef notdef
 	fprintf(stdout,
 		" Xebec used %8d bytes of storage, wasted %8d bytes\n",
 		bytesmalloced, byteswasted);
