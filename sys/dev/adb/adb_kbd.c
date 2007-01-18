@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.1 2007/01/17 23:20:16 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.2 2007/01/18 00:49:17 macallan Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.1 2007/01/17 23:20:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.2 2007/01/18 00:49:17 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.1 2007/01/17 23:20:16 macallan Exp $")
 #include <dev/wscons/wsmousevar.h>
 
 #include <machine/autoconf.h>
-#define KEYBOARD_ARRAY
 #include <machine/keyboard.h>
 #include <machine/adbsys.h>
 
