@@ -1,4 +1,4 @@
-/*	$NetBSD: llparse.c,v 1.10 2005/12/11 12:25:16 christos Exp $	*/
+/*	$NetBSD: llparse.c,v 1.11 2007/01/18 12:43:38 cbiere Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.10 2005/12/11 12:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llparse.c,v 1.11 2007/01/18 12:43:38 cbiere Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -172,6 +172,7 @@ llpushprod(prod) 	/* recognize production prod - push rhs on stack */
 
 int
 llepsilonok(term)
+	int term;
 {
 	register int	ptr;
 	register int	sym;
@@ -225,6 +226,8 @@ llepsilonok(term)
 
 short
 llfindaction(sym, term)
+	int sym;
+	int term;
 {
 	register int	index;
 
