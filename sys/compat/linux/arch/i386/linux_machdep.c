@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.114.4.3 2007/01/12 01:04:03 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.114.4.4 2007/01/18 11:32:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.114.4.3 2007/01/12 01:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.114.4.4 2007/01/18 11:32:04 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -501,7 +501,9 @@ static int
 linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
     register_t *retval)
 {
+#if defined(VM86)
 	struct proc *p = l->l_proc;
+#endif /* defined(VM86) */
 	struct sigaltstack *sas = l->l_sigstk;
 	struct trapframe *tf;
 	sigset_t mask;
