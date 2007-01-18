@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.14.10.2 2007/01/17 22:10:30 tron Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.14.10.3 2007/01/18 12:57:26 tron Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.14.10.2 2007/01/17 22:10:30 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.14.10.3 2007/01/18 12:57:26 tron Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -492,7 +492,7 @@ again:
 				    sc->sc_dev.dv_xname);
 				sc->sc_ring.rsp_cons = i;
 				xbdreq->req_nr_segments = seg + 1;
-				return 1;
+				goto done;
 			}
 			xengnt_revoke_access(
 			    xbdreq->req_gntref[seg]);
@@ -521,7 +521,6 @@ next:
 		    (bp->b_bcount - bp->b_resid),
 		    (bp->b_flags & B_READ));
 		biodone(bp);
-		dk_iodone(sc->sc_di, &sc->sc_dksc);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
 	x86_lfence();
@@ -529,6 +528,8 @@ next:
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_ring, more_to_do);
 	if (more_to_do)
 		goto again;
+done:
+	dk_iodone(sc->sc_di, &sc->sc_dksc);
 	return 1;
 }
 
