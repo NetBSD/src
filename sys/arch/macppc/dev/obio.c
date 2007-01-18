@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.24 2006/08/05 21:26:48 sanjayl Exp $	*/
+/*	$NetBSD: obio.c,v 1.25 2007/01/18 00:17:22 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.24 2006/08/05 21:26:48 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.25 2007/01/18 00:17:22 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.24 2006/08/05 21:26:48 sanjayl Exp $");
 
 #include <machine/autoconf.h>
 
+#include <sys/sysctl.h>
+
 static void obio_attach __P((struct device *, struct device *, void *));
 static int obio_match __P((struct device *, struct cfdata *, void *));
 static int obio_print __P((void *, const char *));
@@ -55,6 +57,10 @@ struct obio_softc {
 	int sc_node;
 };
 
+static void obio_setup_ohare2(struct obio_softc *, struct confargs *);
+static int obio_get_cpu_speed(paddr_t);
+static void obio_set_cpu_speed(paddr_t, int);
+static void setup_sysctl(paddr_t);
 
 CFATTACH_DECL(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
@@ -148,7 +154,20 @@ obio_attach(parent, self, aux)
 		out32rb(ca.ca_baseaddr + 0x40,
 			in32rb(ca.ca_baseaddr + 0x40) & ~((u_int32_t)1<<25));
 	}
-
+	
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID) {
+		paddr_t addr;
+		
+		printf("enabling Intrepid CPU speed control\nCPU speed is ");
+		addr = ca.ca_baseaddr + 0x6a;
+		if (obio_get_cpu_speed(addr)) {
+			printf("high\n");
+		} else {
+			printf("low\n");
+		}
+		setup_sysctl(addr);
+	}
+	
 	/* Enable internal modem (Pangea) */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PANGEA_MACIO) {
 		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x04); /* set reset */
@@ -168,7 +187,22 @@ obio_attach(parent, self, aux)
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
 			out8(ca.ca_baseaddr + 0x37, 0x03);
 	}
-  
+	
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_OHARE) {
+		uint32_t freg;
+		
+		freg = in32rb(ca.ca_baseaddr + 0x38);
+		printf("%s: FCR %08x\n", sc->sc_dev.dv_xname, freg);
+
+		if (ca.ca_baseaddr != 0xf3000000) {
+			obio_setup_ohare2(sc, &ca);
+			return;
+		}
+		printf("enabling 2nd IDE channel on ohare\n");
+		freg |= 8;
+		out32rb(ca.ca_baseaddr + 0x38, freg);
+	}
+
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
@@ -179,9 +213,13 @@ obio_attach(parent, self, aux)
 		name[namelen] = 0;
 		ca.ca_name = name;
 		ca.ca_node = child;
-
+		ca.ca_tag = pa->pa_memt;
+		
 		ca.ca_nreg = OF_getprop(child, "reg", reg, sizeof(reg));
-
+		if (strcmp(name, "backlight") == 0) {
+			paddr_t addr = (ca.ca_baseaddr + reg[0]);
+			printf("backlight: %08x %08x\n",(uint32_t)addr, in32rb(addr));
+		}
 		if (strcmp(compat, "gatwick") != 0) {
 			ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,
 					sizeof(intr));
@@ -231,4 +269,90 @@ obio_print(aux, obio)
 		aprint_normal(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
+}
+
+static void
+obio_setup_ohare2(struct obio_softc *sc, struct confargs *ca)
+{
+	printf("ohare2: %08x\n", ca->ca_baseaddr);
+}
+
+static void
+obio_set_cpu_speed(paddr_t addr, int fast)
+{
+
+	if(addr != 0) {
+		if (fast) {
+			out8rb(addr + 1, 5);	/* bump Vcore */
+			out8rb(addr, 5);	/* bump CPU speed */
+		} else {
+			out8rb(addr, 4);	/* lower CPU speed */
+			out8rb(addr + 1, 4);	/* lower Vcore */
+		}
+	}
+}
+
+static int
+obio_get_cpu_speed(paddr_t addr)
+{
+	
+	if(addr != 0) {
+		if(in8rb(addr) & 1)
+			return 1;
+	}
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_cpuspeed_setup, "sysctl cpu speed setup")
+{
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+}
+
+static int
+sysctl_cpuspeed_temp(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	paddr_t addr = (paddr_t)node.sysctl_data;
+	const int *np = newp;
+	int speed, nd = 0;
+
+	speed = obio_get_cpu_speed(addr);	
+	node.sysctl_idata = speed;
+	if (np) {
+		/* we're asked to write */	
+		nd = *np;
+		node.sysctl_data = &speed;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			int new_reg;
+			
+			new_reg = (max(0, min(1, node.sysctl_idata)));
+			obio_set_cpu_speed(addr, new_reg);
+			return 0;
+		}
+		return EINVAL;
+	} else {
+		node.sysctl_size = 4;
+		return(sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+}
+
+static void
+setup_sysctl(paddr_t addr)
+{
+	struct sysctlnode *node=NULL;
+	int ret;
+	
+	ret = sysctl_createv(NULL, 0, NULL, 
+	    (const struct sysctlnode **)&node, 
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
+	    CTLTYPE_INT, "cpu_speed", "CPU speed", sysctl_cpuspeed_temp, 
+		    addr , NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+	if (node != NULL) {
+		node->sysctl_data = (void *)addr;
+	}
 }
