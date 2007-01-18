@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctype.3,v 1.14 2006/02/04 18:47:31 wiz Exp $
+.\"	$NetBSD: ctype.3,v 1.15 2007/01/18 08:33:34 rillig Exp $
 .\"
 .\" Copyright (c) 1991 Regents of the University of California.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ctype.3	6.5 (Berkeley) 4/19/91
 .\"
-.Dd January 26, 2006
+.Dd January 18, 2006
 .Dt CTYPE 3
 .Os
 .Sh NAME
@@ -78,6 +78,25 @@ The above functions perform character tests and conversions on the integer
 .Ar c .
 .Pp
 See the specific manual pages for more information.
+.Sh CAVEATS
+The first parameter of these functions is of type int, but only a very
+restricted subset is actually valid as an argument.
+The argument must either be the value of the macro
+.Dv EOF
+or representable as an unsigned char.
+When testing an expression having the type
+.Tn plain char ,
+the argument should be cast to an unsigned char.
+.Sh EXAMPLES
+To print an upper-case version of a string on stdout, use the following
+code:
+.Bd -literal
+const char *s = ...;
+while (*s != '\\0') {
+    putchar(toupper((unsigned char)*s));
+    s++;
+}
+.Ed
 .Sh SEE ALSO
 .Xr isalnum 3 ,
 .Xr isalpha 3 ,
