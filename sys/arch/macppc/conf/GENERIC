@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.250 2007/01/17 22:45:51 macallan Exp $
+# $NetBSD: GENERIC,v 1.251 2007/01/18 00:58:55 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.250 $"
+#ident 		"GENERIC-$Revision: 1.251 $"
 
 maxusers	32
 
@@ -351,15 +351,33 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
+
+# the traditional ADB subsystem
+
 adb*	at obio?			# Apple Desktop Bus
 apm0	at adb?				# APM emulation
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
 abtn*	at adb?
-
 wskbd0	at akbd? console ?
-wsmouse* at ams?
+
+# the new, improved, experimental ADB subsystem
+
+#cuda*	at obio?		# CUDA, for Old World PowerMacs
+#pmu*	at obio?		# PMU, *Books and newer PowerMacs
+
+#iic0	at cuda0		# CUDA's IIC bus
+#sgsmix0 at iic0	addr 0x8a	# additional mixer found in beige G3
+				# use with awacs
+
+#nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
+
+#adbkbd* at nadb?		# ADB keyboard
+#adbms*	at nadb?		# ADB mouse or trackpad
+
+wsmouse* at wsmousedev?
+wskbd*	at wskbddev?
 
 zsc*	at obio?
 zstty*	at zsc? channel ?
@@ -443,13 +461,10 @@ uhub*	at uhub? port ? configuration ? interface ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 
 pbms*	at uhidev? reportid ?				# PowerBook 15" mouse
-wsmouse* at pbms?
 
 ums*	at uhidev? reportid ?				# USB Mice
-wsmouse* at ums?
 
 ukbd*	at uhidev? reportid ?				# USB Keyboards
-wskbd*	at ukbd? console ?
 
 ucycom*	at uhidev? reportid ?				# USB serial adapter
 
