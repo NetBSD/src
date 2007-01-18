@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.21 2007/01/17 16:37:41 christos Exp $
+.\"	$NetBSD: who.1,v 1.22 2007/01/18 00:15:05 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,22 +80,22 @@ When this option is used, all other options are ignored.
 Print the current runlevel.
 Supported runlevels are:
 .Bl -tag -width "s (SINGLE_USER)"
-.It Dv d (DEATH)
+.It Dv d Pq Dv DEATH
 The system has halted.
-.It Dv s (SINGLE_USER)
+.It Dv s Pq Dv SINGLE_USER
 The system is running in single user mode.
-.It Dv r (RUNCOM)
+.It Dv r Pq Dv RUNCOM
 The system is executing
 .Pa /etc/rc .
-.It Dv t (READ_TTYS)
+.It Dv t Pq Dv READ_TTYS
 The system is processing
 .Pa /etc/ttys .
-.It Dv m (MULTI_USER)
+.It Dv m Pq Dv MULTI_USER
 The system is running in multi-user mode.
-.It Dv T (CLEAN_TTYS)
+.It Dv T Pq Dv CLEAN_TTYS
 The system is in the process of stopping processes
 associated with terminal devices.
-.It Dv c (CATATONIA)
+.It Dv c Pq Dv CATATONIA
 The system is in the process of shutting down and will
 not create new processes.
 .El
