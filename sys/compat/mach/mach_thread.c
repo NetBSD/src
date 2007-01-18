@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.36.20.3 2006/11/18 21:39:12 ad Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.36.20.4 2007/01/18 00:15:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.3 2006/11/18 21:39:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.4 2007/01/18 00:15:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -456,7 +456,7 @@ mach_thread_abort(args)
 	size_t *msglen = args->rsize;
 	struct lwp *tl = args->tl;
 
-	(void)lwp_exit(tl, 0);
+	lwp_exit(tl);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);

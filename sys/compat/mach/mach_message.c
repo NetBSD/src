@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.48.2.1 2006/11/18 21:39:11 ad Exp $ */
+/*	$NetBSD: mach_message.c,v 1.48.2.2 2007/01/18 00:15:36 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.48.2.1 2006/11/18 21:39:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.48.2.2 2007/01/18 00:15:36 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -710,7 +710,7 @@ mach_get_target_task(l, mp)
 	switch (mp->mp_datatype) {
 	case MACH_MP_PROC:
 		tp = (struct proc *)mp->mp_data;
-		tl = proc_representative_lwp(tp);
+		tl = proc_representative_lwp(tp, NULL, 1);
 		break;
 
 	case MACH_MP_LWP:
