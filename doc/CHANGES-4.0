@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.44 2007/01/17 22:12:28 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.45 2007/01/18 13:10:45 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -841,4 +841,14 @@ sys/arch/xen/xen/xbd_xenbus.c			1.17
 
 	Fix occasional panics in NetBSD domUs caused by a race condition.
 	[bouyer, ticket #365]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.15
+
+	PR port-xen/34005: NetBSD Xen3 domU-s can get stuck waiting for I/O.
+	[yamt, ticket #360]
+
+sys/netinet/ip_output.c				1.173
+
+	Avoid problems if PF's fragment reassemble feature is used.
+	[yamt, ticket #361]
 
