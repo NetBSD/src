@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2002/07/15 22:04:00 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2007/01/18 16:29:21 ginsbach Exp $
 
-SUBDIR+= getopt
+SUBDIR+= getopt getopt_long
 
 .include <bsd.subdir.mk>
