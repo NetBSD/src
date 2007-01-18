@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.1 2007/01/17 23:25:45 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.2 2007/01/18 00:43:00 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.1 2007/01/17 23:25:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.2 2007/01/18 00:43:00 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ static int pmu_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 #endif
 
 /* these values shows that number of data returned after 'send' cmd is sent */
-signed char pm_send_cmd_type[] = {
+static signed char pm_send_cmd_type[] = {
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x01, 0x01,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -184,7 +184,7 @@ signed char pm_send_cmd_type[] = {
 };
 
 /* these values shows that number of data returned after 'receive' cmd is sent */
-signed char pm_receive_cmd_type[] = {
+static signed char pm_receive_cmd_type[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
