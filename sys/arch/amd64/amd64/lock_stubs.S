@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.9 2007/01/12 20:18:29 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.10 2007/01/19 12:25:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ NENTRY(smutex_exit)				/* 0x0080, 63 bytes */
 	jnz	_C_LABEL(Xspllower)
 	movl	%edi, (CPU_INFO_ILEVEL-0x200)(%r8)
 	sti
-1:	ret					/* double ret as branch */
+1:	rep					/* double byte ret as branch */
 	ret					/* target: see AMD docs */
 
 /*
