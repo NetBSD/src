@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.83.4.7 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.83.4.8 2007/01/19 21:50:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.7 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.8 2007/01/19 21:50:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,6 +235,7 @@ sa_newsavp(struct proc *p)
 int
 sys_sa_register(struct lwp *l, void *v, register_t *retval)
 {
+#if 0
 	struct sys_sa_register_args /* {
 		syscallarg(sa_upcall_t) new;
 		syscallarg(sa_upcall_t *) old;
@@ -253,6 +254,9 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		return copyout(&prev, SCARG(uap, old),
 		    sizeof(prev));
 	return 0;
+#else
+	return ENOSYS;
+#endif
 }
 
 int
@@ -563,6 +567,7 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 int
 sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 {
+#if 0
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
 	struct sadata_vp *vp = l->l_savp;
@@ -595,6 +600,9 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 
 	/* This will not return to the place in user space it came from. */
 	return (0);
+#else
+	return ENOSYS;
+#endif
 }
 
 
