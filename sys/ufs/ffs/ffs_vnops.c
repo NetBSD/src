@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.83 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.84 2007/01/19 14:49:12 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.83 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.84 2007/01/19 14:49:12 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.83 2006/11/16 01:33:53 christos Exp 
 #include <sys/pool.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -251,16 +252,20 @@ ffs_fsync(void *v)
 	daddr_t blk_high;
 	struct vnode *vp;
 
+	vp = ap->a_vp;
+
+	if ((error = fstrans_start(vp->v_mount, fstrans_lazy)) != 0)
+		return error;
 	/*
 	 * XXX no easy way to sync a range in a file with softdep.
 	 */
-	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(ap->a_vp) ||
-			(ap->a_vp->v_type != VREG))
-		return ffs_full_fsync(v);
+	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(vp) ||
+	    (vp->v_type != VREG)) {
+		error = ffs_full_fsync(v);
+		goto out;
+	}
 
-	vp = ap->a_vp;
-
-	bsize = ap->a_vp->v_mount->mnt_stat.f_iosize;
+	bsize = vp->v_mount->mnt_stat.f_iosize;
 	blk_high = ap->a_offhi / bsize;
 	if (ap->a_offhi % bsize != 0)
 		blk_high++;
@@ -274,7 +279,7 @@ ffs_fsync(void *v)
 	    round_page(ap->a_offhi), PGO_CLEANIT |
 	    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
 	if (error) {
-		return error;
+		goto out;
 	}
 
 	/*
@@ -286,7 +291,7 @@ ffs_fsync(void *v)
 		error = ufs_getlbns(vp, blk_high, ia, &num);
 		if (error) {
 			splx(s);
-			return error;
+			goto out;
 		}
 		for (i = 0; i < num; i++) {
 			bp = incore(vp, ia[i].in_lbn);
@@ -326,6 +331,8 @@ ffs_fsync(void *v)
 			ap->a_l->l_cred, ap->a_l);
 	}
 
+out:
+	fstrans_done(vp->v_mount);
 	return error;
 }
 
@@ -363,7 +370,9 @@ ffs_full_fsync(void *v)
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
-		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
+		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
+		    (fstrans_getstate(vp->v_mount) == fstrans_suspending ?
+			PGO_FREE : 0));
 		if (error) {
 			return error;
 		}
@@ -480,11 +489,16 @@ ffs_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
+	struct mount *mp = vp->v_mount;
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = ufs_reclaim(vp, ap->a_l)) != 0)
+	if ((error = fstrans_start(mp, fstrans_lazy)) != 0)
+		return error;
+	if ((error = ufs_reclaim(vp, ap->a_l)) != 0) {
+		fstrans_done(mp);
 		return (error);
+	}
 	if (ip->i_din.ffs1_din != NULL) {
 		if (ump->um_fstype == UFS1)
 			pool_put(&ffs_dinode1_pool, ip->i_din.ffs1_din);
@@ -497,6 +511,7 @@ ffs_reclaim(void *v)
 	 */
 	pool_put(&ffs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
+	fstrans_done(mp);
 	return (0);
 }
 
@@ -607,12 +622,19 @@ ffs_getextattr(void *v)
 		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
 #ifdef UFS_EXTATTR
-		return (ufs_getextattr(ap));
+		int error;
+
+		if ((error = fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+			return error;
+		error = ufs_getextattr(ap);
+		fstrans_done(vp->v_mount);
+		return error;
 #else
 		return (EOPNOTSUPP);
 #endif
@@ -633,12 +655,19 @@ ffs_setextattr(void *v)
 		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
 #ifdef UFS_EXTATTR
-		return (ufs_setextattr(ap));
+		int error;
+
+		if ((error = fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+			return error;
+		error = ufs_setextattr(ap);
+		fstrans_done(vp->v_mount);
+		return error;
 #else
 		return (EOPNOTSUPP);
 #endif
@@ -679,12 +708,19 @@ ffs_deleteextattr(void *v)
 		kauth_cred_t a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
-	struct inode *ip = VTOI(ap->a_vp);
+	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	struct fs *fs = ip->i_fs;
 
 	if (fs->fs_magic == FS_UFS1_MAGIC) {
 #ifdef UFS_EXTATTR
-		return (ufs_deleteextattr(ap));
+		int error;
+
+		if ((error = fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+			return error;
+		error = ufs_deleteextattr(ap);
+		fstrans_done(vp->v_mount);
+		return error;
 #else
 		return (EOPNOTSUPP);
 #endif

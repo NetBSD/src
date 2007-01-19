@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.47 2006/11/16 01:33:35 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.48 2007/01/19 14:49:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.47 2006/11/16 01:33:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.48 2007/01/19 14:49:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1021,6 +1021,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	ntfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

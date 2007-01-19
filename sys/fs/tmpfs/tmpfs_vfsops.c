@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.17 2006/11/16 01:33:37 christos Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.18 2007/01/19 14:49:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.17 2006/11/16 01:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.18 2007/01/19 14:49:10 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -472,6 +472,7 @@ struct vfsops tmpfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	tmpfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
+	vfs_stdsuspendctl,		/* vfs_suspendctl */
 	tmpfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
