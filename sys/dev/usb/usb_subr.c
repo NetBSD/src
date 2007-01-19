@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.140 2006/12/05 08:17:03 pavel Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.141 2007/01/19 22:42:05 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.140 2006/12/05 08:17:03 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.141 2007/01/19 22:42:05 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -628,55 +628,30 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 
 	/* Figure out if the device is self or bus powered. */
 	selfpowered = 0;
-	if (!(dev->quirks->uq_flags & UQ_BUS_POWERED) &&
-	    (cdp->bmAttributes & UC_SELF_POWERED)) {
-		/* May be self powered. */
-		if (cdp->bmAttributes & UC_BUS_POWERED) {
-			/* Must ask device. */
-			if (dev->quirks->uq_flags & UQ_POWER_CLAIM) {
-				/*
-				 * Hub claims to be self powered, but isn't.
-				 * It seems that the power status can be
-				 * determined by the hub characteristics.
-				 */
-				usb_hub_descriptor_t hd;
-				usb_device_request_t req;
-				req.bmRequestType = UT_READ_CLASS_DEVICE;
-				req.bRequest = UR_GET_DESCRIPTOR;
-				USETW(req.wValue, 0);
-				USETW(req.wIndex, 0);
-				USETW(req.wLength, USB_HUB_DESCRIPTOR_SIZE);
-				err = usbd_do_request(dev, &req, &hd);
-				if (!err &&
-				    (UGETW(hd.wHubCharacteristics) &
-				     UHD_PWR_INDIVIDUAL))
-					selfpowered = 1;
-				DPRINTF(("usbd_set_config_index: charac=0x%04x"
-				    ", error=%s\n",
-				    UGETW(hd.wHubCharacteristics),
-				    usbd_errstr(err)));
-			} else {
-				err = usbd_get_device_status(dev, &ds);
-				if (!err &&
-				    (UGETW(ds.wStatus) & UDS_SELF_POWERED))
-					selfpowered = 1;
-				DPRINTF(("usbd_set_config_index: status=0x%04x"
-				    ", error=%s\n",
-				    UGETW(ds.wStatus), usbd_errstr(err)));
-			}
-		} else
-			selfpowered = 1;
-	}
+	err = usbd_get_device_status(dev, &ds);
+	if (!err && (UGETW(ds.wStatus) & UDS_SELF_POWERED))
+		selfpowered = 1;
+
 	DPRINTF(("usbd_set_config_index: (addr %d) cno=%d attr=0x%02x, "
 		 "selfpowered=%d, power=%d\n",
 		 cdp->bConfigurationValue, dev->address, cdp->bmAttributes,
 		 selfpowered, cdp->bMaxPower * 2));
 
 	/* Check if we have enough power. */
+	if ((cdp->bmAttributes & UC_SELF_POWERED) && !selfpowered) {
+		if (msg)
+			printf("%s: device addr %d (config %d): "
+				 "can't set self powered configuration\n",
+			       USBDEVNAME(dev->bus->bdev), dev->address,
+			       cdp->bConfigurationValue);
+		err = USBD_NO_POWER;
+		goto bad;
+	}
 #ifdef USB_DEBUG
 	if (dev->powersrc == NULL) {
 		DPRINTF(("usbd_set_config_index: No power source?\n"));
-		return (USBD_IOERROR);
+		err = USBD_IOERROR;
+		goto bad;
 	}
 #endif
 	power = cdp->bMaxPower * 2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.54 2006/09/23 13:07:06 jmcneill Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.55 2007/01/19 22:42:05 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.54 2006/09/23 13:07:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.55 2007/01/19 22:42:05 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,6 @@ Static const struct usbd_quirk_entry {
 	0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_ALCOR2, USB_PRODUCT_ALCOR2_KBD_HUB,   0x001, { UQ_SPUR_BUT_UP }},
- { USB_VENDOR_MCT, USB_PRODUCT_MCT_HUB0100,         0x102, { UQ_BUS_POWERED }},
- { USB_VENDOR_MCT, USB_PRODUCT_MCT_USB232,          0x102, { UQ_BUS_POWERED }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
  	0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_SANYO, USB_PRODUCT_SANYO_SCP4900,
@@ -89,7 +87,6 @@ Static const struct usbd_quirk_entry {
         0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_SIEMENS2, USB_PRODUCT_SIEMENS2_MC75,
         0x000, { UQ_ASSUME_CM_OVER_DATA }},
- { USB_VENDOR_TI, USB_PRODUCT_TI_UTUSB41,	    0x110, { UQ_POWER_CLAIM }},
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
    						    0x100, { UQ_AU_INP_ASYNC }},
