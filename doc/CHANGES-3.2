@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.42 2007/01/16 08:52:07 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.43 2007/01/19 21:47:32 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2510,4 +2510,10 @@ sys/arch/xen/xen/xbd_xenbus.c			1.17
 
 	Fix occasional panics in NetBSD domUs caused by a race condition.
 	[bouyer, ticket #1632]
+
+sys/kern/kern_sig.c				1.241
+
+	Plug memory leak in __sigtimedwait1(): make sure to free `waitset'
+	on error return path.
+	[enami, ticket #1651]
 
