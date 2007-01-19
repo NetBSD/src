@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.6.2.4 2007/01/12 01:04:23 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.6.2.5 2007/01/19 00:38:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
+struct callout;
 struct lwp;
 #include <sys/sched.h>	/* for schedstate_percpu */
 
@@ -62,6 +63,8 @@ struct lwp;
 
 struct cpu_data {
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
+
+	struct callout * volatile cpu_callout;	/* MP: a callout running */
 
 #if defined(MULTIPROCESSOR)
 	u_int		cpu_biglock_count;
