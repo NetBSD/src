@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.52 2006/11/30 16:53:48 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.52.2.1 2007/01/19 22:12:47 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.52 2006/11/30 16:53:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.52.2.1 2007/01/19 22:12:47 bouyer Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.52 2006/11/30 16:53:48 elad Exp $\n$NetBSD: verified_exec.c,v 1.52 2006/11/30 16:53:48 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.52.2.1 2007/01/19 22:12:47 bouyer Exp $\n$NetBSD: verified_exec.c,v 1.52.2.1 2007/01/19 22:12:47 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -250,9 +250,9 @@ veriexec_delete(prop_dictionary_t dict, struct lwp *l)
 
 	/* XXX this should be done differently... */
 	if (nid.ni_vp->v_type == VREG)
-		error = veriexec_file_delete(nid.ni_vp);
+		error = veriexec_file_delete(l, nid.ni_vp);
 	else if (nid.ni_vp->v_type == VDIR)
-		error = veriexec_table_delete(nid.ni_vp->v_mount);
+		error = veriexec_table_delete(l, nid.ni_vp->v_mount);
 
 	vrele(nid.ni_vp);
 
