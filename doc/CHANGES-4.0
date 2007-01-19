@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.45 2007/01/18 13:10:45 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.46 2007/01/19 22:23:45 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -851,4 +851,30 @@ sys/netinet/ip_output.c				1.173
 
 	Avoid problems if PF's fragment reassemble feature is used.
 	[yamt, ticket #361]
+
+usr.sbin/etcupdate/etcupdate			1.30
+
+	Clean ${SRCDIR}/etc when done. Patch provided by rudolf.
+	http://mail-index.netbsd.org/tech-toolchain/2007/01/11/0001.html
+	[martti, ticket #359]
+
+share/man/man9/veriexec.9			1.13
+sys/dev/verified_exec.c				1.57
+sys/kern/kern_verifiedexec.c			1.94
+sys/sys/verified_exec.h				1.53
+
+	veriexec_file_delete() and veriexec_table_delete() now take
+	'struct lwp *' too.
+	[elad, ticket #362]
+
+share/man/man4/re.4				1.12
+
+	- add some note and Xref for rgephy(4) and rlphy(4), as per
+	  suggestion from Steve Bellovin in PR kern/35376
+	- add some more 8169S based products which have their own PCI
+	  vendor ID and are listed in if_re_pci.c
+	- fix/remove some error messages in DIAGNOSTIC section to sync
+	  with reality.
+	- bump date
+	[tsutsui, ticket #368]
 
