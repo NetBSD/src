@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43.4.6 2007/01/19 19:35:22 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.4.7 2007/01/19 20:07:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -1159,9 +1159,6 @@ ENTRY(cpu_exit)
 	/* Restore the idle context. */
 	cli
 
-	/* In case we fault... */
-	movl	$0,CPUVAR(CURLWP)
-
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
 	movl	PCB_EBP(%esi),%ebp
@@ -1188,12 +1185,14 @@ ENTRY(cpu_exit)
 	/* Record new pcb. */
 	SET_CURPCB(%esi)
 
+	/* Now off the CPU. */
+	movl	$0,CPUVAR(CURLWP)
+
 	/* Interrupts are okay again. */
 	sti
 
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi
-	movl	%esi,CPUVAR(CURLWP)
 	jmp	idle_start
 
 /*
