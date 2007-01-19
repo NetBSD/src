@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.29 2006/09/03 09:19:07 itohy Exp $
+# $NetBSD: etcupdate,v 1.29.2.1 2007/01/19 22:06:57 bouyer Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -356,6 +356,23 @@ EOF
 	rm -f "._etcupdate_${TEMPROOT}${1}"
 }
 
+# Set the environment for make.
+set_makeenv() {
+	#
+	# INSTALL_DONE=1 prevents installation of unwanted
+	# files (things that are not part of the etc set).
+	# BUILD=1 allows building of files that are wanted.
+	#
+	MAKE_ENV=" 			\
+		DESTDIR=${TEMPROOT}	\
+		MAKE=make		\
+		MTREE=mtree		\
+		TOOL_MTREE=mtree	\
+		INSTALL_DONE=1		\
+		BUILD=1			\
+		USETOOLS=never"
+}
+
 #
 # main()
 #
@@ -535,19 +552,7 @@ if ! ${CONTINUE}; then
 			echo "*** ERROR: Unable to find ${SRCDIR}/etc/Makefile"
 			exit 1
 		fi
-		# Set the environment for make.
-		#
-		# INSTALL_DONE=1 prevents installation of unwanted
-		# files (things that are not part of the etc set).
-		# BUILD=1 allows building of files that are wanted.
-		MAKE_ENV=" 			\
-			DESTDIR=${TEMPROOT}	\
-			MAKE=make		\
-			MTREE=mtree		\
-			TOOL_MTREE=mtree	\
-			INSTALL_DONE=1		\
-			BUILD=1			\
-			USETOOLS=never"
+		set_makeenv
 		echo "*** Populating ${TEMPROOT} from ${SRCDIR}"
 		cd ${SRCDIR}/etc
 		if ! ${VERBOSE}; then
@@ -612,6 +617,18 @@ if yesno "Remove ${TEMPROOT}"; then
 	rm -rf "${TEMPROOT}"
 else
 	echo "*** Keeping ${TEMPROOT}"
+fi
+
+# Clean up after "make distribution"
+if ! ${BINARYMODE}; then
+	echo "*** Cleaning up in ${SRCDIR}/etc"
+	set_makeenv
+	cd ${SRCDIR}/etc
+	if ! ${VERBOSE}; then
+		eval ${MAKE_ENV} make clean > /dev/null
+	else
+		eval ${MAKE_ENV} make clean
+	fi
 fi
 
 # Do some post-installation tasks
