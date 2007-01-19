@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.35 2007/01/19 14:59:50 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.36 2007/01/19 17:52:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.35 2007/01/19 14:59:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.36 2007/01/19 17:52:01 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1695,6 +1695,8 @@ puffs_strategy(void *v)
 
 	pmp = MPTOPUFFSMP(vp->v_mount);
 	bp = ap->a_bp;
+	error = 0;
+	dowritefaf = 0;
 
 	if ((bp->b_flags & B_READ) && !EXISTSOP(pmp, READ))
 		return EOPNOTSUPP;
@@ -1713,7 +1715,6 @@ puffs_strategy(void *v)
 	 * XXgoddamnX: B_WRITE is a "pseudo flag"
 	 */
 	if ((bp->b_flags & B_READ) == 0) {
-		dowritefaf = 0;
 		simple_lock(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK)
 			dowritefaf = 1;
