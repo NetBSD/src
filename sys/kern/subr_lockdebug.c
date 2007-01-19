@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.6 2007/01/19 14:37:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.6 2007/01/19 14:37:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -302,8 +302,8 @@ lockdebug_free(volatile void *lock, u_int id)
 /*
  * lockdebug_more:
  *
- *	Allocate a batch of debug structures and add to the free list.  Must
- *	be called with ld_free_lk held.
+ *	Allocate a batch of debug structures and add to the free list.
+ *	Must be called with ld_free_lk held.
  */
 void
 lockdebug_more(void)
@@ -365,10 +365,6 @@ lockdebug_locked(u_int id, uintptr_t where, int shared)
 		lockdebug_abort1(ld, lk, __FUNCTION__, "already locked");
 
 	if (shared) {
-		if (l == NULL)
-			lockdebug_abort1(ld, lk, __FUNCTION__, "releasing "
-			    "shared lock from idle context");
-
 		l->l_shlocks++;
 		ld->ld_shares++;
 	} else {
@@ -408,15 +404,12 @@ lockdebug_unlocked(u_int id, uintptr_t where, int shared)
 		return;
 
 	if (shared) {
-		if (l == NULL)
-			lockdebug_abort1(ld, lk, __FUNCTION__, "acquiring "
-			    "shared lock from idle context");
 		if (l->l_shlocks == 0)
-			lockdebug_abort1(ld, lk, __FUNCTION__, "no shared "
-			    "locks held by LWP");
+			lockdebug_abort1(ld, lk, __FUNCTION__,
+			    "no shared locks held by LWP");
 		if (ld->ld_shares == 0)
-			lockdebug_abort1(ld, lk, __FUNCTION__, "no shared "
-			    "holds on this lock");
+			lockdebug_abort1(ld, lk, __FUNCTION__,
+			    "no shared holds on this lock");
 		l->l_shlocks--;
 		ld->ld_shares--;
 	} else {
