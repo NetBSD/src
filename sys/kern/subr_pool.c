@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.122.2.2 2006/10/20 20:03:56 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.122.2.3 2007/01/19 20:49:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.122.2.2 2006/10/20 20:03:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.122.2.3 2007/01/19 20:49:54 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.122.2.2 2006/10/20 20:03:56 ad Exp $
 #include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
+#include <sys/debug.h>
 
 #include <uvm/uvm.h>
 
@@ -674,6 +675,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
 	pp->pr_drain_hook = NULL;
 	pp->pr_drain_hook_arg = NULL;
+	pp->pr_freecheck = NULL;
 
 	/*
 	 * Decide whether to put the page header off page to avoid
@@ -1135,6 +1137,7 @@ pool_get(struct pool *pp, int flags)
 
 	simple_unlock(&pp->pr_slock);
 	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
+	FREECHECK_OUT(&pp->pr_freecheck, v);
 	return (v);
 }
 
@@ -1148,6 +1151,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	struct pool_item_header *ph;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
+	FREECHECK_IN(&pp->pr_freecheck, v);
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(pp->pr_nout == 0)) {
@@ -2080,6 +2084,8 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 			*pap = POOL_PADDR_INVALID;
 #endif
 		}
+
+		FREECHECK_OUT(&pc->pc_freecheck, object);
 		return (object);
 	}
 
@@ -2095,6 +2101,7 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 
 	KASSERT((((vaddr_t)object + pc->pc_pool->pr_itemoffset) &
 	    (pc->pc_pool->pr_align - 1)) == 0);
+	FREECHECK_OUT(&pc->pc_freecheck, object);
 	return (object);
 }
 
@@ -2109,6 +2116,8 @@ pool_cache_put_paddr(struct pool_cache *pc, void *object, paddr_t pa)
 {
 	struct pool_cache_group *pcg;
 	int s;
+
+	FREECHECK_IN(&pc->pc_freecheck, object);
 
 	if (__predict_false((pc->pc_pool->pr_flags & PR_WANTED) != 0)) {
 		goto destruct;

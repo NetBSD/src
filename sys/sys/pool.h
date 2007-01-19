@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.54 2006/08/20 09:35:25 yamt Exp $	*/
+/*	$NetBSD: pool.h,v 1.54.2.1 2007/01/19 20:49:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -99,6 +99,10 @@ struct pool_cache {
 	unsigned long	pc_ngroups;	/* # cache groups */
 
 	unsigned long	pc_nitems;	/* # objects currently in cache */
+
+#if defined(_KERNEL)
+	void		*pc_freecheck;
+#endif
 };
 
 struct pool_allocator {
@@ -216,6 +220,7 @@ struct pool {
 
 #if defined(_KERNEL)
 	struct callback_entry pr_reclaimerentry;
+	void		*pr_freecheck;
 #endif
 };
 #endif /* __POOL_EXPOSE */
