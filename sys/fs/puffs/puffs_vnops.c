@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.34 2007/01/16 21:58:49 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.35 2007/01/19 14:59:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.34 2007/01/16 21:58:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.35 2007/01/19 14:59:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -919,7 +919,7 @@ puffs_fsync(void *v)
 	struct puffs_mount *pmp;
 	struct puffs_vnreq_fsync *fsync_argp;
 	struct vnode *vp;
-	int pflags, error;
+	int pflags, error, dofaf;
 
 	PUFFS_VNREQ(fsync);
 
@@ -948,7 +948,22 @@ puffs_fsync(void *v)
 	if (!EXISTSOP(pmp, FSYNC))
 		return 0;
 
-	if (ap->a_flags & FSYNC_WAIT) {
+	dofaf = (ap->a_flags & FSYNC_WAIT) == 0;
+	/*
+	 * We abuse VXLOCK to mean "vnode is going to die", so we issue
+	 * only FAFs for those.  Otherwise there's a danger of deadlock,
+	 * since the execution context here might be the user server
+	 * doing some operation on another fs, which in turn caused a
+	 * vnode to be reclaimed from the freelist for this fs.
+	 */
+	if (dofaf == 0) {
+		simple_lock(&vp->v_interlock);
+		if (vp->v_flag & VXLOCK)
+			dofaf = 1;
+		simple_unlock(&vp->v_interlock);
+	}
+
+	if (dofaf == 0) {
 		fsync_argp = &fsync_arg;
 	} else {
 		fsync_argp = malloc(sizeof(struct puffs_vnreq_fsync),
@@ -969,7 +984,7 @@ puffs_fsync(void *v)
 	 * If we are not required to wait, do a FAF operation.
 	 * Otherwise block here.
 	 */
-	if (ap->a_flags & FSYNC_WAIT) {
+	if (dofaf == 0) {
 		error =  puffs_vntouser(MPTOPUFFSMP(vp->v_mount),
 		    PUFFS_VN_FSYNC, fsync_argp, sizeof(*fsync_argp),
 		    VPTOPNC(vp), NULL /* XXXshouldbe: vp */, NULL);
@@ -1670,14 +1685,15 @@ puffs_strategy(void *v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
+	struct vnode *vp = ap->a_vp;
 	struct puffs_vnreq_read *read_argp = NULL;
 	struct puffs_vnreq_write *write_argp = NULL;
 	struct buf *bp;
 	size_t argsize;
 	size_t tomove, moved;
-	int error;
+	int error, dowritefaf;
 
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+	pmp = MPTOPUFFSMP(vp->v_mount);
 	bp = ap->a_bp;
 
 	if ((bp->b_flags & B_READ) && !EXISTSOP(pmp, READ))
@@ -1690,6 +1706,22 @@ puffs_strategy(void *v)
 		panic("puffs_strategy: wildly inappropriate buf resid %d",
 		    bp->b_resid);
 #endif
+
+	/*
+	 * See explanation for the necessity of a FAF in puffs_fsync
+	 *
+	 * XXgoddamnX: B_WRITE is a "pseudo flag"
+	 */
+	if ((bp->b_flags & B_READ) == 0) {
+		dowritefaf = 0;
+		simple_lock(&vp->v_interlock);
+		if (vp->v_flag & VXLOCK)
+			dowritefaf = 1;
+		simple_unlock(&vp->v_interlock);
+		if (dowritefaf)
+			printf("STRATEGY WRITEFAF! "
+			    "(let pooka@netbsd.org know if you see this)\n");
+	}
 
 	if (bp->b_flags & B_READ) {
 		argsize = sizeof(struct puffs_vnreq_read);
@@ -1707,9 +1739,8 @@ puffs_strategy(void *v)
 		puffs_credcvt(&read_argp->pvnr_cred, FSCRED);
 
 		error = puffs_vntouser_adjbuf(pmp, PUFFS_VN_READ,
-		    (void **)&read_argp, &argsize,
-		    read_argp->pvnr_resid, VPTOPNC(ap->a_vp),
-		    LOCKEDVP(ap->a_vp), NULL);
+		    (void **)&read_argp, &argsize, read_argp->pvnr_resid,
+		    VPTOPNC(vp), LOCKEDVP(vp), NULL);
 
 		if (error)
 			goto out;
@@ -1740,28 +1771,37 @@ puffs_strategy(void *v)
 
 		(void)memcpy(&write_argp->pvnr_data, bp->b_data, tomove);
 
-		error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
-		    PUFFS_VN_WRITE, write_argp, argsize,
-		    VPTOPNC(ap->a_vp), ap->a_vp, NULL);
-		if (error)
-			goto out;
+		if (dowritefaf) {
+			/*
+			 * assume FAF moves everything.  frankly, we don't
+			 * really have a choice.
+			 */
+			puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount),
+			    PUFFS_VN_WRITE, write_argp, argsize, VPTOPNC(vp));
+			bp->b_resid -= tomove;
+		} else {
+			error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount),
+			    PUFFS_VN_WRITE, write_argp, argsize, VPTOPNC(vp),
+			    vp, NULL);
+			if (error)
+				goto out;
 
-		moved = write_argp->pvnr_resid - tomove;
+			moved = tomove - write_argp->pvnr_resid;
+			if (write_argp->pvnr_resid > tomove) {
+				error = EINVAL;
+				goto out;
+			}
 
-		if (write_argp->pvnr_resid > tomove) {
-			error = EINVAL;
-			goto out;
+			bp->b_resid -= moved;
+			if (write_argp->pvnr_resid != 0)
+				error = EIO;
 		}
-
-		bp->b_resid -= moved;
-		if (write_argp->pvnr_resid != 0)
-			error = EIO;
 	}
 
  out:
 	if (read_argp)
 		free(read_argp, M_PUFFS);
-	if (write_argp)
+	if (write_argp && !dowritefaf)
 		free(write_argp, M_PUFFS);
 
 	biodone(ap->a_bp);
