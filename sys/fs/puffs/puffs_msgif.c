@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.14 2007/01/15 23:29:08 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.15 2007/01/19 13:01:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.14 2007/01/15 23:29:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.15 2007/01/19 13:01:15 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -231,6 +231,10 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	 * theoretical race, so it must be solved
 	 */
 	simple_unlock(&pmp->pmp_lock);
+
+	DPRINTF(("touser: enqueueing req %" PRIu64 ", preq: %p, park: %p, "
+	    "c/t: 0x%x/0x%x\n", preq->preq_id, preq, ppark, preq->preq_opclass,
+	    preq->preq_optype));
 
 	wakeup(&pmp->pmp_req_touser);
 	selnotify(pmp->pmp_sel, 0);
