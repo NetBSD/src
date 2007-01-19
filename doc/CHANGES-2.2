@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.97 2006/12/16 11:08:16 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.98 2007/01/19 21:29:44 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1038,4 +1038,9 @@ sys/dev/ic/elinkxl.c				backout of  1.72.2.1.2.2
 	branch by pullup of elinkxl.c 1.85 without the appropriate pullup
 	of elink3reg.h
 	[itohy, ticket #10825]
+
+usr.sbin/etcupdate/etcupdate			patch
+
+	Sync etcupdate(8) with current. Fix PR bin/32343.
+	[martti, ticket #10953]
 
