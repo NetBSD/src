@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.59 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.60 2007/01/19 14:49:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.59 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.60 2007/01/19 14:49:11 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -334,6 +334,7 @@ struct vfsops portal_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	portal_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

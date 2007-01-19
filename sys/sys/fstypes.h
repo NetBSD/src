@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.17 2006/12/26 12:39:01 yamt Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.18 2007/01/19 14:49:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -209,6 +209,7 @@ typedef struct fhandle	fhandle_t;
 #define	IMNT_SUSPENDLOW	0x00000010	/* request lower write suspension */
 #define	IMNT_SUSPENDED	0x00000020	/* write operations are suspended */
 #define	IMNT_DTYPE	0x00000040	/* returns d_type fields */
+#define	IMNT_HAS_TRANS	0x00000080	/* supports transactions */
 
 #define __MNT_FLAGS \
 	__MNT_BASIC_FLAGS \
@@ -253,6 +254,7 @@ typedef struct fhandle	fhandle_t;
 
 #define __IMNT_FLAG_BITS \
 	"\20" \
+	"\10IMNT_HAS_TRANS" \
 	"\07IMNT_DTYPE" \
 	"\06IMNT_SUSPENDED" \
 	"\05IMNT_SUSPENDLOW" \

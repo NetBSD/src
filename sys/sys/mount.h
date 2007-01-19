@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.151 2006/11/17 17:05:18 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.152 2007/01/19 14:49:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -209,7 +209,8 @@ int	fsname##_mountroot(void);					\
 int	fsname##_snapshot(struct mount *, struct vnode *,		\
 		struct timespec *);					\
 int	fsname##_extattrctl(struct mount *, int, struct vnode *, int,	\
-		const char *, struct lwp *);
+		const char *, struct lwp *);				\
+int	fsname##_suspendctl(struct mount *, int);
 
 struct vfsops {
 	const char *vfs_name;
@@ -237,6 +238,7 @@ struct vfsops {
 	int	(*vfs_extattrctl) (struct mount *, int,
 				    struct vnode *, int, const char *,
 				    struct lwp *);
+	int	(*vfs_suspendctl) (struct mount *, int);
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
@@ -258,6 +260,7 @@ struct vfsops {
 #define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
 #define	VFS_EXTATTRCTL(MP, C, VP, AS, AN, L) \
 	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, VP, AS, AN, L)
+#define VFS_SUSPENDCTL(MP, C)     (*(MP)->mnt_op->vfs_suspendctl)(MP, C)
 
 struct vfs_hooks {
 	void	(*vh_unmount)(struct mount *);
@@ -318,6 +321,7 @@ struct vfsops *vfs_getopsbyname(const char *);
 
 int	vfs_stdextattrctl(struct mount *, int, struct vnode *,
 	    int, const char *, struct lwp *);
+int	vfs_stdsuspendctl(struct mount *, int);
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */

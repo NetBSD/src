@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.163 2006/12/27 12:22:14 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.164 2007/01/19 14:49:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -589,8 +589,6 @@ int	getvnode(struct filedesc *, int, struct file **);
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
 int	vfs_drainvnodes(long target, struct lwp *);
-void	vfs_write_resume(struct mount *);
-int	vfs_write_suspend(struct mount *, int, int);
 void	vfs_timestamp(struct timespec *);
 #ifdef DDB
 void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...));

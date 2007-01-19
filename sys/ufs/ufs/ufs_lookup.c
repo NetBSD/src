@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.82 2007/01/04 16:55:30 elad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.83 2007/01/19 14:49:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.82 2007/01/04 16:55:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.83 2007/01/19 14:49:13 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.82 2007/01/04 16:55:30 elad Exp $")
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
@@ -169,6 +170,9 @@ ufs_lookup(void *v)
 		return (error);
 	}
 
+	if ((error = fstrans_start(vdp->v_mount, fstrans_shared)) != 0)
+		return error;
+
 	/*
 	 * Suppress search for slots unless creating
 	 * file and at end of pathname, in which case
@@ -244,7 +248,7 @@ ufs_lookup(void *v)
 		dp->i_offset = dp->i_diroff;
 		if ((entryoffsetinblock = dp->i_offset & bmask) &&
 		    (error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL, &bp)))
-			return (error);
+			goto out;
 		numdirpasses = 2;
 		nchstats.ncs_2passes++;
 	}
@@ -265,7 +269,7 @@ searchloop:
 			error = ufs_blkatoff(vdp, (off_t)dp->i_offset, NULL,
 			    &bp);
 			if (error)
-				return (error);
+				goto out;
 			entryoffsetinblock = 0;
 		}
 		/*
@@ -422,7 +426,7 @@ notfound:
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
 		if (error)
-			return (error);
+			goto out;
 		/*
 		 * Return an indication of where the new directory
 		 * entry should be put.  If we didn't find a slot,
@@ -466,14 +470,16 @@ notfound:
 		 * information cannot be used.
 		 */
 		cnp->cn_flags |= SAVENAME;
-		return (EJUSTRETURN);
+		error = EJUSTRETURN;
+		goto out;
 	}
 	/*
 	 * Insert name into cache (as non-existent) if appropriate.
 	 */
 	if ((cnp->cn_flags & MAKEENTRY) && nameiop != CREATE)
 		cache_enter(vdp, *vpp, cnp);
-	return (ENOENT);
+	error = ENOENT;
+	goto out;
 
 found:
 	if (numdirpasses == 2)
@@ -509,7 +515,7 @@ found:
 		 */
 		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
 		if (error)
-			return (error);
+			goto out;
 		/*
 		 * Return pointer to current entry in dp->i_offset,
 		 * and distance past previous entry (if there
@@ -523,7 +529,8 @@ found:
 		if (dp->i_number == foundino) {
 			VREF(vdp);
 			*vpp = vdp;
-			return (0);
+			error = 0;
+			goto out;
 		}
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
@@ -531,7 +538,7 @@ found:
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
-			return (error);
+			goto out;
 		/*
 		 * If directory is "sticky", then user must own
 		 * the directory, or the file in it, else she
@@ -544,10 +551,12 @@ found:
 		    kauth_cred_geteuid(cred) != dp->i_uid &&
 		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);
-			return (EPERM);
+			error = EPERM;
+			goto out;
 		}
 		*vpp = tdp;
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -559,23 +568,26 @@ found:
 	if (nameiop == RENAME && (flags & ISLASTCN)) {
 		error = VOP_ACCESS(vdp, VWRITE, cred, cnp->cn_lwp);
 		if (error)
-			return (error);
+			goto out;
 		/*
 		 * Careful about locking second inode.
 		 * This can only occur if the target is ".".
 		 */
-		if (dp->i_number == foundino)
-			return (EISDIR);
+		if (dp->i_number == foundino) {
+			error = EISDIR;
+			goto out;
+		}
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
-			return (error);
+			goto out;
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
-		return (0);
+		error = 0;
+		goto out;
 	}
 
 	/*
@@ -603,7 +615,7 @@ found:
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
-			return error;
+			goto out;
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == foundino) {
@@ -612,7 +624,7 @@ found:
 	} else {
 		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error)
-			return (error);
+			goto out;
 		*vpp = tdp;
 	}
 
@@ -621,7 +633,11 @@ found:
 	 */
 	if (cnp->cn_flags & MAKEENTRY)
 		cache_enter(vdp, *vpp, cnp);
-	return (0);
+	error = 0;
+
+out:
+	fstrans_done(vdp->v_mount);
+	return error;
 }
 
 void
