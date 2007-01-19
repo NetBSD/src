@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.10 2007/01/16 05:21:30 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.11 2007/01/19 13:36:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.10 2007/01/16 05:21:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.11 2007/01/19 13:36:08 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -525,7 +525,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 		 * Mark it as a system process and not a candidate for
 		 * swapping.
 		 */
-		l2->l_flag |= L_SYSTEM | L_INMEM;
+		l2->l_flag |= L_SYSTEM;
 	}
 
 	lwp_update_creds(l2);
