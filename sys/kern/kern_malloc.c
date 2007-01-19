@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.102.4.1 2006/11/18 21:39:22 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.102.4.2 2007/01/19 20:49:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.102.4.1 2006/11/18 21:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.102.4.2 2007/01/19 20:49:54 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.102.4.1 2006/11/18 21:39:22 ad Exp
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/debug.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -163,6 +164,10 @@ struct kmemusage {
 struct kmembuckets kmembuckets[MINBUCKET + 16];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
+
+#ifdef DEBUG
+static void *malloc_freecheck;
+#endif
 
 /*
  * Turn virtual addresses into kmem map indicies
@@ -327,8 +332,11 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		ASSERT_SLEEPABLE(NULL, "malloc");
 #endif
 #ifdef MALLOC_DEBUG
-	if (debug_malloc(size, ksp, flags, (void *) &va))
+	if (debug_malloc(size, ksp, flags, (void *) &va)) {
+		if (va != 0)
+			FREECHECK_OUT(&malloc_freecheck, (void *)va);
 		return ((void *) va);
+	}
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &kmembuckets[indx];
@@ -507,6 +515,7 @@ out:
 	splx(s);
 	if ((flags & M_ZERO) != 0)
 		memset(va, 0, size);
+	FREECHECK_OUT(&malloc_freecheck, (void *)va);
 	return ((void *) va);
 }
 
@@ -531,6 +540,8 @@ free(void *addr, struct malloc_type *ksp)
 	int32_t *end, *lp;
 	long alloc, copysize;
 #endif
+
+	FREECHECK_IN(&malloc_freecheck, addr);
 
 #ifdef MALLOC_DEBUG
 	if (debug_free(addr, ksp))
