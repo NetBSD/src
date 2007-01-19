@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.142 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.143 2007/01/19 14:49:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.142 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.143 2007/01/19 14:49:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.142 2006/12/27 12:10:09 yamt Exp $
 #include <sys/mman.h>
 #include <sys/file.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -437,6 +438,7 @@ genfs_getpages(void *v)
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
 	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	boolean_t sawhole = FALSE;
+	boolean_t has_trans = FALSE;
 	boolean_t overwrite = (flags & PGO_OVERWRITE) != 0;
 	boolean_t blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
 	voff_t origvsize;
@@ -452,6 +454,9 @@ genfs_getpages(void *v)
 	if (*ap->a_count > MAX_READ_PAGES) {
 		panic("genfs_getpages: too many pages");
 	}
+
+	pgs = pgs_onstack;
+	pgs_size = sizeof(pgs_onstack);
 
 startover:
 	error = 0;
@@ -480,7 +485,8 @@ startover:
 		}
 		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
 		    origoffset, *ap->a_count, memeof,0);
-		return (EINVAL);
+		error = EINVAL;
+		goto out_err;
 	}
 
 	/* uobj is locked */
@@ -529,7 +535,8 @@ startover:
 		    ap->a_m, UFP_NOWAIT|UFP_NOALLOC|(write ? UFP_NORDONLY : 0));
 		KASSERT(npages == *ap->a_count);
 		if (nfound == 0) {
-			return EBUSY;
+			error = EBUSY;
+			goto out_err;
 		}
 		if (lockmgr(&gp->g_glock, LK_SHARED | LK_NOWAIT, NULL)) {
 			genfs_rel_pages(ap->a_m, npages);
@@ -548,7 +555,8 @@ startover:
 		} else {
 			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 		}
-		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
+		error = (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
+		goto out_err;
 	}
 	simple_unlock(&uobj->vmobjlock);
 
@@ -580,14 +588,22 @@ startover:
 	if (pgs_size > sizeof(pgs_onstack)) {
 		pgs = kmem_zalloc(pgs_size, async ? KM_NOSLEEP : KM_SLEEP);
 		if (pgs == NULL) {
-			return (ENOMEM);
+			pgs = pgs_onstack;
+			error = ENOMEM;
+			goto out_err;
 		}
 	} else {
-		pgs = pgs_onstack;
+		/* pgs == pgs_onstack */
 		memset(pgs, 0, pgs_size);
 	}
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
+
+	if (!has_trans &&
+	    (error = fstrans_start(vp->v_mount, fstrans_shared)) != 0) {
+		goto out_err;
+	}
+	has_trans = TRUE;
 
 	/*
 	 * hold g_glock to prevent a race with truncate.
@@ -614,9 +630,8 @@ startover:
 		KASSERT(async != 0);
 		genfs_rel_pages(&pgs[ridx], orignpages);
 		simple_unlock(&uobj->vmobjlock);
-		if (pgs != pgs_onstack)
-			kmem_free(pgs, pgs_size);
-		return (EBUSY);
+		error = EBUSY;
+		goto out_err;
 	}
 
 	/*
@@ -682,9 +697,8 @@ startover:
 			KASSERT(async != 0);
 			genfs_rel_pages(pgs, npages);
 			simple_unlock(&uobj->vmobjlock);
-			if (pgs != pgs_onstack)
-				kmem_free(pgs, pgs_size);
-			return (EBUSY);
+			error = EBUSY;
+			goto out_err;
 		}
 	}
 	simple_unlock(&uobj->vmobjlock);
@@ -854,9 +868,8 @@ loopdone:
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
 		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-		if (pgs != pgs_onstack)
-			kmem_free(pgs, pgs_size);
-		return (0);
+		error = 0;
+		goto out_err;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -914,13 +927,12 @@ loopdone:
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
-		if (pgs != pgs_onstack)
-			kmem_free(pgs, pgs_size);
-		return (error);
+		goto out_err;
 	}
 
 out:
 	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
+	error = 0;
 	uvm_lock_pageq();
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
@@ -959,9 +971,13 @@ out:
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignpages * sizeof(struct vm_page *));
 	}
+
+out_err:
 	if (pgs != pgs_onstack)
 		kmem_free(pgs, pgs_size);
-	return (0);
+	if (has_trans)
+		fstrans_done(vp->v_mount);
+	return (error);
 }
 
 /*
@@ -1040,6 +1056,7 @@ genfs_putpages(void *v)
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
 	boolean_t modified = FALSE;
+	boolean_t has_trans = FALSE;
 	boolean_t cleanall;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
@@ -1068,6 +1085,18 @@ genfs_putpages(void *v)
 	/*
 	 * the vnode has pages, set up to process the request.
 	 */
+
+	if ((flags & PGO_CLEANIT) != 0) {
+		simple_unlock(slock);
+		if (pagedaemon)
+			error = fstrans_start_nowait(vp->v_mount, fstrans_lazy);
+		else
+			error = fstrans_start(vp->v_mount, fstrans_lazy);
+		if (error)
+			return error;
+		has_trans = TRUE;
+		simple_lock(slock);
+	}
 
 	error = 0;
 	s = splbio();
@@ -1424,6 +1453,10 @@ skip_scan:
 		splx(s);
 	}
 	simple_unlock(slock);
+
+	if (has_trans)
+		fstrans_done(vp->v_mount);
+
 	return (error);
 }
 

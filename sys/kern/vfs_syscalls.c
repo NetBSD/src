@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.296 2007/01/15 19:13:30 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.297 2007/01/19 14:49:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.296 2007/01/15 19:13:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.297 2007/01/19 14:49:10 hannken Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -664,15 +664,15 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
+	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;
-		vrele(coveredvp);
-	}
 	mp->mnt_op->vfs_refcount--;
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	if (coveredvp != NULLVP)
+		vrele(coveredvp);
 	mount_finispecific(mp);
 	if (used_syncer)
 		lockmgr(&syncer_lock, LK_RELEASE, NULL);

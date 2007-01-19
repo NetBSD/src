@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.36 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.36 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: overlay_vfsops.c,v 1.37 2007/01/19 14:49:11 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,6 +289,7 @@ struct vfsops overlay_vfsops = {
 	NULL,				/* vfs_mountroot */
 	layerfs_snapshot,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	ov_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

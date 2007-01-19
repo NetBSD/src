@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.130 2006/12/30 15:26:55 elad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.131 2007/01/19 14:49:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.130 2006/12/30 15:26:55 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.131 2007/01/19 14:49:10 hannken Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -933,6 +933,8 @@ vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
 	if ((mp = *mpp) == NULL)
 		return (0);
 	mp = mp->mnt_leaf;
+	if ((mp->mnt_iflag & IMNT_HAS_TRANS) != 0)
+		return 0;
 	/*
 	 * Check on status of suspension.
 	 */
@@ -974,6 +976,8 @@ vn_finished_write(struct mount *mp, int flags)
 	if (mp == NULL)
 		return;
 	mp = mp->mnt_leaf;
+	if ((mp->mnt_iflag & IMNT_HAS_TRANS) != 0)
+		return;
 	simple_lock(&mp->mnt_slock);
 	if ((flags & V_LOWER) == 0) {
 		mp->mnt_writeopcountupper--;

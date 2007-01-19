@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.287 2007/01/17 12:27:24 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.288 2007/01/19 14:49:10 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.287 2007/01/17 12:27:24 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.288 2007/01/19 14:49:10 hannken Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.287 2007/01/17 12:27:24 elad Exp $")
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
@@ -321,6 +322,8 @@ main(void)
 #endif
 	vfsinit();
 
+	/* Initialize fstrans. */
+	fstrans_init();
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
