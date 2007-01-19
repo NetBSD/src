@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.8.6 2007/01/19 19:35:22 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.7 2007/01/19 20:07:55 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1082,9 +1082,6 @@ ENTRY(switch_exit)
 
 	cli
 
-	/* In case we fault... */
-	movq	$0,CPUVAR(CURLWP)
-
 	/* Restore stack pointers. */
 	movq	PCB_RSP(%r8),%rsp
 	movq	PCB_RBP(%r8),%rbp
@@ -1113,6 +1110,9 @@ ENTRY(switch_exit)
 	/* Record new pcb. */
 	SET_CURPCB(%r8)
 
+	/* Now off the CPU. */
+	movq	$0,CPUVAR(CURLWP)
+
 	/* Interrupts are okay again. */
 	sti
 
@@ -1126,7 +1126,6 @@ ENTRY(switch_exit)
 
 	/* Jump into cpu_switch() with the right state. */
 	xorq	%r13,%r13
-	movq	%r13, CPUVAR(CURLWP)
 	jmp	idle_start
 
 /*
