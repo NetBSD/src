@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.71 2006/10/12 20:47:55 salo Exp $
+$NetBSD: acronyms.comp,v 1.72 2007/01/19
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -35,13 +35,14 @@ BPS	bits per second
 BQS	berkeley quality software
 BSD	berkeley software distribution
 CAD	computer-aided design
+CARP	common address redundancy protocol
 CAV	constant angular velocity (as opposed to CLV)
 CCD	charge coupled device
 CD	compact disc
 CDDA	compact disc digital audio
 CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
-CGA	color graphics array
+CGA	color graphics {array,adapter}
 CGI	common gateway interface
 CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
@@ -93,8 +94,9 @@ ECP	enhanced capability port
 EDID	extended display identification data
 EDO	extended data out
 EEPROM	electrically erasable programmable read only memory
+EFI	extensible firmware interface
 EFM	eight to fourteen modulation
-EGA	enhanced graphics array
+EGA	enhanced graphics {array,adapter}
 EGP	exterior gateway protocol
 EISA	extended industry standard architecture
 ELF	executable and linking format
@@ -116,6 +118,7 @@ FM	frequency modulation
 FPM	fast page mode
 FQDN	fully qualified domain name
 FTP	file transfer protocol
+FTPS	file transfer protocol, secure
 GC	garbage collector
 GCR	group-coded recording
 GIF	graphics interchange format
@@ -127,6 +130,7 @@ GUI	graphics user interface
 HDCP	high-bandwidth digital content protection
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
+HTTPS	hyper-text transfer protocol, secure
 I2O	intelligent input/output
 IANA	internet assigned number authority
 IC	integrated circuit
@@ -162,6 +166,7 @@ ISP	internet service provider
 JPEG	joint photographic experts group
 KPI	kernel programming interface
 KVA	kernel virtual address
+KVM	keyboard, video, mouse switch
 LAN	local area network
 LBA	logical block addressing
 LCD	liquid crystal display
@@ -169,9 +174,11 @@ LCP	link control protocol
 LDAP	lightweight directory access protocol
 LED	light emitting diode
 LIR	local internet registry
+LKM	{linux, loadable} kernel module
 LLC	logical link control
 LRC	longitudinal redundancy check
 LSB	least significant bit [or: byte]
+LSB	linux standards base
 LUN	logical unit number
 LZW	Lempel Ziv Welch
 MAC	medium access control
@@ -183,6 +190,7 @@ MIME	multipurpose internet mail extensions
 MIPS	million instructions per second
 MMU	memory management unit
 MPEG	moving picture experts group
+MPLS	multiprotocol label switching
 MSB	most significant bit [or: byte]
 MSF	minutes seconds frames
 MSS	maximum segment size
@@ -193,6 +201,7 @@ MWE	module width encoding
 NAT	network address translation
 NAV	network allocation vector
 NCP	network control protocol
+NCQ	native command queuing
 NFS	network file system
 NIC	network interface card
 NIS	network information service
@@ -204,6 +213,8 @@ OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
 OSF	open software foundation
 OSI	open systems interconnection
+OSI	open-source initiative
+OSPF	open shortest path first
 OTP	one time password
 PAM	pluggable authentication modules
 PAM	pulse amplitude modulation
@@ -263,6 +274,7 @@ SAD	security association database
 SAM	serial access memory
 SASI	shugart associates system interface (predecessor to SCSI)
 SATA	serial advanced technology attachment
+SB	sound blaster
 SCM	software configuration management
 SCM	source code management
 SCSI	small computer system interface
@@ -283,11 +295,13 @@ SSFDC	solid state floppy disc card
 SSH	secure shell
 SSL	secure sockets layer
 STP	shielded twisted pair
-SVGA	super video graphics array
+SVGA	super video graphics {array,adapter}
 TCL	tool command language
 TCP	transmission control protocol
+TCQ	tagged command queueing
 TDD	test driven development
 TFT	thin film transistor
+TFTP	trivial file transfer protocol
 TIFF	tagged image file format
 TLA	top level aggregator
 TLB	transition lookaside buffer
@@ -315,12 +329,14 @@ UUCP	unix-to-unix copy protocol
 VAX	virtual address extension
 VCM	virtual channel memory
 VESA	video electronics standards association
-VGA	video graphics array
+VGA	video graphics {array,adapter}
+WIFI    wireless fidelity
 VLAN	virtual local area network
-VLSM	variable length subnetting mask
-VM	virtual memory
+VLSM	variable length subnet mask
+VM	virtual {machine,memory}
 VPN	virtual private network
 VRAM	video random access memory
+VRRP	virtual router redundancy protocol
 WAN	wide area network
 WAP	wireless application protocol
 WEP	wired equivalent privacy
@@ -329,7 +345,7 @@ WPA	wi-fi protected access
 WRAM	window random access memory
 WWW	world wide web
 XER	XML encoding rules
-XGA	extended graphics array
+XGA	extended graphics {array,adapter}
 XML	extensible markup language
 XSL	extensible stylesheet language
 XT	extended technology
