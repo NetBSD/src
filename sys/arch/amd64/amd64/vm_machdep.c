@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15.2.1 2006/12/29 20:27:41 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15.2.2 2007/01/19 19:35:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15.2.1 2006/12/29 20:27:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15.2.2 2007/01/19 19:35:22 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -281,7 +281,7 @@ void
 cpu_exit(struct lwp *l)
 {
 
-	switch_exit(l, lwp_exit2);
+	switch_exit(l, (void (*)(struct lwp *))nullop);
 }
 
 #ifdef COREDUMP

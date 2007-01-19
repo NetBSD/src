@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43.4.5 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.4.6 2007/01/19 19:35:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -1155,11 +1155,12 @@ ENTRY(cpu_exit)
 	movl	CPUVAR(IDLE_PCB),%esi
 	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
-	/* In case we fault... */
-	movl	$0,CPUVAR(CURLWP)
 
 	/* Restore the idle context. */
 	cli
+
+	/* In case we fault... */
+	movl	$0,CPUVAR(CURLWP)
 
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
@@ -1189,13 +1190,6 @@ ENTRY(cpu_exit)
 
 	/* Interrupts are okay again. */
 	sti
-
-	/*
-	 * Schedule the dead LWP's stack to be freed.
-	 */
-	pushl	%edi
-	call	_C_LABEL(lwp_exit2)
-	addl	$4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi

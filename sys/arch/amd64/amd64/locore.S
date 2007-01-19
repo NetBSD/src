@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.8.5 2007/01/14 13:57:13 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.6 2007/01/19 19:35:22 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1080,10 +1080,10 @@ ENTRY(switch_exit)
 	movl	L_MD_TSS_SEL(%r9),%edx
 #endif
 
+	cli
+
 	/* In case we fault... */
 	movq	$0,CPUVAR(CURLWP)
-
-	cli
 
 	/* Restore stack pointers. */
 	movq	PCB_RSP(%r8),%rsp
