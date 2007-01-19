@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.209.2.1 2006/11/18 21:34:03 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.209.2.2 2007/01/19 09:39:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.209.2.1 2006/11/18 21:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.209.2.2 2007/01/19 09:39:57 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2627,7 +2627,9 @@ audio_pint(void *v)
 			if (sc->sc_async_audio) {
 				DPRINTFN(3, ("audio_pint: sending SIGIO %p\n",
 					     sc->sc_async_audio));
+				mutex_enter(&proclist_mutex);
 				psignal(sc->sc_async_audio, SIGIO);
+				mutex_exit(&proclist_mutex);
 			}
 		}
 	}
@@ -2636,8 +2638,11 @@ audio_pint(void *v)
 	if (!sc->sc_full_duplex && sc->sc_rchan) {
 		audio_wakeup(&sc->sc_rchan);
 		selnotify(&sc->sc_rsel, 0);
-		if (sc->sc_async_audio)
+		if (sc->sc_async_audio) {
+			mutex_enter(&proclist_mutex);
 			psignal(sc->sc_async_audio, SIGIO);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 }
 
@@ -2745,8 +2750,11 @@ audio_rint(void *v)
 
 	audio_wakeup(&sc->sc_rchan);
 	selnotify(&sc->sc_rsel, 0);
-	if (sc->sc_async_audio)
+	if (sc->sc_async_audio) {
+		mutex_enter(&proclist_mutex);
 		psignal(sc->sc_async_audio, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
 }
 
 int
@@ -3625,8 +3633,11 @@ mixer_signal(struct audio_softc *sc)
 {
 	struct mixer_asyncs *m;
 
-	for (m = sc->sc_async_mixer; m; m = m->next)
+	for (m = sc->sc_async_mixer; m; m = m->next) {
+		mutex_enter(&proclist_mutex);
 		psignal(m->proc, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
 }
 
 /*

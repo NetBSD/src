@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.33.4.2 2007/01/12 00:57:52 ad Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.33.4.3 2007/01/19 09:39:58 ad Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.33.4.2 2007/01/12 00:57:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.33.4.3 2007/01/19 09:39:58 ad Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -176,7 +176,9 @@ usl_detachproc(void *cookie, int waitok,
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
+	mutex_enter(&proclist_mutex);
 	psignal(sd->s_proc, sd->s_relsig);
+	mutex_exit(&proclist_mutex);
 	callout_reset(&sd->s_detach_ch, wscompat_usl_synctimeout * hz,
 	    usl_detachtimeout, sd);
 
@@ -236,7 +238,9 @@ usl_attachproc(void *cookie, int waitok,
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
+	mutex_enter(&proclist_mutex);
 	psignal(sd->s_proc, sd->s_acqsig);
+	mutex_exit(&proclist_mutex);
 	callout_reset(&sd->s_attach_ch, wscompat_usl_synctimeout * hz,
 	    usl_attachtimeout, sd);
 

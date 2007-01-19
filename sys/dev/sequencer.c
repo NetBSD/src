@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.34.2.2 2007/01/12 00:57:34 ad Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.34.2.3 2007/01/19 09:39:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.34.2.2 2007/01/12 00:57:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.34.2.3 2007/01/19 09:39:58 ad Exp $");
 
 #include "sequencer.h"
 
@@ -262,8 +262,11 @@ seq_timeout(void *addr)
 	if (SEQ_QLEN(&sc->outq) < sc->lowat) {
 		seq_wakeup(&sc->wchan);
 		selnotify(&sc->wsel, 0);
-		if (sc->async)
+		if (sc->async) {
+			mutex_enter(&proclist_mutex);
 			psignal(sc->async, SIGIO);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 
 }
@@ -323,8 +326,11 @@ seq_input_event(struct sequencer_softc *sc, seq_event_t *cmd)
 	SEQ_QPUT(q, *cmd);
 	seq_wakeup(&sc->rchan);
 	selnotify(&sc->rsel, 0);
-	if (sc->async)
+	if (sc->async) {
+		mutex_enter(&proclist_mutex);
 		psignal(sc->async, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
 	return 0;
 }
 

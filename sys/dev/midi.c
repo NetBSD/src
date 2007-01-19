@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.47.2.1 2006/11/18 21:34:03 ad Exp $	*/
+/*	$NetBSD: midi.c,v 1.47.2.2 2007/01/19 09:39:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47.2.1 2006/11/18 21:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47.2.2 2007/01/19 09:39:58 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -738,8 +738,11 @@ sxp_again:
 		MIDI_BUF_PRODUCER_WBACK(mb,buf);
 		MIDI_BUF_PRODUCER_WBACK(mb,idx);
 		midi_wakeup(&sc->rchan);
-		if (sc->async)
+		if (sc->async) {
+			mutex_enter(&proclist_mutex);
 			psignal(sc->async, SIGIO);
+			mutex_exit(&proclist_mutex);
+		}
 		MIDI_IN_UNLOCK(sc,s);
 		selnotify(&sc->rsel, 0); /* filter will spin if locked */
 		break;
@@ -984,8 +987,11 @@ midi_rcv_asense(void *arg)
 		sc->rcv_quiescent = 0;
 		sc->rcv_expect_asense = 0;
 		midi_wakeup(&sc->rchan);
-		if (sc->async)
+		if (sc->async) {
+			mutex_enter(&proclist_mutex);
 			psignal(sc->async, SIGIO);
+			mutex_exit(&proclist_mutex);
+		}
 		MIDI_IN_UNLOCK(sc,s);
 		selnotify(&sc->rsel, 0); /* filter will spin if locked */
 		return;
@@ -1264,8 +1270,11 @@ midi_intr_out(struct midi_softc *sc)
 		callout_schedule(&sc->xmt_asense_co, MIDI_XMT_ASENSE_PERIOD);
 	}
 	midi_wakeup(&sc->wchan);
-	if ( sc->async )
+	if ( sc->async ) {
+		mutex_enter(&proclist_mutex);
 		psignal(sc->async, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
 	MIDI_OUT_UNLOCK(sc,s);
 	selnotify(&sc->wsel, 0); /* filter will spin if locked */
 
@@ -1440,7 +1449,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				goto locked_exit;
 			}
 			if ( pollout ) {
-				preempt(0); /* see midi_poll_output */
+				preempt(); /* see midi_poll_output */
 				pollout = 0;
 			} else
 				error = midi_sleep(&sc->wchan, "mid wr",
