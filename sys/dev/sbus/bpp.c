@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.25.20.1 2006/11/18 21:34:48 ad Exp $ */
+/*	$NetBSD: bpp.c,v 1.25.20.2 2007/01/19 09:39:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.25.20.1 2006/11/18 21:34:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.25.20.2 2007/01/19 09:39:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -612,8 +612,11 @@ bppintr(arg)
 		wakeup(sc->sc_buf);
 	} else {
 		selnotify(&sc->sc_wsel, 0);
-		if (sc->sc_asyncproc != NULL)
+		if (sc->sc_asyncproc != NULL) {
+			mutex_enter(&proclist_mutex);
 			psignal(sc->sc_asyncproc, SIGIO);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 	return (1);
 }

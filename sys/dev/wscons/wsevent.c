@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.19.6.1 2006/11/18 21:34:57 ad Exp $ */
+/* $NetBSD: wsevent.c,v 1.19.6.2 2007/01/19 09:39:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.19.6.1 2006/11/18 21:34:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.19.6.2 2007/01/19 09:39:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -325,8 +325,11 @@ wsevent_wakeup(struct wseventvar *ev)
 		wakeup(ev);
 	}
 
-	if (ev->async)
+	if (ev->async) {
+		mutex_enter(&proclist_mutex);
 		psignal(ev->io, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
 }
 
 /*

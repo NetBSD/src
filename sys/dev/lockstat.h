@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.1.2.3 2007/01/12 00:57:34 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.1.2.4 2007/01/19 09:39:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -120,7 +120,8 @@ typedef struct lsdisable {
 #define	LB_RWLOCK		0x00000300
 #define	LB_LOCKMGR		0x00000400
 #define	LB_KERNEL_LOCK		0x00000500
-#define	LB_NLOCK		0x00000500
+#define	LB_MISC			0x00000600
+#define	LB_NLOCK		0x00000600
 #define	LB_LOCK_MASK		0x0000ff00
 #define	LB_LOCK_SHIFT		8
 
