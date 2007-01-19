@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.119 2007/01/07 16:44:44 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.120 2007/01/19 22:46:21 drochner Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.119 2007/01/07 16:44:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.120 2007/01/19 22:46:21 drochner Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1584,7 +1584,7 @@ Static usb_config_descriptor_t ehci_confd = {
 	1,
 	1,
 	0,
-	UC_SELF_POWERED,
+	UC_ATTR_MBO | UC_SELF_POWERED,
 	0			/* max power */
 };
 
