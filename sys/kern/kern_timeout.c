@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.17.20.3 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.17.20.4 2007/01/19 00:38:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.3 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.4 2007/01/19 00:38:00 yamt Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -192,7 +192,7 @@ static inline void
 callout_barrier(struct callout *c)
 {
 #ifdef MULTIPROCESSOR
-	void *oncpu;
+	struct cpu_info *ci;
 
 	LOCK_ASSERT(mutex_owned(&callout_mutex));
 
@@ -204,13 +204,14 @@ callout_barrier(struct callout *c)
 	 * with that race easily, so for now the caller must deal with
 	 * it.
 	 */
-	oncpu = c->c_oncpu;
-	if (oncpu != NULL && oncpu != curcpu()) {
+	while ((ci = c->c_oncpu) != NULL && ci != curcpu() &&
+	    ci->ci_data.cpu_callout == c) {
 		smutex_exit(&callout_mutex);
-		while (c->c_oncpu != NULL)
+		while (ci->ci_data.cpu_callout == c)
 			;
 		smutex_enter(&callout_mutex);
 	}
+	c->c_oncpu = NULL;
 #endif
 }
 
@@ -412,12 +413,17 @@ softclock(void *v)
 
 #ifdef MULTIPROCESSOR
 			c->c_oncpu = ci;
+			ci->ci_data.cpu_callout = c;
 #endif
 			smutex_exit(&callout_mutex);
 			(*func)(arg);
 			smutex_enter(&callout_mutex);
 #ifdef MULTIPROCESSOR
-			c->c_oncpu = NULL;
+			ci->ci_data.cpu_callout = NULL;
+			/*
+			 * we can't touch 'c' here because it might be
+			 * freed already.
+			 */
 #endif
 		}
 	}
