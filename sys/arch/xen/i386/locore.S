@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17.6.1 2006/11/18 21:29:39 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.17.6.2 2007/01/19 19:40:29 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -746,7 +746,7 @@ ENTRY(cpu_switch)
 	xorl	%esi,%esi
 	STI(%eax)
 idle_unlock:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call	_C_LABEL(sched_unlock_idle)
 #endif
 	/* Interrupts are okay again. */
@@ -803,7 +803,7 @@ idle_start:
 idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 	STI(%eax)
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call	_C_LABEL(sched_lock_idle)
 #endif
 	movl	_C_LABEL(sched_whichqs),%ecx
@@ -936,7 +936,7 @@ switch_exited:
 	movl	$1,%ebx
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call    _C_LABEL(sched_unlock_idle)
 #endif
 	cmpl	$0,CPUVAR(IPENDING)
@@ -1029,11 +1029,12 @@ ENTRY(cpu_exit)
 	movl	CPUVAR(IDLE_PCB),%esi
 	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
-	/* In case we fault... */
-	movl	$0,CPUVAR(CURLWP)
 
 	/* Restore the idle context. */
 	CLI(%eax)
+
+	/* In case we fault... */
+	movl	$0,CPUVAR(CURLWP)
 
 	/* Restore stack pointers. */
 	movl	PCB_ESP(%esi),%esp
@@ -1048,13 +1049,6 @@ ENTRY(cpu_exit)
 
 	/* Interrupts are okay again. */
 	STI(%eax)
-
-	/*
-	 * Schedule the dead LWP's stack to be freed.
-	 */
-	pushl	%edi
-	call	_C_LABEL(lwp_exit2)
-	addl	$4,%esp
 
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi
@@ -1123,6 +1117,7 @@ syscall1:
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
+	movl	CPUVAR(CURLWP),%eax
 	CHECK_ASTPENDING(%eax)
 	je	1f
 	/* Always returning to user mode here. */
