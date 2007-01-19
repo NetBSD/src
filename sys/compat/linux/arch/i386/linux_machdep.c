@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.114.4.4 2007/01/18 11:32:04 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.114.4.5 2007/01/19 20:18:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.114.4.4 2007/01/18 11:32:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.114.4.5 2007/01/19 20:18:46 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -346,6 +346,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Save register context. */
 	linux_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
+	sendsig_reset(l, sig);
 
 	mutex_exit(&p->p_smutex);
 	error = copyout(&frame, fp, sizeof(frame));
@@ -386,7 +387,7 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = l->l_sigstk;
@@ -413,8 +414,13 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sig = native_to_linux_signo[sig];
 
 	linux_save_sigcontext(l, tf, mask, &frame.sf_sc);
+	sendsig_reset(l, sig);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -501,9 +507,7 @@ static int
 linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
     register_t *retval)
 {
-#if defined(VM86)
 	struct proc *p = l->l_proc;
-#endif /* defined(VM86) */
 	struct sigaltstack *sas = l->l_sigstk;
 	struct trapframe *tf;
 	sigset_t mask;
@@ -562,6 +566,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	 * Linux really does it this way; it doesn't have space in sigframe
 	 * to save the onstack flag.
 	 */
+	mutex_enter(&p->p_smutex);
 	ss_gap = (ssize_t)
 	    ((caddr_t) scp->sc_esp_at_signal - (caddr_t) sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
@@ -572,6 +577,8 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&mask, &scp->sc_mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+	mutex_exit(&p->p_smutex);
+
 	DPRINTF(("sigreturn exit esp=%x eip=%x\n", tf->tf_esp, tf->tf_eip));
 	return EJUSTRETURN;
 }
