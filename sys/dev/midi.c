@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.47.2.2 2007/01/19 09:39:58 ad Exp $	*/
+/*	$NetBSD: midi.c,v 1.47.2.3 2007/01/19 10:35:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47.2.2 2007/01/19 09:39:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.47.2.3 2007/01/19 10:35:48 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1449,7 +1449,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				goto locked_exit;
 			}
 			if ( pollout ) {
-				preempt(); /* see midi_poll_output */
+				preempt(0); /* see midi_poll_output */
 				pollout = 0;
 			} else
 				error = midi_sleep(&sc->wchan, "mid wr",
