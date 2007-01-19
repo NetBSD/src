@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.75 2006/12/03 22:34:58 pavel Exp $	*/
+/*	$NetBSD: usb.h,v 1.76 2007/01/19 22:46:21 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ typedef struct {
 	uByte		bConfigurationValue;
 	uByte		iConfiguration;
 	uByte		bmAttributes;
-#define UC_BUS_POWERED		0x80
+#define UC_ATTR_MBO		0x80
 #define UC_SELF_POWERED		0x40
 #define UC_REMOTE_WAKEUP	0x20
 	uByte		bMaxPower; /* max current in 2 mA units */
