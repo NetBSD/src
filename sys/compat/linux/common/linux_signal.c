@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.49.20.2 2006/11/18 21:39:08 ad Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.49.20.3 2007/01/19 20:18:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.49.20.2 2006/11/18 21:39:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.49.20.3 2007/01/19 20:18:46 ad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -355,6 +355,7 @@ linux_sigprocmask1(l, how, set, oset)
 	const linux_old_sigset_t *set;
 	linux_old_sigset_t *oset;
 {
+	struct proc *p = l->l_proc;
 	linux_old_sigset_t nlss, olss;
 	sigset_t nbss, obss;
 	int error;
@@ -379,8 +380,10 @@ linux_sigprocmask1(l, how, set, oset)
 			return (error);
 		linux_old_to_native_sigset(&nbss, &nlss);
 	}
+	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	if (oset) {
@@ -403,6 +406,7 @@ linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	linux_sigset_t nlss, olss, *oset;
 	const linux_sigset_t *set;
+	struct proc *p = l->l_proc;
 	sigset_t nbss, obss;
 	int error, how;
 
@@ -432,8 +436,10 @@ linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval)
 			return (error);
 		linux_to_native_sigset(&nbss, &nlss);
 	}
+	mutex_enter(&p->p_smutex);
 	error = sigprocmask1(l, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
+	mutex_exit(&p->p_smutex);
 	if (!error && oset) {
 		native_to_linux_sigset(&olss, &obss);
 		error = copyout(&olss, oset, sizeof(olss));
