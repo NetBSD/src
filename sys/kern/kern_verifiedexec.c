@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.7 2007/01/19 22:12:50 bouyer Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.8 2007/01/20 14:03:11 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.7 2007/01/19 22:12:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.8 2007/01/20 14:03:11 bouyer Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1173,7 +1173,7 @@ veriexec_unmountchk(struct mount *mp)
 	switch (veriexec_strict) {
 	case VERIEXEC_LEARNING:
 	case VERIEXEC_IDS:
-		if (veriexec_table_delete(mp) == 0) {
+		if (veriexec_table_delete(curlwp, mp) == 0) {
 			log(LOG_INFO, "Veriexec: IDS mode, allowing  unmount "
 			    "of \"%s\".\n", mp->mnt_stat.f_mntonname);
 		}
