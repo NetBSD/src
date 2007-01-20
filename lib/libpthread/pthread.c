@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.55 2007/01/16 05:22:55 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.56 2007/01/20 04:56:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.55 2007/01/16 05:22:55 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.56 2007/01/20 04:56:07 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -382,7 +382,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	pthread_t self, newthread;
 	pthread_attr_t nattr;
 	struct pthread_attr_private *p;
-	char *name;
+	char * volatile name;
 	int ret;
 #ifndef PTHREAD_SA
 	int flag;
