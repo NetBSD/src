@@ -1,4 +1,4 @@
-/*	$NetBSD: cond5.c,v 1.1 2003/01/30 18:57:07 thorpej Exp $	*/
+/*	$NetBSD: cond5.c,v 1.2 2007/01/20 19:22:29 christos Exp $	*/
 
 #include <assert.h>
 #include <err.h>
@@ -11,6 +11,7 @@ void *threadfunc(void *arg);
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 int count, total, toggle;
+#define COUNT 50000
 
 int main(void)
 {
@@ -25,7 +26,7 @@ int main(void)
 	if (ret)
 		err(1, "pthread_mutex_lock(1)");
 
-	count = 5000000;
+	count = COUNT;
 	toggle = 0;
 
 	ret = pthread_create(&new, NULL, threadfunc, &sharedval);
@@ -56,7 +57,7 @@ int main(void)
 	printf("1: Thread joined. Final count = %d, total = %d\n",
 	    count, total);
 	assert(count == 0);
-	assert(total == 5000000);
+	assert(total == COUNT);
 
 	return 0;
 }
