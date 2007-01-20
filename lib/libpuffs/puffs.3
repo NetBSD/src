@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.9 2007/01/20 13:23:59 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.10 2007/01/20 13:34:35 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 19, 2007
+.Dd January 20, 2007
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -49,6 +49,10 @@
 .Fn puffs_getselectable "struct puffs_usermount *pu"
 .Ft int
 .Fn puffs_setblockingmode "struct puffs_usermount *pu" "int mode"
+.Ft int
+.Fn puffs_getstate "struct puffs_usermount *pu"
+.Ft int
+.Fn puffs_setstacksize "struct puffs_usermount *pu" "size_t stacksize"
 .Ft int
 .Fn puffs_fs_unmount "struct puffs_cc *pcc" "int flags" "pid_t pid"
 .Ft int
@@ -295,6 +299,23 @@ Acceptable values for the argument are
 .Dv PUFFSDEV_BLOCK
 and
 .Dv PUFFSDEV_NONBLOCK .
+.Pp
+The state of the file system can be queried with
+.Fn puffs_getstate .
+It is maintained by the framework and is mostly useful for the framework
+itself.
+Possible values are
+.Dv PUFFS_STATE_MOUNTING ,
+.Dv PUFFS_STATE_RUNNING ,
+.Dv PUFFS_STATE_UNMOUNTING
+and
+.Dv PUFFS_STATE_UNMOUNTED .
+.Pp
+The stack size for handling requests can be set with
+.Fn puffs_setstacksize .
+The default is one megabyte of stack space per request.
+See
+.Xr puffs_cc 3 .
 .Pp
 After the correct setup for the library has been established and the
 backend has been initialized, the file system is made operational
