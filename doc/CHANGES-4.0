@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.48 2007/01/20 14:03:38 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.49 2007/01/20 17:13:32 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -907,4 +907,10 @@ sys/kern/kern_verifiedexec.c			patch
 
 	fix build failure introduced by ticket #362
 	[elad, ticket #378]
+
+sys/opencrypto/crypto.c				1.18
+
+	Make the opencrypto framework work with more than one driver again.
+	Fixes PR/35412.
+	[daniel, ticket #367]
 
