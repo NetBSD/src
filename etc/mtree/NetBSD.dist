@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.331 2006/12/14 02:24:21 reed Exp $
+#	$NetBSD: NetBSD.dist,v 1.332 2007/01/20 16:50:29 kardel Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -352,6 +352,14 @@
 ./usr/share/doc/html/groff
 ./usr/share/doc/html/groff/mom
 ./usr/share/doc/html/postfix
+./usr/share/doc/html/ntp
+./usr/share/doc/html/ntp/build
+./usr/share/doc/html/ntp/build/scripts
+./usr/share/doc/html/ntp/drivers
+./usr/share/doc/html/ntp/drivers/icons
+./usr/share/doc/html/ntp/drivers/scripts
+./usr/share/doc/html/ntp/icons
+./usr/share/doc/html/ntp/scripts
 ./usr/share/doc/psd
 ./usr/share/doc/psd/01.cacm
 ./usr/share/doc/psd/02.implement

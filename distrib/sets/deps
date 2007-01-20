@@ -470,6 +470,7 @@ misc-fstab-examples base-fstab-examples
 misc-isdn-examples base-isdn-examples
 misc-krb5-examples base-krb5-examples
 misc-netutil-examples base-netutil-examples
+misc-ntp-htmldoc base-man-share
 misc-postfix-examples base-postfix-examples
 misc-postfix-htmldoc base-htmldoc-share
 misc-psd-doc base-psd-share
