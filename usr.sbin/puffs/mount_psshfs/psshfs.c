@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.5 2007/01/20 13:52:35 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.6 2007/01/20 14:37:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.5 2007/01/20 13:52:35 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.6 2007/01/20 14:37:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -249,7 +249,7 @@ handlebuf(struct psshfs_ctx *pctx, struct psbuf *datapb,
 		pb->psr = psrtmp;
 		free(datapb);
 
-		puffs_docc(ppr, pb->psr.pcc);
+		puffs_docc(pb->psr.pcc, ppr);
 		return;
 	}
 
