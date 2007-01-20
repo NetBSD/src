@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.4 2007/01/11 18:52:26 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.5 2007/01/20 13:52:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.4 2007/01/11 18:52:26 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.5 2007/01/20 13:52:35 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -318,10 +318,10 @@ psshfs_eventloop(struct puffs_usermount *pu, struct psshfs_ctx *pctx)
 	struct pollfd pfds[2];
 	int x;
 
-	pgr = puffs_makegetreq(pu, pu->pu_maxreqlen, 0);
+	pgr = puffs_req_makeget(pu, pu->pu_maxreqlen, 0);
 	if (!pgr)
 		err(1, "makegetreq");
-	ppr = puffs_makeputreq(pu);
+	ppr = puffs_req_makeput(pu);
 	if (!ppr)
 		err(1, "makeputreq");
 
@@ -352,7 +352,7 @@ psshfs_eventloop(struct puffs_usermount *pu, struct psshfs_ctx *pctx)
 		
 		/* get & possibly dispatch events from kernel */
 		if (pfds[PFD_PUFFS].revents & POLLIN)
-			if (puffs_handlereqs(pu, pgr, ppr, 0) == -1)
+			if (puffs_req_handle(pu, pgr, ppr, 0) == -1)
 				err(1, "puffs_handlereqs");
 
 		/* get input from sftpd, possibly build more responses */
@@ -365,12 +365,12 @@ psshfs_eventloop(struct puffs_usermount *pu, struct psshfs_ctx *pctx)
 			err(1, "psshoutput");
 
 		/* stuff all replies from both of the above into kernel */
-		if (puffs_putputreq(ppr) == -1)
+		if (puffs_req_putput(ppr) == -1)
 			err(1, "putputreq");
-		puffs_resetputreq(ppr);
+		puffs_req_resetput(ppr);
 	}
 
-	puffs_destroygetreq(pgr);
+	puffs_req_destroyget(pgr);
 }
 
 static void
