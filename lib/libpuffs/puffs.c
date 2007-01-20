@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.25 2007/01/16 22:37:17 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.26 2007/01/20 13:52:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.25 2007/01/16 22:37:17 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.26 2007/01/20 13:52:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -305,13 +305,13 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	int rv;
 
 	rv = -1;
-	pgr = puffs_makegetreq(pu, pu->pu_maxreqlen, 0);
+	pgr = puffs_req_makeget(pu, pu->pu_maxreqlen, 0);
 	if (pgr == NULL)
 		return -1;
 
-	ppr = puffs_makeputreq(pu);
+	ppr = puffs_req_makeput(pu);
 	if (ppr == NULL) {
-		puffs_destroygetreq(pgr);
+		puffs_req_destroyget(pgr);
 		return -1;
 	}
 
@@ -322,45 +322,22 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 	/* XXX: should be a bit more robust with errors here */
 	while (puffs_getstate(pu) == PUFFS_STATE_RUNNING
 	    || puffs_getstate(pu) == PUFFS_STATE_UNMOUNTING) {
-		puffs_resetputreq(ppr);
+		puffs_req_resetput(ppr);
 
-		if (puffs_handlereqs(pu, pgr, ppr, 0) == -1) {
+		if (puffs_req_handle(pu, pgr, ppr, 0) == -1) {
 			rv = -1;
 			break;
 		}
-		if (puffs_putputreq(ppr) == -1) {
+		if (puffs_req_putput(ppr) == -1) {
 			rv = -1;
 			break;
 		}
 	}
 
  out:
-	puffs_destroyputreq(ppr);
-	puffs_destroygetreq(pgr);
+	puffs_req_destroyput(ppr);
+	puffs_req_destroyget(pgr);
 	return rv;
-}
-
-int
-puffs_handlereqs(struct puffs_usermount *pu, struct puffs_getreq *pgr,
-	struct puffs_putreq *ppr, int maxops)
-{
-	struct puffs_req *preq;
-	int pval;
-
-	puffs_setmaxgetreq(pgr, maxops);
-	if (puffs_loadgetreq(pgr) == -1)
-		return -1;
-
-	/* interlink pgr and ppr for diagnostic asserts */
-	pgr->pgr_nppr++;
-	ppr->ppr_pgr = pgr;
-
-	pval = 0;
-	while ((preq = puffs_getreq(pgr)) != NULL
-	    && pu->pu_state != PUFFS_STATE_UNMOUNTED)
-		pval = puffs_dopreq(pu, ppr, preq);
-
-	return pval;
 }
 
 int
@@ -405,7 +382,7 @@ puffs_docc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
 	/* check if we need to store this reply */
 	switch (rv) {
 	case PUFFCALL_ANSWER:
-		puffs_putreq_cc(ppr, pcc);
+		puffs_req_putcc(ppr, pcc);
 		break;
 	case PUFFCALL_IGNORE:
 		puffs_cc_destroy(pcc);

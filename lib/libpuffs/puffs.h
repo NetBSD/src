@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.26 2007/01/16 22:37:17 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.27 2007/01/20 13:52:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -378,7 +378,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 4
+#define PUFFS_DEVEL_LIBVERSION 5
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -430,20 +430,24 @@ void		puffs_stat2vattr(struct vattr *va, const struct stat *);
  * Requests
  */
 
-struct puffs_getreq	*puffs_makegetreq(struct puffs_usermount *,
-					  size_t, int);
-int			puffs_loadgetreq(struct puffs_getreq *);
-struct puffs_req	*puffs_getreq(struct puffs_getreq *);
-int			puffs_remaininggetreq(struct puffs_getreq *);
-void			puffs_setmaxgetreq(struct puffs_getreq *, int);
-void			puffs_destroygetreq(struct puffs_getreq *);
+struct puffs_getreq	*puffs_req_makeget(struct puffs_usermount *,
+					   size_t, int);
+int			puffs_req_loadget(struct puffs_getreq *);
+struct puffs_req	*puffs_req_get(struct puffs_getreq *);
+int			puffs_req_remainingget(struct puffs_getreq *);
+void			puffs_req_setmaxget(struct puffs_getreq *, int);
+void			puffs_req_destroyget(struct puffs_getreq *);
 
-struct puffs_putreq	*puffs_makeputreq(struct puffs_usermount *);
-void			puffs_putreq(struct puffs_putreq *, struct puffs_req *);
-void			puffs_putreq_cc(struct puffs_putreq *,struct puffs_cc*);
-int			puffs_putputreq(struct puffs_putreq *);
-void			puffs_resetputreq(struct puffs_putreq *);
-void			puffs_destroyputreq(struct puffs_putreq *);
+struct puffs_putreq	*puffs_req_makeput(struct puffs_usermount *);
+void			puffs_req_put(struct puffs_putreq *,struct puffs_req *);
+void			puffs_req_putcc(struct puffs_putreq *,struct puffs_cc*);
+int			puffs_req_putput(struct puffs_putreq *);
+void			puffs_req_resetput(struct puffs_putreq *);
+void			puffs_req_destroyput(struct puffs_putreq *);
+
+int			puffs_req_handle(struct puffs_usermount *,
+					 struct puffs_getreq *,
+					 struct puffs_putreq *, int);
 
 /*
  * Call Context interfaces relevant for user.
@@ -458,9 +462,6 @@ void			puffs_cc_destroy(struct puffs_cc *);
 /*
  * Execute or continue a request
  */
-
-int	puffs_handlereqs(struct puffs_usermount *, struct puffs_getreq *,
-			 struct puffs_putreq *, int);
 
 int	puffs_dopreq(struct puffs_usermount *, struct puffs_putreq *,
 		     struct puffs_req *);

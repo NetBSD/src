@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.2 2006/12/29 15:28:11 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.3 2007/01/20 13:52:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.2 2006/12/29 15:28:11 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.3 2007/01/20 13:52:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: requests.c,v 1.2 2006/12/29 15:28:11 pooka Exp $");
 #include "puffs_priv.h"
 
 struct puffs_getreq *
-puffs_makegetreq(struct puffs_usermount *pu, size_t buflen, int maxops)
+puffs_req_makeget(struct puffs_usermount *pu, size_t buflen, int maxops)
 {
 	struct puffs_getreq *pgr;
 	uint8_t *buf;
@@ -71,7 +71,7 @@ puffs_makegetreq(struct puffs_usermount *pu, size_t buflen, int maxops)
 }
 
 int
-puffs_loadgetreq(struct puffs_getreq *pgr)
+puffs_req_loadget(struct puffs_getreq *pgr)
 {
 
 	assert(pgr->pgr_nppr == 0);
@@ -89,7 +89,7 @@ puffs_loadgetreq(struct puffs_getreq *pgr)
 }
 
 struct puffs_req *
-puffs_getreq(struct puffs_getreq *pgr)
+puffs_req_get(struct puffs_getreq *pgr)
 {
 	struct puffs_req *preq;
 
@@ -107,14 +107,14 @@ puffs_getreq(struct puffs_getreq *pgr)
 }
 
 int
-puffs_remaininggetreq(struct puffs_getreq *pgr)
+puffs_req_remainingget(struct puffs_getreq *pgr)
 {
 
 	return pgr->pgr_phg.phg_nops;
 }
 
 void
-puffs_setmaxgetreq(struct puffs_getreq *pgr, int maxops)
+puffs_req_setmaxget(struct puffs_getreq *pgr, int maxops)
 {
 
 	pgr->pgr_phg.phg_nops = maxops;
@@ -122,7 +122,7 @@ puffs_setmaxgetreq(struct puffs_getreq *pgr, int maxops)
 }
 
 void
-puffs_destroygetreq(struct puffs_getreq *pgr)
+puffs_req_destroyget(struct puffs_getreq *pgr)
 {
 
 	assert(pgr->pgr_nppr == 0);
@@ -133,7 +133,7 @@ puffs_destroygetreq(struct puffs_getreq *pgr)
 
 
 struct puffs_putreq *
-puffs_makeputreq(struct puffs_usermount *pu)
+puffs_req_makeput(struct puffs_usermount *pu)
 {
 	struct puffs_putreq *ppr;
 
@@ -147,13 +147,13 @@ puffs_makeputreq(struct puffs_usermount *pu)
 	ppr->ppr_pu = pu;
 	ppr->ppr_pgr = NULL;
 
-	puffs_resetputreq(ppr);
+	puffs_req_resetput(ppr);
 
 	return ppr;
 }
 
 void
-puffs_putreq(struct puffs_putreq *ppr, struct puffs_req *preq)
+puffs_req_put(struct puffs_putreq *ppr, struct puffs_req *preq)
 {
 
 	ppr->ppr_php.php_nops++;
@@ -173,15 +173,15 @@ puffs_putreq(struct puffs_putreq *ppr, struct puffs_req *preq)
  * instead of a direct preq, put a cc onto the push queue
  */
 void
-puffs_putreq_cc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
+puffs_req_putcc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
 {
 
 	TAILQ_INSERT_TAIL(&ppr->ppr_pccq, pcc, entries);
-	puffs_putreq(ppr, pcc->pcc_preq);
+	puffs_req_put(ppr, pcc->pcc_preq);
 }
 
 int
-puffs_putputreq(struct puffs_putreq *ppr)
+puffs_req_putput(struct puffs_putreq *ppr)
 {
 
 	if (ppr->ppr_php.php_nops)
@@ -192,7 +192,7 @@ puffs_putputreq(struct puffs_putreq *ppr)
 }
 
 void
-puffs_resetputreq(struct puffs_putreq *ppr)
+puffs_req_resetput(struct puffs_putreq *ppr)
 {
 	struct puffs_cc *pcc;
 
@@ -212,9 +212,32 @@ puffs_resetputreq(struct puffs_putreq *ppr)
 }
 
 void
-puffs_destroyputreq(struct puffs_putreq *ppr)
+puffs_req_destroyput(struct puffs_putreq *ppr)
 {
 
-	puffs_resetputreq(ppr);
+	puffs_req_resetput(ppr);
 	free(ppr);
+}
+
+int
+puffs_req_handle(struct puffs_usermount *pu, struct puffs_getreq *pgr,
+	struct puffs_putreq *ppr, int maxops)
+{
+	struct puffs_req *preq;
+	int pval;
+
+	puffs_req_setmaxget(pgr, maxops);
+	if (puffs_req_loadget(pgr) == -1)
+		return -1;
+
+	/* interlink pgr and ppr for diagnostic asserts */
+	pgr->pgr_nppr++;
+	ppr->ppr_pgr = pgr;
+
+	pval = 0;
+	while ((preq = puffs_req_get(pgr)) != NULL
+	    && pu->pu_state != PUFFS_STATE_UNMOUNTED)
+		pval = puffs_dopreq(pu, ppr, preq);
+
+	return pval;
 }
