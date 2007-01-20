@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.4 2007/01/17 23:08:08 macallan Exp $	*/
+/*	$NetBSD: ofb_cons.c,v 1.5 2007/01/20 21:42:12 he Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.4 2007/01/17 23:08:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.5 2007/01/20 21:42:12 he Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -96,10 +96,10 @@ ofb_cnattach()
 		return -1;
 
 	/* get current cursor position */
-	OF_interpret("line#", 1, &crow);
+	OF_interpret("line#", 1, 1, &crow);
 
 	/* move (rom monitor) cursor to the lowest line - 1 */
-	OF_interpret("#lines 2 - to line#", 0);
+	OF_interpret("#lines 2 - to line#", 1, 0);
 	
 	wsfont_init();
 	if (copy_rom_font() == 0) {
@@ -147,7 +147,7 @@ copy_rom_font()
 	int chosen, mmu, m, e;
 
 	/* Get ROM FONT address. */
-	OF_interpret("font-adr", 1, &romfont);
+	OF_interpret("font-adr", 1, 1, &romfont);
 	if (romfont == NULL)
 		return -1;
 
@@ -161,8 +161,8 @@ copy_rom_font()
 	OF_call_method("translate", mmu, 1, 3, romfont, &romfont, &m, &e);
  
 	/* Get character size */
-	OF_interpret("char-width", 1, &char_width);
-	OF_interpret("char-height", 1, &char_height);
+	OF_interpret("char-width", 1, 1, &char_width);
+	OF_interpret("char-height", 1, 1, &char_height);
 
 	openfirm6x11.name = "Open Firmware";
 	openfirm6x11.firstchar = 32;
@@ -186,15 +186,15 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 	/* XXX /chaos/control doesn't have "width", "height", ... */
 	width = height = -1;
 	if (OF_getprop(node, "width", &width, 4) != 4)
-		OF_interpret("screen-width", 1, &width);
+		OF_interpret("screen-width", 1, 1, &width);
 	if (OF_getprop(node, "height", &height, 4) != 4)
-		OF_interpret("screen-height", 1, &height);
+		OF_interpret("screen-height", 1, 1, &height);
 	if (OF_getprop(node, "linebytes", &linebytes, 4) != 4)
 		linebytes = width;			/* XXX */
 	if (OF_getprop(node, "depth", &depth, 4) != 4)
 		depth = 8;				/* XXX */
 	if (OF_getprop(node, "address", &fbaddr, 4) != 4)
-		OF_interpret("frame-buffer-adr", 1, &fbaddr);
+		OF_interpret("frame-buffer-adr", 1, 1, &fbaddr);
 
 	if (width == -1 || height == -1 || fbaddr == 0 || fbaddr == -1)
 		return FALSE;
@@ -238,8 +238,8 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 		 * XXX this assumes we're the console which may or may not 
 		 * be the case 
 		 */
-		OF_interpret("#lines", 1, &rows);
-		OF_interpret("#columns", 1, &cols);
+		OF_interpret("#lines", 1, 1, &rows);
+		OF_interpret("#columns", 1, 1, &cols);
 		ri->ri_font = &openfirm6x11;
 		ri->ri_wsfcookie = -1;		/* not using wsfont */
 		rasops_init(ri, rows, cols);

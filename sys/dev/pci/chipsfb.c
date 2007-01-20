@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.6 2006/11/10 20:27:44 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.7 2007/01/20 21:42:12 he Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6 2006/11/10 20:27:44 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.7 2007/01/20 21:42:12 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,9 +338,9 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef HAVE_OPENFIRMWARE
 	if (OF_getprop(node, "width", &width, 4) != 4)
-		OF_interpret("screen-width", 1, &width);
+		OF_interpret("screen-width", 1, 1, &width);
 	if (OF_getprop(node, "height", &height, 4) != 4)
-		OF_interpret("screen-height", 1, &height);
+		OF_interpret("screen-height", 1, 1, &height);
 	if (OF_getprop(node, "linebytes", &linebytes, 4) != 4)
 		linebytes = width;			/* XXX */
 	if (OF_getprop(node, "depth", &depth, 4) != 4)
