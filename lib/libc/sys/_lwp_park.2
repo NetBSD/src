@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_park.2,v 1.2 2007/01/20 13:24:44 wiz Exp $
+.\"	$NetBSD: _lwp_park.2,v 1.3 2007/01/20 13:26:59 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,23 +113,23 @@ Otherwise, \-1 is returned and
 is set to provide more information.
 .Sh ERRORS
 .Bl -tag -width [EINVAL]
-.It Bq Er ETIMEDOUT
-The UTC time specified by
-.Fa abstime
-has passed.
-.It Bq Er EINVAL
-The time value specified by
-.Fa abstime
-is invalid.
+.It Bq Er EALREADY
+A request was made to wake the LWP before it began to wait in
+the kernel.
 .It Bq Er EINTR
 The LWP has been awoken by a signal or by a call to one of the
 following functions:
 .Fn _lwp_unpark ,
 .Fn _lwp_unpark_all ,
 .Fn _lwp_wakeup .
-.It Bq Er EALREADY
-A request was made to wake the LWP before it began to wait in
-the kernel.
+.It Bq Er EINVAL
+The time value specified by
+.Fa abstime
+is invalid.
+.It Bq Er ETIMEDOUT
+The UTC time specified by
+.Fa abstime
+has passed.
 .El
 .Sh SEE ALSO
 .Xr _lwp_unpark 2 ,
