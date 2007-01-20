@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_unpark_all.2,v 1.1 2007/01/20 01:41:00 ad Exp $
+.\"	$NetBSD: _lwp_unpark_all.2,v 1.2 2007/01/20 13:26:59 wiz Exp $
 .\"
 .\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,9 @@ specifies the size of the array pointed to by
 .Fa targets .
 If the
 .Fa targets
-argument is given as NULL, the maximum size of the array (expressed
+argument is given as
+.Dv NULL ,
+the maximum size of the array (expressed
 as the number of entries) is returned in
 .Fa ntargets.
 .Pp
@@ -81,14 +83,14 @@ A \-1 return value indicates an error occurred and
 is set to indicate the reason.
 .Sh ERRORS
 .Bl -tag -width [EINVAL]
-.It Bq Er EINVAL
-The value specified for
-.Fa ntargets
-is out of range.
 .It Bq Er EFAULT
 The value specified for
 .Fa targets
 is invalid.
+.It Bq Er EINVAL
+The value specified for
+.Fa ntargets
+is out of range.
 .It Bq Er ENOMEM
 Insufficient resources are available to complete the operation.
 .El
