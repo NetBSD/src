@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.47 2007/01/19 22:44:29 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.48 2007/01/20 14:03:38 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -902,4 +902,9 @@ sys/arch/macppc/dev/amsvar.h			1.6
 	for trackpads add a sysctl to control wether tapping causes button 
 	events
 	[macallan, ticket #373]
+
+sys/kern/kern_verifiedexec.c			patch
+
+	fix build failure introduced by ticket #362
+	[elad, ticket #378]
 
