@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.8 2007/01/19 21:10:55 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.9 2007/01/20 13:23:59 wiz Exp $
 .\"
 .\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -562,11 +562,11 @@ The file system should return its internal reference count on the file
 .Fa refcount .
 If this is zero, the kernel will call reclaim immediately.
 .Sh SEE ALSO
-.Xr puffs 4 ,
 .Xr puffs_cc 3 ,
 .Xr puffs_flush 3 ,
 .Xr puffs_node 3 ,
-.Xr puffs_path 3
+.Xr puffs_path 3 ,
+.Xr puffs 4
 .Sh HISTORY
 An unsupported experimental version of
 .Nm
