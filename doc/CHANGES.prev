@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.54 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.55 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8569,3 +8569,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		selection, and redirection of command output; from Anon Ymous.
 		[christos 20061201]
 	re(4): Fix hardware VLAN tagging support. [tsutsui 20061216]
+	nfe(4): Enable hardware checksum support. [tsutsui 20070109]
