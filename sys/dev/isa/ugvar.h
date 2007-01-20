@@ -1,4 +1,4 @@
-/*     $NetBSD: ugvar.h,v 1.1 2007/01/06 21:27:54 xtraeme Exp $ */
+/*     $NetBSD: ugvar.h,v 1.2 2007/01/20 18:18:51 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -28,8 +28,11 @@
 #ifndef _DEV_ISA_UGVAR_H
 #define _DEV_ISA_UGVAR_H
 
-#define UG_DELAY_CYCLES	50000
+#define UG_DRV_VERSION	1000
+
+#define UG_DELAY_CYCLES	5000
 #define UG_NUM_SENSORS	19
+#define UG_MAX_SENSORS	32
 
 /* Data and Cmd offsets - Base is ussualy 0xE0 */
 #define UG_CMD		0
@@ -67,7 +70,6 @@
 
 /*
  * sc->sensors sub-intervals for each unit type.
- * XXX: is this correct ?
  */
 static const struct envsys_range ug_ranges[] = {
 	{ 0,	2,	ENVSYS_STEMP },
@@ -86,9 +88,10 @@ struct ug_softc {
 	bus_space_handle_t sc_ioh;
 
 	struct sysmon_envsys sc_sysmon;
-	envsys_tre_data_t sc_data[UG_NUM_SENSORS];
-	envsys_basic_info_t sc_info[UG_NUM_SENSORS];
-
+	envsys_tre_data_t sc_data[UG_MAX_SENSORS];
+	envsys_basic_info_t sc_info[UG_MAX_SENSORS];
+	uint8_t version;
+	void *mbsens;
 };
 
 #endif /* _DEV_ISA_UGVAR_H_ */
