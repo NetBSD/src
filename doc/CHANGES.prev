@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.53 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.54 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8133,7 +8133,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	build.sh: Add experimental ability to build syspkgs. [apb 20060104]
 	postfix(1): Updated to 2.2.8. [rpaulo 20060109]
 	ews4800mips: Add sysinst support. [tsutsui 20060109]
-	zlib: Updated to 1.2.3 and shared between kernel and userland.
+	zlib(3): Updated to 1.2.3 and shared between kernel and userland.
 		[christos 20060114]
 	firmload(9): Add an API for loading firmware images used by hardware
 		devices.  [thorpej 20060116]
@@ -8379,7 +8379,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		been removed. [matt 20060825]
 	mips64: Preliminary support for a MIPS64 toolchain using the N64
 		ABI. [matt 20060825]
-	postfix: Updated to 2.3.3 [rpaulo 20060827]
+	postfix(1): Updated to 2.3.3 [rpaulo 20060827]
 	landisk: Initial import of landisk port for SuperH based
 		network storage appliances by I-O DATA.  The port was
 		done by NONAKA Kimihiro <nonaka@NetBSD.org>.
@@ -8390,7 +8390,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		Not all ports have adopted it yet.  [gdamore 20060902]
 	sun2: Add timecounter support. [gdamore 20060903]
 	gcc(1): Switch sh5 to GCC4. [scw 20060904]
-	tcp: Add support for Explicit Congestion Notification as defined
+	tcp(4): Add support for Explicit Congestion Notification as defined
 		in RFC 3168. Sponsored by Google SoC. [rpaulo 20060905]
 	prep: Convert prep to MI todr(9) driver. [garbled 20060905]
 	sun3: Add timecounter support. [gdamore 20060905]
@@ -8419,7 +8419,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	mipsco: Add timecounter support.  [gdamore 20060915]
 	hpcmips: Add timecounter support.  [gdamore 20060915]
 	sgimips: Add timecounter support.  [gdamore 20060916]
-	veriexec: Add veriexecgen(8), a tool for easy and fast generation
+	veriexec(4): Add veriexecgen(8), a tool for easy and fast generation
 		  of Veriexec fingerprint files. [elad 20060916]
 	gcc(1): Switch m68k to GCC4 [tsutsui 20060917]
 	gcc(1): Switch mips to GCC4 [simonb 20060919]
@@ -8444,7 +8444,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	evbmips: Add AR5315/2315 support, specifically the Meraki Mini,
 		which can be found at http://www.meraki.net/
 		[gdamore 20060925]
-	ssh: Import openssh-4.4 [christos 20060928]
+	ssh(1): Import openssh-4.4 [christos 20060928]
 	macppc: add timecounter support [macallan 20060929]
 	ofctl(8): initial import, formerly known as ofdump2. For macppc,
 		shark, sparc64.
@@ -8488,12 +8488,12 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		and ei(4) drivers for Acorn SCSI Expansion Cards and
 		Ethernet 1 cards respectively, in place of asc(4) and ie(4).
 		[bjh21 20061022]
-	puffs: Integrate Pass-to-Userspace Framework File System, which
+	puffs(4): Integrate Pass-to-Userspace Framework File System, which
 		can be used to build userspace file system servers
 		[pooka 20061022]
 	hpcarm: Add timecounter support and convert to MI todr(9).
 		[peter 20061023]
-	less: Updated to version 394.  [mrg 20061025]
+	less(1): Updated to version 394.  [mrg 20061025]
 	i386: The support for the Multiboot Specification no longer relies
 		on the a.out kludge which means that a stock GRUB (without
 		custom patches) can be used to successfully boot the kernel.
@@ -8529,18 +8529,18 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		executed over a remote tmpfs mounted through NFS.
 		[jmmv 20061105]
 	tmpfs: Add a LKM for this file system. [jmmv 20061105]
-	postfix: Updated to 2.3.4 [rpaulo 20061107]
+	postfix(1): Updated to 2.3.4 [rpaulo 20061107]
 	macppc: use accelerated wsdisplay drivers [macallan 20061107]
 	evbarm: Add support for Certance CP-3100 [scw 20061108]
 	tmpfs: Audit kqueue notifications and add several regression
 		tests for them.  [jmmv 20061109]
-	vnd: Make this work with files stored on file systems without
+	vnd(4): Make this work with files stored on file systems without
 		the bmap and strategy operations.  This includes tmpfs
 		and smbfs.  [jmmv 20061109]
 	mount_nfs(8): Remove NQNFS support. [yamt 20061109]
-	paxctl: Enable as a tool, and add make rules to run paxctl on
+	paxctl(8): Enable as a tool, and add make rules to run paxctl on
 		binaries to what PROG_PAX is set. [christos 20061110]
-	lfs_cleanerd: Move from /usr/libexec to /libexec so that the
+	lfs_cleanerd(8): Move from /usr/libexec to /libexec so that the
 		root file system can be safely placed on a LFS volume.
 		[jmmv 20061110]
 	tmpfs: Drop experimental status and enable it by default in the
