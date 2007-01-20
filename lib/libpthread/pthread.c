@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.56 2007/01/20 04:56:07 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.57 2007/01/20 20:02:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.56 2007/01/20 04:56:07 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.57 2007/01/20 20:02:36 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -464,6 +464,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 #ifndef PTHREAD_SA
 	/* 5a. Create the new LWP. */
+	newthread->pt_sleeponq = 0;
 	flag = 0;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
 		flag |= LWP_SUSPENDED;
@@ -483,7 +484,6 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		pthread_spinunlock(self, &pthread__deadqueue_lock);
 		return ret;
 	}
-	newthread->pt_sleeponq = 0;
 #endif
 
 #ifdef PTHREAD_SA
