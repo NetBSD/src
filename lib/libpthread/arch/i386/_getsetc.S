@@ -1,4 +1,4 @@
-/*	$NetBSD: _getsetc.S,v 1.5 2004/11/30 21:05:01 nathanw Exp $	*/
+/*	$NetBSD: _getsetc.S,v 1.6 2007/01/20 18:56:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 1:	btl	$8, (UC_REGS + _REG_EFL * 4)(%ecx)	; \
 	jnc	2f					; \
 	pushl %ecx					; \
-	call    PIC_GOT(_C_LABEL(setcontext))		; \
+	call    *PIC_GOT(_C_LABEL(setcontext))		; \
 2:	and 	$_UC_FPU, %eax				; \
 	jz	3f					; \
 	FPLOAD(%ecx)					; \
