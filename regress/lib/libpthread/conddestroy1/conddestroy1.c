@@ -1,4 +1,13 @@
-/*	$NetBSD: conddestroy1.c,v 1.1 2004/07/07 21:53:10 nathanw Exp $ */
+/*	$NetBSD: conddestroy1.c,v 1.2 2007/01/20 19:40:06 ad Exp $ */
+
+/*
+ * XXX This test is bogus.  IEEE Std 1003.1, 2004 Edition says:
+ *
+ * 	If a signal is delivered to a thread waiting for a condition
+ *	variable, upon return from the signal handler the thread resumes
+ *	waiting for the condition variable as if it was not interrupted,
+ *	or it shall return zero due to spurious wakeup.
+ */
 
 #include <signal.h>
 #include <stdio.h>
