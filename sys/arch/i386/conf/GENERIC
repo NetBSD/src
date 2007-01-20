@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.804 2007/01/11 05:36:29 mouse Exp $
+# $NetBSD: GENERIC,v 1.805 2007/01/20 18:48:17 xtraeme Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.804 $"
+#ident 		"GENERIC-$Revision: 1.805 $"
 
 maxusers	32		# estimated number of users
 
@@ -609,9 +609,8 @@ iic*	at piixpm?			# SMBus on PIIX4
 #nsclpcsio*	at isa?
 #gpio*		at nsclpcsio?
 
-# VIA VT82C686A hardware monitor
-#viapm*	at pci? dev ? function ?
-#viaenv* at viapm?
+# VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
+#viaenv*	at pci? dev ? function ?
 
 
 # I2O devices
