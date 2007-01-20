@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.21 2006/12/07 22:50:12 xtraeme Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.22 2007/01/20 20:19:36 xtraeme Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.21 2006/12/07 22:50:12 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.22 2007/01/20 20:19:36 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -470,7 +470,7 @@ k7_powernow_init(void)
 
 	cur_freq = cstate->state_table[cstate->n_states-1].freq;
 
-	aprint_normal("%s: AMD %s Technology %d (MHz)\n",
+	aprint_normal("%s: AMD %s Technology %d MHz\n",
 	    cpuname, techname, cur_freq);
 	aprint_normal("%s: frequencies available (Mhz): %s\n",
 	    cpuname, freq_names);
