@@ -1,4 +1,4 @@
-/*     $NetBSD: ug.c,v 1.2 2007/01/20 18:18:51 xtraeme Exp $ */
+/*     $NetBSD: ug.c,v 1.3 2007/01/20 18:32:41 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.2 2007/01/20 18:18:51 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.3 2007/01/20 18:32:41 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.2 2007/01/20 18:18:51 xtraeme Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 #include <dev/isa/ugvar.h>
-#include <dev/isa/ugvar2.h>
 
 /* autoconf(9) functions */
 static int  ug_isa_match(struct device *, struct cfdata *, void *);
