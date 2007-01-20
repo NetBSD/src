@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.32 2004/07/22 16:51:45 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.33 2007/01/20 01:13:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.32 2004/07/22 16:51:45 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.33 2007/01/20 01:13:13 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ main(int argc, char **argv)
 		exit(0);
 	}
 	status = verify();
-	if (Uflag & (status == MISMATCHEXIT))
+	if (Uflag && (status == MISMATCHEXIT))
 		status = 0;
 	exit(status);
 }
