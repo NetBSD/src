@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.50 2007/01/17 23:00:31 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.51 2007/01/20 21:42:12 he Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.50 2007/01/17 23:00:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2007/01/20 21:42:12 he Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -398,7 +398,7 @@ cpu_rootconf()
 }
 
 int
-OF_interpret(const char *cmd, int nreturns, ...)
+OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 {
 	va_list ap;
 	int i;
@@ -422,7 +422,7 @@ OF_interpret(const char *cmd, int nreturns, ...)
 		return -1;
 	ofbcopy(cmd, OF_buf, i + 1);
 	args.cmd = OF_buf;
-	args.nargs = 1;
+	args.nargs = nargs;
 	args.nreturns = nreturns + 1;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -525,7 +525,7 @@ copyprops(int node, prop_dictionary_t dict)
 	OF_to_intprop(dict, console_node, "depth", "depth");
 	if (!OF_to_intprop(dict, console_node, "address", "address")) {
 		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 1, &fbaddr);
+			OF_interpret("frame-buffer-adr", 1, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}

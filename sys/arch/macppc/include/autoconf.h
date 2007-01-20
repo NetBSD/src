@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.9 2007/01/17 23:39:09 macallan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.10 2007/01/20 21:42:12 he Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -54,7 +54,6 @@ int badaddr __P((void *, int));
 
 /* these are in autoconf.c */
 int getnodebyname __P((int, const char *));
-int OF_interpret __P((const char *cmd, int nreturns, ...));
 
 /* these are in clock.c */
 void calc_delayconst __P((void));
