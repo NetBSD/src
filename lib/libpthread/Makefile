@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.37 2006/12/24 18:39:45 ad Exp $
+#	$NetBSD: Makefile,v 1.38 2007/01/20 04:56:25 christos Exp $
 #
 
 PTHREAD_SA=1
-WARNS=	2
+WARNS=	4
 
 # Define PT_FIXEDSTACKSIZE_LG to set a fixed stacksize
 #CPPFLAGS+=-DPT_FIXEDSTACKSIZE_LG=18
