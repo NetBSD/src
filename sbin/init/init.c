@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.82 2007/01/17 21:59:49 hubertf Exp $	*/
+/*	$NetBSD: init.c,v 1.83 2007/01/20 13:25:28 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.82 2007/01/17 21:59:49 hubertf Exp $");
+__RCSID("$NetBSD: init.c,v 1.83 2007/01/20 13:25:28 isaki Exp $");
 #endif
 #endif /* not lint */
 
@@ -573,7 +573,9 @@ transition(state_t s)
 void
 clear_session_logs(session_t *sp, int status)
 {
+#if defined(SUPPORT_UTMP) || defined(SUPPORT_UTMPX)
 	char *line = sp->se_device + sizeof(_PATH_DEV) - 1;
+#endif
 
 #ifdef SUPPORT_UTMPX
 	if (logoutx(line, status, DEAD_PROCESS))
