@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.22 2007/01/16 07:09:17 ad Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.23 2007/01/20 18:00:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.22 2007/01/16 07:09:17 ad Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.23 2007/01/20 18:00:15 christos Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -258,9 +258,10 @@ pthread__sched_idle2(pthread_t self)
  * run queue.
  */
 void
-pthread__sched_bulk(pthread_t self, pthread_t qhead)
+pthread__sched_bulk(pthread_t self, pthread_t qh)
 {
 	pthread_t next;
+	pthread_t volatile qhead = qh;
 
 	pthread_spinlock(self, &pthread__runqueue_lock);
 	for ( ; qhead && (qhead != self) ; qhead = next) {
