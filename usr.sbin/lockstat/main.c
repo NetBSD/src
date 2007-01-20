@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2006/12/25 11:57:40 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2007/01/20 20:01:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.7 2006/12/25 11:57:40 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2007/01/20 20:01:03 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -545,7 +545,8 @@ makelists(int mask, int event)
 	type = mask & LB_LOCK_MASK;
 
 	for (lb = bufs, max = bufs + nbufs; lb < max; lb++) {
-		if ((lb->lb_flags & LB_LOCK_MASK) != type)
+		if ((lb->lb_flags & LB_LOCK_MASK) != type ||
+		    lb->lb_counts[event] == 0)
 			continue;
 
 		/*
