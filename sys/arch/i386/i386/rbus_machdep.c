@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.20 2007/01/16 18:46:03 gdt Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.21 2007/01/20 14:46:21 gdt Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.20 2007/01/16 18:46:03 gdt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.21 2007/01/20 14:46:21 gdt Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -94,28 +94,28 @@ rbus_min_start_hint(size_t ram)
 
 #else
         if (ram <= 192*1024*1024UL) {
-	  /*
-	   * <= 192 MB, so try 0.5 GB.  This will work on Thinkpad
-	   * 600E (2645-4AU), which fails at 1GB, and on some other
-	   * older machines that may have trouble with addresses
-	   * needing more than 20 bits.
-	   */
-	  rbus_min_start = 512 * 1024 * 1024UL;
+		/*
+		 * <= 192 MB, so try 0.5 GB.  This will work on
+		 * Thinkpad 600E (2645-4AU), which fails at 1GB, and
+		 * on some other older machines that may have trouble
+		 * with addresses needing more than 20 bits.
+		 */
+		rbus_min_start = 512 * 1024 * 1024UL;
 	}
 
 	if (ram >= 1024*1024*1024UL) {
-	  /*
-	   * > 1GB, so try 2 GB.
-	   */
-	  rbus_min_start =  2 * 1024 * 1024 * 1024UL;
+		/*
+		 * > 1GB, so try 2 GB.
+		 */
+		rbus_min_start =  2 * 1024 * 1024 * 1024UL;
 	}
 
-	/* XXX not tested. */
+	/* XXX Not tested in > 2 GB case. */
 	if (ram > 2 * 1024*1024*1024UL) {
-	  /*
-	   * > 2 GB, so try 3 GB.
-	   */
-	  rbus_min_start =  3 * 1024 * 1024 * 1024UL;
+		/*
+		 * > 2 GB, so try 3 GB.
+		 */
+		rbus_min_start =  3 * 1024 * 1024 * 1024UL;
 	}
 
 	printf("rbus: rbus_min_start set to 0x%0lx\n", rbus_min_start);
