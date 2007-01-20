@@ -70,7 +70,7 @@ _initialize_amd64nbsd_nat (void)
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64nbsd32_r_reg_offset);
   amd64_native_gregset64_reg_offset = amd64nbsd_r_reg_offset;
 
-  /* Add some extra features to the common *BSD/i386 target.  */
+  /* Add some extra features to the common *BSD/amd64 target.  */
   t = amd64bsd_target ();
   t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
