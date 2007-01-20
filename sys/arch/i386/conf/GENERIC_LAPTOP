@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.218 2006/12/17 23:02:06 bouyer Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.219 2007/01/20 18:48:17 xtraeme Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.218 $"
+#ident 		"GENERIC-$Revision: 1.219 $"
 
 maxusers	32		# estimated number of users
 
@@ -483,9 +483,8 @@ lpt2	at isa? port 0x3bc
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310
 
-# VIA VT82C686A hardware monitor
-#viapm*	at pci? dev ? function ?
-#viaenv* at viapm?
+# VIA VT82C686A/VT8231 Hardware Monitor and Power Management Timer
+#viaenv*	at pci? dev ? function ?
 
 # Intel PIIX4 power management controllers
 piixpm*	at pci? dev ? function ?	# PIIX4 compatible PM controller
