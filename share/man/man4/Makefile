@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.418 2007/01/07 03:14:09 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.419 2007/01/20 18:44:26 xtraeme Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adc.4 adt7467c.4 adv.4 \
@@ -150,7 +150,6 @@ MLINKS+=tty.4 dty.4
 MLINKS+=url.4 urlphy.4
 MLINKS+=usb.4 uhub.4
 MLINKS+=usb.4 usbtask.4
-MLINKS+=viaenv.4 viapm.4
 MLINKS+=zstty.4 zs.4 zstty.4 zsc.4
 
 # This is a hack

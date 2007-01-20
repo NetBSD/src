@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.275 2006/12/17 23:02:06 bouyer Exp $
+#	$NetBSD: files.pci,v 1.276 2007/01/20 18:44:26 xtraeme Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -660,15 +660,10 @@ device	btvmeii: vmebus, univ_pci
 attach	btvmeii at pci
 file	dev/pci/btvmeii.c btvmeii
 
-# VT86C686A power management
-device	viapm {}
-attach	viapm at pci
-file	dev/pci/viapm.c	viapm
-
-# hardware monitoring part of viapm
-device	viaenv: sysmon_envsys
-attach	viaenv at viapm
-file	dev/pci/viaenv.c		viaenv			needs-flag
+# VIA VT82C686A/VT8231 PM Timer and Hardware Monitor
+device	viaenv: acpipmtimer, sysmon_envsys
+attach	viaenv at pci
+file	dev/pci/viaenv.c		viaenv
 
 # Intel PIIX4 power management controller
 device	piixpm: i2cbus, acpipmtimer
