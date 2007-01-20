@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.10 2006/12/23 05:14:47 ad Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.11 2007/01/20 18:57:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.10 2006/12/23 05:14:47 ad Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.11 2007/01/20 18:57:41 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -75,7 +75,7 @@ extern int pthread__maxconcurrency, pthread__started;
 void pthread__debug_init(int ncpu)
 {
 	time_t t;
-	int i, nbuf;
+	int i;
 
 	if (getenv("PTHREAD_DEBUGCOUNTERS") != NULL)
 		atexit(pthread__debug_printcounters);
@@ -83,13 +83,7 @@ void pthread__debug_init(int ncpu)
 	if (getenv("PTHREAD_DEBUGLOG") != NULL) {
 		t = time(NULL);
 		debugbuf = pthread__debuglog_init(0);
-#ifdef PTHREAD_SA
-		nbuf = ncpu;
-#else
-		nbuf = 1000;	/* XXXLWP */
-#endif
-		linebuf = (struct linebuf *)
-			malloc(ncpu * sizeof(struct linebuf));
+		linebuf = malloc(ncpu * sizeof(struct linebuf));
 		if (linebuf == NULL)
 			err(1, "Couldn't allocate linebuf");
 		for (i = 0; i < ncpu; i++)
