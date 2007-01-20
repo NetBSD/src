@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.22 2007/01/09 10:19:52 tsutsui Exp $
+# $NetBSD: XEN2_DOM0,v 1.23 2007/01/20 18:48:17 xtraeme Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -253,9 +253,8 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
 
-# VIA VT82C686A hardware monitor
-#viapm*	at pci? dev ? function ?
-#viaenv* at viapm?
+# VIA VT82C686A/VT8231 Hardware Monitor and Power Management TImer
+#viaenv*	at pci? dev ? function ?
 
 
 # PCI network interfaces
