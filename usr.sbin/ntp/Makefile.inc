@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2007/01/06 19:45:29 kardel Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2007/01/20 16:50:29 kardel Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
@@ -6,6 +6,7 @@ NTP_MAKEFILE_INC=1
 .include <bsd.own.mk>
 
 DIST=		${NETBSDSRCDIR}/dist/ntp
+NTP_HTMLDIR=	${DIST}/html
 
 CPPFLAGS+=	-I${.CURDIR}/../include -I${DIST}/include -I${DIST}/libopts -DHAVE_CONFIG_H
 
