@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.26 2007/01/20 13:52:14 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.27 2007/01/20 14:37:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.26 2007/01/20 13:52:14 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.27 2007/01/20 14:37:06 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -341,8 +341,8 @@ puffs_mainloop(struct puffs_usermount *pu, int flags)
 }
 
 int
-puffs_dopreq(struct puffs_usermount *pu, struct puffs_putreq *ppr,
-	struct puffs_req *preq)
+puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
+	struct puffs_putreq *ppr)
 {
 	struct puffs_cc *pcc;
 	int rv;
@@ -358,7 +358,7 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_putreq *ppr,
 		return -1;
 	(void) memcpy(pcc->pcc_preq, preq, preq->preq_buflen);
 
-	rv = puffs_docc(ppr, pcc);
+	rv = puffs_docc(pcc, ppr);
 
 	if ((pcc->pcc_flags & PCC_DONE) == 0)
 		return 0;
@@ -367,7 +367,7 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_putreq *ppr,
 }
 
 int
-puffs_docc(struct puffs_putreq *ppr, struct puffs_cc *pcc)
+puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 {
 	int rv;
 

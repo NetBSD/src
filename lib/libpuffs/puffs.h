@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.27 2007/01/20 13:52:14 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.28 2007/01/20 14:37:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -463,9 +463,9 @@ void			puffs_cc_destroy(struct puffs_cc *);
  * Execute or continue a request
  */
 
-int	puffs_dopreq(struct puffs_usermount *, struct puffs_putreq *,
-		     struct puffs_req *);
-int	puffs_docc(struct puffs_putreq *, struct puffs_cc *);
+int	puffs_dopreq(struct puffs_usermount *, struct puffs_req *,
+		     struct puffs_putreq *);
+int	puffs_docc(struct puffs_cc *, struct puffs_putreq *);
 
 /*
  * Flushing / invalidation routines
