@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.223 2007/01/07 15:37:54 elad Exp $
+#       $NetBSD: Makefile,v 1.224 2007/01/21 15:42:36 hannken Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -16,7 +16,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	dopowerhooks.9 do_setresuid.9 doshutdownhooks.9 driver.9 \
 	edid.9 errno.9 ethersubr.9 evcnt.9 extattr.9 extent.9 \
 	fetch.9 file.9 fileassoc.9 filedesc.9 firmload.9 fork1.9 fsetown.9 \
-	getiobuf.9 \
+	fstrans.9 getiobuf.9 \
 	hash.9 hashinit.9 hardclock.9 humanize_number.9 hz.9 \
 	ieee80211.9 ieee80211_crypto.9 ieee80211_input.9 ieee80211_ioctl.9 \
 	ieee80211_node.9 ieee80211_output.9 ieee80211_proto.9 \
@@ -232,6 +232,12 @@ MLINKS+=firmload.9 firmware_open.9 \
 	firmload.9 firmware_free.9
 MLINKS+=fsetown.9 fgetown.9 \
 	fsetown.9 fownsignal.9
+MLINKS+=fstrans.9 fstrans_done.9 \
+	fstrans.9 fstrans_is_owner.9 \
+	fstrans.9 fstrans_getstate.9 \
+	fstrans.9 fstrans_setstate.9 \
+	fstrans.9 fstrans_start.9 \
+	fstrans.9 fstrans_start_nowait.9
 MLINKS+=getiobuf.9 getiobuf_nowait.9 \
 	getiobuf.9 putiobuf.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
@@ -590,7 +596,8 @@ MLINKS+=vfsops.9 VFS_MOUNT.9 \
 	vfsops.9 VFS_FHTOVP.9 \
 	vfsops.9 VFS_VPTOFH.9 \
 	vfsops.9 VFS_CHECKEXP.9 \
-	vfsops.9 VFS_SNAPSHOT.9
+	vfsops.9 VFS_SNAPSHOT.9 \
+	vfsops.9 VFS_SUSPENDCTL.9
 MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_getvfs.9 \
 	vfssubr.9 vfs_export.9 \
@@ -608,8 +615,8 @@ MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_detach.9 \
 	vfssubr.9 vfs_reinit.9 \
 	vfssubr.9 vfs_getopsbyname.9 \
-	vfssubr.9 vfs_write_suspend.9 \
-	vfssubr.9 vfs_write_resume.9
+	vfssubr.9 vfs_resume.9 \
+	vfssubr.9 vfs_suspend.9
 MLINKS+=vnode.9 vcount.9 \
 	vnode.9 vref.9 \
 	vnode.9 VREF.9 \
