@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.49 2007/01/20 17:13:32 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.50 2007/01/21 17:10:17 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -913,4 +913,50 @@ sys/opencrypto/crypto.c				1.18
 	Make the opencrypto framework work with more than one driver again.
 	Fixes PR/35412.
 	[daniel, ticket #367]
+
+sys/kern/vfs_syscalls.c				1.293
+
+	Fix issue noted by Ilja van Sprundel and disclosed at 23C3
+	(file descriptor leak).
+	Make sure we always FILE_UNUSE the file. To make it easier, exit
+	via a new "out:" exit path that does so, setting error beforehand.
+	Fix suggested by Elad, hand-typed by me.
+	[wrstuden, ticket #374]
+
+games/hack/hack.termcap.c			1.14 - 1.15
+
+	fixes problem introduced in 1.13 where the setting of "BC"
+	(backspace char) was left to libterm rather than being done by
+	hack itself.  the problem with this was that hack was directly
+	setting BC to \b if there was no "bc" in the termcap entry, but
+	libterm does not do this.   this resulted in the xputs(BC) calls
+	in nocmov() and backsp() incorrectly doing nothing, thus messing
+	up the display.  added new var BC_BS to provide the old behavior
+	for nocmov() and backsp().
+	[chuck, ticket #375]
+
+sys/fs/udf/udf_subr.c				1.30 - 1.31
+	Use the generic clock_ymdhms_to_secs() instead of home-brewn
+	version to translate UDF timestamps to timespec.
+	Fix important directory lookup bug that could result in an
+	endless loop. It fixes the case where a directory lookup is
+	done in a directory has never been visted/listed; the search
+	optimalisation that searches the directory from where it
+	left behind the last time would never reach the initial offset
+	of zero since it would always have at least processed one entry.
+	[reinoud, ticket #376]
+
+sys/kern/kern_sig.c				1.241 - 1.242
+
+	Plug memory leak in __sigtimedwait1(): make sure to free `waitset'
+	on error return path.
+	Plug another memory leak in __sigtimedwait1() which is introduced
+	by rev. 1.208: free `waitset' and ksiginfo on success.
+	[enami, ticket #377]
+
+sys/dev/isa/ug.c				1.2 - 1.3
+sys/dev/isa/ugvar.h				1.2 - 1.3
+
+	PR kern/35438: uGuru 2005 support from Mihai Chelaru.
+	[xtraeme, ticket #382]
 
