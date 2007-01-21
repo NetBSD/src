@@ -1,4 +1,4 @@
-/*	$NetBSD: copywin.c,v 1.11.12.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: copywin.c,v 1.11.12.2 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: copywin.c,v 1.11.12.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: copywin.c,v 1.11.12.2 2007/01/21 17:43:35 jdc Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -95,9 +95,10 @@ int copywin(const WINDOW *srcwin, WINDOW *dstwin,
 		dmaxrow = srcwin->maxy + dminrow - sminrow - 1;
 
 #ifdef DEBUG
-	__CTRACE("copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
-		 dooverlay ? "overlay" : "overwrite",
-		 sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol);
+	__CTRACE(__CTRACE_WINDOW,
+	    "copywin %s mode: from (%d,%d) to (%d,%d-%d,%d)\n",
+	    dooverlay ? "overlay" : "overwrite",
+	    sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol);
 #endif
 
 	for (; dminrow <= dmaxrow; sminrow++, dminrow++) {

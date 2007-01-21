@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.39.12.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: setterm.c,v 1.39.12.2 2007/01/21 17:43:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.39.12.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.39.12.2 2007/01/21 17:43:36 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		unknown++;
 	}
 #ifdef DEBUG
-	__CTRACE("setterm: tty = %s\n", type);
+	__CTRACE(__CTRACE_INIT, "setterm: tty = %s\n", type);
 #endif
 
 	/* Try TIOCGWINSZ, and, if it fails, the termcap entry. */
@@ -174,7 +174,8 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	COLS = screen->COLS;
 
 #ifdef DEBUG
-	__CTRACE("setterm: LINES = %d, COLS = %d\n", LINES, COLS);
+	__CTRACE(__CTRACE_INIT, "setterm: LINES = %d, COLS = %d\n",
+	    LINES, COLS);
 #endif
 	if (!unknown) {
 		if (zap(screen) == ERR) /* Get terminal description.*/
@@ -195,7 +196,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	} else
 		screen->CA = 1;
 
-    /*
+	/*
 	 * set the pad char, only take the first char of the pc capability
 	 * as this is all we can use.
 	 */
@@ -377,7 +378,8 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*fp++ = t_getflag(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE("%2.2s = %s\n", namp, fp[-1] ? "TRUE" : "FALSE");
+		__CTRACE(__CTRACE_INIT, "%2.2s = %s\n", namp,
+		    fp[-1] ? "TRUE" : "FALSE");
 #endif
 		namp += 2;
 		screen->flag_count++;
@@ -390,7 +392,7 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*vp++ = t_getnum(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE("%2.2s = %d\n", namp, vp[-1]);
+		__CTRACE(__CTRACE_INIT, "%2.2s = %d\n", namp, vp[-1]);
 #endif
 		namp += 2;
 		screen->int_count++;
@@ -410,11 +412,12 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*sp++ = t_agetstr(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE("%2.2s = %s", namp, sp[-1] == NULL ? "NULL\n" : "\"");
+		__CTRACE(__CTRACE_INIT, "%2.2s = %s",
+		    namp, sp[-1] == NULL ? "NULL\n" : "\"");
 		if (sp[-1] != NULL) {
 			for (cp = sp[-1]; *cp; cp++)
-				__CTRACE("%s", unctrl(*cp));
-			__CTRACE("\"\n");
+				__CTRACE(__CTRACE_INIT, "%s", unctrl(*cp));
+			__CTRACE(__CTRACE_INIT, "\n");
 		}
 #endif
 		namp += 2;
@@ -464,7 +467,7 @@ does_esc_m(char *cap)
 	int seq;
 
 #ifdef DEBUG
-	__CTRACE("does_esc_m: Checking %s\n", cap);
+	__CTRACE(__CTRACE_INIT, "does_esc_m: Checking %s\n", cap);
 #endif
 	/* Is it just "\E[m" or "\E[0m"? */
 	if (!strcmp(cap, "\x1b[m") || !strcmp(cap, "\x1b[0m"))
@@ -532,7 +535,7 @@ does_ctrl_o(char *cap)
 	char *capptr = cap;
 
 #ifdef DEBUG
-	__CTRACE("does_ctrl_o: Looping on %s\n", capptr);
+	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Looping on %s\n", capptr);
 #endif
 	while (*capptr != 0) {
 		if (*capptr == '\x0f')

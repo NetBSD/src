@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.30.6.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.30.6.2 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -29,12 +29,13 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.30.6.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.30.6.2 2007/01/21 17:43:35 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -117,7 +118,8 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 	while (count--) {
 		c = *bytes++;
 #ifdef DEBUG
-		__CTRACE("ADDBYTES('%c', %x) at (%d, %d)\n", c, attr, y, x);
+		__CTRACE(__CTRACE_INPUT, "ADDBYTES('%c', %x) at (%d, %d)\n",
+		    c, attr, y, x);
 #endif
 		switch (c) {
 		case '\t':
@@ -129,7 +131,8 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 
 		default:
 #ifdef DEBUG
-			__CTRACE("ADDBYTES(%p, %d, %d)\n", win, y, x);
+			__CTRACE(__CTRACE_INPUT, "ADDBYTES(%p, %d, %d)\n",
+			    win, y, x);
 #endif
 
 			if (lp->flags & __ISPASTEOL) {
@@ -138,7 +141,8 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 				lp->flags &= ~__ISPASTEOL;
 				if (y == win->scr_b) {
 #ifdef DEBUG
-					__CTRACE("ADDBYTES - on bottom "
+					__CTRACE(__CTRACE_INPUT,
+					    "ADDBYTES - on bottom "
 					    "of scrolling region\n");
 #endif
 					if (!(win->flags & __SCROLLOK))
@@ -161,8 +165,9 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			else if (win->wattr & __COLOR)
 				attributes |= win->wattr & __COLOR;
 #ifdef DEBUG
-			__CTRACE("ADDBYTES: 1: y = %d, x = %d, firstch = %d, "
-				"lastch = %d\n",
+			__CTRACE(__CTRACE_INPUT,
+			    "ADDBYTES: 1: y = %d, x = %d, firstch = %d, "
+			    "lastch = %d\n",
 			    y, x, *win->lines[y]->firstchp,
 			    *win->lines[y]->lastchp);
 #endif
@@ -182,7 +187,8 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			if (newx > *lp->lastchp)
 				*lp->lastchp = newx;
 #ifdef DEBUG
-			__CTRACE("ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
+			__CTRACE(__CTRACE_INPUT,
+			    "ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
 			    *lp->firstchp, *lp->lastchp,
 			    *lp->firstchp - win->ch_off,
 			    *lp->lastchp - win->ch_off);
@@ -211,7 +217,9 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 			else
 				x++;
 #ifdef DEBUG
-			__CTRACE("ADDBYTES: 2: y = %d, x = %d, firstch = %d, lastch = %d\n",
+			__CTRACE(__CTRACE_INPUT,
+			    "ADDBYTES: 2: y = %d, x = %d, firstch = %d, "
+			    "lastch = %d\n",
 			    y, x, *win->lines[y]->firstchp,
 			    *win->lines[y]->lastchp);
 #endif

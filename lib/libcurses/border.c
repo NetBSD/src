@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.8.6.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: border.c,v 1.8.6.2 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -11,17 +11,17 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
- *		This product includes software developed by the NetBSD
- *		Foundation, Inc. and its contributors.
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
- *	contributors may be used to endorse or promote products derived
- *	from this software without specific prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.8.6.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: border.c,v 1.8.6.2 2007/01/21 17:43:35 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -51,15 +51,15 @@ __RCSID("$NetBSD: border.c,v 1.8.6.1 2007/01/21 11:38:59 blymn Exp $");
 
 /*
  * border --
- *	  Draw a border around stdscr using the specified
+ *	Draw a border around stdscr using the specified
  *	delimiting characters.
  */
 int
 border(chtype left, chtype right, chtype top, chtype bottom, chtype topleft,
-	   chtype topright, chtype botleft, chtype botright)
+       chtype topright, chtype botleft, chtype botright)
 {
 	return wborder(stdscr, left, right, top, bottom, topleft, topright,
-			   botleft, botright);
+	    botleft, botright);
 }
 
 #endif
@@ -94,22 +94,22 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 		botright |= ACS_LRCORNER;
 
 #ifdef DEBUG
-	__CTRACE("wborder: left = %c, 0x%x\n", left & __CHARTEXT,
-	    left & __ATTRIBUTES);
-	__CTRACE("wborder: right = %c, 0x%x\n", right & __CHARTEXT,
-	    right & __ATTRIBUTES);
-	__CTRACE("wborder: top = %c, 0x%x\n", top & __CHARTEXT,
-	    top & __ATTRIBUTES);
-	__CTRACE("wborder: bottom = %c, 0x%x\n", bottom & __CHARTEXT,
-	    bottom & __ATTRIBUTES);
-	__CTRACE("wborder: topleft = %c, 0x%x\n", topleft & __CHARTEXT,
-	    topleft & __ATTRIBUTES);
-	__CTRACE("wborder: topright = %c, 0x%x\n", topright & __CHARTEXT,
-	    topright & __ATTRIBUTES);
-	__CTRACE("wborder: botleft = %c, 0x%x\n", botleft & __CHARTEXT,
-	    botleft & __ATTRIBUTES);
-	__CTRACE("wborder: botright = %c, 0x%x\n", botright & __CHARTEXT,
-	    botright & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: left = %c, 0x%x\n",
+	    left & __CHARTEXT, left & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: right = %c, 0x%x\n",
+	    right & __CHARTEXT, right & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: top = %c, 0x%x\n",
+	    top & __CHARTEXT, top & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: bottom = %c, 0x%x\n",
+	    bottom & __CHARTEXT, bottom & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: topleft = %c, 0x%x\n",
+	    topleft & __CHARTEXT, topleft & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: topright = %c, 0x%x\n",
+	    topright & __CHARTEXT, topright & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: botleft = %c, 0x%x\n",
+	    botleft & __CHARTEXT, botleft & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: botright = %c, 0x%x\n",
+	    botright & __CHARTEXT, botright & __ATTRIBUTES);
 #endif
 
 	/* Merge window and background attributes */
@@ -222,22 +222,22 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		setcchar( &botright, &WACS_LRCORNER, win->wattr, 0, NULL );
 
 #ifdef DEBUG
-	__CTRACE("wborder_set: left = %c, 0x%x\n", left.vals[ 0 ],
-		left.attributes );
-	__CTRACE("wborder_set: right = %c, 0x%x\n", right.vals[ 0 ],
-		right.attributes );
-	__CTRACE("wborder_set: top = %c, 0x%x\n", top.vals[ 0 ],
-		top.attributes );
-	__CTRACE("wborder_set: bottom = %c, 0x%x\n", bottom.vals[ 0 ],
-		bottom.attributes );
-	__CTRACE("wborder_set: topleft = %c, 0x%x\n", topleft.vals[ 0 ],
-		topleft.attributes );
-	__CTRACE("wborder_set: topright = %c, 0x%x\n", topright.vals[ 0 ],
-		topright.attributes );
-	__CTRACE("wborder_set: botleft = %c, 0x%x\n", botleft.vals[ 0 ],
-		botleft.attributes );
-	__CTRACE("wborder_set: botright = %c, 0x%x\n", botright.vals[ 0 ],
-		botright.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: left = %c, 0x%x\n",
+	    left.vals[0], left.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: right = %c, 0x%x\n",
+	    right.vals[0], right.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: top = %c, 0x%x\n",
+	    top.vals[0], top.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: bottom = %c, 0x%x\n",
+	    bottom.vals[0], bottom.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: topleft = %c, 0x%x\n",
+	    topleft.vals[0], topleft.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: topright = %c, 0x%x\n",
+	    topright.vals[0], topright.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: botleft = %c, 0x%x\n",
+	    botleft.vals[0], botleft.attributes );
+	__CTRACE(__CTRACE_INPUT, "wborder_set: botright = %c, 0x%x\n",
+	    botright.vals[0], botright.attributes );
 #endif
 
 	/* Merge window attributes */
@@ -296,7 +296,8 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 		for ( j = cw; WCOL( win->lines[i]->line[j]) < 0; j++ ) {
 #ifdef DEBUG
-			__CTRACE("[wborder_set]clean out partial char[%d]", j);
+			__CTRACE(__CTRACE_INPUT,
+			    "wborder_set: clean out partial char[%d]", j);
 #endif /* DEBUG */
 			win->lines[i]->line[j].ch = ( wchar_t )btowc(win->bch);
 			if (_cursesi_copy_nsp(win->bnsp,
@@ -338,8 +339,9 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		}
 		if ( pcw != 1 ) {
 #ifdef DEBUG
-			__CTRACE("[wborder_set]clean out partial chars[%d:%d]",
-					endx - cw + pcw, endx - cw );
+			__CTRACE(__CTRACE_INPUT,
+			    "wborder_set: clean out partial chars[%d:%d]",
+			    endx - cw + pcw, endx - cw );
 #endif /* DEBUG */
 			k = pcw < 0 ? endx -cw + pcw : endx - cw;
 			for ( j = endx - cw; j >= k; j-- ) {

@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.1.2.1 2007/01/21 11:50:31 blymn Exp $ */
+/*   $NetBSD: add_wch.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.1.2.1 2007/01/21 11:50:31 blymn Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -115,7 +115,7 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 	for (i = 0; i < win->maxy; i++) {
 		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
 	}
-	__CTRACE("[wadd_wch]win(%p)", win);
+	__CTRACE(__CTRACE_INPUT, "wadd_wch: win(%p)", win);
 #endif
 
 	/* special characters handling */
@@ -208,8 +208,8 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 	} else {
 		for (sx = x - 1; sx >= max(x + cw, 0); sx--) {
 #ifdef DEBUG
-			__CTRACE("[wadd_wch]clear current char (%d,%d)",
-				 y, sx);
+			__CTRACE(__CTRACE_INPUT,
+			    "wadd_wch: clear current char (%d,%d)", y, sx);
 #endif /* DEBUG */
 			tp = &win->lines[y]->line[sx];
 			tp->ch = (wchar_t) btowc((int) win->bch);
@@ -230,7 +230,7 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 	cw = wcwidth(wch->vals[0]);
 	if (cw > win->maxx - x) {
 #ifdef DEBUG
-		__CTRACE("[wadd_wch]clear EOL (%d,%d)", y, x);
+		__CTRACE(__CTRACE_INPUT, "wadd_wch: clear EOL (%d,%d)", y, x);
 #endif /* DEBUG */
 		lnp->flags |= __ISDIRTY;
 		newx = x + win->ch_off;
@@ -266,7 +266,7 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 
 	/* add spacing character */
 #ifdef DEBUG
-	__CTRACE("[wadd_wch]add character (%d,%d)%x",
+	__CTRACE(__CTRACE_INPUT, "wadd_wch: add character (%d,%d)%x",
 		y, x, wch->vals[0]);
 #endif /* DEBUG */
 	lnp->flags |= __ISDIRTY;
@@ -293,15 +293,16 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 			np->ch = wch->vals[i];
 			np->next = lp->nsp;
 #ifdef DEBUG
-			__CTRACE("[wadd_wch]add non-spacing char 0x%x",
-			    np->ch);
+			__CTRACE(__CTRACE_INPUT,
+			    "wadd_wch: add non-spacing char 0x%x", np->ch);
 #endif /* DEBUG */
 			lp->nsp = np;
 		}
 	}
 #ifdef DEBUG
-	__CTRACE("[wadd_wch]non-spacing list header: %p\n", lp->nsp);
-	__CTRACE("[wadd_wch]add rest columns (%d:%d)\n",
+	__CTRACE(__CTRACE_INPUT, "wadd_wch: non-spacing list header: %p\n",
+	    lp->nsp);
+	__CTRACE(__CTRACE_INPUT, "wadd_wch: add rest columns (%d:%d)\n",
 		sx + 1, sx + cw - 1);
 #endif /* DEBUG */
 	for (tp = lp + 1, x = sx + 1; x - sx <= cw - 1; tp++, x++) {
@@ -334,7 +335,8 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 			tp = &win->lines[y]->line[ex];
 			while (ex < win->maxx && WCOL(*tp) < 0) {
 #ifdef DEBUG
-				__CTRACE("[wadd_wch]clear remaining of current char (%d,%d)",
+				__CTRACE(__CTRACE_INPUT, "wadd_wch: clear "
+				    "remaining of current char (%d,%d)",
 				    y, ex);
 #endif /* DEBUG */
 				tp->ch = (wchar_t) btowc((int) win->bch);
@@ -352,7 +354,7 @@ wadd_wch(WINDOW *win, const cchar_t *wch)
 	}
 
 #ifdef DEBUG
-	__CTRACE("add_wch: %d : 0x%x\n", lp->ch, lp->attr);
+	__CTRACE(__CTRACE_INPUT, "add_wch: %d : 0x%x\n", lp->ch, lp->attr);
 #endif /* DEBUG */
 	return OK;
 #endif /* HAVE_WCHAR */

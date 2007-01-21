@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.18 2003/08/07 16:44:21 agc Exp $	*/
+/*	$NetBSD: getstr.c,v 1.18.18.1 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.18 2003/08/07 16:44:21 agc Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.18.18.1 2007/01/21 17:43:35 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -172,8 +172,9 @@ __wgetnstr(WINDOW *win, char *str, int n)
 
 	while ((c = wgetch(win)) != ERR && c != '\n' && c != '\r') {
 #ifdef DEBUG
-		__CTRACE("__wgetnstr: win %p, char 0x%x, remain %d\n", win,
-		    c, remain);
+		__CTRACE(__CTRACE_INPUT,
+		    "__wgetnstr: win %p, char 0x%x, remain %d\n",
+		    win, c, remain);
 #endif
 		*str = c;
 		touchline(win, win->cury, 1);

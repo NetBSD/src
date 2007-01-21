@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.1.2.1 2007/01/21 12:05:54 blymn Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.1.2.1 2007/01/21 12:05:54 blymn Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -208,8 +208,9 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 	while ((ret = wget_wch(win, &wc)) != ERR 
 			&& wc != L'\n' && wc != L'\r') {
 #ifdef DEBUG
-		__CTRACE("__wgetn_wstr: win %p, char 0x%x, remain %d\n", 
-				win, wc, remain);
+		__CTRACE(__CTRACE_INPUT,
+		    "__wgetn_wstr: win %p, char 0x%x, remain %d\n",
+		    win, wc, remain);
 #endif
 		*wstr = wc;
 		touchline(win, win->cury, 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.87.6.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.87.6.2 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -220,7 +220,8 @@ typedef	char	bool;
 #define __NORMAL	0x00000000	/* Added characters are normal. */
 #define __STANDOUT	0x00000100	/* Added characters are standout. */
 #define __UNDERSCORE	0x00000200	/* Added characters are underscored. */
-#define __REVERSE	0x00000400	/* Added characters are reverse video. */
+#define __REVERSE	0x00000400	/* Added characters are reverse
+					   video. */
 #define __BLINK		0x00000800	/* Added characters are blinking. */
 #define __DIM		0x00001000	/* Added characters are dim. */
 #define __BOLD		0x00002000	/* Added characters are bold. */

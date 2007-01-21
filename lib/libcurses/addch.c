@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.13 2003/08/07 16:44:18 agc Exp $	*/
+/*	$NetBSD: addch.c,v 1.13.18.1 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.13 2003/08/07 16:44:18 agc Exp $");
+__RCSID("$NetBSD: addch.c,v 1.13.18.1 2007/01/21 17:43:35 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -92,7 +92,7 @@ waddch(WINDOW *win, chtype ch)
 	buf.ch = (wchar_t) ch & __CHARTEXT;
 	buf.attr = (attr_t) ch & __ATTRIBUTES;
 #ifdef DEBUG
-	__CTRACE("addch: %d : 0x%x\n", buf.ch, buf.attr);
+	__CTRACE(__CTRACE_INPUT, "addch: %d : 0x%x\n", buf.ch, buf.attr);
 #endif
 	return (__waddch(win, &buf));
 }
