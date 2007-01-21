@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.50 2007/01/21 17:10:17 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.51 2007/01/21 19:12:56 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -959,4 +959,14 @@ sys/dev/isa/ugvar.h				1.2 - 1.3
 
 	PR kern/35438: uGuru 2005 support from Mihai Chelaru.
 	[xtraeme, ticket #382]
+
+share/examples/secmodel/secmodel_example.c	1.14 via patch
+share/man/man9/kauth.9				1.48 via patch
+sys/kern/kern_resource.c			1.112 via patch
+sys/secmodel/bsd44/secmodel_bsd44_suser.c	1.33 via patch
+sys/sys/kauth.h					1.35 via patch
+
+	Kill KAUTH_PROCESS_RESOURCE and just replace it with two actions for
+	nice and rlimit.
+	[elad, ticket #379]
 
