@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.21 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.22 2007/01/21 07:59:31 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -2812,7 +2812,7 @@ static l_fp
 static inline int
 read_network_packet(SOCKET fd, struct interface *itf, l_fp ts)
 {
-	socklen_t fromlen;
+	GETSOCKNAME_SOCKLEN_TYPE fromlen;
 	int buflen;
 	register struct recvbuf *rb;
 #ifdef HAVE_TIMESTAMP
