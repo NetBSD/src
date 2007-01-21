@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.992 2007/01/20 15:10:42 pooka Exp $
+#	$NetBSD: mi,v 1.993 2007/01/21 15:42:36 hannken Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -6444,6 +6444,7 @@
 ./usr/share/man/cat9/VFS_START.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_STATFS.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/VFS_STATVFS.0		comp-sys-catman		.cat
+./usr/share/man/cat9/VFS_SUSPENDCTL.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_SYNC.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_UNMOUNT.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/VFS_VGET.0			comp-sys-catman		.cat
@@ -6795,6 +6796,13 @@
 ./usr/share/man/cat9/fownsignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/free.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fsetown.0			comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans.0			comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans_done.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans_getstate.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans_is_owner.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans_setstate.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans_start.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fstrans_start_nowait.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/fubyte.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fuibyte.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fuiword.0			comp-sys-catman		.cat
@@ -7365,15 +7373,17 @@
 ./usr/share/man/cat9/vfs_mountedon.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_mountroot.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_reinit.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_resume.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_rootmountalloc.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_setpublicfs.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_showexport.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_shutdown.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_suspend.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_sysctl.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/vfs_unbusy.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vfs_unmountall.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vfs_write_resume.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vfs_write_suspend.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vfs_write_resume.0		comp-sys-catman		obsolete
+./usr/share/man/cat9/vfs_write_suspend.0	comp-sys-catman		obsolete
 ./usr/share/man/cat9/vfsops.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vfssubr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vget.0			comp-sys-catman		.cat
@@ -10708,6 +10718,7 @@
 ./usr/share/man/man9/VFS_START.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_STATFS.9		comp-obsolete		obsolete
 ./usr/share/man/man9/VFS_STATVFS.9		comp-sys-man		.man
+./usr/share/man/man9/VFS_SUSPENDCTL.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_SYNC.9			comp-sys-man		.man
 ./usr/share/man/man9/VFS_UNMOUNT.9		comp-sys-man		.man
 ./usr/share/man/man9/VFS_VGET.9			comp-sys-man		.man
@@ -11059,6 +11070,13 @@
 ./usr/share/man/man9/fownsignal.9		comp-sys-man		.man
 ./usr/share/man/man9/free.9			comp-sys-man		.man
 ./usr/share/man/man9/fsetown.9			comp-sys-man		.man
+./usr/share/man/man9/fstrans.9			comp-sys-man		.man
+./usr/share/man/man9/fstrans_done.9		comp-sys-man		.man
+./usr/share/man/man9/fstrans_getstate.9		comp-sys-man		.man
+./usr/share/man/man9/fstrans_is_owner.9		comp-sys-man		.man
+./usr/share/man/man9/fstrans_setstate.9		comp-sys-man		.man
+./usr/share/man/man9/fstrans_start.9		comp-sys-man		.man
+./usr/share/man/man9/fstrans_start_nowait.9	comp-sys-man		.man
 ./usr/share/man/man9/fubyte.9			comp-sys-man		.man
 ./usr/share/man/man9/fuibyte.9			comp-sys-man		.man
 ./usr/share/man/man9/fuiword.9			comp-sys-man		.man
@@ -11629,15 +11647,17 @@
 ./usr/share/man/man9/vfs_mountedon.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_mountroot.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_reinit.9		comp-sys-man		.man
+./usr/share/man/man9/vfs_resume.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_rootmountalloc.9	comp-sys-man		.man
 ./usr/share/man/man9/vfs_setpublicfs.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_showexport.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_shutdown.9		comp-sys-man		.man
+./usr/share/man/man9/vfs_suspend.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_sysctl.9		comp-obsolete		obsolete
 ./usr/share/man/man9/vfs_unbusy.9		comp-sys-man		.man
 ./usr/share/man/man9/vfs_unmountall.9		comp-sys-man		.man
-./usr/share/man/man9/vfs_write_resume.9		comp-sys-man		.man
-./usr/share/man/man9/vfs_write_suspend.9	comp-sys-man		.man
+./usr/share/man/man9/vfs_write_resume.9		comp-sys-man		obsolete
+./usr/share/man/man9/vfs_write_suspend.9	comp-sys-man		obsolete
 ./usr/share/man/man9/vfsops.9			comp-sys-man		.man
 ./usr/share/man/man9/vfssubr.9			comp-sys-man		.man
 ./usr/share/man/man9/vget.9			comp-sys-man		.man
