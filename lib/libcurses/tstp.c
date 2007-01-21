@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.34 2006/08/25 17:04:32 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.35 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.34 2006/08/25 17:04:32 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.35 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -104,7 +104,7 @@ void
 __set_stophandler(void)
 {
 #ifdef DEBUG
-	__CTRACE("__set_stophandler: %d\n", tstp_set);
+	__CTRACE(__CTRACE_MISC, "__set_stophandler: %d\n", tstp_set);
 #endif
 	if (!tstp_set) {
 		otstpfn = signal(SIGTSTP, __stop_signal_handler);
@@ -119,7 +119,7 @@ void
 __restore_stophandler(void)
 {
 #ifdef DEBUG
-	__CTRACE("__restore_stophandler: %d\n", tstp_set);
+	__CTRACE(__CTRACE_MISC, "__restore_stophandler: %d\n", tstp_set);
 #endif
 	if (tstp_set) {
 		(void) signal(SIGTSTP, otstpfn);
@@ -158,7 +158,7 @@ void
 __set_winchhandler(void)
 {
 #ifdef DEBUG
-	__CTRACE("__set_winchhandler: %d\n", winch_set);
+	__CTRACE(__CTRACE_MISC, "__set_winchhandler: %d\n", winch_set);
 #endif
 	if (!winch_set) {
 		struct sigaction sa;
@@ -169,7 +169,8 @@ __set_winchhandler(void)
 		sigaction(SIGWINCH, &sa, &owsa);
 		winch_set = 1;
 #ifdef DEBUG
-		__CTRACE("__set_winchhandler: owsa.sa_handler=%p\n",
+		__CTRACE(__CTRACE_MISC,
+		    "__set_winchhandler: owsa.sa_handler=%p\n",
 		    owsa.sa_handler);
 #endif
 	}
@@ -182,7 +183,7 @@ void
 __restore_winchhandler(void)
 {
 #ifdef DEBUG
-	__CTRACE("__restore_winchhandler: %d\n", winch_set);
+	__CTRACE(__CTRACE_MISC, "__restore_winchhandler: %d\n", winch_set);
 #endif
 	if (winch_set > 0) {
 		struct sigaction cwsa;
@@ -198,7 +199,8 @@ __restore_winchhandler(void)
 			 */
 			winch_set = -1;
 #ifdef DEBUG
-			__CTRACE("cwsa.sa_handler = %p\n", cwsa.sa_handler);
+			__CTRACE(__CTRACE_MISC, "cwsa.sa_handler = %p\n",
+			    cwsa.sa_handler);
 #endif
 		}
 	}
@@ -211,7 +213,7 @@ int
 __stopwin(void)
 {
 #ifdef DEBUG
-	__CTRACE("__stopwin\n");
+	__CTRACE(__CTRACE_MISC, "__stopwin\n");
 #endif
 	if (_cursesi_screen->endwin)
 		return OK;
@@ -253,7 +255,7 @@ __restartwin(void)
 	struct winsize win;
 
 #ifdef DEBUG
-	__CTRACE("__restartwin\n");
+	__CTRACE(__CTRACE_MISC, "__restartwin\n");
 #endif
 	if (!_cursesi_screen->endwin)
 		return;

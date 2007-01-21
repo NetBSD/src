@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.9 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: background.c,v 1.10 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.9 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: background.c,v 1.10 2007/01/21 13:25:36 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -72,7 +72,7 @@ void
 wbkgdset(WINDOW *win, chtype ch)
 {
 #ifdef DEBUG
-	__CTRACE("wbkgdset: (%p), '%s', %08x\n",
+	__CTRACE(__CTRACE_ATTR, "wbkgdset: (%p), '%s', %08x\n",
 	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
 #endif
 
@@ -96,7 +96,7 @@ wbkgd(WINDOW *win, chtype ch)
 	int	y, x;
 
 #ifdef DEBUG
-	__CTRACE("wbkgd: (%p), '%s', %08x\n",
+	__CTRACE(__CTRACE_ATTR, "wbkgd: (%p), '%s', %08x\n",
 	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
 #endif
 
