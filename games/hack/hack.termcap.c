@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.13.4.1 2007/01/21 16:36:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.13.4.1 2007/01/21 16:36:28 bouyer Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: hack.termcap.c,v 1.13 2006/05/11 00:18:31 mrg Exp $");
 #include "def.flag.h"		/* for flags.nonull */
 
 static struct tinfo *info;
-static char    *HO, *CL, *CE, *CM, *ND, *XD, *SO, *SE, *TI, *TE;
+static char    *HO, *CL, *CE, *CM, *ND, *XD, *BC_BS, *SO, *SE, *TI, *TE;
 static char    *VS, *VE;
 static int      SG;
 char           *CD;		/* tested in pri.c: docorner() */
@@ -94,6 +94,12 @@ startup()
 		flags.nonull = 1;	/* this should be a termcap flag */
 	if (t_getent(&info, term) < 1)
 		error("Unknown terminal type: %s.", term);
+	BC_BS = t_agetstr(info, "bc");
+	if (!BC_BS) {
+		if (!t_getflag(info, "bs"))
+			error("Terminal must backspace.");
+		BC_BS = "\b";
+	}
 	HO = t_agetstr(info, "ho");
 	CO = t_getnum(info, "co");
 	LI = t_getnum(info, "li");
@@ -210,7 +216,7 @@ nocmov(x, y)
 			}
 	} else if (curx > x) {
 		while (curx > x) {	/* Go to the left. */
-			xputs(BC);
+			xputs(BC_BS);
 			curx--;
 		}
 	}
@@ -301,7 +307,7 @@ standoutend()
 void
 backsp()
 {
-	xputs(BC);
+	xputs(BC_BS);
 	curx--;
 }
 
