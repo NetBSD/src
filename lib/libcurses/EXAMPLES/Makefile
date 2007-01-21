@@ -1,5 +1,8 @@
-#$Id: Makefile,v 1.1 2007/01/21 11:38:59 blymn Exp $
+#$Id: Makefile,v 1.1.2.1 2007/01/21 12:05:54 blymn Exp $
 #$Log: Makefile,v $
+#Revision 1.1.2.1  2007/01/21 12:05:54  blymn
+#Merge wide curses.
+#
 #Revision 1.1  2007/01/21 11:38:59  blymn
 #Wide curses merge
 #
