@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.23 2004/07/24 13:10:47 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.24 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.23 2004/07/24 13:10:47 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.24 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -74,7 +74,8 @@ int
 __mvcur(int ly, int lx, int y, int x, int in_refresh)
 {
 #ifdef DEBUG
-	__CTRACE("mvcur: moving cursor from (%d, %d) to (%d, %d)\n",
+	__CTRACE(__CTRACE_OUTPUT,
+	    "mvcur: moving cursor from (%d, %d) to (%d, %d)\n",
 	    ly, lx, y, x);
 #endif
 	destcol = x;

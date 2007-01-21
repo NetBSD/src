@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.46 2006/07/25 21:45:00 christos Exp $	*/
+/*	$NetBSD: getch.c,v 1.47 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.46 2006/07/25 21:45:00 christos Exp $");
+__RCSID("$NetBSD: getch.c,v 1.47 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -326,8 +326,9 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
         int i, ki;
 
 #ifdef DEBUG
-	__CTRACE("Adding character %s of type %d, symbol 0x%x\n", unctrl(chr),
-		 key_type, symbol);
+	__CTRACE(__CTRACE_MISC,
+	    "Adding character %s of type %d, symbol 0x%x\n",
+	    unctrl(chr), key_type, symbol);
 #endif
 	if (current->mapping[(unsigned char) chr] < 0) {
 		if (current->mapping[(unsigned char) chr] == MAPPING_UNUSED) {
@@ -370,7 +371,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 		  case KEYMAP_MULTI:
 			    /* need for next key */
 #ifdef DEBUG
-			  __CTRACE("Creating new keymap\n");
+			  __CTRACE(__CTRACE_MISC, "Creating new keymap\n");
 #endif
 			  the_key->value.next = new_keymap();
 			  the_key->enable = TRUE;
@@ -379,7 +380,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 		  case KEYMAP_LEAF:
 				/* the associated symbol for the key */
 #ifdef DEBUG
-			  __CTRACE("Adding leaf key\n");
+			  __CTRACE(__CTRACE_MISC, "Adding leaf key\n");
 #endif
 			  the_key->value.symbol = symbol;
 			  the_key->enable = TRUE;
@@ -392,7 +393,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 	} else {
 		  /* the key is already known - just return the address. */
 #ifdef DEBUG
-		__CTRACE("Keymap already known\n");
+		__CTRACE(__CTRACE_MISC, "Keymap already known\n");
 #endif
 		the_key = current->key[current->mapping[(unsigned char) chr]];
 	}
@@ -511,12 +512,13 @@ __init_getch(SCREEN *screen)
 		if (t_getstr(screen->cursesi_genbuf, tc[i].name,
 			     &p, &limit) != NULL) {
 #ifdef DEBUG
-			__CTRACE("Processing termcap entry %s, sequence ",
-				 tc[i].name);
+			__CTRACE(__CTRACE_INIT,
+			    "Processing termcap entry %s, sequence ",
+			    tc[i].name);
 			length = (int) strlen(entry);
 			for (k = 0; k <= length -1; k++)
-				__CTRACE("%s", unctrl(entry[k]));
-			__CTRACE("\n");
+				__CTRACE(__CTRACE_INIT, "%s", unctrl(entry[k]));
+			__CTRACE(__CTRACE_INIT, "\n");
 #endif
 			add_key_sequence(screen, entry, tc[i].symbol);
 		}
@@ -595,7 +597,7 @@ inkey(int to, int delay)
 	k = 0;		/* XXX gcc -Wuninitialized */
 
 #ifdef DEBUG
-	__CTRACE("inkey (%d, %d)\n", to, delay);
+	__CTRACE(__CTRACE_INPUT, "inkey (%d, %d)\n", to, delay);
 #endif
 	for (;;) {		/* loop until we get a complete key sequence */
 reread:
@@ -620,7 +622,8 @@ reread:
 
 			k = (wchar_t) c;
 #ifdef DEBUG
-			__CTRACE("inkey (state normal) got '%s'\n", unctrl(k));
+			__CTRACE(__CTRACE_INPUT,
+			    "inkey (state normal) got '%s'\n", unctrl(k));
 #endif
 
 			working = start;
@@ -668,7 +671,8 @@ reread:
 
 			k = (wchar_t) c;
 #ifdef DEBUG
-			__CTRACE("inkey (state assembling) got '%s'\n", unctrl(k));
+			__CTRACE(__CTRACE_INPUT,
+			    "inkey (state assembling) got '%s'\n", unctrl(k));
 #endif
 			if (feof(infd)) {	/* inter-char timeout,
 						 * start backing out */
@@ -861,7 +865,8 @@ wgetch(WINDOW *win)
 	if (is_wintouched(win))
 		wrefresh(win);
 #ifdef DEBUG
-	__CTRACE("wgetch: __echoit = %d, __rawmode = %d, __nl = %d, flags = %#.4x\n",
+	__CTRACE(__CTRACE_INPUT, "wgetch: __echoit = %d, "
+	    "__rawmode = %d, __nl = %d, flags = %#.4x\n",
 	    __echoit, __rawmode, _cursesi_screen->nl, win->flags);
 #endif
 	if (__echoit && !__rawmode) {
@@ -940,9 +945,9 @@ wgetch(WINDOW *win)
 		  /* XXXX perhaps __unctrl should be expanded to include
 		   * XXXX the keysyms in the table....
 		   */
-		__CTRACE("wgetch assembled keysym 0x%x\n", inp);
+		__CTRACE(__CTRACE_INPUT, "wgetch assembled keysym 0x%x\n", inp);
 	else
-		__CTRACE("wgetch got '%s'\n", unctrl(inp));
+		__CTRACE(__CTRACE_INPUT, "wgetch got '%s'\n", unctrl(inp));
 #endif
 	if (win->delay > -1) {
 		if (__delay() == ERR) {

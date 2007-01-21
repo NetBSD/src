@@ -1,4 +1,4 @@
-/*	$NetBSD: pause.c,v 1.6 2001/12/02 09:14:22 blymn Exp $	*/
+/*	$NetBSD: pause.c,v 1.7 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pause.c,v 1.6 2001/12/02 09:14:22 blymn Exp $");
+__RCSID("$NetBSD: pause.c,v 1.7 2007/01/21 13:25:36 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdarg.h>
@@ -58,7 +58,7 @@ napms(int ms)
 	struct timespec	ts;
 
 #ifdef DEBUG
-	__CTRACE ("napms: %d\n", ms);
+	__CTRACE(__CTRACE_MISC, "napms: %d\n", ms);
 #endif
 	ts.tv_sec = ms / 1000;
 	ts.tv_nsec = (ms % 1000) * 1000000;
@@ -76,7 +76,7 @@ delay_output(int ms)
 	char *delstr;
 
 #ifdef DEBUG
-	__CTRACE ("delay_output: %d\n", ms);
+	__CTRACE(__CTRACE_MISC, "delay_output: %d\n", ms);
 #endif
 	if (!_cursesi_screen->pad_char)
 		return(napms(ms));
