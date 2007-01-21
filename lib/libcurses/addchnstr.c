@@ -1,4 +1,4 @@
-/*	$NetBSD: addchnstr.c,v 1.2 2003/05/22 16:09:09 wiz Exp $	*/
+/*	$NetBSD: addchnstr.c,v 1.3 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addchnstr.c,v 1.2 2003/05/22 16:09:09 wiz Exp $");
+__RCSID("$NetBSD: addchnstr.c,v 1.3 2007/01/21 13:25:36 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -142,7 +142,8 @@ waddchnstr(WINDOW *win, const chtype *chstr, int n)
 	int i, ret;
 
 #ifdef DEBUG
-	__CTRACE("waddchnstr: win = %p, chstr = %p, n = %d\n", win, chstr, n);
+	__CTRACE(__CTRACE_INPUT, "waddchnstr: win = %p, chstr = %p, n = %d\n",
+	    win, chstr, n);
 #endif
 
 	if (n >= 0)

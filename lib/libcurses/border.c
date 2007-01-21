@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.8 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: border.c,v 1.9 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.8 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: border.c,v 1.9 2007/01/21 13:25:36 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -91,22 +91,22 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 		botright |= ACS_LRCORNER;
 
 #ifdef DEBUG
-	__CTRACE("wborder: left = %c, 0x%x\n", left & __CHARTEXT,
-	    left & __ATTRIBUTES);
-	__CTRACE("wborder: right = %c, 0x%x\n", right & __CHARTEXT,
-	    right & __ATTRIBUTES);
-	__CTRACE("wborder: top = %c, 0x%x\n", top & __CHARTEXT,
-	    top & __ATTRIBUTES);
-	__CTRACE("wborder: bottom = %c, 0x%x\n", bottom & __CHARTEXT,
-	    bottom & __ATTRIBUTES);
-	__CTRACE("wborder: topleft = %c, 0x%x\n", topleft & __CHARTEXT,
-	    topleft & __ATTRIBUTES);
-	__CTRACE("wborder: topright = %c, 0x%x\n", topright & __CHARTEXT,
-	    topright & __ATTRIBUTES);
-	__CTRACE("wborder: botleft = %c, 0x%x\n", botleft & __CHARTEXT,
-	    botleft & __ATTRIBUTES);
-	__CTRACE("wborder: botright = %c, 0x%x\n", botright & __CHARTEXT,
-	    botright & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: left = %c, 0x%x\n",
+	    left & __CHARTEXT, left & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: right = %c, 0x%x\n",
+	    right & __CHARTEXT, right & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: top = %c, 0x%x\n",
+	    top & __CHARTEXT, top & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: bottom = %c, 0x%x\n",
+	    bottom & __CHARTEXT, bottom & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: topleft = %c, 0x%x\n",
+	    topleft & __CHARTEXT, topleft & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: topright = %c, 0x%x\n",
+	    topright & __CHARTEXT, topright & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: botleft = %c, 0x%x\n",
+	    botleft & __CHARTEXT, botleft & __ATTRIBUTES);
+	__CTRACE(__CTRACE_INPUT, "wborder: botright = %c, 0x%x\n",
+	    botright & __CHARTEXT, botright & __ATTRIBUTES);
 #endif
 
 	/* Merge window and background attributes */

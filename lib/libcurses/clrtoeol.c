@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.21 2006/02/05 17:39:52 jdc Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.22 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.21 2006/02/05 17:39:52 jdc Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.22 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,9 +94,10 @@ wclrtoeol(WINDOW *win)
 			sp->attr = attr;
 		}
 #ifdef DEBUG
-	__CTRACE("CLRTOEOL: minx = %d, maxx = %d, firstch = %d, lastch = %d\n",
+	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: minx = %d, maxx = %d, "
+	    "firstch = %d, lastch = %d\n",
 	    minx, (int) (maxx - win->lines[y]->line),
-	     *win->lines[y]->firstchp, *win->lines[y]->lastchp);
+	    *win->lines[y]->firstchp, *win->lines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */
 	return (__touchline(win, y, x, (int) win->maxx - 1));

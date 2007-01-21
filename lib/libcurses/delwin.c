@@ -1,4 +1,4 @@
-/*	$NetBSD: delwin.c,v 1.14 2006/08/23 19:23:14 jdc Exp $	*/
+/*	$NetBSD: delwin.c,v 1.15 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)delwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delwin.c,v 1.14 2006/08/23 19:23:14 jdc Exp $");
+__RCSID("$NetBSD: delwin.c,v 1.15 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -55,7 +55,7 @@ delwin(WINDOW *win)
 	SCREEN *screen;
 
 #ifdef DEBUG
-	__CTRACE("delwin(%p)\n", win);
+	__CTRACE(__CTRACE_WINDOW, "delwin(%p)\n", win);
 #endif
 	if (win->orig == NULL) {
 		/*
