@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.20 2007/01/15 23:29:08 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.21 2007/01/21 16:29:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -152,8 +152,11 @@ struct puffs_mount {
 #define PUFFSTAT_RUNNING	2
 #define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
-#define PNODE_LOCKED	0x01
-#define PNODE_WANTED	0x02	
+#define PNODE_NOREFS	0x01	/* vnode invalidated, no backend references */
+#if 0
+#define PNODE_LOCKED	0x0
+#define PNODE_WANTED	0x0
+#endif
 struct puffs_node {
 	struct genfs_node pn_gnode;	/* genfs glue			*/
 
