@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $ */
+/*   $NetBSD: get_wch.c,v 1.1.2.3 2007/01/21 18:21:13 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.1.2.3 2007/01/21 18:21:13 jdc Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -364,8 +364,8 @@ inkey(wchar_t *wc, int to, int delay)
 #ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey: Check wide char[head(%d), "
-			    "current(%d), tail(%d), mlen(%d)]\n",
-			    *start, *working, *end, mlen);
+			    "current(%d), tail(%d), mlen(%ld)]\n",
+			    *start, *working, *end, (long) mlen);
 #endif /* DEBUG */
 			ret = mbrtowc( wc, inbuf + (*working), mlen,
 				&_cursesi_screen->sp );
