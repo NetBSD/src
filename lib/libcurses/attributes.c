@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.13 2003/10/21 00:20:28 fvdl Exp $	*/
+/*	$NetBSD: attributes.c,v 1.14 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.13 2003/10/21 00:20:28 fvdl Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.14 2007/01/21 13:25:36 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -144,7 +144,7 @@ int
 wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
 {
 #ifdef DEBUG
-	__CTRACE ("wattr_get: win %p\n", win);
+	__CTRACE(__CTRACE_ATTR, "wattr_get: win %p\n", win);
 #endif
 	if (attr != NULL)
 		*attr = win->wattr;
@@ -165,7 +165,7 @@ int
 wattr_on(WINDOW *win, attr_t attr, void *opt)
 {
 #ifdef DEBUG
-	__CTRACE ("wattr_on: win %p, attr %08x\n", win, attr);
+	__CTRACE(__CTRACE_ATTR, "wattr_on: win %p, attr %08x\n", win, attr);
 #endif
 	/* If can enter modes, set the relevent attribute bits. */
 	if (__tc_me != NULL) {
@@ -203,7 +203,7 @@ int
 wattr_off(WINDOW *win, attr_t attr, void *opt)
 {
 #ifdef DEBUG
-	__CTRACE ("wattr_off: win %p, attr %08x\n", win, attr);
+	__CTRACE(__CTRACE_ATTR, "wattr_off: win %p, attr %08x\n", win, attr);
 #endif
 	/* If can do exit modes, unset the relevent attribute bits. */
 	if (__tc_me != NULL) {
@@ -240,7 +240,8 @@ int
 wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
 {
 #ifdef DEBUG
-	__CTRACE ("wattr_set: win %p, attr %08x, pair %d\n", win, attr, pair);
+	__CTRACE(__CTRACE_ATTR, "wattr_set: win %p, attr %08x, pair %d\n",
+	    win, attr, pair);
 #endif
 	wattr_on(win, attr, NULL);
 	wattr_off(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR),
@@ -262,7 +263,7 @@ int
 wattron(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattron: win %p, attr %08x\n", win, attr);
+	__CTRACE(__CTRACE_ATTR, "wattron: win %p, attr %08x\n", win, attr);
 #endif
 	return wattr_on(win, (attr_t) attr, NULL);
 }
@@ -275,7 +276,7 @@ int
 wattroff(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattroff: win %p, attr %08x\n", win, attr);
+	__CTRACE(__CTRACE_ATTR, "wattroff: win %p, attr %08x\n", win, attr);
 #endif
 	return wattr_off(win, (attr_t) attr, NULL);
 }
@@ -289,7 +290,7 @@ int
 wattrset(WINDOW *win, int attr)
 {
 #ifdef DEBUG
-	__CTRACE ("wattrset: win %p, attr %08x\n", win, attr);
+	__CTRACE(__CTRACE_ATTR, "wattrset: win %p, attr %08x\n", win, attr);
 #endif
 	wattr_on(win, (attr_t) attr, NULL);
 	wattr_off(win,
@@ -307,7 +308,7 @@ int
 wcolor_set(WINDOW *win, short pair, void *opt)
 {
 #ifdef DEBUG
-	__CTRACE ("wolor_set: win %p, pair %%d\n", win, pair);
+	__CTRACE(__CTRACE_COLOR, "wolor_set: win %p, pair %d\n", win, pair);
 #endif
 	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));
 	return OK;
@@ -321,7 +322,7 @@ chtype
 getattrs(WINDOW *win)
 {
 #ifdef DEBUG
-	__CTRACE ("getattrs: win %p\n", win);
+	__CTRACE(__CTRACE_ATTR, "getattrs: win %p\n", win);
 #endif
 	return((chtype) win->wattr);
 }

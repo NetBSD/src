@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.38 2006/08/23 19:23:55 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.39 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.38 2006/08/23 19:23:55 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.39 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -170,7 +170,7 @@ int
 raw(void)
 {
 #ifdef DEBUG
-	__CTRACE("raw()\n");
+	__CTRACE(__CTRACE_MISC, "raw()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -193,7 +193,7 @@ int
 noraw(void)
 {
 #ifdef DEBUG
-	__CTRACE("noraw()\n");
+	__CTRACE(__CTRACE_MISC, "noraw()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -216,7 +216,7 @@ int
 cbreak(void)
 {
 #ifdef DEBUG
-	__CTRACE("cbreak()\n");
+	__CTRACE(__CTRACE_MISC, "cbreak()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -240,7 +240,7 @@ int
 nocbreak(void)
 {
 #ifdef DEBUG
-	__CTRACE("nocbreak()\n");
+	__CTRACE(__CTRACE_MISC, "nocbreak()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -287,7 +287,7 @@ int
 __delay(void)
  {
 #ifdef DEBUG
-	__CTRACE("__delay()\n");
+	__CTRACE(__CTRACE_MISC, "__delay()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -310,7 +310,7 @@ int
 __nodelay(void)
 {
 #ifdef DEBUG
-	__CTRACE("__nodelay()\n");
+	__CTRACE(__CTRACE_MISC, "__nodelay()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -363,7 +363,7 @@ int
 __timeout(int delay)
 {
 #ifdef DEBUG
-	__CTRACE("__timeout()\n");
+	__CTRACE(__CTRACE_MISC, "__timeout()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -389,7 +389,7 @@ int
 __notimeout(void)
 {
 #ifdef DEBUG
-	__CTRACE("__notimeout()\n");
+	__CTRACE(__CTRACE_MISC, "__notimeout()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -413,7 +413,7 @@ int
 echo(void)
 {
 #ifdef DEBUG
-	__CTRACE("echo()\n");
+	__CTRACE(__CTRACE_MISC, "echo()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -427,7 +427,7 @@ int
 noecho(void)
 {
 #ifdef DEBUG
-	__CTRACE("noecho()\n");
+	__CTRACE(__CTRACE_MISC, "noecho()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -441,7 +441,7 @@ int
 nl(void)
 {
 #ifdef DEBUG
-	__CTRACE("nl()\n");
+	__CTRACE(__CTRACE_MISC, "nl()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -467,7 +467,7 @@ int
 nonl(void)
 {
 #ifdef DEBUG
-	__CTRACE("nonl()\n");
+	__CTRACE(__CTRACE_MISC, "nonl()\n");
 #endif
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -564,7 +564,7 @@ int
 endwin(void)
 {
 #ifdef DEBUG
-	__CTRACE("endwin\n");
+	__CTRACE(__CTRACE_MISC, "endwin\n");
 #endif
 	return __stopwin();
 }

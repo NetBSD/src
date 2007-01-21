@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.14 2003/08/10 07:37:11 dsl Exp $	*/
+/*	$NetBSD: move.c,v 1.15 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: move.c,v 1.14 2003/08/10 07:37:11 dsl Exp $");
+__RCSID("$NetBSD: move.c,v 1.15 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -63,7 +63,7 @@ wmove(WINDOW *win, int y, int x)
 {
 
 #ifdef DEBUG
-	__CTRACE("wmove: (%d, %d)\n", y, x);
+	__CTRACE(__CTRACE_MISC, "wmove: (%d, %d)\n", y, x);
 #endif
 	if (x < 0 || y < 0)
 		return (ERR);

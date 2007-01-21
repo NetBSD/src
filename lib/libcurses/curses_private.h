@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.38 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.39 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -257,10 +257,26 @@ extern int	 My_term;		/* Use Def_term regardless. */
 extern const char	*Def_term;	/* Default terminal type. */
 extern SCREEN   *_cursesi_screen;       /* The current screen in use */
 
-/* Private functions. */
+/* Debugging options/functions. */
 #ifdef DEBUG
-void	 __CTRACE(const char *, ...) __attribute__((__format__(__printf__, 1, 0)));
+#define __CTRACE_TSTAMP		0x00000001
+#define __CTRACE_MISC		0x00000002
+#define __CTRACE_INIT		0x00000004
+#define __CTRACE_SCREEN		0x00000008
+#define __CTRACE_WINDOW		0x00000010
+#define __CTRACE_REFRESH	0x00000020
+#define __CTRACE_COLOR		0x00000040
+#define __CTRACE_INPUT		0x00000080
+#define __CTRACE_OUTPUT		0x00000100
+#define __CTRACE_LINE		0x00000200
+#define __CTRACE_ATTR		0x00000400
+#define __CTRACE_ERASE		0x00000800
+#define __CTRACE_ALL		0x7fffffff
+void	 __CTRACE_init(void);
+void	 __CTRACE(int, const char *, ...) __attribute__((__format__(__printf__, 2, 3)));
 #endif
+
+/* Private functions. */
 void     __cputchar_args(char, void *);
 void     _cursesi_free_keymap(keymap_t *);
 int      _cursesi_gettmode(SCREEN *);

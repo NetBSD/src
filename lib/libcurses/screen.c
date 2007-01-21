@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.18 2006/08/23 19:23:14 jdc Exp $	*/
+/*	$NetBSD: screen.c,v 1.19 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)screen.c	8.2 (blymn) 11/27/2001";
 #else
-__RCSID("$NetBSD: screen.c,v 1.18 2006/08/23 19:23:14 jdc Exp $");
+__RCSID("$NetBSD: screen.c,v 1.19 2007/01/21 13:25:36 jdc Exp $");
 #endif
 #endif					/* not lint */
 
@@ -92,7 +92,8 @@ set_term(SCREEN *new)
 	_cursesi_reset_acs(new);
 
 #ifdef DEBUG
-	__CTRACE("initscr: LINES = %d, COLS = %d\n", LINES, COLS);
+	__CTRACE(__CTRACE_SCREEN, "set_term: LINES = %d, COLS = %d\n",
+	    LINES, COLS);
 #endif
 
 	return old_screen;
@@ -180,7 +181,8 @@ newterm(char *type, FILE *outfd, FILE *infd)
 	}
 
 #ifdef DEBUG
-	__CTRACE("newterm: LINES = %d, COLS = %d\n", LINES, COLS);
+	__CTRACE(__CTRACE_SCREEN, "newterm: LINES = %d, COLS = %d\n",
+	    LINES, COLS);
 #endif
 	__startwin(new_screen);
 
@@ -202,7 +204,7 @@ delscreen(SCREEN *screen)
         struct __winlist *list;
 
 #ifdef DEBUG
-	__CTRACE("delscreen(%p)\n", screen);
+	__CTRACE(__CTRACE_SCREEN, "delscreen(%p)\n", screen);
 #endif
 	  /* free up the termcap entry stuff */
 	t_freent(screen->cursesi_genbuf);

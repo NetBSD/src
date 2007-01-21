@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.11 2002/04/11 18:06:41 mycroft Exp $	*/
+/*	$NetBSD: acs.c,v 1.12 2007/01/21 13:25:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.11 2002/04/11 18:06:41 mycroft Exp $");
+__RCSID("$NetBSD: acs.c,v 1.12 2007/01/21 13:25:36 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -106,7 +106,7 @@ __init_acs(SCREEN *screen)
 			_acs_char[acs] = term | __ALTCHARSET;
 		aofac++;
 #ifdef DEBUG
-		__CTRACE("__init_acs: %c = %c\n", acs, term);
+		__CTRACE(__CTRACE_INIT, "__init_acs: %c = %c\n", acs, term);
 #endif
 	}
 
