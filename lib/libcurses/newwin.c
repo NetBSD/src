@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.43 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.43.6.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.43 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.43.6.1 2007/01/21 11:38:59 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -154,7 +154,13 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
 		else
 			lp->flags = 0;
 		for (sp = lp->line, j = 0; j < maxx; j++, sp++) {
-			sp->ch = ' ';
+#ifndef HAVE_WCHAR
+			sp->ch = win->bch;
+#else
+			sp->ch = ( wchar_t )btowc(( int ) win->bch );
+			sp->nsp = NULL;
+			SET_WCOL( *sp, 1 );
+#endif /* HAVE_WCHAR */
 			sp->attr = 0;
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
@@ -217,6 +223,11 @@ __set_subwin(WINDOW *orig, WINDOW *win)
 {
 	int     i;
 	__LINE *lp, *olp;
+#ifdef HAVE_WCHAR
+	__LDATA *cp;
+	int j;
+	nschar_t *np;
+#endif /* HAVE_WCHAR */
 
 	win->ch_off = win->begx - orig->begx;
 	/* Point line pointers to line space. */
@@ -229,8 +240,25 @@ __set_subwin(WINDOW *orig, WINDOW *win)
 		lp->line = &olp->line[win->ch_off];
 		lp->firstchp = &olp->firstch;
 		lp->lastchp = &olp->lastch;
+#ifndef HAVE_WCHAR
 		lp->hash = __hash((char *)(void *)lp->line,
-		    (size_t) (win->maxx * __LDATASIZE));
+			(size_t) (win->maxx * __LDATASIZE));
+#else
+		for ( cp = lp->line, j = 0; j < win->maxx; j++, cp++ ) {
+			lp->hash = __hash_more( &cp->ch,
+				sizeof( wchar_t ), lp->hash );
+			lp->hash = __hash_more( &cp->attr,
+				sizeof( wchar_t ), lp->hash );
+			if ( cp->nsp ) {
+				np = cp->nsp;
+				while ( np ) {
+					lp->hash = __hash_more( &np->ch,
+						sizeof( wchar_t ), lp->hash );
+					np = np->next;
+				}
+			}
+		}
+#endif /* HAVE_WCHAR */
 	}
 
 #ifdef DEBUG
@@ -343,6 +371,10 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 	win->flags = (__IDLINE | __IDCHAR);
 	win->delay = -1;
 	win->wattr = 0;
+#ifdef HAVE_WCHAR
+	win->bnsp = NULL;
+	SET_BGWCOL( *win, 1 );
+#endif /* HAVE_WCHAR */
 	win->scr_t = 0;
 	win->scr_b = win->maxy - 1;
 	if (ispad) {

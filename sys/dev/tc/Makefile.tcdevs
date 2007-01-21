@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.tcdevs,v 1.1 1998/06/12 23:22:59 cgd Exp $
-
-AWK=	awk
-
-tcdevs.h tcdevs_data.h: tcdevs devlist2h.awk
-	/bin/rm -f tcdevs.h tcdevs_data.h
-	${AWK} -f devlist2h.awk tcdevs

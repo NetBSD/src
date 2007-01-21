@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.12 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.12.6.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.12 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.12.6.1 2007/01/21 11:38:59 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -229,8 +229,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 		  /* Point line pointers to line space. */
 		for (lp = win->lspace, i = 0; i < nlines; i++, lp++) {
 			win->lines[i] = lp;
-			olp = win->orig->lines[i + win->begy
-					      - win->orig->begy];
+			olp = win->orig->lines[i + win->begy - win->orig->begy];
 			lp->line = &olp->line[win->ch_off];
 #ifdef DEBUG
 			lp->sentinel = SENTINEL_VALUE;
@@ -257,7 +256,14 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	for (i = 0; i < win->maxy; i++) {
 		lp = win->lines[i];
 		for (sp = lp->line, j = 0; j < win->maxx; j++, sp++) {
-			sp->ch = ' ';
+#ifndef HAVE_WCHAR
+			sp->ch = win->bch; /* XXX */
+#else
+			sp->ch = ( wchar_t )btowc(( int ) win->bch );
+			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+				return ERR;
+			SET_WCOL( *sp, 1 );
+#endif /* HAVE_WCHAR */
 			sp->attr = 0;
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
@@ -294,4 +300,3 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 
 	return OK;
 }
-

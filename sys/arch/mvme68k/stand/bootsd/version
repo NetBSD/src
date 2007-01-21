@@ -1,7 +1,0 @@
-$NetBSD: version,v 1.4 2001/11/09 19:53:14 scw Exp $
-
-1.1:	Initial bootsd import (from sun3 port, adjusted for mvme68k port
-	by Chuck Cranor)
-1.2:	Support verbose/quiet boot.
-1.3:	loadfile() update:  ELF symbols no longer need backward seeks.
-1.4:	loadfile() update to avoid backwards seeks for ELF Program Headers.

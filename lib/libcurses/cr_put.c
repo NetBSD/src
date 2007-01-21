@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.23 2004/07/24 13:10:47 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.23.12.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -8,13 +8,13 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	may be used to endorse or promote products derived from this software
+ *	without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.23 2004/07/24 13:10:47 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.23.12.1 2007/01/21 11:38:59 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,7 +75,7 @@ __mvcur(int ly, int lx, int y, int x, int in_refresh)
 {
 #ifdef DEBUG
 	__CTRACE("mvcur: moving cursor from (%d, %d) to (%d, %d)\n",
-	    ly, lx, y, x);
+		ly, lx, y, x);
 #endif
 	destcol = x;
 	destline = y;
@@ -87,11 +87,14 @@ __mvcur(int ly, int lx, int y, int x, int in_refresh)
 
 static void
 fgoto(in_refresh)
-	int     in_refresh;
+	int	 in_refresh;
 {
-	int     c, l;
+	int	 c, l;
 	char   cgp[128];
 
+#ifdef DEBUG
+	__CTRACE("[fgoto]in_refresh=%d\n", in_refresh);
+#endif /* DEBUG */
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
 		destcol %= COLS;
@@ -160,13 +163,16 @@ fgoto(in_refresh)
 	if (destline < outline && !(__CA || __tc_up))
 		destline = outline;
 	if (__CA && t_goto(NULL, __tc_cm, destcol, destline, cgp,
-	    sizeof(cgp) - 1) != -1) {
+		sizeof(cgp) - 1) != -1) {
 		/*
 		 * Need this condition due to inconsistent behavior
 		 * of backspace on the last column.
 		 */
+#ifdef DEBUG
+		__CTRACE("[fgoto]cgp=%s\n", cgp );
+#endif /* DEBUG */
 		if (outcol != COLS - 1 &&
-		    plod((int) strlen(cgp), in_refresh) > 0)
+			plod((int) strlen(cgp), in_refresh) > 0)
 			plod(0, in_refresh);
 		else
 			tputs(cgp, 0, __cputchar);
@@ -186,7 +192,7 @@ static int plodcnt, plodflg;
 
 static int
 plodput(c)
-	int     c;
+	int	 c;
 {
 	if (plodflg)
 		--plodcnt;
@@ -197,10 +203,16 @@ plodput(c)
 
 static int
 plod(cnt, in_refresh)
-	int     cnt, in_refresh;
+	int	 cnt, in_refresh;
 {
-	int     i, j, k, soutcol, soutline;
+	int	 i, j, k, soutcol, soutline;
+#ifdef HAVE_WCHAR
+	int	 cw;
+#endif /* HAVE_WCHAR */
 
+#ifdef DEBUG
+	__CTRACE("[plod]cnt=%d, in_refresh=%d\n", cnt, in_refresh);
+#endif /* DEBUG */
 	plodcnt = plodflg = cnt;
 	soutcol = outcol;
 	soutline = outline;
@@ -272,7 +284,7 @@ plod(cnt, in_refresh)
 		i = destcol;
 #ifdef notdef
 	if (__tc_bt && outcol > destcol &&
-	    (j = (((outcol + 7) & ~7) - destcol - 1) >> 3)) {
+		(j = (((outcol + 7) & ~7) - destcol - 1) >> 3)) {
 		j *= (k = strlen(__tc_bt));
 		if ((k += (destcol & 7)) > 4)
 			j += 8 - (destcol & 7);
@@ -389,11 +401,37 @@ dontcr:while (outline < destline) {
 			if (plodflg)	/* Avoid a complex calculation. */
 				plodcnt--;
 			else {
+#ifndef HAVE_WCHAR
 				i = curscr->lines[outline]->line[outcol].ch
-				    & __CHARTEXT;
+					& __CHARTEXT;
 				if (curscr->lines[outline]->line[outcol].attr
-				    == curscr->wattr)
+					== curscr->wattr)
 					__cputchar(i);
+#else
+				if ((curscr->lines[outline]->line[outcol].attr 
+							& WA_ATTRIBUTES) 
+						== curscr->wattr ) {
+					cw = WCOL(curscr->lines[outline]->line[outcol]);
+					if ( cw > 1 ) {
+						__cputwchar(curscr->lines[outline]->line[outcol].ch);
+#ifdef DEBUG
+						__CTRACE("[plod](%d,%d)WCOL(%d),putwchar(%x)\n", 
+							outline, outcol,
+							WCOL( curscr->lines[outline]->line[outcol]),
+							curscr->lines[outline]->line[outcol].ch );
+#endif /* DEBUG */
+					}
+					if ( cw == 1 ) {
+						__cputchar( curscr->lines[outline]->line[outcol].ch );
+#ifdef DEBUG
+						__CTRACE("[plod](%d,%d)WCOL(%d),putchar(%x)\n", 
+							outline, outcol,
+							WCOL( curscr->lines[outline]->line[outcol]),
+							curscr->lines[outline]->line[outcol].ch );
+#endif /* DEBUG */
+					}
+				}
+#endif /* HAVE_WCHAR */
 				else
 					goto nondes;
 			}
@@ -411,6 +449,9 @@ out:	if (plodflg) {
 		outcol = soutcol;
 		outline = soutline;
 	}
+#ifdef DEBUG
+	__CTRACE("[plod]returns %d\n", plodcnt );
+#endif /* DEBUG */
 	return (plodcnt);
 }
 /*
@@ -420,9 +461,9 @@ out:	if (plodflg) {
  */
 static int
 tabcol(col, ts)
-	int     col, ts;
+	int	 col, ts;
 {
-	int     offset;
+	int	 offset;
 
 	if (col >= COLS) {
 		offset = COLS * (col / COLS);

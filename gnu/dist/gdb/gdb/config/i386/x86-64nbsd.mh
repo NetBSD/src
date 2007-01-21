@@ -1,7 +1,0 @@
-# Host: AMD64 NetBSD
-
-XM_FILE= xm-nbsd.h
-
-NAT_FILE= nm-x86-64nbsd.h
-NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o \
-	i386-nat.o x86-64nbsd-nat.o nbsd-proc.o

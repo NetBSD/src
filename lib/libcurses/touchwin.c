@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.22 2006/08/23 19:23:55 jdc Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.22.4.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -8,13 +8,13 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	may be used to endorse or promote products derived from this software
+ *	without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.22 2006/08/23 19:23:55 jdc Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.22.4.1 2007/01/21 11:38:59 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: touchwin.c,v 1.22 2006/08/23 19:23:55 jdc Exp $");
 
 /*
  * is_linetouched --
- *    Indicate if line has been touched or not.
+ *	Indicate if line has been touched or not.
  */
 bool
 is_linetouched(WINDOW *win, int line)
@@ -83,7 +83,7 @@ int wredrawln(WINDOW *win, int start, int count)
 
 /*
  * is_wintouched --
- *      Check if the window has been touched.
+ *	  Check if the window has been touched.
  */
 bool
 is_wintouched(WINDOW *win)
@@ -127,7 +127,7 @@ redrawwin(WINDOW *win)
 
 /*
  * untouchwin --
- *     Make it look like the window has not been changed.
+ *	 Make it look like the window has not been changed.
  */
 int
 untouchwin(WINDOW *win)
@@ -140,8 +140,8 @@ untouchwin(WINDOW *win)
 
 /*
  * wtouchln --
- *     If changed is 1 then touch n lines starting at line.  If changed
- *     is 0 then mark the lines as unchanged.
+ *	 If changed is 1 then touch n lines starting at line.  If changed
+ *	 is 0 then mark the lines as unchanged.
  */
 int
 wtouchln(WINDOW *win, int line, int n, int changed)
@@ -160,10 +160,10 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 		else {
 			wlp = win->lines[y];
 			if (*wlp->firstchp >= win->ch_off &&
-			    *wlp->firstchp < win->maxx + win->ch_off)
+				*wlp->firstchp < win->maxx + win->ch_off)
 				*wlp->firstchp = win->maxx + win->ch_off;
 			if (*wlp->lastchp >= win->ch_off &&
-			    *wlp->lastchp < win->maxx + win->ch_off)
+				*wlp->lastchp < win->maxx + win->ch_off)
 				*wlp->lastchp = win->ch_off;
 			wlp->flags &= ~__ISDIRTY;
 		}
@@ -175,7 +175,7 @@ wtouchln(WINDOW *win, int line, int n, int changed)
 int
 __touchwin(WINDOW *win)
 {
-	int     y, maxy;
+	int	 y, maxy;
 
 #ifdef DEBUG
 	__CTRACE("__touchwin: (%p)\n", win);

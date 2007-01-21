@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.13 2003/10/21 00:20:28 fvdl Exp $	*/
+/*	$NetBSD: attributes.c,v 1.13.18.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.13 2003/10/21 00:20:28 fvdl Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.13.18.1 2007/01/21 11:38:59 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -181,6 +181,20 @@ wattr_on(WINDOW *win, attr_t attr, void *opt)
 			win->wattr |= __PROTECT;
 		if (attr & __REVERSE && __tc_mr != NULL)
 			win->wattr |= __REVERSE;
+#ifdef HAVE_WCHAR
+		if (attr & WA_LOW && __tc_Xo != NULL)
+			win->wattr |= WA_LOW;
+		if (attr & WA_TOP && __tc_Xt != NULL)
+			win->wattr |= WA_TOP;
+		if (attr & WA_LEFT && __tc_Xl != NULL)
+			win->wattr |= WA_LEFT;
+		if (attr & WA_RIGHT && __tc_Xr != NULL)
+			win->wattr |= WA_RIGHT;
+		if (attr & WA_HORIZONTAL && __tc_Xh != NULL)
+			win->wattr |= WA_HORIZONTAL;
+		if (attr & WA_VERTICAL && __tc_Xv != NULL)
+			win->wattr |= WA_VERTICAL;
+#endif /* HAVE_WCHAR */
 	}
 	if (attr & __STANDOUT)
 		wstandout(win);
@@ -219,6 +233,20 @@ wattr_off(WINDOW *win, attr_t attr, void *opt)
 			win->wattr &= ~__PROTECT;
 		if (attr & __REVERSE)
 			win->wattr &= ~__REVERSE;
+#ifdef HAVE_WCHAR
+		if (attr & WA_LOW)
+			win->wattr &= ~WA_LOW;
+		if (attr & WA_TOP)
+			win->wattr &= ~WA_TOP;
+		if (attr & WA_LEFT)
+			win->wattr &= ~WA_LEFT;
+		if (attr & WA_RIGHT)
+			win->wattr &= ~WA_RIGHT;
+		if (attr & WA_HORIZONTAL)
+			win->wattr &= ~WA_HORIZONTAL;
+		if (attr & WA_VERTICAL)
+			win->wattr &= ~WA_VERTICAL;
+#endif /* HAVE_WCHAR */
 	}
 	if (attr & __STANDOUT)
 		wstandend(win);
@@ -246,7 +274,7 @@ wattr_set(WINDOW *win, attr_t attr, short pair, void *opt)
 	wattr_off(win, (~attr & ~__COLOR) | ((attr & __COLOR) ? 0 : __COLOR),
 	    NULL);
 	/*
-         * This overwrites any colour setting from the attributes
+     * This overwrites any colour setting from the attributes
 	 * and is compatible with ncurses.
 	 */
 	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));

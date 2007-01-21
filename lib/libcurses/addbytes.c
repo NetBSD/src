@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.30 2006/01/15 11:43:54 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.30.6.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,15 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.30 2006/01/15 11:43:54 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.30.6.1 2007/01/21 11:38:59 blymn Exp $");
 #endif
 #endif				/* not lint */
 
+#include <stdlib.h>
 #include "curses.h"
 #include "curses_private.h"
-#ifdef DEBUG
-#include <assert.h>
-#endif
 
 #define	SYNCH_IN	{y = win->cury; x = win->curx;}
 #define	SYNCH_OUT	{win->cury = y; win->curx = x;}
@@ -112,7 +110,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
 	}
 #endif
-	
+
 	SYNCH_IN;
 	lp = win->lines[y];
 
@@ -193,11 +191,21 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 				lp->line[x].ch = win->bch;
 			else
 				lp->line[x].ch = c;
+
+#ifdef HAVE_WCHAR
+			if (_cursesi_copy_nsp(win->bnsp, &lp->line[x]) == ERR)
+				return ERR;
+#endif /* HAVE_WCHAR */
+
 			if (attributes & __COLOR)
 				lp->line[x].attr =
 				    attributes | (win->battr & ~__COLOR);
 			else
 				lp->line[x].attr = attributes | win->battr;
+#ifdef HAVE_WCHAR
+			SET_WCOL(lp->line[x], 1);
+#endif /* HAVE_WCHAR */
+
 			if (x == win->maxx - 1)
 				lp->flags |= __ISPASTEOL;
 			else
@@ -223,7 +231,7 @@ __waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr)
 		}
 	}
 	SYNCH_OUT;
-	
+
 #ifdef DEBUG
 	for (i = 0; i < win->maxy; i++) {
 		assert(win->lines[i]->sentinel == SENTINEL_VALUE);
