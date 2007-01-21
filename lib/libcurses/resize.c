@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.12.6.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: resize.c,v 1.12.6.2 2007/01/21 17:43:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.12.6.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: resize.c,v 1.12.6.2 2007/01/21 17:43:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -115,7 +115,7 @@ resizeterm(int nlines, int ncols)
 	return OK;*/
 
 #ifdef	DEBUG
-	__CTRACE("resizeterm: (%d, %d)\n", nlines, ncols);
+	__CTRACE(__CTRACE_WINDOW, "resizeterm: (%d, %d)\n", nlines, ncols);
 #endif
 
 
@@ -168,15 +168,15 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	WINDOW			*swin;
 
 #ifdef	DEBUG
-	__CTRACE("resize: (%p, %d, %d)\n", win, nlines, ncols);
-	__CTRACE("resize: win->wattr = %08x\n", win->wattr);
-	__CTRACE("resize: win->flags = %#.4x\n", win->flags);
-	__CTRACE("resize: win->maxy = %d\n", win->maxy);
-	__CTRACE("resize: win->maxx = %d\n", win->maxx);
-	__CTRACE("resize: win->begy = %d\n", win->begy);
-	__CTRACE("resize: win->begx = %d\n", win->begx);
-	__CTRACE("resize: win->scr_t = %d\n", win->scr_t);
-	__CTRACE("resize: win->scr_b = %d\n", win->scr_b);
+	__CTRACE(__CTRACE_WINDOW, "resize: (%p, %d, %d)\n", win, nlines, ncols);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->wattr = %08x\n", win->wattr);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->flags = %#.4x\n", win->flags);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->maxy = %d\n", win->maxy);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->maxx = %d\n", win->maxx);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->begy = %d\n", win->begy);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->begx = %d\n", win->begx);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->scr_t = %d\n", win->scr_t);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->scr_b = %d\n", win->scr_b);
 #endif
 
 	if (nlines <= 0 || ncols <= 0)
@@ -271,14 +271,14 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	}
 
 #ifdef DEBUG
-	__CTRACE("resize: win->wattr = %08x\n", win->wattr);
-	__CTRACE("resize: win->flags = %#.4x\n", win->flags);
-	__CTRACE("resize: win->maxy = %d\n", win->maxy);
-	__CTRACE("resize: win->maxx = %d\n", win->maxx);
-	__CTRACE("resize: win->begy = %d\n", win->begy);
-	__CTRACE("resize: win->begx = %d\n", win->begx);
-	__CTRACE("resize: win->scr_t = %d\n", win->scr_t);
-	__CTRACE("resize: win->scr_b = %d\n", win->scr_b);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->wattr = %08x\n", win->wattr);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->flags = %#.4x\n", win->flags);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->maxy = %d\n", win->maxy);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->maxx = %d\n", win->maxx);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->begy = %d\n", win->begy);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->begx = %d\n", win->begx);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->scr_t = %d\n", win->scr_t);
+	__CTRACE(__CTRACE_WINDOW, "resize: win->scr_b = %d\n", win->scr_b);
 #endif
 
 	if (win->orig == NULL) {

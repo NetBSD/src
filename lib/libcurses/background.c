@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.9.6.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.9.6.2 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -11,17 +11,17 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
- *		This product includes software developed by the NetBSD
- *		Foundation, Inc. and its contributors.
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
- *	contributors may be used to endorse or promote products derived
- *	from this software without specific prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.9.6.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.9.6.2 2007/01/21 17:43:35 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -73,8 +73,8 @@ void
 wbkgdset(WINDOW *win, chtype ch)
 {
 #ifdef DEBUG
-	__CTRACE("wbkgdset: (%p), '%s', %08x\n",
-		win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
+	__CTRACE(__CTRACE_ATTR, "wbkgdset: (%p), '%s', %08x\n",
+	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
 #endif
 
 	/* Background character. */
@@ -97,8 +97,8 @@ wbkgd(WINDOW *win, chtype ch)
 	int	y, x;
 
 #ifdef DEBUG
-	__CTRACE("wbkgd: (%p), '%s', %08x\n",
-		win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
+	__CTRACE(__CTRACE_ATTR, "wbkgd: (%p), '%s', %08x\n",
+	    win, unctrl(ch & +__CHARTEXT), ch & __ATTRIBUTES);
 #endif
 
 	/* Background attributes (check colour). */
@@ -176,8 +176,8 @@ int wbkgrnd(WINDOW *win, const cchar_t *wch)
 /* 	nschar_t *np, *tnp, *pnp; */
 
 #ifdef DEBUG
-	__CTRACE("wbkgrnd: (%p), '%s', %x\n",
-		win, wunctrl( wch ), wch->attributes );
+	__CTRACE(__CTRACE_ATTR, "wbkgrnd: (%p), '%s', %x\n",
+		win, (char *) wunctrl(wch), wch->attributes);
 #endif
 
 	/* ignore multi-column characters */
@@ -194,7 +194,7 @@ int wbkgrnd(WINDOW *win, const cchar_t *wch)
 /* 	for (y = 0; y < win->maxy; y++) { */
 /* 		for (x = 0; x < win->maxx; x++) { */
 /* #ifdef DEBUG */
-/* 			__CTRACE("[wbkgrnd](%d,%d)=%x,%x",  */
+/* 			__CTRACE(__CTRACE_ATTR, "wbkgrnd: (%d,%d)=%x,%x",  */
 /* 				y, x, wch->vals[ 0 ], wch->attributes); */
 /* #endif /\* DEBUG *\/ */
 /* 			pnp = np = win->lines[y]->line[x].bnsp; */
@@ -254,8 +254,8 @@ void wbkgrndset(WINDOW *win, const cchar_t *wch)
 	int i;
 
 #ifdef DEBUG
-	__CTRACE("wbkgrndset: (%p), '%s', %x\n",
-		win, wunctrl( wch ), wch->attributes );
+	__CTRACE(__CTRACE_ATTR, "wbkgrndset: (%p), '%s', %x\n",
+		win, (char *) wunctrl(wch), wch->attributes);
 #endif
 
 	/* ignore multi-column characters */

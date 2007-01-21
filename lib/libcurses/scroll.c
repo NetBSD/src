@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.18 2003/08/07 16:44:24 agc Exp $	*/
+/*	$NetBSD: scroll.c,v 1.18.18.1 2007/01/21 17:43:36 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.18 2003/08/07 16:44:24 agc Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.18.18.1 2007/01/21 17:43:36 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -85,7 +85,7 @@ wscrl(WINDOW *win, int lines)
 	int     oy, ox;
 
 #ifdef DEBUG
-	__CTRACE("wscrl: (%p) lines=%d\n", win, lines);
+	__CTRACE(__CTRACE_WINDOW, "wscrl: (%p) lines=%d\n", win, lines);
 #endif
 
 	if (!(win->flags & __SCROLLOK))
@@ -95,7 +95,7 @@ wscrl(WINDOW *win, int lines)
 
 	getyx(win, oy, ox);
 #ifdef DEBUG
-	__CTRACE("wscrl: y=%d\n", oy);
+	__CTRACE(__CTRACE_WINDOW, "wscrl: y=%d\n", oy);
 #endif
 	if (oy < win->scr_t || oy > win->scr_b)
 		/* Outside scrolling region */
@@ -111,7 +111,7 @@ wscrl(WINDOW *win, int lines)
 		if (!__NONL)
 			win->curx = 0;
 #ifdef DEBUG
-		__CTRACE("scroll: win == curscr\n");
+		__CTRACE(__CTRACE_WINDOW, "scroll: win == curscr\n");
 #endif
 	}
 	return (OK);

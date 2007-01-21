@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.16 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.16.2.1 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.16 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.16.2.1 2007/01/21 17:43:35 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,28 +53,43 @@ __RCSID("$NetBSD: ctrace.c,v 1.16 2007/01/17 23:24:22 hubertf Exp $");
 #define	TFILE	"__curses.out"
 #endif
 
-static FILE *tracefp;		/* Curses debugging file descriptor. */
+static FILE *tracefp = NULL;		/* Curses debugging file descriptor. */
+
+static int tracemask;	/* Areas of trace output we want. */
 
 void
-__CTRACE(const char *fmt,...)
+__CTRACE_init()
+{
+	char *tf, *tm;
+
+	tm = getenv("CURSES_TRACE_MASK");
+	if (tm == NULL)
+		tracemask = __CTRACE_ALL;
+	else {
+		tracemask = (int) strtol(tm, NULL, 0);
+	}
+	if (tracemask < 0)
+		tracemask = (0 - tracemask) ^ __CTRACE_ALL;
+	if (tracemask == 0)
+		return;
+	tf = getenv("CURSES_TRACE_FILE");
+	if (tf == NULL || strcmp( tf, "<none>"))
+		tracefp = fopen(tf ? tf : TFILE, "w");
+	__CTRACE(__CTRACE_ALL, "Trace mask: 0x%08x\n", tracemask);
+}
+
+void
+__CTRACE(int area, const char *fmt,...)
 {
 	struct timeval tv;
         static int seencr = 1;
 	va_list ap;
 
-	if (tracefp == (void *)~0)
-		return;
-	if (tracefp == NULL) {
-		char *tf = getenv("CURSES_TRACE_FILE");
-		if (!tf || strcmp( tf, "<none>"))
-			tracefp = fopen(tf ? tf : TFILE, "w");
-	}
-	if (tracefp == NULL) {
-		tracefp = (void *)~0;
+	if (tracefp == NULL || !(tracemask & area)) {
 		return;
 	}
 	gettimeofday(&tv, NULL);
-        if (seencr) {
+        if (seencr && (tracemask & __CTRACE_TSTAMP)) {
                 gettimeofday(&tv, NULL);
                 (void) fprintf(tracefp, "%lu.%06lu: ", tv.tv_sec, tv.tv_usec);
         }

@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.4.20.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: line.c,v 1.4.20.2 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -11,9 +11,9 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the author may not be used to endorse or promote products
- *	derived from this software without specific prior written permission
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: line.c,v 1.4.20.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: line.c,v 1.4.20.2 2007/01/21 17:43:35 jdc Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -109,7 +109,7 @@ vline(chtype ch, int count)
 
 /*
  * mvvline --
- *   Move to the given location an draw a vertical line of character ch.
+ *	Move to the given location an draw a vertical line of character ch.
  */
 int
 mvvline(int y, int x, chtype ch, int count)
@@ -198,7 +198,7 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 		return ERR;
 	wcn = min( n, ( win->maxx - win->curx ) / cw );
 #ifdef DEBUG
-	__CTRACE("[whline_set]line of %d\n", wcn );
+	__CTRACE(__CTRACE_LINE, "whline_set: line of %d\n", wcn);
 #endif /* DEBUG */
 	ocurx = win->curx;
 
@@ -207,7 +207,8 @@ int whline_set(WINDOW *win, const cchar_t *wch, int n)
 		cc.vals[ 0 ] |= WACS_HLINE;
 	for (i = 0; i < wcn; i++ ) {
 #ifdef DEBUG
-		__CTRACE("[whline_set](%d,%d)\n", win->cury, ocurx + i * cw );
+		__CTRACE(__CTRACE_LINE, "whline_set: (%d,%d)\n",
+		   win->cury, ocurx + i * cw);
 #endif /* DEBUG */
 		mvwadd_wch(win, win->cury, ocurx + i * cw, &cc);
 	}
@@ -257,7 +258,7 @@ int wvline_set(WINDOW *win, const cchar_t *wch, int n)
 
 	wcn = min( n, win->maxy - win->cury);
 #ifdef DEBUG
-	__CTRACE("[wvline_set]line of %d\n", wcn );
+	__CTRACE(__CTRACE_LINE, "wvline_set: line of %d\n", wcn);
 #endif /* DEBUG */
 	ocury = win->cury;
 	ocurx = win->curx;
@@ -268,7 +269,8 @@ int wvline_set(WINDOW *win, const cchar_t *wch, int n)
 	for (i = 0; i < wcn; i++) {
 		mvwadd_wch(win, ocury + i, ocurx, &cc);
 #ifdef DEBUG
-		__CTRACE("[wvline_set](%d,%d)\n", ocury + i, ocurx);
+		__CTRACE(__CTRACE_LINE, "wvline_set: (%d,%d)\n",
+		    ocury + i, ocurx);
 #endif /* DEBUG */
 	}
 	wmove(win, ocury, ocurx);

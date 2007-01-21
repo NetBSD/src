@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.31 2006/08/23 19:20:37 jdc Exp $	*/
+/*	$NetBSD: color.c,v 1.31.4.1 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.31 2006/08/23 19:20:37 jdc Exp $");
+__RCSID("$NetBSD: color.c,v 1.31.4.1 2007/01/21 17:43:35 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -146,20 +146,20 @@ start_color(void)
 		return(ERR);		/* Unsupported colour method */
 
 #ifdef DEBUG
-	__CTRACE("start_color: COLORS = %d, COLOR_PAIRS = %d",
+	__CTRACE(__CTRACE_COLOR, "start_color: COLORS = %d, COLOR_PAIRS = %d",
 	    COLORS, COLOR_PAIRS);
 	switch (_cursesi_screen->color_type) {
 	case COLOR_ANSI:
-		__CTRACE(" (ANSI style)\n");
+		__CTRACE(__CTRACE_COLOR, " (ANSI style)\n");
 		break;
 	case COLOR_HP:
-		__CTRACE(" (HP style)\n");
+		__CTRACE(__CTRACE_COLOR, " (HP style)\n");
 		break;
 	case COLOR_TEK:
-		__CTRACE(" (Tektronics style)\n");
+		__CTRACE(__CTRACE_COLOR, " (Tektronics style)\n");
 		break;
 	case COLOR_OTHER:
-		__CTRACE(" (Other style)\n");
+		__CTRACE(__CTRACE_COLOR, " (Other style)\n");
 		break;
 	}
 #endif
@@ -191,7 +191,7 @@ start_color(void)
 			_cursesi_screen->nca |= __ALTCHARSET;
 	}
 #ifdef DEBUG
-	__CTRACE ("start_color: _cursesi_screen->nca = %08x\n",
+	__CTRACE(__CTRACE_COLOR, "start_color: _cursesi_screen->nca = %08x\n",
 	    _cursesi_screen->nca);
 #endif
 
@@ -275,7 +275,7 @@ init_pair(short pair, short fore, short back)
 	int	changed;
 
 #ifdef DEBUG
-	__CTRACE("init_pair: %d, %d, %d\n", pair, fore, back);
+	__CTRACE(__CTRACE_COLOR, "init_pair: %d, %d, %d\n", pair, fore, back);
 #endif
 
 	if (pair < 0 || pair >= COLOR_PAIRS)
@@ -390,7 +390,8 @@ int
 init_color(short color, short red, short green, short blue)
 {
 #ifdef DEBUG
-	__CTRACE("init_color: %d, %d, %d, %d\n", color, red, green, blue);
+	__CTRACE(__CTRACE_COLOR, "init_color: %d, %d, %d, %d\n",
+	    color, red, green, blue);
 #endif
 	if (color < 0 || color >= _cursesi_screen->COLORS)
 		return(ERR);
@@ -427,7 +428,7 @@ int
 use_default_colors()
 {
 #ifdef DEBUG
-	__CTRACE("use_default_colors\n");
+	__CTRACE(__CTRACE_COLOR, "use_default_colors\n");
 #endif
 	
 	return(assume_default_colors(-1, -1));
@@ -441,7 +442,8 @@ int
 assume_default_colors(short fore, short back)
 {
 #ifdef DEBUG
-	__CTRACE("assume_default_colors: %d, %d\n", fore, back);
+	__CTRACE(__CTRACE_COLOR, "assume_default_colors: %d, %d\n",
+	    fore, back);
 #endif
 	/* Swap red/blue and yellow/cyan */
 	if (_cursesi_screen->color_type == COLOR_OTHER) {
@@ -518,7 +520,7 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 
 	pair = PAIR_NUMBER((u_int32_t)attr);
 #ifdef DEBUG
-	__CTRACE("__set_color: %d, %d, %d\n", pair,
+	__CTRACE(__CTRACE_COLOR, "__set_color: %d, %d, %d\n", pair,
 		 _cursesi_screen->colour_pairs[pair].fore,
 		 _cursesi_screen->colour_pairs[pair].back);
 #endif
@@ -569,7 +571,7 @@ void
 __unset_color(WINDOW *win)
 {
 #ifdef DEBUG
-	__CTRACE("__unset_color\n");
+	__CTRACE(__CTRACE_COLOR, "__unset_color\n");
 #endif
 	switch (_cursesi_screen->color_type) {
 	/* Clear ANSI forground and background colours */
@@ -628,7 +630,8 @@ __change_pair(short pair)
 
 	for (wlp = _cursesi_screen->winlistp; wlp != NULL; wlp = wlp->nextp) {
 #ifdef DEBUG
-		__CTRACE("__change_pair: win = %p\n", wlp->winp);
+		__CTRACE(__CTRACE_COLOR, "__change_pair: win = %p\n",
+		    wlp->winp);
 #endif
 		win = wlp->winp;
 		if (win == __virtscr)
@@ -636,7 +639,8 @@ __change_pair(short pair)
 		else if (win == curscr) {
 			/* Reset colour attribute on curscr */
 #ifdef DEBUG
-			__CTRACE("__change_pair: win == curscr\n");
+			__CTRACE(__CTRACE_COLOR,
+			    "__change_pair: win == curscr\n");
 #endif
 			for (y = 0; y < curscr->maxy; y++) {
 				lp = curscr->lines[y];
@@ -666,7 +670,11 @@ __change_pair(short pair)
 					}
 #ifdef DEBUG
 				if ((win->lines[y]->flags & __ISDIRTY))
-					__CTRACE("__change_pair: first = %d, last = %d\n", *win->lines[y]->firstchp, *win->lines[y]->lastchp);
+					__CTRACE(__CTRACE_COLOR,
+					    "__change_pair: first = %d, "
+					    "last = %d\n",
+					    *win->lines[y]->firstchp,
+					    *win->lines[y]->lastchp);
 #endif
 			}
 		}

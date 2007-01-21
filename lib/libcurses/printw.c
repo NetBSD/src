@@ -1,4 +1,4 @@
-/*	$NetBSD: printw.c,v 1.19 2003/08/07 16:44:23 agc Exp $	*/
+/*	$NetBSD: printw.c,v 1.19.18.1 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)printw.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: printw.c,v 1.19 2003/08/07 16:44:23 agc Exp $");
+__RCSID("$NetBSD: printw.c,v 1.19.18.1 2007/01/21 17:43:35 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -127,7 +127,7 @@ __winwrite(cookie, buf, n)
 	for (c = n, win = cookie; --c >= 0;)
 	{
 #ifdef DEBUG
-		__CTRACE("__winwrite: %c\n", *buf);
+		__CTRACE(__CTRACE_MISC, "__winwrite: %c\n", *buf);
 #endif
 		if (waddch(win, (chtype) (*buf++ & __CHARTEXT)) == ERR)
 			return (-1);

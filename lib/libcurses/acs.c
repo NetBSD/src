@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.11.20.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: acs.c,v 1.11.20.2 2007/01/21 17:43:35 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -11,17 +11,17 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *	notice, this list of conditions and the following disclaimer.
+ *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *	notice, this list of conditions and the following disclaimer in the
- *	documentation and/or other materials provided with the distribution.
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
- *		This product includes software developed by the NetBSD
- *		Foundation, Inc. and its contributors.
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
- *	contributors may be used to endorse or promote products derived
- *	from this software without specific prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.11.20.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: acs.c,v 1.11.20.2 2007/01/21 17:43:35 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -112,13 +112,13 @@ __init_acs(SCREEN *screen)
 			_acs_char[acs] = term | __ALTCHARSET;
 		aofac++;
 #ifdef DEBUG
-		__CTRACE("__init_acs: %c = %c\n", acs, term);
+		__CTRACE(__CTRACE_INIT, "__init_acs: %c = %c\n", acs, term);
 #endif
 	}
 
 	if (screen->tc_eA != NULL)
 		t_puts(screen->cursesi_genbuf, screen->tc_eA, 0,
-			   __cputchar_args, screen->outfd);
+		    __cputchar_args, screen->outfd);
 
 out:
 	for (count=0; count < NUM_ACS; count++)
@@ -159,7 +159,7 @@ __init_wacs(SCREEN *screen)
 	lstr = setlocale( LC_ALL, "" );
 	if ( !strcasestr( lstr, "UTF-8" )) {
 #ifdef DEBUG
-		__CTRACE("[__init_wacs]setting defaults\n" );
+		__CTRACE(__CTRACE_INIT, "__init_wacs: setting defaults\n" );
 #endif /* DEBUG */
 		WACS_RARROW  = ( wchar_t )btowc( '>' );
 		WACS_LARROW  = ( wchar_t )btowc( '<' );
@@ -179,7 +179,8 @@ __init_wacs(SCREEN *screen)
 	} else {
 		/* Unicode defaults */
 #ifdef DEBUG
-		__CTRACE("[__init_wacs]setting Unicode defaults\n" );
+		__CTRACE(__CTRACE_INIT,
+		    "__init_wacs: setting Unicode defaults\n" );
 #endif /* DEBUG */
 		WACS_RARROW	 = 0x2192;
 		WACS_LARROW	 = 0x2190;
@@ -210,7 +211,8 @@ __init_wacs(SCREEN *screen)
 
 	if (screen->tc_ac == NULL) {
 #ifdef DEBUG
-		__CTRACE("[__init_wacs]no alternative characters\n" );
+		__CTRACE(__CTRACE_INIT,
+		    "__init_wacs: no alternative characters\n" );
 #endif /* DEBUG */
 		goto out;
 	}
@@ -231,7 +233,7 @@ __init_wacs(SCREEN *screen)
 		}
 		aofac++;
 #ifdef DEBUG
-		__CTRACE("__init_wacs: %c = %c\n", acs, term);
+		__CTRACE(__CTRACE_INIT, "__init_wacs: %c = %c\n", acs, term);
 #endif
 	}
 
