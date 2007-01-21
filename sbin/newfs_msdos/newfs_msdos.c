@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.24 2006/11/25 12:29:33 scw Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.25 2007/01/21 20:45:41 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.24 2006/11/25 12:29:33 scw Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.25 2007/01/21 20:45:41 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -830,7 +830,7 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
 	!bpb->bps || !bpb->spt || !bpb->hds) {
 	lp = &dl;
 	i = ioctl(fd, DIOCGDINFO, lp);
-	if (i == -1 && !NO_SLICE && part == -1) {
+	if (i == -1 && !NO_SLICE && part == -1 && s1) {
 	    e = errno;
 	    if (!(s = strdup(fname)))
 		err(1, NULL);
