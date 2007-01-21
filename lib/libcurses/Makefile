@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52.12.1 2007/01/21 11:38:59 blymn Exp $
+#	$NetBSD: Makefile,v 1.52.12.2 2007/01/21 17:40:40 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -27,7 +27,7 @@ SRCS=	acs.c addbytes.c addch.c addchnstr.c addnstr.c attributes.c \
 	newwin.c nodelay.c notimeout.c overlay.c overwrite.c pause.c printw.c \
 	putchar.c refresh.c resize.c scanw.c screen.c scroll.c scrollok.c \
 	setterm.c standout.c timeout.c toucholap.c touchwin.c tscroll.c \
-	tstp.c tty.c unctrl.c underscore.c 
+	tstp.c tty.c unctrl.c underscore.c
 
 MAN=	curses.3 curses_addch.3 curses_addchstr.3 curses_addstr.3 \
 	curses_attributes.3 curses_background.3 curses_border.3 \
