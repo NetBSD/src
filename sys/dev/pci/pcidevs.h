@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.861 2007/01/14 21:00:33 rpaulo Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.862 2007/01/21 04:59:15 isaki Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.862 2007/01/14 20:48:53 rpaulo Exp
+ *	NetBSD: pcidevs,v 1.863 2007/01/21 04:57:50 isaki Exp
  */
 
 /*
@@ -880,6 +880,13 @@
 #define	PCI_PRODUCT_AMD_PCNET_PCI	0x2000		/* PCnet-PCI Ethernet */
 #define	PCI_PRODUCT_AMD_PCNET_HOME	0x2001		/* PCnet-Home HomePNA Ethernet */
 #define	PCI_PRODUCT_AMD_PCSCSI_PCI	0x2020		/* PCscsi-PCI SCSI */
+#define	PCI_PRODUCT_AMD_GEODELX_PCHB	0x2080		/* Geode LX Host-PCI Bridge */
+#define	PCI_PRODUCT_AMD_GEODELX_VGA	0x2081		/* Geode LX VGA Controller */
+#define	PCI_PRODUCT_AMD_GEODELX_AES	0x2082		/* Geode LX AES Security Block */
+#define	PCI_PRODUCT_AMD_CS5536_PCIB	0x2090		/* CS5536 PCI-ISA Bridge */
+#define	PCI_PRODUCT_AMD_CS5536_OHCI	0x2094		/* CS5536 OHCI USB Controller */
+#define	PCI_PRODUCT_AMD_CS5536_EHCI	0x2095		/* CS5536 EHCI USB Controller */
+#define	PCI_PRODUCT_AMD_CS5536_IDE	0x209a		/* CS5536 IDE Controller */
 #define	PCI_PRODUCT_AMD_SC520_SC	0x3000		/* Elan SC520 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* AMD751 System Controller */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* AMD751 PCI-PCI Bridge */
