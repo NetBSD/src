@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.36 2007/01/19 17:52:01 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.37 2007/01/21 14:52:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.36 2007/01/19 17:52:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.37 2007/01/21 14:52:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1719,9 +1719,6 @@ puffs_strategy(void *v)
 		if (vp->v_flag & VXLOCK)
 			dowritefaf = 1;
 		simple_unlock(&vp->v_interlock);
-		if (dowritefaf)
-			printf("STRATEGY WRITEFAF! "
-			    "(let pooka@netbsd.org know if you see this)\n");
 	}
 
 	if (bp->b_flags & B_READ) {
