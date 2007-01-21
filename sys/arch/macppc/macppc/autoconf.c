@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.51 2007/01/20 21:42:12 he Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.52 2007/01/21 23:59:39 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.51 2007/01/20 21:42:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2007/01/21 23:59:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -401,14 +401,12 @@ int
 OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 {
 	va_list ap;
-	int i;
+	int i, len, status;
 	static struct {
 		const char *name;
-		int nargs;
-		int nreturns;
-		char *cmd;
-		int status;
-		int results[8];
+		uint32_t nargs;
+		uint32_t nreturns;
+		uint32_t slots[16];
 	} args = {
 		"interpret",
 		1,
@@ -418,19 +416,31 @@ OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 	ofw_stack();
 	if (nreturns > 8)
 		return -1;
-	if ((i = strlen(cmd)) >= PAGE_SIZE)
+	if ((len = strlen(cmd)) >= PAGE_SIZE)
 		return -1;
-	ofbcopy(cmd, OF_buf, i + 1);
-	args.cmd = OF_buf;
-	args.nargs = nargs;
+	ofbcopy(cmd, OF_buf, len + 1);
+	i = 0;
+	args.slots[i] = (uint32_t)OF_buf;
+	args.nargs = nargs + 1;
 	args.nreturns = nreturns + 1;
+	va_start(ap, nreturns);
+	i++;
+	while (i < args.nargs) {
+		args.slots[i] = (uint32_t)va_arg(ap, uint32_t *);
+		i++;
+	}
+
 	if (openfirmware(&args) == -1)
 		return -1;
-	va_start(ap, nreturns);
-	for (i = 0; i < nreturns; i++)
-		*va_arg(ap, int *) = args.results[i];
+	status = args.slots[i];
+	i++;
+
+	while (i < args.nargs + args.nreturns) {
+		*va_arg(ap, uint32_t *) = args.slots[i];
+		i++;
+	}
 	va_end(ap);
-	return args.status;
+	return status;
 }
 
 /*
@@ -515,17 +525,24 @@ add_model_specifics(prop_dictionary_t dict)
 static void
 copyprops(int node, prop_dictionary_t dict)
 {
+	uint32_t temp;
 
 	prop_dictionary_set_bool(dict, "is_console", 1);
-	if (!OF_to_intprop(dict, node, "width", "width"))
-		OF_to_intprop(dict, console_node, "screen-width", "width");
-	if (!OF_to_intprop(dict, console_node, "height", "height"))
-		OF_to_intprop(dict, console_node, "screen-height", "height");
+	if (!OF_to_intprop(dict, node, "width", "width")) {
+
+		OF_interpret("screen-width", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "width", temp);
+	}
+	if (!OF_to_intprop(dict, console_node, "height", "height")) {
+
+		OF_interpret("screen-height", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "height", temp);
+	}
 	OF_to_intprop(dict, console_node, "linebytes", "linebytes");
 	OF_to_intprop(dict, console_node, "depth", "depth");
 	if (!OF_to_intprop(dict, console_node, "address", "address")) {
 		uint32_t fbaddr = 0;
-			OF_interpret("frame-buffer-adr", 1, 1, &fbaddr);
+			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 		if (fbaddr != 0)
 			prop_dictionary_set_uint32(dict, "address", fbaddr);
 	}
