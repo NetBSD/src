@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.17.2.2 2007/01/06 13:18:16 bouyer Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.17.2.3 2007/01/21 19:12:10 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.17.2.2 2007/01/06 13:18:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.17.2.3 2007/01/21 19:12:10 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -284,34 +284,26 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
-	case KAUTH_PROCESS_RESOURCE:
-		switch ((u_long)arg1) {
-		case KAUTH_REQ_PROCESS_RESOURCE_NICE:
-			if (isroot)
+	case KAUTH_PROCESS_NICE:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		else if ((u_long)arg1 >= p->p_nice)
+			result = KAUTH_RESULT_ALLOW; 
+		break;
+
+	case KAUTH_PROCESS_RLIMIT:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		else {
+			struct rlimit *new_rlimit;
+			u_long which;
+
+			new_rlimit = arg1;
+			which = (u_long)arg2;
+
+			if (new_rlimit->rlim_max <=
+			    p->p_rlimit[which].rlim_max)
 				result = KAUTH_RESULT_ALLOW;
-			else if ((u_long)arg2 >= p->p_nice)
-				result = KAUTH_RESULT_ALLOW; 
-			break;
-
-		case KAUTH_REQ_PROCESS_RESOURCE_RLIMIT:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			else {
-				struct rlimit *new_rlimit;
-				u_long which;
-
-				new_rlimit = arg2;
-				which = (u_long)arg3;
-
-				if (new_rlimit->rlim_max <=
-				    p->p_rlimit[which].rlim_max)
-					result = KAUTH_RESULT_ALLOW;
-			}
-			break;
-
-		default:
-			result = KAUTH_RESULT_DEFER;
-			break;
 		}
 		break;
 
