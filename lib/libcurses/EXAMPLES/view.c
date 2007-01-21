@@ -23,7 +23,7 @@
  * scroll operation worked, and the refresh() code only had to do a
  * partial repaint.
  *
- * $Id: view.c,v 1.1 2007/01/21 11:38:59 blymn Exp $
+ * $Id: view.c,v 1.1.2.1 2007/01/21 12:05:54 blymn Exp $
  */
 
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*   $NetBSD: keymap.h,v 1.1 2007/01/21 11:38:59 blymn Exp $ */
+/*   $NetBSD: keymap.h,v 1.1.2.1 2007/01/21 12:05:54 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keymap.h,v 1.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: keymap.h,v 1.1.2.1 2007/01/21 12:05:54 blymn Exp $");
 #endif                          /* not lint */
 
 /* keymap related stuff */
