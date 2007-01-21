@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.h,v 1.7 2005/12/11 12:20:52 christos Exp $	*/
+/*	$NetBSD: rijndael-api-fst.h,v 1.8 2007/01/21 23:00:08 cbiere Exp $	*/
 
 /**
  * rijndael-api-fst.h
@@ -90,16 +90,16 @@ typedef struct {                    /* changed order of the components */
 
 /*  Function prototypes  */
 
-int rijndael_makeKey(keyInstance *, BYTE, int, char *);
+int rijndael_makeKey(keyInstance *, BYTE, int, const char *);
 
-int rijndael_cipherInit(cipherInstance *, BYTE, char *);
+int rijndael_cipherInit(cipherInstance *, BYTE, const char *);
 
-int rijndael_blockEncrypt(cipherInstance *, keyInstance *, BYTE *, int, BYTE *);
+int rijndael_blockEncrypt(cipherInstance *, keyInstance *, const BYTE *, int, BYTE *);
 
-int rijndael_padEncrypt(cipherInstance *, keyInstance *, BYTE *, int, BYTE *);
+int rijndael_padEncrypt(cipherInstance *, keyInstance *, const BYTE *, int, BYTE *);
 
-int rijndael_blockDecrypt(cipherInstance *, keyInstance *, BYTE *, int, BYTE *);
+int rijndael_blockDecrypt(cipherInstance *, keyInstance *, const BYTE *, int, BYTE *);
 
-int rijndael_padDecrypt(cipherInstance *, keyInstance *, BYTE *, int, BYTE *);
+int rijndael_padDecrypt(cipherInstance *, keyInstance *, const BYTE *, int, BYTE *);
 
 #endif /* __RIJNDAEL_API_FST_H */
