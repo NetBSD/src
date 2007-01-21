@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.37 2007/01/21 14:52:20 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.38 2007/01/21 16:29:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.37 2007/01/21 14:52:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.38 2007/01/21 16:29:31 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -767,8 +767,10 @@ puffs_inactive(void *v)
 	 * user server thinks it's gone?  then don't be afraid care,
 	 * node's life was already all it would ever be
 	 */
-	if (vnrefs == 0)
+	if (vnrefs == 0) {
+		pnode->pn_stat |= PNODE_NOREFS;
 		vrecycle(ap->a_vp, NULL, ap->a_l);
+	}
 
 	return 0;
 }
@@ -919,11 +921,13 @@ puffs_fsync(void *v)
 	struct puffs_mount *pmp;
 	struct puffs_vnreq_fsync *fsync_argp;
 	struct vnode *vp;
+	struct puffs_node *pn;
 	int pflags, error, dofaf;
 
 	PUFFS_VNREQ(fsync);
 
 	vp = ap->a_vp;
+	pn = VPTOPP(vp);
 	pmp = MPTOPUFFSMP(vp->v_mount);
 
 	pflags = PGO_CLEANIT;
@@ -941,11 +945,11 @@ puffs_fsync(void *v)
 
 	/*
 	 * HELLO!  We exit already here if the user server does not
-	 * support fsync.  Otherwise we continue to issue fsync()
-	 * forward.
+	 * support fsync OR if we should call fsync for a node which
+	 * has references neither in the kernel or the fs server.
+	 * Otherwise we continue to issue fsync() forward.
 	 */
-
-	if (!EXISTSOP(pmp, FSYNC))
+	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_NOREFS))
 		return 0;
 
 	dofaf = (ap->a_flags & FSYNC_WAIT) == 0;
@@ -1686,6 +1690,7 @@ puffs_strategy(void *v)
 	} */ *ap = v;
 	struct puffs_mount *pmp;
 	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pn;
 	struct puffs_vnreq_read *read_argp = NULL;
 	struct puffs_vnreq_write *write_argp = NULL;
 	struct buf *bp;
@@ -1697,11 +1702,22 @@ puffs_strategy(void *v)
 	bp = ap->a_bp;
 	error = 0;
 	dowritefaf = 0;
+	pn = VPTOPP(vp);
 
-	if ((bp->b_flags & B_READ) && !EXISTSOP(pmp, READ))
-		return EOPNOTSUPP;
-	if ((bp->b_flags & B_WRITE) && !EXISTSOP(pmp, WRITE))
-		return EOPNOTSUPP;
+	if (((bp->b_flags & B_READ) && !EXISTSOP(pmp, READ))
+	    || (((bp->b_flags & B_READ) == 0) && !EXISTSOP(pmp, WRITE))) {
+		error = EOPNOTSUPP;
+		goto out;
+	}
+
+	/*
+	 * Short-circuit optimization: don't flush buffer in between
+	 * VOP_INACTIVE and VOP_RECLAIM in case the node has no references.
+	 */
+	if (pn->pn_stat & PNODE_NOREFS) {
+		bp->b_resid = 0;
+		goto out;
+	}
 
 #ifdef DIAGNOSTIC
 	if (bp->b_resid > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)
@@ -1802,7 +1818,7 @@ puffs_strategy(void *v)
 	if (write_argp && !dowritefaf)
 		free(write_argp, M_PUFFS);
 
-	biodone(ap->a_bp);
+	biodone(bp);
 	return error;
 }
 
