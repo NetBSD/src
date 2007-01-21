@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.37 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: viaide.c,v 1.38 2007/01/21 05:00:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.37 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.38 2007/01/21 05:00:34 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,11 @@ static const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC8111_IDE,
 	  0,
 	  "Advanced Micro Devices AMD8111 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_AMD_CS5536_IDE,
+	  0,
+	  "Advanced Micro Devices CS5536 IDE Controller",
 	  via_chip_map
 	},
 	{ 0,
