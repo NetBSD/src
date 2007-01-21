@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.12 2006/02/05 17:39:52 jdc Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.12.6.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -11,17 +11,17 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	must display the following acknowledgement:
+ *		This product includes software developed by the NetBSD
+ *		Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *	contributors may be used to endorse or promote products derived
+ *	from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,16 +38,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.12 2006/02/05 17:39:52 jdc Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.12.6.1 2007/01/21 11:38:59 blymn Exp $");
 #endif				/* not lint */
 
-/* 
+/*
  * Based on deleteln.c and insertln.c -
  * Copyright (c) 1981, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  */
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "curses.h"
 #include "curses_private.h"
@@ -75,6 +76,9 @@ winsdelln(WINDOW *win, int lines)
 {
 	int     y, i, last;
 	__LINE *temp;
+#ifdef HAVE_WCHAR
+	__LDATA *lp;
+#endif /* HAVE_WCHAR */
 	attr_t	attr;
 
 #ifdef DEBUG
@@ -120,6 +124,16 @@ winsdelln(WINDOW *win, int lines)
 			for (i = 0; i < win->maxx; i++) {
 				win->lines[y]->line[i].ch = win->bch;
 				win->lines[y]->line[i].attr = attr;
+#ifndef HAVE_WCHAR
+				win->lines[y]->line[i].ch = win->bch;
+#else
+				win->lines[y]->line[i].ch
+					= ( wchar_t )btowc(( int ) win->bch );
+				lp = &win->lines[y]->line[i];
+				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
+					return ERR;
+				SET_WCOL( *lp, 1 );
+#endif /* HAVE_WCHAR */
 			}
 		for (y = last; y >= win->cury; --y)
 			__touchline(win, y, 0, (int) win->maxx - 1);
@@ -154,6 +168,16 @@ winsdelln(WINDOW *win, int lines)
 			for (i = 0; i < win->maxx; i++) {
 				win->lines[y]->line[i].ch = win->bch;
 				win->lines[y]->line[i].attr = attr;
+#ifndef HAVE_WCHAR
+				win->lines[y]->line[i].ch = win->bch;
+#else
+				win->lines[y]->line[i].ch
+					= (wchar_t)btowc((int) win->bch);
+				lp = &win->lines[y]->line[i];
+				SET_WCOL( *lp, 1 );
+				if (_cursesi_copy_nsp(win->bnsp, lp) == ERR)
+					return ERR;
+#endif /* HAVE_WCHAR */
 			}
 		for (y = win->cury; y < last; y++)
 			__touchline(win, y, 0, (int) win->maxx - 1);

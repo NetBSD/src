@@ -1,6 +1,0 @@
-Individual driver attachments here should go away, replaced by use of
-the "direct config ISA" infrastructure; see the block comment above
-"struct isa_knowndev" in sys/dev/isa/isavar.h
-
-
-

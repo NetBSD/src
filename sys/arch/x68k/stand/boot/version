@@ -1,9 +1,0 @@
-$NetBSD: version,v 1.2 2001/11/09 19:53:16 scw Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-0.3:	xxboot, ancient monolithic bootstrap program.
-1.0:	Initial version of the libsa-based bootstrap loader.
-1.1:	loadfile() update to avoid backwards seeks for ELF Program Headers.

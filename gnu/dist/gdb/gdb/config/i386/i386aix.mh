@@ -1,9 +1,0 @@
-# OBSOLETE # Host: IBM PS/2 (i386) running AIX PS/2
-# OBSOLETE 
-# OBSOLETE XM_FILE= xm-i386aix.h
-# OBSOLETE 
-# OBSOLETE NAT_FILE= nm-i386aix.h
-# OBSOLETE NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o i386aix-nat.o
-# OBSOLETE 
-# OBSOLETE # Use gcc. Only coff output can be debugged
-# OBSOLETE CC=gcc

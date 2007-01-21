@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtobot.c,v 1.18 2006/02/05 17:39:52 jdc Exp $	*/
+/*	$NetBSD: clrtobot.c,v 1.18.6.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -8,13 +8,13 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	may be used to endorse or promote products derived from this software
+ *	without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)clrtobot.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtobot.c,v 1.18 2006/02/05 17:39:52 jdc Exp $");
+__RCSID("$NetBSD: clrtobot.c,v 1.18.6.1 2007/01/21 11:38:59 blymn Exp $");
 #endif
 #endif				/* not lint */
 
+#include <stdlib.h>
 #include "curses.h"
 #include "curses_private.h"
 
@@ -83,14 +84,28 @@ wclrtobot(WINDOW *win)
 	for (y = starty; y < win->maxy; y++) {
 		minx = -1;
 		end = &win->lines[y]->line[win->maxx];
-		for (sp = &win->lines[y]->line[startx]; sp < end; sp++)
+		for (sp = &win->lines[y]->line[startx]; sp < end; sp++) {
+#ifndef HAVE_WCHAR
 			if (sp->ch != win->bch || sp->attr != attr) {
+#else
+			if (sp->ch != (wchar_t)btowc((int) win->bch) ||
+					sp->attr != 0 || sp->nsp ) {
+#endif /* HAVE_WCHAR */
 				maxx = sp;
 				if (minx == -1)
 					minx = sp - win->lines[y]->line;
+#ifdef HAVE_WCHAR
+				sp->ch = ( wchar_t )btowc(( int ) win->bch);
+				if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+					return ERR;
+				SET_WCOL( *sp, 1 );
+#else
 				sp->ch = win->bch;
+#endif /* HAVE_WCHAR */
 				sp->attr = attr;
 			}
+		}
+
 		if (minx != -1)
 			__touchline(win, y, minx, maxx - win->lines[y]->line);
 		startx = 0;

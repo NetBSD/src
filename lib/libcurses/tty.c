@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.38 2006/08/23 19:23:55 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.38.4.1 2007/01/21 11:38:59 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.38 2006/08/23 19:23:55 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.38.4.1 2007/01/21 11:38:59 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -629,4 +629,38 @@ killchar(void)
 	if (_cursesi_screen->notty == TRUE)
 		return 0;
 	return _cursesi_screen->baset.c_cc[VKILL];
+}
+
+/*
+ * erasewchar --
+ *     Return the wide character of the erase key.
+ */
+int
+erasewchar( wchar_t *ch )
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	if (_cursesi_screen->notty == TRUE)
+		return ERR;
+	*ch = _cursesi_screen->baset.c_cc[VERASE];
+	return OK;
+#endif /* HAVE_WCHAR */
+}
+
+/*
+ * killwchar --
+ *     Return the wide character of the kill key.
+ */
+int
+killwchar( wchar_t *ch )
+{
+#ifndef HAVE_WCHAR
+	return ERR;
+#else
+	if (_cursesi_screen->notty == TRUE)
+		return 0;
+	*ch = _cursesi_screen->baset.c_cc[VKILL];
+	return OK;
+#endif /* HAVE_WCHAR */
 }

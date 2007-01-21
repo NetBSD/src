@@ -1,8 +1,0 @@
-# $NetBSD: USL-5P,v 1.2 2006/09/11 13:54:14 nonaka Exp $
-#
-# USL-5P
-#
-
-include "arch/landisk/conf/GENERIC.in"
-
-wdc0	at obio? port 0x14000000 irq 10		# CF
