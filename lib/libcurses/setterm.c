@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.39.12.2 2007/01/21 17:43:36 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.39.12.3 2007/01/21 22:31:50 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.39.12.2 2007/01/21 17:43:36 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.39.12.3 2007/01/21 22:31:50 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -412,12 +412,13 @@ zap(SCREEN *screen)
 		*(tmp + 1) = *(namp + 1);
 		*sp++ = t_agetstr(screen->cursesi_genbuf, tmp);
 #ifdef DEBUG
-		__CTRACE(__CTRACE_INIT, "%2.2s = %s",
-		    namp, sp[-1] == NULL ? "NULL\n" : "\"");
-		if (sp[-1] != NULL) {
+		if (sp[-1] == NULL) 
+			__CTRACE(__CTRACE_INIT, "%2.2s = NULL\n", namp);
+		else {
+			__CTRACE(__CTRACE_INIT, "%2.2s = \"", namp);
 			for (cp = sp[-1]; *cp; cp++)
 				__CTRACE(__CTRACE_INIT, "%s", unctrl(*cp));
-			__CTRACE(__CTRACE_INIT, "\n");
+			__CTRACE(__CTRACE_INIT, "\"\n");
 		}
 #endif
 		namp += 2;
