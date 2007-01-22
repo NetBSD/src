@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.30.6.4 2007/01/22 10:43:28 blymn Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.30.6.5 2007/01/22 11:14:05 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,12 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.30.6.4 2007/01/22 10:43:28 blymn Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.30.6.5 2007/01/22 11:14:05 jdc Exp $");
 #endif
 #endif				/* not lint */
 
 #include <stdlib.h>
-#include <assert.h>
 #include "curses.h"
 #include "curses_private.h"
 #ifdef DEBUG

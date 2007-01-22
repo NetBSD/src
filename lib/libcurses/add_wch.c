@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.1.2.4 2007/01/22 10:43:28 blymn Exp $ */
+/*   $NetBSD: add_wch.c,v 1.1.2.5 2007/01/22 11:14:05 jdc Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,11 +36,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.1.2.4 2007/01/22 10:43:28 blymn Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.1.2.5 2007/01/22 11:14:05 jdc Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
-#include <assert.h>
 #include "curses.h"
 #include "curses_private.h"
 #ifdef DEBUG
