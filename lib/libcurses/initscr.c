@@ -1,4 +1,4 @@
-/*	$NetBSD: initscr.c,v 1.28 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: initscr.c,v 1.29 2007/01/22 21:14:53 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)initscr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: initscr.c,v 1.28 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: initscr.c,v 1.29 2007/01/22 21:14:53 jdc Exp $");
 #endif
 #endif	/* not lint */
 
@@ -54,7 +54,6 @@ initscr(void)
 	const char *sp;
 
 #ifdef DEBUG
-	__CTRACE_init();
 	__CTRACE(__CTRACE_INIT, "initscr\n");
 #endif
 
