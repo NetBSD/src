@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.43 2007/01/19 21:47:32 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.44 2007/01/22 13:51:54 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2516,4 +2516,15 @@ sys/kern/kern_sig.c				1.241
 	Plug memory leak in __sigtimedwait1(): make sure to free `waitset'
 	on error return path.
 	[enami, ticket #1651]
+
+sys/arch/xen/include/cpufunc.h			1.13
+sys/arch/xen/include/xen3-public/io/ring.h	1.6
+
+	Avoid block I/O stalls in Xen 3 guests on SMP systems.
+	[bouyer, ticket #1652]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.15
+
+	PR port-xen/34005: NetBSD Xen3 domU-s can get stuck waiting for I/O.
+	[bouyer, ticket #1653]
 
