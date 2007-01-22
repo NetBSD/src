@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.18.18.1 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: getstr.c,v 1.18.18.2 2007/01/22 10:43:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -29,13 +29,12 @@
  * SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.18.18.1 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.18.18.2 2007/01/22 10:43:28 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -188,7 +187,7 @@ __wgetnstr(WINDOW *win, char *str, int n)
 				}
 				if (c == KEY_BACKSPACE || c == KEY_LEFT) {
 					/* getch() displays the key sequence */
-					mvwaddch(win, win->cury, win->curx - 1, 
+					mvwaddch(win, win->cury, win->curx - 1,
 					    ' ');
 					mvwaddch(win, win->cury, win->curx - 2,
 					    ' ');

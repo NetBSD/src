@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.20.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: insch.c,v 1.20.6.3 2007/01/22 10:43:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.20.6.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: insch.c,v 1.20.6.3 2007/01/22 10:43:28 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -109,7 +109,7 @@ winsch(WINDOW *win, chtype ch)
 #ifdef HAVE_WCHAR
 	if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
 		return ERR;
-/* XXX: set wide cols... */
+	SET_WCOL(*temp1, 1);
 #endif /* HAVE_WCHAR */
 	temp1->attr = (attr_t) ch & __ATTRIBUTES;
 	if (temp1->attr & __COLOR)
