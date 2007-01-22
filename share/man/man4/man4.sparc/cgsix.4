@@ -1,4 +1,4 @@
-.\"	$NetBSD: cgsix.4,v 1.11 2003/08/07 10:31:08 agc Exp $
+.\"	$NetBSD: cgsix.4,v 1.12 2007/01/22 18:11:56 jdc Exp $
 .\"
 .\" Copyright 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)cgsix.4	8.1 (Berkeley) 2/16/94
 .\"
-.Dd September 11, 2002
+.Dd January 17, 2007
 .Dt CGSIX 4 sparc
 .Os
 .Sh NAME
@@ -52,8 +52,8 @@ It supports the minimal ioctl's needed to run
 .Pp
 There are several versions of the
 .Nm
-board.  The Sun part numbers and
-board types are:
+board.
+The Sun part numbers and board types are:
 .Pp
 .Bl -tag -width "501-1717, 501-2018, 501-2039" -compact
 .It "501-1374, 501-1532"
@@ -85,29 +85,35 @@ The
 and
 .Sq TGX
 cards have 1Mb of on-board memory and support a maximum graphics resolution
-of 1152x900.  The
+of 1152x900.
+The
 .Sq GX+
 cards have 4Mb of on-board memory and support a maximum resolution of
-1280x1024.  The
+1280x1024.
+The
 .Sq TGX+
 cards have 4Mb
-of on-board memory and support a maximum resolution of 1600x1280.  The
+of on-board memory and support a maximum resolution of 1600x1280.
+The
 .Sq TGX
 (Turbo GX) cards are faster than the
 .Sq GX
 cards.
 .Pp
-The number of supported resolutions varies by card type.  All cards support a
-resolution of 1152x900 at 66Hz.  All but the P4 and double-width cards support
-a resolution of 1152x900 at 76Hz.  The cards default to a resolution dependent
-on the attached monitor (usually 1152x900).
+The number of supported resolutions varies by card type.
+All cards support a resolution of 1152x900 at 66Hz.
+All but the P4 and double-width cards support a resolution of 1152x900
+at 76Hz.
+The cards default to a resolution dependent on the attached monitor
+(usually 1152x900).
 .Pp
 It is only possible to change the resolution of a
 .Nm
-card from the PROM before the operating system is loaded.  For the primary
-card, this can be done using the
+card from the PROM before the operating system is loaded.
+For the primary card, this can be done using the
 .Sq output-device
-PROM field.  For example, for a
+PROM field.
+For example, for a
 .Sq TGX+
 card, the following PROM command will set the resolution to 1280x1024 at
 76Hz:
@@ -141,7 +147,8 @@ For Sun4c machines, the device-path above would be:
 .Ed
 .Pp
 For Sun-4 and Sun-3 systems, it is only possible to change PROM fields by
-altering byte values.  For these systems, it is probably easier to use the
+altering byte values.
+For these systems, it is probably easier to use the
 .Xr eeprom 8
 command to set the
 .Va scrsize
@@ -156,6 +163,7 @@ field to the desired resolution.
 .Xr cgthree 4 ,
 .Xr cgfour 4 ,
 .Xr cgeight 4 ,
+.Xr cgfourteen 4 ,
 .Xr tcx 4 ,
 .Xr eeprom 8
 .Sh BUGS
@@ -164,6 +172,12 @@ The double-width
 and the
 .Sq GX+
 cards are not compatible with UltraSPARC machines.
+.Pp
+On Sun-4 systems using a P4 GX card as console, the
+.Va console
+field in the PROM must be set to
+.Va p4opt ,
+otherwise the card will not be recognised as the console output device.
 .Pp
 Several firmware revisions on
 .Nm
