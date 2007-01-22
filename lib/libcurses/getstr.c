@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.18.18.2 2007/01/22 10:43:28 blymn Exp $	*/
+/*	$NetBSD: getstr.c,v 1.18.18.3 2007/01/22 11:01:12 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -29,12 +29,13 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.18.18.2 2007/01/22 10:43:28 blymn Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.18.18.3 2007/01/22 11:01:12 jdc Exp $");
 #endif
 #endif				/* not lint */
 
