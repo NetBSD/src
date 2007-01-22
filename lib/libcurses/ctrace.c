@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.17 2007/01/21 13:25:36 jdc Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.18 2007/01/22 21:14:53 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.17 2007/01/21 13:25:36 jdc Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.18 2007/01/22 21:14:53 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -57,6 +57,8 @@ static FILE *tracefp = NULL;		/* Curses debugging file descriptor. */
 
 static int tracemask;	/* Areas of trace output we want. */
 
+static int init_done = 0;
+
 void
 __CTRACE_init()
 {
@@ -75,6 +77,7 @@ __CTRACE_init()
 	tf = getenv("CURSES_TRACE_FILE");
 	if (tf == NULL || strcmp( tf, "<none>"))
 		tracefp = fopen(tf ? tf : TFILE, "w");
+	init_done = 1;
 	__CTRACE(__CTRACE_ALL, "Trace mask: 0x%08x\n", tracemask);
 }
 
@@ -85,6 +88,8 @@ __CTRACE(int area, const char *fmt,...)
         static int seencr = 1;
 	va_list ap;
 
+	if (!init_done)
+		__CTRACE_init();
 	if (tracefp == NULL || !(tracemask & area)) {
 		return;
 	}
