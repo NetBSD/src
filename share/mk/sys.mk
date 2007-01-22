@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.88 2006/08/26 19:57:03 matt Exp $
+#	$NetBSD: sys.mk,v 1.89 2007/01/22 21:49:07 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -44,7 +44,8 @@ COMPILE.c?=	${CC} ${CFLAGS} ${CPPFLAGS} -c
 LINK.c?=	${CC} ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 CXX?=		c++
-CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes}
+CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-std=gnu99}
+
 COMPILE.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} -c
 LINK.cc?=	${CXX} ${CXXFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
