@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.20 2007/01/21 23:00:08 cbiere Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.21 2007/01/22 01:38:33 cbiere Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.20 2007/01/21 23:00:08 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.21 2007/01/22 01:38:33 cbiere Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -128,10 +128,15 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 	case MODE_CBC:
 		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
-			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
-			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
-			((u_int32_t*)block)[2] = ((u_int32_t*)input)[2] ^ ((u_int32_t*)iv)[2];
-			((u_int32_t*)block)[3] = ((u_int32_t*)input)[3] ^ ((u_int32_t*)iv)[3];
+			const u_int32_t *src, *iv32;
+			u_int32_t *dst;
+			src = (const uint32_t *)input;
+			iv32 = (const u_int32_t *)iv;
+			dst = (u_int32_t *)block;
+			dst[0] = src[0] ^ iv32[0];
+			dst[1] = src[1] ^ iv32[1];
+			dst[2] = src[2] ^ iv32[2];
+			dst[3] = src[3] ^ iv32[3];
 			rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 			iv = outBuffer;
 			input += 16;
@@ -204,10 +209,15 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 	case MODE_CBC:
 		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
-			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
-			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
-			((u_int32_t*)block)[2] = ((u_int32_t*)input)[2] ^ ((u_int32_t*)iv)[2];
-			((u_int32_t*)block)[3] = ((u_int32_t*)input)[3] ^ ((u_int32_t*)iv)[3];
+			const u_int32_t *src, *iv32;
+			u_int32_t *dst;
+			src = (const uint32_t *)input;
+			iv32 = (const u_int32_t *)iv;
+			dst = (u_int32_t *)block;
+			dst[0] = src[0] ^ iv32[0];
+			dst[1] = src[1] ^ iv32[1];
+			dst[2] = src[2] ^ iv32[2];
+			dst[3] = src[3] ^ iv32[3];
 			rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 			iv = outBuffer;
 			input += 16;
