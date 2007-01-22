@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.26 2007/01/16 08:51:12 tron Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.27 2007/01/22 13:52:55 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -172,4 +172,10 @@ sys/arch/xen/xen/xbd_xenbus.c			1.17
 
 	Fix occasional panics in NetBSD domUs caused by a race condition.
 	[bouyer, ticket #1632]
+
+sys/arch/xen/include/cpufunc.h			1.13
+sys/arch/xen/include/xen3-public/io/ring.h	1.6
+
+	Avoid block I/O stalls in Xen 3 guests on SMP systems.
+	[bouyer, ticket #1652]
 
