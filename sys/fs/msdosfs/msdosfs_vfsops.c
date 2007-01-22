@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.42 2007/01/20 23:34:09 christos Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.43 2007/01/22 16:07:33 reinoud Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.42 2007/01/20 23:34:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.43 2007/01/22 16:07:33 reinoud Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -976,7 +976,7 @@ loop:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		/*
 		 * If the vnode that we are about to sync is no longer
-		 * assoicated with this mount point, start over.
+		 * associated with this mount point, start over.
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
