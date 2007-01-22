@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.3 2003/08/07 11:17:04 agc Exp $	*/
+/*	$NetBSD: dump.c,v 1.4 2007/01/22 11:46:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,6 +41,7 @@ static char sccsid[] = "@(#)dump.c	8.1 (Berkeley) 8/31/94";
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static void
 parse(fp)
