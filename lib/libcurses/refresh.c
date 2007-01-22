@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.63.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.63.6.3 2007/01/22 10:43:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.63.6.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.63.6.3 2007/01/22 10:43:28 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: refresh.c,v 1.63.6.2 2007/01/21 17:43:35 jdc Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
-#include <assert.h>
 
 static void	domvcur __P((int, int, int, int));
 static int	makech __P((int));
