@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.781 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.782 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -27,3 +27,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		the secmodel. [elad 20070110]
 	GCC: Updated to version 4.1.2-20070110.  [mrg 20070111]
 	acpitools: added from FreeBSD via fvdl [christos 20070114]
+	scsictl(8): added setspeed command, to set the highest speed that the
+		optical drive should use for reading data,
+		contributed by Kimura Fuyuki. [bouyer 20070122]
