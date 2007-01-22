@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.30.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.30.6.3 2007/01/22 07:42:17 jdc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -29,19 +29,21 @@
  * SUCH DAMAGE.
  */
 
-#include <assert.h>
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.30.6.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.30.6.3 2007/01/22 07:42:17 jdc Exp $");
 #endif
 #endif				/* not lint */
 
 #include <stdlib.h>
 #include "curses.h"
 #include "curses_private.h"
+#ifdef DEBUG
+#include <assert.h>
+#endif
 
 #define	SYNCH_IN	{y = win->cury; x = win->curx;}
 #define	SYNCH_OUT	{win->cury = y; win->curx = x;}
