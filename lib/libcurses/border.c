@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.8.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: border.c,v 1.8.6.3 2007/01/22 11:42:49 jdc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.8.6.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: border.c,v 1.8.6.3 2007/01/22 11:42:49 jdc Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -141,12 +141,20 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 		win->lines[i]->line[0].attr = (attr_t) left & __ATTRIBUTES;
 		win->lines[i]->line[endx].ch = (wchar_t) right & __CHARTEXT;
 		win->lines[i]->line[endx].attr = (attr_t) right & __ATTRIBUTES;
+#ifdef HAVE_WCHAR
+		SET_WCOL(win->lines[i]->line[0], 1);
+		SET_WCOL(win->lines[i]->line[endx], 1);
+#endif
 	}
 	for (i = 1; i < endx; i++) {
 		fp[i].ch = (wchar_t) top & __CHARTEXT;
 		fp[i].attr = (attr_t) top & __ATTRIBUTES;
 		lp[i].ch = (wchar_t) bottom & __CHARTEXT;
 		lp[i].attr = (attr_t) bottom & __ATTRIBUTES;
+#ifdef HAVE_WCHAR
+		SET_WCOL(fp[i], 1);
+		SET_WCOL(lp[i], 1);
+#endif
 	}
 
 	/* Corners */
@@ -160,6 +168,12 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 		lp[0].attr = (attr_t) botleft & __ATTRIBUTES;
 		lp[endx].ch = (wchar_t) botright & __CHARTEXT;
 		lp[endx].attr = (attr_t) botright & __ATTRIBUTES;
+#ifdef HAVE_WCHAR
+		SET_WCOL(fp[0], 1);
+		SET_WCOL(fp[endx], 1);
+		SET_WCOL(lp[0], 1);
+		SET_WCOL(lp[endx], 1);
+#endif
 	}
 	__touchwin(win);
 	return (OK);
