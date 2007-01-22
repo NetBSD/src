@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.63.6.3 2007/01/22 10:43:28 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.63.6.4 2007/01/22 11:44:32 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.63.6.3 2007/01/22 10:43:28 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.63.6.4 2007/01/22 11:44:32 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -663,24 +663,23 @@ makech(wy)
 #ifdef DEBUG
 #if HAVE_WCHAR
 	{
-		int y, x;
+		int x;
 		__LDATA *lp, *vlp;
 
 		__CTRACE(__CTRACE_REFRESH,
 		    "[makech-before]wy=%d,curscr(%p)-__virtscr(%p)\n",
 		    wy, curscr, __virtscr);
-		for ( y = 0; y < curscr->maxy; y++ )
-			for ( x = 0; x < curscr->maxx; x++ ) {
-				lp = &curscr->lines[ y ]->line[ x ];
-				vlp = &__virtscr->lines[ y ]->line[ x ];
-				__CTRACE(__CTRACE_REFRESH,
-				    "[%d,%d](%x,%x,%x,%x,%p)-"
-				    "(%x,%x,%x,%x,%p)\n",
-				    y, x, lp->ch, lp->attr,
-				    win->bch, win->battr, lp->nsp,
-				    vlp->ch, vlp->attr,
-				    win->bch, win->battr, vlp->nsp);
-			}
+		for (x = 0; x < curscr->maxx; x++) {
+			lp = &curscr->lines[wy]->line[x];
+			vlp = &__virtscr->lines[wy]->line[x];
+			__CTRACE(__CTRACE_REFRESH,
+			    "[%d,%d](%x,%x,%x,%x,%p)-"
+			    "(%x,%x,%x,%x,%p)\n",
+			    wy, x, lp->ch, lp->attr,
+			    win->bch, win->battr, lp->nsp,
+			    vlp->ch, vlp->attr,
+			    win->bch, win->battr, vlp->nsp);
+		}
 	}
 #endif /* HAVE_WCHAR */
 #endif /* DEBUG */
@@ -1154,24 +1153,23 @@ makech(wy)
 #ifdef DEBUG
 #if HAVE_WCHAR
 	{
-		int y, x;
+		int x;
 		__LDATA *lp, *vlp;
 
 		__CTRACE(__CTRACE_REFRESH,
 		    "makech-after: curscr(%p)-__virtscr(%p)\n",
 		    curscr, __virtscr );
-		for ( y = 0; y < curscr->maxy; y++ )
-			for ( x = 0; x < curscr->maxx; x++ ) {
-				lp = &curscr->lines[ y ]->line[ x ];
-				vlp = &__virtscr->lines[ y ]->line[ x ];
-				__CTRACE(__CTRACE_REFRESH,
-				    "[%d,%d](%x,%x,%x,%x,%p)-"
-				    "(%x,%x,%x,%x,%p)\n",
-				    y, x, lp->ch, lp->attr,
-				    win->bch, win->battr, lp->nsp,
-				    vlp->ch, vlp->attr,
-				    win->bch, win->battr, vlp->nsp );
-			}
+		for (x = 0; x < curscr->maxx; x++) {
+			lp = &curscr->lines[wy]->line[x];
+			vlp = &__virtscr->lines[wy]->line[x];
+			__CTRACE(__CTRACE_REFRESH,
+			    "[%d,%d](%x,%x,%x,%x,%p)-"
+			    "(%x,%x,%x,%x,%p)\n",
+			    wy, x, lp->ch, lp->attr,
+			    win->bch, win->battr, lp->nsp,
+			    vlp->ch, vlp->attr,
+			    win->bch, win->battr, vlp->nsp);
+		}
 	}
 #endif /* HAVE_WCHAR */
 #endif /* DEBUG */
