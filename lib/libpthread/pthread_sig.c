@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.48 2006/12/23 05:14:47 ad Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.49 2007/01/22 15:06:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.48 2006/12/23 05:14:47 ad Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.49 2007/01/22 15:06:31 christos Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -940,7 +940,7 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 void
 pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 {
-	ucontext_t *uc, *olduc;
+	ucontext_t *uc, * volatile olduc;
 	struct sigaction act;
 	siginfo_t *siginfop;
 	caddr_t sp;
