@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.52 2007/01/21 23:59:39 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53 2007/01/22 00:10:27 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.52 2007/01/21 23:59:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53 2007/01/22 00:10:27 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -517,7 +517,7 @@ add_model_specifics(prop_dictionary_t dict)
 
 	node = OF_finddevice("/");
 
-	if (of_compatible(node, bl_rev_models)) {
+	if (of_compatible(node, bl_rev_models) != -1) {
 		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
 	}
 }
