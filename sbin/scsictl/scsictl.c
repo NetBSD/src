@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.28 2005/06/02 00:13:10 lukem Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.29 2007/01/22 20:56:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.28 2005/06/02 00:13:10 lukem Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.29 2007/01/22 20:56:46 bouyer Exp $");
 #endif
 
 
@@ -98,6 +98,7 @@ void	device_tur(int, char *[]);
 void	device_getcache(int, char *[]);
 void	device_setcache(int, char *[]);
 void	device_flushcache(int, char *[]);
+void	device_setspeed(int, char *[]);
 
 struct command device_commands[] = {
 	{ "defects",	"[primary] [grown] [block|byte|physical]",
@@ -117,6 +118,7 @@ struct command device_commands[] = {
 	{ "getcache",	"",			device_getcache },
 	{ "setcache",	"none|r|w|rw [save]",	device_setcache },
 	{ "flushcache",	"",			device_flushcache },
+	{ "setspeed",	"[speed]",		device_setspeed },
 	{ NULL,		NULL,			NULL },
 };
 
@@ -741,7 +743,7 @@ device_reassign(int argc, char *argv[])
 /*
  * device_release:
  *
- *      Issue a RELEASE command to a SCSI drevice
+ *	Issue a RELEASE command to a SCSI device.
  */
 #ifndef	SCSI_RELEASE
 #define	SCSI_RELEASE	0x17
@@ -769,7 +771,7 @@ device_release(int argc, char *argv[])
 /*
  * device_reserve:
  *
- *      Issue a RESERVE command to a SCSI drevice
+ *	Issue a RESERVE command to a SCSI device.
  */
 #ifndef	SCSI_RESERVE
 #define	SCSI_RESERVE	0x16
@@ -925,7 +927,7 @@ device_setcache(int argc, char *argv[])
 /*
  * device_flushcache:
  *
- *      Issue a FLUSH CACHE command to a SCSI drevice
+ *	Issue a FLUSH CACHE command to a SCSI device.
  */
 #ifndef	SCSI_FLUSHCACHE
 #define	SCSI_FLUSHCACHE	0x35
@@ -944,6 +946,46 @@ device_flushcache(int argc, char *argv[])
 	cmd.opcode = SCSI_FLUSHCACHE;
 
 	scsi_command(fd, &cmd, sizeof(cmd), NULL, 0, 10000, 0);
+
+	return;
+}
+
+/*
+ * device_setspeed:
+ *
+ *	Set rotation speed to a CD/DVD drive.
+ */
+void
+device_setspeed(int argc, char *argv[])
+{
+	u_char cmd[11];
+	u_char pd[28];
+	u_int32_t speed;
+
+	if (argc != 1)
+		usage();
+
+	speed = atoi(argv[0]) * 177;
+
+	memset(&pd, 0, sizeof(pd));
+	if (speed == 0)
+		pd[0] = 4; /* restore drive defaults */
+	pd[8] = 0xff;
+	pd[9] = 0xff;
+	pd[10] = 0xff;
+	pd[11] = 0xff;
+	pd[12] = pd[20] = (speed >> 24) & 0xff;
+	pd[13] = pd[21] = (speed >> 16) & 0xff;
+	pd[14] = pd[22] = (speed >> 8) & 0xff;
+	pd[15] = pd[23] = speed & 0xff;
+	pd[18] = pd[26] = 1000 >> 8;
+	pd[19] = pd[27] = 1000 & 0xff;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd[0] = 0xb6;
+	cmd[10] = sizeof(pd);
+
+	scsi_command(fd, &cmd, sizeof(cmd), pd, sizeof(pd), 10000, SCCMD_WRITE);
 
 	return;
 }
@@ -1047,7 +1089,7 @@ device_stop(int argc, char *argv[])
 /*
  * device_tur:
  *
- *      Issue a TEST UNIT READY to a SCSI drevice
+ *	Issue a TEST UNIT READY to a SCSI device.
  */
 void
 device_tur(int argc, char *argv[])
