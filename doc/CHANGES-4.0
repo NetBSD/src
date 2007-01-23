@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.52 2007/01/23 18:43:32 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.53 2007/01/23 22:42:00 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -981,6 +981,6 @@ sys/dev/usb/usbdevs				1.450
 sys/dev/usb/usbdevs.h				regen
 sys/dev/usb/usbdevs_data.h			regen
 
-	Add support for Wacom Graphire USB tablets.
+	Add support for newer Wacom Graphire USB tablets.
 	[ghen, ticket #384]
 
