@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.46 2007/01/23 22:42:29 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.47 2007/01/23 23:06:52 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2536,4 +2536,26 @@ sys/dev/usb/usbdevs_data.h			regen
 
 	Add support for newer Wacom Graphire USB tablets.
 	[ghen, ticket #1654]
+
+distrib/sets/lists/xserver/md.amd64		1.18
+distrib/sets/lists/xserver/md.cats		1.14
+distrib/sets/lists/xserver/md.i386		1.35
+distrib/sets/lists/xserver/md.macppc		1.26
+distrib/sets/lists/xserver/md.sparc64		1.14
+share/mk/bsd.x11.mk				1.51
+x11/Xserver/Xserver/XFree86/Makefile		1.13
+x11/Xserver/hw/xfree86/input/Makefile		1.5
+x11/Xserver/hw/xfree86/input/usbtablet/Makefile	1.1
+x11/Xserver/hw/xfree86/xf86/Makefile		1.10
+xsrc/xfree/xc/config/cf/NetBSD.cf		1.82
+xsrc/xfree/xc/programs/Xserver/Imakefile	1.18
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/input/usbtablet/Imakefile 1.1
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/input/usbtablet/usbtablet.man 1.1-1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/input/usbtablet/xf86USBtablet.c 1.1
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/Imakefile 1.2
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/xf86sym.c 1.10
+
+	Introduces a driver for USB graphics tablets (digitizers) using the
+	libusbhid interface into XFree86. This closes PR xsrc/23964.
+	[ghen, ticket #1655]
 
