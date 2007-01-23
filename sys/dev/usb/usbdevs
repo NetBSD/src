@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.398 2005/03/15 17:52:18 xtraeme Exp $
+$NetBSD: usbdevs,v 1.398.2.1 2007/01/23 18:45:56 tron Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1823,6 +1823,8 @@ product VODAFONE MC3G		0x5000	Mobile Connect 3G datacard
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
 product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
+product WACOM GRAPHIRE3_6X8	0x0014	Graphire3 6x8
+product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 4x5
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
 
