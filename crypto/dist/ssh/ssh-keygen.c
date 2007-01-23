@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-keygen.c,v 1.26 2006/12/26 00:06:03 alc Exp $	*/
+/*	$NetBSD: ssh-keygen.c,v 1.27 2007/01/23 22:21:54 wiz Exp $	*/
 /* $OpenBSD: ssh-keygen.c,v 1.154 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.26 2006/12/26 00:06:03 alc Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.27 2007/01/23 22:21:54 wiz Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -1011,13 +1011,13 @@ usage(void)
 #ifdef SMARTCARD
 	fprintf(stderr, "  -D reader   Download public key from smartcard.\n");
 #endif /* SMARTCARD */
-	fprintf(stderr, "  -e          Convert OpenSSH to IETF SECSH key file.\n");
+	fprintf(stderr, "  -e          Convert OpenSSH to RFC 4716 key file.\n");
 	fprintf(stderr, "  -F hostname Find hostname in known hosts file.\n");
 	fprintf(stderr, "  -f filename Filename of the key file.\n");
 	fprintf(stderr, "  -G file     Generate candidates for DH-GEX moduli.\n");
 	fprintf(stderr, "  -g          Use generic DNS resource record format.\n");
 	fprintf(stderr, "  -H          Hash names in known_hosts file.\n");
-	fprintf(stderr, "  -i          Convert IETF SECSH to OpenSSH key file.\n");
+	fprintf(stderr, "  -i          Convert RFC 4716 to OpenSSH key file.\n");
 	fprintf(stderr, "  -l          Show fingerprint of key file.\n");
 	fprintf(stderr, "  -M memory   Amount of memory (MB) to use for generating DH-GEX moduli.\n");
 	fprintf(stderr, "  -N phrase   Provide new passphrase.\n");
