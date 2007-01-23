@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2007/01/23 16:03:43 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -95,7 +95,7 @@ struct softintr_handler {
 	LIST_ENTRY(softintr_handler) sh_link;
 	void (*sh_func)(void *);
 	void *sh_arg;
-	int sh_pending;
+	volatile int sh_pending;
 };
 
 void softintr_init(void);
@@ -110,10 +110,9 @@ static __inline void
 softintr_schedule(void *arg)
 {
 	struct softintr_handler * const sh = arg;
-	if (sh->sh_pending == 0) {
-		sh->sh_pending = 1;
-		isr_soft_request(sh->sh_head->shd_ipl);
-	}
+
+	sh->sh_pending = 1;
+	isr_soft_request(sh->sh_head->shd_ipl);
 }
 
 extern void *softnet_cookie;
