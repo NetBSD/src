@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.63.6.4 2007/01/22 11:44:32 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.63.6.5 2007/01/23 21:07:09 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.63.6.4 2007/01/22 11:44:32 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.63.6.5 2007/01/23 21:07:09 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -854,10 +854,11 @@ makech(wy)
 #ifdef DEBUG
 				__CTRACE(__CTRACE_REFRESH,
 				    "makech: have attr %08x, need attr %08x\n",
-				    curscr->wattr, nsp->attr);
+				    curscr->wattr & WA_ATTRIBUTES,
+				    nsp->attr & WA_ATTRIBUTES);
 #endif
 
-			off = ~nsp->attr & curscr->wattr;
+			off = (~nsp->attr & curscr->wattr) & WA_ATTRIBUTES;
 
 			/*
 			 * Unset attributes as appropriate.  Unset first
@@ -912,7 +913,7 @@ makech(wy)
 			if (__using_color)
 				__set_color(curscr, nsp->attr & __COLOR);
 
-			on = nsp->attr & ~curscr->wattr;
+			on = (nsp->attr & ~curscr->wattr) & WA_ATTRIBUTES;
 
 			/*
 			 * Enter standout mode if appropriate.
