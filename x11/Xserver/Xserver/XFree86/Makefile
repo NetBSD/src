@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/04/15 14:53:40 drochner Exp $
+#	$NetBSD: Makefile,v 1.12.4.1 2007/01/23 23:01:35 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ LDADD+=	${LDADD.hw/xfree86/xf86} ${LDADD.hw/xfree86/xf86config} \
 	${LDADD.render} ${LDADD.dix/xpstubs} ${LDADD.mi} ${LDADD.Xext/exts} \
 	${LDADD.xkb} ${LDADD.xinput} ${LDADD.lbx} -llbxutil \
 	${LDADD.randr} ${LDADD.render} ${LDADD.hw/xfree86/xf86_os} \
-	-lz -lm
+	-lusbhid -lz -lm
 
 DPADD=	${DPADD.hw/xfree86/xf86} ${DPADD.hw/xfree86/xf86config} \
 	${DPADD.hw/xfree86/xf86_os} ${DPADD.hw/xfree86/loader} \

@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.6.8.7 2005/07/21 21:19:39 tron Exp $
+# $NetBSD: md.sparc64,v 1.6.8.8 2007/01/23 23:01:34 tron Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xsun
@@ -113,6 +113,7 @@
 ./usr/X11R6/lib/modules/input/spaceorb_drv.o
 ./usr/X11R6/lib/modules/input/summa_drv.o
 ./usr/X11R6/lib/modules/input/tek4957_drv.o
+./usr/X11R6/lib/modules/input/usbtablet_drv.o
 ./usr/X11R6/lib/modules/input/void_drv.o
 ./usr/X11R6/lib/modules/input/wacom_drv.o
 ./usr/X11R6/lib/modules/libcfb.a
@@ -178,6 +179,7 @@
 ./usr/X11R6/man/cat4/sunleo.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/suntcx.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/tek4957.0			-unknown-		.cat
+./usr/X11R6/man/cat4/usbtablet.0		-unknown-		.cat
 ./usr/X11R6/man/cat4/vga.0			xserver-obsolete	obsolete
 ./usr/X11R6/man/cat4/void.0			-unknown-		.cat
 ./usr/X11R6/man/cat4/wacom.0			-unknown-		.cat
@@ -220,6 +222,7 @@
 ./usr/X11R6/man/man4/sunleo.4			-unknown-		.man
 ./usr/X11R6/man/man4/suntcx.4			-unknown-		.man
 ./usr/X11R6/man/man4/tek4957.4			-unknown-		.man
+./usr/X11R6/man/man4/usbtablet.4		-unknown-		.man
 ./usr/X11R6/man/man4/vga.4			xserver-obsolete	obsolete
 ./usr/X11R6/man/man4/void.4			-unknown-		.man
 ./usr/X11R6/man/man4/wacom.4			-unknown-		.man
