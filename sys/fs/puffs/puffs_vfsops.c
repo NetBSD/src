@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.23 2007/01/19 14:49:09 hannken Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.24 2007/01/23 18:27:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.23 2007/01/19 14:49:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.24 2007/01/23 18:27:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -430,11 +430,10 @@ puffs_sync(struct mount *mp, int waitfor, struct kauth_cred *cred,
 		ppflags |= PGO_SYNCIO;
 
 	/*
-	 * Sync all data from nodes.  The user server can still cache
-	 * metadata and control its syncing with VFS_SYNC.  However,
-	 * we just push all data with VOP_FSYNC already here to avoid
-	 * an extra pingpong query from userspace requesting that
-	 * data (and besides, there's no framework yet to handle it).
+	 * Sync all cached data from regular vnodes (which are not
+	 * currently locked, see below).  After this we call VFS_SYNC
+	 * for the fs server, which should handle data and metadata for
+	 * all the nodes it knows to exist.
 	 */
 	simple_lock(&mntvnode_slock);
  loop:
