@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.51 2007/01/21 19:12:56 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.52 2007/01/23 18:43:32 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -969,4 +969,18 @@ sys/sys/kauth.h					1.35 via patch
 	Kill KAUTH_PROCESS_RESOURCE and just replace it with two actions for
 	nice and rlimit.
 	[elad, ticket #379]
+
+sys/dev/ic/wdc.c				1.245
+
+	Fix code handling unaligned transfers.
+	[bouyer, ticket #380]
+
+sys/dev/usb/ugraphire_rdesc.h			1.5-1.6
+sys/dev/usb/uhidev.c				1.33
+sys/dev/usb/usbdevs				1.450
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add support for Wacom Graphire USB tablets.
+	[ghen, ticket #384]
 
