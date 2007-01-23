@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.1 2007/01/21 15:42:36 hannken Exp $
+.\"     $NetBSD: fstrans.9,v 1.2 2007/01/23 20:31:33 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -142,7 +142,7 @@ The functions
 and
 .Fn fstrans_start_nowait
 return zero on success and an error value on failure.
-.Sh  EXAMPLES
+.Sh EXAMPLES
 The following is an example of a file system suspend operation.
 .Bd -literal
 int
@@ -175,7 +175,7 @@ int
 xxx_create(void *v)
 {
 	struct vop_create_args *ap = v;
-	struct mount *mp = ap->a_dvp->v_mount;
+	struct mount *mp = ap-\*[Gt]a_dvp-\*[Gt]v_mount;
 	int error;
 
 	if ((error = fstrans_start(mp, fstrans_shared)) != 0)
