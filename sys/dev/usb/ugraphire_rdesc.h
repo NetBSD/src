@@ -1,4 +1,4 @@
-/*	$NetBSD: ugraphire_rdesc.h,v 1.3.14.1 2007/01/23 18:45:56 tron Exp $	*/
+/*	$NetBSD: ugraphire_rdesc.h,v 1.3.14.2 2007/01/23 18:47:31 tron Exp $	*/
 /*
  * Copyright (c) 2000 Nick Hibma <n_hibma@freebsd.org>
  * All rights reserved.
@@ -90,7 +90,7 @@ static const uByte uhid_graphire_report_descr[] = {
     0xc0,                          /*  END_COLLECTION			*/
 };
 
-/* Tested with Graphire3 4x5 and 6x8, and Graphire4 4x6 */
+/* Tested with Graphire3 4x5 and 6x8, and Graphire4 4x5 */
 static const uByte uhid_graphire3_4x5_report_descr[] = {
     0x05, 0x01,                    /* USAGE_PAGE (Generic Desktop)	*/
     0x09, 0x02,                    /* USAGE (Mouse)			*/
