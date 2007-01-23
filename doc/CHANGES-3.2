@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.44 2007/01/22 13:51:54 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.45 2007/01/23 18:50:07 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2527,4 +2527,13 @@ sys/arch/xen/xen/xbd_xenbus.c			1.15
 
 	PR port-xen/34005: NetBSD Xen3 domU-s can get stuck waiting for I/O.
 	[bouyer, ticket #1653]
+
+sys/dev/usb/ugraphire_rdesc.h			1.5-1.6
+sys/dev/usb/uhidev.c				1.33
+sys/dev/usb/usbdevs				1.450
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add support for Wacom Graphire USB tablets.
+	[ghen, ticket #1654]
 
