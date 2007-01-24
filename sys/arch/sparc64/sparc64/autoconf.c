@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.135 2006/11/16 01:32:39 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.136 2007/01/24 13:08:14 hubertf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.135 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.136 2007/01/24 13:08:14 hubertf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -97,9 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.135 2006/11/16 01:32:39 christos Exp 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
-#endif
-#ifdef KGDB
-#include <machine/cpu.h>
 #endif
 
 #ifdef RASTERCONSOLE

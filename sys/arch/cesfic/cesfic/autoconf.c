@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2005/12/11 12:17:04 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16 2007/01/24 13:08:14 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,13 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2005/12/11 12:17:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16 2007/01/24 13:08:14 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/device.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/malloc.h>

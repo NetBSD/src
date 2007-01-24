@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.30 2006/06/07 23:22:52 kardel Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.31 2007/01/24 13:08:12 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.30 2006/06/07 23:22:52 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.31 2007/01/24 13:08:12 hubertf Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.30 2006/06/07 23:22:52 kardel Exp $"
 /* #define	PM_GRAB_SI	1 */
 
 #include <sys/param.h>
-#include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 
