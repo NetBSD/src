@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.130 2007/01/18 20:22:44 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.131 2007/01/24 21:43:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.130 2007/01/18 20:22:44 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.131 2007/01/24 21:43:01 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.130 2007/01/18 20:22:44 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.131 2007/01/24 21:43:01 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -391,7 +391,7 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 
 	(void)fprintf(f, "%s: \"", progname);
 
-	if (*cfname != '/') {
+	if (*cfname != '/' && strcmp(cfname, "(stdin)") != 0) {
 		char *cp;
 		const char *dir;
 
@@ -445,9 +445,9 @@ ParseErrorInternal(const char *cfname, size_t clineno, int type,
 	ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
 	va_end(ap);
 
-	if (debug_file != NULL && debug_file != stderr) {
+	if (debug_file != stderr && debug_file != stdout) {
 		va_start(ap, fmt);
-		ParseVErrorInternal(stderr, cfname, clineno, type, fmt, ap);
+		ParseVErrorInternal(debug_file, cfname, clineno, type, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -474,7 +474,7 @@ Parse_Error(int type, const char *fmt, ...)
 		    type, fmt, ap);
 	va_end(ap);
 
-	if (debug_file != NULL && debug_file != stderr) {
+	if (debug_file != stderr && debug_file != stdout) {
 		va_start(ap, fmt);
 		ParseVErrorInternal(debug_file, curFile->fname, curFile->lineno,
 			    type, fmt, ap);
@@ -2058,6 +2058,12 @@ ParseTraditionalInclude(char *line)
 static int
 ParseEOF(void)
 {
+    IFile *next_file =  Lst_DeQueue(includes);
+
+    if (next_file == NULL)
+	/* Make sure conditionals are clean - before we trash curFile */
+	Cond_End();
+
     /* Dispose of curFile info */
     /* Leak curFile->fname because all the gnodes have pointers to it */
     if (curFile->fd != -1)
@@ -2065,7 +2071,7 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    curFile = Lst_DeQueue(includes);
+    curFile = next_file;
 
     if (curFile == NULL) {
 	/* We've run out of input */
@@ -2560,11 +2566,6 @@ Parse_File(const char *name, int fd)
 	 * Reached EOF, but it may be just EOF of an include file...
 	 */
     } while (ParseEOF() == CONTINUE);
-
-    /*
-     * Make sure conditionals are clean
-     */
-    Cond_End();
 
     if (fatals) {
 	(void)fprintf(stderr,
