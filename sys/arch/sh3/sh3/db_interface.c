@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.38 2007/01/24 13:08:13 hubertf Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2006/09/06 00:11:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2007/01/24 13:08:13 hubertf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,7 +62,6 @@ db_regs_t ddb_regs;		/* register state */
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
-#include <ddb/db_run.h>
 #include <ddb/ddbvar.h>
 
 void kdb_printtrap(u_int, int);

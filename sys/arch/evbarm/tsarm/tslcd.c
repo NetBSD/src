@@ -1,4 +1,4 @@
-/* $NetBSD: tslcd.c,v 1.7 2006/08/31 17:53:19 matt Exp $ */
+/* $NetBSD: tslcd.c,v 1.8 2007/01/24 13:08:13 hubertf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.7 2006/08/31 17:53:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.8 2007/01/24 13:08:13 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: tslcd.c,v 1.7 2006/08/31 17:53:19 matt Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/select.h>
-#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

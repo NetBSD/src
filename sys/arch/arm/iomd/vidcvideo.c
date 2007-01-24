@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.29 2006/10/21 14:24:46 bjh21 Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.30 2007/01/24 13:08:14 hubertf Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.29 2006/10/21 14:24:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.30 2007/01/24 13:08:14 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.29 2006/10/21 14:24:46 bjh21 Exp $")
 #include <uvm/uvm_extern.h>
 #include <arm/arm32/pmap.h>
 #include <arm/cpufunc.h>
-#include <machine/intr.h>
 
 /* for vidc_mode ... needs to be MI indepenent one day */
 #include <arm/iomd/vidc.h>
