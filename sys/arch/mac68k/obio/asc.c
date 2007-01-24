@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.47 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: asc.c,v 1.48 2007/01/24 13:08:12 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,10 +64,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.47 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.48 2007/01/24 13:08:12 hubertf Exp $");
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/systm.h>

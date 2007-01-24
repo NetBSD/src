@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145 2007/01/17 23:27:59 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146 2007/01/24 13:08:11 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2007/01/17 23:27:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2007/01/24 13:08:11 hubertf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -441,7 +441,6 @@ dumpsys()
 }
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#include "zsc.h"
 #include "com.h"
 /*
  * Soft tty interrupts.

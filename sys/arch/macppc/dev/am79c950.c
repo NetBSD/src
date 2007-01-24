@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.18 2006/09/07 02:40:31 dogcow Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.19 2007/01/24 13:08:12 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.18 2006/09/07 02:40:31 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.19 2007/01/24 13:08:12 hubertf Exp $");
 
 #include "opt_inet.h"
 
@@ -64,10 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.18 2006/09/07 02:40:31 dogcow Exp $")
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #endif
-
-
-
-#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

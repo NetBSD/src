@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.7 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: ast.c,v 1.8 2007/01/24 13:08:14 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.7 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.8 2007/01/24 13:08:14 hubertf Exp $");
 
 #include "opt_ddb.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.7 2005/12/11 12:16:41 christos Exp $");
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/cpu.h>
 
 #include <arm/cpufunc.h>
 

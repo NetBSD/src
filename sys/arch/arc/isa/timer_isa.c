@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_isa.c,v 1.10 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: timer_isa.c,v 1.11 2007/01/24 13:08:13 hubertf Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_isa.c,v 1.10 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_isa.c,v 1.11 2007/01/24 13:08:13 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: timer_isa.c,v 1.10 2005/12/11 12:16:39 christos Exp 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#include <dev/isa/isareg.h>
 #include <dev/ic/i8253reg.h>
 
 #include <arc/arc/timervar.h>

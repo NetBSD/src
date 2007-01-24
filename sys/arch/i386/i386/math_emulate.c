@@ -1,4 +1,4 @@
-/*	$NetBSD: math_emulate.c,v 1.31 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: math_emulate.c,v 1.32 2007/01/24 13:08:13 hubertf Exp $	*/
 
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.31 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: math_emulate.c,v 1.32 2007/01/24 13:08:13 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -966,8 +966,6 @@ void fmul(const temp_real * src1, const temp_real * src2, temp_real * result)
 /*
  * temporary real division routine.
  */
-
-#include <i386/i386/math_emu.h>
 
 static void shift_left(int * c)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.c,v 1.6 2005/12/11 12:17:33 christos Exp $	*/
+/*	$NetBSD: bus_space_notimpl.c,v 1.7 2007/01/24 13:08:13 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin. All rights reserved.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_notimpl.c,v 1.6 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_notimpl.c,v 1.7 2007/01/24 13:08:13 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/cdefs.h>
 #include <machine/bus.h>
 
 bus_space_protos(bs_notimpl);

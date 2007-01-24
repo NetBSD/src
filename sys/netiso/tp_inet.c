@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.32 2006/12/03 21:56:30 dyoung Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.33 2007/01/24 13:08:11 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.32 2006/12/03 21:56:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.33 2007/01/24 13:08:11 hubertf Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.32 2006/12/03 21:56:30 dyoung Exp $");
 #include <netiso/tp_ip.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_trace.h>
-#include <netiso/tp_stat.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/tp_var.h>
 #include <netinet/in_var.h>

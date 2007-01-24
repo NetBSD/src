@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.9 2006/07/19 21:11:39 ad Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.10 2007/01/24 13:08:12 hubertf Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9 2006/07/19 21:11:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.10 2007/01/24 13:08:12 hubertf Exp $");
 
 #include "opt_compat_linux.h"
 
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9 2006/07/19 21:11:39 ad Exp $")
 #include <compat/linux/arch/amd64/linux_siginfo.h>
 #include <compat/linux/arch/amd64/linux_syscall.h>
 #include <compat/linux/arch/amd64/linux_machdep.h>
-#include <compat/linux/common/linux_errno.h>
 
 void linux_syscall_intern(struct proc *);
 static void linux_syscall_plain(struct trapframe *);
