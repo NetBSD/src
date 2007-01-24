@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.141 2007/01/19 22:42:05 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.142 2007/01/24 12:36:56 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.141 2007/01/19 22:42:05 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.142 2007/01/24 12:36:56 drochner Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -568,7 +568,6 @@ usbd_set_config_no(usbd_device_handle dev, int no, int msg)
 usbd_status
 usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 {
-	usb_status_t ds;
 	usb_config_descriptor_t cd, *cdp;
 	usbd_status err;
 	int i, ifcidx, nifc, len, selfpowered, power;
@@ -626,11 +625,22 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		goto bad;
 	}
 
-	/* Figure out if the device is self or bus powered. */
+	/*
+	 * Figure out if the device is self or bus powered.
+	 */
+#if 0 /* XXX various devices don't report the power state correctly */
 	selfpowered = 0;
 	err = usbd_get_device_status(dev, &ds);
 	if (!err && (UGETW(ds.wStatus) & UDS_SELF_POWERED))
 		selfpowered = 1;
+#endif
+	/*
+	 * Use the power state in the configuration we are going
+	 * to set. This doesn't necessarily reflect the actual
+	 * power state of the device; the driver can control this
+	 * by choosing the appropriate configuration.
+	 */
+	selfpowered = !!(cdp->bmAttributes & UC_SELF_POWERED);
 
 	DPRINTF(("usbd_set_config_index: (addr %d) cno=%d attr=0x%02x, "
 		 "selfpowered=%d, power=%d\n",
@@ -638,6 +648,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		 selfpowered, cdp->bMaxPower * 2));
 
 	/* Check if we have enough power. */
+#if 0 /* this is a no-op, see above */
 	if ((cdp->bmAttributes & UC_SELF_POWERED) && !selfpowered) {
 		if (msg)
 			printf("%s: device addr %d (config %d): "
@@ -647,6 +658,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 		err = USBD_NO_POWER;
 		goto bad;
 	}
+#endif
 #ifdef USB_DEBUG
 	if (dev->powersrc == NULL) {
 		DPRINTF(("usbd_set_config_index: No power source?\n"));
