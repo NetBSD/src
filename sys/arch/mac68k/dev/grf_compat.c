@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.17 2006/03/09 18:50:17 he Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.18 2007/01/24 13:08:12 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,11 +32,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.17 2006/03/09 18:50:17 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.18 2007/01/24 13:08:12 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/cdefs.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/errno.h>

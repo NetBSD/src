@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.10 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: nvram.c,v 1.11 2007/01/24 13:08:12 hubertf Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.10 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.11 2007/01/24 13:08:12 hubertf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.10 2005/12/11 12:18:03 christos Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/conf.h>
 #include <sys/event.h>
 
 #include <machine/autoconf.h>

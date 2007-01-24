@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.25 2007/01/08 10:06:08 isaki Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26 2007/01/24 13:08:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.25 2007/01/08 10:06:08 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26 2007/01/24 13:08:11 hubertf Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -414,7 +414,6 @@ kbd_send_command(int cmd)
 /*
  * for console
  */
-#include "ite.h"
 #if NITE > 0
 int
 kbdcngetc(void)

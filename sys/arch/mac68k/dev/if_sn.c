@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.41 2006/10/07 21:13:02 he Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.42 2007/01/24 13:08:12 hubertf Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.41 2006/10/07 21:13:02 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.42 2007/01/24 13:08:12 hubertf Exp $");
 
 #include "opt_inet.h"
 
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.41 2006/10/07 21:13:02 he Exp $");
 #include <netinet/ip.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

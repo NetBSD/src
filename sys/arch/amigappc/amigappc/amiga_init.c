@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.5 2005/12/11 12:16:36 christos Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.6 2007/01/24 13:08:13 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.5 2005/12/11 12:16:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.6 2007/01/24 13:08:13 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.5 2005/12/11 12:16:36 christos Exp 
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/mbuf.h>
