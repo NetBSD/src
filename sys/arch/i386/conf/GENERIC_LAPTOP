@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.219 2007/01/20 18:48:17 xtraeme Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.220 2007/01/24 19:46:26 tls Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.219 $"
+#ident 		"GENERIC-$Revision: 1.220 $"
 
 maxusers	32		# estimated number of users
 
@@ -109,7 +109,7 @@ options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
