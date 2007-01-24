@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.113 2007/01/03 13:43:49 tron Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.114 2007/01/24 19:46:26 tls Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -94,7 +94,7 @@ options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_SVR4	# binary compatibility with SVR4
