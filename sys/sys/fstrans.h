@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.1 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.2 2007/01/24 22:49:21 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 
 #ifndef _SYS_FSTRANS_H_
 #define	_SYS_FSTRANS_H_
+
+#include <sys/mount.h>
 
 #define SUSPEND_SUSPEND	0x0001		/* VFS_SUSPENDCTL: suspend */
 #define SUSPEND_RESUME	0x0002		/* VFS_SUSPENDCTL: resume */
