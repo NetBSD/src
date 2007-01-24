@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.53 2007/01/23 22:42:00 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.54 2007/01/24 21:56:13 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -916,11 +916,8 @@ sys/opencrypto/crypto.c				1.18
 
 sys/kern/vfs_syscalls.c				1.293
 
-	Fix issue noted by Ilja van Sprundel and disclosed at 23C3
-	(file descriptor leak).
-	Make sure we always FILE_UNUSE the file. To make it easier, exit
-	via a new "out:" exit path that does so, setting error beforehand.
-	Fix suggested by Elad, hand-typed by me.
+	Close a file descriptor leak issue where erronious parameters to an
+	fsync_range(2) call could cause the file descriptor to never be closed.
 	[wrstuden, ticket #374]
 
 games/hack/hack.termcap.c			1.14 - 1.15
