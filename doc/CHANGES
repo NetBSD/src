@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.783 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.784 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,7 +31,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		optical drive should use for reading data,
 		contributed by Kimura Fuyuki. [bouyer 20070122]
 	i386, amd64: remove option COMPAT_386BSD_MBRPART from default
-		kernels.  NetBSD has not used partition ID 0x165 for many,
+		kernels.  NetBSD has not used partition ID 0t165 for many,
 		many years, and the presence of this option in INSTALL
 		kernels can cause overwriting of existing FreeBSD
 		installations when sysinst writes back the disklabel.
