@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.37 2006/12/27 18:47:20 dogcow Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.38 2007/01/24 10:36:33 abs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.37 2006/12/27 18:47:20 dogcow Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.38 2007/01/24 10:36:33 abs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1157,7 +1157,7 @@ play_msf(int start_m, int start_s, int start_f, int end_m, int end_s,
 	a.end_f = end_f;
 
 	if ((rv = ioctl(fd, CDIOCPLAYMSF, &a)) < 0)
-		warn("ioctl(CDIOREADTOCENTRYS)");
+		warn("ioctl(CDIOCPLAYMSF)");
 	return (rv);
 }
 
