@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.15 2007/01/25 22:28:03 christos Exp $	*/
+/*	$NetBSD: timedc.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.15 2007/01/25 22:28:03 christos Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,7 @@ main(int argc, char *argv[])
 void
 intr(int signo)
 {
+	(void) signo;
 	if (!fromatty)
 		exit(0);
 	longjmp(toplevel, 1);

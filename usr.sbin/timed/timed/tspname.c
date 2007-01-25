@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1985, 1993 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,58 +30,28 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)cksum.c	5.2 (Berkeley) 5/11/93";
+static char sccsid[] = "@(#)byteorder.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cksum.c,v 1.6 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: tspname.c,v 1.1 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
-#include <sys/types.h>
 #include "globals.h"
 
-/*
- *			I N _ C K S U M
- *
- * Checksum routine for Internet Protocol family headers (C Version)
- *
- * There is no profit in a specialized version of the checksum
- * function for any machine where int's are 32 bits and shorts are 16.
- *
- * All timed packets are smaller than 32K shorts, so there is no need to
- * worry about carries except at the end.
- */
-int
-in_cksum(const void *data, int len)
+void
+set_tsp_name(struct tsp *tsp, const char *name)
 {
-	const u_char *addr = data;
-	int nleft = len;
-	uint16_t answer;
-	int sum = 0;
-
-	/*
-	 *  Our algorithm is simple, using a 32 bit accumulator (sum),
-	 *  we add sequential 16 bit words to it, and at the end, fold
-	 *  back all the carry bits from the top 16 bits into the lower
-	 *  16 bits.
-	 */
-	while( nleft > 1 )  {
-		uint16_t w;
-
-		memcpy(&w, addr, sizeof(w));
-		sum += w;
-		addr += 2;
-		nleft -= 2;
-	}
-
-	/* mop up an odd byte, if necessary */
-	if( nleft == 1 )
-		sum += *addr << 8;
-
-	/*
-	 * add back carry outs from top 16 bits to low 16 bits
-	 */
-	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
-	sum += (sum >> 16);			/* add carry */
-	answer = ~sum;				/* truncate to 16 bits */
-	return (answer);
+	(void)strncpy(tsp->tsp_name, name, sizeof(tsp->tsp_name));
+	tsp->tsp_name[sizeof(tsp->tsp_name) - 1] = '\0';
 }
+
+void
+get_tsp_name(const struct tsp *tsp, char *name, size_t size)
+{
+	size = MIN(size, sizeof(tsp->tsp_name));
+	if (size > 0) {
+		(void)strncpy(name, tsp->tsp_name, size);
+		name[size - 1] = '\0';
+	}
+}
+

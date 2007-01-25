@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.18 2006/05/09 20:18:10 mrg Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.19 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.18 2006/05/09 20:18:10 mrg Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.19 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ again:
 			 */
 			if (rwait.tv_sec != 0
 			    && EOF == fflush(fd))
-				traceoff("Tracing ended for cause at %s\n");
+				traceoff("Tracing ended for cause");
 		}
 
 		if (!poll(set, 1, rwait.tv_sec * 1000 + rwait.tv_usec / 1000)) {
@@ -404,7 +404,7 @@ masterack(void)
 
 	resp = msgin;
 	resp.tsp_vers = TSPVERSION;
-	(void)strlcpy(resp.tsp_name, hostname, sizeof(resp.tsp_name));
+	set_tsp_name(&resp, hostname);
 
 	switch(msgin.tsp_type) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.13 2006/05/09 20:18:10 mrg Exp $	*/
+/*	$NetBSD: measure.c,v 1.14 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.13 2006/05/09 20:18:10 mrg Exp $");
+__RCSID("$NetBSD: measure.c,v 1.14 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ extern int sock_raw;
 
 int measure_delta;
 
-extern int in_cksum(u_short*, int);
+extern int in_cksum(const void *, int);
 
 static n_short seqno = 0;
 
@@ -72,16 +72,16 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	socklen_t length;
 	int measure_status;
 	int rcvcount, trials;
-	int cc, count;
+	int count;
 	struct pollfd set[1];
 	long sendtime, recvtime, histime1, histime2;
 	long idelta, odelta, total;
 	long min_idelta, min_odelta;
 	struct timeval tdone, tcur, ttrans, twait, tout;
-	u_char packet[PACKET_IN], opacket[64];
-	struct icmp *icp = (struct icmp *) packet;
-	struct icmp *oicp = (struct icmp *) opacket;
-	struct ip *ip = (struct ip *) packet;
+	u_char packet[PACKET_IN];
+	struct icmp icp;
+	struct icmp oicp;
+	struct ip ip;
 
 	min_idelta = min_odelta = 0x7fffffff;
 	measure_status = HOSTDOWN;
@@ -106,10 +106,11 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	 */
 	for (;;) {
 		if (poll(set, 1, 0)) {
+			ssize_t ret;
 			length = sizeof(struct sockaddr_in);
-			cc = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
+			ret = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
 				      0,&length);
-			if (cc < 0)
+			if (ret < 0)
 				goto quit;
 			continue;
 		}
@@ -122,12 +123,12 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 	 * between the two clocks.
 	 */
 
-	oicp->icmp_type = ICMP_TSTAMP;
-	oicp->icmp_code = 0;
-	oicp->icmp_id = getpid();
-	oicp->icmp_rtime = 0;
-	oicp->icmp_ttime = 0;
-	oicp->icmp_seq = seqno;
+	oicp.icmp_type = ICMP_TSTAMP;
+	oicp.icmp_code = 0;
+	oicp.icmp_id = getpid();
+	oicp.icmp_rtime = 0;
+	oicp.icmp_ttime = 0;
+	oicp.icmp_seq = seqno;
 
 	(void)gettimeofday(&tdone, 0);
 	mstotvround(&tout, maxmsec);
@@ -145,14 +146,16 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 		 * keep sending until we have sent the max
 		 */
 		if (trials < TRIALS) {
-			trials++;
-			oicp->icmp_otime = htonl((tcur.tv_sec % SECDAY) * 1000
-					    + tcur.tv_usec / 1000);
-			oicp->icmp_cksum = 0;
-			oicp->icmp_cksum = in_cksum((u_short*)oicp,
-						    sizeof(*oicp));
+			uint32_t otime;
 
-			count = sendto(sock_raw, opacket, sizeof(*oicp), 0,
+			trials++;
+			otime = (tcur.tv_sec % SECDAY) * 1000  
+                                            + tcur.tv_usec / 1000;
+			oicp.icmp_otime = htonl(otime);
+			oicp.icmp_cksum = 0;
+			oicp.icmp_cksum = in_cksum(&oicp, sizeof(oicp));
+
+			count = sendto(sock_raw, &oicp, sizeof(oicp), 0,
 				       (struct sockaddr*)addr,
 				       sizeof(struct sockaddr));
 			if (count < 0) {
@@ -160,7 +163,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 					measure_status = UNREACHABLE;
 				goto quit;
 			}
-			++oicp->icmp_seq;
+			oicp.icmp_seq++;
 
 			timeradd(&tcur, &twait, &ttrans);
 		} else {
@@ -168,6 +171,8 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 		}
 
 		while (rcvcount < trials) {
+			ssize_t ret;
+
 			timersub(&ttrans, &tcur, &tout);
 			if (tout.tv_sec < 0)
 				tout.tv_sec = 0;
@@ -178,34 +183,43 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 				break;
 
 			length = sizeof(struct sockaddr_in);
-			cc = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
+			ret = recvfrom(sock_raw, (char *)packet, PACKET_IN, 0,
 				      0,&length);
-			if (cc < 0)
+			if (ret < 0)
 				goto quit;
 
 			/* 
 			 * got something.  See if it is ours
 			 */
-			icp = (struct icmp *)(packet + (ip->ip_hl << 2));
-			if (cc < sizeof(*ip)
-			    || icp->icmp_type != ICMP_TSTAMPREPLY
-			    || icp->icmp_id != oicp->icmp_id
-			    || icp->icmp_seq < seqno
-			    || icp->icmp_seq >= oicp->icmp_seq)
+
+			if ((size_t)ret < sizeof(ip))
+				continue;
+			memcpy(&ip, packet, sizeof(ip));
+			if ((size_t)ret < (size_t)ip.ip_hl << 2)
+				continue;
+			ret -= ip.ip_hl << 2;
+
+			memset(&icp, 0, sizeof(icp));
+			memcpy(&icp, &packet[ip.ip_hl << 2],
+				MIN((size_t)ret, sizeof(icp)));
+
+			if (icp.icmp_type != ICMP_TSTAMPREPLY
+			    || icp.icmp_id != oicp.icmp_id
+			    || icp.icmp_seq < seqno
+			    || icp.icmp_seq >= oicp.icmp_seq)
 				continue;
 
-
-			sendtime = ntohl(icp->icmp_otime);
+			sendtime = ntohl(icp.icmp_otime);
 			recvtime = ((tcur.tv_sec % SECDAY) * 1000 +
 				    tcur.tv_usec / 1000);
 
-			total = recvtime-sendtime;
+			total = recvtime - sendtime;
 			if (total < 0)	/* do not hassle midnight */
 				continue;
 
 			rcvcount++;
-			histime1 = ntohl(icp->icmp_rtime);
-			histime2 = ntohl(icp->icmp_ttime);
+			histime1 = ntohl(icp.icmp_rtime);
+			histime2 = ntohl(icp.icmp_ttime);
 			/*
 			 * a host using a time format different from
 			 * msec. since midnight UT (as per RFC792) should
