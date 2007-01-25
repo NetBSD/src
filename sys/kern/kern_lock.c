@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99.2.10 2007/01/17 20:26:36 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.11 2007/01/25 11:04:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.10 2007/01/17 20:26:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.11 2007/01/25 11:04:00 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1630,8 +1630,7 @@ void
 _kernel_lock_assert_unlocked()
 {
 
-	if (kernel_lock != __SIMPLELOCK_UNLOCKED ||
-	    curcpu()->ci_biglock_count != 0)
+	if (curcpu()->ci_biglock_count != 0)
 		_KERNEL_LOCK_ABORT("locked");
 }
 #endif
