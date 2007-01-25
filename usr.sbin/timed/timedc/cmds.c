@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.18 2007/01/25 15:29:40 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.19 2007/01/25 22:28:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.18 2007/01/25 15:29:40 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.19 2007/01/25 22:28:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: cmds.c,v 1.18 2007/01/25 15:29:40 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #define TSPTYPES
 #include <protocols/timed.h>
@@ -98,7 +99,7 @@ daydiff(char *hostname)
 		sec = 0;
 		if (sendto(sock, &sec, sizeof(sec), 0,
 			   (struct sockaddr*)&dayaddr, sizeof(dayaddr)) < 0) {
-			perror("sendto(sock)");
+			warn("sendto(sock)");
 			return 0;
 		}
 
@@ -107,7 +108,7 @@ daydiff(char *hostname)
 			if (i < 0) {
 				if (errno == EINTR)
 					continue;
-				perror("poll(date read)");
+				warn("poll(date read)");
 				return 0;
 			}
 			if (0 == i)
@@ -116,14 +117,13 @@ daydiff(char *hostname)
 			fromlen = sizeof(from);
 			if (recvfrom(sock,&sec,sizeof(sec),0,
 				     &from,&fromlen) < 0) {
-				perror("recvfrom(date read)");
+				warn("recvfrom(date read)");
 				return 0;
 			}
 
 			sec = ntohl(sec);
 			if (sec < BU) {
-				fprintf(stderr,
-					"%s says it is before 1970: %lu",
+				warnx("%s says it is before 1970: %lu",
 					hostname, sec);
 				return 0;
 			}
@@ -135,7 +135,7 @@ daydiff(char *hostname)
 	}
 
 	/* if we get here, we tried too many times */
-	fprintf(stderr,"%s will not tell us the date\n", hostname);
+	warnx("%s will not tell us the date", hostname);
 	return 0;
 }
 
@@ -181,8 +181,7 @@ clockdiff(int argc, char *argv[])
 	/* get the address for the date ready */
 	sp = getservbyname(DATE_PORT, DATE_PROTO);
 	if (!sp) {
-		(void)fprintf(stderr, "%s/%s is an unknown service\n",
-			      DATE_PORT, DATE_PROTO);
+		warnx("%s/%s is an unknown service", DATE_PORT, DATE_PROTO);
 		dayaddr.sin_port = 0;
 	} else {
 		dayaddr.sin_port = sp->s_port;
@@ -192,8 +191,8 @@ clockdiff(int argc, char *argv[])
 		argc--; argv++;
 		hp = gethostbyname(*argv);
 		if (hp == NULL) {
-			fprintf(stderr, "timedc: %s: ", *argv);
-			herror(0);
+			warnx("Error resolving %s (%s)", *argv,
+			    hstrerror(h_errno));
 			continue;
 		}
 
@@ -281,7 +280,7 @@ msite(int argc, char *argv[])
 
 	srvp = getservbyname("timed", "udp");
 	if (srvp == 0) {
-		fprintf(stderr, "udp/timed: unknown service\n");
+		warnx("udp/timed: unknown service");
 		return;
 	}
 	dest.sin_port = srvp->s_port;
@@ -296,8 +295,8 @@ msite(int argc, char *argv[])
 		tgtname = (i >= argc) ? myname : argv[i];
 		hp = gethostbyname(tgtname);
 		if (hp == 0) {
-			fprintf(stderr, "timedc: %s: ", tgtname);
-			herror(0);
+			warnx("Error resolving %s (%s)", tgtname,
+			    hstrerror(h_errno));
 			continue;
 		}
 		bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
@@ -310,7 +309,7 @@ msite(int argc, char *argv[])
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
 			   (struct sockaddr*)&dest,
 			   sizeof(struct sockaddr)) < 0) {
-			perror("sendto");
+			warn("sendto");
 			continue;
 		}
 
@@ -319,7 +318,7 @@ msite(int argc, char *argv[])
 			cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 				      &from, &length);
 			if (cc < 0) {
-				perror("recvfrom");
+				warn("recvfrom");
 				continue;
 			}
 			bytehostorder(&msg);
@@ -365,7 +364,7 @@ testing(int argc, char *argv[])
 
 	srvp = getservbyname("timed", "udp");
 	if (srvp == 0) {
-		fprintf(stderr, "udp/timed: unknown service\n");
+		warnx("udp/timed: unknown service");
 		return;
 	}
 
@@ -373,8 +372,8 @@ testing(int argc, char *argv[])
 		argc--; argv++;
 		hp = gethostbyname(*argv);
 		if (hp == NULL) {
-			fprintf(stderr, "timedc: %s: ", *argv);
-			herror(0);
+			warnx("Error resolving %s (%s)", *argv,
+			    hstrerror(h_errno));
 			argc--; argv++;
 			continue;
 		}
@@ -391,7 +390,7 @@ testing(int argc, char *argv[])
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
 			   (struct sockaddr*)&sin,
 			   sizeof(struct sockaddr)) < 0) {
-			perror("sendto");
+			warn("sendto");
 		}
 	}
 }
@@ -420,7 +419,7 @@ tracing(int argc, char *argv[])
 
 	srvp = getservbyname("timed", "udp");
 	if (srvp == 0) {
-		fprintf(stderr, "udp/timed: unknown service\n");
+		warnx("udp/timed: unknown service");
 		return;
 	}
 	dest.sin_port = srvp->s_port;
@@ -444,7 +443,7 @@ tracing(int argc, char *argv[])
 	bytenetorder(&msg);
 	if (sendto(sock, &msg, sizeof(struct tsp), 0,
 		   (struct sockaddr*)&dest, sizeof(struct sockaddr)) < 0) {
-		perror("sendto");
+		warn("sendto");
 		return;
 	}
 
@@ -456,7 +455,7 @@ tracing(int argc, char *argv[])
 		cc = recvfrom(sock, &msg, sizeof(struct tsp), 0,
 			      &from, &length);
 		if (cc < 0) {
-			perror("recvfrom");
+			warn("recvfrom");
 			return;
 		}
 		bytehostorder(&msg);
@@ -476,38 +475,16 @@ int
 priv_resources(void)
 {
 	int port;
-	struct sockaddr_in sin;
 
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sock < 0) {
-		perror("opening socket");
-		return(-1);
+	if ((sock = rresvport(&port)) == -1) {
+		warn("Failed opening reserved port");
+		return -1;
 	}
 
-	memset(&sin, 0, sizeof sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = 0;
-	for (port = IPPORT_RESERVED - 1; port > IPPORT_RESERVED / 2; port--) {
-		sin.sin_port = port;
-		if (bind(sock, (struct sockaddr*)&sin, sizeof (sin)) >= 0)
-			break;
-		if (errno != EADDRINUSE && errno != EADDRNOTAVAIL) {
-			perror("bind");
-			(void) close(sock);
-			return(-1);
-		}
+	if ((sock_raw = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
+		warn("Cannot open raw socket");
+		(void)close(sock);
+		return -1;
 	}
-	if (port == IPPORT_RESERVED / 2) {
-		fprintf(stderr, "all reserved ports in use\n");
-		(void) close(sock);
-		return(-1);
-	}
-
-	sock_raw = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
-	if (sock_raw < 0)  {
-		perror("opening raw socket");
-		(void) close(sock);
-		return(-1);
-	}
-	return(1);
+	return 1;
 }
