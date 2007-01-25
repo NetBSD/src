@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.24 2007/01/23 18:27:50 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.25 2007/01/25 17:43:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.24 2007/01/23 18:27:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.25 2007/01/25 17:43:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -318,17 +318,18 @@ puffs_root(struct mount *mp, struct vnode **vpp)
 	simple_lock(&pmp->pmp_lock);
 	vp = pmp->pmp_root;
 	if (vp) {
-		pn = VPTOPP(vp);
-		if (vget(vp, LK_EXCLUSIVE | LK_RETRY)) {
-			pmp->pmp_root = NULL;
-			goto grabnew;
-		}
+		simple_lock(&vp->v_interlock);
 		simple_unlock(&pmp->pmp_lock);
+		pn = VPTOPP(vp);
+		if (vget(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK))
+			goto grabnew;
 		*vpp = vp;
 		return 0;
-	}
+	} else
+		simple_unlock(&pmp->pmp_lock);
+
+	/* XXX: this is wrong, so FIXME */
  grabnew:
-	simple_unlock(&pmp->pmp_lock);
 
 	/*
 	 * So, didn't have the magic root vnode available.
