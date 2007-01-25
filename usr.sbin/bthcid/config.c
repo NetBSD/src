@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.3 2006/07/30 19:36:39 plunky Exp $	*/
+/*	$NetBSD: config.c,v 1.4 2007/01/25 20:33:41 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.3 2006/07/30 19:36:39 plunky Exp $");
+__RCSID("$NetBSD: config.c,v 1.4 2007/01/25 20:33:41 plunky Exp $");
 
 #include <sys/time.h>
 #include <prop/proplib.h>
@@ -132,9 +132,7 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 	if (cfg == NULL) {
 		cfg = prop_dictionary_create();
 		if (cfg == NULL) {
-			syslog(LOG_ERR, "prop_dictionary_create() failed. %s (%d)",
-				strerror(errno), errno);
-
+			syslog(LOG_ERR, "prop_dictionary_create() failed: %m");
 			return;
 		}
 	}
@@ -143,17 +141,13 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 	if (dev == NULL) {
 		dev = prop_dictionary_create();
 		if (dev == NULL) {
-			syslog(LOG_ERR, "prop_dictionary_create() failed. %s (%d)",
-				strerror(errno), errno);
-
+			syslog(LOG_ERR, "prop_dictionary_create() failed: %m");
 			prop_object_release(cfg);
 			return;
 		}
 
 		if (!prop_dictionary_set(cfg, bt_ntoa(laddr, NULL), dev)) {
-			syslog(LOG_ERR, "prop_dictionary_set() failed. %s (%d)",
-				strerror(errno), errno);
-			
+			syslog(LOG_ERR, "prop_dictionary_set() failed: %m");
 			prop_object_release(dev);
 			prop_object_release(cfg);
 			return;
@@ -164,17 +158,13 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 
 	dat = prop_data_create_data_nocopy(key, HCI_KEY_SIZE);
 	if (dat == NULL) {
-		syslog(LOG_ERR, "Cannot create data object. %s (%d)",
-			strerror(errno), errno);
-
+		syslog(LOG_ERR, "Cannot create data object: %m");
 		prop_object_release(cfg);
 		return;
 	}
 
 	if (!prop_dictionary_set(dev, bt_ntoa(raddr, NULL), dat)) {
-		syslog(LOG_ERR, "prop_dictionary_set() failed. %s (%d)",
-			strerror(errno), errno);
-
+		syslog(LOG_ERR, "prop_dictionary_set() failed: %m");
 		prop_object_release(dat);
 		prop_object_release(cfg);
 		return;
@@ -184,9 +174,7 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 
 	xml = prop_dictionary_externalize(cfg);
 	if (xml == NULL) {
-		syslog(LOG_ERR, "prop_dictionary_externalize() failed. %s (%d)",
-			strerror(errno), errno);
-
+		syslog(LOG_ERR, "prop_dictionary_externalize() failed: %m");
 		prop_object_release(cfg);
 		return;
 	}
@@ -195,18 +183,14 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 
 	fd = open(new_key_file, O_WRONLY|O_TRUNC|O_CREAT|O_EXLOCK, 0600);
 	if (fd < 0) {
-		syslog(LOG_ERR, "Cannot open new keyfile %s. %s (%d)",
-				key_file, strerror(errno), errno);
-
+		syslog(LOG_ERR, "Cannot open new keyfile %s: %m", key_file);
 		free(xml);
 		return;
 	}
 
 	len = strlen(xml);
 	if (write(fd, xml, len) != len) {
-		syslog(LOG_ERR, "Write of keyfile failed. %s (%d)",
-				strerror(errno), errno);
-
+		syslog(LOG_ERR, "Write of keyfile failed: %m");
 		free(xml);
 		close(fd);
 		unlink(new_key_file);
@@ -217,8 +201,8 @@ save_key(bdaddr_t *laddr, bdaddr_t *raddr, uint8_t *key)
 	close(fd);
 
 	if (rename(new_key_file, key_file) < 0) {
-		syslog(LOG_ERR, "rename(%s, %s) failed. %s (%d)",
-			new_key_file, key_file, strerror(errno), errno);
+		syslog(LOG_ERR, "rename(%s, %s) failed: %m",
+			new_key_file, key_file);
 
 		unlink(new_key_file);
 	}

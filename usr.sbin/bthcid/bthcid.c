@@ -1,4 +1,4 @@
-/*	$NetBSD: bthcid.c,v 1.2 2006/07/26 11:00:07 tron Exp $	*/
+/*	$NetBSD: bthcid.c,v 1.3 2007/01/25 20:33:41 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2001-2002 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: bthcid.c,v 1.2 2006/07/26 11:00:07 tron Exp $");
+__RCSID("$NetBSD: bthcid.c,v 1.3 2007/01/25 20:33:41 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -141,9 +141,7 @@ main(int argc, char *argv[])
 	}
 
 	if (detach && pidfile(NULL) < 0) {
-		syslog(LOG_ERR, "Could not create PID file. %s (%d)",
-				strerror(errno), errno);
-
+		syslog(LOG_ERR, "Could not create PID file: %m");
 		exit(EXIT_FAILURE);
 	}
 
