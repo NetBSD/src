@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.38 2007/01/21 16:29:31 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.39 2007/01/25 17:43:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.38 2007/01/21 16:29:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.39 2007/01/25 17:43:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -799,14 +799,10 @@ puffs_reclaim(void *v)
 	 * puffs_root(), since there is only one of us.
 	 */
 	if (ap->a_vp->v_flag & VROOT) {
-#ifdef DIAGNOSTIC
 		simple_lock(&pmp->pmp_lock);
-		if (pmp->pmp_root == NULL)
-			panic("puffs_reclaim: releasing root vnode (%p) twice",
-			    ap->a_vp);
-		simple_unlock(&pmp->pmp_lock);
-#endif
+		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
+		simple_unlock(&pmp->pmp_lock);
 		goto out;
 	}
 
