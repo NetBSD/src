@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.h,v 1.10 2003/08/07 11:25:48 agc Exp $	*/
+/*	$NetBSD: timedc.h,v 1.11 2007/01/25 23:47:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -52,8 +52,8 @@
 #define HOSTDOWN 	0x7fffffff
 
 struct	cmd {
-	char	*c_name;		/* command name */
-	char	*c_help;		/* help message */
+	const char *c_name;		/* command name */
+	const char *c_help;		/* help message */
 	void	(*c_handler)(int, char **); /* routine to do the work */
 	int	c_priv;			/* privileged command */
 };
