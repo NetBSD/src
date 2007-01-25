@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.9 2007/01/25 10:38:06 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.10 2007/01/25 10:55:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.9 2007/01/25 10:38:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.10 2007/01/25 10:55:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -327,8 +327,8 @@ schedcpu(void *arg)
 		 * (remember them?) overflow takes 45 days.
 		 */
 		minslp = 2;
-		runtm = 0;
 		mutex_enter(&p->p_smutex);
+		runtm = p->p_rtime.tv_sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
 			runtm += l->l_rtime.tv_sec;
