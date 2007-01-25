@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: timedc.c,v 1.17 2007/01/25 23:47:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.17 2007/01/25 23:47:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,8 @@ intr(int signo)
 static struct cmd *
 getcmd(char *name)
 {
-	char *p, *q;
+	const char *p;
+	char *q;
 	struct cmd *c, *found;
 	int nmatches, longest;
 	extern struct cmd cmdtab[];
