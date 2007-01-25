@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.14 2006/06/15 19:32:55 christos Exp $	*/
+/*	$NetBSD: timedc.c,v 1.15 2007/01/25 22:28:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.14 2006/06/15 19:32:55 christos Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.15 2007/01/25 22:28:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: timedc.c,v 1.14 2006/06/15 19:32:55 christos Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <err.h>
 
 int trace = 0;
 FILE *fd = 0;
@@ -73,10 +74,8 @@ main(int argc, char *argv[])
 	/*
 	 * security dictates!
 	 */
-	if (priv_resources() < 0) {
-		fprintf(stderr, "Could not get privileged resources\n");
-		exit(1);
-	}
+	if (priv_resources() < 0)
+		errx(1, "Could not get privileged resources");
 	(void) setuid(getuid());
 
 	if (--argc > 0) {
