@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.10 2007/01/25 10:55:47 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.11 2007/01/25 20:09:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.10 2007/01/25 10:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.11 2007/01/25 20:09:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -313,14 +313,13 @@ schedcpu(void *arg)
 	struct rlimit *rlim;
 	struct lwp *l;
 	struct proc *p;
-	int minslp, clkhz;
+	int minslp, clkhz, sig;
 	long runtm;
 
 	schedcpu_ticks++;
 
 	mutex_enter(&proclist_mutex);
 	PROCLIST_FOREACH(p, &allproc) {
-		int sig = 0;
 		/*
 		 * Increment time in/out of memory and sleep time (if
 		 * sleeping).  We ignore overflow; with 16-bit int's
@@ -348,6 +347,7 @@ schedcpu(void *arg)
 		 * If over max, kill it.
 		 */
 		rlim = &p->p_rlimit[RLIMIT_CPU];
+		sig = 0;
 		if (runtm >= rlim->rlim_cur) {
 			if (runtm >= rlim->rlim_max)
 				sig = SIGKILL;
@@ -372,35 +372,33 @@ schedcpu(void *arg)
 		 * If the process has slept the entire second,
 		 * stop recalculating its priority until it wakes up.
 		 */
-		if (minslp > 1) {
-			goto skip;
-		}
-
-		/*
-		 * p_pctcpu is only for ps.
-		 */
-		mutex_enter(&p->p_stmutex);
-		clkhz = stathz != 0 ? stathz : hz;
+		if (minslp <= 1) {
+			/*
+			 * p_pctcpu is only for ps.
+			 */
+			mutex_enter(&p->p_stmutex);
+			clkhz = stathz != 0 ? stathz : hz;
 #if	(FSHIFT >= CCPU_SHIFT)
-		p->p_pctcpu += (clkhz == 100)?
-			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
-                	100 * (((fixpt_t) p->p_cpticks)
-				<< (FSHIFT - CCPU_SHIFT)) / clkhz;
+			p->p_pctcpu += (clkhz == 100)?
+			    ((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
+			    100 * (((fixpt_t) p->p_cpticks)
+			    << (FSHIFT - CCPU_SHIFT)) / clkhz;
 #else
-		p->p_pctcpu += ((FSCALE - ccpu) *
-			(p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
+			p->p_pctcpu += ((FSCALE - ccpu) *
+			    (p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
-		p->p_cpticks = 0;
-		mutex_exit(&p->p_stmutex);
-		p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
+			p->p_cpticks = 0;
+			mutex_exit(&p->p_stmutex);
+			p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
 
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			lwp_lock(l);
-			if (l->l_slptime <= 1)
-				resetpriority(l);
-			lwp_unlock(l);
+			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+				lwp_lock(l);
+				if (l->l_slptime <= 1)
+					resetpriority(l);
+				lwp_unlock(l);
+			}
 		}
-skip:
+
 		mutex_exit(&p->p_smutex);
 		if (sig) {
 			psignal(p, sig);
@@ -931,8 +929,11 @@ resetpriority(struct lwp *l)
 
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
+	if ((l->l_flag & L_SYSTEM) != 0)
+		return;
+
 	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
-			NICE_WEIGHT * (p->p_nice - NZERO);
+	    NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	l->l_usrpri = newpriority;
 	lwp_changepri(l, l->l_usrpri);
@@ -980,7 +981,7 @@ schedclock(struct lwp *l)
 	lwp_lock(l);
 	resetpriority(l);
 	mutex_exit(&p->p_smutex);
-	if (l->l_priority >= PUSER)
+	if ((l->l_flag & L_SYSTEM) == 0 && l->l_priority >= PUSER)
 		l->l_priority = l->l_usrpri;
 	lwp_unlock(l);
 }
@@ -1097,30 +1098,29 @@ scheduler_wait_hook(struct proc *parent, struct proc *child)
 /*
  * sched_kpri:
  *
- *	Given an LWP a priority boost before it sleeps.  Currently we scale
- *	user priorites into the range 60 -> 40, and kernel priorities into
- *	40 -> 0.
+ *	Scale a priority level to a kernel priority level, usually
+ *	for an LWP that is about to sleep.
  */
 int
 sched_kpri(struct lwp *l)
 {
 	static const uint8_t kpri_tab[] = {
-		 0,   0,   1,   2,   3,   4,   4,   5,
-		 6,   7,   8,   8,   9,  10,  11,  12,
-		12,  13,  14,  15,  16,  16,  17,  18,
-		19,  20,  20,  21,  22,  23,  24,  24,
-		25,  26,  27,  28,  28,  29,  30,  31,
-		32,  32,  33,  34,  35,  36,  36,  37,
-		38,  39,  40,  40,  40,  40,  41,  41,
-		41,  41,  42,  42,  42,  42,  43,  43,
-		43,  43,  44,  44,  44,  44,  45,  45,
-		45,  45,  46,  46,  46,  47,  47,  47,
-		47,  48,  48,  48,  48,  49,  49,  49,
-		49,  50,  50,  50,  50,  51,  51,  51,
-		51,  52,  52,  52,  52,  53,  53,  53,
-		54,  54,  54,  54,  55,  55,  55,  55,
-		56,  56,  56,  56,  57,  57,  57,  57,
-		58,  58,  58,  58,  59,  59,  59,  60,
+		 0,   1,   2,   3,   4,   5,   6,   7,
+		 8,   9,  10,  11,  12,  13,  14,  15,
+		16,  17,  18,  19,  20,  21,  22,  23,
+		24,  25,  26,  27,  28,  29,  30,  31,
+		32,  33,  34,  35,  36,  37,  38,  39,
+		40,  41,  42,  43,  44,  45,  46,  47,
+		48,  49,   8,   8,   9,   9,  10,  10,
+		11,  11,  12,  12,  13,  14,  14,  15,
+		15,  16,  16,  17,  17,  18,  18,  19,
+		20,  20,  21,  21,  22,  22,  23,  23,
+		24,  24,  25,  26,  26,  27,  27,  28,
+		28,  29,  29,  30,  30,  31,  32,  32,
+		33,  33,  34,  34,  35,  35,  36,  36,
+		37,  38,  38,  39,  39,  40,  40,  41,
+		41,  42,  42,  43,  44,  44,  45,  45,
+		46,  46,  47,  47,  48,  48,  49,  50,
 	};
 
 	return kpri_tab[l->l_priority];
