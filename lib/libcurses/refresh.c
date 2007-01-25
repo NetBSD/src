@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.63.6.5 2007/01/23 21:07:09 jdc Exp $	*/
+/*	$NetBSD: refresh.c,v 1.63.6.6 2007/01/25 08:50:15 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.63.6.5 2007/01/23 21:07:09 jdc Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.63.6.6 2007/01/25 08:50:15 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -629,15 +629,13 @@ doupdate(void)
  *	Make a change on the screen.
  */
 static int
-makech(wy)
-	int	wy;
+makech(int wy)
 {
 	WINDOW	*win;
 #ifndef HAVE_WCHAR
 	static __LDATA blank = {' ', 0};
 #else
 	static __LDATA blank;
-	nschar_t *np, *tnp, *pnp;
 #endif /* HAVE_WCHAR */
 	__LDATA *nsp, *csp, *cp, *cep;
 	int	clsp, nlsp;	/* Last space in lines. */
@@ -772,7 +770,7 @@ makech(wy)
 		__CTRACE(__CTRACE_REFRESH, "makech: csp=(%x,%x,%x,%x,%p)\n",
 			csp->ch, csp->attr, win->bch, win->battr, csp->nsp);
 #endif /* DEBUG */
-		if ( cellcmp( csp, nsp )) {
+		if (cellcmp(csp, nsp)) {
 			if (wx <= lch) {
 				while (wx <= lch && cellcmp( csp, nsp )) {
 					nsp++;
@@ -837,13 +835,13 @@ makech(wy)
 					tputs(__tc_ce, 0, __cputchar);
 					_cursesi_screen->lx = wx + win->begx;
 					while (wx++ <= clsp) {
+						csp->attr = lspc;
 #ifndef HAVE_WCHAR
 						csp->ch = ' '; /* XXX */
 #else
 						csp->ch = (wchar_t)btowc((int)' ');
 						SET_WCOL( *csp, 1 );
 #endif /* HAVE_WCHAR */
-						csp->attr = lspc;
 						csp++;
 					}
 					return (OK);
@@ -1017,32 +1015,9 @@ makech(wy)
 							csp->attr = nsp->attr;
 							csp->ch = nsp->ch;
 #ifdef HAVE_WCHAR
-							np = csp->nsp;
-							if (np) {
-								while ( np ) {
-									tnp = np->next;
-									free( np );
-									np = tnp;
-								}
-								csp->nsp = NULL;
-							}
-							np = nsp->nsp;
-							if (np) {
-								pnp = NULL;
-								while ( np ) {
-									tnp = (nschar_t *)malloc(sizeof(nschar_t));
-									if (!tnp)
-										return ERR;
-									tnp->ch = np->ch;
-									tnp->next = NULL;
-									if ( pnp )
-										pnp->next = tnp;
-									else
-										csp->nsp = tnp;
-									pnp = tnp;
-									np = np->next;
-								}
-							}
+							if (_cursesi_copy_nsp(nsp->nsp, csp) == ERR)
+								return ERR;
+							SET_WCOL( *csp, 1 );
 #endif /* HAVE_WCHAR */
 						}
 #ifndef HAVE_WCHAR
@@ -1072,35 +1047,13 @@ makech(wy)
 			if (wx < win->maxx || wy < win->maxy - 1 ||
 			    !(win->flags & __SCROLLWIN)) {
 				if (!_cursesi_screen->curwin) {
-				    csp->attr = nsp->attr;
-				    csp->ch = nsp->ch;
+					csp->attr = nsp->attr;
+					csp->ch = nsp->ch;
 #ifdef HAVE_WCHAR
-					np = csp->nsp;
-					if (np) {
-						while (np) {
-							tnp = np->next;
-							free( np );
-							np = tnp;
-						}
-						csp->nsp = NULL;
-					}
-					np = nsp->nsp;
-					if (np) {
-						pnp = NULL;
-						while (np) {
-							tnp = (nschar_t *)malloc(sizeof(nschar_t));
-							if (!tnp)
-								return ERR;
-							tnp->ch = np->ch;
-							tnp->next = NULL;
-							if (pnp)
-								pnp->next = tnp;
-							else
-								csp->nsp = tnp;
-							pnp = tnp;
-							np = np->next;
-						}
-					}
+					if (_cursesi_copy_nsp(nsp->nsp,
+							      csp) == ERR)
+						return ERR;
+					SET_WCOL( *csp, 1 );
 #endif /* HAVE_WCHAR */
 					csp++;
 				}
