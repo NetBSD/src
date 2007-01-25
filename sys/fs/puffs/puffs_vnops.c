@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.39 2007/01/25 17:43:56 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.40 2007/01/25 23:43:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.39 2007/01/25 17:43:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.40 2007/01/25 23:43:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -1813,6 +1813,11 @@ puffs_strategy(void *v)
 		free(read_argp, M_PUFFS);
 	if (write_argp && !dowritefaf)
 		free(write_argp, M_PUFFS);
+
+	if (error) {
+		bp->b_error = error;
+		bp->b_flags |= B_ERROR;
+	}
 
 	biodone(bp);
 	return error;
