@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: slave.c,v 1.17 2007/01/25 23:51:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: slave.c,v 1.17 2007/01/25 23:51:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,9 +55,6 @@ static int old_status;
 static void schgdate(struct tsp *, char *);
 static void setmaster(struct tsp *);
 static void answerdelay(void);
-
-extern void logwtmp(char *, char *, char *);
-
 
 int
 slave(void)
@@ -278,12 +275,7 @@ loop:
 				 */
 				synch(tvtomsround(ntime));
 			} else {
-				logwtmp("|", "date", "");
-				tmptv.tv_sec = msg->tsp_time.tv_sec;
-				tmptv.tv_usec = msg->tsp_time.tv_usec;
-				(void)settimeofday(&tmptv, 0);
-				logwtmp("}", "date", "");
-
+				update_time(&tmptv, msg);
 				syslog(LOG_NOTICE,
 				       "date changed by %s from %s",
 					msg->tsp_name, olddate);

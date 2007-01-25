@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: master.c,v 1.17 2007/01/25 23:51:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: master.c,v 1.17 2007/01/25 23:51:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,6 @@ static int dictate;
 static int slvcount;			/* slaves listening to our clock */
 
 static void mchgdate(struct tsp*);
-
-extern	void	logwtmp(char *, char *, char *);
 
 
 
@@ -372,16 +370,12 @@ mchgdate(struct tsp *msg)
 		dictate = 3;
 		synch(tvtomsround(ntime));
 	} else {
-		logwtmp("|", "date", "");
-		tmptv.tv_sec = msg->tsp_time.tv_sec;
-		tmptv.tv_usec = msg->tsp_time.tv_usec;
-		(void)settimeofday(&tmptv, 0);
-		logwtmp("}", "date", "");
+		update_time(&tmptv, msg);
 		spreadtime();
 	}
-
 	syslog(LOG_NOTICE, "date changed by %s from %s",
 	       tname, olddate);
+
 }
 
 
