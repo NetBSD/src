@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: hci.c,v 1.2 2007/01/25 20:33:41 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hci.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: hci.c,v 1.2 2007/01/25 20:33:41 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/time.h>
@@ -142,9 +142,7 @@ process_hci(int sock, short ev, void *arg)
 	n = recvfrom(sock, buffer, sizeof(buffer), 0,
 			(struct sockaddr *) &addr, &size);
 	if (n < 0) {
-		syslog(LOG_ERR, "Could not receive from HCI socket. "
-				"%s (%d)", strerror(errno), errno);
-
+		syslog(LOG_ERR, "Could not receive from HCI socket: %m");
 		return;
 	}
 
@@ -269,11 +267,9 @@ send_pin_code_reply(int sock, struct sockaddr_bt *addr,
 
 	if (n < 0) {
 		syslog(LOG_ERR, "Could not send PIN code reply to %s "
-				"for remote bdaddr %s. %s (%d)",
+				"for remote bdaddr %s: %m",
 				dev_name,
-				bt_ntoa(bdaddr, NULL),
-				strerror(errno),
-				errno);
+				bt_ntoa(bdaddr, NULL));
 
 		return -1;
 	}
@@ -313,9 +309,8 @@ send_link_key_reply(int sock, struct sockaddr_bt *addr,
 
 	if (n < 0) {
 		syslog(LOG_ERR, "Could not send link key reply to %s "
-				"for remote bdaddr %s. %s (%d)",
-				dev_name, bt_ntoa(bdaddr, NULL),
-				strerror(errno), errno);
+				"for remote bdaddr %s: %m",
+				dev_name, bt_ntoa(bdaddr, NULL));
 		return -1;
 	}
 
