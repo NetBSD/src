@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.11 2007/01/19 13:36:08 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.12 2007/01/25 20:18:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.11 2007/01/19 13:36:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.12 2007/01/25 20:18:37 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -530,6 +530,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 
 	lwp_update_creds(l2);
 	callout_init(&l2->l_tsleep_ch);
+	cv_init(&l2->l_sigcv, "sigwait");
 	l2->l_syncobj = &sched_syncobj;
 
 	if (rnewlwpp != NULL)
@@ -772,6 +773,7 @@ lwp_free(struct lwp *l, int recycle, int last)
 	cpu_lwp_free2(l);
 #endif
 	uvm_lwp_exit(l);
+	cv_destroy(&l->l_sigcv);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
 }

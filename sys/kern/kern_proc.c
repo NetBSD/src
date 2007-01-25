@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.7 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.8 2007/01/25 20:18:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.7 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.8 2007/01/25 20:18:37 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -349,8 +349,11 @@ proc0_init(void)
 	l->l_syncobj = &sched_syncobj;
 	l->l_refcnt = 1;
 	l->l_cpu = curcpu();
+	l->l_priority = PRIBIO;
+	l->l_usrpri = PRIBIO;
 
 	callout_init(&l->l_tsleep_ch);
+	cv_init(&l->l_sigcv, "sigwait");
 
 	/* Create credentials. */
 	cred0 = kauth_cred_alloc();

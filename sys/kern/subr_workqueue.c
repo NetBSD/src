@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.3.10.3 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.3.10.4 2007/01/25 20:18:37 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.3 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.4 2007/01/25 20:18:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,11 +36,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.3 2007/01/12 01:04:07 ad E
 #include <sys/proc.h>
 #include <sys/workqueue.h>
 #include <sys/mutex.h>
+#include <sys/condvar.h>
 
 SIMPLEQ_HEAD(workqhead, work);
 
 struct workqueue_queue {
 	kmutex_t q_mutex;
+	kcondvar_t q_cv;
 	struct workqhead q_queue;
 	struct proc *q_worker;
 };
@@ -80,7 +82,6 @@ workqueue_run(struct workqueue *wq)
 	
 	for (;;) {
 		struct workqhead tmp;
-		int error;
 
 		/*
 		 * we violate abstraction of SIMPLEQ.
@@ -91,14 +92,8 @@ workqueue_run(struct workqueue *wq)
 #endif /* defined(DIAGNOSTIC) */
 
 		mutex_enter(&q->q_mutex);
-		while (SIMPLEQ_EMPTY(&q->q_queue)) {
-			error = mtsleep(q, wq->wq_prio, wq->wq_name, 0,
-			    &q->q_mutex);
-			if (error) {
-				panic("%s: %s error=%d",
-				    __func__, wq->wq_name, error);
-			}
-		}
+		while (SIMPLEQ_EMPTY(&q->q_queue))
+			cv_wait(&q->q_cv, &q->q_mutex);
 		tmp.sqh_first = q->q_queue.sqh_first; /* XXX */
 		SIMPLEQ_INIT(&q->q_queue);
 		mutex_exit(&q->q_mutex);
@@ -111,6 +106,13 @@ static void
 workqueue_worker(void *arg)
 {
 	struct workqueue *wq = arg;
+	struct lwp *l;
+
+	l = curlwp;
+	lwp_lock(l);
+	l->l_priority = wq->wq_prio;
+	l->l_usrpri = wq->wq_prio;
+	lwp_unlock(l);
 
 	workqueue_run(wq);
 }
@@ -135,6 +137,7 @@ workqueue_initqueue(struct workqueue *wq, int ipl)
 	int error;
 
 	mutex_init(&q->q_mutex, MUTEX_SPIN, ipl);
+	cv_init(&q->q_cv, wq->wq_name);
 	SIMPLEQ_INIT(&q->q_queue);
 	error = kthread_create1(workqueue_worker, wq, &q->q_worker,
 	    wq->wq_name);
@@ -162,7 +165,7 @@ workqueue_exit(struct work *wk, void *arg)
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
 	mutex_exit(&q->q_mutex);
-	wakeup(q);
+	cv_broadcast(&q->q_cv);
 	kthread_exit(0);
 }
 
@@ -179,17 +182,13 @@ workqueue_finiqueue(struct workqueue *wq)
 	KASSERT(q->q_worker != NULL);
 	mutex_enter(&q->q_mutex);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, &wqe.wqe_wk, wk_entry);
-	wakeup(q);
+	cv_broadcast(&q->q_cv);
 	while (q->q_worker != NULL) {
-		int error;
-
-		error = mtsleep(q, wq->wq_prio, "wqfini", 0, &q->q_mutex);
-		if (error) {
-			panic("%s: %s error=%d",
-			    __func__, wq->wq_name, error);
-		}
+		cv_wait(&q->q_cv, &q->q_mutex);
 	}
 	mutex_exit(&q->q_mutex);
+	mutex_destroy(&q->q_mutex);
+	cv_destroy(&q->q_cv);
 }
 
 /* --- */
@@ -239,6 +238,6 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk)
 	mutex_exit(&q->q_mutex);
 
 	if (wasempty) {
-		wakeup(q);
+		cv_broadcast(&q->q_cv);
 	}
 }
