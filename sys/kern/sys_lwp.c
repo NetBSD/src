@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.8 2007/01/17 20:24:11 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.9 2007/01/25 20:20:28 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.8 2007/01/17 20:24:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.9 2007/01/25 20:20:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	    l->l_proc->p_emul->e_sa->sae_ucsize);
 	if (error) {
 		pool_put(&lwp_uc_pool, newuc);
-		return (error);
+		return error;
 	}
 
 	/* XXX check against resource limits */
@@ -139,7 +139,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
 		pool_put(&lwp_uc_pool, newuc);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
 	newlwp(l, p, uaddr, inmem,
@@ -155,7 +155,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	lwp_lock(l2);
 	lid = l2->l_lid;
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0 &&
-	    (l->l_flag & (L_WREBOOT | L_WSUSPEND)) == 0) {
+	    (l->l_flag & (L_WREBOOT | L_WSUSPEND | L_WEXIT)) == 0) {
 	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
 	    		l2->l_stat = LSSTOP;
 		else {
@@ -171,9 +171,9 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	error = copyout(&lid, SCARG(uap, new_lwp), sizeof(lid));
 	if (error)
-		return (error);
+		return error;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -181,7 +181,7 @@ sys__lwp_exit(struct lwp *l, void *v, register_t *retval)
 {
 
 	lwp_exit(l);
-	return (0);
+	return 0;
 }
 
 int
@@ -189,18 +189,15 @@ sys__lwp_self(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = l->l_lid;
-
-	return (0);
+	return 0;
 }
 
 int
 sys__lwp_getprivate(struct lwp *l, void *v, register_t *retval)
 {
 
-	mb_read();
-	*retval = (uintptr_t) l->l_private;
-
-	return (0);
+	*retval = (uintptr_t)l->l_private;
+	return 0;
 }
 
 int
@@ -211,9 +208,7 @@ sys__lwp_setprivate(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 
 	l->l_private = SCARG(uap, ptr);
-	mb_write();
-
-	return (0);
+	return 0;
 }
 
 int
@@ -227,15 +222,9 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	int error;
 
 	mutex_enter(&p->p_smutex);
-
-	if ((p->p_sflag & PS_SA) != 0 || p->p_sa != NULL) {
-		mutex_exit(&p->p_smutex);
-		return EINVAL;
-	}
-
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
 		mutex_exit(&p->p_smutex);
-		return (ESRCH);
+		return ESRCH;
 	}
 
 	/*
@@ -250,7 +239,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	    (l->l_flag & (L_WCORE | L_WEXIT)) != 0) {
 		lwp_unlock(t);
 		mutex_exit(&p->p_smutex);
-		return (EDEADLK);
+		return EDEADLK;
 	}
 
 	/*
@@ -262,7 +251,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	error = lwp_suspend(l, t);
 	mutex_exit(&p->p_smutex);
 
-	return (error);
+	return error;
 }
 
 int
@@ -354,16 +343,15 @@ sys__lwp_wait(struct lwp *l, void *v, register_t *retval)
 	mutex_exit(&p->p_smutex);
 
 	if (error)
-		return (error);
+		return error;
 
 	if (SCARG(uap, departed)) {
-		error = copyout(&dep, SCARG(uap, departed),
-		    sizeof(dep));
+		error = copyout(&dep, SCARG(uap, departed), sizeof(dep));
 		if (error)
-			return (error);
+			return error;
 	}
 
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -378,10 +366,10 @@ sys__lwp_kill(struct lwp *l, void *v, register_t *retval)
 	struct lwp *t;
 	ksiginfo_t ksi;
 	int signo = SCARG(uap, signo);
-	int error;
+	int error = 0;
 
 	if ((u_int)signo >= NSIG)
-		return (EINVAL);
+		return EINVAL;
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
@@ -394,14 +382,12 @@ sys__lwp_kill(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	if ((t = lwp_find(p, ksi.ksi_lid)) == NULL)
 		error = ESRCH;
-	else {
+	else if (signo != 0)
 		kpsignal2(p, &ksi);
-		error = 0;
-	}
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
 
-	return (error);
+	return error;
 }
 
 int
@@ -413,11 +399,13 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 	struct proc *p;
 	struct lwp *t;
 	lwpid_t target;
+	int error;
 
 	target = SCARG(uap, target);
 	p = l->l_proc;
 
 	mutex_enter(&p->p_smutex);
+
 	if (l->l_lid == target)
 		t = l;
 	else {
@@ -439,20 +427,25 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 	 * other LWPs that may be sitting in _lwp_wait(), waiting
 	 * for the target LWP to exit.
 	 */
-	if (t != NULL && t->l_stat != LSIDL &&
-	    (t->l_prflag & LPR_DETACHED) == 0) {
-		p->p_ndlwps++;
-		t->l_prflag |= LPR_DETACHED;
-		if (t->l_stat == LSZOMB) {
-			lwp_free(t, 0, 0);	/* releases proc mutex */
-			cv_broadcast(&p->p_lwpcv);
-			return 0;
-		}
-	}
+	if (t != NULL && t->l_stat != LSIDL) {
+		if ((t->l_prflag & LPR_DETACHED) == 0) {
+			p->p_ndlwps++;
+			t->l_prflag |= LPR_DETACHED;
+			if (t->l_stat == LSZOMB) {
+				lwp_free(t, 0, 0); /* releases proc mutex */
+				cv_broadcast(&p->p_lwpcv);
+				return 0;
+			}
+			error = 0;
+		} else
+			error = EINVAL;
+	} else
+		error = ESRCH;
+
 	mutex_exit(&p->p_smutex);
 	cv_broadcast(&p->p_lwpcv);
 
-	return (t == NULL ? ESRCH : 0);
+	return error;
 }
 
 static inline wchan_t
@@ -524,7 +517,7 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	sleepq_block(sq, sched_kpri(l), wchan, "parked", timo, 1,
 	    &lwp_park_sobj);
 	error = sleepq_unblock(timo, 1);
-	return (error == EWOULDBLOCK ? ETIMEDOUT : error);
+	return error == EWOULDBLOCK ? ETIMEDOUT : error;
 }
 
 int
@@ -709,5 +702,6 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 		wakeup(&proc0);
 	LWP_COUNT(lwp_ev_park_bcast, unparked);
 	LWP_COUNT(lwp_ev_park_miss, (ntargets - unparked));
+	/* XXXAD return unparked; */
 	return 0;
 }
