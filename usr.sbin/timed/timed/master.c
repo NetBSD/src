@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.15 2005/04/19 03:40:00 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.15 2005/04/19 03:40:00 christos Exp $");
+__RCSID("$NetBSD: master.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,8 +145,7 @@ loop:
 				to.tsp_vers = TSPVERSION;
 				to.tsp_seq = sequence++;
 				to.tsp_hopcnt = MAX_HOPCNT;
-				(void)strlcpy(to.tsp_name, hostname,
-					      sizeof(to.tsp_name));
+				set_tsp_name(&to, hostname);
 				bytenetorder(&to);
 				if (sendto(sock, (char *)&to,
 					   sizeof(struct tsp), 0,
@@ -228,7 +227,7 @@ loop:
 			break;
 
 		case TSP_TRACEOFF:
-			traceoff("Tracing ended at %s\n");
+			traceoff("Tracing ended");
 			break;
 
 		case TSP_ELECTION:
@@ -239,10 +238,9 @@ loop:
 				(void)addmach(msg->tsp_name, &from,fromnet);
 			}
 			taddr = from;
-			(void)strlcpy(tname, msg->tsp_name, sizeof(tname));
+			get_tsp_name(msg, tname, sizeof(tname));
 			to.tsp_type = TSP_QUIT;
-			(void)strlcpy(to.tsp_name, hostname,
-				      sizeof(to.tsp_name));
+			set_tsp_name(&to, hostname);
 			answer = acksend(&to, &taddr, tname,
 					 TSP_ACK, 0, 1);
 			if (answer == NULL) {
@@ -259,8 +257,8 @@ loop:
 			 */
 			if (!fromnet || fromnet->status != MASTER)
 				break;
-			(void)strlcpy(to.tsp_name, hostname,
-			              sizeof(to.tsp_name));
+
+			set_tsp_name(&to, hostname);
 
 			/* The other master often gets into the same state,
 			 * with boring results if we stay at it forever.
@@ -268,7 +266,7 @@ loop:
 			ntp = fromnet;	/* (acksend() can leave fromnet=0 */
 			for (i = 0; i < 3; i++) {
 				to.tsp_type = TSP_RESOLVE;
-				(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
+				set_tsp_name(&to, hostname);
 				answer = acksend(&to, &ntp->dest_addr,
 						 ANYADDR, TSP_MASTERACK,
 						 ntp, 0);
@@ -313,8 +311,7 @@ loop:
 			 */
 			htp = addmach(msg->tsp_name, &from,fromnet);
 			to.tsp_type = TSP_QUIT;
-			(void)strlcpy(to.tsp_name, hostname,
-				      sizeof(to.tsp_name));
+			set_tsp_name(&to, hostname);
 			answer = acksend(&to, &htp->addr, htp->name,
 					 TSP_ACK, 0, 1);
 			if (!answer) {
@@ -357,7 +354,7 @@ mchgdate(struct tsp *msg)
 	char olddate[32];
 	struct timeval otime, ntime, tmptv;
 
-	(void)strlcpy(tname, msg->tsp_name, sizeof(tname));
+	get_tsp_name(msg, tname, sizeof(tname));
 
 	xmit(TSP_DATEACK, msg->tsp_seq, &from);
 
@@ -478,7 +475,7 @@ spreadtime(void)
 	dictate = 2;
 	for (htp = self.l_fwd; htp != &self; htp = htp->l_fwd) {
 		to.tsp_type = TSP_SETTIME;
-		(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
+		set_tsp_name(&to, hostname);
 		(void)gettimeofday(&tmptv, 0);
 		to.tsp_time.tv_sec = tmptv.tv_sec;
 		to.tsp_time.tv_usec = tmptv.tv_usec;
@@ -518,7 +515,7 @@ prthp(clock_t delta)
 		return;
 
 	this_time = times(&tm);
-	if (this_time + delta < next_time)
+	if ((time_t) (this_time + delta) < next_time)
 		return;
 	next_time = this_time + CLK_TCK;
 
@@ -608,7 +605,7 @@ addmach(char *name, struct sockaddr_in *addr, struct netinfo *ntp)
 				b = newhost_hash->l_bak;
 				f->l_bak = ret;
 				b->l_fwd = ret;
-				bcopy(newhost_hash,ret,sizeof(*ret));
+				memcpy(ret, newhost_hash, sizeof(*ret));
 				ret = newhost_hash;
 				ret->head = 1;
 				ret->h_fwd = ret;
@@ -631,7 +628,8 @@ addmach(char *name, struct sockaddr_in *addr, struct netinfo *ntp)
 		}
 		ret->addr = *addr;
 		ret->ntp = ntp;
-		(void)strlcpy(ret->name, name, sizeof(ret->name));
+		(void)strncpy(ret->name, name, sizeof(ret->name));
+		ret->name[sizeof(ret->name) - 1] = '\0';
 		ret->good = good_host_name(name);
 		ret->l_fwd = &self;
 		ret->l_bak = self.l_bak;
@@ -685,7 +683,7 @@ remmach(struct hosttbl *htp)
 		f->l_bak = htp;
 		b->l_fwd = htp;
 		hnxt->head = 1;
-		bcopy(hnxt, htp, sizeof(*htp));
+		memcpy(htp, hnxt, sizeof(*htp));
 		lasthfree = hnxt;
 	} else {
 		lasthfree = htp;
@@ -757,7 +755,7 @@ newslave(struct tsp *msg)
 	if (now.tv_sec >= fromnet->slvwait.tv_sec+3
 	    || now.tv_sec < fromnet->slvwait.tv_sec) {
 		to.tsp_type = TSP_SETTIME;
-		(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
+		set_tsp_name(&to, hostname);
 		(void)gettimeofday(&tmptv, 0);
 		to.tsp_time.tv_sec = tmptv.tv_sec;
 		to.tsp_time.tv_usec = tmptv.tv_usec;
@@ -829,13 +827,13 @@ traceon(void)
 
 
 void
-traceoff(char *msg)
+traceoff(const char *msg)
 {
 	get_goodgroup(1);
 	setstatus();
 	prthp(CLK_TCK);
 	if (trace) {
-		fprintf(fd, msg, date());
+		fprintf(fd, "%s at %s\n", msg, date());
 		(void)fclose(fd);
 		fd = 0;
 	}

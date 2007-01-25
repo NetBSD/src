@@ -32,7 +32,7 @@
 #if 0
 static char sccsid[] = "@(#)byteorder.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: byteorder.c,v 1.8 2003/08/07 11:25:46 agc Exp $");
+__RCSID("$NetBSD: byteorder.c,v 1.9 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,15 +45,15 @@ __RCSID("$NetBSD: byteorder.c,v 1.8 2003/08/07 11:25:46 agc Exp $");
 void
 bytenetorder(struct tsp *ptr)
 {
-	ptr->tsp_seq = htons((u_short)ptr->tsp_seq);
+	ptr->tsp_seq = htons((uint16_t)ptr->tsp_seq);
 	switch (ptr->tsp_type) {
 
 	case TSP_SETTIME:
 	case TSP_ADJTIME:
 	case TSP_SETDATE:
 	case TSP_SETDATEREQ:
-		ptr->tsp_time.tv_sec = htonl((u_long)ptr->tsp_time.tv_sec);
-		ptr->tsp_time.tv_usec = htonl((u_long)ptr->tsp_time.tv_usec);
+		ptr->tsp_time.tv_sec = htonl((uint32_t)ptr->tsp_time.tv_sec);
+		ptr->tsp_time.tv_usec = htonl((uint32_t)ptr->tsp_time.tv_usec);
 		break;
 	
 	default:
@@ -64,15 +64,15 @@ bytenetorder(struct tsp *ptr)
 void
 bytehostorder(struct tsp *ptr)
 {
-	ptr->tsp_seq = ntohs((u_short)ptr->tsp_seq);
+	ptr->tsp_seq = ntohs((uint16_t)ptr->tsp_seq);
 	switch (ptr->tsp_type) {
 
 	case TSP_SETTIME:
 	case TSP_ADJTIME:
 	case TSP_SETDATE:
 	case TSP_SETDATEREQ:
-		ptr->tsp_time.tv_sec = ntohl((u_long)ptr->tsp_time.tv_sec);
-		ptr->tsp_time.tv_usec = ntohl((u_long)ptr->tsp_time.tv_usec);
+		ptr->tsp_time.tv_sec = ntohl((uint32_t)ptr->tsp_time.tv_sec);
+		ptr->tsp_time.tv_usec = ntohl((uint32_t)ptr->tsp_time.tv_usec);
 		break;
 	
 	default:

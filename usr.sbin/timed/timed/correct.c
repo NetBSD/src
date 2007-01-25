@@ -1,4 +1,4 @@
-/*	$NetBSD: correct.c,v 1.11 2003/08/07 11:25:46 agc Exp $	*/
+/*	$NetBSD: correct.c,v 1.12 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)correct.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: correct.c,v 1.11 2003/08/07 11:25:46 agc Exp $");
+__RCSID("$NetBSD: correct.c,v 1.12 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,8 +85,7 @@ correct(long avdelta)
 				to.tsp_time.tv_usec = tmptv.tv_usec;
 				to.tsp_type = TSP_ADJTIME;
 			}
-			(void)strlcpy(to.tsp_name, hostname,
-				      sizeof(to.tsp_name));
+			set_tsp_name(&to, hostname);
 			answer = acksend(&to, &htp->addr, htp->name,
 					 TSP_ACK, 0, 0);
 			if (!answer) {
