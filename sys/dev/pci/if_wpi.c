@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.7 2007/01/13 09:39:06 degroote Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.8 2007/01/25 21:17:38 njoly Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.7 2007/01/13 09:39:06 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.8 2007/01/25 21:17:38 njoly Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -106,7 +106,7 @@ static void wpi_dma_contig_free(struct wpi_dma_info *);
 static int  wpi_alloc_shared(struct wpi_softc *);
 static void wpi_free_shared(struct wpi_softc *);
 static struct wpi_rbuf *wpi_alloc_rbuf(struct wpi_softc *);
-static void wpi_free_rbuf(struct mbuf *, caddr_t, u_int, void *);
+static void wpi_free_rbuf(struct mbuf *, caddr_t, size_t, void *);
 static int  wpi_alloc_rpool(struct wpi_softc *);
 static void wpi_free_rpool(struct wpi_softc *);
 static int  wpi_alloc_rx_ring(struct wpi_softc *, struct wpi_rx_ring *);
@@ -561,7 +561,7 @@ wpi_alloc_rbuf(struct wpi_softc *sc)
  * Rx buffer is attached is freed.
  */
 static void
-wpi_free_rbuf(struct mbuf* m, caddr_t buf, u_int size, void *arg)
+wpi_free_rbuf(struct mbuf* m, caddr_t buf, size_t size, void *arg)
 {
 	struct wpi_rbuf *rbuf = arg;
 	struct wpi_softc *sc = rbuf->sc;
@@ -2695,7 +2695,7 @@ wpi_init(struct ifnet *ifp)
 		le32toh(hdr.datasz) + le32toh(hdr.bootsz);
 
 	if (size < wsize) {
-		aprint_error("%s: fw file too short: should be %d bytes\n",
+		aprint_error("%s: fw file too short: should be %zd bytes\n",
 			sc->sc_dev.dv_xname, wsize);
 		error = EINVAL;
 		goto fail2;
