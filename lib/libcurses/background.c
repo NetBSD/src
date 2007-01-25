@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.9.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: background.c,v 1.9.6.3 2007/01/25 08:50:14 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.9.6.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: background.c,v 1.9.6.3 2007/01/25 08:50:14 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -191,56 +191,6 @@ int wbkgrnd(WINDOW *win, const cchar_t *wch)
 
 	win->battr = battr;
 	wbkgrndset(win, wch);
-/* 	for (y = 0; y < win->maxy; y++) { */
-/* 		for (x = 0; x < win->maxx; x++) { */
-/* #ifdef DEBUG */
-/* 			__CTRACE(__CTRACE_ATTR, "wbkgrnd: (%d,%d)=%x,%x",  */
-/* 				y, x, wch->vals[ 0 ], wch->attributes); */
-/* #endif /\* DEBUG *\/ */
-/* 			pnp = np = win->lines[y]->line[x].bnsp; */
-/* 			/\* add 1st character *\/ */
-/* 			if ( wcwidth( wch->vals[ 0 ])) { */
-/* 				win->lines[y]->line[x].bch = wch->vals[ 0 ]; */
-/* 			} else { */
-/* 				if ( !np ) { */
-/* 					np = (nschar_t *)malloc(sizeof(nschar_t)); */
-/* 					if (!np) */
-/* 						return ERR; */
-/* 					np->next = NULL; */
-/* 					win->lines[y]->line[x].bnsp = np; */
-/* 				} */
-/* 				np->ch = wch->vals[ 0 ]; */
-/* 				pnp = np; */
-/* 				np = np->next; */
-/* 			} */
-/* 			win->lines[y]->line[x].battr = wch->attributes & WA_ATTRIBUTES; */
-/* 			SET_BGWCOL( win->lines[ y ]->line[ x ], 1 ); */
-/* 			/\* add new non-spacing characters *\/ */
-/* 			if ( wch->elements > 1 ) { */
-/* 				for ( i = 1; i < wch->elements; i++ ) { */
-/* 					if ( !np ) { */
-/* 						np = (nschar_t *)malloc(sizeof(nschar_t)); */
-/* 						if (!np) */
-/* 							return ERR; */
-/* 						np->next = NULL; */
-/* 						if ( pnp )  */
-/* 							pnp->next = np; */
-/* 						else */
-/* 							win->lines[y]->line[x].bnsp = np; */
-/* 					} */
-/* 					np->ch = wch->vals[ i ]; */
-/* 					pnp = np; */
-/* 					np = np->next; */
-/* 				} */
-/* 			} */
-/* 			/\* remove extra old non-spacing characters *\/ */
-/* 			while ( np ) { */
-/* 				tnp = np->next; */
-/* 				free( np ); */
-/* 				np = tnp; */
-/* 			} */
-/* 		} */
-/* 	} */
 	__touchwin(win);
 	return OK;
 #endif /* HAVE_WCHAR */

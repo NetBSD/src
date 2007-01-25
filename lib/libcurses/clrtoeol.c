@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.21.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.21.6.3 2007/01/25 08:50:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.21.6.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.21.6.3 2007/01/25 08:50:14 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -91,11 +91,12 @@ wclrtoeol(WINDOW *win)
 		if (sp->ch != win->bch || sp->attr != attr) {
 #else
 		if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
-				sp->attr != attr || sp->nsp) {
+		    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp) {
 #endif /* HAVE_WCHAR */
 			maxx = sp;
 			if (minx == -1)
 				minx = sp - win->lines[y]->line;
+			sp->attr = attr;
 #ifdef HAVE_WCHAR
 			sp->ch = ( wchar_t )btowc(( int ) win->bch);
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
@@ -104,7 +105,6 @@ wclrtoeol(WINDOW *win)
 #else
 			sp->ch = win->bch;
 #endif /* HAVE_WCHAR */
-			sp->attr = attr;
 		}
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: minx = %d, maxx = %d, "

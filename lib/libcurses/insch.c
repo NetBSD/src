@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.20.6.3 2007/01/22 10:43:28 blymn Exp $	*/
+/*	$NetBSD: insch.c,v 1.20.6.4 2007/01/25 08:50:15 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.20.6.3 2007/01/22 10:43:28 blymn Exp $");
+__RCSID("$NetBSD: insch.c,v 1.20.6.4 2007/01/25 08:50:15 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -106,16 +106,16 @@ winsch(WINDOW *win, chtype ch)
 	temp1->ch = (wchar_t) ch & __CHARTEXT;
 	if (temp1->ch == ' ')
 		temp1->ch = win->bch;
-#ifdef HAVE_WCHAR
-	if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
-		return ERR;
-	SET_WCOL(*temp1, 1);
-#endif /* HAVE_WCHAR */
 	temp1->attr = (attr_t) ch & __ATTRIBUTES;
 	if (temp1->attr & __COLOR)
 		temp1->attr |= (win->battr & ~__COLOR);
 	else
 		temp1->attr |= win->battr;
+#ifdef HAVE_WCHAR
+	if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
+		return ERR;
+	SET_WCOL(*temp1, 1);
+#endif /* HAVE_WCHAR */
 	__touchline(win, (int) win->cury, (int) win->curx, (int) win->maxx - 1);
 	if (win->cury == LINES - 1 &&
 	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||

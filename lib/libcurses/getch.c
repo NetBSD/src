@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.46.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: getch.c,v 1.46.6.3 2007/01/25 08:50:14 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.46.6.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: getch.c,v 1.46.6.3 2007/01/25 08:50:14 blymn Exp $");
 #endif
 #endif					/* not lint */
 
@@ -46,6 +46,163 @@ __RCSID("$NetBSD: getch.c,v 1.46.6.2 2007/01/21 17:43:35 jdc Exp $");
 #include "curses_private.h"
 #include "keymap.h"
 
+short	state;		/* state of the inkey function */
+
+static const struct tcdata tc[] = {
+	{"!1", KEY_SSAVE},
+	{"!2", KEY_SSUSPEND},
+	{"!3", KEY_SUNDO},
+	{"#1", KEY_SHELP},
+	{"#2", KEY_SHOME},
+	{"#3", KEY_SIC},
+	{"#4", KEY_SLEFT},
+	{"%0", KEY_REDO},
+	{"%1", KEY_HELP},
+	{"%2", KEY_MARK},
+	{"%3", KEY_MESSAGE},
+	{"%4", KEY_MOVE},
+	{"%5", KEY_NEXT},
+	{"%6", KEY_OPEN},
+	{"%7", KEY_OPTIONS},
+	{"%8", KEY_PREVIOUS},
+	{"%9", KEY_PRINT},
+	{"%a", KEY_SMESSAGE},
+	{"%b", KEY_SMOVE},
+	{"%c", KEY_SNEXT},
+	{"%d", KEY_SOPTIONS},
+	{"%e", KEY_SPREVIOUS},
+	{"%f", KEY_SPRINT},
+	{"%g", KEY_SREDO},
+	{"%h", KEY_SREPLACE},
+	{"%i", KEY_SRIGHT},
+	{"%j", KEY_SRSUME},
+	{"&0", KEY_SCANCEL},
+	{"&1", KEY_REFERENCE},
+	{"&2", KEY_REFRESH},
+	{"&3", KEY_REPLACE},
+	{"&4", KEY_RESTART},
+	{"&5", KEY_RESUME},
+	{"&6", KEY_SAVE},
+	{"&7", KEY_SUSPEND},
+	{"&8", KEY_UNDO},
+	{"&9", KEY_SBEG},
+	{"*0", KEY_SFIND},
+	{"*1", KEY_SCOMMAND},
+	{"*2", KEY_SCOPY},
+	{"*3", KEY_SCREATE},
+	{"*4", KEY_SDC},
+	{"*5", KEY_SDL},
+	{"*6", KEY_SELECT},
+	{"*7", KEY_SEND},
+	{"*8", KEY_SEOL},
+	{"*9", KEY_SEXIT},
+	{"@0", KEY_FIND},
+	{"@1", KEY_BEG},
+	{"@2", KEY_CANCEL},
+	{"@3", KEY_CLOSE},
+	{"@4", KEY_COMMAND},
+	{"@5", KEY_COPY},
+	{"@6", KEY_CREATE},
+	{"@7", KEY_END},
+	{"@8", KEY_ENTER},
+	{"@9", KEY_EXIT},
+	{"F1", KEY_F(11)},
+	{"F2", KEY_F(12)},
+	{"F3", KEY_F(13)},
+	{"F4", KEY_F(14)},
+	{"F5", KEY_F(15)},
+	{"F6", KEY_F(16)},
+	{"F7", KEY_F(17)},
+	{"F8", KEY_F(18)},
+	{"F9", KEY_F(19)},
+	{"FA", KEY_F(20)},
+	{"FB", KEY_F(21)},
+	{"FC", KEY_F(22)},
+	{"FD", KEY_F(23)},
+	{"FE", KEY_F(24)},
+	{"FF", KEY_F(25)},
+	{"FG", KEY_F(26)},
+	{"FH", KEY_F(27)},
+	{"FI", KEY_F(28)},
+	{"FJ", KEY_F(29)},
+	{"FK", KEY_F(30)},
+	{"FL", KEY_F(31)},
+	{"FM", KEY_F(32)},
+	{"FN", KEY_F(33)},
+	{"FO", KEY_F(34)},
+	{"FP", KEY_F(35)},
+	{"FQ", KEY_F(36)},
+	{"FR", KEY_F(37)},
+	{"FS", KEY_F(38)},
+	{"FT", KEY_F(39)},
+	{"FU", KEY_F(40)},
+	{"FV", KEY_F(41)},
+	{"FW", KEY_F(42)},
+	{"FX", KEY_F(43)},
+	{"FY", KEY_F(44)},
+	{"FZ", KEY_F(45)},
+	{"Fa", KEY_F(46)},
+	{"Fb", KEY_F(47)},
+	{"Fc", KEY_F(48)},
+	{"Fd", KEY_F(49)},
+	{"Fe", KEY_F(50)},
+	{"Ff", KEY_F(51)},
+	{"Fg", KEY_F(52)},
+	{"Fh", KEY_F(53)},
+	{"Fi", KEY_F(54)},
+	{"Fj", KEY_F(55)},
+	{"Fk", KEY_F(56)},
+	{"Fl", KEY_F(57)},
+	{"Fm", KEY_F(58)},
+	{"Fn", KEY_F(59)},
+	{"Fo", KEY_F(60)},
+	{"Fp", KEY_F(61)},
+	{"Fq", KEY_F(62)},
+	{"Fr", KEY_F(63)},
+	{"K1", KEY_A1},
+	{"K2", KEY_B2},
+	{"K3", KEY_A3},
+	{"K4", KEY_C1},
+	{"K5", KEY_C3},
+	{"Km", KEY_MOUSE},
+	{"k0", KEY_F0},
+	{"k1", KEY_F(1)},
+	{"k2", KEY_F(2)},
+	{"k3", KEY_F(3)},
+	{"k4", KEY_F(4)},
+	{"k5", KEY_F(5)},
+	{"k6", KEY_F(6)},
+	{"k7", KEY_F(7)},
+	{"k8", KEY_F(8)},
+	{"k9", KEY_F(9)},
+	{"k;", KEY_F(10)},
+	{"kA", KEY_IL},
+	{"ka", KEY_CATAB},
+	{"kB", KEY_BTAB},
+	{"kb", KEY_BACKSPACE},
+	{"kC", KEY_CLEAR},
+	{"kD", KEY_DC},
+	{"kd", KEY_DOWN},
+	{"kE", KEY_EOL},
+	{"kF", KEY_SF},
+	{"kH", KEY_LL},
+	{"kh", KEY_HOME},
+	{"kI", KEY_IC},
+	{"kL", KEY_DL},
+	{"kl", KEY_LEFT},
+	{"kM", KEY_EIC},
+	{"kN", KEY_NPAGE},
+	{"kP", KEY_PPAGE},
+	{"kR", KEY_SR},
+	{"kr", KEY_RIGHT},
+	{"kS", KEY_EOS},
+	{"kT", KEY_STAB},
+	{"kt", KEY_CTAB},
+	{"ku", KEY_UP}
+};
+/* Number of TC entries .... */
+static const int num_tcs = (sizeof(tc) / sizeof(struct tcdata));
+
 int	ESCDELAY = 300;		/* Delay in ms between keys for esc seq's */
 
 /* Key buffer */
@@ -56,7 +213,7 @@ static int     start, end, working; /* pointers for manipulating inbuf data */
 
 /* prototypes for private functions */
 static void add_key_sequence(SCREEN *screen, char *sequence, int key_type);
-static key_entry_t *add_new_key(keymap_t *current, char ch, int key_type, 
+static key_entry_t *add_new_key(keymap_t *current, char ch, int key_type,
         int symbol);
 static void delete_key_sequence(keymap_t *current, int key_type);
 static void do_keyok(keymap_t *current, int key_type, bool flag, int *retval);
@@ -90,7 +247,7 @@ _cursesi_free_keymap(keymap_t *map)
 	free(map);
 }
 
-				
+
 /*
  * Add a new key entry to the keymap pointed to by current.  Entry
  * contains the character to add to the keymap, type is the type of
@@ -115,7 +272,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 			current->mapping[(unsigned char) chr] =
 				current->count;	/* map new entry */
 			ki = current->count;
-			
+
 			  /* make sure we have room in the key array first */
 			if ((current->count & (KEYMAP_ALLOC_CHUNK - 1)) == 0)
 			{
@@ -127,7 +284,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 					  "Could not malloc for key entry\n");
 					exit(1);
 				}
-			
+
 				the_key = new_key();
 				for (i = 0; i < KEYMAP_ALLOC_CHUNK; i++) {
 					current->key[ki + i] = &the_key[i];
@@ -138,12 +295,12 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 			ki = - current->mapping[(unsigned char) chr];
 			current->mapping[(unsigned char) chr] = ki;
 		}
-		
+
 		current->count++;
-		
+
 		  /* point at the current key array element to use */
 		the_key = current->key[ki];
-                                                
+
 		the_key->type = key_type;
 
 		switch (key_type) {
@@ -219,7 +376,7 @@ delete_key_sequence(keymap_t *current, int key_type)
 		}
 	}
 }
-	
+
 /*
  * Add the sequence of characters given in sequence as the key mapping
  * for the given key symbol.
@@ -232,7 +389,7 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 	int length, j, key_ent;
 
 #ifdef DEBUG
-	__CTRACE(__CTRACE_MISC, "add_key_sequence: add key sequence: %s(%s)\n", 
+	__CTRACE(__CTRACE_MISC, "add_key_sequence: add key sequence: %s(%s)\n",
 	    sequence, keyname(key_type));
 #endif /* DEBUG */
 	current = screen->base_keymap;	/* always start with
@@ -242,13 +399,13 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 	for (j = 0; j < length - 1; j++) {
 		  /* add the entry to the struct */
 		tmp_key = add_new_key(current, sequence[j], KEYMAP_MULTI, 0);
-					
+
 		  /* index into the key array - it's
 		     clearer if we stash this */
 		key_ent = current->mapping[(unsigned char) sequence[j]];
 
 		current->key[key_ent] = tmp_key;
-				
+
 		  /* next key uses this map... */
 		current = current->key[key_ent]->value.next;
 	}
@@ -305,7 +462,7 @@ __init_getch(SCREEN *screen)
 #endif
 			add_key_sequence(screen, entry, tc[i].symbol);
 		}
-		
+
 	}
 }
 
@@ -399,7 +556,7 @@ reread:
 				clearerr(infd);
 				return ERR;
 			}
-			
+
 			if (delay && (__notimeout() == ERR))
 				return ERR;
 
@@ -448,7 +605,7 @@ reread:
 				clearerr(infd);
 				return ERR;
 			}
-			
+
 			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
 
@@ -573,7 +730,7 @@ int
 keyok(int key_type, bool flag)
 {
 	int result = ERR;
-	
+
 	do_keyok(_cursesi_screen->base_keymap, key_type, flag, &result);
 	return result;
 }
@@ -628,7 +785,7 @@ define_key(char *sequence, int symbol)
 
 	return OK;
 }
-	
+
 /*
  * wgetch --
  *	Read in a character from the window.
@@ -714,7 +871,7 @@ wgetch(WINDOW *win)
 			__restore_termios();
 			return ERR;	/* we have timed out */
 		}
-		
+
 		if (ferror(infd)) {
 			clearerr(infd);
 			inp = ERR;

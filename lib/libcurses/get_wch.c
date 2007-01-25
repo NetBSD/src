@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.1.2.3 2007/01/21 18:21:13 jdc Exp $ */
+/*   $NetBSD: get_wch.c,v 1.1.2.4 2007/01/25 08:50:14 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.1.2.3 2007/01/21 18:21:13 jdc Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.1.2.4 2007/01/25 08:50:14 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: get_wch.c,v 1.1.2.3 2007/01/21 18:21:13 jdc Exp $");
 #include "keymap.h"
 
 static short   wstate;		  /* state of the wcinkey function */
+extern short state;		/* storage declared in getch.c */
 
 /* prototypes for private functions */
 static int inkey(wchar_t *wc, int to, int delay);
