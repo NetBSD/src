@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.19 2007/01/09 12:49:36 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.20 2007/01/25 13:57:28 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.19 2007/01/09 12:49:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.20 2007/01/25 13:57:28 elad Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -70,7 +70,7 @@ struct fileassoc {
 
 static LIST_HEAD(, fileassoc) fileassoc_list;
 
-/* An entry in the per-device hash table. */
+/* An entry in the per-mount hash table. */
 struct fileassoc_hash_entry {
 	fhandle_t *handle;				/* File handle */
 	specificdata_reference data;			/* Hooks. */
