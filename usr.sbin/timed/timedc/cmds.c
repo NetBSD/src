@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.19 2007/01/25 22:28:03 christos Exp $	*/
+/*	$NetBSD: cmds.c,v 1.20 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.19 2007/01/25 22:28:03 christos Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.20 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,8 @@ __RCSID("$NetBSD: cmds.c,v 1.19 2007/01/25 22:28:03 christos Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+
+#include <rpc/rpc.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -70,6 +72,8 @@ extern int measure_delta;
 
 void bytenetorder(struct tsp *);
 void bytehostorder(struct tsp *);
+void set_tsp_name(struct tsp *, const char *);
+void get_tsp_name(const struct tsp *, char *, size_t);
 
 
 #define BU ((unsigned long)2208988800U)	/* seconds before UNIX epoch */
@@ -197,7 +201,7 @@ clockdiff(int argc, char *argv[])
 		}
 
 		server.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, &server.sin_addr.s_addr, hp->h_length);
+		memcpy(&server.sin_addr.s_addr, hp->h_addr, hp->h_length);
 		for (avg_cnt = 0, avg = 0; avg_cnt < 16; avg_cnt++) {
 			measure_status = measure(10000,100, *argv, &server, 1);
 			if (measure_status != GOOD)
@@ -227,7 +231,7 @@ clockdiff(int argc, char *argv[])
 		 */
 		if (dayaddr.sin_port != 0) {
 			dayaddr.sin_family = hp->h_addrtype;
-			bcopy(hp->h_addr, &dayaddr.sin_addr.s_addr,
+			memcpy(&dayaddr.sin_addr.s_addr, hp->h_addr,
 			      hp->h_length);
 			avg = daydiff(*argv);
 			if (avg > SECDAY) {
@@ -299,10 +303,9 @@ msite(int argc, char *argv[])
 			    hstrerror(h_errno));
 			continue;
 		}
-		bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
+		memcpy(&dest.sin_addr.s_addr, hp->h_addr, hp->h_length);
 
-		memset(msg.tsp_name, 0, sizeof(msg.tsp_name));
-		(void)strlcpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
+		set_tsp_name(&msg, myname);
 		msg.tsp_type = TSP_MSITE;
 		msg.tsp_vers = TSPVERSION;
 		bytenetorder(&msg);
@@ -341,6 +344,8 @@ msite(int argc, char *argv[])
 void
 quit(int argc, char *argv[])
 {
+	(void) argc;
+	(void) argv;
 	exit(0);
 }
 
@@ -354,7 +359,7 @@ void
 testing(int argc, char *argv[])
 {
 	struct servent *srvp;
-	struct sockaddr_in sin;
+	struct sockaddr_in addr;
 	struct tsp msg;
 
 	if (argc < 2)  {
@@ -377,18 +382,17 @@ testing(int argc, char *argv[])
 			argc--; argv++;
 			continue;
 		}
-		sin.sin_port = srvp->s_port;
-		sin.sin_family = hp->h_addrtype;
-		bcopy(hp->h_addr, &sin.sin_addr.s_addr, hp->h_length);
+		addr.sin_port = srvp->s_port;
+		addr.sin_family = hp->h_addrtype;
+		memcpy(&addr.sin_addr.s_addr, hp->h_addr, hp->h_length);
 
 		msg.tsp_type = TSP_TEST;
 		msg.tsp_vers = TSPVERSION;
 		(void)gethostname(myname, sizeof(myname));
-		memset(msg.tsp_name, 0, sizeof(msg.tsp_name));
-		(void)strlcpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
+		set_tsp_name(&msg, myname);
 		bytenetorder(&msg);
 		if (sendto(sock, &msg, sizeof(struct tsp), 0,
-			   (struct sockaddr*)&sin,
+			   (struct sockaddr*)&addr,
 			   sizeof(struct sockaddr)) < 0) {
 			warn("sendto");
 		}
@@ -427,7 +431,7 @@ tracing(int argc, char *argv[])
 
 	(void)gethostname(myname,sizeof(myname));
 	hp = gethostbyname(myname);
-	bcopy(hp->h_addr, &dest.sin_addr.s_addr, hp->h_length);
+	memcpy(&dest.sin_addr.s_addr, hp->h_addr, hp->h_length);
 
 	if (strcmp(argv[1], "on") == 0) {
 		msg.tsp_type = TSP_TRACEON;
@@ -437,8 +441,7 @@ tracing(int argc, char *argv[])
 		onflag = OFF;
 	}
 
-	memset(msg.tsp_name, 0, sizeof(msg.tsp_name));
-	(void)strlcpy(msg.tsp_name, myname, sizeof(msg.tsp_name));
+	set_tsp_name(&msg, myname);
 	msg.tsp_vers = TSPVERSION;
 	bytenetorder(&msg);
 	if (sendto(sock, &msg, sizeof(struct tsp), 0,
@@ -474,10 +477,20 @@ tracing(int argc, char *argv[])
 int
 priv_resources(void)
 {
-	int port;
+	struct sockaddr_in addr;
 
-	if ((sock = rresvport(&port)) == -1) {
+	sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock < 0) {
+		perror("opening socket");
+		return -1;
+	}
+
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+
+	if ((bindresvport(sock, &addr)) == -1) {
 		warn("Failed opening reserved port");
+		(void)close(sock);
 		return -1;
 	}
 

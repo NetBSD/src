@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.20 2005/02/06 04:56:27 perry Exp $	*/
+/*	$NetBSD: timed.c,v 1.21 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.20 2005/02/06 04:56:27 perry Exp $");
+__RCSID("$NetBSD: timed.c,v 1.21 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ int justquit = 0;
 int debug;
 
 static struct nets {
-	char	*name;
-	long	net;
+	char	 *name;
+	in_addr_t net;
 	struct nets *next;
 } *nets = 0;
 
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	struct netent *nentp;
 	struct nets *nt;
 	struct sockaddr_in server;
-	u_short port;
+	uint16_t port;
 	int c;
 	extern char *optarg;
 	extern int optind, opterr;
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	port = srvp->s_port;
-	bzero(&server, sizeof(server));
+	memset(&server, 0, sizeof(server));
 	server.sin_port = srvp->s_port;
 	server.sin_family = AF_INET;
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -467,7 +467,7 @@ suppress(struct sockaddr_in *addr, char *name, struct netinfo *net)
 
 	syslog(LOG_NOTICE, "suppressing false master %s", tname);
 	msg.tsp_type = TSP_QUIT;
-	(void)strlcpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
+	set_tsp_name(&msg, hostname);
 	(void)acksend(&msg, &tgt, tname, TSP_ACK, 0, 1);
 }
 
@@ -484,7 +484,7 @@ lookformaster(struct netinfo *ntp)
 
 	/* look for master */
 	resp.tsp_type = TSP_MASTERREQ;
-	(void)strlcpy(resp.tsp_name, hostname, sizeof(resp.tsp_name));
+	set_tsp_name(&resp, hostname);
 	answer = acksend(&resp, &ntp->dest_addr, ANYADDR,
 			 TSP_MASTERACK, ntp, 0);
 	if (answer != 0 && !good_host_name(answer->tsp_name)) {
@@ -539,7 +539,7 @@ lookformaster(struct netinfo *ntp)
 	}
 
 	ntp->status = SLAVE;
-	(void)strlcpy(mastername, answer->tsp_name, sizeof(mastername));
+	get_tsp_name(answer, mastername, sizeof(mastername));
 	masteraddr = from;
 
 	/*
@@ -557,8 +557,7 @@ lookformaster(struct netinfo *ntp)
 	if (answer != NULL &&
 	    strcmp(answer->tsp_name, mastername) != 0) {
 		conflict.tsp_type = TSP_CONFLICT;
-		(void)strlcpy(conflict.tsp_name, hostname,
-			      sizeof(conflict.tsp_name));
+		set_tsp_name(&conflict, hostname);
 		if (!acksend(&conflict, &masteraddr, mastername,
 			     TSP_ACK, 0, 0)) {
 			syslog(LOG_ERR,
@@ -839,3 +838,5 @@ good_host_name(char *name)
 
 	return 0;			/* did not find him */
 }
+
+

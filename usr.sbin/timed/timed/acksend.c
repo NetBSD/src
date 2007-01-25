@@ -1,4 +1,4 @@
-/*	$NetBSD: acksend.c,v 1.9 2003/08/07 11:25:46 agc Exp $	*/
+/*	$NetBSD: acksend.c,v 1.10 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acksend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: acksend.c,v 1.9 2003/08/07 11:25:46 agc Exp $");
+__RCSID("$NetBSD: acksend.c,v 1.10 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,8 @@ xmit(int type, u_short seq, struct sockaddr_in *addr)
 	msg.tsp_type = type;
 	msg.tsp_seq = seq;
 	msg.tsp_vers = TSPVERSION;
-	(void)strlcpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
+
+	set_tsp_name(&msg, hostname);
 	bytenetorder(&msg);
 	if (sendto(sock, (char *)&msg, sizeof(struct tsp), 0,
 		   (struct sockaddr*)addr, sizeof(struct sockaddr)) < 0) {

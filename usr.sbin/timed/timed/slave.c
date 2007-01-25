@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.15 2006/05/10 21:53:48 mrg Exp $	*/
+/*	$NetBSD: slave.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.15 2006/05/10 21:53:48 mrg Exp $");
+__RCSID("$NetBSD: slave.c,v 1.16 2007/01/25 23:25:20 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,7 @@ loop:
 			to.tsp_vers = TSPVERSION;
 			to.tsp_seq = sequence++;
 			to.tsp_hopcnt = MAX_HOPCNT;
-			(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
+			set_tsp_name(&to, hostname);
 			bytenetorder(&to);
 			if (sendto(sock, (char *)&to, sizeof(struct tsp), 0,
 				   (struct sockaddr*)&ntp->dest_addr,
@@ -404,10 +404,8 @@ loop:
 					refusetime = ntime.tv_sec + 30;
 				}
 				taddr = from;
-				(void)strlcpy(tname, msg->tsp_name,
-					      sizeof(tname));
-				(void)strlcpy(to.tsp_name, hostname,
-					      sizeof(to.tsp_name));
+				get_tsp_name(msg, tname, sizeof(tname));
+				set_tsp_name(&to, hostname);
 				answerdelay();
 				if (!acksend(&to, &taddr, tname,
 					     TSP_ACK, 0, 0))
@@ -418,8 +416,7 @@ loop:
 			} else {	/* fromnet->status == MASTER */
 				htp = addmach(msg->tsp_name, &from,fromnet);
 				to.tsp_type = TSP_QUIT;
-				(void)strlcpy(to.tsp_name, hostname,
-					      sizeof(to.tsp_name));
+				set_tsp_name(&to, hostname);
 				if (!acksend(&to, &htp->addr, htp->name,
 					     TSP_ACK, 0, htp->noanswer)) {
 					syslog(LOG_ERR,
@@ -438,7 +435,7 @@ loop:
 			 * more than one master: the first slave to
 			 * come up will notify here the situation.
 			 */
-			(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
+			set_tsp_name(&to, hostname);
 
 			/* The other master often gets into the same state,
 			 * with boring results.
@@ -472,7 +469,7 @@ loop:
 			to.tsp_type = TSP_MSITEREQ;
 			to.tsp_vers = TSPVERSION;
 			to.tsp_seq = 0;
-			(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
+			set_tsp_name(&to, hostname);
 			answer = acksend(&to, &slavenet->dest_addr,
 					 ANYADDR, TSP_ACK,
 					 slavenet, 0);
@@ -480,8 +477,7 @@ loop:
 			    && good_host_name(answer->tsp_name)) {
 				setmaster(answer);
 				to.tsp_type = TSP_ACK;
-				(void)strlcpy(to.tsp_name, answer->tsp_name,
-					      sizeof(to.tsp_name));
+				set_tsp_name(&to, answer->tsp_name);
 				bytenetorder(&to);
 				if (sendto(sock, (char *)&to,
 					   sizeof(struct tsp), 0,
@@ -530,11 +526,9 @@ loop:
 				    if (answer == NULL)
 					break;
 				    taddr = from;
-				    (void)strlcpy(tname, answer->tsp_name,
-				    	          sizeof(tname));
+				    get_tsp_name(answer, tname, sizeof(tname));
 				    to.tsp_type = TSP_QUIT;
-				    (void)strlcpy(to.tsp_name, hostname,
-					          sizeof(to.tsp_name));
+				    set_tsp_name(&to, hostname);
 				    if (!acksend(&to, &taddr, tname,
 						 TSP_ACK, 0, 1)) {
 					syslog(LOG_ERR,
@@ -587,8 +581,7 @@ loop:
 				htp = addmach(answer->tsp_name,
 					      &from,ntp);
 				to.tsp_type = TSP_QUIT;
-				(void)strlcpy(to.tsp_name, hostname,
-					      sizeof(to.tsp_name));
+				set_tsp_name(&to, hostname);
 				if (!acksend(&to,&htp->addr,htp->name,
 					     TSP_ACK, 0, htp->noanswer)) {
 					syslog(LOG_ERR,
@@ -623,7 +616,7 @@ setmaster(struct tsp *msg)
 	    && (slavenet != old_slavenet
 		|| strcmp(msg->tsp_name, master_name)
 		|| old_status != status)) {
-		(void)strlcpy(master_name, msg->tsp_name, sizeof(master_name));
+		get_tsp_name(msg, master_name, sizeof(master_name));
 		old_slavenet = slavenet;
 		old_status = status;
 
@@ -669,7 +662,7 @@ schgdate(struct tsp *msg, char *newdate)
 
 	to.tsp_type = TSP_SETDATEREQ;
 	to.tsp_time = msg->tsp_time;
-	(void)strlcpy(to.tsp_name, hostname, sizeof(to.tsp_name));
+	set_tsp_name(&to, hostname);
 	if (!acksend(&to, &slavenet->dest_addr,
 		     ANYADDR, TSP_DATEACK,
 		     slavenet, 0))
