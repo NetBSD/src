@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.8 2007/01/11 22:23:00 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.9 2007/01/25 10:38:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.8 2007/01/11 22:23:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.9 2007/01/25 10:38:06 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -320,6 +320,7 @@ schedcpu(void *arg)
 
 	mutex_enter(&proclist_mutex);
 	PROCLIST_FOREACH(p, &allproc) {
+		int sig = 0;
 		/*
 		 * Increment time in/out of memory and sleep time (if
 		 * sleeping).  We ignore overflow; with 16-bit int's
@@ -349,9 +350,9 @@ schedcpu(void *arg)
 		rlim = &p->p_rlimit[RLIMIT_CPU];
 		if (runtm >= rlim->rlim_cur) {
 			if (runtm >= rlim->rlim_max)
-				psignal(p, SIGKILL);
+				sig = SIGKILL;
 			else {
-				psignal(p, SIGXCPU);
+				sig = SIGXCPU;
 				if (rlim->rlim_cur < rlim->rlim_max)
 					rlim->rlim_cur += 5;
 			}
@@ -372,8 +373,7 @@ schedcpu(void *arg)
 		 * stop recalculating its priority until it wakes up.
 		 */
 		if (minslp > 1) {
-			mutex_exit(&p->p_smutex);
-			continue;
+			goto skip;
 		}
 
 		/*
@@ -400,7 +400,11 @@ schedcpu(void *arg)
 				resetpriority(l);
 			lwp_unlock(l);
 		}
+skip:
 		mutex_exit(&p->p_smutex);
+		if (sig) {
+			psignal(p, sig);
+		}
 	}
 	mutex_exit(&proclist_mutex);
 	uvm_meter();
