@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.83.4.8 2007/01/19 21:50:15 ad Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.83.4.9 2007/01/25 20:18:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.8 2007/01/19 21:50:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.83.4.9 2007/01/25 20:18:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,8 +860,7 @@ sa_yield(struct lwp *l)
 
 			mutex_enter(&sa->sa_mutex);
 			sa->sa_concurrency--;
-			ret = mtsleep(l, PUSER | PCATCH, "sawait", 0,
-			    &sa->sa_mutex);
+			ret = tsleep(l, PUSER | PCATCH, "sawait", 0);
 			sa->sa_concurrency++;
 			mutex_exit(&sa->sa_mutex);
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.9 2007/01/16 01:26:20 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.10 2007/01/25 20:18:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/signalvar.h>
 #include <sys/specificdata.h>
 
@@ -110,6 +111,7 @@ struct	lwp {
 	stack_t		*l_sigstk;	/* p: sp & on stack state variable */
 	sigset_t	*l_sigmask;	/* p: signal mask */
 	sigset_t	*l_sigwait;	/* p: signals being waited for */
+	kcondvar_t	l_sigcv;	/* p: for sigsuspend() */
 	struct ksiginfo	*l_sigwaited;	/* p: delivered signals from set */
 	sigpend_t	*l_sigpendset;	/* p: XXX issignal()/postsig() baton */
 	LIST_ENTRY(lwp)	l_sigwaiter;	/* p: chain on list of waiting LWPs */
@@ -188,7 +190,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
  * Mask indicating that there is "exceptional" work to be done on return to
  * user.
  */
-#define	L_USERRET	(L_WEXIT|L_PENDSIG|L_WREBOOT|L_WSUSPEND|L_WSUSPEND)
+#define	L_USERRET	(L_WEXIT|L_PENDSIG|L_WREBOOT|L_WSUSPEND|L_WCORE)
 
 /*
  * Status values.
