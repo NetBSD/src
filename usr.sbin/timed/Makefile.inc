@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/10/17 14:19:00 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2007/01/25 23:51:28 christos Exp $
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
+
+WARNS=4
