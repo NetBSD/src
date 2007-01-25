@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.17 2006/05/09 20:18:10 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.18 2007/01/25 15:29:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.17 2006/05/09 20:18:10 mrg Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.18 2007/01/25 15:29:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -484,10 +484,11 @@ priv_resources(void)
 		return(-1);
 	}
 
+	memset(&sin, 0, sizeof sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = 0;
 	for (port = IPPORT_RESERVED - 1; port > IPPORT_RESERVED / 2; port--) {
-		sin.sin_port = htons((u_short)port);
+		sin.sin_port = port;
 		if (bind(sock, (struct sockaddr*)&sin, sizeof (sin)) >= 0)
 			break;
 		if (errno != EADDRINUSE && errno != EADDRNOTAVAIL) {
