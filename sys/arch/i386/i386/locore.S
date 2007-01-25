@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43.4.7 2007/01/19 20:07:55 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.4.8 2007/01/25 11:27:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -714,6 +714,13 @@ NENTRY(lgdt)
 	movw	%ax,%ss
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax
 	movw	%ax,%fs
+	/* Reload code selector by doing intersegment return. */
+	popl	%eax
+	pushl	$GSEL(GCODE_SEL, SEL_KPL)
+	pushl	%eax
+	lret
+
+NENTRY(x86_flush)
 	/* Reload code selector by doing intersegment return. */
 	popl	%eax
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
