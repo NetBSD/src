@@ -1,4 +1,4 @@
-.\"	$NetBSD: sdpquery.1,v 1.5 2006/08/23 20:39:48 wiz Exp $
+.\"	$NetBSD: sdpquery.1,v 1.6 2007/01/25 20:29:56 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $Id: sdpquery.1,v 1.5 2006/08/23 20:39:48 wiz Exp $
+.\" $Id: sdpquery.1,v 1.6 2007/01/25 20:29:56 plunky Exp $
 .\" $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/sdpcontrol.8,v 1.6 2005/07/09 19:04:43 markus Exp $
 .\"
 .Dd August 17, 2006
@@ -86,7 +86,7 @@ utility uses Service Search Attribute Requests and prints results to
 standard output and error messages to standard error.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width ".Fl a Ar address"
 .It Fl a Ar address
 Connect to the remote device with the specified address.
 The address can be specified as BD_ADDR or a name.
@@ -114,17 +114,13 @@ utility will use the best available.
 Query the local SDP server via the control socket.
 .It Fl h
 Display usage message and exit.
-.It Ar command
-One of the supported commands (see below).
-.It Ar parameters
-One or more optional space separated command parameters.
 .El
-.Sh COMMANDS
+.Pp
 The currently supported commands in
 .Nm
 are:
 .Pp
-.Bl -tag -width indent -compact
+.Bl -tag -width ".Cm search Ar service" -compact
 .It Cm Browse Op Ar group
 Browse for services.
 The
@@ -141,32 +137,32 @@ parameter is a 16-bit UUID of the service to search for.
 For the following services it is possible to use service name
 instead of service UUID:
 .Pp
-.Bl -tag -width OPUSHXX -compact
-.It Dv CIP
+.Bl -tag -compact
+.It CIP
 Common ISDN Access
-.It Dv CTP
+.It CTP
 Cordless Telephony
-.It Dv DUN
+.It DUN
 DialUp Networking
-.It Dv FAX
+.It FAX
 Fax
-.It Dv FTRN
+.It FTRN
 OBEX File Transfer
-.It Dv GN
+.It GN
 GN
-.It Dv HID
+.It HID
 Human Interface Device
-.It Dv HF
+.It HF
 Handsfree
-.It Dv HSET
+.It HSET
 Headset
-.It Dv LAN
+.It LAN
 LAN Access Using PPP
-.It Dv NAP
+.It NAP
 Network Access Point
-.It Dv OPUSH
+.It OPUSH
 OBEX Object Push
-.It Dv SP
+.It SP
 Serial Port
 .El
 .El
