@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.4.4 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.5 2007/01/25 20:04:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.4 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.5 2007/01/25 20:04:59 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.4 2007/01/12 01:04:06 ad Exp
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/ktrace.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/syslog.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
@@ -71,8 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.4 2007/01/12 01:04:06 ad Exp
 
 struct ktrace_entry {
 	TAILQ_ENTRY(ktrace_entry) kte_list;
-	struct ktr_header kte_kth;
-	void *kte_buf;
+	struct	ktr_header kte_kth;
+	void	*kte_buf;
+	size_t	kte_bufsz;	
 #define	KTE_SPACE		32
 	uint8_t kte_space[KTE_SPACE];
 };
@@ -106,7 +107,8 @@ struct ktr_desc {
 	kcondvar_t ktd_cv;
 };
 
-static void	*ktealloc(struct ktrace_entry **, struct lwp *, int, size_t);
+static int	ktealloc(struct ktrace_entry **, void **, struct lwp *, int,
+			 size_t);
 static void	ktrwrite(struct ktr_desc *, struct ktrace_entry *);
 static int	ktrace_common(struct lwp *, int, int, int, struct file *);
 static int	ktrops(struct lwp *, struct proc *, int, int,
@@ -273,7 +275,9 @@ ktraddentry(struct lwp *l, struct ktrace_entry *kte, int flags)
 		/* Add emulation trace before first entry for this process */
 		p->p_traceflag &= ~KTRFAC_TRC_EMUL;
 		mutex_exit(&ktrace_mutex);
+		ktrexit(l);
 		ktremul(l);
+		(void)ktrenter(l);
 		mutex_enter(&ktrace_mutex);
 	}
 
@@ -352,6 +356,7 @@ ktraddentry(struct lwp *l, struct ktrace_entry *kte, int flags)
 skip_sync:
 	ktdrel(ktd);
 	mutex_exit(&ktrace_mutex);
+	ktrexit(l);
 	return;
 
 relktd:
@@ -360,6 +365,7 @@ relktd:
 freekte:
 	mutex_exit(&ktrace_mutex);
 	ktefree(kte);
+	ktrexit(l);
 }
 
 void
@@ -367,7 +373,7 @@ ktefree(struct ktrace_entry *kte)
 {
 
 	if (kte->kte_buf != kte->kte_space)
-		free(kte->kte_buf, M_KTRACE);
+		kmem_free(kte->kte_buf, kte->kte_bufsz);
 	pool_put(&kte_pool, kte);
 }
 
@@ -440,25 +446,34 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 	return error;
 }
 
-void *
-ktealloc(struct ktrace_entry **ktep, struct lwp *l, int type, size_t sz)
+int
+ktealloc(struct ktrace_entry **ktep, void **bufp, struct lwp *l, int type,
+	 size_t sz)
 {
 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
 	struct ktr_header *kth;
 	void *buf;
 
-	kte = pool_get(&kte_pool, PR_WAITOK);
-	*ktep = kte;
+	if (ktrenter(l))
+		return EAGAIN;
 
-	if (sz > sizeof(kte->kte_space))
-		buf = malloc(sz, M_KTRACE, M_WAITOK);
-	else
+	kte = pool_get(&kte_pool, PR_WAITOK);
+
+	if (sz > sizeof(kte->kte_space)) {
+		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
+			pool_put(&kte_pool, kte);
+			ktrexit(l);
+			return ENOMEM;
+		}
+	} else
 		buf = kte->kte_space;
+
+	kte->kte_bufsz = sz;
+	kte->kte_buf = buf;
 
 	kth = &kte->kte_kth;
 	(void)memset(kth, 0, sizeof(*kth));
-	kte->kte_buf = buf;
 	kth->ktr_len = sz;
 	kth->ktr_type = type;
 	kth->ktr_pid = p->p_pid;
@@ -478,7 +493,10 @@ ktealloc(struct ktrace_entry **ktep, struct lwp *l, int type, size_t sz)
 		break;
 	}
 
-	return (buf);
+	*ktep = kte;
+	*bufp = buf;
+
+	return 0;
 }
 
 void
@@ -493,9 +511,6 @@ ktrsyscall(struct lwp *l, register_t code, register_t realcode,
 	size_t len;
 	u_int i;
 
-	if (ktrenter(l))
-		return;
-
 	if (callp == NULL)
 		callp = p->p_emul->e_sysent;
 
@@ -505,7 +520,9 @@ ktrsyscall(struct lwp *l, register_t code, register_t realcode,
 		argsize = argsize << 1;
 #endif
 	len = sizeof(struct ktr_syscall) + argsize;
-	ktp = ktealloc(&kte, l, KTR_SYSCALL, len);
+
+	if (ktealloc(&kte, (void *)&ktp, l, KTR_SYSCALL, len))
+		return;
 
 	ktp->ktr_code = realcode;
 	ktp->ktr_argsize = argsize;
@@ -514,7 +531,6 @@ ktrsyscall(struct lwp *l, register_t code, register_t realcode,
 		*argp++ = args[i];
 
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 }
 
 void
@@ -523,9 +539,9 @@ ktrsysret(struct lwp *l, register_t code, int error, register_t *retval)
 	struct ktrace_entry *kte;
 	struct ktr_sysret *ktp;
 
-	if (ktrenter(l))
+	if (ktealloc(&kte, (void *)&ktp, l, KTR_SYSRET,
+	    sizeof(struct ktr_sysret)))
 		return;
-	ktp = ktealloc(&kte, l, KTR_SYSRET, sizeof(struct ktr_sysret));
 
 	ktp->ktr_code = code;
 	ktp->ktr_eosys = 0;			/* XXX unused */
@@ -534,7 +550,6 @@ ktrsysret(struct lwp *l, register_t code, int error, register_t *retval)
 	ktp->ktr_retval_1 = retval ? retval[1] : 0;
 
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 }
 
 /*
@@ -559,18 +574,17 @@ void
 ktrkmem(struct lwp *l, int type, const void *bf, size_t len)
 {
 	struct ktrace_entry *kte;
+	void *buf;
 
-	if (ktrenter(l))
+	if (ktealloc(&kte, &buf, l, type, len))
 		return;
-	(void)ktealloc(&kte, l, type, len);
-	memcpy(kte->kte_buf, bf, len);
+	memcpy(buf, bf, len);
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 }
 
 void
 ktrgenio(struct lwp *l, int fd, enum uio_rw rw, struct iovec *iov,
-    int len, int error)
+	 int len, int error)
 {
 	struct ktrace_entry *kte;
 	struct ktr_genio *ktp;
@@ -581,12 +595,12 @@ ktrgenio(struct lwp *l, int fd, enum uio_rw rw, struct iovec *iov,
 	if (error)
 		return;
 
-	if (ktrenter(l))
+ next:
+	buflen = min(PAGE_SIZE, resid + sizeof(struct ktr_genio));
+
+	if (ktealloc(&kte, (void *)&ktp, l, KTR_GENIO, buflen))
 		return;
 
-next:
-	buflen = min(PAGE_SIZE, resid + sizeof(struct ktr_genio));
-	ktp = ktealloc(&kte, l, KTR_GENIO, buflen);
 	ktp->ktr_fd = fd;
 	ktp->ktr_rw = rw;
 
@@ -614,18 +628,16 @@ next:
 	 */
 	ktraddentry(l, kte, KTA_WAITOK | KTA_LARGE);
 	if (resid > 0) {
-#if 0 /* XXX NJWLWP */
-		KDASSERT(p->p_cpu != NULL);
-		KDASSERT(p->p_cpu == curcpu());
-#endif
 		/* XXX NJWLWP */
-		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
+			(void)ktrenter(l);
 			preempt(1);
+			ktrexit(l);
+		}
 
 		goto next;
 	}
 
-	ktrexit(l);
 	return;
 
 out:
@@ -643,12 +655,13 @@ ktrpsig(struct lwp *l, int sig, sig_t action, const sigset_t *mask,
 		siginfo_t	si;
 	} *kbuf;
 
-	if (ktrenter(l))
+	if (ktealloc(&kte, (void *)&kbuf, l, KTR_PSIG, sizeof(*kbuf)))
 		return;
-	kbuf = ktealloc(&kte, l, KTR_PSIG, sizeof(kbuf));
+
 	kbuf->kp.signo = (char)sig;
 	kbuf->kp.action = action;
 	kbuf->kp.mask = *mask;
+
 	if (ksi) {
 		kbuf->kp.code = KSI_TRAPCODE(ksi);
 		(void)memset(&kbuf->si, 0, sizeof(kbuf->si));
@@ -660,7 +673,6 @@ ktrpsig(struct lwp *l, int sig, sig_t action, const sigset_t *mask,
 	}
 
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 }
 
 void
@@ -669,9 +681,6 @@ ktrcsw(struct lwp *l, int out, int user)
 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
 	struct ktr_csw *kc;
-
-	if (ktrenter(l))
-		return;
 
 	/*
 	 * We can't sleep if we're already going to sleep (if original
@@ -683,6 +692,9 @@ ktrcsw(struct lwp *l, int out, int user)
 	 * from that is difficult to do. 
 	 */
 	if (out) {
+		if (ktrenter(l))
+			return;
+
 		switch (KTRFAC_VERSION(p->p_traceflag)) {
 		case 0:
 			/* This is the original format */
@@ -713,7 +725,9 @@ ktrcsw(struct lwp *l, int out, int user)
 	if ((l->l_pflag & LP_KTRCSW) != 0) {
 		l->l_pflag &= ~LP_KTRCSW;
 
-		kc = ktealloc(&kte, l, KTR_CSW, sizeof(*kc));
+		if (ktealloc(&kte, (void *)&kc, l, KTR_CSW, sizeof(*kc)))
+			return;
+
 		kc->out = 1;
 		kc->user = ((l->l_pflag & LP_KTRCSWUSER) != 0);
 
@@ -734,13 +748,13 @@ ktrcsw(struct lwp *l, int out, int user)
 		ktraddentry(l, kte, KTA_WAITOK);
 	}
 
-	kc = ktealloc(&kte, l, KTR_CSW, sizeof(*kc));
+	if (ktealloc(&kte, (void *)&kc, l, KTR_CSW, sizeof(*kc)))
+		return;
+
 	kc->out = 0;
 	kc->user = user;
-	ktraddentry(l, kte, KTA_WAITOK);
 
-	ktrexit(l);
-	return;
+	ktraddentry(l, kte, KTA_WAITOK);
 }
 
 int
@@ -754,9 +768,10 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 	if (len > KTR_USER_MAXLEN)
 		return ENOSPC;
 
-	if (ktrenter(l))
-		return EAGAIN;
-	ktp = ktealloc(&kte, l, KTR_USER, sizeof(*ktp) + len);
+	error = ktealloc(&kte, (void *)&ktp, l, KTR_USER, sizeof(*ktp) + len);
+	if (error != 0)
+		return error;
+
 	if (ustr) {
 		if (copyinstr(id, ktp->ktr_id, KTR_USER_MAXIDLEN, NULL) != 0)
 			ktp->ktr_id[0] = '\0';
@@ -769,7 +784,6 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 		len = 0;
 
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 	return error;
 }
 
@@ -786,15 +800,15 @@ ktrmool(struct lwp *l, const void *kaddr, size_t size, const void *uaddr)
 	struct ktr_mool *kp;
 	struct ktr_mool *bf;
 
-	if (ktrenter(l))
+	if (ktealloc(&kte, (void *)&kp, l, KTR_MOOL, size + sizeof(*kp)))
 		return;
-	kp = ktealloc(&kte, l, KTR_MOOL, size + sizeof(*kp));
+
 	kp->uaddr = uaddr;
 	kp->size = size;
 	bf = kp + 1; /* Skip uaddr and size */
 	(void)memcpy(bf, kaddr, size);
+
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 }
 
 void
@@ -803,24 +817,26 @@ ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 {
 	struct ktrace_entry *kte;
 	struct ktr_saupcall *ktp;
-	size_t len;
+	size_t len, sz;
 	struct sa_t **sapp;
 	int i;
 
 	if (ktrenter(l))
 		return;
+
 	len = sizeof(struct ktr_saupcall);
-	ktp = ktealloc(&kte, l, KTR_SAUPCALL,
-	    len + sizeof(struct sa_t) * (nevent + nint + 1));
+	sz = len + sizeof(struct sa_t) * (nevent + nint + 1);
+
+	if (ktealloc(&kte, (void *)&ktp, l, KTR_SAUPCALL, sz))
+		return;
 
 	ktp->ktr_type = type;
 	ktp->ktr_nevent = nevent;
 	ktp->ktr_nint = nint;
 	ktp->ktr_sas = sas;
 	ktp->ktr_ap = ap;
-	/*
-	 *  Copy the sa_t's
-	 */
+
+	/* Copy the sa_t's */
 	sapp = (struct sa_t **) sas;
 
 	for (i = nevent + nint; i >= 0; i--) {
@@ -831,26 +847,23 @@ ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
 
 	kte->kte_kth.ktr_len = len;
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 }
 
 void
-ktrmib(l, name, namelen)
-	struct lwp *l;
-	const int *name;
-	u_int namelen;
+ktrmib(struct lwp *l, const int *name, u_int namelen)
 {
 	struct ktrace_entry *kte;
 	int *namep;
 	size_t size;
 
-	if (ktrenter(l))
-		return;
 	size = namelen * sizeof(*name);
-	namep = ktealloc(&kte, l, KTR_MIB, size);
+
+	if (ktealloc(&kte, (void *)&namep, l, KTR_MIB, size))
+		return;
+
 	(void)memcpy(namep, name, namelen * sizeof(*name));
+
 	ktraddentry(l, kte, KTA_WAITOK);
-	ktrexit(l);
 }
 
 /* Interface and common routines */
@@ -891,8 +904,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 		ktd = ktd_lookup(fp);
 		mutex_exit(&ktrace_mutex);
 		if (ktd == NULL) {
-			ktd = malloc(sizeof(struct ktr_desc),
-			    M_KTRACE, M_WAITOK);
+			ktd = kmem_alloc(sizeof(*ktd), KM_SLEEP);
 			TAILQ_INIT(&ktd->ktd_queue);
 			callout_init(&ktd->ktd_wakch);
 			cv_init(&ktd->ktd_cv, "ktrwait");
@@ -913,7 +925,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 			error = kthread_create1(ktrace_thread, ktd,
 			    &ktd->ktd_proc, "ktr %p", ktd);
 			if (error != 0) {
-				free(ktd, M_KTRACE);
+				kmem_free(ktd, sizeof(*ktd));
 				goto done;
 			}
 
@@ -951,38 +963,39 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 	/*
 	 * do it
 	 */
+	rw_enter(&proclist_lock, RW_READER);
 	if (pid < 0) {
 		/*
 		 * by process group
 		 */
-		pg = pg_find(-pid, PFIND_UNLOCK_FAIL);
-		if (pg == NULL) {
+		pg = pg_find(-pid, PFIND_LOCKED);
+		if (pg == NULL)
 			error = ESRCH;
-			goto done;
-		}
-		LIST_FOREACH(p, &pg->pg_members, p_pglist) {
-			if (descend)
-				ret |= ktrsetchildren(curl, p, ops, facs, ktd);
-			else
-				ret |= ktrops(curl, p, ops, facs, ktd);
+		else {
+			LIST_FOREACH(p, &pg->pg_members, p_pglist) {
+				if (descend)
+					ret |= ktrsetchildren(curl, p, ops,
+					    facs, ktd);
+				else
+					ret |= ktrops(curl, p, ops, facs,
+					    ktd);
+			}
 		}
 
 	} else {
 		/*
 		 * by pid
 		 */
-		p = p_find(pid, PFIND_UNLOCK_FAIL);
-		if (p == NULL) {
+		p = p_find(pid, PFIND_LOCKED);
+		if (p == NULL)
 			error = ESRCH;
-			goto done;
-		}
-		if (descend)
+		else if (descend)
 			ret |= ktrsetchildren(curl, p, ops, facs, ktd);
 		else
 			ret |= ktrops(curl, p, ops, facs, ktd);
 	}
 	rw_exit(&proclist_lock);	/* taken by p{g}_find */
-	if (!ret)
+	if (error == 0 && !ret)
 		error = EPERM;
 done:
 	if (ktd != NULL) {
@@ -1336,7 +1349,7 @@ ktrace_thread(void *arg)
 	closef(fp, NULL);
 
 	callout_stop(&ktd->ktd_wakch);
-	free(ktd, M_KTRACE);
+	kmem_free(ktd, sizeof(*ktd));
 
 	kthread_exit(0);
 }
