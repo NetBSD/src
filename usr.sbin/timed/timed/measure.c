@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.14 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: measure.c,v 1.15 2007/01/25 23:51:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.14 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: measure.c,v 1.15 2007/01/25 23:51:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: measure.c,v 1.14 2007/01/25 23:25:20 cbiere Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
+#include <util.h>
 
 #define MSEC_DAY	(SECDAY*1000)
 
@@ -321,4 +322,24 @@ mstotvround(struct timeval *res, long x)
 		res->tv_usec += 1000000;
 		res->tv_sec--;
 	}
+}
+
+void
+update_time(struct timeval *tv, const struct tsp *msg)
+{
+#ifdef SUPPORT_UTMP
+	logwtmp("|", "date", "");
+#endif
+#ifdef SUPPORT_UTMPX
+	logwtmpx("|", "date", "", 0, OLD_TIME);
+#endif
+	tv->tv_sec = msg->tsp_time.tv_sec;
+	tv->tv_usec = msg->tsp_time.tv_usec;
+	(void)settimeofday(tv, 0);
+#ifdef SUPPORT_UTMP
+	logwtmp("}", "date", "");
+#endif
+#ifdef SUPPORT_UTMPX
+	logwtmpx("}", "date", "", 0, NEW_TIME);
+#endif
 }
