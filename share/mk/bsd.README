@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.192 2007/01/14 16:19:55 apb Exp $
+#	$NetBSD: bsd.README,v 1.193 2007/01/25 23:04:28 perry Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -980,6 +980,11 @@ SYMLINKS	See <bsd.links.mk>
 MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 		defined, "MAN=${PROG}.1" is assumed.
 
+PAXCTL_FLAGS	If defined then paxctl(1) is ran on binary after link
+		time, with the value of the variable as args to it.
+
+PAXCTL_FLAGS.${PROG} Custom override for PAXCTL_FLAGS.
+
 PROG		The name of the program to build.  If not supplied, nothing
 		is built.
 
@@ -987,11 +992,6 @@ PROG_CXX	If defined, the name of the program to build.  Also
 		causes <bsd.prog.mk> to link the program with the C++
 		compiler rather than the C compiler.  PROG_CXX overrides
 		the value of PROG if PROG is also set.
-
-PROG_PAX	If defined then paxctl(1) is ran on binary after link
-		time, with the value of the variable as args to it.
-
-PROG_PAX.${PROG} Custom override for PROG_PAX.
 
 PROGNAME	The name that the above program will be installed as, if
 		different from ${PROG}.
