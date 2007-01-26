@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.139 2007/01/26 02:04:44 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.140 2007/01/26 02:27:29 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.139 2007/01/26 02:04:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.140 2007/01/26 02:27:29 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -99,8 +99,8 @@ struct cfdriver cbb_cd = {
 #endif
 
 /*
- * DELAY_MS() is a wait millisecond.  It shall use instead of delay()
- * if you want to wait more than 1 ms.
+ * DELAY_MS() is wait in milliseconds.  It should be used instead
+ * of delay() if you want to wait more than 1 ms.
  */
 #define DELAY_MS(time, param)						\
     do {								\
