@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.138 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.139 2007/01/26 02:04:44 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.138 2006/12/21 15:55:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.139 2007/01/26 02:04:44 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -3399,18 +3399,18 @@ pccbb_powerhook(why, arg)
 	if (why == PWR_RESUME) {
 		if (sc->sc_pwrmgt_offs != 0) {
 			reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
-			    sc->sc_pwrmgt_offs + 4);
+			    sc->sc_pwrmgt_offs + PCI_PMCSR);
 			if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
-			    reg & 0x100) {
+			    reg & PCI_PMCSR_PME_EN) {
 				/* powrstate != D0 */
 
 				printf("%s going back to D0 mode\n",
 				    sc->sc_dev.dv_xname);
 				reg &= ~PCI_PMCSR_STATE_MASK;
 				reg |= PCI_PMCSR_STATE_D0;
-				reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
+				reg &= ~PCI_PMCSR_PME_EN;
 				pci_conf_write(sc->sc_pc, sc->sc_tag,
-				    sc->sc_pwrmgt_offs + 4, reg);
+				    sc->sc_pwrmgt_offs + PCI_PMCSR, reg);
 
 				pci_conf_write(sc->sc_pc, sc->sc_tag,
 				    PCI_SOCKBASE, sc->sc_sockbase);
