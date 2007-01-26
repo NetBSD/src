@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.54 2006/10/30 05:10:40 christos Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.55 2007/01/26 00:37:30 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.54 2006/10/30 05:10:40 christos Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.55 2007/01/26 00:37:30 cbiere Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: vfprintf.c,v 1.54 2006/10/30 05:10:40 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
+#include <limits.h>
 
 #include "reentrant.h"
 #include "local.h"
@@ -176,6 +177,19 @@ static int exponent __P((char *, int, int));
 #define	ZEROPAD		0x400		/* zero (as opposed to blank) pad */
 #define FPT		0x800		/* Floating point number */
 
+static inline int
+add_digit(int value, int d)
+{
+	unsigned ret;
+
+	ret = value * 10U + d;
+	if (__predict_false(value > (INT_MAX - 9) / 10)) {
+		if (value > INT_MAX / 10 || ret > INT_MAX)
+			return -1;
+	}
+	return ret;
+}
+
 int
 vfprintf(fp, fmt0, ap)
 	FILE *fp;
@@ -202,7 +216,7 @@ __vfprintf_unlocked(fp, fmt0, ap)
 {
 	const char *fmt;/* format string */
 	int ch;	/* character from fmt */
-	int n, m;	/* handy integers (short term usage) */
+	int n;	/* handy integer (short term usage) */
 	const char *cp;	/* handy char pointer (short term usage) */
 	char *bp;	/* handy char pointer (short term usage) */
 	struct __siov *iovp;/* for PRINT macro */
@@ -350,7 +364,10 @@ __vfprintf_unlocked(fp, fmt0, ap)
 				}
 			}
 		}
-		if ((m = fmt - cp) != 0) {
+		if (fmt != cp) {
+			ptrdiff_t m = fmt - cp;
+			if (m < 0 || m > INT_MAX - ret)
+				goto overflow;
 			PRINT(cp, m);
 			ret += m;
 		}
@@ -387,6 +404,8 @@ reswitch:	switch (ch) {
 			 */
 			if ((width = va_arg(ap, int)) >= 0)
 				goto rflag;
+			if (-(unsigned)width > INT_MAX)
+				goto overflow;
 			width = -width;
 			/* FALLTHROUGH */
 		case '-':
@@ -401,12 +420,15 @@ reswitch:	switch (ch) {
 				prec = n < 0 ? -1 : n;
 				goto rflag;
 			}
-			n = 0;
+			prec = 0;
+			while (ch == '0')
+				ch = *fmt++;
 			while (is_digit(ch)) {
-				n = 10 * n + to_digit(ch);
+				prec = add_digit(prec, to_digit(ch));
+				if (prec < 0)
+					goto overflow;
 				ch = *fmt++;
 			}
-			prec = n < 0 ? -1 : n;
 			goto reswitch;
 		case '0':
 			/*
@@ -418,12 +440,13 @@ reswitch:	switch (ch) {
 			goto rflag;
 		case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
-			n = 0;
+			width = 0;
 			do {
-				n = 10 * n + to_digit(ch);
+				width = add_digit(width, to_digit(ch));
+				if (width < 0)
+					goto overflow;
 				ch = *fmt++;
 			} while (is_digit(ch));
-			width = n;
 			goto reswitch;
 #ifndef NO_FLOATING_POINT
 		case 'L':
@@ -601,16 +624,16 @@ reswitch:	switch (ch) {
 				 * NUL in the first `prec' characters, and
 				 * strlen() will go further.
 				 */
-				char *p = memchr(cp, 0, (size_t)prec);
+				for (n = 0; n < prec && cp[n]; n++)
+					continue;
+				size = n;
+			} else {
+				size_t len = strlen(cp);
 
-				if (p != NULL) {
-					size = p - cp;
-					if (size > prec)
-						size = prec;
-				} else
-					size = prec;
-			} else
-				size = strlen(cp);
+				if (len > INT_MAX)
+					goto overflow;
+				size = len;
+			}
 			sign = '\0';
 			break;
 		case 'U':
@@ -797,19 +820,29 @@ number:			if ((dprec = prec) >= 0)
 			PAD(width - realsz, blanks);
 
 		/* finally, adjust ret */
-		ret += width > realsz ? width : realsz;
+		n = width > realsz ? width : realsz;
+		if (n > INT_MAX - ret)
+			goto overflow;
+		ret += n;
 
 		FLUSH();	/* copy out the I/O vectors */
 	}
 done:
 	FLUSH();
 error:
+	if (__sferror(fp))
+		ret = -1;
+	goto finish;
+
+overflow:
+	errno = EOVERFLOW;
+	ret = -1;
+
+finish:
 #ifndef NO_FLOATING_POINT
 	if (dtoaresult)
 		__freedtoa(dtoaresult);
 #endif
-	if (__sferror(fp))
-		ret = -1;
 	return (ret);
 }
 
