@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.81 2006/12/15 21:18:52 joerg Exp $ */
+/*	$NetBSD: if_gre.c,v 1.82 2007/01/26 03:01:32 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.81 2006/12/15 21:18:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.82 2007/01/26 03:01:32 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -144,14 +144,14 @@ static int gre_getnames(struct socket *, struct lwp *, struct sockaddr_in *,
     struct sockaddr_in *);
 
 static void
-gre_stop(int *running)
+gre_stop(volatile int *running)
 {
 	*running = 0;
 	wakeup(running);
 }
 
 static void
-gre_join(int *running)
+gre_join(volatile int *running)
 {
 	int s;
 
