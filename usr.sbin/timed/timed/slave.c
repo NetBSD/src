@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.17 2007/01/25 23:51:11 christos Exp $	*/
+/*	$NetBSD: slave.c,v 1.18 2007/01/26 16:12:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.17 2007/01/25 23:51:11 christos Exp $");
+__RCSID("$NetBSD: slave.c,v 1.18 2007/01/26 16:12:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,11 +146,7 @@ loop:
 			to.tsp_hopcnt = MAX_HOPCNT;
 			set_tsp_name(&to, hostname);
 			bytenetorder(&to);
-			if (sendto(sock, (char *)&to, sizeof(struct tsp), 0,
-				   (struct sockaddr*)&ntp->dest_addr,
-				   sizeof(ntp->dest_addr)) < 0) {
-				trace_sendto_err(ntp->dest_addr.sin_addr);
-			}
+			(void)sendtsp(sock, &to, &ntp->dest_addr);
 		    }
 		}
 		(void)gettimeofday(&ntime, 0);
@@ -232,7 +228,7 @@ loop:
 			setmaster(msg);
 			if (seq != msg->tsp_seq) {
 				seq = msg->tsp_seq;
-				synch(tvtomsround(msg->tsp_time));
+				synch((long)tvtomsround(msg->tsp_time));
 			}
 			(void)gettimeofday(&ntime, 0);
 			electiontime = ntime.tv_sec + delay2;
@@ -471,11 +467,7 @@ loop:
 				to.tsp_type = TSP_ACK;
 				set_tsp_name(&to, answer->tsp_name);
 				bytenetorder(&to);
-				if (sendto(sock, (char *)&to,
-					   sizeof(struct tsp), 0,
-					   (struct sockaddr*)&taddr, sizeof(taddr)) < 0) {
-					trace_sendto_err(taddr.sin_addr);
-				}
+				(void)sendtsp(sock, &to, &taddr);
 			}
 			break;
 
@@ -537,12 +529,9 @@ loop:
 				    break;
 				bytenetorder(msg);
 				for (ntp = nettab; ntp != 0; ntp = ntp->next) {
-				    if (ntp->status == MASTER
-					&& 0 > sendto(sock, (char *)msg,
-						      sizeof(struct tsp), 0,
-					      (struct sockaddr*)&ntp->dest_addr,
-						      sizeof(ntp->dest_addr)))
-				    trace_sendto_err(ntp->dest_addr.sin_addr);
+				    if (ntp->status == MASTER)
+					    (void)sendtsp(sock, msg,
+						&ntp->dest_addr);
 				}
 			    }
 			} else {	/* fromnet->status == MASTER */

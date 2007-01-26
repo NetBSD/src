@@ -1,4 +1,4 @@
-/*	$NetBSD: timed-extern.h,v 1.7 2007/01/25 23:51:11 christos Exp $	*/
+/*	$NetBSD: timed-extern.h,v 1.8 2007/01/26 16:12:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -83,5 +83,6 @@ void	 traceoff(const char *);
 void	 traceon(void);
 void	 xmit(int, u_short, struct sockaddr_in *);
 void	 set_tsp_name(struct tsp *, const char *);
-void	 get_tsp_name(const struct tsp *tsp, char *, size_t);
+void	 get_tsp_name(const struct tsp *, char *, size_t);
 void	 update_time(struct timeval *, const struct tsp *);
+int	 sendtsp(int , struct tsp *, struct sockaddr_in *);
