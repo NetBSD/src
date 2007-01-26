@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.6 2006/12/05 23:04:21 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.7 2007/01/26 23:00:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.6 2006/12/05 23:04:21 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.7 2007/01/26 23:00:33 pooka Exp $");
 #endif /* !lint */
 
 #include <puffs.h>
@@ -57,7 +57,8 @@ const char *vfsop_revmap[] = {
 	"PUFFS_VFS_INIT",
 	"PUFFS_VFS_DONE",
 	"PUFFS_VFS_SNAPSHOT",
-	"PUFFS_VFS_EXTATTCTL"
+	"PUFFS_VFS_EXTATTCTL",
+	"PUFFS_VFS_SUSPEND"
 };
 /* XXX! */
 const char *vnop_revmap[] = {
