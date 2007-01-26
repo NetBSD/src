@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.14 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.15 2007/01/26 00:27:54 cbiere Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: asprintf.c,v 1.14 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.15 2007/01/26 00:27:54 cbiere Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -67,10 +67,10 @@ asprintf(char **str, char const *fmt, ...)
 	va_start(ap, fmt);
 	ret = __vfprintf_unlocked(&f, fmt, ap);
 	va_end(ap);
-	if (ret == -1)
+	if (ret < 0)
 		goto err;
 	*f._p = '\0';
-	_base = realloc(f._bf._base, (size_t)(ret + 1));
+	_base = realloc(f._bf._base, (size_t)ret + 1);
 	if (_base == NULL)
 		goto err;
 	*str = (char *)_base;
