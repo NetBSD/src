@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.40 2007/01/25 23:43:57 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.41 2007/01/26 22:59:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.40 2007/01/25 23:43:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.41 2007/01/26 22:59:49 pooka Exp $");
 
 #include <sys/param.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/vnode.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -948,7 +949,7 @@ puffs_fsync(void *v)
 	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_NOREFS))
 		return 0;
 
-	dofaf = (ap->a_flags & FSYNC_WAIT) == 0;
+	dofaf = (ap->a_flags & FSYNC_WAIT) == 0 || ap->a_flags == FSYNC_LAZY;
 	/*
 	 * We abuse VXLOCK to mean "vnode is going to die", so we issue
 	 * only FAFs for those.  Otherwise there's a danger of deadlock,
@@ -1722,13 +1723,18 @@ puffs_strategy(void *v)
 #endif
 
 	/*
-	 * See explanation for the necessity of a FAF in puffs_fsync
+	 * See explanation for the necessity of a FAF in puffs_fsync.
+	 *
+	 * Also, do FAF in case we're suspending.
+	 * See puffs_vfsops.c:pageflush()
 	 *
 	 * XXgoddamnX: B_WRITE is a "pseudo flag"
 	 */
 	if ((bp->b_flags & B_READ) == 0) {
 		simple_lock(&vp->v_interlock);
 		if (vp->v_flag & VXLOCK)
+			dowritefaf = 1;
+		if (pn->pn_stat & PNODE_SUSPEND)
 			dowritefaf = 1;
 		simple_unlock(&vp->v_interlock);
 	}
@@ -1893,9 +1899,7 @@ puffs_bmap(void *v)
 	return 0;
 }
 
-/*
- * moreXXX: yes, todo
- */
+
 int
 puffs_lock(void *v)
 {
@@ -1904,10 +1908,28 @@ puffs_lock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
 
 #if 0
 	DPRINTF(("puffs_lock: lock %p, args 0x%x\n", vp, ap->a_flags));
 #endif
+
+	/*
+	 * XXX: this avoids deadlocking when we're suspending.
+	 * e.g. some ops holding the vnode lock might be blocked for
+	 * the vfs transaction lock so we'd deadlock.
+	 *
+	 * Now once again this is skating on the thin ice of modern life,
+	 * since we are breaking the consistency guarantee provided
+	 * _to the user server_ by vnode locking.  Hopefully this will
+	 * get fixed soon enough by getting rid of the dependency on
+	 * vnode locks alltogether.
+	 */
+	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == fstrans_suspending){
+		if (ap->a_flags & LK_INTERLOCK)
+			simple_unlock(&vp->v_interlock);
+		return 0;
+	}
 
 	return lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock);
 }
@@ -1920,10 +1942,18 @@ puffs_unlock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
 
 #if 0
 	DPRINTF(("puffs_unlock: lock %p, args 0x%x\n", vp, ap->a_flags));
 #endif
+
+	/* XXX: see puffs_lock() */
+	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == fstrans_suspending){
+		if (ap->a_flags & LK_INTERLOCK)
+			simple_unlock(&vp->v_interlock);
+		return 0;
+	}
 
 	return lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock);
 }
