@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.19 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.20 2007/01/26 16:12:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.19 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.20 2007/01/26 16:12:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ again:
 			prev->p = ptr->p;
 			if (ptr == tail)
 				tail = prev;
-			free((char *)ptr);
+			free(ptr);
 			fromnet = NULL;
 			if (netfrom == NULL)
 			    for (ntp = nettab; ntp != NULL; ntp = ntp->next) {
@@ -197,14 +197,14 @@ again:
 				traceoff("Tracing ended for cause");
 		}
 
-		if (!poll(set, 1, rwait.tv_sec * 1000 + rwait.tv_usec / 1000)) {
+		if (!poll(set, 1, (int)(rwait.tv_sec * 1000 + rwait.tv_usec / 1000))) {
 			if (rwait.tv_sec == 0 && rwait.tv_usec == 0)
 				return(0);
 			continue;
 		}
 		length = sizeof(from);
-		if ((n = recvfrom(sock, (char *)&msgin, sizeof(struct tsp), 0,
-			     (struct sockaddr*)&from, &length)) < 0) {
+		if ((n = recvfrom(sock, &msgin, sizeof(struct tsp), 0,
+			     (struct sockaddr*)(void *)&from, &length)) < 0) {
 			syslog(LOG_ERR, "recvfrom: %m");
 			exit(1);
 		}
@@ -315,14 +315,13 @@ again:
 					"readmsg: discarding %d msgs\n",
 					msgcnt);
 			msgcnt = 0;
-			while ((ptr=head->p) != NULL) {
+			while ((ptr = head->p) != NULL) {
 				head->p = ptr->p;
-				free((char *)ptr);
+				free(ptr);
 			}
 			tail = head;
 		} else {
-			tail->p = (struct tsplist *)
-				    malloc(sizeof(struct tsplist));
+			tail->p = malloc(sizeof(struct tsplist));
 			tail = tail->p;
 			tail->p = NULL;
 			tail->info = msgin;

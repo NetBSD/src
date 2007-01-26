@@ -1,4 +1,4 @@
-/*	$NetBSD: correct.c,v 1.12 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: correct.c,v 1.13 2007/01/26 16:12:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)correct.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: correct.c,v 1.12 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: correct.c,v 1.13 2007/01/26 16:12:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ void
 correct(long avdelta)
 {
 	struct hosttbl *htp;
-	int corr;
+	long corr;
 	struct timeval adjlocal, tmptv;
 	struct tsp to;
 	struct tsp *answer;

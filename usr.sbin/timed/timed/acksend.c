@@ -1,4 +1,4 @@
-/*	$NetBSD: acksend.c,v 1.10 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: acksend.c,v 1.11 2007/01/26 16:12:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acksend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: acksend.c,v 1.10 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: acksend.c,v 1.11 2007/01/26 16:12:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,10 +56,19 @@ xmit(int type, u_short seq, struct sockaddr_in *addr)
 
 	set_tsp_name(&msg, hostname);
 	bytenetorder(&msg);
-	if (sendto(sock, (char *)&msg, sizeof(struct tsp), 0,
-		   (struct sockaddr*)addr, sizeof(struct sockaddr)) < 0) {
+	(void)sendtsp(sock, &msg, addr);
+}
+
+int
+sendtsp(int s, struct tsp *msg, struct sockaddr_in *addr)
+{
+	int error;
+
+	error = sendto(s, msg, sizeof(*msg), 0,
+	    (struct sockaddr *)(void *)addr, sizeof(*addr));
+	if (error == -1)
 		trace_sendto_err(addr->sin_addr);
-	}
+	return error;
 }
 
 
@@ -100,12 +109,8 @@ acksend(struct tsp *message,		/* this message */
 			 * other guy cannot keep our sequence numbers
 			 * straight.
 			 */
-			if (sendto(sock, (char *)message, sizeof(struct tsp),
-				   0, (struct sockaddr*)addr,
-				   sizeof(struct sockaddr)) < 0) {
-				trace_sendto_err(addr->sin_addr);
+			if (sendtsp(sock, message, addr) == -1)
 				break;
-			}
 		}
 
 		mstotvround(&twait, msec);
