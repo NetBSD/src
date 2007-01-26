@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.21 2007/01/21 16:29:31 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.22 2007/01/26 22:59:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -145,6 +145,7 @@ struct puffs_mount {
 	uint64_t			pmp_nextreq;
 	uint8_t				pmp_status;
 	uint8_t				pmp_unmounting;
+	uint8_t				pmp_suspend;
 };
 
 #define PUFFSTAT_BEFOREINIT	0
@@ -152,7 +153,8 @@ struct puffs_mount {
 #define PUFFSTAT_RUNNING	2
 #define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
-#define PNODE_NOREFS	0x01	/* vnode invalidated, no backend references */
+#define PNODE_NOREFS	0x01	/* vnode inactive, no backend reference	*/
+#define PNODE_SUSPEND	0x02	/* issue all operations as FAF		*/
 #if 0
 #define PNODE_LOCKED	0x0
 #define PNODE_WANTED	0x0
@@ -170,6 +172,7 @@ struct puffs_node {
 int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
 
 int	puffs_vfstouser(struct puffs_mount *, int, void *, size_t);
+void	puffs_suspendtouser(struct puffs_mount *, int);
 int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, void *,
 		       struct vnode *, struct vnode *);
 void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);
