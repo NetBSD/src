@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.81 2007/01/04 19:07:04 elad Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.82 2007/01/26 19:01:26 dyoung Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.81 2007/01/04 19:07:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.82 2007/01/26 19:01:26 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -953,7 +953,7 @@ in6_pcbrtentry(in6p)
 	if (ro->ro_rt == NULL && IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
 		struct sockaddr_in *dst = (struct sockaddr_in *)&ro->ro_dst;
 
-		bzero(dst, sizeof(*dst));
+		memset(dst, 0, sizeof(*dst));
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(struct sockaddr_in);
 		bcopy(&in6p->in6p_faddr.s6_addr32[3], &dst->sin_addr,
@@ -962,7 +962,7 @@ in6_pcbrtentry(in6p)
 	} else
 #endif
 	if (ro->ro_rt == NULL && !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
-		bzero(dst6, sizeof(*dst6));
+		memset(dst6, 0, sizeof(*dst6));
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_addr = in6p->in6p_faddr;
