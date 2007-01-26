@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.7 2006/03/19 19:57:22 christos Exp $	*/
+/*	$NetBSD: event.c,v 1.8 2007/01/26 19:34:30 cbiere Exp $	*/
 /*	$OpenBSD: event.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 
 /*
@@ -756,6 +756,7 @@ event_queue_insert(struct event_base *base, struct event *ev, int queue)
 		break;
 	case EVLIST_TIMEOUT: {
 		struct event *tmp = RB_INSERT(event_tree, &base->timetree, ev);
+		(void)tmp;
 		assert(tmp == NULL);
 		break;
 	}
