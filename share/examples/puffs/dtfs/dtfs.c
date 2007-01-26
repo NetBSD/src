@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.14 2007/01/15 00:41:09 pooka Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.15 2007/01/26 23:02:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -39,6 +39,7 @@
 #include <err.h>
 #include <mntopts.h>
 #include <puffs.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,8 @@
 #define FSNAME "dt"
 #endif
 
+static struct puffs_usermount *pu;
+
 static void usage(void);
 
 static void
@@ -62,13 +65,23 @@ usage()
 	    getprogname());
 }
 
+/*
+ * This is not perhaps entirely kosher, but this is test file system,
+ * so I'm really not concerned.
+ */
+static void
+dosuspend(int v)
+{
+
+	puffs_fs_suspend(pu);
+}
+
 int
 main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
 	struct dtfs_mount dtm;
-	struct puffs_usermount *pu;
 	struct puffs_pathobj *po_root;
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
@@ -97,6 +110,8 @@ main(int argc, char *argv[])
 			/*NOTREACHED*/
 		}
 	}
+	if (pflags & PUFFS_FLAG_OPDUMP)
+		lflags |= PUFFSLOOP_NODAEMON;
 	argc -= optind;
 	argv += optind;
 
@@ -108,6 +123,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, dtfs, fs, statvfs);
 	PUFFSOP_SETFSNOP(pops, unmount);
 	PUFFSOP_SETFSNOP(pops, sync);
+	PUFFSOP_SET(pops, dtfs, fs, suspend);
 
 	PUFFSOP_SET(pops, dtfs, node, lookup);
 	PUFFSOP_SET(pops, dtfs, node, getattr);
@@ -130,6 +146,9 @@ main(int argc, char *argv[])
 	if ((pu = puffs_mount(pops, argv[0], mntflags, FSNAME, &dtm, pflags, 0))
 	    == NULL)
 		err(1, "mount");
+
+	if (signal(SIGUSR1, dosuspend) == SIG_ERR)
+		warn("cannot set suspend sighandler");
 
 	/* init & call puffs_start() */
 	if (dtfs_domount(pu) != 0)
