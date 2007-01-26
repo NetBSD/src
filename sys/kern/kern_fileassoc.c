@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.20 2007/01/25 13:57:28 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.21 2007/01/26 12:36:46 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.20 2007/01/25 13:57:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.21 2007/01/26 12:36:46 elad Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -219,6 +219,7 @@ fileassoc_deregister(fileassoc_t assoc)
 {
 
 	LIST_REMOVE(assoc, list);
+	specificdata_key_delete(fileassoc_domain, assoc->key);
 	kmem_free(assoc, sizeof(*assoc));
 
 	return 0;
