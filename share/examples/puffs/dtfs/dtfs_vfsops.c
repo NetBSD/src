@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.10 2007/01/15 00:41:09 pooka Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.11 2007/01/26 23:02:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -141,3 +141,12 @@ dtfs_fs_statvfs(struct puffs_cc *pcc, struct statvfs *sbp, pid_t pid)
 	return 0;
 }
 #undef ROUND 
+
+void
+dtfs_fs_suspend(struct puffs_cc *pcc, int status)
+{
+
+	printf("suspend status %d\n", status);
+	if (status == 1)
+		sleep(3);
+}
