@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.288 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: init_main.c,v 1.289 2007/01/26 21:57:47 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.288 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.289 2007/01/26 21:57:47 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -262,6 +262,9 @@ main(void)
 	/* Initialize callouts. */
 	callout_startup();
 
+	/* Initialize kauth. */
+	kauth_init();
+
 	/* Initialize the buffer cache */
 	bufinit();
 
@@ -329,9 +332,6 @@ main(void)
 	inittimecounter();
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
-
-	/* Initialize kauth. */
-	kauth_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
