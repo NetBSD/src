@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.39 2007/01/16 11:51:22 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.40 2007/01/26 23:50:36 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,18 +28,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.39 2007/01/16 11:51:22 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.40 2007/01/26 23:50:36 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
-#include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
-#include <sys/acct.h>
-#include <sys/sysctl.h>
 #include <sys/kmem.h>
 
 /* 
