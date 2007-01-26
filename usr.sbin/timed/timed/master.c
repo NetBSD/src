@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.17 2007/01/25 23:51:11 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.18 2007/01/26 16:12:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.17 2007/01/25 23:51:11 christos Exp $");
+__RCSID("$NetBSD: master.c,v 1.18 2007/01/26 16:12:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,12 +145,7 @@ loop:
 				to.tsp_hopcnt = MAX_HOPCNT;
 				set_tsp_name(&to, hostname);
 				bytenetorder(&to);
-				if (sendto(sock, (char *)&to,
-					   sizeof(struct tsp), 0,
-					   (struct sockaddr*)&ntp->dest_addr,
-					   sizeof(ntp->dest_addr)) < 0) {
-				   trace_sendto_err(ntp->dest_addr.sin_addr);
-				}
+				(void)sendtsp(sock, &to, &ntp->dest_addr);
 			}
 		}
 
@@ -318,6 +313,7 @@ loop:
 				    htp->name, inet_ntoa(htp->addr.sin_addr));
 				(void)remmach(htp);
 			}
+			break;
 
 		case TSP_TEST:
 			if (trace) {
@@ -395,13 +391,13 @@ synch(long mydelta)
 		(void)gettimeofday(&check, 0);
 		for (htp = self.l_fwd; htp != &self; htp = htp->l_fwd) {
 			if (htp->noanswer != 0) {
-				measure_status = measure(500, 100,
+				measure_status = measure(500UL, 100UL,
 							 htp->name,
-							 &htp->addr,0);
+							 &htp->addr, 0);
 			} else {
-				measure_status = measure(3000, 100,
+				measure_status = measure(3000UL, 100UL,
 							 htp->name,
-							 &htp->addr,0);
+							 &htp->addr, 0);
 			}
 			if (measure_status != GOOD) {
 				/* The slave did not respond.  We have
@@ -569,7 +565,7 @@ addmach(char *name, struct sockaddr_in *addr, struct netinfo *ntp)
 		if (slvcount >= NHOSTS) {
 			if (trace) {
 				fprintf(fd, "no more slots in host table\n");
-				prthp(CLK_TCK);
+				prthp((clock_t)CLK_TCK);
 			}
 			syslog(LOG_ERR, "no more slots in host table");
 			Mflag = 0;
@@ -703,13 +699,13 @@ rmnetmachs(struct netinfo *ntp)
 	struct hosttbl *htp;
 
 	if (trace)
-		prthp(CLK_TCK);
+		prthp((clock_t)CLK_TCK);
 	for (htp = self.l_fwd; htp != &self; htp = htp->l_fwd) {
 		if (ntp == htp->ntp)
 			htp = remmach(htp);
 	}
 	if (trace)
-		prthp(CLK_TCK);
+		prthp((clock_t)CLK_TCK);
 }
 
 
@@ -739,7 +735,7 @@ newslave(struct tsp *msg)
 	htp = addmach(msg->tsp_name, &from,fromnet);
 	htp->seq = msg->tsp_seq;
 	if (trace)
-		prthp(0);
+		prthp((clock_t)0);
 
 	/*
 	 * If we are stable, send our time to the slave.
@@ -816,7 +812,7 @@ traceon(void)
 	trace = 1;
 	get_goodgroup(1);
 	setstatus();
-	prthp(CLK_TCK);
+	prthp((clock_t)CLK_TCK);
 }
 
 
@@ -825,7 +821,7 @@ traceoff(const char *msg)
 {
 	get_goodgroup(1);
 	setstatus();
-	prthp(CLK_TCK);
+	prthp((clock_t)CLK_TCK);
 	if (trace) {
 		fprintf(fd, "%s at %s\n", msg, date());
 		(void)fclose(fd);
