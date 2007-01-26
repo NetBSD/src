@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.38 2006/12/15 21:18:53 joerg Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.39 2007/01/26 19:12:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.38 2006/12/15 21:18:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39 2007/01/26 19:12:21 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 				return;
 			ipflow_inuse++;
 		}
-		bzero((caddr_t) ipf, sizeof(*ipf));
+		memset(ipf, 0, sizeof(*ipf));
 	} else {
 		s = splnet();
 		IPFLOW_REMOVE(ipf);
