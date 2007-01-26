@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.245 2007/01/18 21:42:57 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.246 2007/01/26 16:28:18 sborrill Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.245 2007/01/18 21:42:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.246 2007/01/26 16:28:18 sborrill Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -94,6 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.245 2007/01/18 21:42:57 bouyer Exp $");
 #define bus_space_write_multi_stream_4	bus_space_write_multi_4
 #define bus_space_read_multi_stream_2	bus_space_read_multi_2
 #define bus_space_read_multi_stream_4	bus_space_read_multi_4
+#define bus_space_read_stream_2	bus_space_read_2
+#define bus_space_read_stream_4	bus_space_read_4
+#define bus_space_write_stream_2	bus_space_write_2
+#define bus_space_write_stream_4	bus_space_write_4
 #endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 #include <dev/ata/atavar.h>
