@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.27 2007/01/20 14:37:06 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.28 2007/01/26 23:00:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.27 2007/01/20 14:37:06 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.28 2007/01/26 23:00:33 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -448,6 +448,18 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			    auxt->pvfsr_pid);
 			break;
 		}
+		case PUFFS_VFS_SUSPEND:
+		{
+			struct puffs_vfsreq_suspend *auxt = auxbuf;
+
+			error = 0;
+			if (pops->puffs_fs_suspend == NULL)
+				break;
+
+			pops->puffs_fs_suspend(pcc, auxt->pvfsr_status);
+			break;
+		}
+
 		default:
 			/*
 			 * I guess the kernel sees this one coming

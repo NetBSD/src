@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.28 2007/01/20 14:37:06 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.29 2007/01/26 23:00:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -132,6 +132,7 @@ struct puffs_ops {
 	    struct statvfs *, pid_t);
 	int (*puffs_fs_sync)(struct puffs_cc *, int,
 	    const struct puffs_cred *, pid_t);
+	void (*puffs_fs_suspend)(struct puffs_cc *, int);
 
 	int (*puffs_node_lookup)(struct puffs_cc *,
 	    void *, void **, enum vtype *, voff_t *, dev_t *,
@@ -299,6 +300,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 	    struct statvfs *, pid_t);					\
 	int fsname##_fs_sync(struct puffs_cc *, int,			\
 	    const struct puffs_cred *cred, pid_t);			\
+	void fsname##_fs_suspend(struct puffs_cc *, int);		\
 									\
 	int fsname##_node_lookup(struct puffs_cc *,			\
 	    void *, void **, enum vtype *, voff_t *, dev_t *,		\
@@ -378,7 +380,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 5
+#define PUFFS_DEVEL_LIBVERSION 6
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -500,6 +502,12 @@ void	puffs_set_pathtransform(struct puffs_usermount *, pu_pathtransform_fn);
 void	puffs_set_pathcmp(struct puffs_usermount *, pu_pathcmp_fn);
 void	puffs_set_pathfree(struct puffs_usermount *, pu_pathfree_fn);
 void	puffs_set_namemod(struct puffs_usermount *, pu_namemod_fn);
+
+/*
+ * Suspension
+ */
+
+int	puffs_fs_suspend(struct puffs_usermount *);
 
 __END_DECLS
 
