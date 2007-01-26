@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.82 2007/01/26 03:01:32 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.83 2007/01/26 19:32:32 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.82 2007/01/26 03:01:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83 2007/01/26 19:32:32 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -787,7 +787,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	rtcache_check(&sc->route);
 	if (sc->route.ro_rt == NULL)
 		goto end;
-	if (sc->route.ro_rt->rt_ifp->if_softc != sc)
+	if (sc->route.ro_rt->rt_ifp->if_softc == sc)
 		rtcache_free(&sc->route);
 	else
 		error = ip_output(m, NULL, &sc->route, 0,
