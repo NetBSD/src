@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.21 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: timed.c,v 1.22 2007/01/26 16:12:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.21 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: timed.c,v 1.22 2007/01/26 16:12:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	port = srvp->s_port;
-	memset(&server, 0, sizeof(server));
+	(void)memset(&server, 0, sizeof(server));
 	server.sin_port = srvp->s_port;
 	server.sin_family = AF_INET;
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -243,12 +243,11 @@ main(int argc, char *argv[])
 		perror("socket");
 		exit(1);
 	}
-	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&on,
-							sizeof(on)) < 0) {
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) {
 		perror("setsockopt");
 		exit(1);
 	}
-	if (bind(sock, (struct sockaddr*)&server, sizeof(server))) {
+	if (bind(sock, (struct sockaddr*)(void *)&server, sizeof(server))) {
 		if (errno == EADDRINUSE)
 			fprintf(stderr,"timed: time daemon already running\n");
 		else
@@ -258,9 +257,9 @@ main(int argc, char *argv[])
 
 	/* choose a unique seed for random number generation */
 	(void)gettimeofday(&ntime, 0);
-	srandom(ntime.tv_sec + ntime.tv_usec);
+	srandom((unsigned long)(ntime.tv_sec + ntime.tv_usec));
 
-	sequence = random();     /* initial seq number */
+	sequence = (u_short)random();     /* initial seq number */
 
 	/* rounds kernel variable time to multiple of 5 ms. */
 	ntime.tv_sec = 0;
@@ -304,9 +303,9 @@ main(int argc, char *argv[])
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		if (!ntp)
-			ntp = (struct netinfo*)malloc(sizeof(struct netinfo));
-		bzero(ntp,sizeof(*ntp));
-		ntp->my_addr=((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+			ntp = malloc(sizeof(struct netinfo));
+		(void)memset(ntp, 0, sizeof(*ntp));
+		ntp->my_addr=((struct sockaddr_in *)(void *)ifa->ifa_addr)->sin_addr;
 		ntp->status = NOMASTER;
 
 		if ((ifa->ifa_flags & IFF_UP) == 0)
@@ -316,17 +315,17 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		ntp->mask = ((struct sockaddr_in *)
+		ntp->mask = ((struct sockaddr_in *)(void *)
 		    ifa->ifa_netmask)->sin_addr.s_addr;
 
 		if (ifa->ifa_flags & IFF_BROADCAST) {
-			ntp->dest_addr = *(struct sockaddr_in *)ifa->ifa_broadaddr;
+			ntp->dest_addr = *(struct sockaddr_in *)(void *)ifa->ifa_broadaddr;
 			/* What if the broadcast address is all ones?
 			 * So we cannot just mask ntp->dest_addr.  */
 			ntp->net = ntp->my_addr;
 			ntp->net.s_addr &= ntp->mask;
 		} else {
-			ntp->dest_addr = *(struct sockaddr_in *)ifa->ifa_dstaddr;
+			ntp->dest_addr = *(struct sockaddr_in *)(void *)ifa->ifa_dstaddr;
 			ntp->net = ntp->dest_addr.sin_addr;
 		}
 
@@ -350,7 +349,7 @@ main(int argc, char *argv[])
 	}
 	freeifaddrs(ifap);
 	if (ntp)
-		(void) free((char *)ntp);
+		(void) free(ntp);
 	if (nettab == NULL) {
 		fprintf(stderr, "timed: no network usable\n");
 		exit(1);
@@ -358,10 +357,10 @@ main(int argc, char *argv[])
 
 
 	/* microseconds to delay before responding to a broadcast */
-	delay1 = casual(1, 100*1000);
+	delay1 = casual(1L, 100*1000L);
 
 	/* election timer delay in secs. */
-	delay2 = casual(MINTOUT, MAXTOUT);
+	delay2 = casual((long)MINTOUT, (long)MAXTOUT);
 
 
 	if (!debug) {
@@ -707,12 +706,12 @@ addnetname(char *name)
 
 	while (*netlist)
 		netlist = &((*netlist)->next);
-	*netlist = (struct nets *)malloc(sizeof **netlist);
-	if (*netlist == 0) {
+	*netlist = malloc(sizeof **netlist);
+	if (*netlist == NULL) {
 		fprintf(stderr,"malloc failed\n");
 		exit(1);
 	}
-	bzero((char *)*netlist, sizeof(**netlist));
+	(void)memset(*netlist, 0, sizeof(**netlist));
 	(*netlist)->name = name;
 }
 
@@ -724,13 +723,13 @@ add_good_host(const char* name,
 	struct goodhost *ghp;
 	struct hostent *hentp;
 
-	ghp = (struct goodhost*)malloc(sizeof(*ghp));
+	ghp = malloc(sizeof(*ghp));
 	if (!ghp) {
 		syslog(LOG_ERR, "malloc failed");
 		exit(1);
 	}
 
-	bzero((char*)ghp, sizeof(*ghp));
+	(void)memset(ghp, 0, sizeof(*ghp));
 	(void)strncpy(&ghp->name[0], name, sizeof(ghp->name));
 	ghp->next = goodhosts;
 	ghp->perm = perm;
@@ -780,7 +779,7 @@ get_goodgroup(int force)
 	while (0 != (ghp = *ghpp)) {
 		if (!ghp->perm) {
 			*ghpp = ghp->next;
-			free((char*)ghp);
+			free(ghp);
 		} else {
 			ghpp = &ghp->next;
 		}
