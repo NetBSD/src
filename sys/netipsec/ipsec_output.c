@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.19 2006/12/15 21:18:56 joerg Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.20 2007/01/26 19:49:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.19 2006/12/15 21:18:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.20 2007/01/26 19:49:18 dyoung Exp $");
 
 /*
  * IPsec output processing.
@@ -746,7 +746,7 @@ ipsec6_output_tunnel(
 		else
 			rtcache_check(state->ro);
 		if (state->ro->ro_rt == NULL) {
-			bzero(dst6, sizeof(*dst6));
+			memset(dst6, 0, sizeof(*dst6));
 			dst6->sin6_family = AF_INET6;
 			dst6->sin6_len = sizeof(*dst6);
 			dst6->sin6_addr = ip6->ip6_dst;
