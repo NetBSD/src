@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.112 2006/12/15 21:18:53 joerg Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.113 2007/01/26 19:15:26 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.112 2006/12/15 21:18:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.113 2007/01/26 19:15:26 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -885,7 +885,7 @@ in_pcbrtentry(struct inpcb *inp)
 	else
 		rtcache_check(ro);
 	if (ro->ro_rt == NULL && !in_nullhost(inp->inp_faddr)) {
-		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
+		memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(ro->ro_dst);
 		satosin(&ro->ro_dst)->sin_addr = inp->inp_faddr;
@@ -898,9 +898,8 @@ struct sockaddr_in *
 in_selectsrc(struct sockaddr_in *sin, struct route *ro,
     int soopts, struct ip_moptions *mopts, int *errorp)
 {
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 
-	ia = (struct in_ifaddr *)0;
 	/*
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
@@ -916,7 +915,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	if ((soopts & SO_DONTROUTE) == 0 && /*XXX*/
 	    ro->ro_rt == NULL) {
 		/* No route yet, so try to acquire one */
-		bzero(&ro->ro_dst, sizeof(struct sockaddr_in));
+		memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
 		ro->ro_dst.sa_family = AF_INET;
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_in);
 		satosin(&ro->ro_dst)->sin_addr = sin->sin_addr;
