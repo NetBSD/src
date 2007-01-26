@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.41 2007/01/26 22:59:49 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.42 2007/01/26 23:25:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.41 2007/01/26 22:59:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.42 2007/01/26 23:25:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -231,7 +231,7 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fifo_revoke },		/* genfs_revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* genfs_badop */
-	{ &vop_fsync_desc, puffs_checkop },		/* fsync */
+	{ &vop_fsync_desc, fifo_fsync },		/* genfs_nullop*/
 	{ &vop_seek_desc, fifo_seek },			/* genfs_badop */
 	{ &vop_remove_desc, fifo_remove },		/* genfs_badop */
 	{ &vop_link_desc, fifo_link },			/* genfs_badop */
