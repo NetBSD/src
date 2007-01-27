@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.157 2007/01/17 03:43:18 rillig Exp $
+#	$NetBSD: build.sh,v 1.158 2007/01/27 11:27:33 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -239,6 +239,40 @@ initdefaults()
 
 getarch()
 {
+	# Translate some MACHINE name aliases (known only to build.sh)
+	# into proper MACHINE and MACHINE_ARCH names.  Save the alias
+	# name in makewrappermachine.
+	#
+	case "${MACHINE}" in
+
+	evbarm-e[bl])
+		makewrappermachine=${MACHINE}
+		# MACHINE_ARCH is "arm" or "armeb", not "armel"
+		MACHINE_ARCH=arm${MACHINE##*-}
+		MACHINE_ARCH=${MACHINE_ARCH%el}
+		MACHINE=${MACHINE%-e[bl]}
+		;;
+
+	evbmips-e[bl]|sbmips-e[bl])
+		makewrappermachine=${MACHINE}
+		MACHINE_ARCH=mips${MACHINE##*-}
+		MACHINE=${MACHINE%-e[bl]}
+		;;
+
+	evbmips64-e[bl]|sbmips64-e[bl])
+		makewrappermachine=${MACHINE}
+		MACHINE_ARCH=mips64${MACHINE##*-}
+		MACHINE=${MACHINE%64-e[bl]}
+		;;
+
+	evbsh3-e[bl])
+		makewrappermachine=${MACHINE}
+		MACHINE_ARCH=sh3${MACHINE##*-}
+		MACHINE=${MACHINE%-e[bl]}
+		;;
+
+	esac
+
 	# Translate a MACHINE into a default MACHINE_ARCH.
 	#
 	case "${MACHINE}" in
@@ -259,18 +293,6 @@ getarch()
 		MACHINE_ARCH=m68k
 		;;
 
-	evbmips-e[bl]|sbmips-e[bl])
-		MACHINE_ARCH=mips${MACHINE##*-}
-		makewrappermachine=${MACHINE}
-		MACHINE=${MACHINE%-e[bl]}
-		;;
-
-	evbmips64-e[bl]|sbmips64-e[bl])
-		MACHINE_ARCH=mips64${MACHINE##*-}
-		makewrappermachine=${MACHINE}
-		MACHINE=${MACHINE%64-e[bl]}
-		;;
-
 	evbmips|sbmips)		# no default MACHINE_ARCH
 		;;
 
@@ -288,12 +310,6 @@ getarch()
 
 	amigappc|bebox|evbppc|ibmnws|macppc|mvmeppc|ofppc|pmppc|prep|sandpoint)
 		MACHINE_ARCH=powerpc
-		;;
-
-	evbsh3-e[bl])
-		MACHINE_ARCH=sh3${MACHINE##*-}
-		makewrappermachine=${MACHINE}
-		MACHINE=${MACHINE%-e[bl]}
 		;;
 
 	evbsh3)			# no default MACHINE_ARCH
@@ -968,7 +984,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.157 2007/01/17 03:43:18 rillig Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.158 2007/01/27 11:27:33 apb Exp $
 # with these arguments: ${_args}
 #
 EOF
