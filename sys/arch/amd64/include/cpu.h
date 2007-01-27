@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.4.3 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.4.4 2007/01/27 07:09:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,8 +84,15 @@ struct cpu_info {
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
-	u_int32_t	ci_ipending;
-	int		ci_ilevel;
+
+	/* The following must be aligned for cmpxchg8b. */
+	struct {
+		uint32_t	ipending;
+		int		ilevel;
+	} ci_istate __aligned(8);
+#define ci_ipending	ci_istate.ipending
+#define	ci_ilevel	ci_istate.ilevel
+
 	int		ci_idepth;
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.8.7 2007/01/19 20:07:55 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.8 2007/01/27 07:09:02 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -670,6 +670,12 @@ NENTRY(lgdt)
 	movl	%eax,%es
 	movl	%eax,%ss
 	/* Reload code selector by doing intersegment return. */
+	popq	%rax
+	pushq	$GSEL(GCODE_SEL, SEL_KPL)
+	pushq	%rax
+	lretq
+
+NENTRY(x86_flush)
 	popq	%rax
 	pushq	$GSEL(GCODE_SEL, SEL_KPL)
 	pushq	%rax
