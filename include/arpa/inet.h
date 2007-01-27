@@ -1,5 +1,3 @@
-/*	$NetBSD: inet.h,v 1.1.1.4 2004/11/07 01:33:17 christos Exp $	*/
-
 /*
  * ++Copyright++ 1983, 1993
  * -
@@ -55,9 +53,9 @@
  * --Copyright--
  */
 
-/*
+/*%
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	Id: inet.h,v 1.1.206.1 2004/03/09 08:33:30 marka Exp
+ *	$Id: inet.h,v 1.1.1.5 2007/01/27 19:49:26 christos Exp $
  */
 
 #ifndef _INET_H_
@@ -124,3 +122,5 @@ __END_DECLS
 #endif
 
 #endif /* !_INET_H_ */
+
+/*! \file */
