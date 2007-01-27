@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2006/10/08 17:52:29 peter Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2007/01/27 21:36:13 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -30,6 +30,7 @@ SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 
 CPPFLAGS+=-I${BIND_SRCDIR}/include \
+	-I${IDIST} \
 	-I${IDIST}/lib/dns/include -I${IDIST}/lib/dns/unix/include \
 	-I${IDIST}/lib/isc/include -I${IDIST}/lib/isc/unix/include \
 	-I${IDIST}/lib/bind9/include \
