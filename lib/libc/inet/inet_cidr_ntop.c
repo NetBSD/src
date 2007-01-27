@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_ntop.c,v 1.1.1.1 2004/05/20 22:29:02 christos Exp $	*/
+/*	$NetBSD: inet_cidr_ntop.c,v 1.1.1.2 2007/01/27 21:45:35 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: inet_cidr_ntop.c,v 1.1.2.1.8.2 2004/03/17 00:29:46 marka Exp";
+static const char rcsid[] = "Id: inet_cidr_ntop.c,v 1.4.18.3 2006/10/11 02:32:47 marka Exp";
 #endif
 
 #include "port_before.h"
@@ -42,12 +42,12 @@ static const char rcsid[] = "Id: inet_cidr_ntop.c,v 1.1.2.1.8.2 2004/03/17 00:29
 # define SPRINTF(x) ((size_t)sprintf x)
 #endif
 
-static char *	inet_cidr_ntop_ipv4 __P((const u_char *src, int bits,
-					 char *dst, size_t size));
-static char *	inet_cidr_ntop_ipv6 __P((const u_char *src, int bits,
-					 char *dst, size_t size));
+static char *
+inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size);
+static char *
+inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size);
 
-/*
+/*%
  * char *
  * inet_cidr_ntop(af, src, bits, dst, size)
  *	convert network address from network to presentation format.
@@ -94,7 +94,7 @@ decoct(const u_char *src, int bytes, char *dst, size_t size) {
 	return (dst - odst);
 }
 
-/*
+/*%
  * static char *
  * inet_cidr_ntop_ipv4(src, bits, dst, size)
  *	convert IPv4 network address from network to presentation format.
@@ -180,7 +180,9 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
 	for (i = 0; i < NS_IN6ADDRSZ; i++)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
+	best.len = 0;
 	cur.base = -1;
+	cur.len = 0;
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++) {
 		if (words[i] == 0) {
 			if (cur.base == -1)
@@ -259,3 +261,5 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
 	strcpy(dst, tmp);
 	return (dst);
 }
+
+/*! \file */

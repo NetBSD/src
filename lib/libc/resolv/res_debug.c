@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.2 2004/11/07 01:49:19 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.1.1.3 2007/01/27 21:45:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -97,7 +97,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.5 2004/07/28 20:16:46 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 1.10.18.5 2005/07/28 07:38:11 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -115,6 +115,7 @@ static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.5 2004/07/28 20:16:46 m
 #include <math.h>
 #include <netdb.h>
 #include <resolv.h>
+#include <resolv_mt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -131,7 +132,7 @@ static const char rcsid[] = "Id: res_debug.c,v 1.3.2.5.4.5 2004/07/28 20:16:46 m
 extern const char *_res_opcodes[];
 extern const char *_res_sectioncodes[];
 
-/*
+/*%
  * Print the current options.
  */
 void
@@ -224,7 +225,7 @@ do_section(const res_state statp,
 		free(buf);
 }
 
-/*
+/*%
  * Print the contents of a query.
  * This is intended to be primarily a debugging routine.
  */
@@ -319,7 +320,8 @@ p_cdname(const u_char *cp, const u_char *msg, FILE *file) {
 	return (p_cdnname(cp, msg, PACKETSZ, file));
 }
 
-/* Return a fully-qualified domain name from a compressed name (with
+/*%
+ * Return a fully-qualified domain name from a compressed name (with
    length supplied).  */
 
 const u_char *
@@ -335,7 +337,7 @@ p_fqnname(cp, msg, msglen, name, namelen)
 		return (NULL);
 	newlen = strlen(name);
 	if (newlen == 0 || name[newlen - 1] != '.') {
-		if (newlen + 1 >= namelen)	/* Lack space for final dot */
+		if (newlen + 1 >= namelen)	/*%< Lack space for final dot */
 			return (NULL);
 		else
 			strcpy(name + newlen, ".");
@@ -357,7 +359,7 @@ p_fqname(const u_char *cp, const u_char *msg, FILE *file) {
 	return (n);
 }
 
-/*
+/*%
  * Names of RR classes and qclasses.  Classes and qclasses are the same, except
  * that C_ANY is a qclass but not a class.  (You can ask for records of class
  * C_ANY, but you can't have any records of that class in the database.)
@@ -373,7 +375,7 @@ const struct res_sym __p_class_syms[] = {
 	{C_IN, 		(char *)0,	(char *)0}
 };
 
-/*
+/*%
  * Names of message sections.
  */
 const struct res_sym __p_default_section_syms[] = {
@@ -410,7 +412,7 @@ const struct res_sym __p_cert_syms[] = {
 	{0,		NULL,		NULL}
 };
 
-/*
+/*%
  * Names of RR types and qtypes.  Types and qtypes are the same, except
  * that T_ANY is a qtype but not a type.  (You can ask for records of type
  * T_ANY, but you can't have any records of that type in the database.)
@@ -468,7 +470,7 @@ const struct res_sym __p_type_syms[] = {
 	{0, 		NULL,		NULL}
 };
 
-/*
+/*%
  * Names of DNS rcodes.
  */
 const struct res_sym __p_rcode_syms[] = {
@@ -501,12 +503,12 @@ sym_ston(const struct res_sym *syms, const char *name, int *success) {
 	}
 	if (success)
 		*success = 0;
-	return (syms->number);		/* The default value. */
+	return (syms->number);		/*%< The default value. */
 }
 
 const char *
 sym_ntos(const struct res_sym *syms, int number, int *success) {
-	static char unname[20];
+	char *unname = sym_ntos_unname;
 
 	for ((void)NULL; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -516,7 +518,7 @@ sym_ntos(const struct res_sym *syms, int number, int *success) {
 		}
 	}
 
-	sprintf(unname, "%d", number);		/* XXX nonreentrant */
+	sprintf(unname, "%d", number);		/*%< XXX nonreentrant */
 	if (success)
 		*success = 0;
 	return (unname);
@@ -524,7 +526,7 @@ sym_ntos(const struct res_sym *syms, int number, int *success) {
 
 const char *
 sym_ntop(const struct res_sym *syms, int number, int *success) {
-	static char unname[20];
+	char *unname = sym_ntop_unname;
 
 	for ((void)NULL; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -533,13 +535,13 @@ sym_ntop(const struct res_sym *syms, int number, int *success) {
 			return (syms->humanname);
 		}
 	}
-	sprintf(unname, "%d", number);		/* XXX nonreentrant */
+	sprintf(unname, "%d", number);		/*%< XXX nonreentrant */
 	if (success)
 		*success = 0;
 	return (unname);
 }
 
-/*
+/*%
  * Return a string for the type.
  */
 const char *
@@ -557,7 +559,7 @@ p_type(int type) {
 	return (typebuf);
 }
 
-/*
+/*%
  * Return a string for the type.
  */
 const char *
@@ -575,7 +577,7 @@ p_section(int section, int opcode) {
 	return (sym_ntos(symbols, section, (int *)0));
 }
 
-/*
+/*%
  * Return a mnemonic for class.
  */
 const char *
@@ -593,12 +595,12 @@ p_class(int class) {
 	return (classbuf);
 }
 
-/*
+/*%
  * Return a mnemonic for an option
  */
 const char *
 p_option(u_long option) {
-	static char nbuf[40];
+	char *nbuf = p_option_nbuf;
 
 	switch (option) {
 	case RES_INIT:		return "init";
@@ -615,7 +617,7 @@ p_option(u_long option) {
 	case RES_INSECURE2:	return "insecure2";
 	case RES_NOALIASES:	return "noaliases";
 	case RES_USE_INET6:	return "inet6";
-#ifdef RES_USE_EDNS0	/* KAME extension */
+#ifdef RES_USE_EDNS0	/*%< KAME extension */
 	case RES_USE_EDNS0:	return "edns0";
 #endif
 #ifdef RES_USE_DNAME
@@ -636,19 +638,19 @@ p_option(u_long option) {
 	}
 }
 
-/*
+/*%
  * Return a mnemonic for a time to live.
  */
 const char *
 p_time(u_int32_t value) {
-	static char nbuf[40];		/* XXX nonreentrant */
+	char *nbuf = p_time_nbuf;
 
 	if (ns_format_ttl(value, nbuf, sizeof nbuf) < 0)
 		sprintf(nbuf, "%u", value);
 	return (nbuf);
 }
 
-/*
+/*%
  * Return a string for the rcode.
  */
 const char *
@@ -656,7 +658,7 @@ p_rcode(int rcode) {
 	return (sym_ntos(__p_rcode_syms, rcode, (int *)0));
 }
 
-/*
+/*%
  * Return a string for a res_sockaddr_union.
  */
 const char *
@@ -683,7 +685,7 @@ p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
 	return (buf);
 }
 
-/*
+/*%
  * routines to convert between on-the-wire RR format and zone file format.
  * Does not contain conversion to/from decimal degrees; divide or multiply
  * by 60*60*1000 for that.
@@ -692,12 +694,12 @@ p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
 static unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
 				      1000000,10000000,100000000,1000000000};
 
-/* takes an XeY precision/size value, returns a string representation. */
+/*% takes an XeY precision/size value, returns a string representation. */
 static const char *
 precsize_ntoa(prec)
 	u_int8_t prec;
 {
-	static char retbuf[sizeof "90000000.00"];	/* XXX nonreentrant */
+	char *retbuf = precsize_ntoa_retbuf;
 	unsigned long val;
 	int mantissa, exponent;
 
@@ -710,7 +712,7 @@ precsize_ntoa(prec)
 	return (retbuf);
 }
 
-/* converts ascii size/precision X * 10**Y(cm) to 0xXY.  moves pointer. */
+/*% converts ascii size/precision X * 10**Y(cm) to 0xXY.  moves pointer.  */
 static u_int8_t
 precsize_aton(const char **strptr) {
 	unsigned int mval = 0, cmval = 0;
@@ -724,7 +726,7 @@ precsize_aton(const char **strptr) {
 	while (isdigit((unsigned char)*cp))
 		mval = mval * 10 + (*cp++ - '0');
 
-	if (*cp == '.') {		/* centimeters */
+	if (*cp == '.') {		/*%< centimeters */
 		cp++;
 		if (isdigit((unsigned char)*cp)) {
 			cmval = (*cp++ - '0') * 10;
@@ -750,7 +752,7 @@ precsize_aton(const char **strptr) {
 	return (retval);
 }
 
-/* converts ascii lat/lon to unsigned encoded 32-bit number.  moves pointer. */
+/*% converts ascii lat/lon to unsigned encoded 32-bit number.  moves pointer. */
 static u_int32_t
 latlon2ul(const char **latlonstrptr, int *which) {
 	const char *cp;
@@ -780,7 +782,7 @@ latlon2ul(const char **latlonstrptr, int *which) {
 	while (isdigit((unsigned char)*cp))
 		secs = secs * 10 + (*cp++ - '0');
 
-	if (*cp == '.') {		/* decimal seconds */
+	if (*cp == '.') {		/*%< decimal seconds */
 		cp++;
 		if (isdigit((unsigned char)*cp)) {
 			secsfrac = (*cp++ - '0') * 100;
@@ -793,7 +795,7 @@ latlon2ul(const char **latlonstrptr, int *which) {
 		}
 	}
 
-	while (!isspace((unsigned char)*cp))	/* if any trailing garbage */
+	while (!isspace((unsigned char)*cp))	/*%< if any trailing garbage */
 		cp++;
 
 	while (isspace((unsigned char)*cp))
@@ -814,30 +816,29 @@ latlon2ul(const char **latlonstrptr, int *which) {
 			- secsfrac;
 		break;
 	default:
-		retval = 0;	/* invalid value -- indicates error */
+		retval = 0;	/*%< invalid value -- indicates error */
 		break;
 	}
 
 	switch (*cp) {
 	case 'N': case 'n':
 	case 'S': case 's':
-		*which = 1;	/* latitude */
+		*which = 1;	/*%< latitude */
 		break;
 	case 'E': case 'e':
 	case 'W': case 'w':
-		*which = 2;	/* longitude */
+		*which = 2;	/*%< longitude */
 		break;
 	default:
-		*which = 0;	/* error */
+		*which = 0;	/*%< error */
 		break;
 	}
 
-	cp++;			/* skip the hemisphere */
-
-	while (!isspace((unsigned char)*cp))	/* if any trailing garbage */
+	cp++;			/*%< skip the hemisphere */
+	while (!isspace((unsigned char)*cp))	/*%< if any trailing garbage */
 		cp++;
 
-	while (isspace((unsigned char)*cp))	/* move to next field */
+	while (isspace((unsigned char)*cp))	/*%< move to next field */
 		cp++;
 
 	*latlonstrptr = cp;
@@ -845,7 +846,8 @@ latlon2ul(const char **latlonstrptr, int *which) {
 	return (retval);
 }
 
-/* converts a zone file representation in a string to an RDATA on-the-wire
+/*%
+ * converts a zone file representation in a string to an RDATA on-the-wire
  * representation. */
 int
 loc_aton(ascii, binary)
@@ -858,9 +860,9 @@ loc_aton(ascii, binary)
 	u_int32_t latit = 0, longit = 0, alt = 0;
 	u_int32_t lltemp1 = 0, lltemp2 = 0;
 	int altmeters = 0, altfrac = 0, altsign = 1;
-	u_int8_t hp = 0x16;	/* default = 1e6 cm = 10000.00m = 10km */
-	u_int8_t vp = 0x13;	/* default = 1e3 cm = 10.00m */
-	u_int8_t siz = 0x12;	/* default = 1e2 cm = 1.00m */
+	u_int8_t hp = 0x16;	/*%< default = 1e6 cm = 10000.00m = 10km */
+	u_int8_t vp = 0x13;	/*%< default = 1e3 cm = 10.00m */
+	u_int8_t siz = 0x12;	/*%< default = 1e2 cm = 1.00m */
 	int which1 = 0, which2 = 0;
 
 	cp = ascii;
@@ -871,18 +873,18 @@ loc_aton(ascii, binary)
 	lltemp2 = latlon2ul(&cp, &which2);
 
 	switch (which1 + which2) {
-	case 3:			/* 1 + 2, the only valid combination */
-		if ((which1 == 1) && (which2 == 2)) { /* normal case */
+	case 3:			/*%< 1 + 2, the only valid combination */
+		if ((which1 == 1) && (which2 == 2)) { /*%< normal case */
 			latit = lltemp1;
 			longit = lltemp2;
-		} else if ((which1 == 2) && (which2 == 1)) { /* reversed */
+		} else if ((which1 == 2) && (which2 == 1)) { /*%< reversed */
 			longit = lltemp1;
 			latit = lltemp2;
-		} else {	/* some kind of brokenness */
+		} else {	/*%< some kind of brokenness */
 			return (0);
 		}
 		break;
-	default:		/* we didn't get one of each */
+	default:		/*%< we didn't get one of each */
 		return (0);
 	}
 
@@ -898,7 +900,7 @@ loc_aton(ascii, binary)
 	while (isdigit((unsigned char)*cp))
 		altmeters = altmeters * 10 + (*cp++ - '0');
 
-	if (*cp == '.') {		/* decimal meters */
+	if (*cp == '.') {		/*%< decimal meters */
 		cp++;
 		if (isdigit((unsigned char)*cp)) {
 			altfrac = (*cp++ - '0') * 10;
@@ -910,7 +912,7 @@ loc_aton(ascii, binary)
 
 	alt = (10000000 + (altsign * (altmeters * 100 + altfrac)));
 
-	while (!isspace((unsigned char)*cp) && (cp < maxcp)) /* if trailing garbage or m */
+	while (!isspace((unsigned char)*cp) && (cp < maxcp)) /*%< if trailing garbage or m */
 		cp++;
 
 	while (isspace((unsigned char)*cp) && (cp < maxcp))
@@ -921,7 +923,7 @@ loc_aton(ascii, binary)
 
 	siz = precsize_aton(&cp);
 	
-	while (!isspace((unsigned char)*cp) && (cp < maxcp))	/* if trailing garbage or m */
+	while (!isspace((unsigned char)*cp) && (cp < maxcp))	/*%< if trailing garbage or m */
 		cp++;
 
 	while (isspace((unsigned char)*cp) && (cp < maxcp))
@@ -932,7 +934,7 @@ loc_aton(ascii, binary)
 
 	hp = precsize_aton(&cp);
 
-	while (!isspace((unsigned char)*cp) && (cp < maxcp))	/* if trailing garbage or m */
+	while (!isspace((unsigned char)*cp) && (cp < maxcp))	/*%< if trailing garbage or m */
 		cp++;
 
 	while (isspace((unsigned char)*cp) && (cp < maxcp))
@@ -946,7 +948,7 @@ loc_aton(ascii, binary)
  defaults:
 
 	bcp = binary;
-	*bcp++ = (u_int8_t) 0;	/* version byte */
+	*bcp++ = (u_int8_t) 0;	/*%< version byte */
 	*bcp++ = siz;
 	*bcp++ = hp;
 	*bcp++ = vp;
@@ -954,10 +956,10 @@ loc_aton(ascii, binary)
 	PUTLONG(longit,bcp);
 	PUTLONG(alt,bcp);
     
-	return (16);		/* size of RR in octets */
+	return (16);		/*%< size of RR in octets */
 }
 
-/* takes an on-the-wire LOC RR and formats it in a human readable format. */
+/*% takes an on-the-wire LOC RR and formats it in a human readable format. */
 const char *
 loc_ntoa(binary, ascii)
 	const u_char *binary;
@@ -1004,7 +1006,7 @@ loc_ntoa(binary, ascii)
 	longval = (templ - ((unsigned)1<<31));
 
 	GETLONG(templ, cp);
-	if (templ < referencealt) { /* below WGS 84 spheroid */
+	if (templ < referencealt) { /*%< below WGS 84 spheroid */
 		altval = referencealt - templ;
 		altsign = "-";
 	} else {
@@ -1067,7 +1069,7 @@ loc_ntoa(binary, ascii)
 }
 
 
-/* Return the number of DNS hierarchy levels in the name. */
+/*% Return the number of DNS hierarchy levels in the name. */
 int
 dn_count_labels(const char *name) {
 	int i, len, count;
@@ -1092,15 +1094,13 @@ dn_count_labels(const char *name) {
 	return (count);
 }
 
-
-/* 
+/*%
  * Make dates expressed in seconds-since-Jan-1-1970 easy to read.  
  * SIG records are required to be printed like this, by the Secure DNS RFC.
  */
 char *
 p_secstodate (u_long secs) {
-	/* XXX nonreentrant */
-	static char output[15];		/* YYYYMMDDHHMMSS and null */
+	char *output = p_secstodate_output;
 	time_t clock = secs;
 	struct tm *time;
 #ifdef HAVE_TIME_R
@@ -1163,3 +1163,5 @@ res_nametotype(const char *buf, int *successp) {
 		*successp = success;
 	return (result);
 }
+
+/*! \file */
