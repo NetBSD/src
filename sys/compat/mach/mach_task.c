@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.59.4.3 2007/01/18 00:15:36 christos Exp $ */
+/*	$NetBSD: mach_task.c,v 1.59.4.4 2007/01/27 01:29:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.3 2007/01/18 00:15:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.4 2007/01/27 01:29:05 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -577,7 +577,7 @@ mach_task_suspend(args)
 			break;
 		}
 	}
-	proc_stop(tp, 0);
+	proc_stop(tp, 0, SIGSTOP);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);

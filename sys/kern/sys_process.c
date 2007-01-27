@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110.2.6 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.7 2007/01/27 01:29:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.6 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.7 2007/01/27 01:29:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -929,122 +929,9 @@ process_stoptrace(struct lwp *l)
 	}
 
 	p->p_xstat = SIGTRAP;
-	proc_stop(p, 1);
+	proc_stop(p, 1, SIGSTOP);
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
 	lwp_lock(l);
 	mi_switch(l, NULL);
 }
-
-#if defined(KTRACE) || defined(PTRACE)
-/*
- * Put process 'p' into the stopped state and optionally, notify the parent.
- */
-void
-proc_stop(struct proc *p, int notify)
-{
-	struct lwp *l;
-	struct sadata_vp *vp;
-
-	LOCK_ASSERT(mutex_owned(&proclist_mutex));
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-
-	/*
-	 * If there are no LWPs running, the mark the process as stopped
-	 * now.  Otherwise, the last LWP to come to a halt in issignal()
-	 * will signal the parent process.
-	 */
-	if (p->p_nrlwps == 0) {
-		p->p_stat = SSTOP;
-		p->p_waited = 0;
-		p->p_pptr->p_nstopchild++;
-		if (notify) {
-			child_psignal(p, PS_NOCLDSTOP);
-			cv_broadcast(&p->p_pptr->p_waitcv);
-		}
-	} else
-		p->p_sflag |= PS_STOPPING;
-
-	if ((p->p_sflag & PS_SA) != 0) {
-		/* XXXSA ??? */
-		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-			l = vp->savp_lwp;
-			lwp_lock(l);
-			signotify(l);
-			lwp_unlock(l);
-		}
-	}
-
-	/*
-	 * Put as many LWP's as possible in stopped state.  Sleeping
-	 * ones will notice the stopped state as they try to return
-	 * to userspace.
-	 */
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		lwp_lock(l);
-		signotify(l);
-		lwp_unlock(l);
-	}
-}
-
-/*
- * Given a process in state SSTOP, set the state back to SACTIVE and
- * move LSSTOP'd LWPs to LSSLEEP or make them runnable.
- */
-void
-proc_unstop(struct proc *p)
-{
-	struct lwp *l;
-	struct sadata_vp *vp;
-	int sig;
-
-	LOCK_ASSERT(mutex_owned(&proclist_mutex));
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-
-	p->p_stat = SACTIVE;
-	p->p_sflag &= ~PS_STOPPING;
-	sig = p->p_xstat;
-
-	if (p->p_waited == 0)
-		p->p_pptr->p_nstopchild--;
-
-	if ((p->p_sflag & PS_SA) != 0) {
-		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-			l = vp->savp_lwp;
-			lwp_lock(l);
-			if (l->l_stat != LSSTOP) {
-				lwp_unlock(l);
-				continue;
-			}
-			if (l->l_wchan == NULL) {
-				setrunnable(l);
-				continue;
-			}
-			l->l_stat = LSSLEEP;
-			if (sig && (l->l_flag & (L_SA_YIELD | L_SINTR)) != 0) {
-			        setrunnable(l);
-			        sig = 0;
-			} else
-				lwp_unlock(l);
-		}
-	} else {
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			lwp_lock(l);
-			if (l->l_stat != LSSTOP) {
-				lwp_unlock(l);
-				continue;
-			}
-			if (l->l_wchan == NULL) {
-				setrunnable(l);
-				continue;
-			}
-			l->l_stat = LSSLEEP;
-			if (sig && (l->l_flag & L_SINTR) != 0) {
-			        setrunnable(l);
-			        sig = 0;
-			} else
-				lwp_unlock(l);
-		}
-	}
-}
-#endif /* KTRACE || PTRACE */
