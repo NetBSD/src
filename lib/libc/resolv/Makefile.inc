@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.2 2004/06/09 18:07:03 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2007/01/27 22:26:44 christos Exp $
 
 # net sources
 .PATH: ${.CURDIR}/resolv
-CPPFLAGS+=-DCOMPAT__RES
+CPPFLAGS+=-DCOMPAT__RES -DUSE_POLL
 
 SRCS+=	__dn_comp.c __res_close.c __res_send.c h_errno.c \
 	herror.c res_comp.c res_data.c res_debug.c \
