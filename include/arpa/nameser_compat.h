@@ -1,3 +1,5 @@
+/*	$NetBSD: nameser_compat.h,v 1.2 2007/01/27 21:25:23 christos Exp $	*/
+
 /* Copyright (c) 1983, 1989
  *    The Regents of the University of California.  All rights reserved.
  * 
@@ -32,13 +34,14 @@
 
 /*%
  *      from nameser.h	8.1 (Berkeley) 6/2/93
- *	$Id: nameser_compat.h,v 1.1.1.3 2007/01/27 19:49:27 christos Exp $
+ *	Id: nameser_compat.h,v 1.5.18.3 2006/05/19 02:36:00 marka Exp
  */
 
 #ifndef _ARPA_NAMESER_COMPAT_
 #define	_ARPA_NAMESER_COMPAT_
 
 #define	__BIND		19950621	/*%< (DEAD) interface version stamp. */
+
 #ifndef BYTE_ORDER
 #if (BSD >= 199103)
 # include <machine/endian.h>
@@ -49,7 +52,9 @@
 #define	LITTLE_ENDIAN	1234	/*%< least-significant byte first (vax, pc) */
 #define	BIG_ENDIAN	4321	/*%< most-significant byte first (IBM, net) */
 #define	PDP_ENDIAN	3412	/*%< LSB first in word, MSW first in long (pdp) */
+
 #if defined(vax) || defined(ns32000) || defined(sun386) || defined(i386) || \
+    defined(MIPSEL) || defined(_MIPSEL) || defined(BIT_ZERO_ON_RIGHT) || \
     defined(__i386__) || defined(__i386) || defined(__amd64__) || \
     defined(__x86_64__) || defined(MIPSEL) || defined(_MIPSEL) || \
     defined(BIT_ZERO_ON_RIGHT) || defined(__alpha__) || defined(__alpha) || \
@@ -229,4 +234,3 @@ typedef struct {
 #define	PUTLONG			NS_PUT32
 
 #endif /* _ARPA_NAMESER_COMPAT_ */
-/*! \file */
