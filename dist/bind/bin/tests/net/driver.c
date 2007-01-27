@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.1.1.3 2005/12/21 23:08:41 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.1.1.4 2007/01/27 21:04:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: driver.c,v 1.7.12.3 2004/03/08 04:04:31 marka Exp */
+/* Id: driver.c,v 1.9 2004/03/05 04:58:59 marka Exp */
 
 #include <config.h>
 

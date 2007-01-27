@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr_multicast.c,v 1.1.1.3 2005/12/21 23:08:41 christos Exp $	*/
+/*	$NetBSD: sockaddr_multicast.c,v 1.1.1.4 2007/01/27 21:04:16 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sockaddr_multicast.c,v 1.5.206.1 2004/03/06 10:21:45 marka Exp */
+/* Id: sockaddr_multicast.c,v 1.6 2004/03/05 04:59:00 marka Exp */
 
 #include <config.h>
 

@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ifconfig.sh,v 1.35.2.8.2.8 2004/10/05 03:18:16 marka Exp
+# Id: ifconfig.sh,v 1.46.18.3 2004/10/05 03:18:21 marka Exp
 
 #
 # Set up interface aliases for bind9 system tests.

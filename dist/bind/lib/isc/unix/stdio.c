@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.c,v 1.1.1.3 2005/12/21 23:17:38 christos Exp $	*/
+/*	$NetBSD: stdio.c,v 1.1.1.4 2007/01/27 21:08:02 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: stdio.c,v 1.5.206.1 2004/03/06 08:15:02 marka Exp */
+/* Id: stdio.c,v 1.6 2004/03/05 05:11:47 marka Exp */
 
 #include <config.h>
 

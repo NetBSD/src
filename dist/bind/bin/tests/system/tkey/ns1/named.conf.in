@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: named.conf.in,v 1.2.206.2 2004/03/06 10:22:35 marka Exp */
+/* Id: named.conf.in,v 1.4 2004/03/05 05:03:16 marka Exp */
 
 controls { /* empty */ };
 
