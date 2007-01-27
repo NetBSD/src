@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.11 2007/01/27 07:09:02 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.12 2007/01/27 14:00:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -99,13 +99,13 @@ NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
 	ret
 
 /*
- * void smutex_enter(kmutex_t *mtx);
+ * void mutex_spin_enter(kmutex_t *mtx);
  *
  * Acquire a spin mutex and post a load fence.
  */
 	.align	64
 
-NENTRY(smutex_enter)				/* 0x0040, 58 bytes */
+NENTRY(mutex_spin_enter)			/* 0x0040, 58 bytes */
 	movq	CPUVAR(SELF200), %r8
 #if defined(FULL)
 	movl	$0x0100, %eax			/* new + expected value */
@@ -121,18 +121,18 @@ NENTRY(smutex_enter)				/* 0x0040, 58 bytes */
 #if defined(FULL)
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
-	jnz,pn	_C_LABEL(smutex_vector_enter)	/* failed; hard case */
+	jnz,pn	_C_LABEL(mutex_spin_retry)	/* failed; hard case */
 #endif
 	ret
 
 /*
- * void smutex_exit(kmutex_t *mtx);
+ * void mutex_spin_exit(kmutex_t *mtx);
  *
  * Release a spin mutex and post a load fence.
  */
 	.align	64
 
-NENTRY(smutex_exit)				/* 0x0080, 60 bytes */
+NENTRY(mutex_spin_exit)				/* 0x0080, 60 bytes */
 #ifdef DIAGNOSTIC
 
 	movl	$0x0001, %eax			/* new + expected value */

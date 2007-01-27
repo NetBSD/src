@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.10 2007/01/25 20:18:37 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.11 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ lwp_lock(struct lwp *l)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	kmutex_t *old;
 
-	smutex_enter(old = l->l_mutex);
+	mutex_spin_enter(old = l->l_mutex);
 
 	/*
 	 * mutex_enter() will have posted a read barrier.  Re-test
@@ -300,7 +300,7 @@ lwp_lock(struct lwp *l)
 	if (__predict_false(l->l_mutex != old))
 		lwp_lock_retry(l, old);
 #else
-	smutex_enter(l->l_mutex);
+	mutex_spin_enter(l->l_mutex);
 #endif
 }
 
@@ -312,7 +312,7 @@ lwp_unlock(struct lwp *l)
 {
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
-	smutex_exit(l->l_mutex);
+	mutex_spin_exit(l->l_mutex);
 }
 
 static inline void
