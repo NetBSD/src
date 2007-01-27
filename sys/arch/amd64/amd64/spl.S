@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5.2.2 2007/01/14 13:57:13 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.2.3 2007/01/27 07:09:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,11 +36,11 @@
  */
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,8 +107,75 @@ _C_LABEL(splx):
 	ret
 #endif /* PROF || GPROF */
 #endif
-	
+
 /*
+ * void spllower(int s);
+ *
+ * Must be the same size as i686_spllower().  This must use
+ * pushf/cli/popf as it is used early in boot where interrupts
+ * are disabled via eflags/IE.
+ */
+	.align 64
+
+ENTRY(spllower)
+	cmpl	CPUVAR(ILEVEL), %edi
+	jae	1f
+	movl	CPUVAR(IUNMASK)(,%edi,4), %edx
+	pushf
+	cli
+	testl	CPUVAR(IPENDING), %edx
+	jnz	2f
+	movl	%edi, CPUVAR(ILEVEL)
+	popf
+1:
+	rep
+	ret
+2:
+	popf
+	jmp	_C_LABEL(Xspllower)
+	.align	64
+LABEL(spllower_end)
+
+/*
+ * void	amd64_spllower(int s);
+ *
+ * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
+ *
+ * edx : eax = old level / old ipending 
+ * ecx : ebx = new level / old ipending
+ */
+	.align	64
+
+ENTRY(amd64_spllower)
+	movl	CPUVAR(ILEVEL),%edx
+	cmpl	%edx,%edi			/* new level is lower? */
+	pushq	%rbx
+	jae,pn	1f
+	movl	CPUVAR(IPENDING),%eax
+	movl	%edi,%ecx
+	testl	%eax,CPUVAR(IUNMASK)(,%rcx,4)/* deferred interrupts? */
+	movl	%eax,%ebx
+	/*
+	 * On the P4 this jump is cheaper than patching in junk
+	 * using cmov.  Is cmpxchg expensive if it fails?
+	 */
+	jnz,pn	2f
+	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
+	jnz,pn	2f
+1:
+	popq	%rbx
+	ret
+2:
+	popq	%rbx
+LABEL(amd64_spllower_patch)
+	jmp	_C_LABEL(Xspllower)
+
+	.align	64
+LABEL(amd64_spllower_end)
+
+/*
+ * void Xspllower(int s);
+ * 
  * Process pending interrupts.
  *
  * Important registers:

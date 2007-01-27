@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.10 2007/01/16 01:26:19 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.11 2007/01/27 07:09:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@
  * we don't make the effort.
  *
  * The sizes listed against each function are for a kernel compiled
- * with options MULTIPROCESSOR.  The offsets are for a kernel compiled
- * without the I386_CPU option.  Where possible we make each routine fit
- * into an assumed 64-byte cache line.
+ * with options MULTIPROCESSOR && DIAGNOSTIC && !I386_CPU.  The offsets
+ * are for a kernel compiled without the I386_CPU option.  Where possible
+ * we make each routine fit into an assumed 64-byte cache line.
  */
 
 #include "opt_multiprocessor.h"
@@ -84,14 +84,6 @@
 #define	LOCK		/* nothing */
 #endif
 
-#if defined(I686_CPU)
-#define	B_NL		cs	/* branch not likely */
-#define	B_L		ds	/* branch likely */
-#else
-#define	B_NL		/* nothing */
-#define	B_L		/* nothing */
-#endif
-
 #if !defined(LOCKDEBUG)
 
 /*
@@ -106,8 +98,7 @@ STUB(mutex_enter, mutex_vector_enter)		/* 0x0000, 20 bytes */
 	xorl	%eax, %eax
 	LOCK
 	cmpxchgl %ecx, MTX_OWNER(%edx)
-	B_NL
-	jnz	_C_LABEL(mutex_vector_enter)
+	jnz,pn	_C_LABEL(mutex_vector_enter)
 	ret
 
 /*
@@ -125,8 +116,7 @@ STUB(mutex_exit, mutex_vector_exit)		/* 0x0020, 19 bytes */
 	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
 	cmpxchgl %ecx, MTX_OWNER(%edx)
-	B_NL
-	jnz     _C_LABEL(mutex_vector_exit)
+	jnz,pn	_C_LABEL(mutex_vector_exit)
 	ret
 
 /*
@@ -136,44 +126,32 @@ STUB(mutex_exit, mutex_vector_exit)		/* 0x0020, 19 bytes */
  */
 	ALIGN64
 
-STUB(rw_enter, rw_vector_enter)			/* 0x0040, 64 bytes */
+STUB(rw_enter, rw_vector_enter)			/* 0x0040, 60 bytes */
 	cmpl	$RW_READER, 8(%esp)
-	movl	RW_OWNER(%edx), %eax
 	jne	2f
 
 	/*
 	 * Reader
 	 */
-1:	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+1:	movl	RW_OWNER(%edx), %eax
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leal	RW_READ_INCR(%eax), %ecx
-	B_NL
-	jnz	3f
+	jnz,pn	_C_LABEL(rw_vector_enter)
 	LOCK
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	B_NL
-	jnz	1b
+	jnz,pn	1b
 	ret
 
 	/*
 	 * Writer
 	 */
-2:	testl	%eax, %eax
-	movl	%eax, %ecx
-	B_NL
-	jnz	3f
-	addl	CPUVAR(CURLWP), %ecx
-	leal	RW_WRITE_LOCKED(%ecx), %ecx     
-	jz	3f
+2:	movl	CPUVAR(CURLWP), %ecx
+	xorl	%eax, %eax
+	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	B_NL
-	jnz	3f
+	jnz,pn	_C_LABEL(rw_vector_enter)
 	ret
-
-	/*
-	 * Slow path.
-	 */
-3:	jmp	_C_LABEL(rw_vector_enter)
 
 /*
  * void rw_exit(krwlock_t *rwl);
@@ -182,7 +160,7 @@ STUB(rw_enter, rw_vector_enter)			/* 0x0040, 64 bytes */
  */
 	ALIGN64
 
-STUB(rw_exit, rw_vector_exit)			/* 0x0080, 64 bytes */
+STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
 	movl	RW_OWNER(%edx), %eax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
@@ -191,16 +169,13 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 64 bytes */
 	 * Reader
 	 */
 1:	testb	$RW_HAS_WAITERS, %al
-	B_NL
-	jnz	3f
+	jnz,pn	3f
 	cmpl	$RW_READ_INCR, %eax
 	leal	-RW_READ_INCR(%eax), %ecx
-	B_NL
-	jb	3f
+	jb,pn	3f
 	LOCK
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	B_NL
-	jnz	1b
+	jnz,pn	1b
 	ret
 
 	/*
@@ -208,19 +183,16 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 64 bytes */
 	 */
 2:	leal	-RW_WRITE_LOCKED(%eax), %ecx
 	subl	CPUVAR(CURLWP), %ecx
-	B_NL
-	jnz	3f
+	jnz,pn	3f
 	LOCK
 	cmpxchgl %ecx, RW_OWNER(%edx)
-	B_NL
-	jnz	3f
+	jnz,pn	3f
 	ret
 
 	/*
 	 * Slow path.
 	 */
 3:	jmp	_C_LABEL(rw_vector_exit)
-
 
 /*
  * void smutex_enter(kmutex_t *mtx);
@@ -237,18 +209,19 @@ STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 51 bytes */
 	movl	%ecx, (CPU_INFO_MTX_OLDSPL-0x150)(%eax)
 1:	movb	MTX_IPL(%edx), %ch
 	cmpb	%ch, %cl
-	B_NL
-	jg	2f
+	jg,pn	2f
 	movb	%ch, (CPU_INFO_ILEVEL-0x150)(%eax)/* splraiseipl() */
 2:
 #if defined(FULL)
 	mov	$0x0100, %eax			/* new + expected value */
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
-	B_NL
-	jnz	_C_LABEL(smutex_vector_enter)
+	jnz,pn	_C_LABEL(smutex_vector_enter)
 #endif
 	ret
+
+	ALIGN64
+LABEL(smutex_enter_end)
 
 /*
  * void smutex_exit(kmutex_t *mtx);
@@ -257,29 +230,78 @@ STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 51 bytes */
  */
 	ALIGN64
 
-STUB(smutex_exit, mutex_vector_exit)		/* 0x0100, 64 bytes */
-#if defined(FULL)
+STUB(smutex_exit, mutex_vector_exit)		/* 0x0100, 50 bytes */
+#if defined(DIAGNOSTIC)
 	movl	$0x0001, %eax			/* new + expected value */
 	cmpxchgb %ah, MTX_LOCK(%edx)
-	B_NL
-	jnz	_C_LABEL(mutex_vector_exit)
+	jnz,pn	_C_LABEL(mutex_vector_exit)
+#elif defined(MULTIPROCESSOR)
+	movb	$0x00,MTX_LOCK(%edx)
 #endif
-	movl	CPUVAR(SELF150), %eax		/* now splx() */
+	movl	CPUVAR(SELF150), %eax
 	movl	(CPU_INFO_MTX_OLDSPL-0x150)(%eax), %ecx
 	incl	(CPU_INFO_MTX_COUNT-0x150)(%eax)
-	jnz	2f
+	jnz	1f
 	cmpl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
 	movl    %ecx, 4(%esp)
-	B_NL
-	jae	2f
+	jae	1f
 	movl	(CPU_INFO_IUNMASK-0x150)(%eax,%ecx,4), %edx
 	cli
 	testl	(CPU_INFO_IPENDING-0x150)(%eax), %edx
-	B_NL
 	jnz	_C_LABEL(Xspllower)		/* does sti */
 	movl	%ecx, (CPU_INFO_ILEVEL-0x150)(%eax)
 	sti
-2:	ret
+1:	ret
+
+	ALIGN64
+LABEL(smutex_exit_end)
+
+#if !defined(I386_CPU) && defined(I686_CPU) && !defined(DIAGNOSTIC)
+
+/*
+ * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
+ * Must be the same size as smutex_exit().
+ */
+	ALIGN64
+
+ENTRY(i686_smutex_exit)				/* 64 bytes */
+	mov	4(%esp),%edx
+	xorl	%eax,%eax
+	pushl	%edi
+	fs
+	movl	(CPU_INFO_SELF150)(%eax), %edi	/* now splx() */
+	pushl	%ebx
+	movl	(CPU_INFO_MTX_OLDSPL-0x150)(%edi), %ecx
+	incl	(CPU_INFO_MTX_COUNT-0x150)(%edi)
+	movb	%al, MTX_LOCK(%edx)		/* zero */
+	movl	(CPU_INFO_ILEVEL-0x150)(%edi), %edx
+	jnz	1f
+	cmpl	%edx, %ecx			/* new level is lower? */
+	movl	(CPU_INFO_IPENDING-0x150)(%edi), %eax
+	jae,pn	1f
+	testl	%eax,(CPU_INFO_IUNMASK-0x150)(%edi,%ecx,4)
+	movl	%eax, %ebx
+	/*
+	 * On a P4 this jump is cheaper than patching in junk using
+	 * cmovnz.  Is cmpxchg expensive if it fails?
+	 */
+	jnz,pn	2f
+	cmpxchg8b (CPU_INFO_ISTATE-0x150)(%edi)	/* swap in new ilevel */
+	jnz,pn	2f
+1:
+	popl	%ebx
+	popl	%edi
+	ret
+2:
+	popl	%ebx
+	popl	%edi
+	movl	%ecx,4(%esp)
+LABEL(i686_smutex_exit_patch)
+	jmp	_C_LABEL(Xspllower)
+	ALIGN64
+LABEL(i686_smutex_exit_end)
+
+#endif
 
 #endif	/* !LOCKDEBUG */
 
@@ -290,7 +312,7 @@ STUB(smutex_exit, mutex_vector_exit)		/* 0x0100, 64 bytes */
  */
 	ALIGN64
 
-STUB(_lock_cas, _80386_lock_cas)		/* 0x0140, 32 bytes */
+STUB(_lock_cas, _80386_lock_cas)		/* 32 bytes */
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
 	LOCK
@@ -298,7 +320,6 @@ STUB(_lock_cas, _80386_lock_cas)		/* 0x0140, 32 bytes */
 	movl	$0, %eax
 	setz	%al
 	ret
-
 
 #ifdef I386_CPU
 /*

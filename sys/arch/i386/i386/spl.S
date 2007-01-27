@@ -1,11 +1,11 @@
-/*	$NetBSD: spl.S,v 1.13.20.2 2007/01/12 01:00:50 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.13.20.3 2007/01/27 07:09:02 ad Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,8 +69,80 @@ _C_LABEL(splx):
 	/* ret */
 #endif /* PROF || GPROF */
 #endif
-	
+
 /*
+ * void spllower(int s);
+ *
+ * spllower() for i486 and Pentium.  Must be the same size as
+ * i686_spllower().  This must use pushf/cli/popf as it is used
+ * early in boot where interrupts are disabled via eflags/IE.
+ */
+	.align 64
+
+ENTRY(spllower)
+	movl	CPUVAR(SELF150), %eax
+	movl	4(%esp), %ecx
+	cmpl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
+	jae	1f
+	movl	(CPU_INFO_IUNMASK-0x150)(%eax,%ecx,4), %edx
+	pushf
+	cli
+	testl	(CPU_INFO_IPENDING-0x150)(%eax), %edx
+	jnz	2f
+	movl	%ecx, (CPU_INFO_ILEVEL-0x150)(%eax)
+	popf
+1:
+	ret
+2:
+	popf
+	jmp	_C_LABEL(Xspllower)
+	.align	64
+LABEL(spllower_end)
+
+/*
+ * void	i686_spllower(int s);
+ *
+ * spllower() optimized for Pentium Pro and later, which have long
+ * pipelines that will be stalled by pushf/cli/popf.  Must be the
+ * same size as spllower().  Does not need to restore eflags/IE as
+ * is patched in once autoconf is underway.
+ *
+ * For cmpxchg8b, edx/ecx are the high words and eax/ebx the low.
+ *
+ * edx : eax = old level / old ipending 
+ * ecx : ebx = new level / old ipending
+ */
+	.align	64
+
+ENTRY(i686_spllower)
+	movl	4(%esp),%ecx
+	movl	CPUVAR(ILEVEL),%edx
+	cmpl	%edx,%ecx			/* new level is lower? */
+	pushl	%ebx
+	jae,pn	1f
+	movl	CPUVAR(IPENDING),%eax
+	testl	%eax,CPUVAR(IUNMASK)(,%ecx,4)	/* deferred interrupts? */
+	movl	%eax,%ebx
+	/*
+	 * On the P4 this jump is cheaper than patching in junk
+	 * using cmovnz.  Is cmpxchg expensive if it fails?
+	 */
+	jnz,pn	2f
+	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
+	jnz,pn	2f
+1:
+	popl	%ebx
+	ret
+2:
+	popl	%ebx
+LABEL(i686_spllower_patch)
+	jmp	_C_LABEL(Xspllower)
+	.align	64
+LABEL(i686_spllower_end)
+
+/*
+ * void Xspllower(int s);
+ * 
  * Process pending interrupts.
  *
  * Important registers:

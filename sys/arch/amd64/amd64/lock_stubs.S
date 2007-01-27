@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.10 2007/01/19 12:25:38 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.11 2007/01/27 07:09:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ NENTRY(mutex_enter)				/* 0x0000, 25 bytes */
 	xorq	%rax, %rax
 	LOCK
 	cmpxchgq %rcx, MTX_OWNER(%rdi)
-	jnz	_C_LABEL(mutex_vector_enter)
+	jnz,pn	_C_LABEL(mutex_vector_enter)
 	ret
 
 /*
@@ -95,7 +95,7 @@ NENTRY(mutex_exit)				/* 0x0020, 24 bytes */
 	movq	CPUVAR(CURLWP), %rax
 	xorq	%rdx, %rdx
 	cmpxchgq %rdx, MTX_OWNER(%rdi)
-	jnz     _C_LABEL(mutex_vector_exit)
+	jnz,pn	_C_LABEL(mutex_vector_exit)
 	ret
 
 /*
@@ -121,7 +121,7 @@ NENTRY(smutex_enter)				/* 0x0040, 58 bytes */
 #if defined(FULL)
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* lock */
-	jnz	_C_LABEL(smutex_vector_enter)	/* failed; hard case */
+	jnz,pn	_C_LABEL(smutex_vector_enter)	/* failed; hard case */
 #endif
 	ret
 
@@ -132,15 +132,13 @@ NENTRY(smutex_enter)				/* 0x0040, 58 bytes */
  */
 	.align	64
 
-NENTRY(smutex_exit)				/* 0x0080, 63 bytes */
-#if defined(FULL)
+NENTRY(smutex_exit)				/* 0x0080, 60 bytes */
+#ifdef DIAGNOSTIC
+
 	movl	$0x0001, %eax			/* new + expected value */
 	movq	CPUVAR(SELF200), %r8
 	cmpxchgb %ah, MTX_LOCK(%rdi)		/* unlock */
-	jnz	_C_LABEL(mutex_vector_exit)	/* hard case if problems */
-#else
-	movq	CPUVAR(SELF200), %r8
-#endif
+	jnz,pn	_C_LABEL(mutex_vector_exit)	/* hard case if problems */
 	movl	(CPU_INFO_MTX_OLDSPL-0x200)(%r8), %edi
 	incl	(CPU_INFO_MTX_COUNT-0x200)(%r8)
 	jnz	1f
@@ -155,6 +153,36 @@ NENTRY(smutex_exit)				/* 0x0080, 63 bytes */
 1:	rep					/* double byte ret as branch */
 	ret					/* target: see AMD docs */
 
+#else	/* DIAGNOSTIC */
+
+	movq	CPUVAR(SELF200), %rsi
+#ifdef MULTIPROCESSOR
+	movb	$0x00, MTX_LOCK(%rdi)
+#endif
+	movl	(CPU_INFO_MTX_OLDSPL-0x200)(%rsi), %ecx
+	incl	(CPU_INFO_MTX_COUNT-0x200)(%rsi)
+	movl	(CPU_INFO_ILEVEL-0x200)(%rsi),%edx
+	cmovnzl	%edx,%ecx
+	cmpl	%edx,%ecx			/* new level is lower? */
+	pushq	%rbx
+	jae,pn	2f
+1:
+	movl	(CPU_INFO_IPENDING-0x200)(%rsi),%eax
+	testl	%eax,(CPU_INFO_IUNMASK-0x200)(%rsi,%rcx,4)/* deferred interrupts? */
+	movl	%eax,%ebx
+	jnz,pn	3f
+	cmpxchg8b (CPU_INFO_ISTATE-0x200)(%rsi)	/* swap in new ilevel */
+	jnz,pn	3f
+2:
+	popq	%rbx
+	ret
+3:
+	popq	%rbx
+	movl	%ecx, %edi
+	jmp	_C_LABEL(Xspllower)
+
+#endif	/* DIAGNOSTIC */
+
 /*
  * void	rw_enter(krwlock_t *rwl, krw_t op);
  *
@@ -162,37 +190,32 @@ NENTRY(smutex_exit)				/* 0x0080, 63 bytes */
  */
 	.align	64
 
-NENTRY(rw_enter)				/* 0x00c0, 63 bytes */
+NENTRY(rw_enter)				/* 0x00c0, 62 bytes */
 	cmpl	$RW_READER, %esi
-	movq	RW_OWNER(%rdi), %rax
 	jne	2f
 
 	/*
 	 * Reader: this is the most common case.
 	 */
-1:	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+1:	movq	RW_OWNER(%rdi), %rax
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	leaq	RW_READ_INCR(%rax), %rdx 
-	jnz	3f
+	jnz,pn	_C_LABEL(rw_vector_enter)
 	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
-	jnz	1b
+	jnz,pn	1b
 	ret
 
 	/*
 	 * Writer: if the compare-and-set fails, don't bother retrying.
 	 */
-2:	testq	%rax, %rax
-	movq	%rax, %rcx
-	jnz	3f
-	addq	CPUVAR(CURLWP), %rcx
-	leaq	RW_WRITE_LOCKED(%rcx), %rcx
-	jz	3f
+2:	movq	CPUVAR(CURLWP), %rcx
+	xorq	%rax, %rax
+	orq	$RW_WRITE_LOCKED, %rcx
 	LOCK
 	cmpxchgq %rcx, RW_OWNER(%rdi)
-	jnz	3f
+	jnz,pn	_C_LABEL(rw_vector_enter)
 	ret
-
-3:	jmp	_C_LABEL(rw_vector_enter)
 
 /*
  * void	rw_exit(krwlock_t *rwl);
@@ -201,7 +224,7 @@ NENTRY(rw_enter)				/* 0x00c0, 63 bytes */
  */
 	.align	64
 
-NENTRY(rw_exit)					/* 0x0100, 60 bytes */
+NENTRY(rw_exit)					/* 0x0100, 64 bytes */
 	movq	RW_OWNER(%rdi), %rax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
@@ -210,13 +233,13 @@ NENTRY(rw_exit)					/* 0x0100, 60 bytes */
 	 * Reader
 	 */
 1:	testb	$RW_HAS_WAITERS, %al
-	jnz	3f
+	jnz,pn	3f
 	cmpq	$RW_READ_INCR, %rax
 	leaq	-RW_READ_INCR(%rax), %rdx
-	jb	3f
+	jb,pn	3f
 	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
-	jnz	1b
+	jnz,pn	1b
 	ret
 
 	/*
@@ -224,7 +247,7 @@ NENTRY(rw_exit)					/* 0x0100, 60 bytes */
 	 */
 2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
 	subq	CPUVAR(CURLWP), %rdx
-	jnz	3f
+	jnz,pn	3f
 	LOCK
 	cmpxchgq %rdx, RW_OWNER(%rdi)
 	jnz	3f
@@ -248,4 +271,3 @@ NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
 	movq	$0, %rax
 	setz	%al				/* = 1 if success */
 	ret
-

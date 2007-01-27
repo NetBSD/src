@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5.14.6 2007/01/12 14:24:17 ad Exp $
+#	$NetBSD: genassym.cf,v 1.5.14.7 2007/01/27 07:09:02 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -237,6 +237,7 @@ define  CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define  CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define  CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
 
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)

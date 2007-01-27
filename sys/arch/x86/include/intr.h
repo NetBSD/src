@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21.4.1 2007/01/12 01:01:01 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.4.2 2007/01/27 07:09:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -114,9 +114,9 @@ struct intrhand {
 #define IUNMASK(ci,level) (ci)->ci_iunmask[(level)]
 
 extern void Xspllower(int);
+extern void spllower(int);
 
 static __inline int splraise(int);
-static __inline void spllower(int);
 static __inline void softintr(int);
 
 /*
@@ -138,31 +138,6 @@ splraise(int nlevel)
 		ci->ci_ilevel = nlevel;
 	__insn_barrier();
 	return (olevel);
-}
-
-/*
- * Restore a value to cpl (unmasking interrupts).  If any unmasked
- * interrupts are pending, call Xspllower() to process them.
- */
-static __inline void
-spllower(int nlevel)
-{
-	struct cpu_info *ci = curcpu();
-	u_int32_t imask;
-	u_long psl;
-
-	__insn_barrier();
-
-	imask = IUNMASK(ci, nlevel);
-	psl = read_psl();
-	disable_intr();
-	if (ci->ci_ipending & imask) {
-		Xspllower(nlevel);
-		/* Xspllower does enable_intr() */
-	} else {
-		ci->ci_ilevel = nlevel;
-		write_psl(psl);
-	}
 }
 
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
