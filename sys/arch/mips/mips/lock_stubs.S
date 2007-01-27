@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.1 2007/01/11 22:22:57 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2007/01/27 14:00:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,11 +37,17 @@
  */
 
 #include "opt_cputype.h"
+#include "opt_lockdebug.h"
+#include "opt_multiprocessor.h"
 
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-#ifdef MIPS_HAS_LLSC
+#include "assym.h"
+
+#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
+#define	FULL
+#endif
 
 #ifdef MIPS64
 #define	LL	lld
@@ -55,6 +61,31 @@
 #define	STPTR	sw
 #endif
 
+#if MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR)
+#define	SYNC		sync
+#define	BDSYNC		sync
+#else
+#define	SYNC		/* nothing */
+#define	BDSYNC		nop
+#endif	/* MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR) */
+
+#ifndef MIPS64
+STRONG_ALIAS(_lock_cas4, _lock_cas)
+#endif	/* MIPS64 */
+
+STRONG_ALIAS(mb_read, mb_memory)
+STRONG_ALIAS(mb_write, mb_memory)
+
+/*
+ * void mb_memory(void);
+ */
+LEAF(mb_memory)
+	j	ra
+	 BDSYNC
+END(mb_memory)
+
+#if MIPS_HAS_LLSC != 0
+
 	.set	mips3
 	.set	noreorder
 	.set	noat
@@ -63,18 +94,41 @@
  * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
  */
 LEAF(_lock_cas)
-1:	LL	t0, (a0)
+	LL	t0, (a0)
+1:
 	bne	t0, a1, 2f
-	 add	t1, a2, a2
+	 addu	t1, zero, a2
 	SC	t1, (a0)
 	beq	t1, zero, 1b
-	 nop
+	 LL	t0, (a0)
+	SYNC
 	j	ra
 	 li	v0, 1
-
-2:	j	ra
-	 add	v0, zero, zero
+2:
+	j	ra
+	 addu	v0, zero, zero
 END(_lock_cas)
+
+#ifndef MIPS64
+/*
+ * int _lock_cas4(uint32_t *val, uint32_t old, uint32_t new);
+ */
+LEAF(_lock_cas4)
+	ll	t0, (a0)
+1:
+	bne	t0, a1, 2f
+	 addu	t1, zero, a2
+	sc	t1, (a0)
+	beq	t1, zero, 1b
+	 ll	t0, (a0)
+	SYNC
+	j	ra
+	 li	v0, 1
+2:
+	j	ra
+	 addu	v0, zero, zero
+END(_lock_cas4)
+#endif	/* MIPS64 */
 
 #ifndef LOCKDEBUG
 
@@ -82,17 +136,18 @@ END(_lock_cas)
  * void	mutex_enter(kmutex_t *mtx);
  */
 LEAF(mutex_enter)
-1:	LL	t0, (a0)
+	LL	t0, MTX_OWNER(a0)
 	LDPTR	t1, _C_LABEL(curlwp)
+1:
 	bne	t0, zero, 2f
-	 nop
-	SC	t1, (a0)
-	beq	t1, zero, 1b
-	 nop
+	 addu	t2, zero, t1
+	SC	t2, MTX_OWNER(a0)
+	beq	t2, zero, 1b
+	 LL	t0, MTX_OWNER(a0)
 	j	ra
-	 nop
-
-2:	j	_C_LABEL(mutex_vector_enter)
+	 BDSYNC
+2:
+	j	_C_LABEL(mutex_vector_enter)
 	 nop
 END(mutex_enter)
 
@@ -100,24 +155,71 @@ END(mutex_enter)
  * void	mutex_exit(kmutex_t *mtx);
  */
 LEAF(mutex_exit)
-1:	LL	t0, (a0)
+	LL	t0, MTX_OWNER(a0)
 	LDPTR	t1, _C_LABEL(curlwp)
-	nop
+	BDSYNC
+1:
 	bne	t0, t1, 2f
-	add	t1, zero, zero
-	SC	t1, (a0)
-	beq	t1, zero, 1b
-	 nop
+	 addu	t2, zero, zero
+	SC	t2, MTX_OWNER(a0)
+	beq	t2, zero, 1b
+	 LL	t0, MTX_OWNER(a0)
 	j	ra
 	 nop
-
-2:	j	_C_LABEL(mutex_vector_exit)
+2:
+	j	_C_LABEL(mutex_vector_exit)
 	 nop
 END(mutex_exit)
 
+/*
+ * void	mutex_spin_enter(kmutex_t *mtx);
+ */
+LEAF(mutex_spin_enter)
+	lw	t1, MTX_IPL(a0)
+	mfc0	v0, MIPS_COP_0_STATUS
+	and	t1, t1, MIPS_INT_MASK
+	nor	t1, zero, t1
+	and	t1, t1, v0
+	DYNAMIC_STATUS_MASK(t1,t0)
+	mtc0	t1, MIPS_COP_0_STATUS
+	COP0_SYNC
+	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	lui	t2, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	lw	t0, CPU_INFO_MTX_COUNT(t2)
+	li	t1, -1
+	addu	t0, t0, t1
+	bne	t0, t1, 1f
+	 sw	t0, CPU_INFO_MTX_COUNT(t2)
+	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
+1:
+#if defined(FULL)
+	ll	t0, MTX_LOCK(a0)
+	nop
+2:
+	bne	t0, zero, 3f
+	 li	t1, 1
+	sc	t1, MTX_LOCK(a0)
+	beq	t1, zero, 2b
+	 ll	t0, MTX_LOCK(a0)
+	j	ra
+	 BDSYNC
+3:
+	j	_C_LABEL(mutex_spin_retry)
+	 nop
+#else
+	j	ra
+	 nop
+#endif
+END(mutex_spin_enter)
+
 #endif	/* !LOCKDEBUG */
 
-#else	/* MIPS_HAS_LLSC */
+#else	/* MIPS_HAS_LLSC != 0 */
+
+#ifdef MULTIPROCESSOR
+#error MULTIPROCESSOR not supported
+#endif
 
 /*
  * Lock stubs for MIPS1 and a couple of oddball MIPS3 CPUs.  These are
@@ -141,6 +243,8 @@ END(mutex_exit)
  *	if ((addr & ~127) == _lock_ras_start)
  *		addr = _lock_ras(addr);
  *
+ *   See definition of MIPS_LOCK_RAS_SIZE in asm.h.
+ *
  * o In order to keep the size of the block down, the routines are run
  *   into each other.  Use objdump -d to check alignment after making
  *   changes.
@@ -149,22 +253,28 @@ END(mutex_exit)
 	.set	noreorder
 	.set	noat
 
+STRONG_ALIAS(_lock_cas4, _lock_cas)
+
 /*
  * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
  */
+	.text
 	.align	7
+	.space	12
+
 EXPORT(_lock_ras_start)
-LEAF(_lock_cas)
-_lock_cas_start:
+LEAF_NOPROFILE(_lock_cas)
 	LDPTR	t0, (a0)	/* <- critical section start */
+_lock_cas_start:
 	 nop
 	bne	t0, a1, 1f
-	 nop
+ 	 nop
 	STPTR	a2, (a0)	/* <- critical section end */
 	j	ra
 	 li	v0, 1
-1:	j	ra
-	 add	v0, zero, zero
+1:
+	j	ra
+	 addu	v0, zero, zero
 END(_lock_cas)
 
 #ifndef LOCKDEBUG
@@ -173,10 +283,10 @@ END(_lock_cas)
  */
 	nop
 	nop
-LEAF(mutex_enter)
+LEAF_NOPROFILE(mutex_enter)
 	lui	t2, %hi(_C_LABEL(curlwp))
-_mutex_enter_start:
 	LDPTR	t0, (a0)	/* <- critical section start */
+_mutex_enter_start:
 	LDPTR	t1, (%lo(_C_LABEL(curlwp)))(t2)
 	bne	t0, zero, 1f
 	 nop			
@@ -191,11 +301,11 @@ END(mutex_enter)
  * int mutex_exit(kmutex_t *mtx);
  */
 	nop
-LEAF(mutex_exit)
+LEAF_NOPROFILE(mutex_exit)
 	lui	t2, %hi(_C_LABEL(curlwp))
 	LDPTR	t1, (%lo(_C_LABEL(curlwp)))(t2)
-_mutex_exit_start:
 	LDPTR	t0, (a0)	/* <- critical section start */
+_mutex_exit_start:
 	 nop
 	bne	t0, t1, 1f
 	 nop			
@@ -203,17 +313,48 @@ _mutex_exit_start:
 	j	ra
 	 nop
 1:	j	_C_LABEL(mutex_vector_exit)
-EXPORT(_lock_ras_end)
-	 nop
 END(mutex_exit)
+	 nop
 
-#else	/* !LOCKDEBUG */
+	.align	7			/* Get out of the RAS block */
 
 /*
- * _lock_cas() is 32 bytes, so add another 96.
+ * void	mutex_spin_enter(kmutex_t *mtx);
  */
-	.space	0x60
-EXPORT(_lock_ras_end)
+LEAF(mutex_spin_enter)
+	lw	t1, MTX_IPL(a0)
+	mfc0	v0, MIPS_COP_0_STATUS
+	and	t1, t1, MIPS_INT_MASK
+	nor	t1, zero, t1
+	and	t1, t1, v0
+	DYNAMIC_STATUS_MASK(t1,t0)
+	mtc0	t1, MIPS_COP_0_STATUS
+	COP0_SYNC
+	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	lui	t2, %hi(_C_LABEL(cpu_info_store))
+	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))
+	lw	t0, CPU_INFO_MTX_COUNT(t2)
+	li	t1, -1
+	addu	t0, t0, t1
+	bne	t0, t1, 1f
+	 sw	t0, CPU_INFO_MTX_COUNT(t2)
+	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
+1:
+#if defined(DIAGNOSTIC)
+	lw	t0, MTX_LOCK(a0)
+	li	t1, 1
+	bne	t0, zero, 2f
+	 nop
+	j	ra
+	 sw	t1, MTX_LOCK(a0)
+2:
+	j	_C_LABEL(mutex_spin_retry)
+	 nop
+#else	/* DIAGNOSTIC */
+	j	ra
+	 nop
+#endif	/* DIAGNOSTIC */
+END(mutex_spin_enter)
 
 #endif	/* !LOCKDEBUG */
 
@@ -222,9 +363,7 @@ EXPORT(_lock_ras_end)
  * within one of the critical sections above.  Do:
  *
  *	if ((addr & ~15) == ras)
- *		return ras;
- *	if ((addr - 16) == ras)
- *		return ras;
+ *		return ras - 4;
  *	... check next ...
  *	return addr;
  *
@@ -241,41 +380,77 @@ EXPORT(_lock_ras_end)
  *	t1	clobbered
  *	t2	clobbered
  */
-LEAF(_lock_ras)
-	addi	t1, zero, -16
+
+LEAF_NOPROFILE(_lock_ras)
+	li	t1, -16
+	and	t2, k1, t1
 
 #ifndef LOCKDEBUG
-	lui	t0, %hi($_mutex_enter_start)
-	ori	t0, t0, %lo($_mutex_enter_start)
-	and	t2, k1, t1
+	lui	t0, %hi(_mutex_enter_start)
+	ori	t0, t0, %lo(_mutex_enter_start)
 	beq	t2, t0, 1f
-	 nop
-	addu	t2, t2, t1
-	beq	t2, t0, 1f
-	
-	 lui	t0, %hi($_mutex_exit_start)
-	ori	t0, t0, %lo($_mutex_exit_start)
-	and	t2, k1, t1
-	beq	t2, t0, 1f
-	 nop
-	addu	t2, t2, t1 
+	 lui	t0, %hi(_mutex_exit_start)
+	ori	t0, t0, %lo(_mutex_exit_start)
 	beq	t2, t0, 1f
 #endif	/* !LOCKDEBUG */
 
-	 lui	t0, %hi($_lock_cas_start)
-	ori	t0, t0, %lo($_lock_cas_start)
-	and	t2, k1, t1
+	 lui	t0, %hi(_lock_cas_start)
+	ori	t0, t0, %lo(_lock_cas_start)
 	beq	t2, t0, 1f
 	 nop
-	addu	t2, t2, t1 
-	beq	t2, t0, 1f
-	 nop
-
 	j	ra
 	 nop
-
-1:	j	ra
-	 add	k1, zero, t2
+1:
+	li	t1, -4
+	j	ra
+	 addu	k1, t0, t1
 END(_lock_ras)
 
-#endif	/* MIPS_HAS_LLSC */
+#endif	/* MIPS_HAS_LLSC == 0 */
+
+#ifndef LOCKDEBUG
+
+/*
+ * void	mutex_spin_exit(kmutex_t *mtx);
+ */
+LEAF(mutex_spin_exit)
+#if defined(DIAGNOSTIC)
+	lw	t0, MTX_LOCK(a0)
+	lui	t1, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	beq	t0, zero, 2f
+	 ori	t1, t1, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	SYNC
+	sw	zero, MTX_LOCK(a0)
+#elif defined(MULTIPROCESSOR)
+	SYNC
+	sw      zero, MTX_LOCK(a0)
+	lui	t1, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	ori	t1, t1, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
+#else
+	lui	t1, %hi(_C_LABEL(cpu_info_store))
+	ori	t1, t1, %lo(_C_LABEL(cpu_info_store))
+#endif
+	lw	t0, CPU_INFO_MTX_COUNT(t1)
+	lw	a0, CPU_INFO_MTX_OLDSPL(t1)
+	addiu	t0, t0, 1
+	bne	t0, zero, 1f
+	 sw	t0, CPU_INFO_MTX_COUNT(t1)
+	mfc0	v0, MIPS_COP_0_STATUS
+	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
+	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)
+	and	v1, v1, v0
+	or	v1, v1, a0
+	DYNAMIC_STATUS_MASK(v1,t0)
+	mtc0	v1, MIPS_COP_0_STATUS
+	COP0_SYNC
+1:
+	j	ra
+	 nop
+#if defined(DIAGNOSTIC)
+2:
+	j	_C_LABEL(mutex_vector_exit)
+	 nop
+#endif
+END(mutex_spin_exit)
+
+#endif	/* !LOCKDEBUG */

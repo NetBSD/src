@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.37 2006/01/20 22:02:40 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.37.18.1 2007/01/27 14:00:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -337,5 +337,8 @@ _C_LABEL(x):
 #define DYNAMIC_STATUS_MASK(sr,scratch)
 #define DYNAMIC_STATUS_MASK_TOUSER(sr,scratch1)
 #endif
+
+/* See lock_stubs.S. */
+#define	MIPS_LOCK_RAS_SIZE	128
 
 #endif /* _MIPS_ASM_H */
