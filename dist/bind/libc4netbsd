@@ -54,3 +54,6 @@ for i in herror.c res_comp.c res_data.c res_debug.c res_debug.h res_init.c \
 do
 	cp $BIND/lib/bind/resolv/$i $LIBC/resolv/$i
 done
+
+mkdir -p $LIBC/net
+cp $BIND/lib/bind/isc/base64.c $LIBC/net
