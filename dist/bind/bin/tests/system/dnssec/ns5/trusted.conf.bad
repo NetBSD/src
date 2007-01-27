@@ -15,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: trusted.conf.bad,v 1.6.206.1 2004/03/06 10:22:03 marka Exp */
+/* Id: trusted.conf.bad,v 1.7 2004/03/05 05:00:31 marka Exp */
 
 trusted-keys {
     "." 256 3 1 "AQO6Cl+slAf+iuieDim9L3kujFHQD7s/IOj03ClMOpKYcTXtK4mRpuULVfvWxDi9Ew/gj0xLnnX7z9OJHIxLI+DSrAHd8Dm0XfBEAtVtJSn70GaPZgnLMw1rk5ap2DsEoWk=";

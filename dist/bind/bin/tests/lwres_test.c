@@ -1,4 +1,4 @@
-/*	$NetBSD: lwres_test.c,v 1.1.1.3 2005/12/21 23:08:22 christos Exp $	*/
+/*	$NetBSD: lwres_test.c,v 1.1.1.4 2007/01/27 21:04:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwres_test.c,v 1.25.12.5 2005/03/17 03:58:28 marka Exp */
+/* Id: lwres_test.c,v 1.27.18.2 2005/03/17 03:57:07 marka Exp */
 
 #include <config.h>
 

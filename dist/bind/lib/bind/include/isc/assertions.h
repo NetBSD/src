@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.1.1.3 2005/12/21 23:15:22 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.1.1.4 2007/01/27 21:09:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: assertions.h,v 1.1.206.1 2004/03/09 08:33:30 marka Exp
+ * Id: assertions.h,v 1.2.18.1 2005/04/27 05:00:50 sra Exp
  */
 
 #ifndef ASSERTIONS_H
@@ -120,5 +120,5 @@ const char *assertion_type_to_text(assertion_type type);
 #define INVARIANT(cond)		((void) (cond))
 #define INVARIANT_ERR(cond)	((void) (cond))
 #endif /* CHECK_INVARIANT */
-
 #endif /* ASSERTIONS_H */
+/*! \file */

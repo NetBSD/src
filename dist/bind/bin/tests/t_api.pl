@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: t_api.pl,v 1.7.206.1 2004/03/06 10:21:41 marka Exp
+# Id: t_api.pl,v 1.8 2004/03/05 04:58:40 marka Exp
 
 require "getopts.pl";
 

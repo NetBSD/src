@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.h,v 1.1.1.3 2005/12/21 23:15:21 christos Exp $	*/
+/*	$NetBSD: netgroup.h,v 1.1.1.4 2007/01/27 21:09:09 christos Exp $	*/
 
 #ifndef netgroup_h
 #define netgroup_h
@@ -24,3 +24,5 @@ int innetgr __P((const char *, const char *, const char *, const char *));
 #endif
 #endif
 #endif
+
+/*! \file */
