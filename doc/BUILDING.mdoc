@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.46 2006/10/08 17:54:30 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.47 2007/01/27 11:47:36 apb Exp $
 .\"
 .\" Copyright (c) 2001-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1169,16 +1169,15 @@ Unsets
 Set the value of
 .Sy MACHINE
 to
-.Ar mach .
+.Ar mach ,
+except in some special cases listed below.
 This will also override any value of
 .Sy MACHINE_ARCH
 in the process environment with a value deduced from
 .Ar mach ,
 unless
 .Fl a
-is specified, or
-.Ar mach
-is a special case listed below.
+is specified.
 All cross builds require
 .Fl m ,
 but if unset on a NetBSD host, the host's value of MACHINE will be
@@ -1186,15 +1185,17 @@ detected and used automatically.
 .Pp
 Some machines support multiple values for
 .Sy MACHINE_ARCH .
-For a given value of
-.Ar mach ,
-the following
+The following special cases for the
+.Ar mach
+argument are defined to set the listed values of
 .Sy MACHINE
 and
-.Sy MACHINE_ARCH
-values will result:
+.Sy MACHINE_ARCH :
 .Bl -column "evbmips-el" "MACHINE" "MACHINE_ARCH" -offset indent
 .It Sy mach Ta Sy "MACHINE" Ta Sy "MACHINE_ARCH"
+.It evbarm Ta evbarm Ta (not set)
+.It evbarm-eb Ta evbarm Ta armeb
+.It evbarm-el Ta evbarm Ta arm
 .It evbmips Ta evbmips Ta (not set)
 .It evbmips-eb Ta evbmips Ta mipseb
 .It evbmips-el Ta evbmips Ta mipsel
