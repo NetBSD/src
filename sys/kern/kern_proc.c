@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.8 2007/01/25 20:18:37 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.9 2007/01/27 01:14:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.8 2007/01/25 20:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.9 2007/01/27 01:14:54 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -252,7 +252,7 @@ procinit(void)
 		LIST_INIT(pd->pd_list);
 
 	rw_init(&proclist_lock);
-	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_VM);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -298,7 +298,7 @@ proc0_init(void)
 	sess = &session0;
 	l = &lwp0;
 
-	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_VM);
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
 	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
