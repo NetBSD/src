@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.2 2004/05/20 19:52:31 christos Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.3 2007/01/27 22:26:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -24,9 +24,9 @@
 #include <sys/cdefs.h>
 #if !defined(LINT) && !defined(CODECENTER) && !defined(lint)
 #ifdef notdef
-static const char rcsid[] = "Id: ev_timers.c,v 1.2.2.1.4.5 2004/03/17 02:39:13 marka Exp";
+static const char rcsid[] = "Id: ev_timers.c,v 1.5.18.1 2005/04/27 05:01:06 sra Exp";
 #else
-__RCSID("$NetBSD: ev_timers.c,v 1.2 2004/05/20 19:52:31 christos Exp $");
+__RCSID("$NetBSD: ev_timers.c,v 1.3 2007/01/27 22:26:43 christos Exp $");
 #endif
 #endif
 
@@ -508,3 +508,5 @@ idle_timeout(evContext opaqueCtx,
 	}
 }
 #endif
+
+/*! \file */
