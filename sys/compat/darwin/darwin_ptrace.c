@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.8.2.4 2007/01/18 00:15:36 christos Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.8.2.5 2007/01/27 01:29:05 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8.2.4 2007/01/18 00:15:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8.2.5 2007/01/27 01:29:05 ad Exp $");
 
 #include "opt_ptrace.h"
 
@@ -141,7 +141,7 @@ darwin_sys_ptrace(l, v, retval)
 		 * If the process is not marked as stopped,
 		 * sys_ptrace sanity checks will return EBUSY.
 		 */
-		proc_stop(t, 0);
+		proc_stop(t, 0, SIGSTOP);
 
 		if ((error = sys_ptrace(l, v, retval)) != 0) {
 			proc_unstop(t);

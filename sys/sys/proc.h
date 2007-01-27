@@ -1,7 +1,7 @@
-/*	$NetBSD: proc.h,v 1.225.4.7 2007/01/12 01:04:24 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.8 2007/01/27 01:29:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -203,6 +203,7 @@ struct emul {
  * Field markings and the corresponding locks (not yet fully implemented,
  * more a statement of intent):
  *
+ * k:	ktrace_mutex
  * m:	proclist_mutex
  * l:	proclist_lock
  * s:	p_smutex
@@ -268,21 +269,21 @@ struct proc {
 	struct sadata 	*p_sa;		/*    Scheduler activation infor */
 
 	/* scheduling */
-	fixpt_t		p_estcpu;	/*    Time averaged value of p_cpticks XXX belongs in p_startcopy section */
+	fixpt_t		p_estcpu;	/* t: Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	fixpt_t		p_estcpu_inherited;
 	unsigned int	p_forktime;
-	int		p_cpticks;	/*    Ticks of CPU time */
-	fixpt_t		p_pctcpu;	/*    %cpu for this process during p_swtime */
+	int		p_cpticks;	/* t: Ticks of CPU time */
+	fixpt_t		p_pctcpu;	/* t: %cpu for this process during p_swtime */
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
 	struct timeval 	p_rtime;	/* s: real time */
-	u_quad_t 	p_uticks;	/*    Statclock hits in user mode */
-	u_quad_t 	p_sticks;	/*    Statclock hits in system mode */
-	u_quad_t 	p_iticks;	/*    Statclock hits processing intr */
+	u_quad_t 	p_uticks;	/* t: Statclock hits in user mode */
+	u_quad_t 	p_sticks;	/* t: Statclock hits in system mode */
+	u_quad_t 	p_iticks;	/* t: Statclock hits processing intr */
 
-	int		p_traceflag;	/*    Kernel trace points */
-	void		*p_tracep;	/*    Trace private data */
+	int		p_traceflag;	/* k: Kernel trace points */
+	void		*p_tracep;	/* k: Trace private data */
 	void		*p_systrace;	/*    Back pointer to systrace */
 
 	struct vnode 	*p_textvp;	/*    Vnode of executable */
@@ -379,6 +380,7 @@ struct proc {
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
 #define	PS_STOPEXEC	0x01000000 /* Will be stopped on exec(2) */
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
+#define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 #define	PS_NOSA		0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
@@ -579,7 +581,7 @@ void	syscall_intern(struct proc *);
 void	child_return(void *);
 
 int	proc_isunder(struct proc *, struct lwp *);
-void	proc_stop(struct proc *, int);
+void	proc_stop(struct proc *, int, int);
 
 void	p_sugid(struct proc *);
 

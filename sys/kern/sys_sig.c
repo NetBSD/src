@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.6 2007/01/16 02:17:45 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.7 2007/01/27 01:29:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.6 2007/01/16 02:17:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.7 2007/01/27 01:29:05 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -728,8 +728,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	/*
 	 * Wait for signal to arrive. We can either be woken up or time out.
 	 */
-	error = mtsleep(&l->l_sigwait, PPAUSE|PCATCH, "sigwait", timo,
-	    &p->p_smutex);
+	error = cv_timedwait_sig(&l->l_sigcv, &p->p_smutex, timo);
 
 	/*
 	 * Need to find out if we woke as a result of lwp_wakeup() or a

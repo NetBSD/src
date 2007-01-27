@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.10 2007/01/17 00:44:30 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.11 2007/01/27 01:29:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.10 2007/01/17 00:44:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.11 2007/01/27 01:29:05 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.10 2007/01/17 00:44:30 ad Exp $
 #include <sys/exec.h>
 #include <sys/kauth.h>
 #include <sys/acct.h>
+#include <sys/callout.h>
 
 #include <machine/cpu.h>
 
@@ -112,12 +113,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.10 2007/01/17 00:44:30 ad Exp $
 #include <uvm/uvm_extern.h>
 
 static void	ksiginfo_exithook(struct proc *, void *);
+static void	proc_stop_callout(void *);
 
 int	sigunwait(struct proc *, const ksiginfo_t *);
 void	sigclear(sigpend_t *, sigset_t *);
 void	sigclearall(struct proc *, sigset_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
-int	sigpost(struct lwp *, sig_t, int prop, ksiginfo_t *, int);
+int	sigpost(struct lwp *, sig_t, int, int, int);
 int	sigchecktrace(void);
 void	sigswitch(int, int);
 void	sigrealloc(ksiginfo_t *);
@@ -126,6 +128,7 @@ sigset_t	contsigmask, stopsigmask, sigcantmask;
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
+static struct	callout proc_stop_ch;
 
 static struct pool_allocator sigactspool_allocator = {
         .pa_alloc = sigacts_poolpage_alloc,
@@ -164,6 +167,9 @@ signal_init(void)
 
 	exithook_establish(ksiginfo_exithook, NULL);
 	exechook_establish(ksiginfo_exithook, NULL);
+
+	callout_init(&proc_stop_ch);
+	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
 }
 
 /*
@@ -655,8 +661,6 @@ sigispending(struct lwp *l, int signo)
 	if (signo == 0) {
 		if (firstsig(&tset) != 0)
 			return EINTR;
-		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
-			return EINTR;
 	} else if (sigismember(&tset, signo))
 		return EINTR;
 
@@ -1000,10 +1004,9 @@ sigismasked(struct lwp *l, int sig)
  *	 able to take the signal.
  */
 int
-sigpost(struct lwp *l, sig_t action, int prop, ksiginfo_t *ksi,
-	int idlecheck)
+sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 {
-	int tolwp, rv, masked;
+	int rv, masked;
 
 	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
 
@@ -1014,7 +1017,6 @@ sigpost(struct lwp *l, sig_t action, int prop, ksiginfo_t *ksi,
 	if (l->l_refcnt == 0)
 		return 0;
 
-	tolwp = (ksi->ksi_lid != 0);
 	lwp_lock(l);
 
 	/*
@@ -1035,10 +1037,8 @@ sigpost(struct lwp *l, sig_t action, int prop, ksiginfo_t *ksi,
 	/*
 	 * SIGCONT can be masked, but must always restart stopped LWPs.
 	 */
-	masked = sigismember(l->l_sigmask, ksi->ksi_signo);
-	if (ksi->ksi_signo == SIGCONT && l->l_stat == LSSTOP)
-		masked = 0;
-	if (masked) {
+	masked = sigismember(l->l_sigmask, sig);
+	if (masked && ((prop & SA_CONT) == 0 || l->l_stat != LSSTOP)) {
 		lwp_unlock(l);
 		return 0;
 	}
@@ -1055,9 +1055,6 @@ sigpost(struct lwp *l, sig_t action, int prop, ksiginfo_t *ksi,
 
 	switch (l->l_stat) {
 	case LSRUN:
-		rv = 1;
-		break;
-
 	case LSONPROC:
 		lwp_need_userret(l);
 		rv = 1;
@@ -1080,11 +1077,24 @@ sigpost(struct lwp *l, sig_t action, int prop, ksiginfo_t *ksi,
 		break;
 
 	case LSSTOP:
+		if ((prop & SA_STOP) != 0)
+			break;
+
 		/*
 		 * If the LWP is stopped and we are sending a continue
 		 * signal, then start it again.
 		 */
-		if (l->l_wchan == NULL || (l->l_flag & L_SINTR) != 0) {
+		if ((prop & SA_CONT) != 0) {
+			if (l->l_wchan != NULL) {
+				l->l_stat = LSSLEEP;
+				l->l_proc->p_nrlwps++;
+				rv = 1;
+				break;
+			}
+			/* setrunnable() will release the lock. */
+			setrunnable(l);
+			return 1;
+		} else if (l->l_wchan == NULL || (l->l_flag & L_SINTR) != 0) {
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 			return 1;
@@ -1150,7 +1160,7 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 		l->l_sigwaited->ksi_info = ksi->ksi_info;
 		l->l_sigwaited = NULL;
 		LIST_REMOVE(l, l_sigwaiter);
-		wakeup_one(&l->l_sigwait);
+		cv_signal(&l->l_sigcv);
 		return 1;
 	}
 
@@ -1181,9 +1191,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 
 	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
-
 	KASSERT(signo > 0 && signo < NSIG);
 
 	/*
@@ -1303,7 +1311,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if (l != NULL) {
 			sigput(&l->l_sigpend, p, kp);
 			mb_write();
-			(void)sigpost(l, action, prop, kp, 0);
+			(void)sigpost(l, action, prop, kp->ksi_signo, 0);
 		}
 		goto out;
 	}
@@ -1328,27 +1336,11 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 * If a child holding parent blocked, stopping could
 			 * cause deadlock: discard the signal.
 			 */
-			if ((p->p_sflag & PS_PPWAIT) != 0)
-				goto out;
-
-			p->p_xstat = signo;
-
-			/*
-			 * If there are no LWPs available to take the
-			 * signal, then we signal the parent process
-			 * immediately.  Otherwise, the last LWP to
-			 * stop will take care of it.
-			 */
-			if (p->p_nrlwps == 0) {
-				p->p_stat = SSTOP;
-				p->p_waited = 0;
-				p->p_pptr->p_nstopchild++;
-				child_psignal(p, PS_NOCLDSTOP);
-				cv_broadcast(&p->p_pptr->p_waitcv);
-			} else {
-				p->p_sflag |= PS_STOPPING;
-				mb_write();
+			if ((p->p_sflag & PS_PPWAIT) == 0) {
+				p->p_xstat = signo;
+				proc_stop(p, 1, signo);
 			}
+			goto out;
 		} else {
 			/*
 			 * Stop signals with the default action are handled
@@ -1418,7 +1410,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if (!toall) {
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp, 1))
+				if (sigpost(l, action, prop, kp->ksi_signo, 1))
 					break;
 			}
 		}
@@ -1426,7 +1418,8 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if (l == NULL) {
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp, 0) && !toall)
+				if (sigpost(l, action, prop, kp->ksi_signo, 0)
+				    && !toall)
 					break;
 			}
 		}
@@ -1436,7 +1429,8 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * willing to do the needful.
 		 */
 		LIST_FOREACH(l, &p->p_lwps, l_sibling)
-			if (sigpost(l, action, prop, kp, 0) && !toall)
+			if (sigpost(l, action, prop, kp->ksi_signo, 0) &&
+			    !toall)
 				break;
 	}
 
@@ -1500,53 +1494,52 @@ sigswitch(int ppsig, int ppmask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	int nrun;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-	KASSERT(l->l_stat == LSONPROC || l->l_stat == LSSLEEP);
-
-	lwp_lock(l);
-
-	nrun = --p->p_nrlwps;
-	l->l_stat = LSSTOP;
 
 	/*
-	 * Unlock and switch away.  If we are the last live LWP, and the
-	 * stop was a result of a new signal, then signal the parent.
+	 * If we are the last live LWP, and the stop was a result of
+	 * a new signal, then signal the parent.
 	 */
-	if (nrun == 0) {
-		lwp_unlock(l);
-
+	if ((p->p_sflag & PS_STOPPING) != 0) {
 		if (!mutex_tryenter(&proclist_mutex)) {
 			mutex_exit(&p->p_smutex);
 			mutex_enter(&proclist_mutex);
 			mutex_enter(&p->p_smutex);
-			if (p->p_stat != SSTOP &&
-			    (p->p_sflag & PS_STOPPING) == 0) {
-				mutex_exit(&proclist_mutex);
-				lwp_lock(l);
-				p->p_nrlwps++;
-				l->l_stat = LSONPROC;
-				lwp_unlock(l);
-				return;
-			}
 		}
 
-		if ((p->p_sflag & PS_STOPPING) != 0) {
+		if (p->p_nrlwps == 1 && (p->p_sflag & PS_STOPPING) != 0) {
 			p->p_sflag &= ~PS_STOPPING;
 			p->p_stat = SSTOP;
 			p->p_waited = 0;
 			p->p_pptr->p_nstopchild++;
-			if (ppsig)
-				child_psignal(p, ppmask);
-			cv_broadcast(&p->p_pptr->p_waitcv);
+			if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
+				/*
+				 * Note that child_psignal() will drop
+				 * p->p_smutex briefly.
+				 */
+				if (ppsig)
+					child_psignal(p, ppmask);
+				cv_broadcast(&p->p_pptr->p_waitcv);
+			}
 		}
 
 		mutex_exit(&proclist_mutex);
+	}
+
+	/*
+	 * Unlock and switch away.
+	 */
+	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
+		p->p_nrlwps--;
 		lwp_lock(l);
+		KASSERT(l->l_stat == LSONPROC || l->l_stat == LSSLEEP);
+		l->l_stat = LSSTOP;
+		lwp_unlock(l);
 	}
 
 	mutex_exit(&p->p_smutex);
+	lwp_lock(l);
 	mi_switch(l, NULL);
 	mutex_enter(&p->p_smutex);
 }
@@ -1751,7 +1744,7 @@ issignal(struct lwp *l)
 			 * than SIGCONT, unless process is traced.
 			 */
 			if ((prop & SA_CONT) == 0 &&
-			    (p->p_sflag & P_STRACED) == 0)
+			    (p->p_slflag & PSL_TRACED) == 0)
 				printf("issignal\n");
 #endif
 			continue;
@@ -1998,6 +1991,197 @@ sigexit(struct lwp *l, int signo)
 
 	exit1(l, W_EXITCODE(0, exitsig));
 	/* NOTREACHED */
+}
+
+/*
+ * Put process 'p' into the stopped state and optionally, notify the parent.
+ */
+void
+proc_stop(struct proc *p, int notify, int signo)
+{
+	struct lwp *l;
+
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
+	/*
+	 * First off, set the stopping indicator and bring all sleeping
+	 * LWPs to a halt so they are included in p->p_nrlwps.  We musn't
+	 * unlock between here and the p->p_nrlwps check below.
+	 */
+	p->p_sflag |= PS_STOPPING;
+	mb_write();
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		if (l->l_stat == LSSLEEP && (l->l_flag & L_SINTR) != 0) {
+			l->l_stat = LSSTOP;
+			p->p_nrlwps--;
+		}
+		lwp_unlock(l);
+	}
+
+	/*
+	 * If there are no LWPs available to take the signal, then we
+	 * signal the parent process immediately.  Otherwise, the last
+	 * LWP to stop will take care of it.
+	 */
+	if (notify)
+		p->p_sflag |= PS_NOTIFYSTOP;
+	else
+		p->p_sflag &= ~PS_NOTIFYSTOP;
+
+	if (p->p_nrlwps == 0) {
+		p->p_sflag &= ~PS_STOPPING;
+		p->p_stat = SSTOP;
+		p->p_waited = 0;
+		p->p_pptr->p_nstopchild++;
+
+		if (notify) {
+			child_psignal(p, PS_NOCLDSTOP);
+			cv_broadcast(&p->p_pptr->p_waitcv);
+		}
+	} else {
+		/*
+		 * Have the remaining LWPs come to a halt, and trigger
+		 * proc_stop_callout() to ensure that they do.
+		 */
+		LIST_FOREACH(l, &p->p_lwps, l_sibling)
+			sigpost(l, SIG_DFL, SA_STOP, signo, 0);
+		callout_schedule(&proc_stop_ch, 1);
+	}
+}
+
+/*
+ * When stopping a process, we do not immediatly set sleeping LWPs stopped,
+ * but wait for them to come to a halt at the kernel-user boundary.  This is
+ * to allow LWPs to release any locks that they may hold before stopping.
+ *
+ * Non-interruptable sleeps can be long, and there is the potential for an
+ * LWP to begin sleeping interruptably soon after the process has been set
+ * stopping (PS_STOPPING).  These LWPs will not notice that the process is
+ * stopping, and so complete halt of the process and the return of status
+ * information to the parent could be delayed indefinitely.
+ *
+ * To handle this race, proc_stop_callout() runs once per tick while there
+ * are stopping processes it the system.  It sets LWPs that are sleeping
+ * interruptably into the LSSTOP state.
+ *
+ * Note that we are not concerned about keeping all LWPs stopped while the
+ * process is stopped: stopped LWPs can awaken briefly to handle signals. 
+ * What we do need to ensure is that all LWPs in a stopping process have
+ * stopped at least once, so that notification can be sent to the parent
+ * process.
+ */
+static void
+proc_stop_callout(void *cookie)
+{
+	boolean_t more, restart;
+	struct proc *p;
+	struct lwp *l;
+
+	(void)cookie;
+
+	do {
+		restart = FALSE;
+		more = FALSE;
+
+		mutex_enter(&proclist_mutex);
+		PROCLIST_FOREACH(p, &allproc) {
+			mutex_enter(&p->p_smutex);
+
+			if ((p->p_sflag & PS_STOPPING) == 0) {
+				mutex_exit(&p->p_smutex);
+				continue;
+			}
+
+			/* Stop any LWPs sleeping interruptably. */
+			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+				lwp_lock(l);
+				if (l->l_stat == LSSLEEP &&
+				    (l->l_flag & L_SINTR) != 0) {
+				    	l->l_stat = LSSTOP;
+				    	p->p_nrlwps--;
+				}
+				lwp_unlock(l);
+			}
+
+			if (p->p_nrlwps == 0) {
+				/*
+				 * We brought the process to a halt.
+				 * Mark it as stopped and notify the
+				 * parent.
+				 */
+				p->p_sflag &= ~PS_STOPPING;
+				p->p_stat = SSTOP;
+				p->p_waited = 0;
+				p->p_pptr->p_nstopchild++;
+				if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
+					/*
+					 * Note that child_psignal() will
+					 * drop p->p_smutex briefly.
+					 * Arrange to restart and check
+					 * all processes again.
+					 */
+					restart = TRUE;
+					child_psignal(p, PS_NOCLDSTOP);
+					cv_broadcast(&p->p_pptr->p_waitcv);
+				}
+			} else
+				more = TRUE;
+
+			mutex_exit(&p->p_smutex);
+			if (restart)
+				break;
+		}
+		mutex_exit(&proclist_mutex);
+	} while (restart);
+
+	/*
+	 * If we noted processes that are stopping but still have
+	 * running LWPs, then arrange to check again in 1 tick.
+	 */
+	if (more)
+		callout_schedule(&proc_stop_ch, 1);
+}
+
+/*
+ * Given a process in state SSTOP, set the state back to SACTIVE and
+ * move LSSTOP'd LWPs to LSSLEEP or make them runnable.
+ */
+void
+proc_unstop(struct proc *p)
+{
+	struct lwp *l;
+	int sig;
+
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
+	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
+	p->p_stat = SACTIVE;
+	p->p_sflag &= ~PS_STOPPING;
+	sig = p->p_xstat;
+
+	if (!p->p_waited)
+		p->p_pptr->p_nstopchild--;
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		if (l->l_stat != LSSTOP) {
+			lwp_unlock(l);
+			continue;
+		}
+		if (l->l_wchan == NULL) {
+			setrunnable(l);
+			continue;
+		}
+		l->l_stat = LSSLEEP;
+		if (sig && (l->l_flag & L_SINTR) != 0) {
+		        setrunnable(l);
+		        sig = 0;
+		} else
+			lwp_unlock(l);
+	}
 }
 
 static int
