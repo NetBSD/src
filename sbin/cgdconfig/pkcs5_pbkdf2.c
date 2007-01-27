@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.9 2006/08/26 18:14:28 christos Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.10 2007/01/27 08:29:14 cbiere Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -53,10 +53,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.9 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.10 2007/01/27 08:29:14 cbiere Exp $");
 #endif
 
 #include <sys/resource.h>
+#include <sys/endian.h>
 
 #include <assert.h>
 #include <stdlib.h>
@@ -69,27 +70,11 @@ __RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.9 2006/08/26 18:14:28 christos Exp $");
 #include "pkcs5_pbkdf2.h"
 #include "utils.h"
 
-static void	int_encode(u_int8_t *, int);
 static void	prf_iterate(u_int8_t *, const u_int8_t *, int,
 			    const u_int8_t *, int, int, int);
 static int	pkcs5_pbkdf2_time(int, int);
 
 #define PRF_BLOCKLEN	20
-
-/*
- * int_encode encodes i as a four octet integer, most significant
- * octet first.  (from the end of Step 3).
- */
-
-static void
-int_encode(u_int8_t *res, int i)
-{
-
-	*res++ = (i >> 24) & 0xff;
-	*res++ = (i >> 16) & 0xff;
-	*res++ = (i >>  8) & 0xff;
-	*res   = (i      ) & 0xff;
-}
 
 static void
 prf_iterate(u_int8_t *r, const u_int8_t *P, int Plen,
@@ -104,7 +89,7 @@ prf_iterate(u_int8_t *r, const u_int8_t *P, int Plen,
 
 	data = emalloc(Slen + 4);
 	memcpy(data, S, Slen);
-	int_encode(data + Slen, ind);
+	be32enc(data + Slen, ind);
 	datalen = Slen + 4;
 
 	for (i=0; i < c; i++) {
