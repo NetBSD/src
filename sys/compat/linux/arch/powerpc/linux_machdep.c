@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.31 2005/12/11 12:20:16 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.31.20.1 2007/01/27 01:40:59 ad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31 2005/12/11 12:20:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.20.1 2007/01/27 01:40:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct linux_pt_regs linux_regs;
 	struct linux_sigcontext sc;
 	register_t fp;
-	int onstack;
+	int onstack, error;
 	int i;
 
 	tf = trapframe(l);
@@ -137,7 +137,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Do we need to jump onto the signal stack?
 	 */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
@@ -151,8 +151,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (onstack) {
 		fp = (register_t)
-		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
+		    ((caddr_t)l->l_sigstk->ss_sp +
+		    l->l_sigstk->ss_size);
 	} else {
 		fp = tf->fixreg[1];
 	}
@@ -212,7 +212,12 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * binaries. But the Linux kernel seems to do without it, and it
 	 * just skip it when building the stack frame. Hence the LINUX_ABIGAP.
 	 */
-	if (copyout(&frame, (caddr_t)fp, sizeof (frame) - LINUX_ABIGAP) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, (caddr_t)fp, sizeof (frame) - LINUX_ABIGAP);
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -251,7 +256,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Remember that we're now on the signal stack.
 	 */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 #ifdef DEBUG_LINUX
 	printf("linux_sendsig: exitting. fp=0x%lx\n",(long)fp);
 #endif
@@ -309,7 +314,6 @@ linux_sys_rt_sigreturn(l, v, retval)
 
 	tf = trapframe(l);
 #ifdef DEBUG_LINUX
-	printf("linux_sys_sigreturn: trapframe=0x%lx scp=0x%lx\n",
 	    (unsigned long)tf, (unsigned long)scp);
 #endif
 
@@ -333,6 +337,8 @@ linux_sys_rt_sigreturn(l, v, retval)
 	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
+	mutex_enter(&p->p_smutex);
+
 	/*
 	 * Restore signal stack.
 	 *
@@ -342,15 +348,17 @@ linux_sys_rt_sigreturn(l, v, retval)
 	 * It seems to be supported in libc6...
 	 */
 	/* if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else */
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	/*
 	 * Grab the signal mask
 	 */
 	linux_to_native_sigset(&mask, &sigframe.luc.luc_sigmask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }
@@ -422,6 +430,8 @@ linux_sys_sigreturn(l, v, retval)
 	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
+	mutex_enter(&p->p_smutex);
+
 	/*
 	 * Restore signal stack.
 	 *
@@ -430,15 +440,17 @@ linux_sys_sigreturn(l, v, retval)
 	 */
 #if 0
 	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	else
 #endif
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_extra_to_native_sigset(&mask, &context.lmask,
 	    &context._unused[3]);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }
