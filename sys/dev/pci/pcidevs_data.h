@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.861 2007/01/21 04:59:15 isaki Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.862 2007/01/27 07:38:48 isaki Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.863 2007/01/21 04:57:50 isaki Exp
+ *	NetBSD: pcidevs,v 1.864 2007/01/27 07:37:31 isaki Exp
  */
 
 /*
@@ -9789,7 +9789,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA,
-	    "nForce MCP55 Seria ATA Controller",
+	    "nForce MCP55 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA2,
