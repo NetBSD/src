@@ -1,4 +1,4 @@
-/*	$NetBSD: cname_5.c,v 1.1.1.3 2005/12/21 23:17:00 christos Exp $	*/
+/*	$NetBSD: cname_5.c,v 1.1.1.4 2007/01/27 21:07:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: cname_5.c,v 1.43.206.2 2004/03/06 08:14:03 marka Exp */
+/* Id: cname_5.c,v 1.45 2004/03/05 05:10:10 marka Exp */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 

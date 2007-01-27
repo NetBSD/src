@@ -1,4 +1,4 @@
-/*	$NetBSD: memcluster.h,v 1.1.1.3 2005/12/21 23:15:23 christos Exp $	*/
+/*	$NetBSD: memcluster.h,v 1.1.1.4 2007/01/27 21:09:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -49,3 +49,4 @@ void 	memstats(FILE *);
 int	memactive(void);
 
 #endif /* MEMCLUSTER_H */
+/*! \file */

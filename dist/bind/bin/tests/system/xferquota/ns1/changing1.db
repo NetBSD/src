@@ -13,11 +13,11 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-; Id: changing1.db,v 1.6.206.1 2004/03/06 10:22:49 marka Exp
+; Id: changing1.db,v 1.7.18.1 2004/11/23 05:24:47 marka Exp
 
 $TTL	600
 
-@               IN      SOA     dns.changing. postmaster.changing. (
+@               IN      SOA     dns1.changing. postmaster.changing. (
                         1               ;; serial
                         3600            ;; refresh period
                         1800            ;; retry interval

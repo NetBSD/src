@@ -1,4 +1,4 @@
-/*	$NetBSD: printmsg.c,v 1.1.1.3 2005/12/21 23:08:24 christos Exp $	*/
+/*	$NetBSD: printmsg.c,v 1.1.1.4 2007/01/27 21:04:03 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: printmsg.c,v 1.25.2.2.8.2 2004/03/08 04:04:26 marka Exp */
+/* Id: printmsg.c,v 1.27 2004/03/05 04:58:39 marka Exp */
 
 #include <config.h>
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: sign.sh,v 1.12.12.3 2004/03/08 04:04:35 marka Exp
+# Id: sign.sh,v 1.18.18.3 2006/03/06 01:38:00 marka Exp
 
 RANDFILE=../random.data
 
@@ -33,7 +33,7 @@ zone=bogus.example.
 infile=bogus.example.db.in
 zonefile=bogus.example.db
 
-keyname=`$KEYGEN -r $RANDFILE -a RSA -b 768 -n zone $zone`
+keyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
 cat $infile $keyname.key >$zonefile
 
@@ -43,9 +43,10 @@ zone=dynamic.example.
 infile=dynamic.example.db.in
 zonefile=dynamic.example.db
 
-keyname=`$KEYGEN -r $RANDFILE -a RSA -b 768 -n zone $zone`
+keyname1=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
+keyname2=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 1024 -n zone -f KSK $zone`
 
-cat $infile $keyname.key >$zonefile
+cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -r $RANDFILE -o $zone $zonefile > /dev/null
 
@@ -53,7 +54,7 @@ zone=keyless.example.
 infile=keyless.example.db.in
 zonefile=keyless.example.db
 
-keyname=`$KEYGEN -r $RANDFILE -a RSA -b 768 -n zone $zone`
+keyname=`$KEYGEN -r $RANDFILE -a RSAMD5 -b 768 -n zone $zone`
 
 cat $infile $keyname.key >$zonefile
 

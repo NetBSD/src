@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.10.12.7 2005/09/13 00:34:53 marka Exp
+# Id: clean.sh,v 1.15.18.2 2005/06/24 00:08:12 marka Exp
 
 rm -f */K* */keyset-* */dsset-* */dlvset-* */signedkey-* */*.signed */trusted.conf */tmp*
 rm -f ns1/root.db ns2/example.db ns3/secure.example.db

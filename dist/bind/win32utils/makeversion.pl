@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: makeversion.pl,v 1.4.12.3 2004/03/08 09:05:15 marka Exp 
+# Id: makeversion.pl,v 1.6 2004/03/05 05:14:21 marka Exp 
 
 # This script takes the version information from the version file located
 # at the root of the source tree and the api files in each library directory

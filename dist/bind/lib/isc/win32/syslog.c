@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.1.1.3 2005/12/21 23:17:47 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.1.1.4 2007/01/27 21:08:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: syslog.c,v 1.3.12.5 2004/03/08 09:05:01 marka Exp */
+/* Id: syslog.c,v 1.8 2004/03/05 05:11:59 marka Exp */
 
 #include <config.h>
 

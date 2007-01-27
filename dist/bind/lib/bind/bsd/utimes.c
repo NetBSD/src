@@ -1,4 +1,4 @@
-/*	$NetBSD: utimes.c,v 1.1.1.3 2005/12/21 23:15:18 christos Exp $	*/
+/*	$NetBSD: utimes.c,v 1.1.1.4 2007/01/27 21:08:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -39,3 +39,4 @@ __utimes(char *filename, struct timeval *tvp) {
 }
 
 #endif /* NEED_UTIMES */
+/*! \file */

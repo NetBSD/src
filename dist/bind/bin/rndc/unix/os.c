@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.1.1.3 2005/12/21 23:08:18 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.1.1.4 2007/01/27 21:05:06 christos Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -17,7 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: os.c,v 1.5.206.1 2004/03/06 10:21:33 marka Exp */
+/* Id: os.c,v 1.6.18.2 2005/04/29 00:15:41 marka Exp */
+
+/*! \file */
 
 #include <config.h>
 
