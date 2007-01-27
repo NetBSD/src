@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.12 2007/01/25 20:18:37 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.13 2007/01/27 00:27:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.12 2007/01/25 20:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.13 2007/01/27 00:27:41 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1141,7 +1141,8 @@ lwp_need_userret(struct lwp *l)
 	 */
 	mb_write();
 
-	lwp_changepri(l, PUSER);
+	if (l->l_priority > PUSER)
+		lwp_changepri(l, PUSER);
 	cpu_signotify(l);
 }
 
