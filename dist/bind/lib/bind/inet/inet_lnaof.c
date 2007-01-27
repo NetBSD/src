@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_lnaof.c,v 1.1.1.1 2004/05/17 23:44:44 christos Exp $	*/
+/*	$NetBSD: inet_lnaof.c,v 1.1.1.2 2007/01/27 21:09:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ static const char sccsid[] = "@(#)inet_lnaof.c	8.1 (Berkeley) 6/4/93";
 
 #include "port_after.h"
 
-/*
+/*%
  * Return the local network address portion of an
  * internet address; handles class a/b/c network
  * number formats.
@@ -63,3 +63,5 @@ inet_lnaof(in)
 	else
 		return ((i)&IN_CLASSC_HOST);
 }
+
+/*! \file */

@@ -51,4 +51,4 @@ The tests can be run individually like this:
 To run all the tests, just type "make test".
 
 
-Id: README,v 1.9.4.2.10.1 2004/03/08 04:04:32 marka Exp
+Id: README,v 1.12 2004/03/05 04:59:12 marka Exp

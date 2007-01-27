@@ -1,4 +1,4 @@
-/*	$NetBSD: bindevt.c,v 1.1.1.3 2005/12/21 23:18:14 christos Exp $	*/
+/*	$NetBSD: bindevt.c,v 1.1.1.4 2007/01/27 21:09:31 christos Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: bindevt.c,v 1.2.206.1 2004/03/06 08:15:48 marka Exp */
+/* Id: bindevt.c,v 1.3 2004/03/05 05:14:03 marka Exp */
 
 /*
  * bindevt.c : Defines the entry point for event log viewer DLL.

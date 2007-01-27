@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: run.sh,v 1.38.12.3 2004/03/08 04:04:33 marka Exp
+# Id: run.sh,v 1.40 2004/03/05 04:59:12 marka Exp
 
 #
 # Run a system test.
