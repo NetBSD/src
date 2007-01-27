@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.h,v 1.11 2007/01/25 23:47:13 christos Exp $	*/
+/*	$NetBSD: timedc.h,v 1.12 2007/01/27 17:57:45 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -51,11 +51,10 @@
 #define NONSTDTIME	3
 #define HOSTDOWN 	0x7fffffff
 
-struct	cmd {
+struct cmd {
 	const char *c_name;		/* command name */
 	const char *c_help;		/* help message */
 	void	(*c_handler)(int, char **); /* routine to do the work */
-	int	c_priv;			/* privileged command */
 };
 
 #include "timedc-extern.h"
