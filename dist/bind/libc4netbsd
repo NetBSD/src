@@ -24,6 +24,7 @@ for i in assertions.h dst.h eventlib.h heap.h list.h memcluster.h
 do
 	cp $BIND/lib/bind/include/isc/$i $LIBC/include/isc/$i
 done
+cp $BIND/lib/bind/include/resolv_mt.h $LIBC/include
 
 mkdir -p $LIBC/inet
 
