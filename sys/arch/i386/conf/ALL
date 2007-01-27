@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.77 2007/01/20 18:48:17 xtraeme Exp $
+# $NetBSD: ALL,v 1.78 2007/01/27 23:41:09 hubertf Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.77 $"
+#ident 		"ALL-$Revision: 1.78 $"
 
 maxusers	32		# estimated number of users
 
@@ -203,6 +203,19 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 options 	IPFILTER_LOOKUP	# ippool(8) support
 options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
+
+options 	ALTQ		# Manipulate network interfaces' output queues
+options 	ALTQ_BLUE	# Stochastic Fair Blue
+options 	ALTQ_CBQ	# Class-Based Queueing
+options 	ALTQ_CDNR	# Diffserv Traffic Conditioner
+options 	ALTQ_FIFOQ	# First-In First-Out Queue
+options 	ALTQ_FLOWVALVE	# RED/flow-valve (red-penalty-box)
+options 	ALTQ_HFSC	# Hierarchical Fair Service Curve
+options 	ALTQ_LOCALQ	# Local queueing discipline
+options 	ALTQ_PRIQ	# Priority Queueing
+options 	ALTQ_RED	# Random Early Detection
+options 	ALTQ_RIO	# RED with IN/OUT
+options 	ALTQ_WFQ	# Weighted Fair Queueing
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
@@ -714,6 +727,7 @@ icpsp*	at icp? unit ?			# SCSI pass-through
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+ahcisata* 	at pci? dev ? function ?	# AHCI SATA controllers
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
@@ -837,6 +851,7 @@ pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
@@ -1357,6 +1372,8 @@ pseudo-device	pf			# PF packet filter
 pseudo-device	pflog			# PF log if
 pseudo-device	kttcp
 pseudo-device	etherip			# EtherIP
+# srt is EXPERIMENTAL
+pseudo-device	srt			# source-address-based routing
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
