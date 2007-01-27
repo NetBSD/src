@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.7 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.8 2007/01/27 01:14:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.7 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.8 2007/01/27 01:14:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,20 +227,20 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	onice = chgp->p_nice;	/* XXXSMP not covered by p_mutex */
+	onice = chgp->p_nice;
 
   again:
 	if (kauth_authorize_process(cred, KAUTH_PROCESS_RESOURCE, chgp,
 	    (void *)KAUTH_REQ_PROCESS_RESOURCE_NICE, KAUTH_ARG(n), NULL))
 		return (EACCES);
-	mutex_enter(&chgp->p_smutex);
+	mutex_enter(&chgp->p_stmutex);
 	if (onice != chgp->p_nice) {
-		mutex_exit(&chgp->p_smutex);
+		mutex_exit(&chgp->p_stmutex);
 		goto again;
 	}
 	chgp->p_nice = n;
 	(void)resetprocpriority(chgp);
-	mutex_exit(&chgp->p_smutex);
+	mutex_exit(&chgp->p_stmutex);
 	return (0);
 }
 

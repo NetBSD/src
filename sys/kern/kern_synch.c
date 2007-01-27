@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.12 2007/01/27 00:26:44 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.13 2007/01/27 01:14:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.12 2007/01/27 00:26:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.13 2007/01/27 01:14:54 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -364,8 +364,10 @@ schedcpu(void *arg)
 		 */
 		if (autonicetime && runtm > autonicetime && p->p_nice == NZERO
 		    && kauth_cred_geteuid(p->p_cred)) {
+			mutex_enter(&p->p_stmutex);
 			p->p_nice = autoniceval + NZERO;
 			resetprocpriority(p);
+			mutex_exit(&p->p_stmutex);
 		}
 
 		/*
@@ -388,7 +390,6 @@ schedcpu(void *arg)
 			    (p->p_cpticks * FSCALE / clkhz)) >> FSHIFT;
 #endif
 			p->p_cpticks = 0;
-			mutex_exit(&p->p_stmutex);
 			p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
 
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
@@ -397,6 +398,7 @@ schedcpu(void *arg)
 					resetpriority(l);
 				lwp_unlock(l);
 			}
+			mutex_exit(&p->p_stmutex);
 		}
 
 		mutex_exit(&p->p_smutex);
@@ -426,7 +428,7 @@ updatepri(struct lwp *l)
 
 	l->l_slptime--; /* the first time was done in schedcpu */
 	/* XXX NJWLWP */
-	/* XXXSMP occasionaly unlocked. */
+	/* XXXSMP occasionally unlocked, should be per-LWP */
 	p->p_estcpu = decay_cpu_batch(loadfac, p->p_estcpu, l->l_slptime);
 	resetpriority(l);
 }
@@ -927,6 +929,7 @@ resetpriority(struct lwp *l)
 	unsigned int newpriority;
 	struct proc *p = l->l_proc;
 
+	/* XXXSMP LOCK_ASSERT(mutex_owned(&p->p_stmutex)); */
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
 	if ((l->l_flag & L_SYSTEM) != 0)
@@ -948,7 +951,7 @@ resetprocpriority(struct proc *p)
 {
 	struct lwp *l;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
@@ -977,11 +980,11 @@ schedclock(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(&p->p_stmutex);
 	p->p_estcpu = ESTCPULIM(p->p_estcpu + (1 << ESTCPU_SHIFT));
 	lwp_lock(l);
 	resetpriority(l);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(&p->p_stmutex);
 	if ((l->l_flag & L_SYSTEM) == 0 && l->l_priority >= PUSER)
 		l->l_priority = l->l_usrpri;
 	lwp_unlock(l);
@@ -1087,13 +1090,13 @@ scheduler_wait_hook(struct proc *parent, struct proc *child)
 
 	/* XXX Only if parent != init?? */
 
-	mutex_enter(&parent->p_smutex);
+	mutex_enter(&parent->p_stmutex);
 	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
 	    schedcpu_ticks - child->p_forktime);
 	if (child->p_estcpu > estcpu)
 		parent->p_estcpu =
 		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
-	mutex_exit(&parent->p_smutex);
+	mutex_exit(&parent->p_stmutex);
 }
 
 /*
