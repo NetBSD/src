@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.1.1 2007/01/27 21:07:51 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.2 2007/01/27 21:30:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
 #define isc_atomic_store(p, v) _clear_lock(p, v)
 
 #ifdef __GNUC__
-static inline int
+static __inline int
 #else
 static int
 #endif
@@ -70,7 +70,7 @@ isc_atomic_cmpxchg(atomic_p p, int old, int new) {
 }
 
 #elif ISC_PLATFORM_USEGCCASM
-static inline isc_int32_t
+static __inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	isc_int32_t orig;
 
@@ -89,7 +89,7 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	return (orig);
 }
 
-static inline void
+static __inline void
 isc_atomic_store(void *p, isc_int32_t val) {
 	__asm__ volatile (
 		"1:"
@@ -103,7 +103,7 @@ isc_atomic_store(void *p, isc_int32_t val) {
 		);
 }
 
-static inline isc_int32_t
+static __inline isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 	isc_int32_t orig;
 
