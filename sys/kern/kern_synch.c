@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.11 2007/01/25 20:09:36 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.12 2007/01/27 00:26:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.11 2007/01/25 20:09:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.12 2007/01/27 00:26:44 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -936,7 +936,8 @@ resetpriority(struct lwp *l)
 	    NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	l->l_usrpri = newpriority;
-	lwp_changepri(l, l->l_usrpri);
+	if (l->l_priority != newpriority)
+		lwp_changepri(l, newpriority);
 }
 
 /*
@@ -1120,7 +1121,7 @@ sched_kpri(struct lwp *l)
 		33,  33,  34,  34,  35,  35,  36,  36,
 		37,  38,  38,  39,  39,  40,  40,  41,
 		41,  42,  42,  43,  44,  44,  45,  45,
-		46,  46,  47,  47,  48,  48,  49,  50,
+		46,  46,  47,  47,  48,  48,  49,  49,
 	};
 
 	return kpri_tab[l->l_priority];
@@ -1153,7 +1154,7 @@ sched_changepri(struct lwp *l, int pri)
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
 	if (l->l_stat != LSRUN || (l->l_flag & L_INMEM) == 0 ||
-	    (l->l_priority / PPQ) == (l->l_usrpri / PPQ)) {
+	    (l->l_priority / PPQ) == (pri / PPQ)) {
 		l->l_priority = pri;
 		return;
 	}
