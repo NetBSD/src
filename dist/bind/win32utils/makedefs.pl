@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: makedefs.pl,v 1.5.206.1 2004/03/06 13:16:25 marka Exp
+# Id: makedefs.pl,v 1.6 2004/03/05 05:14:20 marka Exp
 
 # makedefs.pl
 # This script goes through all of the lib header files and creates a .def file
