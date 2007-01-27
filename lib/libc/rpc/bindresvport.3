@@ -1,13 +1,13 @@
 .\"	@(#)bindresvport.3n	2.2 88/08/02 4.0 RPCSRC; from 1.7 88/03/14 SMI
-.\"	$NetBSD: bindresvport.3,v 1.12 2003/04/16 13:34:43 wiz Exp $
+.\"	$NetBSD: bindresvport.3,v 1.13 2007/01/27 07:58:47 cbiere Exp $
 .\"
-.Dd November 22, 1987
+.Dd January 27, 2007
 .Dt BINDRESVPORT 3
 .Os
 .Sh NAME
 .Nm bindresvport ,
 .Nm bindresvport_sa
-.Nd bind a socket to a privileged IP port
+.Nd bind a socket to a reserved privileged IP port
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -21,7 +21,7 @@
 .Fn bindresvport
 and
 .Fn bindresvport_sa
-are used to bind a socket descriptor to a privileged
+are used to bind a socket descriptor to a reserved privileged
 .Tn IP
 port, that is, a
 port number in the range 0-1023.
@@ -43,7 +43,7 @@ If
 .Fa sin-\*[Gt]sin_port
 is
 .Sq 0
-then an anonymous port (in the range 600-1023) will be
+then a port (in the range 600-1023) will be
 chosen, and if
 .Xr bind 2
 is successful, the
@@ -55,10 +55,12 @@ If
 is the
 .Dv NULL
 pointer,
-an anonymous port will be allocated (as above).
+a port will be allocated (as above).
 However, there is no way for
 .Fn bindresvport
 to return the allocated port in this case.
+.Xr getsockname 2
+can be used to determine the assigned port.
 .Pp
 Only root can bind to a privileged port; this call will fail for any
 other users.
@@ -98,6 +100,7 @@ or
 .Xr setsockopt 2 .
 .Sh SEE ALSO
 .Xr bind 2 ,
+.Xr getsockname 2 ,
 .Xr getsockopt 2 ,
 .Xr setsockopt 2 ,
 .Xr ip 4
