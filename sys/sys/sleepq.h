@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.6 2007/01/16 01:28:27 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.7 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
 	sleepq_t *sq;
 
 	sq = &st->st_queues[SLEEPTAB_HASH(wchan)];
-	smutex_enter(sq->sq_mutex);
+	mutex_spin_enter(sq->sq_mutex);
 	return sq;
 }
 
@@ -139,13 +139,13 @@ sleepq_enter(sleepq_t *sq, struct lwp *l)
 static inline void
 sleepq_lock(sleepq_t *sq)
 {
-	smutex_enter(sq->sq_mutex);
+	mutex_spin_enter(sq->sq_mutex);
 }
 
 static inline void
 sleepq_unlock(sleepq_t *sq)
 {
-	smutex_exit(sq->sq_mutex);
+	mutex_spin_exit(sq->sq_mutex);
 }
 
 /*

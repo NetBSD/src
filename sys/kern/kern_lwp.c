@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.13 2007/01/27 00:27:41 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.14 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.13 2007/01/27 00:27:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.14 2007/01/27 14:00:02 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -977,9 +977,9 @@ lwp_lock_retry(struct lwp *l, kmutex_t *old)
 #else
 	for (;;) {
 #endif
-		smutex_exit(old);
+		mutex_spin_exit(old);
 		old = l->l_mutex;
-		smutex_enter(old);
+		mutex_spin_enter(old);
 
 		/*
 		 * mutex_enter() will have posted a read barrier.  Re-test
@@ -1028,7 +1028,7 @@ lwp_unlock_to(struct lwp *l, kmutex_t *new)
 #else
 	(void)new;
 #endif
-	smutex_exit(old);
+	mutex_spin_exit(old);
 }
 
 /*
@@ -1047,9 +1047,9 @@ lwp_relock(struct lwp *l, kmutex_t *new)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	old = l->l_mutex;
 	if (old != new) {
-		smutex_enter(new);
+		mutex_spin_enter(new);
 		l->l_mutex = new;
-		smutex_exit(old);
+		mutex_spin_exit(old);
 	}
 #else
 	(void)new;

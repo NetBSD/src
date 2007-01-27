@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.8 2007/01/17 20:26:36 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.9 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -131,12 +131,12 @@
  *	mutex_exit()
  *
  * Two additional stubs may be implemented that handle only the spinlock
- * case, primarily for the scheduler.  These should not be documented for or
- * used by device drivers.  __HAVE_SMUTEX_STUBS should be defined if these
- * are provided:
+ * case, primarily for the scheduler.  These should not be documented for
+ * or used by device drivers.  __HAVE_SPIN_MUTEX_STUBS should be defined
+ * if these are provided:
  *
- *	smutex_enter()
- *	smutex_exit()
+ *	mutex_spin_enter()
+ *	mutex_spin_exit()
  */
 
 #if defined(_KERNEL_OPT)
@@ -169,7 +169,7 @@ typedef struct kmutex kmutex_t;
 
 void	mutex_vector_enter(kmutex_t *);
 void	mutex_vector_exit(kmutex_t *);
-void	smutex_vector_enter(kmutex_t *);
+void	mutex_spin_retry(kmutex_t *);
 
 #endif	/* __MUTEX_PRIVATE */
 
@@ -184,8 +184,8 @@ void	mutex_destroy(kmutex_t *);
 void	mutex_enter(kmutex_t *);
 void	mutex_exit(kmutex_t *);
 
-void	smutex_enter(kmutex_t *);
-void	smutex_exit(kmutex_t *);
+void	mutex_spin_enter(kmutex_t *);
+void	mutex_spin_exit(kmutex_t *);
 
 int	mutex_tryenter(kmutex_t *);
 

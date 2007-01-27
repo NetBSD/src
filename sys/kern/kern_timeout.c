@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.17.20.4 2007/01/19 00:38:00 yamt Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.17.20.5 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.4 2007/01/19 00:38:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.5 2007/01/27 14:00:02 ad Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -206,10 +206,10 @@ callout_barrier(struct callout *c)
 	 */
 	while ((ci = c->c_oncpu) != NULL && ci != curcpu() &&
 	    ci->ci_data.cpu_callout == c) {
-		smutex_exit(&callout_mutex);
+		mutex_spin_exit(&callout_mutex);
 		while (ci->ci_data.cpu_callout == c)
 			;
-		smutex_enter(&callout_mutex);
+		mutex_spin_enter(&callout_mutex);
 	}
 	c->c_oncpu = NULL;
 #endif
@@ -261,7 +261,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 
 	KASSERT(to_ticks >= 0);
 
-	smutex_enter(&callout_mutex);
+	mutex_spin_enter(&callout_mutex);
 
 	callout_barrier(c);
 
@@ -288,7 +288,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 		CIRCQ_INSERT(&c->c_list, &timeout_todo);
 	}
 
-	smutex_exit(&callout_mutex);
+	mutex_spin_exit(&callout_mutex);
 }
 
 /*
@@ -304,7 +304,7 @@ callout_schedule(struct callout *c, int to_ticks)
 
 	KASSERT(to_ticks >= 0);
 
-	smutex_enter(&callout_mutex);
+	mutex_spin_enter(&callout_mutex);
 
 	callout_barrier(c);
 
@@ -328,7 +328,7 @@ callout_schedule(struct callout *c, int to_ticks)
 		CIRCQ_INSERT(&c->c_list, &timeout_todo);
 	}
 
-	smutex_exit(&callout_mutex);
+	mutex_spin_exit(&callout_mutex);
 }
 
 /*
@@ -340,7 +340,7 @@ void
 callout_stop(struct callout *c)
 {
 
-	smutex_enter(&callout_mutex);
+	mutex_spin_enter(&callout_mutex);
 
 	callout_barrier(c);
 
@@ -349,7 +349,7 @@ callout_stop(struct callout *c)
 
 	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
 
-	smutex_exit(&callout_mutex);
+	mutex_spin_exit(&callout_mutex);
 }
 
 /*
@@ -361,7 +361,7 @@ callout_hardclock(void)
 {
 	int needsoftclock;
 
-	smutex_enter(&callout_mutex);
+	mutex_spin_enter(&callout_mutex);
 
 	MOVEBUCKET(0, hardclock_ticks);
 	if (MASKWHEEL(0, hardclock_ticks) == 0) {
@@ -374,7 +374,7 @@ callout_hardclock(void)
 	}
 
 	needsoftclock = !CIRCQ_EMPTY(&timeout_todo);
-	smutex_exit(&callout_mutex);
+	mutex_spin_exit(&callout_mutex);
 
 	return needsoftclock;
 }
@@ -390,7 +390,7 @@ softclock(void *v)
 
 	ci = curcpu();
 
-	smutex_enter(&callout_mutex);
+	mutex_spin_enter(&callout_mutex);
 
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
 		c = CIRCQ_FIRST(&timeout_todo);
@@ -415,9 +415,9 @@ softclock(void *v)
 			c->c_oncpu = ci;
 			ci->ci_data.cpu_callout = c;
 #endif
-			smutex_exit(&callout_mutex);
+			mutex_spin_exit(&callout_mutex);
 			(*func)(arg);
-			smutex_enter(&callout_mutex);
+			mutex_spin_enter(&callout_mutex);
 #ifdef MULTIPROCESSOR
 			ci->ci_data.cpu_callout = NULL;
 			/*
@@ -428,7 +428,7 @@ softclock(void *v)
 		}
 	}
 
-	smutex_exit(&callout_mutex);
+	mutex_spin_exit(&callout_mutex);
 }
 
 #ifdef DDB

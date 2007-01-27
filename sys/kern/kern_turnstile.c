@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.36.5 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.36.6 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.5 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.6 2007/01/27 14:00:02 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -198,7 +198,7 @@ turnstile_lookup(wchan_t obj)
 
 	tc = &turnstile_tab[TS_HASH(obj)];
 
-	smutex_enter(tc->tc_mutex);
+	mutex_spin_enter(tc->tc_mutex);
 
 	LIST_FOREACH(ts, &tc->tc_chain, ts_chain)
 		if (ts->ts_obj == obj)
@@ -222,7 +222,7 @@ turnstile_exit(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-	smutex_exit(tc->tc_mutex);
+	mutex_spin_exit(tc->tc_mutex);
 }
 
 /*
@@ -321,7 +321,7 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
 			swapin |= turnstile_remove(ts, l, sq);
 		}
 	}
-	smutex_exit(tc->tc_mutex);
+	mutex_spin_exit(tc->tc_mutex);
 
 	/*
 	 * If there are newly awakend threads that need to be swapped in,

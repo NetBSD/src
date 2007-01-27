@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.9 2007/01/17 20:24:33 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.10 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.9 2007/01/17 20:24:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.10 2007/01/27 14:00:02 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -377,7 +377,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 	}
 
 	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
-	smutex_exit(sq->sq_mutex);
+	sleepq_unlock(sq);
 
 	/*
 	 * If there are newly awakend threads that need to be swapped in,
@@ -405,7 +405,7 @@ sleepq_unsleep(struct lwp *l)
 	KASSERT(l->l_mutex == sq->sq_mutex);
 
 	swapin = sleepq_remove(sq, l);
-	smutex_exit(sq->sq_mutex);
+	sleepq_unlock(sq);
 
 	if (swapin)
 		wakeup(&proc0);

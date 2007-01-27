@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.11 2007/01/27 07:09:02 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.12 2007/01/27 14:00:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -195,13 +195,13 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
 3:	jmp	_C_LABEL(rw_vector_exit)
 
 /*
- * void smutex_enter(kmutex_t *mtx);
+ * void mutex_spin_enter(kmutex_t *mtx);
  *
  * Acquire a spin mutex and post a load fence.
  */
 	ALIGN64
 
-STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 51 bytes */
+STUB(mutex_spin_enter, mutex_vector_enter)	/* 0x00c0, 51 bytes */
 	movl	CPUVAR(SELF150), %eax
 	movl	(CPU_INFO_ILEVEL-0x150)(%eax), %ecx
 	subl	$1, (CPU_INFO_MTX_COUNT-0x150)(%eax)/* decl does not set CF */
@@ -216,21 +216,21 @@ STUB(smutex_enter, mutex_vector_enter)		/* 0x00c0, 51 bytes */
 	mov	$0x0100, %eax			/* new + expected value */
 	LOCK
 	cmpxchgb %ah, MTX_LOCK(%edx)		/* lock it */
-	jnz,pn	_C_LABEL(smutex_vector_enter)
+	jnz,pn	_C_LABEL(mutex_spin_retry)
 #endif
 	ret
 
 	ALIGN64
-LABEL(smutex_enter_end)
+LABEL(mutex_spin_enter_end)
 
 /*
- * void smutex_exit(kmutex_t *mtx);
+ * void mutex_spin_exit(kmutex_t *mtx);
  *
  * Release a spin mutex and post a store fence.
  */
 	ALIGN64
 
-STUB(smutex_exit, mutex_vector_exit)		/* 0x0100, 50 bytes */
+STUB(mutex_spin_exit, mutex_vector_exit)	/* 0x0100, 50 bytes */
 #if defined(DIAGNOSTIC)
 	movl	$0x0001, %eax			/* new + expected value */
 	cmpxchgb %ah, MTX_LOCK(%edx)
@@ -254,17 +254,17 @@ STUB(smutex_exit, mutex_vector_exit)		/* 0x0100, 50 bytes */
 1:	ret
 
 	ALIGN64
-LABEL(smutex_exit_end)
+LABEL(mutex_spin_exit_end)
 
 #if !defined(I386_CPU) && defined(I686_CPU) && !defined(DIAGNOSTIC)
 
 /*
  * Patch for i686 CPUs where cli/sti is prohibitavely expensive.
- * Must be the same size as smutex_exit().
+ * Must be the same size as mutex_spin_exit().
  */
 	ALIGN64
 
-ENTRY(i686_smutex_exit)				/* 64 bytes */
+ENTRY(i686_mutex_spin_exit)			/* 64 bytes */
 	mov	4(%esp),%edx
 	xorl	%eax,%eax
 	pushl	%edi
@@ -296,10 +296,10 @@ ENTRY(i686_smutex_exit)				/* 64 bytes */
 	popl	%ebx
 	popl	%edi
 	movl	%ecx,4(%esp)
-LABEL(i686_smutex_exit_patch)
+LABEL(i686_mutex_spin_exit_patch)
 	jmp	_C_LABEL(Xspllower)
 	ALIGN64
-LABEL(i686_smutex_exit_end)
+LABEL(i686_mutex_spin_exit_end)
 
 #endif
 

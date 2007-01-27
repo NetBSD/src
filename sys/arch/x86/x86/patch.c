@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.1.2.1 2007/01/27 07:09:03 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.1.2.2 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.2.1 2007/01/27 07:09:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.2.2 2007/01/27 14:00:02 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -68,11 +68,11 @@ void	amd64_spllower(int);
 void	amd64_spllower_end(void);
 void	amd64_spllower_patch(void);
 
-void	smutex_exit(int);
-void	smutex_exit_end(void);
-void	i686_smutex_exit(int);
-void	i686_smutex_exit_end(void);
-void	i686_smutex_exit_patch(void);
+void	mutex_spin_exit(int);
+void	mutex_spin_exit_end(void);
+void	i686_mutex_spin_exit(int);
+void	i686_mutex_spin_exit_end(void);
+void	i686_mutex_spin_exit_patch(void);
 
 #define	X86_NOP		0x90
 #define	X86_REP		0xf3
@@ -133,8 +133,9 @@ x86_patch(void)
 		patchfunc(i686_spllower, i686_spllower_end, spllower,
 		    spllower_end, i686_spllower_patch);
 #if !defined(LOCKDEBUG) && !defined(I386_CPU) && !defined(DIAGNOSTIC)
-		patchfunc(i686_smutex_exit, i686_smutex_exit_end,
-		    smutex_exit, smutex_exit_end, i686_smutex_exit_patch);
+		patchfunc(i686_mutex_spin_exit, i686_mutex_spin_exit_end,
+		    mutex_spin_exit, mutex_spin_exit_end,
+		    i686_mutex_spin_exit_patch);
 #endif	/* !defined(LOCKDEBUG) && !defined(I386_CPU) */
 	}
 #endif	/* I686_CPU */

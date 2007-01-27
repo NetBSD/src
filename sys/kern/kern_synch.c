@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.13 2007/01/27 01:14:54 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.14 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.13 2007/01/27 01:14:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.14 2007/01/27 14:00:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -710,7 +710,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 */
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != &sched_mutex) {
-		mutex_enter(&sched_mutex);
+		mutex_spin_enter(&sched_mutex);
 		lwp_unlock(l);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.12 2007/01/17 20:26:36 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.13 2007/01/27 14:00:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.12 2007/01/17 20:26:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.13 2007/01/27 14:00:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -207,7 +207,7 @@ MUTEX_RELEASE(kmutex_t *mtx)
 
 #if defined(LOCKDEBUG)
 #undef	__HAVE_MUTEX_STUBS
-#undef	__HAVE_SMUTEX_STUBS
+#undef	__HAVE_SPIN_MUTEX_STUBS
 #endif
 
 #ifndef __HAVE_MUTEX_STUBS
@@ -215,9 +215,9 @@ __strong_alias(mutex_enter, mutex_vector_enter);
 __strong_alias(mutex_exit, mutex_vector_exit);
 #endif
 
-#ifndef __HAVE_SMUTEX_STUBS
-__strong_alias(smutex_enter, mutex_vector_enter);
-__strong_alias(smutex_exit, mutex_vector_exit);
+#ifndef __HAVE_SPIN_MUTEX_STUBS
+__strong_alias(mutex_spin_enter, mutex_vector_enter);
+__strong_alias(mutex_spin_exit, mutex_vector_exit);
 #endif
 
 void	mutex_dump(volatile void *);
@@ -352,8 +352,8 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
  *
  *	Support routine for mutex_enter() that must handles all cases.  In
  *	the LOCKDEBUG case, mutex_enter() is always aliased here, even if
- *	fast-path stubs are available.  If an smutex_enter() stub is not
- *	available, then it is also aliased directly here.
+ *	fast-path stubs are available.  If an mutex_spin_enter() stub is
+ *	not available, then it is also aliased directly here.
  */
 void
 mutex_vector_enter(kmutex_t *mtx)
@@ -734,17 +734,17 @@ mutex_tryenter(kmutex_t *mtx)
 	return 0;
 }
 
-#if defined(__HAVE_SMUTEX_STUBS) || defined(FULL)
+#if defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL)
 /*
- * smutex_vector_enter:
+ * mutex_spin_retry:
  *
- *	Support routine for smutex_enter().  Assumes that the caller
+ *	Support routine for mutex_spin_enter().  Assumes that the caller
  *	has already raised the SPL, and adjusted counters.
  */
 void
-smutex_vector_enter(kmutex_t *mtx)
+mutex_spin_retry(kmutex_t *mtx)
 {
-#ifdef FULL
+#ifdef MULTIPROCESSOR
 	u_int count;
 	LOCKSTAT_TIMER(spintime);
 #ifdef LOCKDEBUG
@@ -773,11 +773,11 @@ smutex_vector_enter(kmutex_t *mtx)
 	LOCKSTAT_STOP_TIMER(spintime);
 	LOCKSTAT_EVENT(mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
 	MUTEX_LOCKED(mtx);
-#else	/* FULL */
-	panic("smutex_vector_enter");
-#endif	/* FULL */
+#else	/* MULTIPROCESSOR */
+	MUTEX_ABORT(mtx, "mutex_spin_retry");
+#endif	/* MULTIPROCESSOR */
 }
-#endif	/* defined(__HAVE_SMUTEX_STUBS) || defined(FULL) */
+#endif	/* defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL) */
 
 #ifdef FULL
 /*
@@ -793,7 +793,7 @@ sched_lock_idle(void)
 	MUTEX_SPIN_SPLSAVE(mtx, 0);
 
 	if (!__cpu_simple_lock_try(&mtx->mtx_lock)) {
-		smutex_vector_enter(mtx);
+		mutex_spin_retry(mtx);
 		return;
 	}
 
