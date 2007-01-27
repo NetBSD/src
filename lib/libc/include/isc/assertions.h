@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.h,v 1.1.1.1 2004/05/20 19:49:41 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.1.1.2 2007/01/27 21:45:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
  */
 
 /*
- * Id: assertions.h,v 1.1.206.1 2004/03/09 08:33:30 marka Exp
+ * Id: assertions.h,v 1.2.18.1 2005/04/27 05:00:50 sra Exp
  */
 
 #ifndef ASSERTIONS_H
@@ -31,18 +31,20 @@ typedef enum {
 typedef void (*assertion_failure_callback)(const char *, int, assertion_type,
 					   const char *, int);
 
+/* coverity[+kill] */
 extern assertion_failure_callback __assertion_failed;
+
 void set_assertion_failure_callback(assertion_failure_callback f);
 const char *assertion_type_to_text(assertion_type type);
 
-#ifdef CHECK_ALL
+#if defined(CHECK_ALL) || defined(__COVERITY__)
 #define CHECK_REQUIRE		1
 #define CHECK_ENSURE		1
 #define CHECK_INSIST		1
 #define CHECK_INVARIANT		1
 #endif
 
-#ifdef CHECK_NONE
+#if defined(CHECK_NONE) && !defined(__COVERITY__)
 #define CHECK_REQUIRE		0
 #define CHECK_ENSURE		0
 #define CHECK_INSIST		0
@@ -120,5 +122,5 @@ const char *assertion_type_to_text(assertion_type type);
 #define INVARIANT(cond)		((void) (cond))
 #define INVARIANT_ERR(cond)	((void) (cond))
 #endif /* CHECK_INVARIANT */
-
 #endif /* ASSERTIONS_H */
+/*! \file */
