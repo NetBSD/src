@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28.4.1 2007/01/12 01:04:03 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.28.4.2 2007/01/27 01:40:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.4.1 2007/01/12 01:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.4.2 2007/01/27 01:40:59 ad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -119,6 +119,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *fp, kf;
 	short ft;
+	int error;
 
 	ft = frame->f_format;
 
@@ -234,8 +235,13 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	kf.sf_c.c_sc.sc_sp = frame->f_regs[SP];
 	kf.sf_c.c_sc.sc_pc = frame->f_pc;
 	kf.sf_c.c_sc.sc_ps = frame->f_sr;
+	sendsig_reset(l, sig);
 
-	if (copyout(&kf, fp, sizeof(struct linux_sigframe))) {
+	mutex_exit(&p->p_smutex);
+	error = copyout(&kf, fp, sizeof(struct linux_sigframe));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("setup_linux_sigframe(%d): copyout failed on sig %d\n",
@@ -279,6 +285,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 {
 	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *fp, kf;
+	int error;
 	short ft;
 
 	ft = frame->f_format;
@@ -410,13 +417,18 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
-	kf.sf_uc.uc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
+	kf.sf_uc.uc_stack.ss_sp = l->l_sigstk->ss_sp;
 	kf.sf_uc.uc_stack.ss_flags =
-		(p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
-		(p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
-	kf.sf_uc.uc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+		(l->l_sigstk->ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
+		(l->l_sigstk->ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
+	kf.sf_uc.uc_stack.ss_size = l->l_sigstk->ss_size;
+	sendsig_reset(l, sig);
 
-	if (copyout(&kf, fp, sizeof(struct linux_rt_sigframe))) {
+	mutex_exit(&p->p_smutex);
+	error = copyout(&kf, fp, sizeof(struct linux_rt_sigframe));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("setup_linux_rt_sigframe(%d): copyout failed on sig %d\n",
@@ -475,7 +487,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -557,8 +569,10 @@ bad:		sigexit(l, SIGSEGV);
 			sz, frame->f_stackadj);
 #endif
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 #if LINUX__NSIG_WORDS > 1
@@ -567,7 +581,9 @@ bad:		sigexit(l, SIGSEGV);
 #else
 	linux_old_to_native_sigset(&scp->sc_mask, &mask);
 #endif
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	/*
 	 * Restore the user supplied information.
@@ -709,14 +725,18 @@ bad:		sigexit(l, SIGSEGV);
 	if (tuc.uc_mc.mc_version != LINUX_MCONTEXT_VERSION)
 		goto bad;
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags =
-		(p->p_sigctx.ps_sigstk.ss_flags & ~SS_ONSTACK) |
+	l->l_sigstk->ss_flags =
+		(l->l_sigstk->ss_flags & ~SS_ONSTACK) |
 		(tuc.uc_stack.ss_flags & LINUX_SS_ONSTACK ? SS_ONSTACK : 0);
 
 	/* Restore signal mask. */
 	linux_to_native_sigset(&mask, &tuc.uc_sigmask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	/*
 	 * Restore the user supplied information.
