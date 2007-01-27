@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.21 2007/01/27 00:15:50 cbiere Exp $	*/
+/*	$NetBSD: cmds.c,v 1.22 2007/01/27 00:37:56 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.21 2007/01/27 00:15:50 cbiere Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.22 2007/01/27 00:37:56 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,20 +493,8 @@ tracing(int argc, char *argv[])
 int
 priv_resources(void)
 {
-	struct sockaddr_in addr;
-
-	sock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sock < 0) {
-		perror("opening socket");
-		return -1;
-	}
-
-	memset(&addr, 0, sizeof(addr));
-	addr.sin_family = AF_INET;
-
-	if ((bind(sock, (struct sockaddr*)&addr, sizeof(addr))) == -1) {
-		warn("bind");
-		(void)close(sock);
+	if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+		warn("Cannot open UDP socket");
 		return -1;
 	}
 
