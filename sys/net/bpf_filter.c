@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.32 2006/10/04 20:47:43 oster Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.33 2007/01/27 07:16:01 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.32 2006/10/04 20:47:43 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.33 2007/01/27 07:16:01 cbiere Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -48,25 +48,10 @@ static const char rcsid[] =
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/endian.h>
 
-#if !defined(UNALIGNED_ACCESS)
-#define BPF_ALIGN
-#endif
-
-#ifndef BPF_ALIGN
-#define EXTRACT_SHORT(p)	((uint16_t)ntohs(*(uint16_t *)p))
-#define EXTRACT_LONG(p)		(ntohl(*(uint32_t *)p))
-#else
-#define EXTRACT_SHORT(p)			\
-	((uint16_t)				\
-		((uint16_t)*((u_char *)p+0)<<8|	\
-		 (uint16_t)*((u_char *)p+1)<<0))
-#define EXTRACT_LONG(p)				\
-		((uint32_t)*((u_char *)p+0)<<24|\
-		 (uint32_t)*((u_char *)p+1)<<16|\
-		 (uint32_t)*((u_char *)p+2)<<8|	\
-		 (uint32_t)*((u_char *)p+3)<<0)
-#endif
+#define EXTRACT_SHORT(p)	be16dec(p)
+#define EXTRACT_LONG(p)		be32dec(p)
 
 #ifdef _KERNEL
 #include <sys/mbuf.h>
