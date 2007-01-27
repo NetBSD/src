@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.9 2007/01/27 22:26:44 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.10 2007/01/27 23:02:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.16.18.5 2006/08/30 23:23:13 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.9 2007/01/27 22:26:44 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.10 2007/01/27 23:02:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -121,7 +121,6 @@ __weak_alias(res_setservers,__res_setservers)
 #include "res_private.h"
 
 /*% Options.  Should all be left alone. */
-#define RESOLVSORT
 #ifndef DEBUG
 #define DEBUG
 #endif
@@ -238,7 +237,6 @@ __res_vinit(res_state statp, int preinit) {
 		strcpy(statp->_u._ext.ext->nsuffix2, "ip6.int");
 	} else
 		return (-1);
-#ifdef RESOLVSORT
 	statp->nsort = 0;
 	res_setservers(statp, u, nserv);
 
