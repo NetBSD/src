@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.37 2006/06/19 10:19:08 jmcneill Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.37.4.1 2007/01/27 00:24:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -138,6 +138,8 @@ struct audio_softc {
 	struct	selinfo sc_wsel; /* write selector */
 	struct	selinfo sc_rsel; /* read selector */
 	struct	proc *sc_async_audio;	/* process who wants audio SIGIO */
+	void		*sc_sih_rd;
+	void		*sc_sih_wr;
 	struct	mixer_asyncs {
 		struct mixer_asyncs *next;
 		struct proc *proc;
