@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.289 2007/01/26 21:57:47 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.290 2007/01/27 01:13:10 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.289 2007/01/26 21:57:47 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.290 2007/01/27 01:13:10 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -265,6 +265,9 @@ main(void)
 	/* Initialize kauth. */
 	kauth_init();
 
+	/* Initialize default security model. */
+	secmodel_start();
+
 	/* Initialize the buffer cache */
 	bufinit();
 
@@ -383,9 +386,6 @@ main(void)
 	/* Initialize posix semaphores */
 	ksem_init();
 #endif
-
-	/* Initialize default security model. */
-	secmodel_start();
 
 #if NVERIEXEC > 0
 	/*
