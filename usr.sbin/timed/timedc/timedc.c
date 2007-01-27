@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.17 2007/01/25 23:47:13 christos Exp $	*/
+/*	$NetBSD: timedc.c,v 1.18 2007/01/27 17:57:45 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.17 2007/01/25 23:47:13 christos Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.18 2007/01/27 17:57:45 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: timedc.c,v 1.17 2007/01/25 23:47:13 christos Exp $");
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <pwd.h>
 #include <err.h>
 
 int trace = 0;
@@ -63,12 +65,14 @@ char	*margv[MAX_MARGV];
 char	cmdline[200];
 jmp_buf	toplevel;
 static struct cmd *getcmd(char *);
+static int drop_privileges(void);
 
 int
 main(int argc, char *argv[])
 {
 	struct cmd *c;
 
+	fcntl(3, F_CLOSEM);
 	openlog("timedc", 0, LOG_AUTH);
 
 	/*
@@ -76,7 +80,8 @@ main(int argc, char *argv[])
 	 */
 	if (priv_resources() < 0)
 		errx(1, "Could not get privileged resources");
-	(void) setuid(getuid());
+	if (drop_privileges() < 0)
+		errx(1, "Could not drop privileges");
 
 	if (--argc > 0) {
 		c = getcmd(*++argv);
@@ -86,10 +91,6 @@ main(int argc, char *argv[])
 		}
 		if (c == 0) {
 			printf("?Invalid command\n");
-			exit(1);
-		}
-		if (c->c_priv && getuid()) {
-			printf("?Privileged command\n");
 			exit(1);
 		}
 		(*c->c_handler)(argc, argv);
@@ -122,10 +123,6 @@ main(int argc, char *argv[])
 		}
 		if (c == 0) {
 			printf("?Invalid command\n");
-			continue;
-		}
-		if (c->c_priv && getuid()) {
-			printf("?Privileged command\n");
 			continue;
 		}
 		(*c->c_handler)(margc, margv);
@@ -261,4 +258,32 @@ help(int argc, char *argv[])
 			printf("%-*s\t%s\n", (int)HELPINDENT,
 				c->c_name, c->c_help);
 	}
+}
+
+static int
+drop_privileges(void)
+{
+	const struct passwd *pw;
+	uid_t uid;
+	gid_t gid;
+
+	if ((pw = getpwnam("nobody")) == NULL) {
+		warnx("getpwnam(\"nobody\") failed");
+		return -1;
+	}
+	uid = pw->pw_uid;
+	gid = pw->pw_gid;
+	if (setgroups(1, &gid)) {
+		warn("setgroups");
+		return -1;
+	}
+	if (setgid(gid)) {
+		warn("setgid");
+		return -1;
+	}
+	if (setuid(uid)) {
+		warn("setuid");
+		return -1;
+	}
+	return 0;
 }
