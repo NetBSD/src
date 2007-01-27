@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.22 2007/01/21 07:59:31 kardel Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.23 2007/01/27 09:02:38 kardel Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -1864,15 +1864,18 @@ io_setbclient(void)
 			continue;
 
 		/* Do we already have the broadcast address open? */
-		if (interf->flags & INT_BCASTOPEN)
+		if (interf->flags & INT_BCASTOPEN) {
+		/* account for already open interfaces to aviod misleading warning below */
+			nif++;
 			continue;
+		}
 
 		/*
 		 * Try to open the broadcast address
 		 */
 		interf->family = AF_INET;
 		interf->bfd = open_socket(&interf->bcast,
-				    INT_BROADCAST, 1, interf);
+				    INT_BROADCAST, 0, interf);
 
 		 /*
 		 * If we succeeded then we use it otherwise
@@ -1901,8 +1904,8 @@ io_setbclient(void)
 		if (nif > 0)
 			printf("io_setbclient: Opened broadcast clients\n");
 #endif
-		if (nif == 0)
-			netsyslog(LOG_ERR, "Unable to listen for broadcasts, no broadcast interfaces available");
+	if (nif == 0)
+		netsyslog(LOG_ERR, "Unable to listen for broadcasts, no broadcast interfaces available");
 #else
 	netsyslog(LOG_ERR, "io_setbclient: Broadcast Client disabled by build");
 #endif
@@ -2326,7 +2329,7 @@ open_socket(
 
 #ifdef OS_NEEDS_REUSEADDR_FOR_IFADDRBIND
 	/*
-	 * some OSes don't allow bindinf to more specific
+	 * some OSes don't allow binding to more specific
 	 * addresses if a wildcard address already bound
 	 * to the port and SO_REUSEADDR is not set
 	 */
