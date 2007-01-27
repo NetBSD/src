@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.20 2007/01/27 21:25:23 christos Exp $	*/
+/*	$NetBSD: nameser.h,v 1.21 2007/01/27 22:33:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -97,13 +97,13 @@
  * in synch with it.
  */
 typedef enum __ns_sect {
-+	ns_s_qd = 0,		/*%< Query: Question. */
-+	ns_s_zn = 0,		/*%< Update: Zone. */
-+	ns_s_an = 1,		/*%< Query: Answer. */
-+	ns_s_pr = 1,		/*%< Update: Prerequisites. */
-+	ns_s_ns = 2,		/*%< Query: Name servers. */
-+	ns_s_ud = 2,		/*%< Update: Update. */
-+	ns_s_ar = 3,		/*%< Query|Update: Additional records. */
+	ns_s_qd = 0,		/*%< Query: Question. */
+	ns_s_zn = 0,		/*%< Update: Zone. */
+	ns_s_an = 1,		/*%< Query: Answer. */
+	ns_s_pr = 1,		/*%< Update: Prerequisites. */
+	ns_s_ns = 2,		/*%< Query: Name servers. */
+	ns_s_ud = 2,		/*%< Update: Update. */
+	ns_s_ar = 3,		/*%< Query|Update: Additional records. */
 	ns_s_max = 4
 } ns_sect;
 
