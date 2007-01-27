@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.1.1 2007/01/27 21:07:51 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.2 2007/01/27 21:30:22 christos Exp $	*/
 
 /*
  * Copyright (C) 2006  Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,7 @@
  * Open issue: can 'fetchadd' make the code faster for some particular values
  * (e.g., 1 and -1)?
  */
-static inline isc_int32_t
+static __inline isc_int32_t
 isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 	isc_int32_t prev, swapped;
 
@@ -54,7 +54,7 @@ isc_atomic_xadd(isc_int32_t *p, isc_int32_t val) {
 /*
  * This routine atomically stores the value 'val' in 'p'.
  */
-static inline void
+static __inline void
 isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 	__asm__ volatile(
 		"st4.rel %0=%1"
@@ -69,7 +69,7 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
  * original value is equal to 'cmpval'.  The original value is returned in any
  * case.
  */
-static inline isc_int32_t
+static __inline isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 	isc_int32_t ret;
 
