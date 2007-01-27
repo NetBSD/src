@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.20 2007/01/25 23:25:20 cbiere Exp $	*/
+/*	$NetBSD: cmds.c,v 1.21 2007/01/27 00:15:50 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.20 2007/01/25 23:25:20 cbiere Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.21 2007/01/27 00:15:50 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ int sock_raw;
 char myname[MAXHOSTNAMELEN + 1];
 struct hostent *hp;
 struct sockaddr_in server;
-struct sockaddr_in dayaddr;
+static struct sockaddr_in dayaddr;
 extern int measure_delta;
 
 void bytenetorder(struct tsp *);
@@ -76,7 +76,7 @@ void set_tsp_name(struct tsp *, const char *);
 void get_tsp_name(const struct tsp *, char *, size_t);
 
 
-#define BU ((unsigned long)2208988800U)	/* seconds before UNIX epoch */
+#define BU 2208988800UL	/* seconds before UNIX epoch */
 
 
 /* compute the difference between our date and another machine
@@ -89,9 +89,9 @@ daydiff(char *hostname)
 	int tout;
 	struct timeval now;
 	struct pollfd set[1];
-	struct sockaddr from;
+	struct sockaddr_in from;
 	socklen_t fromlen;
-	unsigned long sec;
+	uint32_t sec;
 
 
 	/* wait 2 seconds between 10 tries */
@@ -99,11 +99,17 @@ daydiff(char *hostname)
 	set[0].fd = sock;
 	set[0].events = POLLIN;
 	for (trials = 0; trials < 10; trials++) {
+		ssize_t ret;
+
 		/* ask for the time */
 		sec = 0;
-		if (sendto(sock, &sec, sizeof(sec), 0,
-			   (struct sockaddr*)&dayaddr, sizeof(dayaddr)) < 0) {
-			warn("sendto(sock)");
+		ret = sendto(sock, &sec, sizeof(sec), 0,
+			(struct sockaddr*)&dayaddr, sizeof(dayaddr));
+		if (ret < sizeof(sec)) {
+			if (ret < 0) 
+				warn("sendto(sock)");
+			else
+				warnx("sendto(sock): incomplete");
 			return 0;
 		}
 
@@ -119,16 +125,26 @@ daydiff(char *hostname)
 				break;
 
 			fromlen = sizeof(from);
-			if (recvfrom(sock,&sec,sizeof(sec),0,
-				     &from,&fromlen) < 0) {
-				warn("recvfrom(date read)");
+			ret = recvfrom(sock, &sec, sizeof(sec), 0,
+				(struct sockaddr*)&from, &fromlen);
+			if (ret >= 0 && (
+			    from.sin_family != dayaddr.sin_family ||
+			    from.sin_addr.s_addr != dayaddr.sin_addr.s_addr ||
+			    from.sin_port != dayaddr.sin_port))
+				continue;
+
+			if (ret < sizeof(sec)) {
+				if (ret < 0)
+					warn("recvfrom(date read)");
+				else
+					warnx("recvfrom(date read): incomplete");
 				return 0;
 			}
 
 			sec = ntohl(sec);
 			if (sec < BU) {
 				warnx("%s says it is before 1970: %lu",
-					hostname, sec);
+					hostname, (unsigned long)sec);
 				return 0;
 			}
 			sec -= BU;
@@ -488,8 +504,8 @@ priv_resources(void)
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = AF_INET;
 
-	if ((bindresvport(sock, &addr)) == -1) {
-		warn("Failed opening reserved port");
+	if ((bind(sock, (struct sockaddr*)&addr, sizeof(addr))) == -1) {
+		warn("bind");
 		(void)close(sock);
 		return -1;
 	}
