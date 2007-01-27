@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.19.20.3 2007/01/12 01:00:54 ad Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.19.20.4 2007/01/27 14:00:51 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -620,7 +620,7 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	/* Check for restartable sequences. */
 	lui	t0, %hi(_C_LABEL(_lock_ras_start))
 	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
-	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
 	bne	t1, t0, 1f
 	jal	_C_LABEL(_lock_ras)
@@ -1133,7 +1133,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	/* Check for restartable sequences. */
 	lui	t0, %hi(_C_LABEL(_lock_ras_start))
 	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
-	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, v0
 	bne	t1, t0, 1f
 	move	k1, v0

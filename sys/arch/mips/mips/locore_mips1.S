@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.60.18.2 2007/01/11 22:22:57 ad Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.60.18.3 2007/01/27 14:00:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -241,14 +241,13 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
-#ifdef notyet
 	lui	t0, %hi(_C_LABEL(_lock_ras_start))
 	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
-	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
 	bne	t1, t0, 1f
+	nop
 	jal	_C_LABEL(_lock_ras)
-#endif
 /*
  * Restore registers and return from the exception.
  */
@@ -541,14 +540,13 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
-#ifdef notyet
 	lui	t0, %hi(_C_LABEL(_lock_ras_start))
 	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
-	addi	t1, zero, -MIPS_LOCK_RAS_SIZE
+	li	t1, -MIPS_LOCK_RAS_SIZE
 	and	t1, t1, k1
 	bne	t1, t0, 1f
+	nop
 	jal	_C_LABEL(_lock_ras)
-#endif
 /*
  * Restore registers and return from the interrupt.
  */
