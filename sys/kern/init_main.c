@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.290 2007/01/27 01:13:10 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.290 2007/01/27 01:13:10 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -262,10 +262,15 @@ main(void)
 	/* Initialize callouts. */
 	callout_startup();
 
-	/* Initialize kauth. */
+	/*
+	 * Initialize the kernel authorization subsystem and start the
+	 * default security model, if any. We need to do this early
+	 * enough so that subsystems relying on any of the aforementioned
+	 * can work properly. Since the security model may dictate the
+	 * credential inheritance policy, it is needed at least before
+	 * any process is created, specifically proc0.
+	 */
 	kauth_init();
-
-	/* Initialize default security model. */
 	secmodel_start();
 
 	/* Initialize the buffer cache */
