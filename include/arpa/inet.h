@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.h,v 1.21 2005/02/03 04:39:32 perry Exp $	*/
+/*	$NetBSD: inet.h,v 1.22 2007/01/27 21:25:23 christos Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1993
@@ -51,9 +51,9 @@
  * --Copyright--
  */
 
-/*
+/*%
  *	@(#)inet.h	8.1 (Berkeley) 6/2/93
- *	Id: inet.h,v 1.1.206.1 2004/03/09 08:33:30 marka Exp
+ *	Id: inet.h,v 1.2.18.1 2005/04/27 05:00:50 sra Exp
  */
 
 #ifndef _ARPA_INET_H_
