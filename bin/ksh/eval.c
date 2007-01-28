@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.7 2006/05/13 21:48:00 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.8 2007/01/28 20:01:02 cbiere Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.7 2006/05/13 21:48:00 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.8 2007/01/28 20:01:02 cbiere Exp $");
 #endif
 
 
@@ -1302,11 +1302,19 @@ homedir(name)
 		return NULL;
 #else /* OS2 */
 		struct passwd *pw;
+		size_t n;
 
 		pw = getpwnam(name);
 		if (pw == NULL)
 			return NULL;
-		ap->val.s = str_save(pw->pw_dir, APERM);
+		n = strlen(pw->pw_dir);
+		if (n > 0 && '/' != pw->pw_dir[n - 1]) {
+			ap->val.s = str_nsave(pw->pw_dir, n + 1, APERM);
+			ap->val.s[n] = '/';
+			ap->val.s[n + 1] = '\0';
+		} else {
+			ap->val.s = str_save(pw->pw_dir, APERM);
+		}
 		ap->flag |= DEFINED|ISSET|ALLOC;
 #endif /* OS2 */
 	}
