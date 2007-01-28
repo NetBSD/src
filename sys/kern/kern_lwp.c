@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.14 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.15 2007/01/28 07:20:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.14 2007/01/27 14:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.15 2007/01/28 07:20:38 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -225,7 +225,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.14 2007/01/27 14:00:02 ad Exp $"
 
 struct lwplist	alllwp;
 
-POOL_INIT(lwp_pool, sizeof(struct lwp), 16, 0, 0, "lwppl",
+POOL_INIT(lwp_pool, sizeof(struct lwp), 32, 0, 0, "lwppl",
     &pool_allocator_nointr);
 POOL_INIT(lwp_uc_pool, sizeof(ucontext_t), 0, 0, 0, "lwpucpl",
     &pool_allocator_nointr);

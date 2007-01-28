@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48.20.1 2007/01/12 01:47:51 ad Exp $
+#	$NetBSD: genassym.cf,v 1.48.20.2 2007/01/28 07:20:39 ad Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@
 #
 #	@(#)genassym.c	8.1 (Berkeley) 6/11/93
 #
+
+#define	__MUTEX_PRIVATE
 
 include <sys/param.h>
 include <sys/buf.h>
@@ -170,6 +172,8 @@ define	CPUINFO_XMSG_ARG1	offsetof(struct cpu_info, msg.u.xpmsg_func.arg1)
 define	CPUINFO_XMSG_ARG2	offsetof(struct cpu_info, msg.u.xpmsg_func.arg2)
 define	CPUINFO_XMSG_CMPLT	offsetof(struct cpu_info, msg.complete)
 define	CPUINFO_IDLESPIN	offsetof(struct cpu_info, idlespin)
+define	CPUINFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CPUINFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 # PTE bits and related information
 define	PG_W		PG_W
@@ -268,3 +272,4 @@ define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
 define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
 
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
+define	MTX_IPL		offsetof(struct kmutex, u.s.mtxs_ipl)

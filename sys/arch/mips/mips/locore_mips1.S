@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.60.18.3 2007/01/27 14:00:51 ad Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.60.18.4 2007/01/28 07:20:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -238,6 +238,15 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	jal	_C_LABEL(trap)
 	sw	a3,	KERNFRAME_RA(sp)	# for debugging
 /*
+ * Restore registers and return from the exception.
+ */
+	lw	a0, TF_BASE+TF_REG_SR(sp)
+	lw	t0, TF_BASE+TF_REG_MULLO(sp)
+	lw	t1, TF_BASE+TF_REG_MULHI(sp)
+	mtc0	a0, MIPS_COP_0_STATUS
+	mtlo	t0
+	mthi	t1
+/*
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
@@ -248,15 +257,7 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	bne	t1, t0, 1f
 	nop
 	jal	_C_LABEL(_lock_ras)
-/*
- * Restore registers and return from the exception.
- */
-1:	lw	a0, TF_BASE+TF_REG_SR(sp)
-	lw	t0, TF_BASE+TF_REG_MULLO(sp)
-	lw	t1, TF_BASE+TF_REG_MULHI(sp)
-	mtc0	a0, MIPS_COP_0_STATUS
-	mtlo	t0
-	mthi	t1
+1:
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)
@@ -537,6 +538,15 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	jal	_C_LABEL(cpu_intr)
 	nop
 /*
+ * Restore registers and return from the interrupt.
+ */
+	lw	a0, TF_BASE+TF_REG_SR(sp)
+	lw	t0, TF_BASE+TF_REG_MULLO(sp)
+	lw	t1, TF_BASE+TF_REG_MULHI(sp)
+	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
+	mtlo	t0
+	mthi	t1
+/*
  * Check for kernel restartable atomic sequences.
  */
 	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
@@ -547,15 +557,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	bne	t1, t0, 1f
 	nop
 	jal	_C_LABEL(_lock_ras)
-/*
- * Restore registers and return from the interrupt.
- */
-1:	lw	a0, TF_BASE+TF_REG_SR(sp)
-	lw	t0, TF_BASE+TF_REG_MULLO(sp)
-	lw	t1, TF_BASE+TF_REG_MULHI(sp)
-	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
-	mtlo	t0
-	mthi	t1
+1:
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)

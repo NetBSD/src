@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.95 2006/06/07 22:38:49 kardel Exp $ */
+/*	$NetBSD: intr.c,v 1.95.6.1 2007/01/28 07:20:39 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.95 2006/06/07 22:38:49 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.95.6.1 2007/01/28 07:20:39 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -802,13 +802,13 @@ void
 intr_lock_kernel(void)
 {
 
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 }
 
 void
 intr_unlock_kernel(void)
 {
 
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif
