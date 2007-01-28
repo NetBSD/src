@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.162.2.1 2007/01/12 01:00:53 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.162.2.2 2007/01/28 07:20:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,7 +152,7 @@ _C_LABEL(verylocore):
  */
 LEAF(mips_idle)
 	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
-#if defined(LOCKDEBUG)
+#if defined(LOCKDEBUG) || defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
 #endif
@@ -193,7 +193,7 @@ LEAF(mips_idle)
 	nop
 	nop
 	nop
-#if defined(LOCKDEBUG)
+#if defined(LOCKDEBUG) || defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
 	nop
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
@@ -288,7 +288,7 @@ cpu_switch_queuescan:
 3:
 	/* Squirrel away lwp pointer into s7 */
 	move	s7, a0
-#if defined(LOCKDEBUG)
+#if defined(LOCKDEBUG) || defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
@@ -551,7 +551,7 @@ LEAF(switch_exit)
 	REG_EPILOGUE
 	jal	ra, a1				# lwp already in a0
 	nop
-#if defined(LOCKDEBUG)
+#if defined(LOCKDEBUG) || defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
 #endif

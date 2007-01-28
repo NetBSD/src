@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.36.1 2007/01/12 01:47:51 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.2 2007/01/28 07:20:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ _ENTRY(_C_LABEL(mutex_enter))
 	 * mutex code will spin or sleep while the mutex is
 	 * owned "anonymously".
 	 */
-	sra	%o3, 4, %o1			! curlwp >> 4
+	sra	%o3, 5, %o1			! curlwp >> 5
 	sethi	%hi(0xff000000), %o2		! finish constructing
 	or	%o1, %o2, %o1			!   lock word
 	retl
@@ -108,7 +108,7 @@ _ENTRY(_C_LABEL(mutex_exit))
 #ifdef DIAGNOSTIC
 	sethi	%hi(curlwp), %o3
 	ld	[%o3 + %lo(curlwp)], %o3	! current thread
-	sra	%o3, 4, %o1			! curlwp >> 4
+	sra	%o3, 5, %o1			! curlwp >> 5
 	sethi	%hi(0xff000000), %o2		! finish constructing
 	or	%o1, %o2, %o1			!   lock word
 	ld	[%o0], %o2			! get lock word
@@ -124,47 +124,119 @@ _ENTRY(_C_LABEL(mutex_exit))
 	retl
 	 nop
 
+/*
+ * void mutex_spin_enter(kmutex_t *);
+ */
+_ENTRY(_C_LABEL(mutex_spin_enter))
+	sethi	%hi(CPUINFO_VA), %g1
+	ld	[ %g1 + CPUINFO_SELF ], %g4
+	ld	[ %g4 + CPUINFO_MTX_COUNT ], %o5
+	add	%o5, -1, %g1
+	st	%g1, [ %g4 + CPUINFO_MTX_COUNT ]
+	ldub	[ %o0 + MTX_IPL ], %g2
+	rd	%psr, %g1
+	sll	%g2, 8, %g2
+	and	%g1, PSR_PIL, %g3
+	cmp	%g3, %g2
+	bge	1f
+	 tst	%o5
+	andn	%g1, %g3, %g1
+	or	%g2, %g1, %g1
+	mov	%g1, %psr
+	nop
+	nop
+	nop
+	tst	%o5
+1:
+	bnz,a	2f
+	 st	%g3, [ %g4 + CPUINFO_MTX_OLDSPL ]
+2:
+#if defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
+	ldstub  [ %o0 + MTX_LOCK ], %g2
+	tst	%g2
+	bnz	_C_LABEL(mutex_spin_retry)
+	 nop
+#endif
+	retl
+	 nop
+
+/*
+ * void mutex_spin_exit(kmutex_t *);
+ */
+_ENTRY(_C_LABEL(mutex_spin_exit))
+#if defined(DIAGNOSTIC)
+	ldub	[ %i0 + MTX_LOCK ], %g1
+	cmp	%g1, __SIMPLELOCK_LOCKED
+	bne,a	_C_LABEL(mutex_vector_exit)
+	 clrb	[ %i0 + MTX_LOCK ]
+#elif defined(MULTIPROCESSOR)
+	clrb	[ %i0 + MTX_LOCK ]
+#endif
+	sethi	 %hi(CPUINFO_VA), %g1
+	ld	[ %g1 + CPUINFO_SELF ], %g2
+	ld	[ %g2 + CPUINFO_MTX_OLDSPL ], %g3
+	ld	[ %g2 + CPUINFO_MTX_COUNT ], %g1
+	inc	%g1
+	cmp	%g1, 0
+	bne	1f
+	 st	%g1, [ %g2 + CPUINFO_MTX_COUNT ]
+	rd	%psr, %g1
+	and	%g1, ~PSR_PIL, %g1
+	wr	%g1, %g3, %psr
+	nop
+	nop
+	nop
+1:
+	retl
+	 nop
+
 #endif	/* LOCKDEBUG */
 
 /*
- * INTERLOCK_ACQUIRE expects the lock address to be in %o0.  %o0,
- * %o1, and %o2 are left alone.  %o5 and %o7 must be preserved by
- * the caller, as INTERLOCK_RELEASE will use them.
+ * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
+ *
+ * Compare-and-set operation for RW locks.
+ *
+ * XXX On single CPU systems, this should use a restartable sequence:
+ * XXX there we don't need the overhead of interlocking.
  */
-#define	INTERLOCK_ACQUIRE						\
-	/* disable interrupts */				;	\
-	rd	%psr, %o7					;	\
-	or	%o7, PSR_PIL, %o5				;	\
-	wr	%o5, 0, %psr					;	\
-	srl	%o0, 3, %o5					;	\
-	and	%o5, 1023, %o5					;	\
-	set	_C_LABEL(_lock_hash), %o3			;	\
-	add	%o5, %o3, %o5					;	\
-	/* %o5 == interlock address */					\
-11:	ldstub	[%o5], %o3					;	\
-	tst	%o3						;	\
-	bz	22f						;	\
-	 nop							;	\
-	nop							;	\
-	nop							;	\
-	b,a	11b						;	\
-	 nop							;	\
-22:
-
-#define	INTERLOCK_RELEASE						\
-	stb	%g0, [%o5]					;	\
-	/* enable interrupts */					;	\
-	wr	%o7, 0, %psr
-
 _ENTRY(_C_LABEL(_lock_cas))
-	INTERLOCK_ACQUIRE
-	ld	[%o0], %o4			! lock value
-	cmp	%o1, %o4			! same as expected value?
-	be,a	1f				! yes, store new value
+	rd	%psr, %o4			! disable interrupts
+	or	%o4, PSR_PIL, %o5
+	wr	%o5, 0, %psr
+	nop
+	nop
+	nop
+	srl	%o0, 3, %o5
+	and	%o5, 1023, %o5
+	set	_C_LABEL(_lock_hash), %o3
+	add	%o5, %o3, %o5
+1:
+	ldstub	[%o5], %o3			! %o5 == interlock address
+	tst	%o3
+	bz,a	2f
+	 nop
+	nop
+	nop
+	b,a	1b				! spin
+	 nop
+2:
+	ld	[%o0], %o3			! lock value
+	cmp	%o1, %o3			! same as expected value?
+	be,a	3f				! yes, store new value
 	 st	%o2, [%o0]
-	INTERLOCK_RELEASE
+	stb	%g0, [%o5]
+	wr	%o4, 0, %psr			! enable interrupts
+	nop
+	nop
+	nop
 	retl
 	 mov	%g0, %o0			! nope
-1:	INTERLOCK_RELEASE
+3:
+	stb	%g0, [%o5]
+	wr	%o4, 0, %psr			! enable interrupts
+	nop
+	nop
+	nop
 	retl
 	 or	%g0, 1, %o0

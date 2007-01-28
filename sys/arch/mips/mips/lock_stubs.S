@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2007/01/27 14:00:51 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.3 2007/01/28 07:20:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -175,6 +175,12 @@ END(mutex_exit)
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
 LEAF(mutex_spin_enter)
+	lui	t2, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	li	t7, -1
+	addu	t6, t6, t7
+	sw	t6, CPU_INFO_MTX_COUNT(t2)
 	lw	t1, MTX_IPL(a0)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
@@ -183,14 +189,8 @@ LEAF(mutex_spin_enter)
 	DYNAMIC_STATUS_MASK(t1,t0)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	lui	t2, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
-	lw	t0, CPU_INFO_MTX_COUNT(t2)
-	li	t1, -1
-	addu	t0, t0, t1
-	bne	t0, t1, 1f
-	 sw	t0, CPU_INFO_MTX_COUNT(t2)
+	bne	t6, t7, 1f
+	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
 1:
 #if defined(FULL)
@@ -260,9 +260,11 @@ STRONG_ALIAS(_lock_cas4, _lock_cas)
  */
 	.text
 	.align	7
-	.space	12
 
 EXPORT(_lock_ras_start)
+
+	.space	12
+
 LEAF_NOPROFILE(_lock_cas)
 	LDPTR	t0, (a0)	/* <- critical section start */
 _lock_cas_start:
@@ -322,6 +324,12 @@ END(mutex_exit)
  * void	mutex_spin_enter(kmutex_t *mtx);
  */
 LEAF(mutex_spin_enter)
+	lui	t2, %hi(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))	/* XXXSMP */
+	lw	t6, CPU_INFO_MTX_COUNT(t2)
+	li	t7, -1
+	addu	t6, t6, t7
+	sw	t6, CPU_INFO_MTX_COUNT(t2)
 	lw	t1, MTX_IPL(a0)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	t1, t1, MIPS_INT_MASK
@@ -330,14 +338,8 @@ LEAF(mutex_spin_enter)
 	DYNAMIC_STATUS_MASK(t1,t0)
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
-	and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
-	lui	t2, %hi(_C_LABEL(cpu_info_store))
-	ori	t2, t2, %lo(_C_LABEL(cpu_info_store))
-	lw	t0, CPU_INFO_MTX_COUNT(t2)
-	li	t1, -1
-	addu	t0, t0, t1
-	bne	t0, t1, 1f
-	 sw	t0, CPU_INFO_MTX_COUNT(t2)
+	bne	t6, t7, 1f
+	 and	v0, v0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	sw	v0, CPU_INFO_MTX_OLDSPL(t2)
 1:
 #if defined(DIAGNOSTIC)
@@ -384,24 +386,19 @@ END(mutex_spin_enter)
 LEAF_NOPROFILE(_lock_ras)
 	li	t1, -16
 	and	t2, k1, t1
-
-#ifndef LOCKDEBUG
-	lui	t0, %hi(_mutex_enter_start)
-	ori	t0, t0, %lo(_mutex_enter_start)
-	beq	t2, t0, 1f
-	 lui	t0, %hi(_mutex_exit_start)
-	ori	t0, t0, %lo(_mutex_exit_start)
-	beq	t2, t0, 1f
-#endif	/* !LOCKDEBUG */
-
-	 lui	t0, %hi(_lock_cas_start)
+	lui	t0, %hi(_lock_cas_start)
 	ori	t0, t0, %lo(_lock_cas_start)
 	beq	t2, t0, 1f
+#ifndef LOCKDEBUG
+	 addiu	t0, _mutex_enter_start - _lock_cas_start
+	beq	t2, t0, 1f
+	 addiu	t0, _mutex_exit_start - _mutex_enter_start
+	beq	t2, t0, 1f
+#endif	/* !LOCKDEBUG */
 	 nop
 	j	ra
-	 nop
 1:
-	li	t1, -4
+	 li	t1, -4
 	j	ra
 	 addu	k1, t0, t1
 END(_lock_ras)
@@ -431,10 +428,10 @@ LEAF(mutex_spin_exit)
 	ori	t1, t1, %lo(_C_LABEL(cpu_info_store))
 #endif
 	lw	t0, CPU_INFO_MTX_COUNT(t1)
-	lw	a0, CPU_INFO_MTX_OLDSPL(t1)
 	addiu	t0, t0, 1
+	sw	t0, CPU_INFO_MTX_COUNT(t1)
 	bne	t0, zero, 1f
-	 sw	t0, CPU_INFO_MTX_COUNT(t1)
+	 lw	a0, CPU_INFO_MTX_OLDSPL(t1)
 	mfc0	v0, MIPS_COP_0_STATUS
 	and	a0, a0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	li	v1, ~(MIPS_INT_MASK | MIPS_SR_INT_IE)

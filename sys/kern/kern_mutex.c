@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.13 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.14 2007/01/28 07:20:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.13 2007/01/27 14:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.14 2007/01/28 07:20:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,9 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.13 2007/01/27 14:00:02 ad Exp 
     LOCKDEBUG_UNLOCKED(MUTEX_GETID(mtx),			\
         (uintptr_t)__builtin_return_address(0), 0)
 #define	MUTEX_ABORT(mtx, msg)					\
-    LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, (MUTEX_SPIN_P(mtx) ?	\
-        &mutex_spin_lockops : &mutex_adaptive_lockops),	\
-        __FUNCTION__, msg)
+    mutex_abort(mtx, __FUNCTION__, msg)
 
 #if defined(LOCKDEBUG)
 
@@ -119,10 +117,13 @@ do {								\
  * Spin mutex SPL save / restore.
  */
 
-#define	MUTEX_SPIN_SPLSAVE(mtx, s)					\
+#define	MUTEX_SPIN_SPLRAISE(mtx)					\
 do {									\
 	struct cpu_info *x__ci = curcpu();				\
-	if ((x__ci->ci_mtx_count)-- == 0)				\
+	int x__cnt, s;							\
+	x__cnt = x__ci->ci_mtx_count--;					\
+	s = splraiseipl(mtx->mtx_ipl);					\
+	if (x__cnt == 0)						\
 		x__ci->ci_mtx_oldspl = (s);				\
 } while (/* CONSTCOND */ 0)
 
@@ -220,6 +221,7 @@ __strong_alias(mutex_spin_enter, mutex_vector_enter);
 __strong_alias(mutex_spin_exit, mutex_vector_exit);
 #endif
 
+void	mutex_abort(kmutex_t *, const char *, const char *);
 void	mutex_dump(volatile void *);
 int	mutex_onproc(uintptr_t, struct cpu_info **);
 
@@ -248,6 +250,21 @@ mutex_dump(volatile void *cookie)
 	printf_nolog("owner field  : %#018lx wait/spin: %16d/%d\n",
 	    (long)MUTEX_OWNER(mtx->mtx_owner), MUTEX_HAS_WAITERS(mtx),
 	    MUTEX_SPIN_P(mtx));
+}
+
+/*
+ * mutex_abort:
+ *
+ *	Dump information about an error and panic the system.
+ */
+__attribute ((noinline)) __attribute ((noreturn)) void
+mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
+{
+
+	LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, (MUTEX_SPIN_P(mtx) ?
+	    &mutex_spin_lockops : &mutex_adaptive_lockops),
+	    __FUNCTION__, msg);
+	/* NOTREACHED */
 }
 
 /*
@@ -376,12 +393,9 @@ mutex_vector_enter(kmutex_t *mtx)
 #if defined(LOCKDEBUG) && defined(MULTIPROCESSOR)
 		u_int spins = 0;
 #endif
-		int s;
-
-		s = splraiseipl(mtx->mtx_ipl);
+		MUTEX_SPIN_SPLRAISE(mtx);
 #ifdef FULL
 		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
-			MUTEX_SPIN_SPLSAVE(mtx, s);
 			MUTEX_LOCKED(mtx);
 			return;
 		}
@@ -414,7 +428,6 @@ mutex_vector_enter(kmutex_t *mtx)
 		}
 #endif	/* !MULTIPROCESSOR */
 #endif	/* FULL */
-		MUTEX_SPIN_SPLSAVE(mtx, s);
 		MUTEX_LOCKED(mtx);
 		return;
 	}
@@ -701,22 +714,19 @@ int
 mutex_tryenter(kmutex_t *mtx)
 {
 	uintptr_t curthread;
-	int s;
 
 	/*
 	 * Handle spin mutexes.
 	 */
 	if (MUTEX_SPIN_P(mtx)) {
-		s = splraiseipl(mtx->mtx_ipl);
+		MUTEX_SPIN_SPLRAISE(mtx);
 #ifdef FULL
 		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
-			MUTEX_SPIN_SPLSAVE(mtx, s);
 			MUTEX_LOCKED(mtx);
 			return 1;
 		}
-		splx(s);
+		MUTEX_SPIN_SPLRESTORE(mtx);
 #else
-		MUTEX_SPIN_SPLSAVE(mtx, s);
 		MUTEX_LOCKED(mtx);
 		return 1;
 #endif
@@ -774,7 +784,7 @@ mutex_spin_retry(kmutex_t *mtx)
 	LOCKSTAT_EVENT(mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
 	MUTEX_LOCKED(mtx);
 #else	/* MULTIPROCESSOR */
-	MUTEX_ABORT(mtx, "mutex_spin_retry");
+	MUTEX_ABORT(mtx, "locking against myself");
 #endif	/* MULTIPROCESSOR */
 }
 #endif	/* defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL) */
@@ -790,7 +800,7 @@ sched_lock_idle(void)
 {
 	kmutex_t *mtx = &sched_mutex;
 
-	MUTEX_SPIN_SPLSAVE(mtx, 0);
+	curcpu()->ci_mtx_count--;
 
 	if (!__cpu_simple_lock_try(&mtx->mtx_lock)) {
 		mutex_spin_retry(mtx);

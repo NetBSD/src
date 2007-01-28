@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.2 2007/01/17 20:26:36 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.3 2007/01/28 07:20:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -47,10 +47,10 @@
  * interlock.
  *
  * The locked byte set by the sparc 'ldstub' instruction is 0xff.  sparc
- * kernels are always loaded above 0xf0000000, and the low 4 bits of any
+ * kernels are always loaded above 0xe0000000, and the low 5 bits of any
  * "struct lwp *" are always zero.  So, to record the lock owner, we only
- * need 24 bits of space.  mtxa_owner contains the mutex owner's address
- * shifted right by 4: the top four bits of which will always be 0xf,
+ * need 23 bits of space.  mtxa_owner contains the mutex owner's address
+ * shifted right by 5: the top three bits of which will always be 0xe,
  * overlapping with the interlock at the top byte, which is always 0xff
  * when the mutex is held.
  *
@@ -100,6 +100,7 @@ struct kmutex {
 #ifdef __MUTEX_PRIVATE
 
 #define	__HAVE_MUTEX_STUBS	1
+#define	__HAVE_SPIN_MUTEX_STUBS	1
 
 #define	mtx_owner	u.mtxu_owner
 #define	mtx_interlock	u.mtxu_interlock
@@ -111,7 +112,7 @@ static uintptr_t	MUTEX_OWNER(uintptr_t) __attribute((unused));
 static uintptr_t
 MUTEX_OWNER(uintptr_t owner)
 {
-	return owner << 4;
+	return owner << 5;
 }
 
 static inline int
@@ -183,7 +184,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 {
 	if (!__cpu_simple_lock_try(&mtx->mtx_interlock))
 		return 0;
-	mtx->mtx_owner = (curthread >> 4) | 0xf0000000;
+	mtx->mtx_owner = (curthread >> 5) | 0xf8000000;
 	return 1;
 }
 

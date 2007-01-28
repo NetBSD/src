@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.15 2007/01/28 01:34:18 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.16 2007/01/28 07:20:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.15 2007/01/28 01:34:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.16 2007/01/28 07:20:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -508,12 +508,14 @@ kpause(const char *wmesg, boolean_t intr, int timo, kmutex_t *mtx)
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(NULL, 0);
 
-	mutex_exit(mtx);
+	if (mtx != NULL)
+		mutex_exit(mtx);
 	sq = sleeptab_lookup(&sleeptab, l);
 	sleepq_enter(sq, l);
 	sleepq_block(sq, sched_kpri(l), l, wmesg, timo, intr, &sleep_syncobj);
 	error = sleepq_unblock(timo, intr);
-	mutex_enter(mtx);
+	if (mtx != NULL)
+		mutex_enter(mtx);
 
 	return error;
 }
