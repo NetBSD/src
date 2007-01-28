@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.19 2007/01/19 21:43:28 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.20 2007/01/28 19:39:40 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -145,4 +145,9 @@ usr.sbin/etcupdate/etcupdate.8			1.11 - 1.12
 
 sync etcupdate with HEAD. Fix install/30385 and bin/32343.
 [martti, ticket #1630]
+
+sys/netinet/ip_output.c				1.173
+
+	Avoid problems if PF's fragment reassemble feature is used.
+	[yamt, ticket #1656]
 
