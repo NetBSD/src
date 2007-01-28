@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67 2006/08/31 16:49:21 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.67.2.1 2007/01/28 08:59:46 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2006/08/31 16:49:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67.2.1 2007/01/28 08:59:46 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -215,6 +215,13 @@ cpu_lwp_free(struct lwp *l, int proc)
 		save_vec_lwp(l, ALTIVEC_DISCARD);
 #endif
 
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	(void)l;
 }
 
 /*

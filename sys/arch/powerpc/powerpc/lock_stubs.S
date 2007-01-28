@@ -1,11 +1,11 @@
-/*	$NetBSD: linux_trap.c,v 1.7.20.1 2007/01/28 08:59:45 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.1 2007/01/28 08:59:45 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,12 +17,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
+ *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,22 +36,74 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.7.20.1 2007/01/28 08:59:45 ad Exp $");
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/kernel.h>
-#include <sys/signal.h>
-#include <sys/syscall.h>
+#include <machine/asm.h>
 
-#include <compat/linux/common/linux_exec.h>
+#include "assym.h"
 
-void
-linux_trapsignal(struct lwp *l, struct ksiginfo *ksi)
-{
-	trapsignal(l, ksi);
-}
+#if defined(MULTIPROCESSOR)
+#define	ISYNC	isync
+#define	SYNC	sync
+#else
+#define	ISYNC	/* nothing */
+#define	SYNC	/* nothing */
+#endif
+
+	.text
+
+/*
+ * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
+ */
+ENTRY_NOPROFILE(_lock_cas)
+1:
+	lwarx	r10,0,r3
+	cmpw	r10,r4
+	bne-	2f
+	stwcx.	r5,0,r3
+	bne-	1b
+	SYNC
+	li	r3,1
+	blr
+2:
+	SYNC
+	li	r3,0
+	blr
+
+#if !defined(LOCKDEBUG)
+/*
+ * void mutex_enter(kmutex_t *);
+ */
+ENTRY_NOPROFILE(mutex_enter)
+	GET_CPUINFO(r8)
+	ldptr	r9,CI_CURLWP(r8)
+1:
+	lwarx	r10,0,r3
+	cmpwi	r10,0
+	bne-	2f
+	stwcx.	r9,0,r3
+	bne-	1b
+	ISYNC
+	blr
+2:
+	b	_C_LABEL(mutex_vector_enter)
+
+/*
+ * void mutex_exit(kmutex_t *);
+ */
+ENTRY_NOPROFILE(mutex_exit)
+	GET_CPUINFO(r8)
+	ldptr	r9,CI_CURLWP(r8)
+	SYNC
+	li	r7,0
+1:
+	lwarx	r10,0,r3
+	cmpw	r10,r9
+	bne-	2f
+	stwcx.	r7,0,r3
+	bne-	1b
+	blr
+2:
+	b	_C_LABEL(mutex_vector_exit)
+#endif	/* !LOCKDEBUG */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.62 2006/08/05 21:26:48 sanjayl Exp $
+#	$NetBSD: files.powerpc,v 1.62.4.1 2007/01/28 08:59:45 ad Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -13,6 +13,7 @@ file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c			inet | inet6
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
+file	arch/powerpc/powerpc/lock_stubs.S
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
 file	arch/powerpc/powerpc/pmap_subr.c		ppc_oea | ppc_oea64 | ppc_oea64_bridge

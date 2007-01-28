@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.29 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.29.4.1 2007/01/28 08:59:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -160,7 +160,7 @@ ASENTRY(Idle)
 	or.	%r9,%r9,%r9
 	bne+	.Lsw1			/* at least one queue non-empty */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
@@ -203,7 +203,7 @@ ASENTRY(Idle)
 	mr	%r3,%r31		/* get back IPL mask */
 	bl	_C_LABEL(lcsplx)	/* raise spl back to IPL_SCHED */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 	b	_ASM_LABEL(Idle)
@@ -230,7 +230,7 @@ ENTRY(switch_exit)
 	mtctr	%r4
 	bctrl
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
 
@@ -435,7 +435,7 @@ switch_return:
 1:
 #endif
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	bl	_C_LABEL(sched_unlock_idle)
 #endif
 
