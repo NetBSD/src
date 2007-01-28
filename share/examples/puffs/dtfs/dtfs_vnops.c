@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.12 2007/01/06 18:25:19 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.13 2007/01/28 10:47:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -99,7 +99,7 @@ dtfs_node_setattr(struct puffs_cc *pcc, void *opc,
 	if (va->va_size != PUFFS_VNOVAL) {
 		switch (pn->pn_va.va_type) {
 		case VREG:
-			dtfs_setsize(pn, va->va_size, 0);
+			dtfs_setsize(pn, va->va_size, 1);
 			pn->pn_va.va_bytes = va->va_size;
 			break;
 		case VBLK:
@@ -377,7 +377,7 @@ dtfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (ioflag & PUFFS_IO_APPEND)
 		offset = pn->pn_va.va_size;
 
-	dtfs_setsize(pn, *resid + offset, 1);
+	dtfs_setsize(pn, *resid + offset, 0);
 	memcpy(df->df_data + offset, buf, *resid);
 	*resid = 0;
 
