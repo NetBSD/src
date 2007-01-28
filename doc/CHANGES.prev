@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.55 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.56 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8570,3 +8570,11 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[christos 20061201]
 	re(4): Fix hardware VLAN tagging support. [tsutsui 20061216]
 	nfe(4): Enable hardware checksum support. [tsutsui 20070109]
+	i386, amd64: remove option COMPAT_386BSD_MBRPART from default
+		kernels.  NetBSD has not used partition ID 0x165 for many,
+		many years, and the presence of this option in INSTALL
+		kernels can cause overwriting of existing FreeBSD
+		installations when sysinst writes back the disklabel.
+		Those with very, very old NetBSD installations may find
+		that they must update their fdisk partition tables to use
+		partition ID 0x169 for their NetBSD partitions. [tls 20070124]
