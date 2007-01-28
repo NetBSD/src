@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.58.2.1 2006/12/29 18:50:40 riz Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.58.2.2 2007/01/28 19:59:03 tron Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.58.2.1 2006/12/29 18:50:40 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.58.2.2 2007/01/28 19:59:03 tron Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2337,14 +2337,11 @@ fail1:
 static void
 iwi_free_firmware(struct iwi_softc *sc)
 {
-	struct iwi_firmware *kfw = &sc->fw;
 
 	if (!(sc->flags & IWI_FLAG_FW_CACHED))
 		return;
 
-	firmware_free(kfw->main, 0);
-	firmware_free(kfw->ucode, 0);
-	firmware_free(kfw->boot, 0);
+	firmware_free(sc->sc_blob, 0);
 
 	sc->flags &= ~IWI_FLAG_FW_CACHED;
 }
