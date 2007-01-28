@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.3 2007/01/28 07:20:39 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.4 2007/01/28 08:57:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ LEAF(_lock_cas)
 	 addu	v0, zero, zero
 END(_lock_cas)
 
-#ifndef MIPS64
+#ifdef MIPS64
 /*
  * int _lock_cas4(uint32_t *val, uint32_t old, uint32_t new);
  */
