@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.27 2007/01/22 13:52:55 tron Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.28 2007/01/28 19:39:10 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -178,4 +178,9 @@ sys/arch/xen/include/xen3-public/io/ring.h	1.6
 
 	Avoid block I/O stalls in Xen 3 guests on SMP systems.
 	[bouyer, ticket #1652]
+
+sys/netinet/ip_output.c				1.173
+
+	Avoid problems if PF's fragment reassemble feature is used.
+	[yamt, ticket #1656]
 
