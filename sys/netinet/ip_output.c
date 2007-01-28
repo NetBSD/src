@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.149.2.3 2005/10/21 18:55:52 riz Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.149.2.4 2007/01/28 19:37:20 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.149.2.3 2005/10/21 18:55:52 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.149.2.4 2007/01/28 19:37:20 tron Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -786,6 +786,7 @@ spd_done:
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
+	ip_len = ntohs(ip->ip_len);
 #endif /* PFIL_HOOKS */
 
 	m->m_pkthdr.csum_data |= hlen << 16;
