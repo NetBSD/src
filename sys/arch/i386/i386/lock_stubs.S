@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.12 2007/01/27 14:00:01 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.13 2007/01/28 12:12:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -194,6 +194,8 @@ STUB(rw_exit, rw_vector_exit)			/* 0x0080, 61 bytes */
 	 */
 3:	jmp	_C_LABEL(rw_vector_exit)
 
+#ifndef __XEN__
+
 /*
  * void mutex_spin_enter(kmutex_t *mtx);
  *
@@ -301,7 +303,18 @@ LABEL(i686_mutex_spin_exit_patch)
 	ALIGN64
 LABEL(i686_mutex_spin_exit_end)
 
-#endif
+#endif	/* !defined(I386_CPU) && defined(I686_CPU) && !defined(DIAGNOSTIC) */
+
+#else	/* !__XEN__ */
+
+/* For now; strong alias not working for some reason. */
+NENTRY(mutex_spin_enter)
+	jmp	_C_LABEL(mutex_vector_enter)
+
+NENTRY(mutex_spin_exit)
+	jmp	_C_LABEL(mutex_vector_exit)
+
+#endif	/* !__XEN__ */
 
 #endif	/* !LOCKDEBUG */
 
