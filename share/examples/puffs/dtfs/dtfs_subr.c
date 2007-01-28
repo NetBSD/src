@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.9 2006/12/29 15:37:06 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.10 2007/01/28 10:47:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -222,32 +222,46 @@ dtfs_freenode(struct puffs_node *pn)
 }
 
 void
-dtfs_setsize(struct puffs_node *pn, off_t newsize, int extend)
+dtfs_setsize(struct puffs_node *pn, off_t newsize, int lazyextend)
 {
 	struct dtfs_file *df = DTFS_PTOF(pn);
 	struct dtfs_mount *dtm;
-	int more; /* too tired to think about signed/unsigned promotions */
+	size_t allocsize;
+	int needalloc, shrinks;
 
-	more = newsize > pn->pn_va.va_size;
-	if (extend && !more)
-		return;
+	needalloc = newsize > df->df_datalen;
+	shrinks = newsize < pn->pn_va.va_size;
 
-	df->df_data = erealloc(df->df_data, newsize);
-	/* if extended, set storage to zero to match correct behaviour */ 
-	if (more)
-		memset(df->df_data+df->df_datalen, 0, newsize-df->df_datalen);
-	df->df_datalen = newsize;
+	/*
+	 * quickhack: realloc in 1MB chunks if we're over 1MB in size
+	 */
+	if (pn->pn_va.va_size > 1024*1024 && !shrinks) {
+		allocsize = newsize + 1024*1024;
+	} else {
+		allocsize = newsize;
+	}
+
+	if ((needalloc && !lazyextend) || shrinks) {
+		df->df_data = erealloc(df->df_data, allocsize);
+		/*
+		 * if extended, set storage to zero
+		 * to match correct behaviour
+		 */ 
+		if (!shrinks)
+			memset(df->df_data+df->df_datalen, 0,
+			    allocsize-df->df_datalen);
+		df->df_datalen = allocsize;
+	}
 
 	dtm = pn->pn_mnt->pu_privdata;
-	if (more) {
+	if (!shrinks) {
 		dtm->dtm_fsizes += newsize - pn->pn_va.va_size;
 	} else {
-		assert(dtm->dtm_fsizes >= pn->pn_va.va_size - newsize);
 		dtm->dtm_fsizes -= pn->pn_va.va_size - newsize;
 	}
 
 	pn->pn_va.va_size = newsize;
-	pn->pn_va.va_bytes = newsize;
+	pn->pn_va.va_bytes = df->df_datalen;
 }
 
 /* add & bump link count */
