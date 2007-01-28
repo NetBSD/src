@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.54 2007/01/24 21:56:13 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.55 2007/01/28 20:08:07 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -980,4 +980,45 @@ sys/dev/usb/usbdevs_data.h			regen
 
 	Add support for newer Wacom Graphire USB tablets.
 	[ghen, ticket #384]
+
+distrib/sets/lists/base/mi			1.682
+doc/3RDPARTY					1.500
+share/zoneinfo/africa				1.1.1.22 via patch
+share/zoneinfo/australasia			1.13
+share/zoneinfo/backward				1.1.1.18 via patch
+share/zoneinfo/europe				1.1.1.35 via patch
+share/zoneinfo/iso3166.tab			1.1.1.16 via patch
+share/zoneinfo/northamerica			1.1.1.38 via patch
+share/zoneinfo/southamerica			1.1.1.36 via patch
+share/zoneinfo/zone.tab				1.1.1.28 via patch
+
+	Update to tzdata2007a.
+	[kleink, ticket #381]
+
+sys/kern/init_sysctl.c				1.94
+
+	Don't rely on KAUTH_PROCESS_CANSEE for environment just yet.
+	[elad, ticket #383]
+
+sys/dev/pci/if_iwi.c				1.60
+
+	Fix panic in kernels compiled with the DIAGNOSTIC option.
+	[skrll, ticket #385]
+
+doc/CHANGES					1.783 via patch
+sys/arch/amd64/conf/GENERIC			1.125
+sys/arch/i386/conf/GENERIC			1.806
+sys/arch/i386/conf/GENERIC_LAPTOP		1.220
+sys/arch/i386/conf/GENERIC_TINY			1.103
+sys/arch/i386/conf/INSTALL			1.303
+sys/arch/i386/conf/INSTALL_LAPTOP		1.114
+sys/arch/i386/conf/INSTALL_SMALL		1.132
+sys/arch/i386/conf/INSTALL_TINY			1.109
+sys/arch/i386/conf/INSTALL_XEN2_DOMU		1.11
+
+	Remove option COMPAT_386BSD_MBRPART from default kernels.  NetBSD has
+	not used partition ID 0x165 for many, many years, and the presence of
+	this option in INSTALL kernels can cause overwriting of existing
+	FreeBSD installations when sysinst writes back the disklabel.
+	[tls, ticket #386]
 
