@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.3 2007/01/27 22:26:43 christos Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.4 2007/01/28 01:43:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ev_timers.c,v 1.5.18.1 2005/04/27 05:01:06 sra Exp";
 #else
-__RCSID("$NetBSD: ev_timers.c,v 1.3 2007/01/27 22:26:43 christos Exp $");
+__RCSID("$NetBSD: ev_timers.c,v 1.4 2007/01/28 01:43:52 christos Exp $");
 #endif
 #endif
 
@@ -123,8 +123,10 @@ evNowTime() {
 	int m = CLOCK_REALTIME;
 
 #ifdef CLOCK_MONOTONIC
+#ifndef _LIBC
 	if (__evOptMonoTime)
 		m = CLOCK_MONOTONIC;
+#endif
 #endif
 	if (clock_gettime(m, &tsnow) == 0)
 		return (tsnow);
