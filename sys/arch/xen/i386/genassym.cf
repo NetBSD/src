@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8.6.3 2007/01/18 12:16:01 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.8.6.4 2007/01/28 12:12:50 ad Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -253,6 +253,7 @@ define	IH_LEVEL		offsetof(struct intrhand, ih_level)
 define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define	CPU_INFO_SELF150	offsetof(struct cpu_info, ci_self150)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)

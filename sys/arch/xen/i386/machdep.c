@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.6.2 2007/01/11 22:22:58 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.6.3 2007/01/28 12:12:50 ad Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.6.2 2007/01/11 22:22:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.6.3 2007/01/28 12:12:50 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2335,6 +2335,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct proc *p = l->l_proc;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
@@ -2426,10 +2427,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
 #endif
 	}
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 	return (0);
 }
 
@@ -2439,21 +2442,42 @@ cpu_initclocks()
 	(*initclock_func)();
 }
 
-#ifdef MULTIPROCESSOR
 void
-need_resched(struct cpu_info *ci)
+cpu_need_resched(struct cpu_info *ci)
 {
 
 	if (ci->ci_want_resched)
 		return;
-
 	ci->ci_want_resched = 1;
+
 	if ((ci)->ci_curlwp != NULL)
-		aston((ci)->ci_curlwp->l_proc);
+		aston((ci)->ci_curlwp);
+#ifdef MULTIPROCESSOR
 	else if (ci != curcpu())
 		x86_send_ipi(ci, 0);
-}
 #endif
+}
+
+void
+cpu_signotify(struct lwp *l)
+{
+
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != NULL && l->l_cpu != curcpu())
+		x86_send_ipi(l->l_cpu, 0);
+#endif
+}
+
+void
+cpu_need_proftick(struct lwp *l)
+{
+
+	KASSERT(l->l_cpu == curcpu());
+
+	l->l_pflag |= LP_OWEUPC;
+	aston(l);
+}
 
 /*
  * Allocate an IDT vector slot within the given range.

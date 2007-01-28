@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.4.1 2007/01/11 22:22:58 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.4.2 2007/01/28 12:12:50 ad Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.4.1 2007/01/11 22:22:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.4.2 2007/01/28 12:12:50 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -464,8 +464,8 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
 			KERNEL_LOCK(1, l);
 			ADDUPROF(p);
 			KERNEL_UNLOCK_LAST(l);
@@ -567,7 +567,7 @@ copyfault:
 		KERNEL_LOCK(1, l);
 		if (l->l_flag & L_SA) {
 			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
-			l->l_flag |= L_SA_PAGEFAULT;
+			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 	faultcommon:
 		vm = p->p_vmspace;
@@ -624,7 +624,7 @@ copyfault:
 					pmap_load();
 				return;
 			}
-			l->l_flag &= ~L_SA_PAGEFAULT;
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
@@ -660,7 +660,7 @@ copyfault:
 		if (type == T_PAGEFLT)
 			KERNEL_UNLOCK_ONE(NULL);
 		else {
-			l->l_flag &= ~L_SA_PAGEFAULT;
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			KERNEL_UNLOCK_LAST(l);
 		}
 		break;

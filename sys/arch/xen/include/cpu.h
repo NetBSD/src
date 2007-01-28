@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.14.3 2007/01/12 01:01:02 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.14.4 2007/01/28 12:12:50 ad Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -72,6 +72,7 @@ struct pmap;
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
+	void	*ci_self150;		/* self-pointer + 0x150 */
 	void	*ci_tlog_base;		/* Trap log base */
 	int32_t ci_tlog_offset;		/* Trap log current offset */
 	struct cpu_info *ci_next;	/* next cpu */
@@ -231,7 +232,7 @@ void cpu_init_idle_pcbs(void);
 #define	cpu_number()		0
 #define CPU_IS_PRIMARY(ci)	1
 
-#define aston(l)		((l)->p_md.md_astpending = 1)
+#define aston(l)		((l)->l_md.md_astpending = 1)
 
 #endif /* MULTIPROCESSOR */
 
