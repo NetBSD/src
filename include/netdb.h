@@ -1,4 +1,4 @@
-/*	$NetBSD: netdb.h,v 1.56 2007/01/27 21:25:23 christos Exp $	*/
+/*	$NetBSD: netdb.h,v 1.57 2007/01/28 01:48:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1983, 1988, 1993
@@ -197,14 +197,14 @@ struct addrinfo {
 	int		ai_socktype;	/*%< SOCK_xxx */
 	int		ai_protocol;	/*%< 0 or IPPROTO_xxx for IPv4 and IPv6 */
 #if defined(__sparc__) && defined(_LP64)
-	in	t	__ai_pad0;	/* ABI compatibility */
+	int		__ai_pad0;	/* ABI compatibility */
 #endif
 	socklen_t	 ai_addrlen;	/*%< length of ai_addr */
 #if defined(__alpha__) || (defined(__i386__) && defined(_LP64))
 	int		__ai_pad0;	/* ABI compatibility */
 #endif
-	struct sockaddr	*ai_addr; 	/*%< binary address */
 	char		*ai_canonname;	/*%< canonical name for hostname */
+	struct sockaddr	*ai_addr; 	/*%< binary address */
 	struct addrinfo	*ai_next; 	/*%< next structure in linked list */
 };
 #endif
