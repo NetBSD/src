@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.8 2007/01/28 20:01:02 cbiere Exp $	*/
+/*	$NetBSD: eval.c,v 1.9 2007/01/28 20:20:25 cbiere Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.8 2007/01/28 20:01:02 cbiere Exp $");
+__RCSID("$NetBSD: eval.c,v 1.9 2007/01/28 20:20:25 cbiere Exp $");
 #endif
 
 
@@ -605,6 +605,21 @@ expand(cp, wp, f)
 			if (!quote)
 				switch (c) {
 				  case '[':
+					{
+						const char *p = sp;
+						bool_t special = FALSE;
+						while (*p != EOS) {
+							if (p[0] == CHAR &&
+								p[1] == ']') {
+								special = TRUE;
+								break;
+							}
+								
+							p += 2;
+						}
+						if (!special)
+							break;
+					}
 				  case NOT:
 				  case '-':
 				  case ']':
