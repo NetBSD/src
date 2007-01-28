@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2006/08/31 18:18:17 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52.2.1 2007/01/28 08:59:45 ad Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -76,6 +76,8 @@ struct cpu_info {
 	volatile int ci_iactive;
 	volatile int ci_ipending;
 	int ci_intrdepth;
+	int ci_mtx_oldspl;
+	int ci_mtx_count;
 	char *ci_intstk;
 #define	CPUSAVE_LEN	8
 	register_t ci_tempsave[CPUSAVE_LEN];
@@ -313,9 +315,9 @@ void unmapiodev(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
-#define	need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, curcpu()->ci_astpending = 1)
-#define	signotify(p)		(curcpu()->ci_astpending = 1)
+#define	cpu_need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
+#define	cpu_need_proftick(p)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
+#define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 
 #if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 void oea_init(void (*)(void));
