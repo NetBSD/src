@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225.4.8 2007/01/27 01:29:05 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.9 2007/01/28 01:34:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -548,10 +548,9 @@ void	resetprocpriority(struct proc *);
 void	suspendsched(void);
 int	ltsleep(wchan_t, int, const char *, int,
 	    volatile struct simplelock *);
-int	mtsleep(wchan_t, int, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
-int	sched_pause(const char *, boolean_t, int);
+int	kpause(const char *, boolean_t, int, kmutex_t *);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **);
 struct proc *proc_alloc(void);

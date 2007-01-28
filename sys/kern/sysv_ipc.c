@@ -1,7 +1,7 @@
-/*	$NetBSD: sysv_ipc.c,v 1.17.8.1 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.17.8.2 2007/01/28 01:34:18 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.17.8.1 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.17.8.2 2007/01/28 01:34:18 ad Exp $");
 
 #include "opt_sysv.h"
 
@@ -266,7 +266,9 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 			switch (*name) {
 #ifdef SYSVMSG
 			case KERN_SYSVIPC_MSG_INFO:
-				FILL_MSG(msqids[i], msgsi->msgids[i]);
+				mutex_enter(&msgmutex);
+				FILL_MSG(msqs[i].msq_u, msgsi->msgids[i]);
+				mutex_exit(&msgmutex);
 				break;
 #endif
 #ifdef SYSVSEM
