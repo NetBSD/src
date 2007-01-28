@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.5 2007/01/26 22:59:49 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.6 2007/01/28 00:27:33 pooka Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.5 2007/01/26 22:59:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.6 2007/01/28 00:27:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -411,12 +411,8 @@ dosuspendresume(void *arg)
 static int
 puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
-	struct puffs_mount *pmp;
+	struct puffs_mount *pmp = FPTOPMP(fp);
 	int rv;
-
-	simple_lock(&pi_lock);
-	pmp = FPTOPMP(fp);
-	simple_unlock(&pi_lock);
 
 	if (pmp == PMP_EMBRYO || pmp == PMP_DEAD) {
 		printf("puffs_fop_ioctl: puffs %p, not mounted\n", pmp);
