@@ -1,4 +1,4 @@
-.\"	$NetBSD: btpin.1,v 1.2 2007/01/25 20:28:54 plunky Exp $
+.\"	$NetBSD: btpin.1,v 1.3 2007/01/28 07:54:55 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Dt BTPIN 1
 .Os
 .Sh NAME
-.Nm btpin 
+.Nm btpin
 .Nd Bluetooth PIN utility
 .Sh SYNOPSIS
 .Nm
@@ -65,9 +65,9 @@ be specified by BD_ADDR or device name. See
 for a list of devices available. If no device is specified, the
 PIN will be valid for any local device.
 .It Fl l Ar len
-Specify length of PIN to generate, where 1 <=
+Specify length of PIN to generate, where 1 \*[Lt]=
 .Ar len
-<= 16.
+\*[Lt]= 16.
 .It Fl p Ar pin
 The PIN to register. The PIN may be up to 16 bytes in length.
 .It Fl r
