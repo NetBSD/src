@@ -1,7 +1,7 @@
-/*	$NetBSD: sysv_msg.c,v 1.44.4.3 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.44.4.4 2007/01/28 01:34:18 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.3 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.4 2007/01/28 01:34:18 ad Exp $");
 
 #define SYSVMSG
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.44.4.3 2007/01/12 01:04:07 ad Exp $")
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
-#include <sys/mutex.h>
 
 #define MSG_DEBUG
 #undef MSG_DEBUG_OK
@@ -86,8 +85,9 @@ static struct	__msg *free_msghdrs;	/* list of free msg headers */
 static char	*msgpool;		/* MSGMAX byte long msg buffer pool */
 static struct	msgmap *msgmaps;	/* MSGSEG msgmap structures */
 static struct __msg *msghdrs;		/* MSGTQL msg headers */
-struct	msqid_ds *msqids;		/* MSGMNI msqid_ds struct's */
-static kmutex_t msgmutex;
+
+kmsq_t	*msqs;				/* MSGMNI msqid_ds struct's */
+kmutex_t msgmutex;			/* subsystem lock */
 
 static void msg_freehdr(struct __msg *);
 
@@ -121,7 +121,7 @@ msginit(void)
 	sz = msginfo.msgmax
 		+ msginfo.msgseg * sizeof(struct msgmap)
 		+ msginfo.msgtql * sizeof(struct __msg)
-		+ msginfo.msgmni * sizeof(struct msqid_ds);
+		+ msginfo.msgmni * sizeof(kmsq_t);
 	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
 	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
@@ -129,7 +129,7 @@ msginit(void)
 	msgpool = (void *)v;
 	msgmaps = (void *) (msgpool + msginfo.msgmax);
 	msghdrs = (void *) (msgmaps + msginfo.msgseg);
-	msqids = (void *) (msghdrs + msginfo.msgtql);
+	msqs = (void *) (msghdrs + msginfo.msgtql);
 
 	for (i = 0; i < msginfo.msgseg; i++) {
 		if (i > 0)
@@ -150,12 +150,13 @@ msginit(void)
     	}
 	free_msghdrs = &msghdrs[0];
 
-	if (msqids == NULL)
-		panic("msqids is NULL");
+	if (msqs == NULL)
+		panic("msqs is NULL");
 
 	for (i = 0; i < msginfo.msgmni; i++) {
-		msqids[i].msg_qbytes = 0;	/* implies entry is available */
-		msqids[i].msg_perm._seq = 0;	/* reset to a known value */
+		msqs[i].msq_u.msg_qbytes = 0;	/* implies entry is available */
+		msqs[i].msq_u.msg_perm._seq = 0;/* reset to a known value */
+		cv_init(&msqs[i].msq_cv, "msgwait");
 	}
 
 	mutex_init(&msgmutex, MUTEX_DEFAULT, IPL_NONE);
@@ -220,6 +221,7 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 {
 	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
+	kmsq_t *msq;
 	int error = 0, ix;
 
 	MSG_PRINTF(("call to msgctl1(%d, %d)\n", msqid, cmd));
@@ -235,7 +237,8 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 		goto unlock;
 	}
 
-	msqptr = &msqids[ix];
+	msq = &msqs[ix];
+	msqptr = &msq->msq_u;
 
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such msqid\n"));
@@ -274,7 +277,7 @@ msgctl1(struct lwp *l, int msqid, int cmd, struct msqid_ds *msqbuf)
 
 		msqptr->msg_qbytes = 0;	/* Mark it as free */
 
-		wakeup(msqptr);
+		cv_broadcast(&msq->msq_cv);
 	}
 		break;
 
@@ -337,6 +340,7 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 	int msgflg = SCARG(uap, msgflg);
 	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr = NULL;
+	kmsq_t *msq;
 
 	mutex_enter(&msgmutex);
 
@@ -344,7 +348,8 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 
 	if (key != IPC_PRIVATE) {
 		for (msqid = 0; msqid < msginfo.msgmni; msqid++) {
-			msqptr = &msqids[msqid];
+			msq = &msqs[msqid];
+			msqptr = &msq->msq_u;
 			if (msqptr->msg_qbytes != 0 &&
 			    msqptr->msg_perm._key == key)
 				break;
@@ -375,7 +380,8 @@ sys_msgget(struct lwp *l, void *v, register_t *retval)
 			 * they are copying the message in/out.  We can't
 			 * re-use the entry until they release it.
 			 */
-			msqptr = &msqids[msqid];
+			msq = &msqs[msqid];
+			msqptr = &msq->msq_u;
 			if (msqptr->msg_qbytes == 0 &&
 			    (msqptr->msg_perm.mode & MSG_LOCKED) == 0)
 				break;
@@ -441,6 +447,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	kauth_cred_t cred = l->l_cred;
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
+	kmsq_t *msq;
 	short next;
 
 	MSG_PRINTF(("call to msgsnd(%d, %p, %lld, %d)\n", msqid, user_msgp,
@@ -457,7 +464,9 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 		goto unlock;
 	}
 
-	msqptr = &msqids[msqid];
+	msq = &msqs[msqid];
+	msqptr = &msq->msq_u;
+
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such message queue id\n"));
 		error = EINVAL;
@@ -529,8 +538,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 				we_own_it = 1;
 			}
 			MSG_PRINTF(("goodnight\n"));
-			error = mtsleep(msqptr, (PZERO - 4) | PCATCH,
-			    "msgwait", 0, &msgmutex);
+			error = cv_wait_sig(&msq->msq_cv, &msgmutex);
 			MSG_PRINTF(("good morning, error=%d\n", error));
 			if (we_own_it)
 				msqptr->msg_perm.mode &= ~MSG_LOCKED;
@@ -620,7 +628,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 		MSG_PRINTF(("error %d copying the message type\n", error));
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup(msqptr);
+		cv_broadcast(&msq->msq_cv);
 		goto unlock;
 	}
 	user_msgp += typesz;
@@ -632,7 +640,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	if (msghdr->msg_type < 1) {
 		msg_freehdr(msghdr);
 		msqptr->msg_perm.mode &= ~MSG_LOCKED;
-		wakeup(msqptr);
+		cv_broadcast(&msq->msq_cv);
 		MSG_PRINTF(("mtype (%ld) < 1\n", msghdr->msg_type));
 		goto unlock;
 	}
@@ -660,7 +668,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 			    error));
 			msg_freehdr(msghdr);
 			msqptr->msg_perm.mode &= ~MSG_LOCKED;
-			wakeup(msqptr);
+			cv_broadcast(&msq->msq_cv);
 			goto unlock;
 		}
 		msgsz -= tlen;
@@ -682,7 +690,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 
 	if (msqptr->msg_qbytes == 0) {
 		msg_freehdr(msghdr);
-		wakeup(msqptr);
+		cv_broadcast(&msq->msq_cv);
 		error = EIDRM;
 		goto unlock;
 	}
@@ -705,7 +713,7 @@ msgsnd1(struct lwp *l, int msqidr, const char *user_msgp, size_t msgsz,
 	msqptr->msg_lspid = l->l_proc->p_pid;
 	msqptr->msg_stime = time_second;
 
-	wakeup(msqptr);
+	cv_broadcast(&msq->msq_cv);
 
  unlock:
  	mutex_exit(&msgmutex);
@@ -737,6 +745,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	struct msqid_ds *msqptr;
 	struct __msg *msghdr;
 	int error = 0, msqid;
+	kmsq_t *msq;
 	short next;
 
 	MSG_PRINTF(("call to msgrcv(%d, %p, %lld, %ld, %d)\n", msqid,
@@ -753,7 +762,9 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		goto unlock;
 	}
 
-	msqptr = &msqids[msqid];
+	msq = &msqs[msqid];
+	msqptr = &msq->msq_u;
+
 	if (msqptr->msg_qbytes == 0) {
 		MSG_PRINTF(("no such message queue id\n"));
 		error = EINVAL;
@@ -888,8 +899,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 		 */
 
 		MSG_PRINTF(("msgrcv:  goodnight\n"));
-		error = mtsleep(msqptr, (PZERO - 4) | PCATCH, "msgwait",
-		    0, &msgmutex);
+		error = cv_wait_sig(&msq->msq_cv, &msgmutex);
 		MSG_PRINTF(("msgrcv: good morning (error=%d)\n", error));
 
 		if (error != 0) {
@@ -941,7 +951,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	if (error != 0) {
 		MSG_PRINTF(("error (%d) copying out message type\n", error));
 		msg_freehdr(msghdr);
-		wakeup(msqptr);
+		cv_broadcast(&msq->msq_cv);
 		goto unlock;
 	}
 	user_msgp += typesz;
@@ -970,7 +980,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 			MSG_PRINTF(("error (%d) copying out message segment\n",
 			    error));
 			msg_freehdr(msghdr);
-			wakeup(msqptr);
+			cv_broadcast(&msq->msq_cv);
 			goto unlock;
 		}
 		user_msgp += tlen;
@@ -982,7 +992,7 @@ msgrcv1(struct lwp *l, int msqidr, char *user_msgp, size_t msgsz, long msgtyp,
 	 */
 
 	msg_freehdr(msghdr);
-	wakeup(msqptr);
+	cv_broadcast(&msq->msq_cv);
 	*retval = msgsz;
 
  unlock:

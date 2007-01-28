@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.14 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.15 2007/01/28 01:34:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.14 2007/01/27 14:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.15 2007/01/28 01:34:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -444,7 +444,22 @@ updatepri(struct lwp *l)
 int	safepri;
 
 /*
- * ltsleep: see mtsleep() for comments.
+ * OBSOLETE INTERFACE
+ *
+ * General sleep call.  Suspends the current process until a wakeup is
+ * performed on the specified identifier.  The process will then be made
+ * runnable with the specified priority.  Sleeps at most timo/hz seconds (0
+ * means no timeout).  If pri includes PCATCH flag, signals are checked
+ * before and after sleeping, else signals are not checked.  Returns 0 if
+ * awakened, EWOULDBLOCK if the timeout expires.  If PCATCH is set and a
+ * signal needs to be delivered, ERESTART is returned if the current system
+ * call should be restarted if possible, and EINTR is returned if the system
+ * call should be interrupted by the signal (return EINTR).
+ *
+ * The interlock is held until we are on a sleep queue. The interlock will
+ * be locked before returning back to the caller unless the PNORELOCK flag
+ * is specified, in which case the interlock will always be unlocked upon
+ * return.
  */
 int
 ltsleep(wchan_t ident, int priority, const char *wmesg, int timo,
@@ -481,69 +496,26 @@ ltsleep(wchan_t ident, int priority, const char *wmesg, int timo,
 }
 
 /*
- * General sleep call.  Suspends the current process until a wakeup is
- * performed on the specified identifier.  The process will then be made
- * runnable with the specified priority.  Sleeps at most timo/hz seconds (0
- * means no timeout).  If pri includes PCATCH flag, signals are checked
- * before and after sleeping, else signals are not checked.  Returns 0 if
- * awakened, EWOULDBLOCK if the timeout expires.  If PCATCH is set and a
- * signal needs to be delivered, ERESTART is returned if the current system
- * call should be restarted if possible, and EINTR is returned if the system
- * call should be interrupted by the signal (return EINTR).
- *
- * The interlock is held until we are on a sleep queue. The interlock will
- * be locked before returning back to the caller unless the PNORELOCK flag
- * is specified, in which case the interlock will always be unlocked upon
- * return.
+ * General sleep call for situations where a wake-up is not expected.
  */
 int
-mtsleep(wchan_t ident, int priority, const char *wmesg, int timo,
-	kmutex_t *mtx)
+kpause(const char *wmesg, boolean_t intr, int timo, kmutex_t *mtx)
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
-	int error, catch;
-
-	if (sleepq_dontsleep(l))
-		return sleepq_abort(mtx, priority & PNORELOCK);
-
-	sq = sleeptab_lookup(&sleeptab, ident);
-	sleepq_enter(sq, l);
-
-	if (mtx != NULL) {
-		LOCK_ASSERT(mutex_owned(mtx));
-		mutex_exit(mtx);
-	}
-
-	catch = priority & PCATCH;
-	sleepq_block(sq, priority & PRIMASK, ident, wmesg, timo, catch,
-	    &sleep_syncobj);
-	error = sleepq_unblock(timo, catch);
-
-	if (mtx != NULL && (priority & PNORELOCK) == 0)
-		mutex_enter(mtx);
- 
-	return error;
-}
-
-/*
- * sched_pause:
- *
- *	General sleep call for situations where a wake-up is not expected.
- */
-int
-sched_pause(const char *wmesg, boolean_t intr, int timo)
-{
-	struct lwp *l = curlwp;
-	sleepq_t *sq;
+	int error;
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(NULL, 0);
 
+	mutex_exit(mtx);
 	sq = sleeptab_lookup(&sleeptab, l);
 	sleepq_enter(sq, l);
 	sleepq_block(sq, sched_kpri(l), l, wmesg, timo, intr, &sleep_syncobj);
-	return sleepq_unblock(timo, intr);
+	error = sleepq_unblock(timo, intr);
+	mutex_enter(mtx);
+
+	return error;
 }
 
 void
@@ -557,6 +529,8 @@ sa_awaken(struct lwp *l)
 }
 
 /*
+ * OBSOLETE INTERFACE
+ *
  * Make all processes sleeping on the specified identifier runnable.
  */
 void
@@ -572,6 +546,8 @@ wakeup(wchan_t ident)
 }
 
 /*
+ * OBSOLETE INTERFACE
+ *
  * Make the highest priority process first in line on the specified
  * identifier runnable.
  */

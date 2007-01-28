@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.7 2007/01/27 01:29:05 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.8 2007/01/28 01:34:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.7 2007/01/27 01:29:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.8 2007/01/28 01:34:18 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -594,7 +594,7 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		mutex_exit(&p->p_smutex);
 	}
 
-	while (sched_pause("pause", TRUE, 0) == 0)
+	while (kpause("pause", TRUE, 0, NULL) == 0)
 		;
 
 	/* always return EINTR rather than ERESTART... */
