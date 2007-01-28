@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.49 2007/01/27 23:14:02 elad Exp $
+.\" $NetBSD: kauth.9,v 1.50 2007/01/28 00:21:04 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -114,6 +114,16 @@ indicates failure -- the operation is denied.
 Each scope has its own authorization wrapper, to make it easy to call from various
 places by eliminating the need to specify the scope and/or cast values.
 The authorization wrappers are detailed in each scope's section.
+.Pp
+.Fn kauth_authorize_action
+has several special cases, when it will always allow the request.
+These are for when the request is issued by the kernel itself (indicated by the
+credentials being either
+.Dv NOCRED
+or
+.Dv FSCRED ) ,
+or when there was no definitive decision from any of the listeners (i.e., it
+was not explicitly allowed or denied) and no security model was loaded.
 .Ss Generic Scope
 The generic scope,
 .Dq org.netbsd.kauth.generic ,
