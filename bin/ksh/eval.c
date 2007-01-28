@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.9 2007/01/28 20:20:25 cbiere Exp $	*/
+/*	$NetBSD: eval.c,v 1.10 2007/01/28 22:30:12 cbiere Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: eval.c,v 1.9 2007/01/28 20:20:25 cbiere Exp $");
+__RCSID("$NetBSD: eval.c,v 1.10 2007/01/28 22:30:12 cbiere Exp $");
 #endif
 
 
@@ -1133,9 +1133,6 @@ globit(xs, xpp, sp, wp, check)
 			goto Nodir;
 		while ((d = readdir(dirp)) != NULL) {
 			name = d->d_name;
-			if (name[0] == '.' &&
-			    (name[1] == 0 || (name[1] == '.' && name[2] == 0)))
-				continue; /* always ignore . and .. */
 			if ((*name == '.' && *sp != '.')
 			    || !gmatch(name, sp, TRUE))
 				continue;
