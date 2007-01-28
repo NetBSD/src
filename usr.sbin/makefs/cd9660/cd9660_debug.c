@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.5 2006/12/18 21:03:29 christos Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.6 2007/01/28 09:19:33 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -38,9 +38,10 @@
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
+#include <sys/endian.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.5 2006/12/18 21:03:29 christos Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.6 2007/01/28 09:19:33 dogcow Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
