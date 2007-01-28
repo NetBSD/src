@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_suspend.3,v 1.1 2007/01/26 23:55:27 pooka Exp $
+.\"	$NetBSD: puffs_suspend.3,v 1.2 2007/01/28 07:58:05 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -40,7 +40,7 @@
 This document describes interfaces which are not yet guaranteed to be
 stable.
 In case you update your system sources, please recompile everything
-and fix complation errors.
+and fix compilation errors.
 If your sources are out-of-sync, incorrect operation may result.
 The interfaces in this document will most likely be hugely simplified
 in later versions or made transparent to the implementation.
@@ -58,14 +58,14 @@ sets
 .Va errno .
 In case an error is returned, the callback will never be called.
 However, the converse does not hold and the callback may never be
-called even if the library call is succesful.
+called even if the library call is successful.
 .Pp
-In case the kernel is succesful to start suspending the file system,
+In case the kernel is successful to start suspending the file system,
 the callback is called with status
 .Dv PUFFS_SUSPEND START .
 The file system implementation may use this as a hint on how to handle
 following operations.
-Once the file system has succesfully been suspended, the status
+Once the file system has successfully been suspended, the status
 .Dv PUFFS_SUSPEND_SUSPENDED
 will be delivered.
 In case there was an error while suspending,
