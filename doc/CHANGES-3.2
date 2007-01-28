@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.47 2007/01/23 23:06:52 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.48 2007/01/28 19:42:45 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2558,4 +2558,9 @@ xsrc/xfree/xc/programs/Xserver/hw/xfree86/loader/xf86sym.c 1.10
 	Introduces a driver for USB graphics tablets (digitizers) using the
 	libusbhid interface into XFree86. This closes PR xsrc/23964.
 	[ghen, ticket #1655]
+
+sys/netinet/ip_output.c				1.173
+
+	Avoid problems if PF's fragment reassemble feature is used.
+	[yamt, ticket #1656]
 
