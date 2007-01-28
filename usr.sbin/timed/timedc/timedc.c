@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.c,v 1.18 2007/01/27 17:57:45 cbiere Exp $	*/
+/*	$NetBSD: timedc.c,v 1.19 2007/01/28 13:51:29 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timedc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: timedc.c,v 1.18 2007/01/27 17:57:45 cbiere Exp $");
+__RCSID("$NetBSD: timedc.c,v 1.19 2007/01/28 13:51:29 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,22 +79,22 @@ main(int argc, char *argv[])
 	 * security dictates!
 	 */
 	if (priv_resources() < 0)
-		errx(1, "Could not get privileged resources");
+		errx(EXIT_FAILURE, "Could not get privileged resources");
 	if (drop_privileges() < 0)
-		errx(1, "Could not drop privileges");
+		errx(EXIT_FAILURE, "Could not drop privileges");
 
 	if (--argc > 0) {
 		c = getcmd(*++argv);
 		if (c == (struct cmd *)-1) {
 			printf("?Ambiguous command\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		if (c == 0) {
 			printf("?Invalid command\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		(*c->c_handler)(argc, argv);
-		exit(0);
+		exit(EXIT_SUCCESS);
 	}
 
 	fromatty = isatty(fileno(stdin));
@@ -135,7 +135,7 @@ intr(int signo)
 {
 	(void) signo;
 	if (!fromatty)
-		exit(0);
+		exit(EXIT_SUCCESS);
 	longjmp(toplevel, 1);
 }
 
@@ -263,12 +263,13 @@ help(int argc, char *argv[])
 static int
 drop_privileges(void)
 {
+	static const char user[] = "_timedc";
 	const struct passwd *pw;
 	uid_t uid;
 	gid_t gid;
 
-	if ((pw = getpwnam("nobody")) == NULL) {
-		warnx("getpwnam(\"nobody\") failed");
+	if ((pw = getpwnam(user)) == NULL) {
+		warnx("getpwnam(\"%s\") failed", user);
 		return -1;
 	}
 	uid = pw->pw_uid;
