@@ -1,9 +1,8 @@
-/*	$NetBSD: atomic.h,v 1.1 2007/01/27 21:36:13 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.2 2007/01/29 17:33:30 christos Exp $	*/
 
-#if defined(__i386__)
+#if defined(__i386__) || defined(__x86_64__)
+/* Bind shares those for now, although it provides both of them */
 #include "lib/isc/x86_32/include/isc/atomic.h"
-#elif defined(__x86_64__)
-#include "lib/isc/x86_64/include/isc/atomic.h"
 #elif defined(__sparc__) && defined(_LP64)
 #include "lib/isc/sparc64/include/isc/atomic.h"
 #elif defined(__alpha__)
