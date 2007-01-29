@@ -1,4 +1,4 @@
-.\"     $NetBSD: fstrans.9,v 1.2 2007/01/23 20:31:33 wiz Exp $
+.\"     $NetBSD: fstrans.9,v 1.3 2007/01/29 15:42:50 hannken Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 21, 2007
+.Dd January 29, 2007
 .Dt FSTRANS 9
 .Os
 .Sh NAME
@@ -75,12 +75,12 @@ in
 .Em To use this subsystem the kernel option NEWVNGATE must be set .
 .Pp
 File systems are always in one of these states:
-.Bl -tag -offset indent -width fstrans_suspending -compact
-.It Dv fstrans_normal
+.Bl -tag -offset indent -width FSTRANS_SUSPENDING -compact
+.It Dv FSTRANS_NORMAL
 normal operations.
-.It Dv fstrans_suspending
+.It Dv FSTRANS_SUSPENDING
 preparing a suspension.
-.It Dv fstrans_suspended
+.It Dv FSTRANS_SUSPENDED
 suspended.
 .El
 This state is represented by
@@ -102,15 +102,15 @@ All file system operations use a
 This lock is recursive.
 A thread already owning a lock will always get another lock.
 The lock has two variants:
-.Bl -tag -offset indent -width fstrans_shared -compact
-.It Dv fstrans_shared
+.Bl -tag -offset indent -width FSTRANS_SHARED -compact
+.It Dv FSTRANS_SHARED
 this lock will be granted if the file system is in state
-.Dv fstrans_normal .
-.It Dv fstrans_lazy
+.Dv FSTRANS_NORMAL .
+.It Dv FSTRANS_LAZY
 this lock will be granted if the file system is in state
-.Dv fstrans_normal
+.Dv FSTRANS_NORMAL
 or
-.Dv fstrans_suspending .
+.Dv FSTRANS_SUSPENDING .
 It needs special care because operations using this variant will not block
 while the file system prepares suspension.
 .El
@@ -152,16 +152,16 @@ xxx_suspendctl(struct mount *mp, int cmd)
 
 	switch (cmd) {
 	case SUSPEND_SUSPEND:
-		error = fstrans_setstate(mp, fstrans_suspending);
+		error = fstrans_setstate(mp, FSTRANS_SUSPENDING);
 		if (error != 0)
 			return error;
 
 		/* Sync file system state to disk. */
 
-		return fstrans_setstate(mp, fstrans_suspended);
+		return fstrans_setstate(mp, FSTRANS_SUSPENDED);
 
 	case SUSPEND_RESUME:
-		return fstrans_setstate(mp, fstrans_normal);
+		return fstrans_setstate(mp, FSTRANS_NORMAL);
 
 	default:
 		return EINVAL;
@@ -178,7 +178,7 @@ xxx_create(void *v)
 	struct mount *mp = ap-\*[Gt]a_dvp-\*[Gt]v_mount;
 	int error;
 
-	if ((error = fstrans_start(mp, fstrans_shared)) != 0)
+	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
 		return error;
 
 	/* Actually create the node. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.83 2007/01/19 14:49:13 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.84 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.83 2007/01/19 14:49:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.84 2007/01/29 15:42:50 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -170,7 +170,7 @@ ufs_lookup(void *v)
 		return (error);
 	}
 
-	if ((error = fstrans_start(vdp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(vdp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 
 	/*

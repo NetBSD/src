@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.148 2007/01/19 14:49:14 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.149 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.148 2007/01/19 14:49:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.149 2007/01/29 15:42:50 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -106,7 +106,7 @@ ufs_create(void *v)
 	} */ *ap = v;
 	int	error;
 
-	if ((error = fstrans_start(ap->a_dvp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 	error =
 	    ufs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
@@ -140,7 +140,7 @@ ufs_mknod(void *v)
 
 	vap = ap->a_vap;
 	vpp = ap->a_vpp;
-	if ((error = fstrans_start(ap->a_dvp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 	if ((error =
 	    ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
@@ -267,7 +267,7 @@ ufs_access(void *v)
 				return (EROFS);
 #ifdef QUOTA
 			if ((error =
-			    fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+			    fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
 				return error;
 			error = getinoquota(ip);
 			fstrans_done(vp->v_mount);
@@ -398,7 +398,7 @@ ufs_setattr(void *v)
 		return (EINVAL);
 	}
 
-	if ((error = fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 
 	if (vap->va_flags != VNOVAL) {
@@ -699,7 +699,7 @@ ufs_remove(void *v)
 	vp = ap->a_vp;
 	dvp = ap->a_dvp;
 	ip = VTOI(vp);
-	if ((error = fstrans_start(dvp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 	if (vp->v_type == VDIR || (ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND))
@@ -741,7 +741,7 @@ ufs_link(void *v)
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("ufs_link: no name");
 #endif
-	if ((error = fstrans_start(dvp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 	if (vp->v_type == VDIR) {
 		VOP_ABORTOP(dvp, cnp);
@@ -828,7 +828,7 @@ ufs_whiteout(void *v)
 
 	case CREATE:
 		/* create a new directory whiteout */
-		if ((error = fstrans_start(dvp->v_mount, fstrans_shared)) != 0)
+		if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
 			return error;
 #ifdef DIAGNOSTIC
 		if ((cnp->cn_flags & SAVENAME) == 0)
@@ -850,7 +850,7 @@ ufs_whiteout(void *v)
 
 	case DELETE:
 		/* remove an existing directory whiteout */
-		if ((error = fstrans_start(dvp->v_mount, fstrans_shared)) != 0)
+		if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
 			return error;
 #ifdef DIAGNOSTIC
 		if (ump->um_maxsymlinklen <= 0)
@@ -1023,7 +1023,7 @@ ufs_rename(void *v)
 		xp = VTOI(tvp);
 
 	mp = fdvp->v_mount;
-	if ((error = fstrans_start(mp, fstrans_shared)) != 0)
+	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
 		return error;
 
 	/*
@@ -1332,7 +1332,7 @@ ufs_mkdir(void *v)
 	struct ufsmount		*ump = dp->i_ump;
 	int			dirblksiz = ump->um_dirblksiz;
 
-	if ((error = fstrans_start(dvp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 
 #ifdef DIAGNOSTIC
@@ -1531,7 +1531,7 @@ ufs_rmdir(void *v)
 		return (EINVAL);
 	}
 
-	if ((error = fstrans_start(dvp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(dvp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 
 	/*
@@ -1628,7 +1628,7 @@ ufs_symlink(void *v)
 	int		len, error;
 
 	vpp = ap->a_vpp;
-	if ((error = fstrans_start(ap->a_dvp->v_mount, fstrans_shared)) != 0)
+	if ((error = fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED)) != 0)
 		return error;
 	error = ufs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
 			      vpp, ap->a_cnp);
@@ -2348,7 +2348,7 @@ ufs_lock(void *v)
 	 */
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
-	    fstrans_getstate(mp) == fstrans_suspending) {
+	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
 		if ((ap->a_flags & LK_INTERLOCK) != 0)
 			simple_unlock(&vp->v_interlock);
 		return 0;
@@ -2374,7 +2374,7 @@ ufs_unlock(void *v)
 	 */
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
-	    fstrans_getstate(mp) == fstrans_suspending) {
+	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
 		if ((ap->a_flags & LK_INTERLOCK) != 0)
 			simple_unlock(&vp->v_interlock);
 		return 0;
