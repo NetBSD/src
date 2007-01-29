@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.107 2006/12/15 21:18:53 joerg Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.108 2007/01/29 05:46:33 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.107 2006/12/15 21:18:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.108 2007/01/29 05:46:33 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -726,7 +726,7 @@ icmp_reflect(struct mbuf *m)
 		sin_dst.sin_family = AF_INET;
 		sin_dst.sin_len = sizeof(struct sockaddr_in);
 		sin_dst.sin_addr = ip->ip_dst;
-		bzero(&icmproute, sizeof(icmproute));
+		memset(&icmproute, 0, sizeof(icmproute));
 		errornum = 0;
 		sin = in_selectsrc(&sin_dst, &icmproute, 0, NULL, &errornum);
 		/* errornum is never used */
