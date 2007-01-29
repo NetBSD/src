@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.127 2007/01/15 21:49:56 dyoung Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.128 2007/01/29 06:02:26 dyoung Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.127 2007/01/15 21:49:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.128 2007/01/29 06:02:26 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2059,12 +2059,12 @@ icmp6_reflect(m, off)
 		 * that we do not own.  Select a source address based on the
 		 * source address of the erroneous packet.
 		 */
-		bzero(&sin6, sizeof(sin6));
+		memset(&sin6, 0, sizeof(sin6));
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_len = sizeof(sin6);
 		sin6.sin6_addr = ip6->ip6_dst; /* zone ID should be embedded */
 
-		bzero(&ro, sizeof(ro));
+		memset(&ro, 0, sizeof(ro));
 		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
 		rtcache_free((struct route *)&ro);
 		if (src == NULL) {
