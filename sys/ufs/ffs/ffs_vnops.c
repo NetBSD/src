@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.84 2007/01/19 14:49:12 hannken Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.85 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.84 2007/01/19 14:49:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.85 2007/01/29 15:42:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ ffs_fsync(void *v)
 
 	vp = ap->a_vp;
 
-	if ((error = fstrans_start(vp->v_mount, fstrans_lazy)) != 0)
+	if ((error = fstrans_start(vp->v_mount, FSTRANS_LAZY)) != 0)
 		return error;
 	/*
 	 * XXX no easy way to sync a range in a file with softdep.
@@ -371,7 +371,7 @@ ffs_full_fsync(void *v)
 		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
 		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
-		    (fstrans_getstate(vp->v_mount) == fstrans_suspending ?
+		    (fstrans_getstate(vp->v_mount) == FSTRANS_SUSPENDING ?
 			PGO_FREE : 0));
 		if (error) {
 			return error;
@@ -493,7 +493,7 @@ ffs_reclaim(void *v)
 	struct ufsmount *ump = ip->i_ump;
 	int error;
 
-	if ((error = fstrans_start(mp, fstrans_lazy)) != 0)
+	if ((error = fstrans_start(mp, FSTRANS_LAZY)) != 0)
 		return error;
 	if ((error = ufs_reclaim(vp, ap->a_l)) != 0) {
 		fstrans_done(mp);
@@ -630,7 +630,7 @@ ffs_getextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
 			return error;
 		error = ufs_getextattr(ap);
 		fstrans_done(vp->v_mount);
@@ -663,7 +663,7 @@ ffs_setextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
 			return error;
 		error = ufs_setextattr(ap);
 		fstrans_done(vp->v_mount);
@@ -716,7 +716,7 @@ ffs_deleteextattr(void *v)
 #ifdef UFS_EXTATTR
 		int error;
 
-		if ((error = fstrans_start(vp->v_mount, fstrans_shared)) != 0)
+		if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
 			return error;
 		error = ufs_deleteextattr(ap);
 		fstrans_done(vp->v_mount);

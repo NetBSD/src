@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.1 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.2 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.1 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.2 2007/01/29 15:42:50 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -121,7 +121,7 @@ fstrans_mount_dtor(void *arg)
 {
 	struct fstrans_mount_info *fmi = arg;
 
-	KASSERT(fmi->fmi_state == fstrans_normal);
+	KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
 	lockmgr(&fmi->fmi_lazy_lock, LK_DRAIN, NULL);
 	lockmgr(&fmi->fmi_shared_lock, LK_DRAIN, NULL);
 	free(fmi, M_MOUNT);
@@ -144,7 +144,7 @@ fstrans_mount_init(struct mount *mp)
 	}
 
 	new = malloc(sizeof(*new), M_MOUNT, M_WAITOK);
-	new->fmi_state = fstrans_normal;
+	new->fmi_state = FSTRANS_NORMAL;
 	lockinit(&new->fmi_lazy_lock, PVFS, "suspfs", 0, 0);
 	lockinit(&new->fmi_shared_lock, PVFS, "suspfs", 0, 0);
 
@@ -171,7 +171,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 
 	ASSERT_SLEEPABLE(NULL, __func__);
 
-	lkflags = (lock_type == fstrans_excl ? LK_EXCLUSIVE : LK_SHARED);
+	lkflags = (lock_type == FSTRANS_EXCL ? LK_EXCLUSIVE : LK_SHARED);
 	if (!wait)
 		lkflags |= LK_NOWAIT;
 
@@ -184,8 +184,8 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 			new_fli = fli;
 		if (fli->fli_mount == mp) {
 			KASSERT(fli->fli_count > 0);
-			if (fli->fli_lock_type != fstrans_excl &&
-			    lock_type == fstrans_excl)
+			if (fli->fli_lock_type != FSTRANS_EXCL &&
+			    lock_type == FSTRANS_EXCL)
 				panic("fstrans_start: cannot upgrade lock");
 			fli->fli_count += 1;
 			return 0;
@@ -206,7 +206,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	if ((fmi = mount_getspecific(mp, mount_data_key)) == NULL)
 		fmi = fstrans_mount_init(mp);
 
-	if (lock_type == fstrans_lazy)
+	if (lock_type == FSTRANS_LAZY)
 		error = lockmgr(&fmi->fmi_lazy_lock, lkflags, NULL);
 	else
 		error = lockmgr(&fmi->fmi_shared_lock, lkflags, NULL);
@@ -247,7 +247,7 @@ fstrans_done(struct mount *mp)
 	fli->fli_mount = NULL;
 	fmi = mount_getspecific(mp, mount_data_key);
 	KASSERT(fmi != NULL);
-	if (fli->fli_lock_type == fstrans_lazy)
+	if (fli->fli_lock_type == FSTRANS_LAZY)
 		lockmgr(&fmi->fmi_lazy_lock, LK_RELEASE, NULL);
 	else
 		lockmgr(&fmi->fmi_shared_lock, LK_RELEASE, NULL);
@@ -275,7 +275,7 @@ fstrans_is_owner(struct mount *mp)
 
 	KASSERT(fli->fli_mount == mp);
 	KASSERT(fli->fli_count > 0);
-	return (fli->fli_lock_type == fstrans_excl);
+	return (fli->fli_lock_type == FSTRANS_EXCL);
 }
 
 /*
@@ -291,35 +291,35 @@ fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
 		fmi = fstrans_mount_init(mp);
 
 	switch (new_state) {
-	case fstrans_suspending:
-		KASSERT(fmi->fmi_state == fstrans_normal);
-		if ((error = fstrans_start(mp, fstrans_excl)) != 0)
+	case FSTRANS_SUSPENDING:
+		KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
+		if ((error = fstrans_start(mp, FSTRANS_EXCL)) != 0)
 			return error;
-		fmi->fmi_state = fstrans_suspending;
+		fmi->fmi_state = FSTRANS_SUSPENDING;
 		break;
 
-	case fstrans_suspended:
-		KASSERT(fmi->fmi_state == fstrans_normal ||
-			fmi->fmi_state == fstrans_suspending);
-		KASSERT(fmi->fmi_state == fstrans_normal ||
+	case FSTRANS_SUSPENDED:
+		KASSERT(fmi->fmi_state == FSTRANS_NORMAL ||
+			fmi->fmi_state == FSTRANS_SUSPENDING);
+		KASSERT(fmi->fmi_state == FSTRANS_NORMAL ||
 			fstrans_is_owner(mp));
-		if (fmi->fmi_state == fstrans_normal &&
-		    (error = fstrans_start(mp, fstrans_excl)) != 0)
+		if (fmi->fmi_state == FSTRANS_NORMAL &&
+		    (error = fstrans_start(mp, FSTRANS_EXCL)) != 0)
 			return error;
 		if ((error = lockmgr(&fmi->fmi_lazy_lock, LK_EXCLUSIVE, NULL))
 		    != 0)
 			return error;
-		fmi->fmi_state = fstrans_suspended;
+		fmi->fmi_state = FSTRANS_SUSPENDED;
 		break;
 
-	case fstrans_normal:
-		KASSERT(fmi->fmi_state == fstrans_normal ||
+	case FSTRANS_NORMAL:
+		KASSERT(fmi->fmi_state == FSTRANS_NORMAL ||
 			fstrans_is_owner(mp));
-		if (fmi->fmi_state == fstrans_suspended)
+		if (fmi->fmi_state == FSTRANS_SUSPENDED)
 			lockmgr(&fmi->fmi_lazy_lock, LK_RELEASE, NULL);
-		if (fmi->fmi_state == fstrans_suspending ||
-		    fmi->fmi_state == fstrans_suspended) {
-			fmi->fmi_state = fstrans_normal;
+		if (fmi->fmi_state == FSTRANS_SUSPENDING ||
+		    fmi->fmi_state == FSTRANS_SUSPENDED) {
+			fmi->fmi_state = FSTRANS_NORMAL;
 			fstrans_done(mp);
 		}
 		break;
@@ -340,7 +340,7 @@ fstrans_getstate(struct mount *mp)
 	struct fstrans_mount_info *fmi;
 
 	if ((fmi = mount_getspecific(mp, mount_data_key)) == NULL)
-		return fstrans_normal;
+		return FSTRANS_NORMAL;
 
 	return fmi->fmi_state;
 }
@@ -455,13 +455,13 @@ fstrans_print_lwp(struct proc *p, struct lwp *l, int verbose)
 		else
 			printf(" NULL");
 		switch (fli->fli_lock_type) {
-		case fstrans_lazy:
+		case FSTRANS_LAZY:
 			printf(" lazy");
 			break;
-		case fstrans_shared:
+		case FSTRANS_SHARED:
 			printf(" shared");
 			break;
-		case fstrans_excl:
+		case FSTRANS_EXCL:
 			printf(" excl");
 			break;
 		default:
@@ -479,7 +479,7 @@ fstrans_print_mount(struct mount *mp, int verbose)
 	struct fstrans_mount_info *fmi;
 
 	fmi = mount_getspecific(mp, mount_data_key);
-	if (!verbose && (fmi == NULL || fmi->fmi_state == fstrans_normal))
+	if (!verbose && (fmi == NULL || fmi->fmi_state == FSTRANS_NORMAL))
 		return;
 
 	printf("%-16s ", mp->mnt_stat.f_mntonname);
@@ -488,13 +488,13 @@ fstrans_print_mount(struct mount *mp, int verbose)
 		return;
 	}
 	switch (fmi->fmi_state) {
-	case fstrans_normal:
+	case FSTRANS_NORMAL:
 		printf("state normal\n");
 		break;
-	case fstrans_suspending:
+	case FSTRANS_SUSPENDING:
 		printf("state suspending\n");
 		break;
-	case fstrans_suspended:
+	case FSTRANS_SUSPENDED:
 		printf("state suspended\n");
 		break;
 	default:
