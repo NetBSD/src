@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.21 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.22 2007/01/29 01:52:44 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.21 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.22 2007/01/29 01:52:44 hubertf Exp $");
 
 #include "opt_kgdb.h"
 
@@ -201,8 +201,6 @@ STATIC int gt_reva_gtmpsc_bug;
 unsigned int sdma_imask;        /* soft copy of SDMA IMASK reg */
 
 #ifdef KGDB
-#include <sys/kgdb.h>
-
 static int gtmpsc_kgdb_addr;
 static int gtmpsc_kgdb_attached;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.26 2006/09/24 10:20:16 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.27 2007/01/29 01:52:44 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.26 2006/09/24 10:20:16 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.27 2007/01/29 01:52:44 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.26 2006/09/24 10:20:16 fvdl Exp
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/sockio.h>
 #include <sys/socket.h>
 #include <sys/ttycom.h>

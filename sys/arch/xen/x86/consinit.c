@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.7 2006/12/09 10:37:52 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.8 2007/01/29 01:52:46 hubertf Exp $	*/
 /*	NetBSD: consinit.c,v 1.4 2004/03/13 17:31:34 bjh21 Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2006/12/09 10:37:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.8 2007/01/29 01:52:46 hubertf Exp $");
 
 #include "opt_kgdb.h"
 
@@ -89,11 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.7 2006/12/09 10:37:52 bouyer Exp $");
 #include <sys/termios.h>
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-#endif
-
-#include "ukbd.h"
-#if (NUKBD > 0)
-#include <dev/usb/ukbdvar.h>
 #endif
 
 #ifndef CONSDEVNAME
