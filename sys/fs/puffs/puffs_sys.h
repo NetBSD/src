@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.22 2007/01/26 22:59:49 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.23 2007/01/29 01:52:44 hubertf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,6 @@
 #include <sys/kauth.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
 #include <sys/pool.h>
 
 #include <fs/puffs/puffs_msgif.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: toaster.c,v 1.2 2005/12/11 12:22:03 christos Exp $ */
+/* $NetBSD: toaster.c,v 1.3 2007/01/29 01:52:45 hubertf Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.2 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.3 2007/01/29 01:52:45 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: toaster.c,v 1.2 2005/12/11 12:22:03 christos Exp $")
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/select.h>
-#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

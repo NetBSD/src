@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.21 2007/01/19 14:49:10 hannken Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.22 2007/01/29 01:52:43 hubertf Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.21 2007/01/19 14:49:10 hannken Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.22 2007/01/29 01:52:43 hubertf Exp $");
 #endif /* not lint */
 
 
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: udf_vfsops.c,v 1.21 2007/01/19 14:49:10 hannken Exp $");
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
-#include <sys/sysctl.h>
 #include <sys/kauth.h>
 
 #include <fs/udf/ecma167-udf.h>
