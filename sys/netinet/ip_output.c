@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.175 2007/01/29 05:59:30 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.176 2007/01/29 06:00:11 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.175 2007/01/29 05:59:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.176 2007/01/29 06:00:11 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -287,7 +287,7 @@ ip_output(struct mbuf *m0, ...)
 	/*
 	 * Route packet.
 	 */
-	bzero(&iproute, sizeof(iproute));
+	memset(&iproute, 0, sizeof(iproute));
 	if (ro == NULL)
 		ro = &iproute;
 	dst = satosin(&ro->ro_dst);
@@ -585,7 +585,7 @@ sendit:
 	state.m = m;
 	if (flags & IP_ROUTETOIF) {
 		state.ro = &iproute;
-		bzero(&iproute, sizeof(iproute));
+		memset(&iproute, 0, sizeof(iproute));
 	} else
 		state.ro = ro;
 	state.dst = (struct sockaddr *)dst;
@@ -1759,7 +1759,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * the route to the given multicast address.
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
-			bzero((caddr_t)&ro, sizeof(ro));
+			memset(&ro, 0, sizeof(ro));
 			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
 			dst->sin_family = AF_INET;
