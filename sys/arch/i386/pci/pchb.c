@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.55.4.2 2007/01/29 16:13:17 tron Exp $	*/
+/*	$NetBSD: pchb.c,v 1.55.4.3 2007/01/29 16:14:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.55.4.2 2007/01/29 16:13:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.55.4.3 2007/01/29 16:14:13 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,23 +193,31 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 			break;
 		case PCI_PRODUCT_INTEL_82443BX_AGP:
 		case PCI_PRODUCT_INTEL_82443BX_NOAGP:
-			/*
-			 * BIOS BUG WORKAROUND!  The 82443BX
-			 * datasheet indicates that the only
-			 * legal setting for the "Idle/Pipeline
-			 * DRAM Leadoff Timing (IPLDT)" parameter
-			 * (bits 9:8) is 01.  Unfortunately, some
-			 * BIOSs do not set these bits properly.
-			 */
-			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    I82443BX_SDRAMC_REG);
-			if ((bcreg & 0x0300) != 0x0100) {
-				aprint_verbose("%s: fixing Idle/Pipeline DRAM "
-				    "Leadoff Timing\n", self->dv_xname);
-				bcreg &= ~0x0300;
-				bcreg |=  0x0100;
-				pci_conf_write(pa->pa_pc, pa->pa_tag,
-				    I82443BX_SDRAMC_REG, bcreg);
+		/*
+		 * http://www.intel.com/design/chipsets/specupdt/290639.htm
+		 * says this bug is fixed in revisions >= C0 (erratum 11),
+		 * so don't tweak the bits in that case.
+		 */
+			if (!(PCI_REVISION(pa->pa_class) >= 0x03)) {
+				/*
+				 * BIOS BUG WORKAROUND!  The 82443BX
+				 * datasheet indicates that the only
+				 * legal setting for the "Idle/Pipeline
+				 * DRAM Leadoff Timing (IPLDT)" parameter
+				 * (bits 9:8) is 01.  Unfortunately, some
+				 * BIOSs do not set these bits properly.
+				 */
+				bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				    I82443BX_SDRAMC_REG);
+				if ((bcreg & 0x0300) != 0x0100) {
+					aprint_verbose("%s: fixing "
+					    "Idle/Pipeline DRAM "
+					    "Leadoff Timing\n", self->dv_xname);
+					bcreg &= ~0x0300;
+					bcreg |=  0x0100;
+					pci_conf_write(pa->pa_pc, pa->pa_tag,
+					    I82443BX_SDRAMC_REG, bcreg);
+				}
 			}
 			break;
 
