@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.13.18.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: attributes.c,v 1.13.18.3 2007/01/29 11:12:26 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.13.18.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.13.18.3 2007/01/29 11:12:26 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -146,8 +146,13 @@ wattr_get(WINDOW *win, attr_t *attr, short *pair, void *opt)
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ATTR, "wattr_get: win %p\n", win);
 #endif
-	if (attr != NULL)
+	if (attr != NULL) {
 		*attr = win->wattr;
+#ifdef HAVE_WCHAR
+		*attr &= WA_ATTRIBUTES;
+#endif
+	}
+
 	if (pair != NULL)
 		*pair = PAIR_NUMBER(win->wattr);
 	return OK;
