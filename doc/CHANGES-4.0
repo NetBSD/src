@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.56 2007/01/29 15:57:41 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.57 2007/01/29 22:30:20 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1032,4 +1032,18 @@ sys/arch/i386/pci/pchb.c			1.63-1.64
 	1850R systems, where the BIOS appears to program and require a non-
 	standard value for this parameter.
 	[he, ticket #392]
+
+sys/dev/ic/wdc.c				1.246
+
+	Add missing bus_space_(read,write)_stream macros.
+	Approved by martin@
+	[sborrill, ticket #389]
+
+sys/dev/scsipi/atapi_wdc.c			1.104
+
+	Fix for atapi devices that have 32 bit databusses selected.
+	The devices won't error out but will return garbage data.
+	Implemented by generalising the odd-check for PIO selection
+	to check for 4 byte alignment in offset and size.
+	[reinoud, ticket #388]
 
