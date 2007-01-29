@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.16 2007/01/26 22:59:49 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.17 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.16 2007/01/26 22:59:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.17 2007/01/29 15:42:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -238,9 +238,9 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	 * Ya, Ya, it's wrong wong wrong, me be fixink this someday.
 	 */
 	if (fstrans_is_owner(mp))
-		fstrans_start(mp, fstrans_lazy);
+		fstrans_start(mp, FSTRANS_LAZY);
 	else
-		fstrans_start(mp, fstrans_normal);
+		fstrans_start(mp, FSTRANS_NORMAL);
 	simple_lock(&pmp->pmp_lock);
 	fstrans_done(mp);
 
@@ -300,7 +300,7 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 		 * comment in 2017 and subsequently barf, my condolences ;).
 		 */
 		if (!fstrans_is_owner(mp)) {
-			fstrans_start(mp, fstrans_normal);
+			fstrans_start(mp, FSTRANS_NORMAL);
 			fstrans_done(mp);
 		}
 	}

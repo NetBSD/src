@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans.h,v 1.2 2007/01/24 22:49:21 pooka Exp $	*/
+/*	$NetBSD: fstrans.h,v 1.3 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,18 +49,18 @@
 #define SUSPEND_RESUME	0x0002		/* VFS_SUSPENDCTL: resume */
 
 enum fstrans_lock_type {
-	fstrans_lazy = 1,		/* Granted while not suspended */
-	fstrans_shared = 2		/* Granted while not suspending */
+	FSTRANS_LAZY = 1,		/* Granted while not suspended */
+	FSTRANS_SHARED = 2		/* Granted while not suspending */
 #ifdef _FSTRANS_API_PRIVATE
 	,
-	fstrans_excl = 3		/* Internal: exclusive lock */
+	FSTRANS_EXCL = 3		/* Internal: exclusive lock */
 #endif /* _FSTRANS_API_PRIVATE */
 };
 
 enum fstrans_state {
-	fstrans_normal,
-	fstrans_suspending,
-	fstrans_suspended
+	FSTRANS_NORMAL,
+	FSTRANS_SUSPENDING,
+	FSTRANS_SUSPENDED
 };
 
 void	fstrans_init(void);

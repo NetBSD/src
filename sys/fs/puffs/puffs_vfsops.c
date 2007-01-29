@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.26 2007/01/26 22:59:49 pooka Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.27 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.26 2007/01/26 22:59:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.27 2007/01/29 15:42:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -444,7 +444,7 @@ pageflush(struct mount *mp, int waitfor, int suspending)
 	KASSERT(((waitfor == MNT_WAIT) && suspending) == 0);
 	KASSERT((suspending == 0)
 	    || (fstrans_is_owner(mp)
-	      && fstrans_getstate(mp) == fstrans_suspending));
+	      && fstrans_getstate(mp) == FSTRANS_SUSPENDING));
 
 	error = 0;
 	ppflags = PGO_CLEANIT | PGO_ALLPAGES;
@@ -631,17 +631,17 @@ puffs_suspendctl(struct mount *mp, int cmd)
 	switch (cmd) {
 	case SUSPEND_SUSPEND:
 		DPRINTF(("puffs_suspendctl: suspending\n"));
-		if ((error = fstrans_setstate(mp, fstrans_suspending)) != 0)
+		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
 			break;
 		puffs_suspendtouser(pmp, PUFFS_SUSPEND_START);
 
 		error = pageflush(mp, 0, 1);
 		if (error == 0)
-			error = fstrans_setstate(mp, fstrans_suspended);
+			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 
 		if (error != 0) {
 			puffs_suspendtouser(pmp, PUFFS_SUSPEND_ERROR);
-			(void) fstrans_setstate(mp, fstrans_normal);
+			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
 			break;
 		}
 
@@ -652,7 +652,7 @@ puffs_suspendctl(struct mount *mp, int cmd)
 	case SUSPEND_RESUME:
 		DPRINTF(("puffs_suspendctl: resume\n"));
 		error = 0;
-		(void) fstrans_setstate(mp, fstrans_normal);
+		(void) fstrans_setstate(mp, FSTRANS_NORMAL);
 		puffs_suspendtouser(pmp, PUFFS_SUSPEND_RESUME);
 		break;
 
