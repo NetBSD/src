@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbd.c,v 1.20 2006/11/16 01:32:50 christos Exp $ */
+/*	$NetBSD: hpckbd.c,v 1.21 2007/01/29 01:52:44 hubertf Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.20 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.21 2007/01/29 01:52:44 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpckbd.c,v 1.20 2006/11/16 01:32:50 christos Exp $")
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
-#include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/pckbport/wskbdmap_mfii.h>
 #ifdef WSDISPLAY_COMPAT_RAWKBD

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2006/12/18 15:30:56 nonaka Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2007/01/29 01:52:45 hubertf Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2006/12/18 15:30:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2007/01/29 01:52:45 hubertf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,7 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2006/12/18 15:30:56 nonaka Exp $");
 #include <dev/cons.h>
 #include <sys/conf.h>
 #include <sys/queue.h>
-#include <sys/device.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -1020,7 +1019,6 @@ process_kernel_args(char *args)
  */
 #include "com.h"
 #if (NCOM > 0)
-#include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 #endif
 

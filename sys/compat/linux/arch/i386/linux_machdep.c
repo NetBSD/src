@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.120 2006/12/26 16:42:06 elad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.121 2007/01/29 01:52:44 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.120 2006/12/26 16:42:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.121 2007/01/29 01:52:44 hubertf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.120 2006/12/26 16:42:06 elad Exp
 #endif
 
 #ifdef USER_LDT
-#include <machine/cpu.h>
 int linux_read_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
     register_t *));
 int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
