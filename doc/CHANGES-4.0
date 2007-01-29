@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.55 2007/01/28 20:08:07 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.56 2007/01/29 15:57:41 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1021,4 +1021,15 @@ sys/arch/i386/conf/INSTALL_XEN2_DOMU		1.11
 	this option in INSTALL kernels can cause overwriting of existing
 	FreeBSD installations when sysinst writes back the disklabel.
 	[tls, ticket #386]
+
+sys/arch/i386/pci/pchb.c			1.63-1.64
+
+	According to http://www.intel.com/design/chipsets/specupdt/290639.htm,
+	the BIOS bug workaround for the i82443BX chipset's DRAM leadoff timing
+	parameter is not needed for revisions >= C0, so avoid tweaking that
+	parameter in that case.
+	Earlier, this would trigger NMIs on fully memory-populated Compaq
+	1850R systems, where the BIOS appears to program and require a non-
+	standard value for this parameter.
+	[he, ticket #392]
 
