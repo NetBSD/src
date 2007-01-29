@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.37.2.2 2007/01/12 01:00:49 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.37.2.3 2007/01/29 14:34:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37.2.2 2007/01/12 01:00:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37.2.3 2007/01/29 14:34:10 ad Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.37.2.2 2007/01/12 01:00:49 ad Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
+#include <sys/mutex.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #ifdef KTRACE
@@ -208,10 +209,10 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
@@ -802,7 +803,7 @@ do_onfault:
 			map = &vm->vm_map;
 			if (l->l_flag & L_SA) {
 				l->l_savp->savp_faultaddr = va;
-				l->l_flag |= L_SA_PAGEFAULT;
+				l->l_pflag |= LP_SA_PAGEFAULT;
 			}
 		}
 
@@ -831,7 +832,7 @@ do_onfault:
 #endif
 
 		if (map != kernel_map)
-			l->l_flag &= ~L_SA_PAGEFAULT;
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 
 		/*
 		 * If this was a stack access we keep track of the maximum

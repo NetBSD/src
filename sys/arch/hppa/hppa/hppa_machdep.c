@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.5.20.1 2006/11/18 21:29:17 ad Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.5.20.2 2007/01/29 14:34:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.5.20.1 2006/11/18 21:29:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.5.20.2 2007/01/29 14:34:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct saframe *sf, frame;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	uintptr_t upva;
 	vaddr_t va;
@@ -105,6 +106,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	sf = (void *)(va - 32 - sizeof(frame));
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -118,10 +120,12 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 		upva &= ~3;
 		if (copyin((void *)(upva + 4), &tf->tf_t4, 4)) {
 			printf("copyin t4 failed\n");
+			mutex_enter(&p->p_smutex);
 			sigexit(l, SIGILL);
 		}
 		if (copyin((void *)upva, &upcall, 4)) {
 			printf("copyin upcall failed\n");
+			mutex_enter(&p->p_smutex);
 			sigexit(l, SIGILL);
 		}
 	}
@@ -323,10 +327,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 			sizeof(l->l_addr->u_pcb.pcb_fpregs));
 	}
 
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk->ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	return 0;
 }

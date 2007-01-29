@@ -1,12 +1,11 @@
-/* 	$NetBSD: lock.h,v 1.9.20.2 2007/01/29 14:34:10 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.1 2007/01/29 14:34:10 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center, and Matthew Fredette.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,89 +36,28 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _HPPA_RWLOCK_H_
+#define	_HPPA_RWLOCK_H_
+
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+	uint32_t		rw_id;
+};
+
+#ifdef __RWLOCK_PRIVATE
+
+#define	__HAVE_SIMPLE_RW_LOCKS		1
+
 /*
- * Machine-dependent spin lock operations.
+ * _lock_cas() will take care of any memory barrier that is needed.
  */
+#define	RW_RECEIVE(rw)			/* nothing */
+#define	RW_GIVE(rw)			/* nothing */
 
-#ifndef _HPPA_LOCK_H_
-#define	_HPPA_LOCK_H_
+#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
 
-static __inline int
-__ldcw(__cpu_simple_lock_t *__ptr)
-{
-	int __val;
+int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-	__asm volatile("ldcw 0(%1), %0"
-	    : "=r" (__val) : "r" (__ptr)
-	    : "memory");
+#endif	/* __RWLOCK_PRIVATE */
 
-	return __val;
-}
-
-static __inline void
-__sync(void)
-{
-
-	__asm volatile("sync\n"
-		: /* no outputs */
-		: /* no inputs */
-		: "memory");
-}
-
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
-{
-
-	*alp = __SIMPLELOCK_UNLOCKED;
-	__sync();
-}
-
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
-
-	/*
-	 * Note, if we detect that the lock is held when
-	 * we do the initial load-clear-word, we spin using
-	 * a non-locked load to save the coherency logic
-	 * some work.
-	 */
-
-	while (__ldcw(alp) == __SIMPLELOCK_LOCKED)
-		while (*alp == __SIMPLELOCK_LOCKED)
-			;
-}
-
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-
-	return (__ldcw(alp) != __SIMPLELOCK_LOCKED);
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
-	__sync();
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline void
-mb_read(void)
-{
-	__sync();
-}
-
-static __inline void
-mb_write(void)
-{
-	__sync();
-}
-
-static __inline void
-mb_memory(void)
-{
-	__sync();
-}
-
-#endif /* _HPPA_LOCK_H_ */
+#endif /* _HPPA_RWLOCK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.19.20.1 2006/11/18 21:29:17 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.19.20.2 2007/01/29 14:34:10 ad Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19.20.1 2006/11/18 21:29:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19.20.2 2007/01/29 14:34:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,6 +229,13 @@ cpu_lwp_free(struct lwp *l, int proc)
 	 */
 
 	hppa_fpu_flush(l);
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	(void)l;
 }
 
 void
