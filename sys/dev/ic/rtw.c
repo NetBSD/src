@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.83 2007/01/06 08:27:53 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.84 2007/01/29 07:08:09 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.83 2007/01/06 08:27:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.84 2007/01/29 07:08:09 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3022,6 +3022,8 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 	struct rtw_softc *sc;
 	short *if_flagsp;
 
+	*mp = NULL;
+
 	sc = (struct rtw_softc *)ifp->if_softc;
 
 	DPRINTF(sc, RTW_DEBUG_XMIT,
@@ -3048,8 +3050,6 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txsoft_blk **tsbp,
 		DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: not running\n", __func__));
 		return 0;
 	}
-
-	*mp = NULL;
 
 	IFQ_POLL(&ifp->if_snd, m0);
 	if (m0 == NULL) {
