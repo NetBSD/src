@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.66 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.67 2007/01/29 12:11:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.66 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.67 2007/01/29 12:11:42 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -169,6 +169,8 @@ STATIC int rtk_list_tx_init(struct rtk_softc *);
 	CSR_WRITE_1(sc, RTK_EECMD,			\
 		CSR_READ_1(sc, RTK_EECMD) & ~(x))
 
+#define EE_DELAY()	DELAY(100)
+
 #define ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 /*
@@ -190,11 +192,11 @@ rtk_eeprom_putbyte(struct rtk_softc *sc, int addr, int addr_len)
 		} else {
 			EE_CLR(RTK_EE_DATAIN);
 		}
-		DELAY(4);
+		EE_DELAY();
 		EE_SET(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 		EE_CLR(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 	}
 }
 
@@ -208,14 +210,14 @@ rtk_read_eeprom(struct rtk_softc *sc, int addr, int addr_len)
 	int i;
 
 	/* Enter EEPROM access mode. */
-	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_PROGRAM|RTK_EE_SEL);
+	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_PROGRAM);
+	EE_DELAY();
+	EE_SET(RTK_EE_SEL);
 
 	/*
 	 * Send address of word we want to read.
 	 */
 	rtk_eeprom_putbyte(sc, addr, addr_len);
-
-	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_PROGRAM|RTK_EE_SEL);
 
 	/*
 	 * Start reading bits from EEPROM.
@@ -223,11 +225,11 @@ rtk_read_eeprom(struct rtk_softc *sc, int addr, int addr_len)
 	word = 0;
 	for (i = 16; i > 0; i--) {
 		EE_SET(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 		if (CSR_READ_1(sc, RTK_EECMD) & RTK_EE_DATAOUT)
 			word |= 1 << (i - 1);
 		EE_CLR(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 	}
 
 	/* Turn off EEPROM access mode. */
