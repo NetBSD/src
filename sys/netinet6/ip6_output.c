@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.111 2007/01/04 19:07:04 elad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.112 2007/01/29 06:12:48 dyoung Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.111 2007/01/04 19:07:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.112 2007/01/29 06:12:48 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2584,11 +2584,7 @@ ip6_setmoptions(optname, im6op, m)
 			dst->sin6_len = sizeof(*dst);
 			dst->sin6_addr = mreq->ipv6mr_multiaddr;
 			rtcache_init((struct route *)&ro);
-			if (ro.ro_rt == NULL) {
-				error = EADDRNOTAVAIL;
-				break;
-			}
-			ifp = ro.ro_rt->rt_ifp;
+			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
 			rtcache_free((struct route *)&ro);
 		} else {
 			/*
