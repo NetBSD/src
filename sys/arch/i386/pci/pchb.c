@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.62.2.1 2007/01/29 15:50:22 tron Exp $	*/
+/*	$NetBSD: pchb.c,v 1.62.2.2 2007/01/29 15:54:17 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.62.2.1 2007/01/29 15:50:22 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.62.2.2 2007/01/29 15:54:17 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -196,7 +196,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		case PCI_PRODUCT_INTEL_82443BX_NOAGP:
 		/*
 		 * http://www.intel.com/design/chipsets/specupdt/290639.htm
-		 * says this bug is fixed in revisions >= C0 (erratum 11),
+		 * says this bug is fixed in steppings >= C0 (erratum 11),
 		 * so don't tweak the bits in that case.
 		 */
 			if (!(PCI_REVISION(pa->pa_class) >= 0x03)) {
