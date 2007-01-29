@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.159 2007/01/28 20:15:44 matt Exp $
+#	$NetBSD: build.sh,v 1.160 2007/01/29 00:08:13 matt Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -277,18 +277,6 @@ getarch()
 	#
 	case "${MACHINE}" in
 
-	evbarm-eb)
-		MACHINE_ARCH=armeb
-		makewrappermachine=${MACHINE}
-		MACHINE=evbarm
-		;;
-
-	evbarm-el)
-		MACHINE_ARCH=arm
-		makewrappermachine=${MACHINE}
-		MACHINE=evbarm
-		;;
-
 	acorn26|acorn32|cats|evbarm|hpcarm|iyonix|netwinder|shark|zaurus)
 		MACHINE_ARCH=arm
 		;;
@@ -318,6 +306,12 @@ getarch()
 
 	pc532)
 		MACHINE_ARCH=ns32k
+		;;
+
+	evbppc64|macppc64)
+		makewrappermachine=${MACHINE}
+		MACHINE=${MACHINE%64}
+		MACHINE_ARCH=powerpc64
 		;;
 
 	amigappc|bebox|evbppc|ibmnws|macppc|mvmeppc|ofppc|pmppc|prep|sandpoint)
@@ -996,7 +990,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.159 2007/01/28 20:15:44 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.160 2007/01/29 00:08:13 matt Exp $
 # with these arguments: ${_args}
 #
 EOF
