@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.174 2007/01/13 23:13:46 joerg Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.175 2007/01/29 05:59:30 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.174 2007/01/13 23:13:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.175 2007/01/29 05:59:30 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1765,11 +1765,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 			dst->sin_family = AF_INET;
 			dst->sin_addr = mreq->imr_multiaddr;
 			rtcache_init(&ro);
-			if (ro.ro_rt == NULL) {
-				error = EADDRNOTAVAIL;
-				break;
-			}
-			ifp = ro.ro_rt->rt_ifp;
+			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
 			rtcache_free(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);
