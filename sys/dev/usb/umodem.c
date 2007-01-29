@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.54 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umodem.c,v 1.55 2007/01/29 01:52:45 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.54 2005/12/11 12:24:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.55 2007/01/29 01:52:45 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.54 2005/12/11 12:24:01 christos Exp $")
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/umodemvar.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.16 2006/12/08 15:05:18 yamt Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.17 2007/01/29 01:52:46 hubertf Exp $	*/
 
 /*
  *
@@ -59,9 +59,8 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.16 2006/12/08 15:05:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.17 2007/01/29 01:52:46 hubertf Exp $");
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 

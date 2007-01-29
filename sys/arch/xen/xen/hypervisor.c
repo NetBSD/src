@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.28 2006/10/15 13:31:18 yamt Exp $ */
+/* $NetBSD: hypervisor.c,v 1.29 2007/01/29 01:52:46 hubertf Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.28 2006/10/15 13:31:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.29 2007/01/29 01:52:46 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,12 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.28 2006/10/15 13:31:18 yamt Exp $")
 #endif
 #endif /* NPCI */
 
-#if NXENBUS > 0
-#include <machine/xenbus.h>
-#endif
-#ifdef XEN3
-#include <machine/granttables.h>
-#endif
 #if NXENBUS > 0
 #include <machine/xenbus.h>
 #endif

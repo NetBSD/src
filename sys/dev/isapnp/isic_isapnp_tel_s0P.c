@@ -38,14 +38,14 @@
  *		EXPERIMENTAL !!!
  *		================
  *
- *	$Id: isic_isapnp_tel_s0P.c,v 1.8 2005/12/11 12:22:16 christos Exp $
+ *	$Id: isic_isapnp_tel_s0P.c,v 1.9 2007/01/29 01:52:45 hubertf Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.8 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.9 2007/01/29 01:52:45 hubertf Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_TEL_S0_16_3_P
@@ -79,11 +79,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_tel_s0P.c,v 1.8 2005/12/11 12:22:16 chri
 #include <machine/i4b_debug.h>
 #include <machine/i4b_ioctl.h>
 #else
-#include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_l2.h>
-#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>

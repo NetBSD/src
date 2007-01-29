@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.50 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.51 2007/01/29 01:52:45 hubertf Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.50 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.51 2007/01/29 01:52:45 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.50 2006/11/16 01:33:27 christos Exp $")
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 
 #ifdef UPLCOM_DEBUG

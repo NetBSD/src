@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.48 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: cy.c,v 1.49 2007/01/29 01:52:45 hubertf Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.48 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.49 2007/01/29 01:52:45 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -26,7 +26,6 @@ __KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.48 2006/11/16 01:32:51 christos Exp $");
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/user.h>
-#include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/device.h>
 #include <sys/malloc.h>

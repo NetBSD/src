@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.25 2006/10/15 19:53:27 martin Exp $ */
+/*	$NetBSD: fb.c,v 1.26 2007/01/29 01:52:45 hubertf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.25 2006/10/15 19:53:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.26 2007/01/29 01:52:45 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,8 +400,6 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 
 
 #ifdef RASTERCONSOLE
-#include <machine/kbd.h>
-
 static void fb_bell(int);
 
 static void

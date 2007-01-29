@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2006/10/23 18:10:44 gson Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2007/01/29 01:52:46 hubertf Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2006/10/23 18:10:44 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2007/01/29 01:52:46 hubertf Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -172,7 +172,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2006/10/23 18:10:44 gson Exp $");
 #include <machine/apmvar.h>
 #endif
 
-#include "isa.h"
 #include "isadma.h"
 #include "npx.h"
 #include "ksyms.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.26 2006/11/16 01:32:44 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.27 2007/01/29 01:52:44 hubertf Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.26 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.27 2007/01/29 01:52:44 hubertf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.26 2006/11/16 01:32:44 christos Ex
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <net/if.h>
 #include <sys/malloc.h>

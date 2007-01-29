@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.43 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.44 2007/01/29 01:52:46 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.43 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.44 2007/01/29 01:52:46 hubertf Exp $");
 
 #include <sys/param.h>
 
@@ -44,11 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.43 2006/11/16 01:33:53 christos Exp $
 extern const int inside[], around[];
 extern const u_char * const fragtbl[];
 
-#ifndef _KERNEL
-#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
+
+#ifndef _KERNEL
+#include <ufs/ufs/dinode.h>
 void    panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
 
@@ -62,9 +63,6 @@ void    panic(const char *, ...)
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
-#include <ufs/ffs/fs.h>
-#include <ufs/ffs/ffs_extern.h>
-#include <ufs/ufs/ufs_bswap.h>
 
 /*
  * Load up the contents of an inode and copy the appropriate pieces
