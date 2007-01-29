@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.193 2007/01/19 14:49:12 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.194 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.193 2007/01/19 14:49:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.194 2007/01/29 15:42:50 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1320,7 +1320,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
-	if ((error = fstrans_start(mp, fstrans_shared)) != 0)
+	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
 		return error;
 	/*
 	 * Write back each (modified) inode.
@@ -1351,7 +1351,7 @@ loop:
 			continue;
 		}
 		if (vp->v_type == VBLK &&
-		    fstrans_getstate(mp) == fstrans_suspending) {
+		    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -1784,19 +1784,19 @@ ffs_suspendctl(struct mount *mp, int cmd)
 
 	switch (cmd) {
 	case SUSPEND_SUSPEND:
-		if ((error = fstrans_setstate(mp, fstrans_suspending)) != 0)
+		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
 			return error;
 		error = ffs_sync(mp, MNT_WAIT, l->l_proc->p_cred, l);
 		if (error == 0)
-			error = fstrans_setstate(mp, fstrans_suspended);
+			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
 		if (error != 0) {
-			(void) fstrans_setstate(mp, fstrans_normal);
+			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
 			return error;
 		}
 		return 0;
 
 	case SUSPEND_RESUME:
-		return fstrans_setstate(mp, fstrans_normal);
+		return fstrans_setstate(mp, FSTRANS_NORMAL);
 
 	default:
 		return EINVAL;

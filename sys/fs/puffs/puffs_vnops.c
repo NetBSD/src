@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.42 2007/01/26 23:25:56 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.43 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.42 2007/01/26 23:25:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.43 2007/01/29 15:42:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1925,7 +1925,7 @@ puffs_lock(void *v)
 	 * get fixed soon enough by getting rid of the dependency on
 	 * vnode locks alltogether.
 	 */
-	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == fstrans_suspending){
+	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
 		if (ap->a_flags & LK_INTERLOCK)
 			simple_unlock(&vp->v_interlock);
 		return 0;
@@ -1949,7 +1949,7 @@ puffs_unlock(void *v)
 #endif
 
 	/* XXX: see puffs_lock() */
-	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == fstrans_suspending){
+	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
 		if (ap->a_flags & LK_INTERLOCK)
 			simple_unlock(&vp->v_interlock);
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.143 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.144 2007/01/29 15:42:50 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.143 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.144 2007/01/29 15:42:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -600,7 +600,7 @@ startover:
 	    ridx, npages, startoffset, endoffset);
 
 	if (!has_trans &&
-	    (error = fstrans_start(vp->v_mount, fstrans_shared)) != 0) {
+	    (error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0) {
 		goto out_err;
 	}
 	has_trans = TRUE;
@@ -1089,9 +1089,9 @@ genfs_putpages(void *v)
 	if ((flags & PGO_CLEANIT) != 0) {
 		simple_unlock(slock);
 		if (pagedaemon)
-			error = fstrans_start_nowait(vp->v_mount, fstrans_lazy);
+			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
 		else
-			error = fstrans_start(vp->v_mount, fstrans_lazy);
+			error = fstrans_start(vp->v_mount, FSTRANS_LAZY);
 		if (error)
 			return error;
 		has_trans = TRUE;
