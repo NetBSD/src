@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.68 2006/12/15 21:18:56 joerg Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.69 2007/01/29 06:20:43 dyoung Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.68 2006/12/15 21:18:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.69 2007/01/29 06:20:43 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -359,7 +359,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	caddr_t mac;
 	struct route_in6 ro;
 
-	bzero(&ro, sizeof(ro));
+	memset(&ro, 0, sizeof(ro));
 
 	if (IN6_IS_ADDR_MULTICAST(taddr6))
 		return;
@@ -871,7 +871,7 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	struct route_in6 ro;
 
 	mac = NULL;
-	bzero(&ro, sizeof(ro));
+	memset(&ro, 0, sizeof(ro));
 
 	daddr6 = *daddr6_0;	/* make a local copy for modification */
 
@@ -930,7 +930,7 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 		flags &= ~ND_NA_FLAG_SOLICITED;
 	}
 	ip6->ip6_dst = daddr6;
-	bzero(&dst_sa, sizeof(struct sockaddr_in6));
+	memset(&dst_sa, 0, sizeof(dst_sa));
 	dst_sa.sin6_family = AF_INET6;
 	dst_sa.sin6_len = sizeof(struct sockaddr_in6);
 	dst_sa.sin6_addr = daddr6;
@@ -938,7 +938,7 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	/*
 	 * Select a source whose scope is the same as that of the dest.
 	 */
-	bcopy(&dst_sa, &ro.ro_dst, sizeof(dst_sa));
+	ro.ro_dst = dst_sa;
 	src = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL, NULL, &error);
 	if (src == NULL) {
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
