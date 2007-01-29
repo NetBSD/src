@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.241 2006/12/22 05:34:02 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.242 2007/01/29 05:48:56 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.241 2006/12/22 05:34:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.242 2007/01/29 05:48:56 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1692,7 +1692,7 @@ ip_rtaddr(struct in_addr dst)
 		if (ipforward_rt.ro_rt == NULL)
 			return NULL;
 	}
-	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
+	return ifatoia(ipforward_rt.ro_rt->rt_ifa);
 }
 
 /*
@@ -1879,7 +1879,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		rtcache_check(&ipforward_rt);
 	if (ipforward_rt.ro_rt == NULL) {
 		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(struct sockaddr_in);
+		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = ip->ip_dst;
 
 		rtcache_init(&ipforward_rt);
