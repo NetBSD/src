@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.684 2007/01/26 16:36:20 sborrill Exp $
+# $NetBSD: mi,v 1.685 2007/01/30 19:40:08 elad Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -574,7 +574,7 @@
 ./usr/bin/patch					base-util-bin
 ./usr/bin/pathchk				base-util-bin
 ./usr/bin/pawd					base-amd-bin
-./usr/bin/paxctl				base-util-bin
+./usr/bin/paxctl				base-obsolete		obsolete
 ./usr/bin/pgrep					base-util-bin
 ./usr/bin/pkill					base-util-bin
 ./usr/bin/pmap					base-util-bin
@@ -1154,6 +1154,7 @@
 ./usr/sbin/ntptrace				base-ntp-bin
 ./usr/sbin/omshell				base-dhcpd-bin
 ./usr/sbin/pac					base-sysutil-bin
+./usr/sbin/paxctl				base-sysutil-bin
 ./usr/sbin/pcictl				base-sysutil-bin
 ./usr/sbin/pfspamdb				base-obsolete		obsolete
 ./usr/sbin/pim6dd				base-obsolete		obsolete
