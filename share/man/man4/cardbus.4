@@ -1,4 +1,4 @@
-.\"	$NetBSD: cardbus.4,v 1.29 2007/01/12 20:34:09 gdt Exp $
+.\"	$NetBSD: cardbus.4,v 1.30 2007/01/30 13:01:34 tron Exp $
 .\"
 .\" Copyright (c) 1999-2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -137,7 +137,7 @@ then enabling
 or (if ACPI is in use)
 .Bl -item -offset indent -compact
 .It
-.Cd ACPI_PCI_FIXUP
+.Cd options PCI_INTR_FIXUP_DISABLED
 .El
 in the kernel configuration might be of use.
 .Sh SEE ALSO
