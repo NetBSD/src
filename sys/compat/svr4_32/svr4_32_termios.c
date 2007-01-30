@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.c,v 1.10 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_32_termios.c,v 1.10.20.1 2007/01/30 13:51:38 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.10 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.10.20.1 2007/01/30 13:51:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_termios.c,v 1.10 2005/12/11 12:20:26 christo
 #include <net/if.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>

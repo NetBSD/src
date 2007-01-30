@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.32.2.1 2006/11/18 21:29:31 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.32.2.2 2007/01/30 13:49:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.32.2.1 2006/11/18 21:29:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.32.2.2 2007/01/30 13:49:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,8 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.32.2.1 2006/11/18 21:29:31 ad Exp $"
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -366,11 +364,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		return;
 	}
 
-	if ((map != kernel_map) && (l->l_flag & L_SA)) {
-		l->l_savp->savp_faultaddr = (vaddr_t)va;
-		l->l_flag |= L_SA_PAGEFAULT;
-	}
-
 	err = uvm_fault(map, va, ftype);
 
 	/* User stack extension */
@@ -388,8 +381,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		}
 	}
 
-	if (map != kernel_map)
-		l->l_flag &= ~L_SA_PAGEFAULT;
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
 		boolean_t loaded = __pmap_pte_load(pmap, va, track);
@@ -464,7 +455,7 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		if (want_resched) {
 			/* We are being preempted. */
-			preempt(0);
+			preempt();
 		}
 
 		userret(l);
@@ -514,19 +505,6 @@ startlwp(void *arg)
 		printf("startlwp: error %d from cpu_setmcontext()", error);
 #endif
 	pool_put(&lwp_uc_pool, uc);
-
-	userret(l);
-}
-
-/*
- * void upcallret(struct lwp *l):
- *
- *	Perform userret() for an LWP.
- *	XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
 
 	userret(l);
 }

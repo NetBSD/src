@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.c,v 1.18.20.1 2006/11/18 21:39:15 ad Exp $	 */
+/*	$NetBSD: svr4_32_exec.c,v 1.18.20.2 2007/01/30 13:51:37 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.18.20.1 2006/11/18 21:39:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec.c,v 1.18.20.2 2007/01/30 13:51:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -106,5 +106,5 @@ const struct emul emul_svr4_32 = {
 
 	svr4_32_vm_default_addr,
 	NULL,
-	NULL,
+	0,
 };

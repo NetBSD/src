@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.10 2007/01/28 07:20:39 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.11 2007/01/30 13:51:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.10 2007/01/28 07:20:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.11 2007/01/30 13:51:40 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.10 2007/01/28 07:20:39 ad Exp $
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>

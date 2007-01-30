@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_schedctl.c,v 1.3 2005/12/11 12:20:26 christos Exp $ */
+/* $NetBSD: svr4_32_schedctl.c,v 1.3.20.1 2007/01/30 13:51:37 ad Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_schedctl.c,v 1.3 2005/12/11 12:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_schedctl.c,v 1.3.20.1 2007/01/30 13:51:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_schedctl.c,v 1.3 2005/12/11 12:20:26 christo
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>

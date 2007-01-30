@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.25.8.2 2007/01/28 08:59:45 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.25.8.3 2007/01/30 13:49:37 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25.8.2 2007/01/28 08:59:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25.8.3 2007/01/30 13:49:37 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25.8.2 2007/01/28 08:59:45 ad Exp 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/ucontext.h>
@@ -60,7 +58,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = trapframe(l);
-	struct sigaltstack *ss = l->l_sigstk;
+	struct sigaltstack *ss = &l->l_sigstk;
 	const struct sigact_sigdesc *sd =
 	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];
 	ucontext_t uc;

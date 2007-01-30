@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.6.2 2007/01/12 01:00:47 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.1.6.3 2007/01/30 13:49:34 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.6.2 2007/01/12 01:00:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.6.3 2007/01/30 13:49:34 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.6.2 2007/01/12 01:00:47 ad Exp $");
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>

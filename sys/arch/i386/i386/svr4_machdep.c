@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.79.2.1 2006/10/24 21:10:22 ad Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.79.2.2 2007/01/30 13:49:34 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79.2.1 2006/10/24 21:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79.2.2 2007/01/30 13:49:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.79.2.1 2006/10/24 21:10:22 ad Exp
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 
@@ -380,7 +379,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	struct svr4_sigframe *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = l->l_sigstk;
+	struct sigaltstack *sas = &l->l_sigstk;
 	struct trapframe *tf = l->l_md.md_regs;
 
 	fp--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.4.5 2007/01/25 20:04:59 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.6 2007/01/30 13:51:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.5 2007/01/25 20:04:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.6 2007/01/30 13:51:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.5 2007/01/25 20:04:59 ad Exp
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef KTRACE
@@ -631,7 +630,7 @@ ktrgenio(struct lwp *l, int fd, enum uio_rw rw, struct iovec *iov,
 		/* XXX NJWLWP */
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
 			(void)ktrenter(l);
-			preempt(1);
+			preempt();
 			ktrexit(l);
 		}
 
@@ -808,44 +807,6 @@ ktrmool(struct lwp *l, const void *kaddr, size_t size, const void *uaddr)
 	bf = kp + 1; /* Skip uaddr and size */
 	(void)memcpy(bf, kaddr, size);
 
-	ktraddentry(l, kte, KTA_WAITOK);
-}
-
-void
-ktrsaupcall(struct lwp *l, int type, int nevent, int nint, void *sas,
-    void *ap)
-{
-	struct ktrace_entry *kte;
-	struct ktr_saupcall *ktp;
-	size_t len, sz;
-	struct sa_t **sapp;
-	int i;
-
-	if (ktrenter(l))
-		return;
-
-	len = sizeof(struct ktr_saupcall);
-	sz = len + sizeof(struct sa_t) * (nevent + nint + 1);
-
-	if (ktealloc(&kte, (void *)&ktp, l, KTR_SAUPCALL, sz))
-		return;
-
-	ktp->ktr_type = type;
-	ktp->ktr_nevent = nevent;
-	ktp->ktr_nint = nint;
-	ktp->ktr_sas = sas;
-	ktp->ktr_ap = ap;
-
-	/* Copy the sa_t's */
-	sapp = (struct sa_t **) sas;
-
-	for (i = nevent + nint; i >= 0; i--) {
-		if (copyin(*sapp, (char *)ktp + len, sizeof(struct sa_t)) == 0)
-			len += sizeof(struct sa_t);
-		sapp++;
-	}
-
-	kte->kte_kth.ktr_len = len;
 	ktraddentry(l, kte, KTA_WAITOK);
 }
 
@@ -1273,7 +1234,7 @@ again:
 		break;
 
 	case EWOULDBLOCK:
-		preempt(1);
+		preempt();
 		goto again;
 
 	default:

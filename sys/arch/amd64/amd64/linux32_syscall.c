@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.6.4.3 2007/01/11 22:22:56 ad Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.6.4.4 2007/01/30 13:49:33 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.6.4.3 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.6.4.4 2007/01/30 13:49:33 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -10,8 +10,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.6.4.3 2007/01/11 22:22:56 ad E
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>

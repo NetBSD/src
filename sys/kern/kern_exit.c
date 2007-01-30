@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.9 2007/01/13 17:54:48 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.10 2007/01/30 13:51:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.9 2007/01/13 17:54:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.10 2007/01/30 13:51:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -106,8 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.9 2007/01/13 17:54:48 ad Exp $
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/systrace.h>
@@ -195,7 +193,7 @@ void
 exit1(struct lwp *l, int rv)
 {
 	struct proc	*p, *q, *nq;
-	int		s, sa;
+	int		s;
 	ksiginfo_t	ksi;
 	int		wakeinit;
 
@@ -207,31 +205,14 @@ exit1(struct lwp *l, int rv)
 		panic("init died (signal %d, exit %d)",
 		    WTERMSIG(rv), WEXITSTATUS(rv));
 
-	/*
-	 * Disable scheduler activation upcalls.  We're trying to get out of
-	 * here.
-	 */
-	sa = 0;
-	if (p->p_sa != NULL) {
-		l->l_flag &= ~L_SA;
-#if 0
-		p->p_flag &= ~P_SA;
-#endif
-		sa = 1;
-	}
-
 	p->p_sflag |= PS_WEXIT;
 
 	/*
 	 * Force all other LWPs to exit before we do.  Only then can we
 	 * begin to tear down the rest of the process state.
 	 */
-	if (sa || p->p_nlwps > 1) {
+	if (p->p_nlwps > 1)
 		exit_lwps(l);
-#ifdef notyet /* XXXAD */
-		sadata_upcall_drain();
-#endif
-	}
 
 	/*
 	 * If we have been asked to stop on exit, do so now.
@@ -622,38 +603,10 @@ exit_lwps(struct lwp *l)
 {
 	struct proc *p;
 	struct lwp *l2;
-	struct sadata_vp *vp;
 	int error;
 	lwpid_t waited;
 
 	p = l->l_proc;
-
-	if (p->p_sa != NULL) {
-		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-			/*
-			 * Make SA-cached LWPs normal process runnable
-			 * LWPs so that they'll also self-destruct.
-			 */
-			DPRINTF(("exit_lwps: Making cached LWPs of %d on "
-			    "VP %d runnable: ", p->p_pid, vp->savp_id));
-			while ((l2 = sa_getcachelwp(p, vp)) != 0) {
-				lwp_lock(l2);
-				l2->l_flag = (l2->l_flag & ~L_SA) | L_WEXIT;
-				l2->l_priority = l2->l_usrpri;
-
-				/* setrunnable() will release the mutex. */
-				setrunnable(l2);
-				DPRINTF(("%d ", l2->l_lid));
-			}
-			DPRINTF(("\n"));
-
-			/*
-			 * Clear wokenq, the LWPs on the queue will
-			 * run below.
-			 */
-			vp->savp_wokenq_head = NULL;
-		}
-	}
 
  retry:
 	/*
@@ -664,7 +617,7 @@ exit_lwps(struct lwp *l)
 		if (l2 == l)
 			continue;
 		lwp_lock(l2);
-		l2->l_flag = (l2->l_flag & ~L_SA) | L_WEXIT;
+		l2->l_flag |= L_WEXIT;
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
 		    	/* setrunnable() will release the lock. */
@@ -955,10 +908,6 @@ proc_free(struct proc *p, struct rusage **ru)
 	rup = p->p_ru;
 	if (ru != NULL)
 		*ru = rup;
-
-	/* Release any SA state. */
-	if (p->p_sa)
-		sa_release(p);
 
 	l = LIST_FIRST(&p->p_lwps);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.105 2006/07/23 22:06:08 ad Exp $     */
+/*	$NetBSD: trap.c,v 1.105.4.1 2007/01/30 13:49:38 ad Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105.4.1 2007/01/30 13:49:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.105 2006/07/23 22:06:08 ad Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
 
@@ -215,13 +213,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if (umode) {
+		if (umode)
 			KERNEL_PROC_LOCK(l);
-			if (l->l_flag & L_SA) {
-				l->l_savp->savp_faultaddr = (vaddr_t)frame->code;
-				l->l_flag |= L_SA_PAGEFAULT;
-			}
-		} else
+		else
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 		rv = uvm_fault(map, addr, ftype);
@@ -250,10 +244,9 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			if (map != kernel_map && (caddr_t)addr >= vm->vm_maxsaddr)
 				uvm_grow(p, addr);
 		}
-		if (umode) {
-			l->l_flag &= ~L_SA_PAGEFAULT;
+		if (umode)
 			KERNEL_PROC_UNLOCK(l);
-		} else
+		else
 			KERNEL_UNLOCK();
 		break;
 
@@ -361,12 +354,3 @@ startlwp(arg)
 	/* XXX - profiling spoiled here */
 	userret(l, l->l_addr->u_pcb.framep, l->l_proc->p_sticks);
 }
-
-void
-upcallret(struct lwp *l)
-{
-
-	/* XXX - profiling */
-	userret(l, l->l_addr->u_pcb.framep, l->l_proc->p_sticks);
-}
-

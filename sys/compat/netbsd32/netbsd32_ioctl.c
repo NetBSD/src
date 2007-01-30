@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.25.20.1 2006/11/18 21:39:12 ad Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.25.20.2 2007/01/30 13:51:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.25.20.1 2006/11/18 21:39:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.25.20.2 2007/01/30 13:51:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.25.20.1 2006/11/18 21:39:12 ad 
 #include <sys/socket.h>
 #include <sys/ttycom.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef __sparc__

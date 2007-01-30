@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.20 2006/06/12 00:42:18 christos Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.20.6.1 2007/01/30 13:51:32 ad Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.20 2006/06/12 00:42:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.20.6.1 2007/01/30 13:51:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.20 2006/06/12 00:42:18 christos Ex
 #include <sys/dvdio.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

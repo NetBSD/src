@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.8 2007/01/27 01:14:54 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.9 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.8 2007/01/27 01:14:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.9 2007/01/30 13:51:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.8 2007/01/27 01:14:54 ad E
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

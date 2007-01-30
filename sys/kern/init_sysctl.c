@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81.4.7 2007/01/12 01:04:06 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.8 2007/01/30 13:51:40 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.7 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.8 2007/01/30 13:51:40 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -137,7 +137,6 @@ static const u_int sysctl_lwpflagmap[] = {
 	L_SELECT, KP_SELECT,
 	L_SINTR, KP_SINTR,
 	L_SYSTEM, KP_SYSTEM,
-	L_SA, KP_SA,
 	0
 };
 
@@ -2790,7 +2789,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		/* This is hardly correct, but... */
 		sigplusset(&l->l_sigpend.sp_set, &ss1);
-		sigplusset(l->l_sigmask, &ss2);
+		sigplusset(&l->l_sigmask, &ss2);
 	}
 	memcpy(&ki->p_siglist, &ss1, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &ss2, sizeof(ki_sigset_t));

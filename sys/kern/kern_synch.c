@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.16 2007/01/28 07:20:39 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.17 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.16 2007/01/28 07:20:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.17 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -96,8 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.16 2007/01/28 07:20:39 ad Exp
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -520,16 +518,6 @@ kpause(const char *wmesg, boolean_t intr, int timo, kmutex_t *mtx)
 	return error;
 }
 
-void
-sa_awaken(struct lwp *l)
-{
-
-	LOCK_ASSERT(lwp_locked(l, NULL));
-
-	if (l == l->l_savp->savp_lwp && l->l_flag & L_SA_YIELD)
-		l->l_flag &= ~L_SA_IDLE;
-}
-
 /*
  * OBSOLETE INTERFACE
  *
@@ -588,16 +576,11 @@ yield(void)
 /*
  * General preemption call.  Puts the current process back on its run queue
  * and performs an involuntary context switch.
- * The 'more' ("more work to do") argument is boolean. Returning to userspace
- * preempt() calls pass 0. "Voluntary" preemptions in e.g. uiomove() pass 1.
- * This will be used to indicate to the SA subsystem that the LWP is
- * not yet finished in the kernel.
  */
 void
-preempt(int more)
+preempt(void)
 {
 	struct lwp *l = curlwp;
-	int r;
 
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
@@ -605,10 +588,7 @@ preempt(int more)
 		l->l_priority = l->l_usrpri;
 	}
 	l->l_nivcsw++;
-	r = mi_switch(l, NULL);
-
-	if ((l->l_flag & L_SA) != 0 && r != 0 && more == 0)
-		sa_preempt(l);
+	(void)mi_switch(l, NULL);
 }
 
 /*
@@ -856,9 +836,6 @@ setrunnable(struct lwp *l)
 	}
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
-
-	if (l->l_proc->p_sa)
-		sa_awaken(l);
 
 	/*
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be

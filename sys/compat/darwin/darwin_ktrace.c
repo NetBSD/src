@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ktrace.c,v 1.4.20.1 2006/11/18 21:39:04 ad Exp $ */
+/*	$NetBSD: darwin_ktrace.c,v 1.4.20.2 2007/01/30 13:51:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ktrace.c,v 1.4.20.1 2006/11/18 21:39:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ktrace.c,v 1.4.20.2 2007/01/30 13:51:31 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ktrace.c,v 1.4.20.1 2006/11/18 21:39:04 ad Ex
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/ktrace.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>

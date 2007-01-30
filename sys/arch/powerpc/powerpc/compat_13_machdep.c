@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.11.20.1 2007/01/28 08:59:45 ad Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.11.20.2 2007/01/30 13:49:37 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11.20.1 2007/01/28 08:59:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11.20.2 2007/01/30 13:49:37 ad Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11.20.1 2007/01/28 08:59:45 
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>  
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -90,9 +89,9 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&sc.sc_mask, &mask);

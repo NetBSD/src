@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscalls.c,v 1.26 2006/09/01 21:19:45 matt Exp $ */
+/* $NetBSD: pecoff_syscalls.c,v 1.26.2.1 2007/01/30 13:51:37 ad Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.26 2006/09/01 21:19:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.26.2.1 2007/01/30 13:51:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -26,7 +26,6 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.26 2006/09/01 21:19:45 matt Ex
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/shm.h>
 #include <sys/syscallargs.h>
 #include <compat/pecoff/pecoff_syscallargs.h>
@@ -503,12 +502,12 @@ const char *const pecoff_syscallnames[] = {
 	"#327 (unimplemented)",		/* 327 = unimplemented */
 	"#328 (unimplemented)",		/* 328 = unimplemented */
 	"#329 (unimplemented)",		/* 329 = unimplemented */
-	"sa_register",			/* 330 = sa_register */
-	"sa_stacks",			/* 331 = sa_stacks */
-	"sa_enable",			/* 332 = sa_enable */
-	"sa_setconcurrency",			/* 333 = sa_setconcurrency */
-	"sa_yield",			/* 334 = sa_yield */
-	"sa_preempt",			/* 335 = sa_preempt */
+	"#330 (obsolete sys_sa_register)",		/* 330 = obsolete sys_sa_register */
+	"#331 (obsolete sys_sa_stacks)",		/* 331 = obsolete sys_sa_stacks */
+	"#332 (obsolete sys_sa_enable)",		/* 332 = obsolete sys_sa_enable */
+	"#333 (obsolete sys_sa_setconcurrency)",		/* 333 = obsolete sys_sa_setconcurrency */
+	"#334 (obsolete sys_sa_yield)",		/* 334 = obsolete sys_sa_yield */
+	"#335 (obsolete sys_sa_preempt)",		/* 335 = obsolete sys_sa_preempt */
 	"#336 (obsolete sys_sa_unblockyield)",		/* 336 = obsolete sys_sa_unblockyield */
 	"#337 (unimplemented)",		/* 337 = unimplemented */
 	"#338 (unimplemented)",		/* 338 = unimplemented */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28.4.2 2007/01/27 01:40:59 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.28.4.3 2007/01/30 13:51:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.4.2 2007/01/27 01:40:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.4.3 2007/01/30 13:51:32 ad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.4.2 2007/01/27 01:40:59 ad Ex
 #include <sys/mount.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
@@ -417,11 +416,11 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
-	kf.sf_uc.uc_stack.ss_sp = l->l_sigstk->ss_sp;
+	kf.sf_uc.uc_stack.ss_sp = l->l_sigstk.ss_sp;
 	kf.sf_uc.uc_stack.ss_flags =
-		(l->l_sigstk->ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
-		(l->l_sigstk->ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
-	kf.sf_uc.uc_stack.ss_size = l->l_sigstk->ss_size;
+		(l->l_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
+		(l->l_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
+	kf.sf_uc.uc_stack.ss_size = l->l_sigstk.ss_size;
 	sendsig_reset(l, sig);
 
 	mutex_exit(&p->p_smutex);
@@ -487,7 +486,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -572,7 +571,7 @@ bad:		sigexit(l, SIGSEGV);
 	mutex_enter(&p->p_smutex);
 
 	/* Restore signal stack. */
-	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 #if LINUX__NSIG_WORDS > 1
@@ -728,8 +727,8 @@ bad:		sigexit(l, SIGSEGV);
 	mutex_enter(&p->p_smutex);
 
 	/* Restore signal stack. */
-	l->l_sigstk->ss_flags =
-		(l->l_sigstk->ss_flags & ~SS_ONSTACK) |
+	l->l_sigstk.ss_flags =
+		(l->l_sigstk.ss_flags & ~SS_ONSTACK) |
 		(tuc.uc_stack.ss_flags & LINUX_SS_ONSTACK ? SS_ONSTACK : 0);
 
 	/* Restore signal mask. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.86.2.1 2006/11/18 21:39:06 ad Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.86.2.2 2007/01/30 13:51:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.86.2.1 2006/11/18 21:39:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.86.2.2 2007/01/30 13:51:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.86.2.1 2006/11/18 21:39:06 ad Exp $
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <sys/ptrace.h>	/* For proc_reparent() */
@@ -158,7 +157,7 @@ const struct emul emul_linux = {
 	uvm_default_mapaddr,
 
 	linux_usertrap,
-	NULL,
+	0,
 };
 
 static void

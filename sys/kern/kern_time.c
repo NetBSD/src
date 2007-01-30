@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.105.4.8 2007/01/28 01:34:18 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.105.4.9 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,15 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.8 2007/01/28 01:34:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.105.4.9 2007/01/30 13:51:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
@@ -1030,51 +1028,6 @@ sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
-/* Glue function that triggers an upcall; called from userret(). */
-void
-timerupcall(struct lwp *l)
-{
-	struct ptimers *pt = l->l_proc->p_timers;
-	unsigned int i, fired, done;
-
-	KDASSERT(l->l_proc->p_sa);
-	/* Bail out if we do not own the virtual processor */
-	if (l->l_savp->savp_lwp != l)
-		return ;
-
-	KERNEL_LOCK(1, l);
-
-	fired = pt->pts_fired;
-	done = 0;
-	while ((i = ffs(fired)) != 0) {
-		siginfo_t *si;
-		int mask = 1 << --i;
-		int f;
-
-		lwp_lock(l);
-		f = l->l_flag & L_SA;
-		l->l_flag &= ~L_SA;
-		lwp_unlock(l);
-		si = siginfo_alloc(PR_WAITOK);
-		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
-		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
-		    sizeof(*si), si, siginfo_free) != 0) {
-			siginfo_free(si);
-			/* XXX What do we do here?? */
-		} else
-			done |= mask;
-		fired &= ~mask;
-		lwp_lock(l);
-		l->l_flag |= f;
-		lwp_unlock(l);
-	}
-	pt->pts_fired &= ~done;
-	if (pt->pts_fired == 0)
-		l->l_proc->p_timerpend = 0;
-
-	KERNEL_UNLOCK_LAST(l);
-}
-
 /*
  * Real interval timer expired:
  * send process whose timer expired an alarm signal.
@@ -1440,8 +1393,6 @@ void
 itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
-	struct sadata_vp *vp;
-	unsigned int i;
 
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
 		/*
@@ -1462,43 +1413,6 @@ itimerfire(struct ptimer *pt)
 			mutex_enter(&proclist_mutex);
 			kpsignal(p, &ksi, NULL);
 			mutex_exit(&proclist_mutex);
-		}
-	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_sflag & PS_SA)) {
-		/* Cause the process to generate an upcall when it returns. */
-		if (!p->p_timerpend) {
-			/*
-			 * XXX stop signals can be processed inside tsleep,
-			 * which can be inside sa_yield's inner loop, which
-			 * makes testing for sa_idle alone insuffucent to
-			 * determine if we really should call setrunnable.
-			 */
-			pt->pt_poverruns = pt->pt_overruns;
-			pt->pt_overruns = 0;
-			i = 1 << pt->pt_entry;
-			p->p_timers->pts_fired = i;
-			p->p_timerpend = 1;
-
-			mutex_enter(&p->p_smutex);
-			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-				lwp_need_userret(vp->savp_lwp);
-				lwp_lock(vp->savp_lwp);
-				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
-					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
-					lwp_unlock(vp->savp_lwp);
-					wakeup(vp->savp_lwp);
-					break;
-				}
-				lwp_unlock(vp->savp_lwp);
-			}
-			mutex_exit(&p->p_smutex);
-		} else {
-			i = 1 << pt->pt_entry;
-			if ((p->p_timers->pts_fired & i) == 0) {
-				pt->pt_poverruns = pt->pt_overruns;
-				pt->pt_overruns = 0;
-				p->p_timers->pts_fired |= i;
-			} else
-				pt->pt_overruns++;
 		}
 	}
 }

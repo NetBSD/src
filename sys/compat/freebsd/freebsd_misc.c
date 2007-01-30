@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.24.20.2 2006/11/18 21:39:04 ad Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.24.20.3 2007/01/30 13:51:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.24.20.2 2006/11/18 21:39:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.24.20.3 2007/01/30 13:51:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.24.20.2 2006/11/18 21:39:04 ad Ex
 #include <sys/ktrace.h>
 #endif
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>

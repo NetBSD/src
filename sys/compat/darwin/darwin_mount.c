@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.7.20.1 2006/11/18 21:39:04 ad Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.7.20.2 2007/01/30 13:51:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.7.20.1 2006/11/18 21:39:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.7.20.2 2007/01/30 13:51:31 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>

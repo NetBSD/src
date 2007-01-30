@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110.2.7 2007/01/27 01:29:05 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.8 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.7 2007/01/27 01:29:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.8 2007/01/30 13:51:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.7 2007/01/27 01:29:05 ad Exp
 #include <sys/malloc.h>
 #include <sys/kauth.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

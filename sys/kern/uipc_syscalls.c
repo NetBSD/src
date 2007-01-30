@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.102.2.3 2007/01/16 07:10:07 ad Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.102.2.4 2007/01/30 13:51:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102.2.3 2007/01/16 07:10:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102.2.4 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.102.2.3 2007/01/16 07:10:07 ad E
 #include <sys/event.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

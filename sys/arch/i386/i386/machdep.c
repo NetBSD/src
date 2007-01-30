@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577.4.6 2007/01/12 01:00:50 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.4.7 2007/01/30 13:49:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.6 2007/01/12 01:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.7 2007/01/30 13:49:34 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -114,8 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.6 2007/01/12 01:00:50 ad Exp $")
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/ksyms.h>
 
 #ifdef IPKDB
@@ -720,10 +718,10 @@ getframe(struct lwp *l, int sig, int *onstack)
 	struct trapframe *tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size;
+		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM)
 		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
@@ -793,7 +791,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
-	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
@@ -820,7 +818,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -835,44 +833,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		sendsig_siginfo(ksi, mask);
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
-	struct saframe *sf, frame;
-	struct trapframe *tf;
-
-	tf = l->l_md.md_regs;
-
-	/* Finally, copy out the rest of the frame. */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = ap;
-	frame.sa_ra = 0;
-
-	sf = (struct saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_eip = (int) upcall;
-	tf->tf_esp = (int) sf;
-	tf->tf_ebp = 0; /* indicate call-frame-top to debuggers */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
-	    GSEL(GUCODEBIG_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 }
 
 int	waittime = -1;
@@ -2471,9 +2431,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	}
 	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(&p->p_smutex);
 	return (0);
 }

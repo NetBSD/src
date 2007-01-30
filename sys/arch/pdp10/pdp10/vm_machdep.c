@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4.20.1 2007/01/30 13:49:37 ad Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,7 +30,6 @@
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

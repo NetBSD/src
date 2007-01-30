@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.79.4.2 2007/01/12 01:04:25 ad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.79.4.3 2007/01/30 13:51:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.79.4.2 2007/01/12 01:04:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.79.4.3 2007/01/30 13:51:43 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -255,7 +255,7 @@ ufs_lookup(void *v)
 searchloop:
 	while (dp->i_offset < endsearch) {
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt(1);
+			preempt();
 		/*
 		 * If necessary, get the next directory block.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.6.20.1 2007/01/28 08:59:45 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.6.20.2 2007/01/30 13:49:37 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.20.1 2007/01/28 08:59:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.20.2 2007/01/30 13:49:37 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_altivec.h"
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.20.1 2007/01/28 08:59:45 a
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/ucontext.h>
@@ -72,13 +70,13 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct sigcontext *)((caddr_t)l->l_sigstk->ss_sp +
-						l->l_sigstk->ss_size);
+		fp = (struct sigcontext *)((caddr_t)l->l_sigstk.ss_sp +
+						l->l_sigstk.ss_size);
 	else
 		fp = (struct sigcontext *)tf->fixreg[1];
 	fp = (struct sigcontext *)((uintptr_t)(fp - 1) & ~0xf);
@@ -103,7 +101,7 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 #endif
 
 	/* Save signal stack. */
-	frame.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	frame.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sc_mask = *mask;
@@ -163,7 +161,7 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -218,9 +216,9 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &sc.sc_mask, 0);
 	mutex_exit(&p->p_smutex);

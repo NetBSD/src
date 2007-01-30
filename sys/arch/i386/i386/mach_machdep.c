@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.17.20.1 2006/11/18 21:29:18 ad Exp $	 */
+/*	$NetBSD: mach_machdep.c,v 1.17.20.2 2007/01/30 13:49:34 ad Exp $	 */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17.20.1 2006/11/18 21:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17.20.2 2007/01/30 13:49:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.17.20.1 2006/11/18 21:29:18 ad Ex
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/exec_macho.h>

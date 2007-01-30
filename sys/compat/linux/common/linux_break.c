@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_break.c,v 1.51.48.1 2006/11/18 21:39:06 ad Exp $	*/
+/*	$NetBSD: linux_break.c,v 1.51.48.2 2007/01/30 13:51:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.51.48.1 2006/11/18 21:39:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.51.48.2 2007/01/30 13:51:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

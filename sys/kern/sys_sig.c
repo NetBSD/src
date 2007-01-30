@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.8 2007/01/28 01:34:18 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.9 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.8 2007/01/28 01:34:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.9 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -85,8 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.8 2007/01/28 01:34:18 ad Exp $");
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/wait.h>
@@ -522,25 +520,25 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 	LOCK_ASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 	if (oss)
-		*oss = *l->l_sigmask;
+		*oss = l->l_sigmask;
 	if (nss) {
 		switch (how) {
 		case SIG_BLOCK:
-			sigplusset(nss, l->l_sigmask);
+			sigplusset(nss, &l->l_sigmask);
 			more = 0;
 			break;
 		case SIG_UNBLOCK:
-			sigminusset(nss, l->l_sigmask);
+			sigminusset(nss, &l->l_sigmask);
 			more = 1;
 			break;
 		case SIG_SETMASK:
-			*l->l_sigmask = *nss;
+			l->l_sigmask = *nss;
 			more = 1;
 			break;
 		default:
 			return (EINVAL);
 		}
-		sigminusset(&sigcantmask, l->l_sigmask);
+		sigminusset(&sigcantmask, &l->l_sigmask);
 		if (more) {
 			/*
 			 * Check for pending signals on return to user.
@@ -562,7 +560,7 @@ sigpending1(struct lwp *l, sigset_t *ss)
 	mutex_enter(&p->p_smutex);
 	*ss = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, ss);
-	sigminusset(l->l_sigmask, ss);
+	sigminusset(&l->l_sigmask, ss);
 	mutex_exit(&p->p_smutex);
 }
 
@@ -583,9 +581,9 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		 */
 		mutex_enter(&p->p_smutex);
 		l->l_sigrestore = 1;
-		l->l_sigoldmask = *l->l_sigmask;
-		*l->l_sigmask = *ss;
-		sigminusset(&sigcantmask, l->l_sigmask);
+		l->l_sigoldmask = l->l_sigmask;
+		l->l_sigmask = *ss;
+		sigminusset(&sigcantmask, &l->l_sigmask);
 
 		/* Check for pending signals when sleeping. */
 		lwp_lock(l);
@@ -611,19 +609,19 @@ sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
 	mutex_enter(&p->p_smutex);
 
 	if (oss)
-		*oss = *l->l_sigstk;
+		*oss = l->l_sigstk;
 
 	if (nss) {
 		if (nss->ss_flags & ~SS_ALLBITS)
 			error = EINVAL;
 		else if (nss->ss_flags & SS_DISABLE) {
-			if (l->l_sigstk->ss_flags & SS_ONSTACK)
+			if (l->l_sigstk.ss_flags & SS_ONSTACK)
 				error = EINVAL;
 		} else if (nss->ss_size < MINSIGSTKSZ)
 			error = ENOMEM;
 
 		if (!error)
-			*l->l_sigstk = *nss;
+			l->l_sigstk = *nss;
 	}
 
 	mutex_exit(&p->p_smutex);
@@ -694,15 +692,6 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	}
 
 	mutex_enter(&p->p_smutex);
-
-	/*
-	 * SA processes can have no more than 1 sigwaiter.
-	 */
-	if ((p->p_sflag & PS_SA) != 0 && !LIST_EMPTY(&p->p_sigwaiters)) {
-		mutex_exit(&p->p_smutex);
-		error = EINVAL;
-		goto out;
-	}
 
 	if ((signum = sigget(&p->p_sigpend, ksi, 0, waitset)) == 0)
 		signum = sigget(&l->l_sigpend, ksi, 0, waitset);

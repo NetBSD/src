@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.44.20.3 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.44.20.4 2007/01/30 13:49:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.44.20.3 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.44.20.4 2007/01/30 13:49:34 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -148,7 +148,7 @@ freebsd_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_ss = tf->tf_ss;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	/* XXX freebsd_osigcontext compat? */
@@ -173,7 +173,7 @@ freebsd_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -253,9 +253,9 @@ freebsd_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	/* XXX freebsd_osigcontext compat? */
 	mask = context.sc_mask;

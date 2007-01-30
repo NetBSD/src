@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225.4.9 2007/01/28 01:34:18 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.10 2007/01/30 13:51:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -180,8 +180,7 @@ struct emul {
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
 
-	/* SA-related information */
-	const struct sa_emul *e_sa;
+	size_t		e_ucsize;	/* size of ucontext_t */
 };
 
 /*
@@ -266,8 +265,6 @@ struct proc {
 	u_int		p_waited;	/* m: parent has waited on child */
 	struct lwp	*p_zomblwp;	/* s: detached LWP to be reaped */
 
-	struct sadata 	*p_sa;		/*    Scheduler activation infor */
-
 	/* scheduling */
 	fixpt_t		p_estcpu;	/* t: Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	fixpt_t		p_estcpu_inherited;
@@ -291,12 +288,10 @@ struct proc {
 	const struct emul *p_emul;	/*    Emulation information */
 	void		*p_emuldata;	/*    Per-process emulation data, or NULL.
 					 *    Malloc type M_EMULDATA */
-	int		p_timerpend;	/*    Pending itimer to run */
 	const struct execsw *p_execsw;	/*    Exec package information */
 	struct klist	p_klist;	/*    Knotes attached to this process */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* s: LWPs waiting for signals */
-	sigstore_t	p_sigstore;	/* s: process-wide signal state */
 	sigpend_t	p_sigpend;	/* s: pending signals */
 
 /*
@@ -374,7 +369,6 @@ struct proc {
  */
 #define	PS_NOCLDSTOP	0x00000008 /* No SIGCHLD when children stop */
 #define	PS_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
-#define	PS_SA	     	0x00000400 /* Process using scheduler activations */
 #define	PS_WCORE	0x00001000 /* Process needs to dump core */
 #define	PS_WEXIT	0x00002000 /* Working on exiting */
 #define	PS_STOPFORK	0x00800000 /* Child will be stopped on fork(2) */
@@ -382,7 +376,6 @@ struct proc {
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
-#define	PS_NOSA		0x40000000 /* Do not enable SA */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
 
 /*

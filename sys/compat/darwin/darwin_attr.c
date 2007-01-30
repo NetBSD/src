@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.12 2006/07/23 22:06:08 ad Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.12.4.1 2007/01/30 13:51:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.12 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.12.4.1 2007/01/30 13:51:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/lwp.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>

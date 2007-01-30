@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.8 2006/07/22 06:58:17 tsutsui Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.8.4.1 2007/01/30 13:49:35 ad Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8.4.1 2007/01/30 13:49:35 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -87,8 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.8 2006/07/22 06:58:17 tsutsu
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/ucontext.h>

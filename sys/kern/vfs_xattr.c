@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.7.4.1 2007/01/12 01:04:08 ad Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.7.4.2 2007/01/30 13:51:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.7.4.1 2007/01/12 01:04:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.7.4.2 2007/01/30 13:51:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.7.4.1 2007/01/12 01:04:08 ad Exp $")
 #include <sys/extattr.h>
 #include <sys/xattr.h>
 #include <sys/sysctl.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 

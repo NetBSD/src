@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.62.4.3 2007/01/12 01:01:00 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.62.4.4 2007/01/30 13:49:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.62.4.3 2007/01/12 01:01:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.62.4.4 2007/01/30 13:49:38 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -191,12 +191,12 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (onstack) {
-		fp = (struct sparc32_sigframe *)((char *)l->l_sigstk->ss_sp +
-					l->l_sigstk->ss_size);
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		fp = (struct sparc32_sigframe *)((char *)l->l_sigstk.ss_sp +
+					l->l_sigstk.ss_size);
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sparc32_sigframe *)oldsp;
 	fp = (struct sparc32_sigframe *)((u_long)(fp - 1) & ~7);
@@ -291,7 +291,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
@@ -329,14 +329,14 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	oldsp = (struct rwindow32*)(u_long)(u_int)tf->tf_out[6];
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sparc32_sigframe_siginfo *)
-		    ((caddr_t)l->l_sigstk->ss_sp +
-					  l->l_sigstk->ss_size);
+		    ((caddr_t)l->l_sigstk.ss_sp +
+					  l->l_sigstk.ss_size);
 	else
 		fp = (struct sparc32_sigframe_siginfo *)oldsp;
 	fp = (struct sparc32_sigframe_siginfo*)((u_long)(fp - 1) & ~7);
@@ -344,7 +344,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	uc.uc_flags = _UC_SIGMASK |
-		((l->l_sigstk->ss_flags & SS_ONSTACK)
+		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = 0;
@@ -402,7 +402,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -414,46 +414,6 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		netbsd32_sendsig_siginfo(ksi, mask);
-}
-
-/*
- * Set the lwp to begin execution in the upcall handler.  The upcall
- * handler will then simply call the upcall routine and then exit.
- *
- * Because we have a bunch of different signal trampolines, the first
- * two instructions in the signal trampoline call the upcall handler.
- * Signal dispatch should skip the first two instructions in the signal
- * trampolines.
- */
-void 
-netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-       	struct trapframe *tf;
-	vaddr_t addr;
-
-	tf = l->l_md.md_tf;
-	addr = (vaddr_t) upcall;
-
-	/* Arguments to the upcall... */
-	tf->tf_out[0] = type;
-	tf->tf_out[1] = (vaddr_t) sas;
-	tf->tf_out[2] = nevents;
-	tf->tf_out[3] = ninterrupted;
-	tf->tf_out[4] = (vaddr_t) ap;
-
-	/*
-	 * Ensure the stack is double-word aligned, and provide a
-	 * C call frame.
-	 */
-	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
-
-	/* Arrange to begin execution at the upcall handler. */
-
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (vaddr_t) sp;
-	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 #undef DEBUG
@@ -534,9 +494,9 @@ compat_13_netbsd32_sigreturn(l, v, retval)
 #endif
 	mutex_enter(&p->p_smutex);
 	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask */
 	native_sigset13_to_sigset((sigset13_t *)&scp->sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
@@ -631,9 +591,9 @@ compat_16_netbsd32___sigreturn14(l, v, retval)
 	/* Restore signal stack. */
 	mutex_enter(&p->p_smutex);
 	if (sc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &sc.sc_mask, 0);
 	mutex_exit(&p->p_smutex);
@@ -1312,9 +1272,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 #ifdef _UC_SETSTACK
 	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(&p->p_smutex);
 #endif
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1 2006/03/12 02:04:26 christos Exp $	*/
+/*	$NetBSD: userret.h,v 1.1.18.1 2007/01/30 13:49:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -43,10 +43,6 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 	int sig;
 	struct proc *p = l->l_proc;
 
-	/* Generate UNBLOCKED upcall. */
-	if (l->l_flag & L_SA_BLOCKING)
-		sa_unblock_userret(l);
-
 	/* Take pending signals. */
 	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
@@ -73,9 +69,6 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 		addupc_task(p, frame->pc,
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }

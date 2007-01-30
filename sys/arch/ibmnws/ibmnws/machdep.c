@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2006/05/09 18:13:57 rjs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.8.1 2007/01/30 13:49:35 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,7 +47,6 @@
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>

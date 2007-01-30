@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.32 2006/07/22 06:58:17 tsutsui Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.32.4.1 2007/01/30 13:49:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.32 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.32.4.1 2007/01/30 13:49:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.32 2006/07/22 06:58:17 tsutsui E
 #include <sys/malloc.h>
 #include <sys/buf.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
