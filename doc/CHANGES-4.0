@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.57 2007/01/29 22:30:20 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.58 2007/01/30 14:31:05 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1046,4 +1046,10 @@ sys/dev/scsipi/atapi_wdc.c			1.104
 	Implemented by generalising the odd-check for PIO selection
 	to check for 4 byte alignment in offset and size.
 	[reinoud, ticket #388]
+
+usr.sbin/postinstall/postinstall		1.32
+
+	Fix method to find pf.os so it works with '-s etc.tgz'.
+	This fixes PR bin/35185.
+	[lukem, ticket #393]
 
