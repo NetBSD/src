@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17.6.3 2007/01/19 20:07:56 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.17.6.4 2007/01/30 11:45:28 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -746,9 +746,7 @@ ENTRY(cpu_switch)
 	xorl	%esi,%esi
 	STI(%eax)
 idle_unlock:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call	_C_LABEL(sched_unlock_idle)
-#endif
 	/* Interrupts are okay again. */
 	pushl	$IPL_NONE		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
@@ -803,9 +801,7 @@ idle_start:
 idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 	STI(%eax)
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call	_C_LABEL(sched_lock_idle)
-#endif
 	movl	_C_LABEL(sched_whichqs),%ecx
 	bsfl	%ecx,%ebx
 	jz	idle_unlock
@@ -936,9 +932,7 @@ switch_exited:
 	movl	$1,%ebx
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call    _C_LABEL(sched_unlock_idle)
-#endif
 	cmpl	$0,CPUVAR(IPENDING)
 	jz	3f
 	pushl	$IPL_NONE		# spl0()

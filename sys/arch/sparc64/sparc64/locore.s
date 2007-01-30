@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.213.8.3 2007/01/12 01:00:59 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.213.8.4 2007/01/30 11:45:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6707,9 +6707,7 @@ ENTRY(cpu_exit)
 	call	_C_LABEL(lwp_exit2)		! lwp_exit2(l)
 	 mov	%l2, %o0
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call	_C_LABEL(sched_lock_idle)	! Acquire sched_lock
-#endif
 
 	 wrpr	%g0, PIL_SCHED, %pil		! Set splsched()
 
@@ -6795,10 +6793,8 @@ ENTRY_NOPROFILE(idle_switch)
 
 ENTRY_NOPROFILE(idle)
 	STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
 	 EMPTY
-#endif
 idle_nolock:
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "idle: pcb %p, idle_u %p",
@@ -6829,10 +6825,8 @@ idle_nolock:
 	 nop				! spitfire bug
 notidle:
 	wrpr	%g0, PIL_SCHED, %pil	! (void) splhigh();
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	call	_C_LABEL(sched_lock_idle)	! Grab sched_lock
 	 add	%o7, (Lsw_scan-.-4), %o7	! Return to Lsw_scan directly
-#endif
 	ba,a,pt	%xcc, Lsw_scan
 	 nop				! spitfire bug
 
@@ -7044,14 +7038,12 @@ cpu_loadproc:
 	LDPTR	[%l3 + L_ADDR], %l1		! newpcb = l->l_addr;
 	STPTR	%g0, [%l3 + L_BACK]		! l->l_back = NULL;
 	STPTR	%l3, [%l7 + %lo(CURLWP)]	! store new lwp
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
 	 */
 	call	_C_LABEL(sched_unlock_idle)
 	 EMPTY
-#endif
 
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "cpu_switch: %p->%p",

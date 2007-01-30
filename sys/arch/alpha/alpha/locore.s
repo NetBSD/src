@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.108.20.1 2007/01/11 22:22:56 ad Exp $ */
+/* $NetBSD: locore.s,v 1.108.20.2 2007/01/30 11:45:26 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.108.20.1 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.108.20.2 2007/01/30 11:45:26 ad Exp $");
 
 #include "assym.h"
 
@@ -690,9 +690,7 @@ LEAF(idle, 0)
 	mov	zero, s0			/* no outgoing proc */
 1:
 #endif
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	CALL(sched_unlock_idle)			/* release sched_lock */
-#endif
 	mov	zero, a0			/* enable all interrupts */
 	call_pal PAL_OSF1_swpipl
 	ldl	t0, sched_whichqs		/* look for non-empty queue */
@@ -705,9 +703,7 @@ LEAF(idle, 0)
 	beq	t0, 2b
 4:	ldiq	a0, ALPHA_PSL_IPL_HIGH		/* disable all interrupts */
 	call_pal PAL_OSF1_swpipl
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	CALL(sched_lock_idle)			/* acquire sched_lock */
-#endif
 	jmp	zero, cpu_switch_queuescan	/* jump back into the fire */
 	END(idle)
 
@@ -850,9 +846,7 @@ switch_resume:
 	 * to the new process.  Release the scheduler lock, but keep
 	 * interrupts out.
 	 */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	CALL(sched_unlock_idle)			/* release sched_lock */
-#endif
 
 	/*
 	 * Now running on the new u struct.
@@ -972,9 +966,7 @@ LEAF(switch_exit, 1)
 	mov	s2, a0
 	CALL((pv))
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	CALL(sched_lock_idle)			/* acquire sched_lock */
-#endif
 
 	/*
 	 * Now jump back into the middle of cpu_switch().  Note that

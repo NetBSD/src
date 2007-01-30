@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.14 2007/01/28 07:20:38 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.15 2007/01/30 11:45:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.14 2007/01/28 07:20:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.15 2007/01/30 11:45:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -789,7 +789,6 @@ mutex_spin_retry(kmutex_t *mtx)
 }
 #endif	/* defined(__HAVE_SPIN_MUTEX_STUBS) || defined(FULL) */
 
-#ifdef FULL
 /*
  * sched_lock_idle:
  *
@@ -798,6 +797,7 @@ mutex_spin_retry(kmutex_t *mtx)
 void
 sched_lock_idle(void)
 {
+#ifdef FULL
 	kmutex_t *mtx = &sched_mutex;
 
 	curcpu()->ci_mtx_count--;
@@ -808,6 +808,9 @@ sched_lock_idle(void)
 	}
 
 	MUTEX_LOCKED(mtx);
+#else
+	curcpu()->ci_mtx_count--;
+#endif	/* FULL */
 }
 
 /*
@@ -818,6 +821,7 @@ sched_lock_idle(void)
 void
 sched_unlock_idle(void)
 {
+#ifdef FULL
 	kmutex_t *mtx = &sched_mutex;
 
 	if (mtx->mtx_lock != __SIMPLELOCK_LOCKED)
@@ -825,6 +829,6 @@ sched_unlock_idle(void)
 
 	MUTEX_UNLOCKED(mtx);
 	__cpu_simple_unlock(&mtx->mtx_lock);
+#endif	/* FULL */
 	curcpu()->ci_mtx_count++;
 }
-#endif	/* FULL */

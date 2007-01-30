@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.227.4.1 2007/01/11 22:22:57 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.227.4.2 2007/01/30 11:45:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5005,11 +5005,9 @@ idle_switch:
 	/* FALLTHROUGH*/
 
 idle:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	! unlock scheduler lock
 	call	_C_LABEL(sched_unlock_idle)
 	 nop
-#endif
 
 idle_enter:
 #if defined(MULTIPROCESSOR)
@@ -5054,11 +5052,9 @@ idle_leave:
 	! just wrote to %psr; observe psr delay before doing a `save'
 	! or loading sched_whichqs.
 	nop; nop
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	/* Before we leave the idle loop, detain the scheduler lock */
 	call	_C_LABEL(sched_lock_idle)
 	 nop
-#endif
 	b	Lsw_scan
 	 ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 
@@ -5307,10 +5303,8 @@ Lsw_load:
 					!  sched_unlock_idle() below)
 
 	sethi	%hi(_WANT_RESCHED), %o0		! want_resched = 0;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG) || defined(DIAGNOSTIC)
 	/* Done with the run queues; release the scheduler lock */
 	call	_C_LABEL(sched_unlock_idle)
-#endif
 	st	%g0, [%o0 + %lo(_WANT_RESCHED)]! delay slot
 
 	/*
