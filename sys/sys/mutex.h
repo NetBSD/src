@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.9 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.10 2007/01/30 15:18:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -173,7 +173,10 @@ void	mutex_spin_retry(kmutex_t *);
 
 #endif	/* __MUTEX_PRIVATE */
 
+#ifdef _KERNEL
 #include <machine/intr.h>
+#endif
+
 #include <machine/mutex.h>
 
 #ifdef _KERNEL
@@ -195,4 +198,3 @@ int	mutex_owned(kmutex_t *);
 #endif /* _KERNEL */
 
 #endif /* _SYS_MUTEX_H_ */
-
