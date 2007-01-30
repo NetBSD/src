@@ -1,4 +1,4 @@
-/* $NetBSD: mach_ppccalls_sysent.c,v 1.6 2005/12/11 12:20:22 christos Exp $ */
+/* $NetBSD: mach_ppccalls_sysent.c,v 1.6.20.1 2007/01/30 13:51:35 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,14 +8,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_ppccalls_sysent.c,v 1.6 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_ppccalls_sysent.c,v 1.6.20.1 2007/01/30 13:51:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>

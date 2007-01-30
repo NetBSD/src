@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.7 2005/12/11 12:18:46 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.7.20.1 2007/01/30 13:49:37 ad Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7 2005/12/11 12:18:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.7.20.1 2007/01/30 13:49:37 ad Exp $");
 
 #include <sys/param.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

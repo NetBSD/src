@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.92 2006/08/31 16:49:22 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.92.2.1 2007/01/30 13:49:38 ad Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2006/08/31 16:49:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92.2.1 2007/01/30 13:49:38 ad Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.92 2006/08/31 16:49:22 matt Exp $")
 #include <machine/cpu.h>
 #include <machine/sid.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include "opt_cputype.h"

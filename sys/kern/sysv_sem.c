@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.63.4.1 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.63.4.2 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.63.4.1 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.63.4.2 2007/01/30 13:51:41 ad Exp $");
 
 #define SYSVSEM
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.63.4.1 2006/11/18 21:39:23 ad Exp $")
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 

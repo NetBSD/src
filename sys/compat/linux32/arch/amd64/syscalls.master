@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6.2.1 2006/11/18 21:39:11 ad Exp $
+	$NetBSD: syscalls.master,v 1.6.2.2 2007/01/30 13:51:34 ad Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -40,7 +40,6 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/netbsd32_machdep.h>

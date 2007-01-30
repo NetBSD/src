@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.9 2006/08/05 22:54:28 bjh21 Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.9.4.1 2007/01/30 13:49:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2006/08/05 22:54:28 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9.4.1 2007/01/30 13:49:33 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.9 2006/08/05 22:54:28 bjh21 
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>  
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>

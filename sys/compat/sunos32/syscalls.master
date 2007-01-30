@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.13 2006/07/13 23:38:57 pavel Exp $
+;	$NetBSD: syscalls.master,v 1.13.4.1 2007/01/30 13:51:37 ad Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -44,7 +44,6 @@
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sunos/sunos.h>

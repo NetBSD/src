@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.276.4.9 2007/01/19 20:49:54 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.276.4.10 2007/01/30 13:51:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.9 2007/01/19 20:49:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.10 2007/01/30 13:51:40 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -162,7 +162,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.276.4.9 2007/01/19 20:49:54 ad Exp $
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)

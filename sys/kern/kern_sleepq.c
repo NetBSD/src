@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.10 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.11 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.10 2007/01/27 14:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.11 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.10 2007/01/27 14:00:02 ad Exp 
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/sleepq.h>
 
 #ifdef KTRACE
@@ -172,8 +170,6 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 	 * Set it running.  We'll try to get the last CPU that ran
 	 * this LWP to pick it up again.
 	 */
-	if (l->l_proc->p_sa != NULL)
-		sa_awaken(l);
 	if (l->l_slptime > 1)
 		updatepri(l);
 	l->l_stat = LSRUN;
@@ -274,13 +270,8 @@ sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 	if (timo)
 		callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 
-	if ((l->l_flag & L_SA) != 0) {
-		/* XXXAD Allocating memory while on sleep queue */
-		sa_switch(l, sadata_upcall_alloc(0), SA_UPCALL_BLOCKED);
-	} else {
-		mi_switch(l, NULL);
-		l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
-	}
+	mi_switch(l, NULL);
+	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
 
 	/*
 	 * When we reach this point, the LWP and sleep queue are unlocked.

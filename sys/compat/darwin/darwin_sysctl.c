@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.43.2.3 2007/01/18 00:15:36 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.43.2.4 2007/01/30 13:51:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43.2.3 2007/01/18 00:15:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43.2.4 2007/01/30 13:51:31 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.43.2.3 2007/01/18 00:15:36 chris
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/sa.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
 
@@ -791,7 +790,7 @@ darwin_fill_kproc(p, dkp)
 	native_sigset13_to_sigset(&dep->p_siglist, &l->l_sigpendset->sp_set);
 	/* (ptr) dep->p_textvp */
 	/* dep->p_holdcnt */
-	native_sigset13_to_sigset(&dep->p_sigmask, l->l_sigmask);
+	native_sigset13_to_sigset(&dep->p_sigmask, &l->l_sigmask);
 	native_sigset13_to_sigset(&dep->p_sigignore,
 	    &p->p_sigctx.ps_sigignore);
 	native_sigset13_to_sigset(&dep->p_sigcatch,

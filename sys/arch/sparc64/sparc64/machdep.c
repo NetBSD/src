@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189.2.3 2007/01/12 01:01:00 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.189.2.4 2007/01/30 13:49:38 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.3 2007/01/12 01:01:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.4 2007/01/30 13:49:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189.2.3 2007/01/12 01:01:00 ad Exp $")
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ras.h>
@@ -457,11 +455,11 @@ getframe(struct lwp *l, int sig, int *onstack)
 	 * Compute new user stack addresses, subtract off
 	 * one signal frame, and align.
 	 */
-	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		return ((caddr_t)l->l_sigstk->ss_sp + l->l_sigstk->ss_size);
+		return ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		return (void *)((uintptr_t)tf->tf_out[6] + STACK_OFFSET);
 }
@@ -501,7 +499,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	uc.uc_flags = _UC_SIGMASK |
-	    ((l->l_sigstk->ss_flags & SS_ONSTACK)
+	    ((l->l_sigstk.ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = NULL;
@@ -547,7 +545,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -559,45 +557,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		sendsig_siginfo(ksi, mask);
-}
-
-/*
- * Set the lwp to begin execution in the upcall handler.  The upcall
- * handler will then simply call the upcall routine and then exit.
- *
- * Because we have a bunch of different signal trampolines, the first
- * two instructions in the signal trampoline call the upcall handler.
- * Signal dispatch should skip the first two instructions in the signal
- * trampolines.
- */
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-       	struct trapframe64 *tf;
-	vaddr_t addr;
-
-	tf = l->l_md.md_tf;
-	addr = (vaddr_t) upcall;
-
-	/* Arguments to the upcall... */
-	tf->tf_out[0] = type;
-	tf->tf_out[1] = (vaddr_t) sas;
-	tf->tf_out[2] = nevents;
-	tf->tf_out[3] = ninterrupted;
-	tf->tf_out[4] = (vaddr_t) ap;
-
-	/*
-	 * Ensure the stack is double-word aligned, and provide a
-	 * valid C call frame.
-	 */
-	sp = (void *)(((vaddr_t)sp & ~0xf) - CCFSZ);
-
-	/* Arrange to begin execution at the upcall handler. */
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (vaddr_t)sp - STACK_OFFSET;
-	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 int	waittime = -1;
@@ -1804,7 +1763,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if ((l->l_pflag & LP_SA_SWITCHING) == 0 && rwindow_save(l)) {
+	if (rwindow_save(l)) {
 		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
 	}
@@ -1978,9 +1937,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(&p->p_smutex);
 
 	return (0);

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.111.4.1 2007/01/11 22:22:56 ad Exp $ */
+/* $NetBSD: trap.c,v 1.111.4.2 2007/01/30 13:49:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,13 +100,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111.4.1 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111.4.2 2007/01/30 13:49:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/buf.h>
@@ -438,13 +436,9 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 #endif
 			}
 
-			if (user) {
+			if (user)
 				KERNEL_LOCK(1, l);
-				if (l->l_flag & L_SA) {
-					l->l_savp->savp_faultaddr = (vaddr_t)a0;
-					l->l_pflag |= LP_SA_PAGEFAULT;
-				}
-			} else {
+			else {
 				struct cpu_info *ci = curcpu();
 
 				if (l == NULL) {
@@ -520,10 +514,9 @@ do_fault:
 					rv = EFAULT;
 			}
 			if (rv == 0) {
-				if (user) {
-					l->l_pflag &= ~LP_SA_PAGEFAULT;
+				if (user)
 					KERNEL_UNLOCK_LAST(l);
-				} else
+				else
 					KERNEL_UNLOCK_ONE(NULL);
 				goto out;
 			}
@@ -558,7 +551,6 @@ do_fault:
 				ksi.ksi_code = SEGV_ACCERR;
 			else
 				ksi.ksi_code = SEGV_MAPERR;
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			KERNEL_UNLOCK_LAST(l);
 			break;
 		    }
@@ -698,7 +690,7 @@ ast(struct trapframe *framep)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(0);
+		preempt();
 	}
 
 	KERNEL_UNLOCK_LAST(l);
@@ -1257,16 +1249,5 @@ startlwp(void *arg)
 	pool_put(&lwp_uc_pool, uc);
 
 	KERNEL_UNLOCK_LAST(l);
-	userret(l);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-	KERNEL_UNLOCK_LAST(l);
-
 	userret(l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.89.4.1 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.89.4.2 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.89.4.1 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.89.4.2 2007/01/30 13:51:41 ad Exp $");
 
 #define SYSVSHM
 
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.89.4.1 2007/01/12 01:04:07 ad Exp $")
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/queue.h>
 #include <sys/pool.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.9.10.3 2006/12/29 20:27:45 ad Exp $ */
+/* $NetBSD: userret.h,v 1.9.10.4 2007/01/30 13:51:42 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -89,26 +89,18 @@ mi_userret(struct lwp *l)
 
 	LOCKDEBUG_BARRIER(NULL, 0);
 
-	/* Generate UNBLOCKED upcall. */
-	if (l->l_flag & L_SA_BLOCKING)
-		sa_unblock_userret(l);
-
 	/*
 	 * Handle "exceptional" events: pending signals, stop/exit actions,
 	 * etc.  Note that the event must be flagged BEFORE any AST is
 	 * posted as we are reading unlocked.
 	 */
 	p = l->l_proc;
-	if (((l->l_flag & L_USERRET) | p->p_timerpend) != 0)
+	if ((l->l_flag & L_USERRET) != 0)
 		lwp_userret(l);
 
 	/* XXXSMP unlocked */
 	l->l_priority = l->l_usrpri;
 	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority;
-
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
 }
 
 #endif	/* !_SYS_USERRET_H_ */

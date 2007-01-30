@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.11 2007/01/27 01:29:05 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.12 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.11 2007/01/27 01:29:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.12 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -96,8 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.11 2007/01/27 01:29:05 ad Exp $
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/ucontext.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/exec.h>
 #include <sys/kauth.h>
 #include <sys/acct.h>
@@ -119,7 +117,7 @@ int	sigunwait(struct proc *, const ksiginfo_t *);
 void	sigclear(sigpend_t *, sigset_t *);
 void	sigclearall(struct proc *, sigset_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
-int	sigpost(struct lwp *, sig_t, int, int, int);
+int	sigpost(struct lwp *, sig_t, int, int);
 int	sigchecktrace(void);
 void	sigswitch(int, int);
 void	sigrealloc(ksiginfo_t *);
@@ -330,11 +328,9 @@ siginit(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigmask = &l->l_sigstore.ss_mask;
-	l->l_sigstk = &l->l_sigstore.ss_stk;
-	l->l_sigstk->ss_flags = SS_DISABLE;
-	l->l_sigstk->ss_size = 0;
-	l->l_sigstk->ss_sp = 0;
+	l->l_sigstk.ss_flags = SS_DISABLE;
+	l->l_sigstk.ss_size = 0;
+	l->l_sigstk.ss_sp = 0;
 	CIRCLEQ_INIT(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 
@@ -398,11 +394,9 @@ execsigs(struct proc *p)
 	 */
 	l = LIST_FIRST(&p->p_lwps);
 	l->l_sigwaited = NULL;
-	l->l_sigmask = &l->l_sigstore.ss_mask;
-	l->l_sigstk = &l->l_sigstore.ss_stk;
-	l->l_sigstk->ss_flags = SS_DISABLE;
-	l->l_sigstk->ss_size = 0;
-	l->l_sigstk->ss_sp = 0;
+	l->l_sigstk.ss_flags = SS_DISABLE;
+	l->l_sigstk.ss_size = 0;
+	l->l_sigstk.ss_sp = 0;
 	CIRCLEQ_INIT(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 
@@ -656,7 +650,7 @@ sigispending(struct lwp *l, int signo)
 	tset = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, &tset);
 	sigminusset(&p->p_sigctx.ps_sigignore, &tset);
-	sigminusset(l->l_sigmask, &tset);
+	sigminusset(&l->l_sigmask, &tset);
 
 	if (signo == 0) {
 		if (firstsig(&tset) != 0)
@@ -701,7 +695,7 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	ucp->uc_flags = 0;
 	ucp->uc_link = l->l_ctxlink;
 
-	ucp->uc_sigmask = *l->l_sigmask;
+	ucp->uc_sigmask = l->l_sigmask;
 	ucp->uc_flags |= _UC_SIGMASK;
 
 	/*
@@ -711,13 +705,13 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	 *
 	 * XXXLWP this is borken for multiple LWPs.
 	 */
-	if ((l->l_sigstk->ss_flags & SS_ONSTACK) == 0) {
+	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
 		ucp->uc_stack.ss_sp = (void *)USRSTACK;
 		ucp->uc_stack.ss_size = ctob(l->l_proc->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
 		/* Simply copy alternate signal execution stack. */
-		ucp->uc_stack = *l->l_sigstk;
+		ucp->uc_stack = l->l_sigstk;
 	}
 	ucp->uc_flags |= _UC_STACK;
 	mutex_exit(&p->p_smutex);
@@ -753,9 +747,9 @@ setucontext(struct lwp *l, const ucontext_t *ucp)
 	 */
 	if ((ucp->uc_flags & _UC_STACK) != 0) {
 		if (ucp->uc_stack.ss_flags & SS_ONSTACK)
-			l->l_sigstk->ss_flags |= SS_ONSTACK;
+			l->l_sigstk.ss_flags |= SS_ONSTACK;
 		else
-			l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+			l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	}
 
 	return 0;
@@ -886,15 +880,15 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	ps = p->p_sigacts;
 	if ((p->p_slflag & PSL_TRACED) == 0 &&
 	    sigismember(&p->p_sigctx.ps_sigcatch, signo) &&
-	    !sigismember(l->l_sigmask, signo)) {
+	    !sigismember(&l->l_sigmask, signo)) {
 		mutex_exit(&proclist_mutex);
 		p->p_stats->p_ru.ru_nsignals++;
-		kpsendsig(l, ksi, l->l_sigmask);
+		kpsendsig(l, ksi, &l->l_sigmask);
 		mutex_exit(&p->p_smutex);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
 			ktrpsig(l, signo, SIGACTION_PS(ps, signo).sa_handler,
-			    l->l_sigmask, ksi);
+			    &l->l_sigmask, ksi);
 #endif
 	} else {
 		/* XXX for core dump/debugger */
@@ -994,7 +988,7 @@ sigismasked(struct lwp *l, int sig)
 	struct proc *p = l->l_proc;
 
 	return (sigismember(&p->p_sigctx.ps_sigignore, sig) ||
-	    sigismember(l->l_sigmask, sig));
+	    sigismember(&l->l_sigmask, sig));
 }
 
 /*
@@ -1004,7 +998,7 @@ sigismasked(struct lwp *l, int sig)
  *	 able to take the signal.
  */
 int
-sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
+sigpost(struct lwp *l, sig_t action, int prop, int sig)
 {
 	int rv, masked;
 
@@ -1026,18 +1020,9 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 	l->l_flag |= L_PENDSIG;
 
 	/*
-	 * When sending signals to SA processes, we first try to find an
-	 * idle VP to take it.
-	 */
-	if (idlecheck && (l->l_flag & (L_SA_IDLE | L_SA_YIELD)) == 0) {
-		lwp_unlock(l);
-		return 0;
-	}
-
-	/*
 	 * SIGCONT can be masked, but must always restart stopped LWPs.
 	 */
-	masked = sigismember(l->l_sigmask, sig);
+	masked = sigismember(&l->l_sigmask, sig);
 	if (masked && ((prop & SA_CONT) == 0 || l->l_stat != LSSTOP)) {
 		lwp_unlock(l);
 		return 0;
@@ -1184,7 +1169,6 @@ void
 kpsignal2(struct proc *p, ksiginfo_t *ksi)
 {
 	int prop, lid, toall, signo = ksi->ksi_signo;
-	struct sadata_vp *vp;
 	struct lwp *l;
 	ksiginfo_t *kp;
 	sig_t action;
@@ -1311,7 +1295,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if (l != NULL) {
 			sigput(&l->l_sigpend, p, kp);
 			mb_write();
-			(void)sigpost(l, action, prop, kp->ksi_signo, 0);
+			(void)sigpost(l, action, prop, kp->ksi_signo);
 		}
 		goto out;
 	}
@@ -1400,39 +1384,9 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	/*
 	 * Try to find an LWP that can take the signal.
 	 */
-	if (p->p_sa != NULL) {
-		/*
-		 * In the SA case, we try to find an idle LWP that can take
-		 * the signal.  If that fails, only then do we consider
-		 * interrupting active LWPs.
-		 */
-		l = NULL;
-		if (!toall) {
-			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp->ksi_signo, 1))
-					break;
-			}
-		}
-
-		if (l == NULL) {
-			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp->ksi_signo, 0)
-				    && !toall)
-					break;
-			}
-		}
-	} else {
-		/*
-		 * For non-SA processes, just try all LWPs until we find one
-		 * willing to do the needful.
-		 */
-		LIST_FOREACH(l, &p->p_lwps, l_sibling)
-			if (sigpost(l, action, prop, kp->ksi_signo, 0) &&
-			    !toall)
-				break;
-	}
+	LIST_FOREACH(l, &p->p_lwps, l_sibling)
+		if (sigpost(l, action, prop, kp->ksi_signo) && !toall)
+			break;
 
  out:
  	/*
@@ -1446,42 +1400,8 @@ void
 kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct proc *p = l->l_proc;
-	struct lwp *le, *li;
-	siginfo_t *si;
-	int f;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-
-	if (p->p_sflag & PS_SA) {
-		mutex_exit(&p->p_smutex);
-		/* XXXUPSXXX What if not on sa_vp ? */
-		si = siginfo_alloc(PR_WAITOK);
-
-		lwp_lock(l);
-		f = l->l_flag & L_SA;
-		l->l_flag &= ~L_SA;
-		lwp_unlock(l);
-
-		si->_info = ksi->ksi_info;
-		le = li = NULL;
-		if (KSI_TRAP_P(ksi))
-			le = l;
-		else
-			li = l;
-		if (sa_upcall(l, SA_UPCALL_SIGNAL | SA_UPCALL_DEFER, le, li,
-		    sizeof(*si), si, siginfo_free) != 0) {
-			siginfo_free(si);
-#if 0
-			if (KSI_TRAP_P(ksi))
-				/* XXX What do we do here?? */;
-#endif
-		}
-		lwp_lock(l);
-		l->l_flag |= f;
-		lwp_unlock(l);
-		mutex_enter(&p->p_smutex);
-		return;
-	}
 
 	(*p->p_emul->e_sendsig)(ksi, mask);
 }
@@ -1569,7 +1489,7 @@ sigchecktrace(void)
 	 */
 	signo = p->p_xstat;
 	p->p_xstat = 0;
-	if (sigismember(l->l_sigmask, signo))
+	if (sigismember(&l->l_sigmask, signo))
 		signo = 0;
 
 	return signo;
@@ -1604,10 +1524,6 @@ issignal(struct lwp *l)
 		if (signo != 0)
 			(void)sigget(sp, NULL, signo, NULL);
 
-		/* Bail out if we do not own the virtual processor */
-		if (l->l_flag & L_SA && l->l_savp->savp_lwp != l)
-			break;
-
 		/*
 		 * If the process is stopped/stopping, then stop ourselves
 		 * now that we're on the kernel/userspace boundary.  When
@@ -1630,14 +1546,14 @@ issignal(struct lwp *l)
 			ss = sp->sp_set;
 			if ((p->p_sflag & PS_PPWAIT) != 0)
 				sigminusset(&stopsigmask, &ss);
-			sigminusset(l->l_sigmask, &ss);
+			sigminusset(&l->l_sigmask, &ss);
 
 			if ((signo = firstsig(&ss)) == 0) {
 				sp = &p->p_sigpend;
 				ss = sp->sp_set;
 				if ((p->p_sflag & PS_PPWAIT) != 0)
 					sigminusset(&stopsigmask, &ss);
-				sigminusset(l->l_sigmask, &ss);
+				sigminusset(&l->l_sigmask, &ss);
 		
 				if ((signo = firstsig(&ss)) == 0) {
 					/*
@@ -1797,7 +1713,7 @@ postsig(int signo)
 		returnmask = &l->l_sigoldmask;
 		l->l_sigrestore = 0;
 	} else
-		returnmask = l->l_sigmask;
+		returnmask = &l->l_sigmask;
 
 	/*
 	 * Commit to taking the signal before releasing the mutex.
@@ -1830,7 +1746,7 @@ postsig(int signo)
 	 * If we get here, the signal must be caught.
 	 */
 #ifdef DIAGNOSTIC
-	if (action == SIG_IGN || sigismember(l->l_sigmask, signo))
+	if (action == SIG_IGN || sigismember(&l->l_sigmask, signo))
 		panic("postsig action");
 #endif
 
@@ -1855,7 +1771,7 @@ sendsig_reset(struct lwp *l, int signo)
 	p->p_sigctx.ps_code = 0;
 	p->p_sigctx.ps_signo = 0;
 
-	sigplusset(&SIGACTION_PS(ps, signo).sa_mask, l->l_sigmask);
+	sigplusset(&SIGACTION_PS(ps, signo).sa_mask, &l->l_sigmask);
 	if (SIGACTION_PS(ps, signo).sa_flags & SA_RESETHAND) {
 		sigdelset(&p->p_sigctx.ps_sigcatch, signo);
 		if (signo != SIGCONT && sigprop[signo] & SA_IGNORE)
@@ -1945,15 +1861,6 @@ sigexit(struct lwp *l, int signo)
 			p->p_nlwpwait--;
 		}
 	}
-
-	/* We don't want to switch away from exiting. */
-#if 0
-	if (p->p_flag & P_SA) {
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
-		    l2->l_flag &= ~L_SA;
-		p->p_flag &= ~P_SA;
-	}
-#endif
 
 	exitsig = signo;
 	p->p_acflag |= AXSIG;
@@ -2047,7 +1954,7 @@ proc_stop(struct proc *p, int notify, int signo)
 		 * proc_stop_callout() to ensure that they do.
 		 */
 		LIST_FOREACH(l, &p->p_lwps, l_sibling)
-			sigpost(l, SIG_DFL, SA_STOP, signo, 0);
+			sigpost(l, SIG_DFL, SA_STOP, signo);
 		callout_schedule(&proc_stop_ch, 1);
 	}
 }

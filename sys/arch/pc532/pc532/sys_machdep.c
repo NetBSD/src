@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.15 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15.8.1 2007/01/30 13:49:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2006/05/12 06:05:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15.8.1 2007/01/30 13:49:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.15 2006/05/12 06:05:23 simonb Exp 
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

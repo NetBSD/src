@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.13.4.2 2007/01/28 12:12:50 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.13.4.3 2007/01/30 13:49:39 ad Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.4.2 2007/01/28 12:12:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.4.3 2007/01/30 13:49:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,8 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.13.4.2 2007/01/28 12:12:50 ad Exp $");
 #include <sys/kauth.h>
 
 #include <sys/ucontext.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -472,7 +470,7 @@ copyfault:
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched) /* XXX CSE me? */
-			preempt(0);
+			preempt();
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -565,10 +563,6 @@ copyfault:
 		cr2 = ((uint32_t *)(void *)&frame)[1];
 #endif
 		KERNEL_LOCK(1, l);
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
 	faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -624,7 +618,6 @@ copyfault:
 					pmap_load();
 				return;
 			}
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
@@ -659,10 +652,8 @@ copyfault:
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		if (type == T_PAGEFLT)
 			KERNEL_UNLOCK_ONE(NULL);
-		else {
-			l->l_pflag &= ~LP_SA_PAGEFAULT;
+		else
 			KERNEL_UNLOCK_LAST(l);
-		}
 		break;
 	}
 
@@ -796,17 +787,6 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_UNLOCK_LAST(l);
-
-	userret(l);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
 	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.5 2007/01/12 01:00:40 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.25.2.6 2007/01/30 13:49:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.5 2007/01/12 01:00:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.25.2.6 2007/01/30 13:49:33 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -176,14 +176,14 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct netbsd32_sigframe_sigcontext *)
-		    ((caddr_t)l->l_sigstk->ss_sp +
-					  l->l_sigstk->ss_size);
+		    ((caddr_t)l->l_sigstk.ss_sp +
+					  l->l_sigstk.ss_size);
 	else
 		fp = (struct netbsd32_sigframe_sigcontext *)tf->tf_rsp;
 	fp--;
@@ -225,7 +225,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_err = tf->tf_err;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -255,7 +255,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 #endif
 
@@ -273,14 +273,14 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct netbsd32_sigframe_siginfo *)
-		    ((caddr_t)l->l_sigstk->ss_sp +
-					  l->l_sigstk->ss_size);
+		    ((caddr_t)l->l_sigstk.ss_sp +
+					  l->l_sigstk.ss_size);
 	else
 		fp = (struct netbsd32_sigframe_siginfo *)tf->tf_rsp;
 
@@ -306,7 +306,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = 0;
-	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
@@ -336,7 +336,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -401,9 +401,9 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 	mutex_exit(&p->p_smutex);
@@ -843,9 +843,9 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 
 	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(&p->p_smutex);
 
 	return (0);
@@ -939,42 +939,6 @@ check_mcontext32(const mcontext32_t *mcp, struct trapframe *tf)
 	if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 	return 0;
-}
-
-void
-netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-	struct netbsd32_saframe *sf, frame;
-
-	tf = l->l_md.md_regs;
-
-	frame.sa_type = type;
-	frame.sa_sas = (uintptr_t)sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = (uintptr_t)ap;
-	frame.sa_ra = 0;
-
-	sf = (struct netbsd32_saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_rip = (uintptr_t)upcall;
-	tf->tf_rsp = (uintptr_t)sf;
-	tf->tf_rbp = 0;
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-
-	l->l_md.md_flags |= MDP_IRET;
 }
 
 vaddr_t

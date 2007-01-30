@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.159.2.4 2007/01/16 01:28:27 ad Exp $
+	$NetBSD: syscalls.master,v 1.159.2.5 2007/01/30 13:51:41 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -657,7 +657,7 @@
 321	STD 		{ int sys__lwp_unpark(lwpid_t target, void *hint); }
 322	STD 		{ int sys__lwp_unpark_all(const lwpid_t *targets, \
 				size_t ntargets, void *hint); }
-; Syscalls 323-329 reserved for remaining Solaris-compatible LWP calls.
+; Syscalls 323-339 reserved for LWP syscalls.
 323	UNIMPL
 324	UNIMPL
 325	UNIMPL
@@ -665,19 +665,13 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-; Scheduler activation syscalls
-330	STD		{ int sys_sa_register(sa_upcall_t new, \
-				sa_upcall_t *old, int flags, \
-				ssize_t stackinfo_offset); }
-331	STD		{ int sys_sa_stacks(int num, stack_t *stacks); }
-332	STD		{ int sys_sa_enable(void); }
-333	STD		{ int sys_sa_setconcurrency(int concurrency); }
-334	STD		{ int sys_sa_yield(void); }
-335	STD		{ int sys_sa_preempt(int sa_id); }
+330	OBSOL		sys_sa_register
+331	OBSOL		sys_sa_stacks
+332	OBSOL		sys_sa_enable
+333	OBSOL		sys_sa_setconcurrency
+334	OBSOL		sys_sa_yield
+335	OBSOL		sys_sa_preempt
 336	OBSOL		sys_sa_unblockyield
-;
-; Syscalls 337-339 are reserved for other scheduler activation syscalls.
-;
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.20.1 2006/11/18 21:29:37 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.20.2 2007/01/30 13:49:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.20.1 2006/11/18 21:29:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.20.2 2007/01/30 13:49:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.20.1 2006/11/18 21:29:37 ad Exp $"
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 #ifdef	KGDB

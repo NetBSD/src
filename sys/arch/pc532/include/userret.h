@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.2 2006/05/12 06:05:23 simonb Exp $ */
+/* $NetBSD: userret.h,v 1.2.10.1 2007/01/30 13:49:36 ad Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,8 +72,6 @@
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
 
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/userret.h>
 
 static inline void userret(struct lwp *, int, u_quad_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.74.4.1 2006/11/18 21:39:06 ad Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.74.4.2 2007/01/30 13:51:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.74.4.1 2006/11/18 21:39:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.74.4.2 2007/01/30 13:51:33 ad Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.74.4.1 2006/11/18 21:39:06 ad
 #include <sys/kauth.h>
 
 #include <sys/mman.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

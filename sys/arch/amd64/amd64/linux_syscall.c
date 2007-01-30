@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.9.4.2 2007/01/11 22:22:56 ad Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.9.4.3 2007/01/30 13:49:33 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9.4.2 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9.4.3 2007/01/30 13:49:33 ad Exp $");
 
 #include "opt_compat_linux.h"
 
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.9.4.2 2007/01/11 22:22:56 ad Exp
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.2.6 2007/01/12 01:00:40 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.7 2007/01/30 13:49:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.6 2007/01/12 01:00:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.7 2007/01/30 13:49:33 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -109,8 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.6 2007/01/12 01:00:40 ad Exp $");
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 
@@ -460,12 +458,12 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((caddr_t)l->l_sigstk->ss_sp + l->l_sigstk->ss_size);
+		sp = ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		sp = (caddr_t)tf->tf_rsp - 128;
 
@@ -500,7 +498,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
-	frame.sf_uc.uc_flags |= (l->l_sigstk->ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
@@ -522,40 +520,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
-}
-
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-
-	tf = l->l_md.md_regs;
-
-#if 0
-	printf("proc %d: upcall to lwp %d, type %d ev %d int %d sas %p to %p\n",
-	    (int)l->l_proc->p_pid, (int)l->l_lid, type, nevents, ninterrupted,
-	    sas, (void *)upcall);
-#endif
-
-	tf->tf_rdi = type;
-	tf->tf_rsi = (u_int64_t)sas;
-	tf->tf_rdx = nevents;
-	tf->tf_rcx = ninterrupted;
-	tf->tf_r8 = (u_int64_t)ap;
-
-	tf->tf_rip = (u_int64_t)upcall;
-	tf->tf_rsp = ((unsigned long)sp & ~15) - 8;
-	tf->tf_rbp = 0; /* indicate call-frame-top to debuggers */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-
-	l->l_md.md_flags |= MDP_IRET;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 int	waittime = -1;
@@ -1690,9 +1655,9 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(&p->p_smutex);
 
 	return 0;

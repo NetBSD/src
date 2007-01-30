@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.143.2.3 2007/01/11 22:23:00 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.143.2.4 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.3 2007/01/11 22:23:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.4 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -175,7 +175,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		if (!VMSPACE_IS_KERNEL_P(vm)) {
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
-				preempt(1);
+				preempt();
 		}
 
 		if (uio->uio_rw == UIO_READ) {

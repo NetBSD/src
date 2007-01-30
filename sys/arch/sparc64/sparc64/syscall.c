@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.16.4.2 2007/01/11 22:22:58 ad Exp $ */
+/*	$NetBSD: syscall.c,v 1.16.4.3 2007/01/30 13:49:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16.4.2 2007/01/11 22:22:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16.4.3 2007/01/30 13:49:38 ad Exp $");
 
 #define NEW_FPSTATE
 
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16.4.2 2007/01/11 22:22:58 ad Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #ifdef KTRACE
@@ -523,14 +521,6 @@ startlwp(arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
-
-	KERNEL_UNLOCK_LAST(l);
-	userret(l, 0, 0);
-}
-
-void
-upcallret(struct lwp *l)
-{
 
 	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);

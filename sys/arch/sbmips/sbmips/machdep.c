@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.30 2006/08/26 20:19:19 matt Exp $ */
+/* $NetBSD: machdep.c,v 1.30.2.1 2007/01/30 13:49:37 ad Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/08/26 20:19:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.1 2007/01/30 13:49:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2006/08/26 20:19:19 matt Exp $");
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>

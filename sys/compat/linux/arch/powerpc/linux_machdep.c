@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.31.20.1 2007/01/27 01:40:59 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.31.20.2 2007/01/30 13:51:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.20.1 2007/01/27 01:40:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.20.2 2007/01/30 13:51:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.20.1 2007/01/27 01:40:59 ad E
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
@@ -137,7 +136,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Do we need to jump onto the signal stack?
 	 */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
@@ -151,8 +150,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (onstack) {
 		fp = (register_t)
-		    ((caddr_t)l->l_sigstk->ss_sp +
-		    l->l_sigstk->ss_size);
+		    ((caddr_t)l->l_sigstk.ss_sp +
+		    l->l_sigstk.ss_size);
 	} else {
 		fp = tf->fixreg[1];
 	}
@@ -256,7 +255,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Remember that we're now on the signal stack.
 	 */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 #ifdef DEBUG_LINUX
 	printf("linux_sendsig: exitting. fp=0x%lx\n",(long)fp);
 #endif
@@ -348,9 +347,9 @@ linux_sys_rt_sigreturn(l, v, retval)
 	 * It seems to be supported in libc6...
 	 */
 	/* if (sc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else */
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/*
 	 * Grab the signal mask
@@ -440,10 +439,10 @@ linux_sys_sigreturn(l, v, retval)
 	 */
 #if 0
 	if (sc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
 #endif
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_extra_to_native_sigset(&mask, &context.lmask,

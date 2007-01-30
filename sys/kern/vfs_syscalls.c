@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.267.2.3 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.267.2.4 2007/01/30 13:51:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.3 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.4 2007/01/30 13:51:42 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.3 2007/01/12 01:04:07 ad Ex
 #include <sys/kmem.h>
 #include <sys/dirent.h>
 #include <sys/sysctl.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>

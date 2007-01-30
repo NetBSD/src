@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133.4.2 2007/01/11 22:22:58 ad Exp $ */
+/*	$NetBSD: trap.c,v 1.133.4.3 2007/01/30 13:49:38 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.2 2007/01/11 22:22:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.3 2007/01/30 13:49:38 ad Exp $");
 
 #define NEW_FPSTATE
 
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133.4.2 2007/01/11 22:22:58 ad Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -621,12 +619,8 @@ badtrap:
 
 	case T_AST:
 #if 1
-		if (want_resched) {
-			extern int sadebug;
-			if (sadebug)
-				printf("trap: T_AST, preempt\n");
-			preempt(0);
-		}
+		if (want_resched)
+			preempt();
 		want_ast = 0;
 #endif
 		break;	/* the work is all in userret() */
@@ -1132,13 +1126,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 				return;
 			goto kfault;
 		}
-	} else {
+	} else
 		l->l_md.md_tf = tf;
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = addr;
-			l->l_pflag |= LP_SA_PAGEFAULT;
-		}
-	}
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1236,7 +1225,6 @@ kfault:
 		trapsignal(l, &ksi);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
-		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}

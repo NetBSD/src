@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.2.20.1 2007/01/30 13:49:37 ad Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -63,12 +63,4 @@ void
 child_return(void *arg)
 {
 	panic("child_return");
-}
-
-void
-upcallret(struct lwp *l)
-{
-	/* XXX - profiling */
-	panic("upcallret");
-/*	userret(l, l->l_addr->u_pcb.framep, l->l_proc->p_sticks); */
 }

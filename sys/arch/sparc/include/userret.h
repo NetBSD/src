@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.4.16.1 2007/01/12 01:47:51 ad Exp $ */
+/*	$NetBSD: userret.h,v 1.4.16.2 2007/01/30 13:49:37 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -77,7 +77,7 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
 		/*
 		 * We are being preempted.
 		 */
-		preempt(0);
+		preempt();
 		goto again;
 	}
 

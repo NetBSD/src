@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.43.20.3 2007/01/12 01:04:23 ad Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.43.20.4 2007/01/30 13:51:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -213,6 +213,8 @@ struct ktr_mool {
 
 /*
  * KTR_SAUPCALL - scheduler activated upcall.
+ *
+ * The structure is no longer used, but retained for compatibility.
  */
 #define	KTR_SAUPCALL	13
 struct ktr_saupcall {
@@ -249,7 +251,6 @@ struct ktr_saupcall {
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define KTRFAC_MOOL	(1<<KTR_MOOL)
-#define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 #define	KTRFAC_MIB	(1<<KTR_MIB)
 /*
  * trace flags (also in p_traceflags)
@@ -291,7 +292,6 @@ void ktrmmsg(struct lwp *, const void *, size_t);
 void ktrkmem(struct lwp *, int, const void *, size_t);
 void ktrmib(struct lwp *, const int *, u_int);
 void ktrmool(struct lwp *, const void *, size_t, const void *);
-void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);

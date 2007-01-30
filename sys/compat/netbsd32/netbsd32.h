@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.54.4.1 2007/01/12 01:04:03 ad Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.54.4.2 2007/01/30 13:51:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -42,7 +42,6 @@
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -290,13 +289,6 @@ struct netbsd32_msqid_ds14 {
 	netbsd32_long	msg_pad3;
 	netbsd32_long	msg_pad4[4];
 };
-
-/* from  <sys/sa.h> */
-typedef netbsd32_pointer_t netbsd32_sa_upcall_t;
-typedef netbsd32_pointer_t netbsd32_sa_upcallp_t;
-
-void	netbsd32_cpu_upcall(struct lwp *, int, int, int, void *, void *,
-    void *, sa_upcall_t);
 
 /* from <sys/sem.h> */
 typedef netbsd32_pointer_t netbsd32_semp_t;

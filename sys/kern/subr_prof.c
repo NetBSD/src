@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33.20.6 2007/01/16 01:26:20 ad Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.33.20.7 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.6 2007/01/16 01:26:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.7 2007/01/30 13:51:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.6 2007/01/16 01:26:20 ad Exp $
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 

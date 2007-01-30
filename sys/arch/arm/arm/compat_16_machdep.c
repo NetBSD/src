@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.3 2006/08/05 22:54:28 bjh21 Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.3.4.1 2007/01/30 13:49:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2006/08/05 22:54:28 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3.4.1 2007/01/30 13:49:33 ad Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2006/08/05 22:54:28 bjh21 
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/ucontext.h>
 
 #include <arm/armreg.h>

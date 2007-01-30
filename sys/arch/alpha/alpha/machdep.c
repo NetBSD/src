@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.288.20.3 2007/01/12 01:00:39 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.288.20.4 2007/01/30 13:49:33 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.20.3 2007/01/12 01:00:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.20.4 2007/01/30 13:49:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.20.3 2007/01/12 01:00:39 ad Exp $"
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -109,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.288.20.3 2007/01/12 01:00:39 ad Exp $"
 #include <machine/fpu.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -1439,12 +1436,12 @@ getframe(const struct lwp *l, int sig, int *onstack)
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		frame = (void *)((caddr_t)l->l_sigstk->ss_sp +
-					l->l_sigstk->ss_size);
+		frame = (void *)((caddr_t)l->l_sigstk.ss_sp +
+					l->l_sigstk.ss_size);
 	else
 		frame = (void *)(alpha_pal_rdusp());
 	return (frame);
@@ -1548,7 +1545,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -1579,24 +1576,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef COMPAT_16
 	}
 #endif
-}
-
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-       	struct trapframe *tf;
-
-	tf = l->l_md.md_tf;
-
-	tf->tf_regs[FRAME_PC] = (u_int64_t)upcall;
-	tf->tf_regs[FRAME_RA] = 0;
-	tf->tf_regs[FRAME_A0] = type;
-	tf->tf_regs[FRAME_A1] = (u_int64_t)sas;
-	tf->tf_regs[FRAME_A2] = nevents;
-	tf->tf_regs[FRAME_A3] = ninterrupted;
-	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
-	tf->tf_regs[FRAME_T12] = (u_int64_t)upcall;  /* t12 is pv */
-	alpha_pal_wrusp((unsigned long)sp);
 }
 
 /*

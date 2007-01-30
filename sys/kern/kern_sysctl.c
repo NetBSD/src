@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.201.2.3 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.201.2.4 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201.2.3 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201.2.4 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_ktrace.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.201.2.3 2007/01/12 01:04:06 ad Exp
 #include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #ifdef KTRACE

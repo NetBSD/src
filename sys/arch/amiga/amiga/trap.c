@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 2006/07/23 22:06:04 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.110.4.1 2007/01/30 13:49:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2006/07/23 22:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110.4.1 2007/01/30 13:49:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2006/07/23 22:06:04 ad Exp $");
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
 #include <sys/syscall.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
@@ -402,13 +400,8 @@ trapmmufault(type, code, v, fp, l, sticks)
 	     mmutype == MMU_68040 ? (code & SSW_TMMASK) == FC_SUPERD :
 	     (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
 		map = kernel_map;
-	else {
+	else
 		map = &vm->vm_map;
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)v;
-			l->l_flag |= L_SA_PAGEFAULT;
-		}
-	}
 
 	if (
 #ifdef M68060
@@ -509,7 +502,6 @@ trapmmufault(type, code, v, fp, l, sticks)
 
 		if (type == T_MMUFLT)
 			return;
-		l->l_flag &= ~L_SA_PAGEFAULT;
 		userret(l, fp->f_pc, sticks);
 		return;
 	}
@@ -542,7 +534,6 @@ nogo:
 	trapsignal(l, &ksi);
 	if ((type & T_USER) == 0)
 		return;
-	l->l_flag &= ~L_SA_PAGEFAULT;
 	userret(l, fp->f_pc, sticks);
 }
 /*
@@ -750,7 +741,7 @@ trap(type, code, v, frame)
 			ADDUPROF(p);
 		}
 		if (want_resched)
-			preempt(0);
+			preempt();
 
 		userret(l, frame.f_pc, sticks);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.162.2.2 2006/12/29 20:27:44 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.162.2.3 2007/01/30 13:51:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.162.2.2 2006/12/29 20:27:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.162.2.3 2007/01/30 13:51:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1173,7 +1173,7 @@ allocbuf(struct buf *bp, int size, int preserve)
 			    SPCF_SHOULDYIELD) {
 				simple_unlock(&bqueue_slock);
 				splx(s);
-				preempt(1);
+				preempt();
 				s = splbio();
 				simple_lock(&bqueue_slock);
 			}

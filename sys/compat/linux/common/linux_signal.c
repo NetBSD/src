@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.49.20.3 2007/01/19 20:18:46 ad Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.49.20.4 2007/01/30 13:51:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.49.20.3 2007/01/19 20:18:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.49.20.4 2007/01/30 13:51:33 ad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.49.20.3 2007/01/19 20:18:46 ad Ex
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -613,7 +612,7 @@ linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 	int error = 0;
 
 	if (SCARG(uap, oss)) {
-		native_to_linux_sigaltstack(&ss, l->l_sigstk);
+		native_to_linux_sigaltstack(&ss, &l->l_sigstk);
 		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
 			return error;
 	}
@@ -628,13 +627,13 @@ linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 		if (nss.ss_flags & ~SS_ALLBITS)
 			error = EINVAL;
 		else if (nss.ss_flags & SS_DISABLE) {
-			if (l->l_sigstk->ss_flags & SS_ONSTACK)
+			if (l->l_sigstk.ss_flags & SS_ONSTACK)
 				error = EINVAL;
 		} else if (nss.ss_size < LINUX_MINSIGSTKSZ)
 			error = ENOMEM;
 
 		if (error == 0)
-			*l->l_sigstk = nss;
+			l->l_sigstk = nss;
 
 		mutex_exit(&p->p_smutex);
 	}

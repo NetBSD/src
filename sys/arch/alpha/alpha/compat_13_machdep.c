@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.13.20.1 2007/01/11 22:22:56 ad Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.13.20.2 2007/01/30 13:49:33 ad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.13.20.1 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.13.20.2 2007/01/30 13:49:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.13.20.1 2007/01/11 22:22:56 
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -106,9 +105,9 @@ compat_13_sys_sigreturn(l, v, retval)
 	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/*
 	 * Restore signal mask.  Note the mask is a "long" in the stack
 	 * frame.

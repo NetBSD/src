@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.15 2007/01/28 07:20:38 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.16 2007/01/30 13:51:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.15 2007/01/28 07:20:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.16 2007/01/30 13:51:40 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -214,7 +214,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.15 2007/01/28 07:20:38 ad Exp $"
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
@@ -548,15 +547,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	} else
 		l2->l_prflag = 0;
 
-	if ((p2->p_sflag & PS_SA) == 0) {
-		l2->l_sigmask = &l2->l_sigstore.ss_mask;
-		l2->l_sigstk = &l2->l_sigstore.ss_stk;
-		*l2->l_sigmask = *l1->l_sigmask;
-	} else {
-		l2->l_sigmask = &p2->p_sigstore.ss_mask;
-		l2->l_sigstk = &p2->p_sigstore.ss_stk;
-	}
-
+	l2->l_sigmask = l1->l_sigmask;
 	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 
@@ -1115,15 +1106,6 @@ lwp_userret(struct lwp *l)
 			/* NOTREACHED */
 		}
 	}
-
-	/*
-	 * Timer events are handled specially.  We only try once to deliver
-	 * pending timer upcalls; if if fails, we can try again on the next
-	 * loop around.  If we need to re-enter lwp_userret(), MD code will
-	 * bounce us back here through the trap path after we return.
-	 */
-	if (p->p_timerpend)
-		timerupcall(l);
 }
 
 /*

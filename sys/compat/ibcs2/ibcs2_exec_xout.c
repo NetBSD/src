@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.13 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.13.4.1 2007/01/30 13:51:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.13 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.13.4.1 2007/01/30 13:51:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.13 2006/07/23 22:06:08 ad Exp 
 #include <sys/resourcevar.h>
 
 #include <sys/mman.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.30.2.1 2006/11/18 21:29:38 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.30.2.2 2007/01/30 13:49:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30.2.1 2006/11/18 21:29:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.30.2.2 2007/01/30 13:49:39 ad Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -960,7 +960,7 @@ _bus_dma_uiomove(void *buf, struct uio *uio, size_t n, int direction)
 		if (!VMSPACE_IS_KERNEL_P(vm) &&
 		    (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 		    != 0) {
-			preempt(1);
+			preempt();
 		}
 		if (direction == UIO_READ) {
 			error = copyout_vmspace(vm, cp, iov->iov_base, cnt);

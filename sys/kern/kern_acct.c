@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.66.4.8 2007/01/28 01:34:18 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.66.4.9 2007/01/30 13:51:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.8 2007/01/28 01:34:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.9 2007/01/30 13:51:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.8 2007/01/28 01:34:18 ad Exp $"
 #include <sys/tty.h>
 #include <sys/kauth.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*

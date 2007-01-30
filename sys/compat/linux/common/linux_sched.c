@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.35.2.2 2007/01/12 01:04:03 ad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.35.2.3 2007/01/30 13:51:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.35.2.2 2007/01/12 01:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.35.2.3 2007/01/30 13:51:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.35.2.2 2007/01/12 01:04:03 ad Exp 
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/malloc.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/wait.h>
 #include <sys/kauth.h>

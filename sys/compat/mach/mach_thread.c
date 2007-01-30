@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.36.20.4 2007/01/18 00:15:36 christos Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.36.20.5 2007/01/30 13:51:35 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.4 2007/01/18 00:15:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.5 2007/01/30 13:51:35 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.4 2007/01/18 00:15:36 christ
 #include <sys/proc.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
@@ -128,8 +126,6 @@ mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
 		l->l_proc->p_stats->p_ru.ru_nivcsw++;	/* XXXSMP */
 	}
 	*retval = mi_switch(l, NULL);
-	if ((l->l_flag & L_SA) != 0 && *retval != 0)
-		sa_preempt(l);
 
 	return 0;
 }

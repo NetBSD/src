@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.11 2007/01/27 14:00:02 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.12 2007/01/30 13:51:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@ struct	lwp {
 	u_char		l_usrpri;	/* l: user-priority */
 	long		l_nvcsw;	/* l: voluntary context switches */
 	long		l_nivcsw;	/* l: involuntary context switches */
-	struct sadata_vp *l_savp;	/* p: SA "virtual processor" */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -108,15 +107,14 @@ struct	lwp {
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
-	stack_t		*l_sigstk;	/* p: sp & on stack state variable */
-	sigset_t	*l_sigmask;	/* p: signal mask */
 	sigset_t	*l_sigwait;	/* p: signals being waited for */
 	kcondvar_t	l_sigcv;	/* p: for sigsuspend() */
 	struct ksiginfo	*l_sigwaited;	/* p: delivered signals from set */
 	sigpend_t	*l_sigpendset;	/* p: XXX issignal()/postsig() baton */
 	LIST_ENTRY(lwp)	l_sigwaiter;	/* p: chain on list of waiting LWPs */
+	stack_t		l_sigstk;	/* p: sp & on stack state variable */
+	sigset_t	l_sigmask;	/* p: signal mask */
 	sigpend_t	l_sigpend;	/* p: signals to this LWP */
-	sigstore_t	l_sigstore;	/* p: signal state for 1:1 threads */
 	sigset_t	l_sigoldmask;	/* p: mask for sigpause */
 
 	/* Private data */
@@ -162,17 +160,12 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
 #define	L_SINTR		0x00000080 /* Sleep is interruptible. */
 #define	L_SYSTEM	0x00000200 /* Kernel thread */
-#define	L_SA		0x00000400 /* Scheduler activations LWP */
 #define	L_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	L_WCORE		0x00080000 /* Stop for core dump on return to user */
 #define	L_WEXIT		0x00100000 /* Exit before return to user */
-#define	L_SA_UPCALL	0x00200000 /* SA upcall is pending */
-#define	L_SA_BLOCKING	0x00400000 /* Blocking in tsleep() */
 #define	L_PENDSIG	0x01000000 /* Pending signal for us */
 #define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	L_WREBOOT	0x08000000 /* System is rebooting, please suspend */
-#define	L_SA_YIELD	0x10000000 /* LWP on VP is yielding */
-#define	L_SA_IDLE	0x20000000 /* VP is idle */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -180,8 +173,6 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
 #define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
-#define	LP_SA_SWITCHING	0x00000020 /* SA LWP in context switch */
-#define	LP_SA_PAGEFAULT	0x00000040 /* SA LWP in pagefault handler */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
@@ -222,7 +213,7 @@ do {									\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
 
-void	preempt (int);
+void	preempt (void);
 int	mi_switch (struct lwp *, struct lwp *);
 #ifndef remrunqueue
 void	remrunqueue (struct lwp *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.19.14.1 2007/01/11 22:22:58 ad Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.19.14.2 2007/01/30 13:49:38 ad Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.19.14.1 2007/01/11 22:22:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.19.14.2 2007/01/30 13:49:38 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.19.14.1 2007/01/11 22:22:58 ad
 #include <sys/malloc.h>
 #include <sys/select.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
@@ -188,12 +187,12 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
 		fp = (struct sunos32_sigframe *)
-		     ((caddr_t)l->l_sigstk->ss_sp + l->l_sigstk->ss_size);
+		     ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct sunos32_sigframe *)oldsp;
 
@@ -227,7 +226,7 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 	native_sigset_to_sigset13(mask, &sf.sf_sc.sc_mask);
 	sf.sf_sc.sc_sp = (u_int)(u_long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -373,9 +372,9 @@ sunos32_sys_sigreturn(l, v, retval)
 
 	mutex_enter(&p->p_smutex);
 	if (scp->sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
 	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);

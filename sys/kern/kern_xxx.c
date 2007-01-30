@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.59.4.3 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.59.4.4 2007/01/30 13:51:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.59.4.3 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.59.4.4 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.59.4.3 2007/01/12 01:04:07 ad Exp $")
 #include <sys/syscall.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
@@ -129,7 +128,7 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 		}
 	}
 	printf("\n");
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_ONE(l);
 }
 
 void
@@ -163,6 +162,6 @@ scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
 		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", (long)code,
 		    error, (long)retval[0], (long)retval[1]);
 	printf("\n");
-	(void)KERNEL_UNLOCK(1, l);
+	KERNEL_UNLOCK_ONE(l);
 }
 #endif /* SYSCALL_DEBUG */

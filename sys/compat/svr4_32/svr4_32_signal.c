@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.15.20.3 2007/01/11 22:22:59 ad Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.15.20.4 2007/01/30 13:51:37 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.3 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.4 2007/01/30 13:51:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.3 2007/01/11 22:22:59 ad 
 #include <sys/malloc.h>
 #include <sys/wait.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>
@@ -489,7 +488,7 @@ svr4_32_sys_signal(l, v, retval)
 
 	case SVR4_SIGPAUSE_MASK:
 		mutex_enter(&p->p_smutex);
-		ss = *l->l_sigmask;
+		ss = l->l_sigmask;
 		mutex_exit(&p->p_smutex);
 		sigdelset(&ss, signum);
 		return (sigsuspend1(l, &ss));
@@ -693,8 +692,7 @@ svr4_32_setcontext(l, uc)
 
 	/* set signal stack */
 	if (uc->uc_flags & SVR4_UC_STACK)
-		svr4_32_to_native_sigaltstack(&uc->uc_stack,
-		    l->l_sigstk);
+		svr4_32_to_native_sigaltstack(&uc->uc_stack, &l->l_sigstk);
 
 	/* set signal mask */
 	if (uc->uc_flags & SVR4_UC_SIGMASK) {
@@ -726,7 +724,7 @@ svr4_32_sys_context(l, v, retval)
 	switch (SCARG(uap, func)) {
 	case SVR4_GETCONTEXT:
 		DPRINTF(("getcontext(%p)\n", SCARG(uap, uc)));
-		svr4_32_getcontext(l, &uc, l->l_sigmask);
+		svr4_32_getcontext(l, &uc, &l->l_sigmask);
 		return copyout(&uc, (caddr_t)(u_long)SCARG(uap, uc), sizeof(uc));
 
 	case SVR4_SETCONTEXT:

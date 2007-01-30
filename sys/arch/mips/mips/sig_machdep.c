@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.11.20.2 2007/01/11 22:22:57 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.11.20.3 2007/01/30 13:49:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11.20.2 2007/01/11 22:22:57 ad Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11.20.3 2007/01/30 13:49:36 ad Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11.20.2 2007/01/11 22:22:57 ad Exp
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -66,10 +65,10 @@ getframe(struct lwp *l, int sig, int *onstack)
 	struct frame *fp = l->l_md.md_regs;
  
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)l->l_sigstk->ss_sp + l->l_sigstk->ss_size;
+		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 	else
 		return (void *)fp->f_regs[_R_SP];
 }		
@@ -112,7 +111,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
         }
 
         uc.uc_flags = _UC_SIGMASK
-            | ((l->l_sigstk->ss_flags & SS_ONSTACK)
+            | ((l->l_sigstk.ss_flags & SS_ONSTACK)
             ? _UC_SETSTACK : _UC_CLRSTACK);
         uc.uc_sigmask = *mask;
         uc.uc_link = NULL;
@@ -151,7 +150,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void    

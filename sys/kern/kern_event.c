@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.30.4.3 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.30.4.4 2007/01/30 13:51:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.30.4.3 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.30.4.4 2007/01/30 13:51:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.30.4.3 2007/01/12 01:04:06 ad Exp $
 #include <sys/uio.h>
 #include <sys/mount.h>
 #include <sys/filedesc.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 

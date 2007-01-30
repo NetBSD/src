@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.8.4.1 2006/11/18 21:39:04 ad Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.8.4.2 2007/01/30 13:51:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.8.4.1 2006/11/18 21:39:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.8.4.2 2007/01/30 13:51:30 ad Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.8.4.1 2006/11/18 21:39:04 ad Exp $
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 

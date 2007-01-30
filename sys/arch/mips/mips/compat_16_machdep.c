@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.7.2.2 2007/01/11 22:22:57 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.7.2.3 2007/01/30 13:49:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7.2.2 2007/01/11 22:22:57 ad Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7.2.3 2007/01/30 13:49:36 ad Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7.2.2 2007/01/11 22:22:57 ad
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -135,7 +134,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 
 	/* Save signal stack. */
-	ksc.sc_onstack = l->l_sigstk->ss_flags & SS_ONSTACK;
+	ksc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	ksc.sc_mask = *returnmask;
@@ -201,7 +200,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -272,9 +271,9 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
 	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
 	mutex_exit(&p->p_smutex);

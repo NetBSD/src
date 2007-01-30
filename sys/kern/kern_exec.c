@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.5 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.6 2007/01/30 13:51:40 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.5 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.6 2007/01/30 13:51:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.5 2007/01/12 01:04:06 ad Exp $
 #include <sys/syscall.h>
 #include <sys/kauth.h>
 
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
@@ -148,17 +146,6 @@ struct uvm_object *emul_netbsd_object;
 void	syscall(void);
 #endif
 
-static const struct sa_emul saemul_netbsd = {
-	sizeof(ucontext_t),
-	sizeof(struct sa_t),
-	sizeof(struct sa_t *),
-	NULL,
-	NULL,
-	cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext,
-	sa_ucsp
-};
-
 /* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
@@ -203,7 +190,7 @@ const struct emul emul_netbsd = {
 
 	uvm_default_mapaddr,
 	NULL,
-	&saemul_netbsd,
+	sizeof(ucontext_t),
 };
 
 #ifdef LKM
@@ -427,17 +414,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	char			**tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
-	int			oldlwpflags;
 #ifdef SYSTRACE
 	int			wassugid = ISSET(p->p_flag, P_SUGID);
 	char			pathbuf[MAXPATHLEN];
 	size_t			pathbuflen;
 #endif /* SYSTRACE */
-
-	/* Disable scheduler activation upcalls. */
-	oldlwpflags = l->l_flag & (L_SA | L_SA_UPCALL);
-	if (l->l_flag & L_SA)
-		l->l_flag &= ~(L_SA | L_SA_UPCALL);
 
 	p = l->l_proc;
 
@@ -609,7 +590,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/* Get rid of other LWPs. */
-	if (p->p_sa || p->p_nlwps > 1) {
+	if (p->p_nlwps > 1) {
 		mutex_enter(&p->p_smutex);
 		exit_lwps(l);
 		mutex_exit(&p->p_smutex);
@@ -619,10 +600,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* This is now LWP 1 */
 	l->l_lid = 1;
 	p->p_nlwpid = 1;
-
-	/* Release any SA state. */
-	if (p->p_sa)
-		sa_release(p);
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
@@ -997,8 +974,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #ifdef SYSTRACE
  clrflg:
 #endif /* SYSTRACE */
-	l->l_flag |= oldlwpflags;	/* XXXSMP */
-
 	/* Unlock the process. */
 	mb_write();
 	p->p_refcnt = 1;

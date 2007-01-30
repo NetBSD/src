@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.9 2007/01/25 20:20:28 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.10 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,14 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.9 2007/01/25 20:20:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.10 2007/01/30 13:51:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/types.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
@@ -117,18 +115,9 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	ucontext_t *newuc;
 	int error, lid;
 
-	mutex_enter(&p->p_smutex);
-	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
-		mutex_exit(&p->p_smutex);
-		return EINVAL;
-	}
-	p->p_sflag |= PS_NOSA;
-	mutex_exit(&p->p_smutex);
-
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
 
-	error = copyin(SCARG(uap, ucp), newuc,
-	    l->l_proc->p_emul->e_sa->sae_ucsize);
+	error = copyin(SCARG(uap, ucp), newuc, p->p_emul->e_ucsize);
 	if (error) {
 		pool_put(&lwp_uc_pool, newuc);
 		return error;
@@ -267,12 +256,6 @@ sys__lwp_continue(struct lwp *l, void *v, register_t *retval)
 	error = 0;
 
 	mutex_enter(&p->p_smutex);
-
-	if ((p->p_sflag & PS_SA) != 0 || p->p_sa != NULL) {
-		mutex_exit(&p->p_smutex);
-		return EINVAL;
-	}
-
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
 		mutex_exit(&p->p_smutex);
 		return ESRCH;

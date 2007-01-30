@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.187.4.6 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.187.4.7 2007/01/30 13:51:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.6 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.187.4.7 2007/01/30 13:51:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1715,7 +1715,7 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 	 */
 	if (isbackground(p, tp)) {
 		if (sigismember(&p->p_sigctx.ps_sigignore, SIGTTIN) ||
-		    sigismember(curlwp->l_sigmask, SIGTTIN) ||
+		    sigismember(&curlwp->l_sigmask, SIGTTIN) ||
 		    p->p_sflag & PS_PPWAIT || p->p_pgrp->pg_jobc == 0) {
 			TTY_UNLOCK(tp);
 			splx(s);
@@ -2001,7 +2001,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_sflag & PS_PPWAIT) == 0 &&
 	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&
-	    !sigismember(curlwp->l_sigmask, SIGTTOU)) {
+	    !sigismember(&curlwp->l_sigmask, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;
 			goto out;

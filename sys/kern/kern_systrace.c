@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58.2.8 2007/01/18 00:15:36 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.9 2007/01/30 13:51:41 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.8 2007/01/18 00:15:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.9 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.8 2007/01/18 00:15:36 chris
 #include <sys/ptrace.h>
 #include <sys/namei.h>
 #include <sys/systrace.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kauth.h>
 
 #include <compat/common/compat_util.h>
@@ -1846,11 +1844,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 	SYSTRACE_UNLOCK(fst, strp->proc);
 
 	while (1) {
-		int f;
-		f = curlwp->l_flag & L_SA;
-		curlwp->l_flag &= ~L_SA;
 		st = tsleep(strp, PWAIT, "systrmsg", 0);
-		curlwp->l_flag |= f;
 		if (st != 0)
 			return (ERESTART);
 		/* If we detach, then everything is permitted */

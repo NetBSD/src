@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.16 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.16.20.1 2007/01/30 13:51:37 ad Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.16 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.16.20.1 2007/01/30 13:51:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.16 2005/12/11 12:20:23 christos 
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/disklabel.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>

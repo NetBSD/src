@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.18.2.1 2007/01/27 01:40:58 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.18.2.2 2007/01/30 13:51:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.18.2.1 2007/01/27 01:40:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.18.2.2 2007/01/30 13:51:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.18.2.1 2007/01/27 01:40:58 ad Ex
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
@@ -105,13 +104,13 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (l->l_sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_sigframe *)((caddr_t)l->l_sigstk->ss_sp +
-					  l->l_sigstk->ss_size);
+		fp = (struct linux_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+					  l->l_sigstk.ss_size);
 	else
 		fp = (struct linux_sigframe *)tf->tf_usr_sp;
 	fp--;
@@ -180,7 +179,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 }
 
@@ -258,7 +257,7 @@ linux_sys_sigreturn(l, v, retval)
 	mutex_enter(&p->p_smutex);
 
 	/* Restore signal stack. */
-	l->l_sigstk->ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_extra_to_native_sigset(&mask, &frame.sf_sc.sc_mask,

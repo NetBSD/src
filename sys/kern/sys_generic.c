@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.92.2.5 2007/01/12 01:04:07 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92.2.6 2007/01/30 13:51:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.5 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.6 2007/01/30 13:51:41 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.5 2007/01/12 01:04:07 ad Exp 
 #endif
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -785,7 +784,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	caddr_t		bits;
 	int		s, ncoll, error, timo;
 	size_t		ni;
-	sigset_t	*oldmask = NULL;	/* XXXgcc */
+	sigset_t	oldmask;
 	struct timeval  sleeptv;
 
 	error = 0;
@@ -822,11 +821,11 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
 		mutex_enter(&p->p_smutex);
-		l->l_sigoldmask = *mask;
 		oldmask = l->l_sigmask;
-		l->l_sigmask = &l->l_sigoldmask;
+		l->l_sigmask = *mask;
 		mutex_exit(&p->p_smutex);
-	}
+	} else
+		oldmask = l->l_sigmask;	/* XXXgcc */
 
  retry:
 	ncoll = nselcoll;
@@ -983,7 +982,7 @@ pollcommon(struct lwp *l, register_t *retval,
 	char		smallbits[32 * sizeof(struct pollfd)];
 	struct proc	* const p = l->l_proc;
 	caddr_t		bits;
-	sigset_t	*oldmask = NULL;	/* XXXgcc */
+	sigset_t	oldmask;
 	int		s, ncoll, error, timo;
 	size_t		ni;
 	struct timeval	sleeptv;
@@ -1011,11 +1010,11 @@ pollcommon(struct lwp *l, register_t *retval,
 	if (mask) {
 		sigminusset(&sigcantmask, mask);
 		mutex_enter(&p->p_smutex);
-		l->l_sigoldmask = *mask;
 		oldmask = l->l_sigmask;
-		l->l_sigmask = &l->l_sigoldmask;
+		l->l_sigmask = *mask;
 		mutex_exit(&p->p_smutex);
-	}
+	} else
+		oldmask = l->l_sigmask;	/* XXXgcc */
 
  retry:
 	ncoll = nselcoll;
@@ -1189,6 +1188,6 @@ int
 sys_sched_yield(struct lwp *l, void *v, register_t *retval)
 {
 
-	preempt(0);
+	preempt();
 	return 0;
 }

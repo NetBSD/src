@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.31.4.1 2006/11/18 21:29:23 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.31.4.2 2007/01/30 13:49:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.31.4.1 2006/11/18 21:29:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.31.4.2 2007/01/30 13:49:35 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.31.4.1 2006/11/18 21:29:23 ad Exp 
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/ucontext.h>
@@ -102,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.31.4.1 2006/11/18 21:29:23 ad Exp 
 #include <machine/frame.h>
 
 #include <m68k/m68k.h>
-#include <m68k/saframe.h>
 
 extern short exframesize[];
 struct fpframe m68k_cached_fpu_idle_frame;
@@ -237,36 +234,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		sendsig_siginfo(ksi, mask);
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct saframe *sfp, sf;
-	struct frame *frame;
-
-	frame = (struct frame *)l->l_md.md_regs;
-
-	/* Finally, copy out the rest of the frame */
-	sf.sa_ra = 0;
-	sf.sa_type = type;
-	sf.sa_sas = sas;
-	sf.sa_events = nevents;
-	sf.sa_interrupted = ninterrupted;
-	sf.sa_arg = ap;
-
-	sfp = (struct saframe *)sp - 1;
-	if (copyout(&sf, sfp, sizeof(sf)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	frame->f_pc = (int)upcall;
-	frame->f_regs[SP] = (int) sfp;
-	frame->f_regs[A6] = 0; /* indicate call-frame-top to debuggers */
-	frame->f_sr &= ~PSL_T;
 }
 
 void
