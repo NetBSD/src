@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.49 2007/01/29 09:26:08 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.50 2007/01/30 14:38:55 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2568,4 +2568,21 @@ dist/bzip2/bzlib.c				1.3
 
 	Avoid dereference of NULL pointer.
 	[adrianp, ticket #1658]
+
+sys/arch/i386/pci/pchb.c			1.59,1.63-1.64
+
+	According to http://www.intel.com/design/chipsets/specupdt/290639.htm,
+	the BIOS bug workaround for the i82443BX chipset's DRAM leadoff timing
+	parameter is not needed for revisions >= C0, so avoid tweaking that
+	parameter in that case.
+	Earlier, this would trigger NMIs on fully memory-populated Compaq
+	1850R systems, where the BIOS appears to program and require a non-
+	standard value for this parameter.
+	[he, ticket #1657]
+
+usr.sbin/postinstall/postinstall		1.32
+
+	Fix method to find pf.os so it works with '-s etc.tgz'.
+	This fixes PR bin/35185.
+	[lukem, ticket #1659]
 
