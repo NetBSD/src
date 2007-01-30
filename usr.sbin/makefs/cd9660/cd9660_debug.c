@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_debug.c,v 1.7 2007/01/28 10:40:19 dogcow Exp $	*/
+/*	$NetBSD: cd9660_debug.c,v 1.8 2007/01/30 01:46:33 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 #include <sys/param.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_debug.c,v 1.7 2007/01/28 10:40:19 dogcow Exp $");
+__RCSID("$NetBSD: cd9660_debug.c,v 1.8 2007/01/30 01:46:33 dogcow Exp $");
 #endif  /* !__lint */
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -94,6 +94,7 @@ debug_print_susp_attrs(cd9660node *n, int indent)
 void
 debug_print_tree(cd9660node *node, int level)
 {
+#if !HAVE_NBTOOL_CONFIG_H
 	cd9660node *cn;
 
 	print_n_tabs(level);
@@ -123,6 +124,9 @@ debug_print_tree(cd9660node *node, int level)
 		debug_print_susp_attrs(node, level + 1);
 	TAILQ_FOREACH(cn, &node->cn_children, cn_next_child)
 		debug_print_tree(cn, level + 1);
+#else
+	printf("Sorry, debuging is not supported in host-tools mode.\n");
+#endif
 }
 
 void
@@ -291,6 +295,7 @@ debug_dump_to_xml_padded_hex_output(const char *element, unsigned char *buf,
 int
 debug_get_encoded_number(unsigned char* buf, int mode)
 {
+#if !HAVE_NBTOOL_CONFIG_H
 	switch (mode) {
 	/* 711: Single bite */
 	case 711:
@@ -324,6 +329,7 @@ debug_get_encoded_number(unsigned char* buf, int mode)
 	case 733:
 		return isonum_733(buf);
 	}
+#endif
 	return 0;
 }
 
