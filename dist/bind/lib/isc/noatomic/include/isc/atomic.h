@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.2 2007/01/30 00:46:52 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3 2007/01/30 18:12:48 christos Exp $	*/
 
 /*
  * Copyright (C) 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,9 @@
 
 #ifndef ISC_ATOMIC_H
 #define ISC_ATOMIC_H 1
+
+#include <isc/platform.h>
+#include <isc/types.h>
 
 /* XXX: These are not atomic! */
 /*
