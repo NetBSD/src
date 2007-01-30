@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_mskvar.h,v 1.1 2006/08/16 21:06:23 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.1 2006/09/09 16:17:50 riz Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.2 2007/01/30 11:34:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -199,8 +199,6 @@ struct sk_softc {
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	void			*sk_intrhand;	/* irq handler handle */
-	u_int8_t		sk_coppertype;
-	u_int8_t		sk_pmd;		/* physical media type */
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
 	u_int8_t		sk_macs;	/* # of MACs */
@@ -232,8 +230,6 @@ struct sk_if_softc {
 	u_int32_t		sk_rx_ramend;
 	u_int32_t		sk_tx_ramstart;
 	u_int32_t		sk_tx_ramend;
-	u_int8_t		sk_phytype;
-	int			sk_phyaddr;
 	int			sk_cnt;
 	int			sk_link;
 	struct callout		sk_tick_ch;
