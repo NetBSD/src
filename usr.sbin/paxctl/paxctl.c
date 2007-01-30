@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.11 2007/01/09 12:49:37 elad Exp $ */
+/* $NetBSD: paxctl.c,v 1.1 2007/01/30 19:40:08 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.11 2007/01/09 12:49:37 elad Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.1 2007/01/30 19:40:08 elad Exp $");
 #endif
 #endif /* not lint */
 

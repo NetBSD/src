@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.994 2007/01/26 23:55:58 pooka Exp $
+#	$NetBSD: mi,v 1.995 2007/01/30 19:40:09 elad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2516,7 +2516,7 @@
 ./usr/libdata/debug/usr/bin/patch.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pathchk.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pawd.debug		comp-amd-debug		debug
-./usr/libdata/debug/usr/bin/paxctl.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/paxctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/pfbtops.debug	comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/pic.debug		comp-groff-debug	debug
 ./usr/libdata/debug/usr/bin/pkill.debug		comp-util-debug		debug
@@ -2890,6 +2890,7 @@
 ./usr/libdata/debug/usr/sbin/ntptime.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/omshell.debug	comp-dhcpd-debug	debug
 ./usr/libdata/debug/usr/sbin/pac.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/paxctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pcictl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pkg_add.debug	comp-pkgutil-debug	debug
 ./usr/libdata/debug/usr/sbin/pkg_admin.debug	comp-pkgutil-debug	debug
