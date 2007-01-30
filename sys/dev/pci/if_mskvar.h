@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.2 2007/01/30 11:34:39 msaitoh Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.3 2007/01/30 11:58:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -201,6 +201,7 @@ struct sk_softc {
 	void			*sk_intrhand;	/* irq handler handle */
 	u_int8_t		sk_type;
 	u_int8_t		sk_rev;
+	u_int32_t		sk_workaround;
 	u_int8_t		sk_macs;	/* # of MACs */
 	const char		*sk_name;
 	u_int32_t		sk_rboff;	/* RAMbuffer offset */
