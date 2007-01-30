@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.6 2007/01/30 05:25:15 freza Exp $	*/
+/*	$NetBSD: softintr.c,v 1.7 2007/01/30 05:42:24 freza Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.6 2007/01/30 05:25:15 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.7 2007/01/30 05:42:24 freza Exp $");
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
@@ -207,6 +207,11 @@ softintr_disestablish(void *cookie)
 	}
 	mtmsr(msr);
 
+	/*
+	 * This is the only existing reference to ${si} at this point, so
+	 * no need to protect. The structure is freshly initialized when
+	 * retrieved from the pool, anyway.
+	 */
 	si->si_refs--;
 	KASSERT(si->si_refs == 0);
 
