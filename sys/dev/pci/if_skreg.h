@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.9 2007/01/30 11:34:39 msaitoh Exp $ */
+/* $NetBSD: if_skreg.h,v 1.10 2007/01/30 11:58:10 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -420,6 +420,14 @@
 
 #define SK_YUKON_EC_U_REV_A0	0x1
 #define SK_YUKON_EC_U_REV_A1	0x2
+#define SK_YUKON_EC_U_REV_B0	0x3
+
+#define SK_YUKON_FE_REV_A1	0x1
+#define SK_YUKON_FE_REV_A2	0x3
+
+/* Workaround */
+#define SK_WA_43_418	0x01
+#define SK_WA_4109	0x02
 
 #define SK_IMCTL_IRQ_CLEAR	0x01
 #define SK_IMCTL_STOP		0x02
@@ -1286,6 +1294,8 @@
 #define SK_STAT_BMU_ON		0x00000008
 #define SK_STAT_BMU_IRQ_CLEAR	0x00000010
 
+#define SK_STAT_BMU_TXTHIDX_MSK	0x0fff
+
 /* Block 30 -- GMAC/GPHY Control Registers (Yukon Only)*/
 #define SK_GMAC_CTRL		0x0f00	/* GMAC Control Register */
 #define SK_GPHY_CTRL		0x0f04	/* GPHY Control Register */
@@ -1562,6 +1572,11 @@ struct sk_type {
 
 #define SK_RING_ALIGN	64
 
+#define SK_ADDR_LO(x)	((u_int64_t) (x) & 0xffffffff)
+#define SK_ADDR_HI(x)	((u_int64_t) (x) >> 32)
+
+#define SK_RING_ALIGN	64
+
 /* RX queue descriptor data structure */
 struct sk_rx_desc {
 	u_int32_t		sk_ctl;
@@ -1661,6 +1676,14 @@ struct msk_status_desc {
 #define SK_Y2_STOPC_RXSTAT	0x60
 #define SK_Y2_STOPC_TXSTAT	0x68
 #define SK_Y2_STOPC_OWN		0x80
+
+#define SK_Y2_ST_TXA1_MSKL	0x00000fff
+#define SK_Y2_ST_TXA1_SHIFT	0
+
+#define SK_Y2_ST_TXA2_MSKL	0xff000000
+#define SK_Y2_ST_TXA2_SHIFTL	24
+#define SK_Y2_ST_TXA2_MSKH	0x000f
+#define SK_Y2_ST_TXA2_SHIFTH	8
 
 #define SK_Y2_ST_TXA1_MSKL	0x00000fff
 #define SK_Y2_ST_TXA1_SHIFT	0
@@ -1876,6 +1899,24 @@ struct msk_status_desc {
 #define YU_RXSTAT_LENSHIFT      16
 
 #define YU_RXSTAT_BYTES(x)      ((x) >> YU_RXSTAT_LENSHIFT)
+
+/* Receive status */
+#define YU_RXSTAT_FOFL		0x00000001	/* Rx FIFO overflow */
+#define YU_RXSTAT_CRCERR	0x00000002	/* CRC error */
+#define YU_RXSTAT_FRAGMENT	0x00000008	/* fragment */
+#define YU_RXSTAT_LONGERR	0x00000010	/* too long packet */
+#define YU_RXSTAT_MIIERR	0x00000020	/* MII error */
+#define YU_RXSTAT_BADFC		0x00000040	/* bad flow-control packet */
+#define YU_RXSTAT_GOODFC	0x00000080	/* good flow-control packet */
+#define YU_RXSTAT_RXOK		0x00000100	/* receice OK (Good packet) */
+#define YU_RXSTAT_BROADCAST	0x00000200	/* broadcast packet */
+#define YU_RXSTAT_MULTICAST	0x00000400	/* multicast packet */
+#define YU_RXSTAT_RUNT		0x00000800	/* undersize packet */
+#define YU_RXSTAT_JABBER	0x00001000	/* jabber packet */
+#define YU_RXSTAT_VLAN		0x00002000	/* VLAN packet */
+#define YU_RXSTAT_LENSHIFT	16
+
+#define	YU_RXSTAT_BYTES(x)	((x) >> YU_RXSTAT_LENSHIFT)
 
 /* Receive status */
 #define YU_RXSTAT_FOFL		0x00000001	/* Rx FIFO overflow */
