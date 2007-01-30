@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.36.1 2007/01/11 22:22:56 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.2 2007/01/30 11:34:24 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.1 2007/01/11 22:22:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.2 2007/01/30 11:34:24 ad Exp $");
 
 #include "assym.h"
 
@@ -55,18 +55,22 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.1 2007/01/11 22:22:56 ad Exp $
  * int	_lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new)
  */
 LEAF(_lock_cas, 3)
-1:	ldq_l	t1, 0(a0)
-	mov	a3, v0
-	cmpeq	t1, a1, t0
-	bne	t0, 2f
-	stq_c	v0, 0(a0)
-	beq	v0, 3f
+1:
+	ldq_l	t1, 0(a0)
+	mov	a2, t2
+	cmpeq	a1, t1, t1
+	bne	t1, 2f
+	stq_c	t2, 0(a0)
+	beq	t2, 3f
+	mov	1, v0
 	MB
 	RET
-2:	mov	zero, v0
+2:
+	mov	zero, v0
 	MB
 	RET
-3:	br	1b
+3:
+	br	1b
 END(_lock_cas)
 
 #if !defined(LOCKDEBUG)
@@ -76,15 +80,18 @@ END(_lock_cas)
  */
 LEAF(mutex_enter, 1)
 	GET_CURLWP
-1:	ldq	t1, 0(v0)
+1:
+	ldq	t1, 0(v0)
 	ldq_l	t2, 0(a0)
 	bne	t2, 2f
 	stq_c	t1, 0(a0)
 	beq	t1, 3f
 	MB
 	RET
-2:	br	mutex_vector_enter
-3:	br	1b
+2:
+	br	mutex_vector_enter
+3:
+	br	1b
 END(mutex_enter)
 
 /*
@@ -93,15 +100,18 @@ END(mutex_enter)
 LEAF(mutex_exit, 1)
 	MB
 	GET_CURLWP
-1:	ldq	t1, 0(v0)
+1:
+	ldq	t1, 0(v0)
 	ldq_l	t2, 0(a0)
 	cmpeq	t1, t2, t2
 	bne	t2, 2f
-	stq_c	t1, 0(a0)
-	beq	t1, 3f
+	stq_c	t2, 0(a0)
+	beq	t2, 3f
 	RET
-2:	br	mutex_vector_exit
-3:	br	1b
+2:
+	br	mutex_vector_exit
+3:
+	br	1b
 END(mutex_exit)
 
 #endif	/* !LOCKDEBUG */
