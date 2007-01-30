@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.11.20.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: acs.c,v 1.11.20.3 2007/01/30 09:49:07 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.11.20.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: acs.c,v 1.11.20.3 2007/01/30 09:49:07 blymn Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -157,7 +157,7 @@ __init_wacs(SCREEN *screen)
 
 	/* Add the SUSv2 defaults (those that are not '+') */
 	lstr = setlocale( LC_ALL, "" );
-	if ( !strcasestr( lstr, "UTF-8" )) {
+	if ((lstr != NULL) && !strcasestr( lstr, "UTF-8" )) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INIT, "__init_wacs: setting defaults\n" );
 #endif /* DEBUG */
@@ -243,7 +243,7 @@ __init_wacs(SCREEN *screen)
 
 out:
 	for (count=0; count < NUM_ACS; count++)
-		memcpy(&screen->wacs_char[count], &_wacs_char[count], 
+		memcpy(&screen->wacs_char[count], &_wacs_char[count],
 			sizeof(cchar_t));
 }
 
@@ -253,7 +253,7 @@ _cursesi_reset_wacs(SCREEN *screen)
 	int count;
 
 	for (count=0; count < NUM_ACS; count++)
-		memcpy( &_wacs_char[count], &screen->wacs_char[count], 
+		memcpy( &_wacs_char[count], &screen->wacs_char[count],
 			sizeof( cchar_t ));
 }
 #endif /* HAVE_WCHAR */
