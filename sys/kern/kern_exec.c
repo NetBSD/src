@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.6 2007/01/30 13:51:40 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.7 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.6 2007/01/30 13:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.7 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -414,6 +414,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	char			**tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
+	ksiginfo_t		ksi;
 #ifdef SYSTRACE
 	int			wassugid = ISSET(p->p_flag, P_SUGID);
 	char			pathbuf[MAXPATHLEN];
@@ -920,10 +921,15 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	mutex_enter(&proclist_mutex);
 
-	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED)
-		psignal(p, SIGTRAP);
+	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_lid = l->l_lid;
+		kpsignal(p, &ksi, NULL);
+	}
 
 	if (p->p_sflag & PS_STOPEXEC) {
+		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
 		p->p_pptr->p_waited = 0;
 		mutex_enter(&p->p_smutex);
@@ -936,6 +942,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(&p->p_smutex);
 		mutex_exit(&proclist_mutex);
 		mi_switch(l, NULL);
+		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
 		mutex_exit(&proclist_mutex);
 

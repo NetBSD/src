@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.16 2007/01/30 13:51:40 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.17 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.16 2007/01/30 13:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.17 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -657,9 +657,13 @@ lwp_exit(struct lwp *l)
 	 */
 	sigclear(&l->l_sigpend, NULL);
 	if ((l->l_flag & L_PENDSIG) != 0 &&
-	    firstsig(&p->p_sigpend.sp_set) != 0)
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling)
+	    firstsig(&p->p_sigpend.sp_set) != 0) {
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+			lwp_lock(l2);
 			l2->l_flag |= L_PENDSIG;
+			lwp_unlock(l2);
+		}
+	}
 
 	lwp_lock(l);
 	l->l_stat = LSZOMB;

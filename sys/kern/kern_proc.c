@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.11 2007/01/30 13:51:40 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.12 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.11 2007/01/30 13:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.12 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1028,6 +1028,7 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	struct proc *child;
 
 	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
@@ -1078,6 +1079,7 @@ orphanpg(struct pgrp *pg)
 	int doit;
 
 	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	LOCK_ASSERT(mutex_owned(&proclist_mutex));
 
 	doit = 0;
 

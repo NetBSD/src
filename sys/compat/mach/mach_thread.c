@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.36.20.5 2007/01/30 13:51:35 ad Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.36.20.6 2007/01/31 19:56:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.5 2007/01/30 13:51:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.36.20.6 2007/01/31 19:56:39 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,12 +120,14 @@ mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
 	 * Copied from preempt(9). We cannot just call preempt
 	 * because we want to return mi_switch(9) return value.
 	 */
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
 		l->l_priority = l->l_usrpri;
 		l->l_proc->p_stats->p_ru.ru_nivcsw++;	/* XXXSMP */
 	}
 	*retval = mi_switch(l, NULL);
+	KERNEL_LOCK(l->l_biglocks, l);
 
 	return 0;
 }

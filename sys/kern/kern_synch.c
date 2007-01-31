@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.17 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.18 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.17 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.18 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -564,6 +564,7 @@ yield(void)
 {
 	struct lwp *l = curlwp;
 
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, &sched_mutex));
@@ -571,6 +572,7 @@ yield(void)
 	}
 	l->l_nvcsw++;
 	mi_switch(l, NULL);
+	KERNEL_LOCK(l->l_biglocks, l);
 }
 
 /*
@@ -582,6 +584,7 @@ preempt(void)
 {
 	struct lwp *l = curlwp;
 
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, &sched_mutex));
@@ -589,6 +592,7 @@ preempt(void)
 	}
 	l->l_nivcsw++;
 	(void)mi_switch(l, NULL);
+	KERNEL_LOCK(l->l_biglocks, l);
 }
 
 /*
@@ -602,9 +606,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 {
 	struct schedstate_percpu *spc;
 	struct timeval tv;
-#ifdef MULTIPROCESSOR
-	int hold_count;
-#endif
 	int retval, oldspl;
 	long s, u;
 #if PERFCTRS
@@ -612,11 +613,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 #endif
 
 	LOCK_ASSERT(lwp_locked(l, NULL));
-
-	/*
-	 * Release the kernel_lock, as we are about to yield the CPU.
-	 */
-	KERNEL_UNLOCK_ALL(l, &hold_count);
 
 #ifdef LOCKDEBUG
 	spinlock_switchcheck();
@@ -723,12 +719,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 */
 	KDASSERT(l->l_cpu == curcpu());
 	microtime(&l->l_cpu->ci_schedstate.spc_runtime);
-
-	/*
-	 * Reacquire the kernel_lock.
-	 */
 	splx(oldspl);
-	KERNEL_LOCK(hold_count, l);
 
 	return retval;
 }
@@ -791,6 +782,7 @@ void
 setrunnable(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
+	sigset_t *ss;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 	LOCK_ASSERT(lwp_locked(l, NULL));
@@ -802,7 +794,11 @@ setrunnable(struct lwp *l)
 		 * while we were stopped), check for a signal from the debugger.
 		 */
 		if ((p->p_slflag & PSL_TRACED) != 0 && p->p_xstat != 0) {
-			sigaddset(&l->l_sigpend.sp_set, p->p_xstat);
+			if ((sigprop[p->p_xstat] & SA_TOLWP) != 0)
+				ss = &l->l_sigpend.sp_set;
+			else
+				ss = &p->p_sigpend.sp_set;
+			sigaddset(ss, p->p_xstat);
 			signotify(l);
 		}
 		p->p_nrlwps++;
