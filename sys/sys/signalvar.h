@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.66.4.4 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.66.4.5 2007/01/31 19:56:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -127,7 +127,7 @@ typedef struct sigstore {
 #define	SA_CONT		0x0020		/* continue if suspended */
 #define	SA_CANTMASK	0x0040		/* non-maskable, catchable */
 #define	SA_NORESET	0x0080		/* not reset when caught */
-#define	SA_TOLWP	0x0100		/* to LWP that generated */
+#define	SA_TOLWP	0x0100		/* to LWP that generated, if local */
 #define	SA_TOALL	0x0200		/* always to all LWPs */
 
 #ifdef _KERNEL

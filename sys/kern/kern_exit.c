@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.10 2007/01/30 13:51:40 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.11 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.10 2007/01/30 13:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.11 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -218,6 +218,7 @@ exit1(struct lwp *l, int rv)
 	 * If we have been asked to stop on exit, do so now.
 	 */
 	if (p->p_sflag & PS_STOPEXIT) {
+		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		sigclearall(p, &contsigmask);
 		p->p_waited = 0;
 		mb_write();
@@ -227,6 +228,7 @@ exit1(struct lwp *l, int rv)
 		l->l_stat = LSSTOP;
 		mutex_exit(&p->p_smutex);
 		mi_switch(l, NULL);
+		KERNEL_LOCK(l->l_biglocks, l);
 	} else
 		mutex_exit(&p->p_smutex);
 
@@ -400,7 +402,9 @@ exit1(struct lwp *l, int rv)
 			rw_enter(&proclist_lock, RW_WRITER);
 		}
 	}
+	mutex_enter(&proclist_mutex);
 	fixjobc(p, p->p_pgrp, 0);
+	mutex_exit(&proclist_mutex);
 
 	/*
 	 * Notify interested parties of our demise.

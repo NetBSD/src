@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.110.2.8 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.110.2.9 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.8 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.110.2.9 2007/01/31 19:56:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
 	int error, write, tmp, req, pheld;
+	ksiginfo_t ksi;
 #ifdef COREDUMP
 	char *path;
 #endif
@@ -145,10 +146,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * If attaching or detaching, we need to get a write hold on the
 	 * proclist lock so that we can re-parent the target process.
 	 */
-	if (req == PT_ATTACH || req == PT_DETACH)
-		rw_enter(&proclist_lock, RW_WRITER);
-	else
-		rw_enter(&proclist_lock, RW_READER);
+	rw_enter(&proclist_lock, RW_WRITER);
 
 	/* "A foolish consistency..." XXX */
 	if (req == PT_TRACE_ME)
@@ -317,7 +315,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	if (error == 0)
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(SCARG(uap, req)),
+		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(req),
 		    NULL, NULL);
 
 	if (error != 0) {
@@ -566,6 +564,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
+		mutex_enter(&proclist_mutex);
 		mutex_enter(&t->p_smutex);
 		if (t->p_stat == SSTOP) {
 			/*
@@ -575,15 +574,13 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			 */
 			t->p_xstat = SCARG(uap, data);
 			proc_unstop(t);
-			mutex_exit(&t->p_smutex);
-		} else {
-			mutex_exit(&t->p_smutex);
-			if (SCARG(uap, data) != 0) {
-				mutex_enter(&proclist_mutex);
-				psignal(t, SCARG(uap, data));
-				mutex_exit(&proclist_mutex);
-			}
+		} else if (SCARG(uap, data) != 0) {
+			KSI_INIT_EMPTY(&ksi);
+			ksi.ksi_signo = SCARG(uap, data);
+			kpsignal2(t, &ksi);
 		}
+		mutex_exit(&t->p_smutex);
+		mutex_exit(&proclist_mutex);
 		break;
 
 	case  PT_KILL:
@@ -911,6 +908,7 @@ process_domem(struct lwp *curl /*tracer*/,
 }
 #endif /* KTRACE || PTRACE || SYSTRACE */
 
+#if defined(KTRACE) || defined(PTRACE)
 void
 process_stoptrace(struct lwp *l)
 {
@@ -928,8 +926,11 @@ process_stoptrace(struct lwp *l)
 
 	p->p_xstat = SIGTRAP;
 	proc_stop(p, 1, SIGSTOP);
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
 	lwp_lock(l);
 	mi_switch(l, NULL);
+	KERNEL_LOCK(l->l_biglocks, l);
 }
+#endif	/* KTRACE || PTRACE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.12 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.13 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.12 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.13 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -118,8 +118,8 @@ void	sigclear(sigpend_t *, sigset_t *);
 void	sigclearall(struct proc *, sigset_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 int	sigpost(struct lwp *, sig_t, int, int);
-int	sigchecktrace(void);
-void	sigswitch(int, int);
+int	sigchecktrace(sigpend_t **);
+void	sigswitch(boolean_t, int, int);
 void	sigrealloc(ksiginfo_t *);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
@@ -510,8 +510,9 @@ sigget(sigpend_t *sp, ksiginfo_t *out, int signo, sigset_t *mask)
 		/* If there are no signals pending, that's it. */
 		if ((signo = firstsig(&tset)) == 0)
 			return 0;
-	} else if (sigismember(&sp->sp_set, signo) == 0)
-		return 0;
+	} else {
+		KASSERT(sigismember(&sp->sp_set, signo));
+	}
 
 	sigdelset(&sp->sp_set, signo);
 
@@ -1204,17 +1205,15 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 
 	/*
 	 * If proc is traced, always give parent a chance.
-	 *
-	 * XXXLWP What to do about LWP-private signals?
 	 */
 	if (p->p_slflag & PSL_TRACED) {
 		action = SIG_DFL;
 
-		/*
-		 * If the process is being traced and the signal is being
-		 * caught, make sure to save any ksiginfo.
-		 */
-		if (sigismember(&p->p_sigctx.ps_sigcatch, signo) && lid == 0) {
+		if (lid == 0) {
+			/*
+			 * If the process is being traced and the signal
+			 * is being caught, make sure to save any ksiginfo.
+			 */
 			if ((kp = ksiginfo_alloc(p, ksi, PR_NOWAIT)) == NULL)
 				return;
 			sigput(&p->p_sigpend, p, kp);
@@ -1304,7 +1303,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * Some signals go to all LWPs, even for SA processes.
 	 */
 	if (p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0) {
-		if (p->p_slflag & PSL_TRACED)
+		if ((p->p_slflag & PSL_TRACED) != 0)
 			goto deliver;
 
 		/*
@@ -1337,7 +1336,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * Process is stopped.  If traced, then no further action is
 		 * necessary.
 		 */
-		if (p->p_slflag & PSL_TRACED)
+		if ((p->p_slflag & PSL_TRACED) != 0 && signo != SIGKILL)
 			goto out;
 
 		if ((prop & (SA_CONT | SA_KILL)) != 0) {
@@ -1410,12 +1409,48 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
  * Stop the current process and switch away when being stopped or traced.
  */
 void
-sigswitch(int ppsig, int ppmask)
+sigswitch(boolean_t ppsig, int ppmask, int signo)
 {
-	struct lwp *l = curlwp;
+	struct lwp *l = curlwp, *l2;
 	struct proc *p = l->l_proc;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+
+	/*
+	 * On entry we know that the process needs to stop.  If it's
+	 * the result of a 'sideways' stop signal that has been sourced
+	 * through issignal(), then stop other LWPs in the process too.
+	 */
+	if (p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0) {
+		/*
+		 * Set the stopping indicator and bring all sleeping LWPs
+		 * to a halt so they are included in p->p_nrlwps
+		 */
+		p->p_sflag |= (PS_STOPPING | PS_NOTIFYSTOP);
+		mb_write();
+
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+			lwp_lock(l2);
+			if (l2->l_stat == LSSLEEP &&
+			    (l2->l_flag & L_SINTR) != 0) {
+				l2->l_stat = LSSTOP;
+				p->p_nrlwps--;
+			}
+			lwp_unlock(l2);
+		}
+
+		/*
+		 * Have the remaining LWPs come to a halt, and trigger
+		 * proc_stop_callout() to ensure that they do.
+		 */
+		KASSERT(signo != 0);
+
+		if (p->p_nrlwps > 1) {
+			LIST_FOREACH(l2, &p->p_lwps, l_sibling)
+				sigpost(l2, SIG_DFL, SA_STOP, signo);
+			callout_schedule(&proc_stop_ch, 1);
+		}
+	}
 
 	/*
 	 * If we are the last live LWP, and the stop was a result of
@@ -1450,6 +1485,7 @@ sigswitch(int ppsig, int ppmask)
 	/*
 	 * Unlock and switch away.
 	 */
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 		p->p_nrlwps--;
 		lwp_lock(l);
@@ -1462,13 +1498,14 @@ sigswitch(int ppsig, int ppmask)
 	lwp_lock(l);
 	mi_switch(l, NULL);
 	mutex_enter(&p->p_smutex);
+	KERNEL_LOCK(l->l_biglocks, l);
 }
 
 /*
  * Check for a signal from the debugger.
  */
 int
-sigchecktrace(void)
+sigchecktrace(sigpend_t **spp)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1483,12 +1520,20 @@ sigchecktrace(void)
 	if ((p->p_slflag & PSL_TRACED) == 0 || p->p_xstat == 0)
 		return 0;
 
+	/* If there's a pending SIGKILL, process it immediately. */
+	if (sigismember(&p->p_sigpend.sp_set, SIGKILL))
+		return 0;
+
 	/*
 	 * If the new signal is being masked, look for other signals.
 	 * `p->p_sigctx.ps_siglist |= mask' is done in setrunnable().
 	 */
 	signo = p->p_xstat;
 	p->p_xstat = 0;
+	if ((sigprop[signo] & SA_TOLWP) != 0)
+		*spp = &l->l_sigpend;
+	else
+		*spp = &p->p_sigpend;
 	if (sigismember(&l->l_sigmask, signo))
 		signo = 0;
 
@@ -1530,9 +1575,8 @@ issignal(struct lwp *l)
 		 * we awaken, check for a signal from the debugger.
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
-			sigswitch(1, PS_NOCLDSTOP);
-			sp = &p->p_sigpend;
-			signo = sigchecktrace();
+			sigswitch(TRUE, PS_NOCLDSTOP, 0);
+			signo = sigchecktrace(&sp);
 		} else
 			signo = 0;
 
@@ -1554,7 +1598,7 @@ issignal(struct lwp *l)
 				if ((p->p_sflag & PS_PPWAIT) != 0)
 					sigminusset(&stopsigmask, &ss);
 				sigminusset(&l->l_sigmask, &ss);
-		
+
 				if ((signo = firstsig(&ss)) == 0) {
 					/*
 					 * No signal pending - clear the
@@ -1585,20 +1629,19 @@ issignal(struct lwp *l)
 		 * for us, don't hang as we could deadlock.
 		 */
 		if ((p->p_slflag & PSL_TRACED) != 0 &&
-		    (p->p_sflag & PS_PPWAIT) != 0) {
+		    (p->p_sflag & PS_PPWAIT) == 0 && signo != SIGKILL) {
 			/* Take the signal. */
 			(void)sigget(sp, NULL, signo, NULL);
-
 			p->p_xstat = signo;
 
 			/* Emulation-specific handling of signal trace */
 			if (p->p_emul->e_tracesig == NULL ||
 			    (*p->p_emul->e_tracesig)(p, signo) == 0)
-				sigswitch(!(p->p_slflag & PSL_FSTRACE), 0);
+				sigswitch(!(p->p_slflag & PSL_FSTRACE), 0,
+				    signo);
 
 			/* Check for a signal from the debugger. */
-			sp = &p->p_sigpend;
-			if ((signo = sigchecktrace()) == 0)
+			if ((signo = sigchecktrace(&sp)) == 0)
 				continue;
 		}
 
@@ -1618,7 +1661,7 @@ issignal(struct lwp *l)
 				 * Are you sure you want to ignore SIGSEGV
 				 * in init? XXX
 				 */
-				printf("Process (pid %d) got signal %d\n",
+				printf_nolog("Process (pid %d) got sig %d\n",
 				    p->p_pid, signo);
 #endif
 				continue;
@@ -1640,8 +1683,8 @@ issignal(struct lwp *l)
 				/* Take the signal. */
 				(void)sigget(sp, NULL, signo, NULL);
 				p->p_xstat = signo;
-				p->p_sflag |= PS_STOPPING;
-				(void)sigswitch(1, PS_NOCLDSTOP);
+				signo = 0;
+				sigswitch(TRUE, PS_NOCLDSTOP, p->p_xstat);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -1649,7 +1692,6 @@ issignal(struct lwp *l)
 				 */
 				continue;
 			}
-
 			break;
 
 		case (long)SIG_IGN:
@@ -1661,7 +1703,7 @@ issignal(struct lwp *l)
 			 */
 			if ((prop & SA_CONT) == 0 &&
 			    (p->p_slflag & PSL_TRACED) == 0)
-				printf("issignal\n");
+				printf_nolog("issignal\n");
 #endif
 			continue;
 
@@ -1787,8 +1829,8 @@ void
 killproc(struct proc *p, const char *why)
 {
 	log(LOG_ERR, "pid %d was killed: %s\n", p->p_pid, why);
-	mutex_enter(&proclist_mutex);	/* XXXSMP */
 	uprintf_locked("sorry, pid %d was killed: %s\n", p->p_pid, why);
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
 	psignal(p, SIGKILL);
 	mutex_exit(&proclist_mutex);	/* XXXSMP */
 }

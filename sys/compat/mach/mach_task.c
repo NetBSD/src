@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.59.4.5 2007/01/30 13:51:35 ad Exp $ */
+/*	$NetBSD: mach_task.c,v 1.59.4.6 2007/01/31 19:56:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.5 2007/01/30 13:51:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.6 2007/01/31 19:56:39 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -576,7 +576,11 @@ mach_task_suspend(args)
 			break;
 		}
 	}
+	mutex_enter(&proclist_mutex);
+	mutex_enter(&tp->p_smutex);
 	proc_stop(tp, 0, SIGSTOP);
+	mutex_enter(&tp->p_smutex);
+	mutex_enter(&proclist_mutex);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
@@ -610,7 +614,11 @@ mach_task_resume(args)
 #ifdef DEBUG_MACH
 	printf("resuming pid %d\n", tp->p_pid);
 #endif
+	mutex_enter(&proclist_mutex);
+	mutex_enter(&tp->p_smutex);
 	(void)proc_unstop(tp);
+	mutex_enter(&tp->p_smutex);
+	mutex_enter(&proclist_mutex);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);

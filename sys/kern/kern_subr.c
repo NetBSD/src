@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.143.2.4 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.143.2.5 2007/01/31 19:56:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.4 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.143.2.5 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1418,7 +1418,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #endif /* KTRACE */
 	
 #ifdef PTRACE
-	if ((p->p_flag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace(l);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.8.2.6 2007/01/30 13:51:31 ad Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.8.2.7 2007/01/31 19:56:38 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8.2.6 2007/01/30 13:51:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.8.2.7 2007/01/31 19:56:38 ad Exp $");
 
 #include "opt_ptrace.h"
 
@@ -140,10 +140,18 @@ darwin_sys_ptrace(l, v, retval)
 		 * If the process is not marked as stopped,
 		 * sys_ptrace sanity checks will return EBUSY.
 		 */
+		mutex_enter(&proclist_mutex);
+		mutex_enter(&t->p_smutex);
 		proc_stop(t, 0, SIGSTOP);
+		mutex_exit(&t->p_smutex);
+		mutex_exit(&proclist_mutex);
 
 		if ((error = sys_ptrace(l, v, retval)) != 0) {
+			mutex_enter(&proclist_mutex);
+			mutex_enter(&t->p_smutex);
 			proc_unstop(t);
+			mutex_exit(&t->p_smutex);
+			mutex_exit(&proclist_mutex);
 			if (had_sigexc)
 				ded->ded_flags |= DARWIN_DED_SIGEXC;
 		}
