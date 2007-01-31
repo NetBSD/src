@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.35 2007/01/20 16:47:38 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.36 2007/01/31 10:08:23 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -48,6 +48,7 @@ typedef struct kauth_listener  *kauth_listener_t;
 typedef uint32_t		kauth_action_t;
 typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 				      void *, void *, void *, void *, void *);
+typedef	struct kauth_key       *kauth_key_t;
 
 /*
  * Possible return values for a listener.
@@ -65,6 +66,7 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 #define	KAUTH_SCOPE_NETWORK	"org.netbsd.kauth.network"
 #define	KAUTH_SCOPE_MACHDEP	"org.netbsd.kauth.machdep"
 #define	KAUTH_SCOPE_DEVICE	"org.netbsd.kauth.device"
+#define	KAUTH_SCOPE_CRED	"org.netbsd.kauth.cred"
 
 /*
  * Generic scope - actions.
@@ -218,6 +220,16 @@ enum kauth_device_req {
 };
 
 /*
+ * Credentials scope - actions.
+ */
+enum {
+	KAUTH_CRED_INIT=1,
+	KAUTH_CRED_FORK,
+	KAUTH_CRED_COPY,
+	KAUTH_CRED_FREE
+};
+
+/*
  * Device scope, passthru request - identifiers.
  */
 #define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ		0x00000001
@@ -289,6 +301,11 @@ u_int kauth_cred_getrefcnt(kauth_cred_t);
 
 int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
 int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);
+
+int kauth_register_key(const char *, kauth_key_t *);
+int kauth_deregister_key(kauth_key_t);
+void kauth_cred_setdata(kauth_cred_t, kauth_key_t, void *);
+void *kauth_cred_getdata(kauth_cred_t, kauth_key_t);
 
 int kauth_cred_uidmatch(kauth_cred_t, kauth_cred_t);
 void kauth_uucred_to_cred(kauth_cred_t, const struct uucred *);
