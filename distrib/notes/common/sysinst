@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.78 2007/01/04 00:19:45 wiz Exp $
+.\"	$NetBSD: sysinst,v 1.79 2007/01/31 10:12:28 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1671,7 +1671,7 @@ If so, these values will be installed in the network configuration files.
 The next menu will allow you to select the time zone that you're in,
 to make sure your clock has the right offset from UTC.
 Finally you will be asked to select a password encryption algorithm
-and can than set a password for the "root" account, to prevent
+and can then set a password for the "root" account, to prevent
 the machine coming up without access restrictions.
 .if \n[macppc] \{\
 .It
