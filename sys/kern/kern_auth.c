@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.40 2007/01/26 23:50:36 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.41 2007/01/31 10:08:23 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.40 2007/01/26 23:50:36 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.41 2007/01/31 10:08:23 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -38,6 +38,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.40 2007/01/26 23:50:36 elad Exp $");
 #include <sys/pool.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/specificdata.h>
+
+/*
+ * Secmodel-specific credentials.
+ */
+struct kauth_key {
+	const char *ks_secmodel;	/* secmodel */
+	specificdata_key_t ks_key;	/* key */
+};
 
 /* 
  * Credentials.
@@ -53,6 +62,7 @@ struct kauth_cred {
 	gid_t cr_svgid;			/* saved effective group id */
 	u_int cr_ngroups;		/* number of groups */
 	gid_t cr_groups[NGROUPS];	/* group memberships */
+	specificdata_reference cr_sd;	/* specific data */
 };
 
 /*
@@ -76,6 +86,8 @@ struct kauth_scope {
 	SIMPLEQ_ENTRY(kauth_scope)	next_scope;	/* scope list */
 };
 
+static int kauth_cred_hook(kauth_cred_t, kauth_action_t, void *, void *);
+
 static POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
     "kauthcredpl", &pool_allocator_nointr);
 
@@ -90,8 +102,11 @@ static kauth_scope_t kauth_builtin_scope_process;
 static kauth_scope_t kauth_builtin_scope_network;
 static kauth_scope_t kauth_builtin_scope_machdep;
 static kauth_scope_t kauth_builtin_scope_device;
+static kauth_scope_t kauth_builtin_scope_cred;
 
 static unsigned int nsecmodels = 0;
+
+static specificdata_domain_t kauth_domain;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
@@ -103,6 +118,8 @@ kauth_cred_alloc(void)
 	memset(cred, 0, sizeof(*cred));
 	simple_lock_init(&cred->cr_lock);
 	cred->cr_refcnt = 1;
+	specificdata_init(kauth_domain, &cred->cr_sd);
+	kauth_cred_hook(cred, KAUTH_CRED_INIT, NULL, NULL);
 
 	return (cred);
 }
@@ -132,8 +149,11 @@ kauth_cred_free(kauth_cred_t cred)
 	refcnt = --cred->cr_refcnt;
 	simple_unlock(&cred->cr_lock);
 
-	if (refcnt == 0)
+	if (refcnt == 0) {
+		kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
+		specificdata_fini(kauth_domain, &cred->cr_sd);
 		pool_put(&kauth_cred_pool, cred);
+	}
 }
 
 void
@@ -151,6 +171,8 @@ kauth_cred_clone(kauth_cred_t from, kauth_cred_t to)
 	to->cr_svgid = from->cr_svgid;
 	to->cr_ngroups = from->cr_ngroups;
 	memcpy(to->cr_groups, from->cr_groups, sizeof(to->cr_groups));
+
+	kauth_cred_hook(from, KAUTH_CRED_COPY, to, NULL);
 }
 
 /*
@@ -203,6 +225,9 @@ kauth_proc_fork(struct proc *parent, struct proc *child)
 	kauth_cred_hold(parent->p_cred);
 	child->p_cred = parent->p_cred;
 	/* mutex_exit(&parent->p_mutex); */
+
+	kauth_cred_hook(parent->p_cred, KAUTH_CRED_FORK, parent,
+	    child);
 }
 
 uid_t
@@ -375,6 +400,58 @@ kauth_cred_getgroups(kauth_cred_t cred, gid_t *grbuf, size_t len)
 	memcpy(grbuf, cred->cr_groups, sizeof(*grbuf) * len);
 
 	return (0);
+}
+
+int
+kauth_register_key(const char *secmodel, kauth_key_t *result)
+{
+	kauth_key_t k;
+	specificdata_key_t key;
+	int error;
+
+	KASSERT(result != NULL);
+
+	error = specificdata_key_create(kauth_domain, &key, NULL);
+	if (error)
+		return (error);
+
+	k = kmem_alloc(sizeof(*k), KM_SLEEP);
+	k->ks_secmodel = secmodel;
+	k->ks_key = key;
+
+	*result = k;
+
+	return (0);
+}
+
+int
+kauth_deregister_key(kauth_key_t key)
+{
+	KASSERT(key != NULL);
+
+	specificdata_key_delete(kauth_domain, key->ks_key);
+	kmem_free(key, sizeof(*key));
+
+	return (0);
+}
+
+void *
+kauth_cred_getdata(kauth_cred_t cred, kauth_key_t key)
+{
+	KASSERT(cred != NULL);
+	KASSERT(key != NULL);
+
+	return (specificdata_getspecific(kauth_domain, &cred->cr_sd,
+	    key->ks_key));
+}
+
+void
+kauth_cred_setdata(kauth_cred_t cred, kauth_key_t key, void *data)
+{
+	KASSERT(cred != NULL);
+	KASSERT(key != NULL);
+
+	specificdata_setspecific(kauth_domain, &cred->cr_sd, key->ks_key, data);
 }
 
 /*
@@ -613,13 +690,22 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
  * Initialize the kernel authorization subsystem.
  *
  * Initialize the scopes list lock.
- * Register built-in scopes: generic, process.
+ * Create specificdata domain.
+ * Register the credentials scope, used in kauth(9) internally.
+ * Register built-in scopes: generic, system, process, network, machdep, device.
  */
 void
 kauth_init(void)
 {
 	SIMPLEQ_INIT(&scope_list);
 	simple_lock_init(&scopes_lock);
+
+	/* Create specificdata domain. */
+	kauth_domain = specificdata_domain_create();
+
+	/* Register credentials scope. */
+	kauth_builtin_scope_cred =
+	    kauth_register_scope(KAUTH_SCOPE_CRED, NULL, NULL);
 
 	/* Register generic scope. */
 	kauth_builtin_scope_generic = kauth_register_scope(KAUTH_SCOPE_GENERIC,
@@ -860,6 +946,20 @@ kauth_authorize_device_passthru(kauth_cred_t cred, dev_t dev, u_long bits,
 	return (kauth_authorize_action(kauth_builtin_scope_device, cred,
 	    KAUTH_DEVICE_RAWIO_PASSTHRU, (void *)bits, (void *)(u_long)dev,
 	    data, NULL));
+}
+
+static int
+kauth_cred_hook(kauth_cred_t cred, kauth_action_t action, void *arg0,
+    void *arg1)
+{
+	int r;
+
+	r = kauth_authorize_action(kauth_builtin_scope_cred, cred, action,
+	    arg0, arg1, NULL, NULL);
+
+	KASSERT(r == 0);
+
+	return (r);
 }
 
 void
