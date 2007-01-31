@@ -1,4 +1,4 @@
-/*	$NetBSD: ex1.c,v 1.4.18.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: ex1.c,v 1.4.18.2 2007/01/31 10:08:47 blymn Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@ static char sccsid[] = "@(#)ex1.c	8.1 (Berkeley) 6/4/93";
 #include <sys/types.h>
 #include <curses.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <signal.h>
 #include <locale.h>
 #include <assert.h>
@@ -99,7 +101,7 @@ main()
     cc.vals[ 6 ] = ncc.vals[ 6 ] = 0xda06;
     cc.vals[ 7 ] = ncc.vals[ 7 ] = 0xda07;
 
-    if (( wslen =  mbstowcs( &wstr, mbstr, strlen( mbstr ))) < 0 ) {
+    if (( wslen =  mbstowcs( wstr, mbstr, strlen( mbstr ))) < 0 ) {
         fprintf( stderr, "mbstowcs() failed\n" );
         return -1;
     }
