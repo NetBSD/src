@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.6 2007/01/19 14:37:06 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.7 2007/01/31 13:09:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.6 2007/01/19 14:37:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.7 2007/01/31 13:09:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -344,6 +344,37 @@ lockdebug_more(void)
 }
 
 /*
+ * lockdebug_wantlock:
+ *
+ *	Process the preamble to a lock acquire.
+ */
+void
+lockdebug_wantlock(u_int id, uintptr_t where, int shared)
+{
+	struct lwp *l = curlwp;
+	lockdebuglk_t *lk;
+	lockdebug_t *ld;
+
+	if (panicstr != NULL || shared)
+		return;
+
+	if ((ld = lockdebug_lookup(id, &lk)) == NULL)
+		return;
+
+	if ((ld->ld_flags & LD_LOCKED) != 0) {
+		if ((ld->ld_flags & LD_SLEEPER) != 0) {
+			if (ld->ld_lwp == l)
+				lockdebug_abort1(ld, lk, __FUNCTION__,
+				    "locking against myself");
+		} else if (ld->ld_cpu == (u_short)cpu_number())
+			lockdebug_abort1(ld, lk, __FUNCTION__,
+			    "locking against myself");
+	}
+
+	lockdebug_unlock(lk);
+}
+
+/*
  * lockdebug_locked:
  *
  *	Process a lock acquire operation.
@@ -361,13 +392,14 @@ lockdebug_locked(u_int id, uintptr_t where, int shared)
 	if ((ld = lockdebug_lookup(id, &lk)) == NULL)
 		return;
 
-	if ((ld->ld_flags & LD_LOCKED) != 0)
-		lockdebug_abort1(ld, lk, __FUNCTION__, "already locked");
-
 	if (shared) {
 		l->l_shlocks++;
 		ld->ld_shares++;
 	} else {
+		if ((ld->ld_flags & LD_LOCKED) != 0)
+			lockdebug_abort1(ld, lk, __FUNCTION__,
+			    "already locked");
+
 		ld->ld_flags |= LD_LOCKED;
 		ld->ld_locked = where;
 		ld->ld_cpu = (u_short)cpu_number();

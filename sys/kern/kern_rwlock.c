@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.6 2007/01/11 22:22:59 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.7 2007/01/31 13:09:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.6 2007/01/11 22:22:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.7 2007/01/31 13:09:11 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -70,18 +70,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.6 2007/01/11 22:22:59 ad Exp 
 
 #if defined(LOCKDEBUG)
 
+#define	RW_WANTLOCK(rw, op)						\
+	LOCKDEBUG_WANTLOCK(RW_GETID(rw),				\
+	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_LOCKED(rw, op)						\
-do {									\
 	LOCKDEBUG_LOCKED(RW_GETID(rw),					\
-	    (uintptr_t)__builtin_return_address(0), op == RW_READER);	\
-} while (/* CONSTCOND */ 0)
-
+	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_UNLOCKED(rw, op)						\
-do {									\
 	LOCKDEBUG_UNLOCKED(RW_GETID(rw),				\
-	    (uintptr_t)__builtin_return_address(0), op == RW_READER);	\
-} while (/* CONSTCOND */ 0)
-
+	    (uintptr_t)__builtin_return_address(0), op == RW_READER);
 #define	RW_DASSERT(rw, cond)						\
 do {									\
 	if (!(cond))							\
@@ -90,6 +87,7 @@ do {									\
 
 #else	/* LOCKDEBUG */
 
+#define	RW_WANTLOCK(rw, op)	/* nothing */
 #define	RW_LOCKED(rw, op)	/* nothing */
 #define	RW_UNLOCKED(rw, op)	/* nothing */
 #define	RW_DASSERT(rw, cond)	/* nothing */
@@ -213,7 +211,9 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 	l = curlwp;
 	curthread = (uintptr_t)l;
+
 	RW_ASSERT(rw, curthread != 0);
+	RW_WANTLOCK(rw, op);
 
 #ifdef LOCKDEBUG
 	if (panicstr == NULL) {
@@ -455,7 +455,9 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 	uintptr_t curthread, owner, incr, need_wait;
 
 	curthread = (uintptr_t)curlwp;
+
 	RW_ASSERT(rw, curthread != 0);
+	RW_WANTLOCK(rw, op);
 
 	if (op == RW_READER) {
 		incr = RW_READ_INCR;
@@ -538,6 +540,7 @@ rw_tryupgrade(krwlock_t *rw)
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
+	RW_WANTLOCK(rw, RW_WRITER);
 
 	for (;;) {
 		owner = rw->rw_owner;
