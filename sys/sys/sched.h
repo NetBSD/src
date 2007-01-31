@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.28.8.6 2007/01/12 01:04:24 ad Exp $ */
+/* $NetBSD: sched.h,v 1.28.8.7 2007/01/31 11:36:02 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -213,6 +213,7 @@ typedef struct syncobj {
 #define	SOBJ_SLEEPQ_FIFO	0x02
 
 extern syncobj_t	sched_syncobj;
+extern syncobj_t	turnstile_syncobj;
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */
