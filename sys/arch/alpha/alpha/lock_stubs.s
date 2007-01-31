@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.36.2 2007/01/30 11:34:24 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.3 2007/01/31 17:36:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.2 2007/01/30 11:34:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.3 2007/01/31 17:36:32 ad Exp $");
 
 #include "assym.h"
 
@@ -62,7 +62,7 @@ LEAF(_lock_cas, 3)
 	bne	t1, 2f
 	stq_c	t2, 0(a0)
 	beq	t2, 3f
-	mov	1, v0
+	mov	a0, v0			/* nonzero */
 	MB
 	RET
 2:
