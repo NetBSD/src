@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.50 2007/01/28 00:21:04 elad Exp $
+.\" $NetBSD: kauth.9,v 1.51 2007/01/31 10:08:23 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 28, 2007
+.Dd January 31, 2007
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -724,6 +724,67 @@ passed as
 .Ar arg2
 to the listener, is device-specific data that may be associated with the
 request.
+.Ss Credentials Scope
+The credentials scope,
+.Dq org.netbsd.kauth.cred ,
+is a special scope used internally by the
+.Nm
+framework to provide hooking to credential-related operations.
+.Pp
+It is a
+.Dq notify-only
+scope, allowing hooking operations such as initialization of new credentials,
+credential inheritance during a fork, and copying and freeing of credentials.
+The main purpose for this scope is to give a security model a way to control
+the aforementioned operations, especially in cases where the credentials
+hold security model-private data.
+.Pp
+Notifications are made using the following function, which is internal to
+.Nm :
+.Pp
+.Ft int Fn kauth_cred_hook "kauth_cred_t cred" "kauth_action_t action" \
+"void *arg0" "void *arg1"
+.Pp
+With the following actions:
+.Bl -tag
+.It Dv KAUTH_CRED_COPY
+The credentials are being copied.
+.Ar cred
+are the credentials of the lwp context doing the copy, and
+.Ar arg0
+and
+.Ar arg1
+are both
+.Ft kauth_cred_t
+representing the
+.Dq from
+and
+.Dq to
+credentials, respectively.
+.It Dv KAUTH_CRED_FORK
+The credentials are being inherited from a parent to a child process during a
+fork.
+.Pp
+.Ar cred
+are the credentials of the lwp context doing the copy, and
+.Ar arg0
+and
+.Ar arg1
+are both
+.Ft struct proc *
+of the parent and child processes, respectively.
+.It Dv KAUTH_CRED_FREE
+The credentials in
+.Ar cred
+are being freed.
+.It Dv KAUTH_CRED_INIT
+The credentials in
+.Ar cred
+are being initialized.
+.El
+.Pp
+Since this is a notify-only scope, all listeners are required to return
+.Dv KAUTH_RESULT_ALLOW .
 .Ss Credentials Accessors and Mutators
 .Nm
 has a variety of accessor and mutator routines to handle
@@ -841,23 +902,75 @@ The number of groups in
 .Ar cred
 will be returned.
 .El
-.Ss Credentials Inheritance and Reference Counting
+.Ss Credential Private Data
 .Nm
-provides a KPI for handling a
-.Ft kauth_cred_t
-in shared credentials situations and credential inheritance.
+provides an interface to allow attaching security-model private data to
+credentials.
+.Pp
+The use of this interface has two parts that can be divided to direct and
+indirect control of the private-data.
+Directly controlling the private data is done by using the below routines,
+while the indirect control is often dictated by events such as process
+fork, and is handled by listening on the credentials scope (see above).
+.Pp
+Attaching private data to credentials works by registering a key to serve
+as a unique identifier, distinguishing various sets of private data that
+may be associated with the credentials.
+Registering, and deregistering, a key is done by using these routines:
+.Pp
+.Bl -tag
+.It Ft int Fn kauth_register_key "const char *name" "kauth_key_t *keyp"
+Register new key for private data for
+.Ar name
+(usually, the security model name).
+.Ar keyp
+will be used to return the key to be used in further calls.
+.Pp
+The function returns 0 on success and an error code (see
+.Xr errno 2 )
+on failure.
+.It Ft int Fn kauth_deregister_key "kauth_key_t key"
+Deregister private data key
+.Ar key .
+.El
+.Pp
+Once registered, private data may be manipulated by the following routines:
+.Bl -tag
+.It Ft void Fn kauth_cred_setdata "kauth_cred_t cred" "kauth_key_t key" \
+"void *data"
+Set private data for
+.Ar key
+in
+.Ar cred
+to be
+.Ar data .
+.It Ft void * Fn kauth_cred_getdata "kauth_cred_t cred" "kauth_key_t key"
+Retrieve private data for
+.Ar key
+in
+.Ar cred .
+.El
+.Pp
+Note that it is required to use the above routines every time the private
+data is changed, i.e., using
+.Fn kauth_cred_getdata
+and later modifying the private data should be accompanied by a call to
+.Fn kauth_cred_setdata
+with the
+.Dq new
+private data.
+.Ss Credential Inheritance and Reference Counting
+.Nm
+provides an interface for handling shared credentials.
 .Pp
 When a
 .Ft kauth_cred_t
 is first allocated, its reference count is set to 1.
 However, with time, its reference count can grow as more objects (processes,
 LWPs, files, etc.) reference it.
-One such case is during a
-.Xr fork 2
-where the child process and its LWPs inherit the credentials of the parent.
 .Pp
 The following routines are available for managing credentials reference
-counting and inheritance:
+counting:
 .Bl -tag
 .It Ft void Fn kauth_cred_hold "kauth_cred_t cred"
 Increases reference count to
@@ -870,12 +983,20 @@ by one.
 .Pp
 If the reference count dropped to zero, the memory used by
 .Ar cred
-will be returned back to the memory pool.
-.It Ft void kauth_proc_fork "struct proc *parent" "struct proc *child"
-Called during a
-.Xr fork 2
-to perform credential inheritance.
+will be freed.
 .El
+.Pp
+Credential inheritance happens during a
+.Xr fork 2 ,
+and is handled by the following function:
+.Pp
+.Ft void Fn kauth_proc_fork "struct proc *parent" "struct proc *child"
+.Pp
+When called, it references the parent's credentials from the child,
+and calls the credentials scope's hook with the
+.Dv KAUTH_CRED_FORK
+action to allow security model-specific handling of the inheritance
+to take place.
 .Ss Credentials Memory Management
 Data-structures for credentials, listeners, and scopes are allocated from
 memory pools managed by the
