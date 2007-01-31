@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.8 2007/01/31 10:39:40 elad Exp $
+.\" $NetBSD: secmodel.9,v 1.9 2007/01/31 11:16:46 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -137,28 +137,42 @@ take care of for you!
 A security model is composed of (code-wise) the following components:
 .Bl -enum -offset indent
 .It
-A
+Entry routines, named
+.Fn secmodel_\*[Lt]model\*[Gt]_init
+and
+.Fn secmodel_\*[Lt]model\*[Gt]_start ,
+used to initialize and start the security model.
+.Pp
+If the security model is to be started automatically by the kernel and is
+compiled in it, a function called
 .Fn secmodel_start
-routine, receiving and returning void.
-This routine registers the various listeners for the security model.
-.It
-An "init" routine, named
-.Fn secmodel_\*[Lt]model\*[Gt]_init ,
-receiving and returning void.
-This routine is used to initialize any private data-structures that may be
-used by the model.
-If none exist, it can be omitted.
-It should be called from
-.Fn secmodel_start .
+can be added to call the model's start routine.
+.Pp
+If the security model is to be built and used as an LKM, another function
+called
+.Fn secmodel_\*[Lt]model\*[Gt]_stop ,
+to stop the security model in case the module is to be unloaded.
 .It
 A sysctl(9) setup routine for the model.
 This should create an entry for the model in the
 .Xr sysctl 9
 namespace, under the "security.models.\*[Lt]model\*[Gt]" hierarchy.
-.It
+.Pp
 All "knobs" for the model should be located under the new node, as well
 as a mandatory "name" variable, indicating a descriptive human-readable
 name for the model.
+.Pp
+If the module is to be used as an LKM, explicit calls to the setup
+routine and
+.Fn sysctl_teardown
+are to be used to create and destroy the
+.Xr sysctl 9
+tree.
+.It
+If the model uses any private data inside credentials, listening on
+the credentials scope,
+.Dv KAUTH_SCOPE_CRED ,
+is required.
 .It
 Optionally, internal data-structures used by the model. These must all
 be prefixed with "secmodel_\*[Lt]model\*[Gt]_".
