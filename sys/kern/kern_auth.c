@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.41 2007/01/31 10:08:23 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.42 2007/01/31 16:30:09 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.41 2007/01/31 10:08:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.42 2007/01/31 16:30:09 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -957,7 +957,10 @@ kauth_cred_hook(kauth_cred_t cred, kauth_action_t action, void *arg0,
 	r = kauth_authorize_action(kauth_builtin_scope_cred, cred, action,
 	    arg0, arg1, NULL, NULL);
 
-	KASSERT(r == 0);
+#ifdef DIAGNOSTIC
+	if (!SIMPLEQ_EMPTY(&kauth_builtin_scope_cred->listenq))
+		KASSERT(r == 0);
+#endif /* DIAGNOSTIC */
 
 	return (r);
 }
