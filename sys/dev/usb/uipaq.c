@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.4 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.5 2007/01/31 10:09:17 mjf Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -125,7 +125,8 @@ static const struct uipaq_type uipaq_devs[] = {
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_2215 }, 0 },
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_568J }, 0},
 	{{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQPOCKETPC} , 0},
-	{{ USB_VENDOR_CASIO, USB_PRODUCT_CASIO_BE300} , 0}
+	{{ USB_VENDOR_CASIO, USB_PRODUCT_CASIO_BE300} , 0},
+	{{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_WS007SH} , 0}
 };
 
 #define uipaq_lookup(v, p) ((const struct uipaq_type *)usb_lookup(uipaq_devs, v, p))
