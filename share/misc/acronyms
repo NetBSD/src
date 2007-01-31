@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.163 2007/01/30 22:01:13 wiz Exp $
+$NetBSD: acronyms,v 1.164 2007/01/31 18:37:07 elad Exp $
 
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
@@ -129,6 +129,7 @@ KNF	kernel normal form
 L8R	later
 LART	luser attitude readjustment tool (ie, hammer)
 LBNL	last but not least
+LGTM	looks good to me
 LJBF	let's just be friends
 LMAO	laughing my ass off
 LMSO	laughing my socks off
