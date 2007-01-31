@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.9 2007/01/31 11:16:46 elad Exp $
+.\" $NetBSD: secmodel.9,v 1.10 2007/01/31 11:18:23 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -179,6 +179,11 @@ be prefixed with "secmodel_\*[Lt]model\*[Gt]_".
 .It
 A set of listeners, attached to various scopes, used to enforce the policy
 the model intends to implement.
+.It
+Finally, a security model should register itself when loaded using
+.Fn secmodel_register
+and deregister it when unloaded (if used as an LKM) using
+.Fn secmodel_deregister .
 .El
 .Pp
 Below is sample code for a
