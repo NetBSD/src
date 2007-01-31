@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.450 2007/01/22 19:39:37 ghen Exp $
+$NetBSD: usbdevs,v 1.451 2007/01/31 10:00:03 mjf Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1768,6 +1768,7 @@ product SHARP A300		0x8005	A300
 product SHARP SL5600		0x8006	SL5600
 product SHARP C700		0x8007	C700
 product SHARP C750		0x9031	C750
+product SHARP WS007SH		0x9123	WS007SH
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
