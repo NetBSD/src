@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33.20.7 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.33.20.8 2007/01/31 23:38:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.7 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.8 2007/01/31 23:38:38 ad Exp $");
+
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.7 2007/01/30 13:51:41 ad Exp $
 #include <sys/gmon.h>
 
 MALLOC_DEFINE(M_GPROF, "gprof", "kernel profiling buffer");
+
+#ifdef LOCKDEBUG
+#error The LOCKDEBUG option can not be used with a profiling kernel
+#endif
 
 /*
  * Froms is actually a bunch of unsigned shorts indexing tos
@@ -88,12 +94,11 @@ kmstartup(void)
 		p->tolimit = MAXARCS;
 	p->tossize = p->tolimit * sizeof(struct tostruct);
 	cp = (char *)malloc(p->kcountsize + p->fromssize + p->tossize,
-	    M_GPROF, M_NOWAIT);
+	    M_GPROF, M_NOWAIT | M_ZERO);
 	if (cp == 0) {
 		printf("No memory for profiling.\n");
 		return;
 	}
-	memset(cp, 0, p->kcountsize + p->tossize + p->fromssize);
 	p->tos = (struct tostruct *)cp;
 	cp += p->tossize;
 	p->kcount = (u_short *)cp;
