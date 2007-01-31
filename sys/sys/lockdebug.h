@@ -1,7 +1,7 @@
-/*	$NetBSD: lockdebug.h,v 1.1.2.4 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.1.2.5 2007/01/31 13:09:11 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,12 +61,14 @@ void	lockdebug_abort(int, volatile void *, lockops_t *,
 void	lockdebug_init(void);
 u_int	lockdebug_alloc(volatile void *, lockops_t *);
 void	lockdebug_free(volatile void *, u_int);
+void	lockdebug_wantlock(u_int, uintptr_t, int);
 void	lockdebug_locked(u_int, uintptr_t, int);
 void	lockdebug_unlocked(u_int, uintptr_t, int);
 void	lockdebug_barrier(volatile void *, int);
 
 #define	LOCKDEBUG_ALLOC(lock, ops)		lockdebug_alloc(lock, ops)
 #define	LOCKDEBUG_FREE(lock, id)		lockdebug_free(lock, id)
+#define	LOCKDEBUG_WANTLOCK(id, where, s)	lockdebug_wantlock(id, where, s)
 #define	LOCKDEBUG_LOCKED(id, where, s)		lockdebug_locked(id, where, s)
 #define	LOCKDEBUG_UNLOCKED(id, where, s)	lockdebug_unlocked(id, where, s)
 #define	LOCKDEBUG_BARRIER(lk, slp)		lockdebug_barrier(lk, slp)
@@ -75,6 +77,7 @@ void	lockdebug_barrier(volatile void *, int);
 
 #define	LOCKDEBUG_ALLOC(lock, ops)		0
 #define	LOCKDEBUG_FREE(lock, id)		/* nothing */
+#define	LOCKDEBUG_WANTLOCK(id, where, s)	/* nothing */
 #define	LOCKDEBUG_LOCKED(id, where, s)		/* nothing */
 #define	LOCKDEBUG_UNLOCKED(id, where, s)	/* nothing */
 #define	LOCKDEBUG_BARRIER(lk, slp)		/* nothing */
