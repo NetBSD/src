@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.148 2006/12/06 10:02:22 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.149 2007/01/31 16:00:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.148 2006/12/06 10:02:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.149 2007/01/31 16:00:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1015,6 +1015,7 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 void
 ffree(struct file *fp)
 {
+	kauth_cred_t cred;
 
 #ifdef DIAGNOSTIC
 	if (fp->f_usecount)
@@ -1023,13 +1024,15 @@ ffree(struct file *fp)
 
 	simple_lock(&filelist_slock);
 	LIST_REMOVE(fp, f_list);
-	kauth_cred_free(fp->f_cred);
+	cred = fp->f_cred;
 #ifdef DIAGNOSTIC
+	fp->f_cred = NULL;
 	fp->f_count = 0; /* What's the point? */
 #endif
 	nfiles--;
 	simple_unlock(&filelist_slock);
 	pool_put(&file_pool, fp);
+	kauth_cred_free(cred);
 }
 
 /*
