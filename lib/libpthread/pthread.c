@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.57 2007/01/20 20:02:36 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.58 2007/01/31 23:55:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.57 2007/01/20 20:02:36 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.58 2007/01/31 23:55:20 christos Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -1352,7 +1352,7 @@ pthread__errorfunc(const char *file, int line, const char *function,
  */
 
 #define	OOPS(msg)			\
-    pthread__errorfunc(__FILE__, __LINE__, __FUNCTION__, msg)
+    pthread__errorfunc(__FILE__, __LINE__, __func__, msg)
 
 int
 pthread__park(pthread_t self, pthread_spin_t *lock,
