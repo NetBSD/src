@@ -1,4 +1,4 @@
-.\" $NetBSD: rfcomm_sppd.1,v 1.2 2007/01/31 08:12:21 plunky Exp $
+.\" $NetBSD: rfcomm_sppd.1,v 1.3 2007/02/01 06:54:40 wiz Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -70,7 +70,7 @@
 .Op Fl d Ar device
 .Op Fl t Ar tty
 .Fl c Ar channel
-.Fl s Ar service 
+.Fl s Ar service
 .Sh DESCRIPTION
 The
 .Nm
@@ -141,7 +141,8 @@ If this option is given,
 will detach from the controlling process after the bluetooth connection is
 made, and operate over the named
 .Xr pty 4
-pair. Otherwise, stdin/stdout will be used.
+pair.
+Otherwise, stdin/stdout will be used.
 .El
 .Pp
 Known services are:
@@ -154,7 +155,8 @@ LAN access using PPP
 .It SP
 Serial Port service
 .El
-.Pp
+.Sh EXIT STATUS
+.Ex -std
 .Sh FILES
 .Bl -tag -width ".Pa /dev/tty[p-sP-S][0-9a-v]" -compact
 .It Pa /dev/pty[p-sP-S][0-9a-v]
@@ -162,8 +164,6 @@ master pseudo terminals
 .It Pa /dev/tty[p-sP-S][0-9a-v]
 slave pseudo terminals
 .El
-.Sh EXIT STATUS
-.Ex -std
 .Sh EXAMPLES
 .Dl rfcomm_sppd -a 00:01:02:03:04:05 -c 1 -t /dev/ttyp1
 .Pp
@@ -175,8 +175,8 @@ Once the connection has been established,
 .Nm
 will detach and
 .Pa /dev/ttyp1
-can be used to communicate with the remote serial port on the server, eg
-with the use of
+can be used to communicate with the remote serial port on the
+server, e.g. with the use of
 .Pp
 .Dl cu -l /dev/ttyp1
 .Pp
@@ -197,11 +197,6 @@ configuration file.
 .Xr btconfig 8 ,
 .Xr pppd 8 ,
 .Xr sdpd 8
-.Sh AUTHORS
-.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com ,
-.An Iain Hibbert
-.Sh BUGS
-Please report if found.
 .Sh HISTORY
 The
 .Nm
@@ -212,4 +207,9 @@ and was ported to
 by
 .An Iain Hibbert
 under the sponsorship of
-.An Itronix, Inc
+.An Itronix, Inc .
+.Sh AUTHORS
+.An Maksim Yevmenkin Aq m_evmenkin@yahoo.com ,
+.An Iain Hibbert
+.Sh BUGS
+Please report if found.
