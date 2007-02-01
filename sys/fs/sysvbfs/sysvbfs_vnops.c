@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.5.4.1 2007/01/12 01:04:05 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.5.4.2 2007/02/01 08:48:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.5.4.1 2007/01/12 01:04:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.5.4.2 2007/02/01 08:48:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/resource.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
-#include <sys/vnode.h>
 #include <sys/dirent.h>
 #include <sys/malloc.h>
 #include <sys/lockf.h>

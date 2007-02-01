@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.c,v 1.28 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: isp_target.c,v 1.28.20.1 2007/02/01 08:48:20 ad Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.28 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.28.20.1 2007/02/01 08:48:20 ad Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -910,7 +910,7 @@ isp_handle_ctio(struct ispsoftc *isp, ct_entry_t *ct)
 {
 	void *xs;
 	int pl = ISP_LOGTDEBUG2;
-	char *fmsg = NULL;
+	const char *fmsg = NULL;
 
 	if (ct->ct_syshandle) {
 		xs = isp_find_xs(isp, ct->ct_syshandle);
@@ -1070,7 +1070,7 @@ isp_handle_ctio2(struct ispsoftc *isp, ct2_entry_t *ct)
 {
 	XS_T *xs;
 	int pl = ISP_LOGTDEBUG2;
-	char *fmsg = NULL;
+	const char *fmsg = NULL;
 
 	if (ct->ct_syshandle) {
 		xs = isp_find_xs(isp, ct->ct_syshandle);

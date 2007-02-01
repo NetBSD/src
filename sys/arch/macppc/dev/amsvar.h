@@ -1,4 +1,4 @@
-/*	$NetBSD: amsvar.h,v 1.4.82.1 2006/11/18 21:29:24 ad Exp $	*/
+/*	$NetBSD: amsvar.h,v 1.4.82.2 2007/02/01 08:48:07 ad Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -54,6 +54,7 @@ struct ams_softc {
 	struct device	*sc_wsmousedev;
 	/* helpers for trackpads */
 	int		sc_down;
+	int		sc_tapping;	/* 1 - tapping causes button event */
 	/*
 	 * trackpad protocol variant. Known so far:
 	 * 2 buttons - PowerBook 3400, single events on button 3 and 4 indicate

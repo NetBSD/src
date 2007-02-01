@@ -6,7 +6,7 @@ include		"arch/macppc/conf/std.macppc.g5"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 maxusers	32
 
-options		PMAC_G5
+options 	PMAC_G5
 options 	ALTIVEC		# Include AltiVec support
 
 # Standard system options
@@ -55,10 +55,10 @@ options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
 #options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
 #options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
-#options	DEBUG_DARWIN	# COMPAT_DARWIN debugging
-#options	DEBUG_MACH	# COMPAT_MACH debugging
+#options 	DEBUG_DARWIN	# COMPAT_DARWIN debugging
+#options 	DEBUG_MACH	# COMPAT_MACH debugging
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -71,7 +71,7 @@ file-system 	NFS		# Network File System client
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -98,7 +98,7 @@ options 	FONT_GALLANT12x22
 # Tweak the keyboard driver to treat the caps lock key on an ADB
 # keyboard as a control key; requires special remapping because of
 # ADB's strange emulation of a mechanically-locked key.
-#options	CAPS_IS_CONTROL
+#options 	CAPS_IS_CONTROL
 
 # On Mac laptops, several function keys double as "hot keys"
 # (brightness, volume, eject) when the Fn modifier is held down.  Mac
@@ -106,7 +106,7 @@ options 	FONT_GALLANT12x22
 # events when Fn is not held down and send function key events when it
 # is.  This option transforms the non-keyboard "button" events back
 # into function key events.
-#options	FORCE_FUNCTION_KEYS
+#options 	FORCE_FUNCTION_KEYS
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

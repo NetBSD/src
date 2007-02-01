@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.4.20.1 2007/01/12 00:57:48 ad Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.4.20.2 2007/02/01 08:48:28 ad Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.4.20.1 2007/01/12 00:57:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.4.20.2 2007/02/01 08:48:28 ad Exp $");
 
 /*
  *
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.4.20.1 2007/01/12 00:57:48 ad Exp $");
  */
 #include <sys/param.h>
 #include <sys/callout.h>
-#include <sys/cdefs.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>

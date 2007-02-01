@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.165.4.2 2007/01/12 01:04:14 ad Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.165.4.3 2007/02/01 08:48:43 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165.4.2 2007/01/12 01:04:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.165.4.3 2007/02/01 08:48:43 ad Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -287,10 +287,9 @@ ip_output(struct mbuf *m0, ...)
 	/*
 	 * Route packet.
 	 */
-	if (ro == NULL) {
+	memset(&iproute, 0, sizeof(iproute));
+	if (ro == NULL)
 		ro = &iproute;
-		bzero((caddr_t)ro, sizeof (*ro));
-	}
 	dst = satosin(&ro->ro_dst);
 	/*
 	 * If there is a cached route,
@@ -586,7 +585,7 @@ sendit:
 	state.m = m;
 	if (flags & IP_ROUTETOIF) {
 		state.ro = &iproute;
-		bzero(&iproute, sizeof(iproute));
+		memset(&iproute, 0, sizeof(iproute));
 	} else
 		state.ro = ro;
 	state.dst = (struct sockaddr *)dst;
@@ -965,8 +964,7 @@ spd_done:
 	if (error == 0)
 		ipstat.ips_fragmented++;
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0)
-		rtcache_free(ro);
+	rtcache_free(&iproute);
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -1761,17 +1759,13 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * the route to the given multicast address.
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
-			bzero((caddr_t)&ro, sizeof(ro));
+			memset(&ro, 0, sizeof(ro));
 			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
 			dst->sin_family = AF_INET;
 			dst->sin_addr = mreq->imr_multiaddr;
 			rtcache_init(&ro);
-			if (ro.ro_rt == NULL) {
-				error = EADDRNOTAVAIL;
-				break;
-			}
-			ifp = ro.ro_rt->rt_ifp;
+			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
 			rtcache_free(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);

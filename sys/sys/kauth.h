@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.5.4.2 2007/01/12 01:04:23 ad Exp $ */
+/* $NetBSD: kauth.h,v 1.5.4.3 2007/02/01 08:48:47 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -48,6 +48,7 @@ typedef struct kauth_listener  *kauth_listener_t;
 typedef uint32_t		kauth_action_t;
 typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 				      void *, void *, void *, void *, void *);
+typedef	struct kauth_key       *kauth_key_t;
 
 /*
  * Possible return values for a listener.
@@ -65,6 +66,7 @@ typedef int (*kauth_scope_callback_t)(kauth_cred_t, kauth_action_t,
 #define	KAUTH_SCOPE_NETWORK	"org.netbsd.kauth.network"
 #define	KAUTH_SCOPE_MACHDEP	"org.netbsd.kauth.machdep"
 #define	KAUTH_SCOPE_DEVICE	"org.netbsd.kauth.device"
+#define	KAUTH_SCOPE_CRED	"org.netbsd.kauth.cred"
 
 /*
  * Generic scope - actions.
@@ -126,7 +128,8 @@ enum {
 	KAUTH_PROCESS_CANSIGNAL,
 	KAUTH_PROCESS_CANSYSTRACE,
 	KAUTH_PROCESS_CORENAME,
-	KAUTH_PROCESS_RESOURCE,
+	KAUTH_PROCESS_NICE,
+	KAUTH_PROCESS_RLIMIT,
 	KAUTH_PROCESS_SETID,
 	KAUTH_PROCESS_STOPFLAG
 };
@@ -138,9 +141,7 @@ enum kauth_process_req {
 	KAUTH_REQ_PROCESS_CANPROCFS_CTL=1,
 	KAUTH_REQ_PROCESS_CANPROCFS_READ,
 	KAUTH_REQ_PROCESS_CANPROCFS_RW,
-	KAUTH_REQ_PROCESS_CANPROCFS_WRITE,
-	KAUTH_REQ_PROCESS_RESOURCE_NICE,
-	KAUTH_REQ_PROCESS_RESOURCE_RLIMIT
+	KAUTH_REQ_PROCESS_CANPROCFS_WRITE
 };
 
 /*
@@ -219,6 +220,16 @@ enum kauth_device_req {
 };
 
 /*
+ * Credentials scope - actions.
+ */
+enum {
+	KAUTH_CRED_INIT=1,
+	KAUTH_CRED_FORK,
+	KAUTH_CRED_COPY,
+	KAUTH_CRED_FREE
+};
+
+/*
  * Device scope, passthru request - identifiers.
  */
 #define	KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ		0x00000001
@@ -291,6 +302,11 @@ u_int kauth_cred_getrefcnt(kauth_cred_t);
 int kauth_cred_setgroups(kauth_cred_t, gid_t *, size_t, uid_t);
 int kauth_cred_getgroups(kauth_cred_t, gid_t *, size_t);
 
+int kauth_register_key(const char *, kauth_key_t *);
+int kauth_deregister_key(kauth_key_t);
+void kauth_cred_setdata(kauth_cred_t, kauth_key_t, void *);
+void *kauth_cred_getdata(kauth_cred_t, kauth_key_t);
+
 int kauth_cred_uidmatch(kauth_cred_t, kauth_cred_t);
 void kauth_uucred_to_cred(kauth_cred_t, const struct uucred *);
 void kauth_cred_to_uucred(struct uucred *, const kauth_cred_t);
@@ -299,5 +315,10 @@ void kauth_cred_toucred(kauth_cred_t, struct ucred *);
 void kauth_cred_topcred(kauth_cred_t, struct pcred *);
 
 kauth_cred_t kauth_cred_get(void);
+
+void kauth_proc_fork(struct proc *, struct proc *);
+
+void secmodel_register(void);
+void secmodel_deregister(void);
 
 #endif	/* !_SYS_KAUTH_H_ */

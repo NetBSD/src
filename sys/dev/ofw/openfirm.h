@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.22 2006/06/14 19:42:34 uwe Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.22.6.1 2007/02/01 08:48:22 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,6 +89,7 @@ int	OF_milliseconds(void);
 void	OF_boot(const char *) __attribute__((__noreturn__));
 void	OF_enter(void);
 void	OF_exit(void) __attribute__((__noreturn__));
+int	OF_interpret(const char *, int, int, ...);
 void	(*OF_set_callback(void(*)(void *)))(void *);
 int	openfirmware(void *);
 

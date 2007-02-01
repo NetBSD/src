@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.35 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.35.14.1 2007/02/01 08:47:57 ad Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.35 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.35.14.1 2007/02/01 08:47:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.35 2006/02/25 17:32:43 thorpej Exp $
 #include <machine/cpuconf.h>
 #include <machine/frame.h>
 #include <machine/alpha.h>
-#include <machine/cpuconf.h>
 #include <machine/logout.h>
 
 #include <dev/ic/comreg.h>

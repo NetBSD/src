@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.829.2.2 2007/01/12 00:57:42 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.829.2.3 2007/02/01 08:48:24 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.861 2007/01/06 00:07:46 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.866 2007/01/30 11:31:40 msaitoh Exp
  */
 
 /*
@@ -3152,6 +3152,34 @@ static const struct pci_product pci_products[] = {
 	    "PCscsi-PCI SCSI",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_PCHB,
+	    "Geode LX Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_VGA,
+	    "Geode LX VGA Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_AES,
+	    "Geode LX AES Security Block",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_PCIB,
+	    "CS5536 PCI-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_OHCI,
+	    "CS5536 OHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_EHCI,
+	    "CS5536 EHCI USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_IDE,
+	    "CS5536 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC520_SC,
 	    "Elan SC520 System Controller",
 	},
@@ -5668,6 +5696,10 @@ static const struct pci_product pci_products[] = {
 	    "DL-4000 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550SX,
+	    "DGE-550SX",
+	},
+	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
 	    "DGE-528T Gigabit Ethernet",
 	},
@@ -5678,6 +5710,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2,
 	    "DGE-560T_2 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560SX,
+	    "DGE-560SX",
 	},
 	{
 	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
@@ -6072,6 +6108,14 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88E8038",
 	},
 	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8039,
+	    "Yukon 88E8039",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C033,
+	    "Yukon 88EC033",
+	},
+	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
 	    "Yukon 88E8052",
 	},
@@ -6084,8 +6128,32 @@ static const struct pci_product pci_products[] = {
 	    "Yukon 88E8053",
 	},
 	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_3,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8055,
+	    "Yukon 88E8055",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8056,
+	    "Yukon 88E8056",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_1,
 	    "Yukon",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C036,
+	    "Yukon 88EC036",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C032,
+	    "Yukon 88EC032",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C034,
+	    "Yukon 88EC034",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C042,
+	    "Yukon 88EC042",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
@@ -7461,14 +7529,6 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_EX,
-	    "82915PM/GM PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD,
-	    "82915GM/GMS Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915PM_EX,
 	    "82915PM/GM PCI Express Bridge",
 	},
 	{
@@ -8940,6 +9000,10 @@ static const struct pci_product pci_products[] = {
 	    "Video",
 	},
 	{
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO2,
+	    "Video II",
+	},
+	{
 	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
 	    "USB Host Controller",
 	},
@@ -9757,7 +9821,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA,
-	    "nForce MCP55 Seria ATA Controller",
+	    "nForce MCP55 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA2,
@@ -9922,6 +9986,86 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA4,
 	    "nForce MCP65 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SMB,
+	    "nForce MCP67 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN1,
+	    "nForce MCP67 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN2,
+	    "nForce MCP67 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN3,
+	    "nForce MCP67 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN4,
+	    "nForce MCP67 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA,
+	    "nForce MCP67 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA2,
+	    "nForce MCP67 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA3,
+	    "nForce MCP67 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA4,
+	    "nForce MCP67 Serial ATA Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_1,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_2,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_3,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_4,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_5,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_6,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_7,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_8,
+	    "nForce MCP67 AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HDA_1,
+	    "nForce MCP67 High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HDA_2,
+	    "nForce MCP67 High Definition Audio Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_IDE,
+	    "nForce MCP67 ATA133 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
@@ -10334,6 +10478,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180,
 	    "8180 802.11b",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8185,
+	    "8185 802.11a/b/g",
 	},
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C465,
@@ -10852,8 +11000,12 @@ static const struct pci_product pci_products[] = {
 	    "Cyber20x 2S1P 16850 PCI",
 	},
 	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_PCISERIAL8000P,
-	    "PCI Serial 8000 Plus",
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_PS8000P650,
+	    "PCI Serial 8000 Plus 16650",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_PS8000P850,
+	    "PCI Serial 8000 Plus 16850",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
@@ -12628,4 +12780,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2563;
+const int pci_nproducts = 2601;

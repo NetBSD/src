@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.810.2.6 2007/01/30 13:51:39 ad Exp $
+#	$NetBSD: files,v 1.810.2.7 2007/02/01 08:48:15 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1344,6 +1344,7 @@ file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
 file	kern/sys_process.c		ptrace | ktrace
 file	kern/sys_sig.c
+file	kern/sys_sched.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
 file	kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
@@ -1375,6 +1376,7 @@ file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
 file	kern/vfs_subr.c
 file	kern/vfs_syscalls.c
+file	kern/vfs_trans.c
 file	kern/vfs_vnops.c
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.1.2.4 2007/01/19 09:39:58 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.1.2.5 2007/02/01 08:48:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/types.h>
 #include <sys/ioccom.h>
 #include <sys/queue.h>
-#include <sys/types.h>
 #include <sys/time.h>
 
 #if defined(_KERNEL) && defined(__HAVE_CPU_COUNTER)

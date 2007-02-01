@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.30.4.1 2007/01/12 01:04:04 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.30.4.2 2007/02/01 08:48:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.30.4.1 2007/01/12 01:04:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.30.4.2 2007/02/01 08:48:32 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -863,6 +863,7 @@ struct vfsops adosfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	adosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

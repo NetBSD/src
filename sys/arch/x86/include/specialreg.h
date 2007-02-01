@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.11.2.1 2007/01/12 01:01:01 ad Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.11.2.2 2007/02/01 08:48:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -169,9 +169,13 @@
 
 #define CPUID2_FLAGS "\20\1SSE3\4MONITOR\5DS-CPL\6VMX\10EST\11TM2\13CID\17xTPR"
 
-#define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 15)
-#define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
-#define CPUID2STEPPING(cpuid)	((cpuid) & 15)
+#define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
+#define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)
+#define CPUID2STEPPING(cpuid)	((cpuid) & 0xf)
+
+/* Extended family and model are defined on amd64 processors */
+#define CPUID2EXTFAMILY(cpuid)	(((cpuid) >> 20) & 0xff)
+#define CPUID2EXTMODEL(cpuid)	(((cpuid) >> 16) & 0xf)
 
 #define CPUID(code, eax, ebx, ecx, edx)                         \
 	__asm("cpuid"                                           \

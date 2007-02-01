@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.43 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.43.8.1 2007/02/01 08:48:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.43 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.43.8.1 2007/02/01 08:48:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.43 2006/05/14 21:32:45 elad Exp $")
 #include <sys/file.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/mount.h>
 #include <sys/kauth.h>
 
 #include <ufs/ufs/quota.h>

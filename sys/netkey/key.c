@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.142.2.2 2007/01/12 01:04:19 ad Exp $	*/
+/*	$NetBSD: key.c,v 1.142.2.3 2007/02/01 08:48:45 ad Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142.2.2 2007/01/12 01:04:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.142.2.3 2007/02/01 08:48:45 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4245,7 +4245,6 @@ key_ismyaddr(sa)
  * 0: other
  * NOTE: derived ip6_input() in KAME. This is necessary to modify more.
  */
-#include <netinet6/in6_var.h>
 
 static int
 key_ismyaddr6(sin6)

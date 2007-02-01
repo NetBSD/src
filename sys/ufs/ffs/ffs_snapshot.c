@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.31.4.3 2007/01/12 01:04:24 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.31.4.4 2007/02/01 08:48:48 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31.4.3 2007/01/12 01:04:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31.4.4 2007/02/01 08:48:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.31.4.3 2007/01/12 01:04:24 ad Exp
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -291,7 +292,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	 *
 	 * Suspend operation on filesystem.
 	 */
-	if ((error = vfs_write_suspend(vp->v_mount, PUSER|PCATCH, 0)) != 0) {
+	if ((error = vfs_suspend(vp->v_mount, 0)) != 0) {
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		goto out;
 	}
@@ -389,23 +390,31 @@ loop:
 			MNT_ILOCK(mp);
 			continue;
 		}
+#ifndef NEWVNGATE
 		if (vn_lock(xvp, LK_EXCLUSIVE | LK_INTERLOCK) != 0) {
 			MNT_ILOCK(mp);
 			goto loop;
 		}
+#else /* NEWVNGATE */
+		VI_UNLOCK(xvp);
+#endif /* NEWVNGATE */
 #ifdef DEBUG
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
 		if (VOP_GETATTR(xvp, &vat, l->l_cred, l) == 0 &&
 		    vat.va_nlink > 0) {
+#ifndef NEWVNGATE
 			VOP_UNLOCK(xvp, 0);
+#endif /* NEWVNGATE */
 			MNT_ILOCK(mp);
 			continue;
 		}
 		xp = VTOI(xvp);
 		if (ffs_checkfreefile(copy_fs, vp, xp->i_number)) {
+#ifndef NEWVNGATE
 			VOP_UNLOCK(xvp, 0);
+#endif /* NEWVNGATE */
 			MNT_ILOCK(mp);
 			continue;
 		}
@@ -435,7 +444,9 @@ loop:
 		if (!error)
 			error = ffs_freefile(copy_fs, vp, xp->i_number,
 			    xp->i_mode);
+#ifndef NEWVNGATE
 		VOP_UNLOCK(xvp, 0);
+#endif /* NEWVNGATE */
 		if (error) {
 			free(copy_fs->fs_csp, M_UFSMNT);
 			goto out1;
@@ -518,7 +529,7 @@ out1:
 	/*
 	 * Resume operation on filesystem.
 	 */
-	vfs_write_resume(vp->v_mount);
+	vfs_resume(vp->v_mount);
 	/*
 	 * Set the mtime to the time the snapshot has been taken.
 	 */

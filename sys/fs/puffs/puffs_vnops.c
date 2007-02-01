@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.14.2.3 2007/01/12 01:04:05 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.14.2.4 2007/02/01 08:48:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,13 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.14.2.3 2007/01/12 01:04:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.14.2.4 2007/02/01 08:48:33 ad Exp $");
 
 #include <sys/param.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
+#include <sys/fstrans.h>
 #include <sys/malloc.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/vnode.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -56,7 +57,6 @@ int	puffs_open(void *);
 int	puffs_close(void *);
 int	puffs_getattr(void *);
 int	puffs_setattr(void *);
-int	puffs_revoke(void *);
 int	puffs_reclaim(void *);
 int	puffs_readdir(void *);
 int	puffs_poll(void *);
@@ -133,7 +133,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_pathconf_desc, puffs_checkop },		/* pathconf */
         { &vop_advlock_desc, puffs_checkop },		/* advlock */
         { &vop_strategy_desc, puffs_strategy },		/* REAL strategy */
-        { &vop_revoke_desc, puffs_revoke },		/* REAL revoke */
+        { &vop_revoke_desc, genfs_revoke },		/* REAL revoke */
         { &vop_abortop_desc, genfs_abortop },		/* REAL abortop */
         { &vop_inactive_desc, puffs_inactive },		/* REAL inactive */
         { &vop_reclaim_desc, puffs_reclaim },		/* REAL reclaim */
@@ -231,7 +231,7 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fifo_revoke },		/* genfs_revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* genfs_badop */
-	{ &vop_fsync_desc, puffs_checkop },		/* fsync */
+	{ &vop_fsync_desc, fifo_fsync },		/* genfs_nullop*/
 	{ &vop_seek_desc, fifo_seek },			/* genfs_badop */
 	{ &vop_remove_desc, fifo_remove },		/* genfs_badop */
 	{ &vop_link_desc, fifo_link },			/* genfs_badop */
@@ -418,6 +418,7 @@ puffs_lookup(void *v)
 	struct puffs_mount *pmp;
 	struct componentname *cnp;
 	struct vnode *vp, *dvp;
+	struct puffs_node *dpn;
 	int isdot;
 	int error;
 
@@ -487,6 +488,18 @@ puffs_lookup(void *v)
 		goto errout;
 	}
 
+	/*
+	 * Check that we don't get our parent node back, that would cause
+	 * a pretty obvious deadlock.
+	 */
+	dpn = dvp->v_data;
+	if (lookup_arg.pvnr_newnode == dpn->pn_cookie) {
+		error = EINVAL;
+		goto errout;
+	}
+
+	/* XXX: race here */
+	/* XXX2: this check for node existence twice */
 	vp = puffs_pnode2vnode(pmp, lookup_arg.pvnr_newnode, 1);
 	if (!vp) {
 		error = puffs_getvnode(dvp->v_mount,
@@ -713,36 +726,6 @@ puffs_setattr(void *v)
 }
 
 int
-puffs_revoke(void *v)
-{
-	struct vop_revoke_args /* {
-		const struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct puffs_mount *pmp;
-
-	PUFFS_VNREQ(revoke);
-
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
-
-	revoke_arg.pvnr_flags = ap->a_flags;
-
-	/* don't really care if userspace doesn't want to play along */
-	if (EXISTSOP(pmp, REVOKE))
-		puffs_vntouser(pmp, PUFFS_VN_REVOKE,
-		    &revoke_arg, sizeof(revoke_arg), VPTOPNC(ap->a_vp),
-		    NULL, NULL);
-
-	return genfs_revoke(v);
-}
-
-/*
- * There is no technical need to have this travel to userspace
- * synchronously.  So once async reply support is in place, make this
- * async.
- */
-int
 puffs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
@@ -785,12 +768,18 @@ puffs_inactive(void *v)
 	 * user server thinks it's gone?  then don't be afraid care,
 	 * node's life was already all it would ever be
 	 */
-	if (vnrefs == 0)
+	if (vnrefs == 0) {
+		pnode->pn_stat |= PNODE_NOREFS;
 		vrecycle(ap->a_vp, NULL, ap->a_l);
+	}
 
 	return 0;
 }
 
+/*
+ * always FAF, we don't really care if the server wants to fail to
+ * reclaim the node or not
+ */
 int
 puffs_reclaim(void *v)
 {
@@ -800,9 +789,7 @@ puffs_reclaim(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
-	int error;
-
-	PUFFS_VNREQ(reclaim);
+	struct puffs_vnreq_reclaim *reclaim_argp;
 
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
 
@@ -813,37 +800,25 @@ puffs_reclaim(void *v)
 	 * puffs_root(), since there is only one of us.
 	 */
 	if (ap->a_vp->v_flag & VROOT) {
-#ifdef DIAGNOSTIC
 		simple_lock(&pmp->pmp_lock);
-		if (pmp->pmp_root == NULL)
-			panic("puffs_reclaim: releasing root vnode (%p) twice",
-			    ap->a_vp);
-		simple_unlock(&pmp->pmp_lock);
-#endif
+		KASSERT(pmp->pmp_root != NULL);
 		pmp->pmp_root = NULL;
-		puffs_putvnode(ap->a_vp);
-		return 0;
+		simple_unlock(&pmp->pmp_lock);
+		goto out;
 	}
 
-	reclaim_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
+	if (!EXISTSOP(pmp, RECLAIM))
+		goto out;
 
-	if (EXISTSOP(pmp, RECLAIM))
-		error = puffs_vntouser(pmp, PUFFS_VN_RECLAIM,
-		    &reclaim_arg, sizeof(reclaim_arg), VPTOPNC(ap->a_vp),
-		    NULL, NULL);
-	else
-		error = 0;
-#if 0
-	/*
-	 * XXX: if reclaim fails for any other reason than the userspace
-	 * being dead, we should consider unmounting the filesystem, since
-	 * we can't trust it to be in a consistent state anymore.  But for
-	 * now, just ignore all errors.
-	 */
-	if (error)
-		return error;
-#endif
+	reclaim_argp = malloc(sizeof(struct puffs_vnreq_reclaim),
+	    M_PUFFS, M_WAITOK | M_ZERO);
+	reclaim_argp->pvnr_pid = puffs_lwp2pid(ap->a_l);
 
+	puffs_vntouser_faf(pmp, PUFFS_VN_RECLAIM,
+	    reclaim_argp, sizeof(struct puffs_vnreq_reclaim),
+	    VPTOPNC(ap->a_vp));
+
+ out:
 	if (PUFFS_DOCACHE(pmp))
 		cache_purge(ap->a_vp);
 	puffs_putvnode(ap->a_vp);
@@ -943,11 +918,13 @@ puffs_fsync(void *v)
 	struct puffs_mount *pmp;
 	struct puffs_vnreq_fsync *fsync_argp;
 	struct vnode *vp;
-	int pflags, error;
+	struct puffs_node *pn;
+	int pflags, error, dofaf;
 
 	PUFFS_VNREQ(fsync);
 
 	vp = ap->a_vp;
+	pn = VPTOPP(vp);
 	pmp = MPTOPUFFSMP(vp->v_mount);
 
 	pflags = PGO_CLEANIT;
@@ -965,14 +942,29 @@ puffs_fsync(void *v)
 
 	/*
 	 * HELLO!  We exit already here if the user server does not
-	 * support fsync.  Otherwise we continue to issue fsync()
-	 * forward.
+	 * support fsync OR if we should call fsync for a node which
+	 * has references neither in the kernel or the fs server.
+	 * Otherwise we continue to issue fsync() forward.
 	 */
-
-	if (!EXISTSOP(pmp, FSYNC))
+	if (!EXISTSOP(pmp, FSYNC) || (pn->pn_stat & PNODE_NOREFS))
 		return 0;
 
-	if (ap->a_flags & FSYNC_WAIT) {
+	dofaf = (ap->a_flags & FSYNC_WAIT) == 0 || ap->a_flags == FSYNC_LAZY;
+	/*
+	 * We abuse VXLOCK to mean "vnode is going to die", so we issue
+	 * only FAFs for those.  Otherwise there's a danger of deadlock,
+	 * since the execution context here might be the user server
+	 * doing some operation on another fs, which in turn caused a
+	 * vnode to be reclaimed from the freelist for this fs.
+	 */
+	if (dofaf == 0) {
+		simple_lock(&vp->v_interlock);
+		if (vp->v_flag & VXLOCK)
+			dofaf = 1;
+		simple_unlock(&vp->v_interlock);
+	}
+
+	if (dofaf == 0) {
 		fsync_argp = &fsync_arg;
 	} else {
 		fsync_argp = malloc(sizeof(struct puffs_vnreq_fsync),
@@ -993,7 +985,7 @@ puffs_fsync(void *v)
 	 * If we are not required to wait, do a FAF operation.
 	 * Otherwise block here.
 	 */
-	if (ap->a_flags & FSYNC_WAIT) {
+	if (dofaf == 0) {
 		error =  puffs_vntouser(MPTOPUFFSMP(vp->v_mount),
 		    PUFFS_VN_FSYNC, fsync_argp, sizeof(*fsync_argp),
 		    VPTOPNC(vp), NULL /* XXXshouldbe: vp */, NULL);
@@ -1694,26 +1686,58 @@ puffs_strategy(void *v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct puffs_mount *pmp;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_node *pn;
 	struct puffs_vnreq_read *read_argp = NULL;
 	struct puffs_vnreq_write *write_argp = NULL;
 	struct buf *bp;
 	size_t argsize;
 	size_t tomove, moved;
-	int error;
+	int error, dowritefaf;
 
-	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
+	pmp = MPTOPUFFSMP(vp->v_mount);
 	bp = ap->a_bp;
+	error = 0;
+	dowritefaf = 0;
+	pn = VPTOPP(vp);
 
-	if ((bp->b_flags & B_READ) && !EXISTSOP(pmp, READ))
-		return EOPNOTSUPP;
-	if ((bp->b_flags & B_WRITE) && !EXISTSOP(pmp, WRITE))
-		return EOPNOTSUPP;
+	if (((bp->b_flags & B_READ) && !EXISTSOP(pmp, READ))
+	    || (((bp->b_flags & B_READ) == 0) && !EXISTSOP(pmp, WRITE))) {
+		error = EOPNOTSUPP;
+		goto out;
+	}
+
+	/*
+	 * Short-circuit optimization: don't flush buffer in between
+	 * VOP_INACTIVE and VOP_RECLAIM in case the node has no references.
+	 */
+	if (pn->pn_stat & PNODE_NOREFS) {
+		bp->b_resid = 0;
+		goto out;
+	}
 
 #ifdef DIAGNOSTIC
 	if (bp->b_resid > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)
 		panic("puffs_strategy: wildly inappropriate buf resid %d",
 		    bp->b_resid);
 #endif
+
+	/*
+	 * See explanation for the necessity of a FAF in puffs_fsync.
+	 *
+	 * Also, do FAF in case we're suspending.
+	 * See puffs_vfsops.c:pageflush()
+	 *
+	 * XXgoddamnX: B_WRITE is a "pseudo flag"
+	 */
+	if ((bp->b_flags & B_READ) == 0) {
+		simple_lock(&vp->v_interlock);
+		if (vp->v_flag & VXLOCK)
+			dowritefaf = 1;
+		if (pn->pn_stat & PNODE_SUSPEND)
+			dowritefaf = 1;
+		simple_unlock(&vp->v_interlock);
+	}
 
 	if (bp->b_flags & B_READ) {
 		argsize = sizeof(struct puffs_vnreq_read);
@@ -1731,9 +1755,8 @@ puffs_strategy(void *v)
 		puffs_credcvt(&read_argp->pvnr_cred, FSCRED);
 
 		error = puffs_vntouser_adjbuf(pmp, PUFFS_VN_READ,
-		    (void **)&read_argp, &argsize,
-		    read_argp->pvnr_resid, VPTOPNC(ap->a_vp),
-		    LOCKEDVP(ap->a_vp), NULL);
+		    (void **)&read_argp, &argsize, read_argp->pvnr_resid,
+		    VPTOPNC(vp), LOCKEDVP(vp), NULL);
 
 		if (error)
 			goto out;
@@ -1764,31 +1787,45 @@ puffs_strategy(void *v)
 
 		(void)memcpy(&write_argp->pvnr_data, bp->b_data, tomove);
 
-		error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
-		    PUFFS_VN_WRITE, write_argp, argsize,
-		    VPTOPNC(ap->a_vp), ap->a_vp, NULL);
-		if (error)
-			goto out;
+		if (dowritefaf) {
+			/*
+			 * assume FAF moves everything.  frankly, we don't
+			 * really have a choice.
+			 */
+			puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount),
+			    PUFFS_VN_WRITE, write_argp, argsize, VPTOPNC(vp));
+			bp->b_resid -= tomove;
+		} else {
+			error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount),
+			    PUFFS_VN_WRITE, write_argp, argsize, VPTOPNC(vp),
+			    vp, NULL);
+			if (error)
+				goto out;
 
-		moved = write_argp->pvnr_resid - tomove;
+			moved = tomove - write_argp->pvnr_resid;
+			if (write_argp->pvnr_resid > tomove) {
+				error = EINVAL;
+				goto out;
+			}
 
-		if (write_argp->pvnr_resid > tomove) {
-			error = EINVAL;
-			goto out;
+			bp->b_resid -= moved;
+			if (write_argp->pvnr_resid != 0)
+				error = EIO;
 		}
-
-		bp->b_resid -= moved;
-		if (write_argp->pvnr_resid != 0)
-			error = EIO;
 	}
 
  out:
 	if (read_argp)
 		free(read_argp, M_PUFFS);
-	if (write_argp)
+	if (write_argp && !dowritefaf)
 		free(write_argp, M_PUFFS);
 
-	biodone(ap->a_bp);
+	if (error) {
+		bp->b_error = error;
+		bp->b_flags |= B_ERROR;
+	}
+
+	biodone(bp);
 	return error;
 }
 
@@ -1862,9 +1899,7 @@ puffs_bmap(void *v)
 	return 0;
 }
 
-/*
- * moreXXX: yes, todo
- */
+
 int
 puffs_lock(void *v)
 {
@@ -1873,10 +1908,28 @@ puffs_lock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
 
 #if 0
 	DPRINTF(("puffs_lock: lock %p, args 0x%x\n", vp, ap->a_flags));
 #endif
+
+	/*
+	 * XXX: this avoids deadlocking when we're suspending.
+	 * e.g. some ops holding the vnode lock might be blocked for
+	 * the vfs transaction lock so we'd deadlock.
+	 *
+	 * Now once again this is skating on the thin ice of modern life,
+	 * since we are breaking the consistency guarantee provided
+	 * _to the user server_ by vnode locking.  Hopefully this will
+	 * get fixed soon enough by getting rid of the dependency on
+	 * vnode locks alltogether.
+	 */
+	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
+		if (ap->a_flags & LK_INTERLOCK)
+			simple_unlock(&vp->v_interlock);
+		return 0;
+	}
 
 	return lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock);
 }
@@ -1889,10 +1942,18 @@ puffs_unlock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp = vp->v_mount;
 
 #if 0
 	DPRINTF(("puffs_unlock: lock %p, args 0x%x\n", vp, ap->a_flags));
 #endif
+
+	/* XXX: see puffs_lock() */
+	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
+		if (ap->a_flags & LK_INTERLOCK)
+			simple_unlock(&vp->v_interlock);
+		return 0;
+	}
 
 	return lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock);
 }

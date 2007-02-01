@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.150.2.1 2006/11/18 21:34:03 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.150.2.2 2007/02/01 08:48:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.150.2.1 2006/11/18 21:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.150.2.2 2007/02/01 08:48:17 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -689,10 +689,10 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	if (vnddebug & VDB_IO)
 		printf("vnd (rdwr): vp %p, %s, rawblkno 0x%" PRIx64
 		    ", secsize %d, offset %" PRIu64
-		    ", bcount %d, resid %d\n",
+		    ", bcount %d\n",
 		    vp, doread ? "read" : "write", obp->b_rawblkno,
 		    vnd->sc_dkdev.dk_label->d_secsize, offset,
-		    bp->b_bcount, bp->b_resid);
+		    bp->b_bcount);
 #endif
 
 	/* Issue the read or write operation. */

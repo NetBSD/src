@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.16.8.1 2006/11/18 21:34:46 ad Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.16.8.2 2007/02/01 08:48:27 ad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.16.8.1 2006/11/18 21:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.16.8.2 2007/02/01 08:48:27 ad Exp $");
 
 #include "rf_archs.h"
 
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.16.8.1 2006/11/18 21:34:46 ad Exp $
 #include "rf_map.h"
 #include "rf_pq.h"
 #include "rf_mcpair.h"
-#include "rf_evenodd.h"
 #include "rf_evenodd_dagfuncs.h"
 #include "rf_evenodd_dags.h"
 #include "rf_engine.h"

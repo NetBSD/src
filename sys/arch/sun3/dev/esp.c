@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.23.8.1 2007/02/01 08:48:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23.8.1 2007/02/01 08:48:12 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23 2006/03/28 17:38:28 thorpej Exp $");
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
@@ -69,7 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.23 2006/03/28 17:38:28 thorpej Exp $");
 
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
-	volatile u_char *sc_reg;		/* the registers */
+	bus_space_tag_t sc_bst;			/* bus space tag */
+	bus_space_handle_t sc_bsh;		/* bus space handle */
 	struct dma_softc *sc_dma;		/* pointer to my dma */
 };
 
@@ -138,10 +140,14 @@ espattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_glue = &esp_glue;
 
 	/*
-	 * Map in the ESP registers.
+	 * Map the ESP registers.
 	 */
-	esc->sc_reg =
-		bus_mapin(ca->ca_bustype, ca->ca_paddr, ESP_REG_SIZE);
+	esc->sc_bst = ca->ca_bustag;
+	if (bus_space_map(esc->sc_bst, ca->ca_paddr, ESP_REG_SIZE, 0,
+	    &esc->sc_bsh) != 0) {
+		printf(": can't map register\n");
+		return;
+	}
 
 	/* Other settings */
 	sc->sc_id = 7;
@@ -255,7 +261,7 @@ esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (esc->sc_reg[reg * 4]);
+	return bus_space_read_1(esc->sc_bst, esc->sc_bsh, reg * 4);
 }
 
 void
@@ -263,7 +269,7 @@ esp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_reg[reg * 4] = val;
+	bus_space_write_1(esc->sc_bst, esc->sc_bsh, reg * 4, val);
 }
 
 int 

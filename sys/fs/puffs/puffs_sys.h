@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.9.2.3 2007/01/12 01:04:05 ad Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.9.2.4 2007/02/01 08:48:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,6 @@
 #include <sys/kauth.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
 #include <sys/pool.h>
 
 #include <fs/puffs/puffs_msgif.h>
@@ -119,6 +118,7 @@ extern int puffsdebug; /* puffs_subr.c */
 #define PUFFS_DOCACHE(pmp)	(((pmp)->pmp_flags & PUFFS_KFLAG_NOCACHE) == 0)
 
 TAILQ_HEAD(puffs_wq, puffs_park);
+LIST_HEAD(puffs_node_hashlist, puffs_node);
 struct puffs_mount {
 	struct simplelock		pmp_lock;
 
@@ -133,16 +133,18 @@ struct puffs_mount {
 	struct puffs_wq			pmp_req_replywait;
 	TAILQ_HEAD(, puffs_sizepark)	pmp_req_sizepark;
 
-	LIST_HEAD(, puffs_node)		pmp_pnodelist;
+	struct puffs_node_hashlist	*pmp_pnodehash;
+	size_t				pmp_npnodehash;
 
 	struct mount			*pmp_mp;
 	struct vnode			*pmp_root;
 	void				*pmp_rootcookie;
 	struct selinfo			*pmp_sel;	/* in puffs_instance */
 
-	unsigned int			pmp_nextreq;
+	uint64_t			pmp_nextreq;
 	uint8_t				pmp_status;
 	uint8_t				pmp_unmounting;
+	uint8_t				pmp_suspend;
 };
 
 #define PUFFSTAT_BEFOREINIT	0
@@ -150,8 +152,12 @@ struct puffs_mount {
 #define PUFFSTAT_RUNNING	2
 #define PUFFSTAT_DYING		3 /* Do you want your possessions identified? */
 
-#define PNODE_LOCKED	0x01
-#define PNODE_WANTED	0x02	
+#define PNODE_NOREFS	0x01	/* vnode inactive, no backend reference	*/
+#define PNODE_SUSPEND	0x02	/* issue all operations as FAF		*/
+#if 0
+#define PNODE_LOCKED	0x0
+#define PNODE_WANTED	0x0
+#endif
 struct puffs_node {
 	struct genfs_node pn_gnode;	/* genfs glue			*/
 
@@ -159,12 +165,13 @@ struct puffs_node {
 	struct vnode	*pn_vp;		/* backpointer to vnode		*/
 	uint32_t	pn_stat;	/* node status			*/
 
-	LIST_ENTRY(puffs_node) pn_entries;
+	LIST_ENTRY(puffs_node) pn_hashent;
 };
 
 int	puffs_start2(struct puffs_mount *, struct puffs_startreq *);
 
 int	puffs_vfstouser(struct puffs_mount *, int, void *, size_t);
+void	puffs_suspendtouser(struct puffs_mount *, int);
 int	puffs_vntouser(struct puffs_mount *, int, void *, size_t, void *,
 		       struct vnode *, struct vnode *);
 void	puffs_vntouser_faf(struct puffs_mount *, int, void *, size_t, void *);

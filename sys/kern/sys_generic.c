@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.92.2.6 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.92.2.7 2007/02/01 08:48:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.6 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.92.2.7 2007/02/01 08:48:38 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -1182,12 +1182,4 @@ selwakeup(sip)
 	}
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
-}
-
-int
-sys_sched_yield(struct lwp *l, void *v, register_t *retval)
-{
-
-	preempt();
-	return 0;
 }

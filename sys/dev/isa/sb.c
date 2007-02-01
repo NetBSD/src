@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.85 2006/09/03 05:12:54 christos Exp $	*/
+/*	$NetBSD: sb.c,v 1.85.2.1 2007/02/01 08:48:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.85 2006/09/03 05:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.85.2.1 2007/02/01 08:48:21 ad Exp $");
 
 #include "midi.h"
 
@@ -53,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.85 2006/09/03 05:12:54 christos Exp $");
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
-#include <dev/midi_if.h>
-
 #include <dev/midi_if.h>
 
 #include <dev/isa/isavar.h>

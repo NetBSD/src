@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.1.6.1 2006/11/18 21:39:50 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.1.6.2 2007/02/01 08:48:52 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.1.6.1 2006/11/18 21:39:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.1.6.2 2007/02/01 08:48:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -127,7 +127,6 @@ clock_tune(void)
 {
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 
-	s->s_inactarg = 
 	s->s_inactarg = UVM_PCTPARAM_APPLY(&s->s_inactivepct,
 	    s->s_active + s->s_inactive);
 	if (s->s_inactarg <= uvmexp.freetarg) {

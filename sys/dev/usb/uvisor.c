@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.31.20.1 2006/11/18 21:34:52 ad Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.31.20.2 2007/02/01 08:48:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.31.20.1 2006/11/18 21:34:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.31.20.2 2007/02/01 08:48:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,8 +411,9 @@ uvisor_detach(device_ptr_t self, int flags)
 		}
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
+	if (sc->sc_udev)
+		usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+				   USBDEV(sc->sc_dev));
 
 
 	return (rv);

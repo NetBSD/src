@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.20.1 2007/02/01 08:48:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@
  */
 
 #include <sys/param.h>
-#include <sys/reboot.h>
 #include <sys/reboot.h>
 #include <sys/termios.h>
 #include <sys/ttydefaults.h>

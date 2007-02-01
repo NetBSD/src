@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.7.2.2 2006/11/18 21:39:23 ad Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.7.2.3 2007/02/01 08:48:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.7.2.2 2006/11/18 21:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.7.2.3 2007/02/01 08:48:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -172,7 +172,7 @@ specificdata_noop_dtor(void *data)
 
 /*
  * specificdata_domain_create --
- *	Create a specifidata domain.
+ *	Create a specificdata domain.
  */
 specificdata_domain_t
 specificdata_domain_create(void)
@@ -189,7 +189,7 @@ specificdata_domain_create(void)
 
 /*
  * specificdata_domain_delete --
- *	Destroy a specifidata domain.
+ *	Destroy a specificdata domain.
  */
 void
 specificdata_domain_delete(specificdata_domain_t sd)

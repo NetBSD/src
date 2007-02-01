@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29.4.3 2007/01/30 13:49:34 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29.4.4 2007/02/01 08:47:59 ad Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.4.3 2007/01/30 13:49:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.4.4 2007/02/01 08:47:59 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.4.3 2007/01/30 13:49:34 ad Exp $");
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr405gp.h>
-#include <machine/bus.h>
 
 #include <dev/cons.h>
 

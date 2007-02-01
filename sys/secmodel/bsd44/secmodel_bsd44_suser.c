@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.16.2.3 2007/01/12 01:04:22 ad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.16.2.4 2007/02/01 08:48:47 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.16.2.3 2007/01/12 01:04:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.16.2.4 2007/02/01 08:48:47 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -486,55 +486,49 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 		break;
 
-	case KAUTH_PROCESS_RESOURCE:
-		switch ((u_long)arg1) {
-		case KAUTH_REQ_PROCESS_RESOURCE_NICE:
-			if (isroot) {
-				result = KAUTH_RESULT_ALLOW;
-				break;
-			}
-
-			if (kauth_cred_geteuid(cred) !=
-			    kauth_cred_geteuid(p->p_cred) &&
-			    kauth_cred_getuid(cred) !=
-			    kauth_cred_geteuid(p->p_cred)) {
-				result = KAUTH_RESULT_DENY;
-				break;
-			}
-
-			if ((u_long)arg2 >= p->p_nice)
-				result = KAUTH_RESULT_ALLOW;
-
-			break;
-
-		case KAUTH_REQ_PROCESS_RESOURCE_RLIMIT: {
-			struct rlimit *new_rlimit;
-			u_long which;
-
-			if (isroot) {
-				result = KAUTH_RESULT_ALLOW;
-				break;
-			}
-
-			if (proc_uidmatch(cred, p->p_cred) != 0) {
-				result = KAUTH_RESULT_DENY;
-				break;
-			}
-
-			new_rlimit = arg2;
-			which = (u_long)arg3;
-
-			if (new_rlimit->rlim_max <=
-			    p->p_rlimit[which].rlim_max)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-			}
-
-		default:
-			result = KAUTH_RESULT_DEFER;
+	case KAUTH_PROCESS_NICE:
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
 			break;
 		}
+
+		if (kauth_cred_geteuid(cred) !=
+		    kauth_cred_geteuid(p->p_cred) &&
+		    kauth_cred_getuid(cred) !=
+		    kauth_cred_geteuid(p->p_cred)) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		if ((u_long)arg1 >= p->p_nice)
+			result = KAUTH_RESULT_ALLOW;
+
 		break;
+
+	case KAUTH_PROCESS_RLIMIT: {
+		struct rlimit *new_rlimit;
+		u_long which;
+
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		}
+
+		if ((p != curlwp->l_proc) &&
+		    (proc_uidmatch(cred, p->p_cred) != 0)) {
+			result = KAUTH_RESULT_DENY;
+			break;
+		}
+
+		new_rlimit = arg1;
+		which = (u_long)arg2;
+
+		if (new_rlimit->rlim_max <=
+		    p->p_rlimit[which].rlim_max)
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
 
 	case KAUTH_PROCESS_SETID:
 		if (isroot)

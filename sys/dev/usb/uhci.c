@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.199.2.1 2006/11/18 21:34:51 ad Exp $	*/
+/*	$NetBSD: uhci.c,v 1.199.2.2 2007/02/01 08:48:29 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.199.2.1 2006/11/18 21:34:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.199.2.2 2007/02/01 08:48:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3020,7 +3020,7 @@ usb_config_descriptor_t uhci_confd = {
 	1,
 	1,
 	0,
-	UC_SELF_POWERED,
+	UC_ATTR_MBO | UC_SELF_POWERED,
 	0			/* max power */
 };
 

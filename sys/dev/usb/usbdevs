@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.435.2.2 2007/01/12 00:57:49 ad Exp $
+$NetBSD: usbdevs,v 1.435.2.3 2007/02/01 08:48:30 ad Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -419,6 +419,7 @@ vendor DELORME		0x1163	DeLorme
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor SIERRA		0x1199	Sierra Wireless
 vendor TOPFIELD		0x11db	Topfield Co., Ltd
+vendor PROLIFIC2	0x11f6	Prolific Technology
 vendor TSUNAMI		0x1241	Tsunami
 vendor TARGUS		0x1267	Targus
 vendor CREATIVE2	0x1292	Creative Labs
@@ -1214,8 +1215,8 @@ product KEYSPAN USA28XA_NF	0x0114	USA-28XB serial adapter (no firmware)
 product KEYSPAN USA28XA		0x0115	USA-28XA serial adapter
 product KEYSPAN USA18XA_NF	0x0116	USA-18XA serial adapter (no firmware)
 product KEYSPAN USA18XA		0x0117	USA-18XA serial adapter
-product KEYSPAN USA19QW_NF	0x0118	USA-19WQ serial adapter (no firmware)
-product KEYSPAN USA19QW		0x0119	USA-19WQ serial adapter
+product KEYSPAN USA19QW_NF	0x0118	USA-19QW serial adapter (no firmware)
+product KEYSPAN USA19QW		0x0119	USA-19QW serial adapter
 product KEYSPAN UIA10		0x0201	UIA-10 remote control
 product KEYSPAN UIA11		0x0202	UIA-11 remote control
 
@@ -1648,6 +1649,7 @@ product PROLIFIC PL2305		0x2305	Parallel printer adapter
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host interface
 product PROLIFIC PL2303X	0xaaa0	PL2303 Serial adapter (Pharos GPS)
+product PROLIFIC2 PL2303X	0x2001  Willcom WS002IN (DD)
 
 /* Putercom products */
 product PUTERCOM UPA100		0x047e	USB-1284 BRIDGE
@@ -1768,6 +1770,7 @@ product SHARP A300		0x8005	A300
 product SHARP SL5600		0x8006	SL5600
 product SHARP C700		0x8007	C700
 product SHARP C750		0x9031	C750
+product SHARP WS007SH		0x9123	WS007SH
 
 /* Shuttle Technology products */
 product SHUTTLE EUSB		0x0001	E-USB Bridge
@@ -1796,6 +1799,9 @@ product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
+product SIGMATEL VFIR4210	0x4210	StIR4210 VFIR
+product SIGMATEL VFIR4220	0x4220	StIR4220 VFIR
+product SIGMATEL VFIR4116	0x4116	StIR4116 VFIR
 product SIGMATEL I_BEAD100	0x8008	i-Bead 100 MP3 Player
 product SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 
@@ -2023,6 +2029,8 @@ product VTECH RT2570		0x3012	RT2570
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 product WACOM GRAPHIRE		0x0010	Graphire
 product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
+product WACOM GRAPHIRE3_6X8	0x0014	Graphire3 6x8
+product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 4x5
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
 

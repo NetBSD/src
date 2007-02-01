@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.241.4.2 2007/01/12 01:04:20 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.241.4.3 2007/02/01 08:48:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.241.4.2 2007/01/12 01:04:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.241.4.3 2007/02/01 08:48:46 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.241.4.2 2007/01/12 01:04:20 ad Exp $
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
-#include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/disk.h>

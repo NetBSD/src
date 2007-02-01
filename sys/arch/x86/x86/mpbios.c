@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.28.4.1 2006/11/18 21:29:39 ad Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.28.4.2 2007/02/01 08:48:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.28.4.1 2006/11/18 21:29:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.28.4.2 2007/02/01 08:48:12 ad Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -551,8 +551,15 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 		/* XXX */
 		printf("%s: WARNING: interrupts not configured\n",
 		    self->dv_xname);
+
+		/*
+		 * XXX rpaulo: I have a machine that can boot, so I
+		 * commented this (for now).
+		 */
+#if 0
 		panic("lazy bum");
 		return;
+#endif
 	} else {
 		/*
 		 * should not happen; mp_probe returns 0 in this case,

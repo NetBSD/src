@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.22.2.2 2007/01/12 01:04:19 ad Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.22.2.3 2007/02/01 08:48:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.2.2 2007/01/12 01:04:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.2.3 2007/02/01 08:48:45 ad Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.22.2.2 2007/01/12 01:04:19 ad Exp $");
 #include <netiso/tp_stat.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_trace.h>
-#include <netiso/tp_stat.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/tp_clnp.h>
 #include <netiso/tp_var.h>

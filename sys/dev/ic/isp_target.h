@@ -1,4 +1,4 @@
-/* $NetBSD: isp_target.h,v 1.22 2005/12/11 12:21:27 christos Exp $ */
+/* $NetBSD: isp_target.h,v 1.22.20.1 2007/02/01 08:48:20 ad Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -529,11 +529,13 @@ typedef struct {
 #define	ISP_TDQE(isp, msg, idx, arg)	\
     if (isp->isp_dblev & ISP_LOGTDEBUG2) isp_print_qentry(isp, msg, idx, arg)
 
-#ifdef	ISP_TARGET_FUNCTIONS
+#ifdef	ISP_TARGET_MODE
 /*
  * The functions below are for the publicly available
  * target mode functions that are internal to the Qlogic driver.
  */
+
+struct ispsoftc;
 
 /*
  * This function handles new response queue entry appropriate for target mode.

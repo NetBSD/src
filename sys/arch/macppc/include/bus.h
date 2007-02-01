@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.21 2006/02/16 20:17:14 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.21.14.1 2007/02/01 08:48:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@
 #ifndef _MACPPC_BUS_H_
 #define _MACPPC_BUS_H_
 
-#include <machine/autoconf.h>
 #include <machine/pio.h>
 
 /*

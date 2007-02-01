@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.40 2006/04/04 17:12:57 pavel Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.40.8.1 2007/02/01 08:48:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.40 2006/04/04 17:12:57 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.40.8.1 2007/02/01 08:48:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.40 2006/04/04 17:12:57 pavel Exp $");
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
 #include <sys/trace.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -81,6 +82,8 @@ ufs_bmap(void *v)
 		daddr_t *a_bnp;
 		int *a_runp;
 	} */ *ap = v;
+	int error;
+
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.
@@ -90,8 +93,12 @@ ufs_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 
-	return (ufs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
-	    ap->a_runp, ufs_issequential));
+	if ((error = fstrans_start(ap->a_vp->v_mount, FSTRANS_SHARED)) != 0)
+		return error;
+	error = ufs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL, NULL,
+	    ap->a_runp, ufs_issequential);
+	fstrans_done(ap->a_vp->v_mount);
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.267.2.4 2007/01/30 13:51:42 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.267.2.5 2007/02/01 08:48:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.4 2007/01/30 13:51:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.5 2007/02/01 08:48:40 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -332,6 +332,7 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		goto out;
 	}
 
+	TAILQ_INIT(&mp->mnt_vnodelist);
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
@@ -662,15 +663,15 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
+	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;
-		vrele(coveredvp);
-	}
 	mp->mnt_op->vfs_refcount--;
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	if (coveredvp != NULLVP)
+		vrele(coveredvp);
 	mount_finispecific(mp);
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);

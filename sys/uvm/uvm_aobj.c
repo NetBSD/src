@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.79.2.2 2007/01/12 01:04:25 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.79.2.3 2007/02/01 08:48:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.79.2.2 2007/01/12 01:04:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.79.2.3 2007/02/01 08:48:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.79.2.2 2007/01/12 01:04:25 ad Exp $")
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/pool.h>
-#include <sys/kernel.h>
 
 #include <uvm/uvm.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40.2.7 2007/01/30 13:49:33 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40.2.8 2007/02/01 08:47:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.7 2007/01/30 13:49:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40.2.8 2007/02/01 08:47:57 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -182,8 +182,6 @@ int	physmem;
 u_int64_t	dumpmem_low;
 u_int64_t	dumpmem_high;
 int	cpu_class;
-
-#define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
 vaddr_t	msgbuf_vaddr;
 paddr_t msgbuf_paddr;
