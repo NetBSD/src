@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.5 2007/02/01 05:36:20 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.6 2007/02/01 05:51:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ struct kmutex {
 #define	mtx_ipl		u.s.mtxs_ipl
 
 static uintptr_t	MUTEX_OWNER(uintptr_t) __attribute((unused));
+static int		MUTEX_OWNED(uintptr_t) __attribute((unused));
 
 static uintptr_t
 MUTEX_OWNER(uintptr_t owner)
