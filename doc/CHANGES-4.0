@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.58 2007/01/30 14:31:05 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.59 2007/02/01 22:02:03 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1052,4 +1052,20 @@ usr.sbin/postinstall/postinstall		1.32
 	Fix method to find pf.os so it works with '-s etc.tgz'.
 	This fixes PR bin/35185.
 	[lukem, ticket #393]
+
+doc/CHANGES					patch
+share/man/man4/iwi.4				1.9
+
+	Fix the path reference to the firmware package.
+	[skrll, ticket #387]
+
+gnu/dist/gcc4/gcc/cfgexpand.c			1.2
+
+	Don't mark 0 length arrays as being too small for stack protection.
+	[elad, ticket #390]
+
+share/man/man9/kauth.9				1.49 via patch
+
+	Remove extra '.El', left in previous commit.
+	[elad, ticket #391]
 
