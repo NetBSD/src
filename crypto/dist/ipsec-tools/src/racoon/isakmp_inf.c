@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.15 2007/02/01 08:48:32 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -462,6 +462,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 	int tlen, num_spi;
 	vchar_t *pbuf;
 	int protected = 0;
+	struct ph1handle *del_ph1;
 	struct ph2handle *iph2;
 	union {
 		u_int32_t spi32;
@@ -514,12 +515,17 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 				delete->spi_size, delete->proto_id);
 			return 0;
 		}
-		EVT_PUSH(iph1->local, iph1->remote,
-			EVTT_PEERPH1_NOPROP, NULL);
-		if (iph1->scr)
-			SCHED_KILL(iph1->scr);
 
-		purge_remote(iph1);
+		del_ph1=getph1byindex((isakmp_index *)(delete + 1));
+		if(del_ph1 != NULL){
+
+			EVT_PUSH(del_ph1->local, del_ph1->remote,
+					 EVTT_PEERPH1_NOPROP, NULL);
+			if (del_ph1->scr)
+				SCHED_KILL(del_ph1->scr);
+
+			purge_remote(del_ph1);
+		}
 		break;
 
 	case IPSECDOI_PROTO_IPSEC_AH:
