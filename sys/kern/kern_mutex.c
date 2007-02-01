@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.16 2007/01/31 13:09:11 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.17 2007/02/01 05:36:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.16 2007/01/31 13:09:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.17 2007/02/01 05:36:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -150,6 +150,8 @@ do {									\
 
 #define	MUTEX_OWNER(owner)						\
 	(owner & MUTEX_THREAD)
+#define	MUTEX_OWNED(owner)						\
+	(owner != 0)
 #define	MUTEX_HAS_WAITERS(mtx)						\
 	(((int)(mtx)->mtx_owner & MUTEX_BIT_WAITERS) != 0)
 
@@ -316,7 +318,7 @@ mutex_destroy(kmutex_t *mtx)
 {
 
 	if (MUTEX_ADAPTIVE_P(mtx)) {
-		MUTEX_ASSERT(mtx, MUTEX_OWNER(mtx->mtx_owner) == 0 &&
+		MUTEX_ASSERT(mtx, !MUTEX_OWNED(mtx->mtx_owner) &&
 		    !MUTEX_HAS_WAITERS(mtx));
 	} else {
 		MUTEX_ASSERT(mtx, mtx->mtx_lock != __SIMPLELOCK_LOCKED);
@@ -346,8 +348,9 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
 	struct cpu_info *ci;
 	struct lwp *l;
 
-	if ((l = (struct lwp *)MUTEX_OWNER(owner)) == NULL)
+	if (!MUTEX_OWNED(owner))
 		return 0;
+	l = (struct lwp *)MUTEX_OWNER(owner);
 
 	if ((ci = *cip) != NULL && ci->ci_curlwp == l) {
 		mb_read();	/* XXXSMP Necessary? */
@@ -460,7 +463,7 @@ mutex_vector_enter(kmutex_t *mtx)
 	 */
 	for (;;) {
 		owner = mtx->mtx_owner;
-		if (MUTEX_OWNER(owner) == 0) {
+		if (!MUTEX_OWNED(owner)) {
 			/*
 			 * Mutex owner clear could mean two things:
 			 *
@@ -477,7 +480,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 		if (panicstr != NULL)
 			return;
-		if (owner == curthread)
+		if (MUTEX_OWNER(owner) == curthread)
 			MUTEX_ABORT(mtx, "locking against myself");
 
 #ifdef MULTIPROCESSOR
@@ -497,7 +500,7 @@ mutex_vector_enter(kmutex_t *mtx)
 			}
 			LOCKSTAT_STOP_TIMER(spintime);
 			LOCKSTAT_COUNT(spincnt, 1);
-			if (MUTEX_OWNER(owner) == 0)
+			if (!MUTEX_OWNED(owner))
 				continue;
 		}
 #endif
