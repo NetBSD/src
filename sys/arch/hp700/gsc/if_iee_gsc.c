@@ -1,4 +1,4 @@
-/* $NetBSD: if_iee_gsc.c,v 1.2 2005/12/11 12:17:24 christos Exp $ */
+/* $NetBSD: if_iee_gsc.c,v 1.3 2007/02/01 21:09:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.2 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iee_gsc.c,v 1.3 2007/02/01 21:09:42 skrll Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -204,8 +204,7 @@ iee_gsc_match(struct device *parent, struct cfdata *match, void *aux)
 	struct gsc_attach_args *ga = aux;
 
 	if (ga->ga_type.iodc_type == HPPA_TYPE_FIO
-	    && (ga->ga_type.iodc_sv_model == HPPA_FIO_LAN
-	    || ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN))
+	    && ga->ga_type.iodc_sv_model == HPPA_FIO_GLAN)
 		/* beat old ie(4) i82586 driver */
 		return(10);
 	return(0);
