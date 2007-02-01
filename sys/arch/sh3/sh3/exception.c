@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.32.2.2 2007/01/30 13:49:37 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.32.2.3 2007/02/01 06:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.32.2.2 2007/01/30 13:49:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.32.2.3 2007/02/01 06:21:07 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -226,9 +226,9 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
  trapsignal:
 	ksi.ksi_trap = tf->tf_expevt;
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(l, 1);
 	trapsignal(l, &ksi);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	return;
 
@@ -409,9 +409,9 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
  user_fault:
 	ksi.ksi_trap = tf->tf_expevt
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(l, 1);
 	trapsignal(l, &ksi);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	ast(l, tf);
 	return;
@@ -435,21 +435,18 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 void
 ast(struct lwp *l, struct trapframe *tf)
 {
-	struct proc *p;
 
 	if (KERNELMODE(tf->tf_ssr))
 		return;
 	KDASSERT(l != NULL);
 	KDASSERT(l->l_md.md_regs == tf);
 
-	p = l->l_proc;
-
-	while (p->p_md.md_astpending) {
+	while (l->l_md.md_astpending) {
 		uvmexp.softs++;
-		p->p_md.md_astpending = 0;
+		l->l_md.md_astpending = 0;
 
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(p);
 		}
 

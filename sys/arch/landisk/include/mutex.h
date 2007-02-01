@@ -1,3 +1,3 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2006/12/22 09:59:03 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2007/02/01 06:21:07 ad Exp $	*/
 
-#include <arm/mutex.h>
+#include <sh3/mutex.h>

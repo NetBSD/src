@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2006/07/26 19:54:58 drochner Exp $
+#	$NetBSD: Makefile,v 1.23.4.1 2007/02/01 06:21:07 ad Exp $
 
 INCSDIR= /usr/include/sh3
 
@@ -12,10 +12,10 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
 	limits.h lock.h \
-	math.h mcontext.h \
+	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h \
 	pte.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	setjmp.h sh_opcode.h \
 	signal.h stdarg.h \
 	types.h \

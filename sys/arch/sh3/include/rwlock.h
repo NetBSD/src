@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.10.18.1 2007/02/01 06:21:07 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.1 2007/02/01 06:21:07 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gregory McGarry.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,76 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-dependent spin lock operations.
- */
+#ifndef _SH3_RWLOCK_H_
+#define	_SH3_RWLOCK_H_
 
-#ifndef _SH3_LOCK_H_
-#define	_SH3_LOCK_H_
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+	uint32_t		rw_id;
+};
 
-static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
-static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
-static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+#ifdef __RWLOCK_PRIVATE
 
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
-{
+#define	__HAVE_SIMPLE_RW_LOCKS		1
 
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
+#define	RW_RECEIVE(rw)			/* nothing */
+#define	RW_GIVE(rw)			/* nothing */
 
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
+#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
 
-	 __asm volatile(
-		"1:	tas.b	%0	\n"
-		"	bf	1b	\n"
-		: "=m" (*alp));
-}
+int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-	int __rv;
+#endif	/* __RWLOCK_PRIVATE */
 
-	__asm volatile(
-		"	tas.b	%0	\n"
-		"	mov	#0, %1	\n"
-		"	rotcl	%1	\n"
-		: "=m" (*alp), "=r" (__rv));
-
-	return (__rv);
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
-
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline void
-mb_read(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-static __inline void
-mb_write(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-static __inline void
-mb_memory(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-#endif /* !_SH3_LOCK_H_ */
+#endif /* _SH3_RWLOCK_H_ */

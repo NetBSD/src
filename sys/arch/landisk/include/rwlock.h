@@ -1,3 +1,3 @@
-/*	$NetBSD: rwlock.h,v 1.1.2.1 2006/12/22 09:59:02 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.2 2007/02/01 06:21:07 ad Exp $	*/
 
-#include <arm/rwlock.h>
+#include <sh3/rwlock.h>
