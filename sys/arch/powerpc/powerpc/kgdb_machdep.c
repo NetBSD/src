@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.17 2007/02/01 15:18:57 freza Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.18 2007/02/01 19:59:03 freza Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.17 2007/02/01 15:18:57 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.18 2007/02/01 19:59:03 freza Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,7 +66,9 @@ kgdb_acc(vaddr_t va, size_t len)
 	vaddr_t   last_va;
 	paddr_t   pa;
 	u_int msr;
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	u_int batu, batl;
+#endif
 
 	/* If translation is off, everything is fair game */
 	__asm volatile ("mfmsr %0" : "=r"(msr));
