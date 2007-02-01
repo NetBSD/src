@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.13 2005/12/11 12:18:31 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.13.20.1 2007/02/01 05:04:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -95,18 +95,6 @@ struct sigframe {
 	int	sf_code;		/* "code" argument for handler */
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
 	struct	sigcontext sf_sc;	/* actual saved context */
-};
-
-/*
- * Scheduler Activation upcall frame
- */
-struct saframe {
-	int		sa_ra;
-	int		sa_type;
-	struct sa_t**	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-	void*		sa_arg;
 };
 
 #ifdef _KERNEL

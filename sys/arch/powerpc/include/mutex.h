@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2007/01/30 13:00:50 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2007/02/01 05:04:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -39,16 +39,33 @@
 #ifndef _POWERPC_MUTEX_H_
 #define	_POWERPC_MUTEX_H_
 
+#ifdef __MUTEX_PRIVATE
 #include <machine/lock.h>
+#endif
 
 struct kmutex {
-	volatile uintptr_t	mtx_owner;
-	ipl_cookie_t		mtx_ipl;
-	__cpu_simple_lock_t	mtx_lock;
-	volatile uint32_t	mtx_id;
+	union {
+#ifdef __MUTEX_PRIVATE
+		struct {
+			volatile uintptr_t	mtxm_owner;
+			ipl_cookie_t		mtxm_ipl;
+			__cpu_simple_lock_t	mtxm_lock;
+			volatile uint32_t	mtxm_id;
+		} m;
+#endif
+		struct {
+			uintptr_t		mtxp_a;
+			uint32_t		mtxp_b[3];
+		} p;
+	} u;
 };
 
 #ifdef __MUTEX_PRIVATE
+
+#define	mtx_owner	u.m.mtxm_owner
+#define	mtx_ipl		u.m.mtxm_ipl
+#define	mtx_lock	u.m.mtxm_lock
+#define	mtx_id		u.m.mtxm_id
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1
