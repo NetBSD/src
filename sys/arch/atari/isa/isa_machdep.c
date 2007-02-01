@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.29 2005/12/11 12:16:59 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.29.20.1 2007/02/01 08:47:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.29 2005/12/11 12:16:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.29.20.1 2007/02/01 08:47:59 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.29 2005/12/11 12:16:59 christos Ex
 #include "pckbc.h"
 #if (NPCKBC > 0)
 #include <dev/ic/pckbcvar.h>
-#include <dev/isa/isareg.h>
 #include <dev/ic/i8042reg.h>
 #endif /* NPCKBC > 0 */
 

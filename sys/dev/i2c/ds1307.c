@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.6.2.1 2006/11/18 21:34:07 ad Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.6.2.2 2007/02/01 08:48:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@ dev_type_write(dsrtc_write);
 
 const struct cdevsw dsrtc_cdevsw = {
 	dsrtc_open, dsrtc_close, dsrtc_read, dsrtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int dsrtc_clock_read(struct dsrtc_softc *, struct clock_ymdhms *);

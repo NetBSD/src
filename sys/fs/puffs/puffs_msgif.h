@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.8.2.3 2007/01/12 01:04:05 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.8.2.4 2007/02/01 08:48:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -59,7 +59,7 @@ enum {
 	PUFFS_VFS_ROOT,		PUFFS_VFS_STATVFS,	PUFFS_VFS_SYNC,
 	PUFFS_VFS_VGET,		PUFFS_VFS_FHTOVP,	PUFFS_VFS_VPTOFH,
 	PUFFS_VFS_INIT,		PUFFS_VFS_DONE,		PUFFS_VFS_SNAPSHOT,
-	PUFFS_VFS_EXTATTCTL
+	PUFFS_VFS_EXTATTCTL,	PUFFS_VFS_SUSPEND
 };
 #define PUFFS_VFS_MAX PUFFS_VFS_EXTATTCTL
 
@@ -85,7 +85,7 @@ enum {
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
 #define PUFFSDEVELVERS	0x80000000
-#define PUFFSVERSION	2
+#define PUFFSVERSION	3
 #define PUFFSNAMESIZE	32
 struct puffs_args {
 	unsigned int	pa_vers;
@@ -270,6 +270,7 @@ struct puffs_flush {
 #if 0
 #define PUFFSFLUSHMULTIOP	_IOW ('p', 6, struct puffs_flushmulti)
 #endif
+#define PUFFSSUSPENDOP		_IO  ('p', 7)
 
 
 /*
@@ -364,6 +365,16 @@ struct puffs_vfsreq_sync {
 	pid_t			pvfsr_pid;
 	int			pvfsr_waitfor;
 };
+
+struct puffs_vfsreq_suspend {
+	struct puffs_req	pvfsr_pr;
+
+	int			pvfsr_status;
+};
+#define PUFFS_SUSPEND_START	0
+#define PUFFS_SUSPEND_SUSPENDED	1
+#define PUFFS_SUSPEND_RESUME	2
+#define PUFFS_SUSPEND_ERROR	3
 
 /*
  * aux structures for vnode operations.
@@ -462,12 +473,6 @@ struct puffs_vnreq_poll {
 
 	int			pvnr_events;		/* OUT	*/
 	pid_t			pvnr_pid;		/* OUT	*/
-};
-
-struct puffs_vnreq_revoke {
-	struct puffs_req	pvn_pr;
-
-	int			pvnr_flags;		/* OUT	*/
 };
 
 struct puffs_vnreq_fsync {

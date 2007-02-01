@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.4.1 2006/11/18 21:29:23 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.4.2 2007/02/01 08:48:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.1 2006/11/18 21:29:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.2 2007/02/01 08:48:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,10 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.1 2006/11/18 21:29:23 ad Exp $");
 #ifdef KGDB
 #include <sys/kgdb.h>
 #include <sh3/dev/scifvar.h>
-#endif
-#ifdef DDB
-#include <machine/db_machdep.h>
-#include <ddb/db_extern.h>
 #endif
 
 #if NKSYMS || defined(LKM) || defined(DDB)

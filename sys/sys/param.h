@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.238.2.4 2007/02/01 06:21:07 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.238.2.5 2007/02/01 08:48:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499000800	/* NetBSD 4.99.8 */
+#define	__NetBSD_Version__	499000900	/* NetBSD 4.99.9 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -172,19 +172,19 @@
  */
 #if defined(_KERNEL) || defined(__EXPOSE_STACK)
 #ifdef __MACHINE_STACK_GROWS_UP
-#define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) + (_size))
-#define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) - (_size))
+#define	STACK_GROW(sp, _size)		(((char *)(void *)(sp)) + (_size))
+#define	STACK_SHRINK(sp, _size)		(((char *)(void *)(sp)) - (_size))
 #define	STACK_ALIGN(sp, bytes)	\
-	((caddr_t)((((unsigned long)(sp)) + (bytes)) & ~(bytes)))
-#define	STACK_ALLOC(sp, _size)		((caddr_t)(sp))
-#define	STACK_MAX(p, _size)		(((caddr_t)(p)) + (_size))
+	((char *)((((unsigned long)(sp)) + (bytes)) & ~(bytes)))
+#define	STACK_ALLOC(sp, _size)		((char *)(void *)(sp))
+#define	STACK_MAX(p, _size)		(((char *)(void *)(p)) + (_size))
 #else
-#define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) - (_size))
-#define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) + (_size))
+#define	STACK_GROW(sp, _size)		(((char *)(void *)(sp)) - (_size))
+#define	STACK_SHRINK(sp, _size)		(((char *)(void *)(sp)) + (_size))
 #define	STACK_ALIGN(sp, bytes)	\
-	((caddr_t)(((unsigned long)(sp)) & ~(bytes)))
-#define	STACK_ALLOC(sp, _size)		(((caddr_t)(sp)) - (_size))
-#define	STACK_MAX(p, _size)		((caddr_t)(p))
+	((char *)(((unsigned long)(sp)) & ~(bytes)))
+#define	STACK_ALLOC(sp, _size)		(((char *)(void *)(sp)) - (_size))
+#define	STACK_MAX(p, _size)		((char *)(void *)(p))
 #endif
 #endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
 

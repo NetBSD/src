@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_gxio.c,v 1.1.4.2 2006/11/18 21:29:10 ad Exp $ */
+/*	$NetBSD: if_sm_gxio.c,v 1.1.4.3 2007/02/01 08:47:59 ad Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.1.4.2 2006/11/18 21:29:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gxio.c,v 1.1.4.3 2007/02/01 08:47:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -172,13 +172,14 @@ sm_gxio_match(struct device *parent, struct cfdata *match, void *aux)
 void
 sm_gxio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sm_gxio_softc *gsc = (struct sm_gxio_softc *)self;
+	struct sm_gxio_softc *gsc = device_private(self);
 	struct smc91cxx_softc *sc = &gsc->sc_smc;
 	struct gxio_attach_args *gxa = aux;
 	bus_space_handle_t ioh;
 	u_int8_t myea[ETHER_ADDR_LEN];
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	/* Map i/o space. */
 	if (bus_space_map(gxa->gxa_iot, gxa->gxa_addr, SMC_IOSIZE, 0, &ioh))
@@ -207,6 +208,6 @@ sm_gxio_attach(struct device *parent, struct device *self, void *aux)
 	    gxa->gxa_gpirq, IST_EDGE_RISING, IPL_NET, smc91cxx_intr, sc);
 
 	if (gsc->sc_ih == NULL)
-		printf("%s: couldn't establish interrupt handler\n",
+		aprint_error("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);
 }

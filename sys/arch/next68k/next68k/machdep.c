@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74.20.2 2007/01/30 13:49:36 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74.20.3 2007/02/01 08:48:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.20.2 2007/01/30 13:49:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.20.3 2007/02/01 08:48:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -123,8 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.20.2 2007/01/30 13:49:36 ad Exp $")
 #endif
 
 #ifdef KGDB
-#include <sys/kgdb.h>
-
 /* Is zs configured in? */
 #include "zsc.h"
 #if (NZSC > 0)

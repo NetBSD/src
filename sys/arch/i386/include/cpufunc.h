@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.33.2.3 2007/01/27 07:09:02 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.33.2.4 2007/02/01 08:48:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,11 +49,15 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 
+#ifdef _KERNEL
+void	x86_pause(void);
+#else
 static __inline void
 x86_pause(void)
 {
 	__asm volatile("pause");
 }
+#endif
 
 /*
  * XXX it's better to use real lfence insn if available.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.65.2.2 2007/01/12 01:04:11 ad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.65.2.3 2007/02/01 08:48:43 ad Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65.2.2 2007/01/12 01:04:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.65.2.3 2007/02/01 08:48:43 ad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -144,14 +144,14 @@ static int gre_getnames(struct socket *, struct lwp *, struct sockaddr_in *,
     struct sockaddr_in *);
 
 static void
-gre_stop(int *running)
+gre_stop(volatile int *running)
 {
 	*running = 0;
 	wakeup(running);
 }
 
 static void
-gre_join(int *running)
+gre_join(volatile int *running)
 {
 	int s;
 
@@ -787,7 +787,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	rtcache_check(&sc->route);
 	if (sc->route.ro_rt == NULL)
 		goto end;
-	if (sc->route.ro_rt->rt_ifp->if_softc != sc)
+	if (sc->route.ro_rt->rt_ifp->if_softc == sc)
 		rtcache_free(&sc->route);
 	else
 		error = ip_output(m, NULL, &sc->route, 0,

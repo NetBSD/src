@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.13.4.1 2007/01/30 13:51:31 ad Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.13.4.2 2007/02/01 08:48:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.13.4.1 2007/01/30 13:51:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.13.4.2 2007/02/01 08:48:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.13.4.1 2007/01/30 13:51:31 ad Ex
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <net/if.h>
 

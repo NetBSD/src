@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.59.4.6 2007/01/31 19:56:39 ad Exp $ */
+/*	$NetBSD: mach_task.c,v 1.59.4.7 2007/02/01 08:48:13 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.6 2007/01/31 19:56:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.7 2007/02/01 08:48:13 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.59.4.6 2007/01/31 19:56:39 ad Exp $"
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/ktrace.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 

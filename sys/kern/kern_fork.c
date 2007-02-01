@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.126.4.7 2007/01/30 13:51:40 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.126.4.8 2007/02/01 08:48:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.7 2007/01/30 13:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.8 2007/02/01 08:48:38 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -325,11 +325,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	cv_init(&p2->p_lwpcv, "lwpwait");
 
 	p2->p_refcnt = 1;
-
-	mutex_enter(&p1->p_mutex);
-	kauth_cred_hold(p1->p_cred);
-	p2->p_cred = p1->p_cred;
-	mutex_exit(&p1->p_mutex);
+	kauth_proc_fork(p1, p2);
 
 	LIST_INIT(&p2->p_raslist);
 #if defined(__HAVE_RAS)
@@ -499,31 +495,29 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Make child runnable, set start time, and add to run queue except
 	 * if the parent requested the child to start in SSTOP state.
 	 */
+	mutex_enter(&proclist_mutex);
 	mutex_enter(&p2->p_smutex);
 
 	getmicrotime(&p2->p_stats->p_start);
-	if (p2->p_stflag & PST_PROFIL)
-		startprofclock(p2);
 	p2->p_acflag = AFORK;
 	if (p2->p_sflag & PS_STOPFORK) {
 		lwp_lock(l2);
-		mutex_enter(&proclist_mutex);
 		p2->p_nrlwps = 0;
 		p2->p_stat = SSTOP;
 		p2->p_waited = 0;
 		p1->p_nstopchild++;
-		mutex_exit(&proclist_mutex);
 		l2->l_stat = LSSTOP;
 		lwp_unlock(l2);
 	} else {
-
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
-		l2->l_stat = LSRUN;
 		lwp_lock(l2);
+		l2->l_stat = LSRUN;
 		setrunqueue(l2);
 		lwp_unlock(l2);
 	}
+
+	mutex_exit(&proclist_mutex);
 
 	/*
 	 * Start profiling.

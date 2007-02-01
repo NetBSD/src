@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.6 2006/03/29 06:33:50 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.6.8.1 2007/02/01 08:48:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.6 2006/03/29 06:33:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.6.8.1 2007/02/01 08:48:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ dev_type_ioctl(ppiioctl);
 
 const struct cdevsw ppi_cdevsw = {
         ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
-        nostop, notty, nopoll, nommap, nokqfilter,
+        nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 #define UNIT(x)		minor(x)
@@ -185,10 +185,10 @@ ppiattach(parent, self, aux)
 }
 
 int
-ppiopen(dev, flags, fmt, p)
+ppiopen(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc;
@@ -212,10 +212,10 @@ ppiopen(dev, flags, fmt, p)
 }
 
 int
-ppiclose(dev, flags, fmt, p)
+ppiclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
@@ -448,12 +448,12 @@ again:
 }
 
 int
-ppiioctl(dev, cmd, data, flag, p)
+ppiioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
 	struct ppiparam *pp, *upp;

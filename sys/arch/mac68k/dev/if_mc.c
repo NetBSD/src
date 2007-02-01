@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.27.2.1 2007/01/12 01:00:52 ad Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.27.2.2 2007/02/01 08:48:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.27.2.1 2007/01/12 01:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.27.2.2 2007/02/01 08:48:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.27.2.1 2007/01/12 01:00:52 ad Exp $");
 #endif
 
 
-
-#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

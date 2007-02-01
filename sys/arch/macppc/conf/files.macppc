@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.75.2.1 2006/11/18 21:29:24 ad Exp $
+#	$NetBSD: files.macppc,v 1.75.2.2 2007/02/01 08:48:06 ad Exp $
 #
 # macppc-specific configuration info
 
@@ -144,6 +144,19 @@ file arch/macppc/dev/zs_kgdb.c			zsc & kgdb
 device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
+
+include "dev/adb/files.adb"
+
+defflag	opt_cuda.h	CUDA_DEBUG
+device cuda : adb_bus, i2cbus
+attach cuda at obio
+file arch/macppc/dev/cuda.c			cuda needs-flag
+
+defflag	opt_pmu.h	PMU_DEBUG
+defflag opt_pmu.h	PMU_VERBOSE
+device pmu : adb_bus, i2cbus
+attach pmu at obio
+file arch/macppc/dev/pmu.c			pmu needs-flag
 
 device adb {}
 attach adb at obio

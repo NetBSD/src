@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.22.8.1 2006/11/18 21:34:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.22.8.2 2007/02/01 08:48:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -62,12 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp.c,v 1.22.8.1 2006/11/18 21:34:26 ad Exp 
 #include <machine/i4b_ioctl.h>
 #include <machine/i4b_trace.h>
 #else
-#include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
 #include <netisdn/i4b_trace.h>
 #include <netisdn/i4b_l2.h>
-#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>

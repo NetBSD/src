@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.102.2.2 2007/01/12 01:04:15 ad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.102.2.3 2007/02/01 08:48:44 ad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.102.2.2 2007/01/12 01:04:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.102.2.3 2007/02/01 08:48:44 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -531,9 +531,9 @@ skip_ipsec2:;
 	 * Route packet.
 	 */
 	/* initialize cached route */
-	if (ro == 0) {
+	if (ro == NULL) {
+		memset(&ip6route, 0, sizeof(ip6route));
 		ro = &ip6route;
-		bzero((caddr_t)ro, sizeof(*ro));
 	}
 	ro_pmtu = ro;
 	if (opt && opt->ip6po_rthdr)
@@ -1382,7 +1382,7 @@ ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup, alwaysfragp)
 		else
 			rtcache_check((struct route *)ro_pmtu);
 		if (ro_pmtu->ro_rt == NULL) {
-			bzero(sa6_dst, sizeof(*sa6_dst)); /* for safety */
+			memset(sa6_dst, 0, sizeof(*sa6_dst)); /* for safety */
 			sa6_dst->sin6_family = AF_INET6;
 			sa6_dst->sin6_len = sizeof(struct sockaddr_in6);
 			sa6_dst->sin6_addr = *dst;
@@ -2578,17 +2578,13 @@ ip6_setmoptions(optname, im6op, m)
 			 * address, and choose the outgoing interface.
 			 *   XXX: is it a good approach?
 			 */
-			bzero(&ro, sizeof(ro));
-			dst = (struct sockaddr_in6 *)&ro.ro_dst;
+			memset(&ro, 0, sizeof(ro));
+			dst = &ro.ro_dst;
 			dst->sin6_family = AF_INET6;
 			dst->sin6_len = sizeof(*dst);
 			dst->sin6_addr = mreq->ipv6mr_multiaddr;
 			rtcache_init((struct route *)&ro);
-			if (ro.ro_rt == NULL) {
-				error = EADDRNOTAVAIL;
-				break;
-			}
-			ifp = ro.ro_rt->rt_ifp;
+			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
 			rtcache_free((struct route *)&ro);
 		} else {
 			/*

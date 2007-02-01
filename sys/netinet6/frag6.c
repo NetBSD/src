@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.29.18.2 2007/01/12 01:04:14 ad Exp $	*/
+/*	$NetBSD: frag6.c,v 1.29.18.3 2007/02/01 08:48:44 ad Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.29.18.2 2007/01/12 01:04:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.29.18.3 2007/02/01 08:48:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	else
 		rtcache_check((struct route *)&ro);
 	if (ro.ro_rt == NULL) {
-		bzero(dst, sizeof(*dst));
+		memset(dst, 0, sizeof(*dst));
 		dst->sin6_family = AF_INET6;
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_addr = ip6->ip6_dst;

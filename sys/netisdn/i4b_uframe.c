@@ -27,7 +27,7 @@
  *	i4b_uframe.c - routines for handling U-frames
  *	-----------------------------------------------
  *
- *	$Id: i4b_uframe.c,v 1.7 2005/12/11 12:25:06 christos Exp $
+ *	$Id: i4b_uframe.c,v 1.7.20.1 2007/02/01 08:48:45 ad Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.7 2005/12/11 12:25:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.7.20.1 2007/02/01 08:48:45 ad Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_uframe.c,v 1.7 2005/12/11 12:25:06 christos Exp 
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 
 /*---------------------------------------------------------------------------*

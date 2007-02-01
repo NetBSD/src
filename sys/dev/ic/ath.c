@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.76.4.2 2007/01/12 00:57:35 ad Exp $	*/
+/*	$NetBSD: ath.c,v 1.76.4.3 2007/02/01 08:48:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.76.4.2 2007/01/12 00:57:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.76.4.3 2007/02/01 08:48:18 ad Exp $");
 #endif
 
 /*
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.76.4.2 2007/01/12 00:57:35 ad Exp $");
 #include <sys/callout.h>
 #include <machine/bus.h>
 #include <sys/endian.h>
-
-#include <machine/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

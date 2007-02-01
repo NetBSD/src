@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.7 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.7.2.1 2007/02/01 08:48:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@ dev_type_write(m41t00_write);
 
 const struct cdevsw m41t00_cdevsw = {
 	m41t00_open, m41t00_close, m41t00_read, m41t00_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int m41t00_clock_read(struct m41t00_softc *, struct clock_ymdhms *);

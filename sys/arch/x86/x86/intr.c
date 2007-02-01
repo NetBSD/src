@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24.4.3 2007/01/12 01:01:01 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.24.4.4 2007/02/01 08:48:12 ad Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,13 +104,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24.4.3 2007/01/12 01:01:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24.4.4 2007/02/01 08:48:12 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
 
-#include <sys/cdefs.h>
-#include <sys/param.h> 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>

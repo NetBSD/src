@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.c,v 1.15.20.4 2007/01/30 13:51:37 ad Exp $	 */
+/*	$NetBSD: svr4_32_signal.c,v 1.15.20.5 2007/02/01 08:48:14 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.4 2007/01/30 13:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.5 2007/02/01 08:48:14 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_svr4.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_signal.c,v 1.15.20.4 2007/01/30 13:51:37 ad 
 #include <compat/svr4_32/svr4_32_ucontext.h>
 #include <compat/svr4_32/svr4_32_syscallargs.h>
 #include <compat/svr4_32/svr4_32_util.h>
-#include <compat/svr4_32/svr4_32_ucontext.h>
 
 #define	svr4_sigmask(n)		(1 << (((n) - 1) & 31))
 #define	svr4_sigword(n)		(((n) - 1) >> 5)

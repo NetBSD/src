@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.19.4.2 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.19.4.3 2007/02/01 08:48:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.19.4.2 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.19.4.3 2007/02/01 08:48:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.19.4.2 2007/01/12 01:04:06 ad Exp $
 #include <uvm/uvm_extern.h>
 
 #include <fs/union/union.h>
-
-#ifdef DIAGNOSTIC
-#include <sys/proc.h>
-#endif
 
 /* must be power of two, otherwise change UNION_HASH() */
 #define NHASH 32

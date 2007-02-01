@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17.8.2 2007/01/12 01:01:02 ad Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.8.3 2007/02/01 08:48:12 ad Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.8.2 2007/01/12 01:01:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.8.3 2007/02/01 08:48:12 ad Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -116,8 +116,6 @@ int x86_ndisks;
 #ifdef KVM86
 #include <machine/kvm86.h>
 #endif
-
-#include "opt_xen.h"
 
 /*
  * Determine i/o configuration for a machine.

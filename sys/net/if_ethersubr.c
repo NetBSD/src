@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.136.2.1 2007/01/12 01:04:11 ad Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.136.2.2 2007/02/01 08:48:43 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.136.2.1 2007/01/12 01:04:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.136.2.2 2007/02/01 08:48:43 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -459,20 +459,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		senderr(ENOBUFS);
 	eh = mtod(m, struct ether_header *);
 	/* Note: etype is already in network byte order. */
-#ifdef __NO_STRICT_ALIGNMENT
-	eh->ether_type = etype;
-#else
-	{
-		uint8_t *dstp = (uint8_t *) &eh->ether_type;
-#if BYTE_ORDER == BIG_ENDIAN
-		dstp[0] = etype >> 8;
-		dstp[1] = etype;
-#else
-		dstp[0] = etype;
-		dstp[1] = etype >> 8;
-#endif /* BYTE_ORDER == BIG_ENDIAN */
-	}
-#endif /* __NO_STRICT_ALIGNMENT */
+	(void)memcpy(&eh->ether_type, &etype, sizeof(eh->ether_type));
  	bcopy((caddr_t)edst, (caddr_t)eh->ether_dhost, sizeof (edst));
 	if (hdrcmplt)
 		bcopy((caddr_t)esrc, (caddr_t)eh->ether_shost,
@@ -715,10 +702,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	{
 
 #if NCARP > 0
-		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
-		    (carp_input(m, (u_int8_t *)&eh->ether_shost,
-		    (u_int8_t *)&eh->ether_dhost, eh->ether_type) == 0)) {
-			return;
+		if (ifp->if_carp && ifp->if_type != IFT_CARP) {
+			/*
+			 * clear M_PROMISC, in case the packets comes from a
+			 * vlan
+			 */
+			m->m_flags &= ~M_PROMISC;
+			if (carp_input(m, (u_int8_t *)&eh->ether_shost,
+			    (u_int8_t *)&eh->ether_dhost, eh->ether_type) == 0)
+				return;
 		}
 #endif /* NCARP > 0 */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&

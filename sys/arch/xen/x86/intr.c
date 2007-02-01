@@ -103,14 +103,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.8.2 2007/01/12 01:01:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.8.8.3 2007/02/01 08:48:12 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
 #include "isa.h"
 #include "pci.h"
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

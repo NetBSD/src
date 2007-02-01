@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 2006/03/29 06:55:32 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.8.8.1 2007/02/01 08:48:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,13 +42,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.8 2006/03/29 06:55:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.8.8.1 2007/02/01 08:48:21 ad Exp $");
 
 #include "opt_marvell.h"
 
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <sys/extent.h>
 #include <sys/device.h>
 #include <sys/kernel.h>

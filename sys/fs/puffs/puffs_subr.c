@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.9.2.3 2007/01/12 01:04:05 ad Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.9.2.4 2007/02/01 08:48:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,10 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.9.2.3 2007/01/12 01:04:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.9.2.4 2007/02/01 08:48:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
+#include <sys/hash.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/socketvar.h>
@@ -57,6 +58,9 @@ POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
 int puffsdebug;
 #endif
 
+static __inline struct puffs_node_hashlist
+	*puffs_cookie2hashlist(struct puffs_mount *, void *);
+static struct puffs_node *puffs_cookie2pnode(struct puffs_mount *, void *);
 
 static void puffs_gop_size(struct vnode *, off_t, off_t *, int);
 static void puffs_gop_markupdate(struct vnode *, int);
@@ -80,6 +84,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	struct puffs_mount *pmp;
 	struct vnode *vp, *nvp;
 	struct puffs_node *pnode;
+	struct puffs_node_hashlist *plist;
 	int error;
 
 	pmp = MPTOPUFFSMP(mp);
@@ -121,10 +126,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 
 	/* So it's not dead yet.. good.. inform new vnode of its master */
 	simple_lock(&mntvnode_slock);
-	if (TAILQ_EMPTY(&mp->mnt_vnodelist))
-		TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	else
-		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	simple_unlock(&mntvnode_slock);
 	vp->v_mount = mp;
 
@@ -183,7 +185,8 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 	pnode = pool_get(&puffs_pnpool, PR_WAITOK);
 	pnode->pn_cookie = cookie;
 	pnode->pn_stat = 0;
-	LIST_INSERT_HEAD(&pmp->pmp_pnodelist, pnode, pn_entries);
+	plist = puffs_cookie2hashlist(pmp, cookie);
+	LIST_INSERT_HEAD(plist, pnode, pn_hashent);
 	vp->v_data = pnode;
 	vp->v_type = type;
 	pnode->pn_vp = vp;
@@ -211,6 +214,20 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		error = EOPNOTSUPP;
 		return error;
 	}
+
+	/*
+	 * Check for previous node with the same designation.
+	 *
+	 * XXX: technically this error check should punish the fs,
+	 * not the caller.
+	 */
+	simple_lock(&pmp->pmp_lock);
+	if (puffs_cookie2pnode(pmp, cookie) != NULL) {
+		simple_unlock(&pmp->pmp_lock);
+		error = EEXIST;
+		return error;
+	}
+	simple_unlock(&pmp->pmp_lock);
 
 	error = puffs_getvnode(dvp->v_mount, cookie, type, 0, rdev, &vp);
 	if (error)
@@ -240,11 +257,39 @@ puffs_putvnode(struct vnode *vp)
 		panic("puffs_putvnode: %p not a puffs vnode", vp);
 #endif
 
-	LIST_REMOVE(pnode, pn_entries);
+	LIST_REMOVE(pnode, pn_hashent);
 	pool_put(&puffs_pnpool, vp->v_data);
 	vp->v_data = NULL;
 
 	return;
+}
+
+static __inline struct puffs_node_hashlist *
+puffs_cookie2hashlist(struct puffs_mount *pmp, void *cookie)
+{
+	uint32_t hash;
+
+	hash = hash32_buf(&cookie, sizeof(void *), HASH32_BUF_INIT);
+	return &pmp->pmp_pnodehash[hash % pmp->pmp_npnodehash];
+}
+
+/*
+ * Translate cookie to puffs_node.  Caller must hold mountpoint
+ * lock and it will be held upon return.
+ */
+static struct puffs_node *
+puffs_cookie2pnode(struct puffs_mount *pmp, void *cookie)
+{
+	struct puffs_node_hashlist *plist;
+	struct puffs_node *pnode;
+
+	plist = puffs_cookie2hashlist(pmp, cookie);
+	LIST_FOREACH(pnode, plist, pn_hashent) {
+		if (pnode->pn_cookie == cookie)
+			break;
+	}
+
+	return pnode;
 }
 
 /*
@@ -261,22 +306,21 @@ puffs_pnode2vnode(struct puffs_mount *pmp, void *cookie, int lock)
 	struct vnode *vp;
 	int vgetflags;
 
-	simple_lock(&pmp->pmp_lock);
-	LIST_FOREACH(pnode, &pmp->pmp_pnodelist, pn_entries) {
-		if (pnode->pn_cookie == cookie)
-			break;
-	}
-	simple_unlock(&pmp->pmp_lock);
+	vgetflags = LK_INTERLOCK;
+	if (lock)
+		vgetflags |= LK_EXCLUSIVE | LK_RETRY;
 
-	/* XXX: what lock controls this? */
-	if (!pnode)
+	simple_lock(&pmp->pmp_lock);
+	pnode = puffs_cookie2pnode(pmp, cookie);
+
+	if (pnode == NULL) {
+		simple_unlock(&pmp->pmp_lock);
 		return NULL;
+	}
 	vp = pnode->pn_vp;
 
-	if (lock)
-		vgetflags = LK_EXCLUSIVE | LK_RETRY;
-	else
-		vgetflags = 0;
+	simple_lock(&vp->v_interlock);
+	simple_unlock(&pmp->pmp_lock);
 
 	if (vget(vp, vgetflags))
 		return NULL;
@@ -402,13 +446,13 @@ puffs_updatevpsize(struct vnode *vp)
  * We're dead, kaput, RIP, slightly more than merely pining for the
  * fjords, belly-up, fallen, lifeless, finished, expired, gone to meet
  * our maker, ceased to be, etcetc.  YASD.  It's a dead FS!
+ *
+ * Caller must hold puffs spinlock.
  */
 void
 puffs_userdead(struct puffs_mount *pmp)
 {
 	struct puffs_park *park;
-
-	simple_lock(&pmp->pmp_lock);
 
 	/*
 	 * Mark filesystem status as dying so that operations don't
@@ -429,6 +473,4 @@ puffs_userdead(struct puffs_mount *pmp)
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		wakeup(park);
 	}
-
-	simple_unlock(&pmp->pmp_lock);
 }

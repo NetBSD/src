@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.1.22.2 2007/01/12 01:01:01 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.1.22.3 2007/02/01 08:48:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.22.2 2007/01/12 01:01:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.22.3 2007/02/01 08:48:12 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -114,4 +114,18 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 	}
 
 	return EPERM;
+}
+
+/*
+ * Issue the pause instruction (rep; nop) which acts as a hint to
+ * HyperThreading processors that we are spinning on a lock.
+ *
+ * Not defined as an inline, because even if the CPU does not support
+ * HT the delay resulting from a function call is useful for spin lock
+ * back off.
+ */ 
+void
+x86_pause(void)
+{
+	__asm volatile("pause");
 }

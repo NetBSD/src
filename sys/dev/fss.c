@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.27.4.1 2006/11/18 21:34:03 ad Exp $	*/
+/*	$NetBSD: fss.c,v 1.27.4.2 2007/02/01 08:48:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.27.4.1 2006/11/18 21:34:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.27.4.2 2007/02/01 08:48:17 ad Exp $");
 
 #include "fss.h"
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.27.4.1 2006/11/18 21:34:03 ad Exp $");
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -741,7 +742,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	 * Activate the snapshot.
 	 */
 
-	if ((error = vfs_write_suspend(sc->sc_mount, PUSER|PCATCH, 0)) != 0)
+	if ((error = vfs_suspend(sc->sc_mount, 0)) != 0)
 		goto bad;
 
 	microtime(&sc->sc_time);
@@ -752,7 +753,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
 
-	vfs_write_resume(sc->sc_mount);
+	vfs_resume(sc->sc_mount);
 
 	if (error != 0)
 		goto bad;
@@ -1085,7 +1086,9 @@ fss_bs_thread(void *arg)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
-			}
+			} else
+				bp->b_resid = 0;
+
 			biodone(bp);
 
 			continue;

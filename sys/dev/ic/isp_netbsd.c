@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.69.2.1 2006/11/18 21:34:12 ad Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.69.2.2 2007/02/01 08:48:19 ad Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.69.2.1 2006/11/18 21:34:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.69.2.2 2007/02/01 08:48:19 ad Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -1122,7 +1122,7 @@ isp_async(struct ispsoftc *isp, ispasync_t cmd, void *arg)
 			isp_fw_dump(isp);
 		}
 		isp_reinit(isp);
-		isp_async(isp, ISPASYNC_FW_RESTART, NULL);
+		isp_async(isp, ISPASYNC_FW_RESTARTED, NULL);
 #endif
 		break;
 	}

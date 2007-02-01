@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.9 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.10 2007/02/01 08:48:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.9 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.10 2007/02/01 08:48:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,10 +227,11 @@ donice(struct lwp *l, struct proc *chgp, int n)
 		n = PRIO_MIN;
 	n += NZERO;
 	onice = chgp->p_nice;
+	onice = chgp->p_nice;
 
   again:
-	if (kauth_authorize_process(cred, KAUTH_PROCESS_RESOURCE, chgp,
-	    (void *)KAUTH_REQ_PROCESS_RESOURCE_NICE, KAUTH_ARG(n), NULL))
+	if (kauth_authorize_process(cred, KAUTH_PROCESS_NICE, chgp,
+	    KAUTH_ARG(n), NULL, NULL))
 		return (EACCES);
 	mutex_enter(&chgp->p_stmutex);
 	if (onice != chgp->p_nice) {
@@ -287,9 +288,8 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 */
 		return (EINVAL);
 	}
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RESOURCE,
-	    p, KAUTH_ARG(KAUTH_REQ_PROCESS_RESOURCE_RLIMIT), limp,
-	    KAUTH_ARG(which));
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
+	    p, limp, KAUTH_ARG(which), NULL);
 	if (error)
 			return (error);
 

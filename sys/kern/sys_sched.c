@@ -1,25 +1,26 @@
-/*	$NetBSD: viapmvar.h,v 1.4 2005/12/11 12:22:51 christos Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.2.2.2 2007/02/01 08:48:38 ad Exp $	*/
 
-/*
- * Copyright (c) 2000 Johan Danielsson
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * 3. Neither the name of author nor the names of any contributors may
- *    be used to endorse or promote products derived from this
- *    software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
@@ -32,17 +33,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_PCI_VIAPMVAR_H_
-#define _DEV_PCI_VIAPMVAR_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.2.2.2 2007/02/01 08:48:38 ad Exp $");
 
-enum vapm_devtype { VIAPM_POWER, VIAPM_HWMON, VIAPM_SMBUS };
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/syscallargs.h>
 
-struct viapm_attach_args {
-	enum vapm_devtype	va_type;
-	pci_chipset_tag_t	va_pc;
-	pcitag_t		va_tag;
-	int			va_offset;
-	bus_space_tag_t		va_iot;
-};
+int
+sys_sched_yield(struct lwp *l, void *v, register_t *retval)
+{
 
-#endif /* _DEV_PCI_VIAPMVAR_H_ */
+	yield();
+	return 0;
+}

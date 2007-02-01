@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81.4.8 2007/01/30 13:51:40 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.9 2007/02/01 08:48:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.8 2007/01/30 13:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.9 2007/02/01 08:48:37 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -2259,10 +2259,15 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 
 	/* only root or same user change look at the environment */
 	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
-		     p, NULL, NULL, NULL)) {
+		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) != 0) {
+			if (kauth_cred_getuid(l->l_cred) !=
+			    kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(l->l_cred) !=
+			    kauth_cred_getsvuid(p->p_cred)) {
 				error = EPERM;
 				goto out_locked;
+			}
 		}
 	}
 

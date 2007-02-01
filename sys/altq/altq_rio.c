@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.12.4.1 2006/11/18 21:39:03 ad Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.12.4.2 2007/02/01 08:47:56 ad Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.12.4.1 2006/11/18 21:39:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.12.4.2 2007/02/01 08:47:56 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.12.4.1 2006/11/18 21:39:03 ad Exp $")
 #include <sys/sockio.h>
 #include <sys/kernel.h>
 #endif
-#include <sys/kauth.h>
 
 #include <net/if.h>
 

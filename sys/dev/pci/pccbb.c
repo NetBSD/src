@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.133.4.2 2007/01/12 00:57:42 ad Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.133.4.3 2007/02/01 08:48:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.133.4.2 2007/01/12 00:57:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.133.4.3 2007/02/01 08:48:23 ad Exp $");
 
 /*
 #define CBB_DEBUG
@@ -99,8 +99,8 @@ struct cfdriver cbb_cd = {
 #endif
 
 /*
- * DELAY_MS() is a wait millisecond.  It shall use instead of delay()
- * if you want to wait more than 1 ms.
+ * DELAY_MS() is wait in milliseconds.  It should be used instead
+ * of delay() if you want to wait more than 1 ms.
  */
 #define DELAY_MS(time, param)						\
     do {								\
@@ -3399,18 +3399,18 @@ pccbb_powerhook(why, arg)
 	if (why == PWR_RESUME) {
 		if (sc->sc_pwrmgt_offs != 0) {
 			reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
-			    sc->sc_pwrmgt_offs + 4);
+			    sc->sc_pwrmgt_offs + PCI_PMCSR);
 			if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0 ||
-			    reg & 0x100) {
+			    reg & PCI_PMCSR_PME_EN) {
 				/* powrstate != D0 */
 
 				printf("%s going back to D0 mode\n",
 				    sc->sc_dev.dv_xname);
 				reg &= ~PCI_PMCSR_STATE_MASK;
 				reg |= PCI_PMCSR_STATE_D0;
-				reg &= ~(0x100 /* PCI_PMCSR_PME_EN */);
+				reg &= ~PCI_PMCSR_PME_EN;
 				pci_conf_write(sc->sc_pc, sc->sc_tag,
-				    sc->sc_pwrmgt_offs + 4, reg);
+				    sc->sc_pwrmgt_offs + PCI_PMCSR, reg);
 
 				pci_conf_write(sc->sc_pc, sc->sc_tag,
 				    PCI_SOCKBASE, sc->sc_sockbase);

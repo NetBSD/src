@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.110.20.2 2007/01/12 00:57:49 ad Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.110.20.3 2007/02/01 08:48:31 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.110.20.2 2007/01/12 00:57:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.110.20.3 2007/02/01 08:48:31 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -68,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.110.20.2 2007/01/12 00:57:49 ad Exp $");
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usb_quirks.h>
-
-#if defined(__FreeBSD__)
-#include "usb_if.h"
-#endif
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x

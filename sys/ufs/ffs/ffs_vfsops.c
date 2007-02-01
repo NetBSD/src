@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.185.2.2 2007/01/12 01:04:25 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.185.2.3 2007/02/01 08:48:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.185.2.2 2007/01/12 01:04:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.185.2.3 2007/02/01 08:48:48 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.185.2.2 2007/01/12 01:04:25 ad Exp 
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -108,6 +109,7 @@ struct vfsops ffs_vfsops = {
 	ffs_mountroot,
 	ffs_snapshot,
 	ffs_extattrctl,
+	ffs_suspendctl,
 	ffs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -975,6 +977,9 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
+#ifdef NEWVNGATE
+	mp->mnt_iflag |= IMNT_HAS_TRANS;
+#endif
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1315,6 +1320,8 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
+	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
+		return error;
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1340,6 +1347,11 @@ loop:
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 		{
+			simple_unlock(&vp->v_interlock);
+			continue;
+		}
+		if (vp->v_type == VBLK &&
+		    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -1398,6 +1410,7 @@ loop:
 		if ((error = ffs_cgupdate(ump, waitfor)))
 			allerror = error;
 	}
+	fstrans_done(mp);
 	return (allerror);
 }
 
@@ -1761,4 +1774,31 @@ ffs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
 				       l));
 #endif
 	return (vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname, l));
+}
+
+int
+ffs_suspendctl(struct mount *mp, int cmd)
+{
+	int error;
+	struct lwp *l = curlwp;
+
+	switch (cmd) {
+	case SUSPEND_SUSPEND:
+		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
+			return error;
+		error = ffs_sync(mp, MNT_WAIT, l->l_proc->p_cred, l);
+		if (error == 0)
+			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
+		if (error != 0) {
+			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
+			return error;
+		}
+		return 0;
+
+	case SUSPEND_RESUME:
+		return fstrans_setstate(mp, FSTRANS_NORMAL);
+
+	default:
+		return EINVAL;
+	}
 }

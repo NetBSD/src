@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.68.8.2 2007/01/12 01:04:25 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.68.8.3 2007/02/01 08:48:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68.8.2 2007/01/12 01:04:25 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.68.8.3 2007/02/01 08:48:51 ad Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -104,6 +104,10 @@ READ(void *v)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
+
+	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
+		return error;
+
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
 
@@ -183,6 +187,8 @@ READ(void *v)
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
 			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
+
+	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -273,6 +279,9 @@ WRITE(void *v)
 	}
 	if (uio->uio_resid == 0)
 		return (0);
+
+	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
+		return error;
 
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
@@ -508,5 +517,8 @@ out:
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	KASSERT(vp->v_size == ip->i_size);
+
+	fstrans_done(vp->v_mount);
+
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.31.4.1 2006/11/18 21:29:17 ad Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.31.4.2 2007/02/01 08:48:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.31.4.1 2006/11/18 21:29:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.31.4.2 2007/02/01 08:48:00 ad Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -236,7 +236,8 @@ acpi_restorecpu:						\
 	pushl	r_efl;						\
 	popfl;							\
 								\
-	pushl	ret_addr;					\
+	movl	ret_addr,%eax;					\
+	movl	%eax,(%esp);					\
 	xorl	%eax,%eax;					\
 	ret;							\
 								\

@@ -1,4 +1,4 @@
-/*     $NetBSD: ug.c,v 1.1.2.2 2007/01/12 00:57:38 ad Exp $ */
+/*     $NetBSD: ug.c,v 1.1.2.3 2007/02/01 08:48:21 ad Exp $ */
 
 /*
  * Copyright (c) 2007 Mihai Chelaru <kefren@netbsd.ro>
@@ -28,10 +28,11 @@
 /*
  * Driver for Abit uGuru (interface is inspired from it.c and nslm7x.c)
  * Inspired by olle sandberg linux driver as Abit didn't care to release docs
+ * Support for uGuru 2005 from Louis Kruger and Hans de Goede linux driver
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.1.2.2 2007/01/12 00:57:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ug.c,v 1.1.2.3 2007/02/01 08:48:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,15 +67,24 @@ int ug_reset(struct ug_softc *);
 uint8_t ug_read(struct ug_softc *, unsigned short);
 int ug_waitfor(struct ug_softc *, uint16_t, uint8_t);
 void ug_setup_sensors(struct ug_softc*);
+void ug2_attach(struct ug_softc*);
+int ug2_wait_ready(struct ug_softc*);
+int ug2_wait_readable(struct ug_softc*);
+int ug2_sync(struct ug_softc*);
+int ug2_read(struct ug_softc*, uint8_t, uint8_t, uint8_t, uint8_t*);
 
 /* envsys(9) glue */
 static int ug_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
-static int ug_streinfo(struct sysmon_envsys *, envsys_basic_info_t *);
+static int ug2_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
+static int ug_streinfo_ni(struct sysmon_envsys *, envsys_basic_info_t *);
+
+static uint8_t ug_ver;
 
 static int
 ug_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
+	struct ug_softc wrap_sc;
 	bus_space_handle_t bsh;
 	uint8_t valc, vald;
 
@@ -93,9 +103,25 @@ ug_isa_match(struct device *parent, struct cfdata *match, void *aux)
 	valc = bus_space_read_1(ia->ia_iot, bsh, UG_CMD);
 	vald = bus_space_read_1(ia->ia_iot, bsh, UG_DATA);
 
+	ug_ver = 0;
+
+	/* Check for uGuru 2003 */
+
+	if (((vald == 0) || (vald == 8)) && (valc == 0xAC))
+		ug_ver = 1;
+
+	/* Check for uGuru 2005 */
+
+	wrap_sc.sc_iot = ia->ia_iot;
+	wrap_sc.sc_ioh = bsh;
+
+	if (ug2_sync(&wrap_sc) == 1)
+		ug_ver = 2;
+
+	/* unmap, prepare ia and bye */
 	bus_space_unmap(ia->ia_iot, bsh, 8);
 
-	if (((vald == 0) || (vald == 8)) && (valc == 0xAC)) {
+	if (ug_ver != 0) {
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = 8;
 		ia->ia_niomem = 0;
@@ -105,6 +131,7 @@ ug_isa_match(struct device *parent, struct cfdata *match, void *aux)
 	}
 
 	return 0;
+
 }
 
 static void
@@ -121,6 +148,12 @@ ug_isa_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ia->ia_iot = sc->sc_iot;
+	sc->version = ug_ver;
+
+	if (sc->version == 2) {
+		ug2_attach(sc);
+		return;
+	}
 
 	aprint_normal(": Abit uGuru system monitor\n");
 
@@ -141,13 +174,13 @@ ug_isa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
 	sc->sc_sysmon.sme_cookie = sc;
 	sc->sc_sysmon.sme_gtredata = ug_gtredata;
-	sc->sc_sysmon.sme_streinfo = ug_streinfo;
+	sc->sc_sysmon.sme_streinfo = ug_streinfo_ni;
 	sc->sc_sysmon.sme_nsensors = UG_NUM_SENSORS;
-	sc->sc_sysmon.sme_envsys_version = 1000;
+	sc->sc_sysmon.sme_envsys_version = UG_DRV_VERSION;
 	sc->sc_sysmon.sme_flags = 0;
 
 	if (sysmon_envsys_register(&sc->sc_sysmon))
-		printf("%s: unable to register with sysmon\n",
+		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 
 }
@@ -262,8 +295,6 @@ ug_setup_sensors(struct ug_softc *sc)
 	COPYDESCR(sc->sc_info[16].desc, "SYS Fan");
 	COPYDESCR(sc->sc_info[17].desc, "AUX Fan 1");
 	COPYDESCR(sc->sc_info[18].desc, "AUX Fan 2");
-
-#undef COPYDESCR
 }
 
 static int
@@ -272,7 +303,7 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
 	struct ug_softc *sc = sme->sme_cookie;
 	envsys_tre_data_t *t = sc->sc_data;	/* For easier read */
 
-	/* Sensors returns C while we need uK */
+	/* Sensors return C while we need uK */
 	t[0].cur.data_us = ug_read(sc, UG_CPUTEMP) * 1000000 + 273150000;
 	t[1].cur.data_us = ug_read(sc, UG_SYSTEMP) * 1000000 + 273150000;
 	t[2].cur.data_us = ug_read(sc, UG_PWMTEMP) * 1000000 + 273150000;
@@ -302,10 +333,220 @@ ug_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
 }
 
 static int
-ug_streinfo(struct sysmon_envsys *sme, envsys_basic_info_t *binfo)
+ug_streinfo_ni(struct sysmon_envsys *sme, envsys_basic_info_t *binfo)
 {
 	/* not implemented */
 	binfo->validflags = 0;
 
 	return 0;
+}
+
+void
+ug2_attach(struct ug_softc *sc)
+{
+	uint8_t buf[2];
+	int i, i2;
+	struct ug2_motherboard_info *ai;
+	struct ug2_sensor_info *si;
+	struct envsys_range ug2_ranges[7];	/* XXX: why only 7 ?! */
+
+	aprint_normal(": Abit uGuru 2005 system monitor\n");
+
+	memcpy(ug2_ranges, ug_ranges, 7 * sizeof(struct envsys_range));
+
+	for (i = 0; i < 7; i++)
+		ug2_ranges[i].low = ug2_ranges[i].high = 0xFF;
+
+	if (ug2_read(sc, UG2_MISC_BANK, UG2_BOARD_ID, 2, buf) != 2) {
+		aprint_error("%s: Cannot detect board ID. Using default\n",
+			sc->sc_dev.dv_xname);
+		buf[0] = UG_MAX_MSB_BOARD;
+		buf[1] = UG_MAX_LSB_BOARD;
+	}
+
+	if (buf[0] > UG_MAX_MSB_BOARD || buf[1] > UG_MAX_LSB_BOARD ||
+		buf[1] < UG_MIN_LSB_BOARD) {
+		aprint_error("%s: Invalid board ID(%X,%X). Using default\n",
+			sc->sc_dev.dv_xname, buf[0], buf[1]);
+		buf[0] = UG_MAX_MSB_BOARD;
+		buf[1] = UG_MAX_LSB_BOARD;
+	}
+
+	ai = &ug2_mb[buf[1] - UG_MIN_LSB_BOARD];
+
+	aprint_normal("%s: mainboard %s (%.2X%.2X)\n", sc->sc_dev.dv_xname,
+	    ai->name, buf[0], buf[1]);
+
+	sc->mbsens = (void*)ai->sensors;
+
+	for (i = 0, si = ai->sensors; si && si->name; si++, i++) {
+		COPYDESCR(sc->sc_info[i].desc, si->name);
+		sc->sc_data[i].sensor = sc->sc_info[i].sensor = i;
+		sc->sc_data[i].validflags = (ENVSYS_FVALID|ENVSYS_FCURVALID);
+		sc->sc_info[i].validflags = ENVSYS_FVALID;
+		sc->sc_data[i].warnflags = ENVSYS_WARN_OK;
+		sc->sc_info[i].rfact = 1;
+		switch (si->type) {
+			case UG2_VOLTAGE_SENSOR:
+				sc->sc_data[i].units = sc->sc_info[i].units = 
+					ENVSYS_SVOLTS_DC;
+				sc->sc_info[i].rfact = UG_RFACT;
+				ug2_ranges[3].high = i;
+				if (ug2_ranges[3].low == 0xFF)
+					ug2_ranges[3].low = i;
+				break;
+			case UG2_TEMP_SENSOR:
+				sc->sc_data[i].units = sc->sc_info[i].units =
+					ENVSYS_STEMP;
+				ug2_ranges[0].high = i;
+				if (ug2_ranges[0].low == 0xFF)
+					ug2_ranges[0].low = i;
+				break;
+			case UG2_FAN_SENSOR:
+				sc->sc_data[i].units = sc->sc_info[i].units =
+					ENVSYS_SFANRPM;
+				ug2_ranges[1].high = i;
+				if (ug2_ranges[0].low == 0xFF)
+					ug2_ranges[0].low = i;
+		}
+	}
+#undef COPYDESCR
+
+	for (i2 = 0; i2 < 7; i2++)
+		if (ug2_ranges[i2].low == 0xFF ||
+		    ug2_ranges[i2].high == 0xFF) {
+			ug2_ranges[i2].low = 1;
+			ug2_ranges[i2].high = 0;
+		}
+
+	sc->sc_sysmon.sme_ranges = ug2_ranges;
+	sc->sc_sysmon.sme_sensor_info = sc->sc_info;
+	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
+	sc->sc_sysmon.sme_cookie = sc;
+	sc->sc_sysmon.sme_gtredata = ug2_gtredata;
+	sc->sc_sysmon.sme_streinfo = ug_streinfo_ni;
+	sc->sc_sysmon.sme_nsensors = i;
+	sc->sc_sysmon.sme_envsys_version = UG_DRV_VERSION;
+	sc->sc_sysmon.sme_flags = 0;
+
+	if (sysmon_envsys_register(&sc->sc_sysmon))
+		aprint_error("%s: unable to register with sysmon\n",
+		    sc->sc_dev.dv_xname);
+}
+
+static int
+ug2_gtredata(struct sysmon_envsys *sme, envsys_tre_data_t *tred)
+{
+	struct ug_softc *sc = sme->sme_cookie;
+	envsys_tre_data_t *t = sc->sc_data;	/* makes code readable */
+	struct ug2_sensor_info *si = (struct ug2_sensor_info *)sc->mbsens;
+	int i, rfact;
+	uint8_t v;
+
+#define SENSOR_VALUE (v * si->multiplier * rfact / si->divisor + si->offset)
+
+	for (i = 0; i< sc->sc_sysmon.sme_nsensors; i++, si++)
+		if (ug2_read(sc, UG2_SENSORS_BANK, UG2_VALUES_OFFSET +
+		    si->port, 1, &v) == 1)
+			switch (si->type) {
+			case UG2_TEMP_SENSOR:
+			    rfact = 1;
+			    t[i].cur.data_us = SENSOR_VALUE * 1000000 + 273150000;
+			    break;
+			case UG2_VOLTAGE_SENSOR:
+			    rfact = UG_RFACT;
+			    t[i].cur.data_us = SENSOR_VALUE;
+			    break;
+			default:
+			    rfact = 1;
+			    t[i].cur.data_s = SENSOR_VALUE;
+			}
+#undef SENSOR_VALUE
+	*tred = sc->sc_data[tred->sensor];
+	return 0;
+}
+
+int
+ug2_wait_ready(struct ug_softc *sc)
+{
+	int cnt = 0;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_DATA, 0x1a);
+	while (bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_DATA) &
+	    UG2_STATUS_BUSY) {
+		if (cnt++ > UG_DELAY_CYCLES)
+			return 0;
+	}
+	return 1;
+}
+
+int
+ug2_wait_readable(struct ug_softc *sc)
+{
+	int cnt = 0;
+
+	while (!(bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_DATA) &
+		UG2_STATUS_READY_FOR_READ)) {
+		if (cnt++ > UG_DELAY_CYCLES)
+			return 0;
+	}
+	return 1;
+}
+
+int
+ug2_sync(struct ug_softc *sc)
+{
+	int cnt = 0;
+
+#define UG2_WAIT_READY if(ug2_wait_ready(sc) == 0) return 0;
+
+	/* Don't sync two times in a row */
+	if(ug_ver != 0) {
+		ug_ver = 0;
+		return 1;
+	}
+
+	UG2_WAIT_READY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_DATA, 0x20);
+	UG2_WAIT_READY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, 0x10);
+	UG2_WAIT_READY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, 0x00);
+	UG2_WAIT_READY;
+	if (ug2_wait_readable(sc) == 0)
+		return 0;
+	while (bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_CMD) != 0xAC)
+		if (cnt++ > UG_DELAY_CYCLES)
+			return 0;
+	return 1;
+}
+
+int
+ug2_read(struct ug_softc *sc, uint8_t bank, uint8_t offset, uint8_t count,
+	 uint8_t *ret)
+{
+	int i;
+
+	if (ug2_sync(sc) == 0)
+		return 0;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_DATA, 0x1A);
+	UG2_WAIT_READY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, bank);
+	UG2_WAIT_READY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, offset);
+	UG2_WAIT_READY;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, UG_CMD, count);
+	UG2_WAIT_READY;
+
+#undef UG2_WAIT_READY
+
+	/* Now wait for the results */
+	for (i = 0; i < count; i++) {
+		if (ug2_wait_readable(sc) == 0)
+			break;
+		ret[i] = bus_space_read_1(sc->sc_iot, sc->sc_ioh, UG_CMD);
+	}
+
+	return i;
 }

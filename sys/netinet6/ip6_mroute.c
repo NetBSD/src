@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.74.2.1 2006/11/18 21:39:37 ad Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.74.2.2 2007/02/01 08:48:44 ad Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.74.2.1 2006/11/18 21:39:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.74.2.2 2007/02/01 08:48:44 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1552,12 +1552,13 @@ phyint_send(ip6, mifp, m)
 	struct mbuf *mb_copy;
 	struct ifnet *ifp = mifp->m6_ifp;
 	int error = 0;
-	int s = splsoftnet();
+	int s;
 	static struct route_in6 ro;
 	struct in6_multi *in6m;
 	struct sockaddr_in6 dst6;
 	u_long linkmtu;
 
+	s = splsoftnet();
 	/*
 	 * Make a new reference to the packet; make sure that
 	 * the IPv6 header is actually copied, not just referenced,
@@ -1589,7 +1590,7 @@ phyint_send(ip6, mifp, m)
 		im6o.im6o_multicast_hlim = ip6->ip6_hlim;
 		im6o.im6o_multicast_loop = 1;
 		error = ip6_output(mb_copy, NULL, &ro, IPV6_FORWARDING,
-				   &im6o, (struct socket *)0, NULL);
+				   &im6o, NULL, NULL);
 
 #ifdef MRT6DEBUG
 		if (mrt6debug & DEBUG_XMIT)
@@ -1615,7 +1616,7 @@ phyint_send(ip6, mifp, m)
 
 	IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
 	if (in6m != NULL)
-		ip6_mloopback(ifp, m, (struct sockaddr_in6 *)&ro.ro_dst);
+		ip6_mloopback(ifp, m, &ro.ro_dst);
 
 	/*
 	 * Put the packet into the sending queue of the outgoing interface
