@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.1 2007/01/29 14:34:10 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.2 2007/02/01 05:04:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -53,8 +53,8 @@ struct kmutex {
 		 * __cpu_simple_lock(), but it must be aligned on a
 		 * 16-byte boundary.  See hppa/lock.h
 		 */
+#ifdef __MUTEX_PRIVATE
 		__cpu_simple_lock_t	mtxu_lock;		/* 0-15 */
-
 		struct {
 			volatile uint32_t	mtxs_lockword;	/* 0-3 */
 			volatile uint32_t	mtxs_owner;	/* 4-7 */
@@ -64,6 +64,8 @@ struct kmutex {
 			/* For LOCKDEBUG */
 			uint8_t			mtxs_id[3];	/* 13-15 */
 		} s;
+#endif
+		uint8_t			mtxu_pad[16];		/* 0-15 */
 	} u;
 } __aligned (16);
 

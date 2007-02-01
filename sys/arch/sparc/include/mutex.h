@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.3 2007/01/28 07:20:39 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.4 2007/02/01 05:04:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -79,6 +79,16 @@
  * See comments in kern_mutex.c about releasing adaptive mutexes without
  * an interlocking step.
  */
+
+#ifndef __MUTEX_PRIVATE
+
+struct kmutex {
+	uintptr_t	mtx_pad1;
+	uint32_t	mtx_pad2;
+};
+
+#else	/* __MUTEX_PRIVATE */
+
 struct kmutex {
 	union {
 		/* Adaptive mutex */
@@ -96,8 +106,6 @@ struct kmutex {
 	__cpu_simple_lock_t	mtx_lock;			/* 4 */
 	uint8_t			mtx_idtype[3];			/* 5-7 */
 };
-
-#ifdef __MUTEX_PRIVATE
 
 #define	__HAVE_MUTEX_STUBS	1
 #define	__HAVE_SPIN_MUTEX_STUBS	1

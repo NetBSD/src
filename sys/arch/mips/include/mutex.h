@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.2 2007/01/27 14:00:51 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.3 2007/02/01 05:04:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,18 @@
 #ifndef _MIPS_MUTEX_H_
 #define	_MIPS_MUTEX_H_
 
+#ifndef __MUTEX_PRIVATE
+
+struct kmutex {
+	uintptr_t	mtx_pad1;
+	uint32_t	mtx_pad2[3];
+};
+
+#else	/* __MUTEX_PRIVATE */
+
+#ifdef __MUTEX_PRIVATE
 #include <machine/lock.h>
+#endif
 
 struct kmutex {
 	volatile uintptr_t	mtx_owner;
@@ -47,8 +58,6 @@ struct kmutex {
 	__cpu_simple_lock_t	mtx_lock;
 	volatile uint32_t	mtx_id;
 };
-
-#ifdef __MUTEX_PRIVATE
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1
