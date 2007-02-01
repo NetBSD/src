@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.1.2.2 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.1.2.3 2007/02/01 06:25:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.2.2 2007/01/27 14:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.2.3 2007/02/01 06:25:01 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -117,6 +117,7 @@ patchbyte(void *addr, uint8_t byte)
 void
 x86_patch(void)
 {
+#ifndef GPROF
 	static int again;
 	u_long cr0;
 
@@ -146,4 +147,5 @@ x86_patch(void)
 #endif	/* __x86_64__ */
 
 	lcr0(cr0);
+#endif	/* GPROF */
 }

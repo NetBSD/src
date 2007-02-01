@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5.2.3 2007/01/27 07:09:02 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.2.4 2007/02/01 06:25:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -190,6 +190,9 @@ LABEL(amd64_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
+	nop
+	.align	4	/* Avoid confusion with amd64_spllower_end */
+
 IDTVEC(spllower)
 	pushq	%rbx
 	pushq	%r13

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.13.20.3 2007/01/27 07:09:02 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.13.20.4 2007/02/01 06:25:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -158,6 +158,9 @@ LABEL(i686_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
+	nop
+	.align	4	/* Don't get confused with i686_spllower_end */
+
 IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)
 	pushl	%ebp
