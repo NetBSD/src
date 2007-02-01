@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.8.9 2007/01/30 11:45:26 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.8.10 2007/02/01 04:17:13 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -858,7 +858,7 @@ idle_unlock:
 	call	_C_LABEL(sched_unlock_idle)
 	/* Interrupts are okay again. */
 	movl	$IPL_NONE,%edi
-	call	_C_LABEL(Xspllower)
+	call	_C_LABEL(spllower)
 	jmp	idle_start
 idle_zero:
 	sti
@@ -1034,7 +1034,7 @@ switch_return:
 	call	_C_LABEL(sched_unlock_idle)
 
 	movl	$IPL_NONE,%edi
-	call	_C_LABEL(Xspllower)
+	call	_C_LABEL(spllower)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 
 	movl	%ebx,%eax

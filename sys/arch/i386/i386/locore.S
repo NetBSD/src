@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43.4.9 2007/01/30 11:45:27 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.43.4.10 2007/02/01 04:17:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -889,7 +889,7 @@ idle_unlock:
 	call	_C_LABEL(sched_unlock_idle)
 	/* Interrupts are okay again. */
 	pushl	$IPL_NONE		# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
+	call	_C_LABEL(spllower)	# process pending interrupts
 	addl	$4,%esp
 	jmp	idle_start
 idle_zero:
@@ -1069,7 +1069,7 @@ switch_return:
 	cmpl	$0,CPUVAR(IPENDING)
 	jz	3f
 	pushl	$IPL_NONE		# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
+	call	_C_LABEL(spllower)	# process pending interrupts
 	addl	$4,%esp
 3:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
