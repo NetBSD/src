@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.36.10 2007/01/30 15:18:28 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.36.11 2007/02/01 05:36:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -98,8 +98,12 @@
  *	MUTEX_SPIN_P(mtx)
  *		Evaluates to true if the mutex is a spin mutex.
  *
- *	MUTEX_OWNER(owner)
+ *	MUTEX_OWNED(owner)
  *		Returns the owner of the adaptive mutex (LWP address).
+ *
+ *	MUTEX_OWNER(owner)
+ *		Returns non-zero if an adaptive mutex is currently
+ *		held by an LWP.
  *
  *	MUTEX_HAS_WAITERS(mtx)
  *		Returns true if the mutex has waiters.
