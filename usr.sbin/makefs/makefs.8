@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.26 2007/02/01 06:46:27 uebayasi Exp $
+.\"	$NetBSD: makefs.8,v 1.27 2007/02/01 06:50:15 uebayasi Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -227,31 +227,31 @@ The following keywords are supported:
 .Pp
 .Bl -tag -width optimization -offset indent -compact
 .It Sy avgfilesize
-Expected average file size
+Expected average file size.
 .It Sy avgfpdir
-Expected number of files per directory
+Expected number of files per directory.
 .It Sy bsize
-Block size
+Block size.
 .It Sy density
-Bytes per inode
+Bytes per inode.
 .It Sy fsize
-Fragment size
+Fragment size.
 .It Sy maxbpg
-Maximum blocks per file in a cylinder group
+Maximum blocks per file in a cylinder group.
 .It Sy minfree
-Minimum % free
+Minimum % free.
 .It Sy optimization
 Optimization preference; one of
 .Ql space
 or
 .Ql time .
 .It Sy extent
-Maximum extent size
+Maximum extent size.
 .It Sy maxbpcg
-Maximum total number of blocks in a cylinder group
+Maximum total number of blocks in a cylinder group.
 .It Sy version
 UFS version.
-1 for FFS (default), 2 for UFS2
+1 for FFS (default), 2 for UFS2.
 .El
 .Ss CD9660-specific options
 .Sy cd9660
