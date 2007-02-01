@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.3 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.764.2.4 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -590,6 +590,9 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		offload support. [yamt 20061124]
 	ahcisata(4): Added driver for AHCI 1.0 and 1.1 compliant SATA
 		controllers. [bouyer 20061130]
+	iwi(4): Update to use the single file firmware format. The new
+		firmware is available in pkgsrc/sysutils/iwi-firmware3.
+		[skrll 20061229]
 	i386, amd64: remove option COMPAT_386BSD_MBRPART from default
 		kernels.  NetBSD has not used partition ID 0x165 for many,
 		many years, and the presence of this option in INSTALL
