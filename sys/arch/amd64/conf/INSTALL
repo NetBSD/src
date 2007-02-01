@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.64 2007/01/14 19:23:31 bouyer Exp $
+# $NetBSD: INSTALL,v 1.65 2007/02/01 21:07:45 tron Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.64 $"
+#ident 		"INSTALL-$Revision: 1.65 $"
 
 maxusers	32		# estimated number of users
 
@@ -217,13 +217,13 @@ isa0	at pcib?
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
 #options 	PMS_DISABLE_POWERHOOK	# Disable PS/2 reset on resume
 #options 	PMS_SYNAPTICS_TOUCHPAD	# Enable support for Synaptics Touchpads
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
-wsmouse*	at pms? mux 0
+#wsmouse*	at pms? mux 0
 
 attimer0	at isa?
 pcppi0		at isa?
@@ -531,8 +531,8 @@ uhub*	at uhub? port ? configuration ? interface ?
 uhidev*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
+#ums*	at uhidev? reportid ?
+#wsmouse* at ums? mux 0
 
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
