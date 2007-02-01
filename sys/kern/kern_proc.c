@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.12 2007/01/31 19:56:38 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.13 2007/02/01 06:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.12 2007/01/31 19:56:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.13 2007/02/01 06:21:07 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -185,7 +185,7 @@ static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 struct session session0;
 struct pgrp pgrp0;
 struct proc proc0;
-struct lwp lwp0 __aligned(32);
+struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT);
 kauth_cred_t cred0;
 struct filedesc0 filedesc0;
 struct cwdinfo cwdi0;

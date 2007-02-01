@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.238.2.3 2007/01/12 01:04:24 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.238.2.4 2007/02/01 06:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -337,5 +337,14 @@
 	    ((ms +0u) * hz) / 1000u)
 #endif
 #endif /* _KERNEL */
+
+/*
+ * Minimum alignment of "struct lwp" needed by the architecture.
+ * This counts when packing a lock byte into a word alongside a
+ * pointer to an LWP.
+ */
+#ifndef MIN_LWP_ALIGNMENT
+#define	MIN_LWP_ALIGNMENT	32
+#endif
 
 #endif /* !_SYS_PARAM_H_ */
