@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.452 2007/01/31 10:07:31 msaitoh Exp $
+$NetBSD: usbdevs,v 1.453 2007/02/02 09:39:24 is Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1799,9 +1799,9 @@ product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
-product SIGMATEL VFIR4210	0x4210	StIR4210 VFIR
+product SIGMATEL SIR4116	0x4116	StIR4116 SIR
+product SIGMATEL FIR4210	0x4210	StIR4210 FIR
 product SIGMATEL VFIR4220	0x4220	StIR4220 VFIR
-product SIGMATEL VFIR4116	0x4116	StIR4116 VFIR
 product SIGMATEL I_BEAD100	0x8008	i-Bead 100 MP3 Player
 product SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 
