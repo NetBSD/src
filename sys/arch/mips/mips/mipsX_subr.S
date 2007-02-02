@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.19.20.4 2007/01/27 14:00:51 ad Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.19.20.5 2007/02/02 09:01:23 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1465,17 +1465,6 @@ LEAF_NOPROFILE(MIPSX(TLBInvalidException))
 	nop
 	nop
 	nop
-
-#ifdef notyet
-	/* Check for kernel restartable atomic sequences. */
-	_MFC0	k1, MIPS_COP_0_EXC_PC
-	lui	k0, %hi(_C_LABEL(_lock_ras_start))
-	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
-	xor	k0, k0, k1
-	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
-	bne	k0, zero, 2f
-	nop
-#endif
 	eret
 
 KernTLBIOdd:
@@ -1508,43 +1497,7 @@ KernTLBIOdd:
 	nop
 	nop
 	nop
-
-#ifdef notyet
-	/* Check for kernel restartable atomic sequences. */
-	_MFC0	k1, MIPS_COP_0_EXC_PC
-	lui	k0, %hi(_C_LABEL(_lock_ras_start))
-	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
-	xor	k0, k0, k1
-	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
-	bne	k0, zero, 2f
-	nop
-#endif
 	eret
-
-#ifdef notyet
-	/*
-	 * We faulted in the middle of a RAS.  Patch up the return
-	 * address.  After the call to _lock_ras(), the new address
-	 * will be in k1.
-	 */
-2:	lui	k0, %hi(_C_LABEL(curlwp))
-	lw	k0, (%lo(_C_LABEL(curlwp)))(k0)
-	nop
-	REG_S	t0, L_MD_RAS_T0(k0)
-	REG_S	t1, L_MD_RAS_T1(k0)
-	REG_S	t2, L_MD_RAS_T2(k0)
-	REG_S	ra, L_MD_RAS_RA(k0)
-	jal	_C_LABEL(_lock_ras)
-	nop
-	_MTC0	k1, MIPS_COP_0_EXC_PC
-	COP0_SYNC
-	REG_L	ra, L_MD_RAS_RA(k0)
-	REG_L	t2, L_MD_RAS_T2(k0)
-	REG_L	t1, L_MD_RAS_T1(k0)
-	REG_L	t0, L_MD_RAS_T1(k0)
-	eret
-#endif
-
 END(MIPSX(TLBInvalidException))
 
 /*----------------------------------------------------------------------------
@@ -1605,17 +1558,6 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 	nop
 	nop
 	nop
-
-#ifdef notyet
-	/* Check for kernel restartable atomic sequences. */
-	_MFC0	k1, MIPS_COP_0_EXC_PC
-	lui	k0, %hi(_C_LABEL(_lock_ras_start))
-	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
-	xor	k0, k0, k1
-	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
-	bne	k0, zero, 2f
-	nop
-#endif
 	eret
 
 outofworld:
@@ -1635,30 +1577,6 @@ outofworld:
 	la	sp, start			# set sp to a valid place
 1:	la	a0, 9f				# string
 	eret
-
-#ifdef notyet
-	/*
-	 * We faulted in the middle of a RAS.  Patch up the return
-	 * address.  After the call to _lock_ras(), the new address
-	 * will be in k1.
-	 */
-2:	lui	k0, %hi(_C_LABEL(curlwp))
-	lw	k0, (%lo(_C_LABEL(curlwp)))(k0)
-	nop
-	REG_S	t0, L_MD_RAS_T0(k0)
-	REG_S	t1, L_MD_RAS_T1(k0)
-	REG_S	t2, L_MD_RAS_T2(k0)
-	REG_S	ra, L_MD_RAS_RA(k0)
-	jal	_C_LABEL(_lock_ras)
-	nop
-	_MTC0	k1, MIPS_COP_0_EXC_PC
-	COP0_SYNC
-	REG_L	ra, L_MD_RAS_RA(k0)
-	REG_L	t2, L_MD_RAS_T2(k0)
-	REG_L	t1, L_MD_RAS_T1(k0)
-	REG_L	t0, L_MD_RAS_T1(k0)
-	eret
-#endif
 
 	.set	at
 END(MIPSX(TLBMissException))
@@ -1953,7 +1871,6 @@ LEAF_NOPROFILE(MIPSX(VCED))
 	addu	k0, 1
 	sw	k0, 0(k1)
 #endif
-	/* XXXAD needs RAS? */
 	eret
 	.set	at
 
@@ -1989,7 +1906,6 @@ LEAF_NOPROFILE(MIPSX(VCEI))
 	addu	k0, 1
 	sw	k0, 0(k1)
 #endif
-	/* XXXAD needs RAS? */
 	eret
 	.set	at
 
