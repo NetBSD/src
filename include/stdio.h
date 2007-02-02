@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.67 2006/12/09 19:33:42 bjh21 Exp $	*/
+/*	$NetBSD: stdio.h,v 1.68 2007/02/02 23:00:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -157,7 +157,6 @@ __END_DECLS
 #define	__SOFF	0x1000		/* set iff _offset is in fact correct */
 #define	__SMOD	0x2000		/* true => fgetln modified _p text */
 #define	__SALC	0x4000		/* allocate string space dynamically */
-#define	__SAFE	0x8000		/* don't call signal-unsafe functions */
 
 /*
  * The following three definitions are for ANSI C, which took them
