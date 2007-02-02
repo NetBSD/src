@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.60 2006/12/14 20:55:56 he Exp $	*/
+/*	$NetBSD: function.c,v 1.61 2007/02/02 15:48:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.60 2006/12/14 20:55:56 he Exp $");
+__RCSID("$NetBSD: function.c,v 1.61 2007/02/02 15:48:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1692,7 +1692,7 @@ c_user(char ***argvp, int isok)
 /*
  * -xdev functions --
  *
- *	Always true, causes find not to decend past directories that have a
+ *	Always true, causes find not to descend past directories that have a
  *	different device ID (st_dev, see stat() S5.6.2 [POSIX.1])
  */
 PLAN *
