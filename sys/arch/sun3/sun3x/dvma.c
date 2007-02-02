@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.31 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.32 2007/02/02 15:50:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.31 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.32 2007/02/02 15:50:58 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ dvma_kvtopa(void *kva, int bustype)
 		break;
 	}
 
-	return(addr & mask);
+	return addr & mask;
 }
 
 
@@ -203,16 +203,16 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 	    EX_FAST | EX_NOWAIT | (canwait ? EX_WAITSPACE : 0), &tva);
 	splx(s);
 	if (error)
-		return (NULL);
+		return NULL;
 	
 	/* 
 	 * Tva is the starting page to which the data buffer will be double
 	 * mapped.  Dvma_addr is the starting address of the buffer within
 	 * that page and is the return value of the function.
 	 */
-	dvma_addr = (void *) (tva + off);
+	dvma_addr = (void *)(tva + off);
 
-	for (;npf--; kva += PAGE_SIZE, tva += PAGE_SIZE) {
+	for (; npf--; kva += PAGE_SIZE, tva += PAGE_SIZE) {
 		/*
 		 * Retrieve the physical address of each page in the buffer
 		 * and enter mappings into the I/O MMU so they may be seen
@@ -230,7 +230,7 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 	}
 	pmap_update(pmap_kernel());
 
-	return (dvma_addr);
+	return dvma_addr;
 }
 
 /*
@@ -272,14 +272,14 @@ dvma_malloc(size_t bytes)
 	void *new_mem, *dvma_mem;
 	vsize_t new_size;
 
-	if (!bytes)
+	if (bytes == 0)
 		return NULL;
 	new_size = m68k_round_page(bytes);
-	new_mem = (void*)uvm_km_alloc(kernel_map, new_size, 0, UVM_KMF_WIRED);
-	if (!new_mem)
+	new_mem = (void *)uvm_km_alloc(kernel_map, new_size, 0, UVM_KMF_WIRED);
+	if (new_mem == 0)
 		return NULL;
 	dvma_mem = dvma_mapin(new_mem, new_size, 1);
-	return (dvma_mem);
+	return dvma_mem;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.29 2006/10/01 03:53:27 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.30 2007/02/02 15:50:58 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.29 2006/10/01 03:53:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.30 2007/02/02 15:50:58 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ dvma_init(void)
 	 * context.
 	 */
 	phys_map = uvm_map_create(pmap_kernel(),
-		DVMA_MAP_BASE, DVMA_MAP_END, 0);
+	    DVMA_MAP_BASE, DVMA_MAP_END, 0);
 	if (phys_map == NULL)
 		panic("unable to create DVMA map");
 
@@ -121,17 +121,17 @@ dvma_init(void)
 void *
 dvma_malloc(size_t bytes)
 {
-    caddr_t new_mem;
-    vsize_t new_size;
+	caddr_t new_mem;
+	vsize_t new_size;
 
-    if (!bytes)
+	if (bytes == 0)
 		return NULL;
-    new_size = m68k_round_page(bytes);
-    new_mem = (caddr_t) uvm_km_alloc(phys_map, new_size, 0, UVM_KMF_WIRED);
-    if (!new_mem)
+	new_size = m68k_round_page(bytes);
+	new_mem = (caddr_t)uvm_km_alloc(phys_map, new_size, 0, UVM_KMF_WIRED);
+	if (new_mem == 0)
 		panic("dvma_malloc: no space in phys_map");
-    /* The pmap code always makes DVMA pages non-cached. */
-    return new_mem;
+	/* The pmap code always makes DVMA pages non-cached. */
+	return new_mem;
 }
 
 /*
@@ -169,7 +169,7 @@ dvma_kvtopa(void *kva, int bustype)
 		break;
 	}
 
-	return(addr & mask);
+	return addr & mask;
 }
 
 /*
@@ -201,7 +201,7 @@ dvma_mapin(void *kva, int len, int canwait /* ignored */)
 	    EX_FAST | EX_NOWAIT | EX_MALLOCOK, &seg_dma);
 	if (error) {
 		splx(s);
-		return (NULL);
+		return NULL;
 	}
 
 #ifdef	DIAGNOSTIC
@@ -231,7 +231,7 @@ dvma_mapin(void *kva, int len, int canwait /* ignored */)
 	seg_dma += seg_off;
 
 	splx(s);
-	return ((caddr_t)seg_dma);
+	return (caddr_t)seg_dma;
 }
 
 /*
