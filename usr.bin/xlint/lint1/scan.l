@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.35 2006/10/16 13:33:57 he Exp $ */
+/* $NetBSD: scan.l,v 1.36 2007/02/02 20:02:18 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.35 2006/10/16 13:33:57 he Exp $");
+__RCSID("$NetBSD: scan.l,v 1.36 2007/02/02 20:02:18 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -99,6 +99,7 @@ EX	([eE][+-]?[0-9]+)
 0[xX]{HD}+[lLuU]*		return (icon(16));
 {D}+\.{D}*{EX}?[fFlL]?		|
 {D}+{EX}[fFlL]?			|
+0[xX]{HD}+p{HD}+[fFlL]?		|
 \.{D}+{EX}?[fFlL]?		return (fcon());
 "="				return (operator(T_ASSIGN, ASSIGN));
 "*="				return (operator(T_OPASS, MULASS));
