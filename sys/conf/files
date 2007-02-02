@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.828 2007/01/19 14:49:08 hannken Exp $
+#	$NetBSD: files,v 1.829 2007/02/02 02:10:24 ober Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -298,6 +298,7 @@ define	rasops15
 define	rasops16
 define	rasops24
 define	rasops32
+define	rasops_rotation
 
 # splash screen support
 include "dev/splash/files.splash"
