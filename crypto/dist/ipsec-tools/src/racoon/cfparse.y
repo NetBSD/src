@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.18 2006/12/10 18:46:39 manu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.18.4.1 2007/02/02 13:43:20 vanhu Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1848,7 +1848,7 @@ remote_spec
 	|	NAT_TRAVERSAL SWITCH
 		{
 #ifdef ENABLE_NATT
-        		if (libipsec_opt & LIBIPSEC_OPT_FRAG)
+        		if (libipsec_opt & LIBIPSEC_OPT_NATT)
 				cur_rmconf->nat_traversal = $2;
 			else
                 		yyerror("libipsec lacks NAT-T support");
