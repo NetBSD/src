@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.55 2007/01/26 00:37:30 cbiere Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.56 2007/02/02 23:00:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.55 2007/01/26 00:37:30 cbiere Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.56 2007/02/02 23:00:28 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,6 @@ static int __sbprintf __P((FILE *, const char *, va_list))
  * Flush out all the vectors defined by the given uio,
  * then reset it so that it can be reused.
  */
-/* NB: async-signal-safe when fp->_flags & __SAFE */
 static int
 __sprint(fp, uio)
 	FILE *fp;
@@ -207,7 +206,6 @@ vfprintf(fp, fmt0, ap)
 	
 	    
 
-/* NB: async-signal-safe when fp->_flags & __SAFE */
 int
 __vfprintf_unlocked(fp, fmt0, ap)
 	FILE *fp;
@@ -351,17 +349,11 @@ __vfprintf_unlocked(fp, fmt0, ap)
 	 */
 	for (;;) {
 		cp = fmt;
-		if (fp->_flags & __SAFE) {
-			for (; *fmt && *fmt != '%'; fmt++)
-				continue;
-			n = *fmt == '%';
-		} else {
-			while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
-				fmt += n;
-				if (wc == '%') {
-					fmt--;
-					break;
-				}
+		while ((n = mbrtowc(&wc, fmt, MB_CUR_MAX, &ps)) > 0) {
+			fmt += n;
+			if (wc == '%') {
+				fmt--;
+				break;
 			}
 		}
 		if (fmt != cp) {
@@ -529,14 +521,6 @@ reswitch:	switch (ch) {
 					cp = "NAN";
 				else
 					cp = "nan";
-				size = 3;
-				break;
-			}
-			if (fp->_flags & __SAFE) {
-				if (ch == 'E' || ch == 'F' || ch == 'G')
-					cp = "UNK";
-				else
-					cp = "unk";
 				size = 3;
 				break;
 			}
