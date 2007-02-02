@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2006/03/15 17:35:18 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2007/02/02 23:06:34 christos Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
@@ -23,7 +23,7 @@ CPPFLAGS+=-I${ARCHDIR}/gdtoa
 SRCS+=	strtod.c
 
 # private interfaces interfacing to libc
-SRCS+=	dtoa.c
+SRCS+=	dtoa.c ldtoa.c hdtoa.c gdtoa.c
 
 # local locking implementation
 SRCS+=	gdtoa_locks.c
