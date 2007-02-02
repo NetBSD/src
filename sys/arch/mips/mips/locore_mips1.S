@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.60.18.4 2007/01/28 07:20:39 ad Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.60.18.5 2007/02/02 09:01:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -817,44 +817,10 @@ LEAF_NOPROFILE(mips1_TLBMissException)
 	mtc0	k0, MIPS_COP_0_TLB_LOW		# save PTE entry
 	and	k0, k0, MIPS1_PG_V		# check for valid entry
 	beq	k0, zero, _C_LABEL(mips1_KernGenException) # PTE invalid
-
-#ifdef notyet
-	/* Check for kernel restartable atomic sequences. */
-	lui	k0, %hi(_C_LABEL(_lock_ras_start))
-	ori	k0, zero, %lo(_C_LABEL(_lock_ras_start))
-	xor	k0, k0, k1
-	sltiu	k0, k0, MIPS_LOCK_RAS_SIZE
-	bne	k0, zero, 2f
 	nop
-#endif
-
-1:	tlbwr					# update TLB
+	tlbwr					# update TLB
 	j	k1
 	rfe
-
-#ifdef notyet
-	/*
-	 * We faulted in the middle of a RAS.  Patch up the return
-	 * address.  After the call to _lock_ras(), the new address
-	 * will be in k1.
-	 */
-2:	tlbwr
-	lui	k0, %hi(_C_LABEL(curlwp))
-	lw	k0, (%lo(_C_LABEL(curlwp)))(k0)
-	nop
-	sw	t0, L_MD_RAS_T0(k0)
-	sw	t1, L_MD_RAS_T1(k0)
-	sw	t2, L_MD_RAS_T2(k0)
-	sw	ra, L_MD_RAS_RA(k0)
-	jal	_C_LABEL(_lock_ras)
-	nop
-	lw	ra, L_MD_RAS_RA(k0)
-	lw	t2, L_MD_RAS_T2(k0)
-	lw	t1, L_MD_RAS_T1(k0)
-	lw	t0, L_MD_RAS_T1(k0)
-	j	k1
-	rfe
-#endif
 
 outofworld:
 	/* Ensure we have a valid sp so panic has a chance */
