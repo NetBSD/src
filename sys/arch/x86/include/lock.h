@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.11.20.3 2007/01/12 01:01:01 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.11.20.4 2007/02/02 08:12:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -163,11 +163,14 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 
 #endif /* !LOCKDEBUG */
 
-#ifdef _KERNEL
 #define	SPINLOCK_SPIN_HOOK	/* nothing */
 #define	SPINLOCK_BACKOFF_HOOK	x86_pause()
-#endif
 
+#ifdef _KERNEL
+void	mb_read(void);
+void	mb_write(void);
+void	mb_memory(void);
+#else	/* _KERNEL */
 static inline void
 mb_read(void)
 {
@@ -183,7 +186,8 @@ mb_write(void)
 static inline void
 mb_memory(void)
 {
-	x86_lfence();
+	x86_mfence();
 }
+#endif	/* _KERNEL */
 
 #endif /* _X86_LOCK_H_ */

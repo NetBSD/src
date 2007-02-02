@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.12 2007/01/27 14:00:01 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.13 2007/02/02 08:12:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -62,6 +62,8 @@
 #else
 #define	LOCK		/* nothing */
 #endif
+
+#define	END(name,a)	.align	a; LABEL(name)
 
 #ifndef LOCKDEBUG
 
@@ -271,3 +273,33 @@ NENTRY(_lock_cas)				/* 0x0140, 19 bytes */
 	movq	$0, %rax
 	setz	%al				/* = 1 if success */
 	ret
+
+/*
+ * Memory barrier operations.
+ */
+
+	.align	8
+
+NENTRY(mb_read)
+	lfence
+	ret
+END(mb_read_end, 8)
+
+NENTRY(mb_write)
+	/* Nothing just yet */
+	ret
+END(mb_write_end, 8)
+
+NENTRY(mb_memory)
+	mfence
+	ret
+END(mb_memory_end, 8)
+
+/*
+ * Make sure code after the ret is properly encoded with nopness
+ * by gas, or could stall newer processors.
+ */
+
+NENTRY(x86_mb_nop)
+	ret
+END(x86_mb_nop_end, 8)

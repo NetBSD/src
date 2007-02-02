@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.13 2007/01/28 12:12:50 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.14 2007/02/02 08:12:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@
 #else
 #define	LOCK		/* nothing */
 #endif
+
+#define	END(name,a)	.align	a; LABEL(name)
 
 #if !defined(LOCKDEBUG)
 
@@ -356,3 +358,46 @@ _80386_lock_cas:
 	xorl	%eax, %eax
 	ret
 #endif	/* I386_CPU */
+
+/*
+ * Memory barrier operations, may be patched at runtime.
+ */
+	.align	8
+
+NENTRY(mb_read)
+	lock
+	addl	$0, 0(%esp)
+	ret
+END(mb_read_end, 8)
+
+NENTRY(mb_write)
+	/* Nothing at the moment. */
+	ret
+END(mb_write_end, 8)
+
+NENTRY(mb_memory)
+	lock
+	addl	$0, 0(%esp)
+	ret
+END(mb_memory_end, 8)
+
+#ifdef I686_CPU
+NENTRY(sse2_mb_read)
+	lfence
+	ret
+END(sse2_mb_read_end, 8)
+
+NENTRY(sse2_mb_memory)
+	mfence
+	ret
+END(sse2_mb_memory_end, 8)
+#endif	/* I686_CPU */
+
+/*
+ * Make sure code after the ret is properly encoded with nopness
+ * by gas, or could stall newer processors.
+ */
+
+NENTRY(x86_mb_nop)
+	ret
+END(x86_mb_nop_end, 8)

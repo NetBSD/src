@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.1.2.3 2007/02/01 06:25:01 ad Exp $	*/
+/*	$NetBSD: patch.c,v 1.1.2.4 2007/02/02 08:12:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.2.3 2007/02/01 06:25:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.1.2.4 2007/02/02 08:12:49 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -74,9 +74,25 @@ void	i686_mutex_spin_exit(int);
 void	i686_mutex_spin_exit_end(void);
 void	i686_mutex_spin_exit_patch(void);
 
+void	mb_read(void);
+void	mb_read_end(void);
+void	mb_write(void);
+void	mb_write_end(void);
+void	mb_memory(void);
+void	mb_memory_end(void);
+void	x86_mb_nop(void);
+void	x86_mb_nop_end(void);
+void	sse2_mb_read(void);
+void	sse2_mb_read_end(void);
+void	sse2_mb_memory(void);
+void	sse2_mb_memory_end(void);
+
 #define	X86_NOP		0x90
 #define	X86_REP		0xf3
 #define	X86_RET		0xc3
+#define	X86_CS		0x2e
+#define	X86_DS		0x3e
+#define	X86_GROUP_0F	0x0f
 
 static void __attribute__ ((__unused__))
 patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
@@ -95,10 +111,10 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	if (pcrel != NULL) {
 		ptr = pcrel;
 		/* Branch hints */
-		if (ptr[0] == 0x2e || ptr[0] == 0x3e)
+		if (ptr[0] == X86_CS || ptr[0] == X86_DS)
 			ptr++;
 		/* Conditional jumps */
-		if (ptr[0] == 0x0f)
+		if (ptr[0] == X86_GROUP_0F)
 			ptr++;		
 		/* 4-byte relative jump or call */
 		*(uint32_t *)(ptr + 1 - (uintptr_t)from_s + (uintptr_t)to_s) +=
@@ -109,15 +125,17 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 }
 
 static inline void  __attribute__ ((__unused__))
-patchbyte(void *addr, uint8_t byte)
+patchbytes(void *addr, const int byte1, const int byte2)
 {
-	*(uint8_t *)addr = byte;
+	((uint8_t *)addr)[0] = (uint8_t)byte1;
+	if (byte2 != -1)
+		((uint8_t *)addr)[1] = (uint8_t)byte2;
 }
 
 void
 x86_patch(void)
 {
-#ifndef GPROF
+#if !defined(GPROF)
 	static int again;
 	u_long cr0;
 
@@ -129,23 +147,71 @@ x86_patch(void)
 	cr0 = rcr0();
 	lcr0(cr0 & ~CR0_WP);
 
+	/*
+	 * i686 patches.
+	 */
 #ifdef I686_CPU
 	if (cpu_class == CPUCLASS_686 && (cpu_feature & CPUID_CX8) != 0) {
-		patchfunc(i686_spllower, i686_spllower_end, spllower,
-		    spllower_end, i686_spllower_patch);
+		patchfunc(
+		    i686_spllower, i686_spllower_end,
+		    spllower, spllower_end,
+		    i686_spllower_patch
+		);
 #if !defined(LOCKDEBUG) && !defined(I386_CPU) && !defined(DIAGNOSTIC)
-		patchfunc(i686_mutex_spin_exit, i686_mutex_spin_exit_end,
+		patchfunc(
+		    i686_mutex_spin_exit, i686_mutex_spin_exit_end,
 		    mutex_spin_exit, mutex_spin_exit_end,
-		    i686_mutex_spin_exit_patch);
+		    i686_mutex_spin_exit_patch
+		);
 #endif	/* !defined(LOCKDEBUG) && !defined(I386_CPU) */
+	}
+	if ((cpu_feature & CPUID_SSE2) != 0) {
+		patchfunc(
+		    sse2_mb_read, sse2_mb_read_end,
+		    mb_read, mb_read_end,
+		    NULL
+		);
+		patchfunc(
+		    sse2_mb_memory, sse2_mb_memory_end,
+		    mb_memory, mb_memory_end,
+		    NULL
+		);
 	}
 #endif	/* I686_CPU */
 
+	/*
+	 * AMD64 patches.
+	 */
 #ifdef __x86_64__
-	patchfunc(amd64_spllower, amd64_spllower_end, spllower,
-	    spllower_end, amd64_spllower_patch);
+	patchfunc(
+	    amd64_spllower, amd64_spllower_end,
+	    spllower, spllower_end,
+	    amd64_spllower_patch
+	);
 #endif	/* __x86_64__ */
 
+	/*
+	 * Uniprocessor.  XXX Should be determined at runtime.
+	 */
+#if !defined(MULTIPROCESSOR)
+	patchfunc(
+		x86_mb_nop, x86_mb_nop_end,
+		mb_read, mb_read_end,
+		NULL
+	);
+	patchfunc(
+		x86_mb_nop, x86_mb_nop_end,
+		mb_write, mb_write_end,
+		NULL
+	);
+	patchfunc(
+		x86_mb_nop, x86_mb_nop_end,
+		mb_memory, mb_memory_end,
+		NULL
+	);
+#endif	/* !MULTIPROCESSOR */
+
+	/* Re-enable write protection. */
 	lcr0(cr0);
 #endif	/* GPROF */
 }
