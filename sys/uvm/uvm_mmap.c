@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.103 2007/01/11 14:26:07 elad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.104 2007/02/03 01:11:50 elad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.103 2007/01/11 14:26:07 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.104 2007/02/03 01:11:50 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -406,19 +406,6 @@ sys_mmap(l, v, retval)
 			goto is_anon;
 		}
 
-#if NVERIEXEC > 0
-		/*
-		 * If we are mapping the file as executable, we expect to
-		 * have the VERIEXEC_INDIRECT flag set for the entry if it
-		 * exists.
-		 */
-		if (prot & VM_PROT_EXECUTE) {
-			if (veriexec_verify(l, vp, "(mmap)", VERIEXEC_INDIRECT,
-			    NULL) != 0)
-				return (EPERM);
-		}
-#endif /* NVERIEXEC > 0 */
-
 		/*
 		 * Old programs may not select a specific sharing type, so
 		 * default to an appropriate one.
@@ -452,6 +439,26 @@ sys_mmap(l, v, retval)
 		 */
 
 		maxprot = VM_PROT_EXECUTE;
+
+#if NVERIEXEC > 0
+		/*
+		 * Check if the file can be executed indirectly.
+		 */
+		if (veriexec_verify(l, vp, "(mmap)", VERIEXEC_INDIRECT, NULL)) {
+			/*
+			 * Don't allow executable mappings if we can't
+			 * indirectly execute the file.
+			 */
+			if (prot & VM_PROT_EXECUTE)
+				return (EPERM);
+
+			/*
+			 * Strip the executable bit from 'maxprot' to make sure
+			 * it can't be made executable later.
+			 */
+			maxprot &= ~VM_PROT_EXECUTE;
+		}
+#endif /* NVERIEXEC > 0 */
 
 		/* check read access */
 		if (fp->f_flag & FREAD)
