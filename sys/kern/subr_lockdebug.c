@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.7 2007/01/31 13:09:11 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.8 2007/02/03 16:35:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.7 2007/01/31 13:09:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.8 2007/02/03 16:35:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -139,13 +139,13 @@ lockdebug_lookup(u_int id, lockdebuglk_t **lk)
 		return NULL;
 
 	if (id == 0 || id >= LD_MAX_LOCKS)
-		panic("lockdebug_lookup: uninitialized lock (id=%d)", id);
+		panic("lockdebug_lookup: uninitialized lock (1, id=%d)", id);
 
 	base = ld_table[id >> LD_BATCH_SHIFT];
 	ld = base + (id & LD_BATCH_MASK);
 
 	if (base == NULL || ld->ld_lock == NULL || ld->ld_id != id)
-		panic("lockdebug_lookup: uninitialized lock (id=%d)", id);
+		panic("lockdebug_lookup: uninitialized lock (2, id=%d)", id);
 
 	if ((ld->ld_flags & LD_SLEEPER) != 0)
 		*lk = &ld_sleeper_lk;
@@ -198,11 +198,14 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo)
 	struct cpu_info *ci;
 	lockdebug_t *ld;
 
-	if (panicstr != NULL)
-		return 0;
+	if (ld_freeptr == 0) {
+		printf("lockdebug_alloc: not initialized yet, lock=%p\n",
+		    __UNVOLATILE(lock));
+		return LD_NOID;
+	}
 
-	if (ld_freeptr == 0)
-		panic("lockdebug_alloc: not initialized");
+	if (panicstr != NULL)
+		return LD_NOID;
 
 	ci = curcpu();
 
