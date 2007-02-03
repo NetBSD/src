@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.6 2007/02/03 16:39:53 ad Exp $
+.\"	$NetBSD: condvar.9,v 1.7 2007/02/03 16:49:11 ad Exp $
 .\"
 .\" Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,8 @@
 .Nm cv_signal ,
 .Nm cv_broadcast ,
 .Nm cv_signal_async ,
-.Nm cv_broadcast_async
+.Nm cv_broadcast_async ,
+.Nm cv_has_waiters
 .Nd condition variables
 .Sh SYNOPSIS
 .In sys/condvar.h
@@ -73,6 +74,8 @@
 .Fn cv_signal_async "kcondvar_t *cv"
 .Ft void
 .Fn cv_broadcast_async "kcondvar_t *cv"
+.Ft int
+.Fn cv_has_waiters "kcondvar_t *cv"
 .Sh DESCRIPTION
 Condition variables (CVs) are used in the kernel to synchronize access
 to resources that are limited (for example, memory) and to wait for
@@ -209,6 +212,12 @@ but the interlock
 .Po Fa mtx Pc
 need not be held.
 Use of these methods is discouraged as they are more costly to execute.
+.It Fn cv_has_waiters "cv"
+.Pp
+Return non-zero if one or more LWPs are waiting on the specified condition
+variable.
+.Fn cv_has_waiters
+should only be used when making diagnostic assertions.
 .El
 .Sh EXAMPLES
 .Bd -literal
