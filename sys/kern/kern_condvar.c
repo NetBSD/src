@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_condvar.c,v 1.1.2.4 2006/12/29 20:27:43 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.1.2.5 2007/02/03 16:32:50 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.4 2006/12/29 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.5 2007/02/03 16:32:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,8 +118,8 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, struct lwp *l)
  *
  *	Remove an LWP from the condition variable and sleep queue.  This
  *	is called when the LWP has not been awoken normally but instead
- *	interrupted: for example, when a signal is received.  Must be called
- *	with the LWP locked, and must return it unlocked.
+ *	interrupted: for example, when a signal is received.  Must be
+ *	called with the LWP locked, and must return it unlocked.
  */
 void
 cv_unsleep(struct lwp *l)
@@ -251,11 +251,21 @@ cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int timo)
  * cv_signal:
  *
  *	Wake the highest priority LWP waiting on a condition variable.
+ *	Must be called with the interlocking mutex held.
  */
 void
 cv_signal(kcondvar_t *cv)
 {
 	sleepq_t *sq;
+
+	if (cv->cv_waiters == 0)
+		return;
+
+	/*
+	 * cv->cv_waiters may be stale and have dropped to zero, but
+	 * while holding the interlock (the mutex passed to cv_wait()
+	 * and similar) we will see non-zero values when it matters.
+	 */
 
 	sq = sleeptab_lookup(&sleeptab, cv);
 	if (cv->cv_waiters != 0) {
@@ -268,10 +278,51 @@ cv_signal(kcondvar_t *cv)
 /*
  * cv_broadcast:
  *
- *	Wake all LWPs waiting on a condition variable.
+ *	Wake all LWPs waiting on a condition variable.  Must be called
+ *	with the interlocking mutex held.
  */
 void
 cv_broadcast(kcondvar_t *cv)
+{
+	sleepq_t *sq;
+	u_int cnt;
+
+	if (cv->cv_waiters == 0)
+		return;
+
+	sq = sleeptab_lookup(&sleeptab, cv);
+	if ((cnt = cv->cv_waiters) != 0) {
+		cv->cv_waiters = 0;
+		sleepq_wake(sq, cv, cnt);
+	} else
+		sleepq_unlock(sq);
+}
+
+/*
+ * cv_signal_async:
+ *
+ *	Wake the highest priority LWP waiting on a condition variable.
+ */
+void
+cv_signal_async(kcondvar_t *cv)
+{
+	sleepq_t *sq;
+
+	sq = sleeptab_lookup(&sleeptab, cv);
+	if (cv->cv_waiters != 0) {
+		cv->cv_waiters--;
+		sleepq_wake(sq, cv, 1);
+	} else
+		sleepq_unlock(sq);
+}
+
+/*
+ * cv_broadcast_async:
+ *
+ *	Wake all LWPs waiting on a condition variable.
+ */
+void
+cv_broadcast_async(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 	u_int cnt;

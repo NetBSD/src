@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.4.7 2007/01/31 11:36:02 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.8 2007/02/03 16:32:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.7 2007/01/31 11:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.8 2007/02/03 16:32:50 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -349,7 +349,8 @@ ktraddentry(struct lwp *l, struct ktrace_entry *kte, int flags)
 			callout_reset(&ktd->ktd_wakch,
 			    ktd->ktd_flags & KTDF_INTERACTIVE ?
 			    ktd->ktd_intrwakdl : ktd->ktd_wakedelay,
-			    (void (*)(void *))cv_broadcast, &ktd->ktd_cv);
+			    (void (*)(void *))cv_broadcast_async,
+			    &ktd->ktd_cv);
 	}
 
 skip_sync:
