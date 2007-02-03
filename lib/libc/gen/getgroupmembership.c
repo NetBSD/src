@@ -1,4 +1,4 @@
-/*	$NetBSD: getgroupmembership.c,v 1.2 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: getgroupmembership.c,v 1.3 2007/02/03 16:17:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getgroupmembership.c,v 1.2 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: getgroupmembership.c,v 1.3 2007/02/03 16:17:15 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -83,7 +83,8 @@ __gr_addgid(gid_t gid, gid_t *groups, int maxgrp, int *groupc)
 {
 	int	ret, dupc;
 
-	_DIAGASSERT(grpcnt != NULL);
+	_DIAGASSERT(groupc != NULL);
+	_DIAGASSERT(groups != NULL);
 
 						/* skip duplicates */
 	for (dupc = 0; dupc < MIN(maxgrp, *groupc); dupc++) {
