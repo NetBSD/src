@@ -1,30 +1,41 @@
 #!/bin/sh -
 #
-#	$NetBSD: run.test,v 1.10 2007/02/03 20:39:05 christos Exp $
+#	$NetBSD: run.test,v 1.11 2007/02/03 20:59:34 christos Exp $
 #	@(#)run.test	8.10 (Berkeley) 7/26/94
 #
 
 # db regression tests
+
+PNAME="$(basename "$0")"
+
+usage() {
+ 	echo "Usage: $PNAME [-p <binary>] test# ... | [hash|btree|recno]" 1>&2
+	exit 1
+}
+
 main()
 {
-
-	if [ -z "$1" ]
-	then
-	    PROG=./dbtest
-	else
-	    PROG="$1"
-	fi
+	PROG=./dbtest
+	while getopts p: f; do
+		case $f in
+		p)	PROG="$OPTARG";;
+		*)	usage;;
+		esac
+	done
+	shift $(expr $OPTIND - 1)
 	TMP1=t1
 	TMP2=t2
 	TMP3=t3
 	SEVEN_SEVEN="abcdefg|abcdefg|abcdefg|abcdefg|abcdefg|abcdefg|abcdefg"
+
+	trap "rm -f $TMP1 $TMP2 $TMP3" 0 1 2 3 15
 
 	if [ -f /usr/share/dict/words ]; then
 		DICT=/usr/share/dict/words
 	elif [ -f /usr/dict/words ]; then
 		DICT=/usr/dict/words
 	else
-		echo 'run.test: no dictionary'
+		echo "$PNAME: no dictionary" 1>&2
 		exit 1
 	fi
 	
@@ -33,8 +44,8 @@ main()
 			test$t
 		done
 	else
-		while [ $# -gt 0 ]
-			do case "$1" in
+		while [ $# -gt 0 ]; do
+			case "$1" in
 			test*)
 				$1;;
 			[0-9]*)
@@ -52,14 +63,12 @@ main()
 					test$t
 				done;;
 			*)
-				echo "run.test: unknown test $1"
-				echo "usage: run.test test# | type"
-				exit 1
+				echo "$PNAME: unknown test $1" 1>&2
+				usage
 			esac
 			shift
 		done
 	fi
-	rm -f $TMP1 $TMP2 $TMP3
 	exit 0
 }
 
@@ -79,9 +88,8 @@ test1()
 			echo k$i
 		done > $TMP2
 		$PROG -o $TMP3 $type $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test1: type $type: failed"
+		if  ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test1: type $type: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -93,9 +101,8 @@ test1()
 		printf("p\nk%d\nd%s\ng\nk%d\n", i, $0, i);
 	}' > $TMP2
 	$PROG -o $TMP3 recno $TMP2
-	if (cmp -s $TMP1 $TMP3) ; then :
-	else
-		echo "test1: type recno: failed"
+	if ! cmp -s $TMP1 $TMP3; then
+		echo "$PNAME: test1: type recno: failed" 1>&2
 		exit 1
 	fi
 }
@@ -110,7 +117,7 @@ test2()
 	awk '{ for (i = 1; i < 201; ++i) print $0 }' > $TMP1
 	for type in hash btree; do
 		rm -f $TMP2 $TMP3
-		for i in `sed 200q $DICT`; do
+		for i in $(sed 200q $DICT); do
 			echo p
 			echo k$i
 			echo d$mdata
@@ -118,9 +125,8 @@ test2()
 			echo k$i
 		done > $TMP2
 		$PROG -o $TMP3 $type $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test2: type $type: failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test2: type $type: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -131,9 +137,8 @@ test2()
 		printf("p\nk%d\nd%s\ng\nk%d\n", i, $0, i);
 	}' > $TMP2
 	$PROG -o $TMP3 recno $TMP2
-	if (cmp -s $TMP1 $TMP3) ; then :
-	else
-		echo "test2: type recno: failed"
+	if ! cmp -s $TMP1 $TMP3; then
+		echo "$PNAME: test2: type recno: failed" 1>&2
 		exit 1
 	fi
 }
@@ -154,9 +159,8 @@ test3()
 			echo k$i
 		done > $TMP2
 		$PROG -o $TMP3 $type $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test3: $type: failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test3: $type: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -173,9 +177,8 @@ test3()
 				echo k$i
 			done > $TMP2
 			$PROG -i psize=$psize -o $TMP3 $type $TMP2
-			if (cmp -s $TMP1 $TMP3) ; then :
-			else
-				echo "test3: $type: page size $psize: failed"
+			if ! cmp -s $TMP1 $TMP3; then
+				echo "$PNAME: test3: $type: page size $psize: failed" 1>&2
 				exit 1
 			fi
 		done
@@ -190,9 +193,8 @@ test3()
 	for psize in 512 16384 65536; do
 		echo "    page size $psize"
 		$PROG -i psize=$psize -o $TMP3 recno $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test3: recno: page size $psize: failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test3: recno: page size $psize: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -255,9 +257,8 @@ test4()
 				printf("g\nk%d\n", i);
 		}' > $TMP2
 	$PROG -o $TMP3 recno $TMP2
-	if (cmp -s $TMP1 $TMP3) ; then :
-	else
-		echo "test4: type recno: failed"
+	if ! cmp -s $TMP1 $TMP3; then
+		echo "$PNAME: test4: type recno: failed" 1>&2
 		exit 1
 	fi
 }
@@ -291,9 +292,8 @@ test5()
 				printf("g\nk%d\n", i);
 		}' > $TMP2
 	$PROG -o $TMP3 recno $TMP2
-	if (cmp -s $TMP1 $TMP3) ; then :
-	else
-		echo "test5: type recno: failed"
+	if ! cmp -s $TMP1 $TMP3; then
+		echo "$PNAME: test5: type recno: failed" 1>&2
 		exit 1
 	fi
 }
@@ -343,9 +343,8 @@ test6()
 	$PROG -o $TMP3 recno $TMP2
 	sort -o $TMP1 $TMP1
 	sort -o $TMP3 $TMP3
-	if (cmp -s $TMP1 $TMP3) ; then :
-	else
-		echo "test6: type recno: failed"
+	if ! cmp -s $TMP1 $TMP3; then
+		echo "$PNAME: test6: type recno: failed" 1>&2
 		exit 1
 	fi
 }
@@ -385,9 +384,8 @@ test7()
 			printf("fR_FIRST\ns\n");
 		}' > $TMP2
 		$PROG -o $TMP3 recno $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test7: type $type: failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test7: type $type: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -442,9 +440,8 @@ test9()
 		}' > $TMP2
 		$PROG -iflags=1 -o $TMP3 $type $TMP2
 		sort -o $TMP3 $TMP3
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test9: type $type: failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test9: type $type: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -525,9 +522,8 @@ test11()
 				printf("or\n");
 		}' > $TMP2
 		$PROG -o $TMP3 $type $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test11: type $type: failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test11: type $type: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -552,9 +548,8 @@ test12()
 			echo k$i
 		done > $TMP2
 		$PROG -i psize=512 -o $TMP3 $type $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test12: type $type: failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test12: type $type: failed" 1>&2
 			exit 1
 		fi
 	done
@@ -576,9 +571,8 @@ test13()
 				echo k$i
 			done > $TMP2
 			$PROG -ilorder=$order -f byte.file -o $TMP3 $type $TMP2
-			if (cmp -s $TMP1 $TMP3) ; then :
-			else
-				echo "test13: $type/$order put failed"
+			if ! cmp -s $TMP1 $TMP3; then
+				echo "$PNAME: test13: $type/$order put failed" 1>&2
 				exit 1
 			fi
 			for i in `sed 50q $DICT`; do
@@ -587,9 +581,8 @@ test13()
 			done > $TMP2
 			$PROG -s \
 			    -ilorder=$order -f byte.file -o $TMP3 $type $TMP2
-			if (cmp -s $TMP1 $TMP3) ; then :
-			else
-				echo "test13: $type/$order get failed"
+			if ! cmp -s $TMP1 $TMP3; then
+				echo "$PNAME: test13: $type/$order get failed" 1>&2
 				exit 1
 			fi
 		done
@@ -635,10 +628,9 @@ test20()
 		$PROG -o$TMP3 \
 		    -ibsize=$bsize,ffactor=$ffactor,nelem=25000,cachesize=65536\
 		    hash $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test20: type hash:\
-bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test20: type hash:\
+bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed" 1>&2
 			exit 1
 		fi
 	done
@@ -648,10 +640,9 @@ bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
 		$PROG -o$TMP3 \
 		    -ibsize=$bsize,ffactor=$ffactor,nelem=25000,cachesize=65536\
 		    hash $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test20: type hash:\
-bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test20: type hash:\
+bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed" 1>&2
 			exit 1
 		fi
 	done
@@ -661,10 +652,9 @@ bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
 		$PROG -o$TMP3 \
 		    -ibsize=$bsize,ffactor=$ffactor,nelem=25000,cachesize=65536\
 		    hash $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test20: type hash:\
-bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test20: type hash:\
+bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed" 1>&2
 			exit 1
 		fi
 	done
@@ -674,10 +664,9 @@ bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
 		$PROG -o$TMP3 \
 		    -ibsize=$bsize,ffactor=$ffactor,nelem=25000,cachesize=65536\
 		    hash $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test20: type hash:\
-bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test20: type hash:\
+bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed" 1>&2
 			exit 1
 		fi
 	done
@@ -687,10 +676,9 @@ bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
 		$PROG -o$TMP3 \
 		    -ibsize=$bsize,ffactor=$ffactor,nelem=25000,cachesize=65536\
 		    hash $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test20: type hash:\
-bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test20: type hash:\
+bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed" 1>&2
 			exit 1
 		fi
 	done
@@ -700,10 +688,9 @@ bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
 		$PROG -o$TMP3 \
 		    -ibsize=$bsize,ffactor=$ffactor,nelem=25000,cachesize=65536\
 		    hash $TMP2
-		if (cmp -s $TMP1 $TMP3) ; then :
-		else
-			echo "test20: type hash:\
-bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed"
+		if ! cmp -s $TMP1 $TMP3; then
+			echo "$PNAME: test20: type hash:\
+bsize=$bsize ffactor=$ffactor nelem=25000 cachesize=65536 failed" 1>&2
 			exit 1
 		fi
 	done
