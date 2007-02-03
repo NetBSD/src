@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.33 2007/02/03 05:13:58 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.34 2007/02/03 05:20:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.33 2007/02/03 05:13:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.34 2007/02/03 05:20:31 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 
 #ifdef DIAGNOSTIC
 	if (map->dm_nsegs != 1)
-		panic("%s: invalid nsegs = %d", __func__, nsegs);
+		panic("%s: invalid nsegs = %d", __func__, map->dm_nsegs);
 #endif
 
 	segs = map->dm_segs;
