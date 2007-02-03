@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: run.test,v 1.9 2005/04/27 23:37:34 christos Exp $
+#	$NetBSD: run.test,v 1.10 2007/02/03 20:39:05 christos Exp $
 #	@(#)run.test	8.10 (Berkeley) 7/26/94
 #
 
@@ -8,10 +8,16 @@
 main()
 {
 
-	PROG=./dbtest
+	if [ -z "$1" ]
+	then
+	    PROG=./dbtest
+	else
+	    PROG="$1"
+	fi
 	TMP1=t1
 	TMP2=t2
 	TMP3=t3
+	SEVEN_SEVEN="abcdefg|abcdefg|abcdefg|abcdefg|abcdefg|abcdefg|abcdefg"
 
 	if [ -f /usr/share/dict/words ]; then
 		DICT=/usr/share/dict/words
@@ -196,7 +202,7 @@ test3()
 test4()
 {
 	echo "Test 4: recno: random entries"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk '{
 		for (i = 37; i <= 37 + 88 * 17; i += 17) {
 			if (i % 41)
@@ -260,7 +266,7 @@ test4()
 test5()
 {
 	echo "Test 5: recno: reverse order entries"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk ' {
 		for (i = 1500; i; --i) {
 			if (i % 34)
@@ -296,7 +302,7 @@ test5()
 test6()
 {
 	echo "Test 6: recno: alternating order entries"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk ' {
 		for (i = 1; i < 1200; i += 2) {
 			if (i % 34)
@@ -348,7 +354,7 @@ test6()
 test7()
 {
 	echo "Test 7: btree, recno: delete cursor record"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk '{
 		for (i = 1; i <= 120; ++i)
 			printf("%05d: input key %d: %s\n", i, i, $0);
@@ -415,7 +421,7 @@ test8()
 test9()
 {
 	echo "Test 9: btree: duplicate keys"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk '{
 		for (i = 1; i <= 543; ++i)
 			printf("%05d: input key %d: %s\n", i, i, $0);
@@ -448,7 +454,7 @@ test9()
 test10()
 {
 	echo "Test 10: btree, recno: test cursor flag use"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk '{
 		for (i = 1; i <= 20; ++i)
 			printf("%05d: input key %d: %s\n", i, i, $0);
@@ -497,7 +503,7 @@ test10()
 test11()
 {
 	echo "Test 11: recno: reverse order insert"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk '{
 		for (i = 1; i <= 779; ++i)
 			printf("%05d: input key %d: %s\n", i, i, $0);
@@ -596,7 +602,7 @@ test20()
 {
 	echo\
     "Test 20: hash: bucketsize, fill factor; nelem 25000 cachesize 65536"
-	echo "abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg" |
+	echo $SEVEN_SEVEN |
 	awk '{
 		for (i = 1; i <= 10000; ++i) {
 			if (i % 34)
@@ -609,7 +615,7 @@ test20()
 	}' > $TMP1
 	sed 10000q $DICT |
 	awk 'BEGIN {
-		ds="abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg abcdefg"
+		ds="'$SEVEN_SEVEN'"
 	}
 	{
 		if (++i % 34)
@@ -712,4 +718,5 @@ r
 k1234
 _EOF
 }
-main $*
+
+main "$@"
