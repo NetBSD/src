@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.1 2007/02/02 23:03:35 christos Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.2 2007/02/03 16:44:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.1 2007/02/02 23:03:35 christos Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.2 2007/02/03 16:44:02 christos Exp $");
 #endif
 
 #include <float.h>
@@ -200,7 +200,7 @@ hdtoa(double d, const char *xdigs, int ndigits, int *decpt, int *sign,
 	/* If ndigits < 0, we are expected to auto-size the precision. */
 	if (ndigits < 0) {
 		for (ndigits = sigfigs; s0[ndigits - 1] == 0; ndigits--)
-			;
+			continue;
 	}
 
 	if (sigfigs > ndigits && s0[ndigits] != 0)
@@ -280,6 +280,18 @@ hldtoa(long double e, const char *xdigs, int ndigits, int *decpt, int *sign,
 		*s = u.extu_ext.ext_fracl & 0xf;
 		u.extu_ext.ext_fracl >>= 4;
 	}
+#ifdef EXT_FRACHMBITS
+	for (; s > s0; s--) {
+		*s = u.extu_ext.ext_frachm & 0xf;
+		u.extu_ext.ext_frachm >>= 4;
+	}
+#endif
+#ifdef EXT_FRACLMBITS
+	for (; s > s0; s--) {
+		*s = u.extu_ext.ext_fraclm & 0xf;
+		u.extu_ext.ext_fraclm >>= 4;
+	}
+#endif
 	for (; s > s0; s--) {
 		*s = u.extu_ext.ext_frach & 0xf;
 		u.extu_ext.ext_frach >>= 4;
