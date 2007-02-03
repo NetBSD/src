@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf_ss.c,v 1.5 2007/02/03 00:27:52 christos Exp $	*/
+/*	$NetBSD: vsnprintf_ss.c,v 1.6 2007/02/03 22:26:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf_ss.c,v 1.5 2007/02/03 00:27:52 christos Exp $");
+__RCSID("$NetBSD: vsnprintf_ss.c,v 1.6 2007/02/03 22:26:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -141,7 +141,7 @@ vsnprintf_ss(char *sbuf, size_t slen, const char *fmt0, _BSD_VA_LIST_ ap)
 	static const char xdigs_upper[16] = "0123456789ABCDEF";
 
 	_DIAGASSERT(slen == 0 || sbuf != NULL);
-	_DIAGASSERT(fmt != NULL);
+	_DIAGASSERT(fmt0 != NULL);
 
 	if ((int)slen < 0) {
 		errno = EINVAL;
