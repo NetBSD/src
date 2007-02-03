@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.11 2007/01/31 19:56:38 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.12 2007/02/03 16:32:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.11 2007/01/31 19:56:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.12 2007/02/03 16:32:50 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -339,7 +339,7 @@ exit1(struct lwp *l, int rv)
 	mutex_enter(&p->p_smutex);
 	if (p->p_sflag & PS_PPWAIT) {
 		p->p_sflag &= ~PS_PPWAIT;
-		cv_broadcast(&p->p_pptr->p_waitcv);
+		cv_broadcast_async(&p->p_pptr->p_waitcv); /* XXX */
 	}
 	mutex_exit(&p->p_smutex);
 
@@ -508,7 +508,7 @@ exit1(struct lwp *l, int rv)
 		 * continue.
 		 */
 		if (LIST_FIRST(&q->p_children) == NULL)
-			cv_broadcast(&q->p_waitcv);
+			cv_broadcast_async(&q->p_waitcv);	/* XXX */
 	}
 	mutex_exit(&q->p_mutex);
 
@@ -531,7 +531,7 @@ exit1(struct lwp *l, int rv)
 	ruadd(p->p_ru, &p->p_stats->p_cru);
 
 	if (wakeinit)
-		cv_broadcast(&initproc->p_waitcv);
+		cv_broadcast_async(&initproc->p_waitcv);	/* XXX */
 
 	/*
 	 * Remaining lwp resources will be freed in lwp_exit2() once we've
@@ -558,7 +558,6 @@ exit1(struct lwp *l, int rv)
 	/*
 	 * Signal the parent to collect us, and drop the proclist lock.
 	 */
-	cv_broadcast(&p->p_pptr->p_waitcv);
 	rw_exit(&proclist_lock);
 
 	/* Verify that we hold no locks other than the kernel lock. */
@@ -599,6 +598,7 @@ exit1(struct lwp *l, int rv)
 	 * cpu_switch(), finishing our execution (pun intended).
 	 */
 	uvmexp.swtch++;	/* XXXSMP unlocked */
+	cv_broadcast_async(&p->p_pptr->p_waitcv);	/* XXX */
 	cpu_exit(l);
 }
 
@@ -875,7 +875,7 @@ proc_free(struct proc *p, struct rusage **ru)
 				kpsignal(parent, &ksi, NULL);
 				mutex_exit(&proclist_mutex);
 			}
-			cv_broadcast(&parent->p_waitcv);
+			cv_broadcast_async(&parent->p_waitcv);	/* XXX */
 			rw_exit(&proclist_lock);
 			return;
 		}

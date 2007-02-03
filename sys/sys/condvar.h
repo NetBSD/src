@@ -1,7 +1,7 @@
-/*	$NetBSD: condvar.h,v 1.1.2.3 2006/12/29 20:27:45 ad Exp $	*/
+/*	$NetBSD: condvar.h,v 1.1.2.4 2007/02/03 16:32:50 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,8 +44,9 @@
 /*
  * The condition variable implementation is private to kern_condvar.c but
  * the size of a kcondvar_t must remain constant.  cv_waiters is protected
- * by the sleep queue interlock acquired with sleeptab_lookup().  cv_wmesg
- * is static and does not change throughout the life of the CV.
+ * both by the interlock passed to cv_wait() (increment only), and the sleep
+ * queue lock acquired with sleeptab_lookup() (increment and decrement). 
+ * cv_wmesg is static and does not change throughout the life of the CV.
  */
 typedef struct kcondvar {
 	const char	*cv_wmesg;	/* description for /bin/ps */
@@ -64,6 +65,8 @@ int	cv_timedwait_sig(kcondvar_t *, kmutex_t *, int);
 
 void	cv_signal(kcondvar_t *);
 void	cv_broadcast(kcondvar_t *);
+void	cv_signal_async(kcondvar_t *);
+void	cv_broadcast_async(kcondvar_t *);
 
 int	cv_has_waiters(kcondvar_t *);
 

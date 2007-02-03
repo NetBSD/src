@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.1.2.10 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.1.2.11 2007/02/03 16:32:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.10 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.1.2.11 2007/02/03 16:32:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,8 +415,8 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 			p->p_ndlwps++;
 			t->l_prflag |= LPR_DETACHED;
 			if (t->l_stat == LSZOMB) {
-				lwp_free(t, 0, 0); /* releases proc mutex */
 				cv_broadcast(&p->p_lwpcv);
+				lwp_free(t, 0, 0); /* releases proc mutex */
 				return 0;
 			}
 			error = 0;
@@ -425,8 +425,8 @@ sys__lwp_detach(struct lwp *l, void *v, register_t *retval)
 	} else
 		error = ESRCH;
 
-	mutex_exit(&p->p_smutex);
 	cv_broadcast(&p->p_lwpcv);
+	mutex_exit(&p->p_smutex);
 
 	return error;
 }

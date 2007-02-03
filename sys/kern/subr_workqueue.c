@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.3.10.4 2007/01/25 20:18:37 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.3.10.5 2007/02/03 16:32:50 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.4 2007/01/25 20:18:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.3.10.5 2007/02/03 16:32:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,8 +164,8 @@ workqueue_exit(struct work *wk, void *arg)
 	KASSERT(q->q_worker == curproc);
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
-	mutex_exit(&q->q_mutex);
 	cv_broadcast(&q->q_cv);
+	mutex_exit(&q->q_mutex);
 	kthread_exit(0);
 }
 
@@ -230,14 +230,10 @@ void
 workqueue_enqueue(struct workqueue *wq, struct work *wk)
 {
 	struct workqueue_queue *q = &wq->wq_queue;
-	boolean_t wasempty;
 
 	mutex_enter(&q->q_mutex);
-	wasempty = SIMPLEQ_EMPTY(&q->q_queue);
+	if (SIMPLEQ_EMPTY(&q->q_queue))
+		cv_broadcast(&q->q_cv);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, wk, wk_entry);
 	mutex_exit(&q->q_mutex);
-
-	if (wasempty) {
-		cv_broadcast(&q->q_cv);
-	}
 }
