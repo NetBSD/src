@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.c,v 1.2 2007/02/02 23:05:41 christos Exp $ */
+/* $NetBSD: gdtoa.c,v 1.3 2007/02/03 18:09:20 christos Exp $ */
 
 /****************************************************************
 
@@ -310,7 +310,7 @@ gdtoa
 			if (i <= 0)
 				i = 1;
 		}
-	s = s0 = rv_alloc(i);
+	s = s0 = rv_alloc((size_t)i);
 
 	if ( (rdir = fpi->rounding - 1) !=0) {
 		if (rdir < 0)
