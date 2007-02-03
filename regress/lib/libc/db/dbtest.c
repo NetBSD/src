@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtest.c,v 1.12 2007/02/03 23:04:04 christos Exp $	*/
+/*	$NetBSD: dbtest.c,v 1.13 2007/02/03 23:46:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: dbtest.c,v 1.12 2007/02/03 23:04:04 christos Exp $");
+__RCSID("$NetBSD: dbtest.c,v 1.13 2007/02/03 23:46:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,10 @@ static void	*xcopy(void *, size_t);
 static void	 chkcmd(enum S);
 static void	 chkdata(enum S);
 static void	 chkkey(enum S);
+
+#ifdef STATISTICS
+extern void __bt_stat(DB *);
+#endif
 
 static DBTYPE type;			/* Database type. */
 static void *infop;			/* Iflags. */
