@@ -1,11 +1,11 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.36.3 2007/01/31 17:36:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.4 2007/02/03 07:14:49 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Andrew Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.3 2007/01/31 17:36:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.4 2007/02/03 07:14:49 ad Exp $");
 
 #include "assym.h"
 
@@ -56,14 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.3 2007/01/31 17:36:32 ad Exp $
  */
 LEAF(_lock_cas, 3)
 1:
+	mov	a2, v0
 	ldq_l	t1, 0(a0)
-	mov	a2, t2
-	cmpeq	a1, t1, t1
-	bne	t1, 2f
-	stq_c	t2, 0(a0)
-	beq	t2, 3f
-	mov	a0, v0			/* nonzero */
-	MB
+	cmpeq	t1, a1, t1
+	beq	t1, 2f
+	stq_c	v0, 0(a0)
+	beq	v0, 3f
+	MB	
 	RET
 2:
 	mov	zero, v0
@@ -89,7 +88,8 @@ LEAF(mutex_enter, 1)
 	MB
 	RET
 2:
-	br	mutex_vector_enter
+	lda	t12, mutex_vector_enter
+	jmp	(t12)
 3:
 	br	1b
 END(mutex_enter)
@@ -100,16 +100,18 @@ END(mutex_enter)
 LEAF(mutex_exit, 1)
 	MB
 	GET_CURLWP
-1:
 	ldq	t1, 0(v0)
+	mov	zero, t3
+1:
 	ldq_l	t2, 0(a0)
 	cmpeq	t1, t2, t2
-	bne	t2, 2f
-	stq_c	t2, 0(a0)
-	beq	t2, 3f
+	beq	t2, 2f
+	stq_c	t3, 0(a0)
+	beq	t3, 3f
 	RET
 2:
-	br	mutex_vector_exit
+	lda	t12, mutex_vector_exit
+	jmp	(t12)
 3:
 	br	1b
 END(mutex_exit)
