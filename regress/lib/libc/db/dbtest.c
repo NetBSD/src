@@ -1,4 +1,4 @@
-/*	$NetBSD: dbtest.c,v 1.11 2005/02/06 06:05:18 perry Exp $	*/
+/*	$NetBSD: dbtest.c,v 1.12 2007/02/03 23:04:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -29,17 +29,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-static char rcsid[] = "$NetBSD: dbtest.c,v 1.11 2005/02/06 06:05:18 perry Exp $";
+__RCSID("$NetBSD: dbtest.c,v 1.12 2007/02/03 23:04:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,45 +55,45 @@ static char rcsid[] = "$NetBSD: dbtest.c,v 1.11 2005/02/06 06:05:18 perry Exp $"
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <err.h>
 #include <db.h>
 
 enum S { COMMAND, COMPARE, GET, PUT, REMOVE, SEQ, SEQFLAG, KEY, DATA };
 
-void	 compare(DBT *, DBT *);
-DBTYPE	 dbtype(char *);
-void	 dump(DB *, int);
-void	 err(const char *, ...);
-void	 get(DB *, DBT *);
-void	 getdata(DB *, DBT *, DBT *);
-void	 put(DB *, DBT *, DBT *);
-void	 rem(DB *, DBT *);
-char	*sflags(int);
-void	 synk(DB *);
-void	*rfile(char *, size_t *);
-void	 seq(DB *, DBT *);
-u_int	 setflags(char *);
-void	*setinfo(DBTYPE, char *);
-void	 usage(void);
-void	*xmalloc(char *, size_t);
+static void	 compare(DBT *, DBT *);
+static DBTYPE	 dbtype(const char *);
+static void	 dump(DB *, int);
+static void	 get(DB *, DBT *);
+static void	 getdata(DB *, DBT *, DBT *);
+static void	 put(DB *, DBT *, DBT *);
+static void	 rem(DB *, DBT *);
+static const char *sflags(int);
+static void	 synk(DB *);
+static void	*rfile(char *, size_t *);
+static void	 seq(DB *, DBT *);
+static u_int	 setflags(char *);
+static void	*setinfo(DBTYPE, char *);
+static void	 usage(void) __attribute__((__noreturn__));
+static void	*xcopy(void *, size_t);
+static void	 chkcmd(enum S);
+static void	 chkdata(enum S);
+static void	 chkkey(enum S);
 
-DBTYPE type;				/* Database type. */
-void *infop;				/* Iflags. */
-u_long lineno;				/* Current line in test script. */
-u_int flags;				/* Current DB flags. */
-int ofd = STDOUT_FILENO;		/* Standard output fd. */
+static DBTYPE type;			/* Database type. */
+static void *infop;			/* Iflags. */
+static size_t lineno;			/* Current line in test script. */
+static u_int flags;				/* Current DB flags. */
+static int ofd = STDOUT_FILENO;		/* Standard output fd. */
 
-DB *XXdbp;				/* Global for gdb. */
-int XXlineno;				/* Fast breakpoint for gdb. */
+static DB *XXdbp;			/* Global for gdb. */
+static size_t XXlineno;			/* Fast breakpoint for gdb. */
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;
-	enum S command, state;
+	enum S command = COMMAND, state;
 	DB *dbp;
 	DBT data, key, keydata;
 	size_t len;
@@ -117,7 +118,7 @@ main(argc, argv)
 		case 'o':
 			if ((ofd = open(optarg,
 			    O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
-				err("%s: %s", optarg, strerror(errno));
+				err(1, "Cannot create `%s'", optarg);
 			break;
 		case 's':
 			sflag = 1;
@@ -137,7 +138,7 @@ main(argc, argv)
 
 	/* Open the descriptor file. */
         if (strcmp(*argv, "-") && freopen(*argv, "r", stdin) == NULL)
-	    err("%s: %s", *argv, strerror(errno));
+	    err(1, "Cannot reopen `%s'", *argv);
 
 	/* Set up the db structure as necessary. */
 	if (infoarg == NULL)
@@ -153,10 +154,10 @@ main(argc, argv)
 	 * want it around, and it often screws up tests.
 	 */
 	if (fname == NULL) {
-		p = getenv("TMPDIR");
-		if (p == NULL)
-			p = "/var/tmp";
-		(void)sprintf(buf, "%s/__dbtest", p);
+		const char *q = getenv("TMPDIR");
+		if (q == NULL)
+			q = "/var/tmp";
+		(void)snprintf(buf, sizeof(buf), "%s/__dbtest", q);
 		fname = buf;
 		(void)unlink(buf);
 	} else  if (!sflag)
@@ -164,7 +165,7 @@ main(argc, argv)
 
 	if ((dbp = dbopen(fname,
 	    oflags, S_IRUSR | S_IWUSR, type, infop)) == NULL)
-		err("dbopen: %s", strerror(errno));
+		err(1, "Cannot dbopen `%s'", fname);
 	XXdbp = dbp;
 
 	state = COMMAND;
@@ -173,7 +174,8 @@ main(argc, argv)
 		/* Delete the newline, displaying the key/data is easier. */
 		if (ofd == STDOUT_FILENO && (t = strchr(p, '\n')) != NULL)
 			*t = '\0';
-		if ((len = strlen(buf)) == 0 || isspace(*p) || *p == '#')
+		if ((len = strlen(buf)) == 0 || isspace((unsigned char)*p) ||
+		    *p == '#')
 			continue;
 
 		/* Convenient gdb break point. */
@@ -181,36 +183,31 @@ main(argc, argv)
 			XXlineno = 1;
 		switch (*p) {
 		case 'c':			/* compare */
-			if (state != COMMAND)
-				err("line %lu: not expecting command", lineno);
+			chkcmd(state);
 			state = KEY;
 			command = COMPARE;
 			break;
 		case 'e':			/* echo */
-			if (state != COMMAND)
-				err("line %lu: not expecting command", lineno);
+			chkcmd(state);
 			/* Don't display the newline, if CR at EOL. */
 			if (p[len - 2] == '\r')
 				--len;
 			if (write(ofd, p + 1, len - 1) != len - 1 ||
 			    write(ofd, "\n", 1) != 1)
-				err("write: %s", strerror(errno));
+				err(1, "write failed");
 			break;
 		case 'g':			/* get */
-			if (state != COMMAND)
-				err("line %lu: not expecting command", lineno);
+			chkcmd(state);
 			state = KEY;
 			command = GET;
 			break;
 		case 'p':			/* put */
-			if (state != COMMAND)
-				err("line %lu: not expecting command", lineno);
+			chkcmd(state);
 			state = KEY;
 			command = PUT;
 			break;
 		case 'r':			/* remove */
-			if (state != COMMAND)
-				err("line %lu: not expecting command", lineno);
+			chkcmd(state);
                         if (flags == R_CURSOR) {
 				rem(dbp, &key);
 				state = COMMAND;
@@ -220,14 +217,12 @@ main(argc, argv)
 			}
 			break;
 		case 'S':			/* sync */
-			if (state != COMMAND)
-				err("line %lu: not expecting command", lineno);
+			chkcmd(state);
 			synk(dbp);
 			state = COMMAND;
 			break;
 		case 's':			/* seq */
-			if (state != COMMAND)
-				err("line %lu: not expecting command", lineno);
+			chkcmd(state);
 			if (flags == R_CURSOR) {
 				state = KEY;
 				command = SEQ;
@@ -238,14 +233,12 @@ main(argc, argv)
 			flags = setflags(p + 1);
 			break;
 		case 'D':			/* data file */
-			if (state != DATA)
-				err("line %lu: not expecting data", lineno);
+			chkdata(state);
 			data.data = rfile(p + 1, &data.size);
 			goto ldata;
 		case 'd':			/* data */
-			if (state != DATA)
-				err("line %lu: not expecting data", lineno);
-			data.data = xmalloc(p + 1, len - 1);
+			chkdata(state);
+			data.data = xcopy(p + 1, len - 1);
 			data.size = len - 1;
 ldata:			switch (command) {
 			case COMPARE:
@@ -255,7 +248,7 @@ ldata:			switch (command) {
 				put(dbp, &key, &data);
 				break;
 			default:
-				err("line %lu: command doesn't take data",
+				errx(1, "line %zu: command doesn't take data",
 				    lineno);
 			}
 			if (type != DB_RECNO)
@@ -264,23 +257,21 @@ ldata:			switch (command) {
 			state = COMMAND;
 			break;
 		case 'K':			/* key file */
-			if (state != KEY)
-				err("line %lu: not expecting a key", lineno);
+			chkkey(state);
 			if (type == DB_RECNO)
-				err("line %lu: 'K' not available for recno",
+				errx(1, "line %zu: 'K' not available for recno",
 				    lineno);
 			key.data = rfile(p + 1, &key.size);
 			goto lkey;
 		case 'k':			/* key */
-			if (state != KEY)
-				err("line %lu: not expecting a key", lineno);
+			chkkey(state);
 			if (type == DB_RECNO) {
 				static recno_t recno;
 				recno = atoi(p + 1);
 				key.data = &recno;
 				key.size = sizeof(recno);
 			} else {
-				key.data = xmalloc(p + 1, len - 1);
+				key.data = xcopy(p + 1, len - 1);
 				key.size = len - 1;
 			}
 lkey:			switch (command) {
@@ -310,7 +301,7 @@ lkey:			switch (command) {
 				state = COMMAND;
 				break;
 			default:
-				err("line %lu: command doesn't take a key",
+				errx(1, "line %zu: command doesn't take a key",
 				    lineno);
 			}
 			break;
@@ -318,7 +309,7 @@ lkey:			switch (command) {
 			dump(dbp, p[1] == 'r');
 			break;
 		default:
-			err("line %lu: %s: unknown command character",
+			errx(1, "line %zu: %s: unknown command character",
 			    lineno, p);
 		}
 	}
@@ -330,17 +321,16 @@ lkey:			switch (command) {
 	if (type == DB_BTREE && oflags & DB_LOCK)
 		__bt_stat(dbp);
 #endif
-	if (dbp->close(dbp))
-		err("db->close: %s", strerror(errno));
+	if ((*dbp->close)(dbp))
+		err(1, "db->close failed");
 	(void)close(ofd);
-	exit(0);
+	return 0;
 }
 
 #define	NOOVERWRITE	"put failed, would overwrite key\n"
 
-void
-compare(db1, db2)
-	DBT *db1, *db2;
+static void
+compare(DBT *db1, DBT *db2)
 {
 	size_t len;
 	u_char *p1, *p2;
@@ -352,67 +342,63 @@ compare(db1, db2)
 	len = MIN(db1->size, db2->size);
 	for (p1 = db1->data, p2 = db2->data; len--;)
 		if (*p1++ != *p2++) {
-			printf("compare failed at offset %d\n",
-			    p1 - (u_char *)db1->data);
+			printf("compare failed at offset %lu\n",
+			    (unsigned long)(p1 - (u_char *)db1->data));
 			break;
 		}
 }
 
-void
-get(dbp, kp)
-	DB *dbp;
-	DBT *kp;
+static void
+get(DB *dbp, DBT *kp)
 {
 	DBT data;
 
-	switch (dbp->get(dbp, kp, &data, flags)) {
+	switch ((*dbp->get)(dbp, kp, &data, flags)) {
 	case 0:
 		(void)write(ofd, data.data, data.size);
 		if (ofd == STDOUT_FILENO)
 			(void)write(ofd, "\n", 1);
 		break;
 	case -1:
-		err("line %lu: get: %s", lineno, strerror(errno));
+		err(1, "line %zu: get failed", lineno);
 		/* NOTREACHED */
 	case 1:
 #define	NOSUCHKEY	"get failed, no such key\n"
 		if (ofd != STDOUT_FILENO)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else
-			(void)fprintf(stderr, "%d: %.*s: %s",
-			    lineno, MIN(kp->size, 20), kp->data, NOSUCHKEY);
+			(void)fprintf(stderr, "%zu: %.*s: %s",
+			    lineno, (int)MIN(kp->size, 20),
+			    (const char *)kp->data,
+			    NOSUCHKEY);
 #undef	NOSUCHKEY
 		break;
 	}
 }
 
-void
-getdata(dbp, kp, dp)
-	DB *dbp;
-	DBT *kp, *dp;
+static void
+getdata(DB *dbp, DBT *kp, DBT *dp)
 {
-	switch (dbp->get(dbp, kp, dp, flags)) {
+	switch ((*dbp->get)(dbp, kp, dp, flags)) {
 	case 0:
 		return;
 	case -1:
-		err("line %lu: getdata: %s", lineno, strerror(errno));
+		err(1, "line %zu: getdata failed", lineno);
 		/* NOTREACHED */
 	case 1:
-		err("line %lu: getdata failed, no such key", lineno);
+		errx(1, "line %zu: getdata failed, no such key", lineno);
 		/* NOTREACHED */
 	}
 }
 
-void
-put(dbp, kp, dp)
-	DB *dbp;
-	DBT *kp, *dp;
+static void
+put(DB *dbp, DBT *kp, DBT *dp)
 {
-	switch (dbp->put(dbp, kp, dp, flags)) {
+	switch ((*dbp->put)(dbp, kp, dp, flags)) {
 	case 0:
 		break;
 	case -1:
-		err("line %lu: put: %s", lineno, strerror(errno));
+		err(1, "line %zu: put failed", lineno);
 		/* NOTREACHED */
 	case 1:
 		(void)write(ofd, NOOVERWRITE, sizeof(NOOVERWRITE) - 1);
@@ -420,49 +406,45 @@ put(dbp, kp, dp)
 	}
 }
 
-void
-rem(dbp, kp)
-	DB *dbp;
-	DBT *kp;
+static void
+rem(DB *dbp, DBT *kp)
 {
-	switch (dbp->del(dbp, kp, flags)) {
+	switch ((*dbp->del)(dbp, kp, flags)) {
 	case 0:
 		break;
 	case -1:
-		err("line %lu: rem: %s", lineno, strerror(errno));
+		err(1, "line %zu: rem failed", lineno);
 		/* NOTREACHED */
 	case 1:
 #define	NOSUCHKEY	"rem failed, no such key\n"
 		if (ofd != STDOUT_FILENO)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else if (flags != R_CURSOR)
-			(void)fprintf(stderr, "%d: %.*s: %s", 
-			    lineno, MIN(kp->size, 20), kp->data, NOSUCHKEY);
+			(void)fprintf(stderr, "%zu: %.*s: %s", 
+			    lineno, (int)MIN(kp->size, 20),
+			    (const char *)kp->data, NOSUCHKEY);
 		else
 			(void)fprintf(stderr,
-			    "%d: rem of cursor failed\n", lineno);
+			    "%zu: rem of cursor failed\n", lineno);
 #undef	NOSUCHKEY
 		break;
 	}
 }
 
-void
-synk(dbp)
-	DB *dbp;
+static void
+synk(DB *dbp)
 {
-	switch (dbp->sync(dbp, flags)) {
+	switch ((*dbp->sync)(dbp, flags)) {
 	case 0:
 		break;
 	case -1:
-		err("line %lu: synk: %s", lineno, strerror(errno));
+		err(1, "line %zu: synk failed", lineno);
 		/* NOTREACHED */
 	}
 }
 
-void
-seq(dbp, kp)
-	DB *dbp;
-	DBT *kp;
+static void
+seq(DB *dbp, DBT *kp)
 {
 	DBT data;
 
@@ -473,40 +455,39 @@ seq(dbp, kp)
 			(void)write(ofd, "\n", 1);
 		break;
 	case -1:
-		err("line %lu: seq: %s", lineno, strerror(errno));
+		err(1, "line %zu: seq failed", lineno);
 		/* NOTREACHED */
 	case 1:
 #define	NOSUCHKEY	"seq failed, no such key\n"
 		if (ofd != STDOUT_FILENO)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else if (flags == R_CURSOR)
-			(void)fprintf(stderr, "%d: %.*s: %s", 
-			    lineno, MIN(kp->size, 20), kp->data, NOSUCHKEY);
+			(void)fprintf(stderr, "%zu: %.*s: %s", 
+			    lineno, (int)MIN(kp->size, 20),
+			    (const char *)kp->data, NOSUCHKEY);
 		else
 			(void)fprintf(stderr,
-			    "%d: seq (%s) failed\n", lineno, sflags(flags));
+			    "%zu: seq (%s) failed\n", lineno, sflags(flags));
 #undef	NOSUCHKEY
 		break;
 	}
 }
 
-void
-dump(dbp, rev)
-	DB *dbp;
-	int rev;
+static void
+dump(DB *dbp, int rev)
 {
 	DBT key, data;
-	int flags, nflags;
+	int xflags, nflags;
 
 	if (rev) {
-		flags = R_LAST;
+		xflags = R_LAST;
 		nflags = R_PREV;
 	} else {
-		flags = R_FIRST;
+		xflags = R_FIRST;
 		nflags = R_NEXT;
 	}
-	for (;; flags = nflags)
-		switch (dbp->seq(dbp, &key, &data, flags)) {
+	for (;; xflags = nflags)
+		switch (dbp->seq(dbp, &key, &data, xflags)) {
 		case 0:
 			(void)write(ofd, data.data, data.size);
 			if (ofd == STDOUT_FILENO)
@@ -515,241 +496,227 @@ dump(dbp, rev)
 		case 1:
 			goto done;
 		case -1:
-			err("line %lu: (dump) seq: %s",
-			    lineno, strerror(errno));
+			err(1, "line %zu: (dump) seq failed", lineno);
 			/* NOTREACHED */
 		}
 done:	return;
 }
 	
-u_int
-setflags(s)
-	char *s;
+static u_int
+setflags(char *s)
 {
-	char *p, *index();
+	char *p;
 
-	for (; isspace(*s); ++s);
+	for (; isspace((unsigned char)*s); ++s);
 	if (*s == '\n' || *s == '\0')
-		return (0);
-	if ((p = index(s, '\n')) != NULL)
+		return 0;
+	if ((p = strchr(s, '\n')) != NULL)
 		*p = '\0';
-	if (!strcmp(s, "R_CURSOR"))		return (R_CURSOR);
-	if (!strcmp(s, "R_FIRST"))		return (R_FIRST);
-	if (!strcmp(s, "R_IAFTER")) 		return (R_IAFTER);
-	if (!strcmp(s, "R_IBEFORE")) 		return (R_IBEFORE);
-	if (!strcmp(s, "R_LAST")) 		return (R_LAST);
-	if (!strcmp(s, "R_NEXT")) 		return (R_NEXT);
-	if (!strcmp(s, "R_NOOVERWRITE"))	return (R_NOOVERWRITE);
-	if (!strcmp(s, "R_PREV"))		return (R_PREV);
-	if (!strcmp(s, "R_SETCURSOR"))		return (R_SETCURSOR);
+	if (!strcmp(s, "R_CURSOR"))		return R_CURSOR;
+	if (!strcmp(s, "R_FIRST"))		return R_FIRST;
+	if (!strcmp(s, "R_IAFTER")) 		return R_IAFTER;
+	if (!strcmp(s, "R_IBEFORE")) 		return R_IBEFORE;
+	if (!strcmp(s, "R_LAST")) 		return R_LAST;
+	if (!strcmp(s, "R_NEXT")) 		return R_NEXT;
+	if (!strcmp(s, "R_NOOVERWRITE"))	return R_NOOVERWRITE;
+	if (!strcmp(s, "R_PREV"))		return R_PREV;
+	if (!strcmp(s, "R_SETCURSOR"))		return R_SETCURSOR;
 
-	err("line %lu: %s: unknown flag", lineno, s);
+	errx(1, "line %zu: %s: unknown flag", lineno, s);
 	/* NOTREACHED */
 }
 
-char *
-sflags(flags)
-	int flags;
+static const char *
+sflags(int xflags)
 {
-	switch (flags) {
-	case R_CURSOR:		return ("R_CURSOR");
-	case R_FIRST:		return ("R_FIRST");
-	case R_IAFTER:		return ("R_IAFTER");
-	case R_IBEFORE:		return ("R_IBEFORE");
-	case R_LAST:		return ("R_LAST");
-	case R_NEXT:		return ("R_NEXT");
-	case R_NOOVERWRITE:	return ("R_NOOVERWRITE");
-	case R_PREV:		return ("R_PREV");
-	case R_SETCURSOR:	return ("R_SETCURSOR");
+	switch (xflags) {
+	case R_CURSOR:		return "R_CURSOR";
+	case R_FIRST:		return "R_FIRST";
+	case R_IAFTER:		return "R_IAFTER";
+	case R_IBEFORE:		return "R_IBEFORE";
+	case R_LAST:		return "R_LAST";
+	case R_NEXT:		return "R_NEXT";
+	case R_NOOVERWRITE:	return "R_NOOVERWRITE";
+	case R_PREV:		return "R_PREV";
+	case R_SETCURSOR:	return "R_SETCURSOR";
 	}
 
-	return ("UNKNOWN!");
+	return "UNKNOWN!";
 }
 	
-DBTYPE
-dbtype(s)
-	char *s;
+static DBTYPE
+dbtype(const char *s)
 {
 	if (!strcmp(s, "btree"))
-		return (DB_BTREE);
+		return DB_BTREE;
 	if (!strcmp(s, "hash"))
-		return (DB_HASH);
+		return DB_HASH;
 	if (!strcmp(s, "recno"))
-		return (DB_RECNO);
-	err("%s: unknown type (use btree, hash or recno)", s);
+		return DB_RECNO;
+	errx(1, "%s: unknown type (use btree, hash or recno)", s);
 	/* NOTREACHED */
 }
 
-void *
-setinfo(type, s)
-	DBTYPE type;
-	char *s;
+static void *
+setinfo(DBTYPE dtype, char *s)
 {
 	static BTREEINFO ib;
 	static HASHINFO ih;
 	static RECNOINFO rh;
-	char *eq, *index();
+	char *eq;
 
-	if ((eq = index(s, '=')) == NULL)
-		err("%s: illegal structure set statement", s);
+	if ((eq = strchr(s, '=')) == NULL)
+		errx(1, "%s: illegal structure set statement", s);
 	*eq++ = '\0';
-	if (!isdigit(*eq))
-		err("%s: structure set statement must be a number", s);
+	if (!isdigit((unsigned char)*eq))
+		errx(1, "%s: structure set statement must be a number", s);
 		
-	switch (type) {
+	switch (dtype) {
 	case DB_BTREE:
 		if (!strcmp("flags", s)) {
 			ib.flags = atoi(eq);
-			return (&ib);
+			return &ib;
 		}
 		if (!strcmp("cachesize", s)) {
 			ib.cachesize = atoi(eq);
-			return (&ib);
+			return &ib;
 		}
 		if (!strcmp("maxkeypage", s)) {
 			ib.maxkeypage = atoi(eq);
-			return (&ib);
+			return &ib;
 		}
 		if (!strcmp("minkeypage", s)) {
 			ib.minkeypage = atoi(eq);
-			return (&ib);
+			return &ib;
 		}
 		if (!strcmp("lorder", s)) {
 			ib.lorder = atoi(eq);
-			return (&ib);
+			return &ib;
 		}
 		if (!strcmp("psize", s)) {
 			ib.psize = atoi(eq);
-			return (&ib);
+			return &ib;
 		}
 		break;
 	case DB_HASH:
 		if (!strcmp("bsize", s)) {
 			ih.bsize = atoi(eq);
-			return (&ih);
+			return &ih;
 		}
 		if (!strcmp("ffactor", s)) {
 			ih.ffactor = atoi(eq);
-			return (&ih);
+			return &ih;
 		}
 		if (!strcmp("nelem", s)) {
 			ih.nelem = atoi(eq);
-			return (&ih);
+			return &ih;
 		}
 		if (!strcmp("cachesize", s)) {
 			ih.cachesize = atoi(eq);
-			return (&ih);
+			return &ih;
 		}
 		if (!strcmp("lorder", s)) {
 			ih.lorder = atoi(eq);
-			return (&ih);
+			return &ih;
 		}
 		break;
 	case DB_RECNO:
 		if (!strcmp("flags", s)) {
 			rh.flags = atoi(eq);
-			return (&rh);
+			return &rh;
 		}
 		if (!strcmp("cachesize", s)) {
 			rh.cachesize = atoi(eq);
-			return (&rh);
+			return &rh;
 		}
 		if (!strcmp("lorder", s)) {
 			rh.lorder = atoi(eq);
-			return (&rh);
+			return &rh;
 		}
 		if (!strcmp("reclen", s)) {
 			rh.reclen = atoi(eq);
-			return (&rh);
+			return &rh;
 		}
 		if (!strcmp("bval", s)) {
 			rh.bval = atoi(eq);
-			return (&rh);
+			return &rh;
 		}
 		if (!strcmp("psize", s)) {
 			rh.psize = atoi(eq);
-			return (&rh);
+			return &rh;
 		}
 		break;
 	}
-	err("%s: unknown structure value", s);
+	errx(1, "%s: unknown structure value", s);
 	/* NOTREACHED */
 }
 
-void *
-rfile(name, lenp)
-	char *name;
-	size_t *lenp;
+static void *
+rfile(char *name, size_t *lenp)
 {
 	struct stat sb;
 	void *p;
 	int fd;
-	char *np, *index();
+	char *np;
 
-	for (; isspace(*name); ++name);
-	if ((np = index(name, '\n')) != NULL)
+	for (; isspace((unsigned char)*name); ++name)
+		continue;
+	if ((np = strchr(name, '\n')) != NULL)
 		*np = '\0';
-	if ((fd = open(name, O_RDONLY, 0)) < 0 ||
-	    fstat(fd, &sb))
-		err("%s: %s\n", name, strerror(errno));
+	if ((fd = open(name, O_RDONLY, 0)) == -1 || fstat(fd, &sb) == -1)
+		err(1, "Cannot open `%s'", name);
 #ifdef NOT_PORTABLE
-	if (sb.st_size > (off_t)SIZE_T_MAX)
-		err("%s: %s\n", name, strerror(E2BIG));
+	if (sb.st_size > (off_t)SIZE_T_MAX) {
+		errno = E2BIG;
+		err("Cannot process `%s'", name);
+	}
 #endif
-	if ((p = (void *)malloc((u_int)sb.st_size)) == NULL)
-		err("%s", strerror(errno));
-	(void)read(fd, p, (int)sb.st_size);
-	*lenp = sb.st_size;
+	if ((p = malloc((size_t)sb.st_size)) == NULL)
+		err(1, "Cannot allocate %zu bytes", (size_t)sb.st_size);
+	if (read(fd, p, (ssize_t)sb.st_size) != (ssize_t)sb.st_size)
+		err(1, "read failed");
+	*lenp = (size_t)sb.st_size;
 	(void)close(fd);
-	return (p);
+	return p;
 }
 
-void *
-xmalloc(text, len)
-	char *text;
-	size_t len;
+static void *
+xcopy(void *text, size_t len)
 {
 	void *p;
 
-	if ((p = (void *)malloc(len)) == NULL)
-		err("%s", strerror(errno));
-	memmove(p, text, len);
-	return (p);
+	if ((p = malloc(len)) == NULL)
+		err(1, "Cannot allocate %zu bytes", len);
+	(void)memmove(p, text, len);
+	return p;
 }
 
-void
-usage()
+static void
+chkcmd(enum S state)
+{
+	if (state != COMMAND)
+		errx(1, "line %zu: not expecting command", lineno);
+}
+
+static void
+chkdata(enum S state)
+{
+	if (state != DATA)
+		errx(1, "line %zu: not expecting data", lineno);
+}
+
+static void
+chkkey(enum S state)
+{
+	if (state != KEY)
+		errx(1, "line %zu: not expecting a key", lineno);
+}
+
+static void
+usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: dbtest [-l] [-f file] [-i info] [-o file] type script\n");
+	    "Usage: %s [-l] [-f file] [-i info] [-o file] type script\n",
+	    getprogname());
 	exit(1);
-}
-
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#if __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "dbtest: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
