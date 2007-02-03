@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1.36.5 2007/01/11 22:23:00 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.36.6 2007/02/03 10:04:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@
 
 typedef enum krw_t {
 	RW_READER = 0,
-	RW_WRITER = 1,
+	RW_WRITER = 1
 } krw_t;
 
 typedef struct krwlock krwlock_t;
