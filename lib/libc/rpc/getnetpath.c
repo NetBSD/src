@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetpath.c,v 1.11 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: getnetpath.c,v 1.12 2007/02/03 16:20:08 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static        char sccsid[] = "@(#)getnetpath.c	1.11 91/12/19 SMI";
 #else
-__RCSID("$NetBSD: getnetpath.c,v 1.11 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: getnetpath.c,v 1.12 2007/02/03 16:20:08 christos Exp $");
 #endif
 #endif
 
@@ -241,16 +241,16 @@ endnetpath(handlep)
  */
 
 char *
-_get_next_token(npp, token)
-	char *npp;		/* string */
-	int token;		/* char to parse string for */
+_get_next_token(
+	char *npp,		/* string */
+	int token		/* char to parse string for */
+)
 {
 	char  *cp;		/* char pointer */
 	char  *np;		/* netpath pointer */
 	char  *ep;		/* escape pointer */
 
 	_DIAGASSERT(npp != NULL);
-	_DIAGASSERT(token != NULL);
 
 	if ((cp = strchr(npp, token)) == NULL)
 		return (NULL);
