@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_page.c,v 1.10 2003/08/07 16:42:41 agc Exp $	*/
+/*	$NetBSD: bt_page.c,v 1.11 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)bt_page.c	8.3 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: bt_page.c,v 1.10 2003/08/07 16:42:41 agc Exp $");
+__RCSID("$NetBSD: bt_page.c,v 1.11 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 
+#include <assert.h>
 #include <stdio.h>
 
 #include <db.h>
@@ -61,9 +62,7 @@ __RCSID("$NetBSD: bt_page.c,v 1.10 2003/08/07 16:42:41 agc Exp $");
  *	mpool_put's the page.
  */
 int
-__bt_free(t, h)
-	BTREE *t;
-	PAGE *h;
+__bt_free(BTREE *t, PAGE *h)
 {
 	/* Insert the page at the head of the free list. */
 	h->prevpg = P_INVALID;
@@ -87,9 +86,7 @@ __bt_free(t, h)
  *	Pointer to a page, NULL on error.
  */
 PAGE *
-__bt_new(t, npg)
-	BTREE *t;
-	pgno_t *npg;
+__bt_new(BTREE *t, pgno_t *npg)
 {
 	PAGE *h;
 

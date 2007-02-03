@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.13 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: hash.h,v 1.14 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -96,8 +96,7 @@ typedef struct htab	 {		/* Memory resident data structure */
 	int		nsegs;		/* Number of allocated segments */
 	int		exsegs;		/* Number of extra allocated 
 					 * segments */
-	u_int32_t			/* Hash function */
-	    (*hash)__P((const void *, size_t));
+	u_int32_t	(*hash)(const void *, size_t);	/* Hash function */
 	int		flags;		/* Flag values */
 	int		fp;		/* File pointer */
 	char		*tmp_buf;	/* Temporary Buffer for BIG data */

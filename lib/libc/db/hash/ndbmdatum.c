@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbmdatum.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: ndbmdatum.c,v 1.2 2007/02/03 23:46:09 christos Exp $	*/
 /*	from: NetBSD: ndbm.c,v 1.18 2004/04/27 20:03:45 kleink Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: ndbmdatum.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: ndbmdatum.c,v 1.2 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +61,8 @@ __RCSID("$NetBSD: ndbmdatum.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
  *	DATUM on success
  *	NULL on failure
  */
-extern datum
-dbm_fetch(db, key)
-	DBM *db;
-	datum key;
+datum
+dbm_fetch(DBM *db, datum key)
 {
 	datum retdata;
 	int status;
@@ -87,9 +85,8 @@ dbm_fetch(db, key)
  *	DATUM on success
  *	NULL on failure
  */
-extern datum
-dbm_firstkey(db)
-	DBM *db;
+datum
+dbm_firstkey(DBM *db)
 {
 	int status;
 	datum retkey;
@@ -108,9 +105,8 @@ dbm_firstkey(db)
  *	DATUM on success
  *	NULL on failure
  */
-extern datum
-dbm_nextkey(db)
-	DBM *db;
+datum
+dbm_nextkey(DBM *db)
 {
 	int status;
 	datum retkey;
@@ -129,10 +125,8 @@ dbm_nextkey(db)
  *	 0 on success
  *	<0 failure
  */
-extern int
-dbm_delete(db, key)
-	DBM *db;
-	datum key;
+int
+dbm_delete(DBM *db, datum key)
 {
 	int status;
 	DBT dbtkey;
@@ -152,11 +146,8 @@ dbm_delete(db, key)
  *	<0 failure
  *	 1 if DBM_INSERT and entry exists
  */
-extern int
-dbm_store(db, key, data, flags)
-	DBM *db;
-	datum key, data;
-	int flags;
+int
+dbm_store(DBM *db, datum key, datum data, int flags)
 {
 	DBT dbtkey, dbtdata;
 
