@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.73 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.74 2007/02/03 16:22:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.73 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.74 2007/02/03 16:22:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1773,7 +1773,8 @@ _passwdcompat_bad(void *nsrv, void *nscb, va_list ap)
 {
 	static int warned;
 
-	_DIAGASSERT(cb_data != NULL);
+	_DIAGASSERT(nsrv != NULL);
+	_DIAGASSERT(nscb != NULL);
 
 	if (!warned) {
 		syslog(LOG_ERR,
