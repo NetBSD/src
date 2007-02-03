@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_put.c,v 1.14 2003/12/30 21:20:16 martin Exp $	*/
+/*	$NetBSD: bt_put.c,v 1.15 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)bt_put.c	8.8 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_put.c,v 1.14 2003/12/30 21:20:16 martin Exp $");
+__RCSID("$NetBSD: bt_put.c,v 1.15 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +53,7 @@ __RCSID("$NetBSD: bt_put.c,v 1.14 2003/12/30 21:20:16 martin Exp $");
 #include <db.h>
 #include "btree.h"
 
-static EPG *bt_fast __P((BTREE *, const DBT *, const DBT *, int *));
+static EPG *bt_fast(BTREE *, const DBT *, const DBT *, int *);
 
 /*
  * __BT_PUT -- Add a btree item to the tree.
@@ -68,11 +69,7 @@ static EPG *bt_fast __P((BTREE *, const DBT *, const DBT *, int *));
  *	tree and R_NOOVERWRITE specified.
  */
 int
-__bt_put(dbp, key, data, flags)
-	const DB *dbp;
-	DBT *key;
-	const DBT *data;
-	u_int flags;
+__bt_put(const DB *dbp, DBT *key, const DBT *data, u_int flags)
 {
 	BTREE *t;
 	DBT tkey, tdata;
@@ -144,8 +141,9 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tdata.data = db;
 			tdata.size = NOVFLSIZE;
 			memmove(db, &pg, sizeof(pgno_t));
-			temp = data->size;
-			memmove(db + sizeof(pgno_t),
+			_DBFIT(data->size, u_int32_t);
+			temp = (u_int32_t)data->size;
+			(void)memmove(db + sizeof(pgno_t),
 			    &temp, sizeof(u_int32_t));
 			dflags |= P_BIGDATA;
 			data = &tdata;
@@ -269,10 +267,7 @@ u_long bt_cache_hit, bt_cache_miss;
  * 	EPG for new record or NULL if not found.
  */
 static EPG *
-bt_fast(t, key, data, exactp)
-	BTREE *t;
-	const DBT *key, *data;
-	int *exactp;
+bt_fast(BTREE *t, const DBT *key, const DBT *data, int *exactp)
 {
 	PAGE *h;
 	u_int32_t nbytes;

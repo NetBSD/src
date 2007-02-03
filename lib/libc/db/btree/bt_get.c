@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_get.c,v 1.10 2003/08/07 16:42:41 agc Exp $	*/
+/*	$NetBSD: bt_get.c,v 1.11 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)bt_get.c	8.6 (Berkeley) 7/20/94";
 #else
-__RCSID("$NetBSD: bt_get.c,v 1.10 2003/08/07 16:42:41 agc Exp $");
+__RCSID("$NetBSD: bt_get.c,v 1.11 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -64,11 +65,7 @@ __RCSID("$NetBSD: bt_get.c,v 1.10 2003/08/07 16:42:41 agc Exp $");
  *	RET_ERROR, RET_SUCCESS and RET_SPECIAL if the key not found.
  */
 int
-__bt_get(dbp, key, data, flags)
-	const DB *dbp;
-	const DBT *key;
-	DBT *data;
-	u_int flags;
+__bt_get(const DB *dbp, const DBT *key, DBT *data, u_int flags)
 {
 	BTREE *t;
 	EPG *e;

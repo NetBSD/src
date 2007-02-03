@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.20 2006/11/03 20:18:49 christos Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.21 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.20 2006/11/03 20:18:49 christos Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.21 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: bt_open.c,v 1.20 2006/11/03 20:18:49 christos Exp $");
 #include "namespace.h"
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -70,9 +71,9 @@ __RCSID("$NetBSD: bt_open.c,v 1.20 2006/11/03 20:18:49 christos Exp $");
 #define	MINPSIZE	128
 #endif
 
-static int byteorder __P((void));
-static int nroot __P((BTREE *));
-static int tmp __P((void));
+static int byteorder(void);
+static int nroot(BTREE *);
+static int tmp(void);
 
 /*
  * __BT_OPEN -- Open a btree.
@@ -91,12 +92,8 @@ static int tmp __P((void));
  *
  */
 DB *
-__bt_open(fname, flags, mode, openinfo, dflags)
-	const char *fname;
-	int flags;
-	mode_t mode;
-	const BTREEINFO *openinfo;
-	int dflags;
+__bt_open(const char *fname, int flags, mode_t mode, const BTREEINFO *openinfo,
+    int dflags)
 {
 	struct stat sb;
 	BTMETA m;
@@ -105,6 +102,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	DB *dbp;
 	pgno_t ncache;
 	ssize_t nr;
+	size_t temp;
 	int machine_lorder;
 
 	t = NULL;
@@ -304,8 +302,10 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	 * a key/data pair won't fit even if both key and data are on overflow
 	 * pages.
 	 */
-	t->bt_ovflsize = (t->bt_psize - BTDATAOFF) / b.minkeypage -
+	temp = (t->bt_psize - BTDATAOFF) / b.minkeypage -
 	    (sizeof(indx_t) + NBLEAFDBT(0, 0));
+	_DBFIT(temp, indx_t);
+	t->bt_ovflsize = (indx_t)temp;
 	if (t->bt_ovflsize < NBLEAFDBT(NOVFLSIZE, NOVFLSIZE) + sizeof(indx_t))
 		t->bt_ovflsize =
 		    NBLEAFDBT(NOVFLSIZE, NOVFLSIZE) + sizeof(indx_t);
@@ -357,8 +357,7 @@ err:	if (t) {
  *	RET_ERROR, RET_SUCCESS
  */
 static int
-nroot(t)
-	BTREE *t;
+nroot(BTREE *t)
 {
 	PAGE *meta, *root;
 	pgno_t npg;
@@ -391,7 +390,7 @@ nroot(t)
 }
 
 static int
-tmp()
+tmp(void)
 {
 	sigset_t set, oset;
 	size_t len;
@@ -420,7 +419,7 @@ tmp()
 }
 
 static int
-byteorder()
+byteorder(void)
 {
 	u_int32_t x;
 	u_char *p;
@@ -438,8 +437,7 @@ byteorder()
 }
 
 int
-__bt_fd(dbp)
-        const DB *dbp;
+__bt_fd(const DB *dbp)
 {
 	BTREE *t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_debug.c,v 1.12 2006/01/24 17:24:37 christos Exp $	*/
+/*	$NetBSD: bt_debug.c,v 1.13 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)bt_debug.c	8.5 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_debug.c,v 1.12 2006/01/24 17:24:37 christos Exp $");
+__RCSID("$NetBSD: bt_debug.c,v 1.13 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,8 +61,7 @@ __RCSID("$NetBSD: bt_debug.c,v 1.12 2006/01/24 17:24:37 christos Exp $");
  *	dbp:	pointer to the DB
  */
 void
-__bt_dump(dbp)
-	DB *dbp;
+__bt_dump(DB *dbp)
 {
 	BTREE *t;
 	PAGE *h;
@@ -104,8 +104,7 @@ __bt_dump(dbp)
  *	h:	pointer to the PAGE
  */
 void
-__bt_dmpage(h)
-	PAGE *h;
+__bt_dmpage(PAGE *h)
 {
 	BTMETA *m;
 	const char *sep;
@@ -138,9 +137,7 @@ __bt_dmpage(h)
  *	n:	page number to dump.
  */
 void
-__bt_dnpage(dbp, pgno)
-	DB *dbp;
-	pgno_t pgno;
+__bt_dnpage(DB *dbp, pgno_t pgno)
 {
 	BTREE *t;
 	PAGE *h;
@@ -159,8 +156,7 @@ __bt_dnpage(dbp, pgno)
  *	h:	pointer to the PAGE
  */
 void
-__bt_dpage(h)
-	PAGE *h;
+__bt_dpage(PAGE *h)
 {
 	BINTERNAL *bi;
 	BLEAF *bl;
@@ -255,8 +251,7 @@ __bt_dpage(h)
  *	dbp:	pointer to the DB
  */
 void
-__bt_stat(dbp)
-	DB *dbp;
+__bt_stat(DB *dbp)
 {
 	extern u_long bt_cache_hit, bt_cache_miss, bt_pfxsaved, bt_rootsplit;
 	extern u_long bt_sortsplit, bt_split;
@@ -307,10 +302,11 @@ __bt_stat(dbp)
 	(void)fprintf(stderr, "%d level%s with %ld keys",
 	    levels, levels == 1 ? "" : "s", nkeys);
 	if (F_ISSET(t, R_RECNO))
-		(void)fprintf(stderr, " (%ld header count)", t->bt_nrecs);
+		(void)fprintf(stderr, " (%ld header count)", (long)t->bt_nrecs);
 	(void)fprintf(stderr,
 	    "\n%lu pages (leaf %ld, internal %ld, overflow %ld)\n",
-	    pinternal + pleaf + pcont, pleaf, pinternal, pcont);
+	    (long)pinternal + pleaf + pcont, (long)pleaf, (long)pinternal,
+	    (long)pcont);
 	(void)fprintf(stderr, "%ld cache hits, %ld cache misses\n",
 	    bt_cache_hit, bt_cache_miss);
 	(void)fprintf(stderr, "%ld splits (%ld root splits, %ld sort splits)\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: btree.h,v 1.14 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: btree.h,v 1.15 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -89,7 +89,18 @@ typedef struct _page {
 #define	BTDATAOFF							\
 	(sizeof(pgno_t) + sizeof(pgno_t) + sizeof(pgno_t) +		\
 	    sizeof(u_int32_t) + sizeof(indx_t) + sizeof(indx_t))
-#define	NEXTINDEX(p)	(((p)->lower - BTDATAOFF) / sizeof(indx_t))
+
+#define	_NEXTINDEX(p) (((p)->lower - BTDATAOFF) / sizeof(indx_t))
+#ifdef _DIAGNOSTIC
+static __inline indx_t
+NEXTINDEX(const PAGE *p) {
+	size_t x = _NEXTINDEX(p);
+	_DBFIT(x, indx_t);
+	return (indx_t)x;
+}
+#else
+#define	NEXTINDEX(p) (indx_t)_NEXTINDEX(p)
+#endif
 
 /*
  * For pages other than overflow pages, there is an array of offsets into the
@@ -133,18 +144,29 @@ typedef struct _binternal {
 	((BINTERNAL *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
 /* Get the number of bytes in the entry. */
-#define NBINTERNAL(len)							\
-	BTLALIGN(sizeof(u_int32_t) + sizeof(pgno_t) + sizeof(u_char) + (len))
+#define _NBINTERNAL(len)						\
+    BTLALIGN(sizeof(u_int32_t) + sizeof(pgno_t) + sizeof(u_char) + (len))
+#ifdef _DIAGNOSTIC
+static __inline u_int32_t
+NBINTERNAL(u_int32_t len) {
+	size_t x = _NBINTERNAL(len);
+	_DBFIT(x, u_int32_t);
+	return (u_int32_t)x;
+}
+#else
+#define NBINTERNAL(len)	(u_int32_t)_NBINTERNAL(len)
+#endif
 
 /* Copy a BINTERNAL entry to the page. */
-#define	WR_BINTERNAL(p, size, pgno, flags) {				\
-	*(u_int32_t *)(void *)p = size;					\
+#define	WR_BINTERNAL(p, size, pgno, flags) do {				\
+	_DBFIT(size, u_int32_t);					\
+	*(u_int32_t *)(void *)p = (u_int32_t)size;			\
 	p += sizeof(u_int32_t);						\
 	*(pgno_t *)(void *)p = pgno;					\
 	p += sizeof(pgno_t);						\
 	*(u_char *)(void *)p = flags;					\
 	p += sizeof(u_char);						\
-}
+} while (/*CONSTCOND*/0)
 
 /*
  * For the recno internal pages, the item is a page number with the number of
@@ -164,11 +186,11 @@ typedef struct _rinternal {
 	BTLALIGN(sizeof(recno_t) + sizeof(pgno_t))
 
 /* Copy a RINTERAL entry to the page. */
-#define	WR_RINTERNAL(p, nrecs, pgno) {					\
+#define	WR_RINTERNAL(p, nrecs, pgno) do {				\
 	*(recno_t *)(void *)p = nrecs;					\
 	p += sizeof(recno_t);						\
 	*(pgno_t *)(void *)p = pgno;					\
-}
+} while (/*CONSTCOND*/0)
 
 /* For the btree leaf pages, the item is a key and data pair. */
 typedef struct _bleaf {
@@ -182,26 +204,39 @@ typedef struct _bleaf {
 #define	GETBLEAF(pg, indx)						\
 	((BLEAF *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
+
+/* Get the number of bytes in the user's key/data pair. */
+#define _NBLEAFDBT(ksize, dsize)					\
+    BTLALIGN(sizeof(u_int32_t) + sizeof(u_int32_t) + sizeof(u_char) +	\
+	    (ksize) + (dsize))
+#ifdef _DIAGNOSTIC
+static __inline u_int32_t
+NBLEAFDBT(size_t k, size_t d) {
+	size_t x = _NBLEAFDBT(k, d);
+	_DBFIT(x, u_int32_t);
+	return (u_int32_t)x;
+}
+#else
+#define NBLEAFDBT(p, q)	(u_int32_t)_NBLEAFDBT(p, q)
+#endif
+
 /* Get the number of bytes in the entry. */
 #define NBLEAF(p)	NBLEAFDBT((p)->ksize, (p)->dsize)
 
-/* Get the number of bytes in the user's key/data pair. */
-#define NBLEAFDBT(ksize, dsize)						\
-	BTLALIGN(sizeof(u_int32_t) + sizeof(u_int32_t) + sizeof(u_char) +	\
-	    (ksize) + (dsize))
-
 /* Copy a BLEAF entry to the page. */
-#define	WR_BLEAF(p, key, data, flags) {					\
-	*(u_int32_t *)(void *)p = key->size;				\
+#define	WR_BLEAF(p, key, data, flags) do {				\
+	_DBFIT(key->size, u_int32_t);					\
+	*(u_int32_t *)(void *)p = (u_int32_t)key->size;			\
 	p += sizeof(u_int32_t);						\
-	*(u_int32_t *)(void *)p = data->size;				\
+	_DBFIT(data->size, u_int32_t);					\
+	*(u_int32_t *)(void *)p = (u_int32_t)data->size;		\
 	p += sizeof(u_int32_t);						\
 	*(u_char *)(void *)p = flags;					\
 	p += sizeof(u_char);						\
-	memmove(p, key->data, key->size);				\
+	(void)memmove(p, key->data, key->size);				\
 	p += key->size;							\
-	memmove(p, data->data, data->size);				\
-}
+	(void)memmove(p, data->data, data->size);			\
+} while (/*CONSTCOND*/0)
 
 /* For the recno leaf pages, the item is a data entry. */
 typedef struct _rleaf {
@@ -214,21 +249,34 @@ typedef struct _rleaf {
 #define	GETRLEAF(pg, indx)						\
 	((RLEAF *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
+#define	_NRLEAFDBT(dsize)						\
+	BTLALIGN(sizeof(u_int32_t) + sizeof(u_char) + (dsize))
+
+#ifdef _DIAGNOSTIC
+static __inline u_int32_t
+NRLEAFDBT(size_t d) {
+	size_t x = _NRLEAFDBT(d);
+	_DBFIT(x, u_int32_t);
+	return (u_int32_t)x;
+}
+#else
+#define NRLEAFDBT(d)	(u_int32_t)_NRLEAFDBT(d)
+#endif
+
 /* Get the number of bytes in the entry. */
 #define NRLEAF(p)	NRLEAFDBT((p)->dsize)
 
 /* Get the number of bytes from the user's data. */
-#define	NRLEAFDBT(dsize)						\
-	BTLALIGN(sizeof(u_int32_t) + sizeof(u_char) + (dsize))
 
 /* Copy a RLEAF entry to the page. */
-#define	WR_RLEAF(p, data, flags) {					\
-	*(u_int32_t *)(void *)p = data->size;				\
+#define	WR_RLEAF(p, data, flags) do {					\
+	_DBFIT(data->size, u_int32_t);					\
+	*(u_int32_t *)(void *)p = (u_int32_t)data->size;		\
 	p += sizeof(u_int32_t);						\
 	*(u_char *)(void *)p = flags;					\
 	p += sizeof(u_char);						\
 	memmove(p, data->data, data->size);				\
-}
+} while (/*CONSTCOND*/0)
 
 /*
  * A record in the tree is either a pointer to a page and an index in the page
@@ -337,11 +385,11 @@ typedef struct _btree {
 	EPGNO	  bt_last;		/* last insert */
 
 					/* B: key comparison function */
-	int	(*bt_cmp) __P((const DBT *, const DBT *));
+	int	(*bt_cmp)(const DBT *, const DBT *);
 					/* B: prefix comparison function */
-	size_t	(*bt_pfx) __P((const DBT *, const DBT *));
+	size_t	(*bt_pfx)(const DBT *, const DBT *);
 					/* R: recno input function */
-	int	(*bt_irec) __P((struct _btree *, recno_t));
+	int	(*bt_irec)(struct _btree *, recno_t);
 
 	FILE	 *bt_rfp;		/* R: record FILE pointer */
 	int	  bt_rfd;		/* R: record file descriptor */

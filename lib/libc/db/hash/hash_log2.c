@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_log2.c,v 1.9 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: hash_log2.c,v 1.10 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_log2.c	8.2 (Berkeley) 5/31/94";
 #else
-__RCSID("$NetBSD: hash_log2.c,v 1.9 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: hash_log2.c,v 1.10 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,12 +53,12 @@ __RCSID("$NetBSD: hash_log2.c,v 1.9 2004/06/20 22:20:14 jmc Exp $");
 #include "extern.h"
 
 u_int32_t
-__log2(num)
-	u_int32_t num;
+__log2(u_int32_t num)
 {
-	register u_int32_t i, limit;
+	u_int32_t i, limit;
 
 	limit = 1;
-	for (i = 0; limit < num; limit = limit << 1, i++);
+	for (i = 0; limit < num; limit = limit << 1, i++)
+		continue;
 	return (i);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_conv.c,v 1.11 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: bt_conv.c,v 1.12 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,16 +41,17 @@
 #if 0
 static char sccsid[] = "@(#)bt_conv.c	8.5 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_conv.c,v 1.11 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: bt_conv.c,v 1.12 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <stdio.h>
 
 #include <db.h>
 #include "btree.h"
 
-static void mswap __P((PAGE *));
+static void mswap(PAGE *);
 
 /*
  * __BT_BPGIN, __BT_BPGOUT --
@@ -63,10 +64,7 @@ static void mswap __P((PAGE *));
  *	h:	page to convert
  */
 void
-__bt_pgin(t, pg, pp)
-	void *t;
-	pgno_t pg;
-	void *pp;
+__bt_pgin(void *t, pgno_t pg, void *pp)
 {
 	PAGE *h;
 	indx_t i, top;
@@ -131,10 +129,7 @@ __bt_pgin(t, pg, pp)
 }
 
 void
-__bt_pgout(t, pg, pp)
-	void *t;
-	pgno_t pg;
-	void *pp;
+__bt_pgout(void *t, pgno_t pg, void *pp)
 {
 	PAGE *h;
 	indx_t i, top;
@@ -205,8 +200,7 @@ __bt_pgout(t, pg, pp)
  *	p:	page to convert
  */
 static void
-mswap(pg)
-	PAGE *pg;
+mswap(PAGE *pg)
 {
 	char *p;
 
