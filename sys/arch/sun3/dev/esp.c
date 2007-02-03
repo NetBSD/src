@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.24 2007/01/23 15:58:22 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.25 2007/02/03 05:17:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.24 2007/01/23 15:58:22 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.25 2007/02/03 05:17:30 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -157,7 +157,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	 * Hook up the DMA driver.
 	 */
 	esc->sc_dma = espdmafind(device_unit(&sc->sc_dev));
-	esc->sc_dma->sc_esp = sc; /* Point back to us */
+	esc->sc_dma->sc_client = sc; /* Point back to us */
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -276,10 +276,8 @@ int
 esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	uint32_t csr;
 
-	csr = DMACSR(esc->sc_dma);
-	return (csr & (D_INT_PEND|D_ERR_PEND));
+	return DMA_ISINTR(esc->sc_dma);
 }
 
 void 
@@ -295,7 +293,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (espdmaintr(esc->sc_dma));
+	return espdmaintr(esc->sc_dma);
 }
 
 int 
@@ -304,7 +302,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (dma_setup(esc->sc_dma, addr, len, datain, dmasize));
+	return dma_setup(esc->sc_dma, addr, len, datain, dmasize);
 }
 
 void 
@@ -312,9 +310,7 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	/* Start DMA */
-	DMACSR(esc->sc_dma) |= D_EN_DMA;
-	esc->sc_dma->sc_active = 1;
+	DMA_GO(esc->sc_dma);
 }
 
 void 
@@ -322,7 +318,7 @@ esp_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	DMACSR(esc->sc_dma) &= ~D_EN_DMA;
+	DMA_STOP(esc->sc_dma);
 }
 
 int 
@@ -330,5 +326,5 @@ esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (esc->sc_dma->sc_active);
+	return DMA_ISACTIVE(esc->sc_dma);
 }
