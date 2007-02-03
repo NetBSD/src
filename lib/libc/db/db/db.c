@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.13 2003/08/07 16:42:42 agc Exp $	*/
+/*	$NetBSD: db.c,v 1.14 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: db.c,v 1.13 2003/08/07 16:42:42 agc Exp $");
+__RCSID("$NetBSD: db.c,v 1.14 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,19 +47,15 @@ __RCSID("$NetBSD: db.c,v 1.13 2003/08/07 16:42:42 agc Exp $");
 #include <stdio.h>
 
 #include <db.h>
-static int __dberr __P((void));
+static int __dberr(void);
 
 #ifdef __weak_alias
 __weak_alias(dbopen,_dbopen)
 #endif
 
 DB *
-dbopen(fname, flags, mode, type, openinfo)
-	const char *fname;
-	int flags;
-	mode_t mode;
-	DBTYPE type;
-	const void *openinfo;
+dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
+    const void *openinfo)
 {
 
 #define	DB_FLAGS	(DB_LOCK | DB_SHMEM | DB_TXN)
@@ -84,7 +80,7 @@ dbopen(fname, flags, mode, type, openinfo)
 }
 
 static int
-__dberr()
+__dberr(void)
 {
 	return (RET_ERROR);
 }
@@ -96,8 +92,7 @@ __dberr()
  *	dbp:	pointer to the DB structure.
  */
 void
-__dbpanic(dbp)
-	DB *dbp;
+__dbpanic(DB *dbp)
 {
 	/* The only thing that can succeed is a close. */
 	dbp->del = (int (*)(const struct __db *, const DBT*, u_int))__dberr;

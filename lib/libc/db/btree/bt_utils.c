@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_utils.c,v 1.10 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: bt_utils.c,v 1.11 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)bt_utils.c	8.8 (Berkeley) 7/20/94";
 #else
-__RCSID("$NetBSD: bt_utils.c,v 1.10 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: bt_utils.c,v 1.11 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -71,11 +72,7 @@ __RCSID("$NetBSD: bt_utils.c,v 1.10 2004/06/20 22:20:14 jmc Exp $");
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__bt_ret(t, e, key, rkey, data, rdata, copy)
-	BTREE *t;
-	EPG *e;
-	DBT *key, *rkey, *data, *rdata;
-	int copy;
+__bt_ret(BTREE *t, EPG *e, DBT *key, DBT *rkey, DBT *data, DBT *rdata, int copy)
 {
 	BLEAF *bl;
 	void *p;
@@ -157,10 +154,7 @@ dataonly:
  *	> 0 if k1 is > record
  */
 int
-__bt_cmp(t, k1, e)
-	BTREE *t;
-	const DBT *k1;
-	EPG *e;
+__bt_cmp(BTREE *t, const DBT *k1, EPG *e)
 {
 	BINTERNAL *bi;
 	BLEAF *bl;
@@ -220,11 +214,10 @@ __bt_cmp(t, k1, e)
  *	> 0 if a is > b
  */
 int
-__bt_defcmp(a, b)
-	const DBT *a, *b;
+__bt_defcmp(const DBT *a, const DBT *b)
 {
-	register size_t len;
-	register u_char *p1, *p2;
+	size_t len;
+	u_char *p1, *p2;
 
 	/*
 	 * XXX
@@ -250,11 +243,10 @@ __bt_defcmp(a, b)
  *	Number of bytes needed to distinguish b from a.
  */
 size_t
-__bt_defpfx(a, b)
-	const DBT *a, *b;
+__bt_defpfx(const DBT *a, const DBT *b)
 {
-	register u_char *p1, *p2;
-	register size_t cnt, len;
+	u_char *p1, *p2;
+	size_t cnt, len;
 
 	cnt = 1;
 	len = MIN(a->size, b->size);

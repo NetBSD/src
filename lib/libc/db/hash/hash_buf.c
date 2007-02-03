@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.11 2004/06/20 22:20:14 jmc Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.12 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-__RCSID("$NetBSD: hash_buf.c,v 1.11 2004/06/20 22:20:14 jmc Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.12 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,17 +67,14 @@ __RCSID("$NetBSD: hash_buf.c,v 1.11 2004/06/20 22:20:14 jmc Exp $");
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#ifdef DEBUG
 #include <assert.h>
-#endif
 
 #include <db.h>
 #include "hash.h"
 #include "page.h"
 #include "extern.h"
 
-static BUFHEAD *newbuf __P((HTAB *, u_int32_t, BUFHEAD *));
+static BUFHEAD *newbuf(HTAB *, u_int32_t, BUFHEAD *);
 
 /* Unlink B from its place in the lru */
 #define BUF_REMOVE(B) { \
@@ -108,16 +105,17 @@ static BUFHEAD *newbuf __P((HTAB *, u_int32_t, BUFHEAD *));
  * be valid.  Therefore, you must always verify that its address matches the
  * address you are seeking.
  */
-extern BUFHEAD *
-__get_buf(hashp, addr, prev_bp, newpage)
-	HTAB *hashp;
-	u_int32_t addr;
-	BUFHEAD *prev_bp;
-	int newpage;	/* If prev_bp set, indicates a new overflow page. */
+BUFHEAD *
+__get_buf(
+	HTAB *hashp,
+	u_int32_t addr,
+	BUFHEAD *prev_bp,
+	int newpage	/* If prev_bp set, indicates a new overflow page. */
+)
 {
-	register BUFHEAD *bp;
-	register u_int32_t is_disk_mask;
-	register int is_disk, segment_ndx = 0;	/* pacify gcc */
+	BUFHEAD *bp;
+	u_int32_t is_disk_mask;
+	int is_disk, segment_ndx = 0;	/* pacify gcc */
 	SEGMENT segp = NULL;	/* pacify gcc */
 
 	is_disk = 0;
@@ -134,9 +132,7 @@ __get_buf(hashp, addr, prev_bp, newpage)
 
 		/* valid segment ensured by __call_hash() */
 		segp = hashp->dir[addr >> hashp->SSHIFT];
-#ifdef DEBUG
-		assert(segp != NULL);
-#endif
+		_DIAGASSERT(segp != NULL);
 		bp = PTROF(segp[segment_ndx]);
 		is_disk_mask = ISDISK(segp[segment_ndx]);
 		is_disk = is_disk_mask || !hashp->new_file;
@@ -164,14 +160,11 @@ __get_buf(hashp, addr, prev_bp, newpage)
  * If newbuf finds an error (returning NULL), it also sets errno.
  */
 static BUFHEAD *
-newbuf(hashp, addr, prev_bp)
-	HTAB *hashp;
-	u_int32_t addr;
-	BUFHEAD *prev_bp;
+newbuf(HTAB *hashp, u_int32_t addr, BUFHEAD *prev_bp)
 {
-	register BUFHEAD *bp;		/* The buffer we're going to use */
-	register BUFHEAD *xbp;		/* Temp pointer */
-	register BUFHEAD *next_xbp;
+	BUFHEAD *bp;		/* The buffer we're going to use */
+	BUFHEAD *xbp;		/* Temp pointer */
+	BUFHEAD *next_xbp;
 	SEGMENT segp;
 	int segment_ndx;
 	u_int16_t oaddr, *shortp;
@@ -184,7 +177,7 @@ newbuf(hashp, addr, prev_bp)
 	 */
 	if (hashp->nbufs || (bp->flags & BUF_PIN)) {
 		/* Allocate a new one */
-		if ((bp = (BUFHEAD *)calloc(1, sizeof(BUFHEAD))) == NULL)
+		if ((bp = calloc(1, sizeof(BUFHEAD))) == NULL)
 			return (NULL);
 		if ((bp->page = calloc(1, (size_t)hashp->BSIZE)) == NULL) {
 			free(bp);
@@ -221,9 +214,7 @@ newbuf(hashp, addr, prev_bp)
 			if (IS_BUCKET(bp->flags)) {
 				segment_ndx = bp->addr & (hashp->SGSIZE - 1);
 				segp = hashp->dir[bp->addr >> hashp->SSHIFT];
-#ifdef DEBUG
-				assert(segp != NULL);
-#endif
+				_DIAGASSERT(segp != NULL);
 
 				if (hashp->new_file &&
 				    ((bp->flags & BUF_MOD) ||
@@ -276,7 +267,7 @@ newbuf(hashp, addr, prev_bp)
 		 */
 #ifdef DEBUG1
 		(void)fprintf(stderr, "NEWBUF2: %d->ovfl was %d is now %d\n",
-		    prev_bp->addr, (prev_bp->ovfl ? bp->ovfl->addr : 0),
+		    prev_bp->addr, (prev_bp->ovfl ? prev_bp->ovfl->addr : 0),
 		    (bp ? bp->addr : 0));
 #endif
 		prev_bp->ovfl = bp;
@@ -287,10 +278,8 @@ newbuf(hashp, addr, prev_bp)
 	return (bp);
 }
 
-extern void
-__buf_init(hashp, nbytes)
-	HTAB *hashp;
-	u_int nbytes;
+void
+__buf_init(HTAB *hashp, u_int nbytes)
 {
 	BUFHEAD *bfp;
 	int npages;
@@ -312,10 +301,8 @@ __buf_init(hashp, nbytes)
 	 */
 }
 
-extern int
-__buf_free(hashp, do_free, to_disk)
-	HTAB *hashp;
-	int do_free, to_disk;
+int
+__buf_free(HTAB *hashp, int do_free, int to_disk)
 {
 	BUFHEAD *bp;
 
@@ -343,10 +330,8 @@ __buf_free(hashp, do_free, to_disk)
 	return (0);
 }
 
-extern void
-__reclaim_buf(hashp, bp)
-	HTAB *hashp;
-	BUFHEAD *bp;
+void
+__reclaim_buf(HTAB *hashp, BUFHEAD *bp)
 {
 	bp->ovfl = 0;
 	bp->addr = 0;

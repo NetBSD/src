@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_put.c,v 1.13 2003/08/07 16:42:44 agc Exp $	*/
+/*	$NetBSD: rec_put.c,v 1.14 2007/02/03 23:46:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)rec_put.c	8.7 (Berkeley) 8/18/94";
 #else
-__RCSID("$NetBSD: rec_put.c,v 1.13 2003/08/07 16:42:44 agc Exp $");
+__RCSID("$NetBSD: rec_put.c,v 1.14 2007/02/03 23:46:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,11 +64,7 @@ __RCSID("$NetBSD: rec_put.c,v 1.13 2003/08/07 16:42:44 agc Exp $");
  *	already in the tree and R_NOOVERWRITE specified.
  */
 int
-__rec_put(dbp, key, data, flags)
-	const DB *dbp;
-	DBT *key;
-	const DBT *data;
-	u_int flags;
+__rec_put(const DB *dbp, DBT *key, const DBT *data, u_int flags)
 {
 	BTREE *t;
 	DBT fdata, tdata;
@@ -191,11 +188,7 @@ einval:		errno = EINVAL;
  *	RET_ERROR, RET_SUCCESS
  */
 int
-__rec_iput(t, nrec, data, flags)
-	BTREE *t;
-	recno_t nrec;
-	const DBT *data;
-	u_int flags;
+__rec_iput(BTREE *t, recno_t nrec, const DBT *data, u_int flags)
 {
 	DBT tdata;
 	EPG *e;
@@ -218,7 +211,9 @@ __rec_iput(t, nrec, data, flags)
 		tdata.data = db;
 		tdata.size = NOVFLSIZE;
 		*(pgno_t *)(void *)db = pg;
-		*(u_int32_t *)(void *)(db + sizeof(pgno_t)) = data->size;
+		_DBFIT(data->size, u_int32_t);
+		*(u_int32_t *)(void *)(db + sizeof(pgno_t)) =
+		    (u_int32_t)data->size;
 		dflags = P_BIGDATA;
 		data = &tdata;
 	} else
