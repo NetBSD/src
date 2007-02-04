@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.131 2007/01/24 21:43:01 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.132 2007/02/04 19:23:49 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.131 2007/01/24 21:43:01 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.132 2007/02/04 19:23:49 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.131 2007/01/24 21:43:01 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.132 2007/02/04 19:23:49 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -158,6 +158,7 @@ typedef struct IFile {
     const char      *fname;	    /* name of file */
     int             lineno;	    /* line number in file */
     int             fd;		    /* the open file */
+    int             cond_depth;	    /* 'if' nesting when file opened */
     char            *P_str;         /* point to base of string buffer */
     char            *P_ptr;         /* point to next char of string buffer */
     char            *P_end;         /* point to the end of string buffer */
@@ -1938,8 +1939,9 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
 	/* sanity */
 	return;
 
-    /* Save exiting file info */
-    Lst_AtFront(includes, curFile);
+    if (curFile != NULL)
+	/* Save exiting file info */
+	Lst_AtFront(includes, curFile);
 
     /* Allocate and fill in new structure */
     curFile = emalloc(sizeof *curFile);
@@ -1953,6 +1955,7 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
     curFile->fname = name;
     curFile->lineno = line;
     curFile->fd = fd;
+    curFile->cond_depth = Cond_save_depth();
 
     ParseSetParseFile(name);
 
@@ -2058,11 +2061,8 @@ ParseTraditionalInclude(char *line)
 static int
 ParseEOF(void)
 {
-    IFile *next_file =  Lst_DeQueue(includes);
-
-    if (next_file == NULL)
-	/* Make sure conditionals are clean - before we trash curFile */
-	Cond_End();
+    /* Ensure the makefile (or loop) didn't have mismatched conditionals */
+    Cond_restore_depth(curFile->cond_depth);
 
     /* Dispose of curFile info */
     /* Leak curFile->fname because all the gnodes have pointers to it */
@@ -2071,9 +2071,9 @@ ParseEOF(void)
     free(curFile->P_str);
     free(curFile);
 
-    curFile = next_file;
+    curFile = Lst_DeQueue(includes);
 
-    if (curFile == NULL) {
+    if (curFile == (IFile *)NIL) {
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
