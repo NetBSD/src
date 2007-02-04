@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.140 2007/01/26 02:27:29 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.141 2007/02/04 04:59:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.140 2007/01/26 02:27:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.141 2007/02/04 04:59:39 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -735,7 +735,7 @@ pccbb_pci_callback(self)
 	caa.caa_ph = &sc->sc_pcmcia_h;
 
 	if (NULL != (csc = (void *)config_found(self, &caa, cbbprint))) {
-		DPRINTF(("pccbbattach: found cardslot\n"));
+		DPRINTF(("%s: found cardslot\n", __func__));
 		sc->sc_csc = csc;
 	}
 
