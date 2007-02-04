@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.42 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.43 2007/02/04 15:03:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.42 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.43 2007/02/04 15:03:20 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,38 +394,21 @@ union_root(mp, vpp)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int error;
-	int loselock;
 
 	/*
 	 * Return locked reference to root.
 	 */
 	VREF(um->um_uppervp);
-	if ((um->um_op == UNMNT_BELOW) &&
-	     VOP_ISLOCKED(um->um_uppervp)) {
-		loselock = 1;
-	} else {
-		vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
-		loselock = 0;
-	}
+	vn_lock(um->um_uppervp, LK_EXCLUSIVE | LK_RETRY);
 	if (um->um_lowervp)
 		VREF(um->um_lowervp);
-	error = union_allocvp(vpp, mp,
-			      (struct vnode *) 0,
-			      (struct vnode *) 0,
-			      (struct componentname *) 0,
-			      um->um_uppervp,
-			      um->um_lowervp,
-			      1);
+	error = union_allocvp(vpp, mp, NULL, NULL, NULL,
+			      um->um_uppervp, um->um_lowervp, 1);
 
 	if (error) {
-		if (!loselock)
-			VOP_UNLOCK(um->um_uppervp, 0);
-		vrele(um->um_uppervp);
+		vput(um->um_uppervp);
 		if (um->um_lowervp)
 			vrele(um->um_lowervp);
-	} else {
-		if (loselock)
-			VTOUNION(*vpp)->un_flags &= ~UN_ULOCK;
 	}
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.297 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.298 2007/02/04 15:03:20 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.297 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.298 2007/02/04 15:03:20 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -370,8 +370,8 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
-		checkdirs(vp);
 		VOP_UNLOCK(vp, 0);
+		checkdirs(vp);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
@@ -999,15 +999,15 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
+
+		vput(vp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error)
 			break;
-		vput(vp);
 		vp = tdp;
 	}
 	if (error) {
-		vput(vp);
 		goto out;
 	}
 	VOP_UNLOCK(vp, 0);
