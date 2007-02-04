@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.21.6.3 2007/01/25 08:50:14 blymn Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.21.6.4 2007/02/04 09:53:07 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.21.6.3 2007/01/25 08:50:14 blymn Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.21.6.4 2007/02/04 09:53:07 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -91,7 +91,8 @@ wclrtoeol(WINDOW *win)
 		if (sp->ch != win->bch || sp->attr != attr) {
 #else
 		if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
-		    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp) {
+		    (sp->attr & WA_ATTRIBUTES) != attr || sp->nsp
+		    || (WCOL(*sp) < 0)) {
 #endif /* HAVE_WCHAR */
 			maxx = sp;
 			if (minx == -1)
@@ -107,9 +108,9 @@ wclrtoeol(WINDOW *win)
 #endif /* HAVE_WCHAR */
 		}
 #ifdef DEBUG
-	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: minx = %d, maxx = %d, "
+	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: y = %d, minx = %d, maxx = %d, "
 	    "firstch = %d, lastch = %d\n",
-	    minx, (int) (maxx - win->lines[y]->line),
+	    y, minx, (int) (maxx - win->lines[y]->line),
 	    *win->lines[y]->firstchp, *win->lines[y]->lastchp);
 #endif
 	/* Update firstch and lastch for the line. */
