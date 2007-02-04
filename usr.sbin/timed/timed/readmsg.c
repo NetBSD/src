@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.20 2007/01/26 16:12:41 christos Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.21 2007/02/04 21:17:01 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.20 2007/01/26 16:12:41 christos Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.21 2007/02/04 21:17:01 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ again:
 		if ((n = recvfrom(sock, &msgin, sizeof(struct tsp), 0,
 			     (struct sockaddr*)(void *)&from, &length)) < 0) {
 			syslog(LOG_ERR, "recvfrom: %m");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		if (n < (ssize_t)sizeof(struct tsp)) {
 			syslog(LOG_NOTICE,
