@@ -1,4 +1,4 @@
-/*	$NetBSD: measure.c,v 1.15 2007/01/25 23:51:11 christos Exp $	*/
+/*	$NetBSD: measure.c,v 1.16 2007/02/04 21:17:01 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)measure.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: measure.c,v 1.15 2007/01/25 23:51:11 christos Exp $");
+__RCSID("$NetBSD: measure.c,v 1.16 2007/02/04 21:17:01 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,8 @@ static n_short seqno = 0;
 int					/* status val defined in globals.h */
 measure(u_long maxmsec,			/* wait this many msec at most */
 	u_long wmsec,			/* msec to wait for an answer */
-	char *hname,
-	struct sockaddr_in *addr,
+	const char *hname,
+	const struct sockaddr_in *addr,
 	int printerr)			/* print complaints on stderr */
 {
 	socklen_t length;
@@ -157,7 +157,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 			oicp.icmp_cksum = in_cksum(&oicp, sizeof(oicp));
 
 			count = sendto(sock_raw, &oicp, sizeof(oicp), 0,
-				       (struct sockaddr*)addr,
+				       (const struct sockaddr*)addr,
 				       sizeof(struct sockaddr));
 			if (count < 0) {
 				if (measure_status == HOSTDOWN)
