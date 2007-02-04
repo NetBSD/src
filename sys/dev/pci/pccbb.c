@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.143 2007/02/04 05:34:38 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.144 2007/02/04 21:04:37 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.143 2007/02/04 05:34:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.144 2007/02/04 21:04:37 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1031,6 +1031,8 @@ pccbbintr(void *arg)
 		}
 	}
 
+	aprint_debug("%s: enter sockevent %" PRIx32 "\n", __func__, sockevent);
+
 	if (sockevent & CB_SOCKET_EVENT_CD) {
 		sockstate = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 		if (0x00 != (sockstate & CB_SOCKET_STAT_CD)) {
@@ -1230,10 +1232,11 @@ STATIC int
 pccbb_power(cardbus_chipset_tag_t ct, int command)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)ct;
-	u_int32_t status, sock_ctrl, reg_ctrl;
+	u_int32_t status, osock_ctrl, sock_ctrl, reg_ctrl;
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
-	int on = 0, pwrcycle;
+	int on = 0, pwrcycle, s, times;
+	struct timeval before, after, diff;
 
 	DPRINTF(("pccbb_power: %s and %s [0x%x]\n",
 	    (command & CARDBUS_VCCMASK) == CARDBUS_VCC_UC ? "CARDBUS_VCC_UC" :
@@ -1250,7 +1253,7 @@ pccbb_power(cardbus_chipset_tag_t ct, int command)
 	    "UNKNOWN", command));
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
-	sock_ctrl = bus_space_read_4(memt, memh, CB_SOCKET_CTRL);
+	osock_ctrl = sock_ctrl = bus_space_read_4(memt, memh, CB_SOCKET_CTRL);
 
 	switch (command & CARDBUS_VCCMASK) {
 	case CARDBUS_VCC_UC:
@@ -1301,42 +1304,54 @@ pccbb_power(cardbus_chipset_tag_t ct, int command)
 	}
 
 	pwrcycle = sc->sc_pwrcycle;
+	aprint_debug("%s: osock_ctrl %#" PRIx32 " sock_ctrl %#" PRIx32 "\n",
+	    device_xname(&sc->sc_dev), osock_ctrl, sock_ctrl);
 
-#if 0
-	DPRINTF(("sock_ctrl: 0x%x\n", sock_ctrl));
-#endif
+	microtime(&before);
+	s = splbio();
 	bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
 
-	if (on) {
-		int s, error = 0;
-		struct timeval before, after, diff;
-
-		DPRINTF(("Waiting for bridge to power up\n"));
-		microtime(&before);
-		s = splbio();
-		while (pwrcycle == sc->sc_pwrcycle) {
-			/*
-			 * XXX: Set timeout to 200ms because power cycle event
-			 * will never happen when attaching a 16-bit card.
-			 */
-			if ((error = tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr",
-			    hz / 5)) == EWOULDBLOCK)
-				break;
+	/*
+	 * Wait as long as 200ms for a power-cycle interrupt.  If
+	 * interrupts are enabled, but the socket has already
+	 * changed to the desired status, keep waiting for the
+	 * interrupt.  "Consuming" the interrupt in this way keeps
+	 * the interrupt from prematurely waking some subsequent
+	 * pccbb_power call.
+	 *
+	 * XXX Not every bridge interrupts on the ->OFF transition.
+	 * XXX That's ok, we will time-out after 200ms.
+	 *
+	 * XXX The power cycle event will never happen when attaching
+	 * XXX a 16-bit card.  That's ok, we will time-out after
+	 * XXX 200ms.
+	 */
+	for (times = 5; --times >= 0; ) {
+		if (cold)
+			DELAY(40 * 1000);
+		else {
+			(void)tsleep(&sc->sc_pwrcycle, PWAIT, "pccpwr",
+			    hz / 25);
+			if (pwrcycle == sc->sc_pwrcycle)
+				continue;
 		}
-		splx(s);
-		microtime(&after);
-		timersub(&after, &before, &diff);
-		aprint_debug("%s: wait took%s %ld.%06lds\n",
-			sc->sc_dev.dv_xname,
-		    	error == EWOULDBLOCK ? " too long" : "",
-		    	diff.tv_sec, diff.tv_usec);
-
-		/*
-		 * Ok, wait a bit longer for things to settle.
-		 */
-		if (sc->sc_chipset == CB_TOPIC95B)
-			delay_ms(100, sc);
+		status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
+		if ((status & CB_SOCKET_STAT_PWRCYCLE) != 0 && on)
+			break;
+		if ((status & CB_SOCKET_STAT_PWRCYCLE) == 0 && !on)
+			break;
 	}
+	splx(s);
+	microtime(&after);
+	timersub(&after, &before, &diff);
+	aprint_debug("%s: wait took%s %ld.%06lds\n", sc->sc_dev.dv_xname,
+	    (on && times < 0) ? " too long" : "", diff.tv_sec, diff.tv_usec);
+
+	/*
+	 * Ok, wait a bit longer for things to settle.
+	 */
+	if (on && sc->sc_chipset == CB_TOPIC95B)
+		delay_ms(100, sc);
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 
