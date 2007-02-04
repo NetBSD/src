@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.10 2007/02/04 14:05:19 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.11 2007/02/04 14:08:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.10 2007/02/04 14:05:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.11 2007/02/04 14:08:11 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -706,10 +706,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	}
 
 	/*
-	 * Set up the sigwait list. Pass pointer to kmem_alloced memory here;
-	 * it's not possible to pass pointer to a structure on current
-	 * process's stack, the current LWP might be swapped out when the
-	 * when the signal is delivered.
+	 * Set up the sigwait list.
 	 */
 	l->l_sigwaited = ksi;
 	LIST_INSERT_HEAD(&p->p_sigwaiters, l, l_sigwaiter);
