@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81.4.9 2007/02/01 08:48:37 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.10 2007/02/04 14:42:36 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.9 2007/02/01 08:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.10 2007/02/04 14:42:36 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -137,6 +137,11 @@ static const u_int sysctl_lwpflagmap[] = {
 	L_SELECT, KP_SELECT,
 	L_SINTR, KP_SINTR,
 	L_SYSTEM, KP_SYSTEM,
+	0
+};
+
+static const u_int sysctl_lwpprflagmap[] = {
+	LPR_DETACHED, KL_DETACHED,
 	0
 };
 
@@ -2926,7 +2931,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_addr = PTRTOUINT64(l->l_addr);
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
-	kl->l_flag = l->l_flag;
+	kl->l_flag = sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
 
 	kl->l_swtime = l->l_swtime;
 	kl->l_slptime = l->l_slptime;
