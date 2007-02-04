@@ -1,4 +1,4 @@
-/*	$NetBSD: login_cap.c,v 1.26 2006/12/20 16:47:13 christos Exp $	*/
+/*	$NetBSD: login_cap.c,v 1.27 2007/02/04 08:19:26 elad Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,13 +36,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: login_cap.c,v 1.26 2006/12/20 16:47:13 christos Exp $");
+__RCSID("$NetBSD: login_cap.c,v 1.27 2007/02/04 08:19:26 elad Exp $");
 #endif /* LIBC_SCCS and not lint */
  
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/param.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -557,6 +558,7 @@ setclasscontext(const char *class, u_int flags)
 int
 setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 {
+	char per_user_tmp[MAXPATHLEN + 1];
 	login_cap_t *flc;
 	quad_t p;
 	int i;
@@ -605,6 +607,33 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 			return (-1);
 		}
 	}
+
+	/* Create per-user temporary directories if needed. */
+	if (readlink("/tmp", per_user_tmp, sizeof(per_user_tmp)) != -1) {
+		static const char atuid[] = "/@uid";
+		char *lp;
+
+		/* Check if it's magic symlink. */
+		lp = strstr(per_user_tmp, atuid);
+		if (lp != NULL && *(lp + (sizeof(atuid) - 1)) == '\0') {
+			lp++;
+
+			if ((sizeof(per_user_tmp) - (lp - per_user_tmp)) < 64) {
+				syslog(LOG_ERR, "real temporary path too long");
+				login_close(flc);
+				return (-1);
+			}
+			(void)sprintf(lp, "/%u", pwd->pw_uid); /* safe */
+			if (mkdir(per_user_tmp, S_IRWXU) != -1) {
+				(void)chown(per_user_tmp, pwd->pw_uid,
+				    pwd->pw_gid);
+			} else {
+				syslog(LOG_ERR, "can't create `%s' directory",
+				    per_user_tmp);
+			}
+		}
+	}
+	errno = 0;
 
 	if (flags & LOGIN_SETLOGIN)
 		if (setlogin(pwd->pw_name) < 0) {
