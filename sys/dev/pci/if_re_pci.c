@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.22 2007/02/04 03:20:23 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.23 2007/02/04 04:39:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -122,6 +122,9 @@ static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
 	    RTK_HWREV_8169_8110SB,
 	    "RealTek 8169SB/8110SB Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
+	    RTK_HWREV_8169_8110SC,
+	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169SC,
 	    RTK_HWREV_8169_8110SC,
 	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
