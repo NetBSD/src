@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.8 2006/04/02 11:20:46 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.9 2007/02/04 06:16:12 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.8 2006/04/02 11:20:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.9 2007/02/04 06:16:12 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1321,7 +1321,7 @@ mec_rxintr(struct mec_softc *sc)
 		len = rxstat & MEC_RXSTAT_LEN;
 
 		if (len < ETHER_MIN_LEN ||
-		    len > ETHER_MAX_LEN) {
+		    len > (MCLBYTES - MEC_ETHER_ALIGN)) {
 			/* invalid length packet; drop it. */
 			DPRINTF(MEC_DEBUG_RXINTR,
 			    ("mec_rxintr: wrong packet\n"));
