@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.111 2006/12/23 09:12:35 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.112 2007/02/04 08:19:26 elad Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 4, 2006
+.Dd February 4, 2007
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -313,6 +313,18 @@ to trim logfiles before syslogd starts.
 Intended for laptop users.
 Passes
 .Sy newsyslog_flags .
+.It Sy per_user_tmp
+.Sq YES
+or
+.Sq NO .
+Enables a per-user
+.Pa /tmp
+directory.
+.Sy per_user_tmp_dir
+can be used to override the default location of the
+.Dq real
+temporary directories,
+.Dq Pa /private/tmp .
 .It Sy savecore
 .Sq YES
 or
