@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.108 2006/12/14 02:28:30 reed Exp $
+#	$NetBSD: special,v 1.109 2007/02/04 08:19:26 elad Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -222,6 +222,7 @@
 ./etc/rc.d/nfslocking		type=file mode=0555
 ./etc/rc.d/ntpd			type=file mode=0555
 ./etc/rc.d/ntpdate		type=file mode=0555
+./etc/rc.d/perusertmp		type=file mode=0555
 ./etc/rc.d/pf			type=file mode=0555
 ./etc/rc.d/pf_boot		type=file mode=0555
 ./etc/rc.d/pflogd		type=file mode=0555
@@ -310,6 +311,9 @@
 ./etc/racoon			type=dir  mode=0755 optional
 ./etc/racoon/racoon.conf	type=file mode=0644 optional
 ./etc/racoon/psk.txt		type=file mode=0600 optional tags=nodiff
+
+./private			type=dir mode=0755 optional
+./private/tmp			type=dir mode=0111 optional ignore
 
 ./root				type=dir  mode=0755
 ./root/.cshrc			type=file mode=0644
