@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.13 2007/01/31 19:56:38 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.14 2007/02/04 14:05:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.13 2007/01/31 19:56:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.14 2007/02/04 14:05:18 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1129,7 +1129,7 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 		if ((l = lwp_find(p, ksi->ksi_lid)) == NULL)
 			return 0;
 		if (l->l_sigwaited == NULL ||
-		    !sigismember(l->l_sigwait, signo))
+		    !sigismember(&l->l_sigwaitset, signo))
 			return 0;
 	} else {
 		/*
@@ -1137,7 +1137,7 @@ sigunwait(struct proc *p, const ksiginfo_t *ksi)
 		 */
 		LIST_FOREACH(l, &p->p_sigwaiters, l_sigwaiter) {
 			KASSERT(l->l_sigwaited != NULL);
-			if (sigismember(l->l_sigwait, signo))
+			if (sigismember(&l->l_sigwaitset, signo))
 				break;
 		}
 	}
