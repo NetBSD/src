@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: perusertmp,v 1.1 2007/02/04 08:19:26 elad Exp $
+# $NetBSD: perusertmp,v 1.2 2007/02/04 18:28:26 xtraeme Exp $
 #
 
 # PROVIDE: perusertmp
@@ -34,7 +34,7 @@ perusertmp_start()
 
 	# Fixup real temporary directory.
 	if [ ! -d ${per_user_tmp_dir} ]; then
-		/bin/mkdir ${per_user_tmp_dir}
+		/bin/mkdir -p ${per_user_tmp_dir}
 	fi
 	/usr/sbin/chown root:wheel ${per_user_tmp_dir}
 	/bin/chmod 0111 ${per_user_tmp_dir}
