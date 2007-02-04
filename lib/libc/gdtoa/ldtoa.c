@@ -1,4 +1,4 @@
-/*	$NetBSD: ldtoa.c,v 1.1 2007/02/02 23:03:35 christos Exp $	*/
+/*	$NetBSD: ldtoa.c,v 1.2 2007/02/04 03:05:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 David Schultz <das@FreeBSD.ORG>
@@ -30,7 +30,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_ldtoa.c,v 1.2 2004/01/18 07:53:49 das Exp $");
 #else
-__RCSID("$NetBSD: ldtoa.c,v 1.1 2007/02/02 23:03:35 christos Exp $");
+__RCSID("$NetBSD: ldtoa.c,v 1.2 2007/02/04 03:05:01 christos Exp $");
 #endif
 
 #include <float.h>
@@ -104,6 +104,6 @@ ldtoa(long double *ld, int mode, int ndigits, int *decpt, int *sign, char **rve)
 		*decpt = INT_MAX;
 	return ret;
 #else
-	return "";
+	return dtoa((double)ld, mode, ndigits, decpt, sign, rve);
 #endif
 }
