@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.h,v 1.25 2006/10/14 21:14:02 christos Exp $	*/
+/*	$NetBSD: mtree.h,v 1.26 2007/02/04 08:03:18 elad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,9 +38,6 @@
 			F_TIME | F_TYPE | F_UID | F_FLAGS)
 
 #define	MISMATCHEXIT	2
-
-/* Max. length of hash -- update this if needed when adding a new algorithm. */
-#define	MAXHASHLEN	128 /* SHA512 */
 
 typedef struct _node {
 	struct _node	*parent, *child;	/* up, down */

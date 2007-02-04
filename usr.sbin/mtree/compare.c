@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.50 2006/12/14 20:21:47 he Exp $	*/
+/*	$NetBSD: compare.c,v 1.51 2007/02/04 08:03:18 elad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.50 2006/12/14 20:21:47 he Exp $");
+__RCSID("$NetBSD: compare.c,v 1.51 2007/02/04 08:03:18 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ compare(NODE *s, FTSENT *p)
 	int fd, label;
 	const char *cp, *tab;
 #if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1) || !defined(NO_SHA2)
-	char digestbuf[MAXHASHLEN + 1];
+	char *digestbuf;
 #endif
 
 	tab = NULL;
@@ -392,7 +392,7 @@ typeerr:		LABEL;
 	}
 #ifndef NO_MD5
 	if (s->flags & F_MD5) {
-		if (MD5File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = MD5File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
 			printf("%smd5: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
@@ -404,12 +404,13 @@ typeerr:		LABEL;
 				    tab, s->md5digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_MD5 */
 #ifndef NO_RMD160
 	if (s->flags & F_RMD160) {
-		if (RMD160File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = RMD160File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
 			printf("%srmd160: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
@@ -421,12 +422,13 @@ typeerr:		LABEL;
 				    tab, s->rmd160digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_RMD160 */
 #ifndef NO_SHA1
 	if (s->flags & F_SHA1) {
-		if (SHA1File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA1File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
 			printf("%ssha1: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
@@ -438,12 +440,13 @@ typeerr:		LABEL;
 				    tab, s->sha1digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_SHA1 */
 #ifndef NO_SHA2
 	if (s->flags & F_SHA256) {
-		if (SHA256_File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA256_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
 			printf("%ssha256: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
@@ -455,10 +458,11 @@ typeerr:		LABEL;
 				    tab, s->sha256digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 	if (s->flags & F_SHA384) {
-		if (SHA384_File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA384_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
 			printf("%ssha384: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
@@ -470,10 +474,11 @@ typeerr:		LABEL;
 				    tab, s->sha384digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 	if (s->flags & F_SHA512) {
-		if (SHA512_File(p->fts_accpath, digestbuf) == NULL) {
+		if ((digestbuf = SHA512_File(p->fts_accpath, NULL)) == NULL) {
 			LABEL;
 			printf("%ssha512: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));
@@ -485,6 +490,7 @@ typeerr:		LABEL;
 				    tab, s->sha512digest, digestbuf);
 			}
 			tab = "\t";
+			free(digestbuf);
 		}
 	}
 #endif	/* ! NO_SHA2 */
