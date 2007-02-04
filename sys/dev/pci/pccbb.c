@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.141 2007/02/04 04:59:39 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.142 2007/02/04 05:08:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.141 2007/02/04 04:59:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.142 2007/02/04 05:08:18 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -99,22 +99,17 @@ struct cfdriver cbb_cd = {
 #endif
 
 /*
- * DELAY_MS() is wait in milliseconds.  It should be used instead
+ * delay_ms() is wait in milliseconds.  It should be used instead
  * of delay() if you want to wait more than 1 ms.
  */
-#define DELAY_MS(time, param)						\
-    do {								\
-	if (cold == 0) {						\
-	    int xtick = (hz*(time))/1000;				\
-									\
-	    if (xtick <= 1) {						\
-		xtick = 2;						\
-	    }								\
-	    tsleep((void *)(param), PWAIT, "pccbb", xtick);		\
-	} else {							\
-	    delay((time)*1000);						\
-	}								\
-    } while (/*CONSTCOND*/0)
+static inline void
+delay_ms(int millis, void *param)
+{
+	if (cold)
+		delay(millis * 1000);
+	else
+		tsleep(param, PWAIT, "pccbb", MAX(2, hz * millis / 1000));
+}
 
 int pcicbbmatch(struct device *, struct cfdata *, void *);
 void pccbbattach(struct device *, struct device *, void *);
@@ -1361,7 +1356,7 @@ pccbb_power(ct, command)
 		 * Ok, wait a bit longer for things to settle.
 		 */
 		if (sc->sc_chipset == CB_TOPIC95B)
-			DELAY_MS(100, sc);
+			delay_ms(100, sc);
 	}
 
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
@@ -1511,13 +1506,13 @@ cb_reset(sc)
 	/* Reset bit Assert (bit 6 at 0x3E) */
 	bcr |= CB_BCR_RESET_ENABLE;
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-	DELAY_MS(reset_duration, sc);
+	delay_ms(reset_duration, sc);
 
 	if (CBB_CARDEXIST & sc->sc_flags) {	/* A card exists.  Reset it! */
 		/* Reset bit Deassert (bit 6 at 0x3E) */
 		bcr &= ~CB_BCR_RESET_ENABLE;
 		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, bcr);
-		DELAY_MS(reset_duration, sc);
+		delay_ms(reset_duration, sc);
 	}
 	/* No card found on the slot. Keep Reset. */
 	return 1;
