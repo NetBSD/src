@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.63.6.6 2007/01/25 08:50:15 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.63.6.7 2007/02/04 09:54:23 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.63.6.6 2007/01/25 08:50:15 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.63.6.7 2007/02/04 09:54:23 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -44,10 +44,10 @@ __RCSID("$NetBSD: refresh.c,v 1.63.6.6 2007/01/25 08:50:15 blymn Exp $");
 #include "curses.h"
 #include "curses_private.h"
 
-static void	domvcur __P((int, int, int, int));
-static int	makech __P((int));
-static void	quickch __P((void));
-static void	scrolln __P((int, int, int, int, int));
+static void	domvcur(int, int, int, int);
+static int	makech(int);
+static void	quickch(void);
+static void	scrolln(int, int, int, int, int);
 
 static int _cursesi_wnoutrefresh(SCREEN *, WINDOW *,
 				 int, int, int, int, int, int);
@@ -632,11 +632,7 @@ static int
 makech(int wy)
 {
 	WINDOW	*win;
-#ifndef HAVE_WCHAR
-	static __LDATA blank = {' ', 0};
-#else
 	static __LDATA blank;
-#endif /* HAVE_WCHAR */
 	__LDATA *nsp, *csp, *cp, *cep;
 	int	clsp, nlsp;	/* Last space in lines. */
 	int	lch, wx;
