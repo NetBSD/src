@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.58 2007/02/03 18:02:57 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.59 2007/02/04 01:37:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.58 2007/02/03 18:02:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.59 2007/02/04 01:37:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ found:
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, addr, xlen, NULL,
 	    BUS_DMA_NOWAIT) != 0)
 		panic("%s: can't load dmamap", ncr_sc->sc_dev.dv_xname);
-	dh->dh_dmaaddr = sc->sc_dmap->dm_segs[0].ds_addr & DVMA_VME_SLAVE_MASK;
+	dh->dh_dmaaddr = sc->sc_dmap->dm_segs[0].ds_addr;
 	dh->dh_dmalen  = xlen;
 
 	/* Copy the "write" flag for convenience. */
