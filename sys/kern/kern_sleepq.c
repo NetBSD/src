@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.11 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.12 2007/02/04 16:04:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.11 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.12 2007/02/04 16:04:30 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -311,24 +311,18 @@ sleepq_unblock(int timo, int catch)
 			error = EWOULDBLOCK;
 	}
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	/*
-	 * Re-acquire the kernel lock.  XXXSMP This can come after the
-	 * ktrace stuff below once its safe to allocate memory unlocked.
-	 */
-	KERNEL_LOCK(l->l_biglocks, l);
-#endif
-
 	if (catch && (error == 0 || error == EPASSTHROUGH)) {
 		l->l_sleeperr = 0;
 		p = l->l_proc;
 		if ((l->l_flag & (L_CANCELLED | L_WEXIT | L_WCORE)) != 0)
 			error = EINTR;
 		else if ((l->l_flag & L_PENDSIG) != 0) {
+			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() */
 			mutex_enter(&p->p_smutex);
 			if ((sig = issignal(l)) != 0)
 				error = sleepq_sigtoerror(l, sig);
 			mutex_exit(&p->p_smutex);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		if (error == EPASSTHROUGH) {
 			/* Raced */
@@ -341,6 +335,7 @@ sleepq_unblock(int timo, int catch)
 		ktrcsw(l, 0, 0);
 #endif
 
+	KERNEL_LOCK(l->l_biglocks, l);
 	return error;
 }
 
