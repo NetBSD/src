@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.1.2.8 2007/02/03 16:35:30 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.1.2.9 2007/02/04 17:29:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.8 2007/02/03 16:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.1.2.9 2007/02/04 17:29:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -358,7 +358,9 @@ lockdebug_wantlock(u_int id, uintptr_t where, int shared)
 	lockdebuglk_t *lk;
 	lockdebug_t *ld;
 
-	if (panicstr != NULL || shared)
+	(void)shared;
+
+	if (panicstr != NULL)
 		return;
 
 	if ((ld = lockdebug_lookup(id, &lk)) == NULL)
