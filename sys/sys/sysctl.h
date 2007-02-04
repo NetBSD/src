@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.156.2.3 2007/01/12 01:04:24 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.156.2.4 2007/02/04 14:42:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -599,6 +599,11 @@ struct kinfo_proc2 {
 #define	KP_SYSCALL		0x04000000
 #define	KP_PAXMPROTECT		0x08000000
 #define	KP_PAXNOMPROTECT	0x10000000
+
+/*
+ * LWP compat flags.
+ */
+#define	KL_DETACHED		0x00800000
 
 /*
  * KERN_LWP structure. See notes on KERN_PROC2 about adding elements.
