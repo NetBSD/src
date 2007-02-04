@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.41.4.12 2007/01/30 13:51:42 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.41.4.13 2007/02/04 14:05:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -39,16 +39,19 @@
 #ifndef _SYS_LWP_H_
 #define _SYS_LWP_H_
 
-#if defined(_KERNEL)
-#include <machine/cpu.h>		/* curcpu() and cpu_info */
-#endif
-#include <machine/proc.h>		/* Machine-dependent proc substruct. */
+#include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/signalvar.h>
 #include <sys/specificdata.h>
+
+#if defined(_KERNEL)
+#include <machine/cpu.h>		/* curcpu() and cpu_info */
+#endif
+
+#include <machine/proc.h>		/* Machine-dependent proc substruct. */
 
 typedef volatile const void *wchan_t;
 
@@ -107,7 +110,7 @@ struct	lwp {
 
 	/* Signals */
 	int		l_sigrestore;	/* p: need to restore old sig mask */
-	sigset_t	*l_sigwait;	/* p: signals being waited for */
+	sigset_t	l_sigwaitset;	/* p: signals being waited for */
 	kcondvar_t	l_sigcv;	/* p: for sigsuspend() */
 	struct ksiginfo	*l_sigwaited;	/* p: delivered signals from set */
 	sigpend_t	*l_sigpendset;	/* p: XXX issignal()/postsig() baton */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.9 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.10 2007/02/04 14:05:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.9 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.10 2007/02/04 14:05:19 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -81,13 +81,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.9 2007/01/30 13:51:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/wait.h>
+#include <sys/kmem.h>
 
 #ifdef COMPAT_16
 /* ARGSUSED */
@@ -414,6 +414,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		return (EINVAL);
 	}
 
+	KERNEL_LOCK(1, l);	/* XXXSMP sigclearall() -> pool_put() */
 	mutex_enter(&p->p_mutex);	/* p_flag */
 	mutex_enter(&p->p_smutex);
 
@@ -508,6 +509,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
  out:
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
+	KERNEL_UNLOCK_ONE(l);	/* XXXSMP sigclearall() -> pool_put() */
 
 	return (error);
 }
@@ -638,7 +640,6 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 		syscallarg(siginfo_t *) info;
 		syscallarg(struct timespec *) timeout;
 	} */ *uap = v;
-	sigset_t *waitset;
 	struct proc *p = l->l_proc;
 	int error, signum;
 	int timo = 0;
@@ -670,31 +671,31 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 		getnanouptime(&tsstart);
 	}
 
-	MALLOC(waitset, sigset_t *, sizeof(sigset_t), M_TEMP, M_WAITOK);
-	if ((error = copyin(SCARG(uap, set), waitset, sizeof(sigset_t)))) {
-		FREE(waitset, M_TEMP);
+	error = copyin(SCARG(uap, set), &l->l_sigwaitset,
+	    sizeof(l->l_sigwaitset));
+	if (error != 0)
 		return (error);
-	}
 
 	/*
 	 * Silently ignore SA_CANTMASK signals. psignal1() would ignore
 	 * SA_CANTMASK signals in waitset, we do this only for the below
 	 * siglist check.
 	 */
-	sigminusset(&sigcantmask, waitset);
+	sigminusset(&sigcantmask, &l->l_sigwaitset);
 
 	/*
 	 * Allocate a ksi up front.  We can't sleep with the mutex held.
 	 */
-	if ((ksi = ksiginfo_alloc(p, NULL, PR_WAITOK)) == NULL) {
-		FREE(waitset, M_TEMP);
+	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_alloc() -> pool_get()  */
+	ksi = ksiginfo_alloc(p, NULL, PR_WAITOK);
+	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
+	if (ksi == NULL)
 		return (ENOMEM);
-	}
 
 	mutex_enter(&p->p_smutex);
 
-	if ((signum = sigget(&p->p_sigpend, ksi, 0, waitset)) == 0)
-		signum = sigget(&l->l_sigpend, ksi, 0, waitset);
+	if ((signum = sigget(&p->p_sigpend, ksi, 0, &l->l_sigwaitset)) == 0)
+		signum = sigget(&l->l_sigpend, ksi, 0, &l->l_sigwaitset);
 
 	if (signum != 0) {
 		/*
@@ -705,13 +706,12 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	}
 
 	/*
-	 * Set up the sigwait list. Pass pointer to malloced memory here;
+	 * Set up the sigwait list. Pass pointer to kmem_alloced memory here;
 	 * it's not possible to pass pointer to a structure on current
 	 * process's stack, the current LWP might be swapped out when the
 	 * when the signal is delivered.
 	 */
 	l->l_sigwaited = ksi;
-	l->l_sigwait = waitset;
 	LIST_INSERT_HEAD(&p->p_sigwaiters, l, l_sigwaiter);
 
 	/*
@@ -735,7 +735,6 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 		LIST_REMOVE(l, l_sigwaiter);
 	}
 
-	l->l_sigwait = NULL;
 	mutex_exit(&p->p_smutex);
 
 	/*
@@ -766,8 +765,9 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
  out:
-	FREE(waitset, M_TEMP);
+	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_free() -> pool_put()  */	
 	ksiginfo_free(ksi);
+	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 
 	if (error == 0)
 		error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),
