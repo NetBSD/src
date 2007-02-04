@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.1.2.3 2007/02/04 09:51:43 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.1.2.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.1.2.3 2007/02/04 09:51:43 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -190,7 +190,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	else
 		for (chp = wchstr, cnt = 0; chp->vals[0]; chp++, ++cnt);
 #ifdef DEBUG
-	__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: len=%d", cnt);
+	__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: len=%d\n", cnt);
 #endif /* DEBUG */
 	chp = wchstr;
 	x = win->curx;
@@ -227,11 +227,12 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 	/* add characters in the string */
 	ex = x;
 	while (cnt) {
+		x = ex;
 		wc = chp->vals[0];
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wadd_wchnstr: adding %x", wc);
 #endif /* DEBUG */
-        cw = wcwidth(wc);
+		cw = wcwidth(wc);
 		if (cw) {
 			/* spacing character */
 #ifdef DEBUG
@@ -279,6 +280,11 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				}
 			}
 			lp++, ex++;
+#ifdef DEBUG
+			__CTRACE(__CTRACE_INPUT,
+				"wadd_wchnstr: ex = %d, x = %d, cw = %d\n",
+				 ex, x, cw);
+#endif /* DEBUG */
 			while (ex - x <= cw - 1) {
 				np = lp->nsp;
 				if (np) {
