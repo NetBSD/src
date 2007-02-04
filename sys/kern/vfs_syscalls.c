@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.298 2007/02/04 15:03:20 chs Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.299 2007/02/04 20:33:02 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.298 2007/02/04 15:03:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.299 2007/02/04 20:33:02 elad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -2061,7 +2061,7 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 #if NVERIEXEC > 0
-	pathname_t pathbuf;
+	pathname_t pathbuf = NULL;
 #endif /* NVERIEXEC > 0 */
 
 restart:
@@ -3422,7 +3422,7 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 
 #if NVERIEXEC > 0
 	if (!error) {
-		pathname_t frompath, topath;
+		pathname_t frompath = NULL, topath = NULL;
 
 		error = pathname_get(fromnd.ni_dirp, fromnd.ni_segflg,
 		    &frompath);
