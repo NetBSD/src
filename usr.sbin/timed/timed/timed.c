@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.22 2007/01/26 16:12:41 christos Exp $	*/
+/*	$NetBSD: timed.c,v 1.23 2007/02/04 21:17:01 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.22 2007/01/26 16:12:41 christos Exp $");
+__RCSID("$NetBSD: timed.c,v 1.23 2007/02/04 21:17:01 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: timed.c,v 1.22 2007/01/26 16:12:41 christos Exp $");
 #include <sys/times.h>
 #include <util.h>
 #include <ifaddrs.h>
+#include <err.h>
 
 #ifdef HAVENIS
 #include <netgroup.h>
@@ -137,11 +138,11 @@ main(int argc, char *argv[])
 	extern int optind, opterr;
 	struct ifaddrs *ifap, *ifa;
 
-#define	IN_MSG "timed: -i and -n make no sense together\n"
+#define	IN_MSG "-i and -n make no sense together\n"
 #ifdef HAVENIS
-#define USAGE "timed: [-dtM] [-i net|-n net] [-F host1 host2 ...] [-G netgp]\n"
+#define USAGE "[-dtM] [-i net|-n net] [-F host1 host2 ...] [-G netgp]\n"
 #else
-#define USAGE "timed: [-dtM] [-i net|-n net] [-F host1 host2 ...]\n"
+#define USAGE "[-dtM] [-i net|-n net] [-F host1 host2 ...]\n"
 #endif /* HAVENIS */
 
 	ntip = NULL;
@@ -162,23 +163,17 @@ main(int argc, char *argv[])
 			break;
 
 		case 'n':
-			if (iflag) {
-				fprintf(stderr, IN_MSG);
-				exit(1);
-			} else {
-				nflag = ON;
-				addnetname(optarg);
-			}
+			if (iflag)
+				errx(EXIT_FAILURE, "%s", IN_MSG);
+			nflag = ON;
+			addnetname(optarg);
 			break;
 
 		case 'i':
-			if (nflag) {
-				fprintf(stderr, IN_MSG);
-				exit(1);
-			} else {
-				iflag = ON;
-				addnetname(optarg);
-			}
+			if (nflag)
+				errx(EXIT_FAILURE, "%s", IN_MSG);
+			iflag = ON;
+			addnetname(optarg);
 			break;
 
 		case 'F':
@@ -191,22 +186,17 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'G':
-			if (goodgroup != 0) {
-				fprintf(stderr,"timed: only one net group\n");
-				exit(1);
-			}
+			if (goodgroup != 0)
+				errx(EXIT_FAILURE, "timed: only one net group\n");
 			goodgroup = optarg;
 			break;
 		default:
-			fprintf(stderr, USAGE);
-			exit(1);
+			errx(EXIT_FAILURE, "%s", USAGE);
 			break;
 		}
 	}
-	if (optind < argc) {
-		fprintf(stderr, USAGE);
-		exit(1);
-	}
+	if (optind < argc)
+		errx(EXIT_FAILURE, "%s", USAGE);
 
 	/* If we care about which machine is the master, then we must
 	 *	be willing to be a master
@@ -214,10 +204,9 @@ main(int argc, char *argv[])
 	if (0 != goodgroup || 0 != goodhosts)
 		Mflag = 1;
 
-	if (gethostname(hostname, sizeof(hostname)) < 0) {
-		perror("gethostname");
-		exit(1);
-	}
+	if (gethostname(hostname, sizeof(hostname)) < 0)
+		err(EXIT_FAILURE, "gethostname");
+
 	hostname[sizeof(hostname) - 1] = '\0';
 	self.l_bak = &self;
 	self.l_fwd = &self;
@@ -230,29 +219,25 @@ main(int argc, char *argv[])
 		add_good_host(hostname,1);
 
 	srvp = getservbyname("timed", "udp");
-	if (srvp == 0) {
-		fprintf(stderr, "unknown service 'timed/udp'\n");
-		exit(1);
-	}
+	if (srvp == NULL)
+		errx(EXIT_FAILURE, "unknown service 'timed/udp'\n");
+
 	port = srvp->s_port;
 	(void)memset(&server, 0, sizeof(server));
 	server.sin_port = srvp->s_port;
 	server.sin_family = AF_INET;
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sock < 0) {
-		perror("socket");
-		exit(1);
-	}
-	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) {
-		perror("setsockopt");
-		exit(1);
-	}
+	if (sock < 0)
+		err(EXIT_FAILURE, "socket");
+
+	if (setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0) 
+		err(EXIT_FAILURE, "setsockopt");
+
 	if (bind(sock, (struct sockaddr*)(void *)&server, sizeof(server))) {
 		if (errno == EADDRINUSE)
-			fprintf(stderr,"timed: time daemon already running\n");
+			errx(EXIT_FAILURE, "time daemon already running\n");
 		else
-			perror("bind");
-		exit(1);
+			err(EXIT_FAILURE, "bind");
 	}
 
 	/* choose a unique seed for random number generation */
@@ -273,19 +258,15 @@ main(int argc, char *argv[])
 			if (nt->net != INADDR_NONE)
 				nentp = getnetbyaddr(nt->net, AF_INET);
 		}
-		if (nentp != 0) {
+		if (nentp != 0)
 			nt->net = nentp->n_net;
-		} else if (nt->net == INADDR_NONE) {
-			fprintf(stderr, "timed: unknown net %s\n", nt->name);
-			exit(1);
-		} else if (nt->net == INADDR_ANY) {
-			fprintf(stderr, "timed: bad net %s\n", nt->name);
-			exit(1);
-		} else {
-			fprintf(stderr,
-				"timed: warning: %s unknown in /etc/networks\n",
+		else if (nt->net == INADDR_NONE)
+			errx(EXIT_FAILURE, "unknown net %s\n", nt->name);
+		else if (nt->net == INADDR_ANY)
+			errx(EXIT_FAILURE, "bad net %s\n", nt->name);
+		else
+			warnx("warning: %s unknown in /etc/networks\n",
 				nt->name);
-		}
 
 		if (0 == (nt->net & 0xff000000))
 		    nt->net <<= 8;
@@ -294,10 +275,9 @@ main(int argc, char *argv[])
 		if (0 == (nt->net & 0xff000000))
 		    nt->net <<= 8;
 	}
-	if (getifaddrs(&ifap) != 0) {
-		perror("timed: get interface configuration");
-		exit(1);
-	}
+	if (getifaddrs(&ifap) != 0)
+		err(EXIT_FAILURE, "get interface configuration");
+
 	ntp = NULL;
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -350,10 +330,8 @@ main(int argc, char *argv[])
 	freeifaddrs(ifap);
 	if (ntp)
 		(void) free(ntp);
-	if (nettab == NULL) {
-		fprintf(stderr, "timed: no network usable\n");
-		exit(1);
-	}
+	if (nettab == NULL)
+		errx(EXIT_FAILURE, "no network usable\n");
 
 
 	/* microseconds to delay before responding to a broadcast */
@@ -706,12 +684,9 @@ addnetname(char *name)
 
 	while (*netlist)
 		netlist = &((*netlist)->next);
-	*netlist = malloc(sizeof **netlist);
-	if (*netlist == NULL) {
-		fprintf(stderr,"malloc failed\n");
-		exit(1);
-	}
-	(void)memset(*netlist, 0, sizeof(**netlist));
+	*netlist = calloc(1, sizeof **netlist);
+	if (*netlist == NULL)
+		err(EXIT_FAILURE, "malloc failed\n");
 	(*netlist)->name = name;
 }
 
@@ -723,21 +698,20 @@ add_good_host(const char* name,
 	struct goodhost *ghp;
 	struct hostent *hentp;
 
-	ghp = malloc(sizeof(*ghp));
+	ghp = calloc(1, sizeof(*ghp));
 	if (!ghp) {
 		syslog(LOG_ERR, "malloc failed");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
-	(void)memset(ghp, 0, sizeof(*ghp));
 	(void)strncpy(&ghp->name[0], name, sizeof(ghp->name));
 	ghp->next = goodhosts;
 	ghp->perm = perm;
 	goodhosts = ghp;
 
 	hentp = gethostbyname(name);
-	if (0 == hentp && perm)
-		(void)fprintf(stderr, "unknown host %s\n", name);
+	if (NULL == hentp && perm)
+		(void)warnx("unknown host %s\n", name);
 }
 
 

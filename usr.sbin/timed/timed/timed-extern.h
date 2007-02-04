@@ -1,4 +1,4 @@
-/*	$NetBSD: timed-extern.h,v 1.8 2007/01/26 16:12:41 christos Exp $	*/
+/*	$NetBSD: timed-extern.h,v 1.9 2007/02/04 21:17:01 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -65,7 +65,7 @@ void	 makeslave(struct netinfo *);
 void	 master(void);
 void	 masterack(void);
 void	 masterup(struct netinfo *);
-int	 measure(u_long, u_long, char *, struct sockaddr_in *, int);
+int	 measure(u_long, u_long, const char *, const struct sockaddr_in *, int);
 void	 msterup(struct netinfo *);
 void	 mstotvround(struct timeval *, long);
 long	 networkdelta(void);
