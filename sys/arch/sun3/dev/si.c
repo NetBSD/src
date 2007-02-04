@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.59 2007/02/04 01:37:09 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.60 2007/02/04 01:38:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.59 2007/02/04 01:37:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.60 2007/02/04 01:38:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,6 @@ found:
 
 	dh = &sc->sc_dma[i];
 	dh->dh_flags = SIDH_BUSY;
-	dh->dh_addr = addr;
 
 	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, addr, xlen, NULL,
 	    BUS_DMA_NOWAIT) != 0)

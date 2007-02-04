@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.9 2007/02/03 18:02:57 tsutsui Exp $	*/
+/*	$NetBSD: sivar.h,v 1.10 2007/02/04 01:38:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@ struct si_dma_handle {
 	int 		dh_flags;
 #define	SIDH_BUSY	1		/* This DH is in use */
 #define	SIDH_OUT	2		/* DMA does data out (write) */
-	void		*dh_addr;	/* KVA of start of buffer */
 	vaddr_t		dh_dmaaddr;	/* VA of buffer in DVMA space */
 	vsize_t		dh_dmalen;	/* Length of KVA mapping. */
 };
