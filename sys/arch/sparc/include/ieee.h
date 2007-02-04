@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.11 2007/02/03 16:44:45 christos Exp $	*/
+/*	$NetBSD: ieee.h,v 1.12 2007/02/04 00:39:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,6 @@
  */
 
 #if defined(__arch64__) || defined(_KERNEL)
-#define	EXT_EXPBITS	15
 
 #define	EXT_EXPBITS	15
 #define EXT_FRACHBITS	16
