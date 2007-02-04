@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.4.8 2007/02/03 16:32:50 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.9 2007/02/04 16:04:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.8 2007/02/03 16:32:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.9 2007/02/04 16:04:30 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -349,7 +349,7 @@ ktraddentry(struct lwp *l, struct ktrace_entry *kte, int flags)
 			callout_reset(&ktd->ktd_wakch,
 			    ktd->ktd_flags & KTDF_INTERACTIVE ?
 			    ktd->ktd_intrwakdl : ktd->ktd_wakedelay,
-			    (void (*)(void *))cv_broadcast_async,
+			    (void (*)(void *))ktd_wakeup,
 			    &ktd->ktd_cv);
 	}
 
@@ -371,10 +371,13 @@ freekte:
 void
 ktefree(struct ktrace_entry *kte)
 {
+	struct lwp *l = curlwp;
 
+	KERNEL_LOCK(1, l);			/* XXXSMP */
 	if (kte->kte_buf != kte->kte_space)
 		kmem_free(kte->kte_buf, kte->kte_bufsz);
 	pool_put(&kte_pool, kte);
+	KERNEL_UNLOCK_ONE(l);			/* XXXSMP */
 }
 
 /*
@@ -458,16 +461,18 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, struct lwp *l, int type,
 	if (ktrenter(l))
 		return EAGAIN;
 
+	KERNEL_LOCK(1, l);			/* XXXSMP */
 	kte = pool_get(&kte_pool, PR_WAITOK);
-
 	if (sz > sizeof(kte->kte_space)) {
 		if ((buf = kmem_alloc(sz, KM_SLEEP)) == NULL) {
 			pool_put(&kte_pool, kte);
+			KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 			ktrexit(l);
 			return ENOMEM;
 		}
 	} else
 		buf = kte->kte_space;
+	KERNEL_UNLOCK_ONE(l);			/* XXXSMP */
 
 	kte->kte_bufsz = sz;
 	kte->kte_buf = buf;
