@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.122 2007/01/04 20:24:08 elad Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.123 2007/02/04 14:48:51 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.122 2007/01/04 20:24:08 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.123 2007/02/04 14:48:51 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1898,11 +1898,13 @@ nfsrv_rename(nfsd, slp, lwp, mrq)
 		nfsm_srvwcc_data(fdirfor_ret, &fdirfor, fdiraft_ret, &fdiraft);
 		nfsm_srvwcc_data(tdirfor_ret, &tdirfor, tdiraft_ret, &tdiraft);
 		if (fdirp)
-			vput(fdirp);
+			vrele(fdirp);
 		vn_finished_write(mp, 0);
 		return (0);
 	}
-	VOP_UNLOCK(fdirp, 0);
+	if (fromnd.ni_dvp != fromnd.ni_vp) {
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
+	}
 	fvp = fromnd.ni_vp;
 	nfsm_srvmtofh(&tnsfh);
 	if (v3) {
