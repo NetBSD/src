@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.h,v 1.1.36.6 2007/02/03 10:04:45 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.36.7 2007/02/05 13:03:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -140,7 +140,7 @@ typedef struct krwlock krwlock_t;
 #define	RW_HAS_WAITERS		0x01UL	/* lock has waiters */
 #define	RW_WRITE_WANTED		0x02UL	/* >= 1 waiter is a writer */
 #define	RW_WRITE_LOCKED		0x04UL	/* lock is currently write locked */
-#define	RW_DOWNGRADING		0x08UL	/* pending release a downgrade */
+#define	RW_UNUSED		0x08UL	/* currently unused */
 
 #define	RW_READ_COUNT_SHIFT	4
 #define	RW_READ_INCR		(1UL << RW_READ_COUNT_SHIFT)
