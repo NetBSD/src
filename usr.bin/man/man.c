@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.34 2006/05/01 23:22:48 christos Exp $	*/
+/*	$NetBSD: man.c,v 1.35 2007/02/05 19:46:24 jwise Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.34 2006/05/01 23:22:48 christos Exp $");
+__RCSID("$NetBSD: man.c,v 1.35 2007/02/05 19:46:24 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,12 +378,12 @@ main(int argc, char **argv)
 	/*
 	 * now m.mymanpath is complete!
 	 */
-	if (MAN_DEBUG) {
-		printf("mymanpath:\n");
-		TAILQ_FOREACH(epath, &m.mymanpath->entrylist, q) {
-			printf("\t%s\n", epath->s);
-		}
+#if MAN_DEBUG
+	printf("mymanpath:\n");
+	TAILQ_FOREACH(epath, &m.mymanpath->entrylist, q) {
+		printf("\t%s\n", epath->s);
 	}
+#endif
 
 	/*
 	 * start searching for matching files and format them if necessary.   
