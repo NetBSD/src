@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.7 2007/01/31 13:09:11 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.8 2007/02/05 13:03:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.7 2007/01/31 13:09:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.8 2007/02/05 13:03:57 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -235,7 +235,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	 * therefore we can use an add operation to set them, which
 	 * means an add operation for both cases.
 	 */
-	if (op == RW_READER) {
+	if (__predict_true(op == RW_READER)) {
 		incr = RW_READ_INCR;
 		set_wait = RW_HAS_WAITERS;
 		need_wait = RW_WRITE_LOCKED | RW_WRITE_WANTED;
@@ -279,6 +279,13 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		ts = turnstile_lookup(rw);
 
 		/*
+		 * XXXSMP if this is a high priority LWP (interrupt handler
+		 * or realtime) and acquiring a read hold, then we shouldn't
+		 * wait for RW_WRITE_WANTED if our priority is >= that of
+		 * the highest priority writer that is waiting.
+		 */
+
+		/*
 		 * Mark the rwlock as having waiters.  If the set fails,
 		 * then we may not need to sleep and should spin again.
 		 */
@@ -318,7 +325,7 @@ rw_vector_exit(krwlock_t *rw)
 {
 	uintptr_t curthread, owner, decr, new;
 	turnstile_t *ts;
-	int rcnt, wcnt, dcnt;
+	int rcnt, wcnt;
 	struct lwp *l;
 
 	curthread = (uintptr_t)curlwp;
@@ -340,38 +347,31 @@ rw_vector_exit(krwlock_t *rw)
 	 */
 	owner = rw->rw_owner;
 	if (__predict_false((owner & RW_WRITE_LOCKED) != 0)) {
+		RW_UNLOCKED(rw, RW_WRITER);
 		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) != 0);
 		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
-		if (__predict_false((owner & RW_DOWNGRADING) != 0)) {
-			/* RW_UNLOCKED() is already done */
-			dcnt = 1;
-			decr = (curthread | RW_WRITE_LOCKED) - RW_READ_INCR;
-		} else {
-			RW_UNLOCKED(rw, RW_WRITER);
-			dcnt = 0;
-			decr = curthread | RW_WRITE_LOCKED;
-		}
+		decr = curthread | RW_WRITE_LOCKED;
 	} else {
+		RW_UNLOCKED(rw, RW_READER);
 		RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
 		RW_ASSERT(rw, RW_COUNT(rw) != 0);
-		RW_UNLOCKED(rw, RW_READER);
-		dcnt = 0;
 		decr = RW_READ_INCR;
 	}
 
+	/*
+	 * Compute what we expect the new value of the lock to be. Only
+	 * proceed to do direct handoff if there are waiters, and if the
+	 * lock would become unowned.
+	 */
 	for (;; owner = rw->rw_owner) {
-		/*
-		 * Compute what we expect the new value of the lock to be. 
-		 * Only proceed to do direct handoff if there are waiters,
-		 * and if the lock would become unowned.
-		 */
-		new = (owner - decr) & ~RW_WRITE_WANTED;
-		if ((new & (RW_THREAD | RW_HAS_WAITERS)) != RW_HAS_WAITERS) {
-			if (RW_RELEASE(rw, owner, new))
-				break;
-			continue;
-		}
+		new = (owner - decr);
+		if ((new & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
+			break;
+		if (RW_RELEASE(rw, owner, new))
+			return;
+	}
 
+	for (;;) {
 		/*
 		 * Grab the turnstile chain lock.  This gets the interlock
 		 * on the sleep queue.  Once we have that, we can adjust the
@@ -380,19 +380,21 @@ rw_vector_exit(krwlock_t *rw)
 		ts = turnstile_lookup(rw);
 		RW_DASSERT(rw, ts != NULL);
 
+		owner = rw->rw_owner;
 		wcnt = TS_WAITERS(ts, TS_WRITER_Q);
 		rcnt = TS_WAITERS(ts, TS_READER_Q);
 
 		/*
 		 * Give the lock away.
 		 *
-		 * If we are releasing a write lock or downgrading a write
-		 * lock to read, then wake all outstanding readers.  If we
-		 * are releasing a read lock, then wake one writer.
+		 * If we are releasing a write lock, then wake all
+		 * outstanding readers.  If we are releasing a read
+		 * lock, then wake one writer.
 		 */
-		if (dcnt == 0 &&
-		    (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0))) {
+		if (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0)) {
 			RW_DASSERT(rw, wcnt != 0);
+			RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
+			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_WANTED) != 0);
 
 			/*
 			 * Give the lock to the longest waiting
@@ -416,8 +418,8 @@ rw_vector_exit(krwlock_t *rw)
 			/* Wake the writer. */
 			turnstile_wakeup(ts, TS_WRITER_Q, wcnt, l);
 		} else {
-			dcnt += rcnt;
-			RW_DASSERT(rw, dcnt != 0);
+			RW_DASSERT(rw, rcnt != 0);
+			RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
 			/*
 			 * Give the lock to all blocked readers.  We may
@@ -425,10 +427,10 @@ rw_vector_exit(krwlock_t *rw)
 			 * is a writer waiting, new readers will be blocked
 			 * out.
 			 */
-			new = dcnt << RW_READ_COUNT_SHIFT;
+			new = rcnt << RW_READ_COUNT_SHIFT;
 			if (wcnt != 0)
 				new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
-
+				
 			RW_GIVE(rw);
 			if (!RW_RELEASE(rw, owner, new)) {
 				/* Oops, try again. */
@@ -494,7 +496,9 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 void
 rw_downgrade(krwlock_t *rw)
 {
-	uintptr_t owner, curthread;
+	uintptr_t owner, curthread, new;
+	turnstile_t *ts;
+	int rcnt, wcnt;
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
@@ -502,24 +506,73 @@ rw_downgrade(krwlock_t *rw)
 	RW_ASSERT(rw, RW_OWNER(rw) == curthread);
 	RW_UNLOCKED(rw, RW_WRITER);
 
-	for (;;) {
-		owner = rw->rw_owner;
-
-		/* If there are waiters we need to do this the hard way. */
-		if ((owner & RW_HAS_WAITERS) != 0) {
-			if (!RW_RELEASE(rw, owner, owner | RW_DOWNGRADING))
-				continue;
-			rw_vector_exit(rw);
-			break;
-		}
-
+	owner = rw->rw_owner;
+	if ((owner & RW_HAS_WAITERS) == 0) {
 		/*
+		 * There are no waiters, so we can do this the easy way.
 		 * Try swapping us down to one read hold.  If it fails, the
 		 * lock condition has changed and we most likely now have
 		 * waiters.
 		 */
-		if (RW_RELEASE(rw, owner, RW_READ_INCR))
+		if (RW_RELEASE(rw, owner, RW_READ_INCR)) {
+			RW_LOCKED(rw, RW_READER);
+			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
+			RW_DASSERT(rw, RW_COUNT(rw) != 0);
+			return;
+		}
+	}
+
+	/*
+	 * Grab the turnstile chain lock.  This gets the interlock
+	 * on the sleep queue.  Once we have that, we can adjust the
+	 * waiter bits.
+	 */
+	for (;;) {
+		ts = turnstile_lookup(rw);
+		RW_DASSERT(rw, ts != NULL);
+
+		owner = rw->rw_owner;
+		rcnt = TS_WAITERS(ts, TS_READER_Q);
+		wcnt = TS_WAITERS(ts, TS_WRITER_Q);
+
+		/*
+		 * If there are no readers, just preserve the waiters
+		 * bits, swap us down to one read hold and return.
+		 */
+		if (rcnt == 0) {
+			RW_DASSERT(rw, wcnt != 0);
+			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_WANTED) != 0);
+			RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
+
+			new = RW_READ_INCR | RW_HAS_WAITERS | RW_WRITE_WANTED;
+			if (!RW_RELEASE(rw, owner, new)) {
+				/* Oops, try again. */
+				turnstile_exit(ts);
+				continue;
+			}
 			break;
+		}
+				
+		/*
+		 * Give the lock to all blocked readers.  We may
+		 * retain one read hold if downgrading.  If there
+		 * is a writer waiting, new readers will be blocked
+		 * out.
+		 */
+		new = (rcnt << RW_READ_COUNT_SHIFT) + RW_READ_INCR;
+		if (wcnt != 0)
+			new |= RW_HAS_WAITERS | RW_WRITE_WANTED;
+
+		RW_GIVE(rw);
+		if (!RW_RELEASE(rw, owner, new)) {
+			/* Oops, try again. */
+			turnstile_exit(rw);
+			continue;
+		}
+
+		/* Wake up all sleeping readers. */
+		turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
+		break;
 	}
 
 	RW_LOCKED(rw, RW_READER);
@@ -554,6 +607,7 @@ rw_tryupgrade(krwlock_t *rw)
 			break;
 	}
 
+	RW_UNLOCKED(rw, RW_READER);
 	RW_LOCKED(rw, RW_WRITER);
 	RW_DASSERT(rw, rw->rw_owner & RW_WRITE_LOCKED);
 	RW_DASSERT(rw, RW_OWNER(rw) == curthread);
