@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.1.1.9 2006/07/19 01:17:35 rpaulo Exp $	*/
+/*	$NetBSD: postalias.c,v 1.1.1.10 2007/02/05 17:41:34 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -17,12 +17,12 @@
 /*	and are expected to be suitable for the use as NIS alias maps.
 /*
 /*	If the result files do not exist they will be created with the
-/*	same group and other read permissions as the source file.
+/*	same group and other read permissions as their source file.
 /*
 /*	While a database update is in progress, signal delivery is
 /*	postponed, and an exclusive, advisory, lock is placed on the
 /*	entire database, in order to avoid surprises in spectator
-/*	programs.
+/*	processes.
 /*
 /*	The format of Postfix alias input files is described in
 /*	\fBaliases\fR(5).
@@ -50,6 +50,10 @@
 /* .IP \fB-f\fR
 /*	Do not fold the lookup key to lower case while creating or querying
 /*	a table.
+/*
+/*	With Postfix version 2.3 and later, this option has no
+/*	effect for regular expression tables. There, case folding
+/*	is controlled by appending a flag to a pattern.
 /* .IP \fB-i\fR
 /*	Incremental mode. Read entries from standard input and do not
 /*	truncate an existing database. By default, \fBpostalias\fR(1) creates
@@ -394,6 +398,7 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
     mkmap->dict->flags |= DICT_FLAG_TRY0NULL;
     vstring_sprintf(value_buffer, "%010ld", (long) time((time_t *) 0));
 #if (defined(HAS_NIS) || defined(HAS_NISPLUS))
+    mkmap->dict->flags &= ~DICT_FLAG_FOLD_FIX;
     mkmap_append(mkmap, "YP_LAST_MODIFIED", STR(value_buffer));
     mkmap_append(mkmap, "YP_MASTER_NAME", var_myhostname);
 #endif
