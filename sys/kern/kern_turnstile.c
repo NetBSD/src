@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.36.6 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.36.7 2007/02/05 13:00:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,11 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.6 2007/01/27 14:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.7 2007/02/05 13:00:56 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_ktrace.h"
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -197,7 +198,6 @@ turnstile_lookup(wchan_t obj)
 	tschain_t *tc;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
-
 	mutex_spin_enter(tc->tc_mutex);
 
 	LIST_FOREACH(ts, &tc->tc_chain, ts_chain)
@@ -239,12 +239,11 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 	tschain_t *tc;
 	sleepq_t *sq;
 
-	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
-
 	tc = &turnstile_tab[TS_HASH(obj)];
 	l = curlwp;
 
-	LOCK_ASSERT(mutex_owned(tc->tc_mutex));
+	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
+	KASSERT(mutex_owned(tc->tc_mutex));
 	KASSERT(l != NULL && l->l_ts != NULL);
 
 	if (ts == NULL) {
@@ -288,21 +287,20 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
  *	in a turnstile.
  */
 void
-turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
+turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 {
 	sleepq_t *sq;
 	tschain_t *tc;
 	struct lwp *l;
 	int swapin;
 
-	KASSERT(rw == TS_READER_Q || rw == TS_WRITER_Q);
-	KASSERT(count > 0);
-
-	swapin = 0;
 	tc = &turnstile_tab[TS_HASH(ts->ts_obj)];
-	sq = &ts->ts_sleepq[rw];
+	sq = &ts->ts_sleepq[q];
+	swapin = 0;
 
-	LOCK_ASSERT(mutex_owned(tc->tc_mutex) && sq->sq_mutex == tc->tc_mutex);
+	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
+	KASSERT(count > 0 && count <= TS_WAITERS(ts, q));
+	KASSERT(mutex_owned(tc->tc_mutex) && sq->sq_mutex == tc->tc_mutex);
 
 	if (nl != NULL) {
 #if defined(DEBUG) || defined(LOCKDEBUG)
@@ -337,7 +335,7 @@ turnstile_wakeup(turnstile_t *ts, int rw, int count, struct lwp *nl)
  *	Remove an LWP from the turnstile.  This is called when the LWP has
  *	not been awoken normally but instead interrupted: for example, if it
  *	has received a signal.  It's not a valid action for turnstiles,
- *	since LWPs blocking on a turnstile are not interupptable.
+ *	since LWPs blocking on a turnstile are not interruptable.
  */
 void
 turnstile_unsleep(struct lwp *l)
@@ -357,6 +355,51 @@ void
 turnstile_changepri(struct lwp *l, int pri)
 {
 
-	(void)l;
-	(void)pri;
+	l->l_priority = pri;
 }
+
+#if defined(LOCKDEBUG)
+/*
+ * turnstile_print:
+ *
+ *	Given the address of a lock object, print the contents of a
+ *	turnstile.
+ */
+void
+turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
+{
+	turnstile_t *ts;
+	tschain_t *tc;
+	sleepq_t *rsq, *wsq;
+	struct lwp *l;
+
+	tc = &turnstile_tab[TS_HASH(obj)];
+
+	LIST_FOREACH(ts, &tc->tc_chain, ts_chain)
+		if (ts->ts_obj == obj)
+			break;
+
+	(*pr)("Turnstile chain at %p with tc_mutex at %p.\n", tc, tc->tc_mutex);
+	if (ts == NULL) {
+		(*pr)("=> No active turnstile for this lock.\n");
+		return;
+	}
+
+	rsq = &ts->ts_sleepq[TS_READER_Q];
+	wsq = &ts->ts_sleepq[TS_WRITER_Q];
+
+	(*pr)("=> Turnstile at %p (wrq=%p, rdq=%p).\n", ts, rsq, wsq);
+
+	(*pr)("=> %d waiting readers:", rsq->sq_waiters);
+	TAILQ_FOREACH(l, &rsq->sq_queue, l_sleepchain) {
+		(*pr)(" %p", l);
+	}
+	(*pr)("\n");
+
+	(*pr)("=> %d waiting writers:", wsq->sq_waiters);
+	TAILQ_FOREACH(l, &wsq->sq_queue, l_sleepchain) {
+		(*pr)(" %p", l);
+	}
+	(*pr)("\n");
+}
+#endif	/* LOCKDEBUG */
