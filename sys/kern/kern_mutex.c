@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.18 2007/02/03 16:35:30 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.19 2007/02/05 16:31:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.18 2007/02/03 16:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.19 2007/02/05 16:31:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -393,8 +393,6 @@ mutex_vector_enter(kmutex_t *mtx)
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_TIMER(slptime);
 
-	MUTEX_WANTLOCK(mtx);
-
 	/*
 	 * Handle spin mutexes.
 	 */
@@ -403,6 +401,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		u_int spins = 0;
 #endif
 		MUTEX_SPIN_SPLRAISE(mtx);
+		MUTEX_WANTLOCK(mtx);
 #ifdef FULL
 		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
 			MUTEX_LOCKED(mtx);
@@ -445,6 +444,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 	MUTEX_DASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	MUTEX_ASSERT(mtx, curthread != 0);
+	MUTEX_WANTLOCK(mtx);
 
 #ifdef LOCKDEBUG
 	if (panicstr == NULL) {
