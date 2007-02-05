@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.9.10.4 2007/01/30 13:51:42 ad Exp $ */
+/* $NetBSD: userret.h,v 1.9.10.5 2007/02/05 19:35:43 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,9 @@
 #ifndef _SYS_USERRET_H_
 #define	_SYS_USERRET_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #include <sys/lockdebug.h>
 
