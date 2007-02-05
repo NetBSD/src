@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.1.1.8 2006/07/19 01:17:36 rpaulo Exp $	*/
+/*	$NetBSD: postconf.c,v 1.1.1.9 2007/02/05 17:41:36 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -383,17 +383,12 @@ static const char *check_myhostname(void)
     /*
      * If the local machine name is not in FQDN form, try to append the
      * contents of $mydomain.
-     * 
-     * XXX Do not complain when running as "postconf -d".
      */
     name = get_hostname();
-    if ((cmd_mode & SHOW_DEFS) == 0 && (dot = strchr(name, '.')) == 0) {
-	if ((domain = mail_conf_lookup_eval(VAR_MYDOMAIN)) == 0) {
-	    msg_warn("My hostname %s is not a fully qualified name - set %s or %s in %s/main.cf",
-		     name, VAR_MYHOSTNAME, VAR_MYDOMAIN, var_config_dir);
-	} else {
-	    name = concatenate(name, ".", domain, (char *) 0);
-	}
+    if ((dot = strchr(name, '.')) == 0) {
+	if ((domain = mail_conf_lookup_eval(VAR_MYDOMAIN)) == 0)
+	    domain = DEF_MYDOMAIN;
+	name = concatenate(name, ".", domain, (char *) 0);
     }
     return (name);
 }
@@ -422,7 +417,7 @@ static const char *check_mydomainname(void)
     if (var_myhostname == 0)
 	get_myhostname();
     if ((dot = strchr(var_myhostname, '.')) == 0 || strchr(dot + 1, '.') == 0)
-	return (var_myhostname);
+	return (DEF_MYDOMAIN);
     return (dot + 1);
 }
 

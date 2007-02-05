@@ -4557,9 +4557,10 @@ client network address information.
 
 <dt><b><a name="check_ccert_access">check_ccert_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
 
-<dd>When the remote SMTP client certificate is verified successfully,
-use the client certificate fingerprint as lookup key for the specified
-access(5) database. This feature is available with Postfix version 2.2.</dd>
+<dd> Use the client certificate fingerprint as lookup key for the
+specified access(5) database; with Postfix version 2.2, also require
+that the SMTP client certificate is verified successfully. This
+feature is available with Postfix version 2.2 and later.</dd>
 
 <dt><b><a name="check_client_access">check_client_access</a> <i><a href="DATABASE_README.html">type:table</a></i></b></dt>
 
