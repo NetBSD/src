@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.1.36.4 2007/02/03 07:14:49 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1.36.5 2007/02/05 20:24:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.4 2007/02/03 07:14:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.1.36.5 2007/02/05 20:24:03 ad Exp $");
 
 #include "assym.h"
 
@@ -78,6 +78,7 @@ END(_lock_cas)
  * void mutex_enter(kmutex_t *mtx);
  */
 LEAF(mutex_enter, 1)
+	LDGP(pv)
 	GET_CURLWP
 1:
 	ldq	t1, 0(v0)
@@ -98,6 +99,7 @@ END(mutex_enter)
  * void mutex_exit(kmutex_t *mtx);
  */
 LEAF(mutex_exit, 1)
+	LDGP(pv)
 	MB
 	GET_CURLWP
 	ldq	t1, 0(v0)
