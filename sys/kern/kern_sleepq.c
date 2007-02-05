@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.13 2007/02/05 13:11:13 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.14 2007/02/05 17:58:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.13 2007/02/05 13:11:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.14 2007/02/05 17:58:13 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -81,11 +81,12 @@ sleeptab_init(sleeptab_t *st)
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-		sq = &st->st_queues[i];
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-		mutex_init(&st->st_mutexes[i], MUTEX_SPIN, IPL_SCHED);
-		sleepq_init(sq, &st->st_mutexes[i]);
+		sq = &st->st_queues[i].st_queue;
+		mutex_init(&st->st_queues[i].st_mutex, MUTEX_SPIN, IPL_SCHED);
+		sleepq_init(sq, &st->st_queues[i].st_mutex);
 #else
+		sq = &st->st_queues[i];
 		sleepq_init(sq, &sched_mutex);
 #endif
 	}
