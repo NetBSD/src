@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14.20.2 2007/01/30 11:45:27 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.14.20.3 2007/02/05 17:03:10 ad Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -1038,6 +1038,10 @@ ALTENTRY(hppa_fpu_nop1)
 	mtctl	%r1, %ccr
 
 switch_return:
+	/* Release sched_lock */ 
+	CALL(sched_unlock_idle, %r1)
+	nop
+
 	bv	0(%rp)
 	mtctl	%arg3, %eiem
 
