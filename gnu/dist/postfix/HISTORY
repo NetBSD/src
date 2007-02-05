@@ -12860,5 +12860,84 @@ Apologies for any names omitted.
 
 	Cleanup: document under what conditions these protections
 	work, with REENTRANCY sections in the relevant man pages.
-	Files: util/vbuf.c.  util/msg.c, util/msg_output.c.
+	Files: util/vbuf_print.c.  util/msg.c, util/msg_output.c.
 
+20061211
+
+	Cleanup: when doing server access control by the remote TLS
+	client fingerprint, do not require client certificate
+	verification.  Victor Duchovni.  File: smtpd/smtpd_check.c.
+
+	Safety: when the remote TLS client certificate isn't verified,
+	don't send ccert_subject and ccert_issuer attributes in
+	check_policy_service requests. Victor Duchovni. File:
+	smtpd/smtpd_check.c.
+
+	Bugfix: the postconf command still complained about an
+	unqualified machine name, because it was not updated with
+	the 20050513 change that introduced a default "mydomain =
+	localdomain".  File: postconf/postconf.c.
+
+20061213
+
+	Cleanup: the sendmail and postqueue commands no longer
+	terminate with a non-standard error status after a run-time
+	error in some Postfix internal routine (typically, some
+	essential file is not accessible, or the system is out of
+	memory). Files: sendmail/sendmail.c, postqueue/postqueue.c.
+
+20061220
+
+	Workaround: PMilter 0.95 does not deliver SMFIC_EOB+data
+	to the application as SMFIC_BODY+data followed by SMFIC_EOB.
+	To avoid compatibility problems, Postfix now sends
+	SMFIC_BODY+data followed by SMFIC_EOB.  File: milter/milter8.c.
+
+	Bugfix (introduced with Postfix 2.3): when inserting
+	Milter-generated headers at increasing positions in a
+	message, a later header could end up at a previously used
+	insertion point.  Thus, inserting headers at positions (N,
+	N+M) could work as if (N, N) had been specified. Problem
+	reported by Mark Martinec.  File: milter/milter8.c.
+
+20061227
+
+	Bugfix (introduced with Postfix 2.3): the MX hostname syntax
+	check was skipped with reject_unknown_helo_hostname and
+	reject_unknown_sender/recipient_domain, so that Postfix
+	would still accept mail from domains with a zero-length MX
+	hostname.  File: smtpd/smtpd_check.c.
+
+20070104
+
+	Bugfix (introduced Postfix 2.3): when creating an alias map
+	on a NIS-enabled system, don't case-fold the YP_MASTER_NAME
+	and YP_LAST_MODIFIED lookup keys. This requires that an
+	application can turn off case folding on the fly. This is
+	a point fix. A complete fix requires updates to other map
+	types and to the proxymap protocol, which is too much change
+	for a stable release.  Files: postalias/postalias.c,
+	util/dict_db.c, util/dict_dbm.c, util/dict_cdb.c.
+
+20070112
+
+	Bugfix (introduced 20011008): after return from a nested
+	access restriction, possible longjump into exited stack
+	frame upon configuration error or table lookup error.  Victor
+	Duchovni.  Files: smtpd/smtpd_check.c.
+
+	Workaround: don't insert empty-line header/body separator
+	into malformed MIME attachments, to avoid breaking digital
+	signatures. This change introduces ambiguity. Postfix still
+	treats the remainder of the attachment as body content;
+	header_checks rules will not detect forbidden MIME types
+	inside a message/rfc822 attachment.  With the empty-line
+	header/body separator no longer inserted by Postfix, other
+	software may process the malformed attachment differently,
+	and thus may become exposed to forbidden MIME types.  This
+	is back-ported from Postfix 2.4. File: global/mime_state.c.
+
+20070118
+
+	Bugfix: match lists didn't implement ![ipv6address].  Problem
+	reported by Paulo Pacheco. File: util/match_list.c.
