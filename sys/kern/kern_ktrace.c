@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.4.9 2007/02/04 16:04:30 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.10 2007/02/05 10:56:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.9 2007/02/04 16:04:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.10 2007/02/05 10:56:57 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -371,13 +371,12 @@ freekte:
 void
 ktefree(struct ktrace_entry *kte)
 {
-	struct lwp *l = curlwp;
 
-	KERNEL_LOCK(1, l);			/* XXXSMP */
+	KERNEL_LOCK(1, curlwp);			/* XXXSMP */
 	if (kte->kte_buf != kte->kte_space)
 		kmem_free(kte->kte_buf, kte->kte_bufsz);
 	pool_put(&kte_pool, kte);
-	KERNEL_UNLOCK_ONE(l);			/* XXXSMP */
+	KERNEL_UNLOCK_ONE(curlwp);		/* XXXSMP */
 }
 
 /*
