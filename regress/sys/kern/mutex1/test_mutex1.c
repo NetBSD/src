@@ -1,4 +1,4 @@
-/*	$NetBSD: test_mutex1.c,v 1.2 2007/02/05 20:20:48 ad Exp $	*/
+/*	$NetBSD: test_mutex1.c,v 1.3 2007/02/05 22:48:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: test_mutex1.c,v 1.2 2007/02/05 20:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: test_mutex1.c,v 1.3 2007/02/05 22:48:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -100,10 +100,12 @@ thread1(void *cookie)
 	for (count = 0; !test_exit; count++) {
 		mutex_enter(&test_mutex);
 		KERNEL_LOCK(1, curlwp);
-		if ((count & 1023) == 0)
+		if ((count % 11) == 0)
 			yield();
 		mutex_exit(&test_mutex);
 		KERNEL_UNLOCK_ONE(curlwp);
+		if ((count % 17) == 0)
+			yield();
 	}
 
 	thread_exit(nlocks);
@@ -126,6 +128,8 @@ thread2(void *cookie)
 			yield();
 		KERNEL_UNLOCK_ONE(curlwp);
 		mutex_exit(&test_mutex);
+		if ((count % 19) == 0)
+			yield();
 	}
 
 	thread_exit(nlocks);
@@ -147,6 +151,8 @@ thread3(void *cookie)
 		if ((count % 101) == 0)
 			yield();
 		mutex_exit(&test_mutex);
+		if ((count % 23) == 0)
+			yield();
 	}
 
 	thread_exit(nlocks);
