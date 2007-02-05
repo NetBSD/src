@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.36.7 2007/02/05 13:00:56 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.36.8 2007/02/05 17:58:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.7 2007/02/05 13:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.8 2007/02/05 17:58:13 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -90,9 +90,6 @@ tschain_t	turnstile_tab[TS_HASH_SIZE];
 
 struct pool turnstile_pool;
 struct pool_cache turnstile_cache;
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-kmutex_t	turnstile_mutexes[TS_HASH_SIZE];
-#endif
 
 int	turnstile_ctor(void *, void *, int);
 void	turnstile_unsleep(struct lwp *);
@@ -121,8 +118,8 @@ turnstile_init(void)
 		tc = &turnstile_tab[i];
 		LIST_INIT(&tc->tc_chain);
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-		mutex_init(&turnstile_mutexes[i], MUTEX_SPIN, IPL_SCHED);
-		tc->tc_mutex = &turnstile_mutexes[i];
+		mutex_init(&tc->tc_mutexstore, MUTEX_SPIN, IPL_SCHED);
+		tc->tc_mutex = &tc->tc_mutexstore;
 #else
 		tc->tc_mutex = &sched_mutex;
 #endif

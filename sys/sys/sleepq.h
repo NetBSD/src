@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.8 2007/02/05 13:06:34 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.9 2007/02/05 17:58:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -65,12 +65,26 @@ typedef struct sleepq {
 	u_int			sq_waiters;	/* count of waiters */
 } sleepq_t;
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+typedef struct sleeptab {
+	/*
+	 * The lock must go first, as certain architectures
+	 * have strict alignment requirements; then pad out
+	 * to 1/2 a presumed cache line size of 64 bytes.
+	 * We put the queue head in the same line as the
+	 * mutex, as the queue head itself isn't very write
+	 * intensive.
+	 */
+	struct {
+		kmutex_t	st_mutex;
+		sleepq_t	st_queue __aligned(32);
+	} st_queues[SLEEPTAB_HASH_SIZE];
+} __aligned(64) sleeptab_t;
+#else	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
 typedef struct sleeptab {
 	sleepq_t		st_queues[SLEEPTAB_HASH_SIZE];
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	kmutex_t		st_mutexes[SLEEPTAB_HASH_SIZE];
-#endif
-} sleeptab_t;
+} __aligned(64) sleeptab_t;
+#endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
 
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, struct lwp *);
@@ -109,7 +123,11 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan)
 {
 	sleepq_t *sq;
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	sq = &st->st_queues[SLEEPTAB_HASH(wchan)].st_queue;
+#else
 	sq = &st->st_queues[SLEEPTAB_HASH(wchan)];
+#endif
 	mutex_spin_enter(sq->sq_mutex);
 	return sq;
 }
@@ -172,10 +190,19 @@ typedef struct turnstile {
 	sleepq_t		ts_sleepq[2];	/* sleep queues */
 } turnstile_t;
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 typedef struct tschain {
 	kmutex_t		*tc_mutex;	/* mutex on structs & queues */
 	LIST_HEAD(, turnstile)	tc_chain;	/* turnstile chain */
-} tschain_t;
+	kmutex_t		tc_mutexstore __aligned(32);
+} __aligned(64) tschain_t;
+#else
+/* Try to align the chain to 1/2 a presumed cache line of 64 bytes. */
+typedef struct tschain {
+	kmutex_t		*tc_mutex;	/* mutex on structs & queues */
+	LIST_HEAD(, turnstile)	tc_chain;	/* turnstile chain */
+} __aligned(32) tschain_t;
+#endif
 
 #define	TS_READER_Q	0		/* reader sleep queue */
 #define	TS_WRITER_Q	1		/* writer sleep queue */
