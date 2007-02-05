@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.126.4.8 2007/02/01 08:48:38 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.126.4.9 2007/02/05 13:16:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.8 2007/02/01 08:48:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.9 2007/02/05 13:16:48 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -316,7 +316,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_flag |= (P_SYSTEM | P_NOCLDWAIT);
 	}
 
-	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_VM);
+	/* XXX p_smutex can be IPL_VM except for audio drivers */
+	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
 	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_NONE);
 	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
@@ -355,9 +356,11 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * (If PL_SHAREMOD is clear, the structure is shared
 	 * copy-on-write.)
 	 */
-	if (p1->p_limit->p_lflags & PL_SHAREMOD)
-		p2->p_limit = limcopy(p1->p_limit);
-	else {
+	if (p1->p_limit->p_lflags & PL_SHAREMOD) {
+		mutex_enter(&p1->p_mutex);
+		p2->p_limit = limcopy(p1);
+		mutex_exit(&p1->p_mutex);
+	} else {
 		simple_lock(&p1->p_limit->p_slock);
 		p1->p_limit->p_refcnt++;
 		simple_unlock(&p1->p_limit->p_slock);

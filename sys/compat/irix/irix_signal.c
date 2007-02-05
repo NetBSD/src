@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.34.20.1 2006/10/21 15:20:48 ad Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.34.20.2 2007/02/05 13:16:49 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.34.20.1 2006/10/21 15:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.34.20.2 2007/02/05 13:16:49 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.34.20.1 2006/10/21 15:20:48 ad Exp
 extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
 
-static int irix_wait_siginfo __P((struct proc *, int,
+static int irix_wait_siginfo __P((struct proc *, int, int,
     struct irix_irix5_siginfo *));
 static void irix_signal_siginfo __P((struct irix_irix5_siginfo *,
     int, u_long, caddr_t));
@@ -94,9 +94,9 @@ static void irix_get_sigcontext __P((struct irix_sigcontext*, struct lwp *));
  * This is ripped from svr4_setinfo. See irix_sys_waitsys...
  */
 static int
-irix_wait_siginfo(p, st, s)
+irix_wait_siginfo(p, st, stat, s)
 	struct proc *p;
-	int st;
+	int st, stat;
 	struct irix_irix5_siginfo *s;
 {
 	struct irix_irix5_siginfo i;
@@ -109,7 +109,7 @@ irix_wait_siginfo(p, st, s)
 
 	if (p) {
 		i.isi_pid = p->p_pid;
-		if (p->p_stat == SZOMB) {
+		if (stat == SZOMB) {
 			i.isi_stime = p->p_ru->ru_stime.tv_sec;
 			i.isi_utime = p->p_ru->ru_utime.tv_sec;
 		}
@@ -877,36 +877,48 @@ irix_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	error = find_stopped_child(parent, SCARG(uap,pid), options, &child);
-	if (error != 0)
+	rw_enter(&proclist_lock, RW_WRITER);
+	error = find_stopped_child(parent, SCARG(uap,pid), options, &child,
+	    &status);
+	stat = child->p_stat;	/* XXXSMP */
+	if (error != 0) {
+		rw_exit(&proclist_lock);
 		return error;
+	}
 	*retval = 0;
-	if (child == NULL)
-		return irix_wait_siginfo(NULL, 0, SCARG(uap, info));
+	if (child == NULL) {
+		rw_exit(&proclist_lock);
+		return irix_wait_siginfo(NULL, 0, stat, SCARG(uap, info));
+	}
 
-	if (child->p_stat == SZOMB) {
+	if (stat == SZOMB) {
 #ifdef DEBUG_IRIX
 		printf("irix_sys_wait(): found %d\n", child->p_pid);
 #endif
-		if ((error = irix_wait_siginfo(child, child->p_xstat,
-						  SCARG(uap, info))) != 0)
+		if ((error = irix_wait_siginfo(child, status, stat,
+		    SCARG(uap, info))) != 0) {
+			rw_exit(&proclist_lock);
 			return error;
-
+		}
 
 		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 #ifdef DEBUG_IRIX
 			printf(("irix_sys_wait(): Don't wait\n"));
 #endif
+			rw_exit(&proclist_lock);
 			return 0;
 		}
 		if (SCARG(uap, ru) &&
 		    /* XXX (dsl) is this copying out the right data???
 		       child->p_ru would seem more appropriate! */
 		    (error = copyout(&(parent->p_stats->p_ru),
-		    (caddr_t)SCARG(uap, ru), sizeof(struct rusage))))
+		    (caddr_t)SCARG(uap, ru), sizeof(struct rusage)))) {
+			rw_exit(&proclist_lock);
 			return error;
+		}
 
-		proc_free(child);
+		/* proc_free() will release the lock. */
+		proc_free(child, NULL);
 		return 0;
 	}
 
@@ -915,8 +927,9 @@ irix_sys_waitsys(l, v, retval)
 #ifdef DEBUG_IRIX
 	printf("jobcontrol %d\n", child->p_pid);
 #endif
-	return irix_wait_siginfo(child, W_STOPCODE(child->p_xstat),
-				    SCARG(uap, info));
+	rw_exit(&proclist_lock);
+	return irix_wait_siginfo(child, W_STOPCODE(status), stat,
+	    SCARG(uap, info));
 }
 
 int

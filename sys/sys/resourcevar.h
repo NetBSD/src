@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.32.4.1 2006/10/20 21:32:46 ad Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.32.4.2 2007/02/05 13:16:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -131,7 +131,7 @@ void	 addupc_intr(struct lwp *, u_long);
 void	 addupc_task(struct lwp *, u_long, u_int);
 void	 calcru(struct proc *, struct timeval *, struct timeval *,
 	    struct timeval *, struct timeval *);
-struct plimit *limcopy(struct plimit *);
+struct plimit *limcopy(struct proc *);
 void limfree(struct plimit *);
 void	ruadd(struct rusage *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);

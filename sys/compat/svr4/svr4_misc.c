@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.117.6.3 2007/01/30 13:51:37 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.117.6.4 2007/02/05 13:16:49 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.117.6.3 2007/01/30 13:51:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.117.6.4 2007/02/05 13:16:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1150,7 +1150,7 @@ svr4_sys_waitsys(l, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_waitsys_args *uap = v;
-	int options;
+	int options, status;
 	int error;
 	struct proc *parent = l->l_proc;
 	struct proc *child;
@@ -1190,7 +1190,8 @@ svr4_sys_waitsys(l, v, retval)
 
 	rw_enter(&proclist_lock, RW_WRITER);
 
-	error = find_stopped_child(parent, SCARG(uap, id), options, &child);
+	error = find_stopped_child(parent, SCARG(uap, id), options, &child,
+	    &status);
 	if (error != 0) {
 		rw_exit(&proclist_lock);
 		return error;
@@ -1204,7 +1205,7 @@ svr4_sys_waitsys(l, v, retval)
 
 	if (child->p_stat == SZOMB) {
 		DPRINTF(("found %d\n", child->p_pid));
-		svr4_setinfo(child, child->p_xstat, &i);
+		svr4_setinfo(child, status, &i);
 
 		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 			DPRINTF(("Don't wait\n"));
@@ -1220,7 +1221,7 @@ svr4_sys_waitsys(l, v, retval)
 
 	DPRINTF(("jobcontrol %d\n", child->p_pid));
 
-	svr4_setinfo(child, W_STOPCODE(child->p_xstat), &i);
+	svr4_setinfo(child, W_STOPCODE(status), &i);
 	rw_exit(&proclist_lock);
 	return copyout(&i, SCARG(uap, info), sizeof(i));
 }

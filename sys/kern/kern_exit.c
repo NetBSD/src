@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.12 2007/02/03 16:32:50 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.13 2007/02/05 13:16:48 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.12 2007/02/03 16:32:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.13 2007/02/05 13:16:48 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -195,6 +195,7 @@ exit1(struct lwp *l, int rv)
 	struct proc	*p, *q, *nq;
 	int		s;
 	ksiginfo_t	ksi;
+	ksiginfoq_t	kq;
 	int		wakeinit;
 
 	p = l->l_proc;
@@ -214,12 +215,14 @@ exit1(struct lwp *l, int rv)
 	if (p->p_nlwps > 1)
 		exit_lwps(l);
 
+	ksiginfo_queue_init(&kq);
+
 	/*
 	 * If we have been asked to stop on exit, do so now.
 	 */
 	if (p->p_sflag & PS_STOPEXIT) {
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
-		sigclearall(p, &contsigmask);
+		sigclearall(p, &contsigmask, &kq);
 		p->p_waited = 0;
 		mb_write();
 		p->p_stat = SSTOP;
@@ -246,9 +249,10 @@ exit1(struct lwp *l, int rv)
 	 */
 	mutex_enter(&p->p_smutex);
 	sigfillset(&p->p_sigctx.ps_sigignore);
-	sigclearall(p, NULL);
+	sigclearall(p, NULL, &kq);
 	p->p_stat = SDYING;
 	mutex_exit(&p->p_smutex);
+	ksiginfo_queue_drain(&kq);
 
 	DPRINTF(("exit1: %d.%d exiting.\n", p->p_pid, l->l_lid));
 
@@ -339,7 +343,7 @@ exit1(struct lwp *l, int rv)
 	mutex_enter(&p->p_smutex);
 	if (p->p_sflag & PS_PPWAIT) {
 		p->p_sflag &= ~PS_PPWAIT;
-		cv_broadcast_async(&p->p_pptr->p_waitcv); /* XXX */
+		cv_wakeup(&p->p_pptr->p_waitcv); /* XXXSMP */
 	}
 	mutex_exit(&p->p_smutex);
 
@@ -508,7 +512,7 @@ exit1(struct lwp *l, int rv)
 		 * continue.
 		 */
 		if (LIST_FIRST(&q->p_children) == NULL)
-			cv_broadcast_async(&q->p_waitcv);	/* XXX */
+			cv_wakeup(&q->p_waitcv);	/* XXXSMP */
 	}
 	mutex_exit(&q->p_mutex);
 
@@ -531,7 +535,7 @@ exit1(struct lwp *l, int rv)
 	ruadd(p->p_ru, &p->p_stats->p_cru);
 
 	if (wakeinit)
-		cv_broadcast_async(&initproc->p_waitcv);	/* XXX */
+		cv_wakeup(&initproc->p_waitcv);	/* XXXSMP */
 
 	/*
 	 * Remaining lwp resources will be freed in lwp_exit2() once we've
@@ -598,7 +602,7 @@ exit1(struct lwp *l, int rv)
 	 * cpu_switch(), finishing our execution (pun intended).
 	 */
 	uvmexp.swtch++;	/* XXXSMP unlocked */
-	cv_broadcast_async(&p->p_pptr->p_waitcv);	/* XXX */
+	cv_wakeup(&p->p_pptr->p_waitcv);	/* XXXSMP */
 	cpu_exit(l);
 }
 
@@ -676,7 +680,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	rw_enter(&proclist_lock, RW_WRITER);
 
 	error = find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
-	    &child);
+	    &child, &status);
 	if (error != 0) {
 		rw_exit(&proclist_lock);
 		return error;
@@ -690,8 +694,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	retval[0] = child->p_pid;
 
 	if (P_ZOMBIE(child)) {
-		status = child->p_xstat;
-
+		KERNEL_LOCK(1, l);		/* XXXSMP */
 		/* proc_free() will release the proclist_lock. */
 		proc_free(child, &ru);
 
@@ -700,6 +703,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 			    sizeof(struct rusage));
 
 		pool_put(&rusage_pool, ru);
+		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 
 		if (error == 0 && SCARG(uap, status))
 			error = copyout(&status, SCARG(uap, status),
@@ -708,12 +712,13 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 		return error;
 	}
 
-	status = W_STOPCODE(child->p_xstat);
 	rw_exit(&proclist_lock);
 
 	/* Child state must have been SSTOP. */
-	if (SCARG(uap, status))
+	if (SCARG(uap, status)) {
+		status = W_STOPCODE(status);
 		return copyout(&status, SCARG(uap, status), sizeof(status));
+	}
 
 	return 0;
 }
@@ -727,7 +732,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
  */
 int
 find_stopped_child(struct proc *parent, pid_t pid, int options,
-		   struct proc **child_p)
+		   struct proc **child_p, int *status_p)
 {
 	struct proc *child, *dead;
 	int error;
@@ -806,6 +811,8 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 
 		if (child != NULL || error != 0 ||
 		    ((options & WNOHANG) != 0 && dead == NULL)) {
+		    	if (child != NULL)
+			    	*status_p = child->p_xstat;
 			mutex_exit(&proclist_mutex);
 			*child_p = child;
 			return error;
@@ -875,7 +882,7 @@ proc_free(struct proc *p, struct rusage **ru)
 				kpsignal(parent, &ksi, NULL);
 				mutex_exit(&proclist_mutex);
 			}
-			cv_broadcast_async(&parent->p_waitcv);	/* XXX */
+			cv_wakeup(&parent->p_waitcv);	/* XXXSMP */
 			rw_exit(&proclist_lock);
 			return;
 		}

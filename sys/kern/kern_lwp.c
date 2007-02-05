@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.40.2.19 2007/02/03 16:32:50 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.40.2.20 2007/02/05 13:16:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -183,7 +183,8 @@
  *
  *	The lock order is as follows:
  *
- *		sleepq_t::sq_mutex -> sched_mutex
+ *		sleepq_t::sq_mutex  |---> sched_mutex
+ *		tschain_t::tc_mutex |
  *
  *	Each process has an scheduler state mutex (proc::p_smutex), and a
  *	number of counters on LWPs and their states: p_nzlwps, p_nrlwps, and
@@ -203,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.19 2007/02/03 16:32:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.40.2.20 2007/02/05 13:16:49 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -650,12 +651,10 @@ lwp_exit(struct lwp *l)
 	}
 
 	/*
-	 * Clear any private, pending signals.  If we find a pending signal
-	 * for the process and we have been asked to check for signals, then
-	 * we loose badly: arrange to have all other LWPs in the process check
-	 * for signals.
+	 * If we find a pending signal for the process and we have been
+	 * asked to check for signals, then we loose: arrange to have
+	 * all other LWPs in the process check for signals.
 	 */
-	sigclear(&l->l_sigpend, NULL);
 	if ((l->l_flag & L_PENDSIG) != 0 &&
 	    firstsig(&p->p_sigpend.sp_set) != 0) {
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
@@ -717,6 +716,7 @@ void
 lwp_free(struct lwp *l, int recycle, int last)
 {
 	struct proc *p = l->l_proc;
+	ksiginfoq_t kq;
 
 	/*
 	 * If this was not the last LWP in the process, then adjust
@@ -728,7 +728,6 @@ lwp_free(struct lwp *l, int recycle, int last)
 		 * This needs to co-incide with coming off p_lwps.
 		 */
 		timeradd(&l->l_rtime, &p->p_rtime, &p->p_rtime);
-
 		LIST_REMOVE(l, l_sibling);
 		p->p_nlwps--;
 		p->p_nzlwps--;
@@ -754,6 +753,14 @@ lwp_free(struct lwp *l, int recycle, int last)
 	}
 
 	/*
+	 * Destroy the LWP's remaining signal information.
+	 */
+	ksiginfo_queue_init(&kq);
+	sigclear(&l->l_sigpend, NULL, &kq);
+	ksiginfo_queue_drain(&kq);
+	cv_destroy(&l->l_sigcv);
+
+	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the
 	 * caller wants to recycle them. 
 	 *
@@ -762,15 +769,16 @@ lwp_free(struct lwp *l, int recycle, int last)
 	 *
 	 * We don't recycle the VM resources at this time.
 	 */
+	KERNEL_LOCK(1, l);	/* XXXSMP */
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(&turnstile_cache, l->l_ts);
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif
 	uvm_lwp_exit(l);
-	cv_destroy(&l->l_sigcv);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
+	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 }
 
 /*

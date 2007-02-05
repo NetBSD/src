@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.13 2007/02/01 06:21:07 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.14 2007/02/05 13:16:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.13 2007/02/01 06:21:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.14 2007/02/05 13:16:49 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -249,8 +249,12 @@ procinit(void)
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
 
+	/*
+	 * XXX p_smutex can be IPL_VM except for audio drivers
+	 * XXX proclist_lock must die
+	 */
 	rw_init(&proclist_lock);
-	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_VM);
+	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
 			    M_PROC, M_WAITOK);
@@ -296,7 +300,8 @@ proc0_init(void)
 	sess = &session0;
 	l = &lwp0;
 
-	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_VM);
+	/* XXX p_smutex can be IPL_VM except for audio drivers */
+	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
 	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_NONE);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
@@ -1100,32 +1105,6 @@ orphanpg(struct pgrp *pg)
 	}
 }
 
-/* mark process as suid/sgid, reset some values to defaults */
-void
-p_sugid(struct proc *p)
-{
-	struct plimit *lim;
-	char *cn;
-
-	p->p_flag |= P_SUGID;
-	/* reset what needs to be reset in plimit */
-	lim = p->p_limit;
-	if (lim->pl_corename != defcorename) {
-		if (lim->p_refcnt > 1 &&
-		    (lim->p_lflags & PL_SHAREMOD) == 0) {
-			p->p_limit = limcopy(lim);
-			limfree(lim);
-			lim = p->p_limit;
-		}
-		simple_lock(&lim->p_slock);
-		cn = lim->pl_corename;
-		lim->pl_corename = defcorename;
-		simple_unlock(&lim->p_slock);
-		if (cn != defcorename)
-			free(cn, M_TEMP);
-	}
-}
-
 #ifdef DDB
 #include <ddb/db_output.h>
 void pidtbl_dump(void);
@@ -1308,7 +1287,9 @@ proc_crmod_enter(void)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct plimit *lim;
 	kauth_cred_t oc;
+	char *cn;
 
 	mutex_enter(&p->p_mutex);
 
@@ -1317,6 +1298,23 @@ proc_crmod_enter(void)
 		kauth_cred_hold(p->p_cred);
 		l->l_cred = p->p_cred;
 		kauth_cred_free(oc);
+	}
+
+	/* Reset what needs to be reset in plimit. */
+	lim = p->p_limit;
+	if (lim->pl_corename != defcorename) {
+		if (lim->p_refcnt > 1 &&
+		    (lim->p_lflags & PL_SHAREMOD) == 0) {
+			p->p_limit = limcopy(p);
+			limfree(lim);
+			lim = p->p_limit;
+		}
+		simple_lock(&lim->p_slock);
+		cn = lim->pl_corename;
+		lim->pl_corename = defcorename;
+		simple_unlock(&lim->p_slock);
+		if (cn != defcorename)
+			free(cn, M_TEMP);
 	}
 }
 
@@ -1327,26 +1325,43 @@ proc_crmod_enter(void)
  * briefly acquire the sched state mutex.
  */
 void
-proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred)
+proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, boolean_t sugid)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	kauth_cred_t oc;
 
-	mutex_enter(&p->p_smutex);
-	p->p_cred = scred;
-	mutex_exit(&p->p_smutex);
+	/* Is there a new credential to set in? */
+	if (scred != NULL) {
+		mutex_enter(&p->p_smutex);
+		p->p_cred = scred;
+		mutex_exit(&p->p_smutex);
 
-	/* Ensure the LWP cached credentials are up to date. */
-	if ((oc = l->l_cred) != scred) {
-		kauth_cred_hold(scred);
-		l->l_cred = scred;
+		/* Ensure the LWP cached credentials are up to date. */
+		if ((oc = l->l_cred) != scred) {
+			kauth_cred_hold(scred);
+			l->l_cred = scred;
+		}
+	} else
+		oc = NULL;	/* XXXgcc */
+
+	if (sugid) {
+		/*
+		 * Mark process as having changed credentials, stops
+		 * tracing etc.
+		 */
+		p->p_flag |= P_SUGID;
 	}
 
 	mutex_exit(&p->p_mutex);
-	kauth_cred_free(fcred);
-	if (oc != scred)
-		kauth_cred_free(oc);
+
+	/* If there is a credential to be released, free it now. */
+	if (fcred != NULL) {
+		KASSERT(scred != NULL);
+		kauth_cred_free(fcred);
+		if (oc != scred)
+			kauth_cred_free(oc);
+	}
 }
 
 /*

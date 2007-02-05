@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.7 2007/01/31 19:56:38 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.8 2007/02/05 13:16:48 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.7 2007/01/31 19:56:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.8 2007/02/05 13:16:48 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -415,6 +415,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
 	ksiginfo_t		ksi;
+	ksiginfoq_t		kq;
 #ifdef SYSTRACE
 	int			wassugid = ISSET(p->p_flag, P_SUGID);
 	char			pathbuf[MAXPATHLEN];
@@ -790,7 +791,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * Mark the process as SUGID before we do
 		 * anything that might block.
 		 */
-		p_sugid(p);
+		proc_crmod_enter();
+		proc_crmod_leave(NULL, NULL, TRUE);
 
 		/* Make sure file descriptors 0..2 are in use. */
 		if ((error = fdcheckstd(l)) != 0) {
@@ -933,7 +935,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		p->p_pptr->p_nstopchild++;
 		p->p_pptr->p_waited = 0;
 		mutex_enter(&p->p_smutex);
-		sigclearall(p, &contsigmask);
+		ksiginfo_queue_init(&kq);
+		sigclearall(p, &contsigmask, &kq);
 		lwp_lock(l);
 		p->p_refcnt = 1;
 		l->l_stat = LSSTOP;
@@ -942,6 +945,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		mutex_exit(&p->p_smutex);
 		mutex_exit(&proclist_mutex);
 		mi_switch(l, NULL);
+		ksiginfo_queue_drain(&kq);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
 		mutex_exit(&proclist_mutex);
@@ -1095,7 +1099,7 @@ emul_register(const struct emul *emul, int ro_entry)
 	int			error;
 
 	error = 0;
-	rw_enter(&exec_lock, RW_READER);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	if (emul_search(emul->e_name)) {
 		error = EEXIST;
@@ -1125,7 +1129,7 @@ emul_unregister(const char *name)
 	struct proc		*ptmp;
 
 	error = 0;
-	rw_enter(&exec_lock, RW_READER);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	LIST_FOREACH(it, &el_head, el_list) {
 		if (strcmp(it->el_emul->e_name, name) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.66.4.9 2007/01/30 13:51:40 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.66.4.10 2007/02/05 13:16:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.9 2007/01/30 13:51:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.66.4.10 2007/02/05 13:16:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,11 +398,13 @@ acct_process(struct lwp *l)
 	 *
 	 * XXX We should think about the CPU limit, too.
 	 */
+	mutex_enter(&p->p_mutex);
 	if (p->p_limit->p_refcnt > 1) {
 		oplim = p->p_limit;
-		p->p_limit = limcopy(p->p_limit);
+		p->p_limit = limcopy(p);
 	}
 	p->p_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
+	mutex_exit(&p->p_mutex);
 
 	/*
 	 * Get process accounting information.
@@ -462,8 +464,10 @@ acct_process(struct lwp *l)
 		log(LOG_ERR, "Accounting: write failed %d\n", error);
 
 	if (oplim) {
+		mutex_enter(&p->p_mutex);
 		limfree(p->p_limit);
 		p->p_limit = oplim;
+		mutex_exit(&p->p_mutex);
 	}
 
  out:

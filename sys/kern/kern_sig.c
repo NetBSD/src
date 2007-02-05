@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.14 2007/02/04 14:05:18 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.15 2007/02/05 13:16:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.14 2007/02/04 14:05:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.15 2007/02/05 13:16:49 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -110,12 +110,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.14 2007/02/04 14:05:18 ad Exp $
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
-static void	ksiginfo_exithook(struct proc *, void *);
+static void	ksiginfo_exechook(struct proc *, void *);
 static void	proc_stop_callout(void *);
 
 int	sigunwait(struct proc *, const ksiginfo_t *);
-void	sigclear(sigpend_t *, sigset_t *);
-void	sigclearall(struct proc *, sigset_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 int	sigpost(struct lwp *, sig_t, int, int);
 int	sigchecktrace(sigpend_t **);
@@ -163,8 +161,7 @@ signal_init(void)
 	    sizeof(struct sigacts) > PAGE_SIZE ?
 	    &sigactspool_allocator : &pool_allocator_nointr);
 
-	exithook_establish(ksiginfo_exithook, NULL);
-	exechook_establish(ksiginfo_exithook, NULL);
+	exechook_establish(ksiginfo_exechook, NULL);
 
 	callout_init(&proc_stop_ch);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
@@ -320,7 +317,7 @@ siginit(struct proc *p)
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
 	p->p_sflag &= ~PS_NOCLDSTOP;
 
-	CIRCLEQ_INIT(&p->p_sigpend.sp_info);
+	ksiginfo_queue_init(&p->p_sigpend.sp_info);
 	sigemptyset(&p->p_sigpend.sp_set);
 
 	/*
@@ -331,7 +328,7 @@ siginit(struct proc *p)
 	l->l_sigstk.ss_flags = SS_DISABLE;
 	l->l_sigstk.ss_size = 0;
 	l->l_sigstk.ss_sp = 0;
-	CIRCLEQ_INIT(&l->l_sigpend.sp_info);
+	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 
 	/* One reference. */
@@ -350,6 +347,7 @@ execsigs(struct proc *p)
 	struct lwp *l;
 	int signo, prop;
 	sigset_t tset;
+	ksiginfoq_t kq;
 
 	KASSERT(p->p_nlwps == 1);
 
@@ -379,7 +377,8 @@ execsigs(struct proc *p)
 		sigemptyset(&SIGACTION_PS(ps, signo).sa_mask);
 		SIGACTION_PS(ps, signo).sa_flags = SA_RESTART;
 	}
-	sigclearall(p, &tset);
+	ksiginfo_queue_init(&kq);
+	sigclearall(p, &tset, &kq);
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
 
 	/*
@@ -397,26 +396,34 @@ execsigs(struct proc *p)
 	l->l_sigstk.ss_flags = SS_DISABLE;
 	l->l_sigstk.ss_size = 0;
 	l->l_sigstk.ss_sp = 0;
-	CIRCLEQ_INIT(&l->l_sigpend.sp_info);
+	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
 
 	mutex_exit(&p->p_smutex);
+	ksiginfo_queue_drain(&kq);
 }
 
 /*
- * ksiginfo_exithook:
+ * ksiginfo_exechook:
  *
- *	Free all pending ksiginfo entries from a process on exit.
+ *	Free all pending ksiginfo entries from a process on exec.
  *	Additionally, drain any unused ksiginfo structures in the
  *	system back to the pool.
+ *
+ *	XXX This should not be a hook, every process has signals.
  */
 static void
-ksiginfo_exithook(struct proc *p, void *v)
+ksiginfo_exechook(struct proc *p, void *v)
 {
+	ksiginfoq_t kq;
+
+	ksiginfo_queue_init(&kq);
 
 	mutex_enter(&p->p_smutex);
-	sigclearall(p, NULL);
+	sigclearall(p, NULL, &kq);
 	mutex_exit(&p->p_smutex);
+
+	ksiginfo_queue_drain(&kq);
 }
 
 /*
@@ -474,6 +481,27 @@ ksiginfo_free(ksiginfo_t *kp)
 	if ((kp->ksi_flags & (KSI_QUEUED | KSI_FROMPOOL)) != KSI_FROMPOOL)
 		return;
 	pool_put(&ksiginfo_pool, kp);
+}
+
+/*
+ * ksiginfo_queue_drain:
+ *
+ *	Drain a non-empty ksiginfo_t queue.
+ */
+void
+ksiginfo_queue_drain0(ksiginfoq_t *kq)
+{
+	ksiginfo_t *ksi;
+
+	KASSERT(!CIRCLEQ_EMPTY(kq));
+
+	KERNEL_LOCK(1, curlwp);		/* XXXSMP */
+	while (!CIRCLEQ_EMPTY(kq)) {
+		ksi = CIRCLEQ_FIRST(kq);
+		CIRCLEQ_REMOVE(kq, ksi, ksi_list);
+		pool_put(&ksiginfo_pool, ksi);
+	}
+	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
 }
 
 /*
@@ -591,7 +619,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
  *	Clear all pending signals in the specified set.
  */
 void
-sigclear(sigpend_t *sp, sigset_t *mask)
+sigclear(sigpend_t *sp, sigset_t *mask, ksiginfoq_t *kq)
 {
 	ksiginfo_t *ksi, *next;
 
@@ -607,7 +635,7 @@ sigclear(sigpend_t *sp, sigset_t *mask)
 			CIRCLEQ_REMOVE(&sp->sp_info, ksi, ksi_list);
 			KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
 			KASSERT((ksi->ksi_flags & KSI_QUEUED) != 0);
-			ksiginfo_free(ksi);
+			CIRCLEQ_INSERT_TAIL(kq, ksi, ksi_list);
 		}
 	}
 }
@@ -619,16 +647,16 @@ sigclear(sigpend_t *sp, sigset_t *mask)
  *	its LWPs.
  */
 void
-sigclearall(struct proc *p, sigset_t *mask)
+sigclearall(struct proc *p, sigset_t *mask, ksiginfoq_t *kq)
 {
 	struct lwp *l;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 
-	sigclear(&p->p_sigpend, mask);
+	sigclear(&p->p_sigpend, mask, kq);
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		sigclear(&l->l_sigpend, mask);
+		sigclear(&l->l_sigpend, mask, kq);
 	}
 }
 
@@ -1172,6 +1200,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	int prop, lid, toall, signo = ksi->ksi_signo;
 	struct lwp *l;
 	ksiginfo_t *kp;
+	ksiginfoq_t kq;
 	sig_t action;
 
 	LOCK_ASSERT(mutex_owned(&proclist_mutex));
@@ -1263,10 +1292,14 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * If stopping or continuing a process, discard any pending
 	 * signals that would do the inverse.
 	 */
-	if (prop & SA_CONT)
-		sigclear(&p->p_sigpend, &stopsigmask);
-	if (prop & SA_STOP)
-		sigclear(&p->p_sigpend, &contsigmask);
+	if ((prop & (SA_CONT | SA_STOP)) != 0) {
+		ksiginfo_queue_init(&kq);
+		if ((prop & SA_CONT) != 0)
+			sigclear(&p->p_sigpend, &stopsigmask, &kq);
+		if ((prop & SA_STOP) != 0)
+			sigclear(&p->p_sigpend, &contsigmask, &kq);
+		ksiginfo_queue_drain(&kq);	/* XXXSMP */
+	}
 
 	/* 
 	 * If the signal doesn't have SA_CANTMASK (no override for SIGKILL,

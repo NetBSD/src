@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.93.4.4 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.93.4.5 2007/02/05 13:20:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.93.4.4 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.93.4.5 2007/02/05 13:20:19 ad Exp $");
 
 #include "opt_compat_43.h"
 
@@ -130,15 +130,18 @@ sys_getsid(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	pid_t pid = SCARG(uap, pid);
 	struct proc *p;
+	int error = 0;
 
 	rw_enter(&proclist_lock, RW_READER);
-	if (pid != 0)
-		p = l->l_proc;
-	else if ((p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL)) == NULL)
-		return (ESRCH);
-	*retval = p->p_session->s_sid;
+	if (pid == 0)
+		*retval = l->l_proc->p_session->s_sid;
+	else if ((p = p_find(pid, PFIND_LOCKED)) != NULL)
+		*retval = p->p_session->s_sid;
+	else
+		error = ESRCH;
 	rw_exit(&proclist_lock);
-	return (0);
+
+	return error;
 }
 
 int
@@ -149,15 +152,18 @@ sys_getpgid(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	pid_t pid = SCARG(uap, pid);
 	struct proc *p;
+	int error = 0;
 
 	rw_enter(&proclist_lock, RW_READER);
-	if (pid != 0)
-		p = l->l_proc;
-	else if ((p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL)) == NULL)
-		return (ESRCH);
-	*retval = p->p_pgid;
+	if (pid == 0)
+		*retval = l->l_proc->p_pgid;
+	else if ((p = p_find(pid, PFIND_LOCKED)) != NULL)
+		*retval = p->p_pgid;
+	else
+		error = ESRCH;
 	rw_exit(&proclist_lock);
-	return (0);
+
+	return error;
 }
 
 /* ARGSUSED */
@@ -344,7 +350,7 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 		error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
 		    p, NULL, NULL, NULL);
 		if (error != 0) {
-		 	proc_crmod_leave(cred, ncred);
+		 	proc_crmod_leave(cred, ncred, FALSE);
 			return error;
 		}
 	}
@@ -353,7 +359,7 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 	if ((r == -1 || r == kauth_cred_getuid(cred))
 	    && (e == -1 || e == kauth_cred_geteuid(cred))
 	    && (sv == -1 || sv == kauth_cred_getsvuid(cred))) {
-		proc_crmod_leave(cred, ncred);
+		proc_crmod_leave(cred, ncred, FALSE);
 		return 0;
 	}
 
@@ -370,11 +376,8 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 	if (e != -1)
 		kauth_cred_seteuid(ncred, e);
 
-	/* Mark process as having changed credentials, stops tracing etc. */
-	p_sugid(p);
-
 	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, cred);
+ 	proc_crmod_leave(ncred, cred, TRUE);
 
 	return 0;
 }
@@ -419,7 +422,7 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 		error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
 		    p, NULL, NULL, NULL);
 		if (error != 0) {
-		 	proc_crmod_leave(cred, ncred);
+		 	proc_crmod_leave(cred, ncred, FALSE);
 			return error;
 		}
 	}
@@ -428,7 +431,7 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 	if ((r == -1 || r == kauth_cred_getgid(cred))
 	    && (e == -1 || e == kauth_cred_getegid(cred))
 	    && (sv == -1 || sv == kauth_cred_getsvgid(cred))) {
-	 	proc_crmod_leave(cred, ncred);
+	 	proc_crmod_leave(cred, ncred, FALSE);
 		return 0;
 	}
 
@@ -441,11 +444,8 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 	if (e != -1)
 		kauth_cred_setegid(ncred, e);
 
-	/* Mark process as having changed credentials, stops tracing etc. */
-	p_sugid(p);
-
 	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, cred);
+ 	proc_crmod_leave(ncred, cred, TRUE);
 
 	return 0;
 }
@@ -623,8 +623,16 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	gid_t grp[NGROUPS];
 	size_t grsize;
 
-	ncred = kauth_cred_alloc();
+	ngrp = SCARG(uap, gidsetsize);
+	if ((u_int)ngrp > NGROUPS)
+		return EINVAL;
 
+	grsize = ngrp * sizeof(gid_t);
+	error = copyin(SCARG(uap, gidset), grp, grsize);
+	if (error)
+		return error;
+
+	ncred = kauth_cred_alloc();
 	proc_crmod_enter();
 	cred = p->p_cred;
 
@@ -632,30 +640,16 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	    p, NULL, NULL, NULL)) != 0)
 		goto bad;
 
-	ngrp = SCARG(uap, gidsetsize);
-	if ((u_int)ngrp > NGROUPS) {
-		error = EINVAL;
-		goto bad;
-	}
-
-	grsize = ngrp * sizeof(gid_t);
-	error = copyin(SCARG(uap, gidset), grp, grsize);
-	if (error)
-		goto bad;
-
 	ngrp = grsortu(grp, ngrp);
 	kauth_cred_clone(cred, ncred);
 	kauth_cred_setgroups(ncred, grp, ngrp, -1);
 
-	/* Mark process as having changed credentials, stops tracing etc. */
-	p_sugid(p);
-
 	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, cred);
+ 	proc_crmod_leave(ncred, cred, TRUE);
 
 	return (0);
   bad:
-  	proc_crmod_leave(cred, ncred); 
+  	proc_crmod_leave(cred, ncred, FALSE); 
 	return (error);
 }
 
@@ -676,7 +670,7 @@ sys___getlogin(struct lwp *l, void *v, register_t *retval)
 
 	if (namelen > sizeof(login))
 		namelen = sizeof(login);
-	rw_enter(&proclist_lock, RW_WRITER);
+	rw_enter(&proclist_lock, RW_READER);
 	memcpy(login, p->p_session->s_login, namelen);
 	rw_exit(&proclist_lock);
 	return (copyout(login, (void *)SCARG(uap, namebuf), namelen));
