@@ -1,4 +1,4 @@
-/*	$NetBSD: test_rwlock1.c,v 1.3 2007/02/05 20:20:48 ad Exp $	*/
+/*	$NetBSD: test_rwlock1.c,v 1.4 2007/02/05 22:48:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: test_rwlock1.c,v 1.3 2007/02/05 20:20:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: test_rwlock1.c,v 1.4 2007/02/05 22:48:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -113,6 +113,8 @@ thread1(void *cookie)
 		if ((arc4random() % 11) == 0)
 			yield();
 		rw_exit(&test_rwlock);
+		if ((arc4random() % 23) == 0)
+			yield();
 	}
 
 	thread_exit(nlocks);
