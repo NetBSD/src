@@ -616,6 +616,7 @@ how one would set up the service in the Postfix <a href="master.5.html">master.c
     scan      unix  -       -       n       -       10      smtp
         -o <a href="postconf.5.html#smtp_send_xforward_command">smtp_send_xforward_command</a>=yes
         -o <a href="postconf.5.html#disable_mime_output_conversion">disable_mime_output_conversion</a>=yes
+        -o <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a>=
 </pre>
 </blockquote>
 
@@ -638,6 +639,10 @@ for more information. </p>
 that prevents the breaking of domainkeys and other digital signatures.
 This is needed because some SMTP-based content filters don't announce
 8BITMIME support, even though they can handle it just fine.  </p>
+
+<li> <p> The "-o <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a>=" is a workaround that prevents
+local address rewriting with <a href="generic.5.html">generic(5)</a> maps. Such rewriting should
+happen only when mail is sent out to the Internet.  </p>
 
 </ul>
 
