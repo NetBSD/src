@@ -1,4 +1,4 @@
-/*	$NetBSD: match_list.c,v 1.8 2006/07/19 01:35:40 rpaulo Exp $	*/
+/*	$NetBSD: match_list.c,v 1.9 2007/02/05 17:56:11 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -98,7 +98,7 @@ struct MATCH_LIST {
 };
 
 #define MATCH_DICTIONARY(pattern) \
-    ((pattern)[0] != '[' && strchr((pattern), ':') != 0)
+    ((pattern + strspn(pattern, "!"))[0] != '[' && strchr((pattern), ':') != 0)
 
 /* match_list_parse - parse buffer, destroy buffer */
 
