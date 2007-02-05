@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.103.4.11 2007/02/05 13:16:49 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.103.4.12 2007/02/05 16:44:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.11 2007/02/05 13:16:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.103.4.12 2007/02/05 16:44:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,14 +225,14 @@ donice(struct lwp *l, struct proc *chgp, int n)
 	if (kauth_authorize_process(cred, KAUTH_PROCESS_NICE, chgp,
 	    KAUTH_ARG(n), NULL, NULL))
 		return (EACCES);
-	mutex_enter(&chgp->p_stmutex);
+	mutex_spin_enter(&chgp->p_stmutex);
 	if (onice != chgp->p_nice) {
-		mutex_exit(&chgp->p_stmutex);
+		mutex_spin_exit(&chgp->p_stmutex);
 		goto again;
 	}
 	chgp->p_nice = n;
 	(void)resetprocpriority(chgp);
-	mutex_exit(&chgp->p_stmutex);
+	mutex_spin_exit(&chgp->p_stmutex);
 	return (0);
 }
 
@@ -406,11 +406,11 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
  	struct timeval tv;
 	struct lwp *l;
 
-	mutex_enter(&p->p_stmutex);
+	mutex_spin_enter(&p->p_stmutex);
 	st = p->p_sticks;
 	ut = p->p_uticks;
 	it = p->p_iticks;
-	mutex_exit(&p->p_stmutex);
+	mutex_spin_exit(&p->p_stmutex);
 
 	sec = p->p_rtime.tv_sec;
 	usec = p->p_rtime.tv_usec;

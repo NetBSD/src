@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.158.2.13 2007/02/05 13:16:48 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.158.2.14 2007/02/05 16:44:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.13 2007/02/05 13:16:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.158.2.14 2007/02/05 16:44:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -328,9 +328,9 @@ exit1(struct lwp *l, int rv)
 	 * Stop profiling.
 	 */
 	if ((p->p_stflag & PST_PROFIL) != 0) {
-		mutex_enter(&p->p_stmutex);
+		mutex_spin_enter(&p->p_stmutex);
 		stopprofclock(p);
-		mutex_exit(&p->p_stmutex);
+		mutex_spin_exit(&p->p_stmutex);
 	}
 
 	/*

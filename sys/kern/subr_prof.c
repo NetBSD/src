@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33.20.8 2007/01/31 23:38:38 ad Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.33.20.9 2007/02/05 16:44:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.8 2007/01/31 23:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.9 2007/02/05 16:44:40 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -151,12 +151,12 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 		return (error);
 
 	if (node.sysctl_num == GPROF_STATE) {
-		mutex_enter(&proc0.p_stmutex);
+		mutex_spin_enter(&proc0.p_stmutex);
 		if (gp->state == GMON_PROF_OFF)
 			stopprofclock(&proc0);
 		else
 			startprofclock(&proc0);
-		mutex_exit(&proc0.p_stmutex);
+		mutex_spin_exit(&proc0.p_stmutex);
 	}
 
 	return (0);
@@ -235,21 +235,21 @@ sys_profil(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, scale) > (1 << 16))
 		return (EINVAL);
 	if (SCARG(uap, scale) == 0) {
-		mutex_enter(&p->p_stmutex);
+		mutex_spin_enter(&p->p_stmutex);
 		stopprofclock(p);
-		mutex_exit(&p->p_stmutex);
+		mutex_spin_exit(&p->p_stmutex);
 		return (0);
 	}
 	upp = &p->p_stats->p_prof;
 
 	/* Block profile interrupts while changing state. */
-	mutex_enter(&p->p_stmutex);
+	mutex_spin_enter(&p->p_stmutex);
 	upp->pr_off = SCARG(uap, offset);
 	upp->pr_scale = SCARG(uap, scale);
 	upp->pr_base = SCARG(uap, samples);
 	upp->pr_size = SCARG(uap, size);
 	startprofclock(p);
-	mutex_exit(&p->p_stmutex);
+	mutex_spin_exit(&p->p_stmutex);
 
 	return (0);
 }
@@ -295,14 +295,14 @@ addupc_intr(struct lwp *l, u_long pc)
 		return;			/* out of range; ignore */
 
 	addr = prof->pr_base + i;
-	mutex_exit(&p->p_stmutex);
+	mutex_spin_exit(&p->p_stmutex);
 	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + 1) == -1) {
 		/* XXXSMP */
 		prof->pr_addr = pc;
 		prof->pr_ticks++;
 		cpu_need_proftick(l);
 	}
-	mutex_enter(&p->p_stmutex);
+	mutex_spin_enter(&p->p_stmutex);
 }
 
 /*
@@ -324,25 +324,25 @@ addupc_task(struct lwp *l, u_long pc, u_int ticks)
 	if (ticks == 0)
 		return;
 
-	mutex_enter(&p->p_stmutex);
+	mutex_spin_enter(&p->p_stmutex);
 	prof = &p->p_stats->p_prof;
 
 	/* Testing P_PROFIL may be unnecessary, but is certainly safe. */
 	if ((p->p_stflag & PST_PROFIL) == 0 || pc < prof->pr_off ||
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size) {
-		mutex_exit(&p->p_stmutex);
+		mutex_spin_exit(&p->p_stmutex);
 		return;
 	}
 
 	addr = prof->pr_base + i;
-	mutex_exit(&p->p_stmutex);
+	mutex_spin_exit(&p->p_stmutex);
 	if ((error = copyin(addr, (caddr_t)&v, sizeof(v))) == 0) {
 		v += ticks;
 		error = copyout((caddr_t)&v, addr, sizeof(v));
 	}
 	if (error != 0) {
-		mutex_enter(&p->p_stmutex);
+		mutex_spin_enter(&p->p_stmutex);
 		stopprofclock(p);
-		mutex_exit(&p->p_stmutex);
+		mutex_spin_exit(&p->p_stmutex);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.8 2007/02/05 13:16:48 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.9 2007/02/05 16:44:40 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.8 2007/02/05 13:16:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.9 2007/02/05 16:44:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -757,9 +757,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * Stop profiling.
 	 */
 	if ((p->p_stflag & PST_PROFIL) != 0) {
-		mutex_enter(&p->p_stmutex);
+		mutex_spin_enter(&p->p_stmutex);
 		stopprofclock(p);
-		mutex_exit(&p->p_stmutex);
+		mutex_spin_exit(&p->p_stmutex);
 	}
 
 	/*
