@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.84 2007/02/04 20:53:19 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.85 2007/02/05 15:37:20 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.84 2007/02/04 20:53:19 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.85 2007/02/05 15:37:20 njoly Exp $");
 #endif
 #endif /* not lint */
 
@@ -1698,7 +1698,7 @@ mfs_dev(void)
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
 	case 0:
-		(void)asprintf(&fs_size, "%d", FSSIZE);
+		(void)asprintf(&fs_size, "%zu", FSSIZE);
 		if (fs_size == NULL)
 			return(-1);
 		(void)execl(INIT_MOUNT_MFS, "mount_mfs",
@@ -1733,7 +1733,7 @@ mfs_dev(void)
 
 	(void)freopen(_PATH_CONSOLE, "a", stderr);
 
-	warnx("Creating mfs /dev (%d blocks, %d inodes)", FSSIZE, NINODE);
+	warnx("Creating mfs /dev (%zu blocks, %d inodes)", FSSIZE, NINODE);
 
 	/* Create a MAKEDEV script in the mfs /dev */
 	writefile(&mfile[0]);
