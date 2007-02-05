@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.18 2007/01/31 19:56:38 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.19 2007/02/05 16:44:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.18 2007/01/31 19:56:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.19 2007/02/05 16:44:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -362,10 +362,10 @@ schedcpu(void *arg)
 		 */
 		if (autonicetime && runtm > autonicetime && p->p_nice == NZERO
 		    && kauth_cred_geteuid(p->p_cred)) {
-			mutex_enter(&p->p_stmutex);
+			mutex_spin_enter(&p->p_stmutex);
 			p->p_nice = autoniceval + NZERO;
 			resetprocpriority(p);
-			mutex_exit(&p->p_stmutex);
+			mutex_spin_exit(&p->p_stmutex);
 		}
 
 		/*
@@ -376,7 +376,7 @@ schedcpu(void *arg)
 			/*
 			 * p_pctcpu is only for ps.
 			 */
-			mutex_enter(&p->p_stmutex);
+			mutex_spin_enter(&p->p_stmutex);
 			clkhz = stathz != 0 ? stathz : hz;
 #if	(FSHIFT >= CCPU_SHIFT)
 			p->p_pctcpu += (clkhz == 100)?
@@ -396,7 +396,7 @@ schedcpu(void *arg)
 					resetpriority(l);
 				lwp_unlock(l);
 			}
-			mutex_exit(&p->p_stmutex);
+			mutex_spin_exit(&p->p_stmutex);
 		}
 
 		mutex_exit(&p->p_smutex);
@@ -931,11 +931,11 @@ schedclock(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
-	mutex_enter(&p->p_stmutex);
+	mutex_spin_enter(&p->p_stmutex);
 	p->p_estcpu = ESTCPULIM(p->p_estcpu + (1 << ESTCPU_SHIFT));
 	lwp_lock(l);
 	resetpriority(l);
-	mutex_exit(&p->p_stmutex);
+	mutex_spin_exit(&p->p_stmutex);
 	if ((l->l_flag & L_SYSTEM) == 0 && l->l_priority >= PUSER)
 		l->l_priority = l->l_usrpri;
 	lwp_unlock(l);
@@ -1041,13 +1041,13 @@ scheduler_wait_hook(struct proc *parent, struct proc *child)
 
 	/* XXX Only if parent != init?? */
 
-	mutex_enter(&parent->p_stmutex);
+	mutex_spin_enter(&parent->p_stmutex);
 	estcpu = decay_cpu_batch(loadfac, child->p_estcpu_inherited,
 	    schedcpu_ticks - child->p_forktime);
 	if (child->p_estcpu > estcpu)
 		parent->p_estcpu =
 		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
-	mutex_exit(&parent->p_stmutex);
+	mutex_spin_exit(&parent->p_stmutex);
 }
 
 /*

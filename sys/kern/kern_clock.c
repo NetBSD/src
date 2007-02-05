@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.102.2.6 2007/01/16 07:10:07 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.102.2.7 2007/02/05 16:44:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.6 2007/01/16 07:10:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.102.2.7 2007/02/05 16:44:40 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1124,10 +1124,10 @@ proftick(struct clockframe *frame)
 	l = curlwp;
 	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
-		mutex_enter(&p->p_stmutex);
+		mutex_spin_enter(&p->p_stmutex);
 		if (p->p_stflag & PST_PROFIL)
 			addupc_intr(l, CLKF_PC(frame));
-		mutex_exit(&p->p_stmutex);
+		mutex_spin_exit(&p->p_stmutex);
 	} else {
 #ifdef GPROF
 		g = &_gmonparam;
@@ -1141,10 +1141,10 @@ proftick(struct clockframe *frame)
 #endif
 #ifdef PROC_PC
 		if (p != NULL) {
-			mutex_enter(&p->p_stmutex);
+			mutex_spin_enter(&p->p_stmutex);
 			if (p->p_stflag & PST_PROFIL))
 				addupc_intr(l, PROC_PC(p));
-			mutex_exit(&p->p_stmutex);
+			mutex_spin_exit(&p->p_stmutex);
 		}
 #endif
 	}
@@ -1182,14 +1182,14 @@ statclock(struct clockframe *frame)
 	}
 	l = curlwp;
 	if ((p = (l ? l->l_proc : NULL)) != NULL)
-		mutex_enter(&p->p_stmutex);
+		mutex_spin_enter(&p->p_stmutex);
 	if (CLKF_USERMODE(frame)) {
 		KASSERT(p != NULL);
 
 		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0) {
-			mutex_exit(&p->p_stmutex);
+			mutex_spin_exit(&p->p_stmutex);
 			return;
 		}
 
@@ -1222,7 +1222,7 @@ statclock(struct clockframe *frame)
 #endif
 		if (--spc->spc_pscnt > 0) {
 			if (p != NULL)
-				mutex_exit(&p->p_stmutex);
+				mutex_spin_exit(&p->p_stmutex);
 			return;
 		}
 		/*
@@ -1251,7 +1251,7 @@ statclock(struct clockframe *frame)
 
 	if (p != NULL) {
 		++p->p_cpticks;
-		mutex_exit(&p->p_stmutex);
+		mutex_spin_exit(&p->p_stmutex);
 
 		/*
 		 * If no separate schedclock is provided, call it here

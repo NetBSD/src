@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.126.4.9 2007/02/05 13:16:48 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.126.4.10 2007/02/05 16:44:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.9 2007/02/05 13:16:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.126.4.10 2007/02/05 16:44:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -526,9 +526,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Start profiling.
 	 */
 	if ((p2->p_stflag & PST_PROFIL) != 0) {
-		mutex_enter(&p2->p_stmutex);
+		mutex_spin_enter(&p2->p_stmutex);
 		startprofclock(p2);
-		mutex_exit(&p2->p_stmutex);
+		mutex_spin_exit(&p2->p_stmutex);
 	}
 
 	/*
