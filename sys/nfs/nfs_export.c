@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.25 2007/02/04 15:03:20 chs Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.26 2007/02/05 16:03:53 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.25 2007/02/04 15:03:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.26 2007/02/05 16:03:53 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -244,6 +244,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		}
 	}
 	if (error != 0) {
+		vput(vp);
 		return EOPNOTSUPP;
 	}
 
