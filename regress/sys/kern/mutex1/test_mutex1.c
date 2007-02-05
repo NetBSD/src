@@ -1,4 +1,4 @@
-/*	$NetBSD: test_mutex1.c,v 1.1 2007/01/17 20:56:49 ad Exp $	*/
+/*	$NetBSD: test_mutex1.c,v 1.2 2007/02/05 20:20:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: test_mutex1.c,v 1.1 2007/01/17 20:56:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: test_mutex1.c,v 1.2 2007/02/05 20:20:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,12 +54,25 @@ void	thread1(void *);
 void	thread2(void *);
 void	thread3(void *);
 void	thread_exit(int);
+void	thread_enter(int *);
 
 struct proc	*test_threads[NTHREADS];
 kmutex_t	test_mutex;
 kcondvar_t	test_cv;
 int		test_count;
 int		test_exit;
+
+void
+thread_enter(int *nlocks)
+{
+	struct lwp *l = curlwp;
+
+	KERNEL_UNLOCK_ALL(l, nlocks);
+	lwp_lock(l);
+	l->l_usrpri = MAXPRI;
+	lwp_changepri(l, MAXPRI);
+	lwp_unlock(l);
+}
 
 void
 thread_exit(int nlocks)
@@ -82,7 +95,7 @@ thread1(void *cookie)
 {
 	int count, nlocks;
 
-	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
+	thread_enter(&nlocks);
 
 	for (count = 0; !test_exit; count++) {
 		mutex_enter(&test_mutex);
@@ -104,7 +117,7 @@ thread2(void *cookie)
 {
 	int count, nlocks;
 
-	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
+	thread_enter(&nlocks);
 
 	for (count = 0; !test_exit; count++) {
 		KERNEL_LOCK(1, curlwp);
@@ -126,7 +139,7 @@ thread3(void *cookie)
 {
 	int count, nlocks;
 
-	KERNEL_UNLOCK_ALL(curlwp, &nlocks);
+	thread_enter(&nlocks);
 
 	for (count = 0; !test_exit; count++) {
 		mutex_enter(&test_mutex);
