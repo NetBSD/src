@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.34 2007/01/28 16:39:29 cbiere Exp $
+# $NetBSD: postinstall,v 1.35 2007/02/05 02:34:30 elad Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -844,7 +844,7 @@ do_rc()
 		mixerctl mopd motd mountall mountcritlocal mountcritremote \
 		mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
-		pf pf_boot pflogd poffd postfix powerd ppp pwcheck \
+		perusertmp pf pf_boot pflogd poffd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd root \
 		route6d routed rtadvd rtclocaltime rtsold rwho \
