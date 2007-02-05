@@ -616,6 +616,7 @@ how one would set up the service in the Postfix master.cf file:
     scan      unix  -       -       n       -       10      smtp
         -o smtp_send_xforward_command=yes
         -o disable_mime_output_conversion=yes
+        -o smtp_generic_maps=
 </pre>
 </blockquote>
 
@@ -638,6 +639,10 @@ for more information. </p>
 that prevents the breaking of domainkeys and other digital signatures.
 This is needed because some SMTP-based content filters don't announce
 8BITMIME support, even though they can handle it just fine.  </p>
+
+<li> <p> The "-o smtp_generic_maps=" is a workaround that prevents
+local address rewriting with generic(5) maps. Such rewriting should
+happen only when mail is sent out to the Internet.  </p>
 
 </ul>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_output.c,v 1.1.1.3 2006/12/21 02:35:05 rpaulo Exp $	*/
+/*	$NetBSD: msg_output.c,v 1.1.1.4 2007/02/05 17:43:16 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -152,6 +152,9 @@ void    msg_vprintf(int level, const char *format, va_list ap)
 {
     if (msg_vprintf_lock == 0) {
 	msg_vprintf_lock = 1;
+	/* On-the-fly initialization for debugging test programs only. */
+	if (msg_output_fn_count == 0)
+	    msg_vstream_init("unknown", VSTREAM_ERR);
 	/* OK if terminating signal handler hijacks control before next stmt. */
 	vstring_vsprintf(msg_buffer, percentm(format, errno), ap);
 	msg_text(level, vstring_str(msg_buffer));

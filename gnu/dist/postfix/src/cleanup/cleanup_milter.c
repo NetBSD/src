@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.5 2006/12/21 02:31:36 rpaulo Exp $	*/
+/*	$NetBSD: cleanup_milter.c,v 1.1.1.6 2007/02/05 17:40:02 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -403,6 +403,10 @@ static off_t cleanup_find_header(CLEANUP_STATE *state, ssize_t index,
      * 
      * Thus, header insert operations are relative to the content as delivered,
      * that is, the content including our own Received: header.
+     * 
+     * None of the above is applicable after a Milter inserts a header before
+     * our own Received: header. From then on, our own Received: header
+     * becomes just like other headers.
      */
 #define CLEANUP_FIND_HEADER_NOTFOUND	(-1)
 #define CLEANUP_FIND_HEADER_IOERROR	(-2)
@@ -462,8 +466,7 @@ static off_t cleanup_find_header(CLEANUP_STATE *state, ssize_t index,
 	}
 	/* The middle of a multi-record header. */
 	else if (last_type == REC_TYPE_CONT || IS_SPACE_TAB(STR(buf)[0])) {
-	    /* Reset the saved PTR record. */
-	    ptr_offset = 0;
+	    /* Reset the saved PTR record and update last_type. */
 	}
 	/* No more message headers. */
 	else if ((len = is_header(STR(buf))) == 0) {
@@ -471,7 +474,7 @@ static off_t cleanup_find_header(CLEANUP_STATE *state, ssize_t index,
 	}
 	/* This the start of a message header. */
 	else if (hdr_count++ < skip_headers)
-	    continue;
+	     /* Reset the saved PTR record and update last_type. */ ;
 	else if ((header_label == 0
 		  || (strncasecmp(header_label, STR(buf), len) == 0
 		      && (IS_SPACE_TAB(STR(buf)[len])
@@ -480,6 +483,7 @@ static off_t cleanup_find_header(CLEANUP_STATE *state, ssize_t index,
 	    /* If we have a saved PTR record, it points to start of header. */
 	    break;
 	}
+	ptr_offset = 0;
 	last_type = rec_type;
     }
 

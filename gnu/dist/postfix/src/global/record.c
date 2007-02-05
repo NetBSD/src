@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.1.1.6 2006/11/07 02:57:49 rpaulo Exp $	*/
+/*	$NetBSD: record.c,v 1.1.1.7 2007/02/05 17:40:52 rpaulo Exp $	*/
 
 /*++
 /* NAME
@@ -79,8 +79,8 @@
 /*	and REC_FLAG_DEFAULT for normal use.
 /*
 /*	rec_get() is a wrapper around rec_get_raw() that always
-/*	enables the REC_FLAG_FOLLOW_PTR and REC_FLAG_SKIP_DTXT
-/*	features.
+/*	enables the REC_FLAG_FOLLOW_PTR, REC_FLAG_SKIP_DTXT
+/*	and REC_FLAG_SEEK_END features.
 /*
 /*	rec_put() stores the specified record and returns the record
 /*	type, or REC_TYPE_ERROR in case of problems.
