@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.453 2007/02/02 09:39:24 is Exp $
+$NetBSD: usbdevs,v 1.454 2007/02/05 14:05:48 gdt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -429,6 +429,7 @@ vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
+vendor NOVATEL		0x1410	Novatel
 vendor HUAWEI3COM	0x1472	Huawei 3Com
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
@@ -1504,6 +1505,7 @@ product NOKIA CA42		0x0802	Mobile Phone adapter
 
 /* NovAtel products */
 product NOVATEL FLEXPACKGPS	0x0100	NovAtel FlexPack GPS receiver
+product NOVATEL2 CDMA_MODEM	0x1110	Novatel Wireless Merlin CDMA
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
