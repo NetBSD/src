@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.81.4.10 2007/02/04 14:42:36 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.81.4.11 2007/02/05 13:20:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.10 2007/02/04 14:42:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.81.4.11 2007/02/05 13:20:19 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1722,9 +1722,12 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	elem_size = name[1];
 	elem_count = name[2];
 
-	p = p_find(pid, PFIND_UNLOCK_FAIL);
-	if (p == NULL)
+	rw_enter(&proclist_lock, RW_READER);
+	p = p_find(pid, PFIND_LOCKED);
+	if (p == NULL) {
+		rw_exit(&proclist_lock);
 		return (ESRCH);
+	}
 	mutex_enter(&p->p_smutex);	
 	LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 		if (buflen >= elem_size && elem_count > 0) {

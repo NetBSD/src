@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.66.4.5 2007/01/31 19:56:38 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.66.4.6 2007/02/05 13:16:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -171,8 +171,8 @@ int	sigaltstack1(struct lwp *, const struct sigaltstack *,
 int	sigismasked(struct lwp *, int);
 
 int	sigget(sigpend_t *, ksiginfo_t *, int, sigset_t *);
-void	sigclear(sigpend_t *, sigset_t *);
-void	sigclearall(struct proc *, sigset_t *);
+void	sigclear(sigpend_t *, sigset_t *, ksiginfoq_t *);
+void	sigclearall(struct proc *, sigset_t *, ksiginfoq_t *);
 
 void	kpsignal2(struct proc *, ksiginfo_t *);
 
@@ -184,10 +184,13 @@ void	sigactsfree(struct sigacts *);
 
 void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
 void	sendsig_reset(struct lwp *, int);
+
 siginfo_t *siginfo_alloc(int);
 void	siginfo_free(void *);
+
 ksiginfo_t	*ksiginfo_alloc(struct proc *, ksiginfo_t *, int);
 void	ksiginfo_free(ksiginfo_t *);
+void	ksiginfo_queue_drain0(ksiginfoq_t *);
 
 int	__sigtimedwait1(struct lwp *, void *, register_t *, copyout_t,
     copyin_t, copyout_t);
@@ -231,6 +234,19 @@ firstsig(const sigset_t *ss)
 		return (sig + 96);
 #endif
 	return (0);
+}
+
+static inline void
+ksiginfo_queue_init(ksiginfoq_t *kq)
+{
+	CIRCLEQ_INIT(kq);
+}
+
+static inline void
+ksiginfo_queue_drain(ksiginfoq_t *kq)
+{
+	if (!CIRCLEQ_EMPTY(kq))
+		ksiginfo_queue_drain0(kq);
 }
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.11 2007/02/04 14:08:11 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.12 2007/02/05 13:16:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.11 2007/02/04 14:08:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.12 2007/02/05 13:16:49 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -388,12 +388,14 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	struct sigacts *ps;
 	sigset_t tset;
 	int prop, error;
+	ksiginfoq_t kq;
 
 	if (signum <= 0 || signum >= NSIG)
 		return (EINVAL);
 
 	p = l->l_proc;
 	error = 0;
+	ksiginfo_queue_init(&kq);
 
 	/*
 	 * Trampoline ABI version 0 is reserved for the legacy kernel
@@ -414,7 +416,6 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		return (EINVAL);
 	}
 
-	KERNEL_LOCK(1, l);	/* XXXSMP sigclearall() -> pool_put() */
 	mutex_enter(&p->p_mutex);	/* p_flag */
 	mutex_enter(&p->p_smutex);
 
@@ -485,7 +486,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		/* Never to be seen again. */
 		sigemptyset(&tset);
 		sigaddset(&tset, signum);
-		sigclearall(p, &tset);
+		sigclearall(p, &tset, &kq);
 		if (signum != SIGCONT) {
 			/* Easier in psignal */
 			sigaddset(&p->p_sigctx.ps_sigignore, signum);
@@ -509,7 +510,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
  out:
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP sigclearall() -> pool_put() */
+	ksiginfo_queue_drain(&kq);
 
 	return (error);
 }

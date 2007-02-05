@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.58.2.9 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.58.2.10 2007/02/05 13:16:49 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.9 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.58.2.10 2007/02/05 13:16:49 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -934,30 +934,25 @@ uid_t
 systrace_seteuid(struct lwp *l, uid_t euid)
 {
 	struct proc *p = l->l_proc;
-	kauth_cred_t cred;
+	kauth_cred_t cred, ncred;
 	uid_t oeuid;
 
+	ncred = kauth_cred_alloc();
 	proc_crmod_enter();
 	cred = p->p_cred;
 
 	oeuid = kauth_cred_geteuid(cred);
 	if (oeuid == euid) {
-		proc_crmod_leave(cred, NULL);
+		proc_crmod_leave(cred, ncred, FALSE);
 		return (oeuid);
 	}
 
 	/* Copy credentials so other references do not see our changes. */
-	cred = kauth_cred_dup(cred);
-	kauth_cred_seteuid(cred, euid);
-
-	/* Mark process as having changed credentials, stops tracing etc */
-	p_sugid(p);
+	kauth_cred_clone(cred, ncred);
+	kauth_cred_seteuid(ncred, euid);
 
 	/* Broadcast our credentials to the process and other LWPs. */
-	proc_crmod_leave(cred, p->p_cred);
-
-	/* Update our copy of the credentials. */
- 	lwp_update_creds(l);
+	proc_crmod_leave(ncred, cred, TRUE);
 
 	return (oeuid);
 }
@@ -966,30 +961,25 @@ gid_t
 systrace_setegid(struct lwp *l, gid_t egid)
 {
 	struct proc *p = l->l_proc;
-	kauth_cred_t cred;
+	kauth_cred_t cred, ncred;
 	gid_t oegid;
 
+	ncred = kauth_cred_alloc();
 	proc_crmod_enter();
 	cred = p->p_cred;
 
 	oegid = kauth_cred_getegid(cred);
 	if (oegid == egid) {
-		proc_crmod_leave(cred, NULL);
+		proc_crmod_leave(cred, ncred, FALSE);
 		return (oegid);
 	}
 
 	/* Copy credentials so other references do not see our changes. */
-	cred = kauth_cred_dup(cred);
-	kauth_cred_setegid(cred, egid);
-
-	/* Mark process as having changed credentials, stops tracing etc */
-	p_sugid(p);
+	kauth_cred_clone(cred, ncred);
+	kauth_cred_setegid(ncred, egid);
 
 	/* Broadcast our credentials to the process and other LWPs. */
-	proc_crmod_leave(cred, p->p_cred);
-
-	/* Update our copy of the credentials. */
- 	lwp_update_creds(l);
+	proc_crmod_leave(cred, ncred, TRUE);
 
 	return (oegid);
 }

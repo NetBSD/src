@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.73.2.4 2007/02/01 08:48:51 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.73.2.5 2007/02/05 13:20:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.73.2.4 2007/02/01 08:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.73.2.5 2007/02/05 13:20:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -364,6 +364,7 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 	struct buf *bp;
 	caddr_t base;
 	int sleepreturn = 0;
+	ksiginfoq_t kq;
 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
@@ -388,9 +389,11 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 				mutex_exit(&syncer_mutex);
 			else if (dounmount(mp, 0, l) != 0) {
 				p = l->l_proc;
+				ksiginfo_queue_init(&kq);
 				mutex_enter(&p->p_smutex);
-				sigclearall(p, NULL);
+				sigclearall(p, NULL, &kq);
 				mutex_exit(&p->p_smutex);
+				ksiginfo_queue_drain(&kq);
 			}
 			sleepreturn = 0;
 			continue;
