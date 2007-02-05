@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.18.2.4 2007/02/04 12:10:56 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.18.2.5 2007/02/05 13:53:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.18.2.4 2007/02/04 12:10:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.18.2.5 2007/02/05 13:53:20 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,6 +154,7 @@ kauth_cred_free(kauth_cred_t cred)
 	if (refcnt == 0) {
 		kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
 		specificdata_fini(kauth_domain, &cred->cr_sd);
+		mutex_destroy(&cred->cr_lock);
 		pool_put(&kauth_cred_pool, cred);
 	}
 }
