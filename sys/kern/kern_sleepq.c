@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.12 2007/02/04 16:04:30 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.13 2007/02/05 13:11:13 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.12 2007/02/04 16:04:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.13 2007/02/05 13:11:13 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -481,6 +481,8 @@ sleepq_changepri(struct lwp *l, int pri)
 	sleepq_t *sq = l->l_sleepq;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
+
+	l->l_priority = pri;
 
 	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0)
 		return;
