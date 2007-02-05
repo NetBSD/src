@@ -1,7 +1,7 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.7 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.8 2007/02/05 13:06:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -196,6 +196,7 @@ turnstile_t	*turnstile_lookup(wchan_t);
 void	turnstile_exit(wchan_t);
 void	turnstile_block(turnstile_t *, int, int, wchan_t);
 void	turnstile_wakeup(turnstile_t *, int, int, struct lwp *);
+void	turnstile_print(volatile void *, void (*)(const char *, ...));
 
 static inline void
 turnstile_unblock(void)
