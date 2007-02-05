@@ -1,9 +1,9 @@
-/* $NetBSD: lkminit_skel.c,v 1.1 2007/02/04 22:53:09 elad Exp $ */
+/* $NetBSD: lkminit_skel.c,v 1.2 2007/02/05 17:36:12 elad Exp $ */
 
 /* This code is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_skel.c,v 1.1 2007/02/04 22:53:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_skel.c,v 1.2 2007/02/05 17:36:12 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/lkm.h>
@@ -19,10 +19,10 @@ skelmod_handle(struct lkm_table *lkmtp, int cmd)
 {
 	int error = 0;
 
-	switch(cmd) {
+	switch (cmd) {
 	case LKM_E_LOAD:
-		if(lkmexists(lkmtp))
-			return( EEXIST);
+		if (lkmexists(lkmtp))
+			return (EEXIST);
 
 		printf("hello world\n");
 
