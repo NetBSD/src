@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.10 2006/11/07 03:09:18 rpaulo Exp $
+.\"	$NetBSD: postconf.5,v 1.11 2007/02/05 17:56:11 rpaulo Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -5362,9 +5362,10 @@ restriction that matches wins.
 The following restrictions are specific to client hostname or
 client network address information.
 .IP "\fBcheck_ccert_access \fItype:table\fR\fR"
-When the remote SMTP client certificate is verified successfully,
-use the client certificate fingerprint as lookup key for the specified
-\fBaccess\fR(5) database. This feature is available with Postfix version 2.2.
+Use the client certificate fingerprint as lookup key for the
+specified \fBaccess\fR(5) database; with Postfix version 2.2, also require
+that the SMTP client certificate is verified successfully. This
+feature is available with Postfix version 2.2 and later.
 .IP "\fBcheck_client_access \fItype:table\fR\fR"
 Search the specified access database for the client hostname,
 parent domains, client IP address, or networks obtained by stripping

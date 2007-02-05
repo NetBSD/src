@@ -11,6 +11,34 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
+Incompatible changes with Postfix 2.3.7
+---------------------------------------
+
+Postfix no longer inserts an empty-line header/body separator into
+malformed MIME attachments, to avoid breaking digital signatures.
+
+This change introduces ambiguity. Postfix still treats the remainder
+of the attachment as body content; header_checks rules will therefore
+not detect forbidden MIME types inside a message/rfc822 attachment.
+
+With the empty-line header/body separator no longer inserted by
+Postfix, other software may process the malformed attachment
+differently, and thus may become exposed to forbidden MIME types.
+
+Incompatible changes with Postfix 2.3.6
+---------------------------------------
+
+The check_smtpd_policy client sends TLS certificate attributes
+(client ccert_subject, ccert_issuer) only after successful client
+certificate verification. The reason is that the certification
+verification status itself is not available in the policy request.
+
+The check_smtpd_policy client sends TLS certificate fingerprint
+information even when the certificate itself was not verified.
+
+The remote SMTP client TLS certificate fingerprint can be used for
+access control even when the certificate itself was not verified.
+
 Incompatible changes with Postfix 2.3.3
 ---------------------------------------
 
