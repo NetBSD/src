@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.11 2007/02/05 23:31:37 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.12 2007/02/05 23:56:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -138,7 +138,6 @@ iic_smbus_intr_thread1(void *aux)
 	ic->ic_running = 1;
 	ic->ic_pending = 0;
 
-	printf("iic_smbus_intr_thread1: started\n");
 	while (ic->ic_running) {
 		if (ic->ic_pending == 0)
 			rv = tsleep(ic, PZERO, "iicintr", hz);
