@@ -1,4 +1,4 @@
-/*	$NetBSD: condvar.h,v 1.1.2.4 2007/02/03 16:32:50 ad Exp $	*/
+/*	$NetBSD: condvar.h,v 1.1.2.5 2007/02/05 13:16:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -65,8 +65,7 @@ int	cv_timedwait_sig(kcondvar_t *, kmutex_t *, int);
 
 void	cv_signal(kcondvar_t *);
 void	cv_broadcast(kcondvar_t *);
-void	cv_signal_async(kcondvar_t *);
-void	cv_broadcast_async(kcondvar_t *);
+void	cv_wakeup(kcondvar_t *);
 
 int	cv_has_waiters(kcondvar_t *);
 

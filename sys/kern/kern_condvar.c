@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.1.2.5 2007/02/03 16:32:50 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.1.2.6 2007/02/05 13:16:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.5 2007/02/03 16:32:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.6 2007/02/05 13:16:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -299,30 +299,14 @@ cv_broadcast(kcondvar_t *cv)
 }
 
 /*
- * cv_signal_async:
+ * cv_wakeup:
  *
- *	Wake the highest priority LWP waiting on a condition variable.
+ *	Wake all LWPs waiting on a condition variable.  The interlock
+ *	need not be held, but it is the caller's responsibility to
+ *	ensure correct synchronization.
  */
 void
-cv_signal_async(kcondvar_t *cv)
-{
-	sleepq_t *sq;
-
-	sq = sleeptab_lookup(&sleeptab, cv);
-	if (cv->cv_waiters != 0) {
-		cv->cv_waiters--;
-		sleepq_wake(sq, cv, 1);
-	} else
-		sleepq_unlock(sq);
-}
-
-/*
- * cv_broadcast_async:
- *
- *	Wake all LWPs waiting on a condition variable.
- */
-void
-cv_broadcast_async(kcondvar_t *cv)
+cv_wakeup(kcondvar_t *cv)
 {
 	sleepq_t *sq;
 	u_int cnt;
