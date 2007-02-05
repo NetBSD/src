@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.1 2007/01/17 23:25:45 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.2 2007/02/05 18:26:06 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.1 2007/01/17 23:25:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.2 2007/02/05 18:26:06 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,8 +247,9 @@ cuda_attach(struct device *parent, struct device *dev, void *aux)
 	caa.set_handler = cuda_set_handler;
 	caa.send = cuda_send;
 	caa.poll = cuda_poll;
-//	config_found(dev, &caa, cuda_print);
-
+#if notyet
+	config_found(dev, &caa, cuda_print);
+#endif
 
 	iba.iba_tag = &sc->sc_i2c;
 	sc->sc_i2c.ic_cookie = sc;
@@ -416,13 +417,16 @@ static void
 cuda_poll(void *cookie)
 {
 	struct cuda_softc *sc = cookie;
+	int s;
 
 	DPRINTF("polling\n");
 	while ((sc->sc_state != CUDA_IDLE) ||
 	       (cuda_intr_state(sc)) ||
 	       (sc->sc_waiting == 1)) {
 		if ((cuda_read_reg(sc, vIFR) & vSR_INT) == vSR_INT) {
+			s = splhigh();
 			cuda_intr(sc);
+			splx(s);
 		}
 	}
 }
@@ -431,8 +435,11 @@ static void
 cuda_adb_poll(void *cookie)
 {
 	struct cuda_softc *sc = cookie;
+	int s;
 
+	s = splhigh();
 	cuda_intr(sc);
+	splx(s);
 }
 
 static void
@@ -516,22 +523,17 @@ cuda_intr(void *arg)
 {
 	struct cuda_softc *sc = arg;
 	int i, ending, type;
-	unsigned int s;
 	uint8_t reg;
 
-	s = splhigh();		/* can't be too careful - might be called */
-				/* from a routine, NOT an interrupt */
-
 	reg = cuda_read_reg(sc, vIFR);		/* Read the interrupts */
+	DPRINTF("[");
 	if ((reg & 0x80) == 0) {
-		splx(s);
+		DPRINTF("irq %02x]", reg);
 		return 0;			/* No interrupts to process */
 	}
 	DPRINTF(":");
 
-	cuda_write_reg(sc, vIFR, /*reg &*/ 0x7f);	/* Clear 'em */
-
-	//cuda_write_reg(sc, vIER, 0x04);	/* disable ADB interrupt on IIs. */
+	cuda_write_reg(sc, vIFR, 0x7f);	/* Clear 'em */
 
 switch_start:
 	switch (sc->sc_state) {
@@ -601,8 +603,6 @@ switch_start:
 
 			/* reset vars and signal the end of this frame */
 			cuda_idle(sc);
-			DPRINTF(" CUDA_IDLE");
-			sc->sc_state = CUDA_IDLE;
 
 			/* check if we have a handler for this message */
 			type = sc->sc_in[1];
@@ -618,11 +618,14 @@ switch_start:
 				}
 			}
 
+			DPRINTF("CUDA_IDLE");
+			sc->sc_state = CUDA_IDLE;
+			
 			sc->sc_received = 0;
 
 			/*
 			 * If there is something waiting to be sent out,
-			 * the set everything up and send the first byte.
+			 * set everything up and send the first byte.
 			 */
 			if (sc->sc_waiting == 1) {
 
@@ -652,10 +655,13 @@ switch_start:
 				 * so load the first byte and tell the chip
 				 * we want to send.
 				 */
-				cuda_tip(sc);
+				DPRINTF("sending ");
+
 				cuda_out(sc);
 				cuda_write_reg(sc, vSR,
 				    sc->sc_out[sc->sc_sent]);
+				cuda_ack_off(sc);
+				cuda_tip(sc);
 			}
 		}
 		break;
@@ -703,10 +709,7 @@ switch_start:
 		break;
 	}
 
-	//cuda_write_reg(sc, vIER, 0x84);	/* enable ADB interrupt on IIs. */
-
-	splx(s);		/* restore */
-
+	DPRINTF("]");
 	return 1;
 }
 
