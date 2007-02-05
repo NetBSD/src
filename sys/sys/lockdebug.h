@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdebug.h,v 1.1.2.6 2007/02/05 13:00:56 ad Exp $	*/
+/*	$NetBSD: lockdebug.h,v 1.1.2.7 2007/02/05 19:35:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -36,10 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_lockdebug.h"
-
 #ifndef __SYS_LOCKDEBUG_H__
 #define	__SYS_LOCKDEBUG_H__
+
+#ifdef _KERNEL_OPT
+#include "opt_lockdebug.h"
+#endif
 
 #ifndef _KERNEL
 #error "Sorry, nothing of interest to user level programs here."
