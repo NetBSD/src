@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.85 2007/02/05 15:37:20 njoly Exp $	*/
+/*	$NetBSD: init.c,v 1.86 2007/02/05 22:36:18 cbiere Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.85 2007/02/05 15:37:20 njoly Exp $");
+__RCSID("$NetBSD: init.c,v 1.86 2007/02/05 22:36:18 cbiere Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,12 +252,12 @@ main(int argc, char **argv)
 	/* Dispose of random users. */
 	if (getuid() != 0) {
 		errno = EPERM;
-		err(1, NULL);
+		err(EXIT_FAILURE, NULL);
 	}
 
 	/* System V users like to reexec init. */
 	if (getpid() != 1)
-		errx(1, "already running");
+		errx(EXIT_FAILURE, "already running");
 #endif
 
 	/*
@@ -601,11 +601,11 @@ setctty(const char *name)
 	(void)nanosleep(&dtrtime, NULL);	/* leave DTR low for a bit */
 	if ((fd = open(name, O_RDWR)) == -1) {
 		stall("can't open %s: %m", name);
-		_exit(1);
+		_exit(EXIT_FAILURE);
 	}
 	if (login_tty(fd) == -1) {
 		stall("can't get %s for controlling terminal: %m", name);
-		_exit(1);
+		_exit(EXIT_FAILURE);
 	}
 }
 
@@ -674,7 +674,7 @@ single_user(void)
 			for (;;) {
 				clear = getpass("Password:");
 				if (clear == 0 || *clear == '\0')
-					_exit(0);
+					_exit(EXIT_SUCCESS);
 				password = crypt(clear, pp->pw_passwd);
 				(void)memset(clear, 0, _PASSWORD_LEN);
 				if (strcmp(password, pp->pw_passwd) == 0)
@@ -728,7 +728,7 @@ single_user(void)
 		(void)execv(INIT_BSHELL, __UNCONST(argv));
 		emergency("can't exec `%s' for single user: %m", INIT_BSHELL);
 		(void)sleep(STALL_TIMEOUT);
-		_exit(1);
+		_exit(EXIT_FAILURE);
 	}
 
 	if (pid == -1) {
@@ -826,13 +826,13 @@ runetcrc(int trychroot)
 			if (chroot(rootdir) != 0) {
 				warning("failed to chroot to `%s': %m",
 				    rootdir);
-				_exit(1); 	/* force single user mode */
+				_exit(EXIT_FAILURE); 	/* force single user mode */
 			}
 #endif /* CHROOT */
 
 		(void)execv(INIT_BSHELL, __UNCONST(argv));
 		stall("can't exec `%s' for `%s': %m", INIT_BSHELL, _PATH_RUNCOM);
-		_exit(1);	/* force single user mode */
+		_exit(EXIT_FAILURE);	/* force single user mode */
 		/*NOTREACHED*/
 	case -1:
 		emergency("can't fork for `%s' on `%s': %m", INIT_BSHELL,
@@ -1153,7 +1153,9 @@ read_ttys(void)
 		/*
 		 * If wtmpx is not empty, pick the the down time from there
 		 */
-		if (stat(_PATH_WTMPX, &st) != -1 && st.st_size != 0) {
+		if (stat(_PATH_WTMPX, &st) != -1 &&
+		    S_ISREG(st.st_mode) &&
+		    st.st_size > 0) {
 			struct timeval down_time;
 
 			TIMESPEC_TO_TIMEVAL(&down_time, 
@@ -1230,7 +1232,7 @@ start_window_system(session_t *sp)
 	(void)execv(sp->se_window_argv[0], sp->se_window_argv);
 	stall("can't exec window system `%s' for port `%s': %m",
 	    sp->se_window_argv[0], sp->se_device);
-	_exit(1);
+	_exit(EXIT_FAILURE);
 }
 
 /*
@@ -1261,7 +1263,7 @@ start_getty(session_t *sp)
 		if (chroot(rootdir) != 0) {
 			stall("can't chroot getty `%s' inside `%s': %m",
 			    sp->se_getty_argv[0], rootdir);
-			_exit(1);
+			_exit(EXIT_FAILURE);
 		}
 #endif /* CHROOT */
 
@@ -1283,7 +1285,7 @@ start_getty(session_t *sp)
 	(void)execv(sp->se_getty_argv[0], sp->se_getty_argv);
 	stall("can't exec getty `%s' for port `%s': %m",
 	    sp->se_getty_argv[0], sp->se_device);
-	_exit(1);
+	_exit(EXIT_FAILURE);
 	/*NOTREACHED*/
 }
 #ifdef SUPPORT_UTMPX
@@ -1303,7 +1305,7 @@ make_utmpx(const char *name, const char *line, int type, pid_t pid,
     const struct timeval *tv, int session)
 {
 	struct utmpx ut;
-	const char *eline;
+	size_t len;
 
 	(void)memset(&ut, 0, sizeof(ut));
 	(void)strlcpy(ut.ut_name, name, sizeof(ut.ut_name));
@@ -1316,9 +1318,10 @@ make_utmpx(const char *name, const char *line, int type, pid_t pid,
 		(void)gettimeofday(&ut.ut_tv, NULL);
 	ut.ut_session = session;
 
-	eline = line + strlen(line);
-	if (eline - line >= sizeof(ut.ut_id))
-		line = eline - sizeof(ut.ut_id);
+	/* The last characters of `line' are put into ut_id */
+	len = strlen(line);
+	if (len > sizeof(ut.ut_id))
+		line += len - sizeof(ut.ut_id);
 	(void)strncpy(ut.ut_id, line, sizeof(ut.ut_id));
 
 	if (pututxline(&ut) == NULL)
@@ -1569,6 +1572,7 @@ void
 alrm_handler(int sig)
 {
 
+	(void) sig;
 	clang = 1;
 }
 
@@ -1621,53 +1625,60 @@ death(void)
 static void
 mapfile(struct mappedfile *mf)
 {
-	int fd;
 	struct stat st;
 	size_t len;
 
 	if (lstat(mf->path, &st) == -1)
 		return;
 
-	len = (size_t)st.st_size;
-	if ((st.st_mode & S_IFMT) == S_IFLNK) {
+	if (S_ISLNK(st.st_mode)) {
+		ssize_t ret;
+
+		if (st.st_size <= 0 || st.st_size > SSIZE_MAX)
+			return;
+		len = (size_t)st.st_size;
 		mf->buf = malloc(len + 1);
 		if (mf->buf == NULL)
 			return;
-		mf->buf[len] = 0;
-		if (readlink(mf->path, mf->buf, len) != len)
-			return;
-		mf->len = (size_t)-1;
-		return;
-	}
+		ret = readlink(mf->path, mf->buf, len);
+		if ((size_t)ret == len) {
+			mf->buf[len] = 0;
+			mf->len = SIZE_MAX;
+		}
+	} else if (S_ISREG(st.st_mode)) {
+		int fd;
 
-	if ((fd = open(mf->path, O_RDONLY)) == -1)
-		return;
-	mf->buf = mmap(0, len, PROT_READ, MAP_FILE|MAP_SHARED, fd, (off_t)0);
-	(void)close(fd);
-	if (mf->buf == MAP_FAILED)
-		return;
-	mf->len = len;
+		if ((fd = open(mf->path, O_RDONLY)) == -1)
+			return;
+		if (fstat(fd, &st) == 0 &&
+		    S_ISREG(st.st_mode) &&
+		    st.st_size > 0 &&
+		    (uintmax_t)(intmax_t)st.st_size < SIZE_MAX) {
+			len = (size_t)st.st_size;
+			mf->buf = mmap(0, len, PROT_READ, MAP_SHARED, fd, 0);
+			if (mf->buf != MAP_FAILED)
+				mf->len = len;
+		}
+		(void)close(fd);
+	}
 }
 
 static void
 writefile(struct mappedfile *mf)
 {
-	int fd;
-
-	if (mf->len == (size_t)-1) {
+	if (mf->len == SIZE_MAX) {
 		(void)symlink(mf->buf, mf->path);
 		free(mf->buf);
-		return;
-	}
+	} else if (mf->len > 0) {
+		int fd;
 
-	if (mf->len == 0)
-		return;
-	fd = open(mf->path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
-	if (fd == -1)
-		return;
-	(void)write(fd, mf->buf, mf->len);
-	(void)munmap(mf->buf, mf->len);
-	(void)close(fd);
+		fd = open(mf->path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
+		if (fd != -1) {
+			(void)write(fd, mf->buf, mf->len);
+			(void)munmap(mf->buf, mf->len);
+			(void)close(fd);
+		}
+	}
 }
 
 static int
@@ -1706,7 +1717,7 @@ mfs_dev(void)
 		    "-s", fs_size, "-n", STR(NINODE),
 		    "-p", "0755",
 		    "swap", "/dev", NULL);
-		_exit(1);
+		_exit(EXIT_FAILURE);
 		/*NOTREACHED*/
 
 	case -1:
@@ -1749,7 +1760,7 @@ mfs_dev(void)
 			(void)execl(INIT_BSHELL, "sh",
 			    mfile[0].len ? "./MAKEDEV" : "/etc/MAKEDEV",
 			    "init", NULL); 
-		_exit(1);
+		_exit(EXIT_FAILURE);
 		/* NOTREACHED */
 
 	case -1:
