@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.71 2007/01/15 23:35:11 hubertf Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.72 2007/02/06 21:27:43 dyoung Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -994,6 +994,10 @@ pf)
 
 crypto)
 	mkdev crypto c %crypto_chr% 0 666
+	;;
+
+cmos)
+	mkdev cmos c %cmos_chr% 0 644
 	;;
 
 speaker)
