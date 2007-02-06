@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.38 2006/12/23 05:14:47 ad Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.39 2007/02/06 15:24:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,12 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.38 2006/12/23 05:14:47 ad Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.39 2007/02/06 15:24:37 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
 #include <lwp.h>
+#ifdef PTHREAD_SA
 #include <sa.h>
+#endif
 #include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>

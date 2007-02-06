@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.32 2006/12/24 03:47:53 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.33 2007/02/06 15:24:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.32 2006/12/24 03:47:53 christos Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.33 2007/02/06 15:24:37 ad Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -257,8 +257,11 @@ td_thr_iter(td_proc_t *proc, int (*call)(td_thread_t *, void *), void *callarg)
 int
 td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 {
-	int tmp, tmp1, val;
+	int tmp, val;
 	struct pthread_queue_t queue;
+#ifdef PTHREAD_SA
+	int tmp1;
+#endif
 
 	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
 	if (val != 0)
@@ -268,6 +271,7 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 		return TD_ERR_BADTHREAD;
 
 	info->thread_addr = thread->addr;
+#ifdef PTHREAD_SA
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
 	    &tmp, sizeof(tmp))) != 0)
@@ -276,11 +280,11 @@ td_thr_info(td_thread_t *thread, td_thread_info_t *info)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
-#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
+	else
 #endif
-	else if ((val = READ(thread->proc, 
+	if ((val = READ(thread->proc, 
 		      thread->addr + offsetof(struct __pthread_st, pt_state), 
 		      &tmp, sizeof(tmp))) != 0)
 		return val;
@@ -398,11 +402,11 @@ td_thr_getname(td_thread_t *thread, char *name, int len)
 int
 td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 {
-	int tmp, tmp1, val;
+	int tmp, val;
 #ifdef PTHREAD_SA
 	caddr_t addr;
 	ucontext_t uc;
-#endif
+	int tmp1;
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
@@ -412,7 +416,6 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
-#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
 	else
@@ -494,11 +497,11 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 int
 td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 {
-	int val, tmp, tmp1;
+	int val, tmp;
 #ifdef PTHREAD_SA
 	caddr_t addr;
 	ucontext_t uc;
-#endif
+	int tmp1;
 
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
@@ -508,7 +511,6 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
-#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
 	else
@@ -1093,12 +1095,16 @@ td_thr_sleepinfo(td_thread_t *thread, td_sync_t **s)
 int
 td_thr_suspend(td_thread_t *thread)
 {
-	int tmp, tmp1, val;
+	int tmp, val;
 	caddr_t addr, sp, nthreadaddr, qaddr;
 	size_t rsize, ucsize;
 	td_thread_t *nthread = NULL; /* XXX: GCC */
-	ucontext_t uc, *ucp;
+	ucontext_t uc;
 	struct pthread_queue_t qhead;
+#ifdef PTHREAD_SA
+	ucontext_t *ucp;
+	int tmp1;
+#endif
 
 	/* validate the thread */
 	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
@@ -1115,8 +1121,6 @@ td_thr_suspend(td_thread_t *thread)
 		return val;
 	if (tmp != PT_THREAD_NORMAL)
 		return TD_ERR_BADTHREAD;
-#endif
-
 	/* find the thread's current state */
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
@@ -1126,7 +1130,6 @@ td_thr_suspend(td_thread_t *thread)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
-#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
 	else
@@ -1176,7 +1179,9 @@ td_thr_suspend(td_thread_t *thread)
 		sp = (caddr_t)(intptr_t)pthread__uc_sp(&uc);
 		sp = STACK_ALIGN(sp, ~_UC_UCONTEXT_ALIGN);
 		ucsize = roundup(sizeof(ucontext_t), (~_UC_UCONTEXT_ALIGN) + 1);
+#ifdef PTHREAD_SA
 		ucp = (void *)STACK_ALLOC(sp, ucsize);
+#endif
 		sp = STACK_GROW(sp, ucsize);
 		val = WRITE(thread->proc, sp, &uc, sizeof(uc));
 		if (val != 0)
@@ -1287,7 +1292,10 @@ td_thr_suspend(td_thread_t *thread)
 int
 td_thr_resume(td_thread_t *thread)
 {
-	int tmp, tmp1, val;
+	int tmp, val;
+#ifdef PTHREAD_SA
+	int tmp1;
+#endif
 
 	/* validate the thread */
 	val = READ(thread->proc, thread->addr, &tmp, sizeof(tmp));
@@ -1307,6 +1315,7 @@ td_thr_resume(td_thread_t *thread)
 	    offsetof(struct __pthread_st, pt_flags),
 	    &tmp, sizeof(tmp));
 
+#ifdef PTHREAD_SA
 	/* find the thread's current state */
 	if ((val = READ(thread->proc, 
 	    thread->addr + offsetof(struct __pthread_st, pt_blockgen), 
@@ -1316,7 +1325,6 @@ td_thr_resume(td_thread_t *thread)
 	    thread->addr + offsetof(struct __pthread_st, pt_unblockgen), 
 	    &tmp1, sizeof(tmp1))) != 0)
 		return val;
-#ifdef PTHREAD_SA
 	if (tmp != tmp1)
 		tmp = _PT_STATE_BLOCKED_SYS;
 	else
