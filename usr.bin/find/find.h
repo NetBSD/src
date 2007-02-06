@@ -1,4 +1,4 @@
-/*	$NetBSD: find.h,v 1.23 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: find.h,v 1.24 2007/02/06 13:25:01 elad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@ enum ntype {
 	N_INAME, N_INUM, N_IREGEX, N_LINKS, N_LS, N_MINDEPTH, N_MAXDEPTH,
 	N_MMIN, N_MTIME, N_NAME, N_NEWER, N_NOGROUP, N_NOT, N_NOUSER, N_OK,
 	N_OPENPAREN, N_OR, N_PATH, N_PERM, N_PRINT, N_PRINT0, N_PRINTX,
-	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV
+	N_PRUNE, N_REGEX, N_SIZE, N_TYPE, N_USER, N_XDEV, N_DELETE
 };
 
 /* node definition */

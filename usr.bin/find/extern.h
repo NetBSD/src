@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2006/10/11 19:51:10 apb Exp $	*/
+/*	$NetBSD: extern.h,v 1.27 2007/02/06 13:25:01 elad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -53,6 +53,7 @@ PLAN	*c_atime(char ***, int);
 PLAN	*c_cmin(char ***, int);
 PLAN	*c_cnewer(char ***, int);
 PLAN	*c_ctime(char ***, int);
+PLAN	*c_delete(char ***, int);
 PLAN	*c_depth(char ***, int);
 PLAN	*c_empty(char ***, int);
 PLAN	*c_exec(char ***, int);
