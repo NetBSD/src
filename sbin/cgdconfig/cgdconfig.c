@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.16 2005/06/27 03:07:45 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.17 2007/02/06 02:09:19 cbiere Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.16 2005/06/27 03:07:45 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.17 2007/02/06 02:09:19 cbiere Exp $");
 #endif
 
 #include <err.h>
@@ -71,13 +71,16 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.16 2005/06/27 03:07:45 christos Exp $");
 #define CGDCONFIG_DIR		"/etc/cgd"
 #define CGDCONFIG_CFILE		CGDCONFIG_DIR "/cgd.conf"
 
-#define ACTION_CONFIGURE	0x1	/* configure, with paramsfile */
-#define ACTION_UNCONFIGURE	0x2	/* unconfigure */
-#define ACTION_GENERATE		0x3	/* generate a paramsfile */
-#define ACTION_GENERATE_CONVERT	0x4	/* generate a ``dup'' paramsfile */
-#define ACTION_CONFIGALL	0x5	/* configure all from config file */
-#define ACTION_UNCONFIGALL	0x6	/* unconfigure all from config file */
-#define ACTION_CONFIGSTDIN	0x7	/* configure, key from stdin */
+enum action {
+	 ACTION_DEFAULT,		/* default -> configure */
+	 ACTION_CONFIGURE,		/* configure, with paramsfile */
+	 ACTION_UNCONFIGURE,		/* unconfigure */
+	 ACTION_GENERATE,		/* generate a paramsfile */
+	 ACTION_GENERATE_CONVERT,	/* generate a ``dup'' paramsfile */
+	 ACTION_CONFIGALL,		/* configure all from config file */
+	 ACTION_UNCONFIGALL,		/* unconfigure all from config file */
+	 ACTION_CONFIGSTDIN		/* configure, key from stdin */
+};
 
 /* if nflag is set, do not configure/unconfigure the cgd's */
 
@@ -101,7 +104,7 @@ static bits_t	*getkey(const char *, struct keygen *, int);
 static bits_t	*getkey_storedkey(const char *, struct keygen *, int);
 static bits_t	*getkey_randomkey(const char *, struct keygen *, int, int);
 static bits_t	*getkey_pkcs5_pbkdf2(const char *, struct keygen *, int, int);
-static int	 opendisk_werror(const char *, char *, int);
+static int	 opendisk_werror(const char *, char *, size_t);
 static int	 unconfigure_fd(int);
 static int	 verify(struct params *, int);
 static int	 verify_disklabel(int);
@@ -111,7 +114,7 @@ static int	 verify_reenter(struct params *);
 static void	 usage(void);
 
 /* Verbose Framework */
-int	verbose = 0;
+unsigned	verbose = 0;
 
 #define VERBOSE(x,y)	if (verbose >= x) y
 #define VPRINTF(x,y)	if (verbose >= x) printf y
@@ -131,7 +134,36 @@ usage(void)
 	fprintf(stderr, "       %s -s [-nv] [-i ivmeth] cgd dev alg "
 	    "[keylen]\n", getprogname());
 	fprintf(stderr, "       %s -u [-nv] cgd\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
+}
+
+static int
+parse_int(const char *s)
+{
+	char *endptr;
+	long v;
+
+	errno = 0;
+	v = strtol(s, &endptr, 10);
+	if ((v == LONG_MIN || v == LONG_MAX) && errno)
+		return -1;
+	if (v < INT_MIN || v > INT_MAX) {
+		errno = ERANGE;
+		return -1;
+	}
+	if (endptr == s) {
+		errno = EINVAL;
+		return -1;
+	}
+	return v;
+}
+
+static void
+set_action(enum action *action, enum action value)
+{
+	if (*action != ACTION_DEFAULT)
+		usage();
+	*action = value;
 }
 
 int
@@ -140,11 +172,10 @@ main(int argc, char **argv)
 	struct params *p;
 	struct params *tp;
 	struct keygen *kg;
-	int	action = ACTION_CONFIGURE;
-	int	actions = 0;
+	enum action action = ACTION_DEFAULT;
 	int	ch;
-	char	cfile[FILENAME_MAX] = "";
-	char	outfile[FILENAME_MAX] = "";
+	const char	*cfile = NULL;
+	const char	*outfile = NULL;
 
 	setprogname(*argv);
 	eliminate_cores();
@@ -156,16 +187,13 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "CGUV:b:f:gi:k:no:usv")) != -1)
 		switch (ch) {
 		case 'C':
-			action = ACTION_CONFIGALL;
-			actions++;
+			set_action(&action, ACTION_CONFIGALL);
 			break;
 		case 'G':
-			action = ACTION_GENERATE_CONVERT;
-			actions++;
+			set_action(&action, ACTION_GENERATE_CONVERT);
 			break;
 		case 'U':
-			action = ACTION_UNCONFIGALL;
-			actions++;
+			set_action(&action, ACTION_UNCONFIGALL);
 			break;
 		case 'V':
 			tp = params_verify_method(string_fromcharstar(optarg));
@@ -174,17 +202,25 @@ main(int argc, char **argv)
 			p = params_combine(p, tp);
 			break;
 		case 'b':
-			tp = params_bsize(atoi(optarg));
-			if (!tp)
-				usage();
-			p = params_combine(p, tp);
+			{
+				int size;
+
+				size = parse_int(optarg);
+				if (size == -1 && errno)
+					usage();
+				tp = params_bsize(size);
+				if (!tp)
+					usage();
+				p = params_combine(p, tp);
+			}
 			break;
 		case 'f':
-			strlcpy(cfile, optarg, sizeof(cfile));
+			if (cfile)
+				usage();
+			cfile = estrdup(optarg);
 			break;
 		case 'g':
-			action = ACTION_GENERATE;
-			actions++;
+			set_action(&action, ACTION_GENERATE);
 			break;
 		case 'i':
 			tp = params_ivmeth(string_fromcharstar(optarg));
@@ -200,16 +236,16 @@ main(int argc, char **argv)
 			nflag = 1;
 			break;
 		case 'o':
-			strlcpy(outfile, optarg, sizeof(outfile));
+			if (outfile)
+				usage();
+			outfile = estrdup(optarg);
 			break;
 		case 's':
-			action = ACTION_CONFIGSTDIN;
-			actions++;
+			set_action(&action, ACTION_CONFIGSTDIN);
 			break;
 
 		case 'u':
-			action = ACTION_UNCONFIGURE;
-			actions++;
+			set_action(&action, ACTION_UNCONFIGURE);
 			break;
 		case 'v':
 			verbose++;
@@ -222,12 +258,15 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
+	if (!outfile)
+		outfile = "";
+	if (!cfile)
+		cfile = "";
+
 	/* validate the consistency of the arguments */
 
-	if (actions > 1)
-		usage();
-
 	switch (action) {
+	case ACTION_DEFAULT:	/* ACTION_CONFIGURE is the default */
 	case ACTION_CONFIGURE:
 		return configure(argc, argv, p, CONFIG_FLAGS_FROMMAIN);
 	case ACTION_UNCONFIGURE:
@@ -242,9 +281,8 @@ main(int argc, char **argv)
 		return do_all(cfile, argc, argv, unconfigure);
 	case ACTION_CONFIGSTDIN:
 		return configure_stdin(p, argc, argv);
-	default:
-		errx(EXIT_FAILURE, "undefined action");
 	}
+	errx(EXIT_FAILURE, "undefined action");
 	/* NOTREACHED */
 }
 
@@ -295,6 +333,8 @@ static bits_t *
 getkey_storedkey(const char *target, struct keygen *kg, int keylen)
 {
 
+	(void) target;
+	(void) keylen;
 	return bits_dup(kg->kg_key);
 }
 
@@ -303,6 +343,8 @@ static bits_t *
 getkey_randomkey(const char *target, struct keygen *kg, int keylen, int hard)
 {
 
+	(void) target;
+	(void) kg;
 	return bits_getrandombits(keylen, hard);
 }
 
@@ -346,6 +388,8 @@ unconfigure(int argc, char **argv, struct params *inparams, int flags)
 	int	ret;
 	char	buf[MAXPATHLEN] = "";
 
+	(void) inparams;
+
 	/* only complain about additional arguments, if called from main() */
 	if (flags == CONFIG_FLAGS_FROMMAIN && argc != 1)
 		usage();
@@ -356,11 +400,13 @@ unconfigure(int argc, char **argv, struct params *inparams, int flags)
 
 	fd = opendisk(*argv, O_RDWR, buf, sizeof(buf), 1);
 	if (fd == -1) {
+		int saved_errno = errno;
+
 		warn("can't open cgd \"%s\", \"%s\"", *argv, buf);
 
 		/* this isn't fatal with nflag != 0 */
 		if (!nflag)
-			return errno;
+			return saved_errno;
 	}
 
 	VPRINTF(1, ("%s (%s): clearing\n", *argv, buf));
@@ -377,11 +423,9 @@ static int
 unconfigure_fd(int fd)
 {
 	struct	cgd_ioctl ci;
-	int	ret;
 
-	ret = ioctl(fd, CGDIOCCLR, &ci);
-	if (ret == -1) {
-		perror("ioctl");
+	if (ioctl(fd, CGDIOCCLR, &ci) == -1) {
+		warn("ioctl");
 		return -1;
 	}
 
@@ -395,29 +439,28 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	struct params	*p;
 	int		 fd;
 	int		 ret;
-	char		 pfile[FILENAME_MAX];
 	char		 cgdname[PATH_MAX];
 
-	switch (argc) {
-	case 2:
-		strlcpy(pfile, CGDCONFIG_DIR, FILENAME_MAX);
-		strlcat(pfile, "/", FILENAME_MAX);
-		strlcat(pfile, basename(argv[1]), FILENAME_MAX);
-		break;
-	case 3:
-		strlcpy(pfile, argv[2], FILENAME_MAX);
-		break;
-	default:
+	if (argc == 2) {	
+		char *pfile;
+
+		if (asprintf(&pfile, "%s/%s",
+		    CGDCONFIG_DIR, basename(argv[1])) == -1)
+			return -1;
+
+		p = params_cget(pfile);
+		free(pfile);
+	} else if (argc == 3) {
+		p = params_cget(argv[2]);
+	} else {
 		/* print usage and exit, only if called from main() */
 		if (flags == CONFIG_FLAGS_FROMMAIN) {
 			warnx("wrong number of args");
 			usage();
 		}
 		return -1;
-		/* NOTREACHED */
 	}
 
-	p = params_cget(pfile);
 	if (!p)
 		return -1;
 
@@ -467,8 +510,7 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 		if (!ret)
 			break;
 
-		fprintf(stderr, "verification failed, please reenter "
-		    "passphrase\n");
+		warnx("verification failed, please reenter passphrase");
 
 		unconfigure_fd(fd);
 		close(fd);
@@ -494,8 +536,16 @@ configure_stdin(struct params *p, int argc, char **argv)
 		usage();
 
 	p->algorithm = string_fromcharstar(argv[2]);
-	if (argc > 3)
-		p->keylen = atoi(argv[3]);
+	if (argc > 3) {
+		int keylen;
+
+		keylen = parse_int(argv[3]);
+		if (keylen == -1 && errno) {
+			warn("failed to parse key length");
+			return -1;
+		}
+		p->keylen = keylen;
+	}
 
 	ret = params_filldefaults(p);
 	if (ret)
@@ -515,7 +565,7 @@ configure_stdin(struct params *p, int argc, char **argv)
 }
 
 static int
-opendisk_werror(const char *cgd, char *buf, int buflen)
+opendisk_werror(const char *cgd, char *buf, size_t buflen)
 {
 	int	fd;
 
@@ -526,7 +576,8 @@ opendisk_werror(const char *cgd, char *buf, int buflen)
 		return -1;
 
 	if (nflag) {
-		strlcpy(buf, cgd, buflen);
+		if (strlcpy(buf, cgd, buflen) >= buflen)
+			return -1;
 		return 0;
 	}
 
@@ -541,7 +592,6 @@ static int
 configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 {
 	struct cgd_ioctl ci;
-	int	  ret;
 
 	/* sanity */
 	if (!cgd || !dev)
@@ -565,10 +615,10 @@ configure_params(int fd, const char *cgd, const char *dev, struct params *p)
 	if (nflag)
 		return 0;
 
-	ret = ioctl(fd, CGDIOCSET, &ci);
-	if (ret == -1) {
-		perror("ioctl");
-		return errno;
+	if (ioctl(fd, CGDIOCSET, &ci) == -1) {
+		int saved_errno = errno;
+		warn("ioctl");
+		return saved_errno;
 	}
 
 	return 0;
@@ -603,7 +653,7 @@ static int
 verify_disklabel(int fd)
 {
 	struct	disklabel l;
-	int	ret;
+	ssize_t	ret;
 	char	buf[SCANSIZE];
 
 	/*
@@ -614,14 +664,14 @@ verify_disklabel(int fd)
 	 */
 
 	ret = pread(fd, buf, 8192, 0);
-	if (ret == -1) {
+	if (ret < 0) {
 		warn("can't read disklabel area");
 		return -1;
 	}
 
 	/* now scan for the disklabel */
 
-	return disklabel_scan(&l, buf, sizeof(buf));
+	return disklabel_scan(&l, buf, (size_t)ret);
 }
 
 static off_t sblock_try[] = SBLOCKSEARCH;
@@ -629,18 +679,23 @@ static off_t sblock_try[] = SBLOCKSEARCH;
 static int
 verify_ffs(int fd)
 {
-	struct	fs *fs;
-	int	ret, i;
-	char	buf[SBLOCKSIZE];
+	int	i;
 
 	for (i = 0; sblock_try[i] != -1; i++) {
+		char	buf[SBLOCKSIZE];
+		struct	fs fs;
+		ssize_t ret;
+
 		ret = pread(fd, buf, sizeof(buf), sblock_try[i]);
-		if (ret == -1) {
+		if (ret < 0) {
 			warn("pread");
-			return 0;
+			break;
+		} else if ((size_t)ret < sizeof(fs)) {
+			warnx("pread: incomplete block");
+			break;
 		}
-		fs = (struct fs *)buf;
-		switch (fs->fs_magic) {
+		memcpy(&fs, buf, sizeof(fs));
+		switch (fs.fs_magic) {
 		case FS_UFS1_MAGIC:
 		case FS_UFS2_MAGIC:
 		case FS_UFS1_MAGIC_SWAPPED:
@@ -650,7 +705,8 @@ verify_ffs(int fd)
 			continue;
 		}
 	}
-	return 1;
+
+	return 1;	/* failure */
 }
 
 static int
@@ -691,8 +747,16 @@ generate(struct params *p, int argc, char **argv, const char *outfile)
 		usage();
 
 	p->algorithm = string_fromcharstar(argv[0]);
-	if (argc > 1)
-		p->keylen = atoi(argv[1]);
+	if (argc > 1) {
+		int keylen;
+
+		keylen = parse_int(argv[1]);
+		if (keylen == -1 && errno) {
+			warn("Failed to parse key length");
+			return -1;
+		}
+		p->keylen = keylen;
+	}
 
 	ret = params_filldefaults(p);
 	if (ret)
@@ -796,6 +860,7 @@ do_all(const char *cfile, int argc, char **argv,
 	char		 *line;
 	char		**my_argv;
 
+	(void) argv;
 	if (argc > 0)
 		usage();
 
@@ -839,11 +904,9 @@ static void
 eliminate_cores(void)
 {
 	struct rlimit	rlp;
-	int		ret;
 
 	rlp.rlim_cur = 0;
 	rlp.rlim_max = 0;
-	ret = setrlimit(RLIMIT_CORE, &rlp);
-	if (ret)
+	if (setrlimit(RLIMIT_CORE, &rlp) == -1)
 		err(EXIT_FAILURE, "Can't disable cores");
 }
