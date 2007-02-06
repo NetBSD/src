@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106.2.3 2007/02/01 08:47:57 ad Exp $
+# $NetBSD: GENERIC,v 1.106.2.4 2007/02/06 15:04:17 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106.2.3 $"
+#ident 		"GENERIC-$Revision: 1.106.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -918,6 +918,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	lockstat		# lock profiling
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

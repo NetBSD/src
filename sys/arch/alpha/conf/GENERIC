@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.296.2.2 2007/01/12 01:00:40 ad Exp $
+# $NetBSD: GENERIC,v 1.296.2.3 2007/02/06 15:04:17 ad Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.296.2.2 $"
+ident		"GENERIC-$Revision: 1.296.2.3 $"
 
 maxusers 32
 
@@ -722,6 +722,7 @@ pseudo-device	wsmux			# mouse and keyboad multiplexing
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	lockstat		# lock profiling
 
 # Veriexec
 #
