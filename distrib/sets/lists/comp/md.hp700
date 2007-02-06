@@ -1,4 +1,4 @@
-# $NetBSD: md.hp700,v 1.3 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.hp700,v 1.4 2007/02/06 21:59:24 skrll Exp $
 ./usr/include/hp700				comp-c-include
 ./usr/include/hp700/ansi.h			comp-c-include
 ./usr/include/hp700/aout_machdep.h		comp-c-include
@@ -51,7 +51,7 @@
 ./usr/include/hp700/setjmp.h			comp-c-include
 ./usr/include/hp700/signal.h			comp-c-include
 ./usr/include/hp700/som.h			comp-c-include
-./usr/include/hp700/spinlock.h			comp-c-include
+./usr/include/hp700/spinlock.h			comp-obsolete		obsolete
 ./usr/include/hp700/stdarg.h			comp-c-include
 ./usr/include/hp700/trap.h			comp-c-include
 ./usr/include/hp700/types.h			comp-c-include
