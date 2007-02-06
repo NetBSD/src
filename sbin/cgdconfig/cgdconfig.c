@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.17 2007/02/06 02:09:19 cbiere Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.18 2007/02/06 14:04:01 cbiere Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.17 2007/02/06 02:09:19 cbiere Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.18 2007/02/06 14:04:01 cbiere Exp $");
 #endif
 
 #include <err.h>
@@ -569,7 +569,7 @@ opendisk_werror(const char *cgd, char *buf, size_t buflen)
 {
 	int	fd;
 
-	VPRINTF(3, ("opendisk_werror(%s, %s, %d) called.\n", cgd, buf, buflen));
+	VPRINTF(3, ("opendisk_werror(%s, %s, %zu) called.\n", cgd, buf, buflen));
 
 	/* sanity */
 	if (!cgd || !buf)
