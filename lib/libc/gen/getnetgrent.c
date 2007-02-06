@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.37 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.38 2007/02/06 15:17:54 oster Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.37 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.38 2007/02/06 15:17:54 oster Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -685,9 +685,9 @@ in_lookup(const char *group, const char *key, const char *domain, int map)
 	return 0;
 }
 
-
-void
-endnetgrent(void)
+/*ARGSUSED*/
+static int
+_nis_endnetgrent(void *rv, void *cb_data, va_list ap)
 {
 	for (_nglist = _nghead; _nglist != NULL; _nglist = _nghead) {
 		_nghead = _nglist->ng_next;
@@ -704,12 +704,15 @@ endnetgrent(void)
 		(void)(*_ng_db->close)(_ng_db);
 		_ng_db = NULL;
 	}
+
+	return NS_SUCCESS;
 }
 
-
-void
-setnetgrent(const char *ng)
+/*ARGSUSED*/
+static int
+_nis_setnetgrent(void *rv, void *cb_data, va_list ap)
 {
+	const char	*ng = va_arg(ap, const char *);
 	StringList	*sl;
 	char		*ng_copy;
 
@@ -717,7 +720,7 @@ setnetgrent(const char *ng)
 
 	sl = sl_init();
 	if (sl == NULL)
-		return;
+		return NS_TRYAGAIN;
 
 	/* Cleanup any previous storage */
 	if (_nghead != NULL)
@@ -731,18 +734,27 @@ setnetgrent(const char *ng)
 		addgroup(sl, ng_copy);
 	_nghead = _nglist;
 	sl_free(sl, 1);
+
+	return NS_SUCCESS;
 }
 
-
-int
-getnetgrent(const char **host, const char **user, const char **domain)
+/*ARGSUSED*/
+static int
+_nis_getnetgrent(void *rv, void *cb_data, va_list ap)
 {
+	int *retval = va_arg(ap, int *);
+	const char **host = va_arg(ap, const char **);
+	const char **user = va_arg(ap, const char **);
+	const char **domain = va_arg(ap, const char **);
+
 	_DIAGASSERT(host != NULL);
 	_DIAGASSERT(user != NULL);
 	_DIAGASSERT(domain != NULL);
 
+	*retval = 0;
+
 	if (_nglist == NULL)
-		return 0;
+		return NS_TRYAGAIN;
 
 	*host   = _nglist->ng_host;
 	*user   = _nglist->ng_user;
@@ -750,13 +762,21 @@ getnetgrent(const char **host, const char **user, const char **domain)
 
 	_nglist = _nglist->ng_next;
 
-	return 1;
+	*retval = 1;
+
+	return NS_SUCCESS;
 }
 
-
-int
-innetgr(const char *grp, const char *host, const char *user, const char *domain)
+/*ARGSUSED*/
+static int
+_nis_innetgr(void *rv, void *cb_data, va_list ap)
 {
+	int *retval = va_arg(ap, int *);
+	const char *grp = va_arg(ap, const char *);
+	const char *host = va_arg(ap, const char *);
+	const char *user = va_arg(ap, const char *);
+	const char *domain = va_arg(ap, const char *);
+
 	int	 found;
 	StringList *sl;
 	char *grcpy;
@@ -771,26 +791,97 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 
 	/* Try the fast lookup first */
 	if (host != NULL && user == NULL) {
-		if (in_lookup(grp, host, domain, _NG_KEYBYHOST))
-			return 1;
+		if (in_lookup(grp, host, domain, _NG_KEYBYHOST)) {
+			*retval = 1;
+			return NS_SUCCESS;
+		}
 	} else if (host == NULL && user != NULL) {
-		if (in_lookup(grp, user, domain, _NG_KEYBYUSER))
-			return 1;
+		if (in_lookup(grp, user, domain, _NG_KEYBYUSER)) {
+			*retval = 1;
+			return NS_SUCCESS;
+		}
 	}
 	/* If a domainname is given, we would have found a match */
-	if (domain != NULL)
-		return 0;
+	if (domain != NULL) {
+		*retval = 0;
+		return NS_SUCCESS;
+	}
 
 	/* Too bad need the slow recursive way */
 	sl = sl_init();
-	if (sl == NULL)
-		return 0;
+	if (sl == NULL) {
+		*retval = 0;
+		return NS_SUCCESS;
+	}
 	if ((grcpy = strdup(grp)) == NULL) {
 		sl_free(sl, 1);
-		return 0;
+		*retval = 0;
+		return NS_SUCCESS;
 	}
 	found = in_find(sl, grcpy, host, user, domain);
 	sl_free(sl, 1);
 
-	return found;
+	*retval = found;
+	return NS_SUCCESS;
+}
+
+
+
+
+
+void
+endnetgrent(void)
+{
+	static const ns_dtab dtab[] = {
+		NS_NIS_CB(_nis_endnetgrent, NULL)
+		NS_NULL_CB
+	};
+
+	(void) nsdispatch(NULL, dtab, NSDB_NETGROUP, "endnetgrent",
+			  __nsdefaultcompat);
+}
+
+
+void
+setnetgrent(const char *ng)
+{
+	static const ns_dtab dtab[] = {
+		NS_NIS_CB(_nis_setnetgrent, NULL)
+		NS_NULL_CB
+	};
+
+	(void ) nsdispatch(NULL, dtab, NSDB_NETGROUP, "setnetgrent",
+			   __nsdefaultnis, ng);
+}
+
+
+int
+getnetgrent(const char **host, const char **user, const char **domain)
+{
+	int     r, retval;
+	static const ns_dtab dtab[] = {
+		NS_NIS_CB(_nis_getnetgrent, NULL)
+		NS_NULL_CB
+	};
+
+	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, "getnetgrent",
+		       __nsdefaultnis, &retval, host, user, domain);
+
+	return (r == NS_SUCCESS) ? retval : 0;
+}
+
+
+int
+innetgr(const char *grp, const char *host, const char *user, const char *domain)
+{
+	int     r, retval;
+	static const ns_dtab dtab[] = {
+		NS_NIS_CB(_nis_innetgr, NULL)
+		NS_NULL_CB
+	};
+
+	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, "innetgr",
+		       __nsdefaultnis, &retval, grp, host, user, domain);
+
+	return (r == NS_SUCCESS) ? retval : 0;
 }
