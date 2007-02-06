@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.36 2006/12/24 18:39:46 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.37 2007/02/06 15:24:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -49,9 +49,10 @@
 
 #ifndef PTHREAD_SA
 #include <lwp.h>
+#else
+#include <sa.h>
 #endif
 
-#include <sa.h>
 #include <signal.h>
 
 #define PTHREAD_KEYS_MAX 256
@@ -175,10 +176,12 @@ struct	__pthread_st {
 	 */
 	pthread_spin_t*	pt_heldlock;
 
+#ifdef PTHREAD_SA
 	/* Upcall stack information shared between kernel and
 	 * userland.
 	 */
 	struct sa_stackinfo_t	pt_stackinfo;
+#endif
 
 	/* Thread-specific data */
 	void*		pt_specific[PTHREAD_KEYS_MAX];
