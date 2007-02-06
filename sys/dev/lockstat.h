@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.1.2.5 2007/02/01 08:48:17 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.1.2.6 2007/02/06 17:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -144,32 +144,37 @@ typedef struct lsbuf {
 
 #if defined(_KERNEL) && defined(__HAVE_CPU_COUNTER) && NLOCKSTAT > 0
 
-#define	LOCKSTAT_EVENT(lock, type, count, time)				\
+#define	LOCKSTAT_EVENT(flag, lock, type, count, time)			\
 do {									\
-	if (__predict_false(lockstat_enabled))				\
+	if (__predict_false(flag))					\
 		lockstat_event((uintptr_t)(lock),			\
 		    (uintptr_t)__builtin_return_address(0),		\
 		    (type), (count), (time));				\
 } while (/* CONSTCOND */ 0);
 
-#define	LOCKSTAT_EVENT_RA(lock, type, count, time, ra)			\
+#define	LOCKSTAT_EVENT_RA(flag, lock, type, count, time, ra)		\
 do {									\
-	if (__predict_false(lockstat_enabled))				\
+	if (__predict_false(flag))					\
 		lockstat_event((uintptr_t)(lock), (uintptr_t)ra,	\
 		    (type), (count), (time));				\
 } while (/* CONSTCOND */ 0);
 
 #define	LOCKSTAT_TIMER(name)	uint64_t name = 0
 #define	LOCKSTAT_COUNTER(name)	uint64_t name = 0
+#define	LOCKSTAT_FLAG(name)	int name
+#define	LOCKSTAT_ENTER(name)	name = lockstat_enabled
+#define	LOCKSTAT_EXIT(name)
 
-#define	LOCKSTAT_START_TIMER(name)					\
+#define	LOCKSTAT_START_TIMER(flag, name)				\
 do {									\
-	(name) -= cpu_counter();					\
+	if (__predict_false(flag))					\
+		(name) -= cpu_counter();				\
 } while (/* CONSTCOND */ 0)
 
-#define	LOCKSTAT_STOP_TIMER(name)					\
+#define	LOCKSTAT_STOP_TIMER(flag, name)					\
 do {									\
-	(name) += cpu_counter();					\
+	if (__predict_false(flag))					\
+		(name) += cpu_counter();				\
 } while (/* CONSTCOND */ 0)
 
 #define	LOCKSTAT_COUNT(name, inc)					\
@@ -183,13 +188,16 @@ extern volatile u_int	lockstat_enabled;
 
 #else
 
-#define	LOCKSTAT_EVENT(lock, type, count, time)		/* nothing */
-#define	LOCKSTAT_EVENT_RA(lock, type, count, time, ra)	/* nothing */
-#define	LOCKSTAT_TIMER(void)				/* nothing */
-#define	LOCKSTAT_COUNTER(void)				/* nothing */
-#define	LOCKSTAT_START_TIMER(void)			/* nothing */
-#define	LOCKSTAT_STOP_TIMER(void)			/* nothing */
-#define	LOCKSTAT_COUNT(name, int)			/* nothing */
+#define	LOCKSTAT_FLAG(name)					/* nothing */
+#define	LOCKSTAT_ENTER(name)					/* nothing */
+#define	LOCKSTAT_EXIT(name)					/* nothing */
+#define	LOCKSTAT_EVENT(flag, lock, type, count, time)		/* nothing */
+#define	LOCKSTAT_EVENT_RA(flag, lock, type, count, time, ra)	/* nothing */
+#define	LOCKSTAT_TIMER(void)					/* nothing */
+#define	LOCKSTAT_COUNTER(void)					/* nothing */
+#define	LOCKSTAT_START_TIMER(flag, void)			/* nothing */
+#define	LOCKSTAT_STOP_TIMER(flag, void)				/* nothing */
+#define	LOCKSTAT_COUNT(name, int)				/* nothing */
 
 #endif
 

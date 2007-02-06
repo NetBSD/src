@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.99.2.12 2007/01/26 23:22:44 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.99.2.13 2007/02/06 17:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.12 2007/01/26 23:22:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.99.2.13 2007/02/06 17:27:30 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -230,6 +230,7 @@ acquire(volatile struct lock **lkpp, int *s, int extflags,
 	int error;
 	volatile struct lock *lkp = *lkpp;
 	LOCKSTAT_TIMER(slptime);
+	LOCKSTAT_FLAG(lsflag);
 
 	KASSERT(drain || (wanted & LK_WAIT_NONZERO) == 0);
 
@@ -265,6 +266,8 @@ acquire(volatile struct lock **lkpp, int *s, int extflags,
 		KASSERT((lkp->lk_flags & wanted) == 0);
 		error = 0;	/* sanity */
 	} else {
+		LOCKSTAT_ENTER(lsflag);
+
 		for (error = 0; (lkp->lk_flags & wanted) != 0; ) {
 			if (drain)
 				lkp->lk_flags |= LK_WAITDRAIN;
@@ -273,13 +276,13 @@ acquire(volatile struct lock **lkpp, int *s, int extflags,
 				lkp->lk_flags |= LK_WAIT_NONZERO;
 			}
 			/* XXX Cast away volatile. */
-			LOCKSTAT_START_TIMER(slptime);
+			LOCKSTAT_START_TIMER(lsflag, slptime);
 			error = ltsleep(drain ?
 			    (volatile const void *)&lkp->lk_flags :
 			    (volatile const void *)lkp, lkp->lk_prio,
 			    lkp->lk_wmesg, lkp->lk_timo, &lkp->lk_interlock);
-			LOCKSTAT_STOP_TIMER(slptime);
-			LOCKSTAT_EVENT_RA((void *)(uintptr_t)lkp,
+			LOCKSTAT_STOP_TIMER(lsflag, slptime);
+			LOCKSTAT_EVENT_RA(lsflag, (void *)(uintptr_t)lkp,
 			    LB_LOCKMGR | LB_SLEEP1, 1, slptime, ra);
 			if (!drain) {
 				lkp->lk_waitcount--;
@@ -300,6 +303,8 @@ acquire(volatile struct lock **lkpp, int *s, int extflags,
 				*lkpp = lkp = lkp->lk_newlock;
 			}
 		}
+
+		LOCKSTAT_EXIT(lsflag);
 	}
 
 	return error;
@@ -1501,6 +1506,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 {
 	struct cpu_info *ci = curcpu();
 	LOCKSTAT_TIMER(spintime);
+	LOCKSTAT_FLAG(lsflag);
 	struct lwp *owant;
 #ifdef LOCKDEBUG
 	u_int spins;
@@ -1530,7 +1536,8 @@ _kernel_lock(int nlocks, struct lwp *l)
 		return;
 	}
 
-	LOCKSTAT_START_TIMER(spintime);
+	LOCKSTAT_ENTER(lsflag);
+	LOCKSTAT_START_TIMER(lsflag, spintime);
 
 	/*
 	 * Before setting ci_biglock_wanted we must post a store
@@ -1558,7 +1565,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 
 	ci->ci_biglock_wanted = owant;
 	ci->ci_biglock_count += nlocks;
-	LOCKSTAT_STOP_TIMER(spintime);
+	LOCKSTAT_STOP_TIMER(lsflag, spintime);
 	LOCKDEBUG_LOCKED(kernel_lock_id,
 	    (uintptr_t)__builtin_return_address(0), 0);
 	splx(s);
@@ -1567,7 +1574,9 @@ _kernel_lock(int nlocks, struct lwp *l)
 	 * Again, another store fence is required (see kern_mutex.c).
 	 */
 	mb_write();
-	LOCKSTAT_EVENT(&kernel_lock, LB_KERNEL_LOCK | LB_SPIN, 1, spintime);
+	LOCKSTAT_EVENT(lsflag, &kernel_lock, LB_KERNEL_LOCK | LB_SPIN, 1,
+	    spintime);
+	LOCKSTAT_EXIT(lsflag);
 }
 
 /*
