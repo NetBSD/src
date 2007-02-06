@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.1 2007/01/15 00:39:02 pooka Exp $	*/
+/*	$NetBSD: paths.c,v 1.2 2007/02/06 01:46:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: paths.c,v 1.1 2007/01/15 00:39:02 pooka Exp $");
+__RCSID("$NetBSD: paths.c,v 1.2 2007/02/06 01:46:41 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -167,6 +167,7 @@ puffs_path_buildpath(struct puffs_usermount *pu, struct puffs_pathobj *po_pre,
 {
 	char *path, *pcomp;
 	size_t plen, complen;
+	size_t prelen;
 
 	complen = po_comp->po_len - offset;
 
@@ -178,13 +179,22 @@ puffs_path_buildpath(struct puffs_usermount *pu, struct puffs_pathobj *po_pre,
 		complen--;
 	}
 
+	/*
+	 * Strip trailing components from the preceending component.
+	 * This is an issue only for the root node, which we might want
+	 * to be at path "/" for some file systems.
+	 */
+	prelen = po_pre->po_len;
+	while (prelen > 0 && *((char *)po_pre->po_path + (prelen-1)) == '/')
+		prelen--;
+
 	/* + '/' + '\0' */
-	plen = po_pre->po_len + 1 + complen;
+	plen = prelen + 1 + complen;
 	path = malloc(plen + 1);
 	if (path == NULL)
 		return errno;
 
-	strcpy(path, po_pre->po_path);
+	strlcpy(path, po_pre->po_path, prelen+1);
 	strcat(path, "/");
 	strncat(path, pcomp, complen);
 
