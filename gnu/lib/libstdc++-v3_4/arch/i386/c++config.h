@@ -795,7 +795,7 @@ namespace std
 
 /* Define if C99 functions or macros in <math.h> should be imported in <cmath>
    in namespace std. */
-/* #undef _GLIBCXX_USE_C99_MATH */
+#define _GLIBCXX_USE_C99_MATH 1
 
 /* Define if iconv and related functions exist and are usable. */
 #define _GLIBCXX_USE_ICONV 1
