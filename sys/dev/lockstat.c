@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.2.2.4 2007/01/12 00:57:34 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.2.2.5 2007/02/06 20:32:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.2.2.4 2007/01/12 00:57:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.2.2.5 2007/02/06 20:32:57 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -359,7 +359,7 @@ lockstat_free(void)
  */
 void
 lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
-	       uint64_t time)
+	       uint64_t cycles)
 {
 	lslist_t *ll;
 	lscpu_t *lc;
@@ -400,7 +400,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 			LIST_INSERT_HEAD(ll, lb, lb_chain.list);
 		}
 		lb->lb_counts[event] += count;
-		lb->lb_times[event] += time;
+		lb->lb_times[event] += cycles;
 	} else if ((lb = SLIST_FIRST(&lc->lc_free)) != NULL) {
 		/*
 		 * Pinch a new buffer and fill it out.
@@ -411,7 +411,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 		lb->lb_lock = lock;
 		lb->lb_callsite = callsite;
 		lb->lb_counts[event] = count;
-		lb->lb_times[event] = time;
+		lb->lb_times[event] = cycles;
 	} else {
 		/*
 		 * We didn't find a buffer and there were none free.
