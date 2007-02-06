@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.10 2007/02/05 23:38:15 jmcneill Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.11 2007/02/06 02:07:36 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.10 2007/02/05 23:38:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.11 2007/02/06 02:07:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,15 +98,25 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 #define XBOX_SMBA	0x8000
 #define XBOX_SMSIZE	256
 #define XBOX_INTRLINE	12
+#define XBOX_REG_ACPI_PM1a_EN		0x02
+#define XBOX_REG_ACPI_PM1a_EN_TIMER		0x01
 	/* XXX pci0 dev 1 function 2 "System Management" doesn't probe */
 	if (arch_i386_is_xbox) {
+		uint16_t val;
 		sc->sc_pa->pa_intrline = XBOX_INTRLINE;
 
 		if (bus_space_map(sc->sc_iot, XBOX_SMBA, XBOX_SMSIZE,
-		    0, &sc->sc_sm_ioh) == 0)
+		    0, &sc->sc_sm_ioh) == 0) {
 			aprint_normal("%s: system management at 0x%04x\n",
 			    sc->sc_dev.dv_xname, XBOX_SMBA);
 
+			/* Disable PM ACPI timer SCI interrupt */
+			val = bus_space_read_2(sc->sc_iot, sc->sc_sm_ioh,
+			    XBOX_REG_ACPI_PM1a_EN);
+			bus_space_write_2(sc->sc_iot, sc->sc_sm_ioh,
+			    XBOX_REG_ACPI_PM1a_EN,
+			    val & ~XBOX_REG_ACPI_PM1a_EN_TIMER);
+		}
 	}
 
 	if (pci_intr_map(sc->sc_pa, &ih))
