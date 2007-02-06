@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.61 2007/02/02 15:48:54 christos Exp $	*/
+/*	$NetBSD: function.c,v 1.62 2007/02/06 13:25:01 elad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.61 2007/02/02 15:48:54 christos Exp $");
+__RCSID("$NetBSD: function.c,v 1.62 2007/02/06 13:25:01 elad Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,6 +86,7 @@ static	void	run_f_exec(PLAN *);
 	int	f_cmin(PLAN *, FTSENT *);
 	int	f_cnewer(PLAN *, FTSENT *);
 	int	f_ctime(PLAN *, FTSENT *);
+	int	f_delete(PLAN *, FTSENT *);
 	int	f_empty(PLAN *, FTSENT *);
 	int	f_exec(PLAN *, FTSENT *);
 	int	f_execdir(PLAN *, FTSENT *);
@@ -350,6 +351,64 @@ c_ctime(char ***argvp, int isok)
 	new->t_data = find_parsenum(new, "-ctime", arg, NULL);
 	TIME_CORRECT(new, N_CTIME);
 	return (new);
+}
+
+/*
+ * -delete functions --
+ *
+ *	True always.  Makes its best shot and continues on regardless.
+ */
+int
+f_delete(PLAN *plan __unused, FTSENT *entry)
+{
+	/* ignore these from fts */
+	if (strcmp(entry->fts_accpath, ".") == 0 ||
+	    strcmp(entry->fts_accpath, "..") == 0)
+		return 1;
+
+	/* sanity check */
+	if (isdepth == 0 ||			/* depth off */
+	    (ftsoptions & FTS_NOSTAT) ||	/* not stat()ing */
+	    !(ftsoptions & FTS_PHYSICAL) ||	/* physical off */
+	    (ftsoptions & FTS_LOGICAL))		/* or finally, logical on */
+		errx(1, "-delete: insecure options got turned on");
+
+	/* Potentially unsafe - do not accept relative paths whatsoever */
+	if (strchr(entry->fts_accpath, '/') != NULL)
+		errx(1, "-delete: %s: relative path potentially not safe",
+			entry->fts_accpath);
+
+	/* Turn off user immutable bits if running as root */
+	if ((entry->fts_statp->st_flags & (UF_APPEND|UF_IMMUTABLE)) &&
+	    !(entry->fts_statp->st_flags & (SF_APPEND|SF_IMMUTABLE)) &&
+	    geteuid() == 0)
+		chflags(entry->fts_accpath,
+		       entry->fts_statp->st_flags &= ~(UF_APPEND|UF_IMMUTABLE));
+
+	/* rmdir directories, unlink everything else */
+	if (S_ISDIR(entry->fts_statp->st_mode)) {
+		if (rmdir(entry->fts_accpath) < 0 && errno != ENOTEMPTY)
+			warn("-delete: rmdir(%s)", entry->fts_path);
+	} else {
+		if (unlink(entry->fts_accpath) < 0)
+			warn("-delete: unlink(%s)", entry->fts_path);
+	}
+
+	/* "succeed" */
+	return 1;
+}
+
+PLAN *
+c_delete(char ***argvp __unused, int isok)
+{
+
+	ftsoptions &= ~FTS_NOSTAT;	/* no optimize */
+	ftsoptions |= FTS_PHYSICAL;	/* disable -follow */
+	ftsoptions &= ~FTS_LOGICAL;	/* disable -follow */
+	isoutput = 1;			/* possible output */
+	isdepth = 1;			/* -depth implied */
+
+	return palloc(N_DELETE, f_delete);
 }
 
 /*
