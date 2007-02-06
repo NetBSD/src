@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.18 2007/01/09 12:49:36 elad Exp $
+.\" $NetBSD: fileassoc.9,v 1.19 2007/02/06 01:09:48 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 23, 2006
+.Dd February 6, 2007
 .Dt FILEASSOC 9
 .Os
 .Sh NAME
@@ -142,13 +142,6 @@ if not found.
 .El
 .Ss Mount-wide Routines
 .Bl -tag -width "123456"
-.It Ft int Fn fileassoc_table_add "struct mount *mp" "size_t size"
-Creates a new fileassoc table for
-.Ar mp
-with at least
-.Ar size
-slots.
-.Pp
 .It Ft int Fn fileassoc_table_delete "struct mount *mp"
 Deletes a fileassoc table for
 .Ar mp .
@@ -200,6 +193,11 @@ for
 for the fileassoc specified by
 .Ar id .
 .Pp
+If a table for the mount-point
+.Ar vp
+is on doesn't exist, one will be created automatically.
+.Nm
+manages internally the optimal table sizes as tables are modified.
 .It Ft int Fn fileassoc_clear "struct vnode *vp" "fileassoc_t id"
 Clear the private data for
 .Ar vp ,
@@ -264,23 +262,6 @@ myhook_acl_add(struct vnode *vp, struct myhook_acl *acl)
 .Ed
 .Pp
 Adding an entry will override any entry that previously exists.
-.Pp
-The above can fail, usually when there is no table for the mount.
-Creating a new table is simple:
-.Bd -literal -offset indent
-int error;
-
-error = fileassoc_table_add(vp-\*[Gt]v_mount, nentries);
-if (error)
-	...handle error...
-.Ed
-.Pp
-The second argument to
-.Fn fileassoc_table_add ,
-.Ar nentries ,
-should be approximately the number of files it is predicted that will
-have entries in the table, although you can provide a pseudo-safe constant
-value (like 128, for example).
 .Pp
 Whatever your plug is, eventually you'll want to access the private data you
 store with each file.
