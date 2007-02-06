@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.8 2007/02/05 13:03:57 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.9 2007/02/06 17:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.8 2007/02/05 13:03:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.9 2007/02/06 17:27:30 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -206,8 +206,9 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	uintptr_t owner, incr, need_wait, set_wait, curthread;
 	turnstile_t *ts;
 	int queue;
-	LOCKSTAT_TIMER(slptime);
 	struct lwp *l;
+	LOCKSTAT_TIMER(slptime);
+	LOCKSTAT_FLAG(lsflag);
 
 	l = curlwp;
 	curthread = (uintptr_t)l;
@@ -247,6 +248,8 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		need_wait = RW_WRITE_LOCKED | RW_THREAD;
 		queue = TS_WRITER_Q;
 	}
+
+	LOCKSTAT_ENTER(lsflag);
 
 	for (;;) {
 		/*
@@ -294,21 +297,23 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			continue;
 		}
 
-		LOCKSTAT_START_TIMER(slptime);
+		LOCKSTAT_START_TIMER(lsflag, slptime);
 
 		turnstile_block(ts, queue, sched_kpri(l), rw);
 
 		/* If we wake up and arrive here, we've been handed the lock. */
 		RW_RECEIVE(rw);
 
-		LOCKSTAT_STOP_TIMER(slptime);
-		LOCKSTAT_EVENT(rw,
+		LOCKSTAT_STOP_TIMER(lsflag, slptime);
+		LOCKSTAT_EVENT(lsflag, rw,
 		    LB_RWLOCK | (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2),
 		    1, slptime);
 
 		turnstile_unblock();
 		break;
 	}
+
+	LOCKSTAT_EXIT(lsflag);
 
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.19 2007/02/05 16:31:49 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.20 2007/02/06 17:27:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.19 2007/02/05 16:31:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.20 2007/02/06 17:27:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -392,6 +392,7 @@ mutex_vector_enter(kmutex_t *mtx)
 	LOCKSTAT_COUNTER(slpcnt);
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_TIMER(slptime);
+	LOCKSTAT_FLAG(lsflag);
 
 	/*
 	 * Handle spin mutexes.
@@ -410,7 +411,9 @@ mutex_vector_enter(kmutex_t *mtx)
 #if !defined(MULTIPROCESSOR)
 		MUTEX_ABORT(mtx, "locking against myself");
 #else /* !MULTIPROCESSOR */
-		LOCKSTAT_START_TIMER(spintime);
+
+		LOCKSTAT_ENTER(lsflag);
+		LOCKSTAT_START_TIMER(lsflag, spintime);
 		count = SPINLOCK_BACKOFF_MIN;
 
 		/*
@@ -430,10 +433,11 @@ mutex_vector_enter(kmutex_t *mtx)
 		} while (!__cpu_simple_lock_try(&mtx->mtx_lock));
 
 		if (count != SPINLOCK_BACKOFF_MIN) {
-			LOCKSTAT_STOP_TIMER(spintime);
-			LOCKSTAT_EVENT(mtx, LB_SPIN_MUTEX | LB_SPIN, 1,
-			    spintime);
+			LOCKSTAT_STOP_TIMER(lsflag, spintime);
+			LOCKSTAT_EVENT(lsflag, mtx,
+			    LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
 		}
+		LOCKSTAT_EXIT(lsflag);
 #endif	/* !MULTIPROCESSOR */
 #endif	/* FULL */
 		MUTEX_LOCKED(mtx);
@@ -456,6 +460,8 @@ mutex_vector_enter(kmutex_t *mtx)
 #endif
 	}
 #endif
+
+	LOCKSTAT_ENTER(lsflag);
 
 	/*
 	 * Adaptive mutex; spin trying to acquire the mutex.  If we
@@ -491,7 +497,7 @@ mutex_vector_enter(kmutex_t *mtx)
 		 * likely release the lock very soon.
 		 */
 		if (mutex_onproc(owner, &ci)) {
-			LOCKSTAT_START_TIMER(spintime);
+			LOCKSTAT_START_TIMER(lsflag, spintime);
 			count = SPINLOCK_BACKOFF_MIN;
 			for (;;) {
 				owner = mtx->mtx_owner;
@@ -499,7 +505,7 @@ mutex_vector_enter(kmutex_t *mtx)
 					break;
 				SPINLOCK_BACKOFF(count);
 			}
-			LOCKSTAT_STOP_TIMER(spintime);
+			LOCKSTAT_STOP_TIMER(lsflag, spintime);
 			LOCKSTAT_COUNT(spincnt, 1);
 			if (!MUTEX_OWNED(owner))
 				continue;
@@ -619,18 +625,22 @@ mutex_vector_enter(kmutex_t *mtx)
 		}
 #endif	/* MULTIPROCESSOR */
 
-		LOCKSTAT_START_TIMER(slptime);
+		LOCKSTAT_START_TIMER(lsflag, slptime);
 
 		turnstile_block(ts, TS_WRITER_Q, sched_kpri(curlwp), mtx);
 
-		LOCKSTAT_STOP_TIMER(slptime);
+		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
 
 		turnstile_unblock();
 	}
 
-	LOCKSTAT_EVENT(mtx, LB_ADAPTIVE_MUTEX | LB_SLEEP1, slpcnt, slptime);
-	LOCKSTAT_EVENT(mtx, LB_ADAPTIVE_MUTEX | LB_SPIN, spincnt, spintime);
+	LOCKSTAT_EVENT(lsflag, mtx, LB_ADAPTIVE_MUTEX | LB_SLEEP1,
+	    slpcnt, slptime);
+	LOCKSTAT_EVENT(lsflag, mtx, LB_ADAPTIVE_MUTEX | LB_SPIN,
+	    spincnt, spintime);
+	LOCKSTAT_EXIT(lsflag);
+
 	MUTEX_DASSERT(mtx, MUTEX_OWNER(mtx->mtx_owner) == curthread);
 	MUTEX_LOCKED(mtx);
 }
@@ -771,13 +781,15 @@ mutex_spin_retry(kmutex_t *mtx)
 #ifdef MULTIPROCESSOR
 	u_int count;
 	LOCKSTAT_TIMER(spintime);
+	LOCKSTAT_FLAG(lsflag);
 #ifdef LOCKDEBUG
 	u_int spins = 0;
 #endif	/* LOCKDEBUG */
 
 	MUTEX_WANTLOCK(mtx);
 
-	LOCKSTAT_START_TIMER(spintime);
+	LOCKSTAT_ENTER(lsflag);
+	LOCKSTAT_START_TIMER(lsflag, spintime);
 	count = SPINLOCK_BACKOFF_MIN;
 
 	/*
@@ -796,8 +808,10 @@ mutex_spin_retry(kmutex_t *mtx)
 		}
 	} while (!__cpu_simple_lock_try(&mtx->mtx_lock));
 
-	LOCKSTAT_STOP_TIMER(spintime);
-	LOCKSTAT_EVENT(mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
+	LOCKSTAT_STOP_TIMER(lsflag, spintime);
+	LOCKSTAT_EVENT(lsflag, mtx, LB_SPIN_MUTEX | LB_SPIN, 1, spintime);
+	LOCKSTAT_EXIT(lsflag);
+
 	MUTEX_LOCKED(mtx);
 #else	/* MULTIPROCESSOR */
 	MUTEX_ABORT(mtx, "locking against myself");
