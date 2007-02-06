@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.31.20.2 2007/01/30 13:51:32 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.31.20.3 2007/02/06 18:59:08 ad Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.20.2 2007/01/30 13:51:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31.20.3 2007/02/06 18:59:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,13 +214,13 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
 	error = copyout(&frame, (caddr_t)fp, sizeof (frame) - LINUX_ABIGAP);
-	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -229,7 +229,10 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Add a sigcontext on the stack
 	 */
 	fp -= sizeof(struct linux_sigcontext);
-	if (copyout(&sc, (caddr_t)fp, sizeof (struct linux_sigcontext)) != 0) {
+	error = copyout(&sc, (caddr_t)fp, sizeof (struct linux_sigcontext));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.

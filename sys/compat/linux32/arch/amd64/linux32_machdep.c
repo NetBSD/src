@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.1.20.2 2007/01/30 13:51:34 ad Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.1.20.3 2007/02/06 18:59:08 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1.20.2 2007/01/30 13:51:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1.20.3 2007/02/06 18:59:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux32_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
@@ -140,7 +140,12 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	linux32_save_sigcontext(l, tf, mask, &frame.sf_sc);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -176,9 +181,9 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux32_rt_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	linux32_siginfo_t *lsi;
-	int sig = ksi->ksi_signo;
+	int sig = ksi->ksi_signo, error;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
 
@@ -241,9 +246,13 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	/* Save register context. */
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	linux32_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p-smutex);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
