@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.19.20.2 2007/01/12 00:57:40 ad Exp $	*/
+/*	$NetBSD: aceride.c,v 1.19.20.3 2007/02/06 13:32:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.19.20.2 2007/01/12 00:57:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aceride.c,v 1.19.20.3 2007/02/06 13:32:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,10 +125,10 @@ acer_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;

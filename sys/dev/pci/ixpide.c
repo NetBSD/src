@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.6.4.1 2006/11/18 21:34:31 ad Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.6.4.2 2007/02/06 13:32:31 ad Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.6.4.1 2006/11/18 21:34:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.6.4.2 2007/02/06 13:32:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,10 +106,10 @@ ixp_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {

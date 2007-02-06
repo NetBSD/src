@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.31.8.2 2007/02/06 13:11:48 ad Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.31.8.3 2007/02/06 13:32:31 ad Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.31.8.2 2007/02/06 13:11:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.31.8.3 2007/02/06 13:32:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -382,14 +382,14 @@ pciide_mapreg_dma(sc, pa)
 		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO,
 		    &addr, NULL, NULL) == 0);
 		if (sc->sc_dma_ok == 0) {
-			aprint_normal(
+			aprint_verbose(
 			    ", but unused (couldn't query registers)");
 			break;
 		}
 		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
 		    && addr >= 0x10000) {
 			sc->sc_dma_ok = 0;
-			aprint_normal(
+			aprint_verbose(
 			    ", but unused (registers at unsafe address "
 			    "%#lx)", (unsigned long)addr);
 			break;
@@ -402,7 +402,7 @@ pciide_mapreg_dma(sc, pa)
 		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
 		sc->sc_dmat = pa->pa_dmat;
 		if (sc->sc_dma_ok == 0) {
-			aprint_normal(", but unused (couldn't map registers)");
+			aprint_verbose(", but unused (couldn't map registers)");
 		} else {
 			sc->sc_wdcdev.dma_arg = sc;
 			sc->sc_wdcdev.dma_init = pciide_dma_init;
@@ -412,7 +412,7 @@ pciide_mapreg_dma(sc, pa)
 
 		if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_NODMA) {
-			aprint_normal(
+			aprint_verbose(
 			    ", but unused (forced off by config file)");
 			sc->sc_dma_ok = 0;
 		}
@@ -420,7 +420,7 @@ pciide_mapreg_dma(sc, pa)
 
 	default:
 		sc->sc_dma_ok = 0;
-		aprint_normal(
+		aprint_verbose(
 		    ", but unsupported register maptype (0x%x)", maptype);
 	}
 
@@ -442,7 +442,7 @@ pciide_mapreg_dma(sc, pa)
 			    IDEDMA_SCH_OFFSET * chan + reg, size,
 			    &pc->dma_iohs[reg]) != 0) {
 				sc->sc_dma_ok = 0;
-				aprint_normal(", but can't subregion offset %d "
+				aprint_verbose(", but can't subregion offset %d "
 					      "size %lu", reg, (u_long)size);
 				return;
 			}

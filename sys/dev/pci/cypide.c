@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.17.18.1 2006/11/18 21:34:29 ad Exp $	*/
+/*	$NetBSD: cypide.c,v 1.17.18.2 2007/02/06 13:32:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.17.18.1 2006/11/18 21:34:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cypide.c,v 1.17.18.2 2007/02/06 13:32:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,15 +117,14 @@ cy693_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
-		aprint_normal("%s: bus-master DMA support present",
+		aprint_verbose("%s: bus-master DMA support present\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		pciide_mapreg_dma(sc, pa);
 	} else {
-		aprint_normal("%s: hardware does not support DMA",
+		aprint_normal("%s: hardware does not support DMA\n",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		sc->sc_dma_ok = 0;
 	}
-	aprint_normal("\n");
 
 	sc->sc_cy_handle = cy82c693_init(pa->pa_iot);
 	if (sc->sc_cy_handle == NULL) {
