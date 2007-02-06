@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.44.2.1 2006/11/18 21:34:57 ad Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.44.2.2 2007/02/06 13:11:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.44.2.1 2006/11/18 21:34:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.44.2.2 2007/02/06 13:11:48 ad Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -840,7 +840,7 @@ wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
 	sc->sc_base.me_dispdv = displaydv;
 
 	if (displaydv)
-		printf("%s: connecting to %s\n",
+		aprint_verbose("%s: connecting to %s\n",
 		       sc->sc_base.me_dv.dv_xname, displaydv->dv_xname);
 	ok = 0;
 	error = 0;
@@ -870,7 +870,7 @@ wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
 		error = 0;
 
 	if (displaydv == NULL)
-		printf("%s: disconnecting from %s\n",
+		aprint_verbose("%s: disconnecting from %s\n",
 		       sc->sc_base.me_dv.dv_xname, odisplaydv->dv_xname);
 
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.94.4.2 2007/01/12 00:57:34 ad Exp $	*/
+/*	$NetBSD: acpi.c,v 1.94.4.3 2007/02/06 13:11:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.94.4.2 2007/01/12 00:57:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.94.4.3 2007/02/06 13:11:47 ad Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -562,7 +562,8 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 		aprint_error("acpi: activate failed for %s\n",
 		       (*di)->HardwareId.Value);
 	} else {
-		aprint_normal("acpi: activated %s\n", (*di)->HardwareId.Value);
+		aprint_verbose("acpi: activated %s\n",
+		    (*di)->HardwareId.Value);
 	}
 
 	(void)AcpiGetObjectInfo(handle, &buf);
@@ -752,7 +753,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	 */
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->PwrButton == 0) {
-		aprint_normal("%s: fixed-feature power button present\n",
+		aprint_verbose("%s: fixed-feature power button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_power.smpsw_name = sc->sc_dev.dv_xname;
 		sc->sc_smpsw_power.smpsw_type = PSWITCH_TYPE_POWER;
@@ -773,7 +774,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	}
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->SleepButton == 0) {
-		aprint_normal("%s: fixed-feature sleep button present\n",
+		aprint_verbose("%s: fixed-feature sleep button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_sleep.smpsw_name = sc->sc_dev.dv_xname;
 		sc->sc_smpsw_sleep.smpsw_type = PSWITCH_TYPE_SLEEP;

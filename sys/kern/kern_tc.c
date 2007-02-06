@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.11.2.2 2007/01/12 01:04:07 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.11.2.3 2007/02/06 13:11:48 ad Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11.2.2 2007/01/12 01:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.11.2.3 2007/02/06 13:11:48 ad Exp $");
 
 #include "opt_ntp.h"
 
@@ -434,14 +434,14 @@ tc_init(struct timecounter *tc)
 	u /= 10;
 	if (u > hz && tc->tc_quality >= 0) {
 		tc->tc_quality = -2000;
-		if (bootverbose) {
-			printf("timecounter: Timecounter \"%s\" frequency %ju Hz",
+		aprint_verbose(
+		    "timecounter: Timecounter \"%s\" frequency %ju Hz",
 			    tc->tc_name, (uintmax_t)tc->tc_frequency);
-			printf(" -- Insufficient hz, needs at least %u\n", u);
-		}
+		aprint_verbose(" -- Insufficient hz, needs at least %u\n", u);
 	} else if (tc->tc_quality >= 0 || bootverbose) {
-		printf("timecounter: Timecounter \"%s\" frequency %ju Hz quality %d\n",
-		    tc->tc_name, (uintmax_t)tc->tc_frequency,
+		aprint_verbose(
+		    "timecounter: Timecounter \"%s\" frequency %ju Hz "
+		    "quality %d\n", tc->tc_name, (uintmax_t)tc->tc_frequency,
 		    tc->tc_quality);
 	}
 
@@ -903,7 +903,8 @@ inittimecounter(void)
 	else
 		tc_tick = 1;
 	p = (tc_tick * 1000000) / hz;
-	printf("timecounter: Timecounters tick every %d.%03u msec\n", p / 1000, p % 1000);
+	aprint_verbose("timecounter: Timecounters tick every %d.%03u msec\n",
+	    p / 1000, p % 1000);
 
 	/* warm up new timecounter (again) and get rolling. */
 	(void)timecounter->tc_get_timecount(timecounter);
