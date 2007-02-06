@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.60 2007/01/29 22:45:00 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.61 2007/02/06 21:18:11 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -487,4 +487,10 @@ xfree/xc/programs/Xserver/render/render.c	1.3
 	fix integer overflow in dbe and render extensions
 	(CVE-2006-6101, CVE-2006-6102 and CVE-2006-6103), from xfree86 CVS
 	[adrianp, ticket #10989]
+
+sys/kern/vfs_syscalls.c				1.293 via patch
+
+	Close a file descriptor leak issue where erronious parameters to an
+	fsync_range(2) call could cause the file descriptor to never be closed.
+	[adrianp, ticket #11015]
 
