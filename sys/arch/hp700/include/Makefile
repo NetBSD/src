@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2006/07/26 19:54:57 drochner Exp $
+#	$NetBSD: Makefile,v 1.9 2007/02/06 21:59:24 skrll Exp $
 
 INCSDIR= /usr/include/hp700
 
@@ -17,7 +17,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	param.h pcb.h pdc.h pmap.h pmc.h \
 	proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h \
-	setjmp.h signal.h som.h spinlock.h stdarg.h \
+	setjmp.h signal.h som.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h \
 	wchar_limits.h
