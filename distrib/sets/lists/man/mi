@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.971 2007/01/30 19:40:09 elad Exp $
+# $NetBSD: mi,v 1.972 2007/02/06 07:28:59 dyoung Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -925,6 +925,7 @@
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/autoconf.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/busmouse.0		man-obsolete		obsolete
+./usr/share/man/cat4/i386/cmos.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/com.0			man-obsolete		obsolete
 ./usr/share/man/cat4/i386/cons.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/console.0		man-sys-catman		.cat
@@ -3338,6 +3339,7 @@
 ./usr/share/man/man4/i386/apm.4			man-sys-man		.man
 ./usr/share/man/man4/i386/autoconf.4		man-sys-man		.man
 ./usr/share/man/man4/i386/busmouse.4		man-obsolete		obsolete
+./usr/share/man/man4/i386/cmos.4		man-sys-man		.man
 ./usr/share/man/man4/i386/com.4			man-obsolete		obsolete
 ./usr/share/man/man4/i386/cons.4		man-sys-man		.man
 ./usr/share/man/man4/i386/console.4		man-sys-man		.man
