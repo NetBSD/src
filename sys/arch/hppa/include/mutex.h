@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.5 2007/02/06 22:13:59 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.6 2007/02/06 22:22:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  * know who owns the lock.  For adaptive mutexes, we need an owner
  * field and additional interlock
  */
+#ifndef __ASSEMBLER__
 struct kmutex {
 	union {
 		/*
@@ -68,6 +69,7 @@ struct kmutex {
 		uint8_t			mtxu_pad[16];		/* 0-15 */
 	} u;
 } __aligned (16);
+#endif
 
 #ifdef __MUTEX_PRIVATE
 
@@ -83,6 +85,8 @@ struct kmutex {
 #define	MUTEX_ADAPTIVE_UNOWNED		0xffffff00
 #define	MUTEX_SPIN_FLAG			0xffffff10
 #define	MUTEX_UNOWNED_OR_SPIN(x)	(((x) & 0xffffffef) == 0xffffff00)
+
+#ifndef __ASSEMBLER__
 
 static inline uintptr_t
 MUTEX_OWNER(uintptr_t owner)
@@ -179,6 +183,8 @@ MUTEX_RELEASE(kmutex_t *mtx)
 	__cpu_simple_unlock(&mtx->mtx_lock);
 	mtx->mtx_waiters = 0;
 }
+
+#endif	/* __ASSEMBLER__ */
 
 #endif	/* __MUTEX_PRIVATE */
 
