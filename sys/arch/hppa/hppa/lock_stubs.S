@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.1 2007/02/06 22:22:29 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2007/02/06 23:27:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -169,3 +169,7 @@ LEAF_ENTRY(mutex_enter)
 	bv	%r0(%rp)
 	 stw	%t2,MTX_OWNER(%arg0)
 EXIT(mutex_enter)
+
+#endif	/* !LOCKDEBUG */
+
+#endif /* !MULTIPROCESSOR */
