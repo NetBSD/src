@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28.4.3 2007/01/30 13:51:32 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.28.4.4 2007/02/06 18:59:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.4.3 2007/01/30 13:51:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.4.4 2007/02/06 18:59:08 ad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -541,8 +541,11 @@ linux_sys_sigreturn(l, v, retval)
 #endif
 
 	/* Grab whole of the sigcontext. */
-	if (copyin((caddr_t) usp, &tsigc2, sizeof tsigc2))
-bad:		sigexit(l, SIGSEGV);
+	if (copyin((caddr_t) usp, &tsigc2, sizeof tsigc2)) {
+bad:
+		mutex_enter(&p->p_smutex);
+		sigexit(l, SIGSEGV);
+	}
 
 	scp = &tsigc2.c_sc;
 
@@ -696,8 +699,11 @@ linux_sys_rt_sigreturn(l, v, retval)
 #endif
 
 	/* Grab whole of the ucontext. */
-	if (copyin(ucp, &tuc, sizeof tuc))
-bad:		sigexit(l, SIGSEGV);
+	if (copyin(ucp, &tuc, sizeof tuc)) {
+bad:		
+		mutex_enter(&p->p_smutex);
+		sigexit(l, SIGSEGV);
+	}
 
 	/*
 	 * Check kernel stack and re-enter to syscall() if needed.

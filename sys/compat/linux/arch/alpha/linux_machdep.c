@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.35.4.2 2007/01/30 13:51:32 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.35.4.3 2007/02/06 18:59:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.35.4.2 2007/01/30 13:51:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.35.4.3 2007/02/06 18:59:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *sfp, sigframe;
-	int onstack;
+	int onstack, error;
 	int fsize, rndfsize;
 	extern char linux_rt_sigcode[], linux_rt_esigcode[];
 
@@ -187,7 +187,12 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 	sigframe.info.lsi_pid = p->p_pid;
 	sigframe.info.lsi_uid = kauth_cred_geteuid(l->l_cred);	/* Use real uid here? */
 
-	if (copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize);
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): copyout failed on sig %d\n",
@@ -225,7 +230,7 @@ void setup_linux_sigframe(tf, sig, mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *sfp, sigframe;
-	int onstack;
+	int onstack, error;
 	int fsize, rndfsize;
 	extern char linux_sigcode[], linux_esigcode[];
 
@@ -275,7 +280,12 @@ void setup_linux_sigframe(tf, sig, mask)
 	sigframe.sf_sc.sc_traparg_a1 = tf->tf_regs[FRAME_A1];
 	sigframe.sf_sc.sc_traparg_a2 = tf->tf_regs[FRAME_A2];
 
-	if (copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize);
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): copyout failed on sig %d\n",
