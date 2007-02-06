@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.22.4.2 2007/01/30 13:49:35 ad Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.22.4.3 2007/02/06 19:46:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.22.4.2 2007/01/30 13:49:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.22.4.3 2007/02/06 19:46:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	int onstack;
+	int onstack, error;
 	struct svr4_sigframe *sfp = getframe(l, sig, &onstack), sf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
@@ -263,7 +263,12 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    sf.sf_signum, sf.sf_sip, sf.sf_ucp, sf.sf_handler);
 #endif
 
-	if(copyout(&sf, sfp, sizeof (sf)) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout(&sf, sfp, sizeof (sf));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -275,7 +280,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	buildcontext(l, p->p_sigctx.ps_sigcode, sfp);
 
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*

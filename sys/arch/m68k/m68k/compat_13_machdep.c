@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.10.4.1 2007/01/30 13:49:35 ad Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.10.4.2 2007/02/06 19:46:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10.4.1 2007/01/30 13:49:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10.4.2 2007/02/06 19:46:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,15 +156,19 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
-	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	return EJUSTRETURN;
 }

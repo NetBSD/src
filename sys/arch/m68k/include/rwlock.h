@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.9.20.2 2007/02/06 19:46:22 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1.2.1 2007/02/06 19:46:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,69 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-dependent spin lock operations.
- */
+#ifndef _M68K_RWLOCK_H_
+#define	_M68K_RWLOCK_H_
 
-#ifndef _M68K_LOCK_H_
-#define	_M68K_LOCK_H_
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+	uint32_t		rw_id;
+};
 
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
-{
+#ifdef __RWLOCK_PRIVATE
 
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
+#define	__HAVE_SIMPLE_RW_LOCKS		1
 
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
+#define	RW_RECEIVE(rw)			/* nothing */
+#define	RW_GIVE(rw)			/* nothing */
 
-	__asm volatile(
-		"1:	tas	%0	\n"
-		"	jne	1b	\n"
-		: "=m" (*alp));
-}
+#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
 
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-	int __rv;
+int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-	__asm volatile(
-		"	moveq	#1, %1	\n"
-		"	tas	%0	\n"
-		"	jeq	1f	\n"
-		"	moveq	#0, %1	\n"
-		"1:			\n"
-		: "=m" (*alp), "=d" (__rv));
+#endif	/* __RWLOCK_PRIVATE */
 
-	return (__rv);
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
-
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline void
-mb_read(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-static __inline void
-mb_write(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-static __inline void
-mb_memory(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-#endif /* _M68K_LOCK_H_ */
+#endif /* _M68K_RWLOCK_H_ */
