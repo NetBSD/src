@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.12.4.4 2007/01/12 20:18:29 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.12.4.5 2007/02/06 12:30:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.4.4 2007/01/12 20:18:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.4.5 2007/02/06 12:30:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -478,7 +478,7 @@ cpu_start_secondary (ci)
 
 	ci->ci_flags |= CPUF_AP;
 
-	printf("%s: starting\n", ci->ci_dev->dv_xname);
+	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
 
@@ -489,7 +489,7 @@ cpu_start_secondary (ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_PRESENT)) {
-		printf("%s: failed to become ready\n", ci->ci_dev->dv_xname);
+		aprint_error("%s: failed to become ready\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -511,7 +511,7 @@ cpu_boot_secondary(ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("CPU failed to start\n");
+		aprint_error("CPU failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -569,7 +569,7 @@ cpu_hatch(void *v)
 	lcr8(0);
 	enable_intr();
 
-	printf("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
+	aprint_debug("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }
