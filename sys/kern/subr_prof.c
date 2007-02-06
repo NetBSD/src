@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.33.20.9 2007/02/05 16:44:40 ad Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.33.20.10 2007/02/06 23:14:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,9 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.9 2007/02/05 16:44:40 ad Exp $");
-
-#include "opt_lockdebug.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.10 2007/02/06 23:14:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.33.20.9 2007/02/05 16:44:40 ad Exp $
 #include <sys/gmon.h>
 
 MALLOC_DEFINE(M_GPROF, "gprof", "kernel profiling buffer");
-
-#ifdef LOCKDEBUG
-#error The LOCKDEBUG option can not be used with a profiling kernel
-#endif
 
 /*
  * Froms is actually a bunch of unsigned shorts indexing tos
