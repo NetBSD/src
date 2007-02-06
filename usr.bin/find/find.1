@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.61 2007/02/02 07:27:15 wiz Exp $
+.\"	$NetBSD: find.1,v 1.62 2007/02/06 13:25:01 elad Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd February 1, 2007
+.Dd February 6, 2007
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -204,6 +204,18 @@ information and the time
 was started, rounded up to the next full 24-hour period, is
 .Ar n
 24-hour periods.
+.It Ic -delete
+Delete found files and/or directories.
+Always returns True.
+This executes from the current working directory as
+.Nm
+recurses down the tree.
+It will not attempt to delete a filename with a
+.Dq \/
+character in its pathname relative to
+.Dq \.
+for security reasons.
+Depth-first traversal processing is implied by this option.
 .It Ic -empty
 True if the current file or directory is empty.
 .\" The ".sp" below is probably not the right way to get the desired effect.
@@ -769,6 +781,11 @@ is consistent with
 .Em IEEE PASC Interpretation 1003.2 #210 ,
 though the feature originated in
 .Tn SVR4 .
+ .Pp
+The
+.Ic -delete
+primary does not interact well with other options that cause the filesystem
+tree traversal options to be changed.
 .Sh HISTORY
 A much simpler
 .Nm find
