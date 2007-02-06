@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.94 2007/01/11 16:24:48 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.95 2007/02/06 01:09:48 elad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.94 2007/01/11 16:24:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.95 2007/02/06 01:09:48 elad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -1108,11 +1108,6 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 	if (error)
 		return (error);
 
-	error = fileassoc_table_add(nid.ni_vp->v_mount,
-	    prop_number_integer_value(prop_dictionary_get(dict, "count")));
-	if (error && (error != EEXIST))
-		goto out;
-
 	vte = malloc(sizeof(*vte), M_VERIEXEC, M_WAITOK | M_ZERO);
 	mount_setspecific(nid.ni_vp->v_mount, veriexec_mountspecific_key, vte);
 
@@ -1133,7 +1128,6 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 		       CTLFLAG_READONLY, CTLTYPE_QUAD, "nentries",
 		       NULL, NULL, 0, &vte->vte_count, 0, CTL_CREATE, CTL_EOL);
 
- out:
 	vrele(nid.ni_vp);
 	return (error);
 }
