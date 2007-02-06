@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.23.12.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.23.12.3 2007/02/06 09:59:29 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.23.12.2 2007/01/21 17:43:35 jdc Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.23.12.3 2007/02/06 09:59:29 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -186,6 +186,9 @@ fgoto(in_refresh)
  * Hard thing here is using home cursor on really deficient terminals.
  * Otherwise just use cursor motions, hacking use of tabs and overtabbing
  * and backspace.
+ *
+ * XXX this needs to be revisited for wide characters since we may output
+ * XXX more than one byte for a character.
  */
 
 static int plodcnt, plodflg;
@@ -206,9 +209,6 @@ plod(cnt, in_refresh)
 	int	 cnt, in_refresh;
 {
 	int	 i, j, k, soutcol, soutline;
-#ifdef HAVE_WCHAR
-	int	 cw;
-#endif /* HAVE_WCHAR */
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_OUTPUT, "plod: cnt=%d, in_refresh=%d\n",
@@ -409,27 +409,15 @@ dontcr:while (outline < destline) {
 				    == curscr->wattr)
 					__cputchar(i);
 #else
-				if ((curscr->lines[outline]->line[outcol].attr 
-				    & WA_ATTRIBUTES) 
+				if ((curscr->lines[outline]->line[outcol].attr
+				    & WA_ATTRIBUTES)
 				    == curscr->wattr ) {
-					cw = WCOL(curscr->lines[outline]->line[outcol]);
-					if ( cw > 1 ) {
+					if (WCOL(curscr->lines[outline]->line[outcol]) > 0) {
 						__cputwchar(curscr->lines[outline]->line[outcol].ch);
 #ifdef DEBUG
 						__CTRACE(__CTRACE_OUTPUT,
 						    "plod: (%d,%d)WCOL(%d), "
-						    "putwchar(%x)\n", 
-						    outline, outcol,
-						    WCOL(curscr->lines[outline]->line[outcol]),
-						    curscr->lines[outline]->line[outcol].ch);
-#endif /* DEBUG */
-					}
-					if ( cw == 1 ) {
-						__cputchar( curscr->lines[outline]->line[outcol].ch );
-#ifdef DEBUG
-						__CTRACE(__CTRACE_OUTPUT,
-						    "plod: (%d,%d)WCOL(%d), "
-						    "putchar(%x)\n", 
+						    "putwchar(%x)\n",
 						    outline, outcol,
 						    WCOL(curscr->lines[outline]->line[outcol]),
 						    curscr->lines[outline]->line[outcol].ch);
