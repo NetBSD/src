@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.30.18.2 2007/01/26 23:12:02 ad Exp $	*/
+/*	$NetBSD: asm.h,v 1.30.18.3 2007/02/06 16:58:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -205,49 +205,5 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
-
-/*
- * Assembley equivalent of spllower().  Label contains the function to call
- * to if we need to fire off pending interrupts (e.g. _C_LABEL(Xspllower)).
- *
- * On entry %ecx = new SPL.
- */
-#if defined(DDB)
-#define	SPLLOWER(label)						\
-	movl		CPUVAR(SELF), %eax ;			\
-	cmpl		CPU_INFO_ILEVEL(%eax), %ecx ;		\
-	jae		99f ;					\
-	movl		CPU_INFO_IUNMASK(%eax,%ecx,4), %edx ;	\
-	pushfl		;					\
-	cli		;					\
-	testl		CPU_INFO_IPENDING(%eax), %edx ;		\
-	jz		98f ;					\
-	popfl		;					\
-	pushl		%ebp ;					\
-	movl		%esp, %ebp ;				\
-	pushl		%ecx ;					\
-	call		label ;					\
-	leave		;					\
-	ret		;					\
-98:	movl		%ecx, CPU_INFO_ILEVEL(%eax) ;		\
-	popfl		;					\
-99:	ret
-#else	/* DDB */
-#define	SPLLOWER(label)						\
-	movl		CPUVAR(SELF), %eax ;			\
-	cmpl		CPU_INFO_ILEVEL(%eax), %ecx ;		\
-	jae		99f ;					\
-	movl		CPU_INFO_IUNMASK(%eax,%ecx,4), %edx ;	\
-	pushfl		;					\
-	cli		;					\
-	testl		CPU_INFO_IPENDING(%eax), %edx ;		\
-	jz		98f ;					\
-	pushl		%ecx ;					\
-	call		label ;					\
-	popl		%ecx ;					\
-98:	movl		%ecx, CPU_INFO_ILEVEL(%eax) ;		\
-	popfl		;					\
-99:	ret
-#endif	/* DDB */
 
 #endif /* !_I386_ASM_H_ */
