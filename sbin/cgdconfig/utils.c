@@ -1,4 +1,4 @@
-/* $NetBSD: utils.c,v 1.15 2006/08/26 18:14:28 christos Exp $ */
+/* $NetBSD: utils.c,v 1.16 2007/02/06 00:48:37 cbiere Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utils.c,v 1.15 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: utils.c,v 1.16 2007/02/06 00:48:37 cbiere Exp $");
 #endif
 
 #include <sys/param.h>
@@ -121,13 +121,13 @@ words_free(char **w, int num)
 void
 memxor(void *res, const void *src, size_t len)
 {
-	int i;
 	char *r;
 	const char *s;
+	size_t i;
 
 	r = res;
 	s = src;
-	for (i=0; i < len; i++)
+	for (i = 0; i < len; i++)
 		r[i] ^= s[i];
 }
 
