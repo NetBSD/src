@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126.4.1 2007/01/30 13:49:38 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.126.4.2 2007/02/06 20:54:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.4.1 2007/01/30 13:49:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.4.2 2007/02/06 20:54:26 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -222,9 +222,9 @@ userret(struct lwp *l, struct trapframe *tf, u_quad_t oticks)
 	/*
 	 * If profiling, charge system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
-		addupc_task(p, tf->tf_pc,
+		addupc_task(l, tf->tf_pc,
 		            (int)(p->p_sticks - oticks) * psratio);
 	}
 
@@ -356,10 +356,14 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
+
+		mutex_enter(&p->p_smutex);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(&p->p_sigctx.ps_sigmask, SIGILL);
+		sigdelset(&l->l_sigmask, SIGILL);
+		mutex_exit(&p->p_smutex);
+
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)tf.tf_format;
 		ksi.ksi_code = (type == T_COPERR) ?
@@ -467,9 +471,9 @@ trap(int type, u_int code, u_int v, struct trapframe tf)
 	case T_ASTFLT|T_USER:	/* user async trap */
 		astpending = 0;
 		/* T_SSIR is not used on a Sun3. */
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 		if (want_resched)
 			preempt();

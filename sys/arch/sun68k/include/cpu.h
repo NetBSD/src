@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.20.1 2006/11/18 21:29:37 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.20.2 2007/02/06 20:54:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -105,6 +105,8 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	int	ci_mtx_count;
+	int	ci_mtx_oldspl;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -152,20 +154,20 @@ extern int astpending;	 /* need to trap before returning to user mode */
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	 /* resched() was called */
-#define	need_resched(ci)	{ want_resched = 1; aston(); }
+#define	cpu_need_resched(ci)	{ want_resched = 1; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sun68k, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston())
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, aston())
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	cpu_signotify(l)	aston()
 
 /*
  * For some reason the sparc has this prototype in its machine/cpu.h,
