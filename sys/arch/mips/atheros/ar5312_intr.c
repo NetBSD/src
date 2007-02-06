@@ -1,4 +1,4 @@
-/* $Id: ar5312_intr.c,v 1.2 2006/09/04 05:17:26 gdamore Exp $ */
+/* $Id: ar5312_intr.c,v 1.3 2007/02/06 05:39:16 dyoung Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.2 2006/09/04 05:17:26 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5312_intr.c,v 1.3 2007/02/06 05:39:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -126,7 +126,7 @@ const uint32_t	ipl_sr_bits[_IPL_N] = {
 	MIPS_INT_MASK,			/* 8: IPL_{CLOCK,HIGH} */
 };
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+const uint32_t mips_ipl_si_to_sr[] = {
 	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTNET */
