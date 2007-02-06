@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.15 2007/02/05 13:16:49 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.16 2007/02/06 10:33:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.15 2007/02/05 13:16:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.16 2007/02/06 10:33:45 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -221,9 +221,10 @@ sigactsinit(struct proc *pp, int share)
 		mutex_init(&ps->sa_mutex, MUTEX_SPIN, IPL_NONE);
 		if (pp) {
 			mutex_enter(&pp->p_smutex);
-			memcpy(ps, pp->p_sigacts, sizeof(struct sigacts));
+			memcpy(&ps->sa_sigdesc, pp->p_sigacts->sa_sigdesc,
+			    sizeof(ps->sa_sigdesc));
 		} else
-			memset(ps, 0, sizeof(struct sigacts));
+			memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
 		ps->sa_refcnt = 1;
 	}
 
