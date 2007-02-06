@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.39.4.1 2007/01/30 13:49:35 ad Exp $ */
+/* $NetBSD: trap.c,v 1.39.4.2 2007/02/06 20:54:26 ad Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39.4.1 2007/01/30 13:49:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39.4.2 2007/02/06 20:54:26 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -204,10 +204,10 @@ again:
 	/*
 	 * If profiling, charge system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, fp->f_pc,
+		addupc_task(l, fp->f_pc,
 			    (int)(p->p_sticks - oticks) * psratio);
 	}
 #ifdef M68040
@@ -374,10 +374,14 @@ trap(type, code, v, frame)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
+
+		mutex_enter(&p->p_smutex);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(&p->p_sigctx.ps_sigmask, SIGILL);
+		sigdelset(&l->l_sigmask, SIGILL);
+		mutex_exit(&p->p_smutex);
+
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)frame.f_format;
 				/* XXX was ILL_RESAD_FAULT */
@@ -529,8 +533,8 @@ trap(type, code, v, frame)
 			return;
 		}
 		spl0();
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(p);
 		}
 		if (want_resched)
