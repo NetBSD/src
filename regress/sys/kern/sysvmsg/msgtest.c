@@ -1,12 +1,12 @@
-/*	$NetBSD: msgtest.c,v 1.8 2005/02/06 06:05:20 perry Exp $	*/
+/*	$NetBSD: msgtest.c,v 1.9 2007/02/06 15:08:17 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,6 +84,8 @@ pid_t	child_pid;
 
 key_t	msgkey;
 
+int	maxloop = 1;
+
 int
 main(argc, argv)
 	int argc;
@@ -93,8 +95,11 @@ main(argc, argv)
 	struct msqid_ds m_ds;
 	struct mymsg m;
 	sigset_t sigmask;
+	int loop;
 
-	if (argc != 2)
+	if (argc == 3)
+		maxloop = atoi(argv[2]);
+	else if (argc != 2)
 		usage();
 
 	/*
@@ -168,29 +173,33 @@ main(argc, argv)
 		break;
 	}
 
-	/*
-	 * Send the first message to the receiver and wait for the ACK.
-	 */
-	m.mtype = MTYPE_1;
-	strcpy(m.mtext, m1_str);
-	if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
-		err(1, "sender: msgsnd 1");
+	for (loop = 0; loop < maxloop; loop++) {
+		/*
+		 * Send the first message to the receiver and wait for the ACK.
+		 */
+		m.mtype = MTYPE_1;
+		strcpy(m.mtext, m1_str);
+		if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
+			err(1, "sender: msgsnd 1");
 
-	if (msgrcv(sender_msqid, &m, sizeof(m), MTYPE_1_ACK, 0) != sizeof(m))
-		err(1, "sender: msgrcv 1 ack");
+		if (msgrcv(sender_msqid, &m, sizeof(m), MTYPE_1_ACK, 0) !=
+		    sizeof(m))
+			err(1, "sender: msgrcv 1 ack");
 
-	print_msqid_ds(&m_ds, 0600);
+		print_msqid_ds(&m_ds, 0600);
 
-	/*
-	 * Send the second message to the receiver and wait for the ACK.
-	 */
-	m.mtype = MTYPE_2;
-	strcpy(m.mtext, m2_str);
-	if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
-		err(1, "sender: msgsnd 2");
+		/*
+		 * Send the second message to the receiver and wait for the ACK.
+		 */
+		m.mtype = MTYPE_2;
+		strcpy(m.mtext, m2_str);
+		if (msgsnd(sender_msqid, &m, sizeof(m), 0) == -1)
+			err(1, "sender: msgsnd 2");
 
-	if (msgrcv(sender_msqid, &m, sizeof(m), MTYPE_2_ACK, 0) != sizeof(m))
-		err(1, "sender: msgrcv 2 ack");
+		if (msgrcv(sender_msqid, &m, sizeof(m), MTYPE_2_ACK, 0) !=
+		    sizeof(m))
+			err(1, "sender: msgrcv 2 ack");
+	}
 
 	/*
 	 * Suspend forever; when we get SIGCHLD, the handler will exit.
@@ -306,42 +315,43 @@ void
 receiver()
 {
 	struct mymsg m;
-	int msqid;
+	int msqid, loop;
 
 	if ((msqid = msgget(msgkey, 0)) == -1)
 		err(1, "receiver: msgget");
 
-	/*
-	 * Receive the first message, print it, and send an ACK.
-	 */
+	for (loop = 0; loop < maxloop; loop++) {
+		/*
+		 * Receive the first message, print it, and send an ACK.
+		 */
+		if (msgrcv(msqid, &m, sizeof(m), MTYPE_1, 0) != sizeof(m))
+			err(1, "receiver: msgrcv 1");
 
-	if (msgrcv(msqid, &m, sizeof(m), MTYPE_1, 0) != sizeof(m))
-		err(1, "receiver: msgrcv 1");
+		printf("%s\n", m.mtext);
+		if (strcmp(m.mtext, m1_str) != 0)
+			err(1, "receiver: message 1 data isn't correct");
 
-	printf("%s\n", m.mtext);
-	if (strcmp(m.mtext, m1_str) != 0)
-		err(1, "receiver: message 1 data isn't correct");
+		m.mtype = MTYPE_1_ACK;
 
-	m.mtype = MTYPE_1_ACK;
+		if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
+			err(1, "receiver: msgsnd ack 1");
 
-	if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
-		err(1, "receiver: msgsnd ack 1");
+		/*
+		 * Receive the second message, print it, and send an ACK.
+		 */
 
-	/*
-	 * Receive the second message, print it, and send an ACK.
-	 */
+		if (msgrcv(msqid, &m, sizeof(m), MTYPE_2, 0) != sizeof(m))
+			err(1, "receiver: msgrcv 2");
 
-	if (msgrcv(msqid, &m, sizeof(m), MTYPE_2, 0) != sizeof(m))
-		err(1, "receiver: msgrcv 2");
+		printf("%s\n", m.mtext);
+		if (strcmp(m.mtext, m2_str) != 0)
+			err(1, "receiver: message 2 data isn't correct");
 
-	printf("%s\n", m.mtext);
-	if (strcmp(m.mtext, m2_str) != 0)
-		err(1, "receiver: message 2 data isn't correct");
+		m.mtype = MTYPE_2_ACK;
 
-	m.mtype = MTYPE_2_ACK;
-
-	if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
-		err(1, "receiver: msgsnd ack 2");
+		if (msgsnd(msqid, &m, sizeof(m), 0) == -1)
+			err(1, "receiver: msgsnd ack 2");
+	}
 
 	exit(0);
 }
