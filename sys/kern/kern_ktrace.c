@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.105.4.10 2007/02/05 10:56:57 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.105.4.11 2007/02/06 19:14:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.10 2007/02/05 10:56:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.105.4.11 2007/02/06 19:14:40 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -632,7 +632,6 @@ ktrgenio(struct lwp *l, int fd, enum uio_rw rw, struct iovec *iov,
 	 */
 	ktraddentry(l, kte, KTA_WAITOK | KTA_LARGE);
 	if (resid > 0) {
-		/* XXX NJWLWP */
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD) {
 			(void)ktrenter(l);
 			preempt();
@@ -1246,7 +1245,7 @@ again:
 		break;
 
 	case EWOULDBLOCK:
-		preempt();
+		kpause("ktrzzz", FALSE, 1, NULL);
 		goto again;
 
 	default:
