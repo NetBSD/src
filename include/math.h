@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.44 2006/03/25 16:41:11 xtraeme Exp $	*/
+/*	$NetBSD: math.h,v 1.45 2007/02/06 17:29:37 drochner Exp $	*/
 
 /*
  * ====================================================
@@ -331,7 +331,7 @@ long long int	llroundf(float);
 float	fmodf(float, float);
 float	remainderf(float, float);
 
-/* 7.2.11 manipulation */
+/* 7.12.11 manipulation */
 
 float	copysignf(float, float);
 double	nan(const char *);
@@ -339,6 +339,15 @@ float	nanf(const char *);
 long double	nanl(const char *);
 float	nextafterf(float, float);
 
+/* 7.12.14 comparision */
+
+#define isunordered(x, y)	(isnan(x) || isnan(y))
+#define isgreater(x, y)		(!isunordered((x), (y)) && (x) > (y))
+#define isgreaterequal(x, y)	(!isunordered((x), (y)) && (x) >= (y))
+#define isless(x, y)		(!isunordered((x), (y)) && (x) < (y))
+#define islessequal(x, y)	(!isunordered((x), (y)) && (x) <= (y))
+#define islessgreater(x, y)	(!isunordered((x), (y)) && \
+				 ((x) > (y) || (y) > (x)))
 
 #endif /* !_ANSI_SOURCE && ... */
 
