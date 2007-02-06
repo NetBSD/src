@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.36 2007/02/02 20:02:18 christos Exp $ */
+/* $NetBSD: scan.l,v 1.37 2007/02/06 00:08:31 he Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.36 2007/02/02 20:02:18 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.37 2007/02/06 00:08:31 he Exp $");
 #endif
 
 #include <stdlib.h>
@@ -685,8 +685,24 @@ fcon(void)
 
 	errno = 0;
 	d = strtod(cp, &eptr);
-	if (eptr != cp + len)
-		LERROR("fcon()");
+	if (eptr != cp + len) {
+		switch (*eptr) {
+		/*
+		 * XXX: non-native non-current strtod() may not handle hex
+		 * floats, ignore the rest if we find traces of hex float
+		 * syntax...
+		 */
+		case 'p':
+		case 'P':
+		case 'x':
+		case 'X':
+			d = 0;
+			errno = 0;
+			break;
+		default:
+			LERROR("fcon()");
+		}
+	}
 	if (errno != 0)
 		/* floating-point constant out of range */
 		warning(248);
