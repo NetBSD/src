@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.1.2.12 2007/02/05 13:16:49 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.1.2.13 2007/02/06 10:01:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.12 2007/02/05 13:16:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.1.2.13 2007/02/06 10:01:03 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -763,13 +763,13 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	 * left unchanged (userland is not supposed to touch it anyway).
 	 */
  out:
-	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_free() -> pool_put()  */	
-	ksiginfo_free(ksi);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
-
 	if (error == 0)
 		error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),
 		    sizeof(ksi->ksi_info));
+
+	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_free() -> pool_put()  */	
+	ksiginfo_free(ksi);
+	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 
 	return error;
 }
