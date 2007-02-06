@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.41.2.5 2007/02/06 13:11:47 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.41.2.6 2007/02/06 13:32:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.41.2.5 2007/02/06 13:11:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.41.2.6 2007/02/06 13:32:31 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1342,13 +1342,11 @@ transmeta_cpu_info(struct cpu_info *ci)
 {
 	u_int eax, ebx, ecx, edx, nreg = 0;
 
-	/* XXX aprint_verbose()? */
-
 	CPUID(0x80860000, eax, ebx, ecx, edx);
 	nreg = eax;
 	if (nreg >= 0x80860001) {
 		CPUID(0x80860001, eax, ebx, ecx, edx);
-		aprint_normal("%s: Processor revision %u.%u.%u.%u\n",
+		aprint_verbose("%s: Processor revision %u.%u.%u.%u\n",
 		    ci->ci_dev->dv_xname,
 		    (ebx >> 24) & 0xff,
 		    (ebx >> 16) & 0xff,
@@ -1357,7 +1355,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 	}
 	if (nreg >= 0x80860002) {
 		CPUID(0x80860002, eax, ebx, ecx, edx);
-		aprint_normal("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		aprint_verbose("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
 		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
 		    (ebx >> 16) & 0xff,
 		    (ebx >> 8) & 0xff,
@@ -1383,14 +1381,14 @@ transmeta_cpu_info(struct cpu_info *ci)
 			    info.regs[i].ecx, info.regs[i].edx);
 		}
 		info.text[64] = 0;
-		aprint_normal("%s: %s\n", ci->ci_dev->dv_xname, info.text);
+		aprint_verbose("%s: %s\n", ci->ci_dev->dv_xname, info.text);
 	}
 
 	if (nreg >= 0x80860007) {
 		crusoe_longrun = tmx86_get_longrun_mode();
 		tmx86_get_longrun_status(&crusoe_frequency,
 		    &crusoe_voltage, &crusoe_percentage);
-		aprint_normal("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
+		aprint_verbose("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
 		    ci->ci_dev->dv_xname,
 		    crusoe_longrun, crusoe_frequency, crusoe_voltage,
 		    crusoe_percentage);
