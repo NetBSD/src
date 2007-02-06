@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.31.8.1 2006/11/18 21:34:33 ad Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.31.8.2 2007/02/06 13:11:48 ad Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.31.8.1 2006/11/18 21:34:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.31.8.2 2007/02/06 13:11:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -802,7 +802,7 @@ pciide_chansetup(sc, channel, interface)
 		return 0;
 	}
 	cp->ata_channel.ch_ndrive = 2;
-	aprint_normal("%s: %s channel %s to %s mode\n",
+	aprint_verbose("%s: %s channel %s to %s mode\n",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
 	    "configured" : "wired",
@@ -881,31 +881,31 @@ default_chip_map(sc, pa)
 
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
 #if NATA_DMA
-		aprint_normal("%s: bus-master DMA support present",
+		aprint_verbose("%s: bus-master DMA support present",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		if (sc->sc_pp == &default_product_desc &&
 		    (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_DMA) == 0) {
-			aprint_normal(", but unused (no driver support)");
+			aprint_verbose(", but unused (no driver support)");
 			sc->sc_dma_ok = 0;
 		} else {
 			pciide_mapreg_dma(sc, pa);
 			if (sc->sc_dma_ok != 0)
-				aprint_normal(", used without full driver "
+				aprint_verbose(", used without full driver "
 				    "support");
 		}
 #else
-		aprint_normal("%s: bus-master DMA support present, but unused (no driver support)",
+		aprint_verbose("%s: bus-master DMA support present, but unused (no driver support)",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 #endif	/* NATA_DMA */
 	} else {
-		aprint_normal("%s: hardware does not support DMA",
+		aprint_verbose("%s: hardware does not support DMA",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 #if NATA_DMA
 		sc->sc_dma_ok = 0;
 #endif
 	}
-	aprint_normal("\n");
+	aprint_verbose("\n");
 #if NATA_DMA
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;

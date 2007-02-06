@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.41.2.4 2007/02/01 08:48:03 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.41.2.5 2007/02/06 13:11:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.41.2.4 2007/02/01 08:48:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.41.2.5 2007/02/06 13:11:47 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1620,19 +1620,19 @@ identifycpu(struct cpu_info *ci)
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
 			if ((cpu_feature2 & CPUID2_TM2) &&
 			    (rdmsr(MSR_THERM2_CTL) & (1 << 16)))
-				aprint_normal("%s: using thermal monitor 2\n",
+				aprint_verbose("%s: using thermal monitor 2\n",
 				    cpuname);
 			else
-				aprint_normal("%s: using thermal monitor 1\n",
+				aprint_verbose("%s: using thermal monitor 1\n",
 				    cpuname);
 		} else {
-			aprint_normal("%s: enabling thermal monitor 1 ... ",
+			aprint_verbose("%s: enabling thermal monitor 1 ... ",
 			    cpuname);
 			wrmsr(MSR_MISC_ENABLE, rdmsr(MSR_MISC_ENABLE) | (1<<3));
 			if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
-				aprint_normal("enabled.\n");
+				aprint_verbose("enabled.\n");
 			} else {
-				aprint_normal("failed!\n");
+				aprint_verbose("failed!\n");
 				aprint_error("%s: failed to enable thermal "
 				    "monitoring!\n", cpuname);
 			}

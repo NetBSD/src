@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.109.6.2 2007/01/12 00:57:41 ad Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.109.6.3 2007/02/06 13:11:47 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.109.6.2 2007/01/12 00:57:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.109.6.3 2007/02/06 13:11:47 ad Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1268,7 +1268,8 @@ bge_chipinit(struct bge_softc *sc)
 		dma_rw_ctl =   0x76000000; /* XXX XXX XXX */;
 		device_ctl = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					   BGE_PCI_CONF_DEV_CTRL);
-		printf("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname, device_ctl);
+		aprint_debug("%s: pcie mode=0x%x\n", sc->bge_dev.dv_xname,
+		    device_ctl);
 
 		if ((device_ctl & 0x00e0) && 0) {
 			/*
@@ -2550,7 +2551,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if (sc->bge_quirks & BGE_QUIRK_5705_CORE) {
 		sc->bge_tx_coal_ticks = (12 * 5);
 		sc->bge_rx_max_coal_bds = (12 * 5);
-			aprint_error("%s: setting short Tx thresholds\n",
+			aprint_verbose("%s: setting short Tx thresholds\n",
 			    sc->bge_dev.dv_xname);
 	}
 
