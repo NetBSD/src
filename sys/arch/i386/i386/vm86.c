@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.41.20.4 2007/01/30 13:49:35 ad Exp $	*/
+/*	$NetBSD: vm86.c,v 1.41.20.5 2007/02/06 16:56:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.41.20.4 2007/01/30 13:49:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.41.20.5 2007/02/06 16:56:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,8 +240,6 @@ vm86_return(l, retval)
 	}
 
 	mutex_exit(&p->p_smutex);
-
-	/* XXXAD locking */
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_signo = SIGURG;
