@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577.4.8 2007/02/01 08:48:03 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.4.9 2007/02/06 13:41:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.8 2007/02/01 08:48:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.9 2007/02/06 13:41:04 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1963,7 +1963,7 @@ init386(paddr_t first_avail)
 		/* identical mapping */
 		p = paddr;
 		for (x=0; x<npg; x++) {
-			printf("kenter: 0x%08X\n", (unsigned)p);
+			aprint_debug("kenter: 0x%08X\n", (unsigned)p);
 			pmap_kenter_pa((vaddr_t)p, p, VM_PROT_ALL);
 			p += PAGE_SIZE;
 		}
