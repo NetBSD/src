@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.12 2007/02/05 23:56:13 jmcneill Exp $	*/
+/*	$NetBSD: i2c.c,v 1.13 2007/02/06 12:39:15 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -118,6 +118,8 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_type = iba->iba_type;
 	sc->sc_tag->ic_devname = self->dv_xname;
 
+	LIST_INIT(&(sc->sc_tag->ic_list));
+	LIST_INIT(&(sc->sc_tag->ic_proc_list));
 	kthread_create(iic_smbus_intr_thread, sc->sc_tag);
 
 	/*
