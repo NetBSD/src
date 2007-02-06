@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.17.20.5 2007/01/27 14:00:02 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.17.20.6 2007/02/06 21:18:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.5 2007/01/27 14:00:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.6 2007/02/06 21:18:41 ad Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -383,12 +383,12 @@ callout_hardclock(void)
 void
 softclock(void *v)
 {
-	struct cpu_info *ci;
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+#endif
 	struct callout *c;
 	void (*func)(void *);
 	void *arg;
-
-	ci = curcpu();
 
 	mutex_spin_enter(&callout_mutex);
 
