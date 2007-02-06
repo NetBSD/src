@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.9.20.2 2007/02/06 19:46:22 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.1 2007/02/06 19:46:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,69 +36,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-dependent spin lock operations.
- */
+#ifndef _M68K_MUTEX_H_
+#define	_M68K_MUTEX_H_
 
-#ifndef _M68K_LOCK_H_
-#define	_M68K_LOCK_H_
+#ifndef __MUTEX_PRIVATE
 
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
-{
+struct kmutex {
+	uintptr_t	mtx_pad1;
+	uint32_t	mtx_pad2[3];
+};
 
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
+#else	/* __MUTEX_PRIVATE */
 
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
+#include <machine/lock.h>
 
-	__asm volatile(
-		"1:	tas	%0	\n"
-		"	jne	1b	\n"
-		: "=m" (*alp));
-}
+struct kmutex {
+	volatile uintptr_t	mtx_owner;
+	ipl_cookie_t		mtx_ipl;
+	__cpu_simple_lock_t	mtx_lock;
+	volatile uint32_t	mtx_id;
+};
 
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-	int __rv;
+#define	__HAVE_SIMPLE_MUTEXES		1
 
-	__asm volatile(
-		"	moveq	#1, %1	\n"
-		"	tas	%0	\n"
-		"	jeq	1f	\n"
-		"	moveq	#0, %1	\n"
-		"1:			\n"
-		: "=m" (*alp), "=d" (__rv));
+#define	MUTEX_RECEIVE(mtx)		mb_read()
+#define	MUTEX_GIVE(mtx)			mb_memory()
 
-	return (__rv);
-}
+#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
 
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
+int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
+#endif	/* __MUTEX_PRIVATE */
 
-static __inline void
-mb_read(void)
-{
-	__asm volatile("" : : : "memory");
-}
+#endif /* _M68K_MUTEX_H_ */
 
-static __inline void
-mb_write(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-static __inline void
-mb_memory(void)
-{
-	__asm volatile("" : : : "memory");
-}
-
-#endif /* _M68K_LOCK_H_ */

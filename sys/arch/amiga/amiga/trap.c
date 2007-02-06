@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110.4.1 2007/01/30 13:49:33 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.110.4.2 2007/02/06 19:46:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110.4.1 2007/01/30 13:49:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110.4.2 2007/02/06 19:46:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,10 +248,10 @@ userret(l, pc, oticks)
 	/*
 	 * If profiling, charge recent system time.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
@@ -683,10 +683,13 @@ trap(type, code, v, frame)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		    type==T_COPERR ? "coprocessor" : "format");
 #endif
+		mutex_enter(&p->p_smutex);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(&p->p_sigctx.ps_sigmask, SIGILL);
+		sigdelset(&l->l_sigmask, SIGILL);
+		mutex_exit(&p->p_smutex);
+
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)frame.f_format;
 				/* XXX was ILL_RESAD_FAULT */
@@ -736,9 +739,9 @@ trap(type, code, v, frame)
 	case T_ASTFLT|T_USER:
 		astpending = 0;
 		spl0();
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 		if (want_resched)
 			preempt();

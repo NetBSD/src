@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2006/08/31 16:49:21 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16.2.1 2007/02/06 19:46:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2006/08/31 16:49:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16.2.1 2007/02/06 19:46:22 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -181,6 +181,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* Nothing to do */
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do */
