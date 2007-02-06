@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.16 2007/02/06 10:33:45 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.17 2007/02/06 10:35:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.16 2007/02/06 10:33:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.17 2007/02/06 10:35:25 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -258,12 +258,7 @@ sigactsunshare(struct proc *p)
 	mutex_enter(&p->p_smutex);
 	p->p_sigacts = ps;
 
-	mutex_enter(&oldps->sa_mutex);
-	refcnt = --oldps->sa_refcnt;
-	mutex_exit(&oldps->sa_mutex);
-
-	if (refcnt == 0)
-		pool_put(&sigacts_pool, oldps);
+	sigactsfree(oldps);
 }
 
 /*
@@ -280,8 +275,10 @@ sigactsfree(struct sigacts *ps)
 	refcnt = --ps->sa_refcnt;
 	mutex_exit(&ps->sa_mutex);
 
-	if (refcnt == 0)
+	if (refcnt == 0) {
+		mutex_destroy(&ps->sa_mutex);
 		pool_put(&sigacts_pool, ps);
+	}
 }
 
 /*
