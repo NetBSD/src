@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: perusertmp,v 1.3 2007/02/05 01:47:48 elad Exp $
+# $NetBSD: perusertmp,v 1.4 2007/02/06 16:54:27 elad Exp $
 #
 
 # PROVIDE: perusertmp
@@ -37,7 +37,7 @@ perusertmp_start()
 		/bin/mkdir -p ${per_user_tmp_dir}
 	fi
 	/usr/sbin/chown root:wheel ${per_user_tmp_dir}
-	/bin/chmod 0111 ${per_user_tmp_dir}
+	/bin/chmod 0555 ${per_user_tmp_dir}
 
 	# Create magic link for /tmp.
 	if [ $(/usr/bin/readlink /tmp) != ${per_user_tmp_dir}/@uid ]; then
