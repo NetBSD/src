@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.779.2.2 2007/02/01 08:48:00 ad Exp $
+# $NetBSD: GENERIC,v 1.779.2.3 2007/02/06 15:04:17 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.779.2.2 $"
+#ident 		"GENERIC-$Revision: 1.779.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -1383,6 +1383,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	lockstat		# lock profiling
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
