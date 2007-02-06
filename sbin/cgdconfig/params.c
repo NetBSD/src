@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.17 2007/01/17 21:59:49 hubertf Exp $ */
+/* $NetBSD: params.c,v 1.18 2007/02/06 00:51:09 cbiere Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.17 2007/01/17 21:59:49 hubertf Exp $");
+__RCSID("$NetBSD: params.c,v 1.18 2007/02/06 00:51:09 cbiere Exp $");
 #endif
 
 #include <sys/types.h>
@@ -760,14 +760,11 @@ params_cput(struct params *p, const char *fn)
 static int
 crypt_defaults_lookup(const char *alg)
 {
-	int	i;
+	unsigned	i;
 
 	for (i=0; i < (sizeof(crypto_defaults) / sizeof(crypto_defaults[0])); i++)
 		if (!strcmp(alg, crypto_defaults[i].alg))
-			break;
+			return i;
 
-	if (i >= (sizeof(crypto_defaults) / sizeof(crypto_defaults[0])))
-		return -1;
-	else
-		return i;
+	return -1;
 }
