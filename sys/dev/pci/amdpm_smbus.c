@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.11 2007/02/06 02:07:36 jmcneill Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.12 2007/02/06 14:39:47 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,7 +32,7 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.11 2007/02/06 02:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.12 2007/02/06 14:39:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,14 +72,18 @@ static int       amdpm_smbus_write_1(struct amdpm_softc *sc, u_int8_t cmd, u_int
 static int       amdpm_smbus_receive_1(struct amdpm_softc *sc, i2c_op_t op);
 static int       amdpm_smbus_read_1(struct amdpm_softc *sc, u_int8_t cmd, i2c_op_t op);
 
+#ifdef XBOX
 static int	 amdpm_smbus_intr(void *);
+#endif
 
 void
 amdpm_smbus_attach(struct amdpm_softc *sc)
 {
         struct i2cbus_attach_args iba;
+#ifdef XBOX
 	pci_intr_handle_t ih;
 	const char *intrstr;
+#endif
 	
 	/* register with iic */
 	sc->sc_i2c.ic_cookie = sc; 
@@ -136,10 +140,10 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
 	(void) config_found_ia(&sc->sc_dev, "i2cbus", &iba, iicbus_print);
 }
 
+#ifdef XBOX
 static int
 amdpm_smbus_intr(void *cookie)
 {
-#ifdef XBOX
 	struct amdpm_softc *sc;
 	uint32_t status;
 
@@ -152,9 +156,10 @@ amdpm_smbus_intr(void *cookie)
 		if (status & 2)
 			return iic_smbus_intr(&sc->sc_i2c);
 	}
-#endif
+
 	return 0;
 }
+#endif
 
 static int
 amdpm_smbus_acquire_bus(void *cookie, int flags)
