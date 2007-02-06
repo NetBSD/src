@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.18 2007/02/06 00:51:09 cbiere Exp $ */
+/* $NetBSD: params.c,v 1.19 2007/02/06 01:55:40 cbiere Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.18 2007/02/06 00:51:09 cbiere Exp $");
+__RCSID("$NetBSD: params.c,v 1.19 2007/02/06 01:55:40 cbiere Exp $");
 #endif
 
 #include <sys/types.h>
@@ -268,7 +268,7 @@ params_verify_method(string_t *in)
 	string_free(in);
 
 	if (p->verify_method == VERIFY_UNKNOWN)
-		fprintf(stderr, "params_setverify_method: unrecognized "
+		warnx("params_setverify_method: unrecognized "
 		    "verify method \"%s\"\n", vm);
 	return p;
 }
@@ -413,8 +413,7 @@ keygen_filldefaults(struct keygen *kg, int keylen)
 		kg->kg_iterations = pkcs5_pbkdf2_calibrate(BITS2BYTES(keylen),
 		    DEFAULT_ITERATION_TIME);
 		if (kg->kg_iterations < 1) {
-			fprintf(stderr, "%s: could not calibrate "
-			    "pkcs5_pbkdf2\n", getprogname());
+			warnx("could not calibrate pkcs5_pbkdf2");
 			return -1;
 		}
 		break;
@@ -480,8 +479,7 @@ keygen_method(string_t *in)
 	string_free(in);
 
 	if (kg->kg_method == KEYGEN_UNKNOWN)
-		fprintf(stderr, "unrecognized key generation method "
-		    "\"%s\"\n", kgm);
+		warnx("unrecognized key generation method \"%s\"\n", kgm);
 	return kg;
 }
 
@@ -576,10 +574,8 @@ params_cget(const char *fn)
 	struct params	*p;
 	FILE		*f;
 
-	f = fopen(fn, "r");
-	if (!f) {
-		fprintf(stderr, "failed to open params file \"%s\": %s\n",
-		    fn, strerror(errno));
+	if ((f = fopen(fn, "r")) == NULL) {
+		warn("failed to open params file \"%s\"", fn);
 		return NULL;
 	}
 	p = params_fget(f);
@@ -700,8 +696,7 @@ keygen_fput(struct keygen *kg, int ts, FILE *f)
 		fprintf(f, "};\n");
 		break;
 	default:
-		fprintf(stderr, "keygen_fput: %d not a valid method\n",
-		    kg->kg_method);
+		warnx("keygen_fput: %d not a valid method", kg->kg_method);
 		break;
 	}
 	return keygen_fput(kg->next, ts, f);
@@ -730,8 +725,7 @@ params_fput(struct params *p, FILE *f)
 		print_kvpair_cstr(f, ts, "verify_method", "re-enter");
 		break;
 	default:
-		fprintf(stderr, "unsupported verify_method (%d)\n",
-		    p->verify_method);
+		warnx("unsupported verify_method (%d)", p->verify_method);
 		return -1;
 	}
 	keygen_fput(p->keygen, TAB_COL, f);
@@ -744,11 +738,8 @@ params_cput(struct params *p, const char *fn)
 	FILE	*f;
 
 	if (fn && *fn) {
-		f = fopen(fn, "w");
-		if (!f) {
-			fprintf(stderr, "could not open outfile \"%s\": %s\n",
-			    fn, strerror(errno));
-			perror("fopen");
+		if ((f = fopen(fn, "w")) == NULL) {
+			warn("could not open outfile \"%s\"", fn);
 			return -1;
 		}
 	} else {
