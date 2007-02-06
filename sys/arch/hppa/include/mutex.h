@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1.2.4 2007/02/02 04:07:47 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1.2.5 2007/02/06 22:13:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ struct kmutex {
 /* Magic constants for mtx_owner */
 #define	MUTEX_ADAPTIVE_UNOWNED		0xffffff00
 #define	MUTEX_SPIN_FLAG			0xffffff10
-#define	MUTEX_UNOWNED_OR_SPIN(x)	(((x) & 0xffffffef) == 0xffffff0f)
+#define	MUTEX_UNOWNED_OR_SPIN(x)	(((x) & 0xffffffef) == 0xffffff00)
 
 static inline uintptr_t
 MUTEX_OWNER(uintptr_t owner)
