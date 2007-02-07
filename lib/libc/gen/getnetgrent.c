@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.38 2007/02/06 15:17:54 oster Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.39 2007/02/07 19:12:44 oster Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.38 2007/02/06 15:17:54 oster Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.39 2007/02/07 19:12:44 oster Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -687,7 +687,7 @@ in_lookup(const char *group, const char *key, const char *domain, int map)
 
 /*ARGSUSED*/
 static int
-_nis_endnetgrent(void *rv, void *cb_data, va_list ap)
+_local_endnetgrent(void *rv, void *cb_data, va_list ap)
 {
 	for (_nglist = _nghead; _nglist != NULL; _nglist = _nghead) {
 		_nghead = _nglist->ng_next;
@@ -710,7 +710,7 @@ _nis_endnetgrent(void *rv, void *cb_data, va_list ap)
 
 /*ARGSUSED*/
 static int
-_nis_setnetgrent(void *rv, void *cb_data, va_list ap)
+_local_setnetgrent(void *rv, void *cb_data, va_list ap)
 {
 	const char	*ng = va_arg(ap, const char *);
 	StringList	*sl;
@@ -740,7 +740,7 @@ _nis_setnetgrent(void *rv, void *cb_data, va_list ap)
 
 /*ARGSUSED*/
 static int
-_nis_getnetgrent(void *rv, void *cb_data, va_list ap)
+_local_getnetgrent(void *rv, void *cb_data, va_list ap)
 {
 	int *retval = va_arg(ap, int *);
 	const char **host = va_arg(ap, const char **);
@@ -769,7 +769,7 @@ _nis_getnetgrent(void *rv, void *cb_data, va_list ap)
 
 /*ARGSUSED*/
 static int
-_nis_innetgr(void *rv, void *cb_data, va_list ap)
+_local_innetgr(void *rv, void *cb_data, va_list ap)
 {
 	int *retval = va_arg(ap, int *);
 	const char *grp = va_arg(ap, const char *);
@@ -825,14 +825,45 @@ _nis_innetgr(void *rv, void *cb_data, va_list ap)
 	return NS_SUCCESS;
 }
 
+#ifdef YP
+
+/*ARGSUSED*/
+static int
+_nis_endnetgrent(void *rv, void *cb_data, va_list ap)
+{
+	return _local_endnetgrent(rv, cb_data, ap);
+}
+
+/*ARGSUSED*/
+static int
+_nis_setnetgrent(void *rv, void *cb_data, va_list ap)
+{
+	return _local_setnetgrent(rv, cb_data, ap);
+}
+
+/*ARGSUSED*/
+static int
+_nis_getnetgrent(void *rv, void *cb_data, va_list ap)
+{
+	return _local_getnetgrent(rv, cb_data, ap);
+}
+
+/*ARGSUSED*/
+static int
+_nis_innetgr(void *rv, void *cb_data, va_list ap)
+{
+	return _local_innetgr(rv, cb_data, ap);
+}
+
+#endif
 
 
-
-
+#ifdef NSSRC_FILES
 void
 endnetgrent(void)
 {
 	static const ns_dtab dtab[] = {
+		NS_FILES_CB(_local_endnetgrent, NULL)
 		NS_NIS_CB(_nis_endnetgrent, NULL)
 		NS_NULL_CB
 	};
@@ -840,12 +871,31 @@ endnetgrent(void)
 	(void) nsdispatch(NULL, dtab, NSDB_NETGROUP, "endnetgrent",
 			  __nsdefaultcompat);
 }
+#else
+static int
+_local_endnetgrentv(int *rv, void *cbdata, ...)
+{
+	int e;
+	va_list ap;
+	va_start(ap, cbdata);
+	e = _local_endnetgrent(rv, cbdata, ap);
+	va_end(ap);
+	return e;
+}
 
+void
+endnetgrent(void)
+{
+	(void)_local_endnetgrentv(NULL, NULL, NULL);
+}
+#endif
 
+#ifdef NSSRC_FILES
 void
 setnetgrent(const char *ng)
 {
 	static const ns_dtab dtab[] = {
+		NS_FILES_CB(_local_setnetgrent, NULL)
 		NS_NIS_CB(_nis_setnetgrent, NULL)
 		NS_NULL_CB
 	};
@@ -853,13 +903,33 @@ setnetgrent(const char *ng)
 	(void ) nsdispatch(NULL, dtab, NSDB_NETGROUP, "setnetgrent",
 			   __nsdefaultnis, ng);
 }
+#else
+static int
+_local_setnetgrentv(int *rv, void *cbdata, ...)
+{
+	int e;
+	va_list ap;
+	va_start(ap, cbdata);
+	e = _local_setnetgrent(rv, cbdata, ap);
+	va_end(ap);
+	return e;
+}
 
+void
+setnetgrent(const char *ng)
+{
+	(void) _local_setnetgrentv(NULL, NULL,ng);
+}
 
+#endif
+
+#ifdef NSSRC_FILES
 int
 getnetgrent(const char **host, const char **user, const char **domain)
 {
 	int     r, retval;
 	static const ns_dtab dtab[] = {
+		NS_FILES_CB(_local_getnetgrent, NULL)
 		NS_NIS_CB(_nis_getnetgrent, NULL)
 		NS_NULL_CB
 	};
@@ -869,13 +939,33 @@ getnetgrent(const char **host, const char **user, const char **domain)
 
 	return (r == NS_SUCCESS) ? retval : 0;
 }
-
+#else
+static int
+_local_getnetgrentv(int *rv, void *cbdata, ...)
+{
+	int e;
+	va_list ap;
+	va_start(ap, cbdata);
+	e = _local_getnetgrent(rv, cbdata, ap);
+	va_end(ap);
+	return e;
+}
 
 int
-innetgr(const char *grp, const char *host, const char *user, const char *domain)
+getnetgrent(const char **host, const char **user, const char **domain)
+{
+	return _local_getnetgrentv(NULL, NULL, host, user, domain) == NS_SUCCESS;
+}
+#endif
+
+#ifdef NSSRC_FILES
+int
+innetgr(const char *grp, const char *host, const char *user, 
+	const char *domain)
 {
 	int     r, retval;
 	static const ns_dtab dtab[] = {
+		NS_FILES_CB(_local_innetgr, NULL)
 		NS_NIS_CB(_nis_innetgr, NULL)
 		NS_NULL_CB
 	};
@@ -885,3 +975,22 @@ innetgr(const char *grp, const char *host, const char *user, const char *domain)
 
 	return (r == NS_SUCCESS) ? retval : 0;
 }
+#else
+static int
+_local_innetgrv(int *rv, void *cbdata, ...)
+{
+	int e;
+	va_list ap;
+	va_start(ap, cbdata);
+	e = _local_innetgr(rv, cbdata, ap);
+	va_end(ap);
+	return e;
+}
+
+int
+innetgr(const char *grp, const char *host, const char *user, 
+	const char *domain)
+{
+	return _local_innetgrv(NULL, NULL, grp, host, user, domain) == NS_SUCCESS;
+}
+#endif
