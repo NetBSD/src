@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.12 2006/04/20 23:20:55 hubertf Exp $ */
+/*	$NetBSD: progress.c,v 1.13 2007/02/07 14:06:57 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.12 2006/04/20 23:20:55 hubertf Exp $");
+__RCSID("$NetBSD: progress.c,v 1.13 2007/02/07 14:06:57 hubertf Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: progress.c,v 1.12 2006/04/20 23:20:55 hubertf Exp $");
 #include <netinet/in.h>
 #include <arpa/ftp.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -75,7 +74,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-ez] [-f file] [-l length] [-p prefix] cmd [args...]\n",
 	    getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 
@@ -97,7 +96,7 @@ main(int argc, char *argv[])
 	/* defaults: Read from stdin, 0 filesize (no completion estimate) */
 	fd = STDIN_FILENO;
 	filesize = 0;
-	prefix=NULL;
+	prefix = NULL;
 
 	while ((ch = getopt(argc, argv, "ef:l:p:z")) != -1)
 		switch (ch) {
@@ -118,8 +117,8 @@ main(int argc, char *argv[])
 		case 'z':
 			zflag++;
 			break;
-		default:
 		case '?':
+		default:
 			usage();
 			/* NOTREACHED */
 		}
@@ -128,6 +127,7 @@ main(int argc, char *argv[])
 
 	if (argc < 1)
 		usage();
+
 	if (infile && (fd = open(infile, O_RDONLY, 0)) < 0)
 		err(1, "%s", infile);
 
@@ -196,9 +196,9 @@ main(int argc, char *argv[])
 	progress = 1;
 	ttyout = eflag ? stderr : stdout;
 
-	if (ioctl(fileno(ttyout), TIOCGSIZE, &ts) == -1) {
+	if (ioctl(fileno(ttyout), TIOCGSIZE, &ts) == -1)
 		ttywidth = 80;
-	} else
+	else
 		ttywidth = ts.ts_cols;
 
 	if (pipe(outpipe) < 0)
