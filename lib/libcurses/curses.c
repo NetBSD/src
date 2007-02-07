@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.21.18.1 2007/01/21 11:38:59 blymn Exp $	*/
+/*	$NetBSD: curses.c,v 1.21.18.2 2007/02/07 09:18:44 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.21.18.1 2007/01/21 11:38:59 blymn Exp $");
+__RCSID("$NetBSD: curses.c,v 1.21.18.2 2007/02/07 09:18:44 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -138,24 +138,53 @@ _cursesi_copy_nsp(nschar_t *src_nsp, struct __ldata *ch)
                 np = tnp;
 		if (np) {
 			pnp->next = NULL;
-			while (np) {
-				tnp = np->next;
-				free(np);
-				np = tnp;
-			}
+			__cursesi_free_nsp(np);
 		}
 	} else {
-		np = ch->nsp;
-		if (np) {
-			while (np) {
-				tnp = np->next;
-				free(np);
-				np = tnp;
-			}
+		if (ch->nsp) {
+			__cursesi_free_nsp(ch->nsp);
 			ch->nsp = NULL;
 		}
 	}
 
 	return OK;
 }
+
+/*
+ * Free the storage associated with a non-spacing character - traverse the
+ * linked list until all storage is done.
+ */
+void
+__cursesi_free_nsp(nschar_t *inp)
+{
+	nschar_t *tnp, *np;
+
+	np = inp;
+	if (np) {
+		while (np) {
+			tnp = np->next;
+			free(np);
+			np = tnp;
+		}
+	}
+}
+
+/*
+ * Traverse all the cells in the given window free'ing the non-spacing
+ * character storage.
+ */
+void
+__cursesi_win_free_nsp(WINDOW *win)
+{
+	int     i, j;
+	__LDATA *sp;
+
+	for (i = 0; i < win->maxy; i++) {
+		for (sp = win->lines[i]->line, j = 0; j < win->maxx;
+		     j++, sp++) {
+			__cursesi_free_nsp(sp->nsp);
+		}
+	}
+}
+
 #endif

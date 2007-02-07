@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.38.6.2 2007/01/21 17:43:35 jdc Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.38.6.3 2007/02/07 09:18:44 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -361,8 +361,10 @@ void	 __init_acs(SCREEN *);
 #ifdef HAVE_WCHAR
 void	 __init_get_wch(SCREEN *);
 void	 __init_wacs(SCREEN *);
-void __cputwchar_args( wchar_t, void * );
-int     _cursesi_copy_nsp(nschar_t *src_nsp, struct __ldata *ch);
+void	__cputwchar_args( wchar_t, void * );
+int     _cursesi_copy_nsp(nschar_t *, struct __ldata *);
+void	__cursesi_free_nsp(nschar_t *);
+void	__cursesi_win_free_nsp(WINDOW *);
 #endif /* HAVE_WCHAR */
 char	*__longname(char *, char *);	/* Original BSD version */
 int	 __mvcur(int, int, int, int, int);
