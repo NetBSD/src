@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.1 (Berkeley) 5/31/93
- *	$Id: extern.h,v 1.1.1.1 2007/02/07 21:43:44 tls Exp $
+ *	$Id: extern.h,v 1.2 2007/02/07 21:56:08 tls Exp $
  */
 
 int	 acccmp __P((const FTSENT *, const FTSENT *));
