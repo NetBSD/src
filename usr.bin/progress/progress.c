@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.13 2007/02/07 14:06:57 hubertf Exp $ */
+/*	$NetBSD: progress.c,v 1.14 2007/02/07 15:21:21 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.13 2007/02/07 14:06:57 hubertf Exp $");
+__RCSID("$NetBSD: progress.c,v 1.14 2007/02/07 15:21:21 hubertf Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: progress.c,v 1.13 2007/02/07 14:06:57 hubertf Exp $");
 #include <fcntl.h>
 #include <glob.h>
 #include <signal.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <netdb.h>
 #include <stdio.h>
