@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1.2.2 2007/02/06 23:27:24 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.1.2.3 2007/02/07 00:00:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,13 +69,13 @@
 LEAF_ENTRY(_lock_cas)
 _lock_cas_rasstart:
 	ldw	0(%arg0),%t1
-	comb,<>	%arg1,%t1,.Ldone
+	comb,<>	%arg1, %t1, 1f
 	 ldi	0,%ret0
 	stw	%arg2,0(%arg0)
 _lock_cas_rasend:
 
 	ldi	1,%ret0
-.Ldone:
+1:
 	bv,n	%r0(%rp)
 
 EXIT(_lock_cas)
@@ -111,7 +111,7 @@ LEAF_ENTRY(mutex_exit)
 	 * mutex_vector_exit() to wake up any threads sleeping on the lock.
 	 */
 	ldb	MTX_WAITERS(%arg0),%t4
-	comib,=	0,%t1,.Ldone
+	comib,=	0,%t1,.Lexit_done
 	 nop
 
 .Lexit_slowpath:
@@ -120,7 +120,7 @@ LEAF_ENTRY(mutex_exit)
 	ldo	R%mutex_vector_exit(%t1), %t1
 	.call
 	bv,n	%r0(%t1)
-.Ldone
+.Lexit_done
 	bv,n	%r0(%rp)
 
 EXIT(mutex_exit)
