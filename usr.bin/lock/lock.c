@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.25 2006/05/11 12:02:08 liamjfoy Exp $	*/
+/*	$NetBSD: lock.c,v 1.26 2007/02/07 14:11:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.25 2006/05/11 12:02:08 liamjfoy Exp $");
+__RCSID("$NetBSD: lock.c,v 1.26 2007/02/07 14:11:30 hubertf Exp $");
 #endif /* not lint */
 
 /*
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: lock.c,v 1.25 2006/05/11 12:02:08 liamjfoy Exp $");
 #include <sys/time.h>
 #include <signal.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <pwd.h>
 #include <errno.h>
@@ -74,7 +73,7 @@ __RCSID("$NetBSD: lock.c,v 1.25 2006/05/11 12:02:08 liamjfoy Exp $");
 
 #define	TIMEOUT	15
 
-int	main __P((int, char **));
+int	main(int, char **);
 
 static void	bye(int) __attribute__((__noreturn__));
 static void	hi(int);
