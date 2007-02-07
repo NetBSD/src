@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 2006/09/13 19:55:49 manu Exp $
+	$NetBSD: syscalls.master,v 1.8 2007/02/07 15:32:52 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -279,7 +279,7 @@
 165	UNIMPL	getresuid16
 166	UNIMPL	vm86
 167	UNIMPL	query_module
-168	NOARGS	poll { int netbsd32_poll(struct pollfd *fds, u_int nfds, \
+168	NOARGS	poll { int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, \
 		   int timeout); }
 169	UNIMPL	nfsservctl
 170	NOARGS	{ int linux_sys_setresgid16(gid_t rgid, gid_t egid, \
