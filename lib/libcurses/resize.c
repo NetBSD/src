@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.12.6.2 2007/01/21 17:43:36 jdc Exp $	*/
+/*	$NetBSD: resize.c,v 1.12.6.3 2007/02/07 09:24:22 blymn Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.12.6.2 2007/01/21 17:43:36 jdc Exp $");
+__RCSID("$NetBSD: resize.c,v 1.12.6.3 2007/02/07 09:24:22 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -179,6 +179,14 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	__CTRACE(__CTRACE_WINDOW, "resize: win->scr_b = %d\n", win->scr_b);
 #endif
 
+	/*
+	 * free up any non-spacing storage before we lose the
+	 * pointers...
+	 */
+#ifdef HAVE_WCHAR
+	__cursesi_win_free_nsp(win);
+#endif
+
 	if (nlines <= 0 || ncols <= 0)
 		nlines = ncols = 0;
 	else {
@@ -256,15 +264,16 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 	for (i = 0; i < win->maxy; i++) {
 		lp = win->lines[i];
 		for (sp = lp->line, j = 0; j < win->maxx; j++, sp++) {
+			sp->attr = 0;
 #ifndef HAVE_WCHAR
-			sp->ch = win->bch; /* XXX */
+			sp->ch = win->bch;
 #else
 			sp->ch = ( wchar_t )btowc(( int ) win->bch );
+			sp->nsp = NULL;
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
 				return ERR;
 			SET_WCOL( *sp, 1 );
 #endif /* HAVE_WCHAR */
-			sp->attr = 0;
 		}
 		lp->hash = __hash((char *)(void *)lp->line,
 				  (size_t) (ncols * __LDATASIZE));
