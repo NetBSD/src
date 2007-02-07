@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.456 2007/02/06 14:30:09 elad Exp $
+$NetBSD: usbdevs,v 1.457 2007/02/07 10:30:19 is Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1426,6 +1426,9 @@ product MITSUMI FDD		0x6901	FDD
 product MOBILITY EA		0x0204	Ethernet Adapter
 
 /* MosChip Semiconductor */
+product MOSCHIP MCS7780		0x7780	Fast IrDA Adapter
+product MOSCHIP MCS7781		0x7781	Fast IrDA Adapter
+product MOSCHIP MCS7784		0x7784	Slow IrDA Adapter
 product MOSCHIP MCS7830		0x7830	Ethernet Adapter
 
 /* Motorola products */
