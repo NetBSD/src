@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.586.2.1 2007/02/07 12:51:44 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.586.2.2 2007/02/07 12:53:10 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.1 2007/02/07 12:51:44 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.2 2007/02/07 12:53:10 tron Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1857,12 +1857,12 @@ init386(paddr_t first_avail)
 			reqsz -= sz;
 			if (msgbuf_p_cnt != VM_PHYSSEG_MAX) {
 		/* if still segments available, get memory from next one ... */
-			      sz = reqsz;
-			      goto search_again;
+				sz = reqsz;
+				goto search_again;
 			}
 		/* Warn if the message buffer had to be shrunk. */
 			printf("WARNING: %ld bytes not available for msgbuf "
-			    "in last cluster (%ld used)\n", (long)MSGBUFSIZE, MSGBUFSIZE - reqsz);
+			       "in last cluster (%ld used)\n", (long)MSGBUFSIZE, MSGBUFSIZE - reqsz);
 		}
 	}
 
