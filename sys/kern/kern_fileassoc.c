@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.22 2007/02/06 01:09:48 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.23 2007/02/07 09:38:04 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.22 2007/02/06 01:09:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.23 2007/02/07 09:38:04 elad Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -78,6 +78,7 @@ static LIST_HEAD(, fileassoc) fileassoc_list;
 struct fileassoc_hash_entry {
 	fhandle_t *handle;				/* File handle */
 	specificdata_reference data;			/* Hooks. */
+	u_int nassocs;					/* # of hooks. */
 	LIST_ENTRY(fileassoc_hash_entry) entries;	/* List pointer. */
 };
 
@@ -357,14 +358,15 @@ fileassoc_table_resize(struct fileassoc_table *tbl)
 /*
  * Create a new fileassoc table.
  */
-static int
+static struct fileassoc_table *
 fileassoc_table_add(struct mount *mp)
 {
 	struct fileassoc_table *tbl;
 
 	/* Check for existing table for device. */
-	if (fileassoc_table_lookup(mp) != NULL)
-		return (EEXIST);
+	tbl = fileassoc_table_lookup(mp);
+	if (tbl != NULL)
+		return (tbl);
 
 	/* Allocate and initialize a table. */
 	tbl = kmem_zalloc(sizeof(*tbl), KM_SLEEP);
@@ -376,7 +378,7 @@ fileassoc_table_add(struct mount *mp)
 
 	mount_setspecific(mp, fileassoc_mountspecific_key, tbl);
 
-	return (0);
+	return (tbl);
 }
 
 /*
@@ -484,12 +486,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
 	if (tbl == NULL) {
-		fileassoc_table_add(vp->v_mount);
-
-		if (hint == NULL)
-			vfs_composefh_free(th);
-
-		return (NULL);
+		tbl = fileassoc_table_add(vp->v_mount);
 	}
 
 	indx = FILEASSOC_HASH(tbl, th);
@@ -523,6 +520,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 int
 fileassoc_file_delete(struct vnode *vp)
 {
+	struct fileassoc_table *tbl;
 	struct fileassoc_hash_entry *mhe;
 
 	mhe = fileassoc_file_lookup(vp, NULL);
@@ -530,6 +528,9 @@ fileassoc_file_delete(struct vnode *vp)
 		return (ENOENT);
 
 	file_free(mhe);
+
+	tbl = fileassoc_table_lookup(vp->v_mount);
+	--(tbl->hash_used); /* XXX gc? */
 
 	return (0);
 }
@@ -556,6 +557,8 @@ fileassoc_add(struct vnode *vp, fileassoc_t assoc, void *data)
 
 	file_setdata(e, assoc, data);
 
+	e->nassocs++;
+
 	return (0);
 }
 
@@ -573,6 +576,8 @@ fileassoc_clear(struct vnode *vp, fileassoc_t assoc)
 
 	file_cleanup(mhe, assoc);
 	file_setdata(mhe, assoc, NULL);
+
+	--(mhe->nassocs); /* XXX gc? */
 
 	return (0);
 }
