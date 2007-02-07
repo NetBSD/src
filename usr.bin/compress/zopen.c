@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.8 2003/08/07 11:13:29 agc Exp $	*/
+/*	$NetBSD: zopen.c,v 1.9 2007/02/07 14:20:58 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.8 2003/08/07 11:13:29 agc Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.9 2007/02/07 14:20:58 hubertf Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,6 @@ static char rcsid[] = "$NetBSD: zopen.c,v 1.8 2003/08/07 11:13:29 agc Exp $";
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
