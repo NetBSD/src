@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.72.2.1 2007/01/03 13:59:32 tron Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.72.2.2 2007/02/07 13:02:17 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.72.2.1 2007/01/03 13:59:32 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.72.2.2 2007/02/07 13:02:17 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -213,7 +213,8 @@ pathname_get(const char *dirp, enum uio_seg segflg, pathname_t *path)
 		    NULL);
 		if (error) {
 			PNBUF_PUT((*path)->pathbuf);
-			free(path, M_TEMP);
+			free(*path, M_TEMP);
+			*path = NULL;
 			return (error);
 		}
 		(*path)->needfree = TRUE;
