@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.325 2007/01/23 10:35:01 njoly Exp $
+.\"	$NetBSD: main,v 1.326 2007/02/07 15:17:01 rmind Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1369,6 +1369,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Dante Profeta Ta Mt dante@NetBSD.org
 .It Ta Chris Provenzano Ta Mt proven@NetBSD.org
 .It Ta Niels Provos Ta Mt provos@NetBSD.org
+.It Ta Mindaugas Rasiukevicius Ta Mt rmind@NetBSD.org
 .It Ta Michael Rauch Ta Mt mrauch@NetBSD.org
 .It Ta Marc Recht Ta Mt recht@NetBSD.org
 .It Ta Darren Reed Ta Mt darrenr@NetBSD.org
