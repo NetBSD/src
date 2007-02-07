@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.42 2007/01/31 16:30:09 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.43 2007/02/07 08:04:48 elad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.42 2007/01/31 16:30:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.43 2007/02/07 08:04:48 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,6 +50,10 @@ struct kauth_key {
 
 /* 
  * Credentials.
+ *
+ * A subset of this structure is used in kvm(3) (src/lib/libkvm/kvm_proc.c)
+ * and should be synchronized with this structure when the update is
+ * relevant.
  */
 struct kauth_cred {
 	struct simplelock cr_lock;	/* lock on cr_refcnt */
