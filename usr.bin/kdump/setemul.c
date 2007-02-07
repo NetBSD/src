@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.22 2006/05/04 18:06:29 christos Exp $	*/
+/*	$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.22 2006/05/04 18:06:29 christos Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,7 +192,7 @@ const struct emulation emulations[] = {
 
 	{ "linux32",	linux32_syscallnames,	LINUX32_SYS_MAXSYSCALL,
 	  native_to_linux_errno,	NELEM(native_to_linux_errno),
-	  linux_to_native_signo,	NSIG,	0 },
+	  linux_to_native_signo,	NSIG,	EMUL_FLAG_NETBSD32 },
 
 	{ "darwin",	darwin_syscallnames,	DARWIN_SYS_MAXSYSCALL,
 	  NULL,				0,
