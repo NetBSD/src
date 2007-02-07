@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.85 2007/02/06 20:49:20 bouyer Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.86 2007/02/07 05:54:42 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.85 2007/02/06 20:49:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.86 2007/02/07 05:54:42 elad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -1064,7 +1064,7 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_remove(dp, (dp->i_count == 0) ? ep :
 		   (struct direct *)((char *)ep +
-		   ufs_rw16(ep->d_reclen, needswap), dp->i_offset);
+		   ufs_rw16(ep->d_reclen, needswap)), dp->i_offset);
 #endif
 
 	if (dp->i_count == 0) {
