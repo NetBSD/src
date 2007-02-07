@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.89 2006/11/13 21:57:59 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.89.2.1 2007/02/07 13:00:18 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.89 2006/11/13 21:57:59 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.89.2.1 2007/02/07 13:00:18 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -1093,7 +1093,7 @@ check_outfile(const char *outfile)
 					"overwrite (y or n)? " , outfile);
 			(void)fgets(ans, sizeof(ans) - 1, stdin);
 			if (ans[0] != 'y' && ans[0] != 'Y') {
-				fprintf(stderr, "\tnot overwritting\n");
+				fprintf(stderr, "\tnot overwriting\n");
 				ok = 0;
 			} else
 				unlink(outfile);
