@@ -1,7 +1,7 @@
-.\" The following commands are required for all man pages.
+.\" $NetBSD: cmos.4,v 1.2 2007/02/07 06:46:06 wiz Exp $
 .Dd February 5, 2007
 .Os
-.Dt cmos 4 i386
+.Dt CMOS 4 i386
 .Sh NAME
 .Nm cmos
 .Nd Read/write access to IBM PC/AT CMOS RAM
@@ -43,16 +43,16 @@ Display entire contents of CMOS RAM:
 Change boot order on Soekris net4521 to PXE ROM, Primary HDD,
 Secondary HDD:
 .Bd -literal -offset indent
-# dd if=/dev/cmos of=/tmp/cmos0 bs=48 count=1 
+# dd if=/dev/cmos of=/tmp/cmos0 bs=48 count=1
 1+0 records in
 1+0 records out
 48 bytes transferred in 0.001 secs (48000 bytes/sec)
 # cp /tmp/cmos0 /tmp/cmos
-# printf '\exf0\ex80\ex81\exff' | dd bs=1 seek=33 conv=notrunc of=/tmp/cmos 
+# printf '\exf0\ex80\ex81\exff' | dd bs=1 seek=33 conv=notrunc of=/tmp/cmos
 4+0 records in
 4+0 records out
 4 bytes transferred in 0.001 secs (4000 bytes/sec)
-# dd if=/tmp/cmos of=/dev/cmos 
+# dd if=/tmp/cmos of=/dev/cmos
 0+1 records in
 0+1 records out
 48 bytes transferred in 0.001 secs (48000 bytes/sec)
@@ -71,6 +71,6 @@ The original
 driver was written by
 .An Takahiro Kambe Aq taca@back-street.net .
 .An David Young Aq dyoung@NetBSD.org
-modified the original and added it to 
+modified the original and added it to
 .Nx .
 .\" .Sh BUGS
