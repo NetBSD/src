@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.586 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.586.2.1 2007/02/07 12:51:44 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.586.2.1 2007/02/07 12:51:44 tron Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -240,7 +240,11 @@ int	i386_has_sse2;
 int	tmx86_has_longrun;
 
 vaddr_t	msgbuf_vaddr;
-paddr_t msgbuf_paddr;
+struct {
+	paddr_t paddr;
+	psize_t sz;
+} msgbuf_p_seg[VM_PHYSSEG_MAX];
+unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
@@ -396,25 +400,31 @@ native_loader(int bl_boothowto, int bl_bootdev,
 void
 cpu_startup()
 {
-	int x;
+	int x, y;
 	vaddr_t minaddr, maxaddr;
+	psize_t sz;
 	char pbuf[9];
 
 	/*
 	 * Initialize error message buffer (et end of core).
 	 */
-	msgbuf_vaddr = uvm_km_alloc(kernel_map, x86_round_page(MSGBUFSIZE), 0,
-	    UVM_KMF_VAONLY);
+	if (msgbuf_p_cnt == 0)
+		panic("msgbuf paddr map has not been set up");
+	for (x = 0, sz = 0; x < msgbuf_p_cnt; sz += msgbuf_p_seg[x++].sz)
+		continue;
+	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
 	/* msgbuf_paddr was init'd in pmap */
-	for (x = 0; x < btoc(MSGBUFSIZE); x++)
-		pmap_kenter_pa((vaddr_t)msgbuf_vaddr + x * PAGE_SIZE,
-		    msgbuf_paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
+		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
+			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
+			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
+	}
 	pmap_update(pmap_kernel());
 
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+	initmsgbuf((caddr_t)msgbuf_vaddr, sz);
 
 	printf("%s%s", copyright, version);
 
@@ -1813,6 +1823,7 @@ init386(paddr_t first_avail)
 		psize_t sz = round_page(MSGBUFSIZE);
 		psize_t reqsz = sz;
 
+	search_again:
 		for (x = 0; x < vm_nphysseg; x++) {
 			vps = &vm_physmem[x];
 			if (ptoa(vps->avail_end) == avail_end)
@@ -1827,7 +1838,8 @@ init386(paddr_t first_avail)
 
 		vps->avail_end -= atop(sz);
 		vps->end -= atop(sz);
-		msgbuf_paddr = ptoa(vps->avail_end);
+		msgbuf_p_seg[msgbuf_p_cnt].sz = sz;
+		msgbuf_p_seg[msgbuf_p_cnt++].paddr = ptoa(vps->avail_end);
 
 		/* Remove the last segment if it now has no pages. */
 		if (vps->start == vps->end) {
@@ -1841,10 +1853,17 @@ init386(paddr_t first_avail)
 				avail_end = vm_physmem[x].avail_end;
 		avail_end = ptoa(avail_end);
 
+		if (sz != reqsz) {
+			reqsz -= sz;
+			if (msgbuf_p_cnt != VM_PHYSSEG_MAX) {
+		/* if still segments available, get memory from next one ... */
+			      sz = reqsz;
+			      goto search_again;
+			}
 		/* Warn if the message buffer had to be shrunk. */
-		if (sz != reqsz)
 			printf("WARNING: %ld bytes not available for msgbuf "
-			    "in last cluster (%ld used)\n", reqsz, sz);
+			    "in last cluster (%ld used)\n", (long)MSGBUFSIZE, MSGBUFSIZE - reqsz);
+		}
 	}
 
 	/*
