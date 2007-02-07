@@ -33,38 +33,31 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     @(#)ls.1	8.7 (Berkeley) 7/29/94
-.\"	$Id: ls.1,v 1.1.1.1 2007/02/07 21:43:44 tls Exp $
+.\"	FreeBSD Id: ls.1,v 1.6 1996/12/14 06:03:27 steve Exp $
+.\"	$NetBSD: l.1,v 1.1 2007/02/07 21:56:08 tls Exp $
 .\"
-.Dd July 29, 1994
-.Dt COLORLS 1
+.Dd February 7, 2007
+.Dt L 1
 .Os
 .Sh NAME
-.Nm colorls
-.Nd list directory contents in color
+.Nm l
+.Nd list directory contents, long-form, in color
 .Sh SYNOPSIS
-.Nm colorls
+.Nm l
 .Op Fl ACFGLRTWacdfiloqrstu1
 .Op Ar file ...
 .Sh DESCRIPTION
-(Note: This man page describes the color version of the program.  To
-minimize the differences from the original, the program is referred to
-as
-.Nm ls
-in this manual.  The new option
-.Fl G
-is for color display.)
-.Pp
 For each operand that names a
 .Ar file
 of a type other than
 directory,
-.Nm ls
+.Nm l
 displays its name as well as any requested,
 associated information.
 For each operand that names a
 .Ar file
 of type directory,
-.Nm ls
+.Nm l
 displays the names of files contained
 within that directory, as well as any requested, associated
 information.
@@ -85,7 +78,7 @@ and
 .Ql \&.. .
 Always set for the super-user.
 .It Fl C
-Force multi-column output; this is the default when output is to a terminal.
+Force multi-column output.
 .It Fl F
 Display a slash (/) immediately after each pathname
 that is a directory, an asterisk (*) after each that is
@@ -100,7 +93,9 @@ Use ANSI color sequences to distinguish file types.  (See
 .Ev LSCOLORS
 below.)  In addition to those mentioned above in
 .Fl F ,
-some extra attributes (setuid bit set, etc.) are also displayed.
+some extra attributes (setuid bit set, etc.) are also displayed.  This is
+the default regardless of whether or not output is a terminal (never mind
+what type of terminal).
 .It Fl L
 If argument is a symbolic link, list the file or directory the link references
 rather than the link itself.
@@ -129,7 +124,7 @@ not blocks.
 .It Fl l
 (The lowercase letter ``ell.'')  List in long format. (See below.)
 If the output is to a terminal, a total sum for all the file
-sizes is output on a line before the long listing.
+sizes is output on a line before the long listing.  This is the default.
 .It Fl o
 Include the file flags in a long
 .Pq Fl l
@@ -179,9 +174,9 @@ options override each other; the last one specified determines
 the file time used.
 .Pp
 By default,
-.Nm ls
+.Nm l
 lists one entry per line to standard
-output; the exceptions are to terminals or when the
+output; the exception is when the
 .Fl C
 option is specified.
 .Pp
@@ -302,11 +297,11 @@ or
 .El
 .Pp
 The
-.Nm ls
+.Nm l
 utility exits 0 on success, and >0 if an error occurs.
 .Sh ENVIRONMENTAL VARIABLES
 The following environment variables affect the execution of
-.Nm ls :
+.Nm l :
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
 If the environmental variable
@@ -321,7 +316,7 @@ decimal integer, it is used as the
 column position width for displaying
 multiple-text-column output.
 The
-.Nm ls
+.Nm l
 utility calculates how
 many pathname text columns to display
 based on the width provided.
@@ -412,12 +407,28 @@ specification.
 .Xr sticky 8
 .Sh HISTORY
 An
+.Nm l
+alias appeared in a future NetBSD developer's
+.Pa \&.cshrc
+in the mid-1980s.  Cursory research
+indicates that this vital system feature is even
+older than that.
+.Sh FUTUREHISTORY
+According to some NetBSD developers, only with color
 .Nm ls
-command appeared in
-.At v1 .
+will NetBSD take back the desktop.  The default output of
+.Nm l
+is much longer than that of other color
+.Nm ls
+programs, so with
+.Nm l ,
+NetBSD will take back the desktop much more.
 .Sh STANDARDS
 The
-.Nm ls
+.Nm l
 function is expected to be a superset of the
 .St -p1003.2
-specification.
+.Nm ls
+specification.  If you want to run
+.At v7 , 
+though, it is available for download.

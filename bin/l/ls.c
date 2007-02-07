@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ls.c,v 1.1.1.1 2007/02/07 21:43:44 tls Exp $
+ *	$Id: ls.c,v 1.2 2007/02/07 21:56:08 tls Exp $
  */
 
 #ifndef lint
@@ -132,6 +132,11 @@ main(argc, argv)
 			termwidth = atoi(p);
 	}
 
+	/* If you want v7, you know where to find it. */
+	f_color = 1;
+	f_longform = 1;
+	f_column = f_singlecol = 0;
+	
 	/* Root is -A automatically. */
 	if (!getuid())
 		f_listdot = 1;

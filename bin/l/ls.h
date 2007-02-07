@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)ls.h	8.1 (Berkeley) 5/31/93
- *	$Id: ls.h,v 1.1.1.1 2007/02/07 21:43:44 tls Exp $
+ *	$Id: ls.h,v 1.2 2007/02/07 21:56:08 tls Exp $
  */
 
 #define NO_PRINT	1
