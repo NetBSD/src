@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.685 2007/01/30 19:40:08 elad Exp $
+# $NetBSD: mi,v 1.686 2007/02/07 21:56:07 tls Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -19,6 +19,7 @@
 ./bin/hostname					base-util-root
 ./bin/kill					base-util-root
 ./bin/ksh					base-util-root
+./bin/l						base-util-root
 ./bin/ln					base-util-root
 ./bin/ls					base-util-root
 ./bin/mkdir					base-util-root

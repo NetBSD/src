@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: util.c,v 1.1.1.1 2007/02/07 21:43:47 tls Exp $
+ *	$Id: util.c,v 1.2 2007/02/07 21:56:08 tls Exp $
  */
 
 #ifndef lint
