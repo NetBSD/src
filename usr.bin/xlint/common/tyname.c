@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.3 2006/04/17 06:53:06 skrll Exp $	*/
+/*	$NetBSD: tyname.c,v 1.4 2007/02/07 14:20:58 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -42,10 +42,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.3 2006/04/17 06:53:06 skrll Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.4 2007/02/07 14:20:58 hubertf Exp $");
 #endif
 
-#include <ctype.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <err.h>
