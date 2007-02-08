@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.10 2006/10/01 00:13:28 hubertf Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.11 2007/02/08 23:27:07 hubertf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -322,7 +322,7 @@ scan_pci_list(u_int bus, u_int dev, u_int func)
 
 	printf("%03u:%02u:%01u: ", bus, dev, func);
 	if (print_numbers) {
-		printf("0x%x (0x%x)\n", id, class);
+		printf("0x%08x (0x%08x)\n", id, class);
 	} else {
 		pci_devinfo(id, class, 1, devinfo, sizeof(devinfo));
 		printf("%s\n", devinfo);
