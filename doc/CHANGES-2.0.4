@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0.4,v 1.1.2.61 2007/02/06 21:18:11 bouyer Exp $
+#	$NetBSD: CHANGES-2.0.4,v 1.1.2.62 2007/02/08 23:10:24 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.0.3 update to the NetBSD 2.0.4
 update.
@@ -493,4 +493,14 @@ sys/kern/vfs_syscalls.c				1.293 via patch
 	Close a file descriptor leak issue where erronious parameters to an
 	fsync_range(2) call could cause the file descriptor to never be closed.
 	[adrianp, ticket #11015]
+
+sys/kern/kern_ktrace.c				1.110 via patch
+sys/sys/ktrace.h				1.45 via patch
+sys/compat/freebsd/freebsd_misc.c		1.26 via patch
+sys/compat/darwin/darwin_iohidsystem.c		1.35 via patch
+sys/compat/darwin/darwin_ktrace.c		1.6 via patch
+
+	Due to insufficient length checking it is possible for a user to cause
+	an integer overflow.  Make ktruser return an error instead.
+	[adrianp, ticket #11023]
 
