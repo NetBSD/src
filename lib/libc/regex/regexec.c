@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.18 2005/11/29 03:12:00 christos Exp $	*/
+/*	$NetBSD: regexec.c,v 1.19 2007/02/08 05:44:18 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.18 2005/11/29 03:12:00 christos Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.19 2007/02/08 05:44:18 junyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -200,12 +200,12 @@ __weak_alias(regexec,_regexec)
  * have been prototyped.
  */
 int				/* 0 success, REG_NOMATCH failure */
-regexec(preg, string, nmatch, pmatch, eflags)
-const regex_t *preg;
-const char *string;
-size_t nmatch;
-regmatch_t pmatch[];
-int eflags;
+regexec(
+    const regex_t *preg,
+    const char *string,
+    size_t nmatch,
+    regmatch_t pmatch[],
+    int eflags)
 {
 	struct re_guts *g = preg->re_g;
 	char *s;
