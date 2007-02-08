@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.45 2007/02/08 04:52:23 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.46 2007/02/08 05:09:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.45 2007/02/08 04:52:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.46 2007/02/08 05:09:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1720,9 +1720,9 @@ puffs_strategy(void *v)
 	}
 
 #ifdef DIAGNOSTIC
-	if (bp->b_resid > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)
-		panic("puffs_strategy: wildly inappropriate buf resid %d",
-		    bp->b_resid);
+	if (bp->b_bcount > pmp->pmp_req_maxsize - PUFFS_REQSTRUCT_MAX)
+		panic("puffs_strategy: wildly inappropriate buf bcount %d",
+		    bp->b_bcount);
 #endif
 
 	/*
@@ -1768,7 +1768,7 @@ puffs_strategy(void *v)
 			goto out;
 		}
 
-		tomove = PUFFS_TOMOVE(bp->b_resid, pmp);
+		tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 
 		read_argp->pvnr_ioflag = 0;
 		read_argp->pvnr_resid = tomove;
@@ -1799,7 +1799,7 @@ puffs_strategy(void *v)
 			goto out;
 		}
 
-		tomove = PUFFS_TOMOVE(bp->b_resid, pmp);
+		tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
 
 		write_argp->pvnr_ioflag = 0;
 		write_argp->pvnr_resid = tomove;
