@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.225.4.11 2007/02/05 13:16:48 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.225.4.12 2007/02/08 07:32:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -388,7 +388,7 @@ struct proc {
 #define	PSL_SYSCALL	0x04000000 /* process has PT_SYSCALL enabled */
 
 /*
- * Kept in p_stflag and procted by p_stmutex.
+ * Kept in p_stflag and protected by p_stmutex.
  */
 #define	PST_PROFIL	0x00000020 /* Has started profiling */
 
