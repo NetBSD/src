@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.61 2007/02/07 13:07:02 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.62 2007/02/08 22:38:36 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1111,4 +1111,19 @@ distrib/notes/common/sysinst			1.79
 
 	PR install/35528: Fix typo in install documentation.
 	[martin, ticket #400]
+
+share/man/man9/secmodel.9			1.8
+
+	Fix markup.
+	[elad, ticket #401]
+
+sys/dev/firmload.c				1.7
+
+	Don't crash if firmware_open is before the root filesystem was mounted.
+	[is, ticket #402]
+
+dist/file/src/apprentice.c			1.13
+
+	Fix file(1) endianess problem in cross builds.
+	[skrill, ticket #403]
 
