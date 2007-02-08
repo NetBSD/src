@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.21 2007/02/08 05:07:23 junyoung Exp $	*/
+/*	$NetBSD: regerror.c,v 1.22 2007/02/08 05:44:18 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.21 2007/02/08 05:07:23 junyoung Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.22 2007/02/08 05:44:18 junyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -159,11 +159,11 @@ static const struct rerr {
  */
 /* ARGSUSED */
 size_t
-regerror(errcode, preg, errbuf, errbuf_size)
-int errcode;
-const regex_t *preg;
-char *errbuf;
-size_t errbuf_size;
+regerror(
+    int errcode,
+    const regex_t *preg,
+    char *errbuf,
+    size_t errbuf_size)
 {
 	const struct rerr *r;
 	size_t len;
@@ -205,10 +205,10 @@ size_t errbuf_size;
  * size_t buflen);
  */
 static const char *
-regatoi(preg, localbuf, buflen)
-const regex_t *preg;
-char *localbuf;
-size_t buflen;
+regatoi(
+    const regex_t *preg,
+    char *localbuf,
+    size_t buflen)
 {
 	const struct rerr *r;
 
