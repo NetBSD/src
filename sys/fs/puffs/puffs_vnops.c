@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.46 2007/02/08 05:09:25 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.47 2007/02/08 22:55:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.46 2007/02/08 05:09:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.47 2007/02/08 22:55:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -110,9 +110,9 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
 	{ &vop_lookup_desc, puffs_lookup },		/* REAL lookup */
 	{ &vop_create_desc, puffs_checkop },		/* create */
         { &vop_mknod_desc, puffs_checkop },		/* mknod */
-        { &vop_open_desc, puffs_checkop },		/* open */
+        { &vop_open_desc, puffs_open },			/* REAL open */
         { &vop_close_desc, puffs_checkop },		/* close */
-        { &vop_access_desc, puffs_checkop },		/* access */
+        { &vop_access_desc, puffs_access },		/* REAL access */
         { &vop_getattr_desc, puffs_checkop },		/* getattr */
         { &vop_setattr_desc, puffs_checkop },		/* setattr */
         { &vop_read_desc, puffs_checkop },		/* read */
@@ -130,7 +130,7 @@ const struct vnodeopv_entry_desc puffs_vnodeop_entries[] = {
         { &vop_readdir_desc, puffs_checkop },		/* readdir */
         { &vop_readlink_desc, puffs_checkop },		/* readlink */
         { &vop_getpages_desc, puffs_checkop },		/* getpages */
-        { &vop_putpages_desc, puffs_checkop },		/* putpages */
+        { &vop_putpages_desc, genfs_putpages },		/* REAL putpages */
         { &vop_pathconf_desc, puffs_checkop },		/* pathconf */
         { &vop_advlock_desc, puffs_checkop },		/* advlock */
         { &vop_strategy_desc, puffs_strategy },		/* REAL strategy */
@@ -299,7 +299,6 @@ const struct vnodeopv_entry_desc puffs_msgop_entries[] = {
         { &vop_pathconf_desc, puffs_pathconf },		/* pathconf */
         { &vop_advlock_desc, puffs_advlock },		/* advlock */
         { &vop_getpages_desc, genfs_getpages },		/* getpages */
-        { &vop_putpages_desc, genfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc puffs_msgop_opv_desc =
@@ -381,20 +380,13 @@ puffs_checkop(void *v)
 			CHECKOP_NOTSUPP(PATHCONF);
 			CHECKOP_NOTSUPP(ADVLOCK);
 
-			CHECKOP_SUCCESS(OPEN);
-			CHECKOP_SUCCESS(CLOSE);
 			CHECKOP_SUCCESS(ACCESS);
+			CHECKOP_SUCCESS(CLOSE);
 			CHECKOP_SUCCESS(SEEK);
 
-		/* XXXfixme: read w/o write && cache == bad bad bad */
 		case VOP_GETPAGES_DESCOFFSET:
 			if (!EXISTSOP(pmp, READ))
 				return genfs_eopnotsupp(v);
-			break;
-
-		case VOP_PUTPAGES_DESCOFFSET:
-			if (!EXISTSOP(pmp, WRITE))
-				return genfs_null_putpages(v);
 			break;
 
 		default:
@@ -601,15 +593,24 @@ puffs_open(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	int mode = ap->a_mode;
 
 	PUFFS_VNREQ(open);
 
-	open_arg.pvnr_mode = ap->a_mode;
+	if (vp->v_type == VREG && mode & FWRITE && !EXISTSOP(pmp, WRITE))
+		return EROFS;
+
+	if (!EXISTSOP(pmp, OPEN))
+		return 0;
+
+	open_arg.pvnr_mode = mode;
 	puffs_credcvt(&open_arg.pvnr_cred, ap->a_cred);
 	open_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_OPEN,
-	    &open_arg, sizeof(open_arg), VPTOPNC(ap->a_vp), ap->a_vp, NULL);
+	return puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_OPEN,
+	    &open_arg, sizeof(open_arg), VPTOPNC(vp), vp, NULL);
 }
 
 int
@@ -643,15 +644,24 @@ puffs_access(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
+	int mode = ap->a_mode;
 
 	PUFFS_VNREQ(access);
+
+	if (vp->v_type == VREG && mode & VWRITE && !EXISTSOP(pmp, WRITE))
+		return EROFS;
+
+	if (!EXISTSOP(pmp, ACCESS))
+		return 0;
 
 	access_arg.pvnr_mode = ap->a_mode;
 	access_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 	puffs_credcvt(&access_arg.pvnr_cred, ap->a_cred);
 
-	return puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount), PUFFS_VN_ACCESS,
-	    &access_arg, sizeof(access_arg), VPTOPNC(ap->a_vp), ap->a_vp, NULL);
+	return puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_ACCESS,
+	    &access_arg, sizeof(access_arg), VPTOPNC(vp), vp, NULL);
 }
 
 int
