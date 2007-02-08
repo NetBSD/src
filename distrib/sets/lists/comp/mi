@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.995 2007/01/30 19:40:09 elad Exp $
+#	$NetBSD: mi,v 1.996 2007/02/08 20:42:51 dbj Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2229,7 +2229,7 @@
 ./usr/libdata/debug/bin/sync.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/systrace.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
-./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-obsolete		obsolete
+./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/badsect.debug		comp-sysutil-debug	debug
@@ -2714,6 +2714,7 @@
 ./usr/libdata/debug/usr/libexec/identd.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/libexec/kadmind.debug	comp-krb5-debug		kerberos,debug
 ./usr/libdata/debug/usr/libexec/kpasswdd.debug	comp-krb5-debug		kerberos,debug
+./usr/libdata/debug/usr/libexec/lfs_cleanerd.debug	comp-obsolete	obsolete
 ./usr/libdata/debug/usr/libexec/lint1.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/libexec/lint2.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/libexec/locate.bigram.debug	comp-sysutil-debug	debug
@@ -2951,6 +2952,7 @@
 ./usr/libdata/debug/usr/sbin/sliplogin.debug	comp-slip-debug		debug
 ./usr/libdata/debug/usr/sbin/sntp.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/spray.debug	comp-rpcutil-debug	debug
+./usr/libdata/debug/usr/sbin/srtconfig.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sshd.debug		comp-secsh-debug	crypto,debug
 ./usr/libdata/debug/usr/sbin/stdethers.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/stdhosts.debug	comp-nis-debug		yp,debug
