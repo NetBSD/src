@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.94.4.14 2007/02/05 13:16:49 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.94.4.15 2007/02/08 07:33:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.14 2007/02/05 13:16:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.94.4.15 2007/02/08 07:33:00 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -135,7 +135,7 @@ struct proclist zombproc;	/* resources have been freed */
  *			x		alllwp
  *			x		lwp::l_list
  *
- * The lock order for processes and LWPs is apporoximately as following:
+ * The lock order for processes and LWPs is approximately as following:
  *
  * kernel_mutex
  * -> proclist_lock
