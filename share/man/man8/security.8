@@ -1,4 +1,4 @@
-.\" $NetBSD: security.8,v 1.14 2007/02/04 08:19:26 elad Exp $
+.\" $NetBSD: security.8,v 1.15 2007/02/08 00:38:27 elad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -166,9 +166,25 @@ veriexec_strict=1 # IDS mode
 .Ed
 .Sh EXPLOIT MITIGATION
 .Nx
-incorporates some exploit mitigation features, mainly from the
-.Em PaX
-project.
+incorporates some exploit mitigation features.
+The purpose of exploit mitigation features is to interfere with the way exploits
+work, in order to prevent them from succeeding.
+Due to that, some features may have other impact on the system, so be sure to
+fully understand the implications of each feature.
+.Pp
+.Nx
+provides the following exploit mitigation features:
+.Bl -hyphen -compact
+.It
+PaX MPROTECT
+.Xr ( mprotect 2
+restrictions)
+.It
+PaX SegvGuard
+.It
+.Xr gcc 1
+stack-smashing protection (SSP)
+.El
 .Ss PaX MPROTECT
 .Em PaX MPROTECT
 implements memory protection restrictions, meant to complement non-executable
