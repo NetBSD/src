@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2007/01/17 21:59:50 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2007/02/08 21:36:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.14 2007/01/17 21:59:50 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.15 2007/02/08 21:36:58 drochner Exp $");
 #endif
 #endif	/* not lint */
 
@@ -147,7 +147,7 @@ __RCSID("$NetBSD: main.c,v 1.14 2007/01/17 21:59:50 hubertf Exp $");
 char	specname[MAXPATHLEN];
 
 /* Some global data, all too hard to pass about */
-int bootarea[BBSIZE / sizeof (int)];	/* Buffer matching part of disk */
+char bootarea[BBSIZE];			/* Buffer matching part of disk */
 int bootarea_len;			/* Number of bytes we actually read */
 static struct	disklabel lab;		/* The label we have updated */
 
@@ -897,10 +897,10 @@ find_label(int f, u_int sector)
 	/* Check expected offset first */
 	for (offset = LABEL_OFFSET, i = -4;; offset = i += 4) {
 		is_deleted = "";
-		lp = (void *)((char *)bootarea + offset);
+		lp = (void *)(bootarea + offset);
 		if (i == LABEL_OFFSET)
 			continue;
-		if ((char *)(lp + 1) > (char *)bootarea + bootarea_len)
+		if ((char *)(lp + 1) > bootarea + bootarea_len)
 			break;
 		if (lp->d_magic2 != lp->d_magic)
 			continue;
@@ -1005,8 +1005,8 @@ update_label(int f, u_int label_sector, u_int label_offset)
 		if (label_offset == ~0u)
 			return 0;
 		/* Nothing on the disk - we need to add it */
-		disk_lp = (void *)((char *)bootarea + label_offset);
-		if ((char *)(disk_lp + 1) > (char *)bootarea + bootarea_len)
+		disk_lp = (void *)(bootarea + label_offset);
+		if ((char *)(disk_lp + 1) > bootarea + bootarea_len)
 			errx(1, "no space in bootarea (sector %u) "
 			    "to create label", label_sector);
 	}

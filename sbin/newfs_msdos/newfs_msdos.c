@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.25 2007/01/21 20:45:41 cbiere Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.26 2007/02/08 21:36:58 drochner Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.25 2007/01/21 20:45:41 cbiere Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.26 2007/02/08 21:36:58 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: newfs_msdos.c,v 1.25 2007/01/21 20:45:41 cbiere Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 #ifdef __NetBSD__
 #include <disktab.h>
 #include <util.h>

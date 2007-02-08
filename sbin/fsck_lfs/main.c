@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.33 2007/01/17 21:59:50 hubertf Exp $	 */
+/* $NetBSD: main.c,v 1.34 2007/02/08 21:36:58 drochner Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -45,6 +45,7 @@
 #include <unistd.h>
 #include <err.h>
 #include <util.h>
+#include <signal.h>
 
 #include "fsck.h"
 #include "extern.h"
