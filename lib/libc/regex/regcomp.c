@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.25 2006/03/19 04:43:17 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.26 2007/02/08 05:07:23 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.25 2006/03/19 04:43:17 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.26 2007/02/08 05:07:23 junyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -125,48 +125,48 @@ extern "C" {
 #endif
 
 /* === regcomp.c === */
-static void p_ere __P((struct parse *p, int stop));
-static void p_ere_exp __P((struct parse *p));
-static void p_str __P((struct parse *p));
-static void p_bre __P((struct parse *p, int end1, int end2));
-static int p_simp_re __P((struct parse *p, int starordinary));
-static int p_count __P((struct parse *p));
-static void p_bracket __P((struct parse *p));
-static void p_b_term __P((struct parse *p, cset *cs));
-static void p_b_cclass __P((struct parse *p, cset *cs));
-static void p_b_eclass __P((struct parse *p, cset *cs));
-static char p_b_symbol __P((struct parse *p));
-static char p_b_coll_elem __P((struct parse *p, int endc));
-static int othercase __P((int ch));
-static void bothcases __P((struct parse *p, int ch));
-static void ordinary __P((struct parse *p, int ch));
-static void nonnewline __P((struct parse *p));
-static void repeat __P((struct parse *p, sopno start, int from, int to));
-static int seterr __P((struct parse *p, int e));
-static cset *allocset __P((struct parse *p));
-static void freeset __P((struct parse *p, cset *cs));
-static int freezeset __P((struct parse *p, cset *cs));
-static int firstch __P((struct parse *p, cset *cs));
-static int nch __P((struct parse *p, cset *cs));
-static void mcadd __P((struct parse *p, cset *cs, const char *cp));
+static void p_ere(struct parse *p, int stop);
+static void p_ere_exp(struct parse *p);
+static void p_str(struct parse *p);
+static void p_bre(struct parse *p, int end1, int end2);
+static int p_simp_re(struct parse *p, int starordinary);
+static int p_count(struct parse *p);
+static void p_bracket(struct parse *p);
+static void p_b_term(struct parse *p, cset *cs);
+static void p_b_cclass(struct parse *p, cset *cs);
+static void p_b_eclass(struct parse *p, cset *cs);
+static char p_b_symbol(struct parse *p);
+static char p_b_coll_elem(struct parse *p, int endc);
+static int othercase(int ch);
+static void bothcases(struct parse *p, int ch);
+static void ordinary(struct parse *p, int ch);
+static void nonnewline(struct parse *p);
+static void repeat(struct parse *p, sopno start, int from, int to);
+static int seterr(struct parse *p, int e);
+static cset *allocset(struct parse *p);
+static void freeset(struct parse *p, cset *cs);
+static int freezeset(struct parse *p, cset *cs);
+static int firstch(struct parse *p, cset *cs);
+static int nch(struct parse *p, cset *cs);
+static void mcadd(struct parse *p, cset *cs, const char *cp);
 #if 0
-static void mcsub __P((cset *cs, char *cp));
-static int mcin __P((cset *cs, char *cp));
-static char *mcfind __P((cset *cs, char *cp));
+static void mcsub(cset *cs, char *cp);
+static int mcin(cset *cs, char *cp);
+static char *mcfind(cset *cs, char *cp);
 #endif
-static void mcinvert __P((struct parse *p, cset *cs));
-static void mccase __P((struct parse *p, cset *cs));
-static int isinsets __P((struct re_guts *g, int c));
-static int samesets __P((struct re_guts *g, int c1, int c2));
-static void categorize __P((struct parse *p, struct re_guts *g));
-static sopno dupl __P((struct parse *p, sopno start, sopno finish));
-static void doemit __P((struct parse *p, sop op, sopno opnd));
-static void doinsert __P((struct parse *p, sop op, sopno opnd, sopno pos));
-static void dofwd __P((struct parse *p, sopno pos, sopno value));
-static void enlarge __P((struct parse *p, sopno size));
-static void stripsnug __P((struct parse *p, struct re_guts *g));
-static void findmust __P((struct parse *p, struct re_guts *g));
-static sopno pluscount __P((struct parse *p, struct re_guts *g));
+static void mcinvert(struct parse *p, cset *cs);
+static void mccase(struct parse *p, cset *cs);
+static int isinsets(struct re_guts *g, int c);
+static int samesets(struct re_guts *g, int c1, int c2);
+static void categorize(struct parse *p, struct re_guts *g);
+static sopno dupl(struct parse *p, sopno start, sopno finish);
+static void doemit(struct parse *p, sop op, sopno opnd);
+static void doinsert(struct parse *p, sop op, sopno opnd, sopno pos);
+static void dofwd(struct parse *p, sopno pos, sopno value);
+static void enlarge(struct parse *p, sopno size);
+static void stripsnug(struct parse *p, struct re_guts *g);
+static void findmust(struct parse *p, struct re_guts *g);
+static sopno pluscount(struct parse *p, struct re_guts *g);
 
 #ifdef __cplusplus
 }
