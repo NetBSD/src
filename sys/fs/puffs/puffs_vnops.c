@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.44 2007/02/06 01:53:11 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.45 2007/02/08 04:52:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.44 2007/02/06 01:53:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.45 2007/02/08 04:52:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.44 2007/02/06 01:53:11 pooka Exp $
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <uvm/uvm.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -1740,6 +1741,24 @@ puffs_strategy(void *v)
 			dowritefaf = 1;
 		simple_unlock(&vp->v_interlock);
 	}
+
+	/*
+	 * If we're executing as the pagedaemon, do only FAF operations.
+	 * Otherwise the file server has too much power over the fate
+	 * of the entire kernel and things might end up looking like
+	 * in the song (well, almost anyway):
+	 *   "sleep", said the pagedaemon
+	 *   we are programmed to recv
+	 *   you can deadlock any time you like
+	 *   and you can never leave
+	 */
+	if (curproc == uvm.pagedaemon_proc)
+		dowritefaf = 1;
+
+#ifdef DIAGNOSTIC
+	if (dowritefaf)
+		KASSERT((bp->b_flags & B_READ) == 0);
+#endif
 
 	if (bp->b_flags & B_READ) {
 		argsize = sizeof(struct puffs_vnreq_read);
