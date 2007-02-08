@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.23 2007/02/07 09:38:04 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.24 2007/02/08 16:06:58 elad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.23 2007/02/07 09:38:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.24 2007/02/08 16:06:58 elad Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -56,7 +56,6 @@ fileassoc_file_lookup(struct vnode *, fhandle_t *);
 static struct fileassoc_hash_entry *
 fileassoc_file_add(struct vnode *, fhandle_t *);
 static struct fileassoc_table *fileassoc_table_resize(struct fileassoc_table *);
-
 
 static specificdata_domain_t fileassoc_domain;
 static specificdata_key_t fileassoc_mountspecific_key;
