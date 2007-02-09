@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.47 2007/02/08 22:55:06 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.48 2007/02/09 08:15:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.47 2007/02/08 22:55:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.48 2007/02/09 08:15:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1800,7 +1800,7 @@ puffs_strategy(void *v)
 		moved = tomove - read_argp->pvnr_resid;
 
 		(void)memcpy(bp->b_data, read_argp->pvnr_data, moved);
-		bp->b_resid -= moved;
+		bp->b_resid = bp->b_bcount - moved;
 	} else {
 		argsize = sizeof(struct puffs_vnreq_write) + bp->b_bcount;
 		write_argp = malloc(argsize, M_PUFFS, M_NOWAIT | M_ZERO);
@@ -1825,7 +1825,7 @@ puffs_strategy(void *v)
 			 */
 			puffs_vntouser_faf(MPTOPUFFSMP(vp->v_mount),
 			    PUFFS_VN_WRITE, write_argp, argsize, VPTOPNC(vp));
-			bp->b_resid -= tomove;
+			bp->b_resid = bp->b_bcount - tomove;
 		} else {
 			error = puffs_vntouser(MPTOPUFFSMP(vp->v_mount),
 			    PUFFS_VN_WRITE, write_argp, argsize, VPTOPNC(vp),
@@ -1839,7 +1839,7 @@ puffs_strategy(void *v)
 				goto out;
 			}
 
-			bp->b_resid -= moved;
+			bp->b_resid = bp->b_bcount - moved;
 			if (write_argp->pvnr_resid != 0)
 				error = EIO;
 		}
