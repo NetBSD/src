@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.18.2.5 2007/02/05 13:53:20 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.18.2.6 2007/02/09 20:15:34 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,19 +28,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.18.2.5 2007/02/05 13:53:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.18.2.6 2007/02/09 20:15:34 ad Exp $");
 
-#include <sys/types.h>
+#define	_KAUTH_PRIVATE
+
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
+#include <sys/kauth_impl.h>
 #include <sys/kmem.h>
-#include <sys/specificdata.h>
 #include <sys/rwlock.h>
-#include <sys/mutex.h>
 
 /*
  * Secmodel-specific credentials.
@@ -48,23 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.18.2.5 2007/02/05 13:53:20 yamt Exp 
 struct kauth_key {
 	const char *ks_secmodel;	/* secmodel */
 	specificdata_key_t ks_key;	/* key */
-};
-
-/* 
- * Credentials.
- */
-struct kauth_cred {
-	kmutex_t cr_lock;		/* lock on cr_refcnt */
-	u_int cr_refcnt;		/* reference count */
-	uid_t cr_uid;			/* user id */
-	uid_t cr_euid;			/* effective user id */
-	uid_t cr_svuid;			/* saved effective user id */
-	gid_t cr_gid;			/* group id */
-	gid_t cr_egid;			/* effective group id */
-	gid_t cr_svgid;			/* saved effective group id */
-	u_int cr_ngroups;		/* number of groups */
-	gid_t cr_groups[NGROUPS];	/* group memberships */
-	specificdata_reference cr_sd;	/* specific data */
 };
 
 /*
