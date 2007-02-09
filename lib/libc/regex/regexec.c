@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.19 2007/02/08 05:44:18 junyoung Exp $	*/
+/*	$NetBSD: regexec.c,v 1.20 2007/02/09 23:44:18 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.19 2007/02/08 05:44:18 junyoung Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.20 2007/02/09 23:44:18 junyoung Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,10 +93,10 @@ __RCSID("$NetBSD: regexec.c,v 1.19 2007/02/08 05:44:18 junyoung Exp $");
 #include <assert.h>
 #include <ctype.h>
 #include <limits.h>
-#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <regex.h>
 
 #ifdef __weak_alias
 __weak_alias(regexec,_regexec)
