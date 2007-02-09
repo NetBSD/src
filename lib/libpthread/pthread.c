@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.58 2007/01/31 23:55:20 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.59 2007/02/09 23:53:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.58 2007/01/31 23:55:20 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.59 2007/02/09 23:53:24 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -191,7 +191,9 @@ pthread_init(void)
 		pthread__nspins = PTHREAD__NSPINS;
 	else
 		pthread__nspins = 1;
-	i = _lwp_unpark_all(NULL, 0, NULL);
+	i = (int)_lwp_unpark_all(NULL, 0, NULL);
+	if (i == -1)
+		err(1, "_lwp_unpark_all");
 	if (i < pthread__unpark_max)
 		pthread__unpark_max = i;
 #endif
