@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.5 2007/01/15 00:42:21 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.6 2007/02/09 23:36:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.5 2007/01/15 00:42:21 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.6 2007/02/09 23:36:17 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -67,8 +67,9 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	}
 
 	pd = lookup(psn_dir->dir, psn_dir->dentnext, pcn->pcn_name);
-	if (!pd)
+	if (!pd) {
 		return ENOENT;
+	}
 
 	if (pd->entry)
 		pn = pd->entry;
@@ -93,8 +94,7 @@ psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 
 	rv = 0;
 
-	/* XXX: expire by time */
-	if (!psn->hasvattr) {
+	if ((time(NULL) - psn->attrread) >= PSSHFS_REFRESHIVAL) {
 		psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, PNPATH(pn));
 		pssh_outbuf_enqueue(pctx, pb, pcc, reqid);
 		puffs_cc_yield(pcc);
@@ -103,11 +103,24 @@ psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 		if (rv)
 			goto out;
 
+#if 0
+		/*
+		 * check if the file was modified from below us
+		 *
+		 * XXX: what's the right place(s) to do this?
+		 * XXX2: resolution only per second, since sftp doesn't
+		 *       support nanoseconds
+		 */
+		if (psn->attrread)
+			if (pn->pn_va.va_mtime.tv_sec != va.va_mtime.tv_sec)
+				puffs_inval_pagecache_node(pu, opc);
+#endif
+
 		puffs_setvattr(&pn->pn_va, &va);
+		psn->attrread = time(NULL);
 	}
 
 	memcpy(vap, &pn->pn_va, sizeof(struct vattr));
-	psn->hasvattr = 1;
 
  out:
 	PSSHFSRETURN(rv);

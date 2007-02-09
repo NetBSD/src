@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.6 2007/01/20 14:37:48 pooka Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.7 2007/02/09 23:36:17 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.6 2007/01/20 14:37:48 pooka Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.7 2007/02/09 23:36:17 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -127,6 +127,11 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
+
+#if 0
+	/* XXX: noatime is mandatory for now */
+	mntflags |= MNT_NOATIME;
+#endif
 
 	if (pflags & PUFFS_FLAG_OPDUMP)
 		detach = 0;
@@ -198,6 +203,9 @@ main(int argc, char *argv[])
 	return 0;
 }
 
+/*
+ * enqueue buffer to be handled with cc
+ */
 void
 pssh_outbuf_enqueue(struct psshfs_ctx *pctx, struct psbuf *pb,
 	struct puffs_cc *pcc, uint32_t reqid)
@@ -205,14 +213,26 @@ pssh_outbuf_enqueue(struct psshfs_ctx *pctx, struct psbuf *pb,
 
 	pb->psr.reqid = reqid;
 	pb->psr.pcc = pcc;
+	pb->psr.func = NULL;
+	pb->psr.arg = NULL;
 	TAILQ_INSERT_TAIL(&pctx->outbufq, pb, psr.entries);
 }
 
+/*
+ * enqueue buffer to be handled with "f".  "f" must not block.
+ * gives up struct psbuf ownership.
+ */
 void
-psshreq_put(struct psshfs_ctx *pctx, struct psbuf *pb)
+pssh_outbuf_enqueue_nocc(struct psshfs_ctx *pctx, struct psbuf *pb,
+	void (*f)(struct psshfs_ctx *, struct psbuf *, void *), void *arg,
+	uint32_t reqid)
 {
 
-	TAILQ_INSERT_TAIL(&pctx->req_queue, pb, psr.entries);
+	pb->psr.reqid = reqid;
+	pb->psr.pcc = NULL;
+	pb->psr.func = f;
+	pb->psr.arg = arg;
+	TAILQ_INSERT_TAIL(&pctx->outbufq, pb, psr.entries);
 }
 
 struct psbuf *
@@ -242,19 +262,24 @@ handlebuf(struct psshfs_ctx *pctx, struct psbuf *datapb,
 	/* is this something we are expecting? */
 	pb = psshreq_get(pctx, datapb->reqid);
 
-	if (pb) {
-		/* keep psreq clean, xxx uknow */
-		psrtmp = pb->psr;
-		*pb = *datapb;
-		pb->psr = psrtmp;
-		free(datapb);
-
-		puffs_docc(pb->psr.pcc, ppr);
+	if (pb == NULL) {
+		printf("invalid server request response %d\n", datapb->reqid);
+		psbuf_destroy(datapb);
 		return;
 	}
 
-	printf("invalid server request response %d\n", datapb->reqid);
-	psbuf_destroy(datapb);
+	/* keep psreq clean, xxx uknow */
+	psrtmp = pb->psr;
+	*pb = *datapb;
+	pb->psr = psrtmp;
+	free(datapb);
+
+	assert((pb->psr.pcc && pb->psr.func) == 0);
+	if (pb->psr.pcc) {
+		puffs_docc(pb->psr.pcc, ppr);
+	} else {
+		pb->psr.func(pctx, pb, pb->psr.arg);
+	}
 }
 
 static int
