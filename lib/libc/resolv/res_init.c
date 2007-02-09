@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.11 2007/01/28 07:54:01 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.12 2007/02/09 22:29:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.16.18.5 2006/08/30 23:23:13 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.11 2007/01/28 07:54:01 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.12 2007/02/09 22:29:40 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -186,15 +186,15 @@ __res_vinit(res_state statp, int preinit) {
 	int dots;
 	union res_sockaddr_union u[2];
 
-	if ((statp->options & RES_INIT) != 0U)
-		res_ndestroy(statp);
-
 	if (!preinit) {
 		statp->retrans = RES_TIMEOUT;
 		statp->retry = RES_DFLRETRY;
 		statp->options = RES_DEFAULT;
 		statp->id = res_randomid();
 	}
+
+	if ((statp->options & RES_INIT) != 0U)
+		res_ndestroy(statp);
 
 	memset(u, 0, sizeof(u));
 #ifdef USELOOPBACK
