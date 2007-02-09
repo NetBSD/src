@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.996 2007/02/08 20:42:51 dbj Exp $
+#	$NetBSD: mi,v 1.997 2007/02/09 22:13:31 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1695,7 +1695,7 @@
 ./usr/include/rpcsvc/ypclnt.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.x			comp-c-include
-./usr/include/sa.h				comp-c-include
+./usr/include/sa.h				comp-obsolete		obsolete
 ./usr/include/sched.h				comp-c-include
 ./usr/include/sdp.h				comp-c-include
 ./usr/include/search.h				comp-c-include
@@ -1749,6 +1749,7 @@
 ./usr/include/sys/chio.h			comp-c-include
 ./usr/include/sys/clist.h			comp-obsolete		obsolete
 ./usr/include/sys/clockctl.h			comp-c-include
+./usr/include/sys/condvar.h			comp-c-include
 ./usr/include/sys/conf.h			comp-c-include
 ./usr/include/sys/core.h			comp-c-include
 ./usr/include/sys/cpu_data.h			comp-obsolete		obsolete
@@ -1822,6 +1823,7 @@
 ./usr/include/sys/midiio.h			comp-c-include
 ./usr/include/sys/mman.h			comp-c-include
 ./usr/include/sys/mount.h			comp-c-include
+./usr/include/sys/mutex.h			comp-c-include
 ./usr/include/sys/msg.h				comp-c-include
 ./usr/include/sys/msgbuf.h			comp-c-include
 ./usr/include/sys/mtio.h			comp-c-include
@@ -1846,7 +1848,8 @@
 ./usr/include/sys/resourcevar.h			comp-c-include
 ./usr/include/sys/rmd160.h			comp-c-include
 ./usr/include/sys/rnd.h				comp-c-include
-./usr/include/sys/sa.h				comp-c-include
+./usr/include/sys/rwlock.h			comp-c-include
+./usr/include/sys/sa.h				comp-obsolete		obsolete
 ./usr/include/sys/scanio.h			comp-c-include
 ./usr/include/sys/sched.h			comp-c-include
 ./usr/include/sys/scsiio.h			comp-c-include
@@ -1860,6 +1863,7 @@
 ./usr/include/sys/signal.h			comp-c-include
 ./usr/include/sys/signalvar.h			comp-c-include
 ./usr/include/sys/sigtypes.h			comp-c-include
+./usr/include/sys/sleepq.h			comp-c-include
 ./usr/include/sys/socket.h			comp-c-include
 ./usr/include/sys/socketvar.h			comp-c-include
 ./usr/include/sys/sockio.h			comp-c-include

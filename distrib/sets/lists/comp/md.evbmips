@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.11 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.evbmips,v 1.12 2007/02/09 22:22:32 ad Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -32,6 +32,7 @@
 ./usr/include/evbmips/math.h			comp-c-include
 ./usr/include/evbmips/mcontext.h		comp-c-include
 ./usr/include/evbmips/mips_opcode.h		comp-c-include
+./usr/include/evbmips/mutex.h			comp-c-include
 ./usr/include/evbmips/param.h			comp-c-include
 ./usr/include/evbmips/pcb.h			comp-c-include
 ./usr/include/evbmips/pci_machdep.h		comp-obsolete		obsolete
@@ -47,6 +48,7 @@
 ./usr/include/evbmips/regnum.h			comp-c-include
 ./usr/include/evbmips/reloc.h			comp-c-include
 ./usr/include/evbmips/rnd.h			comp-obsolete		obsolete
+./usr/include/evbmips/rwlock.h			comp-c-include
 ./usr/include/evbmips/setjmp.h			comp-c-include
 ./usr/include/evbmips/signal.h			comp-c-include
 ./usr/include/evbmips/stdarg.h			comp-c-include
