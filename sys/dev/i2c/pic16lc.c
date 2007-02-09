@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.5.2.2 2007/01/12 00:57:35 ad Exp $ */
+/* $NetBSD: pic16lc.c,v 1.5.2.3 2007/02/09 21:03:51 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.5.2.2 2007/01/12 00:57:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.5.2.3 2007/02/09 21:03:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.5.2.2 2007/01/12 00:57:35 ad Exp $");
 static int	pic16lc_match(struct device *, struct cfdata *, void *);
 static void	pic16lc_attach(struct device *, struct device *, void *);
 
+static int	pic16lc_intr(void *);
+
 void		pic16lc_reboot(void);
 void		pic16lc_poweroff(void);
 void		pic16lc_setled(uint8_t);
@@ -65,6 +67,7 @@ struct pic16lc_softc {
 
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
+	void *		sc_ih;
 
 	struct envsys_tre_data sc_data[2];
 	struct envsys_basic_info sc_info[2];
@@ -153,7 +156,7 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+	if (iic_acquire_bus(sc->sc_tag, 0) != 0) {
 		aprint_error(": unable to acquire i2c bus\n");
 		return;
 	}
@@ -171,7 +174,15 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 
 	pic16lc_setled(0xff);	/* orange */
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
+
+	/* disable reset on eject */
+	pic16lc_write_1(sc, PIC16LC_REG_RESETONEJECT, 0x01);
+
+	sc->sc_ih = iic_smbus_intr_establish_proc(sc->sc_tag, pic16lc_intr, sc);
+	if (sc->sc_ih == NULL)
+		aprint_error("%s: couldn't establish interrupt\n",
+		    sc->sc_dev.dv_xname);
 
 	return;
 }
@@ -180,14 +191,14 @@ static void
 pic16lc_write_1(struct pic16lc_softc *sc, uint8_t cmd, uint8_t val)
 {
 	iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-	    sc->sc_addr, &cmd, 1, &val, 1, I2C_F_POLL);
+	    sc->sc_addr, &cmd, 1, &val, 1, 0);
 }
 
 static void
 pic16lc_read_1(struct pic16lc_softc *sc, uint8_t cmd, uint8_t *valp)
 {
 	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, 1, valp, 1, I2C_F_POLL);
+	    sc->sc_addr, &cmd, 1, valp, 1, 0);
 }
 
 static void
@@ -195,7 +206,7 @@ pic16lc_update(struct pic16lc_softc *sc)
 {
 	uint8_t cputemp, boardtemp;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL) != 0) {
+	if (iic_acquire_bus(sc->sc_tag, 0) != 0) {
 		aprint_error(": unable to acquire i2c bus\n");
 		return;
 	}
@@ -214,7 +225,7 @@ pic16lc_update(struct pic16lc_softc *sc)
 	    (int)boardtemp * 1000000 + 273150000;
 	sc->sc_data[XBOX_SENSOR_BOARD].validflags |= ENVSYS_FCURVALID;
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	return;
 }
@@ -239,6 +250,43 @@ pic16lc_streinfo(struct sysmon_envsys *sme, struct envsys_basic_info *info)
 	info->validflags = 0;
 
 	return 0;
+}
+
+static int
+pic16lc_intr(void *opaque)
+{
+	struct pic16lc_softc *sc;
+	uint8_t val;
+	int rv;
+
+	sc = (struct pic16lc_softc *)opaque;
+	rv = 0;
+
+	pic16lc_read_1(sc, PIC16LC_REG_INTSTATUS, &val);
+	if (val == 0)
+		return rv;
+
+	if (val & PIC16LC_REG_INTSTATUS_POWER)
+		printf("%s: power button pressed\n", pic16lc->sc_dev.dv_xname);
+	if (val & PIC16LC_REG_INTSTATUS_TRAYCLOSED)
+		printf("%s: tray closed\n", pic16lc->sc_dev.dv_xname);
+	if (val & PIC16LC_REG_INTSTATUS_TRAYOPENING) {
+		printf("%s: tray opening\n", pic16lc->sc_dev.dv_xname);
+		pic16lc_write_1(sc, PIC16LC_REG_INTACK, 0x02);
+	}
+	if (val & PIC16LC_REG_INTSTATUS_AVPACK_UNPLUG)
+		printf("%s: A/V pack removed\n", pic16lc->sc_dev.dv_xname);
+	if (val & PIC16LC_REG_INTSTATUS_AVPACK_PLUG)
+		printf("%s: A/V pack inserted\n", pic16lc->sc_dev.dv_xname);
+	if (val & PIC16LC_REG_INTSTATUS_EJECT_BUTTON) {
+		pic16lc_write_1(sc, PIC16LC_REG_INTACK, 0x04);
+		pic16lc_write_1(sc, PIC16LC_REG_TRAYEJECT, 0x00);
+		++rv;
+	}
+	if (val & PIC16LC_REG_INTSTATUS_TRAYCLOSING)
+		printf("%s: tray closing\n", pic16lc->sc_dev.dv_xname);
+
+	return rv;
 }
 
 void

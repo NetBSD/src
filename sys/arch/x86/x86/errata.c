@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.5.2.2 2007/01/12 01:01:01 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.5.2.3 2007/02/09 21:03:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.5.2.2 2007/01/12 01:01:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.5.2.3 2007/02/09 21:03:50 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -230,6 +230,7 @@ static errata_t errata[] = {
 		107, FALSE, MSR_BU_CFG, x86_errata_set2,
 		x86_errata_testmsr, BU_CFG_THRL2IDXCMPDIS
 	},
+#if 0
 	/*
 	 * 122: TLB Flush Filter May Cause Coherency Problem in
 	 * Multiprocessor Systems
@@ -238,6 +239,7 @@ static errata_t errata[] = {
 		122, FALSE, MSR_HWCR, x86_errata_set4,
 		x86_errata_setmsr, HWCR_FFDIS
 	},
+#endif
 #endif	/* MULTIPROCESSOR */
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.43.2.2 2007/01/12 00:57:34 ad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.43.2.3 2007/02/09 21:03:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.43.2.2 2007/01/12 00:57:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.43.2.3 2007/02/09 21:03:51 ad Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.43.2.2 2007/01/12 00:57:34 ad Exp $\n$NetBSD: verified_exec.c,v 1.43.2.2 2007/01/12 00:57:34 ad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.43.2.3 2007/02/09 21:03:51 ad Exp $\n$NetBSD: verified_exec.c,v 1.43.2.3 2007/02/09 21:03:51 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -190,6 +190,7 @@ veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 
 		rdict = prop_dictionary_create();
 		if (rdict == NULL) {
+			prop_object_release(dict);
 			error = ENOMEM;
 			break;
 		}

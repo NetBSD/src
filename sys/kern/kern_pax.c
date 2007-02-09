@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.3.14.2 2007/01/12 01:04:06 ad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.3.14.3 2007/02/09 21:03:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -309,10 +309,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 */
 	if (p == NULL) {
 		p = malloc(sizeof(*p), M_TEMP, M_WAITOK);
-		if (fileassoc_add(vp, segvguard_id, p) != 0) {
-			fileassoc_table_add(vp->v_mount, 16);
-			fileassoc_add(vp, segvguard_id, p);
-		}
+		fileassoc_add(vp, segvguard_id, p);
 		LIST_INIT(&p->segv_uids);
 
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.6.2.4 2007/02/01 08:48:33 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.6.2.5 2007/02/09 21:03:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.6.2.4 2007/02/01 08:48:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.6.2.5 2007/02/09 21:03:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -236,11 +236,15 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	 * operations (read, write) do not reliably work yet.
 	 *
 	 * Ya, Ya, it's wrong wong wrong, me be fixink this someday.
+	 *
+	 * XXX: and there is one more problem.  We sometimes need to
+	 * take a lazy lock in case the fs is suspending and we are
+	 * executing as the fs server context.  This might happen
+	 * e.g. in the case that the user server triggers a reclaim
+	 * in the kernel while the fs is suspending.  It's not a very
+	 * likely event, but it needs to be fixed some day.
 	 */
-	if (fstrans_is_owner(mp))
-		fstrans_start(mp, FSTRANS_LAZY);
-	else
-		fstrans_start(mp, FSTRANS_NORMAL);
+	fstrans_start(mp, FSTRANS_NORMAL);
 	simple_lock(&pmp->pmp_lock);
 	fstrans_done(mp);
 

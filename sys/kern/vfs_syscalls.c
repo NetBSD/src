@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.267.2.5 2007/02/01 08:48:40 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.267.2.6 2007/02/09 21:03:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.5 2007/02/01 08:48:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.267.2.6 2007/02/09 21:03:53 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -369,8 +369,8 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
-		checkdirs(vp);
 		VOP_UNLOCK(vp, 0);
+		checkdirs(vp);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
@@ -998,15 +998,15 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
+
+		vput(vp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error)
 			break;
-		vput(vp);
 		vp = tdp;
 	}
 	if (error) {
-		vput(vp);
 		goto out;
 	}
 	VOP_UNLOCK(vp, 0);
@@ -2060,7 +2060,7 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 #if NVERIEXEC > 0
-	pathname_t pathbuf;
+	pathname_t pathbuf = NULL;
 #endif /* NVERIEXEC > 0 */
 
 restart:
@@ -3421,7 +3421,7 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 
 #if NVERIEXEC > 0
 	if (!error) {
-		pathname_t frompath, topath;
+		pathname_t frompath = NULL, topath = NULL;
 
 		error = pathname_get(fromnd.ni_dirp, fromnd.ni_segflg,
 		    &frompath);

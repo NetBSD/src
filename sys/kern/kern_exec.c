@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.227.4.9 2007/02/05 16:44:40 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.227.4.10 2007/02/09 21:03:53 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.9 2007/02/05 16:44:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.227.4.10 2007/02/09 21:03:53 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -273,9 +273,10 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	VOP_UNLOCK(vp, 0);
 
 #if NVERIEXEC > 0
-	if ((error = veriexec_verify(l, vp, ndp->ni_cnd.cn_pnbuf,
+	error = veriexec_verify(l, vp, ndp->ni_cnd.cn_pnbuf,
 	    epp->ep_flags & EXEC_INDIR ? VERIEXEC_INDIRECT : VERIEXEC_DIRECT,
-	    NULL)) != 0)
+	    NULL);
+	if (error)
 		goto bad2;
 #endif /* NVERIEXEC > 0 */
 
@@ -297,7 +298,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	 * Set up default address space limits.  Can be overridden
 	 * by individual exec packages.
 	 *
-	 * XXX probably should be all done in the exec pakages.
+	 * XXX probably should be all done in the exec packages.
 	 */
 	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS;

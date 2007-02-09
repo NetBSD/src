@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.435.2.3 2007/02/01 08:48:30 ad Exp $
+$NetBSD: usbdevs,v 1.435.2.4 2007/02/09 21:03:52 ad Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -429,6 +429,7 @@ vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
 vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
+vendor NOVATEL2		0x1410	Novatel
 vendor HUAWEI3COM	0x1472	Huawei 3Com
 vendor SILICOM		0x1485	Silicom
 vendor RALINK		0x1485	Ralink Technology
@@ -1347,6 +1348,7 @@ product MELCO KB11		0x0044	WLI-USB-KB11 WLAN
 product MELCO KG54YB		0x005e	WLI-U2-KG54-YB WLAN
 product MELCO KG54		0x0066	WLI-U2-KG54 WLAN
 product MELCO KG54AI		0x0067	WLI-U2-KG54-AI WLAN
+product	MELCO SG54HP		0x00d8	WLI-U2-SG54HP
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
@@ -1424,6 +1426,9 @@ product MITSUMI FDD		0x6901	FDD
 product MOBILITY EA		0x0204	Ethernet Adapter
 
 /* MosChip Semiconductor */
+product MOSCHIP MCS7780		0x7780	Fast IrDA Adapter
+product MOSCHIP MCS7781		0x7781	Fast IrDA Adapter
+product MOSCHIP MCS7784		0x7784	Slow IrDA Adapter
 product MOSCHIP MCS7830		0x7830	Ethernet Adapter
 
 /* Motorola products */
@@ -1504,6 +1509,7 @@ product NOKIA CA42		0x0802	Mobile Phone adapter
 
 /* NovAtel products */
 product NOVATEL FLEXPACKGPS	0x0100	NovAtel FlexPack GPS receiver
+product NOVATEL2 CDMA_MODEM	0x1110	Novatel Wireless Merlin CDMA
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
@@ -1597,6 +1603,7 @@ product PILOTECH CRW600		0x0001	CRW-600 6-in-1 Reader
 
 /* Planex Communications products */
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
+product	PLANEX2	GWUS54MINI2	0xab50	GW-US54Mini2
 product PLANEX2 GWUSMM		0xed02	GW-USMM
 
 /* Plantronics products */
@@ -1799,9 +1806,9 @@ product SIERRA AIRCARD580	0x0112	Sierra Wireless AirCard 580
 
 /* Sigmatel products */
 product SIGMATEL IRDA		0x4200	IrDA
-product SIGMATEL VFIR4210	0x4210	StIR4210 VFIR
+product SIGMATEL SIR4116	0x4116	StIR4116 SIR
+product SIGMATEL FIR4210	0x4210	StIR4210 FIR
 product SIGMATEL VFIR4220	0x4220	StIR4220 VFIR
-product SIGMATEL VFIR4116	0x4116	StIR4116 VFIR
 product SIGMATEL I_BEAD100	0x8008	i-Bead 100 MP3 Player
 product SIGMATEL DNSSF7X	0x8020	Datum Networks SSF-7X Multi Players
 

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.9.2.3 2007/02/01 08:48:37 ad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.9.2.4 2007/02/09 21:03:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.9.2.3 2007/02/01 08:48:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.9.2.4 2007/02/09 21:03:53 ad Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -49,10 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.9.2.3 2007/02/01 08:48:37 ad Ex
 #include <sys/kmem.h>
 #include <sys/once.h>
 
+#define	FILEASSOC_INITIAL_TABLESIZE	128
+
 static struct fileassoc_hash_entry *
 fileassoc_file_lookup(struct vnode *, fhandle_t *);
 static struct fileassoc_hash_entry *
 fileassoc_file_add(struct vnode *, fhandle_t *);
+static struct fileassoc_table *fileassoc_table_resize(struct fileassoc_table *);
 
 static specificdata_domain_t fileassoc_domain;
 static specificdata_key_t fileassoc_mountspecific_key;
@@ -74,6 +77,7 @@ static LIST_HEAD(, fileassoc) fileassoc_list;
 struct fileassoc_hash_entry {
 	fhandle_t *handle;				/* File handle */
 	specificdata_reference data;			/* Hooks. */
+	u_int nassocs;					/* # of hooks. */
 	LIST_ENTRY(fileassoc_hash_entry) entries;	/* List pointer. */
 };
 
@@ -83,6 +87,7 @@ struct fileassoc_table {
 	struct fileassoc_hashhead *hash_tbl;
 	size_t hash_size;				/* Number of slots. */
 	u_long hash_mask;
+	size_t hash_used;				/* # of used slots. */
 	specificdata_reference data;
 };
 
@@ -296,28 +301,83 @@ fileassoc_lookup(struct vnode *vp, fileassoc_t assoc)
         return file_getdata(mhe, assoc);
 }
 
+static struct fileassoc_table *
+fileassoc_table_resize(struct fileassoc_table *tbl)
+{
+	struct fileassoc_table *newtbl;
+	struct fileassoc_hashhead *hh;
+	u_long i;
+
+	/*
+	 * Allocate a new table. Like the condition in fileassoc_file_add(),
+	 * this is also temporary -- just double the number of slots.
+	 */
+	newtbl = kmem_zalloc(sizeof(*newtbl), KM_SLEEP);
+	newtbl->hash_size = (tbl->hash_size * 2);
+	if (newtbl->hash_size < tbl->hash_size)
+		newtbl->hash_size = tbl->hash_size;
+	newtbl->hash_tbl = hashinit(newtbl->hash_size, HASH_LIST, M_TEMP,
+	    M_WAITOK | M_ZERO, &newtbl->hash_mask);
+	newtbl->hash_used = 0;
+	specificdata_init(fileassoc_domain, &newtbl->data);
+
+	/* XXX we need to make sure nothing uses fileassoc here! */
+
+	hh = tbl->hash_tbl;
+	for (i = 0; i < tbl->hash_size; i++) {
+		struct fileassoc_hash_entry *mhe;
+
+		while ((mhe = LIST_FIRST(&hh[i])) != NULL) {
+			struct fileassoc_hashhead *vhh;
+			size_t indx;
+
+			LIST_REMOVE(mhe, entries);
+
+			indx = FILEASSOC_HASH(newtbl, mhe->handle);
+			vhh = &(newtbl->hash_tbl[indx]);
+
+			LIST_INSERT_HEAD(vhh, mhe, entries);
+
+			newtbl->hash_used++;
+		}
+	}
+
+	if (tbl->hash_used != newtbl->hash_used)
+		panic("fileassoc_table_resize: inconsistency detected! "
+		    "needed %zu entries, got %zu", tbl->hash_used,
+		    newtbl->hash_used);
+
+	hashdone(tbl->hash_tbl, M_TEMP);
+	specificdata_fini(fileassoc_domain, &tbl->data);
+	kmem_free(tbl, sizeof(*tbl));
+
+	return (newtbl);
+}
+
 /*
  * Create a new fileassoc table.
  */
-int
-fileassoc_table_add(struct mount *mp, size_t size)
+static struct fileassoc_table *
+fileassoc_table_add(struct mount *mp)
 {
 	struct fileassoc_table *tbl;
 
 	/* Check for existing table for device. */
-	if (fileassoc_table_lookup(mp) != NULL)
-		return (EEXIST);
+	tbl = fileassoc_table_lookup(mp);
+	if (tbl != NULL)
+		return (tbl);
 
 	/* Allocate and initialize a table. */
 	tbl = kmem_zalloc(sizeof(*tbl), KM_SLEEP);
-	tbl->hash_size = size;
-	tbl->hash_tbl = hashinit(size, HASH_LIST, M_TEMP,
-				 M_WAITOK | M_ZERO, &tbl->hash_mask);
+	tbl->hash_size = FILEASSOC_INITIAL_TABLESIZE;
+	tbl->hash_tbl = hashinit(tbl->hash_size, HASH_LIST, M_TEMP,
+	    M_WAITOK | M_ZERO, &tbl->hash_mask);
+	tbl->hash_used = 0;
 	specificdata_init(fileassoc_domain, &tbl->data);
 
 	mount_setspecific(mp, fileassoc_mountspecific_key, tbl);
 
-	return (0);
+	return (tbl);
 }
 
 /*
@@ -425,10 +485,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
 	if (tbl == NULL) {
-		if (hint == NULL)
-			vfs_composefh_free(th);
-
-		return (NULL);
+		tbl = fileassoc_table_add(vp->v_mount);
 	}
 
 	indx = FILEASSOC_HASH(tbl, th);
@@ -439,6 +496,20 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 	specificdata_init(fileassoc_domain, &e->data);
 	LIST_INSERT_HEAD(vhh, e, entries);
 
+	/*
+	 * This decides when we need to resize the table. For now,
+	 * resize it whenever we "filled" up the number of slots it
+	 * has. That's not really true unless of course we had zero
+	 * collisions. Think positive! :)
+	 */
+	if (++(tbl->hash_used) == tbl->hash_size) { 
+		struct fileassoc_table *newtbl;
+
+		newtbl = fileassoc_table_resize(tbl);
+		mount_setspecific(vp->v_mount, fileassoc_mountspecific_key,
+		    newtbl);
+	}
+
 	return (e);
 }
 
@@ -448,6 +519,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 int
 fileassoc_file_delete(struct vnode *vp)
 {
+	struct fileassoc_table *tbl;
 	struct fileassoc_hash_entry *mhe;
 
 	mhe = fileassoc_file_lookup(vp, NULL);
@@ -455,6 +527,9 @@ fileassoc_file_delete(struct vnode *vp)
 		return (ENOENT);
 
 	file_free(mhe);
+
+	tbl = fileassoc_table_lookup(vp->v_mount);
+	--(tbl->hash_used); /* XXX gc? */
 
 	return (0);
 }
@@ -481,6 +556,8 @@ fileassoc_add(struct vnode *vp, fileassoc_t assoc, void *data)
 
 	file_setdata(e, assoc, data);
 
+	e->nassocs++;
+
 	return (0);
 }
 
@@ -498,6 +575,8 @@ fileassoc_clear(struct vnode *vp, fileassoc_t assoc)
 
 	file_cleanup(mhe, assoc);
 	file_setdata(mhe, assoc, NULL);
+
+	--(mhe->nassocs); /* XXX gc? */
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.577.4.9 2007/02/06 13:41:04 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.577.4.10 2007/02/09 21:03:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.9 2007/02/06 13:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.577.4.10 2007/02/09 21:03:49 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1506,6 +1506,8 @@ init386(paddr_t first_avail)
 
 #ifdef XBOX
 	/*
+	 * From Rink Springer @ FreeBSD:
+	 *
 	 * The following code queries the PCI ID of 0:0:0. For the XBOX,
 	 * This should be 0x10de / 0x02a5.
 	 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.5 2005/12/11 12:19:20 christos Exp $ */
+/*	$NetBSD: dmareg.h,v 1.5.20.1 2007/02/09 21:03:50 ad Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -29,6 +29,13 @@
  */
 
 #define DMACSRBITS "\020\01INT\02ERR\03DR1\04DR2\05IEN\011WRITE\016ENCNT\017TC\032DMAON"
+
+#define DMAREG_SIZE		0x10
+
+#define DMA_REG_CSR		0x00
+#define DMA_REG_ADDR		0x04
+#define DMA_REG_BCNT		0x08
+#define DMA_REG_TEST		0x0c
 
 struct dma_regs {
 	uint32_t	csr;		/* DMA CSR */
