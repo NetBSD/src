@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.96 2006/10/29 22:32:53 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.97 2007/02/09 22:08:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.96 2006/10/29 22:32:53 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.97 2007/02/09 22:08:48 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ command(void *arg, VARENT *ve, int mode)
 				 * are system commands.  Otherwise they are
 				 * printed within parentheses.
 				 */
-				if (ki->p_flag & P_SYSTEM) {
+				if (ki->p_flag & KP_SYSTEM) {
 					fmt_putc('[', &left);
 					fmt_puts(name, &left);
 					fmt_putc(']', &left);
@@ -512,7 +512,6 @@ state(void *arg, VARENT *ve, int mode)
 		break;
 
 	case LSZOMB:
-	case LSDEAD:
 		*cp = 'Z';
 		is_zombie = 1;
 		break;
@@ -532,26 +531,26 @@ state(void *arg, VARENT *ve, int mode)
 		*cp++ = '<';
 	else if (k->p_nice > NZERO)
 		*cp++ = 'N';
-	if (flag & P_TRACED)
+	if (flag & KP_TRACED)
 		*cp++ = 'X';
-	if (flag & P_SYSTRACE)
+	if (flag & KP_SYSTRACE)
 		*cp++ = 'x';
-	if (flag & P_WEXIT && !is_zombie)
+	if (flag & KP_WEXIT && !is_zombie)
 		*cp++ = 'E';
-	if (flag & P_PPWAIT)
+	if (flag & KP_PPWAIT)
 		*cp++ = 'V';
-	if (flag & P_SYSTEM)
+	if (flag & KP_SYSTEM)
 		*cp++ = 'K';
 	/* system process might have this too, don't need to double up */
 	else if (k->p_holdcnt)
 		*cp++ = 'L';
 	if (k->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
-	if (flag & P_SA)
+	if (flag & KP_SA)
 		*cp++ = 'a';
 	else if (k->p_nlwps > 1)
 		*cp++ = 'l';
-	if ((flag & P_CONTROLT) && k->p__pgid == k->p_tpgid)
+	if ((flag & KP_CONTROLT) && k->p__pgid == k->p_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
 	strprintorsetwidth(v, buf, mode);
@@ -592,7 +591,6 @@ lstate(void *arg, VARENT *ve, int mode)
 		break;
 
 	case LSZOMB:
-	case LSDEAD:
 		*cp = 'Z';
 		is_zombie = 1;
 		break;
@@ -610,7 +608,7 @@ lstate(void *arg, VARENT *ve, int mode)
 		*cp++ = 'W';
 	if (k->l_holdcnt)
 		*cp++ = 'L';
-	if (flag & L_DETACHED)
+	if (flag & KL_DETACHED)
 		*cp++ = '-';
 	*cp = '\0';
 	strprintorsetwidth(v, buf, mode);

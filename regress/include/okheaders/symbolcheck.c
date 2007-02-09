@@ -22,6 +22,7 @@
 #endif
 #include <sys/cdio.h>
 #include <sys/chio.h>
+#include <sys/condvar.h>
 #include <sys/conf.h>
 #include <sys/core.h>
 #include <sys/device.h>
@@ -88,6 +89,7 @@
 #include <sys/mount.h>
 #include <sys/msg.h>
 #include <sys/msgbuf.h>
+#include <sys/mutex.h>
 #include <sys/mtio.h>
 #include <sys/namei.h>
 #include <sys/null.h>
@@ -108,7 +110,7 @@
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/rnd.h>
-#include <sys/sa.h>
+#include <sys/rwlock.h>
 #include <sys/scanio.h>
 #include <sys/sched.h>
 #include <sys/scsiio.h>
@@ -297,7 +299,6 @@
 /* without this rmt.h re-defines ioctl which is also defined in soundcard.h */
 #define __RMTLIB_PRIVATE
 #include <rmt.h>
-#include <sa.h>
 #include <sched.h>
 #include <search.h>
 #include <semaphore.h>
