@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53 2007/01/22 00:10:27 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.54 2007/02/09 21:13:30 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53 2007/01/22 00:10:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54 2007/02/09 21:13:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -259,10 +259,14 @@ device_register(dev, aux)
 	if (device_is_a(device_parent(dev), "pci")) {
 		/* see if this is going to be console */
 		struct pci_attach_args *pa = aux;
+		prop_dictionary_t dict;
 		int node, sub;
 		int console = 0;
 
+		dict = device_properties(dev);
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+		prop_dictionary_set_uint32(dict, "device_node", &node);
+
 		console = (node == console_node);
 
 		if (!console) {
@@ -281,9 +285,9 @@ device_register(dev, aux)
 		}
 
 		if (console) {
-			prop_dictionary_t dict;
 
-			dict = device_properties(dev);
+			prop_dictionary_set_uint32(dict, "instance_handle",
+			    &console_instance);
 			copyprops(console_node, dict);
 		}
 	}
