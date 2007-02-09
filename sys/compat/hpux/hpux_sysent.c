@@ -1,4 +1,4 @@
-/* $NetBSD: hpux_sysent.c,v 1.44 2006/06/26 21:30:50 mrg Exp $ */
+/* $NetBSD: hpux_sysent.c,v 1.45 2007/02/09 21:55:16 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sysent.c,v 1.44 2006/06/26 21:30:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sysent.c,v 1.45 2007/02/09 21:55:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -20,7 +20,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_sysent.c,v 1.44 2006/06/26 21:30:50 mrg Exp $")
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/poll.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_syscallargs.h>

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.40 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.41 2007/02/09 21:55:29 ad Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.40 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.41 2007/02/09 21:55:29 ad Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -917,10 +917,12 @@ common_bktr_intr(void *arg)
 		 */
 
 		if (bktr->proc && !(bktr->signal & METEOR_SIG_MODE_MASK)) {
+			mutex_enter(&proclist_mutex);
 			PROC_LOCK(bktr->proc);
 			psignal(bktr->proc,
 				 bktr->signal&(~METEOR_SIG_MODE_MASK));
 			PROC_UNLOCK(bktr->proc);
+			mutex_exit(&proclist_mutex);
 		}
 
 		/*

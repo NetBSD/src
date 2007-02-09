@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.34 2007/02/01 08:49:05 plunky Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.35 2007/02/09 21:55:37 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,13 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.34 2007/02/01 08:49:05 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.35 2007/02/09 21:55:37 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kauth.h>
 
 #include <sys/acct.h>
+#include <sys/mutex.h>
 #include <sys/ktrace.h>
 #include <sys/mount.h>
 #include <sys/socketvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.38 2007/01/21 05:00:34 isaki Exp $	*/
+/*	$NetBSD: viaide.c,v 1.39 2007/02/09 21:55:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.38 2007/01/21 05:00:34 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.39 2007/02/09 21:55:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,10 +463,10 @@ unknown:
 		panic("via_chip_map: unknown vendor");
 	}
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
@@ -661,10 +661,10 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return 0;
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA | ATAC_CAP_DMA;

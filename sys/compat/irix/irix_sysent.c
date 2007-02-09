@@ -1,4 +1,4 @@
-/* $NetBSD: irix_sysent.c,v 1.55 2005/12/11 12:20:12 christos Exp $ */
+/* $NetBSD: irix_sysent.c,v 1.56 2007/02/09 21:55:18 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.55 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.56 2007/02/09 21:55:18 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -21,7 +21,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_sysent.c,v 1.55 2005/12/11 12:20:12 christos Ex
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/ioctl_compat.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>

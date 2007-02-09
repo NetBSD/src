@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.131 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.132 2007/02/09 21:55:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.131 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.132 2007/02/09 21:55:32 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -585,7 +585,7 @@ vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 static int
 vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 {
-	struct vnode *vp = ((struct vnode *)fp->f_data);
+	struct vnode *vp = ((struct vnode *)fp->f_data), *ovp;
 	struct proc *p = l->l_proc;
 	struct vattr vattr;
 	int error;
@@ -637,10 +637,13 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 		error = VOP_IOCTL(vp, com, data, fp->f_flag,
 		    l->l_cred, l);
 		if (error == 0 && com == TIOCSCTTY) {
-			if (p->p_session->s_ttyvp)
-				vrele(p->p_session->s_ttyvp);
-			p->p_session->s_ttyvp = vp;
 			VREF(vp);
+			rw_enter(&proclist_lock, RW_WRITER);
+			ovp = p->p_session->s_ttyvp;
+			p->p_session->s_ttyvp = vp;
+			rw_exit(&proclist_lock);
+			if (ovp != NULL)
+				vrele(ovp);
 		}
 		return (error);
 

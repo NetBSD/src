@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.13 2006/07/19 21:11:39 ad Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.14 2007/02/09 21:55:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.13 2006/07/19 21:11:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.14 2007/02/09 21:55:01 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.13 2006/07/19 21:11:39 ad Exp
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -134,9 +132,9 @@ netbsd32_syscall_plain(frame)
 	printf("netbsd32: syscall %d (%x %x %x %x %x %x, %x)\n", code,
 	    args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 #endif
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	error = (*callp->sy_call)(l, args, rval);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 
 	switch (error) {
 	case 0:
@@ -220,7 +218,7 @@ netbsd32_syscall_fancy(frame)
 			goto bad;
 	}
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 
 #if defined(KTRACE) || defined(SYSTRACE)
 	if (
@@ -247,7 +245,7 @@ netbsd32_syscall_fancy(frame)
 #if defined(KTRACE) || defined(SYSTRACE)
 out:
 #endif
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.29 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.30 2007/02/09 21:55:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -160,9 +160,7 @@ ASENTRY(Idle)
 	or.	%r9,%r9,%r9
 	bne+	.Lsw1			/* at least one queue non-empty */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
-#endif
 
 	/*
 	 * Re-enable interrupts before lowering IPL so we won't
@@ -203,9 +201,7 @@ ASENTRY(Idle)
 	mr	%r3,%r31		/* get back IPL mask */
 	bl	_C_LABEL(lcsplx)	/* raise spl back to IPL_SCHED */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
-#endif
 	b	_ASM_LABEL(Idle)
 
 /*
@@ -230,9 +226,7 @@ ENTRY(switch_exit)
 	mtctr	%r4
 	bctrl
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
-#endif
 
 /* Fall through to cpu_switch to actually select another lwp */
 	li	%r3,0			/* indicate exited lwp */
@@ -435,9 +429,7 @@ switch_return:
 1:
 #endif
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
-#endif
 
 #if defined(DIAGNOSTIC)
 	GET_CPUINFO(%r3)

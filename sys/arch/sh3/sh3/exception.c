@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.33 2006/10/08 18:20:42 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.34 2007/02/09 21:55:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.33 2006/10/08 18:20:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.34 2007/02/09 21:55:12 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,8 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.33 2006/10/08 18:20:42 uwe Exp $");
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -228,9 +226,9 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
  trapsignal:
 	ksi.ksi_trap = tf->tf_expevt;
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(l, 1);
 	trapsignal(l, &ksi);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	return;
 
@@ -366,11 +364,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		return;
 	}
 
-	if ((map != kernel_map) && (l->l_flag & L_SA)) {
-		l->l_savp->savp_faultaddr = (vaddr_t)va;
-		l->l_flag |= L_SA_PAGEFAULT;
-	}
-
 	err = uvm_fault(map, va, ftype);
 
 	/* User stack extension */
@@ -388,8 +381,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 		}
 	}
 
-	if (map != kernel_map)
-		l->l_flag &= ~L_SA_PAGEFAULT;
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
 		boolean_t loaded = __pmap_pte_load(pmap, va, track);
@@ -418,9 +409,9 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
  user_fault:
 	ksi.ksi_trap = tf->tf_expevt
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(l, 1);
 	trapsignal(l, &ksi);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 	ast(l, tf);
 	return;
@@ -444,27 +435,24 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 void
 ast(struct lwp *l, struct trapframe *tf)
 {
-	struct proc *p;
 
 	if (KERNELMODE(tf->tf_ssr))
 		return;
 	KDASSERT(l != NULL);
 	KDASSERT(l->l_md.md_regs == tf);
 
-	p = l->l_proc;
-
-	while (p->p_md.md_astpending) {
+	while (l->l_md.md_astpending) {
 		uvmexp.softs++;
-		p->p_md.md_astpending = 0;
+		l->l_md.md_astpending = 0;
 
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(p);
 		}
 
 		if (want_resched) {
 			/* We are being preempted. */
-			preempt(0);
+			preempt();
 		}
 
 		userret(l);
@@ -514,19 +502,6 @@ startlwp(void *arg)
 		printf("startlwp: error %d from cpu_setmcontext()", error);
 #endif
 	pool_put(&lwp_uc_pool, uc);
-
-	userret(l);
-}
-
-/*
- * void upcallret(struct lwp *l):
- *
- *	Perform userret() for an LWP.
- *	XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
 
 	userret(l);
 }

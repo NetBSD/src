@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.144 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.145 2007/02/09 21:55:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.144 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.145 2007/02/09 21:55:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1207,7 +1207,7 @@ genfs_putpages(void *v)
 			}
 			if (yld) {
 				simple_unlock(slock);
-				preempt(1);
+				preempt();
 				simple_lock(slock);
 			} else {
 				pg->flags |= PG_WANTED;

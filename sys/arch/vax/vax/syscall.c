@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2006/07/19 21:11:47 ad Exp $     */
+/*	$NetBSD: syscall.c,v 1.3 2007/02/09 21:55:13 ad Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2006/07/19 21:11:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2007/02/09 21:55:13 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2006/07/19 21:11:47 ad Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #ifdef  KTRACE
 #include <sys/ktrace.h>
 #endif

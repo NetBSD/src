@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.43 2007/02/08 03:19:42 riz Exp $	*/
+/*	$NetBSD: ld.c,v 1.44 2007/02/09 21:55:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.43 2007/02/08 03:19:42 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.44 2007/02/09 21:55:26 ad Exp $");
 
 #include "rnd.h"
 
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.43 2007/02/08 03:19:42 riz Exp $");
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
+#include <sys/mutex.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
@@ -75,7 +76,7 @@ static void	ldgetdefaultlabel(struct ld_softc *, struct disklabel *);
 static void	ldgetdisklabel(struct ld_softc *);
 static void	ldminphys(struct buf *bp);
 static void	ldshutdown(void *);
-static void	ldstart(struct ld_softc *);
+static void	ldstart(struct ld_softc *, struct buf *);
 static void	ld_set_properties(struct ld_softc *);
 
 extern struct	cfdriver ld_cd;
@@ -105,6 +106,8 @@ void
 ldattach(struct ld_softc *sc)
 {
 	char tbuf[9];
+
+	mutex_init(&sc->sc_mutex, MUTEX_DRIVER, IPL_BIO);
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
@@ -598,8 +601,7 @@ ldstrategy(struct buf *bp)
 	bp->b_rawblkno = blkno;
 
 	s = splbio();
-	BUFQ_PUT(sc->sc_bufq, bp);
-	ldstart(sc);
+	ldstart(sc, bp);
 	splx(s);
 	return;
 
@@ -611,10 +613,14 @@ ldstrategy(struct buf *bp)
 }
 
 static void
-ldstart(struct ld_softc *sc)
+ldstart(struct ld_softc *sc, struct buf *bp)
 {
-	struct buf *bp;
 	int error;
+
+	mutex_enter(&sc->sc_mutex);
+
+	if (bp != NULL)
+		BUFQ_PUT(sc->sc_bufq, bp);
 
 	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
 		/* See if there is work to do. */
@@ -648,10 +654,14 @@ ldstart(struct ld_softc *sc)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
+				mutex_exit(&sc->sc_mutex);
 				biodone(bp);
+				mutex_enter(&sc->sc_mutex);
 			}
 		}
 	}
+
+	mutex_exit(&sc->sc_mutex);
 }
 
 void
@@ -670,13 +680,16 @@ lddone(struct ld_softc *sc, struct buf *bp)
 #endif
 	biodone(bp);
 
+	mutex_enter(&sc->sc_mutex);
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
 		if ((sc->sc_flags & LDF_DRAIN) != 0) {
 			sc->sc_flags &= ~LDF_DRAIN;
 			wakeup(&sc->sc_queuecnt);
 		}
-		ldstart(sc);
-	}
+		mutex_exit(&sc->sc_mutex);
+		ldstart(sc, NULL);
+	} else
+		mutex_exit(&sc->sc_mutex);
 }
 
 static int

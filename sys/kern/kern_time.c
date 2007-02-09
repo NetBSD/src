@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.112 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.113 2007/02/09 21:55:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,15 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.112 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.113 2007/02/09 21:55:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
@@ -99,7 +97,6 @@ POOL_INIT(ptimer_pool, sizeof(struct ptimer), 0, 0, 0, "ptimerpl",
 POOL_INIT(ptimers_pool, sizeof(struct ptimers), 0, 0, 0, "ptimerspl",
     &pool_allocator_nointr);
 
-static void timerupcall(struct lwp *, void *);
 #ifdef __HAVE_TIMECOUNTER
 static int itimespecfix(struct timespec *);		/* XXX move itimerfix to timespecs */
 #endif /* __HAVE_TIMECOUNTER */
@@ -138,12 +135,18 @@ settime(struct proc *p, struct timespec *ts)
 	 *	time_t is 32 bits even when atv.tv_sec is 64 bits.
 	 */
 	if (ts->tv_sec > INT_MAX - 365*24*60*60) {
-		struct proc *pp = p->p_pptr;
+		struct proc *pp;
+
+		rw_enter(&proclist_lock, RW_READER);
+		pp = p->p_pptr;
+		mutex_enter(&pp->p_mutex);
 		log(LOG_WARNING, "pid %d (%s) "
 		    "invoked by uid %d ppid %d (%s) "
 		    "tried to set clock forward to %ld\n",
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
+		mutex_exit(&pp->p_mutex);
+		rw_exit(&proclist_lock);
 		return (EPERM);
 	}
 	TIMESPEC_TO_TIMEVAL(&tv, ts);
@@ -312,7 +315,6 @@ int
 sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 {
 #ifdef __HAVE_TIMECOUNTER
-	static int nanowait;
 	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
@@ -336,7 +338,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 
 	getnanouptime(&rmt);
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
+	error = kpause("nanoslp", TRUE, timo, NULL);
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
@@ -361,7 +363,6 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 
 	return error;
 #else /* !__HAVE_TIMECOUNTER */
-	static int nanowait;
 	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
@@ -389,7 +390,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		timo = 1;
 	splx(s);
 
-	error = tsleep(&nanowait, PWAIT | PCATCH, "nanosleep", timo);
+	error = kpause("nanoslp", TRUE, timo, NULL);
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
@@ -1027,47 +1028,6 @@ sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
-/* Glue function that triggers an upcall; called from userret(). */
-static void
-timerupcall(struct lwp *l, void *arg)
-{
-	struct ptimers *pt = (struct ptimers *)arg;
-	unsigned int i, fired, done;
-
-	KDASSERT(l->l_proc->p_sa);
-	/* Bail out if we do not own the virtual processor */
-	if (l->l_savp->savp_lwp != l)
-		return ;
-
-	KERNEL_PROC_LOCK(l);
-
-	fired = pt->pts_fired;
-	done = 0;
-	while ((i = ffs(fired)) != 0) {
-		siginfo_t *si;
-		int mask = 1 << --i;
-		int f;
-
-		f = l->l_flag & L_SA;
-		l->l_flag &= ~L_SA;
-		si = siginfo_alloc(PR_WAITOK);
-		si->_info = pt->pts_timers[i]->pt_info.ksi_info;
-		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
-		    sizeof(*si), si, siginfo_free) != 0) {
-			siginfo_free(si);
-			/* XXX What do we do here?? */
-		} else
-			done |= mask;
-		fired &= ~mask;
-		l->l_flag |= f;
-	}
-	pt->pts_fired &= ~done;
-	if (pt->pts_fired == 0)
-		l->l_proc->p_userret = NULL;
-
-	KERNEL_PROC_UNLOCK(l);
-}
-
 /*
  * Real interval timer expired:
  * send process whose timer expired an alarm signal.
@@ -1433,9 +1393,6 @@ void
 itimerfire(struct ptimer *pt)
 {
 	struct proc *p = pt->pt_proc;
-	struct sadata_vp *vp;
-	int s;
-	unsigned int i;
 
 	if (pt->pt_ev.sigev_notify == SIGEV_SIGNAL) {
 		/*
@@ -1443,7 +1400,7 @@ itimerfire(struct ptimer *pt)
 		 * just post the signal number and throw away the
 		 * value.
 		 */
-		if (sigismember(&p->p_sigctx.ps_siglist, pt->pt_ev.sigev_signo))
+		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo))
 			pt->pt_overruns++;
 		else {
 			ksiginfo_t ksi;
@@ -1453,52 +1410,11 @@ itimerfire(struct ptimer *pt)
 			ksi.ksi_sigval = pt->pt_ev.sigev_value;
 			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
+			mutex_enter(&proclist_mutex);
 			kpsignal(p, &ksi, NULL);
-		}
-	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
-		/* Cause the process to generate an upcall when it returns. */
-		signotify(p);
-		if (p->p_userret == NULL) {
-			/*
-			 * XXX stop signals can be processed inside tsleep,
-			 * which can be inside sa_yield's inner loop, which
-			 * makes testing for sa_idle alone insuffucent to
-			 * determine if we really should call setrunnable.
-			 */
-			pt->pt_poverruns = pt->pt_overruns;
-			pt->pt_overruns = 0;
-			i = 1 << pt->pt_entry;
-			p->p_timers->pts_fired = i;
-			p->p_userret = timerupcall;
-			p->p_userret_arg = p->p_timers;
-
-			SCHED_LOCK(s);
-			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-				if (vp->savp_lwp->l_flag & L_SA_IDLE) {
-					vp->savp_lwp->l_flag &= ~L_SA_IDLE;
-					sched_wakeup(vp->savp_lwp);
-					break;
-				}
-			}
-			SCHED_UNLOCK(s);
-		} else if (p->p_userret == timerupcall) {
-			i = 1 << pt->pt_entry;
-			if ((p->p_timers->pts_fired & i) == 0) {
-				pt->pt_poverruns = pt->pt_overruns;
-				pt->pt_overruns = 0;
-				p->p_timers->pts_fired |= i;
-			} else
-				pt->pt_overruns++;
-		} else {
-			pt->pt_overruns++;
-			if ((p->p_flag & P_WEXIT) == 0)
-				printf("itimerfire(%d): overrun %d on timer %x (userret is %p)\n",
-				    p->p_pid, pt->pt_overruns,
-				    pt->pt_ev.sigev_value.sival_int,
-				    p->p_userret);
+			mutex_exit(&proclist_mutex);
 		}
 	}
-
 }
 
 /*

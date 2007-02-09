@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.23 2006/03/04 03:39:02 uwe Exp $ */
+/*	$NetBSD: lock.h,v 1.24 2007/02/09 21:55:12 ad Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Paul Kranenburg and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -122,5 +122,47 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 	__insn_barrier();
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
+
+#if defined(__sparc_v9__)
+static inline void
+mb_read(void)
+{
+	__asm __volatile("membar #LoadLoad" : : : "memory");
+}
+
+static inline void
+mb_write(void)
+{
+	__asm __volatile("" : : : "memory");
+}
+
+static inline void
+mb_memory(void)
+{
+	__asm __volatile("membar #MemIssue" : : : "memory");
+}
+#else	/* __sparc_v9__ */
+static inline void
+mb_read(void)
+{
+	static volatile int junk;
+	__insn_barrier();
+	junk = 1;
+}
+
+static inline void
+mb_write(void)
+{
+	__insn_barrier();
+}
+
+static inline void
+mb_memory(void)
+{
+	static volatile int junk;
+	__insn_barrier();
+	junk = 1;
+}
+#endif	/* __sparc_v9__ */
 
 #endif /* _MACHINE_LOCK_H */

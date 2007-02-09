@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.167 2006/11/14 15:50:00 reinoud Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.168 2007/02/09 21:55:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.167 2006/11/14 15:50:00 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.168 2007/02/09 21:55:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,7 @@ buf_lotsfree(void)
 	struct lwp *l = curlwp;
 
 	/* Always allocate if doing copy on write */
-	if (l->l_flag & L_COWINPROGRESS)
+	if (l->l_pflag & LP_UFSCOW)
 		return 1;
 
 	/* Always allocate if less than the low water mark. */
@@ -1173,7 +1173,7 @@ allocbuf(struct buf *bp, int size, int preserve)
 			    SPCF_SHOULDYIELD) {
 				simple_unlock(&bqueue_slock);
 				splx(s);
-				preempt(1);
+				preempt();
 				s = splbio();
 				simple_lock(&bqueue_slock);
 			}

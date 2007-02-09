@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_ipc.c,v 1.7 2006/07/23 22:06:08 ad Exp $	*/
+/*	$NetBSD: hpux_ipc.c,v 1.8 2007/02/09 21:55:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.7 2006/07/23 22:06:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.8 2007/02/09 21:55:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_ipc.c,v 1.7 2006/07/23 22:06:08 ad Exp $");
 #include <sys/systm.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>

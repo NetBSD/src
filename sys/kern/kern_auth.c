@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.43 2007/02/07 08:04:48 elad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.44 2007/02/09 21:55:30 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,17 +28,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.43 2007/02/07 08:04:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.44 2007/02/09 21:55:30 ad Exp $");
 
-#include <sys/types.h>
+#define	_KAUTH_PRIVATE
+
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
+#include <sys/kauth_impl.h>
 #include <sys/kmem.h>
-#include <sys/specificdata.h>
+#include <sys/rwlock.h>
 
 /*
  * Secmodel-specific credentials.
@@ -46,27 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.43 2007/02/07 08:04:48 elad Exp $");
 struct kauth_key {
 	const char *ks_secmodel;	/* secmodel */
 	specificdata_key_t ks_key;	/* key */
-};
-
-/* 
- * Credentials.
- *
- * A subset of this structure is used in kvm(3) (src/lib/libkvm/kvm_proc.c)
- * and should be synchronized with this structure when the update is
- * relevant.
- */
-struct kauth_cred {
-	struct simplelock cr_lock;	/* lock on cr_refcnt */
-	u_int cr_refcnt;		/* reference count */
-	uid_t cr_uid;			/* user id */
-	uid_t cr_euid;			/* effective user id */
-	uid_t cr_svuid;			/* saved effective user id */
-	gid_t cr_gid;			/* group id */
-	gid_t cr_egid;			/* effective group id */
-	gid_t cr_svgid;			/* saved effective group id */
-	u_int cr_ngroups;		/* number of groups */
-	gid_t cr_groups[NGROUPS];	/* group memberships */
-	specificdata_reference cr_sd;	/* specific data */
 };
 
 /*
@@ -97,7 +78,6 @@ static POOL_INIT(kauth_cred_pool, sizeof(struct kauth_cred), 0, 0, 0,
 
 /* List of scopes and its lock. */
 static SIMPLEQ_HEAD(, kauth_scope) scope_list;
-static struct simplelock scopes_lock;
 
 /* Built-in scopes: generic, process. */
 static kauth_scope_t kauth_builtin_scope_generic;
@@ -111,6 +91,7 @@ static kauth_scope_t kauth_builtin_scope_cred;
 static unsigned int nsecmodels = 0;
 
 static specificdata_domain_t kauth_domain;
+krwlock_t	kauth_lock;
 
 /* Allocate new, empty kauth credentials. */
 kauth_cred_t
@@ -120,7 +101,7 @@ kauth_cred_alloc(void)
 
 	cred = pool_get(&kauth_cred_pool, PR_WAITOK);
 	memset(cred, 0, sizeof(*cred));
-	simple_lock_init(&cred->cr_lock);
+	mutex_init(&cred->cr_lock, MUTEX_DEFAULT, IPL_NONE);
 	cred->cr_refcnt = 1;
 	specificdata_init(kauth_domain, &cred->cr_sd);
 	kauth_cred_hook(cred, KAUTH_CRED_INIT, NULL, NULL);
@@ -135,9 +116,9 @@ kauth_cred_hold(kauth_cred_t cred)
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
 
-        simple_lock(&cred->cr_lock);
+        mutex_enter(&cred->cr_lock);
         cred->cr_refcnt++;
-        simple_unlock(&cred->cr_lock);
+        mutex_exit(&cred->cr_lock);
 }
 
 /* Decrease reference count to cred. If reached zero, free it. */
@@ -149,13 +130,14 @@ kauth_cred_free(kauth_cred_t cred)
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt > 0);
 
-	simple_lock(&cred->cr_lock);
+	mutex_enter(&cred->cr_lock);
 	refcnt = --cred->cr_refcnt;
-	simple_unlock(&cred->cr_lock);
+	mutex_exit(&cred->cr_lock);
 
 	if (refcnt == 0) {
 		kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
 		specificdata_fini(kauth_domain, &cred->cr_sd);
+		mutex_destroy(&cred->cr_lock);
 		pool_put(&kauth_cred_pool, cred);
 	}
 }
@@ -225,11 +207,13 @@ kauth_cred_copy(kauth_cred_t cred)
 void
 kauth_proc_fork(struct proc *parent, struct proc *child)
 {
-	/* mutex_enter(&parent->p_mutex); */
+
+	mutex_enter(&parent->p_mutex);
 	kauth_cred_hold(parent->p_cred);
 	child->p_cred = parent->p_cred;
-	/* mutex_exit(&parent->p_mutex); */
+	mutex_exit(&parent->p_mutex);
 
+	/* XXX: relies on parent process stalling during fork() */
 	kauth_cred_hook(parent->p_cred, KAUTH_CRED_FORK, parent,
 	    child);
 }
@@ -608,7 +592,7 @@ kauth_ifindscope(const char *id)
 {
 	kauth_scope_t scope;
 
-	/* XXX: assert lock on scope list? */
+	KASSERT(rw_lock_held(&kauth_lock));
 
 	scope = NULL;
 	SIMPLEQ_FOREACH(scope, &scope_list, next_scope) {
@@ -651,14 +635,12 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 
 	/*
 	 * Acquire scope list lock.
-	 *
-	 * XXXSMP insufficient locking.
 	 */
-	simple_lock(&scopes_lock);
+	rw_enter(&kauth_lock, RW_WRITER);
 
 	/* Check we don't already have a scope with the same id */
 	if (kauth_ifindscope(id) != NULL) {
-		simple_unlock(&scopes_lock);
+		rw_exit(&kauth_lock);
 
 		kmem_free(scope, sizeof(*scope));
 		if (callback != NULL)
@@ -685,7 +667,7 @@ kauth_register_scope(const char *id, kauth_scope_callback_t callback,
 	/* Insert scope to scopes list */
 	SIMPLEQ_INSERT_TAIL(&scope_list, scope, next_scope);
 
-	simple_unlock(&scopes_lock);
+	rw_exit(&kauth_lock);
 
 	return (scope);
 }
@@ -702,7 +684,7 @@ void
 kauth_init(void)
 {
 	SIMPLEQ_INIT(&scope_list);
-	simple_lock_init(&scopes_lock);
+	rw_init(&kauth_lock);
 
 	/* Create specificdata domain. */
 	kauth_domain = specificdata_domain_create();
@@ -766,21 +748,23 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 	kauth_scope_t scope;
 	kauth_listener_t listener;
 
-	/*
-	 * Find scope struct.
-	 *
-	 * XXXSMP insufficient locking.
-	 */
-	simple_lock(&scopes_lock);
-	scope = kauth_ifindscope(id);
-	simple_unlock(&scopes_lock);
-	if (scope == NULL)
-		return (NULL);
-
-	/* Allocate listener */
 	listener = kmem_alloc(sizeof(*listener), KM_SLEEP);
 	if (listener == NULL)
 		return (NULL);
+
+	rw_enter(&kauth_lock, RW_WRITER);
+
+	/*
+	 * Find scope struct.
+	 */
+	scope = kauth_ifindscope(id);
+	if (scope == NULL) {
+		rw_exit(&kauth_lock);
+		kmem_free(listener, sizeof(*listener));
+		return (NULL);
+	}
+
+	/* Allocate listener */
 
 	/* Initialize listener with parameters */
 	listener->func = callback;
@@ -793,6 +777,8 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 	scope->nlisteners++;
 	listener->scope = scope;
 
+	rw_exit(&kauth_lock);
+
 	return (listener);
 }
 
@@ -804,10 +790,13 @@ kauth_listen_scope(const char *id, kauth_scope_callback_t callback,
 void
 kauth_unlisten_scope(kauth_listener_t listener)
 {
+
 	if (listener != NULL) {
+		rw_enter(&kauth_lock, RW_WRITER);
 		SIMPLEQ_REMOVE(&listener->scope->listenq, listener,
 		    kauth_listener, listener_next);
 		listener->scope->nlisteners--;
+		rw_exit(&kauth_lock);
 		kmem_free(listener, sizeof(*listener));
 	}
 }
@@ -846,15 +835,17 @@ kauth_authorize_action(kauth_scope_t scope, kauth_cred_t cred,
 	fail = 0;
 	allow = 0;
 
+	/* rw_enter(&kauth_lock, RW_READER); XXX not yet */
 	SIMPLEQ_FOREACH(listener, &scope->listenq, listener_next) {
 		error = listener->func(cred, action, scope->cookie, arg0,
-				       arg1, arg2, arg3);
+		    arg1, arg2, arg3);
 
 		if (error == KAUTH_RESULT_ALLOW)
 			allow = 1;
 		else if (error == KAUTH_RESULT_DENY)
 			fail = 1;
 	}
+	/* rw_exit(&kauth_lock); */
 
 	if (fail)
 		return (EPERM);
@@ -974,7 +965,9 @@ secmodel_register(void)
 {
 	KASSERT(nsecmodels + 1 != 0);
 
+	rw_enter(&kauth_lock, RW_WRITER);
 	nsecmodels++;
+	rw_exit(&kauth_lock);
 }
 
 void
@@ -982,5 +975,7 @@ secmodel_deregister(void)
 {
 	KASSERT(nsecmodels != 0);
 
+	rw_enter(&kauth_lock, RW_WRITER);
 	nsecmodels--;
+	rw_exit(&kauth_lock);
 }
