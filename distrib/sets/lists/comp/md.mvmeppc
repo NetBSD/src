@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.10 2005/02/17 02:24:00 briggs Exp $
+# $NetBSD: md.mvmeppc,v 1.11 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
@@ -35,6 +35,7 @@
 ./usr/include/mvmeppc/lock.h			comp-c-include
 ./usr/include/mvmeppc/math.h			comp-c-include
 ./usr/include/mvmeppc/mcontext.h		comp-c-include
+./usr/include/mvmeppc/mutex.h			comp-c-include
 ./usr/include/mvmeppc/param.h			comp-c-include
 ./usr/include/mvmeppc/pcb.h			comp-c-include
 ./usr/include/mvmeppc/pio.h			comp-obsolete		obsolete
@@ -48,6 +49,7 @@
 ./usr/include/mvmeppc/ptrace.h			comp-c-include
 ./usr/include/mvmeppc/reg.h			comp-c-include
 ./usr/include/mvmeppc/reloc.h			comp-c-include
+./usr/include/mvmeppc/rwlock.h			comp-c-include
 ./usr/include/mvmeppc/setjmp.h			comp-c-include
 ./usr/include/mvmeppc/signal.h			comp-c-include
 ./usr/include/mvmeppc/spr.h			comp-c-include

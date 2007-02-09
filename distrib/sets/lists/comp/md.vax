@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.32 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.vax,v 1.33 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-obsolete		obsolete
 ./usr/include/vax				comp-c-include
 ./usr/include/vax/_G_config.h			comp-obsolete		obsolete
@@ -40,6 +40,7 @@
 ./usr/include/vax/macros.h			comp-c-include
 ./usr/include/vax/math.h			comp-c-include
 ./usr/include/vax/mcontext.h			comp-c-include
+./usr/include/vax/mutex.h			comp-c-include
 ./usr/include/vax/mtpr.h			comp-c-include
 ./usr/include/vax/nexus.h			comp-c-include
 ./usr/include/vax/param.h			comp-c-include
@@ -58,6 +59,7 @@
 ./usr/include/vax/reg.h				comp-c-include
 ./usr/include/vax/rpb.h				comp-c-include
 ./usr/include/vax/rsp.h				comp-c-include
+./usr/include/vax/rwlock.h			comp-c-include
 ./usr/include/vax/scb.h				comp-c-include
 ./usr/include/vax/setjmp.h			comp-c-include
 ./usr/include/vax/sid.h				comp-c-include

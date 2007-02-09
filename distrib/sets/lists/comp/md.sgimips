@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.11 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.sgimips,v 1.12 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include
 ./usr/include/sgimips/_G_config.h		comp-obsolete		obsolete
@@ -34,6 +34,7 @@
 ./usr/include/sgimips/math.h			comp-c-include
 ./usr/include/sgimips/mcontext.h		comp-c-include
 ./usr/include/sgimips/mips_opcode.h		comp-c-include
+./usr/include/sgimips/mutex.h			comp-c-include
 ./usr/include/sgimips/param.h			comp-c-include
 ./usr/include/sgimips/pcb.h			comp-c-include
 ./usr/include/sgimips/pci_machdep.h		comp-c-include
@@ -48,6 +49,7 @@
 ./usr/include/sgimips/regdef.h			comp-c-include
 ./usr/include/sgimips/regnum.h			comp-c-include
 ./usr/include/sgimips/reloc.h			comp-c-include
+./usr/include/sgimips/rwlock.h			comp-c-include
 ./usr/include/sgimips/setjmp.h			comp-c-include
 ./usr/include/sgimips/signal.h			comp-c-include
 ./usr/include/sgimips/stdarg.h			comp-c-include

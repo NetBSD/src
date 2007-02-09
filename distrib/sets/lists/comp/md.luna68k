@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.17 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.luna68k,v 1.18 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/luna68k				comp-c-include
 ./usr/include/luna68k/_G_config.h		comp-obsolete		obsolete
@@ -30,6 +30,7 @@
 ./usr/include/luna68k/lock.h			comp-c-include
 ./usr/include/luna68k/math.h			comp-c-include
 ./usr/include/luna68k/mcontext.h		comp-c-include
+./usr/include/luna68k/mutex.h			comp-c-include
 ./usr/include/luna68k/param.h			comp-c-include
 ./usr/include/luna68k/pcb.h			comp-c-include
 ./usr/include/luna68k/pmap.h			comp-c-include
@@ -40,6 +41,7 @@
 ./usr/include/luna68k/pte.h			comp-c-include
 ./usr/include/luna68k/ptrace.h			comp-c-include
 ./usr/include/luna68k/reg.h			comp-c-include
+./usr/include/luna68k/rwlock.h			comp-c-include
 ./usr/include/luna68k/setjmp.h			comp-c-include
 ./usr/include/luna68k/signal.h			comp-c-include
 ./usr/include/luna68k/stdarg.h			comp-c-include

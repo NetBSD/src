@@ -1,4 +1,4 @@
-#	$NetBSD: md.evbsh5,v 1.4 2006/09/12 02:36:37 simonb Exp $
+#	$NetBSD: md.evbsh5,v 1.5 2007/02/09 22:49:47 ad Exp $
 ./usr/include/evbsh5				comp-c-include
 ./usr/include/evbsh5/alphaledio.h		comp-c-include
 ./usr/include/evbsh5/ansi.h			comp-c-include
@@ -27,6 +27,7 @@
 ./usr/include/evbsh5/lock.h			comp-c-include
 ./usr/include/evbsh5/math.h			comp-c-include
 ./usr/include/evbsh5/mcontext.h			comp-c-include
+./usr/include/evbsh5/mutex.h			comp-c-include
 ./usr/include/evbsh5/netbsd32_machdep.h		comp-c-include
 ./usr/include/evbsh5/param.h			comp-c-include
 ./usr/include/evbsh5/pcb.h			comp-c-include
@@ -37,6 +38,7 @@
 ./usr/include/evbsh5/profile.h			comp-c-include
 ./usr/include/evbsh5/ptrace.h			comp-c-include
 ./usr/include/evbsh5/reg.h			comp-c-include
+./usr/include/evbsh5/rwlock.h			comp-c-include
 ./usr/include/evbsh5/setjmp.h			comp-c-include
 ./usr/include/evbsh5/signal.h			comp-c-include
 ./usr/include/evbsh5/stdarg.h			comp-c-include

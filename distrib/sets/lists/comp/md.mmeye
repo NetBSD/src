@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.24 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.mmeye,v 1.25 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmeye				comp-c-include
 ./usr/include/mmeye/_G_config.h			comp-obsolete		obsolete
@@ -35,6 +35,7 @@
 ./usr/include/mmeye/math.h			comp-c-include
 ./usr/include/mmeye/mcontext.h			comp-c-include
 ./usr/include/mmeye/mmeye.h			comp-c-include
+./usr/include/mmeye/mutex.h			comp-c-include
 ./usr/include/mmeye/param.h			comp-c-include
 ./usr/include/mmeye/pcb.h			comp-c-include
 ./usr/include/mmeye/pio.h			comp-obsolete		obsolete
@@ -46,6 +47,7 @@
 ./usr/include/mmeye/pte.h			comp-c-include
 ./usr/include/mmeye/ptrace.h			comp-c-include
 ./usr/include/mmeye/reg.h			comp-c-include
+./usr/include/mmeye/rwlock.h			comp-c-include
 ./usr/include/mmeye/segments.h			comp-obsolete		obsolete
 ./usr/include/mmeye/setjmp.h			comp-c-include
 ./usr/include/mmeye/shbvar.h			comp-obsolete		obsolete

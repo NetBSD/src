@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.8 2005/02/17 02:24:00 briggs Exp $
+# $NetBSD: md.ofppc,v 1.9 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/ofppc				comp-c-include
 ./usr/include/ofppc/_G_config.h			comp-obsolete		obsolete
@@ -32,6 +32,7 @@
 ./usr/include/ofppc/lock.h			comp-c-include
 ./usr/include/ofppc/math.h			comp-c-include
 ./usr/include/ofppc/mcontext.h			comp-c-include
+./usr/include/ofppc/mutex.h			comp-c-include
 ./usr/include/ofppc/param.h			comp-c-include
 ./usr/include/ofppc/pcb.h			comp-c-include
 ./usr/include/ofppc/pmap.h			comp-c-include
@@ -43,6 +44,7 @@
 ./usr/include/ofppc/ptrace.h			comp-c-include
 ./usr/include/ofppc/reg.h			comp-c-include
 ./usr/include/ofppc/reloc.h			comp-c-include
+./usr/include/ofppc/rwlock.h			comp-c-include
 ./usr/include/ofppc/setjmp.h			comp-c-include
 ./usr/include/ofppc/signal.h			comp-c-include
 ./usr/include/ofppc/spr.h			comp-c-include

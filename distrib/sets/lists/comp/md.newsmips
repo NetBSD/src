@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.25 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.newsmips,v 1.26 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/newsmips				comp-c-include
 ./usr/include/newsmips/_G_config.h		comp-obsolete		obsolete
@@ -40,6 +40,7 @@
 ./usr/include/newsmips/mcontext.h		comp-c-include
 ./usr/include/newsmips/mips_opcode.h		comp-c-include
 ./usr/include/newsmips/mouse.h			comp-obsolete		obsolete
+./usr/include/newsmips/mutex.h			comp-c-include
 ./usr/include/newsmips/param.h			comp-c-include
 ./usr/include/newsmips/pcb.h			comp-c-include
 ./usr/include/newsmips/pmap.h			comp-c-include
@@ -53,6 +54,7 @@
 ./usr/include/newsmips/regdef.h			comp-c-include
 ./usr/include/newsmips/regnum.h			comp-c-include
 ./usr/include/newsmips/reloc.h			comp-c-include
+./usr/include/newsmips/rwlock.h			comp-c-include
 ./usr/include/newsmips/setjmp.h			comp-c-include
 ./usr/include/newsmips/signal.h			comp-c-include
 ./usr/include/newsmips/stdarg.h			comp-c-include

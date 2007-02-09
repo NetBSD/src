@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.56 2006/07/29 19:10:56 ad Exp $
+# $NetBSD: md.pmax,v 1.57 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -40,6 +40,7 @@
 ./usr/include/pmax/math.h			comp-c-include
 ./usr/include/pmax/mcontext.h			comp-c-include
 ./usr/include/pmax/mips_opcode.h		comp-c-include
+./usr/include/pmax/mutex.h			comp-c-include
 ./usr/include/pmax/param.h			comp-c-include
 ./usr/include/pmax/pcb.h			comp-c-include
 ./usr/include/pmax/pmap.h			comp-c-include
@@ -54,6 +55,7 @@
 ./usr/include/pmax/regdef.h			comp-c-include
 ./usr/include/pmax/regnum.h			comp-c-include
 ./usr/include/pmax/reloc.h			comp-c-include
+./usr/include/pmax/rwlock.h			comp-c-include
 ./usr/include/pmax/setjmp.h			comp-c-include
 ./usr/include/pmax/signal.h			comp-c-include
 ./usr/include/pmax/stdarg.h			comp-c-include
