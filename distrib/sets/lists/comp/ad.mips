@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.32 2006/07/28 22:30:21 bjh21 Exp $
+# $NetBSD: ad.mips,v 1.33 2007/02/09 22:22:32 ad Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/mips				comp-c-include
@@ -36,6 +36,7 @@
 ./usr/include/mips/mips3_pte.h			comp-c-include
 ./usr/include/mips/mips_opcode.h		comp-c-include
 ./usr/include/mips/mips_param.h			comp-c-include
+./usr/include/mips/mutex.h			comp-c-include
 ./usr/include/mips/pcb.h			comp-c-include
 ./usr/include/mips/pmap.h			comp-c-include
 ./usr/include/mips/pmc.h			comp-c-include
@@ -48,6 +49,7 @@
 ./usr/include/mips/regdef.h			comp-c-include
 ./usr/include/mips/regnum.h			comp-c-include
 ./usr/include/mips/reloc.h			comp-c-include
+./usr/include/mips/rwlock.h			comp-c-include
 ./usr/include/mips/setjmp.h			comp-c-include
 ./usr/include/mips/signal.h			comp-c-include
 ./usr/include/mips/stdarg.h			comp-c-include

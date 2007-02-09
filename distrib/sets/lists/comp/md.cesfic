@@ -1,4 +1,4 @@
-# $NetBSD: md.cesfic,v 1.5 2004/05/08 21:53:23 kleink Exp $
+# $NetBSD: md.cesfic,v 1.6 2007/02/09 22:22:32 ad Exp $
 ./usr/include/cesfic				comp-c-include
 ./usr/include/cesfic/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cesfic/ansi.h			comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/cesfic/lock.h			comp-c-include
 ./usr/include/cesfic/math.h			comp-c-include
 ./usr/include/cesfic/mcontext.h			comp-c-include
+./usr/include/cesfic/mutex.h			comp-c-include
 ./usr/include/cesfic/param.h			comp-c-include
 ./usr/include/cesfic/pcb.h			comp-c-include
 ./usr/include/cesfic/pmap.h			comp-c-include
@@ -35,6 +36,7 @@
 ./usr/include/cesfic/pte.h			comp-c-include
 ./usr/include/cesfic/ptrace.h			comp-c-include
 ./usr/include/cesfic/reg.h			comp-c-include
+./usr/include/cesfic/rwlock.h			comp-c-include
 ./usr/include/cesfic/setjmp.h			comp-c-include
 ./usr/include/cesfic/signal.h			comp-c-include
 ./usr/include/cesfic/stdarg.h			comp-c-include

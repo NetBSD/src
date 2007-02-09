@@ -1,4 +1,4 @@
-#	$NetBSD: ad.sh5,v 1.4 2004/05/08 21:53:23 kleink Exp $
+#	$NetBSD: ad.sh5,v 1.5 2007/02/09 22:22:32 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh5				comp-c-include
 ./usr/include/sh5/ansi.h			comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/sh5/lock.h			comp-c-include
 ./usr/include/sh5/math.h			comp-c-include
 ./usr/include/sh5/mcontext.h			comp-c-include
+./usr/include/sh5/mutex.h			comp-c-include
 ./usr/include/sh5/netbsd32_machdep.h		comp-c-include
 ./usr/include/sh5/param.h			comp-c-include
 ./usr/include/sh5/pcb.h				comp-c-include
@@ -40,6 +41,7 @@
 ./usr/include/sh5/pte.h				comp-c-include
 ./usr/include/sh5/ptrace.h			comp-c-include
 ./usr/include/sh5/reg.h				comp-c-include
+./usr/include/sh5/rwlock.h			comp-c-include
 ./usr/include/sh5/setjmp.h			comp-c-include
 ./usr/include/sh5/signal.h			comp-c-include
 ./usr/include/sh5/stdarg.h			comp-c-include

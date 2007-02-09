@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.20 2006/07/01 17:25:32 tsutsui Exp $
+# $NetBSD: md.arc,v 1.21 2007/02/09 22:22:32 ad Exp $
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/arc/mcontext.h			comp-c-include
 ./usr/include/arc/mips_opcode.h			comp-c-include
 ./usr/include/arc/mouse.h			comp-c-include
+./usr/include/arc/mutex.h			comp-c-include
 ./usr/include/arc/param.h			comp-c-include
 ./usr/include/arc/pcb.h				comp-c-include
 ./usr/include/arc/pccons.h			comp-c-include
@@ -45,6 +46,7 @@
 ./usr/include/arc/regdef.h			comp-c-include
 ./usr/include/arc/regnum.h			comp-c-include
 ./usr/include/arc/reloc.h			comp-c-include
+./usr/include/arc/rwlock.h			comp-c-include
 ./usr/include/arc/setjmp.h			comp-c-include
 ./usr/include/arc/signal.h			comp-c-include
 ./usr/include/arc/stdarg.h			comp-c-include

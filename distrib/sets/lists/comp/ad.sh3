@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.22 2006/07/28 22:30:21 bjh21 Exp $
+	# $NetBSD: ad.sh3,v 1.23 2007/02/09 22:22:32 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
 ./usr/include/sh3/ansi.h			comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/sh3/lock.h			comp-c-include
 ./usr/include/sh3/math.h			comp-c-include
 ./usr/include/sh3/mcontext.h			comp-c-include
+./usr/include/sh3/mutex.h			comp-c-include
 ./usr/include/sh3/param.h			comp-c-include
 ./usr/include/sh3/pcb.h				comp-c-include
 ./usr/include/sh3/pmap.h			comp-c-include
@@ -40,6 +41,7 @@
 ./usr/include/sh3/pte.h				comp-c-include
 ./usr/include/sh3/ptrace.h			comp-c-include
 ./usr/include/sh3/reg.h				comp-c-include
+./usr/include/sh3/rwlock.h			comp-c-include
 ./usr/include/sh3/setjmp.h			comp-c-include
 ./usr/include/sh3/sh_opcode.h			comp-c-include
 ./usr/include/sh3/signal.h			comp-c-include
