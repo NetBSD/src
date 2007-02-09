@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.1.2.6 2007/02/05 13:16:11 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.1.2.7 2007/02/09 19:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.6 2007/02/05 13:16:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.7 2007/02/09 19:58:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -54,12 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.1.2.6 2007/02/05 13:16:11 ad Exp 
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 
-void	cv_unsleep(struct lwp *);
+static void	cv_unsleep(struct lwp *);
+static void	cv_changepri(struct lwp *, int);
 
 syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	cv_unsleep,
-	sleepq_changepri
+	cv_changepri,
 };
 
 /*
@@ -121,7 +122,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, struct lwp *l)
  *	interrupted: for example, when a signal is received.  Must be
  *	called with the LWP locked, and must return it unlocked.
  */
-void
+static void
 cv_unsleep(struct lwp *l)
 {
 	uintptr_t addr;
@@ -133,6 +134,29 @@ cv_unsleep(struct lwp *l)
 	((kcondvar_t *)addr)->cv_waiters--;
 
 	sleepq_unsleep(l);
+}
+
+/*
+ * cv_changepri:
+ *
+ *	Adjust the real (user) priority of an LWP blocked on a CV.
+ */
+static void
+cv_changepri(struct lwp *l, int pri)
+{
+	sleepq_t *sq = l->l_sleepq;
+	int opri;
+
+	KASSERT(lwp_locked(l, sq->sq_mutex));
+
+	opri = l->l_priority;
+	l->l_usrpri = pri;
+	l->l_priority = sched_kpri(l);
+
+	if (l->l_priority != opri) {
+		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
+		sleepq_insert(sq, l, pri, l->l_syncobj);
+	}
 }
 
 /*

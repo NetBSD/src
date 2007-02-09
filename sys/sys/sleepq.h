@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.1.2.9 2007/02/05 17:58:13 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.1.2.10 2007/02/09 19:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -96,6 +96,7 @@ void	sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(struct lwp *, int);
 int	sleepq_unblock(int, int);
+void	sleepq_insert(sleepq_t *, struct lwp *, int, syncobj_t *);
 
 void	sleeptab_init(sleeptab_t *);
 
@@ -221,7 +222,7 @@ typedef struct tschain {
 void	turnstile_init(void);
 turnstile_t	*turnstile_lookup(wchan_t);
 void	turnstile_exit(wchan_t);
-void	turnstile_block(turnstile_t *, int, int, wchan_t);
+void	turnstile_block(turnstile_t *, int, wchan_t);
 void	turnstile_wakeup(turnstile_t *, int, int, struct lwp *);
 void	turnstile_print(volatile void *, void (*)(const char *, ...));
 

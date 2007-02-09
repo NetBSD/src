@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.36.8 2007/02/05 17:58:13 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.36.9 2007/02/09 19:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.8 2007/02/05 17:58:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.36.9 2007/02/09 19:58:10 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -229,7 +229,7 @@ turnstile_exit(wchan_t obj)
  *	 LWP for sleep.
  */
 void
-turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
+turnstile_block(turnstile_t *ts, int q, wchan_t obj)
 {
 	struct lwp *l;
 	turnstile_t *ots;
@@ -274,7 +274,8 @@ turnstile_block(turnstile_t *ts, int q, int pri, wchan_t obj)
 
 	sq = &ts->ts_sleepq[q];
 	sleepq_enter(sq, l);
-	sleepq_block(sq, pri, obj, "tstile", 0, 0, &turnstile_syncobj);
+	sleepq_block(sq, sched_kpri(l), obj, "tstile", 0, 0,
+	    &turnstile_syncobj);
 }
 
 /*
@@ -346,13 +347,15 @@ turnstile_unsleep(struct lwp *l)
  * turnstile_changepri:
  *
  *	Adjust the priority of an LWP residing on a turnstile.  Since we do
- *	not yet do priority inheritance, we currently ignore this action.
+ *	not yet do priority inheritance, we mostly ignore this action.
  */
 void
 turnstile_changepri(struct lwp *l, int pri)
 {
 
-	l->l_priority = pri;
+	/* LWPs on turnstiles always have kernel priority. */
+	l->l_usrpri = pri;
+	l->l_priority = sched_kpri(l);
 }
 
 #if defined(LOCKDEBUG)
