@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2006/07/26 19:54:57 drochner Exp $
+#	$NetBSD: Makefile,v 1.23 2007/02/09 21:55:07 ad Exp $
 
 INCSDIR= /usr/include/mmeye
 
@@ -12,9 +12,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
 	limits.h lock.h \
-	math.h mcontext.h mmeye.h \
+	math.h mcontext.h mmeye.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \
 	varargs.h vmparam.h \

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.20 2006/07/19 21:11:39 ad Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.21 2007/02/09 21:55:01 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,13 +96,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.20 2006/07/19 21:11:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.21 2007/02/09 21:55:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -160,7 +158,7 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	LWP_CACHE_CREDS(l, p);
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -231,7 +229,7 @@ linux_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 		break;
 	}
 
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -247,7 +245,7 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	LWP_CACHE_CREDS(l, p);
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 
 	uvmexp.syscalls++;
 	l->l_md.md_tf = framep;
@@ -324,7 +322,7 @@ out:
 		break;
 	}
 
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 
 	trace_exit(l, code, args, rval, error);
 

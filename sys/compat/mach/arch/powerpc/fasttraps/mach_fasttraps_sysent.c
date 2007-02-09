@@ -1,4 +1,4 @@
-/* $NetBSD: mach_fasttraps_sysent.c,v 1.11 2005/12/11 12:20:21 christos Exp $ */
+/* $NetBSD: mach_fasttraps_sysent.c,v 1.12 2007/02/09 21:55:22 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,14 +8,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_sysent.c,v 1.11 2005/12/11 12:20:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_sysent.c,v 1.12 2007/02/09 21:55:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/mach/mach_types.h>
 #include <compat/mach/arch/powerpc/fasttraps/mach_fasttraps_syscallargs.h>

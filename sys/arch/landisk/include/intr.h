@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2007/02/09 21:55:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define	IPL_HIGH	15	/* everything */
 #define	IPL_LOCK	IPL_HIGH
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;

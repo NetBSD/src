@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_dirhash.c,v 1.11 2006/03/19 17:50:42 matt Exp $	*/
+/*	$NetBSD: ufs_dirhash.c,v 1.12 2007/02/09 21:55:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -196,7 +196,7 @@ ufsdirhash_build(struct inode *ip)
 	while (pos < ip->i_size) {
 		if ((curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
 		    != 0) {
-			preempt(1);
+			preempt();
 		}
 		/* If necessary, get the next directory block. */
 		if ((pos & bmask) == 0) {

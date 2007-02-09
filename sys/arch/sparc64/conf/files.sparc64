@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.107 2006/11/09 15:08:04 tsutsui Exp $
+#	$NetBSD: files.sparc64,v 1.108 2007/02/09 21:55:12 ad Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -191,6 +191,7 @@ file	arch/sparc64/sparc64/syscall.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
 file	arch/sparc64/sparc64/ipifuncs.c		multiprocessor
+file	arch/sparc64/sparc64/lock_stubs.s
 
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb

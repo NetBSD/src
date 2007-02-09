@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.14 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.15 2007/02/09 21:55:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.14 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.15 2007/02/09 21:55:27 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -281,7 +281,7 @@ pdcsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 
-	aprint_normal("%s: bus-master DMA support present\n",
+	aprint_verbose("%s: bus-master DMA support present\n",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16;
 	if (sc->sc_dma_ok) {

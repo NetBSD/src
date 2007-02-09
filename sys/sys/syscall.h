@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.177 2007/01/16 05:29:54 ad Exp $ */
+/* $NetBSD: syscall.h,v 1.178 2007/02/09 21:55:37 ad Exp $ */
 
 /*
  * System call numbers.
@@ -452,7 +452,7 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	SYS_setsid	147
 
-/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "void *" */
+/* syscall: "quotactl" ret: "int" args: "const char *" "int" "int" "caddr_t" */
 #define	SYS_quotactl	148
 
 /* syscall: "compat_43_oquota" ret: "int" args: */
@@ -928,47 +928,27 @@
 /* syscall: "_lwp_setprivate" ret: "void" args: "void *" */
 #define	SYS__lwp_setprivate	317
 
-#if !defined(_KERNEL)
 /* syscall: "_lwp_kill" ret: "int" args: "lwpid_t" "int" */
 #define	SYS__lwp_kill	318
 
 /* syscall: "_lwp_detach" ret: "int" args: "lwpid_t" */
 #define	SYS__lwp_detach	319
 
-/* syscall: "_lwp_park" ret: "int" args: "const struct timespec *" "struct __ucontext *" "const void *" */
+/* syscall: "_lwp_park" ret: "int" args: "const struct timespec *" "struct __ucontext *" "void *" */
 #define	SYS__lwp_park	320
 
-/* syscall: "_lwp_unpark" ret: "int" args: "lwpid_t" "const void *" */
+/* syscall: "_lwp_unpark" ret: "int" args: "lwpid_t" "void *" */
 #define	SYS__lwp_unpark	321
 
-/* syscall: "_lwp_unpark_all" ret: "int" args: "const lwpid_t *" "size_t" "const void *" */
+/* syscall: "_lwp_unpark_all" ret: "int" args: "const lwpid_t *" "size_t" "void *" */
 #define	SYS__lwp_unpark_all	322
 
-#else
-				/* 318 is excluded sys__lwp_kill */
-				/* 319 is excluded sys__lwp_detach */
-				/* 320 is excluded sys__lwp_park */
-				/* 321 is excluded sys__lwp_unpark */
-				/* 322 is excluded sys__lwp_unpark_all */
-#endif
-/* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" "int" "ssize_t" */
-#define	SYS_sa_register	330
-
-/* syscall: "sa_stacks" ret: "int" args: "int" "stack_t *" */
-#define	SYS_sa_stacks	331
-
-/* syscall: "sa_enable" ret: "int" args: */
-#define	SYS_sa_enable	332
-
-/* syscall: "sa_setconcurrency" ret: "int" args: "int" */
-#define	SYS_sa_setconcurrency	333
-
-/* syscall: "sa_yield" ret: "int" args: */
-#define	SYS_sa_yield	334
-
-/* syscall: "sa_preempt" ret: "int" args: "int" */
-#define	SYS_sa_preempt	335
-
+				/* 330 is obsolete sys_sa_register */
+				/* 331 is obsolete sys_sa_stacks */
+				/* 332 is obsolete sys_sa_enable */
+				/* 333 is obsolete sys_sa_setconcurrency */
+				/* 334 is obsolete sys_sa_yield */
+				/* 335 is obsolete sys_sa_preempt */
 				/* 336 is obsolete sys_sa_unblockyield */
 /* syscall: "__sigaction_sigtramp" ret: "int" args: "int" "const struct sigaction *" "struct sigaction *" "const void *" "int" */
 #define	SYS___sigaction_sigtramp	340

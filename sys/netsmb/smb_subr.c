@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.c,v 1.29 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: smb_subr.c,v 1.30 2007/02/09 21:55:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.29 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_subr.c,v 1.30 2007/02/09 21:55:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,14 +79,17 @@ int
 smb_proc_intr(struct lwp *l)
 {
 	struct proc *p;
+	int error;
 
 	if (l == NULL)
 		return 0;
 	p = l->l_proc;
-	if (!sigemptyset(&p->p_sigctx.ps_siglist)
-	    && SMB_SIGMASK(p->p_sigctx.ps_siglist))
-                return EINTR;
-	return 0;
+
+	mutex_enter(&p->p_smutex);
+	error = sigispending(l, 0);
+	mutex_exit(&p->p_smutex);
+
+	return (error != 0 ? EINTR : 0);
 }
 
 char *

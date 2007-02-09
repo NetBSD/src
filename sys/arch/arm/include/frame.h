@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.9 2007/02/09 21:55:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,6 @@
 #ifndef _LOCORE
 
 #include <sys/signal.h>
-#include <sys/sa.h>
 #include <sys/ucontext.h>
 
 /*
@@ -91,21 +90,6 @@ struct sigframe_sigcontext {
 struct sigframe_siginfo {
 	siginfo_t	sf_si;		/* actual saved siginfo */
 	ucontext_t	sf_uc;		/* actual saved ucontext */
-};
-
-/*
- * Scheduler activations upcall frame.  Pushed onto user stack before
- * calling an SA upcall.
- */
-
-struct saframe {
-#if 0 /* in registers on entry to upcall */
-	int		sa_type;
-	struct sa_t **	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-#endif
-	void *		sa_arg;
 };
 
 #ifdef _KERNEL

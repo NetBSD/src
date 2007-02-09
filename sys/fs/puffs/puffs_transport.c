@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.6 2007/01/28 00:27:33 pooka Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.7 2007/02/09 21:55:30 ad Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.6 2007/01/28 00:27:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.7 2007/02/09 21:55:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.6 2007/01/28 00:27:33 pooka Ex
 
 #include <fs/puffs/puffs_sys.h>
 
-#include <miscfs/syncfs/syncfs.h> /* XXX: for syncer_lock reference */
+#include <miscfs/syncfs/syncfs.h> /* XXX: for syncer_mutex reference */
 
 
 /*
@@ -264,14 +264,14 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * mount point.  See dounmount() for details.
 	 *
 	 * XXX2: take a reference to the mountpoint before starting to
-	 * wait for syncer_lock.  Otherwise the mointpoint can be
+	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
 	simple_lock(&mp->mnt_slock);
 	mp->mnt_wcnt++;
 	simple_unlock(&mp->mnt_slock);
 
-	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&syncer_mutex);
 
 	simple_lock(&mp->mnt_slock);
 	mp->mnt_wcnt--;
@@ -280,7 +280,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	gone = mp->mnt_iflag & IMNT_GONE;
 	simple_unlock(&mp->mnt_slock);
 	if (gone) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		goto out;
 	}
 
@@ -296,7 +296,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * XXX: skating on the thin ice of modern calling conventions ...
 	 */
 	if (vfs_busy(mp, 0, 0)) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.15 2006/09/16 15:43:24 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.16 2007/02/09 21:55:03 ad Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -768,11 +768,9 @@ idle_loop:
 	comb,<>	%r0, %t3, gotprocs
 	nop
 
-#if defined(LOCKDEBUG)
 	/* Release sched_lock */ 
 	CALL(sched_unlock_idle, %r1)
 	nop
-#endif  
 
 	/* spl0() */
 	.call
@@ -787,11 +785,9 @@ idle_loop:
 	bl	spllower, %rp
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
 
-#if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
 	CALL(sched_lock_idle, %r1)
 	nop
-#endif
 
 	b	idle_loop
 	nop
@@ -1042,6 +1038,10 @@ ALTENTRY(hppa_fpu_nop1)
 	mtctl	%r1, %ccr
 
 switch_return:
+	/* Release sched_lock */ 
+	CALL(sched_unlock_idle, %r1)
+	nop
+
 	bv	0(%rp)
 	mtctl	%arg3, %eiem
 
@@ -1093,11 +1093,9 @@ ENTRY(switch_exit,0)
 	bv,n	%r0(%arg1)
 	nop
 
-#if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
 	CALL(sched_lock_idle, %r1)
 	nop
-#endif
 
 	.call
 	b	switch_search

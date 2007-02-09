@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.27 2006/09/01 21:19:45 matt Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.28 2007/02/09 21:55:24 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.27 2006/09/01 21:19:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.28 2007/02/09 21:55:24 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -25,7 +25,6 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.27 2006/09/01 21:19:45 matt Exp 
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/shm.h>
 #include <sys/syscallargs.h>
 #include <compat/pecoff/pecoff_syscallargs.h>
@@ -890,18 +889,18 @@ struct sysent pecoff_sysent[] = {
 	    sys_nosys },			/* 328 = unimplemented */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 329 = unimplemented */
-	{ 4, s(struct sys_sa_register_args), 0,
-	    sys_sa_register },			/* 330 = sa_register */
-	{ 2, s(struct sys_sa_stacks_args), 0,
-	    sys_sa_stacks },			/* 331 = sa_stacks */
 	{ 0, 0, 0,
-	    sys_sa_enable },			/* 332 = sa_enable */
-	{ 1, s(struct sys_sa_setconcurrency_args), 0,
-	    sys_sa_setconcurrency },		/* 333 = sa_setconcurrency */
+	    sys_nosys },			/* 330 = obsolete sys_sa_register */
 	{ 0, 0, 0,
-	    sys_sa_yield },			/* 334 = sa_yield */
-	{ 1, s(struct sys_sa_preempt_args), 0,
-	    sys_sa_preempt },			/* 335 = sa_preempt */
+	    sys_nosys },			/* 331 = obsolete sys_sa_stacks */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 332 = obsolete sys_sa_enable */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 333 = obsolete sys_sa_setconcurrency */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 334 = obsolete sys_sa_yield */
+	{ 0, 0, 0,
+	    sys_nosys },			/* 335 = obsolete sys_sa_preempt */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 336 = obsolete sys_sa_unblockyield */
 	{ 0, 0, 0,
