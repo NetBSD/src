@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.26 2007/01/29 01:52:44 hubertf Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.27 2007/02/09 21:55:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.26 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.27 2007/02/09 21:55:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.26 2007/01/29 01:52:44 hubert
 #include <sys/protosw.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/socket.h>

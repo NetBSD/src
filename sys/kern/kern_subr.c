@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.150 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.151 2007/02/09 21:55:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.150 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.151 2007/02/09 21:55:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -149,9 +149,11 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
+#ifdef MULTIPROCESSOR
 	int hold_count;
+#endif
 
-	hold_count = KERNEL_LOCK_RELEASE_ALL();
+	KERNEL_UNLOCK_ALL(NULL, &hold_count);
 
 	ASSERT_SLEEPABLE(NULL, "uiomove");
 
@@ -173,7 +175,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		if (!VMSPACE_IS_KERNEL_P(vm)) {
 			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
-				preempt(1);
+				preempt();
 		}
 
 		if (uio->uio_rw == UIO_READ) {
@@ -194,7 +196,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		KDASSERT(cnt <= n);
 		n -= cnt;
 	}
-	KERNEL_LOCK_ACQUIRE_COUNT(hold_count);
+	KERNEL_LOCK(hold_count, NULL);
 	return (error);
 }
 
@@ -1344,7 +1346,7 @@ trace_is_enabled(struct proc *p)
 		return (TRUE);
 #endif
 #ifdef PTRACE
-	if (ISSET(p->p_flag, P_SYSCALL))
+	if (ISSET(p->p_slflag, PSL_SYSCALL))
 		return (TRUE);
 #endif
 
@@ -1376,7 +1378,8 @@ trace_enter(struct lwp *l, register_t code,
 #endif /* KTRACE */
 
 #ifdef PTRACE
-	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
+	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace(l);
 #endif
 
@@ -1407,23 +1410,21 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #endif /* SYSCALL_DEBUG */
 
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
+	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(l, code, error, rval);
-		KERNEL_PROC_UNLOCK(l);
-	}
 #endif /* KTRACE */
 	
 #ifdef PTRACE
-	if ((p->p_flag & (P_SYSCALL|P_TRACED)) == (P_SYSCALL|P_TRACED))
+	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	    (PSL_SYSCALL|PSL_TRACED))
 		process_stoptrace(l);
 #endif
 
 #ifdef SYSTRACE
 	if (ISSET(p->p_flag, P_SYSTRACE)) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		systrace_exit(l, code, args, rval, error);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */

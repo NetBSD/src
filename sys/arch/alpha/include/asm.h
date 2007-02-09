@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.29 2006/01/20 22:02:40 christos Exp $ */
+/* $NetBSD: asm.h,v 1.30 2007/02/09 21:55:01 ad Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -650,6 +650,49 @@ label:	ASCIZ msg;						\
 #ifdef NO_KERNEL_RCSIDS
 #undef __KERNEL_RCSID
 #define	__KERNEL_RCSID(_n, _s)		/* nothing */
+#endif
+
+#if defined(MULTIPROCESSOR)
+
+/*
+ * Get various per-cpu values.  A pointer to our cpu_info structure
+ * is stored in SysValue.  These macros clobber v0, t0, t8..t11.
+ *
+ * All return values are in v0.
+ */
+#define	GET_CPUINFO		call_pal PAL_OSF1_rdval
+
+#define	GET_CURLWP							\
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_CURLWP, v0
+
+#define	GET_FPCURLWP							\
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_FPCURLWP, v0
+
+#define	GET_CURPCB							\
+	call_pal PAL_OSF1_rdval					;	\
+	addq	v0, CPU_INFO_CURPCB, v0
+
+#define	GET_IDLE_PCB(reg)						\
+	call_pal PAL_OSF1_rdval					;	\
+	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(v0)
+
+#else	/* if not MULTIPROCESSOR... */
+
+IMPORT(cpu_info_primary, CPU_INFO_SIZEOF)
+
+#define	GET_CPUINFO		lda v0, cpu_info_primary
+
+#define	GET_CURLWP		lda v0, cpu_info_primary + CPU_INFO_CURLWP
+
+#define	GET_FPCURLWP		lda v0, cpu_info_primary + CPU_INFO_FPCURLWP
+
+#define	GET_CURPCB		lda v0, cpu_info_primary + CPU_INFO_CURPCB
+
+#define	GET_IDLE_PCB(reg)						\
+	lda	reg, cpu_info_primary				;	\
+	ldq	reg, CPU_INFO_IDLE_PCB_PADDR(reg)
 #endif
 
 #endif /* _KERNEL */

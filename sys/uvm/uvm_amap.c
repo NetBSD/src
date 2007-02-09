@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.76 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.77 2007/02/09 21:55:43 ad Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.76 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.77 2007/02/09 21:55:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -708,7 +708,7 @@ amap_wipeout(struct vm_amap *amap)
 		}
 
 		if (curlwp->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt(1);
+			preempt();
 	}
 
 	/*
@@ -1295,7 +1295,7 @@ amap_swap_off(int startslot, int endslot)
 
 		if (!amap_lock_try(am)) {
 			simple_unlock(&amap_list_lock);
-			preempt(1);
+			preempt();
 			simple_lock(&amap_list_lock);
 			am_next = LIST_NEXT(&marker_prev, am_list);
 			if (am_next == &marker_next) {

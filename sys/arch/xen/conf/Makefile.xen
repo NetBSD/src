@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.18 2006/05/28 14:00:13 pavel Exp $
+#	$NetBSD: Makefile.xen,v 1.19 2007/02/09 21:55:14 ad Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -35,7 +35,7 @@ GENASSYM_CONF=	${XEN}/${XEN_BUILD}/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-D${XEN_BUILD}
-AFLAGS+=	-x assembler-with-cpp -traditional-cpp ${DBG}
+AFLAGS+=	-x assembler-with-cpp -traditional-cpp ${DBG} -D__XEN__
 EXTRA_INCLUDES=	-I${.CURDIR}/xen-ma
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.48 2007/01/04 16:55:29 elad Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.49 2007/02/09 21:55:37 ad Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.48 2007/01/04 16:55:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.49 2007/02/09 21:55:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ ext2fs_lookup(void *v)
 searchloop:
 	while (dp->i_offset < endsearch) {
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt(1);
+			preempt();
 		/*
 		 * If necessary, get the next directory block.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencervar.h,v 1.11 2006/06/30 13:56:25 chap Exp $	*/
+/*	$NetBSD: sequencervar.h,v 1.12 2007/02/09 21:55:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,6 +92,7 @@ struct sequencer_softc {
 	struct	selinfo wsel;	/* write selector */
 	struct	selinfo rsel;	/* read selector */
 	struct	proc *async;	/* process who wants audio SIGIO */
+	void	*sih;
 
 	int	nmidi;		/* number of MIDI devices */
 	struct	midi_dev **devs;

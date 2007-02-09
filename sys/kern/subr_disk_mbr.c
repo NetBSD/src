@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.22 2006/11/25 11:59:58 scw Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.23 2007/02/09 21:55:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.22 2006/11/25 11:59:58 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.23 2007/02/09 21:55:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,6 @@ read_sector(mbr_args_t *a, uint sector, int count)
 {
 	struct buf *bp = a->bp;
 	int error;
-
-	if (a->lp->d_secpercyl == 0)
-		return EINVAL;
 
 	bp->b_blkno = sector;
 	bp->b_bcount = count * a->lp->d_secsize;

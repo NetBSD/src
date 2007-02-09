@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.14 2007/01/29 01:52:44 hubertf Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.15 2007/02/09 21:55:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.14 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.15 2007/02/09 21:55:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_socksys.c,v 1.14 2007/01/29 01:52:44 hubertf E
 #include <net/if.h>
 
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/ibcs2/ibcs2_socksys.h>

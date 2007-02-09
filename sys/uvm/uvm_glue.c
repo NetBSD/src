@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.97 2006/10/05 14:48:33 chs Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.98 2007/02/09 21:55:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.97 2006/10/05 14:48:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.98 2007/02/09 21:55:43 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -426,7 +426,7 @@ void
 uvm_swapin(struct lwp *l)
 {
 	vaddr_t addr;
-	int s, error;
+	int error;
 
 	addr = USER_TO_UAREA(l->l_addr);
 	/* make L_INMEM true */
@@ -441,12 +441,12 @@ uvm_swapin(struct lwp *l)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(l);
-	SCHED_LOCK(s);
+	lwp_lock(l);
 	if (l->l_stat == LSRUN)
 		setrunqueue(l);
 	l->l_flag |= L_INMEM;
-	SCHED_UNLOCK(s);
 	l->l_swtime = 0;
+	lwp_unlock(l);
 	++uvmexp.swapins;
 }
 
@@ -472,8 +472,8 @@ loop:
 #endif
 	ll = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
-	proclist_lock_read();
 
+	mutex_enter(&proclist_mutex);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		/* is it a runnable swapped out process? */
 		if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
@@ -489,7 +489,7 @@ loop:
 	 * XXXSMP: possible unlock/sleep race between here and the
 	 * "scheduler" tsleep below..
 	 */
-	proclist_unlock_read();
+	mutex_exit(&proclist_mutex);
 
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
@@ -542,7 +542,7 @@ loop:
 
 #define	swappable(l)							\
 	(((l)->l_flag & (L_INMEM)) &&					\
-	 ((((l)->l_proc->p_flag) & (P_SYSTEM | P_WEXIT)) == 0) &&	\
+	 ((((l)->l_flag) & (L_SYSTEM | L_WEXIT)) == 0) &&		\
 	 (l)->l_holdcnt == 0)
 
 /*
@@ -577,36 +577,40 @@ uvm_swapout_threads(void)
 	 */
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	proclist_lock_read();
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
 	LIST_FOREACH(l, &alllwp, l_list) {
 		KASSERT(l->l_proc != NULL);
-		if (!swappable(l))
+		lwp_lock(l);
+		if (!swappable(l)) {
+			lwp_unlock(l);
 			continue;
+		}
 		switch (l->l_stat) {
 		case LSONPROC:
-			continue;
+			break;
 
 		case LSRUN:
 			if (l->l_swtime > outpri2) {
 				outl2 = l;
 				outpri2 = l->l_swtime;
 			}
-			continue;
+			break;
 
 		case LSSLEEP:
 		case LSSTOP:
 			if (l->l_slptime >= maxslp) {
+				/* uvm_swapout() will release the lock. */
 				uvm_swapout(l);
 				didswap++;
+				continue;
 			} else if (l->l_slptime > outpri) {
 				outl = l;
 				outpri = l->l_slptime;
 			}
-			continue;
+			break;
 		}
+		lwp_unlock(l);
 	}
-	proclist_unlock_read();
-
 	/*
 	 * If we didn't get rid of any real duds, toss out the next most
 	 * likely sleeping/stopped or running candidate.  We only do this
@@ -620,9 +624,15 @@ uvm_swapout_threads(void)
 		if (swapdebug & SDB_SWAPOUT)
 			printf("swapout_threads: no duds, try procp %p\n", l);
 #endif
-		if (l)
+		if (l) {
+			/* uvm_swapout() will release the lock. */
+			lwp_lock(l);
 			uvm_swapout(l);
+		}
 	}
+
+	mutex_exit(&proclist_mutex);
+
 }
 
 /*
@@ -630,6 +640,7 @@ uvm_swapout_threads(void)
  *
  * - currently "swapout" means "unwire U-area" and "pmap_collect()"
  *   the pmap.
+ * - must be called with the LWP locked, and will release the lock.
  * - XXXCDC: should deactivate all process' private anonymous memory
  */
 
@@ -637,8 +648,9 @@ static void
 uvm_swapout(struct lwp *l)
 {
 	vaddr_t addr;
-	int s;
 	struct proc *p = l->l_proc;
+
+	LOCK_ASSERT(lwp_locked(l, NULL));
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
@@ -650,19 +662,20 @@ uvm_swapout(struct lwp *l)
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	SCHED_LOCK(s);
 	if (l->l_stat == LSONPROC) {
 		KDASSERT(l->l_cpu != curcpu());
-		SCHED_UNLOCK(s);
+		lwp_unlock(l);
 		return;
 	}
 	l->l_flag &= ~L_INMEM;
+	l->l_swtime = 0;
 	if (l->l_stat == LSRUN)
 		remrunqueue(l);
-	SCHED_UNLOCK(s);
-	l->l_swtime = 0;
-	p->p_stats->p_ru.ru_nswap++;
+	lwp_unlock(l);
+	p->p_stats->p_ru.ru_nswap++;	/* XXXSMP */
 	++uvmexp.swapouts;
+
+	mutex_exit(&proclist_mutex);	/* XXXSMP */
 
 	/*
 	 * Do any machine-specific actions necessary before swapout.
@@ -676,6 +689,8 @@ uvm_swapout(struct lwp *l)
 	addr = USER_TO_UAREA(l->l_addr);
 	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !L_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
+
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
 }
 
 #ifdef COREDUMP

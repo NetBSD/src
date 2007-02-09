@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.89 2006/08/30 21:25:22 matt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.90 2007/02/09 21:55:01 ad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2006/08/30 21:25:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.90 2007/02/09 21:55:01 ad Exp $");
 #include "opt_coredump.h"
 
 #include <sys/param.h>
@@ -100,6 +100,11 @@ cpu_lwp_free(struct lwp *l, int proc)
 		fpusave_proc(l, 0);
 }
 
+void
+cpu_lwp_free2(struct lwp *l)
+{
+	(void) l;
+}
 
 /*
  * cpu_exit is called as the last action during exit.

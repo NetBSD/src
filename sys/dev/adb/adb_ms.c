@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_ms.c,v 1.2 2007/02/09 21:07:37 macallan Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.3 2007/02/09 21:55:27 ad Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.2 2007/02/09 21:07:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.3 2007/02/09 21:55:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.2 2007/02/09 21:07:37 macallan Exp $");
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/sysctl.h>
 
 #include <machine/autoconf.h>
 
@@ -86,7 +85,6 @@ struct adbms_softc {
 	 *             always down
 	 */
 	int		sc_x, sc_y;
-	int		sc_tapping;
 	/* buffers */
 	int		sc_poll;
 	int		sc_msg_len;
@@ -131,7 +129,6 @@ static void adbms_mangle_2(struct adbms_softc *, int);
 static void adbms_mangle_4(struct adbms_softc *, int);
 static void adbms_handler(void *, int, uint8_t *);
 static int  adbms_wait(struct adbms_softc *, int);
-static int  sysctl_adbms_tap(SYSCTLFN_ARGS);
 
 const struct wsmouse_accessops adbms_accessops = {
 	adbms_enable,
@@ -171,7 +168,6 @@ adbms_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devid[4] = 0;
 	sc->sc_poll = 0;
 	sc->sc_msg_len = 0;
-	sc->sc_tapping = 1;
 
 	ems_init(sc);
 
@@ -566,22 +562,20 @@ adbms_process_event(struct adbms_softc *sc, int len, uint8_t *buffer)
 
 	if (sc->sc_class == MSCLASS_TRACKPAD) {
 
-		if (sc->sc_tapping == 1) {
-			if (sc->sc_down) {
-				/* finger is down - collect motion data */
-				sc->sc_x += dx;
-				sc->sc_y += dy;
-			}
-			DPRINTF("buttons: %02x\n", buttons);
-			switch (sc->sc_buttons) {
-				case 2:
-					buttons |= ((buttons & 2) >> 1);
-					adbms_mangle_2(sc, buttons);
-					break;
-				case 4:
-					adbms_mangle_4(sc, buttons);
-					break;
-			}
+		if (sc->sc_down) {
+			/* finger is down - collect motion data */
+			sc->sc_x += dx;
+			sc->sc_y += dy;
+		}
+		DPRINTF("buttons: %02x\n", buttons);
+		switch (sc->sc_buttons) {
+			case 2:
+				buttons |= ((buttons & 2) >> 1);
+				adbms_mangle_2(sc, buttons);
+				break;
+			case 4:
+				adbms_mangle_4(sc, buttons);
+				break;
 		}
 		/* filter the pseudo-buttons out */
 		buttons &= 1;
@@ -689,8 +683,7 @@ adbms_disable(void *v)
 static void
 init_trackpad(struct adbms_softc *sc)
 {
-	struct sysctlnode *me = NULL, *node = NULL;
-	int cmd, addr, ret;
+	int cmd, addr;
 	uint8_t buffer[16];
 	uint8_t b2[] = {0x99, 0x94, 0x19, 0xff, 0xb2, 0x8a, 0x1b, 0x50};
 	
@@ -721,28 +714,6 @@ init_trackpad(struct adbms_softc *sc)
 	cmd = ADBFLUSH(addr);
 	adbms_send_sync(sc, cmd, 0, NULL);
 	delay(1000);
-
-	/*
-	 * setup a sysctl node to control wether tapping the pad should
-	 * trigger mouse button events
-	 */
-
-	sc->sc_tapping = 1;
-	
-	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
-	    CTLFLAG_READWRITE,
-	    CTLTYPE_NODE, sc->sc_dev.dv_xname, NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-
-	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&node,
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
-	    CTLTYPE_INT, "tapping", "tapping the pad causes button events",
-	    sysctl_adbms_tap, 1, NULL, 0,
-	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
-	if (node != NULL) {
-		node->sysctl_data = sc;
-	}	
 }
 
 static int
@@ -776,41 +747,4 @@ adbms_send_sync(struct adbms_softc *sc, uint8_t cmd, int len, uint8_t *msg)
 	sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, len, msg);
 	adbms_wait(sc, 1000);
 	return (sc->sc_msg_len != -1);
-}
-
-static int
-sysctl_adbms_tap(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node = *rnode;
-	struct adbms_softc *sc = node.sysctl_data;
-
-	node.sysctl_idata = sc->sc_tapping;
-
-	if (newp) {
-
-		/* we're asked to write */	
-		node.sysctl_data = &sc->sc_tapping;
-		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
-
-			sc->sc_tapping = (node.sysctl_idata == 0) ? 0 : 1;
-			return 0;
-		}
-		return EINVAL;
-	} else {
-
-		node.sysctl_size = 4;
-		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
-	}
-
-	return 0;
-}
-
-SYSCTL_SETUP(sysctl_ams_setup, "sysctl ams subtree setup")
-{
-
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "machdep", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_MACHDEP, CTL_EOL);
 }

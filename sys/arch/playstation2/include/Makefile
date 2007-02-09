@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2006/07/26 19:54:57 drochner Exp $
+#	$NetBSD: Makefile,v 1.9 2007/02/09 21:55:09 ad Exp $
 
 INCSDIR= /usr/include/playstation2
 
@@ -13,9 +13,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h \
 	kcore.h kdbparam.h \
 	limits.h lock.h locore.h \
-	math.h mcontext.h mips_opcode.h \
+	math.h mcontext.h mips_opcode.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h regdef.h regnum.h reloc.h \
+	reg.h regdef.h regnum.h reloc.h rwlock.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h \

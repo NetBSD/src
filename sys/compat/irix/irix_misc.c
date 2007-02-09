@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_misc.c,v 1.7 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_misc.c,v 1.8 2007/02/09 21:55:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.7 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.8 2007/02/09 21:55:18 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_misc.c,v 1.7 2005/12/11 12:20:12 christos Exp $
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>

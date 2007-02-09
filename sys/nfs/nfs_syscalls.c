@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.104 2007/01/17 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.105 2007/02/09 21:55:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.104 2007/01/17 12:40:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.105 2007/02/09 21:55:37 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.104 2007/01/17 12:40:36 yamt Exp 
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
 #include <sys/kauth.h>
-
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <netinet/in.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.8 2005/12/11 12:18:09 christos Exp $ */
+/*	$NetBSD: svr4_machdep.c,v 1.9 2007/02/09 21:55:06 ad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.8 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.9 2007/02/09 21:55:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.8 2005/12/11 12:18:09 christos Ex
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h> 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h> 
  

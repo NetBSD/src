@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.8 2007/01/24 13:08:14 hubertf Exp $	*/
+/*	$NetBSD: ast.c,v 1.9 2007/02/09 21:55:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.8 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.9 2007/02/09 21:55:02 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.8 2007/01/24 13:08:14 hubertf Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
-#include <sys/savar.h>
 #include <sys/vmmeter.h>
 #include <sys/userret.h>
 
@@ -125,7 +124,7 @@ ast(struct trapframe *tf)
 
 	/* Allow a forced task switch. */
 	if (want_resched)
-		preempt(0);
+		preempt();
 
 	userret(l);
 }

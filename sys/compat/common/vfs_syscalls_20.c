@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.15 2006/11/16 01:32:41 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.16 2007/02/09 21:55:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.15 2006/11/16 01:32:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.16 2007/02/09 21:55:16 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.15 2006/11/16 01:32:41 christo
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/sysctl.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 

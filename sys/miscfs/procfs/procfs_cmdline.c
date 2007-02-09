@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.24 2006/12/28 09:17:52 elad Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.25 2007/02/09 21:55:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.24 2006/12/28 09:17:52 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.25 2007/02/09 21:55:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ procfs_docmdline(
 	size_t i, len, xlen, upper_bound;
 	struct uio auio;
 	struct iovec aiov;
+	struct vmspace *vm;
 	vaddr_t argv;
 	char *arg;
 
@@ -87,7 +88,6 @@ procfs_docmdline(
 	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
 		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm) + 1;
 		error = uiomove_frombuf(arg, len, uio);
-
 		free(arg, M_TEMP);
 		return (error);
 	}
@@ -101,12 +101,10 @@ procfs_docmdline(
 	/*
 	 * Lock the process down in memory.
 	 */
-	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
 		free(arg, M_TEMP);
-		return (EFAULT);
+		return (error);
 	}
-	p->p_vmspace->vm_refcnt++;	/* XXX */
 
 	/*
 	 * Read in the ps_strings structure.
@@ -119,7 +117,7 @@ procfs_docmdline(
 	auio.uio_resid = sizeof(pss);
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&vm->vm_map, &auio);
 	if (error)
 		goto bad;
 
@@ -134,7 +132,7 @@ procfs_docmdline(
 	auio.uio_resid = sizeof(argv);
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
-	error = uvm_io(&p->p_vmspace->vm_map, &auio);
+	error = uvm_io(&vm->vm_map, &auio);
 	if (error)
 		goto bad;
 
@@ -156,7 +154,7 @@ procfs_docmdline(
 		auio.uio_resid = xlen;
 		auio.uio_rw = UIO_READ;
 		UIO_SETUP_SYSSPACE(&auio);
-		error = uvm_io(&p->p_vmspace->vm_map, &auio);
+		error = uvm_io(&vm->vm_map, &auio);
 		if (error)
 			goto bad;
 
@@ -178,7 +176,7 @@ procfs_docmdline(
 	/*
 	 * Release the process.
 	 */
-	uvmspace_free(p->p_vmspace);
+	uvmspace_free(vm);
 
 	free(arg, M_TEMP);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.15 2006/08/30 14:01:57 cube Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.16 2007/02/09 21:55:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15 2006/08/30 14:01:57 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.16 2007/02/09 21:55:01 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -261,7 +261,11 @@ cpu_lwp_free(struct lwp *l, int proc)
 
 	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
+}
 
+void
+cpu_lwp_free2(struct lwp *l)
+{
 	/* Nuke the TSS. */
 	tss_free(l->l_md.md_tss_sel);
 }
@@ -277,7 +281,7 @@ void
 cpu_exit(struct lwp *l)
 {
 
-	switch_exit(l, lwp_exit2);
+	switch_exit(l, (void (*)(struct lwp *))nullop);
 }
 
 #ifdef COREDUMP

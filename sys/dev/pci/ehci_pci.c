@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.26 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.27 2007/02/09 21:55:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.26 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.27 2007/02/09 21:55:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_USBREV_1_0:
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
-		aprint_normal("%s: pre-2.0 USB rev\n", devname);
+		aprint_verbose("%s: pre-2.0 USB rev\n", devname);
 		return;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
@@ -318,7 +318,7 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, 0);
 		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS, 0);
 	} else {
-		aprint_normal("%s: BIOS has given up ownership\n", devname);
+		aprint_verbose("%s: BIOS has given up ownership\n", devname);
 	}
 }
 

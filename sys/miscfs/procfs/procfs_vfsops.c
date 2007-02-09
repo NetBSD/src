@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.69 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.70 2007/02/09 21:55:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.69 2007/01/19 14:49:11 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.70 2007/02/09 21:55:36 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -205,7 +205,7 @@ procfs_root(mp, vpp)
 	struct vnode **vpp;
 {
 
-	return (procfs_allocvp(mp, vpp, 0, PFSroot, -1));
+	return (procfs_allocvp(mp, vpp, 0, PFSroot, -1, NULL));
 }
 
 /* ARGSUSED */
