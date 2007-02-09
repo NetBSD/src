@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.15 2006/09/23 22:01:04 manu Exp $	*/
+/*	$NetBSD: subr.c,v 1.16 2007/02/09 22:08:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: subr.c,v 1.15 2006/09/23 22:01:04 manu Exp $");
+__RCSID("$NetBSD: subr.c,v 1.16 2007/02/09 22:08:49 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,9 +90,6 @@ getpoints(int facs, char *s)
 			break;
 		case 'u':
 			fac = KTRFAC_USER;
-			break;
-		case 'U':
-			fac = KTRFAC_SAUPCALL;
 			break;
 		case 'S':
 			fac = KTRFAC_MIB;

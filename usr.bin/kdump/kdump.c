@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.88 2007/01/28 21:29:59 chs Exp $	*/
+/*	$NetBSD: kdump.c,v 1.89 2007/02/09 22:08:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.88 2007/01/28 21:29:59 chs Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.89 2007/02/09 22:08:48 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,6 @@ __RCSID("$NetBSD: kdump.c,v 1.88 2007/01/28 21:29:59 chs Exp $");
 #include <sys/ktrace.h>
 #include <sys/ioctl.h>
 #include <sys/ptrace.h>
-#include <sys/sa.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -116,7 +115,6 @@ static void	ktrcsw(struct ktr_csw *);
 static void	ktruser(struct ktr_user *, int);
 static void	ktrmmsg(struct ktr_mmsg *, int);
 static void	ktrmool(struct ktr_mool *, int);
-static void	ktrsaupcall(const struct ktr_saupcall *, int);
 static void	ktrmib(int *, int);
 static void	usage(void) __attribute__((__noreturn__));
 static void	eprint(int);
@@ -276,9 +274,6 @@ main(int argc, char **argv)
 		case KTR_EXEC_ARG:
 		case KTR_EXEC_ENV:
 			visdump_buf(m, ktrlen, col);
-			break;
-		case KTR_SAUPCALL:
-			ktrsaupcall(m, ktrlen);
 			break;
 		case KTR_MIB:
 			ktrmib(m, ktrlen);
@@ -971,45 +966,6 @@ ktrmmsg(struct ktr_mmsg *mmsg, int len)
 		printf("unknown service%s [%d]\n", reply, mmsg->ktr_id);
 
 	hexdump_buf(mmsg, len, word_size ? word_size : 4);
-}
-
-static void
-ktr_saprint(const struct ktr_saupcall *sau, int off, int len)
-{
-	const struct sa_t * sa = (const struct sa_t *)(const void *)&sau[1];
-	int i;
-	for (i = off; i < off + len; i++) {
-		printf("<ctx=%p, id=%d, cpu=%d>%s",
-		    sa[i].sa_context, sa[i].sa_id, sa[i].sa_cpu,
-		    i == off + len - 1 ? "" : ", ");
-	}
-}
-
-static void
-ktrsaupcall(const struct ktr_saupcall *sau, int len)
-{
-	char tbuf[64];
-	const char *type;
-	static const char *const sastrings[] = { SA_UPCALL_STRINGS };
-
-	if (sau->ktr_type >= 0 && sau->ktr_type < SA_UPCALL_NUPCALLS)
-		type = sastrings[sau->ktr_type];
-	else {
-		(void)snprintf(tbuf, sizeof(tbuf), "*%d*", sau->ktr_type);
-		type = tbuf;
-	}
-	printf("%s", type);
-	if (sau->ktr_nevent) {
-		printf(", event=[");
-		ktr_saprint(sau, 1, sau->ktr_nevent);
-		printf("]");
-	}
-	if (sau->ktr_nint) {
-		printf(", intr=[");
-		ktr_saprint(sau, 1 + sau->ktr_nevent, sau->ktr_nint);
-		printf("]");
-	}
-	printf("\n");
 }
 
 static void
