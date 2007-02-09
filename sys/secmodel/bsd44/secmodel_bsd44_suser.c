@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.17.2.3 2007/01/21 19:12:10 bouyer Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.17.2.4 2007/02/09 22:26:07 tron Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.17.2.3 2007/01/21 19:12:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.17.2.4 2007/02/09 22:26:07 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -413,7 +413,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_NETWORK_SOCKET:
 		switch (req) {
 		case KAUTH_REQ_NETWORK_SOCKET_OPEN:
-			if ((u_long)arg1 == PF_ROUTE)
+			if ((u_long)arg1 == PF_ROUTE || (u_long)arg1 == PF_BLUETOOTH)
 				result = KAUTH_RESULT_ALLOW;
 			else if ((u_long)arg2 == SOCK_RAW) {
 				if (isroot)
