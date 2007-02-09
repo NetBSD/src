@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.40 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.41 2007/02/09 23:51:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.40 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.41 2007/02/09 23:51:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -394,6 +394,7 @@ linux_sys_exit_group(l, v, retval)
 		 * care of hiding the zombies and reporting the exit code
 		 * properly.
 		 */
+		mutex_enter(&proclist_mutex);
       		LIST_FOREACH(e, &led->s->threads, threads) {
 			if (e->proc == p)
 				continue;
@@ -406,6 +407,8 @@ linux_sys_exit_group(l, v, retval)
 
 		/* Now, kill ourselves */
 		psignal(p, SIGKILL);
+		mutex_exit(&proclist_mutex);
+
 		return 0;
 
 	}
