@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.55 2007/01/21 08:47:43 tsutsui Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.56 2007/02/09 21:55:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55 2007/01/21 08:47:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.56 2007/02/09 21:55:04 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -1342,13 +1342,11 @@ transmeta_cpu_info(struct cpu_info *ci)
 {
 	u_int eax, ebx, ecx, edx, nreg = 0;
 
-	/* XXX aprint_verbose()? */
-
 	CPUID(0x80860000, eax, ebx, ecx, edx);
 	nreg = eax;
 	if (nreg >= 0x80860001) {
 		CPUID(0x80860001, eax, ebx, ecx, edx);
-		aprint_normal("%s: Processor revision %u.%u.%u.%u\n",
+		aprint_verbose("%s: Processor revision %u.%u.%u.%u\n",
 		    ci->ci_dev->dv_xname,
 		    (ebx >> 24) & 0xff,
 		    (ebx >> 16) & 0xff,
@@ -1357,7 +1355,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 	}
 	if (nreg >= 0x80860002) {
 		CPUID(0x80860002, eax, ebx, ecx, edx);
-		aprint_normal("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		aprint_verbose("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
 		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
 		    (ebx >> 16) & 0xff,
 		    (ebx >> 8) & 0xff,
@@ -1383,14 +1381,14 @@ transmeta_cpu_info(struct cpu_info *ci)
 			    info.regs[i].ecx, info.regs[i].edx);
 		}
 		info.text[64] = 0;
-		aprint_normal("%s: %s\n", ci->ci_dev->dv_xname, info.text);
+		aprint_verbose("%s: %s\n", ci->ci_dev->dv_xname, info.text);
 	}
 
 	if (nreg >= 0x80860007) {
 		crusoe_longrun = tmx86_get_longrun_mode();
 		tmx86_get_longrun_status(&crusoe_frequency,
 		    &crusoe_voltage, &crusoe_percentage);
-		aprint_normal("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
+		aprint_verbose("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
 		    ci->ci_dev->dv_xname,
 		    crusoe_longrun, crusoe_frequency, crusoe_voltage,
 		    crusoe_percentage);
@@ -1620,19 +1618,19 @@ identifycpu(struct cpu_info *ci)
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
 			if ((cpu_feature2 & CPUID2_TM2) &&
 			    (rdmsr(MSR_THERM2_CTL) & (1 << 16)))
-				aprint_normal("%s: using thermal monitor 2\n",
+				aprint_verbose("%s: using thermal monitor 2\n",
 				    cpuname);
 			else
-				aprint_normal("%s: using thermal monitor 1\n",
+				aprint_verbose("%s: using thermal monitor 1\n",
 				    cpuname);
 		} else {
-			aprint_normal("%s: enabling thermal monitor 1 ... ",
+			aprint_verbose("%s: enabling thermal monitor 1 ... ",
 			    cpuname);
 			wrmsr(MSR_MISC_ENABLE, rdmsr(MSR_MISC_ENABLE) | (1<<3));
 			if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
-				aprint_normal("enabled.\n");
+				aprint_verbose("enabled.\n");
 			} else {
-				aprint_normal("failed!\n");
+				aprint_verbose("failed!\n");
 				aprint_error("%s: failed to enable thermal "
 				    "monitoring!\n", cpuname);
 			}
@@ -1777,4 +1775,5 @@ identifycpu(struct cpu_info *ci)
 #endif /* POWERNOW_K7 || POWERNOW_K8 */
 
 	x86_errata(ci, vendor);
+	x86_patch();
 }

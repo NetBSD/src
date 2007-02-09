@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.37 2006/09/13 19:55:49 manu Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.38 2007/02/09 21:55:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.37 2006/09/13 19:55:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.38 2007/02/09 21:55:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.37 2006/09/13 19:55:49 manu Exp $");
 #include <sys/systm.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

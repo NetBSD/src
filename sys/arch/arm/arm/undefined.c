@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.27 2006/07/19 21:11:40 ad Exp $	*/
+/*	$NetBSD: undefined.c,v 1.28 2007/02/09 21:55:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.27 2006/07/19 21:11:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.28 2007/02/09 21:55:02 ad Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.27 2006/07/19 21:11:40 ad Exp $");
 #include <sys/user.h>
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>
-#include <sys/savar.h>
 #ifdef FAST_FPE
 #include <sys/acct.h>
 #endif
@@ -385,7 +384,7 @@ undefinedinstruction(trapframe_t *frame)
 			/*
 			 * We are being preempted.
 			 */
-			preempt(0);
+			preempt();
 		}
 
 		/* Invoke MI userret code */

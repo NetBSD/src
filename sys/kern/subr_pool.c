@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_pool.c,v 1.124 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.125 2007/02/09 21:55:31 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.124 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.125 2007/02/09 21:55:31 ad Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.124 2006/11/01 10:17:58 yamt Exp $")
 #include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
+#include <sys/debug.h>
 
 #include <uvm/uvm.h>
 
@@ -674,6 +675,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
 	pp->pr_drain_hook = NULL;
 	pp->pr_drain_hook_arg = NULL;
+	pp->pr_freecheck = NULL;
 
 	/*
 	 * Decide whether to put the page header off page to avoid
@@ -929,7 +931,6 @@ pool_get(struct pool *pp, int flags)
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
 		ASSERT_SLEEPABLE(NULL, "pool_get(PR_WAITOK)");
-	SCHED_ASSERT_UNLOCKED();
 #endif
 
 	simple_lock(&pp->pr_slock);
@@ -1135,6 +1136,8 @@ pool_get(struct pool *pp, int flags)
 	}
 
 	simple_unlock(&pp->pr_slock);
+	KASSERT((((vaddr_t)v + pp->pr_itemoffset) & (pp->pr_align - 1)) == 0);
+	FREECHECK_OUT(&pp->pr_freecheck, v);
 	return (v);
 }
 
@@ -1148,7 +1151,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	struct pool_item_header *ph;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
-	SCHED_ASSERT_UNLOCKED();
+	FREECHECK_IN(&pp->pr_freecheck, v);
 
 #ifdef DIAGNOSTIC
 	if (__predict_false(pp->pr_nout == 0)) {
@@ -1371,8 +1374,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
 	caddr_t cp = storage;
-	unsigned int align = pp->pr_align;
-	unsigned int ioff = pp->pr_itemoffset;
+	const unsigned int align = pp->pr_align;
+	const unsigned int ioff = pp->pr_itemoffset;
 	int n;
 
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock));
@@ -1409,6 +1412,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	if (ioff != 0)
 		cp = (caddr_t)(cp + (align - ioff));
 
+	KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
+
 	/*
 	 * Insert remaining chunks on the bucket list.
 	 */
@@ -1436,6 +1441,8 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 			pi->pi_magic = PI_MAGIC;
 #endif
 			cp = (caddr_t)(cp + pp->pr_size);
+
+			KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
 		}
 	}
 
@@ -2068,6 +2075,8 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 				return (NULL);
 			}
 		}
+		KASSERT((((vaddr_t)object + pc->pc_pool->pr_itemoffset) &
+		    (pc->pc_pool->pr_align - 1)) == 0);
 		if (object != NULL && pap != NULL) {
 #ifdef POOL_VTOPHYS
 			*pap = POOL_VTOPHYS(object);
@@ -2075,6 +2084,8 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 			*pap = POOL_PADDR_INVALID;
 #endif
 		}
+
+		FREECHECK_OUT(&pc->pc_freecheck, object);
 		return (object);
 	}
 
@@ -2088,6 +2099,9 @@ pool_cache_get_paddr(struct pool_cache *pc, int flags, paddr_t *pap)
 	}
 	simple_unlock(&pc->pc_slock);
 
+	KASSERT((((vaddr_t)object + pc->pc_pool->pr_itemoffset) &
+	    (pc->pc_pool->pr_align - 1)) == 0);
+	FREECHECK_OUT(&pc->pc_freecheck, object);
 	return (object);
 }
 
@@ -2102,6 +2116,8 @@ pool_cache_put_paddr(struct pool_cache *pc, void *object, paddr_t pa)
 {
 	struct pool_cache_group *pcg;
 	int s;
+
+	FREECHECK_IN(&pc->pc_freecheck, object);
 
 	if (__predict_false((pc->pc_pool->pr_flags & PR_WANTED) != 0)) {
 		goto destruct;

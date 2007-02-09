@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.159 2007/01/16 05:29:54 ad Exp $ */
+/* $NetBSD: syscallargs.h,v 1.160 2007/02/09 21:55:37 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -689,7 +689,7 @@ struct sys_quotactl_args {
 	syscallarg(const char *) path;
 	syscallarg(int) cmd;
 	syscallarg(int) uid;
-	syscallarg(void *) arg;
+	syscallarg(caddr_t) arg;
 };
 
 struct compat_43_sys_getsockname_args {
@@ -1385,7 +1385,6 @@ struct sys__lwp_wakeup_args {
 struct sys__lwp_setprivate_args {
 	syscallarg(void *) ptr;
 };
-#if !defined(_KERNEL)
 
 struct sys__lwp_kill_args {
 	syscallarg(lwpid_t) target;
@@ -1399,40 +1398,18 @@ struct sys__lwp_detach_args {
 struct sys__lwp_park_args {
 	syscallarg(const struct timespec *) ts;
 	syscallarg(struct __ucontext *) ucp;
-	syscallarg(const void *) hint;
+	syscallarg(void *) hint;
 };
 
 struct sys__lwp_unpark_args {
 	syscallarg(lwpid_t) target;
-	syscallarg(const void *) hint;
+	syscallarg(void *) hint;
 };
 
 struct sys__lwp_unpark_all_args {
 	syscallarg(const lwpid_t *) targets;
 	syscallarg(size_t) ntargets;
-	syscallarg(const void *) hint;
-};
-#else
-#endif
-
-struct sys_sa_register_args {
-	syscallarg(sa_upcall_t) new;
-	syscallarg(sa_upcall_t *) old;
-	syscallarg(int) flags;
-	syscallarg(ssize_t) stackinfo_offset;
-};
-
-struct sys_sa_stacks_args {
-	syscallarg(int) num;
-	syscallarg(stack_t *) stacks;
-};
-
-struct sys_sa_setconcurrency_args {
-	syscallarg(int) concurrency;
-};
-
-struct sys_sa_preempt_args {
-	syscallarg(int) sa_id;
+	syscallarg(void *) hint;
 };
 
 struct sys___sigaction_sigtramp_args {
@@ -2360,7 +2337,6 @@ int	sys__lwp_getprivate(struct lwp *, void *, register_t *);
 
 int	sys__lwp_setprivate(struct lwp *, void *, register_t *);
 
-#if !defined(_KERNEL)
 int	sys__lwp_kill(struct lwp *, void *, register_t *);
 
 int	sys__lwp_detach(struct lwp *, void *, register_t *);
@@ -2370,20 +2346,6 @@ int	sys__lwp_park(struct lwp *, void *, register_t *);
 int	sys__lwp_unpark(struct lwp *, void *, register_t *);
 
 int	sys__lwp_unpark_all(struct lwp *, void *, register_t *);
-
-#else
-#endif
-int	sys_sa_register(struct lwp *, void *, register_t *);
-
-int	sys_sa_stacks(struct lwp *, void *, register_t *);
-
-int	sys_sa_enable(struct lwp *, void *, register_t *);
-
-int	sys_sa_setconcurrency(struct lwp *, void *, register_t *);
-
-int	sys_sa_yield(struct lwp *, void *, register_t *);
-
-int	sys_sa_preempt(struct lwp *, void *, register_t *);
 
 int	sys___sigaction_sigtramp(struct lwp *, void *, register_t *);
 

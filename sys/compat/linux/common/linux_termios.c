@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.27 2006/11/25 22:03:41 elad Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.28 2007/02/09 21:55:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.27 2006/11/25 22:03:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.28 2007/02/09 21:55:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.27 2006/11/25 22:03:41 elad Exp 
 #include <sys/mount.h>
 #include <sys/termios.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

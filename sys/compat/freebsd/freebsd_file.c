@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.22 2006/07/13 16:28:39 martin Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.23 2007/02/09 21:55:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.22 2006/07/13 16:28:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.23 2007/02/09 21:55:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_file.c,v 1.22 2006/07/13 16:28:39 martin Exp
 #include <sys/mount.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>

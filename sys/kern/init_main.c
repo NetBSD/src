@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.292 2007/02/09 21:55:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.292 2007/02/09 21:55:30 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -81,6 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $")
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
+#include "opt_systrace.h"
+#include "opt_fileassoc.h"
+#include "opt_ktrace.h"
 #include "opt_pax.h"
 
 #include "rnd.h"
@@ -116,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $")
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
+#include <sys/sleepq.h>
+#include <sys/sleepq.h>
 #include <sys/iostat.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -128,6 +133,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $")
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #ifdef P1003_1B_SEMAPHORE
 #include <sys/ksem.h>
@@ -146,11 +154,15 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.291 2007/01/27 22:54:58 elad Exp $")
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
+#include <sys/lockdebug.h>
+#include <sys/debug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
@@ -244,6 +256,10 @@ main(void)
 	l->l_proc = &proc0;
 	l->l_lid = 1;
 
+#ifdef LOCKDEBUG
+	lockdebug_init();
+#endif
+
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -253,6 +269,10 @@ main(void)
 	KERNEL_LOCK_INIT();
 
 	uvm_init();
+
+#ifdef DEBUG
+	debug_init();
+#endif
 
 	kmem_init();
 
@@ -297,8 +317,6 @@ main(void)
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
 #endif
-	/* Initialize the sysctl subsystem. */
-	sysctl_init();
 
 	/* Initialize process and pgrp structures. */
 	procinit();
@@ -315,7 +333,13 @@ main(void)
 	 */
 	(void)chgproccnt(0, 1);
 
+	/* Initialize the run queues, turnstiles and sleep queues. */
 	rqinit();
+	turnstile_init();
+	sleeptab_init(&sleeptab);
+
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
 
 	/* Initialize I/O statistics. */
 	iostat_init();
@@ -370,7 +394,11 @@ main(void)
 	ubc_init();		/* must be after autoconfig */
 
 	/* Lock the kernel on behalf of proc0. */
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
+
+#ifdef SYSTRACE
+	systrace_init();
+#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -432,6 +460,11 @@ main(void)
 
 	/* Kick off timeout driven events by calling first time. */
 	schedcpu(NULL);
+
+#ifdef KTRACE
+	/* Initialize ktrace. */
+	ktrinit();
+#endif
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
@@ -519,28 +552,29 @@ main(void)
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
-	 * from the file system.  Reset p->p_rtime as it may have been
+	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	proclist_lock_read();
-	s = splsched();
 #ifdef __HAVE_TIMECOUNTER
 	getmicrotime(&time);
 #else
 	mono_time = time;
 #endif
 	boottime = time;
+	rw_enter(&proclist_lock, RW_READER);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & P_MARKER) == 0);
+		mutex_enter(&p->p_smutex);
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_cpu != NULL)
-				l->l_cpu->ci_schedstate.spc_runtime = time;
+			lwp_lock(l);
+			l->l_cpu->ci_schedstate.spc_runtime = time;
+			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
+			lwp_unlock(l);
 		}
-		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+		mutex_exit(&p->p_smutex);
 	}
-	splx(s);
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
@@ -755,7 +789,7 @@ start_init(void *arg)
 		 */
 		error = sys_execve(l, &args, retval);
 		if (error == 0 || error == EJUSTRETURN) {
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			return;
 		}
 		printf("exec %s: error %d\n", path, error);

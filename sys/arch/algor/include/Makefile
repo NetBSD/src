@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2006/07/26 19:54:56 drochner Exp $
+#	$NetBSD: Makefile,v 1.11 2007/02/09 21:55:00 ad Exp $
 
 INCSDIR=/usr/include/algor
 
@@ -14,10 +14,10 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	isa_machdep.h \
 	kcore.h kdbparam.h \
 	limits.h lock.h locore.h \
-	math.h mcontext.h mips_opcode.h \
+	math.h mcontext.h mips_opcode.h mutex.h \
 	param.h pcb.h pci_machdep.h \
 	pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h regdef.h regnum.h reloc.h \
+	reg.h regdef.h regnum.h reloc.h rwlock.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h \

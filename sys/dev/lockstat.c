@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.5 2006/12/25 11:57:40 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.6 2007/02/09 21:55:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.5 2006/12/25 11:57:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.6 2007/02/09 21:55:26 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,22 +241,12 @@ lockstat_start(lsenable_t *le)
 	lockstat_csstart = le->le_csstart;
 	lockstat_csend = le->le_csend;
 	lockstat_lockstart = le->le_lockstart;
+	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockend = le->le_lockend;
-#ifdef notyet
 	mb_memory();
-#else
-	lockstat_unlock(0);
-	(void)lockstat_lock(0);
-#endif
-
 	getnanotime(&lockstat_stime);
 	lockstat_enabled = le->le_mask;
-#ifdef notyet
 	mb_write();
-#else
-	lockstat_unlock(0);
-	(void)lockstat_lock(0);
-#endif
 }
 
 /*
@@ -369,7 +359,7 @@ lockstat_free(void)
  */
 void
 lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
-	       uint64_t time)
+	       uint64_t cycles)
 {
 	lslist_t *ll;
 	lscpu_t *lc;
@@ -410,7 +400,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 			LIST_INSERT_HEAD(ll, lb, lb_chain.list);
 		}
 		lb->lb_counts[event] += count;
-		lb->lb_times[event] += time;
+		lb->lb_times[event] += cycles;
 	} else if ((lb = SLIST_FIRST(&lc->lc_free)) != NULL) {
 		/*
 		 * Pinch a new buffer and fill it out.
@@ -421,7 +411,7 @@ lockstat_event(uintptr_t lock, uintptr_t callsite, u_int flags, u_int count,
 		lb->lb_lock = lock;
 		lb->lb_callsite = callsite;
 		lb->lb_counts[event] = count;
-		lb->lb_times[event] = time;
+		lb->lb_times[event] = cycles;
 	} else {
 		/*
 		 * We didn't find a buffer and there were none free.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.197 2007/01/19 14:49:12 hannken Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.198 2007/02/09 21:55:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.197 2007/01/19 14:49:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.198 2007/02/09 21:55:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -410,7 +410,7 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		wakeup(&lfs_writer_daemon);
 		simple_unlock(&lfs_subsys_lock);
 		simple_unlock(&fs->lfs_interlock);
-		preempt(1);
+		preempt();
 		goto restart;
 	}
 
@@ -2025,7 +2025,7 @@ lfs_putpages(void *v)
 			return r;
 
 		/* Start over. */
-		preempt(1);
+		preempt();
 		simple_lock(&vp->v_interlock);
 	} while(1);
 
@@ -2047,7 +2047,7 @@ lfs_putpages(void *v)
 		simple_unlock(&lfs_subsys_lock);
 		simple_unlock(&fs->lfs_interlock);
 		simple_unlock(&vp->v_interlock);
-		preempt(1);
+		preempt();
 		return EWOULDBLOCK;
 	}
 
@@ -2152,7 +2152,7 @@ again:
 		if (pagedaemon)
 			return EDEADLK;
 		/* else seglocked == 0 */
-		preempt(1);
+		preempt();
 		simple_lock(&vp->v_interlock);
 		goto get_seglock;
 	}
@@ -2178,7 +2178,7 @@ again:
 		}
 
 		/* Give the write a chance to complete */
-		preempt(1);
+		preempt();
 
 		/* We've lost the interlock.  Start over. */
 		if (error == EDEADLK) {

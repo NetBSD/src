@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.8 2005/12/28 19:09:29 perry Exp $	*/
+/*	$NetBSD: lock.h,v 1.9 2007/02/09 21:55:10 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -101,6 +101,24 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 	__asm volatile ("sync");
 	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+mb_read(void)
+{
+	__asm volatile ("isync" ::: "memory");
+}
+
+static __inline void
+mb_write(void)
+{
+	__asm volatile ("sync" ::: "memory");
+}
+
+static __inline void
+mb_memory(void)
+{
+	__asm volatile ("sync" ::: "memory");
 }
 
 #endif /* _POWERPC_LOCK_H_ */

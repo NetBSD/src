@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.180 2007/01/16 05:29:54 ad Exp $ */
+/* $NetBSD: syscalls.c,v 1.181 2007/02/09 21:55:31 ad Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.180 2007/01/16 05:29:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.181 2007/02/09 21:55:31 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -24,7 +24,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.180 2007/01/16 05:29:54 ad Exp $");
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #endif /* _KERNEL_OPT */
 
@@ -453,19 +452,11 @@ const char *const syscallnames[] = {
 	"_lwp_wakeup",			/* 315 = _lwp_wakeup */
 	"_lwp_getprivate",			/* 316 = _lwp_getprivate */
 	"_lwp_setprivate",			/* 317 = _lwp_setprivate */
-#if !defined(_KERNEL)
 	"_lwp_kill",			/* 318 = _lwp_kill */
 	"_lwp_detach",			/* 319 = _lwp_detach */
 	"_lwp_park",			/* 320 = _lwp_park */
 	"_lwp_unpark",			/* 321 = _lwp_unpark */
 	"_lwp_unpark_all",			/* 322 = _lwp_unpark_all */
-#else
-	"#318 (excluded sys__lwp_kill)",		/* 318 = excluded sys__lwp_kill */
-	"#319 (excluded sys__lwp_detach)",		/* 319 = excluded sys__lwp_detach */
-	"#320 (excluded sys__lwp_park)",		/* 320 = excluded sys__lwp_park */
-	"#321 (excluded sys__lwp_unpark)",		/* 321 = excluded sys__lwp_unpark */
-	"#322 (excluded sys__lwp_unpark_all)",		/* 322 = excluded sys__lwp_unpark_all */
-#endif
 	"#323 (unimplemented)",		/* 323 = unimplemented */
 	"#324 (unimplemented)",		/* 324 = unimplemented */
 	"#325 (unimplemented)",		/* 325 = unimplemented */
@@ -473,12 +464,12 @@ const char *const syscallnames[] = {
 	"#327 (unimplemented)",		/* 327 = unimplemented */
 	"#328 (unimplemented)",		/* 328 = unimplemented */
 	"#329 (unimplemented)",		/* 329 = unimplemented */
-	"sa_register",			/* 330 = sa_register */
-	"sa_stacks",			/* 331 = sa_stacks */
-	"sa_enable",			/* 332 = sa_enable */
-	"sa_setconcurrency",			/* 333 = sa_setconcurrency */
-	"sa_yield",			/* 334 = sa_yield */
-	"sa_preempt",			/* 335 = sa_preempt */
+	"#330 (obsolete sys_sa_register)",		/* 330 = obsolete sys_sa_register */
+	"#331 (obsolete sys_sa_stacks)",		/* 331 = obsolete sys_sa_stacks */
+	"#332 (obsolete sys_sa_enable)",		/* 332 = obsolete sys_sa_enable */
+	"#333 (obsolete sys_sa_setconcurrency)",		/* 333 = obsolete sys_sa_setconcurrency */
+	"#334 (obsolete sys_sa_yield)",		/* 334 = obsolete sys_sa_yield */
+	"#335 (obsolete sys_sa_preempt)",		/* 335 = obsolete sys_sa_preempt */
 	"#336 (obsolete sys_sa_unblockyield)",		/* 336 = obsolete sys_sa_unblockyield */
 	"#337 (unimplemented)",		/* 337 = unimplemented */
 	"#338 (unimplemented)",		/* 338 = unimplemented */

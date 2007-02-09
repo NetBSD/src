@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.120 2007/01/19 22:46:21 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.121 2007/02/09 21:55:29 ad Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.120 2007/01/19 22:46:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.121 2007/02/09 21:55:29 ad Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -334,7 +334,7 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 
 	vers = EREAD2(sc, EHCI_HCIVERSION);
-	aprint_normal("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
+	aprint_verbose("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
 	       vers >> 8, vers & 0xff);
 
 	sparams = EREAD4(sc, EHCI_HCSPARAMS);
@@ -342,7 +342,7 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_npcomp = EHCI_HCS_N_PCC(sparams);
 	ncomp = EHCI_HCS_N_CC(sparams);
 	if (ncomp != sc->sc_ncomp) {
-		aprint_error("%s: wrong number of companions (%d != %d)\n",
+		aprint_verbose("%s: wrong number of companions (%d != %d)\n",
 		       USBDEVNAME(sc->sc_bus.bdev),
 		       ncomp, sc->sc_ncomp);
 #if NOHCI == 0 || NUHCI == 0

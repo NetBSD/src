@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.12 2007/02/05 11:53:46 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.13 2007/02/09 21:55:31 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,12 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.12 2007/02/05 11:53:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.13 2007/02/09 21:55:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
 #include <sys/kmem.h>
 #include <sys/vmem.h>
+#include <sys/debug.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -52,6 +53,7 @@ static vmem_t *kmem_arena;
 static struct callback_entry kmem_kva_reclaim_entry;
 
 #if defined(DEBUG)
+static void *kmem_freecheck;
 static void kmem_poison_fill(void *, size_t);
 static void kmem_poison_check(void *, size_t);
 #else /* defined(DEBUG) */
@@ -100,6 +102,7 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
 	if (p != NULL) {
 		kmem_poison_check(p, size);
+		FREECHECK_OUT(&kmem_freecheck, p);
 	}
 	return p;
 }
@@ -132,6 +135,7 @@ void
 kmem_free(void *p, size_t size)
 {
 
+	FREECHECK_IN(&kmem_freecheck, p);
 	kmem_poison_fill(p, size);
 	vmem_free(kmem_arena, (vmem_addr_t)p, size);
 }

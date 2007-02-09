@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.1 2006/09/13 19:55:49 manu Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.2 2007/02/09 21:55:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,12 +33,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.1 2006/09/13 19:55:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.2 2007/02/09 21:55:21 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/sa.h>
 #include <sys/dirent.h>
 
 #include <sys/syscallargs.h>

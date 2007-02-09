@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.14 2006/06/26 21:23:57 mrg Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.15 2007/02/09 21:55:23 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.14 2006/06/26 21:23:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.15 2007/02/09 21:55:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.14 2006/06/26 21:23:57 mrg Exp $")
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>

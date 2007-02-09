@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.8 2005/12/11 12:20:23 christos Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.9 2007/02/09 21:55:23 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.8 2005/12/11 12:20:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.9 2007/02/09 21:55:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.8 2005/12/11 12:20:23 christos Ex
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 

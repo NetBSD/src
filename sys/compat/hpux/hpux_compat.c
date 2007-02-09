@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.82 2007/01/04 15:21:09 elad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.83 2007/02/09 21:55:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.82 2007/01/04 15:21:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.83 2007/02/09 21:55:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.82 2007/01/04 15:21:09 elad Exp $"
 #include <machine/psl.h>
 #include <machine/vmparam.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
@@ -612,7 +611,9 @@ hpux_sys_rtprio(lp, v, retval)
 		nice = (SCARG(uap, prio) >> 3) - 16;
 		break;
 	}
+	mutex_enter(&p->p_mutex);
 	error = donice(lp, p, nice);
+	mutex_exit(&p->p_mutex);
 	if (error == EACCES)
 		error = EPERM;
 	return (error);
@@ -1164,7 +1165,7 @@ hpux_sys_setpgrp_6x(l, v, retval)
 	struct proc *p = l->l_proc;
 
 	if (p->p_pid != p->p_pgid)
-		enterpgrp(p, p->p_pid, 0);
+		enterpgrp(p, p->p_pid, p->p_pid, 0);
 	*retval = p->p_pgid;
 	return (0);
 }
@@ -1351,7 +1352,9 @@ hpux_sys_nice_6x(l, v, retval)
 	struct proc *p = l->l_proc;
 	int error;
 
+	mutex_enter(&p->p_mutex);
 	error = donice(l, p, (p->p_nice - NZERO) + SCARG(uap, nval));
+	mutex_exit(&p->p_mutex);
 	if (error == 0)
 		*retval = p->p_nice - NZERO;
 	return (error);

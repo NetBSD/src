@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.99 2007/01/04 18:44:46 elad Exp $ */
+/* $NetBSD: wskbd.c,v 1.100 2007/02/09 21:55:30 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.99 2007/01/04 18:44:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.100 2007/02/09 21:55:30 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1270,10 +1270,10 @@ wskbd_set_display(struct device *dv, struct wsevsrc *me)
 	}
 
 	if (displaydv)
-		printf("%s: connecting to %s\n",
+		aprint_verbose("%s: connecting to %s\n",
 		       sc->sc_base.me_dv.dv_xname, displaydv->dv_xname);
 	else
-		printf("%s: disconnecting from %s\n",
+		aprint_verbose("%s: disconnecting from %s\n",
 		       sc->sc_base.me_dv.dv_xname, odisplaydv->dv_xname);
 
 	return (0);

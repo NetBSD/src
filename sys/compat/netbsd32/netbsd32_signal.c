@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.18 2006/11/08 20:18:32 drochner Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.19 2007/02/09 21:55:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.18 2006/11/08 20:18:32 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.19 2007/02/09 21:55:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ netbsd32_sigaction(l, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(l->l_proc, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 			   SCARG(uap, nsa) ? &nsa : 0,
 			   SCARG(uap, osa) ? &osa : 0,
 			   NULL, 0);
@@ -126,7 +126,7 @@ netbsd32___sigaltstack14(l, v, retval)
 		nss.ss_size = (size_t)s32.ss_size;
 		nss.ss_flags = s32.ss_flags;
 	}
-	error = sigaltstack1(l->l_proc,
+	error = sigaltstack1(l,
 	    SCARG(uap, nss) ? &nss : 0, SCARG(uap, oss) ? &oss : 0);
 	if (error)
 		return (error);
@@ -167,7 +167,7 @@ netbsd32___sigaction14(l, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(l->l_proc, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
 	    NULL, 0);
 	if (error)
@@ -198,7 +198,6 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 		syscallarg(netbsd32_voidp) tramp;
 		syscallarg(int) vers;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct netbsd32_sigaction sa32;
 	struct sigaction nsa, osa;
 	int error;
@@ -212,7 +211,7 @@ netbsd32___sigaction_sigtramp(l, v, retval)
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
-	error = sigaction1(p, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
 	    NETBSD32PTR64(SCARG(uap, tramp)), SCARG(uap, vers));
 	if (error)
@@ -320,14 +319,14 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 void
 getucontext32(struct lwp *l, ucontext32_t *ucp)
 {
-	struct proc	*p;
+	struct proc *p;
 
 	p = l->l_proc;
 
 	ucp->uc_flags = 0;
 	ucp->uc_link = (uint32_t)(intptr_t)l->l_ctxlink;
 
-	(void)sigprocmask1(p, 0, NULL, &ucp->uc_sigmask);
+	(void)sigprocmask1(l, 0, NULL, &ucp->uc_sigmask);
 	ucp->uc_flags |= _UC_SIGMASK;
 
 	/*
@@ -335,16 +334,16 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 	 * in the System V Interface Definition appears to allow returning
 	 * the main context stack.
 	 */
-	if ((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK) == 0) {
+	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
 		ucp->uc_stack.ss_sp = USRSTACK32;
 		ucp->uc_stack.ss_size = ctob(p->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
 		/* Simply copy alternate signal execution stack. */
 		ucp->uc_stack.ss_sp =
-		    (uint32_t)(intptr_t)p->p_sigctx.ps_sigstk.ss_sp;
-		ucp->uc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
-		ucp->uc_stack.ss_flags = p->p_sigctx.ps_sigstk.ss_flags;
+		    (uint32_t)(intptr_t)l->l_sigstk.ss_sp;
+		ucp->uc_stack.ss_size = l->l_sigstk.ss_size;
+		ucp->uc_stack.ss_flags = l->l_sigstk.ss_flags;
 	}
 	ucp->uc_flags |= _UC_STACK;
 
@@ -369,10 +368,8 @@ netbsd32_getcontext(struct lwp *l, void *v, register_t *retval)
 int
 setucontext32(struct lwp *l, const ucontext32_t *ucp)
 {
-	struct proc	*p;
 	int		error;
 
-	p = l->l_proc;
 	if ((error = cpu_setmcontext32(l, &ucp->uc_mcontext,
 	     ucp->uc_flags)) != 0)
 		return (error);
@@ -382,7 +379,7 @@ setucontext32(struct lwp *l, const ucontext32_t *ucp)
 	 * don't; see the comment in getucontext().
 	 */
 	if ((ucp->uc_flags & _UC_SIGMASK) != 0)
-		sigprocmask1(p, SIG_SETMASK, &ucp->uc_sigmask, NULL);
+		sigprocmask1(l, SIG_SETMASK, &ucp->uc_sigmask, NULL);
 
 	return 0;
 }

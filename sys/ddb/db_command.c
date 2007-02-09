@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.91 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.92 2007/02/09 21:55:26 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.91 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.92 2007/02/09 21:55:26 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.91 2006/11/16 01:32:44 christos Exp
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/lockdebug.h>
+#include <sys/sleepq.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
@@ -121,6 +123,7 @@ static void	db_stack_trace_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_sync_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, const char *);
+static void	db_lock_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, int, db_expr_t, const char *);
 
@@ -144,6 +147,7 @@ static const struct db_command db_show_cmds[] = {
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
 	{ "buf",	db_buf_print_cmd,	0,	NULL },
 	{ "event",	db_event_print_cmd,	0,	NULL },
+	{ "lock",	db_lock_print_cmd,	0,	NULL },
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "mount",	db_mount_print_cmd,	0,	NULL },
@@ -678,6 +682,15 @@ db_uvmexp_print_cmd(db_expr_t addr, int have_addr,
 {
 
 	uvmexp_print(db_printf);
+}
+
+/*ARGSUSED*/
+static void
+db_lock_print_cmd(db_expr_t addr, int have_addr,
+    db_expr_t count, const char *modif)
+{
+
+	lockdebug_lock_print((void *)addr, db_printf);
 }
 
 /*

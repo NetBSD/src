@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.43 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.44 2007/02/09 21:55:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.43 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.44 2007/02/09 21:55:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -91,15 +91,14 @@ uvm_meter(void)
 
 /*
  * uvm_loadav: compute a tenex style load average of a quantity on
- * 1, 5, and 15 minute internvals.
- */
+ * 1, 5, and 15 minute intervals. */
 static void
 uvm_loadav(struct loadavg *avg)
 {
 	int i, nrun;
 	struct lwp *l;
 
-	proclist_lock_read();
+	mutex_enter(&proclist_mutex);
 	nrun = 0;
 	LIST_FOREACH(l, &alllwp, l_list) {
 		switch (l->l_stat) {
@@ -113,7 +112,7 @@ uvm_loadav(struct loadavg *avg)
 			nrun++;
 		}
 	}
-	proclist_unlock_read();
+	mutex_exit(&proclist_mutex);
 	for (i = 0; i < 3; i++)
 		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
 		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
@@ -359,9 +358,8 @@ uvm_total(struct vmtotal *totalp)
 	/*
 	 * calculate process statistics
 	 */
-
-	proclist_lock_read();
-	    LIST_FOREACH(l, &alllwp, l_list) {
+	mutex_enter(&proclist_mutex);
+	LIST_FOREACH(l, &alllwp, l_list) {
 		if (l->l_proc->p_flag & P_SYSTEM)
 			continue;
 		switch (l->l_stat) {
@@ -414,7 +412,8 @@ uvm_total(struct vmtotal *totalp)
 			totalp->t_pw++;
 #endif
 	}
-	proclist_unlock_read();
+	mutex_exit(&proclist_mutex);
+
 	/*
 	 * Calculate object memory usage statistics.
 	 */

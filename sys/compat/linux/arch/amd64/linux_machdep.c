@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15 2006/09/20 09:54:55 manu Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.16 2007/02/09 21:55:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15 2006/09/20 09:54:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.16 2007/02/09 21:55:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -124,7 +124,7 @@ linux_sendsig(ksi, mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct linux_rt_sigframe *sfp, sigframe;
 	struct linux__fpstate *fpsp, fpstate;
@@ -134,6 +134,9 @@ linux_sendsig(ksi, mask)
 	linux_sigset_t lmask;
 	char *sp;
 	int error;
+	sigset_t tmask;
+
+	tmask = *mask;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -156,9 +159,9 @@ linux_sendsig(ksi, mask)
 		    (((long)sp - sizeof(struct linux__fpstate)) & ~0xfUL);
 		fpsp = (struct linux__fpstate *)sp;
 
+		mutex_exit(&p->p_smutex);
 		(void)process_read_fpregs(l, &fpregs);
 		bzero(&fpstate, sizeof(fpstate));
-
 		fpstate.cwd = fpregs.fp_fcw;
 		fpstate.swd = fpregs.fp_fsw;
 		fpstate.twd = fpregs.fp_ftw;
@@ -171,8 +174,10 @@ linux_sendsig(ksi, mask)
 		    sizeof(fpstate.st_space));
 		memcpy(&fpstate.xmm_space, &fpregs.fp_xmm, 
 		    sizeof(fpstate.xmm_space));
+		error = copyout(&fpstate, fpsp, sizeof(fpstate));
+		mutex_enter(&p->p_smutex)
 
-		if ((error = copyout(&fpstate, fpsp, sizeof(fpstate))) != 0) {
+		if (error != 0) {
 			sigexit(l, SIGILL);
 			return;
 		}	
@@ -287,7 +292,12 @@ linux_sendsig(ksi, mask)
 		break;
 	}
 
-	if ((error = copyout(&sigframe, sp, sizeof(sigframe))) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout(&sigframe, sp, sizeof(sigframe));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		sigexit(l, SIGILL);
 		return;
 	}	
@@ -371,6 +381,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 
 	fp = (struct linux_rt_sigframe *)(tf->tf_rsp - 8);
 	if ((error = copyin(fp, &frame, sizeof(frame))) != 0) {
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
 		return error;
 	}
@@ -431,6 +442,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	if (lsigctx->fpstate != NULL) {
 		error = copyin(lsigctx->fpstate, &fpstate, sizeof(fpstate));
 		if (error != 0) {
+			mutex_enter(&l->l_proc->p_smutex);
 			sigexit(l, SIGILL);
 			return error;
 		}
@@ -465,7 +477,11 @@ linux_sys_rt_sigreturn(l, v, retval)
 	/*
 	 * And let setucontext deal with that.
 	 */
-	return setucontext(l, &uctx);
+	mutex_enter(&l->l_proc->p_smutex);
+	error = setucontext(l, &uctx);
+	mutex_exit(&l->l_proc->p_smutex);
+
+	return error;
 }
 
 int

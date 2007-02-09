@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.8 2007/01/01 20:56:59 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.9 2007/02/09 21:55:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.8 2007/01/01 20:56:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9 2007/02/09 21:55:01 ad Exp $");
 
 #include "opt_powernow_k8.h"
 
@@ -116,6 +116,7 @@ identifycpu(struct cpu_info *ci)
 #endif
 
 	x86_errata(ci, vendor);
+	x86_patch();
 }
 
 void

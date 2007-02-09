@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.26 2006/03/07 03:32:06 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.27 2007/02/09 21:55:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.26 2006/03/07 03:32:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.27 2007/02/09 21:55:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.26 2006/03/07 03:32:06 thorpej
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/exec.h>

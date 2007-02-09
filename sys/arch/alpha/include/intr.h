@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.57 2007/01/12 00:55:40 ad Exp $ */
+/* $NetBSD: intr.h,v 1.58 2007/02/09 21:55:01 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,9 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+
 #include <machine/atomic.h>
+#include <machine/cpu.h>
 
 /*
  * The Alpha System Control Block.  This is 8k long, and you get

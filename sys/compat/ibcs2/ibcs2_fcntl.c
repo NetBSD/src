@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.24 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.25 2007/02/09 21:55:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.24 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.25 2007/02/09 21:55:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.24 2006/11/16 01:32:42 christos Ex
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
@@ -186,7 +185,7 @@ ibcs2_sys_open(l, v, retval)
 		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	ret = sys_open(l, uap, retval);
 
-	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
+	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
 		struct file *fp;
 

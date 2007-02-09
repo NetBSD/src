@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2007/02/09 21:55:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -98,6 +98,8 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	int	ci_mtx_count;
+	int	ci_mtx_oldspl;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -145,20 +147,20 @@ extern volatile unsigned int interrupt_depth;
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched(ci)	{ want_resched++; aston(); }
+#define	cpu_need_resched(ci)	{ want_resched++; aston(); }
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the hp300, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	cpu_need_proftick(l)	{ (l)->l_pflag |= LP_OWEUPC; aston(); }
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	cpu_signotify(l)	aston()
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)

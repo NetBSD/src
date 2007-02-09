@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.40 2007/01/19 14:49:12 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.41 2007/02/09 21:55:37 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.40 2007/01/19 14:49:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.41 2007/02/09 21:55:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1928,7 +1928,7 @@ retry:
 		if (blkno != 0)
 			continue;
 #ifdef DIAGNOSTIC
-		if (curlwp->l_flag & L_COWINPROGRESS)
+		if (curlwp->l_pflag & LP_UFSCOW)
 			printf("ffs_copyonwrite: recursive call\n");
 #endif
 		/*
@@ -2097,7 +2097,7 @@ writevnblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 }
 
 /*
- * Set/reset lwp's L_COWINPROGRESS flag.
+ * Set/reset lwp's LP_UFSCOW flag.
  * May be called recursive.
  */
 static inline int
@@ -2105,11 +2105,11 @@ cow_enter(void)
 {
 	struct lwp *l = curlwp;
 
-	if (l->l_flag & L_COWINPROGRESS) {
+	if (l->l_pflag & LP_UFSCOW) {
 		return 0;
 	} else {
-		l->l_flag |= L_COWINPROGRESS;
-		return L_COWINPROGRESS;
+		l->l_pflag |= LP_UFSCOW;
+		return LP_UFSCOW;
 	}
 }
 
@@ -2118,7 +2118,7 @@ cow_leave(int flag)
 {
 	struct lwp *l = curlwp;
 
-	l->l_flag &= ~flag;
+	l->l_pflag &= ~flag;
 }
 
 /*

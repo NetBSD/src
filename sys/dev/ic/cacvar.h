@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.13 2006/12/28 19:17:12 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.14 2007/02/09 21:55:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,6 +38,9 @@
 
 #ifndef _IC_CACVAR_H_
 #define	_IC_CACVAR_H_
+
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #define	CAC_MAX_CCBS	256
 #define	CAC_MAX_XFER	(0xffff * 512)
@@ -106,6 +109,7 @@ struct cac_linkage {
 
 struct cac_softc {
 	struct device		sc_dv;
+	kmutex_t		sc_mutex;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
@@ -116,6 +120,7 @@ struct cac_softc {
 	paddr_t			sc_ccbs_paddr;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_queue;
+	kcondvar_t		sc_ccb_cv;
 	struct cac_linkage	sc_cl;
 };
 

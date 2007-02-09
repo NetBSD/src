@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2007/02/09 21:55:09 ad Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -32,7 +32,6 @@
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
@@ -176,13 +175,6 @@ int
 process_write_regs(struct lwp *p, const struct reg *regs)
 {
 	panic("process_write_regs");
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	panic("cpu_upcall");
 }
 
 void

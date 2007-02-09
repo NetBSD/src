@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.34 2006/11/14 13:34:29 elad Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.35 2007/02/09 21:55:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.34 2006/11/14 13:34:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.35 2007/02/09 21:55:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.34 2006/11/14 13:34:29 elad Exp $"
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/namei.h>
-#include <sys/sa.h>
 #include <sys/statvfs.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>

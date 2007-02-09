@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2007/01/24 13:08:14 hubertf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2007/02/09 21:55:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2007/02/09 21:55:07 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2007/01/24 13:08:14 hubertf Exp $")
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 #ifdef KGDB

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2007/02/09 21:55:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.144 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.145 2007/02/09 21:55:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.144 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.145 2007/02/09 21:55:36 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1717,7 +1717,7 @@ nfs_sigintr(nmp, rep, l)
 	if (!(nmp->nm_flag & NFSMNT_INT))
 		return (0);
 	if (l) {
-		sigpending1(l->l_proc, &ss);
+		sigpending1(l, &ss);
 #if 0
 		sigminusset(&l->l_proc->p_sigctx.ps_sigignore, &ss);
 #endif

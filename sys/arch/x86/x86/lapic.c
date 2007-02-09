@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.19 2006/12/08 15:05:18 yamt Exp $ */
+/* $NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.19 2006/12/08 15:05:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.20 2007/02/09 21:55:14 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -390,7 +390,7 @@ lapic_calibrate_timer(ci)
 	int i;
 	char tbuf[9];
 
-	printf("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
+	aprint_verbose("%s: calibrating local timer\n", ci->ci_dev->dv_xname);
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,
@@ -432,7 +432,8 @@ lapic_calibrate_timer(ci)
 
 	humanize_number(tbuf, sizeof(tbuf), tmp, "Hz", 1000);
 
-	printf("%s: apic clock running at %s\n", ci->ci_dev->dv_xname, tbuf);
+	aprint_verbose("%s: apic clock running at %s\n",
+	    ci->ci_dev->dv_xname, tbuf);
 
 	if (lapic_per_second != 0) {
 		/*

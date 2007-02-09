@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.36 2007/01/14 14:08:55 ad Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.37 2007/02/09 21:55:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,9 @@ x86_mfence(void)
 }
 
 #ifdef _KERNEL
+
+void	x86_flush(void);
+void	x86_patch(void);
 
 extern unsigned int cpu_feature;
 

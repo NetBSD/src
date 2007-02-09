@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.43 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: vm86.c,v 1.44 2007/02/09 21:55:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.43 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.44 2007/02/09 21:55:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.43 2006/11/16 01:32:38 christos Exp $");
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 
@@ -213,33 +212,39 @@ vm86_return(l, retval)
 	int retval;
 {
 	struct proc *p = l->l_proc;
+	ksiginfo_t ksi;
+
+	mutex_enter(&p->p_smutex);
 
 	/*
 	 * We can't set the virtual flags in our real trap frame,
 	 * since it's used to jump to the signal handler.  Instead we
 	 * let sendsig() pull in the vm86_eflags bits.
 	 */
-	if (sigismember(&p->p_sigctx.ps_sigmask, SIGURG)) {
+	if (sigismember(&l->l_sigmask, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
 		    p->p_pid);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
-	} else if (sigismember(&p->p_sigctx.ps_sigignore, SIGURG)) {
+	}
+
+	if (sigismember(&p->p_sigctx.ps_sigignore, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG ignored)\n",
 		    p->p_pid);
 #endif
 		sigexit(l, SIGILL);
-	} else {
-		ksiginfo_t ksi;
-
-		KSI_INIT_TRAP(&ksi);
-		ksi.ksi_signo = SIGURG;
-		ksi.ksi_trap = retval;
-		(*p->p_emul->e_trapsignal)(l, &ksi);
+		/* NOTREACHED */
 	}
+
+	mutex_exit(&p->p_smutex);
+
+	KSI_INIT_TRAP(&ksi);
+	ksi.ksi_signo = SIGURG;
+	ksi.ksi_trap = retval;
+	(*p->p_emul->e_trapsignal)(l, &ksi);
 }
 
 #define	CLI	0xFA
@@ -379,6 +384,7 @@ i386_vm86(struct lwp *l, char *args, register_t *retval)
 	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct vm86_kern vm86s;
+	struct proc *p;
 	int error;
 
 	error = copyin(args, &vm86s, sizeof(vm86s));
@@ -433,7 +439,10 @@ i386_vm86(struct lwp *l, char *args, register_t *retval)
 #undef	DOREG
 
 	/* Going into vm86 mode jumps off the signal stack. */
-	l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p = l->l_proc;
+	mutex_enter(&p->p_smutex);
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	set_vflags(l, vm86s.regs[_REG_EFL] | PSL_VM);
 

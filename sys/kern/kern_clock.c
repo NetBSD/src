@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.104 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.105 2007/02/09 21:55:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.104 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.105 2007/02/09 21:55:30 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -892,9 +892,9 @@ hardclock(struct clockframe *frame)
 			 * it now.
 			 */
 			spllowersoftclock();
-			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+			KERNEL_LOCK(1, NULL);
 			softclock(NULL);
-			KERNEL_UNLOCK();
+			KERNEL_UNLOCK_ONE(NULL);
 		} else {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 			softintr_schedule(softclock_si);
@@ -1072,8 +1072,10 @@ void
 startprofclock(struct proc *p)
 {
 
-	if ((p->p_flag & P_PROFIL) == 0) {
-		p->p_flag |= P_PROFIL;
+	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+
+	if ((p->p_stflag & PST_PROFIL) == 0) {
+		p->p_stflag |= PST_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1090,8 +1092,10 @@ void
 stopprofclock(struct proc *p)
 {
 
-	if (p->p_flag & P_PROFIL) {
-		p->p_flag &= ~P_PROFIL;
+	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+
+	if (p->p_stflag & PST_PROFIL) {
+		p->p_stflag &= ~PST_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1114,12 +1118,16 @@ proftick(struct clockframe *frame)
         struct gmonparam *g;
         intptr_t i;
 #endif
+	struct lwp *l;
 	struct proc *p;
 
-	p = curproc;
+	l = curlwp;
+	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
-		if (p->p_flag & P_PROFIL)
-			addupc_intr(p, CLKF_PC(frame));
+		mutex_spin_enter(&p->p_stmutex);
+		if (p->p_stflag & PST_PROFIL)
+			addupc_intr(l, CLKF_PC(frame));
+		mutex_spin_exit(&p->p_stmutex);
 	} else {
 #ifdef GPROF
 		g = &_gmonparam;
@@ -1132,8 +1140,12 @@ proftick(struct clockframe *frame)
 		}
 #endif
 #ifdef PROC_PC
-                if (p && (p->p_flag & P_PROFIL))
-                        addupc_intr(p, PROC_PC(p));
+		if (p != NULL) {
+			mutex_spin_enter(&p->p_stmutex);
+			if (p->p_stflag & PST_PROFIL))
+				addupc_intr(l, PROC_PC(p));
+			mutex_spin_exit(&p->p_stmutex);
+		}
 #endif
 	}
 }
@@ -1169,14 +1181,18 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	p = (l ? l->l_proc : NULL);
+	if ((p = (l ? l->l_proc : NULL)) != NULL)
+		mutex_spin_enter(&p->p_stmutex);
 	if (CLKF_USERMODE(frame)) {
 		KASSERT(p != NULL);
 
-		if ((p->p_flag & P_PROFIL) && profsrc == PROFSRC_CLOCK)
-			addupc_intr(p, CLKF_PC(frame));
-		if (--spc->spc_pscnt > 0)
+		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
+			addupc_intr(l, CLKF_PC(frame));
+		if (--spc->spc_pscnt > 0) {
+			mutex_spin_exit(&p->p_stmutex);
 			return;
+		}
+
 		/*
 		 * Came from user mode; CPU was in user state.
 		 * If this process is being profiled record the tick.
@@ -1201,11 +1217,14 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && (p->p_flag & P_PROFIL))
-			addupc_intr(p, LWP_PC(l));
+		if (p && profsrc == PROFSRC_CLOCK && (p->p_stflag & PST_PROFIL))
+			addupc_intr(l, LWP_PC(l));
 #endif
-		if (--spc->spc_pscnt > 0)
+		if (--spc->spc_pscnt > 0) {
+			if (p != NULL)
+				mutex_spin_exit(&p->p_stmutex);
 			return;
+		}
 		/*
 		 * Came from kernel mode, so we were:
 		 * - handling an interrupt,
@@ -1232,6 +1251,8 @@ statclock(struct clockframe *frame)
 
 	if (p != NULL) {
 		++p->p_cpticks;
+		mutex_spin_exit(&p->p_stmutex);
+
 		/*
 		 * If no separate schedclock is provided, call it here
 		 * at about 16 Hz.

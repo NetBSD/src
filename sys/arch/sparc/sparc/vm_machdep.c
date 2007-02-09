@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.87 2006/08/31 16:49:21 matt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.88 2007/02/09 21:55:12 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.87 2006/08/31 16:49:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2007/02/09 21:55:12 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -311,9 +311,16 @@ cpu_lwp_free(struct lwp *l, int proc)
 		}
 		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
-		l->l_md.md_fpstate = NULL;
-		free((void *)fs, M_SUBPROC);
 	}
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+	struct fpstate *fs;
+
+	if ((fs = l->l_md.md_fpstate) != NULL)
+		free((void *)fs, M_SUBPROC);
 }
 
 void

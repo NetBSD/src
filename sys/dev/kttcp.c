@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.22 2006/12/28 02:09:49 hubertf Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.23 2007/02/09 21:55:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.22 2006/12/28 02:09:49 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.23 2007/02/09 21:55:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.22 2006/12/28 02:09:49 hubertf Exp $");
 #include <sys/socketvar.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
-#include <sys/sa.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 

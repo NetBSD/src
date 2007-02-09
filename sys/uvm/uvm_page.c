@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.116 2006/12/21 15:55:26 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.117 2007/02/09 21:55:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.116 2006/12/21 15:55:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.117 2007/02/09 21:55:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1536,7 +1536,7 @@ uvm_pageidlezero(void)
 	int free_list, s, firstbucket;
 	static int nextbucket;
 
-	KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
+	KERNEL_LOCK(1, NULL);
 	s = uvm_lock_fpageq();
 	firstbucket = nextbucket;
 	do {
@@ -1558,7 +1558,7 @@ uvm_pageidlezero(void)
 				    pg, pageq);
 				uvmexp.free--;
 				uvm_unlock_fpageq(s);
-				KERNEL_UNLOCK();
+				KERNEL_UNLOCK_LAST(NULL);
 #ifdef PMAP_PAGEIDLEZERO
 				if (!PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg))) {
 
@@ -1569,8 +1569,7 @@ uvm_pageidlezero(void)
 					 * process now ready to run.
 					 */
 
-					KERNEL_LOCK(
-					    LK_EXCLUSIVE | LK_CANRECURSE);
+					KERNEL_LOCK(1, NULL);
 					s = uvm_lock_fpageq();
 					TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 					    nextbucket].pgfl_queues[
@@ -1584,7 +1583,7 @@ uvm_pageidlezero(void)
 #endif /* PMAP_PAGEIDLEZERO */
 				pg->flags |= PG_ZERO;
 
-				KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
+				KERNEL_LOCK(1, NULL);
 				s = uvm_lock_fpageq();
 				TAILQ_INSERT_HEAD(&pgfl->pgfl_buckets[
 				    nextbucket].pgfl_queues[PGFL_ZEROS],
@@ -1597,7 +1596,7 @@ uvm_pageidlezero(void)
 	} while (nextbucket != firstbucket);
 quit:
 	uvm_unlock_fpageq(s);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_LAST(NULL);
 }
 
 /*

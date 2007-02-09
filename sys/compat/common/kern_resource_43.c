@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.17 2006/11/16 01:32:41 christos Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.18 2007/02/09 21:55:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.17 2006/11/16 01:32:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.18 2007/02/09 21:55:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.17 2006/11/16 01:32:41 christ
 #include <sys/proc.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /* ARGSUSED */

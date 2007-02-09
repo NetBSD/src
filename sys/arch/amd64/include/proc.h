@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: proc.h,v 1.6 2007/02/09 21:55:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -43,13 +43,13 @@ struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 	int	md_tss_sel;		/* TSS selector */
+	volatile int md_astpending;
 };
 
 struct mdproc {
 	int	md_flags;
 					/* Syscall handling function */
 	void	(*md_syscall) __P((struct trapframe *));
-	volatile int md_astpending;
 };
 
 /* md_flags */

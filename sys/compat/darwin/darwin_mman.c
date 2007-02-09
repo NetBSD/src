@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.21 2006/06/20 03:21:30 christos Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.22 2007/02/09 21:55:16 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.21 2006/06/20 03:21:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.22 2007/02/09 21:55:16 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.21 2006/06/20 03:21:30 christos Ex
 #include <sys/filedesc.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
-#include <sys/sa.h>
 
 #include <sys/syscallargs.h>
 

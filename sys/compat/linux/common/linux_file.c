@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.76 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.77 2007/02/09 21:55:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.76 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.77 2007/02/09 21:55:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.76 2006/11/16 01:32:42 christos Exp
 #include <sys/conf.h>
 #include <sys/pipe.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -209,7 +208,7 @@ linux_sys_open(l, v, retval)
 	 * terminal yet, and the O_NOCTTY flag is not set, try to make
 	 * this the controlling terminal.
 	 */
-        if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
+        if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
                 struct filedesc *fdp = p->p_fd;
                 struct file     *fp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.3 2006/08/23 19:49:09 manu Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.4 2007/02/09 21:55:21 ad Exp $ */
 
 /*-
  * Copyright (c) 1994-2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.3 2006/08/23 19:49:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.4 2007/02/09 21:55:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.3 2006/08/23 19:49:09 manu Exp $"
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>		/* For proc_reparent() */
 

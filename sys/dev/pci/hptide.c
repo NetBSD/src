@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.23 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: hptide.c,v 1.24 2007/02/09 21:55:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.23 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.24 2007/02/09 21:55:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,10 +174,10 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			interface |= PCIIDE_INTERFACE_PCI(1);
 	}
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;

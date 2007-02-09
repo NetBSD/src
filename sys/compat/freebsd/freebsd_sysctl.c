@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysctl.c,v 1.7 2006/09/24 21:44:58 dbj Exp $	*/
+/*	$NetBSD: freebsd_sysctl.c,v 1.8 2007/02/09 21:55:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.7 2006/09/24 21:44:58 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.8 2007/02/09 21:55:16 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_sysctl.c,v 1.7 2006/09/24 21:44:58 dbj Exp $
 #include <sys/ktrace.h>
 #endif
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>

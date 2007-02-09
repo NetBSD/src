@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.105 2006/12/30 16:57:45 rumble Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106 2007/02/09 21:55:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2006/12/30 16:57:45 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2007/02/09 21:55:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2006/12/30 16:57:45 rumble Exp $")
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>

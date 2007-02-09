@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.28 2007/01/29 01:52:44 hubertf Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.29 2007/02/09 21:55:24 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.28 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.29 2007/02/09 21:55:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.28 2007/01/29 01:52:44 hubertf Exp 
 #include <net/if.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/socket.h>

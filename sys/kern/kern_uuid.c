@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.8 2006/11/01 10:17:58 yamt Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.9 2007/02/09 21:55:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.8 2006/11/01 10:17:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.9 2007/02/09 21:55:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.8 2006/11/01 10:17:58 yamt Exp $");
 
 /* NetBSD */
 #include <sys/proc.h>
-#include <sys/sa.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/uio.h>

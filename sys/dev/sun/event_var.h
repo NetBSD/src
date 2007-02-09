@@ -1,4 +1,4 @@
-/*	$NetBSD: event_var.h,v 1.9 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: event_var.h,v 1.10 2007/02/09 21:55:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,8 +68,11 @@ struct evvar {
 		(ev)->ev_wanted = 0; \
 		wakeup((caddr_t)(ev)); \
 	} \
-	if ((ev)->ev_async) \
+	if ((ev)->ev_async) { \
+		mutex_enter(&proclist_mutex); \
 		psignal((ev)->ev_io, SIGIO); \
+		mutex_exit(&proclist_mutex); \
+	} \
 }
 
 void	ev_init(struct evvar *);

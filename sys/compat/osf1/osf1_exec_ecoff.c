@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.14 2006/07/23 22:06:09 ad Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.15 2007/02/09 21:55:23 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.14 2006/07/23 22:06:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.15 2007/02/09 21:55:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ osf1_copyargs(l, pack, arginfo, stackp, argp)
                         a->a_un.a_val |= OSF1_LDR_EXEC_SETUID_F;
                 if (pack->ep_vap->va_mode & S_ISGID)
                         a->a_un.a_val |= OSF1_LDR_EXEC_SETGID_F;
-	        if (l->l_proc->p_flag & P_TRACED)
+	        if (l->l_proc->p_slflag & PSL_TRACED)
                         a->a_un.a_val |= OSF1_LDR_EXEC_PTRACE_F;
 		a++;
 	}

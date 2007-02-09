@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.4 2007/02/09 21:12:00 macallan Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.5 2007/02/09 21:55:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -29,7 +29,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
+ */ 
 
 /*
  * ATI Technologies Inc. ("ATI") has not assisted in the creation of, and
@@ -303,7 +303,6 @@ struct radeonfb_softc {
 #define	RFB_R300	(1 << 5)	/* R300 variants -- newer parts */
 #define	RFB_RV100	(1 << 6)	/* RV100 variants -- previous gen */
 #define	RFB_ATOM	(1 << 7)	/* ATOM bios */
-#define RFB_INV_BLIGHT	(1 << 8)	/* backlight level inverted */
 
 #define	IS_MOBILITY(sc)	((sc)->sc_flags & RFB_MOB)
 #define	HAS_CRTC2(sc)	(((sc)->sc_flags & RFB_NCRTC2) == 0)

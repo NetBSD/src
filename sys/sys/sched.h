@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.28 2006/05/14 21:38:18 elad Exp $ */
+/* $NetBSD: sched.h,v 1.29 2007/02/09 21:55:37 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
 #define	_SYS_SCHED_H_
 
 #include <sys/featuretest.h>
+#if 0
+#include <sys/mutex.h>
+#endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -192,43 +195,25 @@ struct cpu_info;
 void schedclock(struct lwp *);
 void sched_wakeup(volatile const void *);
 void roundrobin(struct cpu_info *);
+int	sched_kpri(struct lwp *);
 
 void scheduler_fork_hook(struct proc *, struct proc *);
 void scheduler_wait_hook(struct proc *, struct proc *);
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#include <sys/lock.h>
+/*
+ * Synchronisation object operations set.
+ */
+typedef struct syncobj {
+	u_int	sobj_flag;
+	void	(*sobj_unsleep)(struct lwp *);
+	void	(*sobj_changepri)(struct lwp *, int);
+} syncobj_t;
 
-extern struct simplelock sched_lock;
+#define	SOBJ_SLEEPQ_SORTED	0x01
+#define	SOBJ_SLEEPQ_FIFO	0x02
 
-#define	SCHED_ASSERT_LOCKED()	simple_lock_assert_locked(&sched_lock, "sched_lock")
-#define	SCHED_ASSERT_UNLOCKED()	simple_lock_assert_unlocked(&sched_lock, "sched_lock")
-
-
-#define	SCHED_LOCK(s)							\
-do {									\
-	s = splsched();							\
-	simple_lock(&sched_lock);					\
-} while (/* CONSTCOND */ 0)
-
-#define	SCHED_UNLOCK(s)							\
-do {									\
-	simple_unlock(&sched_lock);					\
-	splx(s);							\
-} while (/* CONSTCOND */ 0)
-
-void	sched_lock_idle(void);
-void	sched_unlock_idle(void);
-
-#else /* ! MULTIPROCESSOR || LOCKDEBUG */
-
-#define	SCHED_ASSERT_LOCKED()		/* nothing */
-#define	SCHED_ASSERT_UNLOCKED()		/* nothing */
-
-#define	SCHED_LOCK(s)			s = splsched()
-#define	SCHED_UNLOCK(s)			splx(s)
-
-#endif /* MULTIPROCESSOR || LOCKDEBUG */
+extern syncobj_t	sched_syncobj;
+extern syncobj_t	turnstile_syncobj;
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

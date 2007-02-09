@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.215 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.216 2007/02/09 21:55:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.215 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.216 2007/02/09 21:55:26 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -173,6 +173,9 @@ int	audiodetach(struct device *, int);
 int	audioactivate(struct device *, enum devact);
 
 void	audio_powerhook(int, void *);
+
+static void	audio_softintr_rd(void *);
+static void	audio_softintr_wr(void *);
 
 struct portname {
 	const char *name;
@@ -332,6 +335,11 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		sc->hw_if = NULL;
 		return;
 	}
+
+	sc->sc_sih_rd = softintr_establish(IPL_SOFTSERIAL,
+	    audio_softintr_rd, sc);
+	sc->sc_sih_wr = softintr_establish(IPL_SOFTSERIAL,
+	    audio_softintr_wr, sc);
 
 	iclass = mclass = oclass = rclass = -1;
 	sc->sc_inports.index = -1;
@@ -521,6 +529,14 @@ audiodetach(struct device *self, int flags)
 	if (sc->sc_powerhook != NULL) {
 		powerhook_disestablish(sc->sc_powerhook);
 		sc->sc_powerhook = NULL;
+	}
+	if (sc->sc_sih_rd) {
+		softintr_disestablish(sc->sc_sih_rd);
+		sc->sc_sih_rd = NULL;
+	}
+	if (sc->sc_sih_wr) {
+		softintr_disestablish(sc->sc_sih_wr);
+		sc->sc_sih_wr = NULL;
 	}
 
 	return 0;
@@ -2492,6 +2508,40 @@ audio_pint_silence(struct audio_softc *sc, struct audio_ringbuffer *cb,
 	}
 }
 
+static void
+audio_softintr_rd(void *cookie)
+{
+	struct audio_softc *sc = cookie;
+	struct proc *p;
+
+	selnotify(&sc->sc_rsel, 0);
+	if (sc->sc_async_audio != NULL) {
+		DPRINTFN(3, ("audio_softintr_rd: sending SIGIO %p\n",
+		    sc->sc_async_audio));
+		mutex_enter(&proclist_mutex);
+		if ((p = sc->sc_async_audio) != NULL)
+			psignal(p, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
+}
+
+static void
+audio_softintr_wr(void *cookie)
+{
+	struct audio_softc *sc = cookie;
+	struct proc *p;
+
+	selnotify(&sc->sc_wsel, 0);
+	if (sc->sc_async_audio != NULL) {
+		DPRINTFN(3, ("audio_softintr_wr: sending SIGIO %p\n",
+		    sc->sc_async_audio));
+		mutex_enter(&proclist_mutex);
+		if ((p = sc->sc_async_audio) != NULL)
+			psignal(p, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
+}
+
 /*
  * Called from HW driver module on completion of DMA output.
  * Start output of new block, wrap in ring buffer if needed.
@@ -2623,21 +2673,14 @@ audio_pint(void *v)
 	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
 		if (audio_stream_get_used(sc->sc_pustream) <= cb->usedlow) {
 			audio_wakeup(&sc->sc_wchan);
-			selnotify(&sc->sc_wsel, 0);
-			if (sc->sc_async_audio) {
-				DPRINTFN(3, ("audio_pint: sending SIGIO %p\n",
-					     sc->sc_async_audio));
-				psignal(sc->sc_async_audio, SIGIO);
-			}
+			softintr_schedule(sc->sc_sih_wr);
 		}
 	}
 
 	/* Possible to return one or more "phantom blocks" now. */
 	if (!sc->sc_full_duplex && sc->sc_rchan) {
 		audio_wakeup(&sc->sc_rchan);
-		selnotify(&sc->sc_rsel, 0);
-		if (sc->sc_async_audio)
-			psignal(sc->sc_async_audio, SIGIO);
+		softintr_schedule(sc->sc_sih_rd);
 	}
 }
 
@@ -2744,9 +2787,7 @@ audio_rint(void *v)
 	}
 
 	audio_wakeup(&sc->sc_rchan);
-	selnotify(&sc->sc_rsel, 0);
-	if (sc->sc_async_audio)
-		psignal(sc->sc_async_audio, SIGIO);
+	softintr_schedule(sc->sc_sih_rd);
 }
 
 int
@@ -3625,8 +3666,11 @@ mixer_signal(struct audio_softc *sc)
 {
 	struct mixer_asyncs *m;
 
-	for (m = sc->sc_async_mixer; m; m = m->next)
+	for (m = sc->sc_async_mixer; m; m = m->next) {
+		mutex_enter(&proclist_mutex);
 		psignal(m->proc, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
 }
 
 /*

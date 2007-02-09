@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.3 2006/09/23 22:12:00 manu Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.4 2007/02/09 21:55:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.3 2006/09/23 22:12:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.4 2007/02/09 21:55:21 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.3 2006/09/23 22:12:00 manu Exp 
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>

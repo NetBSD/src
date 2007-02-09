@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.77 2006/03/23 16:16:45 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.78 2007/02/09 21:55:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,6 +58,8 @@ struct cpu_info {
 	u_long ci_divisor_delay;	/* for delay/DELAY */
 	u_long ci_divisor_recip;	/* scaled reciprocal of previous;
 					   see below */
+	int ci_mtx_count;		/* negative count of held mutexes */
+	int ci_mtx_oldspl;		/* saved SPL value */
 };
 
 /*
@@ -179,8 +181,12 @@ extern u_int mips3_pg_shift;
 #define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
 #define	MIPS_NOT_SUPP			0x8000
 
-#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 1
-#ifdef MIPS1
+#endif	/* !_LOCORE */
+
+#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS64) == 1) || defined(_LOCORE)
+
+#if defined(MIPS1)
+
 # define CPUISMIPS3		0
 # define CPUIS64BITS		0
 # define CPUISMIPS32		0
@@ -189,9 +195,9 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	0
 # define MIPS_HAS_CLOCK		0
 # define MIPS_HAS_LLSC		0
-#endif /* MIPS1 */
 
-#if defined(MIPS3) || defined(MIPS4)
+#elif defined(MIPS3) || defined(MIPS4)
+
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
 # define CPUISMIPS32		0
@@ -199,10 +205,18 @@ extern u_int mips3_pg_shift;
 # define CPUISMIPSNN		0
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
-# define MIPS_HAS_LLSC		(mips_has_llsc)
-#endif /* MIPS3 || MIPS4 */
+# if defined(_LOCORE)
+#  if !defined(MIPS3_5900) && !defined(MIPS3_4100)
+#   define MIPS_HAS_LLSC	1
+#  else
+#   define MIPS_HAS_LLSC	0
+#  endif
+# else	/* _LOCORE */
+#  define MIPS_HAS_LLSC		(mips_has_llsc)
+# endif	/* _LOCORE */
 
-#ifdef MIPS32
+#elif defined(MIPS32)
+
 # define CPUISMIPS3		1
 # define CPUIS64BITS		0
 # define CPUISMIPS32		1
@@ -211,9 +225,9 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-#endif /* MIPS32 */
 
-#ifdef MIPS64
+#elif define(MIPS64)
+
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
 # define CPUISMIPS32		0
@@ -222,9 +236,12 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_R4K_MMU	1
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
-#endif /* MIPS64 */
+
+#endif
 
 #else /* run-time test */
+
+#ifndef	_LOCORE
 
 #define	MIPS_HAS_R4K_MMU	(mips_has_r4k_mmu)
 #define	MIPS_HAS_LLSC		(mips_has_llsc)
@@ -241,8 +258,16 @@ extern u_int mips3_pg_shift;
 	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64)) != 0)
 
 #define	MIPS_HAS_CLOCK	(cpu_arch >= CPU_ARCH_MIPS3)
+
+#else	/* !_LOCORE */
+
+#define	MIPS_HAS_LLSC	0
+
+#endif	/* !_LOCORE */
+
 #endif /* run-time test */
 
+#ifndef	_LOCORE
 
 /*
  * definitions of cpu-dependent requirements
@@ -319,11 +344,11 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)						\
+#define	cpu_need_resched(ci)						\
 do {									\
 	want_resched = 1;						\
-	if (curproc != NULL)						\
-		aston(curproc);						\
+	if (curlwp != NULL)						\
+		aston(curlwp);						\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -331,19 +356,19 @@ do {									\
  * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)						\
+#define	cpu_need_proftick(l)						\
 do {									\
-	(p)->p_flag |= P_OWEUPC;					\
-	aston(p);							\
+	(l)->l_pflag |= LP_OWEUPC;					\
+	aston(l);							\
 } while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston(p)
+#define	cpu_signotify(p)	aston(l)
 
-#define aston(p)	((p)->p_md.md_astpending = 1)
+#define aston(l)		((l)->l_md.md_astpending = 1)
 
 extern int want_resched;		/* resched() was called */
 

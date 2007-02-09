@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.15 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.16 2007/02/09 21:55:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.15 2005/12/11 12:20:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.16 2007/02/09 21:55:18 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.15 2005/12/11 12:20:12 christos Exp 
 #include <sys/swap.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_page.h>

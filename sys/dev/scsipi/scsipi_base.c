@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.142 2006/11/26 05:01:09 itohy Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.143 2007/02/09 21:55:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.142 2006/11/26 05:01:09 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.143 2007/02/09 21:55:29 ad Exp $");
 
 #include "opt_scsi.h"
 
@@ -2080,9 +2080,8 @@ scsipi_completion_thread(void *arg)
 			    ADAPTER_REQ_GROW_RESOURCES, NULL);
 			scsipi_channel_thaw(chan, 1);
 			splx(s);
-			if (chan->chan_tflags & SCSIPI_CHANT_GROWRES) {
-				preempt(1);
-			}
+			if (chan->chan_tflags & SCSIPI_CHANT_GROWRES)
+				kpause("scsizzz", FALSE, hz/10, NULL);
 			continue;
 		}
 		if (chan->chan_tflags & SCSIPI_CHANT_KICK) {

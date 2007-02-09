@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.53 2006/11/16 01:32:44 christos Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.54 2007/02/09 21:55:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,14 +39,13 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.53 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.54 2007/02/09 21:55:22 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
 #include <sys/vnode.h>
