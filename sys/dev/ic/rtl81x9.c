@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.52.20.2 2007/02/01 08:48:20 ad Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.52.20.3 2007/02/09 21:03:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.52.20.2 2007/02/01 08:48:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.52.20.3 2007/02/09 21:03:51 ad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1014,7 +1014,7 @@ rtk_rxeof(struct rtk_softc *sc)
 
 		if ((rxstat & RTK_RXSTAT_RXOK) == 0 ||
 		    total_len < ETHER_MIN_LEN ||
-		    total_len > ETHER_MAX_LEN) {
+		    total_len > (MCLBYTES - RTK_ETHER_ALIGN)) {
 			ifp->if_ierrors++;
 
 			/*

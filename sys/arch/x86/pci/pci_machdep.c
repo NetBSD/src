@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.16.4.2 2007/01/12 01:01:01 ad Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.16.4.3 2007/02/09 21:03:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.4.2 2007/01/12 01:01:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.16.4.3 2007/02/09 21:03:50 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,6 +374,15 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	pcireg_t data;
 	int s;
 
+#if defined(__i386__) && defined(XBOX)
+	if (arch_i386_is_xbox) {
+		int bus, dev, fn;
+		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
+		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
+			return (pcireg_t)-1;
+	}
+#endif
+
 #ifndef PCI_CONF_MODE
 	switch (pci_mode) {
 	case 1:
@@ -416,6 +425,15 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
     pcireg_t data)
 {
 	int s;
+
+#if defined(__i386__) && defined(XBOX)
+	if (arch_i386_is_xbox) {
+		int bus, dev, fn;
+		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
+		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
+			return;
+	}
+#endif
 
 #ifndef PCI_CONF_MODE
 	switch (pci_mode) {

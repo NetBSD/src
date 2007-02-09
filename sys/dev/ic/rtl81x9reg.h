@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.15.4.2 2007/01/12 00:57:36 ad Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.15.4.3 2007/02/09 21:03:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -159,6 +159,7 @@
 #define RTK_HWREV_8100E		0x30800000
 #define RTK_HWREV_8101E		0x34000000
 #define RTK_HWREV_8168_SPIN2	0x38000000
+#define RTK_HWREV_8100E_SPIN2	0x38800000
 #define RTK_HWREV_8139		0x60000000
 #define RTK_HWREV_8139A		0x70000000
 #define RTK_HWREV_8139AG	0x70800000

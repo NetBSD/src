@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.71.4.3 2007/02/01 08:48:39 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.71.4.4 2007/02/09 21:03:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.71.4.3 2007/02/01 08:48:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.71.4.4 2007/02/09 21:03:53 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -892,11 +892,10 @@ bad:
 int
 relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
-	struct vnode *dp = 0;		/* the directory we are searching */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
 #ifdef DEBUG
-	u_long newhash;			/* DEBUG: check name hash */
+	uint32_t newhash;		/* DEBUG: check name hash */
 	const char *cp;			/* DEBUG: check name ptr/len */
 #endif /* DEBUG */
 
@@ -905,9 +904,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 */
 	rdonly = cnp->cn_flags & RDONLY;
 	cnp->cn_flags &= ~ISSYMLINK;
-	dp = dvp;
 
-/* dirloop: */
 	/*
 	 * Search a new directory.
 	 *
@@ -920,7 +917,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 #ifdef DEBUG
 	cp = NULL;
 	newhash = namei_hash(cnp->cn_nameptr, &cp);
-	if (newhash != cnp->cn_hash)
+	if ((uint32_t)newhash != (uint32_t)cnp->cn_hash)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
 		panic("relookup: bad len");
@@ -929,9 +926,6 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (*cp != 0)
 		panic("relookup: not last component");
 #endif /* DEBUG */
-#ifdef NAMEI_DIAGNOSTIC
-	printf("{%s}: ", cnp->cn_nameptr);
-#endif /* NAMEI_DIAGNOSTIC */
 
 	/*
 	 * Check for degenerate name (e.g. / or "")
@@ -947,61 +941,38 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 */
-	if ((error = VOP_LOOKUP(dp, vpp, cnp)) != 0) {
+	if ((error = VOP_LOOKUP(dvp, vpp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (*vpp != NULL)
 			panic("leaf `%s' should be empty", cnp->cn_nameptr);
 #endif
 		if (error != EJUSTRETURN)
 			goto bad;
-
-		/*
-		 * If creating and at end of pathname, then can consider
-		 * allowing file to be created.
-		 */
-		if (rdonly) {
-			error = EROFS;
-			goto bad;
-		}
-
-		/* ASSERT(dvp == ndp->ni_startdir) */
-		if (cnp->cn_flags & SAVESTART)
-			VREF(dvp);
-
-		/*
-		 * We return with ni_vp NULL to indicate that the entry
-		 * doesn't currently exist, leaving a pointer to the
-		 * locked directory vnode in ndp->ni_dvp.
-		 */
-		return (0);
 	}
-	dp = *vpp;
 
 #ifdef DIAGNOSTIC
 	/*
 	 * Check for symbolic link
 	 */
-	if (dp->v_type == VLNK && (cnp->cn_flags & FOLLOW))
+	if (*vpp && (*vpp)->v_type == VLNK && (cnp->cn_flags & FOLLOW))
 		panic("relookup: symlink found");
 #endif
 
 	/*
 	 * Check for read-only file systems.
 	 */
-	if (rdonly &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
+	if (rdonly && cnp->cn_nameiop != LOOKUP) {
 		error = EROFS;
+		if (*vpp) {
+			vput(*vpp);
+		}
 		goto bad;
 	}
-	/* ASSERT(dvp == ndp->ni_startdir) */
 	if (cnp->cn_flags & SAVESTART)
 		VREF(dvp);
-	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp, 0);
 	return (0);
 
 bad:
-	vput(dp);
 	*vpp = NULL;
 	return (error);
 }

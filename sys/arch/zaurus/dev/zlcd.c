@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.3.4.2 2007/01/12 01:01:03 ad Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.3.4.3 2007/02/09 21:03:50 ad Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.3.4.2 2007/01/12 01:01:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.3.4.3 2007/02/09 21:03:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static struct pxa2x0_wsscreen_descr lcd_std_screen = {
 		.capabilities = WSSCREEN_WSCOLORS,
 	},
 	.depth = 16,			/* bits per pixel */
-	.flags = 0/*RI_ROTATE_CW*/,	/* quarter clockwise rotation */
+	.flags = RI_ROTATE_CW,		/* quarter clockwise rotation */
 };
 
 static const struct wsscreen_descr *lcd_scr_descr[] = {

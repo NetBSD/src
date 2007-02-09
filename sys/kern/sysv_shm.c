@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.89.4.2 2007/01/30 13:51:41 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.89.4.3 2007/02/09 21:03:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.89.4.2 2007/01/30 13:51:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.89.4.3 2007/02/09 21:03:53 ad Exp $");
 
 #define SYSVSHM
 
@@ -308,7 +308,7 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
-	int error, flags;
+	int error, flags = 0;
 	struct proc *p = l->l_proc;
 	kauth_cred_t cred = l->l_cred;
 	struct shmid_ds *shmseg;
@@ -335,9 +335,8 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	prot = VM_PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
 		prot |= VM_PROT_WRITE;
-	flags = MAP_ANON | MAP_SHARED;
 	if (SCARG(uap, shmaddr)) {
-		flags |= MAP_FIXED;
+		flags |= UVM_FLAG_FIXED;
 		if (SCARG(uap, shmflg) & SHM_RND)
 			attach_va =
 			    (vaddr_t)SCARG(uap, shmaddr) & ~(SHMLBA-1);
@@ -354,7 +353,7 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	(*uobj->pgops->pgo_reference)(uobj);
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    uobj, 0, 0,
-	    UVM_MAPFLAG(prot, prot, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	    UVM_MAPFLAG(prot, prot, UVM_INH_SHARE, UVM_ADV_RANDOM, flags));
 	if (error)
 		goto out;
 	/* Lock the memory */
@@ -729,7 +728,7 @@ shmrealloc(int newshmni)
 	if (newshmni < 1)
 		return EINVAL;
 
-	/* We can't reallocate lesser memory than we use */
+	/* We can't reallocate less memory than we use */
 	if (shm_nused > newshmni)
 		return EPERM;
 

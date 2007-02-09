@@ -1,4 +1,4 @@
-/* $NetBSD: xbox.c,v 1.2.2.2 2007/01/12 01:00:51 ad Exp $ */
+/* $NetBSD: xbox.c,v 1.2.2.3 2007/02/09 21:03:49 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.2.2.2 2007/01/12 01:00:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.2.2.3 2007/02/09 21:03:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,21 @@ xbox_startup(void)
 	if (!arch_i386_is_xbox)
 		return;
 
+	/*
+	 * From Rink Springer @ FreeBSD:
+	 *
+	 * Some XBOX loaders, such as Cromwell, have a flaw which cause the
+	 * nfe(4) driver to fail attaching to the NIC.
+	 *
+	 * This is because they leave the NIC running; this will cause the
+	 * Nvidia driver to fail as the NIC does not return any sensible
+	 * values and thus fails attaching (using an error 0x5, this means
+	 * it cannot find a valid PHY)
+	 *
+	 * We bluntly tell the NIC to stop whatever it's doing; this makes
+	 * nfe(4) attach correctly. As the NIC always resides at
+	 * 0xfef00000-0xfef003ff on an XBOX, we simply hardcode this address.
+	 */
 	rv = bus_space_map(X86_BUS_SPACE_MEM, XBOX_NFORCE_NIC,
 	    0x400, 0, &h);
 	if (!rv) {

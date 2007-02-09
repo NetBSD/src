@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.18.2.6 2007/02/09 20:15:34 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.18.2.7 2007/02/09 21:03:53 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.18.2.6 2007/02/09 20:15:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.18.2.7 2007/02/09 21:03:53 ad Exp $");
 
 #define	_KAUTH_PRIVATE
 

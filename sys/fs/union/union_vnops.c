@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.16.8.2 2007/01/12 01:04:06 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.16.8.3 2007/02/09 21:03:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.16.8.2 2007/01/12 01:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.16.8.3 2007/02/09 21:03:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,9 +259,9 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 		if (vfs_busy(mp, 0, 0))
 			continue;
 
+		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
 		vfs_unbusy(mp);
-		vput(dvp);
 		if (error) {
 			return (error);
 		}
@@ -1695,6 +1695,11 @@ union_lock(v)
 #ifdef DIAGNOSTIC
 	int drain = 0;
 #endif
+
+	/* XXX unionfs can't handle shared locks yet */
+	if ((flags & LK_TYPE_MASK) == LK_SHARED) {
+		flags = LK_EXCLUSIVE | (flags & ~LK_TYPE_MASK);
+	}
 
 	genfs_nolock(ap);
 	/*

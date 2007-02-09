@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lcreg.h,v 1.2.2.2 2007/01/12 00:57:35 ad Exp $ */
+/* $NetBSD: pic16lcreg.h,v 1.2.2.3 2007/02/09 21:03:51 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,7 +55,15 @@
 #define PIC16LC_REG_CPUTEMP             0x09
 #define PIC16LC_REG_BOARDTEMP           0x0a
 #define PIC16LC_REG_TRAYEJECT           0x0c
+#define PIC16LC_REG_INTACK		0x0d
 #define PIC16LC_REG_INTSTATUS           0x11
+#define		PIC16LC_REG_INTSTATUS_POWER		0x01
+#define		PIC16LC_REG_INTSTATUS_TRAYCLOSED	0x02
+#define		PIC16LC_REG_INTSTATUS_TRAYOPENING	0x04
+#define		PIC16LC_REG_INTSTATUS_AVPACK_PLUG	0x08
+#define		PIC16LC_REG_INTSTATUS_AVPACK_UNPLUG	0x10
+#define		PIC16LC_REG_INTSTATUS_EJECT_BUTTON	0x20
+#define		PIC16LC_REG_INTSTATUS_TRAYCLOSING	0x40
 #define PIC16LC_REG_RESETONEJECT        0x19
 #define PIC16LC_REG_INTEN               0x1a
 

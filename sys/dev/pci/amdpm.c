@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.19.2.2 2007/01/12 00:57:40 ad Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.19.2.3 2007/02/09 21:03:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.19.2.2 2007/01/12 00:57:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.19.2.3 2007/02/09 21:03:51 ad Exp $");
 
 #include "opt_amdpm.h"
 
@@ -115,6 +115,7 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
+	sc->sc_pa = pa;
 
 #if 0
 	aprint_normal("%s: ", sc->sc_dev.dv_xname);
@@ -169,8 +170,9 @@ amdpm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* try to attach devices on the smbus */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_PBC8111_ACPI ||
-	    sc->sc_nforce)
+	    sc->sc_nforce) {
 		amdpm_smbus_attach(sc);
+	}
 
 	if (confreg & AMDPM_RNGEN) {
 		/* Check to see if we can read data from the RNG. */

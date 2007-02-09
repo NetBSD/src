@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.32.20.2 2007/02/01 08:48:46 ad Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.32.20.3 2007/02/09 21:03:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.32.20.2 2007/02/01 08:48:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.32.20.3 2007/02/09 21:03:53 ad Exp $");
 
 #include "opt_iso.h"
 
@@ -80,6 +80,10 @@ LIST_HEAD(nfsrvhash, nfsrvcache) *nfsrvhashtbl;
 TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
 struct simplelock nfsrv_reqcache_lock = SIMPLELOCK_INITIALIZER;
 u_long nfsrvhash;
+
+#if defined(MBUFTRACE)
+static struct mowner nfsd_cache_mowner = MOWNER_INIT("nfsd", "cache");
+#endif /* defined(MBUFTRACE) */
 
 #define	NETFAMILY(rp) \
 		(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_ISO)
@@ -163,6 +167,7 @@ nfsrv_initcache()
 	TAILQ_INIT(&nfsrvlruhead);
 	pool_init(&nfs_reqcache_pool, sizeof(struct nfsrvcache), 0, 0, 0,
 	    "nfsreqcachepl", &pool_allocator_nointr);
+	MOWNER_ATTACH(&nfsd_cache_mowner);
 }
 
 /*
@@ -309,6 +314,7 @@ found:
 	default:
 		rp->rc_flag |= RC_NAM;
 		rp->rc_nam = m_copym(nd->nd_nam, 0, M_COPYALL, M_WAIT);
+		m_claimm(rp->rc_nam, &nfsd_cache_mowner);
 		break;
 	};
 	rp->rc_proc = nd->nd_procnum;
@@ -341,8 +347,6 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 {
 	struct nfsrvcache *rp;
 
-	if (!nd->nd_nam2)
-		return;
 	simple_lock(&nfsrv_reqcache_lock);
 	rp = nfsrv_lookupcache(nd);
 	simple_unlock(&nfsrv_reqcache_lock);
@@ -361,6 +365,7 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 			} else {
 				rp->rc_reply = m_copym(repmbuf,
 					0, M_COPYALL, M_WAIT);
+				m_claimm(rp->rc_reply, &nfsd_cache_mowner);
 				rp->rc_flag |= RC_REPMBUF;
 			}
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.18.8.1 2007/01/12 01:00:59 ad Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.18.8.2 2007/02/09 21:03:50 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.18.8.1 2007/01/12 01:00:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_obio.c,v 1.18.8.2 2007/02/09 21:03:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,8 +202,8 @@ cgsixattach(struct device *parent, struct device *self, void *aux)
 	constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT : EE_CONS_COLOR;
 
 	/*
-	 * Assume this is the console if there's no eeprom info
-	 * to be found.
+	 * Check to see if this is the console if there's no eeprom info
+	 * to be found, or if it's the correct framebuffer type.
 	 */
 	if (eep == NULL || eep->eeConsole == constype)
 		isconsole = fb_is_console(0);
