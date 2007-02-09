@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.48 2007/02/09 08:15:41 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.49 2007/02/09 08:53:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.48 2007/02/09 08:15:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.49 2007/02/09 08:53:51 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1752,22 +1752,14 @@ puffs_strategy(void *v)
 		simple_unlock(&vp->v_interlock);
 	}
 
-	/*
-	 * If we're executing as the pagedaemon, do only FAF operations.
-	 * Otherwise the file server has too much power over the fate
-	 * of the entire kernel and things might end up looking like
-	 * in the song (well, almost anyway):
-	 *   "sleep", said the pagedaemon
-	 *   we are programmed to recv
-	 *   you can deadlock any time you like
-	 *   and you can never leave
-	 */
-	if (curproc == uvm.pagedaemon_proc)
+	if (bp->b_flags & B_ASYNC)
 		dowritefaf = 1;
 
 #ifdef DIAGNOSTIC
 	if (dowritefaf)
 		KASSERT((bp->b_flags & B_READ) == 0);
+	if (curproc == uvm.pagedaemon_proc)
+		KASSERT(dowritefaf);
 #endif
 
 	if (bp->b_flags & B_READ) {
