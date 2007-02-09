@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.18 2007/02/06 14:49:15 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.19 2007/02/09 13:00:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.18 2007/02/06 14:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.19 2007/02/09 13:00:43 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1893,6 +1893,7 @@ sigexit(struct lwp *l, int signo)
 	p = l->l_proc;
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KERNEL_UNLOCK_ALL(l, NULL);
 
 	/*
 	 * Don't permit coredump() multiple times in the same process.
