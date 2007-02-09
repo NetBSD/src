@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.64 2007/02/09 07:15:47 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.65 2007/02/09 22:27:13 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1139,4 +1139,19 @@ sys/arch/amd64/conf/INSTALL                     1.64-1.65
 	Add RAIDframe support to the NetBSD-amd64 installation floppies.
 	This fixes PR port-amd64/35532.
 	[tron, ticket #405]
+
+sys/arch/hp700/conf/GENERIC			1.73
+sys/arch/hp700/gsc/if_iee_gsc.c			1.3
+
+	Workaround PR port-hp700/35531 by preventing iee(4) from matching the
+	82596DX/SX chip variant and adding ie(4) to the kernel to match it
+	because ie(4) works.
+	[skrll, ticket #404]
+
+sys/secmodel/bsd44/secmodel_bsd44_suser.c	1.34
+
+	Add another hardwired exception to the SOCK_RAW / superuser rule,
+	because PF_BLUETOOTH, SOCK_RAW, BTPROTO_HCI) sockets need to be
+	accessable for normal users.
+	[plunky, ticket #406]
 
