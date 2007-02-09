@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.25 2006/08/17 22:43:43 bjh21 Exp $
+# $NetBSD: ad.arm,v 1.26 2007/02/09 22:22:32 ad Exp $
 ./usr/include/arm				comp-c-include
 ./usr/include/arm/ansi.h			comp-c-include
 ./usr/include/arm/aout_machdep.h		comp-c-include
@@ -48,6 +48,7 @@
 ./usr/include/arm/lock.h			comp-c-include
 ./usr/include/arm/math.h			comp-c-include
 ./usr/include/arm/mcontext.h			comp-c-include
+./usr/include/arm/mutex.h			comp-c-include
 ./usr/include/arm/param.h			comp-c-include
 ./usr/include/arm/pcb.h				comp-c-include
 ./usr/include/arm/pmc.h				comp-c-include
@@ -55,6 +56,7 @@
 ./usr/include/arm/profile.h			comp-c-include
 ./usr/include/arm/ptrace.h			comp-c-include
 ./usr/include/arm/reg.h				comp-c-include
+./usr/include/arm/rwlock.h			comp-c-include
 ./usr/include/arm/setjmp.h			comp-c-include
 ./usr/include/arm/signal.h			comp-c-include
 ./usr/include/arm/stdarg.h			comp-c-include

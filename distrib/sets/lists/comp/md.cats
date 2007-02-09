@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.11 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.cats,v 1.12 2007/02/09 22:22:32 ad Exp $
 ./usr/include/cats				comp-c-include
 ./usr/include/cats/ansi.h			comp-c-include
 ./usr/include/cats/aout_machdep.h		comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/cats/lock.h			comp-c-include
 ./usr/include/cats/math.h			comp-c-include
 ./usr/include/cats/mcontext.h			comp-c-include
+./usr/include/cats/mutex.h			comp-c-include
 ./usr/include/cats/param.h			comp-c-include
 ./usr/include/cats/pcb.h			comp-c-include
 ./usr/include/cats/pmap.h			comp-c-include
@@ -38,6 +39,7 @@
 ./usr/include/cats/profile.h			comp-c-include
 ./usr/include/cats/ptrace.h			comp-c-include
 ./usr/include/cats/reg.h			comp-c-include
+./usr/include/cats/rwlock.h			comp-c-include
 ./usr/include/cats/setjmp.h			comp-c-include
 ./usr/include/cats/signal.h			comp-c-include
 ./usr/include/cats/stdarg.h			comp-c-include
