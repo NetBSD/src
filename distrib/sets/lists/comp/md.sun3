@@ -1,4 +1,4 @@
-# $NetBSD: md.sun3,v 1.57 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.sun3,v 1.58 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun3				comp-c-include
 ./usr/include/sun3/_G_config.h			comp-obsolete		obsolete
@@ -41,6 +41,7 @@
 ./usr/include/sun3/mc68851.h			comp-c-include
 ./usr/include/sun3/mcontext.h			comp-c-include
 ./usr/include/sun3/mon.h			comp-c-include
+./usr/include/sun3/mutex.h			comp-c-include
 ./usr/include/sun3/param.h			comp-c-include
 ./usr/include/sun3/param3.h			comp-c-include
 ./usr/include/sun3/param3x.h			comp-c-include
@@ -57,6 +58,7 @@
 ./usr/include/sun3/pte3x.h			comp-c-include
 ./usr/include/sun3/ptrace.h			comp-c-include
 ./usr/include/sun3/reg.h			comp-c-include
+./usr/include/sun3/rwlock.h			comp-c-include
 ./usr/include/sun3/setjmp.h			comp-c-include
 ./usr/include/sun3/signal.h			comp-c-include
 ./usr/include/sun3/stdarg.h			comp-c-include

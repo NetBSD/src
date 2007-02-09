@@ -1,4 +1,4 @@
-# $NetBSD: md.mipsco,v 1.15 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.mipsco,v 1.16 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mipsco				comp-c-include
 ./usr/include/mipsco/_G_config.h		comp-obsolete		obsolete
@@ -37,6 +37,7 @@
 ./usr/include/mipsco/math.h			comp-c-include
 ./usr/include/mipsco/mcontext.h			comp-c-include
 ./usr/include/mipsco/mips_opcode.h		comp-c-include
+./usr/include/mipsco/mutex.h		comp-c-include
 ./usr/include/mipsco/param.h			comp-c-include
 ./usr/include/mipsco/pcb.h			comp-c-include
 ./usr/include/mipsco/pmap.h			comp-c-include
@@ -50,6 +51,7 @@
 ./usr/include/mipsco/regdef.h			comp-c-include
 ./usr/include/mipsco/regnum.h			comp-c-include
 ./usr/include/mipsco/reloc.h			comp-c-include
+./usr/include/mipsco/rwlock.h			comp-c-include
 ./usr/include/mipsco/setjmp.h			comp-c-include
 ./usr/include/mipsco/signal.h			comp-c-include
 ./usr/include/mipsco/stdarg.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.2 2006/07/26 20:09:17 drochner Exp $
+# $NetBSD: md.ews4800mips,v 1.3 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/ews4800mips			comp-c-include
 ./usr/include/ews4800mips/ansi.h		comp-c-include
@@ -30,6 +30,7 @@
 ./usr/include/ews4800mips/math.h		comp-c-include
 ./usr/include/ews4800mips/mcontext.h		comp-c-include
 ./usr/include/ews4800mips/mips_opcode.h	comp-c-include
+./usr/include/ews4800mips/mutex.h		comp-c-include
 ./usr/include/ews4800mips/param.h		comp-c-include
 ./usr/include/ews4800mips/pcb.h		comp-c-include
 ./usr/include/ews4800mips/pdinfo.h		comp-c-include
@@ -44,6 +45,7 @@
 ./usr/include/ews4800mips/regdef.h		comp-c-include
 ./usr/include/ews4800mips/regnum.h		comp-c-include
 ./usr/include/ews4800mips/reloc.h		comp-c-include
+./usr/include/ews4800mips/rwlock.h		comp-c-include
 ./usr/include/ews4800mips/setjmp.h		comp-c-include
 ./usr/include/ews4800mips/signal.h		comp-c-include
 ./usr/include/ews4800mips/stdarg.h		comp-c-include

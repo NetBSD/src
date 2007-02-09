@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.51 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.x68k,v 1.52 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/x68k				comp-c-include
 ./usr/include/x68k/_G_config.h			comp-obsolete		obsolete
@@ -37,6 +37,7 @@
 ./usr/include/x68k/lock.h			comp-c-include
 ./usr/include/x68k/math.h			comp-c-include
 ./usr/include/x68k/mcontext.h			comp-c-include
+./usr/include/x68k/mutex.h			comp-c-include
 ./usr/include/x68k/opmbellio.h			comp-c-include
 ./usr/include/x68k/opmreg.h			comp-c-include
 ./usr/include/x68k/param.h			comp-c-include
@@ -53,6 +54,7 @@
 ./usr/include/x68k/ptrace.h			comp-c-include
 ./usr/include/x68k/reg.h			comp-c-include
 ./usr/include/x68k/remote-sl.h			comp-c-include
+./usr/include/x68k/rwlock.h			comp-c-include
 ./usr/include/x68k/setjmp.h			comp-c-include
 ./usr/include/x68k/signal.h			comp-c-include
 ./usr/include/x68k/sram.h			comp-c-include

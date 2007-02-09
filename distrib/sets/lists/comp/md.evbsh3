@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.25 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.evbsh3,v 1.26 2007/02/09 22:49:47 ad Exp $
 ./usr/include/evbsh3				comp-c-include
 ./usr/include/evbsh3/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbsh3/ansi.h			comp-c-include
@@ -33,6 +33,7 @@
 ./usr/include/evbsh3/math.h			comp-c-include
 ./usr/include/evbsh3/mcontext.h			comp-c-include
 ./usr/include/evbsh3/mmeye.h			comp-obsolete		obsolete
+./usr/include/evbsh3/mutex.h			comp-c-include
 ./usr/include/evbsh3/param.h			comp-c-include
 ./usr/include/evbsh3/pcb.h			comp-c-include
 ./usr/include/evbsh3/pio.h			comp-obsolete		obsolete
@@ -44,6 +45,7 @@
 ./usr/include/evbsh3/pte.h			comp-c-include
 ./usr/include/evbsh3/ptrace.h			comp-c-include
 ./usr/include/evbsh3/reg.h			comp-c-include
+./usr/include/evbsh3/rwlock.h			comp-c-include
 ./usr/include/evbsh3/segments.h			comp-obsolete		obsolete
 ./usr/include/evbsh3/setjmp.h			comp-c-include
 ./usr/include/evbsh3/shbvar.h			comp-obsolete		obsolete
