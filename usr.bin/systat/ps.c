@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.28 2006/02/13 16:01:58 kleink Exp $  */
+/*      $NetBSD: ps.c,v 1.29 2007/02/09 22:08:49 ad Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.28 2006/02/13 16:01:58 kleink Exp $");
+__RCSID("$NetBSD: ps.c,v 1.29 2007/02/09 22:08:49 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -200,19 +200,19 @@ state2str(struct kinfo_proc2 *kp)
 		*cp++ = '<';
 	else if (kp->p_nice > NZERO)
 		*cp++ = 'N';
-	if (flag & P_TRACED)
+	if (flag & KP_TRACED)
 		*cp++ = 'X';
-	if (flag & P_WEXIT &&
+	if (flag & KP_WEXIT &&
 	    /* XXX - I don't like this */
-	    (kp->p_stat == LSZOMB || kp->p_stat == LSDEAD) == 0)
+	    (kp->p_stat != LSZOMB))
 		*cp++ = 'E';
-	if (flag & P_PPWAIT)
+	if (flag & KP_PPWAIT)
 		*cp++ = 'V';
-	if ((flag & P_SYSTEM) || kp->p_holdcnt)
+	if ((flag & KP_SYSTEM) || kp->p_holdcnt)
 		*cp++ = 'L';
 	if (kp->p_eflag & EPROC_SLEADER)
 		*cp++ = 's'; 
-	if ((flag & P_CONTROLT) && kp->p__pgid == kp->p_tpgid)
+	if ((flag & KP_CONTROLT) && kp->p__pgid == kp->p_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
 	snprintf(statestr, sizeof(statestr), "%-s",  buf);
@@ -286,7 +286,7 @@ comm2str(struct kinfo_proc2 *kp)
 		 * square brackets if they are system commands.  Otherwise
 		 * they are printed within parentheses.
 		 */
-		if (kp->p_flag & P_SYSTEM)
+		if (kp->p_flag & KP_SYSTEM)
 			fmt = "[%s]";
 		else
 			fmt = "(%s)";
