@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.8 2005/02/17 02:24:00 briggs Exp $
+# $NetBSD: md.evbppc,v 1.9 2007/02/09 22:49:47 ad Exp $
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/evbppc/lock.h			comp-c-include
 ./usr/include/evbppc/math.h			comp-c-include
 ./usr/include/evbppc/mcontext.h			comp-c-include
+./usr/include/evbppc/mutex.h			comp-c-include
 ./usr/include/evbppc/param.h			comp-c-include
 ./usr/include/evbppc/pcb.h			comp-c-include
 ./usr/include/evbppc/pio.h			comp-obsolete		obsolete
@@ -44,6 +45,7 @@
 ./usr/include/evbppc/ptrace.h			comp-c-include
 ./usr/include/evbppc/reg.h			comp-c-include
 ./usr/include/evbppc/reloc.h			comp-c-include
+./usr/include/evbppc/rwlock.h			comp-c-include
 ./usr/include/evbppc/setjmp.h			comp-c-include
 ./usr/include/evbppc/signal.h			comp-c-include
 ./usr/include/evbppc/spr.h			comp-c-include

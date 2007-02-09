@@ -1,4 +1,4 @@
-# $NetBSD: md.prep,v 1.20 2005/02/17 02:24:00 briggs Exp $
+# $NetBSD: md.prep,v 1.21 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/prep				comp-c-include
 ./usr/include/prep/_G_config.h			comp-obsolete		obsolete
@@ -36,6 +36,7 @@
 ./usr/include/prep/lock.h			comp-c-include
 ./usr/include/prep/math.h			comp-c-include
 ./usr/include/prep/mcontext.h			comp-c-include
+./usr/include/prep/mutex.h			comp-c-include
 ./usr/include/prep/param.h			comp-c-include
 ./usr/include/prep/pcb.h			comp-c-include
 ./usr/include/prep/pio.h			comp-obsolete		obsolete
@@ -49,6 +50,7 @@
 ./usr/include/prep/ptrace.h			comp-c-include
 ./usr/include/prep/reg.h			comp-c-include
 ./usr/include/prep/reloc.h			comp-c-include
+./usr/include/prep/rwlock.h			comp-c-include
 ./usr/include/prep/setjmp.h			comp-c-include
 ./usr/include/prep/signal.h			comp-c-include
 ./usr/include/prep/spkr.h			comp-c-include

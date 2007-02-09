@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.65 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.sparc,v 1.66 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -38,6 +38,7 @@
 ./usr/include/sparc/lock.h			comp-c-include
 ./usr/include/sparc/math.h			comp-c-include
 ./usr/include/sparc/mcontext.h			comp-c-include
+./usr/include/sparc/mutex.h			comp-c-include
 ./usr/include/sparc/oldmon.h			comp-c-include
 ./usr/include/sparc/openpromio.h		comp-c-include
 ./usr/include/sparc/param.h			comp-c-include
@@ -51,6 +52,7 @@
 ./usr/include/sparc/ptrace.h			comp-c-include
 ./usr/include/sparc/reg.h			comp-c-include
 ./usr/include/sparc/reloc.h			comp-c-include
+./usr/include/sparc/rwlock.h			comp-c-include
 ./usr/include/sparc/setjmp.h			comp-c-include
 ./usr/include/sparc/signal.h			comp-c-include
 ./usr/include/sparc/stdarg.h			comp-c-include
@@ -103,6 +105,7 @@
 ./usr/include/sparc64/lock.h			comp-c-include
 ./usr/include/sparc64/math.h			comp-c-include
 ./usr/include/sparc64/mcontext.h		comp-c-include
+./usr/include/sparc64/mutex.h			comp-c-include
 ./usr/include/sparc64/oldmon.h			comp-c-include
 ./usr/include/sparc64/openpromio.h		comp-c-include
 ./usr/include/sparc64/param.h			comp-c-include
@@ -117,6 +120,7 @@
 ./usr/include/sparc64/reg.h			comp-c-include
 ./usr/include/sparc64/reloc.h			comp-c-include
 ./usr/include/sparc64/remote-sl.h		comp-c-include
+./usr/include/sparc64/rwlock.h			comp-c-include
 ./usr/include/sparc64/setjmp.h			comp-c-include
 ./usr/include/sparc64/signal.h			comp-c-include
 ./usr/include/sparc64/stdarg.h			comp-c-include
