@@ -1,4 +1,4 @@
-# $NetBSD: md.hp700,v 1.4 2007/02/06 21:59:24 skrll Exp $
+# $NetBSD: md.hp700,v 1.5 2007/02/09 22:49:47 ad Exp $
 ./usr/include/hp700				comp-c-include
 ./usr/include/hp700/ansi.h			comp-c-include
 ./usr/include/hp700/aout_machdep.h		comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/hp700/lock.h			comp-c-include
 ./usr/include/hp700/math.h			comp-c-include
 ./usr/include/hp700/mcontext.h			comp-c-include
+./usr/include/hp700/mutex.h			comp-c-include
 ./usr/include/hp700/nvm.h			comp-c-include
 ./usr/include/hp700/param.h			comp-c-include
 ./usr/include/hp700/pcb.h			comp-c-include
@@ -48,6 +49,7 @@
 ./usr/include/hp700/ptrace.h			comp-c-include
 ./usr/include/hp700/reg.h			comp-c-include
 ./usr/include/hp700/reloc.h			comp-c-include
+./usr/include/hp700/rwlock.h			comp-c-include
 ./usr/include/hp700/setjmp.h			comp-c-include
 ./usr/include/hp700/signal.h			comp-c-include
 ./usr/include/hp700/som.h			comp-c-include

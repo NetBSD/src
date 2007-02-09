@@ -1,4 +1,4 @@
-# $NetBSD: md.pmppc,v 1.9 2005/02/17 02:24:00 briggs Exp $
+# $NetBSD: md.pmppc,v 1.10 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmppc				comp-c-include
 ./usr/include/pmppc/_G_config.h			comp-obsolete		obsolete
@@ -34,6 +34,7 @@
 ./usr/include/pmppc/lock.h			comp-c-include
 ./usr/include/pmppc/math.h			comp-c-include
 ./usr/include/pmppc/mcontext.h			comp-c-include
+./usr/include/pmppc/mutex.h			comp-c-include
 ./usr/include/pmppc/param.h			comp-c-include
 ./usr/include/pmppc/pcb.h			comp-c-include
 ./usr/include/pmppc/pio.h			comp-obsolete		obsolete
@@ -47,6 +48,7 @@
 ./usr/include/pmppc/ptrace.h			comp-c-include
 ./usr/include/pmppc/reg.h			comp-c-include
 ./usr/include/pmppc/reloc.h			comp-c-include
+./usr/include/pmppc/rwlock.h			comp-c-include
 ./usr/include/pmppc/setjmp.h			comp-c-include
 ./usr/include/pmppc/signal.h			comp-c-include
 ./usr/include/pmppc/spr.h			comp-c-include

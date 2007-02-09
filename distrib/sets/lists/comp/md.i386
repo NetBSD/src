@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.97 2007/02/08 20:42:51 dbj Exp $
+# $NetBSD: md.i386,v 1.98 2007/02/09 22:49:47 ad Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -47,6 +47,7 @@
 ./usr/include/i386/mouse.h			comp-obsolete		obsolete
 ./usr/include/i386/mtrr.h			comp-c-include
 ./usr/include/i386/multiboot.h			comp-c-include
+./usr/include/i386/mutex.h			comp-c-include
 ./usr/include/i386/npx.h			comp-c-include
 ./usr/include/i386/param.h			comp-c-include
 ./usr/include/i386/pcb.h			comp-c-include
@@ -60,6 +61,7 @@
 ./usr/include/i386/pte.h			comp-c-include
 ./usr/include/i386/ptrace.h			comp-c-include
 ./usr/include/i386/reg.h			comp-c-include
+./usr/include/i386/rwlock.h			comp-c-include
 ./usr/include/i386/segments.h			comp-c-include
 ./usr/include/i386/setjmp.h			comp-c-include
 ./usr/include/i386/signal.h			comp-c-include
@@ -95,8 +97,10 @@
 ./usr/include/x86/lock.h			comp-c-include
 ./usr/include/x86/math.h			comp-c-include
 ./usr/include/x86/mtrr.h			comp-c-include
+./usr/include/x86/mutex.h			comp-c-include
 ./usr/include/x86/pio.h				comp-c-include
 ./usr/include/x86/psl.h				comp-c-include
+./usr/include/x86/rwlock.h			comp-c-include
 ./usr/include/x86/specialreg.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-c-include		gcccmds

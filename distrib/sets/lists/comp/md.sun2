@@ -1,4 +1,4 @@
-# $NetBSD: md.sun2,v 1.15 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.sun2,v 1.16 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sun2				comp-c-include
 ./usr/include/sun2/_G_config.h			comp-obsolete		obsolete
@@ -37,6 +37,7 @@
 ./usr/include/sun2/math.h			comp-c-include
 ./usr/include/sun2/mcontext.h			comp-c-include
 ./usr/include/sun2/mon.h			comp-c-include
+./usr/include/sun2/mutex.h			comp-c-include
 ./usr/include/sun2/param.h			comp-c-include
 ./usr/include/sun2/pcb.h			comp-c-include
 ./usr/include/sun2/pmap.h			comp-c-include
@@ -48,6 +49,7 @@
 ./usr/include/sun2/pte.h			comp-c-include
 ./usr/include/sun2/ptrace.h			comp-c-include
 ./usr/include/sun2/reg.h			comp-c-include
+./usr/include/sun2/rwlock.h			comp-c-include
 ./usr/include/sun2/setjmp.h			comp-c-include
 ./usr/include/sun2/signal.h			comp-c-include
 ./usr/include/sun2/stdarg.h			comp-c-include

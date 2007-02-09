@@ -1,4 +1,4 @@
-# $NetBSD: md.hp300,v 1.55 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.hp300,v 1.56 2007/02/09 22:49:47 ad Exp $
 ./usr/include/hp300				comp-c-include
 ./usr/include/hp300/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hp300/ansi.h			comp-c-include
@@ -31,6 +31,7 @@
 ./usr/include/hp300/lock.h			comp-c-include
 ./usr/include/hp300/math.h			comp-c-include
 ./usr/include/hp300/mcontext.h			comp-c-include
+./usr/include/hp300/mutex.h			comp-c-include
 ./usr/include/hp300/param.h			comp-c-include
 ./usr/include/hp300/pcb.h			comp-c-include
 ./usr/include/hp300/pmap.h			comp-c-include
@@ -41,6 +42,7 @@
 ./usr/include/hp300/pte.h			comp-c-include
 ./usr/include/hp300/ptrace.h			comp-c-include
 ./usr/include/hp300/reg.h			comp-c-include
+./usr/include/hp300/rwlock.h			comp-c-include
 ./usr/include/hp300/setjmp.h			comp-c-include
 ./usr/include/hp300/signal.h			comp-c-include
 ./usr/include/hp300/stdarg.h			comp-c-include

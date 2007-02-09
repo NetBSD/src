@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.30 2005/02/17 02:24:00 briggs Exp $
+# $NetBSD: md.macppc,v 1.31 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -39,6 +39,7 @@
 ./usr/include/macppc/machine_type.h		comp-obsolete		obsolete
 ./usr/include/macppc/math.h			comp-c-include
 ./usr/include/macppc/mcontext.h			comp-c-include
+./usr/include/macppc/mutex.h			comp-c-include
 ./usr/include/macppc/param.h			comp-c-include
 ./usr/include/macppc/pcb.h			comp-c-include
 ./usr/include/macppc/pio.h			comp-obsolete		obsolete
@@ -52,6 +53,7 @@
 ./usr/include/macppc/ptrace.h			comp-c-include
 ./usr/include/macppc/reg.h			comp-c-include
 ./usr/include/macppc/reloc.h			comp-c-include
+./usr/include/macppc/rwlock.h			comp-c-include
 ./usr/include/macppc/setjmp.h			comp-c-include
 ./usr/include/macppc/signal.h			comp-c-include
 ./usr/include/macppc/spr.h			comp-c-include

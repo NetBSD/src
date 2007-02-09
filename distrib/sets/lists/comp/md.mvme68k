@@ -1,4 +1,4 @@
-# $NetBSD: md.mvme68k,v 1.31 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.mvme68k,v 1.32 2007/02/09 22:49:47 ad Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvme68k				comp-c-include
 ./usr/include/mvme68k/_G_config.h		comp-obsolete		obsolete
@@ -29,6 +29,7 @@
 ./usr/include/mvme68k/lock.h			comp-c-include
 ./usr/include/mvme68k/math.h			comp-c-include
 ./usr/include/mvme68k/mcontext.h		comp-c-include
+./usr/include/mvme68k/mutex.h			comp-c-include
 ./usr/include/mvme68k/param.h			comp-c-include
 ./usr/include/mvme68k/pcb.h			comp-c-include
 ./usr/include/mvme68k/pmap.h			comp-c-include
@@ -40,6 +41,7 @@
 ./usr/include/mvme68k/pte.h			comp-c-include
 ./usr/include/mvme68k/ptrace.h			comp-c-include
 ./usr/include/mvme68k/reg.h			comp-c-include
+./usr/include/mvme68k/rwlock.h			comp-c-include
 ./usr/include/mvme68k/setjmp.h			comp-c-include
 ./usr/include/mvme68k/signal.h			comp-c-include
 ./usr/include/mvme68k/stdarg.h			comp-c-include

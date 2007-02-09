@@ -1,4 +1,4 @@
-# $NetBSD: md.netwinder,v 1.10 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.netwinder,v 1.11 2007/02/09 22:49:47 ad Exp $
 ./usr/include/netwinder				comp-c-include
 ./usr/include/netwinder/ansi.h			comp-c-include
 ./usr/include/netwinder/aout_machdep.h		comp-c-include
@@ -29,6 +29,7 @@
 ./usr/include/netwinder/lock.h			comp-c-include
 ./usr/include/netwinder/math.h			comp-c-include
 ./usr/include/netwinder/mcontext.h		comp-c-include
+./usr/include/netwinder/mutex.h			comp-c-include
 ./usr/include/netwinder/param.h			comp-c-include
 ./usr/include/netwinder/pcb.h			comp-c-include
 ./usr/include/netwinder/pmap.h			comp-c-include
@@ -37,6 +38,7 @@
 ./usr/include/netwinder/profile.h		comp-c-include
 ./usr/include/netwinder/ptrace.h		comp-c-include
 ./usr/include/netwinder/reg.h			comp-c-include
+./usr/include/netwinder/rwlock.h		comp-c-include
 ./usr/include/netwinder/setjmp.h		comp-c-include
 ./usr/include/netwinder/signal.h		comp-c-include
 ./usr/include/netwinder/stdarg.h		comp-c-include
