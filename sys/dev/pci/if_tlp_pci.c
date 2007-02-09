@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.98 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.99 2007/02/09 21:39:38 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.98 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.99 2007/02/09 21:39:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,8 @@ static const struct tlp_pci_quirks tlp_pci_21041_quirks[] = {
 
 static void	tlp_pci_asante_21140_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
+static void	tlp_pci_e100_quirks(struct tulip_pci_softc *,
+	   		const u_int8_t *);
 static void	tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *,
 		    const u_int8_t *);
 static void	tlp_pci_smc_21140_quirks(struct tulip_pci_softc *,
@@ -241,6 +243,7 @@ static void	tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *,
 static const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
 	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
+	{ tlp_pci_e100_quirks,		{ 0x00, 0xa0, 0x59 } },
 	{ tlp_pci_asante_21140_quirks,	{ 0x00, 0x00, 0x94 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0x92 } },
 	{ tlp_pci_adaptec_quirks,	{ 0x00, 0x00, 0xd1 } },
@@ -360,7 +363,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	prop_data_t ea;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val = 0;
-	pcireg_t reg;
+	pcireg_t reg, addr, size;
 	int error;
 
 	sc->sc_devno = pa->pa_device;
@@ -533,13 +536,13 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Map the device.
 	 */
+	 	 
 	ioh_valid = (pci_mapreg_map(pa, TULIP_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
 	memh_valid = (pci_mapreg_map(pa, TULIP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, NULL, NULL) == 0);
-
+	    &memt, &memh, &addr, &size) == 0);
 	if (memh_valid) {
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
@@ -1264,6 +1267,22 @@ tlp_pci_asante_21140_quirks(struct tulip_pci_softc *psc,
 		return;
 
 	strcpy(sc->sc_name, "Asante");
+
+	sc->sc_gp_dir = 0xbf;
+	sc->sc_reset = tlp_pci_asante_21140_reset;
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+}
+
+static void tlp_pci_e100_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	if (sc->sc_mediasw == &tlp_2114x_isv_mediasw)
+		return;
+
+	strcpy(sc->sc_name, "UMAX E100");
 
 	sc->sc_gp_dir = 0xbf;
 	sc->sc_reset = tlp_pci_asante_21140_reset;
