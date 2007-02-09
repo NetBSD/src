@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.25 2006/02/16 20:50:57 christos Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.26 2007/02/09 22:08:49 ad Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,12 +36,12 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.25 2006/02/16 20:50:57 christos Exp $
+ * $Id: m_netbsd15.c,v 1.26 2007/02/09 22:08:49 ad Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.25 2006/02/16 20:50:57 christos Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.26 2007/02/09 22:08:49 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -502,7 +502,7 @@ get_process_info(si, sel, compare)
 		if (pp->p_stat != 0 && (show_system || ((pp->p_flag & P_SYSTEM) == 0))) {
 			total_procs++;
 			process_states[(unsigned char) pp->p_stat]++;
-			if (pp->p_stat != LSZOMB && pp->p_stat != LSDEAD &&
+			if (pp->p_stat != LSZOMB &&
 			    (show_idle || (pp->p_pctcpu != 0) || 
 			    (pp->p_stat == LSRUN || pp->p_stat == LSONPROC)) &&
 			    (!show_uid || pp->p_ruid == (uid_t)sel->uid)) {

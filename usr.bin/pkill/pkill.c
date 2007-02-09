@@ -1,4 +1,4 @@
-/*	$NetBSD: pkill.c,v 1.17 2006/02/25 01:13:55 wiz Exp $	*/
+/*	$NetBSD: pkill.c,v 1.18 2007/02/09 22:08:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.17 2006/02/25 01:13:55 wiz Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.18 2007/02/09 22:08:49 ad Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -345,7 +345,7 @@ main(int argc, char **argv)
 
 		SLIST_FOREACH(li, &tdevlist, li_chain) {
 			if (li->li_number == -1 &&
-			    (kp->p_flag & P_CONTROLT) == 0)
+			    (kp->p_flag & KP_CONTROLT) == 0)
 				break;
 			if (kp->p_tdev == (uid_t)li->li_number)
 				break;

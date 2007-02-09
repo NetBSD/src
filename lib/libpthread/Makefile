@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.38 2007/01/20 04:56:25 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2007/02/09 22:08:48 ad Exp $
 #
 
-PTHREAD_SA=1
+#PTHREAD_SA=1
 WARNS=	4
 
 # Define PT_FIXEDSTACKSIZE_LG to set a fixed stacksize

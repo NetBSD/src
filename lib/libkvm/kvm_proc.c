@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.65 2007/02/06 21:21:51 elad Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.66 2007/02/09 22:08:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.65 2007/02/06 21:21:51 elad Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.66 2007/02/09 22:08:48 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,6 +85,8 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.65 2007/02/06 21:21:51 elad Exp $");
  * most other applications are interested only in open/close/read/nlist).
  */
 
+#define	_KAUTH_PRIVATE
+
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/lwp.h>
@@ -94,6 +96,8 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.65 2007/02/06 21:21:51 elad Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/resourcevar.h>
+#include <sys/kauth_impl.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -149,27 +153,6 @@ struct miniproc {
 		(p)->p_paddr = (void *)(long)(kp)->p_paddr; \
 		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
 	} while (/*CONSTCOND*/0);
-
-/*
- * NetBSD uses kauth(9) to manage credentials, which are stored in kauth_cred_t,
- * a kernel-only opaque type. This is an embedded version which is *INTERNAL* to
- * kvm(3) so dumps can be read properly.
- *
- * Whenever NetBSD starts exporting credentials to userland consistently (using
- * 'struct uucred', or something) this will have to be updated again.
- */
-struct kvm_kauth_cred {
-	struct simplelock cr_lock;	/* lock on cr_refcnt */
-	u_int cr_refcnt;		/* reference count */
-	uid_t cr_uid;			/* user id */
-	uid_t cr_euid;			/* effective user id */
-	uid_t cr_svuid;			/* saved effective user id */
-	gid_t cr_gid;			/* group id */
-	gid_t cr_egid;			/* effective group id */
-	gid_t cr_svgid;			/* saved effective group id */
-	u_int cr_ngroups;		/* number of groups */
-	gid_t cr_groups[NGROUPS];	/* group memberships */
-};
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
@@ -305,7 +288,7 @@ _kvm_uread(kd, p, va, cnt)
 static int
 _kvm_convertcred(kvm_t *kd, u_long cred, struct eproc *eproc)
 {
-	struct kvm_kauth_cred kauthcred;
+	struct kauth_cred kauthcred;
 	struct pcred *pc = &eproc->e_pcred;
 	struct ucred *uc = &eproc->e_ucred;
 
@@ -407,7 +390,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			    pgrp.pg_session);
 			return (-1);
 		}
-		if ((proc.p_flag & P_CONTROLT) && sess.s_ttyp != NULL) {
+		if ((proc.p_lflag & PL_CONTROLT) && sess.s_ttyp != NULL) {
 			if (KREAD(kd, (u_long)sess.s_ttyp, &tty)) {
 				_kvm_err(kd, kd->program,
 				    "can't read tty at %p", sess.s_ttyp);
@@ -457,7 +440,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			break;
 
 		case KERN_PROC_TTY:
-			if ((proc.p_flag & P_CONTROLT) == 0 ||
+			if ((proc.p_lflag & PL_CONTROLT) == 0 ||
 			    eproc.e_tdev != (dev_t)arg)
 				continue;
 			break;
@@ -610,8 +593,8 @@ again:
 			kp2p->p_tsess = PTRTOUINT64(kp->kp_eproc.e_tsess);
 
 			kp2p->p_estcpu = kp->kp_proc.p_estcpu;
-			kp2p->p_rtime_sec = kp->kp_proc.p_estcpu;
-			kp2p->p_rtime_usec = kp->kp_proc.p_estcpu;
+			kp2p->p_rtime_sec = kp->kp_proc.p_rtime.tv_sec;
+			kp2p->p_rtime_usec = kp->kp_proc.p_rtime.tv_usec;
 			kp2p->p_cpticks = kp->kp_proc.p_cpticks;
 			kp2p->p_pctcpu = kp->kp_proc.p_pctcpu;
 			kp2p->p_swtime = kl[0].l_swtime;
@@ -632,10 +615,9 @@ again:
 			kp2p->p_holdcnt = kl[0].l_holdcnt;
 
 			memcpy(&kp2p->p_siglist,
-			    &kp->kp_proc.p_sigctx.ps_siglist,
+			    &kp->kp_proc.p_sigpend.sp_set,
 			    sizeof(ki_sigset_t));
-			memcpy(&kp2p->p_sigmask,
-			    &kp->kp_proc.p_sigctx.ps_sigmask,
+			memset(&kp2p->p_sigmask, 0,
 			    sizeof(ki_sigset_t));
 			memcpy(&kp2p->p_sigignore,
 			    &kp->kp_proc.p_sigctx.ps_sigignore,
