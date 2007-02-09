@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.228.2.19 2007/02/09 13:00:43 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.228.2.20 2007/02/09 19:06:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.19 2007/02/09 13:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.228.2.20 2007/02/09 19:06:05 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1806,11 +1806,8 @@ postsig(int signo)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG)) {
-		/* XXXSMP */
 		mutex_exit(&p->p_smutex);
-		KERNEL_LOCK(1, l);
 		ktrpsig(l, signo, action, returnmask, NULL);
-		KERNEL_UNLOCK_ONE(l);
 		mutex_enter(&p->p_smutex);
 	}
 #endif
