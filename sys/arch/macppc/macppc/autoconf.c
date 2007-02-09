@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.54 2007/02/09 21:13:30 macallan Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55 2007/02/09 21:15:54 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.54 2007/02/09 21:13:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55 2007/02/09 21:15:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -265,7 +265,7 @@ device_register(dev, aux)
 
 		dict = device_properties(dev);
 		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-		prop_dictionary_set_uint32(dict, "device_node", &node);
+		prop_dictionary_set_uint32(dict, "device_node", node);
 
 		console = (node == console_node);
 
@@ -287,7 +287,7 @@ device_register(dev, aux)
 		if (console) {
 
 			prop_dictionary_set_uint32(dict, "instance_handle",
-			    &console_instance);
+			    console_instance);
 			copyprops(console_node, dict);
 		}
 	}
