@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.43 2006/08/02 01:35:50 lukem Exp $
+# $NetBSD: ad.powerpc,v 1.44 2007/02/09 22:22:32 ad Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb,gdb=6
 ./usr/include/altivec.h				comp-c-include		gcccmds
@@ -46,6 +46,7 @@
 ./usr/include/powerpc/mpc6xx/pte.h		comp-obsolete		obsolete
 ./usr/include/powerpc/mpc6xx/sr_601.h		comp-obsolete		obsolete
 ./usr/include/powerpc/mpc6xx/vmparam.h		comp-obsolete		obsolete
+./usr/include/powerpc/mutex.h			comp-c-include
 ./usr/include/powerpc/oea			comp-c-include
 ./usr/include/powerpc/oea/bat.h			comp-c-include
 ./usr/include/powerpc/oea/hid.h			comp-c-include
@@ -65,6 +66,7 @@
 ./usr/include/powerpc/ptrace.h			comp-c-include
 ./usr/include/powerpc/reg.h			comp-c-include
 ./usr/include/powerpc/reloc.h			comp-c-include
+./usr/include/powerpc/rwlock.h			comp-c-include
 ./usr/include/powerpc/setjmp.h			comp-c-include
 ./usr/include/powerpc/signal.h			comp-c-include
 ./usr/include/powerpc/spr.h			comp-c-include

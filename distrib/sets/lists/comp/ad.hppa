@@ -1,4 +1,4 @@
-# $NetBSD: ad.hppa,v 1.3 2007/02/06 21:59:24 skrll Exp $
+# $NetBSD: ad.hppa,v 1.4 2007/02/09 22:22:32 ad Exp $
 ./usr/include/hppa				comp-c-include
 ./usr/include/hppa/ansi.h			comp-c-include
 ./usr/include/hppa/aout_machdep.h		comp-c-include
@@ -25,6 +25,7 @@
 ./usr/include/hppa/lock.h			comp-c-include
 ./usr/include/hppa/math.h			comp-c-include
 ./usr/include/hppa/mcontext.h			comp-c-include
+./usr/include/hppa/mutex.h			comp-c-include
 ./usr/include/hppa/param.h			comp-c-include
 ./usr/include/hppa/pcb.h			comp-c-include
 ./usr/include/hppa/pmap.h			comp-c-include
@@ -36,6 +37,7 @@
 ./usr/include/hppa/ptrace.h			comp-c-include
 ./usr/include/hppa/reg.h			comp-c-include
 ./usr/include/hppa/reloc.h			comp-c-include
+./usr/include/hppa/rwlock.h			comp-c-include
 ./usr/include/hppa/setjmp.h			comp-c-include
 ./usr/include/hppa/signal.h			comp-c-include
 ./usr/include/hppa/som.h			comp-c-include

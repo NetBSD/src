@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.53 2006/09/12 02:36:37 simonb Exp $
+# $NetBSD: md.atari,v 1.54 2007/02/09 22:22:32 ad Exp $
 ./usr/include/atari				comp-c-include
 ./usr/include/atari/_G_config.h			comp-obsolete		obsolete
 ./usr/include/atari/ahdilabel.h			comp-c-include
@@ -35,6 +35,7 @@
 ./usr/include/atari/mcontext.h			comp-c-include
 ./usr/include/atari/msioctl.h			comp-c-include
 ./usr/include/atari/mtpr.h			comp-c-include
+./usr/include/atari/mutex.h			comp-c-include
 ./usr/include/atari/param.h			comp-c-include
 ./usr/include/atari/pcb.h			comp-c-include
 ./usr/include/atari/pmap.h			comp-c-include
@@ -45,6 +46,7 @@
 ./usr/include/atari/pte.h			comp-c-include
 ./usr/include/atari/ptrace.h			comp-c-include
 ./usr/include/atari/reg.h			comp-c-include
+./usr/include/atari/rwlock.h			comp-c-include
 ./usr/include/atari/setjmp.h			comp-c-include
 ./usr/include/atari/signal.h			comp-c-include
 ./usr/include/atari/stdarg.h			comp-c-include

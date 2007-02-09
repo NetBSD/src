@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.22 2007/01/02 03:40:03 dbj Exp $
+# $NetBSD: md.amd64,v 1.23 2007/02/09 22:22:32 ad Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -37,6 +37,7 @@
 ./usr/include/amd64/math.h			comp-c-include
 ./usr/include/amd64/mcontext.h			comp-c-include
 ./usr/include/amd64/mtrr.h			comp-c-include
+./usr/include/amd64/mutex.h			comp-c-include
 ./usr/include/amd64/netbsd32_machdep.h		comp-c-include
 ./usr/include/amd64/param.h			comp-c-include
 ./usr/include/amd64/pcb.h			comp-c-include
@@ -50,6 +51,7 @@
 ./usr/include/amd64/pte.h			comp-c-include
 ./usr/include/amd64/ptrace.h			comp-c-include
 ./usr/include/amd64/reg.h			comp-c-include
+./usr/include/amd64/rwlock.h			comp-c-include
 ./usr/include/amd64/segments.h			comp-c-include
 ./usr/include/amd64/setjmp.h			comp-c-include
 ./usr/include/amd64/signal.h			comp-c-include
@@ -142,8 +144,10 @@
 ./usr/include/x86/lock.h			comp-c-include
 ./usr/include/x86/math.h			comp-c-include
 ./usr/include/x86/mtrr.h			comp-c-include
+./usr/include/x86/mutex.h			comp-c-include
 ./usr/include/x86/pio.h				comp-c-include
 ./usr/include/x86/psl.h				comp-c-include
+./usr/include/x86/rwlock.h			comp-c-include
 ./usr/include/x86/specialreg.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-c-include		gcccmds
