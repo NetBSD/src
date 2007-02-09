@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.166.2.19 2007/02/05 16:44:40 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.166.2.20 2007/02/09 19:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.19 2007/02/05 16:44:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.166.2.20 2007/02/09 19:58:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -392,7 +392,8 @@ schedcpu(void *arg)
 
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 				lwp_lock(l);
-				if (l->l_slptime <= 1)
+				if (l->l_slptime <= 1 &&
+				    l->l_priority >= PUSER)
 					resetpriority(l);
 				lwp_unlock(l);
 			}
@@ -889,9 +890,7 @@ resetpriority(struct lwp *l)
 	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
 	    NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
-	l->l_usrpri = newpriority;
-	if (l->l_priority != newpriority)
-		lwp_changepri(l, newpriority);
+	lwp_changepri(l, newpriority);
 }
 
 /*
@@ -1059,6 +1058,12 @@ scheduler_wait_hook(struct proc *parent, struct proc *child)
 int
 sched_kpri(struct lwp *l)
 {
+	/*
+	 * Scale user priorities (127 -> 50) up to kernel priorities
+	 * in the range (49 -> 8).  Reserve the top 8 kernel priorities
+	 * for high priority kthreads.  Kernel priorities passed in
+	 * are left "as is".  XXX This is somewhat arbitrary.
+	 */
 	static const uint8_t kpri_tab[] = {
 		 0,   1,   2,   3,   4,   5,   6,   7,
 		 8,   9,  10,  11,  12,  13,  14,  15,
@@ -1078,7 +1083,7 @@ sched_kpri(struct lwp *l)
 		46,  46,  47,  47,  48,  48,  49,  49,
 	};
 
-	return kpri_tab[l->l_priority];
+	return kpri_tab[l->l_usrpri];
 }
 
 /*
@@ -1107,6 +1112,10 @@ sched_changepri(struct lwp *l, int pri)
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
+	l->l_usrpri = pri;
+
+	if (l->l_priority < PUSER)
+		return;
 	if (l->l_stat != LSRUN || (l->l_flag & L_INMEM) == 0 ||
 	    (l->l_priority / PPQ) == (pri / PPQ)) {
 		l->l_priority = pri;
@@ -1231,6 +1240,12 @@ setrunqueue(struct lwp *l)
 #endif
 }
 
+/*
+ * XXXSMP When LWP dispatch (cpu_switch()) is changed to use remrunqueue(),
+ * drop of the effective priority level from kernel to user needs to be
+ * moved here from userret().  The assignment in userret() is currently
+ * done unlocked.
+ */
 void
 remrunqueue(struct lwp *l)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.36.9 2007/02/06 17:27:30 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.36.10 2007/02/09 19:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.9 2007/02/06 17:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.36.10 2007/02/09 19:58:10 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -299,7 +299,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
-		turnstile_block(ts, queue, sched_kpri(l), rw);
+		turnstile_block(ts, queue, rw);
 
 		/* If we wake up and arrive here, we've been handed the lock. */
 		RW_RECEIVE(rw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.1.2.14 2007/02/05 17:58:13 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.1.2.15 2007/02/09 19:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.14 2007/02/05 17:58:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.1.2.15 2007/02/09 19:58:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -192,7 +192,7 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
  *
  *	Insert an LWP into the sleep queue, optionally sorting by priority.
  */
-static inline void
+inline void
 sleepq_insert(sleepq_t *sq, struct lwp *l, int pri, syncobj_t *sobj)
 {
 	struct lwp *l2;
@@ -474,20 +474,14 @@ sleepq_abort(kmutex_t *mtx, int unlock)
 /*
  * sleepq_changepri:
  *
- *	Adjust the priority of an LWP residing on a sleepq.
+ *	Adjust the priority of an LWP residing on a sleepq.  This method
+ *	will only alter the user priority; the effective priority is
+ *	assumed to have been fixed at the time of insertion into the queue.
  */
 void
 sleepq_changepri(struct lwp *l, int pri)
 {
-	sleepq_t *sq = l->l_sleepq;
 
-	KASSERT(lwp_locked(l, sq->sq_mutex));
-
-	l->l_priority = pri;
-
-	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0)
-		return;
-
-	TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
-	sleepq_insert(sq, l, pri, l->l_syncobj);
+	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
+	l->l_usrpri = pri;
 }

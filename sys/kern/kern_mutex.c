@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.36.20 2007/02/06 17:27:30 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.36.21 2007/02/09 19:58:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.20 2007/02/06 17:27:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.36.21 2007/02/09 19:58:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -627,7 +627,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
-		turnstile_block(ts, TS_WRITER_Q, sched_kpri(curlwp), mtx);
+		turnstile_block(ts, TS_WRITER_Q, mtx);
 
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
