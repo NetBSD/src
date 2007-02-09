@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.63 2007/02/08 22:58:09 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.64 2007/02/09 07:15:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1136,7 +1136,7 @@ share/man/man4/cardbus.4			1.30
 distrib/amd64/ramdisks/ramdisk/list             1.2
 sys/arch/amd64/conf/INSTALL                     1.64-1.65
 
-	Add RAIDframe support the NetBSD-amd64 installation floppies.
+	Add RAIDframe support to the NetBSD-amd64 installation floppies.
 	This fixes PR port-amd64/35532.
 	[tron, ticket #405]
 
