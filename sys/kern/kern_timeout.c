@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.17.20.6 2007/02/06 21:18:41 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.17.20.7 2007/02/09 12:49:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.6 2007/02/06 21:18:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.17.20.7 2007/02/09 12:49:49 ad Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -192,7 +192,7 @@ static inline void
 callout_barrier(struct callout *c)
 {
 #ifdef MULTIPROCESSOR
-	struct cpu_info *ci;
+	struct cpu_info *ci, *ci_cur;
 
 	LOCK_ASSERT(mutex_owned(&callout_mutex));
 
@@ -204,8 +204,14 @@ callout_barrier(struct callout *c)
 	 * with that race easily, so for now the caller must deal with
 	 * it.
 	 */
+#if 1
+	ci_cur = curcpu();	/* XXXgcc get around alpha problem */
+	while ((ci = c->c_oncpu) != NULL && ci != ci_cur &&
+	    ci->ci_data.cpu_callout == c) {
+#else
 	while ((ci = c->c_oncpu) != NULL && ci != curcpu() &&
 	    ci->ci_data.cpu_callout == c) {
+#endif
 		mutex_spin_exit(&callout_mutex);
 		while (ci->ci_data.cpu_callout == c)
 			;
