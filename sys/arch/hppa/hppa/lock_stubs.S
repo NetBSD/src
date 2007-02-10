@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3 2007/02/10 13:21:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ LEAF_ENTRY(mutex_exit)
 	ldo	R%mutex_vector_exit(%t1), %t1
 	.call
 	bv,n	%r0(%t1)
-.Lexit_done
+.Lexit_done:
 	bv,n	%r0(%rp)
 
 EXIT(mutex_exit)
