@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.67 2007/02/10 16:31:20 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.68 2007/02/10 19:46:16 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1205,4 +1205,10 @@ sys/arch/i386/i386/identcpu.c			1.54
 	Add AMD Geode LX.
 	OK'ed by tsutsui@ on port-i386.
 	[tron, ticket #438]
+
+share/dict/web2					1.16
+
+	"Transvaal" should be capitalized.
+	Patch provided by David A. Holland in PR misc/35517.
+	[tron, ticket #395]
 
