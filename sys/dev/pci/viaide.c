@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.39 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: viaide.c,v 1.40 2007/02/10 10:23:18 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.39 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.40 2007/02/10 10:23:18 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,6 +416,10 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			break;
 		case PCI_PRODUCT_VIATECH_VT8237:
 			aprint_normal("VT8237 ATA133 controller\n");
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			break;
+		case PCI_PRODUCT_VIATECH_VT8237A_ISA:
+			aprint_normal("VT8237A ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
 		default:
