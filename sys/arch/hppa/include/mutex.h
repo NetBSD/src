@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3 2007/02/10 12:15:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, u_int id)
 static inline void
 MUTEX_DESTROY(kmutex_t *mtx)
 {
-	mtx->mtx_waiters = 1;
+	mtx->mtx_owner = 0xffffffff;
 	mtx->mtx_id[0] = 0xff;
 	mtx->mtx_id[1] = 0xff;
 	mtx->mtx_id[2] = 0xff;
