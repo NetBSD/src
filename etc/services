@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.83 2006/10/08 14:30:26 elad Exp $
+#	$NetBSD: services,v 1.84 2007/02/10 19:39:02 reed Exp $
 #
 # Network services, Internet style
 #
@@ -211,7 +211,7 @@ pop3s		995/udp			# pop3 protocol over TLS/SSL (was spop3)
 #> providing services to unknown callers, a service contact port is
 #> defined.  This list specifies the port used by the server process as its
 #> contact port.  While the IANA can not control uses of these ports it
-#> does register or list uses of these ports as a convienence to the
+#> does register or list uses of these ports as a convenience to the
 #> community.
 #
 ingreslock	1524/tcp
