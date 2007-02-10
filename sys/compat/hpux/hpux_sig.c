@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.30 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.31 2007/02/10 02:42:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.30 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.31 2007/02/10 02:42:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ hpux_sys_sigvec(l, v, retval)
 		compat_43_sigvec_to_sigaction(&nsv, &nsa);
 	}
 
-	error = sigaction1(l->l_proc, sig,
+	error = sigaction1(l, sig,
 	    SCARG(uap, nsv) ? &nsa : NULL,
 	    SCARG(uap, osv) ? &osa : NULL,
 	    NULL, 0);
@@ -168,16 +168,15 @@ hpux_sys_sigblock(l, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_sigblock_args *uap = v;
-	struct proc *p = l->l_proc;
 	sigset_t nmask;
 
 	(void) splsched();
 
-	bsdtohpuxmask(&p->p_sigctx.ps_sigmask, (int *)retval);
+	bsdtohpuxmask(&l->l_sigmask, (int *)retval);
 	hpuxtobsdmask(SCARG(uap, mask), &nmask);
 
-	sigplusset(&nmask, &p->p_sigctx.ps_sigmask);
-	sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
+	sigplusset(&nmask, &l->l_sigmask);
+	sigminusset(&sigcantmask, &l->l_sigmask);
 
 	(void) spl0();
 	return (0);
@@ -190,14 +189,13 @@ hpux_sys_sigsetmask(l, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_sigsetmask_args *uap = v;
-	struct proc *p = l->l_proc;
 
 	(void) splsched();
 
-	bsdtohpuxmask(&p->p_sigctx.ps_sigmask, (int *)retval);
-	hpuxtobsdmask(SCARG(uap, mask), &p->p_sigctx.ps_sigmask);
+	bsdtohpuxmask(&l->l_sigmask, (int *)retval);
+	hpuxtobsdmask(SCARG(uap, mask), &l->l_sigmask);
 
-	sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
+	sigminusset(&sigcantmask, &l->l_sigmask);
 
 	(void) spl0();
 	return (0);
@@ -213,7 +211,7 @@ hpux_sys_sigpause(l, v, retval)
 	sigset_t mask;
 
 	hpuxtobsdmask(SCARG(uap, mask), &mask);
-	return (sigsuspend1(l->l_proc, &mask));
+	return (sigsuspend1(l, &mask));
 }
 
 /* not totally correct, but close enuf' */
@@ -254,7 +252,6 @@ hpux_sys_sigprocmask(l, v, retval)
 	register_t *retval;
 {
 	struct hpux_sys_sigprocmask_args *uap = v;
-	struct proc *p = l->l_proc;
 	int error = 0;
 	hpux_sigset_t sigset;
 	sigset_t mask;
@@ -265,7 +262,7 @@ hpux_sys_sigprocmask(l, v, retval)
 	 */
 	if (SCARG(uap, oset)) {
 		memset((caddr_t)&sigset, 0, sizeof(sigset));
-		bsdtohpuxmask(&p->p_sigctx.ps_sigmask, &sigset.sigset[0]);
+		bsdtohpuxmask(&l->l_sigmask, &sigset.sigset[0]);
 		error = copyout(&sigset, SCARG(uap, oset), sizeof(sigset));
 		if (error)
 			return (error);
@@ -278,15 +275,15 @@ hpux_sys_sigprocmask(l, v, retval)
 		(void) splsched();
 		switch (SCARG(uap, how)) {
 		case HPUXSIG_BLOCK:
-			sigplusset(&mask, &p->p_sigctx.ps_sigmask);
-			sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
+			sigplusset(&mask, &l->l_sigmask);
+			sigminusset(&sigcantmask, &l->l_sigmask);
 			break;
 		case HPUXSIG_UNBLOCK:
-			sigminusset(&mask, &p->p_sigctx.ps_sigmask);
+			sigminusset(&mask, &l->l_sigmask);
 			break;
 		case HPUXSIG_SETMASK:
-			p->p_sigctx.ps_sigmask = mask;
-			sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
+			l->l_sigmask = mask;
+			sigminusset(&sigcantmask, &l->l_sigmask);
 			break;
 		default:
 			error = EINVAL;
@@ -306,7 +303,7 @@ hpux_sys_sigpending(l, v, retval)
 	struct hpux_sys_sigpending_args *uap = v;
 	hpux_sigset_t sigset;
 
-	bsdtohpuxmask(&l->l_proc->p_sigctx.ps_siglist, &sigset.sigset[0]);
+	bsdtohpuxmask(&l->l_sigpendset->sp_set, &sigset.sigset[0]);
 	return (copyout(&sigset, SCARG(uap, set), sizeof(sigset)));
 }
 
@@ -326,7 +323,7 @@ hpux_sys_sigsuspend(l, v, retval)
 		return (error);
 
 	hpuxtobsdmask(sigset.sigset[0], &mask);
-	return (sigsuspend1(l->l_proc, &mask));
+	return (sigsuspend1(l, &mask));
 }
 
 int
@@ -382,7 +379,7 @@ hpux_sys_sigaction(l, v, retval)
 		if (sa->hpux_sa_flags & HPUXSA_NOCLDSTOP)
 			act.sa_flags |= SA_NOCLDSTOP;
 
-		error = sigaction1(l->l_proc, sig, &act, NULL, NULL, 0);
+		error = sigaction1(l, sig, &act, NULL, NULL, 0);
 		if (error)
 			return (error);
 	}
@@ -423,7 +420,7 @@ hpux_sys_ssig_6x(l, v, retval)
 	sigemptyset(&sa->sa_mask);
 	sa->sa_flags = 0;
 	*retval = (register_t)SIGACTION(p, a).sa_handler;
-	sigaction1(p, a, sa, NULL, NULL, 0);
+	sigaction1(l, a, sa, NULL, NULL, 0);
 #if 0
 	p->p_flag |= SOUSIG;		/* mark as simulating old stuff */
 #endif
