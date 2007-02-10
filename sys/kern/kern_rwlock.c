@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.2 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.3 2007/02/10 21:07:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.3 2007/02/10 21:07:52 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -384,6 +384,7 @@ rw_vector_exit(krwlock_t *rw)
 		 */
 		ts = turnstile_lookup(rw);
 		RW_DASSERT(rw, ts != NULL);
+		RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
 		owner = rw->rw_owner;
 		wcnt = TS_WAITERS(ts, TS_WRITER_Q);
@@ -398,7 +399,6 @@ rw_vector_exit(krwlock_t *rw)
 		 */
 		if (rcnt == 0 || (decr == RW_READ_INCR && wcnt != 0)) {
 			RW_DASSERT(rw, wcnt != 0);
-			RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_WANTED) != 0);
 
 			/*
@@ -424,13 +424,11 @@ rw_vector_exit(krwlock_t *rw)
 			turnstile_wakeup(ts, TS_WRITER_Q, wcnt, l);
 		} else {
 			RW_DASSERT(rw, rcnt != 0);
-			RW_DASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
 			/*
-			 * Give the lock to all blocked readers.  We may
-			 * retain one read hold if downgrading.  If there
-			 * is a writer waiting, new readers will be blocked
-			 * out.
+			 * Give the lock to all blocked readers.  If there
+			 * is a writer waiting, new readers that arrive
+			 * after the release will be blocked out.
 			 */
 			new = rcnt << RW_READ_COUNT_SHIFT;
 			if (wcnt != 0)
