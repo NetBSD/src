@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.6 2007/02/09 23:36:17 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.7 2007/02/10 02:53:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.6 2007/02/09 23:36:17 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.7 2007/02/10 02:53:27 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -454,7 +454,7 @@ psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	rv = psbuf_expect_status(pb);
 
 	if (rv == 0)
-		nukenode(pn_targ, pcn->pcn_name, 1);
+		nukenode(pn_targ, pcn->pcn_name, 0);
 
  out:
 	PSSHFSRETURN(rv);
@@ -505,7 +505,7 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 	rv = psbuf_expect_status(pb);
 	if (rv == 0)
-		nukenode(pn_targ, pcn->pcn_name, 1);
+		nukenode(pn_targ, pcn->pcn_name, 0);
 
 	PSSHFSRETURN(rv);
 }
