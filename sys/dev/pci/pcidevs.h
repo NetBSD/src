@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.866 2007/02/10 10:23:18 mlelstv Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.867 2007/02/10 10:35:42 mlelstv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.866 2007/01/30 11:31:40 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.867 2007/02/10 10:23:18 mlelstv Exp
  */
 
 /*
