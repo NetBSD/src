@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2007/02/10 02:57:46 tsutsui Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2 2007/02/10 13:08:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ ssir_pending(volatile unsigned char *ssptr)
 /*
  * softintr_init()
  *
- *	Initialise mvme68k software interrupt subsystem.
+ *	Initialise news68k software interrupt subsystem.
  */
 void
 softintr_init(void)
@@ -107,9 +107,7 @@ softintr_init(void)
 	softnet_intrhand = softintr_establish(IPL_SOFTNET,
 	    (void (*)(void *))netintr, NULL);
 
-#ifdef DEBUG
-	assert(softnet_intrhand != NULL);
-#endif
+	KDASSERT(softnet_intrhand != NULL);
 }
 
 /*
@@ -124,9 +122,7 @@ softintr_dispatch(void)
 	struct news68k_soft_intrhand *sih;
 	int handled;
 
-	/* disable level 2 interrupt */
-	*ctrl_int2 = 0;
-	uvmexp.softs++;
+	softintr_clear();
 
 	do {
 		for (nsi = news68k_soft_intrs, handled = 0;
