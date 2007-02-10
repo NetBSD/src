@@ -1,4 +1,4 @@
-/*	$NetBSD: lcl_ho.c,v 1.1.1.1 2004/05/17 23:44:43 christos Exp $	*/
+/*	$NetBSD: lcl_ho.c,v 1.1.1.1.4.1 2007/02/10 19:20:49 tron Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993

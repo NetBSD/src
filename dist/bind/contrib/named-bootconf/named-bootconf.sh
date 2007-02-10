@@ -17,7 +17,7 @@
 
 # Id: named-bootconf.sh,v 1.7.206.1 2004/03/06 13:16:11 marka Exp
 
-# $NetBSD: named-bootconf.sh,v 1.1.1.1 2004/05/17 23:43:51 christos Exp $
+# $NetBSD: named-bootconf.sh,v 1.1.1.1.4.1 2007/02/10 19:20:41 tron Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.

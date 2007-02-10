@@ -1,4 +1,4 @@
-/*	$NetBSD: os-sunos4.h,v 1.1.1.1 2004/05/17 23:43:53 christos Exp $	*/
+/*	$NetBSD: os-sunos4.h,v 1.1.1.1.4.1 2007/02/10 19:20:42 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994, 1995, 1996

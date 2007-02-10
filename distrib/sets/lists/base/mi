@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.26 2005/11/21 20:29:23 tron Exp $
+# $NetBSD: mi,v 1.532.2.26.2.1 2007/02/10 19:21:06 tron Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -945,8 +945,8 @@
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
 ./usr/sbin/dnssec-keygen			base-bind-bin
-./usr/sbin/dnssec-makekeyset			base-bind-bin
-./usr/sbin/dnssec-signkey			base-bind-bin
+./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
+./usr/sbin/dnssec-signkey			base-obsolete		obsolete
 ./usr/sbin/dnssec-signzone			base-bind-bin
 ./usr/sbin/dtmfdecode				base-isdn-bin
 ./usr/sbin/dumpfs				base-sysutil-bin

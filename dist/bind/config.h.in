@@ -16,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.h.in,v 1.47.2.3.2.11 2004/09/01 07:18:30 marka Exp */
+/* Id: config.h.in,v 1.47.2.3.2.20 2005/10/20 23:57:38 marka Exp */
 
 /***
  *** This file is not to be included by any public header files, because
@@ -134,11 +134,17 @@ int sigwait(const unsigned int *set, int *sig);
 /* define if you have strerror in the C library. */
 #undef HAVE_STRERROR
 
-/* Define if you are running under Compaq TruCluster..  */
+/* Define if you are running under Compaq TruCluster. */
 #undef HAVE_TRUCLUSTER
 
 /* Define if OpenSSL includes DSA support */
 #undef HAVE_OPENSSL_DSA
+
+/* Define to the length type used by the socket API (socklen_t, size_t, int). */
+#undef ISC_SOCKADDR_LEN_T
+
+/* Define if threads need PTHREAD_SCOPE_SYSTEM */
+#undef NEED_PTHREAD_SCOPE_SYSTEM
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
@@ -218,6 +224,9 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Defined if extern char *optarg is not declared. */
+#undef NEED_OPTARG
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -233,11 +242,19 @@ int sigwait(const unsigned int *set, int *sig);
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Sets which flag to pass to open/fcntl to make non-blocking
+   (O_NDELAY/O_NONBLOCK). */
+#undef PORT_NONBLOCK
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
 /* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
 #undef TIME_WITH_SYS_TIME
+
+/* Defined if you need to use ioctl(FIONBIO) instead a fcntl call to make
+   non-blocking. */
+#undef USE_FIONBIO_IOCTL
 
 /* Define to 1 if your processor stores words with the most significant byte
    first (like Motorola and SPARC, unlike Intel and VAX). */
@@ -257,3 +274,6 @@ int sigwait(const unsigned int *set, int *sig);
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef ssize_t
+
+/* Define to `unsigned long' if <sys/types.h> does not define. */
+#undef uintptr_t

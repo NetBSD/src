@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,13 +15,14 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: clean.sh,v 1.10.12.4 2004/03/10 01:05:51 marka Exp
+# Id: clean.sh,v 1.10.12.7 2005/09/13 00:34:53 marka Exp
 
-rm -f */K* */keyset-* */signedkey-* */*.signed */trusted.conf */tmp*
+rm -f */K* */keyset-* */dsset-* */dlvset-* */signedkey-* */*.signed */trusted.conf */tmp*
 rm -f ns1/root.db ns2/example.db ns3/secure.example.db
 rm -f ns3/unsecure.example.db ns3/bogus.example.db ns3/keyless.example.db
 rm -f ns3/dynamic.example.db ns3/dynamic.example.db.signed.jnl
+rm -f ns2/private.secure.example.db
 rm -f */example.bk
 rm -f dig.out.*
 rm -f random.data
-
+rm -f ns2/dlv.db

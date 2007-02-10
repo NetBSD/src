@@ -1,4 +1,4 @@
-/*	$NetBSD: bitypes.h,v 1.1.1.1 2004/05/17 23:44:46 christos Exp $	*/
+/*	$NetBSD: bitypes.h,v 1.1.1.1.4.1 2007/02/10 19:20:51 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")

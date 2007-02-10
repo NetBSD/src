@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: tests.sh,v 1.33.12.6 2004/05/18 03:06:24 marka Exp
+# Id: tests.sh,v 1.33.12.8 2005/09/06 02:12:40 marka Exp
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -441,14 +441,20 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
-#echo "I:checking dnssec-lookaside-validation works ($n)"
-#ret=0
-#$DIG $DIGOPTS private.secure.example. SOA @10.53.0.6 \
-#	> dig.out.ns6.test$n || ret=1
-#grep "flags:.*ad.*QUERY" dig.out.ns6.test$n > /dev/null || ret=1
-#n=`expr $n + 1`
-#if [ $ret != 0 ]; then echo "I:failed"; fi
-#status=`expr $status + $ret`
+#
+# private.secure.example is served by the same server as its
+# grand parent and there is not a secure delegation from secure.example
+# to private.secure.example.  In addition secure.example is using a
+# algorithm which the validation does not support.
+# 
+echo "I:checking dnssec-lookaside-validation works ($n)"
+ret=0
+$DIG $DIGOPTS private.secure.example. SOA @10.53.0.6 \
+	> dig.out.ns6.test$n || ret=1
+grep "flags:.*ad.*QUERY" dig.out.ns6.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:checking that we can load a rfc2535 signed zone ($n)"
 ret=0

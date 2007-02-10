@@ -1,0 +1,226 @@
+
+
+
+
+
+
+Network Working Group                                         R. Austein
+draft-ietf-dnsext-dnsmib-historical-00.txt       InterNetShare.com, Inc.
+                                                            October 2000
+
+
+             Applicability Statement for DNS MIB Extensions
+
+
+Status of this document
+
+   This document is an Internet-Draft and is in full conformance with
+   all provisions of Section 10 of RFC 2026.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF), its areas, and its working groups.  Note that
+   other groups may also distribute working documents as Internet-
+   Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   The list of current Internet-Drafts can be accessed at
+   <http://www.ietf.org/ietf/1id-abstracts.txt>
+
+   The list of Internet-Draft Shadow Directories can be accessed at
+   <http://www.ietf.org/shadow.html>
+
+   Distribution of this document is unlimited.  Please send comments to
+   the Namedroppers mailing list <namedroppers@ops.ietf.org>.
+
+Abstract
+
+   More than six years after the DNS Server and Resolver MIB extensions
+   became proposed standards, there still has not been any significant
+   deployment of these MIB extensions.  This note examines the reasons
+   why these MIB extensions were never deployed, and recommends retiring
+   these MIB extensions by moving them to Historical status.
+
+History
+
+   The road to the DNS MIB extensions was paved with good intentions.
+
+   In retrospect, it's obvious that the working group never had much
+   agreement on what belonged in the MIB extensions, just that we should
+   have some.  This happened during the height of the craze for MIB
+   extensions in virtually every protocol that the IETF was working on
+
+
+
+Austein                    Expires 2 May 2001                   [Page 1]
+
+draft-ietf-dnsext-dnsmib-historical-00.txt                  October 2000
+
+
+   at the time, so the question of why we were doing this in the first
+   place never got a lot of scrutiny.  Very late in the development
+   cycle we discovered that much of the support for writing the MIB
+   extensions in the first place had come from people who wanted to use
+   SNMP SET operations to update DNS zones on the fly.  Examination of
+   the security model involved, however, led us to conclude that this
+   was not a good way to do dynamic update and that a separate DNS
+   Dynamic Update protocol would be necessary.
+
+   The MIB extensions started out being fairly specific to one
+   particular DNS implementation (BIND-4.8.3); as work progressed, the
+   BIND-specific portions were rewritten to be as implementation-neutral
+   as we knew how to make them, but somehow every revision of the MIB
+   extensions managed to accrete new counters that just happened to
+   closely match statistics kept by some version of BIND.  As a result,
+   the MIB extensions ended up being much too big, which raised a number
+   of concerns with the network management directorate, but the WG
+   resisted every attempt to remove any of these variables.  In the end,
+   large portions of the MIB extensions were moved into optional groups
+   in an attempt to get the required subset down to a manageable size.
+
+   The DNS Server and Resolver MIB extensions were one of the first
+   attempts to write MIB extensions for a protocol usually considered to
+   be at the application layer.  Fairly early on it became clear that,
+   while it was certainly possible to write MIB extensions for DNS, the
+   SMI was not really designed with this sort of thing in mind.  A case
+   in point was the attempt to provide direct indexing into the caches
+   in the resolver MIB extensions: while arguably the only sane way to
+   do this for a large cache, this required much more complex indexing
+   clauses than is usual, and ended up running into known length limits
+   for object identifiers in some SNMP implementations.
+
+   Furthermore, the lack of either real proxy MIB support in SNMP
+   managers or a standard subagent protocol meant that there was no
+   reasonable way to implement the MIB extensions in the dominant
+   implementation (BIND).  When the AgentX subagent protocol was
+   developed a few years later, we initially hoped that this would
+   finally clear the way for an implementation of the DNS MIB
+   extensions, but by the time AgentX was a viable protocol it had
+   become clear that nobody really wanted to implement these MIB
+   extensions.
+
+   Finally, the MIB extensions took much too long to produce.  In
+   retrospect, this should have been a clear warning sigh, particularly
+   when the WG had clearly become so tired of the project that the
+   authors found it impossible to elicit any comments whatsoever on the
+   documents.
+
+
+
+
+Austein                    Expires 2 May 2001                   [Page 2]
+
+draft-ietf-dnsext-dnsmib-historical-00.txt                  October 2000
+
+
+Lessons
+
+   Observations based on the preceding list of mistakes, for the benefit
+   of anyone else who ever attempts to write DNS MIB extensions again:
+
+   - Define a clear set of goals before writing any MIB extensions.
+     Know who the constituency is and make sure that what you write
+     solves their problem.
+
+   - Keep the MIB extensions short, and don't add variables just because
+     somebody in the WG thinks they'd be a cool thing to measure.
+
+   - If some portion of the task seems to be very hard to do within the
+     SMI, that's a strong hint that SNMP is not the right tool for
+     whatever it is that you're trying to do.
+
+   - If the entire project is taking too long, perhaps that's a hint
+     too.
+
+
+Recommendation
+
+   In view of the community's apparent total lack of interest in
+   deploying these MIB extensions, we recommend that RFCs 1611 and 1612
+   be reclassified as Historical documents.
+
+Security Considerations
+
+   Getting rid of the DNS MIB extensions undoubtedly closes a few
+   security holes, or would if anybody had ever implemented them.
+
+IANA Considerations
+
+   Getting rid of the DNS MIB extensions should not impose any new work
+   on IANA.
+
+Acknowledgments
+
+   The author would like to thank all the people who were involved in
+   this silly project over the years for their optimism and patience,
+   misguided though it may have been.
+
+References
+
+   [DNS-SERVER-MIB]  Austein, R., and Saperia, J., "DNS Server MIB
+        Extensions", RFC 1611, May 1994.
+
+
+
+
+
+Austein                    Expires 2 May 2001                   [Page 3]
+
+draft-ietf-dnsext-dnsmib-historical-00.txt                  October 2000
+
+
+   [DNS-RESOLVER-MIB]  Austein, R., and Saperia, J., "DNS Resolver MIB
+        Extensions", RFC 1612, May 1994.
+
+   [DNS-DYNAMIC-UPDATE] Vixie,  P., Ed., Thomson, S., Rekhter, Y., and
+        Bound, J., "Dynamic Updates in the Domain Name System (DNS
+        UPDATE)", RFC 2136, April 1997.
+
+   [AGENTX] Daniele, M., Wijnen, B., Ellison, M., and Francisco, D.,
+        "Agent Extensibility (AgentX) Protocol Version 1", RFC 2741,
+        January 2000.
+
+Author's addresses:
+
+      Rob Austein
+      InterNetShare.com, Inc.
+      505 West Olive Ave., Suite 321
+      Sunnyvale, CA 94086
+      USA
+      sra@hactrn.net
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Austein                    Expires 2 May 2001                   [Page 4]

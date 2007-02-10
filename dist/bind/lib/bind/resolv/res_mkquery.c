@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.1.1.1 2004/05/17 23:44:47 christos Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.1.1.1.4.1 2007/02/10 19:20:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
