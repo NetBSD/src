@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.174 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.175 2007/02/10 02:55:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.174 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.175 2007/02/10 02:55:18 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -609,9 +609,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	struct timeval tv;
 	int retval, oldspl;
 	long s, u;
-#if PERFCTRS
-	struct proc *p = l->l_proc;
-#endif
 
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
@@ -653,8 +650,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * XXXSMP If we are using h/w performance counters, save context.
 	 */
 #if PERFCTRS
-	if (PMC_ENABLED(p)) {
-		pmc_save_context(p);
+	if (PMC_ENABLED(l->l_proc)) {
+		pmc_save_context(l->l_proc);
 	}
 #endif
 
@@ -708,8 +705,8 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * XXXSMP If we are using h/w performance counters, restore context.
 	 */
 #if PERFCTRS
-	if (PMC_ENABLED(p)) {
-		pmc_restore_context(p);
+	if (PMC_ENABLED(l->l_proc)) {
+		pmc_restore_context(l->l_proc);
 	}
 #endif
 
