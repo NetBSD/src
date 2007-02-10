@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.17 2007/02/10 07:44:00 mlelstv Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.18 2007/02/10 14:28:55 salo Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.17 2007/02/10 07:44:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.18 2007/02/10 14:28:55 salo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,6 +239,8 @@ Static const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_MC3G },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS2 },
 	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS },
+	/* AnyDATA ADU-E100H */
+	{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_E100H },
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
