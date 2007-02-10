@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.84 2007/02/10 02:42:30 tsutsui Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.85 2007/02/10 10:09:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.84 2007/02/10 02:42:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.85 2007/02/10 10:09:01 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -938,14 +938,24 @@ hpux_sys_getpgrp2(lp, v, retval)
 
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = cp->p_pid;
-	p = pfind(SCARG(uap, pid));
-	if (p == 0)
+
+	rw_enter(&proclist_lock, RW_READER);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED);
+	if (p == 0) {
+		rw_exit(&proclist_lock);
 		return (ESRCH);
+	}
+	mutex_enter(&p->p_mutex);
 	if (kauth_cred_geteuid(lp->l_cred) &&
 	    kauth_cred_geteuid(p->p_cred) != kauth_cred_geteuid(lp->l_cred) &&
-	    !inferior(p, cp))
+	    !inferior(p, cp)) {
+		mutex_exit(&p->p_mutex);
+		rw_exit(&proclist_lock);
 		return (EPERM);
+	}
+	mutex_exit(&p->p_mutex);
 	*retval = p->p_pgid;
+	rw_exit(&proclist_lock);
 	return (0);
 }
 
