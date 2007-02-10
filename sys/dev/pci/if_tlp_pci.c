@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.99 2007/02/09 21:39:38 macallan Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.100 2007/02/10 12:22:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.99 2007/02/09 21:39:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.100 2007/02/10 12:22:26 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	prop_data_t ea;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val = 0;
-	pcireg_t reg, addr, size;
+	pcireg_t reg;
 	int error;
 
 	sc->sc_devno = pa->pa_device;
@@ -542,7 +542,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	    &iot, &ioh, NULL, NULL) == 0);
 	memh_valid = (pci_mapreg_map(pa, TULIP_PCI_MMBA,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
-	    &memt, &memh, &addr, &size) == 0);
+	    &memt, &memh, NULL, NULL) == 0);
 	if (memh_valid) {
 		sc->sc_st = memt;
 		sc->sc_sh = memh;
