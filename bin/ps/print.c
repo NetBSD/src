@@ -1,7 +1,7 @@
-/*	$NetBSD: print.c,v 1.97 2007/02/09 22:08:48 ad Exp $	*/
+/*	$NetBSD: print.c,v 1.98 2007/02/10 18:20:12 ad Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.97 2007/02/09 22:08:48 ad Exp $");
+__RCSID("$NetBSD: print.c,v 1.98 2007/02/10 18:20:12 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -499,7 +499,7 @@ state(void *arg, VARENT *ve, int mode)
 		break;
 
 	case LSSLEEP:
-		if (flag & L_SINTR)	/* interruptable (long) */
+		if (flag & KP_SINTR)	/* interruptable (long) */
 			*cp = k->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
@@ -524,7 +524,7 @@ state(void *arg, VARENT *ve, int mode)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & L_INMEM) {
+	if (flag & KP_INMEM) {
 	} else
 		*cp++ = 'W';
 	if (k->p_nice < NZERO)
@@ -1078,7 +1078,7 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
+	if (k->p_swtime == 0 || (k->p_flag & KP_INMEM) == 0 ||
 	    k->p_stat == SZOMB)
 		return (0.0);
 	if (rawcpu)
@@ -1111,7 +1111,7 @@ getpmem(k)
 	if (failure)
 		return (0.0);
 
-	if ((k->p_flag & L_INMEM) == 0)
+	if ((k->p_flag & KP_INMEM) == 0)
 		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = uspace/getpagesize();

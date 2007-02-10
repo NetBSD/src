@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.26 2007/02/09 22:08:49 ad Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.27 2007/02/10 18:20:12 ad Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -36,12 +36,12 @@
  *		Tomas Svensson <ts@unix1.net>
  *
  *
- * $Id: m_netbsd15.c,v 1.26 2007/02/09 22:08:49 ad Exp $
+ * $Id: m_netbsd15.c,v 1.27 2007/02/10 18:20:12 ad Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.26 2007/02/09 22:08:49 ad Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.27 2007/02/10 18:20:12 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -496,10 +496,10 @@ get_process_info(si, sel, compare)
 		/*
 		 * Place pointers to each valid proc structure in pref[].
 		 * Process slots that are actually in use have a non-zero
-		 * status field.  Processes with P_SYSTEM set are system
+		 * status field.  Processes with KP_SYSTEM set are system
 		 * processes---these get ignored unless show_sysprocs is set.
 		 */
-		if (pp->p_stat != 0 && (show_system || ((pp->p_flag & P_SYSTEM) == 0))) {
+		if (pp->p_stat != 0 && (show_system || ((pp->p_flag & KP_SYSTEM) == 0))) {
 			total_procs++;
 			process_states[(unsigned char) pp->p_stat]++;
 			if (pp->p_stat != LSZOMB &&
@@ -552,9 +552,9 @@ format_next_process(handle, get_userid)
 	hp->remaining--;
 
 	/* get the process's user struct and set cputime */
-	if ((pp->p_flag & L_INMEM) == 0)
+	if ((pp->p_flag & KP_INMEM) == 0)
 		pretty = "<>";
-	else if ((pp->p_flag & P_SYSTEM) != 0)
+	else if ((pp->p_flag & KP_SYSTEM) != 0)
 		pretty = "[]";
 
 	if (pretty[0] != '\0') {
