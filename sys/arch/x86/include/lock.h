@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.13 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.14 2007/02/10 16:19:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -171,19 +171,19 @@ void	mb_read(void);
 void	mb_write(void);
 void	mb_memory(void);
 #else	/* _KERNEL */
-static inline void
+static __inline void
 mb_read(void)
 {
 	x86_lfence();
 }
 
-static inline void
+static __inline void
 mb_write(void)
 {
 	__insn_barrier();
 }
 
-static inline void
+static __inline void
 mb_memory(void)
 {
 	x86_mfence();
