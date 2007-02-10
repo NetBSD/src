@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.12 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.13 2007/02/10 02:03:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.12 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.13 2007/02/10 02:03:51 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.12 2005/12/11 12:18:23 christos Exp $");
 #include <net/netisr.h>
 
 #include <machine/cpu.h>
+#include <machine/intr.h>
 
 #include <news68k/news68k/isr.h>
 
@@ -315,4 +316,29 @@ netintr(void)
 
 #undef DONETISR
 
+}
+
+static const int ipl2psl_table[] = {
+	[IPL_NONE] = PSL_IPL0,
+	[IPL_SOFT] = PSL_IPL2,
+	[IPL_SOFTCLOCK] = PSL_IPL2,
+	[IPL_SOFTNET] = PSL_IPL2,
+	[IPL_SOFTSERIAL] = PSL_IPL2,
+	[IPL_BIO] = PSL_IPL4,
+	[IPL_NET] = PSL_IPL4,
+	[IPL_TTY] = PSL_IPL5,
+	/* IPL_LPT == IPL_TTY */
+	[IPL_VM] = PSL_IPL5,
+	[IPL_SERIAL] = PSL_IPL5,
+	[IPL_CLOCK] = PSL_IPL6,
+	[IPL_HIGH] = PSL_IPL7,
+	[IPL_SCHED] = PSL_IPL7,
+	[IPL_LOCK] = PSL_IPL7,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
 }

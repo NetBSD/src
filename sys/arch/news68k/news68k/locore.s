@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 2007/02/10 02:03:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -854,9 +854,9 @@ ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
 	movl	%sp@+,%a0
 	jra	_ASM_LABEL(rei)		| handle AST
 
-ENTRY_NOPROFILE(lev2intr)		/* Level 2: software interrupt */
+ENTRY_NOPROFILE(_softintr)		/* Level 2: software interrupt */
 	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(intrhand_lev2)
+	jbsr	_C_LABEL(softintr_dispatch)
 	INTERRUPT_RESTOREREG
 	rte
 
