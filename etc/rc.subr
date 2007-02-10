@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.67 2006/10/07 11:25:15 elad Exp $
+# $NetBSD: rc.subr,v 1.67.2.1 2007/02/10 14:17:21 tron Exp $
 #
 # Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -179,6 +179,7 @@ _find_processes()
 	_psargs=$3
 
 	_pref=
+	_procnamebn=${_procname##*/}
 	if [ $_interpreter != "." ]; then	# an interpreted script
 		read _interp < ${_chroot:-}/$_procname	# read interpreter name
 		_interp=${_interp#\#!}		# strip #!
@@ -190,9 +191,8 @@ _find_processes()
 		_interpbn=${1##*/}
 		_fp_args='_argv'
 		_fp_match='case "$_argv" in
-		    ${_interp}|"${_interp} "*|"${_interpbn}: ${_procname}"*)'
+		    ${_interp}|"${_interp} "*|"${_interpbn}: "*${_procnamebn}*)'
 	else					# a normal daemon
-		_procnamebn=${_procname##*/}
 		_fp_args='_arg0 _argv'
 		_fp_match='case "$_arg0" in
 		    $_procname|$_procnamebn|${_procnamebn}:|"(${_procnamebn})")'
