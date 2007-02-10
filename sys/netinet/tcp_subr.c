@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.209 2006/12/06 09:10:45 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.210 2007/02/10 09:43:05 degroote Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.209 2006/12/06 09:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.210 2007/02/10 09:43:05 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2303,9 +2303,6 @@ tcp_optlen(struct tcpcb *tp)
 		optlen += TCPOLEN_TSTAMP_APPA;
 
 #ifdef TCP_SIGNATURE
-#if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET)
-#endif
 	if (tp->t_flags & TF_SIGNATURE)
 		optlen += TCPOLEN_SIGNATURE + 2;
 #endif /* TCP_SIGNATURE */
