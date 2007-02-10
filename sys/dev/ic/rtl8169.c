@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.72.2.3 2007/02/10 14:24:36 tron Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.72.2.4 2007/02/10 14:25:58 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -578,6 +578,20 @@ re_attach(struct rtk_softc *sc)
 	/* Reset the adapter. */
 	re_reset(sc);
 
+	if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
+		addr_len = RTK_EEADDR_LEN1;
+	else
+		addr_len = RTK_EEADDR_LEN0;
+
+	/*
+	 * Get station address from the EEPROM.
+	 */
+	for (i = 0; i < 3; i++) {
+		val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
+		eaddr[(i * 2) + 0] = val & 0xff;
+		eaddr[(i * 2) + 1] = val >> 8;
+	}
+
 	if (sc->rtk_type == RTK_8169) {
 		uint32_t hwrev;
 
@@ -593,46 +607,11 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_rev = 1;
 
 		/* Set RX length mask */
-
 		sc->re_rxlenmask = RE_RDESC_STAT_GFRAGLEN;
-
-		/* Force station address autoload from the EEPROM */
-
-		CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_AUTOLOAD);
-		for (i = 0; i < RTK_TIMEOUT; i++) {
-			if ((CSR_READ_1(sc, RTK_EECMD) & RTK_EEMODE_AUTOLOAD)
-			    == 0)
-				break;
-			DELAY(100);
-		}
-		if (i == RTK_TIMEOUT)
-			aprint_error("%s: eeprom autoload timed out\n",
-			    sc->sc_dev.dv_xname);
-
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
-
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8169;
 	} else {
-
 		/* Set RX length mask */
-
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
-
-		if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
-			addr_len = RTK_EEADDR_LEN1;
-		else
-			addr_len = RTK_EEADDR_LEN0;
-
-		/*
-		 * Get station address from the EEPROM.
-		 */
-		for (i = 0; i < 3; i++) {
-			val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
-			eaddr[(i * 2) + 0] = val & 0xff;
-			eaddr[(i * 2) + 1] = val >> 8;
-		}
-
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
 	}
 
