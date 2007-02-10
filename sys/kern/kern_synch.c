@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.175 2007/02/10 02:55:18 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.176 2007/02/10 14:02:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.175 2007/02/10 02:55:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.176 2007/02/10 14:02:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -116,7 +116,6 @@ volatile uint32_t sched_whichqs;	/* bitmap of non-empty queues */
 
 void	schedcpu(void *);
 void	updatepri(struct lwp *);
-void	sa_awaken(struct lwp *);
 
 void	sched_unsleep(struct lwp *);
 void	sched_changepri(struct lwp *, int);

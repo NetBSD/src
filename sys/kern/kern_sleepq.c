@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.2 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.3 2007/02/10 14:02:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.3 2007/02/10 14:02:01 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
 
 int	sleepq_sigtoerror(struct lwp *, int);
 void	updatepri(struct lwp *);
-void	sa_awaken(struct lwp *);
 
 /* General purpose sleep table, used by ltsleep() and condition variables. */
 sleeptab_t	sleeptab;
