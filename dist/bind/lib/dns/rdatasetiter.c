@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatasetiter.c,v 1.1.1.1 2004/05/17 23:44:51 christos Exp $	*/
+/*	$NetBSD: rdatasetiter.c,v 1.1.1.1.4.1 2007/02/10 19:20:53 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")

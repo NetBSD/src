@@ -1,4 +1,4 @@
-/*	$NetBSD: utimes.c,v 1.1.1.1 2004/05/17 23:44:40 christos Exp $	*/
+/*	$NetBSD: utimes.c,v 1.1.1.1.4.1 2007/02/10 19:20:48 tron Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")

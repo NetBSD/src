@@ -1,0 +1,636 @@
+Working Group                                 Edmon Chung & David Leung
+Internet Draft                                              Neteka Inc.
+<draft-ietf-idn-dnsii-trace-00.txt>                      September 2000
+ 
+ 
+     DNSII Transitional Reflexive ASCII Compatible Encoding (TRACE) 
+ 
+ 
+STATUS OF THIS MEMO 
+ 
+   This document is an Internet-Draft and is in full conformance with 
+   all provisions of Section 10 of RFC2026.  
+    
+   Internet-Drafts are working documents of the Internet Engineering 
+   Task Force (IETF), its areas, and its working groups.  Note that 
+   other groups may also distribute working documents as Internet-
+   Drafts.  Internet-Drafts are draft documents valid for a maximum of 
+   six months and may be updated, replaced, or obsoleted by other 
+   documents at any time.  It is inappropriate to use Internet-Drafts as 
+   reference material or to cite them other than as "work in progress."  
+    
+   The reader is cautioned not to depend on the values that appear in 
+   examples to be current or complete, since their purpose is primarily 
+   educational.  Distribution of this memo is unlimited. 
+    
+   The list of current Internet-Drafts can be accessed at  
+   http://www.ietf.org/ietf/1id-abstracts.txt 
+   The list of Internet-Draft Shadow Directories can be accessed at 
+   http://www.ietf.org/shadow.html.  
+    
+    
+Abstract 
+    
+   ASCII Compatible Encoding (ACE) schemes should only be used as a 
+   transitional strategy with a well-defined way forward to the eventual 
+   enabling of a truly multilingual name space for the DNS. 
+    
+   The previous DNSII documents surrounding multilingual domain names 
+   have focused on the ultimate form with the DNSII-MDNR suggesting 
+   possible tunneling techniques where ACE may be used.  This document 
+   furthers the discussion on an ACE system, which not only provides a 
+   pathway towards the ultimate DNSII scheme but also an interim 
+   solution taking care of the immediate needs. 
+    
+   A reflexive CNAME process RENAME is introduced where non-ASCII 
+   incoming queries will be automatically CNAMEd to its ASCII 
+   counterpart without requiring an actual lookup.  The resolver will 
+   then be responsible for recursively looking up the corresponding 
+   translated alphanumeric name. 
+    
+   This document does not attempt to create another ACE scheme, instead 
+   it discusses the way an ACE scheme could be used as a transition 
+   towards the ultimate goal of a true multilingual name on the wire. 
+    
+  
+Chung & Leung                                                  [Page 1] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+Table of Contents 
+    
+   1. Introduction....................................................2 
+   1.1 Terminology....................................................2 
+   2. TRACE - Introduced with Due Obsolescence........................3 
+   2.1 Problems & Benefits of ACE.....................................3 
+   2.2 TRACE Format...................................................3 
+   2.3 TRACE Identifier...............................................3 
+   2.4 TRACE Zone Handling............................................4 
+   3. REflexive CNAME (RENAME)........................................4 
+   3.1 Non-Recursive Name Servers with RENAME-ON......................5 
+   3.1 Recursive Name Servers (Resolvers) with RENAME-ON..............6 
+   3.2 Benefits of RENAME.............................................6 
+   3.3 Problems with RENAME...........................................7 
+   4. Use of RENAME with Respect to DNS Hierarchy.....................7 
+   4.1 General Rules for using RENAME.................................8 
+   4.2 Transitioning towards Identification Based DNSII...............8 
+   5. Security Considerations.........................................9 
+   6. Conclusion......................................................9 
+   7. Intellectual Property Considerations...........................10 
+   8. References.....................................................10 
+    
+    
+1. Introduction 
+    
+   ACE usage should be limited to machine read only and steps should be 
+   taken to avoid the user being able to easily input the names through 
+   an application onto the wire.  This is a well-understood concept 
+   because without this requirement, the creation of an ACE system 
+   effectively creates an alternate universe model that is counter to 
+   the spirit of the DNS.  In essence, if an ACE scheme could easily be 
+   typed in, people who are typing that sequence of characters may be 
+   unexpectedly be brought to another site which happens to have the 
+   same "code". 
+    
+   TRACE outlines a scheme that uses an ACE scheme but is identified in 
+   a 7-bit format that could not easily be typed in by a user.  Thereby 
+   preventing an inconsistent expectation of a domain name.  Beyond the 
+   specification of an identifier a RENAME function for an ACE 
+   resolution process is also introduced. 
+    
+    
+1.1 Terminology 
+    
+   The key words "MUST", "SHALL", "REQUIRED", "SHOULD", "RECOMMENDED", 
+   and "MAY" in this document are to be interpreted as described in RFC 
+   2119 [RFC2119]. 
+    
+   A number of characters used in this document are in a Big-5 encoding, 
+   you could select your view encoding type to traditional Chinese or 
+   Big-5 for it to be displayed properly. 
+    
+    
+  
+Chung & Leung                                                  [Page 2] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+2. TRACE - Introduced with Due Obsolescence 
+    
+   TRACE is designed to be a transitional scheme with due obsolescence 
+   once a full-fledged DNSII mode is attained. 
+    
+    
+2.1 Problems & Benefits of ACE 
+    
+   One of the major problems with ACE is the evident result of creating 
+   an extra layer on top of the DNS.  DNS was designed to be the human 
+   friendly machine identifier with its names human readable.  With ACE, 
+   it is certain that an added layer is required to decode a domain 
+   name.  This also effectively results in a quasi-alternate universe 
+   mode whereby the actual characters represent a translation into the 
+   existing domain name space. 
+    
+   However, ACE has its benefits as well and the most prominent one is 
+   that host servers need not migrate to new name servers.  Also it will 
+   ensure that there is a lengthy enough migration period for other 
+   applications to start adapting to the new DNS specifications. 
+    
+    
+2.2 TRACE Format 
+    
+   TRACE does not intend to introduce a new type of encoding.  Rather, 
+   it is concerned with using a 7-bit compatible identifier and a 
+   reflexive mechanism for switching from regular DNS packets to TRACE. 
+    
+    
+2.3 TRACE Identifier 
+    
+   In other ACE proposals, identifiers are often created from 
+   alphanumeric characters, which end users can easily type in.  The 
+   problem with this approach is easy to understand, for each 
+   multilingual name, one alphanumeric name must be reserved simply for 
+   the use of the multilingual conversion and will not be available for 
+   normal usage. 
+    
+   For example from Paul Hoffman's draft [RACE-01], the sample 
+   conversion for a value 0x3a27 would result in a string "bq--hitq".  
+   The name "bq--hitq" which is a perfectly usable name on its own must 
+   now be reserved for a multilingual name.  Also, 4 character spaces 
+   will be wasted just for the identifier. 
+    
+   Instead of using an alphanumeric identifier, a single 7-bit compliant 
+   control character is used.  The proposed character is the control 
+   character with the value 0x7F.  With this character, a multilingual 
+   name part could be effectively identified while it would be very 
+   difficult for the average user to enter the character into an 
+   application, thereby avoiding the issue discussed above. 
+    
+   In any case, an ACE form name is not intended for an end user to type 
+   in.  The only reason for ACE is that the current name servers could 
+  
+Chung & Leung                                                  [Page 3] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+   easily handle them.  TRACE provides a simple and effective way which 
+   is 7-bit compliant and a string that is could not be easily imitated. 
+    
+    
+2.4 TRACE Zone Handling 
+    
+   A zone administrator could also easily enter the TRACE Identifier 
+   into the zone file.  To insert the TRACE Identifier in a BIND server, 
+   the administrator could simply append the string "\127" before the 
+   ACE label.  Current BIND servers will understand that "\127" calls 
+   for the character with the value 127 and therefore load it into 
+   memory accordingly.  The BIND should also be reconfigured to set the 
+   options for "check-names" to "ignore". 
+    
+   In the following examples, the ACE format used is simply the hex 
+   value of the corresponding character encoding.  RACE or other ACE 
+   formats or hex of other encoding schemes may be used. 
+    
+   To set up an NS record to ns1.trace.tld and an A record to 123.4.5.6 
+   for the name "ссс…" <U+4e2d><U+6587> in a BIND server, using UTF-8 
+   (E4B8AD E69687) the following lines are included into the zone file: 
+    
+   \127e4b8ade69687      IN   NS   ns1.trace.tld. 
+   \127e4b8ade69687      IN   A    123.4.5.6 
+    
+   Section 4.3 will discuss a method to prepare the zone file for the 
+   transition into a fully DNSII compliant mode. 
+    
+    
+3. REflexive CNAME (RENAME) 
+    
+   To complement an ACE transition, a reflexive mechanism is introduced.  
+   REflexive CNAME (RENAME) successfully creates a scheme whereby child 
+   DNS nodes could keep using their BIND name servers while be capable 
+   of hosting multilingual domain names. 
+    
+   RENAME is simply a mechanism that attaches an incoming multilingual 
+   name to its ACE counterpart as it enters a RENAME-ON name server.  
+   When to use RENAME is discussed in Section 4. 
+    
+   As an example, if an incoming query contains a the domain name "сс
+   с….tld" <U+4e2d><U+6587>.tld in UTF-8 encoding reaches a RENAME-ON 
+   name server, the following automatic response will be created: 
+    
+   ссс….tld   IN   CNAME   \127e4b8ade69687.tld 
+    
+   If the server is in non-recursive mode, the RENAMEd name will now be 
+   used for a lookup within the zone and the corresponding response 
+   returned to the inquirer, including the CNAME process.  If the server 
+   is in recursive mode, the RENAMEd name will be used for lookup within 
+   cache and passed on through the DNS hierarchy when not found. 
+    
+    
+  
+Chung & Leung                                                  [Page 4] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+3.1 Non-Recursive Name Servers with RENAME-ON 
+    
+   The two basic modes for a name server includes a non-recursive mode, 
+   which are usually used by registries, root or authoritative host 
+   servers; and a recursive mode, which are usually resolvers installed 
+   in ISPs. 
+    
+   A non-recursive mode server with RENAME-ON would upon receiving a 
+   multilingual name label, automatically CNAME the name to an ACE 
+   format.  If a complete match is found, the response will be passed 
+   back to the inquirer including the CNAME record.  If no direct match 
+   is found, it will pass along either an authoritative NXDomain or the 
+   nearest NS Record in ACE format so that the inquirer may continue its 
+   recursive request. 
+    
+   The following diagram and descriptions details the resolution process 
+   for the domain "www.ссс….ссс….tld" or <U+4e2d><U+6587>.<U+4e2d> 
+   <U+6587>.tld, with a DNSII TRACE RENAME-ON server installed at the 
+   Parent domain "ссс….tld" and a BIND server installed at the Child DNS 
+   domain "ссс….ссс….tld": 
+    
+                                                     (3) 
+    +--------+         +------------+         +---------------+ 
+    |        |   (1)   |            |   (2)   |               | 
+    | Client |-------->|  Resolver  |-------->| Parent Domain | ссс….tld 
+    |        |<--------|            |<--------|  (RENAME-ON)  | 
+    |        |   (8)   |            |   (4)   |               | 
+    +--------+         +------------+         +---------------+ 
+                             ^ |                
+                             | |               (6) 
+                             | |  (5)    +--------------+ 
+                             | +-------->|              | 
+                             +-----------| Child Domain | ссс….ссс….tld 
+                                 (7)     | (using BIND) | 
+                                         |              | 
+                                         +--------------+ 
+    
+    
+   (1) A user enters a query for the A record of "www.ссс….ссс….tld" or 
+       <U+4e2d><U+6587>.<U+4e2d><U+6587>.tld using an ISO10646 encoding 
+       input. 
+    
+   (2) The DNS recursive resolver arrives at the parent domain "сс
+       с….tld" <U+4e2d><U+6587>.tld 
+    
+   (3) With RENAME-ON and detection that the incoming query is non-ASCII, 
+       the server reflexively assigns the CNAME to the domain: 
+        
+       www.ссс….ссс….tld.  IN CNAME  www.\127e4b8ade69687. 
+       \127e4b8ade69687.tld. 
+    
+
+
+  
+Chung & Leung                                                  [Page 5] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+   (4) Since a direct match is not found in the Parent DNS, the closest 
+       NS record is returned to the Resolver, with the CNAME part 
+       included: 
+        
+       www.ссс….ссс….tld.   IN CNAME   www.\127e4b8ade69687. 
+       \127e4b8ade69687.tld. 
+        
+       \127e4b8ade69687.\127e4b8ade69687.tld.   IN NS 
+       ns1.\127e4b8ade69687.\127e4b8ade69687.tld. 
+        
+       ns1.\127e4b8ade69687.\127e4b8ade69687.tld.   IN A   123.5.6.7 
+    
+   (5) The recursive resolver passes on the request using the CNAME 
+       record to the Child DNS as: 
+        
+       www.\127e4b8ade69687.\127e4b8ade69687.tld. 
+        
+       Asking for an A record for the corresponding domain. 
+    
+   (6) The Child DNS simply does a regular look up for the domain with 
+       the corresponding response. 
+        
+   (7) Assuming that the correct IP address for www.ссс….ссс….tld is 
+       123.6.7.8, the response would be: 
+        
+       www.\127e4b8ade69687.\127e4b8ade69687.tld.   IN A   123.6.7.8 
+    
+   (8) The resolver will then respond to the client request accordingly, 
+       including the CNAME record. 
+    
+    
+3.1 Recursive Name Servers (Resolvers) with RENAME-ON 
+    
+   If the recursive resolver is DNSII compatible and have switched the 
+   RENAME-ON, then both the parent and child DNSs could still run BIND 
+   and be able to serve multilingual names.  As the request goes through 
+   the resolver, it is automatically CNAMEd to the corresponding ACE 
+   format name and passed along for further resolution. 
+    
+   When the corresponding response is obtained, the definite answer 
+   including the CNAME record will both be passed to the client. 
+    
+    
+3.2 Benefits of RENAME 
+    
+   The immediate benefit for using RENAME is that once it is deployed at 
+   a particular DNS level, all its child, or sub-level DNSs could 
+   continue to run a BIND-based or current name server while still be 
+   capable of serving multilingual domain names. 
+    
+   Most ACE implementations expect the client application to begin 
+   migration first.  This is unfortunately would take a long time 
+   because we understand that client end migration may take years to 
+  
+Chung & Leung                                                  [Page 6] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+   complete.  With RENAME however, the migration could be dynamic.  
+   Section 4 explains further how and when RENAME should be used to 
+   complement and facilitate the resolution of multilingual names even 
+   when some of the components are not fully multilingual aware. 
+    
+    
+3.3 Problems with RENAME 
+    
+   RENAME effectively creates an ACE based name space which is 
+   ultimately undesired.  Also, wherever the RENAME function is located, 
+   it will intensify the processing requirements for the machine to 
+   handle the conversion of the incoming multilingual label into an ACE 
+   format and package the CNAME record accordingly. 
+    
+    
+4. Use of RENAME with Respect to DNS Hierarchy 
+    
+   For the discussion within this document, the DNS hierarchy is 
+   summarized into four nodes, beginning with the client end 
+   application, through the resolver, to the root or NIC servers then 
+   finally at the authoritative host for a second-level domain.  This 
+   more or less summarizes the DNS process from the initiation of a 
+   request to the authoritative host. 
+    
+   All together, there are 16 combinations with the basic DNS 
+   environments.  The following chart outlines the different 
+   combinations with the denotations as: 
+    
+    
+   B = B-DNS = Current Bind-based DNS 
+   D = DNSII = DNSII Compliant Name Servers 
+   RENAME(X-X-X-X) = RENAME(Client/application-Resolver-Root/NIC-Host) 
+            with X = ON = RENAME-ON  
+                     FF = RENAME-OFF 
+                     OP = Optional ON/OFF 
+                     NA = Not Applicable 
+     
+   Scenario | Client |Resolver|Root/NIC|  Host  |   RENAME(ON/OFF) 
+   ---------+--------+--------+--------+--------+--------------------- 
+   1)  BBBB | B-DNS  | B-DNS  | B-DNS  | B-DNS  | existing system 
+            +--------+--------+--------+--------+ 
+   2)  BBBD | B-DNS  | B DNS  | B-DNS  | DNSII  | RENAME(NA-NA-NA-FF) 
+            +--------+--------+--------+--------+ 
+   3)  BBDB | B-DNS  | B DNS  | DNSII  | B-DNS  | RENAME(NA-NA-ON-NA) 
+            +--------+--------+--------+--------+ 
+   4)  BDBB | B-DNS  | DNSII  | B DNS  | B-DNS  | RENAME(NA-ON-NA-NA) 
+            +--------+--------+--------+--------+ 
+   5)  DBBB | DNSII  | B-DNS  | B-DNS  | B-DNS  | RENAME(ON-NA-NA-NA) 
+            +--------+--------+--------+--------+ 
+   6)  BBDD | B-DNS  | B-DNS  | DNSII  | DNSII  | RENAME(NA-NA-FF-FF) 
+            +--------+--------+--------+--------+ 
+   7)  DNND | B-DNS  | DNSII  | DNSII  | B-DNS  | RENAME(NA-OP-ON-NA) 
+            +--------+--------+--------+--------+ 
+  
+Chung & Leung                                                  [Page 7] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+   Scenario | Client |Resolver|Root/NIC|  Host  |   RENAME(ON/OFF) 
+   ---------+--------+--------+--------+--------+--------------------- 
+   8)  DDBB | DNSII  | DNSII  | B-DNS  | B-DNS  | RENAME(OP-ON-NA-NA) 
+            +--------+--------+--------+--------+ 
+   9)  DBBD | DNSII  | B-DNS  | B-DNS  | DNSII  | RENAME(ON-NA-NA-FF) 
+            +--------+--------+--------+--------+ 
+   10) BDBD | B-DNS  | DNSII  | B-DNS  | DNSII  | RENAME(NA-ON-NA-FF) 
+            +--------+--------+--------+--------+ 
+   11) DBDB | DNSII  | B-DNS  | DNSII  | B-DNS  | RENAME(ON-NA-OP-NA) 
+            +--------+--------+--------+--------+ 
+   12) BDDD | B-DNS  | DNSII  | DNSII  | DNSII  | RENAME(NA-FF-FF-FF) 
+            +--------+--------+--------+--------+ 
+   13) DDDB | DNSII  | DNSII  | DNSII  | B-DNS  | RENAME(OP-OP-ON-NA) 
+            +--------+--------+--------+--------+ 
+   14) DDBD | DNSII  | DNSII  | B-DNS  | DNSII  | RENAME(OP-ON-NA-FF) 
+            +--------+--------+--------+--------+ 
+   15) DBDD | DNSII  | B-DNS  | DNSII  | DNSII  | RENAME(ON-NA-FF-FF) 
+            +--------+--------+--------+--------+ 
+   16) DDDD | DNSII  | DNSII  | DNSII  | DNSII  | Full DNSII mode 
+            +--------+--------+--------+--------+ 
+    
+    
+4.1 General Rules for using RENAME 
+    
+   As a general rule, RENAME should be turned on whenever there is an 
+   anticipation that further down the DNS hierarchy or resolution 
+   process, a host has not been migrated and is still using existing 
+   name server software.  For example, Scenario(3),(4) or (5) and their 
+   equivalents. 
+    
+   If it is known that the entire set of child hosts is DNSII compliant, 
+   then RENAME is optional even if there exists child sub-sub-domain 
+   host beneath the sub-domain level that uses existing name servers.  
+   For example, Scenario(7) and the sample given in Section 3. 
+    
+   The end host without any more child sub-domains SHOULD never turn on 
+   RENAME.  This consideration is given to reduce the amount of 
+   transition traffic created due to the reflexive answer where no 
+   further resolution is required. 
+    
+    
+4.2 Transitioning towards Identification Based DNSII 
+    
+   Following the DNSII-MDNP recommendations, TRACE could smooth the 
+   transition into a multilingual name space by starting at the registry 
+   level and without requiring the host DNSs to migrate. 
+    
+   As the user-end applications or recursive ISP resolvers began the 
+   migration, new multilingual TLDs could also be introduced even before 
+   the root servers begin any migration. 
+    
+   Eventually, when the root servers migrate, they should be enabled 
+   with both the full DNSII capability with the InPacket Identifier, 
+  
+Chung & Leung                                                  [Page 8] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+   ILET as well as TRACE as a fallback should there be any host DNS 
+   still using existing servers. 
+    
+   From the general rules, we understand that if the entire child DNSs 
+   are DNSII enabled, then the RENAME function of the parent DNS could 
+   be turned off.  This therefore makes way for a very sensible 
+   migration strategy owing to the hierarchical structure of the DNS.  
+   Since a parent DNS must know a glue record for its immediate 
+   children, it is easy for the zone administrator to determine whether 
+   it could turn off the RENAME function for its zone. 
+    
+   While it is understood that gradually, all name servers should 
+   migrate to be DNSII capable and that multilingual names, TRACE 
+   creates a very effective way of monitoring the migration by 
+   encouraging child DNSs to begin transition first followed by upper 
+   and more important levels, up to the root. 
+    
+   A fully DNSII aware server should also be prepared for DNSII queries.  
+   That is, it should be able to process requests containing the DNSII 
+   Identifier and ILET.  As a working example, a Neteka Enhanced BIND 
+   (for a demo copy please mailto:netekare@neteka.com) has been 
+   developed as a demonstration.  To enter a full DNSII label, in the 
+   product, simply duplicate the TRACE identifier and insert a 
+   corresponding ILET.  As an example, for "ссс….tld" <U+4e2d> 
+   <U+6587>.tld with ILET = 1000 = Unicode, an A record for the IP 
+   address 123.4.5.6 could be added to the zone file as: 
+    
+   \127\12710004e2d6587.tld.   IN  A   123.4.5.6 
+    
+   In such an environment, DNSII aware queries will be answered 
+   accordingly utilizing the "\127\127" record. 
+    
+    
+5. Security Considerations 
+    
+   The implementation of TRACE constitutes no further security burden on 
+   the DNS.  DNSSEC could be used in parallel with TRACE resolution and 
+   records.  RENAME records will be secured through transaction 
+   authentication, while authoritative records will have their own SIG 
+   RRs. 
+    
+   Moreover, the TRACE identifier actually increases the security for 
+   multilingual names over other ACE implementations by using the 0x7F 
+   character, which is difficult for an end user to key in, thereby 
+   reducing the possible confusions. 
+    
+    
+6. Conclusion 
+    
+   With any implementation, the first step towards universal deployment 
+   of a multilingual aware name space should be an 8-bit clean approach.  
+   For current BIND servers it is a simple configuration matter, which 
+   could be set as an option for checknames to be ignored. 
+  
+Chung & Leung                                                  [Page 9] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+    
+   With TRACE, the migration from the current system could be dynamic.  
+   While it is encouraged that the registries begin the migration first 
+   because it is most sensible, client end or recursive resolvers could 
+   also begin the migration. 
+    
+   The use of the control character 0x7F also solves two problems at 
+   once: 1) a 7-bit identifier to avoid disruption of other applications 
+   using DNS; and, 2) an identifier that is not easily input by a client 
+   end user to prevent confusion between a multilingual name and an 
+   English alphanumeric only name. 
+    
+   RENAME successfully creates an environment where host level DNSs 
+   could hold on to their existing BIND based name servers while being 
+   able to host multilingual domains, thereby relieving the migration 
+   stress for hosting facilities and ISPs. 
+    
+    
+7. Intellectual Property Considerations 
+    
+   It is the intention of Neteka to submit the DNSII protocol and other 
+   elements of the multilingual domain name server software to IETF for 
+   review, comment or standardization. 
+    
+   Neteka Inc. has applied for one or more patents on the technology 
+   related to multilingual domain name server software and multilingual 
+   email server software suite.  If a standard is adopted by IETF and 
+   any patents are issued to Neteka with claims that are necessary for 
+   practicing the standard, any party will be able to obtain the right 
+   to implement, use and distribute the technology or works when 
+   implementing, using or distributing technology based upon the 
+   specific specifications under fair, reasonable and non-discriminatory 
+   terms. 
+    
+    
+8. References 
+ 
+   [DNSII-MDNP] E. Chung & D. Leung "DNSII Multilingual Domain Name 
+              Protocol", August 2000 
+    
+   [RACE]     P. Hoffman "RACE: Row-based ASCII Compatible Encoding for 
+              IDN", August 31, 2000 
+    
+   [RFC1700]  J. Reynolds, J. Postel, "ASSIGNED NUMBERS", RFC 
+              1700, October 1994. 
+     
+   [ISO10646] ISO/IEC 10646-1:2000. International Standard -- 
+              Information technology -- Universal Multiple-Octet Coded 
+              Character Set (UCS) 
+    
+   [RFC2119]  S. Bradner, "Key words for use in RFCs to Indicate  
+              Requirement Levels," RFC 2119, March 1997 
+    
+  
+Chung & Leung                                                 [Page 10] 
+
+DNSII-TRACE    DNSII Transitional Reflexive ACE (TRACE)     August 2000  
+ 
+    
+   Authors: 
+    
+   Edmon Chung 
+   Neteka Inc. 
+   2462 Yonge St. Toronto, 
+   Ontario, Canada M4P 2H5 
+   edmon@neteka.com 
+    
+   David Leung 
+   Neteka Inc. 
+   2462 Yonge St. Toronto, 
+   Ontario, Canada M4P 2H5 
+   david@neteka.com 
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+Chung & Leung                                                 [Page 11] 
