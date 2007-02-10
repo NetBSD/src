@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_bus.c,v 1.3 2007/02/09 21:55:27 ad Exp $ */
+/*	$NetBSD: adb_bus.c,v 1.4 2007/02/10 03:38:47 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.3 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_bus.c,v 1.4 2007/02/10 03:38:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,8 +111,8 @@ nadb_init(struct device *dev)
 	}
 
 	/* bus reset (?) */
-	//nadb_send_sync(sc, 0, 0, NULL);
-	//delay(200000);
+	nadb_send_sync(sc, 0, 0, NULL);
+	delay(200000);
 
 	/* 
 	 * scan only addresses 1 - 7 
