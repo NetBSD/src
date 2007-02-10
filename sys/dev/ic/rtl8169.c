@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.78 2007/02/04 04:49:58 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.79 2007/02/10 12:46:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1345,7 +1345,7 @@ re_txeof(struct rtk_softc *sc)
 
 	sc->re_ldata.re_txq_considx = idx;
 
-	if (sc->re_ldata.re_txq_free > 0)
+	if (sc->re_ldata.re_txq_free > RE_NTXDESC_RSVD)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
