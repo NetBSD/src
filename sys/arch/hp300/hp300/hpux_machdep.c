@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.44 2007/02/09 21:55:03 ad Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.45 2007/02/10 02:42:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.44 2007/02/09 21:55:03 ad Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.45 2007/02/10 02:42:30 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,7 +524,7 @@ hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	kf.hsf_sc.hsc_pc	= frame->f_pc;
 
 	/* Save the signal stack. */
-	kf.hsf_sc.hsc_onstack	= p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	kf.hsf_sc.hsc_onstack	= l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	bsdtohpuxmask(mask, &kf.hsf_sc.hsc_mask);
 
@@ -558,7 +558,7 @@ hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
@@ -584,7 +584,6 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	struct hpux_sys_sigreturn_args /* {
 		syscallarg(struct hpuxsigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct hpuxsigcontext *scp;
 	struct frame *frame;
 	struct hpuxsigcontext tsigc;
@@ -695,13 +694,13 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	frame->f_sr = scp->hsc_ps;
 
 	if (scp->hsc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	hpuxtobsdmask(scp->hsc_mask, &p->p_sigctx.ps_sigmask);
-	sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
+	hpuxtobsdmask(scp->hsc_mask, &l->l_sigmask);
+	sigminusset(&sigcantmask, &l->l_sigmask);
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.hss_fpstate)
