@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.10 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: softintr.c,v 1.11 2007/02/10 03:30:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.10 2006/12/21 15:55:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.11 2007/02/10 03:30:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.10 2006/12/21 15:55:22 yamt Exp $");
 struct hp300_soft_intrhand	*softnet_intrhand;
 volatile uint8_t ssir;
 
-static struct hp300_soft_intr hp300_soft_intrs[IPL_NSOFT];
+static struct hp300_soft_intr hp300_soft_intrs[SI_NQUEUES];
 
 /*
  * softintr_init()
@@ -71,7 +71,7 @@ static struct hp300_soft_intr hp300_soft_intrs[IPL_NSOFT];
 void
 softintr_init(void)
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
+	static const char *softintr_names[] = SI_QUEUENAMES;
 	struct hp300_soft_intr *hsi;
 	int i;
 
@@ -136,16 +136,16 @@ ipl2si(ipl_t ipl)
 
 	switch (ipl) {
 	case IPL_SOFTNET:
-		si = _IPL_SOFTNET;
+		si = SI_SOFTNET;
 		break;
 	case IPL_SOFTCLOCK:
-		si = _IPL_SOFTCLOCK;
+		si = SI_SOFTCLOCK;
 		break;
 	case IPL_SOFTSERIAL:
-		si = _IPL_SOFTSERIAL;
+		si = SI_SOFTSERIAL;
 		break;
 	default:
-		si = _IPL_SOFT;
+		si = SI_SOFT;
 		break;
 	}
 
