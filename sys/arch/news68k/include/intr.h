@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2007/02/10 02:03:51 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2007/02/10 13:08:30 tsutsui Exp $	*/
 
 /*
  *
@@ -122,10 +122,11 @@ splx(int sr)
  * simulated software interrupt register
  */
 #define SOFTINTR_IPL	2
-extern volatile u_char *ctrl_int2;
+extern volatile uint8_t *ctrl_int2;
 
-#define	setsoft(x)		x = 0
-#define	softintr_assert()	*ctrl_int2 = 0xff
+#define	setsoft(x)		(x = 0)
+#define	softintr_assert()	(*ctrl_int2 = 0xff)
+#define	softintr_clear()	(*ctrl_int2 = 0)
 
 struct news68k_soft_intrhand {
 	LIST_ENTRY(news68k_soft_intrhand) sih_q;
