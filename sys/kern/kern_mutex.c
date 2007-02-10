@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.2 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.3 2007/02/10 21:07:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.2 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.3 2007/02/10 21:07:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -261,15 +261,16 @@ mutex_dump(volatile void *cookie)
 /*
  * mutex_abort:
  *
- *	Dump information about an error and panic the system.
+ *	Dump information about an error and panic the system.  This
+ *	generates a lot of machine code in the DIAGNOSTIC case, so
+ *	we ask the compiler to not inline it.
  */
 __attribute ((noinline)) __attribute ((noreturn)) void
 mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 {
 
 	LOCKDEBUG_ABORT(MUTEX_GETID(mtx), mtx, (MUTEX_SPIN_P(mtx) ?
-	    &mutex_spin_lockops : &mutex_adaptive_lockops),
-	    __FUNCTION__, msg);
+	    &mutex_spin_lockops : &mutex_adaptive_lockops), func, msg);
 	/* NOTREACHED */
 }
 
@@ -340,6 +341,9 @@ mutex_destroy(kmutex_t *mtx)
  *	Note that we can't use the mutex owner field as an LWP pointer.  We
  *	don't have full control over the timing of our execution, and so the
  *	pointer could be completely invalid by the time we dereference it.
+ *
+ *	XXX This should be optimised further to reduce potential cache line
+ *	ping-ponging and skewing of the spin time while busy waiting.
  */
 #ifdef MULTIPROCESSOR
 int
@@ -354,14 +358,14 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
 	l = (struct lwp *)MUTEX_OWNER(owner);
 
 	if ((ci = *cip) != NULL && ci->ci_curlwp == l) {
-		mb_read();	/* XXXSMP Necessary? */
+		mb_read(); /* XXXSMP Very expensive, necessary? */
 		return ci->ci_biglock_wanted != l;
 	}
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_curlwp == l) {
 			*cip = ci;
-			mb_read();	/* XXXSMP Necessary? */
+			mb_read(); /* XXXSMP Very expensive, necessary? */
 			return ci->ci_biglock_wanted != l;
 		}
 	}
@@ -699,7 +703,8 @@ mutex_vector_exit(kmutex_t *mtx)
 /*
  * mutex_owned:
  *
- *	Return true if the current thread holds the mutex.
+ *	Return true if the current LWP (adaptive) or CPU (spin)
+ *	holds the mutex.
  */
 int
 mutex_owned(kmutex_t *mtx)
