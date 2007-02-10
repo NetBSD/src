@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.49 2007/02/09 08:53:51 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.50 2007/02/10 13:12:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.49 2007/02/09 08:53:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.50 2007/02/10 13:12:43 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -514,6 +514,7 @@ puffs_lookup(void *v)
 	if (cnp->cn_flags & ISDOTDOT)
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	
+	DPRINTF(("puffs_lookup: returning %d %p\n", error, *ap->a_vpp));
 	return error;
 }
 
@@ -530,6 +531,8 @@ puffs_create(void *v)
 	int error;
 
 	PUFFS_VNREQ(create);
+	DPRINTF(("puffs_create: dvp %p, cnp: %s\n",
+	    ap->a_dvp, ap->a_cnp->cn_nameptr));
 
 	puffs_makecn(&create_arg.pvnr_cn, ap->a_cnp);
 	create_arg.pvnr_va = *ap->a_vap;
@@ -542,11 +545,14 @@ puffs_create(void *v)
 
 	error = puffs_newnode(ap->a_dvp->v_mount, ap->a_dvp, ap->a_vpp,
 	    create_arg.pvnr_newnode, ap->a_cnp, ap->a_vap->va_type, 0);
+	/* XXX: in case of error, need to uncommit userspace transaction */
 
  out:
 	if (error || (ap->a_cnp->cn_flags & SAVESTART) == 0)
 		PNBUF_PUT(ap->a_cnp->cn_pnbuf);
 	vput(ap->a_dvp);
+
+	DPRINTF(("puffs_create: return %d\n", error));
 	return error;
 }
 
@@ -596,21 +602,31 @@ puffs_open(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
 	int mode = ap->a_mode;
+	int rv;
 
 	PUFFS_VNREQ(open);
+	DPRINTF(("puffs_open: vp %p, mode 0x%x\n", vp, mode));
 
-	if (vp->v_type == VREG && mode & FWRITE && !EXISTSOP(pmp, WRITE))
-		return EROFS;
+	if (vp->v_type == VREG && mode & FWRITE && !EXISTSOP(pmp, WRITE)) {
+		rv = EROFS;
+		goto out;
+	}
 
-	if (!EXISTSOP(pmp, OPEN))
-		return 0;
+	if (!EXISTSOP(pmp, OPEN)) {
+		rv = 0;
+		goto out;
+	}
 
 	open_arg.pvnr_mode = mode;
 	puffs_credcvt(&open_arg.pvnr_cred, ap->a_cred);
 	open_arg.pvnr_pid = puffs_lwp2pid(ap->a_l);
 
-	return puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_OPEN,
+	rv = puffs_vntouser(MPTOPUFFSMP(vp->v_mount), PUFFS_VN_OPEN,
 	    &open_arg, sizeof(open_arg), VPTOPNC(vp), vp, NULL);
+
+ out:
+	DPRINTF(("puffs_open: returning %d\n", rv));
+	return rv;
 }
 
 int
@@ -1392,11 +1408,10 @@ puffs_write(void *v)
 	off_t oldoff, newoff, origoff;
 	vsize_t bytelen;
 	int error, uflags;
-	int async, ubcflags;
+	int ubcflags;
 
 	vp = ap->a_vp;
 	uio = ap->a_uio;
-	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	error = uflags = 0;
 	write_argp = NULL;
 	pmp = MPTOPUFFSMP(ap->a_vp->v_mount);
@@ -1449,11 +1464,20 @@ puffs_write(void *v)
 			if (error)
 				break;
 
-			/* ok, I really need to admit: why's this? */
-			if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
+			/*
+			 * If we're writing large files, flush to file server
+			 * every 64k.  Otherwise we can very easily exhaust
+			 * kernel and user memory, as the file server cannot
+			 * really keep up with our writing speed.
+			 *
+			 * Note: this does *NOT* honor MNT_ASYNC, because
+			 * that gives userland too much say in the kernel.
+			 */
+			if (oldoff >> 16 != uio->uio_offset >> 16) {
 				simple_lock(&vp->v_interlock);
 				error = VOP_PUTPAGES(vp, oldoff & ~0xffff,
-				    uio->uio_offset & ~0xffff, PGO_CLEANIT);
+				    uio->uio_offset & ~0xffff,
+				    PGO_CLEANIT | PGO_SYNCIO);
 				if (error)
 					break;
 			}
