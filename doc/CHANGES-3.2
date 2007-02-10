@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.50 2007/01/30 14:38:55 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.51 2007/02/10 14:12:03 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -130,10 +130,10 @@ sys/kern/sys_process.c				1.112
 
 sys/dev/pci/if_wm.c				1.108
 
-		don't reset interface on rx overrun because it makes
-		the situation worse, if the overrun is merely a symptom of
-		heavy load.  increament if_ierrors instead.  PR/29831.
-		[hauke, ticket #1578]
+	Don't reset interface on rx overrun because it makes
+	the situation worse, if the overrun is merely a symptom of
+	heavy load.  increament if_ierrors instead. PR kern/29831.
+	[hauke, ticket #1578]
 
 sys/dev/pci/if_pcn.c				1.34
 
@@ -2251,8 +2251,8 @@ sys/dev/ic/mfivar.h				1.1
 sys/dev/pci/files.pci				1.274
 sys/dev/pci/mfi_pci.c				1.1 via patch
 sys/dev/pci/pcidevs				patch
-sys/dev/pci/pcidevs.h				regen                                                                                                                                                                
-sys/dev/pci/pcidevs_data.h			regen                                                                                                                                                                
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
 
 	Add mfi(4), a driver for LSI Logic & Dell MegaRAID SAS RAID controller.
 	[bouyer, ticket #1609]
