@@ -1,0 +1,945 @@
+ 
+
+Telephone Number Mapping                                       A. Brown
+Internet Draft                                          Nortel Networks
+Document: <draft-ietf-enum-operation-02.txt>             Greg Vaudreuil
+                                                    Lucent Technologies
+                                                      February 23, 2001
+ 
+ 
+                       ENUM Service Reference Model 
+ 
+ 
+    
+Status of this Memo 
+ 
+   This document is an Internet-Draft and is in full conformance with 
+   all provisions of Section 10 of RFC2026 [1].  
+    
+   Internet-Drafts are working documents of the Internet Engineering 
+   Task Force (IETF), its areas, and its working groups. Note that 
+   other groups may also distribute working documents as Internet-
+   Drafts. Internet-Drafts are draft documents valid for a maximum of 
+   six months and may be updated, replaced, or obsoleted by other 
+   documents at any time. It is inappropriate to use Internet-Drafts as 
+   reference material or to cite them other than as "work in progress."  
+    
+   The list of current Internet-Drafts can be accessed at 
+   http://www.ietf.org/ietf/1id-abstracts.txt  
+    
+   The list of Internet-Draft Shadow Directories can be accessed at 
+   http://www.ietf.org/shadow.html. 
+    
+    
+1. Abstract 
+    
+   This document outlines the principles for the operation of a 
+   telephone number directory service.  This service provides for the 
+   resolution of telephone numbers into Internet domain name addresses 
+   and service specific directory discovery. 
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+ 
+Brown, Vaudreuil         Expires August 2001                         1 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+   Table of Contents 
+ 
+   1. Abstract........................................................1 
+   2. Introduction....................................................2 
+   3. Scope...........................................................2 
+   4. Overview........................................................4 
+
+   4.1 Relationship with Dynamic Services.............................4 
+   4.2 Number Portability.............................................5 
+   5. The ENUM Service................................................5 
+   5.1 First Tier: Determining the Service Registrar..................5 
+   5.2 Second Tier: Retrieving Resource records.......................6 
+   5.3 Third Tier: Service-Specific Queries...........................6 
+   6.  Interesting Numbering Topologies...............................8 
+   6.1 Sub-addressing.................................................8 
+
+   6.2 Default and Range-based Service Records........................9 
+   6.3  Permissive dialing for dialing plan transitions...............9 
+   7 Illustrative System Examples....................................10 
+   7.1 Example: Hypothetical Reachme Service.........................10 
+   7.2 Example: SIP Call Setup Service Request.......................11 
+   8. Security Considerations........................................12 
+   9. References.....................................................13 
+
+   10. Acknowledgments...............................................13 
+   11. Author's Addresses............................................13 
+   12. Full Copyright Statement......................................14 
+   Appendix:.........................................................15 
+   Changes from draft-ietf-enum-operations-00.txt....................15 
+   Changes from draft-ietf-enum-operations-01.txt....................15 
+    
+    
+2. Introduction 
+    
+   This document outlines the principles for the operation of a 
+   telephone number directory service.  This service provides for the 
+   resolution of telephone numbers into the address of a service 
+   specific directory or where applicable for a given service, directly 
+   into a service-specific endpoint addresses. 
+    
+   This directory service uses the algorithms and methods described in 
+   RFC 2916. 
+     
+   Please send comments on this document to the ENUM working group. 
+ 
+3. Scope 
+    
+   This document defines the reference architecture behind the ENUM 
+   protocols necessary to implement a telephone number-based Internet 
+   directory system.  This solution enables an extensible set of 
+   services to be provided for a given telephone number. Example 
+   services may include IP telephony, store and forward or real-time 
+   Internet Fax, VPIM voice messaging, Internet paging, geographic 
+   phone location, and many others.  Each service is to be separately 
+   defined and identified using a unique, registered service 
+   identifier.  
+    
+
+
+ Brown, Vaudreuil        Expires August 2001                         2 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+   This document does not specify the particulars of any telephone 
+   number-based service.  In particular, it does not describe how phone 
+   calls are placed, routed, or terminated or how voice, fax, pager, or 
+   email messages are routed.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                         3 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+4. Overview 
+    
+   This telephone number-based directory system implements a three-tier 
+   information model; the first two constituting the ENUM service.  
+   This abstract model is based on analysis of pre-existing 
+   administrative structures, generalized service requirements, and the 
+   capabilities of candidate protocols.  This model does not itself 
+   specify an administrative model, but provides a reference to guide 
+   implementers or conforming clients and servers. 
+   The mechanics of the ENUM service are specified in [ENUM]. 
+    
+   The first tier is the mapping of the telephone number delegation 
+   tree to the service registrar.  Conceptually, this delegated 
+   authority knows nothing about service-specific information 
+   associated with the telephone number but provides  a reference to 
+   the service registrar that does know the specific information. Where 
+   this services registrar is different from the delegated authority, a 
+   query redirection from the delegated authority to the name server of 
+   the service registrar for a given telephone number is necessary. 
+    
+    
+   The second tier is the set of service records themselves.  The 
+   service records indicate which of several services may be available 
+   for a given telephone number.  Multiple records indicating redundant 
+   or competitive service providers may be provided. The set of records 
+   may be provided or modified by any number of service providers. The 
+   ENUM service defines these records to be NAPTR records yielding a 
+   valid URL for a potentially useful service.  It is up to the client 
+   initiating the service request to sort through the set of NAPTR 
+   records to determine which services are appropriate for the intended 
+   action. 
+    
+   The service registrar is conceptually responsible for maintaining 
+   the set of service records for a given telephone number. Because 
+   there may be multiple service providers for a given telephone 
+   number, conceptually this registrar of services assumes a role of 
+   managing service registrations and arbitrating conflicts between 
+   service providers. 
+    
+   If necessary, an additional service-specific tier of information can 
+   be provided by the service provider itself. This tier provides 
+   specific attributes including any necessary attributes to place a 
+   call, route a message, validate capabilities, or other data 
+   necessary for that service that are known only by the provider of 
+   that specific service.  
+    
+4.1 Relationship with Dynamic Services 
+    
+   The telephone number delegation information changes infrequently.  
+   However, when a change to this data is made, the information must be 
+   rapidly propagated through the directory system.  Inconsistencies 
+   between the authoritative data and cached data may result in loss of 
+   service, misrouting of communications, and/or service loops.  An 
+   effective ENUM service requires that DNS time-to-live fields be set 
+   to an appropriate value consistent with the telephone number 
+   reassignment policies and service record update intervals. 
+    
+   Use of the ENUM system to implement time-of-day and other highly 
+   dynamic services is discouraged.  Where such a service is desired, 
+ Brown, Vaudreuil        Expires August 2001                         4 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+   it is recommended that itself be implemented as part of a service 
+   indicated by the service records. 
+    
+4.2 Number Portability 
+    
+   The concept of number portability generally refers to the ability of 
+   a subscriber to change service providers, service types, or 
+   locations without changing their telephone number.  For a full 
+   discussion of number portability, see [PORT].  In support of number 
+   portability, the ENUM service provides mechanism at the three 
+   conceptual tiers of the ENUM service. 
+    
+   1.      If the telephone number has been re-delegated to another 
+     authority, and that authority also provides the Tier-1 ENUM 
+     service, the telephone number can be re-delegated in the ENUM 
+     service by changing the name server "NS" records to point to the 
+     new authority.  This may be the case where numbers are re-
+     delegated from the incumbent service provider to another or to a 
+     portability authority.  The immediately higher delegated authority 
+     coordinates the transfer. 
+    
+   2.      The service registrar may be reassigned.  This may be the case 
+     where an individual or corporation changes telephony service 
+     providers and wishes that telephony service provider to also 
+     provide service registrar functions.  The new service registrar 
+     would recreate the appropriate service specific NAPTR records and 
+     the delegated authority would coordinate the transfer from one 
+     registrar to the other. 
+  
+   3.      If a specific service for a given telephone number was changed 
+     from one provider to another, such as switching telephone 
+     answering / voice messaging providers, the NATPR record indicating 
+     the specific service would change.  The service registrar would 
+     coordinate the deletion of the record for the previous service 
+     provider and the insertion of a record for the new service 
+     provider.  
+    
+   It is anticipated that in the early stages of an ENUM deployment, 
+   the delegated authority and the service registrar may be the same 
+   entity. 
+    
+5. The ENUM Service 
+    
+5.1 First Tier: Determining the Service Registrar 
+    
+   The first tier is the mapping of an E.164-formatted international 
+   telecommunication number into the identity of the service registrar 
+   for that number. This may or may not involve more than one referral 
+   in DNS.  
+    
+   The delegation of telephone numbers from the root authority (the 
+   ITU) down to individuals is a well-established system.  While there 
+   are differing Tier-1 administrative models, to a client they each 
+   aim to represent in a single tree the trusted relationship between 
+   the delegated carriers and subsidiary registrars; a necessary 
+   precondition to ensure protection against various attacks.  The 
+   delegated authority, sub-delegated authority, or individual may 
+   arrange to have a third-party (e.g., a service provider) list their 
+
+ Brown, Vaudreuil        Expires August 2001                         5 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+   information.  In this case the service provider's domain would be 
+   returned in the ENUM query. 
+ 
+   The Internet Domain Name System provides an ideal technology for the 
+   first-tier directory due to its hierarchical structure, fast 
+   connectionless queries, and distributed administrative model.  
+   Earlier experimentation with the TPC.INT remote printing experiment 
+   has shown how the hierarchical assignment of telephone numbers can 
+   be mapped directly to the hierarchy of domains within the DNS.  The 
+   ENUM directory uses that approach to map any arbitrary telephone 
+   number into a single domain name.  
+    
+   ITU standard E.164 defines the structure of the public telephone 
+   number as follows: country code, followed by nationally significant 
+   part, followed by sub-address.  The country code may be from one to 
+   three digits, and the total length may be up to 15 digits.  The 
+   nationally significant portion may be arbitrarily divided on any 
+   number boundary.  In many countries numbering plans, the divisions 
+   are not uniform, that is, the "area codes" or "city codes" may be of 
+   varying lengths within a single country and the total number of 
+   digits may be variable.  Where supported by the relevant service, an 
+   optional sub-address of up to four digits may be utilized to 
+   designate an extension telephone number. Note that while sub-
+   addressing is not well supported in GSTN calling, it is more widely 
+   supported for voice messaging.  It is important to note that the 
+   national long-distance access or international dialing prefix 
+   sequence is not part of the canonical E.164 number.  
+    
+   Within this delegation flexibility, it is always the case that the 
+   delegation of authority is always done left-to-right. With this 
+   assumption, a numbering tree can be built on a digit-by-digit basis 
+   that can represent any arbitrary hierarchical structure.  DNS 
+   permits the delegation of authority on arbitrary boundaries such 
+   that a delegation to country code "1", "44", and "972" can all 
+   coexist under a single numbering plan root.  The same applies for 
+   "service selectors", "area codes", "city codes", "line number", or 
+   "additional address information " within numbering plans. 
+    
+5.2 Second Tier: Retrieving Resource records. 
+ 
+   The second tier is the request for NAPTR RRs to discover the URL of 
+   the appropriate service-specific directory such as an LDAP directory 
+   server, H.323 gatekeeper, or specific endpoint addresses. 
+    
+   The service registrar is responsible for ensuring that multiple 
+   services may be provided on behalf of a single telephone number, 
+   potentially by different service providers. This function includes 
+   an arbiter function to ensure that there is a deterministic instance 
+   of any given service assigned to a single telephone number.  The 
+   service-specific directory locator function is a new service modeled 
+   upon existing telco service provisioning models. Long-distance 
+   carrier selection within the United States is one well-known example 
+   of a service-specific registration requiring an arbiter function 
+   within the current network. 
+    
+5.3 Third Tier: Service-Specific Queries 
+ 
+   An additional tier of query may be used to a service-specific 
+   directory for service-specific information.  As indicated in the 
+ Brown, Vaudreuil        Expires August 2001                         6 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+   URI, such a query may include a SIP query to a designated gatekeeper 
+   or an LDAP query to a designated directory server.  This tier is 
+   specific to the service and is to be described in service-specific 
+   documents.  The service-specific directory is expected to be 
+   dynamic.  It is important that as little coordination as possible be 
+   required between the directories of innovative and potentially 
+   competing service-specific providers. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                         7 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+6.  Interesting Numbering Topologies 
+    
+   The following numbering uses require special consideration in the 
+   provision and use of ENUM services.  
+ 
+6.1 Sub-addressing  
+ 
+   The E.164 standard provides for sub-addressing through "additional 
+   information" within the 16 digits of an E.164 number.  This 
+   information is passed through many telecommunications networks to be 
+   used by terminal equipment to select between alternate services or 
+   terminal devices.  The sub-address digits are not processed by the 
+   switching system and are not used by intermediate processes to 
+   select services or route calls.  In many cases, the network-
+   numbering infrastructure may be unaware of the existence or use of 
+   sub-addressing by a given endpoint. Within ENUM, sub-addressing may 
+   be supported in two ways.  The service registrar may explicitly 
+   provision NAPTR records for each sub-address, or the service 
+   registrar may provision default records for a range of sub-
+   addresses. 
+    
+   Using common DNS server implementations, the registrar may provision 
+   default records for a block of sub-addresses.  A combination of 
+   explicit entries and default entries may be provided in common DNS 
+   server implementations using a longest-match algorithm.  It is 
+   important to note that if a NAPTR or any other RR is provisioned for 
+   a sub-address, then all NAPTR records that are useful for that sub-
+   address must also be provisioned. 
+    
+   It is also important to note that numbers with optional sub-
+   addresses may be queried without the sub-address component.  For 
+   example, it may be useful to dial an address when placing a PSTN 
+   telephone call.  The telephone number may terminate on an automated 
+   attendant application that can prompt for the appropriate internal 
+   extension. However, when placing a SIP call using IP telephony, the 
+   address plus the sub-address may be queried.   
+    
+   The following set of records for company.com illustrate one 
+   configuration where a PSTN caller will be directed to the automated 
+   attendant application whether they dial the number or the number 
+   plus a sub-address, and whether the sub-address is explicitly 
+   provisioned or not.  Calling using SIP to the explicitly provisioned 
+   sub-address will result in a direct call to the intended recipient. 
+    
+   Example: 
+    
+   1.2.3.4.5.6.7.8.9.e164.arpa 
+       IN NAPTR 102 10 "u" "tel+E2U" "!^.*$!tel:+987654321!"  .  
+       IN NAPTR  10 10 "u" "sip+E2U" "!+(.*)!sip:AA@company.com!"  . 
+    
+   *.1.2.3.4.5.6.7.8.9.e164.arpa 
+       IN NAPTR 102 10 "u" "tel+E2U" "!^.*$!tel:+987654321!"  . 
+       IN NAPTR  10 10 "u" "sip+E2U" "!+(.*)!sip:AA@company.com!"  . 
+    
+   1.0.1.1.2.3.4.5.6.7.8.9.e164.arpa  
+       IN NAPTR  10 10 "u" "sip+E2U" "!^.*$!sip:joe@company.com!"  . 
+       IN NAPTR 102 10 "u" "tel+E2U" "!^.*$!tel:+987654321!"  . 
+    
+
+ Brown, Vaudreuil        Expires August 2001                         8 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+6.2 Default and Range-based Service Records 
+    
+   It is envisioned that a corporation or service provider not subject 
+   to number portability may wish to maintain a set of default NAPTR 
+   records for all E.164 telephone numbers within a delegation block.  
+   Similar to sub-addressing, a service registrar may provision a set 
+   of NAPTR records for a set of E.164 numbers with similar service 
+   requirements.   
+    
+   Example: 
+    
+   *.3.4.5.6.7.8.9.164.arpa 
+     IN NAPTR 102 10 "u" "tel+E2U" "!+(.*)!Tel:+\1"  .  
+     IN NAPTR  10 10 "u" "sip+E2U" "!^.*$!sip:AA@company.com!"  . 
+     IN NAPTR  10 10 "U" "mailto+E2U" \  
+                                "!+(.*)!mailto:+\1@company.com!" . 
+    
+   1.0.3.4.5.6.7.8.9.164.arpa 
+     IN NAPTR 102 10 "u" "tel+E2U" "!^.*$!tel:+987654310!"  . 
+     IN NAPTR  10 10 "u" "sip+E2U" "!^.*$!sip:AA@company.com!"  . 
+    
+   2.2.3.4.5.6.7.8.9.164.arpa  
+     IN NAPTR 102 10 "u" "tel+E2U" "!^.*$!tel:+987654322!"  . 
+     IN NAPTR  10 10 "u" "sip+E2U"   "!^.*$!sip:joe@company.com!"  . 
+     IN NAPTR  10 10 "U" "mailto+E2U" \ 
+                                "!^.*$!tel:+987654322@company.com!" . 
+    
+   In this example, mail sent to the phone number +987654311 using 
+   1.1.3.4.5.6.7.8.9.164.arpa will be sent to +987654311@company.com.  
+   Mail is explicitly not accepted at the automated attendant number as 
+   indicted by the lack of a mailto service record.  Because extension 
+   22 has an explicit NAPTR record for inbound calls via the tel 
+   record, it must also have an explicit mailto: URL in a NAPTR record. 
+    
+6.3  Permissive dialing for dialing plan transitions 
+    
+   In the real-world environment, the telephone number hierarchy is 
+   modified as necessary to prevent number exhaustion and to facilitate 
+   new services.  These re-numberings either insert additional digits 
+   at arbitrary parts of the previous telephone number or result in the 
+   re-assignment of a sub-tree of numbers to a new prefix.  To avoid 
+   the operational and social disruption involved with a _flash cut_, a 
+   practice of _permissive dialing_ has been created.  Permissive 
+   dialing enables and end-user to use either the previous or new 
+   telephone number for a period of time.  During this time, there may 
+   be two different telephone numbers pointing to the same set of 
+   service records, or a duplicate set of service records for the new 
+   and previous number. 
+    
+ 
+
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                         9 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+7 Illustrative System Examples 
+    
+7.1 Example: Hypothetical Reachme Service 
+    
+   The following hypothetical service enables an end-user to discover 
+   the various means by which she can reach a recipient represented by 
+   their corporate telephone number +1 613-555-1212 using the 
+   hypothetical "reachme" service.  This service is hosted by directly 
+   by the recipient's corporation. 
+    
+   The telephone number is transformed into a domain name form to be 
+   used in a DNS query.   
+    
+        2.1.2.1.5.5.5.3.1.6.1.e164.arpa 
+    
+   Sample configuration file for the top tier delegations from ITU: 
+    
+        1.e164.arpa.      IN NS ns.NANP.phone.net. ;for NANP 
+        3.3.e164.arpa.    IN NS  ns.FR.phone.net. ; for France 
+        2.7.9.e164.arpa.  IN NS  ns.il.phone.net.  ; for Israel 
+         
+   Sample configuration file for numbers delegated from the NANP node 
+   in the DNS tree:  
+    
+        5.5.5.3.1.6.1.e164.arpa.  IN NS ns.Zcorporation.com.   
+                                          ;for +1 613 555 XXXX 
+   Zcorporation is the designated service registrar for the block of 
+   100 numbers +1 613 555 12XX. Zcorporation provides the following 
+   service specific record for all telephone numbers within it's 100 
+   number block: 
+    
+      *.2.1.5.5.5.3.1.6.1.e164.arpa.  
+            IN NAPTR 100 10 "u" "ldap+E2U"\  
+            "$!ldap://ldap1.Zcorporation.com/cn=\1!" . 
+    
+   Assuming the resolver is using non-extended DNS, the query using 
+   telephone number +1 613 555 1212 for the_reachme service is as 
+   follows: 
+    
+       QueryType: NAPTR 
+       QueryName: _ 2.1.2.1.5.5.5.3.1.6.1.e164.arpa.  
+       Response:  
+          IN NAPTR 10 10 "u" "Reachme+E2U" \ 
+                    "!LDAP:\\ldap1.zcorporation.com\cn=\1!" . 
+    
+   The client can then apply the regular expression to yield an LDAP 
+   URI of LDAP:\\ldap1.zcorporation.com\cn=16135551212 and then use 
+   LDAP with the reachme schema to determine the set of communications 
+   technologies available for +1 613 555 1212. 
+    
+
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                        10 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+7.2 Example: SIP Call Setup Service Request 
+    
+   This example provides resolution of a telephone number to the 
+   identifier for the SIP gatekeeper designated to support real-time 
+   calling (Sipphonecall) to 972 555 1313.  The telephone number is 
+   part of a block of ported telephone numbers that have been ported 
+   out of the donor carriers block to another carrier. 
+    
+   The telephone number is transformed into a domain name form to be 
+   used in a DNS query.   
+    
+   Sample configuration file for the top tier delegations from ITU: 
+    
+        1.e164.arpa.     IN NS  ns.NANP.phone.net.  ;for NANP 
+        3.3.e164.arpa.   IN NS  ns.FR.phone.net.  ; for France 
+        2.7.9.e164.arpa. IN NS  ns.il.phone.net. ; for Israel 
+    
+   Sample DNS configuration file for the ported number block serviced 
+   by the 972 555 number portability authority delegated from the NANP 
+   node in the DNS tree:  
+    
+       5.5.5.2.7.9.1.e164.arpa.  IN NS ns.972555Port.NANP.phone.net. 
+                                          ;for 972 555 
+    
+   The number portability authority manages the delegation on a per-
+   telephone number basis.  Logically, the ns.972555Port.NANP.phone.net 
+   has the following record for the telephone number. 
+    
+       3.1.3.1.5.5.5.2.7.9.1.e164.arpa.  IN NS ns.ServiceProviderB.net. 
+                                          ;for 972 555 1313 
+    
+   ServiceProviderB provides service registrar functions directly for 
+   the telephone number.  The following configuration entry is provided 
+   for +1 972 555 1313. 
+    
+    
+      3.1.3.1.5.5.2.7.9.1.ServiceProviderB.net.   
+                  IN NAPTR 10 10 "u" "sip+E2U"\ 
+               "!^.*$!sip:19725551313@ServiceProviderB.net!" . 
+   The DNS Query and response using telephone number +1 972 555 1313: 
+    
+        QueryType: NAPTR 
+        QueryName: 3.1.3.1.5.5.5.2.7.9.1.e164.arpa 
+        Result:  
+           IN NAPTR  10 10 "u" "sip+E2U" \ 
+               "!^.*$!sip:19725551313@ServiceProviderB.net!"   . 
+         
+   The client can now use the SIP protocols to contact the SIP gateway 
+   to initiate a phone call. 
+ 
+ 
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                        11 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+8. Security Considerations 
+    
+   The following are known security issues taken into consideration in 
+   the definition of this directory service. 
+         
+     1.        Service provider customer information is very sensitive, 
+       especially in this time of local phone competition.  Service 
+       providers require the maximum flexibility to protect this data.  
+         
+     2.        Registration of a domain name for the telephone numbers 
+       delegated to another carrier may result in messages being 
+       misdirected to the wrong carrier.  As subdelegations are 
+       implemented, the risk that phone numbers delegated to one 
+       enterprise may be incorrectly pointed at another will increase. 
+         
+     3.        Service providers operate in a regulated environment where 
+       certain information about subscribers must not be disclosed.  
+       Telephony services and Voice Messaging are subject to caller-ID 
+       blocking restrictions, restrictions normally enforced in the 
+       telephony network.  No such protection is available on the 
+       Internet.  The protection of this data is essential, but is up 
+       to the individual service providers to not disclose this 
+       information outside of their control. 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                        12 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+9. References 
+    
+   [DNS1] Mockapetris, P., "Domain names - implementation and 
+   specification", RFC1035, Nov 1987. 
+    
+   [DNS2] Mockapetris, P., "Domain names - concepts and facilities", 
+   RFC 1034, Nov 1987. 
+    
+   [SRV] Arnt Gulbrandsen, Paul Vixie, Levon Esibov, "A DNS RR for 
+   specifying the location of services (DNS SRV)", Work in Progress  
+    
+   [E164] ITU, "CCITT Recommendation E.164 (1991), Telephone Network 
+   and ISDN Operation, Numbering, Routing and  Mobile Service - 
+   Numbering Plan for the ISDN Era."   
+    
+   [TPC1] Malamud, Carl, Rose, Marshall, "Principles of Operation for 
+   the TPC.INT Subdomain: Remote Printing -- Technical Procedures", RFC 
+   1530, October 1993. 
+    
+   [VPIM2] Vaudreuil, Greg, Parsons, Glen, "Voice Profile for Internet 
+   Mail, Version 2", RFC 2421, September 1998. 
+    
+   [SRV] Gulbrandsen, A., Vixie, P., "A DNS RR for specifying the 
+   location of services (DNS SRV)", RFC 2052, October 1996. 
+    
+   [REQ] Brown, Anne, "ENUM Requirements", work-in-progress, November 
+   1999  
+    
+   [ENUM] Faltstrom, Patrick, "E.164 number and DNS", RFC 2916, 
+   September 2000. 
+ 
+   [NAPTR] M. Mealling, R. Daniel _The Naming Authority Pointer (NAPTR) 
+   DNS Resource Record_, RFC 2915, September 2000. 
+    
+   [PORT] M. Foster, T. McGarry, j. Yu, _Number Portability in the 
+   GSTN: An Overview_, Work-in-Progress, July 2000. 
+ 
+10. Acknowledgments 
+    
+11. Author's Addresses 
+    
+   Anne R. Brown 
+   Nortel Networks 
+   P.O. Box 3511, Station C 
+   Ottawa, ON  K1Y 4H7 
+   Canada 
+   Phone: +1-613-765-5274 
+   Fax: +1-613-763-2697 
+   Email: ARBrown@NortelNetworks.com 
+    
+   Gregory M. Vaudreuil 
+   Lucent Technologies,  
+   Communications Application Group 
+   17080 Dallas Parkway 
+   Dallas, TX  75248-1905 
+   United States 
+   Phone/Fax: +1-972-733-2722 
+   Email: GregV@IEEE.org 
+
+ Brown, Vaudreuil        Expires August 2001                        13 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+    
+12. Full Copyright Statement                             
+
+   "Copyright (C) The Internet Society (2001). All Rights Reserved. 
+   This document and translations of it may be copied and furnished to 
+   others, and derivative works that comment on or otherwise explain it 
+   or assist in its implementation may be prepared, copied, published 
+   and distributed, in whole or in part, without restriction of any 
+   kind, provided that the above copyright notice and this paragraph 
+   are included on all such copies and derivative works. However, this 
+   document itself may not be modified in any way, such as by removing 
+   the copyright notice or references to the Internet Society or other 
+   Internet organizations, except as needed for the purpose of 
+   developing Internet standards in which case the procedures for 
+   copyrights defined in the Internet Standards process must be 
+   followed, or as required to translate it into 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                        14 
+                        ENUM Reference Model         February 23, 2001 
+ 
+ 
+Appendix:  
+ 
+Changes from draft-ietf-enum-operations-00.txt 
+    
+   o Discussion of interesting numbering topologies was added 
+    
+   o Retrieval of NAPTR records are now described in a separate step 
+   from the determination of a service registrar. 
+    
+   o A new example was created to illustrate ENUM using sub-addressing. 
+    
+Changes from draft-ietf-enum-operations-01.txt 
+    
+   O Changed the title to more clearly reflect the intent of the 
+   document. 
+    
+   o Collapsed Level 1 and 2 into a single tier.  Aligned the document 
+   to use the _tier_ terminology. 
+    
+   o Added missing text for dynamic updates. 
+    
+   o Reworked the examples to eliminate all references to the 
+   controversial DNAME and CNAME redirection. 
+    
+   o Generalized descriptions of the administrative model to avoid 
+   exclusion of any particular tier-1 approach. 
+    
+   o Corrected various errors in the examples. 
+    
+ 
+ 
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ Brown, Vaudreuil        Expires August 2001                        15 
+

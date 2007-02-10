@@ -1,4 +1,4 @@
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: Makefile.in,v 1.25.12.7 2004/07/20 07:01:51 marka Exp
+# Id: Makefile.in,v 1.25.12.9 2005/06/22 00:12:14 marka Exp
 
 srcdir =	@srcdir@
 VPATH =		@srcdir@
@@ -46,7 +46,7 @@ t_mem@EXEEXT@: t_mem.@O@ ${DEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ t_mem.@O@ ${LIBS}
 
 test: t_mem@EXEEXT@
-	-@./t_mem@EXEEXT@ -b @srcdir@ -q 300 -a
+	-@./t_mem@EXEEXT@ -b @srcdir@ -q 450 -a
 
 testhelp:
 	@./t_mem@EXEEXT@ -h

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.1.1.1 2004/05/17 23:44:46 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.1.1.1.4.1 2007/02/10 19:20:49 tron Exp $	*/
 
 #ifndef LINT
 static const char rcsid[] = "Id: tree.c,v 1.2.206.1 2004/03/09 08:33:43 marka Exp";

@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2005/11/21 20:36:31 tron Exp $
+#	$NetBSD: Makefile,v 1.1.2.2.2.1 2007/02/10 19:21:07 tron Exp $
 
-SUBDIR= dnssec-keygen dnssec-makekeyset dnssec-signkey dnssec-signzone
+SUBDIR= dnssec-keygen dnssec-signzone
 
 .include "Makefile.inc"
 

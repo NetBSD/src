@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.1.1.2 2004/11/06 23:53:33 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.1.1.2.4.1 2007/02/10 19:20:36 tron Exp $	*/
 
 /*
  * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
