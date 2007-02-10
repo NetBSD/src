@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51.2.1 2007/02/10 14:47:45 tron Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.51.2.2 2007/02/10 14:48:16 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.1 2007/02/10 14:47:45 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.2 2007/02/10 14:48:16 tron Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -743,9 +743,12 @@ intel_family6_name(struct cpu_info *ci)
 /*
  * Identify AMD64 CPU names from cpuid.
  *
- * Based on "Revision Guide for AMD Athlon 64 and AMD Opteron Processors"
+ * Based on:
+ * "Revision Guide for AMD Athlon 64 and AMD Opteron Processors"
  * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf
- * miscellaneous reports.
+ * "Revision Guide for AMD NPT Family 0Fh Processors"
+ * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/33610.pdf
+ * and other miscellaneous reports.
  */
 const char *
 amd_amd64_name(struct cpu_info *ci)
@@ -762,6 +765,7 @@ amd_amd64_name(struct cpu_info *ci)
 		case 0x1:
 			switch (extmodel) {
 			case 0x2:	/* rev JH-E1/E6 */
+			case 0x4:	/* rev JH-F2 */
 				ret = "Dual-Core Opteron";
 				break;
 			}
@@ -815,6 +819,9 @@ amd_amd64_name(struct cpu_info *ci)
 			case 0x1:	/* rev CH-D0 */
 				ret = "Athlon 64 or Sempron";
 				break;
+			case 0x4:	/* rev BH-F2 */
+				ret = "Turion 64 X2";
+				break;
 			}
 			break;
 		case 0xb:
@@ -825,6 +832,7 @@ amd_amd64_name(struct cpu_info *ci)
 				break;
 			case 0x2:	/* rev BH-E4 (Manchester) */
 			case 0x4:	/* rev BH-F2 (Windsor) */
+			case 0x6:	/* rev BH-G1 (Brisbane) */
 				ret = "Athlon 64 X2";
 				break;
 			}
@@ -853,6 +861,7 @@ amd_amd64_name(struct cpu_info *ci)
 			case 0x1:	/* rev DH-D0 (Winchester/Victoria) */
 			case 0x2:	/* rev DH-E3/E6 (Venice/Palermo) */
 			case 0x4:	/* rev DH-F2 (Orleans/Manila) */
+			case 0x5:	/* rev DH-F2 (Orleans/Manila) */
 				ret = "Athlon 64 or Sempron";
 				break;
 			}
