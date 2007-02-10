@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.42 2003/03/28 14:02:45 christos Exp $
+#	$NetBSD: Makefile,v 1.43 2007/02/10 00:23:13 ad Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
 LIB=	kvm
-CPPFLAGS+=-DLIBC_SCCS
+CPPFLAGS+=-DLIBC_SCCS -I${NETBSDSRCDIR}/sys
 .if ${MACHINE_ARCH} == "i386"
 LINTFLAGS+=-w
 .endif
