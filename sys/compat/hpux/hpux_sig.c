@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.31 2007/02/10 02:42:30 tsutsui Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.32 2007/02/10 10:12:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.31 2007/02/10 02:42:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.32 2007/02/10 10:12:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,15 +170,14 @@ hpux_sys_sigblock(l, v, retval)
 	struct hpux_sys_sigblock_args *uap = v;
 	sigset_t nmask;
 
-	(void) splsched();
-
 	bsdtohpuxmask(&l->l_sigmask, (int *)retval);
 	hpuxtobsdmask(SCARG(uap, mask), &nmask);
 
+	mutex_enter(&l->l_proc->p_smutex);
 	sigplusset(&nmask, &l->l_sigmask);
 	sigminusset(&sigcantmask, &l->l_sigmask);
+	mutex_exit(&l->l_proc->p_smutex);
 
-	(void) spl0();
 	return (0);
 }
 
@@ -190,14 +189,13 @@ hpux_sys_sigsetmask(l, v, retval)
 {
 	struct hpux_sys_sigsetmask_args *uap = v;
 
-	(void) splsched();
-
 	bsdtohpuxmask(&l->l_sigmask, (int *)retval);
 	hpuxtobsdmask(SCARG(uap, mask), &l->l_sigmask);
 
+	mutex_enter(&l->l_proc->p_smutex);
 	sigminusset(&sigcantmask, &l->l_sigmask);
+	mutex_exit(&l->l_proc->p_smutex);
 
-	(void) spl0();
 	return (0);
 }
 
@@ -262,7 +260,9 @@ hpux_sys_sigprocmask(l, v, retval)
 	 */
 	if (SCARG(uap, oset)) {
 		memset((caddr_t)&sigset, 0, sizeof(sigset));
+		mutex_enter(&l->l_proc->p_smutex);
 		bsdtohpuxmask(&l->l_sigmask, &sigset.sigset[0]);
+		mutex_exit(&l->l_proc->p_smutex);
 		error = copyout(&sigset, SCARG(uap, oset), sizeof(sigset));
 		if (error)
 			return (error);
@@ -272,7 +272,7 @@ hpux_sys_sigprocmask(l, v, retval)
 		if (error)
 			return (error);
 		hpuxtobsdmask(sigset.sigset[0], &mask);
-		(void) splsched();
+		mutex_enter(&l->l_proc->p_smutex);
 		switch (SCARG(uap, how)) {
 		case HPUXSIG_BLOCK:
 			sigplusset(&mask, &l->l_sigmask);
@@ -289,7 +289,8 @@ hpux_sys_sigprocmask(l, v, retval)
 			error = EINVAL;
 			break;
 		}
-		(void) spl0();
+		l->l_flag |= L_PENDSIG;
+		mutex_exit(&l->l_proc->p_smutex);
 	}
 	return (error);
 }
@@ -346,6 +347,7 @@ hpux_sys_sigaction(l, v, retval)
 
 	sa = &action;
 	if (SCARG(uap, osa)) {
+		mutex_enter(&l->l_proc->p_smutex);
 		sa->hpux_sa_handler = bsa->sa_handler;
 		memset((caddr_t)&sa->hpux_sa_mask, 0, sizeof(sa->hpux_sa_mask));
 		bsdtohpuxmask(&bsa->sa_mask, &sa->hpux_sa_mask.sigset[0]);
@@ -356,6 +358,7 @@ hpux_sys_sigaction(l, v, retval)
 			sa->hpux_sa_flags |= HPUXSA_RESETHAND;
 		if (bsa->sa_flags & SA_NOCLDSTOP)
 			sa->hpux_sa_flags |= HPUXSA_NOCLDSTOP;
+		mutex_exit(&l->l_proc->p_smutex);
 		error = copyout(sa, SCARG(uap, osa), sizeof (action));
 		if (error)
 			return (error);
