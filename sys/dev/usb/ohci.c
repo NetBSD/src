@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.180 2007/01/19 22:46:21 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.181 2007/02/10 07:52:29 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.180 2007/01/19 22:46:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.181 2007/02/10 07:52:29 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,7 +999,6 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("ohci_freex: xfer=%p not busy, 0x%08x\n", xfer,
 		       xfer->busy_free);
-		return;
 	}
 	xfer->busy_free = XFER_FREE;
 #endif

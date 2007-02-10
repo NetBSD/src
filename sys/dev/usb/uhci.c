@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.206 2007/01/19 22:46:21 drochner Exp $	*/
+/*	$NetBSD: uhci.c,v 1.207 2007/02/10 07:52:29 mlelstv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.206 2007/01/19 22:46:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.207 2007/02/10 07:52:29 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -701,12 +701,10 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("uhci_freex: xfer=%p not busy, 0x%08x\n", xfer,
 		       xfer->busy_free);
-		return;
 	}
 	xfer->busy_free = XFER_FREE;
 	if (!UXFER(xfer)->iinfo.isdone) {
 		printf("uhci_freex: !isdone\n");
-		return;
 	}
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);

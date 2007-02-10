@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.121 2007/02/09 21:55:29 ad Exp $ */
+/*	$NetBSD: ehci.c,v 1.122 2007/02/10 07:52:29 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.121 2007/02/09 21:55:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.122 2007/02/10 07:52:29 mlelstv Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1139,12 +1139,10 @@ ehci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("ehci_freex: xfer=%p not busy, 0x%08x\n", xfer,
 		       xfer->busy_free);
-		return;
 	}
 	xfer->busy_free = XFER_FREE;
 	if (!EXFER(xfer)->isdone) {
 		printf("ehci_freex: !isdone\n");
-		return;
 	}
 #endif
 	SIMPLEQ_INSERT_HEAD(&sc->sc_free_xfers, xfer, next);
