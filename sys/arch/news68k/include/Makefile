@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2006/07/26 19:54:57 drochner Exp $
+#	$NetBSD: Makefile,v 1.21 2007/02/10 02:01:26 tsutsui Exp $
 
 INCSDIR= /usr/include/news68k
 
@@ -13,9 +13,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	intr.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h mcontext.h \
+	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \
 	varargs.h vmparam.h \
