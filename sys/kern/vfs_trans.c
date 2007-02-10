@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.2 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.3 2007/02/10 15:51:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.2 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.3 2007/02/10 15:51:02 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -363,10 +363,10 @@ vfs_suspend(struct mount *mp, int nowait)
 		return EWOULDBLOCK;
 
 #ifdef NEWVNGATE
-	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&syncer_mutex);
 
 	if ((error = VFS_SUSPENDCTL(mp, SUSPEND_SUSPEND)) != 0) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		lockmgr(&vfs_suspend_lock, LK_RELEASE, NULL);
 	}
 
@@ -410,7 +410,7 @@ vfs_resume(struct mount *mp)
 
 #ifdef NEWVNGATE
 	VFS_SUSPENDCTL(mp, SUSPEND_RESUME);
-	lockmgr(&syncer_lock, LK_RELEASE, NULL);
+	mutex_exit(&syncer_mutex);
 	lockmgr(&vfs_suspend_lock, LK_RELEASE, NULL);
 #else /* NEWVNGATE */
 	if ((mp->mnt_iflag & IMNT_SUSPEND) == 0)
