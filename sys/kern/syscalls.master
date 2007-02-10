@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.164 2007/02/10 10:24:44 ad Exp $
+	$NetBSD: syscalls.master,v 1.165 2007/02/10 11:32:21 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -664,13 +664,14 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-330	OBSOL		sys_sa_register
-331	OBSOL		sys_sa_stacks
-332	OBSOL		sys_sa_enable
-333	OBSOL		sys_sa_setconcurrency
-334	OBSOL		sys_sa_yield
-335	OBSOL		sys_sa_preempt
-336	OBSOL		sys_sa_unblockyield
+; Obsolete SA system calls.  Must remain until libc's major version is bumped.
+330	STD MPSAFE	{ int sys_sa_register(void); }
+331	STD MPSAFE	{ int sys_sa_stacks(void); }
+332	STD MPSAFE	{ int sys_sa_enable(void); }
+333	STD MPSAFE	{ int sys_sa_setconcurrency(void); }
+334	STD MPSAFE	{ int sys_sa_yield(void); }
+335	STD MPSAFE	{ int sys_sa_preempt(void); }
+336	STD MPSAFE	{ int sys_sa_unblockyield(void); }
 337	UNIMPL
 338	UNIMPL
 339	UNIMPL

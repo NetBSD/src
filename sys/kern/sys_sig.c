@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.2 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.3 2007/02/10 11:32:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.3 2007/02/10 11:32:22 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -301,27 +301,6 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 		return (killpg1(l, &ksi, -SCARG(uap, pid), 0));
 	}
 	/* NOTREACHED */
-}
-
-/*
- * Nonexistent system call-- signal process (may want to handle it).  Flag
- * error in case process won't see signal immediately (blocked or ignored).
- *
- * XXX This should not be here.
- */
-#ifndef PTRACE
-__weak_alias(sys_ptrace, sys_nosys);
-#endif
-
-/* ARGSUSED */
-int
-sys_nosys(struct lwp *l, void *v, register_t *retval)
-{
-
-	mutex_enter(&proclist_mutex);
-	psignal(l->l_proc, SIGSYS);
-	mutex_exit(&proclist_mutex);
-	return (ENOSYS);
 }
 
 /* ARGSUSED */
