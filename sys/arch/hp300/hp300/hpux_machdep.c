@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.45 2007/02/10 02:42:30 tsutsui Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.46 2007/02/10 10:16:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.45 2007/02/10 02:42:30 tsutsui Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.46 2007/02/10 10:16:33 ad Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	int onstack;
+	int onstack, error;
 	struct hpuxsigframe *fp = getframe(l, sig, &onstack), kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	short ft = frame->f_format;
@@ -531,8 +531,12 @@ hpux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* How amazingly convenient! */
 	kf.hsf_sc._hsc_pad	= 0;
 	kf.hsf_sc._hsc_ap	= (int)&fp->hsf_sigstate;
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout(&kf, fp, sizeof(kf));
+	mutex_enter(&p->p_smutex);
 
-	if (copyout(&kf, fp, sizeof(kf))) {
+	if (error) {
 #ifdef DEBUG
 		if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
 			printf("hpux_sendsig(%d): copyout failed on sig %d\n",
@@ -693,6 +697,8 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	frame->f_pc = scp->hsc_pc;
 	frame->f_sr = scp->hsc_ps;
 
+	mutex_enter(&l->l_proc->p_smutex);
+
 	if (scp->hsc_onstack & SS_ONSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
@@ -701,6 +707,8 @@ hpux_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	/* Restore signal mask. */
 	hpuxtobsdmask(scp->hsc_mask, &l->l_sigmask);
 	sigminusset(&sigcantmask, &l->l_sigmask);
+
+	mutex_exit(&l->l_proc->p_smutex);
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.hss_fpstate)
