@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.458 2007/02/10 07:44:00 mlelstv Exp $
+$NetBSD: usbdevs,v 1.459 2007/02/10 14:28:55 salo Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -195,6 +195,7 @@ vendor OMNIVISION	0x05a9	OmniVision
 vendor INSYSTEM		0x05ab	In-System Design
 vendor APPLE		0x05ac	Apple Computer
 vendor DIGI		0x05c5	Digi International
+vendor QUALCOMM2	0x05c6	Qualcomm
 vendor QTRONIX		0x05c7	Qtronix
 vendor ELSA		0x05cc	ELSA
 vendor BRAINBOXES	0x05d1	Brainboxes Limited
@@ -444,6 +445,7 @@ vendor GOODWAY		0x1631	Good Way Technology
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor GIGASET		0x1690	Gigaset
+vendor ANYDATA		0x16d5	AnyDATA Inc.
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
 vendor DLINK		0x2001	D-Link
@@ -606,6 +608,9 @@ product APC UPSPRO500		0x0002	Back-UPS Pro 500
 /* Anchor products */
 product ANCHOR EZUSB		0x2131	EZUSB
 product ANCHOR EZLINK		0x2720	EZLINK
+
+/* AnyDATA Inc. products */
+product ANYDATA ADU_E100H	0x6501	ADU-E100H
 
 /* AOX, Inc. products */
 product AOX USB101		0x0008	USB ethernet controller engine
@@ -1670,6 +1675,7 @@ product QTRONIX 980N		0x2011	Scorpion-980N keyboard
 
 /* Qualcomm products */
 product QUALCOMM CDMA_MSM	0x6000	CDMA Technologies MSM phone
+product QUALCOMM2 CDMA_MSM	0x3196	CDMA Technologies MSM modem
 
 product QUALCOMM_K CDMA_MSM_K	0x17da	Qualcomm Kyocera CDMA Technologies MSM
 
