@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.51.2.2 2007/02/10 14:48:16 tron Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.51.2.3 2007/02/10 16:29:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.2 2007/02/10 14:48:16 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.51.2.3 2007/02/10 16:29:03 bouyer Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -312,7 +312,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
-				"K6", "K6-2", "K6-III", 0, 0, 0,
+				"K6", "K6-2", "K6-III", "Geode LX", 0, 0,
 				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
