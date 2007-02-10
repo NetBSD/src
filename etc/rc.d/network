@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.50 2005/11/24 17:28:45 rpaulo Exp $
+# $NetBSD: network,v 1.51 2007/02/10 19:40:58 reed Exp $
 #
 
 # PROVIDE: network
@@ -108,7 +108,7 @@ network_start()
 		# Completely disallow packets to IPv4 compatible prefix.
 		# This may conflict with RFC1933 under following circumstances:
 		# (1) An IPv6-only KAME node tries to originate packets to IPv4
-		#     comatible destination.  The KAME node has no IPv4
+		#     compatible destination.  The KAME node has no IPv4
 		#     compatible support.  Under RFC1933, it should transmit
 		#     native IPv6 packets toward IPv4 compatible destination,
 		#     hoping it would reach a router that forwards the packet
