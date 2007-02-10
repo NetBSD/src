@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2005/12/06 16:52:14 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2007/02/10 02:03:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -79,10 +79,12 @@
 #ifndef	_NEWS68K_PARAM_H_
 #define	_NEWS68K_PARAM_H_
 
+#if defined(_KERNEL)
 /*
  * Interrupt glue.
  */
 #include <machine/intr.h>
+#endif
 
 /*
  * Machine dependent constants for m68k NEWS.
