@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.83 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.84 2007/02/10 02:42:30 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.83 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.84 2007/02/10 02:42:30 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1374,7 +1374,9 @@ hpux_sys_times_6x(l, v, retval)
 	struct tms atms;
 	int error;
 
-	calcru(p, &ru, &rs, NULL);
+	mutex_enter(&p->p_smutex);
+	calcru(p, &ru, &rs, NULL, NULL);
+	mutex_exit(&p->p_smutex);
 	atms.tms_utime = hpux_scale(&ru);
 	atms.tms_stime = hpux_scale(&rs);
 	atms.tms_cutime = hpux_scale(&p->p_stats->p_cru.ru_utime);
@@ -1452,7 +1454,6 @@ hpux_sys_pause_6x(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 
-	return (sigsuspend1(p, &p->p_sigctx.ps_sigmask));
+	return (sigsuspend1(l, &l->l_sigmask));
 }
