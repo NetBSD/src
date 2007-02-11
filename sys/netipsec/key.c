@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.34 2007/02/11 13:32:18 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.35 2007/02/11 13:35:00 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.34 2007/02/11 13:32:18 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.35 2007/02/11 13:35:00 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4179,6 +4179,7 @@ key_sockaddrcmp(
 		    satosin6(sa1)->sin6_port != satosin6(sa2)->sin6_port) {
 			return 1;
 		}
+		break;
 	default:
 		if (bcmp(sa1, sa2, sa1->sa_len) != 0)
 			return 1;
