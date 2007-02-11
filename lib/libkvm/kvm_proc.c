@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.62 2006/05/11 12:00:20 yamt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.62.4.1 2007/02/11 13:40:55 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.62 2006/05/11 12:00:20 yamt Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.62.4.1 2007/02/11 13:40:55 tron Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -149,6 +149,26 @@ struct miniproc {
 		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
 	} while (/*CONSTCOND*/0);
 
+/*
+ * NetBSD uses kauth(9) to manage credentials, which are stored in kauth_cred_t,
+ * a kernel-only opaque type. This is an embedded version which is *INTERNAL* to
+ * kvm(3) so dumps can be read properly.
+ *
+ * Whenever NetBSD starts exporting credentials to userland consistently (using
+ * 'struct uucred', or something) this will have to be updated again.
+ */
+struct kvm_kauth_cred {
+	struct simplelock cr_lock;	/* lock on cr_refcnt */
+	u_int cr_refcnt;		/* reference count */
+	uid_t cr_uid;			/* user id */
+	uid_t cr_euid;			/* effective user id */
+	uid_t cr_svuid;			/* saved effective user id */
+	gid_t cr_gid;			/* group id */
+	gid_t cr_egid;			/* effective group id */
+	gid_t cr_svgid;			/* saved effective group id */
+	u_int cr_ngroups;		/* number of groups */
+	gid_t cr_groups[NGROUPS];	/* group memberships */
+};
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
@@ -278,6 +298,40 @@ _kvm_uread(kd, p, va, cnt)
 }
 
 /*
+ * Convert credentials located in kernel space address 'cred' and store
+ * them in the appropriate members of 'eproc'.
+ */
+static int
+_kvm_convertcred(kvm_t *kd, u_long cred, struct eproc *eproc)
+{
+	struct kvm_kauth_cred kauthcred;
+	struct pcred *pc = &eproc->e_pcred;
+	struct ucred *uc = &eproc->e_ucred;
+
+	if (KREAD(kd, cred, &kauthcred) != 0)
+		return (-1);
+
+	/* inlined version of kauth_cred_to_pcred, see kauth(9). */
+	pc->p_ruid = kauthcred.cr_uid;
+	pc->p_svuid = kauthcred.cr_svuid;
+	pc->p_rgid = kauthcred.cr_gid;
+	pc->p_svgid = kauthcred.cr_svgid;
+	pc->p_refcnt = kauthcred.cr_refcnt;
+	pc->pc_ucred = (void *)cred;
+
+	/* inlined version of kauth_cred_to_ucred(), see kauth(9). */
+	uc->cr_ref = kauthcred.cr_refcnt;
+	uc->cr_uid = kauthcred.cr_euid;
+	uc->cr_gid = kauthcred.cr_egid;
+	uc->cr_ngroups = MIN(kauthcred.cr_ngroups,
+	    sizeof(uc->cr_groups) / sizeof(uc->cr_groups[0]));
+	memcpy(uc->cr_groups, kauthcred.cr_groups,
+	    uc->cr_ngroups * sizeof(uc->cr_groups[0]));
+
+	return (0);
+}
+
+/*
  * Read proc's from memory file into buffer bp, which has space to hold
  * at most maxcnt procs.
  */
@@ -303,13 +357,11 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			_kvm_err(kd, kd->program, "can't read proc at %p", p);
 			return (-1);
 		}
-		if (KREAD(kd, (u_long)proc.p_cred, &eproc.e_pcred) == 0)
-			if (KREAD(kd, (u_long)eproc.e_pcred.pc_ucred,
-			    &eproc.e_ucred)) {
-				_kvm_err(kd, kd->program,
-				    "can't read proc credentials at %p", p);
-				return (-1);
-			}
+		if (_kvm_convertcred(kd, (u_long)proc.p_cred, &eproc) != 0) {
+			_kvm_err(kd, kd->program,
+			    "can't read proc credentials at %p", p);
+			return (-1);
+		}
 
 		switch (what) {
 
