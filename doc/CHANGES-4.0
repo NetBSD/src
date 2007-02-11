@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.68 2007/02/10 19:46:16 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.69 2007/02/11 13:44:46 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1211,4 +1211,35 @@ share/dict/web2					1.16
 	"Transvaal" should be capitalized.
 	Patch provided by David A. Holland in PR misc/35517.
 	[tron, ticket #395]
+
+sys/kern/vfs_syscalls.c				1.299
+
+	Fix a potential panic.
+	[elad, ticket #412]
+
+gnu/dist/gdb6/gdb/Makefile.in			1.3
+gnu/usr.bin/gdb6/gdb/Makefile			1.6
+gnu/usr.bin/gdb6/libgdb/Makefile		1.6-1.7
+
+	- Remove generated files "ada-exp.c" and "c-exp.c".
+	- Don't try to write to the source directory while building "gdb6".
+	  This fixes PR toolchain/35271.
+	[skrll, ticket #413]
+
+gnu/dist/gdb6/gdb/i386nbsd-nat.c		1.4
+
+	Make printing backtraces of kernel crash dumps work in "gdb6".
+	This fixes PR toolchain/35118.
+	[skrll, ticket #414]
+
+lib/libkvm/kvm_proc.c				1.65
+
+	PR lib/35506: Teach "libkvm" about kauth to make "ps" work on
+	crash dumps again.
+	[elad, ticket #415]
+
+share/i18n/csmapper/CP/charset.pivot.CP.src	1.5
+
+	Make conversions from "cp932" to "eucjp-ms" work again.
+	[tnozaki, ticket #417]
 
