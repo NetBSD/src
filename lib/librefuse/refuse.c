@@ -129,7 +129,7 @@ puffs_fuse_fill_dir(void *buf, const char *name,
 	else
 		dtype = DT_REG;
 
-	return puffs_nextdent(&deh->dent, name, fakeino++, dtype, &deh->reslen);
+	return !puffs_nextdent(&deh->dent, name, fakeino++, dtype,&deh->reslen);
 }
 
 static int
@@ -152,7 +152,7 @@ puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 	else
 		dino = fakeino++;
 
-	return puffs_nextdent(&h->dent, name, dino, dtype, &h->reslen);
+	return !puffs_nextdent(&h->dent, name, dino, dtype, &h->reslen);
 }
 
 int
