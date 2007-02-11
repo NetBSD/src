@@ -1,3 +1,5 @@
+/*	$NetBSD: refuse.c,v 1.7 2007/02/11 16:02:24 pooka Exp $	*/
+
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
  *
@@ -25,6 +27,12 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#if !defined(lint)
+__RCSID("$NetBSD: refuse.c,v 1.7 2007/02/11 16:02:24 pooka Exp $");
+#endif /* !lint */
+
 #include <err.h>
 #include <errno.h>
 #include <fuse.h>
@@ -62,7 +70,8 @@ struct fuse_config {
 struct fuse {
 	struct fuse_session	*se;		/* fuse session pointer */
 	struct fuse_operations	op;		/* switch table of operations */
-	int			compat;		/* compat level - not used in puffs_fuse */
+	int			compat;		/* compat level -
+						 * not used in puffs_fuse */
 	struct node		**name_table;
 	size_t			name_table_size;
 	struct node		**id_table;
@@ -162,11 +171,13 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 	int	oldargc;
 
 	if (args->allocated) {
-		RENEW(char *, args->argv, args->argc + 1, "fuse_opt_add_arg1", return 0);
+		RENEW(char *, args->argv, args->argc + 1,
+		    "fuse_opt_add_arg1", return 0);
 	} else {
 		oldargv = args->argv;
 		oldargc = args->argc;
-		NEWARRAY(char *, args->argv, oldargc + 1, "fuse_opt_add_arg2", return 0);
+		NEWARRAY(char *, args->argv, oldargc + 1,
+		    "fuse_opt_add_arg2", return 0);
 		(void) memcpy(args->argv, oldargv, oldargc * sizeof(char *));
 		args->allocated = 1;
 	}
@@ -499,13 +510,13 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 /*
-We run into a slight problemette here - puffs provides
-setattr/getattr, whilst fuse provides all the usual chown/chmod/chgrp
-functionality.  So that we don't miss out on anything when calling a
-fuse operation, we have to get the vattr from the existing file,
-find out what's changed, and then switch on that to call the fuse
-function accordingly.
-*/
+ * We run into a slight problemette here - puffs provides
+ * setattr/getattr, whilst fuse provides all the usual chown/chmod/chgrp
+ * functionality.  So that we don't miss out on anything when calling a
+ * fuse operation, we have to get the vattr from the existing file,
+ * find out what's changed, and then switch on that to call the fuse
+ * function accordingly.
+ */
 /* ARGSUSED3 */
 static int
 puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
@@ -604,7 +615,8 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		return ENOSYS;
 	}
 
-	ret = (*fuse->op.read)(path, (char *)buf, *resid, offset, &rn->file_info);
+	ret = (*fuse->op.read)(path, (char *)buf, *resid, offset,
+	    &rn->file_info);
 
 	if (ret > 0) {
 		*resid -= ret;
@@ -678,7 +690,8 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	deh.readoff = *readoff;
 
 	if (fuse->op.readdir)
-		ret = fuse->op.readdir(path, &deh, puffs_fuse_fill_dir, *readoff, &file_info);
+		ret = fuse->op.readdir(path, &deh, puffs_fuse_fill_dir,
+		    *readoff, &file_info);
 	else
 		ret = fuse->op.getdir(path, &deh, puffs_fuse_dirfil);
 	*reslen = deh.reslen;
@@ -808,9 +821,9 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 		+ then call the fuse user-supplied operation
 		+ then we fix up any values on return that we need to
 		+ and fix up any nodes, etc
-	* so we need to be able to get at the fuse ops from within the
-	* puffs_usermount struct
-	*/
+	 * so we need to be able to get at the fuse ops from within the
+	 * puffs_usermount struct
+	 */
 	if ((slash = strrchr(*argv, '/')) == NULL) {
 		slash = *argv;
 	} else {
