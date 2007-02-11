@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.3,v 1.1.2.22 2007/02/10 19:25:12 tron Exp $
+#	$NetBSD: CHANGES-3.0.3,v 1.1.2.23 2007/02/11 13:23:21 tron Exp $
 
 A complete list of changes from the NetBSD 3.0.2 release to the NetBSD 3.0.3
 release:
@@ -1529,4 +1529,13 @@ usr.sbin/bind/include/lwres/platform.h		patch
 
 	Update BIND to version 9.3.2.
 	[ghen, ticket #1425]
+
+dist/bind/bin/named/named.8			1.2
+dist/bind/bin/named/query.c			1.2
+dist/bind/lib/dns/adb.c				1.2
+dist/bind/lib/dns/message.c			1.2
+
+	- Fix references in named.conf(5).
+	- Fix bugs detected by Coverity CID 2486 and compiler warnings.
+	[adrianp, ticket #1664]
 
