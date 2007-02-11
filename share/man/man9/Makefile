@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.225 2007/02/11 16:17:07 ad Exp $
+#       $NetBSD: Makefile,v 1.226 2007/02/11 18:49:18 ad Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -167,9 +167,11 @@ MLINKS+=cardbus.9 cardbus_attach_card.9 \
 	cardbus.9 Cardbus_free_tag.9 \
 	cardbus.9 Cardbus_conf_read.9 \
 	cardbus.9 Cardbus_conf_write.9
-MLINKS+=condvar.9 cv.9 cv_init.9 cv_destroy.9 cv_wait.9 cv_wait_sig.9 \
-	cv_timedwait.9 cv_timedwait_sig.9 cv_signal.9 cv_broadcast.9 \
-	cv_wakeup.9 cv_has_waiters.9
+MLINKS+=condvar.9 cv.9 condvar.9 cv_init.9 condvar.9 cv_destroy.9 \
+	condvar.9 cv_wait.9 condvar.9 cv_wait_sig.9 \
+	condvar.9 cv_timedwait.9 condvar.9 cv_timedwait_sig.9 \
+	condvar.9 cv_signal.9 condvar.9 cv_broadcast.9 \
+	condvar.9 cv_wakeup.9 condvar.9 cv_has_waiters.9
 MLINKS+=cons.9 cnbell.9 cons.9 cngetc.9 cons.9 cngetsn.9 cons.9 cnpollc.9 \
 	cons.9 cnputc.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
@@ -317,7 +319,7 @@ MLINKS+=malloc.9 malloc_roundup.9 malloc.9 malloc_type_attach.9
 MLINKS+=malloc.9 malloc_type_detach.9 malloc.9 malloc_type_setlimit.9
 MLINKS+=malloc.9 MALLOC_DEFINE_LIMIT.9 malloc.9 MALLOC_DEFINE.9
 MLINKS+=malloc.9 MALLOC_DECLARE.9
-MLINKS+=mb.9 mb_memory.9 mb_read.9 mb_write.9
+MLINKS+=mb.9 mb_memory.9 mb.9 mb_read.9 mb.9 mb_write.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
@@ -337,8 +339,8 @@ MLINKS+=mca.9 mca_intr_establish.9 \
 	mca.9 mca_intr_evcnt.9 \
 	mca.9 mca_conf_read.9 \
 	mca.9 mca_conf_write.9
-MLINKS+=mutex.9 mutex_init.9 mutex_destroy.9 mutex_enter.9 mutex_exit.9 \
-	mutex_tryenter.9 mutex_owned.9
+MLINKS+=mutex.9 mutex_init.9 mutex.9 mutex_destroy.9 mutex.9 mutex_enter.9 \
+	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9
 MLINKS+=m_tag.9 m_tag_copy.9 \
 	m_tag.9 m_tag_copy_chain.9 \
 	m_tag.9 m_tag_delete.9 \
@@ -481,9 +483,10 @@ MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
 MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
 	rt_timer.9 rt_timer_remove_all.9
-MLINKS+=rwlock.9 rw.9 rw_init.9 rw_destroy.9 rw_enter.9 rw_exit.9 \
-	rw_tryenter.9 rw_tryupgrade.9 rw_downgrade.9 rw_read_held.9 \
-	rw_write_held.9 rw_lock_held.9
+MLINKS+=rwlock.9 rw.9 rwlock.9 rw_init.9 rwlock.9 rw_destroy.9 \
+	rwlock.9 rw_enter.9 rwlock.9 rw_exit.9  rwlock.9 rw_tryenter.9 \
+	rwlock.9 rw_tryupgrade.9 rwlock.9 rw_downgrade.9 \
+	rwlock.9 rw_read_held.9 rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9
 MLINKS+=SCHED_LOCK.9 SCHED_UNLOCK.9 \
 	SCHED_LOCK.9 sched_lock_idle.9 \
 	SCHED_LOCK.9 sched_unlock_idle.9
