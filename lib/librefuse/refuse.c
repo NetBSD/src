@@ -78,6 +78,34 @@ struct fuse {
 	struct puffs_usermount	*pu;
 };
 
+struct refusenode {
+	struct fuse_file_info	 file_info;
+};
+
+static struct puffs_node *
+newrn(struct puffs_usermount *pu)
+{
+	struct puffs_node *pn;
+	struct refusenode *rn;
+
+	rn = malloc(sizeof(struct refusenode));
+	if (!rn)
+		abort(); /*XXX*/
+
+	memset(rn, 0, sizeof(struct refusenode));
+	pn = puffs_pn_new(pu, rn);
+
+	return pn;
+}
+
+static void
+nukern(struct puffs_node *pn)
+{
+
+	free(pn->pn_data);
+	puffs_pn_put(pn);
+}
+
 static ino_t fakeino = 3;
 
 /* XXX: rethinkme */
@@ -168,7 +196,7 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	if (ret != 0) {
 		return ret;
 	}
-	*newnode = puffs_pn_new(pu, NULL);
+	*newnode = newrn(pu);
 	*newtype = (S_ISDIR(st.st_mode)) ? VDIR : VREG;
 	*newsize = st.st_size;
 	return ret;
@@ -270,7 +298,7 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	if (ret == 0) {
 		/* fix up nodes */
-		pn = puffs_pn_new(pu, NULL);
+		pn = newrn(pu);
 		if (pn == NULL) {
 			unlink(PCNPATH(pcn));
 			return ENOMEM;
@@ -306,7 +334,7 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	if (ret == 0) {
 		/* fix up nodes */
-		pn = puffs_pn_new(pu, NULL);
+		pn = newrn(pu);
 		if (pn == NULL) {
 			rmdir(PCNPATH(pcn));
 			return ENOMEM;
@@ -387,7 +415,7 @@ puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	if (ret == 0) {
 		/* fix up nodes */
-		pn = puffs_pn_new(pu, NULL);
+		pn = newrn(pu);
 		if (pn == NULL) {
 			unlink(link_target);
 			return ENOMEM;
@@ -422,6 +450,7 @@ puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	/* wrap up return code */
 	ret = (*fuse->op.rename)(path, PCNPATH(pcn_targ));
 
+	/* XXX: what's this guy doing??? */
 	if (ret == 0) {
 		(void) memcpy(&va, &pn->pn_va, sizeof(va));
 
@@ -459,7 +488,7 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 
 	if (ret == 0) {
 		/* fix up nodes */
-		pn = puffs_pn_new(pu, NULL);
+		pn = newrn(pu);
 		if (pn == NULL) {
 			unlink(PCNPATH(pcn));
 			return ENOMEM;
@@ -524,8 +553,8 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 	const struct puffs_cred *cred, pid_t pid)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct fuse_file_info	 file_info;
 	struct puffs_node	*pn = opc;
+	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
 	struct stat		 st;
 	const char		*path = PNPATH(pn);
@@ -535,8 +564,6 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 	if (fuse->op.open == NULL) {
 		return ENOSYS;
 	}
-
-	(void) memset(&file_info, 0x0, sizeof(file_info));
 
 	/* examine type - if directory, return 0 rather than open */
 	ret = (fuse->op.getattr == NULL) ?
@@ -550,7 +577,7 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 		return 0;
 	}
 
-	ret = (*fuse->op.open)(path, &file_info);
+	ret = (*fuse->op.open)(path, &rn->file_info);
 
 	if (ret == 0) {
 	}
@@ -566,8 +593,8 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	int ioflag)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct fuse_file_info	file_info;
 	struct puffs_node	*pn = opc;
+	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 	int			ret;
@@ -577,10 +604,7 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		return ENOSYS;
 	}
 
-	(void) memset(&file_info, 0x0, sizeof(file_info));
-	/* XXX fill in file_info here */
-
-	ret = (*fuse->op.read)(path, (char *)buf, *resid, offset, &file_info);
+	ret = (*fuse->op.read)(path, (char *)buf, *resid, offset, &rn->file_info);
 
 	if (ret > 0) {
 		*resid -= ret;
@@ -672,7 +696,7 @@ puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 {
 	struct puffs_node	*pn = opc;
 
-	puffs_pn_put(pn);
+	nukern(pn);
 
 	return 0;
 }
