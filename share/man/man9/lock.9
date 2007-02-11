@@ -1,6 +1,6 @@
-.\"     $NetBSD: lock.9,v 1.23 2004/10/04 19:12:52 rumble Exp $
+.\"     $NetBSD: lock.9,v 1.24 2007/02/11 16:05:08 ad Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 25, 2004
+.Dd Febuary 11, 2007
 .Dt LOCK 9
 .Os
 .Sh NAME
@@ -80,6 +80,16 @@
 .Ft int
 .Fn spinlockmgr "struct lock *lock" "u_int flags" "struct simplelock *slock"
 .Sh DESCRIPTION
+.Sy The interfaces described in this manual page are obsolete
+.Sy and will be removed from a future version of the system. 
+.Pp
+.Sy Please see the
+.Xr condvar 9 ,
+.Xr mutex 9 ,
+.Sy and
+.Sy Xr rwlock 9
+.Sy manual pages for information on kernel synchronisation primitives.
+.Pp
 The
 .Nm
 functions provide synchronisation in the kernel by preventing multiple
@@ -385,7 +395,10 @@ Machine-dependent simplelock primitives are implemented within the
 file
 .Pa sys/arch/\*[Lt]arch\*[Gt]/include/lock.h .
 .Sh SEE ALSO
+.Xr condvar 9 ,
+.Xr mutex 9 ,
 .Xr pmap 9 ,
+.Xr rwlock 9, 
 .Xr spl 9 ,
 .Xr tsleep 9 ,
 .Xr uvm 9
