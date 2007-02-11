@@ -80,18 +80,19 @@ struct fuse {
 
 static ino_t fakeino = 3;
 
-/* XXX: redome */
-struct feh {
+/* XXX: rethinkme */
+struct fuse_dirh {
 	struct dirent *dent;
 	size_t reslen;
+	off_t readoff;
 };
 
 /* ARGSUSED2 */
 static int
-puffs_fuse_dirfiller(void *buf, const char *name,
+puffs_fuse_fill_dir(void *buf, const char *name,
 	const struct stat *stbuf, off_t off)
 {
-	struct feh *feh = buf;
+	struct fuse_dirh *deh = buf;
 	uint8_t dtype;
 
 	/* XXX: this is hacked *purely* for hellofs, so fiXXXme */
@@ -100,7 +101,30 @@ puffs_fuse_dirfiller(void *buf, const char *name,
 	else
 		dtype = DT_REG;
 
-	return puffs_nextdent(&feh->dent, name, fakeino++, dtype, &feh->reslen);
+	return puffs_nextdent(&deh->dent, name, fakeino++, dtype, &deh->reslen);
+}
+
+static int
+puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
+{
+	ino_t dino;
+	int dtype;
+
+	/* XXX: this is hacked *purely* for cddafs, so fiXXXme */
+	if (type == 0) {
+		if (*name == '.')
+			dtype = DT_DIR;
+		else
+			dtype = DT_REG;
+	} else
+		dtype = type;
+
+	if (ino)
+		dino = ino;
+	else
+		dino = fakeino++;
+
+	return puffs_nextdent(&h->dent, name, dino, dtype, &h->reslen);
 }
 
 int
@@ -609,11 +633,11 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	struct puffs_node	*pn = opc;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
-	struct feh		feh; /* XXX */
+	struct fuse_dirh	deh;
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.readdir == NULL) {
+	if (fuse->op.readdir == NULL && fuse->op.getdir == NULL) {
 		return ENOSYS;
 	}
 
@@ -625,10 +649,15 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	(void) memset(&file_info, 0x0, sizeof(file_info));
 	/* XXX - fill in file_info here */
 
-	feh.dent = dent;
-	feh.reslen = *reslen;
-	ret = (*fuse->op.readdir)(path, &feh, puffs_fuse_dirfiller, *readoff, &file_info);
-	*reslen = feh.reslen;
+	deh.dent = dent;
+	deh.reslen = *reslen;
+	deh.readoff = *readoff;
+
+	if (fuse->op.readdir)
+		ret = fuse->op.readdir(path, &deh, puffs_fuse_fill_dir, *readoff, &file_info);
+	else
+		ret = fuse->op.getdir(path, &deh, puffs_fuse_dirfil);
+	*reslen = deh.reslen;
 	*readoff = 1;
 
 	if (ret == 0) {
