@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/11/28 13:44:52 jdc Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2007/02/11 13:30:38 tron Exp $
 
 .include <bsd.own.mk>
 
@@ -37,9 +37,5 @@ CPPFLAGS.inf-ptrace.c=	-Wno-error
 #
 COPTS+=	-Wno-stack-protector
 
-# ignore yacc-generated files in ${DIST}/gdb
-ada-exp.c: .NOPATH
-c-exp.c: .NOPATH
-m2-exp.c: .NOPATH
-p-exp.c: .NOPATH
-CLEANFILES+= m2-exp.c p-exp.c
+# Don't run yacc/bison or lex
+.y.c .y.h .l.c:
