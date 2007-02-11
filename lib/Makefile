@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112 2007/01/06 20:54:37 bouyer Exp $
+#	$NetBSD: Makefile,v 1.113 2007/02/11 18:36:26 pooka Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -73,6 +73,10 @@ SUBDIR+=	libssh		# depends on libcrypto
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+=	libkrb5		# depends on libcrypto and more
+.endif
+
+.if (${MKPUFFS} != "no")
+SUBDIR+=	librefuse	# depends on libpuffs
 .endif
 
 #==================== 2nd library dependency barrier ====================
