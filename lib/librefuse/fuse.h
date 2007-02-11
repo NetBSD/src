@@ -89,7 +89,10 @@ enum {
 	FUSE_OPT_KEY_DISCARD = -4
 };
 
+typedef struct fuse_dirh *fuse_dirh_t;
+
 typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *, off_t);
+typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);
 
 #define FUSE_VERSION	26
 
@@ -125,6 +128,7 @@ struct fuse_operations {
 	int	(*removexattr)(const char *, const char *);
 	int	(*opendir)(const char *, struct fuse_file_info *);
 	int	(*readdir)(const char *, void *, fuse_fill_dir_t, off_t, struct fuse_file_info *);
+	int	(*getdir)(const char *, fuse_dirh_t, fuse_dirfil_t);
 	int	(*releasedir)(const char *, struct fuse_file_info *);
 	int	(*fsyncdir)(const char *, int, struct fuse_file_info *);
 	void	*(*init)(struct fuse_conn_info *);
