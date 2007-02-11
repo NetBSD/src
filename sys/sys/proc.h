@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.233 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.234 2007/02/11 10:47:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -132,7 +132,6 @@ struct pgrp {
 struct exec_package;
 struct ps_strings;
 struct ras;
-struct sa_emul;
 struct kauth_cred;
 
 struct emul {
