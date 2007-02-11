@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.145 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.146 2007/02/11 17:16:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.145 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.146 2007/02/11 17:16:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -647,7 +647,7 @@ procfs_getattr(v)
 	case PFSexe:
 		MALLOC(path, char *, MAXPATHLEN + 4, M_TEMP,
 		    M_WAITOK|M_CANFAIL);
-		if (path == NULL) {
+		if (path == NULL && procp != NULL) {
 			procfs_proc_unlock(procp);
 			return (ENOMEM);
 		}
@@ -660,8 +660,10 @@ procfs_getattr(v)
 
 	if (procp != NULL) {
 		mutex_enter(&procp->p_mutex);
-		if (kauth_authorize_process(kauth_cred_get(),
-		    KAUTH_PROCESS_CANSEE, procp, NULL, NULL, NULL) != 0) {
+		error = kauth_authorize_process(kauth_cred_get(),
+		    KAUTH_PROCESS_CANSEE, procp, NULL, NULL, NULL);
+		mutex_exit(&procp->p_mutex);
+		if (error != 0) {
 		    	procfs_proc_unlock(procp);
 		    	if (path != NULL)
 		    		free(path, M_TEMP);
@@ -880,11 +882,8 @@ procfs_getattr(v)
 		panic("procfs_getattr");
 	}
 
-	if (procp != NULL) {
-		mutex_exit(&procp->p_mutex);
+	if (procp != NULL)
 		procfs_proc_unlock(procp);
-	}
-
 	if (path != NULL)
 		free(path, M_TEMP);
 
@@ -971,11 +970,12 @@ procfs_lookup(v)
 	const char *pname = cnp->cn_nameptr;
 	const struct proc_target *pt = NULL;
 	struct vnode *fvp;
-	pid_t pid;
+	pid_t pid, vnpid;
 	struct pfsnode *pfs;
 	struct proc *p = NULL;
 	struct lwp *l = NULL;
-	int i, error, iscurproc = 0, isself = 0;
+	int i, error;
+	pfstype type;
 
 	*vpp = NULL;
 
@@ -997,15 +997,6 @@ procfs_lookup(v)
 		if (cnp->cn_flags & ISDOTDOT)
 			return (EIO);
 
-		iscurproc = CNEQ(cnp, "curproc", 7);
-		isself = CNEQ(cnp, "self", 4);
-
-		if (iscurproc || isself) {
-			error = procfs_allocvp(dvp->v_mount, vpp, 0,
-			    iscurproc ? PFScurproc : PFSself, -1, NULL);
-			return (error);
-		}
-
 		for (i = 0; i < nproc_root_targets; i++) {
 			pt = &proc_root_targets[i];
 			if (cnp->cn_namelen == pt->pt_namlen &&
@@ -1021,12 +1012,23 @@ procfs_lookup(v)
 			return (error);
 		}
 
-		pid = (pid_t)atoi(pname, cnp->cn_namelen);
+		if (CNEQ(cnp, "curproc", 7)) {
+			pid = curproc->p_pid;
+			vnpid = 0;
+			type = PFScurproc;
+		} else if (CNEQ(cnp, "self", 4)) {
+			pid = curproc->p_pid;
+			vnpid = 0;
+			type = PFSself;
+		} else {
+			pid = (pid_t)atoi(pname, cnp->cn_namelen);
+			vnpid = pid;
+			type = PFSproc;
+		}
 
 		if (procfs_proc_lock(pid, &p, ESRCH) != 0)
 			break;
-
-		error = procfs_allocvp(dvp->v_mount, vpp, pid, PFSproc, -1, p);
+		error = procfs_allocvp(dvp->v_mount, vpp, vnpid, type, -1, p);
 		procfs_proc_unlock(p);
 		return (error);
 
@@ -1054,14 +1056,17 @@ procfs_lookup(v)
 			     (*pt->pt_valid)(cnp->cn_lwp, dvp->v_mount)))
 				break;
 		}
-		if (i == nproc_targets)
+		if (i == nproc_targets) {
+			procfs_proc_unlock(p);
 			break;
+		}
 		if (pt->pt_pfstype == PFSfile) {
 			fvp = p->p_textvp;
 			/* We already checked that it exists. */
 			VREF(fvp);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);
 			*vpp = fvp;
+			procfs_proc_unlock(p);
 			return (0);
 		}
 
@@ -1086,8 +1091,8 @@ procfs_lookup(v)
 			VOP_UNLOCK(dvp, 0);
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 			    PFSproc, -1, p);
-			procfs_proc_unlock(p);
 			vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
+			procfs_proc_unlock(p);
 			return (error);
 		}
 		fd = atoi(pname, cnp->cn_namelen);
