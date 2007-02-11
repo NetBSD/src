@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.9 2007/02/11 18:30:55 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.10 2007/02/11 18:33:30 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.9 2007/02/11 18:30:55 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.10 2007/02/11 18:33:30 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -496,15 +496,6 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 
 	/* wrap up return code */
 	ret = (*fuse->op.link)(PNPATH(pn), PCNPATH(pcn));
-
-	if (ret == 0) {
-		/* fix up nodes */
-		pn = newrn(pu);
-		if (pn == NULL) {
-			unlink(PCNPATH(pcn));
-			return ENOMEM;
-		}
-	}
 
 	return ret;
 }
