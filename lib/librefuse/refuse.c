@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.8 2007/02/11 16:06:52 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.9 2007/02/11 18:30:55 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.8 2007/02/11 16:06:52 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.9 2007/02/11 18:30:55 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -539,13 +539,13 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 	uid = va->va_uid;
 	gid = va->va_gid;
 
-	if (mode != 0) {
+	if (mode != (mode_t)PUFFS_VNOVAL) {
 		if (fuse->op.chmod == NULL) {
 			return ENOSYS;
 		}
 		ret = (*fuse->op.chmod)(path, mode);
 	}
-	if (uid != 0 || gid != 0) {
+	if (uid != (uid_t)PUFFS_VNOVAL || gid != (gid_t)PUFFS_VNOVAL) {
 		if (fuse->op.chown == NULL) {
 			return ENOSYS;
 		}
