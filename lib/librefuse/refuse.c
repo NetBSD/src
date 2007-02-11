@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.7 2007/02/11 16:02:24 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.8 2007/02/11 16:06:52 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.7 2007/02/11 16:02:24 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.8 2007/02/11 16:06:52 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -633,8 +633,8 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	int ioflag)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct fuse_file_info	file_info;
 	struct puffs_node	*pn = opc;
+	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 	int			ret;
@@ -644,11 +644,8 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		return ENOSYS;
 	}
 
-	(void) memset(&file_info, 0x0, sizeof(file_info));
-
-	/* XXX fill in file_info here */
-
-	ret = (*fuse->op.write)(path, (char *)buf, *resid, offset, &file_info);
+	ret = (*fuse->op.write)(path, (char *)buf, *resid, offset,
+	    &rn->file_info);
 
 	if (ret > 0) {
 		*resid -= ret;
@@ -665,8 +662,8 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	size_t *reslen)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct fuse_file_info	file_info;
 	struct puffs_node	*pn = opc;
+	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 	struct fuse_dirh	deh;
@@ -682,16 +679,13 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 		return 0;
 	}
 
-	(void) memset(&file_info, 0x0, sizeof(file_info));
-	/* XXX - fill in file_info here */
-
 	deh.dent = dent;
 	deh.reslen = *reslen;
 	deh.readoff = *readoff;
 
 	if (fuse->op.readdir)
 		ret = fuse->op.readdir(path, &deh, puffs_fuse_fill_dir,
-		    *readoff, &file_info);
+		    *readoff, &rn->file_info);
 	else
 		ret = fuse->op.getdir(path, &deh, puffs_fuse_dirfil);
 	*reslen = deh.reslen;
