@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.292 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.293 2007/02/11 14:29:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.292 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.293 2007/02/11 14:29:01 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -119,7 +119,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.292 2007/02/09 21:55:30 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
-#include <sys/sleepq.h>
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
 #ifdef FAST_IPSEC
