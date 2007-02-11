@@ -302,7 +302,6 @@ puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
 	struct fuse		*fuse;
 	const char		*path = PCNPATH(pcn);
 	int			ret;
@@ -315,10 +314,6 @@ puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	/* wrap up return code */
 	ret = (*fuse->op.unlink)(path);
 
-	if (ret == 0) {
-		puffs_pn_put(pn);
-	}
-
 	return ret;
 }
 
@@ -329,7 +324,6 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
 	struct fuse		*fuse;
 	const char		*path = PCNPATH(pcn);
 	int			ret;
@@ -341,10 +335,6 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 	/* wrap up return code */
 	ret = (*fuse->op.rmdir)(path);
-
-	if (ret == 0) {
-		puffs_pn_put(pn);
-	}
 
 	return ret;
 }
@@ -647,6 +637,17 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	return ret;
 }
 
+/* ARGSUSED */
+static int
+puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+{
+	struct puffs_node	*pn = opc;
+
+	puffs_pn_put(pn);
+
+	return 0;
+}
+
 /* ARGSUSED1 */
 static int
 puffs_fuse_fs_unmount(struct puffs_cc *pcc, int flags, pid_t pid)
@@ -738,7 +739,7 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
         PUFFSOP_SET(pops, puffs_fuse, node, readdir);
         PUFFSOP_SET(pops, puffs_fuse, node, read);
         PUFFSOP_SET(pops, puffs_fuse, node, write);
-	/* XXX: reclaim is missing */
+        PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
 	NEW(struct fuse, fuse, "fuse_main_real", exit(EXIT_FAILURE));
 
