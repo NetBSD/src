@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.1.1.2.4.1 2007/02/10 19:20:52 tron Exp $	*/
+/*	$NetBSD: adb.c,v 1.1.1.2.4.2 2007/02/11 13:21:28 tron Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -3094,7 +3094,7 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 	dns_fetchevent_t *dev;
 	dns_adbname_t *name;
 	dns_adb_t *adb;
-	dns_adbfetch_t *fetch;
+	dns_adbfetch_t *fetch = NULL;
 	int bucket;
 	isc_eventtype_t ev_status;
 	isc_stdtime_t now;
@@ -3126,7 +3126,7 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 		fetch = name->fetch_aaaa;
 		name->fetch_aaaa = NULL;
 	}
-	INSIST(address_type != 0);
+	INSIST(address_type != 0 && fetch != NULL);
 
 	dns_resolver_destroyfetch(&fetch->fetch);
 	dev->fetch = NULL;
