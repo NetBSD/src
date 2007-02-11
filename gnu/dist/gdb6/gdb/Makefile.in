@@ -1612,6 +1612,8 @@ po/$(PACKAGE).pot: force
 
 .SUFFIXES: .y .l
 .y.c: 
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_y_c:
 	$(SHELL) $(YLWRAP) $< y.tab.c $@.tmp -- $(YACC) $(YFLAGS)
 	-sed -e '/extern.*malloc/d' \
 	     -e '/extern.*realloc/d' \
@@ -1624,6 +1626,8 @@ po/$(PACKAGE).pot: force
 	-rm $@.tmp
 	mv $@.new ./$*.c
 .l.c:
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_l_c:
 	if [ "$(FLEX)" ] && $(FLEX) --version >/dev/null 2>&1; then \
 	    $(FLEX) -o$@ $< && \
 	    rm -f $@.new && \
