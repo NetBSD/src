@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.10 2007/02/11 15:36:35 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.11 2007/02/11 15:37:20 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.10 2007/02/11 15:36:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.11 2007/02/11 15:37:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,8 +157,7 @@ workqueue_exit(struct work *wk, void *arg)
 	struct workqueue_queue *q = wqe->wqe_q;
 
 	/*
-	 * no need to raise ipl because only competition at this point
-	 * is workqueue_finiqueue.
+	 * only competition at this point is workqueue_finiqueue.
 	 */
 
 	KASSERT(q->q_worker == curproc);
