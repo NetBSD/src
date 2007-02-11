@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.9 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.10 2007/02/11 15:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.9 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.10 2007/02/11 15:36:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ workqueue_exit(struct work *wk, void *arg)
 	KASSERT(q->q_worker == curproc);
 	mutex_enter(&q->q_mutex);
 	q->q_worker = NULL;
-	cv_broadcast(&q->q_cv);
+	cv_signal(&q->q_cv);
 	mutex_exit(&q->q_mutex);
 	kthread_exit(0);
 }
@@ -182,7 +182,7 @@ workqueue_finiqueue(struct workqueue *wq)
 	KASSERT(q->q_worker != NULL);
 	mutex_enter(&q->q_mutex);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, &wqe.wqe_wk, wk_entry);
-	cv_broadcast(&q->q_cv);
+	cv_signal(&q->q_cv);
 	while (q->q_worker != NULL) {
 		cv_wait(&q->q_cv, &q->q_mutex);
 	}
@@ -233,7 +233,7 @@ workqueue_enqueue(struct workqueue *wq, struct work *wk)
 
 	mutex_enter(&q->q_mutex);
 	if (SIMPLEQ_EMPTY(&q->q_queue))
-		cv_broadcast(&q->q_cv);
+		cv_signal(&q->q_cv);
 	SIMPLEQ_INSERT_TAIL(&q->q_queue, wk, wk_entry);
 	mutex_exit(&q->q_mutex);
 }
