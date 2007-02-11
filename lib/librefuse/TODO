@@ -1,0 +1,14 @@
+To Do
+=====
+address all XXX
+implement all fuse_opt
+
+Done
+====
+statvfs
+sync
+WARNS=4
+address lint
+remove pn entries on unlink, rmdir, remove
+special directory handling in open()
+Finish off manual page
