@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.24 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: lock.h,v 1.25 2007/02/11 15:41:31 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -124,25 +124,25 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 }
 
 #if defined(__sparc_v9__)
-static inline void
+static __inline void
 mb_read(void)
 {
 	__asm __volatile("membar #LoadLoad" : : : "memory");
 }
 
-static inline void
+static __inline void
 mb_write(void)
 {
 	__asm __volatile("" : : : "memory");
 }
 
-static inline void
+static __inline void
 mb_memory(void)
 {
 	__asm __volatile("membar #MemIssue" : : : "memory");
 }
 #else	/* __sparc_v9__ */
-static inline void
+static __inline void
 mb_read(void)
 {
 	static volatile int junk;
@@ -150,13 +150,13 @@ mb_read(void)
 	junk = 1;
 }
 
-static inline void
+static __inline void
 mb_write(void)
 {
 	__insn_barrier();
 }
 
-static inline void
+static __inline void
 mb_memory(void)
 {
 	static volatile int junk;
