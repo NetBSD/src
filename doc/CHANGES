@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.786 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.787 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,3 +31,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		optical drive should use for reading data,
 		contributed by Kimura Fuyuki. [bouyer 20070122]
 	bind: import 9.4.0-rc2 [christos 20070127]
+	refuse: added file system in userspace compatibility functionality,
+		layered on top of libpuffs [agc 20070211]
