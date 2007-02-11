@@ -78,27 +78,9 @@ struct fuse {
 	struct puffs_usermount	*pu;
 };
 
-/* call context */
-
-struct puffs_cc {
-	struct puffs_usermount	*pcc_pu;
-	struct puffs_req	*pcc_preq;
-
-	ucontext_t		pcc_uc;		/* "continue" 		*/
-	ucontext_t		pcc_uc_ret;	/* "yield" 		*/
-	void			*pcc_stack;
-
-	int			pcc_flags;
-
-	/* these are for threading information to the implementation	*/
-	void			*pcc_priv;
-	int			pcc_rv;
-
-	TAILQ_ENTRY(puffs_cc)	entries;
-};
-
 static ino_t fakeino = 3;
 
+/* XXX: redome */
 struct feh {
 	struct dirent *dent;
 	size_t reslen;
@@ -112,7 +94,7 @@ puffs_fuse_dirfiller(void *buf, const char *name,
 	struct feh *feh = buf;
 	uint8_t dtype;
 
-	/* gazeesus & other similar dudes */
+	/* XXX: this is hacked *purely* for hellofs, so fiXXXme */
 	if (*name == '.')
 		dtype = DT_DIR;
 	else
@@ -600,7 +582,6 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
-#if 0
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct fuse_file_info	file_info;
 	struct puffs_node	*pn = opc;
@@ -624,13 +605,6 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	}
 
 	return ret;
-#else
-	/*
-	 * XXX: currently puffs vfs will suck if you have read but
-	 * no write, so just dummyfy this
-	 */
-	return 0;
-#endif
 }
 
 
@@ -682,7 +656,7 @@ puffs_fuse_fs_unmount(struct puffs_cc *pcc, int flags, pid_t pid)
 
 	fuse = (struct fuse *)pu->pu_privdata;
 	if (fuse->op.destroy == NULL) {
-		return ENOSYS;
+		return 0;
 	}
 	(*fuse->op.destroy)(fuse);
         return 0;
@@ -742,6 +716,10 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
         PUFFSOP_SET(pops, puffs_fuse, fs, statvfs);
         PUFFSOP_SET(pops, puffs_fuse, fs, unmount);
 
+	/*
+	 * XXX: all of these don't possibly need to be
+	 * unconditionally set
+	 */
         PUFFSOP_SET(pops, puffs_fuse, node, lookup);
         PUFFSOP_SET(pops, puffs_fuse, node, getattr);
         PUFFSOP_SET(pops, puffs_fuse, node, readdir);
@@ -760,6 +738,7 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
         PUFFSOP_SET(pops, puffs_fuse, node, readdir);
         PUFFSOP_SET(pops, puffs_fuse, node, read);
         PUFFSOP_SET(pops, puffs_fuse, node, write);
+	/* XXX: reclaim is missing */
 
 	NEW(struct fuse, fuse, "fuse_main_real", exit(EXIT_FAILURE));
 
