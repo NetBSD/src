@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1000 2007/02/11 16:16:09 ad Exp $
+#	$NetBSD: mi,v 1.1001 2007/02/11 18:37:45 pooka Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -541,6 +541,7 @@
 ./usr/include/fstab.h				comp-c-include
 ./usr/include/fts.h				comp-c-include
 ./usr/include/ftw.h				comp-c-include
+./usr/include/fuse.h				comp-c-include		puffs
 ./usr/include/g++/ACG.h				comp-obsolete		obsolete
 ./usr/include/g++/AllocRing.h			comp-obsolete		obsolete
 ./usr/include/g++/Binomial.h			comp-obsolete		obsolete
@@ -2152,6 +2153,8 @@
 ./usr/lib/libpuffs_p.a				comp-c-proflib		profile
 ./usr/lib/libradius.a				comp-c-lib
 ./usr/lib/libradius_p.a				comp-c-proflib		profile
+./usr/lib/librefuse.a				comp-c-lib		puffs
+./usr/lib/librefuse_p.a				comp-c-proflib		puffs,profile
 ./usr/lib/libresolv.a				comp-c-lib
 ./usr/lib/libresolv_p.a				comp-c-proflib		profile
 ./usr/lib/librmt.a				comp-c-lib
@@ -5692,6 +5695,7 @@
 ./usr/share/man/cat3/realpath.0			comp-c-catman		.cat
 ./usr/share/man/cat3/recno.0			comp-c-catman		.cat
 ./usr/share/man/cat3/refresh.0			comp-c-catman		.cat
+./usr/share/man/cat3/refuse.0			comp-c-catman		puffs,.cat
 ./usr/share/man/cat3/regcomp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/regerror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/regex.0			comp-c-catman		.cat
@@ -10013,6 +10017,7 @@
 ./usr/share/man/man3/realpath.3			comp-c-man		.man
 ./usr/share/man/man3/recno.3			comp-c-man		.man
 ./usr/share/man/man3/refresh.3			comp-c-man		.man
+./usr/share/man/man3/refuse.3			comp-c-man		puffs,.man
 ./usr/share/man/man3/regcomp.3			comp-c-man		.man
 ./usr/share/man/man3/regerror.3			comp-c-man		.man
 ./usr/share/man/man3/regex.3			comp-c-man		.man
