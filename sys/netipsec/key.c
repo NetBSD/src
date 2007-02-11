@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.33 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.34 2007/02/11 13:32:18 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.33 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.34 2007/02/11 13:32:18 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -381,7 +381,7 @@ static struct secasvar *key_do_allocsa_policy __P((struct secashead *, u_int));
 static void key_delsp __P((struct secpolicy *));
 static struct secpolicy *key_getsp __P((struct secpolicyindex *));
 static struct secpolicy *key_getspbyid __P((u_int32_t));
-static u_int32_t key_newreqid __P((void));
+static u_int16_t key_newreqid __P((void));
 static struct mbuf *key_gather_mbuf __P((struct mbuf *,
 	const struct sadb_msghdr *, int, int, ...));
 static int key_spdadd __P((struct socket *, struct mbuf *,
@@ -428,7 +428,7 @@ static struct mbuf *key_setsadbaddr __P((u_int16_t,
 static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
 #endif
-static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int32_t));
+static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int16_t));
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
 	u_int32_t));
 static void *key_newbuf __P((const void *, u_int));
@@ -1493,7 +1493,7 @@ key_msg2sp(xpl0, len, error)
 
 				/* allocate new reqid id if reqid is zero. */
 				if (xisr->sadb_x_ipsecrequest_reqid == 0) {
-					u_int32_t reqid;
+					u_int16_t reqid;
 					if ((reqid = key_newreqid()) == 0) {
 						KEY_FREESP(&newsp);
 						*error = ENOBUFS;
@@ -1582,12 +1582,12 @@ key_msg2sp(xpl0, len, error)
 	return newsp;
 }
 
-static u_int32_t
+static u_int16_t
 key_newreqid()
 {
-	static u_int32_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+	static u_int16_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
 
-	auto_reqid = (auto_reqid == ~0
+	auto_reqid = (auto_reqid == 0xffff
 			? IPSEC_MANUAL_REQID_MAX + 1 : auto_reqid + 1);
 
 	/* XXX should be unique check */
@@ -3764,7 +3764,8 @@ key_setsadbident(exttype, idtype, string, stringlen, id)
 static struct mbuf *
 key_setsadbxsa2(mode, seq, reqid)
 	u_int8_t mode;
-	u_int32_t seq, reqid;
+	u_int32_t seq;
+	u_int16_t reqid;
 {
 	struct mbuf *m;
 	struct sadb_x_sa2 *p;
@@ -4616,7 +4617,7 @@ key_getspi(so, m, mhp)
 	u_int8_t proto;
 	u_int32_t spi;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
@@ -4891,7 +4892,7 @@ key_update(so, m, mhp)
 	struct secasvar *sav;
 	u_int16_t proto;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
@@ -5086,7 +5087,7 @@ key_add(so, m, mhp)
 	struct secasvar *newsav;
 	u_int16_t proto;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
