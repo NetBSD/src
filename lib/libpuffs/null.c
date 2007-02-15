@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.7 2007/02/15 17:05:25 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.8 2007/02/15 19:33:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.7 2007/02/15 17:05:25 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.8 2007/02/15 19:33:51 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -418,7 +418,7 @@ puffs_null_node_readlink(struct puffs_cc *pcc, void *opc,
 	if (rv == -1)
 		return errno;
 
-	*linklen -= rv;
+	*linklen = rv;
 	return 0;
 }
 
