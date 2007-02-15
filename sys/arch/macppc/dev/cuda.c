@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.2 2007/02/05 18:26:06 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.3 2007/02/15 01:45:40 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.2 2007/02/05 18:26:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.3 2007/02/15 01:45:40 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ cuda_attach(struct device *parent, struct device *dev, void *aux)
 		printf("%s: unable to map registers\n", dev->dv_xname);
 		return;
 	}
-	sc->sc_ih = intr_establish(irq, IST_LEVEL, IPL_HIGH, cuda_intr, sc);
+	sc->sc_ih = intr_establish(irq, IST_LEVEL, IPL_TTY, cuda_intr, sc);
 	printf("\n");
 
 	for (i = 0; i < 16; i++) {
