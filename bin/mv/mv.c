@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.37 2006/09/23 16:54:13 elad Exp $ */
+/* $NetBSD: mv.c,v 1.38 2007/02/15 09:57:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.37 2006/09/23 16:54:13 elad Exp $");
+__RCSID("$NetBSD: mv.c,v 1.38 2007/02/15 09:57:16 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,10 +76,11 @@ int	main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	int baselen, ch, len, rval;
+	int ch, len, rval;
 	char *p, *endp;
 	struct stat sb;
 	char path[MAXPATHLEN + 1];
+	size_t baselen;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
@@ -335,7 +336,7 @@ copy(char *from, char *to)
 	int pid, status;
 
 	if ((pid = vfork()) == 0) {
-		execl(_PATH_CP, "mv", vflg ? "-PRpv" : "-PRp", from, to, NULL);
+		execl(_PATH_CP, "mv", vflg ? "-PRpv" : "-PRp", "--", from, to, NULL);
 		warn("%s", _PATH_CP);
 		_exit(1);
 	}
@@ -353,7 +354,7 @@ copy(char *from, char *to)
 		return (1);
 	}
 	if (!(pid = vfork())) {
-		execl(_PATH_RM, "mv", "-rf", from, NULL);
+		execl(_PATH_RM, "mv", "-rf", "--", from, NULL);
 		warn("%s", _PATH_RM);
 		_exit(1);
 	}
