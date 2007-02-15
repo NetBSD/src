@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.13 2007/02/15 12:59:22 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.14 2007/02/15 17:07:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -122,25 +122,21 @@ sysctlfs_pathtransform(struct puffs_usermount *pu,
 	return 0;
 }
 
+static int
+sysctlfs_pathcmp(struct puffs_usermount *pu, struct puffs_pathobj *po1,
+	struct puffs_pathobj *po2, size_t clen, int checkprefix)
+{
+
+	if (memcmp(po1->po_path, po2->po_path, clen * sizeof(int)) == 0)
+		return 0;
+	return 1;
+}
+
 static void
 sysctlfs_pathfree(struct puffs_usermount *pu, struct puffs_pathobj *po)
 {
 
 	free(po->po_path);
-}
-
-static void *
-pathcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
-{
-	struct puffs_pathobj *po_cmp = arg;
-
-	if (po_cmp->po_len != PNPLEN(pn))
-		return NULL;
-
-	if (memcmp(PNPATH(pn), po_cmp->po_path, PNPLEN(pn) * sizeof(int)) == 0)
-		return pn;
-
-	return NULL;
 }
 
 int
@@ -201,6 +197,7 @@ main(int argc, char *argv[])
 
 	puffs_set_pathbuild(pu, sysctlfs_pathbuild);
 	puffs_set_pathtransform(pu, sysctlfs_pathtransform);
+	puffs_set_pathcmp(pu, sysctlfs_pathcmp);
 	puffs_set_pathfree(pu, sysctlfs_pathfree);
 
 	if (sysctlfs_domount(pu) != 0)
@@ -321,6 +318,7 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
 	const struct puffs_cn *pcn)
 {
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_cn *p2cn = __UNCONST(pcn); /* XXX: fix the interface */
 	struct sysctlnode sn[SFS_NODEPERDIR];
 	struct sysctlnode qnode;
@@ -360,11 +358,17 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	/*
 	 * Check if we need to create a new in-memory node or if we
-	 * already have one for this path.
+	 * already have one for this path.  Shortcut for the rootnode.
+	 * Also, memcmp against zero-length would be quite true always.
 	 */
-	po.po_path = sname;
-	po.po_len = PCNPLEN(pcn);
-	pn_new = puffs_pn_nodewalk(puffs_cc_getusermount(pcc), pathcmp, &po);
+	if (PCNPLEN(pcn) == 0) {
+		pn_new = pu->pu_pn_root;
+	} else {
+		po.po_path = sname;
+		po.po_len = PCNPLEN(pcn);
+		pn_new = puffs_pn_nodewalk(puffs_cc_getusermount(pcc),
+		    puffs_path_walkcmp, &po);
+	}
 
 	if (pn_new != NULL) {
 		sfs_new = pn_new->pn_data;
