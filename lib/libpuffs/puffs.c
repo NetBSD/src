@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.28 2007/01/26 23:00:33 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.29 2007/02/15 12:51:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.28 2007/01/26 23:00:33 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.29 2007/02/15 12:51:45 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -479,14 +479,10 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			if (buildpath) {
-				if (pcn.pcn_flags & PUFFS_ISDOTDOT) {
-					buildpath = 0;
-				} else {
-					error = puffs_path_pcnbuild(pu, &pcn,
-					    preq->preq_cookie);
-					if (error)
-						break;
-				}
+				error = puffs_path_pcnbuild(pu, &pcn,
+				    preq->preq_cookie);
+				if (error)
+					break;
 			}
 
 			/* lookup *must* be present */
@@ -503,7 +499,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					/*
 					 * did we get a new node or a
 					 * recycled node?
-					 * XXX: mapping assumption
 					 */
 					pn = PU_CMAP(pu, auxt->pvnr_newnode);
 					if (pn->pn_po.po_path == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.29 2007/01/26 23:00:33 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.30 2007/02/15 12:51:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #define _PUFFS_H_
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
@@ -86,7 +87,6 @@ struct puffs_usermount;
  * need to work on the translation for ALL the necessary values.
  */
 #define PUFFS_VNOVAL (-1)
-#define PUFFS_ISDOTDOT 0x2000
 #define PUFFS_IO_APPEND 0x20
 
 #define PUFFS_FSYNC_DATAONLY 0x0002
@@ -200,11 +200,12 @@ struct puffs_ops {
 	    uint8_t *, off_t, size_t *, const struct puffs_cred *, int);
 };
 
-typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *, struct puffs_pathobj *,
-			       struct puffs_pathobj *, size_t,
+typedef	int (*pu_pathbuild_fn)(struct puffs_usermount *,
+			       const struct puffs_pathobj *,
+			       const struct puffs_pathobj *, size_t,
 			       struct puffs_pathobj *);
 typedef int (*pu_pathtransform_fn)(struct puffs_usermount *,
-				   struct puffs_pathobj *,
+				   const struct puffs_pathobj *,
 				   const struct puffs_cn *,
 				   struct puffs_pathobj *);
 typedef int (*pu_pathcmp_fn)(struct puffs_usermount *, struct puffs_pathobj *,
@@ -256,12 +257,6 @@ enum {
 
 /* mainloop flags */
 #define PUFFSLOOP_NODAEMON 0x01
-
-int  puffs_fsnop_unmount(struct puffs_cc *, int, pid_t);
-int  puffs_fsnop_statvfs(struct puffs_cc *, struct statvfs *, pid_t);
-void puffs_zerostatvfs(struct statvfs *);
-int  puffs_fsnop_sync(struct puffs_cc *, int waitfor,
-		      const struct puffs_cred *, pid_t);
 
 #define		DENT_DOT	0
 #define		DENT_DOTDOT	1
@@ -380,7 +375,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 6
+#define PUFFS_DEVEL_LIBVERSION 7
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -389,6 +384,8 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PNPLEN(pnode)	((pnode)->pn_po.po_len)
 #define PCNPATH(pcnode)	((pcnode)->pcn_po_full.po_path)
 #define PCNPLEN(pcnode)	((pcnode)->pcn_po_full.po_len)
+#define PCNISDOTDOT(pcnode) \
+	((pcnode)->pcn_namelen == 2 && strcmp((pcnode)->pcn_name, "..") == 0)
 
 __BEGIN_DECLS
 
@@ -416,6 +413,16 @@ void			*puffs_pn_nodewalk(struct puffs_usermount *,
 
 void			puffs_setvattr(struct vattr *, const struct vattr *);
 void			puffs_vattr_null(struct vattr *);
+
+/*
+ * generic/dummy routines applicable for some file systems
+ */
+int  puffs_fsnop_unmount(struct puffs_cc *, int, pid_t);
+int  puffs_fsnop_statvfs(struct puffs_cc *, struct statvfs *, pid_t);
+void puffs_zerostatvfs(struct statvfs *);
+int  puffs_fsnop_sync(struct puffs_cc *, int waitfor,
+		      const struct puffs_cred *, pid_t);
+int  puffs_genfs_node_reclaim(struct puffs_cc *, void *, pid_t);
 
 /*
  * Subroutine stuff
@@ -480,8 +487,9 @@ int	puffs_inval_namecache_all(struct puffs_usermount *);
  * Path constructicons
  */
 
-int	puffs_path_buildpath(struct puffs_usermount *, struct puffs_pathobj *,
-			     struct puffs_pathobj *, size_t,
+int	puffs_path_buildpath(struct puffs_usermount *,
+			     const struct puffs_pathobj *,
+			     const struct puffs_pathobj *, size_t,
 			     struct puffs_pathobj *);
 int	puffs_path_cmppath(struct puffs_usermount *, struct puffs_pathobj *,
 			   struct puffs_pathobj *, size_t);
