@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.61 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.62 2007/02/15 15:40:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.61 2006/05/14 21:32:45 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.62 2007/02/15 15:40:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -401,7 +401,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 	 */
     top:
 	if (bpp) {
-		lockmgr(&fs->lfs_fraglock, LK_SHARED, 0);
+		rw_enter(&fs->lfs_fraglock, RW_READER);
 		LFS_DEBUG_COUNTLOCKED("frag");
 	}
 
@@ -441,7 +441,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 #ifdef QUOTA
 			chkdq(ip, -bb, cred, 0);
 #endif
-			lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
+			rw_exit(&fs->lfs_fraglock);
 			lfs_availwait(fs, bb);
 			goto top;
 		}
@@ -470,7 +470,7 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf *
 
     out:
 	if (bpp) {
-		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
+		rw_exit(&fs->lfs_fraglock);
 	}
 	return (error);
 }
