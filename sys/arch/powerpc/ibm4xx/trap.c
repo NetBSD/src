@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2007/02/09 21:55:10 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.39 2007/02/15 15:14:57 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.38 2007/02/09 21:55:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 2007/02/15 15:14:57 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -161,9 +161,9 @@ trap(struct trapframe *frame)
 		ksi.ksi_signo = SIGTRAP;
 		ksi.ksi_trap = EXC_TRC;
 		ksi.ksi_addr = (void *)frame->srr0;
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		trapsignal(l, &ksi);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	/*
@@ -178,7 +178,7 @@ trap(struct trapframe *frame)
 			vaddr_t va;
 			struct faultbuf *fb = NULL;
 
-			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+			KERNEL_LOCK(1, NULL);
 			va = frame->dar;
 			if (frame->tf_xtra[TF_PID] == KERNEL_PID) {
 				map = kernel_map;
@@ -195,7 +195,7 @@ trap(struct trapframe *frame)
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), ftype);
-			KERNEL_UNLOCK();
+			KERNEL_UNLOCK_ONE(NULL);
 			if (rv == 0)
 				goto done;
 			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
@@ -216,7 +216,7 @@ trap(struct trapframe *frame)
 	case EXC_DSI|EXC_USER:
 		/* FALLTHROUGH */
 	case EXC_DTMISS|EXC_USER:
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 
 		if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
 			ftype = VM_PROT_WRITE;
@@ -229,7 +229,7 @@ trap(struct trapframe *frame)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
 		    ftype);
 		if (rv == 0) {
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -245,12 +245,12 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGKILL;
 		}
 		trapsignal(l, &ksi);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ftype = VM_PROT_EXECUTE;
 		DBPRINTF(TDB_ALL,
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
@@ -258,7 +258,7 @@ trap(struct trapframe *frame)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    ftype);
 		if (rv == 0) {
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -267,26 +267,24 @@ trap(struct trapframe *frame)
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		trapsignal(l, &ksi);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_AST|EXC_USER:
 		curcpu()->ci_astpending = 0;	/* we are about to do it */
-		KERNEL_PROC_LOCK(l);
 		uvmexp.softs++;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 		/* Check whether we are being preempted. */
 		if (curcpu()->ci_want_resched)
 			preempt();
-		KERNEL_PROC_UNLOCK(l);
 		break;
 
 
 	case EXC_ALI|EXC_USER:
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		if (fix_unaligned(l, frame) != 0) {
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_signo = SIGBUS;
@@ -295,7 +293,7 @@ trap(struct trapframe *frame)
 			trapsignal(l, &ksi);
 		} else
 			frame->srr0 += 4;
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		break;
 
 	case EXC_PGM|EXC_USER:
@@ -317,9 +315,9 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = rv;
 			ksi.ksi_trap = EXC_PGM;
 			ksi.ksi_addr = (void *)frame->srr0;
-			KERNEL_PROC_LOCK(l);
+			KERNEL_LOCK(1, l);
 			trapsignal(l, &ksi);
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
