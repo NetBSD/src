@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.27 2006/10/22 21:06:19 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.28 2007/02/15 22:23:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.27 2006/10/22 21:06:19 christos Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.28 2007/02/15 22:23:11 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 	if ((p = getenv("MACHINE")) != NULL)
 		getmachine(params, p, "$MACHINE");
 
-	while ((ch = getopt(argc, argv, "b:B:cem:no:t:v")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:cefm:no:t:v")) != -1) {
 		switch (ch) {
 
 		case 'b':
@@ -145,6 +145,10 @@ main(int argc, char *argv[])
 
 		case 'e':
 			params->flags |= IB_EDIT;
+			break;
+
+		case 'f':
+			params->flags |= IB_FORCE;
 			break;
 
 		case 'm':
@@ -547,10 +551,10 @@ usage(void)
 
 	prog = getprogname();
 	fprintf(stderr,
-"usage: %s [-nv] [-B s2bno] [-b s1bno] [-m machine] [-o options]\n"
+"usage: %s [-fnv] [-B s2bno] [-b s1bno] [-m machine] [-o options]\n"
 "\t\t   [-t fstype] filesystem primary [secondary]\n"
-"usage: %s -c [-nv] [-m machine] [-o options] [-t fstype] filesystem\n"
-"usage: %s -e [-nv] [-m machine] [-o options] bootstrap\n",
+"usage: %s -c [-fnv] [-m machine] [-o options] [-t fstype] filesystem\n"
+"usage: %s -e [-fnv] [-m machine] [-o options] bootstrap\n",
 	    prog, prog, prog);
 	machine_usage();
 	fstype_usage();

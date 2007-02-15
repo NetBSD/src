@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.24 2007/01/07 04:16:57 dogcow Exp $ */
+/* $NetBSD: i386.c,v 1.25 2007/02/15 22:23:11 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.24 2007/01/07 04:16:57 dogcow Exp $");
+__RCSID("$NetBSD: i386.c,v 1.25 2007/02/15 22:23:11 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -378,39 +378,55 @@ i386_setboot(ib_params *params)
 	}
 
 	/*
-	 * For FAT compatibility, the pbr code starts 'jmp xx; nop' followed
-	 * by the BIOS Parameter Block (BPB).
-	 * The 2nd byte (jump offset) is the size of the nop + BPB.
+	 * If the partion has a FAT (or NTFS) filesystem, then we must
+	 * preserve the BIOS Parameter Block (BPB).
+	 * It is also very likely that there isn't 8k of space available
+	 * for (say) bootxx_msdos, and that blindly installing it will trash
+	 * the FAT filesystem.
+	 * To avoid this we check the number of 'reserved' sectors to ensure
+	 * there there is enough space.
+	 * Unfortunately newfs(8) doesn't (yet) splat the BPB (which is
+	 * effectively the FAT superblock) when a filesystem is initailised
+	 * so this code tends to complain rather too often,
+	 * Specifying 'installboot -f' will delete the old BPB info.
 	 */
-	if (bootstrap.b[0] != 0xeb || bootstrap.b[2] != 0x90) {
-		warnx("No BPB in new bootstrap %02x:%02x:%02x",
-			bootstrap.b[0], bootstrap.b[1], bootstrap.b[2]);
-		return 0;
-	}
-
-	/* Find size of old BPB, and copy into new bootcode */
-	if (!is_zero(disk_buf.b + 3 + 8, disk_buf.b[1] - 1 - 8)) {
-		struct mbr_bpbFAT16 *bpb = (void *)(disk_buf.b + 3 + 8);
-		/* Check enough space before first FAT for the bootcode */
-		u = le16toh(bpb->bpbBytesPerSec) * le16toh(bpb->bpbResSectors);
-		if (u != 0 && u < params->s1stat.st_size) {
-			warnx("Insufficient reserved space (%u bytes)", u);
+	if (!(params->flags & IB_FORCE)) {
+		/*
+		 * For FAT compatibility, the pbr code starts 'jmp xx; nop'
+		 * followed by the BIOS Parameter Block (BPB).
+		 * The 2nd byte (jump offset) is the size of the nop + BPB.
+		 */
+		if (bootstrap.b[0] != 0xeb || bootstrap.b[2] != 0x90) {
+			warnx("No BPB in new bootstrap %02x:%02x:%02x, use -f",
+				bootstrap.b[0], bootstrap.b[1], bootstrap.b[2]);
 			return 0;
 		}
-		/* Check we have enough space for the old bpb */
-		if (disk_buf.b[1] > bootstrap.b[1]) {
-			/* old BPB is larger, allow if extra zeros */
-			if (!is_zero(disk_buf.b + 2 + bootstrap.b[1],
-			    disk_buf.b[1] - bootstrap.b[1])) {
-				warnx("Old BPB too big");
-				    return 0;
+
+		/* Find size of old BPB, and copy into new bootcode */
+		if (!is_zero(disk_buf.b + 3 + 8, disk_buf.b[1] - 1 - 8)) {
+			struct mbr_bpbFAT16 *bpb = (void *)(disk_buf.b + 3 + 8);
+			/* Check enough space before the FAT for the bootcode */
+			u = le16toh(bpb->bpbBytesPerSec)
+			    * le16toh(bpb->bpbResSectors);
+			if (u != 0 && u < params->s1stat.st_size) {
+				warnx("Insufficient reserved space before FAT (%u bytes available), use -f", u);
+				return 0;
 			}
-			u = bootstrap.b[1];
-		} else {
-			/* Old BPB is shorter, leave zero filled */
-			u = disk_buf.b[1];
+			/* Check we have enough space for the old bpb */
+			if (disk_buf.b[1] > bootstrap.b[1]) {
+				/* old BPB is larger, allow if extra zeros */
+				if (!is_zero(disk_buf.b + 2 + bootstrap.b[1],
+				    disk_buf.b[1] - bootstrap.b[1])) {
+					warnx("Old BPB too big, use -f");
+					    return 0;
+				}
+				u = bootstrap.b[1];
+			} else {
+				/* Old BPB is shorter, leave zero filled */
+				u = disk_buf.b[1];
+			}
+			memcpy(bootstrap.b + 2, disk_buf.b + 2, u);
 		}
-		memcpy(bootstrap.b + 2, disk_buf.b + 2, u);
 	}
 
 	/*
