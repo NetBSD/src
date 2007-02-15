@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.79 2007/02/10 12:46:29 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.80 2007/02/15 12:24:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -594,7 +594,7 @@ re_attach(struct rtk_softc *sc)
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
 		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
 		/* These rev numbers are taken from Realtek's driver */
-		if (hwrev == 0x38800000 /* XXX */) {
+		if (       hwrev == RTK_HWREV_8100E_SPIN2) {
 			sc->sc_rev = 15;
 		} else if (hwrev == RTK_HWREV_8100E) {
 			sc->sc_rev = 14;
