@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.39 2003/08/07 09:05:32 agc Exp $	*/
+/*	$NetBSD: input.c,v 1.40 2007/02/15 12:02:59 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.39 2003/08/07 09:05:32 agc Exp $");
+__RCSID("$NetBSD: input.c,v 1.40 2007/02/15 12:02:59 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,12 +384,28 @@ popstring(void)
 void
 setinputfile(const char *fname, int push)
 {
+	unsigned char magic[4];
 	int fd;
 	int fd2;
 
 	INTOFF;
 	if ((fd = open(fname, O_RDONLY)) < 0)
 		error("Can't open %s", fname);
+
+	/* Since the message "Syntax error: "(" unexpected" is not very
+	 * helpful, we check if the file starts with the ELF magic to
+	 * avoid that message. The first lseek tries to make sure that
+	 * we can later rewind the file.
+	 */
+	if (lseek(fd, 0, SEEK_SET) == 0) {
+		if (read(fd, magic, 4) == 4) {
+			if (memcmp(magic, "\177ELF", 4) == 0)
+				error("Cannot execute ELF binary %s", fname);
+		}
+		if (lseek(fd, 0, SEEK_SET) != 0)
+			error("Cannot rewind the file %s", fname);
+	}
+
 	if (fd < 10) {
 		fd2 = copyfd(fd, 10);
 		close(fd);
