@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.30 2007/02/15 12:51:45 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.31 2007/02/15 17:04:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -209,7 +209,7 @@ typedef int (*pu_pathtransform_fn)(struct puffs_usermount *,
 				   const struct puffs_cn *,
 				   struct puffs_pathobj *);
 typedef int (*pu_pathcmp_fn)(struct puffs_usermount *, struct puffs_pathobj *,
-			  struct puffs_pathobj *, size_t);
+			  struct puffs_pathobj *, size_t, int);
 typedef void (*pu_pathfree_fn)(struct puffs_usermount *,
 			       struct puffs_pathobj *);
 typedef int (*pu_namemod_fn)(struct puffs_usermount *,
@@ -375,7 +375,7 @@ int	puffs_cred_isjuggernaut(const struct puffs_cred *pcr);
 #define PUFFSOP_SETFSNOP(ops, opname)					\
     (ops)->puffs_fs_##opname = puffs_fsnop_##opname
 
-#define PUFFS_DEVEL_LIBVERSION 7
+#define PUFFS_DEVEL_LIBVERSION 8
 #define puffs_mount(a,b,c,d,e,f,g) \
     _puffs_mount(PUFFS_DEVEL_LIBVERSION,a,b,c,d,e,f,g)
 
@@ -487,19 +487,16 @@ int	puffs_inval_namecache_all(struct puffs_usermount *);
  * Path constructicons
  */
 
-int	puffs_path_buildpath(struct puffs_usermount *,
+int	puffs_stdpath_buildpath(struct puffs_usermount *,
 			     const struct puffs_pathobj *,
 			     const struct puffs_pathobj *, size_t,
 			     struct puffs_pathobj *);
-int	puffs_path_cmppath(struct puffs_usermount *, struct puffs_pathobj *,
-			   struct puffs_pathobj *, size_t);
-int	puffs_path_transformpath(struct puffs_usermount *,
-			   struct puffs_pathobj *, const struct puffs_cn *,
-			   struct puffs_pathobj *);
-void	puffs_path_freepath(struct puffs_usermount *, struct puffs_pathobj *);
-int	puffs_path_modname(struct puffs_usermount *, struct puffs_pathobj *,
-			   struct puffs_cn *);
+int	puffs_stdpath_cmppath(struct puffs_usermount *, struct puffs_pathobj *,
+			   struct puffs_pathobj *, size_t, int);
+void	puffs_stdpath_freepath(struct puffs_usermount *,struct puffs_pathobj *);
 
+void	*puffs_path_walkcmp(struct puffs_usermount *,
+			    struct puffs_node *, void *);
 void	*puffs_path_prefixadj(struct puffs_usermount *,
 			      struct puffs_node *, void *);
 int	puffs_path_pcnbuild(struct puffs_usermount *,

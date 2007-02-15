@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.29 2007/02/15 12:51:45 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.30 2007/02/15 17:04:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.29 2007/02/15 12:51:45 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.30 2007/02/15 17:04:46 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -232,9 +232,9 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 	/* defaults for some user-settable translation functions */
 	pu->pu_cmap = NULL; /* identity translation */
 
-	pu->pu_pathbuild = puffs_path_buildpath;
-	pu->pu_pathfree = puffs_path_freepath;
-	pu->pu_pathcmp = puffs_path_cmppath;
+	pu->pu_pathbuild = puffs_stdpath_buildpath;
+	pu->pu_pathfree = puffs_stdpath_freepath;
+	pu->pu_pathcmp = puffs_stdpath_cmppath;
 	pu->pu_pathtransform = NULL;
 	pu->pu_namemod = NULL;
 
