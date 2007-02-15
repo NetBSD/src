@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.3 2007/02/10 21:07:52 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.4 2007/02/15 15:49:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.3 2007/02/10 21:07:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.4 2007/02/15 15:49:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -205,6 +205,12 @@ MUTEX_RELEASE(kmutex_t *mtx)
 {
 	MUTEX_GIVE();
 	mtx->mtx_owner = 0;
+}
+
+static inline void
+MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
+{
+	/* nothing */
 }
 #endif	/* __HAVE_SIMPLE_MUTEXES */
 
@@ -700,6 +706,29 @@ mutex_vector_exit(kmutex_t *mtx)
 	}
 }
 
+#ifndef __HAVE_SIMPLE_MUTEXES
+/*
+ * mutex_wakeup:
+ *
+ *	Support routine for mutex_exit() that wakes up all waiters.
+ *	We assume that the mutex has been released, but it need not
+ *	be.
+ */
+void
+mutex_wakeup(kmutex_t *mtx)
+{
+	turnstile_t *ts;
+
+	ts = turnstile_lookup(mtx);
+	if (ts == NULL) {
+		turnstile_exit(mtx);
+		return;
+	}
+	MUTEX_CLEAR_WAITERS(mtx);
+	turnstile_wakeup(ts, TS_WRITER_Q, TS_WAITERS(ts, TS_WRITER_Q), NULL);
+}
+#endif	/* !__HAVE_SIMPLE_MUTEXES */
+
 /*
  * mutex_owned:
  *
@@ -742,8 +771,6 @@ mutex_tryenter(kmutex_t *mtx)
 {
 	uintptr_t curthread;
 
-	MUTEX_WANTLOCK(mtx);
-
 	/*
 	 * Handle spin mutexes.
 	 */
@@ -751,11 +778,13 @@ mutex_tryenter(kmutex_t *mtx)
 		MUTEX_SPIN_SPLRAISE(mtx);
 #ifdef FULL
 		if (__cpu_simple_lock_try(&mtx->mtx_lock)) {
+			MUTEX_WANTLOCK(mtx);
 			MUTEX_LOCKED(mtx);
 			return 1;
 		}
 		MUTEX_SPIN_SPLRESTORE(mtx);
 #else
+		MUTEX_WANTLOCK(mtx);
 		MUTEX_LOCKED(mtx);
 		return 1;
 #endif
@@ -763,6 +792,7 @@ mutex_tryenter(kmutex_t *mtx)
 		curthread = (uintptr_t)curlwp;
 		MUTEX_ASSERT(mtx, curthread != 0);
 		if (MUTEX_ACQUIRE(mtx, curthread)) {
+			MUTEX_WANTLOCK(mtx);
 			MUTEX_LOCKED(mtx);
 			MUTEX_DASSERT(mtx,
 			    MUTEX_OWNER(mtx->mtx_owner) == curthread);
