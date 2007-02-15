@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.11 2007/02/15 10:54:40 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.12 2007/02/15 17:06:24 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.11 2007/02/15 10:54:40 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.12 2007/02/15 17:06:24 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -195,22 +195,35 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn_res;
 	struct stat		st;
 	struct fuse		*fuse;
 	const char		*path = PCNPATH(pcn);
 	int			ret;
 
-	/* XXX: THIS IS VERY WRONG */
 	fuse = (struct fuse *)pu->pu_privdata;
 	ret = fuse->op.getattr(path, &st);
-	ret = -ret; /* linux foo */
+
 	if (ret != 0) {
-		return ret;
+		return -ret; /* XXX: linux foo */
 	}
-	*newnode = newrn(pu);
-	*newtype = (S_ISDIR(st.st_mode)) ? VDIR : VREG;
-	*newsize = st.st_size;
-	return ret;
+
+	/* XXX: fiXXXme unconst */
+	pn_res = puffs_pn_nodewalk(pu, puffs_path_walkcmp,
+	    __UNCONST(&pcn->pcn_po_full));
+	if (pn_res == NULL) {
+		pn_res = newrn(pu);
+		if (pn_res == NULL)
+			return errno;
+		puffs_stat2vattr(&pn_res->pn_va, &st);
+	}
+
+	*newnode = pn_res;
+	*newtype = pn_res->pn_va.va_type;
+	*newsize = pn_res->pn_va.va_size;
+	*newrdev = pn_res->pn_va.va_rdev;
+
+	return 0;
 }
 
 /* get attributes for the path name */
