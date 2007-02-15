@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_vnops.c,v 1.146 2007/02/11 17:16:08 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.147 2007/02/15 15:35:45 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.146 2007/02/11 17:16:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.147 2007/02/15 15:35:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,8 +862,10 @@ procfs_getattr(v)
 		vap->va_gid = 0;
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
+		mutex_enter(&procp->p_mutex);
 		(void)procfs_dir(pfs->pfs_type, curlwp, procp, &bp, path,
 		     MAXPATHLEN);
+		mutex_exit(&procp->p_mutex);
 		vap->va_bytes = vap->va_size = strlen(bp);
 		break;
 	}
