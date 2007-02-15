@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.13 2005/02/01 01:08:10 groo Exp $
+/	$NetBSD: units.lib,v 1.14 2007/02/15 22:37:27 dogcow Exp $
 
 / primitive units
 
@@ -402,7 +402,7 @@ cup			1|2 pt
 curie			3.7e+10 /sec
 dalton			amu
 decade			10 yr
-dipotre			/m
+diopter			/m
 displacementton		35 ft3
 doppelzentner		100 kg
 dozen			12
