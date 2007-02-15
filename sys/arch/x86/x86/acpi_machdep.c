@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.12 2006/08/12 19:15:19 christos Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.13 2007/02/15 18:18:21 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2006/08/12 19:15:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13 2007/02/15 18:18:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ found:
 	/*
 	 * XXX probably, IPL_BIO is enough.
 	 */
-	ih = intr_establish(irq, pic, pin, trigger, IPL_VM,
+	ih = intr_establish(irq, pic, pin, trigger, IPL_TTY,
 	    (int (*)(void *)) ServiceRoutine, Context);
 	if (ih == NULL)
 		return (AE_NO_MEMORY);
