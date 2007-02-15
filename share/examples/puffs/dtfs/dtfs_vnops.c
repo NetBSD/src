@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vnops.c,v 1.13 2007/01/28 10:47:36 pooka Exp $	*/
+/*	$NetBSD: dtfs_vnops.c,v 1.14 2007/02/15 12:52:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@ dtfs_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	struct dtfs_dirent *dfd;
 
 	/* parent dir? */
-	if (pcn->pcn_flags & PUFFS_ISDOTDOT) {
+	if (PCNISDOTDOT(pcn)) {
 		*newnode = df->df_dotdot;
 		*newtype = df->df_dotdot->pn_va.va_type;
 		assert(*newtype == VDIR);
