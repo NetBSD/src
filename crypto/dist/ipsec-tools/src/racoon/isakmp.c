@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20 2006/10/02 21:19:43 manu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.6.1 2007/02/15 10:18:54 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1911,13 +1911,28 @@ void
 isakmp_ph1resend_stub(p)
 	void *p;
 {
-	(void)isakmp_ph1resend((struct ph1handle *)p);
+	struct ph1handle *iph1;
+
+	iph1=(struct ph1handle *)p;
+	if(isakmp_ph1resend(iph1) < 0){
+		if(iph1->scr != NULL){
+			/* Should not happen...
+			 */
+			sched_kill(iph1->scr);
+			iph1->scr=NULL;
+		}
+
+		remph1(iph1);
+		delph1(iph1);
+	}
 }
 
 int
 isakmp_ph1resend(iph1)
 	struct ph1handle *iph1;
 {
+	/* Note: NEVER do the rem/del here, it will be done by the caller or by the _stub function
+	 */
 	if (iph1->retry_counter < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase1 negotiation failed due to time up. %s\n",
@@ -1925,16 +1940,15 @@ isakmp_ph1resend(iph1)
 		EVT_PUSH(iph1->local, iph1->remote, 
 		    EVTT_PEER_NO_RESPONSE, NULL);
 
-		remph1(iph1);
-		delph1(iph1);
 		return -1;
 	}
 
 	if (isakmp_send(iph1, iph1->sendbuf) < 0){
-		iph1->retry_counter--;
-
-		iph1->scr = sched_new(iph1->rmconf->retry_interval,
-							  isakmp_ph1resend_stub, iph1);
+		plog(LLV_ERROR, LOCATION, NULL,
+			 "phase1 negotiation failed due to send error. %s\n",
+			 isakmp_pindex(&iph1->index, iph1->msgid));
+		EVT_PUSH(iph1->local, iph1->remote, 
+				 EVTT_PEER_NO_RESPONSE, NULL);
 		return -1;
 	}
 
@@ -1955,27 +1969,47 @@ void
 isakmp_ph2resend_stub(p)
 	void *p;
 {
+	struct ph2handle *iph2;
 
-	(void)isakmp_ph2resend((struct ph2handle *)p);
+	iph2=(struct ph2handle *)p;
+
+	if(isakmp_ph2resend(iph2) < 0){
+		unbindph12(iph2);
+		remph2(iph2);
+		delph2(iph2);
+	}
 }
 
 int
 isakmp_ph2resend(iph2)
 	struct ph2handle *iph2;
 {
+	/* Note: NEVER do the unbind/rem/del here, it will be done by the caller or by the _stub function
+	 */
+	if (iph2->ph1->status == PHASE1ST_EXPIRED){
+		plog(LLV_ERROR, LOCATION, NULL,
+			"phase2 negotiation failed due to phase1 expired. %s\n",
+				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
+		return -1;
+	}
+
 	if (iph2->retry_counter < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase2 negotiation failed due to time up. %s\n",
 				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
 		EVT_PUSH(iph2->src, iph2->dst, EVTT_PEER_NO_RESPONSE, NULL);
 		unbindph12(iph2);
-		remph2(iph2);
-		delph2(iph2);
 		return -1;
 	}
 
-	if (isakmp_send(iph2->ph1, iph2->sendbuf) < 0)
+	if (isakmp_send(iph2->ph1, iph2->sendbuf) < 0){
+		plog(LLV_ERROR, LOCATION, NULL,
+			"phase2 negotiation failed due to send error. %s\n",
+				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
+		EVT_PUSH(iph2->src, iph2->dst, EVTT_PEER_NO_RESPONSE, NULL);
+
 		return -1;
+	}
 
 	plog(LLV_DEBUG, LOCATION, NULL,
 		"resend phase2 packet %s\n",
