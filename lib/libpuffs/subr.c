@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.13 2007/01/11 01:01:55 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.14 2007/02/15 12:51:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.13 2007/01/11 01:01:55 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.14 2007/02/15 12:51:24 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: subr.c,v 1.13 2007/01/11 01:01:55 pooka Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#include "puffs_priv.h"
 
 int
 puffs_gendotdent(struct dirent **dent, ino_t id, int dotdot, size_t *reslen)
@@ -108,6 +109,21 @@ puffs_fsnop_statvfs(struct puffs_cc *dontuse1, struct statvfs *sbp,
 
 	sbp->f_bfree=sbp->f_bavail=sbp->f_bresvd=sbp->f_blocks = (fsblkcnt_t)0;
 	sbp->f_ffree=sbp->f_favail=sbp->f_fresvd=sbp->f_files = (fsfilcnt_t)0;
+
+	return 0;
+}
+
+/*
+ * Just put the node, don't do anything else.  Don't use this if
+ * your fs needs more cleanup.
+ */
+/*ARGSUSED2*/
+int
+puffs_genfs_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+{
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+
+	puffs_pn_put(PU_CMAP(pu, opc));
 
 	return 0;
 }
