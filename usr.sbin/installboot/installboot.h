@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.32 2006/09/01 21:47:21 uwe Exp $	*/
+/*	$NetBSD: installboot.h,v 1.33 2007/02/15 22:23:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@ typedef enum {
 	IB_NOWRITE =	1<<1,		/* don't write */
 	IB_CLEAR =	1<<2,		/* clear boot block */
 	IB_EDIT =	1<<3,		/* edit boot parameters */
+	IB_FORCE =	1<<4,		/* Ignore some consistency checks */
 
 				/* flags from -o options */
 	IB_ALPHASUM =	1<<8,		/* set Alpha checksum */
