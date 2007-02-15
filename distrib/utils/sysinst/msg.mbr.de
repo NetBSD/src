@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.de,v 1.7 2005/09/11 16:43:11 martin Exp $	*/
+/*	$NetBSD: msg.mbr.de,v 1.8 2007/02/15 12:00:15 rillig Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,12 +44,12 @@ message fullpart
 {NetBSD wird auf die Festplatte %s installiert.
 
 NetBSD benötigt eine eigene Partition in der Partitionstabelle des Master
-Boot Record (MBR). Diese Partition wird später durch das NetBSD Disklabel
+Boot Record (MBR). Diese Partition wird später durch das NetBSD-Disklabel
 weiter aufgeteilt. NetBSD kann auch auf Dateisysteme zugreifen, die in
 anderen MBR-Partitionen definiert werden.
 
-Wenn Sie 'Die ganze Festplatte nutzen' auswählen, werden alle MBR Partitionen
-gelöscht und eine NetBSD Partition für die gesamte Festplatte erstellt.
+Wenn Sie 'Die ganze Festplatte nutzen' auswählen, werden alle MBR-Partitionen
+gelöscht und eine NetBSD-Partition für die gesamte Festplatte erstellt.
 Wenn Sie mehr als ein Betriebssystem installieren möchten, bearbeiten Sie
 die MBR-Partitionstabelle und erstellen eine kleinere NetBSD Partition.
 
@@ -89,15 +89,15 @@ message setbiosgeom
 {
 Geben Sie die Geometrie der Festplatte ein.
 Bitte geben Sie die Anzahl Sektoren je Spur (maximal 63)
-und die Anzahl der Köpfe (maximal 256) an, die das BIOS dazu verwendet, auf die
-Festplatte zuzugreifen. Die Zahl der Zylinder ergibt sich aus der
-Festplattengröße kalkuliert.
+und die Anzahl der Köpfe (maximal 256) an, die das BIOS dazu verwendet,
+auf die Festplatte zuzugreifen. Die Zahl der Zylinder wird dann automatisch
+aus der Festplattengröße berechnet.
 
 }
 
 message nobiosgeom
 {Sysinst konnte die BIOS-Geometrie der Festplatte nicht ermitteln.
-Die physische Geometrie beträgt %d Zylinder, %d Sektoren und %d Köpfe\n}
+Die physische Geometrie beträgt %d Zylinder, %d Sektoren und %d Köpfe.\n}
 
 message biosguess
 {Den auf der Festplatte befindlichen Informationen zufolge beträgt die BIOS-
@@ -198,4 +198,3 @@ message bootseltimeout
 
 .endif
 .endif
-
