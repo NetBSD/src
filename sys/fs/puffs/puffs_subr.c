@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.18 2007/01/26 22:59:49 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.19 2007/02/15 12:16:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.18 2007/01/26 22:59:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.19 2007/02/15 12:16:00 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.18 2007/01/26 22:59:49 pooka Exp $"
 POOL_INIT(puffs_pnpool, sizeof(struct puffs_node), 0, 0, 0, "puffspnpl",
     &pool_allocator_nointr);
 
-#ifdef DEBUG
+#ifdef PUFFSDEBUG
 int puffsdebug;
 #endif
 

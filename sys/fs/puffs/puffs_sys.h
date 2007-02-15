@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.23 2007/01/29 01:52:44 hubertf Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.24 2007/02/15 12:14:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -96,6 +96,12 @@ struct puffs_sizepark {
 };
 
 #ifdef DEBUG
+#ifndef PUFFSDEBUG
+#define PUFFSDEBUG
+#endif
+#endif
+
+#ifdef PUFFSDEBUG
 extern int puffsdebug; /* puffs_subr.c */
 #define DPRINTF(x) if (puffsdebug > 0) printf x
 #define DPRINTF_VERBOSE(x) if (puffsdebug > 1) printf x
