@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: cleartmp,v 1.8 2007/02/04 08:19:26 elad Exp $
+# $NetBSD: cleartmp,v 1.9 2007/02/15 08:47:38 xtraeme Exp $
 #
 
 # PROVIDE: cleartmp
@@ -22,10 +22,18 @@ cleartmp_start()
 	#	/tmp/[lq]* (this is not needed with mfs /tmp, but
 	#	doesn't hurt anything).
 	#
-	if [ \( X"${per_user_tmp}" = X"YES" \) -a \( -d ${per_user_tmp_dir} \) ]; then
+	if checkyesno per_user_tmp && [ -d ${per_user_tmp_dir} ]; then
 		tmp_dir=${per_user_tmp_dir}
 	else
 		tmp_dir="/tmp"
+		# Check if /tmp was created by the perusertmp rc.d
+		# script and recreate it if necessary.
+		if [ "$(/usr/bin/readlink /tmp)" = ${per_user_tmp_dir}/@uid ]; then
+			/bin/rm -rf ${tmp_dir}
+			/bin/mkdir ${tmp_dir}
+			/usr/sbin/chown root:wheel ${tmp_dir}
+			/bin/chmod 1777 ${tmp_dir}
+		fi
 	fi
 
 	(cd ${tmp_dir} && rm -rf [a-km-pr-zA-Z]* &&
