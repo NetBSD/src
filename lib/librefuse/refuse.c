@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.14 2007/02/15 19:33:52 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.15 2007/02/15 21:57:09 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.14 2007/02/15 19:33:52 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.15 2007/02/15 21:57:09 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -798,20 +798,17 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	 */
         PUFFSOP_SET(pops, puffs_fuse, node, lookup);
         PUFFSOP_SET(pops, puffs_fuse, node, getattr);
+        PUFFSOP_SET(pops, puffs_fuse, node, setattr);
         PUFFSOP_SET(pops, puffs_fuse, node, readdir);
         PUFFSOP_SET(pops, puffs_fuse, node, readlink);
         PUFFSOP_SET(pops, puffs_fuse, node, mknod);
-        PUFFSOP_SET(pops, puffs_fuse, node, mkdir);
         PUFFSOP_SET(pops, puffs_fuse, node, remove);
+        PUFFSOP_SET(pops, puffs_fuse, node, mkdir);
         PUFFSOP_SET(pops, puffs_fuse, node, rmdir);
         PUFFSOP_SET(pops, puffs_fuse, node, symlink);
         PUFFSOP_SET(pops, puffs_fuse, node, rename);
         PUFFSOP_SET(pops, puffs_fuse, node, link);
-        PUFFSOP_SET(pops, puffs_fuse, node, setattr);
         PUFFSOP_SET(pops, puffs_fuse, node, open);
-        PUFFSOP_SET(pops, puffs_fuse, node, read);
-        PUFFSOP_SET(pops, puffs_fuse, node, write);
-        PUFFSOP_SET(pops, puffs_fuse, node, readdir);
         PUFFSOP_SET(pops, puffs_fuse, node, read);
         PUFFSOP_SET(pops, puffs_fuse, node, write);
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
