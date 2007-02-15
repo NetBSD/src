@@ -1,11 +1,11 @@
-/*	$NetBSD: mutex.h,v 1.3 2007/02/15 02:48:48 mhitch Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.1 2007/02/15 02:48:48 mhitch Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Andrew Doran.
+ * by Andrew Doran and Michael Hitch.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,7 +22,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
+ *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,38 +36,62 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _M68K_MUTEX_H_
-#define	_M68K_MUTEX_H_
+#include "opt_lockdebug.h"
 
-#ifndef __MUTEX_PRIVATE
+#include <machine/asm.h>
 
-struct kmutex {
-	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[3];
-};
+#include "assym.h"
 
-#else	/* __MUTEX_PRIVATE */
+#if defined(DIAGNOSTIC)
+#define	FULL
+#endif
 
-#include <machine/lock.h>
+	.file	"lock_stubs.s"
+	.text
 
-struct kmutex {
-	volatile uintptr_t	mtx_owner;
-	ipl_cookie_t		mtx_ipl;
-	__cpu_simple_lock_t	mtx_lock;
-	volatile uint32_t	mtx_id;
-};
+#ifndef	__mc68010__
+/*
+ * int _lock_cas(uintptr_t *val, uintptr_t old, uintptr_t new);
+ */
+ENTRY(_lock_cas)
+	movl	%sp@(4),%a0		| a0 = val address
+	movl	%sp@(8),%d0		| d0 = old value
+	movl	%sp@(12),%d1		| d1 = new value
+	casl	%d0,%d1,%a0@		| compare old, set new
+	beqb	1f			| matched and set
+	movq	#0,%d0
+	rts
+1:	movq	#1,%d0
+	rts
 
-#define	__HAVE_SIMPLE_MUTEXES		1
-#define	__HAVE_MUTEX_STUBS		1
+#if !defined(LOCKDEBUG)
 
-#define	MUTEX_RECEIVE(mtx)		mb_read()
-#define	MUTEX_GIVE(mtx)			mb_memory()
+/*
+ * void mutex_enter(kmutex_t *mtx);
+ */
+ENTRY(mutex_enter)
+	movq	#0,%d0
+	movl	_C_LABEL(curlwp),%d1
+	movl	%sp@(4),%a0
+	casl	%d0,%d1,%a0@
+	bnes	1f
+	rts
+1:	jra	_C_LABEL(mutex_vector_enter)
 
-#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
+/*
+ * void mutex_exit(kmutex_t *mtx);
+ */
+ENTRY(mutex_exit)
+	movl	_C_LABEL(curlwp),%d0
+	movq	#0,%d1
+	movl	%sp@(4),%a0
+	casl	%d0,%d1,%a0@
+	bnes	1f
+	rts
+1:	jra	_C_LABEL(mutex_vector_exit)
 
-int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-#endif	/* __MUTEX_PRIVATE */
-
-#endif /* _M68K_MUTEX_H_ */
-
+#endif	/* !LOCKDEBUG */
+#else	/* __mc68010__ */
+#error no locking stubs for 68010 yet
+#endif	/* __mc68010__ */
