@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.11 2007/02/10 03:30:13 tsutsui Exp $	*/
+/*	$NetBSD: softintr.c,v 1.12 2007/02/15 12:43:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.11 2007/02/10 03:30:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.12 2007/02/15 12:43:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ softintr_init(void)
 	struct hp300_soft_intr *hsi;
 	int i;
 
-	for (i = 0; i < IPL_NSOFT; i++) {
+	for (i = 0; i < SI_NQUEUES; i++) {
 		hsi = &hp300_soft_intrs[i];
 		LIST_INIT(&hsi->hsi_q);
 		hsi->hsi_ipl = i;
@@ -106,7 +106,7 @@ softintr_dispatch(void)
 	do {
 		mask = 0x01;
 		for (hsi = hp300_soft_intrs, handled = 0;
-		    hsi < &hp300_soft_intrs[IPL_NSOFT];
+		    hsi < &hp300_soft_intrs[SI_NQUEUES];
 		    hsi++, mask <<= 1) {
 
 			if ((ssir & mask) == 0)
