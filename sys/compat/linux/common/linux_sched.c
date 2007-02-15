@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.41 2007/02/09 23:51:20 ad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.42 2007/02/15 20:32:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.41 2007/02/09 23:51:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.42 2007/02/15 20:32:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -526,9 +526,6 @@ linux_sys_sched_getaffinity(l, v, retval)
 	} */ *uap = v;
 	int error;
 	int ret;
-	int ncpu;
-	int name[2];
-	size_t sz;
 	char *data;
 	int *retp;
 
@@ -546,15 +543,7 @@ linux_sys_sched_getaffinity(l, v, retval)
 	 * The result is a mask, the first CPU being in the least significant
 	 * bit.
 	 */
-	name[0] = CTL_HW;
-	name[1] = HW_NCPU;
-	sz = sizeof(ncpu);
-
-	if ((error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL)) != 0)
-		return error;
-
 	ret = (1 << ncpu) - 1;
-
 	data = malloc(SCARG(uap, len), M_TEMP, M_WAITOK|M_ZERO);
 	retp = (int *)&data[SCARG(uap, len) - sizeof(ret)];
 	*retp = ret;
