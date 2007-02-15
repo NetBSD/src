@@ -1,11 +1,11 @@
-/* $NetBSD: sched.h,v 1.29 2007/02/09 21:55:37 ad Exp $ */
+/* $NetBSD: sched.h,v 1.30 2007/02/15 15:09:16 ad Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ross Harvey, Jason R. Thorpe, and Nathan J. Williams.
+ * by Ross Harvey, Jason R. Thorpe, Nathan J. Williams, and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,9 +76,6 @@
 #define	_SYS_SCHED_H_
 
 #include <sys/featuretest.h>
-#if 0
-#include <sys/mutex.h>
-#endif
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -101,14 +98,6 @@ struct sched_param {
 #if defined(_NETBSD_SOURCE)
 
 #include <sys/time.h>
-
-/*
- * Sleep queues.
- */
-struct slpque {
-	struct lwp *sq_head;
-	struct lwp **sq_tailp;
-};
 
 /*
  * Run queues.
@@ -193,9 +182,8 @@ struct proc;
 struct cpu_info;
 
 void schedclock(struct lwp *);
-void sched_wakeup(volatile const void *);
 void roundrobin(struct cpu_info *);
-int	sched_kpri(struct lwp *);
+int sched_kpri(struct lwp *);
 
 void scheduler_fork_hook(struct proc *, struct proc *);
 void scheduler_wait_hook(struct proc *, struct proc *);
