@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.2 2007/01/18 00:43:00 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.3 2007/02/15 01:44:54 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.2 2007/01/18 00:43:00 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.3 2007/02/15 01:44:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.2 2007/01/18 00:43:00 macallan Exp $");
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/pmuvar.h>
+#include <macppc/dev/batteryvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/adb/adbvar.h>
@@ -76,6 +77,7 @@ struct pmu_softc {
 	struct adb_bus_accessops sc_adbops;
 	struct i2c_controller sc_i2c;
 	struct lock sc_buslock;
+	struct pmu_ops sc_pmu_ops;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	uint32_t sc_flags;
@@ -117,16 +119,8 @@ static void pmu_update_brightness(struct pmu_softc *);
  * send a message to Cuda.
  */
 /* cookie, flags, length, data */
-static int pmu_send(struct pmu_softc *, int, int, uint8_t *, uint8_t *);
-#if notyet
-static void pmu_poll(void *);
-#endif
+static int pmu_send(void *, int, int, uint8_t *, uint8_t *);
 static void pmu_adb_poll(void *);
-#if notyet
-static int pmu_error_handler(void *, int, uint8_t *);
-
-static int pmu_todr_handler(void *, int, uint8_t *);
-#endif
 static int pmu_todr_set(todr_chip_handle_t, volatile struct timeval *);
 static int pmu_todr_get(todr_chip_handle_t, volatile struct timeval *);
 
@@ -146,6 +140,10 @@ static void pmu_i2c_release_bus(void *, int);
 static int pmu_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 #endif
+
+static void pmu_attach_legacy_battery(struct pmu_softc *);
+static void pmu_attach_smart_battery(struct pmu_softc *, int);
+static int  pmu_print(void *, const char *);
 
 /* these values shows that number of data returned after 'send' cmd is sent */
 static signed char pm_send_cmd_type[] = {
@@ -219,6 +217,16 @@ static signed char pm_receive_cmd_type[] = {
 	  -1,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
 };
 
+static const char *has_legacy_battery[] = {
+	"AAPL,3500",
+	"AAPL,3400/2400",
+	NULL };
+
+static const char *has_two_smart_batteries[] = {
+	"AAPL,PowerBook1998",
+	"PowerBook1,1",
+	NULL };
+
 static int
 pmu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
@@ -246,7 +254,7 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 	struct i2cbus_attach_args iba;
 #endif
 	int irq = ca->ca_intr[0];
-	int node, extint_node;
+	int node, extint_node, root_node;
 	uint8_t cmd[2] = {2, 0};
 	uint8_t resp[8];
 	char name[32];
@@ -259,6 +267,8 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_memt = ca->ca_tag;
+
+	root_node = OF_finddevice("/");
 
 	sc->sc_error = 0;
 	sc->sc_autopoll = 0;
@@ -273,9 +283,12 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 		printf("%s: unable to map registers\n", dev->dv_xname);
 		return;
 	}
-	sc->sc_ih = intr_establish(irq, IST_LEVEL, IPL_HIGH, pmu_intr, sc);
+	sc->sc_ih = intr_establish(irq, IST_LEVEL, IPL_TTY, pmu_intr, sc);
 
 	pmu_init(sc);
+
+	sc->sc_pmu_ops.cookie = sc;
+	sc->sc_pmu_ops.do_command = pmu_send;
 
 	if (pmu0 == NULL)
 		pmu0 = sc;
@@ -316,6 +329,35 @@ pmu_attach(struct device *parent, struct device *dev, void *aux)
 			sc->sc_todr.cookie = sc;
 			todr_attach(&sc->sc_todr);
 			goto next;
+		}
+		if (strncmp(name, "battery", 8) == 0) {
+			int nbat = 1, i, pmnode;
+			uint32_t regs[16];
+
+			if (of_compatible(root_node, has_legacy_battery) 
+			    != -1) {
+
+				pmu_attach_legacy_battery(sc);
+				goto next;
+			}
+
+			if (of_compatible(root_node, has_two_smart_batteries) 
+			    != -1) {
+
+				pmu_attach_smart_battery(sc, 0);
+				pmu_attach_smart_battery(sc, 1);
+				goto next;
+			}
+
+			/* check how many batteries we have */
+			pmnode = getnodebyname(ca->ca_node, "power-mgt");
+			if (pmnode == -1)
+				goto next;
+			if (OF_getprop(pmnode, "prim-info", regs, sizeof(regs)) < 24)
+				goto next;
+			nbat = regs[6] >> 16;
+			for (i = 0; i < nbat; i++)
+				pmu_attach_smart_battery(sc, i);
 		}
 		printf("%s: %s not configured\n", sc->sc_dev.dv_xname, name);
 next:
@@ -414,9 +456,9 @@ pmu_read_byte(struct pmu_softc *sc, uint8_t *data)
 }
 
 static int
-pmu_send(struct pmu_softc *sc, int cmd, int length, uint8_t *in_msg,
-    uint8_t *out_msg)
+pmu_send(void *cookie, int cmd, int length, uint8_t *in_msg, uint8_t *out_msg)
 {
+	struct pmu_softc *sc = cookie;
 	int i, rcv_len = -1, s;
 	uint8_t out_len, intreg;
 
@@ -470,18 +512,6 @@ done:
 
 	return rcv_len;
 }
-
-#if notyet
-static void
-pmu_poll(void *cookie)
-{
-	struct pmu_softc *sc = cookie;
-
-	while ((pmu_read_reg(sc, vIFR) & vSR_INT) == vSR_INT) {
-		pmu_intr(sc);
-	}
-}
-#endif
 
 static void
 pmu_adb_poll(void *cookie)
@@ -944,4 +974,26 @@ pmu_thread(void *cookie)
 			sc->sc_volume = sc->sc_volume_wanted;
 		}
 	}
+}
+
+static int
+pmu_print(void *aux, const char *what)
+{
+
+	return 0;
+}
+
+static void
+pmu_attach_legacy_battery(struct pmu_softc *sc)
+{
+	struct battery_attach_args baa;
+
+	baa.baa_type = BATTERY_TYPE_LEGACY;
+	baa.baa_pmu_ops = &sc->sc_pmu_ops;
+	config_found_ia(&sc->sc_dev, "pmu_bus", &baa, pmu_print);
+}
+
+static void
+pmu_attach_smart_battery(struct pmu_softc *sc, int num)
+{
 }
