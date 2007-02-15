@@ -756,7 +756,7 @@ AC_MSG_RESULT($kernel_secctx)
 AC_MSG_CHECKING(whether to support Security Context)
 AC_ARG_ENABLE(security-context,
 	[  --enable-security-context    enable Security Context(yes/no/kernel)],
-	[if test "$enable_security-context" = "kernel"; then
+	[if test "$enable_security_context" = "kernel"; then
 		enable_security_context=$kernel_secctx; fi],
 	[enable_security_context=$kernel_secctx])
 AC_MSG_RESULT($enable_security_context)
