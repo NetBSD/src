@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.6 2007/02/15 12:51:45 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.7 2007/02/15 17:05:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.6 2007/02/15 12:51:45 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.7 2007/02/15 17:05:25 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -50,17 +50,6 @@ __RCSID("$NetBSD: null.c,v 1.6 2007/02/15 12:51:45 pooka Exp $");
 #include <unistd.h>
 
 PUFFSOP_PROTOS(puffs_null)
-
-/*ARGSUSED*/
-static void *
-pathcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
-{
-	struct puffs_pathobj *po = arg;
-
-	if (strcmp(po->po_path, PNPATH(pn)) == 0)
-		return pn;
-	return NULL;
-}
 
 /*
  * set attributes to what is specified.  XXX: no rollback in case of failure
@@ -171,7 +160,8 @@ puffs_null_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	/* XXX: UNCONST is wrong, fix the interface */
 	/* XXX2: nodewalk is a bit too slow here */
-	pn_res = puffs_pn_nodewalk(pu, pathcmp, __UNCONST(&pcn->pcn_po_full));
+	pn_res = puffs_pn_nodewalk(pu, puffs_path_walkcmp,
+	    __UNCONST(&pcn->pcn_po_full));
 
 	if (pn_res == NULL) {
 		pn_res = puffs_pn_new(pu, NULL);
