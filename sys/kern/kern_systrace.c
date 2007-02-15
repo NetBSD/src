@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.65 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.66 2007/02/15 15:08:59 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.65 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.66 2007/02/15 15:08:59 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -60,13 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.65 2007/02/09 21:55:31 ad Exp $"
 
 #include <compat/common/compat_util.h>
 
-#ifdef __NetBSD__
 #define	SYSTRACE_LOCK(fst, p)	mutex_enter(&fst->mutex)
 #define	SYSTRACE_UNLOCK(fst, p)	mutex_exit(&fst->mutex)
-#else
-#define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p)
-#define	SYSTRACE_UNLOCK(fst, p)	lockmgr(&fst->lock, LK_RELEASE, NULL, p)
-#endif
+
 #ifndef	M_XDATA
 MALLOC_DEFINE(M_SYSTR, "systrace", "systrace");
 #define	M_XDATA		M_SYSTR
@@ -533,38 +529,19 @@ systracef_close(struct file *fp, struct lwp *l)
 void
 systrace_lock(void)
 {
-#ifdef __NetBSD__
 	mutex_enter(&systrace_mutex);
-#else
-	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curlwp);
-#endif
 }
 
 void
 systrace_unlock(void)
 {
-#ifdef __NetBSD__
 	mutex_exit(&systrace_mutex);
-#else
-	lockmgr(&systrace_lck, LK_RELEASE, NULL, curlwp);
-#endif
 }
 
 void
 systrace_init(void)
 {
-#ifdef __NetBSD__
 	mutex_init(&systrace_mutex, MUTEX_DEFAULT, IPL_NONE);
-#else
-	pool_init(&systr_proc_pl, sizeof(struct str_process), 0, 0, 0,
-	    "strprocpl", NULL);
-	pool_init(&systr_policy_pl, sizeof(struct str_policy), 0, 0, 0,
-	    "strpolpl", NULL);
-	pool_init(&systr_msgcontainer_pl, sizeof(struct str_msgcontainer),
-	    0, 0, 0, "strmsgpl", NULL);
-
-	lockinit(&systrace_lck, PLOCK, "systrace", 0, 0);
-#endif
 }
 
 int
