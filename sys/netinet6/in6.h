@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.57 2006/10/31 00:29:30 cbiere Exp $	*/
+/*	$NetBSD: in6.h,v 1.58 2007/02/15 16:28:37 seanb Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ struct route_in6 {
 #define IPV6_2292HOPLIMIT	20 /* bool; hop limit */
 #define IPV6_2292NEXTHOP	21 /* bool; next hop addr */
 #define IPV6_2292HOPOPTS	22 /* bool; hop-by-hop option */
-#define IPV6_2292DSTOPTS	23 /* bool; destinaion option */
+#define IPV6_2292DSTOPTS	23 /* bool; destination option */
 #define IPV6_2292RTHDR		24 /* bool; routing header */
 #define IPV6_2292PKTOPTIONS	25 /* buf/cmsghdr; set/get IPv6 options */
 #endif
