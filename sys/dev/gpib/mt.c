@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.7 2007/01/13 18:46:37 cube Exp $ */
+/*	$NetBSD: mt.c,v 1.8 2007/02/15 18:33:26 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.7 2007/01/13 18:46:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.8 2007/02/15 18:33:26 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ struct	mt_softc {
 
 #define	MTUNIT(x)	(minor(x) & 0x03)
 
-#define B_CMD		B_XXX		/* command buf instead of data */
+#define B_CMD		B_DEVPRIVATE	/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
 int	mtmatch(struct device *, struct cfdata *, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.90 2006/11/14 15:50:00 reinoud Exp $	*/
+/*	$NetBSD: buf.h,v 1.91 2007/02/15 18:33:26 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ do {									\
 #define	B_TAPE		0x00200000	/* Magnetic tape I/O. */
 #define	B_WANTED	0x00800000	/* Process wants this buffer. */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
-#define	B_XXX		0x02000000	/* Debugging flag. */
+#define	B_DEVPRIVATE	0x02000000	/* Device driver private flag. */
 #define	B_VFLUSH	0x04000000	/* Buffer is being synced. */
 
 #define BUF_FLAGBITS \

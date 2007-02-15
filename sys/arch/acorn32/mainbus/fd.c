@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $	*/
+/*	$NetBSD: fd.c,v 1.27 2007/02/15 18:33:26 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.27 2007/02/15 18:33:26 reinoud Exp $");
 
 #include "opt_ddb.h"
 
@@ -135,8 +135,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.26 2006/04/14 13:09:05 blymn Exp $");
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
-/* XXX misuse a flag to identify format operation */
-#define B_FORMAT B_XXX
+/* (mis)use device use flag to identify format operation */
+#define B_FORMAT B_DEVPRIVATE
 
 enum fdc_state {
 	DEVIDLE = 0,

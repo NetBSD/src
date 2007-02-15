@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.52 2006/10/14 08:11:16 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.53 2007/02/15 18:33:27 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2006/10/14 08:11:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.53 2007/02/15 18:33:27 reinoud Exp $");
 
 #include "opt_ddb.h"
 
@@ -122,8 +122,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.52 2006/10/14 08:11:16 tsutsui Exp $");
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
-/* XXX misuse a flag to identify format operation */
-#define B_FORMAT B_XXX
+/* (mis)use device use flag to identify format operation */
+#define B_FORMAT B_DEVPRIVATE
 
 #ifdef FD_DEBUG
 int	fdc_debug = 0;
