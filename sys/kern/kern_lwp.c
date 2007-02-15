@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.53 2007/02/15 15:08:42 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.54 2007/02/15 15:13:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.53 2007/02/15 15:08:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.54 2007/02/15 15:13:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1070,6 +1070,7 @@ void
 lwp_userret(struct lwp *l)
 {
 	struct proc *p;
+	void (*hook)(void);
 	int sig;
 
 	p = l->l_proc;
@@ -1119,6 +1120,16 @@ lwp_userret(struct lwp *l)
 			lwp_exit(l);
 			KASSERT(0);
 			/* NOTREACHED */
+		}
+
+		/* Call userret hook; used by Linux emulation. */
+		if ((l->l_flag & L_WUSERRET) != 0) {
+			lwp_lock(l);
+			l->l_flag &= ~L_WUSERRET;
+			lwp_unlock(l);
+			hook = p->p_userret;
+			p->p_userret = NULL;
+			(*hook)();
 		}
 	}
 }

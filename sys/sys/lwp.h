@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.47 2007/02/09 21:55:37 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48 2007/02/15 15:13:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_WEXIT		0x00100000 /* Exit before return to user */
 #define	L_PENDSIG	0x01000000 /* Pending signal for us */
 #define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	L_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	L_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 
 /* The second set of flags is kept in l_pflag. */
@@ -184,7 +185,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
  * Mask indicating that there is "exceptional" work to be done on return to
  * user.
  */
-#define	L_USERRET	(L_WEXIT|L_PENDSIG|L_WREBOOT|L_WSUSPEND|L_WCORE)
+#define	L_USERRET (L_WEXIT|L_PENDSIG|L_WREBOOT|L_WSUSPEND|L_WCORE|L_WUSERRET)
 
 /*
  * Status values.
