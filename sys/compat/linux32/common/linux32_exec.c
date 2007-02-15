@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_exec.c,v 1.4 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.5 2007/02/15 15:29:51 ad Exp $ */
 
 /*-
- * Copyright (c) 1994-2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.4 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.5 2007/02/15 15:29:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,8 @@ static void linux32_e_proc_exit __P((struct proc *));
 static void linux32_e_proc_init __P((struct proc *, struct proc *, int));
 
 #ifdef LINUX32_NPTL
-void linux32_userret __P((struct lwp *, void *));
-void linux_nptl_proc_fork __P((struct proc *, struct proc *,
-	void (luserret)(struct lwp *, void *)));
+void linux32_userret(void);
+void linux_nptl_proc_fork(struct proc *, struct proc *, void (*luserret)(void));
 void linux_nptl_proc_exit __P((struct proc *));
 void linux_nptl_proc_init __P((struct proc *, struct proc *));
 #endif
@@ -265,7 +264,7 @@ linux32_e_proc_fork(p, parent, forkflags)
 	linux32_e_proc_init(p, parent, forkflags);
 
 #ifdef LINUX32_NPTL
-	linux_nptl_proc_fork(p, parent, (*linux32_userret));
+	linux_nptl_proc_fork(p, parent, linux32_userret);
 #endif
 
 	return;
@@ -273,15 +272,12 @@ linux32_e_proc_fork(p, parent, forkflags)
 
 #ifdef LINUX32_NPTL
 void
-linux32_userret(l, arg)
-	struct lwp *l;
-	void *arg;
+linux32_userret(void)
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct linux_emuldata *led = p->p_emuldata;
 	int error;
-
-	p->p_userret = NULL;
 
 	/* LINUX_CLONE_CHILD_SETTID: copy child's TID to child's memory  */
 	if (led->clone_flags & LINUX_CLONE_CHILD_SETTID) {
