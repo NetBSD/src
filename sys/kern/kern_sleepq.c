@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.3 2007/02/10 14:02:01 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4 2007/02/15 20:21:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.3 2007/02/10 14:02:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4 2007/02/15 20:21:13 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -57,10 +57,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.3 2007/02/10 14:02:01 yamt Exp $")
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/sleepq.h>
-
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+
+#include <uvm/uvm_extern.h>
 
 int	sleepq_sigtoerror(struct lwp *, int);
 void	updatepri(struct lwp *);
@@ -117,7 +118,7 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 {
 	struct cpu_info *ci;
 
-	LOCK_ASSERT(lwp_locked(l, sq->sq_mutex));
+	KASSERT(lwp_locked(l, sq->sq_mutex));
 	KASSERT(sq->sq_waiters > 0);
 
 	sq->sq_waiters--;
@@ -224,14 +225,9 @@ sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 {
 	struct lwp *l = curlwp;
 
-	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
+	KASSERT(mutex_owned(sq->sq_mutex));
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
-
-#ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_CSW))
-		ktrcsw(l, 1, 0);
-#endif
 
 	l->l_syncobj = sobj;
 	l->l_wchan = wchan;
@@ -245,6 +241,11 @@ sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 
 	sq->sq_waiters++;
 	sleepq_insert(sq, l, pri, sobj);
+
+#ifdef KTRACE
+	if (KTRPOINT(l->l_proc, KTR_CSW))
+		ktrcsw(l, 1, 0);
+#endif
 
 	/*
 	 * If sleeping interruptably, check for pending signals, exits or
@@ -350,7 +351,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 	struct lwp *l, *next;
 	int swapin = 0;
 
-	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
+	KASSERT(mutex_owned(sq->sq_mutex));
 
 	for (l = TAILQ_FIRST(&sq->sq_queue); l != NULL; l = next) {
 		KASSERT(l->l_sleepq == sq);
@@ -362,7 +363,6 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 			break;
 	}
 
-	LOCK_ASSERT(mutex_owned(sq->sq_mutex));
 	sleepq_unlock(sq);
 
 	/*
@@ -370,7 +370,7 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected)
 	 * then kick the swapper into action.
 	 */
 	if (swapin)
-		wakeup(&proc0);
+		uvm_kick_scheduler();
 }
 
 /*
@@ -386,7 +386,7 @@ sleepq_unsleep(struct lwp *l)
 	sleepq_t *sq = l->l_sleepq;
 	int swapin;
 
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_wchan != NULL);
 	KASSERT(l->l_mutex == sq->sq_mutex);
 
@@ -394,7 +394,7 @@ sleepq_unsleep(struct lwp *l)
 	sleepq_unlock(sq);
 
 	if (swapin)
-		wakeup(&proc0);
+		uvm_kick_scheduler();
 }
 
 /*
@@ -434,7 +434,7 @@ sleepq_sigtoerror(struct lwp *l, int sig)
 	struct proc *p = l->l_proc;
 	int error;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	/*
 	 * If this sleep was canceled, don't let the syscall restart.
