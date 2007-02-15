@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.2 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.3 2007/02/15 22:49:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ _ENTRY(_C_LABEL(mutex_enter))
 	sethi	%hi(curlwp), %o3
 	ld	[%o3 + %lo(curlwp)], %o3	! current thread
 	ldstub	[%o0], %o1			! try to acquire lock
+mutex_enter_crit_start:	.globl	mutex_enter_crit_start
 	tst	%o1
 	bnz	_C_LABEL(mutex_vector_enter)	! nope, hard case
 
@@ -90,9 +91,10 @@ _ENTRY(_C_LABEL(mutex_enter))
 	sra	%o3, 5, %o1			! curlwp >> 5
 	sethi	%hi(0xff000000), %o2		! finish constructing
 	or	%o1, %o2, %o1			!   lock word
+	st	%o1, [%o0]
+mutex_enter_crit_end:	.globl	mutex_enter_crit_end
 	retl
-	 st	%o1, [%o0]
-
+	 nop
 /*
  * void	mutex_exit(kmutex_t *mtx);
  *
@@ -105,7 +107,6 @@ _ENTRY(_C_LABEL(mutex_enter))
  * memory ordering issues.
  */
 _ENTRY(_C_LABEL(mutex_exit))
-#ifdef DIAGNOSTIC
 	sethi	%hi(curlwp), %o3
 	ld	[%o3 + %lo(curlwp)], %o3	! current thread
 	sra	%o3, 5, %o1			! curlwp >> 5
@@ -115,11 +116,10 @@ _ENTRY(_C_LABEL(mutex_exit))
 	sub	%o1, %o2, %o2			! -> 0 if we own lock
 	bnz	_C_LABEL(mutex_vector_exit)	! no, hard case
 	 nop
-#endif	/* DIAGNOSTIC */
 	st	%g0, [%o0]			! and release lock
 	ldub	[%o0 + MTX_LOCK], %o3		! get has-waiters indicator
 	tst	%o3				! has waiters?
-	bnz	_C_LABEL(mutex_vector_exit)	! yes, hard case
+	bnz	_C_LABEL(mutex_wakeup)		! yes, hard case
 	 nop
 	retl
 	 nop
