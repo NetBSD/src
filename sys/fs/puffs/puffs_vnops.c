@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.50 2007/02/10 13:12:43 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.51 2007/02/15 19:50:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.50 2007/02/10 13:12:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.51 2007/02/15 19:50:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1217,12 +1217,14 @@ puffs_readlink(void *v)
 		struct uio *a_uio;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
+	size_t linklen;
 	int error;
 
 	PUFFS_VNREQ(readlink);
 
 	puffs_credcvt(&readlink_arg.pvnr_cred, ap->a_cred);
-	readlink_arg.pvnr_linklen = sizeof(readlink_arg.pvnr_link);
+	linklen = sizeof(readlink_arg.pvnr_link);
+	readlink_arg.pvnr_linklen = linklen;
 
 	error = puffs_vntouser(MPTOPUFFSMP(ap->a_vp->v_mount),
 	    PUFFS_VN_READLINK, &readlink_arg, sizeof(readlink_arg),
@@ -1230,7 +1232,10 @@ puffs_readlink(void *v)
 	if (error)
 		return error;
 
-	readlink_arg.pvnr_link[readlink_arg.pvnr_linklen] = '\0';
+	/* bad bad user file server */
+	if (readlink_arg.pvnr_linklen > linklen)
+		return EINVAL;
+
 	return uiomove(&readlink_arg.pvnr_link, readlink_arg.pvnr_linklen,
 	    ap->a_uio);
 }
