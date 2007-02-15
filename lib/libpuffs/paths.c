@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.2 2007/02/06 01:46:41 pooka Exp $	*/
+/*	$NetBSD: paths.c,v 1.3 2007/02/15 12:51:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: paths.c,v 1.2 2007/02/06 01:46:41 pooka Exp $");
+__RCSID("$NetBSD: paths.c,v 1.3 2007/02/15 12:51:45 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -161,13 +161,14 @@ puffs_path_cmppath(struct puffs_usermount *pu, struct puffs_pathobj *c1,
 
 /*ARGSUSED*/
 int
-puffs_path_buildpath(struct puffs_usermount *pu, struct puffs_pathobj *po_pre,
-	struct puffs_pathobj *po_comp, size_t offset,
-	struct puffs_pathobj *newpath)
+puffs_path_buildpath(struct puffs_usermount *pu,
+	const struct puffs_pathobj *po_pre, const struct puffs_pathobj *po_comp,
+	size_t offset, struct puffs_pathobj *newpath)
 {
 	char *path, *pcomp;
 	size_t plen, complen;
 	size_t prelen;
+	int isdotdot;
 
 	complen = po_comp->po_len - offset;
 
@@ -179,24 +180,46 @@ puffs_path_buildpath(struct puffs_usermount *pu, struct puffs_pathobj *po_pre,
 		complen--;
 	}
 
+	/* todotdot or nottodotdot */
+	if (complen == 2 && strcmp(pcomp, "..") == 0)
+		isdotdot = 1;
+	else
+		isdotdot = 0;
+
 	/*
 	 * Strip trailing components from the preceending component.
 	 * This is an issue only for the root node, which we might want
 	 * to be at path "/" for some file systems.
 	 */
 	prelen = po_pre->po_len;
-	while (prelen > 0 && *((char *)po_pre->po_path + (prelen-1)) == '/')
+	while (prelen > 0 && *((char *)po_pre->po_path + (prelen-1)) == '/') {
+		assert(isdotdot == 0);
 		prelen--;
+	}
 
-	/* + '/' + '\0' */
-	plen = prelen + 1 + complen;
-	path = malloc(plen + 1);
-	if (path == NULL)
-		return errno;
+	if (isdotdot) {
+		char *slash; /* sweet char of mine */
+		
+		slash = strrchr(po_pre->po_path, '/');
+		assert(slash != NULL);
 
-	strlcpy(path, po_pre->po_path, prelen+1);
-	strcat(path, "/");
-	strncat(path, pcomp, complen);
+		plen = slash - (char *)po_pre->po_path;
+		path = malloc(plen + 1);
+		if (path == NULL)
+			return errno;
+
+		strlcpy(path, po_pre->po_path, plen+1);
+	} else {
+		/* + '/' + '\0' */
+		plen = prelen + 1 + complen;
+		path = malloc(plen + 1);
+		if (path == NULL)
+			return errno;
+
+		strlcpy(path, po_pre->po_path, prelen+1);
+		strcat(path, "/");
+		strncat(path, pcomp, complen);
+	}
 
 	newpath->po_path = path;
 	newpath->po_len = plen;

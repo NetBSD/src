@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.5 2007/01/27 11:49:44 agc Exp $	*/
+/*	$NetBSD: null.c,v 1.6 2007/02/15 12:51:45 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.5 2007/01/27 11:49:44 agc Exp $");
+__RCSID("$NetBSD: null.c,v 1.6 2007/02/15 12:51:45 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -147,10 +147,6 @@ puffs_null_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 	return 0;
 }
 
-/*
- * Wow, this kinda looks like a real lookup since it bounces all
- * over the place
- */
 int
 puffs_null_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
@@ -158,68 +154,32 @@ puffs_null_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 {
 	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc, *pn_res;
-	struct dirent entry, *result;
-	char dpath[MAXPATHLEN+1];
-	char *npath;
 	struct stat sb;
-	DIR *dp;
 	int rv;
 
 	assert(pn->pn_va.va_type == VDIR);
 
-	/* XXX: push this out of here */
-	if (pcn->pcn_flags & PUFFS_ISDOTDOT) {
-		struct puffs_pathobj mypo;
-		char *p;
-
-		strcpy(dpath, PNPATH(pn));
-		p = strrchr(dpath, '/');
-		assert(p != NULL);
-		*p = '\0';
-
-		mypo.po_path = dpath;
-		mypo.po_len = strlen(dpath);
-		pn_res = puffs_pn_nodewalk(pu, pathcmp, &mypo);
-		if (pn_res)
-			goto success;
-		npath = dpath;
-		goto getnew;
-	}
-
-	dp = opendir(PNPATH(pn));
-	if (dp == NULL)
-		return errno;
-
-	/* more readable than for(), IMHO */
-	rv = readdir_r(dp, &entry, &result);
-	while (rv == 0 && result) {
-		if (strcmp(result->d_name, pcn->pcn_name) == 0)
-			break;
-		rv = readdir_r(dp, &entry, &result);
-	}
-	closedir(dp);
-
+	/*
+	 * Note to whoever is copypasting this: you must first check
+	 * if the node is there and only then do nodewalk.  Alternatively
+	 * you could make sure that you don't return unlinked/rmdir'd
+	 * nodes in some other fashion
+	 */
+	rv = lstat(PCNPATH(pcn), &sb);
 	if (rv)
 		return rv;
-	if (!result)
-		return ENOENT;
 
 	/* XXX: UNCONST is wrong, fix the interface */
+	/* XXX2: nodewalk is a bit too slow here */
 	pn_res = puffs_pn_nodewalk(pu, pathcmp, __UNCONST(&pcn->pcn_po_full));
-	if (pn_res)
-		goto success;
-	npath = PCNPATH(pcn);
 
- getnew:
-	rv = lstat(npath, &sb);
-	if (rv)
-		return rv;
-	pn_res = puffs_pn_new(pu, NULL);
-	if (pn_res == NULL)
-		return ENOMEM;
-	puffs_stat2vattr(&pn_res->pn_va, &sb);
+	if (pn_res == NULL) {
+		pn_res = puffs_pn_new(pu, NULL);
+		if (pn_res == NULL)
+			return ENOMEM;
+		puffs_stat2vattr(&pn_res->pn_va, &sb);
+	}
 
- success:
 	*newnode = pn_res;
 	*newtype = pn_res->pn_va.va_type;
 	*newsize = pn_res->pn_va.va_size;
@@ -586,4 +546,12 @@ puffs_null_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
  out:
 	close(fd);
 	return rv;
+}
+
+/*ARGSUSED*/
+int
+puffs_null_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+{
+
+	return puffs_genfs_node_reclaim(pcc, opc, pid);
 }
