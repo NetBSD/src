@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.227 2007/02/15 07:30:07 skrll Exp $
+#       $NetBSD: Makefile,v 1.228 2007/02/15 16:44:41 tron Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -50,8 +50,8 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	vmem.9 vmem_alloc.9 vmem_create.9 vmem_destroy.9 vmem_free.9 \
 	vmem_xalloc.9 vmem_xfree.9 \
 	wdc.9 \
-	workqueue.9 workqueue_create.9 workqueue_destroy.9 workqueue_enqueue.9 \
-	wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
+	workqueue.9 workqueue_create.9 workqueue_destroy.9 \
+	workqueue_enqueue.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
 
 MAN+=	dmover.9
 MLINKS+=dmover.9 dmover_backend_register.9 \
@@ -484,9 +484,10 @@ MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
 	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
 	rt_timer.9 rt_timer_remove_all.9
 MLINKS+=rwlock.9 rw.9 rwlock.9 rw_init.9 rwlock.9 rw_destroy.9 \
-	rwlock.9 rw_enter.9 rwlock.9 rw_exit.9  rwlock.9 rw_tryenter.9 \
-	rwlock.9 rw_tryupgrade.9 rwlock.9 rw_downgrade.9 \
-	rwlock.9 rw_read_held.9 rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9
+	rwlock.9 rw_enter.9 rwlock.9 rw_exit.9 rwlock.9 rw_owned.9 \
+	rwlock.9 rw_tryenter.9 rwlock.9 rw_tryupgrade.9 \
+	rwlock.9 rw_downgrade.9 rwlock.9 rw_read_held.9 \
+	rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9
 MLINKS+=SCHED_LOCK.9 SCHED_UNLOCK.9 \
 	SCHED_LOCK.9 sched_lock_idle.9 \
 	SCHED_LOCK.9 sched_unlock_idle.9
