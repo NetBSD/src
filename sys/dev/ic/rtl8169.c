@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.80 2007/02/15 12:24:56 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.81 2007/02/15 12:33:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1930,7 +1930,7 @@ re_init(struct ifnet *ifp)
 	if (sc->re_testmode)
 		return 0;
 
-	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD | RTK_CFG1_FULLDUPLEX);
+	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
