@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.28 2007/02/15 15:40:52 ad Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.29 2007/02/15 16:18:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.28 2007/02/15 15:40:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.29 2007/02/15 16:18:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,12 +409,11 @@ ntfs_ntlookup(
 	dprintf(("ntfs_ntlookup: looking for ntnode %llu\n",
 	    (unsigned long long)ino));
 
-	if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
-		ntfs_ntget(ip);
+	if ((*ipp = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
+		ntfs_ntget(*ipp);
 		dprintf(("ntfs_ntlookup: ntnode %llu: %p,"
 		    " usecount: %d\n",
-		    (unsigned long long)ino, ip, ip->i_usecount));
-		*ipp = ip;
+		    (unsigned long long)ino, *ipp, (*ipp)->i_usecount));
 		return (0);
 	}
 
@@ -425,14 +424,13 @@ ntfs_ntlookup(
 	bzero(ip, sizeof(struct ntnode));
 
 	mutex_enter(&ntfs_hashlock);
-	if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
+	if ((*ipp = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
 		mutex_exit(&ntfs_hashlock);
-		ntfs_ntget(ip);
+		ntfs_ntget(*ipp);
 		FREE(ip, M_NTFSNTNODE);
 		dprintf(("ntfs_ntlookup: ntnode %llu: %p,"
 		    " usecount: %d\n",
-		    (unsigned long long)ino, ip, ip->i_usecount));
-		*ipp = ip;
+		    (unsigned long long)ino, *ipp, (*ipp)->i_usecount));
 		return (0);
 	}
 
