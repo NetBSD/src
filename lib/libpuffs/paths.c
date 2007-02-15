@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.3 2007/02/15 12:51:45 pooka Exp $	*/
+/*	$NetBSD: paths.c,v 1.4 2007/02/15 17:04:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: paths.c,v 1.3 2007/02/15 12:51:45 pooka Exp $");
+__RCSID("$NetBSD: paths.c,v 1.4 2007/02/15 17:04:46 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -101,7 +101,7 @@ puffs_path_prefixadj(struct puffs_usermount *pu, struct puffs_node *pn,
 	if (pn->pn_po.po_len < pi->pi_old->po_len)
 		return NULL;
 
-	if (pu->pu_pathcmp(pu, &pn->pn_po, pi->pi_old, pi->pi_old->po_len))
+	if (pu->pu_pathcmp(pu, &pn->pn_po, pi->pi_old, pi->pi_old->po_len, 1))
 		return NULL;
 
 	/* otherwise we'd have two nodes with an equal path */
@@ -129,6 +129,25 @@ puffs_path_prefixadj(struct puffs_usermount *pu, struct puffs_node *pn,
 	return NULL;
 }
 
+/*
+ * called from nodewalk, checks for exact match
+ */
+void *
+puffs_path_walkcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
+{
+	struct puffs_pathobj *po = arg;
+	struct puffs_pathobj po2;
+
+	if (po->po_len != PNPLEN(pn))
+		return NULL;
+
+	po2.po_path = PNPATH(pn);
+	po2.po_len = PNPLEN(pn);
+
+	if (pu->pu_pathcmp(pu, po, &po2, PNPLEN(pn), 0) == 0)
+		return pn;
+	return NULL;
+}
 
 /*
  * Routines provided to file systems which consider a path a tuple of
@@ -137,8 +156,8 @@ puffs_path_prefixadj(struct puffs_usermount *pu, struct puffs_node *pn,
 
 /*ARGSUSED*/
 int
-puffs_path_cmppath(struct puffs_usermount *pu, struct puffs_pathobj *c1,
-	struct puffs_pathobj *c2, size_t clen)
+puffs_stdpath_cmppath(struct puffs_usermount *pu, struct puffs_pathobj *c1,
+	struct puffs_pathobj *c2, size_t clen, int checkprefix)
 {
 	char *p;
 	int rv;
@@ -146,6 +165,9 @@ puffs_path_cmppath(struct puffs_usermount *pu, struct puffs_pathobj *c1,
 	rv = strncmp(c1->po_path, c2->po_path, clen);
 	if (rv)
 		return 1;
+
+	if (checkprefix == 0)
+		return 0;
 
 	/* sanity for next step */
 	if (!(c1->po_len > c2->po_len))
@@ -161,7 +183,7 @@ puffs_path_cmppath(struct puffs_usermount *pu, struct puffs_pathobj *c1,
 
 /*ARGSUSED*/
 int
-puffs_path_buildpath(struct puffs_usermount *pu,
+puffs_stdpath_buildpath(struct puffs_usermount *pu,
 	const struct puffs_pathobj *po_pre, const struct puffs_pathobj *po_comp,
 	size_t offset, struct puffs_pathobj *newpath)
 {
@@ -229,7 +251,7 @@ puffs_path_buildpath(struct puffs_usermount *pu,
 
 /*ARGSUSED*/
 void
-puffs_path_freepath(struct puffs_usermount *pu, struct puffs_pathobj *po)
+puffs_stdpath_freepath(struct puffs_usermount *pu, struct puffs_pathobj *po)
 {
 
 	free(po->po_path);
