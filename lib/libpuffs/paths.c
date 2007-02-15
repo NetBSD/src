@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.4 2007/02/15 17:04:46 pooka Exp $	*/
+/*	$NetBSD: paths.c,v 1.5 2007/02/15 21:26:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: paths.c,v 1.4 2007/02/15 17:04:46 pooka Exp $");
+__RCSID("$NetBSD: paths.c,v 1.5 2007/02/15 21:26:50 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -226,6 +226,14 @@ puffs_stdpath_buildpath(struct puffs_usermount *pu,
 		assert(slash != NULL);
 
 		plen = slash - (char *)po_pre->po_path;
+
+		/*
+		 * As the converse to not stripping the initial "/" above,
+		 * don't nuke it here either.
+		 */
+		if (plen == 0)
+			plen++;
+
 		path = malloc(plen + 1);
 		if (path == NULL)
 			return errno;
