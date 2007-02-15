@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.70 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.71 2007/02/15 18:33:26 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.71 2007/02/15 18:33:26 reinoud Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -169,8 +169,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.70 2006/11/16 01:33:00 christos Exp $");
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
-/* XXX misuse a flag to identify format operation */
-#define B_FORMAT B_XXX
+/* (mis)use device use flag to identify format operation */
+#define B_FORMAT B_DEVPRIVATE
 
 /* controller driver configuration */
 int fdprint(void *, const char *);
