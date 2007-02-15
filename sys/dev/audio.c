@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.216 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.217 2007/02/15 18:12:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.216 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.217 2007/02/15 18:12:05 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2514,6 +2514,7 @@ audio_softintr_rd(void *cookie)
 	struct audio_softc *sc = cookie;
 	struct proc *p;
 
+	audio_wakeup(&sc->sc_rchan);
 	selnotify(&sc->sc_rsel, 0);
 	if (sc->sc_async_audio != NULL) {
 		DPRINTFN(3, ("audio_softintr_rd: sending SIGIO %p\n",
@@ -2531,6 +2532,7 @@ audio_softintr_wr(void *cookie)
 	struct audio_softc *sc = cookie;
 	struct proc *p;
 
+	audio_wakeup(&sc->sc_wchan);
 	selnotify(&sc->sc_wsel, 0);
 	if (sc->sc_async_audio != NULL) {
 		DPRINTFN(3, ("audio_softintr_wr: sending SIGIO %p\n",
@@ -2671,17 +2673,13 @@ audio_pint(void *v)
 		     sc->sc_mode, cb->pause,
 		     audio_stream_get_used(sc->sc_pustream), cb->usedlow));
 	if ((sc->sc_mode & AUMODE_PLAY) && !cb->pause) {
-		if (audio_stream_get_used(sc->sc_pustream) <= cb->usedlow) {
-			audio_wakeup(&sc->sc_wchan);
+		if (audio_stream_get_used(sc->sc_pustream) <= cb->usedlow)
 			softintr_schedule(sc->sc_sih_wr);
-		}
 	}
 
 	/* Possible to return one or more "phantom blocks" now. */
-	if (!sc->sc_full_duplex && sc->sc_rchan) {
-		audio_wakeup(&sc->sc_rchan);
+	if (!sc->sc_full_duplex && sc->sc_rchan)
 		softintr_schedule(sc->sc_sih_rd);
-	}
 }
 
 /*
@@ -2786,7 +2784,6 @@ audio_rint(void *v)
 		}
 	}
 
-	audio_wakeup(&sc->sc_rchan);
 	softintr_schedule(sc->sc_sih_rd);
 }
 
