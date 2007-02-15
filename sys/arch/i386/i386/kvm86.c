@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.11 2007/01/07 20:16:14 christos Exp $ */
+/* $NetBSD: kvm86.c,v 1.12 2007/02/15 15:40:50 ad Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.11 2007/01/07 20:16:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.12 2007/02/15 15:40:50 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -36,8 +36,10 @@ __KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.11 2007/01/07 20:16:14 christos Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
+
 #include <uvm/uvm.h>
+
 #include <machine/pcb.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
@@ -71,7 +73,7 @@ void *bioscallscratchpage;
 /* a virtual page to map in vm86 memory temporarily */
 vaddr_t bioscalltmpva;
 
-struct lock kvm86_mp_lock;
+kmutex_t kvm86_mp_lock;
 
 #define KVM86_IOPL3 /* not strictly necessary, saves a lot of traps */
 
@@ -122,7 +124,7 @@ kvm86_init()
 		  BIOSCALLSCRATCHPAGE_VMVA);
 	bioscallvmd = vmd;
 	bioscalltmpva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
-	lockinit(&kvm86_mp_lock, 0, "KVM86 MP", 0, LK_RECURSEFAIL);
+	mutex_init(&kvm86_mp_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -276,9 +278,9 @@ kvm86_bioscall_simple(intno, r)
 	tf.tf_edi = r->EDI;
 	tf.tf_vm86_es = r->ES;
 
-	lockmgr(&kvm86_mp_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&kvm86_mp_lock);
 	res = kvm86_bioscall(intno, &tf);
-	lockmgr(&kvm86_mp_lock, LK_RELEASE, NULL);
+	mutex_exit(&kvm86_mp_lock);
 
 	r->EAX = tf.tf_eax;
 	r->EBX = tf.tf_ebx;

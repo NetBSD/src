@@ -1,7 +1,7 @@
-/*	$NetBSD: dpti.c,v 1.31 2006/12/02 03:10:42 elad Exp $	*/
+/*	$NetBSD: dpti.c,v 1.32 2007/02/15 15:40:51 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.31 2006/12/02 03:10:42 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.32 2007/02/15 15:40:51 ad Exp $");
 
 #include "opt_i2o.h"
 
@@ -301,10 +301,9 @@ dptiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case DPT_I2ORESCANCMD:
-		if ((rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE, NULL)) != 0)
-			break;
+		mutex_enter(&iop->sc_conflock);
 		rv = iop_reconfigure(iop, 0);
-		lockmgr(&iop->sc_conflock, LK_RELEASE, NULL);
+		mutex_exit(&iop->sc_conflock);
 		break;
 
 	default:

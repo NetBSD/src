@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.226 2007/01/19 14:49:12 hannken Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.227 2007/02/15 15:40:54 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.226 2007/01/19 14:49:12 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.227 2007/02/15 15:40:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -729,7 +729,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_sleepers = 0;
 	fs->lfs_pages = 0;
 	simple_lock_init(&fs->lfs_interlock);
-	lockinit(&fs->lfs_fraglock, PINOD, "lfs_fraglock", 0, 0);
+	rw_init(&fs->lfs_fraglock);
 	lockinit(&fs->lfs_iflock, PINOD, "lfs_iflock", 0, 0);
 	lockinit(&fs->lfs_stoplock, PINOD, "lfs_stoplock", 0, 0);
 
@@ -1069,7 +1069,7 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred,
 	return (error);
 }
 
-extern struct lock ufs_hashlock;
+extern kmutex_t ufs_hashlock;
 
 /*
  * Look up an LFS dinode number to find its incore vnode.  If not already
@@ -1115,12 +1115,12 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		 return (error);
 	}
 
-	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
-			ungetnewvnode(vp);
-			return (0);
-		}
-	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	mutex_enter(&ufs_hashlock);
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+		mutex_exit(&ufs_hashlock);
+		ungetnewvnode(vp);
+		return (0);
+	}
 
 	/* Translate the inode number to a disk address. */
 	if (ino == LFS_IFILE_INUM)
@@ -1138,7 +1138,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		if (daddr == LFS_UNUSED_DADDR) {
 			*vpp = NULLVP;
 			ungetnewvnode(vp);
-			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+			mutex_exit(&ufs_hashlock);
 			return (ENOENT);
 		}
 	}
@@ -1154,7 +1154,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&ufs_hashlock);
 
 	/*
 	 * XXX

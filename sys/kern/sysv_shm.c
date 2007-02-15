@@ -1,7 +1,7 @@
-/*	$NetBSD: sysv_shm.c,v 1.95 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.96 2007/02/15 15:40:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,14 +68,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.95 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.96 2007/02/15 15:40:52 ad Exp $");
 
 #define SYSVSHM
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -112,7 +112,7 @@ struct shmmap_entry {
 	int shmid;
 };
 
-struct lock	shm_lock;
+static kmutex_t	shm_lock;
 static int	shm_last_free, shm_committed, shm_use_phys;
 
 static POOL_INIT(shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
@@ -764,7 +764,7 @@ shminit(void)
 	int i, sz;
 	vaddr_t v;
 
-	lockinit(&shm_lock, PWAIT, "shmlk", 0, 0);
+	mutex_init(&shm_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Allocate pageable memory for our structures */
 	sz = shminfo.shmmni * sizeof(struct shmid_ds);
@@ -797,11 +797,11 @@ sysctl_ipc_shmmni(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	lockmgr(&shm_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&shm_lock);
 	error = shmrealloc(newsize);
 	if (error == 0)
 		shminfo.shmmni = newsize;
-	lockmgr(&shm_lock, LK_RELEASE, NULL);
+	mutex_exit(&shm_lock);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.h,v 1.3 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: ntfs_ihash.h,v 1.4 2007/02/15 15:40:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -27,11 +27,14 @@
  *
  *	Id: ntfs_ihash.h,v 1.3 1999/05/12 09:42:59 semenu Exp
  */
+
 #if !defined(_KERNEL)
 #error not supposed to be exposed to userland.
 #endif
 
-extern struct lock ntfs_hashlock;
+#include <sys/mutex.h>
+
+extern kmutex_t ntfs_hashlock;
 void ntfs_nthashinit(void);
 void ntfs_nthashreinit(void);
 void ntfs_nthashdone(void);

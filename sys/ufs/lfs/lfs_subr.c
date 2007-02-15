@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.65 2006/11/16 01:33:53 christos Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.66 2007/02/15 15:40:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.65 2006/11/16 01:33:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.66 2007/02/15 15:40:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	LFS_ENTER_LOG("seglock", __FILE__, __LINE__, 0, flags, curproc->p_pid);
 #endif
 	/* Drain fragment size changes out */
-	lockmgr(&fs->lfs_fraglock, LK_EXCLUSIVE, 0);
+	rw_enter(&fs->lfs_fraglock, RW_WRITER);
 
 	sp = fs->lfs_sp = pool_get(&fs->lfs_segpool, PR_WAITOK);
 	sp->bpp = pool_get(&fs->lfs_bpppool, PR_WAITOK);
@@ -562,7 +562,7 @@ lfs_segunlock(struct lfs *fs)
 			wakeup(&fs->lfs_seglock);
 		}
 		/* Reenable fragment size changes */
-		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
+		rw_exit(&fs->lfs_fraglock);
 		if (do_unmark_dirop)
 			lfs_unmark_dirop(fs);
 	} else if (fs->lfs_seglock == 0) {

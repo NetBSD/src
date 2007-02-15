@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_subr.c,v 1.75 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.76 2007/02/15 15:40:53 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.75 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.76 2007/02/15 15:40:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,8 +133,8 @@ LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
 #define PFSPIDHASH(pid)	((pid) & pfs_ihash)
 
-kmutex_t pfs_hashmutex;
-struct simplelock pfs_hash_slock;
+kmutex_t pfs_hashlock;
+kmutex_t pfs_ihash_lock;
 
 #define	ISSET(t, f)	((t) & (f))
 
@@ -177,18 +177,23 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	struct vnode *vp;
 	int error;
 
-	do {
-		if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
-			return (0);
-	} while (!mutex_tryenter(&pfs_hashmutex));
+	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
+		return (0);
 
 	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
-		mutex_exit(&pfs_hashmutex);
 		return (error);
 	}
-
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
+
+	mutex_enter(&pfs_hashlock);
+	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL) {
+		mutex_exit(&pfs_hashlock);
+		ungetnewvnode(vp);
+		FREE(pfs, M_TEMP);
+		return (0);
+	}
+
 	vp->v_data = pfs;
 
 	pfs->pfs_pid = pid;
@@ -310,13 +315,13 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 
 	procfs_hashins(pfs);
 	uvm_vnp_setsize(vp, 0);
-	mutex_exit(&pfs_hashmutex);
+	mutex_exit(&pfs_hashlock);
 
 	*vpp = vp;
 	return (0);
 
  bad:
-	mutex_exit(&pfs_hashmutex);
+	mutex_exit(&pfs_hashlock);
 	FREE(pfs, M_TEMP);
 	ungetnewvnode(vp);
 	return (error);
@@ -534,10 +539,10 @@ vfs_findname(nm, bf, buflen)
 void
 procfs_hashinit()
 {
-	mutex_init(&pfs_hashmutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
 	    M_WAITOK, &pfs_ihash);
-	simple_lock_init(&pfs_hash_slock);
 }
 
 void
@@ -550,7 +555,7 @@ procfs_hashreinit()
 	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
 	    &mask);
 
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	oldhash = pfs_hashtbl;
 	oldmask = pfs_ihash;
 	pfs_hashtbl = hash;
@@ -562,7 +567,7 @@ procfs_hashreinit()
 			LIST_INSERT_HEAD(&hash[val], pp, pfs_hash);
 		}
 	}
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 	hashdone(oldhash, M_UFSMNT);
 }
 
@@ -587,20 +592,20 @@ procfs_hashget(pid, type, fd, mp)
 	struct vnode *vp;
 
 loop:
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pid)];
 	LIST_FOREACH(pp, ppp, pfs_hash) {
 		vp = PFSTOV(pp);
 		if (pid == pp->pfs_pid && pp->pfs_type == type &&
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
 			simple_lock(&vp->v_interlock);
-			simple_unlock(&pfs_hash_slock);
+			mutex_exit(&pfs_ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}
 	}
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 	return (NULL);
 }
 
@@ -616,10 +621,10 @@ procfs_hashins(pp)
 	/* lock the pfsnode, then put it on the appropriate hash list */
 	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
 
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
 	LIST_INSERT_HEAD(ppp, pp, pfs_hash);
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 }
 
 /*
@@ -629,9 +634,9 @@ void
 procfs_hashrem(pp)
 	struct pfsnode *pp;
 {
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	LIST_REMOVE(pp, pfs_hash);
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 }
 
 void

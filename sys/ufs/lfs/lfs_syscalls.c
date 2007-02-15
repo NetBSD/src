@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.120 2007/02/09 21:55:39 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.121 2007/02/15 15:40:54 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.120 2007/02/09 21:55:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.121 2007/02/15 15:40:54 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1003,7 +1003,7 @@ sys_lfs_segwait(struct lwp *l, void *v, register_t *retval)
  * we lfs_vref, and it is the caller's responsibility to lfs_vunref
  * when finished.
  */
-extern struct lock ufs_hashlock;
+extern kmutex_t ufs_hashlock;
 
 int
 lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
@@ -1028,7 +1028,8 @@ lfs_fasthashget(dev_t dev, ino_t ino, struct vnode **vpp)
 }
 
 int
-lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, struct ufs1_dinode *dinp)
+lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
+	     struct ufs1_dinode *dinp)
 {
 	struct inode *ip;
 	struct ufs1_dinode *dip;
@@ -1079,13 +1080,13 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 		return (error);
 	}
 
-	do {
-		error = lfs_fasthashget(dev, ino, vpp);
-		if (error != 0 || *vpp != NULL) {
-			ungetnewvnode(vp);
-			return (error);
-		}
-	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	mutex_enter(&ufs_hashlock);
+	error = lfs_fasthashget(dev, ino, vpp);
+	if (error != 0 || *vpp != NULL) {
+		mutex_exit(&ufs_hashlock);
+		ungetnewvnode(vp);
+		return (error);
+	}
 
 	/* Allocate new vnode/inode. */
 	lfs_vcreate(mp, ino, vp);
@@ -1098,7 +1099,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&ufs_hashlock);
 
 	/*
 	 * XXX

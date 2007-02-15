@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.194 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.195 2007/02/15 15:40:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.194 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.195 2007/02/15 15:40:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.194 2007/01/29 15:42:50 hannken Exp
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
 
-extern struct lock ufs_hashlock;
+extern kmutex_t ufs_hashlock;
 
 extern const struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ffs_specop_opv_desc;
@@ -1442,18 +1442,19 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
+	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 
 	/*
 	 * If someone beat us to it while sleeping in getnewvnode(),
 	 * push back the freshly allocated vnode we don't need, and return.
 	 */
-
-	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
-			ungetnewvnode(vp);
-			return (0);
-		}
-	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	mutex_enter(&ufs_hashlock);
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+		mutex_exit(&ufs_hashlock);
+		ungetnewvnode(vp);
+		pool_put(&ffs_inode_pool, ip);
+		return (0);
+	}
 
 	vp->v_flag |= VLOCKSWORK;
 
@@ -1462,7 +1463,6 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * XXX create another pool for MFS inodes?
 	 */
 
-	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
@@ -1488,7 +1488,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 
 	ufs_ihashins(ip);
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&ufs_hashlock);
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),

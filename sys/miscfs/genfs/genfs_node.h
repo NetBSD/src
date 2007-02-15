@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.14 2006/10/14 09:16:28 yamt Exp $ */
+/* $NetBSD: genfs_node.h,v 1.15 2007/02/15 15:40:53 ad Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -32,6 +32,8 @@
 
 #ifndef	_MISCFS_GENFS_GENFS_NODE_H_
 #define	_MISCFS_GENFS_GENFS_NODE_H_
+
+#include <sys/rwlock.h>
 
 struct vm_page;
 struct kauth_cred;
@@ -73,7 +75,7 @@ struct genfs_ops {
 
 struct genfs_node {
 	const struct genfs_ops	*g_op;		/* ops vector */
-	struct lock		g_glock;	/* getpages lock */
+	krwlock_t		g_glock;	/* getpages lock */
 	int			g_dirtygen;
 };
 

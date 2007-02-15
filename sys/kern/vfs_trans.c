@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.3 2007/02/10 15:51:02 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.4 2007/02/15 15:40:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.3 2007/02/10 15:51:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.4 2007/02/15 15:40:53 ad Exp $");
 
 /*
  * File system transaction operations.
@@ -73,8 +73,7 @@ struct fstrans_mount_info {
 
 static specificdata_key_t lwp_data_key;
 static specificdata_key_t mount_data_key;
-static struct lock vfs_suspend_lock =	/* Serialize suspensions. */
-    LOCK_INITIALIZER(PUSER, "suspwt1", 0, 0);
+static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
 
 POOL_INIT(fstrans_pl, sizeof(struct fstrans_lwp_info), 0, 0, 0,
     "fstrans", NULL);
@@ -95,6 +94,7 @@ fstrans_init(void)
 	KASSERT(error == 0);
 	error = mount_specific_key_create(&mount_data_key, fstrans_mount_dtor);
 	KASSERT(error == 0);
+	mutex_init(&vfs_suspend_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -354,20 +354,20 @@ vfs_suspend(struct mount *mp, int nowait)
 #ifndef NEWVNGATE
 	struct lwp *l = curlwp;	/* XXX */
 #endif /* NEWVNGATE */
-	int error, flags;
+	int error;
 
-	flags = LK_EXCLUSIVE;
-	if (nowait)
-		flags |= LK_NOWAIT;
-	if (lockmgr(&vfs_suspend_lock, flags, NULL) != 0)
-		return EWOULDBLOCK;
+	if (nowait) {
+		if (!mutex_tryenter(&vfs_suspend_lock))
+			return EWOULDBLOCK;
+	} else
+		mutex_enter(&vfs_suspend_lock);
 
 #ifdef NEWVNGATE
 	mutex_enter(&syncer_mutex);
 
 	if ((error = VFS_SUSPENDCTL(mp, SUSPEND_SUSPEND)) != 0) {
 		mutex_exit(&syncer_mutex);
-		lockmgr(&vfs_suspend_lock, LK_RELEASE, NULL);
+		mutex_exit(&vfs_suspend_lock);
 	}
 
 	return error;
@@ -411,14 +411,14 @@ vfs_resume(struct mount *mp)
 #ifdef NEWVNGATE
 	VFS_SUSPENDCTL(mp, SUSPEND_RESUME);
 	mutex_exit(&syncer_mutex);
-	lockmgr(&vfs_suspend_lock, LK_RELEASE, NULL);
+	mutex_exit(&vfs_suspend_lock);
 #else /* NEWVNGATE */
 	if ((mp->mnt_iflag & IMNT_SUSPEND) == 0)
 		return;
 	mp->mnt_iflag &= ~(IMNT_SUSPEND | IMNT_SUSPENDLOW | IMNT_SUSPENDED);
 	wakeup(&mp->mnt_flag);
 
-	lockmgr(&vfs_suspend_lock, LK_RELEASE, NULL);
+	mutex_exit(&vfs_suspend_lock);
 #endif /* NEWVNGATE */
 }
 
