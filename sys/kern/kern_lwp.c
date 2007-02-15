@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.52 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.53 2007/02/15 15:08:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.52 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.53 2007/02/15 15:08:42 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -552,7 +552,10 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	CIRCLEQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
 
-	l2->l_lid = ++p2->p_nlwpid;
+	p2->p_nlwpid++;
+	if (p2->p_nlwpid == 0)
+		p2->p_nlwpid++;
+	l2->l_lid = p2->p_nlwpid;
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
 	p2->p_nlwps++;
 
