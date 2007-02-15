@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.10 2007/02/11 18:33:30 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.11 2007/02/15 10:54:40 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.10 2007/02/11 18:33:30 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.11 2007/02/15 10:54:40 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -747,6 +747,13 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 
 /* End of puffs_fuse operations */
 
+/*
+ * XXX: do this otherwise if/when we grow thread support
+ *
+ * XXX2: does not supply uid, gid or pid currently
+ */
+static struct fuse_context fcon;
+
 /* ARGSUSED3 */
 int
 fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
@@ -797,6 +804,9 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	/* copy fuse ops to their own stucture */
 	(void) memcpy(&fuse->op, ops, sizeof(fuse->op));
 
+	fcon.fuse = fuse;
+	fcon.private_data = userdata;
+
 	/* whilst this (assigning the pu_privdata in the puffs
 	 * usermount struct to be the fuse struct) might seem like
 	 * we are chasing our tail here, the logic is as follows:
@@ -828,6 +838,9 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	po_root->po_path = strdup("/");
 	po_root->po_len = 1;
 
+	if (fuse->op.init)
+		fcon.private_data = fuse->op.init(NULL); /* XXX */
+
 	statvfs(argv[argc - 1], &svfsb); /* XXX - not really the correct dir */
 	if (puffs_start(pu, pu->pu_pn_root, &svfsb) == -1) {
 		err(EXIT_FAILURE, "puffs_start");
@@ -846,4 +859,12 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 	const struct fuse_opt *opts, fuse_opt_proc_t proc)
 {
 	return 0;
+}
+
+/* XXX: threads */
+struct fuse_context *
+fuse_get_context()
+{
+
+	return &fcon;
 }
