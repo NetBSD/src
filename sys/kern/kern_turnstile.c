@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.2 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.3 2007/02/15 20:21:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.3 2007/02/15 20:21:13 ad Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.2 2007/02/09 21:55:31 ad Exp $"
 #include <sys/proc.h> 
 #include <sys/sleepq.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #define	TS_HASH_SIZE	64
 #define	TS_HASH_MASK	(TS_HASH_SIZE - 1)
@@ -324,7 +326,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 	 * then kick the swapper into action.
 	 */
 	if (swapin)
-		wakeup(&proc0);
+		uvm_kick_scheduler();
 }
 
 /*

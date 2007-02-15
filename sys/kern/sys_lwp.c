@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.2 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.3 2007/02/15 20:21:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3 2007/02/15 20:21:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,7 +568,7 @@ sys__lwp_unpark(struct lwp *l, void *v, register_t *retval)
 	swapin = sleepq_remove(sq, t);
 	sleepq_unlock(sq);
 	if (swapin)
-		wakeup(&proc0);
+		uvm_kick_scheduler();
 	LWP_COUNT(lwp_ev_park_targ, 1);
 	return 0;
 }
@@ -693,7 +693,7 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 	}
 	if (swapin)
-		wakeup(&proc0);
+		uvm_kick_scheduler();
 	LWP_COUNT(lwp_ev_park_bcast, unparked);
 	LWP_COUNT(lwp_ev_park_miss, (ntargets - unparked));
 	/* XXXAD return unparked; */

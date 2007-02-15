@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.176 2007/02/10 14:02:01 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177 2007/02/15 20:21:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.176 2007/02/10 14:02:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177 2007/02/15 20:21:13 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -862,7 +862,7 @@ setrunnable(struct lwp *l)
 		lwp_unlock(l);
 	} else {
 		lwp_unlock(l);
-		wakeup(&proc0);
+		uvm_kick_scheduler();
 	}
 }
 

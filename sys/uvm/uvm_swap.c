@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.116 2007/02/09 21:55:43 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.117 2007/02/15 20:21:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.116 2007/02/09 21:55:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.117 2007/02/15 20:21:13 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -215,7 +215,7 @@ LIST_HEAD(swap_priority, swappri);
 static struct swap_priority swap_priority;
 
 /* locks */
-static struct lock swap_syscall_lock;
+static krwlock_t swap_syscall_lock;
 
 /*
  * prototypes
@@ -258,8 +258,12 @@ uvm_swap_init(void)
 
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
-	lockinit(&swap_syscall_lock, PVM, "swapsys", 0, 0);
+	rw_init(&swap_syscall_lock);
+	cv_init(&uvm.scheduler_cv, "schedule");
 	simple_lock_init(&uvm.swap_data_lock);
+
+	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
+	mutex_init(&uvm.scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
@@ -448,7 +452,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * ensure serialized syscall access by grabbing the swap_syscall_lock
 	 */
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&swap_syscall_lock, RW_WRITER);
 
 	userpath = malloc(SWAP_PATH_MAX, M_TEMP, M_WAITOK);
 	/*
@@ -677,7 +681,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 out:
 	free(userpath, M_TEMP);
-	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
+	rw_exit(&swap_syscall_lock);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
 	return (error);
@@ -696,9 +700,9 @@ void
 uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 {
 
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&swap_syscall_lock, RW_READER);
 	uvm_swap_stats_locked(cmd, sep, sec, retval);
-	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
+	rw_exit(&swap_syscall_lock);
 }
 
 static void
