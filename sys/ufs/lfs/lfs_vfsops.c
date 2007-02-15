@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.227 2007/02/15 15:40:54 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.228 2007/02/15 17:47:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.227 2007/02/15 15:40:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.228 2007/02/15 17:47:56 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -974,6 +974,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	free(fs->lfs_suflags[1], M_SEGMENT);
 	free(fs->lfs_suflags, M_SEGMENT);
 	lfs_free_resblks(fs);
+	rw_destroy(&fs->lfs_fraglock);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
 
