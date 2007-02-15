@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.4 2007/02/09 23:36:17 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.5 2007/02/15 13:07:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -83,6 +83,7 @@ struct psshfs_node {
 	size_t dentnext;
 	time_t dentread;
 	int childcount;
+	int reclaimed;
 
 	time_t attrread;
 };
@@ -207,5 +208,6 @@ struct puffs_node *allocnode(struct puffs_usermount *, struct puffs_node *,
 			    const char *, const struct vattr *);
 struct psshfs_dir *direnter(struct puffs_node *, const char *);
 void nukenode(struct puffs_node *, const char *, int);
+void doreclaim(struct puffs_node *);
 
 #endif /* PSSHFS_H_ */
