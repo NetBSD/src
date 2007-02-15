@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.4 2007/01/15 00:43:07 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.5 2007/02/15 12:54:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 	PUFFSOP_SET(pops, puffs_null, node, readdir);
 	PUFFSOP_SET(pops, puffs_null, node, read);
 	PUFFSOP_SET(pops, puffs_null, node, write);
+	PUFFSOP_SET(pops, puffs_null, node, reclaim);
 
 	if ((pu = puffs_mount(pops, argv[1], mntflags, "pnullfs", NULL,
 	    pflags, 0)) == NULL)
