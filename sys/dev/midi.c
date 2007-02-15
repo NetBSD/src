@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.51 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: midi.c,v 1.52 2007/02/15 18:12:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.51 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.52 2007/02/15 18:12:05 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -673,6 +673,7 @@ midi_softintr_rd(void *cookie)
 			psignal(p, SIGIO);
 		mutex_exit(&proclist_mutex);
 	}
+	midi_wakeup(&sc->rchan);
 	selnotify(&sc->rsel, 0); /* filter will spin if locked */
 }
 
@@ -688,6 +689,7 @@ midi_softintr_wr(void *cookie)
 			psignal(p, SIGIO);
 		mutex_exit(&proclist_mutex);
 	}
+	midi_wakeup(&sc->wchan);
 	selnotify(&sc->wsel, 0); /* filter will spin if locked */
 }
 
@@ -781,7 +783,6 @@ sxp_again:
 		MIDI_BUF_WRAP(idx);
 		MIDI_BUF_PRODUCER_WBACK(mb,buf);
 		MIDI_BUF_PRODUCER_WBACK(mb,idx);
-		midi_wakeup(&sc->rchan);
 		MIDI_IN_UNLOCK(sc,s);
 		softintr_schedule(sc->sih_rd);
 		break;
@@ -1025,7 +1026,6 @@ midi_rcv_asense(void *arg)
 		sc->rcv_eof = 1;
 		sc->rcv_quiescent = 0;
 		sc->rcv_expect_asense = 0;
-		midi_wakeup(&sc->rchan);
 		MIDI_IN_UNLOCK(sc,s);
 		softintr_schedule(sc->sih_rd);
 		return;
@@ -1303,7 +1303,6 @@ midi_intr_out(struct midi_softc *sc)
 		sc->pbus = 0;
 		callout_schedule(&sc->xmt_asense_co, MIDI_XMT_ASENSE_PERIOD);
 	}
-	midi_wakeup(&sc->wchan);
 	MIDI_OUT_UNLOCK(sc,s);
 	softintr_schedule(sc->sih_wr);
 
