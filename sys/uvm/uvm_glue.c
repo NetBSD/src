@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.98 2007/02/09 21:55:43 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.99 2007/02/15 20:21:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.98 2007/02/09 21:55:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.99 2007/02/15 20:21:13 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -451,6 +451,22 @@ uvm_swapin(struct lwp *l)
 }
 
 /*
+ * uvm_kick_scheduler: kick the scheduler into action if not running.
+ *
+ * - called when swapped out processes have been awoken.
+ */
+
+void
+uvm_kick_scheduler(void)
+{
+
+	mutex_enter(&uvm.scheduler_mutex);
+	uvm.scheduler_kicked = TRUE;
+	cv_signal(&uvm.scheduler_cv);
+	mutex_exit(&uvm.scheduler_mutex);
+}
+
+/*
  * uvm_scheduler: process zero main loop
  *
  * - attempt to swapin every swaped-out, runnable process in order of
@@ -465,75 +481,87 @@ uvm_scheduler(void)
 	int pri;
 	int ppri;
 
-loop:
-#ifdef DEBUG
-	while (!enableswap)
-		tsleep(&proc0, PVM, "noswap", 0);
-#endif
-	ll = NULL;		/* process to choose */
-	ppri = INT_MIN;	/* its priority */
+	l = curlwp;
+	lwp_lock(l);
+	lwp_changepri(l, PVM);
+	lwp_unlock(l);
 
-	mutex_enter(&proclist_mutex);
-	LIST_FOREACH(l, &alllwp, l_list) {
-		/* is it a runnable swapped out process? */
-		if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
-			pri = l->l_swtime + l->l_slptime -
-			    (l->l_proc->p_nice - NZERO) * 8;
-			if (pri > ppri) {   /* higher priority?  remember it. */
-				ll = l;
-				ppri = pri;
+	for (;;) {
+#ifdef DEBUG
+		mutex_enter(&uvm.scheduler_mutex);
+		while (!enableswap)
+			cv_wait(&uvm.scheduler_cv, &uvm.scheduler_mutex);
+		mutex_exit(&uvm.scheduler_mutex);
+#endif
+		ll = NULL;		/* process to choose */
+		ppri = INT_MIN;		/* its priority */
+
+		mutex_enter(&proclist_mutex);
+		LIST_FOREACH(l, &alllwp, l_list) {
+			/* is it a runnable swapped out process? */
+			if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
+				pri = l->l_swtime + l->l_slptime -
+				    (l->l_proc->p_nice - NZERO) * 8;
+				if (pri > ppri) {   /* higher priority? */
+					ll = l;
+					ppri = pri;
+				}
 			}
 		}
-	}
-	/*
-	 * XXXSMP: possible unlock/sleep race between here and the
-	 * "scheduler" tsleep below..
-	 */
-	mutex_exit(&proclist_mutex);
+		mutex_exit(&proclist_mutex);
+#ifdef DEBUG
+		if (swapdebug & SDB_FOLLOW)
+			printf("scheduler: running, procp %p pri %d\n", ll,
+			    ppri);
+#endif
+		/*
+		 * Nothing to do, back to sleep
+		 */
+		if ((l = ll) == NULL) {
+			mutex_enter(&uvm.scheduler_mutex);
+			if (uvm.scheduler_kicked == FALSE)
+				cv_wait(&uvm.scheduler_cv,
+				    &uvm.scheduler_mutex);
+			uvm.scheduler_kicked = FALSE;
+			mutex_exit(&uvm.scheduler_mutex);
+			continue;
+		}
 
+		/*
+		 * we have found swapped out process which we would like
+		 * to bring back in.
+		 *
+		 * XXX: this part is really bogus cuz we could deadlock
+		 * on memory despite our feeble check
+		 */
+		if (uvmexp.free > atop(USPACE)) {
 #ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: running, procp %p pri %d\n", ll, ppri);
+			if (swapdebug & SDB_SWAPIN)
+				printf("swapin: pid %d(%s)@%p, pri %d "
+				    "free %d\n", l->l_proc->p_pid,
+				    l->l_proc->p_comm, l->l_addr, ppri,
+				    uvmexp.free);
 #endif
-	/*
-	 * Nothing to do, back to sleep
-	 */
-	if ((l = ll) == NULL) {
-		tsleep(&proc0, PVM, "scheduler", 0);
-		goto loop;
+			uvm_swapin(l);
+		} else {
+			/*
+			 * not enough memory, jab the pageout daemon and
+			 * wait til the coast is clear
+			 */
+#ifdef DEBUG
+			if (swapdebug & SDB_FOLLOW)
+				printf("scheduler: no room for pid %d(%s),"
+				    " free %d\n", l->l_proc->p_pid,
+				    l->l_proc->p_comm, uvmexp.free);
+#endif
+			uvm_wait("schedpwait");
+#ifdef DEBUG
+			if (swapdebug & SDB_FOLLOW)
+				printf("scheduler: room again, free %d\n",
+				    uvmexp.free);
+#endif
+		}
 	}
-
-	/*
-	 * we have found swapped out process which we would like to bring
-	 * back in.
-	 *
-	 * XXX: this part is really bogus cuz we could deadlock on memory
-	 * despite our feeble check
-	 */
-	if (uvmexp.free > atop(USPACE)) {
-#ifdef DEBUG
-		if (swapdebug & SDB_SWAPIN)
-			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
-	     l->l_proc->p_pid, l->l_proc->p_comm, l->l_addr, ppri, uvmexp.free);
-#endif
-		uvm_swapin(l);
-		goto loop;
-	}
-	/*
-	 * not enough memory, jab the pageout daemon and wait til the coast
-	 * is clear
-	 */
-#ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: no room for pid %d(%s), free %d\n",
-	   l->l_proc->p_pid, l->l_proc->p_comm, uvmexp.free);
-#endif
-	uvm_wait("schedpwait");
-#ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: room again, free %d\n", uvmexp.free);
-#endif
-	goto loop;
 }
 
 /*
