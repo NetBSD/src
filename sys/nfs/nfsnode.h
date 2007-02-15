@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.60 2006/12/28 00:39:03 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.61 2007/02/15 16:01:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _NFS_NFSNODE_H_
 #define _NFS_NFSNODE_H_
+
+#include <sys/mutex.h>
 
 #ifndef _NFS_NFS_H_
 #include <nfs/nfs.h>
@@ -110,7 +112,7 @@ struct nfsnode_reg {
 	off_t nreg_pushedhi;		/* Last block in range */
 	off_t nreg_pushlo;		/* 1st block in commit range */
 	off_t nreg_pushhi;		/* Last block in range */
-	struct lock nreg_commitlock;	/* Serialize commits XXX */
+	kmutex_t nreg_commitlock;	/* Serialize commits XXX */
 	int nreg_commitflags;
 	int nreg_error;			/* Save write error value */
 };

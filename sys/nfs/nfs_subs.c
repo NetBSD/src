@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.179 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.180 2007/02/15 16:01:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.179 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.180 2007/02/15 16:01:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1667,7 +1667,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			extern int (**fifo_nfsv2nodeop_p) __P((void *));
 			vp->v_op = fifo_nfsv2nodeop_p;
 		} else if (vp->v_type == VREG) {
-			lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
+			mutex_init(&np->n_commitlock, MUTEX_DEFAULT, IPL_NONE);
 		} else if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
 			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
@@ -2639,7 +2639,7 @@ nfs_clearcommit(mp)
 	struct vm_page *pg;
 	struct nfsmount *nmp = VFSTONFS(mp);
 
-	lockmgr(&nmp->nm_writeverflock, LK_EXCLUSIVE, NULL);
+	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
 
 	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
@@ -2659,7 +2659,7 @@ nfs_clearcommit(mp)
 	simple_lock(&nmp->nm_slock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	simple_unlock(&nmp->nm_slock);
-	lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
+	rw_exit(&nmp->nm_writeverflock);
 }
 
 void
