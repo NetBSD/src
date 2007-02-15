@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.15 2007/02/01 08:48:32 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.16 2007/02/15 13:01:26 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -524,7 +524,11 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 			if (del_ph1->scr)
 				SCHED_KILL(del_ph1->scr);
 
-			purge_remote(del_ph1);
+			/*
+			 * Do not delete IPsec SAs when receiving an IKE delete notification.
+			 * Just delete the IKE SA.
+			 */
+			isakmp_ph1expire(del_ph1);
 		}
 		break;
 
