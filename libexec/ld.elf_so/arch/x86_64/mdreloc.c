@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.27 2006/05/20 23:38:27 dan Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.28 2007/02/15 15:44:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.27 2006/05/20 23:38:27 dan Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.28 2007/02/15 15:44:28 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -131,12 +131,16 @@ int
 _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
+#define COMBRELOC
+#ifdef COMBRELOC
+	unsigned long lastsym = -1;
+#endif
+	const Elf_Sym *def = NULL;
+	const Obj_Entry *defobj =NULL;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
 		Elf64_Addr *where64;
 		Elf32_Addr *where32;
-		const Elf_Sym *def;
-		const Obj_Entry *defobj;
 		Elf64_Addr tmp64;
 		Elf32_Addr tmp32;
 		unsigned long	 symnum;
@@ -152,9 +156,17 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 		case R_TYPE(32):	/* word32 S + A, truncate */
 		case R_TYPE(32S):	/* word32 S + A, signed truncate */
 		case R_TYPE(GOT32):	/* word32 G + A (XXX can we see these?) */
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
+#ifdef COMBRELOC
+			if (symnum != lastsym) {
+#endif
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+#ifdef COMBRELOC
+				lastsym = symnum;
+			}
+#endif
 			tmp32 = (Elf32_Addr)(u_long)(defobj->relocbase +
 			    def->st_value + rela->r_addend);
 
@@ -166,10 +178,17 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    defobj->path));
 			break;
 		case R_TYPE(64):	/* word64 S + A */
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
+#ifdef COMBRELOC
+			if (symnum != lastsym) {
+#endif
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+#ifdef COMBRELOC
+				lastsym = symnum;
+			}
+#endif
 			tmp64 = (Elf64_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend);
 
@@ -180,9 +199,17 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    obj->path, (void *)*where64, defobj->path));
 			break;
 		case R_TYPE(PC32):	/* word32 S + A - P */
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
+#ifdef COMBRELOC
+			if (symnum != lastsym) {
+#endif
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+#ifdef COMBRELOC
+				lastsym = symnum;
+			}
+#endif
 			tmp32 = (Elf32_Addr)(u_long)(defobj->relocbase +
 			    def->st_value + rela->r_addend -
 			    (Elf64_Addr)where64);
@@ -194,10 +221,17 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 			    defobj->path));
 			break;
 		case R_TYPE(GLOB_DAT):	/* word64 S */
-			def = _rtld_find_symdef(symnum, obj, &defobj, false);
-			if (def == NULL)
-				return -1;
-
+#ifdef COMBRELOC
+			if (symnum != lastsym) {
+#endif
+				def = _rtld_find_symdef(symnum, obj, &defobj,
+				    false);
+				if (def == NULL)
+					return -1;
+#ifdef COMBRELOC
+				lastsym = symnum;
+			}
+#endif
 			tmp64 = (Elf64_Addr)(defobj->relocbase + def->st_value);
 
 			if (*where64 != tmp64)
