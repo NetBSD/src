@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17 2007/02/10 03:30:13 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.18 2007/02/15 12:22:04 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #define	SI_SOFTSERIAL	0	/* serial software interrupts */
 #define	SI_SOFTNET	1	/* network software interrupts */
 #define	SI_SOFTCLOCK	2	/* clock software interrupts */
-#define	SI_SOFT	3	/* other software interrupts */
+#define	SI_SOFT		3	/* other software interrupts */
 
 #define	SI_NQUEUES	4
 
