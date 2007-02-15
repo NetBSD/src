@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.78 2007/02/10 19:10:24 macallan Exp $
+#	$NetBSD: files.macppc,v 1.79 2007/02/15 02:06:48 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -159,6 +159,12 @@ defflag opt_pmu.h	PMU_VERBOSE
 device pmu : adb_bus, i2cbus
 attach pmu at obio
 file arch/macppc/dev/pmu.c			pmu needs-flag
+define pmu_bus {}
+
+device battery : sysmon_envsys, sysmon_power, sysmon_taskq
+attach battery at pmu_bus
+file arch/macppc/dev/battery.c			battery
+defflag opt_battery.h	BATTERY_DEBUG
 
 device adb {}
 attach adb at obio
