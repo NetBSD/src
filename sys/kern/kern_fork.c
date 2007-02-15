@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.130 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131 2007/02/15 15:13:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.130 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131 2007/02/15 15:13:10 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -220,6 +220,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	boolean_t	inmem;
+	int		tmp;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -498,6 +499,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Make child runnable, set start time, and add to run queue except
 	 * if the parent requested the child to start in SSTOP state.
 	 */
+	tmp = (p2->p_userret != NULL ? L_WUSERRET : 0);
 	mutex_enter(&proclist_mutex);
 	mutex_enter(&p2->p_smutex);
 
@@ -510,12 +512,14 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		p2->p_waited = 0;
 		p1->p_nstopchild++;
 		l2->l_stat = LSSTOP;
+		l2->l_flag |= tmp;
 		lwp_unlock(l2);
 	} else {
 		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
 		lwp_lock(l2);
 		l2->l_stat = LSRUN;
+		l2->l_flag |= tmp;
 		setrunqueue(l2);
 		lwp_unlock(l2);
 	}

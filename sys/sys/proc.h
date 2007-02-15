@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.234 2007/02/11 10:47:38 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.235 2007/02/15 15:13:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -284,6 +284,7 @@ struct proc {
 
 	struct vnode 	*p_textvp;	/*    Vnode of executable */
 
+	void	     (*p_userret)(void);/* p: return-to-user hook */
 	const struct emul *p_emul;	/*    Emulation information */
 	void		*p_emuldata;	/*    Per-process emulation data, or NULL.
 					 *    Malloc type M_EMULDATA */
@@ -324,7 +325,6 @@ struct proc {
 	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
 	struct rusage 	*p_ru;		/*    Exit information. XXX */
-
 	struct mdproc	p_md;		/*    Any machine-dependent fields */
 };
 
