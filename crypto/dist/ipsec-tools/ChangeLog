@@ -1,6 +1,9 @@
 2007-02-15  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp.c: Fixed the way phase1/2 messages are
 	  sent/resent, to avoid zombie handles and acces to freed memory.
+	* src/racoon/isakmp_inf.c: Just expire a ph1 handle when receiving
+	  a DELETE-SA instead of calling purge_remote(). Reported by
+	  "Uncle Pedro" on Sourceforge's bugtracker.
 
 2007-02-02  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/cfparse.y: Fixed a check of NAT-T support in libipsec. 
