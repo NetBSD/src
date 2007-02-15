@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3 2007/02/15 15:49:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ typedef struct kmutex kmutex_t;
 void	mutex_vector_enter(kmutex_t *);
 void	mutex_vector_exit(kmutex_t *);
 void	mutex_spin_retry(kmutex_t *);
+void	mutex_wakeup(kmutex_t *);
 
 #endif	/* __MUTEX_PRIVATE */
 
