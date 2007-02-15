@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.16 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.17 2007/02/15 15:13:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.16 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17 2007/02/15 15:13:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -133,23 +133,18 @@ linux_sendsig(ksi, mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	linux_sigset_t lmask;
 	char *sp;
-	int error;
-	sigset_t tmask;
-
-	tmask = *mask;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-		    p->p_sigctx.ps_sigstk.ss_size);
+		sp = ((caddr_t)l->l_sigstk.ss_sp +
+		    l->l_sigstk.ss_size);
 	else
 		sp = (caddr_t)tf->tf_rsp - 128;
-
 
 	/* 
 	 * Save FPU state, if any 
@@ -158,32 +153,8 @@ linux_sendsig(ksi, mask)
 		sp = (char *)
 		    (((long)sp - sizeof(struct linux__fpstate)) & ~0xfUL);
 		fpsp = (struct linux__fpstate *)sp;
-
-		mutex_exit(&p->p_smutex);
-		(void)process_read_fpregs(l, &fpregs);
-		bzero(&fpstate, sizeof(fpstate));
-		fpstate.cwd = fpregs.fp_fcw;
-		fpstate.swd = fpregs.fp_fsw;
-		fpstate.twd = fpregs.fp_ftw;
-		fpstate.fop = fpregs.fp_fop;
-		fpstate.rip = fpregs.fp_rip;
-		fpstate.rdp = fpregs.fp_rdp;
-		fpstate.mxcsr = fpregs.fp_mxcsr;
-		fpstate.mxcsr_mask = fpregs.fp_mxcsr_mask;
-		memcpy(&fpstate.st_space, &fpregs.fp_st, 
-		    sizeof(fpstate.st_space));
-		memcpy(&fpstate.xmm_space, &fpregs.fp_xmm, 
-		    sizeof(fpstate.xmm_space));
-		error = copyout(&fpstate, fpsp, sizeof(fpstate));
-		mutex_enter(&p->p_smutex)
-
-		if (error != 0) {
-			sigexit(l, SIGILL);
-			return;
-		}	
-	} else {
+	} else
 		fpsp = NULL;
-	}
 
 	/* 
 	 * Populate the rt_sigframe 
@@ -206,12 +177,12 @@ linux_sendsig(ksi, mask)
 	sigframe.uc.luc_link = NULL;
 
 	/* This is used regardless of SA_ONSTACK in Linux */
-	sigframe.uc.luc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
-	sigframe.uc.luc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+	sigframe.uc.luc_stack.ss_sp = l->l_sigstk.ss_sp;
+	sigframe.uc.luc_stack.ss_size = l->l_sigstk.ss_size;
 	sigframe.uc.luc_stack.ss_flags = 0;
-	if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	if (l->l_sigstk.ss_flags & SS_ONSTACK)
 		sigframe.uc.luc_stack.ss_flags |= LINUX_SS_ONSTACK;
-	if (p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE)
+	if (l->l_sigstk.ss_flags & SS_DISABLE)
 		sigframe.uc.luc_stack.ss_flags |= LINUX_SS_DISABLE;
 
 	sigframe.uc.luc_mcontext.r8 = tf->tf_r8;
@@ -294,7 +265,32 @@ linux_sendsig(ksi, mask)
 
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
-	error = copyout(&sigframe, sp, sizeof(sigframe));
+	error = 0;
+
+	/* 
+	 * Save FPU state, if any 
+	 */
+	if (fpsp != NULL) {
+		(void)process_read_fpregs(l, &fpregs);
+		bzero(&fpstate, sizeof(fpstate));
+		fpstate.cwd = fpregs.fp_fcw;
+		fpstate.swd = fpregs.fp_fsw;
+		fpstate.twd = fpregs.fp_ftw;
+		fpstate.fop = fpregs.fp_fop;
+		fpstate.rip = fpregs.fp_rip;
+		fpstate.rdp = fpregs.fp_rdp;
+		fpstate.mxcsr = fpregs.fp_mxcsr;
+		fpstate.mxcsr_mask = fpregs.fp_mxcsr_mask;
+		memcpy(&fpstate.st_space, &fpregs.fp_st, 
+		    sizeof(fpstate.st_space));
+		memcpy(&fpstate.xmm_space, &fpregs.fp_xmm, 
+		    sizeof(fpstate.xmm_space));
+		error = copyout(&fpstate, fpsp, sizeof(fpstate));
+	}
+
+	if (error == 0)
+		error = copyout(&sigframe, sp, sizeof(sigframe));
+
 	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {
@@ -312,7 +308,7 @@ linux_sendsig(ksi, mask)
 	 * Remember we use signal stack
 	 */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	return;
 }
 
