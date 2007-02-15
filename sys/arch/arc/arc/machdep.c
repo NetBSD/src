@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2007/02/15 20:32:48 ad Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2007/02/15 20:32:48 ad Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -173,7 +173,6 @@ struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
-int	ncpu = 1;		/* At least one CPU in the system */
 int	cpuspeed = 150;		/* approx CPU clock [MHz] */
 vsize_t kseg2iobufsize = 0;	/* to reserve PTEs for KSEG2 I/O space */
 struct arc_bus_space arc_bus_io;/* Bus tag for bus.h macros */

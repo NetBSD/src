@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.95 2007/02/09 21:55:30 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.96 2007/02/15 20:32:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.95 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96 2007/02/15 20:32:48 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -177,25 +177,11 @@ dcopyout(l, kaddr, uaddr, len)
 #else /* !KTRACE */
 #define dcopyout(l, kaddr, uaddr, len) copyout(kaddr, uaddr, len)
 #endif /* KTRACE */
-#ifndef MULTIPROCESSOR
-#define	sysctl_ncpus()	(1)
-#else /* MULTIPROCESSOR */
+
 #ifndef CPU_INFO_FOREACH
 #define CPU_INFO_ITERATOR int
 #define CPU_INFO_FOREACH(cii, ci) cii = 0, ci = curcpu(); ci != NULL; ci = NULL
 #endif
-static int
-sysctl_ncpus(void)
-{
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	int ncpus = 0;
-	for (CPU_INFO_FOREACH(cii, ci))
-		ncpus++;
-	return (ncpus);
-}
-#endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC
 static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
@@ -1521,7 +1507,7 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 #else /* MULTIPROCESSOR */
 
 	uint64_t *cp_time = NULL;
-	int error, n = sysctl_ncpus(), i;
+	int error, n = ncpu, i;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
@@ -2538,7 +2524,7 @@ sysctl_kern_cpid(SYSCTLFN_ARGS)
 
 #else /* MULTIPROCESSOR */
 	uint64_t *cp_id = NULL;
-	int error, n = sysctl_ncpus();
+	int error, n = ncpu;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
@@ -2659,10 +2645,8 @@ sysctl_hw_cnmagic(SYSCTLFN_ARGS)
 static int
 sysctl_hw_ncpu(SYSCTLFN_ARGS)
 {
-	int ncpu;
 	struct sysctlnode node;
 
-	ncpu = sysctl_ncpus();
 	node = *rnode;
 	node.sysctl_data = &ncpu;
 
