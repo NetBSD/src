@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.12 2007/02/15 17:06:24 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.13 2007/02/15 18:35:16 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.12 2007/02/15 17:06:24 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.13 2007/02/15 18:35:16 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -130,15 +130,18 @@ puffs_fuse_fill_dir(void *buf, const char *name,
 	const struct stat *stbuf, off_t off)
 {
 	struct fuse_dirh *deh = buf;
+	ino_t dino;
 	uint8_t dtype;
 
-	/* XXX: this is hacked *purely* for hellofs, so fiXXXme */
-	if (*name == '.')
-		dtype = DT_DIR;
-	else
-		dtype = DT_REG;
+	if (stbuf == NULL) {
+		dtype = DT_UNKNOWN;
+		dino = fakeino++;
+	} else {
+		dtype = puffs_vtype2dt(puffs_mode2vt(stbuf->st_mode));
+		dino = stbuf->st_ino;
+	}
 
-	return !puffs_nextdent(&deh->dent, name, fakeino++, dtype,&deh->reslen);
+	return !puffs_nextdent(&deh->dent, name, dino, dtype, &deh->reslen);
 }
 
 static int
@@ -147,13 +150,9 @@ puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 	ino_t dino;
 	int dtype;
 
-	/* XXX: this is hacked *purely* for cddafs, so fiXXXme */
-	if (type == 0) {
-		if (*name == '.')
-			dtype = DT_DIR;
-		else
-			dtype = DT_REG;
-	} else
+	if (type == 0)
+		dtype = DT_UNKNOWN;
+	else
 		dtype = type;
 
 	if (ino)
@@ -282,7 +281,7 @@ puffs_fuse_node_readlink(struct puffs_cc *pcc, void *opc,
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
 	struct fuse		*fuse;
-	const char		*path = PNPATH(pn);
+	const char		*path = PNPATH(pn), *p;
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -294,9 +293,14 @@ puffs_fuse_node_readlink(struct puffs_cc *pcc, void *opc,
 	ret = (*fuse->op.readlink)(path, linkname, *linklen);
 
 	if (ret == 0) {
+		p = memchr(linkname, '\0', *linklen);
+		if (!p)
+			return EINVAL;
+
+		*linklen -= p - linkname;
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* make the special node */
