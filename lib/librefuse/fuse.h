@@ -64,6 +64,15 @@ struct fuse_opt {
 	int32_t		value;
 };
 
+/* equivalent'ish of puffs_cc */
+struct fuse_context {
+	struct fuse	*fuse;
+	uid_t		uid;
+	gid_t		gid;
+	pid_t		pid;
+	void		*private_data;
+};
+
 #define FUSE_OPT_KEY(templ, key) { templ, -1U, key }
 
 #define FUSE_OPT_END { .templ = NULL }
@@ -150,6 +159,7 @@ typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
 int fuse_opt_add_arg(struct fuse_args *, const char *);
 int fuse_opt_parse(struct fuse_args *, void *, const struct fuse_opt *, fuse_opt_proc_t);
 int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *);
+struct fuse_context *fuse_get_context(void);
 
 
 #define fuse_main(argc, argv, op) \
