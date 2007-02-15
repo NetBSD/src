@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.59 2007/02/09 23:53:24 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.60 2007/02/15 15:39:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.59 2007/02/09 23:53:24 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.60 2007/02/15 15:39:38 yamt Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -418,12 +418,17 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	self = pthread__self();
 
 	pthread_spinlock(self, &pthread__deadqueue_lock);
-	if (!PTQ_EMPTY(&pthread__deadqueue)) {
-		newthread = PTQ_FIRST(&pthread__deadqueue);
-		PTQ_REMOVE(&pthread__deadqueue, newthread, pt_allq);
-		pthread_spinunlock(self, &pthread__deadqueue_lock);
-	} else {
-		pthread_spinunlock(self, &pthread__deadqueue_lock);
+	newthread = PTQ_FIRST(&pthread__deadqueue);
+	if (newthread != NULL) {
+#ifndef PTHREAD_SA
+		if (_lwp_kill(newthread->pt_lid, 0) == 0 || errno != ESRCH)
+			newthread = NULL;
+		else
+#endif
+			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_allq);
+	}
+	pthread_spinunlock(self, &pthread__deadqueue_lock);
+	if (newthread == NULL) {
 		/* Set up a stack and allocate space for a pthread_st. */
 		ret = pthread__stackalloc(&newthread);
 		if (ret != 0) {
@@ -720,7 +725,6 @@ pthread_exit(void *retval)
 		pthread_spinunlock(self, &pthread__allqueue_lock);
 #else
 		pthread_spinunlock(self, &pthread__deadqueue_lock);
-		/* XXXLWP race against stack being reclaimed. */
 		_lwp_exit();
 #endif
 	} else {
