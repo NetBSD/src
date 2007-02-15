@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.11 2007/02/10 17:34:46 nakayama Exp $	*/
+/*	$NetBSD: lock.h,v 1.12 2007/02/15 15:27:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -101,19 +101,25 @@ mb_memory(void)
 static __inline void
 mb_read(void)
 {
-	__asm volatile("sync" ::: "memory");
+	__asm volatile(
+	    "	.set push\n"
+	    "	.set mips2\n"
+	    "	sync\n"
+	    "	.set pop"
+	    ::: "memory"
+	);
 }
 
 static __inline void
 mb_write(void)
 {
-	__asm volatile("sync" ::: "memory");
+	mb_read();
 }
 
 static __inline void
 mb_memory(void)
 {
-	__asm volatile("sync" ::: "memory");
+	mb_read();
 }
 #endif	/* MIPS1 */
 
