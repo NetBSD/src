@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3 2007/02/15 22:52:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -204,6 +204,12 @@ static inline void
 MUTEX_RELEASE(kmutex_t *mtx)
 {
 	mtx->mtx_owner = 0;
+	__cpu_simple_unlock(&mtx->mtx_lock);
+}
+
+static inline void
+MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
+{
 	__cpu_simple_unlock(&mtx->mtx_lock);
 }
 
