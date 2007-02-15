@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.234 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.235 2007/02/15 09:02:12 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7203,7 +7203,7 @@ Lsw_havectx:
 
 #ifdef SCHED_DEBUG
 	mov	%o0, %g1
-	mov	%i7, %g1
+	mov	%i7, %g2
 	save	%sp, -CC64FSZ, %sp
 	GLOBTOLOC
 	set	1f, %o0
