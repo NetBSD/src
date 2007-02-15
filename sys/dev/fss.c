@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.30 2007/01/19 14:49:09 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.31 2007/02/15 15:40:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.30 2007/01/19 14:49:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.31 2007/02/15 15:40:51 ad Exp $");
 
 #include "fss.h"
 
@@ -163,7 +163,7 @@ fssattach(int num)
 		sc->sc_unit = i;
 		sc->sc_bdev = NODEV;
 		simple_lock_init(&sc->sc_slock);
-		lockinit(&sc->sc_lock, PRIBIO, "fsslock", 0, 0);
+		mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
 		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	}
 }
@@ -274,29 +274,29 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case FSSIOCSET:
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_lock);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
 		else if ((sc->sc_flags & FSS_ACTIVE) != 0)
 			error = EBUSY;
 		else
 			error = fss_create_snapshot(sc, fss, l);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case FSSIOCCLR:
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_lock);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
 		else if ((sc->sc_flags & FSS_ACTIVE) == 0)
 			error = ENXIO;
 		else
 			error = fss_delete_snapshot(sc, l);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case FSSIOCGET:
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_lock);
 		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
 		case FSS_ACTIVE:
 			memcpy(fsg->fsg_mount, sc->sc_mntname, MNAMELEN);
@@ -318,7 +318,7 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			error = ENXIO;
 			break;
 		}
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case FSSIOFSET:
