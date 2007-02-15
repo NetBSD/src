@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.146 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.147 2007/02/15 16:01:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.146 2006/12/27 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.147 2007/02/15 16:01:51 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -966,7 +966,7 @@ nfs_doio_write(bp, uiop)
 #ifndef NFS_V2_ONLY
 again:
 #endif
-	lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
+	rw_enter(&nmp->nm_writeverflock, RW_READER);
 
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
@@ -1029,7 +1029,7 @@ again:
 
 		off = uiop->uio_offset;
 		cnt = bp->b_bcount;
-		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&np->n_commitlock);
 		if (!nfs_in_committed_range(vp, off, bp->b_bcount)) {
 			boolean_t pushedrange;
 			if (nfs_in_tobecommitted_range(vp, off, bp->b_bcount)) {
@@ -1050,8 +1050,8 @@ again:
 		} else {
 			error = 0;
 		}
-		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
-		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
+		mutex_exit(&np->n_commitlock);
+		rw_exit(&nmp->nm_writeverflock);
 		if (!error) {
 			/*
 			 * pages are now on stable storage.
@@ -1085,7 +1085,7 @@ again:
 		/*
 		 * we need to commit pages later.
 		 */
-		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&np->n_commitlock);
 		nfs_add_tobecommitted_range(vp, off, cnt);
 		/*
 		 * if there can be too many uncommitted pages, commit them now.
@@ -1113,16 +1113,16 @@ again:
 			}
 			simple_unlock(&uobj->vmobjlock);
 		}
-		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		mutex_exit(&np->n_commitlock);
 	} else
 #endif
 	if (!error) {
 		/*
 		 * pages are now on stable storage.
 		 */
-		lockmgr(&np->n_commitlock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&np->n_commitlock);
 		nfs_del_committed_range(vp, off, cnt);
-		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		mutex_exit(&np->n_commitlock);
 		simple_lock(&uobj->vmobjlock);
 		for (i = 0; i < npages; i++) {
 			pgs[i]->flags &= ~(PG_NEEDCOMMIT | PG_RDONLY);
@@ -1137,7 +1137,7 @@ again:
 		np->n_flag |= NWRITEERR;
 	}
 
-	lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
+	rw_exit(&nmp->nm_writeverflock);
 
 	if (stalewriteverf) {
 		nfs_clearcommit(vp->v_mount);
@@ -1168,9 +1168,9 @@ nfs_doio_phys(bp, uiop)
 
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
-		lockmgr(&nmp->nm_writeverflock, LK_SHARED, NULL);
+		rw_enter(&nmp->nm_writeverflock, RW_READER);
 		error = nfs_writerpc(vp, uiop, &iomode, FALSE, &stalewriteverf);
-		lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
+		rw_exit(&nmp->nm_writeverflock);
 		if (stalewriteverf) {
 			nfs_clearcommit(bp->b_vp->v_mount);
 		}
@@ -1310,25 +1310,27 @@ nfs_getpages(v)
 	len = npages << PAGE_SHIFT;
 
 	if (v3) {
-		error = lockmgr(&np->n_commitlock,
-		    LK_EXCLUSIVE | (locked ? LK_NOWAIT : 0), NULL);
-		if (error) {
-			KASSERT(locked != 0);
+		if (!locked) {
+			mutex_enter(&np->n_commitlock);
+		} else {
+			error = mutex_tryenter(&np->n_commitlock);
+			if (error) {
 
-			/*
-			 * Since PGO_LOCKED is set, we need to unbusy
-			 * all pages fetched by genfs_getpages() above,
-			 * tell the caller that there are no pages
-			 * available and put back original pgs array.
-			 */
+				/*
+				 * Since PGO_LOCKED is set, we need to unbusy
+				 * all pages fetched by genfs_getpages() above,
+				 * tell the caller that there are no pages
+				 * available and put back original pgs array.
+				 */
 
-			uvm_lock_pageq();
-			uvm_page_unbusy(pgs, npages);
-			uvm_unlock_pageq();
-			*ap->a_count = 0;
-			memcpy(pgs, opgs,
-			    npages * sizeof(struct vm_pages *));
-			return (error);
+				uvm_lock_pageq();
+				uvm_page_unbusy(pgs, npages);
+				uvm_unlock_pageq();
+				*ap->a_count = 0;
+				memcpy(pgs, opgs,
+				    npages * sizeof(struct vm_pages *));
+				return (error);
+			}
 		}
 		nfs_del_committed_range(vp, origoffset, len);
 		nfs_del_tobecommitted_range(vp, origoffset, len);
@@ -1348,7 +1350,7 @@ nfs_getpages(v)
 		simple_unlock(&uobj->vmobjlock);
 	}
 	if (v3) {
-		lockmgr(&np->n_commitlock, LK_RELEASE, NULL);
+		mutex_exit(&np->n_commitlock);
 	}
 	return (0);
 }
