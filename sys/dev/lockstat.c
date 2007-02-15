@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.6 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.7 2007/02/15 20:32:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.6 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.7 2007/02/15 20:32:47 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -176,7 +176,7 @@ lockstat_unlock(int unbusy)
 void
 lockstat_init_tables(lsenable_t *le)
 {
-	int i, ncpu, per, slop, cpuno;
+	int i, per, slop, cpuno;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	lscpu_t *lc;
@@ -184,13 +184,11 @@ lockstat_init_tables(lsenable_t *le)
 
 	KASSERT(!lockstat_enabled);
 
-	ncpu = 0;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_lockstat != NULL) {
 			free(ci->ci_lockstat, M_LOCKSTAT);
 			ci->ci_lockstat = NULL;
 		}
-		ncpu++;
 	}
 
 	if (le == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.15 2006/09/15 15:51:12 yamt Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.16 2007/02/15 20:32:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.15 2006/09/15 15:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.16 2007/02/15 20:32:48 ad Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -91,22 +91,8 @@ irix_sys_sysmp(l, v, retval)
 	switch(cmd) {
 	case IRIX_MP_NPROCS:	/* Number of processors in complex */
 	case IRIX_MP_NAPROCS: {	/* Number of active processors in complex */
-		int ncpu, name[2];
-		size_t sz;
-
-		name[0] = CTL_HW;
-		name[1] = HW_NCPU;
-		sz = sizeof(ncpu);
-		/*
-		 * by passing a NULL lwp pointer, we indicate that oldp
-		 * (and newp) are kernel addresses, not userspace
-		 * addresses, making this whole thing simpler
-		 */
-		error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL);
-		if (!error)
-			*retval = ncpu;
-
-		return error;
+		*retval = ncpu;
+		return 0;
 		break;
 	}
 	case IRIX_MP_PGSIZE:	/* Page size */

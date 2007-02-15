@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_systeminfo.c,v 1.12 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_systeminfo.c,v 1.13 2007/02/15 20:32:48 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.12 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_systeminfo.c,v 1.13 2007/02/15 20:32:48 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -129,18 +129,8 @@ irix_sys_systeminfo(l, v, retval)
 
 	case SVR4_MIPS_SI_NUM_PROCESSORS:
 	case SVR4_MIPS_SI_AVAIL_PROCESSORS: {
-		int ncpu, name[2];
-		size_t sz;
-
-		name[0] = CTL_HW;
-		name[1] = HW_NCPU;
-		sz = sizeof(ncpu);
-		error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL);
-		if (error)
-			return error;
 		snprintf(strbuf, BUF_SIZE, "%d", ncpu);
 		str = strbuf;
-
 		break;
 	}
 

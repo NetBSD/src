@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.27 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.28 2007/02/15 20:32:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.27 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.28 2007/02/15 20:32:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 
 			COPY(machine);
 			COPY(cpu_model);
-			ksi.ncpu = 1;			/* XXX */
+			ksi.ncpu = ncpu;		/* XXX */
 			ksi.cpuspeed = 40;		/* XXX */
 			ksi.hwflags = 0;		/* XXX */
 			ksi.physmem = ctob(physmem);
