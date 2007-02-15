@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.1 2007/01/17 23:25:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.2 2007/02/15 01:44:54 macallan Exp $");
 
 #ifndef PMUVAR_H
 #define PMUVAR_H
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmuvar.h,v 1.1 2007/01/17 23:25:45 macallan Exp $");
 /* Bits to use with the PMU_POWER_CTRL0 command */
 #define PMU_POW0_ON		0x80	/* OR this to power ON the device */
 #define PMU_POW0_OFF		0x00	/* leave bit 7 to 0 to power it OFF */
+#define PMU_POW0_HARD_DRIVE	0x04	/* wallstreet/lombard? */
 
 /* Bits to use with the PMU_POWER_CTRL command */
 #define PMU_POW_ON		0x80	/* OR this to power ON the device */
@@ -115,11 +116,32 @@ enum {
 #define PMU_PWR_PCHARGE_RESET	(1 << 6)
 #define PMU_PWR_BATT_EXIST	(1 << 7)
 
-struct pmu_attach_args {
+
+/* I2C related definitions */
+#define PMU_I2C_MODE_SIMPLE	0
+#define PMU_I2C_MODE_STDSUB	1
+#define PMU_I2C_MODE_COMBINED	2
+
+#define PMU_I2C_BUS_STATUS	0
+#define PMU_I2C_BUS_SYSCLK	1
+#define PMU_I2C_BUS_POWER	2
+
+#define PMU_I2C_STATUS_OK	0
+#define PMU_I2C_STATUS_DATAREAD	1
+#define PMU_I2C_STATUS_BUSY	0xfe
+
+/* Power events wakeup bits */
+enum {
+	PMU_PWR_WAKEUP_KEY		= 0x01, /* Wake on key press */
+	PMU_PWR_WAKEUP_AC_INSERT	= 0x02, /* Wake on AC adapter plug */
+	PMU_PWR_WAKEUP_AC_CHANGE 	= 0x04,
+	PMU_PWR_WAKEUP_LID_OPEN		= 0x08,
+	PMU_PWR_WAKEUP_RING		= 0x10,
+};
+
+struct pmu_ops {
 	void *cookie;
-	int (*send)(void *, int, int, uint8_t *);	/* send a message */
-	void (*poll)(void *);		/* poll until the chip is idle */
-	int (*set_handler)(void *, int, int (*)(void *, int, uint8_t *), void *);
+	int (*do_command)(void *, int, int, uint8_t *, uint8_t *);
 };
 
 void pmu_poweroff(void);
