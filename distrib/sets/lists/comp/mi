@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1001 2007/02/11 18:37:45 pooka Exp $
+#	$NetBSD: mi,v 1.1002 2007/02/15 15:16:02 ad Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7207,7 +7207,6 @@
 ./usr/share/man/cat9/rw_exit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_init.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_lock_held.0		comp-sys-catman		.cat
-./usr/share/man/cat9/rw_owned.0		 	comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_read_held.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_tryenter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_tryupgrade.0		comp-sys-catman		.cat
@@ -11524,7 +11523,6 @@
 ./usr/share/man/man9/rw_exit.9			comp-sys-man		.man
 ./usr/share/man/man9/rw_init.9			comp-sys-man		.man
 ./usr/share/man/man9/rw_lock_held.9		comp-sys-man		.man
-./usr/share/man/man9/rw_owned.9		 	comp-sys-man		.man
 ./usr/share/man/man9/rw_read_held.9		comp-sys-man		.man
 ./usr/share/man/man9/rw_tryenter.9		comp-sys-man		.man
 ./usr/share/man/man9/rw_tryupgrade.9		comp-sys-man		.man
