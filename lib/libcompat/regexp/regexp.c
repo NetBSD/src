@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: regexp.c,v 1.17 2006/04/08 22:05:36 christos Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.18 2007/02/16 16:34:19 freza Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -1175,12 +1175,12 @@ regexp *r;
 	s = r->program + 1;
 	while (op != END) {	/* While that wasn't END last time... */
 		op = OP(s);
-		printf("%2d%s", s-r->program, regprop(s));	/* Where, what. */
+		printf("%2td%s", s-r->program, regprop(s));	/* Where, what. */
 		next = regnext(s);
 		if (next == NULL)		/* Next ptr. */
 			printf("(0)");
 		else
-			printf("(%d)", (s-r->program)+(next-s));
+			printf("(%td)", (s-r->program)+(next-s));
 		s += 3;
 		if (op == ANYOF || op == ANYBUT || op == EXACTLY) {
 			/* Literal string, where present. */
