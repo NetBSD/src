@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.122 2007/02/09 21:55:24 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.123 2007/02/16 00:39:16 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.122 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.123 2007/02/16 00:39:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1154,7 +1154,6 @@ svr4_sys_waitsys(l, v, retval)
 	int error;
 	struct proc *parent = l->l_proc;
 	struct proc *child;
-	struct rusage *ru;
 	svr4_siginfo_t i;
 
 	switch (SCARG(uap, grp)) {
@@ -1214,8 +1213,7 @@ svr4_sys_waitsys(l, v, retval)
 		}
 
 		/* proc_free() will release the lock. */
-		proc_free(child, &ru);
-		pool_put(&rusage_pool, ru);
+		proc_free(child, NULL);
 		return copyout(&i, SCARG(uap, info), sizeof(i));
 	}
 
