@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.35 2006/10/13 00:20:28 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.36 2007/02/16 22:26:36 dillo Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -696,7 +696,7 @@ Check to see if the new vnode
 .Fa vp
 represents a special device for which another vnode represents the
 same device.
-If such an aliases exists the existing contents and the aliased vnode
+If such an alias exists, the existing contents and the aliased vnode
 are deallocated.
 The caller is responsible for filling the new vnode with its new contents.
 .It Fn bdevvp "dev" "vpp"
