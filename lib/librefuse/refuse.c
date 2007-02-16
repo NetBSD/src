@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.17 2007/02/16 00:16:39 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.18 2007/02/16 00:35:06 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.17 2007/02/16 00:16:39 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.18 2007/02/16 00:35:06 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -184,6 +184,9 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 	return 1;
 }
 
+#define FUSE_ERR_UNLINK(fuse, file) if (fuse->op.unlink) fuse->op.unlink(file)
+#define FUSE_ERR_RMDIR(fuse, dir) if (fuse->op.rmdir) fuse->op.rmdir(dir)
+
 /* operation wrappers start here */
 
 /* lookup the path */
@@ -204,7 +207,7 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 	ret = fuse->op.getattr(path, &st);
 
 	if (ret != 0) {
-		return -ret; /* XXX: linux foo */
+		return -ret;
 	}
 
 	/* XXX: fiXXXme unconst */
@@ -269,7 +272,7 @@ puffs_fuse_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* read the contents of the symbolic link */
@@ -328,7 +331,7 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 		/* fix up nodes */
 		pn = newrn(pu);
 		if (pn == NULL) {
-			unlink(PCNPATH(pcn));
+			FUSE_ERR_UNLINK(fuse, path);
 			return ENOMEM;
 		}
 		puffs_setvattr(&pn->pn_va, va);
@@ -336,7 +339,7 @@ puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
 		*newnode = pn;
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* make a directory */
@@ -364,7 +367,7 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 		/* fix up nodes */
 		pn = newrn(pu);
 		if (pn == NULL) {
-			rmdir(PCNPATH(pcn));
+			FUSE_ERR_RMDIR(fuse, path);
 			return ENOMEM;
 		}
 		puffs_setvattr(&pn->pn_va, va);
@@ -372,7 +375,7 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 		*newnode = pn;
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* create a regular file */
@@ -402,7 +405,7 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 		/* fix up nodes */
 		pn = newrn(pu);
 		if (pn == NULL) {
-			unlink(PCNPATH(pcn));
+			FUSE_ERR_UNLINK(fuse, path);
 			return ENOMEM;
 		}
 		puffs_setvattr(&pn->pn_va, va);
@@ -413,7 +416,7 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 		*newnode = pn;
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* remove the directory entry */
@@ -435,7 +438,7 @@ puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	/* wrap up return code */
 	ret = (*fuse->op.unlink)(path);
 
-	return ret;
+	return -ret;
 }
 
 /* remove the directory */
@@ -457,7 +460,7 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	/* wrap up return code */
 	ret = (*fuse->op.rmdir)(path);
 
-	return ret;
+	return -ret;
 }
 
 /* create a symbolic link */
@@ -486,7 +489,7 @@ puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 		/* fix up nodes */
 		pn = newrn(pu);
 		if (pn == NULL) {
-			unlink(link_target);
+			FUSE_ERR_UNLINK(fuse, path);
 			return ENOMEM;
 		}
 		puffs_setvattr(&pn->pn_va, va);
@@ -494,7 +497,7 @@ puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 		*newnode = pn;
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* rename a directory entry */
@@ -533,7 +536,7 @@ puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* create a link in the file system */
@@ -555,7 +558,7 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 	/* wrap up return code */
 	ret = (*fuse->op.link)(PNPATH(pn), PCNPATH(pcn));
 
-	return ret;
+	return -ret;
 }
 
 /*
@@ -604,7 +607,7 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 	if (ret == 0) {
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* ARGSUSED2 */
@@ -642,7 +645,7 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 	if (ret == 0) {
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* read some more from the file */
@@ -748,7 +751,7 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	if (ret == 0) {
 	}
 
-	return ret;
+	return -ret;
 }
 
 /* ARGSUSED */
