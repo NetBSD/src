@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.1 2007/02/11 10:31:37 agc Exp $
+# $NetBSD: Makefile,v 1.2 2007/02/16 15:44:37 pooka Exp $
 
 LIB=		refuse
+LIBDPLIBS=	puffs	${.CURDIR}/../libpuffs
+
 SRCS=		refuse.c
 CPPFLAGS+=	-I.
-LDADD+=		-lpuffs
 MAN=		refuse.3
 WARNS=		4
 INCS=           fuse.h
