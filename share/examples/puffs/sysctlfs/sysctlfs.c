@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.14 2007/02/15 17:07:31 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.15 2007/02/16 16:39:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,11 +29,9 @@
  */
 
 /*
- * sysctlfs: mount sysctls as a file system tree
- *
- * XXXX: this is a very quick hack fs.  it's not even complete,
- * please don't use it as an example.  actually, this code is so bad that
- * it's nearly a laugh, it's nearly a laugh, but it's really a cry
+ * sysctlfs: mount sysctls as a file system tree.  Supports query and
+ * modify of nodes in the sysctl namespace in addition to namespace
+ * traversal.
  */
 
 #include <sys/types.h>
@@ -91,8 +89,10 @@ sysctlfs_pathbuild(struct puffs_usermount *pu,
 	assert(sname != NULL);
 
 	clen = parent->po_len;
-	if (comp->po_len == SFSPATH_DOTDOT)
+	if (comp->po_len == SFSPATH_DOTDOT) {
+		assert(clen != 0);
 		clen--;
+	}
 
 	memcpy(sname, parent->po_path, clen * sizeof(int));
 
@@ -437,13 +437,17 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc,
 	struct dirent *dent, const struct puffs_cred *pcr,
 	off_t *readoff, size_t *reslen)
 {
+	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct sysctlnode sn[SFS_NODEPERDIR];
 	struct sysctlnode qnode;
 	struct puffs_node *pn_dir = opc;
-	struct sfsnode *sfs_dir = pn_dir->pn_data;
+	struct puffs_node *pn_res;
+	struct puffs_pathobj po;
+	struct sfsnode *sfs_dir = pn_dir->pn_data, *sfs_ent;
 	SfsName *sname;
 	size_t sl;
 	enum vtype vt;
+	ino_t id;
 	int i;
 
  again:
@@ -463,6 +467,9 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc,
 	    &qnode, sizeof(qnode)) == -1)
 		return ENOENT;
 
+	po.po_path = sname;
+	po.po_len = PNPLEN(pn_dir)+1;
+
 	for (i = DENT_ADJ(*readoff);
 	    i < sl / sizeof(struct sysctlnode);
 	    i++, (*readoff)++) {
@@ -470,7 +477,21 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc,
 			vt = VDIR;
 		else
 			vt = VREG;
-		if (!puffs_nextdent(&dent, sn[i].sysctl_name, nextid++,
+
+		/*
+		 * check if the node exists.  if so, give it the real
+		 * inode number.  otherwise just fake it.
+		 */
+		(*sname)[PNPLEN(pn_dir)] = sn[i].sysctl_num;
+		pn_res = puffs_pn_nodewalk(pu, puffs_path_walkcmp, &po);
+		if (pn_res) {
+			sfs_ent = pn_res->pn_data;
+			id = sfs_ent->myid;
+		} else {
+			id = nextid++;
+		}
+
+		if (!puffs_nextdent(&dent, sn[i].sysctl_name, id,
 		    puffs_vtype2dt(vt), reslen))
 			return 0;
 	}
