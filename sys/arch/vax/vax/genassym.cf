@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.29 2006/03/12 02:04:26 christos Exp $
+#	$NetBSD: genassym.cf,v 1.30 2007/02/16 01:34:03 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -30,6 +30,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+quote #define __MUTEX_PRIVATE
 
 include	<sys/param.h>
 include	<sys/proc.h>
@@ -47,6 +48,7 @@ include	<machine/sid.h>
 include <machine/signal.h>
 include	<machine/trap.h>
 include	<machine/uvax.h>
+include <machine/mutex.h>
 
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_ADDR		offsetof(struct lwp, l_addr)
@@ -85,6 +87,8 @@ define	UVME_SOFTS	offsetof(struct uvmexp, softs)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_EXIT		offsetof(struct cpu_info, ci_exit)
+define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 # mtpr register numbers
 define	PR_KSP		PR_KSP
@@ -150,3 +154,7 @@ define	SH_PENDING	offsetof(struct softintr_handler, sh_pending)
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
 
 define	PSL_IS		PSL_IS
+
+define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
+define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
+define	MTX_ID		offsetof(struct kmutex, mtx_id)
