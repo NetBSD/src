@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2007/02/16 02:53:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -205,7 +205,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
-#define CLKF_BASEPRI(frame)	(0)
 #define CLKF_PC(frame)		((frame)->cf_if.if_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 

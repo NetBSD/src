@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2007/02/16 02:53:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -86,7 +86,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(cf)	(!KERNELMODE((cf)->ssr))
-#define	CLKF_BASEPRI(cf)	(((cf)->ssr & 0xf0) == 0)
 #define	CLKF_PC(cf)		((cf)->spc)
 #define	CLKF_INTR(cf)		0	/* XXX */
 

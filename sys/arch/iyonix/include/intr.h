@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2007/02/16 02:53:47 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -156,7 +156,6 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #define	spl0()		_spllower(IPL_NONE)
-#define	spllowersoftclock() _spllower(IPL_SOFTCLOCK)
 
 #include <sys/spl.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.28 2007/02/16 02:53:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -99,7 +99,6 @@ void	_clrsoftintr __P((int));
 #define splvm()		splraiseipl(makeiplcookie(IPL_VM))
 #define splclock()	splraiseipl(makeiplcookie(IPL_CLOCK))
 #define splstatclock()	splraiseipl(makeiplcookie(IPL_STATCLOCK))
-#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()

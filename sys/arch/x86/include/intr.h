@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.25 2007/02/16 02:53:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -141,14 +141,6 @@ splraise(int nlevel)
 }
 
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
-
-/*
- * Software interrupt masks
- *
- * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
- */
-#define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
 
 /*
  * Miscellaneous

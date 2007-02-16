@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2007/02/09 21:55:03 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2007/02/16 02:53:46 ad Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -181,7 +181,6 @@ struct clockframe {
 	int	cf_spl;
 	u_int	cf_pc;
 };
-#define	CLKF_BASEPRI(framep)	((framep)->cf_spl == 0)
 #define	CLKF_PC(framep)		((framep)->cf_pc)
 #define	CLKF_INTR(framep)	((framep)->cf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)

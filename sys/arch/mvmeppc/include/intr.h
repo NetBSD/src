@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.10 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.11 2007/02/16 02:53:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@
 
 #ifndef _LOCORE
 
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -170,8 +169,6 @@ set_sint(int pending)
 #define	CNT_SINT_CLOCK	30
 #define	CNT_SINT_SERIAL	31
 #define	CNT_CLOCK	0
-
-#define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
 
 #define	setsoftclock()	set_sint(SINT_CLOCK);
 #define	setsoftnet()	set_sint(SINT_NET);
