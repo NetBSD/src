@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.154 2007/02/09 21:55:13 ad Exp $	 */
+/* $NetBSD: machdep.c,v 1.155 2007/02/16 01:34:04 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2007/02/16 01:34:04 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -670,13 +670,13 @@ void	krnunlock(void);
 void
 krnlock()
 {
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 }
 
 void
 krnunlock()
 {
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif
 

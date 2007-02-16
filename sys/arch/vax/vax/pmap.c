@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2006/10/02 02:59:38 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.140 2007/02/16 01:34:04 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2006/10/02 02:59:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2007/02/16 01:34:04 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -386,10 +386,14 @@ pmap_bootstrap()
 	simple_lock_init(&pmap->pm_lock);
 
 	/* Activate the kernel pmap. */
-	mtpr(pcb->P1BR = pmap->pm_p1br, PR_P1BR);
-	mtpr(pcb->P0BR = pmap->pm_p0br, PR_P0BR);
-	mtpr(pcb->P1LR = pmap->pm_p1lr, PR_P1LR);
-	mtpr(pcb->P0LR = (pmap->pm_p0lr|AST_PCB), PR_P0LR);
+	pcb->P1BR = pmap->pm_p1br;
+	pcb->P0BR = pmap->pm_p0br;
+	pcb->P1LR = pmap->pm_p1lr;
+	pcb->P0LR = pmap->pm_p0lr|AST_PCB;
+	mtpr((uintptr_t)pcb->P1BR, PR_P1BR);
+	mtpr((uintptr_t)pcb->P0BR, PR_P0BR);
+	mtpr(pcb->P1LR, PR_P1LR);
+	mtpr(pcb->P0LR, PR_P0LR);
 
 	/* cpu_info struct */
 	pcb->SSP = scratch + VAX_NBPG;
@@ -565,9 +569,9 @@ update_pcbs(struct pmap *pm)
 
 	/* If curlwp uses this pmap update the regs too */ 
 	if (pm == curproc->p_vmspace->vm_map.pmap) {
-		mtpr(pm->pm_p0br, PR_P0BR);
+		mtpr((uintptr_t)pm->pm_p0br, PR_P0BR);
 		mtpr(pm->pm_p0lr|AST_PCB, PR_P0LR);
-		mtpr(pm->pm_p1br, PR_P1BR);
+		mtpr((uintptr_t)pm->pm_p1br, PR_P1BR);
 		mtpr(pm->pm_p1lr, PR_P1LR);
 	}
 #if defined(MULTIPROCESSOR) && defined(notyet)
@@ -668,8 +672,9 @@ rmspace(struct pmap *pm)
 
 #undef swappable
 #define swappable(l, pm)						\
-	(((l)->l_flag & (P_SYSTEM | L_INMEM | P_WEXIT)) == L_INMEM &&	\
-	((l)->l_holdcnt == 0) && ((l)->l_proc->p_vmspace->vm_map.pmap != pm))
+	(((l)->l_flag & (L_SYSTEM | L_INMEM | L_WEXIT)) == L_INMEM	\
+	 && (l)->l_holdcnt == 0						\
+	 && (l)->l_proc->p_vmspace->vm_map.pmap != pm)
 
 static int
 pmap_rmproc(struct pmap *pm)
@@ -683,7 +688,7 @@ pmap_rmproc(struct pmap *pm)
 
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		if (!swappable(l, pm))
 			continue;
@@ -710,7 +715,7 @@ pmap_rmproc(struct pmap *pm)
 			continue;
 		}
 	}
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 	if (didswap == 0) {
 		if ((l = outl) == NULL)
 			l = outl2;
@@ -1638,9 +1643,9 @@ pmap_activate(struct lwp *l)
 	ps->ps_pcb = pcb;
 
 	if (l == curlwp) {
-		mtpr(pmap->pm_p0br, PR_P0BR);
+		mtpr((uintptr_t)pmap->pm_p0br, PR_P0BR);
 		mtpr(pmap->pm_p0lr|AST_PCB, PR_P0LR);
-		mtpr(pmap->pm_p1br, PR_P1BR);
+		mtpr((uintptr_t)pmap->pm_p1br, PR_P1BR);
 		mtpr(pmap->pm_p1lr, PR_P1LR);
 		mtpr(0, PR_TBIA);
 	}
