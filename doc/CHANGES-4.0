@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.69 2007/02/11 13:44:46 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.70 2007/02/16 19:20:10 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1242,4 +1242,19 @@ share/i18n/csmapper/CP/charset.pivot.CP.src	1.5
 
 	Make conversions from "cp932" to "eucjp-ms" work again.
 	[tnozaki, ticket #417]
+
+sys/kern/subr_kmem.c				1.12
+
+	Fix a potential kernel panic in kmem_alloc().
+	[chs, ticket #418]
+
+etc/MAKEDEV.tmpl				1.73
+
+	Fix off-by-one error in the creation of dk(4) device nodes.
+	[riz, ticket #443]
+
+sys/dev/ld.c					1.43
+
+	Add disk-info properties to ld(4) similar to wd(4).
+	[riz, ticket #444]
 
