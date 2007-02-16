@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1002 2007/02/15 15:16:02 ad Exp $
+#	$NetBSD: mi,v 1.1003 2007/02/16 17:23:53 hannken Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -7472,7 +7472,7 @@
 ./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_default_error.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_fcntl.0			comp-sys-catman		.cat
-./usr/share/man/cat9/vn_finished_write.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vn_finished_write.0	comp-sys-catman		obsolete
 ./usr/share/man/cat9/vn_ioctl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_isunder.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_lock.0			comp-sys-catman		.cat
@@ -7484,7 +7484,7 @@
 ./usr/share/man/cat9/vn_read.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_restorerecurse.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_setrecurse.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vn_start_write.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vn_start_write.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/vn_stat.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_statfile.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_write.0			comp-sys-catman		.cat
@@ -11788,7 +11788,7 @@
 ./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_default_error.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_fcntl.9			comp-sys-man		.man
-./usr/share/man/man9/vn_finished_write.9	comp-sys-man		.man
+./usr/share/man/man9/vn_finished_write.9	comp-sys-man		obsolete
 ./usr/share/man/man9/vn_ioctl.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_isunder.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_lock.9			comp-sys-man		.man
@@ -11800,7 +11800,7 @@
 ./usr/share/man/man9/vn_read.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_restorerecurse.9	comp-sys-man		.man
 ./usr/share/man/man9/vn_setrecurse.9		comp-sys-man		.man
-./usr/share/man/man9/vn_start_write.9		comp-sys-man		.man
+./usr/share/man/man9/vn_start_write.9		comp-sys-man		obsolete
 ./usr/share/man/man9/vn_stat.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_statfile.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_write.9			comp-sys-man		.man

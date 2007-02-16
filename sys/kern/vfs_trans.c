@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.4 2007/02/15 15:40:53 ad Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5 2007/02/16 17:24:00 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.4 2007/02/15 15:40:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5 2007/02/16 17:24:00 hannken Exp $");
 
 /*
  * File system transaction operations.
@@ -351,9 +351,6 @@ fstrans_getstate(struct mount *mp)
 int
 vfs_suspend(struct mount *mp, int nowait)
 {
-#ifndef NEWVNGATE
-	struct lwp *l = curlwp;	/* XXX */
-#endif /* NEWVNGATE */
 	int error;
 
 	if (nowait) {
@@ -362,7 +359,6 @@ vfs_suspend(struct mount *mp, int nowait)
 	} else
 		mutex_enter(&vfs_suspend_lock);
 
-#ifdef NEWVNGATE
 	mutex_enter(&syncer_mutex);
 
 	if ((error = VFS_SUSPENDCTL(mp, SUSPEND_SUSPEND)) != 0) {
@@ -371,34 +367,6 @@ vfs_suspend(struct mount *mp, int nowait)
 	}
 
 	return error;
-#else /* NEWVNGATE */
-	KASSERT((mp->mnt_iflag &
-	    (IMNT_SUSPEND|IMNT_SUSPENDLOW|IMNT_SUSPENDED)) == 0);
-
-	mp->mnt_iflag |= IMNT_SUSPEND;
-
-	simple_lock(&mp->mnt_slock);
-	if (mp->mnt_writeopcountupper > 0)
-		ltsleep(&mp->mnt_writeopcountupper, PUSER - 1, "suspwt",
-			0, &mp->mnt_slock);
-	simple_unlock(&mp->mnt_slock);
-
-	error = VFS_SYNC(mp, MNT_WAIT, l->l_proc->p_cred, l);
-	if (error) {
-		vfs_resume(mp);
-		return error;
-	}
-	mp->mnt_iflag |= IMNT_SUSPENDLOW;
-
-	simple_lock(&mp->mnt_slock);
-	if (mp->mnt_writeopcountlower > 0)
-		ltsleep(&mp->mnt_writeopcountlower, PUSER - 1, "suspwt",
-			0, &mp->mnt_slock);
-	mp->mnt_iflag |= IMNT_SUSPENDED;
-	simple_unlock(&mp->mnt_slock);
-
-	return 0;
-#endif /* NEWVNGATE */
 }
 
 /*
@@ -408,18 +376,9 @@ void
 vfs_resume(struct mount *mp)
 {
 
-#ifdef NEWVNGATE
 	VFS_SUSPENDCTL(mp, SUSPEND_RESUME);
 	mutex_exit(&syncer_mutex);
 	mutex_exit(&vfs_suspend_lock);
-#else /* NEWVNGATE */
-	if ((mp->mnt_iflag & IMNT_SUSPEND) == 0)
-		return;
-	mp->mnt_iflag &= ~(IMNT_SUSPEND | IMNT_SUSPENDLOW | IMNT_SUSPENDED);
-	wakeup(&mp->mnt_flag);
-
-	mutex_exit(&vfs_suspend_lock);
-#endif /* NEWVNGATE */
 }
 
 /*

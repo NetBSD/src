@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.7 2007/02/09 21:55:30 ad Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.8 2007/02/16 17:23:59 hannken Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.7 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.8 2007/02/16 17:23:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -373,7 +373,6 @@ puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 	return rv;
 }
 
-#ifdef NEWVNGATE
 static void
 dosuspendresume(void *arg)
 {
@@ -406,7 +405,6 @@ dosuspendresume(void *arg)
  out:
 	kthread_exit(0);
 }
-#endif
 
 static int
 puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
@@ -443,7 +441,6 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 
 	case PUFFSSUSPENDOP:
-#ifdef NEWVNGATE
 		rv = 0;
 		simple_lock(&pmp->pmp_lock);
 		if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING)
@@ -454,9 +451,6 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		if (rv)
 			break;
 		rv = kthread_create1(dosuspendresume, pmp, NULL, "puffsusp");
-#else
-		rv = EOPNOTSUPP;
-#endif
 		break;
 
 	/* already done in sys_ioctl() */

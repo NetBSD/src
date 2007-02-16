@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.41 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.42 2007/02/16 17:24:00 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.41 2007/02/09 21:55:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.42 2007/02/16 17:24:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -390,31 +390,18 @@ loop:
 			MNT_ILOCK(mp);
 			continue;
 		}
-#ifndef NEWVNGATE
-		if (vn_lock(xvp, LK_EXCLUSIVE | LK_INTERLOCK) != 0) {
-			MNT_ILOCK(mp);
-			goto loop;
-		}
-#else /* NEWVNGATE */
 		VI_UNLOCK(xvp);
-#endif /* NEWVNGATE */
 #ifdef DEBUG
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
 		if (VOP_GETATTR(xvp, &vat, l->l_cred, l) == 0 &&
 		    vat.va_nlink > 0) {
-#ifndef NEWVNGATE
-			VOP_UNLOCK(xvp, 0);
-#endif /* NEWVNGATE */
 			MNT_ILOCK(mp);
 			continue;
 		}
 		xp = VTOI(xvp);
 		if (ffs_checkfreefile(copy_fs, vp, xp->i_number)) {
-#ifndef NEWVNGATE
-			VOP_UNLOCK(xvp, 0);
-#endif /* NEWVNGATE */
 			MNT_ILOCK(mp);
 			continue;
 		}
@@ -444,9 +431,6 @@ loop:
 		if (!error)
 			error = ffs_freefile(copy_fs, vp, xp->i_number,
 			    xp->i_mode);
-#ifndef NEWVNGATE
-		VOP_UNLOCK(xvp, 0);
-#endif /* NEWVNGATE */
 		if (error) {
 			free(copy_fs->fs_csp, M_UFSMNT);
 			goto out1;
