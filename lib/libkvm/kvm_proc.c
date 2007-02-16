@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.62.4.1 2007/02/11 13:40:55 tron Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.62.4.2 2007/02/16 20:26:01 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.62.4.1 2007/02/11 13:40:55 tron Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.62.4.2 2007/02/16 20:26:01 riz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -557,6 +557,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			kl = kvm_getlwps(kd, kp->kp_proc.p_pid,
 			    (u_long)PTRTOUINT64(kp->kp_eproc.e_paddr),
 			    sizeof(struct kinfo_lwp), &nlwps);
+
 			/* We use kl[0] as the "representative" LWP */
 			memset(kp2p, 0, sizeof(kp2));
 			kp2p->p_forw = kl[0].l_forw;
@@ -638,7 +639,7 @@ kvm_getproc2(kd, op, arg, esize, cnt)
 			    &kp->kp_proc.p_sigctx.ps_sigcatch,
 			    sizeof(ki_sigset_t));
 
-			kp2p->p_stat = kp->kp_proc.p_stat;
+			kp2p->p_stat = kl[0].l_stat;
 			kp2p->p_priority = kl[0].l_priority;
 			kp2p->p_usrpri = kl[0].l_usrpri;
 			kp2p->p_nice = kp->kp_proc.p_nice;
