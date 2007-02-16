@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.35 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.36 2007/02/16 00:39:16 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.35 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.36 2007/02/16 00:39:16 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -862,6 +862,7 @@ irix_sys_waitsys(l, v, retval)
 	} */ *uap = v;
 	struct proc *parent = l->l_proc, *child;
 	int options, status, error, stat;
+	struct rusage ru;
 
 	switch (SCARG(uap, type)) {
 	case SVR4_P_PID:
@@ -927,18 +928,14 @@ irix_sys_waitsys(l, v, retval)
 			rw_exit(&proclist_lock);
 			return 0;
 		}
-		if (SCARG(uap, ru) &&
-		    /* XXX (dsl) is this copying out the right data???
-		       child->p_ru would seem more appropriate! */
-		    (error = copyout(&(parent->p_stats->p_ru),
-		    (caddr_t)SCARG(uap, ru), sizeof(struct rusage)))) {
-			rw_exit(&proclist_lock);
-			return error;
-		}
 
 		/* proc_free() will release the lock. */
-		proc_free(child, NULL);
-		return 0;
+		proc_free(child, (SCARG(uap, ru) == NULL ? NULL : &ru));
+
+		if (SCARG(uap, ru))
+			error = copyout(&ru, (caddr_t)SCARG(uap, ru), sizeof(ru));
+
+		return error;
 	}
 
 	/* Child state must be SSTOP */
