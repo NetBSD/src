@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.84 2006/09/02 17:02:57 christos Exp $ */
+/*      $NetBSD: ac97.c,v 1.85 2007/02/16 21:05:40 alc Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.84 2006/09/02 17:02:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.85 2007/02/16 21:05:40 alc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,8 +380,8 @@ static const struct ac97_source_info modem_source_info[] = {
 		MODEM_SOURCE_INFO_SIZE : AUDIO_SOURCE_INFO_SIZE)
 
 /*
- * Check out http://developer.intel.com/pc-supp/platform/ac97/ for
- * information on AC-97
+ * Check out http://www.intel.com/support/motherboards/desktop/sb/cs-025406.htm for
+ * AC'97 Component Specification
  */
 
 struct ac97_softc {
