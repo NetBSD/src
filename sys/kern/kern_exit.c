@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.165 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166 2007/02/16 00:39:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.165 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166 2007/02/16 00:39:16 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -675,7 +675,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct proc	*child, *parent;
 	int		status, error;
-	struct rusage	*ru;
+	struct rusage	ru;
 
 	parent = l->l_proc;
 
@@ -703,15 +703,11 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	if (P_ZOMBIE(child)) {
 		KERNEL_LOCK(1, l);		/* XXXSMP */
 		/* proc_free() will release the proclist_lock. */
-		proc_free(child, &ru);
-
-		if (SCARG(uap, rusage))
-			error = copyout(ru, SCARG(uap, rusage),
-			    sizeof(struct rusage));
-
-		pool_put(&rusage_pool, ru);
+		proc_free(child, (SCARG(uap, rusage) == NULL ? NULL : &ru));
 		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 
+		if (SCARG(uap, rusage))
+			error = copyout(&ru, SCARG(uap, rusage), sizeof(ru));
 		if (error == 0 && SCARG(uap, status))
 			error = copyout(&status, SCARG(uap, status),
 			    sizeof(status));
@@ -845,11 +841,11 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
  * *ru is returned to the caller, and must be freed by the caller.
  */
 void
-proc_free(struct proc *p, struct rusage **ru)
+proc_free(struct proc *p, struct rusage *caller_ru)
 {
 	struct plimit *plim;
 	struct pstats *pstats;
-	struct rusage *rup;
+	struct rusage *ru;
 	struct proc *parent;
 	struct lwp *l;
 	ksiginfo_t ksi;
@@ -863,6 +859,9 @@ proc_free(struct proc *p, struct rusage **ru)
 	KASSERT(p->p_nzlwps == 1);
 	KASSERT(p->p_nrlwps == 0);
 	KASSERT(p->p_stat == SZOMB);
+
+	if (caller_ru != NULL)
+		memcpy(caller_ru, p->p_ru, sizeof(*caller_ru));
 
 	/*
 	 * If we got the child via ptrace(2) or procfs, and
@@ -923,9 +922,7 @@ proc_free(struct proc *p, struct rusage **ru)
 	uid = kauth_cred_getuid(p->p_cred);
 	vp = p->p_textvp;
 	cred = p->p_cred;
-	rup = p->p_ru;
-	if (ru != NULL)
-		*ru = rup;
+	ru = p->p_ru;
 
 	l = LIST_FIRST(&p->p_lwps);
 
@@ -994,9 +991,7 @@ proc_free(struct proc *p, struct rusage **ru)
 	 * Collect child u-areas.
 	 */
 	uvm_uarea_drain(FALSE);
-
-	if (ru == NULL)
-		pool_put(&rusage_pool, rup);
+	pool_put(&rusage_pool, ru);
 }
 
 /*
