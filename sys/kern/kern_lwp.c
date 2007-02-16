@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.54 2007/02/15 15:13:10 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55 2007/02/16 00:35:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.54 2007/02/15 15:13:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55 2007/02/16 00:35:45 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -772,7 +772,7 @@ lwp_free(struct lwp *l, int recycle, int last)
 	 *
 	 * We don't recycle the VM resources at this time.
 	 */
-	KERNEL_LOCK(1, l);	/* XXXSMP */
+	KERNEL_LOCK(1, curlwp);		/* XXXSMP */
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(&turnstile_cache, l->l_ts);
 #ifndef __NO_CPU_LWP_FREE
@@ -781,7 +781,7 @@ lwp_free(struct lwp *l, int recycle, int last)
 	uvm_lwp_exit(l);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
+	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
 }
 
 /*
