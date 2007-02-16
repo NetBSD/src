@@ -1,3 +1,7 @@
+2007-02-16  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/ipsec_doi.c: Fixed a %zu in a printf. Reported by
+	  Olivier Warin.
+
 2007-02-15  Emmanuel Dreyfus  <manu@netbsd.org>
 	* configure.ac: fix typo in SELinux option
 	* src/racoon/security.c: missing file from Joy Latten
