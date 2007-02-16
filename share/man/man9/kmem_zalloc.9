@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem_zalloc.9,v 1.3 2006/07/14 15:49:58 yamt Exp $
+.\"	$NetBSD: kmem_zalloc.9,v 1.4 2007/02/16 23:13:05 rmind Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -49,7 +49,8 @@ except that it initializes the memory to zero.
 .Sh SEE ALSO
 .Xr intro 9 ,
 .Xr kmem_alloc 9 ,
-.Xr kmem_free 9
+.Xr kmem_free 9,
+.Xr memoryallocators 9
 .\" ------------------------------------------------------------
 .Sh CAVEATS
 .Fn kmem_zalloc
