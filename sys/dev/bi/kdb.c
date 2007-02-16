@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.38 2005/12/11 12:21:15 christos Exp $ */
+/*	$NetBSD: kdb.c,v 1.39 2007/02/16 13:41:45 ad Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.38 2005/12/11 12:21:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.39 2007/02/16 13:41:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -307,9 +307,9 @@ kdbintr(void *arg)
 		kdbsaerror(&sc->sc_dev, 1);
 		return;
 	}
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 	mscp_intr(sc->sc_softc);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 #ifdef notyet
