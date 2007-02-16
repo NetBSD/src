@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.42 2006/12/26 15:22:44 ad Exp $ */
+/*	$NetBSD: psl.h,v 1.43 2007/02/16 02:53:51 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -294,7 +294,6 @@ static __inline void name(void) \
 	__asm volatile("nop; nop; nop"); \
 }
 
-_SPLSET(spllowersoftclock, IPL_SOFTCLOCK)
 _SPLSET(spllowerschedclock, IPL_SCHED)
 
 typedef uint8_t ipl_t;

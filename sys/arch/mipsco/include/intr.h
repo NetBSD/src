@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2007/02/16 02:53:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -140,7 +140,6 @@ extern struct mipsco_intrhand *softnet_intrhand;
 #define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
 #define	splsoftnet()	splsoft()
 #define	splsoftserial()	splsoft()
-#define spllowersoftclock() _spllower(MIPS_INT_MASK_SPL_SOFT0)
 
 typedef int ipl_t;
 typedef struct {

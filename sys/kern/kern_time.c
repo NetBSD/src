@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.113 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.114 2007/02/16 02:53:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.113 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.114 2007/02/16 02:53:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -120,7 +120,7 @@ settime(struct proc *p, struct timespec *ts)
 	struct timespec ts1;
 #endif /* !__HAVE_TIMECOUNTER */
 	struct cpu_info *ci;
-	int s;
+	int s1, s2;
 
 	/*
 	 * Don't allow the time to be set forward so far it will wrap
@@ -152,7 +152,8 @@ settime(struct proc *p, struct timespec *ts)
 	TIMESPEC_TO_TIMEVAL(&tv, ts);
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	s = splclock();
+	s1 = splsoftclock();
+	s2 = splclock();
 #ifdef __HAVE_TIMECOUNTER
 	microtime(&now);
 	timersub(&tv, &now, &delta);
@@ -162,12 +163,12 @@ settime(struct proc *p, struct timespec *ts)
 	if ((delta.tv_sec < 0 || delta.tv_usec < 0) &&
 	    kauth_authorize_system(p->p_cred, KAUTH_SYSTEM_TIME,
 	    KAUTH_REQ_SYSTEM_TIME_BACKWARDS, NULL, NULL, NULL)) {
-		splx(s);
+		splx(s1);
 		return (EPERM);
 	}
 #ifdef notyet
 	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
-		splx(s);
+		splx(s1);
 		return (EPERM);
 	}
 #endif
@@ -179,7 +180,7 @@ settime(struct proc *p, struct timespec *ts)
 	time = tv;
 #endif /* !__HAVE_TIMECOUNTER */
 
-	(void) spllowersoftclock();
+	splx(s2);
 
 	timeradd(&boottime, &delta, &boottime);
 
@@ -192,7 +193,7 @@ settime(struct proc *p, struct timespec *ts)
 	ci = curcpu();
 	timeradd(&ci->ci_schedstate.spc_runtime, &delta,
 	    &ci->ci_schedstate.spc_runtime);
-	splx(s);
+	splx(s1);
 	resettodr();
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.7 2007/02/16 02:53:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,5 @@ splraiseipl(ipl_cookie_t icookie)
 
 #define	spl0()			_cpu_intr_resume(0)
 #define	splx(x)			_cpu_intr_resume(x)
-
-#define	spllowersoftclock()	_cpu_intr_resume(IPL_SOFTCLOCK << 4)
 
 #endif /* !_DREAMCAST_INTR_H_ */
