@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.15 2007/02/15 21:57:09 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.16 2007/02/16 00:13:02 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.15 2007/02/15 21:57:09 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.16 2007/02/16 00:13:02 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -375,6 +375,47 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	return ret;
 }
 
+/* create a regular file */
+/*ARGSUSED1*/
+static int
+puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
+	const struct puffs_cn *pcn, const struct vattr *va)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn;
+	struct refusenode	*rn;
+	struct fuse		*fuse;
+	struct fuse_file_info	fi;
+	mode_t			mode = va->va_mode;
+	const char		*path = PCNPATH(pcn);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.create == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.create)(path, mode, &fi);
+
+	if (ret == 0) {
+		/* fix up nodes */
+		pn = newrn(pu);
+		if (pn == NULL) {
+			unlink(PCNPATH(pcn));
+			return ENOMEM;
+		}
+		puffs_setvattr(&pn->pn_va, va);
+
+		rn = pn->pn_data;
+		memcpy(&rn->file_info, &fi, sizeof(struct fuse_file_info));
+
+		*newnode = pn;
+	}
+
+	return ret;
+}
+
 /* remove the directory entry */
 /* ARGSUSED1 */
 static int
@@ -628,9 +669,10 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (ret > 0) {
 		*resid -= ret;
+		ret = 0;
 	}
 
-	return 0;
+	return -ret;
 }
 
 /* write to the file */
@@ -657,9 +699,10 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (ret > 0) {
 		*resid -= ret;
+		ret = 0;
 	}
 
-	return ret;
+	return -ret;
 }
 
 
@@ -802,6 +845,7 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
         PUFFSOP_SET(pops, puffs_fuse, node, readdir);
         PUFFSOP_SET(pops, puffs_fuse, node, readlink);
         PUFFSOP_SET(pops, puffs_fuse, node, mknod);
+        PUFFSOP_SET(pops, puffs_fuse, node, create);
         PUFFSOP_SET(pops, puffs_fuse, node, remove);
         PUFFSOP_SET(pops, puffs_fuse, node, mkdir);
         PUFFSOP_SET(pops, puffs_fuse, node, rmdir);
