@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.8 2005/12/11 12:18:23 christos Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.9 2007/02/16 21:52:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.8 2005/12/11 12:18:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.9 2007/02/16 21:52:47 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +114,7 @@ ms_hb_attach(struct device *parent, struct device *self, void *aux)
 
 	ms_hb_init(sc);
 
-	isrlink_autovec(ms_hb_intr, (void *)sc, ipl, ISRPRI_TTY);
+	isrlink_autovec(ms_hb_intr, (void *)sc, ipl, IPL_TTY);
 
 	wsa.accessops = &ms_hb_accessops;
 	wsa.accesscookie = sc;
