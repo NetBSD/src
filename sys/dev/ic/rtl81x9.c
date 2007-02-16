@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.69 2007/02/10 03:58:32 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.70 2007/02/16 13:01:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.69 2007/02/10 03:58:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.70 2007/02/16 13:01:48 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -595,7 +595,8 @@ rtk_setmulti(struct rtk_softc *sc)
 	 * order for those devices.
 	 */
 	hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
-	if (hwrev == RTK_HWREV_8100E || hwrev == RTK_HWREV_8101E ||
+	if (hwrev == RTK_HWREV_8100E || hwrev == RTK_HWREV_8100E_SPIN2 ||
+	    hwrev == RTK_HWREV_8101E ||
 	    hwrev == RTK_HWREV_8168_SPIN1 || hwrev == RTK_HWREV_8168_SPIN2) {
 		CSR_WRITE_4(sc, RTK_MAR0, bswap32(hashes[1]));
 		CSR_WRITE_4(sc, RTK_MAR4, bswap32(hashes[0]));
