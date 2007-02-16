@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.80 2006/11/16 22:29:03 joerg Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.80.2.1 2007/02/16 20:05:36 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.80 2006/11/16 22:29:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.80.2.1 2007/02/16 20:05:36 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -912,8 +912,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	 * dp->i_offset + dp->i_count would yield the space.
 	 */
 	ep = (struct direct *)dirbuf;
-	dsize = ufs_rw32(ep->d_ino, needswap) ?
-	    DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
+	dsize = (ep->d_ino != 0) ?  DIRSIZ(FSFMT(dvp), ep, needswap) : 0;
 	spacefree = ufs_rw16(ep->d_reclen, needswap) - dsize;
 	for (loc = ufs_rw16(ep->d_reclen, needswap); loc < dp->i_count; ) {
 		uint16_t reclen;
@@ -1078,7 +1077,8 @@ ufs_dirremove(struct vnode *dvp, struct inode *ip, int flags, int isrmdir)
 	 */
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_remove(dp, (dp->i_count == 0) ? ep :
-		   (struct direct *)((char *)ep + ep->d_reclen), dp->i_offset);
+		   (struct direct *)((char *)ep +
+		   ufs_rw16(ep->d_reclen, needswap)), dp->i_offset);
 #endif
 
 	if (dp->i_count == 0) {
