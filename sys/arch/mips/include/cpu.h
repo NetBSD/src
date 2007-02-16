@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79 2007/02/16 02:53:48 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.80 2007/02/16 03:30:48 oster Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -226,7 +226,7 @@ extern u_int mips3_pg_shift;
 # define MIPS_HAS_CLOCK		1
 # define MIPS_HAS_LLSC		1
 
-#elif define(MIPS64)
+#elif defined(MIPS64)
 
 # define CPUISMIPS3		1
 # define CPUIS64BITS		1
