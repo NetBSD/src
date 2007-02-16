@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.26 2007/02/15 15:27:53 ad Exp $ */
+/*	$NetBSD: lock.h,v 1.27 2007/02/16 15:42:02 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -145,8 +145,11 @@ mb_memory(void)
 static __inline void
 mb_read(void)
 {
+	/* LINTED */
 	static volatile int junk;
+	/* LINTED */
 	__insn_barrier();
+	/* LINTED */
 	junk = 1;
 }
 
@@ -159,12 +162,7 @@ mb_write(void)
 static __inline void
 mb_memory(void)
 {
-	/* LINTED */
-	static volatile int junk;
-	/* LINTED */
-	__insn_barrier();
-	/* LINTED */
-	junk = 1;
+	mb_read();
 }
 #endif	/* __sparc_v9__ */
 
