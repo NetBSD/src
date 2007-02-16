@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.235 2007/02/15 15:13:10 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.236 2007/02/16 00:39:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -547,7 +547,7 @@ void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
 struct proc *proc_alloc(void);
 void	proc0_init(void);
-void	proc_free(struct proc *, struct rusage **);
+void	proc_free(struct proc *, struct rusage *);
 void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
