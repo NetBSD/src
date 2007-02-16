@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.147 2007/02/15 15:35:45 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.148 2007/02/16 21:37:56 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.147 2007/02/15 15:35:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.148 2007/02/16 21:37:56 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1003,8 +1003,9 @@ procfs_lookup(v)
 			pt = &proc_root_targets[i];
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
-			    (pt->pt_valid == NULL ||
-			     (*pt->pt_valid)(cnp->cn_lwp, dvp->v_mount)))
+			    (pt->pt_valid == NULL || (p != NULL &&
+			     (*pt->pt_valid)(LIST_FIRST(&p->p_lwps),
+			     		     dvp->v_mount))))
 				break;
 		}
 
@@ -1054,8 +1055,9 @@ procfs_lookup(v)
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
-			    (pt->pt_valid == NULL ||
-			     (*pt->pt_valid)(cnp->cn_lwp, dvp->v_mount)))
+			    (pt->pt_valid == NULL || (p != NULL &&
+			      (*pt->pt_valid)(LIST_FIRST(&p->p_lwps),
+					      dvp->v_mount))))
 				break;
 		}
 		if (i == nproc_targets) {
