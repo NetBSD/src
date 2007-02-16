@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.81 2006/09/28 15:20:14 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.81.2.1 2007/02/16 20:31:20 riz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.81 2006/09/28 15:20:14 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.81.2.1 2007/02/16 20:31:20 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ state_t requested_transition = single_user;
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
 
-#define NINODE 1024
+#define NINODE 1280
 #define FSSIZE ((8192		/* boot area */				\
 	+ 2 * 8192		/* two copies of superblock */		\
 	+ 4096			/* cylinder group info */		\
