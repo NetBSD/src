@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.244 2007/02/15 15:10:44 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.245 2007/02/16 00:35:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.244 2007/02/15 15:10:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.245 2007/02/16 00:35:20 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1453,6 +1453,9 @@ sigswitch(boolean_t ppsig, int ppmask, int signo)
 {
 	struct lwp *l = curlwp, *l2;
 	struct proc *p = l->l_proc;
+#ifdef MULTIPROCESSOR
+	int biglocks;
+#endif
 
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 
@@ -1525,7 +1528,7 @@ sigswitch(boolean_t ppsig, int ppmask, int signo)
 	/*
 	 * Unlock and switch away.
 	 */
-	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
+	KERNEL_UNLOCK_ALL(l, &biglocks);
 	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 		p->p_nrlwps--;
 		lwp_lock(l);
@@ -1537,7 +1540,7 @@ sigswitch(boolean_t ppsig, int ppmask, int signo)
 	mutex_exit(&p->p_smutex);
 	lwp_lock(l);
 	mi_switch(l, NULL);
-	KERNEL_LOCK(l->l_biglocks, l);
+	KERNEL_LOCK(biglocks, l);
 	mutex_enter(&p->p_smutex);
 }
 
