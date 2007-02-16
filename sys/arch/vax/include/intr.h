@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.22 2007/02/16 01:34:02 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.23 2007/02/16 02:53:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -120,7 +120,6 @@ splraiseipl(ipl_cookie_t icookie)
 #define _setsirr(reg)	mtpr((reg), PR_SIRR)
 
 #define spl0()		_splset(IPL_NONE)		/* IPL00 */
-#define spllowersoftclock() _splset(IPL_SOFTCLOCK)	/* IPL08 */
 #define splddb()	splraiseipl(makeiplcookie(IPL_SOFTDDB)) /* IPL0F */
 #define splconsmedia()	splraiseipl(makeiplcookie(IPL_CONSMEDIA)) /* IPL14 */
 

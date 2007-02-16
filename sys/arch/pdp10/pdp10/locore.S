@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2007/02/16 02:53:50 ad Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -265,15 +265,6 @@ ENTRY(splraiseipl)
 	move %2,-1(SP)
 	cono PI,%2
 	popj SP,
-
-
-/*
- * This routine is problematic. The only way to lower an interrupt is
- * through xjen, which resets the interrupt level. For now we don't try
- * to do anything clever; set CLKF_BASEPRI() to 0 and avoid this routine.
- */
-ENTRY(spllowersoftclock)
-	HALT(044)
 
 /*
  * Lower the current interrupt level. If softclock was blocked but is

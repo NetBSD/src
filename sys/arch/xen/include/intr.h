@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2006/12/26 15:22:44 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2007/02/16 02:53:52 ad Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -166,12 +166,7 @@ spllower(int nlevel)
 
 /*
  * Software interrupt masks
- *
- * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
  */
-#define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
-
 #define splsoftxenevt()	splraise(IPL_SOFTXENEVT)
 
 /*

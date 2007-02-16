@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.81 2007/02/16 02:53:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -149,7 +149,6 @@ struct clockframe {
 } __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0) /* XXX should use PSL_M (see hp300) */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2006/12/21 15:55:23 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2007/02/16 02:53:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 
 #ifdef _KERNEL
 #define spl0()			_spl0()
-#define spllowersoftclock()	spl1()
 #define splsoft()		splraise1()
 #define splsoftclock()		splsoft()
 #define splsoftnet()		splsoft()

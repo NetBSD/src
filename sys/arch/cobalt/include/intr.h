@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.24 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.25 2007/02/16 02:53:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -96,7 +96,6 @@ void _clrsoftintr(int);
 #define splclock()	_splraise(SPLCLOCK)
 #define splvm()		splclock()
 #define splstatclock()	splclock()
-#define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()

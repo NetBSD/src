@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.53 2007/02/09 21:55:10 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.54 2007/02/16 02:53:50 ad Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -282,11 +282,6 @@ cntlzw(uint32_t val)
 })
 #endif /* PPC_IBM4XX || PPC_IBM403 */
 
-/*
- * CLKF_BASEPRI is dependent on the underlying interrupt code
- * and can not be defined here.  It should be defined in
- * <machine/intr.h>
- */
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth > 0)
