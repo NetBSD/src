@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.866 2007/02/10 10:35:42 mlelstv Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.867 2007/02/16 01:35:53 markd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.867 2007/02/10 10:23:18 mlelstv Exp
+ *	NetBSD: pcidevs,v 1.868 2007/02/16 01:35:04 markd Exp
  */
 
 /*
@@ -7964,6 +7964,22 @@ static const struct pci_product pci_products[] = {
 	    "82801H Thermal Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
+	    "82965Q Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_EXP,
+	    "82965Q PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_IGD,
+	    "82965Q Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_IGD_1,
+	    "82965Q Integrated Graphics Device",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
 	    "31244 Serial ATA Controller",
 	},
@@ -12784,4 +12800,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2602;
+const int pci_nproducts = 2606;
