@@ -1,4 +1,4 @@
-/*	$NetBSD: viaenv.c,v 1.18 2007/01/20 18:44:26 xtraeme Exp $	*/
+/*	$NetBSD: viaenv.c,v 1.19 2007/02/16 12:46:11 njoly Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.18 2007/01/20 18:44:26 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaenv.c,v 1.19 2007/02/16 12:46:11 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ static const struct envsys_range viaenv_ranges[] = {
 	{ 0, 2,		ENVSYS_STEMP },
 	{ 3, 4,		ENVSYS_SFANRPM },
 	{ 1, 0,		ENVSYS_SVOLTS_AC },	/* none */
-	{ 5, 11,	ENVSYS_SVOLTS_DC },
+	{ 5, 9,		ENVSYS_SVOLTS_DC },
 	{ 1, 0,		ENVSYS_SOHMS },		/* none */
 	{ 1, 0,		ENVSYS_SWATTS },	/* none */
 	{ 1, 0,		ENVSYS_SAMPS },		/* none */
