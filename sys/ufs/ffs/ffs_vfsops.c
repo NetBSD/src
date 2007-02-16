@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.195 2007/02/15 15:40:54 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.196 2007/02/16 17:24:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.195 2007/02/15 15:40:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.196 2007/02/16 17:24:00 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -977,9 +977,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-#ifdef NEWVNGATE
 	mp->mnt_iflag |= IMNT_HAS_TRANS;
-#endif
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;

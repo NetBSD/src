@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.27 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.28 2007/02/16 17:24:00 hannken Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.27 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.28 2007/02/16 17:24:00 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -131,9 +131,7 @@ puffs_mount(struct mount *mp, const char *path, void *data,
 	mp->mnt_dev_bshift = DEV_BSHIFT;
 	mp->mnt_flag &= ~MNT_LOCAL; /* we don't really know, so ... */
 	mp->mnt_data = pmp;
-#ifdef NEWVNGATE
 	mp->mnt_iflag |= IMNT_HAS_TRANS;
-#endif
 
 	pmp->pmp_status = PUFFSTAT_MOUNTING;
 	pmp->pmp_nextreq = 0;
