@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2007/02/16 13:27:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2006/12/21 15:55:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2007/02/16 13:27:00 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -669,32 +669,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
-
 		/* call the common MIPS3 clock interrupt handler */ 
 		cf.pc = pc;
 		cf.sr = status;
-
-		if ((status & MIPS_INT_MASK) == MIPS_INT_MASK) {
-			if ((ipending & MIPS_INT_MASK &
-			     ~MIPS_INT_MASK_5) == 0) {
-				/*
-				 * If all interrupts were enabled and
-				 * there is no pending interrupts,
-				 * set MIPS_SR_INT_IE so that
-				 * spllowersoftclock(9) in hardclock(9)
-				 * works properly.
-				 */
-				_splset(MIPS_SR_INT_IE);
-			} else {
-				/*
-				 * If there are any pending interrputs,
-				 * clear MIPS_SR_INT_IE in cf.sr so that
-				 * spllowersoftclock(9) in hardclock(9) will
-				 * not happen.
-				 */
-				cf.sr &= ~MIPS_SR_INT_IE;
-			}
-		}
 		mips3_clockintr(&cf);
 
 		cause &= ~MIPS_INT_MASK_5;
