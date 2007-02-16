@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79 2007/02/16 02:53:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -288,49 +288,31 @@ struct clockframe {
 };
 
 /*
- * A port must provde CLKF_USERMODE() and CLKF_BASEPRI() for use
- * in machine-independent code. These differ on r4000 and r3000 systems;
- * provide them in the port-dependent file that includes this one, using
- * the macros below.
+ * A port must provde CLKF_USERMODE() for use in machine-independent code.
+ * These differ on r4000 and r3000 systems; provide them in the
+ * port-dependent file that includes this one, using the macros below.
  */
 
 /* mips1 versions */
 #define	MIPS1_CLKF_USERMODE(framep)	((framep)->sr & MIPS_SR_KU_PREV)
-#define	MIPS1_CLKF_BASEPRI(framep)	\
-	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_ENA_PREV)) == 0)
 
 /* mips3 versions */
 #define	MIPS3_CLKF_USERMODE(framep)	((framep)->sr & MIPS_SR_KSU_USER)
-#define	MIPS3_CLKF_BASEPRI(framep)	\
-	((~(framep)->sr & (MIPS_INT_MASK | MIPS_SR_INT_IE)) == 0)
-
-#ifdef IPL_ICU_MASK
-#define ICU_CLKF_BASEPRI(framep)	((framep)->ppl == 0)
-#endif
 
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0)
 
 #if defined(MIPS3_PLUS) && !defined(MIPS1)		/* XXX bogus! */
 #define	CLKF_USERMODE(framep)	MIPS3_CLKF_USERMODE(framep)
-#define	CLKF_BASEPRI(framep)	MIPS3_CLKF_BASEPRI(framep)
 #endif
 
 #if !defined(MIPS3_PLUS) && defined(MIPS1)		/* XXX bogus! */
 #define	CLKF_USERMODE(framep)	MIPS1_CLKF_USERMODE(framep)
-#define	CLKF_BASEPRI(framep)	MIPS1_CLKF_BASEPRI(framep)
-#endif
-
-#ifdef IPL_ICU_MASK
-#undef CLKF_BASEPRI
-#define CLKF_BASEPRI(framep)	ICU_CLKF_BASEPRI(framep)
 #endif
 
 #if defined(MIPS3_PLUS) && defined(MIPS1)		/* XXX bogus! */
 #define CLKF_USERMODE(framep) \
     ((CPUISMIPS3) ? MIPS3_CLKF_USERMODE(framep):  MIPS1_CLKF_USERMODE(framep))
-#define CLKF_BASEPRI(framep) \
-    ((CPUISMIPS3) ? MIPS3_CLKF_BASEPRI(framep):  MIPS1_CLKF_BASEPRI(framep))
 #endif
 
 /*

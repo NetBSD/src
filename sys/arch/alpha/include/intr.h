@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.58 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: intr.h,v 1.59 2007/02/16 02:53:44 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -176,8 +176,6 @@ splx(int s)
 	else
 		alpha_pal_swpipl(s);
 }
-#define	spllowersoftclock()	((void)alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT))
-
 /* IPL-raising functions/macros */
 static __inline int
 _splraise(int s)

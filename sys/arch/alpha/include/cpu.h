@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.66 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.67 2007/02/16 02:53:44 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -221,8 +221,6 @@ struct clockframe {
 };
 #define	CLKF_USERMODE(framep)						\
 	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0)
-#define	CLKF_BASEPRI(framep)						\
-	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_IPL_MASK) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_tf.tf_regs[FRAME_PC])
 
 /*

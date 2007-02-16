@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2007/02/09 21:55:15 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2007/02/16 02:53:52 ad Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -251,17 +251,12 @@ extern u_int32_t cpus_attached;
  * Arguments to hardclock, softclock and statclock
  * encapsulate the previous machine state in an opaque
  * clockframe; for now, use generic intrframe.
- *
- * Note: Since spllowersoftclock() does not actually unmask the currently
- * running (hardclock) interrupt, CLKF_BASEPRI() *must* always be 0; otherwise
- * we could stall hardclock ticks if another interrupt takes too long.
  */
 struct clockframe {
 	struct intrframe cf_if;
 };
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
-#define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
 #define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 

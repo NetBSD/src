@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15 2007/02/10 13:08:30 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.16 2007/02/16 02:53:49 ad Exp $	*/
 
 /*
  *
@@ -102,7 +102,6 @@ splx(int sr)
  */
 #define	spl0()		_spl0()
 
-#define	spllowersoftclock()	spl2()
 #define	splsoft()	splraise2()
 #define	splsoftclock()	splsoft()
 #define	splsoftnet()	splsoft()

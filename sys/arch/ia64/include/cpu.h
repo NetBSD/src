@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2007/02/16 02:53:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -135,7 +135,6 @@ struct clockframe {
 #define	CLKF_PC(cf)		((cf)->cf_tf.tf_special.iip)
 #define	CLKF_CPL(cf)		((cf)->cf_tf.tf_special.psr & IA64_PSR_CPL)
 #define	CLKF_USERMODE(cf)	(CLKF_CPL(cf) != IA64_PSR_CPL_KERN)
-#define	CLKF_BASEPRI(frame)	(0) /*XXX: CHECKME */
 #define	CLKF_INTR(frame)	(curcpu()->ci_intrdepth)
 
 #define	TRAPF_PC(tf)		((tf)->tf_special.iip)

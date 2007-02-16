@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.13 2007/02/16 02:53:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,6 @@
 /* spl0 requires checking for software interrupts */
 
 #define splnone()		spl0()
-#define	spllowersoftclock()	spl1()
 
 #define splsoftclock()		splraise1()
 #define splsoftnet()		splraise1()

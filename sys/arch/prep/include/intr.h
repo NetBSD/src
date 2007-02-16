@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.29 2007/02/16 02:53:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,7 +129,6 @@ extern struct intrsource intrsources[ICU_LEN];
 #define	LEGAL_IRQ(x)		((x) >= 0 && (x) < ICU_LEN && (x) != IRQ_SLAVE)
 #define	I8259_INTR_NUM		16
 #define	OPENPIC_INTR_NUM	((ICU_LEN)-(I8259_INTR_NUM))
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 
 #define	PREP_INTR_REG	0xbffff000
 #define	INTR_VECTOR_REG	0xff0
@@ -144,8 +143,6 @@ extern struct intrsource intrsources[ICU_LEN];
 #define	CNT_SINT_CLOCK	30
 #define	CNT_SINT_SERIAL	31
 #define	CNT_CLOCK	0
-
-#define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
 
 #define setsoftclock()  softintr(SINT_CLOCK);
 #define setsoftnet()    softintr(SINT_NET);

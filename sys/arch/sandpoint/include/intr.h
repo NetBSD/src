@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2006/12/21 15:55:24 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2007/02/16 02:53:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,8 +95,6 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
-
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -208,7 +206,6 @@ set_sint(pending)
 #define splvm()		splraise(imask[IPL_VM])
 #define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splclock()
-#define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
 #define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
 #define	splsoftnet()	splraise(imask[IPL_SOFTNET])
 #define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])

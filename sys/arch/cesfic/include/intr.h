@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2007/02/16 02:53:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -95,7 +95,6 @@
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
 /* These spl calls are used by machine-independent code. */
-#define	spllowersoftclock() spl1()
 #define	splsoft()	splraise1()
 #define splsoftclock()	splsoft()
 #define splsoftnet()	splsoft()

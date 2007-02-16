@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_clock.c,v 1.105 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106 2007/02/16 02:53:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.105 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106 2007/02/16 02:53:43 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -98,9 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.105 2007/02/09 21:55:30 ad Exp $");
 #endif
 
 #include <machine/cpu.h>
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -354,9 +352,7 @@ volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
 #endif /* !__HAVE_TIMECOUNTER */
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	*softclock_si;
-#endif
 
 #ifdef __HAVE_TIMECOUNTER
 static u_int get_intr_timecount(struct timecounter *);
@@ -388,11 +384,9 @@ initclocks(void)
 {
 	int i;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
 	if (softclock_si == NULL)
 		panic("initclocks: unable to register softclock intr");
-#endif
 
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
@@ -880,29 +874,12 @@ hardclock(struct clockframe *frame)
 #endif /* !__HAVE_TIMECOUNTER */
 
 	/*
-	 * Update real-time timeout queue.
-	 * Process callouts at a very low CPU priority, so we don't keep the
-	 * relatively high clock interrupt priority any longer than necessary.
+	 * Update real-time timeout queue.  Callouts are processed at a
+	 * very low CPU priority, so we don't keep the relatively high
+	 * clock interrupt priority any longer than necessary.
 	 */
-	if (callout_hardclock()) {
-		if (CLKF_BASEPRI(frame)) {
-			/*
-			 * Save the overhead of a software interrupt;
-			 * it will happen as soon as we return, so do
-			 * it now.
-			 */
-			spllowersoftclock();
-			KERNEL_LOCK(1, NULL);
-			softclock(NULL);
-			KERNEL_UNLOCK_ONE(NULL);
-		} else {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-			softintr_schedule(softclock_si);
-#else
-			setsoftclock();
-#endif
-		}
-	}
+	if (callout_hardclock())
+		softintr_schedule(softclock_si);
 }
 
 #ifdef __HAVE_TIMECOUNTER

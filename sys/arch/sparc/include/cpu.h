@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.79 2007/02/16 02:53:51 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,6 @@ typedef struct clockframe clockframe;
 extern int eintstack[];
 
 #define	CLKF_USERMODE(framep)	(((framep)->psr & PSR_PS) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->psr & PSR_PIL) == 0)
 #define	CLKF_LOPRI(framep,n)	(((framep)->psr & PSR_PIL) < (n) << 8)
 #define	CLKF_PC(framep)		((framep)->pc)
 #if defined(MULTIPROCESSOR)

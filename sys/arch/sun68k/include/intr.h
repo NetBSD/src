@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2007/01/23 16:03:43 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2007/02/16 02:53:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -156,7 +156,6 @@ _getsr(void)
 #define splx(x)	_spl(x)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
-#define	spllowersoftclock() spl1()
 #define splsoftclock()  splraise1()
 #define splsoftnet()    splraise1()
 #define	splsoftserial()	splraise3()

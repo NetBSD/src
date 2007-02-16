@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.5 2006/12/21 15:55:24 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.6 2007/02/16 02:53:50 ad Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -90,7 +90,6 @@
 #define	spllock()		splhigh()
 
 #define	spl0()			_spllower(0)
-#define	spllowersoftclock()	_spllower(_IMR_SOFT)
 #define	splx(s)			_splset(s)
 
 int	_splraise(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2007/02/16 02:53:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 #define	spl0()			_cpu_intr_resume(IPL_NONE << 4)
 #define	splx(x)			_cpu_intr_resume(x)
-
-#define	spllowersoftclock()	_cpu_intr_resume(IPL_SOFTCLOCK << 4)
 
 void intr_init(void);
 void *extintr_establish(int irq, int level, int (*func)(void *), void *arg);

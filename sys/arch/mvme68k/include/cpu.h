@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2007/02/09 21:55:07 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2007/02/16 02:53:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -129,7 +129,6 @@ struct clockframe {
 } __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 
 /*

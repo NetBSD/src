@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18 2007/02/15 12:22:04 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.19 2007/02/16 02:53:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 /* These spl calls are used by machine-independent code. */
 /* spl0 requires checking for software interrupts */
-#define	spllowersoftclock() spl1()
 #define	splsoft()	splraise1()
 #define	splsoftclock()	splsoft()
 #define	splsoftnet()	splsoft()
