@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2007/02/15 15:49:27 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2007/02/16 03:10:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -183,6 +183,17 @@ void	mutex_wakeup(kmutex_t *);
 #endif
 
 #include <machine/mutex.h>
+
+/*
+ * Return true if no spin mutexes are held by the current CPU.
+ */
+#if defined(_KERNEL) && !defined(__HAVE_MUTEX_NO_SPIN_ACTIVE_P)
+static inline bool
+MUTEX_NO_SPIN_ACTIVE_P(struct cpu_info *ci)
+{
+	return (ci->ci_mtx_count == 0);
+}
+#endif	/* _KERNEL && !__HAVE_MUTEX_NO_SPIN_ACTIVE_P */
 
 #ifdef _KERNEL
 
