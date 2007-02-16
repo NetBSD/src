@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2007/02/09 21:55:13 ad Exp $     */
+/*	$NetBSD: syscall.c,v 1.4 2007/02/16 02:17:42 ad Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2007/02/16 02:17:42 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,17 +117,20 @@ syscall_plain(struct trapframe *frame)
 
 	rval[0] = 0;
 	rval[1] = frame->r1;
-	KERNEL_PROC_LOCK(l);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err) {
-			KERNEL_PROC_UNLOCK(l);
+		if (err)
 			goto bad;
-		}
 	}
 
-	err = (*callp->sy_call)(curlwp, args, rval);
-	KERNEL_PROC_UNLOCK(l);
+	if ((callp->sy_flags & SYCALL_MPSAFE) != 0)
+		err = (*callp->sy_call)(curlwp, args, rval);
+	else {
+		KERNEL_LOCK(1, l);
+		err = (*callp->sy_call)(curlwp, args, rval);
+		KERNEL_UNLOCK_LAST(l);
+	}
+
 	exptr = l->l_addr->u_pcb.framep;
 
 	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
@@ -195,21 +198,24 @@ syscall_fancy(struct trapframe *frame)
 
 	rval[0] = 0;
 	rval[1] = frame->r1;
-	KERNEL_PROC_LOCK(l);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err) {
-			KERNEL_PROC_UNLOCK(l);
+		if (err)
 			goto bad;
-		}
 	}
 
+	KERNEL_LOCK(1, l);
 	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0)
 		goto out;
 
-	err = (*callp->sy_call)(curlwp, args, rval);
-out:
-	KERNEL_PROC_UNLOCK(l);
+	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
+		err = (*callp->sy_call)(curlwp, args, rval);
+ out:
+ 		KERNEL_UNLOCK_LAST(l);
+	} else {
+ 		KERNEL_UNLOCK_LAST(l);
+		err = (*callp->sy_call)(curlwp, args, rval);
+	}
 	exptr = l->l_addr->u_pcb.framep;
 	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
 	    "frame %p\n", syscallnames[exptr->code], exptr->pc, exptr->psl,
@@ -245,14 +251,11 @@ child_return(void *arg)
 {
         struct lwp *l = arg;
 
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_addr->u_pcb.framep, 0);
 
 #ifdef KTRACE
-	if (KTRPOINT(l->l_proc, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
+	if (KTRPOINT(l->l_proc, KTR_SYSRET))
 		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
-	}
 #endif
 }
