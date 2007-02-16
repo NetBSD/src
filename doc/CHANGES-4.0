@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.70 2007/02/16 19:20:10 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.71 2007/02/16 20:32:38 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1257,4 +1257,26 @@ sys/dev/ld.c					1.43
 
 	Add disk-info properties to ld(4) similar to wd(4).
 	[riz, ticket #444]
+
+sys/ufs/ufs/ufs_lookup.c			1.85-1.86
+
+	In ufs_dirremove swap ep->d_reclen before use if needed. 
+	[chs, ticket #419]
+
+usr.bin/kdump/kdump.c				1.88
+
+	skip over the "self" sa when printing upcalls.
+	[chs, ticket #420]
+
+lib/libkvm/kvm_proc.c				1.64
+
+	fill in p_stat for crashdumps like the kernel does for the sysctl.
+	[chs, ticket #421]
+
+sbin/init/init.c				1.88
+
+	Increase the numbers of inodes available on the "/dev" MFS to 1280.
+	This should fix the "sysinst" problems caused by adding more devices
+	node to resolve PR port-amd64/35532.
+	[tron, ticket #441]
 
