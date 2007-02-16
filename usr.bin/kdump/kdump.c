@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.87 2006/10/23 04:13:51 mrg Exp $	*/
+/*	$NetBSD: kdump.c,v 1.87.2.1 2007/02/16 20:21:13 riz Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.87 2006/10/23 04:13:51 mrg Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.87.2.1 2007/02/16 20:21:13 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1001,12 +1001,12 @@ ktrsaupcall(const struct ktr_saupcall *sau, int len)
 	printf("%s", type);
 	if (sau->ktr_nevent) {
 		printf(", event=[");
-		ktr_saprint(sau, 0, sau->ktr_nevent);
+		ktr_saprint(sau, 1, sau->ktr_nevent);
 		printf("]");
 	}
 	if (sau->ktr_nint) {
 		printf(", intr=[");
-		ktr_saprint(sau, sau->ktr_nevent, sau->ktr_nint);
+		ktr_saprint(sau, 1 + sau->ktr_nevent, sau->ktr_nint);
 		printf("]");
 	}
 	printf("\n");
