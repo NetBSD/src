@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.34 2006/07/21 10:01:39 tsutsui Exp $	*/
+/*	$NetBSD: ppi.c,v 1.35 2007/02/16 14:00:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.34 2006/07/21 10:01:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.35 2007/02/16 14:00:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ ppirw(dev_t dev, struct uio *uio)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
-	int s, len, cnt;
+	int s, s2, len, cnt;
 	char *cp;
 	int error = 0, gotdata = 0;
 	int buflen, ctlr, slave;
@@ -327,14 +327,15 @@ ppirw(dev_t dev, struct uio *uio)
 				break;
 		}
 again:
-		s = splbio();
+		s = splsoftclock();
+		s2 = splbio();
 		if ((sc->sc_flags & PPIF_UIO) &&
 		    hpibreq(device_parent(&sc->sc_dev), &sc->sc_hq) == 0)
 			(void) tsleep(sc, PRIBIO + 1, "ppirw", 0);
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
-		(void) spllowersoftclock();
+		splx(s2);
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 #ifdef DEBUG
 			if (ppidebug & PDB_IO)
