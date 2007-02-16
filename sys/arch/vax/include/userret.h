@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.2 2007/02/09 21:55:13 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.3 2007/02/16 02:17:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -40,33 +40,24 @@ userret(struct lwp *, struct trapframe *, u_quad_t);
 static __inline void
 userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 {
-	int sig;
 	struct proc *p = l->l_proc;
 
 	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-	l->l_priority = l->l_usrpri;
-	if (curcpu()->ci_want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(0);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
+	for (;;) {
+		if ((l->l_flag & L_USERRET) != 0)
+			lwp_userret(l);
+		if (!curcpu()->ci_want_resched)
+			break;
+		preempt();
 	}
-
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if ((p->p_stflag & PST_PROFIL) != 0) {
 		extern int psratio;
 
-		addupc_task(p, frame->pc,
+		addupc_task(l, frame->pc,
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
 
