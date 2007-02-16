@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.46 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.47 2007/02/16 20:25:33 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-#include <getopt.h>
+#include <ctype.h>
 
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.46 2006/12/14 17:09:43 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.47 2007/02/16 20:25:33 hubertf Exp $");
 #endif /* not lint */
 
 /*

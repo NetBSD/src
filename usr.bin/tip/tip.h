@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.28 2006/12/14 17:09:43 christos Exp $	*/
+/*	$NetBSD: tip.h,v 1.29 2007/02/16 20:25:33 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,6 @@
 #include <sys/wait.h>
 #include <machine/endian.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <errno.h>
