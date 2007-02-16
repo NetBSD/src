@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.45 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: gencons.c,v 1.46 2007/02/16 01:34:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.45 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.46 2007/02/16 01:34:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -226,14 +226,14 @@ gencnrint(void *arg)
 	if (sc->alive == 0)
 		return;
 	i = mfpr(pr_rxdb[sc->unit]) & 0377; /* Mask status flags etc... */
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 
 #ifdef DDB
 	if (tp->t_dev == cn_tab->cn_dev) {
 		int j = kdbrint(i);
 
 		if (j == 1) {	/* Escape received, just return */
-			KERNEL_UNLOCK();
+			KERNEL_UNLOCK_ONE(NULL);
 			return;
 		}
 
@@ -243,7 +243,7 @@ gencnrint(void *arg)
 #endif
 
 	(*tp->t_linesw->l_rint)(i, tp);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static void
@@ -254,11 +254,11 @@ gencntint(void *arg)
 
 	if (sc->alive == 0)
 		return;
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 	tp->t_state &= ~TS_BUSY;
 
 	gencnstart(tp);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 int
