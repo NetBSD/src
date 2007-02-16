@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.4 2003/01/06 13:05:04 wiz Exp $	*/
+/*	$NetBSD: isr.h,v 1.5 2007/02/16 21:52:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,14 +77,6 @@ struct isr_vectored {
 	void *isr_arg;
 	int  isr_ipl;
 };
-
-/*
- * Autovectored ISR priorities.  These are not the same as interrupt levels.
- */
-#define ISRPRI_BIO		0
-#define ISRPRI_NET		1
-#define ISRPRI_TTY		2
-#define ISRPRI_TTYNOBUF		3
 
 void isrinit(void);
 void isrlink_autovec(int (*)(void *), void *, int, int);
