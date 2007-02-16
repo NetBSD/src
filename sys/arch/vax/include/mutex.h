@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1 2007/02/16 01:34:03 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2 2007/02/16 02:48:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ static inline bool
 MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 {
 	mtx->mtx_owner |= 1;
- 	return mtx->mtx_owner != 0;
+ 	return (mtx->mtx_owner & ~1) != 0;
 }
 
 static inline bool
