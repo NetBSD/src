@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.13 2007/02/10 02:03:51 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.14 2007/02/16 21:46:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.13 2007/02/10 02:03:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2007/02/16 21:46:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority)
 	 * at the head of the list.
 	 */
 	list = &isr_autovec[ipl];
-	if (list->lh_first == NULL) {
+	if (LIST_EMPTY(list)) {
 		LIST_INSERT_HEAD(list, newisr, isr_link);
 		return;
 	}
@@ -134,8 +134,8 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority)
 	 * and place ourselves after any ISRs with our current (or
 	 * higher) priority.
 	 */
-	for (curisr = list->lh_first; curisr->isr_link.le_next != NULL;
-	    curisr = curisr->isr_link.le_next) {
+	for (curisr = LIST_FIRST(list); LIST_NEXT(curisr, isr_link) != NULL;
+	    curisr = LIST_NEXT(curisr, isr_link)) {
 		if (newisr->isr_priority > curisr->isr_priority) {
 			LIST_INSERT_BEFORE(curisr, newisr, isr_link);
 			return;
@@ -216,7 +216,7 @@ isrdispatch_autovec(int evec)
 	uvmexp.intrs++;
 
 	list = &isr_autovec[ipl];
-	if (list->lh_first == NULL) {
+	if (LIST_EMPTY(list)) {
 		printf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
@@ -224,7 +224,8 @@ isrdispatch_autovec(int evec)
 	}
 
 	/* Give all the handlers a chance. */
-	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next)
+	for (isr = LIST_FIRST(list); isr != NULL;
+	    isr = LIST_NEXT(isr, isr_link))
 		handled |= (*isr->isr_func)(isr->isr_arg);
 
 	if (handled)
