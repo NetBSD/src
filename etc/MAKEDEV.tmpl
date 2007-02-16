@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.67 2006/10/22 23:02:08 pooka Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.67.2.1 2007/02/16 19:14:08 tron Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -749,7 +749,7 @@ xbd*)
 dk*)
 	name=dk; unit=${i#dk}; blk=%dk_blk%; chr=%dk_chr%
 	minor=0 
-	while [ $minor -lt ${i#dk} ]
+	while [ $minor -le ${i#dk} ]
 	do
 		mkdev r$name$minor c $chr $minor 0640 $g_operator
 		mkdev $name$minor b $blk  $minor 0640 $g_operator
