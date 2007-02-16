@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.67 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: lock.h,v 1.68 2007/02/16 20:54:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -300,6 +300,25 @@ struct lock {
 					   getting lk_interlock */
 #define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
+#define __LK_FLAG_BITS \
+	"\20" \
+	"\23LK_SPIN" \
+	"\22LK_RECURSEFAIL" \
+	"\21LK_SETRECURSE" \
+	"\20LK_WAIT_NOZERO" \
+	"\19LK_SHARE_NOZERO" \
+	"\18LK_RETRY" \
+	"\17LK_INTERLOCK" \
+	"\16LK_DRAINED" \
+	"\15LK_DRAINING" \
+	"\12LK_WAITDRAIN" \
+	"\11LK_HAVE_EXCL" \
+	"\10LK_WANT_EXCL" \
+	"\09LK_WANT_UPGRADE" \
+	"\08LK_REENABLE" \
+	"\07LK_CANRECURSE" \
+	"\06LK_SLEEPFAIL" \
+	"\05LK_NOWAIT"
 /*
  * Lock return status.
  *
