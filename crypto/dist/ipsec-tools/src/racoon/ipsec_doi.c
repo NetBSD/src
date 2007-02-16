@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.23 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.23.4.1 2007/02/16 11:01:58 vanhu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3478,8 +3478,8 @@ cmpid_invalid:
 	/* id integrity error */
 	plog(LLV_DEBUG, LOCATION, NULL, "check and compare ids : %s integrity error\n",
 		s_ipsecdoi_ident(id_bs->type));
-	plog(LLV_DEBUG, LOCATION, NULL, "cmpid target: length = \'%i\'\n", ident_t.l );
-	plog(LLV_DEBUG, LOCATION, NULL, "cmpid source: length = \'%i\'\n", ident_s.l );
+	plog(LLV_DEBUG, LOCATION, NULL, "cmpid target: length = \'%zu\'\n", ident_t.l );
+	plog(LLV_DEBUG, LOCATION, NULL, "cmpid source: length = \'%zu\'\n", ident_s.l );
 
 	return -1;
 }
