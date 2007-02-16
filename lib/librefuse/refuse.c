@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.16 2007/02/16 00:13:02 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.17 2007/02/16 00:16:39 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.16 2007/02/16 00:13:02 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.17 2007/02/16 00:16:39 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -693,6 +693,9 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	if (fuse->op.write == NULL) {
 		return ENOSYS;
 	}
+
+	if (ioflag & PUFFS_IO_APPEND)
+		offset = pn->pn_va.va_size;
 
 	ret = (*fuse->op.write)(path, (char *)buf, *resid, offset,
 	    &rn->file_info);
