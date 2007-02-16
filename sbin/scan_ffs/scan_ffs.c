@@ -1,7 +1,7 @@
-/* $NetBSD: scan_ffs.c,v 1.15 2006/10/15 13:18:24 xtraeme Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.16 2007/02/16 01:32:21 xtraeme Exp $ */
 
 /*
- * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.15 2006/10/15 13:18:24 xtraeme Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.16 2007/02/16 01:32:21 xtraeme Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,6 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.15 2006/10/15 13:18:24 xtraeme Exp $");
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/queue.h>
 #include <sys/mount.h>
 
 #include <ufs/ufs/dinode.h>
@@ -151,13 +150,13 @@ static int	flags = 0;
 static int	sbaddr = 0; /* counter for the LFS superblocks */
 
 static char	device[MAXPATHLEN];
-static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2", "LFS" };
+static const char *fstypes[] = { "NONE", "FFSv1", "FFSv2" };
 
 #define FSTYPE_NONE	0
 #define FSTYPE_FFSV1	1
 #define FSTYPE_FFSV2	2
 
-#define SBCOUNT		64 /* may be changed */
+#define SBCOUNT		128 /* may be changed */
 #define SBPASS		(SBCOUNT * SBLOCKSIZE / 512)
 
 /* This is only useful for LFS */
@@ -202,25 +201,23 @@ static void
 ffs_printpart(struct sblockinfo *sbi, int flag, size_t ffsize, int n)
 {
 	
-	int fstype = ffs_checkver(sbi);
-
 	switch (flag) {
 	case VERBOSE:
-		switch (fstype) {
+		switch (ffs_checkver(sbi)) {
 		case FSTYPE_FFSV1:
 			(void)printf("offset: %" PRIu64 " n: %d "
-			    "id %x,%x size: %" PRIu64 "\n",
+			    "id: %x,%x size: %" PRIu64 "\n",
 			    BLK_CNT - (2 * SBLOCKSIZE / 512), n,
 			    sbi->ffs->fs_id[0], sbi->ffs->fs_id[1],
-			    (uint64_t)(off_t)sbi->ffs->fs_size *
+			    (uint64_t)sbi->ffs->fs_size *
 			    sbi->ffs->fs_fsize / 512);
 			break;
 		case FSTYPE_FFSV2:
 			(void)printf("offset: %" PRIu64 " n: %d "
-			    "id %x,%x size: %" PRIu64 "\n",
+			    "id: %x,%x size: %" PRIu64 "\n",
 			    BLK_CNT - (ffsize * SBLOCKSIZE / 512+128),
 			    n, sbi->ffs->fs_id[0], sbi->ffs->fs_id[1],
-			    (uint64_t)(off_t)sbi->ffs->fs_size *
+			    (uint64_t)sbi->ffs->fs_size *
 			    sbi->ffs->fs_fsize / 512);
 			break;
 		default:
@@ -229,9 +226,9 @@ ffs_printpart(struct sblockinfo *sbi, int flag, size_t ffsize, int n)
 		break;
 	case LABELS:
 		(void)printf("X:  %9" PRIu64,
-			(uint64_t)((off_t)sbi->ffs->fs_size *
+			(uint64_t)(sbi->ffs->fs_size *
 			sbi->ffs->fs_fsize / 512));
-		switch (fstype) {
+		switch (ffs_checkver(sbi)) {
 		case FSTYPE_FFSV1:
 			(void)printf(" %9" PRIu64,
 			    BLK_CNT - (ffsize * SBLOCKSIZE / 512));
@@ -246,11 +243,11 @@ ffs_printpart(struct sblockinfo *sbi, int flag, size_t ffsize, int n)
 		(void)printf(" 4.2BSD %6d %5d %7d # %s [%s]\n",
 			sbi->ffs->fs_fsize, sbi->ffs->fs_bsize,
 			sbi->ffs->fs_old_cpg, 
-			sbi->ffs_path, fstypes[fstype]);
+			sbi->ffs_path, fstypes[ffs_checkver(sbi)]);
 		break;
 	default:
-		(void)printf("%s ", fstypes[fstype]);
-		switch (fstype) {
+		(void)printf("%s ", fstypes[ffs_checkver(sbi)]);
+		switch (ffs_checkver(sbi)) {
 		case FSTYPE_FFSV1:
 			(void)printf("at %" PRIu64,
 			    BLK_CNT - (2 * SBLOCKSIZE / 512));
@@ -263,7 +260,7 @@ ffs_printpart(struct sblockinfo *sbi, int flag, size_t ffsize, int n)
 			break;
 		}
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
-			(uint64_t)((off_t)sbi->ffs->fs_size *
+			(uint64_t)(sbi->ffs->fs_size *
 			sbi->ffs->fs_fsize / 512), sbi->ffs_path);
 		break;
 	}
@@ -272,12 +269,11 @@ ffs_printpart(struct sblockinfo *sbi, int flag, size_t ffsize, int n)
 static void
 ffs_scan(struct sblockinfo *sbi, int n)
 {
-	int fstype = ffs_checkver(sbi);
 	size_t i = 0;
 
 	if (flags & VERBOSE)
 		ffs_printpart(sbi, VERBOSE, NADA, n);
-	switch (fstype) {
+	switch (ffs_checkver(sbi)) {
 	case FSTYPE_FFSV1:
 		/* fsize/bsize > 512/4096 and < 4096/32768. */
 		if ((BLK_CNT - lastblk) == (SBLOCKSIZE / 512)) {
@@ -323,7 +319,7 @@ lfs_printpart(struct sblockinfo *sbi, int flag, int n)
 	switch (flag) {
 	case LABELS:
 		(void)printf("X:  %9" PRIu64,
-               		(uint64_t)((off_t)sbi->lfs->lfs_size *
+               		(uint64_t)(sbi->lfs->lfs_size *
                		sbi->lfs->lfs_fsize / 512));
 		(void)printf(" %9" PRIu64, sbi->lfs_off); 
 		(void)printf(" 4.4LFS %6d %5d %7d # %s [LFSv%d]\n",
@@ -335,7 +331,7 @@ lfs_printpart(struct sblockinfo *sbi, int flag, int n)
 		(void)printf("LFSv%d ", sbi->lfs->lfs_version);
 		(void)printf("at %" PRIu64, sbi->lfs_off);
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
-			(uint64_t)((off_t)sbi->lfs->lfs_size *
+			(uint64_t)(sbi->lfs->lfs_size *
 			sbi->lfs->lfs_fsize / 512), sbi->lfs_path);
 		break;
 	}
@@ -387,9 +383,9 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 {
 	struct sblockinfo sbinfo;
 	uint8_t buf[SBLOCKSIZE * SBCOUNT];
-	int n, fstype;
+	int n;
 
-	n = fstype = 0;
+	n = 0;
 	lastblk = -1;
 
 	/* clear our struct before using it */
@@ -399,17 +395,18 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 		(void)printf(
 		    "#        size    offset fstype [fsize bsize cpg/sgs]\n");
 
-	for (blk = beg; blk <= ((end < 0) ? blk: end); blk += SBPASS) {
-		(void)memset(&buf, 0, sizeof(buf));
-
-		if (pread(fd, buf, sizeof(buf), (off_t)blk * 512) == (off_t)-1)
+	for (blk = beg; blk <= end; blk += SBPASS) {
+		if (pread(fd, buf, sizeof(buf), blk * 512) == -1) {
+			if (fflag && fd >= 0)
+				(void)close(fd);
 			err(1, "pread");
+		}
 
 		for (n = 0; n < (SBLOCKSIZE * SBCOUNT); n += 512) {
-			sbinfo.ffs = (struct fs *)(void *)&buf[n];
-			sbinfo.lfs = (struct lfs *)(void *)&buf[n];
-			fstype = ffs_checkver(&sbinfo);
-			switch (fstype) {
+			sbinfo.ffs = (struct fs *)&buf[n];
+			sbinfo.lfs = (struct lfs *)&buf[n];
+
+			switch (ffs_checkver(&sbinfo)) {
 			case FSTYPE_FFSV1:
 			case FSTYPE_FFSV2:
 				ffs_scan(&sbinfo, n);
@@ -427,6 +424,10 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 			}
 		}
 	}
+
+	if (fflag && fd >= 0)
+		(void)close(fd);
+	
 	return EXIT_SUCCESS;
 }
 
@@ -487,6 +488,9 @@ main(int argc, char **argv)
 
 		if (!eflag)
 			end = (uint64_t)stp.st_size;
+
+		(void)printf("Total file size: %" PRIu64 "\n\n",
+		    (uint64_t)stp.st_size);
 
 		fd = open(fpath, O_RDONLY | O_DIRECT);
 	} else {
