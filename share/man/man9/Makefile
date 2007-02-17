@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.231 2007/02/17 14:32:23 yamt Exp $
+#       $NetBSD: Makefile,v 1.232 2007/02/17 17:18:31 yamt Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -9,7 +9,8 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	coredump_write.9 \
 	cpu_configure.9 cpu_coredump.9 cpu_dumpconf.9 cpu_exit.9 \
 	cpu_lwp_fork.9 \
-	cpu_initclocks.9 cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
+	cpu_initclocks.9 cpu_need_resched.9 \
+	cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
 	cpu_startup.9 cpu_swapout.9 \
 	ctxsw.9 curproc.9 \
 	delay.9 disk.9 ddc.9 disklabel.9 dofileread.9 \
@@ -31,7 +32,7 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	malloc.9 mb.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memoryallocators.9 \
 	memmove.9 memset.9 \
 	microtime.9 microuptime.9 mstohz.9 mutex.9 m_tag.9 namecache.9 \
-	namei.9 need_resched.9 opencrypto.9 optstr.9 \
+	namei.9 opencrypto.9 optstr.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 pckbport.9 \
 	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 \
 	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
