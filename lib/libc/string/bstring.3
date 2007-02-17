@@ -28,19 +28,17 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)bstring.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: bstring.3,v 1.10 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: bstring.3,v 1.11 2007/02/17 09:04:57 wiz Exp $
 .\"
-.Dd June 4, 1993
+.Dd February 9, 2007
 .Dt BSTRING 3
 .Os
 .Sh NAME
-.Nm bcmp ,
-.Nm bcopy ,
-.Nm bzero ,
 .Nm memccpy ,
 .Nm memchr ,
 .Nm memcmp ,
 .Nm memcpy ,
+.Nm memmem ,
 .Nm memmove ,
 .Nm memset
 .Nd byte string operations
@@ -48,12 +46,6 @@
 .Lb libc
 .Sh SYNOPSIS
 .In string.h
-.Ft int
-.Fn bcmp "const void *b1" "const void *b2" "size_t len"
-.Ft void
-.Fn bcopy "const void *src" "void *dst" "size_t len"
-.Ft void
-.Fn bzero "void *b" "size_t len"
 .Ft void *
 .Fn memchr "const void *b" "int c" "size_t len"
 .Ft int
@@ -62,6 +54,8 @@
 .Fn memccpy "void *dst" "const void *src" "int c" "size_t len"
 .Ft void *
 .Fn memcpy "void *dst" "const void *src" "size_t len"
+.Ft void *
+.Fn memmem "const void *block" "size_t blen" "const void *pat" "size_t plen"
 .Ft void *
 .Fn memmove "void *dst" "const void *src" "size_t len"
 .Ft void *
@@ -75,13 +69,11 @@ do.
 .Pp
 See the specific manual pages for more information.
 .Sh SEE ALSO
-.Xr bcmp 3 ,
-.Xr bcopy 3 ,
-.Xr bzero 3 ,
 .Xr memccpy 3 ,
 .Xr memchr 3 ,
 .Xr memcmp 3 ,
 .Xr memcpy 3 ,
+.Xr memmem 3 ,
 .Xr memmove 3 ,
 .Xr memset 3
 .Sh STANDARDS
@@ -95,14 +87,7 @@ and
 conform to
 .St -ansiC .
 .Sh HISTORY
-The functions
-.Fn bzero
-and
+The function
 .Fn memccpy
 appeared in
-.Bx 4.3 ;
-the functions
-.Fn bcmp ,
-.Fn bcopy ,
-appeared in
-.Bx 4.2 .
+.Bx 4.3 .
