@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.47 2006/12/15 21:18:54 joerg Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.48 2007/02/17 06:11:25 dyoung Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.47 2006/12/15 21:18:54 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.48 2007/02/17 06:11:25 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -460,8 +460,7 @@ in6_gif_ctlinput(cmd, sa, d)
 	 * XXX slow.  sc (or sc->encap_cookie6) should be passed from
 	 * ip_encap.c.
 	 */
-	for (sc = LIST_FIRST(&gif_softc_list); sc;
-	     sc = LIST_NEXT(sc, gif_list)) {
+	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if ((sc->gif_if.if_flags & IFF_RUNNING) == 0)
 			continue;
 		if (sc->gif_psrc->sa_family != AF_INET6)
