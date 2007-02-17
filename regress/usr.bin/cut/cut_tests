@@ -39,6 +39,6 @@ run_locale_tests $1/input-latin1 | sed -e "s@$1/@@" > result-latin1
 cmp result-latin1 $1/expected-latin1
 
 export LC_ALL=en_US.UTF-8
-run_locale_tests input-utf8 | sed -e "s@$1/@@" > result-utf8
+run_locale_tests $1/input-utf8 | sed -e "s@$1/@@" > result-utf8
 cmp result-utf8 $1/expected-utf8
 
