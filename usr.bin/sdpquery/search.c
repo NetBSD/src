@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.2 2006/08/17 20:13:31 plunky Exp $	*/
+/*	$NetBSD: search.c,v 1.3 2007/02/17 09:19:06 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.2 2006/08/17 20:13:31 plunky Exp $
+ * $Id: search.c,v 1.3 2007/02/17 09:19:06 plunky Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpcontrol/search.c,v 1.4 2005/05/27 19:11:33 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.2 2006/08/17 20:13:31 plunky Exp $");
+__RCSID("$NetBSD: search.c,v 1.3 2007/02/17 09:19:06 plunky Exp $");
 
 #include <netinet/in.h>
 #include <bluetooth.h>
@@ -540,7 +540,7 @@ struct service {
 	{ "FTRN",	SDP_SERVICE_CLASS_OBEX_FILE_TRANSFER,
 	  "Obex File Transfer"		},
 	{ "GN",		SDP_SERVICE_CLASS_GN,
-	  "GN"				},
+	  "Group ad-hoc Network"	},
 	{ "HID",	SDP_SERVICE_CLASS_HUMAN_INTERFACE_DEVICE,
 	  "Human Interface Device"	},
 	{ "HF",		SDP_SERVICE_CLASS_HANDSFREE,
@@ -553,6 +553,8 @@ struct service {
 	  "Network Access Point"	},
 	{ "OPUSH",	SDP_SERVICE_CLASS_OBEX_OBJECT_PUSH,
 	  "OBEX Object Push"		},
+	{ "PANU",	SDP_SERVICE_CLASS_PANU,
+	  "Personal Area Networking User"		},
 	{ "SP",		SDP_SERVICE_CLASS_SERIAL_PORT,
 	  "Serial Port"			},
 	{ NULL }
