@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.10 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.11 2007/02/17 22:34:11 dyoung Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -2010,7 +2010,7 @@ carp_start(struct ifnet *ifp)
 }
 
 int
-carp_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
+carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
     struct rtentry *rt)
 {
 	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
