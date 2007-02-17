@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_idle.9,v 1.5 2007/02/17 16:23:08 yamt Exp $
+.\"	$NetBSD: cpu_idle.9,v 1.6 2007/02/17 17:14:21 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -47,10 +47,24 @@ nothing to do.
 It can be used to conserve the processor power, for example.
 .Pp
 .Fn cpu_idle
+returns immediately if
+.Fn cpu_need_resched
+has been called for the processor after
+the last call of
+.Fn cpu_idle
+or
+.Fn cpu_switchto
+on the processor.
+.Fn cpu_idle
 returns as soon as possible when
 .Fn cpu_need_resched
 is called for the processor.
 Otherwise, it returns whenever it likes.
+.Pp
+.Fn cpu_idle
+is called at
+.Dv IPL_NONE ,
+without any locks held.
 .\" ------------------------------------------------------------
 .Sh EXAMPLES
 The simplest (and, in some cases, the best) implementation of
@@ -65,4 +79,7 @@ is the following.
 .Ed
 .\" ------------------------------------------------------------
 .Sh SEE ALSO
-.Xr intro 9
+.Xr intro 9 ,
+.Xr cpu_switchto 9 ,
+.Xr cpu_need_resched 9 ,
+.Xr spl 9
