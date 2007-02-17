@@ -1,4 +1,4 @@
-.\"     $NetBSD: userret.9,v 1.7 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: userret.9,v 1.8 2007/02/17 17:29:24 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,14 +75,14 @@ Check the
 flag to see if the scheduler requires the current process to be
 preempted by invoking
 .Xr preempt 9
-.Pq see Xr need_resched 9 .
+.Pq see Xr cpu_need_resched 9 .
 This may occur if the clock interrupt causes the scheduler to
 determine that the current process has completed its time slice.
 .It
 Update the scheduler state.
 .El
 .Sh SEE ALSO
-.Xr need_resched 9 ,
+.Xr cpu_need_resched 9 ,
 .Xr postsig 9 ,
 .Xr preempt 9 ,
 .Xr scheduler 9
