@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2007/02/09 21:55:03 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.17 2007/02/17 10:37:33 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -770,7 +770,6 @@ idle_loop:
 
 	/* Release sched_lock */ 
 	CALL(sched_unlock_idle, %r1)
-	nop
 
 	/* spl0() */
 	.call
@@ -787,7 +786,6 @@ idle_loop:
 
 	/* Acquire sched_lock */
 	CALL(sched_lock_idle, %r1)
-	nop
 
 	b	idle_loop
 	nop
@@ -1038,9 +1036,10 @@ ALTENTRY(hppa_fpu_nop1)
 	mtctl	%r1, %ccr
 
 switch_return:
+	copy	%rp, %r4
 	/* Release sched_lock */ 
 	CALL(sched_unlock_idle, %r1)
-	nop
+	copy	%r4, %rp
 
 	bv	0(%rp)
 	mtctl	%arg3, %eiem
@@ -1095,7 +1094,6 @@ ENTRY(switch_exit,0)
 
 	/* Acquire sched_lock */
 	CALL(sched_lock_idle, %r1)
-	nop
 
 	.call
 	b	switch_search
