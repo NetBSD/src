@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_need_resched.9,v 1.3 2007/02/17 17:26:31 yamt Exp $
+.\"     $NetBSD: cpu_need_resched.9,v 1.4 2007/02/17 17:35:52 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,17 +52,20 @@ notify machine-dependent code that a context switch from the current
 LWP is required.
 This event may occur if a higher priority LWP appears on the run
 queue or if the current LWP has exceeded its time slice.
-.Pp
+.Sh EXAMPLES
 Specifically, the
 .Fn cpu_need_resched
 function will perform the following operations:
 .Bl -bullet -offset indent
 .It
-Set a global flag which is checked by
+Set a per-processor flag which is checked by
 .Xr userret 9
 when returning to user-mode execution.
 .It
 Post an asynchronous software trap (AST).
+.It
+Send an inter processor interrupt to wake up
+.Fn cpu_idle .
 .El
 .Sh SEE ALSO
 .Xr scheduler 9 ,
