@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3 2007/02/16 02:17:42 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.4 2007/02/17 05:34:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,8 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static __inline void
-userret(struct lwp *, struct trapframe *, u_quad_t);
+#include <sys/userret.h>
 
 /*
  *	Common code used by various execption handlers to
@@ -42,6 +41,8 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
+	LOCKDEBUG_BARRIER(NULL, 0);
+
 	/* Take pending signals. */
 	for (;;) {
 		if ((l->l_flag & L_USERRET) != 0)
@@ -50,6 +51,9 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 			break;
 		preempt();
 	}
+
+	l->l_priority = l->l_usrpri;
+	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority;
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
@@ -60,6 +64,4 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 		addupc_task(l, frame->pc,
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }
