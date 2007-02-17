@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.2 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: copy.S,v 1.2.28.1 2007/02/17 10:30:44 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -80,7 +80,9 @@
 #include <machine/frameasm.h>
 #include <machine/cputypes.h>
 
-#define GET_CURPCB(reg)			movl	CPUVAR(CURPCB),reg
+#define GET_CURPCB(reg)	\
+	movl	CPUVAR(CURLWP), reg; \
+	movl	L_ADDR(reg), reg
 
 /*
  * The following primitives are used to fill and copy regions of memory.

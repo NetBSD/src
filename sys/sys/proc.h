@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236 2007/02/16 00:39:16 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.1 2007/02/17 10:31:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -478,6 +478,8 @@ extern struct lwp	*curlwp;		/* Current running LWP */
 #endif /* MULTIPROCESSOR */
 #endif /* ! curproc */
 
+#define	CURCPU_IDLE_P()	(curlwp == curcpu()->ci_data.cpu_idlelwp)
+
 static struct proc *__curproc(void);
 
 static __inline struct proc *
@@ -557,7 +559,6 @@ int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);
 #endif
-void	cpu_exit(struct lwp *);
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 #ifndef cpu_lwp_free
@@ -619,10 +620,6 @@ void assert_sleepable(struct simplelock *, const char *);
 /* Compatibility with old, non-interlocked tsleep call */
 #define	tsleep(chan, pri, wmesg, timo)					\
 	ltsleep(chan, pri, wmesg, timo, NULL)
-
-#if defined(MULTIPROCESSOR)
-void	proc_trampoline_mp(void);	/* XXX */
-#endif
 
 #ifdef KSTACK_CHECK_MAGIC
 void kstack_setup_magic(const struct lwp *);

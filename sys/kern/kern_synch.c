@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177 2007/02/15 20:21:13 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.1 2007/02/17 10:30:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177 2007/02/15 20:21:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.1 2007/02/17 10:30:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -147,7 +147,7 @@ roundrobin(struct cpu_info *ci)
 
 	spc->spc_rrticks = rrticks;
 
-	if (curlwp != NULL) {
+	if (!CURCPU_IDLE_P()) {
 		if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
@@ -326,6 +326,8 @@ schedcpu(void *arg)
 		mutex_enter(&p->p_smutex);
 		runtm = p->p_rtime.tv_sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if ((l->l_flag & L_IDLE) != 0)
+				continue;
 			lwp_lock(l);
 			runtm += l->l_rtime.tv_sec;
 			l->l_swtime++;
@@ -390,6 +392,8 @@ schedcpu(void *arg)
 			p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
 
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+				if ((l->l_flag & L_IDLE) != 0)
+					continue;
 				lwp_lock(l);
 				if (l->l_slptime <= 1 &&
 				    l->l_priority >= PUSER)
@@ -596,6 +600,29 @@ preempt(void)
 }
 
 /*
+ * sched_switch_unlock: update 'curlwp' and release old lwp.
+ */
+
+void
+sched_switch_unlock(struct lwp *old, struct lwp *new)
+{
+
+	KASSERT(old == NULL || old == curlwp);
+
+	if (old != NULL) {
+		LOCKDEBUG_BARRIER(&sched_mutex, 1);
+	} else {
+		LOCKDEBUG_BARRIER(NULL, 1);
+	}
+
+	curlwp = new;
+	if (old != NULL) {
+		mutex_spin_exit(&sched_mutex);
+	}
+	spl0();
+}
+
+/*
  * The machine independent parts of context switch.  Switch to "new"
  * if non-NULL, otherwise let cpu_switch choose the next lwp.
  *
@@ -627,23 +654,25 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	KDASSERT(l->l_cpu == curcpu());
 	spc = &l->l_cpu->ci_schedstate;
 
-	/*
-	 * Compute the amount of time during which the current
-	 * process was running.
-	 */
-	microtime(&tv);
-	u = l->l_rtime.tv_usec +
-	    (tv.tv_usec - spc->spc_runtime.tv_usec);
-	s = l->l_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
-	if (u < 0) {
-		u += 1000000;
-		s--;
-	} else if (u >= 1000000) {
-		u -= 1000000;
-		s++;
+	if ((l->l_flag & L_IDLE) == 0) {
+		/*
+		 * Compute the amount of time during which the current
+		 * process was running.
+		 */
+		microtime(&tv);
+		u = l->l_rtime.tv_usec +
+		    (tv.tv_usec - spc->spc_runtime.tv_usec);
+		s = l->l_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
+		if (u < 0) {
+			u += 1000000;
+			s--;
+		} else if (u >= 1000000) {
+			u -= 1000000;
+			s++;
+		}
+		l->l_rtime.tv_usec = u;
+		l->l_rtime.tv_sec = s;
 	}
-	l->l_rtime.tv_usec = u;
-	l->l_rtime.tv_sec = s;
 
 	/*
 	 * XXXSMP If we are using h/w performance counters, save context.
@@ -655,9 +684,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 #endif
 
 	/*
-	 * Acquire the sched_mutex if necessary.  It will be released by
-	 * cpu_switch once it has decided to idle, or picked another LWP
-	 * to run.
+	 * Acquire the sched_mutex if necessary.
 	 */
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != &sched_mutex) {
@@ -673,7 +700,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, &sched_mutex));
 		l->l_stat = LSRUN;
-		setrunqueue(l);
+		if ((l->l_flag & L_IDLE) == 0) {
+			setrunqueue(l);
+		}
 	}
 	uvmexp.swtch++;
 
@@ -686,19 +715,39 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	LOCKDEBUG_BARRIER(&sched_mutex, 1);
 
 	/*
-	 * Switch to the new current LWP.  When we run again, we'll
-	 * return back here.
+	 * Switch to the new LWP if necessary.
+	 * When we run again, we'll return back here.
 	 */
 	oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
 
-	if (newl == NULL || newl->l_back == NULL)
-		retval = cpu_switch(l, NULL);
-	else {
+	if (newl == NULL) {
+		newl = nextrunqueue();
+	}
+	if (newl != NULL) {
 		KASSERT(lwp_locked(newl, &sched_mutex));
 		remrunqueue(newl);
-		cpu_switchto(l, newl);
+	} else {
+		newl = l->l_cpu->ci_data.cpu_idlelwp;
+		KASSERT(newl != NULL);
+	}
+	newl->l_stat = LSONPROC;
+	if (l != newl) {
+		struct lwp *prevlwp;
+
+		uvmexp.swtch++;
+		pmap_deactivate(l);
+		newl->l_cpu = l->l_cpu;
+		prevlwp = cpu_switchto(l, newl);
+		sched_switch_unlock(prevlwp, l);
+		pmap_activate(l);
+		retval = 1;
+	} else {
+		sched_switch_unlock(l, l);
 		retval = 0;
 	}
+
+	KASSERT(l == curlwp);
+	KASSERT(l->l_stat == LSONPROC);
 
 	/*
 	 * XXXSMP If we are using h/w performance counters, restore context.
@@ -715,9 +764,12 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * schedstate_percpu pointer.
 	 */
 	KDASSERT(l->l_cpu == curcpu());
-	microtime(&l->l_cpu->ci_schedstate.spc_runtime);
-	splx(oldspl);
+	if ((l->l_flag & L_IDLE) == 0) {
+		microtime(&l->l_cpu->ci_schedstate.spc_runtime);
+	}
 
+	(void)splsched();
+	splx(oldspl);
 	return retval;
 }
 
@@ -781,6 +833,7 @@ setrunnable(struct lwp *l)
 	struct proc *p = l->l_proc;
 	sigset_t *ss;
 
+	KASSERT((l->l_flag & L_IDLE) == 0);
 	LOCK_ASSERT(mutex_owned(&p->p_smutex));
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
@@ -866,6 +919,13 @@ setrunnable(struct lwp *l)
 	}
 }
 
+boolean_t
+sched_curcpu_runnable_p(void)
+{
+
+	return sched_whichqs != 0;
+}
+
 /*
  * Compute the priority of a process when running in user mode.
  * Arrange to reschedule if the resulting priority is better
@@ -926,6 +986,7 @@ schedclock(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 
+	KASSERT(!CURCPU_IDLE_P());
 	mutex_spin_enter(&p->p_stmutex);
 	p->p_estcpu = ESTCPULIM(p->p_estcpu + (1 << ESTCPU_SHIFT));
 	lwp_lock(l);
@@ -1125,13 +1186,6 @@ sched_changepri(struct lwp *l, int pri)
 }
 
 /*
- * Low-level routines to access the run queue.  Optimised assembler
- * routines can override these.
- */
-
-#ifndef __HAVE_MD_RUNQUEUE
-
-/*
  * On some architectures, it's faster to use a MSB ordering for the priorites
  * than the traditional LSB ordering.
  */
@@ -1140,6 +1194,13 @@ sched_changepri(struct lwp *l, int pri)
 #else
 #define	RQMASK(n) (0x00000001 << (n))
 #endif
+
+/*
+ * Low-level routines to access the run queue.  Optimised assembler
+ * routines can override these.
+ */
+
+#ifndef __HAVE_MD_RUNQUEUE
 
 /*
  * The primitives that manipulate the run queues.  whichqs tells which
@@ -1272,5 +1333,57 @@ remrunqueue(struct lwp *l)
 #endif
 }
 
-#undef RQMASK
+struct lwp *
+nextrunqueue(void)
+{
+	const struct prochd *rq;
+	struct lwp *l;
+	int whichq;
+
+	if (sched_whichqs == 0) {
+		return NULL;
+	}
+#ifdef __HAVE_BIGENDIAN_BITOPS
+	for (whichq = 0; ; whichq++) {
+		if ((sched_whichqs & RQMASK(whichq)) != 0) {
+			break;
+		}
+	}
+#else
+	whichq = ffs(sched_whichqs) - 1;
+#endif
+	rq = &sched_qs[whichq];
+	l = rq->ph_link;
+	return l;
+}
+
 #endif /* !defined(__HAVE_MD_RUNQUEUE) */
+
+#if defined(DDB)
+void
+sched_print_runqueue(void (*pr)(const char *, ...))
+{
+	struct prochd *ph;
+	struct lwp *l;
+	int i, first;
+
+	for (i = 0; i < RUNQUE_NQS; i++)
+	{
+		first = 1;
+		ph = &sched_qs[i];
+		for (l = ph->ph_link; l != (void *)ph; l = l->l_forw) {
+			if (first) {
+				(*pr)("%c%d",
+				    (sched_whichqs & RQMASK(i))
+				    ? ' ' : '!', i);
+				first = 0;
+			}
+			(*pr)("\t%d.%d (%s) pri=%d usrpri=%d\n",
+			    l->l_proc->p_pid,
+			    l->l_lid, l->l_proc->p_comm,
+			    (int)l->l_priority, (int)l->l_usrpri);
+		}
+	}
+}
+#endif /* defined(DDB) */
+#undef RQMASK
