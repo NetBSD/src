@@ -28,33 +28,38 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)string.3	8.2 (Berkeley) 12/11/93
-.\"	$NetBSD: string.3,v 1.13 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: string.3,v 1.14 2007/02/17 09:00:37 wiz Exp $
 .\"
-.Dd December 11, 1993
+.Dd February 9, 2007
 .Dt STRING 3
 .Os
 .Sh NAME
 .Nm strcat ,
+.Nm strlcat ,
 .Nm strncat ,
 .Nm strchr ,
 .Nm strrchr ,
 .Nm strcmp ,
 .Nm strncmp ,
-.Nm strcasecmp ,
-.Nm strncasecmp ,
+.Nm strcoll ,
 .Nm strcpy ,
+.Nm strlcpy ,
 .Nm strncpy ,
 .Nm strerror ,
+.Nm strerror_r ,
 .Nm strlen ,
 .Nm strpbrk ,
 .Nm strsep ,
+.Nm stresep ,
 .Nm strspn ,
 .Nm strcspn ,
+.Nm strdup ,
+.Nm strndup ,
 .Nm strstr ,
+.Nm strcasestr ,
 .Nm strtok ,
 .Nm strtok_r ,
-.Nm index ,
-.Nm rindex
+.Nm strxfrm
 .Nd string specific functions
 .Sh LIBRARY
 .Lb libc
@@ -62,6 +67,8 @@
 .In string.h
 .Ft char *
 .Fn strcat "char *s" "const char * append"
+.Ft size_t
+.Fn strlcat "char *dst" "const char *src" "size_t size"
 .Ft char *
 .Fn strncat "char *s" "const char *append" "size_t count"
 .Ft char *
@@ -73,35 +80,43 @@
 .Ft int
 .Fn strncmp "const char *s1" "const char *s2" "size_t count"
 .Ft int
-.Fn strcasecmp "const char *s1" "const char *s2"
-.Ft int
-.Fn strncasecmp "const char *s1" "const char *s2" "size_t count"
+.Fn strcoll "const char *s1" "const char *s2"
 .Ft char *
 .Fn strcpy "char *dst" "const char *src"
+.Ft size_t
+.Fn strlcpy "char *dst" "const char *src" "size_t size"
 .Ft char *
 .Fn strncpy "char *dst" "const char *src" "size_t count"
 .Ft char *
 .Fn strerror "int errno"
+.Ft int
+.Fn strerror_r "int errnum" "char *strerrbuf" "size_t buflen"
 .Ft size_t
 .Fn strlen "const char *s"
 .Ft char *
 .Fn strpbrk "const char *s" "const char *charset"
 .Ft char *
 .Fn strsep "char **stringp" "const char *delim"
+.Ft char *
+.Fn stresep "char **stringp" "const char *delim" "int escape"
 .Ft size_t
 .Fn strspn "const char *s" "const char *charset"
 .Ft size_t
 .Fn strcspn "const char *s" "const char *charset"
 .Ft char *
+.Fn strdup "const char *str"
+.Ft char *
+.Fn strndup "const char *str" "size_t len"
+.Ft char *
 .Fn strstr "const char *big" "const char *little"
+.Ft char *
+.Fn strcasestr "const char *big" "const char *little"
 .Ft char *
 .Fn strtok "char *s" "const char *delim"
 .Ft char *
 .Fn strtok_r "char *s" "const char *delim" "char **lasts"
-.Ft char *
-.Fn index "const char *s" "int c"
-.Ft char *
-.Fn rindex "const char *s" "int c"
+.Ft size_t
+.Fn strxfrm "char *dst" "const char *src" "size_t n"
 .Sh DESCRIPTION
 The string
 functions manipulate strings terminated by a
@@ -117,15 +132,15 @@ the string functions do not test the destination
 for size limitations.
 .Sh SEE ALSO
 .Xr bstring 3 ,
-.Xr index 3 ,
-.Xr rindex 3 ,
-.Xr strcasecmp 3 ,
 .Xr strcat 3 ,
 .Xr strchr 3 ,
 .Xr strcmp 3 ,
+.Xr strcoll 3 ,
 .Xr strcpy 3 ,
 .Xr strcspn 3 ,
+.Xr strdup 3 ,
 .Xr strerror 3 ,
+.Xr strlcat 3 ,
 .Xr strlen 3 ,
 .Xr strpbrk 3 ,
 .Xr strrchr 3 ,
@@ -133,7 +148,7 @@ for size limitations.
 .Xr strspn 3 ,
 .Xr strstr 3 ,
 .Xr strtok 3 ,
-.Xr strtok_r 3
+.Xr strxfrm 3
 .Sh STANDARDS
 The
 .Fn strcat ,
@@ -144,6 +159,7 @@ The
 .Fn strncmp ,
 .Fn strcpy ,
 .Fn strncpy ,
+.Fn strcoll ,
 .Fn strerror ,
 .Fn strlen ,
 .Fn strpbrk ,
@@ -151,12 +167,18 @@ The
 .Fn strspn ,
 .Fn strcspn ,
 .Fn strstr ,
+.Fn strtok ,
 and
-.Fn strtok
-functions
-conform to
+.Fn strxfrm
+functions conform to
 .St -ansiC .
+.Pp
 The
 .Fn strtok_r
 function conforms to
 .St -p1003.1c-95 .
+.Pp
+The
+.Fn strerror_r
+function conform to
+.St -p1003.1-2001 .
