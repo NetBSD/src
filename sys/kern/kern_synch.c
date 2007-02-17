@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177 2007/02/15 20:21:13 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.178 2007/02/17 22:31:43 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177 2007/02/15 20:21:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.178 2007/02/17 22:31:43 pavel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -801,7 +801,7 @@ setrunnable(struct lwp *l)
 		p->p_nrlwps++;
 		break;
 	case LSSUSPENDED:
-		l->l_flag &= ~L_WSUSPEND;
+		l->l_flag &= ~LW_WSUSPEND;
 		p->p_nrlwps++;
 		break;
 	case LSSLEEP:
@@ -817,7 +817,7 @@ setrunnable(struct lwp *l)
 	 */
 	if (l->l_wchan != NULL) {
 		l->l_stat = LSSLEEP;
-		if ((l->l_flag & L_SINTR) != 0)
+		if ((l->l_flag & LW_SINTR) != 0)
 			lwp_unsleep(l);
 		else {
 			lwp_unlock(l);
@@ -856,7 +856,7 @@ setrunnable(struct lwp *l)
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 
-	if (l->l_flag & L_INMEM) {
+	if (l->l_flag & LW_INMEM) {
 		setrunqueue(l);
 		resched_lwp(l, l->l_priority);
 		lwp_unlock(l);
@@ -880,7 +880,7 @@ resetpriority(struct lwp *l)
 	/* XXXSMP LOCK_ASSERT(mutex_owned(&p->p_stmutex)); */
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
-	if ((l->l_flag & L_SYSTEM) != 0)
+	if ((l->l_flag & LW_SYSTEM) != 0)
 		return;
 
 	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
@@ -931,7 +931,7 @@ schedclock(struct lwp *l)
 	lwp_lock(l);
 	resetpriority(l);
 	mutex_spin_exit(&p->p_stmutex);
-	if ((l->l_flag & L_SYSTEM) == 0 && l->l_priority >= PUSER)
+	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_priority >= PUSER)
 		l->l_priority = l->l_usrpri;
 	lwp_unlock(l);
 }
@@ -958,7 +958,7 @@ suspendsched(void)
 	PROCLIST_FOREACH(p, &allproc) {
 		mutex_enter(&p->p_smutex);
 
-		if ((p->p_flag & P_SYSTEM) != 0) {
+		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(&p->p_smutex);
 			continue;
 		}
@@ -978,10 +978,10 @@ suspendsched(void)
 			 * the user / kernel boundary, so that they will
 			 * release any locks that they hold.
 			 */
-			l->l_flag |= (L_WREBOOT | L_WSUSPEND);
+			l->l_flag |= (LW_WREBOOT | LW_WSUSPEND);
 
 			if (l->l_stat == LSSLEEP &&
-			    (l->l_flag & L_SINTR) != 0) {
+			    (l->l_flag & LW_SINTR) != 0) {
 				/* setrunnable() will release the lock. */
 				setrunnable(l);
 				continue;
@@ -1112,7 +1112,7 @@ sched_changepri(struct lwp *l, int pri)
 
 	if (l->l_priority < PUSER)
 		return;
-	if (l->l_stat != LSRUN || (l->l_flag & L_INMEM) == 0 ||
+	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0 ||
 	    (l->l_priority / PPQ) == (pri / PPQ)) {
 		l->l_priority = pri;
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.148 2007/02/16 21:37:56 pooka Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.149 2007/02/17 22:31:44 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.148 2007/02/16 21:37:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.149 2007/02/17 22:31:44 pavel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,7 +712,7 @@ procfs_getattr(v)
 		 * privilege, then rip away read/write permission so
 		 * that only root can gain access.
 		 */
-		if (procp->p_flag & P_SUGID)
+		if (procp->p_flag & PK_SUGID)
 			vap->va_mode &= ~(S_IRUSR|S_IWUSR);
 		/* FALLTHROUGH */
 	case PFSctl:

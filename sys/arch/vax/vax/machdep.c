@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.155 2007/02/16 01:34:04 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.156 2007/02/17 22:31:40 pavel Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2007/02/16 01:34:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2007/02/17 22:31:40 pavel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -510,7 +510,7 @@ process_set_pc(l, addr)
 	struct	trapframe *tf;
 	void	*ptr;
 
-	if ((l->l_flag & L_INMEM) == 0)
+	if ((l->l_flag & LW_INMEM) == 0)
 		return (EIO);
 
 	ptr = (char *) l->l_addr->u_pcb.framep;
@@ -528,7 +528,7 @@ process_sstep(l, sstep)
 	void	       *ptr;
 	struct trapframe *tf;
 
-	if ((l->l_flag & L_INMEM) == 0)
+	if ((l->l_flag & LW_INMEM) == 0)
 		return (EIO);
 
 	ptr = l->l_addr->u_pcb.framep;

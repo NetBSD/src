@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.46 2007/02/17 22:31:37 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -1008,7 +1008,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have P_SYSTEM!
+	testl	$PK_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have PK_SYSTEM!
 	jnz	switch_restored
 #endif
 

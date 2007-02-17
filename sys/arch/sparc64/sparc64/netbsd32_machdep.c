@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.66 2007/02/09 21:55:13 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.67 2007/02/17 22:31:39 pavel Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.66 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.67 2007/02/17 22:31:39 pavel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -110,7 +110,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
-	p->p_flag |= P_32;
+	p->p_flag |= PK_32;
 
 	netbsd32_adjust_limits(p);
 

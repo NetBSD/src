@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166 2007/02/16 00:39:16 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.167 2007/02/17 22:31:42 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166 2007/02/16 00:39:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.167 2007/02/17 22:31:42 pavel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -502,7 +502,7 @@ exit1(struct lwp *l, int rv)
 	 * this situation).
 	 */
 	mutex_enter(&q->p_mutex);
-	if (q->p_flag & (P_NOCLDWAIT|P_CLDSIGIGN)) {
+	if (q->p_flag & (PK_NOCLDWAIT|PK_CLDSIGIGN)) {
 		proc_reparent(p, initproc);
 		wakeinit = 1;
 
@@ -630,8 +630,8 @@ exit_lwps(struct lwp *l)
 		if (l2 == l)
 			continue;
 		lwp_lock(l2);
-		l2->l_flag |= L_WEXIT;
-		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
+		l2->l_flag |= LW_WEXIT;
+		if ((l2->l_stat == LSSLEEP && (l2->l_flag & LW_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
 		    	/* setrunnable() will release the lock. */
 			setrunnable(l2);

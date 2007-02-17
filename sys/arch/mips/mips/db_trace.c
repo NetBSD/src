@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.30 2006/12/26 12:28:31 martin Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.31 2007/02/17 22:31:38 pavel Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30 2006/12/26 12:28:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31 2007/02/17 22:31:38 pavel Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,7 +162,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		return;
 	}	
 	l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
-	if (!(l->l_flag & L_INMEM)) {
+	if (!(l->l_flag & LW_INMEM)) {
 		(*pr)("swapped out\n");
 		return;
 	}

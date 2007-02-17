@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236 2007/02/16 00:39:16 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.237 2007/02/17 22:31:45 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -349,18 +349,17 @@ struct proc {
  * These flags are kept in p_flag and are protected by p_mutex.  Access from
  * process context only.
  */
-#define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
-#define	P_SYSTEM	0x00000002 /* System process (kthread) */
-#define	P_SUGID		0x00000100 /* Had set id privileges since last exec */
-#define	P_EXEC		0x00004000 /* Process called exec */
-#define	P_NOCLDWAIT	0x00020000 /* No zombies if child dies */
-#define	P_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
-#define	P_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
-#define	P_SYSTRACE	0x00200000 /* Process system call tracing active */
-#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
-#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
-#define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
-#define	P_MARKER	0x80000000 /* Is a dummy marker process */
+#define	PK_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
+#define	PK_SYSTEM	0x00000002 /* System process (kthread) */
+#define	PK_SUGID	0x00000100 /* Had set id privileges since last exec */
+#define	PK_EXEC		0x00004000 /* Process called exec */
+#define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
+#define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
+#define	PK_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
+#define	PK_SYSTRACE	0x00200000 /* Process system call tracing active */
+#define	PK_PAXMPROTECT 	0x08000000 /* Explicitly enable PaX MPROTECT */
+#define	PK_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
+#define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*
  * These flags are kept in p_sflag and are protected by p_smutex.  Access from
@@ -599,7 +598,7 @@ _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;
 
-	while (p != NULL && p->p_flag & P_MARKER)
+	while (p != NULL && p->p_flag & PK_MARKER)
 		p = LIST_NEXT(p, p_list);
 
 	return p;

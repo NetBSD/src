@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.28 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.29 2007/02/17 22:31:44 pavel Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.28 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.29 2007/02/17 22:31:44 pavel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 int
 procfs_validmap(struct lwp *l, struct mount *mp)
 {
-	return ((l->l_flag & L_SYSTEM) == 0);
+	return ((l->l_flag & LW_SYSTEM) == 0);
 }
 
 /*

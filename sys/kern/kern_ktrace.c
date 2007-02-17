@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.114 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.115 2007/02/17 22:31:42 pavel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.114 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.115 2007/02/17 22:31:42 pavel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -519,7 +519,7 @@ ktrsyscall(struct lwp *l, register_t code, register_t realcode,
 
 	argsize = callp[code].sy_argsize;
 #ifdef _LP64
-	if (p->p_flag & P_32)
+	if (p->p_flag & PK_32)
 		argsize = argsize << 1;
 #endif
 	len = sizeof(struct ktr_syscall) + argsize;

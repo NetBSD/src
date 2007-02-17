@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.66 2007/02/15 15:08:59 ad Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.67 2007/02/17 22:31:43 pavel Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.66 2007/02/15 15:08:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.67 2007/02/17 22:31:43 pavel Exp $");
 
 #include "opt_systrace.h"
 
@@ -598,7 +598,7 @@ systrace_find(struct str_process *strp)
 	}
 
 	mutex_enter(&proc->p_mutex);
-	if (proc != strp->proc || !ISSET(proc->p_flag, P_SYSTRACE)) {
+	if (proc != strp->proc || !ISSET(proc->p_flag, PK_SYSTRACE)) {
 		mutex_exit(&proc->p_mutex);
 		rw_exit(&proclist_lock);
 		return (NULL);
@@ -630,7 +630,7 @@ systrace_sys_exit(struct proc *proc)
 		SYSTRACE_UNLOCK(fst, curlwp);
 	} else
 		systrace_unlock();
-	CLR(proc->p_flag, P_SYSTRACE);
+	CLR(proc->p_flag, PK_SYSTRACE);
 }
 
 void
@@ -704,7 +704,7 @@ systrace_enter(struct lwp *l, register_t code, void *v)
 	if (fst->issuser) {
 		maycontrol = 1;
 		issuser = 1;
-	} else if (!(p->p_flag & P_SUGID)) {
+	} else if (!(p->p_flag & PK_SUGID)) {
 		maycontrol = fst->p_ruid == kauth_cred_getuid(p->p_cred) &&
 		    fst->p_rgid == kauth_cred_getgid(p->p_cred);
 	}
@@ -742,7 +742,7 @@ systrace_enter(struct lwp *l, register_t code, void *v)
 	/* Get the (adjusted) argsize */
 	argsize = callp->sy_argsize;
 #ifdef _LP64
-	if (p->p_flag & P_32)
+	if (p->p_flag & PK_32)
 		argsize = argsize << 1;
 #endif
 
@@ -839,7 +839,7 @@ systrace_exit(struct lwp *l, register_t code, void *v, register_t retval[],
 
 	systrace_replacefree(strp);
 
-	if (p->p_flag & P_SUGID) {
+	if (p->p_flag & PK_SUGID) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
 			systrace_unlock();
 			return;
@@ -896,7 +896,7 @@ systrace_exit(struct lwp *l, register_t code, void *v, register_t retval[],
 		callp = p->p_emul->e_sysent + code;
 		argsize = callp->sy_argsize;
 #ifdef _LP64
-		if (p->p_flag & P_32)
+		if (p->p_flag & PK_32)
 			argsize = argsize << 1;
 #endif
 
@@ -1256,7 +1256,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	/*
 	 *	(2) it's a system process
 	 */
-	if (ISSET(proc->p_flag, P_SYSTEM)) {
+	if (ISSET(proc->p_flag, PK_SYSTEM)) {
 		error = EPERM;
 		goto out;
 	}
@@ -1264,7 +1264,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	/*
 	 *	(3) it's being traced already
 	 */
-	if (ISSET(proc->p_flag, P_SYSTRACE)) {
+	if (ISSET(proc->p_flag, PK_SYSTRACE)) {
 		error = EBUSY;
 		goto out;
 	}
@@ -1500,7 +1500,7 @@ systrace_scriptname(struct proc *p, char *dst)
 	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 
-	if (!fst->issuser && (ISSET(p->p_flag, P_SUGID) ||
+	if (!fst->issuser && (ISSET(p->p_flag, PK_SUGID) ||
 			      fst->p_ruid != kauth_cred_getuid(p->p_cred) ||
 			      fst->p_rgid != kauth_cred_getgid(p->p_cred))) {
 		error = EPERM;
@@ -1589,7 +1589,7 @@ systrace_detach(struct str_process *strp)
 	DPRINTF(("%s: Trying to detach from %d\n", __func__, strp->pid));
 
 	if ((proc = systrace_find(strp)) != NULL) {
-		CLR(proc->p_flag, P_SYSTRACE);
+		CLR(proc->p_flag, PK_SYSTRACE);
 		proc->p_systrace = NULL;
 	} else
 		error = ESRCH;
@@ -1653,7 +1653,7 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc,
 	fst->nprocesses++;
 
 	proc->p_systrace = strp;
-	SET(proc->p_flag, P_SYSTRACE);
+	SET(proc->p_flag, PK_SYSTRACE);
 
 	/* Pass the new pointer back to the caller */
 	if (pstrp != NULL)

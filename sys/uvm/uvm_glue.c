@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.99 2007/02/15 20:21:13 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.100 2007/02/17 22:31:45 pavel Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.99 2007/02/15 20:21:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.100 2007/02/17 22:31:45 pavel Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -248,7 +248,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Note the kernel stack gets read/write accesses right off the bat.
 	 */
 
-	if ((l2->l_flag & L_INMEM) == 0) {
+	if ((l2->l_flag & LW_INMEM) == 0) {
 		vaddr_t uarea = USER_TO_UAREA(l2->l_addr);
 
 		error = uvm_fault_wire(kernel_map, uarea,
@@ -259,7 +259,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		/* Tell the pmap this is a u-area mapping */
 		PMAP_UAREA(uarea);
 #endif
-		l2->l_flag |= L_INMEM;
+		l2->l_flag |= LW_INMEM;
 	}
 
 #ifdef KSTACK_CHECK_MAGIC
@@ -381,7 +381,7 @@ uvm_lwp_exit(struct lwp *l)
 {
 	vaddr_t va = USER_TO_UAREA(l->l_addr);
 
-	l->l_flag &= ~L_INMEM;
+	l->l_flag &= ~LW_INMEM;
 	uvm_uarea_free(va);
 	l->l_addr = NULL;
 }
@@ -444,7 +444,7 @@ uvm_swapin(struct lwp *l)
 	lwp_lock(l);
 	if (l->l_stat == LSRUN)
 		setrunqueue(l);
-	l->l_flag |= L_INMEM;
+	l->l_flag |= LW_INMEM;
 	l->l_swtime = 0;
 	lwp_unlock(l);
 	++uvmexp.swapins;
@@ -499,7 +499,7 @@ uvm_scheduler(void)
 		mutex_enter(&proclist_mutex);
 		LIST_FOREACH(l, &alllwp, l_list) {
 			/* is it a runnable swapped out process? */
-			if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
+			if (l->l_stat == LSRUN && !(l->l_flag & LW_INMEM)) {
 				pri = l->l_swtime + l->l_slptime -
 				    (l->l_proc->p_nice - NZERO) * 8;
 				if (pri > ppri) {   /* higher priority? */
@@ -569,8 +569,8 @@ uvm_scheduler(void)
  */
 
 #define	swappable(l)							\
-	(((l)->l_flag & (L_INMEM)) &&					\
-	 ((((l)->l_flag) & (L_SYSTEM | L_WEXIT)) == 0) &&		\
+	(((l)->l_flag & (LW_INMEM)) &&					\
+	 ((((l)->l_flag) & (LW_SYSTEM | LW_WEXIT)) == 0) &&		\
 	 (l)->l_holdcnt == 0)
 
 /*
@@ -695,7 +695,7 @@ uvm_swapout(struct lwp *l)
 		lwp_unlock(l);
 		return;
 	}
-	l->l_flag &= ~L_INMEM;
+	l->l_flag &= ~LW_INMEM;
 	l->l_swtime = 0;
 	if (l->l_stat == LSRUN)
 		remrunqueue(l);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.245 2007/02/16 00:35:20 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.246 2007/02/17 22:31:43 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.245 2007/02/16 00:35:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.246 2007/02/17 22:31:43 pavel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -382,7 +382,7 @@ execsigs(struct proc *p)
 	/*
 	 * Reset no zombies if child dies flag as Solaris does.
 	 */
-	p->p_flag &= ~(P_NOCLDWAIT | P_CLDSIGIGN);
+	p->p_flag &= ~(PK_NOCLDWAIT | PK_CLDSIGIGN);
 	if (SIGACTION_PS(ps, SIGCHLD).sa_handler == SIG_IGN)
 		SIGACTION_PS(ps, SIGCHLD).sa_handler = SIG_DFL;
 
@@ -814,7 +814,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		 * broadcast
 		 */
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || p == cp)
+			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM || p == cp)
 				continue;
 			mutex_enter(&p->p_mutex);
 			if (kauth_authorize_process(pc,
@@ -843,7 +843,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 				goto out;
 		}
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM)
+			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM)
 				continue;
 			mutex_enter(&p->p_mutex);
 			if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
@@ -1053,7 +1053,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
 	 */
-	l->l_flag |= L_PENDSIG;
+	l->l_flag |= LW_PENDSIG;
 
 	/*
 	 * SIGCONT can be masked, but must always restart stopped LWPs.
@@ -1082,7 +1082,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 		break;
 
 	case LSSLEEP:
-		if ((l->l_flag & L_SINTR) != 0) {
+		if ((l->l_flag & LW_SINTR) != 0) {
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 			return 1;
@@ -1115,7 +1115,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 			return 1;
-		} else if (l->l_wchan == NULL || (l->l_flag & L_SINTR) != 0) {
+		} else if (l->l_wchan == NULL || (l->l_flag & LW_SINTR) != 0) {
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 			return 1;
@@ -1138,7 +1138,7 @@ signotify(struct lwp *l)
 {
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
-	l->l_flag |= L_PENDSIG;
+	l->l_flag |= LW_PENDSIG;
 	lwp_need_userret(l);
 }
 
@@ -1475,7 +1475,7 @@ sigswitch(boolean_t ppsig, int ppmask, int signo)
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			lwp_lock(l2);
 			if (l2->l_stat == LSSLEEP &&
-			    (l2->l_flag & L_SINTR) != 0) {
+			    (l2->l_flag & LW_SINTR) != 0) {
 				l2->l_stat = LSSTOP;
 				p->p_nrlwps--;
 			}
@@ -1648,7 +1648,7 @@ issignal(struct lwp *l)
 					 * indicator and bail out.
 					 */
 					lwp_lock(l);
-					l->l_flag &= ~L_PENDSIG;
+					l->l_flag &= ~LW_PENDSIG;
 					lwp_unlock(l);
 					sp = NULL;
 					break;
@@ -1899,11 +1899,11 @@ sigexit(struct lwp *l, int signo)
 	 * Don't permit coredump() multiple times in the same process.
 	 * Call back into sigexit, where we will be suspended until
 	 * the deed is done.  Note that this is a recursive call, but
-	 * L_WCORE will prevent us from coming back this way.
+	 * LW_WCORE will prevent us from coming back this way.
 	 */
 	if ((p->p_sflag & PS_WCORE) != 0) {
 		lwp_lock(l);
-		l->l_flag |= (L_WCORE | L_WEXIT | L_WSUSPEND);
+		l->l_flag |= (LW_WCORE | LW_WEXIT | LW_WSUSPEND);
 		lwp_unlock(l);
 		mutex_exit(&p->p_smutex);
 		lwp_userret(l);
@@ -1923,11 +1923,11 @@ sigexit(struct lwp *l, int signo)
 			LIST_FOREACH(t, &p->p_lwps, l_sibling) {
 				lwp_lock(t);
 				if (t == l) {
-					t->l_flag &= ~L_WSUSPEND;
+					t->l_flag &= ~LW_WSUSPEND;
 					lwp_unlock(t);
 					continue;
 				}
-				t->l_flag |= (L_WCORE | L_WEXIT);
+				t->l_flag |= (LW_WCORE | LW_WEXIT);
 				lwp_suspend(l, t);
 			}
 
@@ -2004,7 +2004,7 @@ proc_stop(struct proc *p, int notify, int signo)
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
-		if (l->l_stat == LSSLEEP && (l->l_flag & L_SINTR) != 0) {
+		if (l->l_stat == LSSLEEP && (l->l_flag & LW_SINTR) != 0) {
 			l->l_stat = LSSTOP;
 			p->p_nrlwps--;
 		}
@@ -2089,7 +2089,7 @@ proc_stop_callout(void *cookie)
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 				lwp_lock(l);
 				if (l->l_stat == LSSLEEP &&
-				    (l->l_flag & L_SINTR) != 0) {
+				    (l->l_flag & LW_SINTR) != 0) {
 				    	l->l_stat = LSSTOP;
 				    	p->p_nrlwps--;
 				}
@@ -2166,7 +2166,7 @@ proc_unstop(struct proc *p)
 			continue;
 		}
 		l->l_stat = LSSLEEP;
-		if (sig && (l->l_flag & L_SINTR) != 0) {
+		if (sig && (l->l_flag & LW_SINTR) != 0) {
 		        setrunnable(l);
 		        sig = 0;
 		} else

@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.35 2007/02/09 21:55:37 ad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.36 2007/02/17 22:31:45 pavel Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.35 2007/02/09 21:55:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.36 2007/02/17 22:31:45 pavel Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -351,7 +351,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 		}
 
-		if ((p->p_traceflag & KTRFAC_ROOT) || (p->p_flag & P_SUGID)) {
+		if ((p->p_traceflag & KTRFAC_ROOT) || (p->p_flag & PK_SUGID)) {
 			result = KAUTH_RESULT_DENY;
 			break;
 		}
@@ -387,7 +387,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		case PFSmem:
 			if (kauth_cred_getuid(cred) !=
 			    kauth_cred_getuid(p->p_cred) ||
-			    ISSET(p->p_flag, P_SUGID)) {
+			    ISSET(p->p_flag, PK_SUGID)) {
 				result = KAUTH_RESULT_DENY;
 				break;
 			}
@@ -430,7 +430,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 			if (kauth_cred_getuid(cred) !=
 			    kauth_cred_getuid(p->p_cred) ||
-			    ISSET(p->p_flag, P_SUGID)) {
+			    ISSET(p->p_flag, PK_SUGID)) {
 				result = KAUTH_RESULT_DENY;
 				break;
 			}
@@ -465,7 +465,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
-		    ISSET(p->p_flag, P_SUGID)) {
+		    ISSET(p->p_flag, PK_SUGID)) {
 			result = KAUTH_RESULT_DENY;
 			break;
 		}

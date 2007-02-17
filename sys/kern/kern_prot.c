@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.97 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.98 2007/02/17 22:31:43 pavel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.97 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.98 2007/02/17 22:31:43 pavel Exp $");
 
 #include "opt_compat_43.h"
 
@@ -559,13 +559,13 @@ sys_issetugid(struct lwp *l, void *v, register_t *retval)
 
 	/*
 	 * Note: OpenBSD sets a P_SUGIDEXEC flag set at execve() time,
-	 * we use P_SUGID because we consider changing the owners as
+	 * we use PK_SUGID because we consider changing the owners as
 	 * "tainting" as well.
 	 * This is significant for procs that start as root and "become"
 	 * a user without an exec - programs cannot know *everything*
 	 * that libc *might* have put in their data segment.
 	 */
-	*retval = (p->p_flag & P_SUGID) != 0;
+	*retval = (p->p_flag & PK_SUGID) != 0;
 	return (0);
 }
 

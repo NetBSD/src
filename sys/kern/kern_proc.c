@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.101 2007/02/17 21:46:13 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.102 2007/02/17 22:31:43 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.101 2007/02/17 21:46:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.102 2007/02/17 22:31:43 pavel Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -336,7 +336,7 @@ proc0_init(void)
 	 * init(8) when they exit.  init(8) can easily wait them out
 	 * for us.
 	 */
-	p->p_flag = P_SYSTEM | P_NOCLDWAIT;
+	p->p_flag = PK_SYSTEM | PK_NOCLDWAIT;
 	p->p_stat = SACTIVE;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
@@ -346,7 +346,7 @@ proc0_init(void)
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
 	l->l_mutex = &sched_mutex;
-	l->l_flag = L_INMEM | L_SYSTEM;
+	l->l_flag = LW_INMEM | LW_SYSTEM;
 	l->l_stat = LSONPROC;
 	l->l_ts = &turnstile0;
 	l->l_syncobj = &sched_syncobj;
@@ -748,7 +748,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		if (pgrp != NULL && pgrp->pg_session != p->p_session)
 			goto done;
 		/* ... and not done an exec. */
-		if (p->p_flag & P_EXEC) {
+		if (p->p_flag & PK_EXEC) {
 			rval = EACCES;
 			goto done;
 		}
@@ -1245,11 +1245,11 @@ proclist_foreach_call(struct proclist *list,
 	struct lwp * const l = curlwp;
 	int ret = 0;
 
-	marker.p_flag = P_MARKER;
+	marker.p_flag = PK_MARKER;
 	PHOLD(l);
 	rw_enter(&proclist_lock, RW_READER);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
-		if (p->p_flag & P_MARKER) {
+		if (p->p_flag & PK_MARKER) {
 			p = LIST_NEXT(p, p_list);
 			continue;
 		}
@@ -1355,7 +1355,7 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, boolean_t sugid)
 		 * Mark process as having changed credentials, stops
 		 * tracing etc.
 		 */
-		p->p_flag |= P_SUGID;
+		p->p_flag |= PK_SUGID;
 	}
 
 	mutex_exit(&p->p_mutex);
