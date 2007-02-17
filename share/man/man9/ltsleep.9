@@ -1,4 +1,4 @@
-.\"	$NetBSD: ltsleep.9,v 1.8 2007/02/11 16:05:08 ad Exp $
+.\"	$NetBSD: ltsleep.9,v 1.9 2007/02/17 08:43:19 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,15 +51,15 @@
 .Ft void
 .Fn "wakeup" "const void *ident"
 .Sh DESCRIPTION
-.Sy The interfaces described in this manual page are obsolete
-.Sy and will be removed from a future version of the system. 
+.Em The interfaces described in this manual page are obsolete
+.Em and will be removed from a future version of the system.
 .Pp
-.Sy Please see the
+.Em Please see the
 .Xr condvar 9 ,
 .Xr mutex 9 ,
-.Sy and
-.Sy Xr rwlock 9
-.Sy manual pages for information on kernel synchronisation primitives.
+.Em and
+.Xr rwlock 9
+.Em manual pages for information on kernel synchronisation primitives.
 .Pp
 These functions implement voluntary context switching.
 .Fn ltsleep
@@ -203,7 +203,7 @@ returns because of a timeout it returns
 .Xr hz 9 ,
 .Xr lock 9 ,
 .Xr mutex 9 ,
-.Xr rwlock 9 
+.Xr rwlock 9
 .Sh HISTORY
 The sleep/wakeup process synchronization mechanism is very old.
 It appeared in a very early version of Unix.
