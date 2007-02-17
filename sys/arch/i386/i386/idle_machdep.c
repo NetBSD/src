@@ -1,7 +1,7 @@
-/*	$NetBSD: idle_machdep.c,v 1.1.2.1 2007/02/17 10:30:45 yamt Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.1.2.2 2007/02/17 14:03:05 yamt Exp $	*/
 
 /*-
- * Copyright (c)2002, 2006 YAMAMOTO Takashi,
+ * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,24 +28,75 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.1.2.1 2007/02/17 10:30:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.1.2.2 2007/02/17 14:03:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 
 #include <machine/cpufunc.h>
 
-void
-cpu_idle(void)
+#if defined(I686_CPU)
+
+static void
+monitor(const void *addr)
 {
-	struct cpu_info *ci = curcpu();
+	uint32_t hint = 0;
+	uint32_t ext = 0;
+
+	__asm __volatile (".byte 0x0f, 0x01, 0xc8" /* monitor */
+	    :: "a"(addr), "c"(ext), "d"(hint));
+}
+
+static void
+mwait(void)
+{
+	uint32_t hint = 0;
+	uint32_t ext = 0;
+
+	__asm __volatile (".byte 0x0f, 0x01, 0xc9" /* mwait */
+	    :: "a"(hint), "c"(ext));
+}
+
+static void
+cpu_idle_mwait(struct cpu_info *ci)
+{
+
+	monitor(&ci->ci_want_resched);
+	if (__predict_false(ci->ci_want_resched)) {
+		return;
+	}
+	mwait();
+	ci->ci_want_resched = 0;
+}
+
+#endif /* defined(I686_CPU) */
+
+static void
+cpu_idle_halt(struct cpu_info *ci)
+{
 
 	disable_intr();
 	__insn_barrier();
-	if (__predict_false(ci->ci_want_resched) == 0) {
+	if (!__predict_false(ci->ci_want_resched)) {
 		__asm __volatile ("sti; hlt");
 	} else {
 		enable_intr();
 	}
 	ci->ci_want_resched = 0;
+}
+
+void
+cpu_idle(void)
+{
+	struct cpu_info *ci = curcpu();
+
+#if defined(I686_CPU)
+	if ((ci->ci_feature2_flags & CPUID2_MONITOR) != 0) {
+		cpu_idle_mwait(ci);
+	} else {
+		cpu_idle_halt(ci);
+	}
+#else /* defined(I686_CPU) */
+	cpu_idle_halt(ci);
+#endif /* defined(I686_CPU) */
 }
