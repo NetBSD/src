@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.1 2007/02/16 01:34:03 matt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2 2007/02/17 05:34:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -41,19 +41,75 @@
 
 struct krwlock {
 	volatile uintptr_t	rw_owner;
-	uint32_t		rw_id;
+	__cpu_simple_lock_t	rw_lock;
+	unsigned int	 	rw_id : 24;
 };
 
 #ifdef __RWLOCK_PRIVATE
 
-#define	__HAVE_SIMPLE_RW_LOCKS		1
-
 #define	RW_RECEIVE(rw)			/* nothing */
 #define	RW_GIVE(rw)			/* nothing */
 
-#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
+bool _rw_cas(krwlock_t *rw, uintptr_t old, uintptr_t new);
 
-int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+/*
+ *	RW_ACQUIRE(rw, old, new)
+ *		Perform an atomic "compare and swap" operation and
+ *		evaluate to true or false according to the success
+ *		of the operation, such that:
+ *			if (rw->rw_owner == old) {
+ *				rw->rw_owner = new;
+ *				return 1;
+ *			} else
+ *				return 0;
+ *		Must be MP/interrupt atomic.
+ */
+#define	RW_ACQUIRE(rw, old, new)	_rw_cas(rw, old, new)
+
+/*
+ *
+ *	RW_RELEASE(rw, old, new)
+ *		As above, but for releasing the lock.  Must be
+ *		MP/interrupt atomic.
+ */
+#define	RW_RELEASE(rw, old, new)	_rw_cas(rw, old, new)
+
+/*
+ *	RW_SET_WAITERS(rw, need_wait, set_wait)
+ *		Set the has-waiters indication.  If the needs-waiting
+ *		condition becomes false, abort the operation.  Must
+ *		be MP/interrupt atomic.
+ */
+static inline bool
+RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
+{
+	uintptr_t old = rw->rw_owner;
+	if (old & need)
+		return _rw_cas(rw, old, old | set);
+	return false;
+}
+
+/*
+ *	RW_SETID(rw, id)
+ *		Set the debugging ID for the lock, an integer.  Only
+ *		used in the LOCKDEBUG case.
+ */
+static inline void
+RW_SETID(krwlock_t *rw, u_int id)
+{
+	rw->rw_id = id;
+}
+
+/*
+ *	RW_GETID(rw)
+ *		Get the debugging ID for the lock, an integer.  Only
+ *		used in the LOCKDEBUG case.
+ */
+static inline u_int
+RW_GETID(krwlock_t *rw)
+{
+	return rw->rw_id;
+}
 
 #endif	/* __RWLOCK_PRIVATE */
 
