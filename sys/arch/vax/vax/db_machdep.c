@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.41 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.42 2007/02/17 22:47:42 dsl Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.41 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.42 2007/02/17 22:47:42 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -453,7 +453,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	 */
 	if (have_addr) {
 		if (trace_proc) {
-			p = pfind((int)addr);
+			p = p_find((int)addr, PFIND_LOCKED);
 			/* Try to be helpful by looking at it as if it were decimal */
 			if (p == NULL) {
 				u_int	tpid = 0;
@@ -468,7 +468,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 					tpid = tpid * 10 + digit;
 					foo = foo << 4;
 				}
-				p = pfind(tpid);
+				p = p_find(tpid, PFIND_LOCKED);
 				if (p == NULL) {
 					(*pr)("	 No such process.\n");
 					return;
