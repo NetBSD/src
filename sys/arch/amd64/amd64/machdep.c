@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2007/02/17 22:31:37 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2007/02/17 22:31:37 pavel Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -875,7 +875,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
-	l->l_proc->p_flag &= ~P_32;
+	l->l_proc->p_flag &= ~PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);

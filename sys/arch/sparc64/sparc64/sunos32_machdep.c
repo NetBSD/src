@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.20 2007/02/09 21:55:13 ad Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.21 2007/02/17 22:31:39 pavel Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.20 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.21 2007/02/17 22:31:39 pavel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -120,7 +120,7 @@ sunos32_setregs(l, pack, stack)
 
 	/* Mark this as a 32-bit emulation */
 	mutex_enter(&p->p_mutex);
-	p->p_flag |= P_32;
+	p->p_flag |= Pk_32;
 	mutex_exit(&p->p_mutex);
 
 	/* Setup the ev_out32 hook */

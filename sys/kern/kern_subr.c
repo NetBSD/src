@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.151 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.152 2007/02/17 22:31:43 pavel Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.151 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.152 2007/02/17 22:31:43 pavel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1342,7 +1342,7 @@ trace_is_enabled(struct proc *p)
 		return (TRUE);
 #endif
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, PK_SYSTRACE))
 		return (TRUE);
 #endif
 #ifdef PTRACE
@@ -1384,7 +1384,7 @@ trace_enter(struct lwp *l, register_t code,
 #endif
 
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, PK_SYSTRACE))
 		return systrace_enter(l, code, args);
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
@@ -1421,7 +1421,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #endif
 
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
+	if (ISSET(p->p_flag, PK_SYSTRACE)) {
 		KERNEL_LOCK(1, l);
 		systrace_exit(l, code, args, rval, error);
 		KERNEL_UNLOCK_LAST(l);
