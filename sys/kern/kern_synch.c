@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.2 2007/02/17 11:00:52 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.3 2007/02/17 11:13:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.2 2007/02/17 11:00:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.3 2007/02/17 11:13:51 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -623,6 +623,40 @@ sched_switch_unlock(struct lwp *old, struct lwp *new)
 }
 
 /*
+ * Compute the amount of time during which the current lwp was running.
+ *
+ * - update l_rtime unless it's an idle lwp.
+ * - update spc_runtime for the next lwp.
+ */
+
+static inline void
+updatertime(struct lwp *l, struct schedstate_percpu *spc)
+{
+	struct timeval tv;
+	long s, u;
+
+	if ((l->l_flag & L_IDLE) != 0) {
+		microtime(&spc->spc_runtime);
+		return;
+	}
+
+	microtime(&tv);
+	u = l->l_rtime.tv_usec + (tv.tv_usec - spc->spc_runtime.tv_usec);
+	s = l->l_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
+	if (u < 0) {
+		u += 1000000;
+		s--;
+	} else if (u >= 1000000) {
+		u -= 1000000;
+		s++;
+	}
+	l->l_rtime.tv_usec = u;
+	l->l_rtime.tv_sec = s;
+
+	spc->spc_runtime = tv;
+}
+
+/*
  * The machine independent parts of context switch.  Switch to "new"
  * if non-NULL, otherwise let cpu_switch choose the next lwp.
  *
@@ -632,9 +666,7 @@ int
 mi_switch(struct lwp *l, struct lwp *newl)
 {
 	struct schedstate_percpu *spc;
-	struct timeval tv;
 	int retval, oldspl;
-	long s, u;
 
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
@@ -653,26 +685,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 */
 	KDASSERT(l->l_cpu == curcpu());
 	spc = &l->l_cpu->ci_schedstate;
-
-	if ((l->l_flag & L_IDLE) == 0) {
-		/*
-		 * Compute the amount of time during which the current
-		 * process was running.
-		 */
-		microtime(&tv);
-		u = l->l_rtime.tv_usec +
-		    (tv.tv_usec - spc->spc_runtime.tv_usec);
-		s = l->l_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
-		if (u < 0) {
-			u += 1000000;
-			s--;
-		} else if (u >= 1000000) {
-			u -= 1000000;
-			s++;
-		}
-		l->l_rtime.tv_usec = u;
-		l->l_rtime.tv_sec = s;
-	}
 
 	/*
 	 * XXXSMP If we are using h/w performance counters, save context.
@@ -737,6 +749,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 #endif
 
 	newl->l_stat = LSONPROC;
+	updatertime(l, spc);
 	if (l != newl) {
 		struct lwp *prevlwp;
 
@@ -770,9 +783,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * schedstate_percpu pointer.
 	 */
 	KDASSERT(l->l_cpu == curcpu());
-	if ((l->l_flag & L_IDLE) == 0) {
-		microtime(&l->l_cpu->ci_schedstate.spc_runtime);
-	}
 
 	(void)splsched();
 	splx(oldspl);
