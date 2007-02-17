@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.2 2007/02/17 23:53:10 tron Exp $
+$NetBSD: pcidevs,v 1.855.2.3 2007/02/17 23:56:56 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3546,6 +3546,7 @@ product VIATECH VT8377		0x3189	VT8377 Apollo KT400 CPU to PCI Bridge
 product VIATECH VT8378		0x3205	VT8378 Apollo KM400 CPU to PCI Bridge
 product VIATECH VT8237		0x3227	VT8237 (Apollo KT600) PCI-ISA Bridge
 product	VIATECH	VT8237A_HDA	0x3288	VT8237A/VT8251 High Definition Audio Controller
+product	VIATECH	VT8237A_ISA	0x3337	VT8237A/VT82C586A PCI-ISA Bridge
 product VIATECH KT880_4		0x4269	KT880 CPU to PCI Bridge
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8378_IG	0x7205	VT8378 KM400 UniChrome Integrated Graphics
