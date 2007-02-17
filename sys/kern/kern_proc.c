@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.100 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.101 2007/02/17 21:46:13 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.101 2007/02/17 21:46:13 dsl Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -431,18 +431,23 @@ int
 pgid_in_session(struct proc *p, pid_t pg_id)
 {
 	struct pgrp *pgrp;
+	struct session *session;
+
+	rw_enter(&proclist_lock, RW_READER);
 
 	if (pg_id < 0) {
-		struct proc *p1 = pfind(-pg_id);
+		struct proc *p1 = p_find(-pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 		if (p1 == NULL)
 			return EINVAL;
 		pgrp = p1->p_pgrp;
 	} else {
-		pgrp = pgfind(pg_id);
+		pgrp = pg_find(pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 		if (pgrp == NULL)
 			return EINVAL;
 	}
-	if (pgrp->pg_session != p->p_pgrp->pg_session)
+	session = pgrp->pg_session;
+	rw_exit(&proclist_lock);
+	if (session != p->p_pgrp->pg_session)
 		return EPERM;
 	return 0;
 }
@@ -486,7 +491,7 @@ p_find(pid_t pid, uint flags)
 		return p;
 	}
 	if (flags & PFIND_UNLOCK_FAIL)
-		 rw_exit(&proclist_lock);
+		rw_exit(&proclist_lock);
 	return NULL;
 }
 
