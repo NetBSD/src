@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.52 2006/06/07 22:33:42 kardel Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.53 2007/02/17 22:34:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.52 2006/06/07 22:33:42 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.53 2007/02/17 22:34:08 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -240,7 +240,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)&adst))
+		if (!nd6_storelladdr(ifp, rt, m, dst, &adst, sizeof(adst)))
 			return (0); /* it must be impossible, but... */
 		atype = htons(ARCTYPE_INET6);
 		newencoding = 1;

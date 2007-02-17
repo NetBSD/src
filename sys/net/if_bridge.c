@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.47 2007/01/04 19:07:03 elad Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.48 2007/02/17 22:34:08 dyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.47 2007/01/04 19:07:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.48 2007/02/17 22:34:08 dyoung Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1205,7 +1205,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
  *	enqueue or free the mbuf before returning.
  */
 int
-bridge_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sa,
+bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
     struct rtentry *rt)
 {
 	struct ether_header *eh;

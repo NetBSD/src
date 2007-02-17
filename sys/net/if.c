@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.180 2006/12/03 19:17:41 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.181 2007/02/17 22:34:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.180 2006/12/03 19:17:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.181 2007/02/17 22:34:07 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -205,7 +205,7 @@ ifinit(void)
 
 int
 if_nulloutput(struct ifnet *ifp, struct mbuf *m,
-    struct sockaddr *so, struct rtentry *rt)
+    const struct sockaddr *so, struct rtentry *rt)
 {
 
 	return (ENXIO);
