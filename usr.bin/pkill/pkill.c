@@ -1,7 +1,7 @@
-/*	$NetBSD: pkill.c,v 1.19 2007/02/10 18:20:12 ad Exp $	*/
+/*	$NetBSD: pkill.c,v 1.20 2007/02/17 22:49:57 pavel Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkill.c,v 1.19 2007/02/10 18:20:12 ad Exp $");
+__RCSID("$NetBSD: pkill.c,v 1.20 2007/02/17 22:49:57 pavel Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -261,7 +261,7 @@ main(int argc, char **argv)
 		}
 
 		for (i = 0, kp = plist; i < nproc; i++, kp++) {
-			if ((kp->p_flag & KP_SYSTEM) != 0 || kp->p_pid == mypid)
+			if ((kp->p_flag & P_SYSTEM) != 0 || kp->p_pid == mypid)
 				continue;
 
 			if (matchargs) {
@@ -300,7 +300,7 @@ main(int argc, char **argv)
 	}
 
 	for (i = 0, kp = plist; i < nproc; i++, kp++) {
-		if ((kp->p_flag & KP_SYSTEM) != 0)
+		if ((kp->p_flag & P_SYSTEM) != 0)
 			continue;
 
 		SLIST_FOREACH(li, &ruidlist, li_chain)
@@ -345,7 +345,7 @@ main(int argc, char **argv)
 
 		SLIST_FOREACH(li, &tdevlist, li_chain) {
 			if (li->li_number == -1 &&
-			    (kp->p_flag & KP_CONTROLT) == 0)
+			    (kp->p_flag & P_CONTROLT) == 0)
 				break;
 			if (kp->p_tdev == (uid_t)li->li_number)
 				break;
@@ -402,7 +402,7 @@ main(int argc, char **argv)
 		} else if (!inverse)
 			continue;
 
-		if ((kp->p_flag & KP_SYSTEM) != 0)
+		if ((kp->p_flag & P_SYSTEM) != 0)
 			continue;
 
 		rv |= (*action)(kp);
