@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.2 2007/02/17 23:54:13 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.3 2007/02/17 23:58:07 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.2 2007/02/17 23:53:10 tron Exp
+ *	NetBSD: pcidevs,v 1.855.2.3 2007/02/17 23:56:56 tron Exp
  */
 
 /*
@@ -12136,6 +12136,10 @@ static const struct pci_product pci_products[] = {
 	    "VT8237A/VT8251 High Definition Audio Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_ISA,
+	    "VT8237A/VT82C586A PCI-ISA Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4,
 	    "KT880 CPU to PCI Bridge",
 	},
@@ -12688,4 +12692,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2578;
+const int pci_nproducts = 2579;

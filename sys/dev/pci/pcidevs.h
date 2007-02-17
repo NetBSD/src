@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.2 2007/02/17 23:54:12 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.3 2007/02/17 23:58:06 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.2 2007/02/17 23:53:10 tron Exp
+ *	NetBSD: pcidevs,v 1.855.2.3 2007/02/17 23:56:56 tron Exp
  */
 
 /*
@@ -3553,6 +3553,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8378	0x3205		/* VT8378 Apollo KM400 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237	0x3227		/* VT8237 (Apollo KT600) PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_VT8237A_HDA	0x3288		/* VT8237A/VT8251 High Definition Audio Controller */
+#define	PCI_PRODUCT_VIATECH_VT8237A_ISA	0x3337		/* VT8237A/VT82C586A PCI-ISA Bridge */
 #define	PCI_PRODUCT_VIATECH_KT880_4	0x4269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8378_IG	0x7205		/* VT8378 KM400 UniChrome Integrated Graphics */
