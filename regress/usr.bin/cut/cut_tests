@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CUT=${CUT:=cut}
+CUT=${CUT:-cut}
 
 run_cut (){
     echo "----- test: cut $@ -----"
@@ -18,12 +18,27 @@ run_test_block (){
     run_cut -f 1,2-7 "$@"
 }
 
-run_all_tests (){
+run_general_tests (){
     run_test_block "$@"
     run_test_block -s "$@"
     run_test_block -d ':' "$@"
     run_test_block -d ':' -s "$@"
 }
 
-run_all_tests $1/input | sed -e "s@$1/@@" > result
-cmp -s result $1/expected
+run_locale_tests (){
+    run_cut -b 6,7,8 "$@"
+    run_cut -c 6,7,8 "$@"
+}
+
+
+run_general_tests $1/input-general | sed -e "s@$1/@@" > result-general
+cmp result-general $1/expected-general
+
+export LC_ALL=C
+run_locale_tests $1/input-latin1 | sed -e "s@$1/@@" > result-latin1
+cmp result-latin1 $1/expected-latin1
+
+export LC_ALL=en_US.UTF-8
+run_locale_tests input-utf8 | sed -e "s@$1/@@" > result-utf8
+cmp result-utf8 $1/expected-utf8
+
