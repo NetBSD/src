@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.854.2.1 2006/12/12 12:39:33 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.854.2.2 2007/02/17 23:54:12 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.1 2006/12/12 12:37:47 tron Exp
+ *	NetBSD: pcidevs,v 1.855.2.2 2007/02/17 23:53:10 tron Exp
  */
 
 /*
@@ -2149,8 +2149,6 @@
 #define	PCI_PRODUCT_INTEL_82925X_EX	0x2585		/* 82925X PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82915GM_HB	0x2590		/* 82915PM/GM/GMS,82910GML Host Bridge */
 #define	PCI_PRODUCT_INTEL_82915GM_EX	0x2591		/* 82915PM/GM PCI Express Bridge */
-#define	PCI_PRODUCT_INTEL_82915GM_IGD	0x2592		/* 82915GM/GMS Integrated Graphics Device */
-#define	PCI_PRODUCT_INTEL_82915PM_EX	0x2591		/* 82915PM/GM PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82915GM_IGD	0x2592		/* 82915GM/GMS,82910GML Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_6300ESB_LPC	0x25a1		/* 6300ESB LPC Interface Bridge */
 #define	PCI_PRODUCT_INTEL_6300ESB_IDE	0x25a2		/* 6300ESB IDE Controller */
@@ -2861,6 +2859,26 @@
 #define	PCI_PRODUCT_NVIDIA_MCP65_SATA2	0x045d		/* nForce MCP65 Serial ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_SATA3	0x045e		/* nForce MCP65 Serial ATA Controller */
 #define	PCI_PRODUCT_NVIDIA_MCP65_SATA4	0x045f		/* nForce MCP65 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_SMB	0x0542		/* nForce MCP67 SMBus Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_LAN1	0x054c		/* nForce MCP67 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_LAN2	0x054d		/* nForce MCP67 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_LAN3	0x054e		/* nForce MCP67 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_LAN4	0x054f		/* nForce MCP67 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_SATA	0x0550		/* nForce MCP67 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_SATA2	0x0551		/* nForce MCP67 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_SATA3	0x0552		/* nForce MCP67 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_SATA4	0x0553		/* nForce MCP67 Serial ATA Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_1	0x0554		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_2	0x0555		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_3	0x0556		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_4	0x0557		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_5	0x0558		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_6	0x0559		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_7	0x055a		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_AHCI_8	0x055b		/* nForce MCP67 AHCI Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_HDA_1	0x055c		/* nForce MCP67 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_HDA_2	0x055d		/* nForce MCP67 High Definition Audio Controller */
+#define	PCI_PRODUCT_NVIDIA_MCP67_IDE	0x0560		/* nForce MCP67 ATA133 IDE Controller */
 
 /* Nvidia & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
@@ -3003,6 +3021,7 @@
 #define	PCI_PRODUCT_REALTEK_RT8168	0x8168		/* 8168B/8111B 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8169	0x8169		/* 8169/S/SB 10/100/1000 Ethernet */
 #define	PCI_PRODUCT_REALTEK_RT8180	0x8180		/* 8180 802.11b */
+#define	PCI_PRODUCT_REALTEK_RT8185	0x8185		/* 8185 802.11a/b/g */
 
 /* RICOH products */
 #define	PCI_PRODUCT_RICOH_Rx5C465	0x0465		/* 5C465 PCI-CardBus bridge */
@@ -3163,7 +3182,8 @@
 #define	PCI_PRODUCT_SIIG_CYBER20_2S1P550	0x2060		/* Cyber20x 2S1P 16550 PCI */
 #define	PCI_PRODUCT_SIIG_CYBER20_2S1P650	0x2061		/* Cyber20x 2S1P 16650 PCI */
 #define	PCI_PRODUCT_SIIG_CYBER20_2S1P850	0x2062		/* Cyber20x 2S1P 16850 PCI */
-#define	PCI_PRODUCT_SIIG_PCISERIAL8000P	0x2082		/* PCI Serial 8000 Plus */
+#define	PCI_PRODUCT_SIIG_PS8000P650	0x2081		/* PCI Serial 8000 Plus 16650 */
+#define	PCI_PRODUCT_SIIG_PS8000P850	0x2082		/* PCI Serial 8000 Plus 16850 */
 
 /* Silicon Integrated System products */
 #define	PCI_PRODUCT_SIS_86C201	0x0001		/* 86C201 */
