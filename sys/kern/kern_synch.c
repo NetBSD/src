@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.1 2007/02/17 10:30:58 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.2 2007/02/17 11:00:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.1 2007/02/17 10:30:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.2 2007/02/17 11:00:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -610,14 +610,14 @@ sched_switch_unlock(struct lwp *old, struct lwp *new)
 	KASSERT(old == NULL || old == curlwp);
 
 	if (old != NULL) {
-		LOCKDEBUG_BARRIER(&sched_mutex, 1);
+		LOCKDEBUG_BARRIER(&old->l_mutex, 1);
 	} else {
 		LOCKDEBUG_BARRIER(NULL, 1);
 	}
 
 	curlwp = new;
 	if (old != NULL) {
-		mutex_spin_exit(&sched_mutex);
+		lwp_unlock(old);
 	}
 	spl0();
 }
@@ -684,16 +684,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 #endif
 
 	/*
-	 * Acquire the sched_mutex if necessary.
-	 */
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	if (l->l_mutex != &sched_mutex) {
-		mutex_spin_enter(&sched_mutex);
-		lwp_unlock(l);
-	}
-#endif
-
-	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
 	KASSERT(l->l_stat != LSRUN);
@@ -712,13 +702,22 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 */
 	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 
-	LOCKDEBUG_BARRIER(&sched_mutex, 1);
+	LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
 	/*
 	 * Switch to the new LWP if necessary.
 	 * When we run again, we'll return back here.
 	 */
 	oldspl = MUTEX_SPIN_OLDSPL(l->l_cpu);
+
+	/*
+	 * Acquire the sched_mutex if necessary.
+	 */
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	if (l->l_mutex != &sched_mutex) {
+		mutex_enter(&sched_mutex);
+	}
+#endif
 
 	if (newl == NULL) {
 		newl = nextrunqueue();
@@ -730,6 +729,13 @@ mi_switch(struct lwp *l, struct lwp *newl)
 		newl = l->l_cpu->ci_data.cpu_idlelwp;
 		KASSERT(newl != NULL);
 	}
+
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	if (l->l_mutex != &sched_mutex) {
+		mutex_exit(&sched_mutex);
+	}
+#endif
+
 	newl->l_stat = LSONPROC;
 	if (l != newl) {
 		struct lwp *prevlwp;
