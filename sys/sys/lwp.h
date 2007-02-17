@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48 2007/02/15 15:13:10 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.1 2007/02/17 10:31:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -159,6 +159,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #endif
 
 /* These flags are kept in l_flag. */
+#define	L_IDLE		0x00000001 /* Idle lwp. */
 #define	L_INMEM		0x00000004 /* Loaded into memory. */
 #define	L_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
 #define	L_SINTR		0x00000080 /* Sleep is interruptible. */
@@ -231,12 +232,11 @@ void	setrunqueue (struct lwp *);
 struct lwp *nextrunqueue(void);
 #endif
 void	unsleep (struct lwp *);
-#ifndef cpu_switch
-int	cpu_switch (struct lwp *, struct lwp *);
-#endif
 #ifndef cpu_switchto
-void	cpu_switchto (struct lwp *, struct lwp *);
+struct lwp *cpu_switchto(struct lwp *, struct lwp *);
 #endif
+
+void	lwp_startup(struct lwp *, struct lwp *);
 
 int	lwp_locked(struct lwp *, kmutex_t *);
 void	lwp_setlock(struct lwp *, kmutex_t *);
@@ -256,6 +256,7 @@ void	cpu_setfunc(struct lwp *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(struct lwp *);
 void	lwp_exit(struct lwp *);
+void	lwp_exit_switchaway(struct lwp *);
 void	lwp_exit2(struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(struct lwp *, struct lwp *);
@@ -369,8 +370,7 @@ sched_unlock(int heldmutex)
 
 #endif	/* defined(MULTIPROCESSOR) || defined(LOCKDEBUG) */
 
-void	sched_lock_idle(void);
-void	sched_unlock_idle(void);
+void sched_switch_unlock(struct lwp *, struct lwp *);
 
 #endif	/* _KERNEL */
 

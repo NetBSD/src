@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.2 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.2.2.1 2007/02/17 10:31:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ sleepq_dontsleep(struct lwp *l)
 {
 	extern int cold;
 
-	return cold || (doing_shutdown && (panicstr || l == NULL));
+	return cold || (doing_shutdown && (panicstr || CURCPU_IDLE_P()));
 }
 
 /*

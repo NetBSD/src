@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55 2007/02/16 00:35:45 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.1 2007/02/17 10:30:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55 2007/02/16 00:35:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.1 2007/02/17 10:30:57 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -696,7 +696,22 @@ lwp_exit(struct lwp *l)
 	KERNEL_UNLOCK_ALL(l, NULL);
 #endif
 
-	cpu_exit(l);
+	lwp_exit_switchaway(l);
+}
+
+void
+lwp_exit_switchaway(struct lwp *l)
+{
+	struct cpu_info *ci;
+	struct lwp *idlelwp;
+
+	uvmexp.swtch++; /* XXXSMP unlocked */
+
+	ci = curcpu();	
+	idlelwp = ci->ci_data.cpu_idlelwp;
+
+	idlelwp->l_stat = LSONPROC;
+	cpu_switchto(NULL, idlelwp);
 }
 
 /*
@@ -822,6 +837,9 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 		onproc = running = sleeping = stopped = suspended = NULL;
 		signalled = NULL;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			if ((l->l_flag & L_IDLE) != 0) {
+				continue;
+			}
 			if (l->l_lid == p->p_sigctx.ps_lwp)
 				signalled = l;
 			switch (l->l_stat) {

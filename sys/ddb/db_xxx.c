@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.41 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.41.2.1 2007/02/17 10:30:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.41 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.41.2.1 2007/02/17 10:30:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,25 +298,6 @@ void
 db_show_sched_qs(db_expr_t addr, int haddr,
     db_expr_t count, const char *modif)
 {
-	struct prochd *ph;
-	struct lwp *l;
-	int i, first;
 
-	for (i = 0; i < RUNQUE_NQS; i++)
-	{
-		first = 1;
-		ph = &sched_qs[i];
-		for (l = ph->ph_link; l != (void *)ph; l = l->l_forw) {
-			if (first) {
-				db_printf("%c%d",
-				    (sched_whichqs & RQMASK(i))
-				    ? ' ' : '!', i);
-				first = 0;
-			}
-			db_printf("\t%d.%d (%s) pri=%d usrpri=%d\n",
-			    l->l_proc->p_pid,
-			    l->l_lid, l->l_proc->p_comm,
-			    (int)l->l_priority, (int)l->l_usrpri);
-		}
-	}
+	sched_print_runqueue(db_printf);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30 2007/02/15 15:09:16 ad Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.1 2007/02/17 10:31:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -167,17 +167,6 @@ struct schedstate_percpu {
 extern int schedhz;			/* ideally: 16 */
 extern int rrticks;			/* ticks per roundrobin() */
 
-/*
- * Global scheduler state.  We would like to group these all together
- * in a single structure to make them easier to find, but leaving
- * whichqs and qs as independent globals makes for more efficient
- * assembly language in the low-level context switch code.  So we
- * simply give them meaningful names; the globals are actually declared
- * in kern/kern_synch.c.
- */
-extern struct prochd sched_qs[];
-extern volatile uint32_t sched_whichqs;
-
 struct proc;
 struct cpu_info;
 
@@ -187,6 +176,9 @@ int sched_kpri(struct lwp *);
 
 void scheduler_fork_hook(struct proc *, struct proc *);
 void scheduler_wait_hook(struct proc *, struct proc *);
+
+boolean_t sched_curcpu_runnable_p(void);
+void sched_print_runqueue(void (*)(const char *, ...));
 
 /*
  * Synchronisation object operations set.

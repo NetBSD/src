@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166 2007/02/16 00:39:16 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166.2.1 2007/02/17 10:30:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166 2007/02/16 00:39:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.1 2007/02/17 10:30:54 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -593,17 +593,8 @@ exit1(struct lwp *l, int rv)
 	KERNEL_UNLOCK_ALL(l, NULL);
 #endif
 
-	/*
-	 * Finally, call machine-dependent code to switch to a new
-	 * context (possibly the idle context).  Once we are no longer
-	 * using the dead lwp's stack, lwp_exit2() will be called.
-	 *
-	 * Note that cpu_exit() will end with a call equivalent to
-	 * cpu_switch(), finishing our execution (pun intended).
-	 */
-	uvmexp.swtch++;	/* XXXSMP unlocked */
 	cv_wakeup(&p->p_pptr->p_waitcv);	/* XXXSMP */
-	cpu_exit(l);
+	lwp_exit_switchaway(l);
 }
 
 void

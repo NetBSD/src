@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.131 2007/02/15 15:13:10 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131.2.1 2007/02/17 10:30:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131 2007/02/15 15:13:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.1 2007/02/17 10:30:55 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -558,18 +558,12 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	return (0);
 }
 
-#if defined(MULTIPROCESSOR)
-/*
- * XXX This is a slight hack to get newly-formed processes to
- * XXX acquire the kernel lock as soon as they run.
- */
 void
-proc_trampoline_mp(void)
+lwp_startup(struct lwp *prev, struct lwp *new)
 {
-	struct lwp *l;
 
-	l = curlwp;
+	sched_switch_unlock(prev, new);
+	pmap_activate(new);
 
-	KERNEL_LOCK(1, l);
+	KERNEL_LOCK(1, new);
 }
-#endif

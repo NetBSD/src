@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106 2007/02/16 02:53:43 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.2.1 2007/02/17 10:30:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106 2007/02/16 02:53:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.1 2007/02/17 10:30:53 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -513,7 +513,7 @@ hardclock(struct clockframe *frame)
 #endif /* __HAVE_TIMECOUNTER */
 
 	l = curlwp;
-	if (l) {
+	if (!CURCPU_IDLE_P()) {
 		p = l->l_proc;
 		/*
 		 * Run current process's virtual and profile time, as needed.
@@ -1158,11 +1158,17 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	if ((p = (l ? l->l_proc : NULL)) != NULL)
+	if ((l->l_flag & L_IDLE) != 0) {
+		/*
+		 * don't account idle lwps as swapper.
+		 */
+		p = NULL;
+	} else {
+		p = l->l_proc;
 		mutex_spin_enter(&p->p_stmutex);
-	if (CLKF_USERMODE(frame)) {
-		KASSERT(p != NULL);
+	}
 
+	if (CLKF_USERMODE(frame)) {
 		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
 			addupc_intr(l, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0) {
@@ -1194,8 +1200,10 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && (p->p_stflag & PST_PROFIL))
+		if (p != NULL && profsrc == PROFSRC_CLOCK &&
+		    (p->p_stflag & PST_PROFIL)) {
 			addupc_intr(l, LWP_PC(l));
+		}
 #endif
 		if (--spc->spc_pscnt > 0) {
 			if (p != NULL)
@@ -1215,30 +1223,35 @@ statclock(struct clockframe *frame)
 		 * in ``non-process'' (i.e., interrupt) work.
 		 */
 		if (CLKF_INTR(frame)) {
-			if (p != NULL)
+			if (p != NULL) {
 				p->p_iticks++;
+			}
 			spc->spc_cp_time[CP_INTR]++;
 		} else if (p != NULL) {
 			p->p_sticks++;
 			spc->spc_cp_time[CP_SYS]++;
-		} else
+		} else {
 			spc->spc_cp_time[CP_IDLE]++;
+		}
 	}
 	spc->spc_pscnt = psdiv;
 
-	if (p != NULL) {
-		++p->p_cpticks;
-		mutex_spin_exit(&p->p_stmutex);
+	if (p == NULL) {
+		return;
+	}
 
-		/*
-		 * If no separate schedclock is provided, call it here
-		 * at about 16 Hz.
-		 */
-		if (schedhz == 0)
-			if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
-				schedclock(l);
-				ci->ci_schedstate.spc_schedticks = statscheddiv;
-			}
+	++p->p_cpticks;
+	mutex_spin_exit(&p->p_stmutex);
+
+	/*
+	 * If no separate schedclock is provided, call it here
+	 * at about 16 Hz.
+	 */
+	if (schedhz == 0) {
+		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
+			schedclock(l);
+			ci->ci_schedstate.spc_schedticks = statscheddiv;
+		}
 	}
 }
 

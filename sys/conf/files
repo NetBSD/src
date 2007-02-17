@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.831 2007/02/10 11:55:23 ad Exp $
+#	$NetBSD: files,v 1.831.2.1 2007/02/17 10:30:49 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1283,6 +1283,7 @@ file	kern/kern_event.c
 file	kern/kern_exec.c
 file	kern/kern_exit.c
 file	kern/kern_fork.c
+file	kern/kern_idle.c
 file	kern/kern_kcont.c		kcont
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c
