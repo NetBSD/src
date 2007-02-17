@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.17 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.18 2007/02/17 22:34:16 dyoung Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -320,8 +320,8 @@ extern const char *ipsec_logsastr __P((struct secasvar *));
 extern void ipsec_dumpmbuf __P((struct mbuf *));
 
 /* NetBSD protosw ctlin entrypoint */
-extern void *esp4_ctlinput __P((int, struct sockaddr *, void *));
-extern void *ah4_ctlinput __P((int, struct sockaddr *, void *));
+extern void *esp4_ctlinput(int, const struct sockaddr *, void *);
+extern void *ah4_ctlinput(int, const struct sockaddr *, void *);
 
 struct m_tag;
 extern void ipsec4_common_input(struct mbuf *m, ...);

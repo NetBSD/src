@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.32 2006/11/16 01:33:09 christos Exp $ */
+/* $NetBSD: if_lmc.c,v 1.33 2007/02/17 22:34:07 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -3745,7 +3745,7 @@ ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
  */
 static int  /* context: process */
 ifnet_output(struct ifnet *ifp, struct mbuf *m,
- struct sockaddr *dst, struct rtentry *rt)
+ const struct sockaddr *dst, struct rtentry *rt)
   {
   softc_t *sc = IFP2SC(ifp);
   int error = 0;

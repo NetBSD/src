@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.81 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.82 2007/02/17 22:34:15 dyoung Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.81 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.82 2007/02/17 22:34:15 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -292,10 +292,7 @@ rip6_input(mp, offp, proto)
 }
 
 void
-rip6_ctlinput(cmd, sa, d)
-	int cmd;
-	struct sockaddr *sa;
-	void *d;
+rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct ip6_hdr *ip6;
 	struct ip6ctlparam *ip6cp = NULL;
@@ -334,7 +331,7 @@ rip6_ctlinput(cmd, sa, d)
 	}
 
 	if (ip6 && cmd == PRC_MSGSIZE) {
-		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+		const struct sockaddr_in6 *sa6 = (const struct sockaddr_in6 *)sa;
 		int valid = 0;
 		struct in6pcb *in6p;
 
@@ -487,7 +484,8 @@ rip6_output(m, va_alist)
 	 * Source address selection.
 	 */
 	if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp, &error)) == 0) {
+	    (struct route *)&in6p->in6p_route, &in6p->in6p_laddr, &oifp,
+	    &error)) == 0) {
 		if (error == 0)
 			error = EADDRNOTAVAIL;
 		goto bad;
@@ -576,11 +574,8 @@ rip6_output(m, va_alist)
  * Raw IPv6 socket option processing.
  */
 int
-rip6_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+rip6_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	int error = 0;
 
@@ -786,7 +781,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
-		    in6p->in6p_moptions, &in6p->in6p_route,
+		    in6p->in6p_moptions, (struct route *)&in6p->in6p_route,
 		    &in6p->in6p_laddr, &ifp, &error);
 		if (in6a == NULL) {
 			if (error == 0)

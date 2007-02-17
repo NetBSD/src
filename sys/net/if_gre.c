@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.83 2007/01/26 19:32:32 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.84 2007/02/17 22:34:08 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83 2007/01/26 19:32:32 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.84 2007/02/17 22:34:08 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -132,8 +132,8 @@ static int	gre_clone_destroy(struct ifnet *);
 static struct if_clone gre_cloner =
     IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
-static int	gre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-			   struct rtentry *);
+static int	gre_output(struct ifnet *, struct mbuf *,
+			   const struct sockaddr *, struct rtentry *);
 static int	gre_ioctl(struct ifnet *, u_long, caddr_t);
 
 static int	gre_compute_route(struct gre_softc *sc);
@@ -600,7 +600,7 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
  * given by sc->sc_proto. See also RFC 1701 and RFC 2004
  */
 static int
-gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	   struct rtentry *rt)
 {
 	int error = 0, hlen;
@@ -1160,7 +1160,7 @@ gre_compute_route(struct gre_softc *sc)
 
 #ifdef DIAGNOSTIC
 	printf("%s: searching for a route to %s", sc->sc_if.if_xname,
-	    inet_ntoa(satosin(&ro->ro_dst)->sin_addr));
+	    inet_ntoa(satocsin(rtcache_getdst(ro))->sin_addr));
 #endif
 
 	rtcache_init(ro);
