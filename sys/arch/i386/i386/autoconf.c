@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.84 2006/06/07 22:37:58 kardel Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.85 2007/02/17 00:28:24 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84 2006/06/07 22:37:58 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.85 2007/02/17 00:28:24 daniel Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -90,6 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84 2006/06/07 22:37:58 kardel Exp $")
 #ifdef KVM86
 #include <machine/kvm86.h>
 #endif
+
+#include "opt_viapadlock.h"
 
 /*
  * Determine i/o configuration for a machine.
@@ -139,4 +141,8 @@ cpu_configure(void)
 #if NLAPIC > 0
 	lapic_tpr = 0;
 #endif
+
+#if defined(I686_CPU) && defined(VIA_PADLOCK)
+	via_padlock_attach();
+#endif /* defined(I686_CPU) && defined(VIA_PADLOCK) */
 }

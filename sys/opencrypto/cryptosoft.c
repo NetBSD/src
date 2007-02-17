@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.15 2006/11/16 01:33:51 christos Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.16 2007/02/17 00:28:25 daniel Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.15 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.16 2007/02/17 00:28:25 daniel Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,6 @@ int32_t swcr_id = -1;
 	: cuio_copydata((struct uio *)a,b,c,d)
 
 static	int swcr_encdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
-static	int swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
-			     struct swcr_data *sw, caddr_t buf, int outtype);
 static	int swcr_compdec(struct cryptodesc *, struct swcr_data *, caddr_t, int);
 static	int swcr_process(void *, struct cryptop *, int);
 static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
@@ -530,7 +528,7 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 /*
  * Compute keyed-hash authenticator.
  */
-static int
+int
 swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
     struct swcr_data *sw, caddr_t buf, int outtype)
 {

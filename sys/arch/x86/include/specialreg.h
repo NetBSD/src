@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.14 2007/01/16 15:43:44 christos Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.15 2007/02/17 00:28:25 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -155,6 +155,13 @@
 				    "\0373DNOW2\0403DNOW"
 
 /*
+ * "Features" that are copied from elsewhere -- not necessarily tied to
+ * a specific CPUID response
+ */
+
+#define CPUID_FEAT_VACE	0x00000002	/* VIA C3 AES Crypto Extension */
+
+/*
  * CPUID "features" bits in %ecx
  */
 
@@ -280,6 +287,18 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+
+/*
+ * VIA "Nehemiah" MSRs
+ */
+#define MSR_VIA_RNG		0x0000110b
+#define MSR_VIA_RNG_ENABLE	0x00000040
+#define MSR_VIA_RNG_NOISE_MASK	0x00000300
+#define MSR_VIA_RNG_NOISE_A	0x00000000
+#define MSR_VIA_RNG_NOISE_B	0x00000100
+#define MSR_VIA_RNG_2NOISE	0x00000300
+#define MSR_VIA_ACE		0x00001107
+#define MSR_VIA_ACE_ENABLE	0x10000000
 
 /*
  * AMD K6/K7 MSRs.

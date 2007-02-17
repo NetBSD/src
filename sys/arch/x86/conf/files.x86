@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.22 2007/02/09 21:55:13 ad Exp $
+#	$NetBSD: files.x86,v 1.23 2007/02/17 00:28:25 daniel Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -12,6 +12,10 @@ defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
 
 # AMD Powernow/Cool`n'Quiet Technology
 defflag opt_powernow_k8.h	POWERNOW_K8
+
+# VIA PadLock support
+defflag	opt_viapadlock.h	VIA_PADLOCK:	opencrypto
+file	arch/x86/x86/via_padlock.c	via_padlock
 
 define  cpubus { [apid = -1] }
 define  ipmibus {}

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.595 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.596 2007/02/17 00:28:24 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.595 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596 2007/02/17 00:28:24 daniel Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -242,6 +242,7 @@ int	dumpmem_low;
 int	dumpmem_high;
 unsigned int cpu_feature;
 unsigned int cpu_feature2;
+unsigned int cpu_feature_padlock;
 int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
@@ -1499,6 +1500,7 @@ init386(paddr_t first_avail)
 	cpu_probe_features(&cpu_info_primary);
 	cpu_feature = cpu_info_primary.ci_feature_flags;
 	cpu_feature2 = cpu_info_primary.ci_feature2_flags;
+	cpu_feature_padlock = cpu_info_primary.ci_padlock_flags;
 
 	proc0paddr = UAREA_TO_USER(proc0uarea);
 	lwp0.l_addr = proc0paddr;

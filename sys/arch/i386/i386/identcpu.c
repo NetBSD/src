@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.56 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.57 2007/02/17 00:28:24 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.56 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.57 2007/02/17 00:28:24 daniel Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -653,8 +653,10 @@ winchip_cpu_setup(struct cpu_info *ci)
 void
 via_cpu_probe(struct cpu_info *ci)
 {
+	u_int model = CPUID2MODEL(ci->ci_signature);
+	u_int stepping = CPUID2STEPPING(ci->ci_signature);
 	u_int descs[4];
-	u_int lfunc;
+	u_int lfunc, msr;
 
 	/*
 	 * Determine the largest extended function value.
@@ -668,6 +670,24 @@ via_cpu_probe(struct cpu_info *ci)
 	if (lfunc >= 0x80000001) {
 		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
 		ci->ci_feature_flags |= descs[3];
+	}
+
+	if (model >= 0x9) {
+		/* Nehemiah or Esther */
+		CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
+		lfunc = descs[0];
+		if (lfunc == 0xc0000001) {
+			CPUID(lfunc, descs[0], descs[1], descs[2], descs[3]);
+			lfunc = descs[3];
+			if (model > 0x9 || stepping >= 8) {	/* ACE */
+				if ((lfunc & 0xc0) == 0xc0) {
+					ci->ci_padlock_flags |= CPUID_FEAT_VACE;
+					msr = rdmsr(MSR_VIA_ACE);
+					wrmsr(MSR_VIA_ACE,
+					    msr | MSR_VIA_ACE_ENABLE);
+				}
+			}
+		}
 	}
 }
 
