@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.21 2006/07/29 02:01:24 jnemeth Exp $	*/
+/*	$NetBSD: cut.c,v 1.22 2007/02/17 19:10:00 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.21 2006/07/29 02:01:24 jnemeth Exp $");
+__RCSID("$NetBSD: cut.c,v 1.22 2007/02/17 19:10:00 hubertf Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -54,13 +54,16 @@ __RCSID("$NetBSD: cut.c,v 1.21 2006/07/29 02:01:24 jnemeth Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
+int bflag;
 int	cflag;
 char	dchar;
 int	dflag;
 int	fflag;
 int	sflag;
 
+void	b_cut(FILE *, const char *);
 void	c_cut(FILE *, const char *);
 void	f_cut(FILE *, const char *);
 void	get_list(char *);
@@ -83,6 +86,10 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "b:c:d:f:sn")) != -1)
 		switch(ch) {
 		case 'b':
+			fcn = b_cut;
+			get_list(optarg);
+			bflag = 1;
+			break;
 		case 'c':
 			fcn = c_cut;
 			get_list(optarg);
@@ -110,9 +117,11 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (fflag) {
-		if (cflag)
+		if (cflag || bflag)
 			usage();
-	} else if (!cflag || dflag || sflag)
+	} else if ((!cflag && !bflag) || dflag || sflag)
+		usage();
+	else if (bflag && cflag)
 		usage();
 
 	if (*argv)
@@ -191,35 +200,6 @@ get_list(char *list)
 		memset(positions + 1, '1', autostart);
 }
 
-/* ARGSUSED */
-void
-c_cut(FILE *fp, const char *fname)
-{
-	int ch, col;
-	char *pos;
-
-	ch = 0;
-	for (;;) {
-		pos = positions + 1;
-		for (col = maxval; col; --col) {
-			if ((ch = getc(fp)) == EOF)
-				return;
-			if (ch == '\n')
-				break;
-			if (*pos++)
-				(void)putchar(ch);
-		}
-		if (ch != '\n') {
-			if (autostop)
-				while ((ch = getc(fp)) != EOF && ch != '\n')
-					(void)putchar(ch);
-			else
-				while ((ch = getc(fp)) != EOF && ch != '\n');
-		}
-		(void)putchar('\n');
-	}
-}
-
 void
 f_cut(FILE *fp, const char *fname)
 {
@@ -294,3 +274,13 @@ usage(void)
 	    "\tcut -f list [-d delim] [-s] [file ...]\n");
 	exit(1);
 }
+
+/* make b_put(): */
+#define CUT_BYTE 1 
+#include "x_cut.c"
+#undef CUT_BYTE
+
+/* make c_put(): */
+#define CUT_BYTE 0
+#include "x_cut.c"
+#undef CUT_BYTE
