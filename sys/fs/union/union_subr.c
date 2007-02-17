@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.21 2006/11/16 01:33:37 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.21.2.1 2007/02/17 23:27:46 tron Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.21 2006/11/16 01:33:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.21.2.1 2007/02/17 23:27:46 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -801,7 +801,7 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	cn->cn_pnbuf[cn->cn_namelen] = '\0';
 
 	cn->cn_nameiop = CREATE;
-	cn->cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
+	cn->cn_flags = (LOCKPARENT|HASBUF|SAVENAME|ISLASTCN);
 	cn->cn_lwp = cnp->cn_lwp;
 	if (um->um_op == UNMNT_ABOVE)
 		cn->cn_cred = cnp->cn_cred;
@@ -811,11 +811,8 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	cn->cn_hash = cnp->cn_hash;
 	cn->cn_consume = cnp->cn_consume;
 
-	VREF(dvp);
 	error = relookup(dvp, vpp, cn);
-	if (!error)
-		vrele(dvp);
-	else {
+	if (error) {
 		PNBUF_PUT(cn->cn_pnbuf);
 		cn->cn_pnbuf = 0;
 	}
@@ -853,17 +850,20 @@ union_mkshadow(um, dvp, cnp, vpp)
 
 	if ((error = vn_start_write(dvp, &mp, V_WAIT | V_PCATCH)) != 0)
 		return (error);
+	vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	error = union_relookup(um, dvp, vpp, cnp, &cn,
 			cnp->cn_nameptr, cnp->cn_namelen);
 	if (error) {
+		VOP_UNLOCK(dvp, 0);
 		vn_finished_write(mp, 0);
 		return (error);
 	}
 
 	if (*vpp) {
 		VOP_ABORTOP(dvp, &cn);
-		VOP_UNLOCK(dvp, 0);
-		vrele(*vpp);
+		if (dvp != *vpp)
+			VOP_UNLOCK(dvp, 0);
+		vput(*vpp);
 		vn_finished_write(mp, 0);
 		*vpp = NULLVP;
 		return (EEXIST);
@@ -884,6 +884,7 @@ union_mkshadow(um, dvp, cnp, vpp)
 	/* VOP_LEASE: dvp is locked */
 	VOP_LEASE(dvp, l, cn.cn_cred, LEASE_WRITE);
 
+	vref(dvp);
 	error = VOP_MKDIR(dvp, vpp, &cn, &va);
 	vn_finished_write(mp, 0);
 	return (error);
@@ -914,17 +915,18 @@ union_mkwhiteout(um, dvp, cnp, path)
 	VOP_UNLOCK(dvp, 0);
 	if ((error = vn_start_write(dvp, &mp, V_WAIT | V_PCATCH)) != 0)
 		return (error);
+	vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	error = union_relookup(um, dvp, &wvp, cnp, &cn, path, strlen(path));
 	if (error) {
 		vn_finished_write(mp, 0);
-		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 	}
 
 	if (wvp) {
 		VOP_ABORTOP(dvp, &cn);
-		vrele(dvp);
-		vrele(wvp);
+		if (dvp != wvp)
+			VOP_UNLOCK(dvp, 0);
+		vput(wvp);
 		vn_finished_write(mp, 0);
 		return (EEXIST);
 	}
@@ -936,7 +938,6 @@ union_mkwhiteout(um, dvp, cnp, path)
 	if (error)
 		VOP_ABORTOP(dvp, &cn);
 
-	vrele(dvp);
 	vn_finished_write(mp, 0);
 
 	return (error);
@@ -982,25 +983,25 @@ union_vn_create(vpp, un, l)
 	cn.cn_pnbuf = PNBUF_GET();
 	memcpy(cn.cn_pnbuf, un->un_path, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
-	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
+	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|ISLASTCN);
 	cn.cn_lwp = l;
 	cn.cn_cred = l->l_cred;
 	cn.cn_nameptr = cn.cn_pnbuf;
 	cn.cn_hash = un->un_hash;
 	cn.cn_consume = 0;
 
-	VREF(un->un_dirvp);
-	if ((error = relookup(un->un_dirvp, &vp, &cn)) != 0)
+	vn_lock(un->un_dirvp, LK_EXCLUSIVE | LK_RETRY);
+	error = relookup(un->un_dirvp, &vp, &cn);
+	if (error) {
+		VOP_UNLOCK(un->un_dirvp, 0);
 		return (error);
-	vrele(un->un_dirvp);
+	}
 
 	if (vp) {
 		VOP_ABORTOP(un->un_dirvp, &cn);
-		if (un->un_dirvp == vp)
-			vrele(un->un_dirvp);
-		else
-			vput(un->un_dirvp);
-		vrele(vp);
+		if (un->un_dirvp != vp)
+			VOP_UNLOCK(un->un_dirvp, 0);
+		vput(vp);
 		return (EEXIST);
 	}
 
@@ -1018,6 +1019,7 @@ union_vn_create(vpp, un, l)
 	vap->va_type = VREG;
 	vap->va_mode = cmode;
 	VOP_LEASE(un->un_dirvp, l, cred, LEASE_WRITE);
+	vref(un->un_dirvp);
 	if ((error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap)) != 0)
 		return (error);
 
