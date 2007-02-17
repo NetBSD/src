@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.505 2007/02/05 17:56:56 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.506 2007/02/17 16:05:27 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -44,7 +44,7 @@ Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://ftp.am-utils.org/pub/am-utils/
 Home Page:	http://www.am-utils.org/
 Mailing List:	am-utils
-Responsible:	christos, rpaulo
+Responsible:	christos
 License:	BSD (4-clause)
 Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
