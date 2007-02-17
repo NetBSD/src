@@ -1,4 +1,4 @@
-/*	$NetBSD: in_route.c,v 1.2 2007/01/05 15:47:33 joerg Exp $	*/
+/*	$NetBSD: in_route.c,v 1.3 2007/02/17 05:35:50 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2006 David Young.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.2 2007/01/05 15:47:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_route.c,v 1.3 2007/02/17 05:35:50 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_in_route.h"
@@ -64,16 +64,16 @@ LIST_HEAD(in_rtlist, route) in_rtcache_head =
     LIST_HEAD_INITIALIZER(in_rtcache_head);
 
 #ifdef IN_RTFLUSH_DEBUG
-#define	in_rtflush_debug() _in_rtflush_debug
+#define	in_rtcache_debug() _in_rtcache_debug
 #else /* IN_RTFLUSH_DEBUG */
-#define	in_rtflush_debug() 0
+#define	in_rtcache_debug() 0
 #endif /* IN_RTFLUSH_DEBUG */
 
 #ifdef IN_RTFLUSH_DEBUG
-static int _in_rtflush_debug = 0;
+static int _in_rtcache_debug = 0;
 
-SYSCTL_SETUP(sysctl_net_inet_ip_rtflush_setup,
-    "sysctl net.inet.ip.rtflush_debug setup")
+SYSCTL_SETUP(sysctl_net_inet_ip_rtcache_setup,
+    "sysctl net.inet.ip.rtcache_debug setup")
 {
 	/* XXX do not duplicate */
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -96,9 +96,9 @@ SYSCTL_SETUP(sysctl_net_inet_ip_rtflush_setup,
 
 	sysctl_createv(clog, 0, NULL, NULL,
 	               CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
-		       "rtflush_debug",
-		       SYSCTL_DESCR("Debug flushing of IP route cache"),
-		       NULL, 0, &_in_rtflush_debug, 0,
+		       "rtcache_debug",
+		       SYSCTL_DESCR("Debug IP route cache"),
+		       NULL, 0, &_in_rtcache_debug, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, CTL_CREATE, CTL_EOL);
 }
 #endif /* IN_RTFLUSH_DEBUG */
@@ -118,8 +118,8 @@ in_rtflush(struct route *ro)
 	KASSERT(ro->ro_rt == NULL);
 	LIST_REMOVE(ro, ro_rtcache_next);
 
-	if (in_rtflush_debug()) {
-		printf("%s: flushing %s\n", __func__,
+	if (in_rtcache_debug()) {
+		printf("%s: freeing %s\n", __func__,
 		    inet_ntoa(((struct sockaddr_in *)&ro->ro_dst)->sin_addr));
 	}
 }
@@ -132,7 +132,7 @@ in_rtflushall(void)
 
 	s = splnet();
 
-	if (in_rtflush_debug())
+	if (in_rtcache_debug())
 		printf("%s: enter\n", __func__);
 
 	while ((ro = LIST_FIRST(&in_rtcache_head)) != NULL) {
