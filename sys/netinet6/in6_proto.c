@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.70 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.71 2007/02/17 20:38:05 dyoung Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.70 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.71 2007/02/17 20:38:05 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -158,7 +158,7 @@ const struct ip6protosw inet6sw[] = {
   0,		0,		0,
 },
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS|PR_PURGEIF,
-  tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
+  tcp6_input,	NULL,		tcp6_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
 #ifdef INET	/* don't call initialization and timeout routines twice */
   0,		0,		0,		0,
