@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.41.2.1 2007/02/17 10:30:51 yamt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.41.2.2 2007/02/17 14:00:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.41.2.1 2007/02/17 10:30:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.41.2.2 2007/02/17 14:00:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,12 +287,6 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count,
 	if (!newl)
 		db_printf("\n");
 }
-
-#ifdef __HAVE_BIGENDIAN_BITOPS
-#define	RQMASK(n) (0x80000000 >> (n))
-#else
-#define	RQMASK(n) (0x00000001 << (n))
-#endif
 
 void
 db_show_sched_qs(db_expr_t addr, int haddr,
