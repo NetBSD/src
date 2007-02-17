@@ -1,4 +1,4 @@
------ test: cut -f 1 input -----
+----- test: cut -f 1 input-general -----
 1
 
 12
@@ -9,7 +9,7 @@ qwe
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 2 input -----
+----- test: cut -f 2 input-general -----
 1
 
 34
@@ -20,7 +20,7 @@ qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 3 input -----
+----- test: cut -f 3 input-general -----
 1
 
 56
@@ -31,7 +31,7 @@ rty
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 1-2 input -----
+----- test: cut -f 1-2 input-general -----
 1
 
 12	34
@@ -42,7 +42,7 @@ qwe
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 2,3 input -----
+----- test: cut -f 2,3 input-general -----
 1
 
 34	56
@@ -53,7 +53,7 @@ qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 4 input -----
+----- test: cut -f 4 input-general -----
 1
 
 
@@ -64,7 +64,7 @@ uio
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 1-3,4-7 input -----
+----- test: cut -f 1-3,4-7 input-general -----
 1
 
 12	34	56
@@ -75,7 +75,7 @@ qwe		rty	uio	p[]	asd
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 1,2-7 input -----
+----- test: cut -f 1,2-7 input-general -----
 1
 
 12	34	56
@@ -86,39 +86,39 @@ qwe		rty	uio	p[]	asd
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl:zxc:vbn:nm
 :qwe:::rty:uio::p[]:asd:fgh:jkl:zxc:vbn:nm
------ test: cut -f 1 -s input -----
+----- test: cut -f 1 -s input-general -----
 12
 
 qwe
------ test: cut -f 2 -s input -----
+----- test: cut -f 2 -s input-general -----
 34
 12
 
------ test: cut -f 3 -s input -----
+----- test: cut -f 3 -s input-general -----
 56
 
 rty
------ test: cut -f 1-2 -s input -----
+----- test: cut -f 1-2 -s input-general -----
 12	34
 	12
 qwe	
------ test: cut -f 2,3 -s input -----
+----- test: cut -f 2,3 -s input-general -----
 34	56
 12	
 	rty
------ test: cut -f 4 -s input -----
+----- test: cut -f 4 -s input-general -----
 
 34
 uio
------ test: cut -f 1-3,4-7 -s input -----
+----- test: cut -f 1-3,4-7 -s input-general -----
 12	34	56
 	12		34	56
 qwe		rty	uio	p[]	asd	
------ test: cut -f 1,2-7 -s input -----
+----- test: cut -f 1,2-7 -s input-general -----
 12	34	56
 	12		34	56
 qwe		rty	uio	p[]	asd	
------ test: cut -f 1 -d : input -----
+----- test: cut -f 1 -d : input-general -----
 1
 
 12	34	56
@@ -129,7 +129,7 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 12
 qwe
 
------ test: cut -f 2 -d : input -----
+----- test: cut -f 2 -d : input-general -----
 1
 
 12	34	56
@@ -140,7 +140,7 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 34
 rty
 qwe
------ test: cut -f 3 -d : input -----
+----- test: cut -f 3 -d : input-general -----
 1
 
 12	34	56
@@ -151,7 +151,7 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 56
 uio
 
------ test: cut -f 1-2 -d : input -----
+----- test: cut -f 1-2 -d : input-general -----
 1
 
 12	34	56
@@ -162,7 +162,7 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 12:34
 qwe:rty
 :qwe
------ test: cut -f 2,3 -d : input -----
+----- test: cut -f 2,3 -d : input-general -----
 1
 
 12	34	56
@@ -173,7 +173,7 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 34:56
 rty:uio
 qwe:
------ test: cut -f 4 -d : input -----
+----- test: cut -f 4 -d : input-general -----
 1
 
 12	34	56
@@ -184,7 +184,7 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 
 p[]
 
------ test: cut -f 1-3,4-7 -d : input -----
+----- test: cut -f 1-3,4-7 -d : input-general -----
 1
 
 12	34	56
@@ -195,7 +195,7 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl
 :qwe:::rty:uio:
------ test: cut -f 1,2-7 -d : input -----
+----- test: cut -f 1,2-7 -d : input-general -----
 1
 
 12	34	56
@@ -206,35 +206,35 @@ qwe		rty	uio	p[]	asd		fgh	jkl	zxc	vbn	nm
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl
 :qwe:::rty:uio:
------ test: cut -f 1 -d : -s input -----
+----- test: cut -f 1 -d : -s input-general -----
 12
 qwe
 
------ test: cut -f 2 -d : -s input -----
+----- test: cut -f 2 -d : -s input-general -----
 34
 rty
 qwe
------ test: cut -f 3 -d : -s input -----
+----- test: cut -f 3 -d : -s input-general -----
 56
 uio
 
------ test: cut -f 1-2 -d : -s input -----
+----- test: cut -f 1-2 -d : -s input-general -----
 12:34
 qwe:rty
 :qwe
------ test: cut -f 2,3 -d : -s input -----
+----- test: cut -f 2,3 -d : -s input-general -----
 34:56
 rty:uio
 qwe:
------ test: cut -f 4 -d : -s input -----
+----- test: cut -f 4 -d : -s input-general -----
 
 p[]
 
------ test: cut -f 1-3,4-7 -d : -s input -----
+----- test: cut -f 1-3,4-7 -d : -s input-general -----
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl
 :qwe:::rty:uio:
------ test: cut -f 1,2-7 -d : -s input -----
+----- test: cut -f 1,2-7 -d : -s input-general -----
 12:34:56
 qwe:rty:uio:p[]:asd:fgh:jkl
 :qwe:::rty:uio:
