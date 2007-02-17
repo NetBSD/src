@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45.2.1 2007/02/17 10:30:45 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.45.2.2 2007/02/17 15:19:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -758,7 +758,7 @@ NENTRY(switch_error)
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp)
  *
- *	1. if (oldlwp != NULL), save its context and call sched_switch_unlock().
+ *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
  *
  * Note that the stack frame layout is known to "struct switchframe"
