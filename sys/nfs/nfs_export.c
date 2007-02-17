@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.22 2006/11/09 09:53:57 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.22.2.1 2007/02/17 23:27:51 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.22 2006/11/09 09:53:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.22.2.1 2007/02/17 23:27:51 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -193,9 +193,6 @@ nfs_export_unmount(struct mount *mp)
 		netexport_wrunlock();
 		return;
 	}
-
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 	netexport_clear(ne);
 	netexport_remove(ne);
 	netexport_wrunlock();
@@ -238,12 +235,6 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 
-	/* The selected file system may not support NFS exports, so ensure
-	 * it does. */
-	if (mp->mnt_op->vfs_vptofh == NULL || mp->mnt_op->vfs_fhtovp == NULL) {
-		error = EOPNOTSUPP;
-		goto out_locked;
-	}
 	fid_size = 0;
 	if ((error = VFS_VPTOFH(vp, NULL, &fid_size)) == E2BIG) {
 		fid = malloc(fid_size, M_TEMP, M_NOWAIT);
@@ -253,23 +244,22 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		}
 	}
 	if (error != 0) {
-		error = EOPNOTSUPP;
-		goto out_locked;
+		vput(vp);
+		return EOPNOTSUPP;
 	}
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 
 	/* Mark the file system busy. */
 	error = vfs_busy(mp, LK_NOWAIT, NULL);
+	vput(vp);
 	if (error != 0)
-		goto out_locked;
+		return error;
 
 	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
 		error = init_exports(mp, &ne);
 		if (error != 0) {
-			goto out_locked2;
+			goto out;
 		}
 	}
 
@@ -302,13 +292,9 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	}
 #endif
 
-out_locked2:
+out:
 	netexport_wrunlock();
 	vfs_unbusy(mp);
-
-out_locked:
-	vput(vp);
-
 	return error;
 }
 
@@ -465,8 +451,6 @@ init_exports(struct mount *mp, struct netexport **nep)
 	struct netexport *ne;
 
 	KASSERT(mp != NULL);
-	KASSERT(mp->mnt_op->vfs_vptofh != NULL &&
-	    mp->mnt_op->vfs_fhtovp != NULL);
 
 	/* Ensure that we do not already have this mount point. */
 	KASSERT(netexport_lookup(mp) == NULL);

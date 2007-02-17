@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.279.2.3 2007/02/11 13:26:18 tron Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.279.2.4 2007/02/17 23:27:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.279.2.3 2007/02/11 13:26:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.279.2.4 2007/02/17 23:27:47 tron Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -364,6 +364,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, l);
 	if (mp->mnt_flag & (MNT_UPDATE | MNT_GETARGS)) {
+		VOP_UNLOCK(vp, 0);
 #if defined(COMPAT_30) && defined(NFSSERVER)
 		if (mp->mnt_flag & MNT_UPDATE && error != 0) {
 			int error2;
@@ -395,7 +396,6 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 				vfs_deallocate_syncvnode(mp);
 		}
 		vfs_unbusy(mp);
-		VOP_UNLOCK(vp, 0);
 		vrele(vp);
 		return (error);
 	}
@@ -411,8 +411,8 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
-		checkdirs(vp);
 		VOP_UNLOCK(vp, 0);
+		checkdirs(vp);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
@@ -958,15 +958,15 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
+
+		vput(vp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error)
 			break;
-		vput(vp);
 		vp = tdp;
 	}
 	if (error) {
-		vput(vp);
 		goto out;
 	}
 	VOP_UNLOCK(vp, 0);
@@ -1246,9 +1246,6 @@ vfs_composefh(struct vnode *vp, fhandle_t *fhp, size_t *fh_size)
 	size_t fidsize;
 
 	mp = vp->v_mount;
-	if (mp->mnt_op->vfs_vptofh == NULL) {
-		return EOPNOTSUPP;
-	}
 	fidp = NULL;
 	if (*fh_size < FHANDLE_SIZE_MIN) {
 		fidsize = 0;
@@ -1280,10 +1277,6 @@ vfs_composefh_alloc(struct vnode *vp, fhandle_t **fhpp)
 
 	*fhpp = NULL;
 	mp = vp->v_mount;
-	if (mp->mnt_op->vfs_vptofh == NULL) {
-		error = EOPNOTSUPP;
-		goto out;
-	}
 	fidsize = 0;
 	error = VFS_VPTOFH(vp, NULL, &fidsize);
 	KASSERT(error != 0);
@@ -3332,10 +3325,12 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 	struct proc *p;
 	int error;
 
-	NDINIT(&fromnd, DELETE, WANTPARENT | SAVESTART, UIO_USERSPACE,
+	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART, UIO_USERSPACE,
 	    from, l);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
+	if (fromnd.ni_dvp != fromnd.ni_vp)
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
 	fvp = fromnd.ni_vp;
 	error = vn_start_write(fvp, &mp, V_WAIT | V_PCATCH);
 	if (error != 0) {
