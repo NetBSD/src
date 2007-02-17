@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.82 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.83 2007/02/17 22:31:45 pavel Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.82 2007/02/09 21:55:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.83 2007/02/17 22:31:45 pavel Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5878,7 +5878,7 @@ softdep_trackbufs(struct vnode *devvp, int delta, boolean_t throttle)
 	 */
 	while (throttle && softdep_lockedbufs >= nbuf >> 2) {
 		speedup_syncer();
-		if (l && (l->l_flag & L_SYSTEM))
+		if (l && (l->l_flag & LW_SYSTEM))
 			break;
 		tsleep(&softdep_lockedbufs, PRIBIO, "softdbufs", mstohz(10));
 		if ((devvp->v_specmountpoint->mnt_iflag & IMNT_SUSPEND) != 0)

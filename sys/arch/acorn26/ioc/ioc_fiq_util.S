@@ -1,4 +1,4 @@
-/*	$NetBSD: ioc_fiq_util.S,v 1.1 2002/03/24 15:47:18 bjh21 Exp $	*/
+/*	$NetBSD: ioc_fiq_util.S,v 1.2 2007/02/17 22:31:36 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ioc_fiq_util.S,v 1.1 2002/03/24 15:47:18 bjh21 Exp $")
+RCSID("$NetBSD: ioc_fiq_util.S,v 1.2 2007/02/17 22:31:36 pavel Exp $")
 
 #include <machine/memcreg.h>
 #include <arch/acorn26/iobus/iocreg.h>

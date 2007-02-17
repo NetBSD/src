@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4 2007/02/15 20:21:13 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.5 2007/02/17 22:31:43 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4 2007/02/15 20:21:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.5 2007/02/17 22:31:43 pavel Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -134,7 +134,7 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
-	l->l_flag &= ~L_SINTR;
+	l->l_flag &= ~LW_SINTR;
 
 	/*
 	 * If not sleeping, the LWP must have been suspended.  Let whoever
@@ -175,7 +175,7 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 		updatepri(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
-	if ((l->l_flag & L_INMEM) != 0) {
+	if ((l->l_flag & LW_INMEM) != 0) {
 		setrunqueue(l);
 		if (l->l_priority < ci->ci_schedstate.spc_curpriority)
 			cpu_need_resched(ci);
@@ -252,15 +252,15 @@ sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 	 * core dump events.
 	 */
 	if (catch) {
-		l->l_flag |= L_SINTR;
-		if ((l->l_flag & L_PENDSIG) != 0 && sigispending(l, 0)) {
+		l->l_flag |= LW_SINTR;
+		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
 			l->l_sleeperr = EPASSTHROUGH;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
 			return;
 		}
-		if ((l->l_flag & (L_CANCELLED|L_WEXIT|L_WCORE)) != 0) {
-			l->l_flag &= ~L_CANCELLED;
+		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
+			l->l_flag &= ~LW_CANCELLED;
 			l->l_sleeperr = EINTR;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
@@ -315,9 +315,9 @@ sleepq_unblock(int timo, int catch)
 	if (catch && (error == 0 || error == EPASSTHROUGH)) {
 		l->l_sleeperr = 0;
 		p = l->l_proc;
-		if ((l->l_flag & (L_CANCELLED | L_WEXIT | L_WCORE)) != 0)
+		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
-		else if ((l->l_flag & L_PENDSIG) != 0) {
+		else if ((l->l_flag & LW_PENDSIG) != 0) {
 			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() */
 			mutex_enter(&p->p_smutex);
 			if ((sig = issignal(l)) != 0)

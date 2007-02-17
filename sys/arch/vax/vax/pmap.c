@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141 2007/02/17 05:34:07 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.142 2007/02/17 22:31:40 pavel Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141 2007/02/17 05:34:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2007/02/17 22:31:40 pavel Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -673,7 +673,7 @@ rmspace(struct pmap *pm)
 
 #undef swappable
 #define swappable(l, pm)						\
-	(((l)->l_flag & (L_SYSTEM | L_INMEM | L_WEXIT)) == L_INMEM	\
+	(((l)->l_flag & (LW_SYSTEM | LW_INMEM | LW_WEXIT)) == LW_INMEM	\
 	 && (l)->l_holdcnt == 0						\
 	 && (l)->l_proc->p_vmspace->vm_map.pmap != pm)
 
