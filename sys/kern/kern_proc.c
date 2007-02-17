@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.100 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.100.2.1 2007/02/17 10:30:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.1 2007/02/17 10:30:57 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -315,6 +315,7 @@ proc0_init(void)
 
 	p->p_nlwps = 1;
 	p->p_nrlwps = 1;
+	p->p_nlwpid = l->l_lid;
 	p->p_refcnt = 1;
 
 	pid_table[0].pt_proc = p;

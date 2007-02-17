@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.7 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.7.2.1 2007/02/17 10:31:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -63,6 +63,7 @@ struct lwp;
 
 struct cpu_data {
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
+	struct lwp *cpu_idlelwp;	/* idle lwp */
 
 	struct callout * volatile cpu_callout;	/* MP: a callout running */
 
