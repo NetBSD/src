@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.62 2007/02/09 22:08:48 ad Exp $	*/
+/*	$NetBSD: ps.c,v 1.63 2007/02/17 22:49:57 pavel Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.62 2007/02/09 22:08:48 ad Exp $");
+__RCSID("$NetBSD: ps.c,v 1.63 2007/02/17 22:49:57 pavel Exp $");
 #endif
 #endif /* not lint */
 
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 			struct kinfo_proc2 *ki = &kinfo[i];
 
 			if (xflg == 0 && (ki->p_tdev == NODEV ||
-			    (ki->p_flag & KP_CONTROLT) == 0))
+			    (ki->p_flag & P_CONTROLT) == 0))
 				continue;
 
 			kl = kvm_getlwps(kd, ki->p_pid, ki->p_paddr,
@@ -447,7 +447,7 @@ main(int argc, char *argv[])
 		struct kinfo_proc2 *ki = &kinfo[i];
 
 		if (xflg == 0 && (ki->p_tdev == NODEV ||
-		    (ki->p_flag & KP_CONTROLT ) == 0))
+		    (ki->p_flag & P_CONTROLT ) == 0))
 			continue;
 		kl = kvm_getlwps(kd, ki->p_pid, (u_long)ki->p_paddr,
 		    sizeof(struct kinfo_lwp), &nlwps);
