@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.43 2007/02/17 04:59:50 dyoung Exp $	*/
+/*	$NetBSD: esis.c,v 1.44 2007/02/17 22:34:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.43 2007/02/17 04:59:50 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.44 2007/02/17 22:34:16 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -1188,7 +1188,7 @@ release:
 void *
 esis_ctlinput(
     int    req,			/* request: we handle only PRC_IFDOWN */
-    struct sockaddr *siso,	/* address of ifp */
+    const struct sockaddr *siso,	/* address of ifp */
     void *dummy)
 {
 	struct iso_ifaddr *ia;	/* scan through interface addresses */
@@ -1199,7 +1199,7 @@ esis_ctlinput(
 	if (req == PRC_IFDOWN)
 		TAILQ_FOREACH(ia, &iso_ifaddr, ia_list) {
 			if (iso_addrmatch(IA_SIS(ia),
-					  (struct sockaddr_iso *) siso))
+					  (const struct sockaddr_iso *)siso))
 				snpac_flushifp(ia->ia_ifp);
 		}
 	return NULL;

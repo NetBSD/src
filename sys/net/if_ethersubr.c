@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.144 2007/01/29 22:13:14 bouyer Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.145 2007/02/17 22:34:08 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.144 2007/01/29 22:13:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.145 2007/02/17 22:34:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -187,10 +187,8 @@ const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
 #define senderr(e) { error = (e); goto bad;}
 
-#define SIN(x) ((struct sockaddr_in *)x)
-
 static	int ether_output(struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *);
+	    const struct sockaddr *, struct rtentry *);
 
 /*
  * Ethernet output routine.
@@ -198,12 +196,12 @@ static	int ether_output(struct ifnet *, struct mbuf *,
  * Assumes that ifp is actually pointer to ethercom structure.
  */
 static int
-ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
+ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
 	int error = 0, hdrcmplt = 0;
- 	u_char esrc[6], edst[6];
+ 	uint8_t esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
@@ -229,7 +227,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
 		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
 		    ifa->ifa_ifp == ifp0)
-			return (looutput(ifp0, m, dst, rt0));
+			return looutput(ifp0, m, dst, rt0);
 
 		ifp = ifp->if_carpdev;
 		/* ac = (struct arpcom *)ifp; */
@@ -281,12 +279,9 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	case AF_INET:
 		if (m->m_flags & M_BCAST)
                 	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
-
-		else if (m->m_flags & M_MCAST) {
-			ETHER_MAP_IP_MULTICAST(&SIN(dst)->sin_addr,
-			    (caddr_t)edst)
-
-		} else if (!arpresolve(ifp, rt, m, dst, edst))
+		else if (m->m_flags & M_MCAST)
+			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
+		else if (!arpresolve(ifp, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -323,7 +318,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 #endif
 #ifdef INET6
 	case AF_INET6:
-		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst)){
+		if (!nd6_storelladdr(ifp, rt, m, dst, (u_char *)edst, sizeof(edst))){
 			/* something bad happened */
 			return (0);
 		}
@@ -332,7 +327,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 #endif
 #ifdef NETATALK
     case AF_APPLETALK:
-		if (!aarpresolve(ifp, m, (struct sockaddr_at *)dst, edst)) {
+		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
 			printf("aarpresolv failed\n");
 #endif /* NETATALKDEBUG */
@@ -342,7 +337,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		 * ifaddr is the first thing in at_ifaddr
 		 */
 		aa = (struct at_ifaddr *) at_ifawithnet(
-		    (struct sockaddr_at *)dst, ifp);
+		    (const struct sockaddr_at *)dst, ifp);
 		if (aa == NULL)
 		    goto bad;
 
@@ -370,7 +365,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 #ifdef IPX
 	case AF_IPX:
 		etype = htons(ETHERTYPE_IPX);
- 		bcopy((caddr_t)&(((struct sockaddr_ipx *)dst)->sipx_addr.x_host),
+ 		bcopy(&(((const struct sockaddr_ipx *)dst)->sipx_addr.x_host),
 		    (caddr_t)edst, sizeof (edst));
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
@@ -387,7 +382,8 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
 			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
 		} else {
-			error = iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
+			error = iso_snparesolve(ifp,
+			    (const struct sockaddr_iso *)dst,
 						(char *)edst, &snpalen);
 			if (error)
 				goto bad; /* Not Resolved */
@@ -400,10 +396,9 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 			M_PREPEND(mcopy, sizeof (*eh), M_DONTWAIT);
 			if (mcopy) {
 				eh = mtod(mcopy, struct ether_header *);
-				bcopy((caddr_t)edst,
-				      (caddr_t)eh->ether_dhost, sizeof (edst));
+				bcopy(edst, eh->ether_dhost, sizeof(edst));
 				bcopy(LLADDR(ifp->if_sadl),
-				      (caddr_t)eh->ether_shost, sizeof (edst));
+				      eh->ether_shost, sizeof(edst));
 			}
 		}
 		M_PREPEND(m, 3, M_DONTWAIT);
@@ -426,15 +421,15 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;
-		eh = (struct ether_header *)dst->sa_data;
-		bcopy((caddr_t)eh->ether_shost, (caddr_t)esrc, sizeof (esrc));
+		bcopy(((const struct ether_header *)dst->sa_data)->ether_shost,
+		    esrc, sizeof(esrc));
 		/* FALLTHROUGH */
 
 	case AF_UNSPEC:
-		eh = (struct ether_header *)dst->sa_data;
- 		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
+ 		bcopy(((const struct ether_header *)dst->sa_data)->ether_dhost,
+		    edst, sizeof(edst));
 		/* AF_UNSPEC doesn't swap the byte order of the ether_type. */
-		etype = eh->ether_type;
+		etype = ((const struct ether_header *)dst->sa_data)->ether_type;
 		break;
 
 	default:
@@ -444,7 +439,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 	}
 
 	if (mcopy)
-		(void) looutput(ifp, mcopy, dst, rt);
+		(void)looutput(ifp, mcopy, dst, rt);
 
 	/* If no ether type is set, this must be a 802.2 formatted packet.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.25 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.26 2007/02/17 22:34:08 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.25 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.26 2007/02/17 22:34:08 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.25 2006/11/16 01:33:40 christos E
 #endif
 
 static int	hippi_output(struct ifnet *, struct mbuf *,
-			     struct sockaddr *, struct rtentry *);
+			     const struct sockaddr *, struct rtentry *);
 static void	hippi_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -88,7 +88,7 @@ static void	hippi_input(struct ifnet *, struct mbuf *);
  */
 
 static int
-hippi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t htype;

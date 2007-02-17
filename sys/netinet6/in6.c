@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.122 2007/01/04 19:07:04 elad Exp $	*/
+/*	$NetBSD: in6.c,v 1.123 2007/02/17 22:34:12 dyoung Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.122 2007/01/04 19:07:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.123 2007/02/17 22:34:12 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -1818,9 +1818,7 @@ in6_ifinit(ifp, ia, sin6, newhost)
  * Find an IPv6 interface link-local address specific to an interface.
  */
 struct in6_ifaddr *
-in6ifa_ifpforlinklocal(ifp, ignoreflags)
-	struct ifnet *ifp;
-	int ignoreflags;
+in6ifa_ifpforlinklocal(const struct ifnet *ifp, const int ignoreflags)
 {
 	struct ifaddr *ifa;
 
@@ -1845,9 +1843,7 @@ in6ifa_ifpforlinklocal(ifp, ignoreflags)
  * find the internet address corresponding to a given interface and address.
  */
 struct in6_ifaddr *
-in6ifa_ifpwithaddr(ifp, addr)
-	struct ifnet *ifp;
-	struct in6_addr *addr;
+in6ifa_ifpwithaddr(const struct ifnet *ifp, const struct in6_addr *addr)
 {
 	struct ifaddr *ifa;
 

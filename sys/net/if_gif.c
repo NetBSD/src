@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.64 2006/11/23 04:07:07 rpaulo Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.65 2007/02/17 22:34:08 dyoung Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.64 2006/11/23 04:07:07 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.65 2007/02/17 22:34:08 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -261,7 +261,7 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 #endif
 
 int
-gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.5 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.6 2007/02/17 22:34:16 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -91,15 +91,15 @@ extern const char *ipsec6_logpacketstr __P((struct ip6_hdr *, u_int32_t));
 
 #ifdef __NetBSD__
 /* NetBSD protosw ctlin entrypoint */
-extern void esp6_ctlinput __P((int, struct sockaddr *, void *));
-extern void ah6_ctlinput __P((int, struct sockaddr *, void *));
+extern void esp6_ctlinput(int, const struct sockaddr *, void *);
+extern void ah6_ctlinput(int, const struct sockaddr *, void *);
 #endif /* __NetBSD__ */
 
 struct m_tag;
 extern int ipsec6_common_input(struct mbuf **mp, int *offp, int proto);
 extern int ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav,
 			int skip, int protoff, struct m_tag *mt);
-extern void esp6_ctlinput(int, struct sockaddr *, void *);
+extern void esp6_ctlinput(int, const struct sockaddr *, void *);
 
 struct ipsec_output_state;
 
