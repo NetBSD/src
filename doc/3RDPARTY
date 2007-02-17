@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.506 2007/02/17 16:05:27 rpaulo Exp $
+#	$NetBSD: 3RDPARTY,v 1.507 2007/02/17 19:02:53 perry Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -674,7 +674,7 @@ Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
-Responsible:	perry, rpaulo
+Responsible:	rpaulo
 License:	IBM Public License. See also src/gnu/dist/postfix.
 Notes:
 HTML documentation should be kept in sync with the README_FILES.
@@ -722,7 +722,7 @@ Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
 Mailing List:
-Responsible:	perry, thorpej
+Responsible:	thorpej
 License:	Public domain
 Notes:
 The root server cache is also included with BIND.  However, the
