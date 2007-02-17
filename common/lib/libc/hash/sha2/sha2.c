@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.2 2006/11/01 11:29:08 he Exp $ */
+/* $NetBSD: sha2.c,v 1.3 2007/02/17 17:15:43 christos Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2 2006/11/01 11:29:08 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.3 2007/02/17 17:15:43 christos Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.2 2006/11/01 11:29:08 he Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.3 2007/02/17 17:15:43 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -339,6 +339,7 @@ __weak_alias(SHA384_Transform,_SHA384_Transform)
 __weak_alias(SHA512_Init,_SHA512_Init) 
 __weak_alias(SHA512_Update,_SHA512_Update)
 __weak_alias(SHA512_Final,_SHA512_Final)
+__weak_alias(SHA512_Last,_SHA512_Last)
 __weak_alias(SHA512_Transform,_SHA512_Transform)
 #endif
 
