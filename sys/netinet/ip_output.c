@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.176 2007/01/29 06:00:11 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.177 2007/02/17 05:36:29 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.176 2007/01/29 06:00:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.177 2007/02/17 05:36:29 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -298,8 +298,7 @@ ip_output(struct mbuf *m0, ...)
 	 * The address family should also be checked in case of sharing the
 	 * cache with IPv6.
 	 */
-	if (dst->sin_family != AF_INET ||
-	    !in_hosteq(dst->sin_addr, ip->ip_dst))
+	if (dst->sin_family != AF_INET || !in_hosteq(dst->sin_addr, ip->ip_dst))
 		rtcache_free(ro);
 	else
 		rtcache_check(ro);
