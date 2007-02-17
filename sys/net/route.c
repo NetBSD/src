@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.84 2007/01/05 16:40:08 joerg Exp $	*/
+/*	$NetBSD: route.c,v 1.85 2007/02/17 07:50:49 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.84 2007/01/05 16:40:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.85 2007/02/17 07:50:49 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,8 +844,8 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		if ((rt = rtalloc1(dst, 0)) != NULL) {
 			rt->rt_refcnt--;
 			if (rt->rt_ifa != ifa)
-				return (flags & RTF_HOST ? EHOSTUNREACH
-							: ENETUNREACH);
+				return (flags & RTF_HOST) ? EHOSTUNREACH
+							: ENETUNREACH;
 		}
 	}
 	memset(&info, 0, sizeof(info));
@@ -882,7 +882,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		}
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -935,7 +935,7 @@ rt_timer_queue_create(u_int timeout)
 
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
-		return (NULL);
+		return NULL;
 	Bzero(rtq, sizeof *rtq);
 
 	rtq->rtq_timeout = timeout;
@@ -943,7 +943,7 @@ rt_timer_queue_create(u_int timeout)
 	TAILQ_INIT(&rtq->rtq_head);
 	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
 
-	return (rtq);
+	return rtq;
 }
 
 void
@@ -1023,28 +1023,26 @@ rt_timer_add(struct rtentry *rt,
 	 * If there's already a timer with this action, destroy it before
 	 * we add a new one.
 	 */
-	for (r = LIST_FIRST(&rt->rt_timer); r != NULL;
-	     r = LIST_NEXT(r, rtt_link)) {
-		if (r->rtt_func == func) {
-			LIST_REMOVE(r, rtt_link);
-			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-			if (r->rtt_queue->rtq_count > 0)
-				r->rtt_queue->rtq_count--;
-			else
-				printf("rt_timer_add: rtq_count reached 0\n");
-			s = splsoftnet();
-			pool_put(&rttimer_pool, r);
-			splx(s);
-			break;  /* only one per list, so we can quit... */
-		}
+	LIST_FOREACH(r, &rt->rt_timer, rtt_link) {
+		if (r->rtt_func == func)
+			break;
+	}
+	if (r != NULL) {
+		LIST_REMOVE(r, rtt_link);
+		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		if (r->rtt_queue->rtq_count > 0)
+			r->rtt_queue->rtq_count--;
+		else
+			printf("rt_timer_add: rtq_count reached 0\n");
+	} else {
+		s = splsoftnet();
+		r = pool_get(&rttimer_pool, PR_NOWAIT);
+		splx(s);
+		if (r == NULL)
+			return ENOBUFS;
 	}
 
-	s = splsoftnet();
-	r = pool_get(&rttimer_pool, PR_NOWAIT);
-	splx(s);
-	if (r == NULL)
-		return (ENOBUFS);
-	Bzero(r, sizeof(*r));
+	memset(r, 0, sizeof(*r));
 
 	r->rtt_rt = rt;
 	r->rtt_time = time_uptime;
@@ -1066,8 +1064,7 @@ rt_timer_timer(void *arg)
 	int s;
 
 	s = splsoftnet();
-	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL;
-	     rtq = LIST_NEXT(rtq, rtq_link)) {
+	LIST_FOREACH(rtq, &rttimer_queue_head, rtq_link) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
 		    (r->rtt_time + rtq->rtq_timeout) < time_uptime) {
 			LIST_REMOVE(r, rtt_link);
