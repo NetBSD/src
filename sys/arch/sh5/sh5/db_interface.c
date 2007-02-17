@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.17 2007/02/17 22:47:42 dsl Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.17 2007/02/17 22:47:42 dsl Exp $");
 
 #include "opt_ddb.h"
 
@@ -441,7 +441,7 @@ db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	flagf = (strchr(modif, 'f') != NULL);
 
 	if (have_addr) {
-		struct proc *p = pfind(addr);
+		struct proc *p = p_find(addr, PFIND_LOCKED);
 		if (p == NULL) {
 			db_printf("Invalid PID\n");
 			return;
