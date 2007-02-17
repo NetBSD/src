@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.2 2007/01/06 18:22:09 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.3 2007/02/17 23:00:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.2 2007/01/06 18:22:09 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.3 2007/02/17 23:00:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: callcontext.c,v 1.2 2007/01/06 18:22:09 pooka Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ucontext.h>
 
 #include "puffs_priv.h"
 
