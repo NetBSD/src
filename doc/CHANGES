@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.788 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.789 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -34,3 +34,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	news68k: Implement generic softintr(9) support. [tsutsui 20070210]
 	refuse: added file system in userspace compatibility functionality,
 		layered on top of libpuffs [agc 20070211]
+	i386: added an opencrypto provider for VIA ACE (AES encryption
+		instructions), ported from OpenBSD. [daniel 20070217]
