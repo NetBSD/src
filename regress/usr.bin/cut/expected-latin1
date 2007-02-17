@@ -1,0 +1,10 @@
+----- test: cut -b 6,7,8 input-latin1 -----
+bar
+Bar
+BAr
+BAR
+----- test: cut -c 6,7,8 input-latin1 -----
+bar
+Bar
+BAr
+BAR
