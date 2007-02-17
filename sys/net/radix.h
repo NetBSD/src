@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.17 2006/10/22 20:55:09 christos Exp $	*/
+/*	$NetBSD: radix.h,v 1.18 2007/02/17 07:46:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -148,6 +148,8 @@ struct radix_node
 	 *rn_addmask(const void *, int, int),
 	 *rn_addroute(const void *, const void *, struct radix_node_head *,
 			struct radix_node [2]),
+	 *rn_delete1(const void *, const void *, struct radix_node_head *,
+			struct radix_node *),
 	 *rn_delete(const void *, const void *, struct radix_node_head *),
 	 *rn_insert(const void *, struct radix_node_head *, int *,
 			struct radix_node [2]),
