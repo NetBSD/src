@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.153 2007/02/17 10:38:49 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.154 2007/02/17 20:04:57 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -284,27 +284,28 @@ Notes:
 
 Branch:		newlock
 Description:	New locking primitives, based on Solaris's
-Status:		Dormant
+Status:		Terminated
 Start Date:	March 9, 2002
-End Date:
+End Date:	Febuary 12, 2007
 Base Tag:	newlock-base
 Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
 Scope:		Kernel
 Notes:		The goal is to replace the existing lockmgr() and
 		simple_lock() based locking mechanisms with the
 		primitives found in Solaris: mutexes and rwlocks.
+		Superseeded by the newlock2 branch.
 
 Branch:		newlock2
 Description:	New locking primitives, based on Solaris's
-Status:		Active
+Status:		Terminated
 Start Date:	September 9, 2006
-End Date:
+End Date:	Febuary 12, 2007
 Base Tag:	newlock2-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		Kernel
 Notes:		As per the newlock branch, however given the amount of time
 		the original branch has lain dormant, a new one has been
-		created. Goals:
+		created.  Goals:
 		- Implement new locking primitives on most-used ports.
 		- Minor locking improvements.
 		- Remove spinlockmgr().
@@ -389,7 +390,7 @@ Description:	idle lwp, and some changes depending on it.
 		   (cf. gmcgarry_ctxsw)
 		2. implement idle lwp.
 		3. clean up related MD/MI interfaces.
-		4. (maybe) implement interrupt threads.
+		4. implement interrupt LWPs.
 		5. (maybe) make scheduler(s) modular.
 
 Status:		Active
