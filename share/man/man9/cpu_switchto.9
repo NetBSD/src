@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_switchto.9,v 1.2 2007/02/17 17:24:01 yamt Exp $
+.\"	$NetBSD: cpu_switchto.9,v 1.3 2007/02/17 17:48:17 yamt Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -48,8 +48,9 @@ and restores the context of the LWP specified by
 .Pp
 .Fn cpu_switchto
 doesn't switch address spaces.
+.Pp
 .Fn cpu_switchto
-doesn't modify
+doesn't modify or use
 .Dv curlwp
 or
 .Dv curproc .
