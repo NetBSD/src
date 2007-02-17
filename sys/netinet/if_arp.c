@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.117 2006/11/24 19:37:03 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.118 2007/02/17 05:31:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.117 2006/11/24 19:37:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.118 2007/02/17 05:31:15 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -657,15 +657,15 @@ arprequest(struct ifnet *ifp,
 	ah->ar_hln = ifp->if_addrlen;		/* hardware address length */
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
 	ah->ar_op = htons(ARPOP_REQUEST);
-	bcopy((caddr_t)enaddr, (caddr_t)ar_sha(ah), ah->ar_hln);
-	bcopy((caddr_t)sip, (caddr_t)ar_spa(ah), ah->ar_pln);
-	bcopy((caddr_t)tip, (caddr_t)ar_tpa(ah), ah->ar_pln);
+	memcpy(ar_sha(ah), enaddr, ah->ar_hln);
+	memcpy(ar_spa(ah), sip, ah->ar_pln);
+	memcpy(ar_tpa(ah), tip, ah->ar_pln);
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
 	arpstat.as_sndtotal++;
 	arpstat.as_sndrequest++;
-	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
 }
 
 /*
