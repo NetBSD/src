@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.789 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.790 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,6 +31,10 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		optical drive should use for reading data,
 		contributed by Kimura Fuyuki. [bouyer 20070122]
 	bind: import 9.4.0-rc2 [christos 20070127]
+	newlock2: Merge the newlock2 branch. Introduces a number of new
+		kernel synchronization primitives, improves scalability
+		on MP systems, and replaces the existing SA threads model
+		with a 1:1 threading model. [ad 20070209]
 	news68k: Implement generic softintr(9) support. [tsutsui 20070210]
 	refuse: added file system in userspace compatibility functionality,
 		layered on top of libpuffs [agc 20070211]
