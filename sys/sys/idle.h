@@ -1,4 +1,4 @@
-/*	$NetBSD: idle.h,v 1.1.2.1 2007/02/17 10:31:03 yamt Exp $	*/
+/*	$NetBSD: idle.h,v 1.1.2.2 2007/02/17 11:24:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006 YAMAMOTO Takashi,
@@ -29,7 +29,6 @@
 #ifndef _SYS_IDLE_H_
 #define _SYS_IDLE_H_
 
-struct lwp;
 struct cpu_info;
 
 void idle_loop(void *);
