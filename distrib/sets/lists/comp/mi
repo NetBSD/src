@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1003 2007/02/16 17:23:53 hannken Exp $
+#	$NetBSD: mi,v 1.1004 2007/02/17 09:32:57 wiz Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1824,10 +1824,10 @@
 ./usr/include/sys/midiio.h			comp-c-include
 ./usr/include/sys/mman.h			comp-c-include
 ./usr/include/sys/mount.h			comp-c-include
-./usr/include/sys/mutex.h			comp-c-include
 ./usr/include/sys/msg.h				comp-c-include
 ./usr/include/sys/msgbuf.h			comp-c-include
 ./usr/include/sys/mtio.h			comp-c-include
+./usr/include/sys/mutex.h			comp-c-include
 ./usr/include/sys/namei.h			comp-c-include
 ./usr/include/sys/null.h			comp-c-include
 ./usr/include/sys/optstr.h			comp-obsolete		obsolete
@@ -5966,6 +5966,7 @@
 ./usr/share/man/cat3/string.0			comp-c-catman		.cat
 ./usr/share/man/cat3/string_to_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/stringlist.0		comp-c-catman		.cat
+./usr/share/man/cat3/strings.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strlcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strlcpy.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strlen.0			comp-c-catman		.cat
@@ -6728,8 +6729,8 @@
 ./usr/share/man/cat9/cv.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_broadcast.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_destroy.0		comp-sys-catman		.cat
-./usr/share/man/cat9/cv_init.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_has_waiters.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cv_init.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_signal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_timedwait.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cv_timedwait_sig.0		comp-sys-catman		.cat
@@ -10283,6 +10284,7 @@
 ./usr/share/man/man3/string.3			comp-c-man		.man
 ./usr/share/man/man3/string_to_flags.3		comp-c-man		.man
 ./usr/share/man/man3/stringlist.3		comp-c-man		.man
+./usr/share/man/man3/strings.3			comp-c-man		.man
 ./usr/share/man/man3/strlcat.3			comp-c-man		.man
 ./usr/share/man/man3/strlcpy.3			comp-c-man		.man
 ./usr/share/man/man3/strlen.3			comp-c-man		.man
