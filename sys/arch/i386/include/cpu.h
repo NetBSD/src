@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.132 2007/02/16 02:53:46 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.133 2007/02/17 00:28:25 daniel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,6 +54,7 @@
 #include <machine/tss.h>
 #include <machine/intrdefs.h>
 #include <x86/cacheinfo.h>
+#include <x86/via_padlock.h>
 
 #include <sys/device.h>
 #include <sys/lock.h>			/* will also get LOCKDEBUG */
@@ -133,6 +134,7 @@ struct cpu_info {
 	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
 	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
 	uint32_t	ci_feature3_flags;/* X86 extended feature bits */
+	uint32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	uint32_t	ci_cpu_class;	 /* CPU class */
 	uint32_t	ci_brand_id;	 /* Intel brand id */
 	uint32_t	ci_vendor[4];	 /* vendor string */
@@ -160,6 +162,8 @@ struct cpu_info {
 	char *ci_ddbipi_stack;
 
 	struct evcnt ci_ipi_events[X86_NIPI];
+
+	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
 };
 
 /*
@@ -328,6 +332,7 @@ extern int biosbasemem;
 extern int biosextmem;
 extern unsigned int cpu_feature;
 extern unsigned int cpu_feature2;
+extern unsigned int cpu_feature_padlock;
 extern int cpu;
 extern int cpu_class;
 extern char cpu_brand_string[];
