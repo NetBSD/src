@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_need_resched.9,v 1.2 2007/02/17 17:25:34 yamt Exp $
+.\"     $NetBSD: cpu_need_resched.9,v 1.3 2007/02/17 17:26:31 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,9 +49,9 @@ The
 .Fn cpu_need_resched
 function is the machine-independent interface for the scheduler to
 notify machine-dependent code that a context switch from the current
-process is required.
-This event may occur if a higher priority process appears on the run
-queue or if the current process has exceeded its time slice.
+LWP is required.
+This event may occur if a higher priority LWP appears on the run
+queue or if the current LWP has exceeded its time slice.
 .Pp
 Specifically, the
 .Fn cpu_need_resched
