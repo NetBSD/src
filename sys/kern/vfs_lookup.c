@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.81 2007/02/04 15:03:20 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.82 2007/02/17 22:31:44 pavel Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.81 2007/02/04 15:03:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.82 2007/02/17 22:31:44 pavel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -315,7 +315,7 @@ namei(struct nameidata *ndp)
 		ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf);
 #endif
 #ifdef SYSTRACE
-	if (ISSET(cnp->cn_lwp->l_proc->p_flag, P_SYSTRACE))
+	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
 		systrace_namei(ndp);
 #endif
 

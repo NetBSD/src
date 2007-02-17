@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.18 2006/09/06 23:58:20 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19 2007/02/17 22:31:38 pavel Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.18 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19 2007/02/17 22:31:38 pavel Exp $");
 
 #include "opt_ddb.h"
 
@@ -190,7 +190,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 				return;
 			}
 			l = LIST_FIRST(&p->p_lwps);	/* XXX: Hardly ideal */
-			if ((l->l_flag & L_INMEM) == 0) {
+			if ((l->l_flag & LW_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
 			}

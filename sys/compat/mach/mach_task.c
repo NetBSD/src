@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.64 2007/02/09 21:55:22 ad Exp $ */
+/*	$NetBSD: mach_task.c,v 1.65 2007/02/17 22:31:41 pavel Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.64 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.65 2007/02/17 22:31:41 pavel Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -684,7 +684,7 @@ mach_sys_task_for_pid(struct lwp *l, void *v, register_t *retval)
 
 	/* Allowed only if the UID match, if setuid, or if superuser */
 	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(l->l_cred) ||
-	    ISSET(t->p_flag, P_SUGID)) && (error = kauth_authorize_generic(l->l_cred,
+	    ISSET(t->p_flag, PK_SUGID)) && (error = kauth_authorize_generic(l->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			    return (error);
 

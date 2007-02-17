@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.237 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.238 2007/02/17 22:31:42 pavel Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.237 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.238 2007/02/17 22:31:42 pavel Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -418,7 +418,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
 #ifdef SYSTRACE
-	int			wassugid = ISSET(p->p_flag, P_SUGID);
+	int			wassugid = ISSET(p->p_flag, PK_SUGID);
 	char			pathbuf[MAXPATHLEN];
 	size_t			pathbuflen;
 #endif /* SYSTRACE */
@@ -444,7 +444,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * see exec_script_makecmds().
 	 */
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, PK_SYSTRACE))
 		systrace_execve0(p);
 
 	error = copyinstr(path, pathbuf, sizeof(pathbuf),
@@ -752,7 +752,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p->p_comm[len] = 0;
 	p->p_acflag &= ~AFORK;
 
-	p->p_flag |= P_EXEC;
+	p->p_flag |= PK_EXEC;
 
 	/*
 	 * Stop profiling.
@@ -827,7 +827,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		    kauth_cred_getuid(l->l_cred) &&
 		    kauth_cred_getegid(l->l_cred) ==
 		    kauth_cred_getgid(l->l_cred))
-			p->p_flag &= ~P_SUGID;
+			p->p_flag &= ~PK_SUGID;
 	}
 
 	/*
@@ -958,8 +958,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 #ifdef SYSTRACE
 	/* XXXSMP */
-	if (ISSET(p->p_flag, P_SYSTRACE) &&
-	    wassugid && !ISSET(p->p_flag, P_SUGID))
+	if (ISSET(p->p_flag, PK_SYSTRACE) &&
+	    wassugid && !ISSET(p->p_flag, PK_SUGID))
 		systrace_execve1(pathbuf, p);
 #endif /* SYSTRACE */
 

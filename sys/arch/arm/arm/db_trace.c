@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 2006/09/06 23:58:20 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12 2007/02/17 22:31:37 pavel Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.12 2007/02/17 22:31:37 pavel Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -115,7 +115,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				return;
 			}	
 			l = LIST_FIRST(&p->p_lwps);	/* XXX NJWLWP */
-			if (!(l->l_flag & L_INMEM)) {
+			if (!(l->l_flag & LW_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}

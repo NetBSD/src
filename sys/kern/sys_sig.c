@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.3 2007/02/10 11:32:22 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.4 2007/02/17 22:31:44 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.3 2007/02/10 11:32:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.4 2007/02/17 22:31:44 pavel Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -431,22 +431,22 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 			 * to set SA_NOCLDWAIT.
 			 */
 			if (p->p_pid == 1)
-				p->p_flag &= ~P_NOCLDWAIT;
+				p->p_flag &= ~PK_NOCLDWAIT;
 			else
-				p->p_flag |= P_NOCLDWAIT;
+				p->p_flag |= PK_NOCLDWAIT;
 		} else
-			p->p_flag &= ~P_NOCLDWAIT;
+			p->p_flag &= ~PK_NOCLDWAIT;
 
 		if (nsa->sa_handler == SIG_IGN) {
 			/*
 			 * Paranoia: same as above.
 			 */
 			if (p->p_pid == 1)
-				p->p_flag &= ~P_CLDSIGIGN;
+				p->p_flag &= ~PK_CLDSIGIGN;
 			else
-				p->p_flag |= P_CLDSIGIGN;
+				p->p_flag |= PK_CLDSIGIGN;
 		} else
-			p->p_flag &= ~P_CLDSIGIGN;
+			p->p_flag &= ~PK_CLDSIGIGN;
 	}
 
 	if ((nsa->sa_flags & SA_NODEFER) == 0)
@@ -484,7 +484,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * we check for them before returning to userspace.
 	 */
 	lwp_lock(l);
-	l->l_flag |= L_PENDSIG;
+	l->l_flag |= LW_PENDSIG;
 	lwp_unlock(l);
  out:
 	mutex_exit(&p->p_smutex);
@@ -526,7 +526,7 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 			 * Check for pending signals on return to user.
 			 */
 			lwp_lock(l);
-			l->l_flag |= L_PENDSIG;
+			l->l_flag |= LW_PENDSIG;
 			lwp_unlock(l);
 		}
 	}
@@ -569,7 +569,7 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 
 		/* Check for pending signals when sleeping. */
 		lwp_lock(l);
-		l->l_flag |= L_PENDSIG;
+		l->l_flag |= LW_PENDSIG;
 		lwp_unlock(l);
 		mutex_exit(&p->p_smutex);
 	}

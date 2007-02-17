@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48 2007/02/15 15:13:10 ad Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.49 2007/02/17 22:31:45 pavel Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -159,17 +159,17 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #endif
 
 /* These flags are kept in l_flag. */
-#define	L_INMEM		0x00000004 /* Loaded into memory. */
-#define	L_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
-#define	L_SINTR		0x00000080 /* Sleep is interruptible. */
-#define	L_SYSTEM	0x00000200 /* Kernel thread */
-#define	L_WSUSPEND	0x00020000 /* Suspend before return to user */
-#define	L_WCORE		0x00080000 /* Stop for core dump on return to user */
-#define	L_WEXIT		0x00100000 /* Exit before return to user */
-#define	L_PENDSIG	0x01000000 /* Pending signal for us */
-#define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
-#define	L_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
-#define	L_WREBOOT	0x08000000 /* System is rebooting, please suspend */
+#define	LW_INMEM	0x00000004 /* Loaded into memory. */
+#define	LW_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
+#define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
+#define	LW_SYSTEM	0x00000200 /* Kernel thread */
+#define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
+#define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
+#define	LW_WEXIT	0x00100000 /* Exit before return to user */
+#define	LW_PENDSIG	0x01000000 /* Pending signal for us */
+#define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
+#define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -185,7 +185,8 @@ extern struct lwp lwp0;			/* LWP for proc0 */
  * Mask indicating that there is "exceptional" work to be done on return to
  * user.
  */
-#define	L_USERRET (L_WEXIT|L_PENDSIG|L_WREBOOT|L_WSUSPEND|L_WCORE|L_WUSERRET)
+#define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
+		    LW_WUSERRET)
 
 /*
  * Status values.
@@ -200,13 +201,15 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LSSLEEP		3	/* Sleeping on an address. */
 #define	LSSTOP		4	/* Process debugging or suspension. */
 #define	LSZOMB		5	/* Awaiting collection by parent. */
+/* unused, for source compatibility with NetBSD 4.0 and earlier. */
+#define	LSDEAD		6	/* Process is almost a zombie. */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
 #ifdef _KERNEL
 #define	PHOLD(l)							\
 do {									\
-	if ((l)->l_holdcnt++ == 0 && ((l)->l_flag & L_INMEM) == 0)	\
+	if ((l)->l_holdcnt++ == 0 && ((l)->l_flag & LW_INMEM) == 0)	\
 		uvm_swapin(l);						\
 } while (/* CONSTCOND */ 0)
 #define	PRELE(l)	(--(l)->l_holdcnt)
