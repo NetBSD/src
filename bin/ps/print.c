@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.98 2007/02/10 18:20:12 ad Exp $	*/
+/*	$NetBSD: print.c,v 1.99 2007/02/17 22:49:57 pavel Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.98 2007/02/10 18:20:12 ad Exp $");
+__RCSID("$NetBSD: print.c,v 1.99 2007/02/17 22:49:57 pavel Exp $");
 #endif
 #endif /* not lint */
 
@@ -347,7 +347,7 @@ command(void *arg, VARENT *ve, int mode)
 				 * are system commands.  Otherwise they are
 				 * printed within parentheses.
 				 */
-				if (ki->p_flag & KP_SYSTEM) {
+				if (ki->p_flag & P_SYSTEM) {
 					fmt_putc('[', &left);
 					fmt_puts(name, &left);
 					fmt_putc(']', &left);
@@ -499,7 +499,7 @@ state(void *arg, VARENT *ve, int mode)
 		break;
 
 	case LSSLEEP:
-		if (flag & KP_SINTR)	/* interruptable (long) */
+		if (flag & L_SINTR)	/* interruptable (long) */
 			*cp = k->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
@@ -524,33 +524,33 @@ state(void *arg, VARENT *ve, int mode)
 		*cp = '?';
 	}
 	cp++;
-	if (flag & KP_INMEM) {
+	if (flag & L_INMEM) {
 	} else
 		*cp++ = 'W';
 	if (k->p_nice < NZERO)
 		*cp++ = '<';
 	else if (k->p_nice > NZERO)
 		*cp++ = 'N';
-	if (flag & KP_TRACED)
+	if (flag & P_TRACED)
 		*cp++ = 'X';
-	if (flag & KP_SYSTRACE)
+	if (flag & P_SYSTRACE)
 		*cp++ = 'x';
-	if (flag & KP_WEXIT && !is_zombie)
+	if (flag & P_WEXIT && !is_zombie)
 		*cp++ = 'E';
-	if (flag & KP_PPWAIT)
+	if (flag & P_PPWAIT)
 		*cp++ = 'V';
-	if (flag & KP_SYSTEM)
+	if (flag & P_SYSTEM)
 		*cp++ = 'K';
 	/* system process might have this too, don't need to double up */
 	else if (k->p_holdcnt)
 		*cp++ = 'L';
 	if (k->p_eflag & EPROC_SLEADER)
 		*cp++ = 's';
-	if (flag & KP_SA)
+	if (flag & P_SA)
 		*cp++ = 'a';
 	else if (k->p_nlwps > 1)
 		*cp++ = 'l';
-	if ((flag & KP_CONTROLT) && k->p__pgid == k->p_tpgid)
+	if ((flag & P_CONTROLT) && k->p__pgid == k->p_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
 	strprintorsetwidth(v, buf, mode);
@@ -591,6 +591,7 @@ lstate(void *arg, VARENT *ve, int mode)
 		break;
 
 	case LSZOMB:
+	case LSDEAD:
 		*cp = 'Z';
 		is_zombie = 1;
 		break;
@@ -608,7 +609,7 @@ lstate(void *arg, VARENT *ve, int mode)
 		*cp++ = 'W';
 	if (k->l_holdcnt)
 		*cp++ = 'L';
-	if (flag & KL_DETACHED)
+	if (flag & L_DETACHED)
 		*cp++ = '-';
 	*cp = '\0';
 	strprintorsetwidth(v, buf, mode);
@@ -1078,7 +1079,7 @@ getpcpu(k)
 #define	fxtofl(fixpt)	((double)(fixpt) / fscale)
 
 	/* XXX - I don't like this */
-	if (k->p_swtime == 0 || (k->p_flag & KP_INMEM) == 0 ||
+	if (k->p_swtime == 0 || (k->p_flag & L_INMEM) == 0 ||
 	    k->p_stat == SZOMB)
 		return (0.0);
 	if (rawcpu)
@@ -1111,7 +1112,7 @@ getpmem(k)
 	if (failure)
 		return (0.0);
 
-	if ((k->p_flag & KP_INMEM) == 0)
+	if ((k->p_flag & L_INMEM) == 0)
 		return (0.0);
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = uspace/getpagesize();
