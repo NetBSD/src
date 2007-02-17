@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.1 2007/02/16 01:34:04 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/17 05:34:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,8 +68,7 @@ NENTRY(mutex_exit, 0)
 	cmpl	(%r0),CI_CURLWP(%r1)		/* is the owner still us and */
 						/*    no waiters? */
 	bneq	2f				/*   no, slow path */
-	insv	$0, $0, $31, (%r0)		/* clear low 31 bits */
-	bbcci	$31, (%r0), 1f			/* clear high bit interlocked */
+	clrl	(%r0)				/* clear owner */
 2:	ret
 
 1:	callg	(%ap), _C_LABEL(mutex_vector_exit)
@@ -87,8 +86,8 @@ NENTRY(mutex_spin_enter, 0)
 	cmpl	MTX_IPL(%r0), %r2		/* does mutex have > IPL? */
 	bleq	1f				/*   no, leave IPL alone */ 
 	mtpr	MTX_IPL(%r0), $PR_IPL		/*   yes, raise IPL */
-	mfpr	$PR_SSP, %r1			/* get curcpu */
-1:	decl	CI_MTX_COUNT(%r1)		/* decr mutex count */
+1:	mfpr	$PR_SSP, %r1			/* get curcpu */
+	decl	CI_MTX_COUNT(%r1)		/* decr mutex count */
 	bneq	2f				/* was mutex count < 1 */
 	movl	%r2, CI_MTX_OLDSPL(%r1)		/*   save was-current IPL */
 2:
@@ -121,3 +120,33 @@ NENTRY(mutex_spin_exit, 0)
 2:	callg	(%ap), _C_LABEL(mutex_vector_exit)	/* slow path */
 	ret
 #endif
+
+/*
+ * bool _rw_cas(krwlock_t *rw, uintptr_t old, uintptr_t new);
+ * {
+ *         bool rv = false;
+ *         while (rw->rw_owner == old) {
+ *                 if (__cpu_simple_try_lock(&rw->rw_lock)) {
+ *                         if (old == rw->rw_owner) {
+ *                                 rw->rw_owner = new;
+ *                                 rv = true;
+ *                         }
+ *                         __cpu_simple_unlock(&rw->rw_lock);
+ *                         break;
+ *                 }
+ *         }
+ *         return rv;
+ * }
+ */
+NENTRY(_rw_cas, 0)
+	clrl	%r0			/* rv = false */
+	movq	4(%ap), %r1		/* cache rw, old */
+1:	cmpl	(%r1), %r2		/* rw->rw_owner == old? */
+	bneq	2f			/*    nope, return */
+	bbssi	$0, RW_LOCK(%r1), 1b	/* get lock, loop if failure */
+	cmpl	(%r1), %r2		/* rw->rw_owner still == old? */
+	bneq	2f			/*    nope, return */
+	movl	12(%ap),(%r1)		/* update rw->rw_owner with new */
+	incl	%r0			/* indicate success */
+	clrb	RW_LOCK(%r1)		/* release lock */
+2:	ret				/* return */
