@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: psl.h,v 1.8 2007/02/18 07:13:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,6 +45,11 @@
 #ifndef _ARM_PSL_H_
 #define _ARM_PSL_H_
 #include <machine/intr.h>
+#ifndef _LOCORE
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#include <arm/softintr.h>
+#endif
+#endif
 
 /*
  * These are the different SPL states
@@ -54,6 +59,7 @@
  */
 
 #define _SPL_0		0
+#define _SPL_SOFT	1
 #define _SPL_SOFTCLOCK	1
 #define _SPL_SOFTNET	2
 #define _SPL_BIO	3
@@ -69,7 +75,9 @@
 #define _SPL_LEVELS	13
 
 #define spl0()		splx(_SPL_0)
-/*#define splsoft()	raisespl(_SPL_SOFT)*/
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+#define splsoft()	raisespl(_SPL_SOFT)
+#endif
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
 #define spllowersoftclock() lowerspl(_SPL_SOFTCLOCK)
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
@@ -94,11 +102,15 @@ int raisespl	__P((int));
 int lowerspl	__P((int));
 int splx	__P((int));
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+void _setsoftintr	(int si);
+#else
 void setsoftast		__P((void));
 void setsoftclock	__P((void));
 void setsoftnet		__P((void));
 void setsoftserial	__P((void));
 void setsoftintr	__P((u_int intrmask));
+#endif
 
 extern int current_spl_level;
 
