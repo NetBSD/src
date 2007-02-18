@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.8 2007/02/18 07:24:52 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.9 2007/02/18 21:01:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -48,8 +48,8 @@
 #ifndef _ARM_LOCK_H_
 #define	_ARM_LOCK_H_
 
-#define	mb_read()	
-#define	mb_write()
+#define	mb_read		drain_writebuf		/* in cpu.h */
+#define	mb_write	drain_writebuf		/* in cpu.h */
 
 static __inline int
 __swp(int __val, volatile int *__ptr)
