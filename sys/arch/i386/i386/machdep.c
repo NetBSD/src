@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.596 2007/02/17 00:28:24 daniel Exp $	*/
+/*	$NetBSD: machdep.c,v 1.597 2007/02/18 17:11:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596 2007/02/17 00:28:24 daniel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.597 2007/02/18 17:11:27 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -808,14 +808,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
-	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
 	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);
-
 	sendsig_reset(l, sig);
 
 	mutex_exit(&p->p_smutex);
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
 	mutex_enter(&p->p_smutex);
 
