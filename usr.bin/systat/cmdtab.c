@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.22 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.23 2007/02/18 17:00:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.22 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.23 2007/02/18 17:00:08 dsl Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -148,6 +148,16 @@ struct command	vmstat_commands[] = {
 	{ .c_name = NULL }
 };
 
+struct command	syscall_commands[] = {
+	{ "boot",	syscall_boot,	"show total syscall stats since boot"},
+	{ "run",	syscall_run,	"show running total syscall stats"},
+	{ "time",	syscall_time,	"show syscall stats for each sample time"},
+	{ "zero",	syscall_zero,	"re-zero running totals"},
+	{ "sort",	syscall_order,	"sort by [name|count|syscall]"},
+	{ "show",	syscall_show,	"show [count|time]"},
+	{ .c_name = NULL }
+};
+
 struct mode modes[] = {
 	/* "pigs" is the default, it must be first. */
 	{ "pigs",	showpigs,	fetchpigs,	labelpigs,
@@ -198,6 +208,9 @@ struct mode modes[] = {
 	  CF_LOADAV },
 	{ "vmstat",	showvmstat,	fetchvmstat,	labelvmstat,
 	  initvmstat,	openvmstat,	closevmstat,	vmstat_commands,
+	  0 },
+	{ "syscall",	showsyscall,	fetchsyscall,	labelsyscall,
+	  initsyscall,	opensyscall,	closesyscall,	syscall_commands,
 	  0 },
 	{ .c_name = NULL }
 };

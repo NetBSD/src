@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2006/05/20 20:07:35 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2007/02/18 17:00:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: syscall.c,v 1.2 2006/05/20 20:07:35 dsl Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.3 2007/02/18 17:00:08 dsl Exp $");
 
 /* System call stats */
 
@@ -66,7 +66,10 @@ static struct Info {
 	struct	 vmtotal Total;
 	uint64_t counts[SYS_NSYSENT];
 	uint64_t times[SYS_NSYSENT];
-} s, s1, s2, irf;
+} s, s1, s2;
+
+static uint64_t irf[SYS_NSYSENT], val[SYS_NSYSENT];
+static int irf_first = 1;
 
 int syscall_sort[SYS_NSYSENT];
 
@@ -78,7 +81,7 @@ static int show = SHOW_COUNTS;
 
 static void getinfo(struct Info *, int);
 
-static	char buf[26];
+static	char buf[32];
 static	float hertz;
 
 static size_t counts_mib_len, times_mib_len;
@@ -151,30 +154,34 @@ labelsyscall(void)
 
 #define MAXFAIL 5
 
-static int
-compare_counts(const void *a, const void *b)
+static void
+putuint64(uint64_t v, int row, int col, int width)
 {
-	int ia = *(const int *)a, ib = *(const int *)b;
-	int64_t delta;
+	static const char suffix[] = "KMDT";
+	int len, i;
 
-	if (display_mode == TIME)
-		delta = irf.counts[ib] - irf.counts[ia];
-	else
-		delta = s.counts[ib] - s1.counts[ib]
-		    - (s.counts[ia] - s1.counts[ia]);
-	return delta ? delta < 0 ? -1 : 1 : 0;
+	len = snprintf(buf, sizeof buf, "%" PRIu64, v);
+	if (len > width) {
+		i = (len - width) / 3;
+		if (i >= sizeof suffix) {
+			memset(buf, '*', width);
+			len = width;
+		} else {
+			len -= (i + 1) * 3;
+			buf[len++] = suffix[i];
+		}
+		buf[len] = 0;
+	}
+	mvprintw(row, col, "%*s", width, buf);
 }
 
 static int
-compare_times(const void *a, const void *b)
+compare_irf(const void *a, const void *b)
 {
 	int ia = *(const int *)a, ib = *(const int *)b;
 	int64_t delta;
 
-	if (display_mode == TIME)
-		delta = irf.times[ib] - irf.times[ia];
-	else
-		delta = s.times[ib] - s1.times[ib] - s.times[ia] + s1.times[ia];
+	delta = irf[ib] - irf[ia];
 	return delta ? delta < 0 ? -1 : 1 : 0;
 }
 
@@ -182,10 +189,11 @@ void
 showsyscall(void)
 {
 	int i, ii, l, c;
-	uint64_t val;
+	uint64_t v;
 	static int failcnt = 0;
 	static int relabel = 0;
 	static char pigs[] = "pigs";
+	uint64_t itime;
 
 	if (relabel) {
 		labelsyscall();
@@ -212,40 +220,49 @@ showsyscall(void)
 		}
 	} else
 		etime = 1.0;
+	itime = etime * 100;
 
 	failcnt = 0;
 
 	show_vmstat_top(&s.Total, &s.uvmexp, &s1.uvmexp);
 
-	if (sort_order == COUNTS) {
+	/* Sort out the values we are going to display */
+	for (i = 0; i < nelem(s.counts); i++) {
+		switch (show) {
+		default:
+		case SHOW_COUNTS:
+			v = s.counts[i] - s1.counts[i];
+			break;
+		case SHOW_TIMES:
+			v = s.times[i] - s1.times[i];
+			break;
+		case SHOW_COUNTS | SHOW_TIMES:    /* time/count */
+			v = s.counts[i] - s1.counts[i];
+			v = v ? (s.times[i] - s1.times[i]) / v : 0;
+		}
+
+		if (display_mode == TIME)
+		    v = (v * 100 + itime/2) / itime;
+
+		val[i] = v;
+
 		/*
 		 * We use an 'infinite response filter' in a vague
 		 * attempt to stop the data leaping around too much.
 		 * I suspect there are other/better methods in use.
 		 */
-		if (show & SHOW_COUNTS) {
-			for (i = 0; i < nelem(s.counts); i++) {
-				val = s.counts[i] - s1.counts[i];
-				if (irf.counts[i] > 0xfffffff)
-				    irf.counts[i] = irf.counts[i] / 8 * 7 + val;
-				else
-				    irf.counts[i] = irf.counts[i] * 7 / 8 + val;
-			}
+		if (irf_first) {
+			irf[i] = v;
+			irf_first = 0;
+		} else {
+			irf[i] = irf[i] * 7 / 8 + v;
 		}
-		if (show & SHOW_TIMES) {
-			for (i = 0; i < nelem(s.times); i++) {
-				val = s.times[i] - s1.times[i];
-				if (irf.times[i] > 0xfffffff)
-				    irf.times[i] = irf.times[i] / 8 * 7 + val;
-				else
-				    irf.times[i] = irf.times[i] * 7 / 8 + val;
-			}
-		}
+	}
 
+	if (sort_order == COUNTS) {
 		/* mergesort() doesn't swap equal values about... */
 		mergesort(syscall_sort, nelem(syscall_sort),
-			sizeof syscall_sort[0],
-			show & SHOW_COUNTS ? compare_counts : compare_times);
+			sizeof syscall_sort[0], compare_irf);
 	}
 
 	l = SYSCALLROW;
@@ -253,20 +270,7 @@ showsyscall(void)
 	move(l, c);
 	for (ii = 0; ii < nelem(s.counts); ii++) {
 		i = syscall_sort[ii];
-		switch (show) {
-		default:
-		case SHOW_COUNTS:
-			val = s.counts[i] - s1.counts[i];
-			break;
-		case SHOW_TIMES:
-			val = s.times[i] - s1.times[i];
-			break;
-		case SHOW_COUNTS | SHOW_TIMES:
-			val = s.counts[i] - s1.counts[i];
-			if (val != 0)
-				val = (s.times[i] - s1.times[i]) / val;
-		}
-		if (val == 0 && irf.counts[i] == 0 && irf.times[i] == 0)
+		if (val[i] == 0 && irf[i] == 0)
 			continue;
 
 		if (i < nelem(syscallnames)) {
@@ -279,7 +283,7 @@ showsyscall(void)
 		} else
 			mvprintw(l, c, "syscall #%d       ", i);
 			
-		putint((unsigned int)((double)val/etime + 0.5), l, c + 17, 9);
+		putuint64(val[i], l, c + 18, 8);
 		c += 27;
 		if (c + 26 > COLS) {
 			c = 0;
@@ -351,10 +355,9 @@ syscall_order(char *args)
 	if (args[len + strspn(args + len, " \t\r\n")])
 		goto usage;
 	
-	if (memcmp(args, "count", len) == 0) {
+	if (memcmp(args, "count", len) == 0)
 		sort_order = COUNTS;
-		memset(&irf, 0, sizeof irf);
-	} else if (memcmp(args, "name", len) == 0)
+	else if (memcmp(args, "name", len) == 0)
 		sort_order = NAMES;
 	else if (memcmp(args, "syscall", len) == 0)
 		sort_order = UNSORTED;
@@ -397,6 +400,9 @@ syscall_show(char *args)
 		show = SHOW_COUNTS | SHOW_TIMES;
 	else
 		goto usage;
+
+	memset(&irf, 0, sizeof irf);
+	irf_first = 1;
 
 	return;
 

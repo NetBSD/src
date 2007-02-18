@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.36 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.37 2007/02/18 17:00:08 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,7 @@ void	 closeicmp(WINDOW *);
 void	 closeiostat(WINDOW *);
 void	 closeip(WINDOW *);
 void	 closevmstat(WINDOW *);
+void	 closesyscall(WINDOW *);
 void	 closembufs(WINDOW *);
 void	 closenetstat(WINDOW *);
 void	 closepigs(WINDOW *);
@@ -98,6 +99,7 @@ void	 fetchicmp(void);
 void	 fetchiostat(void);
 void	 fetchip(void);
 void	 fetchvmstat(void);
+void	 fetchsyscall(void);
 void	 fetchmbufs(void);
 void	 fetchnetstat(void);
 void	 fetchpigs(void);
@@ -119,6 +121,7 @@ int	 initicmp(void);
 int	 initiostat(void);
 int	 initip(void);
 int	 initvmstat(void);
+int	 initsyscall(void);
 int	 initmbufs(void);
 int	 initnetstat(void);
 int	 initpigs(void);
@@ -141,6 +144,7 @@ void	 labelicmp(void);
 void	 labeliostat(void);
 void	 labelip(void);
 void	 labelvmstat(void);
+void	 labelsyscall(void);
 void	 labelmbufs(void);
 void	 labelnetstat(void);
 void	 labelpigs(void);
@@ -165,6 +169,7 @@ WINDOW	*openicmp(void);
 WINDOW	*openiostat(void);
 WINDOW	*openip(void);
 WINDOW	*openvmstat(void);
+WINDOW	*opensyscall(void);
 WINDOW	*openmbufs(void);
 WINDOW	*opennetstat(void);
 WINDOW	*openpigs(void);
@@ -178,6 +183,7 @@ void	 showicmp(void);
 void	 showiostat(void);
 void	 showip(void);
 void	 showvmstat(void);
+void	 showsyscall(void);
 void	 showmbufs(void);
 void	 shownetstat(void);
 void	 showpigs(void);
@@ -195,6 +201,12 @@ void	 vmstat_boot(char *);
 void	 vmstat_run(char *);
 void	 vmstat_time(char *);
 void	 vmstat_zero(char *);
+void	 syscall_boot(char *);
+void	 syscall_run(char *);
+void	 syscall_time(char *);
+void	 syscall_zero(char *);
+void	 syscall_order(char *);
+void	 syscall_show(char *);
 
 #ifdef INET6
 void	 closeip6(WINDOW *);
