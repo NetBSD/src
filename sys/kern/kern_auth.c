@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.44 2007/02/09 21:55:30 ad Exp $ */
+/* $NetBSD: kern_auth.c,v 1.45 2007/02/18 15:20:34 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.44 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.45 2007/02/18 15:20:34 dsl Exp $");
 
 #define	_KAUTH_PRIVATE
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.44 2007/02/09 21:55:30 ad Exp $");
 #include <sys/kauth_impl.h>
 #include <sys/kmem.h>
 #include <sys/rwlock.h>
+#include <sys/sysctl.h>		/* for pi_[p]cread */
 
 /*
  * Secmodel-specific credentials.
@@ -543,7 +544,7 @@ kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
  * Make a struct ucred out of a kauth_cred_t.  For compatibility.
  */
 void
-kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
+kauth_cred_toucred(kauth_cred_t cred, struct ki_ucred *uc)
 {
 	KASSERT(cred != NULL);
 	KASSERT(uc != NULL);
@@ -561,12 +562,12 @@ kauth_cred_toucred(kauth_cred_t cred, struct ucred *uc)
  * Make a struct pcred out of a kauth_cred_t.  For compatibility.
  */
 void
-kauth_cred_topcred(kauth_cred_t cred, struct pcred *pc)
+kauth_cred_topcred(kauth_cred_t cred, struct ki_pcred *pc)
 {
 	KASSERT(cred != NULL);
 	KASSERT(pc != NULL);
 
-	pc->pc_ucred = NULL;
+	pc->p_pad = NULL;
 	pc->p_ruid = cred->cr_uid;
 	pc->p_svuid = cred->cr_svuid;
 	pc->p_rgid = cred->cr_gid;
