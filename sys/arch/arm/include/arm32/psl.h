@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.8 2007/02/18 07:13:17 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.9 2007/02/18 07:48:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,9 +46,7 @@
 #define _ARM_PSL_H_
 #include <machine/intr.h>
 #ifndef _LOCORE
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <arm/softintr.h>
-#endif
 #endif
 
 /*
@@ -75,9 +73,7 @@
 #define _SPL_LEVELS	13
 
 #define spl0()		splx(_SPL_0)
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #define splsoft()	raisespl(_SPL_SOFT)
-#endif
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
 #define spllowersoftclock() lowerspl(_SPL_SOFTCLOCK)
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
@@ -102,20 +98,11 @@ int raisespl	__P((int));
 int lowerspl	__P((int));
 int splx	__P((int));
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void _setsoftintr	(int si);
-#else
-void setsoftast		__P((void));
-void setsoftclock	__P((void));
-void setsoftnet		__P((void));
-void setsoftserial	__P((void));
-void setsoftintr	__P((u_int intrmask));
-#endif
 
 extern int current_spl_level;
 
 extern u_int spl_masks[_SPL_LEVELS + 1];
-extern u_int spl_smasks[_SPL_LEVELS];
 
 typedef int ipl_t;
 typedef struct {
