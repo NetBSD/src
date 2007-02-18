@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.1 2007/02/17 10:31:03 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.2 2007/02/18 13:32:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -257,7 +257,6 @@ void	startlwp(void *);
 void	upcallret(struct lwp *);
 void	lwp_exit(struct lwp *);
 void	lwp_exit_switchaway(struct lwp *);
-void	lwp_exit2(struct lwp *);
 struct lwp *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(struct lwp *, struct lwp *);
 int	lwp_create1(struct lwp *, const void *, size_t, u_long, lwpid_t *);

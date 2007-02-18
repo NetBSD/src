@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.2 2007/02/18 13:09:03 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.3 2007/02/18 13:32:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.2 2007/02/18 13:09:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.3 2007/02/18 13:32:34 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -712,17 +712,6 @@ lwp_exit_switchaway(struct lwp *l)
 
 	idlelwp->l_stat = LSONPROC;
 	cpu_switchto(NULL, idlelwp);
-}
-
-/*
- * We are called from cpu_exit() once it is safe to schedule the dead LWP's
- * resources to be freed (i.e., once we've switched to the idle PCB for the
- * current CPU).
- */
-void
-lwp_exit2(struct lwp *l)
-{
-	/* XXXSMP re-enable preemption */
 }
 
 /*
