@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.20 2007/02/18 17:44:57 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.21 2007/02/18 20:38:07 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.20 2007/02/18 17:44:57 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.21 2007/02/18 20:38:07 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -116,6 +116,14 @@ nukern(struct puffs_node *pn)
 }
 
 static ino_t fakeino = 3;
+
+/*
+ * XXX: do this otherwise if/when we grow thread support
+ *
+ * XXX2: does not consistently supply uid, gid or pid currently
+ */
+static struct fuse_context fcon;
+
 
 /* XXX: rethinkme */
 struct fuse_dirh {
@@ -389,7 +397,13 @@ puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
 	return -ret;
 }
 
-/* create a regular file */
+/*
+ * create a regular file
+ *
+ * since linux/fuse sports using mknod for creating regular files
+ * instead of having a separate call for it in some versions, if
+ * we don't have create, just jump to op->mknod.
+ */
 /*ARGSUSED1*/
 static int
 puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
@@ -405,12 +419,19 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.create == NULL) {
-		return ENOSYS;
-	}
 
-	/* wrap up return code */
-	ret = (*fuse->op.create)(path, mode, &fi);
+	if (fuse->op.create) {
+		ret = fuse->op.create(path, mode, &fi);
+
+	} else if (fuse->op.mknod) {
+		fcon.uid = va->va_uid; /*XXX*/
+		fcon.gid = va->va_gid; /*XXX*/
+
+		ret = fuse->op.mknod(path, mode | S_IFREG, 0);
+
+	} else {
+		ret = -ENOSYS;
+	}
 
 	if (ret == 0) {
 		/* fix up nodes */
@@ -870,13 +891,6 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 
 
 /* End of puffs_fuse operations */
-
-/*
- * XXX: do this otherwise if/when we grow thread support
- *
- * XXX2: does not supply uid, gid or pid currently
- */
-static struct fuse_context fcon;
 
 /* ARGSUSED3 */
 int
