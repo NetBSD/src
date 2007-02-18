@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.73 2007/02/18 14:07:59 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.74 2007/02/18 21:42:49 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1413,4 +1413,26 @@ etc/etc.x68k/MAKEDEV.conf			1.8
 	to those platforms that actually have the driver.
 	This fixes PR install/26511 properly.
 	[hubertf, ticket #429]
+
+distrib/common/Makefile.bootcd			1.7
+
+	Add CDRELEASE_NOISOS to allow excluding installation/cdroms from
+	CDs that have full releases.
+	[hubertf, ticket #430]
+
+share/man/man0/mkman				1.5
+
+	Exclude working directories.
+	[hubertf, ticket #431]
+
+regress/usr.bin/cut/cut_tests			1.2
+
+	Allow using something else than 'cut' to test this with the CUT
+	environment variable.
+	[hubertf, ticket #432]
+
+sys/arch/i386/conf/ALL				1.78
+
+	Enable ALTQ and some others, taken from GENERIC kernel configuration.
+	[hubertf, ticket #434]
 
