@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.8 2007/02/18 07:24:52 matt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.1 2007/02/18 07:24:52 matt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,57 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Machine-dependent spin lock operations.
- *
- * NOTE: The SWP insn used here is available only on ARM architecture
- * version 3 and later (as well as 2a).  What we are going to do is
- * expect that the kernel will trap and emulate the insn.  That will
- * be slow, but give us the atomicity that we need.
- */
+#ifndef _ARM_RWLOCK_H_
+#define	_ARM_RWLOCK_H_
 
-#ifndef _ARM_LOCK_H_
-#define	_ARM_LOCK_H_
+#include <arm/atomic.h>
 
-#define	mb_read()	
-#define	mb_write()
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+	uint32_t		rw_id;
+};
 
-static __inline int
-__swp(int __val, volatile int *__ptr)
-{
+#ifdef __RWLOCK_PRIVATE
 
-	__asm volatile("swp %0, %1, [%2]"
-	    : "=r" (__val) : "r" (__val), "r" (__ptr) : "memory");
-	return __val;
-}
+#define	__HAVE_SIMPLE_RW_LOCKS		1
 
-static __inline void __attribute__((__unused__))
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
-{
+#define	RW_RECEIVE(rw)			/* nothing */
+#define	RW_GIVE(rw)			/* nothing */
 
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
+#define	RW_CAS(p, o, n)			atomic_cas((p), (o), (n))
 
-static __inline void __attribute__((__unused__))
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
-{
+#endif	/* __RWLOCK_PRIVATE */
 
-	while (__swp(__SIMPLELOCK_LOCKED, alp) != __SIMPLELOCK_UNLOCKED)
-		continue;
-}
-
-static __inline int __attribute__((__unused__))
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
-{
-
-	return (__swp(__SIMPLELOCK_LOCKED, alp) == __SIMPLELOCK_UNLOCKED);
-}
-
-static __inline void __attribute__((__unused__))
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
-{
-
-	*alp = __SIMPLELOCK_UNLOCKED;
-}
-
-#endif /* _ARM_LOCK_H_ */
+#endif /* _ARM_RWLOCK_H_ */
