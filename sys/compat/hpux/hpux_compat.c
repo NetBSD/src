@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.86 2007/02/18 11:38:15 dsl Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.87 2007/02/18 11:45:35 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.86 2007/02/18 11:38:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.87 2007/02/18 11:45:35 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -549,10 +549,14 @@ hpux_sys_rtprio(lp, v, retval)
 	    SCARG(uap, prio) != RTPRIO_RTOFF)
 		return (EINVAL);
 
+	rw_enter(&proclist_lock, RW_READER);
 	if (SCARG(uap, pid) == 0)
 		p = lp->l_proc;
-	else if ((p = pfind(SCARG(uap, pid))) == 0)
-		return (ESRCH);
+	else {
+		p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+		if (p == NULL)
+			return ESRCH;
+	}
 
 	nice = p->p_nice - NZERO;
 	if (nice < 0)
@@ -563,7 +567,8 @@ hpux_sys_rtprio(lp, v, retval)
 	switch (SCARG(uap, prio)) {
 
 	case RTPRIO_NOCHG:
-		return (0);
+		rw_exit(&proclist_lock);
+		return 0;
 
 	case RTPRIO_RTOFF:
 		if (nice >= 0)
@@ -578,6 +583,7 @@ hpux_sys_rtprio(lp, v, retval)
 	mutex_enter(&p->p_mutex);
 	error = donice(lp, p, nice);
 	mutex_exit(&p->p_mutex);
+	rw_exit(&proclist_lock);
 	if (error == EACCES)
 		error = EPERM;
 	return (error);
