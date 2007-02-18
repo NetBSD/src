@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.167 2007/02/17 22:31:45 pavel Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.168 2007/02/18 15:20:34 dsl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -391,6 +391,23 @@ struct clockinfo {
 #define	KERN_PROC_TTY_NODEV	NODEV		/* no controlling tty */
 #define	KERN_PROC_TTY_REVOKE	((dev_t)-2)	/* revoked tty */
 
+struct ki_pcred {
+	void		*p_pad;
+	uid_t		p_ruid;		/* Real user id */
+	uid_t		p_svuid;	/* Saved effective user id */
+	gid_t		p_rgid;		/* Real group id */
+	gid_t		p_svgid;	/* Saved effective group id */
+	int		p_refcnt;	/* Number of references */
+};
+
+struct ki_ucred {
+	uint32_t	cr_ref;			/* reference count */
+	uid_t		cr_uid;			/* effective user id */
+	gid_t		cr_gid;			/* effective group id */
+	uint32_t	cr_ngroups;		/* number of groups */
+	gid_t		cr_groups[NGROUPS];	/* groups */
+};
+
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
@@ -399,8 +416,8 @@ struct kinfo_proc {
 	struct	eproc {
 		struct	proc *e_paddr;		/* address of proc */
 		struct	session *e_sess;	/* session pointer */
-		struct	pcred e_pcred;		/* process credentials */
-		struct	ucred e_ucred;		/* current credentials */
+		struct	ki_pcred e_pcred;	/* process credentials */
+		struct	ki_ucred e_ucred;	/* current credentials */
 		struct	vmspace e_vm;		/* address space */
 		pid_t	e_ppid;			/* parent process id */
 		pid_t	e_pgid;			/* process group id */

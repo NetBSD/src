@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.237 2007/02/17 22:31:45 pavel Exp $	*/
+/*	$NetBSD: proc.h,v 1.238 2007/02/18 15:20:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -401,22 +401,6 @@ struct proc {
  */
 #define	P_EXITSIG(p)	\
     (((p)->p_slflag & (PSL_TRACED|PSL_FSTRACE)) ? SIGCHLD : p->p_exitsig)
-
-/*
- * MOVE TO ucred.h?
- *
- * Shareable process credentials (always resident).  This includes a reference
- * to the current user credentials as well as real and saved ids that may be
- * used to change ids.
- */
-struct pcred {
-	struct ucred	*pc_ucred;	/* Current credentials */
-	uid_t		p_ruid;		/* Real user id */
-	uid_t		p_svuid;	/* Saved effective user id */
-	gid_t		p_rgid;		/* Real group id */
-	gid_t		p_svgid;	/* Saved effective group id */
-	int		p_refcnt;	/* Number of references */
-};
 
 LIST_HEAD(proclist, proc);		/* A list of processes */
 
