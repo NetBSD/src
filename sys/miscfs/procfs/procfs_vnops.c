@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.149 2007/02/17 22:31:44 pavel Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.150 2007/02/18 01:55:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.149 2007/02/17 22:31:44 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.150 2007/02/18 01:55:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,11 +1001,14 @@ procfs_lookup(v)
 
 		for (i = 0; i < nproc_root_targets; i++) {
 			pt = &proc_root_targets[i];
+			/*
+			 * check for node match.  proc is always NULL here,
+			 * so call pt_valid with constant NULL lwp.
+			 */
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
-			    (pt->pt_valid == NULL || (p != NULL &&
-			     (*pt->pt_valid)(LIST_FIRST(&p->p_lwps),
-			     		     dvp->v_mount))))
+			    (pt->pt_valid == NULL ||
+			     (*pt->pt_valid)(NULL, dvp->v_mount)))
 				break;
 		}
 
