@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.23 2007/02/18 22:30:59 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.24 2007/02/18 22:42:33 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.23 2007/02/18 22:30:59 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.24 2007/02/18 22:42:33 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -544,10 +544,9 @@ puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	const struct puffs_cn *pcn_targ)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
-	struct vattr		va;
 	struct fuse		*fuse;
-	const char		*path = PCNPATH(pcn_src);
+	const char		*path_src = PCNPATH(pcn_src);
+	const char		*path_dest = PCNPATH(pcn_targ);
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -555,21 +554,9 @@ puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 		return ENOSYS;
 	}
 
-	/* wrap up return code */
-	ret = (*fuse->op.rename)(path, PCNPATH(pcn_targ));
+	ret = fuse->op.rename(path_src, path_dest);
 
-	/* XXX: what's this guy doing??? */
 	if (ret == 0) {
-		(void) memcpy(&va, &pn->pn_va, sizeof(va));
-
-		puffs_pn_put(pn);
-
-		pn = puffs_pn_new(pu, NULL);
-		if (pn == NULL) {
-			return ENOMEM;
-		}
-		puffs_setvattr(&pn->pn_va, &va);
-
 	}
 
 	return -ret;
