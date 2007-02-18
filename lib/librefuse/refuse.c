@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.18 2007/02/16 00:35:06 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.19 2007/02/18 00:01:18 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.18 2007/02/16 00:35:06 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.19 2007/02/18 00:01:18 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -562,12 +562,9 @@ puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
 }
 
 /*
- * We run into a slight problemette here - puffs provides
- * setattr/getattr, whilst fuse provides all the usual chown/chmod/chgrp
- * functionality.  So that we don't miss out on anything when calling a
- * fuse operation, we have to get the vattr from the existing file,
- * find out what's changed, and then switch on that to call the fuse
- * function accordingly.
+ * fuse's regular interface provides chmod(), chown(), utimes()
+ * and truncate() + some variations, so try to fit the square block
+ * in the circle hole and the circle block .... something like that
  */
 /* ARGSUSED3 */
 static int
@@ -576,38 +573,88 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
+	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 	mode_t			mode;
 	uid_t			uid;
 	gid_t			gid;
-	int			ret;
+	int			error, ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
 
-	ret = -1;
+	error = 0;
 
 	mode = va->va_mode;
 	uid = va->va_uid;
 	gid = va->va_gid;
 
 	if (mode != (mode_t)PUFFS_VNOVAL) {
+		ret = 0;
+
 		if (fuse->op.chmod == NULL) {
-			return ENOSYS;
+			error = -ENOSYS;
+		} else {
+			ret = fuse->op.chmod(path, mode);
+			if (ret)
+				error = ret;
 		}
-		ret = (*fuse->op.chmod)(path, mode);
 	}
 	if (uid != (uid_t)PUFFS_VNOVAL || gid != (gid_t)PUFFS_VNOVAL) {
+		ret = 0;
+
 		if (fuse->op.chown == NULL) {
-			return ENOSYS;
+			error = -ENOSYS;
+		} else {
+			ret = fuse->op.chown(path, uid, gid);
+			if (ret)
+				error = ret;
 		}
-		ret = (*fuse->op.chown)(path, uid, gid);
+	}
+	if (va->va_atime.tv_sec != (time_t)PUFFS_VNOVAL
+	    || va->va_mtime.tv_sec != (long)PUFFS_VNOVAL) {
+		ret = 0;
+
+		if (fuse->op.utimens) {
+			struct timespec tv[2];
+
+			tv[0].tv_sec = va->va_atime.tv_sec;
+			tv[0].tv_nsec = va->va_atime.tv_nsec;
+			tv[1].tv_sec = va->va_mtime.tv_sec;
+			tv[1].tv_nsec = va->va_mtime.tv_nsec;
+
+			ret = fuse->op.utimens(path, tv);
+		} else if (fuse->op.utime) {
+			struct utimbuf timbuf;
+
+			timbuf.actime = va->va_atime.tv_sec;
+			timbuf.modtime = va->va_mtime.tv_sec;
+
+			ret = fuse->op.utime(path, &timbuf);
+		} else {
+			error = -ENOSYS;
+		}
+
+		if (ret)
+			error = ret;
+	}
+	if (va->va_size != (u_quad_t)PUFFS_VNOVAL) {
+		ret = 0;
+
+		if (fuse->op.truncate) {
+			ret = fuse->op.truncate(path, (off_t)va->va_size);
+		} else if (fuse->op.ftruncate) {
+			ret = fuse->op.ftruncate(path, (off_t)va->va_size,
+			    &rn->file_info);
+		} else {
+			error = -ENOSYS;
+		}
+
+		if (ret)
+			error = ret;
 	}
 
-	if (ret == 0) {
-	}
-
-	return -ret;
+	return -error;
 }
 
 /* ARGSUSED2 */
