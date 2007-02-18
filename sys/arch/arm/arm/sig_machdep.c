@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.30 2007/02/18 20:05:20 briggs Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.31 2007/02/18 21:10:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.30 2007/02/18 20:05:20 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.31 2007/02/18 21:10:32 ad Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -97,7 +97,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	struct sigframe_siginfo *fp, frame;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
@@ -132,9 +132,14 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
-	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	sendsig_reset(l, sig);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	mutex_exit(&p->p_smutex);
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -232,6 +237,7 @@ cpu_setmcontext(l, mcp, flags)
 {
 	struct trapframe *tf = process_frame(l);
 	const __greg_t *gr = mcp->__gregs;
+	struct proc *p = l->l_proc;
 
 	if ((flags & _UC_CPU) != 0) {
 		/* Restore General Register context. */
@@ -264,10 +270,13 @@ cpu_setmcontext(l, mcp, flags)
 		arm_fpe_setcontext(p, (struct fpreg *)(void *)&mcp->__fpregs);
 	}
 #endif
+
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }
