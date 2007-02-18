@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.126 2007/02/17 17:18:12 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.127 2007/02/18 18:16:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -142,7 +142,6 @@
 #define SHA512_File		_SHA512_File
 #define SHA512_Final		_SHA512_Final
 #define SHA512_Init		_SHA512_Init
-#define SHA512_Last		_SHA512_Last
 #define SHA512_Transform	_SHA512_Transform
 #define SHA512_Update		_SHA512_Update
 #define a64l			_a64l
