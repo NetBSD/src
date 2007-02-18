@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.30 2007/02/15 17:04:46 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.31 2007/02/18 17:36:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.30 2007/02/15 17:04:46 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.31 2007/02/18 17:36:48 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -369,6 +369,7 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 int
 puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 {
+	struct puffs_usermount *pu = pcc->pcc_pu;
 	int rv;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
@@ -382,6 +383,9 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 	/* check if we need to store this reply */
 	switch (rv) {
 	case PUFFCALL_ANSWER:
+		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
+			puffsdump_rv(pcc->pcc_preq);
+
 		puffs_req_putcc(ppr, pcc);
 		break;
 	case PUFFCALL_IGNORE:
