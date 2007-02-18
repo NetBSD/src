@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 2007/02/17 22:31:37 pavel Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18 2007/02/18 08:08:41 cube Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.17 2007/02/17 22:31:37 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18 2007/02/18 08:08:41 cube Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -226,7 +226,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
-	if (func == child_return && !(l->l_proc->p_flag & P_32))
+	if (func == child_return && !(l->l_proc->p_flag & PK_32))
 		sf->sf_rip = (u_int64_t)child_trampoline;
 	else
 		sf->sf_rip = (u_int64_t)proc_trampoline;
