@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.66 2007/02/09 22:08:48 ad Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.67 2007/02/18 15:22:44 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.66 2007/02/09 22:08:48 ad Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.67 2007/02/18 15:22:44 dsl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -289,8 +289,8 @@ static int
 _kvm_convertcred(kvm_t *kd, u_long cred, struct eproc *eproc)
 {
 	struct kauth_cred kauthcred;
-	struct pcred *pc = &eproc->e_pcred;
-	struct ucred *uc = &eproc->e_ucred;
+	struct ki_pcred *pc = &eproc->e_pcred;
+	struct ki_ucred *uc = &eproc->e_ucred;
 
 	if (KREAD(kd, cred, &kauthcred) != 0)
 		return (-1);
@@ -301,7 +301,7 @@ _kvm_convertcred(kvm_t *kd, u_long cred, struct eproc *eproc)
 	pc->p_rgid = kauthcred.cr_gid;
 	pc->p_svgid = kauthcred.cr_svgid;
 	pc->p_refcnt = kauthcred.cr_refcnt;
-	pc->pc_ucred = (void *)cred;
+	pc->p_pad = NULL;
 
 	/* inlined version of kauth_cred_to_ucred(), see kauth(9). */
 	uc->cr_ref = kauthcred.cr_refcnt;
