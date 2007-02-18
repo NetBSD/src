@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.8 2006/05/11 12:05:37 yamt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.9 2007/02/18 07:20:40 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.8 2006/05/11 12:05:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.9 2007/02/18 07:20:40 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -140,6 +140,7 @@ irq_init()
 	actual_mask = 0x00000000;
 	spl_mask = 0x00000000;
 	soft_interrupts = 0x00000000;
+	softintr_init();
 
 	set_spl_masks();
 
