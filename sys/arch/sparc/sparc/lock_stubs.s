@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.3 2007/02/15 22:49:35 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.4 2007/02/18 21:14:52 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -165,12 +165,12 @@ _ENTRY(_C_LABEL(mutex_spin_enter))
  */
 _ENTRY(_C_LABEL(mutex_spin_exit))
 #if defined(DIAGNOSTIC)
-	ldub	[ %i0 + MTX_LOCK ], %g1
+	ldub	[ %o0 + MTX_LOCK ], %g1
 	cmp	%g1, __SIMPLELOCK_LOCKED
 	bne,a	_C_LABEL(mutex_vector_exit)
-	 clrb	[ %i0 + MTX_LOCK ]
+	 clrb	[ %o0 + MTX_LOCK ]
 #elif defined(MULTIPROCESSOR)
-	clrb	[ %i0 + MTX_LOCK ]
+	clrb	[ %o0 + MTX_LOCK ]
 #endif
 	sethi	 %hi(CPUINFO_VA), %g1
 	ld	[ %g1 + CPUINFO_SELF ], %g2
