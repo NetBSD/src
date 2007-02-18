@@ -113,10 +113,13 @@ typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);
  * These operations shadow those in puffs_usermount, and are used
  * as a table of callbacks to make when file system requests come
  * in.
+ *
+ * NOTE: keep same order as fuse
  */
 struct fuse_operations {
 	int	(*getattr)(const char *, struct stat *);
 	int	(*readlink)(const char *, char *, size_t);
+	int	(*getdir)(const char *, fuse_dirh_t, fuse_dirfil_t);
 	int	(*mknod)(const char *, mode_t, dev_t);
 	int	(*mkdir)(const char *, mode_t);
 	int	(*unlink)(const char *);
@@ -141,7 +144,6 @@ struct fuse_operations {
 	int	(*removexattr)(const char *, const char *);
 	int	(*opendir)(const char *, struct fuse_file_info *);
 	int	(*readdir)(const char *, void *, fuse_fill_dir_t, off_t, struct fuse_file_info *);
-	int	(*getdir)(const char *, fuse_dirh_t, fuse_dirfil_t);
 	int	(*releasedir)(const char *, struct fuse_file_info *);
 	int	(*fsyncdir)(const char *, int, struct fuse_file_info *);
 	void	*(*init)(struct fuse_conn_info *);
