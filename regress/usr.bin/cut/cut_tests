@@ -1,8 +1,10 @@
 #!/bin/sh
 
+CUT=${CUT:=cut}
+
 run_cut (){
     echo "----- test: cut $@ -----"
-    cut "$@"
+    ${CUT} "$@"
 }
 
 run_test_block (){
