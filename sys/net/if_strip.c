@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.72 2007/02/18 06:20:10 dogcow Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.73 2007/02/18 07:17:48 dyoung Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.72 2007/02/18 06:20:10 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.73 2007/02/18 07:17:48 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -775,7 +775,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		    rt_key(rt)->sa_family, rt->rt_gateway->sa_family);
 		if (rt_key(rt)->sa_family == AF_INET)
 		  printf(" dst %x",
-		      ((struct sockaddr_in *)rt_key(rt))->sin_addr.s_addr);
+		      satocsin(rt_key(rt))->sin_addr.s_addr);
 		printf("\n");
 	}
 #endif
@@ -788,7 +788,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
                 if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK
                     || SDL(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
 		  	DPRINTF(("strip: could not arp starmode addr %x\n",
-			 ((const struct sockaddr_in *)dst)->sin_addr.s_addr));
+			 satocsin(dst)->sin_addr.s_addr));
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
