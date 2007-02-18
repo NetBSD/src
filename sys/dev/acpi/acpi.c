@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.99 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: acpi.c,v 1.100 2007/02/18 23:39:20 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.99 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.100 2007/02/18 23:39:20 xtraeme Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.99 2007/02/09 21:55:26 ad Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -150,7 +151,7 @@ struct acpi_softc *acpi_softc;
 /*
  * Locking stuff.
  */
-static struct simplelock acpi_slock;
+static kmutex_t acpi_slock;
 static int acpi_locked;
 
 /*
@@ -189,7 +190,7 @@ acpi_probe(void)
 		panic("acpi_probe: ACPI has already been probed");
 	beenhere = 1;
 
-	simple_lock_init(&acpi_slock);
+	mutex_init(&acpi_slock, MUTEX_DRIVER, IPL_NONE);
 	acpi_locked = 0;
 
 	/*
