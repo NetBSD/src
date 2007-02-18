@@ -37,6 +37,8 @@
 extern "C" {
 #endif
 
+struct fuse;
+
 struct fuse_file_info {
 	int32_t		flags;
 	uint32_t	fh_old;
@@ -104,6 +106,8 @@ typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *, off_t)
 typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);
 
 #define FUSE_VERSION	26
+#define FUSE_MAJOR_VERSION	2
+#define FUSE_MINOR_VERSION	6
 
 /*
  * These operations shadow those in puffs_usermount, and are used
@@ -157,10 +161,11 @@ typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
 
 
 int fuse_opt_add_arg(struct fuse_args *, const char *);
+void fuse_opt_free_args(struct fuse_args *);
 int fuse_opt_parse(struct fuse_args *, void *, const struct fuse_opt *, fuse_opt_proc_t);
 int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *);
 struct fuse_context *fuse_get_context(void);
-
+void fuse_exit(struct fuse *);
 
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
