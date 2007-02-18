@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.16 2007/02/18 07:17:18 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.17 2007/02/18 07:48:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16 2007/02/18 07:17:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2007/02/18 07:48:20 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -66,29 +66,7 @@ static void clearsoftintr(u_int);
  
 u_int soft_interrupts = 0;
 
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#ifdef IRQSTATS
-extern u_int sintrcnt[];
-#define INC_SINTRCNT(x) ++sintrcnt[x]
-#else
-#define INC_SINTRCNT(x)
-#endif	/* IRQSTATS */
-#else
-#define INC_SINTRCNT(x)
-#endif  /* !__HAVE_GENERIC_SOFT_INTERRUPTS */
-
 #define	COUNT	uvmexp.softs;
-
-/* Prototypes */
-
-#include "com.h"
-#if NCOM > 0
-extern void comsoft(void);
-#endif	/* NCOM > 0 */
-
-#if NPLCOM > 0
-extern void plcomsoft(void);
-#endif	/* NPLCOM > 0 */
 
 /* Eventually these will become macros */
 
@@ -100,7 +78,6 @@ clearsoftintr(u_int intrmask)
 	atomic_clear_bit(&soft_interrupts, intrmask);
 }
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 static const int ipl_to_si_map[] = {
 #ifdef IPL_SOFT
 	[IPL_SOFT] = SI_SOFT,
@@ -115,49 +92,6 @@ _setsoftintr(int si)
 {
 	atomic_set_bit(&soft_interrupts, SI_SOFTMASK(ipl_to_si_map[si]));
 }
-#else /* __HAVE_GENERIC_SOFT_INTERRUPTS */
-#define	SI_SOFTNET	SOFTIRQ_NET
-#define	SI_SOFTCLOCK	SOFTIRQ_CLOCK
-#define	SI_SOFTSERIAL	SOFTIRQ_SERIAL
-void
-setsoftintr(u_int intrmask)
-{
-	atomic_set_bit(&soft_interrupts, intrmask);
-}
-
-void
-setsoftclock(void)
-{
-	atomic_set_bit(&soft_interrupts, SI_MASK(SI_SOFTCLOCK));
-}
-
-void
-setsoftnet(void)
-{
-	atomic_set_bit(&soft_interrupts, SI_MASK(SI_SOFTNET));
-}
-
-void
-setsoftserial(void)
-{
-	atomic_set_bit(&soft_interrupts, SI_MASK(SI_SOFTSERIAL));
-}
-
-static void
-softnet(void)
-{
-#define DONETISR(bit, fn) do {					\
-		if (netisr & (1 << bit)) {			\
-			atomic_clear_bit(&netisr, (1 << bit));	\
-			fn();					\
-		}						\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-#endif /* !__HAVE_GENERIC_SOFT_INTERRUPTS */
 
 /* Handle software interrupts */
 
@@ -176,18 +110,8 @@ dosoftints(void)
 	if (softints & SI_SOFTMASK(SI_SOFTSERIAL)) {
 		s = splsoftserial();
 		++COUNT;
-		INC_SINTRCNT(SI_SOFTSERIAL);
 		clearsoftintr(SI_SOFTMASK(SI_SOFTSERIAL));
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-#if NCOM > 0
-		comsoft();
-#endif	/* NCOM > 0 */
-#if NPLCOM > 0
-		plcomsoft();
-#endif	/* NPLCOM > 0 */
-#else
 		softintr_dispatch(SI_SOFTSERIAL);
-#endif
 		(void)splx(s);
 	}
 
@@ -197,13 +121,8 @@ dosoftints(void)
 	if (softints & SI_SOFTMASK(SI_SOFTNET)) {
 		s = splsoftnet();
 		++COUNT;
-		INC_SINTRCNT(SI_SOFTNET);
 		clearsoftintr(SI_SOFTMASK(SI_SOFTNET));
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		softnet();
-#else
 		softintr_dispatch(SI_SOFTNET);
-#endif
 		(void)splx(s);
 	}
 
@@ -213,20 +132,14 @@ dosoftints(void)
 	if (softints & SI_SOFTMASK(SI_SOFTCLOCK)) {
 		s = splsoftclock();
 		++COUNT;
-		INC_SINTRCNT(SI_SOFTCLOCK);
 		clearsoftintr(SI_SOFTMASK(SI_SOFTCLOCK));
-#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		softclock(NULL);
-#else
 		softintr_dispatch(SI_SOFTCLOCK);
-#endif
 		(void)splx(s);
 	}
 
 	/*
 	 * Misc software interrupts
 	 */
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	if (softints & SI_SOFTMASK(SI_SOFT)) {
 		s = splsoft();
 		++COUNT;
@@ -234,7 +147,6 @@ dosoftints(void)
 		softintr_dispatch(SI_SOFT);
 		(void)splx(s);
 	}
-#endif
 }
 
 int current_spl_level = _SPL_SERIAL;
@@ -277,10 +189,8 @@ set_spl_masks(void)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTNET);
 	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTCLOCK);
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	for (loop = 0; loop < _SPL_SOFT; ++loop)
 		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFT);
-#endif
 }
 
 static const int ipl_to_spl_map[] = {
