@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.20 2007/02/18 14:28:25 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.21 2007/02/18 18:58:17 degroote Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.20 2007/02/18 14:28:25 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.21 2007/02/18 18:58:17 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -129,8 +129,8 @@ ah4_ctlinput(cmd, sa, v)
 									  offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 
-				KEY_FREESAV(&sav);
 			}
+			KEY_FREESAV(&sav);
 		}
 	}
 	return NULL;
@@ -181,8 +181,8 @@ esp4_ctlinput(cmd, sa, v)
 									   offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 
-				KEY_FREESAV(&sav);
 			}
+			KEY_FREESAV(&sav);
 		}
 	}
 	return NULL;
