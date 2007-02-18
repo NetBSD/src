@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2007/02/18 07:13:17 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2007/02/18 21:04:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,22 +41,23 @@
 /* Hardware Interrupt Priority Levels are not mutually exclusive. */
 
 #define IPL_NONE	0
-#define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define IPL_BIO		3	/* block I/O */
-#define IPL_NET		4	/* network */
-#define	IPL_SOFTSERIAL	5
-#define IPL_TTY		6	/* terminal */
-#define IPL_VM		7	/* memory allocation */
-#define IPL_AUDIO	8	/* audio */
-#define IPL_CLOCK	9	/* clock */
-#define	IPL_STATCLOCK	10
-#define IPL_SERIAL	11	/* serial */
-#define IPL_HIGH	12	/*  */
+#define	IPL_SOFT	1
+#define	IPL_SOFTCLOCK	2
+#define	IPL_SOFTNET	3
+#define IPL_BIO		4	/* block I/O */
+#define IPL_NET		5	/* network */
+#define	IPL_SOFTSERIAL	6
+#define IPL_TTY		7	/* terminal */
+#define IPL_VM		8	/* memory allocation */
+#define IPL_AUDIO	9	/* audio */
+#define IPL_CLOCK	10	/* clock */
+#define	IPL_STATCLOCK	11
+#define IPL_SERIAL	12	/* serial */
+#define IPL_HIGH	13	/*  */
 #define	IPL_LOCK	IPL_HIGH
 #define	IPL_SCHED	IPL_HIGH
 
-#define IPL_LEVELS	13
+#define IPL_LEVELS	14
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
