@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.235 2007/02/15 09:02:12 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.236 2007/02/18 13:28:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -183,7 +183,7 @@
 #ifdef SUN_AS
 #define	EMPTY	.empty
 #else
-#define	EMPTY	/* .empty */
+#define	EMPTY	nop
 #endif
 
 /* use as needed to align things on longword boundaries */
