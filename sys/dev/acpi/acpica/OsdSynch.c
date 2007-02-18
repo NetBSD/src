@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.3 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.4 2007/02/18 23:41:07 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,11 +69,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.3 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.4 2007/02/18 23:41:07 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
@@ -89,13 +90,14 @@ ACPI_MODULE_NAME("SYNCH")
  * subsequently used in the OSI code to implement a mutex.  Go figure.
  */
 struct acpi_semaphore {
-	struct simplelock as_slock;
+	kcondvar_t as_cv;
+	kmutex_t as_slock;
 	UINT32 as_units;
 	UINT32 as_maxunits;
 };
 
 struct acpi_lock {
-	struct simplelock al_slock;
+	kmutex_t al_slock;
 };
 
 /*
@@ -120,7 +122,8 @@ AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits,
 	if (as == NULL)
 		return_ACPI_STATUS(AE_NO_MEMORY);
 
-	simple_lock_init(&as->as_slock);
+	mutex_init(&as->as_slock, MUTEX_DRIVER, IPL_NONE);
+	cv_init(&as->as_cv, "acpicv");
 	as->as_units = InitialUnits;
 	as->as_maxunits = MaxUnits;
 
@@ -187,7 +190,7 @@ AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT16 Timeout)
 			timo = 1;
 	}
 
-	simple_lock(&as->as_slock);
+	mutex_enter(&as->as_slock);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
 	    "get %d units from semaphore %p (has %d) timeout %d\n",
@@ -203,14 +206,14 @@ AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT16 Timeout)
 		ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
 		    "semaphore blocked, sleeping %d ticks\n", timo));
 
-		error = ltsleep(as, PVM, "acpisem", timo, &as->as_slock);
+		error = cv_wait_sig(&as->as_cv, &as->as_slock);
 		if (error == EWOULDBLOCK) {
 			rv = AE_TIME;
 			break;
 		}
 	}
 
-	simple_unlock(&as->as_slock);
+	mutex_exit(&as->as_slock);
 
 	return_ACPI_STATUS(rv);
 }
@@ -230,7 +233,7 @@ AcpiOsSignalSemaphore(ACPI_HANDLE Handle, UINT32 Units)
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
-	simple_lock(&as->as_slock);
+	mutex_enter(&as->as_slock);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
 	    "return %d units to semaphore %p (has %d)\n",
@@ -239,9 +242,9 @@ AcpiOsSignalSemaphore(ACPI_HANDLE Handle, UINT32 Units)
 	as->as_units += Units;
 	if (as->as_units > as->as_maxunits)
 		as->as_units = as->as_maxunits;
-	wakeup(as);
+	cv_broadcast(&as->as_cv);
 
-	simple_unlock(&as->as_slock);
+	mutex_exit(&as->as_slock);
 
 	return_ACPI_STATUS(AE_OK);
 }
@@ -265,7 +268,7 @@ AcpiOsCreateLock(ACPI_HANDLE *OutHandle)
 	if (al == NULL)
 		return_ACPI_STATUS(AE_NO_MEMORY);
 
-	simple_lock_init(&al->al_slock);
+	mutex_init(&al->al_slock, MUTEX_DRIVER, IPL_NONE);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
 	    "created lock %p\n", al));
@@ -311,7 +314,7 @@ AcpiOsAcquireLock(ACPI_HANDLE Handle)
 	if (al == NULL)
 		return 0;
 
-	simple_lock(&al->al_slock);
+	mutex_enter(&al->al_slock);
 
 	return 0;
 }
@@ -331,7 +334,7 @@ AcpiOsReleaseLock(ACPI_HANDLE Handle, ACPI_NATIVE_UINT Flags)
 	if (al == NULL)
 		return;
 
-	simple_unlock(&al->al_slock);
+	mutex_exit(&al->al_slock);
 
 	return;
 }
