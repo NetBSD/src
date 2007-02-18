@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
+/*	$NetBSD: softintr.h,v 1.2 2007/02/18 07:13:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -39,6 +39,7 @@
 #define	_ARM_SOFTINTR_H_
 
 #ifdef _KERNEL
+#include <sys/device.h>			/* for evcnt */
 
 /*
  * Generic software interrupt support for all ARM platforms.

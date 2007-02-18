@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5 2007/02/18 07:13:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -40,34 +40,29 @@
 
 /* Hardware Interrupt Priority Levels are not mutually exclusive. */
 
-#define IPL_BIO		0	/* block I/O */
-#define IPL_NET		1	/* network */
-#define IPL_TTY		2	/* terminal */
-#define IPL_VM		3	/* memory allocation */
-#define IPL_AUDIO	4	/* audio */
-#define IPL_CLOCK	5	/* clock */
-#define	IPL_STATCLOCK	6
-#define IPL_HIGH	7	/*  */
+#define IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define IPL_BIO		3	/* block I/O */
+#define IPL_NET		4	/* network */
+#define	IPL_SOFTSERIAL	5
+#define IPL_TTY		6	/* terminal */
+#define IPL_VM		7	/* memory allocation */
+#define IPL_AUDIO	8	/* audio */
+#define IPL_CLOCK	9	/* clock */
+#define	IPL_STATCLOCK	10
+#define IPL_SERIAL	11	/* serial */
+#define IPL_HIGH	12	/*  */
 #define	IPL_LOCK	IPL_HIGH
 #define	IPL_SCHED	IPL_HIGH
-#define IPL_SERIAL	8	/* serial */
-#define IPL_NONE	9
 
-#define IPL_LEVELS	10
+#define IPL_LEVELS	13
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-/* Software interrupt priority levels */
-
-#define SOFTIRQ_CLOCK	0
-#define SOFTIRQ_NET	1
-#define SOFTIRQ_SERIAL	2
-
-#define SOFTIRQ_BIT(x)	(1 << x)
 
 #include <machine/irqhandler.h>
 #include <arm/arm32/psl.h>
