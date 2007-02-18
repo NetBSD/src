@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.239 2007/02/18 18:30:06 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.240 2007/02/18 19:09:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7036,13 +7036,12 @@ cpu_loadproc:
 	st	%g0, [%o0 + %lo(CPUINFO_VA+CI_WANT_RESCHED)]	! want_resched = 0;
 	LDPTR	[%l3 + L_ADDR], %l1		! newpcb = l->l_addr;
 	STPTR	%g0, [%l3 + L_BACK]		! l->l_back = NULL;
-	STPTR	%l3, [%l7 + %lo(CURLWP)]	! store new lwp
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
 	 */
 	call	_C_LABEL(sched_unlock_idle)
-	 nop
+	 STPTR	%l3, [%l7 + %lo(CURLWP)]	! store new lwp
 
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "cpu_switch: %p->%p",
