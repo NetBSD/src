@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.102 2007/02/17 22:31:43 pavel Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.103 2007/02/18 16:58:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.102 2007/02/17 22:31:43 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.103 2007/02/18 16:58:16 dsl Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.102 2007/02/17 22:31:43 pavel Exp $"
 #include <sys/signalvar.h>
 #include <sys/ras.h>
 #include <sys/filedesc.h>
+#include "sys/syscall_stats.h"
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 
@@ -419,6 +420,8 @@ proc0_init(void)
 
 	proc_initspecific(p);
 	lwp_initspecific(l);
+
+	SYSCALL_TIME_LWP_INIT(l);
 }
 
 /*
