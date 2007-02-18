@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.22 2007/02/18 22:08:42 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.23 2007/02/18 22:30:59 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.22 2007/02/18 22:08:42 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.23 2007/02/18 22:30:59 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -454,15 +454,15 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 }
 
 /* remove the directory entry */
-/* ARGSUSED2 */
+/* ARGSUSED1 */
 static int
 puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
+	struct puffs_node	*pn_targ = targ;
 	struct fuse		*fuse;
-	const char		*path = PNPATH(pn);
+	const char		*path = PNPATH(pn_targ);
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -483,9 +483,9 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
+	struct puffs_node	*pn_targ = targ;
 	struct fuse		*fuse;
-	const char		*path = PNPATH(pn);
+	const char		*path = PNPATH(pn_targ);
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -789,6 +789,8 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
 	if (ret > 0) {
 		*resid -= ret;
+		if (offset + ret > pn->pn_va.va_size)
+			pn->pn_va.va_size = offset + ret;
 		ret = 0;
 	}
 
@@ -993,7 +995,10 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	(void) snprintf(name, sizeof(name), "refuse:%s", slash);
 	pu = puffs_mount(pops, argv[argc - 1], MNT_NODEV | MNT_NOSUID,
 			name, fuse,
-			PUFFS_FLAG_BUILDPATH | PUFFS_FLAG_OPDUMP, 0);
+			PUFFS_FLAG_BUILDPATH
+			  | PUFFS_FLAG_OPDUMP
+			  | PUFFS_KFLAG_NOCACHE,
+			0);
 	if (pu == NULL) {
 		err(EXIT_FAILURE, "puffs_mount");
 	}
