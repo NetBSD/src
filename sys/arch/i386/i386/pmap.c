@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.197 2007/02/18 15:51:54 dsl Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2007/02/18 15:51:54 dsl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1703,10 +1703,10 @@ void
 pmap_fork(pmap1, pmap2)
 	struct pmap *pmap1, *pmap2;
 {
+#ifdef USER_LDT
 	simple_lock(&pmap1->pm_obj.vmobjlock);
 	simple_lock(&pmap2->pm_obj.vmobjlock);
 
-#ifdef USER_LDT
 	/* Copy the LDT, if necessary. */
 	if (pmap1->pm_flags & PMF_USER_LDT) {
 		union descriptor *new_ldt;
@@ -1721,10 +1721,10 @@ pmap_fork(pmap1, pmap2)
 		pmap2->pm_flags |= PMF_USER_LDT;
 		ldt_alloc(pmap2, new_ldt, len);
 	}
-#endif /* USER_LDT */
 
 	simple_unlock(&pmap2->pm_obj.vmobjlock);
 	simple_unlock(&pmap1->pm_obj.vmobjlock);
+#endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
 
