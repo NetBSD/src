@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.4 2007/02/18 21:14:52 macallan Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.5 2007/02/18 23:02:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -128,8 +128,7 @@ _ENTRY(_C_LABEL(mutex_exit))
  * void mutex_spin_enter(kmutex_t *);
  */
 _ENTRY(_C_LABEL(mutex_spin_enter))
-	sethi	%hi(CPUINFO_VA), %g1
-	ld	[ %g1 + CPUINFO_SELF ], %g4
+	sethi	%hi(CPUINFO_VA), %g4
 	ld	[ %g4 + CPUINFO_MTX_COUNT ], %o5
 	add	%o5, -1, %g1
 	st	%g1, [ %g4 + CPUINFO_MTX_COUNT ]
@@ -172,13 +171,12 @@ _ENTRY(_C_LABEL(mutex_spin_exit))
 #elif defined(MULTIPROCESSOR)
 	clrb	[ %o0 + MTX_LOCK ]
 #endif
-	sethi	 %hi(CPUINFO_VA), %g1
-	ld	[ %g1 + CPUINFO_SELF ], %g2
+	sethi	 %hi(CPUINFO_VA), %g2
 	ld	[ %g2 + CPUINFO_MTX_OLDSPL ], %g3
 	ld	[ %g2 + CPUINFO_MTX_COUNT ], %g1
 	inc	%g1
-	cmp	%g1, 0
-	bne	1f
+	tst	%g1
+	bnz	1f
 	 st	%g1, [ %g2 + CPUINFO_MTX_COUNT ]
 	rd	%psr, %g1
 	and	%g1, ~PSR_PIL, %g1
