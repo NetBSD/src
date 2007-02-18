@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.301 2007/02/18 19:57:29 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.302 2007/02/18 20:36:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.301 2007/02/18 19:57:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.302 2007/02/18 20:36:36 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1793,7 +1793,7 @@ restart:
 			break;
 		case S_IFREG:
 			vattr.va_type = VREG;
-			vattr.va_rdev = 0;
+			vattr.va_rdev = VNOVAL;
 			optype = VOP_CREATE_DESCOFFSET;
 			break;
 		default:
