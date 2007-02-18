@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.237 2007/02/18 18:23:58 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.238 2007/02/18 18:25:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7429,7 +7429,7 @@ ALTENTRY(fuiword)
 ENTRY(fuword)
 	btst	3, %o0			! has low bits set...
 	bnz	Lfsbadaddr		!	go return -1
-	EMPTY
+	 EMPTY
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o3
 	LDPTR	[%o2 + %lo(CPCB)], %o2
@@ -7509,7 +7509,7 @@ ALTENTRY(suiword)
 ENTRY(suword)
 	btst	3, %o0			! or has low bits set ...
 	bnz	Lfsbadaddr		!	go return error
-	EMPTY
+	 EMPTY
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	LDPTR	[%o2 + %lo(CPCB)], %o2
 	set	Lfserr, %o3
