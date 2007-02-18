@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.5 2006/11/04 12:06:28 hubertf Exp $
+#	$NetBSD: Makefile.bootcd,v 1.5.2.1 2007/02/18 21:37:50 tron Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -14,6 +14,7 @@
 #
 # Optional variables:
 #	CDRELEASE	Set to 'true' to include $RELEASEDIR/$MACHINE on the CD
+#	CDRELEASE_NOISOS Excludes installation/cdrom directory if set
 #	BOOT		Defaults to $DESTDIR/usr/mdec/boot
 #	BOOTXX_CD9660	Defaults to $DESTDIR/usr/mdec/bootxx_cd9660
 #	CDBOOTOPTIONS	Options for installboot, eg -o console=com0,speed=9600
@@ -24,6 +25,9 @@ BOOT?=		${DESTDIR}/usr/mdec/boot
 BOOTXX_CD9660?=	${DESTDIR}/usr/mdec/bootxx_cd9660
 CDRELEASE?=	false
 CDROMS_RELEASEDIR?=	installation/cdrom
+.if defined(CDRELEASE_NOISOS)
+CDRELEASE_EXCLUDE=	-s ',./installation/cdrom.*,,gp'
+.endif
 
 CDINSTALLBOOT=	"${TOOL_INSTALLBOOT} ${CDBOOTOPTIONS} -m${MACHINE} @IMAGE@ ${MDEC}/bootxx_cd9660"
 
@@ -75,7 +79,10 @@ copy-releasedir:
 		release_destdir=`pwd`/cdrom/${MACHINE} ; 		\
 		cd ${RELEASEDIR}/${MACHINE} ; 				\
 		echo Copying `pwd` to $$release_destdir ... ; 		\
-		${TOOL_PAX} -rw -pe -v . $$release_destdir ; 		\
+		${TOOL_PAX} 						\
+			-rw -pe -v 					\
+			${CDRELEASE_EXCLUDE}				\
+			. $$release_destdir ; 				\
 	fi
 
 image:
