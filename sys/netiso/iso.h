@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.18 2007/02/17 22:34:16 dyoung Exp $	*/
+/*	$NetBSD: iso.h,v 1.19 2007/02/18 00:56:53 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -165,7 +165,7 @@ WRITABLE_TSEL(struct sockaddr_iso *siso)
 	return &siso->siso_data[siso->siso_nlen];
 }
 
-static inline const void *
+static inline const char *
 TSEL(const struct sockaddr_iso *siso)
 {
 	return &siso->siso_data[siso->siso_nlen];
