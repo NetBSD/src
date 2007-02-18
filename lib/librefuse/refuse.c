@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.24 2007/02/18 22:42:33 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.25 2007/02/18 23:30:45 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,13 +30,13 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.24 2007/02/18 22:42:33 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.25 2007/02/18 23:30:45 pooka Exp $");
 #endif /* !lint */
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fuse.h>
-#include <ucontext.h>
 #include <unistd.h>
 
 #include "defs.h"
@@ -238,8 +238,8 @@ puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
 		pn_res = newrn(pu);
 		if (pn_res == NULL)
 			return errno;
-		puffs_stat2vattr(&pn_res->pn_va, &st);
 	}
+	puffs_stat2vattr(&pn_res->pn_va, &st);
 
 	*newnode = pn_res;
 	*newtype = pn_res->pn_va.va_type;
@@ -689,7 +689,6 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 	struct puffs_node	*pn = opc;
 	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
-	struct stat		 st;
 	const char		*path = PNPATH(pn);
 	int			 ret;
 
@@ -698,17 +697,14 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 		return ENOSYS;
 	}
 
-	/* examine type - if directory, return 0 rather than open */
-	ret = (fuse->op.getattr == NULL) ?
-		stat(path, &st) :
-		(*fuse->op.getattr)(path, &st);
-	if (ret == 0 && (st.st_mode & S_IFMT) == S_IFDIR) {
+	/*
+	 * examine type
+	 *  - if directory, return 0 rather than open
+	 *  - if open, don't open again, lest risk nuking file
+	 *    private info
+	 */
+	if (pn->pn_va.va_type == VDIR || rn->flags & RN_OPEN)
 		return 0;
-	}
-
-	if (strcmp(path, "/") == 0) {
-		return 0;
-	}
 
 	ret = (*fuse->op.open)(path, &rn->file_info);
 
@@ -731,6 +727,7 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
+	size_t			maxread;
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -738,7 +735,13 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		return ENOSYS;
 	}
 
-	ret = (*fuse->op.read)(path, (char *)buf, *resid, offset,
+	maxread = *resid;
+	if (maxread > pn->pn_va.va_size - offset)
+		maxread = pn->pn_va.va_size - offset;
+	if (maxread == 0)
+		return 0;
+
+	ret = (*fuse->op.read)(path, (char *)buf, maxread, offset,
 	    &rn->file_info);
 
 	if (ret > 0) {
@@ -920,6 +923,7 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	struct puffs_pathobj	*po_root;
 	struct puffs_ops	*pops;
 	struct statvfs		svfsb;
+	struct stat		st;
 	struct fuse		*fuse;
 	char			 name[64];
 	char			*slash;
@@ -995,6 +999,15 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	po_root = puffs_getrootpathobj(pu);
 	po_root->po_path = strdup("/");
 	po_root->po_len = 1;
+
+	/* sane defaults */
+	puffs_vattr_null(&pu->pu_pn_root->pn_va);
+	pu->pu_pn_root->pn_va.va_type = VDIR;
+	pu->pu_pn_root->pn_va.va_mode = 0755;
+	if (fuse->op.getattr)
+		if (fuse->op.getattr(po_root->po_path, &st) == 0)
+			puffs_stat2vattr(&pu->pu_pn_root->pn_va, &st);
+	assert(pu->pu_pn_root->pn_va.va_type == VDIR);
 
 	if (fuse->op.init)
 		fcon.private_data = fuse->op.init(NULL); /* XXX */
