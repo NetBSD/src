@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.105 2006/11/11 21:50:19 apb Exp $	*/
+/*	$NetBSD: route.c,v 1.106 2007/02/18 01:48:37 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.105 2006/11/11 21:50:19 apb Exp $");
+__RCSID("$NetBSD: route.c,v 1.106 2007/02/18 01:48:37 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -1200,7 +1200,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 	case AF_OSI:
 		su->siso.siso_addr = *iso_addr(s);
 		if (which == RTA_NETMASK || which == RTA_GENMASK) {
-			char *cp = (char *)TSEL(&su->siso);
+			const char *cp = TSEL(&su->siso);
 			su->siso.siso_nlen = 0;
 			do {--cp ;} while ((cp > (char *)su) && (*cp == 0));
 			su->siso.siso_len = 1 + cp - (char *)su;
