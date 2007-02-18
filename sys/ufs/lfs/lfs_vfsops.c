@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.228 2007/02/15 17:47:56 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.229 2007/02/18 14:26:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.228 2007/02/15 17:47:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.229 2007/02/18 14:26:52 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1138,8 +1138,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR) {
 			*vpp = NULLVP;
-			ungetnewvnode(vp);
 			mutex_exit(&ufs_hashlock);
+			ungetnewvnode(vp);
 			return (ENOENT);
 		}
 	}
