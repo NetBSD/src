@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.178 2007/02/17 22:31:43 pavel Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.179 2007/02/18 16:03:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.178 2007/02/17 22:31:43 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.179 2007/02/18 16:03:06 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.178 2007/02/17 22:31:43 pavel Exp $
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
+#include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -635,12 +636,14 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	u = l->l_rtime.tv_usec +
 	    (tv.tv_usec - spc->spc_runtime.tv_usec);
 	s = l->l_rtime.tv_sec + (tv.tv_sec - spc->spc_runtime.tv_sec);
-	if (u < 0) {
-		u += 1000000;
-		s--;
-	} else if (u >= 1000000) {
-		u -= 1000000;
-		s++;
+	if (u < 0 || u >= 1000000) {
+		if (u < 0) {
+			u += 1000000;
+			s--;
+		} else  {
+			u -= 1000000;
+			s++;
+		}
 	}
 	l->l_rtime.tv_usec = u;
 	l->l_rtime.tv_sec = s;
