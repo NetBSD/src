@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.36 2007/02/17 22:34:16 dyoung Exp $	*/
+/*	$NetBSD: key.c,v 1.37 2007/02/18 13:55:25 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.36 2007/02/17 22:34:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.37 2007/02/18 13:55:25 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1040,7 +1040,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
  */
 struct secasvar *
 key_allocsa(
-	union sockaddr_union *dst,
+	const union sockaddr_union *dst,
 	u_int proto,
 	u_int32_t spi,
 	const char* where, int tag)
