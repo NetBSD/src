@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.36 2005/02/20 21:18:27 wiz Exp $
+.\"	$NetBSD: systat.1,v 1.37 2007/02/18 17:29:26 dsl Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd February 16, 2005
+.Dd February 18, 2007
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -126,7 +126,8 @@ argument expects to be one of:
 .Ic netstat ,
 .Ic pigs ,
 .Ic ps ,
-.Ic swap
+.Ic swap ,
+.Ic syscall
 or
 .Ic vmstat .
 These displays can also be requested interactively and are described in
@@ -375,6 +376,30 @@ the graph shows the percentage of space in use on each partition.
 If there are more than one swap partition in use,
 a total line is also shown.
 Areas known to the kernel, but not in use are shown as not available.
+.It Ic syscall
+Show per system call statistics.
+The display consists of several columns of system call name and counts.
+.Pp
+In order to stop entries moving around the screen too much, an infinite
+response filter is applied to the values before they are sorted.
+.Pp
+The following commands are specific to the
+.Ic syscall
+display:
+.Pp
+.Bl -tag -width Ar -compact
+.It Ic sort Ic name
+Sort display by the syscall name (default).
+.It Ic sort Ic count
+Sort display by the count of calls or time spent in the calls.
+.It Ic sort Ic syscall
+Sort display be syscall number.
+.It Ic show Ic count
+Show the number of times the system call has be called (default).
+.It Ic show Ic time
+Show the average amount of time (in arbitrary units) spent in a call of
+the syscall.
+.El
 .It Ic vmstat
 Take over the entire display and show a (rather crowded) compendium
 of statistics related to virtual memory usage, process scheduling,
@@ -500,7 +525,8 @@ with the ones specified.
 The following commands are specific to the
 .Ic inet.* ,
 .Ic inet6.* ,
-.Ic ipsec
+.Ic ipsec ,
+.Ic syscall
 and
 .Ic vmstat
 displays; the minimum unambiguous prefix may be supplied.
