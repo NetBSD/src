@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.7 2006/04/04 16:17:18 martti Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.8 2007/02/18 03:22:03 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -162,9 +162,9 @@ static int	write_output __P((struct ifnet *, struct mbuf *,
 				  struct sockaddr *, struct rtentry *, char *));
 # else
 static int 	no_output __P((struct ifnet *, struct mbuf *,
-			       struct sockaddr *, struct rtentry *));
+			       const struct sockaddr *, struct rtentry *));
 static int	write_output __P((struct ifnet *, struct mbuf *,
-				  struct sockaddr *, struct rtentry *));
+				  const struct sockaddr *, struct rtentry *));
 # endif
 #endif
 
@@ -468,7 +468,7 @@ struct rtentry *rt;
 #endif
 struct ifnet *ifp;
 struct mbuf *m;
-struct sockaddr *s;
+const struct sockaddr *s;
 {
 	return 0;
 }
@@ -487,7 +487,7 @@ struct rtentry *rt;
 #endif
 struct ifnet *ifp;
 struct mbuf *m;
-struct sockaddr *s;
+const struct sockaddr *s;
 {
 	char fname[32];
 	mb_t *mb;
