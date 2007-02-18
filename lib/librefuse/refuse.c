@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.19 2007/02/18 00:01:18 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.20 2007/02/18 17:44:57 agc Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.19 2007/02/18 00:01:18 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.20 2007/02/18 17:44:57 agc Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -182,6 +182,17 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 	}
 	args->argv[args->argc++] = strdup(arg);
 	return 1;
+}
+
+void
+fuse_opt_free_args(struct fuse_args *args)
+{
+	if (args && args->argv) {
+		int i;
+		for (i = 0; i < args->argc; i++)
+			FREE(args->argv[i]);
+		FREE(args->argv);
+	}
 }
 
 #define FUSE_ERR_UNLINK(fuse, file) if (fuse->op.unlink) fuse->op.unlink(file)
@@ -978,4 +989,11 @@ fuse_get_context()
 {
 
 	return &fcon;
+}
+
+void
+fuse_exit(struct fuse *f)
+{
+	
+	puffs_exit(f->pu, 1);
 }
