@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.8 2007/02/18 03:22:03 dogcow Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.9 2007/02/18 04:01:27 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -161,10 +161,17 @@ static int 	no_output __P((struct ifnet *, struct mbuf *,
 static int	write_output __P((struct ifnet *, struct mbuf *,
 				  struct sockaddr *, struct rtentry *, char *));
 # else
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
+static int 	no_output(struct ifnet *, struct mbuf *,
+	    const struct sockaddr *, struct rtentry *);
+static int	write_output(struct ifnet *, struct mbuf *,
+	    const struct sockaddr *, struct rtentry *);
+#else
 static int 	no_output __P((struct ifnet *, struct mbuf *,
-			       const struct sockaddr *, struct rtentry *));
+			       struct sockaddr *, struct rtentry *));
 static int	write_output __P((struct ifnet *, struct mbuf *,
-				  const struct sockaddr *, struct rtentry *));
+				  struct sockaddr *, struct rtentry *));
+#endif
 # endif
 #endif
 
@@ -468,7 +475,11 @@ struct rtentry *rt;
 #endif
 struct ifnet *ifp;
 struct mbuf *m;
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
 const struct sockaddr *s;
+#else
+struct sockaddr *s;
+#endif
 {
 	return 0;
 }
@@ -487,7 +498,11 @@ struct rtentry *rt;
 #endif
 struct ifnet *ifp;
 struct mbuf *m;
+#if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 499001100)
 const struct sockaddr *s;
+#else
+struct sockaddr *s;
+#endif
 {
 	char fname[32];
 	mb_t *mb;
