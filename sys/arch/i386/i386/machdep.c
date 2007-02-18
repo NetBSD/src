@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.597 2007/02/18 17:11:27 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.598 2007/02/18 18:20:26 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.597 2007/02/18 17:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.598 2007/02/18 18:20:26 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -205,16 +205,6 @@ uint32_t arch_i386_xbox_memsize = 0;
 #ifdef MULTIPROCESSOR		/* XXX */
 #include <machine/mpbiosvar.h>	/* XXX */
 #endif				/* XXX */
-
-#ifndef BEEP_ONHALT_COUNT
-#define BEEP_ONHALT_COUNT 3
-#endif
-#ifndef BEEP_ONHALT_PITCH
-#define BEEP_ONHALT_PITCH 1500
-#endif
-#ifndef BEEP_ONHALT_PERIOD
-#define BEEP_ONHALT_PERIOD 250
-#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* CPU "architecture" */
