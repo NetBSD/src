@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.29 2007/02/17 22:31:44 pavel Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.30 2007/02/18 20:03:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.29 2007/02/17 22:31:44 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.30 2007/02/18 20:03:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	     struct uio *uio, int linuxmode)
 {
 	size_t len;
-	int error;
+	int error, retries;
 	struct vmspace *vm;
 	struct vm_map *map;
 	struct vm_map_entry *entry;
@@ -123,6 +123,8 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	struct vattr va;
 	dev_t dev;
 	long fileid;
+	unsigned timestamp;
+	struct uio savuio;
 
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
@@ -146,11 +148,19 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	}
 
 	map = &vm->vm_map;
+	memcpy(&savuio, uio, sizeof(savuio));
+	retries = 0;
 	vm_map_lock_read(map);
 
+ restart:
 	for (entry = map->header.next;
 		((uio->uio_resid > 0) && (entry != &map->header));
 		entry = entry->next) {
+
+		if (retries > 250) {
+			error = EWOULDBLOCK;
+			break;
+		}
 
 		if (UVM_ET_ISSUBMAP(entry))
 			continue;
@@ -205,9 +215,27 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			error = EFBIG;
 			break;
 		}
+
+		timestamp = map->timestamp;
+		vm_map_unlock_read(map);
 		error = uiomove(mebuffer, len, uio);
+		vm_map_lock_read(map);
 		if (error)
 			break;
+
+		if (timestamp != map->timestamp) {
+			/*
+			 * The map may have changed, so restart.  We
+			 * make an ugly assumption about uiomove()
+			 * and the vm_map timestamp: it will never
+			 * fall back to copyout_vmspace() because
+			 * we are copying out to curproc.
+			 */
+			KASSERT(uio->uio_vmspace == curproc->p_vmspace);
+			retries++;
+			memcpy(uio, &savuio, sizeof(*uio));
+			goto restart;
+		}
 	}
 
 	vm_map_unlock_read(map);
