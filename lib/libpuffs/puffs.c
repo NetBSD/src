@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.31 2007/02/18 17:36:48 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.32 2007/02/18 17:38:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.31 2007/02/18 17:36:48 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.32 2007/02/18 17:38:10 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -239,6 +239,14 @@ _puffs_mount(int develv, struct puffs_ops *pops, const char *dir, int mntflags,
 	pu->pu_namemod = NULL;
 
 	pu->pu_state = PUFFS_STATE_MOUNTING;
+
+#if 1
+	/* XXXkludgehere */
+	/* kauth doesn't provide this service any longer */
+	if (geteuid() != 0)
+		mntflags |= MNT_NOSUID | MNT_NODEV;
+#endif
+
 	if (mount(MOUNT_PUFFS, dir, mntflags, &pargs) == -1)
 		goto failfree;
 	pu->pu_maxreqlen = pargs.pa_maxreqlen;
