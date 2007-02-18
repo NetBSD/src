@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.13 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.14 2007/02/18 23:38:11 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.13 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.14 2007/02/18 23:38:11 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.13 2006/11/16 01:33:26 christos 
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -59,21 +61,22 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.13 2006/11/16 01:33:26 christos 
  */
 #define	SYSMON_ENVSYS_VERSION	(1 * 1000)
 
-struct lock sysmon_envsys_lock;
+kmutex_t sysmon_envsys_mtx;
 
 LIST_HEAD(, sysmon_envsys) sysmon_envsys_list =
     LIST_HEAD_INITIALIZER(&sysmon_envsys_list);
-struct simplelock sysmon_envsys_list_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t sysmon_envsys_list_mtx;
+kcondvar_t sysmon_envsys_cv;
 u_int	sysmon_envsys_next_sensor_index;
 
 int	sysmon_envsys_initialized;
-struct simplelock sysmon_envsys_initialized_slock = SIMPLELOCK_INITIALIZER;
+kmutex_t sysmon_envsys_initialized_mtx;
 
 #define	SYSMON_ENVSYS_LOCK()	\
-	lockmgr(&sysmon_envsys_lock, LK_EXCLUSIVE, NULL)
+	mutex_enter(&sysmon_envsys_mtx)
 
 #define SYSMON_ENVSYS_UNLOCK()		\
-	lockmgr(&sysmon_envsys_lock, LK_RELEASE, NULL)
+	mutex_exit(&sysmon_envsys_mtx)
 
 struct sysmon_envsys *sysmon_envsys_find(u_int);
 void	sysmon_envsys_release(struct sysmon_envsys *);
@@ -87,12 +90,12 @@ int
 sysmonopen_envsys(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
-	simple_lock(&sysmon_envsys_initialized_slock);
+	mutex_enter(&sysmon_envsys_initialized_mtx);
 	if (sysmon_envsys_initialized == 0) {
-		lockinit(&sysmon_envsys_lock, PWAIT|PCATCH, "smenv", 0, 0);
+		mutex_init(&sysmon_envsys_mtx, MUTEX_DRIVER, IPL_NONE);
 		sysmon_envsys_initialized = 1;
 	}
-	simple_unlock(&sysmon_envsys_initialized_slock);
+	mutex_exit(&sysmon_envsys_initialized_mtx);
 
 	return (0);
 }
@@ -246,8 +249,12 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 {
 	int error = 0;
 
+	mutex_init(&sysmon_envsys_list_mtx, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sysmon_envsys_initialized_mtx, MUTEX_DRIVER, IPL_NONE);
+	cv_init(&sysmon_envsys_cv, "smestate");
+
 	KASSERT((sme->sme_flags & (SME_FLAG_BUSY | SME_FLAG_WANTED)) == 0);
-	simple_lock(&sysmon_envsys_list_slock);
+	mutex_enter(&sysmon_envsys_list_mtx);
 
 	if (sme->sme_envsys_version != SYSMON_ENVSYS_VERSION) {
 		error = EINVAL;
@@ -259,7 +266,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	LIST_INSERT_HEAD(&sysmon_envsys_list, sme, sme_list);
 
  out:
-	simple_unlock(&sysmon_envsys_list_slock);
+	mutex_exit(&sysmon_envsys_list_mtx);
 	return (error);
 }
 
@@ -272,13 +279,13 @@ void
 sysmon_envsys_unregister(struct sysmon_envsys *sme)
 {
 
-	simple_lock(&sysmon_envsys_list_slock);
+	mutex_enter(&sysmon_envsys_list_mtx);
 	while (sme->sme_flags & SME_FLAG_BUSY) {
 		sme->sme_flags |= SME_FLAG_WANTED;
-		ltsleep(sme, PWAIT, "smeunreg", 0, &sysmon_envsys_list_slock);
+		cv_wait(&sysmon_envsys_cv, &sysmon_envsys_list_mtx);
 	}
 	LIST_REMOVE(sme, sme_list);
-	simple_unlock(&sysmon_envsys_list_slock);
+	mutex_exit(&sysmon_envsys_list_mtx);
 }
 
 /*
@@ -292,7 +299,7 @@ sysmon_envsys_find(u_int idx)
 {
 	struct sysmon_envsys *sme;
 
-	simple_lock(&sysmon_envsys_list_slock);
+	mutex_enter(&sysmon_envsys_list_mtx);
 again:
 	for (sme = LIST_FIRST(&sysmon_envsys_list); sme != NULL;
 	     sme = LIST_NEXT(sme, sme_list)) {
@@ -300,8 +307,8 @@ again:
 		    idx < (sme->sme_fsensor + sme->sme_nsensors)) {
 			if (sme->sme_flags & SME_FLAG_BUSY) {
 				sme->sme_flags |= SME_FLAG_WANTED;
-				ltsleep(sme, PWAIT, "smefind", 0,
-				    &sysmon_envsys_list_slock);
+				cv_wait(&sysmon_envsys_cv,
+				    &sysmon_envsys_list_mtx);
 				goto again;
 			}
 			sme->sme_flags |= SME_FLAG_BUSY;
@@ -309,7 +316,7 @@ again:
 		}
 	}
 
-	simple_unlock(&sysmon_envsys_list_slock);
+	mutex_exit(&sysmon_envsys_list_mtx);
 	return sme;
 }
 
@@ -325,9 +332,9 @@ sysmon_envsys_release(struct sysmon_envsys *sme)
 
 	KASSERT(sme->sme_flags & SME_FLAG_BUSY);
 
-	simple_lock(&sysmon_envsys_list_slock);
+	mutex_enter(&sysmon_envsys_list_mtx);
 	if (sme->sme_flags & SME_FLAG_WANTED)
-		wakeup(sme);
+		cv_broadcast(&sysmon_envsys_cv);
 	sme->sme_flags &= ~(SME_FLAG_BUSY | SME_FLAG_WANTED);
-	simple_unlock(&sysmon_envsys_list_slock);
+	mutex_exit(&sysmon_envsys_list_mtx);
 }
