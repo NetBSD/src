@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.21 2007/02/18 20:38:07 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.22 2007/02/18 22:08:42 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.21 2007/02/18 20:38:07 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.22 2007/02/18 22:08:42 pooka Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -89,7 +89,9 @@ struct fuse {
 
 struct refusenode {
 	struct fuse_file_info	 file_info;
+	int flags;
 };
+#define RN_OPEN		0x01
 
 static struct puffs_node *
 newrn(struct puffs_usermount *pu)
@@ -452,14 +454,15 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 }
 
 /* remove the directory entry */
-/* ARGSUSED1 */
+/* ARGSUSED2 */
 static int
 puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn = opc;
 	struct fuse		*fuse;
-	const char		*path = PCNPATH(pcn);
+	const char		*path = PNPATH(pn);
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -480,8 +483,9 @@ puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn = opc;
 	struct fuse		*fuse;
-	const char		*path = PCNPATH(pcn);
+	const char		*path = PNPATH(pn);
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -722,6 +726,7 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 	ret = (*fuse->op.open)(path, &rn->file_info);
 
 	if (ret == 0) {
+		rn->flags |= RN_OPEN;
 	}
 
 	return -ret;
@@ -833,15 +838,40 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	return -ret;
 }
 
-/* ARGSUSED */
+/* ARGSUSED2 */
 static int
 puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 {
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
+	struct refusenode	*rn = pn->pn_data;
+	struct fuse		*fuse;
+	const char		*path = PNPATH(pn);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+
+	if (rn->flags & RN_OPEN) {
+		if (pn->pn_va.va_type == VDIR) {
+			if (fuse->op.releasedir == NULL)
+				ret = -ENOSYS;
+
+			ret = fuse->op.releasedir(path, &rn->file_info);
+		} else {
+			if (fuse->op.release == NULL)
+				return ENOSYS;
+
+			ret = fuse->op.release(path, &rn->file_info);
+		}
+	}
 
 	nukern(pn);
 
-	return 0;
+	/*
+	 * value ignored by the kernel, but we might as well
+	 * return something for debugging purposes
+	 */
+	return -ret;
 }
 
 /* ARGSUSED1 */
