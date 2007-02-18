@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2007/02/18 07:48:20 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.18 2007/02/18 21:03:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17 2007/02/18 07:48:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2007/02/18 21:03:22 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -64,7 +64,8 @@ extern unsigned spl_mask;
 /* Prototypes */
 static void clearsoftintr(u_int); 
  
-u_int soft_interrupts = 0;
+static u_int soft_interrupts = 0;
+static u_int spl_smasks[_SPL_LEVELS];
 
 #define	COUNT	uvmexp.softs;
 
@@ -151,7 +152,6 @@ dosoftints(void)
 
 int current_spl_level = _SPL_SERIAL;
 u_int spl_masks[_SPL_LEVELS + 1];
-u_int spl_smasks[_SPL_LEVELS];
 int safepri = _SPL_0;
 
 extern u_int irqmasks[];
