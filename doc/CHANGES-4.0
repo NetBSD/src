@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.72 2007/02/18 00:06:58 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.73 2007/02/18 14:07:59 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1367,4 +1367,50 @@ sys/dev/pci/if_bnx.c				1.2
 
 	Fix two panics in DIAGNOSTIC kernels.
 	[bouyer, ticket #451]
+
+sys/dev/pci/pucdata.c				1.51
+
+	Add some SIIG and Moxa cards.
+	[chs, ticket #424]
+
+etc/MAKEDEV.tmpl				1.71
+etc/etc.acorn32/MAKEDEV.conf			1.8
+etc/etc.algor/MAKEDEV.conf			1.4
+etc/etc.alpha/MAKEDEV.conf			1.7
+etc/etc.amd64/MAKEDEV.conf			1.8
+etc/etc.amiga/MAKEDEV.conf			1.10
+etc/etc.arc/MAKEDEV.conf			1.6
+etc/etc.atari/MAKEDEV.conf			1.7
+etc/etc.bebox/MAKEDEV.conf			1.5
+etc/etc.cobalt/MAKEDEV.conf			1.4
+etc/etc.evbmips/MAKEDEV.conf			1.4
+etc/etc.evbppc/MAKEDEV.conf			1.5
+etc/etc.hp300/MAKEDEV.conf			1.11
+etc/etc.hp700/MAKEDEV.conf			1.4
+etc/etc.hpcarm/MAKEDEV.conf			1.7
+etc/etc.hpcmips/MAKEDEV.conf			1.4
+etc/etc.i386/MAKEDEV.conf			1.12
+etc/etc.ibmnws/MAKEDEV.conf			1.6
+etc/etc.mac68k/MAKEDEV.conf			1.7
+etc/etc.macppc/MAKEDEV.conf			1.7
+etc/etc.mipsco/MAKEDEV.conf			1.3
+etc/etc.mmeye/MAKEDEV.conf			1.5
+etc/etc.mvme68k/MAKEDEV.conf			1.6
+etc/etc.mvmeppc/MAKEDEV.conf			1.6
+etc/etc.next68k/MAKEDEV.conf			1.3
+etc/etc.ofppc/MAKEDEV.conf			1.5
+etc/etc.pc532/MAKEDEV.conf			1.5
+etc/etc.pmppc/MAKEDEV.conf			1.6
+etc/etc.prep/MAKEDEV.conf			1.4
+etc/etc.sandpoint/MAKEDEV.conf			1.4
+etc/etc.sgimips/MAKEDEV.conf			1.8
+etc/etc.sparc/MAKEDEV.conf			1.11
+etc/etc.sparc64/MAKEDEV.conf			1.12
+etc/etc.vax/MAKEDEV.conf			1.10
+etc/etc.x68k/MAKEDEV.conf			1.8
+
+	Fix MAKEDEV on shark: Move ses(4) devices from MI code (MAKEDEV.tmpl)
+	to those platforms that actually have the driver.
+	This fixes PR install/26511 properly.
+	[hubertf, ticket #429]
 
