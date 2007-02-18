@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.5 2007/02/18 19:59:25 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5 2007/02/18 19:59:25 briggs Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -123,7 +123,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_spsr   = tf->tf_spsr;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -189,7 +189,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -209,7 +209,6 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	struct compat_16_sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;
 
@@ -258,12 +257,12 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
 
 	return (EJUSTRETURN);
 }
