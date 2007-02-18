@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2007/02/18 18:15:44 dsl Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2007/02/18 18:15:44 dsl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -207,16 +207,6 @@ void ddb_trap_hook(int);
 
 #ifdef XENDEBUG_LOW
 void xen_dbglow_init(void);
-#endif
-
-#ifndef BEEP_ONHALT_COUNT
-#define BEEP_ONHALT_COUNT 3
-#endif
-#ifndef BEEP_ONHALT_PITCH
-#define BEEP_ONHALT_PITCH 1500
-#endif
-#ifndef BEEP_ONHALT_PERIOD
-#define BEEP_ONHALT_PERIOD 250
 #endif
 
 /* the following is used externally (sysctl_hw) */
