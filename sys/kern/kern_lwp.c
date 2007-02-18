@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.1 2007/02/17 10:30:57 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.2 2007/02/18 13:09:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.1 2007/02/17 10:30:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.2 2007/02/18 13:09:03 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -572,8 +572,8 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 }
 
 /*
- * Quit the process.  This will call cpu_exit, which will call cpu_switch,
- * so this can only be used meaningfully if you're willing to switch away. 
+ * Quit the process.
+ * this can only be used meaningfully if you're willing to switch away. 
  * Calling with l!=curlwp would be weird.
  */
 void
