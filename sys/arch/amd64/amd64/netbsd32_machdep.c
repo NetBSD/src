@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.33 2007/02/17 22:31:37 pavel Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.34 2007/02/18 20:22:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.33 2007/02/17 22:31:37 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.34 2007/02/18 20:22:25 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.33 2007/02/17 22:31:37 pavel 
 #include <machine/mtrr.h>
 #include <machine/netbsd32_machdep.h>
 #include <machine/sysarch.h>
+#include <machine/userret.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -169,7 +170,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct netbsd32_sigframe_sigcontext *fp, frame;
-	int onstack;
+	int onstack, error;
 	struct sigacts *ps = p->p_sigacts;
 
 	tf = l->l_md.md_regs;
@@ -230,7 +231,13 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
 
-	if (copyout(&frame, fp, sizeof frame) != 0) {
+	sendsig_reset(l, sig);
+
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -265,7 +272,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct netbsd32_sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -309,9 +316,14 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
-	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	sendsig_reset(l, sig);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	mutex_exit(&p->p_smutex);
+	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
