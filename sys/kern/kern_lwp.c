@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.56 2007/02/17 22:31:43 pavel Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.57 2007/02/18 16:58:15 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.56 2007/02/17 22:31:43 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.57 2007/02/18 16:58:15 dsl Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -216,6 +216,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.56 2007/02/17 22:31:43 pavel Exp $");
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
+#include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -564,6 +565,8 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(&proclist_mutex);
+
+	SYSCALL_TIME_LWP_INIT(l2);
 
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);

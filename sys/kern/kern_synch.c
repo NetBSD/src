@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.179 2007/02/18 16:03:06 dsl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.180 2007/02/18 16:58:16 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.179 2007/02/18 16:03:06 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.180 2007/02/18 16:58:16 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -648,6 +648,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	l->l_rtime.tv_usec = u;
 	l->l_rtime.tv_sec = s;
 
+	/* Count time spent in current system call */
+	SYSCALL_TIME_SLEEP(l);
+
 	/*
 	 * XXXSMP If we are using h/w performance counters, save context.
 	 */
@@ -717,6 +720,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * be running on a new CPU now, so don't use the cached
 	 * schedstate_percpu pointer.
 	 */
+	SYSCALL_TIME_WAKEUP(l);
 	KDASSERT(l->l_cpu == curcpu());
 	microtime(&l->l_cpu->ci_schedstate.spc_runtime);
 	splx(oldspl);
