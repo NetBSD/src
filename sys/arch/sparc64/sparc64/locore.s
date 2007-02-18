@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.238 2007/02/18 18:25:40 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.239 2007/02/18 18:30:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6792,9 +6792,8 @@ ENTRY_NOPROFILE(idle_switch)
 #endif
 
 ENTRY_NOPROFILE(idle)
-	STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
-	 EMPTY
+	 STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
 idle_nolock:
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "idle: pcb %p, idle_u %p",
@@ -7043,7 +7042,7 @@ cpu_loadproc:
 	 * scheduler lock, but keep interrupts out.
 	 */
 	call	_C_LABEL(sched_unlock_idle)
-	 EMPTY
+	 nop
 
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "cpu_switch: %p->%p",
