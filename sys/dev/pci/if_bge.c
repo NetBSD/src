@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.124 2007/02/17 19:47:06 bouyer Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.125 2007/02/19 18:44:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.124 2007/02/17 19:47:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.125 2007/02/19 18:44:05 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -864,20 +864,14 @@ bge_newbuf_std(struct bge_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		if (!sc->bge_rx_alignment_bug)
-		    m_adj(m_new, ETHER_ALIGN);
 	}
+	if (!sc->bge_rx_alignment_bug)
+	    m_adj(m_new, ETHER_ALIGN);
 	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT))
 		return(ENOBUFS);
-	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, MCLBYTES, 
+	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize, 
 	    BUS_DMASYNC_PREREAD);
-	/*
-	 * as m_adj() change the len of the chain it's easier to
-	 * dmamap_load it before
-	 */
-	if (!sc->bge_rx_alignment_bug)
-	    m_adj(m_new, ETHER_ALIGN);
 
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
 	r = &sc->bge_rdata->bge_rx_std_ring[i];
@@ -934,12 +928,11 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 		buf = m_new->m_data = m_new->m_ext.ext_buf;
 		m_new->m_ext.ext_size = BGE_JUMBO_FRAMELEN;
 	}
-	bus_dmamap_sync(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
-	    buf - sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
-	    BUS_DMASYNC_PREREAD);
-
 	if (!sc->bge_rx_alignment_bug)
 	    m_adj(m_new, ETHER_ALIGN);
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
+	    mtod(m_new, caddr_t) - sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
+	    BUS_DMASYNC_PREREAD);
 	/* Set up the descriptor. */
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
 	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
@@ -2926,16 +2919,14 @@ bge_rxeof(struct bge_softc *sc)
 		BGE_INC(sc->bge_rx_saved_considx, sc->bge_return_ring_cnt);
 
 		if (cur_rx->bge_flags & BGE_RXBDFLAG_JUMBO_RING) {
-			caddr_t buf;
 			BGE_INC(sc->bge_jumbo, BGE_JUMBO_RX_RING_CNT);
 			m = sc->bge_cdata.bge_rx_jumbo_chain[rxidx];
 			sc->bge_cdata.bge_rx_jumbo_chain[rxidx] = NULL;
 			jumbocnt++;
-			buf = m->m_ext.ext_buf;
 			bus_dmamap_sync(sc->bge_dmatag,
 			    sc->bge_cdata.bge_rx_jumbo_map,
-			    buf - sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
-			    BUS_DMASYNC_POSTREAD);
+			    mtod(m, caddr_t) - sc->bge_cdata.bge_jumbo_buf,
+			    BGE_JLEN, BUS_DMASYNC_POSTREAD);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
 				ifp->if_ierrors++;
 				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
@@ -2955,8 +2946,9 @@ bge_rxeof(struct bge_softc *sc)
 			stdcnt++;
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			sc->bge_cdata.bge_rx_std_map[rxidx] = 0;
-			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, MCLBYTES,
-			    BUS_DMASYNC_POSTREAD);
+			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->bge_dmatag, dmamap);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
 				ifp->if_ierrors++;
 				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
