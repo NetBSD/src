@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.27 2007/02/19 22:07:51 xtraeme Exp $	*/
+/*	$NetBSD: refuse.c,v 1.28 2007/02/19 22:12:44 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.27 2007/02/19 22:07:51 xtraeme Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.28 2007/02/19 22:12:44 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -841,30 +841,23 @@ puffs_fuse_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid,
 	struct refusenode	*rn = pn->pn_data;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
-	int			ret;
-
-	ret = 0;
 
 	*refcount = 1; /* safe default */
 	fuse = (struct fuse *)pu->pu_privdata;
 
 	if (rn && rn->flags & RN_OPEN) {
 		if (pn->pn_va.va_type == VDIR) {
-			if (fuse->op.releasedir == NULL)
-				ret = -ENOSYS;
-
-			ret = fuse->op.releasedir(path, &rn->file_info);
+			if (fuse->op.releasedir)
+				fuse->op.releasedir(path, &rn->file_info);
 		} else {
-			if (fuse->op.release == NULL)
-				return ENOSYS;
-
-			ret = fuse->op.release(path, &rn->file_info);
+			if (fuse->op.release)
+				fuse->op.release(path, &rn->file_info);
 		}
 	}
 	if (rn)
 		rn->flags &= ~RN_OPEN;
 
-	return ret;
+	return 0;
 }
 
 /* ARGSUSED */
