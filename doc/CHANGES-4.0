@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.75 2007/02/19 13:57:52 tron Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.76 2007/02/19 20:01:07 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1463,4 +1463,27 @@ common/lib/libc/hash/sha2/sha2.c		1.3-1.4
 	errors while building the toolchain on a NetBSD 4.x system using
 	the "-static" link option.
 	[christos, ticket #456]
+
+usr.sbin/pcictl/pcictl.8			1.6
+
+	Xref drvctl(8), bump date
+	[hubertf, ticket #435]
+
+usr.sbin/pcictl/pcictl.c			1.11
+
+	Make the output of 'list -n' aligned  by always printing 8 hex digits.
+	[hubertf, ticket #436]
+
+usr.sbin/etcupdate/etcupdate			1.31
+
+	Run pwd_mkdb before running mtree.  PR#35570.
+	[martti, ticket #440]
+
+etc/defaults/weekly.conf			1.3
+etc/weekly					1.22
+share/man/man5/weekly.conf.5			1.8-1.9
+
+	Remove unused references to "clean_uucp" variable. 
+	Add rebuild_whatisdb weekly variable that defaults to NO.
+	[reed, ticket #442]
 
