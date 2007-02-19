@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.4 2007/02/17 05:34:07 matt Exp $	*/
+/*	$NetBSD: userret.h,v 1.5 2007/02/19 03:06:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -45,7 +45,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 
 	/* Take pending signals. */
 	for (;;) {
-		if ((l->l_flag & L_USERRET) != 0)
+		if ((l->l_flag & LW_USERRET) != 0)
 			lwp_userret(l);
 		if (!curcpu()->ci_want_resched)
 			break;
