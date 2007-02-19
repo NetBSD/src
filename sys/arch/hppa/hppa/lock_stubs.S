@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.4 2007/02/19 17:06:32 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.5 2007/02/19 18:09:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@
 	.import	curlwp, data
 	.import mutex_vector_enter, code
 	.import mutex_vector_exit, code
+	.import mutex_wakeup, code
 
 LEAF_ENTRY(_lock_cas)
 _lock_cas_rasstart:
@@ -107,12 +108,17 @@ LEAF_ENTRY(mutex_exit)
 
 	/*	
 	 * We have posted a read memory barrier so the check of mtx_waiters
-	 * will happen in sequence.  If it's set then trap into
-	 * mutex_vector_exit() to wake up any threads sleeping on the lock.
+	 * will happen in sequence.  If it's set then trap into mutex_wakeup()
+	 * to wake up any threads sleeping on the lock.
 	 */
 	ldb	MTX_WAITERS(%arg0),%t4
 	comib,=	0,%t1,.Lexit_done
 	 nop
+
+	ldil	L%mutex_wakeup, %t1
+	ldo	R%mutex_wakeup(%t1), %t1
+	.call
+	bv,n	%r0(%t1)
 
 .Lexit_slowpath:
 	ldil	L%mutex_vector_exit, %t1
