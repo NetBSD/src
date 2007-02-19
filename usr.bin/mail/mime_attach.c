@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.3 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.3.2.1 2007/02/19 13:39:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.3 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.3.2.1 2007/02/19 13:39:00 tron Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -315,25 +315,41 @@ content_encoding(struct attachment *attach, const char *ctype)
  */
 /*
  * We use libmagic(3) to get the content type, except in the case of a
- * 0 or 1 byte file, which we declare "text/plain".
+ * 0 or 1 byte file where libmagic gives rather useless results.
  */
 static const char *
-content_type_by_name(const char *filename)
+content_type_by_name(char *filename)
 {
 	const char *cp;
+	char *cp2;
 	magic_t magic;
 	struct stat sb;
 
 	/*
 	 * libmagic produces annoying results on very short files.
-	 * Note: a 1-byte file always consists of a newline, so size
-	 * determines all here.
+	 * The common case is with mime-encode-message defined and an
+	 * empty message body.
+	 *
+	 * Note: a 1-byte message body always consists of a newline,
+	 * so size determines all there.  However, 1-byte attachments
+	 * (filename != NULL) could be anything, so check those.
 	 */
 	if ((filename != NULL && stat(filename, &sb) == 0) ||
-	    (filename == NULL && fstat(0, &sb) == 0))
-		if (sb.st_size < 2 && S_ISREG(sb.st_mode))
-			return "text/plain";
-		       
+	    (filename == NULL && fstat(0, &sb) == 0)) {
+		if (sb.st_size < 2 && S_ISREG(sb.st_mode)) {
+			FILE *fp;
+			int ch;
+			if (sb.st_size == 0 || filename == NULL ||
+			    (fp = fopen(filename, "r")) == NULL)
+				return "text/plain";
+
+			ch = fgetc(fp);
+			(void)fclose(fp);
+
+			return isprint(ch) || isspace(ch) ?
+			    "text/plain" : "application/octet-stream";
+		}
+	}
 	magic = magic_open(MAGIC_MIME);
 	if (magic == NULL) {
 		warn("magic_open: %s", magic_error(magic));
@@ -348,7 +364,11 @@ content_type_by_name(const char *filename)
 		warn("magic_load: %s", magic_error(magic));
 		return NULL;
 	}
-	cp = savestr(cp);
+	if (filename &&
+	    sasprintf(&cp2, "%s; name=\"%s\"", cp, basename(filename)) != -1)
+		cp = cp2;
+	else
+		cp = savestr(cp);
 	magic_close(magic);
 	return cp;
 }
