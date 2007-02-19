@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.3 2007/02/18 23:40:07 xtraeme Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.4 2007/02/19 00:41:48 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.3 2007/02/18 23:40:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.4 2007/02/19 00:41:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -76,12 +76,6 @@ static LIST_HEAD(, acpi_interrupt_handler) acpi_interrupt_list =
     LIST_HEAD_INITIALIZER(&acpi_interrupt_list);
 static kmutex_t acpi_interrupt_list_mtx;
 
-#define	ACPI_INTERRUPT_LIST_LOCK()					\
-	mutex_enter(&acpi_interrupt_list_mtx)
-
-#define	ACPI_INTERRUPT_LIST_UNLOCK()					\
-	mutex_exit(&acpi_interrupt_list_mtx)
-
 /*
  * AcpiOsInstallInterruptHandler:
  *
@@ -111,9 +105,9 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 	rv = acpi_md_OsInstallInterruptHandler(InterruptNumber,
 	    ServiceRoutine, Context, &aih->aih_ih);
 	if (rv == AE_OK) {
-		ACPI_INTERRUPT_LIST_LOCK();
+		mutex_enter(&acpi_interrupt_list_mtx);
 		LIST_INSERT_HEAD(&acpi_interrupt_list, aih, aih_list);
-		ACPI_INTERRUPT_LIST_UNLOCK();
+		mutex_exit(&acpi_interrupt_list_mtx);
 	} else
 		free(aih, M_ACPI);
 
@@ -138,17 +132,17 @@ AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber,
 	if (ServiceRoutine == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
-	ACPI_INTERRUPT_LIST_LOCK();
+	mutex_enter(&acpi_interrupt_list_mtx);
 	LIST_FOREACH(aih, &acpi_interrupt_list, aih_list) {
 		if (aih->aih_intrnum == InterruptNumber &&
 		    aih->aih_func == ServiceRoutine) {
 			LIST_REMOVE(aih, aih_list);
-			ACPI_INTERRUPT_LIST_UNLOCK();
+			mutex_exit(&acpi_interrupt_list_mtx);
 			acpi_md_OsRemoveInterruptHandler(aih->aih_ih);
 			free(aih, M_ACPI);
 			return_ACPI_STATUS(AE_OK);
 		}
 	}
-	ACPI_INTERRUPT_LIST_UNLOCK();
+	mutex_exit(&acpi_interrupt_list_mtx);
 	return_ACPI_STATUS(AE_NOT_EXIST);
 }
