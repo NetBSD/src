@@ -1,4 +1,4 @@
-.\"	$NetBSD: gio.4,v 1.17 2006/12/26 04:43:10 rumble Exp $
+.\"	$NetBSD: gio.4,v 1.18 2007/02/19 14:55:56 rumble Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm gio
-.Nd SGI's Graphics I/O (GIO) bus - an early PCI-like bus
+.Nd SGI's Graphics I/O (GIO) bus (an early PCI-like bus)
 .Sh SYNOPSIS
 .Cd "gio0 at imc0"
 .Cd "gio0 at pic0"
@@ -74,20 +74,14 @@ The
 driver first appeared in
 .Nx 1.5 .
 .Sh CAVEATS
-On Challenge S systems only one
+Challenge S systems may use only one
 .Nm
-expansion slot may be used with a DMA-capable device.
-This is due to the fact that the IOPLUS board uses one of the slots'
-DMA channels for the additional
-.Xr sq 4
-Ethernet.
-Which slot to use with a DMA-capable card depends on the card in
-question.
-HPC1.5-based cards, such as the E++ Ethernet Adapter and GIO32 SCSI
-Adapter, must be placed in slot 1 (next to the memory banks).
-All other DMA-capable boards must be placed in slot 0 (closest to
-the edge of the case).
-In either case the other slot may only accommodate a PIO card.
+DMA-capable expansion card, despite having two slots.
+Cards based on the
+.Xr hpc 4
+controller, such as the GIO32 scsi and E++ ethernet adapters, must be
+placed in slot 1 (closest to the side of the case).
+All other cards must be placed in slot 0 (adjacent to the memory banks).
 .Pp
 Indigo2 and Challenge M systems contain either three or four GIO64 connectors,
 depending on the model.
