@@ -1,4 +1,4 @@
-/*	$NetBSD: collect.c,v 1.37 2006/11/28 18:45:32 christos Exp $	*/
+/*	$NetBSD: collect.c,v 1.37.2.1 2007/02/19 13:36:57 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-__RCSID("$NetBSD: collect.c,v 1.37 2006/11/28 18:45:32 christos Exp $");
+__RCSID("$NetBSD: collect.c,v 1.37.2.1 2007/02/19 13:36:57 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -528,7 +528,7 @@ cont:
 			/*
 			 * Escape to command mode, but be nice!
 			 */
-			(void)execute(&linebuf[2], 1);
+			(void)execute(&linebuf[2], ec_composing);
 			goto cont;
 		case '.':
 			/*
