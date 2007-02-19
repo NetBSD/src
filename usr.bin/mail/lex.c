@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.30.2.2 2007/02/19 13:36:58 tron Exp $	*/
+/*	$NetBSD: lex.c,v 1.30.2.3 2007/02/19 13:39:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.30.2.2 2007/02/19 13:36:58 tron Exp $");
+__RCSID("$NetBSD: lex.c,v 1.30.2.3 2007/02/19 13:39:08 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ setfile(const char *name)
 	 */
 
 	readonly = 0;
-	if ((i = open(name, 1)) < 0)
+	if ((i = open(name, O_WRONLY)) < 0)
 		readonly++;
 	else
 		(void)close(i);
@@ -384,9 +384,9 @@ setup_piping(char *cmdline, int c_pipe)
 	if (fout) {
 		(void)signal(SIGPIPE, brokpipe);
 		(void)fflush(stdout);
-		if ((oldfd1 = dup(1)) == -1)
+		if ((oldfd1 = dup(STDOUT_FILENO)) == -1)
 			err(EXIT_FAILURE, "dup failed");
-		if (dup2(fileno(fout), 1) == -1)
+		if (dup2(fileno(fout), STDOUT_FILENO) == -1)
 			err(EXIT_FAILURE, "dup2 failed");
 		fp_stop = last_file;
 	}
@@ -401,7 +401,8 @@ close_piping(void)
 {
 	if (oldfd1 != -1) {
 		(void)fflush(stdout);
-		if (fileno(stdout) != oldfd1 && dup2(oldfd1, 1) == -1)
+		if (fileno(stdout) != oldfd1 &&
+		    dup2(oldfd1, STDOUT_FILENO) == -1)
 			err(EXIT_FAILURE, "dup2 failed");
 
 		(void)signal(SIGPIPE, SIG_IGN);
@@ -456,6 +457,9 @@ get_cmdname(char *buf)
 	for (cp = buf; *cp; cp++)
 		if (strchr(" \t0123456789$^.:/-+*'\">|", *cp) != NULL)
 			break;
+	/* XXX - Don't miss the pipe command! */
+	if (cp == buf && *cp == '|')
+		cp++;
 	len = cp - buf + 1;
 	cmd = salloc(len);
 	(void)strlcpy(cmd, buf, len);
