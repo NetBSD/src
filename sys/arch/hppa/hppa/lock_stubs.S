@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3 2007/02/10 13:21:52 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4 2007/02/19 17:06:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ LEAF_ENTRY(mutex_exit)
 	 nop
 
 .Lexit_slowpath:
-	.import mutex_vector_exit, code
 	ldil	L%mutex_vector_exit, %t1
 	ldo	R%mutex_vector_exit(%t1), %t1
 	.call
@@ -142,7 +141,6 @@ LEAF_ENTRY(mutex_enter)
 	comb,=,n %t1,%t2,.Lmutexunowned
 .Lenter_slowpath:
 
-	.import mutex_vector_enter, code
 	ldil	L%mutex_vector_enter, %t1
 	ldo	R%mutex_vector_enter(%t1), %t1
 	.call
