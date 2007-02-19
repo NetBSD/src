@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.5 2007/02/19 00:56:05 xtraeme Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.6 2007/02/19 22:31:17 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.5 2007/02/19 00:56:05 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.6 2007/02/19 22:31:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -74,7 +74,8 @@ struct acpi_interrupt_handler {
 
 static LIST_HEAD(, acpi_interrupt_handler) acpi_interrupt_list =
     LIST_HEAD_INITIALIZER(&acpi_interrupt_list);
-static kmutex_t acpi_interrupt_list_mtx;
+
+kmutex_t acpi_interrupt_list_mtx;
 
 /*
  * AcpiOsInstallInterruptHandler:
@@ -87,8 +88,6 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 {
 	struct acpi_interrupt_handler *aih;
 	ACPI_STATUS rv;
-
-	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DRIVER, IPL_NONE);
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
