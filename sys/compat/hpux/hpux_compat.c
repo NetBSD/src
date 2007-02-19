@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.87 2007/02/18 11:45:35 dsl Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.88 2007/02/19 18:43:17 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.87 2007/02/18 11:45:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.88 2007/02/19 18:43:17 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -538,7 +538,7 @@ hpux_sys_ulimit(struct lwp *l, void *v, register_t *retval)
  * values -16 (high) thru -1 (low).
  */
 int
-hpux_sys_rtprio(lp, v, retval)
+hpux_sys_rtprio(struct lwp *lp, void *v, register_t *retval)
 {
 	struct hpux_sys_rtprio_args *uap = v;
 	struct proc *p;
