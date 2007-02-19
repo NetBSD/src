@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.54 2007/02/19 21:17:03 dyoung Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.55 2007/02/19 21:18:23 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.54 2007/02/19 21:17:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.55 2007/02/19 21:18:23 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -102,7 +102,6 @@ int arc_ipmtu = ARC_IPMTU;
 u_int8_t  arcbroadcastaddr = 0;
 
 #define senderr(e) { error = (e); goto bad;}
-#define SIN(s) ((struct sockaddr_in *)s)
 
 static	int arc_output(struct ifnet *, struct mbuf *,
 	    const struct sockaddr *, struct rtentry *);
