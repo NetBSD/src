@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.53 2007/02/17 22:34:08 dyoung Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.54 2007/02/19 21:17:03 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.53 2007/02/17 22:34:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.54 2007/02/19 21:17:03 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -105,7 +105,7 @@ u_int8_t  arcbroadcastaddr = 0;
 #define SIN(s) ((struct sockaddr_in *)s)
 
 static	int arc_output(struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *);
+	    const struct sockaddr *, struct rtentry *);
 static	void arc_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -114,12 +114,13 @@ static	void arc_input(struct ifnet *, struct mbuf *);
  * Assumes that ifp is actually pointer to arccom structure.
  */
 static int
-arc_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	struct mbuf		*m, *m1, *mcopy;
 	struct rtentry		*rt;
 	struct arccom		*ac;
+	const struct arc_header	*cah;
 	struct arc_header	*ah;
 	struct arphdr		*arph;
 	int			error, newencoding;
@@ -176,7 +177,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		if (m->m_flags & (M_BCAST|M_MCAST))
 			adst = arcbroadcastaddr; /* ARCnet broadcast address */
 		else if (ifp->if_flags & IFF_NOARP)
-			adst = ntohl(SIN(dst)->sin_addr.s_addr) & 0xFF;
+			adst = ntohl(satocsin(dst)->sin_addr.s_addr) & 0xFF;
 		else if (!arpresolve(ifp, rt, m, dst, &adst))
 			return 0;	/* not resolved yet */
 
@@ -248,9 +249,9 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif
 
 	case AF_UNSPEC:
-		ah = (struct arc_header *)dst->sa_data;
- 		adst = ah->arc_dhost;
-		atype = ah->arc_type;
+		cah = (const struct arc_header *)dst->sa_data;
+ 		adst = cah->arc_dhost;
+		atype = cah->arc_type;
 		break;
 
 	default:
