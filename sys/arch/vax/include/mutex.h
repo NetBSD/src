@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2007/02/17 05:34:07 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2007/02/19 00:31:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -105,7 +105,8 @@ struct kmutex {
 
 #define	__HAVE_MUTEX_STUBS		1
 #define	__HAVE_SPIN_MUTEX_STUBS		1
-#define	__HAVE_MUTEX_NO_SPIN_ACTIVE_P	1
+
+#define	MUTEX_NO_SPIN_ACTIVE_P(ci)	((ci)->ci_mtx_count == 1)
 
 static inline uintptr_t
 MUTEX_OWNER(uintptr_t owner)
@@ -177,12 +178,6 @@ static inline bool
 MUTEX_ADAPTIVE_P(volatile kmutex_t *mtx)
 {
 	return (mtx->mtx_id & 1) == 0;
-}
-
-static inline bool
-MUTEX_NO_SPIN_ACTIVE_P(struct cpu_info *ci)
-{
-	return ci->ci_mtx_count == 1;
 }
 
 static inline bool
