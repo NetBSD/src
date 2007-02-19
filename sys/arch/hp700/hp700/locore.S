@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.17 2007/02/17 10:37:33 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.18 2007/02/19 10:12:14 skrll Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -1036,10 +1036,25 @@ ALTENTRY(hppa_fpu_nop1)
 	mtctl	%r1, %ccr
 
 switch_return:
-	copy	%rp, %r4
+	/* start stack calling convention */
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(1)(%sp)
+	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)
+	copy	%r3, %r1
+	copy	%sp, %r3
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+
 	/* Release sched_lock */ 
 	CALL(sched_unlock_idle, %r1)
-	copy	%r4, %rp
+
+	/* end stack calling convention */
+	ldw	HPPA_FRAME_CRP(%r3), %rp
+	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
+	ldw	HPPA_FRAME_ARG(1)(%r3), %t3
+	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
+	ldo	HPPA_FRAME_SIZE(%r3), %sp
+	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
 
 	bv	0(%rp)
 	mtctl	%arg3, %eiem
