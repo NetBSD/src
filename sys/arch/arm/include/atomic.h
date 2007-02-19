@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.6 2007/02/18 07:24:52 matt Exp $ */
+/* $NetBSD: atomic.h,v 1.7 2007/02/19 15:54:00 he Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -53,7 +53,7 @@
 #ifdef ATOMIC_SET_BIT_NONINLINE_REQUIRED
 void atomic_set_bit( u_int *, u_int );
 void atomic_clear_bit( u_int *, u_int );
-bool atomic_cas(volatile uinptr_t *, uintptr_t, uintptr_t);
+bool atomic_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 #endif
 
 #ifdef __PROG32
