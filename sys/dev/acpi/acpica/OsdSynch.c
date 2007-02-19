@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.5 2007/02/19 00:01:23 xtraeme Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.6 2007/02/19 12:29:24 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.5 2007/02/19 00:01:23 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.6 2007/02/19 12:29:24 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -150,6 +150,7 @@ AcpiOsDeleteSemaphore(ACPI_HANDLE Handle)
 	if (as == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
+	mutex_destroy(&as->as_slock);
 	free(as, M_ACPI);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "destroyed semaphore %p\n", as));
@@ -292,6 +293,7 @@ AcpiOsDeleteLock(ACPI_HANDLE Handle)
 	if (al == NULL)
 		return;
 
+	mutex_destroy(&al->al_slock);
 	free(al, M_ACPI);
 
 	ACPI_DEBUG_PRINT((ACPI_DB_MUTEX, "destroyed lock %p\n", al));
