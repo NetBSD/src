@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4 2007/02/19 00:31:21 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5 2007/02/19 03:06:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 		"1:"
 	    : "=m"(mtx->mtx_owner), "=r"(rv)
 	    : "g"(curthread));
-	return 1;
+	return rv;
 }
 
 static inline void
