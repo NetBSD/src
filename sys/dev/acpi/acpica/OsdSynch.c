@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.4 2007/02/18 23:41:07 xtraeme Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.5 2007/02/19 00:01:23 xtraeme Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.4 2007/02/18 23:41:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.5 2007/02/19 00:01:23 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -123,7 +123,7 @@ AcpiOsCreateSemaphore(UINT32 MaxUnits, UINT32 InitialUnits,
 		return_ACPI_STATUS(AE_NO_MEMORY);
 
 	mutex_init(&as->as_slock, MUTEX_DRIVER, IPL_NONE);
-	cv_init(&as->as_cv, "acpicv");
+	cv_init(&as->as_cv, "acpisem");
 	as->as_units = InitialUnits;
 	as->as_maxunits = MaxUnits;
 
@@ -206,7 +206,7 @@ AcpiOsWaitSemaphore(ACPI_HANDLE Handle, UINT32 Units, UINT16 Timeout)
 		ACPI_DEBUG_PRINT((ACPI_DB_MUTEX,
 		    "semaphore blocked, sleeping %d ticks\n", timo));
 
-		error = cv_wait_sig(&as->as_cv, &as->as_slock);
+		error = cv_timedwait(&as->as_cv, &as->as_slock, timo);
 		if (error == EWOULDBLOCK) {
 			rv = AE_TIME;
 			break;
