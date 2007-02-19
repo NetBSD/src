@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.12 2006/10/14 17:51:37 bjh21 Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.13 2007/02/19 23:44:26 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2006/10/14 17:51:37 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2007/02/19 23:44:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2006/10/14 17:51:37 bjh21 Exp $"
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
 #include <sys/user.h>
+#include <sys/sched.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -169,21 +171,18 @@ cpu_lwp_free(struct lwp *l, int proc)
 }
 
 void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	/* Nothing to do here? */
+}
+
+void
 cpu_exit(struct lwp *l)
 {
 	int s;
 
-	/*
-	 * We're still running on l's stack here.  This is a little
-	 * dangerous, since we're about to free it, but no-one's going
-	 * to get a chance to reallocate it before we call
-	 * cpu_switch().  Well, I hope they're not anyway.
-	 *
-	 * A more conventional approach would be to run on lwp0's
-	 * stack or to have a special stack for this purpose.
-	 */
-	lwp_exit2(l);
-	SCHED_LOCK(s);		/* expected by cpu_switch */
+	mutex_enter(&sched_mutex);		/* expected by cpu_switch */
 	cpu_switch(NULL, NULL);
 }
 
