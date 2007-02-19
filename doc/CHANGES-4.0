@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.76 2007/02/19 20:01:07 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.77 2007/02/19 20:19:12 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1486,4 +1486,16 @@ share/man/man5/weekly.conf.5			1.8-1.9
 	Remove unused references to "clean_uucp" variable. 
 	Add rebuild_whatisdb weekly variable that defaults to NO.
 	[reed, ticket #442]
+
+sys/dev/scsipi/scsiconf.c			1.242
+
+	Add PQUIRK_CAP_SYNC | PQUIRK_CAP_WIDE16 for Seagate
+	ST318203LSUN18G.
+	[bouyer, ticket #452]
+
+sys/arch/amd64/include/signal.h			1.9
+
+	Accept the old ABI versions of signal trampolines for 32-bit
+	compatibility.
+	[pavel, ticket #455]
 
