@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.34 2007/02/18 20:22:25 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.35 2007/02/19 15:10:04 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.34 2007/02/18 20:22:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.35 2007/02/19 15:10:04 cube Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -905,6 +905,21 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
 	}
+}
+
+void
+startlwp32(void *arg)
+{
+	int err;
+	ucontext32_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
+	pool_put(&lwp_uc_pool, uc);
+
+	KERNEL_UNLOCK_LAST(l);
+
+	userret(l);
 }
 
 /*
