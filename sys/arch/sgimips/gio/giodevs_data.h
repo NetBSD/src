@@ -1,4 +1,4 @@
-/*	$NetBSD: giodevs_data.h,v 1.5 2006/07/20 13:12:32 rumble Exp $	*/
+/*	$NetBSD: giodevs_data.h,v 1.6 2007/02/19 04:47:06 rumble Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -23,8 +23,8 @@ struct gio_knowndev gio_knowndevs[] = {
 	{ 0x30, "Lyon Lamb IVAS" },
 	{ 0x35, "Phobos G160 10/100 Ethernet" },
 	{ 0x36, "Phobos G130 10/100 Ethernet" },
-	{ 0x37, "Phobos G100 10/100 Ethernet" },
-	{ 0x38, "Set Engineering GIO 100BaseTX Fast Ethernet" },
+	{ 0x37, "Phobos G100 100baseTX Fast Ethernet" },
+	{ 0x38, "Set Engineering GFE 10/100 Ethernet" },
 	{ 0x85, "ATM board" },
 	{ 0x87, "16 bit SCSI Card" },
 	{ 0x8c, "SMPTE 259M Video" },
