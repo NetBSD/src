@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.2.2.1 2007/02/19 13:37:06 tron Exp $	*/
+/*	$NetBSD: format.c,v 1.2.2.2 2007/02/19 13:39:28 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.2.2.1 2007/02/19 13:37:06 tron Exp $");
+__RCSID("$NetBSD: format.c,v 1.2.2.2 2007/02/19 13:39:28 tron Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -554,7 +554,7 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 	     (tail = strptime(date,     " %d %b %Y %R ", tm)) != NULL)) {
 		int hour;
 		int min;
-		char sign;
+		char sign[2];
 		char *cp;
 
 		if ((cp = strchr(tail, '(')) != NULL)
@@ -573,9 +573,9 @@ dateof(struct tm *tm, struct message *mp, int use_hl_date)
 		 * XXX - This is painful!  Is there a better way?
 		 */
 		if (strcmp(gmtoff, "-0000") != 0 &&
-		    sscanf(gmtoff, " %[+-]%2d%2d ", &sign, &hour, &min) == 3) {
+		    sscanf(gmtoff, " %1[+-]%2d%2d ", sign, &hour, &min) == 3) {
 			time_t otime;
-			if (sign == '-') {
+			if (sign[0] == '-') {
 				tm->tm_hour += hour;
 				tm->tm_min += min;
 			}
