@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.238 2007/02/17 22:31:42 pavel Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.239 2007/02/19 15:10:04 cube Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.238 2007/02/17 22:31:42 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.239 2007/02/19 15:10:04 cube Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -191,6 +191,7 @@ const struct emul emul_netbsd = {
 	uvm_default_mapaddr,
 	NULL,
 	sizeof(ucontext_t),
+	startlwp,
 };
 
 #ifdef LKM
