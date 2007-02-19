@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2007/02/17 18:30:29 hubertf Exp $
+#	$NetBSD: Makefile,v 1.4 2007/02/19 11:15:47 cube Exp $
 
 NOMAN=  	# defined
-CLEANFILES=	input-utf8 result-general result-latin1 result-utf8
+CLEANFILES=	result-general result-latin1 result-utf8
 
 regress:
 	@${HOST_SH} ${.CURDIR}/cut_tests ${.CURDIR}
