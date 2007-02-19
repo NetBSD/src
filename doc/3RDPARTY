@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.508 2007/02/18 12:29:24 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.509 2007/02/19 03:18:04 rpaulo Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -118,7 +118,7 @@ Maintainer:	n/a
 Archive Site:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Home Page:	http://cvsweb.freebsd.org/src/share/misc/bsd-family-tree
 Mailing List:
-Responsible:	rpaulo
+Responsible:	None.
 License:	See URL above.
 Notes:
 
@@ -373,7 +373,7 @@ Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/hostapd/
 Mailing List:
-Responsible:	rpaulo
+Responsible:	None
 License:	BSD or GPLv2
 Notes:
 See /usr/src/dist/hostapd/NetBSD-upgrade for update instructions.
