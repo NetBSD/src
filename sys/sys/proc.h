@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.238 2007/02/18 15:20:34 dsl Exp $	*/
+/*	$NetBSD: proc.h,v 1.239 2007/02/19 15:10:02 cube Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ struct emul {
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
 
 	size_t		e_ucsize;	/* size of ucontext_t */
+	void		(*e_startlwp)(void *);
 };
 
 /*
