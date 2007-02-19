@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.46 2007/02/15 20:21:14 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.47 2007/02/19 01:35:19 ad Exp $	*/
 
 /*
  *
@@ -111,6 +111,7 @@ struct uvm {
 
 	/* swap-related items */
 	struct simplelock swap_data_lock;
+	boolean_t swap_running;
 	kcondvar_t scheduler_cv;
 	kmutex_t scheduler_mutex;
 	boolean_t scheduler_kicked;

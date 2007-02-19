@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.100 2007/02/17 22:31:45 pavel Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.101 2007/02/19 01:35:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.100 2007/02/17 22:31:45 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.101 2007/02/19 01:35:20 ad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -459,6 +459,9 @@ uvm_swapin(struct lwp *l)
 void
 uvm_kick_scheduler(void)
 {
+
+	if (uvm.swap_running == FALSE)
+		return;
 
 	mutex_enter(&uvm.scheduler_mutex);
 	uvm.scheduler_kicked = TRUE;
