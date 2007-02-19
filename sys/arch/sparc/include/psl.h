@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.43 2007/02/16 02:53:51 ad Exp $ */
+/*	$NetBSD: psl.h,v 1.44 2007/02/19 02:57:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -285,10 +285,9 @@ spl0(void)
 #define	_SPLSET(name, newipl) \
 static __inline void name(void) \
 { \
-	int psr, oldipl; \
+	int psr; \
 	__asm volatile("rd %%psr,%0" : "=r" (psr)); \
-	oldipl = psr & PSR_PIL; \
-	psr &= ~oldipl; \
+	psr &= ~PSR_PIL; \
 	__asm volatile("wr %0,%1,%%psr" : : \
 	    "r" (psr), "n" ((newipl) << 8)); \
 	__asm volatile("nop; nop; nop"); \
