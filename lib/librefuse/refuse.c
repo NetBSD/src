@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.25 2007/02/18 23:30:45 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.26 2007/02/19 22:04:26 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.25 2007/02/18 23:30:45 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.26 2007/02/19 22:04:26 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -92,6 +92,9 @@ struct refusenode {
 	int flags;
 };
 #define RN_OPEN		0x01
+
+static int fuse_setattr(struct fuse *, struct puffs_node *,
+			const char *, const struct vattr *);
 
 static struct puffs_node *
 newrn(struct puffs_usermount *pu)
@@ -208,61 +211,14 @@ fuse_opt_free_args(struct fuse_args *args)
 #define FUSE_ERR_UNLINK(fuse, file) if (fuse->op.unlink) fuse->op.unlink(file)
 #define FUSE_ERR_RMDIR(fuse, dir) if (fuse->op.rmdir) fuse->op.rmdir(dir)
 
-/* operation wrappers start here */
-
-/* lookup the path */
 /* ARGSUSED1 */
 static int
-puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
-	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
-	const struct puffs_cn *pcn)
+fuse_getattr(struct fuse *fuse, struct puffs_node *pn, const char *path,
+	struct vattr *va)
 {
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn_res;
-	struct stat		st;
-	struct fuse		*fuse;
-	const char		*path = PCNPATH(pcn);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	ret = fuse->op.getattr(path, &st);
-
-	if (ret != 0) {
-		return -ret;
-	}
-
-	/* XXX: fiXXXme unconst */
-	pn_res = puffs_pn_nodewalk(pu, puffs_path_walkcmp,
-	    __UNCONST(&pcn->pcn_po_full));
-	if (pn_res == NULL) {
-		pn_res = newrn(pu);
-		if (pn_res == NULL)
-			return errno;
-	}
-	puffs_stat2vattr(&pn_res->pn_va, &st);
-
-	*newnode = pn_res;
-	*newtype = pn_res->pn_va.va_type;
-	*newsize = pn_res->pn_va.va_size;
-	*newrdev = pn_res->pn_va.va_rdev;
-
-	return 0;
-}
-
-/* get attributes for the path name */
-/* ARGSUSED3 */
-static int
-puffs_fuse_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcr, pid_t pid) 
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
 	struct stat		 st;
-	struct fuse		*fuse;
-	const char		*path = PNPATH(pn);
 	int			ret;
 
-	fuse = (struct fuse *)pu->pu_privdata;
 	if (fuse->op.getattr == NULL) {
 		return ENOSYS;
 	}
@@ -271,340 +227,21 @@ puffs_fuse_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 	ret = (*fuse->op.getattr)(path, &st);
 
 	if (ret == 0) {
-		/* fill in va from st */
-		va->va_mode = st.st_mode;
-		va->va_nlink = st.st_nlink;
-		va->va_uid = st.st_uid;
-		va->va_gid = st.st_gid;
-		va->va_fsid = st.st_rdev;
-		va->va_fileid = st.st_ino;
-		va->va_size = st.st_size;
-		va->va_blocksize = st.st_blksize;
-		va->va_atime = st.st_atimespec;
-		va->va_mtime = st.st_mtimespec;
-		va->va_ctime = st.st_ctimespec;
-		va->va_birthtime = st.st_birthtimespec;
-		va->va_gen = st.st_gen;
-		va->va_flags = st.st_flags;
-		va->va_rdev = st.st_rdev;
-		va->va_bytes = st.st_size;
-		va->va_filerev = st.st_gen;
-		va->va_vaflags = st.st_flags;
-
+		puffs_stat2vattr(va, &st);
 	}
 
 	return -ret;
 }
 
-/* read the contents of the symbolic link */
-/* ARGSUSED2 */
 static int
-puffs_fuse_node_readlink(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cred *cred, char *linkname, size_t *linklen)
+fuse_setattr(struct fuse *fuse, struct puffs_node *pn, const char *path,
+	const struct vattr *va)
 {
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
-	struct fuse		*fuse;
-	const char		*path = PNPATH(pn), *p;
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.readlink == NULL) {
-		return ENOSYS;
-	}
-
-	/* wrap up return code */
-	ret = (*fuse->op.readlink)(path, linkname, *linklen);
-
-	if (ret == 0) {
-		p = memchr(linkname, '\0', *linklen);
-		if (!p)
-			return EINVAL;
-
-		*linklen = p - linkname;
-	}
-
-	return -ret;
-}
-
-/* make the special node */
-/* ARGSUSED1 */
-static int
-puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn, const struct vattr *va)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn;
-	struct fuse		*fuse;
-	mode_t			 mode = va->va_mode;
-	const char		*path = PCNPATH(pcn);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.mknod == NULL) {
-		return ENOSYS;
-	}
-
-	/* wrap up return code */
-	ret = (*fuse->op.mknod)(path, mode, va->va_rdev);
-
-	if (ret == 0) {
-		/* fix up nodes */
-		pn = newrn(pu);
-		if (pn == NULL) {
-			FUSE_ERR_UNLINK(fuse, path);
-			return ENOMEM;
-		}
-		puffs_setvattr(&pn->pn_va, va);
-
-		*newnode = pn;
-	}
-
-	return -ret;
-}
-
-/* make a directory */
-/* ARGSUSED1 */
-static int
-puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn, const struct vattr *va)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn;
-	struct fuse		*fuse;
-	mode_t			 mode = va->va_mode;
-	const char		*path = PCNPATH(pcn);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.mkdir == NULL) {
-		return ENOSYS;
-	}
-
-	/* wrap up return code */
-	ret = (*fuse->op.mkdir)(path, mode);
-
-	if (ret == 0) {
-		/* fix up nodes */
-		pn = newrn(pu);
-		if (pn == NULL) {
-			FUSE_ERR_RMDIR(fuse, path);
-			return ENOMEM;
-		}
-		puffs_setvattr(&pn->pn_va, va);
-
-		*newnode = pn;
-	}
-
-	return -ret;
-}
-
-/*
- * create a regular file
- *
- * since linux/fuse sports using mknod for creating regular files
- * instead of having a separate call for it in some versions, if
- * we don't have create, just jump to op->mknod.
- */
-/*ARGSUSED1*/
-static int
-puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn, const struct vattr *va)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn;
-	struct refusenode	*rn;
-	struct fuse		*fuse;
-	struct fuse_file_info	fi;
-	mode_t			mode = va->va_mode;
-	const char		*path = PCNPATH(pcn);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-
-	if (fuse->op.create) {
-		ret = fuse->op.create(path, mode, &fi);
-
-	} else if (fuse->op.mknod) {
-		fcon.uid = va->va_uid; /*XXX*/
-		fcon.gid = va->va_gid; /*XXX*/
-
-		ret = fuse->op.mknod(path, mode | S_IFREG, 0);
-
-	} else {
-		ret = -ENOSYS;
-	}
-
-	if (ret == 0) {
-		/* fix up nodes */
-		pn = newrn(pu);
-		if (pn == NULL) {
-			FUSE_ERR_UNLINK(fuse, path);
-			return ENOMEM;
-		}
-		puffs_setvattr(&pn->pn_va, va);
-
-		rn = pn->pn_data;
-		memcpy(&rn->file_info, &fi, sizeof(struct fuse_file_info));
-
-		*newnode = pn;
-	}
-
-	return -ret;
-}
-
-/* remove the directory entry */
-/* ARGSUSED1 */
-static int
-puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
-	const struct puffs_cn *pcn)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn_targ = targ;
-	struct fuse		*fuse;
-	const char		*path = PNPATH(pn_targ);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.unlink == NULL) {
-		return ENOSYS;
-	}
-
-	/* wrap up return code */
-	ret = (*fuse->op.unlink)(path);
-
-	return -ret;
-}
-
-/* remove the directory */
-/* ARGSUSED1 */
-static int
-puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
-	const struct puffs_cn *pcn)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn_targ = targ;
-	struct fuse		*fuse;
-	const char		*path = PNPATH(pn_targ);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.rmdir == NULL) {
-		return ENOSYS;
-	}
-
-	/* wrap up return code */
-	ret = (*fuse->op.rmdir)(path);
-
-	return -ret;
-}
-
-/* create a symbolic link */
-/* ARGSUSED1 */
-static int
-puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
-	const struct puffs_cn *pcn_src, const struct vattr *va,
-	const char *link_target)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn;
-	struct fuse		*fuse;
-	const char		*path = PCNPATH(pcn_src);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.symlink == NULL) {
-		return ENOSYS;
-	}
-
-	/* wrap up return code */
-	ret = (*fuse->op.symlink)(path, link_target);
-	/* XXX - check I haven't transposed these args */
-
-	if (ret == 0) {
-		/* fix up nodes */
-		pn = newrn(pu);
-		if (pn == NULL) {
-			FUSE_ERR_UNLINK(fuse, path);
-			return ENOMEM;
-		}
-		puffs_setvattr(&pn->pn_va, va);
-
-		*newnode = pn;
-	}
-
-	return -ret;
-}
-
-/* rename a directory entry */
-/* ARGSUSED1 */
-static int
-puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
-	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
-	const struct puffs_cn *pcn_targ)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct fuse		*fuse;
-	const char		*path_src = PCNPATH(pcn_src);
-	const char		*path_dest = PCNPATH(pcn_targ);
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.rename == NULL) {
-		return ENOSYS;
-	}
-
-	ret = fuse->op.rename(path_src, path_dest);
-
-	if (ret == 0) {
-	}
-
-	return -ret;
-}
-
-/* create a link in the file system */
-/* ARGSUSED1 */
-static int
-puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
-	const struct puffs_cn *pcn)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = targ;
-	struct fuse		*fuse;
-	int			ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.link == NULL) {
-		return ENOSYS;
-	}
-
-	/* wrap up return code */
-	ret = (*fuse->op.link)(PNPATH(pn), PCNPATH(pcn));
-
-	return -ret;
-}
-
-/*
- * fuse's regular interface provides chmod(), chown(), utimes()
- * and truncate() + some variations, so try to fit the square block
- * in the circle hole and the circle block .... something like that
- */
-/* ARGSUSED3 */
-static int
-puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
 	struct refusenode	*rn = pn->pn_data;
-	struct fuse		*fuse;
-	const char		*path = PNPATH(pn);
 	mode_t			mode;
 	uid_t			uid;
 	gid_t			gid;
 	int			error, ret;
-
-	fuse = (struct fuse *)pu->pu_privdata;
 
 	error = 0;
 
@@ -676,8 +313,370 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 		if (ret)
 			error = ret;
 	}
+	/* XXX: no reflection with reality */
+	puffs_setvattr(&pn->pn_va, va);
 
 	return -error;
+
+}
+
+static int
+fuse_newnode(struct puffs_usermount *pu, const char *path,
+	const struct vattr *va, struct fuse_file_info *fi, void **newnode)
+{
+	struct vattr		newva;
+	struct fuse		*fuse;
+	struct puffs_node	*pn;
+	struct refusenode	*rn;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+
+	/* fix up nodes */
+	pn = newrn(pu);
+	if (pn == NULL) {
+		if (va->va_type == VDIR) {
+			FUSE_ERR_RMDIR(fuse, path);
+		} else {
+			FUSE_ERR_UNLINK(fuse, path);
+		}
+		return ENOMEM;
+	}
+	fuse_setattr(fuse, pn, path, va);
+	if (fuse_getattr(fuse, pn, path, &newva) == 0)
+		puffs_setvattr(&pn->pn_va, &newva);
+
+	rn = pn->pn_data;
+	if (fi)
+		memcpy(&rn->file_info, fi, sizeof(struct fuse_file_info));
+
+	*newnode = pn;
+
+	return 0;
+}
+
+
+/* operation wrappers start here */
+
+/* lookup the path */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_lookup(struct puffs_cc *pcc, void *opc, void **newnode,
+	enum vtype *newtype, voff_t *newsize, dev_t *newrdev,
+	const struct puffs_cn *pcn)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn_res;
+	struct stat		st;
+	struct fuse		*fuse;
+	const char		*path = PCNPATH(pcn);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	ret = fuse->op.getattr(path, &st);
+
+	if (ret != 0) {
+		return -ret;
+	}
+
+	/* XXX: fiXXXme unconst */
+	pn_res = puffs_pn_nodewalk(pu, puffs_path_walkcmp,
+	    __UNCONST(&pcn->pcn_po_full));
+	if (pn_res == NULL) {
+		pn_res = newrn(pu);
+		if (pn_res == NULL)
+			return errno;
+		puffs_stat2vattr(&pn_res->pn_va, &st);
+	}
+
+	*newnode = pn_res;
+	*newtype = pn_res->pn_va.va_type;
+	*newsize = pn_res->pn_va.va_size;
+	*newrdev = pn_res->pn_va.va_rdev;
+
+	return 0;
+}
+
+/* get attributes for the path name */
+/* ARGSUSED3 */
+static int
+puffs_fuse_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
+	const struct puffs_cred *pcr, pid_t pid) 
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn = opc;
+	struct fuse		*fuse;
+	const char		*path = PNPATH(pn);
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	return fuse_getattr(fuse, pn, path, va);
+}
+
+/* read the contents of the symbolic link */
+/* ARGSUSED2 */
+static int
+puffs_fuse_node_readlink(struct puffs_cc *pcc, void *opc,
+	const struct puffs_cred *cred, char *linkname, size_t *linklen)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn = opc;
+	struct fuse		*fuse;
+	const char		*path = PNPATH(pn), *p;
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.readlink == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.readlink)(path, linkname, *linklen);
+
+	if (ret == 0) {
+		p = memchr(linkname, '\0', *linklen);
+		if (!p)
+			return EINVAL;
+
+		*linklen = p - linkname;
+	}
+
+	return -ret;
+}
+
+/* make the special node */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_mknod(struct puffs_cc *pcc, void *opc, void **newnode,
+	const struct puffs_cn *pcn, const struct vattr *va)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct fuse		*fuse;
+	mode_t			 mode = va->va_mode;
+	const char		*path = PCNPATH(pcn);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.mknod == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.mknod)(path, mode, va->va_rdev);
+
+	if (ret == 0) {
+		ret = fuse_newnode(pu, path, va, NULL, newnode);
+	}
+
+	return -ret;
+}
+
+/* make a directory */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_mkdir(struct puffs_cc *pcc, void *opc, void **newnode,
+	const struct puffs_cn *pcn, const struct vattr *va)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct fuse		*fuse;
+	mode_t			 mode = va->va_mode;
+	const char		*path = PCNPATH(pcn);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.mkdir == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.mkdir)(path, mode);
+
+	if (ret == 0) {
+		ret = fuse_newnode(pu, path, va, NULL, newnode);
+	}
+
+	return -ret;
+}
+
+/*
+ * create a regular file
+ *
+ * since linux/fuse sports using mknod for creating regular files
+ * instead of having a separate call for it in some versions, if
+ * we don't have create, just jump to op->mknod.
+ */
+/*ARGSUSED1*/
+static int
+puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
+	const struct puffs_cn *pcn, const struct vattr *va)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct fuse		*fuse;
+	struct fuse_file_info	fi;
+	mode_t			mode = va->va_mode;
+	const char		*path = PCNPATH(pcn);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+
+	if (fuse->op.create) {
+		ret = fuse->op.create(path, mode, &fi);
+
+	} else if (fuse->op.mknod) {
+		fcon.uid = va->va_uid; /*XXX*/
+		fcon.gid = va->va_gid; /*XXX*/
+
+		ret = fuse->op.mknod(path, mode | S_IFREG, 0);
+
+	} else {
+		ret = -ENOSYS;
+	}
+
+	if (ret == 0) {
+		ret = fuse_newnode(pu, path, va, &fi, newnode);
+	}
+
+	return -ret;
+}
+
+/* remove the directory entry */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
+	const struct puffs_cn *pcn)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn_targ = targ;
+	struct fuse		*fuse;
+	const char		*path = PNPATH(pn_targ);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.unlink == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.unlink)(path);
+
+	return -ret;
+}
+
+/* remove the directory */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
+	const struct puffs_cn *pcn)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn_targ = targ;
+	struct fuse		*fuse;
+	const char		*path = PNPATH(pn_targ);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.rmdir == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.rmdir)(path);
+
+	return -ret;
+}
+
+/* create a symbolic link */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
+	const struct puffs_cn *pcn_src, const struct vattr *va,
+	const char *link_target)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct fuse		*fuse;
+	const char		*path = PCNPATH(pcn_src);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.symlink == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.symlink)(path, link_target);
+	/* XXX - check I haven't transposed these args */
+
+	if (ret == 0) {
+		ret = fuse_newnode(pu, path, va, NULL, newnode);
+	}
+
+	return -ret;
+}
+
+/* rename a directory entry */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_rename(struct puffs_cc *pcc, void *opc, void *src,
+	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
+	const struct puffs_cn *pcn_targ)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct fuse		*fuse;
+	const char		*path_src = PCNPATH(pcn_src);
+	const char		*path_dest = PCNPATH(pcn_targ);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.rename == NULL) {
+		return ENOSYS;
+	}
+
+	ret = fuse->op.rename(path_src, path_dest);
+
+	if (ret == 0) {
+	}
+
+	return -ret;
+}
+
+/* create a link in the file system */
+/* ARGSUSED1 */
+static int
+puffs_fuse_node_link(struct puffs_cc *pcc, void *opc, void *targ,
+	const struct puffs_cn *pcn)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn = targ;
+	struct fuse		*fuse;
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	if (fuse->op.link == NULL) {
+		return ENOSYS;
+	}
+
+	/* wrap up return code */
+	ret = (*fuse->op.link)(PNPATH(pn), PCNPATH(pcn));
+
+	return -ret;
+}
+
+/*
+ * fuse's regular interface provides chmod(), chown(), utimes()
+ * and truncate() + some variations, so try to fit the square block
+ * in the circle hole and the circle block .... something like that
+ */
+/* ARGSUSED3 */
+static int
+puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
+	const struct vattr *va, const struct puffs_cred *pcr, pid_t pid)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn = opc;
+	struct fuse		*fuse;
+	const char		*path = PNPATH(pn);
+
+	fuse = (struct fuse *)pu->pu_privdata;
+
+	return fuse_setattr(fuse, pn, path, va);
 }
 
 /* ARGSUSED2 */
@@ -736,8 +735,10 @@ puffs_fuse_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	}
 
 	maxread = *resid;
-	if (maxread > pn->pn_va.va_size - offset)
+	if (maxread > pn->pn_va.va_size - offset) {
+		/*LINTED*/
 		maxread = pn->pn_va.va_size - offset;
+	}
 	if (maxread == 0)
 		return 0;
 
@@ -778,9 +779,9 @@ puffs_fuse_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	    &rn->file_info);
 
 	if (ret > 0) {
-		*resid -= ret;
 		if (offset + ret > pn->pn_va.va_size)
 			pn->pn_va.va_size = offset + ret;
+		*resid -= ret;
 		ret = 0;
 	}
 
@@ -832,7 +833,8 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 
 /* ARGSUSED2 */
 static int
-puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+puffs_fuse_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid,
+	int *refcount)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
@@ -841,9 +843,10 @@ puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 	const char		*path = PNPATH(pn);
 	int			ret;
 
+	*refcount = 1; /* safe default */
 	fuse = (struct fuse *)pu->pu_privdata;
 
-	if (rn->flags & RN_OPEN) {
+	if (rn && rn->flags & RN_OPEN) {
 		if (pn->pn_va.va_type == VDIR) {
 			if (fuse->op.releasedir == NULL)
 				ret = -ENOSYS;
@@ -856,14 +859,21 @@ puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
 			ret = fuse->op.release(path, &rn->file_info);
 		}
 	}
+	if (rn)
+		rn->flags &= ~RN_OPEN;
+
+	return ret;
+}
+
+/* ARGSUSED */
+static int
+puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
+{
+	struct puffs_node	*pn = opc;
 
 	nukern(pn);
 
-	/*
-	 * value ignored by the kernel, but we might as well
-	 * return something for debugging purposes
-	 */
-	return -ret;
+	return 0;
 }
 
 /* ARGSUSED1 */
@@ -910,8 +920,6 @@ puffs_fuse_fs_statvfs(struct puffs_cc *pcc, struct statvfs *svfsb, pid_t pid)
 }
 
 
-
-
 /* End of puffs_fuse operations */
 
 /* ARGSUSED3 */
@@ -956,6 +964,7 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
         PUFFSOP_SET(pops, puffs_fuse, node, open);
         PUFFSOP_SET(pops, puffs_fuse, node, read);
         PUFFSOP_SET(pops, puffs_fuse, node, write);
+        PUFFSOP_SET(pops, puffs_fuse, node, inactive);
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
 	NEW(struct fuse, fuse, "fuse_main_real", exit(EXIT_FAILURE));
