@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2006/11/24 22:04:23 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2007/02/19 13:19:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2006/11/24 22:04:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2007/02/19 13:19:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1001,13 +1001,13 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 
 		/* Coalesce BTLB entries whenever possible. */
 		while (btlb_j > 0 &&
-			btlb_entry_vm_prot[btlb_j] == 
+		    btlb_entry_vm_prot[btlb_j] == 
 			btlb_entry_vm_prot[btlb_j - 1] &&
-			btlb_entry_size[btlb_j] ==
+		    btlb_entry_size[btlb_j] ==
 			btlb_entry_size[btlb_j - 1] &&
-			!(btlb_entry_start[btlb_j - 1] &
-			  ((btlb_entry_size[btlb_j - 1] << 1) - 1)) &&
-			(btlb_entry_size[btlb_j - 1] << 1) <=
+		    !(btlb_entry_start[btlb_j - 1] &
+			((btlb_entry_size[btlb_j - 1] << 1) - 1)) &&
+		    (btlb_entry_size[btlb_j - 1] << 1) <=
 			btlb_entry_max)
 			btlb_entry_size[--btlb_j] <<= 1;
 
@@ -1039,7 +1039,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 		size = btlb_entry_min;
 		while ((addr + size) < *vstart &&
 			(size << 1) < btlb_entry_max &&
-			!(addr & ((size << 1) - 1)))
+		    !(addr & ((size << 1) - 1)))
 			size <<= 1;
 		btlb_entry_start[btlb_j] = addr;
 		btlb_entry_size[btlb_j] = size;
