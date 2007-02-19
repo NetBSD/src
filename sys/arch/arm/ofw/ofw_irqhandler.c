@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irqhandler.c,v 1.8 2007/02/18 07:48:20 matt Exp $	*/
+/*	$NetBSD: ofw_irqhandler.c,v 1.9 2007/02/19 21:46:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.8 2007/02/18 07:48:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_irqhandler.c,v 1.9 2007/02/19 21:46:32 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -102,7 +102,6 @@ irq_init()
 	disabled_mask = 0x00000000;
 	actual_mask = 0x00000000;
 	spl_mask = 0x00000000;
-	softintr_init();
 
 	set_spl_masks();
 
