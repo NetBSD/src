@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.2.4.1 2007/02/19 13:54:29 tron Exp $ */
+/* $NetBSD: sha2.c,v 1.2.4.2 2007/02/19 13:56:01 tron Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.1 2007/02/19 13:54:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.2 2007/02/19 13:56:01 tron Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.2.4.1 2007/02/19 13:54:29 tron Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.2.4.2 2007/02/19 13:56:01 tron Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -218,7 +218,7 @@ typedef u_int64_t sha2_word64;	/* Exactly 8 bytes */
  * library -- they are intended for private internal visibility/use
  * only.
  */
-void SHA512_Last(SHA512_CTX*);
+static void SHA512_Last(SHA512_CTX*);
 void SHA256_Transform(SHA256_CTX*, const sha2_word32*);
 void SHA384_Transform(SHA384_CTX*, const sha2_word64*);
 void SHA512_Transform(SHA512_CTX*, const sha2_word64*);
@@ -339,7 +339,6 @@ __weak_alias(SHA384_Transform,_SHA384_Transform)
 __weak_alias(SHA512_Init,_SHA512_Init) 
 __weak_alias(SHA512_Update,_SHA512_Update)
 __weak_alias(SHA512_Final,_SHA512_Final)
-__weak_alias(SHA512_Last,_SHA512_Last)
 __weak_alias(SHA512_Transform,_SHA512_Transform)
 #endif
 
@@ -867,7 +866,7 @@ void SHA512_Update(SHA512_CTX* context, const sha2_byte *data, size_t len) {
 	usedspace = freespace = 0;
 }
 
-void SHA512_Last(SHA512_CTX* context) {
+static void SHA512_Last(SHA512_CTX* context) {
 	unsigned int	usedspace;
 
 	usedspace = (unsigned int)((context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH);
