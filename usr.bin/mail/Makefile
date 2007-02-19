@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2006/11/28 18:45:32 christos Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2007/02/19 13:38:47 tron Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -18,8 +18,6 @@ MLINKS=	mail.1 Mail.1 mail.1 mailx.1
 
 LDADD+=		-lutil
 DPADD+=		${LIBUTIL}
-
-SRCS+=	
 
 .if ${USE_EDITLINE:Uno} == "yes"
 SRCS+=	complete.c

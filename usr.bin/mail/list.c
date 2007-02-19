@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.18.2.1 2007/02/19 13:38:30 tron Exp $	*/
+/*	$NetBSD: list.c,v 1.18.2.2 2007/02/19 13:38:47 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.18.2.1 2007/02/19 13:38:30 tron Exp $");
+__RCSID("$NetBSD: list.c,v 1.18.2.2 2007/02/19 13:38:47 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -552,8 +552,6 @@ get_cmpfn(void **pattern, char *str)
 			if (is_substr(val, "extended"))
 				cflags |= REG_EXTENDED;
 			/*
-			 * Support "nospec", but don't document it as
-			 * it may not be portable.
 			 * NOTE: regcomp() will fail if "nospec" and
 			 * "extended" are used together.
 			 */
