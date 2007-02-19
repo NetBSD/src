@@ -168,6 +168,7 @@ int fuse_opt_parse(struct fuse_args *, void *, const struct fuse_opt *, fuse_opt
 int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *);
 struct fuse_context *fuse_get_context(void);
 void fuse_exit(struct fuse *);
+void fuse_unmount(const char *);
 
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
