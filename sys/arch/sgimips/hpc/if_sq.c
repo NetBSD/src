@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.30 2006/12/22 08:17:14 rumble Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.31 2007/02/19 20:14:31 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.30 2006/12/22 08:17:14 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.31 2007/02/19 20:14:31 rumble Exp $");
 
 #include "bpfilter.h"
 
@@ -354,7 +354,6 @@ int
 sq_init(struct ifnet *ifp)
 {
 	int i;
-	u_int32_t reg;
 	struct sq_softc *sc = ifp->if_softc;
 
 	/* Cancel any in-progress I/O */
@@ -397,13 +396,30 @@ sq_init(struct ifnet *ifp)
 	/* Now write the receive command register. */
 	sq_seeq_write(sc, SEEQ_RXCMD, sc->sc_rxcmd);
 
-	/* Set up HPC ethernet DMA config */
+	/*
+	 * Set up HPC ethernet PIO and DMA configurations.
+	 *
+	 * The PROM appears to do most of this for the onboard HPC3, but
+	 * not for the Challenge S's IOPLUS chip. We copy how the onboard 
+	 * chip is configured and assume that it's correct for both.
+	 */
 	if (sc->hpc_regs->revision == 3) {
-		reg = sq_hpc_read(sc, HPC3_ENETR_DMACFG);	
-		sq_hpc_write(sc, HPC3_ENETR_DMACFG, reg |
-		    HPC3_ENETR_DMACFG_FIX_RXDC |
-		    HPC3_ENETR_DMACFG_FIX_INTR |
-		    HPC3_ENETR_DMACFG_FIX_EOP);
+		u_int32_t dmareg, pioreg;
+
+		pioreg = HPC3_ENETR_PIOCFG_P1(1) |
+			 HPC3_ENETR_PIOCFG_P2(6) |
+			 HPC3_ENETR_PIOCFG_P3(1);
+
+		dmareg = HPC3_ENETR_DMACFG_D1(6) |
+			 HPC3_ENETR_DMACFG_D2(2) |
+			 HPC3_ENETR_DMACFG_D3(0) |
+			 HPC3_ENETR_DMACFG_FIX_RXDC |
+			 HPC3_ENETR_DMACFG_FIX_INTR |
+			 HPC3_ENETR_DMACFG_FIX_EOP |
+			 HPC3_ENETR_DMACFG_TIMEOUT;
+
+		sq_hpc_write(sc, HPC3_ENETR_PIOCFG, pioreg);
+		sq_hpc_write(sc, HPC3_ENETR_DMACFG, dmareg);
 	}
 
 	/* Pass the start of the receive ring to the HPC */
