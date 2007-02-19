@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.13 2007/02/19 23:44:26 ad Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.14 2007/02/19 23:48:40 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2007/02/19 23:44:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2007/02/19 23:48:40 he Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -180,7 +180,6 @@ cpu_lwp_free2(struct lwp *l)
 void
 cpu_exit(struct lwp *l)
 {
-	int s;
 
 	mutex_enter(&sched_mutex);		/* expected by cpu_switch */
 	cpu_switch(NULL, NULL);
