@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.29.2.1 2007/01/19 22:06:57 bouyer Exp $
+# $NetBSD: etcupdate,v 1.29.2.2 2007/02/19 19:52:50 riz Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -632,6 +632,21 @@ if ! ${BINARYMODE}; then
 fi
 
 # Do some post-installation tasks
+if ${NEED_PWD_MKDB}; then
+	if yesno "Do you want to rebuild the password databases from the" \
+	         "new master.passwd"
+	then
+		verbose "Running pwd_mkdb"
+		pwd_mkdb -p "/etc/master.passwd"
+	else
+		echo ""
+		echo "*** You MUST rebuild the password databases to make" \
+		     "the changes visible"
+		echo "*** This is done by running \"pwd_mkdb -p" \
+		     "/etc/master.passwd\" as root"
+		echo ""
+	fi
+fi
 if ${NEED_MTREE}; then
 	if yesno "You have created new directories. Run mtree to set" \
 	         "permissions"
@@ -660,21 +675,6 @@ if ${NEED_NEWALIASES}; then
 		echo "*** You MUST rebuild the mail alias database to make" \
 		     "the changes visible"
 		echo "*** This is done by running \"newaliases\" as root"
-		echo ""
-	fi
-fi
-if ${NEED_PWD_MKDB}; then
-	if yesno "Do you want to rebuild the password databases from the" \
-	         "new master.passwd"
-	then
-		verbose "Running pwd_mkdb"
-		pwd_mkdb -p "/etc/master.passwd"
-	else
-		echo ""
-		echo "*** You MUST rebuild the password databases to make" \
-		     "the changes visible"
-		echo "*** This is done by running \"pwd_mkdb -p" \
-		     "/etc/master.passwd\" as root"
 		echo ""
 	fi
 fi
