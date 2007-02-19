@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_decode.c,v 1.5.2.2 2007/02/19 13:38:30 tron Exp $	*/
+/*	$NetBSD: mime_decode.c,v 1.5.2.3 2007/02/19 13:39:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_decode.c,v 1.5.2.2 2007/02/19 13:38:30 tron Exp $");
+__RCSID("$NetBSD: mime_decode.c,v 1.5.2.3 2007/02/19 13:39:00 tron Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -108,7 +108,7 @@ show_one_mime_info(FILE *fp, struct mime_info *mip)
 	(void)fprintf(fp, "** mi_ignore_body: %d\n", mip->mi_ignore_body);
 	(void)fprintf(fp, "** mi_partnum: %d\n", mip->mi_partnum);
 	(void)fprintf(fp, "** mi_partstr: %s\n", mip->mi_partstr);
-	(void)fprintf(fp, "** mi_msgstr: %d\n", mip->mi_msgstr);
+	(void)fprintf(fp, "** mi_msgstr: %s\n", mip->mi_msgstr);
 
 	(void)fflush(fp);
 	    
@@ -921,7 +921,7 @@ get_display_mode(struct mime_info *mip, mime_codec_t dec)
 		{ "audio",	 audio_subtype_tbl,		DM_IGNORE },
 		{ "video",	 video_subtype_tbl,		DM_IGNORE },
 		{ "application", application_subtype_tbl,	APPLICATION_OCTET_STREAM },
-		{ "NULL",	 NULL,				DM_UNKNOWN }, /* default */
+		{ NULL,		 NULL,				DM_UNKNOWN }, /* default */
 	};
 	const struct mime_type_s *mtp;
 	const struct mime_subtype_s *stp;
