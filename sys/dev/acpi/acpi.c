@@ -1,7 +1,7 @@
-/*	$NetBSD: acpi.c,v 1.100 2007/02/18 23:39:20 xtraeme Exp $	*/
+/*	$NetBSD: acpi.c,v 1.101 2007/02/19 22:31:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.100 2007/02/18 23:39:20 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.101 2007/02/19 22:31:05 ad Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -153,6 +153,7 @@ struct acpi_softc *acpi_softc;
  */
 static kmutex_t acpi_slock;
 static int acpi_locked;
+extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
  * sysctl-related information
@@ -191,6 +192,7 @@ acpi_probe(void)
 	beenhere = 1;
 
 	mutex_init(&acpi_slock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DRIVER, IPL_NONE);
 	acpi_locked = 0;
 
 	/*
