@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.51 2006/12/29 07:15:01 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.52 2007/02/19 20:14:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.51 2006/12/29 07:15:01 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.52 2007/02/19 20:14:30 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ static const struct hpc_device hpc3_devices[] = {
 	{ "sq",		/* Challenge S IOPLUS secondary ethernet */
 	  HPC_BASE_ADDRESS_1,
 	  HPC3_ENET_DEVREGS, HPC3_ENET_REGS,
-	  22,
+	  0,
 	  HPCDEV_IP24 },
 
 	{ "wdsc",	/* Indigo2/Indy/Challenge S/Challenge M onboard SCSI */
@@ -419,8 +419,46 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	    (hpctype == 15) ? ".5" : "", (isonboard) ? "onboard" :
 	    (isioplus) ? "IOPLUS mezzanine" : "GIO slot");
 
-	/* configure the bus arbiter appropriately (never happens on Indigo2) */
-	if (!isonboard) {
+	/*
+	 * Configure the bus arbiter appropriately.
+	 *
+	 * In the case of Challenge S, we must tell the IOPLUS board which
+	 * DMA channel to use (we steal it from one of the slots). SGI permits
+	 * an HPC1.5 in slot 1, in which case IOPLUS must use EXP0, or any
+	 * other DMA-capable board in slot 0, which leaves us to use EXP1. Of
+	 * course, this means that only one GIO board may use DMA.
+	 *
+	 * Note that this never happens on Indigo2.
+	 */
+	if (isioplus) {
+		int arb_slot;
+
+		if (platform.badaddr(
+		    (void *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_2), 4))
+			arb_slot = GIO_SLOT_EXP1;
+		else
+			arb_slot = GIO_SLOT_EXP0;
+
+		if (gio_arb_config(arb_slot, GIO_ARB_LB | GIO_ARB_MST |
+		    GIO_ARB_64BIT | GIO_ARB_HPC2_64BIT)) {
+			printf("%s: failed to configure GIO bus arbiter\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+
+		printf("%s: using EXP%d's DMA channel\n", sc->sc_dev.dv_xname,
+		    (arb_slot == GIO_SLOT_EXP0) ? 0 : 1);
+
+		bus_space_write_4(ga->ga_iot, ga->ga_ioh,
+		    HPC3_PBUS_CFGPIO_REGS, 0x0003ffff);
+
+		if (arb_slot == GIO_SLOT_EXP0)
+			bus_space_write_4(ga->ga_iot, ga->ga_ioh,
+			    HPC3_PBUS_CH0_DEVREGS, 0x20202020);
+		else
+			bus_space_write_4(ga->ga_iot, ga->ga_ioh,
+			    HPC3_PBUS_CH0_DEVREGS, 0x30303030);
+	} else if (!isonboard) {
 		int arb_slot;
 
 		arb_slot = (ga->ga_addr == HPC_BASE_ADDRESS_1) ?
