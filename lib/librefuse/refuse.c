@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.28 2007/02/19 22:12:44 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.29 2007/02/19 23:12:29 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.28 2007/02/19 22:12:44 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.29 2007/02/19 23:12:29 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -1049,4 +1049,15 @@ fuse_exit(struct fuse *f)
 {
 	
 	puffs_exit(f->pu, 1);
+}
+
+/*
+ * XXX: obviously not the most perfect of functions, but needs some
+ * puffs tweaking for a better tomorrow
+ */
+void
+fuse_unmount(const char *mp)
+{
+
+	return;
 }
