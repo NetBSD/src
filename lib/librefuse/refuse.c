@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.26 2007/02/19 22:04:26 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.27 2007/02/19 22:07:51 xtraeme Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.26 2007/02/19 22:04:26 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.27 2007/02/19 22:07:51 xtraeme Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -842,6 +842,8 @@ puffs_fuse_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid,
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 	int			ret;
+
+	ret = 0;
 
 	*refcount = 1; /* safe default */
 	fuse = (struct fuse *)pu->pu_privdata;
