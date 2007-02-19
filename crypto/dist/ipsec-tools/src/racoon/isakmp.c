@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.21 2007/02/15 10:19:25 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.22 2007/02/19 13:08:47 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1204,8 +1204,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 		delph1(iph1);
 		return -1;
 	}
-	printf("%s: iph1->local = %p\n", __func__, iph1->local);
-
 	(void)insph1(iph1);
 
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
