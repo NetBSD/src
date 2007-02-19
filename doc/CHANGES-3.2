@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.51 2007/02/10 14:12:03 tron Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.52 2007/02/19 22:32:43 tron Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2585,4 +2585,26 @@ usr.sbin/postinstall/postinstall		1.32
 	Fix method to find pf.os so it works with '-s etc.tgz'.
 	This fixes PR bin/35185.
 	[lukem, ticket #1659]
+
+usr.sbin/etcupdate/etcupdate			1.31
+
+	Run pwd_mkdb(8) before running mtree(8) to get updated user and
+	group information. This fixes PR bin/35570.
+	[martti, ticket #1666]
+
+sys/dev/pci/if_bnx.c				1.2
+
+	Fix two panics in DIAGNOSTIC kernels.
+	[bouyer, ticket #1667]
+
+sys/dev/scsipi/scsiconf.c			1.242 via patch
+
+	Fix problems with Seagate ST318203LSUN18G.
+	[bouyer, ticket #1668]
+
+sys/arch/amd64/include/signal.h			1.9
+
+	Accept the old ABI versions of signal trampolines for 32-bit
+	compatibility. This unbreaks the i386 "cvsup" binary on NetBSD-amd64.
+	[pavel, ticket #1669]
 
