@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.46 2007/02/17 22:31:37 pavel Exp $	*/
+/*	$NetBSD: locore.S,v 1.47 2007/02/19 11:46:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -1202,7 +1202,7 @@ ENTRY(cpu_exit)
  */
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
-	movl	4(%esp),%edx		# edx = p->p_addr
+	movl	4(%esp),%edx		# edx = pcb
 
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)
