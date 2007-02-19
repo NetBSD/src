@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.16 2007/02/19 00:25:30 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.17 2007/02/19 06:08:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,31 +41,41 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.16 2007/02/19 00:25:30 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.17 2007/02/19 06:08:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
+#include <sys/lock.h>
 #include <sys/callout.h>
 #include <sys/kernel.h>
-#include <sys/mutex.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-
-#include <machine/intr.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
 LIST_HEAD(, sysmon_wdog) sysmon_wdog_list =
     LIST_HEAD_INITIALIZER(&sysmon_wdog_list);
 int sysmon_wdog_count;
-kmutex_t sysmon_wdog_list_mtx;
+struct simplelock sysmon_wdog_list_slock = SIMPLELOCK_INITIALIZER;
 
-kmutex_t sysmon_wdog_mtx;
+struct simplelock sysmon_wdog_slock = SIMPLELOCK_INITIALIZER;
 struct sysmon_wdog *sysmon_armed_wdog;
 struct callout sysmon_wdog_callout = CALLOUT_INITIALIZER;
 void *sysmon_wdog_sdhook;
+
+#define	SYSMON_WDOG_LOCK(s)						\
+do {									\
+	s = splsoftclock();						\
+	simple_lock(&sysmon_wdog_slock);				\
+} while (0)
+
+#define	SYSMON_WDOG_UNLOCK(s)						\
+do {									\
+	simple_unlock(&sysmon_wdog_slock);				\
+	splx(s);							\
+} while (0)
 
 struct sysmon_wdog *sysmon_wdog_find(const char *);
 void	sysmon_wdog_release(struct sysmon_wdog *);
@@ -83,7 +93,7 @@ sysmonopen_wdog(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
 
-	mutex_enter(&sysmon_wdog_list_mtx);
+	simple_lock(&sysmon_wdog_list_slock);
 	if (sysmon_wdog_sdhook == NULL) {
 		sysmon_wdog_sdhook =
 		    shutdownhook_establish(sysmon_wdog_shutdown, NULL);
@@ -91,7 +101,7 @@ sysmonopen_wdog(dev_t dev, int flag, int mode,
 			printf("WARNING: unable to register watchdog "
 			    "shutdown hook\n");
 	}
-	mutex_exit(&sysmon_wdog_list_mtx);
+	simple_unlock(&sysmon_wdog_list_slock);
 
 	return (0);
 }
@@ -106,7 +116,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
 	struct sysmon_wdog *smw;
-	int error = 0;
+	int s, error = 0;
 
 	/*
 	 * If this is the last close, and there is a watchdog
@@ -115,7 +125,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode,
 	 *
 	 * XXX Maybe we should just go into KTICKLE mode?
 	 */
-	mutex_enter(&sysmon_wdog_mtx);
+	SYSMON_WDOG_LOCK(s);
 	if ((smw = sysmon_armed_wdog) != NULL) {
 		if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_UTICKLE) {
 			error = sysmon_wdog_setmode(smw,
@@ -130,7 +140,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode,
 			}
 		}
 	}
-	mutex_exit(&sysmon_wdog_mtx);
+	SYSMON_WDOG_UNLOCK(s);
 
 	return (error);
 }
@@ -145,7 +155,7 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
     struct lwp *l)
 {
 	struct sysmon_wdog *smw;
-	int error = 0;
+	int s, error = 0;
 
 	switch (cmd) {
 	case WDOGIOC_GMODE:
@@ -184,10 +194,10 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
 		if (wm->wm_mode & ~(WDOG_MODE_MASK|WDOG_FEATURE_MASK))
 			error = EINVAL;
 		else {
-			mutex_enter(&sysmon_wdog_mtx);
+			SYSMON_WDOG_LOCK(s);
 			error = sysmon_wdog_setmode(smw, wm->wm_mode,
 			    wm->wm_period);
-			mutex_exit(&sysmon_wdog_mtx);
+			SYSMON_WDOG_UNLOCK(s);
 		}
 
 		sysmon_wdog_release(smw);
@@ -198,14 +208,14 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
 	    {
 		struct wdog_mode *wm = (void *) data;
 
-		mutex_enter(&sysmon_wdog_mtx);
+		SYSMON_WDOG_LOCK(s);
 		if ((smw = sysmon_armed_wdog) != NULL) {
 			strcpy(wm->wm_name, smw->smw_name);
 			wm->wm_mode = smw->smw_mode;
 			wm->wm_period = smw->smw_period;
 		} else
 			error = ESRCH;
-		mutex_exit(&sysmon_wdog_mtx);
+		SYSMON_WDOG_UNLOCK(s);
 		break;
 	    }
 
@@ -215,14 +225,14 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
 			break;
 		}
 
-		mutex_enter(&sysmon_wdog_mtx);
+		SYSMON_WDOG_LOCK(s);
 		if ((smw = sysmon_armed_wdog) != NULL) {
 			error = (*smw->smw_tickle)(smw);
 			if (error == 0)
 				smw->smw_tickler = l->l_proc->p_pid;
 		} else
 			error = ESRCH;
-		mutex_exit(&sysmon_wdog_mtx);
+		SYSMON_WDOG_UNLOCK(s);
 		break;
 
 	case WDOGIOC_GTICKLER:
@@ -238,7 +248,7 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
 		char *cp;
 		int i;
 
-		mutex_enter(&sysmon_wdog_list_mtx);
+		simple_lock(&sysmon_wdog_list_slock);
 		if (wc->wc_names == NULL)
 			wc->wc_count = sysmon_wdog_count;
 		else {
@@ -251,7 +261,7 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
 				    strlen(smw->smw_name) + 1);
 			wc->wc_count = i;
 		}
-		mutex_exit(&sysmon_wdog_list_mtx);
+		simple_unlock(&sysmon_wdog_list_slock);
 		break;
 	    }
 
@@ -273,9 +283,7 @@ sysmon_wdog_register(struct sysmon_wdog *smw)
 	struct sysmon_wdog *lsmw;
 	int error = 0;
 
-	mutex_init(&sysmon_wdog_mtx, MUTEX_DRIVER, IPL_SOFTCLOCK);
-	mutex_init(&sysmon_wdog_list_mtx, MUTEX_DRIVER, IPL_NONE);
-	mutex_enter(&sysmon_wdog_list_mtx);
+	simple_lock(&sysmon_wdog_list_slock);
 
 	for (lsmw = LIST_FIRST(&sysmon_wdog_list); lsmw != NULL;
 	     lsmw = LIST_NEXT(lsmw, smw_list)) {
@@ -292,7 +300,7 @@ sysmon_wdog_register(struct sysmon_wdog *smw)
 	LIST_INSERT_HEAD(&sysmon_wdog_list, smw, smw_list);
 
  out:
-	mutex_exit(&sysmon_wdog_list_mtx);
+	simple_unlock(&sysmon_wdog_list_slock);
 	return (error);
 }
 
@@ -305,10 +313,10 @@ void
 sysmon_wdog_unregister(struct sysmon_wdog *smw)
 {
 
-	mutex_enter(&sysmon_wdog_list_mtx);
+	simple_lock(&sysmon_wdog_list_slock);
 	sysmon_wdog_count--;
 	LIST_REMOVE(smw, smw_list);
-	mutex_exit(&sysmon_wdog_list_mtx);
+	simple_unlock(&sysmon_wdog_list_slock);
 }
 
 /*
@@ -322,7 +330,7 @@ sysmon_wdog_find(const char *name)
 {
 	struct sysmon_wdog *smw;
 
-	mutex_enter(&sysmon_wdog_list_mtx);
+	simple_lock(&sysmon_wdog_list_slock);
 
 	for (smw = LIST_FIRST(&sysmon_wdog_list); smw != NULL;
 	     smw = LIST_NEXT(smw, smw_list)) {
@@ -333,7 +341,7 @@ sysmon_wdog_find(const char *name)
 	if (smw != NULL)
 		smw->smw_refcnt++;
 
-	mutex_exit(&sysmon_wdog_list_mtx);
+	simple_unlock(&sysmon_wdog_list_slock);
 	return (smw);
 }
 
@@ -346,10 +354,10 @@ void
 sysmon_wdog_release(struct sysmon_wdog *smw)
 {
 
-	mutex_enter(&sysmon_wdog_list_mtx);
+	simple_lock(&sysmon_wdog_list_slock);
 	KASSERT(smw->smw_refcnt != 0);
 	smw->smw_refcnt--;
-	mutex_exit(&sysmon_wdog_list_mtx);
+	simple_unlock(&sysmon_wdog_list_slock);
 }
 
 /*
@@ -424,8 +432,9 @@ void
 sysmon_wdog_ktickle(void *arg)
 {
 	struct sysmon_wdog *smw;
+	int s;
 
-	mutex_enter(&sysmon_wdog_mtx);
+	SYSMON_WDOG_LOCK(s);
 	if ((smw = sysmon_armed_wdog) != NULL) {
 		if ((*smw->smw_tickle)(smw) != 0) {
 			printf("WARNING: KERNEL TICKLE OF WATCHDOG %s "
@@ -438,7 +447,7 @@ sysmon_wdog_ktickle(void *arg)
 		    WDOG_PERIOD_TO_TICKS(smw->smw_period) / 2,
 		    sysmon_wdog_ktickle, NULL);
 	}
-	mutex_exit(&sysmon_wdog_mtx);
+	SYSMON_WDOG_UNLOCK(s);
 }
 
 /*

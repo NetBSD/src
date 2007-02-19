@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.15 2007/02/18 23:38:11 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.16 2007/02/19 06:08:37 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.15 2007/02/18 23:38:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.16 2007/02/19 06:08:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -52,21 +52,20 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.15 2007/02/18 23:38:11 xtraeme Ex
 #include <sys/poll.h>
 #include <sys/select.h>
 #include <sys/vnode.h>
-#include <sys/condvar.h>
-#include <sys/mutex.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
 static LIST_HEAD(, sysmon_pswitch) sysmon_pswitch_list =
     LIST_HEAD_INITIALIZER(sysmon_pswitch_list);
-static kmutex_t sysmon_pswitch_list_mtx;
-static kcondvar_t sysmon_power_event_queue_cv;
+static struct simplelock sysmon_pswitch_list_slock =
+    SIMPLELOCK_INITIALIZER;
 
 static struct proc *sysmon_power_daemon;
 
 #define	SYSMON_MAX_POWER_EVENTS		32
 
-static kmutex_t sysmon_power_event_queue_mtx;
+static struct simplelock sysmon_power_event_queue_slock =
+    SIMPLELOCK_INITIALIZER;
 static power_event_t sysmon_power_event_queue[SYSMON_MAX_POWER_EVENTS];
 static int sysmon_power_event_queue_head;
 static int sysmon_power_event_queue_tail;
@@ -90,7 +89,7 @@ static int
 sysmon_queue_power_event(power_event_t *pev)
 {
 
-	LOCK_ASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+	LOCK_ASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
 
 	if (sysmon_power_event_queue_count == SYSMON_MAX_POWER_EVENTS)
 		return (0);
@@ -113,7 +112,7 @@ static int
 sysmon_get_power_event(power_event_t *pev)
 {
 
-	LOCK_ASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+	LOCK_ASSERT(simple_lock_held(&sysmon_power_event_queue_slock));
 
 	if (sysmon_power_event_queue_count == 0)
 		return (0);
@@ -152,14 +151,14 @@ sysmonopen_power(dev_t dev, int flag, int mode,
 {
 	int error = 0;
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
 	if (sysmon_power_daemon != NULL)
 		error = EBUSY;
 	else {
 		sysmon_power_daemon = l->l_proc;
 		sysmon_power_event_queue_flush();
 	}
-	mutex_exit(&sysmon_power_event_queue_mtx);
+	simple_unlock(&sysmon_power_event_queue_slock);
 
 	return (error);
 }
@@ -175,11 +174,11 @@ sysmonclose_power(dev_t dev, int flag, int mode,
 {
 	int count;
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
 	count = sysmon_power_event_queue_count;
 	sysmon_power_daemon = NULL;
 	sysmon_power_event_queue_flush();
-	mutex_exit(&sysmon_power_event_queue_mtx);
+	simple_unlock(&sysmon_power_event_queue_slock);
 
 	if (count)
 		printf("WARNING: %d power events lost by exiting daemon\n",
@@ -203,23 +202,23 @@ sysmonread_power(dev_t dev, struct uio *uio, int flags)
 	if (uio->uio_resid != POWER_EVENT_MSG_SIZE)
 		return (EINVAL);
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
  again:
 	if (sysmon_get_power_event(&pev)) {
-		mutex_exit(&sysmon_power_event_queue_mtx);
+		simple_unlock(&sysmon_power_event_queue_slock);
 		return (uiomove(&pev, POWER_EVENT_MSG_SIZE, uio));
 	}
 
 	if (flags & IO_NDELAY) {
-		mutex_exit(&sysmon_power_event_queue_mtx);
+		simple_unlock(&sysmon_power_event_queue_slock);
 		return (EWOULDBLOCK);
 	}
 
 	sysmon_power_event_queue_flags |= PEVQ_F_WAITING;
-	error = cv_wait_sig(&sysmon_power_event_queue_cv,
-			    &sysmon_power_event_queue_mtx);
+	error = ltsleep(&sysmon_power_event_queue_count,
+	    PRIBIO|PCATCH, "smpower", 0, &sysmon_power_event_queue_slock);
 	if (error) {
-		mutex_exit(&sysmon_power_event_queue_mtx);
+		simple_unlock(&sysmon_power_event_queue_slock);
 		return (error);
 	}
 	goto again;
@@ -241,12 +240,12 @@ sysmonpoll_power(dev_t dev, int events, struct lwp *l)
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
 	if (sysmon_power_event_queue_count)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
 		selrecord(l, &sysmon_power_event_queue_selinfo);
-	mutex_exit(&sysmon_power_event_queue_mtx);
+	simple_unlock(&sysmon_power_event_queue_slock);
 
 	return (revents);
 }
@@ -255,19 +254,19 @@ static void
 filt_sysmon_power_rdetach(struct knote *kn)
 {
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
 	SLIST_REMOVE(&sysmon_power_event_queue_selinfo.sel_klist,
 	    kn, knote, kn_selnext);
-	mutex_exit(&sysmon_power_event_queue_mtx);
+	simple_unlock(&sysmon_power_event_queue_slock);
 }
 
 static int
 filt_sysmon_power_read(struct knote *kn, long hint)
 {
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
 	kn->kn_data = sysmon_power_event_queue_count;
-	mutex_exit(&sysmon_power_event_queue_mtx);
+	simple_unlock(&sysmon_power_event_queue_slock);
 
 	return (kn->kn_data > 0);
 }
@@ -303,9 +302,9 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
-	mutex_exit(&sysmon_power_event_queue_mtx);
+	simple_unlock(&sysmon_power_event_queue_slock);
 
 	return (0);
 }
@@ -363,13 +362,9 @@ int
 sysmon_pswitch_register(struct sysmon_pswitch *smpsw)
 {
 
-	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DRIVER, IPL_NONE);
-	mutex_init(&sysmon_pswitch_list_mtx, MUTEX_DRIVER, IPL_NONE);
-	cv_init(&sysmon_power_event_queue_cv, "smpower");
-
-	mutex_enter(&sysmon_pswitch_list_mtx);
+	simple_lock(&sysmon_pswitch_list_slock);
 	LIST_INSERT_HEAD(&sysmon_pswitch_list, smpsw, smpsw_list);
-	mutex_exit(&sysmon_pswitch_list_mtx);
+	simple_unlock(&sysmon_pswitch_list_slock);
 
 	return (0);
 }
@@ -383,9 +378,9 @@ void
 sysmon_pswitch_unregister(struct sysmon_pswitch *smpsw)
 {
 
-	mutex_enter(&sysmon_pswitch_list_mtx);
+	simple_lock(&sysmon_pswitch_list_slock);
 	LIST_REMOVE(smpsw, smpsw_list);
-	mutex_exit(&sysmon_pswitch_list_mtx);
+	simple_unlock(&sysmon_pswitch_list_slock);
 }
 
 /*
@@ -402,7 +397,7 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 	 * deliver the event to them.  If not, we need to try to
 	 * do something reasonable ourselves.
 	 */
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	simple_lock(&sysmon_power_event_queue_slock);
 	if (sysmon_power_daemon != NULL) {
 		power_event_t pev;
 		int rv;
@@ -414,7 +409,7 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 
 		rv = sysmon_queue_power_event(&pev);
 		if (rv == 0) {
-			mutex_exit(&sysmon_power_event_queue_mtx);
+			simple_unlock(&sysmon_power_event_queue_slock);
 			printf("%s: WARNING: state change event %d lost; "
 			    "queue full\n", smpsw->smpsw_name,
 			    pev.pev_type);
@@ -422,16 +417,16 @@ sysmon_pswitch_event(struct sysmon_pswitch *smpsw, int event)
 		} else {
 			if (sysmon_power_event_queue_flags & PEVQ_F_WAITING) {
 				sysmon_power_event_queue_flags &= ~PEVQ_F_WAITING;
-				mutex_exit(&sysmon_power_event_queue_mtx);
-				cv_broadcast(&sysmon_power_event_queue_cv);
+				simple_unlock(&sysmon_power_event_queue_slock);
+				wakeup(&sysmon_power_event_queue_count);
 			} else {
-				mutex_exit(&sysmon_power_event_queue_mtx);
+				simple_unlock(&sysmon_power_event_queue_slock);
 			}
 			selnotify(&sysmon_power_event_queue_selinfo, 0);
 			return;
 		}
 	}
-	mutex_exit(&sysmon_power_event_queue_mtx);
+	simple_unlock(&sysmon_power_event_queue_slock);
 
 	switch (smpsw->smpsw_type) {
 	case PSWITCH_TYPE_POWER:
