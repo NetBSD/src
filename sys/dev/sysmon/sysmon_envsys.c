@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.14 2007/02/18 23:38:11 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.15 2007/02/19 00:36:12 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.14 2007/02/18 23:38:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.15 2007/02/19 00:36:12 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -71,12 +71,6 @@ u_int	sysmon_envsys_next_sensor_index;
 
 int	sysmon_envsys_initialized;
 kmutex_t sysmon_envsys_initialized_mtx;
-
-#define	SYSMON_ENVSYS_LOCK()	\
-	mutex_enter(&sysmon_envsys_mtx)
-
-#define SYSMON_ENVSYS_UNLOCK()		\
-	mutex_exit(&sysmon_envsys_mtx)
 
 struct sysmon_envsys *sysmon_envsys_find(u_int);
 void	sysmon_envsys_release(struct sysmon_envsys *);
@@ -182,9 +176,9 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data,
 		tred->sensor = SME_SENSOR_IDX(sme, tred->sensor);
 		if (tred->sensor < sme->sme_nsensors
 		    && sme->sme_gtredata != NULL) {
-			SYSMON_ENVSYS_LOCK();
+			mutex_enter(&sysmon_envsys_mtx);
 			error = (*sme->sme_gtredata)(sme, tred);
-			SYSMON_ENVSYS_UNLOCK();
+			mutex_exit(&sysmon_envsys_mtx);
 		}
 		tred->sensor = oidx;
 		sysmon_envsys_release(sme);
@@ -204,9 +198,9 @@ sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data,
 		binfo->sensor = SME_SENSOR_IDX(sme, binfo->sensor);
 		if (binfo->sensor < sme->sme_nsensors
 		    && sme->sme_streinfo != NULL) {
-			SYSMON_ENVSYS_LOCK();
+			mutex_enter(&sysmon_envsys_mtx);
 			error = (*sme->sme_streinfo)(sme, binfo);
-			SYSMON_ENVSYS_UNLOCK();
+			mutex_exit(&sysmon_envsys_mtx);
 		} else
 			binfo->validflags = 0;
 		binfo->sensor = oidx;
