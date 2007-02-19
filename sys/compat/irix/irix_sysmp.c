@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.16 2007/02/15 20:32:48 ad Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.17 2007/02/19 03:55:26 rumble Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.16 2007/02/15 20:32:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.17 2007/02/19 03:55:26 rumble Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -82,7 +82,6 @@ irix_sys_sysmp(l, v, retval)
 		syscallarg(void *) arg4;
 	} */ *uap = v;
 	int cmd = SCARG(uap, cmd);
-	int error = 0;
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sysmp(): cmd = %d\n", cmd);
