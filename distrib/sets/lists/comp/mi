@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1006 2007/02/17 17:20:19 yamt Exp $
+#	$NetBSD: mi,v 1.1007 2007/02/20 16:56:08 kiyohara Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -160,6 +160,7 @@
 ./usr/include/dev/bluetooth/bthidev.h		comp-c-include
 ./usr/include/dev/bluetooth/bthset.h		comp-obsolete		obsolete
 ./usr/include/dev/bluetooth/btsco.h		comp-c-include
+./usr/include/dev/bluetooth/btuart.h		comp-c-include
 ./usr/include/dev/ccdvar.h			comp-c-include
 ./usr/include/dev/cgdvar.h			comp-c-include
 ./usr/include/dev/clock_subr.h			comp-obsolete		obsolete

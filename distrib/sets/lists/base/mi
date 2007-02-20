@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.687 2007/02/08 03:57:53 tls Exp $
+# $NetBSD: mi,v 1.688 2007/02/20 16:56:08 kiyohara Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1007,6 +1007,7 @@
 ./usr/sbin/btcontrol				base-obsolete		obsolete
 ./usr/sbin/btdevctl				base-sysutil-bin
 ./usr/sbin/bthcid				base-sysutil-bin
+./usr/sbin/btuartd				base-sysutil-bin
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/chat					base-ppp-bin
 ./usr/sbin/chown				base-sysutil-bin

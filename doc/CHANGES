@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.791 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.792 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -41,3 +41,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	i386: added an opencrypto provider for VIA ACE (AES encryption
 		instructions), ported from OpenBSD. [daniel 20070217]
 	sdiff(1): Replaced by OpenBSD sdiff(1) (public domain). [rmind 20070219]
+	btuart(4): Supprot Bluetooth HCI UART (H4) driver.
+	btuartd(8): Supprot Bluetooth HCI UART (H4) daemon.

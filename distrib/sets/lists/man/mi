@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.974 2007/02/08 03:57:53 tls Exp $
+# $NetBSD: mi,v 1.975 2007/02/20 16:56:09 kiyohara Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1799,6 +1799,7 @@
 ./usr/share/man/cat8/btcontrol.0		man-obsolete		obsolete
 ./usr/share/man/cat8/btdevctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/bthcid.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/btuartd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/catman.0			man-man-catman		.cat
 ./usr/share/man/cat8/cats/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cats/makedev.0		man-obsolete		obsolete
@@ -3150,6 +3151,7 @@
 ./usr/share/man/man4/btkbd.4			man-sys-man		.man
 ./usr/share/man/man4/btms.4			man-sys-man		.man
 ./usr/share/man/man4/btsco.4			man-sys-man		.man
+./usr/share/man/man4/btuart.4			man-sys-man		.man
 ./usr/share/man/man4/ca.4			man-obsolete		obsolete
 ./usr/share/man/man4/cac.4			man-sys-man		.man
 ./usr/share/man/man4/cardbus.4			man-sys-man		.man
@@ -4212,6 +4214,7 @@
 ./usr/share/man/man8/btcontrol.8		man-obsolete		obsolete
 ./usr/share/man/man8/btdevctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/bthcid.8			man-sysutil-man		.man
+./usr/share/man/man8/btuartd.8			man-sysutil-man		.man
 ./usr/share/man/man8/catman.8			man-man-man		.man
 ./usr/share/man/man8/cats/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cats/makedev.8		man-obsolete		obsolete
