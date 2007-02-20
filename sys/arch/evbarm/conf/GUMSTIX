@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.6 2007/01/18 10:24:53 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.7 2007/02/20 17:23:09 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
@@ -355,6 +355,33 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB Generic driver
 #ugen*	at uhub? port ?
 
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+#bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+#ubt*	at uhub? port ? configuration ? interface ?
+
+# Bluetooth Device Hub
+#bthub*	at bt3c?
+#bthub*	at ubt?
+bthub*	at btuart?
+
+# Bluetooth HID support
+#bthidev* at bthub?
+
+# Bluetooth Mouse
+#btms*	at bthidev? reportid ?
+#wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+#btkbd*	at bthidev? reportid ?
+#wskbd*	at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+#btsco*	at bthub?
+
 # Pseudo-Devices
 
 pseudo-device	swcrypto		# software crypto implementation
@@ -407,6 +434,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 options		RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
