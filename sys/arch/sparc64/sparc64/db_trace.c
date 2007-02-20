@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35 2007/02/17 22:31:38 pavel Exp $ */
+/*	$NetBSD: db_trace.c,v 1.36 2007/02/20 01:02:03 ad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.35 2007/02/17 22:31:38 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2007/02/20 01:02:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -64,10 +64,15 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	vaddr_t		frame;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
+	boolean_t	lwpaddr = FALSE;
 	char		c;
 	const char	*cp = modif;
 
 	while ((c = *cp++) != 0) {
+		if (c == 'a') {
+			lwpaddr = TRUE;
+			trace_thread = TRUE;
+		}
 		if (c == 't')
 			trace_thread = TRUE;
 		if (c == 'u')
@@ -81,13 +86,20 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			struct proc *p;
 			struct lwp *l;
 			struct user *u;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
-			}	
-                        l = LIST_FIRST(&p->p_lwps);     /* XXX NJWLWP */
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
+			}
+			(*pr)("lid %d ", l->l_lid);
                         if ((l->l_flag & LW_INMEM) == 0) {
                                 (*pr)("swapped out\n");
                                 return;

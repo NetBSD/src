@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.17 2007/02/20 01:02:03 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2006/05/12 06:05:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.17 2007/02/20 01:02:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,12 +239,17 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	int		is_trap = 0;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
+	boolean_t	lwpaddr = FALSE;
 
 	{
 		char *cp = modif;
 		char c;
 
 		while ((c = *cp++) != 0) {
+			if (c == 'a') {
+				lwpaddr = TRUE;
+				trace_thread = TRUE;
+			}
 			if (c == 't')
 				trace_thread = TRUE;
 			if (c == 'u')
