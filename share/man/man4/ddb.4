@@ -1,6 +1,6 @@
-.\"	$NetBSD: ddb.4,v 1.98 2007/01/31 02:17:31 mrg Exp $
+.\"	$NetBSD: ddb.4,v 1.99 2007/02/20 01:03:01 ad Exp $
 .\"
-.\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd November 17, 2006
+.Dd Febuary 20, 2007
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -342,6 +342,15 @@ A synonym for
 .Xc
 A synonym for
 .Ic trace/t .
+.It Xo
+.Ic bt/a Ns Op Cm /ul
+.Sm off
+.Op Ar pid
+.Op Cm , Ar count
+.Sm on
+.Xc
+A synonym for
+.Ic trace/a .
 .It Xo
 .Ic call
 .Sm off
@@ -871,6 +880,22 @@ message buffer.
 .Pp
 Warning: trace by pid is valid only if the machine dependent code
 supports it.
+.It Xo
+.Ic trace/a Ns Op Cm l
+.Sm off
+.Op Ar lwpaddr
+.Op Cm , Ar count
+.Sm on
+.Xc
+Stack trace by light weight process (LWP) address
+rather than by stack frame address.
+If
+.Cm /l
+is specified, the trace is printed and also stored in the kernel
+message buffer.
+.Pp
+Warning: trace by LWP address is valid only if the machine dependent
+code supports it.
 .It Ic until Ns Op Cm /p
 Stop at the next call or return instruction.
 If
