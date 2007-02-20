@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.11 2007/02/19 21:38:37 matt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.12 2007/02/20 01:51:16 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.11 2007/02/19 21:38:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.12 2007/02/20 01:51:16 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -197,19 +197,6 @@ irq_claim(irq, handler)
 	 */
 	handler->ih_num = irq;
 
-#ifdef IRQSTATS
-	/* Get the interrupt name from the head of the list */
-	if (handler->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, handler->ih_name,
-		    min(strlen(handler->ih_name), 13));
-	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
-	}
-#endif	/* IRQSTATS */
-
 	irq_calculatemasks();
 
 	enable_irq(irq);
@@ -231,9 +218,6 @@ irq_release(irq, handler)
 {
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
-#ifdef IRQSTATS
-	extern char *_intrnames;
-#endif
 
 	/*
 	 * IRQ_INSTRUCT indicates that we should get the irq number
@@ -267,19 +251,6 @@ irq_release(irq, handler)
 	/* Make sure the head of the handler list is active */
 	if (irqhandlers[irq])
 		irqhandlers[irq]->ih_flags |= IRQ_FLAG_ACTIVE;
-
-#ifdef IRQSTATS
-	/* Get the interrupt name from the head of the list */
-	if (irqhandlers[irq] && irqhandlers[irq]->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, irqhandlers[irq]->ih_name,
-		    min(strlen(irqhandlers[irq]->ih_name), 13));
-	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
-	}
-#endif	/* IRQSTATS */
 
 	irq_calculatemasks();
 
@@ -370,18 +341,24 @@ intr_claim(irq, level, name, ih_func, ih_arg)
 {
 	irqhandler_t *ih;
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (!ih)
 		panic("intr_claim(): Cannot malloc handler memory");
 
 	ih->ih_level = level;
-	ih->ih_name = name;
 	ih->ih_func = ih_func;
 	ih->ih_arg = ih_arg;
 	ih->ih_flags = 0;
+	if (name == NULL) {
+		snprintf(ih->ih_evname, sizeof(ih->ih_evname), "irq %2d", irq);
+		name = ih->ih_evname;
+	}
+	evcnt_attach_dynamic(&ih->ih_ev, EVCNT_TYPE_INTR, NULL, NULL, name);
 
-	if (irq_claim(irq, ih) != 0)
+	if (irq_claim(irq, ih) != 0) {
+		evcnt_detach(&ih->ih_ev);
 		return(NULL);
+	}
 	return(ih);
 }
 
@@ -392,6 +369,7 @@ intr_release(arg)
 	irqhandler_t *ih = (irqhandler_t *)arg;
 
 	if (irq_release(ih->ih_num, ih) == 0) {
+		evcnt_detach(&ih->ih_ev);
 		free(ih, M_DEVBUF);
 		return(0);
 	}
