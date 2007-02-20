@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.5 2006/12/09 05:52:57 manu Exp $	*/
+/*	$NetBSD: policy.h,v 1.5.4.1 2007/02/20 09:08:00 vanhu Exp $	*/
 
 /* Id: policy.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -65,6 +65,7 @@ struct policyindex {
 	u_int8_t prefd;			/* prefix length in bits for dst */
 	u_int16_t ul_proto;		/* upper layer Protocol */
 	u_int32_t priority;		/* priority for the policy */
+ 	u_int64_t created;		/* Used for generated SPD entries deletion */
 #ifdef HAVE_SECCTX
 	struct security_ctx sec_ctx;    /* Security Context */
 #endif
@@ -108,7 +109,7 @@ struct ipsecrequest {
 };
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
-#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, _priority, idx)              \
+#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, _priority, _created, idx)              \
 do {                                                                         \
 	bzero((idx), sizeof(struct policyindex));                            \
 	(idx)->dir = (_dir);                                                 \
@@ -116,17 +117,19 @@ do {                                                                         \
 	(idx)->prefd = (pd);                                                 \
 	(idx)->ul_proto = (ulp);                                             \
 	(idx)->priority = (_priority);                                        \
+	(idx)->created = (_created);                                        \
 	memcpy(&(idx)->src, (s), sysdep_sa_len((struct sockaddr *)(s)));          \
 	memcpy(&(idx)->dst, (d), sysdep_sa_len((struct sockaddr *)(d)));          \
 } while (0)
 #else
-#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, idx)              \
+#define KEY_SETSECSPIDX(_dir, s, d, ps, pd, ulp, _created, idx)              \
 do {                                                                         \
 	bzero((idx), sizeof(struct policyindex));                            \
 	(idx)->dir = (_dir);                                                 \
 	(idx)->prefs = (ps);                                                 \
 	(idx)->prefd = (pd);                                                 \
 	(idx)->ul_proto = (ulp);                                             \
+	(idx)->created = (_created);                                        \
 	memcpy(&(idx)->src, (s), sysdep_sa_len((struct sockaddr *)(s)));          \
 	memcpy(&(idx)->dst, (d), sysdep_sa_len((struct sockaddr *)(d)));          \
 } while (0)
