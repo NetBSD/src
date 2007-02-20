@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.19 2007/02/20 03:43:22 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.20 2007/02/20 04:14:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2007/02/20 03:43:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2007/02/20 04:14:23 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -66,8 +66,6 @@ static void clearsoftintr(u_int);
  
 static u_int soft_interrupts = 0;
 static u_int spl_smasks[_SPL_LEVELS];
-
-#define	COUNT	uvmexp.softs;
 
 /* Eventually these will become macros */
 
@@ -101,7 +99,6 @@ dosoftints(void)
 	 */
 	if (softints & SI_SOFTMASK(SI_SOFTSERIAL)) {
 		s = splsoftserial();
-		++COUNT;
 		clearsoftintr(SI_SOFTMASK(SI_SOFTSERIAL));
 		softintr_dispatch(SI_SOFTSERIAL);
 		(void)splx(s);
@@ -112,7 +109,6 @@ dosoftints(void)
 	 */
 	if (softints & SI_SOFTMASK(SI_SOFTNET)) {
 		s = splsoftnet();
-		++COUNT;
 		clearsoftintr(SI_SOFTMASK(SI_SOFTNET));
 		softintr_dispatch(SI_SOFTNET);
 		(void)splx(s);
@@ -123,7 +119,6 @@ dosoftints(void)
 	 */
 	if (softints & SI_SOFTMASK(SI_SOFTCLOCK)) {
 		s = splsoftclock();
-		++COUNT;
 		clearsoftintr(SI_SOFTMASK(SI_SOFTCLOCK));
 		softintr_dispatch(SI_SOFTCLOCK);
 		(void)splx(s);
@@ -134,7 +129,6 @@ dosoftints(void)
 	 */
 	if (softints & SI_SOFTMASK(SI_SOFT)) {
 		s = splsoft();
-		++COUNT;
 		clearsoftintr(SI_SOFTMASK(SI_SOFT));
 		softintr_dispatch(SI_SOFT);
 		(void)splx(s);
