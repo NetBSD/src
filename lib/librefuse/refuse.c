@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.30 2007/02/20 14:51:52 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.31 2007/02/20 19:00:21 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.30 2007/02/20 14:51:52 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.31 2007/02/20 19:00:21 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -89,10 +89,11 @@ struct fuse {
 
 struct refusenode {
 	struct fuse_file_info	 file_info;
+	int opencount;
 	int flags;
 };
 #define RN_ROOT		0x01
-#define RN_OPEN		0x02
+#define RN_OPEN		0x02	/* XXX: could just use opencount */
 
 static int fuse_setattr(struct fuse *, struct puffs_node *,
 			const char *, const struct vattr *);
@@ -514,12 +515,15 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	struct fuse_file_info	fi;
 	mode_t			mode = va->va_mode;
 	const char		*path = PCNPATH(pcn);
-	int			ret;
+	int			ret, created;
 
 	fuse = (struct fuse *)pu->pu_privdata;
 
+	created = 0;
 	if (fuse->op.create) {
 		ret = fuse->op.create(path, mode, &fi);
+		if (ret == 0)
+			created = 1;
 
 	} else if (fuse->op.mknod) {
 		fcon.uid = va->va_uid; /*XXX*/
@@ -533,6 +537,17 @@ puffs_fuse_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 
 	if (ret == 0) {
 		ret = fuse_newnode(pu, path, va, &fi, newnode);
+
+		/* sweet..  create also open the file */
+		if (created) {
+			struct puffs_node *pn;
+			struct refusenode *rn;
+
+			pn = *newnode;
+			rn = pn->pn_data;
+			rn->flags |= RN_OPEN;
+			rn->opencount++;
+		}
 	}
 
 	return -ret;
@@ -682,12 +697,13 @@ puffs_fuse_node_setattr(struct puffs_cc *pcc, void *opc,
 
 /* ARGSUSED2 */
 static int
-puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
+puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	const struct puffs_cred *cred, pid_t pid)
 {
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
 	struct refusenode	*rn = pn->pn_data;
+	struct fuse_file_info	*fi = &rn->file_info;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
 	int			 ret;
@@ -695,26 +711,63 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 	fuse = (struct fuse *)pu->pu_privdata;
 
 	/* if open, don't open again, lest risk nuking file private info */
-	if (rn->flags & RN_OPEN)
+	if (rn->flags & RN_OPEN) {
+		rn->opencount++;
 		return 0;
+	}
 
+	fi->flags = mode & ~(O_CREAT | O_EXCL | O_TRUNC);
 	if (pn->pn_va.va_type == VDIR) {
 		if (fuse->op.opendir)
-			ret = fuse->op.opendir(path, &rn->file_info);
+			ret = fuse->op.opendir(path, fi);
 		else
 			ret = ENOSYS;
 	} else {
 		if (fuse->op.open)
-			ret = fuse->op.open(path, &rn->file_info);
+			ret = fuse->op.open(path, fi);
 		else
 			ret = ENOSYS;
 	}
 
 	if (ret == 0) {
 		rn->flags |= RN_OPEN;
+		rn->opencount++;
 	}
 
 	return -ret;
+}
+
+/* ARGSUSED2 */
+static int
+puffs_fuse_node_close(struct puffs_cc *pcc, void *opc, int fflag,
+	const struct puffs_cred *pcr, pid_t pid)
+{
+	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
+	struct puffs_node	*pn = opc;
+	struct refusenode	*rn = pn->pn_data;
+	struct fuse		*fuse;
+	struct fuse_file_info	*fi;
+	const char		*path = PNPATH(pn);
+	int			ret;
+
+	fuse = (struct fuse *)pu->pu_privdata;
+	fi = &rn->file_info;
+	ret = 0;
+
+	if (rn->flags & RN_OPEN) {
+		if (pn->pn_va.va_type == VDIR) {
+			if (fuse->op.releasedir)
+				ret = fuse->op.releasedir(path, fi);
+		} else {
+			if (fuse->op.release)
+				ret = fuse->op.release(path, fi);
+		}
+	}
+	rn->flags &= ~RN_OPEN;
+	rn->opencount--;
+	printf("opencount- %d\n", rn->opencount);
+
+	return ret;
 }
 
 /* read some more from the file */
@@ -834,35 +887,6 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	return -ret;
 }
 
-/* ARGSUSED2 */
-static int
-puffs_fuse_node_inactive(struct puffs_cc *pcc, void *opc, pid_t pid,
-	int *refcount)
-{
-	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
-	struct puffs_node	*pn = opc;
-	struct refusenode	*rn = pn->pn_data;
-	struct fuse		*fuse;
-	const char		*path = PNPATH(pn);
-
-	*refcount = 1; /* safe default */
-	fuse = (struct fuse *)pu->pu_privdata;
-
-	if (rn && rn->flags & RN_OPEN) {
-		if (pn->pn_va.va_type == VDIR) {
-			if (fuse->op.releasedir)
-				fuse->op.releasedir(path, &rn->file_info);
-		} else {
-			if (fuse->op.release)
-				fuse->op.release(path, &rn->file_info);
-		}
-	}
-	if (rn)
-		rn->flags &= ~RN_OPEN;
-
-	return 0;
-}
-
 /* ARGSUSED */
 static int
 puffs_fuse_node_reclaim(struct puffs_cc *pcc, void *opc, pid_t pid)
@@ -961,9 +985,9 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
         PUFFSOP_SET(pops, puffs_fuse, node, rename);
         PUFFSOP_SET(pops, puffs_fuse, node, link);
         PUFFSOP_SET(pops, puffs_fuse, node, open);
+        PUFFSOP_SET(pops, puffs_fuse, node, close);
         PUFFSOP_SET(pops, puffs_fuse, node, read);
         PUFFSOP_SET(pops, puffs_fuse, node, write);
-        PUFFSOP_SET(pops, puffs_fuse, node, inactive);
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
 	NEW(struct fuse, fuse, "fuse_main_real", exit(EXIT_FAILURE));
@@ -1062,6 +1086,7 @@ fuse_exit(struct fuse *f)
  * XXX: obviously not the most perfect of functions, but needs some
  * puffs tweaking for a better tomorrow
  */
+/*ARGSUSED*/
 void
 fuse_unmount(const char *mp)
 {
