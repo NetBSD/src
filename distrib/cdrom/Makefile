@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2006/09/17 03:56:03 tsutsui Exp $
+# $NetBSD: Makefile,v 1.30 2007/02/20 18:09:05 mrg Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -156,7 +156,7 @@ RSYNC_INCLUDE+=		--include "/shared/${arch}"
 ##### Boot info and additional options for various platforms #####
 
 .if defined(PUBLISHER)
-MKISOFS_ARGS+=		-P "${PUBLISHER}"
+MKISOFS_ARGS+=		-publisher "${PUBLISHER}"
 .endif
 
 .if defined(PREPARER)
