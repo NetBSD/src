@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.77 2007/02/19 20:19:12 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.78 2007/02/20 14:39:19 tron Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1431,7 +1431,7 @@ regress/usr.bin/cut/cut_tests			1.2
 	environment variable.
 	[hubertf, ticket #432]
 
-sys/arch/i386/conf/ALL				1.78
+sys/arch/i386/conf/ALL				1.78 via patch
 
 	Enable ALTQ and some others, taken from GENERIC kernel configuration.
 	[hubertf, ticket #434]
