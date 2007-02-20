@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.14.4.3 2007/02/20 09:08:19 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.14.4.4 2007/02/20 13:00:29 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -746,7 +746,6 @@ isakmp_info_send_nx(isakmp, remote, local, type, data)
 		error = -1;
 		goto end;
 	}
-	printf("%s: iph1->local = %p\n", __func__, iph1->local);
 
 	tlen = sizeof(*n) + spisiz;
 	if (data)
