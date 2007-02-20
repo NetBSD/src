@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.106 2007/02/20 15:56:59 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.107 2007/02/20 16:10:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.106 2007/02/20 15:56:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.107 2007/02/20 16:10:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1528,6 +1528,9 @@ _kernel_lock(int nlocks, struct lwp *l)
 		return;
 	}
 
+	LOCKDEBUG_WANTLOCK(kernel_lock_id,
+	    (uintptr_t)__builtin_return_address(0), 0);
+
 	if (__cpu_simple_lock_try(&kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		LOCKDEBUG_LOCKED(kernel_lock_id,
@@ -1565,19 +1568,19 @@ _kernel_lock(int nlocks, struct lwp *l)
 
 	ci->ci_biglock_wanted = owant;
 	ci->ci_biglock_count += nlocks;
-	if (owant == NULL) {
-		LOCKSTAT_STOP_TIMER(lsflag, spintime);
-		LOCKDEBUG_LOCKED(kernel_lock_id,
-		    (uintptr_t)__builtin_return_address(0), 0);
-	}
+	LOCKSTAT_STOP_TIMER(lsflag, spintime);
+	LOCKDEBUG_LOCKED(kernel_lock_id,
+	    (uintptr_t)__builtin_return_address(0), 0);
 	splx(s);
 
 	/*
 	 * Again, another store fence is required (see kern_mutex.c).
 	 */
 	mb_write();
-	LOCKSTAT_EVENT(lsflag, &kernel_lock, LB_KERNEL_LOCK | LB_SPIN, 1,
-	    spintime);
+	if (owant == NULL) {
+		LOCKSTAT_EVENT(lsflag, &kernel_lock, LB_KERNEL_LOCK | LB_SPIN,
+		    1, spintime);
+	}
 	LOCKSTAT_EXIT(lsflag);
 }
 
