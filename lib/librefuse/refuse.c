@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.31 2007/02/20 19:00:21 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.32 2007/02/20 19:13:28 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.31 2007/02/20 19:00:21 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.32 2007/02/20 19:13:28 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -617,8 +617,7 @@ puffs_fuse_node_symlink(struct puffs_cc *pcc, void *opc, void **newnode,
 	}
 
 	/* wrap up return code */
-	ret = (*fuse->op.symlink)(path, link_target);
-	/* XXX - check I haven't transposed these args */
+	ret = fuse->op.symlink(link_target, path);
 
 	if (ret == 0) {
 		ret = fuse_newnode(pu, path, va, NULL, newnode);
