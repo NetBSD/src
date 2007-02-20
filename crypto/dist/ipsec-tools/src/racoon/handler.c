@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.9 2006/10/03 08:02:51 vanhu Exp $	*/
+/*	$NetBSD: handler.c,v 1.10 2007/02/20 09:11:14 vanhu Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -687,7 +687,7 @@ flushph2()
 		if (p->status == PHASE2ST_ESTABLISHED) 
 			isakmp_info_send_d2(p);
 
-		delete_spd(p);
+		delete_spd(p, 0);
 		unbindph12(p);
 		remph2(p);
 		delph2(p);
