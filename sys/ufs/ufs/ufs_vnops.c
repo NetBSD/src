@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.150 2007/02/20 16:45:58 pooka Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.151 2007/02/20 18:03:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.150 2007/02/20 16:45:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.151 2007/02/20 18:03:03 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1746,7 +1746,7 @@ ufs_readdir(void *v)
 				continue;
 			}
 			/*
-			 * invlid cookie.
+			 * invalid cookie.
 			 */
 			error = EINVAL;
 			goto out;
