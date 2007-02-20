@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.32 2007/02/20 19:13:28 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.33 2007/02/20 23:49:15 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.32 2007/02/20 19:13:28 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.33 2007/02/20 23:49:15 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -705,7 +705,6 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	struct fuse_file_info	*fi = &rn->file_info;
 	struct fuse		*fuse;
 	const char		*path = PNPATH(pn);
-	int			 ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
 
@@ -718,22 +717,16 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	fi->flags = mode & ~(O_CREAT | O_EXCL | O_TRUNC);
 	if (pn->pn_va.va_type == VDIR) {
 		if (fuse->op.opendir)
-			ret = fuse->op.opendir(path, fi);
-		else
-			ret = ENOSYS;
+			fuse->op.opendir(path, fi);
 	} else {
 		if (fuse->op.open)
-			ret = fuse->op.open(path, fi);
-		else
-			ret = ENOSYS;
+			fuse->op.open(path, fi);
 	}
 
-	if (ret == 0) {
-		rn->flags |= RN_OPEN;
-		rn->opencount++;
-	}
+	rn->flags |= RN_OPEN;
+	rn->opencount++;
 
-	return -ret;
+	return 0;
 }
 
 /* ARGSUSED2 */
@@ -764,7 +757,6 @@ puffs_fuse_node_close(struct puffs_cc *pcc, void *opc, int fflag,
 	}
 	rn->flags &= ~RN_OPEN;
 	rn->opencount--;
-	printf("opencount- %d\n", rn->opencount);
 
 	return ret;
 }
