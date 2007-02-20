@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.3 2006/10/15 22:43:30 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.3.2.1 2007/02/20 15:13:59 tron Exp $");
 #endif
 
 #include <sys/types.h>
@@ -207,7 +207,7 @@ cmd_label(int argc, char *argv[])
 		case 'i':
 			if (entry > 0)
 				usage_label();
-			entry = strtol(optarg, &p, 10);
+			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
 				usage_label();
 			break;

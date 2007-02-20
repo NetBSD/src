@@ -31,7 +31,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.2 2006/10/15 22:36:29 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.2.2.1 2007/02/20 15:14:00 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -766,7 +766,7 @@ main(int argc, char *argv[])
 		case 'p':
 			if (parts > 0)
 				usage();
-			parts = strtol(optarg, &p, 10);
+			parts = strtoul(optarg, &p, 10);
 			if (*p != 0 || parts < 1)
 				usage();
 			break;
