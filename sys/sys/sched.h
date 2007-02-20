@@ -1,11 +1,12 @@
-/* $NetBSD: sched.h,v 1.30.2.1 2007/02/17 10:31:06 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.2 2007/02/20 21:48:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ross Harvey, Jason R. Thorpe, Nathan J. Williams, and Andrew Doran.
+ * by Ross Harvey, Jason R. Thorpe, Nathan J. Williams, Andrew Doran and
+ * Daniel Sieger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -80,7 +81,16 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_sched.h"
 #endif
+
+#if _KERNEL
+
+#if defined(SCHED_4BSD)
+#include <sys/sched_4bsd.h>
+#endif
+
+#endif /* _KERNEL */
 
 struct sched_param {
 	int	sched_priority;
@@ -98,21 +108,6 @@ struct sched_param {
 #if defined(_NETBSD_SOURCE)
 
 #include <sys/time.h>
-
-/*
- * Run queues.
- *
- * We have 32 run queues in descending priority of 0..31.  We maintain
- * a bitmask of non-empty queues in order speed up finding the first
- * runnable process.  The bitmask is maintained only by machine-dependent
- * code, allowing the most efficient instructions to be used to find the
- * first non-empty queue.
- */
-#define	RUNQUE_NQS		32
-struct prochd {
-	struct lwp *ph_link;
-	struct lwp *ph_rlink;
-};
 
 /*
  * CPU states.
@@ -135,7 +130,7 @@ struct schedstate_percpu {
 	u_int spc_schedticks;		/* ticks for schedclock() */
 	uint64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
-	int spc_rrticks;		/* ticks until roundrobin() */
+	int spc_ticks;		        /* ticks until sched_tick() */
 	int spc_pscnt;			/* prof/stat counter */
 	int spc_psdiv;			/* prof/stat divisor */
 };
@@ -164,21 +159,45 @@ struct schedstate_percpu {
 
 #ifdef _KERNEL
 
-extern int schedhz;			/* ideally: 16 */
-extern int rrticks;			/* ticks per roundrobin() */
-
 struct proc;
 struct cpu_info;
 
-void schedclock(struct lwp *);
-void roundrobin(struct cpu_info *);
+/*
+ * Common Scheduler Interface
+ */
+
+/* Scheduler initialization */
+void sched_rqinit(void);	/* Initialize runqueues */
+void sched_setup(void);		/* Setup scheduler, e.g. kick off timeout driven events */
+
+/* Main scheduler functions */
+void sched_tick(struct cpu_info *); /* Maybe resched after spc_ticks hardclock() ticks */
+
+/* Runqueue-related functions */
+inline boolean_t sched_curcpu_runnable_p(void); /* Indicate runnable processes on current CPU */
+struct lwp * sched_nextlwp(void);		/* Select LWP to run on the CPU next */
+void sched_enqueue(struct lwp *);	/* Place a process on its runqueue */
+void sched_dequeue(struct lwp *);	/* Remove a process from its runqueue */
+
+/* Priority adjustment */
+void sched_nice(struct proc *, int);		/* Recalc priority according to its nice value */
+void sched_changepri(struct lwp *, int);	/* Change priority of a LWP */
+
+/* General helper functions */
+void sched_proc_fork(struct proc *, struct proc *);	/* Inherit scheduling history */
+void sched_proc_exit(struct proc *, struct proc *);	/* Chargeback parents */
+void sched_print_runqueue(void (*pr)(const char *, ...));	/* Print runqueues in DDB */
+void sched_setrunnable(struct lwp *);	/* Scheduler-specific actions for setrunnable() */
+
+/* Functions common to all scheduler implementations */
+void sched_wakeup(volatile const void *);
 int sched_kpri(struct lwp *);
 
-void scheduler_fork_hook(struct proc *, struct proc *);
-void scheduler_wait_hook(struct proc *, struct proc *);
-
-boolean_t sched_curcpu_runnable_p(void);
-void sched_print_runqueue(void (*)(const char *, ...));
+inline void resched_cpu(struct lwp *, u_char); /* Arrange reschedule */
+void setrunnable(struct lwp *);
+void preempt(void);
+int mi_switch(struct lwp *, struct lwp *);
+struct lwp *cpu_switchto(struct lwp *, struct lwp *);
 
 /*
  * Synchronisation object operations set.

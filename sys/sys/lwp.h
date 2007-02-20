@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.2 2007/02/18 13:32:34 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.3 2007/02/20 21:48:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -217,24 +217,6 @@ do {									\
 	if ((l)->l_cred != (p)->p_cred)					\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
-
-void	preempt (void);
-int	mi_switch (struct lwp *, struct lwp *);
-#ifndef remrunqueue
-void	remrunqueue (struct lwp *);
-#endif
-void	resetpriority (struct lwp *);
-void	setrunnable (struct lwp *);
-#ifndef setrunqueue
-void	setrunqueue (struct lwp *);
-#endif
-#ifndef nextrunqueue
-struct lwp *nextrunqueue(void);
-#endif
-void	unsleep (struct lwp *);
-#ifndef cpu_switchto
-struct lwp *cpu_switchto(struct lwp *, struct lwp *);
-#endif
 
 void	lwp_startup(struct lwp *, struct lwp *);
 

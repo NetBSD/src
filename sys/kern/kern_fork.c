@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.131.2.1 2007/02/17 10:30:55 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131.2.2 2007/02/20 21:48:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.1 2007/02/17 10:30:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.2 2007/02/20 21:48:45 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -397,7 +397,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
 	p2->p_sflag |=
 	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
-	scheduler_fork_hook(p1, p2);
+	sched_proc_fork(p1, p2);
 	mutex_exit(&p1->p_smutex);
 
 	p2->p_stflag = p1->p_stflag;
@@ -520,7 +520,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		lwp_lock(l2);
 		l2->l_stat = LSRUN;
 		l2->l_flag |= tmp;
-		setrunqueue(l2);
+		sched_enqueue(l2);
 		lwp_unlock(l2);
 	}
 

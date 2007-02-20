@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.294.2.1 2007/02/17 10:30:51 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.294.2.2 2007/02/20 21:48:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.1 2007/02/17 10:30:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.2 2007/02/20 21:48:44 rmind Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.1 2007/02/17 10:30:51 yamt Exp
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
+#include <sys/sched.h>
 #include <sys/sleepq.h>
 #include <sys/iostat.h>
 #ifdef FAST_IPSEC
@@ -242,7 +243,6 @@ main(void)
 	struct pdevinit *pdev;
 	int s, error;
 	extern struct pdevinit pdevinit[];
-	extern void schedcpu(void *);
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
@@ -339,7 +339,7 @@ main(void)
 	(void)chgproccnt(0, 1);
 
 	/* Initialize the run queues, turnstiles and sleep queues. */
-	rqinit();
+	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
 
@@ -467,8 +467,8 @@ main(void)
 	/* Initialize system accouting. */
 	acct_init();
 
-	/* Kick off timeout driven events by calling first time. */
-	schedcpu(NULL);
+	/* Setup the scheduler */
+	sched_setup();
 
 #ifdef KTRACE
 	/* Initialize ktrace. */
