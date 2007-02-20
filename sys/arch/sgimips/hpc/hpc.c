@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.52 2007/02/19 20:14:30 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.53 2007/02/20 23:09:15 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.52 2007/02/19 20:14:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.53 2007/02/20 23:09:15 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,6 +476,10 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_base = ga->ga_addr;
 
+	hpc_read_eeprom(hpctype, SGIMIPS_BUS_SPACE_HPC,
+	    MIPS_PHYS_TO_KSEG1(sc->sc_base), ha.hpc_eeprom,
+	    sizeof(ha.hpc_eeprom));
+
 	hd = (hpctype == 3) ? hpc3_devices : hpc1_devices;
 	for (; hd->hd_name != NULL; hd++) {
 		if (!(hd->hd_sysmask & sysmask) || hd->hd_base != sc->sc_base)
@@ -495,8 +499,6 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		else
 			ha.hpc_regs = &hpc1_values;
 		ha.hpc_regs->revision = hpctype;
-		hpc_read_eeprom(hpctype, ha.ha_st, ha.ha_sh, ha.hpc_eeprom,
-		    sizeof(ha.hpc_eeprom));
 
 		(void) config_found_sm_loc(self, "hpc", NULL, &ha, hpc_print,
 					   hpc_submatch);
