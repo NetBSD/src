@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.18 2006/12/10 18:46:39 manu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.19 2007/02/20 09:11:03 vanhu Exp $	*/
 
-/* $Id: pfkey.c,v 1.18 2006/12/10 18:46:39 manu Exp $ */
+/* $Id: pfkey.c,v 1.19 2007/02/20 09:11:03 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2209,8 +2209,10 @@ pk_recvspdupdate(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+ 	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+ 	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2224,6 +2226,11 @@ pk_recvspdupdate(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2233,6 +2240,7 @@ pk_recvspdupdate(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2241,6 +2249,7 @@ pk_recvspdupdate(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
 
@@ -2322,8 +2331,10 @@ pk_recvspdadd(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2337,6 +2348,11 @@ pk_recvspdadd(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2346,6 +2362,7 @@ pk_recvspdadd(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2354,6 +2371,7 @@ pk_recvspdadd(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
 
@@ -2430,8 +2448,10 @@ pk_recvspddelete(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2445,6 +2465,11 @@ pk_recvspddelete(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2454,6 +2479,7 @@ pk_recvspddelete(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2462,6 +2488,7 @@ pk_recvspddelete(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
 
@@ -2497,8 +2524,10 @@ pk_recvspdexpire(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2512,6 +2541,11 @@ pk_recvspdexpire(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef HAVE_PFKEY_POLICY_PRIORITY
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2521,6 +2555,7 @@ pk_recvspdexpire(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2529,6 +2564,7 @@ pk_recvspdexpire(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
 
@@ -2579,8 +2615,10 @@ pk_recvspddump(mhp)
 	struct sadb_msg *msg;
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[0] == NULL) {
@@ -2593,6 +2631,11 @@ pk_recvspddump(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 	if (saddr == NULL || daddr == NULL || xpl == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -2608,6 +2651,7 @@ pk_recvspddump(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2616,6 +2660,7 @@ pk_recvspddump(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&spidx);
 #endif
 
@@ -2822,6 +2867,8 @@ addnewsp(mhp)
 	struct secpolicy *new = NULL;
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
+	struct sadb_lifetime *lt;
+	u_int64_t created;
 
 	/* sanity check */
 	if (mhp[SADB_EXT_ADDRESS_SRC] == NULL
@@ -2835,6 +2882,16 @@ addnewsp(mhp)
 	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
 	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if(lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
 
 #ifdef __linux__
 	/* bsd skips over per-socket policies because there will be no
@@ -2989,6 +3046,7 @@ addnewsp(mhp)
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
 			xpl->sadb_x_policy_priority,
+			created,
 			&new->spidx);
 #else
 	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
@@ -2997,6 +3055,7 @@ addnewsp(mhp)
 			saddr->sadb_address_prefixlen,
 			daddr->sadb_address_prefixlen,
 			saddr->sadb_address_proto,
+			created,
 			&new->spidx);
 #endif
 
