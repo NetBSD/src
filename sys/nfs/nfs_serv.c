@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.123 2007/02/04 14:48:51 chs Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.124 2007/02/20 16:27:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.123 2007/02/04 14:48:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.124 2007/02/20 16:27:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2706,6 +2706,7 @@ again:
 		toff = off;
 		siz = fullsiz;
 		free(cookies, M_TEMP);
+		cookies = NULL;
 		goto again;
 	}
 
@@ -2975,6 +2976,7 @@ again:
 		toff = off;
 		siz = fullsiz;
 		free(cookies, M_TEMP);
+		cookies = NULL;
 		goto again;
 	}
 
