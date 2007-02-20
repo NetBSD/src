@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.146 2007/02/15 15:40:53 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.147 2007/02/20 16:19:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.146 2007/02/15 15:40:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.147 2007/02/20 16:19:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1633,6 +1633,14 @@ genfs_node_init(struct vnode *vp, const struct genfs_ops *ops)
 
 	rw_init(&gp->g_glock);
 	gp->g_op = ops;
+}
+
+void
+genfs_node_destroy(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	rw_destroy(&gp->g_glock);
 }
 
 void
