@@ -1,4 +1,4 @@
-/*	$NetBSD: sock.c,v 1.10 2006/12/27 18:13:53 alc Exp $	*/
+/*	$NetBSD: sock.c,v 1.11 2007/02/20 15:40:08 matt Exp $	*/
 
 /*
  * sock.c (C) 1995-1998 Darren Reed
@@ -31,6 +31,9 @@ typedef int     boolean_t;
 # include <sys/dir.h>
 #endif
 #if !defined(__osf__)
+# ifdef __NetBSD__ 
+#  include <machine/lock.h>
+# endif
 # define _KERNEL
 # define	KERNEL
 # ifdef	ultrix
