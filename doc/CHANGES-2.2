@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.101 2007/02/08 23:10:06 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.102 2007/02/20 15:53:23 tron Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1072,4 +1072,9 @@ sys/compat/darwin/darwin_ktrace.c		1.6 via patch
 	Due to insufficient length checking it is possible for a user to cause
 	an integer overflow.  Make ktruser return an error instead.
 	[adrianp, ticket #11023]
+
+sys/dev/scsipi/scsiconf.c			1.242 via patch
+
+	Fix problems with Seagate ST318203LSUN18G.
+	[bouyer, ticket #11051]
 
