@@ -1,9 +1,9 @@
-#	$NetBSD: GUMSTIX,v 1.7 2007/02/20 17:23:09 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.8 2007/02/20 17:29:33 kiyohara Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
 
-include	"arch/evbarm/conf/std.gumstix"
+include		"arch/evbarm/conf/std.gumstix"
 
 # estimated number of users
 
@@ -146,7 +146,7 @@ options 	DEBUG
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
-#options  	DEBUG_KGDB
+#options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
 options 	SYMTAB_SPACE=350000
 #options 	AUDIO_DEBUG=2
@@ -170,15 +170,15 @@ pxagpio0 at pxaip?				# GPIO
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
-com0	at pxaip?  addr 0x40100000 intr 22      # Full Function UART
-com1	at pxaip?  addr 0x40700000 intr 20	# Standard UART (waysmall-ST)
-com2	at pxaip?  addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
-com3	at pxaip?  addr 0x41600000 intr 7	# Hardware UART (waysmall, -bt)
+com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
+com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (waysmall-ST)
+com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
+com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART (waysmall, -bt)
 options 	FFUARTCONSOLE
 #options 	STUARTCONSOLE
 #options 	BTUARTCONSOLE
 #options 	HWUARTCONSOLE
-#options 	KGDB_DEVNAME="\"ffuart\""   	# or stuart or btuart or hwuart
+#options 	KGDB_DEVNAME="\"ffuart\""	# or stuart or btuart or hwuart
 #options 	KGDB_DEVRATE=115200
 
 # DMAC support
@@ -388,7 +388,7 @@ pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device  cgd		4	# cryptographic disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -450,16 +450,16 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
-# Veriexec      
-#pseudo-device   veriexec
+# Veriexec
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
-# code size.    
+# code size.
 #
 #options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384 
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1   
+#options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
