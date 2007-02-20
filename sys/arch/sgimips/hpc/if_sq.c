@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.31 2007/02/19 20:14:31 rumble Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.32 2007/02/20 16:11:38 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.31 2007/02/19 20:14:31 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.32 2007/02/20 16:11:38 rumble Exp $");
 
 #include "bpfilter.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.31 2007/02/19 20:14:31 rumble Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/sysconf.h>
 
 #include <dev/ic/seeq8003reg.h>
 
@@ -149,8 +150,27 @@ sq_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_name) == 0)
-		return (1);
+	if (strcmp(ha->ha_name, cf->cf_name) == 0) {
+		uint32_t reset, txstat;
+
+		reset = MIPS_PHYS_TO_KSEG1(ha->ha_sh +
+		    ha->ha_dmaoff + ha->hpc_regs->enetr_reset);
+		txstat = MIPS_PHYS_TO_KSEG1(ha->ha_sh +
+		    ha->ha_devoff + (SEEQ_TXSTAT << 2));
+
+		if (platform.badaddr((void *)reset, sizeof(reset)))
+			return (0);
+
+		*(volatile uint32_t *)reset = 0x1;
+		delay(20);
+		*(volatile uint32_t *)reset = 0x0;
+
+		if (platform.badaddr((void *)txstat, sizeof(txstat)))
+			return (0);
+
+		if ((*(volatile uint32_t *)txstat & 0xff) == TXSTAT_OLDNEW)
+			return (1);
+	}
 
 	return (0);
 }
