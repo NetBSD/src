@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.16 2007/02/15 13:01:26 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.17 2007/02/20 09:11:03 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1157,8 +1157,10 @@ purge_ipsec_spi(dst0, proto, spi, n)
 	vchar_t *buf = NULL;
 	struct sadb_msg *msg, *next, *end;
 	struct sadb_sa *sa;
+	struct sadb_lifetime *lt;
 	struct sockaddr *src, *dst;
 	struct ph2handle *iph2;
+	u_int64_t created;
 	size_t i;
 	caddr_t mhp[SADB_EXT_MAX + 1];
 
@@ -1197,6 +1199,11 @@ purge_ipsec_spi(dst0, proto, spi, n)
 		}
 		src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
 		dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
+		lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+		if(lt != NULL)
+			created = lt->sadb_lifetime_addtime;
+		else
+			created = 0;
 
 		if (sa->sadb_sa_state != SADB_SASTATE_MATURE
 		 && sa->sadb_sa_state != SADB_SASTATE_DYING) {
@@ -1232,7 +1239,7 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			 */
 			iph2 = getph2bysaidx(src, dst, proto, spi[i]);
 			if(iph2 != NULL){
-				delete_spd(iph2);
+				delete_spd(iph2, created);
 				unbindph12(iph2);
 				remph2(iph2);
 				delph2(iph2);
@@ -1443,7 +1450,7 @@ info_recv_initialcontact(iph1)
 		proto_id = pfkey2ipsecdoi_proto(msg->sadb_msg_satype);
 		iph2 = getph2bysaidx(src, dst, proto_id, sa->sadb_sa_spi);
 		if (iph2) {
-			delete_spd(iph2);
+			delete_spd(iph2, 0);
 			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
