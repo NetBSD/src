@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.29 2007/02/19 23:12:29 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.30 2007/02/20 14:51:52 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.29 2007/02/19 23:12:29 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.30 2007/02/20 14:51:52 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -91,7 +91,8 @@ struct refusenode {
 	struct fuse_file_info	 file_info;
 	int flags;
 };
-#define RN_OPEN		0x01
+#define RN_ROOT		0x01
+#define RN_OPEN		0x02
 
 static int fuse_setattr(struct fuse *, struct puffs_node *,
 			const char *, const struct vattr *);
@@ -692,20 +693,22 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int flags,
 	int			 ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
-	if (fuse->op.open == NULL) {
-		return ENOSYS;
-	}
 
-	/*
-	 * examine type
-	 *  - if directory, return 0 rather than open
-	 *  - if open, don't open again, lest risk nuking file
-	 *    private info
-	 */
-	if (pn->pn_va.va_type == VDIR || rn->flags & RN_OPEN)
+	/* if open, don't open again, lest risk nuking file private info */
+	if (rn->flags & RN_OPEN)
 		return 0;
 
-	ret = (*fuse->op.open)(path, &rn->file_info);
+	if (pn->pn_va.va_type == VDIR) {
+		if (fuse->op.opendir)
+			ret = fuse->op.opendir(path, &rn->file_info);
+		else
+			ret = ENOSYS;
+	} else {
+		if (fuse->op.open)
+			ret = fuse->op.open(path, &rn->file_info);
+		else
+			ret = ENOSYS;
+	}
 
 	if (ret == 0) {
 		rn->flags |= RN_OPEN;
@@ -925,6 +928,7 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	struct puffs_usermount	*pu;
 	struct puffs_pathobj	*po_root;
 	struct puffs_ops	*pops;
+	struct refusenode	*rn_root;
 	struct statvfs		svfsb;
 	struct stat		st;
 	struct fuse		*fuse;
@@ -999,7 +1003,10 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	}
 
 	fuse->pu = pu;
-	pu->pu_pn_root = puffs_pn_new(pu, NULL);
+	pu->pu_pn_root = newrn(pu);
+	rn_root = pu->pu_pn_root->pn_data;
+	rn_root->flags |= RN_ROOT;
+
 	po_root = puffs_getrootpathobj(pu);
 	po_root->po_path = strdup("/");
 	po_root->po_len = 1;
