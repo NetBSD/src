@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 2007/02/18 21:03:22 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.19 2007/02/20 03:43:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.18 2007/02/18 21:03:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.19 2007/02/20 03:43:22 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -79,19 +79,10 @@ clearsoftintr(u_int intrmask)
 	atomic_clear_bit(&soft_interrupts, intrmask);
 }
 
-static const int ipl_to_si_map[] = {
-#ifdef IPL_SOFT
-	[IPL_SOFT] = SI_SOFT,
-#endif
-	[IPL_SOFTCLOCK] = SI_SOFTCLOCK,
-	[IPL_SOFTNET] = SI_SOFTNET,
-	[IPL_SOFTSERIAL] = SI_SOFTSERIAL,
-};
-
 void
 _setsoftintr(int si)
 {
-	atomic_set_bit(&soft_interrupts, SI_SOFTMASK(ipl_to_si_map[si]));
+	atomic_set_bit(&soft_interrupts, SI_SOFTMASK(si));
 }
 
 /* Handle software interrupts */
