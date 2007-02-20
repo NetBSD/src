@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.5 2007/02/19 18:09:55 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.6 2007/02/20 00:28:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ LEAF_ENTRY(mutex_exit)
 	 * to wake up any threads sleeping on the lock.
 	 */
 	ldb	MTX_WAITERS(%arg0),%t4
-	comib,=	0,%t1,.Lexit_done
+	comib,=	0,%t4,.Lexit_done
 	 nop
 
 	ldil	L%mutex_wakeup, %t1
