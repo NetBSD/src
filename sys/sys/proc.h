@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.1 2007/02/17 10:31:04 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.2 2007/02/20 21:48:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -538,7 +538,6 @@ void	sessdelete(struct session *);
 void	yield(void);
 void	pgdelete(struct pgrp *);
 void	procinit(void);
-void	resetprocpriority(struct proc *);
 void	suspendsched(void);
 int	ltsleep(wchan_t, int, const char *, int,
 	    volatile struct simplelock *);
@@ -554,7 +553,6 @@ void	proc_free_mem(struct proc *);
 void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
-void	rqinit(void);
 int	pgid_in_session(struct proc *, pid_t);
 #ifndef cpu_idle
 void	cpu_idle(void);

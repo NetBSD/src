@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166.2.1 2007/02/17 10:30:54 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166.2.2 2007/02/20 21:48:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.1 2007/02/17 10:30:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.2 2007/02/20 21:48:45 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -892,7 +892,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	leavepgrp(p);
 
 	parent = p->p_pptr;
-	scheduler_wait_hook(parent, p);
+	sched_proc_exit(parent, p);
 	ruadd(&parent->p_stats->p_cru, p->p_ru);
 	p->p_xstat = 0;
 

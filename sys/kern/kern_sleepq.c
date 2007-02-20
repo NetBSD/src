@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4 2007/02/15 20:21:13 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.1 2007/02/20 21:48:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4 2007/02/15 20:21:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.1 2007/02/20 21:48:45 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -171,12 +171,11 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 	 * Set it running.  We'll try to get the last CPU that ran
 	 * this LWP to pick it up again.
 	 */
-	if (l->l_slptime > 1)
-		updatepri(l);
+	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 	if ((l->l_flag & L_INMEM) != 0) {
-		setrunqueue(l);
+		sched_enqueue(l);
 		if (l->l_priority < ci->ci_schedstate.spc_curpriority)
 			cpu_need_resched(ci);
 		sched_unlock(1);
