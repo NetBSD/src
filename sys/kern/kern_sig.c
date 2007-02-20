@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.246 2007/02/17 22:31:43 pavel Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.247 2007/02/20 17:47:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.246 2007/02/17 22:31:43 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.247 2007/02/20 17:47:03 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1063,6 +1063,13 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 		lwp_unlock(l);
 		return 0;
 	}
+
+	/*
+	 * If killing the process, make it run fast.
+	 */
+	if (__predict_false((prop & SA_KILL) != 0) &&
+	    action == SIG_DFL && l->l_priority > PUSER)
+		lwp_changepri(l, PUSER);
 
 	/*
 	 * If the LWP is running or on a run queue, then we win.  If it's
