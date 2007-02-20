@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.53 2007/02/17 22:31:37 pavel Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.54 2007/02/20 01:02:03 ad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.53 2007/02/17 22:31:37 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.54 2007/02/20 01:02:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,6 +388,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	int		is_trap;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
+	boolean_t	lwpaddr = FALSE;
 
 #if 0
 	if (!db_trace_symbols_found)
@@ -399,6 +400,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		char c;
 
 		while ((c = *cp++) != 0) {
+			if (c == 'a') {
+				lwpaddr = TRUE;
+				trace_thread = TRUE;
+			}
 			if (c == 't')
 				trace_thread = TRUE;
 			if (c == 'u')
@@ -414,13 +419,20 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			struct proc *p;
 			struct user *u;
 			struct lwp *l;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
 			}
-			l = proc_representative_lwp(p, NULL, 0); /* XXX NJWLWP */
+			(*pr)("lid %d ", l->l_lid);
 			if (!(l->l_flag & LW_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
@@ -429,12 +441,12 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			if (p == curproc && l == curlwp) {
 				frame = (int *)ddb_regs.tf_ebp;
 				callpc = (db_addr_t)ddb_regs.tf_eip;
-				(*pr)(" at %p\n", frame);
+				(*pr)("at %p\n", frame);
 			} else {
 				frame = (int *)u->u_pcb.pcb_ebp;
 				callpc = (db_addr_t)
 				    db_get_value((int)(frame + 1), 4, FALSE);
-				(*pr)(" at %p\n", frame);
+				(*pr)("at %p\n", frame);
 				frame = (int *)*frame; /* XXXfvdl db_get_value? */
 			}
 		} else {
