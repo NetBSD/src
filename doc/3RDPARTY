@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.510 2007/02/20 07:25:15 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.511 2007/02/20 21:21:19 heas Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -674,7 +674,7 @@ Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
-Responsible:	rpaulo
+Responsible:	heas
 License:	IBM Public License. See also src/gnu/dist/postfix.
 Notes:
 HTML documentation should be kept in sync with the README_FILES.
