@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.186 2007/02/04 14:45:34 rpaulo Exp $
+# $NetBSD: mi,v 1.187 2007/02/20 16:56:09 kiyohara Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -20,6 +20,7 @@
 ./etc/bluetooth					etc-sys-etc
 ./etc/bluetooth/bluetooth.conf			etc-obsolete		obsolete
 ./etc/bluetooth/btdevctl.conf			etc-sys-etc
+./etc/bluetooth/btuartd.conf			etc-sys-etc
 ./etc/bluetooth/hosts				etc-sys-etc
 ./etc/bluetooth/protocols			etc-sys-etc
 ./etc/daily					etc-sys-etc
@@ -156,6 +157,7 @@
 ./etc/rc.d/btcontrol				etc-obsolete		obsolete
 ./etc/rc.d/btdevctl				etc-sys-rc
 ./etc/rc.d/bthcid				etc-sys-rc
+./etc/rc.d/btuartd				etc-sys-rc
 ./etc/rc.d/ccd					etc-sys-rc
 ./etc/rc.d/cgd					etc-sys-rc
 ./etc/rc.d/cleartmp				etc-sys-rc
