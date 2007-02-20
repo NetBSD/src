@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.53 2007/02/20 23:09:15 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.54 2007/02/20 23:45:09 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.53 2007/02/20 23:09:15 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.54 2007/02/20 23:45:09 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,30 @@ static const struct hpc_device hpc1_devices[] = {
 	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
 	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */    
 	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "wdsc",	/* GIO32 SCSI adapter slot 0 (Indigo) */
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  6,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "wdsc",	/* GIO32 SCSI adapter slot 0 (Indy) */
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  22,
+	  HPCDEV_IP24 }, 
+
+	{ "wdsc",	/* GIO32 SCSI adapter slot 1 (Indigo) */
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  6,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "wdsc",	/* GIO32 SCSI adapter slot 1 (Indy/Challenge S) */
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  23,
+	  HPCDEV_IP24 },
 
 	{ "dpclock",	/* Personal Iris/Indigo clock */
 	  HPC_BASE_ADDRESS_0,
