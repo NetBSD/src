@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.49 2007/02/17 22:31:45 pavel Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.50 2007/02/20 18:08:43 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -136,6 +136,10 @@ struct	lwp {
 	u_short		l_locks;	/* !: lockmgr count of held locks */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
+
+	/* These are only used by 'options SYSCALL_TIMES' */
+	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
+	uint64_t        *l_syscall_counter; /* !: counter for current process */
 };
 
 #if !defined(USER_TO_UAREA)
