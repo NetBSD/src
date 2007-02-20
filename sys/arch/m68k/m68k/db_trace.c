@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.46 2007/02/17 22:31:38 pavel Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.47 2007/02/20 01:02:03 ad Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.46 2007/02/17 22:31:38 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.47 2007/02/20 01:02:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -408,6 +408,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	struct pcb	*pcb = curpcb;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
+	boolean_t	lwpaddr = FALSE;
 	int		fault_pc = 0;
 
 	{
@@ -415,10 +416,12 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		char c;
 
 		while ((c = *cp++) != 0)
-			if (c == 't')
+			if (c == 'a') {
+				lwpaddr = TRUE;
 				trace_thread = TRUE;
-			else
-			if (c == 'u')
+			} else if (c == 't')
+				trace_thread = TRUE;
+			else if (c == 'u')
 				kernel_only = FALSE;
 	}
 
@@ -429,14 +432,20 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			struct proc *p;
 			struct user *u;
 			struct lwp *l;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
 			}
-			/* XXX: Have to pick on some thread... */
-			l = LIST_FIRST(&p->p_lwps);
+			(*pr)("lid %d ", l->l_lid);
 			if (!(l->l_flag & LW_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
