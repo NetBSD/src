@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.51 2007/02/15 19:50:54 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.52 2007/02/20 19:45:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.51 2007/02/15 19:50:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.52 2007/02/20 19:45:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -477,8 +477,8 @@ puffs_lookup(void *v)
 				    && PUFFS_DOCACHE(pmp))
 					cache_enter(dvp, NULL, cnp);
 			}
-		} else {
-			error = ENOENT;
+		} else if (error < 0) {
+			error = EINVAL;
 		}
 		goto errout;
 	}
