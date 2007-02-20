@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.99 2007/02/20 01:03:01 ad Exp $
+.\"	$NetBSD: ddb.4,v 1.100 2007/02/20 08:11:41 skrll Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -119,6 +119,11 @@ from the keyboard:
 \*[Lt]Alt\*[Gt]-\*[Lt]LeftShift\*[Gt]-\*[Lt]F9\*[Gt]
 .It hp300
 \*[Lt]Shift\*[Gt]-\*[Lt]Reset\*[Gt]
+.It hp700
++++++
+(five plus signs)
+.br
+\*[Lt]Break\*[Gt] on serial console.
 .It hpcarm
 \*[Lt]Ctrl\*[Gt]-\*[Lt]Alt\*[Gt]-\*[Lt]Esc\*[Gt]
 .It hpcmips
@@ -345,7 +350,7 @@ A synonym for
 .It Xo
 .Ic bt/a Ns Op Cm /ul
 .Sm off
-.Op Ar pid
+.Op Ar lwpaddr
 .Op Cm , Ar count
 .Sm on
 .Xc
