@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.8 2007/01/29 01:52:44 hubertf Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.9 2007/02/20 16:21:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.8 2007/01/29 01:52:44 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.9 2007/02/20 16:21:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -600,6 +600,7 @@ sysvbfs_reclaim(void *v)
 	LIST_REMOVE(bnode, link);
 	simple_unlock(&mntvnode_slock);
 	cache_purge(vp);
+	genfs_node_destroy(vp);
 	pool_put(&sysvbfs_node_pool, bnode);
 	vp->v_data = NULL;
 

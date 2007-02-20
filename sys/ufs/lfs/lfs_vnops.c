@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.198 2007/02/09 21:55:42 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.199 2007/02/20 16:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.198 2007/02/09 21:55:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.199 2007/02/20 16:21:05 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1086,6 +1086,7 @@ lfs_reclaim(void *v)
 	lfs_deregister_all(vp);
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
 	ip->inode_ext.lfs = NULL;
+	genfs_node_destroy(vp);
 	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);

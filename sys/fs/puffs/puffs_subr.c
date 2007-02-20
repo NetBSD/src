@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.20 2007/02/16 16:37:55 pooka Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.21 2007/02/20 16:21:04 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20 2007/02/16 16:37:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.21 2007/02/20 16:21:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -261,6 +261,7 @@ puffs_putvnode(struct vnode *vp)
 #endif
 
 	LIST_REMOVE(pnode, pn_hashent);
+	genfs_node_destroy(vp);
 	pool_put(&puffs_pnpool, vp->v_data);
 	vp->v_data = NULL;
 
