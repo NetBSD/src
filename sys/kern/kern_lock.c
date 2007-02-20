@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.105 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.106 2007/02/20 15:56:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.106 2007/02/20 15:56:59 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1565,9 +1565,11 @@ _kernel_lock(int nlocks, struct lwp *l)
 
 	ci->ci_biglock_wanted = owant;
 	ci->ci_biglock_count += nlocks;
-	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKDEBUG_LOCKED(kernel_lock_id,
-	    (uintptr_t)__builtin_return_address(0), 0);
+	if (owant == NULL) {
+		LOCKSTAT_STOP_TIMER(lsflag, spintime);
+		LOCKDEBUG_LOCKED(kernel_lock_id,
+		    (uintptr_t)__builtin_return_address(0), 0);
+	}
 	splx(s);
 
 	/*
