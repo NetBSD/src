@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20.6.2 2007/02/19 13:11:15 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.6.3 2007/02/20 09:09:27 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -3378,7 +3378,7 @@ purge_remote(iph1)
 
 		/* delete a relative phase 2 handle. */
 		if (iph2 != NULL) {
-			delete_spd(iph2);
+			delete_spd(iph2, 0);
 			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
@@ -3406,8 +3406,9 @@ purge_remote(iph1)
 }
 
 void 
-delete_spd(iph2)
+delete_spd(iph2, created)
 	struct ph2handle *iph2;
+ 	u_int64_t created;
 {
 	struct policyindex spidx;
 	struct sockaddr_storage addr;
@@ -3605,6 +3606,23 @@ delete_spd(iph2)
 		spidx.ul_proto = IPSEC_ULPROTO_ANY;
 
 #undef _XIDT
+
+	/* Check if the generated SPD has the same timestamp as the SA.
+	 * If timestamps are different, this means that the SPD entry has been
+	 * refreshed by another SA, and should NOT be deleted with the current SA.
+	 */
+	if( created ){
+		struct secpolicy *p;
+		
+		p = getsp(&spidx);
+		if(p != NULL){
+			/* just do no test if p is NULL, because this probably just means
+			 * that the policy has already be deleted for some reason.
+			 */
+			if(p->spidx.created != created)
+				goto purge;
+		}
+	}
 
 	/* End of code from get_proposal_r
 	 */
