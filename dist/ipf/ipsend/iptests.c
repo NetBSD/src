@@ -1,4 +1,4 @@
-/*	$NetBSD: iptests.c,v 1.10 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: iptests.c,v 1.11 2007/02/20 15:40:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -22,6 +22,9 @@ typedef	int	boolean_t;
 #endif
 #include <sys/time.h>
 #if !defined(__osf__)
+# ifdef __NetBSD__ 
+#  include <machine/lock.h>
+# endif
 # define _KERNEL
 # define KERNEL
 # if !defined(solaris) && !defined(linux) && !defined(__sgi) && !defined(hpux)
