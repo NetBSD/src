@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.54 2007/02/20 23:45:09 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.55 2007/02/20 23:49:20 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.54 2007/02/20 23:45:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.55 2007/02/20 23:49:20 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,8 +524,14 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 			ha.hpc_regs = &hpc1_values;
 		ha.hpc_regs->revision = hpctype;
 
-		(void) config_found_sm_loc(self, "hpc", NULL, &ha, hpc_print,
-					   hpc_submatch);
+		/* XXXgross! avoid complaining in E++ and GIO32 SCSI cases */
+		if (hpctype != 3 && sc->sc_base != HPC_BASE_ADDRESS_0) {
+			(void)config_found_sm_loc(self, "hpc", NULL, &ha,
+			    NULL, hpc_submatch);
+		} else {
+			(void)config_found_sm_loc(self, "hpc", NULL, &ha,
+			    hpc_print, hpc_submatch);
+		}
 	}
 
 	/*
