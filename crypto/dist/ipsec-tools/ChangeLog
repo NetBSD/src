@@ -6,6 +6,7 @@
 	* src/racoon/{pfkey.c|isakmp_inf.c}: fills creation date of
 	  generated SPDs.
 	* src/racoon/policy.h: added 'created' var.
+	* src/racoon/isakmp_inf.c: Removed a debug printf....
 
 2007-02-19  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp.c: Removed a debug printf....
