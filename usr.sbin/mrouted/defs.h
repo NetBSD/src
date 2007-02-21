@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 2007/02/21 21:01:10 hubertf Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <ctype.h>
 #include <errno.h>
 #include <syslog.h>
 #include <signal.h>
