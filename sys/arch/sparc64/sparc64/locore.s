@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.241 2007/02/21 20:07:42 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.242 2007/02/21 22:39:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5026,30 +5026,32 @@ _C_LABEL(cpu_initialize):
 	/*
 	 * Step 7: change the trap base register, and install our TSB pointers
 	 */
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_dmmu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
+
+	/*
+	 * install our TSB pointers
+	 */
+	sethi	%hi(_C_LABEL(tsb_dmmu)), %l0
+	sethi	%hi(_C_LABEL(tsb_immu)), %l1
+	sethi	%hi(_C_LABEL(tsbsize)), %l2
+	sethi	%hi(0x1fff), %l3
+	sethi	%hi(TSB), %l4
+	LDPTR	[%l0 + %lo(_C_LABEL(tsb_dmmu))], %l0
+	LDPTR	[%l1 + %lo(_C_LABEL(tsb_immu))], %l1
+	ld	[%l2 + %lo(_C_LABEL(tsbsize))], %l2
+	or	%l3, %lo(0x1fff), %l3
+	or	%l4, %lo(TSB), %l4
+
+	andn	%l0, %l3, %l0			! Mask off size and split bits
+	or	%l0, %l2, %l0			! Make a TSB pointer
+	stxa	%l0, [%l4] ASI_DMMU		! Install data TSB pointer
 	membar	#Sync
 
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_immu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
+	andn	%l1, %l3, %l1			! Mask off size and split bits
+	or	%l1, %l2, %l1			! Make a TSB pointer
+	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
 
+	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
 	 mov	%l1, %o0
@@ -5182,28 +5184,25 @@ ENTRY(cpu_mp_startup)
 	/*
 	 * install our TSB pointers
 	 */
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_dmmu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
+	sethi	%hi(_C_LABEL(tsb_dmmu)), %l0
+	sethi	%hi(_C_LABEL(tsb_immu)), %l1
+	sethi	%hi(_C_LABEL(tsbsize)), %l2
+	sethi	%hi(0x1fff), %l3
+	sethi	%hi(TSB), %l4
+	LDPTR	[%l0 + %lo(_C_LABEL(tsb_dmmu))], %l0
+	LDPTR	[%l1 + %lo(_C_LABEL(tsb_immu))], %l1
+	ld	[%l2 + %lo(_C_LABEL(tsbsize))], %l2
+	or	%l3, %lo(0x1fff), %l3
+	or	%l4, %lo(TSB), %l4
+
+	andn	%l0, %l3, %l0			! Mask off size and split bits
+	or	%l0, %l2, %l0			! Make a TSB pointer
+	stxa	%l0, [%l4] ASI_DMMU		! Install data TSB pointer
 	membar	#Sync
 
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_immu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
+	andn	%l1, %l3, %l1			! Mask off size and split bits
+	or	%l1, %l2, %l1			! Make a TSB pointer
+	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
 
 	/* set trap table */
