@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread.c,v 1.61 2007/02/21 22:25:57 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.62 2007/02/21 22:31:38 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.61 2007/02/21 22:25:57 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.62 2007/02/21 22:31:38 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -718,7 +718,7 @@ pthread_exit(void *retval)
 
 		/* Yeah, yeah, doing work while we're dead is tacky. */
 		pthread_spinlock(self, &pthread__deadqueue_lock);
-		PTQ_INSERT_HEAD(&pthread__deadqueue, self, pt_allq);
+		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_allq);
 
 #ifdef PTHREAD_SA
 		pthread__block(self, &pthread__deadqueue_lock);
@@ -943,6 +943,7 @@ pthread_detach(pthread_t thread)
 
 	return 0;
 #else
+	thread->pt_flags |= PT_FLAG_DETACHED;
 	return _lwp_detach(thread->pt_lid);
 #endif
 }
