@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.48 2007/02/17 22:34:08 dyoung Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.49 2007/02/21 02:24:14 dyoung Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.48 2007/02/17 22:34:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.49 2007/02/21 02:24:14 dyoung Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -326,8 +326,7 @@ static const struct bridge_control bridge_control_table[] = {
 	  BC_F_COPYIN|BC_F_SUSER },
 #endif /* BRIDGE_IPF && PFIL_HOOKS */
 };
-static const int bridge_control_table_size =
-    sizeof(bridge_control_table) / sizeof(bridge_control_table[0]);
+static const int bridge_control_table_size = __arraycount(bridge_control_table);
 
 static LIST_HEAD(, bridge_softc) bridge_list;
 
