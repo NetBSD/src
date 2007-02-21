@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.55 2007/02/20 23:49:20 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.56 2007/02/21 04:33:41 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.55 2007/02/20 23:49:20 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.56 2007/02/21 04:33:41 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -543,7 +543,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	 * it gets attached, as long as it only happens once.
 	 */
 	if (mach_type == MACH_SGI_IP22 && !powerintr_established) {
-		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
+//		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
 		powerintr_established++;
 	}
 
