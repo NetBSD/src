@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2007/02/21 21:01:10 hubertf Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -29,9 +29,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("@(#) $NetBSD: main.c,v 1.22 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("@(#) $NetBSD: main.c,v 1.23 2007/02/21 21:01:10 hubertf Exp $");
 #endif
 
+#include <ctype.h>
 #include <err.h>
 #include <util.h>
 
