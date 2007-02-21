@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.48 2007/02/21 23:00:12 thorpej Exp $	*/
+/*	$NetBSD: uvm.h,v 1.49 2007/02/21 23:48:16 thorpej Exp $	*/
 
 /*
  *
@@ -111,10 +111,10 @@ struct uvm {
 
 	/* swap-related items */
 	struct simplelock swap_data_lock;
-	boolean_t swap_running;
+	bool swap_running;
 	kcondvar_t scheduler_cv;
 	kmutex_t scheduler_mutex;
-	boolean_t scheduler_kicked;
+	bool scheduler_kicked;
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;
