@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.11 2003/06/26 11:55:56 wiz Exp $
+.\"     $NetBSD: nls.7,v 1.12 2007/02/21 00:11:55 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -295,7 +295,7 @@ ZULU	ZU	NEGRO-AFRICAN
 .fi
 .Pp
 For example, the locale for the Danish language spoken in Denmark
-using the ISO8859-1 character set is da_DK.ISO8859-1.
+using the ISO 8859-1 character set is da_DK.ISO8859-1.
 The da stands for the Danish language and the DK stands for Denmark.
 The short form of da_DK is sufficient to indicate this locale.
 .Pp
@@ -336,7 +336,7 @@ environment variable is not set, and the value of the
 .Ev LANG
 environment variable is not set, the locale for that specific
 category defaults to the C locale.
-The C or POSIX locale assumes the 7-bit ASCII character set and defines
+The C or POSIX locale assumes the ASCII character set and defines
 information for the six categories.
 .El
 .Ss Character Sets
@@ -348,21 +348,33 @@ It is the encoding values in a character set that provide
 the interface between the system and its input and output devices.
 .Pp
 The following character sets are supported in
-.Nx
-.Bl -tag -width ISO8859_family
-.It ISO8859 family
-Industry-standard character sets are provided by means of the ISO8859
-family of character sets, which provide a range of single-byte character set
-support that includes Latin-1, Latin-2, Arabic, Cyrillic, Hebrew,
-Greek, and Turkish.
-The eucJP character set is the industry-standard character set used to support
-the Japanese locale.
+.Nx :
+.Bl -tag -width ISO_8859_family
+.It ASCII
+The American Standard Code for Information Exchange (ASCII) standard
+specifies 128 Roman characters and control codes, encoded in a 7-bit
+character encoding scheme.
+.It ISO 8859 family
+Industry-standard character sets specified by the ISO/IEC 8859
+standard.
+The standard is divided into 15 numbered parts, with each
+part specifying broad script similarities.
+Examples include Western European, Central European, Arabic, Cyrillic,
+Hebrew, Greek, and Turkish.
+The character sets use an 8-bit character encoding scheme which is 
+compatible with the ASCII character set.
 .It Unicode
-A Unicode environment based on the UTF-8 character set is supported for all
-supported language/territories.
-UTF-8 provides character support for most of the major languages of the
-world and can be used in environments where multiple languages must be
-processed simultaneously.
+The Unicode character set is the full set of known abstract characters of
+all real-world scripts.  It can be used in environments where multiple
+scripts must be processed simultaneously.
+Unicode is compatible with ISO 8859-1 (Western European) and ASCII.
+Many character encoding schemes are available for Unicode, including UTF-8,
+UTF-16 and UTF-32.
+These encoding schemes are multi-byte encodings.
+The UTF-8 encoding scheme uses 8-bit, variable-width encodings which is
+compatible with ASCII.
+The UTF-16 encoding scheme uses 16-bit, variable-width encodings.
+The UTF-32 encoding scheme using 32-bit, fixed-width encodings.
 .El
 .Ss Font Sets
 A font set contains the glyphs to be displayed on the screen for a
@@ -371,7 +383,7 @@ A display must support a suitable font to display a character set.
 If suitable fonts are available to the X server, then X clients can
 include support for different character sets.
 .Xr xterm 1
-includes support for UTF-8 character sets.
+includes support for Unicode with UTF-8 encoding.
 .Xr xfd 1
 is useful for displaying all the characters in an X font.
 .Pp
@@ -421,14 +433,16 @@ interface has not been standardized yet, however it is being supported
 by an increasing number of systems.
 It also provides many additional tools which make programming and
 catalog maintenance much easier.
-.Ss Support for Multibyte Characters and Wide Characters
-Character sets with multibyte characters may be difficult to decode, or may
-contain state (i.e., adjacent characters are dependent).
+.Ss Support for Multi-byte Encodings
+Some character sets with multi-byte encodings may be difficult to decode,
+or may contain state (i.e., adjacent characters are dependent).
 ISO C specifies a set of functions using 'wide characters' which can handle
-multibyte characters properly.
+multi-byte encodings properly.
+The behaviour of these functions is affected
+by the LC_CTYPE category of the current locale.
+.Pp
 A wide character is specified in ISO C
 as being a fixed number of bits wide and is stateless.
-.Pp
 There are two types for wide characters:
 .Em wchar_t
 and
@@ -463,8 +477,8 @@ The two primary issues requiring special use of wide characters are:
 All I/O is performed using multibyte characters.
 Input data is converted into wide characters immediately after
 reading and data for output is converted from wide characters to
-multibyte characters immediately before writing.
-Conversion is achieved using
+multi-byte encoding immediately before writing.
+Conversion is controlled by the
 .Xr mbstowcs 3 ,
 .Xr mbsrtowcs 3 ,
 .Xr wcstombs 3 ,
