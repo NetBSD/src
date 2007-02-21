@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.62.14.1 2007/02/21 18:29:24 snj Exp $	*/
+/*	$NetBSD: cpu.c,v 1.62.14.2 2007/02/21 18:36:03 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.14.1 2007/02/21 18:29:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.14.2 2007/02/21 18:36:03 snj Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -169,6 +169,7 @@ enum cpu_class {
 	CPU_CLASS_ARM8,
 	CPU_CLASS_ARM9TDMI,
 	CPU_CLASS_ARM9ES,
+	CPU_CLASS_ARM9EJS,
 	CPU_CLASS_ARM10E,
 	CPU_CLASS_ARM10EJ,
 	CPU_CLASS_SA1,
@@ -316,6 +317,8 @@ const struct cpuidtab cpuids[] = {
 	  generic_steppings },
 	{ CPU_ID_ARM922T,	CPU_CLASS_ARM9TDMI,	"ARM922T",
 	  generic_steppings },
+	{ CPU_ID_ARM926EJS,	CPU_CLASS_ARM9EJS,	"ARM926EJ-S",
+	  generic_steppings },
 	{ CPU_ID_ARM940T,	CPU_CLASS_ARM9TDMI,	"ARM940T",
 	  generic_steppings },
 	{ CPU_ID_ARM946ES,	CPU_CLASS_ARM9ES,	"ARM946E-S",
@@ -406,7 +409,8 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "ARM7TDMI",	"CPU_ARM7TDMI" },	/* CPU_CLASS_ARM7TDMI */
 	{ "ARM8",	"CPU_ARM8" },		/* CPU_CLASS_ARM8 */
 	{ "ARM9TDMI",	NULL },			/* CPU_CLASS_ARM9TDMI */
-	{ "ARM9E-S",	NULL },			/* CPU_CLASS_ARM9ES */
+	{ "ARM9E-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9ES */
+	{ "ARM9EJ-S",	"CPU_ARM9E" },		/* CPU_CLASS_ARM9EJS */
 	{ "ARM10E",	"CPU_ARM10" },		/* CPU_CLASS_ARM10E */
 	{ "ARM10EJ",	"CPU_ARM10" },		/* CPU_CLASS_ARM10EJ */
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
@@ -483,6 +487,8 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 			aprint_normal(" IDC enabled");
 		break;
 	case CPU_CLASS_ARM9TDMI:
+	case CPU_CLASS_ARM9ES:
+	case CPU_CLASS_ARM9EJS:
 	case CPU_CLASS_ARM10E:
 	case CPU_CLASS_ARM10EJ:
 	case CPU_CLASS_SA1:
@@ -560,6 +566,10 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 #ifdef CPU_ARM9
 	case CPU_CLASS_ARM9TDMI:
+#endif
+#ifdef CPU_ARM9E
+	case CPU_CLASS_ARM9ES:
+	case CPU_CLASS_ARM9EJS:
 #endif
 #ifdef CPU_ARM10
 	case CPU_CLASS_ARM10E:

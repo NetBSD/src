@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm10.S,v 1.5 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm10.S,v 1.5.24.1 2007/02/21 18:36:03 snj Exp $	*/
 
 /*
  * Copyright (c) 2002 ARM Limited
@@ -33,22 +33,6 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
-
-/*
- * Functions to set the MMU Translation Table Base register
- *
- * We need to clean and flush the cache as it uses virtual
- * addresses that are about to change.
- */
-ENTRY(arm10_setttb)
-	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(armv5_idcache_wbinv_all)
-	ldmfd	sp!, {r0, lr}
-
-	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
-
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
-	RET
 
 /*
  * TLB functions
