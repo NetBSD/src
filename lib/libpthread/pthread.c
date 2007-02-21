@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.60 2007/02/15 15:39:38 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.61 2007/02/21 22:25:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.60 2007/02/15 15:39:38 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.61 2007/02/21 22:25:57 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -421,7 +421,8 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	newthread = PTQ_FIRST(&pthread__deadqueue);
 	if (newthread != NULL) {
 #ifndef PTHREAD_SA
-		if (_lwp_kill(newthread->pt_lid, 0) == 0 || errno != ESRCH)
+		if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0 &&
+		    (_lwp_kill(newthread->pt_lid, 0) == 0 || errno != ESRCH))
 			newthread = NULL;
 		else
 #endif
