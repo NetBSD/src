@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.2 2002/08/26 17:04:18 ad Exp $	*/
+/*	$NetBSD: config.c,v 1.3 2007/02/21 20:53:59 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.2 2002/08/26 17:04:18 ad Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2007/02/21 20:53:59 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,7 +82,6 @@ __RCSID("$NetBSD: config.c,v 1.2 2002/08/26 17:04:18 ad Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 #include <getopt.h>
 
