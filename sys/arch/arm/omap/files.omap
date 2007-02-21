@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap,v 1.4.6.4 2007/02/21 18:40:59 snj Exp $
+#	$NetBSD: files.omap,v 1.4.6.5 2007/02/21 18:41:50 snj Exp $
 #
 # Configuration info for Texas Instruments OMAP CPU support
 # Based on xscale/files.pxa2x0
@@ -124,3 +124,8 @@ defparam opt_omap.h				OMAP_MPU_TIMER_CLOCK_FREQ
 device omapgpio
 attach omapgpio at tipb
 file  arch/arm/omap/omap_gpio.c       omapgpio	needs-count
+
+# RTC
+device omaprtc
+attach omaprtc at tipb
+file arch/arm/omap/omap_rtc.c			omaprtc
