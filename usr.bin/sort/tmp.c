@@ -1,4 +1,4 @@
-/*	$NetBSD: tmp.c,v 1.11 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: tmp.c,v 1.12 2007/02/21 20:15:17 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -68,10 +68,10 @@
  * SUCH DAMAGE.
  */
 
-#include <ctype.h>
+#include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tmp.c,v 1.11 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: tmp.c,v 1.12 2007/02/21 20:15:17 hubertf Exp $");
 __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
