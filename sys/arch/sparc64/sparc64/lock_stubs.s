@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.3 2007/02/20 15:30:53 martin Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.4 2007/02/21 20:03:26 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -59,10 +59,12 @@
 #define	CASPTR	casx
 #define	LDPTR	ldx
 #define	STPTR	stx
+#define	CCCR	%xcc
 #else
 #define	CASPTR	cas
 #define	LDPTR	ld
 #define	STPTR	st
+#define	CCCR	%icc
 #endif /* __arch64__ */
 
 /*
@@ -108,7 +110,8 @@ _ENTRY(_C_LABEL(mutex_exit))
 	clr	%o2				! new value (0)
 	MB_MEM
 	CASPTR	[%o0], %o1, %o2			! compare-and-swap
-	brnz,pn	%o2, 1f				! nope, hard case
+	cmp	%o1, %o2
+	bne,pn	CCCR, 1f			! nope, hard case
 	 nop
 	retl
 	 nop
