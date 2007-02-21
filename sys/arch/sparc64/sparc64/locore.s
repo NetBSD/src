@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.240 2007/02/18 19:09:36 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.241 2007/02/21 20:07:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -10819,9 +10819,6 @@ _C_LABEL(ssym):
 _C_LABEL(proc0paddr):
 	POINTER	0
 
-#if !defined(MULTIPROCESSOR)
-	.comm	_C_LABEL(curlwp), PTRSZ
-#endif
 	.comm	_C_LABEL(promvec), PTRSZ
 
 #ifdef DEBUG

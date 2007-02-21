@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.4 2007/02/21 20:03:26 martin Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.5 2007/02/21 20:07:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -45,12 +45,12 @@
 #include "assym.h"
 
 #undef CURLWP
-#if defined(MULTIPROCESSOR)
 #define	CURLWP	(CPUINFO_VA+CI_CURLWP)
+
+#if defined(MULTIPROCESSOR)
 #define	MB_READ	membar #LoadLoad
 #define	MB_MEM	membar #LoadStore | #StoreStore
 #else
-#define	CURLWP	_C_LABEL(curlwp)
 #define	MB_READ	/* nothing */
 #define	MB_MEM	/* nothing */
 #endif
