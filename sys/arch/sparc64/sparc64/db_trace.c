@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.36 2007/02/20 01:02:03 ad Exp $ */
+/*	$NetBSD: db_trace.c,v 1.37 2007/02/21 23:48:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2007/02/20 01:02:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2007/02/21 23:48:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,9 +62,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
  	void		(*pr) (const char *, ...);
 {
 	vaddr_t		frame;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
-	boolean_t	lwpaddr = FALSE;
+	bool		kernel_only = TRUE;
+	bool		trace_thread = FALSE;
+	bool		lwpaddr = FALSE;
 	char		c;
 	const char	*cp = modif;
 
@@ -286,7 +286,7 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 {
 	int		i;
 	uint64_t	frame, oldframe;
-	boolean_t	kernel_only = TRUE;
+	bool		kernel_only = TRUE;
 	char		c;
 	const char	*cp = modif;
 
