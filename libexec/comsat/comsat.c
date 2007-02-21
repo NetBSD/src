@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.34 2005/07/18 04:01:33 christos Exp $	*/
+/*	$NetBSD: comsat.c,v 1.35 2007/02/21 21:06:26 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.34 2005/07/18 04:01:33 christos Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.35 2007/02/21 21:06:26 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: comsat.c,v 1.34 2005/07/18 04:01:33 christos Exp $");
 
 #include <netinet/in.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
 #include <paths.h>
