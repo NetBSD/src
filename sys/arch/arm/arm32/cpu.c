@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.62 2006/03/15 18:31:11 drochner Exp $	*/
+/*	$NetBSD: cpu.c,v 1.62.14.1 2007/02/21 18:29:24 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62 2006/03/15 18:31:11 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.62.14.1 2007/02/21 18:29:24 snj Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -578,7 +578,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 		break;
 	default:
-		if (cpu_classes[cpu_class].class_option != NULL)
+		if (cpu_classes[cpu_class].class_option == NULL)
 			aprint_error("%s: %s does not fully support this CPU."
 			       "\n", dv->dv_xname, ostype);
 		else {
