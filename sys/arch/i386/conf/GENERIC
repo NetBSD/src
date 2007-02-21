@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.808.2.2 2007/02/20 21:48:43 rmind Exp $
+# $NetBSD: GENERIC,v 1.808.2.3 2007/02/21 11:57:28 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.808.2.2 $"
+#ident 		"GENERIC-$Revision: 1.808.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -118,9 +118,6 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # high disk I/O load. Likely stable but not yet the default.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
-
-# Scheduling algorithm
-options	SCHED_4BSD
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
