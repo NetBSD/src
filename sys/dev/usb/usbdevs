@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.443.2.1 2007/01/23 18:39:04 tron Exp $
+$NetBSD: usbdevs,v 1.443.2.2 2007/02/21 13:22:55 tron Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -369,7 +369,7 @@ vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor ZYDAS		0x0ace	Zydas Technology Corporation
 vendor NEODIO		0x0aec	Neodio
-vendor VODAFONE		0x0af0	Vodafone
+vendor OPTIONNV		0x0af0	Option N.V:
 vendor ASUSTEK		0x0b05	ASUSTeK Computer
 vendor TODOS		0x0b0c	Todos Data System
 vendor SIIG2		0x0b39	SIIG
@@ -2004,8 +2004,10 @@ product VISIONEER 8600		0x0331	OneTouch 8600
 /* Vivitar products */
 product VIVITAR DSC350		0x0003	DSC350 Camera
 
-/* Vodafone products */
-product VODAFONE MC3G		0x5000	Mobile Connect 3G datacard
+/* Option N.V. products */
+product OPTIONNV MC3G		0x5000	Mobile Connect 3G datacard
+product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
+product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
 
 /* VTech products */
 product VTECH RT2570		0x3012	RT2570
