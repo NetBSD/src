@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.1 2007/02/20 21:48:46 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.2 2007/02/21 12:05:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,12 +75,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.1 2007/02/20 21:48:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.2 2007/02/21 12:05:49 yamt Exp $");
 
 #include "opt_ddb.h"
-#include "opt_kstack.h"
 #include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
 #include "opt_perfctrs.h"
 
 #define	__MUTEX_PRIVATE
@@ -90,15 +88,10 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.1 2007/02/20 21:48:46 rmind Exp
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/buf.h>
-#if defined(PERFCTRS)
-#include <sys/pmc.h>
-#endif
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
 #include <sys/kauth.h>
-#include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 
 #include <uvm/uvm_extern.h>
