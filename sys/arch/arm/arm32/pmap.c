@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157.24.1 2007/02/21 18:33:19 snj Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157.24.1 2007/02/21 18:33:19 snj Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4587,12 +4587,12 @@ pmap_devmap_find_pa(paddr_t pa, psize_t size)
 	if (pmap_devmap_table == NULL)
 		return (NULL);
 
-	endpa = (uint64_t)pa + (uint64_t)size;
+	endpa = (uint64_t)pa + (uint64_t)(size - 1);
 
 	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
 		if (pa >= pmap_devmap_table[i].pd_pa &&
 		    endpa <= (uint64_t)pmap_devmap_table[i].pd_pa +
-			     (uint64_t)pmap_devmap_table[i].pd_size)
+			     (uint64_t)(pmap_devmap_table[i].pd_size - 1))
 			return (&pmap_devmap_table[i]);
 	}
 
@@ -4609,8 +4609,8 @@ pmap_devmap_find_va(vaddr_t va, vsize_t size)
 
 	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
 		if (va >= pmap_devmap_table[i].pd_va &&
-		    va + size <= pmap_devmap_table[i].pd_va +
-				 pmap_devmap_table[i].pd_size)
+		    va + size - 1 <= pmap_devmap_table[i].pd_va +
+				     pmap_devmap_table[i].pd_size - 1)
 			return (&pmap_devmap_table[i]);
 	}
 
