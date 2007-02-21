@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.3 2007/02/21 12:06:41 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.4 2007/02/21 12:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.3 2007/02/21 12:06:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.4 2007/02/21 12:11:37 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -628,8 +628,8 @@ sched_changepri(struct lwp *l, int pri)
 
 /*
  * The primitives that manipulate the run queues.  whichqs tells which
- * of the 32 queues qs have processes in them.  Setrunqueue puts processes
- * into queues, remrunqueue removes them from queues.  The running process is
+ * of the 32 queues qs have processes in them.  sched_enqueue puts processes
+ * into queues, sched_dequeue removes them from queues.  The running process is
  * on no queue, other processes are on a queue related to p->p_priority,
  * divided by 4 actually to shrink the 0-127 range of priorities into the 32
  * available queues.
@@ -707,7 +707,7 @@ sched_enqueue(struct lwp *l)
 #endif
 #ifdef DIAGNOSTIC
 	if (l->l_back != NULL || l->l_stat != LSRUN)
-		panic("setrunqueue");
+		panic("sched_enqueue");
 #endif
 	sched_whichqs |= RQMASK(whichq);
 	rq = &sched_qs[whichq];
@@ -722,7 +722,7 @@ sched_enqueue(struct lwp *l)
 }
 
 /*
- * XXXSMP When LWP dispatch (cpu_switch()) is changed to use remrunqueue(),
+ * XXXSMP When LWP dispatch (cpu_switch()) is changed to use sched_dequeue(),
  * drop of the effective priority level from kernel to user needs to be
  * moved here from userret().  The assignment in userret() is currently
  * done unlocked.
@@ -742,7 +742,7 @@ sched_dequeue(struct lwp *l)
 #if defined(DIAGNOSTIC)
 	if (((sched_whichqs & RQMASK(whichq)) == 0) || l->l_back == NULL) {
 		/* Shouldn't happen - interrupts disabled. */
-		panic("remrunqueue: bit %d not set", whichq);
+		panic("sched_dequeue: bit %d not set", whichq);
 	}
 #endif
 	prev = l->l_back;
