@@ -1,4 +1,4 @@
-/*	$NetBSD: db_expr.c,v 1.13 2002/02/15 07:33:50 simonb Exp $	*/
+/*	$NetBSD: db_expr.c,v 1.14 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_expr.c,v 1.13 2002/02/15 07:33:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_expr.c,v 1.14 2007/02/21 22:59:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,13 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: db_expr.c,v 1.13 2002/02/15 07:33:50 simonb Exp $");
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
-static boolean_t db_term(db_expr_t *);
-static boolean_t db_unary(db_expr_t *);
-static boolean_t db_mult_expr(db_expr_t *);
-static boolean_t db_add_expr(db_expr_t *);
-static boolean_t db_shift_expr(db_expr_t *);
+static bool db_term(db_expr_t *);
+static bool db_unary(db_expr_t *);
+static bool db_mult_expr(db_expr_t *);
+static bool db_add_expr(db_expr_t *);
+static bool db_shift_expr(db_expr_t *);
 
-static boolean_t
+static bool
 db_term(db_expr_t *valuep)
 {
 	int	t;
@@ -121,7 +121,7 @@ db_term(db_expr_t *valuep)
 	return (FALSE);
 }
 
-static boolean_t
+static bool
 db_unary(db_expr_t *valuep)
 {
 	int	t;
@@ -149,7 +149,7 @@ db_unary(db_expr_t *valuep)
 	return (db_term(valuep));
 }
 
-static boolean_t
+static bool
 db_mult_expr(db_expr_t *valuep)
 {
 	db_expr_t	lhs, rhs;
@@ -185,7 +185,7 @@ db_mult_expr(db_expr_t *valuep)
 	return (TRUE);
 }
 
-static boolean_t
+static bool
 db_add_expr(db_expr_t *valuep)
 {
 	db_expr_t	lhs, rhs;
@@ -211,7 +211,7 @@ db_add_expr(db_expr_t *valuep)
 	return (TRUE);
 }
 
-static boolean_t
+static bool
 db_shift_expr(db_expr_t *valuep)
 {
 	db_expr_t	lhs, rhs;

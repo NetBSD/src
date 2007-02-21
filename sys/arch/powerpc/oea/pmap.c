@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2006/10/30 17:52:12 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 2007/02/21 22:59:50 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2006/10/30 17:52:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2007/02/21 22:59:50 thorpej Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -932,7 +932,7 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
  */
 
 int
-pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
+pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 {
 	struct pvo_entry *source_pvo, *victim_pvo, *next_pvo;
 	struct pvo_entry *pvo;
@@ -2122,7 +2122,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pvo_entry *pvo;
@@ -2394,7 +2394,7 @@ pmap_deactivate(struct lwp *l)
 {
 }
 
-boolean_t
+bool
 pmap_query_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_entry *pvo;
@@ -2446,7 +2446,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	return FALSE;
 }
 
-boolean_t
+bool
 pmap_clear_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_head *pvoh = vm_page_to_pvoh(pg);

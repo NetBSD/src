@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.91 2007/02/20 16:21:04 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.92 2007/02/21 23:00:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.91 2007/02/20 16:21:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.92 2007/02/21 23:00:08 thorpej Exp $");
 
 #include "opt_nfs.h"
 
@@ -230,7 +230,7 @@ nfs_inactive(v)
 	struct sillyrename *sp;
 	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
-	boolean_t removed;
+	bool removed;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)

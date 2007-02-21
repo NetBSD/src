@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2006/09/14 01:27:59 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2007/02/21 22:59:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2006/09/14 01:27:59 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2007/02/21 22:59:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by the VM system */
-boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
+bool		pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
@@ -304,11 +304,11 @@ extern paddr_t z2mem_start;
 
 extern vaddr_t reserve_dumppages(vaddr_t);
 
-boolean_t	pmap_testbit(paddr_t, int);
+bool		pmap_testbit(paddr_t, int);
 void		pmap_enter_ptpage(pmap_t, vaddr_t);
 static void	pmap_ptpage_addref(vaddr_t);
 static int	pmap_ptpage_delref(vaddr_t);
-static void	pmap_changebit(vaddr_t, int, boolean_t);
+static void	pmap_changebit(vaddr_t, int, bool);
 struct pv_entry * pmap_alloc_pv(void);
 void		pmap_free_pv(struct pv_entry *);
 void		pmap_pinit(pmap_t);
@@ -1035,7 +1035,7 @@ pmap_protect(pmap, sva, eva, prot)
 {
 	u_int *pte;
 	vaddr_t va;
-	boolean_t needtflush;
+	bool needtflush;
 	int isro;
 
 #ifdef DEBUG
@@ -1115,9 +1115,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 	u_int *pte;
 	int npte;
 	paddr_t opa;
-	boolean_t cacheable = TRUE;
-	boolean_t checkpv = TRUE;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	bool cacheable = TRUE;
+	bool checkpv = TRUE;
+	bool wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1562,13 +1562,13 @@ pmap_unwire(pmap, va)
  *		with the given map/virtual_address pair.
  */
 
-boolean_t
+bool
 pmap_extract(pmap, va, pap)
 	pmap_t	pmap;
 	vaddr_t va;
 	paddr_t *pap;
 {
-	boolean_t rv = FALSE;
+	bool rv = FALSE;
 	paddr_t pa = 0;
 	u_int pte;
 
@@ -1900,11 +1900,11 @@ pmap_copy_page(src, dst)
  *	Clear the modify bits on the specified physical page.
  */
 
-boolean_t
+bool
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
-	boolean_t rv;
+	bool rv;
 	paddr_t	pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
@@ -1923,11 +1923,11 @@ pmap_clear_modify(pg)
  *	Clear the reference bit on the specified physical page.
  */
 
-boolean_t
+bool
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
-	boolean_t rv;
+	bool rv;
 	paddr_t	pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
@@ -1947,7 +1947,7 @@ pmap_clear_reference(pg)
  *	by any physical maps.
  */
 
-boolean_t
+bool
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
@@ -1955,7 +1955,7 @@ pmap_is_referenced(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
-		boolean_t rv = pmap_testbit(pa, PG_U);
+		bool rv = pmap_testbit(pa, PG_U);
 		printf("pmap_is_referenced(%lx) -> %c\n", pa, "FT"[rv]);
 		return(rv);
 	}
@@ -1970,7 +1970,7 @@ pmap_is_referenced(pg)
  *	by any physical maps.
  */
 
-boolean_t
+bool
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
@@ -1978,7 +1978,7 @@ pmap_is_modified(pg)
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW) {
-		boolean_t rv = pmap_testbit(pa, PG_M);
+		bool rv = pmap_testbit(pa, PG_M);
 		printf("pmap_is_modified(%lx) -> %c\n", pa, "FT"[rv]);
 		return(rv);
 	}
@@ -2323,7 +2323,7 @@ amiga_protection_init()
 }
 
 /* static */
-boolean_t
+bool
 pmap_testbit(pa, bit)
 	paddr_t pa;
 	int bit;
@@ -2366,12 +2366,12 @@ static void
 pmap_changebit(pa, bit, setem)
 	paddr_t pa;
 	int bit;
-	boolean_t setem;
+	bool setem;
 {
 	pv_entry_t pv;
 	int *pte, npte;
 	vaddr_t va;
-	boolean_t firstpage;
+	bool firstpage;
 	int s;
 
 	firstpage = TRUE;

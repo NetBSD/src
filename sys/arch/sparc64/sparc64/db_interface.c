@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.93 2006/10/21 03:16:05 mrg Exp $ */
+/*	$NetBSD: db_interface.c,v 1.94 2007/02/21 22:59:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.93 2006/10/21 03:16:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.94 2007/02/21 22:59:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1349,7 +1349,7 @@ db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
     }
 }
 
-boolean_t
+bool
 db_inst_branch(int inst)
 {
     union instr insn;
@@ -1374,7 +1374,7 @@ db_inst_branch(int inst)
 }
 
 
-boolean_t
+bool
 db_inst_call(int inst)
 {
     union instr insn;
@@ -1394,7 +1394,7 @@ db_inst_call(int inst)
 }
 
 
-boolean_t
+bool
 db_inst_unconditional_flow_transfer(int inst)
 {
     union instr insn;
@@ -1422,14 +1422,14 @@ db_inst_unconditional_flow_transfer(int inst)
 }
 
 
-boolean_t
+bool
 db_inst_return(int inst)
 {
     return (inst == I_JMPLri(I_G0, I_O7, 8) ||		/* ret */
 	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
 }
 
-boolean_t
+bool
 db_inst_trap_return(int inst)
 {
     union instr insn;

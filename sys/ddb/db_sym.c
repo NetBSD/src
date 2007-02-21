@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.54 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.55 2007/02/21 22:59:57 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.54 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.55 2007/02/21 22:59:57 thorpej Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -75,7 +75,7 @@ ddb_init(int symsize, void *vss, void *vse)
 	ksyms_init(symsize, vss, vse);	/* Will complain if necessary */
 }
 
-boolean_t
+bool
 db_eqname(const char *src, const char *dst, int c)
 {
 
@@ -86,7 +86,7 @@ db_eqname(const char *src, const char *dst, int c)
 	return (FALSE);
 }
 
-boolean_t
+bool
 db_value_of_name(const char *name, db_expr_t *valuep)
 {
 	char symbol[128];
@@ -450,7 +450,7 @@ db_symsplit(char *str, char **mod, char **sym)
 	}
 }
 
-boolean_t
+bool
 db_sym_numargs(db_sym_t cursym, int *nargp, char **argnamep)
 {
 #ifdef DB_AOUT_SYMBOLS

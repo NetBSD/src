@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.27 2007/02/19 20:14:30 rumble Exp $	*/
+/*	$NetBSD: gio.c,v 1.28 2007/02/21 22:59:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.27 2007/02/19 20:14:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.28 2007/02/21 22:59:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -234,7 +234,7 @@ gio_attach(struct device *parent, struct device *self, void *aux)
 	 * already been attached.
 	 */
 	for (i = 0; slot_bases[i].base != 0; i++) {
-		boolean_t skip = FALSE;
+		bool skip = FALSE;
 
 		/* skip slots that don't apply to us */
 		if (slot_bases[i].mach_type != mach_type)

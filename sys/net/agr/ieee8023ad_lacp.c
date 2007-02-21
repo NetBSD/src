@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.4 2007/02/21 23:00:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.4 2007/02/21 23:00:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -289,8 +289,8 @@ void
 lacp_portinit(struct agr_port *port)
 {
 	struct lacp_port *lp = LACP_PORT(port);
-	boolean_t active = TRUE; /* XXX should be configurable */
-	boolean_t fast = FALSE; /* XXX should be configurable */
+	bool active = TRUE; /* XXX should be configurable */
+	bool fast = FALSE; /* XXX should be configurable */
 
 	lp->lp_agrport = port;
 	lacp_fill_actorinfo(port, &lp->lp_actor);

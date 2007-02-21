@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.2 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.3 2007/02/21 22:59:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.2 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.3 2007/02/21 22:59:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,8 +93,8 @@ int mouse_enable(void *);
 void mouse_disable(void *);
 int mouse_ioctl(void *, u_long, caddr_t, int, struct lwp *);
 
-boolean_t kbd_init(struct kbms_softc *);
-boolean_t kbd_reset(struct kbms_softc *, int);
+bool kbd_init(struct kbms_softc *);
+bool kbd_reset(struct kbms_softc *, int);
 
 void mouse_init(struct kbms_softc *);
 #ifdef MOUSE_DEBUG
@@ -259,7 +259,7 @@ do {									\
 	delay(1);							\
 } while (/*CONSTCOND*/ 0)
 
-boolean_t
+bool
 kbd_init(struct kbms_softc *sc)
 {
 	struct kbms_reg *reg = &sc->sc_reg;
@@ -295,7 +295,7 @@ kbd_init(struct kbms_softc *sc)
 	return TRUE;
 }
 
-boolean_t
+bool
 kbd_reset(struct kbms_softc *sc, int retry)
 {
 #define	__RETRY_LOOP(x, y)						\
@@ -461,7 +461,7 @@ kbd_cngetc(void *arg, u_int *type, int *data)
 void
 kbd_cnpollc(void *arg, int on)
 {
-	static boolean_t __polling = FALSE;
+	static bool __polling = FALSE;
 	static int s;
 
 	if (on && !__polling) {

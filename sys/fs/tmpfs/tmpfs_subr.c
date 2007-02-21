@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.32 2007/01/04 15:42:37 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.33 2007/02/21 23:00:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.32 2007/01/04 15:42:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.33 2007/02/21 23:00:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -323,7 +323,7 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
  */
 void
 tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
-    boolean_t node_exists)
+    bool node_exists)
 {
 	if (node_exists) {
 		struct tmpfs_node *node;
@@ -623,7 +623,7 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
-	boolean_t found;
+	bool found;
 	struct tmpfs_dirent *de;
 
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
@@ -960,7 +960,7 @@ out:
  *
  */
 size_t
-tmpfs_mem_info(boolean_t total)
+tmpfs_mem_info(bool total)
 {
 	size_t size;
 
@@ -1313,7 +1313,7 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 int
 tmpfs_truncate(struct vnode *vp, off_t length)
 {
-	boolean_t extended;
+	bool extended;
 	int error;
 	struct tmpfs_node *node;
 

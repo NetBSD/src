@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.h,v 1.18 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_break.h,v 1.19 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -55,8 +55,8 @@ void		db_clear_breakpoints(void);
 void		db_delete_cmd(db_expr_t, int, db_expr_t, const char *);
 void		db_breakpoint_cmd(db_expr_t, int, db_expr_t, const char *);
 void		db_listbreak_cmd(db_expr_t, int, db_expr_t, const char *);
-boolean_t	db_map_equal(struct vm_map *, struct vm_map *);
-boolean_t	db_map_current(struct vm_map *);
+bool		db_map_equal(struct vm_map *, struct vm_map *);
+bool		db_map_current(struct vm_map *);
 struct vm_map  *db_map_addr(vaddr_t);
 
 #endif	/* _DDB_DB_BREAK_H_ */

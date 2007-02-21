@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.77 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.78 2007/02/21 23:00:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.77 2006/12/21 15:55:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.78 2007/02/21 23:00:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	PHOLD(l);
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
-		boolean_t sync = TRUE;
+		bool sync = TRUE;
 
 		iovp = &uio->uio_iov[i];
 		while (iovp->iov_len > 0) {

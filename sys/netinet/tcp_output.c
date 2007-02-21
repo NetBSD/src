@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.154 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.155 2007/02/21 23:00:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.154 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.155 2007/02/21 23:00:08 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -244,7 +244,7 @@ inline
 #endif
 int
 tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
-    boolean_t *alwaysfragp)
+    bool *alwaysfragp)
 {
 #ifdef INET
 	struct inpcb *inp = tp->t_inpcb;
@@ -568,7 +568,7 @@ tcp_output(struct tcpcb *tp)
 	int iphdrlen;
 	int has_tso4, has_tso6;
 	int has_tso, use_tso;
-	boolean_t alwaysfrag;
+	bool alwaysfrag;
 	int sack_rxmit;
 	int sack_bytes_rxmt;
 	struct sackhole *p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38 2007/01/24 13:08:13 hubertf Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.39 2007/02/21 22:59:51 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2007/01/24 13:08:13 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39 2007/02/21 22:59:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -163,7 +163,7 @@ cpu_Debugger()
 #define	M_RTE	0xffff
 #define	I_RTE	0x002b
 
-boolean_t
+bool
 inst_call(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -173,7 +173,7 @@ inst_call(int inst)
 	       (inst & M_JSR) == I_JSR;
 }
 
-boolean_t
+bool
 inst_return(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN
@@ -182,7 +182,7 @@ inst_return(int inst)
 	return (inst & M_RTS) == I_RTS;
 }
 
-boolean_t
+bool
 inst_trap_return(int inst)
 {
 #if _BYTE_ORDER == BIG_ENDIAN

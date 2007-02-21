@@ -1,4 +1,4 @@
-/*	$NetBSD: ac97var.h,v 1.19 2006/07/26 14:44:33 kent Exp $	*/
+/*	$NetBSD: ac97var.h,v 1.20 2007/02/21 22:59:59 thorpej Exp $	*/
 /*	$OpenBSD: ac97.h,v 1.4 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct ac97_host_if {
 	int (*reset)(void *);
 
 	enum ac97_host_flags (*flags)(void *);
-	void (*spdif_event)(void *, boolean_t);
+	void (*spdif_event)(void *, bool);
 };
 
 /*

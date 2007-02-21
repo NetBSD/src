@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.27 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_run.c,v 1.28 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.27 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.28 2007/02/21 22:59:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,12 +74,12 @@ static int	db_run_mode;
 #define STEP_INVISIBLE	5
 #define	STEP_COUNT	6
 
-static boolean_t	db_sstep_print;
+static bool		db_sstep_print;
 static int		db_loop_count;
 static int		db_call_depth;
 
-boolean_t
-db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
+bool
+db_stop_at_pc(db_regs_t *regs, bool *is_breakpoint)
 {
 	db_addr_t	pc;
 	db_breakpoint_t bkpt;
@@ -187,7 +187,7 @@ db_stop_at_pc(db_regs_t *regs, boolean_t *is_breakpoint)
 }
 
 void
-db_restart_at_pc(db_regs_t *regs, boolean_t watchpt)
+db_restart_at_pc(db_regs_t *regs, bool watchpt)
 {
 	db_addr_t pc = PC_REGS(regs);
 #ifdef SOFTWARE_SSTEP
@@ -255,7 +255,7 @@ void
 db_single_step_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t print = FALSE;
+	bool print = FALSE;
 
 	if (count == -1)
 		count = 1;
@@ -279,7 +279,7 @@ void
 db_trace_until_call_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t print = FALSE;
+	bool print = FALSE;
 
 	if (modif[0] == 'p')
 		print = TRUE;
@@ -298,7 +298,7 @@ void
 db_trace_until_matching_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t print = FALSE;
+	bool print = FALSE;
 
 	if (modif[0] == 'p')
 		print = TRUE;
@@ -341,18 +341,18 @@ db_continue_cmd(db_expr_t addr, int have_addr,
  *	Just define the above conditional and provide
  *	the functions/macros defined below.
  *
- * boolean_t inst_branch(int inst)
- * boolean_t inst_call(int inst)
+ * bool inst_branch(int inst)
+ * bool inst_call(int inst)
  *	returns TRUE if the instruction might branch
  *
- * boolean_t inst_unconditional_flow_transfer(int inst)
+ * bool inst_unconditional_flow_transfer(int inst)
  *	returns TRUE if the instruction is an unconditional
  *	transter of flow (i.e. unconditional branch)
  *
  * db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
  *	returns the target address of the branch
  *
- * db_addr_t next_instr_address(db_addr_t pc, boolean_t bd)
+ * db_addr_t next_instr_address(db_addr_t pc, bool bd)
  *	returns the address of the first instruction following the
  *	one at "pc", which is either in the taken path of the branch
  *	(bd == TRUE) or not.  This is for machines (e.g. mips) with
@@ -374,7 +374,7 @@ void
 db_set_single_step(db_regs_t *regs)
 {
 	db_addr_t pc = PC_REGS(regs), brpc = pc;
-	boolean_t unconditional;
+	bool unconditional;
 	unsigned int inst;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 2007/02/21 22:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 
 void mem_write(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
 void mem_read(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
-boolean_t __ga_rom;
+bool __ga_rom;
 
 int
 cmd_mem(int argc, char *argp[], int interactive)

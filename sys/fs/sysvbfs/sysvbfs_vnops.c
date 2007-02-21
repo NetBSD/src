@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.9 2007/02/20 16:21:04 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.10 2007/02/21 23:00:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.9 2007/02/20 16:21:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.10 2007/02/21 23:00:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,7 +81,7 @@ sysvbfs_lookup(void *arg)
 	const char *name = cnp->cn_nameptr;
 	int namelen = cnp->cn_namelen;
 	int error;
-	boolean_t islastcn = cnp->cn_flags & ISLASTCN;
+	bool islastcn = cnp->cn_flags & ISLASTCN;
 
 	DPRINTF("%s: %s op=%d %ld\n", __FUNCTION__, name, nameiop,
 	    cnp->cn_flags);
@@ -394,7 +394,7 @@ sysvbfs_write(void *arg)
 	struct uio *uio = a->a_uio;
 	struct sysvbfs_node *bnode = v->v_data;
 	struct bfs_inode *inode = bnode->inode;
-	boolean_t extended = FALSE;
+	bool extended = FALSE;
 	vsize_t sz;
 	void *win;
 	int err = 0;

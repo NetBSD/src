@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.h,v 1.2 2005/12/11 12:16:52 christos Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.h,v 1.3 2007/02/21 22:59:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -97,7 +97,7 @@ struct dmac_xfer_desc {
 	 * and the first dma segment in xd_dma_segs must have a non-zero
 	 * ds_len field.
 	 */
-	boolean_t xd_addr_hold;
+	bool xd_addr_hold;
 
 	u_int xd_nsegs;
 	bus_dma_segment_t *xd_dma_segs;

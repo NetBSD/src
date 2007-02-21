@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.37 2006/08/18 00:41:57 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.38 2007/02/21 22:59:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.37 2006/08/18 00:41:57 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.38 2007/02/21 22:59:43 thorpej Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -138,7 +138,7 @@ STATIC void hd64461video_get_clut(struct hd64461video_chip *, int, int,
 STATIC int hd64461video_power(void *, int, long, void *);
 STATIC void hd64461video_off(struct hd64461video_chip *);
 STATIC void hd64461video_on(struct hd64461video_chip *);
-STATIC void hd64461video_display_onoff(void *, boolean_t);
+STATIC void hd64461video_display_onoff(void *, bool);
 STATIC void hd64461video_display_on(void *);
 
 #if notyet
@@ -1217,7 +1217,7 @@ hd64461video_display_on(void *arg)
 }
 
 STATIC void
-hd64461video_display_onoff(void *arg, boolean_t on)
+hd64461video_display_onoff(void *arg, bool on)
 {
 	/* struct hd64461video_chip *vc = arg; */
 	uint16_t r;

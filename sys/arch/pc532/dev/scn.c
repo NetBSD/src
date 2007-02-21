@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.76 2006/10/01 20:31:50 elad Exp $ */
+/*	$NetBSD: scn.c,v 1.77 2007/02/21 22:59:48 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.76 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.77 2007/02/21 22:59:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -801,7 +801,7 @@ scnattach(struct device *parent, struct device *self, void *aux)
 	enum scntype scntype = SCNUNK;
 	const char *duart_type = "Unknown";
 	char *intrname;
-	boolean_t console, first;
+	bool console, first;
 
 	sc = (void *) self;
 	unit = device_unit(self);

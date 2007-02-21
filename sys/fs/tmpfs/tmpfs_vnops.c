@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.35 2007/01/04 15:42:37 elad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.36 2007/02/21 23:00:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.35 2007/01/04 15:42:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.36 2007/02/21 23:00:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -567,7 +567,7 @@ tmpfs_write(void *v)
 	struct uio *uio = ((struct vop_write_args *)v)->a_uio;
 	int ioflag = ((struct vop_write_args *)v)->a_ioflag;
 
-	boolean_t extended;
+	bool extended;
 	int error;
 	int flags;
 	off_t oldsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2006/03/15 18:12:03 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2007/02/21 22:59:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2006/03/15 18:12:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2007/02/21 22:59:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -390,8 +390,8 @@ static void pmap_kernel_init(pmap_t);
 static void pmap_user_init(pmap_t);
 static void pmap_page_upload(void);
 
-static void pmap_enter_kernel(vaddr_t, int, boolean_t);
-static void pmap_enter_user(pmap_t, vaddr_t, int, boolean_t);
+static void pmap_enter_kernel(vaddr_t, int, bool);
+static void pmap_enter_user(pmap_t, vaddr_t, int, bool);
 
 static void pmap_protect1(pmap_t, vaddr_t, vaddr_t);
 static void pmap_protect_mmu(pmap_t, vaddr_t, vaddr_t);
@@ -1106,7 +1106,7 @@ pv_changepte(paddr_t pa, int set_bits, int clear_bits)
 	vaddr_t va;
 	int pte, sme;
 	int saved_ctx;
-	boolean_t in_ctx;
+	bool in_ctx;
 	u_int flags;
 
 	pv_flags = pa_to_pvflags(pa);
@@ -1210,7 +1210,7 @@ pv_syncflags(pv_entry_t pv)
 	vaddr_t va;
 	int pte, sme;
 	int saved_ctx;
-	boolean_t in_ctx;
+	bool in_ctx;
 	u_int flags;
 
 	/* If no mappings, no work to do. */
@@ -1952,7 +1952,7 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	int new_pte, s;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	bool wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef	PMAP_DEBUG
 	if ((pmap_debug & PMD_ENTER) ||
@@ -1997,7 +1997,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 }
 
 static void 
-pmap_enter_kernel(vaddr_t pgva, int new_pte, boolean_t wired)
+pmap_enter_kernel(vaddr_t pgva, int new_pte, bool wired)
 {
 	pmap_t pmap = kernel_pmap;
 	pmeg_t pmegp;
@@ -2143,7 +2143,7 @@ add_pte:	/* can be destructive */
 
 
 static void 
-pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, boolean_t wired)
+pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 {
 	int do_pv, old_pte, sme;
 	vaddr_t segva;
@@ -2661,14 +2661,14 @@ pmap_fault_reload(pmap_t pmap, vaddr_t pgva, vm_prot_t ftype)
 /*
  * Clear the modify bit for the given physical page.
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t *head;
 	u_char *pv_flags;
 	int s;
-	boolean_t rv;
+	bool rv;
 
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
@@ -2684,14 +2684,14 @@ pmap_clear_modify(struct vm_page *pg)
 /*
  * Tell whether the given physical page has been modified.
  */
-boolean_t
+bool
 pmap_is_modified(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t *head;
 	u_char *pv_flags;
 	int s;
-	boolean_t rv;
+	bool rv;
 
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
@@ -2708,14 +2708,14 @@ pmap_is_modified(struct vm_page *pg)
  * Clear the reference bit for the given physical page.
  * It's OK to just remove mappings if that's easier.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t *head;
 	u_char *pv_flags;
 	int s;
-	boolean_t rv;
+	bool rv;
 
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
@@ -2732,14 +2732,14 @@ pmap_clear_reference(struct vm_page *pg)
  * Tell whether the given physical page has been referenced.
  * It's OK to just return FALSE if page is not mapped.
  */
-boolean_t
+bool
 pmap_is_referenced(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t *head;
 	u_char *pv_flags;
 	int s;
-	boolean_t rv;
+	bool rv;
 
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
@@ -2896,7 +2896,7 @@ _pmap_extract_pmeg(pmap_t pmap, vaddr_t va)
  *		with the given map/virtual_address pair.
  *	Returns zero if VA not valid.
  */
-boolean_t 
+bool 
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	int s, sme, segnum, ptenum, pte;
@@ -3036,7 +3036,7 @@ void
 pmap_protect1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int old_ctx, s, sme;
-	boolean_t in_ctx;
+	bool in_ctx;
 
 	s = splvm();
 
@@ -3273,7 +3273,7 @@ void
 pmap_remove1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int old_ctx, s, sme;
-	boolean_t in_ctx;
+	bool in_ctx;
 
 	s = splvm();
 

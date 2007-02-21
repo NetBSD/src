@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.79 2006/12/21 15:55:26 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.80 2007/02/21 23:00:14 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.79 2006/12/21 15:55:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.80 2007/02/21 23:00:14 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -72,9 +72,9 @@ struct uvm_pagerops * const uvmpagerops[] = {
 
 struct vm_map *pager_map;		/* XXX */
 struct simplelock pager_map_wanted_lock;
-boolean_t pager_map_wanted;	/* locked by pager map */
+bool pager_map_wanted;	/* locked by pager map */
 static vaddr_t emergva;
-static boolean_t emerginuse;
+static bool emerginuse;
 
 /*
  * uvm_pager_init: init pagers (at boot time)
@@ -134,7 +134,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vaddr_t cva;
 	struct vm_page *pp;
 	vm_prot_t prot;
-	const boolean_t pdaemon = curproc == uvm.pagedaemon_proc;
+	const bool pdaemon = curproc == uvm.pagedaemon_proc;
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(pps=0x%x, npages=%d)", pps, npages,0,0);
@@ -291,7 +291,7 @@ uvm_aio_aiodone(struct buf *bp)
 	struct uvm_object *uobj;
 	struct simplelock *slock;
 	int s, i, error, swslot;
-	boolean_t write, swap;
+	bool write, swap;
 	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
@@ -488,7 +488,7 @@ uvm_pageratop(vaddr_t kva)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-	boolean_t rv;
+	bool rv;
 
 	rv = pmap_extract(pmap_kernel(), kva, &pa);
 	KASSERT(rv);

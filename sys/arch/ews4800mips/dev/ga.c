@@ -1,4 +1,4 @@
-/*	$NetBSD: ga.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: ga.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Graphic Adaptor  (350, 360) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ga.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ga.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ga.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
 #include <machine/gareg.h>
 #include <machine/gavar.h>
 
-boolean_t ga_map(struct ga *);
+bool ga_map(struct ga *);
 void ga_clut_init(struct ga *);
 void ga_vblank_start(const struct ga *);
 void ga_bt463_reg(const struct ga *, int);
@@ -75,7 +75,7 @@ void ga_plane_mask_test(const struct ga *);
 #define	ga_reg_read(ga, ofs)						\
 	(*(volatile uint32_t *)((ga)->reg_addr + (ofs)))
 
-boolean_t
+bool
 ga_init(struct ga *ga)
 {
 	int i;
@@ -163,7 +163,7 @@ ga_init(struct ga *ga)
 	return TRUE;
 }
 
-boolean_t
+bool
 ga_map(struct ga *ga)
 {
 #ifdef _STANDALONE

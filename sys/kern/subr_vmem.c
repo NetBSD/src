@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.24 2006/11/18 07:51:54 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.25 2007/02/21 23:00:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24 2006/11/18 07:51:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.25 2007/02/21 23:00:05 thorpej Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -525,13 +525,13 @@ qc_destroy(vmem_t *vm)
 	}
 }
 
-static boolean_t
+static bool
 qc_reap(vmem_t *vm)
 {
 	const qcache_t *prevqc;
 	int i;
 	int qcache_idx_max;
-	boolean_t didsomething = FALSE;
+	bool didsomething = FALSE;
 
 	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
 	prevqc = NULL;
@@ -1104,10 +1104,10 @@ vmem_add(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags)
  * => return TRUE if we successfully reaped something.
  */
 
-boolean_t
+bool
 vmem_reap(vmem_t *vm)
 {
-	boolean_t didsomething = FALSE;
+	bool didsomething = FALSE;
 
 	VMEM_ASSERT_UNLOCKED(vm);
 
@@ -1175,7 +1175,7 @@ main()
 	struct reg {
 		vmem_addr_t p;
 		vmem_size_t sz;
-		boolean_t x;
+		bool x;
 	} *reg = NULL;
 	int nreg = 0;
 	int nalloc = 0;
@@ -1208,7 +1208,7 @@ main()
 		if (t > 45) {
 			/* alloc */
 			vmem_size_t sz = rand() % 500 + 1;
-			boolean_t x;
+			bool x;
 			vmem_size_t align, phase, nocross;
 			vmem_addr_t minaddr, maxaddr;
 

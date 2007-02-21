@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.8 2006/10/29 11:38:56 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.9 2007/02/21 23:00:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.8 2006/10/29 11:38:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.9 2007/02/21 23:00:07 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -79,7 +79,7 @@ static int agr_ioctl_filter(struct ifnet *, u_long, caddr_t);
 static void agr_reset_iftype(struct ifnet *);
 static int agr_config_promisc(struct agr_softc *);
 static int agrport_config_promisc_callback(struct agr_port *, void *);
-static int agrport_config_promisc(struct agr_port *, boolean_t);
+static int agrport_config_promisc(struct agr_port *, bool);
 static int agrport_cleanup(struct agr_softc *, struct agr_port *);
 
 static struct if_clone agr_cloner =
@@ -923,7 +923,7 @@ agrport_config_promisc_callback(struct agr_port *port, void *arg)
 	struct agr_softc *sc = AGR_SC_FROM_PORT(port);
 	int *errorp = arg;
 	int error;
-	boolean_t promisc;
+	bool promisc;
 
 	promisc = (sc->sc_if.if_flags & IFF_PROMISC) != 0;
 
@@ -936,7 +936,7 @@ agrport_config_promisc_callback(struct agr_port *port, void *arg)
 }
 
 static int
-agrport_config_promisc(struct agr_port *port, boolean_t promisc)
+agrport_config_promisc(struct agr_port *port, bool promisc)
 {
 	int error;
 

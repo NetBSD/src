@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.12 2005/12/08 22:41:44 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.13 2007/02/21 22:59:35 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2005/12/08 22:41:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2007/02/21 22:59:35 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -182,7 +182,7 @@ struct pv_entry *pv_table;
 struct pmap kernel_pmap_store;
 struct pv_entry *kernel_pmap_entries[PM_NENTRIES];
 
-static boolean_t pmap_initialised = FALSE;
+static bool pmap_initialised = FALSE;
 
 static struct pool pmap_pool;
 
@@ -739,7 +739,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	splx(s);
 }
 
-boolean_t
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 {
 	struct pv_entry *pv;
@@ -771,12 +771,12 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	pmap_remove(pmap_kernel(), va, va+len);
 }
 
-inline boolean_t
+inline bool
 pmap_is_modified(page)
 	struct vm_page *page;
 {
 	int ppn;
-	boolean_t rv;
+	bool rv;
 #ifdef PMAP_DEBUG_MODIFIED
 	unsigned char digest[16];
 #endif
@@ -805,7 +805,7 @@ pmap_is_modified(page)
 	return rv;
 }
 
-inline boolean_t
+inline bool
 pmap_is_referenced(page)
 	struct vm_page *page;
 {
@@ -836,11 +836,11 @@ pmap_update_page(int ppn)
 		}
 }
 
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *page)
 {
 	int ppn;
-	boolean_t rv;
+	bool rv;
 	struct pv_entry *pv;
 	UVMHIST_FUNC("pmap_clear_modify");
 
@@ -861,11 +861,11 @@ pmap_clear_modify(struct vm_page *page)
 	return rv;
 }
 
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *page)
 {
 	int ppn;
-	boolean_t rv;
+	bool rv;
 	UVMHIST_FUNC("pmap_clear_reference");
 
 	UVMHIST_CALLED(pmaphist);
@@ -883,7 +883,7 @@ pmap_clear_reference(struct vm_page *page)
  * referenced/modified emulation).  If it was, handle it and return
  * TRUE.  Otherwise, return FALSE.
  */
-boolean_t
+bool
 pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 {
 	int lpn, ppn;

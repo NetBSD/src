@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.23 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_break.c,v 1.24 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.23 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.24 2007/02/21 22:59:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -156,7 +156,7 @@ db_find_breakpoint_here(db_addr_t addr)
 	return db_find_breakpoint(db_map_addr(addr), addr);
 }
 
-static boolean_t db_breakpoints_inserted = TRUE;
+static bool db_breakpoints_inserted = TRUE;
 
 void
 db_set_breakpoints(void)
@@ -262,7 +262,7 @@ db_listbreak_cmd(db_expr_t addr, int have_addr,
  *	(or both) may be null.
  */
 
-boolean_t
+bool
 db_map_equal(struct vm_map *map1, struct vm_map *map2)
 {
 
@@ -271,7 +271,7 @@ db_map_equal(struct vm_map *map1, struct vm_map *map2)
 		((map1 == kernel_map) && (map2 == NULL)));
 }
 
-boolean_t
+bool
 db_map_current(struct vm_map *map)
 {
 #if 0

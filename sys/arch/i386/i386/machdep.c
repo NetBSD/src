@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.598 2007/02/18 18:20:26 dsl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.599 2007/02/21 22:59:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.598 2007/02/18 18:20:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.599 2007/02/21 22:59:43 thorpej Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2025,7 +2025,7 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
-		boolean_t loaded;
+		bool loaded;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB

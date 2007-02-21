@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.21 2006/10/07 18:14:42 rjs Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.22 2007/02/21 22:59:53 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -95,13 +95,13 @@ void	db_dump_stack(db_expr_t, int, db_expr_t, const char *);
  */
 #define SOFTWARE_SSTEP
 
-boolean_t	db_inst_trap_return(int inst);
-boolean_t	db_inst_return(int inst);
-boolean_t	db_inst_call(int inst);
-boolean_t	db_inst_branch(int inst);
+bool		db_inst_trap_return(int inst);
+bool		db_inst_return(int inst);
+bool		db_inst_call(int inst);
+bool		db_inst_branch(int inst);
 int		db_inst_load(int inst);
 int		db_inst_store(int inst);
-boolean_t	db_inst_unconditional_flow_transfer(int inst);
+bool		db_inst_unconditional_flow_transfer(int inst);
 db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 #define inst_trap_return(ins)	db_inst_trap_return(ins)

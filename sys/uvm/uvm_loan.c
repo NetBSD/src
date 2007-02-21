@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.63 2006/12/15 13:51:30 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.64 2007/02/21 23:00:13 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.63 2006/12/15 13:51:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.64 2007/02/21 23:00:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,7 +628,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	struct vm_page *pg;
 	struct vm_anon *anon;
 	int error, npages;
-	boolean_t locked;
+	bool locked;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(loanhist);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.17 2007/02/21 22:59:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17 2007/02/21 22:59:48 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ static void print_addr(db_addr_t);
  * be executed but the 'linear' next instruction.
  */
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	u_int32_t instr;
 
@@ -184,9 +184,9 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
  * 'loc' may in fact contain a breakpoint instruction.
  */
 db_addr_t
-db_disasm_insn(int insn, db_addr_t loc, boolean_t altfmt)
+db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 {
-	boolean_t bdslot = FALSE;
+	bool bdslot = FALSE;
 	InstFmt i;
 
 	i.word = insn;

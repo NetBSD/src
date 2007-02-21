@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.41 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.42 2007/02/21 23:00:12 thorpej Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.41 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.42 2007/02/21 23:00:12 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -272,7 +272,7 @@ struct vm_page *
 uvm_anon_lockloanpg(struct vm_anon *anon)
 {
 	struct vm_page *pg;
-	boolean_t locked = FALSE;
+	bool locked = FALSE;
 
 	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
 
@@ -348,7 +348,7 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
  * => returns TRUE if pagein was aborted due to lack of memory.
  */
 
-boolean_t
+bool
 uvm_anon_pagein(struct vm_anon *anon)
 {
 	struct vm_page *pg;

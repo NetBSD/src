@@ -1,4 +1,4 @@
-/* $NetBSD: auvar.h,v 1.8 2006/02/16 01:55:17 gdamore Exp $ */
+/* $NetBSD: auvar.h,v 1.9 2007/02/21 22:59:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -87,16 +87,16 @@ struct au_chipdep {
 struct au_chipdep	*au_chipdep(void);
 
 #ifdef	ALCHEMY_AU1000
-boolean_t	au1000_match(struct au_chipdep **);
+bool		au1000_match(struct au_chipdep **);
 #endif
 #ifdef	ALCHEMY_AU1100
-boolean_t	au1100_match(struct au_chipdep **);
+bool		au1100_match(struct au_chipdep **);
 #endif
 #ifdef	ALCHEMY_AU1500
-boolean_t	au1500_match(struct au_chipdep **);
+bool		au1500_match(struct au_chipdep **);
 #endif
 #ifdef	ALCHEMY_AU1550
-boolean_t	au1550_match(struct au_chipdep **);
+bool		au1550_match(struct au_chipdep **);
 #endif
 
 void	au_intr_init(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sector.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: sector.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
 struct sector_rw {
 	struct buf *buf;
 	void (*strategy)(struct buf *);
-	boolean_t busy;
+	bool busy;
 } __context;
 
 void *
@@ -74,7 +74,7 @@ sector_fini(void *self)
 	rw->busy = FALSE;
 }
 
-boolean_t
+bool
 sector_read_n(void *self, uint8_t *buf, daddr_t sector, int count)
 {
 	int i;
@@ -89,7 +89,7 @@ sector_read_n(void *self, uint8_t *buf, daddr_t sector, int count)
 	return TRUE;
 }
 
-boolean_t
+bool
 sector_read(void *self, uint8_t *buf, daddr_t sector)
 {
 	struct sector_rw *rw = self;
@@ -110,7 +110,7 @@ sector_read(void *self, uint8_t *buf, daddr_t sector)
 	return TRUE;
 }
 
-boolean_t
+bool
 sector_write_n(void *self, uint8_t *buf, daddr_t sector, int count)
 {
 	int i;
@@ -125,7 +125,7 @@ sector_write_n(void *self, uint8_t *buf, daddr_t sector, int count)
 	return TRUE;
 }
 
-boolean_t
+bool
 sector_write(void *self, uint8_t *buf, daddr_t sector)
 {
 	struct sector_rw *rw = self;

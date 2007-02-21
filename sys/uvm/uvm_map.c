@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.232 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.233 2007/02/21 23:00:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.232 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.233 2007/02/21 23:00:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -418,8 +418,8 @@ _uvm_map_check(struct vm_map *map, const char *name,
 int
 _uvm_map_sanity(struct vm_map *map)
 {
-	boolean_t first_free_found = FALSE;
-	boolean_t hint_found = FALSE;
+	bool first_free_found = FALSE;
+	bool hint_found = FALSE;
 	const struct vm_map_entry *e;
 
 	e = &map->header; 
@@ -1421,12 +1421,12 @@ done:
  * => return value is true if address is in the returned entry
  */
 
-boolean_t
+bool
 uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
     struct vm_map_entry **entry	/* OUT */)
 {
 	struct vm_map_entry *cur;
-	boolean_t use_tree = FALSE;
+	bool use_tree = FALSE;
 	UVMHIST_FUNC("uvm_map_lookup_entry");
 	UVMHIST_CALLED(maphist);
 
@@ -2797,7 +2797,7 @@ uvm_map_setup_kernel(struct vm_map_kernel *map,
 
 int
 uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
-    vm_prot_t new_prot, boolean_t set_max)
+    vm_prot_t new_prot, bool set_max)
 {
 	struct vm_map_entry *current, *entry;
 	int error = 0;
@@ -3042,7 +3042,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 
 int
 uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
-    boolean_t new_pageable, int lockflags)
+    bool new_pageable, int lockflags)
 {
 	struct vm_map_entry *entry, *start_entry, *failed_entry;
 	int rv;
@@ -3690,7 +3690,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
  * => map must be read or write locked by caller.
  */
 
-boolean_t
+bool
 uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
     vm_prot_t protection)
 {
@@ -4528,7 +4528,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	struct vm_map_entry *prev;
 	vsize_t size;
 	int merged = 0;
-	boolean_t copying;
+	bool copying;
 	int newetype;
 
 	if (VM_MAP_USE_KMAPENT(map)) {
@@ -4640,7 +4640,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
  */
 
 void
-uvm_map_printit(struct vm_map *map, boolean_t full,
+uvm_map_printit(struct vm_map *map, bool full,
     void (*pr)(const char *, ...))
 {
 	struct vm_map_entry *entry;
@@ -4676,7 +4676,7 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
  */
 
 void
-uvm_object_printit(struct uvm_object *uobj, boolean_t full,
+uvm_object_printit(struct uvm_object *uobj, bool full,
     void (*pr)(const char *, ...))
 {
 	struct vm_page *pg;
@@ -4713,7 +4713,7 @@ static const char page_flagbits[] = UVM_PGFLAGBITS;
 static const char page_pqflagbits[] = UVM_PQFLAGBITS;
 
 void
-uvm_page_printit(struct vm_page *pg, boolean_t full,
+uvm_page_printit(struct vm_page *pg, bool full,
     void (*pr)(const char *, ...))
 {
 	struct vm_page *tpg;
@@ -4927,7 +4927,7 @@ vm_map_to_kernel(struct vm_map *map)
 	return (struct vm_map_kernel *)map;
 }
 
-boolean_t
+bool
 vm_map_starved_p(struct vm_map *map)
 {
 

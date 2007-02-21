@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.47 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.48 2007/02/21 23:00:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -261,7 +261,7 @@
 		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
 		struct timespec ctime, mtime; \
 		struct nfsnode *nfsp = VTONFS(v); \
-		boolean_t haspreopattr = FALSE; \
+		bool haspreopattr = FALSE; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
 			haspreopattr = TRUE; \

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.68 2005/12/24 22:45:39 perry Exp $ */
+/*	$NetBSD: db_interface.c,v 1.69 2007/02/21 22:59:52 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2005/12/24 22:45:39 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.69 2007/02/21 22:59:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -610,7 +610,7 @@ db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
     }
 }
 
-boolean_t
+bool
 db_inst_branch(int inst)
 {
     union instr insn;
@@ -635,7 +635,7 @@ db_inst_branch(int inst)
 }
 
 
-boolean_t
+bool
 db_inst_call(int inst)
 {
     union instr insn;
@@ -655,7 +655,7 @@ db_inst_call(int inst)
 }
 
 
-boolean_t
+bool
 db_inst_unconditional_flow_transfer(int inst)
 {
     union instr insn;
@@ -683,7 +683,7 @@ db_inst_unconditional_flow_transfer(int inst)
 }
 
 
-boolean_t
+bool
 db_inst_return(int inst)
 {
 
@@ -691,7 +691,7 @@ db_inst_return(int inst)
 	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
 }
 
-boolean_t
+bool
 db_inst_trap_return(int inst)
 {
     union instr insn;

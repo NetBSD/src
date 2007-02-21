@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.117 2006/12/15 13:51:30 yamt Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.118 2007/02/21 23:00:12 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.117 2006/12/15 13:51:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.118 2007/02/21 23:00:12 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -284,8 +284,8 @@ int
 uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
     struct vm_anon *anon)
 {
-	boolean_t we_own;	/* we own anon's page? */
-	boolean_t locked;	/* did we relock? */
+	bool we_own;	/* we own anon's page? */
+	bool locked;	/* did we relock? */
 	struct vm_page *pg;
 	int error;
 	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
@@ -699,7 +699,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 {
 	struct uvm_faultinfo ufi;
 	vm_prot_t enter_prot, check_prot;
-	boolean_t wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
+	bool wired, narrow, promote, locked, shadowed, wire_fault, cow_now;
 	int npages, nback, nforw, centeridx, error, lcv, gotpages;
 	vaddr_t startva, currva;
 	voff_t uoff;
@@ -1069,7 +1069,7 @@ ReFault:
 			for (lcv = 0; lcv < npages;
 			     lcv++, currva += PAGE_SIZE) {
 				struct vm_page *curpg;
-				boolean_t readonly;
+				bool readonly;
 
 				curpg = pages[lcv];
 				if (curpg == NULL || curpg == PGO_DONTCARE) {

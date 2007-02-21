@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.81 2007/02/15 12:33:57 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.82 2007/02/21 22:59:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1517,7 +1517,7 @@ re_start(struct ifnet *ifp)
 	uint32_t		cmdstat, re_flags;
 	int			ofree, idx, error, nsegs, seg;
 	int			startdesc, curdesc, lastdesc;
-	boolean_t		pad;
+	bool			pad;
 
 	sc = ifp->if_softc;
 	ofree = sc->re_ldata.re_txq_free;

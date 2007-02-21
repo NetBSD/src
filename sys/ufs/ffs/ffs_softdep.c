@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.83 2007/02/17 22:31:45 pavel Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.84 2007/02/21 23:00:10 thorpej Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.83 2007/02/17 22:31:45 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.84 2007/02/21 23:00:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -198,7 +198,7 @@ void softdep_pageiodone1(struct buf *);
 #endif
 void softdep_pageiodone(struct buf *);
 void softdep_flush_vnode(struct vnode *, daddr_t);
-static void softdep_trackbufs(struct vnode *, int, boolean_t);
+static void softdep_trackbufs(struct vnode *, int, bool);
 
 #define	PCBP_BITMAP(off, size) \
 	(((1 << howmany((size), PAGE_SIZE)) - 1) << ((off) >> PAGE_SHIFT))
@@ -5858,7 +5858,7 @@ softdep_lookupvp(fs, ino)
 }
 
 static void
-softdep_trackbufs(struct vnode *devvp, int delta, boolean_t throttle)
+softdep_trackbufs(struct vnode *devvp, int delta, bool throttle)
 {
 	struct lwp *l = curlwp;
 

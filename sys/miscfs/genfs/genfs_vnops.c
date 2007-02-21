@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.147 2007/02/20 16:19:42 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.148 2007/02/21 23:00:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.147 2007/02/20 16:19:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.148 2007/02/21 23:00:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,12 +435,12 @@ genfs_getpages(void *v)
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
 	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
-	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
-	boolean_t sawhole = FALSE;
-	boolean_t has_trans = FALSE;
-	boolean_t overwrite = (flags & PGO_OVERWRITE) != 0;
-	boolean_t blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
+	bool async = (flags & PGO_SYNCIO) == 0;
+	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	bool sawhole = FALSE;
+	bool has_trans = FALSE;
+	bool overwrite = (flags & PGO_OVERWRITE) != 0;
+	bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
 	voff_t origvsize;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
@@ -1049,15 +1049,15 @@ genfs_putpages(void *v)
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
-	boolean_t wasclean, by_list, needs_clean, yld;
-	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
+	bool wasclean, by_list, needs_clean, yld;
+	bool async = (flags & PGO_SYNCIO) == 0;
+	bool pagedaemon = curproc == uvm.pagedaemon_proc;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
-	boolean_t modified = FALSE;
-	boolean_t has_trans = FALSE;
-	boolean_t cleanall;
+	bool modified = FALSE;
+	bool has_trans = FALSE;
+	bool cleanall;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1500,8 +1500,8 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	daddr_t lbn, blkno;
 	struct buf *mbp, *bp;
 	struct vnode *devvp;
-	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	boolean_t write = rw == UIO_WRITE;
+	bool async = (flags & PGO_SYNCIO) == 0;
+	bool write = rw == UIO_WRITE;
 	int brw = write ? B_WRITE : B_READ;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
@@ -1675,7 +1675,7 @@ genfs_compat_getpages(void *v)
 	struct iovec iov;
 	struct uio uio;
 	kauth_cred_t cred = curlwp->l_cred;
-	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	error = 0;
 	origoffset = ap->a_offset;

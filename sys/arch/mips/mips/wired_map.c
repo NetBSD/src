@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.2 2005/11/27 16:49:56 tsutsui Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.3 2007/02/21 22:59:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.2 2005/11/27 16:49:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.3 2007/02/21 22:59:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ int mips3_nwired_page;
  * Lower layer API, to supply an explicit page size.  It only wires a
  * single page at a time.
  */
-boolean_t
+bool
 mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
 {
 	struct tlb tlb;
@@ -170,7 +170,7 @@ mips3_wired_enter_page(vaddr_t va, paddr_t pa, vsize_t pgsize)
  * Typically the caller will just pass a physaddr that is the same as
  * the vaddr with bits 35-32 set nonzero.
  */
-boolean_t
+bool
 mips3_wired_enter_region(vaddr_t va, paddr_t pa, vsize_t size)
 {
 	vaddr_t	vend;

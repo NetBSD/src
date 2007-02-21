@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.95 2007/02/06 01:09:48 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.96 2007/02/21 23:00:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.95 2007/02/06 01:09:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.96 2007/02/21 23:00:04 thorpej Exp $");
 
 #include "opt_veriexec.h"
 
@@ -510,7 +510,7 @@ veriexec_get(struct vnode *vp)
 	return (fileassoc_lookup(vp, veriexec_hook));
 }
 
-boolean_t
+bool
 veriexec_lookup(struct vnode *vp)
 {
 	return (veriexec_get(vp) == NULL ? FALSE : TRUE);
@@ -524,7 +524,7 @@ veriexec_lookup(struct vnode *vp)
  */
 int
 veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
-    boolean_t *found)
+    bool *found)
 {
 	struct veriexec_file_entry *vfe;
 	u_char *digest;
@@ -1036,7 +1036,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	 */
 	hh = veriexec_get(nid.ni_vp);
 	if (hh != NULL) {
-		boolean_t fp_mismatch;
+		bool fp_mismatch;
 
 		if (strcmp(vfe->ops->type, fp_type) ||
 		    memcmp(hh->fp, vfe->fp, hh->ops->hash_len))
@@ -1229,7 +1229,7 @@ veriexec_unmountchk(struct mount *mp)
 int
 veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 {
-	boolean_t monitored = FALSE;
+	bool monitored = FALSE;
 	int error = 0;
 
 	if (vp == NULL) {

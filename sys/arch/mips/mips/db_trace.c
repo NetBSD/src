@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.31 2007/02/17 22:31:38 pavel Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.32 2007/02/21 22:59:48 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.31 2007/02/17 22:31:38 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.32 2007/02/21 22:59:48 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,7 +59,7 @@ vaddr_t getreg_val(db_expr_t regno);
 		 ((int *)(&((struct mips_kernel_state *)0)->sp) - (int *)0):  \
 	 -1)
 
-db_sym_t localsym(db_sym_t sym, boolean_t isreg, int *lex_level);
+db_sym_t localsym(db_sym_t sym, bool isreg, int *lex_level);
 
 /*
  * Machine register set.

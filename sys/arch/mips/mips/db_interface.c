@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.58 2006/08/26 20:14:51 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.59 2007/02/21 22:59:48 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.58 2006/08/26 20:14:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59 2007/02/21 22:59:48 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -552,7 +552,7 @@ const struct db_command db_machine_command_table[] = {
 /*
  * Determine whether the instruction involves a delay slot.
  */
-boolean_t
+bool
 inst_branch(int inst)
 {
 	InstFmt i;
@@ -595,10 +595,10 @@ inst_branch(int inst)
 /*
  * Determine whether the instruction calls a function.
  */
-boolean_t
+bool
 inst_call(int inst)
 {
-	boolean_t call;
+	bool call;
 	InstFmt i;
 
 	i.word = inst;
@@ -618,7 +618,7 @@ inst_call(int inst)
  * compiler can use this construct for other jumps, but usually will not.
  * This lets the ddb "next" command to work (also need inst_trap_return()).
  */
-boolean_t
+bool
 inst_return(int inst)
 {
 	InstFmt i;
@@ -632,11 +632,11 @@ inst_return(int inst)
 /*
  * Determine whether the instruction makes a jump.
  */
-boolean_t
+bool
 inst_unconditional_flow_transfer(int inst)
 {
 	InstFmt i;
-	boolean_t jump;
+	bool jump;
 
 	i.word = inst;
 	jump = (i.JType.op == OP_J) ||
@@ -647,7 +647,7 @@ inst_unconditional_flow_transfer(int inst)
 /*
  * Determine whether the instruction is a load/store as appropriate.
  */
-boolean_t
+bool
 inst_load(int inst)
 {
 	InstFmt i;
@@ -674,7 +674,7 @@ inst_load(int inst)
 	}
 }
 
-boolean_t
+bool
 inst_store(int inst)
 {
 	InstFmt i;
@@ -717,7 +717,7 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
  * Return the next pc of an arbitrary instruction.
  */
 db_addr_t
-next_instr_address(db_addr_t pc, boolean_t bd)
+next_instr_address(db_addr_t pc, bool bd)
 {
 	unsigned ins;
 

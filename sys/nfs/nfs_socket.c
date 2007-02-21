@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.145 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.146 2007/02/21 23:00:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.145 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.146 2007/02/21 23:00:08 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -976,8 +976,8 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	kauth_cred_t acred;
 	struct mbuf *mrest_backup = NULL;
 	kauth_cred_t origcred = NULL; /* XXX: gcc */
-	boolean_t retry_cred = TRUE;
-	boolean_t use_opencred = (np->n_flag & NUSEOPENCRED) != 0;
+	bool retry_cred = TRUE;
+	bool use_opencred = (np->n_flag & NUSEOPENCRED) != 0;
 
 	if (rexmitp != NULL)
 		*rexmitp = 0;
@@ -2290,7 +2290,7 @@ dorecs_unlocked:
 }
 
 int
-nfsdsock_lock(struct nfssvc_sock *slp, boolean_t waitok)
+nfsdsock_lock(struct nfssvc_sock *slp, bool waitok)
 {
 
 	simple_lock(&slp->ns_lock);

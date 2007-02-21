@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -176,7 +176,7 @@ void
 option(int argc, char *argv[], struct bootinfo *bi)
 {
 	extern char __boot_kernel_name[];
-	boolean_t boot_device_set;
+	bool boot_device_set;
 	char *p;
 	int i;
 

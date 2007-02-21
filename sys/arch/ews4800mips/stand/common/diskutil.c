@@ -1,4 +1,4 @@
-/*	$NetBSD: diskutil.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: diskutil.c,v 1.2 2007/02/21 22:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ fstype(int partition)
 	return -1;
 }
 
-boolean_t
+bool
 find_partition_start(int partition,  int *sector)
 {
 
@@ -166,7 +166,7 @@ find_partition_start(int partition,  int *sector)
 	return TRUE;
 }
 
-boolean_t
+bool
 read_vtoc(void)
 {
 
