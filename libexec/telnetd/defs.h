@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.15 2003/11/17 11:16:10 wiz Exp $	*/
+/*	$NetBSD: defs.h,v 1.16 2007/02/21 21:14:07 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,6 @@
 #include <errno.h>
 #include <netdb.h>
 #include <syslog.h>
-#include <ctype.h>
 #include <string.h>
 #include <termios.h>
 #include <time.h>
