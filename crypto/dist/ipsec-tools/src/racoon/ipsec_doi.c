@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.25 2007/02/16 11:01:35 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.26 2007/02/21 11:01:06 vanhu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -4442,10 +4442,11 @@ ipsecdoi_id2str(id)
 	case IPSECDOI_ID_DER_ASN1_DN:
 	case IPSECDOI_ID_DER_ASN1_GN:
 	{
+		X509_NAME *xn = NULL;
+
 		dat = id->v + sizeof(*id_b);
 		len = id->l - sizeof(*id_b);
 
-		X509_NAME *xn = NULL;
 		if (d2i_X509_NAME(&xn, (void*) &dat, len) != NULL) {
 			BIO *bio = BIO_new(BIO_s_mem());
 			X509_NAME_print_ex(bio, xn, 0, 0);
