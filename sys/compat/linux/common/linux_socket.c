@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.68 2006/11/16 01:32:42 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.68.2.1 2007/02/21 13:21:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.68 2006/11/16 01:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.68.2.1 2007/02/21 13:21:01 tron Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -998,6 +998,7 @@ linux_sys_setsockopt(l, v, retval)
 		syscallarg(void *) optval;
 		syscallarg(int) optlen;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_setsockopt_args bsa;
 	int name;
 
@@ -1005,6 +1006,29 @@ linux_sys_setsockopt(l, v, retval)
 	SCARG(&bsa, level) = linux_to_bsd_sopt_level(SCARG(uap, level));
 	SCARG(&bsa, val) = SCARG(uap, optval);
 	SCARG(&bsa, valsize) = SCARG(uap, optlen);
+
+	/*
+	 * Linux supports only SOL_SOCKET for AF_LOCAL domain sockets
+	 * and returns EOPNOTSUPP for other levels
+	 */
+	if (SCARG(&bsa, level) != SOL_SOCKET) {
+		struct file *fp;
+		struct socket *so;
+		int error, s, family;
+
+		/* getsock() will use the descriptor for us */
+	    	if ((error = getsock(p->p_fd, SCARG(&bsa, s), &fp)) != 0)
+		    	return error;
+
+		s = splsoftnet();
+		so = (struct socket *)fp->f_data;
+		family = so->so_proto->pr_domain->dom_family;
+		splx(s);
+		FILE_UNUSE(fp, l);
+
+		if (family == AF_LOCAL)
+			return EOPNOTSUPP;
+	}
 
 	switch (SCARG(&bsa, level)) {
 	case SOL_SOCKET:
