@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap,v 1.4.6.2 2007/02/21 18:27:15 snj Exp $
+#	$NetBSD: files.omap,v 1.4.6.3 2007/02/21 18:39:19 snj Exp $
 #
 # Configuration info for Texas Instruments OMAP CPU support
 # Based on xscale/files.pxa2x0
@@ -109,6 +109,10 @@ defparam opt_com.h				CONSADDR CONSPEED CONMODE
 # INTC controller
 define omapintc
 file	arch/arm/omap/omap_intr.c		omapintc
+# OMAP5912 specific INTC controller code
+device omap5912intc: omapintc
+attach omap5912intc at tipb
+file	arch/arm/omap/omap5912_intr.c		omap5912intc
 
 # MPU Timer
 device omapmputmr
