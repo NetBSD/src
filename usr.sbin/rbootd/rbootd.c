@@ -1,4 +1,4 @@
-/*	$NetBSD: rbootd.c,v 1.19 2003/08/07 11:25:41 agc Exp $	*/
+/*	$NetBSD: rbootd.c,v 1.20 2007/02/21 20:57:55 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,14 +95,13 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rbootd.c,v 1.19 2003/08/07 11:25:41 agc Exp $");
+__RCSID("$NetBSD: rbootd.c,v 1.20 2007/02/21 20:57:55 hubertf Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <poll.h>
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -115,12 +114,10 @@ __RCSID("$NetBSD: rbootd.c,v 1.19 2003/08/07 11:25:41 agc Exp $");
 #include <util.h>
 #include "defs.h"
 
-int	main __P((int, char *[]));
+int	main (int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c, fd, omask;
 	struct pollfd set[1];
@@ -316,7 +313,7 @@ main(argc, argv)
 **		- Timed out connections in `RmpConns' will be freed.
 */
 void
-DoTimeout()
+DoTimeout(void)
 {
 	RMPCONN *rtmp;
 	struct timeval now;
@@ -353,8 +350,7 @@ DoTimeout()
 */
 
 CLIENT *
-FindClient(rconn)
-	RMPCONN *rconn;
+FindClient(RMPCONN *rconn)
 {
 	CLIENT *ctmp;
 
@@ -379,8 +375,7 @@ FindClient(rconn)
 **		- This process ceases to exist.
 */
 void
-Exit(sig)
-	int sig;
+Exit(int sig)
 {
 	if (sig > 0)
 		syslog(LOG_ERR, "going down on signal %d", sig);
@@ -408,8 +403,7 @@ Exit(sig)
 **		- This routine must be called with SIGHUP blocked.
 */
 void
-ReConfig(signo)
-	int signo;
+ReConfig(int signo)
 {
 	syslog(LOG_NOTICE, "reconfiguring boot server");
 
@@ -435,8 +429,7 @@ ReConfig(signo)
 **		- Debug file is closed.
 */
 void
-DebugOff(signo)
-	int signo;
+DebugOff(int signo)
 {
 	if (DbgFp != NULL)
 		(void) fclose(DbgFp);
@@ -458,8 +451,7 @@ DebugOff(signo)
 **		  otherwise do nothing.
 */
 void
-DebugOn(signo)
-	int signo;
+DebugOn(int signo)
 {
 	if (DbgFp == NULL) {
 		if ((DbgFp = fopen(DbgFile, "w")) == NULL)
