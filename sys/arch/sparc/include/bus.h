@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.51 2006/03/04 03:39:02 uwe Exp $	*/
+/*	$NetBSD: bus.h,v 1.52 2007/02/21 20:41:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1678,6 +1678,9 @@ struct sparc_bus_dma_tag {
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t
