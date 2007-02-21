@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.114 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.114.2.1 2007/02/21 13:26:41 tron Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.114 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.114.2.1 2007/02/21 13:26:41 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,7 +772,6 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	if (xfer->busy_free != XFER_ONQU) {
 		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
 		       xfer, xfer->busy_free);
-		return;
 	}
 #endif
 
