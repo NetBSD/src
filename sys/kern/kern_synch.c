@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.5 2007/02/20 21:48:45 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.6 2007/02/21 12:05:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,9 +75,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.5 2007/02/20 21:48:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.6 2007/02/21 12:05:48 yamt Exp $");
 
-#include "opt_ddb.h"
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -87,17 +86,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.5 2007/02/20 21:48:45 rmind E
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-#include <sys/buf.h>
 #if defined(PERFCTRS)
 #include <sys/pmc.h>
 #endif
-#include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
-#include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 
