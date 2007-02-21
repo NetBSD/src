@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.5 2007/02/21 20:07:42 martin Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.6 2007/02/21 22:14:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -70,22 +70,21 @@
 /*
  * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
+.align	32
 _ENTRY(_C_LABEL(_lock_cas))
 	CASPTR	[%o0], %o1, %o2			! compare-and-swap
 	MB_MEM
-	cmp	%o1, %o2			! expected == actual?
-	bne,pn	%icc,1f				! nope
-	 nop
+	xor	%o1, %o2, %o2			! expected == actual?
+	clr	%o0
 	retl
-	 mov	1, %o0
-1:	retl
-	 clr	%o0
+	 movrz	%o2, 1, %o0
 
 #if !defined(LOCKDEBUG)
 
 /*
  * void mutex_enter(kmutex_t *);
  */
+.align	32
 _ENTRY(_C_LABEL(mutex_enter))
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
@@ -95,15 +94,15 @@ _ENTRY(_C_LABEL(mutex_enter))
 	 nop
 	retl					! - yes, done
 	 nop
-1:	sethi	%hi(_C_LABEL(mutex_vector_enter)),%o2	! nope, do it the
-	jmp	%o2 + %lo(_C_LABEL(mutex_vector_enter))	! hard way
-	 nop
+1:	ba	_C_LABEL(mutex_vector_enter)	! nope, do it the
+	 nop					! hard way
 
 /*
  * void mutex_exit(kmutex_t *);
  *
  * XXX This should use a restartable sequence.  See mutex_vector_enter().
  */
+.align	32
 _ENTRY(_C_LABEL(mutex_exit))
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
@@ -115,8 +114,7 @@ _ENTRY(_C_LABEL(mutex_exit))
 	 nop
 	retl
 	 nop
-1:	sethi	%hi(_C_LABEL(mutex_vector_exit)), %o2
-	jmp	%o2 + %lo(_C_LABEL(mutex_vector_exit))
+1:	ba _C_LABEL(mutex_vector_exit)
 	 nop
 
 #endif	/* !LOCKDEBUG */
