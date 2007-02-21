@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.6 2006/08/26 14:04:55 tsutsui Exp $	*/
+/*	$NetBSD: bfs.c,v 1.7 2007/02/21 23:00:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.6 2006/08/26 14:04:55 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.7 2007/02/21 23:00:03 thorpej Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -81,14 +81,14 @@ STATIC int bfs_init_inode(struct bfs *, uint8_t *, size_t *);
 STATIC int bfs_init_dirent(struct bfs *, uint8_t *);
 
 /* super block ops. */
-STATIC boolean_t bfs_superblock_valid(const struct bfs_super_block *);
-STATIC boolean_t bfs_writeback_dirent(const struct bfs *, struct bfs_dirent *,
-    boolean_t);
-STATIC boolean_t bfs_writeback_inode(const struct bfs *, struct bfs_inode *);
+STATIC bool bfs_superblock_valid(const struct bfs_super_block *);
+STATIC bool bfs_writeback_dirent(const struct bfs *, struct bfs_dirent *,
+    bool);
+STATIC bool bfs_writeback_inode(const struct bfs *, struct bfs_inode *);
 
 int
 bfs_init2(struct bfs **bfsp, int bfs_sector, struct sector_io_ops *io,
-    boolean_t debug)
+    bool debug)
 {
 	struct bfs *bfs;
 	size_t memsize;
@@ -440,9 +440,9 @@ bfs_file_create(struct bfs *bfs, const char *fname, void *buf, size_t bufsz,
 	return 0;
 }
 
-STATIC boolean_t
+STATIC bool
 bfs_writeback_dirent(const struct bfs *bfs, struct bfs_dirent *dir,
-    boolean_t create)
+    bool create)
 {
 	struct bfs_dirent *dir_base = bfs->dirent;
 	struct bfs_inode *root_inode = bfs->root_inode;
@@ -476,7 +476,7 @@ bfs_writeback_dirent(const struct bfs *bfs, struct bfs_dirent *dir,
 	    bfs->start_sector + bfs->root_inode->start_sector + i);
 }
 
-STATIC boolean_t
+STATIC bool
 bfs_writeback_inode(const struct bfs *bfs, struct bfs_inode *inode)
 {
 	struct bfs_inode *inode_base = bfs->inode;
@@ -489,7 +489,7 @@ bfs_writeback_inode(const struct bfs *bfs, struct bfs_inode *inode)
 	    bfs->start_sector + 1/*super block*/ + i);
 }
 
-boolean_t
+bool
 bfs_file_lookup(const struct bfs *bfs, const char *fname, int *start, int *end,
     size_t *size)
 {
@@ -515,7 +515,7 @@ bfs_file_lookup(const struct bfs *bfs, const char *fname, int *start, int *end,
 	return TRUE;
 }
 
-boolean_t
+bool
 bfs_dirent_lookup_by_inode(const struct bfs *bfs, int inode,
     struct bfs_dirent **dirent)
 {
@@ -534,7 +534,7 @@ bfs_dirent_lookup_by_inode(const struct bfs *bfs, int inode,
 	return TRUE;
 }
 
-boolean_t
+bool
 bfs_dirent_lookup_by_name(const struct bfs *bfs, const char *fname,
     struct bfs_dirent **dirent)
 {
@@ -554,7 +554,7 @@ bfs_dirent_lookup_by_name(const struct bfs *bfs, const char *fname,
 	return TRUE;
 }
 
-boolean_t
+bool
 bfs_inode_lookup(const struct bfs *bfs, ino_t n, struct bfs_inode **iinode)
 {
 	struct bfs_inode *inode;
@@ -652,14 +652,14 @@ bfs_inode_set_attr(const struct bfs *bfs, struct bfs_inode *inode,
 	bfs_writeback_inode(bfs, inode);
 }
 
-STATIC boolean_t
+STATIC bool
 bfs_superblock_valid(const struct bfs_super_block *super)
 {
 
 	return super->header.magic == BFS_MAGIC;
 }
 
-boolean_t
+bool
 bfs_dump(const struct bfs *bfs)
 {
 	const struct bfs_super_block_header *h;

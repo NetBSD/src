@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.24 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.25 2007/02/21 22:59:57 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.24 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.25 2007/02/21 22:59:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.24 2006/11/16 01:32:44 christos Exp $
  * Watchpoints.
  */
 
-static boolean_t		db_watchpoints_inserted = TRUE;
+static bool			db_watchpoints_inserted = TRUE;
 
 #define	NWATCHPOINTS	100
 static struct db_watchpoint	db_watch_table[NWATCHPOINTS];

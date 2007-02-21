@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.82 2006/12/27 17:59:08 alc Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.83 2007/02/21 23:00:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.82 2006/12/27 17:59:08 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.83 2007/02/21 23:00:14 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -458,7 +458,7 @@ swapcluster_add(struct swapcluster *swc, struct vm_page *pg)
 }
 
 static void
-swapcluster_flush(struct swapcluster *swc, boolean_t now)
+swapcluster_flush(struct swapcluster *swc, bool now)
 {
 	int slot;
 	int nused;
@@ -509,10 +509,10 @@ swapcluster_flush(struct swapcluster *swc, boolean_t now)
  * => return TRUE if a page had an associated slot.
  */
 
-static boolean_t
+static bool
 uvmpd_dropswap(struct vm_page *pg)
 {
-	boolean_t result = FALSE;
+	bool result = FALSE;
 	struct vm_anon *anon = pg->uanon;
 
 	if ((pg->pqflags & PQ_ANON) && anon->an_swslot) {
@@ -539,11 +539,11 @@ uvmpd_dropswap(struct vm_page *pg)
  * => return TRUE if a slot is successfully freed.
  */
 
-boolean_t
+bool
 uvmpd_trydropswap(struct vm_page *pg)
 {
 	struct simplelock *slock;
-	boolean_t result;
+	bool result;
 
 	if ((pg->flags & PG_BUSY) != 0) {
 		return FALSE;
@@ -914,7 +914,7 @@ uvmpd_scan(void)
  * XXX should consider pools, etc?
  */
 
-boolean_t
+bool
 uvm_reclaimable(void)
 {
 	int filepages;

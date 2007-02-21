@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.69 2007/02/19 18:43:40 chs Exp $	   */
+/*	$NetBSD: pmap.h,v 1.70 2007/02/21 22:59:54 thorpej Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -161,7 +161,7 @@ extern	struct pmap kernel_pmap_store;
 /*
  * This is the by far most used pmap routine. Make it inline.
  */
-__inline static boolean_t
+__inline static bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	int	*pte, sva;
@@ -198,26 +198,26 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	return (FALSE);
 }
 
-boolean_t pmap_clear_modify_long(struct pv_entry *);
-boolean_t pmap_clear_reference_long(struct pv_entry *);
-boolean_t pmap_is_modified_long(struct pv_entry *);
+bool pmap_clear_modify_long(struct pv_entry *);
+bool pmap_clear_reference_long(struct pv_entry *);
+bool pmap_is_modified_long(struct pv_entry *);
 void pmap_page_protect_long(struct pv_entry *, vm_prot_t);
 void pmap_protect_long(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 
-__inline static boolean_t
+__inline static bool
 pmap_is_referenced(struct vm_page *pg)
 {
 	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
-	boolean_t rv = (pv->pv_attr & PG_V) != 0;
+	bool rv = (pv->pv_attr & PG_V) != 0;
 
 	return rv;
 }
 
-__inline static boolean_t
+__inline static bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
-	boolean_t rv = (pv->pv_attr & PG_V) != 0;
+	bool rv = (pv->pv_attr & PG_V) != 0;
 
 	pv->pv_attr &= ~PG_V;
 	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
@@ -225,11 +225,11 @@ pmap_clear_reference(struct vm_page *pg)
 	return rv;
 }
 
-__inline static boolean_t
+__inline static bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	struct  pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);
-	boolean_t rv = (pv->pv_attr & PG_M) != 0;
+	bool rv = (pv->pv_attr & PG_M) != 0;
 
 	pv->pv_attr &= ~PG_M;
 	if (pv->pv_pmap != NULL || pv->pv_next != NULL)
@@ -237,7 +237,7 @@ pmap_clear_modify(struct vm_page *pg)
 	return rv;
 }
 
-__inline static boolean_t
+__inline static bool
 pmap_is_modified(struct vm_page *pg)
 {
 	struct pv_entry *pv = pv_table + (VM_PAGE_TO_PHYS(pg) >> PGSHIFT);

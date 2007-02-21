@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.249 2007/01/24 13:08:15 hubertf Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.250 2007/02/21 23:00:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.249 2007/01/24 13:08:15 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.250 2007/02/21 23:00:09 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1292,8 +1292,8 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	struct vnode *vp;
 	struct uio *uiop;
 	int *iomode;
-	boolean_t pageprotected;
-	boolean_t *stalewriteverfp;
+	bool pageprotected;
+	bool *stalewriteverfp;
 {
 	u_int32_t *tl;
 	caddr_t cp;
@@ -1340,7 +1340,7 @@ retry:
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
 		uint32_t backup;
-		boolean_t stalewriteverf = FALSE;
+		bool stalewriteverf = FALSE;
 
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
 		len = min(tsiz, nmp->nm_wsize);
@@ -2974,7 +2974,7 @@ int
 nfs_sillyrename(dvp, vp, cnp, dolink)
 	struct vnode *dvp, *vp;
 	struct componentname *cnp;
-	boolean_t dolink;
+	bool dolink;
 {
 	struct sillyrename *sp;
 	struct nfsnode *np;

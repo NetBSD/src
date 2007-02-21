@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: console.c,v 1.2 2007/02/21 22:59:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ console_init(void)
 }
 
 void
-console_cursor(boolean_t on)
+console_cursor(bool on)
 {
 
 	cons.cursor_enable = on;

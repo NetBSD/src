@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.h,v 1.9 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_run.h,v 1.10 2007/02/21 22:59:57 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -39,8 +39,8 @@ extern int	db_inst_count;
 extern int	db_load_count;
 extern int	db_store_count;
 
-boolean_t	db_stop_at_pc(db_regs_t *, boolean_t *);
-void		db_restart_at_pc(db_regs_t *, boolean_t);
+bool		db_stop_at_pc(db_regs_t *, bool *);
+void		db_restart_at_pc(db_regs_t *, bool);
 void		db_single_step(db_regs_t *);
 #ifndef db_set_single_step
 void		db_set_single_step(db_regs_t *);

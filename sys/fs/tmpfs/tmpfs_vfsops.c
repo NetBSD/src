@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.18 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.19 2007/02/21 23:00:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.18 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.19 2007/02/21 23:00:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -307,7 +307,7 @@ tmpfs_vget(struct mount *mp, ino_t ino,
 static int
 tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	boolean_t found;
+	bool found;
 	struct tmpfs_fid tfh;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;

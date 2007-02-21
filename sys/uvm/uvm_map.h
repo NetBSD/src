@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.54 2006/05/25 14:27:28 yamt Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.55 2007/02/21 23:00:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -328,7 +328,7 @@ int		uvm_map_inherit(struct vm_map *, vaddr_t, vaddr_t,
 		    vm_inherit_t);
 int		uvm_map_advice(struct vm_map *, vaddr_t, vaddr_t, int);
 void		uvm_map_init(void);
-boolean_t	uvm_map_lookup_entry(struct vm_map *, vaddr_t,
+bool		uvm_map_lookup_entry(struct vm_map *, vaddr_t,
 		    struct vm_map_entry **);
 void		uvm_map_reference(struct vm_map *);
 int		uvm_map_replace(struct vm_map *, vaddr_t, vaddr_t,
@@ -402,14 +402,14 @@ int		uvm_mapent_trymerge(struct vm_map *,
 #include <sys/proc.h>	/* for tsleep(), wakeup() */
 #include <sys/systm.h>	/* for panic() */
 
-static __inline boolean_t	vm_map_lock_try(struct vm_map *);
+static __inline bool		vm_map_lock_try(struct vm_map *);
 static __inline void		vm_map_lock(struct vm_map *);
 extern const char vmmapbsy[];
 
-static __inline boolean_t
+static __inline bool
 vm_map_lock_try(struct vm_map *map)
 {
-	boolean_t rv;
+	bool rv;
 
 	if (map->flags & VM_MAP_INTRSAFE)
 		rv = simple_lock_try(&map->lock.lk_interlock);
@@ -513,7 +513,7 @@ do {									\
 		wakeup(&(map)->flags);					\
 } while (/*CONSTCOND*/ 0)
 
-boolean_t vm_map_starved_p(struct vm_map *);
+bool vm_map_starved_p(struct vm_map *);
 
 #endif /* _KERNEL */
 

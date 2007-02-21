@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.117 2007/02/09 21:55:43 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.118 2007/02/21 23:00:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.117 2007/02/09 21:55:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.118 2007/02/21 23:00:14 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -107,7 +107,7 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * XXX disabled until we can find a way to do this without causing
  * problems for either CPU caches or DMA latency.
  */
-boolean_t vm_page_zero_enable = FALSE;
+bool vm_page_zero_enable = FALSE;
 
 /*
  * local variables
@@ -138,7 +138,7 @@ static struct pglist uvm_bootbucket;
  * uvm_pageboot_alloc().
  */
 
-static boolean_t have_recolored_pages /* = FALSE */;
+static bool have_recolored_pages /* = FALSE */;
 
 MALLOC_DEFINE(M_VMPAGE, "VM page", "VM page");
 
@@ -468,7 +468,7 @@ uvm_setpagesize(void)
 vaddr_t
 uvm_pageboot_alloc(vsize_t size)
 {
-	static boolean_t initialized = FALSE;
+	static bool initialized = FALSE;
 	vaddr_t addr;
 #if !defined(PMAP_STEAL_MEMORY)
 	vaddr_t vaddr;
@@ -562,9 +562,9 @@ uvm_pageboot_alloc(vsize_t size)
  */
 
 /* subroutine: try to allocate from memory chunks on the specified freelist */
-static boolean_t uvm_page_physget_freelist(paddr_t *, int);
+static bool uvm_page_physget_freelist(paddr_t *, int);
 
-static boolean_t
+static bool
 uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 {
 	int lcv, x;
@@ -654,7 +654,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 	return (FALSE);        /* whoops! */
 }
 
-boolean_t
+bool
 uvm_page_physget(paddr_t *paddrp)
 {
 	int i;
@@ -1034,7 +1034,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 {
 	int lcv, try1, try2, s, zeroit = 0, color;
 	struct vm_page *pg;
-	boolean_t use_reserve;
+	bool use_reserve;
 
 	KASSERT(obj == NULL || anon == NULL);
 	KASSERT(anon == NULL || off == 0);
@@ -1289,7 +1289,7 @@ uvm_pagefree(struct vm_page *pg)
 {
 	int s;
 	struct pglist *pgfl;
-	boolean_t iszero;
+	bool iszero;
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
 	LOCK_ASSERT(simple_lock_held(&uvm.pageqlock) ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.6 2007/01/19 15:52:24 skrll Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.7 2007/02/21 23:00:14 thorpej Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.6 2007/01/19 15:52:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.7 2007/02/21 23:00:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -110,8 +110,8 @@ struct uvmpdpol_globalstate {
 };
 
 struct uvmpdpol_scanstate {
-	boolean_t ss_first;
-	boolean_t ss_anonreact, ss_filereact, ss_execreact;
+	bool ss_first;
+	bool ss_anonreact, ss_filereact, ss_execreact;
 	struct vm_page *ss_nextpg;
 };
 
@@ -140,9 +140,9 @@ uvmpdpol_scaninit(void)
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
 	int t;
-	boolean_t anonunder, fileunder, execunder;
-	boolean_t anonover, fileover, execover;
-	boolean_t anonreact, filereact, execreact;
+	bool anonunder, fileunder, execunder;
+	bool anonover, fileover, execover;
+	bool anonreact, filereact, execreact;
 
 	/*
 	 * decide which types of pages we want to reactivate instead of freeing
@@ -343,7 +343,7 @@ uvmpdpol_anfree(struct vm_anon *an)
 {
 }
 
-boolean_t
+bool
 uvmpdpol_pageisqueued_p(struct vm_page *pg)
 {
 
@@ -406,7 +406,7 @@ uvmpdpol_reinit(void)
 {
 }
 
-boolean_t
+bool
 uvmpdpol_needsscan_p(void)
 {
 

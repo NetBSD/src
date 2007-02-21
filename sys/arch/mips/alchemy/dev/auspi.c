@@ -1,4 +1,4 @@
-/* $NetBSD: auspi.c,v 1.1 2006/10/02 08:00:07 gdamore Exp $ */
+/* $NetBSD: auspi.c,v 1.2 2007/02/21 22:59:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.1 2006/10/02 08:00:07 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auspi.c,v 1.2 2007/02/21 22:59:47 thorpej Exp $");
 
 #include "locators.h"
 
@@ -77,7 +77,7 @@ struct auspi_softc {
 	void			*sc_ih;		/* interrupt handler */
 
 	struct spi_transfer	*sc_transfer;
-	boolean_t		sc_running;	/* is it processing stuff? */
+	bool			sc_running;	/* is it processing stuff? */
 
 	SIMPLEQ_HEAD(,spi_transfer)	sc_q;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2006/09/09 22:33:13 gdamore Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2007/02/21 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2006/09/09 22:33:13 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2007/02/21 22:59:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -2317,12 +2317,12 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pvo_entry *pvo;
 	int s, idx;
-	boolean_t found = FALSE;
+	bool found = FALSE;
 
 	PMPRINTF(("pmap_extract: %s: va 0x%lx - ", PMSTR(pm), va));
 
@@ -2629,7 +2629,7 @@ pmap_deactivate(struct lwp *p)
 {
 }
 
-boolean_t
+bool
 pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 {
 	struct pvo_entry *pvo;
@@ -2711,7 +2711,7 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 	return (FALSE);
 }
 
-boolean_t
+bool
 pmap_clear_bit(struct vm_page *pg, ptel_t ptebit)
 {
 	struct pvo_entry *pvo;

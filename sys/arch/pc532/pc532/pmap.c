@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2006/05/15 12:47:42 dogcow Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2007/02/21 22:59:49 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2006/05/15 12:47:42 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2007/02/21 22:59:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,8 +280,8 @@ paddr_t avail_end;	/* PA of last available physical page */
  * other data structures
  */
 
-static pt_entry_t protection_codes[8];     /* maps MI prot to ns532 prot code */
-static boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
+static pt_entry_t protection_codes[8];	/* maps MI prot to ns532 prot code */
+static bool pmap_initialized = FALSE;	/* pmap_init done yet? */
 
 /*
  * the following two vaddr_t's are used during system startup
@@ -343,7 +343,7 @@ extern paddr_t msgbuf_paddr;
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
+static struct pv_entry	*pmap_add_pvpage(struct pv_page *, bool);
 static struct vm_page	*pmap_alloc_ptp(struct pmap *, int);
 static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
@@ -357,12 +357,12 @@ static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
 static void		 pmap_free_pv_doit(struct pv_entry *);
 static void		 pmap_free_pvpage(void);
 static struct vm_page	*pmap_get_ptp(struct pmap *, int);
-static boolean_t	 pmap_is_curpmap(struct pmap *);
+static bool		 pmap_is_curpmap(struct pmap *);
 static pt_entry_t	*pmap_map_ptes(struct pmap *);
 static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 			    vaddr_t);
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
-static boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *,
+static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 			    pt_entry_t *, vaddr_t, int);
 static void		 pmap_remove_ptes(struct pmap *,
 			    struct pmap_remove_record *, struct vm_page *,
@@ -380,7 +380,7 @@ static void		 pmap_unmap_ptes(struct pmap *);
  *		of course the kernel is always loaded
  */
 
-inline static boolean_t
+inline static bool
 pmap_is_curpmap(struct pmap *pmap)
 {
 	paddr_t ptb;
@@ -888,7 +888,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
  */
 
 static struct pv_entry *
-pmap_add_pvpage(struct pv_page *pvp, boolean_t need_entry)
+pmap_add_pvpage(struct pv_page *pvp, bool need_entry)
 {
 	int tofree, lcv;
 
@@ -1358,7 +1358,7 @@ pmap_deactivate(struct lwp *l)
  * pmap_extract: extract a PA for the given VA
  */
 
-boolean_t
+bool
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
@@ -1449,10 +1449,10 @@ pmap_zero_page(paddr_t pa)
  * reason.
  */
 
-boolean_t
+bool
 pmap_zero_page_uncached(paddr_t pa)
 {
-	boolean_t rv = TRUE;
+	bool rv = TRUE;
 	int i, *ptr;
 
 	simple_lock(&pmap_zero_page_lock);
@@ -1614,7 +1614,7 @@ pmap_remove_ptes(struct pmap *pmap, struct pmap_remove_record *pmap_rr,
  * => returns true if we removed a mapping
  */
 
-static boolean_t
+static bool
 pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
     vaddr_t va, int flags)
 {
@@ -1696,7 +1696,7 @@ static void
 pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 {
 	pt_entry_t *ptes;
-	boolean_t result;
+	bool result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
 	struct vm_page *ptp;
@@ -1969,7 +1969,7 @@ pmap_page_remove(struct vm_page *pg)
  * => we set pv_head => pmap locking
  */
 
-boolean_t
+bool
 pmap_test_attrs(struct vm_page *pg, int testbits)
 {
 	int bank, off;
@@ -2030,7 +2030,7 @@ pmap_test_attrs(struct vm_page *pg, int testbits)
  * => we return TRUE if we cleared one of the bits we were asked to
  */
 
-boolean_t
+bool
 pmap_change_attrs(struct vm_page *pg, int setbits, int clearbits)
 {
 	uint32_t result;
@@ -2293,7 +2293,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct pv_entry *pve;
 	int bank, off, error;
 	int ptpdelta, wireddelta, resdelta;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	bool wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
 	/* sanity check: totally out of range? */

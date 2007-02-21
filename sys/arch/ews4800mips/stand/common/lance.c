@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: lance.c,v 1.2 2007/02/21 22:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -64,24 +64,24 @@ struct {
 	uint8_t rxdata[RX_BUFSIZE] __attribute__((__aligned__(0x1000)));
 } lance_mem __attribute__((__aligned__(64)));
 
-boolean_t lance_init(void);
+bool lance_init(void);
 void lance_eaddr(uint8_t *);
-boolean_t lance_get(void *, size_t);
-boolean_t lance_put(void *, size_t);
+bool lance_get(void *, size_t);
+bool lance_put(void *, size_t);
 
 void lance_setup(void);
-boolean_t lance_set_initblock(struct leinit *);
-boolean_t lacne_do_initialize(void);
+bool lance_set_initblock(struct leinit *);
+bool lacne_do_initialize(void);
 
-boolean_t lance_test(void);
-boolean_t lance_internal_loopback_test(boolean_t);
-void lance_internal_loopback_setup(boolean_t);
+bool lance_test(void);
+bool lance_internal_loopback_test(bool);
+void lance_internal_loopback_setup(bool);
 void lance_internal_loopback_testdata(void);
-boolean_t lance_internal_loopback_data_check(boolean_t);
-boolean_t __poll_interrupt(void);
-boolean_t __poll_lance_c0(uint16_t);
+bool lance_internal_loopback_data_check(bool);
+bool __poll_interrupt(void);
+bool __poll_lance_c0(uint16_t);
 
-boolean_t
+bool
 lance_init(void)
 {
 
@@ -107,7 +107,7 @@ lance_eaddr(uint8_t *p)
 		p[i] = lance_mem.eaddr[i];
 }
 
-boolean_t
+bool
 lance_get(void *data, size_t len)
 {
 	static int current;
@@ -154,7 +154,7 @@ lance_get(void *data, size_t len)
 	return TRUE;
 }
 
-boolean_t
+bool
 lance_put(void *data, size_t len)
 {
 	static int current;
@@ -222,7 +222,7 @@ lance_put(void *data, size_t len)
 	return TRUE;
 }
 
-boolean_t
+bool
 lance_set_initblock(struct leinit *leinit)
 {
 	uint16_t test_data[] = { 0xffff, 0xaaaa, 0x5555, 0x0000 };
@@ -286,7 +286,7 @@ lance_set_initblock(struct leinit *leinit)
 	return FALSE;
 }
 
-boolean_t
+bool
 lacne_do_initialize(void)
 {
 
@@ -363,7 +363,7 @@ lance_setup(void)
 /*
  * Internal loopback test.
  */
-boolean_t
+bool
 lance_test(void)
 {
 
@@ -378,8 +378,8 @@ lance_test(void)
 	return TRUE;
 }
 
-boolean_t
-lance_internal_loopback_test(boolean_t crc)
+bool
+lance_internal_loopback_test(bool crc)
 {
 
 	lance_internal_loopback_setup(crc);
@@ -399,7 +399,7 @@ lance_internal_loopback_test(boolean_t crc)
 }
 
 void
-lance_internal_loopback_setup(boolean_t crc)
+lance_internal_loopback_setup(bool crc)
 {
 	struct leinit *init = &lance_mem.leinit;
 	struct lermd *lermd = lance_mem.lermd;
@@ -487,8 +487,8 @@ lance_internal_loopback_testdata(void)
 	}
 }
 
-boolean_t
-lance_internal_loopback_data_check(boolean_t crc_check)
+bool
+lance_internal_loopback_data_check(bool crc_check)
 {
 	uint32_t *p = (uint32_t *)lance_mem.txdata;
 	uint32_t *q = (uint32_t *)lance_mem.rxdata;
@@ -550,7 +550,7 @@ lance_internal_loopback_data_check(boolean_t crc_check)
 	return FALSE;
 }
 
-boolean_t
+bool
 __poll_interrupt(void)
 {
 	int j;
@@ -568,7 +568,7 @@ __poll_interrupt(void)
 	return TRUE;
 }
 
-boolean_t
+bool
 __poll_lance_c0(uint16_t r)
 {
 	int j;

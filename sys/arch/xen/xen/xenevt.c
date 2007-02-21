@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.11 2006/09/10 14:34:11 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.12 2007/02/21 22:59:55 thorpej Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -111,7 +111,7 @@ typedef uint16_t evtchn_port_t;
 struct xenevt_d {
 	struct simplelock lock;
 	STAILQ_ENTRY(xenevt_d) pendingq;
-	boolean_t pending;
+	bool pending;
 	evtchn_port_t ring[2048]; 
 	u_int ring_read; /* pointer of the reader */
 	u_int ring_write; /* pointer of the writer */

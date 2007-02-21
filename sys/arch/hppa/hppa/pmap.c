@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2007/02/19 13:19:20 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2007/02/21 22:59:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2007/02/19 13:19:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2007/02/21 22:59:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ static u_int *page_aliased_bitmap;
 
 struct pmap	kernel_pmap_store;
 pmap_t		kernel_pmap;
-boolean_t	pmap_initialized = FALSE;
+bool		pmap_initialized = FALSE;
 
 TAILQ_HEAD(, pmap)	pmap_freelist;	/* list of free pmaps */
 u_int pmap_nfree;
@@ -316,8 +316,8 @@ static inline void _pmap_pv_update(paddr_t, struct pv_entry *, u_int, u_int);
 static inline struct pv_entry *pmap_pv_enter(pmap_t, pa_space_t, vaddr_t,
     paddr_t, u_int);
 static void pmap_pinit(pmap_t);
-static inline boolean_t pmap_clear_bit(paddr_t, u_int);
-static inline boolean_t pmap_test_bit(paddr_t, u_int);
+static inline bool pmap_clear_bit(paddr_t, u_int);
+static inline bool pmap_test_bit(paddr_t, u_int);
 
 /*
  * Given a directly-mapped region, this makes pv_entries out of it and
@@ -1362,8 +1362,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct pv_entry *pv;
 	u_int tlbpage, tlbprot;
 	pa_space_t space;
-	boolean_t waswired;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	bool waswired;
+	bool wired = (flags & PMAP_WIRED) != 0;
 	int s;
 
 	/* Get a handle on the mapping we want to enter. */
@@ -1636,7 +1636,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  *	storage pointed to by pap and returns TRUE if the
  *	virtual address is mapped. returns FALSE in not mapped.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	struct pv_entry *pv;
@@ -1727,13 +1727,13 @@ pmap_copy_page(paddr_t spa, paddr_t dpa)
  * Given a PA and a bit, this tests and clears that bit in 
  * the modref information for the PA.
  */
-static inline boolean_t
+static inline bool
 pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
 {
 	int table_off;
 	struct pv_head *hpv;
 	u_int pv_head_bit;
-	boolean_t ret;
+	bool ret;
 	int s;
 
 	table_off = pmap_table_find_pa(pa);
@@ -1752,14 +1752,14 @@ pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
  * Given a PA and a bit, this tests that bit in the modref
  * information for the PA.
  */
-static inline boolean_t
+static inline bool
 pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 {
 	int table_off;
 	struct pv_head *hpv;
 	u_int pv_head_bit;
 	struct pv_entry *pv;
-	boolean_t ret;
+	bool ret;
 	int s;
 
 	table_off = pmap_table_find_pa(pa);
@@ -1791,11 +1791,11 @@ pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
  *	physical address.  phys must be aligned on a machine
  *	independent page boundary.
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t ret = pmap_clear_bit(pa, TLB_DIRTY);
+	bool ret = pmap_clear_bit(pa, TLB_DIRTY);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
 }
@@ -1805,11 +1805,11 @@ pmap_clear_modify(struct vm_page *pg)
  *	returns TRUE if the given physical page has been modified
  *	since the last call to pmap_clear_modify().
  */
-boolean_t
+bool
 pmap_is_modified(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t ret = pmap_test_bit(pa, TLB_DIRTY);
+	bool ret = pmap_test_bit(pa, TLB_DIRTY);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
 }
@@ -1822,11 +1822,11 @@ pmap_is_modified(struct vm_page *pg)
  *	Currently, we treat a TLB miss as a reference; i.e. to clear
  *	the reference bit we flush all mappings for pa from the TLBs.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t ret = pmap_clear_bit(pa, TLB_REF);
+	bool ret = pmap_clear_bit(pa, TLB_REF);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
 }
@@ -1836,11 +1836,11 @@ pmap_clear_reference(struct vm_page *pg)
  *	returns TRUE if the given physical page has been referenced
  *	since the last call to pmap_clear_reference().
  */
-boolean_t
+bool
 pmap_is_referenced(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t ret = pmap_test_bit(pa, TLB_REF);
+	bool ret = pmap_test_bit(pa, TLB_REF);
 	PMAP_PRINTF(PDB_BITS, ("(%p) = %d\n", (caddr_t)pa, ret));
 	return ret;
 }

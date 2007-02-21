@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.118 2007/02/19 01:35:20 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.119 2007/02/21 23:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.118 2007/02/19 01:35:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.119 2007/02/21 23:00:15 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -352,7 +352,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
  * => we return the swapdev we found (and removed)
  */
 static struct swapdev *
-swaplist_find(struct vnode *vp, boolean_t remove)
+swaplist_find(struct vnode *vp, bool remove)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
@@ -1439,7 +1439,7 @@ sw_reg_iodone(struct buf *bp)
  * => XXXMRG: "LESSOK" INTERFACE NEEDED TO EXTENT SYSTEM
  */
 int
-uvm_swap_alloc(int *nslots /* IN/OUT */, boolean_t lessok)
+uvm_swap_alloc(int *nslots /* IN/OUT */, bool lessok)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
@@ -1500,10 +1500,10 @@ ReTry:	/* XXXMRG */
 	return 0;
 }
 
-boolean_t
+bool
 uvm_swapisfull(void)
 {
-	boolean_t rv;
+	bool rv;
 
 	simple_lock(&uvm.swap_data_lock);
 	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
@@ -1642,7 +1642,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	struct	buf *bp;
 	vaddr_t kva;
 	int	error, s, mapinflags;
-	boolean_t write, async;
+	bool write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "<- called, startslot=%d, npages=%d, flags=%d",

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.h,v 1.11 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_access.h,v 1.12 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -32,7 +32,7 @@
 /*
  * Data access functions for debugger.
  */
-db_expr_t	db_get_value(db_addr_t, size_t, boolean_t);
+db_expr_t	db_get_value(db_addr_t, size_t, bool);
 void		db_put_value(db_addr_t, size_t, db_expr_t);
 
 void		db_read_bytes(db_addr_t, size_t, char *);
