@@ -1,4 +1,4 @@
-.\" $NetBSD: ubsa.4,v 1.4 2004/09/16 09:44:46 wiz Exp $
+.\" $NetBSD: ubsa.4,v 1.4.12.1 2007/02/21 13:22:54 tron Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,12 +54,16 @@ driver supports the following adapters:
 .It e-Tek Labs Kwik232
 .It GoHubs GoCOM232
 .It Peracom single port serial adapter
+.It Option N.V. Mobile Connect 3G datacard
+.It Option N.V. GlobeTrotter Fusion Quad Lite UMTS/GPRS
+.It Option N.V. GlobeTrotter Fusion Quad Lite 3D
 .El
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the USB-to-RS-232 Bridge chip used by a variety of
-serial adapters from Belkin and other vendors.
+serial adapters from Belkin and other vendors. The bridge is also embedded
+into several UMTS/GPRS cards.
 .Pp
 The device is accessed through the
 .Xr ucom 4
