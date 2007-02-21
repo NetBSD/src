@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.17 2006/01/21 01:11:43 uwe Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.18 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _DDB_DB_INTERFACE_H_
 
 /* arch/<arch>/<arch>/db_disasm.c */
-db_addr_t	db_disasm(db_addr_t, boolean_t);
+db_addr_t	db_disasm(db_addr_t, bool);
 
 /* arch/<arch>/<arch>/db_trace.c */
 /* arch/vax/vax/db_machdep.c */

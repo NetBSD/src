@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.101 2007/02/19 01:35:20 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.102 2007/02/21 23:00:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.101 2007/02/19 01:35:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.102 2007/02/21 23:00:13 thorpej Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -113,10 +113,10 @@ static void uvm_uarea_free(vaddr_t);
  * - used only by /dev/kmem driver (mem.c)
  */
 
-boolean_t
+bool
 uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
-	boolean_t rv;
+	bool rv;
 	vaddr_t saddr, eaddr;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
@@ -204,7 +204,7 @@ uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
  * - the address space is copied as per parent map's inherit values
  */
 void
-uvm_proc_fork(struct proc *p1, struct proc *p2, boolean_t shared)
+uvm_proc_fork(struct proc *p1, struct proc *p2, bool shared)
 {
 
 	if (shared == TRUE) {
@@ -283,7 +283,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
  * uvm_uarea_alloc: allocate a u-area
  */
 
-boolean_t
+bool
 uvm_uarea_alloc(vaddr_t *uaddrp)
 {
 	vaddr_t uaddr;
@@ -328,7 +328,7 @@ uvm_uarea_free(vaddr_t uaddr)
  */
 
 void
-uvm_uarea_drain(boolean_t empty)
+uvm_uarea_drain(bool empty)
 {
 	int leave = empty ? 0 : UVM_NUAREA_MAX;
 	vaddr_t uaddr;

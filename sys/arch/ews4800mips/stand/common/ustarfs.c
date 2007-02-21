@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.3 2006/08/26 14:13:40 tsutsui Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.4 2007/02/21 22:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,9 +46,9 @@
 #include "local.h"
 #include "common.h"
 
-boolean_t __ustarfs_file(int, char *, size_t *);
-boolean_t __block_read(uint8_t *, int);
-boolean_t __block_read_n(uint8_t *, int, int);
+bool __ustarfs_file(int, char *, size_t *);
+bool __block_read(uint8_t *, int);
+bool __block_read_n(uint8_t *, int, int);
 void __change_volume(int);
 
 enum { USTAR_BLOCK_SIZE = 8192 };/* Check src/distrib/common/buildfloppies.sh */
@@ -58,7 +58,7 @@ struct volume {
 	int block_offset;
 } __volume;
 
-boolean_t
+bool
 ustarfs_load(const char *file, void **addrp, size_t *sizep)
 {
 	char fname[16];
@@ -113,7 +113,7 @@ ustarfs_load(const char *file, void **addrp, size_t *sizep)
 	return TRUE;
 }
 
-boolean_t
+bool
 __ustarfs_file(int start_block, char *file, size_t *size)
 {
 	uint8_t buf[512];
@@ -132,7 +132,7 @@ __ustarfs_file(int start_block, char *file, size_t *size)
 	return TRUE;
 }
 
-boolean_t
+bool
 __block_read_n(uint8_t *buf, int blk, int count)
 {
 	int i;
@@ -144,7 +144,7 @@ __block_read_n(uint8_t *buf, int blk, int count)
 	return TRUE;
 }
 
-boolean_t
+bool
 __block_read(uint8_t *buf, int blk)
 {
 	int vol;

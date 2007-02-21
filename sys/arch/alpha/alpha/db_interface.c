@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.22 2005/12/24 20:06:46 perry Exp $ */
+/* $NetBSD: db_interface.c,v 1.23 2007/02/21 22:59:36 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.22 2005/12/24 20:06:46 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23 2007/02/21 22:59:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -375,7 +375,7 @@ db_register_value(regs, regno)
  * Support functions for software single-step.
  */
 
-boolean_t
+bool
 db_inst_call(ins)
 	int ins;
 {
@@ -387,7 +387,7 @@ db_inst_call(ins)
 	     (insn.jump_format.action & 1)));
 }
 
-boolean_t
+bool
 db_inst_return(ins)
 	int ins;
 {
@@ -398,7 +398,7 @@ db_inst_return(ins)
 	    (insn.jump_format.action == op_ret));
 }
 
-boolean_t
+bool
 db_inst_trap_return(ins)
 	int ins;
 {
@@ -409,7 +409,7 @@ db_inst_trap_return(ins)
 	    (insn.pal_format.function == PAL_OSF1_rti));
 }
 
-boolean_t
+bool
 db_inst_branch(ins)
 	int ins;
 {
@@ -439,7 +439,7 @@ db_inst_branch(ins)
 	return (FALSE);
 }
 
-boolean_t
+bool
 db_inst_unconditional_flow_transfer(ins)
 	int ins;
 {
@@ -464,7 +464,7 @@ db_inst_unconditional_flow_transfer(ins)
 }
 
 #if 0
-boolean_t
+bool
 db_inst_spill(ins, regn)
 	int ins, regn;
 {
@@ -476,7 +476,7 @@ db_inst_spill(ins, regn)
 }
 #endif
 
-boolean_t
+bool
 db_inst_load(ins)
 	int ins;
 {
@@ -507,7 +507,7 @@ db_inst_load(ins)
 	return (FALSE);
 }
 
-boolean_t
+bool
 db_inst_store(ins)
 	int ins;
 {

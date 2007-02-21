@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.14 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.15 2007/02/21 23:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -45,10 +45,10 @@ struct swapent;
 #if defined(VMSWAP)
 int	uvm_swap_get(struct vm_page *, int, int);
 int	uvm_swap_put(int, struct vm_page **, int, int);
-int	uvm_swap_alloc(int *, boolean_t);
+int	uvm_swap_alloc(int *, bool);
 void	uvm_swap_free(int, int);
 void	uvm_swap_markbad(int, int);
-boolean_t	uvm_swapisfull(void);
+bool	uvm_swapisfull(void);
 #else /* defined(VMSWAP) */
 #define	uvm_swapisfull()	TRUE
 #endif /* defined(VMSWAP) */

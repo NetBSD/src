@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2007/02/21 22:59:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct cmd_batch_tab cmd_batch_tab[] = {
 struct ipl_args ipl_args;
 struct device_capability DEVICE_CAPABILITY;
 void set_device_capability(void);
-boolean_t guess_boot_kernel(char *, size_t, int);
+bool guess_boot_kernel(char *, size_t, int);
 extern int kernel_binary_size;
 
 void
@@ -127,7 +127,7 @@ main(int a0, int v0, int v1)
 	/* NOTREACHED */
 }
 
-boolean_t
+bool
 guess_boot_kernel(char *name, size_t len, int pri)
 {
 	extern struct vtoc_sector vtoc;

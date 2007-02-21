@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.147 2007/02/15 16:01:51 yamt Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.148 2007/02/21 23:00:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.147 2007/02/15 16:01:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.148 2007/02/21 23:00:08 thorpej Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -517,7 +517,7 @@ nfs_write(v)
 
 	origoff = uio->uio_offset;
 	do {
-		boolean_t extending; /* if we are extending whole pages */
+		bool extending; /* if we are extending whole pages */
 		u_quad_t oldsize;
 		oldoff = uio->uio_offset;
 		bytelen = uio->uio_resid;
@@ -944,15 +944,15 @@ nfs_doio_write(bp, uiop)
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int iomode;
-	boolean_t stalewriteverf = FALSE;
+	bool stalewriteverf = FALSE;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
 	struct vm_page *pgs[npages];
 #ifndef NFS_V2_ONLY
-	boolean_t needcommit = TRUE; /* need only COMMIT RPC */
+	bool needcommit = TRUE; /* need only COMMIT RPC */
 #else
-	boolean_t needcommit = FALSE; /* need only COMMIT RPC */
+	bool needcommit = FALSE; /* need only COMMIT RPC */
 #endif
-	boolean_t pageprotected;
+	bool pageprotected;
 	struct uvm_object *uobj = &vp->v_uobj;
 	int error;
 	off_t off, cnt;
@@ -1031,7 +1031,7 @@ again:
 		cnt = bp->b_bcount;
 		mutex_enter(&np->n_commitlock);
 		if (!nfs_in_committed_range(vp, off, bp->b_bcount)) {
-			boolean_t pushedrange;
+			bool pushedrange;
 			if (nfs_in_tobecommitted_range(vp, off, bp->b_bcount)) {
 				pushedrange = TRUE;
 				off = np->n_pushlo;
@@ -1163,7 +1163,7 @@ nfs_doio_phys(bp, uiop)
 		error = nfs_readrpc(vp, uiop);
 	} else {
 		int iomode = NFSV3WRITE_DATASYNC;
-		boolean_t stalewriteverf;
+		bool stalewriteverf;
 		struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
 		uiop->uio_rw = UIO_WRITE;
@@ -1247,9 +1247,9 @@ nfs_getpages(v)
 	struct vm_page *pg, **pgs, *opgs[npages];
 	off_t origoffset, len;
 	int i, error;
-	boolean_t v3 = NFS_ISV3(vp);
-	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
-	boolean_t locked = (ap->a_flags & PGO_LOCKED) != 0;
+	bool v3 = NFS_ISV3(vp);
+	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	bool locked = (ap->a_flags & PGO_LOCKED) != 0;
 
 	/*
 	 * call the genfs code to get the pages.  `pgs' may be NULL

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_optstr.c,v 1.2 2006/11/04 11:37:12 jmmv Exp $	*/
+/*	$NetBSD: subr_optstr.c,v 1.3 2007/02/21 23:00:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.2 2006/11/04 11:37:12 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.3 2007/02/21 23:00:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/optstr.h>
@@ -50,10 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.2 2006/11/04 11:37:12 jmmv Exp $")
  * with a maximum of bufsize bytes.  If the key is found, returns TRUE;
  * otherwise FALSE.
  */
-boolean_t
+bool
 optstr_get(const char *optstr, const char *key, char *buf, size_t bufsize)
 {
-	boolean_t found;
+	bool found;
 
 	found = FALSE;
 

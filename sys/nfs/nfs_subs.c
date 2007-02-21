@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.180 2007/02/15 16:01:51 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.181 2007/02/21 23:00:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.180 2007/02/15 16:01:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.181 2007/02/21 23:00:09 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1452,7 +1452,7 @@ nfs_invaldircache(vp, flags)
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdircache *ndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	const boolean_t forcefree = flags & NFS_INVALDIRCACHE_FORCE;
+	const bool forcefree = flags & NFS_INVALDIRCACHE_FORCE;
 
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VDIR)
@@ -1869,7 +1869,7 @@ nfs_delayedtruncate(vp)
 
 int
 nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
-    struct timespec *mtime, boolean_t docheck)
+    struct timespec *mtime, bool docheck)
 {
 	int error = 0;
 
@@ -2934,7 +2934,7 @@ nfs_renewxid(struct nfsreq *req)
 
 #if defined(NFSSERVER)
 int
-nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, boolean_t v3)
+nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, bool v3)
 {
 	int error;
 	size_t fhsize;

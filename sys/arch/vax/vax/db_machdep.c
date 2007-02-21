@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.42 2007/02/17 22:47:42 dsl Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.43 2007/02/21 22:59:55 thorpej Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.42 2007/02/17 22:47:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.43 2007/02/21 22:59:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -414,7 +414,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;		/* Address parameter */
-	boolean_t	have_addr;	/* True if addr is valid */
+	bool		have_addr;	/* True if addr is valid */
 	db_expr_t	count;		/* Optional count */
 	const char	*modif;		/* pointer to flag modifier 't' */
 	void		(*pr) __P((const char *, ...)); /* Print function */

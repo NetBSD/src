@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.92 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.93 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.92 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.93 2007/02/21 22:59:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.92 2007/02/09 21:55:26 ad Exp $");
 /*
  * Exported global variables
  */
-boolean_t	db_cmd_loop_done;
+bool		db_cmd_loop_done;
 label_t		*db_recover;
 db_addr_t	db_dot;
 db_addr_t	db_last_addr;
@@ -100,7 +100,7 @@ db_addr_t	db_next;
  * and '+' points to next line.
  * Otherwise: 'dot' points to next item, '..' points to last.
  */
-static boolean_t db_ed_style = TRUE;
+static bool	 db_ed_style = TRUE;
 
 static void	db_buf_print_cmd(db_expr_t, int, db_expr_t, const char *);
 static void	db_cmd_list(const struct db_command *);
@@ -395,7 +395,7 @@ db_command(const struct db_command **last_cmdp,
 	int		t;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
-	boolean_t	have_addr = FALSE;
+	bool		have_addr = FALSE;
 	int		result;
 	static db_expr_t last_count = 0;
 
@@ -534,7 +534,7 @@ static void
 db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     const char *modif)
 {
-	boolean_t full = FALSE;
+	bool full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;
@@ -566,7 +566,7 @@ static void
 db_object_print_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t full = FALSE;
+	bool full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;
@@ -580,7 +580,7 @@ static void
 db_page_print_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t full = FALSE;
+	bool full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;
@@ -602,7 +602,7 @@ static void
 db_buf_print_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t full = FALSE;
+	bool full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;
@@ -615,7 +615,7 @@ static void
 db_event_print_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t full = FALSE;
+	bool full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;
@@ -628,7 +628,7 @@ static void
 db_vnode_print_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t full = FALSE;
+	bool full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;
@@ -640,7 +640,7 @@ static void
 db_mount_print_cmd(db_expr_t addr, int have_addr,
     db_expr_t count, const char *modif)
 {
-	boolean_t full = FALSE;
+	bool full = FALSE;
 
 	if (modif[0] == 'f')
 		full = TRUE;

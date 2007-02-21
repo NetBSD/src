@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.13 2007/02/06 01:09:48 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.14 2007/02/21 23:00:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -274,14 +274,14 @@ pax_segvguard_cb(void *v)
  */
 int
 pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
-    boolean_t crashed)
+    bool crashed)
 {
 	struct pax_segvguard_entry *p;
 	struct pax_segvguard_uid_entry *up;
 	struct timeval tv;
 	uid_t uid;
 	void *t;
-	boolean_t have_uid;
+	bool have_uid;
 
 	if (!pax_segvguard_enabled)
 		return (0);

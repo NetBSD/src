@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.7 2007/01/04 15:42:37 elad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.8 2007/02/21 23:00:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.7 2007/01/04 15:42:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.8 2007/02/21 23:00:03 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data,
 	struct sysvbfs_mount *bmp = NULL;
 	struct vnode *devvp = NULL;
 	int error;
-	boolean_t update;
+	bool update;
 
 	DPRINTF("%s: mnt_flag=%x\n", __FUNCTION__, mp->mnt_flag);
 

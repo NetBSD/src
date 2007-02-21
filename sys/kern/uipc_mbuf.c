@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.116 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.117 2007/02/21 23:00:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.116 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.117 2007/02/21 23:00:05 thorpej Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -347,7 +347,7 @@ SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 static void *
 mclpool_alloc(struct pool *pp, int flags)
 {
-	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+	bool waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
 	return ((void *)uvm_km_alloc_poolpage(mb_map, waitok));
 }
@@ -1425,7 +1425,7 @@ void
 m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 {
 	char ch;
-	boolean_t opt_c = FALSE;
+	bool opt_c = FALSE;
 	char buf[512];
 
 	while ((ch = *(modif++)) != '\0') {

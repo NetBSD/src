@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158 2007/01/06 00:40:47 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.159 2007/02/21 22:59:38 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2007/01/06 00:40:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2007/02/21 22:59:38 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -312,7 +312,7 @@ extern caddr_t msgbufaddr;
 /*
  * Flag to indicate if pmap_init() has done its thing
  */
-boolean_t pmap_initialized;
+bool pmap_initialized;
 
 /*
  * Misc. locking data structures
@@ -484,8 +484,8 @@ struct pv_entry {
 static int		pmap_set_pt_cache_mode(pd_entry_t *, vaddr_t);
 static void		pmap_alloc_specials(vaddr_t *, int, vaddr_t *,
 			    pt_entry_t **);
-static boolean_t	pmap_is_current(pmap_t);
-static boolean_t	pmap_is_cached(pmap_t);
+static bool		pmap_is_current(pmap_t);
+static bool		pmap_is_cached(pmap_t);
 static void		pmap_enter_pv(struct vm_page *, struct pv_entry *,
 			    pmap_t, vaddr_t, u_int);
 static struct pv_entry *pmap_find_pv(struct vm_page *, pmap_t, vaddr_t);
@@ -511,7 +511,7 @@ static void		pmap_vac_me_kpmap(struct vm_page *, pmap_t, vaddr_t);
 static void		pmap_vac_me_user(struct vm_page *, pmap_t, vaddr_t);
 
 static void		pmap_clearbit(struct vm_page *, u_int);
-static int		pmap_clean_page(struct pv_entry *, boolean_t);
+static int		pmap_clean_page(struct pv_entry *, bool);
 static void		pmap_page_remove(struct vm_page *);
 
 static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
@@ -598,7 +598,7 @@ pmap_idcache_wbinv_range(pmap_t pm, vaddr_t va, vsize_t len)
 
 static inline void
 pmap_dcache_wb_range(pmap_t pm, vaddr_t va, vsize_t len,
-    boolean_t do_inv, boolean_t rd_only)
+    bool do_inv, bool rd_only)
 {
 
 	if (pm->pm_cstate.cs_cache_d) {
@@ -633,7 +633,7 @@ pmap_dcache_wbinv_all(pmap_t pm)
 	}
 }
 
-static inline boolean_t
+static inline bool
 pmap_is_current(pmap_t pm)
 {
 
@@ -644,7 +644,7 @@ pmap_is_current(pmap_t pm)
 	return (FALSE);
 }
 
-static inline boolean_t
+static inline bool
 pmap_is_cached(pmap_t pm)
 {
 
@@ -1000,7 +1000,7 @@ static inline void
 #ifndef PMAP_INCLUDE_PTE_SYNC
 pmap_free_l2_ptp(pt_entry_t *l2, paddr_t pa)
 #else
-pmap_free_l2_ptp(boolean_t need_sync, pt_entry_t *l2, paddr_t pa)
+pmap_free_l2_ptp(bool need_sync, pt_entry_t *l2, paddr_t pa)
 #endif
 {
 #ifdef PMAP_INCLUDE_PTE_SYNC
@@ -1722,7 +1722,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
  * it will just result in not the most efficient clean for the page.
  */
 static int
-pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
+pmap_clean_page(struct pv_entry *pv, bool is_src)
 {
 	pmap_t pm, pm_to_clean = NULL;
 	struct pv_entry *npv;
@@ -1803,7 +1803,7 @@ pmap_page_remove(struct vm_page *pg)
 	struct pv_entry *pv, *npv;
 	pmap_t pm, curpm;
 	pt_entry_t *ptep, pte;
-	boolean_t flush;
+	bool flush;
 	u_int flags;
 
 	NPDEBUG(PDB_FOLLOW,
@@ -2173,7 +2173,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * identical, so there's no need to update the page table.
 	 */
 	if (npte != opte) {
-		boolean_t is_cached = pmap_is_cached(pm);
+		bool is_cached = pmap_is_cached(pm);
 
 		*ptep = npte;
 		if (is_cached) {
@@ -2515,7 +2515,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	cpu_cpwait();
 }
 
-boolean_t
+bool
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct l2_dtable *l2;
@@ -2702,10 +2702,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *
  *	Clear the "modified" attribute for a page.
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	boolean_t rv;
+	bool rv;
 
 	if (pg->mdpage.pvh_attrs & PVF_MOD) {
 		rv = TRUE;
@@ -2721,10 +2721,10 @@ pmap_clear_modify(struct vm_page *pg)
  *
  *	Clear the "referenced" attribute for a page.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	boolean_t rv;
+	bool rv;
 
 	if (pg->mdpage.pvh_attrs & PVF_REF) {
 		rv = TRUE;
@@ -3337,12 +3337,12 @@ pmap_zero_page_xscale(paddr_t phys)
  * mapped.  This means we never have to flush the cache first.  Called
  * from the idle loop.
  */
-boolean_t
+bool
 pmap_pageidlezero(paddr_t phys)
 {
 	unsigned int i;
 	int *ptr;
-	boolean_t rv = TRUE;
+	bool rv = TRUE;
 #ifdef DEBUG
 	struct vm_page *pg;
 	
@@ -3737,7 +3737,7 @@ pmap_set_pcb_pagedir(pmap_t pm, struct pcb *pcb)
  * NOTE: We can return a NULL *ptp in the case where the L1 pde is
  * a "section" mapping.
  */
-boolean_t
+bool
 pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 {
 	struct l2_dtable *l2;
@@ -3771,7 +3771,7 @@ pmap_get_pde_pte(pmap_t pm, vaddr_t va, pd_entry_t **pdp, pt_entry_t **ptp)
 	return (TRUE);
 }
 
-boolean_t
+bool
 pmap_get_pde(pmap_t pm, vaddr_t va, pd_entry_t **pdp)
 {
 	u_short l1idx;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.39 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.40 2007/02/21 22:59:56 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.39 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.40 2007/02/21 22:59:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,15 +43,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.39 2006/11/16 01:32:44 christos Exp $"
 
 #include <ddb/db_aout.h>
 
-static boolean_t db_aout_sym_init(int, void *, void *, const char *);
+static bool db_aout_sym_init(int, void *, void *, const char *);
 static db_sym_t	db_aout_lookup(db_symtab_t *, const char *);
 static db_sym_t	db_aout_search_symbol(db_symtab_t *, db_addr_t, db_strategy_t,
 		    db_expr_t *);
 static void	db_aout_symbol_values(db_symtab_t *, db_sym_t, const char **,
 		    db_expr_t *);
-static boolean_t db_aout_line_at_pc(db_symtab_t *, db_sym_t, char **, int *,
+static bool db_aout_line_at_pc(db_symtab_t *, db_sym_t, char **, int *,
 		    db_expr_t);
-static boolean_t db_aout_sym_numargs(db_symtab_t *, db_sym_t, int *, char **);
+static bool db_aout_sym_numargs(db_symtab_t *, db_sym_t, int *, char **);
 static void	db_aout_forall(db_symtab_t *, db_forall_func_t db_forall_func,
 		    void *);
 static int db_add_symbol_table(char *, char *, const char *, char *);
@@ -87,7 +87,7 @@ const db_symformat_t db_symformat_aout = {
 /*
  * Find the symbol table and strings; tell ddb about them.
  */
-static boolean_t
+static bool
 db_aout_sym_init(
 	int symsize,		/* size of symbol table */
 	void *vsymtab,		/* pointer to start of symbol table */
@@ -247,7 +247,7 @@ db_aout_symbol_values(db_symtab_t *symtab, db_sym_t sym,
 }
 
 
-static boolean_t
+static bool
 db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym,
     char **filename, int *linenum, db_expr_t off)
 {
@@ -309,7 +309,7 @@ db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym,
 	return (FALSE);
 }
 
-static boolean_t
+static bool
 db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
     char **argnamep)
 {

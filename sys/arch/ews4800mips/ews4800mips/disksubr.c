@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 2006/11/25 11:59:58 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.2 2006/11/25 11:59:58 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ readdisklabel(dev_t dev, void (*strategy)(struct buf *), struct disklabel *d,
 	uint8_t buf[DEV_BSIZE];
 	struct pdinfo_sector *pdinfo = &ux->pdinfo;
 	struct vtoc_sector *vtoc = &ux->vtoc;
-	boolean_t disklabel_available = FALSE;
-	boolean_t vtoc_available = FALSE;
+	bool disklabel_available = FALSE;
+	bool vtoc_available = FALSE;
 	void *rwops;
 
 	if ((rwops = sector_init(dev, strategy)) == 0)

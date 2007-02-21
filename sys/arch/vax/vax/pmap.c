@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.142 2007/02/17 22:31:40 pavel Exp $	   */
+/*	$NetBSD: pmap.c,v 1.143 2007/02/21 22:59:55 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.142 2007/02/17 22:31:40 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2007/02/21 22:59:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1220,7 +1220,7 @@ pmap_map(virtuell, pstart, pend, prot)
 }
 
 #if 0
-boolean_t 
+bool 
 pmap_extract(pmap, va, pap)
 	pmap_t pmap;
 	vaddr_t va;
@@ -1423,7 +1423,7 @@ pmap_simulref(int bits, int addr)
 /*
  * Clears valid bit in all ptes referenced to this physical page.
  */
-boolean_t
+bool
 pmap_clear_reference_long(struct pv_entry *pv)
 {
 	struct pte *pte;
@@ -1463,7 +1463,7 @@ pmap_clear_reference_long(struct pv_entry *pv)
 /*
  * Checks if page is modified; returns true or false depending on result.
  */
-boolean_t
+bool
 pmap_is_modified_long(struct pv_entry *pv)
 {
 	struct pte *pte;
@@ -1498,11 +1498,11 @@ pmap_is_modified_long(struct pv_entry *pv)
 /*
  * Clears modify bit in all ptes referenced to this physical page.
  */
-boolean_t
+bool
 pmap_clear_modify_long(struct pv_entry *pv)
 {
 	struct pte *pte;
-	boolean_t rv = FALSE;
+	bool rv = FALSE;
 
 	PMDEBUG(("pmap_clear_modify: pv_entry %p\n", pv));
 
