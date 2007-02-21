@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.2 2007/02/21 12:05:49 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.3 2007/02/21 12:06:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.2 2007/02/21 12:05:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.3 2007/02/21 12:06:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -122,7 +122,7 @@ volatile uint32_t sched_whichqs;	/* bitmap of non-empty queues */
 
 void schedcpu(void *);
 void updatepri(struct lwp *);
-void resetpriority (struct lwp *);
+void resetpriority(struct lwp *);
 void resetprocpriority(struct proc *);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
