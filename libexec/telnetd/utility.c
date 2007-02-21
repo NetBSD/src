@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.30 2006/10/07 18:26:40 elad Exp $	*/
+/*	$NetBSD: utility.c,v 1.31 2007/02/21 21:14:07 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.30 2006/10/07 18:26:40 elad Exp $");
+__RCSID("$NetBSD: utility.c,v 1.31 2007/02/21 21:14:07 hubertf Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/utsname.h>
+#include <ctype.h>
 #define PRINTOPTIONS
 #include "telnetd.h"
 
