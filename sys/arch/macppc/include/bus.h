@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.22 2007/01/17 23:39:09 macallan Exp $	*/
+/*	$NetBSD: bus.h,v 1.23 2007/02/21 20:41:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -874,6 +874,9 @@ struct macppc_bus_dma_tag {
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t
