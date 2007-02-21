@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.27 2007/01/14 16:15:26 apb Exp $	*/
+/*	$NetBSD: join.c,v 1.28 2007/02/21 20:45:27 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.27 2007/01/14 16:15:26 apb Exp $");
+__RCSID("$NetBSD: join.c,v 1.28 2007/02/21 20:45:27 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -281,12 +281,18 @@ main(int argc, char *argv[])
 			joinlines(F1, NULL);
 			slurp(F1);
 		}
+	if (F1->fp != stdin)
+		fclose(F1->fp);
+
 	if (F2->unpair)
 		while (F2->setcnt) {
 			joinlines(F2, NULL);
 			slurp(F2);
 		}
-	exit(0);
+	if (F2->fp != stdin)
+		fclose(F2->fp);
+
+	return 0;
 }
 
 void
