@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.232 2007/02/17 17:18:31 yamt Exp $
+#       $NetBSD: Makefile,v 1.233 2007/02/21 21:13:02 mrg Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -138,7 +138,8 @@ MLINKS+=bus_dma.9 bus_dmamap_create.9 bus_dma.9 bus_dmamap_destroy.9 \
 	bus_dma.9 bus_dmamap_unload.9 bus_dma.9 bus_dmamap_sync.9 \
 	bus_dma.9 bus_dmamem_alloc.9 bus_dma.9 bus_dmamem_free.9 \
 	bus_dma.9 bus_dmamem_map.9 bus_dma.9 bus_dmamem_unmap.9 \
-	bus_dma.9 bus_dmamem_mmap.9
+	bus_dma.9 bus_dmamem_mmap.9 \
+	bus_dma.9 bus_dmatag_subregion.9 bus_dma.9 bus_dmatag_destroy.9
 MLINKS+=callout.9 callout_init.9 callout.9 callout_reset.9 \
 	callout.9 callout_schedule.9 callout.9 callout_setfunc.9 \
 	callout.9 callout_stop.9 callout.9 callout_pending.9 \

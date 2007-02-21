@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.39 2007/02/02 07:37:06 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.40 2007/02/21 21:13:02 mrg Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,9 @@
 .Nm bus_dmamem_free ,
 .Nm bus_dmamem_map ,
 .Nm bus_dmamem_unmap ,
-.Nm bus_dmamem_mmap
+.Nm bus_dmamem_mmap ,
+.Nm bus_dmatag_subregion ,
+.Nm bus_dmatag_destroy
 .Nd Bus and Machine Independent DMA Mapping Interface
 .Sh SYNOPSIS
 .In machine/bus.h
@@ -92,6 +94,11 @@
 .Ft paddr_t
 .Fn bus_dmamem_mmap "bus_dma_tag_t tag" "bus_dma_segment_t *segs" \
 "int nsegs" "off_t off" "int prot" "int flags"
+.Ft int
+.Fn bus_dmatag_subregion "bus_dma_tag_t tag" "bus_addr_t min_addr" \
+"bus_addr_t max_addr" "bus_dma_tag_t *newtag" "int flags"
+.Ft void
+.Fn bus_dmatag_destroy "bus_dma_tag_t tag"
 .Sh DESCRIPTION
 Provide a bus- and machine-independent "DMA mapping interface."
 .Sh NOTES
@@ -777,6 +784,33 @@ to
 .Pp
 Returns -1 to indicate failure.
 Otherwise, returns an opaque value to be interpreted by the device pager.
+.It Fn bus_dmatag_subregion "tag" "min_addr" "max_addr" "newtag" "flags"
+Given a bus_dma_tag_t
+create a new bus_dma_tag_t with a limited bus address space.  This function
+should not normally be used, but is useful for devices that do not support
+the full address space of the parent bus.
+The arguments are as follows:
+.Bl -tag -width max_addr -compact
+.It Fa tag
+This is the bus_dma_tag_t to subregion.
+.It Fa min_addr
+The smallest address this new tag can address.
+.It Fa max_addr .
+The largest address this new tag can address.
+.It Fa newtag
+Pointer filled in with the address of the new bus_dma_tag_t.
+.It Fa flags
+Flags are defined as follows:
+.Bl -tag -width BUS_DMA_WAITOK -compact
+.It Dv BUS_DMA_WAITOK
+It is safe to wait (sleep) for resources during this call.
+.It Dv BUS_DMA_NOWAIT
+It is not safe to wait (sleep) for resources during this call.
+.El
+.El
+.It Fn bus_dmatag_destroy "tag"
+Free a tag created by
+.Fn bus_dmatag_subregion .
 .El
 .Sh SEE ALSO
 .Xr bus_space 9 ,
