@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.2 2006/08/26 14:13:40 tsutsui Exp $	*/
+/*	$NetBSD: disk.c,v 1.3 2007/02/21 22:59:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct devsw dkdevsw = {
 };
 
 struct disk {
-	boolean_t active;
+	bool active;
 	int type;	/* FD/HD */
 	int unit;
 	int format;	/* 2D/2HD */
@@ -65,13 +65,13 @@ struct disk {
 } __disk;
 
 void sector_init(void);
-boolean_t __sector_rw(uint8_t *, int, int, int);
+bool __sector_rw(uint8_t *, int, int, int);
 int __hd_rw(uint8_t *, int, int, int);
 int __fd_2d_rw(uint8_t *, int, int, int);
 int __fd_2hd_rw(uint8_t *, int, int, int);
 void __fd_progress_msg(int);
 
-boolean_t
+bool
 device_attach(int type, int unit, int partition)
 {
 
@@ -168,7 +168,7 @@ sector_fini(void *self)
 	__disk.active = FALSE;
 }
 
-boolean_t
+bool
 sector_read_n(void *self, uint8_t *buf, int sector, int count)
 {
 
@@ -177,14 +177,14 @@ sector_read_n(void *self, uint8_t *buf, int sector, int count)
 	return TRUE;
 }
 
-boolean_t
+bool
 sector_read(void *self, uint8_t *buf, int sector)
 {
 
 	return __sector_rw(buf, sector, 0, 1);
 }
 
-boolean_t
+bool
 sector_write_n(void *self, uint8_t *buf, int sector, int count)
 {
 
@@ -193,14 +193,14 @@ sector_write_n(void *self, uint8_t *buf, int sector, int count)
 	return TRUE;
 }
 
-boolean_t
+bool
 sector_write(void *self, uint8_t *buf, int sector)
 {
 
 	return __sector_rw(buf, sector, 0x1000, 1);
 }
 
-boolean_t
+bool
 __sector_rw(uint8_t *buf, int block, int flag, int count)
 {
 	int err;

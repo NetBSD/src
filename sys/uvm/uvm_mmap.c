@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.105 2007/02/09 21:55:43 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.106 2007/02/21 23:00:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105 2007/02/09 21:55:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.106 2007/02/21 23:00:13 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -1035,7 +1035,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	int error;
 	int advice = UVM_ADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
-	boolean_t needwritemap;
+	bool needwritemap;
 
 	/*
 	 * check params

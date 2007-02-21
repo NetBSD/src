@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.4 2006/07/06 21:55:06 martin Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.5 2007/02/21 23:00:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.4 2006/07/06 21:55:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.5 2007/02/21 23:00:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,10 +56,10 @@ struct bc_io_ops {
 
 #define	STATIC
 
-STATIC boolean_t bc_read_n(void *, uint8_t *, daddr_t, int);
-STATIC boolean_t bc_read(void *, uint8_t *, daddr_t);
-STATIC boolean_t bc_write_n(void *, uint8_t *, daddr_t, int);
-STATIC boolean_t bc_write(void *, uint8_t *, daddr_t);
+STATIC bool bc_read_n(void *, uint8_t *, daddr_t, int);
+STATIC bool bc_read(void *, uint8_t *, daddr_t);
+STATIC bool bc_write_n(void *, uint8_t *, daddr_t, int);
+STATIC bool bc_write(void *, uint8_t *, daddr_t);
 
 int
 sysvbfs_bfs_init(struct bfs **bfsp, struct vnode *vp)
@@ -89,7 +89,7 @@ sysvbfs_bfs_fini(struct bfs *bfs)
 	bfs_fini(bfs);
 }
 
-STATIC boolean_t
+STATIC bool
 bc_read_n(void *self, uint8_t *buf, daddr_t block, int count)
 {
 	int i;
@@ -104,7 +104,7 @@ bc_read_n(void *self, uint8_t *buf, daddr_t block, int count)
 	return TRUE;
 }
 
-STATIC boolean_t
+STATIC bool
 bc_read(void *self, uint8_t *buf, daddr_t block)
 {
 	struct bc_io_ops *bio = self;
@@ -125,7 +125,7 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 	return FALSE;
 }
 
-STATIC boolean_t
+STATIC bool
 bc_write_n(void *self, uint8_t *buf, daddr_t block, int count)
 {
 	int i;
@@ -140,7 +140,7 @@ bc_write_n(void *self, uint8_t *buf, daddr_t block, int count)
 	return TRUE;
 }
 
-STATIC boolean_t
+STATIC bool
 bc_write(void *self, uint8_t *buf, daddr_t block)
 {
 	struct bc_io_ops *bio = self;

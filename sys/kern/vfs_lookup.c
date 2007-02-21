@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.82 2007/02/17 22:31:44 pavel Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.83 2007/02/21 23:00:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.82 2007/02/17 22:31:44 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.83 2007/02/21 23:00:05 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.82 2007/02/17 22:31:44 pavel Exp $"
 
 struct pathname_internal {
 	char *pathbuf;
-	boolean_t needfree;
+	bool needfree;
 };
 
 int vfs_magiclinks = MAGICLINKS;

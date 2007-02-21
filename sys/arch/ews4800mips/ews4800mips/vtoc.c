@@ -1,4 +1,4 @@
-/*	$NetBSD: vtoc.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: vtoc.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vtoc.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vtoc.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vtoc.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
 void vtoc_print_partition_table(const struct ux_partition *);
 #endif /* VTOC_DEBUG */
 
-boolean_t
+bool
 vtoc_sector(void *rwops, struct vtoc_sector *vtoc, int start)
 {
 
@@ -95,14 +95,14 @@ vtoc_find_bfs(const struct vtoc_sector *vtoc)
 	return &vtoc->partition[i];
 }
 
-boolean_t
+bool
 vtoc_valid(const struct vtoc_sector *vtoc)
 {
 
 	return (vtoc->magic == VTOC_MAGIC) && (vtoc->version == VTOC_VERSION);
 }
 
-boolean_t
+bool
 vtoc_sanity(const struct vtoc_sector *vtoc)
 {
 

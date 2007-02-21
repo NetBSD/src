@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.215 2006/05/14 21:55:09 elad Exp $ */
+/* $NetBSD: pmap.c,v 1.216 2007/02/21 22:59:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2006/05/14 21:55:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2007/02/21 22:59:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,7 +232,7 @@ paddr_t    	avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
 static vaddr_t	virtual_end;	/* VA of last avail page (end of kernel AS) */
 
-static boolean_t pmap_initialized;	/* Has pmap_init completed? */
+static bool pmap_initialized;	/* Has pmap_init completed? */
 
 u_long		pmap_pages_stolen;	/* instrumentation */
 
@@ -466,9 +466,8 @@ static void	pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *,
  * Internal routines
  */
 static void	alpha_protection_init(void);
-static void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, boolean_t);
-static boolean_t pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *,
-				     boolean_t, long);
+static void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, bool);
+static bool	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, bool, long);
 static void	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t, long);
 
 /*
@@ -495,8 +494,8 @@ static int	pmap_l1pt_ctor(void *, void *, int);
  * PV table management functions.
  */
 static int	pmap_pv_enter(pmap_t, struct vm_page *, vaddr_t, pt_entry_t *,
-			      boolean_t);
-static void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, boolean_t);
+			      bool);
+static void	pmap_pv_remove(pmap_t, struct vm_page *, vaddr_t, bool);
 static void	*pmap_pv_page_alloc(struct pool *, int);
 static void	pmap_pv_page_free(struct pool *, void *);
 
@@ -519,7 +518,7 @@ static void	pmap_asn_alloc(pmap_t, long);
 /*
  * Misc. functions.
  */
-static boolean_t pmap_physpage_alloc(int, paddr_t *);
+static bool	pmap_physpage_alloc(int, paddr_t *);
 static void	pmap_physpage_free(paddr_t);
 static int	pmap_physpage_addref(void *);
 static int	pmap_physpage_delref(void *);
@@ -1318,12 +1317,12 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  *	want to remove wired mappings).
  */
 static void
-pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, boolean_t dowired)
+pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, bool dowired)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
 	pt_entry_t *saved_l1pte, *saved_l2pte, *saved_l3pte;
 	vaddr_t l1eva, l2eva, vptva;
-	boolean_t needisync = FALSE;
+	bool needisync = FALSE;
 	long cpu_id = cpu_number();
 
 #ifdef DEBUG
@@ -1480,7 +1479,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	pmap_t pmap;
 	pv_entry_t pv, nextpv;
-	boolean_t needkisync = FALSE;
+	bool needkisync = FALSE;
 	long cpu_id = cpu_number();
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 #ifdef DEBUG
@@ -1563,8 +1562,8 @@ void
 pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte, bits;
-	boolean_t isactive;
-	boolean_t hadasm;
+	bool isactive;
+	bool hadasm;
 	vaddr_t l1eva, l2eva;
 	long cpu_id = cpu_number();
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
@@ -1646,12 +1645,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	struct vm_page *pg;			/* if != NULL, managed page */
 	pt_entry_t *pte, npte, opte;
 	paddr_t opa;
-	boolean_t tflush = TRUE;
-	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
-	boolean_t needisync = FALSE;
-	boolean_t setisync = FALSE;
-	boolean_t isactive;
-	boolean_t wired;
+	bool tflush = TRUE;
+	bool hadasm = FALSE;	/* XXX gcc -Wuninitialized */
+	bool needisync = FALSE;
+	bool setisync = FALSE;
+	bool isactive;
+	bool wired;
 	long cpu_id = cpu_number();
 	int error = 0;
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
@@ -1979,7 +1978,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte, npte;
 	long cpu_id = cpu_number();
-	boolean_t needisync = FALSE;
+	bool needisync = FALSE;
 	pmap_t pmap = pmap_kernel();
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
@@ -2043,7 +2042,7 @@ void
 pmap_kremove(vaddr_t va, vsize_t size)
 {
 	pt_entry_t *pte;
-	boolean_t needisync = FALSE;
+	bool needisync = FALSE;
 	long cpu_id = cpu_number();
 	pmap_t pmap = pmap_kernel();
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
@@ -2140,7 +2139,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *l1pte, *l2pte, *l3pte;
@@ -2427,7 +2426,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  *	Page zero'er for the idle loop.  Returns TRUE if the
  *	page was zero'd, FLASE if we aborted for some reason.
  */
-boolean_t
+bool
 pmap_pageidlezero(paddr_t pa)
 {
 	u_long *ptr;
@@ -2453,10 +2452,10 @@ pmap_pageidlezero(paddr_t pa)
  *
  *	Clear the modify bits on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	boolean_t rv = FALSE;
+	bool rv = FALSE;
 	long cpu_id = cpu_number();
 
 #ifdef DEBUG
@@ -2484,10 +2483,10 @@ pmap_clear_modify(struct vm_page *pg)
  *
  *	Clear the reference bit on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	boolean_t rv = FALSE;
+	bool rv = FALSE;
 	long cpu_id = cpu_number();
 
 #ifdef DEBUG
@@ -2600,16 +2599,16 @@ alpha_protection_init(void)
  *	Returns TRUE or FALSE, indicating if an I-stream sync needs
  *	to be initiated (for this CPU or for other CPUs).
  */
-static boolean_t
+static bool
 pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte,
-    boolean_t dolock, long cpu_id)
+    bool dolock, long cpu_id)
 {
 	paddr_t pa;
 	struct vm_page *pg;		/* if != NULL, page is managed */
-	boolean_t onpv;
-	boolean_t hadasm;
-	boolean_t isactive;
-	boolean_t needisync = FALSE;
+	bool onpv;
+	bool hadasm;
+	bool isactive;
+	bool needisync = FALSE;
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
@@ -2712,7 +2711,7 @@ pmap_changebit(struct vm_page *pg, u_long set, u_long mask, long cpu_id)
 	pv_entry_t pv;
 	pt_entry_t *pte, npte;
 	vaddr_t va;
-	boolean_t hadasm, isactive;
+	bool hadasm, isactive;
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
@@ -2760,8 +2759,8 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	pt_entry_t faultoff, *pte;
 	struct vm_page *pg;
 	paddr_t pa;
-	boolean_t didlock = FALSE;
-	boolean_t exec = FALSE;
+	bool didlock = FALSE;
+	bool exec = FALSE;
 	long cpu_id = cpu_number();
 
 #ifdef DEBUG
@@ -2937,7 +2936,7 @@ vtophys(vaddr_t vaddr)
  */
 static int
 pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
-    boolean_t dolock)
+    bool dolock)
 {
 	pv_entry_t newpv;
 
@@ -2987,7 +2986,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
  *	Remove a physical->virtual entry from the pv_table.
  */
 static void
-pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, boolean_t dolock)
+pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock)
 {
 	pv_entry_t pv, *pvp;
 
@@ -3050,7 +3049,7 @@ pmap_pv_page_free(struct pool *pp, void *v)
  *	Allocate a single page from the VM system and return the
  *	physical address for that page.
  */
-static boolean_t
+static bool
 pmap_physpage_alloc(int usage, paddr_t *pap)
 {
 	struct vm_page *pg;

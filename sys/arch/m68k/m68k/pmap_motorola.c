@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.22 2006/12/30 01:28:57 martin Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.23 2007/02/21 22:59:46 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.22 2006/12/30 01:28:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.23 2007/02/21 22:59:46 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -256,7 +256,7 @@ vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */
 
-boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
+bool		pmap_initialized = FALSE;	/* Has pmap_init completed? */
 struct pv_entry	*pv_table;
 char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
@@ -307,9 +307,9 @@ int	pmap_mapmulti(pmap_t, vaddr_t);
  */
 void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
-boolean_t pmap_testbit(paddr_t, int);
-boolean_t pmap_changebit(paddr_t, int, int);
-boolean_t pmap_enter_ptpage(pmap_t, vaddr_t, boolean_t);
+bool	pmap_testbit(paddr_t, int);
+bool	pmap_changebit(paddr_t, int, int);
+bool	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
 void	pmap_ptpage_addref(vaddr_t);
 int	pmap_ptpage_delref(vaddr_t);
 void	pmap_collect1(pmap_t, paddr_t, paddr_t);
@@ -877,7 +877,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 	pt_entry_t *pte;
 	int flags;
 #ifdef M68K_MMU_HP
-	boolean_t firstpage = TRUE, needcflush = FALSE;
+	bool firstpage = TRUE, needcflush = FALSE;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
@@ -1036,7 +1036,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
-	boolean_t firstpage, needtflush;
+	bool firstpage, needtflush;
 	int isro;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_PROTECT,
@@ -1141,10 +1141,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pt_entry_t *pte;
 	int npte;
 	paddr_t opa;
-	boolean_t cacheable = TRUE;
-	boolean_t checkpv = TRUE;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-	boolean_t can_fail = (flags & PMAP_CANFAIL) != 0;
+	bool cacheable = TRUE;
+	bool checkpv = TRUE;
+	bool wired = (flags & PMAP_WIRED) != 0;
+	bool can_fail = (flags & PMAP_CANFAIL) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
@@ -1502,7 +1502,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	vaddr_t nssva;
 	vaddr_t eva = va + size;
 #ifdef M68K_MMU_HP
-	boolean_t firstpage, needcflush;
+	bool firstpage, needcflush;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
@@ -1627,7 +1627,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
@@ -1957,7 +1957,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  *
  *	Clear the modify bits on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1972,7 +1972,7 @@ pmap_clear_modify(struct vm_page *pg)
  *
  *	Clear the reference bit on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1988,7 +1988,7 @@ pmap_clear_reference(struct vm_page *pg)
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
-boolean_t
+bool
 pmap_is_referenced(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2002,7 +2002,7 @@ pmap_is_referenced(struct vm_page *pg)
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
-boolean_t
+bool
 pmap_is_modified(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2396,7 +2396,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
  *	Test the modified/referenced bits of a physical page.
  */
 /* static */
-boolean_t
+bool
 pmap_testbit(paddr_t pa, int bit)
 {
 	struct pv_entry *pv;
@@ -2451,7 +2451,7 @@ pmap_testbit(paddr_t pa, int bit)
  *	for a physical page.
  */
 /* static */
-boolean_t
+bool
 pmap_changebit(paddr_t pa, int set, int mask)
 {
 	struct pv_entry *pv;
@@ -2460,9 +2460,9 @@ pmap_changebit(paddr_t pa, int set, int mask)
 	char *attrp;
 	int s;
 #if defined(M68K_MMU_HP) || defined(M68040) || defined(M68060)
-	boolean_t firstpage = TRUE;
+	bool firstpage = TRUE;
 #endif
-	boolean_t r;
+	bool r;
 
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
@@ -2543,7 +2543,7 @@ pmap_changebit(paddr_t pa, int set, int mask)
  */
 /* static */
 int
-pmap_enter_ptpage(pmap_t pmap, vaddr_t va, boolean_t can_fail)
+pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 {
 	paddr_t ptpa;
 	struct vm_page *pg;

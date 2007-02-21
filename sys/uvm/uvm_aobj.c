@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.84 2007/01/24 13:08:11 hubertf Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.85 2007/02/21 23:00:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.84 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.85 2007/02/21 23:00:12 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -181,14 +181,14 @@ MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
 static void	uao_free(struct uvm_aobj *);
 static int	uao_get(struct uvm_object *, voff_t, struct vm_page **,
 		    int *, int, vm_prot_t, int, int);
-static boolean_t uao_put(struct uvm_object *, voff_t, voff_t, int);
+static bool uao_put(struct uvm_object *, voff_t, voff_t, int);
 
 #if defined(VMSWAP)
 static struct uao_swhash_elt *uao_find_swhash_elt
-    (struct uvm_aobj *, int, boolean_t);
+    (struct uvm_aobj *, int, bool);
 
-static boolean_t uao_pagein(struct uvm_aobj *, int, int);
-static boolean_t uao_pagein_page(struct uvm_aobj *, int);
+static bool uao_pagein(struct uvm_aobj *, int, int);
+static bool uao_pagein_page(struct uvm_aobj *, int);
 static void uao_dropswap_range1(struct uvm_aobj *, voff_t, voff_t);
 #endif /* defined(VMSWAP) */
 
@@ -232,7 +232,7 @@ static struct simplelock uao_list_lock;
  */
 
 static struct uao_swhash_elt *
-uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
+uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, bool create)
 {
 	struct uao_swhash *swhash;
 	struct uao_swhash_elt *elt;
@@ -726,7 +726,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	struct vm_page *pg, *nextpg, curmp, endmp;
-	boolean_t by_list;
+	bool by_list;
 	voff_t curoff;
 	UVMHIST_FUNC("uao_put"); UVMHIST_CALLED(maphist);
 
@@ -918,7 +918,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	voff_t current_offset;
 	struct vm_page *ptmp = NULL;	/* Quell compiler warning */
 	int lcv, gotpages, maxpages, swslot, pageidx;
-	boolean_t done;
+	bool done;
 	UVMHIST_FUNC("uao_get"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "aobj=%p offset=%d, flags=%d",
@@ -1238,11 +1238,11 @@ uao_dropswap(struct uvm_object *uobj, int pageidx)
  * => returns TRUE if pagein was aborted due to lack of memory.
  */
 
-boolean_t
+bool
 uao_swap_off(int startslot, int endslot)
 {
 	struct uvm_aobj *aobj, *nextaobj;
-	boolean_t rv;
+	bool rv;
 
 	/*
 	 * walk the list of all aobjs.
@@ -1313,10 +1313,10 @@ restart:
  * => aobj must be locked and is returned locked.
  * => returns TRUE if pagein was aborted due to lack of memory.
  */
-static boolean_t
+static bool
 uao_pagein(struct uvm_aobj *aobj, int startslot, int endslot)
 {
-	boolean_t rv;
+	bool rv;
 
 	if (UAO_USES_SWHASH(aobj)) {
 		struct uao_swhash_elt *elt;
@@ -1392,7 +1392,7 @@ restart:
  * => aobj must be locked and is returned locked.
  */
 
-static boolean_t
+static bool
 uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 {
 	struct vm_page *pg;

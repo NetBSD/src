@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.12 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.13 2007/02/21 22:59:49 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2006/05/12 06:05:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2007/02/21 22:59:49 thorpej Exp $");
 
 #define STATIC static
 
@@ -973,7 +973,7 @@ STATIC unsigned char mmuRegTable [] = {
 
 void	db_reverseBits(int *);
 void	db_formatOperand(struct operand *, db_addr_t);
-void	db_formatAsm(struct insn *, db_addr_t, boolean_t);
+void	db_formatAsm(struct insn *, db_addr_t, bool);
 void	db_initInsn(struct insn *);
 int	db_disp(db_addr_t, long *);
 int	db_decode_operand(db_addr_t,  unsigned char byte, struct operand *,
@@ -1115,7 +1115,7 @@ bitlist:
 }
 
 void
-db_formatAsm(struct insn *insn, db_addr_t loc, boolean_t altfmt)
+db_formatAsm(struct insn *insn, db_addr_t loc, bool altfmt)
 {
 	int i, j;
 
@@ -1877,7 +1877,7 @@ db_reverseBits(int *ip)
  * next instruction.
  */
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	int ate;
 	struct insn insn;

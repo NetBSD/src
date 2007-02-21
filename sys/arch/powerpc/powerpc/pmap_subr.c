@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.14 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.15 2007/02/21 22:59:50 thorpej Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.14 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.15 2007/02/21 22:59:50 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -305,12 +305,12 @@ pmap_syncicache(paddr_t pa, psize_t len)
 #endif	/* !MULTIPROCESSOR */
 }
 
-boolean_t
+bool
 pmap_pageidlezero(paddr_t pa)
 {
 	register_t msr;
 	register_t *dp = (register_t *) pa;
-	boolean_t rv = TRUE;
+	bool rv = TRUE;
 	int i;
 
 #if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)

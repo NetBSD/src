@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 2007/02/17 22:47:42 dsl Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 2007/02/21 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.17 2007/02/17 22:47:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18 2007/02/21 22:59:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -275,7 +275,7 @@ kdb_trap(int type, void *v)
 	return (1);
 }
 
-boolean_t
+bool
 inst_branch(int inst)
 {
 	/*
@@ -296,7 +296,7 @@ inst_branch(int inst)
 	return (FALSE);
 }
 
-boolean_t
+bool
 inst_unconditional_flow_transfer(int inst)
 {
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.6 2007/01/14 14:03:00 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.7 2007/02/21 22:59:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.6 2007/01/14 14:03:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.7 2007/02/21 22:59:55 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,7 @@ struct bootinfo bootinfo;
 void *
 lookup_bootinfo(int type)
 {
-	boolean_t found;
+	bool found;
 	int i;
 	struct btinfo_common *bic;
 
