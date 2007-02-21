@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.132 2007/02/21 23:48:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.132 2007/02/21 23:48:12 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1641,7 +1641,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
 		int hlen = offset + iphl;
-		boolean_t v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+		bool v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
 
 		if (__predict_false(m0->m_len <
 				    (hlen + sizeof(struct tcphdr)))) {

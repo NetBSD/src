@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.5 2007/02/19 15:10:04 cube Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.6 2007/02/21 23:48:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.5 2007/02/19 15:10:04 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.6 2007/02/21 23:48:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
 	vaddr_t uaddr;
-	boolean_t inmem;
+	bool inmem;
 	ucontext_t *newuc;
 	int error, lid;
 

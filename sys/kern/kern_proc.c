@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.103 2007/02/18 16:58:16 dsl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.104 2007/02/21 23:48:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.103 2007/02/18 16:58:16 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.104 2007/02/21 23:48:14 thorpej Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1333,7 +1333,7 @@ proc_crmod_enter(void)
  * briefly acquire the sched state mutex.
  */
 void
-proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, boolean_t sugid)
+proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
