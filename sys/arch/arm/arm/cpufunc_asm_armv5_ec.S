@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5.S,v 1.2.24.1 2007/02/21 18:36:03 snj Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.1.6.2 2007/02/21 18:36:03 snj Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -29,10 +29,13 @@
  * SUCH DAMAGE.
  *
  * ARMv5 assembly functions for manipulating caches.
- * These routines can be used by any core that supports the set/index
- * operations.
+ * These routines can be used by any core that supports both the set/index
+ * operations and the test and clean operations for efficiently cleaning the
+ * entire DCache.  If a core does not have the test and clean operations, but
+ * does have the set/index operations, use the routines in cpufunc_asm_armv5.S.
+ * This source was derived from that file.
  */
- 
+
 #include <machine/cpu.h>
 #include <machine/asm.h>
 
@@ -42,10 +45,22 @@
  * We need to clean and flush the cache as it uses virtual
  * addresses that are about to change.
  */
-ENTRY(armv5_setttb)
-	stmfd	sp!, {r0, lr}
-	bl	_C_LABEL(armv5_idcache_wbinv_all)
-	ldmfd	sp!, {r0, lr}
+ENTRY(armv5_ec_setttb)
+	/*
+	 * Some other ARM ports save registers on the stack, call the
+	 * idcache_wbinv_all function and then restore the registers from the
+	 * stack before setting the TTB.  I observed that this caused a
+	 * problem when the old and new translation table entries' buffering
+	 * bits were different.  If I saved the registers in other registers
+	 * or invalidated the caches when I returned from idcache_wbinv_all,
+	 * it worked fine.  If not, I ended up executing at an invalid PC.
+	 * For armv5_ec_settb, the idcache_wbinv_all is simple enough, I just
+	 * do it directly and entirely avoid the problem.
+	 */
+	mcr	p15, 0, r0, c7, c5, 0	/* Invalidate ICache */
+1:	mrc	p15, 0, r15, c7, c14, 3	/* Test, clean and invalidate DCache */
+	bne	1b			/* More to do? */
+	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 
 	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 
@@ -53,18 +68,14 @@ ENTRY(armv5_setttb)
 	RET
 
 /*
- * Cache operations.  For the entire cache we use the set/index
+ * Cache operations.  For the entire cache we use the enhanced cache
  * operations.
  */
-	s_max	.req r0
-	i_max	.req r1
-	s_inc	.req r2
-	i_inc	.req r3
 
-ENTRY_NP(armv5_icache_sync_range)
-	ldr	ip, .Larmv5_line_size
+ENTRY_NP(armv5_ec_icache_sync_range)
+	ldr	ip, .Larmv5_ec_line_size
 	cmp	r1, #0x4000
-	bcs	.Larmv5_icache_sync_all
+	bcs	.Larmv5_ec_icache_sync_all
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -80,8 +91,8 @@ ENTRY_NP(armv5_icache_sync_range)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
 
-ENTRY_NP(armv5_icache_sync_all)
-.Larmv5_icache_sync_all:
+ENTRY_NP(armv5_ec_icache_sync_all)
+.Larmv5_ec_icache_sync_all:
 	/*
 	 * We assume that the code here can never be out of sync with the
 	 * dcache, so that we can safely flush the Icache and fall through
@@ -90,29 +101,20 @@ ENTRY_NP(armv5_icache_sync_all)
 	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
 	/* Fall through to clean Dcache. */
 
-.Larmv5_dcache_wb:
-	ldr	ip, .Larmv5_cache_data
-	ldmia	ip, {s_max, i_max, s_inc, i_inc}
+.Larmv5_ec_dcache_wb:
 1:
-	orr	ip, s_max, i_max
-2:
-	mcr	p15, 0, ip, c7, c10, 2	/* Clean D cache SE with Set/Index */
-	sub	ip, ip, i_inc
-	tst	ip, i_max		/* Index 0 is last one */
-	bne	2b			/* Next index */
-	mcr	p15, 0, ip, c7, c10, 2	/* Clean D cache SE with Set/Index */
-	subs	s_max, s_max, s_inc
-	bpl	1b			/* Next set */
+	mrc	p15, 0, r15, c7, c10, 3	/* Test and clean (don't invalidate) */
+	bne	1b			/* More to do? */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
 
-.Larmv5_line_size:
+.Larmv5_ec_line_size:
 	.word	_C_LABEL(arm_pdcache_line_size)
 
-ENTRY(armv5_dcache_wb_range)
-	ldr	ip, .Larmv5_line_size
+ENTRY(armv5_ec_dcache_wb_range)
+	ldr	ip, .Larmv5_ec_line_size
 	cmp	r1, #0x4000
-	bcs	.Larmv5_dcache_wb
+	bcs	.Larmv5_ec_dcache_wb
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -126,11 +128,11 @@ ENTRY(armv5_dcache_wb_range)
 	bpl	1b
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
-ENTRY(armv5_dcache_wbinv_range)
-	ldr	ip, .Larmv5_line_size
+
+ENTRY(armv5_ec_dcache_wbinv_range)
+	ldr	ip, .Larmv5_ec_line_size
 	cmp	r1, #0x4000
-	bcs	.Larmv5_dcache_wbinv_all
+	bcs	.Larmv5_ec_dcache_wbinv_all
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -144,15 +146,15 @@ ENTRY(armv5_dcache_wbinv_range)
 	bpl	1b
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
+
 /*
  * Note, we must not invalidate everything.  If the range is too big we
  * must use wb-inv of the entire cache.
  */
-ENTRY(armv5_dcache_inv_range)
-	ldr	ip, .Larmv5_line_size
+ENTRY(armv5_ec_dcache_inv_range)
+	ldr	ip, .Larmv5_ec_line_size
 	cmp	r1, #0x4000
-	bcs	.Larmv5_dcache_wbinv_all
+	bcs	.Larmv5_ec_dcache_wbinv_all
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -167,10 +169,10 @@ ENTRY(armv5_dcache_inv_range)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
 
-ENTRY(armv5_idcache_wbinv_range)
-	ldr	ip, .Larmv5_line_size
+ENTRY(armv5_ec_idcache_wbinv_range)
+	ldr	ip, .Larmv5_ec_line_size
 	cmp	r1, #0x4000
-	bcs	.Larmv5_idcache_wbinv_all
+	bcs	.Larmv5_ec_idcache_wbinv_all
 	ldr	ip, [ip]
 	sub	r1, r1, #1		/* Don't overrun */
 	sub	r3, ip, #1
@@ -186,53 +188,19 @@ ENTRY(armv5_idcache_wbinv_range)
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
 
-ENTRY_NP(armv5_idcache_wbinv_all)
-.Larmv5_idcache_wbinv_all:
+ENTRY_NP(armv5_ec_idcache_wbinv_all)
+.Larmv5_ec_idcache_wbinv_all:
 	/*
 	 * We assume that the code here can never be out of sync with the
 	 * dcache, so that we can safely flush the Icache and fall through
 	 * into the Dcache purging code.
 	 */
-	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
+	mcr	p15, 0, r0, c7, c5, 0	/* Invalidate ICache */
 	/* Fall through to purge Dcache. */
 
-ENTRY(armv5_dcache_wbinv_all)
-.Larmv5_dcache_wbinv_all:
-	ldr	ip, .Larmv5_cache_data
-	ldmia	ip, {s_max, i_max, s_inc, i_inc}
-1:
-	orr	ip, s_max, i_max
-2:
-	mcr	p15, 0, ip, c7, c14, 2	/* Purge D cache SE with Set/Index */
-	sub	ip, ip, i_inc
-	tst	ip, i_max		/* Index 0 is last one */
-	bne	2b			/* Next index */
-	mcr	p15, 0, ip, c7, c14, 2	/* Purge D cache SE with Set/Index */
-	subs	s_max, s_max, s_inc
-	bpl	1b			/* Next set */
+ENTRY(armv5_ec_dcache_wbinv_all)
+.Larmv5_ec_dcache_wbinv_all:
+1:	mrc	p15, 0, r15, c7, c14, 3	/* Test, clean and invalidate DCache */
+	bne	1b			/* More to do? */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-
-.Larmv5_cache_data:
-	.word	_C_LABEL(armv5_dcache_sets_max)
-
-	.bss
-
-/* XXX The following macros should probably be moved to asm.h */
-#define _DATA_OBJECT(x) .globl x; .type x,_ASM_TYPE_OBJECT; x:
-#define C_OBJECT(x)	_DATA_OBJECT(_C_LABEL(x))
-
-/*
- * Parameters for the cache cleaning code.  Note that the order of these
- * four variables is assumed in the code above.  Hence the reason for 
- * declaring them in the assembler file.
- */
-	.align 0
-C_OBJECT(armv5_dcache_sets_max)
-	.space	4
-C_OBJECT(armv5_dcache_index_max)
-	.space	4
-C_OBJECT(armv5_dcache_sets_inc)
-	.space	4
-C_OBJECT(armv5_dcache_index_inc)
-	.space	4
