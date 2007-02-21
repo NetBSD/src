@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.26 2005/06/21 22:29:53 lha Exp $	*/
+/*	$NetBSD: state.c,v 1.27 2007/02/21 21:14:07 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: state.c,v 1.26 2005/06/21 22:29:53 lha Exp $");
+__RCSID("$NetBSD: state.c,v 1.27 2007/02/21 21:14:07 hubertf Exp $");
 #endif
 #endif /* not lint */
 
+#include <ctype.h>
 #include <stdarg.h>
 
 #include "telnetd.h"
