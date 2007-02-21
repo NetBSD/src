@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.247 2007/02/20 17:47:03 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.248 2007/02/21 23:48:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.247 2007/02/20 17:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.248 2007/02/21 23:48:14 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -117,7 +117,7 @@ int	sigunwait(struct proc *, const ksiginfo_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 int	sigpost(struct lwp *, sig_t, int, int);
 int	sigchecktrace(sigpend_t **);
-void	sigswitch(boolean_t, int, int);
+void	sigswitch(bool, int, int);
 void	sigrealloc(ksiginfo_t *);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
@@ -1456,7 +1456,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
  * Stop the current process and switch away when being stopped or traced.
  */
 void
-sigswitch(boolean_t ppsig, int ppmask, int signo)
+sigswitch(bool ppsig, int ppmask, int signo)
 {
 	struct lwp *l = curlwp, *l2;
 	struct proc *p = l->l_proc;
@@ -2073,7 +2073,7 @@ proc_stop(struct proc *p, int notify, int signo)
 static void
 proc_stop_callout(void *cookie)
 {
-	boolean_t more, restart;
+	bool more, restart;
 	struct proc *p;
 	struct lwp *l;
 

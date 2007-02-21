@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.2 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.3 2007/02/21 23:48:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.2 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.3 2007/02/21 23:48:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -373,7 +373,7 @@ lockdebug_wantlock(u_int id, uintptr_t where, int shared)
 	struct lwp *l = curlwp;
 	lockdebuglk_t *lk;
 	lockdebug_t *ld;
-	boolean_t recurse;
+	bool recurse;
 
 	(void)shared;
 	recurse = FALSE;

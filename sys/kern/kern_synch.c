@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.181 2007/02/19 22:14:15 dsl Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.182 2007/02/21 23:48:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.181 2007/02/19 22:14:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.182 2007/02/21 23:48:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -498,7 +498,7 @@ ltsleep(wchan_t ident, int priority, const char *wmesg, int timo,
  * General sleep call for situations where a wake-up is not expected.
  */
 int
-kpause(const char *wmesg, boolean_t intr, int timo, kmutex_t *mtx)
+kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;

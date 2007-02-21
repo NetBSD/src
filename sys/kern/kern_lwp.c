@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.58 2007/02/20 17:47:03 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.59 2007/02/21 23:48:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.58 2007/02/20 17:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.59 2007/02/21 23:48:13 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -480,7 +480,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
  * suspended, or stopped by the caller.
  */
 int
-newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
+newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
     int flags, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, struct lwp **rnewlwpp)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.13 2007/02/20 01:02:03 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.14 2007/02/21 23:48:10 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.13 2007/02/20 01:02:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.14 2007/02/21 23:48:10 thorpej Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -90,10 +90,10 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	u_int32_t	*frame, *lastframe;
 	const char	*cp = modif;
 	char c;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
-	boolean_t	lwpaddr = FALSE;
-	int	scp_offset;
+	bool		kernel_only = TRUE;
+	bool		trace_thread = FALSE;
+	bool		lwpaddr = FALSE;
+	int		scp_offset;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'a') {

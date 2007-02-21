@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.239 2007/02/19 15:10:02 cube Exp $	*/
+/*	$NetBSD: proc.h,v 1.240 2007/02/21 23:48:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -526,7 +526,7 @@ int	ltsleep(wchan_t, int, const char *, int,
 	    volatile struct simplelock *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
-int	kpause(const char *, boolean_t, int, kmutex_t *);
+int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
 struct proc *proc_alloc(void);
@@ -561,7 +561,7 @@ void	proc_stop(struct proc *, int, int);
 void	p_sugid(struct proc *);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
-void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, boolean_t);
+void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
 void	proc_crmod_enter(void);
 int	proc_addref(struct proc *);
 void	proc_delref(struct proc *);

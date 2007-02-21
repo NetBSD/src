@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.9 2007/02/20 01:02:02 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.10 2007/02/21 23:48:10 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.9 2007/02/20 01:02:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2007/02/21 23:48:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ struct x86_64_frame {
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_kdintr_symbol_value = 0;
-boolean_t	db_trace_symbols_found = FALSE;
+bool		db_trace_symbols_found = FALSE;
 
 void db_find_trace_symbols(void);
 int db_numargs(long *);
@@ -299,7 +299,7 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep, db_expr_t *offp
 
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		     const char *modif, void (*pr)(const char *, ...))
 {
 	long *frame, *lastframe;
@@ -307,9 +307,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	long		*argp;
 	db_addr_t	callpc;
 	int		is_trap;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
-	boolean_t	lwpaddr = FALSE;
+	bool		kernel_only = TRUE;
+	bool		trace_thread = FALSE;
+	bool		lwpaddr = FALSE;
 
 #if 0
 	if (!db_trace_symbols_found)

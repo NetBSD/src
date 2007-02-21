@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 2007/02/21 00:23:59 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11 2007/02/21 23:48:11 thorpej Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2007/02/21 00:23:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2007/02/21 23:48:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,9 +213,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 {
 	register_t *fp, pc, rp, nargs, *argp;
 	char **argnp, *argnames[HPPA_FRAME_NARGS];
-	boolean_t kernel_only = TRUE;
-	boolean_t trace_thread = FALSE;
-	boolean_t lwpaddr = FALSE;
+	bool kernel_only = TRUE;
+	bool trace_thread = FALSE;
+	bool lwpaddr = FALSE;
 	db_sym_t sym;
 	db_expr_t off;
 	const char *name;

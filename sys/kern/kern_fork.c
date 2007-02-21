@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.132 2007/02/17 22:31:42 pavel Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.133 2007/02/21 23:48:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.132 2007/02/17 22:31:42 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.133 2007/02/21 23:48:13 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -219,7 +219,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	struct lwp	*l2;
 	int		count;
 	vaddr_t		uaddr;
-	boolean_t	inmem;
+	bool		inmem;
 	int		tmp;
 
 	/*
