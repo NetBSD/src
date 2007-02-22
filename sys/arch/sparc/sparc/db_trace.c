@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.28 2007/02/22 05:18:29 matt Exp $ */
+/*	$NetBSD: db_trace.c,v 1.29 2007/02/22 16:48:59 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.28 2007/02/22 05:18:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.29 2007/02/22 16:48:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -52,9 +52,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 {
 	struct frame	*frame, *prevframe;
 	db_addr_t	pc;
-	bool		kernel_only = TRUE;
-	bool		trace_thread = FALSE;
-	bool		lwpaddr = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 	const char	*cp = modif;
 	char		c;
 
@@ -63,13 +63,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr,
 
 	while ((c = *cp++) != 0) {
 		if (c == 'a') {
-			lwpaddr = TRUE;
-			trace_thread = TRUE;
+			lwpaddr = true;
+			trace_thread = true;
 		}
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = true;
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 	}
 
 	if (!have_addr) {
