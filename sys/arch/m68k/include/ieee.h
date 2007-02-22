@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.13 2007/02/17 17:50:52 mhitch Exp $	*/
+/*	$NetBSD: ieee.h,v 1.14 2007/02/22 17:09:40 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 
 #if !defined(__mc68010__) || defined(_KERNEL)
 #define	EXT_EXPBITS	15
-#define EXT_FRACHBITS	32
+#define	EXT_FRACHBITS	32
 #define	EXT_FRACLBITS	32
 #define	EXT_FRACBITS	(EXT_FRACLBITS + EXT_FRACHBITS)
 
