@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.181 2007/02/17 22:34:07 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.182 2007/02/22 09:23:38 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.181 2007/02/17 22:34:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.182 2007/02/22 09:23:38 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -1617,7 +1617,7 @@ ifconf(u_long cmd, caddr_t data)
 		    sizeof(ifr.ifr_name));
 		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
 			return ENAMETOOLONG;
-		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == NULL) {
+		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (ifrp != NULL && space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
@@ -1629,7 +1629,7 @@ ifconf(u_long cmd, caddr_t data)
 			continue;
 		}
 
-		for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #ifdef COMPAT_OSOCK
 			if (cmd == OSIOCGIFCONF) {
