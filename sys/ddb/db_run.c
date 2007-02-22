@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.28 2007/02/21 22:59:56 thorpej Exp $	*/
+/*	$NetBSD: db_run.c,v 1.29 2007/02/22 04:38:06 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.28 2007/02/21 22:59:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.29 2007/02/22 04:38:06 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -252,7 +252,7 @@ db_single_step(db_regs_t *regs)
 /* single-step */
 /*ARGSUSED*/
 void
-db_single_step_cmd(db_expr_t addr, int have_addr,
+db_single_step_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	bool print = FALSE;
@@ -276,7 +276,7 @@ db_single_step_cmd(db_expr_t addr, int have_addr,
 /* trace and print until call/return */
 /*ARGSUSED*/
 void
-db_trace_until_call_cmd(db_expr_t addr, int have_addr,
+db_trace_until_call_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	bool print = FALSE;
@@ -295,7 +295,7 @@ db_trace_until_call_cmd(db_expr_t addr, int have_addr,
 
 /*ARGSUSED*/
 void
-db_trace_until_matching_cmd(db_expr_t addr, int have_addr,
+db_trace_until_matching_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	bool print = FALSE;
@@ -316,7 +316,7 @@ db_trace_until_matching_cmd(db_expr_t addr, int have_addr,
 /* continue */
 /*ARGSUSED*/
 void
-db_continue_cmd(db_expr_t addr, int have_addr,
+db_continue_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 

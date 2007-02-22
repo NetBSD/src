@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.119 2007/02/21 23:00:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.120 2007/02/22 04:38:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.119 2007/02/21 23:00:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.120 2007/02/22 04:38:07 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -222,7 +222,7 @@ static krwlock_t swap_syscall_lock;
  */
 static struct swapdev	*swapdrum_getsdp(int);
 
-static struct swapdev	*swaplist_find(struct vnode *, int);
+static struct swapdev	*swaplist_find(struct vnode *, bool);
 static void		 swaplist_insert(struct swapdev *,
 					 struct swappri *, int);
 static void		 swaplist_trim(void);
@@ -583,7 +583,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		priority = SCARG(uap, misc);
 		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
 		simple_lock(&uvm.swap_data_lock);
-		if ((sdp = swaplist_find(vp, 1)) == NULL) {
+		if ((sdp = swaplist_find(vp, true)) == NULL) {
 			error = ENOENT;
 		} else {
 			swaplist_insert(sdp, spp, priority);
@@ -612,7 +612,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		bufq_alloc(&sdp->swd_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 		simple_lock(&uvm.swap_data_lock);
-		if (swaplist_find(vp, 0) != NULL) {
+		if (swaplist_find(vp, false) != NULL) {
 			error = EBUSY;
 			simple_unlock(&uvm.swap_data_lock);
 			bufq_free(sdp->swd_tab);
@@ -637,7 +637,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 		if ((error = swap_on(l, sdp)) != 0) {
 			simple_lock(&uvm.swap_data_lock);
-			(void) swaplist_find(vp, 1);  /* kill fake entry */
+			(void) swaplist_find(vp, true);  /* kill fake entry */
 			swaplist_trim();
 			simple_unlock(&uvm.swap_data_lock);
 			bufq_free(sdp->swd_tab);
@@ -649,7 +649,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 	case SWAP_OFF:
 		simple_lock(&uvm.swap_data_lock);
-		if ((sdp = swaplist_find(vp, 0)) == NULL) {
+		if ((sdp = swaplist_find(vp, false)) == NULL) {
 			simple_unlock(&uvm.swap_data_lock);
 			error = ENXIO;
 			break;
@@ -1031,7 +1031,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	uvmexp.swpages -= npages;
 	uvmexp.swpginuse -= sdp->swd_npgbad;
 
-	if (swaplist_find(sdp->swd_vp, 1) == NULL)
+	if (swaplist_find(sdp->swd_vp, true) == NULL)
 		panic("swap_off: swapdev not in list");
 	swaplist_trim();
 	simple_unlock(&uvm.swap_data_lock);
