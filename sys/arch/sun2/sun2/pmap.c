@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2007/02/21 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2007/02/22 16:46:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2007/02/21 22:59:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2007/02/22 16:46:48 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1134,21 +1134,21 @@ pv_changepte(paddr_t pa, int set_bits, int clear_bits)
 #endif
 
 		/* Is the PTE currently accessible in some context? */
-		in_ctx = FALSE;
+		in_ctx = false;
 		sme = SEGINV;	/* kill warning */
 		if (pmap == kernel_pmap) {
 			set_context(KERNEL_CONTEXT);
-			in_ctx = TRUE;
+			in_ctx = true;
 		}
 		else if (has_context(pmap)) {
 			/* PMEG may be inactive. */
 			set_context(pmap->pm_ctxnum);
 			sme = get_segmap(va);
 			if (sme != SEGINV)
-				in_ctx = TRUE;
+				in_ctx = true;
 		}
 
-		if (in_ctx == TRUE) {
+		if (in_ctx == true) {
 			/*
 			 * The PTE is in the current context.
 			 * Make sure PTE is up-to-date with VAC.
@@ -1187,7 +1187,7 @@ pv_changepte(paddr_t pa, int set_bits, int clear_bits)
 		pte |= set_bits;
 		pte &= ~clear_bits;
 
-		if (in_ctx == TRUE) {
+		if (in_ctx == true) {
 			/* Did cache flush above. */
 			set_pte(va, pte);
 		} else {
@@ -1234,20 +1234,20 @@ pv_syncflags(pv_entry_t pv)
 #endif
 
 		/* Is the PTE currently accessible in some context? */
-		in_ctx = FALSE;
+		in_ctx = false;
 		if (pmap == kernel_pmap) {
 			set_context(KERNEL_CONTEXT);
-			in_ctx = TRUE;
+			in_ctx = true;
 		}
 		else if (has_context(pmap)) {
 			/* PMEG may be inactive. */
 			set_context(pmap->pm_ctxnum);
 			sme = get_segmap(va);
 			if (sme != SEGINV)
-				in_ctx = TRUE;
+				in_ctx = true;
 		}
 
-		if (in_ctx == TRUE) {
+		if (in_ctx == true) {
 
 			/*
 			 * The PTE is in the current context.
@@ -1284,7 +1284,7 @@ pv_syncflags(pv_entry_t pv)
 			pte &= ~PG_MODREF;
 		}
 
-		if (in_ctx == TRUE) {
+		if (in_ctx == true) {
 			/* Did cache flush above. */
 			set_pte(va, pte);
 		} else {
@@ -1581,14 +1581,14 @@ pmap_bootstrap(vaddr_t nextva)
 	 * Free up any pmegs in this range which have no mappings.
 	 * VA range: [0x00E00000 .. 0x00F00000]
 	 */
-	pmeg_mon_init(SUN2_MONSTART, SUN2_MONEND, TRUE);
+	pmeg_mon_init(SUN2_MONSTART, SUN2_MONEND, true);
 
 	/*
 	 * Unmap any pmegs left in DVMA space by the PROM.
 	 * DO NOT kill the last one! (owned by the PROM!)
 	 * VA range: [0x00F00000 .. 0x00FE0000]
 	 */
-	pmeg_mon_init(SUN2_MONEND, SUN2_MONEND + DVMA_MAP_SIZE, FALSE);
+	pmeg_mon_init(SUN2_MONEND, SUN2_MONEND + DVMA_MAP_SIZE, false);
 
 	/*
 	 * Done reserving PMEGs and/or clearing out mappings.
@@ -2041,7 +2041,7 @@ pmap_enter_kernel(vaddr_t pgva, int new_pte, bool wired)
 	}
 
 	segva = m68k_trunc_seg(pgva);
-	do_pv = TRUE;
+	do_pv = true;
 
 	/* Do we have a PMEG? */
 	sme = get_segmap(segva);
@@ -2109,7 +2109,7 @@ pmap_enter_kernel(vaddr_t pgva, int new_pte, bool wired)
 	 * Note we get here only with old_pte having PGT_OBMEM.
 	 */
 	if ((old_pte & (PG_TYPE|PG_FRAME)) == (new_pte & (PG_TYPE|PG_FRAME))) {
-		do_pv = FALSE;		/* re-use pv_entry */
+		do_pv = false;		/* re-use pv_entry */
 		new_pte |= (old_pte & PG_NC);
 		goto add_pte;
 	}
@@ -2123,9 +2123,9 @@ add_pte:	/* can be destructive */
 	/* Anything but MAIN_MEM is mapped non-cached. */
 	if (!IS_MAIN_MEM(new_pte)) {
 		new_pte |= PG_NC;
-		do_pv = FALSE;
+		do_pv = false;
 	}
-	if (do_pv == TRUE) {
+	if (do_pv == true) {
 		if (pv_link(pmap, new_pte, pgva) & PV_NC)
 			new_pte |= PG_NC;
 	}
@@ -2185,7 +2185,7 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 	}
 
 	segva = m68k_trunc_seg(pgva);
-	do_pv = TRUE;
+	do_pv = true;
 
 	/*
 	 * If this pmap was sharing the "empty" context,
@@ -2285,7 +2285,7 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 	 * Note we get here only with old_pte having PGT_OBMEM.
 	 */
 	if ((old_pte & (PG_TYPE|PG_FRAME)) == (new_pte & (PG_TYPE|PG_FRAME))) {
-		do_pv = FALSE;		/* re-use pv_entry */
+		do_pv = false;		/* re-use pv_entry */
 		new_pte |= (old_pte & PG_NC);
 		goto add_pte;
 	}
@@ -2300,9 +2300,9 @@ pmap_enter_user(pmap_t pmap, vaddr_t pgva, int new_pte, bool wired)
 	/* Anything but MAIN_MEM is mapped non-cached. */
 	if (!IS_MAIN_MEM(new_pte)) {
 		new_pte |= PG_NC;
-		do_pv = FALSE;
+		do_pv = false;
 	}
-	if (do_pv == TRUE) {
+	if (do_pv == true) {
 		if (pv_link(pmap, new_pte, pgva) & PV_NC)
 			new_pte |= PG_NC;
 	}
@@ -2411,7 +2411,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #endif
 	}
 
-	pmeg_set_wiring(pmegp, va, TRUE);
+	pmeg_set_wiring(pmegp, va, true);
 
 	/* Anything but MAIN_MEM is mapped non-cached. */
 	if (!IS_MAIN_MEM(new_pte)) {
@@ -2579,7 +2579,7 @@ _pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t ftype)
 /*
  * This is a shortcut used by the trap handler to
  * reload PMEGs into a user segmap without calling
- * the actual VM fault handler.  Returns TRUE if:
+ * the actual VM fault handler.  Returns true if:
  *	the PMEG was reloaded, and
  *	it has a valid PTE at va.
  * Otherwise return zero and let VM code handle it.
@@ -2730,7 +2730,7 @@ pmap_clear_reference(struct vm_page *pg)
 
 /*
  * Tell whether the given physical page has been referenced.
- * It's OK to just return FALSE if page is not mapped.
+ * It's OK to just return false if page is not mapped.
  */
 bool
 pmap_is_referenced(struct vm_page *pg)
@@ -2928,7 +2928,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		db_printf("pmap_extract: invalid va=0x%lx\n", va);
 		Debugger();
 #endif
-		return (FALSE);
+		return (false);
 	}
 	pa = PG_PA(pte);
 #ifdef	DIAGNOSTIC
@@ -2938,7 +2938,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 #endif
 	if (pap != NULL)
 		*pap = pa;
-	return (TRUE);
+	return (true);
 }
 
 
@@ -3058,17 +3058,17 @@ pmap_protect1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	/* There is a PMEG, but maybe not active. */
 	old_ctx = INVALID_CONTEXT;
-	in_ctx = FALSE;
+	in_ctx = false;
 	if (has_context(pmap)) {
 		/* Temporary context change. */
 		old_ctx = get_context();
 		set_context(pmap->pm_ctxnum);
 		sme = get_segmap(sva);
 		if (sme != SEGINV)
-			in_ctx = TRUE;
+			in_ctx = true;
 	}
 
-	if (in_ctx == TRUE)
+	if (in_ctx == true)
 		pmap_protect_mmu(pmap, sva, eva);
 	else
 		pmap_protect_noctx(pmap, sva, eva);
@@ -3295,17 +3295,17 @@ pmap_remove1(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 
 	/* There is a PMEG, but maybe not active. */
 	old_ctx = INVALID_CONTEXT;
-	in_ctx = FALSE;
+	in_ctx = false;
 	if (has_context(pmap)) {
 		/* Temporary context change. */
 		old_ctx = get_context();
 		set_context(pmap->pm_ctxnum);
 		sme = get_segmap(sva);
 		if (sme != SEGINV)
-			in_ctx = TRUE;
+			in_ctx = true;
 	}
 
-	if (in_ctx == TRUE)
+	if (in_ctx == true)
 		pmap_remove_mmu(pmap, sva, eva);
 	else
 		pmap_remove_noctx(pmap, sva, eva);
