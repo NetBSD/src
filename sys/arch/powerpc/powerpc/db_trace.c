@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.44 2007/02/21 23:48:12 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.45 2007/02/22 04:47:07 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.44 2007/02/21 23:48:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45 2007/02/22 04:47:07 matt Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -100,7 +100,7 @@ const struct db_variable * const db_eregs = db_regs + sizeof (db_regs)/sizeof (d
  *	Frame tracing.
  */
 void
-db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	const char *modif, void (*pr)(const char *, ...))
 {
 	db_addr_t frame, lr, *args;
