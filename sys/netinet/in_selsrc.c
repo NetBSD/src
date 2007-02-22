@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.3 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.4 2007/02/22 07:33:48 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.3 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.4 2007/02/22 07:33:48 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -106,6 +106,7 @@ static struct in_ifselsrc default_iss = { 0, {in_index} };
 
 #ifdef GETIFA_DEBUG
 int in_selsrc_debug = 0;
+#endif /* GETIFA_DEBUG */
 
 SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 {
@@ -141,6 +142,7 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 		       "rc = %d\n", __func__, rc);
 		return;
 	}
+#ifdef GETIFA_DEBUG
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
 	    SYSCTL_DESCR("enable source-selection debug messages"),
@@ -149,6 +151,7 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 		       "rc = %d\n", __func__, rc);
 		return;
 	}
+#endif /* GETIFA_DEBUG */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_STRING, "default",
 	    SYSCTL_DESCR("default source selection policy"),
@@ -160,7 +163,6 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 		return;
 	}
 }
-#endif /* GETIFA_DEBUG */
 
 /*
  * Score by address preference: prefer addresses with lower preference
