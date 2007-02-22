@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.31 2007/02/03 16:51:13 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.32 2007/02/22 16:45:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.31 2007/02/03 16:51:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.32 2007/02/22 16:45:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	while (sgsize > 0) {
 		rv = pmap_extract(pmap, kva, &pa);
 #ifdef DIAGNOSTIC
-		if (rv == FALSE)
+		if (rv == false)
 			panic("%s: unmapped VA", __func__);
 #endif
 		pmap_enter(pmap_kernel(), dva, pa | PMAP_NC,

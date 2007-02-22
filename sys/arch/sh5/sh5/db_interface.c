@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18 2007/02/21 22:59:52 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.19 2007/02/22 16:51:43 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.18 2007/02/21 22:59:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.19 2007/02/22 16:51:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -263,7 +263,7 @@ kdb_trap(int type, void *v)
 
 	if (IS_BREAKPOINT_TRAP(type, 0)) {
 		int bkpt;
-		bkpt = db_get_value(PC_REGS(DDB_REGS), BKPT_SIZE, FALSE);
+		bkpt = db_get_value(PC_REGS(DDB_REGS), BKPT_SIZE, false);
 		if (bkpt == BKPT_INST)
 			PC_ADVANCE(DDB_REGS);
 	}
@@ -290,10 +290,10 @@ inst_branch(int inst)
 	case 0x640f0000:	/* BGTU Rm, Rn, TRc */
 	case 0x64050000:	/* BNE  Rm, Rn, TRc */
 	case 0xe4050000:	/* BNEI Rm, imm, TRc */
-		return (TRUE);
+		return (true);
 	}
 
-	return (FALSE);
+	return (false);
 }
 
 bool
@@ -303,9 +303,9 @@ inst_unconditional_flow_transfer(int inst)
 	 * Deal with blink <anything>
 	 */
 	if ((inst & 0xff8ffc0f) == 0x4401fc00)
-		return (TRUE);
+		return (true);
 
-	return (FALSE);
+	return (false);
 }
 
 db_addr_t

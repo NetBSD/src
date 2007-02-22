@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.309 2007/02/22 05:18:29 matt Exp $ */
+/*	$NetBSD: pmap.c,v 1.310 2007/02/22 16:48:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.309 2007/02/22 05:18:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.310 2007/02/22 16:48:59 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6346,7 +6346,7 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 
 	sp = &rp->rg_segmap[vs];
 
-	owired = FALSE;
+	owired = false;
 	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
 		int i;
@@ -6609,7 +6609,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
-	owired = FALSE;
+	owired = false;
 	if (CPU_HAS_SUNMMU) {
 		ptep = &sp->sg_pte[VA_VPG(va)];
 		owired = *ptep & PG_WIRED;
@@ -6661,7 +6661,7 @@ pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid segment (%d)\n", vr);
 #endif
-		return (FALSE);
+		return (false);
 	}
 	sp = &rp->rg_segmap[vs];
 	ptep = sp->sg_pte;
@@ -6670,7 +6670,7 @@ pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid segment\n");
 #endif
-		return (FALSE);
+		return (false);
 	}
 	pte = ptep[VA_VPG(va)];
 
@@ -6679,12 +6679,12 @@ pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid pte\n");
 #endif
-		return (FALSE);
+		return (false);
 	}
 	pte &= PG_PFNUM;
 	if (pap != NULL)
 		*pap = (pte << PGSHIFT) | (va & PGOFSET);
-	return (TRUE);
+	return (true);
 }
 #endif /* SUN4 || SUN4C */
 
@@ -6700,7 +6700,7 @@ pmap_extract4m(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	struct regmap *rp;
 	struct segmap *sp;
 	int pte;
-	int vr, vs, s, v = FALSE;
+	int vr, vs, s, v = false;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -6758,7 +6758,7 @@ pmap_extract4m(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		*pap = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) |
 		    VA_OFF(va);
 
-	v = TRUE;
+	v = true;
 out:
 	if (pm != pmap_kernel())
 		simple_unlock(&pm->pm_lock);

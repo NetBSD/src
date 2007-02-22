@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.89 2007/02/22 16:48:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.89 2007/02/22 16:48:59 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -111,7 +111,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
 	do {
-		if (pmap_extract(upmap, uva, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == false)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
 		pmap_enter(kpmap, kva, pa,
