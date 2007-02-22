@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.113 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.114 2007/02/22 06:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.113 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.114 2007/02/22 06:34:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 				     alimp->rlim_cur;
 			}
 			(void) uvm_map_protect(&p->p_vmspace->vm_map,
-			    addr, addr+size, prot, FALSE);
+			    addr, addr+size, prot, false);
 		}
 		break;
 

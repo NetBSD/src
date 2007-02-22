@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.25 2007/02/21 23:00:05 thorpej Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.26 2007/02/22 06:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.25 2007/02/21 23:00:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.26 2007/02/22 06:34:45 thorpej Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -531,7 +531,7 @@ qc_reap(vmem_t *vm)
 	const qcache_t *prevqc;
 	int i;
 	int qcache_idx_max;
-	bool didsomething = FALSE;
+	bool didsomething = false;
 
 	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
 	prevqc = NULL;
@@ -542,7 +542,7 @@ qc_reap(vmem_t *vm)
 			continue;
 		}
 		if (pool_reclaim(&qc->qc_pool) != 0) {
-			didsomething = TRUE;
+			didsomething = true;
 		}
 		prevqc = qc;
 	}
@@ -1101,13 +1101,13 @@ vmem_add(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags)
 /*
  * vmem_reap: reap unused resources.
  *
- * => return TRUE if we successfully reaped something.
+ * => return true if we successfully reaped something.
  */
 
 bool
 vmem_reap(vmem_t *vm)
 {
-	bool didsomething = FALSE;
+	bool didsomething = false;
 
 	VMEM_ASSERT_UNLOCKED(vm);
 
@@ -1213,7 +1213,7 @@ main()
 			vmem_addr_t minaddr, maxaddr;
 
 			if (t > 70) {
-				x = TRUE;
+				x = true;
 				/* XXX */
 				align = 1 << (rand() % 15);
 				phase = rand() % 65536;
@@ -1244,7 +1244,7 @@ main()
 				p = vmem_xalloc(vm, sz, align, phase, nocross,
 				    minaddr, maxaddr, strat|VM_SLEEP);
 			} else {
-				x = FALSE;
+				x = false;
 				printf("=== alloc %" PRIu64 "\n", (uint64_t)sz);
 				p = vmem_alloc(vm, sz, strat|VM_SLEEP);
 			}

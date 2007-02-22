@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.133 2007/02/21 23:48:13 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.134 2007/02/22 06:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.133 2007/02/21 23:48:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.134 2007/02/22 06:34:43 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -426,7 +426,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	PHOLD(l1);
 
-	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
+	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
 
 	/*
 	 * Finish creating the child process.

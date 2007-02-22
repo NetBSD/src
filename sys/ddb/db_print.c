@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.25 2007/02/22 04:38:06 matt Exp $	*/
+/*	$NetBSD: db_print.c,v 1.26 2007/02/22 06:41:01 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.25 2007/02/22 04:38:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.26 2007/02/22 06:41:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -69,7 +69,7 @@ db_show_regs(db_expr_t addr, bool have_addr,
 			if (offset != 0) {
 				char tbuf[24];
 
-				db_format_radix(tbuf, 24, offset, TRUE);
+				db_format_radix(tbuf, 24, offset, true);
 				db_printf("+%s", tbuf);
 			}
 		}

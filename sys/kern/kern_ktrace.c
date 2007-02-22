@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.115 2007/02/17 22:31:42 pavel Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.116 2007/02/22 06:34:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.115 2007/02/17 22:31:42 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.116 2007/02/22 06:34:43 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -1244,7 +1244,7 @@ again:
 		break;
 
 	case EWOULDBLOCK:
-		kpause("ktrzzz", FALSE, 1, NULL);
+		kpause("ktrzzz", false, 1, NULL);
 		goto again;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.33 2007/02/21 23:00:04 thorpej Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.34 2007/02/22 06:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.33 2007/02/21 23:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.34 2007/02/22 06:37:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -530,7 +530,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	/* Allocate a vnode for the new file. */
 	error = tmpfs_alloc_vp(dvp->v_mount, node, vpp);
 	if (error != 0) {
-		tmpfs_free_dirent(tmp, de, TRUE);
+		tmpfs_free_dirent(tmp, de, true);
 		tmpfs_free_node(tmp, node);
 		goto out;
 	}
@@ -951,7 +951,7 @@ out:
  * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
- * If 'total' is TRUE, the value returned is the total amount of memory 
+ * If 'total' is true, the value returned is the total amount of memory 
  * pages configured for the system (either in use or free).
  * If it is FALSE, the value returned is the amount of free memory pages.
  *
