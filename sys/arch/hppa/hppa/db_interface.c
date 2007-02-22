@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 2007/02/21 23:48:11 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.12 2007/02/22 05:46:28 thorpej Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2007/02/21 23:48:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12 2007/02/22 05:46:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,9 +186,9 @@ kdb_trap(int type, int code, db_regs_t *regs)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(type, code);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 
@@ -213,9 +213,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 {
 	register_t *fp, pc, rp, nargs, *argp;
 	char **argnp, *argnames[HPPA_FRAME_NARGS];
-	bool kernel_only = TRUE;
-	bool trace_thread = FALSE;
-	bool lwpaddr = FALSE;
+	bool kernel_only = true;
+	bool trace_thread = false;
+	bool lwpaddr = false;
 	db_sym_t sym;
 	db_expr_t off;
 	const char *name;
@@ -227,13 +227,13 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 	while ((c = *cp++) != 0) {
 		if (c == 'a') {
-			lwpaddr = TRUE;
-			trace_thread = TRUE;
+			lwpaddr = true;
+			trace_thread = true;
 		}
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = true;
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 	}
 
 	if (!have_addr) {
@@ -308,7 +308,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		for (argp = &fp[-9]; nargs--; argp--) {
 			if (argnp)
 				pr("%s=", *argnp++);
-			pr("%lx%s", db_get_value((int)argp, 4, FALSE),
+			pr("%lx%s", db_get_value((int)argp, 4, false),
 				  nargs? ",":"");
 		}
 		pr(") at ");
