@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.22 2007/02/21 22:59:53 thorpej Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.23 2007/02/22 05:10:30 matt Exp $ */
 
 /*
  * Mach Operating System
@@ -67,11 +67,11 @@ extern db_regs_t	*ddb_regp;
 #define	DDB_FP		(&ddb_regp->db_fpstate)
 
 /* DDB commands not in db_interface.c */
-void	db_dump_ts(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_trap(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_window(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_stack(db_expr_t, int, db_expr_t, const char *);
+void	db_dump_ts(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_trap(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_fpstate(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_window(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_stack(db_expr_t, bool, db_expr_t, const char *);
 
 #define	PC_REGS(regs)	((regs)->db_tf.tf_pc)
 #define	PC_ADVANCE(regs) do {				\

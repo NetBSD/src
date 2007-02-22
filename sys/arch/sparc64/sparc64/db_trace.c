@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.37 2007/02/21 23:48:12 thorpej Exp $ */
+/*	$NetBSD: db_trace.c,v 1.38 2007/02/22 05:10:30 matt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2007/02/21 23:48:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38 2007/02/22 05:10:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,7 +56,7 @@ void db_print_window(uint64_t);
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
-	int             have_addr;
+	bool            have_addr;
 	db_expr_t       count;
 	const char      *modif;
  	void		(*pr) (const char *, ...);
@@ -177,7 +177,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 
 void
-db_dump_window(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_window(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	int i;
 	uint64_t frame = DDB_TF->tf_out[6];
@@ -282,7 +282,7 @@ db_print_window(uint64_t frame)
 }
 
 void
-db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_stack(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	int		i;
 	uint64_t	frame, oldframe;
@@ -339,7 +339,7 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 
 
 void
-db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct trapframe64 *tf;
 
@@ -420,7 +420,7 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 void
-db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_fpstate(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct fpstate64 *fpstate;
 
@@ -508,7 +508,7 @@ db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, const char *modi
 }
 
 void
-db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_ts(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct trapstate	*ts;
 	int			i, tl;
