@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.40 2005/10/13 11:14:09 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.41 2007/02/22 18:57:48 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.40 2005/10/13 11:14:09 skrll Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.41 2007/02/22 18:57:48 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -200,6 +200,27 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	const char     *name;
 	unsigned long   hash;
 
+#ifdef COMBRELOC
+	/*
+	 * COMBRELOC combines multiple reloc sections and sorts them to make
+	 * dynamic symbol lookup caching possible.
+	 *
+	 * So if the lookup we are doing is the same as the previous lookup
+	 * return the cached results.
+	 */
+	static unsigned long last_symnum;
+	static const Elf_Sym *last_def;
+	static const Obj_Entry *last_refobj;
+	static const Obj_Entry *last_defobj;
+	static bool last_in_plt;
+
+	if (symnum == last_symnum && refobj == last_refobj
+	    && in_plt == last_in_plt) {
+		*defobj_out = last_defobj;
+		return last_def;
+	}
+#endif
+
 	ref = refobj->symtab + symnum;
 	name = refobj->strtab + ref->st_name;
 
@@ -233,9 +254,19 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 		defobj = _rtld_objmain;
 	}
 
-	if (def != NULL)
+	if (def != NULL) {
 		*defobj_out = defobj;
-	else {
+#ifdef COMBRELOC
+		/*
+		 * Cache the lookup arguments and results.
+		 */
+		last_symnum = symnum;
+		last_refobj = refobj;
+		last_def = def;
+		last_defobj = defobj;
+		last_in_plt = in_plt;
+#endif
+	} else {
 		rdbg(("lookup failed"));
 		_rtld_error("%s: Undefined %ssymbol \"%s\" (symnum = %ld)",
 		    refobj->path, in_plt ? "PLT " : "", name, symnum);
