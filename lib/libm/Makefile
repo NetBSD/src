@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.77 2006/07/03 16:03:56 drochner Exp $
+#  $NetBSD: Makefile,v 1.78 2007/02/22 22:08:20 drochner Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -48,12 +48,6 @@ USE_SHLIBDIR=	yes
 
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
-
-# XXX our cabs() is different!
-.if ${HAVE_GCC} == 4
-COPTS.w_cabs.c=  -fno-builtin-cabs
-COPTS.w_cabsf.c= -fno-builtin-cabsf
-.endif
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
@@ -136,7 +130,7 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	s_scalbnf.c s_signgam.c s_significand.c s_significandf.c s_sin.c \
 	s_sinf.c s_tan.c s_tanf.c s_tanh.c s_tanhf.c s_trunc.c s_truncf.c \
 	w_acos.c w_acosf.c w_acosh.c w_acoshf.c w_asin.c w_asinf.c w_atan2.c \
-	w_atan2f.c w_atanh.c w_atanhf.c w_cabs.c w_cabsf.c w_cosh.c w_coshf.c \
+	w_atan2f.c w_atanh.c w_atanhf.c w_cosh.c w_coshf.c \
 	w_drem.c w_dremf.c w_exp.c w_expf.c w_fmod.c w_fmodf.c w_gamma.c \
 	w_gamma_r.c w_gammaf.c w_gammaf_r.c w_hypot.c w_hypotf.c w_j0.c \
 	w_j0f.c w_j1.c w_j1f.c w_jn.c w_jnf.c w_lgamma.c w_lgamma_r.c \
@@ -146,6 +140,14 @@ COMMON_SRCS = e_acos.c e_acosf.c e_acosh.c e_acoshf.c e_asin.c e_asinf.c \
 	w_sinh.c w_sinhf.c w_sqrt.c w_sqrtf.c \
 	lrint.c lrintf.c llrint.c llrintf.c lround.c lroundf.c llround.c \
 	llroundf.c s_frexp.c s_ldexp.c s_modf.c
+
+.PATH:	${.CURDIR}/compat
+COMMON_SRCS+= compat_cabs.c compat_cabsf.c
+# XXX our compatibility cabs() is different!
+.if ${HAVE_GCC} == 4
+COPTS.compat_cabs.c=	-fno-builtin-cabs
+COPTS.compat_cabsf.c=	-fno-builtin-cabsf
+.endif
 
 # math routines for non-IEEE architectures.
 NOIEEE_SRCS = n_asincos.c n_acosh.c n_asinh.c n_atan.c n_atanh.c n_cosh.c \
@@ -204,7 +206,7 @@ MLINKS+=exp.3 expf.3 exp.3 expm1.3 exp.3 expm1f.3 exp.3 log.3 exp.3 logf.3 \
 MLINKS+=fabs.3 fabsf.3
 MLINKS+=floor.3 floorf.3
 MLINKS+=fmod.3 fmodf.3
-MLINKS+=hypot.3 hypotf.3 hypot.3 cabs.3 hypot.3 cabsf.3
+MLINKS+=hypot.3 hypotf.3
 MLINKS+=ieee.3 copysign.3 ieee.3 copysignf.3 ieee.3 finite.3 ieee.3 finitef.3 \
 	ieee.3 ilogb.3 ieee.3 ilogbf.3 ieee.3 nextafter.3 ieee.3 nextafterf.3 \
 	ieee.3 remainder.3 ieee.3 remainderf.3 ieee.3 scalbn.3 ieee.3 scalbnf.3

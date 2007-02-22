@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.45 2007/02/06 17:29:37 drochner Exp $	*/
+/*	$NetBSD: math.h,v 1.46 2007/02/22 22:08:19 drochner Exp $	*/
 
 /*
  * ====================================================
@@ -390,9 +390,6 @@ double	scalbn(double, int);
 /*
  * BSD math library entry points
  */
-#ifndef __MATH_PRIVATE__
-double	cabs(/* struct complex { double r; double i; } */);
-#endif
 double	drem(double, double);
 
 #endif /* _NETBSD_SOURCE */
@@ -432,9 +429,6 @@ float	significandf(float);
 /*
  * float versions of BSD math library entry points
  */
-#ifndef __MATH_PRIVATE__
-float	cabsf(/* struct complex { float r; float i; } */);
-#endif
 float	dremf(float, float);
 #endif /* _NETBSD_SOURCE */
 

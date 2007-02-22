@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1008 2007/02/21 21:13:01 mrg Exp $
+#	$NetBSD: mi,v 1.1009 2007/02/22 22:08:17 drochner Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -4052,8 +4052,8 @@
 ./usr/share/man/cat3/buffer.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/byteorder.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bzero.0			comp-c-catman		.cat
-./usr/share/man/cat3/cabs.0			comp-c-catman		.cat
-./usr/share/man/cat3/cabsf.0			comp-c-catman		.cat
+./usr/share/man/cat3/cabs.0			comp-obsolete		obsolete
+./usr/share/man/cat3/cabsf.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/calloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/callrpc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/can_change_color.0		comp-c-catman		.cat
@@ -4822,6 +4822,7 @@
 ./usr/share/man/cat3/isendwin.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isfinite.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isgraph.0			comp-c-catman		.cat
+./usr/share/man/cat3/isgreater.0		comp-c-catman		.cat
 ./usr/share/man/cat3/isinf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/isinff.0			comp-c-catman		.cat
 ./usr/share/man/cat3/islower.0			comp-c-catman		.cat
@@ -8377,8 +8378,8 @@
 ./usr/share/man/man3/buffer.3			comp-obsolete		obsolete
 ./usr/share/man/man3/byteorder.3		comp-c-man		.man
 ./usr/share/man/man3/bzero.3			comp-c-man		.man
-./usr/share/man/man3/cabs.3			comp-c-man		.man
-./usr/share/man/man3/cabsf.3			comp-c-man		.man
+./usr/share/man/man3/cabs.3			comp-obsolete		obsolete
+./usr/share/man/man3/cabsf.3			comp-obsolete		obsolete
 ./usr/share/man/man3/calloc.3			comp-c-man		.man
 ./usr/share/man/man3/callrpc.3			comp-c-man		.man
 ./usr/share/man/man3/can_change_color.3		comp-c-man		.man
@@ -9147,6 +9148,7 @@
 ./usr/share/man/man3/isendwin.3			comp-c-man		.man
 ./usr/share/man/man3/isfinite.3			comp-c-man		.man
 ./usr/share/man/man3/isgraph.3			comp-c-man		.man
+./usr/share/man/man3/isgreater.3		comp-c-man		.man
 ./usr/share/man/man3/isinf.3			comp-c-man		.man
 ./usr/share/man/man3/isinff.3			comp-c-man		.man
 ./usr/share/man/man3/islower.3			comp-c-man		.man
