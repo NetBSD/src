@@ -1,4 +1,4 @@
-/* $NetBSD: db_trace.c,v 1.21 2007/02/21 23:48:10 thorpej Exp $ */
+/* $NetBSD: db_trace.c,v 1.22 2007/02/22 04:51:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.21 2007/02/21 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.22 2007/02/22 04:51:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,8 +204,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	struct proc *p = NULL;
 	struct lwp *l = NULL;
 	char c;
-	bool trace_thread = FALSE;
-	bool lwpaddr = FALSE;
+	bool trace_thread = false;
+	bool lwpaddr = false;
 
 	while ((c = *cp++) != 0) {
 		trace_thread |= c == 't';
@@ -219,7 +219,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		tf = (struct trapframe *)addr;
 		callpc = tf->tf_regs[FRAME_PC];
 		frame = (db_addr_t)tf + FRAME_SIZE * 8;
-		ra_from_tf = TRUE;
+		ra_from_tf = true;
 	} else {
 		if (trace_thread) {
 			if (lwpaddr) {
@@ -250,7 +250,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		}
 		frame = addr;
 		tf = NULL;
-		ra_from_tf = FALSE;
+		ra_from_tf = false;
 	}
 
 	while (count--) {
@@ -324,7 +324,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			}
 			callpc = tf->tf_regs[FRAME_PC];
 			frame = (db_addr_t)tf + FRAME_SIZE * 8;
-			ra_from_tf = TRUE;
+			ra_from_tf = true;
 			continue;
 		}
 
@@ -351,6 +351,6 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		} else
 			callpc = *(u_long *)(frame + pi.pi_reg_offset[26]);
 		frame += pi.pi_frame_size;
-		ra_from_tf = FALSE;
+		ra_from_tf = false;
 	}
 }

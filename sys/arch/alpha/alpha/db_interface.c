@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.23 2007/02/21 22:59:36 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.24 2007/02/22 04:51:26 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.23 2007/02/21 22:59:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2007/02/22 04:51:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -206,11 +206,11 @@ ddb_trap(a0, a1, a2, entry, regs)
 	s = splhigh();
 
 	db_active++;
-	cnpollc(TRUE);		/* Set polling mode, unblank video */
+	cnpollc(true);		/* Set polling mode, unblank video */
 
 	db_trap(entry, a0);	/* Where the work happens */
 
-	cnpollc(FALSE);		/* Resume interrupt mode */
+	cnpollc(false);		/* Resume interrupt mode */
 	db_active--;
 
 	splx(s);
@@ -433,10 +433,10 @@ db_inst_branch(ins)
 	case op_bne:
 	case op_bge:
 	case op_bgt:
-		return (TRUE);
+		return (true);
 	}
 
-	return (FALSE);
+	return (false);
 }
 
 bool
@@ -449,18 +449,18 @@ db_inst_unconditional_flow_transfer(ins)
 	switch (insn.branch_format.opcode) {
 	case op_j:
 	case op_br:
-		return (TRUE);
+		return (true);
 
 	case op_pal:
 		switch (insn.pal_format.function) {
 		case PAL_OSF1_retsys:
 		case PAL_OSF1_rti:
 		case PAL_OSF1_callsys:
-			return (TRUE);
+			return (true);
 		}
 	}
 
-	return (FALSE);
+	return (false);
 }
 
 #if 0
@@ -488,23 +488,23 @@ db_inst_load(ins)
 	if (insn.mem_format.opcode == op_ldbu ||
 	    insn.mem_format.opcode == op_ldq_u ||
 	    insn.mem_format.opcode == op_ldwu)
-		return (TRUE);
+		return (true);
 	if ((insn.mem_format.opcode >= op_ldf) &&
 	    (insn.mem_format.opcode <= op_ldt))
-		return (TRUE);
+		return (true);
 	if ((insn.mem_format.opcode >= op_ldl) &&
 	    (insn.mem_format.opcode <= op_ldq_l))
-		return (TRUE);
+		return (true);
 
 	/* Prefetches. */
 	if (insn.mem_format.opcode == op_special) {
 		/* Note: MB is treated as a store. */
 		if ((insn.mem_format.displacement == (short)op_fetch) ||
 		    (insn.mem_format.displacement == (short)op_fetch_m))
-			return (TRUE);
+			return (true);
 	}
 
-	return (FALSE);
+	return (false);
 }
 
 bool
@@ -519,21 +519,21 @@ db_inst_store(ins)
 	if (insn.mem_format.opcode == op_stw ||
 	    insn.mem_format.opcode == op_stb ||
 	    insn.mem_format.opcode == op_stq_u)
-		return (TRUE);
+		return (true);
 	if ((insn.mem_format.opcode >= op_stf) &&
 	    (insn.mem_format.opcode <= op_stt))
-		return (TRUE);
+		return (true);
 	if ((insn.mem_format.opcode >= op_stl) &&
 	    (insn.mem_format.opcode <= op_stq_c))
-		return (TRUE);
+		return (true);
 
 	/* Barriers. */
 	if (insn.mem_format.opcode == op_special) {
 		if (insn.mem_format.displacement == op_mb)
-			return (TRUE);
+			return (true);
 	}
 
-	return (FALSE);
+	return (false);
 }
 
 db_addr_t
