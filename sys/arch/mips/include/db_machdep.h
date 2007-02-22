@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.20 2007/02/21 22:59:47 thorpej Exp $ */
+/* $NetBSD: db_machdep.h,v 1.21 2007/02/22 05:28:53 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -74,7 +74,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 /*
  * Interface to  disassembly (shared with mdb)
  */
-bool	db_disasm_insn(int insn, db_addr_t loc, bool altfmt);
+db_addr_t	db_disasm_insn(int insn, db_addr_t loc, bool altfmt);
 
 
 /*

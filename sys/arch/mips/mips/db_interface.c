@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.59 2007/02/21 22:59:48 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.60 2007/02/22 05:28:53 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.59 2007/02/21 22:59:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.60 2007/02/22 05:28:53 matt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
@@ -64,9 +64,9 @@ int		db_active = 0;
 db_regs_t	ddb_regs;
 mips_reg_t	kdbaux[11]; /* XXX struct switchframe: better inside curpcb? XXX */
 
-void db_tlbdump_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_kvtophys_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_cp0dump_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_cp0dump_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static void	kdbpoke_4(vaddr_t addr, int newval);
 static void	kdbpoke_2(vaddr_t addr, short newval);
@@ -324,7 +324,7 @@ db_write_bytes(vaddr_t addr, size_t size, const char *data)
 
 #ifndef KGDB
 void
-db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
 
@@ -387,7 +387,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 void
-db_kvtophys_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
 {
 
@@ -434,7 +434,7 @@ do {									\
 } while (0)
 
 void
-db_cp0dump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_cp0dump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
 
