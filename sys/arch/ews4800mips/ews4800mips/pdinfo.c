@@ -1,4 +1,4 @@
-/*	$NetBSD: pdinfo.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $	*/
+/*	$NetBSD: pdinfo.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdinfo.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdinfo.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -60,12 +60,12 @@ pdinfo_sector(void *rwops, struct pdinfo_sector *pdinfo)
 {
 
 	if (!sector_read(rwops, (void *)pdinfo, PDINFO_SECTOR))
-		return FALSE;
+		return false;
 
 	if (!pdinfo_sanity(pdinfo))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -83,7 +83,7 @@ pdinfo_sanity(const struct pdinfo_sector *disk)
 
 	if (!pdinfo_valid(disk)) {
 		DPRINTF("no physical disk info.\n");
-		return FALSE;
+		return false;
 	}
 
 	geom = &disk->geometory;
@@ -129,5 +129,5 @@ pdinfo_sanity(const struct pdinfo_sector *disk)
 		}
 	}
 
-	return TRUE;
+	return true;
 }

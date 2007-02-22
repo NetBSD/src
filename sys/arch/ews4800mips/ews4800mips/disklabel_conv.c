@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel_conv.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $	*/
+/*	$NetBSD: disklabel_conv.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disklabel_conv.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disklabel_conv.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -286,7 +286,7 @@ disklabel_sanity(struct disklabel *d)
 
 	if (d->d_magic != DISKMAGIC || d->d_magic2 != DISKMAGIC ||
 	    dkcksum(d) != 0)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }

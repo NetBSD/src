@@ -1,4 +1,4 @@
-/*	$NetBSD: sector.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $	*/
+/*	$NetBSD: sector.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sector.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ sector_init(dev_t dev, void (*strat)(struct buf *))
 
 	if (rw->busy)
 		return 0;
-	rw->busy = TRUE;
+	rw->busy = true;
 	rw->strategy = strat;
 	rw->buf = geteblk(DEV_BSIZE);
 	rw->buf->b_dev = dev;
@@ -71,7 +71,7 @@ sector_fini(void *self)
 	struct sector_rw *rw = self;
 
 	brelse(rw->buf);
-	rw->busy = FALSE;
+	rw->busy = false;
 }
 
 bool
@@ -81,12 +81,12 @@ sector_read_n(void *self, uint8_t *buf, daddr_t sector, int count)
 
 	for (i = 0; i < count; i++) {
 		if (!sector_read(self, buf, sector))
-			return FALSE;
+			return false;
 		buf += DEV_BSIZE;
 		sector++;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -103,11 +103,11 @@ sector_read(void *self, uint8_t *buf, daddr_t sector)
 	rw->strategy(b);
 
 	if (biowait(b) != 0)
-		return FALSE;
+		return false;
 
 	memcpy(buf, b->b_data, DEV_BSIZE);
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -117,12 +117,12 @@ sector_write_n(void *self, uint8_t *buf, daddr_t sector, int count)
 
 	for (i = 0; i < count; i++) {
 		if (!sector_write(self, buf, sector))
-			return FALSE;
+			return false;
 		buf += DEV_BSIZE;
 		sector++;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -140,7 +140,7 @@ sector_write(void *self, uint8_t *buf, daddr_t sector)
 	rw->strategy(b);
 
 	if (biowait(b) != 0)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }

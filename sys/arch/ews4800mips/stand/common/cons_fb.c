@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_fb.c,v 1.2 2007/02/21 22:59:41 thorpej Exp $	*/
+/*	$NetBSD: cons_fb.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ fb_init(void)
 
 	cons.x = X_INIT;
 	cons.y = Y_INIT;
-	fb.active = TRUE;
+	fb.active = true;
 	fb_clear(0, 0, FB_WIDTH, FB_HEIGHT, CONS_BG);
 }
 

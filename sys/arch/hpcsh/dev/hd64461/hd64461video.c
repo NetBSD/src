@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.38 2007/02/21 22:59:43 thorpej Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.39 2007/02/22 05:39:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.38 2007/02/21 22:59:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.39 2007/02/22 05:39:44 thorpej Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -935,7 +935,7 @@ hd64461video_font_load(struct hd64461video_softc *sc)
 		break;
 	}
 
-	sc->sc_font.loaded = TRUE;
+	sc->sc_font.loaded = true;
 }
 #endif /* HD64461VIDEO_HWACCEL */
 
@@ -1183,7 +1183,7 @@ hd64461video_off(struct hd64461video_chip *vc)
 	callout_stop(&vc->unblank_ch);
 
 	/* turn off display in LCDC */
-	hd64461video_display_onoff(vc, FALSE);
+	hd64461video_display_onoff(vc, false);
 
 	/* turn off the LCD */
 	config_hook_call(CONFIG_HOOK_POWERCONTROL,
@@ -1206,14 +1206,14 @@ hd64461video_on(struct hd64461video_chip *vc)
 		callout_reset(&vc->unblank_ch, hz/2,
 		    hd64461video_display_on, vc);
 	else
-		hd64461video_display_onoff(vc, TRUE);
+		hd64461video_display_onoff(vc, true);
 }
 
 STATIC void
 hd64461video_display_on(void *arg)
 {
 
-	hd64461video_display_onoff(arg, TRUE);
+	hd64461video_display_onoff(arg, true);
 }
 
 STATIC void
