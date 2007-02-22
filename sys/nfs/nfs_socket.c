@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.146 2007/02/21 23:00:08 thorpej Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.147 2007/02/22 06:14:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.146 2007/02/21 23:00:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.147 2007/02/22 06:14:28 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -976,7 +976,7 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	kauth_cred_t acred;
 	struct mbuf *mrest_backup = NULL;
 	kauth_cred_t origcred = NULL; /* XXX: gcc */
-	bool retry_cred = TRUE;
+	bool retry_cred = true;
 	bool use_opencred = (np->n_flag & NUSEOPENCRED) != 0;
 
 	if (rexmitp != NULL)
@@ -1020,7 +1020,7 @@ kerbauth:
 				return (error);
 			}
 		}
-		retry_cred = FALSE;
+		retry_cred = false;
 	} else {
 		/* AUTH_UNIX */
 		uid_t uid;
@@ -1045,7 +1045,7 @@ kerbauth:
 			gid = np->n_vattr->va_gid;
 			if (kauth_cred_geteuid(cred) == uid &&
 			    kauth_cred_getegid(cred) == gid) {
-				retry_cred = FALSE;
+				retry_cred = false;
 				break;
 			}
 			if (use_opencred)
@@ -1059,7 +1059,7 @@ kerbauth:
 			cred = acred;
 			break;
 		default:
-			retry_cred = FALSE;
+			retry_cred = false;
 			break;
 		}
 		/*
@@ -1259,7 +1259,7 @@ tryagain:
 				mrest_backup = NULL;
 				cred = origcred;
 				error = 0;
-				retry_cred = FALSE;
+				retry_cred = false;
 				goto tryagain_cred;
 
 			case NFSERR_EXIST:
@@ -2445,7 +2445,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 
 	*ndp = NULL;
 
-	if (nfsdsock_lock(slp, TRUE)) {
+	if (nfsdsock_lock(slp, true)) {
 		return ENOBUFS;
 	}
 	m = slp->ns_rec;
@@ -2470,7 +2470,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
 	nd->nd_dpos = mtod(m, caddr_t);
-	error = nfs_getreq(nd, nfsd, TRUE);
+	error = nfs_getreq(nd, nfsd, true);
 	if (error) {
 		m_freem(nam);
 		nfsdreq_free(nd);

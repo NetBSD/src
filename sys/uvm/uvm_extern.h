@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.126 2007/02/21 23:00:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.127 2007/02/22 06:05:00 thorpej Exp $	*/
 
 /*
  *
@@ -204,7 +204,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #ifdef PMAP_CACHE_VIVT
 #define UBC_WANT_UNMAP(vp) (((vp)->v_flag & VTEXT) != 0)
 #else
-#define UBC_WANT_UNMAP(vp) FALSE
+#define UBC_WANT_UNMAP(vp) false
 #endif
 
 /*

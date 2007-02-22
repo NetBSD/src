@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.80 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.81 2007/02/22 06:05:01 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.80 2007/02/21 23:00:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.81 2007/02/22 06:05:01 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -92,16 +92,16 @@ uvm_pager_init(void)
 
 	sva = 0;
 	pager_map = uvm_km_suballoc(kernel_map, &sva, &eva, PAGER_MAP_SIZE, 0,
-	    FALSE, NULL);
+	    false, NULL);
 	simple_lock_init(&pager_map_wanted_lock);
-	pager_map_wanted = FALSE;
+	pager_map_wanted = false;
 	emergva = uvm_km_alloc(kernel_map, round_page(MAXPHYS), 0,
 	    UVM_KMF_VAONLY);
 #if defined(DEBUG)
 	if (emergva == 0)
 		panic("emergva");
 #endif
-	emerginuse = FALSE;
+	emerginuse = false;
 
 	/*
 	 * init ASYNC I/O queue
@@ -158,11 +158,11 @@ ReStart:
 			simple_lock(&pager_map_wanted_lock);
 			if (emerginuse) {
 				UVM_UNLOCK_AND_WAIT(&emergva,
-				    &pager_map_wanted_lock, FALSE,
+				    &pager_map_wanted_lock, false,
 				    "emergva", 0);
 				goto ReStart;
 			}
-			emerginuse = TRUE;
+			emerginuse = true;
 			simple_unlock(&pager_map_wanted_lock);
 			kva = emergva;
 			/* The shift implicitly truncates to PAGE_SIZE */
@@ -174,9 +174,9 @@ ReStart:
 			return(0);
 		}
 		simple_lock(&pager_map_wanted_lock);
-		pager_map_wanted = TRUE;
+		pager_map_wanted = true;
 		UVMHIST_LOG(maphist, "  SLEEPING on pager_map",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(pager_map, &pager_map_wanted_lock, FALSE,
+		UVM_UNLOCK_AND_WAIT(pager_map, &pager_map_wanted_lock, false,
 		    "pager_map", 0);
 		goto ReStart;
 	}
@@ -218,7 +218,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	pmap_kremove(kva, npages << PAGE_SHIFT);
 	if (kva == emergva) {
 		simple_lock(&pager_map_wanted_lock);
-		emerginuse = FALSE;
+		emerginuse = false;
 		wakeup(&emergva);
 		simple_unlock(&pager_map_wanted_lock);
 		return;
@@ -228,7 +228,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	uvm_unmap_remove(pager_map, kva, kva + size, &entries, NULL, 0);
 	simple_lock(&pager_map_wanted_lock);
 	if (pager_map_wanted) {
-		pager_map_wanted = FALSE;
+		pager_map_wanted = false;
 		wakeup(pager_map);
 	}
 	simple_unlock(&pager_map_wanted_lock);

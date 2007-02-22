@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.7 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.7 2007/02/21 23:00:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -462,10 +462,10 @@ nonresident_lookupremove(objid_t obj, off_t idx)
 	for (i = 0; i < BUCKETSIZE; i++) {
 		if (b->pages[i] == cookie) {
 			b->pages[i] = NONRES_COOKIE_INVAL;
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 static objid_t
@@ -713,7 +713,7 @@ clockpro_pageenqueue(struct vm_page *pg)
 	s->s_npages++;
 	pg->pqflags &= ~(PQ_HOT|PQ_TEST);
 	if (speculative) {
-		hot = FALSE;
+		hot = false;
 		PDPOL_EVCNT_INCR(speculativeenqueue);
 	} else {
 		hot = nonresident_pagelookupremove(pg);
@@ -1215,9 +1215,9 @@ uvmpdpol_needsscan_p(void)
 	struct clockpro_state * const s = &clockpro;
 
 	if (s->s_ncold < s->s_coldtarget) {
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
 void

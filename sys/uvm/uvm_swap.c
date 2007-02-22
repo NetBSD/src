@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.120 2007/02/22 04:38:07 matt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.121 2007/02/22 06:05:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.120 2007/02/22 04:38:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.121 2007/02/22 06:05:02 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -282,7 +282,7 @@ uvm_swap_init(void)
 	/*
 	 * done!
 	 */
-	uvm.swap_running = TRUE;
+	uvm.swap_running = true;
 	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
 }
 

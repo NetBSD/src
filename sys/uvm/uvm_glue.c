@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.102 2007/02/21 23:00:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.103 2007/02/22 06:05:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.102 2007/02/21 23:00:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.103 2007/02/22 06:05:01 thorpej Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -155,7 +155,7 @@ uvm_chgkprot(caddr_t addr, size_t len, int rw)
 		/*
 		 * Extract physical address for the page.
 		 */
-		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
+		if (pmap_extract(pmap_kernel(), sva, &pa) == false)
 			panic("chgkprot: invalid page");
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
@@ -207,7 +207,7 @@ void
 uvm_proc_fork(struct proc *p1, struct proc *p2, bool shared)
 {
 
-	if (shared == TRUE) {
+	if (shared == true) {
 		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);
 	} else {
@@ -299,12 +299,12 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uaddr;
-		return TRUE;
+		return true;
 	} else {
 		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
 		    UVM_KMF_PAGEABLE);
-		return FALSE;
+		return false;
 	}
 }
 
@@ -460,11 +460,11 @@ void
 uvm_kick_scheduler(void)
 {
 
-	if (uvm.swap_running == FALSE)
+	if (uvm.swap_running == false)
 		return;
 
 	mutex_enter(&uvm.scheduler_mutex);
-	uvm.scheduler_kicked = TRUE;
+	uvm.scheduler_kicked = true;
 	cv_signal(&uvm.scheduler_cv);
 	mutex_exit(&uvm.scheduler_mutex);
 }
@@ -522,10 +522,10 @@ uvm_scheduler(void)
 		 */
 		if ((l = ll) == NULL) {
 			mutex_enter(&uvm.scheduler_mutex);
-			if (uvm.scheduler_kicked == FALSE)
+			if (uvm.scheduler_kicked == false)
 				cv_wait(&uvm.scheduler_cv,
 				    &uvm.scheduler_mutex);
-			uvm.scheduler_kicked = FALSE;
+			uvm.scheduler_kicked = false;
 			mutex_exit(&uvm.scheduler_mutex);
 			continue;
 		}

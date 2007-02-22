@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.78 2007/02/21 23:00:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.79 2007/02/22 06:05:00 thorpej Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.78 2007/02/21 23:00:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.79 2007/02/22 06:05:00 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -978,7 +978,7 @@ ReStart:
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
 			amap_unlock(amap);
-			UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, FALSE,
+			UVM_UNLOCK_AND_WAIT(pg, &anon->an_lock, false,
 			    "cownow", 0);
 			goto ReStart;
 		}
@@ -1196,12 +1196,12 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 	 */
 
 	if (slots < amap->am_nused) {
-		byanon = TRUE;
+		byanon = true;
 		lcv = slotoff;
 		stop = slotoff + slots;
 		slotend = 0;
 	} else {
-		byanon = FALSE;
+		byanon = false;
 		lcv = 0;
 		stop = amap->am_nused;
 		slotend = slotoff + slots;
@@ -1267,7 +1267,7 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
  * => called with swap_syscall_lock held.
  * => note that we don't always traverse all anons.
  *    eg. amaps being wiped out, released anons.
- * => return TRUE if failed.
+ * => return true if failed.
  */
 
 bool
@@ -1278,7 +1278,7 @@ amap_swap_off(int startslot, int endslot)
 	struct vm_amap marker_prev;
 	struct vm_amap marker_next;
 	struct lwp *l = curlwp;
-	bool rv = FALSE;
+	bool rv = false;
 
 #if defined(DIAGNOSTIC)
 	memset(&marker_prev, 0, sizeof(marker_prev));
