@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.80 2007/02/21 22:59:38 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.81 2007/02/22 05:14:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -304,7 +304,7 @@ vtopte(vaddr_t va)
 	pd_entry_t *pdep;
 	pt_entry_t *ptep;
 
-	if (pmap_get_pde_pte(pmap_kernel(), va, &pdep, &ptep) == FALSE)
+	if (pmap_get_pde_pte(pmap_kernel(), va, &pdep, &ptep) == false)
 		return (NULL);
 	return (ptep);
 }
@@ -317,7 +317,7 @@ vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), va, &pa) == false)
 		return (0);	/* XXXSCW: Panic? */
 
 	return (pa);

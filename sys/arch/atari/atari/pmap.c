@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2007/02/21 22:59:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2007/02/22 05:15:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2007/02/21 22:59:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2007/02/22 05:15:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ paddr_t		avail_end;	/* PA of last available physical page */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by the VM system */
-bool		pmap_initialized = FALSE;	/* Has pmap_init completed? */
+bool		pmap_initialized = false;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
@@ -628,7 +628,7 @@ pmap_init()
 	else s = maxproc * ATARI_UPTSIZE;
 
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
-	    TRUE, &pt_map_store);
+	    true, &pt_map_store);
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT)
@@ -642,7 +642,7 @@ pmap_init()
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 
 	/*
 	 * Now that this is done, mark the pages shared with the
@@ -954,7 +954,7 @@ pmap_page_protect(pg, prot)
 	/* copy_on_write */
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pmap_changebit(pa, PG_RO, TRUE);
+		pmap_changebit(pa, PG_RO, true);
 		break;
 	/* remove_all */
 	default:
@@ -1075,8 +1075,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	register u_int *pte;
 	register int npte;
 	paddr_t opa;
-	bool cacheable = TRUE;
-	bool checkpv = TRUE;
+	bool cacheable = true;
+	bool checkpv = true;
 	bool wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
@@ -1138,9 +1138,9 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/*
 		 * Retain cache inhibition status
 		 */
-		checkpv = FALSE;
+		checkpv = false;
 		if (pmap_pte_ci(pte))
-			cacheable = FALSE;
+			cacheable = false;
 		goto validate;
 	}
 
@@ -1230,7 +1230,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * then it must be device memory which may be volitile.
 	 */
 	else if (pmap_initialized) {
-		checkpv = cacheable = FALSE;
+		checkpv = cacheable = false;
 #ifdef DEBUG
 		enter_stats.unmanaged++;
 #endif
@@ -1279,7 +1279,7 @@ validate:
 	if (mmutype == MMU_68040 && pmap == pmap_kernel() && (
 	    (va >= ATARI_UPTBASE && va < (ATARI_UPTBASE + ATARI_UPTMAXSIZE)) ||
 	    (va >= (u_int)Sysmap && va < ((u_int)Sysmap + ATARI_KPTSIZE))))
-		cacheable = FALSE;	/* don't cache user page tables */
+		cacheable = false;	/* don't cache user page tables */
 #endif
 	npte = (pa & PG_FRAME) | pte_prot(pmap, prot) | PG_V;
 	npte |= (*(int *)pte & (PG_M|PG_U));
@@ -1499,7 +1499,7 @@ pmap_unwire(pmap, va)
 	 */
 	if (pmap_pte_w(pte)) {
 		pmap->pm_stats.wired_count--;
-		pmap_pte_set_w(pte, FALSE);
+		pmap_pte_set_w(pte, false);
 	}
 #ifdef DIAGNOSTIC
 	else {
@@ -1522,7 +1522,7 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	bool rv = FALSE;
+	bool rv = false;
 	paddr_t pa;
 	u_int pte;
 
@@ -1536,7 +1536,7 @@ pmap_extract(pmap, va, pap)
 			pa = (pte & PG_FRAME) | (va & ~PG_FRAME);
 			if (pap != NULL)
 				*pap = pa;
-			rv = TRUE;
+			rv = true;
 		}
 	}
 #ifdef DEBUG
@@ -1866,7 +1866,7 @@ pmap_clear_modify(pg)
 		printf("pmap_clear_modify(%lx)\n", pa);
 #endif
 	rv = pmap_testbit(pa, PG_M);
-	pmap_changebit(pa, PG_M, FALSE);
+	pmap_changebit(pa, PG_M, false);
 	return rv;
 }
 
@@ -1888,7 +1888,7 @@ pmap_clear_reference(pg)
 		printf("pmap_clear_reference(%lx)\n", pa);
 #endif
 	rv = pmap_testbit(pa, PG_U);
-	pmap_changebit(pa, PG_U, FALSE);
+	pmap_changebit(pa, PG_U, false);
 	return rv;
 }
 
@@ -2293,7 +2293,7 @@ pmap_testbit(pa, bit)
 
 	if (*pa_to_attribute(pa) & bit) {
 		splx(s);
-		return(TRUE);
+		return(true);
 	}
 
 	/*
@@ -2306,12 +2306,12 @@ pmap_testbit(pa, bit)
 			pte = (int *) pmap_pte(pv->pv_pmap, pv->pv_va);
 			if (*pte & bit) {
 				splx(s);
-				return(TRUE);
+				return(true);
 			}
 		}
 	}
 	splx(s);
-	return(FALSE);
+	return(false);
 }
 
 void
@@ -2326,7 +2326,7 @@ pmap_changebit(pa, bit, setem)
 	int s;
 	bool firstpage;
 
-	firstpage = TRUE;
+	firstpage = true;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2367,7 +2367,7 @@ pmap_changebit(pa, bit, setem)
 #if defined(M68040) || defined(M68060)
 			if (firstpage && mmutype == MMU_68040 &&
 			    ((bit == PG_RO && setem) || (bit & PG_CMASK))) {
-				firstpage = FALSE;
+				firstpage = false;
 				DCFP(pa);
 				ICPP(pa);
 			}
