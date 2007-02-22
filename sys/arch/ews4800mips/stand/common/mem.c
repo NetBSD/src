@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.3 2007/02/21 22:59:42 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.4 2007/02/22 05:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -74,10 +74,10 @@ cmd_mem(int argc, char *argp[], int interactive)
 
 	if (c == 'g') {
 		size = a[3];	/* GA-ROM special */
-		__ga_rom = TRUE;
+		__ga_rom = true;
 	} else {
 		size = a[1] * a[3];
-		__ga_rom = FALSE;
+		__ga_rom = false;
 	}
 
 	p = 0;

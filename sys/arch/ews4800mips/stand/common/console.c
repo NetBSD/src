@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2 2007/02/21 22:59:41 thorpej Exp $	*/
+/*	$NetBSD: console.c,v 1.3 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -63,8 +63,8 @@ console_init(void)
 
 	cons.cursor = nullcursor;
 	cons.scroll = nullscroll;
-	cons.cursor_enable = FALSE;
-	cons.erace_previous_cursor = FALSE;
+	cons.cursor_enable = false;
+	cons.erace_previous_cursor = false;
 
 	switch (SBD_INFO->machine) {
 	case MACHINE_TR2:
@@ -222,9 +222,9 @@ PUTCHAR(int c)
 
 	if (cons.cursor_enable) {
 		cons.cursor(cons.x * ROM_FONT_WIDTH, cons.y * ROM_FONT_HEIGHT);
-		cons.erace_previous_cursor = TRUE;
+		cons.erace_previous_cursor = true;
 	} else {
-		cons.erace_previous_cursor = FALSE;
+		cons.erace_previous_cursor = false;
 	}
 }
 

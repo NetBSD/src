@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.3 2007/02/21 22:59:41 thorpej Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.4 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.3 2007/02/21 22:59:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.4 2007/02/22 05:31:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,15 +160,15 @@ kbms_sbdio_attach(struct device *parent, struct device *self, void *aux)
 
 	if (reg->kbd_csr  == kbms_consreg.kbd_csr &&
 	    reg->kbd_data == kbms_consreg.kbd_data)
-		ka.console = TRUE;
+		ka.console = true;
 	else
-		ka.console = FALSE;
+		ka.console = false;
 
 	ka.keymap = &kbd_keymapdata;
 	ka.accessops = &kbd_accessops;
 	ka.accesscookie = self;
 
-	if (kbd_init(sc) == FALSE) {
+	if (kbd_init(sc) == false) {
 		printf("keyboard not connected\n");
 		return;
 	}
@@ -289,10 +289,10 @@ kbd_init(struct kbms_softc *sc)
 
 	if (retry == 0) {
 		printf("keyboard initialize failed.\n");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -330,10 +330,10 @@ do {									\
 	/* drain buffer */
 	(void)*reg->kbd_data;
 #undef __RETRY_LOOP
-	return TRUE;
+	return true;
  error:
 	printf("retry failed.\n");
-	return FALSE;
+	return false;
 }
 
 void
@@ -438,11 +438,11 @@ kbd_sbdio_cnattach(uint32_t csr, uint32_t data)
 	reg->kbd_csr  = (void *)csr;
 	reg->kbd_data = (void *)data;
 
-	if (kbd_init(sc) == FALSE)
-		return FALSE;
+	if (kbd_init(sc) == false)
+		return false;
 
 	wskbd_cnattach(&kbd_consops, &kbms_consreg, &kbd_keymapdata);
-	return TRUE;
+	return true;
 }
 
 void
@@ -461,13 +461,13 @@ kbd_cngetc(void *arg, u_int *type, int *data)
 void
 kbd_cnpollc(void *arg, int on)
 {
-	static bool __polling = FALSE;
+	static bool __polling = false;
 	static int s;
 
 	if (on && !__polling) {
 		s = splhigh();  /* Disable interrupt driven I/O */
 	} else if (!on && __polling) {
-		__polling = FALSE;
+		__polling = false;
 	splx(s);        /* Enable interrupt driven I/O */
 	}
 }

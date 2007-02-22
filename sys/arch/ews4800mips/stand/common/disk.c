@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.3 2007/02/21 22:59:42 thorpej Exp $	*/
+/*	$NetBSD: disk.c,v 1.4 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -85,14 +85,14 @@ device_attach(int type, int unit, int partition)
 
 	__disk.partition = partition;
 
-	__disk.active = TRUE;
+	__disk.active = true;
 	__disk.offset = 0;
 
 	if (partition >= 0) {
 		if (!find_partition_start(__disk.partition, &__disk.offset)) {
 			printf("type %d, unit %d partition %d not found.\n",
 			    __disk.type, __disk.unit, __disk.partition);
-			return FALSE;
+			return false;
 		}
 	}
 	DEVICE_CAPABILITY.active_device = type;
@@ -108,14 +108,14 @@ device_attach(int type, int unit, int partition)
 		} else {
 			printf("unknown floppy disk format %d.\n",
 			    __disk.format);
-			return FALSE;
+			return false;
 		}
 	} else {
 		printf("unknown disk type %d.\n", __disk.type);
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 int
@@ -165,7 +165,7 @@ void
 sector_fini(void *self)
 {
 
-	__disk.active = FALSE;
+	__disk.active = false;
 }
 
 bool
@@ -173,8 +173,8 @@ sector_read_n(void *self, uint8_t *buf, int sector, int count)
 {
 
 	if (!__sector_rw(buf, sector, 0, count))
-		return FALSE;
-	return TRUE;
+		return false;
+	return true;
 }
 
 bool
@@ -189,8 +189,8 @@ sector_write_n(void *self, uint8_t *buf, int sector, int count)
 {
 
 	if (!__sector_rw(buf, sector, 0x1000, count))
-		return FALSE;
-	return TRUE;
+		return false;
+	return true;
 }
 
 bool
