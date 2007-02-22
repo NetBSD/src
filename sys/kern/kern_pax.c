@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.14 2007/02/21 23:00:04 thorpej Exp $ */
+/* $NetBSD: kern_pax.c,v 1.15 2007/02/22 06:34:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -333,10 +333,10 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 * See if it's a culprit we're familiar with.
 	 */
 	uid = kauth_cred_getuid(l->l_cred);
-	have_uid = FALSE;
+	have_uid = false;
 	LIST_FOREACH(up, &p->segv_uids, sue_list) {
 		if (up->sue_uid == uid) {
-			have_uid = TRUE;
+			have_uid = true;
 			break;
 		}
 	}

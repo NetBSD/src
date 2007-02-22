@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_optstr.c,v 1.3 2007/02/21 23:00:05 thorpej Exp $	*/
+/*	$NetBSD: subr_optstr.c,v 1.4 2007/02/22 06:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.3 2007/02/21 23:00:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.4 2007/02/22 06:34:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/optstr.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.3 2007/02/21 23:00:05 thorpej Exp 
 /*
  * Given an options string of the form 'a=b c=d ... y=z' and a key,
  * looks for the given key's value in the string and returns it in buf
- * with a maximum of bufsize bytes.  If the key is found, returns TRUE;
+ * with a maximum of bufsize bytes.  If the key is found, returns true;
  * otherwise FALSE.
  */
 bool
@@ -55,7 +55,7 @@ optstr_get(const char *optstr, const char *key, char *buf, size_t bufsize)
 {
 	bool found;
 
-	found = FALSE;
+	found = false;
 
 	/* Skip any initial spaces until we find a word. */
 	while (*optstr == ' ' && *optstr != '\0')
@@ -73,7 +73,7 @@ optstr_get(const char *optstr, const char *key, char *buf, size_t bufsize)
 		}
 
 		if (*optstr == '=' && *keyp == '\0')
-			found = TRUE;
+			found = true;
 		else {
 			/* Key not found; skip until next space. */
 			while (*optstr != ' ' && *optstr != '\0')

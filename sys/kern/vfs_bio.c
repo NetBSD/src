@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.168 2007/02/09 21:55:32 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.169 2007/02/22 06:34:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.168 2007/02/09 21:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.169 2007/02/22 06:34:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ bufinit(void)
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
 		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-					  bufmem_valimit, 0, FALSE, 0);
+					  bufmem_valimit, 0, false, 0);
 		if (buf_map == NULL)
 			panic("bufinit: cannot allocate submap");
 	} else

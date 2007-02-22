@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.96 2007/02/21 23:00:04 thorpej Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.97 2007/02/22 06:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.96 2007/02/21 23:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.97 2007/02/22 06:34:44 thorpej Exp $");
 
 #include "opt_veriexec.h"
 
@@ -513,7 +513,7 @@ veriexec_get(struct vnode *vp)
 bool
 veriexec_lookup(struct vnode *vp)
 {
-	return (veriexec_get(vp) == NULL ? FALSE : TRUE);
+	return (veriexec_get(vp) == NULL ? false : true);
 }
 
 /*
@@ -537,9 +537,9 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	vfe = veriexec_get(vp);
 	if (found != NULL) {
 		if (vfe != NULL)
-			*found = TRUE;
+			*found = true;
 		else
-			*found = FALSE;
+			*found = false;
 	}
 	if (vfe == NULL)
 		goto out;
@@ -1040,9 +1040,9 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 
 		if (strcmp(vfe->ops->type, fp_type) ||
 		    memcmp(hh->fp, vfe->fp, hh->ops->hash_len))
-			fp_mismatch = TRUE;
+			fp_mismatch = true;
 		else
-			fp_mismatch = FALSE;
+			fp_mismatch = false;
 
 		if ((veriexec_verbose >= 1) || fp_mismatch)
 			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
@@ -1229,7 +1229,7 @@ veriexec_unmountchk(struct mount *mp)
 int
 veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 {
-	bool monitored = FALSE;
+	bool monitored = false;
 	int error = 0;
 
 	if (vp == NULL) {

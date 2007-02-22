@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.25 2007/02/21 23:00:04 thorpej Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.26 2007/02/22 06:37:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -456,7 +456,7 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 {
 	size_t freepages;
 
-	freepages = tmpfs_mem_info(FALSE);
+	freepages = tmpfs_mem_info(false);
 	if (freepages < TMPFS_PAGES_RESERVED)
 		freepages = 0;
 	else

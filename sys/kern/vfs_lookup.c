@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.83 2007/02/21 23:00:05 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.84 2007/02/22 06:34:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.83 2007/02/21 23:00:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.84 2007/02/22 06:34:45 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -217,10 +217,10 @@ pathname_get(const char *dirp, enum uio_seg segflg, pathname_t *path)
 			*path = NULL;
 			return (error);
 		}
-		(*path)->needfree = TRUE;
+		(*path)->needfree = true;
 	} else {
 		(*path)->pathbuf = __UNCONST(dirp);
-		(*path)->needfree = FALSE;
+		(*path)->needfree = false;
 	}
 
 	return (0);

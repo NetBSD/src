@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.239 2007/02/19 15:10:04 cube Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.240 2007/02/22 06:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.239 2007/02/19 15:10:04 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.240 2007/02/22 06:34:43 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -282,7 +282,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 #endif /* NVERIEXEC > 0 */
 
 #ifdef PAX_SEGVGUARD
-	error = pax_segvguard(l, vp, ndp->ni_cnd.cn_pnbuf, FALSE);
+	error = pax_segvguard(l, vp, ndp->ni_cnd.cn_pnbuf, false);
 	if (error)
 		goto bad2;
 #endif /* PAX_SEGVGUARD */
@@ -794,7 +794,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * anything that might block.
 		 */
 		proc_crmod_enter();
-		proc_crmod_leave(NULL, NULL, TRUE);
+		proc_crmod_leave(NULL, NULL, true);
 
 		/* Make sure file descriptors 0..2 are in use. */
 		if ((error = fdcheckstd(l)) != 0) {

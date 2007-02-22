@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.67 2007/02/17 22:31:43 pavel Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.68 2007/02/22 06:34:44 thorpej Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.67 2007/02/17 22:31:43 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.68 2007/02/22 06:34:44 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -920,7 +920,7 @@ systrace_seteuid(struct lwp *l, uid_t euid)
 
 	oeuid = kauth_cred_geteuid(cred);
 	if (oeuid == euid) {
-		proc_crmod_leave(cred, ncred, FALSE);
+		proc_crmod_leave(cred, ncred, false);
 		return (oeuid);
 	}
 
@@ -929,7 +929,7 @@ systrace_seteuid(struct lwp *l, uid_t euid)
 	kauth_cred_seteuid(ncred, euid);
 
 	/* Broadcast our credentials to the process and other LWPs. */
-	proc_crmod_leave(ncred, cred, TRUE);
+	proc_crmod_leave(ncred, cred, true);
 
 	return (oeuid);
 }
@@ -947,7 +947,7 @@ systrace_setegid(struct lwp *l, gid_t egid)
 
 	oegid = kauth_cred_getegid(cred);
 	if (oegid == egid) {
-		proc_crmod_leave(cred, ncred, FALSE);
+		proc_crmod_leave(cred, ncred, false);
 		return (oegid);
 	}
 
@@ -956,7 +956,7 @@ systrace_setegid(struct lwp *l, gid_t egid)
 	kauth_cred_setegid(ncred, egid);
 
 	/* Broadcast our credentials to the process and other LWPs. */
-	proc_crmod_leave(cred, ncred, TRUE);
+	proc_crmod_leave(cred, ncred, true);
 
 	return (oegid);
 }

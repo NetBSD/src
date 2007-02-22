@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.5 2007/02/21 23:00:03 thorpej Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.6 2007/02/22 06:37:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.5 2007/02/21 23:00:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.6 2007/02/22 06:37:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -78,7 +78,7 @@ sysvbfs_bfs_init(struct bfs **bfsp, struct vnode *vp)
 	bio->vp = vp;
 	bio->cred = NOCRED;	/* sysvbfs layer check cred. */
 
-	return bfs_init2(bfsp, 0, (struct sector_io_ops *)bio, FALSE);
+	return bfs_init2(bfsp, 0, (struct sector_io_ops *)bio, false);
 }
 
 void
@@ -96,12 +96,12 @@ bc_read_n(void *self, uint8_t *buf, daddr_t block, int count)
 
 	for (i = 0; i < count; i++) {
 		if (!bc_read(self, buf, block))
-			return FALSE;
+			return false;
 		buf += DEV_BSIZE;
 		block++;
 	}
 
-	return TRUE;
+	return true;
 }
 
 STATIC bool
@@ -115,14 +115,14 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 	memcpy(buf, bp->b_data, DEV_BSIZE);
 	brelse(bp);
 
-	return TRUE;
+	return true;
  error_exit:
 	printf("%s: block %lld read failed.\n", __FUNCTION__, 
 	    (long long int)block);
 
 	if (bp != NULL)
 		brelse(bp);
-	return FALSE;
+	return false;
 }
 
 STATIC bool
@@ -132,12 +132,12 @@ bc_write_n(void *self, uint8_t *buf, daddr_t block, int count)
 
 	for (i = 0; i < count; i++) {
 		if (!bc_write(self, buf, block))
-			return FALSE;
+			return false;
 		buf += DEV_BSIZE;
 		block++;
 	}
 
-	return TRUE;
+	return true;
 }
 
 STATIC bool
@@ -151,14 +151,14 @@ bc_write(void *self, uint8_t *buf, daddr_t block)
 #endif
 	if ((bp = getblk(bio->vp, block, DEV_BSIZE, 0, 0)) == 0) {
 		printf("getblk failed.\n");
-		return FALSE;
+		return false;
 	}
 	memcpy(bp->b_data, buf, DEV_BSIZE);
 
 	if (bwrite(bp) != 0) {
 		printf("bwrite failed.\n");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }

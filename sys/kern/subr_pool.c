@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.126 2007/02/21 23:00:05 thorpej Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.127 2007/02/22 06:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.126 2007/02/21 23:00:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.127 2007/02/22 06:34:44 thorpej Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -481,7 +481,7 @@ pa_starved_p(struct pool_allocator *pa)
 	if (pa->pa_backingmap != NULL) {
 		return vm_map_starved_p(pa->pa_backingmap);
 	}
-	return FALSE;
+	return false;
 }
 
 static int
@@ -2371,7 +2371,7 @@ pool_allocator_free(struct pool *pp, void *v)
 void *
 pool_page_alloc(struct pool *pp, int flags)
 {
-	bool waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+	bool waitok = (flags & PR_WAITOK) ? true : false;
 
 	return ((void *) uvm_km_alloc_poolpage_cache(kmem_map, waitok));
 }
@@ -2386,7 +2386,7 @@ pool_page_free(struct pool *pp, void *v)
 static void *
 pool_page_alloc_meta(struct pool *pp, int flags)
 {
-	bool waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+	bool waitok = (flags & PR_WAITOK) ? true : false;
 
 	return ((void *) uvm_km_alloc_poolpage(kmem_map, waitok));
 }
@@ -2438,7 +2438,7 @@ pool_subpage_free_nointr(struct pool *pp, void *v)
 void *
 pool_page_alloc_nointr(struct pool *pp, int flags)
 {
-	bool waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+	bool waitok = (flags & PR_WAITOK) ? true : false;
 
 	return ((void *) uvm_km_alloc_poolpage_cache(kernel_map, waitok));
 }

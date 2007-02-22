@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.40 2007/02/21 22:59:56 thorpej Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.41 2007/02/22 06:41:00 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.40 2007/02/21 22:59:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_aout.c,v 1.41 2007/02/22 06:41:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ db_aout_sym_init(
 	if (ALIGNED_POINTER(vsymtab, long) == 0) {
 		printf("[ %s symbol table has bad start address %p ]\n",
 		    name, vsymtab);
-		return (FALSE);
+		return (false);
 	}
 
 	/*
@@ -120,7 +120,7 @@ db_aout_sym_init(
 	if (ALIGNED_POINTER(strtab, int) == 0) {
 		printf("[ %s symbol table has bad string table address %p ]\n",
 		    name, strtab);
-		return (FALSE);
+		return (false);
 	}
 	slen = *(int *)strtab;
 
@@ -131,7 +131,7 @@ db_aout_sym_init(
 
 	if (round_to_size(estrtab) != round_to_size(vesymtab)) {
 		printf("[ %s a.out symbol table not valid ]\n", name);
-		return (FALSE);
+		return (false);
 	}
 #undef	round_to_size
 
@@ -151,16 +151,16 @@ db_aout_sym_init(
 	}
 
 	if (bad)
-		return (FALSE);
+		return (false);
 
 	if (db_add_symbol_table((char *)sym_start, (char *)sym_end, name,
 	    NULL) !=  -1) {
 		printf("[ using %ld bytes of %s a.out symbol table ]\n",
 			  (long)vesymtab - (long)vsymtab, name);
-		return (TRUE);
+		return (true);
 	}
 
-	return (FALSE);
+	return (false);
 }
 
 static db_sym_t
@@ -303,10 +303,10 @@ db_aout_line_at_pc(db_symtab_t *symtab, db_sym_t cursym,
 	if (fname != NULL && ln != 0) {
 		*filename = fname;
 		*linenum = ln;
-		return TRUE;
+		return true;
 	}
 
-	return (FALSE);
+	return (false);
 }
 
 static bool
@@ -319,7 +319,7 @@ db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 	static char question[] = "???";
 
 	if ((struct nlist *)cursym == NULL)
-		return FALSE;
+		return false;
 
 	symtab = &db_symtabs;
 
@@ -343,10 +343,10 @@ db_aout_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 				}
 			}
 			*nargp = nargs;
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 static void

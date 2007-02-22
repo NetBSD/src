@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.94 2007/02/22 04:38:05 matt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.95 2007/02/22 06:41:00 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.94 2007/02/22 04:38:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.95 2007/02/22 06:41:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -100,7 +100,7 @@ db_addr_t	db_next;
  * and '+' points to next line.
  * Otherwise: 'dot' points to next item, '..' points to last.
  */
-static bool	 db_ed_style = TRUE;
+static bool	 db_ed_style = true;
 
 static void	db_buf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_cmd_list(const struct db_command *);
@@ -395,7 +395,7 @@ db_command(const struct db_command **last_cmdp,
 	int		t;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
-	bool		have_addr = FALSE;
+	bool		have_addr = false;
 	int		result;
 	static db_expr_t last_count = 0;
 
@@ -417,7 +417,7 @@ db_command(const struct db_command **last_cmdp,
 			}
 		} else
 			count = last_count;
-		have_addr = FALSE;
+		have_addr = false;
 		modif[0] = '\0';
 		db_skip_to_eol();
 	} else if (t == tEXCL) {
@@ -481,10 +481,10 @@ db_command(const struct db_command **last_cmdp,
 			if (db_expression(&addr)) {
 				db_dot = (db_addr_t) addr;
 				db_last_addr = db_dot;
-				have_addr = TRUE;
+				have_addr = true;
 			} else {
 				addr = (db_expr_t) db_dot;
-				have_addr = FALSE;
+				have_addr = false;
 			}
 			t = db_read_token();
 			if (t == tCOMMA) {
@@ -534,12 +534,12 @@ static void
 db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-	bool full = FALSE;
+	bool full = false;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = true;
 
-	if (have_addr == FALSE)
+	if (have_addr == false)
 		addr = (db_expr_t)(intptr_t) kernel_map;
 
 	uvm_map_printit((struct vm_map *)(intptr_t) addr, full, db_printf);
@@ -566,10 +566,10 @@ static void
 db_object_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool full = FALSE;
+	bool full = false;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = true;
 
 	uvm_object_printit((struct uvm_object *)(intptr_t) addr, full,
 	    db_printf);
@@ -580,10 +580,10 @@ static void
 db_page_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool full = FALSE;
+	bool full = false;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = true;
 
 	uvm_page_printit((struct vm_page *)(intptr_t) addr, full, db_printf);
 }
@@ -602,10 +602,10 @@ static void
 db_buf_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool full = FALSE;
+	bool full = false;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = true;
 
 	vfs_buf_print((struct buf *)(intptr_t) addr, full, db_printf);
 }
@@ -615,10 +615,10 @@ static void
 db_event_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool full = FALSE;
+	bool full = false;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = true;
 
 	event_print(full, db_printf);
 }
@@ -628,10 +628,10 @@ static void
 db_vnode_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool full = FALSE;
+	bool full = false;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = true;
 
 	vfs_vnode_print((struct vnode *)(intptr_t) addr, full, db_printf);
 }
@@ -640,10 +640,10 @@ static void
 db_mount_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool full = FALSE;
+	bool full = false;
 
 	if (modif[0] == 'f')
-		full = TRUE;
+		full = true;
 
 	vfs_mount_print((struct mount *)(intptr_t) addr, full, db_printf);
 }
