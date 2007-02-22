@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.12 2007/02/22 05:46:28 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13 2007/02/22 22:17:02 skrll Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.12 2007/02/22 05:46:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2007/02/22 22:17:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,9 +206,8 @@ db_valid_breakpoint(db_addr_t addr)
 	return (1);
 }
 
-
 void
-db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
 	register_t *fp, pc, rp, nargs, *argp;
