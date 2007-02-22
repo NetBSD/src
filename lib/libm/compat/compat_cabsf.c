@@ -7,10 +7,9 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_cabsf.c,v 1.4 2001/01/06 00:15:00 christos Exp $");
+__RCSID("$NetBSD: compat_cabsf.c,v 1.1 2007/02/22 22:08:19 drochner Exp $");
 #endif
 
-#define __MATH_PRIVATE__
 #include <math.h>
 
 struct complex {
@@ -19,10 +18,11 @@ struct complex {
 };
 
 float cabsf __P((struct complex));
+__warn_references(cabsf, "warning: reference to compatibility cabsf()");
 
 float
-cabsf(z)
-	struct complex z;
+cabsf(struct complex z)
 {
+
 	return hypotf(z.x, z.y);
 }
