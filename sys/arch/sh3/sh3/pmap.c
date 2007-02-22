@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2007/02/21 22:59:51 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2007/02/22 16:52:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2007/02/21 22:59:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2007/02/22 16:52:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,12 +429,12 @@ __pmap_map_change(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	if ((pte = __pmap_pte_lookup(pmap, va)) == NULL ||
 	    ((oentry = *pte) == 0))
-		return (FALSE);		/* no mapping exists. */
+		return (false);		/* no mapping exists. */
 
 	if (pa != (oentry & PG_PPN)) {
 		/* Enter a mapping at a mapping to another physical page. */
 		pmap_remove(pmap, va, eva);
-		return (FALSE);
+		return (false);
 	}
 
 	/* Pre-existing mapping */
@@ -454,10 +454,10 @@ __pmap_map_change(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	} else if (entry & _PG_WIRED) {
 		/* unwired -> wired. make sure to reflect "flags" */
 		pmap_remove(pmap, va, eva);
-		return (FALSE);
+		return (false);
 	}
 
-	return (TRUE);	/* mapping was changed. */
+	return (true);	/* mapping was changed. */
 }
 
 /*
@@ -633,17 +633,17 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pmap == pmap_kernel() && (va >> 30) == 2) {
 		if (pap != NULL)
 			*pap = va & SH3_PHYS_MASK;
-		return (TRUE);
+		return (true);
 	}
 
 	pte = __pmap_pte_lookup(pmap, va);
 	if (pte == NULL || *pte == 0)
-		return (FALSE);
+		return (false);
 
 	if (pap != NULL)
 		*pap = (*pte & PG_PPN) | (va & PGOFSET);
 
-	return (TRUE);
+	return (true);
 }
 
 void
@@ -790,7 +790,7 @@ bool
 pmap_is_referenced(struct vm_page *pg)
 {
 
-	return ((pg->mdpage.pvh_flags & PVH_REFERENCED) ? TRUE : FALSE);
+	return ((pg->mdpage.pvh_flags & PVH_REFERENCED) ? true : false);
 }
 
 bool
@@ -804,7 +804,7 @@ pmap_clear_reference(struct vm_page *pg)
 	int s;
 
 	if ((pg->mdpage.pvh_flags & PVH_REFERENCED) == 0)
-		return (FALSE);
+		return (false);
 
 	pg->mdpage.pvh_flags &= ~PVH_REFERENCED;
 
@@ -825,14 +825,14 @@ pmap_clear_reference(struct vm_page *pg)
 	}
 	splx(s);
 
-	return (TRUE);
+	return (true);
 }
 
 bool
 pmap_is_modified(struct vm_page *pg)
 {
 
-	return ((pg->mdpage.pvh_flags & PVH_MODIFIED) ? TRUE : FALSE);
+	return ((pg->mdpage.pvh_flags & PVH_MODIFIED) ? true : false);
 }
 
 bool
@@ -848,14 +848,14 @@ pmap_clear_modify(struct vm_page *pg)
 
 	modified = pvh->pvh_flags & PVH_MODIFIED;
 	if (!modified)
-		return (FALSE);
+		return (false);
 
 	pvh->pvh_flags &= ~PVH_MODIFIED;
 
 	s = splvm();
 	if (SLIST_EMPTY(&pvh->pvh_head)) {/* no map on this page */
 		splx(s);
-		return (TRUE);
+		return (true);
 	}
 
 	/* Write-back and invalidate TLB entry */
@@ -880,7 +880,7 @@ pmap_clear_modify(struct vm_page *pg)
 	}
 	splx(s);
 
-	return (TRUE);
+	return (true);
 }
 
 paddr_t
@@ -1017,7 +1017,7 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 	/* Lookup page table entry */
 	if (((pte = __pmap_pte_lookup(pmap, va)) == NULL) ||
 	    ((entry = *pte) == 0))
-		return (FALSE);
+		return (false);
 
 	KDASSERT(va != 0);
 
@@ -1038,7 +1038,7 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 	if (pmap->pm_asid != -1)
 		sh_tlb_update(pmap->pm_asid, va, entry);
 
-	return (TRUE);
+	return (true);
 }
 
 /*
