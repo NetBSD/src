@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.56 2007/02/21 04:33:41 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.57 2007/02/22 01:04:18 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.56 2007/02/21 04:33:41 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.57 2007/02/22 01:04:18 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,7 @@ static int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 static int	hpc_submatch(struct device *, struct cfdata *,
 		     const int *, void *);
 
-static int	hpc_power_intr(void *);
+//static int	hpc_power_intr(void *);
 
 #if defined(BLINK)
 static struct callout hpc_blink_ch = CALLOUT_INITIALIZER;
@@ -660,6 +660,7 @@ hpc_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+#if 0
 static int
 hpc_power_intr(void *arg)
 {
@@ -675,6 +676,7 @@ hpc_power_intr(void *arg)
 
 	return 1;
 }
+#endif
 
 #if defined(BLINK)
 static void
