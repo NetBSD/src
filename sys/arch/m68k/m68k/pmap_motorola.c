@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.23 2007/02/21 22:59:46 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.24 2007/02/22 13:50:36 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.23 2007/02/21 22:59:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.24 2007/02/22 13:50:36 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -309,7 +309,7 @@ void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 bool	pmap_testbit(paddr_t, int);
 bool	pmap_changebit(paddr_t, int, int);
-bool	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
+int	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
 void	pmap_ptpage_addref(vaddr_t);
 int	pmap_ptpage_delref(vaddr_t);
 void	pmap_collect1(pmap_t, paddr_t, paddr_t);
