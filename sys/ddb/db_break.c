@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.25 2007/02/22 04:38:04 matt Exp $	*/
+/*	$NetBSD: db_break.c,v 1.26 2007/02/22 06:41:00 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.25 2007/02/22 04:38:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.26 2007/02/22 06:41:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -156,7 +156,7 @@ db_find_breakpoint_here(db_addr_t addr)
 	return db_find_breakpoint(db_map_addr(addr), addr);
 }
 
-static bool db_breakpoints_inserted = TRUE;
+static bool db_breakpoints_inserted = true;
 
 void
 db_set_breakpoints(void)
@@ -170,12 +170,12 @@ db_set_breakpoints(void)
 		     bkpt = bkpt->link)
 			if (db_map_current(bkpt->map)) {
 				bkpt->bkpt_inst = db_get_value(bkpt->address,
-				    BKPT_SIZE, FALSE);
+				    BKPT_SIZE, false);
 				db_put_value(bkpt->address,
 				    BKPT_SIZE,
 				    BKPT_SET(bkpt->bkpt_inst, bkpt->address));
 			}
-		db_breakpoints_inserted = TRUE;
+		db_breakpoints_inserted = true;
 	}
 }
 
@@ -192,7 +192,7 @@ db_clear_breakpoints(void)
 			if (db_map_current(bkpt->map))
 			    db_put_value(bkpt->address, BKPT_SIZE,
 				bkpt->bkpt_inst);
-		db_breakpoints_inserted = FALSE;
+		db_breakpoints_inserted = false;
 	}
 }
 

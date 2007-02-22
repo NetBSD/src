@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.78 2007/02/21 23:00:04 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.79 2007/02/22 06:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.78 2007/02/21 23:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.79 2007/02/22 06:34:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	PHOLD(l);
 
 	for (i = 0; i < uio->uio_iovcnt; i++) {
-		bool sync = TRUE;
+		bool sync = true;
 
 		iovp = &uio->uio_iov[i];
 		while (iovp->iov_len > 0) {
@@ -384,14 +384,14 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				    todo);
 #endif /* defined(DIAGNOSTIC) */
 
-			sync = FALSE;
+			sync = false;
 			endp = (vaddr_t)bp->b_data + todo;
 			if (trunc_page(endp) != endp) {
 				/*
 				 * following requests can overlap.
 				 * note that uvm_vslock does round_page.
 				 */
-				sync = TRUE;
+				sync = true;
 			}
 
 			/*

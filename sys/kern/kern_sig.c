@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.248 2007/02/21 23:48:14 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.249 2007/02/22 06:34:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.248 2007/02/21 23:48:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.249 2007/02/22 06:34:44 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -1625,7 +1625,7 @@ issignal(struct lwp *l)
 		 * we awaken, check for a signal from the debugger.
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
-			sigswitch(TRUE, PS_NOCLDSTOP, 0);
+			sigswitch(true, PS_NOCLDSTOP, 0);
 			signo = sigchecktrace(&sp);
 		} else
 			signo = 0;
@@ -1734,7 +1734,7 @@ issignal(struct lwp *l)
 				(void)sigget(sp, NULL, signo, NULL);
 				p->p_xstat = signo;
 				signo = 0;
-				sigswitch(TRUE, PS_NOCLDSTOP, p->p_xstat);
+				sigswitch(true, PS_NOCLDSTOP, p->p_xstat);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -1976,7 +1976,7 @@ sigexit(struct lwp *l, int signo)
 		}
 
 #ifdef PAX_SEGVGUARD
-		pax_segvguard(l, p->p_textvp, p->p_comm, TRUE);
+		pax_segvguard(l, p->p_textvp, p->p_comm, true);
 #endif /* PAX_SEGVGUARD */
 	}
 
@@ -2080,8 +2080,8 @@ proc_stop_callout(void *cookie)
 	(void)cookie;
 
 	do {
-		restart = FALSE;
-		more = FALSE;
+		restart = false;
+		more = false;
 
 		mutex_enter(&proclist_mutex);
 		PROCLIST_FOREACH(p, &allproc) {
@@ -2120,12 +2120,12 @@ proc_stop_callout(void *cookie)
 					 * Arrange to restart and check
 					 * all processes again.
 					 */
-					restart = TRUE;
+					restart = true;
 					child_psignal(p, PS_NOCLDSTOP);
 					cv_broadcast(&p->p_pptr->p_waitcv);
 				}
 			} else
-				more = TRUE;
+				more = true;
 
 			mutex_exit(&p->p_smutex);
 			if (restart)

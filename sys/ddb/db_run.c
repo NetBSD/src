@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.29 2007/02/22 04:38:06 matt Exp $	*/
+/*	$NetBSD: db_run.c,v 1.30 2007/02/22 06:41:01 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.29 2007/02/22 04:38:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.30 2007/02/22 06:41:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -103,7 +103,7 @@ db_stop_at_pc(db_regs_t *regs, bool *is_breakpoint)
 	 * really a breakpoint so that we don't skip over the real instruction.
 	 */
 	if (db_taken_bkpt.address == pc || db_not_taken_bkpt.address == pc)
-		*is_breakpoint = FALSE;
+		*is_breakpoint = false;
 #endif	/* SOFTWARE_SSTEP */
 
 	db_clear_single_step(regs);
@@ -117,8 +117,8 @@ db_stop_at_pc(db_regs_t *regs, bool *is_breakpoint)
 	if (bkpt) {
 		if (--bkpt->count == 0) {
 			bkpt->count = bkpt->init_count;
-			*is_breakpoint = TRUE;
-			return (TRUE);	/* stop here */
+			*is_breakpoint = true;
+			return (true);	/* stop here */
 		}
 	} else if (*is_breakpoint) {
 #ifdef PC_ADVANCE
@@ -128,14 +128,14 @@ db_stop_at_pc(db_regs_t *regs, bool *is_breakpoint)
 #endif
 	}
 
-	*is_breakpoint = FALSE;
+	*is_breakpoint = false;
 
 	if (db_run_mode == STEP_INVISIBLE) {
 		db_run_mode = STEP_CONTINUE;
-		return (FALSE);	/* continue */
+		return (false);	/* continue */
 	}
 	if (db_run_mode == STEP_COUNT) {
-		return (FALSE); /* continue */
+		return (false); /* continue */
 	}
 	if (db_run_mode == STEP_ONCE) {
 		if (--db_loop_count > 0) {
@@ -144,11 +144,11 @@ db_stop_at_pc(db_regs_t *regs, bool *is_breakpoint)
 				db_print_loc_and_inst(pc);
 				db_printf("\n");
 			}
-			return (FALSE);	/* continue */
+			return (false);	/* continue */
 		}
 	}
 	if (db_run_mode == STEP_RETURN) {
-		db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
+		db_expr_t ins = db_get_value(pc, sizeof(int), false);
 
 		/* continue until matching return */
 
@@ -168,22 +168,22 @@ db_stop_at_pc(db_regs_t *regs, bool *is_breakpoint)
 			}
 			if (inst_call(ins))
 				db_call_depth++;
-			return (FALSE);	/* continue */
+			return (false);	/* continue */
 		}
 	}
 	if (db_run_mode == STEP_CALLT) {
-		db_expr_t ins = db_get_value(pc, sizeof(int), FALSE);
+		db_expr_t ins = db_get_value(pc, sizeof(int), false);
 
 		/* continue until call or return */
 
 		if (!inst_call(ins) &&
 		    !inst_return(ins) &&
 		    !inst_trap_return(ins)) {
-			return (FALSE);	/* continue */
+			return (false);	/* continue */
 		}
 	}
 	db_run_mode = STEP_NONE;
-	return (TRUE);
+	return (true);
 }
 
 void
@@ -203,7 +203,7 @@ db_restart_at_pc(db_regs_t *regs, bool watchpt)
 		 * We are about to execute this instruction,
 		 * so count it now.
 		 */
-		ins = db_get_value(pc, sizeof(int), FALSE);
+		ins = db_get_value(pc, sizeof(int), false);
 		db_inst_count++;
 		db_load_count += inst_load(ins);
 		db_store_count += inst_store(ins);
@@ -212,10 +212,10 @@ db_restart_at_pc(db_regs_t *regs, bool watchpt)
 		/*
 		 * Account for instructions in delay slots.
 		 */
-		brpc = next_instr_address(pc, TRUE);
+		brpc = next_instr_address(pc, true);
 		if ((brpc != pc) &&
 		    (inst_branch(ins) || inst_call(ins) || inst_return(ins))) {
-			ins = db_get_value(brpc, sizeof(int), FALSE);
+			ins = db_get_value(brpc, sizeof(int), false);
 			db_inst_count++;
 			db_load_count += inst_load(ins);
 			db_store_count += inst_store(ins);
@@ -255,13 +255,13 @@ void
 db_single_step_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool print = FALSE;
+	bool print = false;
 
 	if (count == -1)
 		count = 1;
 
 	if (modif[0] == 'p')
-		print = TRUE;
+		print = true;
 
 	db_run_mode = STEP_ONCE;
 	db_loop_count = count;
@@ -279,10 +279,10 @@ void
 db_trace_until_call_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool print = FALSE;
+	bool print = false;
 
 	if (modif[0] == 'p')
-		print = TRUE;
+		print = true;
 
 	db_run_mode = STEP_CALLT;
 	db_sstep_print = print;
@@ -298,10 +298,10 @@ void
 db_trace_until_matching_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
-	bool print = FALSE;
+	bool print = false;
 
 	if (modif[0] == 'p')
-		print = TRUE;
+		print = true;
 
 	db_run_mode = STEP_RETURN;
 	db_call_depth = 1;
@@ -343,10 +343,10 @@ db_continue_cmd(db_expr_t addr, bool have_addr,
  *
  * bool inst_branch(int inst)
  * bool inst_call(int inst)
- *	returns TRUE if the instruction might branch
+ *	returns true if the instruction might branch
  *
  * bool inst_unconditional_flow_transfer(int inst)
- *	returns TRUE if the instruction is an unconditional
+ *	returns true if the instruction is an unconditional
  *	transter of flow (i.e. unconditional branch)
  *
  * db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
@@ -355,7 +355,7 @@ db_continue_cmd(db_expr_t addr, bool have_addr,
  * db_addr_t next_instr_address(db_addr_t pc, bool bd)
  *	returns the address of the first instruction following the
  *	one at "pc", which is either in the taken path of the branch
- *	(bd == TRUE) or not.  This is for machines (e.g. mips) with
+ *	(bd == true) or not.  This is for machines (e.g. mips) with
  *	branch delays.
  *
  *	A single-step may involve at most 2 breakpoints -
@@ -381,14 +381,14 @@ db_set_single_step(db_regs_t *regs)
 	 *	User was stopped at pc, e.g. the instruction
 	 *	at pc was not executed.
 	 */
-	inst = db_get_value(pc, sizeof(int), FALSE);
+	inst = db_get_value(pc, sizeof(int), false);
 	if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
 		brpc = branch_taken(inst, pc, regs);
 		if (brpc != pc) {	/* self-branches are hopeless */
 			db_set_temp_breakpoint(&db_taken_bkpt, brpc);
 		} else
 			db_taken_bkpt.address = 0;
-		pc = next_instr_address(pc, TRUE);
+		pc = next_instr_address(pc, true);
 	}
 
 	/*
@@ -397,7 +397,7 @@ db_set_single_step(db_regs_t *regs)
 	 */
 	unconditional = inst_unconditional_flow_transfer(inst);
 
-	pc = next_instr_address(pc, FALSE);
+	pc = next_instr_address(pc, false);
 
 	/*
 	 *	We only set the sequential breakpoint if previous
@@ -415,7 +415,7 @@ db_set_single_step(db_regs_t *regs)
 	 *	in the same place even if the MD code would otherwise
 	 *	have us do so.
 	 */
-	if (unconditional == FALSE &&
+	if (unconditional == false &&
 	    db_find_breakpoint_here(pc) == 0 &&
 	    pc != brpc)
 		db_set_temp_breakpoint(&db_not_taken_bkpt, pc);
@@ -444,7 +444,7 @@ db_set_temp_breakpoint(db_breakpoint_t bkpt, db_addr_t addr)
 	bkpt->init_count = 1;
 	bkpt->count = 1;
 
-	bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE, FALSE);
+	bkpt->bkpt_inst = db_get_value(bkpt->address, BKPT_SIZE, false);
 	db_put_value(bkpt->address, BKPT_SIZE,
 		BKPT_SET(bkpt->bkpt_inst, bkpt->address));
 }
