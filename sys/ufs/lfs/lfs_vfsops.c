@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.230 2007/02/21 23:00:11 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.231 2007/02/22 06:10:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.230 2007/02/21 23:00:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.231 2007/02/22 06:10:49 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -1485,15 +1485,15 @@ lfs_issequential_hole(const struct ufsmount *ump,
 	 * treat UNWRITTENs and all resident blocks as 'contiguous'
 	 */
 	if (daddr0 != 0 && daddr1 != 0)
-		return TRUE;
+		return true;
 
 	/*
 	 * both are in hole?
 	 */
 	if (daddr0 == 0 && daddr1 == 0)
-		return TRUE; /* all holes are 'contiguous' for us. */
+		return true; /* all holes are 'contiguous' for us. */
 
-	return FALSE;
+	return false;
 }
 
 /*
