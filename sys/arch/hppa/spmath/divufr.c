@@ -1,4 +1,4 @@
-/*	$NetBSD: divufr.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: divufr.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $	*/
 
 /*	$OpenBSD: divufr.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: divufr.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: divufr.c,v 1.4 2007/02/22 05:46:29 thorpej Exp $");
 
 #include "md.h"
 
@@ -54,16 +54,16 @@ struct mdsfu_register *result;
 {
 	/* check divisor for zero */
 	if (opnd2 == 0) {
-		overflow = TRUE;
+		overflow = true;
 		return;
 	}
 
 	/* check for overflow */
 	if (opnd1 >= opnd2) {
-		overflow = TRUE;
+		overflow = true;
 		return;
 	}
-	overflow = FALSE;
+	overflow = false;
 
 	/* do the divide */
 	divu(opnd1,0,opnd2,result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2007/02/21 22:59:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 2007/02/22 05:46:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2007/02/21 22:59:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2007/02/22 05:46:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ static u_int *page_aliased_bitmap;
 
 struct pmap	kernel_pmap_store;
 pmap_t		kernel_pmap;
-bool		pmap_initialized = FALSE;
+bool		pmap_initialized = false;
 
 TAILQ_HEAD(, pmap)	pmap_freelist;	/* list of free pmaps */
 u_int pmap_nfree;
@@ -285,7 +285,7 @@ vsize_t	hpt_mask;
  * Reference Manual" (HP part number 09740-90039) defines equivalent
  * and non-equivalent virtual addresses in the cache.
  *
- * This macro evaluates to TRUE iff the two space/virtual address
+ * This macro evaluates to true iff the two space/virtual address
  * combinations are non-equivalent aliases, and therefore will find
  * two different locations in the cache.
  *
@@ -511,7 +511,7 @@ pmap_pv_check_alias(paddr_t pa)
 	u_int *aliased_word, aliased_bit;
 
 	/* By default we find no aliasing. */
-	aliased = FALSE;
+	aliased = false;
 
 	/*
 	 * We should never get called on I/O pages.
@@ -539,7 +539,7 @@ pmap_pv_check_alias(paddr_t pa)
 		     pv = pv->pv_next) {
 			if (NON_EQUIVALENT_ALIAS(space, va,
 				pv->pv_space, pv->pv_va)) {
-				aliased = TRUE;
+				aliased = true;
 				break;
 			}
 		}
@@ -822,7 +822,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 */
 	kernel_pmap = &kernel_pmap_store;
 #if	NCPUS > 1
-	lock_init(&pmap_lock, FALSE, ETAP_VM_PMAP_SYS, ETAP_VM_PMAP_SYS_I);
+	lock_init(&pmap_lock, false, ETAP_VM_PMAP_SYS, ETAP_VM_PMAP_SYS_I);
 #endif	/* NCPUS > 1 */
 	simple_lock_init(&kernel_pmap->pmap_lock);
 	simple_lock_init(&pmap_freelock);
@@ -1201,7 +1201,7 @@ pmap_init(void)
 		      (paddr_t)&gateway_page, 
 		      TLB_GATE_PROT | TLB_UNMANAGED | TLB_WIRED);
 
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 }
 
 /*
@@ -1396,7 +1396,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		 */
 		pv = pmap_pv_enter(pmap, space, va, pa, tlbprot);
 		pmap->pmap_stats.resident_count++;
-		waswired = FALSE;
+		waswired = false;
 	} else {
 		KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) == 0);
 		waswired = pv->pv_tlbprot & TLB_WIRED;
@@ -1633,8 +1633,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  * pmap_extract(pmap, va, pap)
  *	fills in the physical address corrsponding to the
  *	virtual address specified by pmap and va into the
- *	storage pointed to by pap and returns TRUE if the
- *	virtual address is mapped. returns FALSE in not mapped.
+ *	storage pointed to by pap and returns true if the
+ *	virtual address is mapped. returns false in not mapped.
  */
 bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
@@ -1775,7 +1775,7 @@ pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 			if ((pv->pv_tlbprot & (TLB_UNMANAGED | tlbprot_bit)) ==
 			    tlbprot_bit) {
 				hpv->pv_head_writable_dirty_ref |= pv_head_bit;
-				ret = TRUE;
+				ret = true;
 				break;
 			}
 		}
@@ -1802,7 +1802,7 @@ pmap_clear_modify(struct vm_page *pg)
 
 /*
  * pmap_is_modified(pa)
- *	returns TRUE if the given physical page has been modified
+ *	returns true if the given physical page has been modified
  *	since the last call to pmap_clear_modify().
  */
 bool
@@ -1833,7 +1833,7 @@ pmap_clear_reference(struct vm_page *pg)
 
 /*
  * pmap_is_referenced(pa)
- *	returns TRUE if the given physical page has been referenced
+ *	returns true if the given physical page has been referenced
  *	since the last call to pmap_clear_reference().
  */
 bool
