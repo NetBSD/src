@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.118 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.118 2007/02/21 23:00:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.119 2007/02/22 06:05:01 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -107,7 +107,7 @@ int vm_nphysseg = 0;				/* XXXCDC: uvm.nphysseg */
  * XXX disabled until we can find a way to do this without causing
  * problems for either CPU caches or DMA latency.
  */
-bool vm_page_zero_enable = FALSE;
+bool vm_page_zero_enable = false;
 
 /*
  * local variables
@@ -138,7 +138,7 @@ static struct pglist uvm_bootbucket;
  * uvm_pageboot_alloc().
  */
 
-static bool have_recolored_pages /* = FALSE */;
+static bool have_recolored_pages /* = false */;
 
 MALLOC_DEFINE(M_VMPAGE, "VM page", "VM page");
 
@@ -431,7 +431,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * done!
 	 */
 
-	uvm.page_init_done = TRUE;
+	uvm.page_init_done = true;
 }
 
 /*
@@ -468,7 +468,7 @@ uvm_setpagesize(void)
 vaddr_t
 uvm_pageboot_alloc(vsize_t size)
 {
-	static bool initialized = FALSE;
+	static bool initialized = false;
 	vaddr_t addr;
 #if !defined(PMAP_STEAL_MEMORY)
 	vaddr_t vaddr;
@@ -478,14 +478,14 @@ uvm_pageboot_alloc(vsize_t size)
 	/*
 	 * on first call to this function, initialize ourselves.
 	 */
-	if (initialized == FALSE) {
+	if (initialized == false) {
 		pmap_virtual_space(&virtual_space_start, &virtual_space_end);
 
 		/* round it the way we like it */
 		virtual_space_start = round_page(virtual_space_start);
 		virtual_space_end = trunc_page(virtual_space_end);
 
-		initialized = TRUE;
+		initialized = true;
 	}
 
 	/* round to page size */
@@ -577,7 +577,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 #endif
 	{
 
-		if (uvm.page_init_done == TRUE)
+		if (uvm.page_init_done == true)
 			panic("uvm_page_physget: called _after_ bootstrap");
 
 		if (vm_physmem[lcv].free_list != freelist)
@@ -599,7 +599,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 					/* structure copy */
 					vm_physmem[x] = vm_physmem[x+1];
 			}
-			return (TRUE);
+			return (true);
 		}
 
 		/* try from rear */
@@ -618,7 +618,7 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 					/* structure copy */
 					vm_physmem[x] = vm_physmem[x+1];
 			}
-			return (TRUE);
+			return (true);
 		}
 	}
 
@@ -648,10 +648,10 @@ uvm_page_physget_freelist(paddr_t *paddrp, int freelist)
 				/* structure copy */
 				vm_physmem[x] = vm_physmem[x+1];
 		}
-		return (TRUE);
+		return (true);
 	}
 
-	return (FALSE);        /* whoops! */
+	return (false);        /* whoops! */
 }
 
 bool
@@ -661,9 +661,9 @@ uvm_page_physget(paddr_t *paddrp)
 
 	/* try in the order of freelist preference */
 	for (i = 0; i < VM_NFREELIST; i++)
-		if (uvm_page_physget_freelist(paddrp, i) == TRUE)
-			return (TRUE);
-	return (FALSE);
+		if (uvm_page_physget_freelist(paddrp, i) == true)
+			return (true);
+	return (false);
 }
 #endif /* PMAP_STEAL_MEMORY */
 
@@ -908,7 +908,7 @@ uvm_page_recolor(int newncolors)
 	if (newncolors <= uvmexp.ncolors)
 		return;
 
-	if (uvm.page_init_done == FALSE) {
+	if (uvm.page_init_done == false) {
 		uvmexp.ncolors = newncolors;
 		return;
 	}
@@ -963,7 +963,7 @@ uvm_page_recolor(int newncolors)
 		return;
 	}
 
-	have_recolored_pages = TRUE;
+	have_recolored_pages = true;
 	uvm_unlock_fpageq(s);
 }
 
@@ -1543,7 +1543,7 @@ uvm_pageidlezero(void)
 		if (sched_whichqs != 0)
 			goto quit;
 		if (uvmexp.zeropages >= UVM_PAGEZERO_TARGET) {
-			uvm.page_idle_zero = FALSE;
+			uvm.page_idle_zero = false;
 			goto quit;
 		}
 		for (free_list = 0; free_list < VM_NFREELIST; free_list++) {
