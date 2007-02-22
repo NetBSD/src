@@ -1,4 +1,4 @@
-/*	$NetBSD: mrinfo.c,v 1.25 2006/05/09 20:18:09 mrg Exp $	*/
+/*	$NetBSD: mrinfo.c,v 1.26 2007/02/22 01:29:35 hubertf Exp $	*/
 
 /*
  * This tool requests configuration info from a multicast router
@@ -80,10 +80,11 @@
 static char rcsid[] =
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 #else
-__RCSID("$NetBSD: mrinfo.c,v 1.25 2006/05/09 20:18:09 mrg Exp $");
+__RCSID("$NetBSD: mrinfo.c,v 1.26 2007/02/22 01:29:35 hubertf Exp $");
 #endif
 #endif
 
+#include <ctype.h>
 #include <string.h>
 #include <netdb.h>
 #include <sys/time.h>
