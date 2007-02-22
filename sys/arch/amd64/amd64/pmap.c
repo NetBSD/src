@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2007/02/21 22:59:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2007/02/22 04:54:36 thorpej Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2007/02/21 22:59:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2007/02/22 04:54:36 thorpej Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -388,7 +388,7 @@ int pmap_pg_g = 0;
 #ifdef LARGEPAGES
 /*
  * pmap_largepages: if our processor supports PG_PS and we are
- * using it, this is set to TRUE.
+ * using it, this is set to true.
  */
 
 int pmap_largepages;
@@ -408,7 +408,7 @@ paddr_t avail_end;	/* PA of last available physical page */
  */
 
 static pt_entry_t protection_codes[8];	/* maps MI prot to i386 prot code */
-static bool pmap_initialized = FALSE;	/* pmap_init done yet? */
+static bool pmap_initialized = false;	/* pmap_init done yet? */
 
 /*
  * the following two vaddr_t's are used during system startup
@@ -1227,7 +1227,7 @@ pmap_init()
 	 * done: pmap module is up (and ready for business)
 	 */
 
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 }
 
 /*
@@ -2078,11 +2078,11 @@ pmap_pdes_valid(vaddr_t va, pd_entry_t **pdes, pd_entry_t *lastpde)
 		index = pl_i(va, i);
 		pde = pdes[i - 2][index];
 		if ((pde & PG_V) == 0)
-			return FALSE;
+			return false;
 	}
 	if (lastpde != NULL)
 		*lastpde = pde;
-	return TRUE;
+	return true;
 }
 
 /*
@@ -2099,9 +2099,9 @@ pmap_extract(pmap, va, pap)
 	pd_entry_t pde, **pdes;
 
 	pmap_map_ptes(pmap, &ptes, &pdes);
-	if (pmap_pdes_valid(va, pdes, &pde) == FALSE) {
+	if (pmap_pdes_valid(va, pdes, &pde) == false) {
 		pmap_unmap_ptes(pmap);
-		return FALSE;
+		return false;
 	}
 	pte = ptes[pl1_i(va)];
 	pmap_unmap_ptes(pmap);
@@ -2110,7 +2110,7 @@ pmap_extract(pmap, va, pap)
 	if (pde & PG_PS) {
 		if (pap != NULL)
 			*pap = (pde & PG_LGFRAME) | (va & 0x1fffff);
-		return (TRUE);
+		return (true);
 	}
 #endif
 
@@ -2118,10 +2118,10 @@ pmap_extract(pmap, va, pap)
 	if (__predict_true((pte & PG_V) != 0)) {
 		if (pap != NULL)
 			*pap = (pte & PG_FRAME) | (va & 0xfff);
-		return (TRUE);
+		return (true);
 	}
 
-	return FALSE;
+	return false;
 }
 
 
@@ -2136,7 +2136,7 @@ vtophys(va)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
+	if (pmap_extract(pmap_kernel(), va, &pa) == true)
 		return (pa);
 	return (0);
 }
@@ -2218,7 +2218,7 @@ pmap_zero_page(pa)
 
 /*
  * pmap_pagezeroidle: the same, for the idle loop page zero'er.
- * Returns TRUE if the page was zero'd, FALSE if we aborted for
+ * Returns true if the page was zero'd, false if we aborted for
  * some reason.
  */
 
@@ -2231,7 +2231,7 @@ pmap_pageidlezero(pa)
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	caddr_t zerova = VASLEW(zerop, id);
-	bool rv = TRUE;
+	bool rv = true;
 	int i, *ptr;
 
 #ifdef DIAGNOSTIC
@@ -2250,7 +2250,7 @@ pmap_pageidlezero(pa)
 			 * page.
 			 */
 
-			rv = FALSE;
+			rv = false;
 			break;
 		}
 		*ptr++ = 0;
@@ -2421,9 +2421,9 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	off = 0; /* XXX: GCC4 turns up "uninitialised" w/ -march=nocona -O2 */
 
 	if (!pmap_valid_entry(*pte))
-		return(FALSE);		/* VA not mapped */
+		return(false);		/* VA not mapped */
 	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
-		return(FALSE);
+		return(false);
 	}
 
 	/* atomically save the old PTE and zap! it */
@@ -2448,7 +2448,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 #endif
-		return(TRUE);
+		return(true);
 	}
 
 	bank = vm_physseg_find(btop(opte & PG_FRAME), &off);
@@ -2467,7 +2467,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 
 	if (pve)
 		pmap_free_pv(pmap, pve);
-	return(TRUE);
+	return(true);
 }
 
 /*
@@ -2738,12 +2738,12 @@ pmap_test_attrs(pg, testbits)
 
 	myattrs = &vm_physmem[bank].pmseg.attrs[off];
 	if (*myattrs & testbits)
-		return(TRUE);
+		return(true);
 
 	/* test to see if there is a list before bothering to lock */
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
 	if (SPLAY_ROOT(&pvh->pvh_root) == NULL) {
-		return(FALSE);
+		return(false);
 	}
 
 	/* nope, gonna have to do it the hard way */
@@ -2774,7 +2774,7 @@ pmap_test_attrs(pg, testbits)
  * pmap_clear_attrs: clear the specified attribute for a page.
  *
  * => we set pv_head => pmap locking
- * => we return TRUE if we cleared one of the bits we were asked to
+ * => we return true if we cleared one of the bits we were asked to
  */
 
 bool
@@ -3239,14 +3239,14 @@ pmap_get_physpage(va, level, paddrp)
 	struct vm_page *ptp;
 	struct pmap *kpm = pmap_kernel();
 
-	if (uvm.page_init_done == FALSE) {
+	if (uvm.page_init_done == false) {
 		/*
 		 * we're growing the kernel pmap early (from
 		 * uvm_pageboot_alloc()).  this case must be
 		 * handled a little differently.
 		 */
 
-		if (uvm_page_physget(paddrp) == FALSE)
+		if (uvm_page_physget(paddrp) == false)
 			panic("pmap_get_physpage: out of memory");
 		*early_zero_pte = (*paddrp & PG_FRAME) | PG_V | PG_RW;
 		pmap_update_pg((vaddr_t)early_zerop);
@@ -3267,7 +3267,7 @@ pmap_get_physpage(va, level, paddrp)
 		*paddrp = VM_PAGE_TO_PHYS(ptp);
 	}
 	kpm->pm_stats.resident_count++;
-	return TRUE;
+	return true;
 }
 
 /*
@@ -3523,7 +3523,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		va &= PG_LGFRAME;
 #endif
 
-	if (pmap_initialized == FALSE || cpus_attached == 0) {
+	if (pmap_initialized == false || cpus_attached == 0) {
 		pmap_update_pg(va);
 		return;
 	}

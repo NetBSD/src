@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.13 2007/02/21 22:59:36 thorpej Exp $ */
+/* $NetBSD: db_disasm.c,v 1.14 2007/02/22 04:51:26 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2007/02/21 22:59:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2007/02/22 04:51:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,7 +814,7 @@ alpha_print_instruction(db_addr_t iadr, alpha_instruction i,
 	pal_instruction	p;
 
 	regcount = 0;
-	fstore = FALSE;
+	fstore = false;
 	opcode = op_name[i.mem_format.opcode];
 
 	/*
@@ -983,7 +983,7 @@ foperate:
 	case op_stg:
 	case op_sts:
 	case op_stt:
-		fstore = TRUE;
+		fstore = true;
 		/* fall through */
 	case op_ldl:
 	case op_ldq:
@@ -1007,7 +1007,7 @@ loadstore_address:
 		{
 			char tbuf[24];
 
-			db_format_hex(tbuf, 24, signed_immediate, FALSE);
+			db_format_hex(tbuf, 24, signed_immediate, false);
 			db_printf("%s(%s)", tbuf,
 				register_name(i.mem_format.rb));
 		}
