@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.48 2007/02/21 23:48:11 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.49 2007/02/22 13:50:36 tsutsui Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.48 2007/02/21 23:48:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2007/02/22 13:50:36 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -397,7 +397,7 @@ findregs(struct stackpos *sp, db_addr_t addr)
  *	Frame tracing.
  */
 void
-db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
 	int i, nargs;
