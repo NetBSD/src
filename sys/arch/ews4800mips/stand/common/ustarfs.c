@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.4 2007/02/21 22:59:42 thorpej Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.5 2007/02/22 05:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ ustarfs_load(const char *file, void **addrp, size_t *sizep)
 		maxblk = (77 + 76) * 13;
 	else {
 		printf("not supported device.\n");
-		return FALSE;
+		return false;
 	}
 
 	/* Truncate to ustar block boundary */
@@ -88,7 +88,7 @@ ustarfs_load(const char *file, void **addrp, size_t *sizep)
 	/* Find file */
 	while (/*CONSTCOND*/1) {
 		if (!__ustarfs_file(block, fname, &sz))
-			return FALSE;
+			return false;
 
 		if (strcmp(file, fname) == 0)
 			break;
@@ -101,16 +101,16 @@ ustarfs_load(const char *file, void **addrp, size_t *sizep)
 	sz = ROUND_SECTOR(sz);
 	if ((*addrp = alloc(sz)) == 0) {
 		printf("%s: can't allocate memory.\n", __FUNCTION__);
-		return FALSE;
+		return false;
 	}
 
 	if (!__block_read_n(*addrp, block, sz >> DEV_BSHIFT)) {
 		printf("%s: can't load file.\n", __FUNCTION__);
 		dealloc(*addrp, sz);
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -120,16 +120,16 @@ __ustarfs_file(int start_block, char *file, size_t *size)
 
 	if (!__block_read(buf, start_block)) {
 		printf("can't read tar header.\n");
-		return FALSE;
+		return false;
 	}
 	if (((*(uint32_t *)(buf + 256)) & 0xffffff) != 0x757374) {
 		printf("bad tar magic.\n");
-		return FALSE;
+		return false;
 	}
 	*size = strtoul((char *)buf + 124, 0, 0);
 	strncpy(file, (char *)buf, 16);
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -139,9 +139,9 @@ __block_read_n(uint8_t *buf, int blk, int count)
 
 	for (i = 0; i < count; i++, buf += DEV_BSIZE)
 		if (!__block_read(buf, blk + i))
-			return FALSE;
+			return false;
 
-	return TRUE;
+	return true;
 }
 
 bool

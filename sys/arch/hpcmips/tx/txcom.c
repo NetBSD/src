@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.35 2007/02/21 22:59:43 thorpej Exp $ */
+/*	$NetBSD: txcom.c,v 1.36 2007/02/22 05:38:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.35 2007/02/21 22:59:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.36 2007/02/22 05:38:03 thorpej Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -577,7 +577,7 @@ txcom_cnattach(int slot, int speed, int cflag)
 	txcom_setmode(&txcom_chip);
 	txcom_setbaudrate(&txcom_chip);
 
-	if (txcom_enable(&txcom_chip, TRUE) != 0)
+	if (txcom_enable(&txcom_chip, true) != 0)
 		return 1;
 
 	return 0;
@@ -799,7 +799,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	s = spltty();
 
-	if (txcom_enable(sc->sc_chip, FALSE)) {
+	if (txcom_enable(sc->sc_chip, false)) {
 		splx(s);
 		goto out;
 	}

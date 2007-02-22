@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2007/02/22 05:31:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -194,16 +194,16 @@ option(int argc, char *argv[], struct bootinfo *bi)
 		    (void *)bi->bi_ssym, (void *)bi->bi_esym);
 #endif
 	/* Parse option */
-	boot_device_set = FALSE;
+	boot_device_set = false;
 	for (i = 2; i < argc; i++) {
 		p = argv[i];
 		/* prompt for root device */
 		if (p[0] == '-' && p[1] == 'a')
-			boot_device_set = TRUE;
+			boot_device_set = true;
 
 		/* root device option. ex) -b=net:netbsd, -b=sd0k:netbsd */
 		if (p[0] == '-' && p[1] == 'b') {
-			boot_device_set = TRUE;
+			boot_device_set = true;
 			strcpy(__boot_kernel_name, p + 3);
 		}
 	}
@@ -241,12 +241,12 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters

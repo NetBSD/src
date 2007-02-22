@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 2007/02/22 05:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.3 2007/02/21 22:59:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.4 2007/02/22 05:31:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,8 @@ readdisklabel(dev_t dev, void (*strategy)(struct buf *), struct disklabel *d,
 	uint8_t buf[DEV_BSIZE];
 	struct pdinfo_sector *pdinfo = &ux->pdinfo;
 	struct vtoc_sector *vtoc = &ux->vtoc;
-	bool disklabel_available = FALSE;
-	bool vtoc_available = FALSE;
+	bool disklabel_available = false;
+	bool vtoc_available = false;
 	void *rwops;
 
 	if ((rwops = sector_init(dev, strategy)) == 0)
@@ -74,12 +74,12 @@ readdisklabel(dev_t dev, void (*strategy)(struct buf *), struct disklabel *d,
 		DPRINTF("%s: PDINFO not found.\n", __FUNCTION__);
 	} else if (vtoc_sector(rwops, vtoc, pdinfo->logical_sector) &&
 	    vtoc_sanity(vtoc)) {
-		vtoc_available = TRUE;
+		vtoc_available = true;
 
 		/* Read BSD DISKLABEL (if any) */
 		sector_read(rwops, buf, LABELSECTOR);
 		if (disklabel_sanity((struct disklabel *)buf)) {
-			disklabel_available = TRUE;
+			disklabel_available = true;
 			memcpy(d, buf, sizeof(struct disklabel));
 		} else {
 			DPRINTF("%s: no BSD disklabel.\n", __FUNCTION__);
