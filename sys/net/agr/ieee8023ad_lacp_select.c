@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_select.c,v 1.4 2007/02/21 23:00:07 thorpej Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_select.c,v 1.5 2007/02/22 06:20:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_select.c,v 1.4 2007/02/21 23:00:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_select.c,v 1.5 2007/02/22 06:20:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -164,22 +164,22 @@ lacp_aggregator_is_compatible(const struct lacp_aggregator *la,
 
 	if (!(lp->lp_state & LACP_STATE_AGGREGATION) ||
 	    !(lp->lp_partner.lip_state & LACP_STATE_AGGREGATION)) {
-		return FALSE;
+		return false;
 	}
 
 	if (!(la->la_actor.lip_state & LACP_STATE_AGGREGATION)) {
-		return FALSE;
+		return false;
 	}
 
 	if (!lacp_peerinfo_is_compatible(&la->la_partner, &lp->lp_partner)) {
-		return FALSE;
+		return false;
 	}
 
 	if (!lacp_peerinfo_is_compatible(&la->la_actor, &lp->lp_actor)) {
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 static bool
@@ -189,14 +189,14 @@ lacp_peerinfo_is_compatible(const struct lacp_peerinfo *a,
 
 	if (memcmp(&a->lip_systemid, &b->lip_systemid,
 	    sizeof(a->lip_systemid))) {
-		return FALSE;
+		return false;
 	}
 
 	if (memcmp(&a->lip_key, &b->lip_key, sizeof(a->lip_key))) {
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*
