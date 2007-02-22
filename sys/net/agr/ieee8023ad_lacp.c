@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.4 2007/02/21 23:00:06 thorpej Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.5 2007/02/22 06:20:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.4 2007/02/21 23:00:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.5 2007/02/22 06:20:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -146,7 +146,7 @@ ieee8023ad_lacp_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 
 	if (tlv_check(du, sizeof(*du), &du->ldu_tlv_actor,
-	    lacp_info_tlv_template, FALSE)) {
+	    lacp_info_tlv_template, false)) {
 		goto bad;
 	}
 
@@ -289,8 +289,8 @@ void
 lacp_portinit(struct agr_port *port)
 {
 	struct lacp_port *lp = LACP_PORT(port);
-	bool active = TRUE; /* XXX should be configurable */
-	bool fast = FALSE; /* XXX should be configurable */
+	bool active = true; /* XXX should be configurable */
+	bool fast = false; /* XXX should be configurable */
 
 	lp->lp_agrport = port;
 	lacp_fill_actorinfo(port, &lp->lp_actor);
@@ -424,7 +424,7 @@ lacp_transit_expire(void *vp)
 
 	s = AGR_LOCK(sc);
 	LACP_DPRINTF((NULL, "%s\n", __func__));
-	lsc->lsc_suppress_distributing = FALSE;
+	lsc->lsc_suppress_distributing = false;
 	AGR_UNLOCK(sc, s);
 }
 
@@ -538,7 +538,7 @@ lacp_suppress_distributing(struct lacp_softc *lsc, struct lacp_aggregator *la)
 	}
 
 	LACP_DPRINTF((NULL, "%s\n", __func__));
-	lsc->lsc_suppress_distributing = TRUE;
+	lsc->lsc_suppress_distributing = true;
 	/* XXX should consider collector max delay */
 	callout_schedule(&lsc->lsc_transit_callout,
 	    LACP_TRANSIT_DELAY * hz / 1000);

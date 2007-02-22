@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.9 2007/02/21 23:00:07 thorpej Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.10 2007/02/22 06:20:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.9 2007/02/21 23:00:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.10 2007/02/22 06:20:16 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -569,7 +569,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	ifp->if_flags |= IFF_RUNNING;
 
 	agrport_config_promisc(port, (ifp->if_flags & IFF_PROMISC) != 0);
-	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, TRUE);
+	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, true);
 	if (error) {
 		printf("%s: configmulti error %d\n", __func__, error);
 		goto cleanup;
@@ -644,7 +644,7 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 		goto out;
 	}
 
-	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, FALSE);
+	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, false);
 	if (error) {
 		/* XXX XXX */
 		printf("%s: configmulti_port error %d\n", __func__, error);
@@ -683,7 +683,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 	int result = 0;
 	int s;
 
-	error = agrport_config_promisc(port, FALSE);
+	error = agrport_config_promisc(port, false);
 	if (error) {
 		printf("%s: config_promisc error %d\n", __func__, error);
 		result = error;

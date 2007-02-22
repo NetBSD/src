@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.155 2007/02/21 23:00:08 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.156 2007/02/22 06:17:51 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.155 2007/02/21 23:00:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.156 2007/02/22 06:17:51 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -259,7 +259,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	int hdrlen;
 	int optlen;
 
-	*alwaysfragp = FALSE;
+	*alwaysfragp = false;
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -311,7 +311,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 			 * attach fragment header.
 			 */
 			size = IPV6_MMTU - hdrlen - sizeof(struct ip6_frag);
-			*alwaysfragp = TRUE;
+			*alwaysfragp = true;
 		} else
 			size = rt->rt_rmx.rmx_mtu - hdrlen;
 #else
@@ -626,7 +626,7 @@ tcp_output(struct tcpcb *tp)
 	 * - If there is not an IPsec policy that prevents it
 	 * - If the interface can do it
 	 */
-	has_tso4 = has_tso6 = FALSE;
+	has_tso4 = has_tso6 = false;
 #if defined(INET)
 	has_tso4 = tp->t_inpcb != NULL &&
 #if defined(IPSEC) || defined(FAST_IPSEC)
