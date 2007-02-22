@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.31 2007/02/21 23:00:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.32 2007/02/22 04:38:07 matt Exp $	*/
 
 /*
  *
@@ -105,7 +105,7 @@ void		amap_unadd	/* remove an anon from an amap */
 void		amap_unlock	/* unlock amap */
 			(struct vm_amap *);
 void		amap_unref	/* drop reference to an amap */
-			(struct vm_amap *, vaddr_t, vsize_t, int);
+			(struct vm_amap *, vaddr_t, vsize_t, bool);
 void		amap_wipeout	/* remove all anons from amap */
 			(struct vm_amap *);
 bool		amap_swap_off
