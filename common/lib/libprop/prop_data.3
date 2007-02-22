@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_data.3,v 1.2 2006/07/09 19:04:02 wiz Exp $
+.\"	$NetBSD: prop_data.3,v 1.3 2007/02/22 22:49:29 freza Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,6 +63,8 @@
 .\"
 .Ft void *
 .Fn prop_data_data "prop_data_t data"
+.Ft size_t
+.Fn prop_data_size "prop_data_t data"
 .Ft const void *
 .Fn prop_data_data_nocopy "prop_data_t data"
 .\"
