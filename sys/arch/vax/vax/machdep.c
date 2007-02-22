@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.156 2007/02/17 22:31:40 pavel Exp $	 */
+/* $NetBSD: machdep.c,v 1.157 2007/02/22 06:51:30 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2007/02/17 22:31:40 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2007/02/22 06:51:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -208,7 +208,7 @@ cpu_startup()
 	 * At most one process with the full length is allowed.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				 NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/*
@@ -216,7 +216,7 @@ cpu_startup()
 	 * number of processes doing physio at any one time.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 #endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));

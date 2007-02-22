@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.43 2007/02/21 22:59:55 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.44 2007/02/22 06:51:30 thorpej Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.43 2007/02/21 22:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.44 2007/02/22 06:51:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -208,9 +208,9 @@ kdb_trap(struct trapframe *frame)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(frame->trap, frame->code);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 

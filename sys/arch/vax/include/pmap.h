@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.70 2007/02/21 22:59:54 thorpej Exp $	   */
+/*	$NetBSD: pmap.h,v 1.71 2007/02/22 06:51:30 thorpej Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -173,8 +173,8 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		if (pap)
 			*pap = pa;
 		if (pa)
-			return (TRUE);
-		return (FALSE);
+			return (true);
+		return (false);
 	}
 
 	sva = PG_PFNUM(va);
@@ -190,12 +190,12 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (kvtopte(&pte[sva])->pg_pfn && pte[sva]) {
 		if (pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
-		return (TRUE);
+		return (true);
 	}
   fail:
 	if (pap)
 		*pap = 0;
-	return (FALSE);
+	return (false);
 }
 
 bool pmap_clear_modify_long(struct pv_entry *);

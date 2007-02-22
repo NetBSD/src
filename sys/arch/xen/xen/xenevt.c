@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.12 2007/02/21 22:59:55 thorpej Exp $      */
+/*      $NetBSD: xenevt.c,v 1.13 2007/02/22 06:48:54 thorpej Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -163,7 +163,7 @@ xenevt_event(int port)
 			simple_lock(&devevent_pending_lock);
 			STAILQ_INSERT_TAIL(&devevent_pending, d, pendingq);
 			simple_unlock(&devevent_pending_lock);
-			d->pending = TRUE;
+			d->pending = true;
 			softintr(SIR_XENEVT);
 		}
 	}
@@ -186,7 +186,7 @@ xenevt_notify()
 		simple_unlock(&devevent_pending_lock);
 		sti();
 
-		d->pending = FALSE;
+		d->pending = false;
 		xenevt_donotify(d);
 
 		cli();
