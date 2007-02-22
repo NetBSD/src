@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.308 2007/02/21 22:59:52 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.309 2007/02/22 05:18:29 matt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.308 2007/02/21 22:59:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.309 2007/02/22 05:18:29 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -6952,7 +6952,7 @@ pmap_clear_reference4m(struct vm_page *pg)
 /*
  * Tell whether the given physical page has been referenced.
  */
-int
+bool
 pmap_is_referenced4m(struct vm_page *pg)
 {
 
