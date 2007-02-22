@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2007/02/21 22:59:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 2007/02/22 16:57:57 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2007/02/21 22:59:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2007/02/22 16:57:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1078,7 +1078,7 @@ pmap_check_attr(struct vm_page *pg, u_int mask, int clear)
 	pa = VM_PAGE_TO_PHYS(pg);
 	attr = pa_to_attr(pa);
 	if (attr == NULL)
-		return FALSE;
+		return false;
 
 	s = splvm();
 	rv = ((*attr & mask) != 0);
