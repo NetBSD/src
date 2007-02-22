@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.143 2007/02/21 22:59:55 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.144 2007/02/22 06:51:30 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.143 2007/02/21 22:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.144 2007/02/22 06:51:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -454,7 +454,7 @@ pmap_steal_memory(size, vstartp, vendp)
 	npgs = btoc(size);
 
 #ifdef DIAGNOSTIC
-	if (uvm.page_init_done == TRUE)
+	if (uvm.page_init_done == true)
 		panic("pmap_steal_memory: called _after_ bootstrap");
 #endif
 
@@ -1236,26 +1236,26 @@ pmap_extract(pmap, va, pap)
 		if (pap)
 			*pap = pa;
 		if (pa)
-			return (TRUE);
-		return (FALSE);
+			return (true);
+		return (false);
 	}
 
 	sva = PG_PFNUM(va);
 	if (va < 0x40000000) {
 		if (sva > pmap->pm_p0lr)
-			return FALSE;
+			return false;
 		pte = (int *)pmap->pm_p0br;
 	} else {
 		if (sva < pmap->pm_p1lr)
-			return FALSE;
+			return false;
 		pte = (int *)pmap->pm_p1br;
 	}
 	if (kvtopte(&pte[sva])->pg_pfn) {
 		if (pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
-		return (TRUE);
+		return (true);
 	}
-	return (FALSE);
+	return (false);
 }
 #endif
 /*
@@ -1502,7 +1502,7 @@ bool
 pmap_clear_modify_long(struct pv_entry *pv)
 {
 	struct pte *pte;
-	bool rv = FALSE;
+	bool rv = false;
 
 	PMDEBUG(("pmap_clear_modify: pv_entry %p\n", pv));
 
@@ -1511,7 +1511,7 @@ pmap_clear_modify_long(struct pv_entry *pv)
 		pte = vaddrtopte(pv);
 		if (pte[0].pg_m | pte[1].pg_m | pte[2].pg_m | pte[3].pg_m |
 		    pte[4].pg_m | pte[5].pg_m | pte[6].pg_m | pte[7].pg_m) {
-			rv = TRUE;
+			rv = true;
 		}
 		pte[0].pg_m = pte[1].pg_m = pte[2].pg_m = pte[3].pg_m = 
 		    pte[4].pg_m = pte[5].pg_m = pte[6].pg_m = pte[7].pg_m = 0;
@@ -1521,7 +1521,7 @@ pmap_clear_modify_long(struct pv_entry *pv)
 		pte = vaddrtopte(pv);
 		if (pte[0].pg_m | pte[1].pg_m | pte[2].pg_m | pte[3].pg_m |
 		    pte[4].pg_m | pte[5].pg_m | pte[6].pg_m | pte[7].pg_m) {
-			rv = TRUE;
+			rv = true;
 		}
 		pte[0].pg_m = pte[1].pg_m = pte[2].pg_m = pte[3].pg_m = 
 		    pte[4].pg_m = pte[5].pg_m = pte[6].pg_m = pte[7].pg_m = 0;
