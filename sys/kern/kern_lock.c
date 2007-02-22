@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.107 2007/02/20 16:10:10 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.108 2007/02/22 06:34:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.107 2007/02/20 16:10:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.108 2007/02/22 06:34:43 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -178,7 +178,7 @@ int simple_lock_debugger = 0;
 #define	SLOCK_DEBUGGER()	if (simple_lock_debugger && db_onpanic) Debugger()
 #define	SLOCK_TRACE()							\
 	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
-	    TRUE, 65535, "", lock_printf);
+	    true, 65535, "", lock_printf);
 #else
 #define	SLOCK_DEBUGGER()	/* nothing */
 #define	SLOCK_TRACE()		/* nothing */

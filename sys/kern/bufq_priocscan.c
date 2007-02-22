@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_priocscan.c,v 1.9 2007/02/21 23:00:04 thorpej Exp $	*/
+/*	$NetBSD: bufq_priocscan.c,v 1.10 2007/02/22 06:34:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.9 2007/02/21 23:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_priocscan.c,v 1.10 2007/02/22 06:34:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,11 +220,11 @@ bufq_priocscan_get(struct bufq_state *bufq, int remove)
 	}
 
 	first = pq;
-	single = TRUE;
+	single = true;
 	for (npq = first + 1; npq < epq; npq++) {
 		cq = &npq->q_queue;
 		if (!cscan_empty(cq)) {
-			single = FALSE;
+			single = false;
 			if (pq->q_burst > 0)
 				break;
 			pq = npq;

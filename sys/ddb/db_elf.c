@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.23 2007/02/21 22:59:56 thorpej Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.24 2007/02/22 06:41:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.23 2007/02/21 22:59:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.24 2007/02/22 06:41:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ db_elf_sym_init(
 	if (ALIGNED_POINTER(symtab, long) == 0) {
 		printf("[ %s symbol table has bad start address %p ]\n",
 		    name, symtab);
-		return (FALSE);
+		return (false);
 	}
 
 	symtab_start = symtab_end = NULL;
@@ -195,14 +195,14 @@ db_elf_sym_init(
 		printf("[ using %lu bytes of %s ELF symbol table ]\n",
 		    (u_long)roundup(((char *)esymtab - (char *)symtab),
 		    sizeof(u_long)), name);
-		return (TRUE);
+		return (true);
 	}
 
-	return (FALSE);
+	return (false);
 
  badheader:
 	printf("[ %s ELF symbol table not valid ]\n", name);
-	return (FALSE);
+	return (false);
 }
 
 /*
@@ -359,7 +359,7 @@ db_elf_line_at_pc(symtab, cursym, filename, linenum, off)
 	/*
 	 * XXX We don't support this (yet).
 	 */
-	return (FALSE);
+	return (false);
 }
 
 /*
@@ -374,7 +374,7 @@ db_elf_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 	/*
 	 * XXX We don't support this (yet).
 	 */
-	return (FALSE);
+	return (false);
 }
 
 static void

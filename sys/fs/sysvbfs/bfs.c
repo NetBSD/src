@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.c,v 1.7 2007/02/21 23:00:03 thorpej Exp $	*/
+/*	$NetBSD: bfs.c,v 1.8 2007/02/22 06:37:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.7 2007/02/21 23:00:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs.c,v 1.8 2007/02/22 06:37:00 thorpej Exp $");
 #define	BFS_DEBUG
 
 #include <sys/param.h>
@@ -329,7 +329,7 @@ bfs_file_delete(struct bfs *bfs, const char *fname)
 	bfs->n_inode--;
 	bfs->n_dirent--;
 
-	bfs_writeback_dirent(bfs, dirent, FALSE);
+	bfs_writeback_dirent(bfs, dirent, false);
 	bfs_writeback_inode(bfs, inode);
 	DPRINTF(bfs->debug, "%s: \"%s\" deleted.\n", __FUNCTION__, fname);
 
@@ -353,7 +353,7 @@ bfs_file_rename(struct bfs *bfs, const char *from_name, const char *to_name)
 
 	bfs_file_delete(bfs, to_name);
 	strncpy(dirent->name, to_name, BFS_FILENAME_MAXLEN);
-	bfs_writeback_dirent(bfs, dirent, FALSE);
+	bfs_writeback_dirent(bfs, dirent, false);
 
  out:
 	DPRINTF(bfs->debug, "%s: \"%s\" -> \"%s\" error=%d.\n", __FUNCTION__,
@@ -434,7 +434,7 @@ bfs_file_create(struct bfs *bfs, const char *fname, void *buf, size_t bufsz,
 	/* Update */
 	bfs->n_inode++;
 	bfs->n_dirent++;
-	bfs_writeback_dirent(bfs, file, TRUE);
+	bfs_writeback_dirent(bfs, file, true);
 	bfs_writeback_inode(bfs, inode);
 
 	return 0;
@@ -497,9 +497,9 @@ bfs_file_lookup(const struct bfs *bfs, const char *fname, int *start, int *end,
 	struct bfs_dirent *dirent;
 
 	if (!bfs_dirent_lookup_by_name(bfs, fname, &dirent))
-		return FALSE;
+		return false;
 	if (!bfs_inode_lookup(bfs, dirent->inode, &inode))
-		return FALSE;
+		return false;
 
 	if (start)
 		*start = inode->start_sector + bfs->start_sector;
@@ -512,7 +512,7 @@ bfs_file_lookup(const struct bfs *bfs, const char *fname, int *start, int *end,
 	    fname, bfs->start_sector, inode->start_sector,
 	    inode->end_sector, *size);
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -527,11 +527,11 @@ bfs_dirent_lookup_by_inode(const struct bfs *bfs, int inode,
 			break;
 
 	if (i == bfs->max_dirent)
-		return FALSE;
+		return false;
 
 	*dirent = file;
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -547,11 +547,11 @@ bfs_dirent_lookup_by_name(const struct bfs *bfs, const char *fname,
 			break;
 
 	if (i == bfs->max_dirent)
-		return FALSE;
+		return false;
 
 	*dirent = file;
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -565,11 +565,11 @@ bfs_inode_lookup(const struct bfs *bfs, ino_t n, struct bfs_inode **iinode)
 			break;
 
 	if (i == bfs->max_inode)
-		return FALSE;
+		return false;
 
 	*iinode = inode;
 
-	return TRUE;
+	return true;
 }
 
 size_t
@@ -671,7 +671,7 @@ bfs_dump(const struct bfs *bfs)
 
 	if (!bfs_superblock_valid(bfs->super_block)) {
 		DPRINTF(bfs->debug, "invalid bfs super block.\n");
-		return FALSE;
+		return false;
 	}
 	h = &bfs->super_block->header;
 	compaction = &bfs->super_block->compaction;
@@ -709,7 +709,7 @@ bfs_dump(const struct bfs *bfs)
 	}
 	if (j != bfs->n_inode) {
 		DPRINTF(bfs->debug, "inconsistent cached data. (i-node)\n");
-		return FALSE;
+		return false;
 	}
 	DPRINTF(bfs->debug, "total %d i-node.\n", j);
 
@@ -727,9 +727,9 @@ bfs_dump(const struct bfs *bfs)
 	}
 	if (j != bfs->n_dirent) {
 		DPRINTF(bfs->debug, "inconsistent cached data. (dirent)\n");
-		return FALSE;
+		return false;
 	}
 	DPRINTF(bfs->debug, "%d files.\n", j);
 
-	return TRUE;
+	return true;
 }
