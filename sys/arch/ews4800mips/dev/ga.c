@@ -1,4 +1,4 @@
-/*	$NetBSD: ga.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $	*/
+/*	$NetBSD: ga.c,v 1.3 2007/02/22 05:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 /* Graphic Adaptor  (350, 360) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ga.c,v 1.2 2007/02/21 22:59:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ga.c,v 1.3 2007/02/22 05:31:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ ga_init(struct ga *ga)
 
 	/* Map GA register and buffers */
 	if (ga->reg_addr == 0 && ga_map(ga) != 0)
-		return FALSE;
+		return false;
 
 	/* This is 350 GA-ROM initialization sequence. */
 	if (ga->flags == 0x0000) {
@@ -160,7 +160,7 @@ ga_init(struct ga *ga)
 		ga_reg_write(ga, 0xca8, 0);
 	}
 
-	return TRUE;
+	return true;
 }
 
 bool
@@ -179,7 +179,7 @@ ga_map(struct ga *ga)
 
 	if (!(va = uvm_km_alloc(kernel_map, epa - pa, 0, UVM_KMF_VAONLY))) {
 		printf("can't map GA register.\n");
-		return FALSE;
+		return false;
 	}
 
 	for (tva = va; pa < epa; pa += PAGE_SIZE, tva += PAGE_SIZE)
@@ -190,7 +190,7 @@ ga_map(struct ga *ga)
 	ga->reg_addr = (uint32_t)va;
 #endif
 
-	return TRUE;
+	return true;
 }
 
 void
