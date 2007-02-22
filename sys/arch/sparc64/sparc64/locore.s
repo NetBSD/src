@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.242 2007/02/21 22:39:22 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.243 2007/02/22 16:29:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -6811,7 +6811,7 @@ idle_nolock:
 #ifdef UVM_PAGE_IDLE_ZERO
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
-	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
+	ldub	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
 	brz,pn	%o3, 1b
 	 nop
 
