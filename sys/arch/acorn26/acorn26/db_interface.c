@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13 2007/02/21 22:59:35 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.14 2007/02/22 04:47:27 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13 2007/02/21 22:59:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.14 2007/02/22 04:47:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -153,9 +153,9 @@ kdb_trap(int type, db_regs_t *regs)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(type, 0/*code*/);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 
@@ -171,10 +171,10 @@ db_validate_address(vm_offset_t addr)
 {
 	volatile uint8_t tmp;
 
-	db_faulted = FALSE;
-	db_validating = TRUE;
+	db_faulted = false;
+	db_validating = true;
 	tmp = *(uint8_t *)addr;
-	db_validating = FALSE;
+	db_validating = false;
 	return db_faulted;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.14 2007/02/19 23:48:40 he Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.15 2007/02/22 04:47:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2007/02/19 23:48:40 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.15 2007/02/22 04:47:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -227,7 +227,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 				      VM_PROT_READ;
 	while (len--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
-		    &pa) == FALSE)
+		    &pa) == false)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
 		    prot, prot | PMAP_WIRED);
