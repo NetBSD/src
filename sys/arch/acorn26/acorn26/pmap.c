@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.13 2007/02/21 22:59:35 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.14 2007/02/22 04:47:28 thorpej Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2007/02/21 22:59:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2007/02/22 04:47:28 thorpej Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -182,7 +182,7 @@ struct pv_entry *pv_table;
 struct pmap kernel_pmap_store;
 struct pv_entry *kernel_pmap_entries[PM_NENTRIES];
 
-static bool pmap_initialised = FALSE;
+static bool pmap_initialised = false;
 
 static struct pool pmap_pool;
 
@@ -748,9 +748,9 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 	UVMHIST_CALLED(pmaphist);
 	pv = pmap->pm_entries[atop(va)];
 	if (pv == NULL)
-		return FALSE;
+		return false;
 	*ppa = ptoa(pv->pv_ppn);
-	return TRUE;
+	return true;
 }
 
 void
@@ -881,7 +881,7 @@ pmap_clear_reference(struct vm_page *page)
 /*
  * Work out if a given page fault was our fault (e.g. through
  * referenced/modified emulation).  If it was, handle it and return
- * TRUE.  Otherwise, return FALSE.
+ * true.  Otherwise, return false.
  */
 bool
 pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
@@ -894,7 +894,7 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 	lpn = atop(va);
 	pv = pmap->pm_entries[lpn];
 	if (pv == NULL)
-		return FALSE;
+		return false;
 	ppn = pv->pv_ppn;
 	ppv = &pv_table[ppn];
  	UVMHIST_LOG(pmaphist,
@@ -904,13 +904,13 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 		if ((ppv->pv_pflags & PV_REFERENCED) == 0) {
 			ppv->pv_pflags |= PV_REFERENCED;
 			pmap_update_page(ppn);
-			return TRUE;
+			return true;
 		}
 		if ((atype & VM_PROT_WRITE) && (pv->pv_prot & VM_PROT_WRITE) &&
 		    (ppv->pv_pflags & PV_MODIFIED) == 0) {
 			ppv->pv_pflags |= PV_MODIFIED;
 			pmap_update_page(ppn);
-			return TRUE;
+			return true;
 		}
 	}
 	/*
@@ -928,9 +928,9 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 		 */
 		if (pv->pv_prot & VM_PROT_WRITE)
 			cpu_cache_flush();
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
 /*

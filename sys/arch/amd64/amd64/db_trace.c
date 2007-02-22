@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.10 2007/02/21 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11 2007/02/22 04:54:36 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.10 2007/02/21 23:48:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2007/02/22 04:54:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ struct x86_64_frame {
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_kdintr_symbol_value = 0;
-bool		db_trace_symbols_found = FALSE;
+bool		db_trace_symbols_found = false;
 
 void db_find_trace_symbols(void);
 int db_numargs(long *);
@@ -139,7 +139,7 @@ db_find_trace_symbols()
 		db_kdintr_symbol_value = (db_addr_t) value;
 	if (db_value_of_name("_syscall", &value))
 		db_syscall_symbol_value = (db_addr_t) value;
-	db_trace_symbols_found = TRUE;
+	db_trace_symbols_found = true;
 }
 
 /*
@@ -176,9 +176,9 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	switch (is_trap) {
 	    case NONE:
 		*ip = (db_addr_t)
-			db_get_value((long)*retaddr, 8, FALSE);
+			db_get_value((long)*retaddr, 8, false);
 		fp = (struct x86_64_frame *)
-			db_get_value((long)*nextframe, 8, FALSE);
+			db_get_value((long)*nextframe, 8, false);
 		if (fp == NULL)
 			return 0;
 		*nextframe = (long *)&fp->f_frame;
@@ -226,9 +226,9 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	    && traptype == INTERRUPT) {
 		for (i = 0; i < 4; i++) {
 			ifp = (struct intrframe *)(argp + i);
-			err = db_get_value((long)&ifp->__if_err, 8, FALSE);
+			err = db_get_value((long)&ifp->__if_err, 8, false);
 			trapno = db_get_value((long)&ifp->__if_trapno,
-			    8, FALSE);
+			    8, false);
 			if ((err == 0 || err == IREENT_MAGIC) && trapno == T_ASTFLT) {
 				*nextframe = (long *)ifp - 1;
 				break;
@@ -307,9 +307,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	long		*argp;
 	db_addr_t	callpc;
 	int		is_trap;
-	bool		kernel_only = TRUE;
-	bool		trace_thread = FALSE;
-	bool		lwpaddr = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 
 #if 0
 	if (!db_trace_symbols_found)
@@ -322,13 +322,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		while ((c = *cp++) != 0) {
 			if (c == 'a') {
-				lwpaddr = TRUE;
-				trace_thread = TRUE;
+				lwpaddr = true;
+				trace_thread = true;
 			}
 			if (c == 't')
-				trace_thread = TRUE;
+				trace_thread = true;
 			if (c == 'u')
-				kernel_only = FALSE;
+				kernel_only = false;
 		}
 	}
 
@@ -366,14 +366,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			} else {
 				frame = (long *)u->u_pcb.pcb_rbp;
 				callpc = (db_addr_t)
-				    db_get_value((long)(frame + 1), 8, FALSE);
+				    db_get_value((long)(frame + 1), 8, false);
 				(*pr)("at %p\n", frame);
 				frame = (long *)*frame; /* XXXfvdl db_get_value? */
 			}
 		} else {
 			frame = (long *)addr;
 			callpc = (db_addr_t)
-			    db_get_value((long)(frame + 1), 8, FALSE);
+			    db_get_value((long)(frame + 1), 8, false);
 			frame = (long *)*frame; /* XXXfvdl db_get_value? */
 		}
 	}
@@ -397,7 +397,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		if (lastframe == 0 && sym == (db_sym_t)0) {
 			/* Symbol not found, peek at code */
-			u_long	instr = db_get_value(callpc, 4, FALSE);
+			u_long	instr = db_get_value(callpc, 4, false);
 
 			offset = 1;
 			if (instr  == 0xe5894855 ||
@@ -430,7 +430,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		while (narg) {
 			if (argnp)
 				(*pr)("%s=", *argnp++);
-			(*pr)("%lx", db_get_value((long)argp, 8, FALSE));
+			(*pr)("%lx", db_get_value((long)argp, 8, false));
 			argp++;
 			if (--narg != 0)
 				(*pr)(",");
@@ -445,7 +445,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 			lastframe = (long *)fp;
 			callpc = (db_addr_t)
-			    db_get_value((db_addr_t)&fp->f_retaddr, 8, FALSE);
+			    db_get_value((db_addr_t)&fp->f_retaddr, 8, false);
 			continue;
 		}
 
