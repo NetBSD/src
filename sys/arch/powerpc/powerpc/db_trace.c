@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.45 2007/02/22 04:47:07 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.46 2007/02/22 16:57:57 thorpej Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45 2007/02/22 04:47:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.46 2007/02/22 16:57:57 thorpej Exp $");
 
 #include "opt_ppcarch.h"
 
@@ -109,24 +109,24 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	const char *symname;
 	const char *cp = modif;
 	char c;
-	bool kernel_only = TRUE;
-	bool trace_thread = FALSE;
-	bool lwpaddr = FALSE;
+	bool kernel_only = true;
+	bool trace_thread = false;
+	bool lwpaddr = false;
 	extern int trapexit[], sctrapexit[];
-	bool full = FALSE;
-	bool in_kernel = TRUE;
+	bool full = false;
+	bool in_kernel = true;
 
 	while ((c = *cp++) != 0) {
 		if (c == 'a') {
-			lwpaddr = TRUE;
-			trace_thread = TRUE;
+			lwpaddr = true;
+			trace_thread = true;
 		}
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = true;
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 		if (c == 'f')
-			full = TRUE;
+			full = true;
 	}
 
 	if (have_addr) {
