@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.7 2007/02/22 20:26:40 dogcow Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.8 2007/02/22 21:38:23 bouyer Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.7 2007/02/22 20:26:40 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.8 2007/02/22 21:38:23 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,8 @@ struct x86_bus_dma_tag isa_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 
 #define	IDTVEC(name)	__CONCAT(X,name)
