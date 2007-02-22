@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3 2007/02/21 22:59:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4 2007/02/22 17:03:20 thorpej Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -243,7 +243,7 @@ pmap_remove(pmap_t pmap, vaddr_t v1, vaddr_t v2)
 
 /*
  * Get the physical page address for the virtual address v.
- * Return FALSE if no mapping exists.
+ * Return false if no mapping exists.
  */
 bool
 pmap_extract(pmap_t pmap, vaddr_t v, paddr_t *pp)
@@ -255,14 +255,14 @@ pmap_extract(pmap_t pmap, vaddr_t v, paddr_t *pp)
 		panic("pmap_extract");
 	seg = SEGNO(nv);
 	if (((pga = ept->ept_section[seg]) & PG_IMM) == 0)
-		return FALSE;
+		return false;
 	pg = PGINSEG(nv);
 	pgp = (int *)(((pga << PGSH) & 017777777) << PTOV_COMP);
 	if (((paddr = pgp[pg]) & PG_IMM) == 0)
-		return FALSE;
+		return false;
 	*pp = (paddr << PGSH) & 037777777;
 	*pp <<= PTOV_COMP;
-	return TRUE;
+	return true;
 }
 
 int
