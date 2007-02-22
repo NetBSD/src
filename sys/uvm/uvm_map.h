@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.55 2007/02/21 23:00:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.56 2007/02/22 06:05:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -417,7 +417,7 @@ vm_map_lock_try(struct vm_map *map)
 		simple_lock(&map->flags_lock);
 		if (map->flags & VM_MAP_BUSY) {
 			simple_unlock(&map->flags_lock);
-			return (FALSE);
+			return (false);
 		}
 		rv = (lockmgr(&map->lock, LK_EXCLUSIVE|LK_NOWAIT|LK_INTERLOCK,
 		    &map->flags_lock) == 0);

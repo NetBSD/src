@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.75 2007/02/21 23:00:11 thorpej Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.76 2007/02/22 06:10:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.75 2007/02/21 23:00:11 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.76 2007/02/22 06:10:49 thorpej Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -79,7 +79,7 @@ READ(void *v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error, flags, ioflag;
-	bool usepc = FALSE;
+	bool usepc = false;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -220,9 +220,9 @@ WRITE(void *v)
 	void *win;
 	vsize_t bytelen;
 	bool async;
-	bool usepc = FALSE;
+	bool usepc = false;
 #ifdef LFS_READWRITE
-	bool need_unreserve = FALSE;
+	bool need_unreserve = false;
 #endif
 	struct ufsmount *ump;
 
@@ -292,7 +292,7 @@ WRITE(void *v)
 
 	usepc = vp->v_type == VREG;
 #ifdef LFS_READWRITE
-	async = TRUE;
+	async = true;
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)
@@ -443,7 +443,7 @@ WRITE(void *v)
 		    btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		if (error)
 			break;
-		need_unreserve = TRUE;
+		need_unreserve = true;
 #endif
 		error = UFS_BALLOC(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
@@ -476,7 +476,7 @@ WRITE(void *v)
 		(void)VOP_BWRITE(bp);
 		lfs_reserve(fs, vp, NULL,
 		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
-		need_unreserve = FALSE;
+		need_unreserve = false;
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);

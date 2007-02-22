@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.181 2007/02/21 23:00:09 thorpej Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.182 2007/02/22 06:14:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.181 2007/02/21 23:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.182 2007/02/22 06:14:28 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1502,8 +1502,8 @@ nfs_init0(void)
 	rpc_auth_unix = txdr_unsigned(RPCAUTH_UNIX);
 	rpc_auth_kerb = txdr_unsigned(RPCAUTH_KERB4);
 	nfs_prog = txdr_unsigned(NFS_PROG);
-	nfs_true = txdr_unsigned(TRUE);
-	nfs_false = txdr_unsigned(FALSE);
+	nfs_true = txdr_unsigned(true);
+	nfs_false = txdr_unsigned(false);
 	nfs_xdrneg1 = txdr_unsigned(-1);
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
@@ -2095,7 +2095,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	/*
 	 * Extract and set starting directory.
 	 */
-	error = nfsrv_fhtovp(nsfh, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
+	error = nfsrv_fhtovp(nsfh, false, &dp, ndp->ni_cnd.cn_cred, slp,
 	    nam, &rdonly, kerbflag, pubflag);
 	if (error)
 		goto out;
@@ -2556,22 +2556,22 @@ nfs_ispublicfh(const nfsrvfh_t *nsfh)
 	int i;
 
 	if (NFSRVFH_SIZE(nsfh) == 0) {
-		return TRUE;
+		return true;
 	}
 	if (NFSRVFH_SIZE(nsfh) != NFSX_V2FH) {
-		return FALSE;
+		return false;
 	}
 	for (i = 0; i < NFSX_V2FH; i++)
 		if (*cp++ != 0)
-			return FALSE;
-	return TRUE;
+			return false;
+	return true;
 }
 #endif /* NFSSERVER */
 
 /*
- * This function compares two net addresses by family and returns TRUE
+ * This function compares two net addresses by family and returns true
  * if they are the same host.
- * If there is any doubt, return FALSE.
+ * If there is any doubt, return false.
  * The AF_INET family is handled as a special case so that address mbufs
  * don't need to be saved to store "struct in_addr", which is only 4 bytes.
  */

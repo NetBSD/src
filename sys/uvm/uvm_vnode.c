@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.79 2007/02/21 23:00:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.80 2007/02/22 06:05:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.79 2007/02/21 23:00:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.80 2007/02/22 06:05:02 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -142,7 +142,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	while (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(uobj, &uobj->vmobjlock, FALSE,
+		UVM_UNLOCK_AND_WAIT(uobj, &uobj->vmobjlock, false,
 		    "uvn_attach", 0);
 		simple_lock(&uobj->vmobjlock);
 		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);

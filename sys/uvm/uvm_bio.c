@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.55 2007/02/21 23:00:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.56 2007/02/22 06:05:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.55 2007/02/21 23:00:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.56 2007/02/22 06:05:00 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -588,9 +588,9 @@ ubc_release(void *va, int flags)
 		simple_lock(&uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
 		simple_unlock(&uobj->vmobjlock);
-		unmapped = TRUE;
+		unmapped = true;
 	} else {
-		unmapped = FALSE;
+		unmapped = false;
 	}
 
 	simple_lock(&ubc_object.uobj.vmobjlock);

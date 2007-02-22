@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.7 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.7 2007/02/21 23:00:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.8 2007/02/22 06:05:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -160,13 +160,13 @@ uvmpdpol_scaninit(void)
 	filereact = fileunder || (!fileover && (anonover || execover));
 	execreact = execunder || (!execover && (anonover || fileover));
 	if (filereact && execreact && (anonreact || uvm_swapisfull())) {
-		anonreact = filereact = execreact = FALSE;
+		anonreact = filereact = execreact = false;
 	}
 	ss->ss_anonreact = anonreact;
 	ss->ss_filereact = filereact;
 	ss->ss_execreact = execreact;
 
-	ss->ss_first = TRUE;
+	ss->ss_first = true;
 }
 
 struct vm_page *
@@ -183,7 +183,7 @@ uvmpdpol_selectvictim(void)
 
 		if (ss->ss_first) {
 			pg = TAILQ_FIRST(&pdpol_state.s_inactiveq);
-			ss->ss_first = FALSE;
+			ss->ss_first = false;
 		} else {
 			pg = ss->ss_nextpg;
 			if (pg != NULL && (pg->pqflags & PQ_INACTIVE) == 0) {
