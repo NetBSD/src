@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.44 2007/02/22 06:51:30 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.45 2007/02/22 20:09:42 dogcow Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.44 2007/02/22 06:51:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.45 2007/02/22 20:09:42 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -630,7 +630,7 @@ kdbrint(tkn)
 #ifdef MULTIPROCESSOR
 
 static void
-db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_mp_softc *sc;
 	struct cpu_info *ci;
