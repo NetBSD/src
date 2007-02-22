@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.4 2007/02/21 22:59:38 thorpej Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.5 2007/02/22 05:09:01 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.4 2007/02/21 22:59:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.5 2007/02/22 05:09:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,16 +102,16 @@ arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep)
 		    pa >= entry->pa0 && pa < entry->pa0 + size) {
 			*vap = entry->va;
 			*sizep = size;
-			return TRUE;
+			return true;
 		}
 		if (entry->pa1 != 0 &&
 		    pa >= entry->pa1 && pa < entry->pa1 + size) {
 			*vap = entry->va + size;
 			*sizep = size;
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 /* XXX: Using tlbp makes this easier... */
@@ -132,11 +132,11 @@ arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep)
 			if (pa != 0) {
 				*pap = pa;
 				*sizep = size;
-				return TRUE;
+				return true;
 			}
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 vaddr_t
@@ -211,8 +211,8 @@ arc_wired_map_extract(vaddr_t va, paddr_t *pap)
 
 	if (arc_wired_map_vaddr_entry(va, &pa, &size)) {
 		*pap = pa + (va & (size - 1));
-		return TRUE;
+		return true;
 	} else {
-		return FALSE;
+		return false;
 	}
 }
