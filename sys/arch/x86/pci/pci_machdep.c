@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21 2007/02/21 20:41:27 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.22 2007/02/22 04:58:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.21 2007/02/21 20:41:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.22 2007/02/22 04:58:26 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -218,6 +218,7 @@ struct x86_bus_dma_tag pci_bus_dma_tag = {
 
 #ifdef _LP64
 struct x86_bus_dma_tag pci_bus_dma64_tag = {
+	0,				/* tag_needs_free */
 	0,
 	0,
 	0,
