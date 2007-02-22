@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2007/02/15 22:52:43 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2007/02/22 22:29:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct kmutex {
 	uint8_t			mtx_idtype[3];			/* 5-7 */
 };
 
-#define	__HAVE_MUTEX_STUBS	1
+#undef	__HAVE_MUTEX_STUBS
 
 #define	mtx_owner	u.mtxu_owner
 #define	mtx_interlock	u.mtxu_interlock
