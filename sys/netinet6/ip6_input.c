@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.95 2007/02/17 22:34:13 dyoung Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.96 2007/02/22 08:39:27 dyoung Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.95 2007/02/17 22:34:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.96 2007/02/22 08:39:27 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -237,8 +237,7 @@ ip6intr()
 extern struct	route_in6 ip6_forward_rt;
 
 void
-ip6_input(m)
-	struct mbuf *m;
+ip6_input(struct mbuf *m)
 {
 	struct ip6_hdr *ip6;
 	int off = sizeof(struct ip6_hdr), nest;
@@ -277,7 +276,7 @@ ip6_input(m)
 		else
 			ip6stat.ip6s_mext1++;
 	} else {
-#define M2MMAX	(sizeof(ip6stat.ip6s_m2m)/sizeof(ip6stat.ip6s_m2m[0]))
+#define M2MMAX	__arraycount(ip6stat.ip6s_m2m)
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
 				ip6stat.ip6s_m2m[lo0ifp->if_index]++; /* XXX */
