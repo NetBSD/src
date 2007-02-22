@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.85 2007/02/21 23:00:12 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.86 2007/02/22 04:38:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.85 2007/02/21 23:00:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.86 2007/02/22 04:38:07 matt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -181,7 +181,7 @@ MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
 static void	uao_free(struct uvm_aobj *);
 static int	uao_get(struct uvm_object *, voff_t, struct vm_page **,
 		    int *, int, vm_prot_t, int, int);
-static bool uao_put(struct uvm_object *, voff_t, voff_t, int);
+static int	uao_put(struct uvm_object *, voff_t, voff_t, int);
 
 #if defined(VMSWAP)
 static struct uao_swhash_elt *uao_find_swhash_elt
@@ -703,7 +703,7 @@ uao_detach_locked(struct uvm_object *uobj)
  * => NOTE: we are allowed to lock the page queues, so the caller
  *	must not be holding the lock on them [e.g. pagedaemon had
  *	better not call us with the queues locked]
- * => we return TRUE unless we encountered some sort of I/O error
+ * => we return 0 unless we encountered some sort of I/O error
  *	XXXJRT currently never happens, as we never directly initiate
  *	XXXJRT I/O
  *
@@ -734,7 +734,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
 		stop = aobj->u_pages << PAGE_SHIFT;
-		by_list = TRUE;		/* always go by the list */
+		by_list = true;		/* always go by the list */
 	} else {
 		start = trunc_page(start);
 		if (stop == 0) {

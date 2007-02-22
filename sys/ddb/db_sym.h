@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.22 2007/02/21 22:59:57 thorpej Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.23 2007/02/22 04:38:06 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -91,7 +91,7 @@ extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 bool		db_eqname(const char *, const char *, int);
 					/* strcmp, modulo leading char */
 
-int		db_value_of_name(const char *, db_expr_t *);
+bool		db_value_of_name(const char *, db_expr_t *);
 					/* find symbol value given name */
 
 void		db_sifting(char *, int);
@@ -115,4 +115,4 @@ void		db_symstr(char *, size_t, db_expr_t, db_strategy_t);
 void		db_printsym(db_expr_t, db_strategy_t,
 		    void(*)(const char *, ...));
 					/* print closest symbol to a value */
-int		db_sym_numargs(db_sym_t, int *, char **);
+bool		db_sym_numargs(db_sym_t, int *, char **);
