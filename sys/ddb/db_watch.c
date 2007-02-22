@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.25 2007/02/21 22:59:57 thorpej Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.26 2007/02/22 04:38:06 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.25 2007/02/21 22:59:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.26 2007/02/22 04:38:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -170,7 +170,7 @@ db_list_watchpoints(void)
 /* Delete watchpoint */
 /*ARGSUSED*/
 void
-db_deletewatch_cmd(db_expr_t addr, int have_addr,
+db_deletewatch_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
@@ -180,7 +180,7 @@ db_deletewatch_cmd(db_expr_t addr, int have_addr,
 /* Set watchpoint */
 /*ARGSUSED*/
 void
-db_watchpoint_cmd(db_expr_t addr, int have_addr,
+db_watchpoint_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	vsize_t size;
@@ -198,7 +198,7 @@ db_watchpoint_cmd(db_expr_t addr, int have_addr,
 /* list watchpoints */
 /*ARGSUSED*/
 void
-db_listwatch_cmd(db_expr_t addr, int have_addr,
+db_listwatch_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 

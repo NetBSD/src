@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.119 2007/02/17 22:34:10 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.120 2007/02/22 04:38:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.119 2007/02/17 22:34:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.120 2007/02/22 04:38:02 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1505,7 +1505,7 @@ db_show_radix_node(struct radix_node *rn, void *w)
  * Use this from ddb:  "show arptab"
  */
 void
-db_show_arptab(db_expr_t addr, int have_addr,
+db_show_arptab(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	struct radix_node_head *rnh;

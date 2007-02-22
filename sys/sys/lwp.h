@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.50 2007/02/20 18:08:43 dsl Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.51 2007/02/22 04:38:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -333,7 +333,7 @@ lwp_unsleep(struct lwp *l)
 	(*l->l_syncobj->sobj_unsleep)(l);
 }
 
-int newlwp(struct lwp *, struct proc *, vaddr_t, int, int,
+int newlwp(struct lwp *, struct proc *, vaddr_t, bool, int,
     void *, size_t, void (*)(void *), void *, struct lwp **);
 
 /*
