@@ -7,10 +7,9 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: w_cabs.c,v 1.4 2001/01/06 00:15:00 christos Exp $");
+__RCSID("$NetBSD: compat_cabs.c,v 1.1 2007/02/22 22:08:19 drochner Exp $");
 #endif
 
-#define __MATH_PRIVATE__
 #include <math.h>
 
 struct complex {
@@ -18,11 +17,12 @@ struct complex {
 	double y;
 };
 
-double cabs __P((struct complex));
+double cabs(struct complex);
+__warn_references(cabs, "warning: reference to compatibility cabs()");
 
 double
-cabs(z)
-	struct complex z;
+cabs(struct complex z)
 {
+
 	return hypot(z.x, z.y);
 }

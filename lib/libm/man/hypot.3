@@ -26,16 +26,14 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)hypot.3	6.7 (Berkeley) 5/6/91
-.\"	$NetBSD: hypot.3,v 1.16 2003/11/02 11:17:16 wiz Exp $
+.\"	$NetBSD: hypot.3,v 1.17 2007/02/22 22:08:20 drochner Exp $
 .\"
-.Dd May 6, 1991
+.Dd February 12, 2007
 .Dt HYPOT 3
 .Os
 .Sh NAME
 .Nm hypot ,
-.Nm hypotf ,
-.Nm cabs ,
-.Nm cabsf
+.Nm hypotf
 .Nd Euclidean distance and complex absolute value functions
 .Sh LIBRARY
 .Lb libm
@@ -45,15 +43,9 @@
 .Fn hypot "double x" "double y"
 .Ft float
 .Fn hypotf "float x" "float y"
-.Ft double
-.Fn cabs "struct complex { double x; double y; } z"
-.Ft float
-.Fn cabsf "struct complex { float x; float y; } z"
 .Sh DESCRIPTION
 The
 .Fn hypot
-and
-.Fn cabs
 functions
 compute the
 sqrt(x*x+y*y)
@@ -73,11 +65,11 @@ Consequently
 .Fn hypot "5.0" "12.0"
 = 13.0
 exactly;
-in general, hypot and cabs return an integer whenever an
+in general, hypot returns an integer whenever an
 integer might be expected.
 .Pp
 The same cannot be said for the shorter and faster version of hypot
-and cabs that is provided in the comments in cabs.c; its error can
+that is provided in the comments in cabs.c; its error can
 exceed 1.2
 .Em ulps .
 .Sh NOTES
@@ -126,11 +118,7 @@ function and a
 function
 appeared in
 .At v7 .
-.Sh BUGS
-The
 .Fn cabs
-and
-.Fn cabsf
-functions use structures that are not defined in any header and need to
-be defined by the user.
-As such they cannot be prototyped properly.
+was removed from public namespace in
+.Nx 5.0
+to avoid conflicts with the complex function in C99.
