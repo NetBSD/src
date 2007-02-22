@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.49 2007/02/22 13:50:36 tsutsui Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.50 2007/02/22 17:09:44 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.49 2007/02/22 13:50:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.50 2007/02/22 17:09:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -92,9 +92,9 @@ extern struct pcb *curpcb;
 				 ((u_int)(va) < ((u_int)(pcb) + USPACE)))
 
 #define	get(addr, space) \
-		(db_get_value((db_addr_t)(addr), sizeof(int), FALSE))
+		(db_get_value((db_addr_t)(addr), sizeof(int), false))
 #define	get16(addr, space) \
-		(db_get_value((db_addr_t)(addr), sizeof(u_short), FALSE))
+		(db_get_value((db_addr_t)(addr), sizeof(u_short), false))
 
 #define	NREGISTERS	16
 
@@ -406,9 +406,9 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	const char *	name;
 	struct stackpos pos;
 	struct pcb	*pcb = curpcb;
-	bool		kernel_only = TRUE;
-	bool		trace_thread = FALSE;
-	bool		lwpaddr = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 	int		fault_pc = 0;
 
 	{
@@ -417,12 +417,12 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		while ((c = *cp++) != 0)
 			if (c == 'a') {
-				lwpaddr = TRUE;
-				trace_thread = TRUE;
+				lwpaddr = true;
+				trace_thread = true;
 			} else if (c == 't')
-				trace_thread = TRUE;
+				trace_thread = true;
 			else if (c == 'u')
-				kernel_only = FALSE;
+				kernel_only = false;
 	}
 
 	if (!have_addr)
