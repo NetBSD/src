@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2007/02/09 21:55:09 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2007/02/22 17:03:20 thorpej Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -81,13 +81,13 @@ cpu_startup()
 	 * At most one process with the full length is allowed.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 NCARGS/4, VM_MAP_PAGEABLE, FALSE, NULL);
+				 NCARGS/4, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free)/4);
 	pbuf[strlen(pbuf)-1] = 0; /* Remove 'B' */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2007/02/21 22:59:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2007/02/22 17:04:53 thorpej Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2007/02/21 22:59:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2007/02/22 17:04:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ paddr_t avail_end;	/* PA of last available physical page */
  */
 
 static pt_entry_t protection_codes[8];	/* maps MI prot to ns532 prot code */
-static bool pmap_initialized = FALSE;	/* pmap_init done yet? */
+static bool pmap_initialized = false;	/* pmap_init done yet? */
 
 /*
  * the following two vaddr_t's are used during system startup
@@ -747,7 +747,7 @@ pmap_init(void)
 	 * done: pmap module is up (and ready for business)
 	 */
 
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 }
 
 /*
@@ -1372,10 +1372,10 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		if (__predict_true((pte & PG_V) != 0)) {
 			if (pap != NULL)
 				*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
-			return (TRUE);
+			return (true);
 		}
 	}
-	return (FALSE);
+	return (false);
 }
 
 
@@ -1389,7 +1389,7 @@ vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
+	if (pmap_extract(pmap_kernel(), va, &pa) == true)
 		return (pa);
 	return (0);
 }
@@ -1445,14 +1445,14 @@ pmap_zero_page(paddr_t pa)
 
 /*
  * pmap_zero_page_uncached: the same, except uncached.  Returns
- * TRUE if the page was zero'd, FALSE if we aborted for some
+ * true if the page was zero'd, false if we aborted for some
  * reason.
  */
 
 bool
 pmap_zero_page_uncached(paddr_t pa)
 {
-	bool rv = TRUE;
+	bool rv = true;
 	int i, *ptr;
 
 	simple_lock(&pmap_zero_page_lock);
@@ -1468,7 +1468,7 @@ pmap_zero_page_uncached(paddr_t pa)
 			 * do slow memory access to finish this
 			 * page.
 			 */
-			rv = FALSE;
+			rv = false;
 			break;
 		}
 		*ptr++ = 0;
@@ -1623,9 +1623,9 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	struct pv_entry *pve;
 
 	if (!pmap_valid_entry(*pte))
-		return(FALSE);		/* VA not mapped */
+		return(false);		/* VA not mapped */
 	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
-		return(FALSE);
+		return(false);
 	}
 
 	opte = *pte;			/* save the old PTE */
@@ -1651,7 +1651,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 #endif
-		return(TRUE);
+		return(true);
 	}
 
 	bank = vm_physseg_find(ns532_btop(opte & PG_FRAME), &off);
@@ -1670,7 +1670,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 
 	if (pve)
 		pmap_free_pv(pmap, pve);
-	return(TRUE);
+	return(true);
 }
 
 /*
@@ -1982,7 +1982,7 @@ pmap_test_attrs(struct vm_page *pg, int testbits)
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
 	if (bank == -1) {
 		printf("pmap_test_attrs: unmanaged page?\n");
-		return(FALSE);
+		return(false);
 	}
 
 	/*
@@ -1992,12 +1992,12 @@ pmap_test_attrs(struct vm_page *pg, int testbits)
 
 	myattrs = &vm_physmem[bank].pmseg.attrs[off];
 	if (*myattrs & testbits)
-		return(TRUE);
+		return(true);
 
 	/* test to see if there is a list before bothering to lock */
 	pvh = &vm_physmem[bank].pmseg.pvhead[off];
 	if (pvh->pvh_list == NULL) {
-		return(FALSE);
+		return(false);
 	}
 
 	/* nope, gonna have to do it the hard way */
@@ -2027,7 +2027,7 @@ pmap_test_attrs(struct vm_page *pg, int testbits)
  * pmap_change_attrs: change a page's attributes
  *
  * => we set pv_head => pmap locking
- * => we return TRUE if we cleared one of the bits we were asked to
+ * => we return true if we cleared one of the bits we were asked to
  */
 
 bool
@@ -2044,7 +2044,7 @@ pmap_change_attrs(struct vm_page *pg, int setbits, int clearbits)
 	bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
 	if (bank == -1) {
 		printf("pmap_change_attrs: unmanaged page?\n");
-		return(FALSE);
+		return(false);
 	}
 
 	PMAP_HEAD_TO_MAP_LOCK();
@@ -2526,7 +2526,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
-		if (uvm.page_init_done == FALSE) {
+		if (uvm.page_init_done == false) {
 
 			/*
 			 * we're growing the kernel pmap early (from
@@ -2534,7 +2534,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			 * handled a little differently.
 			 */
 
-			if (uvm_page_physget(&ptaddr) == FALSE)
+			if (uvm_page_physget(&ptaddr) == false)
 				panic("pmap_growkernel: out of memory");
 			pmap_zero_page(ptaddr);
 
@@ -2548,7 +2548,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 		/*
 		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
-		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * pmap_initialized == false CASE!  WE MAY BE
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 

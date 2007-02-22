@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.4 2007/02/21 22:59:49 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.5 2007/02/22 17:03:19 thorpej Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -106,13 +106,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 bool
 inst_branch(int inst)
 {
-	return TRUE;
+	return true;
 }
 
 bool
 inst_unconditional_flow_transfer(int inst)
 {
-	return TRUE;
+	return true;
 }
 
 db_addr_t

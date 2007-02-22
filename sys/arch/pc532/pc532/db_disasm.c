@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.13 2007/02/21 22:59:49 thorpej Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.14 2007/02/22 17:04:52 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.13 2007/02/21 22:59:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.14 2007/02/22 17:04:52 thorpej Exp $");
 
 #define STATIC static
 
@@ -982,7 +982,7 @@ int	db_gen( struct insn *, db_addr_t, int, unsigned char, unsigned char);
 int	db_dasm_ns32k(struct insn *, db_addr_t);
 void	db_reverseBits(int *);
 
-#define get_byte(l) ((unsigned char) db_get_value(l, 1, FALSE))
+#define get_byte(l) ((unsigned char) db_get_value(l, 1, false))
 
 void
 db_formatOperand(struct operand *operand, db_addr_t loc)
