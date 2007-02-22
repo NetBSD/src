@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.4 2007/02/22 07:33:48 dyoung Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.5 2007/02/22 08:08:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.4 2007/02/22 07:33:48 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.5 2007/02/22 08:08:40 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -165,14 +165,14 @@ SYSCTL_SETUP(sysctl_selectsrc_setup, "sysctl selectsrc subtree setup")
 }
 
 /*
- * Score by address preference: prefer addresses with lower preference
+ * Score by address preference: prefer addresses with higher preference
  * number.  Preference numbers are assigned with ioctl SIOCSIFADDRPREF.
  */
 static int
 in_preference(const struct in_addr *src, int preference,
     int idx, const struct in_addr *dst)
 {
-	return -preference;
+	return preference;
 }
 
 /*
