@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.3 2007/02/23 12:00:29 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.4 2007/02/23 12:12:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -83,14 +83,6 @@
 #include "opt_lockdebug.h"
 #include "opt_sched.h"
 #endif
-
-#if _KERNEL
-
-#if defined(SCHED_4BSD)
-#include <sys/sched_4bsd.h>
-#endif
-
-#endif /* _KERNEL */
 
 struct sched_param {
 	int	sched_priority;
