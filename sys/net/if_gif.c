@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.65 2007/02/17 22:34:08 dyoung Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.66 2007/02/23 06:15:31 dyoung Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.65 2007/02/17 22:34:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.66 2007/02/23 06:15:31 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -188,6 +188,7 @@ gif_clone_destroy(struct ifnet *ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	rtcache_free(&sc->gif_ro);
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF);
