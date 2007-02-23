@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.41 2007/02/22 18:57:48 matt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.42 2007/02/23 01:16:32 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.41 2007/02/22 18:57:48 matt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.42 2007/02/23 01:16:32 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -212,10 +212,9 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	static const Elf_Sym *last_def;
 	static const Obj_Entry *last_refobj;
 	static const Obj_Entry *last_defobj;
-	static bool last_in_plt;
 
 	if (symnum == last_symnum && refobj == last_refobj
-	    && in_plt == last_in_plt) {
+	    && in_plt == false) {
 		*defobj_out = last_defobj;
 		return last_def;
 	}
@@ -257,14 +256,16 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	if (def != NULL) {
 		*defobj_out = defobj;
 #ifdef COMBRELOC
-		/*
-		 * Cache the lookup arguments and results.
-		 */
-		last_symnum = symnum;
-		last_refobj = refobj;
-		last_def = def;
-		last_defobj = defobj;
-		last_in_plt = in_plt;
+		if (in_plt == false) {
+			/*
+			 * Cache the lookup arguments and results if this was
+			 * non-PLT lookup.
+			 */
+			last_symnum = symnum;
+			last_refobj = refobj;
+			last_def = def;
+			last_defobj = defobj;
+		}
 #endif
 	} else {
 		rdbg(("lookup failed"));
