@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.40 2007/02/22 16:52:55 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.41 2007/02/23 02:57:43 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.40 2007/02/22 16:52:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.41 2007/02/23 02:57:43 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -66,16 +66,16 @@ db_regs_t ddb_regs;		/* register state */
 
 void kdb_printtrap(u_int, int);
 
-void db_tlbdump_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void __db_tlbdump_page_size_sh4(uint32_t);
 void __db_tlbdump_pfn(uint32_t);
-void db_cachedump_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_cachedump_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 void __db_cachedump_sh3(vaddr_t);
 void __db_cachedump_sh4(vaddr_t);
 
-void db_stackcheck_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_frame_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_stackcheck_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_frame_cmd(db_expr_t, bool, db_expr_t, const char *);
 void __db_print_symbol(db_expr_t);
 char *__db_procname_by_asid(int);
 
@@ -219,7 +219,7 @@ db_clear_single_step(db_regs_t *regs)
  * MMU
  */
 void
-db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	static const char *pr[] = { "_r", "_w", "rr", "ww" };
@@ -404,7 +404,7 @@ __db_tlbdump_page_size_sh4(uint32_t r)
  * CACHE
  */
 void
-db_cachedump_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_cachedump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 #ifdef SH3
@@ -516,7 +516,7 @@ __db_cachedump_sh4(vaddr_t va)
 #undef ON
 
 void
-db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct switchframe *sf = &curpcb->pcb_sf;
 	struct trapframe *tf, *tftop;
