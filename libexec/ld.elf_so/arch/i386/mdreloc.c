@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.22 2006/03/18 23:09:34 christos Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.23 2007/02/23 01:17:11 matt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.22 2006/03/18 23:09:34 christos Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.23 2007/02/23 01:17:11 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,10 +52,6 @@ int
 _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
-#define COMBRELOC
-#ifdef COMBRELOC
-	unsigned long lastsym = -1;
-#endif
 	Elf_Addr target = 0;
 
 	for (rel = obj->rel; rel < obj->rellim; rel++) {
@@ -74,19 +70,10 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 
 #if 1 /* XXX should not occur */
 		case R_TYPE(PC32):
-#ifdef COMBRELOC
-			if (symnum != lastsym) {
-#endif
-				def = _rtld_find_symdef(symnum, obj, &defobj,
-				    false);
-				if (def == NULL)
-					return -1;
-				target = (Elf_Addr)(defobj->relocbase +
-				    def->st_value);
-#ifdef COMBRELOC
-				lastsym = symnum;
-			}
-#endif
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+			target = (Elf_Addr)(defobj->relocbase + def->st_value);
 
 			*where += target - (Elf_Addr)where;
 			rdbg(("PC32 %s in %s --> %p in %s",
@@ -98,19 +85,10 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 #endif
 		case R_TYPE(32):
 		case R_TYPE(GLOB_DAT):
-#ifdef COMBRELOC
-			if (symnum != lastsym) {
-#endif
-				def = _rtld_find_symdef(symnum, obj, &defobj,
-				    false);
-				if (def == NULL)
-					return -1;
-				target = (Elf_Addr)(defobj->relocbase +
-				    def->st_value);
-#ifdef COMBRELOC
-				lastsym = symnum;
-			}
-#endif
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+			target = (Elf_Addr)(defobj->relocbase + def->st_value);
 
 			tmp = target + *where;
 			if (*where != tmp)
