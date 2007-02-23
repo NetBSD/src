@@ -1,4 +1,4 @@
-/* $NetBSD: sched_4bsd.h,v 1.1.2.1 2007/02/20 21:48:47 rmind Exp $ */
+/* $NetBSD: sched_4bsd.h,v 1.1.2.2 2007/02/23 12:00:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -75,9 +75,5 @@
 
 #ifndef	_SYS_SCHED_4BSD_H_
 #define	_SYS_SCHED_4BSD_H_
-
-extern int schedhz;			/* ideally: 16 */
-
-void schedclock(struct lwp *);
 
 #endif /* _SYS_SCHED_4BSD_H_ */

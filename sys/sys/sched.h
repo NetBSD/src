@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.2 2007/02/20 21:48:47 rmind Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.3 2007/02/23 12:00:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -159,6 +159,8 @@ struct schedstate_percpu {
 
 #ifdef _KERNEL
 
+extern int schedhz;			/* ideally: 16 */
+
 struct proc;
 struct cpu_info;
 
@@ -172,6 +174,7 @@ void sched_setup(void);		/* Setup scheduler, e.g. kick off timeout driven events
 
 /* Main scheduler functions */
 void sched_tick(struct cpu_info *); /* Maybe resched after spc_ticks hardclock() ticks */
+void sched_clock(struct lwp *); /* Called from statclock(), e.g. to handle priority adjustment */
 
 /* Runqueue-related functions */
 inline boolean_t sched_curcpu_runnable_p(void); /* Indicate runnable processes on current CPU */
