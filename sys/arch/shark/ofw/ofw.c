@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.36 2007/01/25 02:20:23 macallan Exp $	*/
+/*	$NetBSD: ofw.c,v 1.37 2007/02/23 05:53:36 mrg Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.36 2007/01/25 02:20:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.37 2007/02/23 05:53:36 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,7 +412,7 @@ ofw_boot(howto, bootstr)
 			*ap1 = 0;
 #if defined(SHARK) && (NPC > 0)
 		shark_screen_cleanup(0);
-#else
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 		reset_screen();
 #endif
 		OF_boot(str);
@@ -423,7 +423,7 @@ ofw_exit:
 	printf("Calling OF_exit...\n");
 #if defined(SHARK) && (NPC > 0)
 	shark_screen_cleanup(1);
-#else
+#elif (NIGSFB_OFBUS > 0) || (NVGA_OFBUS > 0)
 	reset_screen();
 #endif
 	OF_exit();
