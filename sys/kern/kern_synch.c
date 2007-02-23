@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.6 2007/02/21 12:05:48 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.7 2007/02/23 11:55:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.6 2007/02/21 12:05:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.7 2007/02/23 11:55:43 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -427,6 +427,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 		newl = l->l_cpu->ci_data.cpu_idlelwp;
 		KASSERT(newl != NULL);
 	}
+	KASSERT(lwp_locked(newl, &sched_mutex));
+	newl->l_stat = LSONPROC;
+	newl->l_cpu = l->l_cpu;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	if (l->l_mutex != &sched_mutex) {
@@ -434,14 +437,12 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	}
 #endif
 
-	newl->l_stat = LSONPROC;
 	updatertime(l, spc);
 	if (l != newl) {
 		struct lwp *prevlwp;
 
 		uvmexp.swtch++;
 		pmap_deactivate(l);
-		newl->l_cpu = l->l_cpu;
 		prevlwp = cpu_switchto(l, newl);
 		sched_switch_unlock(prevlwp, l);
 		pmap_activate(l);
