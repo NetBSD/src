@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.182 2007/02/21 23:48:15 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.183 2007/02/23 16:51:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.182 2007/02/21 23:48:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.183 2007/02/23 16:51:47 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -786,8 +786,8 @@ setrunnable(struct lwp *l)
 	struct proc *p = l->l_proc;
 	sigset_t *ss;
 
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	switch (l->l_stat) {
 	case LSSTOP:
@@ -822,14 +822,8 @@ setrunnable(struct lwp *l)
 	 */
 	if (l->l_wchan != NULL) {
 		l->l_stat = LSSLEEP;
-		if ((l->l_flag & LW_SINTR) != 0)
-			lwp_unsleep(l);
-		else {
-			lwp_unlock(l);
-#ifdef DIAGNOSTIC
-			panic("setrunnable: !L_SINTR");
-#endif
-		}
+		/* lwp_unsleep() will release the lock. */
+		lwp_unsleep(l);
 		return;
 	}
 
