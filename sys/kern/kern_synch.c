@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.7 2007/02/23 11:55:43 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.8 2007/02/23 15:57:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.7 2007/02/23 11:55:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.8 2007/02/23 15:57:45 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -91,14 +91,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.7 2007/02/23 11:55:43 yamt Ex
 #if defined(PERFCTRS)
 #include <sys/pmc.h>
 #endif
+#include <sys/cpu.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
 
 int	lbolt;			/* once a second sleep address */
 
