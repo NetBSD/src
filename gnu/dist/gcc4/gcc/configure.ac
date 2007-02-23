@@ -3124,7 +3124,8 @@ case "$target" in
 	fi
       fi]) ;;
   *-*-netbsd*)
-      if $gcc_cv_nm /lib/libc.so | grep -sq 'B __stack_chk_guard'; then
+      if $gcc_cv_nm $($CC -print-file-name=libc.a) | \
+	grep 'B __stack_chk_guard' > /dev/null; then
 	gcc_cv_libc_provides_ssp=yes
       else
 	gcc_cv_libc_provides_ssp=no
