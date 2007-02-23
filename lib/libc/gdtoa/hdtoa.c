@@ -1,4 +1,4 @@
-/*	$NetBSD: hdtoa.c,v 1.3 2007/02/03 18:09:20 christos Exp $	*/
+/*	$NetBSD: hdtoa.c,v 1.4 2007/02/23 17:45:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 David Schultz <das@FreeBSD.ORG>
@@ -30,13 +30,15 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/gdtoa/_hdtoa.c,v 1.4 2007/01/03 04:57:58 das Exp $");
 #else
-__RCSID("$NetBSD: hdtoa.c,v 1.3 2007/02/03 18:09:20 christos Exp $");
+__RCSID("$NetBSD: hdtoa.c,v 1.4 2007/02/23 17:45:59 christos Exp $");
 #endif
 
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#ifndef __vax__
 #include <machine/ieee.h>
+#endif
 #include "gdtoaimp.h"
 
 /* Strings values used by dtoa() */
