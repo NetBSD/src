@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.84 2007/02/17 22:34:08 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.85 2007/02/23 04:20:02 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.84 2007/02/17 22:34:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.85 2007/02/23 04:20:02 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -221,6 +221,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	splx(s);
 	gre_join(&sc->sc_thread);
 	s = splnet();
+	rtcache_free(&sc->route);
 	if_detach(ifp);
 	splx(s);
 	if (sc->sc_fp != NULL) {
