@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.5 2007/02/23 12:00:30 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.6 2007/02/23 15:57:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.5 2007/02/23 12:00:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.6 2007/02/23 15:57:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.5 2007/02/23 12:00:30 yamt Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
@@ -95,8 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.5 2007/02/23 12:00:30 yamt Exp 
 #include <sys/lockdebug.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
 
 /*
  * Run queues.

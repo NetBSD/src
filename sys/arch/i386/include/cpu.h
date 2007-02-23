@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133.2.2 2007/02/17 10:30:49 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.133.2.3 2007/02/23 15:57:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -242,12 +242,6 @@ void cpu_init_idle_lwps(void);
 #define aston(l)		((l)->l_md.md_astpending = 1)
 
 #endif /* MULTIPROCESSOR */
-
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void cpu_need_resched(struct cpu_info *);
 
 extern uint32_t cpus_attached;
 
