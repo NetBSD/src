@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.2 2007/02/20 21:48:47 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.3 2007/02/23 15:57:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -554,9 +554,6 @@ void	exit_lwps(struct lwp *l);
 int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 int	pgid_in_session(struct proc *, pid_t);
-#ifndef cpu_idle
-void	cpu_idle(void);
-#endif
 void	cpu_lwp_fork(struct lwp *, struct lwp *, void *, size_t,
 	    void (*)(void *), void *);
 #ifndef cpu_lwp_free

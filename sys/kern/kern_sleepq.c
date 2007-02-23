@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.1 2007/02/20 21:48:45 rmind Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.2 2007/02/23 15:57:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.1 2007/02/20 21:48:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.2 2007/02/23 15:57:45 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.1 2007/02/20 21:48:45 rmind Ex
 #include <sys/param.h>
 #include <sys/lock.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>

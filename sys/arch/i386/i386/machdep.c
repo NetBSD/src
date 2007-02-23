@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.596.2.3 2007/02/17 14:03:05 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.596.2.4 2007/02/23 15:57:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.3 2007/02/17 14:03:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.4 2007/02/23 15:57:46 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -96,18 +96,15 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.3 2007/02/17 14:03:05 yamt Exp $
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/extent.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
