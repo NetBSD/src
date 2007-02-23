@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.12 2006/11/29 21:21:41 xtraeme Exp $
+#	$NetBSD: ROADMAP,v 1.13 2007/02/23 18:31:42 yamt Exp $
 
 A high-level roadmap for NetBSD
 
@@ -80,7 +80,7 @@ aa. Modular scheduler supporting CPU affinity and some soft RT features.
     multi-processor systems could benefit from taking processor affinity
     into account (including support for HT CPUs).
 	Responsible: matt (possibly)
-	ETA: ?
+	ETA: ?  yamt-idlelwp branch is a first step of this.
 
 ab. Reduction of the giant lock
     There are several proposals for the best way forward on this, but
@@ -136,8 +136,8 @@ ai. Complete support for LWPs
 aj. PTHREAD_CONCURRENCY > 1 support
     A single process that uses threads should be able to reliably
     use more than one CPU.
-	Responsible: TBD
-	ETA: ?
+	Responsible: ad
+	ETA: 5.0  (1:1 pthread come with newlock2)
 
 ak. AIO support
     POSIX aio_*() with full support for Asynchronous I/O (AIO) in the
@@ -161,8 +161,8 @@ an. Update the locking mechanisms in the kernel
     now-archaic "newlock" branch, from thorpej.  It requires some
     overhaul of cpu_switch/scheduler so that mutex_*(9) and ltsleep(9)
     can interlock.
-	Responsible: TBD
-	ETA: ?
+	Responsible: ad
+	ETA: 5.0  (newlock2)
 
 ao. Review TCP/IP developments
     Fix NewReno
