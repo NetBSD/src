@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.86 2007/02/23 06:10:40 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.87 2007/02/23 06:13:24 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.86 2007/02/23 06:10:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.87 2007/02/23 06:13:24 dyoung Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -202,7 +202,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int32_t));
 #endif
 	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
-	return (0);
+	return 0;
 }
 
 static int
@@ -230,7 +230,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	}
 	free(sc, M_DEVBUF);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -527,7 +527,7 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
 			hlen += 4;
 		/* We don't support routing fields (variable length) */
 		if (flags & GRE_RP)
-			return (0);
+			return 0;
 		if (flags & GRE_KP)
 			hlen += 4;
 		if (flags & GRE_SP)
@@ -560,18 +560,18 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
 		default:	   /* others not yet supported */
 			printf("%s: unhandled ethertype 0x%04x\n", __func__,
 			    ntohs(gh->ptype));
-			return (0);
+			return 0;
 		}
 		break;
 	default:
 		/* others not yet supported */
-		return (0);
+		return 0;
 	}
 
 	if (hlen > m->m_pkthdr.len) {
 		m_freem(m);
 		sc->sc_if.if_ierrors++;
-		return (EINVAL);
+		return EINVAL;
 	}
 	m_adj(m, hlen);
 
@@ -593,7 +593,7 @@ gre_input3(struct gre_softc *sc, struct mbuf *m, int hlen, u_char proto,
 	schednetisr(isr);
 	splx(s);
 
-	return (1);	/* packet is done, no further processing needed */
+	return 1;	/* packet is done, no further processing needed */
 }
 
 /*
@@ -799,7 +799,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
   end:
 	if (error)
 		ifp->if_oerrors++;
-	return (error);
+	return error;
 }
 
 /* gre_kick must be synchronized with network interrupts in order
@@ -914,7 +914,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)
-			return (EPERM);
+			return EPERM;
 		break;
 	default:
 		break;
@@ -1144,7 +1144,7 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	}
 	splx(s);
-	return (error);
+	return error;
 }
 
 /*
@@ -1209,7 +1209,7 @@ gre_in_cksum(u_int16_t *p, u_int len)
 	/* end-around-carry */
 	sum = (sum >> 16) + (sum & 0xffff);
 	sum += (sum >> 16);
-	return (~sum);
+	return ~sum;
 }
 #endif
 
