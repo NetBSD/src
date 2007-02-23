@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.29 2005/12/24 20:59:30 perry Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.30 2007/02/23 01:17:11 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.29 2005/12/24 20:59:30 perry Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.30 2007/02/23 01:17:11 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -199,10 +199,6 @@ int
 _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
-#define COMBRELOC
-#ifdef COMBRELOC
-	unsigned long lastsym = -1;
-#endif
 	Elf_Addr target = -1;
 
 	for (rela = obj->rela; rela < obj->relalim; rela++) {
@@ -221,19 +217,11 @@ _rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 
 		case R_TYPE(REFQUAD):
 		case R_TYPE(GLOB_DAT):
-#ifdef COMBRELOC
-			if (symnum != lastsym) {
-#endif
-				def = _rtld_find_symdef(symnum, obj, &defobj,
-				    false);
-				if (def == NULL)
-					return -1;
-				target = (Elf_Addr)(defobj->relocbase +
-				    def->st_value);
-#ifdef COMBRELOC
-				lastsym = symnum;
-			}
-#endif
+			def = _rtld_find_symdef(symnum, obj, &defobj, false);
+			if (def == NULL)
+				return -1;
+			target = (Elf_Addr)(defobj->relocbase +
+			    def->st_value);
 
 			tmp = target + rela->r_addend;
 			if (__predict_true(RELOC_ALIGNED_P(where))) {
