@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.57 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.58 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8375,7 +8375,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		RISC OS monitor definitions into the kernel. [bjh21 20060820]
 	netns: Support for XNS in the kernel and userspace has been
 		removed. [matt 20060825]
-	netccit: Support for CCITT/X.26 in the kernel and userspace has
+	netccitt: Support for CCITT/X.26 in the kernel and userspace has
 		been removed. [matt 20060825]
 	mips64: Preliminary support for a MIPS64 toolchain using the N64
 		ABI. [matt 20060825]
