@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.72.2.6 2007/02/10 14:29:06 tron Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.72.2.7 2007/02/24 13:25:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -598,7 +598,7 @@ re_attach(struct rtk_softc *sc)
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
 		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
 		/* These rev numbers are taken from Realtek's driver */
-		if (hwrev == 0x38800000 /* XXX */) {
+		if (       hwrev == RTK_HWREV_8100E_SPIN2) {
 			sc->sc_rev = 15;
 		} else if (hwrev == RTK_HWREV_8100E) {
 			sc->sc_rev = 14;
@@ -1934,7 +1934,7 @@ re_init(struct ifnet *ifp)
 	if (sc->re_testmode)
 		return 0;
 
-	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD | RTK_CFG1_FULLDUPLEX);
+	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
