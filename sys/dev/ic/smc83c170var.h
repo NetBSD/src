@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.10 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.10.24.1 2007/02/24 13:30:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -177,8 +177,8 @@ do {									\
 	__m->m_data = __m->m_ext.ext_buf + 2;				\
 	__rxd->er_bufaddr = __ds->ds_dmamap->dm_segs[0].ds_addr + 2;	\
 	__rxd->er_control = RXCTL_BUFLENGTH(__m->m_ext.ext_size - 2);	\
-	__rxd->er_rxstatus = ER_RXSTAT_OWNER;				\
 	__rxd->er_nextdesc = EPIC_CDRXADDR((sc), EPIC_NEXTRX((x)));	\
+	__rxd->er_rxstatus = ER_RXSTAT_OWNER;				\
 	EPIC_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (/* CONSTCOND */ 0)
 
