@@ -1,4 +1,4 @@
-# 	$NetBSD: LIBERO,v 1.43 2006/11/24 22:04:23 wiz Exp $
+# 	$NetBSD: LIBERO,v 1.43.2.1 2007/02/24 13:32:50 bouyer Exp $
 
 #	NEWS1750 config file;
 #
@@ -145,7 +145,7 @@ zstty1	at zsc0 channel 1
 # For example: "flags 0x1000f" would disable DMA interrupts,
 # and disable disconnect/reselect for targets 0-3
 #
-si0	at hb0 addr 0xe0cc0000 ipl 4 flags 0xf
+si0	at hb0 addr 0xe0cc0000 ipl 4 flags 0x0
 scsibus* at si0
 
 sd*	at scsibus? target ? lun ?		# SCSI disks
