@@ -1,4 +1,4 @@
-/*	$NetBSD: info_exec.c,v 1.1.1.1.2.2 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: info_exec.c,v 1.1.1.1.2.3 2007/02/24 12:17:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -38,9 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      %W% (Berkeley) %G%
  *
- * Id: info_exec.c,v 1.2 2005/03/08 07:47:10 ezk Exp
+ * File: am-utils/amd/info_exec.c
  *
  */
 
@@ -81,7 +80,7 @@ fgets_timed(char *s, int size, int rdfd, int secs)
   if (size == 0)
     return s;
 
-  start = clocktime();
+  start = clocktime(NULL);
   while (s[i] != '\n'  &&  i < size-1) {
     s[i+1] = 0; /* places the requisite trailing '\0' */
 
@@ -102,7 +101,7 @@ fgets_timed(char *s, int size, int rdfd, int secs)
     }
 
     timeo.tv_usec = 0;
-    now = clocktime() - start;
+    now = clocktime(NULL) - start;
     if (secs <= 0)
       timeo.tv_sec = 0;
     else if (now < secs)
@@ -278,47 +277,48 @@ exec_map_open(char *emap, char *key)
     return -1;
   }
 
-  switch((p1 = vfork())) {
+  switch ((p1 = vfork())) {
+  case -1:
+    /* parent: fork error */
+    close(nullfd);
+    close(pdes[0]);
+    close(pdes[1]);
+    return -1;
+  case 0:
+    /* child #1 */
+    p2 = vfork();
+    switch (p2) {
     case -1:
-      /* parent: fork error */
-      close(nullfd);
-      close(pdes[0]);
-      close(pdes[1]);
-      return -1;
+      /* child #1: fork error */
+      exit(errno);
     case 0:
-      /* child #1 */
-      switch((p2 = vfork())) {
-        case -1:
-          /* child #1: fork error */
-          exit(errno);
-        case 0:
-          /* child #2: init will reap our status */
-          if (pdes[1] != STDOUT_FILENO) {
-            dup2(pdes[1], STDOUT_FILENO);
-            close(pdes[1]);
-          }
-
-          if (nullfd != STDERR_FILENO) {
-            dup2(nullfd, STDERR_FILENO);
-            close(nullfd);
-          }
-
-          for (i=0; i<FD_SETSIZE; i++)
-            if (i != STDOUT_FILENO  &&  i != STDERR_FILENO)
-              close(i);
-
-          /* make the write descriptor non-blocking */
-          if (!set_nonblock(STDOUT_FILENO)) {
-            close(STDOUT_FILENO);
-            exit(-1);
-          }
-
-          execve(emap, argv, NULL);
-          exit(errno);		/* in case execve failed */
+      /* child #2: init will reap our status */
+      if (pdes[1] != STDOUT_FILENO) {
+	dup2(pdes[1], STDOUT_FILENO);
+	close(pdes[1]);
       }
 
-      /* child #1 */
-      exit(0);
+      if (nullfd != STDERR_FILENO) {
+	dup2(nullfd, STDERR_FILENO);
+	close(nullfd);
+      }
+
+      for (i=0; i<FD_SETSIZE; i++)
+	if (i != STDOUT_FILENO  &&  i != STDERR_FILENO)
+	  close(i);
+
+      /* make the write descriptor non-blocking */
+      if (!set_nonblock(STDOUT_FILENO)) {
+	close(STDOUT_FILENO);
+	exit(-1);
+      }
+
+      execve(emap, argv, NULL);
+      exit(errno);		/* in case execve failed */
+    }
+
+    /* child #1 */
+    exit(0);
   }
 
   /* parent */
@@ -326,7 +326,7 @@ exec_map_open(char *emap, char *key)
   close(pdes[1]);
 
   /* anti-zombie insurance */
-  while(waitpid(p1,0,0) < 0)
+  while (waitpid(p1,0,0) < 0)
     if (errno != EINTR)
       exit(errno);
 
@@ -416,7 +416,7 @@ exec_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 
   if (mapfd >= 0) {
     if (tp)
-      *tp = clocktime();
+      *tp = clocktime(NULL);
 
     return exec_parse_qanswer(mapfd, map, key, pval, tp);
   }

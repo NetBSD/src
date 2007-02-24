@@ -1,4 +1,4 @@
-/*	$NetBSD: wr_dumpset.c,v 1.1.1.7.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: wr_dumpset.c,v 1.1.1.7.2.2 2007/02/24 12:17:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wr_dumpset.c,v 1.9 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/fsinfo/wr_dumpset.c
  *
  */
 

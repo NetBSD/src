@@ -6,7 +6,7 @@
 #set -x
 
 # find a single word that prints the version number of the release
-getdistrover () {
+getver () {
     l=`head $1`
     set $l
     for i in $*
@@ -26,12 +26,11 @@ if test "x$GCONFIG" = "x" ; then
     export PATH
     GCONFIG=`config.guess || echo unknown-config`
 fi
-
 case "${GCONFIG}" in
     *linux* )
 	GCONFIG=`echo ${GCONFIG} | sed -e 's/i.86/i386/' -e 's/linux-gnu/linux/'`
 	if test -f /etc/redhat-release ; then
-	    long=`getdistrover /etc/redhat-release`
+	    long=`getver /etc/redhat-release`
 	    if grep -q 'Red Hat Enterprise Linux' /etc/redhat-release; then
 		echo ${GCONFIG}-rhel${long}
 	    elif grep -q 'Fedora Core' /etc/redhat-release; then
@@ -41,18 +40,34 @@ case "${GCONFIG}" in
 	    fi
 	    exit 0
 	elif test -f /etc/SuSE-release ; then
-	    long=`getdistrover /etc/SuSE-release`
-	    echo ${GCONFIG}-suse${long}
+	    long=`getver /etc/SuSE-release`
+	    if grep -q 'Enterprise Server' /etc/SuSE-release; then
+		echo ${GCONFIG}-sles${long}
+	    else
+		echo ${GCONFIG}-suse${long}
+	    fi
 	    exit 0
 	elif test -f /etc/debian_version ; then
-	    long=`getdistrover /etc/debian_version`
+	    long=`getver /etc/debian_version`
 	    echo ${GCONFIG}-deb${long}
+	    exit 0
+	elif test -f /etc/gentoo-release ; then
+	    long=`getver /etc/gentoo-release`
+	    echo ${GCONFIG}-gentoo${long}
+	    exit 0
+	elif test -f /etc/yellowdog-release ; then
+	    long=`getver /etc/yellowdog-release`
+	    echo ${GCONFIG}-yellowdog${long}
 	    exit 0
 	else
 	    echo ${GCONFIG}
 	fi
-    ;;
-    * ) echo ${GCONFIG}
-    ;;
+	;;
+    *netbsdelf3* )		# remove trailing '.' from beta
+	echo ${GCONFIG} | sed 's/\.$//g'
+	;;
+    * )
+	echo ${GCONFIG}
+	;;
 esac
 exit 0

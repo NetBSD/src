@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_auto.c,v 1.5.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amfs_auto.c,v 1.5.2.2 2007/02/24 12:17:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_auto.c,v 1.65 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/amfs_auto.c
  *
  */
 
@@ -154,10 +154,10 @@ amfs_auto_mount(am_node *mp, mntfs *mf)
 
 #ifdef HAVE_FS_AUTOFS
   if (mf->mf_flags & MFF_IS_AUTOFS) {
-    char opts[256];
+    char opts[SIZEOF_OPTS];
     int error;
 
-    autofs_get_opts(opts, mp->am_autofs_fh);
+    autofs_get_opts(opts, sizeof(opts), mp->am_autofs_fh);
 
     /* now do the mount */
     error = amfs_mount(mp, mf, opts);

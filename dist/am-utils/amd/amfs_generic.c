@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_generic.c,v 1.1.1.1.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amfs_generic.c,v 1.1.1.1.2.2 2007/02/24 12:17:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_generic.c,v 1.28 2005/01/18 03:01:24 ib42 Exp
+ * File: am-utils/amd/amfs_generic.c
  *
  */
 
@@ -345,6 +345,7 @@ amfs_lookup_mntfs(am_node *new_mp, int *error_return)
   char *info;			/* Mount info - where to get the file system */
   char **ivecs, **cur_ivec;	/* Split version of info */
   int num_ivecs;
+  char *orig_def_opts;          /* Original Automount options */
   char *def_opts;	       	/* Automount options */
   int error = 0;		/* Error so far */
   char path_name[MAXPATHLEN];	/* General path name buffer */
@@ -364,7 +365,7 @@ amfs_lookup_mntfs(am_node *new_mp, int *error_return)
   if (mp->am_pref) {
     if (strlen(mp->am_pref) + strlen(new_mp->am_name) >= sizeof(path_name))
       ereturn(ENAMETOOLONG);
-    sprintf(path_name, "%s%s", mp->am_pref, new_mp->am_name);
+    xsnprintf(path_name, sizeof(path_name), "%s%s", mp->am_pref, new_mp->am_name);
     pfname = path_name;
   } else {
     pfname = new_mp->am_name;
@@ -405,7 +406,8 @@ amfs_lookup_mntfs(am_node *new_mp, int *error_return)
   else
     def_opts = "";
 
-  def_opts = amfs_parse_defaults(mp, mf, strdup(def_opts));
+  orig_def_opts = amfs_parse_defaults(mp, mf, strdup(def_opts));
+  def_opts = strdup(orig_def_opts);
 
   /* first build our defaults */
   num_ivecs = 0;
@@ -414,8 +416,9 @@ amfs_lookup_mntfs(am_node *new_mp, int *error_return)
       /*
        * Pick up new defaults
        */
-      char *old_def_opts = def_opts;
-      def_opts = str3cat((char *) 0, old_def_opts, ";", *cur_ivec + 1);
+      char *new_def_opts = str3cat(NULL, def_opts, ";", *cur_ivec + 1);
+      XFREE(def_opts);
+      def_opts = new_def_opts;
       dlog("Setting def_opts to \"%s\"", def_opts);
       continue;
     } else
@@ -428,9 +431,22 @@ amfs_lookup_mntfs(am_node *new_mp, int *error_return)
   for (count = 0, cur_ivec = ivecs; *cur_ivec; cur_ivec++) {
     mntfs *new_mf;
 
-    /* we've dealt with the defaults already */
-    if (**cur_ivec == '-')
+    if (**cur_ivec == '-') {
+      XFREE(def_opts);
+      if ((*cur_ivec)[1] == '\0') {
+	/*
+	 * If we have a single dash '-' than we need to reset the
+	 * default options.
+	 */
+	def_opts = strdup(orig_def_opts);
+	dlog("Resetting the default options, a single dash '-' was found.");
+      } else {
+	/* append options to /default options */
+	def_opts = str3cat((char *) 0, orig_def_opts, ";", *cur_ivec + 1);
+	dlog("Resetting def_opts to \"%s\"", def_opts);
+      }
       continue;
+    }
 
     /*
      * If a mntfs has already been found, and we find
@@ -456,6 +472,7 @@ amfs_lookup_mntfs(am_node *new_mp, int *error_return)
   /* We're done with ivecs */
   XFREE(ivecs);
   XFREE(info);
+  XFREE(orig_def_opts);
   XFREE(def_opts);
   if (count == 0) {			/* no match */
     XFREE(mf_array);
@@ -585,7 +602,7 @@ amfs_retry(int rc, int term, opaque_t arg)
 
   new_ttl(mp);
 
-  if ((cp->start + ALLOWED_MOUNT_TIME) < clocktime()) {
+  if ((cp->start + ALLOWED_MOUNT_TIME) < clocktime(NULL)) {
     /*
      * The entire mount has timed out.  Set the error code and skip past all
      * the mntfs's so that amfs_bgmount will not have any more
@@ -755,7 +772,7 @@ amfs_bgmount(struct continuation *cp)
       goto already_mounted;
     }
 
-    if (mf->mf_fo->fs_mtab) {
+    if (mf->mf_fo && mf->mf_fo->fs_mtab) {
       plog(XLOG_MAP, "Trying mount of %s on %s fstype %s mount_type %s",
 	   mf->mf_fo->fs_mtab, mf->mf_mount, p->fs_type,
 	   mp->am_flags & AMF_AUTOFS ? "autofs" : "non-autofs");
@@ -769,15 +786,16 @@ amfs_bgmount(struct continuation *cp)
     if (this_error < 0)
       goto retry;
 
-    if (mf->mf_fo->opt_delay) {
+    if (mf->mf_fo && mf->mf_fo->opt_delay) {
       /*
        * If there is a delay timer on the mount
        * then don't try to mount if the timer
        * has not expired.
        */
       int i = atoi(mf->mf_fo->opt_delay);
-      if (i > 0 && clocktime() < (cp->start + i)) {
-	dlog("Mount of %s delayed by %lds", mf->mf_mount, (long) (i - clocktime() + cp->start));
+      time_t now = clocktime(NULL);
+      if (i > 0 && now < (cp->start + i)) {
+	dlog("Mount of %s delayed by %lds", mf->mf_mount, (long) (i - now + cp->start));
 	goto retry;
       }
     }
@@ -842,7 +860,7 @@ amfs_bgmount(struct continuation *cp)
     cp->callout = timeout(RETRY_INTERVAL, wakeup,
 			  (opaque_t) get_mntfs_wchan(mf));
 
-    mp->am_ttl = clocktime() + RETRY_INTERVAL;
+    mp->am_ttl = clocktime(NULL) + RETRY_INTERVAL;
 
     /*
      * Not done yet - so don't return anything
@@ -1029,8 +1047,9 @@ amfs_parse_defaults(am_node *mp, mntfs *mf, char *def_opts)
      * otherwise just use these defaults.
      */
     if (*def_opts && *dfl) {
-      char *nopts = (char *) xmalloc(strlen(def_opts) + strlen(dfl) + 2);
-      sprintf(nopts, "%s;%s", dfl, def_opts);
+      size_t l = strlen(def_opts) + strlen(dfl) + 2;
+      char *nopts = (char *) xmalloc(l);
+      xsnprintf(nopts, l, "%s;%s", dfl, def_opts);
       XFREE(def_opts);
       def_opts = nopts;
     } else if (*dfl) {
@@ -1069,7 +1088,7 @@ amfs_generic_mount_child(am_node *new_mp, int *error_return)
   cp->callout = 0;
   cp->mp = new_mp;
   cp->retry = TRUE;
-  cp->start = clocktime();
+  cp->start = clocktime(NULL);
   cp->mf = new_mp->am_mfarray;
 
   /*
@@ -1207,9 +1226,9 @@ amfs_generic_umount(am_node *mp, mntfs *mf)
   int error = 0;
 
 #ifdef HAVE_FS_AUTOFS
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  int unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
   if (mf->mf_flags & MFF_IS_AUTOFS)
-    error = UMOUNT_FS(mp->am_path, mnttab_file_name, on_autofs);
+    error = UMOUNT_FS(mp->am_path, mnttab_file_name, unmount_flags);
 #endif /* HAVE_FS_AUTOFS */
 
   return error;

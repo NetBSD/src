@@ -1,4 +1,4 @@
-/*	$NetBSD: autil.c,v 1.4.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: autil.c,v 1.4.2.2 2007/02/24 12:17:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autil.c,v 1.51 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/autil.c
  *
  */
 
@@ -82,87 +82,17 @@ static int dofork(void);
 char *
 strealloc(char *p, char *s)
 {
-  int len = strlen(s) + 1;
+  size_t len = strlen(s) + 1;
 
   p = (char *) xrealloc((voidp) p, len);
 
-  strlcpy(p, s, len);
+  xstrlcpy(p, s, len);
 #ifdef DEBUG_MEM
 # if defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY)
   malloc_verify();
 # endif /* not defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY) */
 #endif /* DEBUG_MEM */
   return p;
-}
-
-
-/*
- * Split s using ch as delimiter and qc as quote character
- */
-char **
-strsplit(char *s, int ch, int qc)
-{
-  char **ivec;
-  int ic = 0;
-  int done = 0;
-
-  ivec = (char **) xmalloc((ic + 1) * sizeof(char *));
-
-  while (!done) {
-    char *v;
-
-    /*
-     * skip to split char
-     */
-    while (*s && (ch == ' ' ? (isascii(*s) && isspace((int)*s)) : *s == ch))
-      *s++ = '\0';
-
-    /*
-     * End of string?
-     */
-    if (!*s)
-      break;
-
-    /*
-     * remember start of string
-     */
-    v = s;
-
-    /*
-     * skip to split char
-     */
-    while (*s && !(ch == ' ' ? (isascii(*s) && isspace((int)*s)) : *s == ch)) {
-      if (*s++ == qc) {
-	/*
-	 * Skip past string.
-	 */
-	s++;
-	while (*s && *s != qc)
-	  s++;
-	if (*s == qc)
-	  s++;
-      }
-    }
-
-    if (!*s)
-      done = 1;
-    *s++ = '\0';
-
-    /*
-     * save string in new ivec slot
-     */
-    ivec[ic++] = v;
-    ivec = (char **) xrealloc((voidp) ivec, (ic + 1) * sizeof(char *));
-    if (amuDebug(D_STR))
-      plog(XLOG_DEBUG, "strsplit saved \"%s\"", v);
-  }
-
-  if (amuDebug(D_STR))
-    plog(XLOG_DEBUG, "strsplit saved a total of %d strings", ic);
-
-  ivec[ic] = 0;
-
-  return ivec;
 }
 
 
@@ -203,7 +133,6 @@ host_normalize(char **chp)
    */
   if (gopt.flags & CFM_NORMALIZE_HOSTNAMES) {
     struct hostent *hp;
-    clock_valid = 0;
     hp = gethostbyname(*chp);
     if (hp && hp->h_addrtype == AF_INET) {
       dlog("Hostname %s normalized to %s", *chp, hp->h_name);
@@ -246,7 +175,13 @@ forcibly_timeout_mp(am_node *mp)
   } else {
     plog(XLOG_INFO, "\"%s\" forcibly timed out", mp->am_path);
     mp->am_flags &= ~AMF_NOTIMEOUT;
-    mp->am_ttl = clocktime();
+    mp->am_ttl = clocktime(NULL);
+    /*
+     * Force mtime update of parent dir, to prevent DNLC/dcache from caching
+     * the old entry, which could result in ESTALE errors, bad symlinks, and
+     * more.
+     */
+    clocktime(&mp->am_parent->am_fattr.na_mtime);
     reschedule_timeout_mp();
   }
 }
@@ -295,8 +230,8 @@ mf_mounted(mntfs *mf, bool_t call_free_opts)
   }
 
   if (mf->mf_flags & MFF_RESTART) {
-    dlog("Restarted filesystem %s", mf->mf_mount);
     mf->mf_flags &= ~MFF_RESTART;
+    dlog("Restarted filesystem %s, flags 0x%x", mf->mf_mount, mf->mf_flags);
   }
 
   /*
@@ -380,16 +315,16 @@ am_mounted(am_node *mp)
     mp->am_fattr.na_size = strlen(mp->am_link ? mp->am_link : mf->mf_mount);
 
   /*
-   * Record mount time
+   * Record mount time, and update am_stats at the same time.
    */
-  mp->am_fattr.na_mtime.nt_seconds = mp->am_stats.s_mtime = clocktime();
+  mp->am_stats.s_mtime = clocktime(&mp->am_fattr.na_mtime);
   new_ttl(mp);
 
   /*
-   * Update mtime of parent node
+   * Update mtime of parent node (copying "struct nfstime" in '=' below)
    */
   if (mp->am_parent && mp->am_parent->am_mnt)
-    mp->am_parent->am_fattr.na_mtime.nt_seconds = mp->am_stats.s_mtime;
+    mp->am_parent->am_fattr.na_mtime = mp->am_fattr.na_mtime;
 
   /*
    * This is ugly, but essentially unavoidable
@@ -463,7 +398,7 @@ amfs_mkcacheref(mntfs *mf)
   else
     cache = "none";
   mf->mf_private = (opaque_t) mapc_find(mf->mf_info, cache,
-				     mf->mf_fo->opt_maptype);
+				     mf->mf_fo ? mf->mf_fo->opt_maptype : NULL);
   mf->mf_prfree = mapc_free;
 }
 
@@ -518,6 +453,7 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
   char *dir = mf->mf_mount;
   mntent_t mnt;
   MTYPE_TYPE type;
+  int forced_unmount = 0;	/* are we using forced unmounts? */
 
   memset((voidp) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir;
@@ -557,13 +493,14 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
   /*
    * Make a ``hostname'' string for the kernel
    */
-  sprintf(fs_hostname, "pid%ld@%s:%s",
-	  get_server_pid(), am_get_hostname(), dir);
+  xsnprintf(fs_hostname, sizeof(fs_hostname), "pid%ld@%s:%s",
+	    get_server_pid(), am_get_hostname(), dir);
   /*
    * Most kernels have a name length restriction (64 bytes)...
    */
   if (strlen(fs_hostname) >= MAXHOSTNAMELEN)
-    strcpy(fs_hostname + MAXHOSTNAMELEN - 3, "..");
+    xstrlcpy(fs_hostname + MAXHOSTNAMELEN - 3, "..",
+	     sizeof(fs_hostname) - MAXHOSTNAMELEN + 3);
 #ifdef HOSTNAMESZ
   /*
    * ... and some of these restrictions are 32 bytes (HOSTNAMESZ)
@@ -571,7 +508,8 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
    * add the proper header file to the conf/nfs_prot/nfs_prot_*.h file.
    */
   if (strlen(fs_hostname) >= HOSTNAMESZ)
-    strcpy(fs_hostname + HOSTNAMESZ - 3, "..");
+    xstrlcpy(fs_hostname + HOSTNAMESZ - 3, "..",
+	     sizeof(fs_hostname) - HOSTNAMESZ + 3);
 #endif /* HOSTNAMESZ */
 
   /*
@@ -585,6 +523,7 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
 #endif /* HAVE_FS_AUTOFS */
   genflags |= compute_automounter_mount_flags(&mnt);
 
+again:
   if (!(mf->mf_flags & MFF_IS_AUTOFS)) {
     nfs_args_t nfs_args;
     am_nfs_fh *fhp;
@@ -686,6 +625,29 @@ amfs_mount(am_node *mp, mntfs *mf, char *opts)
 		     retry, type, 0, NULL, mnttab_file_name, on_autofs);
 #endif /* HAVE_FS_AUTOFS */
   }
+  if (error == 0 || forced_unmount)
+     return error;
+
+  /*
+   * If user wants forced/lazy unmount semantics, then try it iff the
+   * current mount failed with EIO or ESTALE.
+   */
+  if (gopt.flags & CFM_FORCED_UNMOUNTS) {
+    switch (errno) {
+    case ESTALE:
+    case EIO:
+      forced_unmount = errno;
+      plog(XLOG_WARNING, "Mount %s failed (%m); force unmount.", mp->am_path);
+      if ((error = UMOUNT_FS(mp->am_path, mnttab_file_name,
+			     AMU_UMOUNT_FORCE | AMU_UMOUNT_DETACH)) < 0) {
+	plog(XLOG_WARNING, "Forced umount %s failed: %m.", mp->am_path);
+	errno = forced_unmount;
+      } else
+	goto again;
+    default:
+      break;
+    }
+  }
 
   return error;
 }
@@ -746,9 +708,9 @@ am_unmounted(am_node *mp)
    * Update mtime of parent node
    */
   if (mp->am_parent && mp->am_parent->am_mnt)
-    mp->am_parent->am_fattr.na_mtime.nt_seconds = clocktime();
+    clocktime(&mp->am_parent->am_fattr.na_mtime);
 
-  if (mp->am_flags & AMF_REMOUNT) {
+  if (mp->am_parent && (mp->am_flags & AMF_REMOUNT)) {
     char *fname = strdup(mp->am_name);
     am_node *mp_parent = mp->am_parent;
     mntfs *mf_parent = mp_parent->am_mnt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: umount_linux.c,v 1.1.1.1.2.2 2005/08/16 13:02:23 tron Exp $	*/
+/*	$NetBSD: umount_linux.c,v 1.1.1.1.2.3 2007/02/24 12:17:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: umount_linux.c,v 1.3 2005/03/05 07:09:17 ezk Exp
+ * File: am-utils/conf/umount/umount_linux.c
  *
  */
 
@@ -56,10 +56,15 @@
 
 
 int
-umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
+umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
 {
   mntlist *mlist, *mp, *mp_save = 0;
   int error = 0;
+#ifdef HAVE_LOOP_DEVICE
+  char *opt, *xopts=NULL;
+  char loopstr[] = "loop=";
+  char *loopdev;
+#endif /* HAVE_LOOP_DEVICE */
 
   mp = mlist = read_mtab(mntdir, mnttabname);
 
@@ -73,112 +78,182 @@ umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
     mp = mp->mnext;
   }
 
-  if (mp_save) {
-    dlog("Trying unmount(%s)", mp_save->mnt->mnt_dir);
+  if (!mp_save) {
+    plog(XLOG_ERROR, "Couldn't find how to unmount %s", mntdir);
+    /* Assume it is already unmounted */
+    error = 0;
+    goto out;
+  }
+
+  dlog("Trying unmount(%s)", mp_save->mnt->mnt_dir);
 
 #ifdef MOUNT_TABLE_ON_FILE
-    /*
-     * This unmount may hang leaving this process with an exclusive lock on
-     * /etc/mtab. Therefore it is necessary to unlock mtab, do the unmount,
-     * then lock mtab (again) and reread it and finally update it.
-     */
-    unlock_mntlist();
+  /*
+   * This unmount may hang leaving this process with an exclusive lock on
+   * /etc/mtab. Therefore it is necessary to unlock mtab, do the unmount,
+   * then lock mtab (again) and reread it and finally update it.
+   */
+  unlock_mntlist();
 #endif /* MOUNT_TABLE_ON_FILE */
 
+#if defined(HAVE_UMOUNT2) && defined(MNT2_GEN_OPT_DETACH)
+  /*
+   * If user asked to try forced unmounts, then do a quick check to see if
+   * the mount point is hung badly.  If so, then try to detach it by
+   * force; if the latter works, we're done.
+   */
+  if (unmount_flags & AMU_UMOUNT_DETACH) {
+    /*
+     * Note: we pass both DETACH and FORCE flags, because umount2_fs below
+     * (on Linux), should try FORCE before DETACH (the latter always
+     * succeeds).
+     */
+    error = umount2_fs(mp_save->mnt->mnt_dir,
+		       unmount_flags & (AMU_UMOUNT_DETACH|AMU_UMOUNT_FORCE));
+  } else
+#endif /* defined(HAVE_UMOUNT2) && defined(MNT2_GEN_OPT_DETACH) */
     error = UNMOUNT_TRAP(mp_save->mnt);
-    if (error < 0) {
-      switch (error = errno) {
-      case EINVAL:
-      case ENOTBLK:
-	plog(XLOG_WARNING, "unmount: %s is not mounted", mp_save->mnt->mnt_dir);
-	error = 0;		/* Not really an error */
-	break;
+  if (error < 0) {
+    plog(XLOG_WARNING, "unmount(%s) failed: %m", mp_save->mnt->mnt_dir);
+    switch ((error = errno)) {
+    case EINVAL:
+    case ENOTBLK:
+      plog(XLOG_WARNING, "unmount: %s is not mounted", mp_save->mnt->mnt_dir);
+      error = 0;		/* Not really an error */
+      break;
 
-      case ENOENT:
-	/*
-	 * This could happen if the kernel insists on following symlinks
-	 * when we try to unmount a direct mountpoint. We need to propagate
-	 * the error up so that the top layers know it failed and don't
-	 * try to rmdir() the mountpoint or other silly things.
-	 */
-	plog(XLOG_ERROR, "mount point %s: %m", mp_save->mnt->mnt_dir);
-	break;
+    case ENOENT:
+      /*
+       * This could happen if the kernel insists on following symlinks
+       * when we try to unmount a direct mountpoint. We need to propagate
+       * the error up so that the top layers know it failed and don't
+       * try to rmdir() the mountpoint or other silly things.
+       */
+      plog(XLOG_ERROR, "mount point %s: %m", mp_save->mnt->mnt_dir);
+      break;
 
-#ifdef HAVE_UMOUNT2
-# ifndef MNT_DETACH
-#  define MNT_DETACH	0x2	/* from kernel <linux/fs.h> */
-# endif /* not MNT_DETACH */
-      case EIO:
-      case ESTALE:
-	plog(XLOG_ERROR, "umount %s failed (retrying): %m", mp_save->mnt->mnt_dir);
-	error = umount2(mp_save->mnt->mnt_dir, MNT_DETACH | MNT_FORCE);
+#if defined(HAVE_UMOUNT2) && defined(MNT2_GEN_OPT_FORCE)
+    case EBUSY:
+      /*
+       * Caller determines if forced unmounts should be used now (for
+       * EBUSY).  If caller asked to force an unmount, *and* the above
+       * "trivial" unmount attempt failed with EBUSY, then try to force
+       * the unmount.
+       */
+      if (unmount_flags & AMU_UMOUNT_FORCE) {
+	error = umount2_fs(mp_save->mnt->mnt_dir,
+			   unmount_flags & AMU_UMOUNT_FORCE);
 	if (error < 0) {
-	    dlog("%s: unmount2(detach+force): %m", mp_save->mnt->mnt_dir);
-	    error = errno;
+	  plog(XLOG_WARNING, "%s: unmount/force: %m",
+	       mp_save->mnt->mnt_dir);
+	  error = errno;
 	}
-	break;
-#endif /* HAVE_UMOUNT2 */
-
-      default:
-	dlog("%s: unmount: %m", mp_save->mnt->mnt_dir);
-	break;
       }
-    }
-    dlog("Finished unmount(%s)", mp_save->mnt->mnt_dir);
+      break;
+#endif /* defined(HAVE_UMOUNT2) && defined(MNT2_GEN_OPT_FORCE) */
 
-    if (!error) {
+    default:
+      dlog("%s: unmount: %m", mp_save->mnt->mnt_dir);
+      break;
+    }
+  } else {
+    dlog("unmount(%s) succeeded", mp_save->mnt->mnt_dir);
+  }
+  dlog("Finished unmount(%s)", mp_save->mnt->mnt_dir);
+
+  /*
+   * If we are successful or there was an ENOENT, remove
+   * the mount entry from the mtab file.
+   */
+  if (error && error != ENOENT)
+    goto out;
+
 #ifdef HAVE_LOOP_DEVICE
-      /* look for loop=/dev/loopX in mnt_opts */
-      char *opt, *xopts=NULL;
-      char loopstr[] = "loop=";
-      char *loopdev;
-      xopts = strdup(mp_save->mnt->mnt_opts); /* b/c strtok is destructive */
-      for (opt = strtok(xopts, ","); opt; opt = strtok(NULL, ","))
-	if (NSTREQ(opt, loopstr, sizeof(loopstr) - 1)) {
-	  loopdev = opt + sizeof(loopstr) - 1;
-	  if (delete_loop_device(loopdev) < 0)
-	    plog(XLOG_WARNING, "unmount() failed to release loop device %s: %m", loopdev);
-	  else
-	    plog(XLOG_INFO, "unmount() released loop device %s OK", loopdev);
-	  break;
-	}
-      if (xopts)
-	XFREE(xopts);
+  /* look for loop=/dev/loopX in mnt_opts */
+  xopts = strdup(mp_save->mnt->mnt_opts); /* b/c strtok is destructive */
+  for (opt = strtok(xopts, ","); opt; opt = strtok(NULL, ","))
+    if (NSTREQ(opt, loopstr, sizeof(loopstr) - 1)) {
+      loopdev = opt + sizeof(loopstr) - 1;
+      if (delete_loop_device(loopdev) < 0)
+	plog(XLOG_WARNING, "unmount() failed to release loop device %s: %m", loopdev);
+      else
+	plog(XLOG_INFO, "unmount() released loop device %s OK", loopdev);
+      break;
+    }
+  if (xopts)
+    XFREE(xopts);
 #endif /* HAVE_LOOP_DEVICE */
 
 #ifdef MOUNT_TABLE_ON_FILE
-      free_mntlist(mlist);
-      mp = mlist = read_mtab(mntdir, mnttabname);
+  free_mntlist(mlist);
+  mp = mlist = read_mtab(mntdir, mnttabname);
 
-      /*
-       * Search the mount table looking for
-       * the correct (ie last) matching entry
-       */
-      mp_save = 0;
-      while (mp) {
-	if (STREQ(mp->mnt->mnt_dir, mntdir))
-	  mp_save = mp;
-	mp = mp->mnext;
-      }
+  /*
+   * Search the mount table looking for
+   * the correct (ie last) matching entry
+   */
+  mp_save = 0;
+  while (mp) {
+    if (STREQ(mp->mnt->mnt_dir, mntdir))
+      mp_save = mp;
+    mp = mp->mnext;
+  }
 
-      if (mp_save) {
-	mnt_free(mp_save->mnt);
-	mp_save->mnt = 0;
-	rewrite_mtab(mlist, mnttabname);
-      }
+  if (mp_save) {
+    mnt_free(mp_save->mnt);
+    mp_save->mnt = 0;
+    rewrite_mtab(mlist, mnttabname);
+  }
 #endif /* MOUNT_TABLE_ON_FILE */
-    }
 
-  } else {
-
-    plog(XLOG_ERROR, "Couldn't find how to unmount %s", mntdir);
-    /*
-     * Assume it is already unmounted
-     */
-    error = 0;
-  } /* end of "if (mp_save)" statement */
-
+ out:
   free_mntlist(mlist);
 
   return error;
 }
+
+
+#if defined(HAVE_UMOUNT2) && (defined(MNT2_GEN_OPT_FORCE) || defined(MNT2_GEN_OPT_DETACH))
+/*
+ * Force unmount, no questions asked, without touching mnttab file.  Try
+ * detach first because it is safer: will remove the hung mnt point without
+ * affecting hung applications.  "Force" is more risky: it will cause the
+ * kernel to return EIO to applications stuck on a stat(2) of Amd.
+ */
+int
+umount2_fs(const char *mntdir, u_int unmount_flags)
+{
+  int error = 0;
+
+#ifdef MNT2_GEN_OPT_DETACH
+  if (unmount_flags & AMU_UMOUNT_DETACH) {
+    error = umount2(mntdir, MNT2_GEN_OPT_DETACH);
+    if (error < 0 && (errno == EINVAL || errno == ENOENT))
+      error = 0;		/* ignore EINVAL/ENOENT */
+    if (error < 0) {		/* don't try FORCE if detach succeeded */
+      plog(XLOG_WARNING, "%s: unmount/detach: %m", mntdir);
+      /* fall through to try "force" (if flag specified) */
+    } else {
+      dlog("%s: unmount/detach: OK", mntdir);
+      return error;
+    }
+  }
+#endif /* MNT2_GEN_OPT_DETACH */
+
+#ifdef MNT2_GEN_OPT_FORCE
+  if (unmount_flags & AMU_UMOUNT_FORCE) {
+    plog(XLOG_INFO, "umount2_fs: trying unmount/forced on %s", mntdir);
+    error = umount2(mntdir, MNT2_GEN_OPT_FORCE);
+    if (error < 0 && (errno == EINVAL || errno == ENOENT))
+      error = 0;		/* ignore EINVAL/ENOENT */
+    if (error < 0)
+      plog(XLOG_WARNING, "%s: unmount/force: %m", mntdir);
+    else
+      dlog("%s: unmount/force: OK", mntdir);
+    /* fall through to return whatever error we got (if any) */
+  }
+#endif /* MNT2_GEN_OPT_FORCE */
+
+  return error;
+}
+#endif /* HAVE_UMOUNT2 && (MNT2_GEN_OPT_FORCE || MNT2_GEN_OPT_DETACH) */

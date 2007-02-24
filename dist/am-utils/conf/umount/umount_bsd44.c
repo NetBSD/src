@@ -1,4 +1,4 @@
-/*	$NetBSD: umount_bsd44.c,v 1.1.1.7.2.1 2005/08/16 13:02:23 tron Exp $	*/
+/*	$NetBSD: umount_bsd44.c,v 1.1.1.7.2.2 2007/02/24 12:17:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: umount_bsd44.c,v 1.12 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/umount/umount_bsd44.c
  *
  */
 
@@ -55,7 +55,7 @@
 
 
 int
-umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
+umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
 {
   int error;
 
@@ -77,6 +77,21 @@ eintr:
     dlog("%s: unmount: %m", mntdir);
     goto eintr;
 
+#ifdef MNT2_GEN_OPT_FORCE
+  case EBUSY:
+  case EIO:
+  case ESTALE:
+    /* caller determines if forced unmounts should be used */
+    if (unmount_flags & AMU_UMOUNT_FORCE) {
+      error = umount2_fs(mntdir, unmount_flags);
+      if (error < 0)
+	error = errno;
+      else
+	return error;
+    }
+    /* fallthrough */
+#endif /* MNT2_GEN_OPT_FORCE */
+
   default:
     dlog("%s: unmount: %m", mntdir);
     break;
@@ -84,3 +99,24 @@ eintr:
 
   return error;
 }
+
+
+#ifdef MNT2_GEN_OPT_FORCE
+/* force unmount, no questions asked, without touching mnttab file */
+int
+umount2_fs(const char *mntdir, u_int unmount_flags)
+{
+  int error = 0;
+  if (unmount_flags & AMU_UMOUNT_FORCE) {
+    plog(XLOG_INFO, "umount2_fs: trying unmount/forced on %s", mntdir);
+    error = unmount(mntdir, MNT2_GEN_OPT_FORCE);
+    if (error < 0 && (errno == EINVAL || errno == ENOENT))
+      error = 0;		/* ignore EINVAL/ENOENT */
+    if (error < 0)
+      plog(XLOG_WARNING, "%s: unmount/force: %m", mntdir);
+    else
+      dlog("%s: unmount/force: OK", mntdir);
+  }
+  return error;
+}
+#endif /* MNT2_GEN_OPT_FORCE */

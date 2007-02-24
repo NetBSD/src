@@ -1,3 +1,175 @@
+*** Notes specific to am-utils version 6.1.3
+
+- Bugs fixed:
+	* amq should de-register properly on exit
+	* convert all sprintf to safer xsnprintf
+	* convert all strcat to safer xstrlcat
+	* convert all strcpy to safer xstrlcpy
+	* fix three buffer overruns in expand_op (amd/opts.c)
+	* pawd was trying UDP only, now try TCP if UDP failed
+
+Moved pawd's path-matching functionality into Amd, where it can be done a
+lot more efficiently (we no longer need to construct and send the whole
+mounted tree, only to match small parts of it).  This will lessen the CPU
+and network load on systems that use pawd heavily, and also minimize the
+chance that we exceed default or hard-coded UDP/TCP RPC packet sizes.
+
+*** Notes specific to am-utils version 6.1.2.1
+
+- Bugs fixed:
+	* properly turn off the attrcache in freebsd and openbsd
+	* can turn off attrcache on netbsd, but need kernel patch, see
+	  README.attrcache
+	* pawd goes into an infinite loop on type:=auto
+	* consistent search for file system mnttab/mount names
+
+*** Notes specific to am-utils version 6.1.2
+
+MAJOR BUG FIXES: Synchronize Amd's view of its file systems with the
+kernel's NFS client-side DNLC/dcache.  Amd changes its view when it reloads
+maps (automatically or via "amq -f") because new map entries could be added,
+old one removed, or existing ones changed.  Amd also changes its view when a
+simple entry has expired and was flushed, or was forced out via "amq -u".
+Amd was not updating the mtime of its parent directory (often the amd
+automount point): this resulted in the kernel re-using cached entries, which
+are now possibly stale.  Many users had seen this problem in the form of
+occasional ESTALE errors, or dangling/broken automounted symlinks,
+especially on systems under heavy use.  To tell the kernel to ignore (flush)
+its old entries for an directory, the mtime of the directory must be updated
+(monotonically incremented).  Amd was indeed doing so in several places, but
+unfortunately it was using time(2) which only provides a one-second
+resolution clock: this was fine a decade ago, but not good enough on today's
+fast systems; using only a one-second resolution clock meant that on busy
+systems that invoke Amd many times a second, some rapidly changing entries
+do not get flushed from the kernel, and the kernel thus uses stale entries.
+The solution to all of these was to rework the whole clock timer updates to
+use gettimeofday(), using a micro-second resolution timer, and to use that
+time whenever Amd needs to update an mtime/atime/ctime of any node.
+Finally, we now update the mtime in places that were never updated before
+(when a whole map is flushed or a single entry times out).
+
+Warning: some OSs, we discovered, are incapable of turning off their
+NFS attribute cache entirely.  This means that Amd cannot work fully
+reliability on these systems, not under heavy load.  This is documented in
+detail in the README.attrcache file included with this distribution.
+
+Include test-attrcache script to test the NFS attribute cache behavior using
+Amd.
+
+Tell syslog not to log automatically to /dev/console; it's unfriendly.  If
+user really wants to, they can set it in /etc/syslog.conf.
+
+- minor new ports:
+	i386-pc-linux-deb3.1
+	i386-unknown-netbsdelf3.0
+	powerpc-apple-darwin8.2.0
+
+- bugs fixed:
+	* minor documentation corrections
+
+*** Notes specific to am-utils version 6.1.1
+
+New amd.conf global parameter: forced_unmounts (default to "no").  If set to
+"yes," and the client OS supports forced or lazy unmounts, then Amd will
+attempt to use them if it gets any of three serious error conditions when
+trying to unmount an existing mount point or mount on top of one: EIO,
+ESTALE, or EBUSY.  This could be useful to recover from serious conditions
+such as hardware failure of mounted disks, or NFS servers which are down
+permanently, were migrated, or changed their IP address.  Only
+"type:=toplvl" mounts hung with EBUSY are forcibly unmounted using this
+option: this is useful to ensure that a new Amd can mount itself even if a
+previous Amd died and left its mount points hung, or to force Amd to
+shutdown cleanly, even if some processes (i.e., user shells) have their CWD
+on Amd's own mount point.  This functionality is available for Linux, BSD44
+systems, Solaris, OSF/1, and partially for AIX.
+
+New amd.conf global parameter: truncate_log (default to "no").  If set to
+"yes", then Amd will truncate the log file (if it's a regular file) on
+startup.  This could be useful when conducting extensive testing on Amd maps
+(or Amd itself) and you don't want to see log data from a previous run in
+the same file.
+
+- minor new ports:
+	i386-pc-linux-fc4
+	i386-pc-linux-suse9.3
+	i386-pc-linuxoldld-deb3.1
+
+- bugs fixed:
+	* safer mtab handling for Linux (locks + handles /proc/mounts)
+	* small compile problems on Solaris 6 (rpcvers_t)
+	* small compile problems on HPUX 10 (h_errno)
+	* possibly missing definition of INADDR_NONE in wire.c
+	* extern for sleep(3) may be missing on older gcc systems
+	* updated nfs_args structure on aix4.
+	* possible running off end of exported_ap[] array.
+	* buffer overflow in pawd.
+	* aix4 clean build.
+	* use strlcat/snprintf in a few places for safety.
+	* recover from IP address change of a down NFS server
+	* don't discard restarted mntfs that was used.
+
+*** Notes specific to am-utils version 6.1
+
+- bugs fixed:
+	* set timeo/retrans for type:=nfs only if user asked
+
+Also, if you want to know what's new in 6.1 compared to 6.0.x, it's
+EVERYTHING below this line, up to "6.0.4."  Yes, that's a lot of stuff.
+
+*** Notes specific to am-utils version 6.1-rc7
+
+Remove alloca from am-utils, and rewrite code that used it.
+
+Assorted minor code cleanups.
+
+- minor new ports:
+	alpha-unknown-linux-gentoo1.4.16
+	alphaev56-dec-osf4.0f (using both cc and gcc)
+	mips-sgi-irix6.5 (using both cc and gcc)
+	mips-unknown-linux-gentoo1.4.16
+	sparc64-unknown-linux-gentoo1.4.16
+
+- bugs fixed:
+	* getwire() detects networks correctly on OSF/1
+
+*** Notes specific to am-utils version 6.1-rc6
+
+- minor new ports:
+	i386-pc-linux-deb3.0
+	i386-pc-linux-gentoo1.4.16
+	i386-pc-linux-suse9.2
+	i386-unknown-freebsd5.4
+	i386-unknown-netbsdelf2.0.2
+	i386-unknown-openbsd3.7
+	powerpc-unknown-linux-yellowdog2.3
+
+- bugs fixed:
+	* minor compile error of nfs_subr.c on some systems.
+	* AIX 5.2/5.3 PPC compile fixes.
+
+*** Notes specific to am-utils version 6.1-rc5
+
+For NetBSD systems, $os used to say "netbsdelf1" or "netbsdelf2."  Now it
+just says "netbsd."
+
+- minor new ports:
+	powerpc-apple-darwin7.9.0
+
+- bugs fixed:
+	* silly (but nasty) null pointer dereferencing
+	* improved fix for '-opts' syntax for resetting map options
+
+*** Notes specific to am-utils version 6.1-rc4
+
+- bugs fixed:
+	* check for "macosx" in M4 macros properly
+	* minor memory leaks (thanks to Valgrind)
+
+*** Notes specific to am-utils version 6.1-rc3
+
+Minor fix to configure.in.  Reran bootstrap to get a working configure
+script that indeed checks for certain Linux nfs/autofs headers.
+
 *** Notes specific to am-utils version 6.1-rc2
 
 New amd.conf global parameter: normalize_slashes (default to "yes").  If set
@@ -5,13 +177,25 @@ to "no," then Amd will not condense repeated slashes or remove trailing ones
 from strings representing pathnames.  This is sometimes useful with SMB
 mounts, which often require multiple slash characters in pathnames.
 
-Using a custom version of strlcpy instead of strncpy (but only where
-it makes sense), to minimize string overlow changes.  Audited all use
-of strncpy/strlcpy to ensure safety.
+Using a custom version of strlcpy instead of strncpy (but only where it
+makes sense), to minimize string overflow changes.  Audited all use of
+strncpy/strlcpy to ensure safety.
+
+On Apple machines, use "powerpc" for $arch, instead of "Power Macintosh".
+Also, use sw_vers to find out more appropriate OS name (macosx) and OS
+version (10.3.x) than uname(3) reports.
+
+- minor new ports:
+	powerpc64-unknown-linux-rhel4
+	powerpc64-unknown-linux-sles9
 
 - bugs fixed:
 	* pawd handles all file systems
 	* fix double-free in type:=nfsx
+	* timeo and retrans shouldn't be set for type:=toplvl
+	* fix inconsistency in handling filehandle generation number
+	* document proper use of hosts.allow (don't spawn)
+	* single dash '-' map entry now resets the defaults
 
 *** Notes specific to am-utils version 6.1-rc1
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: opts.c,v 1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: opts.c,v 1.7.2.2 2007/02/24 12:17:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: opts.c,v 1.39 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/opts.c
  *
  */
 
@@ -115,7 +115,7 @@ static char *opt_key = nullstr;
 static char *opt_keyd = nullstr;
 static char *opt_map = nullstr;
 static char *opt_path = nullstr;
-static char uid_str[12], gid_str[12];
+char uid_str[SIZEOF_UID_STR], gid_str[SIZEOF_GID_STR];
 char *opt_uid = uid_str;
 char *opt_gid = gid_str;
 static char *vars[8];
@@ -1030,12 +1030,12 @@ expand_op(char *opt, int sel_p)
      */
     {
       int len = dp - cp;
-      
+
       if (len > 0) {
-	if (BUFSPACE(ep, len)) { 
-	  /* 
-	   * We use strncpy (not xstrlen) because 'ep' relies on it's symantics.
-	   * BUFSPACE guarantees that ep can hold len.
+	if (BUFSPACE(ep, len)) {
+	  /*
+	   * We use strncpy (not xstrlcpy) because 'ep' relies on its
+	   * semantics.  BUFSPACE guarantees that ep can hold len.
 	   */
 	  strncpy(ep, cp, len);
 	  ep += len;
@@ -1133,7 +1133,7 @@ expand_op(char *opt, int sel_p)
        */
       strncpy(nbuf, cp, len);
       nbuf[len] = '\0';
-      
+
       /*
        * Advance cp
        */
@@ -1157,12 +1157,12 @@ expand_op(char *opt, int sel_p)
 	    /*
 	     * Copy the string across unexpanded
 	     */
-	    snprintf(xbuf, sizeof(xbuf), "${%s%s%s}",
-		    todo == E_File ? "/" :
-		    todo == E_Domain ? "." : "",
-		    nbuf,
-		    todo == E_Dir ? "/" :
-		    todo == E_Host ? "." : "");
+	    xsnprintf(xbuf, sizeof(xbuf), "${%s%s%s}",
+		      todo == E_File ? "/" :
+		      todo == E_Domain ? "." : "",
+		      nbuf,
+		      todo == E_Dir ? "/" :
+		      todo == E_Host ? "." : "");
 	    val = xbuf;
 	    /*
 	     * Make sure expansion doesn't
@@ -1221,8 +1221,8 @@ expand_op(char *opt, int sel_p)
 	      break;
 	    }
 
-	    if (BUFSPACE(ep, vlen)) {
-	      strlcpy(ep, vptr, sizeof(expbuf) - (ep - expbuf));
+	    if (BUFSPACE(ep, vlen+1)) {
+	      xstrlcpy(ep, vptr, vlen+1);
 	      ep += vlen;
 	    } else {
 	      plog(XLOG_ERROR, EXPAND_ERROR, opt);
@@ -1250,8 +1250,8 @@ expand_op(char *opt, int sel_p)
 	if (env) {
 	  int vlen = strlen(env);
 
-	  if (BUFSPACE(ep, vlen)) {
-	    strlcpy(ep, env, sizeof(expbuf) - (ep - expbuf));
+	  if (BUFSPACE(ep, vlen+1)) {
+	    xstrlcpy(ep, env, vlen+1);
 	    ep += vlen;
 	  } else {
 	    plog(XLOG_ERROR, EXPAND_ERROR, opt);
@@ -1281,9 +1281,10 @@ out:
     /*
      * Finish off the expansion
      */
-    if (BUFSPACE(ep, strlen(cp))) {
-      strlcpy(ep, cp, sizeof(expbuf) - (ep - expbuf));
-      /* ep += strlen(ep); */
+    int vlen = strlen(cp);
+    if (BUFSPACE(ep, vlen+1)) {
+      xstrlcpy(ep, cp, vlen+1);
+      /* ep += vlen; */
     } else {
       plog(XLOG_ERROR, EXPAND_ERROR, opt);
     }

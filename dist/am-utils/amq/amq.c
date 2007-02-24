@@ -1,4 +1,4 @@
-/*	$NetBSD: amq.c,v 1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: amq.c,v 1.7.2.2 2007/02/24 12:17:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,25 +39,13 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq.c,v 1.20 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amq/amq.c
  *
  */
 
 /*
  * Automounter query tool
  */
-
-#ifndef lint
-char copyright[] = "\
-@(#)Copyright (c) 1997-2005 Erez Zadok\n\
-@(#)Copyright (c) 1990 Jan-Simon Pendry\n\
-@(#)Copyright (c) 1990 Imperial College of Science, Technology & Medicine\n\
-@(#)Copyright (c) 1990 The Regents of the University of California.\n\
-@(#)All rights reserved.\n";
-#if __GNUC__ < 2
-static char rcsid[] = "Id: amq.c,v 1.20 2005/01/03 20:56:45 ezk Exp";
-#endif /* __GNUC__ < 2 */
-#endif /* not lint */
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -189,10 +177,10 @@ show_pwd(amq_mount_tree *mt, char *path, size_t l, int *flag)
     len = strlen(mt->mt_mountpoint);
     if (NSTREQ(path, mt->mt_mountpoint, len) &&
 	!STREQ(mt->mt_directory, mt->mt_mountpoint)) {
-      char buf[MAXPATHLEN+1];
-      strlcpy(buf, mt->mt_directory, sizeof(buf));
-      strlcat(buf, &path[len], sizeof(buf));
-      strlcpy(path, buf, l);
+      char buf[MAXPATHLEN+1];	/* must be same size as 'path' */
+      xstrlcpy(buf, mt->mt_directory, sizeof(buf));
+      xstrlcat(buf, &path[len], sizeof(buf));
+      xstrlcpy(path, buf, l);
       *flag = 1;
     }
     show_pwd(mt->mt_next, path, l, flag);

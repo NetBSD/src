@@ -16,7 +16,7 @@ libamu_la_SOURCES =	\
 	mount_fs.c	\
 	mtab.c		\
 	nfs_prot_xdr.c	\
-	util.c		\
+	strutil.c	\
 	wire.c		\
 	xdr_func.c	\
 	xutil.c
@@ -25,12 +25,12 @@ libamu_la_SOURCES =	\
 ## automatically.
 ## XXX: must add the files after memcmp.c until automake 1.4+ is out
 EXTRA_DIST = memcmp.c	\
-	alloca.c	\
 	clnt_sperrno.c	\
 	hasmntopt.c	\
 	strcasecmp.c	\
 	strdup.c	\
 	strerror.c	\
+	strlcat.c	\
 	strlcpy.c	\
 	strstr.c	\
 	ualarm.c

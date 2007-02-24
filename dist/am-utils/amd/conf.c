@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.1.7.2.2 2007/02/24 12:17:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: conf.c,v 1.32 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/conf.c
  *
  */
 
@@ -88,6 +88,7 @@ static int gopt_debug_options(const char *val);
 static int gopt_dismount_interval(const char *val);
 static int gopt_domain_strip(const char *val);
 static int gopt_exec_map_timeout(const char *val);
+static int gopt_forced_unmounts(const char *val);
 static int gopt_full_os(const char *val);
 static int gopt_fully_qualified_hosts(const char *val);
 static int gopt_hesiod_base(const char *val);
@@ -130,6 +131,7 @@ static int gopt_restart_mounts(const char *val);
 static int gopt_search_path(const char *val);
 static int gopt_selectors_in_defaults(const char *val);
 static int gopt_show_statfs_entries(const char *val);
+static int gopt_truncate_log(const char *val);
 static int gopt_unmount_on_exit(const char *val);
 static int gopt_use_tcpwrappers(const char *val);
 static int gopt_vendor(const char *val);
@@ -165,6 +167,7 @@ static struct _func_map glob_functable[] = {
   {"dismount_interval",		gopt_dismount_interval},
   {"domain_strip",		gopt_domain_strip},
   {"exec_map_timeout",		gopt_exec_map_timeout},
+  {"forced_unmounts",		gopt_forced_unmounts},
   {"fully_qualified_hosts",	gopt_fully_qualified_hosts},
   {"full_os",			gopt_full_os},
   {"hesiod_base",		gopt_hesiod_base},
@@ -208,6 +211,7 @@ static struct _func_map glob_functable[] = {
   {"selectors_on_default",	gopt_selectors_in_defaults},
   {"selectors_in_defaults",	gopt_selectors_in_defaults},
   {"show_statfs_entries",	gopt_show_statfs_entries},
+  {"truncate_log",		gopt_truncate_log},
   {"unmount_on_exit",		gopt_unmount_on_exit},
   {"use_tcpwrappers",		gopt_use_tcpwrappers},
   {"vendor",			gopt_vendor},
@@ -491,6 +495,48 @@ gopt_exec_map_timeout(const char *val)
   if (gopt.exec_map_timeout <= 0)
     gopt.exec_map_timeout = AMFS_EXEC_MAP_TIMEOUT; /* default exec map timeout */
   return 0;
+}
+
+
+static int
+gopt_forced_unmounts(const char *val)
+{
+  if (STREQ(val, "yes")) {
+#if !defined(MNT2_GEN_OPT_DETACH) && !defined(MNT2_GEN_OPT_FORCE)
+    fprintf(stderr, "conf: forced_unmounts unsupported on this system.\n");
+    return 1;
+#else /* defined(MNT2_GEN_OPT_DETACH) || defined(MNT2_GEN_OPT_FORCE) */
+# ifdef __linux__
+    /*
+     * HACK ALERT: Linux has had MNT_FORCE since 2.2, but it hasn't gotten
+     * stable until 2.4.  And it had MNT_DETACH since 2.4, but it hasn't
+     * gotten stable since 2.6.  So alert users if they're trying to use a
+     * feature that may not work well on their older kernel.
+     */
+    {
+      struct utsname un;
+      if (uname(&un) >= 0) {
+#  ifdef MNT2_GEN_OPT_FORCE
+	if (strcmp(un.release, "2.4.0") < 0)
+	  fprintf(stderr, "warning: forced-unmounts (MNT_FORCE) may not work well before 2.4.0\n");
+#  endif /* MNT2_GEN_OPT_FORCE */
+#  ifdef MNT2_GEN_OPT_DETACH
+	if (strcmp(un.release, "2.6.0") < 0)
+	  fprintf(stderr, "warning: lazy-unmounts (MNT_DETACH) may not work well before 2.6.0\n");
+#  endif /* MNT2_GEN_OPT_DETACH */
+      }
+    }
+# endif /* __linux__ */
+    gopt.flags |= CFM_FORCED_UNMOUNTS;
+    return 0;
+#endif /* defined(MNT2_GEN_OPT_DETACH) || defined(MNT2_GEN_OPT_FORCE) */
+  } else if (STREQ(val, "no")) {
+    gopt.flags &= ~CFM_FORCED_UNMOUNTS;
+    return 0;
+  }
+
+  fprintf(stderr, "conf: unknown value to unmount_on_exit \"%s\"\n", val);
+  return 1;			/* unknown value */
 }
 
 
@@ -1035,6 +1081,22 @@ gopt_show_statfs_entries(const char *val)
   }
 
   fprintf(stderr, "conf: unknown value to show_statfs_entries \"%s\"\n", val);
+  return 1;			/* unknown value */
+}
+
+
+static int
+gopt_truncate_log(const char *val)
+{
+  if (STREQ(val, "yes")) {
+    gopt.flags |= CFM_TRUNCATE_LOG;
+    return 0;
+  } else if (STREQ(val, "no")) {
+    gopt.flags &= ~CFM_TRUNCATE_LOG;
+    return 0;
+  }
+
+  fprintf(stderr, "conf: unknown value to truncate_log \"%s\"\n", val);
   return 1;			/* unknown value */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: strerror.c,v 1.3.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: strerror.c,v 1.3.2.2 2007/02/24 12:17:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Ion Badulescu
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: strerror.c,v 1.5 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/libamu/strerror.c
  *
  */
 
@@ -60,7 +60,7 @@ strerror(int errnum)
 #ifdef HAVE_EXTERN_SYS_ERRLIST
   if (errnum < 0 || errnum >= (sizeof(sys_errlist) >> 2)) {
     static char errstr[30];
-    snprintf(errstr, sizeof(errstr), "Unknown error #%d", errnum);
+    xsnprintf(errstr, sizeof(errstr), "Unknown error #%d", errnum);
     return errstr;
   }
   return sys_errlist[error];

@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_solaris_v2_v3.c,v 1.1.1.3.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: autofs_solaris_v2_v3.c,v 1.1.1.3.2.2 2007/02/24 12:17:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_solaris_v2_v3.c,v 1.39 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/autofs/autofs_solaris_v2_v3.c
  *
  */
 
@@ -100,6 +100,7 @@ bool_t xdr_postmountres(XDR *xdrs, postmountres *objp);
 /*
  * AUTOFS XDR FUNCTIONS:
  */
+
 bool_t
 xdr_autofs_stat(XDR *xdrs, autofs_stat *objp)
 {
@@ -108,6 +109,7 @@ xdr_autofs_stat(XDR *xdrs, autofs_stat *objp)
   return (TRUE);
 }
 
+
 bool_t
 xdr_autofs_action(XDR *xdrs, autofs_action *objp)
 {
@@ -115,6 +117,7 @@ xdr_autofs_action(XDR *xdrs, autofs_action *objp)
     return (FALSE);
   return (TRUE);
 }
+
 
 bool_t
 xdr_linka(XDR *xdrs, linka *objp)
@@ -125,6 +128,7 @@ xdr_linka(XDR *xdrs, linka *objp)
     return (FALSE);
   return (TRUE);
 }
+
 
 bool_t
 xdr_autofs_netbuf(XDR *xdrs, struct netbuf *objp)
@@ -137,6 +141,7 @@ xdr_autofs_netbuf(XDR *xdrs, struct netbuf *objp)
 		    (u_int *)&(objp->len), objp->maxlen);
   return (dummy);
 }
+
 
 bool_t
 xdr_autofs_args(XDR *xdrs, autofs_args *objp)
@@ -162,6 +167,7 @@ xdr_autofs_args(XDR *xdrs, autofs_args *objp)
   return (TRUE);
 }
 
+
 bool_t
 xdr_mounta(XDR *xdrs, struct mounta *objp)
 {
@@ -180,6 +186,7 @@ xdr_mounta(XDR *xdrs, struct mounta *objp)
     return (FALSE);
   return (TRUE);
 }
+
 
 bool_t
 xdr_action_list_entry(XDR *xdrs, action_list_entry *objp)
@@ -201,6 +208,7 @@ xdr_action_list_entry(XDR *xdrs, action_list_entry *objp)
   return (TRUE);
 }
 
+
 bool_t
 xdr_action_list(XDR *xdrs, action_list *objp)
 {
@@ -211,6 +219,7 @@ xdr_action_list(XDR *xdrs, action_list *objp)
     return (FALSE);
   return (TRUE);
 }
+
 
 bool_t
 xdr_umntrequest(XDR *xdrs, umntrequest *objp)
@@ -254,6 +263,7 @@ xdr_umntres(XDR *xdrs, umntres *objp)
   return (TRUE);
 }
 
+
 /*
  * These exist only in the AutoFS V2 protocol.
  */
@@ -272,6 +282,7 @@ xdr_postumntreq(XDR *xdrs, postumntreq *objp)
   return (TRUE);
 }
 
+
 bool_t
 xdr_postumntres(XDR *xdrs, postumntres *objp)
 {
@@ -279,6 +290,7 @@ xdr_postumntres(XDR *xdrs, postumntres *objp)
     return (FALSE);
   return (TRUE);
 }
+
 
 bool_t
 xdr_postmountreq(XDR *xdrs, postmountreq *objp)
@@ -296,6 +308,7 @@ xdr_postmountreq(XDR *xdrs, postmountreq *objp)
   return (TRUE);
 }
 
+
 bool_t
 xdr_postmountres(XDR *xdrs, postmountres *objp)
 {
@@ -305,6 +318,7 @@ xdr_postmountres(XDR *xdrs, postmountres *objp)
 }
 #endif /* AUTOFS_POSTUNMOUNT */
 
+
 bool_t
 xdr_autofs_res(XDR *xdrs, autofs_res *objp)
 {
@@ -312,6 +326,7 @@ xdr_autofs_res(XDR *xdrs, autofs_res *objp)
     return (FALSE);
   return (TRUE);
 }
+
 
 bool_t
 xdr_autofs_lookupargs(XDR *xdrs, autofs_lookupargs *objp)
@@ -355,6 +370,7 @@ xdr_mount_result_type(XDR *xdrs, mount_result_type *objp)
   return (TRUE);
 }
 
+
 bool_t
 xdr_autofs_mountres(XDR *xdrs, autofs_mountres *objp)
 {
@@ -368,6 +384,7 @@ xdr_autofs_mountres(XDR *xdrs, autofs_mountres *objp)
 
   return (TRUE);
 }
+
 
 bool_t
 xdr_lookup_result_type(XDR *xdrs, lookup_result_type *objp)
@@ -385,6 +402,7 @@ xdr_lookup_result_type(XDR *xdrs, lookup_result_type *objp)
   return (TRUE);
 }
 
+
 bool_t
 xdr_autofs_lookupres(XDR *xdrs, autofs_lookupres *objp)
 {
@@ -396,6 +414,7 @@ xdr_autofs_lookupres(XDR *xdrs, autofs_lookupres *objp)
     return (FALSE);
   return (TRUE);
 }
+
 
 bool_t
 xdr_autofs_rddirargs(XDR *xdrs, autofs_rddirargs *objp)
@@ -490,8 +509,8 @@ autofs_lookup_2_req(autofs_lookupargs *m,
        m->path, m->isdirect);
 
   /* find the effective uid/gid from RPC request */
-  sprintf(opt_uid, "%d", (int) cred->aup_uid);
-  sprintf(opt_gid, "%d", (int) cred->aup_gid);
+  xsnprintf(opt_uid, sizeof(uid_str), "%d", (int) cred->aup_uid);
+  xsnprintf(opt_gid, sizeof(gid_str), "%d", (int) cred->aup_gid);
 
   mp = find_ap(m->path);
   if (!mp) {
@@ -558,8 +577,8 @@ autofs_mount_2_req(autofs_lookupargs *m,
        m->path, m->isdirect);
 
   /* find the effective uid/gid from RPC request */
-  sprintf(opt_uid, "%d", (int) cred->aup_uid);
-  sprintf(opt_gid, "%d", (int) cred->aup_gid);
+  xsnprintf(opt_uid, sizeof(uid_str), "%d", (int) cred->aup_uid);
+  xsnprintf(opt_gid, sizeof(gid_str), "%d", (int) cred->aup_gid);
 
   mp = find_ap(m->path);
   if (!mp) {
@@ -957,10 +976,10 @@ autofs_get_fh(am_node *mp)
    * SET MOUNT ARGS
    */
   if (uname(&utsname) < 0) {
-    strcpy(buf, "localhost.autofs");
+    xstrlcpy(buf, "localhost.autofs", sizeof(buf));
   } else {
-    strcpy(buf, utsname.nodename);
-    strcat(buf, ".autofs");
+    xstrlcpy(buf, utsname.nodename, sizeof(buf));
+    xstrlcat(buf, ".autofs", sizeof(buf));
   }
 #ifdef HAVE_AUTOFS_ARGS_T_ADDR
   fh->addr.buf = strdup(buf);
@@ -997,7 +1016,7 @@ autofs_release_fh(am_node *mp)
 {
   autofs_fh_t *fh = mp->am_autofs_fh;
 #ifdef HAVE_AUTOFS_ARGS_T_ADDR
-  free(fh->addr.buf);
+  XFREE(fh->addr.buf);
 #endif /* HAVE_AUTOFS_ARGS_T_ADDR */
   XFREE(fh);
   mp->am_autofs_fh = NULL;
@@ -1115,7 +1134,7 @@ autofs_mount_fs(am_node *mp, mntfs *mf)
 
  out:
   if (target2)
-    free(target2);
+    XFREE(target2);
 
   if (err)
     return errno;
@@ -1166,6 +1185,7 @@ autofs_umount_succeeded(am_node *mp)
   plog(XLOG_INFO, "autofs: unmounting %s succeeded", mp->am_path);
   return 0;
 }
+
 
 int
 autofs_umount_failed(am_node *mp)
@@ -1256,10 +1276,10 @@ autofs_mount_failed(am_node *mp)
 
 
 void
-autofs_get_opts(char *opts, autofs_fh_t *fh)
+autofs_get_opts(char *opts, size_t l, autofs_fh_t *fh)
 {
-  sprintf(opts, "%sdirect",
-	  fh->direct ? "" : "in");
+  xsnprintf(opts, l, "%sdirect",
+	    fh->direct ? "" : "in");
 }
 
 

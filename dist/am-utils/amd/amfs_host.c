@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_host.c,v 1.5.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amfs_host.c,v 1.5.2.2 2007/02/24 12:17:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_host.c,v 1.30 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/amd/amfs_host.c
  *
  */
 
@@ -103,17 +103,17 @@ make_mntpt(char *mntpt, size_t l, const exports ex, const char *mf_mount)
 {
   if (ex->ex_dir[0] == '/') {
     if (ex->ex_dir[1] == 0)
-      strlcpy(mntpt, mf_mount, l);
+      xstrlcpy(mntpt, mf_mount, l);
     else
-      snprintf(mntpt, l, "%s%s", mf_mount, ex->ex_dir);
+      xsnprintf(mntpt, l, "%s%s", mf_mount, ex->ex_dir);
   } else if (ex->ex_dir[0] >= 'a' &&
 	     ex->ex_dir[0] <= 'z' &&
 	     ex->ex_dir[1] == ':' &&
 	     ex->ex_dir[2] == '/' &&
 	     ex->ex_dir[3] == 0)
-    snprintf(mntpt, l, "%s/%c%%", mf_mount, ex->ex_dir[0]);
+    xsnprintf(mntpt, l, "%s/%c%%", mf_mount, ex->ex_dir[0]);
   else
-    snprintf(mntpt, l, "%s/%s", mf_mount, ex->ex_dir);
+    xsnprintf(mntpt, l, "%s/%s", mf_mount, ex->ex_dir);
 }
 
 
@@ -477,7 +477,13 @@ amfs_host_mount(am_node *am, mntfs *mf)
   for (j = 0; j < n_export; j++) {
     ex = ep[j];
     if (ex) {
-      strlcpy(rfs_dir, ex->ex_dir, sizeof(fs_name) - (rfs_dir - fs_name));
+      /*
+       * Note: the sizeof space left in rfs_dir is what's left in fs_name
+       * after strchr() above returned a pointer _inside_ fs_name.  The
+       * calculation below also takes into account that rfs_dir was
+       * incremented by the ++ above.
+       */
+      xstrlcpy(rfs_dir, ex->ex_dir, sizeof(fs_name) - (rfs_dir - fs_name));
       make_mntpt(mntpt, sizeof(mntpt), ex, mf->mf_mount);
       if (do_mount(&fp[j], mntpt, fs_name, mf) == 0)
 	ok = TRUE;
@@ -531,7 +537,7 @@ static int
 amfs_host_umount(am_node *am, mntfs *mf)
 {
   mntlist *ml, *mprev;
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  int unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
   int xerror = 0;
 
   /*
@@ -570,12 +576,20 @@ amfs_host_umount(am_node *am, mntfs *mf)
       /*
        * Unmount "dir"
        */
-      error = UMOUNT_FS(dir, mnttab_file_name, on_autofs);
+      error = UMOUNT_FS(dir, mnttab_file_name, unmount_flags);
       /*
        * Keep track of errors
        */
       if (error) {
-	if (!xerror)
+	/*
+	 * If we have not already set xerror and error is not ENOENT,
+	 * then set xerror equal to error and log it.
+	 * 'xerror' is the return value for this function.
+	 *
+	 * We do not want to pass ENOENT as an error because if the
+	 * directory does not exists our work is done anyway.
+	 */
+	if (!xerror && error != ENOENT)
 	  xerror = error;
 	if (error != EBUSY) {
 	  errno = error;

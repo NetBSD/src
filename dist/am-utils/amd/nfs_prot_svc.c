@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: nfs_prot_svc.c,v 1.1.1.7.2.2 2007/02/24 12:17:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_svc.c,v 1.15 2005/03/02 03:00:09 ezk Exp
+ * File: am-utils/amd/nfs_prot_svc.c
  *
  */
 
@@ -129,7 +129,7 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
       ntohs(sinp->sin_port) >= IPPORT_RESERVED &&
       !(gopt.flags & CFM_NFS_INSECURE_PORT)) {
     plog(XLOG_WARNING, "ignoring request from %s:%u, port not reserved",
-	 inet_dquad(dq, sinp->sin_addr.s_addr),
+	 inet_dquad(dq, sizeof(dq), sinp->sin_addr.s_addr),
 	 ntohs(sinp->sin_port));
     return;
   }
@@ -137,9 +137,9 @@ nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp)
   /* if the address does not match, ignore the request */
   if (sinp && sinp->sin_addr.s_addr != myipaddr.s_addr) {
     plog(XLOG_WARNING, "ignoring request from %s:%u, expected %s",
-	 inet_dquad(dq, sinp->sin_addr.s_addr),
+	 inet_dquad(dq, sizeof(dq), sinp->sin_addr.s_addr),
 	 ntohs(sinp->sin_port),
-	 inet_dquad(dq2, myipaddr.s_addr));
+	 inet_dquad(dq2, sizeof(dq2), myipaddr.s_addr));
     return;
   }
 #endif /* not HAVE_TRANPORT_TYPE_TLI */

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.1.1.7.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: stubs.c,v 1.1.1.7.2.2 2007/02/24 12:17:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: stubs.c,v 1.17 2005/04/07 05:50:39 ezk Exp
+ * File: am-utils/hlfsd/stubs.c
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -136,7 +136,7 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
      * Some NFS clients may need this code.
      */
     if (uid != rootfattr.na_uid) {
-      rootfattr.na_mtime.nt_seconds++;
+      clocktime(&rootfattr.na_mtime);
       rootfattr.na_uid = uid;
     }
 #endif
@@ -155,7 +155,7 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
      * so we must update the nt_seconds field every time.
      */
     if (uid != slinkfattr.na_uid) {
-      slinkfattr.na_mtime.nt_seconds++;
+      clocktime(&slinkfattr.na_mtime);
       slinkfattr.na_uid = uid;
     }
 #endif /* not MNT2_NFS_OPT_SYMTTL */
@@ -240,7 +240,7 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
      * Some NFS clients may need this code.
      */
       if (uid != rootfattr.na_uid) {
-	rootfattr.na_mtime.nt_seconds++;
+	clocktime(&rootfattr.na_mtime);
 	rootfattr.na_uid = uid;
       }
 #endif
@@ -262,7 +262,7 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
        * so we must update the nt_seconds field every time.
        */
       if (uid != slinkfattr.na_uid) {
-	slinkfattr.na_mtime.nt_seconds++;
+	clocktime(&slinkfattr.na_mtime);
 	slinkfattr.na_uid = uid;
       }
 #endif /* not MNT2_NFS_OPT_SYMTTL */
@@ -319,7 +319,7 @@ nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
     if (getcreds(rqstp, &userid, &groupid, nfsxprt) < 0)
       return (nfsreadlinkres *) NULL;
 
-    gettimeofday((struct timeval *) &slinkfattr.na_atime, (struct timezone *) 0);
+    clocktime(&slinkfattr.na_atime);
 
     res.rlr_status = NFS_OK;
     if (groupid == hlfs_gid) {
@@ -491,7 +491,7 @@ nfsproc_readdir_2_svc(nfsreaddirargs *argp, struct svc_req *rqstp)
   if (eq_fh(&argp->rda_fhandle, &slink)) {
     res.rdr_status = NFSERR_NOTDIR;
   } else if (eq_fh(&argp->rda_fhandle, &root)) {
-    gettimeofday((struct timeval *) &rootfattr.na_atime, (struct timezone *) 0);
+    clocktime(&rootfattr.na_atime);
 
     res.rdr_status = NFS_OK;
     switch (argp->rda_cookie[0]) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_defs.h,v 1.7.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: amq_defs.h,v 1.7.2.2 2007/02/24 12:17:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq_defs.h,v 1.10 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/include/amq_defs.h
  *
  */
 
@@ -52,7 +52,7 @@
 #ifndef AMQ_SIZE
 # define AMQ_SIZE 16384
 #endif /* not AMQ_SIZE */
-#define AMQ_STRLEN 10240
+#define AMQ_STRLEN 16384
 #define AMQ_PROGRAM ((u_long)300019)
 #define AMQ_VERSION ((u_long)1)
 #define AMQPROC_NULL ((u_long)0)
@@ -65,6 +65,7 @@
 #define AMQPROC_MOUNT ((u_long)7)
 #define AMQPROC_GETVERS ((u_long)8)
 #define AMQPROC_GETPID ((u_long)9)
+#define AMQPROC_PAWD ((u_long)10)
 
 /*
  * TYPEDEFS
