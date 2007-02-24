@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.88 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: ugen.c,v 1.88.2.1 2007/02/24 13:19:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.88 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.88.2.1 2007/02/24 13:19:09 bouyer Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 
@@ -627,7 +627,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	case UE_BULK:
 #ifdef UGEN_BULK_RA_WB
 		if (sce->state & UGEN_BULK_RA) {
-			DPRINTFN(5, ("ugenread: BULK_RA req: %d used: %d\n",
+			DPRINTFN(5, ("ugenread: BULK_RA req: %zd used: %d\n",
 				     uio->uio_resid, sce->ra_wb_used));
 			xfer = sce->ra_wb_xfer;
 
@@ -825,7 +825,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 	case UE_BULK:
 #ifdef UGEN_BULK_RA_WB
 		if (sce->state & UGEN_BULK_WB) {
-			DPRINTFN(5, ("ugenwrite: BULK_WB req: %d used: %d\n",
+			DPRINTFN(5, ("ugenwrite: BULK_WB req: %zd used: %d\n",
 				     uio->uio_resid, sce->ra_wb_used));
 			xfer = sce->ra_wb_xfer;
 
