@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.132 2007/02/04 19:23:49 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.133 2007/02/24 17:55:54 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.132 2007/02/04 19:23:49 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.133 2007/02/24 17:55:54 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.132 2007/02/04 19:23:49 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.133 2007/02/24 17:55:54 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2446,8 +2446,9 @@ Parse_File(const char *name, int fd)
 		 * If a line starts with a tab, it can only hope to be
 		 * a creation command.
 		 */
+		cp = line + 1;
 	      shellCommand:
-		for (cp = line + 1; isspace ((unsigned char)*cp); cp++) {
+		for (; isspace ((unsigned char)*cp); cp++) {
 		    continue;
 		}
 		if (*cp) {
@@ -2533,7 +2534,7 @@ Parse_File(const char *name, int fd)
 	    }
 	    if (*cp != 0)
 		/* Terminate the dependency list at the ';' */
-		*cp = 0;
+		*cp++ = 0;
 	    else
 		cp = NULL;
 
@@ -2558,7 +2559,6 @@ Parse_File(const char *name, int fd)
 
 	    /* If there were commands after a ';', add them now */
 	    if (cp != NULL) {
-		line = cp + 1;
 		goto shellCommand;
 	    }
 	}
