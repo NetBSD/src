@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2007/01/17 20:56:49 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2007/02/24 15:25:24 yamt Exp $
 
 KMOD=   rwlock1_test
 
-.PATH:	../lkmcommon
+NOMAN=
+
+.PATH:	${.CURDIR}/../lkmcommon
 
 SRCS=	lkminit_test.c test_rwlock1.c
 CPPFLAGS+=-DLKMENTRY=rwlock1_test_lkmentry
