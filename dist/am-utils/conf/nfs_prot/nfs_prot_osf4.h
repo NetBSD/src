@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_osf4.h,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
+/*	$NetBSD: nfs_prot_osf4.h,v 1.1.1.7.2.2 2007/02/24 12:17:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_osf4.h,v 1.10 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/nfs_prot/nfs_prot_osf4.h
  *
  */
 
@@ -190,7 +190,7 @@ typedef struct nfswriteargs nfswriteargs;
 
 
 /*
- * EXTERNALS:
+ * EXTERNALS: (some are missing from system headers)
  */
 
 extern void *nfsproc_null_2_svc(void *, struct svc_req *);
@@ -211,6 +211,9 @@ extern nfsdiropres *nfsproc_mkdir_2_svc(nfscreateargs *, struct svc_req *);
 extern nfsstat *nfsproc_rmdir_2_svc(nfsdiropargs *, struct svc_req *);
 extern nfsreaddirres *nfsproc_readdir_2_svc(nfsreaddirargs *, struct svc_req *);
 extern nfsstatfsres *nfsproc_statfs_2_svc(struct nfssvcfh *, struct svc_req *);
+extern int plock(int op);
+extern const char *hstrerror(int err);
+extern int getmntinfo(struct statfs **mntbufp, int flags);
 
 extern bool_t xdr_nfsstat(XDR *, nfsstat*);
 extern bool_t xdr_ftype(XDR *, nfsftype*);
@@ -241,6 +244,9 @@ extern bool_t xdr_dirlist(XDR *, nfsdirlist*);
 extern bool_t xdr_readdirres(XDR *, nfsreaddirres*);
 extern bool_t xdr_statfsokres(XDR *, nfsstatfsokres*);
 extern bool_t xdr_statfsres(XDR *, nfsstatfsres*);
+extern bool_t xdr_exportnode (XDR *, exportnode*);
+extern bool_t xdr_groups (XDR *, groups*);
+
 
 
 /*

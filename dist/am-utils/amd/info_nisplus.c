@@ -1,4 +1,4 @@
-/*	$NetBSD: info_nisplus.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: info_nisplus.c,v 1.1.1.7.2.2 2007/02/24 12:17:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_nisplus.c,v 1.11 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/info_nisplus.c
  *
  */
 
@@ -94,6 +94,7 @@ nisplus_reload(mnt_map *m, char *map, void (*fn) ())
   nis_result *result;
   char *org;		/* if map does not have ".org_dir" then append it */
   nis_name map_name;
+  size_t l;
 
   org = strstr(map, NISPLUS_ORGDIR);
   if (org == NULL)
@@ -102,13 +103,14 @@ nisplus_reload(mnt_map *m, char *map, void (*fn) ())
     org = "";
 
   /* make some room for the NIS map_name */
-  map_name = xmalloc(strlen(map) + sizeof(NISPLUS_ORGDIR));
+  l = strlen(map) + sizeof(NISPLUS_ORGDIR);
+  map_name = xmalloc(l);
   if (map_name == NULL) {
     plog(XLOG_ERROR, "Unable to create map_name %s: %s",
 	 map, strerror(ENOMEM));
     return ENOMEM;
   }
-  sprintf(map_name, "%s%s", map, org);
+  xsnprintf(map_name, l, "%s%s", map, org);
 
   data.ncd_m = m;
   data.ncd_map = map_name;
@@ -161,6 +163,7 @@ nisplus_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
   struct nisplus_search_callback_data data;
   nis_name index;
   char *org;		/* if map does not have ".org_dir" then append it */
+  size_t l;
 
   org = strstr(map, NISPLUS_ORGDIR);
   if (org == NULL)
@@ -169,14 +172,14 @@ nisplus_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
     org = "";
 
   /* make some room for the NIS index */
-  index = xmalloc(sizeof('[')	/* for opening selection criteria */
-		  +sizeof(NISPLUS_KEY)
-		  + strlen(key)
-		  + sizeof(']')	/* for closing selection criteria */
-		  +sizeof(',')	/* + 1 for , separator */
-		  +strlen(map)
-		  + sizeof(NISPLUS_ORGDIR)
-		  );
+  l = sizeof('[')		/* for opening selection criteria */
+    + sizeof(NISPLUS_KEY)
+    + strlen(key)
+    + sizeof(']')		/* for closing selection criteria */
+    + sizeof(',')		/* + 1 for , separator */
+    + strlen(map)
+    + sizeof(NISPLUS_ORGDIR);
+  index = xmalloc(l);
   if (index == NULL) {
     plog(XLOG_ERROR,
 	 "Unable to create index %s: %s",
@@ -184,7 +187,7 @@ nisplus_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
 	 strerror(ENOMEM));
     return ENOMEM;
   }
-  sprintf(index, "[%s%s],%s%s", NISPLUS_KEY, key, map, org);
+  xsnprintf(index, l, "[%s%s],%s%s", NISPLUS_KEY, key, map, org);
 
   data.key = key;
   data.value = NULL;
@@ -256,6 +259,7 @@ nisplus_init(mnt_map *m, char *map, time_t *tp)
   char *org;		/* if map does not have ".org_dir" then append it */
   nis_name map_name;
   int error = 0;
+  size_t l;
 
   org = strstr(map, NISPLUS_ORGDIR);
   if (org == NULL)
@@ -264,7 +268,8 @@ nisplus_init(mnt_map *m, char *map, time_t *tp)
     org = "";
 
   /* make some room for the NIS map_name */
-  map_name = xmalloc(strlen(map) + sizeof(NISPLUS_ORGDIR));
+  l = strlen(map) + sizeof(NISPLUS_ORGDIR);
+  map_name = xmalloc(l);
   if (map_name == NULL) {
     plog(XLOG_ERROR,
 	 "Unable to create map_name %s: %s",
@@ -272,7 +277,7 @@ nisplus_init(mnt_map *m, char *map, time_t *tp)
 	 strerror(ENOMEM));
     return ENOMEM;
   }
-  sprintf(map_name, "%s%s", map, org);
+  xsnprintf(map_name, l, "%s%s", map, org);
 
   result = nis_lookup(map_name, (EXPAND_NAME | FOLLOW_LINKS | FOLLOW_PATH));
 

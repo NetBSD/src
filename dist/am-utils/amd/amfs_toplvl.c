@@ -1,4 +1,4 @@
-/*	$NetBSD: amfs_toplvl.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amfs_toplvl.c,v 1.3.2.2 2007/02/24 12:17:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_toplvl.c,v 1.38 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/amfs_toplvl.c
  *
  */
 
@@ -56,7 +56,7 @@
 /****************************************************************************
  *** FORWARD DEFINITIONS                                                  ***
  ****************************************************************************/
-
+static int amfs_toplvl_init(mntfs *mf);
 
 /****************************************************************************
  *** OPS STRUCTURES                                                       ***
@@ -65,7 +65,7 @@ am_ops amfs_toplvl_ops =
 {
   "toplvl",
   amfs_generic_match,
-  0,				/* amfs_toplvl_init */
+  amfs_toplvl_init,		/* amfs_toplvl_init */
   amfs_toplvl_mount,
   amfs_toplvl_umount,
   amfs_generic_lookup_child,
@@ -89,7 +89,7 @@ am_ops amfs_toplvl_ops =
  ****************************************************************************/
 
 static void
-set_auto_attrcache_timeout(char *preopts, char *opts)
+set_auto_attrcache_timeout(char *preopts, char *opts, size_t l)
 {
 
 #ifdef MNTTAB_OPT_NOAC
@@ -100,8 +100,8 @@ set_auto_attrcache_timeout(char *preopts, char *opts)
    * automount points.
    */
   if (gopt.auto_attrcache == 0) {
-    sprintf(preopts, ",%s", MNTTAB_OPT_NOAC);
-    strcat(opts, preopts);
+    xsnprintf(preopts, l, ",%s", MNTTAB_OPT_NOAC);
+    xstrlcat(opts, preopts, l);
   }
 #endif /* MNTTAB_OPT_NOAC */
 
@@ -112,26 +112,56 @@ set_auto_attrcache_timeout(char *preopts, char *opts)
    * then we'll have to condition the remainder of this on OPT_NOAC.
    */
 #ifdef MNTTAB_OPT_ACTIMEO
-  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTIMEO, gopt.auto_attrcache);
-  strcat(opts, preopts);
+  xsnprintf(preopts, l, ",%s=%d", MNTTAB_OPT_ACTIMEO, gopt.auto_attrcache);
+  xstrlcat(opts, preopts, l);
 #else /* MNTTAB_OPT_ACTIMEO */
 # ifdef MNTTAB_OPT_ACDIRMIN
-  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTDIRMIN, gopt.auto_attrcache);
-  strcat(opts, preopts);
+  xsnprintf(preopts, l, ",%s=%d", MNTTAB_OPT_ACTDIRMIN, gopt.auto_attrcache);
+  xstrlcat(opts, preopts, l);
 # endif /* MNTTAB_OPT_ACDIRMIN */
 # ifdef MNTTAB_OPT_ACDIRMAX
-  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTDIRMAX, gopt.auto_attrcache);
-  strcat(opts, preopts);
+  xsnprintf(preopts, l, ",%s=%d", MNTTAB_OPT_ACTDIRMAX, gopt.auto_attrcache);
+  xstrlcat(opts, preopts, l);
 # endif /* MNTTAB_OPT_ACDIRMAX */
 # ifdef MNTTAB_OPT_ACREGMIN
-  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTREGMIN, gopt.auto_attrcache);
-  strcat(opts, preopts);
+  xsnprintf(preopts, l, ",%s=%d", MNTTAB_OPT_ACTREGMIN, gopt.auto_attrcache);
+  xstrlcat(opts, preopts, l);
 # endif /* MNTTAB_OPT_ACREGMIN */
 # ifdef MNTTAB_OPT_ACREGMAX
-  sprintf(preopts, ",%s=%d", MNTTAB_OPT_ACTREGMAX, gopt.auto_attrcache);
-  strcat(opts, preopts);
+  xsnprintf(preopts, l, ",%s=%d", MNTTAB_OPT_ACTREGMAX, gopt.auto_attrcache);
+  xstrlcat(opts, preopts, l);
 # endif /* MNTTAB_OPT_ACREGMAX */
 #endif /* MNTTAB_OPT_ACTIMEO */
+}
+
+
+/*
+ * Initialize a top-level mount.  In our case, if the user asked for
+ * forced_unmounts, and the OS supports it, then we try forced/lazy unmounts
+ * on any previous toplvl mounts.  This is useful if a previous Amd died and
+ * left behind toplvl mount points (this Amd will clean them up).
+ *
+ * WARNING: Don't use forced/lazy unmounts if you have another valid Amd
+ * running, because this code WILL force those valid toplvl mount points to
+ * be detached as well!
+ */
+static int
+amfs_toplvl_init(mntfs *mf)
+{
+  int error = 0;
+
+#if defined(MNT2_GEN_OPT_FORCE) || defined(MNT2_GEN_OPT_DETACH)
+  if (gopt.flags & CFM_FORCED_UNMOUNTS) {
+    plog(XLOG_INFO, "amfs_toplvl_init: trying forced/lazy unmount of %s",
+	 mf->mf_mount);
+    error = umount2_fs(mf->mf_mount, AMU_UMOUNT_FORCE | AMU_UMOUNT_DETACH);
+    if (error)
+      plog(XLOG_INFO, "amfs_toplvl_init: forced/lazy unmount failed: %m");
+    else
+      dlog("amfs_toplvl_init: forced/lazy unmount succeeded");
+  }
+#endif /* MNT2_GEN_OPT_FORCE || MNT2_GEN_OPT_DETACH */
+  return error;
 }
 
 
@@ -142,7 +172,7 @@ int
 amfs_toplvl_mount(am_node *mp, mntfs *mf)
 {
   struct stat stb;
-  char opts[256], preopts[256];
+  char opts[SIZEOF_OPTS], preopts[SIZEOF_OPTS];
   int error;
 
   /*
@@ -167,40 +197,42 @@ amfs_toplvl_mount(am_node *mp, mntfs *mf)
 
 #ifdef HAVE_FS_AUTOFS
   if (mf->mf_flags & MFF_IS_AUTOFS) {
-    autofs_get_opts(opts, mp->am_autofs_fh);
+    autofs_get_opts(opts, sizeof(opts), mp->am_autofs_fh);
   } else
 #endif /* HAVE_FS_AUTOFS */
   {
     preopts[0] = '\0';
 #ifdef MNTTAB_OPT_INTR
-    strlcat(preopts, MNTTAB_OPT_INTR, sizeof(preopts));
-    strlcat(preopts, ",", sizeof(preopts));
+    xstrlcat(preopts, MNTTAB_OPT_INTR, sizeof(preopts));
+    xstrlcat(preopts, ",", sizeof(preopts));
 #endif /* MNTTAB_OPT_INTR */
 #ifdef MNTTAB_OPT_IGNORE
-    strlcat(preopts, MNTTAB_OPT_IGNORE, sizeof(preopts));
-    strlcat(preopts, ",", sizeof(preopts));
+    xstrlcat(preopts, MNTTAB_OPT_IGNORE, sizeof(preopts));
+    xstrlcat(preopts, ",", sizeof(preopts));
 #endif /* MNTTAB_OPT_IGNORE */
 #ifdef WANT_TIMEO_AND_RETRANS_ON_TOPLVL
-    sprintf(opts, "%s%s,%s=%d,%s=%d,%s=%d,%s,map=%s",
-#else /* WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
-    sprintf(opts, "%s%s,%s=%d,%s,map=%s",
-#endif /* WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
-	    preopts,
-	    MNTTAB_OPT_RW,
-	    MNTTAB_OPT_PORT, nfs_port,
-#ifdef WANT_TIMEO_AND_RETRANS_ON_TOPLVL
-	    /* note: TIMEO+RETRANS for toplvl are only "udp" currently */
-	    MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[AMU_TYPE_UDP],
-	    MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[AMU_TYPE_UDP],
-#endif /* WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
-	    mf->mf_ops->fs_type, mf->mf_info);
+    xsnprintf(opts, sizeof(opts), "%s%s,%s=%d,%s=%d,%s=%d,%s,map=%s",
+	      preopts,
+	      MNTTAB_OPT_RW,
+	      MNTTAB_OPT_PORT, nfs_port,
+	      /* note: TIMEO+RETRANS for toplvl are only "udp" currently */
+	      MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[AMU_TYPE_UDP],
+	      MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[AMU_TYPE_UDP],
+	      mf->mf_ops->fs_type, mf->mf_info);
+#else /* not WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
+    xsnprintf(opts, sizeof(opts), "%s%s,%s=%d,%s,map=%s",
+	      preopts,
+	      MNTTAB_OPT_RW,
+	      MNTTAB_OPT_PORT, nfs_port,
+	      mf->mf_ops->fs_type, mf->mf_info);
+#endif /* not WANT_TIMEO_AND_RETRANS_ON_TOPLVL */
 #ifdef MNTTAB_OPT_NOAC
     if (gopt.auto_attrcache == 0) {
-      strcat(opts, ",");
-      strcat(opts, MNTTAB_OPT_NOAC);
+      xstrlcat(opts, ",", sizeof(opts));
+      xstrlcat(opts, MNTTAB_OPT_NOAC, sizeof(opts));
     } else
 #endif /* MNTTAB_OPT_NOAC */
-      set_auto_attrcache_timeout(preopts, opts);
+      set_auto_attrcache_timeout(preopts, opts, sizeof(preopts));
   }
 
   /* now do the mount */
@@ -221,8 +253,9 @@ int
 amfs_toplvl_umount(am_node *mp, mntfs *mf)
 {
   struct stat stb;
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  int unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
   int error;
+  int count = 0;		/* how many times did we try to unmount? */
 
 again:
   /*
@@ -247,7 +280,7 @@ again:
     goto out;
   }
 
-  error = UMOUNT_FS(mp->am_path, mnttab_file_name, on_autofs);
+  error = UMOUNT_FS(mp->am_path, mnttab_file_name, unmount_flags);
   if (error == EBUSY) {
 #ifdef HAVE_FS_AUTOFS
     /*
@@ -259,7 +292,24 @@ again:
       return error;
 #endif /* HAVE_FS_AUTOFS */
     plog(XLOG_WARNING, "amfs_toplvl_unmount retrying %s in 1s", mp->am_path);
-    sleep(1);			/* XXX */
+    count++;
+    sleep(1);
+    /*
+     * If user wants forced/lazy unmount semantics, then set those flags,
+     * but only after we've tried normal lstat/umount a few times --
+     * otherwise forced unmounts may hang this very same Amd (by preventing
+     * it from achieving a clean unmount).
+     */
+    if (gopt.flags & CFM_FORCED_UNMOUNTS) {
+      if (count == 5) {		/* after 5 seconds, try MNT_FORCE */
+	dlog("enabling forced unmounts for toplvl node %s", mp->am_path);
+	unmount_flags |= AMU_UMOUNT_FORCE;
+      }
+      if (count == 10) {	/* after 10 seconds, try MNT_DETACH */
+	dlog("enabling detached unmounts for toplvl node %s", mp->am_path);
+	unmount_flags |= AMU_UMOUNT_DETACH;
+      }
+    }
     goto again;
   }
 out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.6.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.6.2.2 2007/02/24 12:17:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_defs.h,v 1.56 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/include/am_defs.h
  *
  */
 
@@ -69,26 +69,6 @@
 # endif /* not HAVE_STRCHR */
 char *strchr(), *strrchr(), *strdup();
 #endif /* not STDC_HEADERS */
-
-/* AIX requires this to be the first thing in the file. */
-#ifndef __GNUC__
-# if HAVE_ALLOCA_H
-#  include <alloca.h>
-# else /* not HAVE_ALLOCA_H */
-#  ifdef _AIX
-/*
- * This pragma directive is indented so that pre-ANSI C compilers will
- * ignore it, rather than choke on it.
- */
- #pragma alloca
-#  else /* not _AIX */
-#   ifndef alloca
-/* predefined by HP cc +Olibcalls */
-voidp alloca();
-#   endif /* not alloca */
-#  endif /* not _AIX */
-# endif /* not HAVE_ALLOCA_H */
-#endif /* not __GNUC__ */
 
 /*
  * Handle gcc __attribute__ if available.
@@ -765,13 +745,29 @@ struct ypall_callback;
 #ifdef HAVE_SYS_FS_NFS_CLNT_H
 # include <sys/fs/nfs_clnt.h>
 #endif /* HAVE_SYS_FS_NFS_CLNT_H */
+
+/* complex rules for linux/nfs_mount.h: broken on so many systems */
 #ifdef HAVE_LINUX_NFS_MOUNT_H
-# define _LINUX_NFS_H
-# define _LINUX_NFS2_H
-# define _LINUX_NFS3_H
-# define _LINUX_NFS_FS_H
-# define _LINUX_IN_H
+# ifndef _LINUX_NFS_H
+#  define _LINUX_NFS_H
+# endif /* not _LINUX_NFS_H */
+# ifndef _LINUX_NFS2_H
+#  define _LINUX_NFS2_H
+# endif /* not _LINUX_NFS2_H */
+# ifndef _LINUX_NFS3_H
+#  define _LINUX_NFS3_H
+# endif /* not _LINUX_NFS3_H */
+# ifndef _LINUX_NFS_FS_H
+#  define _LINUX_NFS_FS_H
+# endif /* not _LINUX_NFS_FS_H */
+# ifndef _LINUX_IN_H
+#  define _LINUX_IN_H
+# endif /* not _LINUX_IN_H */
+# ifndef __KERNEL__
+#  define __KERNEL__
+# endif /* __KERNEL__ */
 # include <linux/nfs_mount.h>
+# undef __KERNEL__
 #endif /* HAVE_LINUX_NFS_MOUNT_H */
 
 /*
@@ -1235,6 +1231,13 @@ extern char *nc_sperror(void);
 #endif /* HAVE_SYS_STATFS_H */
 
 /*
+ * Actions to take if <sys/statvfs.h> exists.
+ */
+#ifdef HAVE_SYS_STATVFS_H
+# include <sys/statvfs.h>
+#endif /* HAVE_SYS_STATVFS_H */
+
+/*
  * Actions to take if <sys/vfs.h> exists.
  */
 #ifdef HAVE_SYS_VFS_H
@@ -1505,6 +1508,10 @@ extern int seteuid(uid_t euid);
 extern int setitimer(int, struct itimerval *, struct itimerval *);
 #endif /* defined(HAVE_SETITIMER) && !defined(HAVE_EXTERN_SETITIMER) */
 
+#ifndef HAVE_EXTERN_SLEEP
+extern unsigned int sleep(unsigned int seconds);
+#endif /* not HAVE_EXTERN_SETITIMER */
+
 #ifndef HAVE_EXTERN_STRCASECMP
 /*
  * define this extern even if function does not exist, for it will
@@ -1520,6 +1527,14 @@ extern int strcasecmp(const char *s1, const char *s2);
  */
 extern char *strdup(const char *s);
 #endif /* not HAVE_EXTERN_STRDUP */
+
+#ifndef HAVE_EXTERN_STRLCAT
+/*
+ * define this extern even if function does not exist, for it will
+ * be filled in by libamu/strlcat.c
+ */
+extern size_t strlcat(char *dst, const char *src, size_t siz);
+#endif /* not HAVE_EXTERN_STRLCAT */
 
 #ifndef HAVE_EXTERN_STRLCPY
 /*

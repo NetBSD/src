@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.8.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.8.2.2 2007/02/24 12:17:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: hlfsd.c,v 1.32 2005/02/27 23:53:22 ezk Exp
+ * File: am-utils/hlfsd/hlfsd.c
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -104,6 +104,7 @@ char *mnttab_file_name = NULL;
 
 /* forward declarations */
 void hlfsd_going_down(int rc);
+void fatalerror(char *str);
 
 
 static void
@@ -119,6 +120,17 @@ usage(void)
 #endif /* DEBUG */
   fprintf(stderr, "\t[dir_name [subdir]]\n");
   exit(2);
+}
+
+
+void
+fatalerror(char *str)
+{
+#define ERRM ": %m"
+  size_t l = strlen(str) + sizeof(ERRM) - 1;
+  char *tmp = strnsave(str, l);
+  xstrlcat(tmp, ERRM, l);
+  fatal(tmp);
 }
 
 
@@ -309,7 +321,7 @@ main(int argc, char *argv[])
     *dot = '\0';
   orig_umask = umask(0);
   if (logfile)
-    switch_to_logfile(logfile, orig_umask);
+    switch_to_logfile(logfile, orig_umask, 0);
 
 #ifndef MOUNT_TABLE_ON_FILE
   if (amuDebug(D_MTAB))
@@ -337,8 +349,6 @@ main(int argc, char *argv[])
 	   am_get_progname(), dir_name);
     exit(3);
   }
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   if (!forcefast) {
     /* make sure mount point exists and is at least mode 555 */
@@ -466,32 +476,33 @@ main(int argc, char *argv[])
   /*
    * setup options to mount table (/etc/{mtab,mnttab}) entry
    */
-  snprintf(hostpid_fs, sizeof(hostpid_fs), "%s:(pid%d)", hostname, masterpid);
+  xsnprintf(hostpid_fs, sizeof(hostpid_fs),
+	    "%s:(pid%d)", hostname, masterpid);
   memset((char *) &mnt, 0, sizeof(mnt));
   mnt.mnt_dir = dir_name;	/* i.e., "/mail" */
   mnt.mnt_fsname = hostpid_fs;
   if (mntopts) {
     mnt.mnt_opts = mntopts;
   } else {
-    strlcpy(preopts, default_mntopts, sizeof(preopts));
+    xstrlcpy(preopts, default_mntopts, sizeof(preopts));
     /*
      * Turn off all kinds of attribute and symlink caches as
      * much as possible.  Also make sure that mount does not
      * show up to df.
      */
 #ifdef MNTTAB_OPT_INTR
-    strlcat(preopts, ",", sizeof(preopts));
-    strlcat(preopts, MNTTAB_OPT_INTR, sizeof(preopts));
+    xstrlcat(preopts, ",", sizeof(preopts));
+    xstrlcat(preopts, MNTTAB_OPT_INTR, sizeof(preopts));
 #endif /* MNTTAB_OPT_INTR */
 #ifdef MNTTAB_OPT_IGNORE
-    strlcat(preopts, ",", sizeof(preopts));
-    strlcat(preopts, MNTTAB_OPT_IGNORE, sizeof(preopts));
+    xstrlcat(preopts, ",", sizeof(preopts));
+    xstrlcat(preopts, MNTTAB_OPT_IGNORE, sizeof(preopts));
 #endif /* MNTTAB_OPT_IGNORE */
 #ifdef MNT2_GEN_OPT_CACHE
-    strlcat(preopts, ",nocache", sizeof(preopts));
+    xstrlcat(preopts, ",nocache", sizeof(preopts));
 #endif /* MNT2_GEN_OPT_CACHE */
 #ifdef MNT2_NFS_OPT_SYMTTL
-    strlcat(preopts, ",symttl=0", sizeof(preopts));
+    xstrlcat(preopts, ",symttl=0", sizeof(preopts));
 #endif /* MNT2_NFS_OPT_SYMTTL */
     mnt.mnt_opts = preopts;
   }
@@ -519,11 +530,13 @@ main(int argc, char *argv[])
    * Update hostname field.
    * Make some name prog:pid (i.e., hlfsd:174) for hostname
    */
-  snprintf(progpid_fs, sizeof(progpid_fs), "%s:%d", am_get_progname(), masterpid);
+  xsnprintf(progpid_fs, sizeof(progpid_fs),
+	    "%s:%d", am_get_progname(), masterpid);
 
   /* Most kernels have a name length restriction. */
   if ((int) strlen(progpid_fs) >= (int) MAXHOSTNAMELEN)
-    strlcpy(progpid_fs + MAXHOSTNAMELEN - 3, "..", sizeof(progpid_fs) - (MAXHOSTNAMELEN - 3));
+    xstrlcpy(progpid_fs + MAXHOSTNAMELEN - 3, "..",
+	     sizeof(progpid_fs) - MAXHOSTNAMELEN + 3);
 
   genflags = compute_mount_flags(&mnt);
 
@@ -572,8 +585,6 @@ main(int argc, char *argv[])
    * more carefully, *after* compute_nfs_args() runs.			   *
    *************************************************************************/
   compute_automounter_nfs_args(&nfs_args, &mnt);
-
-  clock_valid = 0;		/* invalidate logging clock */
 
 /*
  * For some reason, this mount may have to be done in the background, if I am
@@ -640,8 +651,6 @@ hlfsd_init(void)
 #ifdef HAVE_SIGACTION
   struct sigaction sa;
 #endif /* HAVE_SIGACTION */
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   /*
    * Initialize file handles.
@@ -742,12 +751,7 @@ hlfsd_init(void)
   if (setitimer(ITIMER_REAL, &reloadinterval, (struct itimerval *) 0) < 0)
     fatal("setitimer: %m");
 
-  {
-    struct timeval start_time;
-    gettimeofday(&start_time, NULL);
-    startup.nt_seconds = (u_int) start_time.tv_sec;
-    startup.nt_useconds = (u_int) start_time.tv_usec;
-  }
+  clocktime(&startup);
 
   /*
    * If not -D daemon, then start serving here in the child,
@@ -787,8 +791,6 @@ reload(int signum)
   int child;
   int status;
 
-  clock_valid = 0;		/* invalidate logging clock */
-
   if (getpid() != masterpid)
     return;
 
@@ -797,7 +799,7 @@ reload(int signum)
    * can be rotated)
    */
   if (signum == SIGHUP && logfile)
-    switch_to_logfile(logfile, orig_umask);
+    switch_to_logfile(logfile, orig_umask, 0);
 
   /*
    * parent performs the reload, while the child continues to serve
@@ -839,8 +841,6 @@ cleanup(int signum)
 {
   struct stat stbuf;
   int umount_result;
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   if (!amuDebug(D_DAEMON)) {
     if (getpid() != masterpid)
@@ -916,7 +916,7 @@ fatal(char *mess)
     if (!STREQ(&mess[messlen + 1 - sizeof(ERRM)], ERRM))
       fprintf(stderr, "%s: %s\n", am_get_progname(), mess);
     else {
-      strlcpy(lessmess, mess, sizeof(lessmess));
+      xstrlcpy(lessmess, mess, sizeof(lessmess));
       lessmess[messlen - 4] = '\0';
 
       fprintf(stderr, "%s: %s: %s\n",

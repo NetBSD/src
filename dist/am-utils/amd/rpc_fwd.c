@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_fwd.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: rpc_fwd.c,v 1.1.1.7.2.2 2007/02/24 12:17:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: rpc_fwd.c,v 1.19 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/rpc_fwd.c
  *
  */
 
@@ -95,7 +95,7 @@ static u_int xid;
 static rpc_forward *
 fwd_alloc(void)
 {
-  time_t now = clocktime();
+  time_t now = clocktime(NULL);
   rpc_forward *p = 0, *p2;
 
   /*
@@ -306,7 +306,7 @@ fwd_packet(int type_id, char *pkt, int len, struct sockaddr_in *fwdto, struct so
     if (p && fwdto)
       dlog("Sending packet id %#x to %s:%d",
 	   p->rf_xid,
-	   inet_dquad(dq, fwdto->sin_addr.s_addr),
+	   inet_dquad(dq, sizeof(dq), fwdto->sin_addr.s_addr),
 	   ntohs(fwdto->sin_port));
   }
 #endif /* DEBUG */

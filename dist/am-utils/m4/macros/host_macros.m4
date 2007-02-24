@@ -11,11 +11,26 @@ AC_DEFUN([AMU_HOST_MACROS],
   AC_DEFINE_UNQUOTED(HOST_VENDOR, "$host_vendor")
   AC_MSG_RESULT($host_vendor)
 
+# if vendor is apple, then check values in /usr/bin/sw_vers
+  if test "${host_vendor}" = "apple"
+  then
+      pn=`sw_vers -productName 2>/dev/null`
+      pv=`sw_vers -productVersion 2>/dev/null`
+      if test -n "${pn}" && test -n "${pv}"
+      then
+	  host_os_name=`echo ${pn} | tr -d ' ' | tr '[A-Z]' '[a-z]'`
+	  host_os_version="${pv}"
+	  host_os="${host_os_name}-${host_os_version}"
+      fi
+  fi
+
   AC_MSG_CHECKING([host full OS name and version])
   # normalize some host OS names
   case ${host_os} in
 	# linux is linux is linux, regardless of RMS.
 	linux-gnu* | lignux* )	host_os=linux ;;
+	# NetBSD systems today are elf, so no need to distinguish
+	netbsdelf* ) host_os=`echo ${host_os} | sed 's/^netbsdelf/netbsd/'`;;
   esac
   AC_DEFINE_UNQUOTED(HOST_OS, "$host_os")
   AC_MSG_RESULT($host_os)
@@ -27,6 +42,8 @@ AC_DEFUN([AMU_HOST_MACROS],
   case ${host_os_name} in
 	# linux is linux is linux, regardless of RMS.
 	linux-gnu* | lignux* )	host_os_name=linux ;;
+	# all NetBSD systems today should just show up as "netbsd"
+	netbsd* ) host_os_name=netbsd;;
   esac
   AC_DEFINE_UNQUOTED(HOST_OS_NAME, "$host_os_name")
   AC_MSG_RESULT($host_os_name)
@@ -55,6 +72,7 @@ AC_DEFUN([AMU_HOST_MACROS],
 	sun3x )	host_arch=sun3 ;;
 	sun )	host_arch=`(arch) 2>/dev/null` || host_arch=unknown ;;
 	i?86 )	host_arch=i386 ;; # all x86 should show up as i386
+	Power*Macintosh )	host_arch=powerpc ;;
   esac
   AC_DEFINE_UNQUOTED(HOST_ARCH, "$host_arch")
   AC_MSG_RESULT($host_arch)

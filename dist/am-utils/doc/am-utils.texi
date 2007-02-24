@@ -1,5 +1,5 @@
 \input texinfo          @c -*-texinfo-*-
-@c $NetBSD: am-utils.texi,v 1.6.2.1 2005/08/16 13:02:23 tron Exp $
+@c $NetBSD: am-utils.texi,v 1.6.2.2 2007/02/24 12:17:20 bouyer Exp $
 @c
 @c Copyright (c) 1997-2005 Erez Zadok
 @c Copyright (c) 1989 Jan-Simon Pendry
@@ -37,9 +37,8 @@
 @c LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
-@c      %W% (Berkeley) %G%
 @c
-@c Id: am-utils.texi,v 1.101 2005/04/17 03:05:54 ezk Exp
+@c File: am-utils/doc/am-utils.texi
 @c
 @setfilename am-utils.info
 
@@ -659,10 +658,10 @@ value on a per-mount basis (@pxref{opts Option, opts, opts}).
 
 Filesystems can be forcefully timed out using the @i{Amq} command.
 @xref{Run-time Administration}.  Note that on new enough systems that
-support forced unmounts, such as Linux, @i{Amd} will try to use the
+support forced unmounts, such as Linux, @i{Amd} can try to use the
 @b{umount2}(2) system call to force the unmount, if the regular
 @b{umount}(2) system call failed in a way that indicates that the
-mount point is hung or stale.
+mount point is hung or stale.  @xref{forced_unmounts Parameter}.
 
 @node Keep-alives, Non-blocking Operation, Automatic Unmounting, Overview
 @comment  node-name,  next,  previous,  up
@@ -4137,6 +4136,7 @@ sections that follow.
 * map_type Parameter::
 * mount_type Parameter::
 * search_path Parameter::
+* selectors_in_defaults Parameter::
 @end menu
 
 @c ----------------------------------------------------------------
@@ -4249,7 +4249,7 @@ host it is running on.  If @samp{autofs} is specified, @i{Amd} will be
 an autofs server for those mount points.
 
 @c ----------------------------------------------------------------
-@node search_path Parameter, , mount_type Parameter, Common Parameters
+@node search_path Parameter, selectors_in_defaults Parameter, mount_type Parameter, Common Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{search_path} Parameter
 @cindex search_path Parameter
@@ -4258,6 +4258,28 @@ an autofs server for those mount points.
 (colon-delimited) search path for file maps.  Using a search path,
 sites can allow for local map customizations and overrides, and can
 distributed maps in several locations as needed.
+
+@c ----------------------------------------------------------------
+@node selectors_in_defaults Parameter, , search_path Parameter, Common Parameters
+@comment  node-name,  next,  previous,  up
+@subsection @t{selectors_in_defaults} Parameter
+@cindex selectors_in_defaults Parameter
+
+(type=boolean, default=@samp{no}).  If @samp{yes}, then the
+@samp{/defaults} entry of maps will search for and process any
+selectors before setting defaults for all other keys in that map.
+Useful when you want to set different options for a complete map based
+on some parameters.  For example, you may want to better the NFS
+performance over slow slip-based networks as follows:
+
+@example
+/defaults \
+    wire==slip-net;opts:=intr,rsize=1024,wsize=1024 \
+    wire!=slip-net;opts:=intr,rsize=8192,wsize=8192
+@end example
+
+Deprecated form: selectors_on_default.
+
 
 @c ================================================================
 @node Global Parameters, Regular Map Parameters, Common Parameters, Amd Configuration File
@@ -4278,6 +4300,7 @@ The following parameters are applicable to the @samp{[global]} section only.
 * dismount_interval Parameter::
 * domain_strip Parameter::
 * exec_map_timeout Parameter::
+* forced_unmounts Parameter::
 * full_os Parameter::
 * fully_qualified_hosts Parameter::
 * hesiod_base Parameter::
@@ -4313,8 +4336,8 @@ The following parameters are applicable to the @samp{[global]} section only.
 * print_pid Parameter::
 * print_version Parameter::
 * restart_mounts Parameter::
-* selectors_in_defaults Parameter::
 * show_statfs_entries Parameter::
+* truncate_log Parameter::
 * unmount_on_exit Parameter::
 * use_tcpwrappers Parameter::
 * vendor Parameter::
@@ -4336,14 +4359,34 @@ option to @i{Amd}.  Allows you to override the value of the @i{arch}
 @subsection @t{auto_attrcache} Parameter
 @cindex auto_attrcache Parameter
 
-(type=numeric, default=0).  Specify in seconds, the (kernel-side) NFS
-attribute cache timeout for @i{Amd}'s own automount points.  A value
-of 0 turns off attribute caching, meaning that @i{Amd} will be
-consulted via a kernel-RPC each time someone stat's the mount point
+(type=numeric, default=0).  Specify in seconds (or units of 0.1
+seconds, depending on the OS), what is the (kernel-side) NFS attribute
+cache timeout for @i{Amd}'s own automount points.  A value of 0 is
+supposed to turn off attribute caching, meaning that @i{Amd} will be
+consulted via a kernel-RPC each time someone stat()'s the mount point
 (which could be abused as a denial-of-service attack).
-@emph{WARNING}: if you set this option to any non-zero value,
-especially a large value, and you get ESTALE errors on your particular
-OS, then set this value back to 0 seconds.
+
+@emph{WARNING}: @i{Amd} depends on being able to turn off the NFS
+attribute cache of the client OS.  If it cannot be turned off, then
+users may get ESTALE errors or symlinks that point to the wrong
+places; this is more likely under heavy use of @i{Amd}.  Therefore,
+under normal circumstances, this parameter should remain set to 0, to
+ensure that the attribute cache is indeed off.
+
+Unfortunately, some kernels (e.g., certain BSDs) don't have a way to
+turn off the NFS attribute cache.  Setting this parameter to 0 is
+supposed to turn off attribute caching entirely, but unfortunately it
+does not; instead, the attribute cache is set to some internal
+hard-coded default (usually anywhere from 5-30 seconds).  If you
+suspect that your OS doesn't have a reliable way of turning off the
+attribute cache, then it is better to set this parameter to the
+smallest possible non-zero value (set @samp{auto_attrcache=1} in your
+@code{amd.conf}).  This will not eliminate the problem, but reduce the
+risk window somewhat.  The best solutions are (1) to use Amd in Autofs
+mode, if it's supported in your OS, and (2) talk to your OS vendor to
+support a true @samp{noac} flag.  See the
+@uref{http://www.am-utils.org/docs/am-utils/attrcache.txt,README.attrcache}
+document for more details.
 
 @c ----------------------------------------------------------------
 @node auto_dir Parameter, cache_duration Parameter, auto_attrcache Parameter, Global Parameters
@@ -4424,7 +4467,7 @@ the same maps (as you may have hosts whose domain-stripped name is
 identical).
 
 @c ----------------------------------------------------------------
-@node exec_map_timeout Parameter, full_os Parameter, domain_strip Parameter, Global Parameters
+@node exec_map_timeout Parameter, forced_unmounts Parameter, domain_strip Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{exec_map_timeout} Parameter
 @cindex exec_map_timeout Parameter
@@ -4438,7 +4481,43 @@ is queried, @i{Amd} is essentially waiting and is thus not responding
 to any other queries.  @xref{Executable maps}.
 
 @c ----------------------------------------------------------------
-@node full_os Parameter, fully_qualified_hosts Parameter, exec_map_timeout Parameter, Global Parameters
+@node forced_unmounts Parameter, full_os Parameter, exec_map_timeout Parameter, Global Parameters
+@comment  node-name,  next,  previous,  up
+@subsection @t{forced_unmounts} Parameter
+@cindex forced_unmounts Parameter
+
+(type=boolean, default=@samp{no}).
+Sometimes, mount points are hung due to unrecoverable conditions, such
+as when NFS servers migrate, change their IP address, are down
+permanently, or due to hardware failures, and more.  In this case,
+attempting to unmount an existing mount point, or even just to
+@b{stat}(2) it, results in one of three fatal errors: EIO, ESTALE, or
+EBUSY.  At that point, @i{Amd} can do little to recover that hung
+point (in fact, the OS cannot automatically recover either).  For that
+reason, some OSs support special kinds of forced unmounts, which must
+be used very carefully: they will force an ummount immediately (or
+lazily on Linux), which could result in application data loss.
+However, that may be the only way to recover the entire host (without
+rebooting).  Once a hung mount point is forced out, @i{Amd} can then
+re-mount a replacement one (if available), bringing a mostly-hung
+system back to operation and avoiding a potentially costly reboot.
+
+If the @samp{forced_unmounts} option is set to @samp{yes}, and the
+client OS supports forced or lazy unmounts, then @i{Amd} will attempt
+to use them if it gets any of the three serious error conditions
+listed above.  Note that @i{Amd} will force the unmount of mount
+points that returned EBUSY only for @samp{type:=toplvl} mounts
+(@pxref{Top-level Filesystem}): that is, @i{Amd}'s own mount points.
+This is useful to recover from a previously hung @i{Amd}, and to
+ensure that an existing @i{Amd} can shutdown cleanly even if some
+processes are keeping its mount points busy (i.e., when a user's shell
+process uses @code{cd} to set its CWD to @i{Amd}'s own mount point).
+
+If this option is set to @samp{no} (the default), then @i{Amd} will
+not attempt this special recovery procedure.
+
+@c ----------------------------------------------------------------
+@node full_os Parameter, fully_qualified_hosts Parameter, forced_unmounts Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{full_os} Parameter
 @cindex full_os Parameter
@@ -4894,7 +4973,7 @@ will print its version information string, which includes some
 configuration and compilation values.
 
 @c ----------------------------------------------------------------
-@node restart_mounts Parameter, selectors_in_defaults Parameter, print_version Parameter, Global Parameters
+@node restart_mounts Parameter, show_statfs_entries Parameter, print_version Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{restart_mounts} Parameter
 @cindex restart_mounts Parameter
@@ -4905,28 +4984,7 @@ systems are currently mounted.  Whenever one of these would have been
 auto-mounted, @i{Amd} inherits it.
 
 @c ----------------------------------------------------------------
-@node selectors_in_defaults Parameter, show_statfs_entries Parameter, restart_mounts Parameter, Global Parameters
-@comment  node-name,  next,  previous,  up
-@subsection @t{selectors_in_defaults} Parameter
-@cindex selectors_in_defaults Parameter
-
-(type=boolean, default=@samp{no}).  If @samp{yes}, then the @samp{/defaults} entry of
-maps will search for and process any selectors before setting defaults
-for all other keys in that map.  Useful when you want to set different
-options for a complete map based on some parameters.  For example, you
-may want to better the NFS performance over slow slip-based networks as
-follows:
-
-@example
-/defaults \
-    wire==slip-net;opts:=intr,rsize=1024,wsize=1024 \
-    wire!=slip-net;opts:=intr,rsize=8192,wsize=8192
-@end example
-
-Deprecated form: selectors_on_default.
-
-@c ----------------------------------------------------------------
-@node show_statfs_entries Parameter, unmount_on_exit Parameter, selectors_in_defaults Parameter, Global Parameters
+@node show_statfs_entries Parameter, truncate_log Parameter, restart_mounts Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{show_statfs_entries} Parameter
 @cindex show_statfs_entries Parameter
@@ -4937,12 +4995,24 @@ browsable will also show the number of entries (keys) they have when
 the @b{statfs}(2) system call).
 
 @c ----------------------------------------------------------------
-@node unmount_on_exit Parameter, use_tcpwrappers Parameter, show_statfs_entries Parameter, Global Parameters
+@node truncate_log Parameter, unmount_on_exit Parameter, show_statfs_entries Parameter, Global Parameters
+@comment  node-name,  next,  previous,  up
+@subsection @t{truncate_log} Parameter
+@cindex truncate_log Parameter
+
+(type=boolean), default=@samp{no}).  If @samp{yes}, then @i{Amd} will
+truncate the log file (if it's a regular file) on startup.  This could
+be useful when conducting extensive testing on @i{Amd} maps (or
+@i{Amd} itself) and you don't want to see log data from a previous run
+in the same file.
+
+@c ----------------------------------------------------------------
+@node unmount_on_exit Parameter, use_tcpwrappers Parameter, truncate_log Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{unmount_on_exit} Parameter
 @cindex unmount_on_exit Parameter
 
-(type=boolean), default=@samp{no}).  If @samp{yes}, then @i{Amd} will attempt
+(type=boolean, default=@samp{no}).  If @samp{yes}, then @i{Amd} will attempt
 to unmount all file systems which it knows about.  Normally it leaves
 all (esp. NFS) mounted file systems intact.  Note that @i{Amd} does not
 know about file systems mounted before it starts up, unless the
@@ -4973,8 +5043,14 @@ and this line to @code{/etc/hosts.deny}:
 amd: ALL
 @end example
 
-Consult the man pages for @b{hosts_access}(5) for more information on
-using the tcpwrappers access-control library.
+Consult the man pages for @b{hosts_access}(5) for more information on using
+the tcpwrappers access-control library.
+
+Note that in particular, you should not configure your @code{hosts.allow}
+file to spawn a command for @i{Amd}: that will cause @i{Amd} to not be able
+to @code{waitpid} on the child process ID of any background un/mount that
+@i{Amd} issued, resulting in a confused @i{Amd} that does not know what
+happened to those background un/mount requests.
 
 @c ----------------------------------------------------------------
 @node vendor Parameter, , use_tcpwrappers Parameter, Global Parameters

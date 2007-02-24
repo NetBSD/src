@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ldap.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.3.2.2 2007/02/24 12:17:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_ldap.c,v 1.24 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/info_ldap.c
  *
  */
 
@@ -234,7 +234,7 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
    * map types?
    */
   if (!gopt.map_type || !STREQ(gopt.map_type, AMD_LDAP_TYPE)) {
-    plog(XLOG_WARNING, "amu_ldap_init called with map_type <%s>\n",
+    dlog("amu_ldap_init called with map_type <%s>\n",
 	 (gopt.map_type ? gopt.map_type : "null"));
   } else {
     dlog("Map %s is ldap\n", map);
@@ -247,6 +247,8 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
   if (aldh->hostent == NULL) {
     plog(XLOG_USER, "Unable to parse hostport %s for ldap map %s",
 	 gopt.ldap_hostports ? gopt.ldap_hostports : "(null)", map);
+    XFREE(creds);
+    XFREE(aldh);
     return (ENOENT);
   }
   creds->who = "";
@@ -264,7 +266,7 @@ amu_ldap_init(mnt_map *m, char *map, time_t *ts)
   dlog("Bound to %s:%d\n", aldh->hostent->host, aldh->hostent->port);
   if (get_ldap_timestamp(aldh, map, ts))
     return (ENOENT);
-  dlog("Got timestamp for map %s: %ld\n", map, *ts);
+  dlog("Got timestamp for map %s: %ld\n", map, (u_long) *ts);
 
   return (0);
 }
@@ -276,7 +278,7 @@ amu_ldap_rebind(ALD *a)
   LDAP *ld;
   HE_ENT *h;
   CR *c = a->credentials;
-  time_t now = clocktime();
+  time_t now = clocktime(NULL);
   int try;
 
   dlog("-> amu_ldap_rebind\n");
@@ -350,7 +352,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
 
   tv.tv_sec = 3;
   tv.tv_usec = 0;
-  snprintf(filter, sizeof(filter), AMD_LDAP_TSFILTER, map);
+  xsnprintf(filter, sizeof(filter), AMD_LDAP_TSFILTER, map);
   dlog("Getting timestamp for map %s\n", map);
   dlog("Filter is: %s\n", filter);
   dlog("Base is: %s\n", gopt.ldap_base);
@@ -418,7 +420,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
     }
     if (!*ts > 0) {
       plog(XLOG_USER, "Nonpositive timestamp %ld for map %s\n",
-	   *ts, map);
+	   (u_long) *ts, map);
       err = ENOENT;
     }
   } else {
@@ -429,7 +431,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
 
   ldap_value_free(vals);
   ldap_msgfree(res);
-  dlog("The timestamp for %s is %ld (err=%d)\n", map, *ts, err);
+  dlog("The timestamp for %s is %ld (err=%d)\n", map, (u_long) *ts, err);
   return (err);
 }
 
@@ -455,7 +457,7 @@ amu_ldap_search(mnt_map *m, char *map, char *key, char **pval, time_t *ts)
   if (amu_ldap_rebind(a))	/* Check that's the handle is still valid */
     return (ENOENT);
 
-  snprintf(filter, sizeof(filter), AMD_LDAP_FILTER, map, key);
+  xsnprintf(filter, sizeof(filter), AMD_LDAP_FILTER, map, key);
   /* "*" is special to ldap_search(); run through the filter escaping it. */
   f1 = filter; f2 = filter2;
   while (*f1) {

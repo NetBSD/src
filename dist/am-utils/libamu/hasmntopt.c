@@ -1,4 +1,4 @@
-/*	$NetBSD: hasmntopt.c,v 1.6.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: hasmntopt.c,v 1.6.2.2 2007/02/24 12:17:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@ n * modification, are permitted provided that the following conditions
  * SUCH DAMAGE.
  *
  *
- * Id: hasmntopt.c,v 1.11 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/libamu/hasmntopt.c
  *
  */
 
@@ -50,7 +50,7 @@ n * modification, are permitted provided that the following conditions
 #include <amu.h>
 
 #ifndef MNTMAXSTR
-# define MNTMAXSTR	128
+# define MNTMAXSTR	256
 #endif /* not MNTMAXSTR */
 
 
@@ -60,7 +60,6 @@ n * modification, are permitted provided that the following conditions
  *
  * From: Piete Brooks <pb@cl.cam.ac.uk>
  */
-
 static char *
 nextmntopt(char **p)
 {
@@ -99,6 +98,7 @@ nextmntopt(char **p)
   return rp;
 }
 
+
 /*
  * replacement for hasmntopt if the system does not have it.
  */
@@ -110,7 +110,7 @@ amu_hasmntopt(mntent_t *mnt, char *opt)
   char *o = t;
   size_t l = strlen(opt);
 
-  strlcpy(t, mnt->mnt_opts, sizeof(t));
+  xstrlcpy(t, mnt->mnt_opts, sizeof(t));
 
   while (*(f = nextmntopt(&o)))
     if (NSTREQ(opt, f, l))

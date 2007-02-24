@@ -67,6 +67,9 @@ AH_TEMPLATE([HAVE_MAP_EXEC],
 AH_TEMPLATE([HAVE_FS_UFS],
 [Define if have UFS filesystem])
 
+AH_TEMPLATE([HAVE_FS_FFS],
+[Define if have FFS filesystem])
+
 AH_TEMPLATE([HAVE_FS_XFS],
 [Define if have XFS filesystem (irix)])
 
@@ -121,6 +124,9 @@ AH_TEMPLATE([HAVE_FS_UMAPFS],
 AH_TEMPLATE([MOUNT_TYPE_UFS],
 [Mount(2) type/name for UFS filesystem])
 
+AH_TEMPLATE([MOUNT_TYPE_FFS],
+[Mount(2) type/name for FFS filesystem])
+
 AH_TEMPLATE([MOUNT_TYPE_XFS],
 [Mount(2) type/name for XFS filesystem (irix)])
 
@@ -174,6 +180,9 @@ AH_TEMPLATE([MOUNT_TYPE_UMAPFS],
 
 AH_TEMPLATE([MNTTAB_TYPE_UFS],
 [Mount-table entry name for UFS filesystem])
+
+AH_TEMPLATE([MNTTAB_TYPE_FFS],
+[Mount-table entry name for FFS filesystem])
 
 AH_TEMPLATE([MNTTAB_TYPE_XFS],
 [Mount-table entry name for XFS filesystem (irix)])
@@ -411,6 +420,12 @@ AH_TEMPLATE([MNT2_GEN_OPT_CACHE],
 
 AH_TEMPLATE([MNT2_GEN_OPT_DATA],
 [6-argument mount])
+
+AH_TEMPLATE([MNT2_GEN_OPT_DETACH],
+[Use a lazy unmount (detach)])
+
+AH_TEMPLATE([MNT2_GEN_OPT_FORCE],
+[Use a forced unmount])
 
 AH_TEMPLATE([MNT2_GEN_OPT_FSS],
 [old (4-argument) mount (compatibility)])
@@ -877,6 +892,9 @@ AH_TEMPLATE([HAVE_EXTERN_GETCCENT],
 AH_TEMPLATE([HAVE_EXTERN_GETDOMAINNAME],
 [does extern definition for getdomainname() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_GETDTABLESIZE],
+[does extern definition for getdtablesize() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_GETHOSTNAME],
 [does extern definition for gethostname() exist?])
 
@@ -889,6 +907,9 @@ AH_TEMPLATE([HAVE_EXTERN_GETTABLESIZE],
 AH_TEMPLATE([HAVE_EXTERN_GETPAGESIZE],
 [does extern definition for getpagesize() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_GETWD],
+[does extern definition for getwd() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_HOSTS_CTL],
 [does extern definition for hosts_ctl() exist?])
 
@@ -897,6 +918,9 @@ AH_TEMPLATE([HAVE_EXTERN_INNETGR],
 
 AH_TEMPLATE([HAVE_EXTERN_MKSTEMP],
 [does extern definition for mkstemp() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_MNTCTL],
+[does extern definition for mntctl() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_SBRK],
 [does extern definition for sbrk() exist?])
@@ -907,17 +931,26 @@ AH_TEMPLATE([HAVE_EXTERN_SETEUID],
 AH_TEMPLATE([HAVE_EXTERN_SETITIMER],
 [does extern definition for setitimer() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_SLEEP],
+[does extern definition for sleep() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_STRCASECMP],
 [does extern definition for strcasecmp() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_STRDUP],
 [does extern definition for strdup() exist?])
 
+AH_TEMPLATE([HAVE_EXTERN_STRLCAT],
+[does extern definition for strlcat() exist?])
+
 AH_TEMPLATE([HAVE_EXTERN_STRLCPY],
 [does extern definition for strlcpy() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_STRSTR],
 [does extern definition for strstr() exist?])
+
+AH_TEMPLATE([HAVE_EXTERN_UALARM],
+[does extern definition for ualarm() exist?])
 
 AH_TEMPLATE([HAVE_EXTERN_USLEEP],
 [does extern definition for usleep() exist?])

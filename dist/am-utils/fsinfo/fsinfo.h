@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.h,v 1.7.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: fsinfo.h,v 1.7.2.2 2007/02/24 12:17:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsinfo.h,v 1.13 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/fsinfo/fsinfo.h
  *
  */
 
@@ -82,7 +82,7 @@ extern fsi_mount *new_mount(void);
 extern qelem *new_que(void);
 extern void analyze_automounts(qelem *);
 extern void analyze_hosts(qelem *);
-extern void compute_automount_point(char *, host *, char *);
+extern void compute_automount_point(char *, size_t, host *, char *);
 extern void dict_add(dict *, char *, char *);
 extern void error(char *fmt, ...)
 	__attribute__((__format__(__printf__, 1, 2)));

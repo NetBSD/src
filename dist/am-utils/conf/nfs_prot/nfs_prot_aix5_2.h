@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_aix5_2.h,v 1.1.1.2.2.1 2005/08/16 13:02:20 tron Exp $	*/
+/*	$NetBSD: nfs_prot_aix5_2.h,v 1.1.1.2.2.2 2007/02/24 12:17:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_aix5_2.h,v 1.9 2005/01/16 23:59:25 ezk Exp
+ * File: am-utils/conf/nfs_prot/nfs_prot_aix5_2.h
  *
  */
 
@@ -72,7 +72,10 @@
 struct pathcnf;
 # include <rpcsvc/mount.h>
 #endif /* HAVE_RPCSVC_MOUNT_H */
-
+#ifdef HAVE_SYS_VFS_H
+/* AIX 5.3 (ppc) wants definition of kernel-specific structure */
+struct thread_credentials;
+#endif /* HAVE_SYS_VFS_H */
 
 /*
  * MACROS
@@ -84,6 +87,11 @@ struct pathcnf;
 #ifndef MNTNAMLEN
 # define MNTNAMLEN 255
 #endif /* not MNTNAMLEN */
+
+/* compatible macro name with other OSs */
+#ifdef UVMNT_FORCE
+# define MS_FORCE UVMNT_FORCE
+#endif /* UVMNT_FORCE */
 
 /********************************************************************************/
 /*

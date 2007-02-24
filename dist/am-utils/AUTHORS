@@ -206,6 +206,8 @@ and proto.
 
 January 12, 1998: minor bug in output of amd -H.
 
+June 23, 2005: assortment of small compile bugs on aix4, and solaris 5/6/7.
+
 * Thomas Richter <richter@chemie.fu-berlin.de>
 
 January 13, 1998: use case insensitive comparisons for variables that need
@@ -393,6 +395,8 @@ AIX.
 * Jonathan Chen <jon+amd@spock.org>
 October 22, 2004: patch/fix to move mlock/mlockall/plock code after the
 fork().
+June 29, 2005: core dump going off end of exported_ap[] array.
+September 29, 2005: patch/fix for pawd not to go into an infinite loop.
 
 * David Rage <rage@ucl.ac.uk>
 January 17, 2005: prevent Amd from logging 'Read-only filesystem' errors
@@ -416,3 +420,10 @@ March 14, 2005: small patch to amd2ldif.
 * Adam Morley <adam at gmi dot com>
 January 27, 2005: synchronize what amd2ldif does vs. what the ldap.schema
 expects.
+
+* Graeme Wilford <G.Wilford@surrey.ac.uk>
+July 4, 2005: buffer overflow in pawd.
+
+* Steve Plite <splite-amutils@sigint.cs.purdue.edu>
+September 22, 2005: repair reversed meaning of D_AMQ, so amq will unregister
+on exit.

@@ -1,4 +1,4 @@
-/*	$NetBSD: srvr_nfs.c,v 1.9.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: srvr_nfs.c,v 1.9.2.2 2007/02/24 12:17:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: srvr_nfs.c,v 1.39 2005/03/02 03:00:09 ezk Exp
+ * File: am-utils/amd/srvr_nfs.c
  *
  */
 
@@ -116,18 +116,20 @@ static void nfs_keepalive(voidp);
 
 
 /*
- * Flush any cached data
+ * Flush cached data for an fserver (or for all, if fs==NULL)
  */
 void
-flush_srvr_nfs_cache(void)
+flush_srvr_nfs_cache(fserver *fs)
 {
-  fserver *fs = 0;
+  fserver *fs2 = NULL;
 
-  ITER(fs, fserver, &nfs_srvr_list) {
-    nfs_private *np = (nfs_private *) fs->fs_private;
-    if (np) {
-      np->np_mountd_inval = TRUE;
-      np->np_error = -1;
+  ITER(fs2, fserver, &nfs_srvr_list) {
+    if (fs == NULL || fs == fs2) {
+      nfs_private *np = (nfs_private *) fs2->fs_private;
+      if (np) {
+	np->np_mountd_inval = TRUE;
+	np->np_error = -1;
+      }
     }
   }
 }
@@ -409,7 +411,7 @@ nfs_keepalive_callback(voidp pkt, int len, struct sockaddr_in *sp, struct sockad
       /*
        * Update ttl for this server
        */
-      np->np_ttl = clocktime() +
+      np->np_ttl = clocktime(NULL) +
 	(MAX_ALLOWED_PINGS - 1) * FAST_NFS_PING + fs->fs_pinger - 1;
 
       /*
@@ -438,6 +440,46 @@ nfs_keepalive_callback(voidp pkt, int len, struct sockaddr_in *sp, struct sockad
 }
 
 
+static void
+check_fs_addr_change(fserver *fs)
+{
+  struct hostent *hp = NULL;
+  struct in_addr ia;
+  char *old_ipaddr, *new_ipaddr;
+
+  hp = gethostbyname(fs->fs_host);
+  if (!hp ||
+      hp->h_addrtype != AF_INET ||
+      !STREQ((char *) hp->h_name, fs->fs_host) ||
+      memcmp((voidp) &fs->fs_ip->sin_addr,
+	     (voidp) hp->h_addr,
+	     sizeof(fs->fs_ip->sin_addr)) == 0)
+    return;
+  /* if got here: downed server changed IP address */
+  old_ipaddr = strdup(inet_ntoa(fs->fs_ip->sin_addr));
+  memmove((voidp) &ia, (voidp) hp->h_addr, sizeof(struct in_addr));
+  new_ipaddr = inet_ntoa(ia);	/* ntoa uses static buf */
+  plog(XLOG_WARNING, "EZK: down fileserver %s changed ip: %s -> %s",
+       fs->fs_host, old_ipaddr, new_ipaddr);
+  XFREE(old_ipaddr);
+  /* copy new IP addr */
+  memmove((voidp) &fs->fs_ip->sin_addr,
+	  (voidp) hp->h_addr,
+	  sizeof(fs->fs_ip->sin_addr));
+  /* XXX: do we need to un/set these flags? */
+  fs->fs_flags &= ~FSF_DOWN;
+  fs->fs_flags |= FSF_VALID | FSF_WANT;
+  map_flush_srvr(fs);		/* XXX: a race with flush_srvr_nfs_cache? */
+  flush_srvr_nfs_cache(fs);
+  fs->fs_flags |= FSF_FORCE_UNMOUNT;
+
+#if 0
+  flush_nfs_fhandle_cache(fs);	/* done in caller: nfs_keepalive_timeout */
+  /* XXX: need to purge nfs_private so that somehow it will get re-initialized? */
+#endif
+}
+
+
 /*
  * Called when no ping-reply received
  */
@@ -463,7 +505,7 @@ nfs_keepalive_timeout(voidp v)
   /*
    * If ttl has expired then guess that it is dead
    */
-  if (np->np_ttl < clocktime()) {
+  if (np->np_ttl < clocktime(NULL)) {
     int oflags = fs->fs_flags;
     dlog("ttl has expired");
     if ((fs->fs_flags & FSF_DOWN) == 0) {
@@ -479,6 +521,7 @@ nfs_keepalive_timeout(voidp v)
        */
       flush_nfs_fhandle_cache(fs);
       np->np_error = -1;
+      check_fs_addr_change(fs); /* check if IP addr of fserver changed */
     } else {
       /*
        * Known to be down
@@ -637,7 +680,7 @@ find_nfs_srvr(mntfs *mf)
   int pingval;
   mntent_t mnt;
   nfs_private *np;
-  struct hostent *hp = 0;
+  struct hostent *hp = NULL;
   struct sockaddr_in *ip = NULL;
   u_long nfs_version = 0;	/* default is no version specified */
   u_long best_nfs_version = 0;
@@ -753,7 +796,8 @@ find_nfs_srvr(mntfs *mf)
 	STREQ(host, fs->fs_host)) {
       plog(XLOG_WARNING, "fileserver %s is already hung - not running NFS proto/version discovery", host);
       fs->fs_refc++;
-      XFREE(ip);
+      if (ip)
+	XFREE(ip);
       return fs;
     }
   }
@@ -886,8 +930,21 @@ no_dns:
        * between mounts.
        * Mike Mitchell, mcm@unx.sas.com, 09/08/93
        */
-      if (hp && fs->fs_ip)
+      if (hp && fs->fs_ip &&
+	  memcmp((voidp) &fs->fs_ip->sin_addr,
+		 (voidp) hp->h_addr,
+		 sizeof(fs->fs_ip->sin_addr)) != 0) {
+	struct in_addr ia;
+	char *old_ipaddr, *new_ipaddr;
+	old_ipaddr = strdup(inet_ntoa(fs->fs_ip->sin_addr));
+	memmove((voidp) &ia, (voidp) hp->h_addr, sizeof(struct in_addr));
+	new_ipaddr = inet_ntoa(ia);	/* ntoa uses static buf */
+	plog(XLOG_WARNING, "fileserver %s changed ip: %s -> %s",
+	     fs->fs_host, old_ipaddr, new_ipaddr);
+	XFREE(old_ipaddr);
+	flush_nfs_fhandle_cache(fs);
 	memmove((voidp) &fs->fs_ip->sin_addr, (voidp) hp->h_addr, sizeof(fs->fs_ip->sin_addr));
+      }
 
       /*
        * If the new file systems doesn't use WebNFS, the nfs pings may
@@ -915,7 +972,7 @@ no_dns:
 	 * after MAX_ALLOWED_PINGS of the fast variety
 	 * have failed.
 	 */
-	np->np_ttl = MAX_ALLOWED_PINGS * FAST_NFS_PING + clocktime() - 1;
+	np->np_ttl = MAX_ALLOWED_PINGS * FAST_NFS_PING + clocktime(NULL) - 1;
 	start_nfs_pings(fs, pingval);
 	if (fserver_is_down)
 	  fs->fs_flags |= FSF_VALID | FSF_DOWN;
@@ -966,7 +1023,7 @@ no_dns:
    * Initially the server will be deemed dead after
    * MAX_ALLOWED_PINGS of the fast variety have failed.
    */
-  np->np_ttl = clocktime() + MAX_ALLOWED_PINGS * FAST_NFS_PING - 1;
+  np->np_ttl = clocktime(NULL) + MAX_ALLOWED_PINGS * FAST_NFS_PING - 1;
   fs->fs_private = (voidp) np;
   fs->fs_prfree = (void (*)(voidp)) free;
 

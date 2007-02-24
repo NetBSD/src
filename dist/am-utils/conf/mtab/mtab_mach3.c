@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_mach3.c,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
+/*	$NetBSD: mtab_mach3.c,v 1.1.1.7.2.2 2007/02/24 12:17:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_mach3.c,v 1.13 2005/03/04 18:42:43 ezk Exp
+ * File: am-utils/conf/mtab/mtab_mach3.c
  *
  */
 
@@ -129,7 +129,6 @@ again:
     endmntent(mfp);
     mfp = 0;
   }
-  clock_valid = 0;
   if (stat(mnttabname, &st_before) < 0) {
     plog(XLOG_ERROR, "%s: stat: %m", mnttabname);
     if (errno == ESTALE) {
@@ -227,6 +226,7 @@ unlock_mntlist(void)
    * Release file lock, by closing the file
    */
   if (mnt_file) {
+    dlog("unlock_mntlist: releasing");
     endmntent(mnt_file);
     mnt_file = 0;
   }
@@ -312,15 +312,15 @@ rewrite_mtab(mntlist *mp, const char *mnttabname)
   FILE *mfp;
   int error = 0;
   /*
-   * Concoct a temporary name in the same
-   * directory as the target mount table
-   * so that rename() will work.
+   * Concoct a temporary name in the same directory as the target mount
+   * table so that rename() will work.
    */
   char tmpname[64];
   int retries;
   int tmpfd;
   char *cp;
   char *mcp = mnttabname;
+
   cp = strrchr(mcp, '/');
   if (cp) {
     memmove(tmpname, mcp, cp - mcp);
@@ -330,7 +330,7 @@ rewrite_mtab(mntlist *mp, const char *mnttabname)
     tmpname[0] = '.';
     tmpname[1] = '\0';
   }
-  strcat(tmpname, "/mtabXXXXXX");
+  xstrlcat(tmpname, "/mtabXXXXXX", sizeof(tmpname));
   retries = 0;
 enfile1:
 #ifdef HAVE_MKSTEMP

@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_tli.c,v 1.1.1.7.2.1 2005/08/16 13:02:23 tron Exp $	*/
+/*	$NetBSD: transp_tli.c,v 1.1.1.7.2.2 2007/02/24 12:17:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_tli.c,v 1.31 2005/03/19 03:05:25 ezk Exp
+ * File: am-utils/conf/transp/transp_tli.c
  *
  * TLI specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -89,7 +89,7 @@ amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
     char dq[20];
     if (preferred_localhost)
       plog(XLOG_INFO, "localhost_address \"%s\" requested, using %s",
-	   preferred_localhost, inet_dquad(dq, iap->s_addr));
+	   preferred_localhost, inet_dquad(dq, sizeof(dq), iap->s_addr));
     iap->s_addr = sinp->sin_addr.s_addr; /* XXX: used to be htonl() */
   }
 
@@ -748,11 +748,7 @@ u_long
 get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto)
 {
   CLIENT *clnt = NULL;
-#ifdef HAVE_CLNT_CREATE_VERS_TIMED
   rpcvers_t versout;
-#else /* not HAVE_CLNT_CREATE_VERS_TIMED */
-  u_long versout;
-#endif /* not HAVE_CLNT_CREATE_VERS_TIMED */
   struct timeval tv;
 
   /*

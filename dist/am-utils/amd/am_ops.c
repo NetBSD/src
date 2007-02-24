@@ -1,4 +1,4 @@
-/*	$NetBSD: am_ops.c,v 1.4.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.4.2.2 2007/02/24 12:16:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_ops.c,v 1.23 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/amd/am_ops.c
  *
  */
 
@@ -147,111 +147,111 @@ static am_ops *vops[] =
 
 
 void
-ops_showamfstypes(char *buf)
+ops_showamfstypes(char *buf, size_t l)
 {
   struct am_ops **ap;
-  int l = 0;
+  int linesize = 0;
 
   buf[0] = '\0';
   for (ap = vops; *ap; ap++) {
-    strcat(buf, (*ap)->fs_type);
+    xstrlcat(buf, (*ap)->fs_type, l);
     if (ap[1])
-      strcat(buf, ", ");
-    l += strlen((*ap)->fs_type) + 2;
-    if (l > 62) {
-      l = 0;
-      strcat(buf, "\n      ");
+      xstrlcat(buf, ", ", l);
+    linesize += strlen((*ap)->fs_type) + 2;
+    if (linesize > 62) {
+      linesize = 0;
+      xstrlcat(buf, "\n      ", l);
     }
   }
 }
 
 
 static void
-ops_show1(char *buf, int *lp, const char *name)
+ops_show1(char *buf, size_t l, int *linesizep, const char *name)
 {
-  strcat(buf, name);
-  strcat(buf, ", ");
-  *lp += strlen(name) + 2;
-  if (*lp > 60) {
-    strcat(buf, "\t\n");
-    *lp = 0;
+  xstrlcat(buf, name, l);
+  xstrlcat(buf, ", ", l);
+  *linesizep += strlen(name) + 2;
+  if (*linesizep > 60) {
+    xstrlcat(buf, "\t\n", l);
+    *linesizep = 0;
   }
 }
 
 
 void
-ops_showfstypes(char *buf)
+ops_showfstypes(char *buf, size_t l)
 {
-  int l = 0;
+  int linesize = 0;
 
   buf[0] = '\0';
 
 #ifdef MNTTAB_TYPE_AUTOFS
-  ops_show1(buf, &l, MNTTAB_TYPE_AUTOFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_AUTOFS);
 #endif /* MNTTAB_TYPE_AUTOFS */
 
 #ifdef MNTTAB_TYPE_CACHEFS
-  ops_show1(buf, &l, MNTTAB_TYPE_CACHEFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_CACHEFS);
 #endif /* MNTTAB_TYPE_CACHEFS */
 
 #ifdef MNTTAB_TYPE_CDFS
-  ops_show1(buf, &l, MNTTAB_TYPE_CDFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_CDFS);
 #endif /* MNTTAB_TYPE_CDFS */
 
 #ifdef MNTTAB_TYPE_CFS
-  ops_show1(buf, &l, MNTTAB_TYPE_CFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_CFS);
 #endif /* MNTTAB_TYPE_CFS */
 
 #ifdef MNTTAB_TYPE_LOFS
-  ops_show1(buf, &l, MNTTAB_TYPE_LOFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_LOFS);
 #endif /* MNTTAB_TYPE_LOFS */
 
 #ifdef MNTTAB_TYPE_EFS
-  ops_show1(buf, &l, MNTTAB_TYPE_EFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_EFS);
 #endif /* MNTTAB_TYPE_EFS */
 
 #ifdef MNTTAB_TYPE_MFS
-  ops_show1(buf, &l, MNTTAB_TYPE_MFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_MFS);
 #endif /* MNTTAB_TYPE_MFS */
 
 #ifdef MNTTAB_TYPE_NFS
-  ops_show1(buf, &l, MNTTAB_TYPE_NFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_NFS);
 #endif /* MNTTAB_TYPE_NFS */
 
 #ifdef MNTTAB_TYPE_NFS3
-  ops_show1(buf, &l, "nfs3");	/* always hard-code as nfs3 */
+  ops_show1(buf, l, &linesize, "nfs3"); /* always hard-code as nfs3 */
 #endif /* MNTTAB_TYPE_NFS3 */
 
 #ifdef MNTTAB_TYPE_NULLFS
-  ops_show1(buf, &l, MNTTAB_TYPE_NULLFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_NULLFS);
 #endif /* MNTTAB_TYPE_NULLFS */
 
 #ifdef MNTTAB_TYPE_PCFS
-  ops_show1(buf, &l, MNTTAB_TYPE_PCFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_PCFS);
 #endif /* MNTTAB_TYPE_PCFS */
 
 #ifdef MNTTAB_TYPE_TFS
-  ops_show1(buf, &l, MNTTAB_TYPE_TFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_TFS);
 #endif /* MNTTAB_TYPE_TFS */
 
 #ifdef MNTTAB_TYPE_TMPFS
-  ops_show1(buf, &l, MNTTAB_TYPE_TMPFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_TMPFS);
 #endif /* MNTTAB_TYPE_TMPFS */
 
 #ifdef MNTTAB_TYPE_UFS
-  ops_show1(buf, &l, MNTTAB_TYPE_UFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_UFS);
 #endif /* MNTTAB_TYPE_UFS */
 
 #ifdef MNTTAB_TYPE_UMAPFS
-  ops_show1(buf, &l, MNTTAB_TYPE_UMAPFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_UMAPFS);
 #endif /* MNTTAB_TYPE_UMAPFS */
 
 #ifdef MNTTAB_TYPE_UNIONFS
-  ops_show1(buf, &l, MNTTAB_TYPE_UNIONFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_UNIONFS);
 #endif /* MNTTAB_TYPE_UNIONFS */
 
 #ifdef MNTTAB_TYPE_XFS
-  ops_show1(buf, &l, MNTTAB_TYPE_XFS);
+  ops_show1(buf, l, &linesize, MNTTAB_TYPE_XFS);
 #endif /* MNTTAB_TYPE_XFS */
 
   /* terminate with a period, newline, and NULL */
@@ -259,7 +259,7 @@ ops_showfstypes(char *buf)
     buf[strlen(buf) - 4] = '\0';
   else
     buf[strlen(buf) - 2] = '\0';
-  strcat(buf, ".\n");
+  xstrlcat(buf, ".\n", l);
 }
 
 
@@ -291,11 +291,11 @@ reverse_option(const char *opt)
 
   /* check if string starts with 'no' and chop it */
   if (NSTREQ(opt, "no", 2)) {
-    strlcpy(buf, &opt[2], sizeof(buf));
+    xstrlcpy(buf, &opt[2], sizeof(buf));
   } else {
     /* finally return a string prepended with 'no' */
-    strlcpy(buf, "no", sizeof(buf));
-    strlcat(buf, opt, sizeof(buf));
+    xstrlcpy(buf, "no", sizeof(buf));
+    xstrlcat(buf, opt, sizeof(buf));
   }
   return buf;
 }
@@ -317,7 +317,7 @@ merge_opts(const char *opts1, const char *opts2)
   char *eq;			/* pointer to whatever follows '=' within temp */
   char oneopt[80];		/* one option w/o value if any */
   char *revoneopt;		/* reverse of oneopt */
-  int len = strlen(opts1) + strlen(opts2) + 2; /* space for "," and NULL */
+  size_t len = strlen(opts1) + strlen(opts2) + 2; /* space for "," and NULL */
   char *s1 = strdup(opts1);	/* copy of opts1 to munge */
 
   /* initialization */
@@ -339,20 +339,20 @@ merge_opts(const char *opts1, const char *opts2)
     if (amu_hasmntopt(&mnt2, oneopt) || amu_hasmntopt(&mnt2, revoneopt))
       continue;
     /* add option to returned string */
-    if (newstr && newstr[0]) {
-      strlcat(newstr, ",", len);
-      strlcat(newstr, tmpstr, len);
+    if (newstr[0]) {
+      xstrlcat(newstr, ",", len);
+      xstrlcat(newstr, tmpstr, len);
     } else {
-      strlcpy(newstr, tmpstr, len);
+      xstrlcpy(newstr, tmpstr, len);
     }
   }
 
   /* finally, append opts2 itself */
-  if (newstr && newstr[0]) {
-    strlcat(newstr, ",", len);
-    strlcat(newstr, opts2, len);
+  if (newstr[0]) {
+    xstrlcat(newstr, ",", len);
+    xstrlcat(newstr, opts2, len);
   } else {
-    strlcpy(newstr, opts2, len);
+    xstrlcpy(newstr, opts2, len);
   }
 
   XFREE(s1);

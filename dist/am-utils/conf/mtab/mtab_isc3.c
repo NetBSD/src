@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_isc3.c,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
+/*	$NetBSD: mtab_isc3.c,v 1.1.1.7.2.2 2007/02/24 12:17:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_isc3.c,v 1.11 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/conf/mtab/mtab_isc3.c
  *
  */
 
@@ -104,6 +104,7 @@ lockmnttab(void)
 void
 unlock_mntlist(void)
 {
+  dlog("unlock_mntlist: releasing");
   unlockmnttab();
 }
 

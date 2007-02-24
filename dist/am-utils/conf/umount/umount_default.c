@@ -1,4 +1,4 @@
-/*	$NetBSD: umount_default.c,v 1.1.1.7.2.1 2005/08/16 13:02:23 tron Exp $	*/
+/*	$NetBSD: umount_default.c,v 1.1.1.7.2.2 2007/02/24 12:17:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: umount_default.c,v 1.14 2005/01/17 19:31:54 ib42 Exp
+ * File: am-utils/conf/umount/umount_default.c
  *
  */
 
@@ -55,7 +55,7 @@
 
 
 int
-umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
+umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags)
 {
   mntlist *mlist, *mp, *mp_save = 0;
   int error = 0;
@@ -85,7 +85,7 @@ umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
 #endif /* MOUNT_TABLE_ON_FILE */
 
 #ifdef NEED_AUTOFS_SPACE_HACK
-    if (on_autofs) {
+    if (unmount_flags & AMU_UMOUNT_AUTOFS) {
       char *mnt_dir_save = mp_save->mnt->mnt_dir;
       mp_save->mnt->mnt_dir = autofs_strdup_space_hack(mnt_dir_save);
       error = UNMOUNT_TRAP(mp_save->mnt);
@@ -95,7 +95,7 @@ umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
 #endif /* NEED_AUTOFS_SPACE_HACK */
       error = UNMOUNT_TRAP(mp_save->mnt);
     if (error < 0) {
-      switch (error = errno) {
+      switch ((error = errno)) {
       case EINVAL:
       case ENOTBLK:
 	plog(XLOG_WARNING, "unmount: %s is not mounted", mp_save->mnt->mnt_dir);
@@ -112,6 +112,20 @@ umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
 	plog(XLOG_ERROR, "mount point %s: %m", mp_save->mnt->mnt_dir);
 	break;
 
+#if defined(MNT2_GEN_OPT_FORCE) && defined(HAVE_UMOUNT2)
+      case EBUSY:
+      case EIO:
+      case ESTALE:
+	/* caller determines if forced unmounts should be used */
+	if (unmount_flags & AMU_UMOUNT_FORCE) {
+	  error = umount2_fs(mntdir, unmount_flags);
+	  if (error < 0)
+	    error = errno;
+	  else
+	    break;		/* all is OK */
+	}
+	/* fallthrough */
+#endif /* MNT2_GEN_OPT_FORCE && HAVE_UMOUNT2 */
       default:
 	dlog("%s: unmount: %m", mp_save->mnt->mnt_dir);
 	break;
@@ -156,3 +170,24 @@ umount_fs(char *mntdir, const char *mnttabname, int on_autofs)
 
   return error;
 }
+
+
+#if defined(MNT2_GEN_OPT_FORCE) && defined(HAVE_UMOUNT2)
+/* force unmount, no questions asked, without touching mnttab file */
+int
+umount2_fs(const char *mntdir, u_int unmount_flags)
+{
+  int error = 0;
+  if (unmount_flags & AMU_UMOUNT_FORCE) {
+    plog(XLOG_INFO, "umount2_fs: trying unmount/forced on %s", mntdir);
+    error = umount2(mntdir, MNT2_GEN_OPT_FORCE); /* Solaris */
+    if (error < 0 && (errno == EINVAL || errno == ENOENT))
+      error = 0;		/* ignore EINVAL/ENOENT */
+    if (error < 0)
+      plog(XLOG_WARNING, "%s: unmount/force: %m", mntdir);
+    else
+      dlog("%s: unmount/force: OK", mntdir);
+  }
+  return error;
+}
+#endif /* MNT2_GEN_OPT_FORCE && HAVE_UMOUNT2 */

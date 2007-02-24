@@ -1,4 +1,4 @@
-/*	$NetBSD: mtab_svr4.c,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
+/*	$NetBSD: mtab_svr4.c,v 1.1.1.7.2.2 2007/02/24 12:17:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mtab_svr4.c,v 1.12 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/mtab/mtab_svr4.c
  *
  * How to manage the mount table file.  Based on other SVR3 ports.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -183,7 +183,7 @@ update_mnttab_fields(const mntent_t *mnt)
   if (gettimeofday(&tv, NULL) < 0)
     timestr[0] = '\0';
   else
-    sprintf(timestr, "%ld", tv.tv_sec);
+    xsnprintf(timestr, sizeof(timestr), "%ld", tv.tv_sec);
 
   mt.mnt_time = timestr;
 

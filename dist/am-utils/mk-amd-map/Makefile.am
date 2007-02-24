@@ -14,7 +14,7 @@ man_MANS = mk-amd-map.8
 
 mk_amd_map_SOURCES = mk-amd-map.c
 
-#LDADD = ../libamu/libamu.la
+LDADD = ../libamu/libamu.la
 
 INCLUDES = -I$(top_srcdir)/include
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.3.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: autofs_solaris_v1.c,v 1.1.1.3.2.2 2007/02/24 12:17:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Ion Badulescu
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_solaris_v1.c,v 1.23 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/conf/autofs/autofs_solaris_v1.c
  *
  */
 
@@ -98,6 +98,7 @@ static int autofs_unmount_1_req(struct umntrequest *ur, struct umntres *result, 
 /*
  * AUTOFS XDR FUNCTIONS:
  */
+
 #ifndef HAVE_XDR_MNTREQUEST
 bool_t
 xdr_mntrequest(XDR *xdrs, mntrequest *objp)
@@ -197,8 +198,8 @@ autofs_mount_1_req(struct mntrequest *m,
        m->name, m->map, m->opts, m->path);
 
   /* find the effective uid/gid from RPC request */
-  sprintf(opt_uid, "%d", (int) cred->aup_uid);
-  sprintf(opt_gid, "%d", (int) cred->aup_gid);
+  xsnprintf(opt_uid, sizeof(uid_str), "%d", (int) cred->aup_uid);
+  xsnprintf(opt_gid, sizeof(gid_str), "%d", (int) cred->aup_gid);
 
   mp = find_ap(m->path);
   if (!mp) {
@@ -385,10 +386,10 @@ autofs_get_fh(am_node *mp)
    * SET MOUNT ARGS
    */
   if (uname(&utsname) < 0) {
-    strcpy(buf, "localhost.autofs");
+    xstrlcpy(buf, "localhost.autofs", sizeof(buf));
   } else {
-    strcpy(buf, utsname.nodename);
-    strcat(buf, ".autofs");
+    xstrlcpy(buf, utsname.nodename, sizeof(buf));
+    xstrlcat(buf, ".autofs", sizeof(buf));
   }
 #ifdef HAVE_AUTOFS_ARGS_T_ADDR
   fh->addr.buf = strdup(buf);
@@ -420,7 +421,7 @@ autofs_release_fh(am_node *mp)
 {
   autofs_fh_t *fh = mp->am_autofs_fh;
 #ifdef HAVE_AUTOFS_ARGS_T_ADDR
-  free(fh->addr.buf);
+  XFREE(fh->addr.buf);
 #endif /* HAVE_AUTOFS_ARGS_T_ADDR */
   XFREE(fh);
   mp->am_autofs_fh = NULL;
@@ -548,9 +549,9 @@ autofs_mount_fs(am_node *mp, mntfs *mf)
   }
 
  out:
-  free(space_hack);
+  XFREE(space_hack);
   if (target2)
-    free(target2);
+    XFREE(target2);
 
   if (err)
     return errno;
@@ -588,7 +589,7 @@ autofs_umount_fs(am_node *mp, mntfs *mf)
   }
 
  out:
-  free(space_hack);
+  XFREE(space_hack);
   return err;
 }
 
@@ -615,6 +616,7 @@ autofs_umount_succeeded(am_node *mp)
   plog(XLOG_INFO, "autofs: unmounting %s succeeded", mp->am_path);
   return 0;
 }
+
 
 int
 autofs_umount_failed(am_node *mp)
@@ -667,7 +669,7 @@ autofs_mount_succeeded(am_node *mp)
     mp->am_dev = stb.st_dev;
     mp->am_rdev = stb.st_rdev;
   }
-  free(space_hack);
+  XFREE(space_hack);
   /* don't expire the entries -- the kernel will do it for us */
   mp->am_flags |= AMF_NOTIMEOUT;
 
@@ -700,10 +702,10 @@ autofs_mount_failed(am_node *mp)
 
 
 void
-autofs_get_opts(char *opts, autofs_fh_t *fh)
+autofs_get_opts(char *opts, size_t l, autofs_fh_t *fh)
 {
-  sprintf(opts, "%sdirect",
-	  fh->direct ? "" : "in");
+  xsnprintf(opts, l, "%sdirect",
+	    fh->direct ? "" : "in");
 }
 
 
@@ -720,5 +722,4 @@ void autofs_timeout_mp(am_node *mp)
   /* We don't want any timeouts on autofs nodes */
   mp->am_autofs_ttl = NEVER;
 }
-
 #endif /* HAVE_FS_AUTOFS */

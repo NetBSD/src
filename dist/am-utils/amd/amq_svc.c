@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_svc.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amq_svc.c,v 1.1.1.7.2.2 2007/02/24 12:17:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq_svc.c,v 1.16 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/amq_svc.c
  *
  */
 
@@ -70,34 +70,44 @@ static int
 amqsvc_is_client_allowed(const struct sockaddr_in *addr, char *remote)
 {
   struct hostent *h;
-  char *name, **ad;
+  char *name = NULL, **ad;
+  int ret = 0;			/* default is 0==denied */
 
   /* Check IP address */
-  if (hosts_ctl(AMD_SERVICE_NAME, "", remote, ""))
-    return 1;
+  if (hosts_ctl(AMD_SERVICE_NAME, "", remote, "")) {
+    ret = 1;
+    goto out;
+  }
   /* Get address */
   if (!(h = gethostbyaddr((const char *)&(addr->sin_addr),
                           sizeof(addr->sin_addr),
                           AF_INET)))
-    return 0;
-  if (!(name = alloca(strlen(h->h_name)+1)))
-    return 0;
-  strcpy(name, h->h_name);
+    goto out;
+  if (!(name = strdup(h->h_name)))
+    goto out;
   /* Paranoia check */
   if (!(h = gethostbyname(name)))
-    return 0;
+    goto out;
   for (ad = h->h_addr_list; *ad; ad++)
     if (!memcmp(*ad, &(addr->sin_addr), h->h_length))
       break;
   if (!*ad)
-    return 0;
-  if (hosts_ctl(AMD_SERVICE_NAME, "", h->h_name, ""))
+    goto out;
+  if (hosts_ctl(AMD_SERVICE_NAME, "", h->h_name, "")) {
     return 1;
+    goto out;
+  }
   /* Check aliases */
   for (ad = h->h_aliases; *ad; ad++)
-    if (hosts_ctl(AMD_SERVICE_NAME, "", *ad, ""))
+    if (hosts_ctl(AMD_SERVICE_NAME, "", *ad, "")) {
       return 1;
-  return 0;
+      goto out;
+    }
+
+ out:
+  if (name)
+    XFREE(name);
+  return ret;
 }
 #endif /* defined(HAVE_TCPD_H) && defined(HAVE_LIBWRAP) */
 
@@ -183,6 +193,12 @@ amq_program_1(struct svc_req *rqstp, SVCXPRT *transp)
     xdr_argument = (xdrproc_t) xdr_void;
     xdr_result = (xdrproc_t) xdr_int;
     local = (amqsvcproc_t) amqproc_getpid_1_svc;
+    break;
+
+  case AMQPROC_PAWD:
+    xdr_argument = (xdrproc_t) xdr_amq_string;
+    xdr_result = (xdrproc_t) xdr_amq_string;
+    local = (amqsvcproc_t) amqproc_pawd_1_svc;
     break;
 
   default:

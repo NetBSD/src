@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_netbsd1_4.h,v 1.12 2005/01/03 20:56:45 ezk Exp 
+ * File: am-utils/conf/nfs_prot/nfs_prot_netbsd1_4.h
  *
  */
 
@@ -79,6 +79,9 @@ typedef int (*ypall_callback_fxn_t)(u_long, char *, int, char *, int, void *);
 typedef int (*ypall_callback_fxn_t)(int, char *, int, char *, int, char *);
 #endif /* DEFINED_YPALL_CALLBACK_FXN_T */
 
+#ifdef HAVE_STATVFS
+# define statfs statvfs
+#endif /* HAVE_STATVFS */
 
 /*
  * MACROS:
