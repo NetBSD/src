@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.22 2007/02/16 01:34:02 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.23 2007/02/24 02:25:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -94,7 +94,7 @@ do {									\
 	}								\
 } while (0)
 #else
-static _inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	__asm volatile ("1:bbssi $0,%0,1b"
