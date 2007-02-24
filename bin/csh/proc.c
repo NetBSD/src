@@ -1,4 +1,4 @@
-/* $NetBSD: proc.c,v 1.29 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: proc.c,v 1.30 2007/02/24 21:29:13 matt Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)proc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: proc.c,v 1.29 2005/06/26 19:10:48 christos Exp $");
+__RCSID("$NetBSD: proc.c,v 1.30 2007/02/24 21:29:13 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -769,7 +769,7 @@ prcomd:
 	if (pp->p_flags & PPTIME && !(status & (PSTOPPED | PRUNNING))) {
 	    if (!hadnl)
 		(void)fprintf(cshout, "\n\t");
-	    prusage(&zru, &pp->p_rusage, &pp->p_etime,
+	    prusage(cshout, &zru, &pp->p_rusage, &pp->p_etime,
 		    &pp->p_btime);
 	    hadnl = 1;
 	}
@@ -814,7 +814,7 @@ ptprint(struct process *tp)
 	if (timercmp(&diff, &tetime, >))
 	    tetime = diff;
     } while ((pp = pp->p_friends) != tp);
-    prusage(&zru, &ru, &tetime, &ztime);
+    prusage(cshout, &zru, &ru, &tetime, &ztime);
 }
 
 /*
