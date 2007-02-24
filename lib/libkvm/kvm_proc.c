@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.67 2007/02/18 15:22:44 dsl Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.68 2007/02/24 20:41:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.67 2007/02/18 15:22:44 dsl Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.68 2007/02/24 20:41:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,8 +85,6 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.67 2007/02/18 15:22:44 dsl Exp $");
  * most other applications are interested only in open/close/read/nlist).
  */
 
-#define	_KAUTH_PRIVATE
-
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/lwp.h>
@@ -96,7 +94,8 @@ __RCSID("$NetBSD: kvm_proc.c,v 1.67 2007/02/18 15:22:44 dsl Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/resourcevar.h>
-#include <sys/kauth_impl.h>
+#include <sys/mutex.h>
+#include <sys/specificdata.h>
 
 #include <errno.h>
 #include <stdlib.h>
@@ -153,6 +152,28 @@ struct miniproc {
 		(p)->p_paddr = (void *)(long)(kp)->p_paddr; \
 		(p)->p_vmspace = (void *)(long)(kp)->p_vmspace; \
 	} while (/*CONSTCOND*/0);
+
+/*
+ * NetBSD uses kauth(9) to manage credentials, which are stored in kauth_cred_t,
+ * a kernel-only opaque type. This is an embedded version which is *INTERNAL* to
+ * kvm(3) so dumps can be read properly.
+ *
+ * Whenever NetBSD starts exporting credentials to userland consistently (using
+ * 'struct uucred', or something) this will have to be updated again.
+ */
+struct kvm_kauth_cred {
+	kmutex_t cr_lock;		/* lock on cr_refcnt */
+	u_int cr_refcnt;		/* reference count */
+	uid_t cr_uid;			/* user id */
+	uid_t cr_euid;			/* effective user id */
+	uid_t cr_svuid;			/* saved effective user id */
+	gid_t cr_gid;			/* group id */
+	gid_t cr_egid;			/* effective group id */
+	gid_t cr_svgid;			/* saved effective group id */
+	u_int cr_ngroups;		/* number of groups */
+	gid_t cr_groups[NGROUPS];	/* group memberships */
+	specificdata_reference cr_sd;	/* specific data */
+};
 
 #define KREAD(kd, addr, obj) \
 	(kvm_read(kd, addr, (obj), sizeof(*obj)) != sizeof(*obj))
@@ -288,7 +309,7 @@ _kvm_uread(kd, p, va, cnt)
 static int
 _kvm_convertcred(kvm_t *kd, u_long cred, struct eproc *eproc)
 {
-	struct kauth_cred kauthcred;
+	struct kvm_kauth_cred kauthcred;
 	struct ki_pcred *pc = &eproc->e_pcred;
 	struct ki_ucred *uc = &eproc->e_ucred;
 
