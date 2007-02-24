@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.45 2007/02/18 15:20:34 dsl Exp $ */
+/* $NetBSD: kern_auth.c,v 1.46 2007/02/24 20:41:33 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,20 +28,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.45 2007/02/18 15:20:34 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.46 2007/02/24 20:41:33 christos Exp $");
 
-#define	_KAUTH_PRIVATE
-
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
-#include <sys/kauth_impl.h>
 #include <sys/kmem.h>
 #include <sys/rwlock.h>
 #include <sys/sysctl.h>		/* for pi_[p]cread */
+#include <sys/mutex.h>
+#include <sys/specificdata.h>
 
 /*
  * Secmodel-specific credentials.
@@ -49,6 +49,27 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.45 2007/02/18 15:20:34 dsl Exp $");
 struct kauth_key {
 	const char *ks_secmodel;	/* secmodel */
 	specificdata_key_t ks_key;	/* key */
+};
+
+/* 
+ * Credentials.
+ *
+ * A subset of this structure is used in kvm(3) (src/lib/libkvm/kvm_proc.c)
+ * and should be synchronized with this structure when the update is
+ * relevant.
+ */
+struct kauth_cred {
+	kmutex_t cr_lock;		/* lock on cr_refcnt */
+	u_int cr_refcnt;		/* reference count */
+	uid_t cr_uid;			/* user id */
+	uid_t cr_euid;			/* effective user id */
+	uid_t cr_svuid;			/* saved effective user id */
+	gid_t cr_gid;			/* group id */
+	gid_t cr_egid;			/* effective group id */
+	gid_t cr_svgid;			/* saved effective group id */
+	u_int cr_ngroups;		/* number of groups */
+	gid_t cr_groups[NGROUPS];	/* group memberships */
+	specificdata_reference cr_sd;	/* specific data */
 };
 
 /*
