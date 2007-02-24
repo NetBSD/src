@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.16 2006/12/18 15:17:38 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.17 2007/02/24 21:30:27 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.16 2006/12/18 15:17:38 christos Exp $");
+__RCSID("$NetBSD: time.c,v 1.17 2007/02/24 21:30:27 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: time.c,v 1.16 2006/12/18 15:17:38 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "ext.h"
+
 int		main(int, char **);
 static void	usage(void);
 static void	prl(long, const char *);
@@ -67,6 +69,7 @@ main(int argc, char ** volatile argv)
 	int ch, status;
 	int volatile portableflag;
 	int volatile lflag;
+	int volatile cshflag;
 	const char *decpt;
 	const struct lconv *lconv;
 	struct timeval before, after;
@@ -74,9 +77,12 @@ main(int argc, char ** volatile argv)
 
 	(void)setlocale(LC_ALL, "");
 
-	lflag = portableflag = 0;
-	while ((ch = getopt(argc, argv, "lp")) != -1) {
+	cshflag = lflag = portableflag = 0;
+	while ((ch = getopt(argc, argv, "clp")) != -1) {
 		switch (ch) {
+		case 'c':
+			cshflag = 1;
+			break;
 		case 'p':
 			portableflag = 1;
 			break;
@@ -120,7 +126,12 @@ main(int argc, char ** volatile argv)
 	    (decpt = lconv->decimal_point) == NULL)
 		decpt = ".";
 
-	if (portableflag) {
+	if (cshflag) {
+		static struct rusage null_ru;
+		before.tv_sec = 0;
+		before.tv_usec = 0;
+		prusage(stderr, &null_ru, &ru, &after, &before);
+	} else if (portableflag) {
 		prtv("real ", decpt, &after, "\n");
 		prtv("user ", decpt, &ru.ru_utime, "\n");
 		prtv("sys  ", decpt, &ru.ru_stime, "\n");
@@ -160,7 +171,7 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: %s [-lp] utility [argument ...]\n",
+	(void)fprintf(stderr, "usage: %s [-clp] utility [argument ...]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
