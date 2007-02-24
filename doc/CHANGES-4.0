@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.82 2007/02/24 13:34:14 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.83 2007/02/24 19:07:11 snj Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1541,6 +1541,7 @@ sys/arch/arm/arm/cpufunc_asm_arm10.S		1.6
 sys/arch/arm/arm/cpufunc_asm_armv5.S		1.3
 sys/arch/arm/arm/cpufunc_asm_armv5_ec.S		1.1
 sys/arch/arm/arm32/cpu.c			1.63-1.64
+sys/arch/arm/arm32/genassym.cf			1.31
 sys/arch/arm/arm32/pmap.c			1.158
 sys/arch/arm/conf/files.arm			1.82
 sys/arch/arm/include/arm32/vmparam.h		1.20
@@ -1573,6 +1574,12 @@ sys/arch/arm/omap/omap_space.c			1.1
 sys/arch/arm/omap/omap_start.S			1.1
 sys/arch/arm/omap/omap_tipb.c			1.1
 sys/arch/arm/omap/omap_tipb.h			1.1
+sys/arch/evbarm/conf/OSK5912			1.1
+sys/arch/evbarm/conf/files.osk5912		1.1
+sys/arch/evbarm/conf/mk.osk5912			1.1
+sys/arch/evbarm/conf/std.osk5912		1.1
+sys/arch/evbarm/osk5912/if_sm_emifs.c		1.1
+sys/arch/evbarm/osk5912/osk5912_machdep.c	1.1
 
 	Add support for the TI OMAP family of ARM processors.
 	[matt, ticket #457]
