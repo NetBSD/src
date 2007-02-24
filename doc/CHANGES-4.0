@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.81 2007/02/21 18:45:39 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.82 2007/02/24 13:34:14 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1576,4 +1576,68 @@ sys/arch/arm/omap/omap_tipb.h			1.1
 
 	Add support for the TI OMAP family of ARM processors.
 	[matt, ticket #457]
+
+sys/dev/ld.c					1.45
+
+	Defer dkwedge_discover() until after interrupts are enabled.  This
+	allows a kernel with options DKWEDGE_AUTODISCOVER to boot
+	on a machine with a twa(4) card.
+
+	ok matt@
+	[riz, ticket #458]
+
+usr.sbin/sdpd/server.c				1.2
+
+	use CMSG_LEN and SOCKCREDSIZE macros to validate length because when
+	there are zero extra groups, the size of the cmsg is smaller than
+	sizeof(struct sockcred). This fixes a problem with registering
+	services during rc.d
+
+	while here, validate the pdu header length before using the contents
+	[plunky, ticket #459]
+
+sys/dev/usb/if_rum.c				1.5
+sys/dev/usb/ugen.c				1.90
+
+	Fix debug format strings (found on amd64).
+	[wiz, ticket #460]
+
+sys/arch/newsmips/dev/sc_wrap.c			1.29
+
+	Add a missing break, which causes bogus debug messages on
+	check condition during device probe.
+	[tsutsui, ticket #461]
+
+sys/dev/ic/rtl8169.c				1.80 - 1.81
+sys/dev/ic/rtl81x9.c				1.70
+
+	Use new RTK_HWREV_8100E_SPIN2 macro. (missed in the previous)
+
+	Don't set RTK_CFG1_FULLDUPLEX bit in RTK_CFG1 register
+	since it's available only on RTL8129. From FreeBSD.
+
+	As defined in rtl81x9reg.h, bits of 0x80 and 0x40 in RTK_CFG1
+	seem to indicate LEDS0 and LEDS1 configuration initialized by
+	EEPROM settings, and they seem read only on my quick tests with
+	two 8169S based cards.
+
+	RTK_HWREV_8100E_SPIN2 is a PCIe device so also check it
+	in rtk_setmulti() to handle quirk. Noticed by OpenBSD.
+	[tsutsui, ticket #462]
+
+sys/dev/ic/smc83c170reg.h			1.12
+sys/dev/ic/smc83c170var.h			1.11
+
+	fix timeouts caused by race condition.
+	[tsutsui, ticket #463]
+
+sys/arch/news68k/conf/GENERIC			1.87
+sys/arch/news68k/conf/GENERIC_TINY		1.56
+sys/arch/news68k/conf/INSTALL			1.41
+sys/arch/news68k/conf/LIBERO			1.44
+sys/arch/news68k/dev/si.c			1.19
+
+	Make disconnect/reselect work on news68k si(4) with DMA and
+	enable it by default.
+	[tsutsui, ticket #464]
 
