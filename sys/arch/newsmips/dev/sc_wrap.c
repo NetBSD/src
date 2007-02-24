@@ -1,11 +1,11 @@
-/*	$NetBSD: sc_wrap.c,v 1.28 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.28.24.1 2007/02/24 13:20:16 bouyer Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.28 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.28.24.1 2007/02/24 13:20:16 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -377,6 +377,7 @@ sc_done(struct sc_scb *scb)
 		xs->status = SCSI_CHECK;
 		if (xs->error == 0)
 			xs->error = XS_BUSY;
+		break;
 
 	default:
 		printf("SC(t): [istatus=0x%x, tstatus=0x%x]\n",
