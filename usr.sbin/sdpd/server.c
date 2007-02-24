@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: server.c,v 1.1.4.1 2007/02/24 13:16:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -55,12 +55,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: server.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: server.c,v 1.1.4.1 2007/02/24 13:16:09 bouyer Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/server.c,v 1.2 2005/12/06 17:56:36 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: server.c,v 1.1.4.1 2007/02/24 13:16:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -463,12 +463,13 @@ server_process_request(server_p srv, int32_t fd)
 	if ((cmsg = CMSG_FIRSTHDR(&msg)) != NULL
 	    && cmsg->cmsg_level == SOL_SOCKET
 	    && cmsg->cmsg_type == SCM_CREDS
-	    && cmsg->cmsg_len >= sizeof(*cmsg) + sizeof(*cred)
+	    && cmsg->cmsg_len >= CMSG_LEN(SOCKCREDSIZE(0))
 	    && (cred = (struct sockcred *)CMSG_DATA(cmsg)) != NULL
 	    && (cred->sc_uid == 0 || cred->sc_euid == 0))
 		srv->fdidx[fd].priv = 1;
-	
-	if (sizeof(*pdu) + (pdu->len = ntohs(pdu->len)) == len) {
+
+	if (len >= sizeof(*pdu)
+	    && (sizeof(*pdu) + (pdu->len = ntohs(pdu->len))) == len) {
 		switch (pdu->pid) {
 		case SDP_PDU_SERVICE_SEARCH_REQUEST:
 			error = server_prepare_service_search_response(srv, fd);
