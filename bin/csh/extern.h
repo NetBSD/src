@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.17 2005/06/26 19:10:48 christos Exp $ */
+/* $NetBSD: extern.h,v 1.18 2007/02/24 21:29:13 matt Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -288,11 +288,10 @@ void plist(struct varent *);
  */
 void donice(Char **, struct command *);
 void dotime(Char **, struct command *);
-void prusage(struct rusage *, struct rusage *, struct timeval *,
+void prusage(FILE *, struct rusage *, struct rusage *, struct timeval *,
              struct timeval *);
 void ruadd(struct rusage *, struct rusage *);
 void settimes(void);
-void pcsecs(long);
 void psecs(long);
 
 /*
