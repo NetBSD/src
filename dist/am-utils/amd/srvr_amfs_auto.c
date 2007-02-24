@@ -1,4 +1,4 @@
-/*	$NetBSD: srvr_amfs_auto.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: srvr_amfs_auto.c,v 1.1.1.7.2.2 2007/02/24 12:17:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: srvr_amfs_auto.c,v 1.15 2005/03/02 03:00:09 ezk Exp
+ * File: am-utils/amd/srvr_amfs_auto.c
  *
  */
 

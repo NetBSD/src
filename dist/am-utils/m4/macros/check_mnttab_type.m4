@@ -115,7 +115,7 @@ do
     break
   fi
 
-  # finally run a test program for bsdi3
+  # then run a test program for bsdi3, tru64, and others
   AC_TRY_RUN(
   [
 #include <sys/param.h>
@@ -134,6 +134,27 @@ main()
       break
      ]
   )
+  # check if need to terminate "for" loop
+  if test "`eval echo '$''{ac_cv_mnttab_type_'$ac_fs_name'}'`" != notfound
+  then
+    break
+  fi
+
+  # finally try to run a program that derefences a static array (bsd44)
+  AMU_EXPAND_RUN_STRING(
+  AMU_MOUNT_HEADERS(
+  [
+  ]),
+  [
+  if (argc > 1)
+    printf("\"%s\"", MOUNT_$ac_upcase_fs_symbol);
+  ], [ eval "ac_cv_mnttab_type_$ac_fs_name=\\\"$value\\\""
+  ])
+  # check if need to terminate "for" loop
+  if test "`eval echo '$''{ac_cv_mnttab_type_'$ac_fs_name'}'`" != notfound
+  then
+    break
+  fi
 
 done
 

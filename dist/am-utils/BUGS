@@ -1,5 +1,8 @@
 	    LIST OF KNOWN BUGS IN AM-UTILS OR OPERATING SYSTEMS
 
+Note: report am-utils bugs via Bugzilla to https://bugzilla.am-utils.org/ or
+by email to the am-utils@am-utils.org mailing list.
+
 
 (1) mips-sgi-irix*
 
@@ -192,8 +195,12 @@ although amd does the right thing.  The bug doesn't appear to be in 5.1 or
 A binary built on 4.3.3 will not work on 5.2, because the kernel ABIs have
 changed.
 
+[12C] *-aix*
+
 It is important that you install bos.net.nfs.adt before configuring and
-building am-utils.
+building am-utils.  If you don't, you will get compile-time or
+configure-time errors, especially when configure tries to find AIX's
+definition of struct nfs_args.
 
 (13) *-linux and *-darwin6.0
 
@@ -214,8 +221,16 @@ unprivileged ports, causing the same EPERM error above.
 
 The line "%option" in *.l files may cause Solaris /usr/ccs/bin/lex to abort
 with the error "missing translation value."  This is a bug in Solaris lex.
-Use GNU Flex instead.   You can download ready-made flex binaries from
-www.sunfreeware.com.
+
+Moreover, both Solaris yacc and lex produce code that does not pass strict
+compilation such as "gcc -Wall -Werror".
+
+Use GNU Flex and Bison instead.  You can download ready-made binaries from
+www.sunfreeware.com.  Note, however, that sometimes the binaries on
+sunfreeware.com don't seem to work, often because they are built against an
+older revision of Solaris or build tools.  In that case, build a fresh
+version of GNU flex and/or bison from the latest stable sources.  See
+http://www.gnu.org/software/flex/ and http://www.gnu.org/software/bison/.
 
 (15) Solaris 8 + patch 10899[34]-xx (18 <= xx < 25) or patch 11260[56]-xx
 
@@ -269,5 +284,20 @@ the resulting configure script by an order of magnitude, and for no real
 gain.  Configure is big enough as it is, we don't need any more useless
 baggage in it.
 
+(18) NetBSD 2.0.2, FreeBSD 5.4, OpenBSD 3.7, and quite possibly most other
+     BSDs and other OSs (as of September 2005)
 
-Erez & Ion
+Some BSD kernels don't have a way to turn off the NFS attribute cache.  They
+don't have a 'noac' mount flag, and setting various cache timeout fields in
+struct nfs_args doesn't turn off the attribute cache; instead, it sets the
+attribute cache timeout to some internal hard-coded default (usually
+anywhere from 5-30 seconds).  If Amd cannot turn off the NFS attribute
+cache, under heavy Amd usage, users could get ESTALE errors from automounted
+symlinks, or find that those symlinks point to the wrong place.  One
+workaround which would minimize this effect is to set auto_attrcache=1 in
+your amd.conf, but it doesn't eliminate the problem!  The best solutions are
+(1) to use Amd in Autofs mode, if it's supported in your OS, and (2) talk to
+your OS vendor to support a true "noac" flag.  See README.attrcache for more
+details.
+
+Erez & the am-utils team.

@@ -1,4 +1,4 @@
-/*	$NetBSD: amq_subr.c,v 1.9.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amq_subr.c,v 1.9.2.2 2007/02/24 12:17:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amq_subr.c,v 1.19 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/amq_subr.c
  *
  */
 /*
@@ -140,7 +140,7 @@ amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp)
   case AMOPT_LOGFILE:
     if (gopt.logfile && opt->as_str
 	&& STREQ(gopt.logfile, opt->as_str)) {
-      if (switch_to_logfile(opt->as_str, orig_umask))
+      if (switch_to_logfile(opt->as_str, orig_umask, 0))
 	rc = EINVAL;
     } else {
       rc = EACCES;
@@ -156,8 +156,8 @@ amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp)
     if (amd_state == Run) {
       plog(XLOG_INFO, "amq says flush cache");
       do_mapc_reload = 0;
-      flush_nfs_fhandle_cache((fserver *) 0);
-      flush_srvr_nfs_cache();
+      flush_nfs_fhandle_cache((fserver *) NULL);
+      flush_srvr_nfs_cache((fserver *) NULL);
     }
     break;
   }
@@ -190,6 +190,43 @@ amqproc_getpid_1_svc(voidp argp, struct svc_req *rqstp)
   static int res;
 
   res = getpid();
+  return &res;
+}
+
+
+/* process PAWD string of remote pawd tool */
+amq_string *
+amqproc_pawd_1_svc(voidp argp, struct svc_req *rqstp)
+{
+  static amq_string res;
+  int index, len;
+  am_node *mp;
+  char *mountpoint;
+  char *dir = *(char **) argp;
+  static char tmp_buf[MAXPATHLEN];
+
+  tmp_buf[0] = '\0';		/* default is empty string: no match */
+  for (mp = get_first_exported_ap(&index);
+       mp;
+       mp = get_next_exported_ap(&index)) {
+    if (STREQ(mp->am_mnt->mf_ops->fs_type, "toplvl"))
+      continue;
+    if (STREQ(mp->am_mnt->mf_ops->fs_type, "auto"))
+      continue;
+    mountpoint = (mp->am_link ? mp->am_link : mp->am_mnt->mf_mount);
+    len = strlen(mountpoint);
+    if (len == 0)
+      continue;
+    if (!NSTREQ(mountpoint, dir, len))
+      continue;
+    if (dir[len] != '\0' && dir[len] != '/')
+      continue;
+    xstrlcpy(tmp_buf, mp->am_path, sizeof(tmp_buf));
+    xstrlcat(tmp_buf, &dir[len], sizeof(tmp_buf));
+    break;
+  }
+
+  res = tmp_buf;
   return &res;
 }
 

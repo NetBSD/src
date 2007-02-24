@@ -1,4 +1,4 @@
-/*	$NetBSD: fsinfo.c,v 1.10.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: fsinfo.c,v 1.10.2.2 2007/02/24 12:17:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsinfo.c,v 1.15 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/fsinfo/fsinfo.c
  *
  */
 
@@ -158,7 +158,8 @@ fsi_get_args(int c, char *v[])
     case 'I':
     case 'D':
     case 'U':
-      snprintf(iptr, sizeof(idvbuf) - (iptr - idvbuf), "-%c%s ", ch, optarg);
+      /* sizeof(iptr) is actually that of idvbuf.  See declaration above */
+      xsnprintf(iptr, sizeof(idvbuf), "-%c%s ", ch, optarg);
       iptr += strlen(iptr);
       break;
 

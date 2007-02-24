@@ -1,4 +1,4 @@
-/*	$NetBSD: mntfs.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: mntfs.c,v 1.3.2.2 2007/02/24 12:17:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mntfs.c,v 1.36 2005/01/18 03:01:24 ib42 Exp
+ * File: am-utils/amd/mntfs.c
  *
  */
 
@@ -286,8 +286,15 @@ free_mntfs(opaque_t arg)
    * a non-positive refcount.  Something is badly wrong if
    * we have been!  Ignore the request for now...
    */
-  if(mf->mf_refc <= 0) {
-    plog(XLOG_ERROR, "IGNORING free_mntfs for <%s>: refc %d, flags %x",
+  if (mf->mf_refc <= 0) {
+    plog(XLOG_ERROR, "IGNORING free_mntfs for <%s>: refc %d, flags %x (bug?)",
+         mf->mf_mount, mf->mf_refc, mf->mf_flags);
+    return;
+  }
+
+  /* don't discard last reference of a restarted/kept mntfs */
+  if (mf->mf_refc == 1 && mf->mf_flags & MFF_RSTKEEP) {
+    plog(XLOG_ERROR, "IGNORING free_mntfs for <%s>: refc %d, flags %x (restarted)",
          mf->mf_mount, mf->mf_refc, mf->mf_flags);
     return;
   }

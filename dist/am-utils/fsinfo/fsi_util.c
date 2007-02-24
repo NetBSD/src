@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_util.c,v 1.9.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: fsi_util.c,v 1.9.2.2 2007/02/24 12:17:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_util.c,v 1.13 2005/02/27 04:23:09 ezk Exp
+ * File: am-utils/fsinfo/fsi_util.c
  *
  */
 
@@ -78,7 +78,7 @@ show_total(void)
 
     if (total_mmm < 0)
       fputc('*', stdout);
-    snprintf(n, sizeof(n), "%d", total_shown);
+    xsnprintf(n, sizeof(n), "%d", total_shown);
     len = strlen(n);
     if (col_output(len))
       fputc(' ', stdout);
@@ -277,7 +277,7 @@ pref_open(char *pref, char *hn, void (*hdr) (FILE *, char *), char *arg)
   char p[MAXPATHLEN];
   FILE *ef;
 
-  snprintf(p, sizeof(p), "%s%s", pref, hn);
+  xsnprintf(p, sizeof(p), "%s%s", pref, hn);
   fsi_log("Writing %s info for %s to %s", pref, hn, p);
   ef = fopen(p, "w");
   if (ef) {
@@ -302,9 +302,9 @@ pref_close(FILE *fp)
  * Determine where Amd would automount the host/volname pair
  */
 void
-compute_automount_point(char *buf, host *hp, char *vn)
+compute_automount_point(char *buf, size_t l, host *hp, char *vn)
 {
-  sprintf(buf, "%s/%s%s", autodir, hp->h_lochost, vn);
+  xsnprintf(buf, l, "%s/%s%s", autodir, hp->h_lochost, vn);
 }
 
 
@@ -453,7 +453,7 @@ set_ether_if(ether_if *ep, int k, char *v)
 
   case EF_INADDR:{
       ep->e_inaddr.s_addr = inet_addr(v);
-      if (ep->e_inaddr.s_addr == INADDR_NONE)
+      if ((int) ep->e_inaddr.s_addr == (int) INADDR_NONE)
 	yyerror("malformed IP dotted quad: %s", v);
       XFREE(v);
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pawd.c,v 1.3.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: pawd.c,v 1.3.2.2 2007/02/24 12:17:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: pawd.c,v 1.16 2005/04/07 03:08:46 ezk Exp
+ * File: am-utils/amq/pawd.c
  *
  */
 
@@ -60,44 +60,8 @@
 #include <amq.h>
 
 /* statics */
-static char *localhost="localhost";
-static char newdir[MAXPATHLEN];
+static char *localhost = "localhost";
 static char transform[MAXPATHLEN];
-
-static int
-find_mt(amq_mount_tree *mt, char *dir)
-{
-  while (mt) {
-    if (!STREQ(mt->mt_type, "toplvl")) {
-      int len = strlen(mt->mt_mountpoint);
-      if (len && NSTREQ(mt->mt_mountpoint, dir, len) &&
-	  ((dir[len] == '\0') || (dir[len] == '/'))) {
-	char tmp_buf[MAXPATHLEN];
-	strlcpy(tmp_buf, mt->mt_directory, sizeof(tmp_buf));
-	strlcat(tmp_buf, &dir[len], sizeof(tmp_buf));
-	strlcpy(newdir, tmp_buf, sizeof(newdir));
-	return 1;
-      }
-    }
-    if (find_mt(mt->mt_next,dir))
-      return 1;
-    mt = mt->mt_child;
-  }
-  return 0;
-}
-
-
-static int
-find_mlp(amq_mount_tree_list *mlp, char *dir)
-{
-  u_int i;
-
-  for (i = 0; i < mlp->amq_mount_tree_list_len; i++) {
-    if (find_mt(mlp->amq_mount_tree_list_val[i], dir))
-      return 1;
-  }
-  return 0;
-}
 
 
 #ifdef HAVE_CNODEID
@@ -159,7 +123,8 @@ hack_name(char *dir)
     fprintf(stderr, "partition %s, username %s\n", partition, username);
 #endif /* DEBUG */
 
-    snprintf(hesiod_lookup, sizeof(hesiod_lookup), "%s.homes-remote", username);
+    xsnprintf(hesiod_lookup, sizeof(hesiod_lookup),
+	      "%s.homes-remote", username);
     hes = hes_resolve(hesiod_lookup, "amd");
     if (!hes)
       return NULL;
@@ -183,9 +148,10 @@ hack_name(char *dir)
 #ifdef DEBUG
     fprintf(stderr, "A match, munging....\n");
 #endif /* DEBUG */
-    strlcpy(transform, "/home/", sizeof(transform));
-    strlcat(transform, username, sizeof(transform));
-    if (*ch) strlcat(transform, ch, sizeof(transform));
+    xstrlcpy(transform, "/home/", sizeof(transform));
+    xstrlcat(transform, username, sizeof(transform));
+    if (*ch)
+      xstrlcat(transform, ch, sizeof(transform));
 #ifdef DEBUG
     fprintf(stderr, "Munged to <%s>\n", transform);
 #endif /* DEBUG */
@@ -215,8 +181,9 @@ transform_dir(char *dir)
   int s = RPC_ANYSOCK;
   CLIENT *clnt;
   struct hostent *hp;
-  amq_mount_tree_list *mlp;
   struct timeval tmo = {10, 0};
+  char *dummystr;
+  amq_string *spp;
 
 #ifdef DISK_HOME_HACK
   if (ch = hack_name(dir))
@@ -229,21 +196,26 @@ transform_dir(char *dir)
   server = localhost;
 #endif /* not HAVE_CNODEID */
 
-  if ((hp = gethostbyname(server)) == 0)
+  if ((hp = gethostbyname(server)) == NULL)
     return dir;
   memset(&server_addr, 0, sizeof(server_addr));
   server_addr.sin_family = AF_INET;
   server_addr.sin_addr = *(struct in_addr *) hp->h_addr;
 
   clnt = clntudp_create(&server_addr, AMQ_PROGRAM, AMQ_VERSION, tmo, &s);
-  if (clnt == 0)
+  if (clnt == NULL)
+    clnt = clnttcp_create(&server_addr, AMQ_PROGRAM, AMQ_VERSION, &s, 0, 0);
+  if (clnt == NULL)
     return dir;
 
-  strlcpy(transform, dir, sizeof(transform));
-  while ((mlp = amqproc_export_1((voidp)0, clnt)) &&
-	  find_mlp(mlp,transform) ) {
-    strlcpy(transform, newdir, sizeof(transform));
+  xstrlcpy(transform, dir, sizeof(transform));
+  dummystr = transform;
+  spp = amqproc_pawd_1((amq_string *) &dummystr, clnt);
+  if (spp && *spp && **spp) {
+    xstrlcpy(transform, *spp, sizeof(transform));
+    XFREE(*spp);
   }
+  clnt_destroy(clnt);
   return transform;
 }
 
@@ -253,7 +225,7 @@ static char *
 getawd(char *path, size_t l)
 {
 #ifdef HAVE_GETCWD
-  char *wd = getcwd(path, MAXPATHLEN+1);
+  char *wd = getcwd(path, MAXPATHLEN);
 #else /* not HAVE_GETCWD */
   char *wd = getwd(path);
 #endif /* not HAVE_GETCWD */
@@ -261,7 +233,7 @@ getawd(char *path, size_t l)
   if (wd == NULL) {
     return NULL;
   }
-  strlcpy(path, transform_dir(wd), l);
+  xstrlcpy(path, transform_dir(wd), l);
   return path;
 }
 

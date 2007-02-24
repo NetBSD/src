@@ -12,7 +12,9 @@ dnl ######################################################################
 dnl INITIALIZATION
 dnl AC_INIT
 dnl new init style: PACKAGE, VERSION, BUG-REPORTING-ADDRESS
-AC_INIT([am-utils],[6.1-rc2],[am-utils@am-utils.org])
+AC_INIT([am-utils],
+	sinclude([vers.m4]),
+	[https://bugzilla.am-utils.org/ or am-utils@am-utils.org])
 AC_MSG_NOTICE(*** INITIALIZATION ***)
 AC_CONFIG_SRCDIR([amd/amd.c])
 AM_CONFIG_HEADER(config.h)
@@ -53,7 +55,7 @@ AH_BOTTOM([
 dnl
 dnl AC_CONFIG_AUX_DIR(m4)
 AC_PREREQ(2.52)
-AC_REVISION($Revision: 1.1.1.5.2.1 $)
+AC_REVISION($Revision: 1.1.1.5.2.2 $)
 AC_COPYRIGHT([Copyright (c) 1997-2005 Erez Zadok])
 dnl find out system type
 AC_MSG_NOTICE(*** SYSTEM TYPES ***)
@@ -87,10 +89,11 @@ dnl is changed.
 dnl last version info was 3:2:1 (am-utils-6.0.2)
 dnl last version info was 4:0:2 (am-utils-6.0.3)
 dnl last version info was 4:1:2 (am-utils-6.0.4)
+dnl last version info was 3:0:0 (am-utils-6.1, should have been updated)
 dnl
 dnl We increase the major number for am-utils-6.1, because it has new API's
 dnl and removes some old API's.
-LIBTOOL_LDFLAGS="-version-info 3:0:0"
+LIBTOOL_LDFLAGS="-version-info 4:0:0"
 AC_SUBST(LIBTOOL_LDFLAGS)
 dnl ======================================================================
 
@@ -242,7 +245,7 @@ dnl LIBRARY FUNCTIONS
 dnl ======================================================================
 dnl Particular Function Checks
 AC_MSG_NOTICE(*** PARTICULAR LIBRARY FUNCTIONS ***)
-AC_FUNC_ALLOCA
+dnl AC_FUNC_ALLOCA
 dnl This GETMNTENT test will add -lgen to LIBS if needed.  We may need it
 dnl if we have to build am-utils on Irix 4, PTX, or Unixware.
 dnl AC_FUNC_GETMNTENT
@@ -283,10 +286,6 @@ AC_CHECK_FUNCS(			\
 	getpagesize		\
 	gettimeofday		\
 	hasmntopt		\
-	hes_init		\
-	hesiod_init		\
-	hesiod_reload		\
-	hesiod_to_bind		\
 	hstrerror		\
 	madvise			\
 	memcmp			\
@@ -312,11 +311,14 @@ AC_CHECK_FUNCS(			\
 	signal			\
 	sigsuspend		\
 	socket			\
-	strchr			\
+	statfs			\
+	statvfs			\
 	strcasecmp		\
+	strchr			\
 	strcspn			\
 	strdup			\
 	strerror		\
+	strlcat			\
 	strlcpy			\
 	strspn			\
 	strstr			\
@@ -336,12 +338,22 @@ AC_CHECK_FUNCS(			\
 	wait3			\
 	waitpid			\
 	)
+dnl optional functions
+if test "$with_hesiod" = "yes"; then
+AC_CHECK_FUNCS(			\
+	hes_init		\
+	hesiod_init		\
+	hesiod_reload		\
+	hesiod_to_bind		\
+	)
+fi
 AC_REPLACE_FUNCS(		\
 	clnt_sperrno		\
 	hasmntopt		\
 	strcasecmp		\
 	strdup			\
 	strerror		\
+	strlcat			\
 	strlcpy			\
 	strstr			\
 	ualarm			\
@@ -417,12 +429,13 @@ AC_CHECK_HEADERS(			\
 	gdbm/ndbm.h			\
 	hsfs/hsfs.h			\
 	isofs/cd9660/cd9660_mount.h	\
-	limits.h			\
 	linux/fs.h			\
 	linux/kdev_t.h			\
 	linux/list.h			\
 	linux/nfs.h			\
+	linux/nfs2.h			\
 	linux/posix_types.h		\
+	linux/socket.h			\
 	machine/endian.h		\
 	msdosfs/msdosfsmount.h		\
 	net/errno.h			\
@@ -477,6 +490,7 @@ AC_CHECK_HEADERS(			\
 	sys/fsid.h			\
 	sys/fstyp.h			\
 	sys/ioctl.h			\
+	sys/immu.h			\
 	sys/lock.h			\
 	sys/machine.h			\
 	sys/mbuf.h			\
@@ -497,6 +511,7 @@ AC_CHECK_HEADERS(			\
 	sys/sockio.h			\
 	sys/stat.h			\
 	sys/statfs.h			\
+	sys/statvfs.h			\
 	sys/syscall.h			\
 	sys/syslimits.h			\
 	sys/syslog.h			\
@@ -524,9 +539,6 @@ dnl	dirent.h			\
 	ifaddrs.h			\
 	irs.h				\
 	grp.h				\
-	hesiod.h			\
-	lber.h				\
-	ldap.h				\
 	libgen.h			\
 	limits.h			\
 	malloc.h			\
@@ -559,12 +571,23 @@ dnl	dirent.h			\
 	varargs.h			\
 	unistd.h			\
 	)
+dnl optional headers
+if test "$with_ldap" = "yes"; then
+AC_CHECK_HEADERS(			\
+	lber.h				\
+	ldap.h				\
+	)
+fi
+if test "$with_hesiod" = "yes"; then
+AC_CHECK_HEADERS(			\
+	hesiod.h			\
+	)
+fi
 dnl headers which depend on others, else you get an configure error
 AC_CHECK_HEADERS([			\
 	linux/auto_fs.h			\
 	linux/auto_fs4.h		\
 	linux/loop.h			\
-	linux/nfs_mount.h		\
 ], [], [],
 [
 #ifdef HAVE_SYS_SOCKET_H
@@ -576,6 +599,42 @@ AC_CHECK_HEADERS([			\
 #ifdef HAVE_LINUX_POSIX_TYPES_H
 # include <linux/posix_types.h>
 #endif /* HAVE_LINUX_POSIX_TYPES_H */
+/* next dev_t lines needed due to changes in kernel code */
+#undef dev_t
+#define dev_t unsigned short	/* compatible with Red Hat and SuSE */
+])
+dnl even more special checks for Linux nfs headers
+AC_CHECK_HEADERS([			\
+	linux/nfs_mount.h		\
+], [], [],
+[
+/*
+ * Needed to find nfs2_fh and nfs_fh on older systems (yellowdog2.3, gentoo,
+ * etc.)
+ * Needs to be defined before <asm/types.h> so u32 is available for
+ * <linux/sunrpc/msg_prot.h>.
+ */
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif /* HAVE_SYS_TYPES_H */
+# ifndef __KERNEL__
+#  define __KERNEL__
+# endif /* __KERNEL__ */
+#ifdef HAVE_LINUX_SOCKET_H
+# include <linux/socket.h>
+#endif /* HAVE_LINUX_SOCKET_H */
+#ifdef HAVE_LIMITS_H
+# include <limits.h>
+#endif /* HAVE_LIMITS_H */
+#ifdef HAVE_LINUX_POSIX_TYPES_H
+# include <linux/posix_types.h>
+#endif /* HAVE_LINUX_POSIX_TYPES_H */
+#ifdef HAVE_LINUX_NFS2_H
+struct nfs2_fh {
+  char data[FHSIZE];
+};
+# define _LINUX_NFS2_H
+#endif /* HAVE_LINUX_NFS2_H */
 /* next dev_t lines needed due to changes in kernel code */
 #undef dev_t
 #define dev_t unsigned short	/* compatible with Red Hat and SuSE */
@@ -639,9 +698,14 @@ if test "$ac_cv_have_struct_nfs_args" = notfound && test "$ac_cv_have_struct_nfs
 then
 AC_MSG_ERROR(
 [Cannot find any definition for struct nfs_args!
-This can be due to a misconfigured system, one for which am-utils
-was not ported to yet, or a bug in the am-utils sources.  Check
-config.log for details and report them to am-utils@am-utils.org please.])
+This can be due to several reasons: a misconfigured system, a system that is
+missing some vital NFS-related headers or libraries, one for which am-utils
+was not ported to yet, or even a bug in the am-utils sources.  Check the
+BUGS file in this distribution and see if there is any mention relevant to
+your system.  If that does not help, check the config.log and config.cache
+files in this build for details and report them to
+https://bugzilla.am-utils.org/ or am-utils@am-utils.org please.
+])
 fi
 dnl -----------------------------------------------------------------------
 AMU_STRUCT_FIELD_NFS_FH
@@ -668,6 +732,12 @@ dnl ======================================================================
 dnl Generic Typedef Checks
 AC_MSG_NOTICE(*** GENERIC TYPEDEFS ***)
 AMU_TYPE_TIME_T
+AMU_TYPE_RPCVERS_T
+case "${host_os}" in
+	irix6* )
+AMU_TYPE_PTE_T
+	;;
+esac
 AMU_CHECK_FHANDLE
 AMU_CHECK_MTYPE_TYPE
 AMU_CHECK_MTYPE_PRINTF_TYPE
@@ -701,6 +771,7 @@ dnl ======================================================================
 dnl Generic Compiler Characteristics
 AC_MSG_NOTICE(*** GENERIC COMPILER CHARACTERISTICS ***)
 AMU_C_VOID_P
+AMU_VARARGS_MACROS
 dnl ======================================================================
 
 dnl *********
@@ -726,11 +797,14 @@ AMU_CHECK_EXTERNS(
 	hosts_ctl		\
 	innetgr			\
 	mkstemp			\
+	mntctl			\
 	sbrk			\
 	seteuid			\
 	setitimer		\
+	sleep			\
 	strcasecmp		\
 	strdup			\
+	strlcat			\
 	strlcpy			\
 	strstr			\
 	ualarm			\
@@ -742,7 +816,9 @@ AMU_CHECK_EXTERNS(
 	)
 dnl Different macro to check for LDAP externs, so as to avoid
 dnl breaking the basic extern-checking macro.
+if test "$with_ldap" = "yes"; then
 AMU_CHECK_EXTERN_LDAP(ldap_enable_cache)
+fi
 dnl ======================================================================
 
 dnl ######################################################################
@@ -793,7 +869,9 @@ AMU_CHECK_FIELD(xfs_args_t.fspec)
 AMU_CHECK_FIELD(struct fhstatus.fhs_fh)
 AMU_CHECK_FIELD(struct statfs.f_fstypename)
 AMU_CHECK_FIELD(nfs_args_t.acdirmin)
+AMU_CHECK_FIELD(nfs_args_t.acdirmax)
 AMU_CHECK_FIELD(nfs_args_t.acregmin)
+AMU_CHECK_FIELD(nfs_args_t.acregmax)
 AMU_CHECK_FIELD(nfs_args_t.bsize)
 AMU_CHECK_FIELD(nfs_args_t.fh_len)
 AMU_CHECK_FIELD(nfs_args_t.fhsize)
@@ -862,7 +940,7 @@ dnl AMU_CHECK_FS_MNTENT(nfs3)
 AMU_CHECK_FS_MNTENT(vfat pcfs pc msdos msdosfs fat, pcfs)
 AMU_CHECK_FS_MNTENT(tfs)
 AMU_CHECK_FS_MNTENT(tmpfs)
-AMU_CHECK_FS_MNTENT(ext2 ffs ufs 42 efs xfs jfs ultrix, ufs)
+AMU_CHECK_FS_MNTENT(ext3 ext2 ffs ufs 42 43 44 efs xfs jfs ultrix, ufs)
 dnl openbsd 2.4 introduce a new file system called xfs, which is not
 dnl the same as irix-s xfs.  Sigh, why did openbsd have to use such a name!
 case "${host_os_name}" in
@@ -910,7 +988,7 @@ dnl check for mount(2) type/name for filesystem (MNTTYPE_*, MOUNT_*)
 AC_MSG_NOTICE(*** MOUNTING TYPES ***)
 AMU_CHECK_MOUNT_TYPE(nfs)
 AMU_CHECK_MOUNT_TYPE(nfs3)
-AMU_CHECK_MOUNT_TYPE(4.2 4.3 4.4 ext2 ufs efs xfs ffs jfs ultrix, ufs)
+AMU_CHECK_MOUNT_TYPE(ext3 ext2 ffs ufs 4.2 4.3 4.4 efs xfs jfs ultrix, ufs)
 AMU_CHECK_MOUNT_TYPE(xfs)
 AMU_CHECK_MOUNT_TYPE(efs)
 AMU_CHECK_MOUNT_TYPE(cdfs hsfs cd9660 iso9660 isofs cdrom, cdfs)
@@ -933,7 +1011,7 @@ dnl check for mnttab name for filesystem
 AC_MSG_NOTICE(*** MOUNTING TABLE NAMES ***)
 AMU_CHECK_MNTTAB_TYPE(nfs)
 AMU_CHECK_MNTTAB_TYPE(nfs3)
-AMU_CHECK_MNTTAB_TYPE(ext2 ufs jfs 4.2 4.3 4.4 efs xfs ffs, ufs)
+AMU_CHECK_MNTTAB_TYPE(ext3 ext2 ffs ufs 4.2 4.3 4.4 efs xfs jfs ultrix, ufs)
 AMU_CHECK_MNTTAB_TYPE(xfs)
 AMU_CHECK_MNTTAB_TYPE(efs)
 AMU_CHECK_MNTTAB_TYPE(cdfs hsfs cd9660 iso9660 isofs cdrom, cdfs)
@@ -1016,6 +1094,8 @@ AMU_CHECK_MNT2_GEN_OPTS(	\
 	bind		\
 	cache		\
 	data		\
+	detach		\
+	force		\
 	fss		\
 	grpid		\
 	ignore		\
@@ -1191,7 +1271,7 @@ LTLIBOBJS=`echo "$LIB@&t@OBJS" |
 		sed 's,\.[[^.]]* ,.lo ,g;s,\.[[^.]]*$,.lo,'`
 AC_SUBST(LTLIBOBJS)
 dnl XXX: next two lines are temp hack until automake newer than 1.4 comes out
-AMU_LIB_OBJS="${LTLIBOBJS} ${LTALLOCA}"
+AMU_LIB_OBJS="${LTLIBOBJS}"
 AC_SUBST(AMU_LIB_OBJS)
 dnl for Makefile rule to regenerate libtool
 AC_SUBST(LIBTOOL_DEPS)
@@ -1220,14 +1300,17 @@ AC_CONFIG_FILES(			\
 	scripts/ctl-amd			\
 	scripts/ctl-hlfsd		\
 	scripts/expn			\
-	scripts/fixrmtab		\
 	scripts/fix-amd-map		\
+	scripts/fixrmtab		\
 	scripts/lostaltmail		\
 	scripts/redhat-ctl-amd		\
+	scripts/test-attrcache		\
 	scripts/wait4amd		\
 	scripts/wait4amd2die		\
 	)
 AC_OUTPUT
+# chmod some scripts that are built but not installed
+test -f scripts/test-attrcache && chmod +x scripts/test-attrcache
 dnl ======================================================================
 
 dnl ######################################################################

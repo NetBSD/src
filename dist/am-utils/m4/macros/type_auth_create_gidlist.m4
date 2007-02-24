@@ -9,6 +9,12 @@ ac_cv_auth_create_gidlist,
 case "${host_os_name}" in
 	sunos[[34]]* | bsdi2* | sysv4* | hpux10.10 | ultrix* | aix4* )
 		ac_cv_auth_create_gidlist="int" ;;
+	# old macosx used "gid_t" but all newer ones use int
+	macosx-10.[[0-3]]* )
+		ac_cv_auth_create_gidlist="gid_t" ;;
+	macosx* )
+		ac_cv_auth_create_gidlist="int" ;;
+
 	* )
 		ac_cv_auth_create_gidlist="gid_t" ;;
 esac

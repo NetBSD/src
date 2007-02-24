@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_sockets.c,v 1.7.2.1 2005/08/16 13:02:23 tron Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.7.2.2 2007/02/24 12:17:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: transp_sockets.c,v 1.34 2005/03/03 02:59:02 ezk Exp
+ * File: am-utils/conf/transp/transp_sockets.c
  *
  * Socket specific utilities.
  *      -Erez Zadok <ezk@cs.columbia.edu>
@@ -115,7 +115,7 @@ amu_get_myaddress(struct in_addr *iap, const char *preferred_localhost)
   }
   memmove((voidp) &iap->s_addr, (voidp) hp->h_addr_list[0], sizeof(iap->s_addr));
   plog(XLOG_INFO, "localhost_address \"%s\" requested, using %s",
-       preferred_localhost, inet_dquad(dq, iap->s_addr));
+       preferred_localhost, inet_dquad(dq, sizeof(dq), iap->s_addr));
   return;
 
  out:
@@ -341,7 +341,7 @@ create_amq_service(int *udp_soAMQp,
 # ifndef RPC_MAXDATASIZE
 #  define RPC_MAXDATASIZE 9000
 # endif /* not RPC_MAXDATASIZE */
-    {
+    if (tcp_amqpp) {
       int maxrec = RPC_MAXDATASIZE;
       SVC_CONTROL(*tcp_amqpp, SVCSET_CONNMAXREC, &maxrec);
     }

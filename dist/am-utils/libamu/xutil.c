@@ -1,4 +1,4 @@
-/*	$NetBSD: xutil.c,v 1.11.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: xutil.c,v 1.11.2.2 2007/02/24 12:17:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,8 +39,12 @@
  * SUCH DAMAGE.
  *
  *
- * Id: xutil.c,v 1.37 2005/04/07 05:50:39 ezk Exp
+ * File: am-utils/libamu/xutil.c
  *
+ */
+
+/*
+ * Miscellaneous Utilities: Logging, TTY, timers, signals, RPC, memory, etc.
  */
 
 #ifdef HAVE_CONFIG_H
@@ -69,9 +73,6 @@ int syslogging;
 int xlog_level = XLOG_ALL & ~XLOG_MAP & ~XLOG_STATS;
 int xlog_level_init = ~0;
 static int amd_program_number = AMQ_PROGRAM;
-
-time_t clock_valid = 0;
-time_t xclock_valid = 0;
 
 #ifdef DEBUG_MEM
 # if defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY)
@@ -291,16 +292,16 @@ checkup_mem(void)
  * 'e' never gets longer than maxlen characters.
  */
 static const char *
-expand_error(const char *f, char *e, int maxlen)
+expand_error(const char *f, char *e, size_t maxlen)
 {
   const char *p;
   char *q;
   int error = errno;
   int len = 0;
 
-  for (p = f, q = e; (*q = *p) && len < maxlen; len++, q++, p++) {
+  for (p = f, q = e; (*q = *p) && (size_t) len < maxlen; len++, q++, p++) {
     if (p[0] == '%' && p[1] == 'm') {
-      strlcpy(q, strerror(error), maxlen - (q - e));
+      xstrlcpy(q, strerror(error), maxlen);
       len += strlen(q) - 1;
       q += strlen(q) - 1;
       p++;
@@ -323,8 +324,10 @@ show_time_host_and_name(int lvl)
 #if defined(HAVE_CLOCK_GETTIME) && defined(DEBUG)
   struct timespec ts;
 #endif /* defined(HAVE_CLOCK_GETTIME) && defined(DEBUG) */
-  char nsecs[11] = "";	/* '.' + 9 digits + '\0' */
+  char nsecs[11];		/* '.' + 9 digits + '\0' */
   char *sev;
+
+  nsecs[0] = '\0';
 
 #if defined(HAVE_CLOCK_GETTIME) && defined(DEBUG)
   /*
@@ -334,11 +337,11 @@ show_time_host_and_name(int lvl)
   if (clock_gettime(CLOCK_REALTIME, &ts) == 0) {
     t = ts.tv_sec;
     if (amuDebug(D_HRTIME))
-      snprintf(nsecs, sizeof(nsecs), ".%09ld", ts.tv_nsec);
+      xsnprintf(nsecs, sizeof(nsecs), ".%09ld", ts.tv_nsec);
   }
   else
 #endif /* defined(HAVE_CLOCK_GETTIME) && defined(DEBUG) */
-    t = clocktime();
+    t = clocktime(NULL);
 
   if (t != last_t) {
     last_ctime = ctime(&t);
@@ -405,10 +408,6 @@ dplog(const char *fmt, ...)
   real_plog(XLOG_DEBUG, fmt, ap);
   va_end(ap);
 }
-#else
-void
-dplog(const char *fmt, ...)
-{ }
 #endif /* DEBUG */
 
 
@@ -444,23 +443,12 @@ real_plog(int lvl, const char *fmt, va_list vargs)
 # endif /* not defined(HAVE_MALLINFO) && defined(HAVE_MALLOC_VERIFY) */
 #endif /* DEBUG_MEM */
 
-#ifdef HAVE_VSNPRINTF
   /*
-   * XXX: ptr is 1024 bytes long, but we may write to ptr[strlen(ptr) + 2]
-   * (to add an '\n', see code below) so we have to limit the string copy
-   * to 1023 (including the '\0').
+   * Note: xvsnprintf() may call plog() if a truncation happened, but the
+   * latter has some code to break out of an infinite loop.  See comment in
+   * xsnprintf() below.
    */
-  vsnprintf(ptr, 1023, expand_error(fmt, efmt, 1024), vargs);
-  msg[1022] = '\0';		/* null terminate, to be sure */
-#else /* not HAVE_VSNPRINTF */
-  /*
-   * XXX: ptr is 1024 bytes long.  It is possible to write into it
-   * more than 1024 bytes, if efmt is already large, and vargs expand
-   * as well.  This is not as safe as using vsnprintf().
-   */
-  vsprintf(ptr, expand_error(fmt, efmt, 1023), vargs);
-  msg[1023] = '\0';		/* null terminate, to be sure */
-#endif /* not HAVE_VSNPRINTF */
+  xvsnprintf(ptr, 1023, expand_error(fmt, efmt, 1024), vargs);
 
   ptr += strlen(ptr);
   if (*(ptr-1) == '\n')
@@ -539,7 +527,8 @@ real_plog(int lvl, const char *fmt, va_list vargs)
      * cycles like crazy.
      */
     show_time_host_and_name(last_lvl);
-    snprintf(last_msg, sizeof(last_msg), "last message repeated %d times\n", last_count);
+    xsnprintf(last_msg, sizeof(last_msg),
+	      "last message repeated %d times\n", last_count);
     fwrite(last_msg, strlen(last_msg), 1, logfp);
     fflush(logfp);
     last_count = 0;		/* start from scratch */
@@ -550,7 +539,8 @@ real_plog(int lvl, const char *fmt, va_list vargs)
       last_count++;
     } else {		/* last msg repeated+skipped, new one differs */
       show_time_host_and_name(last_lvl);
-      snprintf(last_msg, sizeof(last_msg), "last message repeated %d times\n", last_count);
+      xsnprintf(last_msg, sizeof(last_msg),
+		"last message repeated %d times\n", last_count);
       fwrite(last_msg, strlen(last_msg), 1, logfp);
       if (strlcpy(last_msg, msg, sizeof(last_msg)) >= sizeof(last_msg)) /* don't use xstrlcpy here (recursive!) */
 	fprintf(stderr, "real_plog: string \"%s\" truncated to \"%s\"\n", last_msg, msg);
@@ -676,6 +666,7 @@ switch_option(char *opt)
   return rc;
 }
 
+
 #ifdef LOG_DAEMON
 /*
  * get syslog facility to use.
@@ -780,7 +771,7 @@ get_syslog_facility(const char *logfile)
  * Change current logfile
  */
 int
-switch_to_logfile(char *logfile, int old_umask)
+switch_to_logfile(char *logfile, int old_umask, int truncate_log)
 {
   FILE *new_logfp = stderr;
 
@@ -809,8 +800,10 @@ switch_to_logfile(char *logfile, int old_umask)
       plog(XLOG_WARNING, "syslog option not supported, logging unchanged");
 #endif /* not HAVE_SYSLOG */
 
-    } else {
+    } else {			/* regular log file */
       (void) umask(old_umask);
+      if (truncate_log)
+	truncate(logfile, 0);
       new_logfp = fopen(logfile, "a");
       umask(0);
     }
@@ -843,9 +836,14 @@ switch_to_logfile(char *logfile, int old_umask)
 void
 unregister_amq(void)
 {
-  if (!amuDebug(D_AMQ))
+  if (!amuDebug(D_AMQ)) {
     /* find which instance of amd to unregister */
-    pmap_unset(get_amd_program_number(), AMQ_VERSION);
+    u_long amd_prognum = get_amd_program_number();
+
+    if (pmap_unset(amd_prognum, AMQ_VERSION) != 1)
+      dlog("failed to de-register Amd program %lu, version %lu",
+	   amd_prognum, AMQ_VERSION);
+  }
 }
 
 
@@ -859,12 +857,21 @@ going_down(int rc)
       unregister_amq();
     }
   }
+
+#ifdef MOUNT_TABLE_ON_FILE
+  /*
+   * Call unlock_mntlist to free any important resources such as an on-disk
+   * lock file (/etc/mtab~).
+   */
+  unlock_mntlist();
+#endif /* MOUNT_TABLE_ON_FILE */
+
   if (foreground) {
     plog(XLOG_INFO, "Finishing with status %d", rc);
   } else {
     dlog("background process exiting with status %d", rc);
   }
-
+  /* bye bye... */
   exit(rc);
 }
 
@@ -953,4 +960,134 @@ amu_release_controlling_tty(void)
 #endif /* not TIOCNOTTY */
 
   plog(XLOG_ERROR, "unable to release controlling tty");
+}
+
+
+/* setup a single signal handler */
+void
+setup_sighandler(int signum, void (*handler)(int))
+{
+#ifdef HAVE_SIGACTION
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_flags = 0;		/* unnecessary */
+  sa.sa_handler = handler;
+  sigemptyset(&(sa.sa_mask));	/* probably unnecessary too */
+  sigaddset(&(sa.sa_mask), signum);
+  sigaction(signum, &sa, NULL);
+#else /* not HAVE_SIGACTION */
+  (void) signal(signum, handler);
+#endif /* not HAVE_SIGACTION */
+}
+
+
+/*
+ * Return current time in seconds.  If passed a non-null argyument, then
+ * fill it in with the current time in seconds and microseconds (useful
+ * for mtime updates).
+ */
+time_t
+clocktime(nfstime *nt)
+{
+  static struct timeval now;	/* keep last time, as default */
+
+  if (gettimeofday(&now, NULL) < 0) {
+    plog(XLOG_ERROR, "clocktime: gettimeofday: %m");
+    /* hack: force time to have incremented by at least 1 second */
+    now.tv_sec++;
+  }
+  /* copy seconds and microseconds. may demote a long to an int */
+  if (nt) {
+    nt->nt_seconds = (u_int) now.tv_sec;
+    nt->nt_useconds = (u_int) now.tv_usec;
+  }
+  return (time_t) now.tv_sec;
+}
+
+
+/*
+ * Make all the directories in the path.
+ */
+int
+mkdirs(char *path, int mode)
+{
+  /*
+   * take a copy in case path is in readonly store
+   */
+  char *p2 = strdup(path);
+  char *sp = p2;
+  struct stat stb;
+  int error_so_far = 0;
+
+  /*
+   * Skip through the string make the directories.
+   * Mostly ignore errors - the result is tested at the end.
+   *
+   * This assumes we are root so that we can do mkdir in a
+   * mode 555 directory...
+   */
+  while ((sp = strchr(sp + 1, '/'))) {
+    *sp = '\0';
+    if (mkdir(p2, mode) < 0) {
+      error_so_far = errno;
+    } else {
+      dlog("mkdir(%s)", p2);
+    }
+    *sp = '/';
+  }
+
+  if (mkdir(p2, mode) < 0) {
+    error_so_far = errno;
+  } else {
+    dlog("mkdir(%s)", p2);
+  }
+
+  XFREE(p2);
+
+  return stat(path, &stb) == 0 &&
+    (stb.st_mode & S_IFMT) == S_IFDIR ? 0 : error_so_far;
+}
+
+
+/*
+ * Remove as many directories in the path as possible.
+ * Give up if the directory doesn't appear to have
+ * been created by Amd (not mode dr-x) or an rmdir
+ * fails for any reason.
+ */
+void
+rmdirs(char *dir)
+{
+  char *xdp = strdup(dir);
+  char *dp;
+
+  do {
+    struct stat stb;
+    /*
+     * Try to find out whether this was
+     * created by amd.  Do this by checking
+     * for owner write permission.
+     */
+    if (stat(xdp, &stb) == 0 && (stb.st_mode & 0200) == 0) {
+      if (rmdir(xdp) < 0) {
+	if (errno != ENOTEMPTY &&
+	    errno != EBUSY &&
+	    errno != EEXIST &&
+	    errno != EROFS &&
+	    errno != EINVAL)
+	  plog(XLOG_ERROR, "rmdir(%s): %m", xdp);
+	break;
+      } else {
+	dlog("rmdir(%s)", xdp);
+      }
+    } else {
+      break;
+    }
+
+    dp = strrchr(xdp, '/');
+    if (dp)
+      *dp = '\0';
+  } while (dp && dp > xdp);
+
+  XFREE(xdp);
 }

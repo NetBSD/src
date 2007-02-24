@@ -1,4 +1,4 @@
-/*	$NetBSD: am_utils.h,v 1.9.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.9.2.2 2007/02/24 12:17:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_utils.h,v 1.65 2005/04/07 23:31:07 ezk Exp
+ * File: am-utils/include/am_utils.h
  *
  */
 
@@ -114,8 +114,6 @@
 #define XLOG_DEFSTR	"all,nomap,nostats"	/* Default log options */
 #define XLOG_ALL	(XLOG_FATAL|XLOG_ERROR|XLOG_USER|XLOG_WARNING|XLOG_INFO|XLOG_MAP|XLOG_STATS)
 
-#define clocktime() (clock_valid ? clock_valid : time(&clock_valid))
-
 #define NO_SUBNET	"notknown"   /* default subnet name for no subnet */
 #define	NEXP_AP		(1022)			/* gdmr: was 254 */
 #define NEXP_AP_MARGIN	(128)			/* ???? not used */
@@ -141,10 +139,17 @@
  * Systems which have the mount table in a file need to read it before
  * they can perform an unmount() system call.
  */
-#define UMOUNT_FS(dir, mtb_name, on_autofs)	umount_fs(dir, mtb_name, on_autofs)
+#define UMOUNT_FS(dir, mtb_name, unmount_flags)	umount_fs(dir, mtb_name, unmount_flags)
+/* next two are imported via $srcdir/conf/umount/umount_*.c */
+extern int umount_fs(char *mntdir, const char *mnttabname, u_int unmount_flags);
+#ifdef MNT2_GEN_OPT_FORCE
+extern int umount2_fs(const char *mntdir, u_int unmount_flags);
+#endif /* MNT2_GEN_OPT_FORCE */
 
-/* imported via $srcdir/conf/umount/umount_*.c */
-extern int umount_fs(char *mntdir, const char *mnttabname, int on_autofs);
+/* unmount-related flags (special handling of autofs, forced/lazy, etc.) */
+#define AMU_UMOUNT_FORCE        0x1
+#define AMU_UMOUNT_DETACH       0x2
+#define AMU_UMOUNT_AUTOFS       0x4
 
 /*
  * The following values can be tuned...
@@ -233,8 +238,6 @@ extern char *cpu;		/* "CPU type" */
 extern char *endian;		/* "big" */
 extern char *hostdomain;	/* "southseas.nz" */
 extern char copyright[];	/* Copyright info */
-extern char hostd[];		/* "kiska.southseas.nz" */
-extern char pid_fsname[];	/* kiska.southseas.nz:(pid%d) */
 extern char version[];		/* Version info */
 
 /*
@@ -262,7 +265,6 @@ extern int xlog_level_init;
 extern serv_state amd_state;	/* Should we go now */
 extern struct in_addr myipaddr;	/* (An) IP address of this host */
 extern struct opt_tab xlog_opt[];
-extern time_t clock_valid;	/* Clock needs recalculating */
 extern u_short nfs_port;	/* Our NFS service port */
 
 /*
@@ -275,7 +277,7 @@ extern bool_t xdr_dirpath(XDR *xdrs, dirpath *objp);
 extern char **strsplit(char *, int, int);
 extern char *expand_selectors(char *);
 extern char *get_version_string(void);
-extern char *inet_dquad(char *, u_long);
+extern char *inet_dquad(char *, size_t, u_long);
 extern char *print_wires(void);
 extern char *str3cat(char *, char *, char *, char *);
 extern char *strealloc(char *, char *);
@@ -299,7 +301,7 @@ extern int mount_fs(mntent_t *, int, caddr_t, int, MTYPE_TYPE, u_long, const cha
 extern void nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp);
 extern int pickup_rpc_reply(voidp, int, voidp, XDRPROC_T_TYPE);
 extern int switch_option(char *);
-extern int switch_to_logfile(char *logfile, int orig_umask);
+extern int switch_to_logfile(char *logfile, int orig_umask, int truncate_log);
 extern mntlist *read_mtab(char *, const char *);
 #ifndef HAVE_TRANSPORT_TYPE_TLI
 extern struct sockaddr_in *amu_svc_getcaller(SVCXPRT *xprt);
@@ -319,7 +321,6 @@ extern void rmdirs(char *);
 extern void rpc_msg_init(struct rpc_msg *, u_long, u_long, u_long);
 extern void set_amd_program_number(int program);
 extern void show_opts(int ch, struct opt_tab *);
-extern void xstrlcpy(char *dst, const char *src, size_t len);
 extern void unregister_amq(void);
 extern voidp xmalloc(int);
 extern voidp xrealloc(voidp, int);
@@ -327,9 +328,33 @@ extern voidp xzalloc(int);
 extern int check_pmap_up(char *host, struct sockaddr_in* sin);
 extern u_long get_nfs_version(char *host, struct sockaddr_in *sin, u_long nfs_version, const char *proto);
 extern long get_server_pid(void);
-extern void dplog(const char *fmt, ...);
+extern void setup_sighandler(int signum, void (*handler)(int));
+extern time_t clocktime(nfstime *nt);
 
+#if defined(DEBUG) && (defined(HAVE_C99_VARARGS_MACROS) || defined(HAVE_GCC_VARARGS_MACROS))
+# ifdef HAVE_C99_VARARGS_MACROS
+#define xsnprintf(str,size,fmt,...)	_xsnprintf(__FILE__,__LINE__,(str),(size),(fmt),__VA_ARGS__)
+# endif /* HAVE_C99_VARARGS_MACROS */
+# ifdef HAVE_GCC_VARARGS_MACROS
+#define xsnprintf(str,size,fmt,args...)		_xsnprintf(__FILE__,__LINE__,(str),(size),(fmt),args)
+# endif /* HAVE_GCC_VARARGS_MACROS */
+extern int _xsnprintf(const char *filename, int lineno, char *str, size_t size, const char *format, ...);
+#define xvsnprintf(str,size,fmt,ap)	_xvsnprintf(__FILE__,__LINE__,(str),(size),(fmt),(ap))
+extern int _xvsnprintf(const char *filename, int lineno, char *str, size_t size, const char *format, va_list ap);
+#else /* not DEBUG or no C99/GCC-style vararg cpp macros supported */
+extern int xsnprintf(char *str, size_t size, const char *format, ...);
+extern int xvsnprintf(char *str, size_t size, const char *format, va_list ap);
+#endif /* not DEBUG or no C99/GCC-style vararg cpp macros supported */
 
+#ifdef DEBUG
+extern void _xstrlcat(const char *filename, int lineno, char *dst, const char *src, size_t len);
+# define xstrlcat(d,s,l)	_xstrlcat(__FILE__,__LINE__,(d),(s),(l))
+extern void _xstrlcpy(const char *filename, int lineno, char *dst, const char *src, size_t len);
+# define xstrlcpy(d,s,l)	_xstrlcpy(__FILE__,__LINE__,(d),(s),(l))
+#else /* not DEBUG */
+extern void xstrlcat(char *dst, const char *src, size_t len);
+extern void xstrlcpy(char *dst, const char *src, size_t len);
+#endif /* not DEBUG */
 
 #ifdef MOUNT_TABLE_ON_FILE
 extern void rewrite_mtab(mntlist *, const char *);

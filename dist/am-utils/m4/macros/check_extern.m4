@@ -40,6 +40,10 @@ AC_EGREP_CPP(${pattern},
 # endif /* not HAVE_SYS_TIME_H */
 #endif /* not TIME_WITH_SYS_TIME */
 
+#if defined(_AIX) && defined(HAVE_SYS_VMOUNT_H)
+# include <sys/vmount.h>
+#endif /* defined(_AIX) && defined(HAVE_SYS_VMOUNT_H) */
+
 #ifdef HAVE_STDIO_H
 # include <stdio.h>
 #endif /* HAVE_STDIO_H */

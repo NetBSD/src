@@ -1,4 +1,4 @@
-/*	$NetBSD: fixmount.c,v 1.3.2.1 2005/08/16 13:02:23 tron Exp $	*/
+/*	$NetBSD: fixmount.c,v 1.3.2.2 2007/02/24 12:17:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fixmount.c,v 1.12 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/fixmount/fixmount.c
  *
  */
 
@@ -50,10 +50,6 @@
 
 #define CREATE_TIMEOUT	2	/* seconds */
 #define CALL_TIMEOUT	5	/* seconds */
-
-#ifndef INADDR_NONE
-# define INADDR_NONE	0xffffffff
-#endif /* not INADDR_NONE */
 
 /* Constant defs */
 #define	ALL		1

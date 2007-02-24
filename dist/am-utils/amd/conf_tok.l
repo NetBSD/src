@@ -1,4 +1,4 @@
-/*	$NetBSD: conf_tok.l,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: conf_tok.l,v 1.1.1.7.2.2 2007/02/24 12:17:02 bouyer Exp $	*/
 
 %{
 /*
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: conf_tok.l,v 1.13 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/conf_tok.l
  *
  */
 

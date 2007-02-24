@@ -1,4 +1,4 @@
-/*	$NetBSD: homedir.c,v 1.3.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: homedir.c,v 1.3.2.2 2007/02/24 12:17:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: homedir.c,v 1.20 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/hlfsd/homedir.c
  *
  * HLFSD was written at Columbia University Computer Science Department, by
  * Erez Zadok <ezk@cs.columbia.edu> and Alexander Dupuy <dupuy@cs.columbia.edu>
@@ -91,8 +91,6 @@ homedir(int userid, int groupid)
   struct stat homestat;
   int old_groupid, old_userid;
 
-  clock_valid = 0;		/* invalidate logging clock */
-
   if ((found = plt_search(userid)) == (uid2home_t *) NULL) {
     return alt_spooldir;	/* use alt spool for unknown uid */
   }
@@ -103,9 +101,9 @@ homedir(int userid, int groupid)
     return alt_spooldir;	/* use alt spool for / or rel. home */
   }
   if ((int) userid == 0)	/* force all uid 0 to use root's home */
-    snprintf(linkval, sizeof(linkval), "%s/%s", root_home, home_subdir);
+    xsnprintf(linkval, sizeof(linkval), "%s/%s", root_home, home_subdir);
   else
-    snprintf(linkval, sizeof(linkval), "%s/%s", homename, home_subdir);
+    xsnprintf(linkval, sizeof(linkval), "%s/%s", homename, home_subdir);
 
   if (noverify) {
     found->last_status = 0;
@@ -231,9 +229,7 @@ hlfsd_diskspace(char *path)
   char buf[MAXPATHLEN];
   int fd, len;
 
-  clock_valid = 0;		/* invalidate logging clock */
-
-  snprintf(buf, sizeof(buf), "%s/._hlfstmp_%lu", path, (long) getpid());
+  xsnprintf(buf, sizeof(buf), "%s/._hlfstmp_%lu", path, (long) getpid());
   if ((fd = open(buf, O_RDWR | O_CREAT, 0600)) < 0) {
     plog(XLOG_ERROR, "cannot open %s: %m", buf);
     return -1;
@@ -271,8 +267,7 @@ delay(uid2home_t *found, int secs)
 {
   struct timeval tv;
 
-  if (found)
-    dlog("delaying on child %ld for %d seconds", (long) found->child, secs);
+  dlog("delaying on child %ld for %d seconds", (long) found->child, secs);
 
   tv.tv_usec = 0;
 
@@ -402,9 +397,11 @@ mailbox(int uid, char *username)
   if ((home = homeof(username)) == (char *) NULL)
     return (char *) NULL;
   if (STREQ(home, "/"))
-    snprintf(mboxfile, sizeof(mboxfile), "/%s/%s", home_subdir, username);
+    xsnprintf(mboxfile, sizeof(mboxfile),
+	      "/%s/%s", home_subdir, username);
   else
-    snprintf(mboxfile, sizeof(mboxfile), "%s/%s/%s", home, home_subdir, username);
+    xsnprintf(mboxfile, sizeof(mboxfile),
+	      "%s/%s/%s", home, home_subdir, username);
   return mboxfile;
 }
 
@@ -486,8 +483,6 @@ hlfsd_getpwent(void)
     return getpwent();
   }
 
-  clock_valid = 0;		/* invalidate logging clock */
-
   /* return here to read another entry */
 readent:
 
@@ -510,7 +505,8 @@ readent:
     plog(XLOG_ERROR, "no user name on line %d of %s", passwd_line, passwdfile);
     goto readent;
   }
-  strlcpy(pw_name, cp, sizeof(pw_name)); /* will show up in passwd_ent.pw_name */
+  /* pw_name will show up in passwd_ent.pw_name */
+  xstrlcpy(pw_name, cp, sizeof(pw_name));
 
   /* skip passwd */
   strtok(NULL, ":");
@@ -533,7 +529,8 @@ readent:
     plog(XLOG_ERROR, "no home dir on line %d of %s", passwd_line,  passwdfile);
     goto readent;
   }
-  strlcpy(pw_dir, cp, sizeof(pw_dir)); /* will show up in passwd_ent.pw_dir */
+  /* pw_dir will show up in passwd_ent.pw_dir */
+  xstrlcpy(pw_dir, cp, sizeof(pw_dir));
 
   /* the rest of the fields are unimportant and not being considered */
 
@@ -596,8 +593,6 @@ plt_reset(void)
 {
   int i;
 
-  clock_valid = 0;		/* invalidate logging clock */
-
   hlfsd_setpwent();
   if (hlfsd_getpwent() == (struct passwd *) NULL) {
     hlfsd_endpwent();
@@ -641,8 +636,6 @@ static void
 table_add(u_int u, const char *h, const char *n)
 {
   int i;
-
-  clock_valid = 0;		/* invalidate logging clock */
 
   if (max_pwtab_num <= 0) {	/* was never initialized */
     max_pwtab_num = 1;

@@ -13,7 +13,7 @@ case "${host_os}" in
 		ac_cv_nfs_sa_dref_style=svr4 ;;
 	386bsd* | bsdi1* )
 		ac_cv_nfs_sa_dref_style=386bsd ;;
-	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | rhapsody* )
+	bsd44* | bsdi* | freebsd* | netbsd* | openbsd* | darwin* | macosx* | rhapsody* )
 		ac_cv_nfs_sa_dref_style=bsd44 ;;
 	linux* )
 		ac_cv_nfs_sa_dref_style=linux ;;

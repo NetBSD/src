@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_prot_aix4_3.h,v 1.1.1.7.2.1 2005/08/16 13:02:20 tron Exp $	*/
+/*	$NetBSD: nfs_prot_aix4_3.h,v 1.1.1.7.2.2 2007/02/24 12:17:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_aix4_3.h,v 1.13 2005/01/16 23:59:25 ezk Exp
+ * File: am-utils/conf/nfs_prot/nfs_prot_aix4_3.h
  *
  */
 
@@ -226,6 +226,29 @@ typedef writeargs	nfswriteargs;
 #ifdef MNT_NFS3
 
 struct aix4_nfs_args {
+  struct sockaddr_in addr;	/* file server address */
+  struct sockaddr_in *syncaddr;	/* secure NFS time sync addr */
+  int proto;			/* IPPROTO_TCP/IPPROTO_UDP ??? */
+  char *hostname;		/* server's hostname */
+  char *netname;		/* server's netname */
+  caddr_t fh;			/* File handle to be mounted */
+  int flags;			/* flags */
+  int wsize;			/* write size in bytes */
+  int rsize;			/* read size in bytes */
+  int timeo;			/* initial timeout in .1 secs */
+  int retrans;			/* times to retry send */
+  int acregmin;			/* attr cache file min secs */
+  int acregmax;			/* attr cache file max secs */
+  int acdirmin;			/* attr cache dir min secs */
+  int acdirmax;			/* attr cache dir max secs */
+  struct ppathcnf *pathconf;	/* static pathconf kludge */
+  int biods;			/* biods per mount */
+  int numclust;			/* numclust per mount */
+};
+
+#if 0
+/* old structure we hand crafted. no longer needed */
+struct aix4_nfs_args {
   struct sockaddr_in addr;	/* server address and port */
   caddr_t u0;			/* ??? UNKNOWN ??? */
   unsigned long proto;		/* IPPROTO_TCP/IPPROTO_UDP */
@@ -244,6 +267,7 @@ struct aix4_nfs_args {
   unsigned long u14;		/* ??? UNKNOWN ??? */
   struct pathcnf *pathconf;	/* pathconf */
 };
+#endif
 
 /*
  * IBM is in dire need of taking a soft-eng class.
@@ -255,12 +279,11 @@ struct aix4_nfs_args {
 #define MOUNT_TYPE_NFS3_BIS 0x12344321
 struct aix4_nfs_args_bis {
   struct sockaddr_in addr;	/* server address and port */
-  caddr_t u0;			/* ??? UNKNOWN ??? */
-  unsigned long proto;		/* IPPROTO_TCP/IPPROTO_UDP */
+  struct sockaddr_in *syncaddr;	/* secure NFS time sync addr */
+  int proto;			/* IPPROTO_TCP/IPPROTO_UDP ??? */
   char *hostname;		/* pointer to hostname? */
   char *netname;		/* pointer to netname? */
   caddr_t fh;			/* pointer to NFS v3 fh? */
-  unsigned long junk;		/* IBM sux, IBM sux, IBM sux... */
   unsigned long flags;		/* flags */
   unsigned long wsize;		/* wsize */
   unsigned long rsize;		/* rsize */
@@ -271,7 +294,9 @@ struct aix4_nfs_args_bis {
   unsigned long acdirmin;	/* acdirmin */
   unsigned long acdirmax;	/* acdirmax */
   unsigned long u14;		/* ??? UNKNOWN ??? */
-  struct pathcnf *pathconf;	/* pathconf */
+  struct ppathcnf *pathconf;	/* static pathconf kludge */
+  int biods;			/* biods per mount */
+  int numclust;			/* numclust per mount */
 };
 
 #endif /* MNT_NFS3 */

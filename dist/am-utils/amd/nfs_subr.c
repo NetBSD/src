@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subr.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: nfs_subr.c,v 1.3.2.2 2007/02/24 12:17:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_subr.c,v 1.28 2005/04/09 18:15:35 ottavio Exp
+ * File: am-utils/amd/nfs_subr.c
  *
  */
 
@@ -57,6 +57,29 @@
 #ifndef nfs_error
 # define nfs_error(e) ((nfsstat)(e))
 #endif /* nfs_error */
+
+/*
+ * File Handle structure
+ *
+ * This is interpreted by indexing the exported array
+ * by fhh_id (for old-style filehandles), or by retrieving
+ * the node name from fhh_path (for new-style filehandles).
+ *
+ * The whole structure is mapped onto a standard fhandle_t
+ * when transmitted.
+ */
+struct am_fh {
+  u_int fhh_gen;				/* generation number */
+  union {
+    struct {
+      int fhh_type;				/* old or new am_fh */
+      int fhh_pid;				/* process id */
+      int fhh_id;				/* map id */
+    } s;
+    char fhh_path[NFS_FHSIZE-sizeof(u_int)];	/* path to am_node */
+  } u;
+};
+
 
 /* forward declarations */
 /* converting am-filehandles to mount-points */
@@ -110,7 +133,7 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
   static nfsattrstat res;
   am_node *mp;
   int retry;
-  time_t now = clocktime();
+  time_t now = clocktime(NULL);
 
   if (amuDebug(D_TRACE))
     plog(XLOG_DEBUG, "getattr:");
@@ -130,10 +153,11 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 
   res = mp->am_attr;
   if (amuDebug(D_TRACE))
-    plog(XLOG_DEBUG, "\tstat(%s), size = %d, mtime=%ld",
+    plog(XLOG_DEBUG, "\tstat(%s), size = %d, mtime=%ld.%ld",
 	 mp->am_path,
 	 (int) res.ns_u.ns_attr_u.na_size,
-	 (long) res.ns_u.ns_attr_u.na_mtime.nt_seconds);
+	 (long) res.ns_u.ns_attr_u.na_mtime.nt_seconds,
+	 (long) res.ns_u.ns_attr_u.na_mtime.nt_useconds);
 
   /* Delay unmount of what was looked up */
   if (mp->am_timeo_w < 4 * gopt.am_timeo_w)
@@ -183,8 +207,8 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
   /* finally, find the effective uid/gid from RPC request */
   if (getcreds(rqstp, &uid, &gid, nfsxprt) < 0)
     plog(XLOG_ERROR, "cannot get uid/gid from RPC credentials");
-  snprintf(opt_uid, sizeof(12), "%d", (int) uid); /* 12 = sizeof(uid_str) */
-  snprintf(opt_gid, sizeof(12), "%d", (int) gid); /* 12 = sizeof(gid_str) */
+  xsnprintf(opt_uid, sizeof(uid_str), "%d", (int) uid);
+  xsnprintf(opt_gid, sizeof(gid_str), "%d", (int) gid);
 
   mp = fh_to_mp3(&argp->da_fhandle, &retry, VLOOK_CREATE);
   if (mp == 0) {
@@ -262,8 +286,7 @@ nfs_quick_reply(am_node *mp, int error)
     /*
      * Free up transp.  It's only used for one reply.
      */
-    XFREE(transp);
-    mp->am_transp = NULL;
+    XFREE(mp->am_transp);
     dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
   }
 }
@@ -614,15 +637,15 @@ fh_to_mp3(am_nfs_fh *fhp, int *rp, int vop)
   struct am_fh *fp = (struct am_fh *) fhp;
   am_node *ap = 0;
 
-  if (fp->fhh_type != 0) {
+  if (fp->u.s.fhh_type != 0) {
     /* New filehandle type */
-    int len = sizeof(*fhp);
+    int len = sizeof(*fhp) - sizeof(fp->fhh_gen);
     char *path = xmalloc(len+1);
     /*
      * Because fhp is treated as a filehandle we use memcpy
      * instead of xstrlcpy.
      */
-    memcpy(path, (char *) fhp, len);
+    memcpy(path, (char *) fp->u.fhh_path, len);
     path[len] = '\0';
     /* dlog("fh_to_mp3: new filehandle: %s", path); */
 
@@ -633,25 +656,26 @@ fh_to_mp3(am_nfs_fh *fhp, int *rp, int vop)
     /*
      * Check process id matches
      * If it doesn't then it is probably
-     * from an old kernel cached filehandle
+     * from an old kernel-cached filehandle
      * which is now out of date.
      */
-    if (fp->fhh_pid != am_mypid)
+    if (fp->u.s.fhh_pid != am_mypid)
       goto drop;
 
     /*
      * Get hold of the supposed mount node
      */
-    ap = get_exported_ap(fp->fhh_id);
-    /*
-     * Check the generation number in the node
-     * matches the one from the kernel.  If not
-     * then the old node has been timed out and
-     * a new one allocated.
-     */
-    if (ap->am_gen != fp->fhh_gen)
-      ap = 0;
+    ap = get_exported_ap(fp->u.s.fhh_id);
   }
+
+  /*
+   * Check the generation number in the node
+   * matches the one from the kernel.  If not
+   * then the old node has been timed out and
+   * a new one allocated.
+   */
+  if (ap != NULL && ap->am_gen != fp->fhh_gen)
+    ap = 0;
 
   /*
    * If it doesn't exists then drop the request
@@ -677,7 +701,7 @@ fh_to_mp3(am_nfs_fh *fhp, int *rp, int vop)
      * With any luck the kernel will re-stat
      * the child node and get new information.
      */
-    orig_ap->am_fattr.na_mtime.nt_seconds = clocktime();
+    clocktime(&orig_ap->am_fattr.na_mtime);
 
     /*
      * Call the parent's lookup routine for an object
@@ -764,37 +788,36 @@ void
 mp_to_fh(am_node *mp, am_nfs_fh *fhp)
 {
   u_int pathlen;
+  struct am_fh *fp = (struct am_fh *) fhp;
 
   memset((char *) fhp, 0, sizeof(am_nfs_fh));
 
+  /* Store the generation number */
+  fp->fhh_gen = mp->am_gen;
+
   pathlen = strlen(mp->am_path);
-  if (pathlen <= sizeof(*fhp)) {
+  if (pathlen <= sizeof(*fhp) - sizeof(fp->fhh_gen)) {
     /* dlog("mp_to_fh: new filehandle: %s", mp->am_path); */
+
     /*
      * Because fhp is treated as a filehandle we use memcpy instead of
      * xstrlcpy.
      */
-    memcpy((char *) fhp, mp->am_path, pathlen); /* making a filehandle */
+    memcpy(fp->u.fhh_path, mp->am_path, pathlen); /* making a filehandle */
   } else {
-    struct am_fh *fp = (struct am_fh *) fhp;
-
     /*
      * Take the process id
      */
-    fp->fhh_pid = am_mypid;
+    fp->u.s.fhh_pid = am_mypid;
 
     /*
      * ... the map number
      */
-    fp->fhh_id = mp->am_mapno;
+    fp->u.s.fhh_id = mp->am_mapno;
 
     /*
-     * ... and the generation number
-     */
-    fp->fhh_gen = mp->am_gen;
-
-    /*
-     * ... to make a "unique" triple that will never
+     * ... and the generation number (previously stored)
+     * to make a "unique" triple that will never
      * be reallocated except across reboots (which doesn't matter)
      * or if we are unlucky enough to be given the same
      * pid as a previous amd (very unlikely).

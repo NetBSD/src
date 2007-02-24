@@ -1,4 +1,4 @@
-/*	$NetBSD: wr_atab.c,v 1.3.2.1 2005/08/16 13:02:24 tron Exp $	*/
+/*	$NetBSD: wr_atab.c,v 1.3.2.2 2007/02/24 12:17:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: wr_atab.c,v 1.10 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/fsinfo/wr_atab.c
  *
  */
 
@@ -136,7 +136,8 @@ write_amount_info(FILE *af, automount *ap,  u_int sk)
        */
       if (mp->m_dk->d_host->h_lochost) {
 	char amountpt[1024];
-	compute_automount_point(amountpt, mp->m_dk->d_host, mp->m_exported->m_volname);
+	compute_automount_point(amountpt, sizeof(amountpt),
+				mp->m_dk->d_host, mp->m_exported->m_volname);
 	if (!STREQ(mp->m_dk->d_mountpt, amountpt)) {
 	  /*
 	   * ap->a_volname is the name of the aliased volume
@@ -222,12 +223,12 @@ write_amount_info(FILE *af, automount *ap,  u_int sk)
 	char sublink[1024];
 	sublink[0] = '\0';
 	if (exp_namelen < namelen) {
-	  strlcat(sublink, mp->m_name + exp_namelen + 1, sizeof(sublink));
+	  xstrlcat(sublink, mp->m_name + exp_namelen + 1, sizeof(sublink));
 	  if (mvolnlen < volnlen)
-	    strlcat(sublink, "/", sizeof(sublink));
+	    xstrlcat(sublink, "/", sizeof(sublink));
 	}
 	if (mvolnlen < volnlen)
-	  strlcat(sublink, ap->a_volname + mvolnlen + 1, sizeof(sublink));
+	  xstrlcat(sublink, ap->a_volname + mvolnlen + 1, sizeof(sublink));
 
 	fprintf(af, ";sublink:=%s", sublink);
       }

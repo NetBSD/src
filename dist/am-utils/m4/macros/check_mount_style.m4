@@ -15,6 +15,8 @@ case "${host_os_name}" in
 			ac_cv_style_mount=svr4 ;;
 	bsdi* )
 			ac_cv_style_mount=bsdi3 ;;
+	aix3* | aix4* )
+			ac_cv_style_mount=aix3 ;;
 	aix* )
 			ac_cv_style_mount=aix ;;
 	irix5* )

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsi_data.h,v 1.1.1.7.2.1 2005/08/16 13:02:23 tron Exp $	*/
+/*	$NetBSD: fsi_data.h,v 1.1.1.7.2.2 2007/02/24 12:17:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,9 +39,12 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fsi_data.h,v 1.9 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/fsinfo/fsi_data.h
  *
  */
+
+#ifndef _FSI_DATA_H
+#define _FSI_DATA_H
 
 typedef struct auto_tree auto_tree;
 typedef struct automount automount;
@@ -234,3 +237,4 @@ struct ioloc {
   int i_line;
   char *i_file;
 };
+#endif /* not _FSI_DATA_H */

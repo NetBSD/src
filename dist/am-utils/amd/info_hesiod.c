@@ -1,4 +1,4 @@
-/*	$NetBSD: info_hesiod.c,v 1.4.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.4.2.2 2007/02/24 12:17:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_hesiod.c,v 1.16 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/info_hesiod.c
  *
  */
 
@@ -80,7 +80,7 @@ amu_hesiod_init(mnt_map *m, char *map, time_t *tp)
   *tp = 0;
 
 #ifdef HAVE_HESIOD_INIT
-  if(!hesiod_context && hesiod_init(&hesiod_context) != 0)
+  if (!hesiod_context && hesiod_init(&hesiod_context) != 0)
     return ENOENT;
 #endif /* HAVE_HESIOD_INIT */
 
@@ -107,7 +107,7 @@ hesiod_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
   if (key[0] == '.')
     return ENOENT;
 
-  snprintf(hes_key, sizeof(hes_key), "%s.%s", key, map + HES_PREFLEN);
+  xsnprintf(hes_key, sizeof(hes_key), "%s.%s", key, map + HES_PREFLEN);
 
   /*
    * Call the resolver

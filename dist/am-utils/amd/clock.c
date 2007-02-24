@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.1.7.2.2 2007/02/24 12:17:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: clock.c,v 1.14 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/clock.c
  *
  */
 
@@ -121,13 +121,13 @@ free_callout(callout *cp)
 /*
  * Schedule a callout.
  *
- * (*fn)(fn_arg) will be called at clocktime() + secs
+ * (*fn)(fn_arg) will be called at clocktime(NULL) + secs
  */
 int
 timeout(u_int secs, callout_fun *fn, opaque_t fn_arg)
 {
   callout *cp, *cp2;
-  time_t t = clocktime() + secs;
+  time_t t = clocktime(NULL) + secs;
 
   /*
    * Allocate and fill in a new callout structure
@@ -210,7 +210,7 @@ softclock(void)
     if (task_notify_todo)
       do_task_notify();
 
-    now = clocktime();
+    now = clocktime(NULL);
 
     /*
      * While there are more callouts waiting...

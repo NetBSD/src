@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_nfs.c,v 1.4.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: ops_nfs.c,v 1.4.2.2 2007/02/24 12:17:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_nfs.c,v 1.41 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/amd/ops_nfs.c
  *
  */
 
@@ -306,7 +306,7 @@ flush_nfs_fhandle_cache(fserver *fs)
   fh_cache *fp;
 
   ITER(fp, fh_cache, &fh_head) {
-    if (fp->fh_fs == fs || fs == 0) {
+    if (fp->fh_fs == fs || fs == NULL) {
       /*
        * Only invalidate port info for non-WebNFS servers
        */
@@ -362,7 +362,7 @@ prime_nfs_fhandle_cache(char *path, fserver *fs, am_nfs_handle_t *fhbuf, mntfs *
       if (error == 0) {
 	if (mf->mf_flags & MFF_NFS_SCALEDOWN) {
 	  fp_save = fp;
-	  // XXX: why reuse the ID?
+	  /* XXX: why reuse the ID? */
 	  reuse_id = TRUE;
 	  break;
 	}
@@ -609,6 +609,7 @@ webnfs_lookup(fh_cache *fp, fwd_fun fun, wchan_t wchan)
   am_LOOKUP3args args3;
 #endif
   char *wnfs_path;
+  size_t l;
 
   if (!nfs_auth) {
     error = make_nfs_auth();
@@ -626,9 +627,10 @@ webnfs_lookup(fh_cache *fp, fwd_fun fun, wchan_t wchan)
   /*
    * Use native path like the rest of amd (cf. RFC 2054, 6.1).
    */
-  wnfs_path = (char *) xmalloc(strlen(fp->fh_path) + 2);
+  l = strlen(fp->fh_path) + 2;
+  wnfs_path = (char *) xmalloc(l);
   wnfs_path[0] = 0x80;
-  strcpy(wnfs_path + 1, fp->fh_path);
+  xstrlcpy(wnfs_path + 1, fp->fh_path, l - 1);
 
   /* find the right program and lookup procedure */
 #ifdef HAVE_FS_NFS3
@@ -688,6 +690,7 @@ static char *
 nfs_match(am_opts *fo)
 {
   char *xmtab;
+  size_t l;
 
   if (fo->opt_fs && !fo->opt_rfs)
     fo->opt_rfs = fo->opt_fs;
@@ -703,8 +706,9 @@ nfs_match(am_opts *fo)
   /*
    * Determine magic cookie to put in mtab
    */
-  xmtab = (char *) xmalloc(strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2);
-  sprintf(xmtab, "%s:%s", fo->opt_rhost, fo->opt_rfs);
+  l = strlen(fo->opt_rhost) + strlen(fo->opt_rfs) + 2;
+  xmtab = (char *) xmalloc(l);
+  xsnprintf(xmtab, l, "%s:%s", fo->opt_rhost, fo->opt_rfs);
   dlog("NFS: mounting remote server \"%s\", remote fs \"%s\" on \"%s\"",
        fo->opt_rhost, fo->opt_rfs, fo->opt_fs);
 
@@ -756,7 +760,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
 {
   MTYPE_TYPE type;
   char *colon;
-  char *xopts=NULL, transp_opts[80];
+  char *xopts=NULL, transp_timeo_opts[40], transp_retrans_opts[40];
   char host[MAXHOSTNAMELEN + MAXPATHLEN + 2];
   fserver *fs = mf->mf_server;
   u_long nfs_version = fs->fs_version;
@@ -765,6 +769,7 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
   int error;
   int genflags;
   int retry;
+  int proto = AMU_TYPE_NONE;
   mntent_t mnt;
   nfs_args_t nfs_args;
 
@@ -785,28 +790,37 @@ mount_nfs_fh(am_nfs_handle_t *fhp, char *mntdir, char *fs_name, mntfs *mf)
 #ifdef MAXHOSTNAMELEN
   /* most kernels have a name length restriction */
   if (strlen(host) >= MAXHOSTNAMELEN)
-    strlcpy(host + MAXHOSTNAMELEN - 3, "..", sizeof(host) - (MAXHOSTNAMELEN - 3));
+    xstrlcpy(host + MAXHOSTNAMELEN - 3, "..",
+	     sizeof(host) - MAXHOSTNAMELEN + 3);
 #endif /* MAXHOSTNAMELEN */
 
-  /* create option=VAL for udp/tcp specific timeouts and retrans values */
-  if (STREQ(nfs_proto, "udp")) {
-    sprintf(transp_opts, "%s=%d,%s=%d,",
-	    MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[AMU_TYPE_UDP],
-	    MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[AMU_TYPE_UDP]);
-  } else if (STREQ(nfs_proto, "tcp")) {
-    sprintf(transp_opts, "%s=%d,%s=%d,",
-	    MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[AMU_TYPE_TCP],
-	    MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[AMU_TYPE_TCP]);
+  /*
+   * Create option=VAL for udp/tcp specific timeouts and retrans values, but
+   * only if these options were specified.
+   */
+
+  transp_timeo_opts[0] = transp_retrans_opts[0] = '\0';	/* initialize */
+  if (STREQ(nfs_proto, "udp"))
+    proto = AMU_TYPE_UDP;
+  else if (STREQ(nfs_proto, "tcp"))
+    proto = AMU_TYPE_TCP;
+  if (proto != AMU_TYPE_NONE) {
+    if (gopt.amfs_auto_timeo[proto] > 0)
+      xsnprintf(transp_timeo_opts, sizeof(transp_timeo_opts), "%s=%d,",
+		MNTTAB_OPT_TIMEO, gopt.amfs_auto_timeo[proto]);
+    if (gopt.amfs_auto_retrans[proto] > 0)
+      xsnprintf(transp_retrans_opts, sizeof(transp_retrans_opts), "%s=%d,",
+		MNTTAB_OPT_RETRANS, gopt.amfs_auto_retrans[proto]);
   }
 
   if (mf->mf_remopts && *mf->mf_remopts &&
       !islocalnet(fs->fs_ip->sin_addr.s_addr)) {
     plog(XLOG_INFO, "Using remopts=\"%s\"", mf->mf_remopts);
     /* use transp_opts first, so map-specific opts will override */
-    xopts = str3cat(xopts, transp_opts, mf->mf_remopts, "");
+    xopts = str3cat(xopts, transp_timeo_opts, transp_retrans_opts, mf->mf_remopts);
   } else {
     /* use transp_opts first, so map-specific opts will override */
-    xopts = str3cat(xopts, transp_opts, mf->mf_mopts, "");
+    xopts = str3cat(xopts, transp_timeo_opts, transp_retrans_opts, mf->mf_mopts);
   }
 
   memset((voidp) &mnt, 0, sizeof(mnt));
@@ -918,8 +932,30 @@ nfs_mount(am_node *am, mntfs *mf)
 static int
 nfs_umount(am_node *am, mntfs *mf)
 {
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
-  int error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, on_autofs);
+  int unmount_flags, new_unmount_flags, error;
+
+  unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
+  error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, unmount_flags);
+
+#if defined(HAVE_UMOUNT2) && (defined(MNT2_GEN_OPT_FORCE) || defined(MNT2_GEN_OPT_DETACH))
+  /*
+   * If the attempt to unmount failed with EBUSY, and this fserver was
+   * marked for forced unmounts, then use forced/lazy unmounts.
+   */
+  if (error == EBUSY &&
+      gopt.flags & CFM_FORCED_UNMOUNTS &&
+      mf->mf_server->fs_flags & FSF_FORCE_UNMOUNT) {
+    plog(XLOG_INFO, "EZK: nfs_umount: trying forced/lazy unmounts");
+    /*
+     * XXX: turning off the FSF_FORCE_UNMOUNT may not be perfectly
+     * incorrect.  Multiple nodes may need to be timed out and restarted for
+     * a single hung fserver.
+     */
+    mf->mf_server->fs_flags &= ~FSF_FORCE_UNMOUNT;
+    new_unmount_flags = unmount_flags | AMU_UMOUNT_FORCE | AMU_UMOUNT_DETACH;
+    error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, new_unmount_flags);
+  }
+#endif /* HAVE_UMOUNT2 && (MNT2_GEN_OPT_FORCE || MNT2_GEN_OPT_DETACH) */
 
   /*
    * Here is some code to unmount 'restarted' file systems.
@@ -948,12 +984,14 @@ nfs_umount(am_node *am, mntfs *mf)
 
       if (NSTREQ(mf->mf_mount, new_mf->mf_mount, len) &&
 	  new_mf->mf_mount[len] == '/') {
-	UMOUNT_FS(new_mf->mf_mount, mnttab_file_name, 0);
+	new_unmount_flags =
+	  (new_mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
+	UMOUNT_FS(new_mf->mf_mount, mnttab_file_name, new_unmount_flags);
 	didsome = 1;
       }
     }
     if (didsome)
-      error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, on_autofs);
+      error = UMOUNT_FS(mf->mf_mount, mnttab_file_name, unmount_flags);
   }
   if (error)
     return error;

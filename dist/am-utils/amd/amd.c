@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.c,v 1.7.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amd.c,v 1.7.2.2 2007/02/24 12:17:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amd.c,v 1.35 2005/03/08 06:05:33 ezk Exp
+ * File: am-utils/amd/amd.c
  *
  */
 
@@ -55,9 +55,10 @@
 
 struct amu_global_options gopt;	/* where global options are stored */
 
-char pid_fsname[16 + MAXHOSTNAMELEN];	/* "kiska.southseas.nz:(pid%d)" */
+char pid_fsname[SIZEOF_PID_FSNAME]; /* "kiska.southseas.nz:(pid%d)" */
 char *hostdomain = "unknown.domain";
-char hostd[2 * MAXHOSTNAMELEN + 1]; /* Host+domain */
+#define SIZEOF_HOSTD (2 * MAXHOSTNAMELEN + 1)	/* Host+domain */
+char hostd[SIZEOF_HOSTD];	/* Host+domain */
 char *endian = ARCH_ENDIAN;	/* Big or Little endian */
 char *cpu = HOST_CPU;		/* CPU type */
 char *PrimNetName;		/* name of primary network */
@@ -384,14 +385,11 @@ do_memory_locking(void)
 int
 main(int argc, char *argv[])
 {
-  char *domdot, *verstr;
+  char *domdot, *verstr, *vertmp;
   int ppid = 0;
   int error;
   char *progname = NULL;		/* "amd" */
   char hostname[MAXHOSTNAMELEN + 1] = "localhost"; /* Hostname */
-#ifdef HAVE_SIGACTION
-  struct sigaction sa;
-#endif /* HAVE_SIGACTION */
 
   /*
    * Make sure some built-in assumptions are true before we start
@@ -460,74 +458,31 @@ main(int argc, char *argv[])
     *domdot++ = '\0';
     hostdomain = domdot;
   }
-  strlcpy(hostd, hostname, sizeof(hostd));
+  xstrlcpy(hostd, hostname, sizeof(hostd));
   am_set_hostname(hostname);
 
   /*
-   * Trap interrupts for shutdowns.
+   * Setup signal handlers
    */
-#ifdef HAVE_SIGACTION
-  memset(&sa, 0, sizeof(sa));
-  sa.sa_handler = sigterm;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGINT);
-  sigaddset(&(sa.sa_mask), SIGTERM);
-  sigaction(SIGINT, &sa, NULL);
-  sigaction(SIGTERM, &sa, NULL);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGINT, sigterm);
-#endif /* not HAVE_SIGACTION */
-
+  /* SIGINT: trap interrupts for shutdowns */
+  setup_sighandler(SIGINT, sigterm);
+  /* SIGTERM: trap terminate so we can shutdown cleanly (some chance) */
+  setup_sighandler(SIGTERM, sigterm);
+  /* SIGHUP: hangups tell us to reload the cache */
+  setup_sighandler(SIGHUP, sighup);
   /*
-   * Trap Terminate so that we can shutdown gracefully (some chance)
+   * SIGCHLD: trap Death-of-a-child.  These allow us to pick up the exit
+   * status of backgrounded mounts.  See "sched.c".
    */
+  setup_sighandler(SIGCHLD, sigchld);
 #ifdef HAVE_SIGACTION
-  sa.sa_handler = sigterm;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGTERM);
-  sigaction(SIGTERM, &sa, NULL);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGTERM, sigterm);
-#endif /* not HAVE_SIGACTION */
-
-  /*
-   * Hangups tell us to reload the cache
-   */
-#ifdef HAVE_SIGACTION
-  sa.sa_handler = sighup;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGHUP);
-  sigaction(SIGHUP, &sa, NULL);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGHUP, sighup);
-#endif /* not HAVE_SIGACTION */
-
-  /*
-   * Trap Death-of-a-child.  These allow us to
-   * pick up the exit status of backgrounded mounts.
-   * See "sched.c".
-   */
-#ifdef HAVE_SIGACTION
-  sa.sa_handler = sigchld;
-  sa.sa_flags = 0;
-  sigemptyset(&(sa.sa_mask));
-  sigaddset(&(sa.sa_mask), SIGCHLD);
-  sigaction(SIGCHLD, &sa, NULL);
-
-  /*
-   * construct global "masked_sigs" used in nfs_start.c
-   */
+  /* construct global "masked_sigs" used in nfs_start.c */
   sigemptyset(&masked_sigs);
+  sigaddset(&masked_sigs, SIGINT);
+  sigaddset(&masked_sigs, SIGTERM);
   sigaddset(&masked_sigs, SIGHUP);
   sigaddset(&masked_sigs, SIGCHLD);
-  sigaddset(&masked_sigs, SIGTERM);
-  sigaddset(&masked_sigs, SIGINT);
-#else /* not HAVE_SIGACTION */
-  (void) signal(SIGCHLD, sigchld);
-#endif /* not HAVE_SIGACTION */
+#endif /* HAVE_SIGACTION */
 
   /*
    * Fix-up any umask problems.  Most systems default
@@ -548,12 +503,14 @@ main(int argc, char *argv[])
   /*
    * Log version information.
    */
-  verstr = strtok(get_version_string(), "\n");
+  vertmp = get_version_string();
+  verstr = strtok(vertmp, "\n");
   plog(XLOG_INFO, "AM-UTILS VERSION INFORMATION:");
   while (verstr) {
     plog(XLOG_INFO, "%s", verstr);
     verstr = strtok(NULL, "\n");
   }
+  XFREE(vertmp);
 
   /*
    * Get our own IP address so that we can mount the automounter.  We pass
@@ -597,7 +554,7 @@ main(int argc, char *argv[])
     do_memory_locking();
   }
 
-  do_mapc_reload = clocktime() + gopt.map_reload_interval;
+  do_mapc_reload = clocktime(NULL) + gopt.map_reload_interval;
 
   /*
    * Register automounter with system.

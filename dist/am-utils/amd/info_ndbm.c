@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ndbm.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: info_ndbm.c,v 1.3.2.2 2007/02/24 12:17:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_ndbm.c,v 1.9 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/info_ndbm.c
  *
  */
 
@@ -87,8 +87,8 @@ ndbm_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
 #ifdef DBM_SUFFIX
     char dbfilename[256];
 
-    strlcpy(dbfilename, map, sizeof(dbfilename));
-    strlcat(dbfilename, DBM_SUFFIX, sizeof(dbfilename));
+    xstrlcpy(dbfilename, map, sizeof(dbfilename));
+    xstrlcat(dbfilename, DBM_SUFFIX, sizeof(dbfilename));
     error = stat(dbfilename, &stb);
 #else /* not DBM_SUFFIX */
     error = fstat(dbm_pagfno(db), &stb);
@@ -118,14 +118,14 @@ ndbm_init(mnt_map *m, char *map, time_t *tp)
 #ifdef DBM_SUFFIX
     char dbfilename[256];
 
-    strlcpy(dbfilename, map, sizeof(dbfilename));
-    strlcat(dbfilename, DBM_SUFFIX, sizeof(dbfilename));
+    xstrlcpy(dbfilename, map, sizeof(dbfilename));
+    xstrlcat(dbfilename, DBM_SUFFIX, sizeof(dbfilename));
     error = stat(dbfilename, &stb);
 #else /* not DBM_SUFFIX */
     error = fstat(dbm_pagfno(db), &stb);
 #endif /* not DBM_SUFFIX */
     if (error < 0)
-      *tp = clocktime();
+      *tp = clocktime(NULL);
     else
       *tp = stb.st_mtime;
     dbm_close(db);

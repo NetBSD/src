@@ -75,7 +75,7 @@ case "${host_os}" in
 			ac_cv_nfs_prot_headers=nextstep ;;
 	ultrix* )
 			ac_cv_nfs_prot_headers=ultrix ;;
- 	darwin* | rhapsody* )
+ 	darwin* | macosx* | rhapsody* )
  			ac_cv_nfs_prot_headers=darwin ;;
 	* )
 			ac_cv_nfs_prot_headers=default ;;

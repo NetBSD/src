@@ -1,4 +1,4 @@
-/*	$NetBSD: mk-amd-map.c,v 1.3.2.1 2005/08/16 13:02:37 tron Exp $	*/
+/*	$NetBSD: mk-amd-map.c,v 1.3.2.2 2007/02/24 12:17:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mk-amd-map.c,v 1.13 2005/01/03 20:56:46 ezk Exp
+ * File: am-utils/mk-amd-map/mk-amd-map.c
  */
 
 /*
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
   char maptpag[16], maptdir[16];
   char *map_name_pag = (char *) NULL, *map_name_dir = (char *) NULL;
 #endif /* not HAVE_DB_SUFFIX */
-  int len;
+  size_t l = 0;
   char *sl;
   int printit = 0;
   int usage = 0;
@@ -273,13 +273,14 @@ main(int argc, char *argv[])
 #endif /* DEBUG */
 
   if (!printit) {
-    len = strlen(mapsrc);
+    /* enough space for ".db" or ".pag" or ".dir" appended */
+    l = strlen(mapsrc) + 5;
 #ifdef HAVE_DB_SUFFIX
-    map_name_db = (char *) malloc(len + 4);
+    map_name_db = (char *) malloc(l);
     error = (map_name_db == NULL);
 #else /* not HAVE_DB_SUFFIX */
-    map_name_pag = (char *) malloc(len + 5);
-    map_name_dir = (char *) malloc(len + 5);
+    map_name_pag = (char *) malloc(l);
+    map_name_dir = (char *) malloc(l);
     error = (map_name_pag == NULL || map_name_dir == NULL);
 #endif /* not HAVE_DB_SUFFIX */
     if (error) {
@@ -306,15 +307,15 @@ main(int argc, char *argv[])
 
     /* remove existing temps (if any) */
 #ifdef HAVE_DB_SUFFIX
-    snprintf(maptdb, sizeof(maptdb), "%s.db", maptmp);
+    xsnprintf(maptdb, sizeof(maptdb), "%s.db", maptmp);
     if (remove_file(maptdb) < 0) {
       fprintf(stderr, "Can't remove existing temporary file; ");
       perror(maptdb);
       exit(1);
     }
 #else /* not HAVE_DB_SUFFIX */
-    snprintf(maptpag, sizeof(maptpag), "%s.pag", maptmp);
-    snprintf(maptdir, sizeof(maptdir), "%s.dir", maptmp);
+    xsnprintf(maptpag, sizeof(maptpag), "%s.pag", maptmp);
+    xsnprintf(maptdir, sizeof(maptdir), "%s.dir", maptmp);
     if (remove_file(maptpag) < 0 || remove_file(maptdir) < 0) {
       fprintf(stderr, "Can't remove existing temporary files; %s and ", maptpag);
       perror(maptdir);
@@ -349,7 +350,8 @@ main(int argc, char *argv[])
   /* all went well */
 
 #ifdef HAVE_DB_SUFFIX
-  sprintf(map_name_db, "%s.db", mapsrc);
+  /* sizeof(map_name_db) is malloc'ed above */
+  xsnprintf(map_name_db, l, "%s.db", mapsrc);
   if (rename(maptdb, map_name_db) < 0) {
     fprintf(stderr, "Couldn't rename %s to ", maptdb);
     perror(map_name_db);
@@ -358,8 +360,9 @@ main(int argc, char *argv[])
     exit(1);
   }
 #else /* not HAVE_DB_SUFFIX */
-  sprintf(map_name_pag, "%s.pag", mapsrc);
-  sprintf(map_name_dir, "%s.dir", mapsrc);
+  /* sizeof(map_name_{pag,dir}) are malloc'ed above */
+  xsnprintf(map_name_pag, l, "%s.pag", mapsrc);
+  xsnprintf(map_name_dir, l, "%s.dir", mapsrc);
   if (rename(maptpag, map_name_pag) < 0) {
     fprintf(stderr, "Couldn't rename %s to ", maptpag);
     perror(map_name_pag);

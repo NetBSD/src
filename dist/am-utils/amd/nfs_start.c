@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_start.c,v 1.5.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: nfs_start.c,v 1.5.2.2 2007/02/24 12:17:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_start.c,v 1.25 2005/03/02 03:00:09 ezk Exp
+ * File: am-utils/amd/nfs_start.c
  *
  */
 
@@ -124,10 +124,6 @@ do_select(int smask, int fds, fd_set *fdp, struct timeval *tvp)
   } else {
     select_intr_valid = 1;
     /*
-     * Invalidate the current clock value
-     */
-    clock_valid = 0;
-    /*
      * Allow interrupts.  If a signal
      * occurs, then it will cause a longjmp
      * up above.
@@ -154,9 +150,9 @@ do_select(int smask, int fds, fd_set *fdp, struct timeval *tvp)
   /*
    * Perhaps reload the cache?
    */
-  if (do_mapc_reload < clocktime()) {
+  if (do_mapc_reload < clocktime(NULL)) {
     mapc_reload();
-    do_mapc_reload = clocktime() + gopt.map_reload_interval;
+    do_mapc_reload = clocktime(NULL) + gopt.map_reload_interval;
   }
   return nsel;
 }
@@ -197,7 +193,7 @@ run_rpc(void)
   int smask = sigblock(MASKED_SIGS);
 #endif /* not HAVE_SIGACTION */
 
-  next_softclock = clocktime();
+  next_softclock = clocktime(NULL);
 
   amd_state = Run;
 
@@ -230,7 +226,7 @@ run_rpc(void)
      * If the full timeout code is not called,
      * then recompute the time delta manually.
      */
-    now = clocktime();
+    now = clocktime(NULL);
 
     if (next_softclock <= now) {
       if (amd_state == Finishing)
@@ -241,7 +237,7 @@ run_rpc(void)
     }
     tvv.tv_usec = 0;
 
-    if (amd_state == Finishing && get_exported_ap(0) == 0) {
+    if (amd_state == Finishing && get_exported_ap(0) == NULL) {
       flush_mntfs();
       amd_state = Quit;
       break;
@@ -375,8 +371,8 @@ mount_automounter(int ppid)
     if (ret != 0)
       return ret;
   }
-  snprintf(pid_fsname, 16 + MAXHOSTNAMELEN, "%s:(pid%ld,port%u)",
-      am_get_hostname(), (long) am_mypid, nfs_port);
+  xsnprintf(pid_fsname, sizeof(pid_fsname), "%s:(pid%ld,port%u)",
+	    am_get_hostname(), (long) am_mypid, nfs_port);
 
   /* security: if user sets -D amq, don't even create listening socket */
   if (!amuDebug(D_AMQ)) {

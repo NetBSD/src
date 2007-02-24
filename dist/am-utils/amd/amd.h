@@ -1,4 +1,4 @@
-/*	$NetBSD: amd.h,v 1.2.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: amd.h,v 1.2.2.2 2007/02/24 12:17:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amd.h,v 1.64 2005/04/17 03:05:54 ezk Exp
+ * File: am-utils/amd/amd.h
  *
  */
 
@@ -60,22 +60,25 @@
 #endif /* MOUNT_TABLE_ON_FILE */
 
 /* options for amd.conf */
-#define CFM_BROWSABLE_DIRS		0x0001
-#define CFM_MOUNT_TYPE_AUTOFS		0x0002 /* use kernel autofs support */
-#define CFM_SELECTORS_IN_DEFAULTS	0x0004
-#define CFM_NORMALIZE_HOSTNAMES		0x0008
-#define CFM_PROCESS_LOCK		0x0010
-#define CFM_PRINT_PID			0x0020
-#define CFM_RESTART_EXISTING_MOUNTS	0x0040
-#define CFM_SHOW_STATFS_ENTRIES		0x0080
-#define CFM_FULLY_QUALIFIED_HOSTS	0x0100
-#define CFM_BROWSABLE_DIRS_FULL		0x0200 /* allow '/' in readdir() */
-#define CFM_UNMOUNT_ON_EXIT		0x0400 /* when amd finishing */
-#define CFM_USE_TCPWRAPPERS		0x0800
-#define CFM_AUTOFS_USE_LOFS		0x1000
-#define CFM_NFS_INSECURE_PORT		0x2000
-#define CFM_DOMAIN_STRIP		0x4000
-#define CFM_NORMALIZE_SLASHES		0x8000 /* normalize slashes? */
+#define CFM_BROWSABLE_DIRS		0x00000001
+#define CFM_MOUNT_TYPE_AUTOFS		0x00000002 /* use kernel autofs support */
+#define CFM_SELECTORS_IN_DEFAULTS	0x00000004
+#define CFM_NORMALIZE_HOSTNAMES		0x00000008
+#define CFM_PROCESS_LOCK		0x00000010
+#define CFM_PRINT_PID			0x00000020
+#define CFM_RESTART_EXISTING_MOUNTS	0x00000040
+#define CFM_SHOW_STATFS_ENTRIES		0x00000080
+#define CFM_FULLY_QUALIFIED_HOSTS	0x00000100
+#define CFM_BROWSABLE_DIRS_FULL		0x00000200 /* allow '/' in readdir() */
+#define CFM_UNMOUNT_ON_EXIT		0x00000400 /* when amd finishing */
+#define CFM_USE_TCPWRAPPERS		0x00000800
+#define CFM_AUTOFS_USE_LOFS		0x00001000
+#define CFM_NFS_INSECURE_PORT		0x00002000
+#define CFM_DOMAIN_STRIP		0x00004000
+#define CFM_NORMALIZE_SLASHES		0x00008000 /* normalize slashes? */
+#define CFM_FORCED_UNMOUNTS		0x00010000 /* forced unmounts? */
+#define CFM_TRUNCATE_LOG		0x00020000 /* truncate log file? */
+
 /* defaults global flags: plock, tcpwrappers, and autofs/lofs */
 #define CFM_DEFAULT_FLAGS	(CFM_PROCESS_LOCK|CFM_USE_TCPWRAPPERS|CFM_AUTOFS_USE_LOFS|CFM_DOMAIN_STRIP|CFM_NORMALIZE_SLASHES)
 
@@ -139,6 +142,7 @@
 #define	FSF_PINGING	0x0010	/* Already doing pings */
 #define	FSF_WEBNFS	0x0020	/* Don't try to contact portmapper */
 #define FSF_PING_UNINIT	0x0040	/* ping values have not been initilized */
+#define FSF_FORCE_UNMOUNT 0x0080 /* force umount of this fserver */
 #define	FSRV_ERROR(fs)	((fs) && (((fs)->fs_flags & FSF_ERROR) == FSF_ERROR))
 #define	FSRV_ISDOWN(fs)	((fs) && (((fs)->fs_flags & (FSF_DOWN|FSF_VALID)) == (FSF_DOWN|FSF_VALID)))
 #define	FSRV_ISUP(fs)	(!(fs) || (((fs)->fs_flags & (FSF_DOWN|FSF_VALID)) == (FSF_VALID)))
@@ -275,6 +279,7 @@ struct amu_global_options {
   char *debug_mtab_file;        /* path for the mtab file during debug mode */
   u_int flags;			/* various CFM_* flags */
 
+#define AMU_TYPE_NONE -1	/* for amfs_auto_{retrans,timeo} */
 #define AMU_TYPE_UDP 0		/* for amfs_auto_{retrans,timeo} */
 #define AMU_TYPE_TCP 1		/* for amfs_auto_{retrans,timeo} */
 #define AMU_TYPE_MAX 2		/* for amfs_auto_{retrans,timeo} */
@@ -497,22 +502,6 @@ struct am_node {
 };
 
 /*
- * File Handle
- *
- * This is interpreted by indexing the exported array
- * by fhh_id.
- *
- * The whole structure is mapped onto a standard fhandle_t
- * when transmitted.
- */
-struct am_fh {
-  int fhh_type;			/* old or new am_fh */
-  int fhh_pid;			/* process id */
-  int fhh_id;			/* map id */
-  u_int fhh_gen;		/* generation number */
-};
-
-/*
  * EXTERNALS:
  */
 
@@ -524,6 +513,7 @@ extern amq_mount_stats *amqproc_stats_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_tree_list *amqproc_export_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_mount_tree_p *amqproc_mnttree_1_svc(voidp argp, struct svc_req *rqstp);
 extern amq_string *amqproc_getvers_1_svc(voidp argp, struct svc_req *rqstp);
+extern amq_string *amqproc_pawd_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_getpid_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_mount_1_svc(voidp argp, struct svc_req *rqstp);
 extern int *amqproc_setopt_1_svc(voidp argp, struct svc_req *rqstp);
@@ -548,7 +538,7 @@ extern void amfs_mkcacheref(mntfs *mf);
 extern int amfs_mount(am_node *mp, mntfs *mf, char *opts);
 extern void assign_error_mntfs(am_node *mp);
 extern am_node *next_nonerror_node(am_node *xp);
-extern void flush_srvr_nfs_cache(void);
+extern void flush_srvr_nfs_cache(fserver *fs);
 extern void am_mounted(am_node *);
 extern void mf_mounted(mntfs *mf, bool_t call_free_opts);
 extern void am_unmounted(am_node *);
@@ -602,7 +592,7 @@ extern void mapc_free(opaque_t);
 extern int  mapc_keyiter(mnt_map *, key_fun, opaque_t);
 extern void mapc_reload(void);
 extern int  mapc_search(mnt_map *, char *, char **);
-extern void mapc_showtypes(char *buf, size_t buflen);
+extern void mapc_showtypes(char *buf, size_t l);
 extern int  mapc_type_exists(const char *type);
 extern void mk_fattr(nfsfattr *, nfsftype);
 extern int  mount_auto_node(char *, opaque_t);
@@ -612,8 +602,8 @@ extern void mp_to_fh(am_node *, am_nfs_fh *);
 extern void new_ttl(am_node *);
 extern void nfs_quick_reply(am_node *mp, int error);
 extern void normalize_slash(char *);
-extern void ops_showamfstypes(char *buf);
-extern void ops_showfstypes(char *outbuf);
+extern void ops_showamfstypes(char *buf, size_t l);
+extern void ops_showfstypes(char *outbuf, size_t l);
 extern void rem_que(qelem *);
 extern void reschedule_timeout_mp(void);
 extern void restart(void);
@@ -631,6 +621,11 @@ extern int  valid_key(char *);
 extern void wakeup(wchan_t);
 extern void wakeup_srvr(fserver *);
 extern void wakeup_task(int, int, wchan_t);
+#define SIZEOF_PID_FSNAME	(16 + MAXHOSTNAMELEN)
+extern char pid_fsname[SIZEOF_PID_FSNAME]; /* "kiska.southseas.nz:(pid%d)" */
+#define SIZEOF_HOSTD (2 * MAXHOSTNAMELEN + 1)
+extern char hostd[SIZEOF_HOSTD]; /* Host+domain */
+#define SIZEOF_OPTS 256		/* used for char opts[] and preopts[] */
 
 /*
  * Global variables.
@@ -638,8 +633,10 @@ extern void wakeup_task(int, int, wchan_t);
 extern FILE *yyin;
 extern SVCXPRT *current_transp; /* For nfs_quick_reply() */
 extern char *conf_tag;
-extern char *opt_gid;
-extern char *opt_uid;
+#define SIZEOF_UID_STR	12
+#define SIZEOF_GID_STR	12
+extern char *opt_gid, gid_str[SIZEOF_GID_STR];
+extern char *opt_uid, uid_str[SIZEOF_UID_STR];
 extern int NumChildren;
 extern int fwd_sock;
 extern int select_intr_valid;
@@ -677,7 +674,7 @@ extern int autofs_umount_succeeded(am_node *mp);
 extern int autofs_umount_failed(am_node *mp);
 extern int autofs_mount_fs(am_node *mp, mntfs *mf);
 extern int autofs_umount_fs(am_node *mp, mntfs *mf);
-extern void autofs_get_opts(char *opts, autofs_fh_t *fh);
+extern void autofs_get_opts(char *opts, size_t l, autofs_fh_t *fh);
 extern int autofs_compute_mount_flags(mntent_t *);
 extern void autofs_timeout_mp(am_node *);
 extern int create_autofs_service(void);

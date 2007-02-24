@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_ufs.c,v 1.3.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: ops_ufs.c,v 1.3.2.2 2007/02/24 12:17:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_ufs.c,v 1.18 2005/01/03 20:56:45 ezk Exp
+ * File: am-utils/amd/ops_ufs.c
  *
  */
 
@@ -180,6 +180,7 @@ ufs_mount(am_node *am, mntfs *mf)
 static int
 ufs_umount(am_node *am, mntfs *mf)
 {
-  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
-  return UMOUNT_FS(mf->mf_mount, mnttab_file_name, on_autofs);
+  int unmount_flags = (mf->mf_flags & MFF_ON_AUTOFS) ? AMU_UMOUNT_AUTOFS : 0;
+
+  return UMOUNT_FS(mf->mf_mount, mnttab_file_name, unmount_flags);
 }

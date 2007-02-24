@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_svr4.c,v 1.1.1.7.2.1 2005/08/16 13:02:14 tron Exp $	*/
+/*	$NetBSD: mount_svr4.c,v 1.1.1.7.2.2 2007/02/24 12:17:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mount_svr4.c,v 1.12 2005/04/07 05:50:38 ezk Exp
+ * File: am-utils/conf/mount/mount_svr4.c
  *
  */
 

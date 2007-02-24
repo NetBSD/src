@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.4.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: map.c,v 1.4.2.2 2007/02/24 12:17:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: map.c,v 1.53 2005/03/18 01:11:33 ezk Exp
+ * File: am-utils/amd/map.c
  *
  */
 
@@ -124,12 +124,12 @@ am_node *
 get_next_exported_ap(int *index)
 {
   (*index)++;
-  while (exported_ap[*index] == NULL) {
-    if (*index >= exported_ap_size)
-      return NULL;
+  while (*index < exported_ap_size) {
+    if (exported_ap[*index] != NULL)
+      return exported_ap[*index];
     (*index)++;
   }
-  return exported_ap[*index];
+  return NULL;
 }
 
 
@@ -369,8 +369,7 @@ void
 new_ttl(am_node *mp)
 {
   mp->am_timeo_w = 0;
-  mp->am_ttl = clocktime();
-  mp->am_fattr.na_atime.nt_seconds = mp->am_ttl;
+  mp->am_ttl = clocktime(&mp->am_fattr.na_atime);
   mp->am_ttl += mp->am_timeo;	/* sun's -tl option */
 }
 
@@ -425,8 +424,8 @@ init_map(am_node *mp, char *dir)
   mp->am_fattr = gen_fattr;
   mp->am_fattr.na_fsid = 42;
   mp->am_fattr.na_fileid = mp->am_gen;
-  mp->am_fattr.na_atime.nt_seconds = clocktime();
-  mp->am_fattr.na_atime.nt_useconds = 0;
+  clocktime(&mp->am_fattr.na_atime);
+  /* next line copies a "struct nfstime" among several fields */
   mp->am_fattr.na_mtime = mp->am_fattr.na_ctime = mp->am_fattr.na_atime;
 
   new_ttl(mp);
@@ -589,7 +588,7 @@ map_flush_srvr(fserver *fs)
     am_node *mp = exported_ap[i];
     if (mp && mp->am_mnt && mp->am_mnt->mf_server == fs) {
       plog(XLOG_INFO, "Flushed %s; dependent on %s", mp->am_path, fs->fs_host);
-      mp->am_ttl = clocktime();
+      mp->am_ttl = clocktime(NULL);
       done = 1;
     }
   }
@@ -896,11 +895,16 @@ unmount_mp(am_node *mp)
      * symlink-cache at mount time (such as Irix 5.x and 6.x). -Erez.
      *
      * Additionally, Linux currently ignores the nt_useconds field,
-     * so we must update the nt_seconds field every time.
+     * so we must update the nt_seconds field every time if clocktime(NULL)
+     * didn't return a new number of seconds.
      */
-  if (mp->am_parent)
+  if (mp->am_parent) {
+    time_t last = mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds;
+    clocktime(&mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime);
     /* defensive programming... can't we assert the above condition? */
-    mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds++;
+    if (last == (time_t) mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds)
+      mp->am_parent->am_attr.ns_u.ns_attr_u.na_mtime.nt_seconds++;
+  }
 #endif /* not MNT2_NFS_OPT_SYMTTL */
 
   if (mf->mf_refc == 1 && !FSRV_ISUP(mf->mf_server)) {
@@ -944,7 +948,7 @@ timeout_mp(opaque_t v)				/* argument not used?! */
 {
   int i;
   time_t t = NEVER;
-  time_t now = clocktime();
+  time_t now = clocktime(NULL);
   int backoff = NumChildren / 4;
 
   dlog("Timing out automount points...");

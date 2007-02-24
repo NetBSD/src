@@ -1,4 +1,4 @@
-/*	$NetBSD: mapc.c,v 1.3.2.1 2005/08/16 13:02:13 tron Exp $	*/
+/*	$NetBSD: mapc.c,v 1.3.2.2 2007/02/24 12:17:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Erez Zadok
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: mapc.c,v 1.27 2005/03/19 03:05:25 ezk Exp
+ * File: am-utils/amd/mapc.c
  *
  */
 
@@ -303,17 +303,6 @@ static map_type maptypes[] =
     MAPC_INC
   },
 #endif /* HAVE_MAP_NDBM */
-#ifdef HAVE_MAP_EXEC
-  {
-    "exec",
-    exec_init,
-    error_reload,
-    NULL,			/* isup function */
-    exec_search,
-    error_mtime,
-    MAPC_INC
-  },
-#endif /* HAVE_MAP_EXEC */
 #ifdef HAVE_MAP_FILE
   {
     "file",
@@ -325,6 +314,17 @@ static map_type maptypes[] =
     MAPC_ALL
   },
 #endif /* HAVE_MAP_FILE */
+#ifdef HAVE_MAP_EXEC
+  {
+    "exec",
+    exec_init,
+    error_reload,
+    NULL,			/* isup function */
+    exec_search,
+    error_mtime,
+    MAPC_INC
+  },
+#endif /* HAVE_MAP_EXEC */
   {
     "error",
     error_init,
@@ -352,26 +352,26 @@ kvhash_of(char *key)
 
 
 void
-mapc_showtypes(char *buf, size_t buflen)
+mapc_showtypes(char *buf, size_t l)
 {
   map_type *mt=NULL, *lastmt;
-  int l = 0, i;
+  int linesize = 0, i;
 
   i = sizeof(maptypes) / sizeof(maptypes[0]);
   lastmt = maptypes + i;
   buf[0] = '\0';
   for (mt = maptypes; mt < lastmt; mt++) {
-    strlcat(buf, mt->name, buflen);
+    xstrlcat(buf, mt->name, l);
     if (mt == (lastmt-1))
-      break;	      /* if last one, don't do strcat's that follow */
-    l += strlen(mt->name);
+      break;	      /* if last one, don't do xstrlcat's that follows */
+    linesize += strlen(mt->name);
     if (--i > 0) {
-      strlcat(buf, ", ", buflen);
-      l += 2;
+      xstrlcat(buf, ", ", l);
+      linesize += 2;
     }
-    if (l > 54) {
-      l = 0;
-      strlcat(buf, "\n\t\t ", buflen);
+    if (linesize > 54) {
+      linesize = 0;
+      xstrlcat(buf, "\n\t\t ", l);
     }
   }
 }
@@ -422,7 +422,7 @@ mapc_add_kv(mnt_map *m, char *key, char *val)
     /*
      * Make sure the string is bound to the start and end
      */
-    snprintf(pattern, sizeof(pattern), "^%s$", key);
+    xsnprintf(pattern, sizeof(pattern), "^%s$", key);
     retval = regcomp(&re, pattern, REG_ICASE);
     if (retval != 0) {
       char errstr[256];
@@ -516,11 +516,12 @@ mapc_find_wildcard(mnt_map *m)
  * Do a map reload.
  * Attempt to reload without losing current data by switching the hashes
  * round.
+ * If reloading was needed and succeeded, return 1; else return 0.
  */
-static void
+static int
 mapc_reload_map(mnt_map *m)
 {
-  int error;
+  int error, ret = 0;
   kv *maphash[NKVHASH], *tmphash[NKVHASH];
   time_t t;
 
@@ -538,7 +539,7 @@ mapc_reload_map(mnt_map *m)
       plog(XLOG_INFO, "reload of map %s is not needed (in sync)", m->map_name);
       dlog("map %s last load time is %d, last modify time is %d",
 	   m->map_name, (int) m->modify, (int) t);
-      return;
+      return ret;
     }
   }
 
@@ -567,6 +568,7 @@ mapc_reload_map(mnt_map *m)
     mapc_clear(m);
     memcpy((voidp) m->kvhash, (voidp) tmphash, sizeof(m->kvhash));
     m->modify = t;
+    ret = 1;
   }
   m->wildcard = 0;
 
@@ -574,6 +576,7 @@ mapc_reload_map(mnt_map *m)
   error = mapc_search(m, wildcard, &m->wildcard);
   if (error)
     m->wildcard = 0;
+  return ret;
 }
 
 
@@ -585,7 +588,7 @@ mapc_create(char *map, char *opt, const char *type)
 {
   mnt_map *m = ALLOC(struct mnt_map);
   map_type *mt;
-  time_t modify;
+  time_t modify = 0;
   int alloc = 0;
 
   cmdoption(opt, mapc_opt, &alloc);
@@ -899,9 +902,14 @@ mapc_meta_search(mnt_map *m, char *key, char **pval, int recurse)
        * For example:
        * "src/gnu/gcc" -> "src / gnu / *" -> "src / *"
        */
-      strlcpy(wildname, key, sizeof(wildname));
+      xstrlcpy(wildname, key, sizeof(wildname));
       while (error && (subp = strrchr(wildname, '/'))) {
-	strlcpy(subp, "/*", sizeof(wildname) - (subp - wildname));
+	/*
+	 * sizeof space left in subp is sizeof wildname minus what's left
+	 * after the strchr above returned a pointer inside wildname into
+	 * subp.
+	 */
+	xstrlcpy(subp, "/*", sizeof(wildname) - (subp - wildname));
 	dlog("mapc recurses on %s", wildname);
 	error = mapc_meta_search(m, wildname, pval, MREC_PART);
 	if (error)
@@ -931,25 +939,42 @@ mapc_search(mnt_map *m, char *key, char **pval)
 static void
 mapc_sync(mnt_map *m)
 {
-  if (m->alloc != MAPC_ROOT) {
+  int need_mtime_update = 0;
 
-    /* do not clear map if map service is down */
-    if (m->isup) {
-      if (!((*m->isup)(m, m->map_name))) {
-	plog(XLOG_ERROR, "mapc_sync: map %s is down: not clearing map", m->map_name);
-	return;
-      }
+  if (m->alloc == MAPC_ROOT)
+    return;			/* nothing to do */
+
+  /* do not clear map if map service is down */
+  if (m->isup) {
+    if (!((*m->isup)(m, m->map_name))) {
+      plog(XLOG_ERROR, "mapc_sync: map %s is down: not clearing map", m->map_name);
+      return;
     }
+  }
 
-    if (m->alloc >= MAPC_ALL) {
-      /* mapc_reload_map() always works */
-      mapc_reload_map(m);
+  if (m->alloc >= MAPC_ALL) {
+    /* mapc_reload_map() always works */
+    need_mtime_update = mapc_reload_map(m);
+  } else {
+    mapc_clear(m);
+    /*
+     * Attempt to find the wildcard entry
+     */
+    mapc_find_wildcard(m);
+    need_mtime_update = 1;	/* because mapc_clear always works */
+  }
+
+  /*
+   * To be safe, update the mtime of the mnt_map's own node, so that the
+   * kernel will flush all of its cached entries.
+   */
+  if (need_mtime_update && m->cfm) {
+    am_node *mp = find_ap(m->cfm->cfm_dir);
+    if (mp) {
+      clocktime(&mp->am_fattr.na_mtime);
     } else {
-      mapc_clear(m);
-      /*
-       * Attempt to find the wildcard entry
-       */
-      mapc_find_wildcard(m);
+      plog(XLOG_ERROR, "cannot find map %s to update its mtime",
+	   m->cfm->cfm_dir);
     }
   }
 }
@@ -986,7 +1011,7 @@ mapc_reload(void)
 static int
 root_init(mnt_map *m, char *map, time_t *tp)
 {
-  *tp = clocktime();
+  *tp = clocktime(NULL);
   return STREQ(map, ROOT_MAP) ? 0 : ENOENT;
 }
 
@@ -1021,31 +1046,32 @@ root_newmap(const char *dir, const char *opts, const char *map, const cf_map_t *
 
   if (cfm) {
     if (map) {
-      snprintf(str, sizeof(str),
-	      "cache:=mapdefault;type:=toplvl;mount_type:=%s;fs:=\"%s\"",
-	      cfm->cfm_flags & CFM_MOUNT_TYPE_AUTOFS ? "autofs" : "nfs",
-	      get_full_path(map, cfm->cfm_search_path, cfm->cfm_type));
+      xsnprintf(str, sizeof(str),
+		"cache:=mapdefault;type:=toplvl;mount_type:=%s;fs:=\"%s\"",
+		cfm->cfm_flags & CFM_MOUNT_TYPE_AUTOFS ? "autofs" : "nfs",
+		get_full_path(map, cfm->cfm_search_path, cfm->cfm_type));
       if (opts && opts[0] != '\0') {
-	strlcat(str, ";", sizeof(str));
-	strlcat(str, opts, sizeof(str));
+	xstrlcat(str, ";", sizeof(str));
+	xstrlcat(str, opts, sizeof(str));
       }
       if (cfm->cfm_flags & CFM_BROWSABLE_DIRS_FULL)
-	strlcat(str, ";opts:=rw,fullybrowsable", sizeof(str));
+	xstrlcat(str, ";opts:=rw,fullybrowsable", sizeof(str));
       if (cfm->cfm_flags & CFM_BROWSABLE_DIRS)
-	strlcat(str, ";opts:=rw,browsable", sizeof(str));
+	xstrlcat(str, ";opts:=rw,browsable", sizeof(str));
       if (cfm->cfm_type) {
-	strlcat(str, ";maptype:=", sizeof(str));
-	strlcat(str, cfm->cfm_type, sizeof(str));
+	xstrlcat(str, ";maptype:=", sizeof(str));
+	xstrlcat(str, cfm->cfm_type, sizeof(str));
       }
     } else {
-      strlcpy(str, opts, sizeof(str));
+      xstrlcpy(str, opts, sizeof(str));
     }
   } else {
     if (map)
-      snprintf(str, sizeof(str), "cache:=mapdefault;type:=toplvl;fs:=\"%s\";%s",
-	      map, opts ? opts : "");
+      xsnprintf(str, sizeof(str),
+		"cache:=mapdefault;type:=toplvl;fs:=\"%s\";%s",
+		map, opts ? opts : "");
     else
-      strlcpy(str, opts, sizeof(str));
+      xstrlcpy(str, opts, sizeof(str));
   }
   mapc_repl_kv(root_map, strdup((char *)dir), strdup(str));
 }
@@ -1150,15 +1176,15 @@ get_full_path(const char *map, const char *path, const char *type)
     return map;
 
   /* now break path into components, and search in each */
-  strlcpy(component, path, sizeof(component));
+  xstrlcpy(component, path, sizeof(component));
 
   str = strtok(component, ":");
   do {
-    strlcpy(full_path, str, sizeof(full_path));
+    xstrlcpy(full_path, str, sizeof(full_path));
     len = strlen(full_path);
     if (full_path[len - 1] != '/') /* add trailing "/" if needed */
-      strlcat(full_path, "/", sizeof(full_path));
-    strlcat(full_path, map, sizeof(full_path));
+      xstrlcat(full_path, "/", sizeof(full_path));
+    xstrlcat(full_path, map, sizeof(full_path));
     if (access(full_path, R_OK) == 0)
       return full_path;
     str = strtok(NULL, ":");
