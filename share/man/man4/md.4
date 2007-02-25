@@ -1,15 +1,15 @@
-.\"   $NetBSD: md.4,v 1.4 2004/01/12 21:17:30 wiz Exp $
+.\"   $NetBSD: md.4,v 1.5 2007/02/25 04:22:01 uwe Exp $
 .\"
 .\" This file is in the public domain.
 .\"
-.Dd January 12, 2004
+.Dd February 25, 2007
 .Dt MD 4
 .Os
 .Sh NAME
 .Nm md
 .Nd memory disk driver
 .Sh SYNOPSIS
-.Cd "pseudo-device md"
+.Cd "pseudo-device md" Op Ar count
 .Sh DESCRIPTION
 The
 .Nm
@@ -27,7 +27,7 @@ Its behaviour is configured by the kernel options
 and
 .Sy MEMORY_DISK_SERVER .
 .Sh FILES
-.Bl -tag -width /dev/rmdX -compact
+.Bl -tag -width /dev/rmdXX -compact
 .It Pa "/dev/md??"
 block mode memory disk devices.
 .It Pa "/dev/rmd??"
