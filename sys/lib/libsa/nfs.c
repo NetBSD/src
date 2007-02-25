@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.40 2006/12/29 13:05:48 yamt Exp $	*/
+/*	$NetBSD: nfs.c,v 1.41 2007/02/25 04:46:32 uwe Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -599,14 +599,15 @@ nfs_read(f, buf, size, resid)
 		if (cc == -1) {
 #ifdef NFS_DEBUG
 			if (debug)
-				printf("nfs_read: read: %s", strerror(errno));
+				printf("nfs_read: read: %s\n",
+				       strerror(errno));
 #endif
 			return (errno);	/* XXX - from nfs_readdata */
 		}
 		if (cc == 0) {
 #ifdef NFS_DEBUG
 			if (debug)
-				printf("nfs_read: hit EOF unexpectantly");
+				printf("nfs_read: hit EOF unexpectantly\n");
 #endif
 			goto ret;
 		}
