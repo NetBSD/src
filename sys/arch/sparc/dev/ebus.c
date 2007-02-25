@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.25 2006/07/02 10:14:15 jdc Exp $ */
+/*	$NetBSD: ebus.c,v 1.26 2007/02/25 05:04:28 uwe Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.25 2006/07/02 10:14:15 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.26 2007/02/25 05:04:28 uwe Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -266,7 +266,6 @@ ebus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map the LED register */
 	base14 = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x14);
-	printf("base14: %08x\n", (uint32_t)base14);
 	if (bus_space_map(pa->pa_memt, base14 + 0x726000, 4, 0, &hLED) == 0) {
 		ebus_LED = bus_space_vaddr(pa->pa_memt, hLED);
 #ifdef BLINK
