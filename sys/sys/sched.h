@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.4 2007/02/23 12:12:34 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.5 2007/02/25 13:57:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -192,7 +192,6 @@ inline void resched_cpu(struct lwp *, u_char); /* Arrange reschedule */
 void setrunnable(struct lwp *);
 void preempt(void);
 int mi_switch(struct lwp *, struct lwp *);
-struct lwp *cpu_switchto(struct lwp *, struct lwp *);
 
 /*
  * Synchronisation object operations set.

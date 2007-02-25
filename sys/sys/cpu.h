@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.52.1 2007/02/23 15:57:44 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.52.2 2007/02/25 13:57:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -40,5 +40,7 @@ void cpu_idle(void);
 #ifndef cpu_need_resched
 void cpu_need_resched(struct cpu_info *);
 #endif
+
+struct lwp *cpu_switchto(struct lwp *, struct lwp *);
 
 #endif	/* !_SYS_CPU_H_ */
