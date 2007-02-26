@@ -1,4 +1,4 @@
-.\"	$NetBSD: math.3,v 1.21 2006/03/26 02:02:38 xtraeme Exp $
+.\"	$NetBSD: math.3,v 1.22 2007/02/26 12:10:56 drochner Exp $
 .\"
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)math.3	6.10 (Berkeley) 5/6/91
 .\"
-.TH MATH 3 "March 26, 2006"
+.TH MATH 3 "February 23, 2007"
 .UC 4
 .ds up \fIulp\fR
 .ds nn \fINaN\fR
@@ -62,7 +62,6 @@ asinh	asinh.3	inverse hyperbolic function	3
 atan	atan.3	inverse trigonometric function	1
 atanh	atanh.3	inverse hyperbolic function	3
 atan2	atan2.3	inverse trigonometric function	2
-cabs	hypot.3	complex absolute value	1
 cbrt	sqrt.3	cube root	1
 ceil	ceil.3	integer no less than	0
 copysign	ieee.3	copy sign bit	0
@@ -327,7 +326,7 @@ chips, or with the Apple Macintosh or ELXSI 6400, is to
 forego the use of better codes provided (perhaps freely) by
 those companies and designed by some of the authors of the
 codes above.
-Except for \fIatan\fR, \fIcabs\fR, \fIcbrt\fR, \fIerf\fR,
+Except for \fIatan\fR, \fIcbrt\fR, \fIerf\fR,
 \fIerfc\fR, \fIhypot\fR, \fIj0\-jn\fR, \fIlgamma\fR, \fIpow\fR
 and \fIy0\-yn\fR,
 the Motorola 68881 has all the functions in \fIlibm\fR on chip,
@@ -624,7 +623,7 @@ Over/Underflow
 .RS
 when a result, if properly computed, might have lain barely within range, and
 .RE
-Inexact in \fIcabs\fR, \fIcbrt\fR, \fIhypot\fR, \fIlog10\fR and \fIpow\fR
+Inexact in \fIcbrt\fR, \fIhypot\fR, \fIlog10\fR and \fIpow\fR
 .RS
 when it happens to be exact, thanks to fortuitous cancellation of errors.
 .RE
