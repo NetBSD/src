@@ -38,6 +38,7 @@ extern "C" {
 #endif
 
 struct fuse;
+struct fuse_args; /* XXXsupportme */
 
 struct fuse_file_info {
 	int32_t		flags;
@@ -165,14 +166,27 @@ typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
 int fuse_opt_add_arg(struct fuse_args *, const char *);
 void fuse_opt_free_args(struct fuse_args *);
 int fuse_opt_parse(struct fuse_args *, void *, const struct fuse_opt *, fuse_opt_proc_t);
+
+struct fuse_chan *fuse_mount(const char *, struct fuse_args *);
+struct fuse *fuse_new(struct fuse_chan *, struct fuse_args *,
+	const struct fuse_operations *, size_t, void *);
+
 int fuse_main_real(int, char **, const struct fuse_operations *, size_t, void *);
+int fuse_loop(struct fuse *);
 struct fuse_context *fuse_get_context(void);
 void fuse_exit(struct fuse *);
-void fuse_unmount(const char *);
+void fuse_destroy(struct fuse *);
+
+void fuse_unmount(const char *, struct fuse_chan *);
+
+#if FUSE_USE_VERSION == 22
+#define fuse_unmount fuse_unmount_compat22
+#endif
+
+void fuse_unmount_compat22(const char *);
 
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
-
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.37 2007/02/26 15:09:19 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.38 2007/02/26 15:57:33 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.37 2007/02/26 15:09:19 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.38 2007/02/26 15:57:33 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -66,9 +66,16 @@ struct fuse_config {
 	int		intr_signal;
 };
 
+struct fuse_chan {
+	const char *dir;
+	struct fuse_args *args;
+
+	struct puffs_usermount *pu;
+};
+
 /* this is the private fuse structure */
 struct fuse {
-	struct fuse_session	*se;		/* fuse session pointer */
+	struct fuse_chan	*fc;		/* fuse channel pointer */
 	struct fuse_operations	op;		/* switch table of operations */
 	int			compat;		/* compat level -
 						 * not used in puffs_fuse */
@@ -84,7 +91,6 @@ struct fuse {
 	void			*user_data;
 	struct fuse_config	conf;
 	int			intr_installed;
-	struct puffs_usermount	*pu;
 };
 
 struct puffs_fuse_dirh {
@@ -113,11 +119,7 @@ newrn(struct puffs_usermount *pu)
 	struct puffs_node *pn;
 	struct refusenode *rn;
 
-	rn = malloc(sizeof(struct refusenode));
-	if (!rn)
-		abort(); /*XXX*/
-
-	memset(rn, 0, sizeof(struct refusenode));
+	NEW(struct refusenode, rn, "newrn", exit(EXIT_FAILURE));
 	pn = puffs_pn_new(pu, rn);
 
 	return pn;
@@ -994,6 +996,65 @@ int
 fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	size_t size, void *userdata)
 {
+	struct fuse		*fuse;
+	struct fuse_chan	*fc;
+	char			 name[64];
+	char			*slash;
+	int			 ret;
+
+	/* whilst this (assigning the pu_privdata in the puffs
+	 * usermount struct to be the fuse struct) might seem like
+	 * we are chasing our tail here, the logic is as follows:
+		+ the operation wrapper gets called with the puffs
+		  calling conventions
+		+ we need to fix up args first
+		+ then call the fuse user-supplied operation
+		+ then we fix up any values on return that we need to
+		+ and fix up any nodes, etc
+	 * so we need to be able to get at the fuse ops from within the
+	 * puffs_usermount struct
+	 */
+	if ((slash = strrchr(*argv, '/')) == NULL) {
+		slash = *argv;
+	} else {
+		slash += 1;
+	}
+	(void) snprintf(name, sizeof(name), "refuse:%s", slash);
+
+	/* XXX: stuff name into fuse_args */
+
+	fc = fuse_mount(argv[argc - 1], NULL);
+	fuse = fuse_new(fc, NULL, ops, size, userdata);
+
+	ret = fuse_loop(fuse);
+
+	return ret;
+}
+
+/*
+ * XXX: just defer the operation until fuse_new() when we have more
+ * info on our hands.  The real beef is why's this separate in fuse in
+ * the first place?
+ */
+/* ARGSUSED1 */
+struct fuse_chan *
+fuse_mount(const char *dir, struct fuse_args *args)
+{
+	struct fuse_chan *fc;
+
+	NEW(struct fuse_chan, fc, "fuse_mount", exit(EXIT_FAILURE));
+
+	fc->dir = strdup(dir);
+	fc->args = args; /* XXXX: do we need to deep copy? */
+
+	return fc;
+}
+
+/* ARGSUSED1 */
+struct fuse *
+fuse_new(struct fuse_chan *fc, struct fuse_args *args,
+	const struct fuse_operations *ops, size_t size, void *userdata)
+{
 	struct puffs_usermount	*pu;
 	struct puffs_pathobj	*po_root;
 	struct puffs_ops	*pops;
@@ -1001,9 +1062,16 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	struct statvfs		svfsb;
 	struct stat		st;
 	struct fuse		*fuse;
-	char			 name[64];
-	char			*slash;
-	int			 ret;
+
+	NEW(struct fuse, fuse, "fuse_new", exit(EXIT_FAILURE));
+
+	/* copy fuse ops to their own stucture */
+	(void) memcpy(&fuse->op, ops, sizeof(fuse->op));
+
+	fcon.fuse = fuse;
+	fcon.private_data = userdata;
+
+	fuse->fc = fc;
 
 	/* initialise the puffs operations structure */
         PUFFSOP_INIT(pops);
@@ -1035,43 +1103,18 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
         PUFFSOP_SET(pops, puffs_fuse, node, write);
         PUFFSOP_SET(pops, puffs_fuse, node, reclaim);
 
-	NEW(struct fuse, fuse, "fuse_main_real", exit(EXIT_FAILURE));
-
-	/* copy fuse ops to their own stucture */
-	(void) memcpy(&fuse->op, ops, sizeof(fuse->op));
-
-	fcon.fuse = fuse;
-	fcon.private_data = userdata;
-
-	/* whilst this (assigning the pu_privdata in the puffs
-	 * usermount struct to be the fuse struct) might seem like
-	 * we are chasing our tail here, the logic is as follows:
-		+ the operation wrapper gets called with the puffs
-		  calling conventions
-		+ we need to fix up args first
-		+ then call the fuse user-supplied operation
-		+ then we fix up any values on return that we need to
-		+ and fix up any nodes, etc
-	 * so we need to be able to get at the fuse ops from within the
-	 * puffs_usermount struct
-	 */
-	if ((slash = strrchr(*argv, '/')) == NULL) {
-		slash = *argv;
-	} else {
-		slash += 1;
-	}
-	(void) snprintf(name, sizeof(name), "refuse:%s", slash);
-	pu = puffs_mount(pops, argv[argc - 1], MNT_NODEV | MNT_NOSUID,
-			name, fuse,
-			PUFFS_FLAG_BUILDPATH
-			  | PUFFS_FLAG_OPDUMP
-			  | PUFFS_KFLAG_NOCACHE,
-			0);
+	pu = puffs_mount(pops, fc->dir, MNT_NODEV | MNT_NOSUID,
+			 "fiXXXme", NULL,
+			 PUFFS_FLAG_BUILDPATH
+			   | PUFFS_FLAG_OPDUMP
+			   | PUFFS_KFLAG_NOCACHE,
+			 0);
 	if (pu == NULL) {
 		err(EXIT_FAILURE, "puffs_mount");
 	}
+	fc->pu = pu;
+	pu->pu_privdata = fuse;
 
-	fuse->pu = pu;
 	pu->pu_pn_root = newrn(pu);
 	rn_root = pu->pu_pn_root->pn_data;
 	rn_root->flags |= RN_ROOT;
@@ -1092,16 +1135,28 @@ fuse_main_real(int argc, char **argv, const struct fuse_operations *ops,
 	if (fuse->op.init)
 		fcon.private_data = fuse->op.init(NULL); /* XXX */
 
-	statvfs(argv[argc - 1], &svfsb); /* XXX - not really the correct dir */
+	puffs_zerostatvfs(&svfsb);
 	if (puffs_start(pu, pu->pu_pn_root, &svfsb) == -1) {
 		err(EXIT_FAILURE, "puffs_start");
 	}
 
-	ret = puffs_mainloop(fuse->pu, PUFFSLOOP_NODAEMON);
+	return fuse;
+}
 
-	(void) free(po_root->po_path);
+int
+fuse_loop(struct fuse *fuse)
+{
+
+	return puffs_mainloop(fuse->fc->pu, PUFFSLOOP_NODAEMON);
+}
+
+void
+fuse_destroy(struct fuse *fuse)
+{
+
+
+	/* XXXXXX: missing stuff */
 	FREE(fuse);
-	return ret;
 }
 
 /* ARGSUSED0 */
@@ -1121,10 +1176,10 @@ fuse_get_context()
 }
 
 void
-fuse_exit(struct fuse *f)
+fuse_exit(struct fuse *fuse)
 {
 	
-	puffs_exit(f->pu, 1);
+	puffs_exit(fuse->fc->pu, 1);
 }
 
 /*
@@ -1133,7 +1188,15 @@ fuse_exit(struct fuse *f)
  */
 /*ARGSUSED*/
 void
-fuse_unmount(const char *mp)
+fuse_unmount(const char *mp, struct fuse_chan *fc)
+{
+
+	puffs_exit(fc->pu, 1);
+}
+
+/*ARGSUSED*/
+void
+fuse_unmount_compat22(const char *mp)
 {
 
 	return;
