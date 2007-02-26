@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.51 2007/02/22 04:38:03 matt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.52 2007/02/26 09:20:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -83,8 +83,10 @@ struct	lwp {
 	u_int		l_swtime;	/* l: time swapped in or out */
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
-	u_char		l_priority;	/* l: process priority */
-	u_char		l_usrpri;	/* l: user-priority */
+	int		l_priority;	/* l: process priority */
+	int		l_usrpri;	/* l: user-priority */
+	int		l_inheritedprio;/* l: inherited priority */
+	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	long		l_nvcsw;	/* l: voluntary context switches */
 	long		l_nivcsw;	/* l: involuntary context switches */
 
@@ -250,6 +252,7 @@ void	lwp_setlock(struct lwp *, kmutex_t *);
 void	lwp_unlock_to(struct lwp *, kmutex_t *);
 void	lwp_lock_retry(struct lwp *, kmutex_t *);
 void	lwp_relock(struct lwp *, kmutex_t *);
+int	lwp_trylock(struct lwp *);
 void	lwp_addref(struct lwp *);
 void	lwp_delref(struct lwp *);
 void	lwp_drainrefs(struct lwp *);
@@ -322,7 +325,21 @@ lwp_changepri(struct lwp *l, int pri)
 {
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
+	if (l->l_priority == pri)
+		return;
+
 	(*l->l_syncobj->sobj_changepri)(l, pri);
+}
+
+static inline void
+lwp_lendpri(struct lwp *l, int pri)
+{
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+
+	if (l->l_inheritedprio == pri)
+		return;
+
+	(*l->l_syncobj->sobj_lendpri)(l, pri);
 }
 
 static inline void
@@ -331,6 +348,13 @@ lwp_unsleep(struct lwp *l)
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
 	(*l->l_syncobj->sobj_unsleep)(l);
+}
+
+static inline int
+lwp_eprio(struct lwp *l)
+{
+
+	return MIN(l->l_inheritedprio, l->l_priority);
 }
 
 int newlwp(struct lwp *, struct proc *, vaddr_t, bool, int,
