@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30 2007/02/15 15:09:16 ad Exp $ */
+/* $NetBSD: sched.h,v 1.31 2007/02/26 09:20:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -195,13 +195,18 @@ typedef struct syncobj {
 	u_int	sobj_flag;
 	void	(*sobj_unsleep)(struct lwp *);
 	void	(*sobj_changepri)(struct lwp *, int);
+	void	(*sobj_lendpri)(struct lwp *, int);
+	struct lwp *(*sobj_owner)(volatile const void *); /* XXX wchan_t */
 } syncobj_t;
+
+struct lwp *syncobj_noowner(volatile const void *); /* XXX wchan_t */
 
 #define	SOBJ_SLEEPQ_SORTED	0x01
 #define	SOBJ_SLEEPQ_FIFO	0x02
 
 extern syncobj_t	sched_syncobj;
-extern syncobj_t	turnstile_syncobj;
+extern syncobj_t	mutex_syncobj;
+extern syncobj_t	rw_syncobj;
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

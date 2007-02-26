@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.2 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.3 2007/02/26 09:20:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -95,8 +95,12 @@ void	sleepq_timeout(void *);
 void	sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
 void	sleepq_changepri(struct lwp *, int);
+void	sleepq_lendpri(struct lwp *, int);
 int	sleepq_unblock(int, int);
-void	sleepq_insert(sleepq_t *, struct lwp *, int, syncobj_t *);
+void	sleepq_insert(sleepq_t *, struct lwp *, syncobj_t *);
+
+void	sleepq_enqueue(sleepq_t *, int, wchan_t, const char *, syncobj_t *);
+void	sleepq_switch(int, int);
 
 void	sleeptab_init(sleeptab_t *);
 
@@ -189,6 +193,11 @@ typedef struct turnstile {
 	struct turnstile	*ts_free;	/* turnstile free list */
 	wchan_t			ts_obj;		/* lock object */
 	sleepq_t		ts_sleepq[2];	/* sleep queues */
+
+	/* priority inheritance */
+	u_char			ts_eprio;
+	struct lwp		*ts_inheritor;
+	SLIST_ENTRY(turnstile)	ts_pichain;
 } turnstile_t;
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
@@ -222,7 +231,7 @@ typedef struct tschain {
 void	turnstile_init(void);
 turnstile_t	*turnstile_lookup(wchan_t);
 void	turnstile_exit(wchan_t);
-void	turnstile_block(turnstile_t *, int, wchan_t);
+void	turnstile_block(turnstile_t *, int, wchan_t, syncobj_t *);
 void	turnstile_wakeup(turnstile_t *, int, int, struct lwp *);
 void	turnstile_print(volatile void *, void (*)(const char *, ...));
 
@@ -231,6 +240,9 @@ turnstile_unblock(void)
 {
 	(void)sleepq_unblock(0, 0);
 }
+
+void	turnstile_unsleep(struct lwp *);
+void	turnstile_changepri(struct lwp *, int);
 
 extern struct pool_cache turnstile_cache;
 extern struct turnstile turnstile0;

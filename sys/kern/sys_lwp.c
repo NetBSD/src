@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.6 2007/02/21 23:48:15 thorpej Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.7 2007/02/26 09:20:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.6 2007/02/21 23:48:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.7 2007/02/26 09:20:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.6 2007/02/21 23:48:15 thorpej Exp $");
 syncobj_t lwp_park_sobj = {
 	SOBJ_SLEEPQ_SORTED,
 	sleepq_unsleep,
-	sleepq_changepri
+	sleepq_changepri,
+	sleepq_lendpri,
+	syncobj_noowner,
 };
 
 sleeptab_t	lwp_park_tab;
