@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.5 2007/02/21 15:42:07 wiz Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.6 2007/02/26 21:35:44 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.5 2007/02/21 15:42:07 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.6 2007/02/26 21:35:44 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -1129,7 +1129,8 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		xferlen += 4;
 
 	DPRINTFN(10, ("sending msg frame len=%lu rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len + RT2573_TX_DESC_SIZE, rate, xferlen));
+	    (long unsigned int)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
+	    rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUM_TX_TIMEOUT, rum_txeof);
@@ -1219,7 +1220,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		xferlen += 4;
 
 	DPRINTFN(10, ("sending data frame len=%lu rate=%u xfer len=%u\n",
-	    m0->m_pkthdr.len + RT2573_TX_DESC_SIZE, rate, xferlen));
+	    (long unsigned int)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
+	    rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUM_TX_TIMEOUT, rum_txeof);
