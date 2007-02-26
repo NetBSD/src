@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.2 2007/02/23 15:57:45 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.3 2007/02/26 09:18:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.2 2007/02/23 15:57:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.3 2007/02/26 09:18:08 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -178,7 +178,7 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 	if ((l->l_flag & L_INMEM) != 0) {
 		sched_enqueue(l);
 		if (l->l_priority < ci->ci_schedstate.spc_curpriority)
-			cpu_need_resched(ci);
+			cpu_need_resched(ci, 0);
 		sched_unlock(1);
 		return 0;
 	}
