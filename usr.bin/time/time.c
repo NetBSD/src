@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.17 2007/02/24 21:30:27 matt Exp $	*/
+/*	$NetBSD: time.c,v 1.18 2007/02/26 21:56:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: time.c,v 1.17 2007/02/24 21:30:27 matt Exp $");
+__RCSID("$NetBSD: time.c,v 1.18 2007/02/26 21:56:17 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -82,12 +82,18 @@ main(int argc, char ** volatile argv)
 		switch (ch) {
 		case 'c':
 			cshflag = 1;
+			portableflag = 0;
+			lflag = 0;
 			break;
 		case 'p':
 			portableflag = 1;
+			cshflag = 0;
+			lflag = 0;
 			break;
 		case 'l':
 			lflag = 1;
+			portableflag = 0;
+			cshflag = 0;
 			break;
 		case '?':
 		default:
