@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.36 2007/02/26 13:52:16 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.37 2007/02/26 15:09:19 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.36 2007/02/26 13:52:16 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.37 2007/02/26 15:09:19 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -747,7 +747,9 @@ puffs_fuse_node_open(struct puffs_cc *pcc, void *opc, int mode,
 		return 0;
 	}
 
-	fi->flags = mode & ~(O_CREAT | O_EXCL | O_TRUNC);
+	/* OFLAGS(), need to convert FREAD/FWRITE to O_RD/WR */
+	fi->flags = (mode & ~(O_CREAT | O_EXCL | O_TRUNC)) - 1;
+
 	if (pn->pn_va.va_type == VDIR) {
 		if (fuse->op.opendir)
 			fuse->op.opendir(path, fi);
