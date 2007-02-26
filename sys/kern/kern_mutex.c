@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.5 2007/02/26 09:20:53 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.6 2007/02/26 19:11:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.5 2007/02/26 09:20:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.6 2007/02/26 19:11:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -236,7 +236,7 @@ __strong_alias(mutex_spin_exit, mutex_vector_exit);
 void	mutex_abort(kmutex_t *, const char *, const char *);
 void	mutex_dump(volatile void *);
 int	mutex_onproc(uintptr_t, struct cpu_info **);
-static struct lwp *mutex_getowner(wchan_t); /* XXX naming conflict */
+static struct lwp *mutex_owner(wchan_t);
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
@@ -255,7 +255,7 @@ syncobj_t mutex_syncobj = {
 	turnstile_unsleep,
 	turnstile_changepri,
 	sleepq_lendpri,
-	mutex_getowner,
+	mutex_owner,
 };
 
 /*
@@ -760,22 +760,16 @@ mutex_owned(kmutex_t *mtx)
 /*
  * mutex_owner:
  *
- *	Return the current owner of an adaptive mutex.
+ *	Return the current owner of an adaptive mutex.  Used for
+ *	priority inheritance.
  */
-struct lwp *
-mutex_owner(kmutex_t *mtx)
-{
-
-	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
-	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);
-}
-
 static struct lwp *
-mutex_getowner(wchan_t obj)
+mutex_owner(wchan_t obj)
 {
 	kmutex_t *mtx = (void *)(uintptr_t)obj; /* discard qualifiers */
 
-	return mutex_owner(mtx);
+	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
+	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);
 }
 
 /*
