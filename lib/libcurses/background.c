@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.9.6.3 2007/01/25 08:50:14 blymn Exp $	*/
+/*	$NetBSD: background.c,v 1.9.6.4 2007/02/26 09:50:03 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: background.c,v 1.9.6.3 2007/01/25 08:50:14 blymn Exp $");
+__RCSID("$NetBSD: background.c,v 1.9.6.4 2007/02/26 09:50:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -258,6 +258,7 @@ void wbkgrndset(WINDOW *win, const cchar_t *wch)
 	if (__using_color && !( battr & __COLOR))
 		battr |= __default_color;
 	win->battr = battr;
+	SET_BGWCOL((*win), 1);
 #endif /* HAVE_WCHAR */
 }
 
