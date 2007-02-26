@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.4 2007/02/15 15:49:27 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.5 2007/02/26 09:20:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.4 2007/02/15 15:49:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.5 2007/02/26 09:20:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -236,6 +236,7 @@ __strong_alias(mutex_spin_exit, mutex_vector_exit);
 void	mutex_abort(kmutex_t *, const char *, const char *);
 void	mutex_dump(volatile void *);
 int	mutex_onproc(uintptr_t, struct cpu_info **);
+static struct lwp *mutex_getowner(wchan_t); /* XXX naming conflict */
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
@@ -247,6 +248,14 @@ lockops_t mutex_adaptive_lockops = {
 	"Mutex",
 	1,
 	mutex_dump
+};
+
+syncobj_t mutex_syncobj = {
+	SOBJ_SLEEPQ_SORTED,
+	turnstile_unsleep,
+	turnstile_changepri,
+	sleepq_lendpri,
+	mutex_getowner,
 };
 
 /*
@@ -637,7 +646,7 @@ mutex_vector_enter(kmutex_t *mtx)
 
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
-		turnstile_block(ts, TS_WRITER_Q, mtx);
+		turnstile_block(ts, TS_WRITER_Q, mtx, &mutex_syncobj);
 
 		LOCKSTAT_STOP_TIMER(lsflag, slptime);
 		LOCKSTAT_COUNT(slpcnt, 1);
@@ -759,6 +768,14 @@ mutex_owner(kmutex_t *mtx)
 
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);
+}
+
+static struct lwp *
+mutex_getowner(wchan_t obj)
+{
+	kmutex_t *mtx = (void *)(uintptr_t)obj; /* discard qualifiers */
+
+	return mutex_owner(mtx);
 }
 
 /*

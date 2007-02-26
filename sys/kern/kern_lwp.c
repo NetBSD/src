@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.59 2007/02/21 23:48:13 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.60 2007/02/26 09:20:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.59 2007/02/21 23:48:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.60 2007/02/26 09:20:53 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -504,9 +504,12 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 		l2 = pool_get(&lwp_pool, PR_WAITOK);
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
+		SLIST_INIT(&l2->l_pi_lenders);
 	} else {
 		l2 = isfree;
 		ts = l2->l_ts;
+		KASSERT(l2->l_inheritedprio == MAXPRI);
+		KASSERT(SLIST_EMPTY(&l2->l_pi_lenders));
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = ts;
 	}
@@ -516,6 +519,7 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
 	l2->l_refcnt = 1;
 	l2->l_priority = l1->l_priority;
 	l2->l_usrpri = l1->l_usrpri;
+	l2->l_inheritedprio = MAXPRI;
 	l2->l_mutex = &sched_mutex;
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
@@ -782,6 +786,8 @@ lwp_free(struct lwp *l, int recycle, int last)
 	cpu_lwp_free2(l);
 #endif
 	uvm_lwp_exit(l);
+	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
+	KASSERT(l->l_inheritedprio == MAXPRI);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
 	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
@@ -1062,6 +1068,24 @@ lwp_relock(struct lwp *l, kmutex_t *new)
 	}
 #else
 	(void)new;
+#endif
+}
+
+int
+lwp_trylock(struct lwp *l)
+{
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	kmutex_t *old;
+
+	for (;;) {
+		if (!mutex_tryenter(old = l->l_mutex))
+			return 0;
+		if (__predict_true(l->l_mutex == old))
+			return 1;
+		mutex_spin_exit(old);
+	}
+#else
+	return mutex_tryenter(l->l_mutex);
 #endif
 }
 
