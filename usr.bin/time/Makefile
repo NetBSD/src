@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2007/02/24 21:30:27 matt Exp $
+#	$NetBSD: Makefile,v 1.6 2007/02/26 00:17:37 matt Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
+
+.include <bsd.own.mk>
 
 WARNS=2
 CPPFLAGS+=	-DNOT_CSH
