@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.3 2007/02/26 09:20:52 yamt Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.4 2007/02/26 10:50:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/sched.h>
+#include <sys/syncobj.h>
 
 /*
  * Generic sleep queues.
