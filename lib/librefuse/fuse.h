@@ -100,7 +100,7 @@ enum {
 	FUSE_OPT_KEY_DISCARD = -4
 };
 
-typedef struct fuse_dirh *fuse_dirh_t;
+typedef struct puffs_fuse_dirh *fuse_dirh_t;
 
 typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *, off_t);
 typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);

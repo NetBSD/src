@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.35 2007/02/26 00:25:40 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.36 2007/02/26 13:52:16 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.35 2007/02/26 00:25:40 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.36 2007/02/26 13:52:16 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -87,8 +87,17 @@ struct fuse {
 	struct puffs_usermount	*pu;
 };
 
+struct puffs_fuse_dirh {
+	void *dbuf;
+	struct dirent *d;
+
+	size_t reslen;
+	size_t bufsize;
+};
+
 struct refusenode {
-	struct fuse_file_info	 file_info;
+	struct fuse_file_info	file_info;
+	struct puffs_fuse_dirh	dirh;
 	int opencount;
 	int flags;
 };
@@ -117,8 +126,10 @@ newrn(struct puffs_usermount *pu)
 static void
 nukern(struct puffs_node *pn)
 {
+	struct refusenode *rn = pn->pn_data;
 
-	free(pn->pn_data);
+	free(rn->dirh.dbuf);
+	free(rn);
 	puffs_pn_put(pn);
 }
 
@@ -131,20 +142,42 @@ static ino_t fakeino = 3;
  */
 static struct fuse_context fcon;
 
+#define DIR_CHUNKSIZE 4096
+static int
+fill_dirbuf(struct puffs_fuse_dirh *dh, const char *name, ino_t dino,
+	uint8_t dtype)
+{
 
-/* XXX: rethinkme */
-struct fuse_dirh {
-	struct dirent *dent;
-	size_t reslen;
-	off_t readoff;
-};
+	/* initial? */
+	if (dh->bufsize == 0) {
+		dh->dbuf = malloc(DIR_CHUNKSIZE);
+		if (dh->dbuf == NULL)
+			err(1, "fill_dirbuf");
+		dh->d = dh->dbuf;
+		dh->reslen = dh->bufsize = DIR_CHUNKSIZE;
+	}
 
-/* ARGSUSED2 */
+	if (puffs_nextdent(&dh->d, name, dino, dtype, &dh->reslen))
+		return 0;
+
+	/* try to increase buffer space */
+	dh->dbuf = realloc(dh->dbuf, dh->bufsize + DIR_CHUNKSIZE);
+	if (dh->dbuf == NULL)
+		err(1, "fill_dirbuf realloc");
+	dh->d = (void *)((uint8_t *)dh->dbuf + (dh->bufsize - dh->reslen));
+	dh->reslen += DIR_CHUNKSIZE;
+	dh->bufsize += DIR_CHUNKSIZE;
+
+	return !puffs_nextdent(&dh->d, name, dino, dtype, &dh->reslen);
+}
+
+/* ARGSUSED3 */
+/* XXX: I have no idea how "off" is supposed to be used */
 static int
 puffs_fuse_fill_dir(void *buf, const char *name,
 	const struct stat *stbuf, off_t off)
 {
-	struct fuse_dirh *deh = buf;
+	struct puffs_fuse_dirh *deh = buf;
 	ino_t dino;
 	uint8_t dtype;
 
@@ -156,7 +189,7 @@ puffs_fuse_fill_dir(void *buf, const char *name,
 		dino = stbuf->st_ino;
 	}
 
-	return !puffs_nextdent(&deh->dent, name, dino, dtype, &deh->reslen);
+	return fill_dirbuf(deh, name, dino, dtype);
 }
 
 static int
@@ -175,7 +208,7 @@ puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 	else
 		dino = fakeino++;
 
-	return !puffs_nextdent(&h->dent, name, dino, dtype, &h->reslen);
+	return fill_dirbuf(h, name, dino, dtype);
 }
 
 int
@@ -845,9 +878,10 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	struct puffs_usermount	*pu = puffs_cc_getusermount(pcc);
 	struct puffs_node	*pn = opc;
 	struct refusenode	*rn = pn->pn_data;
+	struct puffs_fuse_dirh	*dirh;
 	struct fuse		*fuse;
+	struct dirent		*fromdent;
 	const char		*path = PNPATH(pn);
-	struct fuse_dirh	deh;
 	int			ret;
 
 	fuse = (struct fuse *)pu->pu_privdata;
@@ -855,27 +889,45 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 		return ENOSYS;
 	}
 
-	/* XXX: how to handle this??? */
-	if (*readoff != 0) {
-		return 0;
+	if (pn->pn_va.va_type != VDIR)
+		return ENOTDIR;
+
+	dirh = &rn->dirh;
+
+	/*
+	 * if we are starting from the beginning, slurp entire directory
+	 * into our buffers
+	 */
+	if (*readoff == 0) {
+		/* free old buffers */
+		free(dirh->dbuf);
+		memset(dirh, 0, sizeof(struct puffs_fuse_dirh));
+
+		if (fuse->op.readdir)
+			ret = fuse->op.readdir(path, dirh, puffs_fuse_fill_dir,
+			    0, &rn->file_info);
+		else
+			ret = fuse->op.getdir(path, dirh, puffs_fuse_dirfil);
+		if (ret)
+			return -ret;
 	}
 
-	deh.dent = dent;
-	deh.reslen = *reslen;
-	deh.readoff = *readoff;
+	/* now, stuff results into the kernel buffers */
+	while (*readoff < dirh->bufsize - dirh->reslen) {
+		/*LINTED*/
+		fromdent = (struct dirent *)((uint8_t *)dirh->dbuf + *readoff);
 
-	if (fuse->op.readdir)
-		ret = fuse->op.readdir(path, &deh, puffs_fuse_fill_dir,
-		    *readoff, &rn->file_info);
-	else
-		ret = fuse->op.getdir(path, &deh, puffs_fuse_dirfil);
-	*reslen = deh.reslen;
-	*readoff = 1;
+		if (*reslen < _DIRENT_SIZE(fromdent))
+			break;
 
-	if (ret == 0) {
+		memcpy(dent, fromdent, _DIRENT_SIZE(fromdent));
+		*readoff += _DIRENT_SIZE(fromdent);
+		*reslen -= _DIRENT_SIZE(fromdent);
+
+		dent = _DIRENT_NEXT(dent);
 	}
 
-	return -ret;
+	return 0;
 }
 
 /* ARGSUSED */
