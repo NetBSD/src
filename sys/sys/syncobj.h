@@ -1,11 +1,11 @@
-/*	$NetBSD: syncobj.h,v 1.1 2007/02/26 10:50:31 yamt Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.2 2007/02/26 19:04:47 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ross Harvey, Jason R. Thorpe, Nathan J. Williams, and Andrew Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
