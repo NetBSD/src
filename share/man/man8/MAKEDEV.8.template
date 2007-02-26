@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.8 2007/02/26 22:38:07 apb Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.9 2007/02/26 22:54:40 apb Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -126,18 +126,71 @@ you can get more debugging output by using
 .Dl Ic sh Fl x Ar MAKEDEV Ar argument .
 .Sh SEE ALSO
 .Xr config 1 ,
+.Xr pax 1 ,
 .Xr intro 4 ,
 .Xr MAKEDEV.local 8 ,
-.Xr mknod 8
+.Xr diskless 8 ,
+.Xr mknod 8 ,
+.Xr mtree 8
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
 .Sh NOTES
+Not all devices listed in this manpage are supported on all platforms.
+.Pp
 This man page is generated automatically from the same sources
 as
 .Pa /dev/MAKEDEV ,
 in which the device files are not always sorted, which may result
 in an unusual (non-alphabetical) order.
-Not all devices listed in this manpage are supported on all platforms.
+.Pp
+In order to allow a diskless
+.Nx
+client to obtain its
+.Pa /dev
+directory from a file server running a foreign operating system,
+one of the following techniques may be useful to populate
+a directory of device nodes on the foreign server:
+.Bl -bullet
+.It
+If the foreign server is sufficiently similar to
+.Nx ,
+run
+.Nm
+in an appropriate directory of the foreign server,
+using the
+.Fl m
+flag to refer to a script that converts from command line
+arguments that would be usable with the
+.Nx
+.Xr mknod 8
+command to the equivalent commands for the foreign server.
+.It
+Run
+.Nm
+with the
+.Fl s
+flag to generate an
+.Xr mtree 8
+specification file; this can be done on any host with a
+POSIX-compliant shell and a few widely-available utilities.
+Use the
+.Xr pax 1
+command with the
+.Fl w Fl M
+flags to convert the
+.Xr mtree 8
+specification file into an archive
+in a format that supports device nodes
+(such as
+.Ar ustar
+format);
+this can be done on a
+.Nx
+host, or can be done in a cross-build environment using
+.Sy TOOLDIR Ns Pa /bin/nbpax .
+Finally, use apropriate tools on the foreign server
+to unpack the archive and create the device nodes.
+.El
