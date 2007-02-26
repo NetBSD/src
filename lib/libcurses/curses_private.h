@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.38.6.3 2007/02/07 09:18:44 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.38.6.4 2007/02/26 09:49:29 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -347,6 +347,8 @@ void     __cputchar_args(char, void *);
 void     _cursesi_free_keymap(keymap_t *);
 int      _cursesi_gettmode(SCREEN *);
 void     _cursesi_reset_acs(SCREEN *);
+int	_cursesi_addbyte(WINDOW *, __LINE **, int *, int *, int , attr_t);
+int	_cursesi_addwchar(WINDOW *, __LINE **, int *, int *, const cchar_t *);
 #ifdef HAVE_WCHAR
 void     _cursesi_reset_wacs(SCREEN *);
 #endif /* HAVE_WCHAR */
