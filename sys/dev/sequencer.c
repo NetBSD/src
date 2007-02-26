@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.29.2.2 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.29.2.3 2007/02/26 09:09:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.2 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.29.2.3 2007/02/26 09:09:56 yamt Exp $");
 
 #include "sequencer.h"
 
@@ -109,6 +109,7 @@ static int seq_to_new(seq_event_t *, struct uio *);
 static int seq_sleep_timo(int *, const char *, int);
 static int seq_sleep(int *, const char *);
 static void seq_wakeup(int *);
+static void seq_softintr(void *);
 
 struct midi_softc;
 static int midiseq_out(struct midi_dev *, u_char *, u_int, int);
@@ -142,9 +143,13 @@ const struct cdevsw sequencer_cdevsw = {
 void
 sequencerattach(int n)
 {
+	struct sequencer_softc *sc;
 
-	for (n = 0; n < NSEQUENCER; n++)
-		callout_init(&seqdevs[n].sc_callout);
+	for (n = 0; n < NSEQUENCER; n++) {
+		sc = &seqdevs[n];
+		callout_init(&sc->sc_callout);
+		sc->sih = softintr_establish(IPL_SOFTSERIAL, seq_softintr, sc);
+	}
 }
 
 static int
@@ -256,14 +261,20 @@ static void
 seq_timeout(void *addr)
 {
 	struct sequencer_softc *sc = addr;
+	struct proc *p;
+
 	DPRINTFN(4, ("seq_timeout: %p\n", sc));
 	sc->timeout = 0;
 	seq_startoutput(sc);
 	if (SEQ_QLEN(&sc->outq) < sc->lowat) {
 		seq_wakeup(&sc->wchan);
 		selnotify(&sc->wsel, 0);
-		if (sc->async)
-			psignal(sc->async, SIGIO);
+		if (sc->async != NULL) {
+			mutex_enter(&proclist_mutex);
+			if ((p = sc->async) != NULL)
+				psignal(p, SIGIO);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 
 }
@@ -307,6 +318,22 @@ sequencerclose(dev_t dev, int flags, int ifmt,
 	return (0);
 }
 
+static void
+seq_softintr(void *cookie)
+{
+	struct sequencer_softc *sc = cookie;
+	struct proc *p;
+
+	seq_wakeup(&sc->rchan);
+	selnotify(&sc->rsel, 0);
+	if (sc->async != NULL) {
+		mutex_enter(&proclist_mutex);
+		if ((p = sc->async) != NULL)
+			psignal(p, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
+}
+
 static int
 seq_input_event(struct sequencer_softc *sc, seq_event_t *cmd)
 {
@@ -321,10 +348,7 @@ seq_input_event(struct sequencer_softc *sc, seq_event_t *cmd)
 	if (SEQ_QFULL(q))
 		return (ENOMEM);
 	SEQ_QPUT(q, *cmd);
-	seq_wakeup(&sc->rchan);
-	selnotify(&sc->rsel, 0);
-	if (sc->async)
-		psignal(sc->async, SIGIO);
+	softintr_schedule(sc->sih);
 	return 0;
 }
 

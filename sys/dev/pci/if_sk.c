@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.15.2.2 2006/12/30 20:48:45 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.15.2.3 2007/02/26 09:10:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1082,7 +1082,7 @@ sk_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 void
 sk_update_int_mod(struct sk_softc *sc)
 {
-	u_int32_t sk_imtimer_ticks;
+	u_int32_t imtimer_ticks;
 
 	/*
          * Configure interrupt moderation. The moderation timer
@@ -1095,13 +1095,13 @@ sk_update_int_mod(struct sk_softc *sc)
 	 */
 	switch (sc->sk_type) {
 	case SK_GENESIS:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
+		imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
 		break;
 	case SK_YUKON_EC:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
 		break;
 	default:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
 	}
 	aprint_verbose("%s: interrupt moderation is %d us\n",
 	    sc->sk_dev.dv_xname, sc->sk_int_mod);
@@ -2698,7 +2698,7 @@ sk_init(struct ifnet *ifp)
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct mii_data		*mii = &sc_if->sk_mii;
 	int			s;
-	u_int32_t		imr, sk_imtimer_ticks;
+	u_int32_t		imr, imtimer_ticks;
 
 	DPRINTFN(1, ("sk_init\n"));
 
@@ -2804,13 +2804,13 @@ sk_init(struct ifnet *ifp)
 	/* Set interrupt moderation if changed via sysctl. */
 	switch (sc->sk_type) {
 	case SK_GENESIS:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
+		imtimer_ticks = SK_IMTIMER_TICKS_GENESIS;
 		break;
 	case SK_YUKON_EC:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON_EC;
 		break;
 	default:
-		sk_imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
+		imtimer_ticks = SK_IMTIMER_TICKS_YUKON;
 	}
 	imr = sk_win_read_4(sc, SK_IMTIMERINIT);
 	if (imr != SK_IM_USECS(sc->sk_int_mod)) {
@@ -2844,7 +2844,10 @@ sk_init(struct ifnet *ifp)
 	if (SK_YUKON_FAMILY(sc->sk_type)) {
 		u_int16_t reg = SK_YU_READ_2(sc_if, YUKON_GPCR);
 		reg |= YU_GPCR_TXEN | YU_GPCR_RXEN;
-		reg &= ~(YU_GPCR_SPEED_EN | YU_GPCR_DPLX_EN);
+#if 0
+		/* XXX disable 100Mbps and full duplex mode? */
+		reg &= ~(YU_GPCR_SPEED | YU_GPCR_DPLX_EN);
+#endif
 		SK_YU_WRITE_2(sc_if, YUKON_GPCR, reg);
 	}
 

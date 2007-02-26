@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.10.4.2 2006/12/30 20:50:54 yamt Exp $ */
+/*	$NetBSD: crypto.c,v 1.10.4.3 2007/02/26 09:12:08 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.10.4.2 2006/12/30 20:50:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.10.4.3 2007/02/26 09:12:08 yamt Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -242,7 +242,7 @@ crypto_init0(void)
 void
 crypto_init(void)
 {
-	ONCE_DECL(crypto_init_once);
+	static ONCE_DECL(crypto_init_once);
 
 	RUN_ONCE(&crypto_init_once, crypto_init0);
 }

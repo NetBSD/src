@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.108.2.2 2006/12/30 20:49:39 yamt Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.108.2.3 2007/02/26 09:10:50 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.108.2.2 2006/12/30 20:49:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.108.2.3 2007/02/26 09:10:50 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -68,10 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.108.2.2 2006/12/30 20:49:39 yamt Exp $")
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usb_quirks.h>
-
-#if defined(__FreeBSD__)
-#include "usb_if.h"
-#endif
 
 #ifdef USB_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
@@ -774,7 +770,6 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 	if (xfer->busy_free != XFER_ONQU) {
 		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
 		       xfer, xfer->busy_free);
-		return;
 	}
 #endif
 

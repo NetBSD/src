@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.13.4.1 2006/06/21 15:10:27 yamt Exp $       */
+/*      $NetBSD: if_atm.h,v 1.13.4.2 2007/02/26 09:11:33 yamt Exp $       */
 
 /*
  *
@@ -140,7 +140,7 @@ struct atmllc {
 void	atm_ifattach(struct ifnet *);
 void	atm_input(struct ifnet *, struct atm_pseudohdr *,
 		struct mbuf *, void *);
-int	atm_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+int	atm_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 		struct rtentry *);
 #endif
 #ifdef ATM_PVCEXT

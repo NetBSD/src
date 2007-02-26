@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.h,v 1.17.2.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: esis.h,v 1.17.2.2 2007/02/26 09:12:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -144,7 +144,7 @@ void esis_shoutput (struct ifnet *, int, int, const void *, int,
 	               struct iso_addr *);
 void isis_input (struct mbuf *, ...);
 int isis_output (struct mbuf *, ...);
-void *esis_ctlinput (int, struct sockaddr *, void *);
+void *esis_ctlinput(int, const struct sockaddr *, void *);
 #endif /* _KERNEL */
 
 #endif /* !_NETISO_ESIS_H_ */

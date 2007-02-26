@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.6.6.1 2006/06/21 14:50:07 yamt Exp $ */
+/* $NetBSD: panel.c,v 1.6.6.2 2007/02/26 09:06:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.6.6.1 2006/06/21 14:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.6.6.2 2007/02/26 09:06:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.6.6.1 2006/06/21 14:50:07 yamt Exp $");
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/select.h>
-#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

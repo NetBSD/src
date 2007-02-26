@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14.16.1 2006/06/21 14:48:53 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.16.2 2007/02/26 09:05:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -194,11 +194,7 @@ softintr(ipl)
 
 /*
  * Software interrupt masks
- *
- * NOTE: splsoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
  */
-#define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
 #define	splsoftclock()	splraise(imask[IPL_SOFTCLOCK])
 #define	splsoftnet()	splraise(imask[IPL_SOFTNET])
 #define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])

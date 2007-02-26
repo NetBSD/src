@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.8.18.1 2006/06/21 14:47:47 yamt Exp $ */
+/* $NetBSD: if_eh.c,v 1.8.18.2 2007/02/26 09:05:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8.18.1 2006/06/21 14:47:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8.18.2 2007/02/26 09:05:29 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8.18.1 2006/06/21 14:47:47 yamt Exp $");
 #include <net/if_ether.h>
 
 #include <sys/bswap.h>
-#include <machine/bus.h>
 #include <machine/bus.h>
 #include <machine/irq.h>
 

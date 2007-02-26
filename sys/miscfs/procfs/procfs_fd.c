@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fd.c,v 1.5.18.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: procfs_fd.c,v 1.5.18.3 2007/02/26 09:11:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,8 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.18.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_fd.c,v 1.5.18.3 2007/02/26 09:11:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,11 +59,13 @@ procfs_dofd(
 {
 	int error;
 	struct file *fp;
-	struct proc *pown;
 	off_t offs;
 
-	if ((error = procfs_getfp(pfs, &pown, &fp)) != 0)
-		return error;
+	mutex_enter(&p->p_mutex);
+	fp = fd_getfile(p->p_fd, pfs->pfs_fd);
+	mutex_exit(&p->p_mutex);
+	if (fp == NULL)
+		return (EBADF);
 
 	FILE_USE(fp);
 
@@ -79,7 +82,7 @@ procfs_dofd(
 		panic("bad uio op");
 	}
 
-	FILE_UNUSE(fp, proc_representative_lwp(pown));
+	FILE_UNUSE(fp, curl);
 
 	return (error);
 }

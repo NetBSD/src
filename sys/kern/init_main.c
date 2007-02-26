@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.248.2.2 2006/12/30 20:50:04 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.248.2.3 2007/02/26 09:11:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.2 2006/12/30 20:50:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.3 2007/02/26 09:11:03 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -81,6 +81,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.2 2006/12/30 20:50:04 yamt Exp
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
+#include "opt_systrace.h"
+#include "opt_fileassoc.h"
+#include "opt_ktrace.h"
 #include "opt_pax.h"
 
 #include "rnd.h"
@@ -102,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.2 2006/12/30 20:50:04 yamt Exp
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/fstrans.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
@@ -115,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.2 2006/12/30 20:50:04 yamt Exp
 #include <sys/sysctl.h>
 #include <sys/event.h>
 #include <sys/mbuf.h>
+#include <sys/sleepq.h>
 #include <sys/iostat.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -127,6 +132,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.2 2006/12/30 20:50:04 yamt Exp
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
+#endif
+#ifdef SYSTRACE
+#include <sys/systrace.h>
 #endif
 #ifdef P1003_1B_SEMAPHORE
 #include <sys/ksem.h>
@@ -145,11 +153,15 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.2 2006/12/30 20:50:04 yamt Exp
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
+#include <sys/lockdebug.h>
+#include <sys/debug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
@@ -185,6 +197,7 @@ int	boothowto;
 int	cold = 1;			/* still working on startup */
 struct timeval boottime;	        /* time at system startup - will only follow settime deltas */
 time_t	rootfstime;			/* recorded root fs time, if known */
+int	ncpu =  1;			/* number of CPUs configured, assume 1 */
 
 volatile int start_init_exec;		/* semaphore for start_init() */
 
@@ -202,6 +215,14 @@ __stack_chk_fail(void)
 	panic("stack overflow detected; terminated");
 }
 #endif
+
+void __secmodel_none(void);
+__weak_alias(secmodel_start, __secmodel_none);
+void
+__secmodel_none(void)
+{
+	return;
+}
 
 /*
  * System startup; initialize the world, create process 0, mount root
@@ -224,6 +245,10 @@ main(void)
 #ifdef NVNODE_IMPLICIT
 	int usevnodes;
 #endif
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+#endif
 
 	/*
 	 * Initialize the current LWP pointer (curlwp) before
@@ -235,6 +260,10 @@ main(void)
 	l->l_proc = &proc0;
 	l->l_lid = 1;
 
+#ifdef LOCKDEBUG
+	lockdebug_init();
+#endif
+
 	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
@@ -245,6 +274,10 @@ main(void)
 
 	uvm_init();
 
+#ifdef DEBUG
+	debug_init();
+#endif
+
 	kmem_init();
 
 	/* Do machine-dependent initialization. */
@@ -252,6 +285,17 @@ main(void)
 
 	/* Initialize callouts. */
 	callout_startup();
+
+	/*
+	 * Initialize the kernel authorization subsystem and start the
+	 * default security model, if any. We need to do this early
+	 * enough so that subsystems relying on any of the aforementioned
+	 * can work properly. Since the security model may dictate the
+	 * credential inheritance policy, it is needed at least before
+	 * any process is created, specifically proc0.
+	 */
+	kauth_init();
+	secmodel_start();
 
 	/* Initialize the buffer cache */
 	bufinit();
@@ -277,8 +321,6 @@ main(void)
 #if NRND > 0
 	rnd_init();		/* initialize RNG */
 #endif
-	/* Initialize the sysctl subsystem. */
-	sysctl_init();
 
 	/* Initialize process and pgrp structures. */
 	procinit();
@@ -295,7 +337,13 @@ main(void)
 	 */
 	(void)chgproccnt(0, 1);
 
+	/* Initialize the run queues, turnstiles and sleep queues. */
 	rqinit();
+	turnstile_init();
+	sleeptab_init(&sleeptab);
+
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
 
 	/* Initialize I/O statistics. */
 	iostat_init();
@@ -313,14 +361,13 @@ main(void)
 #endif
 	vfsinit();
 
+	/* Initialize fstrans. */
+	fstrans_init();
 
 #ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
 #endif /* __HAVE_TIMECOUNTER */
-
-	/* Initialize kauth. */
-	kauth_init();
 
 	/* Configure the system hardware.  This will enable interrupts. */
 	configure();
@@ -351,7 +398,11 @@ main(void)
 	ubc_init();		/* must be after autoconfig */
 
 	/* Lock the kernel on behalf of proc0. */
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
+
+#ifdef SYSTRACE
+	systrace_init();
+#endif
 
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
@@ -372,9 +423,6 @@ main(void)
 	/* Initialize posix semaphores */
 	ksem_init();
 #endif
-
-	/* Initialize default security model. */
-	secmodel_start();
 
 #if NVERIEXEC > 0
 	/*
@@ -416,6 +464,11 @@ main(void)
 
 	/* Kick off timeout driven events by calling first time. */
 	schedcpu(NULL);
+
+#ifdef KTRACE
+	/* Initialize ktrace. */
+	ktrinit();
+#endif
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
@@ -503,28 +556,29 @@ main(void)
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
-	 * from the file system.  Reset p->p_rtime as it may have been
+	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-	proclist_lock_read();
-	s = splsched();
 #ifdef __HAVE_TIMECOUNTER
 	getmicrotime(&time);
 #else
 	mono_time = time;
 #endif
 	boottime = time;
+	rw_enter(&proclist_lock, RW_READER);
 	LIST_FOREACH(p, &allproc, p_list) {
-		KASSERT((p->p_flag & P_MARKER) == 0);
+		KASSERT((p->p_flag & PK_MARKER) == 0);
+		mutex_enter(&p->p_smutex);
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_cpu != NULL)
-				l->l_cpu->ci_schedstate.spc_runtime = time;
+			lwp_lock(l);
+			l->l_cpu->ci_schedstate.spc_runtime = time;
+			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
+			lwp_unlock(l);
 		}
-		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+		mutex_exit(&p->p_smutex);
 	}
-	splx(s);
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
@@ -543,6 +597,12 @@ main(void)
 #if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
 	cpu_boot_secondary_processors();
+
+	/* Count the number of running CPUs. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ncpu++;
+	}
+	ncpu--;
 #endif
 
 	/* Initialize exec structures */
@@ -739,7 +799,7 @@ start_init(void *arg)
 		 */
 		error = sys_execve(l, &args, retval);
 		if (error == 0 || error == EJUSTRETURN) {
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			return;
 		}
 		printf("exec %s: error %d\n", path, error);

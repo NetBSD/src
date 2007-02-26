@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.15.2.2 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.15.2.3 2007/02/26 09:09:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.2 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.3 2007/02/26 09:09:54 yamt Exp $");
 
 #include "fss.h"
 
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.2 2006/12/30 20:47:50 yamt Exp $");
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/kthread.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -162,7 +163,7 @@ fssattach(int num)
 		sc->sc_unit = i;
 		sc->sc_bdev = NODEV;
 		simple_lock_init(&sc->sc_slock);
-		lockinit(&sc->sc_lock, PRIBIO, "fsslock", 0, 0);
+		mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
 		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
 	}
 }
@@ -273,29 +274,29 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case FSSIOCSET:
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_lock);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
 		else if ((sc->sc_flags & FSS_ACTIVE) != 0)
 			error = EBUSY;
 		else
 			error = fss_create_snapshot(sc, fss, l);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case FSSIOCCLR:
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_lock);
 		if ((flag & FWRITE) == 0)
 			error = EPERM;
 		else if ((sc->sc_flags & FSS_ACTIVE) == 0)
 			error = ENXIO;
 		else
 			error = fss_delete_snapshot(sc, l);
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case FSSIOCGET:
-		lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&sc->sc_lock);
 		switch (sc->sc_flags & (FSS_PERSISTENT | FSS_ACTIVE)) {
 		case FSS_ACTIVE:
 			memcpy(fsg->fsg_mount, sc->sc_mntname, MNAMELEN);
@@ -317,7 +318,7 @@ fss_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			error = ENXIO;
 			break;
 		}
-		lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case FSSIOFSET:
@@ -741,7 +742,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	 * Activate the snapshot.
 	 */
 
-	if ((error = vfs_write_suspend(sc->sc_mount, PUSER|PCATCH, 0)) != 0)
+	if ((error = vfs_suspend(sc->sc_mount, 0)) != 0)
 		goto bad;
 
 	microtime(&sc->sc_time);
@@ -752,7 +753,7 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	if (error == 0)
 		sc->sc_flags |= FSS_ACTIVE;
 
-	vfs_write_resume(sc->sc_mount);
+	vfs_resume(sc->sc_mount);
 
 	if (error != 0)
 		goto bad;
@@ -1085,7 +1086,9 @@ fss_bs_thread(void *arg)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
-			}
+			} else
+				bp->b_resid = 0;
+
 			biodone(bp);
 
 			continue;

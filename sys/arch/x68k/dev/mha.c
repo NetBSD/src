@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.37.2.1 2006/06/21 14:57:48 yamt Exp $	*/
+/*	$NetBSD: mha.c,v 1.37.2.2 2007/02/26 09:08:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.37.2.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.37.2.2 2007/02/26 09:08:44 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1567,6 +1567,10 @@ mha_dataout_pio(struct mha_softc *sc, u_char *p, int n)
 	return total_n - n;
 }
 
+/*
+ * dw: DMA word
+ * cw: CMR word
+ */
 static int
 mha_dataio_dma(int dw, int cw, struct mha_softc *sc, u_char *p, int n)
 {

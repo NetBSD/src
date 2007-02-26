@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.20.16.1 2006/06/21 14:56:48 yamt Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.20.16.2 2007/02/26 09:08:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20.16.1 2006/06/21 14:56:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20.16.2 2007/02/26 09:08:29 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.20.16.1 2006/06/21 14:56:48 yamt
 #include <compat/sys/signal.h>
 #include <compat/sys/signalvar.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
@@ -94,7 +93,7 @@ sunos_sendsig(ksi, mask)
 	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
-	int sig = ksi->ksi_signo;
+	int sig = ksi->ksi_signo, error;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sunos_sigframe sf;
 
@@ -106,12 +105,12 @@ sunos_sendsig(ksi, mask)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
-		fp = (struct sunos_sigframe *)((char *)p->p_sigctx.ps_sigstk.ss_sp +
-					p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct sunos_sigframe *)((char *)l->l_sigstk.ss_sp +
+					l->l_sigstk.ss_size);
 	else
 		fp = (struct sunos_sigframe *)oldsp;
 	fp = (struct sunos_sigframe *)((long)(fp - 1) & ~7);
@@ -139,7 +138,7 @@ sunos_sendsig(ksi, mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 	native_sigset_to_sigset13(mask, &sf.sf_sc.sc_mask);
 	sf.sf_sc.sc_sp = (long)oldsp;
 	sf.sf_sc.sc_pc = tf->tf_pc;
@@ -157,6 +156,8 @@ sunos_sendsig(ksi, mask)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	newsp = (struct rwindow32 *)((long)fp - sizeof(struct rwindow32));
 	write_user_windows();
 #ifdef DEBUG
@@ -165,9 +166,12 @@ sunos_sendsig(ksi, mask)
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
 	kwin = (struct rwindow32 *)(((caddr_t)tf)-CCFSZ);
-	if (rwindow_save(l) || 
+	error = (rwindow_save(l) || 
 	    copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
-	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp)) {
+	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -225,8 +229,10 @@ sunos_sys_sigreturn(l, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
+	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sunos_sigreturn: %s[%d], sigcntxp %p\n",
@@ -276,14 +282,15 @@ sunos_sys_sigreturn(l, v, retval)
 	}
 #endif
 
+	mutex_enter(&p->p_smutex);
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

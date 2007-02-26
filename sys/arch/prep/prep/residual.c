@@ -1,4 +1,4 @@
-/*      $NetBSD: residual.c,v 1.4.2.2 2006/12/30 20:46:50 yamt Exp $     */
+/*      $NetBSD: residual.c,v 1.4.2.3 2007/02/26 09:07:59 yamt Exp $     */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.4.2.2 2006/12/30 20:46:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: residual.c,v 1.4.2.3 2007/02/26 09:07:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ print_residual_device_info(void)
 	unsigned long nmem;
 	unsigned long ndev;
 	unsigned long page_size;
-	int ncpu;
+	int ncpus;
 	int first;
 	int i, j;
 	char deviceid[9];
@@ -406,10 +406,10 @@ print_residual_device_info(void)
 	 */
 	printf("\n");
 	printf("MaxNumCpus = %d\n", be16toh(res->MaxNumCpus));
-	ncpu = be16toh(res->ActualNumCpus);
-	printf("ActualNumCpus = %d\n", ncpu);
+	ncpus = be16toh(res->ActualNumCpus);
+	printf("ActualNumCpus = %d\n", ncpus);
 	ppc_cpu = res->Cpus;
-	for (i = 0; i < ((ncpu > MAX_CPUS) ? MAX_CPUS : ncpu); i++) {
+	for (i = 0; i < ((ncpus > MAX_CPUS) ? MAX_CPUS : ncpus); i++) {
 		printf("%d:\n", i);
 		printf("  CpuType = %08lx\n", be32toh(ppc_cpu[i].CpuType));
 		printf("  CpuNumber = %d\n", ppc_cpu[i].CpuNumber);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32reg.h,v 1.2.4.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: ninjaata32reg.h,v 1.2.4.3 2007/02/26 09:10:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -33,7 +33,7 @@
  * Workbit NinjaATA (32bit versions), IDE Controller with Busmastering PIO:
  *	NinjaATA-32Bi	PCMCIA/CardBus dual mode device ("DuoATA")
  *			(CardBus mode only)
- *	PATA-32		CardBus device
+ *	NPATA-32	CardBus device
  */
 
 /*

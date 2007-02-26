@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_ras.c,v 1.10.4.2 2006/12/30 20:50:05 yamt Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.10.4.3 2007/02/26 09:11:09 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.3 2007/02/26 09:11:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.10.4.2 2006/12/30 20:50:05 yamt Exp $
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -77,27 +75,30 @@ caddr_t
 ras_lookup(struct proc *p, caddr_t addr)
 {
 	struct ras *rp;
+	caddr_t startaddr;
+
+	startaddr = (caddr_t)-1;
 
 #ifdef DIAGNOSTIC
 	if (addr < (caddr_t)VM_MIN_ADDRESS ||
 	    addr > (caddr_t)VM_MAXUSER_ADDRESS)
-		return ((caddr_t)-1);
+		return (startaddr);
 #endif
 
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr > rp->ras_startaddr && addr < rp->ras_endaddr) {
 			rp->ras_hits++;
-			simple_unlock(&p->p_lock);
+			startaddr = rp->ras_startaddr;
 #ifdef DIAGNOSTIC
 			DPRINTF(("RAS hit: p=%p %p\n", p, addr));
 #endif
-			return (rp->ras_startaddr);
+			break;
 		}
 	}
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
 
-	return ((caddr_t)-1);
+	return (startaddr);
 }
 
 /*
@@ -123,10 +124,10 @@ again:
 	 */
 
 	nras = 0;
-	simple_lock(&p1->p_lock);
+	mutex_enter(&p1->p_rasmutex);
 	LIST_FOREACH(rp, &p1->p_raslist, ras_list)
 		nras++;
-	simple_unlock(&p1->p_lock);
+	mutex_exit(&p1->p_rasmutex);
 
 	/*
 	 * allocate entries.
@@ -142,7 +143,7 @@ again:
 	 * copy entries.
 	 */
 
-	simple_lock(&p1->p_lock);
+	mutex_enter(&p1->p_rasmutex);
 	nrp = LIST_FIRST(&p2->p_raslist);
 	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
 		if (nrp == NULL)
@@ -151,7 +152,7 @@ again:
 		nrp->ras_endaddr = rp->ras_endaddr;
 		nrp = LIST_NEXT(nrp, ras_list);
 	}
-	simple_unlock(&p1->p_lock);
+	mutex_exit(&p1->p_rasmutex);
 
 	/*
 	 * if we lose a race, retry.
@@ -175,7 +176,7 @@ ras_purgeall(struct proc *p)
 {
 	struct ras *rp;
 
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	while (!LIST_EMPTY(&p->p_raslist)) {
 		rp = LIST_FIRST(&p->p_raslist);
                 DPRINTF(("RAS %p-%p, hits %d\n", rp->ras_startaddr,
@@ -183,7 +184,7 @@ ras_purgeall(struct proc *p)
 		LIST_REMOVE(rp, ras_list);
 		pool_put(&ras_pool, rp);
 	}
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
 
 	return (0);
 }
@@ -211,16 +212,16 @@ ras_install(struct proc *p, caddr_t addr, size_t len)
 
 	newrp = NULL;
 again:
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (++nras >= ras_per_proc ||
 		    (addr < rp->ras_endaddr && endaddr > rp->ras_startaddr)) {
-			simple_unlock(&p->p_lock);
+			mutex_exit(&p->p_rasmutex);
 			return (EINVAL);
 		}
 	}
 	if (newrp == NULL) {
-		simple_unlock(&p->p_lock);
+		mutex_exit(&p->p_rasmutex);
 		newrp = pool_get(&ras_pool, PR_WAITOK);
 		goto again;
 	}
@@ -228,7 +229,7 @@ again:
 	newrp->ras_endaddr = endaddr;
 	newrp->ras_hits = 0;
 	LIST_INSERT_HEAD(&p->p_raslist, newrp, ras_list);
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
 
 	return (0);
 }
@@ -244,16 +245,19 @@ ras_purge(struct proc *p, caddr_t addr, size_t len)
 	caddr_t endaddr = addr + len;
 	int error = ESRCH;
 
-	simple_lock(&p->p_lock);
+	mutex_enter(&p->p_rasmutex);
 	LIST_FOREACH(rp, &p->p_raslist, ras_list) {
 		if (addr == rp->ras_startaddr && endaddr == rp->ras_endaddr) {
 			LIST_REMOVE(rp, ras_list);
-			pool_put(&ras_pool, rp);
-			error = 0;
 			break;
 		}
 	}
-	simple_unlock(&p->p_lock);
+	mutex_exit(&p->p_rasmutex);
+
+	if (rp != NULL) {
+		pool_put(&ras_pool, rp);
+		error = 0;
+	}
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_subr.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: bfs_subr.c,v 1.1.18.3 2007/02/26 09:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_subr.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_subr.c,v 1.1.18.3 2007/02/26 09:06:28 yamt Exp $");
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -69,7 +69,7 @@ bfs_init(struct bfs **bfsp)
 	if ((err = bfs_find(&bfs_sector)) != 0)
 		return err;
 
-	return bfs_init2(bfsp, bfs_sector, &__io_ops, FALSE);
+	return bfs_init2(bfsp, bfs_sector, &__io_ops, false);
 }
 
 int

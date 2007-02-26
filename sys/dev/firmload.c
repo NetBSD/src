@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.3.6.3 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: firmload.c,v 1.3.6.4 2007/02/26 09:09:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.3.6.3 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.3.6.4 2007/02/26 09:09:53 yamt Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.3.6.3 2006/12/30 20:47:50 yamt Exp $"
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
+#include <sys/filedesc.h>
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/systm.h>
@@ -229,9 +230,16 @@ firmware_open(const char *drvname, const char *imgname, firmware_handle_t *fhp)
 	firmware_handle_t fh;
 	struct vnode *vp;
 	int error;
+	extern struct cwdinfo cwdi0;
 
 	if (drvname == NULL || imgname == NULL)
 		return (EINVAL);
+
+	if (cwdi0.cwdi_cdir == NULL) {
+		printf("firmware_open(%s/%s) called too early.\n",
+			drvname, imgname);
+		return ENOENT;
+	}
 
 	pnbuf = PNBUF_GET();
 	KASSERT(pnbuf != NULL);

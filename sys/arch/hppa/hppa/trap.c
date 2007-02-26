@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28.2.2 2006/12/30 20:46:04 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.28.2.3 2007/02/26 09:06:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.2 2006/12/30 20:46:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.3 2007/02/26 09:06:42 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -82,8 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.2 2006/12/30 20:46:04 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
+#include <sys/mutex.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -200,7 +199,7 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 
 	l->l_priority = l->l_usrpri;
 	if (want_resched) {
-		preempt(0);
+		preempt();
 	}
 
 	mi_userret(l);
@@ -208,10 +207,10 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
@@ -798,13 +797,8 @@ do_onfault:
 		 */
 		if (!(type & T_USER) && space == HPPA_SID_KERNEL)
 			map = kernel_map;
-		else {
+		else
 			map = &vm->vm_map;
-			if (l->l_flag & L_SA) {
-				l->l_savp->savp_faultaddr = va;
-				l->l_flag |= L_SA_PAGEFAULT;
-			}
-		}
 
 		va = hppa_trunc_page(va);
 
@@ -829,9 +823,6 @@ do_onfault:
 		printf("uvm_fault(%p, %x, %d)=%d\n",
 		    map, (u_int)va, vftype, ret);
 #endif
-
-		if (map != kernel_map)
-			l->l_flag &= ~L_SA_PAGEFAULT;
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -1230,14 +1221,5 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
 	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
 }

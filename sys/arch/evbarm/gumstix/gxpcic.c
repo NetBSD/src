@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.2.8.2 2006/12/30 20:45:49 yamt Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.2.8.3 2007/02/26 09:06:18 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -173,13 +173,14 @@ gxpcic_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 gxpcic_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct gxio_softc *gxsc = (struct gxio_softc *)parent;
-	struct gxpcic_softc *sc = (struct gxpcic_softc *)self;
+	struct gxio_softc *gxsc = device_private(parent);
+	struct gxpcic_softc *sc = device_private(self);
 	struct gxio_attach_args *gxa = aux;
 	struct pcmciabus_attach_args paa;
 	int mecr, val, i, n;
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	sc->sc_iot = sc->sc_pc.sc_iot = gxa->gxa_iot;
 	sc->sc_ioh = gxsc->sc_ioh;

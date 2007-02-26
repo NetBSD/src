@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.17.2.1 2006/12/30 20:48:41 yamt Exp $	*/
+/*	$NetBSD: acardide.c,v 1.17.2.2 2007/02/26 09:10:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.17.2.1 2006/12/30 20:48:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.17.2.2 2007/02/26 09:10:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,10 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 
 	if (sc->sc_dma_ok) {

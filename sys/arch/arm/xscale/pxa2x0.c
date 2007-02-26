@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.8.2.2 2006/12/30 20:45:38 yamt Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.8.2.3 2007/02/26 09:06:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2005  Genetec Corporation.  All rights reserved.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.8.2.2 2006/12/30 20:45:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.8.2.3 2007/02/26 09:06:06 yamt Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
@@ -481,7 +481,7 @@ pxa2x0_clkman_bootstrap(vaddr_t va)
 }
 
 void
-pxa2x0_clkman_config(u_int clk, boolean_t enable)
+pxa2x0_clkman_config(u_int clk, bool enable)
 {
 	struct pxaip_softc *sc;
 	bus_space_tag_t iot;

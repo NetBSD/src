@@ -1,7 +1,7 @@
-/*	$NetBSD: puffs_msgif.c,v 1.13.2.2 2006/12/30 20:50:00 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.13.2.3 2007/02/26 09:10:57 yamt Exp $	*/
 
 /*
- * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
  * Google Summer of Code program and the Ulla Tuominen Foundation.
@@ -33,9 +33,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.13.2.2 2006/12/30 20:50:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.13.2.3 2007/02/26 09:10:57 yamt Exp $");
 
 #include <sys/param.h>
+#include <sys/fstrans.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -55,7 +56,7 @@ static int touser(struct puffs_mount *, struct puffs_park *, uint64_t,
 uint64_t
 puffs_getreqid(struct puffs_mount *pmp)
 {
-	unsigned int rv;
+	uint64_t rv;
 
 	simple_lock(&pmp->pmp_lock);
 	rv = pmp->pmp_nextreq++;
@@ -78,6 +79,28 @@ puffs_vfstouser(struct puffs_mount *pmp, int optype, void *kbuf, size_t buflen)
 	park.park_maxlen = park.park_copylen = buflen;
 
 	return touser(pmp, &park, puffs_getreqid(pmp), NULL, NULL);
+}
+
+void
+puffs_suspendtouser(struct puffs_mount *pmp, int status)
+{
+	struct puffs_vfsreq_suspend *pvfsr_susp;
+	struct puffs_park *ppark;
+
+	pvfsr_susp = malloc(sizeof(struct puffs_vfsreq_suspend),
+	    M_PUFFS, M_WAITOK | M_ZERO);
+	ppark = malloc(sizeof(struct puffs_park), M_PUFFS, M_WAITOK | M_ZERO);
+
+	pvfsr_susp->pvfsr_status = status;
+	ppark->park_preq = (struct puffs_req *)pvfsr_susp;
+
+	ppark->park_preq->preq_opclass = PUFFSOP_VFS | PUFFSOPFLAG_FAF;
+	ppark->park_preq->preq_optype = PUFFS_VFS_SUSPEND;
+
+	ppark->park_maxlen = ppark->park_copylen
+	    = sizeof(struct puffs_vfsreq_suspend);
+
+	(void)touser(pmp, ppark, 0, NULL, NULL);
 }
 
 /*
@@ -193,9 +216,38 @@ static int
 touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	struct vnode *vp1, struct vnode *vp2)
 {
+	struct mount *mp;
 	struct puffs_req *preq;
 
+	mp = PMPTOMP(pmp);
+
+	/*
+	 * test for suspension lock.
+	 *
+	 * Note that we *DO NOT* keep the lock, since that might block
+	 * lock acquiring PLUS it would give userlandia control over
+	 * the lock.  The operation queue enforces a strict ordering:
+	 * when the fs server gets in the op stream, it knows things
+	 * are in order.  The kernel locks can't guarantee that for
+	 * userspace, in any case.
+	 *
+	 * BUT: this presents a problem for ops which have a consistency
+	 * clause based on more than one operation.  Unfortunately such
+	 * operations (read, write) do not reliably work yet.
+	 *
+	 * Ya, Ya, it's wrong wong wrong, me be fixink this someday.
+	 *
+	 * XXX: and there is one more problem.  We sometimes need to
+	 * take a lazy lock in case the fs is suspending and we are
+	 * executing as the fs server context.  This might happen
+	 * e.g. in the case that the user server triggers a reclaim
+	 * in the kernel while the fs is suspending.  It's not a very
+	 * likely event, but it needs to be fixed some day.
+	 */
+	fstrans_start(mp, FSTRANS_NORMAL);
 	simple_lock(&pmp->pmp_lock);
+	fstrans_done(mp);
+
 	if (pmp->pmp_status != PUFFSTAT_RUNNING) {
 		simple_unlock(&pmp->pmp_lock);
 		return ENXIO;
@@ -232,11 +284,30 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	 */
 	simple_unlock(&pmp->pmp_lock);
 
+	DPRINTF(("touser: enqueueing req %" PRIu64 ", preq: %p, park: %p, "
+	    "c/t: 0x%x/0x%x\n", preq->preq_id, preq, ppark, preq->preq_opclass,
+	    preq->preq_optype));
+
 	wakeup(&pmp->pmp_req_touser);
 	selnotify(pmp->pmp_sel, 0);
 
-	if (PUFFSOP_WANTREPLY(ppark->park_preq->preq_opclass))
+	if (PUFFSOP_WANTREPLY(ppark->park_preq->preq_opclass)) {
 		ltsleep(ppark, PUSER, "puffs1", 0, NULL);
+
+		/*
+		 * retake the lock and release.  This makes sure (haha,
+		 * I'm humorous) that we don't process the same vnode in
+		 * multiple threads due to the locks hacks we have in
+		 * puffs_lock().  In reality this is well protected by
+		 * the biglock, but once that's gone, well, hopefully
+		 * this will be fixed for real.  (and when you read this
+		 * comment in 2017 and subsequently barf, my condolences ;).
+		 */
+		if (!fstrans_is_owner(mp)) {
+			fstrans_start(mp, FSTRANS_NORMAL);
+			fstrans_done(mp);
+		}
+	}
 
 #if 0
 	/* relock */
@@ -245,6 +316,11 @@ touser(struct puffs_mount *pmp, struct puffs_park *ppark, uint64_t reqid,
 	if (vp2)
 		KASSERT(vn_lock(vp2, LK_EXCLUSIVE | LK_RETRY) == 0);
 #endif
+
+	simple_lock(&pmp->pmp_lock);
+	if (--pmp->pmp_req_touser_waiters == 0)
+		wakeup(&pmp->pmp_req_touser_waiters);
+	simple_unlock(&pmp->pmp_lock);
 
 	return ppark->park_preq->preq_rv;
 }
@@ -331,8 +407,6 @@ puffs_getop(struct puffs_mount *pmp, struct puffs_reqh_get *phg, int nonblock)
 		donesome++;
 
 		simple_lock(&pmp->pmp_lock);
-		pmp->pmp_req_touser_waiters--;
-
 		if (PUFFSOP_WANTREPLY(preq->preq_opclass)) {
 			TAILQ_INSERT_TAIL(&pmp->pmp_req_replywait, park,
 			    park_entries);

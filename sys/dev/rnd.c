@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.48.2.2 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: rnd.c,v 1.48.2.3 2007/02/26 09:09:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.48.2.2 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.48.2.3 2007/02/26 09:09:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -496,6 +496,25 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 	ret = 0;
 
 	switch (cmd) {
+	case FIONBIO:
+	case FIOASYNC:
+	case RNDGETENTCNT:
+		break;
+	case RNDGETPOOLSTAT:
+	case RNDGETSRCNUM:
+	case RNDGETSRCNAME:
+	case RNDCTL:
+	case RNDADDDATA:
+		ret = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
+		    NULL);
+		if (ret)
+			return (ret);
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	switch (cmd) {
 
 	/*
 	 * Handled in upper layer really, but we have to return zero
@@ -512,20 +531,12 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case RNDGETPOOLSTAT:
-		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return (ret);
-
 		s = splsoftclock();
 		rndpool_get_stats(&rnd_pool, addr, sizeof(rndpoolstat_t));
 		splx(s);
 		break;
 
 	case RNDGETSRCNUM:
-		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return (ret);
-
 		rst = (rndstat_t *)addr;
 
 		if (rst->count == 0)
@@ -566,10 +577,6 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case RNDGETSRCNAME:
-		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return (ret);
-
 		/*
 		 * Scan through the list, trying to find the name.
 		 */
@@ -590,10 +597,6 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case RNDCTL:
-		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return (ret);
-
 		/*
 		 * Set flags to enable/disable entropy counting and/or
 		 * collection.
@@ -635,10 +638,6 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case RNDADDDATA:
-		if ((ret = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
-			return (ret);
-
 		rnddata = (rnddata_t *)addr;
 
 		s = splsoftclock();

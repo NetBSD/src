@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.240.2.2 2006/12/30 20:49:34 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.240.2.3 2007/02/26 09:10:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.2 2006/12/30 20:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.3 2007/02/26 09:10:42 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -657,7 +657,7 @@ sdstrategy(struct buf *bp)
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
-	boolean_t sector_aligned;
+	bool sector_aligned;
 
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_periph, SCSIPI_DB1,

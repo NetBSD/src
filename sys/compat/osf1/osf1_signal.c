@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.26 2005/02/26 23:10:21 perry Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.26.4.1 2007/02/26 09:09:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.26 2005/02/26 23:10:21 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.26.4.1 2007/02/26 09:09:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.26 2005/02/26 23:10:21 perry Exp $
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/osf1/osf1.h>
@@ -79,7 +78,6 @@ osf1_sys_sigaction(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_sigaction_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct osf1_sigaction *nosa, *oosa, tmposa;
 	struct sigaction nbsa, obsa;
 	int error;
@@ -95,7 +93,7 @@ osf1_sys_sigaction(l, v, retval)
 		osf1_cvt_sigaction_to_native(&tmposa, &nbsa);
 	}
 
-	if ((error = sigaction1(p,
+	if ((error = sigaction1(l,
 				osf1_to_native_signo[SCARG(uap, signum)],
 				(nosa ? &nbsa : NULL),
 				(oosa ? &obsa : NULL),
@@ -331,19 +329,25 @@ osf1_sys_sigprocmask(l, v, retval)
 
 	osf1_cvt_sigset_to_native(&oss, &bss);
 
-	(void) splsched();	/* XXXSMP */
+	mutex_enter(&p->p_smutex);
 
 	switch (SCARG(uap, how)) {
 	case OSF1_SIG_BLOCK:
-		p->p_sigmask |= bss & ~sigcantmask;
+		*l->l_sigmask |= bss & ~sigcantmask;
 		break;
 
 	case OSF1_SIG_UNBLOCK:
-		p->p_sigmask &= ~bss;
+		*l->l_sigmask &= ~bss;
+		lwp_lock(l);
+		l->l_flag |= LW_PENDSIG;
+		lwp_unlock(l);
 		break;
 
 	case OSF1_SIG_SETMASK:
-		p->p_sigmask = bss & ~sigcantmask;
+		*l->l_sigmask = bss & ~sigcantmask;
+		lwp_lock(l);
+		l->l_flag |= LW_PENDSIG;
+		lwp_unlock(l);
 		break;
 
 	default:
@@ -351,7 +355,7 @@ osf1_sys_sigprocmask(l, v, retval)
 		break;
 	}
 
-	(void) spl0();
+	mutex_exit(&p->p_smutex);
 
 	return error;
 }

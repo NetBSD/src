@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.4.40.1 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: viareg.h,v 1.4.40.2 2007/02/26 09:07:21 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -183,6 +183,14 @@ extern volatile unsigned char *Via1Base;
 #define RBVMonIDRGB	0x10	/* color monitor */
 #define RBVMonIDRGB15	0x28	/* 15 inch RGB */
 #define RBVMonIDBW	0x30	/* No internal video */
+
+/* some misc. leftovers */
+#define vPB		0x0000
+#define vPB3		0x08
+#define vPB4		0x10
+#define vPB5		0x20
+#define vSR_INT		0x04
+#define vSR_OUT		0x10
 
 #define via_reg(v, r) (*(Via1Base + (r)))
 

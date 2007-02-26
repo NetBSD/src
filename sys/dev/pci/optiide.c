@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.11.2.1 2006/12/30 20:48:46 yamt Exp $	*/
+/*	$NetBSD: optiide.c,v 1.11.2.2 2007/02/26 09:10:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.11.2.1 2006/12/30 20:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: optiide.c,v 1.11.2.2 2007/02/26 09:10:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 
 	/*
@@ -130,12 +130,12 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * issues too...
 	 */
 	if (PCI_REVISION(pa->pa_class) <= 0x12) {
-		aprint_normal(" but disabled due to chip rev. <= 0x12");
+		aprint_verbose(" but disabled due to chip rev. <= 0x12");
 		sc->sc_dma_ok = 0;
 	} else
 		pciide_mapreg_dma(sc, pa);
 
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA32 | ATAC_CAP_DATA16;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;

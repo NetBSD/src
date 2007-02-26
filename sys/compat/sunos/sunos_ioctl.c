@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.50.2.1 2006/06/21 14:59:42 yamt Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.50.2.2 2007/02/26 09:09:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.50.2.1 2006/06/21 14:59:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.50.2.2 2007/02/26 09:09:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.50.2.1 2006/06/21 14:59:42 yamt Ex
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/disklabel.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>

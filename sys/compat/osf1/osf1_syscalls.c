@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscalls.c,v 1.52 2005/03/31 16:36:03 drochner Exp $ */
+/* $NetBSD: osf1_syscalls.c,v 1.52.2.1 2007/02/26 09:09:35 yamt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscalls.c,v 1.52 2005/03/31 16:36:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscalls.c,v 1.52.2.1 2007/02/26 09:09:35 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -19,7 +19,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_syscalls.c,v 1.52 2005/03/31 16:36:03 drochner 
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>

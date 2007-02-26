@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.10.2.1 2006/06/21 15:09:23 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.10.2.2 2007/02/26 09:10:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.1 2006/06/21 15:09:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.2 2007/02/26 09:10:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,6 +338,7 @@ cd9660_reclaim(v)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
+	genfs_node_destroy(vp);
 	pool_put(&cd9660_node_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.214.2.2 2006/12/30 20:49:18 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.214.2.3 2007/02/26 09:10:38 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.220 2006/11/16 00:52:48 christos Exp
+ *	NetBSD: pcmciadevs,v 1.221 2007/02/10 03:14:03 ichiro Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -101,6 +101,7 @@
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
+#define	PCMCIA_VENDOR_NECINFRONTIA	0x0288	/* NEC Infrontia */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_ASUSTEK	0x02aa	/* Asustek Computer */
 #define	PCMCIA_VENDOR_SIEMENS	0x02ac	/* Siemens */
@@ -423,6 +424,10 @@
 #define	PCMCIA_PRODUCT_MOTOROLA_PM100C	0x0302
 #define	PCMCIA_CIS_MOTOROLA_MONTANA_336	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MOTOROLA_MONTANA_336	0x0505
+
+/* NEC Infrontia Products */
+#define	PCMCIA_CIS_NECINFRONTIA_AX420N	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NECINFRONTIA_AX420N	0x1b01
 
 /* New Media Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }

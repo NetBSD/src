@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.1.16.3 2007/02/26 09:09:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -35,6 +35,7 @@
 #include <sys/signalvar.h>
 #include <sys/lwp.h>
 #include <sys/time.h>
+#include <sys/proc.h>
 
 #include <compat/netbsd32/netbsd32.h>
 
@@ -238,7 +239,7 @@ linux32_sys_rt_sigaction(l, v, retval)
 		sigemptyset(&os.sa_mask);
 		os.sa_flags = 0;
 	} else {
-		if ((error = sigaction1(l->l_proc, 
+		if ((error = sigaction1(l, 
 		    linux32_to_native_signo[sig],	
 		    NETBSD32PTR64(SCARG(uap, nsa)) ? &ns : NULL,
 		    NETBSD32PTR64(SCARG(uap, osa)) ? &os : NULL,
@@ -300,9 +301,13 @@ linux32_sys_rt_sigprocmask(l, v, retval)
 		linux32_to_native_sigset(&ns, &nls32);
 	}
 
-	if ((error = sigprocmask1(p, how,
+	mutex_enter(&p->p_smutex);
+	error = sigprocmask1(l, how,
 	    NETBSD32PTR64(SCARG(uap, set)) ? &ns : NULL,
-	    NETBSD32PTR64(SCARG(uap, oset)) ? &os : NULL)) != 0)
+	    NETBSD32PTR64(SCARG(uap, oset)) ? &os : NULL);
+	mutex_exit(&p->p_smutex);
+      
+        if (error != 0)
 		return error;
 		
 	if (NETBSD32PTR64(SCARG(uap, oset)) != NULL) {
@@ -360,7 +365,7 @@ linux32_sys_rt_sigsuspend(l, v, retval)
 
 	linux32_to_native_sigset(&bss, &lss);
 
-	return sigsuspend1(l->l_proc, &bss);
+	return sigsuspend1(l, &bss);
 }
 
 int
@@ -373,7 +378,6 @@ linux32_sys_signal(l, v, retval)
 		syscallarg(int) signum;
 		syscallarg(linux32_handler_t) handler;
 	} */ *uap = v;
-        struct proc *p = l->l_proc;
         struct sigaction nbsa, obsa;
         int error, sig;
 
@@ -387,7 +391,7 @@ linux32_sys_signal(l, v, retval)
         sigemptyset(&nbsa.sa_mask);
         nbsa.sa_flags = SA_RESETHAND | SA_NODEFER;
 
-        if ((error = sigaction1(p, linux32_to_native_signo[sig],
+        if ((error = sigaction1(l, linux32_to_native_signo[sig],
             &nbsa, &obsa, NULL, 0)) != 0)
 		return error;
 

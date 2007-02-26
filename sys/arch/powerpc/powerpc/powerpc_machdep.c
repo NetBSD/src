@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.28.12.2 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.28.12.3 2007/02/26 09:07:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.28.12.2 2006/12/30 20:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.28.12.3 2007/02/26 09:07:56 yamt Exp $");
 
 #include "opt_altivec.h"
 
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.28.12.2 2006/12/30 20:46:44 ya
 #include <sys/exec.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/sysctl.h>
 #include <sys/ucontext.h>
@@ -228,26 +226,4 @@ cpu_dumpconf(void)
 		dumpsize = dtoc(nblks - dumplo);
 	if (dumplo < nblks - ctod(dumpsize))
 		dumplo = nblks - ctod(dumpsize);
-}
-
-void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-
-	tf = trapframe(l);
-
-	/*
-	 * Build context to run handler in.
-	 */
-	tf->fixreg[1] = (register_t)((struct saframe *)sp - 1);
-	tf->lr = 0;
-	tf->fixreg[3] = (register_t)type;
-	tf->fixreg[4] = (register_t)sas;
-	tf->fixreg[5] = (register_t)nevents;
-	tf->fixreg[6] = (register_t)ninterrupted;
-	tf->fixreg[7] = (register_t)ap;
-	tf->srr0 = (register_t)upcall;
-	tf->srr1 &= ~PSL_SE;
 }

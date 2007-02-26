@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.5.6.2 2006/06/21 14:50:54 yamt Exp $
+$NetBSD: README,v 1.5.6.3 2007/02/26 09:06:20 yamt Exp $
 
 NetBSD for the Linksys NSLU2 (a.k.a. "Slug")
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,22 +30,6 @@ Current status
 ==============
 
 The following bits of Slug hardware are not (yet?) supported:
-
- - NPE Ethernet
-   Someone will have to port Intel's IXP425 access library before this can
-   be made to work. If that someone is you, the source code is available
-   online here:
-
-   http://www.intel.com/design/network/products/npfamily/ixp425.htm
-
-   Look under "Tools & Software", then select "Intel(R) IPXX400 Software"
-   to downlod the documentation.  If you aren't registered, select
-   "Register/Login" first.  Documentation is available in the
-   "Technical Documents" section.
-
-   The easiest option will be to download the non-crypto version of the
-   Access Library. The crypto-enabled version requires a lot more form
-   filling. The Slug's IXP420 has no crypto capabilities anyway.
 
  - Flash ROM
    You can write gzboot kernels (when support is added) to Flash using
@@ -127,13 +111,12 @@ redboot> ip_address -h 192.168.0.2
 redboot> load -r -b 0x200000 netbsd.bin
 redboot> go
 
-At this point your only real option is to mount the root filesystem from
-a USB disk device as the onboard Ethernet is not (yet?) supported. However,
-there's nothing to stop you using a USB-Ethernet interface...
+At this point you should mount a root filesystem from a USB disk device.
+The ethernet is now supported, so you may also be able to use a NFS root.
+USB Ethernet devices can also be used for a NFS root.
 
 Note that the kernel will always report the CPU core clock speed as 266MHz
 even if your Slug's CPU clock is running at a stock 133MHz.
-
 
 
 Burning a NetBSD kernel into Flash

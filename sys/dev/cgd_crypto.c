@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.4.2.1 2006/12/30 20:47:49 yamt Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.4.2.2 2007/02/26 09:09:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.4.2.1 2006/12/30 20:47:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.4.2.2 2007/02/26 09:09:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ cryptfuncs_find(const char *alg)
 	return NULL;
 }
 
-typedef void	(*cipher_func)(void *, void *, void *, size_t);
+typedef void	(*cipher_func)(void *, void *, const void *, size_t);
 
 void
 cgd_cipher_uio_cbc(void *privdata, cipher_func cipher,
@@ -173,11 +173,11 @@ struct aes_encdata {
 	u_int8_t	 ae_iv[16];	/* Initialization Vector */
 };
 
-static void	aes_cbc_enc_int(void *, void *, void *, size_t);
-static void	aes_cbc_dec_int(void *, void *, void *, size_t);
+static void	aes_cbc_enc_int(void *, void *, const void *, size_t);
+static void	aes_cbc_dec_int(void *, void *, const void *, size_t);
 
 void *
-cgd_cipher_aes_init(size_t keylen, void *key, size_t *blocksize)
+cgd_cipher_aes_init(size_t keylen, const void *key, size_t *blocksize)
 {
 	struct	aes_privdata *ap;
 
@@ -207,7 +207,7 @@ cgd_cipher_aes_destroy(void *data)
 }
 
 void
-aes_cbc_enc_int(void *privdata, void *dst, void *src, size_t len)
+aes_cbc_enc_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct aes_encdata	*ae = privdata;
 	cipherInstance		 cipher;
@@ -218,14 +218,14 @@ aes_cbc_enc_int(void *privdata, void *dst, void *src, size_t len)
 }
 
 void
-aes_cbc_dec_int(void *privdata, void *dst, void *src, size_t len)
+aes_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct aes_encdata	*ae = privdata;
 	cipherInstance		 cipher;
 
 	rijndael_cipherInit(&cipher, MODE_CBC, ae->ae_iv);
 	rijndael_blockDecrypt(&cipher, ae->ae_key, src, len * 8, dst);
-	(void)memcpy(ae->ae_iv, (u_int8_t *)src + (len - 16), 16);
+	(void)memcpy(ae->ae_iv, (const u_int8_t *)src + (len - 16), 16);
 }
 
 void
@@ -272,8 +272,8 @@ struct c3des_privdata {
 	des_key_schedule	cp_key3;
 };
 
-static void	c3des_cbc_enc_int(void *, void *, void *, size_t);
-static void	c3des_cbc_dec_int(void *, void *, void *, size_t);
+static void	c3des_cbc_enc_int(void *, void *, const void *, size_t);
+static void	c3des_cbc_dec_int(void *, void *, const void *, size_t);
 
 struct c3des_encdata {
 	des_key_schedule	*ce_key1;
@@ -283,10 +283,11 @@ struct c3des_encdata {
 };
 
 void *
-cgd_cipher_3des_init(size_t keylen, void *key, size_t *blocksize)
+cgd_cipher_3des_init(size_t keylen, const void *key, size_t *blocksize)
 {
 	struct	c3des_privdata *cp;
 	int	error = 0;
+	des_cblock *block;
 
 	if (!blocksize)
 		return NULL;
@@ -297,9 +298,10 @@ cgd_cipher_3des_init(size_t keylen, void *key, size_t *blocksize)
 	cp = malloc(sizeof(*cp), M_DEVBUF, 0);
 	if (!cp)
 		return NULL;
-	error  = des_key_sched((des_cblock *)key, cp->cp_key1);
-	error |= des_key_sched((des_cblock *)key + 1, cp->cp_key2);
-	error |= des_key_sched((des_cblock *)key + 2, cp->cp_key3);
+	block = __UNCONST(key);
+	error  = des_key_sched(block, cp->cp_key1);
+	error |= des_key_sched(block + 1, cp->cp_key2);
+	error |= des_key_sched(block + 2, cp->cp_key3);
 	if (error) {
 		(void)memset(cp, 0, sizeof(*cp));
 		free(cp, M_DEVBUF);
@@ -318,23 +320,23 @@ cgd_cipher_3des_destroy(void *data)
 }
 
 static void
-c3des_cbc_enc_int(void *privdata, void *dst, void *src, size_t len)
+c3des_cbc_enc_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct	c3des_encdata *ce = privdata;
 
 	des_ede3_cbc_encrypt(src, dst, len, *ce->ce_key1, *ce->ce_key2,
 	    *ce->ce_key3, (des_cblock *)ce->ce_iv, 1);
-	(void)memcpy(ce->ce_iv, (u_int8_t *)dst + (len - 8), 8);
+	(void)memcpy(ce->ce_iv, (const u_int8_t *)dst + (len - 8), 8);
 }
 
 static void
-c3des_cbc_dec_int(void *privdata, void *dst, void *src, size_t len)
+c3des_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct	c3des_encdata *ce = privdata;
 
 	des_ede3_cbc_encrypt(src, dst, len, *ce->ce_key1, *ce->ce_key2,
 	    *ce->ce_key3, (des_cblock *)ce->ce_iv, 0);
-	(void)memcpy(ce->ce_iv, (u_int8_t *)src + (len - 8), 8);
+	(void)memcpy(ce->ce_iv, (const u_int8_t *)src + (len - 8), 8);
 }
 
 void
@@ -376,8 +378,8 @@ struct cryptfuncs cgd_BF_funcs = {
 	cgd_cipher_bf_cbc,
 };
 
-static void	bf_cbc_enc_int(void *, void *, void *, size_t);
-static void	bf_cbc_dec_int(void *, void *, void *, size_t);
+static void	bf_cbc_enc_int(void *, void *, const void *, size_t);
+static void	bf_cbc_dec_int(void *, void *, const void *, size_t);
 
 struct bf_privdata {
 	BF_KEY	bp_key;
@@ -389,7 +391,7 @@ struct bf_encdata {
 };
 
 void *
-cgd_cipher_bf_init(size_t keylen, void *key, size_t *blocksize)
+cgd_cipher_bf_init(size_t keylen, const void *key, size_t *blocksize)
 {
 	struct	bf_privdata *bp;
 
@@ -418,7 +420,7 @@ cgd_cipher_bf_destroy(void *data)
 }
 
 void
-bf_cbc_enc_int(void *privdata, void *dst, void *src, size_t len)
+bf_cbc_enc_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct	bf_encdata *be = privdata;
 
@@ -427,12 +429,12 @@ bf_cbc_enc_int(void *privdata, void *dst, void *src, size_t len)
 }
 
 void
-bf_cbc_dec_int(void *privdata, void *dst, void *src, size_t len)
+bf_cbc_dec_int(void *privdata, void *dst, const void *src, size_t len)
 {
 	struct	bf_encdata *be = privdata;
 
 	BF_cbc_encrypt(src, dst, len, be->be_key, be->be_iv, 0);
-	(void)memcpy(be->be_iv, (u_int8_t *)src + (len - 8), 8);
+	(void)memcpy(be->be_iv, (const u_int8_t *)src + (len - 8), 8);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.5.4.1 2006/06/21 15:02:46 yamt Exp $ */
+/*	$NetBSD: rd.c,v 1.5.4.2 2007/02/26 09:10:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.5.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.5.4.2 2007/02/26 09:10:01 yamt Exp $");
 
 #include "rnd.h"
 
@@ -210,7 +210,7 @@ int	rderrthresh = RDRETRY-1;	/* when to start reporting errors */
 const struct rdidentinfo {
 	u_int16_t ri_hwid;		/* 2 byte HW id */
 	u_int16_t ri_maxunum;		/* maximum allowed unit number */
-	char	*ri_desc;		/* drive type description */
+	const char *ri_desc;		/* drive type description */
 	int	ri_nbpt;		/* DEV_BSIZE blocks per track */
 	int	ri_ntpc;		/* tracks per cylinder */
 	int	ri_ncyl;		/* cylinders per unit */
@@ -508,10 +508,10 @@ rdgetinfo(sc)
 }
 
 int
-rdopen(dev, flags, mode, p)
+rdopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct rd_softc *sc;
 	int error, mask, part;
@@ -564,10 +564,10 @@ rdopen(dev, flags, mode, p)
 }
 
 int
-rdclose(dev, flag, mode, p)
+rdclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct rd_softc *sc;
 	struct disk *dk;
@@ -1032,12 +1032,12 @@ rdwrite(dev, uio, flags)
 }
 
 int
-rdioctl(dev, cmd, data, flag, p)
+rdioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct rd_softc *sc;
 	struct disklabel *lp;

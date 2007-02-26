@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.5.16.2 2006/12/30 20:47:14 yamt Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.5.16.3 2007/02/26 09:08:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.5.16.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.5.16.3 2007/02/26 09:08:41 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -305,16 +305,16 @@ ka6400_enable_cache(void)
 void
 ka6400_steal_pages(void)
 {
-	int i, ncpu;
+	int i, ncpus;
 
 	ka6400_enable_cache(); /* Turn on cache early */
 	if (cca == 0)
 		cca = (void *)rpb.cca_addr;
 	/* Is there any way to get number of CPUs easier??? */
-	for (i = ncpu = 0; i < cca->cca_maxcpu; i++)
+	for (i = ncpus = 0; i < cca->cca_maxcpu; i++)
 		if (cca->cca_console & (1 << i))
-			ncpu++;
-	sprintf(cpu_model, "VAX 6000/4%x0", ncpu + 1);
+			ncpus++;
+	sprintf(cpu_model, "VAX 6000/4%x0", ncpus + 1);
 }
 	
 

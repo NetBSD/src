@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.16.2.2 2006/12/30 20:47:14 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.16.2.3 2007/02/26 09:08:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -33,6 +33,7 @@
 #define _VAX_INTR_H_
 
 #include <sys/queue.h>
+#include <machine/mtpr.h>
 
 /* Define the various Interrupt Priority Levels */
 
@@ -76,24 +77,22 @@
 
 
 #ifdef _KERNEL
-#ifndef __lint__
-#define splx(reg)						\
-({								\
-	register int __val;					\
-	__asm volatile ("mfpr $0x12,%0;mtpr %1,$0x12"		\
-				: "=&g" (__val)			\
-				: "g" (reg));			\
-	__val;							\
-})
-
-#define _splset(reg)						\
-((void)({							\
-	__asm volatile ("mtpr %0,$0x12"			\
-				: 				\
-				: "g" (reg));			\
-}))
-
 typedef int ipl_t;
+
+static inline ipl_t
+splx(ipl_t new_ipl)
+{
+	ipl_t old_ipl = mfpr(PR_IPL);
+	mtpr(new_ipl, PR_IPL);
+	return old_ipl;
+}
+
+static inline void
+_splset(ipl_t ipl)
+{
+	mtpr(ipl, PR_IPL);
+}
+
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
@@ -108,26 +107,19 @@ makeiplcookie(ipl_t ipl)
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
-	register int __val;
-	int newipl = icookie._ipl;
+	register ipl_t __val;
+	ipl_t newipl = icookie._ipl;
 
-	__asm volatile ("mfpr $0x12,%0" : "=&g" (__val) : );
+	__asm volatile ("mfpr %1,%0" : "=&g" (__val) : "g" (PR_IPL));
 	if (newipl > __val) {
 		_splset(newipl);
 	}
 	return __val;
 }
 
-#define _setsirr(reg)						\
-do {								\
-	__asm volatile ("mtpr %0,$0x14"			\
-				:				\
-				: "g" (reg));			\
-} while (0)
-#endif
+#define _setsirr(reg)	mtpr((reg), PR_SIRR)
 
 #define spl0()		_splset(IPL_NONE)		/* IPL00 */
-#define spllowersoftclock() _splset(IPL_SOFTCLOCK)	/* IPL08 */
 #define splddb()	splraiseipl(makeiplcookie(IPL_SOFTDDB)) /* IPL0F */
 #define splconsmedia()	splraiseipl(makeiplcookie(IPL_CONSMEDIA)) /* IPL14 */
 

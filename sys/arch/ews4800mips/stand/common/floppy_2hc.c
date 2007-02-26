@@ -1,4 +1,4 @@
-/*	$NetBSD: floppy_2hc.c,v 1.1.18.2 2006/06/21 14:51:21 yamt Exp $	*/
+/*	$NetBSD: floppy_2hc.c,v 1.1.18.3 2007/02/26 09:06:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/types.h>
 #include "common.h"
 
-boolean_t
+bool
 blk_to_2hc_position(uint32_t logical_block_number, uint32_t *position,
     int *count)
 {
@@ -53,7 +53,7 @@ blk_to_2hc_position(uint32_t logical_block_number, uint32_t *position,
 	 *     512 bytes/sector
 	 */
 	if (logical_block_number >= 2400)
-		return FALSE;
+		return false;
 
 	cylinder = logical_block_number / (15 * 2);
 	side = logical_block_number - (cylinder * 15 * 2) > 14;
@@ -64,5 +64,5 @@ blk_to_2hc_position(uint32_t logical_block_number, uint32_t *position,
 	if (count)
 		*count = 1;
 
-	return TRUE;
+	return true;
 }

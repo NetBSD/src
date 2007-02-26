@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2.2.3 2006/12/30 20:47:25 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.2.2.4 2007/02/26 09:08:53 yamt Exp $
 #	NetBSD: genassym.cf,v 1.40 2004/02/20 17:35:01 yamt Exp 
 
 #
@@ -83,12 +83,18 @@ include "opt_multiprocessor.h"
 include "opt_xen.h"
 endif
 
+quote #define __MUTEX_PRIVATE
+quote #define __RWLOCK_PRIVATE
+
 include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
 include <sys/device.h>
 include <sys/user.h>
 include <sys/mbuf.h>
+include <sys/mutex.h>
+include <sys/rwlock.h>
+
 include <netinet/in.h>
 include <netinet/in_systm.h>
 include <netinet/ip.h>
@@ -171,12 +177,13 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CPU			offsetof(struct lwp, l_cpu)
+define	L_MUTEX			offsetof(struct lwp, l_mutex)
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
-define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 
-define	P_SYSTEM		P_SYSTEM
+define	PK_SYSTEM		PK_SYSTEM
 
 define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)
@@ -249,6 +256,7 @@ define	IH_LEVEL		offsetof(struct intrhand, ih_level)
 define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
 
 define	CPU_INFO_SELF		offsetof(struct cpu_info, ci_self)
+define	CPU_INFO_SELF150	offsetof(struct cpu_info, ci_self150)
 define	CPU_INFO_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
@@ -274,6 +282,8 @@ define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
+define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_INFO_INTRSTACK	offsetof(struct cpu_info, ci_intrstack)
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
@@ -316,6 +326,19 @@ define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
 define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
 
 define	PSL_MBO			PSL_MBO
+
+define	MTX_IPL			offsetof(struct kmutex, u.s.mtxs_ipl)
+define	MTX_LOCK		offsetof(struct kmutex, mtx_lock)
+define	MTX_OWNER		offsetof(struct kmutex, u.mtxa_owner)
+
+define	RW_OWNER		offsetof(struct krwlock, rw_owner)
+define	RW_WRITE_LOCKED		RW_WRITE_LOCKED
+define	RW_WRITE_WANTED		RW_WRITE_WANTED
+define	RW_READ_INCR		RW_READ_INCR
+define	RW_HAS_WAITERS		RW_HAS_WAITERS
+define	RW_THREAD		RW_THREAD
+define	RW_READER		RW_READER
+define	RW_WRITER		RW_WRITER
 
 ifdef XEN3
 define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.4.2.2 2006/12/30 20:45:22 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.4.2.3 2007/02/26 09:05:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.2.2 2006/12/30 20:45:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.2.3 2007/02/26 09:05:40 yamt Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -62,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.4.2.2 2006/12/30 20:45:22 yamt Exp
 #include <sys/kernel.h>
 #include <sys/buf.h>
 #include <sys/signal.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>

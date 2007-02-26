@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.3 2003/10/10 15:07:43 chs Exp $	*/
+/*	$NetBSD: copy.S,v 1.3.16.1 2007/02/26 09:06:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -236,8 +236,8 @@ ENTRY(name, HPPA_FRAME_SIZE * 2)		! \
 	bv,n	%r0(%rp)			! \
 EXIT(name)
 
-/* This loads curproc's space into the given register. */
-#define SPACE_CURPROC(reg)			  \
+/* This loads curlwp's space into the given register. */
+#define SPACE_CURLWP(reg)			  \
 	ldil	L%curlwp, reg			! \
 	ldw	R%curlwp(reg), reg		! \
 	ldw	L_ADDR(reg), reg		! \
@@ -279,14 +279,14 @@ _SPCOPY(copystr, CALL_SPSTRCPY,
  * int copyinstr(const void *src, void *dst, size_t size, size_t *lenp);
  */
 SPCOPY(copyin, copyinstr,
-	SPACE_CURPROC(%arg0) ! SPACE_KERNEL(%arg2))
+	SPACE_CURLWP(%arg0) ! SPACE_KERNEL(%arg2))
 
 /*
  * int copyout(const void *src, void *dst, size_t size);
  * int copyoutstr(const void *src, void *dst, size_t size, size_t *lenp);
  */
 SPCOPY(copyout, copyoutstr,
-	SPACE_KERNEL(%arg0) ! SPACE_CURPROC(%arg2))
+	SPACE_KERNEL(%arg0) ! SPACE_CURLWP(%arg2))
 
 /*
  * For lack of a better place to put them, these functions

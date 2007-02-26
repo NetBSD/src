@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.4.6.3 2006/12/30 20:48:45 yamt Exp $
+ * $NetBSD: if_lmc.h,v 1.4.6.4 2007/02/26 09:10:26 yamt Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1061,7 +1061,7 @@ typedef int intr_return_t;
 # define TOP_UNLOCK(sc)		__cpu_simple_unlock  (&(sc)->top_lock)
 # define BOTTOM_TRYLOCK(sc)	__cpu_simple_lock_try(&(sc)->bottom_lock)
 # define BOTTOM_UNLOCK(sc)	__cpu_simple_unlock  (&(sc)->bottom_lock)
-# define CHECK_CAP		kauth_authorize_generic(curlwp->l_cred, KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag)
+# define CHECK_CAP		kauth_authorize_generic(curlwp->l_cred, KAUTH_GENERIC_ISSUSER, NULL)
 # define DISABLE_INTR		int spl = splnet()
 # define ENABLE_INTR		splx(spl)
 # define IRQ_NONE		0
@@ -1563,7 +1563,7 @@ static int rawip_detach(softc_t *);
 #if IFNET
 static void ifnet_input(struct ifnet *, struct mbuf *);
 static int ifnet_output(struct ifnet *, struct mbuf *,
-			struct sockaddr *, struct rtentry *);
+			const struct sockaddr *, struct rtentry *);
 static int ifnet_ioctl(struct ifnet *, u_long, caddr_t);
 static void ifnet_start(struct ifnet *);
 static void ifnet_watchdog(struct ifnet *);

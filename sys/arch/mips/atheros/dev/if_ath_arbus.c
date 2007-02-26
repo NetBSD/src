@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.4.4.3 2006/12/30 20:46:30 yamt Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.4.4.4 2007/02/26 09:07:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4.4.3 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4.4.4 2007/02/26 09:07:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.4.4.3 2006/12/30 20:46:30 yamt Ex
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
-#include <sys/device.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

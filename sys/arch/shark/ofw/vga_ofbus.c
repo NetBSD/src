@@ -1,4 +1,4 @@
-/* $NetBSD: vga_ofbus.c,v 1.7 2005/02/27 18:24:49 tsutsui Exp $ */
+/* $NetBSD: vga_ofbus.c,v 1.7.4.1 2007/02/26 09:08:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.7 2005/02/27 18:24:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_ofbus.c,v 1.7.4.1 2007/02/26 09:08:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ struct vga_ofbus_softc {
 
 	int sc_phandle;
 };
+
+extern int console_ihandle;
 
 int	vga_ofbus_match (struct device *, struct cfdata *, void *);
 void	vga_ofbus_attach (struct device *, struct device *, void *);
@@ -97,7 +99,7 @@ int
 vga_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 {
 	int chosen_phandle;
-	int stdout_ihandle, stdout_phandle;
+	int stdout_ihandle, stdout_phandle, ret;
 	char buf[128];
 
 	stdout_phandle = 0;
@@ -128,5 +130,9 @@ vga_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 		       "screen device failed\n");
 	}
 
-	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_ISAVGA, 1));
+	ret = vga_cnattach(iot, memt, WSDISPLAY_TYPE_ISAVGA, 1);
+	if (ret == 0)
+		console_ihandle = stdout_ihandle;
+
+	return ret;
 }

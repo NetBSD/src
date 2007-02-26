@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.15.2.2 2006/12/30 20:47:35 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.15.2.3 2007/02/26 09:09:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.2 2006/12/30 20:47:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.3 2007/02/26 09:09:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.15.2.2 2006/12/30 20:47:35 yamt 
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
@@ -92,7 +91,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	const int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
@@ -105,13 +104,13 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-					  p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct linux_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+					  l->l_sigstk.ss_size);
 	else
 		fp = (struct linux_sigframe *)tf->tf_usr_sp;
 	fp--;
@@ -154,8 +153,13 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_trapno = 0;
 	frame.sf_sc.sc_error_code = 0;
 	frame.sf_sc.sc_fault_address = (u_int32_t) ksi->ksi_addr;
+	sendsig_reset(l, sig);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+	
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -175,7 +179,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 }
 
@@ -250,13 +254,17 @@ linux_sys_sigreturn(l, v, retval)
 	tf->tf_pc    = frame.sf_sc.sc_pc;
 	tf->tf_spsr  = frame.sf_sc.sc_cpsr;
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_extra_to_native_sigset(&mask, &frame.sf_sc.sc_mask,
 	    frame.sf_extramask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

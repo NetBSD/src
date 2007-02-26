@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.16.12.1 2006/06/21 14:57:33 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.16.12.2 2007/02/26 09:08:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -41,7 +41,7 @@
 #include <machine/cpu.h>
 #endif
 
-static __inline void
+static inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
@@ -57,7 +57,7 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 #endif
 }
 
-static __inline int
+static inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int ret;
@@ -94,7 +94,7 @@ do {									\
 	}								\
 } while (0)
 #else
-static __inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	__asm volatile ("1:bbssi $0,%0,1b"
@@ -105,7 +105,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 #endif /* _KERNEL */
 
 #if 0
-static __inline void
+static inline void
 __cpu_simple_lock(__cpu_simple_lock_t *alp)
 {
 	struct cpu_info *ci = curcpu();
@@ -134,7 +134,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 }
 #endif
 
-static __inline void
+static inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 #ifdef _KERNEL
@@ -174,4 +174,14 @@ do {									\
 	}								\
 } while (0)
 #endif /* MULTIPROCESSOR */
+
+static inline void
+mb_read(void)
+{
+}
+
+static inline void
+mb_write(void)
+{
+}
 #endif /* _VAX_LOCK_H_ */

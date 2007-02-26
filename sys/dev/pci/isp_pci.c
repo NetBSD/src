@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.93.2.2 2006/12/30 20:48:46 yamt Exp $ */
+/* $NetBSD: isp_pci.c,v 1.93.2.3 2007/02/26 09:10:30 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.93.2.2 2006/12/30 20:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.93.2.3 2007/02/26 09:10:30 yamt Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -72,10 +72,10 @@ static void isp_pci_wr_reg(struct ispsoftc *, int, u_int16_t);
 static u_int16_t isp_pci_rd_reg_1080(struct ispsoftc *, int);
 static void isp_pci_wr_reg_1080(struct ispsoftc *, int, u_int16_t);
 #endif
-#if !defined(ISP_DISABLE_2100_SUPPORT) && \
-	 !defined(ISP_DISABLE_2200_SUPPORT) && \
-	 !defined(ISP_DISABLE_1020_SUPPORT) && \
-	 !defined(ISP_DISABLE_1080_SUPPORT) && \
+#if !defined(ISP_DISABLE_2100_SUPPORT) || \
+	 !defined(ISP_DISABLE_2200_SUPPORT) || \
+	 !defined(ISP_DISABLE_1020_SUPPORT) || \
+	 !defined(ISP_DISABLE_1080_SUPPORT) || \
 	 !defined(ISP_DISABLE_12160_SUPPORT)
 static int
 isp_pci_rd_isr(struct ispsoftc *, u_int16_t *, u_int16_t *, u_int16_t *);
@@ -732,10 +732,10 @@ isp_pci_rd_debounced(struct ispsoftc *isp, int off, u_int16_t *rp)
 	return (0);
 }
 
-#if !defined(ISP_DISABLE_2100_SUPPORT) && \
-	 !defined(ISP_DISABLE_2200_SUPPORT) && \
-	 !defined(ISP_DISABLE_1020_SUPPORT) && \
-	 !defined(ISP_DISABLE_1080_SUPPORT) && \
+#if !defined(ISP_DISABLE_2100_SUPPORT) || \
+	 !defined(ISP_DISABLE_2200_SUPPORT) || \
+	 !defined(ISP_DISABLE_1020_SUPPORT) || \
+	 !defined(ISP_DISABLE_1080_SUPPORT) || \
 	 !defined(ISP_DISABLE_12160_SUPPORT)
 static int
 isp_pci_rd_isr(struct ispsoftc *isp, u_int16_t *isrp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_socket.c,v 1.8.4.2 2006/12/30 20:47:32 yamt Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.8.4.3 2007/02/26 09:09:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,14 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.8.4.2 2006/12/30 20:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.8.4.3 2007/02/26 09:09:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/signal.h>
 #include <sys/lwp.h>
-#include <sys/sa.h>
 #include <sys/socketvar.h>
 #include <sys/un.h>
 #include <sys/ucred.h>

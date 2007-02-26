@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2005/02/17 02:14:23 briggs Exp $
+#	$NetBSD: Makefile,v 1.32.6.1 2007/02/26 09:07:52 yamt Exp $
 
 INCSDIR?= /usr/include/powerpc
 
@@ -11,9 +11,9 @@ INCS+=	ansi.h aout_machdep.h asm.h atomic.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h \
 	limits.h lock.h \
-	math.h mcontext.h \
+	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h reloc.h \
+	reg.h reloc.h rwlock.h \
 	setjmp.h signal.h spr.h stdarg.h \
 	trap.h types.h \
 	varargs.h \

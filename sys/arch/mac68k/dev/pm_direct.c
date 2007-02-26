@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.24.2.1 2006/06/21 14:53:02 yamt Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.24.2.2 2007/02/26 09:07:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.24.2.1 2006/06/21 14:53:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.24.2.2 2007/02/26 09:07:16 yamt Exp $");
 
 #include "opt_adb.h"
 
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.24.2.1 2006/06/21 14:53:02 yamt Exp 
 /* #define	PM_GRAB_SI	1 */
 
 #include <sys/types.h>
-#include <sys/cdefs.h>
 #include <sys/systm.h>
 
 #include <machine/viareg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.17.16.2 2006/12/30 20:46:50 yamt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.17.16.3 2007/02/26 09:07:59 yamt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.17.16.2 2006/12/30 20:46:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.17.16.3 2007/02/26 09:07:59 yamt Exp $");
 
 #include "opt_openpic.h"
 #include "pci.h"
@@ -206,7 +206,7 @@ ext_intr_i8259(void)
 	} else {
 		splraise(is->is_mask);
 		mtmsr(msr | PSL_EE);
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		ih = is->is_hand;
 		if (ih == NULL)
 			printf("spurious interrupt %d\n", irq);
@@ -214,7 +214,7 @@ ext_intr_i8259(void)
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
 
@@ -255,7 +255,7 @@ ext_intr_ivr(void)
 	} else {
 		splraise(is->is_mask);
 		mtmsr(msr | PSL_EE);
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		ih = is->is_hand;
 		if (ih == NULL)
 			printf("spurious interrupt %d\n", irq);
@@ -263,7 +263,7 @@ ext_intr_ivr(void)
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(msr);
 		ci->ci_cpl = pcpl;
 
@@ -313,7 +313,7 @@ ext_intr_openpic(void)
 		} else {
 			splraise(is->is_mask);
 			mtmsr(msr | PSL_EE);
-			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+			KERNEL_LOCK(1, NULL);
 			ih = is->is_hand;
 			if (ih == NULL)
 				printf("spurious interrupt %d\n", irq);
@@ -321,7 +321,7 @@ ext_intr_openpic(void)
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
 			}
-			KERNEL_UNLOCK();
+			KERNEL_UNLOCK_ONE(NULL);
 			mtmsr(msr);
 			ci->ci_cpl = pcpl;
 
@@ -621,9 +621,9 @@ again:
 		ci->ci_ipending &= ~SINT_CLOCK;
 		splsoftclock();
 		mtmsr(emsr);
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTCLOCK);
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softclock.ev_count++;
@@ -633,9 +633,9 @@ again:
 		ci->ci_ipending &= ~SINT_NET;
 		splsoftnet();
 		mtmsr(emsr);
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTNET);
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softnet.ev_count++;
@@ -645,9 +645,9 @@ again:
 		ci->ci_ipending &= ~SINT_SERIAL;
 		splsoftserial();
 		mtmsr(emsr);
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTSERIAL);
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 		mtmsr(dmsr);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softserial.ev_count++;

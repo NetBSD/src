@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.9.16.1 2006/06/21 15:04:20 yamt Exp $	*/
+/*	$NetBSD: cir.c,v 1.9.16.2 2007/02/26 09:10:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.9.16.1 2006/06/21 15:04:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.9.16.2 2007/02/26 09:10:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ dev_type_kqfilter(cirkqfilter);
 const struct cdevsw cir_cdevsw = {
 	ciropen, circlose, cirread, cirwrite, cirioctl,
 	nostop, notty, cirpoll, nommap, cirkqfilter,
+	D_OTHER
 };
 
 int cir_match(struct device *parent, struct cfdata *match, void *aux);
@@ -137,7 +138,7 @@ cir_detach(struct device *self, int flags)
 }
 
 int
-ciropen(dev_t dev, int flag, int mode, struct proc *p)
+ciropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct cir_softc *sc;
 	int error;
@@ -150,7 +151,8 @@ ciropen(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc->sc_open)
 		return (EBUSY);
 	if (sc->sc_methods->im_open != NULL) {
-		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode, p);
+		error = sc->sc_methods->im_open(sc->sc_handle, flag, mode,
+		    l->l_proc);
 		if (error)
 			return (error);
 	}
@@ -159,7 +161,7 @@ ciropen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-circlose(dev_t dev, int flag, int mode, struct proc *p)
+circlose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct cir_softc *sc;
 	int error;
@@ -168,7 +170,8 @@ circlose(dev_t dev, int flag, int mode, struct proc *p)
 	if (sc == NULL)
 		return (ENXIO);
 	if (sc->sc_methods->im_close != NULL)
-		error = sc->sc_methods->im_close(sc->sc_handle, flag, mode, p);
+		error = sc->sc_methods->im_close(sc->sc_handle, flag, mode,
+		    l->l_proc);
 	else
 		error = 0;
 	sc->sc_open = 0;
@@ -202,7 +205,7 @@ cirwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
+cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct cir_softc *sc;
 	int error;
@@ -220,6 +223,7 @@ cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 	case CIR_GET_PARAMS:
 		*(struct cir_params *)addr = sc->sc_params;
+		error = 0;
 		break;
 	case CIR_SET_PARAMS:
 		error = sc->sc_methods->im_setparams(sc->sc_handle,
@@ -235,7 +239,7 @@ cirioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 }
 
 int
-cirpoll(dev_t dev, int events, struct proc *p)
+cirpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct cir_softc *sc;
 	int revents;
@@ -258,13 +262,13 @@ cirpoll(dev_t dev, int events, struct proc *p)
 #if 0
 	/* How about write? */
 	if (events & (POLLOUT | POLLWRNORM))
-		if (???)
+		if (/* ??? */)
 			revents |= events & (POLLOUT | POLLWRNORM);
 #endif
 
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->sc_rdsel);
+			selrecord(l, &sc->sc_rdsel);
 
 #if 0
 		if (events & (POLLOUT | POLLWRNORM))

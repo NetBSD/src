@@ -1,68 +1,70 @@
-#	$NetBSD: GUMSTIX,v 1.4.2.2 2006/12/30 20:45:48 yamt Exp $
+#	$NetBSD: GUMSTIX,v 1.4.2.3 2007/02/26 09:06:17 yamt Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
 
-include	"arch/evbarm/conf/std.gumstix"
+include 	"arch/evbarm/conf/std.gumstix"
 
 # estimated number of users
 
 maxusers	32
 
-options 	VERBOSE_ARM32
-#options 	INTR_DEBUG
-#options	BOOTHOWTO=RB_SINGLE
-options 	PCMCIADEBUG
-options 	PCMCIACISDEBUG
+# CPU options
+
+# For XScale systems
+options 	CPU_XSCALE_PXA250	# Support the XScale core
+makeoptions	CPUFLAGS="-mcpu=xscale"
+
+# Architecture options
+#options 	XSCALE_CACHE_WRITE_THROUGH
+options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 
 # Standard system options
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
 
-# CPU options
-
-options 	CPU_XSCALE_PXA250	# Support the XScale core
-#options 	XSCALE_CACHE_WRITE_THROUGH
-options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
-makeoptions	CPUFLAGS="-mcpu=xscale"
-
-# Architecture options
-
 # File systems
 
 file-system	FFS		# UFS
+#file-system 	EXT2FS		# second extended file system (linux)
 #file-system	LFS		# log-structured file system
 file-system	MFS		# memory file system
-file-system	NFS		# Network file system
-#file-system 	ADOSFS		# AmigaDOS-compatible file system
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system	NFS		# Network file system client
+#file-system 	NTFS		# Windows/NT file system (experimental)
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
 file-system	MSDOSFS		# MS-DOS file system
 file-system	FDESC		# /dev/fd
 file-system	KERNFS		# /kern
 file-system	NULLFS		# loopback file system
+#file-system 	OVERLAY		# overlay file system
 file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
+#file-system	CODA		# Coda File System; also needs vcoda (below)
+#file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	NFSSERVER
 options 	SOFTDEP
-#options	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	NFSSERVER
+#options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+#options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
+				# immutable) behave as system flags.
 
 # Networking options
 
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	ISO,TPIP	# OSI
@@ -93,6 +95,9 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
+options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
 # Shared memory options
 
 #options 	SYSVMSG		# System V-like message queues
@@ -103,6 +108,7 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
+options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Device options
 
@@ -113,17 +119,23 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	MEMORY_RBFLAGS=RB_AUTOBOOT
 
 # Miscellaneous kernel options
+
 options 	KTRACE		# system call tracing, a la ktrace(1)
+#options 	SYSTRACE	# system call vetting via systrace(1)
+options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
-options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
 #options 	USERCONF	# userconf(4) support
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Development and Debugging options
 
+#options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
@@ -131,21 +143,19 @@ options 	DEBUG
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
-#options 	IPKDB
-#options 	IPKDB_NE
-#options 	IPKDBKEY="\"Debug_it_over_network\""
-#options  	DEBUG_KGDB
+#options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=300000
+options 	SYMTAB_SPACE=350000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?
+config		netbsd-sm0	root on sm0 type nfs
 
 # The main bus device
-mainbus0	at root
+mainbus0 at root
 
 # The boot cpu
-cpu0		at mainbus?
+cpu0	at mainbus?
 
 # integrated peripherals
 pxaip0	at mainbus?
@@ -157,16 +167,16 @@ pxagpio0 at pxaip?				# GPIO
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
-com0	at pxaip?  addr 0x40100000 intr 22      # Full Function UART
-#com1	at pxaip?  addr 0x40200000 intr 21 	# BlueTooth UART
-#com2	at pxaip?  addr 0x40700000 intr 20	# Standard UART
-#com3	at pxaip?  addr 0x41600000 intr 7	# Hardware UART
+com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
+com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (waysmall-ST)
+com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
+com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART (waysmall, -bt)
 options 	FFUARTCONSOLE
-#options 	BTUARTCONSOLE
 #options 	STUARTCONSOLE
+#options 	BTUARTCONSOLE
 #options 	HWUARTCONSOLE
-options 	KGDB_DEVNAME="\"ffuart\""   	# ffuart or btuart
-options 	KGDB_DEVRATE=115200
+#options 	KGDB_DEVNAME="\"ffuart\""	# or stuart or btuart or hwuart
+#options 	KGDB_DEVRATE=115200
 
 # DMAC support
 pxadmac0 at pxaip? addr 0x40000000 intr 25
@@ -191,12 +201,13 @@ audio*	at audiobus?
 
 # gumstix device support
 gxio0	at pxaip?
+options 	GXIO_BLUETOOTH_ON_HWUART	# Bluetooth module on HWUART
 
 # gumstix expantion boards
 
 # SMC 91C111
 sm0	at gxio? addr 0x04000300 gpirq 36	# etherstix, net{MMC,CF,DUO}
-sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd if)
+sm1	at gxio? addr 0x08000300 gpirq 27	# netDUO(2nd NIC)
 
 # PCMCIA/CF card
 gxpcic* at gxio? addr 0x20000000 gpirq 11	# cfstix, netCF
@@ -341,19 +352,62 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB Generic driver
 #ugen*	at uhub? port ?
 
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+#bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+#ubt*	at uhub? port ? configuration ? interface ?
+
+# Bluetooth Device Hub
+#bthub*	at bt3c?
+#bthub*	at ubt?
+bthub*	at btuart?
+
+# Bluetooth HID support
+#bthidev* at bthub?
+
+# Bluetooth Mouse
+#btms*	at bthidev? reportid ?
+#wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+#btkbd*	at bthidev? reportid ?
+#wskbd*	at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+#btsco*	at bthub?
+
 # Pseudo-Devices
 
+pseudo-device	swcrypto		# software crypto implementation
+
 # disk/mass storage pseudo-devices
-#pseudo-device	md		1	# memory disk device (ramdisk)
-pseudo-device	vnd			# disk-like interface to files
+#pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
+#pseudo-device	raid		8	# RAIDframe disk driver
+#options	RAID_AUTOCONFIG		# auto-configuration of RAID components
+# Options to enable various other RAIDframe RAID types.
+#options	RF_INCLUDE_EVENODD=1
+#options	RF_INCLUDE_RAID5_RS=1
+#options	RF_INCLUDE_PARITYLOGGING=1
+#options	RF_INCLUDE_CHAINDECLUSTER=1
+#options	RF_INCLUDE_INTERDECLUSTER=1
+#options	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 #pseudo-device	fss		4	# file system snapshot device
+
+pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vnd			# disk-like interface to files
+options		VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
+#pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	kttcp			# network loopback
-#pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
@@ -372,10 +426,37 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
+#pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
+options		RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
+
+# a pseudo device needed for Coda	# also needs CODA (above)
+#pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+#pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
-pseudo-device	ksyms			# /dev/ksyms
+
+# data mover pseudo-devices
+#pseudo-device	swdmover		# softare dmover(9) back-end
+#pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
+
+# Veriexec
+#pseudo-device	veriexec
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384 
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5

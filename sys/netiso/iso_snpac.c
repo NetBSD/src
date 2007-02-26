@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.33.2.2 2006/12/30 20:50:45 yamt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.33.2.3 2007/02/26 09:12:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.33.2.2 2006/12/30 20:50:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.33.2.3 2007/02/26 09:12:01 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -314,7 +314,7 @@ iso_setmcasts(struct ifnet *ifp, int req)
 int
 iso_snparesolve(
 	struct ifnet   *ifp,		/* outgoing interface */
-	struct sockaddr_iso *dest,	/* destination */
+	const struct sockaddr_iso *dest,	/* destination */
 	caddr_t         snpa,		/* RESULT: snpa to be used */
 	int            *snpa_len)	/* RESULT: length of snpa */
 {
@@ -549,7 +549,7 @@ snpac_ioctl(
 
 	if (cmd == SIOCSSTYPE) {
 		if (l == NULL || kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+		    KAUTH_GENERIC_ISSUSER, NULL))
 			return (EPERM);
 		if ((rq->sr_type & (SNPA_ES | SNPA_IS)) == (SNPA_ES | SNPA_IS))
 			return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.93.2.2 2006/12/30 20:50:38 yamt Exp $	*/
+/*	$NetBSD: in6.c,v 1.93.2.3 2007/02/26 09:11:48 yamt Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.93.2.2 2006/12/30 20:50:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.93.2.3 2007/02/26 09:11:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -795,7 +795,7 @@ in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 
 	privileged = 0;
 	if (l && !kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+	    KAUTH_GENERIC_ISSUSER, NULL))
 		privileged++;
 
 	s = splnet();
@@ -988,8 +988,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		/* gain a refcnt for the link from in6_ifaddr */
 		IFAREF(&ia->ia_ifa);
 
-		TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
-				  ifa_list);
+		TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
 		/* gain another refcnt for the link from if_addrlist */
 		IFAREF(&ia->ia_ifa);
 	}
@@ -1818,9 +1817,7 @@ in6_ifinit(ifp, ia, sin6, newhost)
  * Find an IPv6 interface link-local address specific to an interface.
  */
 struct in6_ifaddr *
-in6ifa_ifpforlinklocal(ifp, ignoreflags)
-	struct ifnet *ifp;
-	int ignoreflags;
+in6ifa_ifpforlinklocal(const struct ifnet *ifp, const int ignoreflags)
 {
 	struct ifaddr *ifa;
 
@@ -1845,9 +1842,7 @@ in6ifa_ifpforlinklocal(ifp, ignoreflags)
  * find the internet address corresponding to a given interface and address.
  */
 struct in6_ifaddr *
-in6ifa_ifpwithaddr(ifp, addr)
-	struct ifnet *ifp;
-	struct in6_addr *addr;
+in6ifa_ifpwithaddr(const struct ifnet *ifp, const struct in6_addr *addr)
 {
 	struct ifaddr *ifa;
 
@@ -2192,8 +2187,7 @@ in6_setmaxmtu()
 	unsigned long maxmtu = 0;
 	struct ifnet *ifp;
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-	{
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		/* this function can be called during ifnet initialization */
 		if (!ifp->if_afdata[AF_INET6])
 			continue;

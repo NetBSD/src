@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.8.2.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: xencons.c,v 1.8.2.3 2007/02/26 09:08:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.8.2.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.8.2.3 2007/02/26 09:08:57 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -81,7 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.8.2.2 2006/12/30 20:47:25 yamt Exp $")
 #include <machine/hypervisor.h>
 #include <machine/evtchn.h>
 #ifdef XEN3
-#include <sys/param.h>
 #include <uvm/uvm.h>
 #include <machine/pmap.h>
 #include <machine/xen3-public/io/console.h>
@@ -387,6 +386,7 @@ xencons_start(struct tty *tp)
 #define XNC_OUT (xencons_interface->out)
 		cons = xencons_interface->out_cons;
 		prod = xencons_interface->out_prod;
+		x86_lfence();
 		while (prod != cons + sizeof(xencons_interface->out)) {
 			if (MASK_XENCONS_IDX(prod, XNC_OUT) <
 			    MASK_XENCONS_IDX(cons, XNC_OUT)) {
@@ -402,9 +402,9 @@ xencons_start(struct tty *tp)
 				break;
 			prod = prod + len;
 		}
-		x86_lfence();
+		x86_sfence();
 		xencons_interface->out_prod = prod;
-		x86_lfence();
+		x86_sfence();
 		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
 #undef XNC_OUT
 #else /* XEN3 */
@@ -482,12 +482,13 @@ xencons_handler(void *arg)
 			cons = xencons_interface->in_cons;
 			prod = xencons_interface->in_prod;
 			x86_lfence();
-		} else
+		} else {
 			cons += len;
+			x86_sfence();
+			xencons_interface->in_cons = cons;
+			x86_sfence();
+		}
 	}
-	x86_lfence();
-	xencons_interface->in_cons = cons;
-	x86_lfence();
 	hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
 	splx(s);
 	return 1;

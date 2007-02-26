@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.11.2.1 2006/06/21 14:59:12 yamt Exp $ */
+/*	$NetBSD: linux_time.c,v 1.11.2.2 2007/02/26 09:09:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.11.2.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.11.2.2 2007/02/26 09:09:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.11.2.1 2006/06/21 14:59:12 yamt Exp
 #include <sys/stdint.h>
 #include <sys/time.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>

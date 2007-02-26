@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307reg.h,v 1.3 2004/09/20 17:31:57 drochner Exp $	*/
+/*	$NetBSD: ns87307reg.h,v 1.3.12.1 2007/02/26 09:08:13 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -57,16 +57,6 @@
 
 #ifndef _NS87307REG_H
 #define _NS87307REG_H
-
-/*
-** Define TRUE/FALSE if not already defined.  It
-** annoys me that C doesn't do this in a standard 
-** header.
-*/
-#ifndef TRUE
-#define TRUE  1
-#define FALSE 0
-#endif
 
 /*
 ** Macro for debugging

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161.2.2 2006/12/30 20:46:42 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.161.2.3 2007/02/26 09:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161.2.2 2006/12/30 20:46:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161.2.3 2007/02/26 09:07:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -99,8 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161.2.2 2006/12/30 20:46:42 yamt Exp $
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -216,19 +214,19 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -370,34 +368,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		sendsig_siginfo(ksi, mask);
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct saframe *sf, frame;
-	struct reg *regs;
-
-	regs = l->l_md.md_regs;
-
-	/* Build up and copy the SA frame. */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = ap;
-	frame.sa_ra = 0;
-
-	sf = (struct saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		/* Copying onto the stack didn't work.  Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	regs->r_sp = (int) sf;
-	regs->r_pc = (int) upcall;
 }
 
 void

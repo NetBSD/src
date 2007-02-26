@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.25.2.2 2006/12/30 20:50:44 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.25.2.3 2007/02/26 09:11:57 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.25.2.2 2006/12/30 20:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.25.2.3 2007/02/26 09:11:57 yamt Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -102,6 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.25.2.2 2006/12/30 20:50:44 yamt Exp $");
 
 #include <netipsec/xform.h>
 #include <netipsec/ipsec_osdep.h>
+#include <netipsec/ipcomp.h>
+
 
 #include <machine/stdarg.h>
 
@@ -379,7 +381,7 @@ static struct secasvar *key_do_allocsa_policy __P((struct secashead *, u_int));
 static void key_delsp __P((struct secpolicy *));
 static struct secpolicy *key_getsp __P((struct secpolicyindex *));
 static struct secpolicy *key_getspbyid __P((u_int32_t));
-static u_int32_t key_newreqid __P((void));
+static u_int16_t key_newreqid __P((void));
 static struct mbuf *key_gather_mbuf __P((struct mbuf *,
 	const struct sadb_msghdr *, int, int, ...));
 static int key_spdadd __P((struct socket *, struct mbuf *,
@@ -426,7 +428,7 @@ static struct mbuf *key_setsadbaddr __P((u_int16_t,
 static struct mbuf *key_setsadbident __P((u_int16_t, u_int16_t, caddr_t,
 	int, u_int64_t));
 #endif
-static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int32_t));
+static struct mbuf *key_setsadbxsa2 __P((u_int8_t, u_int32_t, u_int16_t));
 static struct mbuf *key_setsadbxpolicy __P((u_int16_t, u_int8_t,
 	u_int32_t));
 static void *key_newbuf __P((const void *, u_int));
@@ -1038,7 +1040,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
  */
 struct secasvar *
 key_allocsa(
-	union sockaddr_union *dst,
+	const union sockaddr_union *dst,
 	u_int proto,
 	u_int32_t spi,
 	const char* where, int tag)
@@ -1048,10 +1050,34 @@ key_allocsa(
 	u_int stateidx, state;
 	int s;
 
+	int must_check_spi = 1;
+	int must_check_alg = 0;
+	u_int16_t cpi = 0;
+	u_int8_t algo = 0;
+
 	IPSEC_ASSERT(dst != NULL, ("key_allocsa: null dst address"));
 
 	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 		printf("DP key_allocsa from %s:%u\n", where, tag));
+
+	/*
+	 * XXX IPCOMP case 
+	 * We use cpi to define spi here. In the case where cpi <=
+	 * IPCOMP_CPI_NEGOTIATE_MIN, cpi just define the algorithm used, not
+	 * the real spi. In this case, don't check the spi but check the
+	 * algorithm
+	 */
+    
+	if (proto == IPPROTO_IPCOMP) {
+		u_int32_t tmp;
+		tmp = ntohl(spi);
+		cpi = (u_int16_t) tmp;
+		if (cpi < IPCOMP_CPI_NEGOTIATE_MIN) {
+			algo = (u_int8_t) cpi;
+			must_check_spi = 0;
+			must_check_alg = 1;
+		}
+	}
 
 	/*
 	 * searching SAD.
@@ -1075,8 +1101,12 @@ key_allocsa(
 					continue;
 				if (proto != sav->sah->saidx.proto)
 					continue;
-				if (spi != sav->spi)
+				if (must_check_spi && spi != sav->spi)
 					continue;
+				/* XXX only on the ipcomp case */
+				if (must_check_alg && algo != sav->alg_comp)
+					continue;
+
 #if 0	/* don't check src */
 				/* check src address */
 				if (key_sockaddrcmp(&src->sa, &sav->sah->saidx.src.sa, 0) != 0)
@@ -1463,7 +1493,7 @@ key_msg2sp(xpl0, len, error)
 
 				/* allocate new reqid id if reqid is zero. */
 				if (xisr->sadb_x_ipsecrequest_reqid == 0) {
-					u_int32_t reqid;
+					u_int16_t reqid;
 					if ((reqid = key_newreqid()) == 0) {
 						KEY_FREESP(&newsp);
 						*error = ENOBUFS;
@@ -1552,12 +1582,12 @@ key_msg2sp(xpl0, len, error)
 	return newsp;
 }
 
-static u_int32_t
+static u_int16_t
 key_newreqid()
 {
-	static u_int32_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
+	static u_int16_t auto_reqid = IPSEC_MANUAL_REQID_MAX + 1;
 
-	auto_reqid = (auto_reqid == ~0
+	auto_reqid = (auto_reqid == 0xffff
 			? IPSEC_MANUAL_REQID_MAX + 1 : auto_reqid + 1);
 
 	/* XXX should be unique check */
@@ -1766,32 +1796,6 @@ key_spdadd(so, m, mhp)
 	src0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_SRC];
 	dst0 = (struct sadb_address *)mhp->ext[SADB_EXT_ADDRESS_DST];
 	xpl0 = (struct sadb_x_policy *)mhp->ext[SADB_X_EXT_POLICY];
-
-#if defined(__NetBSD__) && defined(INET6)
-	/*
-	 * On NetBSD, FAST_IPSEC and INET6 can be configured together,
-	 * but FAST_IPSEC does not protect IPv6 traffic.
-	 * Rather than silently leaking IPv6 traffic for which IPsec
-	 * is configured, forbid  specifying IPsec for IPv6 traffic.
-	 *
-	 * (On FreeBSD, both FAST_IPSEC and INET6 gives a compile-time error.)
-	 */
-	if (((const struct sockaddr *)(src0 + 1))->sa_family == AF_INET6 ||
-	    ((const struct sockaddr *)(dst0 + 1))->sa_family == AF_INET6) {
-		static int v6_warned = 0;
-
-		if (v6_warned == 0) {
-			printf("key_spdadd: FAST_IPSEC does not support IPv6.");
-			printf("Check syslog for more per-SPD warnings.\n");
-			v6_warned++;
-		}
-		log(LOG_WARNING,
-		    "FAST_IPSEC does not support PF_INET6 SPDs. "
-		    "Request refused.\n");
-
-		return EOPNOTSUPP;	/* EPROTOTYPE?  EAFNOSUPPORT? */
-	}
-#endif /* __NetBSD__ && INET6 */
 
 	/* make secindex */
 	/* XXX boundary check against sa_len */
@@ -3760,7 +3764,8 @@ key_setsadbident(exttype, idtype, string, stringlen, id)
 static struct mbuf *
 key_setsadbxsa2(mode, seq, reqid)
 	u_int8_t mode;
-	u_int32_t seq, reqid;
+	u_int32_t seq;
+	u_int16_t reqid;
 {
 	struct mbuf *m;
 	struct sadb_x_sa2 *p;
@@ -4174,6 +4179,7 @@ key_sockaddrcmp(
 		    satosin6(sa1)->sin6_port != satosin6(sa2)->sin6_port) {
 			return 1;
 		}
+		break;
 	default:
 		if (bcmp(sa1, sa2, sa1->sa_len) != 0)
 			return 1;
@@ -4612,7 +4618,7 @@ key_getspi(so, m, mhp)
 	u_int8_t proto;
 	u_int32_t spi;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
@@ -4887,7 +4893,7 @@ key_update(so, m, mhp)
 	struct secasvar *sav;
 	u_int16_t proto;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
@@ -5082,7 +5088,7 @@ key_add(so, m, mhp)
 	struct secasvar *newsav;
 	u_int16_t proto;
 	u_int8_t mode;
-	u_int32_t reqid;
+	u_int16_t reqid;
 	int error;
 
 	/* sanity check */
@@ -7536,8 +7542,8 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (dst->sa_len == ro->ro_dst.sa_len &&
-		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+		if (dst->sa_len == rtcache_getdst(ro)->sa_len &&
+		    memcmp(dst, rtcache_getdst(ro), dst->sa_len) == 0)
 			rtcache_free(ro);
 	}
 

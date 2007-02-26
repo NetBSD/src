@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9.2.1 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.9.2.2 2007/02/26 09:08:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 
-	while (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	while (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
 	    != __SIMPLELOCK_UNLOCKED) {
 		do {
 			x86_pause();
@@ -93,7 +93,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
-	int r = (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	int r = (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_UNLOCKED);
 
 	__insn_barrier();
@@ -163,8 +163,31 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 
 #endif /* !LOCKDEBUG */
 
+#define	SPINLOCK_SPIN_HOOK	/* nothing */
+#define	SPINLOCK_BACKOFF_HOOK	x86_pause()
+
 #ifdef _KERNEL
-#define	SPINLOCK_SPIN_HOOK	x86_pause()
-#endif
+void	mb_read(void);
+void	mb_write(void);
+void	mb_memory(void);
+#else	/* _KERNEL */
+static __inline void
+mb_read(void)
+{
+	x86_lfence();
+}
+
+static __inline void
+mb_write(void)
+{
+	__insn_barrier();
+}
+
+static __inline void
+mb_memory(void)
+{
+	x86_mfence();
+}
+#endif	/* _KERNEL */
 
 #endif /* _X86_LOCK_H_ */

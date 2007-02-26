@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.43.2.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.43.2.2 2007/02/26 09:12:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -66,10 +66,10 @@ int	ufs_getattr(void *);
 int	ufs_inactive(void *);
 #define	ufs_fcntl	genfs_fcntl
 #define	ufs_ioctl	genfs_enoioctl
-#define	ufs_islocked	genfs_islocked
+int	ufs_islocked(void *);
 #define	ufs_lease_check genfs_lease_check
 int	ufs_link(void *);
-#define ufs_lock	genfs_lock
+int	ufs_lock(void *);
 int	ufs_lookup(void *);
 int	ufs_mkdir(void *);
 int	ufs_mknod(void *);
@@ -88,7 +88,7 @@ int	ufs_rmdir(void *);
 int	ufs_setattr(void *);
 int	ufs_strategy(void *);
 int	ufs_symlink(void *);
-#define ufs_unlock	genfs_unlock
+int	ufs_unlock(void *);
 int	ufs_whiteout(void *);
 int	ufsspec_close(void *);
 int	ufsspec_read(void *);
@@ -99,7 +99,7 @@ int	ufsfifo_write(void *);
 int	ufsfifo_close(void *);
 
 /* ufs_bmap.c */
-typedef	boolean_t (*ufs_issequential_callback_t)(const struct ufsmount *,
+typedef	bool (*ufs_issequential_callback_t)(const struct ufsmount *,
 						 daddr_t, daddr_t);
 int	ufs_bmaparray(struct vnode *, daddr_t, daddr_t *, struct indir *,
 		      int *, int *, ufs_issequential_callback_t);

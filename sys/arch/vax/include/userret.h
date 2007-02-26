@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1.14.2 2006/06/21 14:57:33 yamt Exp $	*/
+/*	$NetBSD: userret.h,v 1.1.14.3 2007/02/26 09:08:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,8 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static __inline void
-userret(struct lwp *, struct trapframe *, u_quad_t);
+#include <sys/userret.h>
 
 /*
  *	Common code used by various execption handlers to
@@ -40,42 +39,29 @@ userret(struct lwp *, struct trapframe *, u_quad_t);
 static __inline void
 userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 {
-	int sig;
 	struct proc *p = l->l_proc;
 
-	/* Generate UNBLOCKED upcall. */
-	if (l->l_flag & L_SA_BLOCKING)
-		sa_unblock_userret(l);
+	LOCKDEBUG_BARRIER(NULL, 0);
 
 	/* Take pending signals. */
-	while ((sig = CURSIG(l)) != 0)
-		postsig(sig);
-	l->l_priority = l->l_usrpri;
-	if (curcpu()->ci_want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(0);
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
+	for (;;) {
+		if ((l->l_flag & LW_USERRET) != 0)
+			lwp_userret(l);
+		if (!curcpu()->ci_want_resched)
+			break;
+		preempt();
 	}
 
-	/* Invoke per-process kernel-exit handling, if any */
-	if (p->p_userret)
-		(p->p_userret)(l, p->p_userret_arg);
+	l->l_priority = l->l_usrpri;
+	l->l_cpu->ci_schedstate.spc_curpriority = l->l_priority;
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if ((p->p_stflag & PST_PROFIL) != 0) {
 		extern int psratio;
 
-		addupc_task(p, frame->pc,
+		addupc_task(l, frame->pc,
 		    (int)(p->p_sticks - oticks) * psratio);
 	}
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority;
 }

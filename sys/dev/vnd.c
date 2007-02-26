@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.114.2.2 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.114.2.3 2007/02/26 09:09:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.2 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.3 2007/02/26 09:09:56 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -222,7 +222,7 @@ static void	vnd_free(void *, void *);
 #endif /* VND_COMPRESSION */
 
 static void	vndthread(void *);
-static boolean_t vnode_has_op(const struct vnode *, int);
+static bool	vnode_has_op(const struct vnode *, int);
 static void	handle_with_rdwr(struct vnd_softc *, const struct buf *,
 		    struct buf *);
 static void	handle_with_strategy(struct vnd_softc *, const struct buf *,
@@ -532,7 +532,7 @@ static void
 vndthread(void *arg)
 {
 	struct vnd_softc *vnd = arg;
-	boolean_t usestrategy;
+	bool usestrategy;
 	int s;
 
 	/* Determine whether we can use VOP_BMAP and VOP_STRATEGY to
@@ -654,7 +654,7 @@ done:
  * unimplemented operations.  There might be another way to do
  * it more cleanly.
  */
-static boolean_t
+static bool
 vnode_has_op(const struct vnode *vp, int opoffset)
 {
 	int (*defaultp)(void *);
@@ -676,7 +676,7 @@ vnode_has_op(const struct vnode *vp, int opoffset)
 static void
 handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 {
-	boolean_t doread;
+	bool doread;
 	off_t offset;
 	size_t resid;
 	struct vnode *vp;
@@ -689,10 +689,10 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	if (vnddebug & VDB_IO)
 		printf("vnd (rdwr): vp %p, %s, rawblkno 0x%" PRIx64
 		    ", secsize %d, offset %" PRIu64
-		    ", bcount %d, resid %d\n",
+		    ", bcount %d\n",
 		    vp, doread ? "read" : "write", obp->b_rawblkno,
 		    vnd->sc_dkdev.dk_label->d_secsize, offset,
-		    bp->b_bcount, bp->b_resid);
+		    bp->b_bcount);
 #endif
 
 	/* Issue the read or write operation. */

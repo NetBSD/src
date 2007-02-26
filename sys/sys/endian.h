@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.15.6.1 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: endian.h,v 1.15.6.2 2007/02/26 09:12:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -190,6 +190,43 @@ __END_DECLS
  * to/from an octet stream.
  */
 
+#if __GNUC_PREREQ__(2, 95)
+
+#define __GEN_ENDIAN_ENC(bits, endian) \
+static __inline __unused void \
+endian ## bits ## enc(void *dst, uint ## bits ## _t u) \
+{ \
+	u = hto ## endian ## bits (u); \
+	__builtin_memcpy(dst, &u, sizeof(u)); \
+}
+
+__GEN_ENDIAN_ENC(16, be)
+__GEN_ENDIAN_ENC(32, be)
+__GEN_ENDIAN_ENC(64, be)
+__GEN_ENDIAN_ENC(16, le)
+__GEN_ENDIAN_ENC(32, le)
+__GEN_ENDIAN_ENC(64, le)
+#undef __GEN_ENDIAN_ENC
+
+#define __GEN_ENDIAN_DEC(bits, endian) \
+static __inline __unused uint ## bits ## _t \
+endian ## bits ## dec(const void *buf) \
+{ \
+	uint ## bits ## _t u; \
+	__builtin_memcpy(&u, buf, sizeof(u)); \
+	return endian ## bits ## toh (u); \
+}
+
+__GEN_ENDIAN_DEC(16, be)
+__GEN_ENDIAN_DEC(32, be)
+__GEN_ENDIAN_DEC(64, be)
+__GEN_ENDIAN_DEC(16, le)
+__GEN_ENDIAN_DEC(32, le)
+__GEN_ENDIAN_DEC(64, le)
+#undef __GEN_ENDIAN_DEC
+
+#else	/* !(GCC >= 2.95) */
+
 static __inline void __unused
 be16enc(void *buf, uint16_t u)
 {
@@ -295,6 +332,8 @@ le64dec(const void *buf)
 
 	return (le32dec(p) | ((uint64_t)le32dec(p + 4) << 32));
 }
+
+#endif	/* GCC >= 2.95 */
 
 #endif /* !_LOCORE */
 #endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */

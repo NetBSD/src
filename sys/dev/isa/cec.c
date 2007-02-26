@@ -1,4 +1,4 @@
-/*	$NetBSD: cec.c,v 1.3 2005/02/27 00:27:17 perry Exp $	*/
+/*	$NetBSD: cec.c,v 1.3.4.1 2007/02/26 09:10:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.3 2005/02/27 00:27:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cec.c,v 1.3.4.1 2007/02/26 09:10:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,9 @@ struct gpib_chipset_tag cec_ic = {
 	cecifc,
 	cecsendcmds,
 	cecsenddata,
-	cecrecvdata
+	cecrecvdata,
+	NULL,
+	NULL
 };
 
 int cecwtimeout = 0x10000;

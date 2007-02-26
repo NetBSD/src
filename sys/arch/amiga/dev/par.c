@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.30.16.1 2006/06/21 14:48:26 yamt Exp $ */
+/*	$NetBSD: par.c,v 1.30.16.2 2007/02/26 09:05:47 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30.16.1 2006/06/21 14:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30.16.2 2007/02/26 09:05:47 yamt Exp $");
 
 /*
  * parallel port interface
@@ -294,7 +294,6 @@ parrw(dev_t dev, register struct uio *uio)
 	    break;
 	}
 again:
-      s = splbio();
 #if 0
       if ((sc->sc_flags & PARF_UIO) && hpibreq(&sc->sc_dq) == 0)
 	sleep(sc, PRIBIO+1);
@@ -302,7 +301,7 @@ again:
       /*
        * Check if we timed out during sleep or uiomove
        */
-      (void) spllowersoftclock();
+      s = splsoftclock();
       if ((sc->sc_flags & PARF_UIO) == 0)
 	{
 #ifdef DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.1.18.3 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.1.18.4 2007/02/26 09:08:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.18.3 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.1.18.4 2007/02/26 09:08:52 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,7 @@ struct bootinfo bootinfo;
 void *
 lookup_bootinfo(int type)
 {
-	boolean_t found;
+	bool found;
 	int i;
 	struct btinfo_common *bic;
 
@@ -114,4 +114,18 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 	}
 
 	return EPERM;
+}
+
+/*
+ * Issue the pause instruction (rep; nop) which acts as a hint to
+ * HyperThreading processors that we are spinning on a lock.
+ *
+ * Not defined as an inline, because even if the CPU does not support
+ * HT the delay resulting from a function call is useful for spin lock
+ * back off.
+ */ 
+void
+x86_pause(void)
+{
+	__asm volatile("pause");
 }

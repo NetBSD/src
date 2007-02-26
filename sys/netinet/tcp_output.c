@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.136.2.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.136.2.3 2007/02/26 09:11:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136.2.2 2006/12/30 20:50:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136.2.3 2007/02/26 09:11:46 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -185,6 +185,9 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.136.2.2 2006/12/30 20:50:33 yamt Ex
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/key.h>
+#ifdef INET6
+#include <netipsec/ipsec6.h>
+#endif
 #endif	/* FAST_IPSEC*/
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -241,7 +244,7 @@ inline
 #endif
 int
 tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
-    boolean_t *alwaysfragp)
+    bool *alwaysfragp)
 {
 #ifdef INET
 	struct inpcb *inp = tp->t_inpcb;
@@ -256,7 +259,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	int hdrlen;
 	int optlen;
 
-	*alwaysfragp = FALSE;
+	*alwaysfragp = false;
 
 #ifdef DIAGNOSTIC
 	if (tp->t_inpcb && tp->t_in6pcb)
@@ -308,7 +311,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 			 * attach fragment header.
 			 */
 			size = IPV6_MMTU - hdrlen - sizeof(struct ip6_frag);
-			*alwaysfragp = TRUE;
+			*alwaysfragp = true;
 		} else
 			size = rt->rt_rmx.rmx_mtu - hdrlen;
 #else
@@ -374,7 +377,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep,
 	} else
 #endif
 	if (in6p && tp->t_family == AF_INET6) {
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		if (! IPSEC_PCB_SKIP_IPSEC(in6p->in6p_sp, IPSEC_DIR_OUTBOUND))
 			optlen += ipsec6_hdrsiz_tcp(tp);
 #endif
@@ -565,7 +568,7 @@ tcp_output(struct tcpcb *tp)
 	int iphdrlen;
 	int has_tso4, has_tso6;
 	int has_tso, use_tso;
-	boolean_t alwaysfrag;
+	bool alwaysfrag;
 	int sack_rxmit;
 	int sack_bytes_rxmt;
 	struct sackhole *p;
@@ -623,7 +626,7 @@ tcp_output(struct tcpcb *tp)
 	 * - If there is not an IPsec policy that prevents it
 	 * - If the interface can do it
 	 */
-	has_tso4 = has_tso6 = FALSE;
+	has_tso4 = has_tso6 = false;
 #if defined(INET)
 	has_tso4 = tp->t_inpcb != NULL &&
 #if defined(IPSEC) || defined(FAST_IPSEC)
@@ -1160,9 +1163,6 @@ send:
 	TCP_REASS_UNLOCK(tp);
 
 #ifdef TCP_SIGNATURE
-#if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET)
-#endif
 	if (tp->t_flags & TF_SIGNATURE) {
 		u_char *bp;
 		/*
@@ -1378,9 +1378,6 @@ send:
 		tp->snd_up = tp->snd_una;		/* drag it along */
 
 #ifdef TCP_SIGNATURE
-#if defined(INET6) && defined(FAST_IPSEC)
-	if (tp->t_family == AF_INET) /* XXX */
-#endif
 	if (sigoff && (tp->t_flags & TF_SIGNATURE)) {
 		struct secasvar *sav;
 		u_int8_t *sigp;

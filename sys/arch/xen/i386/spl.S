@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.4.4.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: spl.S,v 1.4.4.3 2007/02/26 09:08:54 yamt Exp $	*/
 /*	NetBSD: spl.S,v 1.11 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
@@ -169,6 +169,7 @@ IDTVEC(doreti)
 #endif
 	.globl doreti_checkast
 doreti_checkast:
+	movl	CPUVAR(CURLWP),%eax
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 	CLEAR_ASTPENDING(%eax)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.46.2.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.46.2.3 2007/02/26 09:11:12 yamt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.46.2.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.46.2.3 2007/02/26 09:11:12 yamt Exp $");
 
 #include "opt_systrace.h"
 
@@ -49,26 +49,20 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.46.2.2 2006/12/30 20:50:06 yamt 
 #include <sys/filedesc.h>
 #include <sys/filio.h>
 #include <sys/signalvar.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/ptrace.h>
 #include <sys/namei.h>
 #include <sys/systrace.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kauth.h>
 
 #include <compat/common/compat_util.h>
 
-#ifdef __NetBSD__
-#define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL)
-#define	SYSTRACE_UNLOCK(fst, p)	lockmgr(&fst->lock, LK_RELEASE, NULL)
-#else
-#define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p)
-#define	SYSTRACE_UNLOCK(fst, p)	lockmgr(&fst->lock, LK_RELEASE, NULL, p)
-#endif
+#define	SYSTRACE_LOCK(fst, p)	mutex_enter(&fst->mutex)
+#define	SYSTRACE_UNLOCK(fst, p)	mutex_exit(&fst->mutex)
+
 #ifndef	M_XDATA
 MALLOC_DEFINE(M_SYSTR, "systrace", "systrace");
 #define	M_XDATA		M_SYSTR
@@ -207,7 +201,7 @@ POOL_INIT(systr_policy_pl, sizeof(struct str_policy), 0, 0, 0, "strpolpl",
 POOL_INIT(systr_msgcontainer_pl, sizeof(struct str_msgcontainer), 0, 0, 0,
     "strmsgpl", NULL);
 
-struct lock systrace_lck = LOCK_INITIALIZER(PLOCK, "systrace", 0, 0);
+kmutex_t systrace_mutex;
 #else /* ! __NetBSD__ */
 struct pool systr_proc_pl;
 struct pool systr_policy_pl;
@@ -431,6 +425,9 @@ systracef_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 		break;
 	}
 
+	mutex_enter(&p->p_mutex);
+	proc_delref(strp->proc);
+	mutex_exit(&p->p_mutex);
  unlock:
 	SYSTRACE_UNLOCK(fst, curlwp);
 
@@ -499,7 +496,9 @@ systracef_close(struct file *fp, struct lwp *l)
 		struct proc *q = strp->proc;
 
 		systrace_detach(strp);
+		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
 		psignal(q, SIGKILL);
+		rw_exit(&proclist_lock);		/* XXXSMP */
 	}
 
 	/* Clean up fork and exit messages */
@@ -530,38 +529,20 @@ systracef_close(struct file *fp, struct lwp *l)
 void
 systrace_lock(void)
 {
-#ifdef __NetBSD__
-	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL);
-#else
-	lockmgr(&systrace_lck, LK_EXCLUSIVE, NULL, curlwp);
-#endif
+	mutex_enter(&systrace_mutex);
 }
 
 void
 systrace_unlock(void)
 {
-#ifdef __NetBSD__
-	lockmgr(&systrace_lck, LK_RELEASE, NULL);
-#else
-	lockmgr(&systrace_lck, LK_RELEASE, NULL, curlwp);
-#endif
+	mutex_exit(&systrace_mutex);
 }
 
-#ifndef __NetBSD__
 void
 systrace_init(void)
 {
-
-	pool_init(&systr_proc_pl, sizeof(struct str_process), 0, 0, 0,
-	    "strprocpl", NULL);
-	pool_init(&systr_policy_pl, sizeof(struct str_policy), 0, 0, 0,
-	    "strpolpl", NULL);
-	pool_init(&systr_msgcontainer_pl, sizeof(struct str_msgcontainer),
-	    0, 0, 0, "strmsgpl", NULL);
-
-	lockinit(&systrace_lck, PLOCK, "systrace", 0, 0);
+	mutex_init(&systrace_mutex, MUTEX_DEFAULT, IPL_NONE);
 }
-#endif /* ! __NetBSD__ */
 
 int
 systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
@@ -577,14 +558,18 @@ systraceopen(dev_t dev, int flag, int mode, struct lwp *l)
 	MALLOC(fst, struct fsystrace *, sizeof(*fst), M_XDATA, M_WAITOK);
 
 	memset(fst, 0, sizeof(struct fsystrace));
+#ifdef __NetBSD__
+	mutex_init(&fst->mutex, MUTEX_DEFAULT, IPL_NONE);
+#else
 	lockinit(&fst->lock, PLOCK, "systrace", 0, 0);
+#endif
 
 	TAILQ_INIT(&fst->processes);
 	TAILQ_INIT(&fst->messages);
 	TAILQ_INIT(&fst->policies);
 
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) == 0)
+	    NULL) == 0)
 		fst->issuser = 1;
 	fst->p_ruid = kauth_cred_getuid(l->l_cred);
 	fst->p_rgid = kauth_cred_getgid(l->l_cred);
@@ -603,17 +588,26 @@ struct proc *
 systrace_find(struct str_process *strp)
 {
 	struct proc *proc;
+	int error;
 
-	if ((proc = pfind(strp->pid)) == NULL)
+	rw_enter(&proclist_lock, RW_READER);
+
+	if ((proc = p_find(strp->pid, PFIND_LOCKED)) == NULL) {
+		rw_exit(&proclist_lock);
 		return (NULL);
+	}
 
-	if (proc != strp->proc)
+	mutex_enter(&proc->p_mutex);
+	if (proc != strp->proc || !ISSET(proc->p_flag, PK_SYSTRACE)) {
+		mutex_exit(&proc->p_mutex);
+		rw_exit(&proclist_lock);
 		return (NULL);
+	}
+	error = proc_addref(proc);
+	mutex_exit(&proc->p_mutex);
+	rw_exit(&proclist_lock);
 
-	if (!ISSET(proc->p_flag, P_SYSTRACE))
-		return (NULL);
-
-	return (proc);
+	return (error ? NULL : proc);
 }
 
 void
@@ -636,7 +630,7 @@ systrace_sys_exit(struct proc *proc)
 		SYSTRACE_UNLOCK(fst, curlwp);
 	} else
 		systrace_unlock();
-	CLR(proc->p_flag, P_SYSTRACE);
+	CLR(proc->p_flag, PK_SYSTRACE);
 }
 
 void
@@ -658,7 +652,9 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 
 	if (systrace_insert_process(fst, p, &strp)) {
 		/* We need to kill the child */
+		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
 		psignal(p, SIGKILL);
+		rw_exit(&proclist_lock);		/* XXXSMP */
 		goto out;
 	}
 
@@ -708,7 +704,7 @@ systrace_enter(struct lwp *l, register_t code, void *v)
 	if (fst->issuser) {
 		maycontrol = 1;
 		issuser = 1;
-	} else if (!(p->p_flag & P_SUGID)) {
+	} else if (!(p->p_flag & PK_SUGID)) {
 		maycontrol = fst->p_ruid == kauth_cred_getuid(p->p_cred) &&
 		    fst->p_rgid == kauth_cred_getgid(p->p_cred);
 	}
@@ -746,7 +742,7 @@ systrace_enter(struct lwp *l, register_t code, void *v)
 	/* Get the (adjusted) argsize */
 	argsize = callp->sy_argsize;
 #ifdef _LP64
-	if (p->p_flag & P_32)
+	if (p->p_flag & PK_32)
 		argsize = argsize << 1;
 #endif
 
@@ -843,7 +839,7 @@ systrace_exit(struct lwp *l, register_t code, void *v, register_t retval[],
 
 	systrace_replacefree(strp);
 
-	if (p->p_flag & P_SUGID) {
+	if (p->p_flag & PK_SUGID) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
 			systrace_unlock();
 			return;
@@ -900,7 +896,7 @@ systrace_exit(struct lwp *l, register_t code, void *v, register_t retval[],
 		callp = p->p_emul->e_sysent + code;
 		argsize = callp->sy_argsize;
 #ifdef _LP64
-		if (p->p_flag & P_32)
+		if (p->p_flag & PK_32)
 			argsize = argsize << 1;
 #endif
 
@@ -915,30 +911,25 @@ uid_t
 systrace_seteuid(struct lwp *l, uid_t euid)
 {
 	struct proc *p = l->l_proc;
-	kauth_cred_t cred;
+	kauth_cred_t cred, ncred;
 	uid_t oeuid;
 
-	proc_crmod_enter(p);
+	ncred = kauth_cred_alloc();
+	proc_crmod_enter();
 	cred = p->p_cred;
 
 	oeuid = kauth_cred_geteuid(cred);
 	if (oeuid == euid) {
-		proc_crmod_leave(p, cred, NULL);
+		proc_crmod_leave(cred, ncred, false);
 		return (oeuid);
 	}
 
 	/* Copy credentials so other references do not see our changes. */
-	cred = kauth_cred_dup(cred);
-	kauth_cred_seteuid(cred, euid);
-
-	/* Mark process as having changed credentials, stops tracing etc */
-	p_sugid(p);
+	kauth_cred_clone(cred, ncred);
+	kauth_cred_seteuid(ncred, euid);
 
 	/* Broadcast our credentials to the process and other LWPs. */
-	proc_crmod_leave(p, cred, p->p_cred);
-
-	/* Update our copy of the credentials. */
- 	lwp_update_creds(l);
+	proc_crmod_leave(ncred, cred, true);
 
 	return (oeuid);
 }
@@ -947,30 +938,25 @@ gid_t
 systrace_setegid(struct lwp *l, gid_t egid)
 {
 	struct proc *p = l->l_proc;
-	kauth_cred_t cred;
+	kauth_cred_t cred, ncred;
 	gid_t oegid;
 
-	proc_crmod_enter(p);
+	ncred = kauth_cred_alloc();
+	proc_crmod_enter();
 	cred = p->p_cred;
 
 	oegid = kauth_cred_getegid(cred);
 	if (oegid == egid) {
-		proc_crmod_leave(p, cred, NULL);
+		proc_crmod_leave(cred, ncred, false);
 		return (oegid);
 	}
 
 	/* Copy credentials so other references do not see our changes. */
-	cred = kauth_cred_dup(cred);
-	kauth_cred_setegid(cred, egid);
-
-	/* Mark process as having changed credentials, stops tracing etc */
-	p_sugid(p);
+	kauth_cred_clone(cred, ncred);
+	kauth_cred_setegid(ncred, egid);
 
 	/* Broadcast our credentials to the process and other LWPs. */
-	proc_crmod_leave(p, cred, p->p_cred);
-
-	/* Update our copy of the credentials. */
- 	lwp_update_creds(l);
+	proc_crmod_leave(cred, ncred, true);
 
 	return (oegid);
 }
@@ -1068,8 +1054,13 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 			return (EINVAL);
 
 		/* Check that emulation matches */
-		if (strpol->emul && strpol->emul != strp->proc->p_emul)
+		if (strpol->emul && strpol->emul != strp->proc->p_emul) {
+			struct proc *p = strp->proc;
+			mutex_enter(&p->p_mutex);
+			proc_delref(p);
+			mutex_exit(&p->p_mutex);
 			return (EINVAL);
+		}
 
 		if (strp->policy)
 			systrace_closepolicy(fst, strp->policy);
@@ -1080,6 +1071,9 @@ systrace_policy(struct fsystrace *fst, struct systrace_policy *pol)
 		if (strpol->emul == NULL)
 			strpol->emul = strp->proc->p_emul;
 
+		mutex_enter(&strp->proc->p_mutex);
+		proc_delref(strp->proc);
+		mutex_exit(&strp->proc->p_mutex);
 		break;
 	case SYSTR_POLICY_MODIFY:
 		DPRINTF(("%s: %d: code %d -> policy %d\n", __func__,
@@ -1210,7 +1204,15 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 		return (error);
 
 #ifdef __NetBSD__
-	error = process_domem(l, proc_representative_lwp(t), &uio);
+	{
+		struct lwp *tl;
+		mutex_enter(&t->p_smutex);
+		tl = proc_representative_lwp(t, NULL, 1);
+		lwp_addref(tl);
+		mutex_exit(&t->p_smutex);
+		error = process_domem(l, tl, &uio);
+		lwp_delref(tl);
+	}
 #else
 	error = procfs_domem(p, t, NULL, &uio);
 #endif
@@ -1226,14 +1228,20 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	int error = 0;
 	struct proc *proc, *p = curproc;
 
-	if ((proc = pfind(pid)) == NULL) {
-		error = ESRCH;
-		goto out;
+	rw_enter(&proclist_lock, RW_READER);
+
+	if ((proc = p_find(pid, PFIND_LOCKED)) == NULL) {
+		rw_exit(&proclist_lock);
+		return (ESRCH);
 	}
 
-	if (ISSET(proc->p_flag, P_INEXEC)) {
-		error = EAGAIN;
-		goto out;
+	mutex_enter(&proc->p_mutex);
+	error = proc_addref(proc);
+	rw_exit(&proclist_lock);
+
+	if (error != 0) {
+		mutex_exit(&proc->p_mutex);
+		return (error);
 	}
 
 	/*
@@ -1248,7 +1256,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	/*
 	 *	(2) it's a system process
 	 */
-	if (ISSET(proc->p_flag, P_SYSTEM)) {
+	if (ISSET(proc->p_flag, PK_SYSTEM)) {
 		error = EPERM;
 		goto out;
 	}
@@ -1256,7 +1264,7 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	/*
 	 *	(3) it's being traced already
 	 */
-	if (ISSET(proc->p_flag, P_SYSTRACE)) {
+	if (ISSET(proc->p_flag, PK_SYSTRACE)) {
 		error = EBUSY;
 		goto out;
 	}
@@ -1280,6 +1288,8 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 		(*proc->p_emul->e_syscall_intern)(proc);
 #endif
  out:
+ 	proc_delref(proc);
+ 	mutex_exit(&proc->p_mutex);
 	return (error);
 }
 
@@ -1490,7 +1500,7 @@ systrace_scriptname(struct proc *p, char *dst)
 	SYSTRACE_LOCK(fst, curlwp);
 	systrace_unlock();
 
-	if (!fst->issuser && (ISSET(p->p_flag, P_SUGID) ||
+	if (!fst->issuser && (ISSET(p->p_flag, PK_SUGID) ||
 			      fst->p_ruid != kauth_cred_getuid(p->p_cred) ||
 			      fst->p_rgid != kauth_cred_getgid(p->p_cred))) {
 		error = EPERM;
@@ -1579,7 +1589,7 @@ systrace_detach(struct str_process *strp)
 	DPRINTF(("%s: Trying to detach from %d\n", __func__, strp->pid));
 
 	if ((proc = systrace_find(strp)) != NULL) {
-		CLR(proc->p_flag, P_SYSTRACE);
+		CLR(proc->p_flag, PK_SYSTRACE);
 		proc->p_systrace = NULL;
 	} else
 		error = ESRCH;
@@ -1599,6 +1609,10 @@ systrace_detach(struct str_process *strp)
 		systrace_closepolicy(fst, strp->policy);
 	systrace_replacefree(strp);
 	pool_put(&systr_proc_pl, strp);
+
+	mutex_enter(&strp->proc->p_mutex);
+	proc_delref(strp->proc);
+	mutex_exit(&strp->proc->p_mutex);
 
 	return (error);
 }
@@ -1639,7 +1653,7 @@ systrace_insert_process(struct fsystrace *fst, struct proc *proc,
 	fst->nprocesses++;
 
 	proc->p_systrace = strp;
-	SET(proc->p_flag, P_SYSTRACE);
+	SET(proc->p_flag, PK_SYSTRACE);
 
 	/* Pass the new pointer back to the caller */
 	if (pstrp != NULL)
@@ -1797,11 +1811,7 @@ systrace_make_msg(struct str_process *strp, int type, struct str_message *tmsg)
 	SYSTRACE_UNLOCK(fst, strp->proc);
 
 	while (1) {
-		int f;
-		f = curlwp->l_flag & L_SA;
-		curlwp->l_flag &= ~L_SA;
 		st = tsleep(strp, PWAIT, "systrmsg", 0);
-		curlwp->l_flag |= f;
 		if (st != 0)
 			return (ERESTART);
 		/* If we detach, then everything is permitted */

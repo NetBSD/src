@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.27.2.1 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.27.2.2 2007/02/26 09:10:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27.2.1 2006/06/21 15:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27.2.2 2007/02/26 09:10:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,9 @@ USB_ATTACH(uhidev)
 			descptr = uhid_graphire_report_descr;
 			break;
 
-		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5: /* The 6x8 too? */
+		case USB_PRODUCT_WACOM_GRAPHIRE3_4X5:
+		case USB_PRODUCT_WACOM_GRAPHIRE3_6X8:
+		case USB_PRODUCT_WACOM_GRAPHIRE4_4X5: /* The 6x8 too? */
 			/*
 			 * The Graphire3 needs 0x0202 to be written to
 			 * feature report ID 2 before it'll start

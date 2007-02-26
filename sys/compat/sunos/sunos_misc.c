@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.132.2.2 2006/12/30 20:47:45 yamt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.132.2.3 2007/02/26 09:09:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132.2.2 2006/12/30 20:47:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132.2.3 2007/02/26 09:09:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.132.2.2 2006/12/30 20:47:45 yamt Ex
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
-#include <sys/sa.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
@@ -450,7 +449,7 @@ sunos_sys_sigpending(l, v, retval)
 	sigset_t ss;
 	int mask;
 
-	sigpending1(l->l_proc, &ss);
+	sigpending1(l, &ss);
 	native_to_sunos_sigset(&ss, &mask);
 
 	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
@@ -470,7 +469,7 @@ sunos_sys_sigsuspend(l, v, retval)
 
 	mask = SCARG(uap, mask);
 	sunos_to_native_sigset(mask, &ss);
-	return (sigsuspend1(l->l_proc, &ss));
+	return (sigsuspend1(l, &ss));
 }
 
 /*
@@ -878,7 +877,8 @@ sunos_sys_open(l, v, retval)
 	SCARG(uap, flags) = nmode;
 	ret = sys_open(l, (struct sys_open_args *)uap, retval);
 
-	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
+	/* XXXSMP */
+	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
 		struct file *fp;
 
@@ -1351,7 +1351,7 @@ sunos_sys_sigvec(l, v, retval)
 
 		compat_43_sigvec_to_sigaction(&nsv, &nsa);
 	}
-	error = sigaction1(l->l_proc, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 			   SCARG(uap, nsv) ? &nsa : 0,
 			   SCARG(uap, osv) ? &osa : 0,
 			   NULL, 0);

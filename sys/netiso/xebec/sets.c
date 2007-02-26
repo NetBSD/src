@@ -1,4 +1,4 @@
-/*	$NetBSD: sets.c,v 1.9 2005/05/22 15:54:47 christos Exp $	*/
+/*	$NetBSD: sets.c,v 1.9.2.1 2007/02/26 09:12:03 yamt Exp $	*/
 
 /*
  * This code is such a kludge that I don't want to put my name on it.
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.9 2005/05/22 15:54:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.9.2.1 2007/02/26 09:12:03 yamt Exp $");
 
 #include "main.h"
 #include "malloc.h"
@@ -16,6 +16,7 @@ __KERNEL_RCSID(0, "$NetBSD: sets.c,v 1.9 2005/05/22 15:54:47 christos Exp $");
 #include <stdio.h>
 
 #include <sys/types.h>
+#include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 
@@ -316,7 +317,7 @@ dumpit(o, s)
 	char *o;
 	char *s;
 {
-	register int i;
+	register unsigned i;
 
 IFDEBUG(o)
 	fprintf(OUT, "object %p, %s\n",o, s);
@@ -457,13 +458,12 @@ dumptree(o,i)
 
 void
 dump(c,a)
+	int c;
+	int a;
 {
-	register int x = 8;
-	int zero = 0;
-
 	fprintf(stderr, "dump: c 0x%x, a 0x%x\n",c,a);
 
-	x = x/zero;
+	raise(SIGFPE);
 	kill(0, SIGQUIT);
 }
 

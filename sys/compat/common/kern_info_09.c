@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.14.16.1 2006/12/30 20:47:31 yamt Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.14.16.2 2007/02/26 09:08:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.14.16.1 2006/12/30 20:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.14.16.2 2007/02/26 09:08:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.14.16.1 2006/12/30 20:47:31 yamt 
 #include <sys/sysctl.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /* ARGSUSED */

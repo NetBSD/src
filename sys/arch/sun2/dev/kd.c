@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.9.8.2 2006/12/30 20:47:06 yamt Exp $	*/
+/*	$NetBSD: kd.c,v 1.9.8.3 2007/02/26 09:08:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.9.8.2 2006/12/30 20:47:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kd.c,v 1.9.8.3 2007/02/26 09:08:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -359,9 +359,10 @@ static void
 kdstart(struct tty *tp)
 {
 	struct clist *cl;
-	int s;
+	int s1, s2;
 
-	s = spltty();
+	s1 = splsoftclock();
+	s2 = spltty();
 	if (tp->t_state & (TS_BUSY|TS_TTSTOP|TS_TIMEOUT))
 		goto out;
 
@@ -369,11 +370,11 @@ kdstart(struct tty *tp)
 	if (cl->c_cc) {
 		if (kd_is_console) {
 			tp->t_state |= TS_BUSY;
-			if (is_spl0(s)) {
+			if (is_spl0(s1)) {
 				/* called at level zero - update screen now. */
-				(void) spllowersoftclock();
+				splx(s2);
 				kd_putfb(tp);
-				(void) spltty();
+				s2 = spltty();
 				tp->t_state &= ~TS_BUSY;
 			} else {
 				/* called at interrupt level - do it later */
@@ -398,7 +399,8 @@ kdstart(struct tty *tp)
 		selwakeup(&tp->t_wsel);
 	}
 out:
-	splx(s);
+	splx(s2);
+	splx(s1);
 }
 
 /*

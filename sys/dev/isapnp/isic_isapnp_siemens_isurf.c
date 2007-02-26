@@ -37,14 +37,14 @@
  *	Siemens I-Surf 2.0 PnP specific routines for isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_siemens_isurf.c,v 1.6.4.1 2006/06/21 15:04:36 yamt Exp $
+ *	$Id: isic_isapnp_siemens_isurf.c,v 1.6.4.2 2007/02/26 09:10:16 yamt Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.6.4.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.6.4.2 2007/02/26 09:10:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,10 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.6.4.1 2006/06/21 15:
 #include <net/if.h>
 
 #if defined(__FreeBSD__)
-#include <machine/i4b_debug.h>
 #include <machine/i4b_ioctl.h>
 #else
-#include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
 #endif
 

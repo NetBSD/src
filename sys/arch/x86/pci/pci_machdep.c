@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.11.2.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11.2.3 2007/02/26 09:08:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.3 2007/02/26 09:08:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,6 +118,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11.2.2 2006/12/30 20:47:22 yamt Ex
 #include <machine/mpconfig.h>
 
 #include "opt_pci_conf_mode.h"
+
+#ifdef __i386__
+#include "opt_xbox.h"
+#ifdef XBOX
+#include <machine/xbox.h>
+#endif
+#endif
 
 int pci_mode = -1;
 
@@ -181,6 +188,7 @@ struct {
  * of these functions.
  */
 struct x86_bus_dma_tag pci_bus_dma_tag = {
+	0,				/* tag_needs_free */
 #if defined(_LP64) || defined(PAE)
 	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_thresh */
 	ISA_DMA_BOUNCE_THRESHOLD,	/* bounce_alloclo */
@@ -198,20 +206,19 @@ struct x86_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-#if defined(_LP64) || defined(PAE)
 	_bus_dmamap_sync,
-#else
-	NULL,
-#endif
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 
 #ifdef _LP64
 struct x86_bus_dma_tag pci_bus_dma64_tag = {
+	0,				/* tag_needs_free */
 	0,
 	0,
 	0,
@@ -229,6 +236,8 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 #endif
 
@@ -250,6 +259,19 @@ pci_attach_hook(struct device *parent, struct device *self,
 int
 pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
+
+#if defined(__i386__) && defined(XBOX)
+	/*
+	 * Scanning above the first device is fatal on the Microsoft Xbox.
+	 * If busno=1, only allow for one device.
+	 */
+	if (arch_i386_is_xbox) {
+		if (busno == 1)
+			return 1;
+		else if (busno > 1)
+			return 0;
+	}
+#endif
 
 	/*
 	 * Bus number is irrelevant.  If Configuration Mechanism 2 is in
@@ -354,6 +376,15 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	pcireg_t data;
 	int s;
 
+#if defined(__i386__) && defined(XBOX)
+	if (arch_i386_is_xbox) {
+		int bus, dev, fn;
+		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
+		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
+			return (pcireg_t)-1;
+	}
+#endif
+
 #ifndef PCI_CONF_MODE
 	switch (pci_mode) {
 	case 1:
@@ -396,6 +427,15 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
     pcireg_t data)
 {
 	int s;
+
+#if defined(__i386__) && defined(XBOX)
+	if (arch_i386_is_xbox) {
+		int bus, dev, fn;
+		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
+		if (bus == 0 && dev == 0 && (fn == 1 || fn == 2))
+			return;
+	}
+#endif
 
 #ifndef PCI_CONF_MODE
 	switch (pci_mode) {

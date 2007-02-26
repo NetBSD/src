@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.6.16.1 2006/06/21 14:55:11 yamt Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.6.16.2 2007/02/26 09:07:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.6.16.1 2006/06/21 14:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_glue.c,v 1.6.16.2 2007/02/26 09:07:55 yamt Exp $");
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
 
 #include <ipkdb/ipkdb.h>

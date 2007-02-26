@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.20 2003/11/04 10:33:16 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.20.16.1 2007/02/26 09:05:44 yamt Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -53,8 +53,6 @@ ifdef COMPAT_SVR4
 include <compat/svr4/svr4_syscall.h>
 include <compat/svr4/svr4_ucontext.h>
 endif
-
-include <m68k/saframe.h>
 
 include <machine/cpu.h>
 include <machine/psl.h>

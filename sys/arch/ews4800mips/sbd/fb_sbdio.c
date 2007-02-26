@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_sbdio.c,v 1.2.6.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: fb_sbdio.c,v 1.2.6.3 2007/02/26 09:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #define WIRED_FB_TLB
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.2.6.2 2006/06/21 14:51:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_sbdio.c,v 1.2.6.3 2007/02/26 09:06:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,12 +399,12 @@ fb_pmap_enter(paddr_t fb_paddr, paddr_t reg_paddr,
 	reg_paddr = reg_paddr & ~MIPS3_WIRED_OFFMASK;
 	va = GA_FRB_ADDR;
 
-	if (mips3_wired_enter_page(va, fb_paddr, pgsize) == FALSE) {
+	if (mips3_wired_enter_page(va, fb_paddr, pgsize) == false) {
 		printf("cannot allocate fb memory\n");
 		return;
 	}
 
-	if (mips3_wired_enter_page(va + pgsize, reg_paddr, pgsize) == FALSE) {
+	if (mips3_wired_enter_page(va + pgsize, reg_paddr, pgsize) == false) {
 		printf("cannot allocate fb register\n");
 		return;
 	}

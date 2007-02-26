@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.3.2.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3.2.3 2007/02/26 09:08:54 yamt Exp $	*/
 /*	NetBSD: sys_machdep.c,v 1.70 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3.2.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3.2.3 2007/02/26 09:08:54 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_mtrr.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.3.2.2 2006/12/30 20:47:25 yamt Exp
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>

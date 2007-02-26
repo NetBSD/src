@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.2.10.1 2006/06/21 14:49:16 yamt Exp $	*/
+/*	$NetBSD: epe.c,v 1.2.10.2 2007/02/26 09:05:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.2.10.1 2006/06/21 14:49:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.2.10.2 2007/02/26 09:05:56 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,8 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.2.10.1 2006/06/21 14:49:16 yamt Exp $");
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 #endif
-
-#include <machine/bus.h>
 
 #ifdef IPKDB_EP93XX
 #include <ipkdb/ipkdb.h>

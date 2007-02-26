@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_clock.c,v 1.94.4.2 2006/12/30 20:50:05 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.94.4.3 2007/02/26 09:11:04 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.3 2007/02/26 09:11:04 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -98,9 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.2 2006/12/30 20:50:05 yamt Exp
 #endif
 
 #include <machine/cpu.h>
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 #include <machine/intr.h>
-#endif
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -354,9 +352,7 @@ volatile struct	timeval time  __attribute__((__aligned__(__alignof__(quad_t))));
 volatile struct	timeval mono_time;
 #endif /* !__HAVE_TIMECOUNTER */
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	*softclock_si;
-#endif
 
 #ifdef __HAVE_TIMECOUNTER
 static u_int get_intr_timecount(struct timecounter *);
@@ -388,11 +384,9 @@ initclocks(void)
 {
 	int i;
 
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softclock_si = softintr_establish(IPL_SOFTCLOCK, softclock, NULL);
 	if (softclock_si == NULL)
 		panic("initclocks: unable to register softclock intr");
-#endif
 
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
@@ -880,29 +874,12 @@ hardclock(struct clockframe *frame)
 #endif /* !__HAVE_TIMECOUNTER */
 
 	/*
-	 * Update real-time timeout queue.
-	 * Process callouts at a very low CPU priority, so we don't keep the
-	 * relatively high clock interrupt priority any longer than necessary.
+	 * Update real-time timeout queue.  Callouts are processed at a
+	 * very low CPU priority, so we don't keep the relatively high
+	 * clock interrupt priority any longer than necessary.
 	 */
-	if (callout_hardclock()) {
-		if (CLKF_BASEPRI(frame)) {
-			/*
-			 * Save the overhead of a software interrupt;
-			 * it will happen as soon as we return, so do
-			 * it now.
-			 */
-			spllowersoftclock();
-			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-			softclock(NULL);
-			KERNEL_UNLOCK();
-		} else {
-#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-			softintr_schedule(softclock_si);
-#else
-			setsoftclock();
-#endif
-		}
-	}
+	if (callout_hardclock())
+		softintr_schedule(softclock_si);
 }
 
 #ifdef __HAVE_TIMECOUNTER
@@ -1072,8 +1049,10 @@ void
 startprofclock(struct proc *p)
 {
 
-	if ((p->p_flag & P_PROFIL) == 0) {
-		p->p_flag |= P_PROFIL;
+	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+
+	if ((p->p_stflag & PST_PROFIL) == 0) {
+		p->p_stflag |= PST_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1090,8 +1069,10 @@ void
 stopprofclock(struct proc *p)
 {
 
-	if (p->p_flag & P_PROFIL) {
-		p->p_flag &= ~P_PROFIL;
+	LOCK_ASSERT(mutex_owned(&p->p_stmutex));
+
+	if (p->p_stflag & PST_PROFIL) {
+		p->p_stflag &= ~PST_PROFIL;
 		/*
 		 * This is only necessary if using the clock as the
 		 * profiling source.
@@ -1114,12 +1095,16 @@ proftick(struct clockframe *frame)
         struct gmonparam *g;
         intptr_t i;
 #endif
+	struct lwp *l;
 	struct proc *p;
 
-	p = curproc;
+	l = curlwp;
+	p = (l ? l->l_proc : NULL);
 	if (CLKF_USERMODE(frame)) {
-		if (p->p_flag & P_PROFIL)
-			addupc_intr(p, CLKF_PC(frame));
+		mutex_spin_enter(&p->p_stmutex);
+		if (p->p_stflag & PST_PROFIL)
+			addupc_intr(l, CLKF_PC(frame));
+		mutex_spin_exit(&p->p_stmutex);
 	} else {
 #ifdef GPROF
 		g = &_gmonparam;
@@ -1132,8 +1117,12 @@ proftick(struct clockframe *frame)
 		}
 #endif
 #ifdef PROC_PC
-                if (p && (p->p_flag & P_PROFIL))
-                        addupc_intr(p, PROC_PC(p));
+		if (p != NULL) {
+			mutex_spin_enter(&p->p_stmutex);
+			if (p->p_stflag & PST_PROFIL))
+				addupc_intr(l, PROC_PC(p));
+			mutex_spin_exit(&p->p_stmutex);
+		}
 #endif
 	}
 }
@@ -1169,14 +1158,18 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	p = (l ? l->l_proc : NULL);
+	if ((p = (l ? l->l_proc : NULL)) != NULL)
+		mutex_spin_enter(&p->p_stmutex);
 	if (CLKF_USERMODE(frame)) {
 		KASSERT(p != NULL);
 
-		if ((p->p_flag & P_PROFIL) && profsrc == PROFSRC_CLOCK)
-			addupc_intr(p, CLKF_PC(frame));
-		if (--spc->spc_pscnt > 0)
+		if ((p->p_stflag & PST_PROFIL) && profsrc == PROFSRC_CLOCK)
+			addupc_intr(l, CLKF_PC(frame));
+		if (--spc->spc_pscnt > 0) {
+			mutex_spin_exit(&p->p_stmutex);
 			return;
+		}
+
 		/*
 		 * Came from user mode; CPU was in user state.
 		 * If this process is being profiled record the tick.
@@ -1201,11 +1194,14 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef LWP_PC
-		if (p && profsrc == PROFSRC_CLOCK && (p->p_flag & P_PROFIL))
-			addupc_intr(p, LWP_PC(l));
+		if (p && profsrc == PROFSRC_CLOCK && (p->p_stflag & PST_PROFIL))
+			addupc_intr(l, LWP_PC(l));
 #endif
-		if (--spc->spc_pscnt > 0)
+		if (--spc->spc_pscnt > 0) {
+			if (p != NULL)
+				mutex_spin_exit(&p->p_stmutex);
 			return;
+		}
 		/*
 		 * Came from kernel mode, so we were:
 		 * - handling an interrupt,
@@ -1232,6 +1228,8 @@ statclock(struct clockframe *frame)
 
 	if (p != NULL) {
 		++p->p_cpticks;
+		mutex_spin_exit(&p->p_stmutex);
+
 		/*
 		 * If no separate schedclock is provided, call it here
 		 * at about 16 Hz.

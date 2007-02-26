@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.9.2.1 2006/06/21 14:50:32 yamt Exp $	*/
+/*	$NetBSD: aica.c,v 1.9.2.2 2007/02/26 09:06:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.9.2.1 2006/06/21 14:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.9.2.2 2007/02/26 09:06:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -462,7 +462,7 @@ aica_set_params(void *addr, int setmode, int usemode,
 	int i;
 
 	i = auconv_set_converter(aica_formats, AICA_NFORMATS,
-				 AUMODE_PLAY, play, FALSE, pfil);
+				 AUMODE_PLAY, play, false, pfil);
 	if (i < 0)
 		return EINVAL;
 	hw = pfil->req_size > 0 ? &pfil->filters[0].param : play;

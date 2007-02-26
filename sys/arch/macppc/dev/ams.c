@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.17.2.2 2006/12/30 20:46:26 yamt Exp $	*/
+/*	$NetBSD: ams.c,v 1.17.2.3 2007/02/26 09:07:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17.2.2 2006/12/30 20:46:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17.2.3 2007/02/26 09:07:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17.2.2 2006/12/30 20:46:26 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/sysctl.h>
+#include <sys/sysctl.h>
 
 #include <machine/autoconf.h>
 
@@ -77,6 +79,7 @@ void ams_disable(void *);
  */
 static void ams_mangle_2(struct ams_softc *, int);
 static void ams_mangle_4(struct ams_softc *, int);
+static int  sysctl_ams_tap(SYSCTLFN_ARGS);
 
 const struct wsmouse_accessops ams_accessops = {
 	ams_enable,
@@ -520,19 +523,21 @@ ms_processevent(adb_event_t *event, struct ams_softc *sc)
 				((event->bytes[0] & 0x40) ? 64 : 0);
 
 	if (sc->sc_class == MSCLASS_TRACKPAD) {
+		if (sc->sc_tapping == 1) {
 
-		if (sc->sc_down) {
-			/* finger is down - collect motion data */
-			sc->sc_x += dx;
-			sc->sc_y += dy;
-		}
-		switch (sc->sc_buttons) {
-			case 2:
-				ams_mangle_2(sc, buttons);
-				break;
-			case 4:
-				ams_mangle_4(sc, buttons);
-				break;
+			if (sc->sc_down) {
+				/* finger is down - collect motion data */
+				sc->sc_x += dx;
+				sc->sc_y += dy;
+			}
+			switch (sc->sc_buttons) {
+				case 2:
+					ams_mangle_2(sc, buttons);
+					break;
+				case 4:
+					ams_mangle_4(sc, buttons);
+					break;
+			}
 		}
 		/* filter the pseudo-buttons out */
 		buttons &= 1;
@@ -635,7 +640,8 @@ ams_disable(void *v)
 static void
 init_trackpad(struct ams_softc *sc)
 {
-	int cmd, res;
+	struct sysctlnode *me = NULL, *node = NULL;
+	int cmd, res, ret;
 	u_char buffer[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 	u_char b2[10];
 	u_char b3[9] = {8, 0x99, 0x94, 0x19, 0xff, 0xb2, 0x8a, 0x1b, 0x50};
@@ -662,4 +668,64 @@ init_trackpad(struct ams_softc *sc)
 	buffer[0] = 0;
 	cmd = ADBFLUSH(sc->adbaddr);
 	adb_op_sync((Ptr)buffer, NULL, (Ptr)0, cmd);
+
+	/*
+	 * setup a sysctl node to control wether tapping the pad should
+	 * trigger mouse button events
+	 */
+
+	sc->sc_tapping = 1;
+	
+	ret = sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&me,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_NODE, sc->sc_dev.dv_xname, NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	ret=sysctl_createv(NULL, 0, NULL, (const struct sysctlnode **)&node,
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC | CTLFLAG_IMMEDIATE,
+	    CTLTYPE_INT, "tapping", "tapping the pad causes button events",
+	    sysctl_ams_tap, 1, NULL, 0,
+	    CTL_MACHDEP, me->sysctl_num, CTL_CREATE, CTL_EOL);
+	if (node != NULL) {
+		node->sysctl_data = sc;
+	}	
 }
+
+static int
+sysctl_ams_tap(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct ams_softc *sc = node.sysctl_data;
+
+	node.sysctl_idata = sc->sc_tapping;
+
+	if (newp) {
+
+		/* we're asked to write */	
+		node.sysctl_data = &sc->sc_tapping;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+
+			sc->sc_tapping = (node.sysctl_idata == 0) ? 0 : 1;
+			return 0;
+		}
+		return EINVAL;
+	} else {
+
+		node.sysctl_size = 4;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_ams_setup, "sysctl ams subtree setup")
+{
+
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+}
+

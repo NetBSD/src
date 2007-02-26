@@ -1,10 +1,10 @@
-#	$NetBSD: files.acpi,v 1.32.2.2 2006/12/30 20:47:54 yamt Exp $
+#	$NetBSD: files.acpi,v 1.32.2.3 2007/02/26 09:09:57 yamt Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
 defflag	opt_acpi.h	ACPIVERBOSE ACPI_DEBUG ACPI_ACTIVATE_DEV
 			ACPI_DSDT_OVERRIDE ACPI_SCANPCI
-defparam opt_acpi.h	ACPI_DSDT_FILE
+defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
 
 define	acpiapmbus { }
 define	acpinodebus { }

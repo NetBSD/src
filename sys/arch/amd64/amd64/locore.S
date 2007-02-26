@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14.2.1 2006/06/21 14:48:18 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.14.2.2 2007/02/26 09:05:40 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -675,6 +675,12 @@ NENTRY(lgdt)
 	pushq	%rax
 	lretq
 
+NENTRY(x86_flush)
+	popq	%rax
+	pushq	$GSEL(GCODE_SEL, SEL_KPL)
+	pushq	%rax
+	lretq
+
 ENTRY(setjmp)
 	/*
 	 * Only save registers that must be preserved across function
@@ -749,7 +755,7 @@ NENTRY(switch_error3)
  * int cpu_switch(struct lwp *)
  * Find a runnable lwp and switch to it.  Wait if necessary.  If the new
  * lwp is the same as the old one, we short-circuit the context save and
- * restore.
+ * restore.  On MP, must be entered with the sched_mutex held.
  */
 ENTRY(cpu_switch)
 	pushq	%rbx
@@ -849,12 +855,10 @@ ENTRY(cpu_switch)
 	xorq	%r13,%r13
 	sti
 idle_unlock:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
 	call	_C_LABEL(sched_unlock_idle)
-#endif
 	/* Interrupts are okay again. */
 	movl	$IPL_NONE,%edi
-	call	_C_LABEL(Xspllower)
+	call	_C_LABEL(spllower)
 	jmp	idle_start
 idle_zero:
 	sti
@@ -877,9 +881,7 @@ idle_start:
 idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	sti
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)       
 	call	_C_LABEL(sched_lock_idle)
-#endif
 	movl	_C_LABEL(sched_whichqs)(%rip),%ecx
 	bsfl	%ecx,%r8d
 	jz	idle_unlock
@@ -920,7 +922,7 @@ switch_resume:
 	jne	_C_LABEL(switch_error3)
 #endif
 
-	/* Isolate lwp.  XXX Is this necessary? */
+	/* Isolate lwp. */
 	movq	%rax,L_BACK(%r12)
 
 	/* Record new lwp. */
@@ -974,7 +976,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,P_FLAG(%r12)
+	testl	$PK_SYSTEM,P_FLAG(%r12)
 	jnz	switch_restored
 #endif
 
@@ -1029,12 +1031,10 @@ switch_restored:
 	movl	$1,%ebx
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
 	call	_C_LABEL(sched_unlock_idle)
-#endif
 
 	movl	$IPL_NONE,%edi
-	call	_C_LABEL(Xspllower)
+	call	_C_LABEL(spllower)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 
 	movl	%ebx,%eax
@@ -1080,9 +1080,6 @@ ENTRY(switch_exit)
 	movl	L_MD_TSS_SEL(%r9),%edx
 #endif
 
-	/* In case we fault... */
-	movq	$0,CPUVAR(CURLWP)
-
 	cli
 
 	/* Restore stack pointers. */
@@ -1113,6 +1110,9 @@ ENTRY(switch_exit)
 	/* Record new pcb. */
 	SET_CURPCB(%r8)
 
+	/* Now off the CPU. */
+	movq	$0,CPUVAR(CURLWP)
+
 	/* Interrupts are okay again. */
 	sti
 
@@ -1126,7 +1126,6 @@ ENTRY(switch_exit)
 
 	/* Jump into cpu_switch() with the right state. */
 	xorq	%r13,%r13
-	movq	%r13, CPUVAR(CURLWP)
 	jmp	idle_start
 
 /*
@@ -1186,10 +1185,10 @@ IDTVEC(syscall)
 	call	*P_MD_SYSCALL(%r15)
 1:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING(%r11)
+	CHECK_ASTPENDING(%r14)
 	je	2f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r11)
+	CLEAR_ASTPENDING(%r14)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
@@ -1286,18 +1285,18 @@ osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
 	sti
-	movq	CPUVAR(CURLWP),%rdx
-	movq	%rsp,L_MD_REGS(%rdx)	# save pointer to frame
-	movq	L_PROC(%rdx),%rdx
+	movq	CPUVAR(CURLWP),%r14
+	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
+	movq	L_PROC(%r14),%rdx
 	movq	%rsp,%rdi
 	call	*P_MD_SYSCALL(%rdx)
 _C_LABEL(osyscall_return):
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	CHECK_ASTPENDING(%r11)
+	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
-	CLEAR_ASTPENDING(%r11)
+	CLEAR_ASTPENDING(%r14)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi

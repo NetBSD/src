@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.41.4.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.41.4.3 2007/02/26 09:12:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,6 +33,8 @@
 
 #ifndef _SYS_KTRACE_H_
 #define _SYS_KTRACE_H_
+
+#include <sys/mutex.h>
 
 /*
  * operations to ktrace system call  (KTROP(op))
@@ -83,7 +85,7 @@ struct ktr_header {
  * Test for kernel trace point
  */
 #define KTRPOINT(p, type)	\
-	(((p)->p_traceflag & ((1<<(type))|KTRFAC_ACTIVE)) == (1<<(type)))
+	(((p)->p_traceflag & (1<<(type))) != 0)
 
 /*
  * ktrace record types
@@ -211,6 +213,8 @@ struct ktr_mool {
 
 /*
  * KTR_SAUPCALL - scheduler activated upcall.
+ *
+ * The structure is no longer used, but retained for compatibility.
  */
 #define	KTR_SAUPCALL	13
 struct ktr_saupcall {
@@ -247,14 +251,12 @@ struct ktr_saupcall {
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define KTRFAC_MOOL	(1<<KTR_MOOL)
-#define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 #define	KTRFAC_MIB	(1<<KTR_MIB)
 /*
  * trace flags (also in p_traceflags)
  */
 #define KTRFAC_ROOT	0x80000000	/* root set this trace */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
-#define KTRFAC_ACTIVE	0x20000000	/* ktrace logging in progress, ignore */
 #define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
 #define	KTRFAC_VER_MASK	0x0f000000	/* record version mask */
 #define	KTRFAC_VER_SHIFT	24	/* record version shift */
@@ -276,6 +278,7 @@ __END_DECLS
 
 #else
 
+void ktrinit(void);
 void ktrcsw(struct lwp *, int, int);
 void ktremul(struct lwp *);
 void ktrgenio(struct lwp *, int, enum uio_rw, struct iovec *, int, int);
@@ -289,10 +292,11 @@ void ktrmmsg(struct lwp *, const void *, size_t);
 void ktrkmem(struct lwp *, int, const void *, size_t);
 void ktrmib(struct lwp *, const int *, u_int);
 void ktrmool(struct lwp *, const void *, size_t, const void *);
-void ktrsaupcall(struct lwp *, int, int, int, void *, void *);
 
 void ktrderef(struct proc *);
 void ktradref(struct proc *);
+
+extern kmutex_t ktrace_mutex;
 
 #endif	/* !_KERNEL */
 

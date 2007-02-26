@@ -1,4 +1,4 @@
-/* $NetBSD: if_srt.c,v 1.2.2.2 2006/12/30 20:50:20 yamt Exp $ */
+/* $NetBSD: if_srt.c,v 1.2.2.3 2007/02/26 09:11:36 yamt Exp $ */
 /* This file is in the public domain. */
 
 #include "opt_inet.h"
@@ -10,6 +10,13 @@
 #ifndef SRT_MAXUNIT
 #define SRT_MAXUNIT 255
 #endif
+
+/* include-file bug workarounds */
+#include <sys/types.h> /* sys/conf.h */
+#include <sys/resource.h> /* sys/resourcevar.h (uvm/uvm_param.h, sys/mbuf.h) */
+#include <netinet/in.h> /* netinet/ip.h */
+#include <sys/param.h> /* sys/mbuf.h */
+#include <netinet/in_systm.h> /* netinet/ip.h */
 
 #include <sys/conf.h>
 #include <sys/mbuf.h>
@@ -168,7 +175,7 @@ static int srt_if_ioctl(struct ifnet *intf, u_long cmd, caddr_t data)
 static int srt_if_output(
 	struct ifnet *intf,
 	struct mbuf *m,
-	struct sockaddr *to,
+	const struct sockaddr *to,
 	struct rtentry *rtp )
 {
  SOFTC *sc;

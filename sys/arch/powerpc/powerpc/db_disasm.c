@@ -1,8 +1,8 @@
-/*	$NetBSD: db_disasm.c,v 1.19.2.1 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19.2.2 2007/02/26 09:07:54 yamt Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.2.1 2006/12/30 20:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.2.2 2007/02/26 09:07:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -981,7 +981,7 @@ dis_ppc(const struct opcode *opcodeset, instr_t instr, vaddr_t loc)
 }
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t extended)
+db_disasm(db_addr_t loc, bool extended)
 {
 	int class;
 	instr_t opcode;

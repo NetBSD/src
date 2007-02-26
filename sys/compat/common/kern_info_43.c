@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.20.4.2 2006/12/30 20:47:31 yamt Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.20.4.3 2007/02/26 09:08:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.20.4.2 2006/12/30 20:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.20.4.3 2007/02/26 09:08:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.20.4.2 2006/12/30 20:47:31 yamt E
 #include <sys/sysctl.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int
@@ -237,7 +236,7 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 
 			COPY(machine);
 			COPY(cpu_model);
-			ksi.ncpu = 1;			/* XXX */
+			ksi.ncpu = ncpu;		/* XXX */
 			ksi.cpuspeed = 40;		/* XXX */
 			ksi.hwflags = 0;		/* XXX */
 			ksi.physmem = ctob(physmem);
@@ -290,7 +289,7 @@ compat_43_sys_sethostid(struct lwp *l, void *v, register_t *retval)
 	int error;
 
 	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 	hostid = SCARG(uap, hostid);
 	return (0);

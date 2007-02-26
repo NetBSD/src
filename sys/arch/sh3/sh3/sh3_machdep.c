@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.55.2.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.55.2.2 2007/02/26 09:08:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55.2.1 2006/06/21 14:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55.2.2 2007/02/26 09:08:08 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -90,8 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.55.2.1 2006/06/21 14:55:39 yamt Ex
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ucontext.h>
 #include <sys/user.h>
@@ -281,13 +279,13 @@ sh_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -311,47 +309,6 @@ dumpsys()
 }
 
 /*
- * void cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
- *     void *sas, void *ap, void *sp, sa_upcall_t upcall):
- *
- * Send an upcall to userland.
- */
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-	struct saframe *sf, frame;
-
-	tf = l->l_md.md_regs;
-
-	/* Build the stack frame. */
-#if 0 /* First 4 args in regs (see below). */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-#endif
-	frame.sa_arg = ap;
-
-	sf = (struct saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		/* Copying onto the stack didn't work.  Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_r4 = type;
-	tf->tf_r5 = (int) sas;
-	tf->tf_r6 = nevents;
-	tf->tf_r7 = ninterrupted;
-
-	tf->tf_spc = (int) upcall;
-	tf->tf_pr = 0;		/* no return */
-	tf->tf_r15 = (int) sf;
-}
-
-/*
  * Get the base address of the signal frame either on the lwp's stack
  * or on the signal stack and set *onstack accordingly.  Caller then
  * just subtracts the size of appropriate struct sigframe_foo.
@@ -360,7 +317,7 @@ static void *
 getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
-	struct sigaltstack *sigstk= &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sigstk= &l->l_sigstk;
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
@@ -391,7 +348,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_info._signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigframe_sigcontext *fp, frame;
-	int onstack;
+	int onstack, error;
 
 	fp = getframe(l, sig, &onstack);
 	--fp;
@@ -419,12 +376,18 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_sc.sc_expevt = tf->tf_expevt;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	sendsig_reset(l, sig);
+
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -461,7 +424,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember if we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 #endif /* COMPAT_16 */
 
@@ -472,7 +435,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf = l->l_md.md_regs;
-	int sig = ksi->ksi_signo;
+	int sig = ksi->ksi_signo, error;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigframe_siginfo *fp, frame;
 	int onstack;
@@ -496,12 +459,16 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_link = NULL;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_flags = _UC_SIGMASK;
-	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 		? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -519,7 +486,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember if we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -594,13 +561,15 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	tf->tf_r15 = context.sc_r15;
 	tf->tf_pr = context.sc_pr;
 
+	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &context.sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }
@@ -658,6 +627,7 @@ cpu_setmcontext(l, mcp, flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct proc *p = l->l_proc;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
@@ -696,10 +666,12 @@ cpu_setmcontext(l, mcp, flags)
 	}
 #endif
 
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }

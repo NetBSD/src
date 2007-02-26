@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36.12.1 2006/06/21 14:55:31 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36.12.2 2007/02/26 09:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -55,6 +55,8 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	int	ci_mtx_count;
+	int	ci_mtx_oldspl;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -84,7 +86,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(cf)	(!KERNELMODE((cf)->ssr))
-#define	CLKF_BASEPRI(cf)	(((cf)->ssr & 0xf0) == 0)
 #define	CLKF_PC(cf)		((cf)->spc)
 #define	CLKF_INTR(cf)		0	/* XXX */
 
@@ -99,11 +100,11 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)						\
+#define	cpu_need_resched(ci)						\
 do {									\
 	want_resched = 1;						\
-	if (curproc != NULL)						\
-		aston(curproc);					\
+	if (curlwp != NULL)						\
+		aston(curlwp);						\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -111,19 +112,19 @@ do {									\
  * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)						\
+#define	cpu_need_proftick(l)						\
 do {									\
-	(p)->p_flag |= P_OWEUPC;					\
-	aston(p);							\
+	(l)->l_pflag |= LP_OWEUPC;					\
+	aston(l);							\
 } while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston(p)
+#define	cpu_signotify(l)	aston(l)
 
-#define	aston(p)	((p)->p_md.md_astpending = 1)
+#define	aston(l)		((l)->l_md.md_astpending = 1)
 
 extern int want_resched;		/* need_resched() was called */
 

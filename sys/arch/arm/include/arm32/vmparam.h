@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 2003/05/22 05:25:48 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19.18.1 2007/02/26 09:06:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -44,7 +44,9 @@
  * Virtual Memory parameters common to all arm32 platforms.
  */
 
+#ifndef __ASSEMBLER__
 #include <sys/lock.h>		/* struct simplelock */ 
+#endif /* __ASSEMBLER__ */
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS
@@ -92,6 +94,7 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 
+#ifndef __ASSEMBLER__
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
 extern vaddr_t virtual_avail;
@@ -129,6 +132,7 @@ do {									\
 	(pg)->mdpage.urw_mappings = 0;					\
 	(pg)->mdpage.k_mappings = 0;					\
 } while (/*CONSTCOND*/0)
+#endif /* __ASSEMBLER__ */
 
 #endif /* _KERNEL */
 

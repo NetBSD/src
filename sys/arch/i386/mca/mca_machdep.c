@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.25.2.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.25.2.2 2007/02/26 09:07:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.25.2.1 2006/06/21 14:52:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.25.2.2 2007/02/26 09:07:03 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -108,6 +108,7 @@ static void	_mca_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
 #define	MCA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
 struct x86_bus_dma_tag mca_bus_dma_tag = {
+	0,
 	MCA_DMA_BOUNCE_THRESHOLD,		/* _bounce_thresh */
 	0,					/* _bounce_alloc_lo */
 	MCA_DMA_BOUNCE_THRESHOLD,		/* _bounce_alloc_hi */
@@ -125,6 +126,8 @@ struct x86_bus_dma_tag mca_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 
 /* Updated in mca_busprobe() if appropriate. */

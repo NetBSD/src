@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.2.1 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.2.2 2007/02/26 09:08:53 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.2.1 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.2.2 2007/02/26 09:08:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -153,11 +153,24 @@ CFATTACH_DECL(vcpu, sizeof(struct cpu_softc),
  */
 #ifdef TRAPLOG
 struct tlog tlog_primary;
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary, &tlog_primary };
+struct cpu_info cpu_info_primary = {
+	0,
+	&cpu_info_primary,
+	(uint8_t *)&cpu_info_primary + 0x150,
+	&tlog_primary
+};
 #else  /* TRAPLOG */
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
+struct cpu_info cpu_info_primary = {
+	0,
+	&cpu_info_primary,
+	(uint8_t *)&cpu_info_primary + 0x150,
+};	
 #endif /* !TRAPLOG */
-struct cpu_info phycpu_info_primary = { 0, &phycpu_info_primary};
+struct cpu_info phycpu_info_primary = {
+	0,
+	&phycpu_info_primary,
+	(uint8_t *)&cpu_info_primary + 0x150,
+};
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 

@@ -1,4 +1,5 @@
-/*	$NetBSD: linux_signal.c,v 1.47.2.2 2006/12/30 20:47:38 yamt Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.47.2.3 2007/02/26 09:09:23 yamt Exp $	*/
+
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.2 2006/12/30 20:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.3 2007/02/26 09:09:23 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -70,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.47.2.2 2006/12/30 20:47:38 yamt E
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -288,14 +288,13 @@ linux_sys_rt_sigaction(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct linux_sigaction *) osa;
 		syscallarg(size_t) sigsetsize;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct linux_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error, sig;
 	void *tramp = NULL;
 	int vers = 0;
 #if defined __amd64__
-	struct sigacts *ps = p->p_sigacts;
+	struct sigacts *ps = l->l_proc->p_sigacts;
 #endif
 
 	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
@@ -324,7 +323,7 @@ linux_sys_rt_sigaction(struct lwp *l, void *v, register_t *retval)
 		}
 #endif
 
-		error = sigaction1(p, linux_to_native_signo[sig],
+		error = sigaction1(l, linux_to_native_signo[sig],
 		    SCARG(uap, nsa) ? &nbsa : NULL,
 		    SCARG(uap, osa) ? &obsa : NULL,
 		    tramp, vers);
@@ -349,12 +348,13 @@ linux_sys_rt_sigaction(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-linux_sigprocmask1(p, how, set, oset)
-	struct proc *p;
+linux_sigprocmask1(l, how, set, oset)
+	struct lwp *l;
 	int how;
 	const linux_old_sigset_t *set;
 	linux_old_sigset_t *oset;
 {
+	struct proc *p = l->l_proc;
 	linux_old_sigset_t nlss, olss;
 	sigset_t nbss, obss;
 	int error;
@@ -379,8 +379,10 @@ linux_sigprocmask1(p, how, set, oset)
 			return (error);
 		linux_old_to_native_sigset(&nbss, &nlss);
 	}
-	error = sigprocmask1(p, how,
+	mutex_enter(&p->p_smutex);
+	error = sigprocmask1(l, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	if (oset) {
@@ -401,9 +403,9 @@ linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval)
 		syscallarg(linux_sigset_t *) oset;
 		syscallarg(size_t) sigsetsize;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	linux_sigset_t nlss, olss, *oset;
 	const linux_sigset_t *set;
+	struct proc *p = l->l_proc;
 	sigset_t nbss, obss;
 	int error, how;
 
@@ -433,8 +435,10 @@ linux_sys_rt_sigprocmask(struct lwp *l, void *v, register_t *retval)
 			return (error);
 		linux_to_native_sigset(&nbss, &nlss);
 	}
-	error = sigprocmask1(p, how,
+	mutex_enter(&p->p_smutex);
+	error = sigprocmask1(l, how,
 	    set ? &nbss : NULL, oset ? &obss : NULL);
+	mutex_exit(&p->p_smutex);
 	if (!error && oset) {
 		native_to_linux_sigset(&olss, &obss);
 		error = copyout(&olss, oset, sizeof(olss));
@@ -449,14 +453,13 @@ linux_sys_rt_sigpending(struct lwp *l, void *v, register_t *retval)
 		syscallarg(linux_sigset_t *) set;
 		syscallarg(size_t) sigsetsize;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	sigset_t bss;
 	linux_sigset_t lss;
 
 	if (SCARG(uap, sigsetsize) != sizeof(linux_sigset_t))
 		return (EINVAL);
 
-	sigpending1(p, &bss);
+	sigpending1(l, &bss);
 	native_to_linux_sigset(&lss, &bss);
 	return copyout(&lss, SCARG(uap, set), sizeof(lss));
 }
@@ -468,11 +471,10 @@ linux_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 	struct linux_sys_sigpending_args /* {
 		syscallarg(linux_old_sigset_t *) mask;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	sigset_t bss;
 	linux_old_sigset_t lss;
 
-	sigpending1(p, &bss);
+	sigpending1(l, &bss);
 	native_to_linux_old_sigset(&lss, &bss);
 	return copyout(&lss, SCARG(uap, set), sizeof(lss));
 }
@@ -485,13 +487,12 @@ linux_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int) oldmask;
 		syscallarg(int) mask;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	linux_old_sigset_t lss;
 	sigset_t bss;
 
 	lss = SCARG(uap, mask);
 	linux_old_to_native_sigset(&bss, &lss);
-	return (sigsuspend1(p, &bss));
+	return (sigsuspend1(l, &bss));
 }
 #endif /* __amd64__ */
 
@@ -502,7 +503,6 @@ linux_sys_rt_sigsuspend(struct lwp *l, void *v, register_t *retval)
 		syscallarg(linux_sigset_t *) unewset;
 		syscallarg(size_t) sigsetsize;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	linux_sigset_t lss;
 	sigset_t bss;
 	int error;
@@ -516,7 +516,7 @@ linux_sys_rt_sigsuspend(struct lwp *l, void *v, register_t *retval)
 
 	linux_to_native_sigset(&bss, &lss);
 
-	return (sigsuspend1(p, &bss));
+	return (sigsuspend1(l, &bss));
 }
 
 /*
@@ -606,13 +606,13 @@ linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct linux_sigaltstack *) ss;
 		syscallarg(struct linux_sigaltstack *) oss;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct linux_sigaltstack ss;
 	struct sigaltstack nss;
-	int error;
+	struct proc *p = l->l_proc;
+	int error = 0;
 
 	if (SCARG(uap, oss)) {
-		native_to_linux_sigaltstack(&ss, &p->p_sigctx.ps_sigstk);
+		native_to_linux_sigaltstack(&ss, &l->l_sigstk);
 		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
 			return error;
 	}
@@ -622,20 +622,23 @@ linux_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 			return error;
 		linux_to_native_sigaltstack(&nss, &ss);
 
-		if (nss.ss_flags & ~SS_ALLBITS)
-			return EINVAL;
+		mutex_enter(&p->p_smutex);
 
-		if (nss.ss_flags & SS_DISABLE) {
-			if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
-				return EINVAL;
-		} else {
-			if (nss.ss_size < LINUX_MINSIGSTKSZ)
-				return ENOMEM;
-		}
-		p->p_sigctx.ps_sigstk = nss;
+		if (nss.ss_flags & ~SS_ALLBITS)
+			error = EINVAL;
+		else if (nss.ss_flags & SS_DISABLE) {
+			if (l->l_sigstk.ss_flags & SS_ONSTACK)
+				error = EINVAL;
+		} else if (nss.ss_size < LINUX_MINSIGSTKSZ)
+			error = ENOMEM;
+
+		if (error == 0)
+			l->l_sigstk = nss;
+
+		mutex_exit(&p->p_smutex);
 	}
 
-	return 0;
+	return error;
 }
 #endif /* LINUX_SS_ONSTACK */
 

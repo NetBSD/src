@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15.12.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.12.3 2007/02/26 09:08:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -114,9 +114,9 @@ struct intrhand {
 #define IUNMASK(ci,level) (ci)->ci_iunmask[(level)]
 
 extern void Xspllower(int);
+extern void spllower(int);
 
 static __inline int splraise(int);
-static __inline void spllower(int);
 static __inline void softintr(int);
 
 /*
@@ -140,40 +140,7 @@ splraise(int nlevel)
 	return (olevel);
 }
 
-/*
- * Restore a value to cpl (unmasking interrupts).  If any unmasked
- * interrupts are pending, call Xspllower() to process them.
- */
-static __inline void
-spllower(int nlevel)
-{
-	struct cpu_info *ci = curcpu();
-	u_int32_t imask;
-	u_long psl;
-
-	__insn_barrier();
-
-	imask = IUNMASK(ci, nlevel);
-	psl = read_psl();
-	disable_intr();
-	if (ci->ci_ipending & imask) {
-		Xspllower(nlevel);
-		/* Xspllower does enable_intr() */
-	} else {
-		ci->ci_ilevel = nlevel;
-		write_psl(psl);
-	}
-}
-
 #define SPL_ASSERT_BELOW(x) KDASSERT(curcpu()->ci_ilevel < (x))
-
-/*
- * Software interrupt masks
- *
- * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
- */
-#define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
 
 /*
  * Miscellaneous

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_opb.c,v 1.1.12.1 2006/06/21 14:55:03 yamt Exp $	*/
+/*	$NetBSD: gpio_opb.c,v 1.1.12.2 2007/02/26 09:07:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -98,7 +98,7 @@ gpio_opb_attach(struct device *parent, struct device *self, void *aux)
 	reg2 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_TCR);
 	reg3 = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, GPIO_ODR);
 
-	/* Initialize ping array */
+	/* Initialize pins array */
 	for (i = 0 ; i < GPIO_NPINS ; i++) {
 		int p = i + 1;
 		sc->sc_gpio_pins[i].pin_num = i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5.S,v 1.1 2005/06/03 15:55:55 rearnsha Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5.S,v 1.1.2.1 2007/02/26 09:05:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -35,6 +35,22 @@
  
 #include <machine/cpu.h>
 #include <machine/asm.h>
+
+/*
+ * Functions to set the MMU Translation Table Base register
+ *
+ * We need to clean and flush the cache as it uses virtual
+ * addresses that are about to change.
+ */
+ENTRY(armv5_setttb)
+	stmfd	sp!, {r0, lr}
+	bl	_C_LABEL(armv5_idcache_wbinv_all)
+	ldmfd	sp!, {r0, lr}
+
+	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
+
+	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
+	RET
 
 /*
  * Cache operations.  For the entire cache we use the set/index

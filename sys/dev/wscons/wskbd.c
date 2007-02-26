@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.83.2.2 2006/12/30 20:49:51 yamt Exp $ */
+/* $NetBSD: wskbd.c,v 1.83.2.3 2007/02/26 09:10:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.83.2.2 2006/12/30 20:49:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.83.2.3 2007/02/26 09:10:52 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1024,7 +1024,7 @@ getbell:
 
 	case WSKBDIO_SETDEFAULTBELL:
 		if (p && (error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		kbdp = &wskbd_default_bell_data;
 		goto setbell;
@@ -1063,7 +1063,7 @@ getkeyrepeat:
 
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		kkdp = &wskbd_default_keyrepeat_data;
 		goto setkeyrepeat;
@@ -1270,10 +1270,10 @@ wskbd_set_display(struct device *dv, struct wsevsrc *me)
 	}
 
 	if (displaydv)
-		printf("%s: connecting to %s\n",
+		aprint_verbose("%s: connecting to %s\n",
 		       sc->sc_base.me_dv.dv_xname, displaydv->dv_xname);
 	else
-		printf("%s: disconnecting from %s\n",
+		aprint_verbose("%s: disconnecting from %s\n",
 		       sc->sc_base.me_dv.dv_xname, odisplaydv->dv_xname);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.92.2.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.92.2.3 2007/02/26 09:11:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92.2.2 2006/12/30 20:50:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.92.2.3 2007/02/26 09:11:44 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -396,7 +396,7 @@ icmp_input(struct mbuf *m, ...)
 	int icmplen;
 	int i;
 	struct in_ifaddr *ia;
-	void *(*ctlfunc)(int, struct sockaddr *, void *);
+	void *(*ctlfunc)(int, const struct sockaddr *, void *);
 	int code;
 	int hlen;
 	va_list ap;
@@ -726,7 +726,7 @@ icmp_reflect(struct mbuf *m)
 		sin_dst.sin_family = AF_INET;
 		sin_dst.sin_len = sizeof(struct sockaddr_in);
 		sin_dst.sin_addr = ip->ip_dst;
-		bzero(&icmproute, sizeof(icmproute));
+		memset(&icmproute, 0, sizeof(icmproute));
 		errornum = 0;
 		sin = in_selectsrc(&sin_dst, &icmproute, 0, NULL, &errornum);
 		/* errornum is never used */
@@ -966,7 +966,7 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	if (icmp_redirect_timeout_q != NULL) {
 		if (icmp_redirtimeout == 0) {
 			rt_timer_queue_destroy(icmp_redirect_timeout_q,
-			    TRUE);
+			    true);
 			icmp_redirect_timeout_q = NULL;
 		} else {
 			rt_timer_queue_change(icmp_redirect_timeout_q,

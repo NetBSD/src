@@ -1,4 +1,4 @@
-/*	$NetBSD: dfsqrt.c,v 1.2 2003/07/15 02:29:42 lukem Exp $	*/
+/*	$NetBSD: dfsqrt.c,v 1.2.16.1 2007/02/26 09:06:44 yamt Exp $	*/
 
 /*	$OpenBSD: dfsqrt.c,v 1.5 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfsqrt.c,v 1.2 2003/07/15 02:29:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfsqrt.c,v 1.2.16.1 2007/02/26 09:06:44 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -61,7 +61,7 @@ unsigned int *status;
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register unsigned int newbitp1, newbitp2, sump1, sump2;
 	register int src_exponent;
-	register int guardbit = FALSE, even_exponent;
+	register int guardbit = false, even_exponent;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	/*

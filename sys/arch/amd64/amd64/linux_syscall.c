@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.2.2.2 2006/12/30 20:45:22 yamt Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.2.2.3 2007/02/26 09:05:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2.2.2 2006/12/30 20:45:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2.2.3 2007/02/26 09:05:39 yamt Exp $");
 
 #include "opt_compat_linux.h"
 
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2.2.2 2006/12/30 20:45:22 yamt E
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>
@@ -64,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2.2.2 2006/12/30 20:45:22 yamt E
 #include <compat/linux/arch/amd64/linux_siginfo.h>
 #include <compat/linux/arch/amd64/linux_syscall.h>
 #include <compat/linux/arch/amd64/linux_machdep.h>
-#include <compat/linux/common/linux_errno.h>
 
 void linux_syscall_intern(struct proc *);
 static void linux_syscall_plain(struct trapframe *);
@@ -140,9 +137,9 @@ linux_syscall_plain(struct trapframe *frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	error = (*callp->sy_call)(l, argp, rval);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 
 	switch (error) {
 	case 0:
@@ -223,7 +220,7 @@ linux_syscall_fancy(struct trapframe *frame)
 		}
 	}
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	if ((error = trace_enter(l, code, code, NULL, argp)) != 0)
 		goto out;
 
@@ -231,7 +228,7 @@ linux_syscall_fancy(struct trapframe *frame)
 	rval[1] = 0;
 	error = (*callp->sy_call)(l, argp, rval);
 out:
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	switch (error) {
 	case 0:
 		frame->tf_rax = rval[0];

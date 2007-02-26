@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.66.18.2 2006/12/30 20:45:21 yamt Exp $ */
+/* $NetBSD: interrupt.c,v 1.66.18.3 2007/02/26 09:05:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.66.18.2 2006/12/30 20:45:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.66.18.3 2007/02/26 09:05:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,14 +296,14 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		atomic_add_ulong(&sc->sc_evcnt_device.ev_count, 1);
 		atomic_add_ulong(&ci->ci_intrdepth, 1);
 
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 
 		uvmexp.intrs++;
 
 		scb = &scb_iovectab[SCB_VECTOIDX(a1 - SCB_IOVECBASE)];
 		(*scb->scb_func)(scb->scb_arg, a1);
 
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 
 		atomic_sub_ulong(&ci->ci_intrdepth, 1);
 		break;
@@ -571,7 +571,7 @@ softintr_dispatch()
 		panic("softintr_dispatch: entry at ipl %ld", n);
 #endif
 
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 
 #ifdef DEBUG
 	n = alpha_pal_rdps() & ALPHA_PSL_IPL_MASK;
@@ -611,7 +611,7 @@ softintr_dispatch()
 		}
 	}
 
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 static int
@@ -700,7 +700,7 @@ rlprintf(struct timeval *t, const char *fmt, ...)
 		vprintf(fmt, ap);
 }
 
-const static int ipl2psl_table[] = {
+const static uint8_t ipl2psl_table[] = {
 	[IPL_NONE] = ALPHA_PSL_IPL_0,
 	[IPL_SOFT] = ALPHA_PSL_IPL_SOFT,
 	[IPL_SOFTCLOCK] = IPL_SOFT,

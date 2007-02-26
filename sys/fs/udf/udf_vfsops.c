@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.6.4.3 2006/12/30 20:50:01 yamt Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.6.4.4 2007/02/26 09:11:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.6.4.3 2006/12/30 20:50:01 yamt Exp $");
+__RCSID("$NetBSD: udf_vfsops.c,v 1.6.4.4 2007/02/26 09:11:01 yamt Exp $");
 #endif /* not lint */
 
 
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: udf_vfsops.c,v 1.6.4.3 2006/12/30 20:50:01 yamt Exp $");
 #include <sys/dirent.h>
 #include <sys/stat.h>
 #include <sys/conf.h>
-#include <sys/sysctl.h>
 #include <sys/kauth.h>
 
 #include <fs/udf/ecma167-udf.h>
@@ -144,6 +143,7 @@ struct vfsops udf_vfsops = {
 	udf_mountroot,
 	udf_snapshot,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	udf_vnodeopv_descs,
 	0, /* int vfs_refcount   */
 	{ NULL, NULL, }, /* LIST_ENTRY(vfsops) */
@@ -217,6 +217,17 @@ free_udf_mountinfo(struct mount *mp)
 
 	ump = VFSTOUDF(mp);
 	if (ump) {
+		/* dereference all system nodes */
+		if (ump->metadata_file)
+			vrele(ump->metadata_file->vnode);
+		if (ump->metadatamirror_file)
+			vrele(ump->metadatamirror_file->vnode);
+		if (ump->metadatabitmap_file)
+			vrele(ump->metadatabitmap_file->vnode);
+
+		/* vflush all (system) nodes if any */
+		(void) vflush(mp, NULLVP, FORCECLOSE);
+
 		/* dispose of our descriptor pool */
 		if (ump->desc_pool) {
 			pool_destroy(ump->desc_pool);
@@ -310,7 +321,7 @@ udf_mount(struct mount *mp, const char *path,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
@@ -402,26 +413,23 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 
 	DPRINTF(CALL, ("udf_umount called\n"));
 
-	/*
-	 * By specifying SKIPSYSTEM we can skip vnodes marked with VSYSTEM.
-	 * This hardly documented feature allows us to exempt certain files
-	 * from being flushed.
-	 */
-	flags = SKIPSYSTEM;	/* allow for system vnodes to stay alive */
-	if (mntflags & MNT_FORCE)
-		flags |= FORCECLOSE;
-
 	ump = VFSTOUDF(mp);
 	if (!ump)
 		panic("UDF unmount: empty ump\n");
 
+	flags = (mntflags & MNT_FORCE) ? FORCECLOSE : 0;
 	/* TODO remove these paranoid functions */
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_LOCKING)
 		udf_unmount_sanity_check(mp);
 #endif
 
-	if ((error = vflush(mp, NULLVP, flags)) != 0)
+	/*
+	 * By specifying SKIPSYSTEM we can skip vnodes marked with VSYSTEM.
+	 * This hardly documented feature allows us to exempt certain files
+	 * from being flushed.
+	 */
+	if ((error = vflush(mp, NULLVP, flags | VSYSTEM)) != 0)
 		return error;
 
 #ifdef DEBUG
@@ -433,9 +441,6 @@ udf_unmount(struct mount *mp, int mntflags, struct lwp *l)
 
 	/*
 	 * TODO close logical volume and close session if requested.
-	 *
-	 * XXX no system nodes defined yet.  Code to reclaim them is calling
-	 * VOP_RECLAIM on the nodes themselves.
 	 */
 
 	/* close device */
@@ -539,7 +544,8 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 
 	/* check consistency and completeness */
 	if ((error = udf_process_vds(ump, args))) {
-		printf("UDF mount: disc not properly formatted\n");
+		printf( "UDF mount: disc not properly formatted"
+			"(bad VDS)\n");
 		return error;
 	}
 
@@ -555,13 +561,15 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 
 	/* read vds support tables like VAT, sparable etc. */
 	if ((error = udf_read_vds_tables(ump, args))) {
-		printf("UDF mount: error in format or damaged disc\n");
+		printf( "UDF mount: error in format or damaged disc "
+			"(VDS tables failing)\n");
 		return error;
 	}
 
 	if ((error = udf_read_rootdirs(ump, args))) {
-		printf("UDF mount: "
-		       "disc not properly formatted or damaged disc\n");
+		printf( "UDF mount: "
+			"disc not properly formatted or damaged disc "
+			"(rootdirs failing)\n");
 		return error;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.28.4.1 2006/12/30 20:50:45 yamt Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.28.4.2 2007/02/26 09:12:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.28.4.1 2006/12/30 20:50:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.28.4.2 2007/02/26 09:12:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.28.4.1 2006/12/30 20:50:45 yamt Exp $"
 #include <netiso/tp_ip.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_trace.h>
-#include <netiso/tp_stat.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/tp_var.h>
 #include <netinet/in_var.h>
@@ -625,7 +624,7 @@ tpin_quench(struct inpcb *inp, int dummy)
  * NOTES:
  */
 void *
-tpip_ctlinput(int cmd, struct sockaddr *sa, void *dummy)
+tpip_ctlinput(int cmd, const struct sockaddr *sa, void *dummy)
 {
 	void            (*notify)(struct inpcb *, int);
 	int             errno;
@@ -666,7 +665,7 @@ tpip_ctlinput(int cmd, struct sockaddr *sa, void *dummy)
 		notify = tpin_abort;
 		break;
 	}
-	in_pcbnotifyall(&tp_inpcb, satosin(sa)->sin_addr, errno, notify);
+	in_pcbnotifyall(&tp_inpcb, satocsin(sa)->sin_addr, errno, notify);
 	return NULL;
 }
 

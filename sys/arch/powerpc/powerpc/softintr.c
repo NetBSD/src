@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2.18.1 2006/06/21 14:55:11 yamt Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2.18.2 2007/02/26 09:07:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2.18.1 2006/06/21 14:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2.18.2 2007/02/26 09:07:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
@@ -76,7 +76,8 @@ softintr_queue(int ipl)
 	case IPL_SOFTI2C:	return &softintr_softi2c;
 #endif
 	default:
-		KASSERT(ipl == IPL_SOFTSERIAL || ipl == IPL_SOFTNET || ipl == IPL_SOFTCLOCK);
+		KASSERT(ipl == IPL_SOFTSERIAL || ipl == IPL_SOFTNET ||
+		    ipl == IPL_SOFTCLOCK);
 	}
 	return NULL;
 }
@@ -104,20 +105,22 @@ softintr__run(int ipl)
 {
 	struct softintr_qh * const qh = softintr_queue(ipl);
 	struct softintr *si;
-	int s;
+	register_t msr;
 
 	for (;;) {
-		s = splvm();
+		msr = mfmsr();
+		mtmsr(msr & ~PSL_EE);
+
 		si = SIMPLEQ_FIRST(qh);
 		if (si == NULL) {
-			splx(s);
+			mtmsr(msr);
 			return;
 		}
 		SIMPLEQ_REMOVE_HEAD(qh, si_link);
 		si->si_refs--;
 		KASSERT(si->si_refs > 0);
-		splx(s);
 
+		mtmsr(msr);
 		(*si->si_func)(si->si_arg);
 	}
 }
@@ -131,29 +134,32 @@ softintr_schedule(void *cookie)
 {
 	struct softintr * const si = cookie;
 	struct softintr_qh * const qh = softintr_queue(si->si_ipl);
-	int s;
+	register_t msr;
 
 	/*
-	 * Assume checking a single integer field is atomic.
+	 * Disable interrupts and insert onto the queue. Note si_refs is
+	 * strictly positive number, the KASSERT around would catch us in
+	 * any case. We cannot rely on any particular IPL level to be
+	 * safe due to differences between PowerPC ports.
 	 */
-	if (si->si_refs > 1)
-		return;
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
 
-	/*
-	 * Raise IPL and insert onto queue.
-	 */
-	s = splvm();
-	SIMPLEQ_INSERT_TAIL(qh, si, si_link);
-	si->si_refs++;
-	switch (si->si_ipl) {
-	case IPL_SOFTSERIAL:	setsoftserial(); break;
-	case IPL_SOFTCLOCK:	setsoftclock(); break;
-	case IPL_SOFTNET:	setsoftnet(); break;
+	if (si->si_refs == 1) {
+		SIMPLEQ_INSERT_TAIL(qh, si, si_link);
+		si->si_refs++;
+
+		switch (si->si_ipl) {
+		case IPL_SOFTSERIAL:	setsoftserial(); break;
+		case IPL_SOFTCLOCK:	setsoftclock(); break;
+		case IPL_SOFTNET:	setsoftnet(); break;
 #ifdef IPL_SOFTI2C
-	case IPL_SOFTI2C:	setsofti2c(); break;
+		case IPL_SOFTI2C:	setsofti2c(); break;
 #endif
+		}
 	}
-	splx(s);
+
+	mtmsr(msr);
 }
 
 /*
@@ -186,9 +192,11 @@ void
 softintr_disestablish(void *cookie)
 {
 	struct softintr * const si = cookie;
+	register_t msr;
 	int s;
 
-	s = splvm();
+	msr = mfmsr();
+	mtmsr(msr & ~PSL_EE);
 	/*
 	 * If queued, dequeue the entry.
 	 */
@@ -197,12 +205,17 @@ softintr_disestablish(void *cookie)
 		SIMPLEQ_REMOVE(qh, si, softintr, si_link);
 		si->si_refs--;
 	}
+	mtmsr(msr);
 
 	/*
-	 * Make sure we always put to the pool at a consistent IPL.
+	 * This is the only existing reference to ${si} at this point, so
+	 * no need to protect. The structure is freshly initialized when
+	 * retrieved from the pool, anyway.
 	 */
 	si->si_refs--;
 	KASSERT(si->si_refs == 0);
+
+	s = splvm();
 	pool_put(&softintr_pool, si);
 	splx(s);
 }

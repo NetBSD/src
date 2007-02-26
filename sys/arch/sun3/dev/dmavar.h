@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.5 2005/01/22 15:36:09 chs Exp $ */
+/*	$NetBSD: dmavar.h,v 1.5.8.1 2007/02/26 09:08:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -30,14 +30,16 @@
 
 struct dma_softc {
 	struct device sc_dev;			/* us as a device */
-	struct ncr53c9x_softc *sc_esp;		/* my scsi */
-	volatile struct dma_regs *sc_regs;	/* the registers */
+	bus_space_tag_t sc_bst;			/* bus space tag */
+	bus_dma_tag_t sc_dmatag;		/* bus dma tag */
+
+	bus_space_handle_t sc_bsh;		/* bus space handle */
+	void *sc_client;			/* my client */
+
 	int	sc_active;			/* DMA active ? */
+	bus_dmamap_t sc_dmamap;			/* bus dma map */
 	u_int	sc_rev;				/* revision */
 	int	sc_burst;			/* DVMA burst size in effect */
-	caddr_t	sc_dvmakaddr;			/* DVMA cookies */
-	caddr_t	sc_dvmaaddr;			/*		*/
-	u_long  sc_dmasaddr;			/* Slave address */
 	size_t	sc_dmasize;
 	caddr_t	*sc_dmaaddr;
 	size_t  *sc_dmalen;
@@ -48,13 +50,47 @@ struct dma_softc {
 #endif
 };
 
-#define DMACSR(sc)	((sc)->sc_regs->csr)
-#define DMADDR(sc)	((sc)->sc_regs->addr)
-#define DMACNT(sc)	((sc)->sc_regs->bcnt)
+#define DMA_GCSR(sc)		\
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, DMA_REG_CSR)
+#define DMA_SCSR(sc, csr)	\
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, DMA_REG_CSR, (csr))
 
-struct dma_softc * espdmafind(int);
+/*
+ * DMA engine interface functions.
+ */
+#if 0
+#define DMA_RESET(sc)			(((sc)->reset)(sc))
+#define DMA_INTR(sc)			(((sc)->intr)(sc))
+#define DMA_SETUP(sc, a, l, d, s)	(((sc)->setup)(sc, a, l, d, s))
+#endif
+
+#define DMA_ISACTIVE(sc)		((sc)->sc_active)
+
+#define DMA_ENINTR(sc) do {			\
+	uint32_t _csr = DMA_GCSR(sc);		\
+	_csr |= D_INT_EN;			\
+	DMA_SCSR(sc, _csr);			\
+} while (/* CONSTCOND */0)
+
+#define DMA_ISINTR(sc)	(DMA_GCSR(sc) & (D_INT_PEND|D_ERR_PEND))
+
+#define DMA_GO(sc) do {				\
+	uint32_t _csr = DMA_GCSR(sc);		\
+	_csr |= D_EN_DMA;			\
+	DMA_SCSR(sc, _csr);			\
+	sc->sc_active = 1;			\
+} while (/* CONSTCOND */0)
+
+#define DMA_STOP(sc) do {			\
+	uint32_t _csr = DMA_GCSR(sc);		\
+	_csr &= ~D_EN_DMA;			\
+	DMA_SCSR(sc, _csr);			\
+	sc->sc_active = 0;			\
+} while (/* CONSTCOND */0)
+
+struct dma_softc *espdmafind(int);
+int espdmaintr(struct dma_softc *);
 
 void dma_reset(struct dma_softc *);
 int  dma_setup(struct dma_softc *, caddr_t *, size_t *, int, size_t *);
 
-int espdmaintr(struct dma_softc *);

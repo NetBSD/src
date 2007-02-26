@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.16.2.2 2006/12/30 20:46:04 yamt Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.16.2.3 2007/02/26 09:06:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.2 2006/12/30 20:46:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.16.2.3 2007/02/26 09:06:49 yamt Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -114,7 +114,7 @@ acpi_md_install_wakecode(paddr_t pa)
 {
 	bcopy(wakecode, (caddr_t)pa, sizeof(wakecode));
 	phys_wakeup = pa;
-	printf("acpi: wakecode is installed at 0x%lX, size=%u\n",
+	aprint_verbose("acpi: wakecode is installed at 0x%lX, size=%u\n",
 	       pa, sizeof(wakecode));
 }
 
@@ -236,7 +236,8 @@ acpi_restorecpu:						\
 	pushl	r_efl;						\
 	popfl;							\
 								\
-	pushl	ret_addr;					\
+	movl	ret_addr,%eax;					\
+	movl	%eax,(%esp);					\
 	xorl	%eax,%eax;					\
 	ret;							\
 								\

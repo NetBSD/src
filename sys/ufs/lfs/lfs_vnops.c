@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.152.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.152.2.3 2007/02/26 09:12:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.3 2007/02/26 09:12:22 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.152.2.2 2006/12/30 20:51:01 yamt Exp
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/syslog.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -409,7 +410,7 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		wakeup(&lfs_writer_daemon);
 		simple_unlock(&lfs_subsys_lock);
 		simple_unlock(&fs->lfs_interlock);
-		preempt(1);
+		preempt();
 		goto restart;
 	}
 
@@ -1085,6 +1086,7 @@ lfs_reclaim(void *v)
 	lfs_deregister_all(vp);
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
 	ip->inode_ext.lfs = NULL;
+	genfs_node_destroy(vp);
 	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
@@ -1427,7 +1429,7 @@ lfs_fcntl(void *v)
 	l = ap->a_l;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
 	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    NULL)) != 0)
 		return (error);
 
 	fs = VTOI(ap->a_vp)->i_lfs;
@@ -1517,7 +1519,7 @@ lfs_fcntl(void *v)
 	    case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
@@ -1887,7 +1889,7 @@ lfs_putpages(void *v)
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
 	int s;
-	boolean_t seglocked, sync, pagedaemon;
+	bool seglocked, sync, pagedaemon;
 	struct vm_page *pg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1908,9 +1910,12 @@ lfs_putpages(void *v)
 	 */
 	if (vp->v_uobj.uo_npages == 0) {
 		s = splbio();
-		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-		    (vp->v_flag & VONWORKLST))
+		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
+		    (vp->v_flag & VONWORKLST) &&
+		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+			vp->v_flag &= ~VWRITEMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
+		}
 		splx(s);
 		simple_unlock(&vp->v_interlock);
 		
@@ -2021,7 +2026,7 @@ lfs_putpages(void *v)
 			return r;
 
 		/* Start over. */
-		preempt(1);
+		preempt();
 		simple_lock(&vp->v_interlock);
 	} while(1);
 
@@ -2043,7 +2048,7 @@ lfs_putpages(void *v)
 		simple_unlock(&lfs_subsys_lock);
 		simple_unlock(&fs->lfs_interlock);
 		simple_unlock(&vp->v_interlock);
-		preempt(1);
+		preempt();
 		return EWOULDBLOCK;
 	}
 
@@ -2148,7 +2153,7 @@ again:
 		if (pagedaemon)
 			return EDEADLK;
 		/* else seglocked == 0 */
-		preempt(1);
+		preempt();
 		simple_lock(&vp->v_interlock);
 		goto get_seglock;
 	}
@@ -2174,7 +2179,7 @@ again:
 		}
 
 		/* Give the write a chance to complete */
-		preempt(1);
+		preempt();
 
 		/* We've lost the interlock.  Start over. */
 		if (error == EDEADLK) {

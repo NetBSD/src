@@ -1,36 +1,35 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.31.2.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.31.2.3 2007/02/26 09:11:13 yamt Exp $	*/
 
 /*-
- * Copyright 2005 Elad Efrat <elad@NetBSD.org>
- * Copyright 2005 Brett Lymn <blymn@netbsd.org>
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Brett Lymn and Elad Efrat
+ * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
+ * Copyright (c) 2005, 2006 Brett Lymn <blymn@NetBSD.org>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the authors may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.31.2.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.31.2.3 2007/02/26 09:11:13 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -96,18 +95,18 @@ struct veriexec_table_entry {
 	const struct sysctlnode *vte_node;
 };
 
-int veriexec_verbose;
+static int veriexec_verbose;
 int veriexec_strict;
 
-char *veriexec_fp_names;
-size_t veriexec_name_max;
+static char *veriexec_fp_names;
+static size_t veriexec_name_max;
 
-const struct sysctlnode *veriexec_count_node;
+static const struct sysctlnode *veriexec_count_node;
 
 static fileassoc_t veriexec_hook;
 static specificdata_key_t veriexec_mountspecific_key;
 
-LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
+static LIST_HEAD(, veriexec_fpops) veriexec_fpops_list;
 
 static int veriexec_raw_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);
@@ -382,12 +381,12 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp,
 	if (error)
 		return (error);
 
-#if 0 /* XXX - for now */
+#ifdef notyet /* XXX - for now */
 	if ((vfe->type & VERIEXEC_UNTRUSTED) &&
 	    (vfe->page_fp_status == PAGE_FP_NONE))
 		do_perpage = 1;
 	else
-#endif
+#endif  /* notyet */
 		do_perpage = 0;
 
 	ctx = (void *) malloc(vfe->ops->context_size, M_VERIEXEC, M_WAITOK);
@@ -511,10 +510,10 @@ veriexec_get(struct vnode *vp)
 	return (fileassoc_lookup(vp, veriexec_hook));
 }
 
-boolean_t
+bool
 veriexec_lookup(struct vnode *vp)
 {
-	return (veriexec_get(vp) == NULL ? FALSE : TRUE);
+	return (veriexec_get(vp) == NULL ? false : true);
 }
 
 /*
@@ -525,7 +524,7 @@ veriexec_lookup(struct vnode *vp)
  */
 int
 veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
-    boolean_t *found)
+    bool *found)
 {
 	struct veriexec_file_entry *vfe;
 	u_char *digest;
@@ -538,9 +537,9 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	vfe = veriexec_get(vp);
 	if (found != NULL) {
 		if (vfe != NULL)
-			*found = TRUE;
+			*found = true;
 		else
-			*found = FALSE;
+			*found = false;
 	}
 	if (vfe == NULL)
 		goto out;
@@ -632,6 +631,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	return (error);
 }
 
+#ifdef notyet
 /*
  * Evaluate per-page fingerprints.
  */
@@ -700,6 +700,7 @@ veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
 
 	return (error);
 }
+#endif /* notyet */
 
 /*
  * Veriexec remove policy code.
@@ -1035,13 +1036,13 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	 */
 	hh = veriexec_get(nid.ni_vp);
 	if (hh != NULL) {
-		boolean_t fp_mismatch;
+		bool fp_mismatch;
 
 		if (strcmp(vfe->ops->type, fp_type) ||
 		    memcmp(hh->fp, vfe->fp, hh->ops->hash_len))
-			fp_mismatch = TRUE;
+			fp_mismatch = true;
 		else
-			fp_mismatch = FALSE;
+			fp_mismatch = false;
 
 		if ((veriexec_verbose >= 1) || fp_mismatch)
 			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
@@ -1107,11 +1108,6 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 	if (error)
 		return (error);
 
-	error = fileassoc_table_add(nid.ni_vp->v_mount,
-	    prop_number_integer_value(prop_dictionary_get(dict, "count")));
-	if (error && (error != EEXIST))
-		goto out;
-
 	vte = malloc(sizeof(*vte), M_VERIEXEC, M_WAITOK | M_ZERO);
 	mount_setspecific(nid.ni_vp->v_mount, veriexec_mountspecific_key, vte);
 
@@ -1132,13 +1128,12 @@ veriexec_table_add(struct lwp *l, prop_dictionary_t dict)
 		       CTLFLAG_READONLY, CTLTYPE_QUAD, "nentries",
 		       NULL, NULL, 0, &vte->vte_count, 0, CTL_CREATE, CTL_EOL);
 
- out:
 	vrele(nid.ni_vp);
 	return (error);
 }
 
 int
-veriexec_table_delete(struct mount *mp) {
+veriexec_table_delete(struct lwp *l, struct mount *mp) {
 	struct veriexec_table_entry *vte;
 
 	vte = veriexec_table_lookup(mp);
@@ -1149,7 +1144,7 @@ veriexec_table_delete(struct mount *mp) {
 }
 
 int
-veriexec_file_delete(struct vnode *vp) {
+veriexec_file_delete(struct lwp *l, struct vnode *vp) {
 	struct veriexec_table_entry *vte;
 	int error;
 
@@ -1234,7 +1229,7 @@ veriexec_unmountchk(struct mount *mp)
 int
 veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 {
-	boolean_t monitored = FALSE;
+	bool monitored = false;
 	int error = 0;
 
 	if (vp == NULL) {

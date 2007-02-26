@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.15.2.2 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.15.2.3 2007/02/26 09:07:13 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15.2.2 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15.2.3 2007/02/26 09:07:13 yamt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
@@ -478,17 +478,6 @@ startlwp(void *arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
-
-	machine_userret(l, f, 0);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	machine_userret(l, f, 0);
 }

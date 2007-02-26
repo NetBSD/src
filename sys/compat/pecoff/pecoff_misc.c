@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.10.4.2 2006/12/30 20:47:45 yamt Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.10.4.3 2007/02/26 09:09:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.10.4.2 2006/12/30 20:47:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.10.4.3 2007/02/26 09:09:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.10.4.2 2006/12/30 20:47:45 yamt Ex
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>

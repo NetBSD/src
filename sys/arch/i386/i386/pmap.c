@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.183.2.2 2006/12/30 20:46:10 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183.2.3 2007/02/26 09:06:57 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.2 2006/12/30 20:46:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183.2.3 2007/02/26 09:06:57 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -357,8 +357,8 @@ paddr_t avail_end;	/* PA of last available physical page */
  * other data structures
  */
 
-static pt_entry_t protection_codes[8];     /* maps MI prot to i386 prot code */
-static boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
+static pt_entry_t protection_codes[8];	/* maps MI prot to i386 prot code */
+static bool pmap_initialized = FALSE;	/* pmap_init done yet? */
 
 /*
  * the following two vaddr_t's are used during system startup
@@ -446,9 +446,6 @@ int	pmap_pdp_ctor(void *, void *, int);
 
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
-extern vaddr_t msgbuf_vaddr;
-extern paddr_t msgbuf_paddr;
-
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
 
@@ -462,7 +459,7 @@ extern vaddr_t pentium_idt_vaddr;
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
+static struct pv_entry	*pmap_add_pvpage(struct pv_page *, bool);
 static struct vm_page	*pmap_alloc_ptp(struct pmap *, int);
 static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
@@ -477,13 +474,13 @@ static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
 static void		 pmap_free_pv_doit(struct pv_entry *);
 static void		 pmap_free_pvpage(void);
 static struct vm_page	*pmap_get_ptp(struct pmap *, int);
-static boolean_t	 pmap_is_curpmap(struct pmap *);
-static boolean_t	 pmap_is_active(struct pmap *, int);
+static bool		 pmap_is_curpmap(struct pmap *);
+static bool		 pmap_is_active(struct pmap *, int);
 static pt_entry_t	*pmap_map_ptes(struct pmap *);
 static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					vaddr_t);
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
-static boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *,
+static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t, int32_t *, int);
 static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t, int32_t *,
@@ -493,7 +490,7 @@ static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 
 static void		 pmap_unmap_ptes(struct pmap *);
 
-static boolean_t	 pmap_reactivate(struct pmap *);
+static bool		 pmap_reactivate(struct pmap *);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -504,7 +501,7 @@ static boolean_t	 pmap_reactivate(struct pmap *);
  *		of course the kernel is always loaded
  */
 
-inline static boolean_t
+inline static bool
 pmap_is_curpmap(pmap)
 	struct pmap *pmap;
 {
@@ -517,7 +514,7 @@ pmap_is_curpmap(pmap)
  * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
-inline static boolean_t
+inline static bool
 pmap_is_active(pmap, cpu_id)
 	struct pmap *pmap;
 	int cpu_id;
@@ -983,9 +980,6 @@ pmap_bootstrap(kva_start)
 	vmmap = (char *)virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE;
 
-	msgbuf_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += round_page(MSGBUFSIZE);
-
 	idt_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += PAGE_SIZE;
 	idt_paddr = avail_start;			/* steal a page */
@@ -1212,7 +1206,7 @@ pmap_alloc_pvpage(struct pmap *pmap, int mode)
 static struct pv_entry *
 pmap_add_pvpage(pvp, need_entry)
 	struct pv_page *pvp;
-	boolean_t need_entry;
+	bool need_entry;
 {
 	int tofree, lcv;
 
@@ -1709,10 +1703,10 @@ void
 pmap_fork(pmap1, pmap2)
 	struct pmap *pmap1, *pmap2;
 {
+#ifdef USER_LDT
 	simple_lock(&pmap1->pm_obj.vmobjlock);
 	simple_lock(&pmap2->pm_obj.vmobjlock);
 
-#ifdef USER_LDT
 	/* Copy the LDT, if necessary. */
 	if (pmap1->pm_flags & PMF_USER_LDT) {
 		union descriptor *new_ldt;
@@ -1727,10 +1721,10 @@ pmap_fork(pmap1, pmap2)
 		pmap2->pm_flags |= PMF_USER_LDT;
 		ldt_alloc(pmap2, new_ldt, len);
 	}
-#endif /* USER_LDT */
 
 	simple_unlock(&pmap2->pm_obj.vmobjlock);
 	simple_unlock(&pmap1->pm_obj.vmobjlock);
+#endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
 
@@ -1822,13 +1816,13 @@ pmap_activate(l)
  * pmap_reactivate: try to regain reference to the pmap.
  */
 
-static boolean_t
+static bool
 pmap_reactivate(struct pmap *pmap)
 {
 	struct cpu_info *ci = curcpu();
 	uint32_t cpumask = 1U << ci->ci_cpuid;
 	int s;
-	boolean_t result;
+	bool result;
 	uint32_t oldcpus;
 
 	KASSERT(pmap->pm_pdirpa == rcr3());
@@ -1916,9 +1910,9 @@ pmap_load()
 	KASSERT(oldpmap->pm_pdirpa == rcr3());
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 
-	KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
+	KERNEL_LOCK(1, NULL);
 	pmap_reference(pmap);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 
 	/*
 	 * mark the pmap in use by this processor.
@@ -1944,9 +1938,9 @@ pmap_load()
 
 	ci->ci_want_pmapload = 0;
 
-	KERNEL_LOCK(LK_EXCLUSIVE | LK_CANRECURSE);
+	KERNEL_LOCK(1, NULL);
 	pmap_destroy(oldpmap);
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
@@ -2014,7 +2008,7 @@ pmap_deactivate2(l)
  * pmap_extract: extract a PA for the given VA
  */
 
-boolean_t
+bool
 pmap_extract(pmap, va, pap)
 	struct pmap *pmap;
 	vaddr_t va;
@@ -2133,7 +2127,7 @@ pmap_zero_page(pa)
  * some reason.
  */
 
-boolean_t
+bool
 pmap_pageidlezero(pa)
 	paddr_t pa;
 {
@@ -2142,7 +2136,7 @@ pmap_pageidlezero(pa)
 #endif
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	caddr_t zerova = VASLEW(zerop, id);
-	boolean_t rv = TRUE;
+	bool rv = TRUE;
 	int *ptr;
 	int *ep;
 #if defined(I686_CPU)
@@ -2337,7 +2331,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
  * => returns true if we removed a mapping
  */
 
-static boolean_t
+static bool
 pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	struct pmap *pmap;
 	struct vm_page *ptp;
@@ -2435,7 +2429,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 	int flags;
 {
 	pt_entry_t *ptes, opte;
-	boolean_t result;
+	bool result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
 	struct vm_page *ptp;
@@ -2781,7 +2775,7 @@ pmap_page_remove(pg)
  * => we set pv_head => pmap locking
  */
 
-boolean_t
+bool
 pmap_test_attrs(pg, testbits)
 	struct vm_page *pg;
 	int testbits;
@@ -2848,7 +2842,7 @@ pmap_test_attrs(pg, testbits)
  * => we return TRUE if we cleared one of the bits we were asked to
  */
 
-boolean_t
+bool
 pmap_clear_attrs(pg, clearbits)
 	struct vm_page *pg;
 	int clearbits;
@@ -3125,7 +3119,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	struct pv_head *old_pvh, *new_pvh;
 	struct pv_entry *pve = NULL; /* XXX gcc */
 	int error;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	bool wired = (flags & PMAP_WIRED) != 0;
 
 	KASSERT(pmap_initialized);
 
@@ -3659,7 +3653,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
  * => called at splvm if !MULTIPROCESSOR.
  * => return TRUE if we need to maintain user tlbs.
  */
-static inline boolean_t
+static inline bool
 pmap_do_tlb_shootdown_checktlbstate(struct cpu_info *ci)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.153.2.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.153.2.3 2007/02/26 09:11:45 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.2 2006/12/30 20:50:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.153.2.3 2007/02/26 09:11:45 yamt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -287,10 +287,9 @@ ip_output(struct mbuf *m0, ...)
 	/*
 	 * Route packet.
 	 */
-	if (ro == NULL) {
+	memset(&iproute, 0, sizeof(iproute));
+	if (ro == NULL)
 		ro = &iproute;
-		bzero((caddr_t)ro, sizeof (*ro));
-	}
 	dst = satosin(&ro->ro_dst);
 	/*
 	 * If there is a cached route,
@@ -299,13 +298,12 @@ ip_output(struct mbuf *m0, ...)
 	 * The address family should also be checked in case of sharing the
 	 * cache with IPv6.
 	 */
-	if (dst->sin_family != AF_INET ||
-	    !in_hosteq(dst->sin_addr, ip->ip_dst))
+	if (dst->sin_family != AF_INET || !in_hosteq(dst->sin_addr, ip->ip_dst))
 		rtcache_free(ro);
 	else
 		rtcache_check(ro);
 	if (ro->ro_rt == NULL) {
-		bzero(dst, sizeof(*dst));
+		memset(dst, 0, sizeof(*dst));
 		dst->sin_family = AF_INET;
 		dst->sin_len = sizeof(*dst);
 		dst->sin_addr = ip->ip_dst;
@@ -402,7 +400,7 @@ ip_output(struct mbuf *m0, ...)
 			xifa = &xia->ia_ifa;
 			if (xifa->ifa_getifa != NULL) {
 				xia = ifatoia((*xifa->ifa_getifa)(xifa,
-				    &ro->ro_dst));
+				    rtcache_getdst(ro)));
 			}
 			ip->ip_src = xia->ia_addr.sin_addr;
 		}
@@ -463,7 +461,7 @@ ip_output(struct mbuf *m0, ...)
 	if (in_nullhost(ip->ip_src)) {
 		xifa = &ia->ia_ifa;
 		if (xifa->ifa_getifa != NULL)
-			ia = ifatoia((*xifa->ifa_getifa)(xifa, &ro->ro_dst));
+			ia = ifatoia((*xifa->ifa_getifa)(xifa, rtcache_getdst(ro)));
 		ip->ip_src = ia->ia_addr.sin_addr;
 	}
 
@@ -586,7 +584,7 @@ sendit:
 	state.m = m;
 	if (flags & IP_ROUTETOIF) {
 		state.ro = &iproute;
-		bzero(&iproute, sizeof(iproute));
+		memset(&iproute, 0, sizeof(iproute));
 	} else
 		state.ro = ro;
 	state.dst = (struct sockaddr *)dst;
@@ -820,6 +818,7 @@ spd_done:
 
 	ip = mtod(m, struct ip *);
 	hlen = ip->ip_hl << 2;
+	ip_len = ntohs(ip->ip_len);
 #endif /* PFIL_HOOKS */
 
 	m->m_pkthdr.csum_data |= hlen << 16;
@@ -964,8 +963,7 @@ spd_done:
 	if (error == 0)
 		ipstat.ips_fragmented++;
 done:
-	if (ro == &iproute && (flags & IP_ROUTETOIF) == 0)
-		rtcache_free(ro);
+	rtcache_free(&iproute);
 
 #ifdef IPSEC
 	if (sp != NULL) {
@@ -1360,7 +1358,7 @@ ip_ctloutput(int op, struct socket *so, int level, int optname,
 
 #ifdef __NetBSD__
 			if (l == 0 || kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+			    KAUTH_GENERIC_ISSUSER, NULL))
 				priv = 0;
 			else
 				priv = 1;
@@ -1760,17 +1758,13 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 		 * the route to the given multicast address.
 		 */
 		if (in_nullhost(mreq->imr_interface)) {
-			bzero((caddr_t)&ro, sizeof(ro));
+			memset(&ro, 0, sizeof(ro));
 			dst = satosin(&ro.ro_dst);
 			dst->sin_len = sizeof(*dst);
 			dst->sin_family = AF_INET;
 			dst->sin_addr = mreq->imr_multiaddr;
 			rtcache_init(&ro);
-			if (ro.ro_rt == NULL) {
-				error = EADDRNOTAVAIL;
-				break;
-			}
-			ifp = ro.ro_rt->rt_ifp;
+			ifp = (ro.ro_rt != NULL) ? ro.ro_rt->rt_ifp : NULL;
 			rtcache_free(&ro);
 		} else {
 			ifp = ip_multicast_if(&mreq->imr_interface, NULL);

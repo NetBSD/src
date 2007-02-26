@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.h,v 1.9.4.3 2006/12/30 20:48:41 yamt Exp $	*/
+/*	$NetBSD: azalia.h,v 1.9.4.4 2007/02/26 09:10:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -470,6 +470,7 @@ typedef struct {
 
 
 /* #define AZALIA_DEBUG */
+/* #define AZALIA_DEBUG_DOT */
 #ifdef AZALIA_DEBUG
 # define DPRINTF(x)	do { printf x; } while (0/*CONSTCOND*/)
 #else

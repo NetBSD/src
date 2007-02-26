@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.17.6.1 2006/06/21 15:06:47 yamt Exp $ */
+/* 	$NetBSD: rasops.h,v 1.17.6.2 2007/02/26 09:10:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@ struct wsdisplay_font;
 #define RI_CENTER	0x20	/* center onscreen output */
 #define RI_CURSORCLIP	0x40	/* cursor is currently clipped */
 #define RI_CFGDONE	0x80	/* rasops_reconfig() completed successfully */
+#define RI_ROTATE_CW	0x100	/* display is rotated, quarter clockwise */
 
 struct rasops_info {
 	/* These must be filled in by the caller */
@@ -110,6 +111,11 @@ struct rasops_info {
 
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
+
+#if NRASOPS_ROTATION > 0
+	/* Used to intercept putchar to permit display rotation */
+	struct	wsdisplay_emulops ri_real_ops;
+#endif
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))

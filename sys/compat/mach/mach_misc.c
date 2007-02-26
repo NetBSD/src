@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.21.16.1 2006/12/30 20:47:42 yamt Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.21.16.2 2007/02/26 09:09:27 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.21.16.1 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.21.16.2 2007/02/26 09:09:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.21.16.1 2006/12/30 20:47:42 yamt Exp
 #include <sys/signalvar.h>
 
 #include <netinet/in.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>

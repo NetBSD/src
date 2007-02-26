@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.14.16.1 2006/06/21 14:48:15 yamt Exp $ */
+/* $NetBSD: proc.h,v 1.14.16.2 2007/02/26 09:05:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -39,6 +39,7 @@ struct mdlwp {
 	u_long	md_flags;
 	struct	trapframe *md_tf;	/* trap/syscall registers */
 	struct pcb *md_pcbpaddr;	/* phys addr of the pcb */
+	volatile int md_astpending;	/* AST pending for this process */
 };
 /*
  * md_flags usage
@@ -68,7 +69,6 @@ struct lwp;
 struct mdproc {
 					/* this process's syscall vector */
 	void	(*md_syscall)(struct lwp *, u_int64_t, struct trapframe *);
-	volatile int md_astpending;	/* AST pending for this process */
 };
 
 

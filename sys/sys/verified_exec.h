@@ -1,32 +1,31 @@
-/*	$NetBSD: verified_exec.h,v 1.15.2.2 2006/12/30 20:50:56 yamt Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.15.2.3 2007/02/26 09:12:17 yamt Exp $	*/
 
 /*-
- * Copyright 2005 Elad Efrat <elad@NetBSD.org>
- * Copyright 2005 Brett Lymn <blymn@netbsd.org>
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Brett Lymn and Elad Efrat
+ * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
+ * Copyright (c) 2005, 2006 Brett Lymn <blymn@NetBSD.org>
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the authors may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef _SYS_VERIFIED_EXEC_H_
@@ -84,10 +83,6 @@ typedef void (*veriexec_fpop_final_t)(u_char *, void *);
 #if defined(_KERNEL) && !defined(HAVE_NBTOOL_CONFIG_H)
 MALLOC_DECLARE(M_VERIEXEC);
 
-struct veriexec_file_entry;
-struct veriexec_table_entry;
-
-extern int veriexec_verbose;
 extern int veriexec_strict;
 
 /* Readable values for veriexec_report(). */
@@ -109,15 +104,17 @@ int veriexec_fpops_add(const char *, size_t, size_t, veriexec_fpop_init_t,
 int veriexec_table_add(struct lwp *, prop_dictionary_t);
 int veriexec_file_add(struct lwp *, prop_dictionary_t);
 int veriexec_verify(struct lwp *, struct vnode *, const u_char *, int,
-    boolean_t *);
-boolean_t veriexec_lookup(struct vnode *);
-int veriexec_file_delete(struct vnode *);
-int veriexec_table_delete(struct mount *);
+    bool *);
+#ifdef notyet
+int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *,
+    size_t, struct lwp *);
+#endif /* notyet */
+bool veriexec_lookup(struct vnode *);
+int veriexec_file_delete(struct lwp *, struct vnode *);
+int veriexec_table_delete(struct lwp *, struct mount *);
 int veriexec_convert(struct vnode *, prop_dictionary_t);
 void veriexec_report(const u_char *, const u_char *, struct lwp *, int);
 void veriexec_purge(struct vnode *);
-int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *,
-    size_t, struct lwp *);
 int veriexec_removechk(struct vnode *, const char *, struct lwp *l);
 int veriexec_renamechk(struct vnode *, const char *, struct vnode *,
     const char *, struct lwp *);

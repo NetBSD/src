@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.55.2.2 2006/12/30 20:50:17 yamt Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.55.2.3 2007/02/26 09:11:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55.2.2 2006/12/30 20:50:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.55.2.3 2007/02/26 09:11:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,6 +310,7 @@ struct vfsops nullfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	layerfs_snapshot,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	nullfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

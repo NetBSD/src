@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.20.4.2 2006/12/30 20:48:03 yamt Exp $ */
+/*	$NetBSD: igsfb.c,v 1.20.4.3 2007/02/26 09:10:08 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.20.4.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.20.4.3 2007/02/26 09:10:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,6 +221,7 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 	bus_addr_t fbaddr, craddr;
 	off_t croffset;
 	uint8_t busctl, curctl;
+	void *va;
 
 	/* Total amount of video memory. */
 	busctl = igs_ext_read(dc->dc_iot, dc->dc_ioh, IGS_EXT_BUS_CTL);
@@ -327,8 +328,8 @@ igsfb_init_video(struct igsfb_devconfig *dc)
 
 	/* XXX: fill dc_cursor and use igsfb_update_cursor() instead? */
 	memset(&dc->dc_cursor, 0, sizeof(struct igs_hwcursor));
-	memset(bus_space_vaddr(dc->dc_memt, dc->dc_crh),
-	       /* transparent */ 0xaa, IGS_CURSOR_DATA_SIZE);
+	va = bus_space_vaddr(dc->dc_memt, dc->dc_crh);
+	memset(va, /* transparent */ 0xaa, IGS_CURSOR_DATA_SIZE);
 
 	curctl = igs_ext_read(dc->dc_iot, dc->dc_ioh, IGS_EXT_SPRITE_CTL);
 	curctl |= IGS_EXT_SPRITE_64x64;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.250.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.250.2.3 2007/02/26 09:11:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.3 2007/02/26 09:11:22 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.2 2006/12/30 20:50:07 yamt Exp 
 #include <sys/malloc.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/device.h>
 #include <sys/filedesc.h>
@@ -661,13 +660,8 @@ insmntque(struct vnode *vp, struct mount *mp)
 	/*
 	 * Insert into list of vnodes for the new mount point, if available.
 	 */
-	if ((vp->v_mount = mp) != NULL) {
-		if (TAILQ_EMPTY(&mp->mnt_vnodelist)) {
-			TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
-		} else {
-			TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-		}
-	}
+	if ((vp->v_mount = mp) != NULL)
+		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	simple_unlock(&mntvnode_slock);
 }
 
@@ -1754,7 +1748,7 @@ vgonel(struct vnode *vp, struct lwp *l)
 
 	vp->v_type = VBAD;
 	if (vp->v_usecount == 0) {
-		boolean_t dofree;
+		bool dofree;
 
 		simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)
@@ -2120,7 +2114,7 @@ vaccess(enum vtype type, mode_t file_mode, uid_t uid, gid_t gid,
 	 * Super-user always gets read/write access, but execute access depends
 	 * on at least one execute bit being set.
 	 */
-	if (kauth_cred_geteuid(cred) == 0) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
 		if ((acc_mode & VEXEC) && type != VDIR &&
 		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
 			return (EACCES);
@@ -2187,9 +2181,9 @@ vfs_unmountall(struct lwp *l)
 		 * XXX Freeze syncer.  Must do this before locking the
 		 * mount point.  See dounmount() for details.
 		 */
-		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&syncer_mutex);
 		if (vfs_busy(mp, 0, 0)) {
-			lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			mutex_exit(&syncer_mutex);
 			continue;
 		}
 		if ((error = dounmount(mp, MNT_FORCE, l)) != 0) {
@@ -2446,60 +2440,6 @@ vfs_reinit(void)
 			(*vfs->vfs_reinit)();
 		}
 	}
-}
-
-/*
- * Request a filesystem to suspend write operations.
- */
-int
-vfs_write_suspend(struct mount *mp, int slpflag, int slptimeo)
-{
-	struct lwp *l = curlwp;	/* XXX */
-	int error;
-
-	while ((mp->mnt_iflag & IMNT_SUSPEND)) {
-		if (slptimeo < 0)
-			return EWOULDBLOCK;
-		error = tsleep(&mp->mnt_flag, slpflag, "suspwt1", slptimeo);
-		if (error)
-			return error;
-	}
-	mp->mnt_iflag |= IMNT_SUSPEND;
-
-	simple_lock(&mp->mnt_slock);
-	if (mp->mnt_writeopcountupper > 0)
-		ltsleep(&mp->mnt_writeopcountupper, PUSER - 1, "suspwt",
-			0, &mp->mnt_slock);
-	simple_unlock(&mp->mnt_slock);
-
-	error = VFS_SYNC(mp, MNT_WAIT, l->l_cred, l);
-	if (error) {
-		vfs_write_resume(mp);
-		return error;
-	}
-	mp->mnt_iflag |= IMNT_SUSPENDLOW;
-
-	simple_lock(&mp->mnt_slock);
-	if (mp->mnt_writeopcountlower > 0)
-		ltsleep(&mp->mnt_writeopcountlower, PUSER - 1, "suspwt",
-			0, &mp->mnt_slock);
-	mp->mnt_iflag |= IMNT_SUSPENDED;
-	simple_unlock(&mp->mnt_slock);
-
-	return 0;
-}
-
-/*
- * Request a filesystem to resume write operations.
- */
-void
-vfs_write_resume(struct mount *mp)
-{
-
-	if ((mp->mnt_iflag & IMNT_SUSPEND) == 0)
-		return;
-	mp->mnt_iflag &= ~(IMNT_SUSPEND | IMNT_SUSPENDLOW | IMNT_SUSPENDED);
-	wakeup(&mp->mnt_flag);
 }
 
 void
@@ -2759,14 +2699,11 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	else if (mp->mnt_lock.lk_flags & LK_HAVE_EXCL) {
 		(*pr)(" lock type %s: EXCL (count %d) by ",
 		    mp->mnt_lock.lk_wmesg, mp->mnt_lock.lk_exclusivecount);
-		if (mp->mnt_lock.lk_flags & LK_SPIN)
-			(*pr)("processor %lu", mp->mnt_lock.lk_cpu);
-		else
-			(*pr)("pid %d.%d", mp->mnt_lock.lk_lockholder,
-			    mp->mnt_lock.lk_locklwp);
+		(*pr)("pid %d.%d", mp->mnt_lock.lk_lockholder,
+		    mp->mnt_lock.lk_locklwp);
 	} else
 		(*pr)(" not locked");
-	if ((mp->mnt_lock.lk_flags & LK_SPIN) == 0 && mp->mnt_lock.lk_waitcount > 0)
+	if (mp->mnt_lock.lk_waitcount > 0)
 		(*pr)(" with %d pending", mp->mnt_lock.lk_waitcount);
 
 	(*pr)("\n");

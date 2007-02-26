@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.h,v 1.12.16.1 2006/06/21 15:12:39 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.h,v 1.12.16.2 2007/02/26 09:12:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -70,7 +70,7 @@ int uao_set_swslot(struct uvm_object *, int, int);
 #if defined(VMSWAP)
 int uao_find_swslot(struct uvm_object *, int);
 void uao_dropswap(struct uvm_object *, int);
-int uao_swap_off(int, int);
+bool uao_swap_off(int, int);
 void uao_dropswap_range(struct uvm_object *, voff_t, voff_t);
 #else /* defined(VMSWAP) */
 #define	uao_find_swslot(obj, off)	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.76.10.1 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.76.10.2 2007/02/26 09:07:14 yamt Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.76.10.1 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.76.10.2 2007/02/26 09:07:14 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -173,8 +173,7 @@ ae_write_mbuf(struct dp8390_softc *sc, struct mbuf *m, int buf)
 		bus_space_write_region_2(sc->sc_buft, sc->sc_bufh,
 		    buf, (u_int16_t *)savebyte, 1);
 		buf += 2;
-		if (len > 0)
-			totlen++;
+		totlen++;
 		len--;
 	}
 	/* if sent data is shorter than EHTER_PAD_LEN, put 0 to padding */

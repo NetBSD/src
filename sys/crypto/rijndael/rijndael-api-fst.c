@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.18 2005/02/26 23:04:17 perry Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.18.4.1 2007/02/26 09:09:47 yamt Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.18 2005/02/26 23:04:17 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.18.4.1 2007/02/26 09:09:47 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.18 2005/02/26 23:04:17 perry 
 #include <crypto/rijndael/rijndael-alg-fst.h>
 #include <crypto/rijndael/rijndael-api-fst.h>
 
-int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMaterial) {
+int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, const char *keyMaterial) {
 	u_int8_t cipherKey[RIJNDAEL_MAXKB];
 
 	if (key == NULL) {
@@ -86,7 +86,7 @@ int rijndael_makeKey(keyInstance *key, BYTE direction, int keyLen, char *keyMate
 	return TRUE;
 }
 
-int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
+int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, const char *IV) {
 	if ((mode == MODE_ECB) || (mode == MODE_CBC) || (mode == MODE_CFB1)) {
 		cipher->mode = mode;
 	} else {
@@ -101,7 +101,7 @@ int rijndael_cipherInit(cipherInstance *cipher, BYTE mode, char *IV) {
 }
 
 int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
-		BYTE *input, int inputLen, BYTE *outBuffer) {
+		const BYTE *input, int inputLen, BYTE *outBuffer) {
 	int i, k, t, numBlocks;
 	u_int8_t block[16], *iv;
 
@@ -128,10 +128,15 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
 	case MODE_CBC:
 		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
-			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
-			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
-			((u_int32_t*)block)[2] = ((u_int32_t*)input)[2] ^ ((u_int32_t*)iv)[2];
-			((u_int32_t*)block)[3] = ((u_int32_t*)input)[3] ^ ((u_int32_t*)iv)[3];
+			const u_int32_t *src, *iv32;
+			u_int32_t *dst;
+			src = (const uint32_t *)input;
+			iv32 = (const u_int32_t *)iv;
+			dst = (u_int32_t *)block;
+			dst[0] = src[0] ^ iv32[0];
+			dst[1] = src[1] ^ iv32[1];
+			dst[2] = src[2] ^ iv32[2];
+			dst[3] = src[3] ^ iv32[3];
 			rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 			iv = outBuffer;
 			input += 16;
@@ -173,7 +178,7 @@ int rijndael_blockEncrypt(cipherInstance *cipher, keyInstance *key,
  * @return	length in octets (not bits) of the encrypted output buffer.
  */
 int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
-		BYTE *input, int inputOctets, BYTE *outBuffer) {
+		const BYTE *input, int inputOctets, BYTE *outBuffer) {
 	int i, numBlocks, padLen;
 	u_int8_t block[16], *iv;
 
@@ -204,10 +209,15 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 	case MODE_CBC:
 		iv = (u_int8_t *)cipher->IV;
 		for (i = numBlocks; i > 0; i--) {
-			((u_int32_t*)block)[0] = ((u_int32_t*)input)[0] ^ ((u_int32_t*)iv)[0];
-			((u_int32_t*)block)[1] = ((u_int32_t*)input)[1] ^ ((u_int32_t*)iv)[1];
-			((u_int32_t*)block)[2] = ((u_int32_t*)input)[2] ^ ((u_int32_t*)iv)[2];
-			((u_int32_t*)block)[3] = ((u_int32_t*)input)[3] ^ ((u_int32_t*)iv)[3];
+			const u_int32_t *src, *iv32;
+			u_int32_t *dst;
+			src = (const uint32_t *)input;
+			iv32 = (const u_int32_t *)iv;
+			dst = (u_int32_t *)block;
+			dst[0] = src[0] ^ iv32[0];
+			dst[1] = src[1] ^ iv32[1];
+			dst[2] = src[2] ^ iv32[2];
+			dst[3] = src[3] ^ iv32[3];
 			rijndaelEncrypt(key->rk, key->Nr, block, outBuffer);
 			iv = outBuffer;
 			input += 16;
@@ -231,7 +241,7 @@ int rijndael_padEncrypt(cipherInstance *cipher, keyInstance *key,
 }
 
 int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
-		BYTE *input, int inputLen, BYTE *outBuffer) {
+		const BYTE *input, int inputLen, BYTE *outBuffer) {
 	int i, k, t, numBlocks;
 	u_int8_t block[16], *iv;
 
@@ -295,7 +305,7 @@ int rijndael_blockDecrypt(cipherInstance *cipher, keyInstance *key,
 }
 
 int rijndael_padDecrypt(cipherInstance *cipher, keyInstance *key,
-		BYTE *input, int inputOctets, BYTE *outBuffer) {
+		const BYTE *input, int inputOctets, BYTE *outBuffer) {
 	int i, numBlocks, padLen;
 	u_int8_t block[16];
 

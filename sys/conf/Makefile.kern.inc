@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.68.2.2 2006/12/30 20:47:49 yamt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.68.2.3 2007/02/26 09:09:45 yamt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -443,13 +443,11 @@ EXTRA_CLEAN+= .gdbinit
 .endfor
 .endif
 
-# The following files use alloca(3) or variable array allocations,
-# or, in the case of kern_exit_43.c, an array of size 0 on the stack.
+# The following files use alloca(3) or variable array allocations.
 # Their full name is noted as documentation.
 VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     nfs/nfs_bio.c ufs/ufs/ufs_inode.c ufs/ufs/ufs_lookup.c uvm/uvm_bio.c \
-    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
-    compat/common/kern_exit_43.c
+    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c
 
 . if ${HAVE_GCC} > 3
 .for __varstack in ${VARSTACK}

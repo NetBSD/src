@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.2 2006/12/30 20:45:45 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.3 2007/02/26 09:06:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.2 2006/12/30 20:45:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.3 2007/02/26 09:06:12 yamt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.2 2006/12/30 20:45:45 yamt Exp $"
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/tty.h>
 #include <sys/user.h>
@@ -317,20 +316,20 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 FALSE, NULL);
+				 false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

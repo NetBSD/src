@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.23 2005/01/15 15:19:51 kent Exp $	*/
+/*	$NetBSD: awacs.c,v 1.23.10.1 2007/02/26 09:07:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.23 2005/01/15 15:19:51 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.23.10.1 2007/02/26 09:07:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -46,6 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.23 2005/01/15 15:19:51 kent Exp $");
 
 #include <dev/ofw/openfirm.h>
 #include <macppc/dev/dbdma.h>
+
+#include <dev/i2c/sgsmixvar.h>
+#include "sgsmix.h"
 
 #ifdef AWACS_DEBUG
 # define DPRINTF printf
@@ -70,11 +73,22 @@ struct awacs_softc {
 	u_int sc_record_source;		/* recording source mask */
 	u_int sc_output_mask;		/* output source mask */
 
+	int sc_screamer;
+	int sc_have_perch;
+	int spk_l, spk_r, hph_l, hph_r;
+	int sc_bass, sc_treble;
+#if NSGSMIX > 0
+	struct device *sc_sgsmix;
+#endif
+
 	char *sc_reg;
 	u_int sc_codecctl0;
 	u_int sc_codecctl1;
 	u_int sc_codecctl2;
 	u_int sc_codecctl4;
+	u_int sc_codecctl5;
+	u_int sc_codecctl6;
+	u_int sc_codecctl7;
 	u_int sc_soundctl;
 
 	struct dbdma_regmap *sc_odma;
@@ -114,7 +128,14 @@ static inline void awacs_write_reg(struct awacs_softc *, int, int);
 void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
+void awacs_set_loopthrough_volume(struct awacs_softc *, int, int);
 int awacs_set_rate(struct awacs_softc *, const audio_params_t *);
+void awacs_select_output(struct awacs_softc *, int);
+#if NSGSMIX > 0
+static void awacs_set_bass(struct awacs_softc *, int);
+static void awacs_set_treble(struct awacs_softc *, int);
+#endif
+static int awacs_setup_sgsmix(struct device *);
 
 CFATTACH_DECL(awacs, sizeof(struct awacs_softc),
     awacs_match, awacs_attach, NULL, NULL);
@@ -197,6 +218,9 @@ static const struct audio_format awacs_formats[AWACS_NFORMATS] = {
 #define AWACS_CODEC_ADDR1	0x00001000
 #define AWACS_CODEC_ADDR2	0x00002000
 #define AWACS_CODEC_ADDR4	0x00004000
+#define AWACS_CODEC_ADDR5	0x00005000
+#define AWACS_CODEC_ADDR6	0x00006000
+#define AWACS_CODEC_ADDR7	0x00007000
 #define AWACS_CODEC_EMSEL0	0x00000000
 #define AWACS_CODEC_EMSEL1	0x00400000
 #define AWACS_CODEC_EMSEL2	0x00800000
@@ -211,9 +235,14 @@ static const struct audio_format awacs_formats[AWACS_NFORMATS] = {
 #define AWACS_INPUT_MASK	0x00000e00
 
 /* cc1 */
+#define AWACS_LOOP_THROUGH	0x00000040
 #define AWACS_MUTE_SPEAKER	0x00000080
 #define AWACS_MUTE_HEADPHONE	0x00000200
+#define AWACS_PARALLEL_OUTPUT	0x00000c00
 
+/* output */
+#define OUTPUT_SPEAKER		1
+#define OUTPUT_HEADPHONES	2
 int
 awacs_match(struct device *parent, struct cfdata *match, void *aux)
 {
@@ -239,19 +268,23 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	struct awacs_softc *sc;
 	struct confargs *ca;
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
+	int len = -1, perch;
+	char compat[255];
 
 	sc = (struct awacs_softc *)self;
 	ca = aux;
-	ca->ca_reg[0] += ca->ca_baseaddr;
-	ca->ca_reg[2] += ca->ca_baseaddr;
-	ca->ca_reg[4] += ca->ca_baseaddr;
 
-	sc->sc_reg = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
+	sc->sc_reg = mapiodev(ca->ca_baseaddr + ca->ca_reg[0], ca->ca_reg[1]);
 
-	sc->sc_odma = mapiodev(ca->ca_reg[2], ca->ca_reg[3]); /* out */
-	sc->sc_idma = mapiodev(ca->ca_reg[4], ca->ca_reg[5]); /* in */
+	/* out */
+	sc->sc_odma = mapiodev(ca->ca_baseaddr + ca->ca_reg[2], ca->ca_reg[3]);
 	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
+	/* in */
+	sc->sc_idma = mapiodev(ca->ca_baseaddr + ca->ca_reg[4], ca->ca_reg[5]);
 	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
+
+	aprint_debug("base: %08x reg: %08x %08x %08x\n",ca->ca_baseaddr, 
+	    ca->ca_reg[0], ca->ca_reg[2], ca->ca_reg[4]);
 
 	if (strcmp(ca->ca_name, "i2s") == 0) {
 		int node, intr[6];
@@ -288,9 +321,38 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 
 	intr_establish(cirq, cirq_type, IPL_AUDIO, awacs_intr, sc);
 	intr_establish(oirq, oirq_type, IPL_AUDIO, awacs_intr, sc);
-	/* intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc); */
+	intr_establish(iirq, iirq_type, IPL_AUDIO, awacs_intr, sc);
+
+	/* check if the chip is a screamer */
+	sc->sc_screamer = 0;
+	memset(compat, 0, 256);
+	if ((len = OF_getprop(ca->ca_node, "compatible", compat, 255)) <= 0) {
+		int child;
+
+		child = OF_child(ca->ca_node);
+		while ((child != -1) && (len <= 0)) {
+			len = OF_getprop(child, "compatible", compat, 255);
+			child = OF_peer(child);
+		}
+	}
+	if (len > 0) {			
+		char *ptr = compat;
+		
+		while (( ptr[0] != 0) && (sc->sc_screamer == 0)) {
+			sc->sc_screamer = (strcmp(ptr, "screamer") == 0);
+			ptr += strlen(ptr) + 1;
+		}
+	}
+	if (sc->sc_screamer)
+		printf(" Screamer");
+
 
 	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
+
+	sc->spk_l = 0;
+	sc->spk_r = 0;
+	sc->hph_l = 0;
+	sc->hph_r = 0;
 
 	memcpy(&sc->sc_formats, awacs_formats, sizeof(awacs_formats));
 	/* XXX Uni-North based models don't have byteswap capability. */
@@ -308,23 +370,41 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_codecctl1 = AWACS_CODEC_ADDR1 | AWACS_CODEC_EMSEL0;
 	sc->sc_codecctl2 = AWACS_CODEC_ADDR2 | AWACS_CODEC_EMSEL0;
 	sc->sc_codecctl4 = AWACS_CODEC_ADDR4 | AWACS_CODEC_EMSEL0;
+	sc->sc_codecctl5 = AWACS_CODEC_ADDR5 | AWACS_CODEC_EMSEL0;
+	sc->sc_codecctl6 = AWACS_CODEC_ADDR6 | AWACS_CODEC_EMSEL0;
+	sc->sc_codecctl7 = AWACS_CODEC_ADDR7 | AWACS_CODEC_EMSEL0;
 
 	sc->sc_codecctl0 |= AWACS_INPUT_CD | AWACS_DEFAULT_CD_GAIN;
 	awacs_write_codec(sc, sc->sc_codecctl0);
 
-	/* Set initial volume[s] */
-	awacs_set_speaker_volume(sc, 80, 80);
-
 	/* Set loopback (for CD?) */
 	/* sc->sc_codecctl1 |= 0x440; */
-	sc->sc_codecctl1 |= 0x40;
+	sc->sc_codecctl1 |= (AWACS_LOOP_THROUGH | AWACS_PARALLEL_OUTPUT);
+
+        /* check for headphone present */
+        if (awacs_read_reg(sc, AWACS_CODEC_STATUS) & 0x8) {
+                /* default output to speakers */
+                printf(" headphones");
+                sc->sc_output_mask = OUTPUT_HEADPHONES;
+                sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+                sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER;
+        } else {
+                /* default output to speakers */
+                printf(" speaker");
+                sc->sc_output_mask = OUTPUT_SPEAKER;
+                sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
+                sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
+        }
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
-	/* default output to speakers */
-	sc->sc_output_mask = 1 << 0;
-	sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
-	sc->sc_codecctl1 |= AWACS_MUTE_HEADPHONE;
-	awacs_write_codec(sc, sc->sc_codecctl1);
+	delay(100);
+	if (sc->sc_screamer) {
+		awacs_write_codec(sc, sc->sc_codecctl6);
+		awacs_write_codec(sc, sc->sc_codecctl5);
+		delay(2);
+		awacs_write_codec(sc, sc->sc_codecctl1);
+		awacs_write_codec(sc, sc->sc_codecctl7);
+	}
 
 	/* default input from CD */
 	sc->sc_record_source = 1 << 0;
@@ -335,8 +415,65 @@ awacs_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable interrupts and looping mode. */
 	/* XXX ... */
 
+	sc->sc_codecctl1 |= (AWACS_LOOP_THROUGH | AWACS_PARALLEL_OUTPUT);
+	awacs_write_codec(sc, sc->sc_codecctl1);
+
+#if NSGSMIX > 0
+	sc->sc_sgsmix = NULL;
+#endif
+	sc->sc_have_perch = 0;
+	if ((perch = OF_finddevice("/perch")) != -1) {
+
+		len = OF_getprop(perch, "compatible", compat, 255);
+		if (len > 0) {
+			printf("%s: found '%s' personality card\n",
+			    sc->sc_dev.dv_xname, compat);
+			sc->sc_have_perch = 1;
+			config_finalize_register(&sc->sc_dev, awacs_setup_sgsmix);
+		}
+	}
+
+	/* Set initial volume[s] */
+	awacs_set_speaker_volume(sc, 80, 80);
+	awacs_set_ext_volume(sc, 120, 120);
+	//awacs_set_loopthrough_volume(sc, 240, 240);
+
 	audio_attach_mi(&awacs_hw_if, sc, &sc->sc_dev);
 }
+
+static int
+awacs_setup_sgsmix(struct device *cookie)
+{
+	struct awacs_softc *sc = (struct awacs_softc *)cookie;
+#if NSGSMIX > 0
+	struct device *dv;
+#endif
+
+	if (!sc->sc_have_perch)
+		return 0;
+#if NSGSMIX > 0
+	/* look for sgsmix */
+	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
+		if (device_is_a(dv, "sgsmix")) {
+			sc->sc_sgsmix = dv;
+			break;
+		}
+	}
+	if (sc->sc_sgsmix == NULL)
+		return 0;
+
+	printf("%s: using %s\n", sc->sc_dev.dv_xname,
+	    sc->sc_sgsmix->dv_xname);
+
+	awacs_select_output(sc, sc->sc_output_mask);
+	awacs_set_speaker_volume(sc, sc->spk_l, sc->spk_r);
+	awacs_set_ext_volume(sc, sc->hph_l, sc->hph_r);
+	awacs_set_bass(sc, 128);
+	awacs_set_treble(sc, 128);	
+#endif
+	return 0;
+}
+
 
 static inline u_int
 awacs_read_reg(struct awacs_softc *sc, int reg)
@@ -360,9 +497,15 @@ void
 awacs_write_codec(struct awacs_softc *sc, int value)
 {
 
+	do {
+		delay(100);
+	} while (awacs_read_reg(sc, AWACS_CODEC_CTRL) & AWACS_CODEC_BUSY);
+
 	awacs_write_reg(sc, AWACS_CODEC_CTRL, value);
-	while (awacs_read_reg(sc, AWACS_CODEC_CTRL) & AWACS_CODEC_BUSY)
-		continue;
+
+	do {
+		delay(100);
+	} while (awacs_read_reg(sc, AWACS_CODEC_CTRL) & AWACS_CODEC_BUSY);
 }
 
 int
@@ -573,6 +716,8 @@ enum {
 	AWACS_VOL_HEADPHONE,
 	AWACS_INPUT_SELECT,
 	AWACS_VOL_INPUT,
+	AWACS_BASS,
+	AWACS_TREBLE,
 	AWACS_ENUM_LAST
 };
 
@@ -592,15 +737,7 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 		/* No change necessary? */
 		if (mc->un.mask == sc->sc_output_mask)
 			return 0;
-
-		sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER | AWACS_MUTE_HEADPHONE;
-		if (mc->un.mask & 1 << 0)
-			sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
-		if (mc->un.mask & 1 << 1)
-			sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
-
-		awacs_write_codec(sc, sc->sc_codecctl1);
-		sc->sc_output_mask = mc->un.mask;
+		awacs_select_output(sc, mc->un.mask);
 		return 0;
 
 	case AWACS_VOL_SPEAKER:
@@ -642,6 +779,16 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 		sc->sc_codecctl0 |= (l & 0xf0) | (r >> 4);
 		awacs_write_codec(sc, sc->sc_codecctl0);
 		return 0;
+
+#if NSGSMIX > 0
+	case AWACS_BASS:
+		awacs_set_bass(sc, l);
+		return 0;
+
+	case AWACS_TREBLE:
+		awacs_set_treble(sc, l);
+		return 0;
+#endif
 	}
 
 	return ENXIO;
@@ -651,7 +798,7 @@ int
 awacs_get_port(void *h, mixer_ctrl_t *mc)
 {
 	struct awacs_softc *sc;
-	int vol, l, r;
+	int l, r, vol;
 
 	DPRINTF("awacs_get_port dev = %d, type = %d\n", mc->dev, mc->type);
 	sc = h;
@@ -661,19 +808,13 @@ awacs_get_port(void *h, mixer_ctrl_t *mc)
 		return 0;
 
 	case AWACS_VOL_SPEAKER:
-		vol = sc->sc_codecctl4;
-		l = (15 - ((vol & 0x3c0) >> 6)) * 16;
-		r = (15 - (vol & 0x0f)) * 16;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->spk_l;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->spk_r;
 		return 0;
 
 	case AWACS_VOL_HEADPHONE:
-		vol = sc->sc_codecctl2;
-		l = (15 - ((vol & 0x3c0) >> 6)) * 16;
-		r = (15 - (vol & 0x0f)) * 16;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->hph_l;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->hph_r;
 		return 0;
 
 	case AWACS_INPUT_SELECT:
@@ -687,6 +828,15 @@ awacs_get_port(void *h, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = l;
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = r;
 		return 0;
+#if NSGSMIX > 0
+	case AWACS_BASS:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_bass;
+		return 0;
+
+	case AWACS_TREBLE:
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = sc->sc_treble;
+		return 0;
+#endif
 
 	default:
 		return ENXIO;
@@ -698,6 +848,9 @@ awacs_get_port(void *h, mixer_ctrl_t *mc)
 int
 awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 {
+#if NSGSMIX > 0
+	struct awacs_softc *sc = h;
+#endif
 
 	DPRINTF("query_devinfo %d\n", dip->index);
 
@@ -732,6 +885,30 @@ awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 		dip->un.v.num_channels = 2;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		return 0;
+
+#if NSGSMIX > 0
+	case AWACS_BASS:
+		if (sc->sc_sgsmix == NULL)
+			return ENXIO;
+		dip->mixer_class = AWACS_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioNbass);
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNbass);
+		return 0;
+
+	case AWACS_TREBLE:
+		if (sc->sc_sgsmix == NULL)
+			return ENXIO;
+		dip->mixer_class = AWACS_MONITOR_CLASS;
+		strcpy(dip->label.name, AudioNtreble);
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->prev = dip->next = AUDIO_MIXER_LAST;
+		dip->un.v.num_channels = 1;
+		strcpy(dip->un.v.units.name, AudioNtreble);
+		return 0;
+#endif
 
 	case AWACS_INPUT_SELECT:
 		dip->mixer_class = AWACS_RECORD_CLASS;
@@ -864,33 +1041,129 @@ awacs_trigger_input(void *h, void *start, void *end, int bsize,
 }
 
 void
+awacs_select_output(struct awacs_softc *sc, int mask)
+{
+
+#if NSGSMIX > 0
+	if (sc->sc_sgsmix) {
+		if (mask & OUTPUT_HEADPHONES) {
+			/* mute speakers */
+			sgsmix_set_speaker_vol(sc->sc_sgsmix, 0, 0);
+			sgsmix_set_headphone_vol(sc->sc_sgsmix,
+			    sc->hph_l, sc->hph_r);
+		}
+		if (mask & OUTPUT_SPEAKER) {
+			/* mute headphones */
+			sgsmix_set_speaker_vol(sc->sc_sgsmix,
+			    sc->hph_l, sc->hph_r);
+			sgsmix_set_headphone_vol(sc->sc_sgsmix, 0, 0);
+		}
+	} else {
+#endif
+	sc->sc_codecctl1 |= AWACS_MUTE_SPEAKER | AWACS_MUTE_HEADPHONE;
+	if (mask & 1 << 0)
+		sc->sc_codecctl1 &= ~AWACS_MUTE_SPEAKER;
+	if (mask & 1 << 1)
+		sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
+
+	awacs_write_codec(sc, sc->sc_codecctl1);
+#if NSGSMIX > 0
+	}
+#endif
+	sc->sc_output_mask = mask;
+}
+
+void
 awacs_set_speaker_volume(struct awacs_softc *sc, int left, int right)
 {
-	int lval;
-	int rval;
 
-	lval = 15 - (left  & 0xff) / 16;
-	rval = 15 - (right & 0xff) / 16;
-	DPRINTF("speaker_volume %d %d\n", lval, rval);
+#if NSGSMIX > 0
+	if (sc->sc_sgsmix) {
+		if (sc->sc_output_mask & OUTPUT_SPEAKER)
+			sgsmix_set_speaker_vol(sc->sc_sgsmix, left, right);
+	} else
+#endif
+	{
+		int lval;
+		int rval;
 
-	sc->sc_codecctl4 &= ~0x3cf;
-	sc->sc_codecctl4 |= (lval << 6) | rval;
-	awacs_write_codec(sc, sc->sc_codecctl4);
+		lval = 15 - (left  & 0xff) / 16;
+		rval = 15 - (right & 0xff) / 16;
+		DPRINTF("speaker_volume %d %d\n", lval, rval);
+
+		sc->sc_codecctl4 &= ~0x3cf;
+		sc->sc_codecctl4 |= (lval << 6) | rval;
+		awacs_write_codec(sc, sc->sc_codecctl4);
+	}
+	sc->spk_l = left;
+	sc->spk_r = right;
 }
 
 void
 awacs_set_ext_volume(struct awacs_softc *sc, int left, int right)
 {
+
+#if NSGSMIX > 0
+	if (sc->sc_sgsmix) {
+		if (sc->sc_output_mask & OUTPUT_HEADPHONES)
+			sgsmix_set_headphone_vol(sc->sc_sgsmix, left, right);
+	} else
+#endif
+	{
+		int lval;
+		int rval;
+
+		lval = 15 - (left  & 0xff) / 16;
+		rval = 15 - (right & 0xff) / 16;
+		DPRINTF("ext_volume %d %d\n", lval, rval);
+
+		sc->sc_codecctl2 &= ~0x3cf;
+		sc->sc_codecctl2 |= (lval << 6) | rval;
+		awacs_write_codec(sc, sc->sc_codecctl2);
+	}
+	sc->hph_l = left;
+	sc->hph_r = right;
+}
+
+#if NSGSMIX > 0
+static void
+awacs_set_bass(struct awacs_softc *sc, int bass)
+{
+
+	if (sc->sc_bass == bass)
+		return;
+
+	sc->sc_bass = bass;
+	if (sc->sc_sgsmix)
+		sgsmix_set_bass_treble(sc->sc_sgsmix, sc->sc_bass, sc->sc_treble);
+}
+
+static void
+awacs_set_treble(struct awacs_softc *sc, int treble)
+{
+
+	if (sc->sc_treble == treble)
+		return;
+
+	sc->sc_treble = treble;
+	if (sc->sc_sgsmix)
+		sgsmix_set_bass_treble(sc->sc_sgsmix, sc->sc_bass, sc->sc_treble);
+}
+#endif
+
+void
+awacs_set_loopthrough_volume(struct awacs_softc *sc, int left, int right)
+{
 	int lval;
 	int rval;
 
 	lval = 15 - (left  & 0xff) / 16;
 	rval = 15 - (right & 0xff) / 16;
-	DPRINTF("ext_volume %d %d\n", lval, rval);
+	DPRINTF("loopthrough_volume %d %d\n", lval, rval);
 
-	sc->sc_codecctl2 &= ~0x3cf;
-	sc->sc_codecctl2 |= (lval << 6) | rval;
-	awacs_write_codec(sc, sc->sc_codecctl2);
+	sc->sc_codecctl5 &= ~0x3cf;
+	sc->sc_codecctl5 |= (lval << 6) | rval;
+	awacs_write_codec(sc, sc->sc_codecctl5);
 }
 
 int

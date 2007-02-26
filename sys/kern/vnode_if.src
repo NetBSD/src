@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.44.4.1 2006/06/21 15:09:39 yamt Exp $
+#	$NetBSD: vnode_if.src,v 1.44.4.2 2007/02/26 09:11:24 yamt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -56,38 +56,26 @@
 #     
  
 #
-#% lookup     dvp     L ? ?
+#% lookup     dvp     L L L
 #% lookup     vpp     - L -
 #
-# XXX - the lookup locking protocol defies simple description and depends
-#     on the flags and operation fields in the (cnp) structure.  Note
-#     especially that *vpp may equal dvp and both may be locked.
+# XXX - the lookup locking protocol defies simple description.
+#    Note especially that *vpp may equal dvp.
 #
 #    More details:
 #     There are three types of lookups: ".", ".." (ISDOTDOT), and other.
 #     On successful lookup of ".", a reference is added to dvp, and it
 #          is returned in *vpp.
 #     To look up ISDOTDOT, dvp is unlocked, the ".." node is locked, and
-#          then dvp is relocked iff LOCKPARENT is set and this is the last
-#          component name (ISLASTCN set). This preserves the
-#          protocol of always locking nodes from root ("/") downward and
-#          prevents deadlock.
+#          then dvp is relocked.  This preserves the protocol of always
+#          locking nodes from root ("/") downward and prevents deadlock.
 #     Other lookups find the named node (creating the vnode if needed) and
 #          return it, locked, in *vpp.
-#     For non-"." lookups, if LOCKPARENT is not set or this was not the
-#          last component name, dvp is returned unlocked on a successful
-#          lookup.
-#     On failure, *vpp is NULL, and *dvp is left locked. If there was
-#          an error re-locking dvp (for instance in the ISDOTDOT case),
-#          the error is returned with PDIRUNLOCK set.
+#     On failure, *vpp is NULL, and *dvp is left locked.
 #	
 #     *vpp is always locked on return if the operation succeeds.
-#     typically, if *vpp == dvp, you need to release twice, but unlock once.
-#
-#     The PDIRUNLOCK flag is set when dvp is unlocked in the lookup routine.
-#          It signals the caller that dvp's lock state changed. It will
-#          be set on exit if either a successful lookup unlocked the
-#          parrent, or there was an error re-locking dvp in the ISDOTDOT case.
+#          Typically, if *vpp == dvp, you need to release twice, but
+#          unlock only once.
 #
 #     See sys/sys/namei.h for a description of the SAVENAME and SAVESTART
 #          flags.
@@ -306,7 +294,7 @@ vop_link {
 #% rename     tdvp    L U U
 #% rename     tvp     X U U
 #
-#! rename fcnp	DELETE,	WANTPARENT | SAVESTART
+#! rename fcnp	DELETE,	LOCKPARENT | SAVESTART
 #! rename tcnp	RENAME, LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART
 #
 # XXX the vop_rename routines should REALLY NOT be depending on SAVESTART!

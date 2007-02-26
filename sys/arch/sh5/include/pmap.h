@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 2005/01/29 11:20:09 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19.6.1 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,8 +78,8 @@ extern struct pmap kernel_pmap_store;
 #define	pmap_kernel()	(&kernel_pmap_store)
 
 extern int pmap_write_trap(struct proc *, int, vaddr_t);
-extern boolean_t pmap_clear_bit(struct vm_page *, ptel_t);
-extern boolean_t pmap_query_bit(struct vm_page *, ptel_t);
+extern bool pmap_clear_bit(struct vm_page *, ptel_t);
+extern bool pmap_query_bit(struct vm_page *, ptel_t);
 
 extern vaddr_t pmap_map_poolpage(paddr_t);
 extern paddr_t pmap_unmap_poolpage(vaddr_t);

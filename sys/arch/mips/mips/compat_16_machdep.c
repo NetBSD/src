@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4.8.2 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.4.8.3 2007/02/26 09:07:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.8.2 2006/12/30 20:46:33 yamt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.8.3 2007/02/26 09:07:27 yamt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.8.2 2006/12/30 20:46:33 ya
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -95,7 +94,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	struct sigcontext *scp = getframe(l, sig, &onstack), ksc;
 	struct frame *f;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -135,7 +134,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 #endif
 
 	/* Save signal stack. */
-	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	ksc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	ksc.sc_mask = *returnmask;
@@ -150,7 +149,13 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	native_sigset_to_sigset13(returnmask, &ksc.__sc_mask13);
 #endif
 
-	if (copyout(&ksc, (caddr_t)scp, sizeof(ksc))) {
+	sendsig_reset(l, sig);
+
+	mutex_exit(&p->p_smutex);
+	error = copyout(&ksc, (caddr_t)scp, sizeof(ksc));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -195,7 +200,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
@@ -263,14 +268,15 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	l->l_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 #endif
 
+	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

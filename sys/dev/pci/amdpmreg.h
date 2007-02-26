@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpmreg.h,v 1.1.28.1 2006/06/21 15:05:03 yamt Exp $	*/
+/*	$NetBSD: amdpmreg.h,v 1.1.28.2 2007/02/26 09:10:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,9 @@
 
 #define	AMDPM_PMPTR	0x58		/* PMxx System Management IO space
 					   Pointer */
+#define	NFORCE_PMPTR	0x14		/* nForce System Management IO space */
 #define	AMDPM_PMBASE(x)	((x) & 0xff00)	/* PMxx base address */
+#define	NFORCE_PMBASE(x) ((x) & 0xfffc) /* nForce base address */
 #define	AMDPM_PMSIZE	256		/* PMxx space size */
 
 /* Registers in PMxx space */

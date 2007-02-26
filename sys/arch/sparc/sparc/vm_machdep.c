@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83.2.2 2006/12/30 20:46:58 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.83.2.3 2007/02/26 09:08:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83.2.2 2006/12/30 20:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83.2.3 2007/02/26 09:08:22 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -111,7 +111,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
 	do {
-		if (pmap_extract(upmap, uva, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == false)
 			panic("vmapbuf: null page frame");
 		/* Now map the page into kernel space. */
 		pmap_enter(kpmap, kva, pa,
@@ -311,9 +311,16 @@ cpu_lwp_free(struct lwp *l, int proc)
 		}
 		l->l_md.md_fpu = NULL;
 		FPU_UNLOCK(s);
-		l->l_md.md_fpstate = NULL;
-		free((void *)fs, M_SUBPROC);
 	}
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
+	struct fpstate *fs;
+
+	if ((fs = l->l_md.md_fpstate) != NULL)
+		free((void *)fs, M_SUBPROC);
 }
 
 void

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.19.2.1 2006/06/21 14:59:11 yamt Exp $  
+	$NetBSD: syscalls.master,v 1.19.2.2 2007/02/26 09:09:16 yamt Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -50,7 +50,6 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

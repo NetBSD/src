@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.91.2.2 2006/12/30 20:51:05 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.91.2.3 2007/02/26 09:12:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91.2.2 2006/12/30 20:51:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91.2.3 2007/02/26 09:12:31 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.91.2.2 2006/12/30 20:51:05 yamt Exp $
 
 #include <miscfs/specfs/specdev.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>
@@ -178,7 +177,7 @@ sys_mincore(struct lwp *l, void *v, register_t *retval)
 	}
 	vm_map_lock_read(map);
 
-	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
+	if (uvm_map_lookup_entry(map, start, &entry) == false) {
 		error = ENOMEM;
 		goto out;
 	}
@@ -406,19 +405,6 @@ sys_mmap(l, v, retval)
 			goto is_anon;
 		}
 
-#if NVERIEXEC > 0
-		/*
-		 * If we are mapping the file as executable, we expect to
-		 * have the VERIEXEC_INDIRECT flag set for the entry if it
-		 * exists.
-		 */
-		if (prot & VM_PROT_EXECUTE) {
-			if (veriexec_verify(l, vp, "[mmap]",
-			    VERIEXEC_INDIRECT, NULL) != 0)
-				return (EPERM);
-		}
-#endif /* NVERIEXEC > 0 */
-
 		/*
 		 * Old programs may not select a specific sharing type, so
 		 * default to an appropriate one.
@@ -452,6 +438,26 @@ sys_mmap(l, v, retval)
 		 */
 
 		maxprot = VM_PROT_EXECUTE;
+
+#if NVERIEXEC > 0
+		/*
+		 * Check if the file can be executed indirectly.
+		 */
+		if (veriexec_verify(l, vp, "(mmap)", VERIEXEC_INDIRECT, NULL)) {
+			/*
+			 * Don't allow executable mappings if we can't
+			 * indirectly execute the file.
+			 */
+			if (prot & VM_PROT_EXECUTE)
+				return (EPERM);
+
+			/*
+			 * Strip the executable bit from 'maxprot' to make sure
+			 * it can't be made executable later.
+			 */
+			maxprot &= ~VM_PROT_EXECUTE;
+		}
+#endif /* NVERIEXEC > 0 */
 
 		/* check read access */
 		if (fp->f_flag & FREAD)
@@ -601,12 +607,12 @@ sys___msync13(struct lwp *l, void *v, register_t *retval)
 
 		vm_map_lock_read(map);
 		rv = uvm_map_lookup_entry(map, addr, &entry);
-		if (rv == TRUE) {
+		if (rv == true) {
 			addr = entry->start;
 			size = entry->end - entry->start;
 		}
 		vm_map_unlock_read(map);
-		if (rv == FALSE)
+		if (rv == false)
 			return (EINVAL);
 	}
 
@@ -730,7 +736,7 @@ sys_mprotect(struct lwp *l, void *v, register_t *retval)
 	size = round_page(size);
 
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
-				FALSE);
+				false);
 	return error;
 }
 
@@ -917,7 +923,7 @@ sys_mlock(struct lwp *l, void *v, register_t *retval)
 			p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)
 		return (EAGAIN);
 
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
+	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, false,
 	    0);
 	if (error == EFAULT)
 		error = ENOMEM;
@@ -960,7 +966,7 @@ sys_munlock(struct lwp *l, void *v, register_t *retval)
 	if (addr + size < addr)
 		return (EINVAL);
 
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
+	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
 	    0);
 	if (error == EFAULT)
 		error = ENOMEM;
@@ -1029,7 +1035,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	int error;
 	int advice = UVM_ADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
-	boolean_t needwritemap;
+	bool needwritemap;
 
 	/*
 	 * check params
@@ -1210,7 +1216,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 */
 
 		error = uvm_map_pageable(map, *addr, *addr + size,
-					 FALSE, UVM_LK_ENTER);
+					 false, UVM_LK_ENTER);
 		if (error) {
 			uvm_unmap(map, *addr, *addr + size);
 			return error;

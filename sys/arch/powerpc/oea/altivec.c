@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.9.2.1 2006/06/21 14:55:03 yamt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.9.2.2 2007/02/26 09:07:54 yamt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,13 +32,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.9.2.1 2006/06/21 14:55:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.9.2.2 2007/02/26 09:07:54 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/malloc.h>

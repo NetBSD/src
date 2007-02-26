@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.55.4.1 2006/06/21 14:56:12 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.55.4.2 2007/02/26 09:08:22 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55.4.1 2006/06/21 14:56:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55.4.2 2007/02/26 09:08:22 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55.4.1 2006/06/21 14:56:12 yamt E
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 
@@ -136,8 +135,10 @@ svr4_getmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long *flags)
 #endif
 
 	write_user_windows();
-	if (rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
+	}
 
 	/*
 	 * Get the general purpose registers
@@ -224,8 +225,10 @@ svr4_setmcontext(struct lwp *l, struct svr4_mcontext *mc, u_long flags)
 #endif
 
 	write_user_windows();
-	if (rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
+	}
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -446,7 +449,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	register struct trapframe *tf;
 	struct svr4_sigframe *fp, frame;
-	int onstack, oldsp, newsp, addr;
+	int onstack, oldsp, newsp, addr, error;
 	int sig = ksi->ksi_signo;
 	u_long code = ksi->ksi_code;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -456,15 +459,15 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct svr4_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;
 	fp = (struct svr4_sigframe *) ((int) (fp - 1) & ~7);
@@ -487,13 +490,16 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Modify the signal context to be used by sigreturn.
 	 */
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = oldsp;
-
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
+	error = (rwindow_save(l) || copyout(&frame, fp, sizeof(frame)) != 0 ||
+	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
+	mutex_enter(&p->p_smutex);
 
-	if (rwindow_save(l) || copyout(&frame, fp, sizeof(frame)) != 0 ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -517,7 +523,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.165.2.2 2006/12/30 20:51:00 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.165.2.3 2007/02/26 09:12:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.2 2006/12/30 20:51:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.3 2007/02/26 09:12:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.2 2006/12/30 20:51:00 yamt Ex
 #include <sys/sysctl.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -77,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.2 2006/12/30 20:51:00 yamt Ex
 /* how many times ffs_init() was called */
 int ffs_initcount = 0;
 
-extern struct lock ufs_hashlock;
+extern kmutex_t ufs_hashlock;
 
 extern const struct vnodeopv_desc ffs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ffs_specop_opv_desc;
@@ -108,6 +109,7 @@ struct vfsops ffs_vfsops = {
 	ffs_mountroot,
 	ffs_snapshot,
 	ffs_extattrctl,
+	ffs_suspendctl,
 	ffs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -262,7 +264,8 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
+	if (error == 0 && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
@@ -745,7 +748,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fstype = 0;
 
 	/*
-	 * Try reading the superblock in each of its possible locations.		 */
+	 * Try reading the superblock in each of its possible locations.
+	 */
 	for (i = 0; ; i++) {
 		if (bp != NULL) {
 			bp->b_flags |= B_NOCACHE;
@@ -973,6 +977,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_iflag |= IMNT_HAS_TRANS;
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -1313,6 +1318,8 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 		printf("fs = %s\n", fs->fs_fsmnt);
 		panic("update: rofs mod");
 	}
+	if ((error = fstrans_start(mp, FSTRANS_SHARED)) != 0)
+		return error;
 	/*
 	 * Write back each (modified) inode.
 	 */
@@ -1338,6 +1345,11 @@ loop:
 		     LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		     vp->v_uobj.uo_npages == 0))
 		{
+			simple_unlock(&vp->v_interlock);
+			continue;
+		}
+		if (vp->v_type == VBLK &&
+		    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
 			simple_unlock(&vp->v_interlock);
 			continue;
 		}
@@ -1396,6 +1408,7 @@ loop:
 		if ((error = ffs_cgupdate(ump, waitfor)))
 			allerror = error;
 	}
+	fstrans_done(mp);
 	return (allerror);
 }
 
@@ -1427,18 +1440,19 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
+	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 
 	/*
 	 * If someone beat us to it while sleeping in getnewvnode(),
 	 * push back the freshly allocated vnode we don't need, and return.
 	 */
-
-	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
-			ungetnewvnode(vp);
-			return (0);
-		}
-	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	mutex_enter(&ufs_hashlock);
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+		mutex_exit(&ufs_hashlock);
+		ungetnewvnode(vp);
+		pool_put(&ffs_inode_pool, ip);
+		return (0);
+	}
 
 	vp->v_flag |= VLOCKSWORK;
 
@@ -1447,7 +1461,6 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 * XXX create another pool for MFS inodes?
 	 */
 
-	ip = pool_get(&ffs_inode_pool, PR_WAITOK);
 	memset(ip, 0, sizeof(struct inode));
 	vp->v_data = ip;
 	ip->i_vnode = vp;
@@ -1473,7 +1486,7 @@ ffs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 
 	ufs_ihashins(ip);
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&ufs_hashlock);
 
 	/* Read in the disk contents for the inode, copy into the inode. */
 	error = bread(ump->um_devvp, fsbtodb(fs, ino_to_fsba(fs, ino)),
@@ -1759,4 +1772,31 @@ ffs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
 				       l));
 #endif
 	return (vfs_stdextattrctl(mp, cmd, vp, attrnamespace, attrname, l));
+}
+
+int
+ffs_suspendctl(struct mount *mp, int cmd)
+{
+	int error;
+	struct lwp *l = curlwp;
+
+	switch (cmd) {
+	case SUSPEND_SUSPEND:
+		if ((error = fstrans_setstate(mp, FSTRANS_SUSPENDING)) != 0)
+			return error;
+		error = ffs_sync(mp, MNT_WAIT, l->l_proc->p_cred, l);
+		if (error == 0)
+			error = fstrans_setstate(mp, FSTRANS_SUSPENDED);
+		if (error != 0) {
+			(void) fstrans_setstate(mp, FSTRANS_NORMAL);
+			return error;
+		}
+		return 0;
+
+	case SUSPEND_RESUME:
+		return fstrans_setstate(mp, FSTRANS_NORMAL);
+
+	default:
+		return EINVAL;
+	}
 }

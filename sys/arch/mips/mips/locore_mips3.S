@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.86.16.1 2006/06/21 14:53:44 yamt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.86.16.2 2007/02/26 09:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -173,10 +173,8 @@ END(mips3_wbflush)
  */
 LEAF(mips_wait_idle)
 	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
-#if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
-#endif
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
@@ -184,7 +182,7 @@ LEAF(mips_wait_idle)
 	nop
 
 	/* Try to zero some free pages. */
-	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	lbu	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
 	nop
 	beq	t0, zero, 1f
 	nop
@@ -209,7 +207,6 @@ LEAF(mips_wait_idle)
 	b	1b
 	nop
 1:
-#if defined(LOCKDEBUG)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
 	COP0_SYNC
 	nop
@@ -221,16 +218,6 @@ LEAF(mips_wait_idle)
 	la	ra, cpu_switch_queuescan
 	j	ra
 	nop
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	COP0_SYNC
-	nop
-	nop
-	nop
-	la	ra, cpu_switch_queuescan
-	j	ra
-	nop
-#endif
 END(mips_wait_idle)
 #endif /* (MIPS3 && !MIPS3_5900) || MIPS32 || MIPS64 */
 

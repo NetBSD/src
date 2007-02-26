@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.45.12.2 2006/12/30 20:50:38 yamt Exp $	*/
+/*	$NetBSD: in6.h,v 1.45.12.3 2007/02/26 09:11:48 yamt Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ struct route_in6 {
 #define IPV6_2292HOPLIMIT	20 /* bool; hop limit */
 #define IPV6_2292NEXTHOP	21 /* bool; next hop addr */
 #define IPV6_2292HOPOPTS	22 /* bool; hop-by-hop option */
-#define IPV6_2292DSTOPTS	23 /* bool; destinaion option */
+#define IPV6_2292DSTOPTS	23 /* bool; destination option */
 #define IPV6_2292RTHDR		24 /* bool; routing header */
 #define IPV6_2292PKTOPTIONS	25 /* buf/cmsghdr; set/get IPv6 options */
 #endif
@@ -717,6 +717,7 @@ extern void addrsel_policy_init __P((void));
 extern	u_char	ip6_protox[];
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
+#define	satocsin6(sa)	((const struct sockaddr_in6 *)(sa))
 #define	sin6tosa(sin6)	((struct sockaddr *)(sin6))
 #define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 #endif /* _KERNEL */

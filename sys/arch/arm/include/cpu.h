@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36.12.2 2006/12/30 20:45:33 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36.12.3 2007/02/26 09:05:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -133,15 +133,6 @@ extern int cpu_do_powersave;
 #endif
 
 /*
- * CLKF_BASEPRI: True if we were at spl0 before the interrupt.
- *
- * This is hard-wired to 0 on the ARM, since spllowersoftclock() might
- * not actually be able to unblock the interrupt, which would cause us
- * to run the softclock interrupts with hardclock blocked.
- */
-#define CLKF_BASEPRI(frame)	0
-
-/*
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
@@ -222,6 +213,8 @@ struct cpu_info {
 	u_int32_t ci_arm_cpurev;	/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
 	struct evcnt ci_arm700bugcount;
+	int32_t ci_mtx_count;
+	int ci_mtx_oldspl;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
 #endif
@@ -251,21 +244,21 @@ extern int astpending;
  * process as soon as possible.
  */
 
-#define signotify(p)            setsoftast()
+#define cpu_signotify(l)            setsoftast()
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
+#define	cpu_need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
 #ifndef acorn26
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.24.2.1 2006/06/21 15:02:56 yamt Exp $ */
+/* $NetBSD: rtwvar.h,v 1.24.2.2 2007/02/26 09:10:12 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -175,11 +175,11 @@ struct rtw_txsoft {
 #define RTW_RXQLEN	64
 
 struct rtw_rxdesc_blk {
-	struct rtw_rxdesc	*rdb_desc;
-	u_int			rdb_next;
 	u_int			rdb_ndesc;
+	u_int			rdb_next;
 	bus_dma_tag_t		rdb_dmat;
 	bus_dmamap_t		rdb_dmamap;
+	struct rtw_rxdesc	*rdb_desc;
 };
 
 struct rtw_txdesc_blk {

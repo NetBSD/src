@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.14.4.2 2006/12/30 20:50:20 yamt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.14.4.3 2007/02/26 09:11:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,8 +52,8 @@ struct gre_soparm {
 
 struct gre_softc {
 	struct ifnet		sc_if;
-	int			sc_waitchan;
-	int			sc_thread;
+	volatile int		sc_waitchan;
+	volatile int		sc_thread;
 	struct ifqueue		sc_snd;
 	struct gre_soparm	sc_soparm;
 	LIST_ENTRY(gre_softc)	sc_list;

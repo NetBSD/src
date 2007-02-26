@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.15.16.1 2006/06/21 14:58:32 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.15.16.2 2007/02/26 09:09:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.15.16.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.15.16.2 2007/02/26 09:09:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.15.16.1 2006/06/21 14:58:32 ya
 #include <sys/uio.h>
 #include <sys/dirent.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/stat.h>

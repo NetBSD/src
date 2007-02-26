@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.12.2.1 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.12.2.2 2007/02/26 09:10:44 yamt Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.12.2.1 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.12.2.2 2007/02/26 09:10:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,8 @@ SYSCTL_INT(_hw_usb_ubsa, OID_AUTO, debug, CTLFLAG_RW,
 #define	UBSA_SET_BREAK		0x0C
 #define	UBSA_SET_FLOW_CTRL	0x10
 
+#define UBSA_QUADUMTS_SET_PIN   0x22
+
 #define	UBSA_PARITY_NONE	0x00
 #define	UBSA_PARITY_EVEN	0x01
 #define	UBSA_PARITY_ODD		0x02
@@ -187,6 +189,7 @@ struct	ubsa_softc {
 	device_ptr_t		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;	/* disconnecting */
+	u_char			sc_quadumts;
 
 };
 
@@ -201,7 +204,9 @@ Static	void ubsa_close(void *, int);
 Static  void ubsa_break(struct ubsa_softc *sc, int onoff);
 Static	int  ubsa_request(struct ubsa_softc *, u_int8_t, u_int16_t);
 Static	void ubsa_dtr(struct ubsa_softc *, int);
+Static	void ubsa_quadumts_dtr(struct ubsa_softc *, int);
 Static	void ubsa_rts(struct ubsa_softc *, int);
+Static	void ubsa_quadumts_rts(struct ubsa_softc *, int);
 Static	void ubsa_baudrate(struct ubsa_softc *, speed_t);
 Static	void ubsa_parity(struct ubsa_softc *, tcflag_t);
 Static	void ubsa_databits(struct ubsa_softc *, tcflag_t);
@@ -230,8 +235,12 @@ Static const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
 	/* Peracom */
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
-	/* Vodafone */
-	{ USB_VENDOR_VODAFONE, USB_PRODUCT_VODAFONE_MC3G },
+	/* Option N.V. */
+	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_MC3G },
+	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS2 },
+	{ USB_VENDOR_OPTIONNV, USB_PRODUCT_OPTIONNV_QUADUMTS },
+	/* AnyDATA ADU-E100H */
+	{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_E100H },
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
@@ -274,6 +283,20 @@ USB_ATTACH(ubsa)
 	 */
 	sc->sc_dtr = -1;
 	sc->sc_rts = -1;
+
+	/*
+	 * Quad UMTS cards use different requests to
+	 * control com settings and only some.
+	 */
+	sc->sc_quadumts = 0;
+	if (uaa->vendor == USB_VENDOR_OPTIONNV) {
+		switch (uaa->product) {
+		case USB_PRODUCT_OPTIONNV_QUADUMTS:
+		case USB_PRODUCT_OPTIONNV_QUADUMTS2:
+			sc->sc_quadumts = 1;
+			break;
+		}
+	}
 
 	DPRINTF(("ubsa attach: sc = %p\n", sc));
 
@@ -435,7 +458,11 @@ ubsa_request(struct ubsa_softc *sc, u_int8_t request, u_int16_t value)
 	usb_device_request_t req;
 	usbd_status err;
 
-	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	if (sc->sc_quadumts)
+		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	else
+		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+
 	req.bRequest = request;
 	USETW(req.wValue, value);
 	USETW(req.wIndex, sc->sc_iface_number);
@@ -475,9 +502,34 @@ ubsa_rts(struct ubsa_softc *sc, int onoff)
 }
 
 Static void
-ubsa_break(struct ubsa_softc *sc, int onoff)
+ubsa_quadumts_dtr(struct ubsa_softc *sc, int onoff)
 {
 
+	DPRINTF(("ubsa_dtr: onoff = %d\n", onoff));
+
+	if (sc->sc_dtr == onoff)
+		return;
+	sc->sc_dtr = onoff;
+
+	ubsa_request(sc, UBSA_QUADUMTS_SET_PIN, (sc->sc_rts ? 2 : 0)+(sc->sc_dtr ? 1 : 0));
+}
+
+Static void
+ubsa_quadumts_rts(struct ubsa_softc *sc, int onoff)
+{
+
+	DPRINTF(("ubsa_rts: onoff = %d\n", onoff));
+
+	if (sc->sc_rts == onoff)
+		return;
+	sc->sc_rts = onoff;
+
+	ubsa_request(sc, UBSA_QUADUMTS_SET_PIN, (sc->sc_rts ? 2 : 0)+(sc->sc_dtr ? 1 : 0));
+}
+
+Static void
+ubsa_break(struct ubsa_softc *sc, int onoff)
+{
 	DPRINTF(("ubsa_rts: onoff = %d\n", onoff));
 
 	ubsa_request(sc, UBSA_SET_BREAK, onoff ? 1 : 0);
@@ -491,13 +543,20 @@ ubsa_set(void *addr, int portno, int reg, int onoff)
 	sc = addr;
 	switch (reg) {
 	case UCOM_SET_DTR:
-		ubsa_dtr(sc, onoff);
+		if (sc->sc_quadumts)
+			ubsa_quadumts_dtr(sc, onoff);
+		else
+			ubsa_dtr(sc, onoff);
 		break;
 	case UCOM_SET_RTS:
-		ubsa_rts(sc, onoff);
+		if (sc->sc_quadumts)
+			ubsa_quadumts_rts(sc, onoff);
+		else
+			ubsa_rts(sc, onoff);
 		break;
 	case UCOM_SET_BREAK:
-		ubsa_break(sc, onoff);
+		if (!sc->sc_quadumts)
+			ubsa_break(sc, onoff);
 		break;
 	default:
 		break;
@@ -615,11 +674,13 @@ ubsa_param(void *addr, int portno, struct termios *ti)
 
 	DPRINTF(("ubsa_param: sc = %p\n", sc));
 
-	ubsa_baudrate(sc, ti->c_ospeed);
-	ubsa_parity(sc, ti->c_cflag);
-	ubsa_databits(sc, ti->c_cflag);
-	ubsa_stopbits(sc, ti->c_cflag);
-	ubsa_flow(sc, ti->c_cflag, ti->c_iflag);
+	if (!sc->sc_quadumts) {
+		ubsa_baudrate(sc, ti->c_ospeed);
+		ubsa_parity(sc, ti->c_cflag);
+		ubsa_databits(sc, ti->c_cflag);
+		ubsa_stopbits(sc, ti->c_cflag);
+		ubsa_flow(sc, ti->c_cflag, ti->c_iflag);
+	}
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2.12.1 2007/02/26 09:07:46 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -62,7 +62,6 @@ void need_proftick(struct proc *);
 
 /*
  * Info given to hardclock; current ac block (DATAI PAG).
- * If current ac block is not interrupt block, CLKF_BASEPRI. XXX - not for now
  * If current ac block is user block, CLKF_USERMODE.
  * If current ac block is interrupt block, CLKF_INTR.
  */
@@ -72,7 +71,6 @@ struct clockframe {
 #define	CAC(y) (((y)->dataiw >> 27) & 7)
 
 #define	CLKF_USERMODE(x)	(CAC(x) == 1)
-#define	CLKF_BASEPRI(x)		/* (CAC(x) < 2) */ (0)
 #define	CLKF_PC(x)		(panic("CLKF_PC"), 0)
 #define	CLKF_INTR(x)		(CAC(x) == 2)
 

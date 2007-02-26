@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.8.2.1 2006/06/21 14:58:32 yamt Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.8.2.2 2007/02/26 09:09:02 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.8.2.1 2006/06/21 14:58:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.8.2.2 2007/02/26 09:09:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,25 +150,12 @@ void
 darwin_commpage_init(dcp)
 	struct darwin_commpage *dcp;
 {
-	int ncpu, name[2];
-	size_t sz;
-	int error;
-
 	/*
 	 * XXX Only one page is mapped yet (see higher in the file)
 	 */
 	(void)memset(dcp, 0, sizeof(*dcp));
 
 	dcp->dcp_version = DARWIN_COMMPAGE_VERSION;
-
-	name[0] = CTL_HW;
-	name[1] = HW_NCPU;
-	sz = sizeof(ncpu);
-
-	error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL);
-	if (error != 0)
-		ncpu = 1; /* At least there should be one */
-
 	dcp->dcp_ncpu = ncpu;
 	dcp->dcp_cap |= (ncpu << DARWIN_CAP_NCPUSHIFT);
 

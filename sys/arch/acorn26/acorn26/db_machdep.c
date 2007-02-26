@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3.2.1 2006/12/30 20:45:17 yamt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3.2.2 2007/02/26 09:05:26 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3.2.1 2006/12/30 20:45:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3.2.2 2007/02/26 09:05:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.3.2.1 2006/12/30 20:45:17 yamt Exp 
 
 
 void
-db_show_panic_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_show_panic_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	int s;
@@ -60,7 +60,7 @@ db_show_panic_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 
 
 void
-db_show_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_show_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	struct trapframe *frame;
@@ -85,7 +85,7 @@ db_show_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 
 
 void
-db_bus_write_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_bus_write_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	db_expr_t datum;
@@ -115,7 +115,7 @@ db_bus_write_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 void
-db_irqstat_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_irqstat_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 

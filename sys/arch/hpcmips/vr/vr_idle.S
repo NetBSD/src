@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.8.16.1 2006/06/21 14:51:50 yamt Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.8.16.2 2007/02/26 09:06:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,10 +59,8 @@
  */
 LEAF(vr_idle)
 	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
-#if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
-#endif
 	li	t0, (MIPS_INT_MASK | MIPS_SR_INT_IE)
 	mtc0	t0, MIPS_COP_0_STATUS		# enable all interrupts
 	nop
@@ -86,7 +84,6 @@ LEAF(vr_idle)
 	beq	t0, zero, 1b
 	nop
 1:
-#if defined(LOCKDEBUG)
 	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
 	nop
 	nop
@@ -97,13 +94,4 @@ LEAF(vr_idle)
 	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
 	j	ra
 	nop
-#else
-	mtc0	zero, MIPS_COP_0_STATUS		# disable all interrupts
-	nop
-	nop
-	nop
-	la	ra, cpu_switch_queuescan	# rathole to cpu_switch()
-	j	ra
-	nop
-#endif
 END(vr_idle)

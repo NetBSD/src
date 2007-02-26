@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.33.2.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: mlx.c,v 1.33.2.3 2007/02/26 09:10:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.33.2.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.33.2.3 2007/02/26 09:10:09 yamt Exp $");
 
 #include "ld.h"
 
@@ -296,7 +296,7 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	}
 
 	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, 1, size, 0,
-	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &mlx->mlx_dmamap)) != 0) {
+	    BUS_DMA_NOWAIT, &mlx->mlx_dmamap)) != 0) {
 		printf("%s: unable to create sglist DMA map, rv = %d\n",
 		    mlx->mlx_dv.dv_xname, rv);
 		return;

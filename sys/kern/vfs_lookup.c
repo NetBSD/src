@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.62.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.62.2.3 2007/02/26 09:11:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.3 2007/02/26 09:11:22 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.2 2006/12/30 20:50:07 yamt Exp
 
 struct pathname_internal {
 	char *pathbuf;
-	boolean_t needfree;
+	bool needfree;
 };
 
 int vfs_magiclinks = MAGICLINKS;
@@ -213,13 +213,14 @@ pathname_get(const char *dirp, enum uio_seg segflg, pathname_t *path)
 		    NULL);
 		if (error) {
 			PNBUF_PUT((*path)->pathbuf);
-			free(path, M_TEMP);
+			free(*path, M_TEMP);
+			*path = NULL;
 			return (error);
 		}
-		(*path)->needfree = TRUE;
+		(*path)->needfree = true;
 	} else {
 		(*path)->pathbuf = __UNCONST(dirp);
-		(*path)->needfree = FALSE;
+		(*path)->needfree = false;
 	}
 
 	return (0);
@@ -314,7 +315,7 @@ namei(struct nameidata *ndp)
 		ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf);
 #endif
 #ifdef SYSTRACE
-	if (ISSET(cnp->cn_lwp->l_proc->p_flag, P_SYSTRACE))
+	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
 		systrace_namei(ndp);
 #endif
 
@@ -486,12 +487,11 @@ namei_hash(const char *name, const char **ep)
  * When CREATE, RENAME, or DELETE is specified, information usable in
  * creating, renaming, or deleting a directory entry may be calculated.
  * If flag has LOCKPARENT or'ed into it, the parent directory is returned
- * locked. If flag has WANTPARENT or'ed into it, the parent directory is
- * returned unlocked. Otherwise the parent directory is not returned. If
- * the target of the pathname exists and LOCKLEAF is or'ed into the flag
- * the target is returned locked, otherwise it is returned unlocked.
- * When creating or renaming and LOCKPARENT is specified, the target may not
- * be ".".  When deleting and LOCKPARENT is specified, the target may be ".".
+ * locked.  Otherwise the parent directory is not returned. If the target
+ * of the pathname exists and LOCKLEAF is or'ed into the flag the target
+ * is returned locked, otherwise it is returned unlocked.  When creating
+ * or renaming and LOCKPARENT is specified, the target may not be ".".
+ * When deleting and LOCKPARENT is specified, the target may be ".".
  *
  * Overall outline of lookup:
  *
@@ -500,14 +500,13 @@ namei_hash(const char *name, const char **ep)
  *	handle degenerate case where name is null string
  *	if .. and crossing mount points and on mounted filesys, find parent
  *	call VOP_LOOKUP routine for next component name
- *	    directory vnode returned in ni_dvp, unlocked unless LOCKPARENT set
+ *	    directory vnode returned in ni_dvp, locked.
  *	    component vnode returned in ni_vp (if it exists), locked.
  *	if result vnode is mounted on and crossing mount points,
  *	    find mounted on vnode
  *	if more components of name, do next level at dirloop
  *	return the answer in ni_vp, locked if LOCKLEAF set
  *	    if LOCKPARENT set, return locked parent in ni_dvp
- *	    if WANTPARENT set, return unlocked parent in ni_dvp
  */
 int
 lookup(struct nameidata *ndp)
@@ -527,7 +526,7 @@ lookup(struct nameidata *ndp)
 	 * Setup: break out flag bits into variables.
 	 */
 	docache = (cnp->cn_flags & NOCACHE) ^ NOCACHE;
-	if (cnp->cn_nameiop != CREATE)
+	if (cnp->cn_nameiop == DELETE)
 		docache = 0;
 	rdonly = cnp->cn_flags & RDONLY;
 	ndp->ni_dvp = NULL;
@@ -893,11 +892,10 @@ bad:
 int
 relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
-	struct vnode *dp = 0;		/* the directory we are searching */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
 #ifdef DEBUG
-	u_long newhash;			/* DEBUG: check name hash */
+	uint32_t newhash;		/* DEBUG: check name hash */
 	const char *cp;			/* DEBUG: check name ptr/len */
 #endif /* DEBUG */
 
@@ -906,9 +904,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	 */
 	rdonly = cnp->cn_flags & RDONLY;
 	cnp->cn_flags &= ~ISSYMLINK;
-	dp = dvp;
 
-/* dirloop: */
 	/*
 	 * Search a new directory.
 	 *
@@ -921,7 +917,7 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 #ifdef DEBUG
 	cp = NULL;
 	newhash = namei_hash(cnp->cn_nameptr, &cp);
-	if (newhash != cnp->cn_hash)
+	if ((uint32_t)newhash != (uint32_t)cnp->cn_hash)
 		panic("relookup: bad hash");
 	if (cnp->cn_namelen != cp - cnp->cn_nameptr)
 		panic("relookup: bad len");
@@ -930,9 +926,6 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (*cp != 0)
 		panic("relookup: not last component");
 #endif /* DEBUG */
-#ifdef NAMEI_DIAGNOSTIC
-	printf("{%s}: ", cnp->cn_nameptr);
-#endif /* NAMEI_DIAGNOSTIC */
 
 	/*
 	 * Check for degenerate name (e.g. / or "")
@@ -948,61 +941,38 @@ relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	/*
 	 * We now have a segment name to search for, and a directory to search.
 	 */
-	if ((error = VOP_LOOKUP(dp, vpp, cnp)) != 0) {
+	if ((error = VOP_LOOKUP(dvp, vpp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (*vpp != NULL)
 			panic("leaf `%s' should be empty", cnp->cn_nameptr);
 #endif
 		if (error != EJUSTRETURN)
 			goto bad;
-
-		/*
-		 * If creating and at end of pathname, then can consider
-		 * allowing file to be created.
-		 */
-		if (rdonly) {
-			error = EROFS;
-			goto bad;
-		}
-
-		/* ASSERT(dvp == ndp->ni_startdir) */
-		if (cnp->cn_flags & SAVESTART)
-			VREF(dvp);
-
-		/*
-		 * We return with ni_vp NULL to indicate that the entry
-		 * doesn't currently exist, leaving a pointer to the
-		 * locked directory vnode in ndp->ni_dvp.
-		 */
-		return (0);
 	}
-	dp = *vpp;
 
 #ifdef DIAGNOSTIC
 	/*
 	 * Check for symbolic link
 	 */
-	if (dp->v_type == VLNK && (cnp->cn_flags & FOLLOW))
+	if (*vpp && (*vpp)->v_type == VLNK && (cnp->cn_flags & FOLLOW))
 		panic("relookup: symlink found");
 #endif
 
 	/*
 	 * Check for read-only file systems.
 	 */
-	if (rdonly &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
+	if (rdonly && cnp->cn_nameiop != LOOKUP) {
 		error = EROFS;
+		if (*vpp) {
+			vput(*vpp);
+		}
 		goto bad;
 	}
-	/* ASSERT(dvp == ndp->ni_startdir) */
 	if (cnp->cn_flags & SAVESTART)
 		VREF(dvp);
-	if ((cnp->cn_flags & LOCKLEAF) == 0)
-		VOP_UNLOCK(dp, 0);
 	return (0);
 
 bad:
-	vput(dp);
 	*vpp = NULL;
 	return (error);
 }

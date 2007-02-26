@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.201.2.2 2006/12/30 20:46:26 yamt Exp $
+# $NetBSD: GENERIC,v 1.201.2.3 2007/02/26 09:07:18 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.201.2.2 $"
+#ident 		"GENERIC-$Revision: 1.201.2.3 $"
 
 maxusers	32
 
@@ -81,14 +81,14 @@ options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
-options 	COMPAT_LINUX	# Linux binary compatibility
+#options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	COMPAT_DARWIN	# Darwin binary compatibility (experimental)
 #options 	COMPAT_MACH	# Mach compatibility, needed for COMPAT_DARWIN 
 #options 	EXEC_MACHO	# Mach-O binary support, needed for COMPAT_MACH
-#options	DEBUG_DARWIN	# COMPAT_DARWIN debugging
-#options	DEBUG_MACH	# COMPAT_MACH debugging
+#options 	DEBUG_DARWIN	# COMPAT_DARWIN debugging
+#options 	DEBUG_MACH	# COMPAT_MACH debugging
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -115,7 +115,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -186,7 +186,7 @@ options 	FONT_GALLANT12x22
 # Tweak the keyboard driver to treat the caps lock key on an ADB
 # keyboard as a control key; requires special remapping because of
 # ADB's strange emulation of a mechanically-locked key.
-#options	CAPS_IS_CONTROL
+#options 	CAPS_IS_CONTROL
 
 # On Mac laptops, several function keys double as "hot keys"
 # (brightness, volume, eject) when the Fn modifier is held down.  Mac
@@ -194,7 +194,9 @@ options 	FONT_GALLANT12x22
 # events when Fn is not held down and send function key events when it
 # is.  This option transforms the non-keyboard "button" events back
 # into function key events.
-#options	FORCE_FUNCTION_KEYS
+# enabled by default since trying to control brightness with those causes
+# trouble on pretty much all halfway recent Apple laptops
+options 	FORCE_FUNCTION_KEYS
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -272,13 +274,15 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # Display devices
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 # OFB_ENABLE_CACHE speeds up the console on many machines, but should
-# not be enabled on some older machines, such as the rev. A-D iMacs.
+# not be enabled on some older machines, such as the rev. A-D iMacs or any
+# O'Hare based machine that uses external cache like the PowerBook 3400c
 #options 	OFB_ENABLE_CACHE	# Speed up console in ofb
+#options 	OFB_FAKE_VGA_FB		# Allow X to mmap VGA regs
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
 
 radeonfb*	at pci? function ?	# ATI Radeon. R3xx is problematic
-options		RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
+options 	RADEONFB_MMAP_BARS	# allow mmap()ing BARs - needed for X
 
 voodoofb*	at pci? function ?	# 3Dfx Voodoo3 
 
@@ -347,15 +351,34 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
+
+# the traditional ADB subsystem
+
 adb*	at obio?			# Apple Desktop Bus
 apm0	at adb?				# APM emulation
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
 abtn*	at adb?
-
 wskbd0	at akbd? console ?
-wsmouse* at ams?
+
+# the new, improved, experimental ADB subsystem
+
+#cuda*	at obio?		# CUDA, for Old World PowerMacs
+#pmu*	at obio?		# PMU, *Books and newer PowerMacs
+#battery* at pmu?		# legacy battery, for ohare-based PowerBooks
+
+#iic0	at cuda0		# CUDA's IIC bus
+#sgsmix0 at iic0	addr 0x8a	# additional mixer found in beige G3
+				# use with awacs
+
+#nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
+
+#adbkbd* at nadb?		# ADB keyboard
+#adbms*	at nadb?		# ADB mouse or trackpad
+
+wsmouse* at wsmousedev?
+wskbd*	at wskbddev?
 
 zsc*	at obio?
 zstty*	at zsc? channel ?
@@ -439,13 +462,10 @@ uhub*	at uhub? port ? configuration ? interface ?
 uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
 
 pbms*	at uhidev? reportid ?				# PowerBook 15" mouse
-wsmouse* at pbms?
 
 ums*	at uhidev? reportid ?				# USB Mice
-wsmouse* at ums?
 
 ukbd*	at uhidev? reportid ?				# USB Keyboards
-wskbd*	at ukbd? console ?
 
 ucycom*	at uhidev? reportid ?				# USB serial adapter
 
@@ -509,15 +529,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #opl*	at fms?
 
 # Audio support
-#audio* at awacs?
-#audio*	at clcs?
-#audio*	at cmpci?
-audio*	at eap?
-#audio*	at eso?
-#audio*	at fms?
-audio*	at snapper?
-#audio*	at sv?
-audio*	at uaudio?
+audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at cmpci?
@@ -561,7 +573,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm

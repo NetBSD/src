@@ -1,7 +1,7 @@
-/*	$NetBSD: iopvar.h,v 1.15 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.15.4.1 2007/02/26 09:10:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,9 @@
 
 #ifndef _I2O_IOPVAR_H_
 #define	_I2O_IOPVAR_H_
+
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 /*
  * Transfer descriptor.
@@ -134,7 +137,8 @@ struct iop_softc {
 	int		sc_nlctent;	/* Number of LCT entries */
 	int		sc_flags;	/* IOP-wide flags */
 	u_int32_t	sc_chgind;	/* Configuration change indicator */
-	struct lock	sc_conflock;	/* Configuration lock */
+	kmutex_t	sc_conflock;	/* Configuration lock */
+	kcondvar_t	sc_confcv;	/* Configuration CV */
 	struct proc	*sc_reconf_proc;/* Auto reconfiguration process */
 	LIST_HEAD(, iop_initiator) sc_iilist;/* Initiator list */
 	int		sc_nii;		/* Total number of initiators */

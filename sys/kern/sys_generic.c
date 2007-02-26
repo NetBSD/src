@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.83.2.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.83.2.3 2007/02/26 09:11:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.83.2.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.83.2.3 2007/02/26 09:11:16 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.83.2.2 2006/12/30 20:50:06 yamt Ex
 #endif
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -382,8 +381,11 @@ dofilewrite(struct lwp *l, int fd, struct file *fp, const void *buf,
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE) {
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
@@ -508,8 +510,11 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE)
+		if (error == EPIPE) {
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
@@ -813,12 +818,18 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		goto done;
 	}
 
-	if (mask)
-		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
+	if (mask) {
+		sigminusset(&sigcantmask, mask);
+		mutex_enter(&p->p_smutex);
+		oldmask = l->l_sigmask;
+		l->l_sigmask = *mask;
+		mutex_exit(&p->p_smutex);
+	} else
+		oldmask = l->l_sigmask;	/* XXXgcc */
 
  retry:
 	ncoll = nselcoll;
-	l->l_flag |= L_SELECT;
+	l->l_flag |= LW_SELECT;
 	error = selscan(l, (fd_mask *)(bits + ni * 0),
 			   (fd_mask *)(bits + ni * 3), nd, retval);
 	if (error || *retval)
@@ -826,19 +837,22 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 		goto donemask;
 	s = splsched();
-	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
  donemask:
-	if (mask)
-		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
-	l->l_flag &= ~L_SELECT;
+	if (mask) {
+		mutex_enter(&p->p_smutex);
+		l->l_sigmask = oldmask;
+		mutex_exit(&p->p_smutex);
+	}
+	l->l_flag &= ~LW_SELECT;
  done:
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
@@ -993,31 +1007,41 @@ pollcommon(struct lwp *l, register_t *retval,
 		goto done;
 	}
 
-	if (mask != NULL)
-		(void)sigprocmask1(p, SIG_SETMASK, mask, &oldmask);
+	if (mask) {
+		sigminusset(&sigcantmask, mask);
+		mutex_enter(&p->p_smutex);
+		oldmask = l->l_sigmask;
+		l->l_sigmask = *mask;
+		mutex_exit(&p->p_smutex);
+	} else
+		oldmask = l->l_sigmask;	/* XXXgcc */
 
  retry:
 	ncoll = nselcoll;
-	l->l_flag |= L_SELECT;
+	l->l_flag |= LW_SELECT;
 	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 	if (error || *retval)
 		goto donemask;
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 		goto donemask;
 	s = splsched();
-	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "poll", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
  donemask:
-	if (mask != NULL)
-		(void)sigprocmask1(p, SIG_SETMASK, &oldmask, NULL);
-	l->l_flag &= ~L_SELECT;
+	if (mask) {
+		mutex_enter(&p->p_smutex);
+		l->l_sigmask = oldmask;
+		mutex_exit(&p->p_smutex);
+	}
+
+	l->l_flag &= ~LW_SELECT;
  done:
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
@@ -1090,16 +1114,26 @@ selrecord(struct lwp *selector, struct selinfo *sip)
 	mypid = selector->l_proc->p_pid;
 	if (sip->sel_pid == mypid)
 		return;
-	if (sip->sel_pid && (p = pfind(sip->sel_pid))) {
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if (l->l_wchan == (caddr_t)&selwait) {
-				sip->sel_collision = 1;
-				return;
-			}
-		}
-	}
 
-	sip->sel_pid = mypid;
+	mutex_enter(&proclist_mutex);
+	if (sip->sel_pid && (p = p_find(sip->sel_pid, PFIND_LOCKED))) {
+		mutex_enter(&p->p_smutex);
+		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+			lwp_lock(l);
+			if (l->l_wchan == (caddr_t)&selwait &&
+			    l->l_stat == LSSLEEP) {
+				sip->sel_collision = 1;
+				lwp_unlock(l);
+				break;
+			}
+			lwp_unlock(l);
+		}
+		mutex_exit(&p->p_smutex);
+	}
+	mutex_exit(&proclist_mutex);
+
+	if (!sip->sel_collision)
+		sip->sel_pid = mypid;
 }
 
 /*
@@ -1111,7 +1145,6 @@ selwakeup(sip)
 {
 	struct lwp *l;
 	struct proc *p;
-	int s;
 
 	if (sip->sel_pid == 0)
 		return;
@@ -1122,19 +1155,31 @@ selwakeup(sip)
 		wakeup((caddr_t)&selwait);
 		return;
 	}
-	p = pfind(sip->sel_pid);
+
+	/*
+	 * We must use the proclist_mutex as we can be called from an
+	 * interrupt context.
+	 */
+	mutex_enter(&proclist_mutex);
+	p = p_find(sip->sel_pid, PFIND_LOCKED);
 	sip->sel_pid = 0;
-	if (p != NULL) {
-		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			SCHED_LOCK(s);
-			if (l->l_wchan == (caddr_t)&selwait) {
-				if (l->l_stat == LSSLEEP)
-					setrunnable(l);
-				else
-					unsleep(l);
-			} else if (l->l_flag & L_SELECT)
-				l->l_flag &= ~L_SELECT;
-			SCHED_UNLOCK(s);
+	if (p == NULL) {
+		mutex_exit(&proclist_mutex);
+		return;
+	}
+
+	mutex_enter(&p->p_smutex);
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		if (l->l_wchan == (wchan_t)&selwait && l->l_stat == LSSLEEP) {
+			/* setrunnable() will release the lock. */
+			setrunnable(l);
+		} else {
+			if (l->l_flag & LW_SELECT)
+				l->l_flag &= ~LW_SELECT;
+			lwp_unlock(l);
 		}
 	}
+	mutex_exit(&p->p_smutex);
+	mutex_exit(&proclist_mutex);
 }

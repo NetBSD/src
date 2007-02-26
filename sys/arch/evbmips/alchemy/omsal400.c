@@ -1,4 +1,4 @@
-/* $NetBSD: omsal400.c,v 1.4.8.2 2006/06/21 14:50:55 yamt Exp $ */
+/* $NetBSD: omsal400.c,v 1.4.8.3 2007/02/26 09:06:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -36,7 +36,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.4.8.2 2006/06/21 14:50:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omsal400.c,v 1.4.8.3 2007/02/26 09:06:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -79,7 +79,7 @@ static struct aupcmcia_machdep omsal400_pcmcia = {
 };
 
 static struct alchemy_board omsal400_info = {
-	"Plathome Open Micro Sever AL400/AMD Alchemy Au1550",
+	"Plathome Open Micro Server AL400/AMD Alchemy Au1550",
 	omsal400_devices,
 	omsal400_init,
 	omsal400_pci_intr_map,

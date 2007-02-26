@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.219.2.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.219.2.3 2007/02/26 09:12:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499000700	/* NetBSD 4.99.7 */
+#define	__NetBSD_Version__	499001200	/* NetBSD 4.99.12 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -172,19 +172,19 @@
  */
 #if defined(_KERNEL) || defined(__EXPOSE_STACK)
 #ifdef __MACHINE_STACK_GROWS_UP
-#define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) + (_size))
-#define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) - (_size))
+#define	STACK_GROW(sp, _size)		(((char *)(void *)(sp)) + (_size))
+#define	STACK_SHRINK(sp, _size)		(((char *)(void *)(sp)) - (_size))
 #define	STACK_ALIGN(sp, bytes)	\
-	((caddr_t)((((unsigned long)(sp)) + (bytes)) & ~(bytes)))
-#define	STACK_ALLOC(sp, _size)		((caddr_t)(sp))
-#define	STACK_MAX(p, _size)		(((caddr_t)(p)) + (_size))
+	((char *)((((unsigned long)(sp)) + (bytes)) & ~(bytes)))
+#define	STACK_ALLOC(sp, _size)		((char *)(void *)(sp))
+#define	STACK_MAX(p, _size)		(((char *)(void *)(p)) + (_size))
 #else
-#define	STACK_GROW(sp, _size)		(((caddr_t)(sp)) - (_size))
-#define	STACK_SHRINK(sp, _size)		(((caddr_t)(sp)) + (_size))
+#define	STACK_GROW(sp, _size)		(((char *)(void *)(sp)) - (_size))
+#define	STACK_SHRINK(sp, _size)		(((char *)(void *)(sp)) + (_size))
 #define	STACK_ALIGN(sp, bytes)	\
-	((caddr_t)(((unsigned long)(sp)) & ~(bytes)))
-#define	STACK_ALLOC(sp, _size)		(((caddr_t)(sp)) - (_size))
-#define	STACK_MAX(p, _size)		((caddr_t)(p))
+	((char *)(((unsigned long)(sp)) & ~(bytes)))
+#define	STACK_ALLOC(sp, _size)		(((char *)(void *)(sp)) - (_size))
+#define	STACK_MAX(p, _size)		((char *)(void *)(p))
 #endif
 #endif /* defined(_KERNEL) || defined(__EXPOSE_STACK) */
 
@@ -209,8 +209,6 @@
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
 #define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
 				   the interlock */
-#define PNOEXITERR     	0x400   /* OR'd with pri for tsleep to not exit
-				   with an error code when LWPs are exiting */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */
@@ -339,5 +337,14 @@
 	    ((ms +0u) * hz) / 1000u)
 #endif
 #endif /* _KERNEL */
+
+/*
+ * Minimum alignment of "struct lwp" needed by the architecture.
+ * This counts when packing a lock byte into a word alongside a
+ * pointer to an LWP.
+ */
+#ifndef MIN_LWP_ALIGNMENT
+#define	MIN_LWP_ALIGNMENT	32
+#endif
 
 #endif /* !_SYS_PARAM_H_ */

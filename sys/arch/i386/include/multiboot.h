@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.h,v 1.3.14.3 2006/12/30 20:46:11 yamt Exp $	*/
+/*	$NetBSD: multiboot.h,v 1.3.14.4 2007/02/26 09:07:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ struct multiboot_mmap {
 void		multiboot_pre_reloc(struct multiboot_info *);
 void		multiboot_post_reloc(void);
 void		multiboot_print_info(void);
-boolean_t	multiboot_ksyms_init(void);
+bool		multiboot_ksyms_init(void);
 #endif /* !defined(_LOCORE) */
 
 /* --------------------------------------------------------------------- */

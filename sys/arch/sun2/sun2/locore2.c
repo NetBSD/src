@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.14 2005/06/19 20:00:28 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.14.2.1 2007/02/26 09:08:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.14 2005/06/19 20:00:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.14.2.1 2007/02/26 09:08:31 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -237,14 +237,14 @@ _verify_hardware(void)
 		cpu_match++;
 		cpu_string = "{120,170}";
 		delay_divisor = 205;	/* 10 MHz */
-		cpu_has_multibus = TRUE;
+		cpu_has_multibus = true;
 		break;
 
 	case ID_SUN2_50 :
 		cpu_match++;
 		cpu_string = "50";
 		delay_divisor = 205;	/* 10 MHz */
-		cpu_has_vme = TRUE;
+		cpu_has_vme = true;
 		break;
 
 	default:

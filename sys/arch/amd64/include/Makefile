@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3.12.1 2006/06/21 14:48:25 yamt Exp $
+#	$NetBSD: Makefile,v 1.3.12.2 2007/02/26 09:05:42 yamt Exp $
 
 INCSDIR= /usr/include/amd64
 
@@ -15,11 +15,11 @@ INCS=	ansi.h aout_machdep.h asm.h atomic.h \
 	joystick.h \
 	kcore.h \
 	limits.h linux32_machdep.h lock.h \
-	math.h mcontext.h mtrr.h \
+	math.h mcontext.h mutex.h mtrr.h \
 	netbsd32_machdep.h \
 	param.h pcb.h pci_machdep.h pio.h pmap.h pmc.h proc.h \
 	profile.h psl.h pte.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	segments.h setjmp.h signal.h specialreg.h stdarg.h sysarch.h \
 	trap.h tss.h types.h \
 	userret.h \

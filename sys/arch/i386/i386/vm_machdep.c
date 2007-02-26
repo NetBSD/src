@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.121.2.2 2006/12/30 20:46:11 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.121.2.3 2007/02/26 09:07:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.2.2 2006/12/30 20:46:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121.2.3 2007/02/26 09:07:00 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -242,8 +242,8 @@ cpu_swapout(struct lwp *l)
 
 /*
  * cpu_lwp_free is called from exit() to let machine-dependent
- * code free machine-dependent resources that should be cleaned
- * while we can still block and have process associated with us
+ * code free machine-dependent resources.  Note that this routine
+ * must not block.
  */
 void
 cpu_lwp_free(struct lwp *l, int proc)
@@ -259,6 +259,15 @@ cpu_lwp_free(struct lwp *l, int proc)
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
 #endif
+}
+
+/*
+ * cpu_lwp_free2 is called when an LWP is being reaped.  This routine
+ * may block.
+ */
+void
+cpu_lwp_free2(struct lwp *l)
+{
 
 	/* Nuke the TSS. */
 	tss_free(l->l_md.md_tss_sel);

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.6.4.3 2006/12/30 20:50:01 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.6.4.4 2007/02/26 09:11:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.6.4.3 2006/12/30 20:50:01 yamt Exp $");
+__RCSID("$NetBSD: udf_vnops.c,v 1.6.4.4 2007/02/26 09:11:01 yamt Exp $");
 #endif /* not lint */
 
 
@@ -698,7 +698,7 @@ udf_getattr(void *v)
 	vap->va_gen       = 1;		/* no multiple generations yes (!?) */
 	vap->va_flags     = 0;		/* no flags */
 	vap->va_rdev      = udf_node->rdev;
-	vap->va_bytes     = udf_node->ump->discinfo.sector_size * blkssize;
+	vap->va_bytes     = blkssize * udf_node->ump->discinfo.sector_size;
 	vap->va_filerev   = 1;		/* TODO file revision numbers? */
 	vap->va_vaflags   = 0;		/* TODO which va_vaflags? */
 

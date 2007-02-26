@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11.2.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.11.2.3 2007/02/26 09:08:54 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -746,9 +746,7 @@ ENTRY(cpu_switch)
 	xorl	%esi,%esi
 	STI(%eax)
 idle_unlock:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)
-#endif
 	/* Interrupts are okay again. */
 	pushl	$IPL_NONE		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
@@ -803,9 +801,7 @@ idle_start:
 idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 	STI(%eax)
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)
-#endif
 	movl	_C_LABEL(sched_whichqs),%ecx
 	bsfl	%ecx,%ebx
 	jz	idle_unlock
@@ -907,7 +903,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have P_SYSTEM!
+	testl	$PK_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have PK_SYSTEM!
 	jnz	switch_restored	; XXX skip stack_switch+pmap_activate
 #endif
 
@@ -936,9 +932,7 @@ switch_exited:
 	movl	$1,%ebx
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call    _C_LABEL(sched_unlock_idle)
-#endif
 	cmpl	$0,CPUVAR(IPENDING)
 	jz	3f
 	pushl	$IPL_NONE		# spl0()
@@ -1029,8 +1023,6 @@ ENTRY(cpu_exit)
 	movl	CPUVAR(IDLE_PCB),%esi
 	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
-	/* In case we fault... */
-	movl	$0,CPUVAR(CURLWP)
 
 	/* Restore the idle context. */
 	CLI(%eax)
@@ -1046,19 +1038,14 @@ ENTRY(cpu_exit)
 	/* Record new pcb. */
 	SET_CURPCB(%esi)
 
+	/* In case we fault... */
+	movl	$0,CPUVAR(CURLWP)
+
 	/* Interrupts are okay again. */
 	STI(%eax)
 
-	/*
-	 * Schedule the dead LWP's stack to be freed.
-	 */
-	pushl	%edi
-	call	_C_LABEL(lwp_exit2)
-	addl	$4,%esp
-
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi
-	movl	%esi,CPUVAR(CURLWP)
 	jmp	idle_start
 
 /*
@@ -1123,6 +1110,7 @@ syscall1:
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
+	movl	CPUVAR(CURLWP),%eax
 	CHECK_ASTPENDING(%eax)
 	je	1f
 	/* Always returning to user mode here. */

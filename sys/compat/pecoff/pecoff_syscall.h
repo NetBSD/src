@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscall.h,v 1.12.4.2 2006/12/30 20:47:45 yamt Exp $ */
+/* $NetBSD: pecoff_syscall.h,v 1.12.4.3 2007/02/26 09:09:37 yamt Exp $ */
 
 /*
  * System call numbers.
@@ -848,24 +848,12 @@
 /* syscall: "_lwp_setprivate" ret: "void" args: "void *" */
 #define	PECOFF_SYS__lwp_setprivate	317
 
-/* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" "int" "ssize_t" */
-#define	PECOFF_SYS_sa_register	330
-
-/* syscall: "sa_stacks" ret: "int" args: "int" "stack_t *" */
-#define	PECOFF_SYS_sa_stacks	331
-
-/* syscall: "sa_enable" ret: "int" args: */
-#define	PECOFF_SYS_sa_enable	332
-
-/* syscall: "sa_setconcurrency" ret: "int" args: "int" */
-#define	PECOFF_SYS_sa_setconcurrency	333
-
-/* syscall: "sa_yield" ret: "int" args: */
-#define	PECOFF_SYS_sa_yield	334
-
-/* syscall: "sa_preempt" ret: "int" args: "int" */
-#define	PECOFF_SYS_sa_preempt	335
-
+				/* 330 is obsolete sys_sa_register */
+				/* 331 is obsolete sys_sa_stacks */
+				/* 332 is obsolete sys_sa_enable */
+				/* 333 is obsolete sys_sa_setconcurrency */
+				/* 334 is obsolete sys_sa_yield */
+				/* 335 is obsolete sys_sa_preempt */
 				/* 336 is obsolete sys_sa_unblockyield */
 /* syscall: "__sigaction_sigtramp" ret: "int" args: "int" "const struct sigaction *" "struct sigaction *" "const void *" "int" */
 #define	PECOFF_SYS___sigaction_sigtramp	340

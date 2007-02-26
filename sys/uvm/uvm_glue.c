@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.89.2.2 2006/12/30 20:51:05 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.89.2.3 2007/02/26 09:12:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89.2.2 2006/12/30 20:51:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.89.2.3 2007/02/26 09:12:28 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -113,10 +113,10 @@ static void uvm_uarea_free(vaddr_t);
  * - used only by /dev/kmem driver (mem.c)
  */
 
-boolean_t
+bool
 uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
-	boolean_t rv;
+	bool rv;
 	vaddr_t saddr, eaddr;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
@@ -155,7 +155,7 @@ uvm_chgkprot(caddr_t addr, size_t len, int rw)
 		/*
 		 * Extract physical address for the page.
 		 */
-		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
+		if (pmap_extract(pmap_kernel(), sva, &pa) == false)
 			panic("chgkprot: invalid page");
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
@@ -204,10 +204,10 @@ uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
  * - the address space is copied as per parent map's inherit values
  */
 void
-uvm_proc_fork(struct proc *p1, struct proc *p2, boolean_t shared)
+uvm_proc_fork(struct proc *p1, struct proc *p2, bool shared)
 {
 
-	if (shared == TRUE) {
+	if (shared == true) {
 		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);
 	} else {
@@ -248,7 +248,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Note the kernel stack gets read/write accesses right off the bat.
 	 */
 
-	if ((l2->l_flag & L_INMEM) == 0) {
+	if ((l2->l_flag & LW_INMEM) == 0) {
 		vaddr_t uarea = USER_TO_UAREA(l2->l_addr);
 
 		error = uvm_fault_wire(kernel_map, uarea,
@@ -259,7 +259,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		/* Tell the pmap this is a u-area mapping */
 		PMAP_UAREA(uarea);
 #endif
-		l2->l_flag |= L_INMEM;
+		l2->l_flag |= LW_INMEM;
 	}
 
 #ifdef KSTACK_CHECK_MAGIC
@@ -283,7 +283,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
  * uvm_uarea_alloc: allocate a u-area
  */
 
-boolean_t
+bool
 uvm_uarea_alloc(vaddr_t *uaddrp)
 {
 	vaddr_t uaddr;
@@ -299,12 +299,12 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uaddr;
-		return TRUE;
+		return true;
 	} else {
 		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
 		    UVM_KMF_PAGEABLE);
-		return FALSE;
+		return false;
 	}
 }
 
@@ -328,7 +328,7 @@ uvm_uarea_free(vaddr_t uaddr)
  */
 
 void
-uvm_uarea_drain(boolean_t empty)
+uvm_uarea_drain(bool empty)
 {
 	int leave = empty ? 0 : UVM_NUAREA_MAX;
 	vaddr_t uaddr;
@@ -381,7 +381,7 @@ uvm_lwp_exit(struct lwp *l)
 {
 	vaddr_t va = USER_TO_UAREA(l->l_addr);
 
-	l->l_flag &= ~L_INMEM;
+	l->l_flag &= ~LW_INMEM;
 	uvm_uarea_free(va);
 	l->l_addr = NULL;
 }
@@ -426,7 +426,7 @@ void
 uvm_swapin(struct lwp *l)
 {
 	vaddr_t addr;
-	int s, error;
+	int error;
 
 	addr = USER_TO_UAREA(l->l_addr);
 	/* make L_INMEM true */
@@ -441,13 +441,32 @@ uvm_swapin(struct lwp *l)
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
 	cpu_swapin(l);
-	SCHED_LOCK(s);
+	lwp_lock(l);
 	if (l->l_stat == LSRUN)
 		setrunqueue(l);
-	l->l_flag |= L_INMEM;
-	SCHED_UNLOCK(s);
+	l->l_flag |= LW_INMEM;
 	l->l_swtime = 0;
+	lwp_unlock(l);
 	++uvmexp.swapins;
+}
+
+/*
+ * uvm_kick_scheduler: kick the scheduler into action if not running.
+ *
+ * - called when swapped out processes have been awoken.
+ */
+
+void
+uvm_kick_scheduler(void)
+{
+
+	if (uvm.swap_running == false)
+		return;
+
+	mutex_enter(&uvm.scheduler_mutex);
+	uvm.scheduler_kicked = true;
+	cv_signal(&uvm.scheduler_cv);
+	mutex_exit(&uvm.scheduler_mutex);
 }
 
 /*
@@ -465,75 +484,87 @@ uvm_scheduler(void)
 	int pri;
 	int ppri;
 
-loop:
-#ifdef DEBUG
-	while (!enableswap)
-		tsleep(&proc0, PVM, "noswap", 0);
-#endif
-	ll = NULL;		/* process to choose */
-	ppri = INT_MIN;	/* its priority */
-	proclist_lock_read();
+	l = curlwp;
+	lwp_lock(l);
+	lwp_changepri(l, PVM);
+	lwp_unlock(l);
 
-	LIST_FOREACH(l, &alllwp, l_list) {
-		/* is it a runnable swapped out process? */
-		if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
-			pri = l->l_swtime + l->l_slptime -
-			    (l->l_proc->p_nice - NZERO) * 8;
-			if (pri > ppri) {   /* higher priority?  remember it. */
-				ll = l;
-				ppri = pri;
+	for (;;) {
+#ifdef DEBUG
+		mutex_enter(&uvm.scheduler_mutex);
+		while (!enableswap)
+			cv_wait(&uvm.scheduler_cv, &uvm.scheduler_mutex);
+		mutex_exit(&uvm.scheduler_mutex);
+#endif
+		ll = NULL;		/* process to choose */
+		ppri = INT_MIN;		/* its priority */
+
+		mutex_enter(&proclist_mutex);
+		LIST_FOREACH(l, &alllwp, l_list) {
+			/* is it a runnable swapped out process? */
+			if (l->l_stat == LSRUN && !(l->l_flag & LW_INMEM)) {
+				pri = l->l_swtime + l->l_slptime -
+				    (l->l_proc->p_nice - NZERO) * 8;
+				if (pri > ppri) {   /* higher priority? */
+					ll = l;
+					ppri = pri;
+				}
 			}
 		}
-	}
-	/*
-	 * XXXSMP: possible unlock/sleep race between here and the
-	 * "scheduler" tsleep below..
-	 */
-	proclist_unlock_read();
+		mutex_exit(&proclist_mutex);
+#ifdef DEBUG
+		if (swapdebug & SDB_FOLLOW)
+			printf("scheduler: running, procp %p pri %d\n", ll,
+			    ppri);
+#endif
+		/*
+		 * Nothing to do, back to sleep
+		 */
+		if ((l = ll) == NULL) {
+			mutex_enter(&uvm.scheduler_mutex);
+			if (uvm.scheduler_kicked == false)
+				cv_wait(&uvm.scheduler_cv,
+				    &uvm.scheduler_mutex);
+			uvm.scheduler_kicked = false;
+			mutex_exit(&uvm.scheduler_mutex);
+			continue;
+		}
 
+		/*
+		 * we have found swapped out process which we would like
+		 * to bring back in.
+		 *
+		 * XXX: this part is really bogus cuz we could deadlock
+		 * on memory despite our feeble check
+		 */
+		if (uvmexp.free > atop(USPACE)) {
 #ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: running, procp %p pri %d\n", ll, ppri);
+			if (swapdebug & SDB_SWAPIN)
+				printf("swapin: pid %d(%s)@%p, pri %d "
+				    "free %d\n", l->l_proc->p_pid,
+				    l->l_proc->p_comm, l->l_addr, ppri,
+				    uvmexp.free);
 #endif
-	/*
-	 * Nothing to do, back to sleep
-	 */
-	if ((l = ll) == NULL) {
-		tsleep(&proc0, PVM, "scheduler", 0);
-		goto loop;
+			uvm_swapin(l);
+		} else {
+			/*
+			 * not enough memory, jab the pageout daemon and
+			 * wait til the coast is clear
+			 */
+#ifdef DEBUG
+			if (swapdebug & SDB_FOLLOW)
+				printf("scheduler: no room for pid %d(%s),"
+				    " free %d\n", l->l_proc->p_pid,
+				    l->l_proc->p_comm, uvmexp.free);
+#endif
+			uvm_wait("schedpwait");
+#ifdef DEBUG
+			if (swapdebug & SDB_FOLLOW)
+				printf("scheduler: room again, free %d\n",
+				    uvmexp.free);
+#endif
+		}
 	}
-
-	/*
-	 * we have found swapped out process which we would like to bring
-	 * back in.
-	 *
-	 * XXX: this part is really bogus cuz we could deadlock on memory
-	 * despite our feeble check
-	 */
-	if (uvmexp.free > atop(USPACE)) {
-#ifdef DEBUG
-		if (swapdebug & SDB_SWAPIN)
-			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
-	     l->l_proc->p_pid, l->l_proc->p_comm, l->l_addr, ppri, uvmexp.free);
-#endif
-		uvm_swapin(l);
-		goto loop;
-	}
-	/*
-	 * not enough memory, jab the pageout daemon and wait til the coast
-	 * is clear
-	 */
-#ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: no room for pid %d(%s), free %d\n",
-	   l->l_proc->p_pid, l->l_proc->p_comm, uvmexp.free);
-#endif
-	uvm_wait("schedpwait");
-#ifdef DEBUG
-	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: room again, free %d\n", uvmexp.free);
-#endif
-	goto loop;
 }
 
 /*
@@ -541,8 +572,8 @@ loop:
  */
 
 #define	swappable(l)							\
-	(((l)->l_flag & (L_INMEM)) &&					\
-	 ((((l)->l_proc->p_flag) & (P_SYSTEM | P_WEXIT)) == 0) &&	\
+	(((l)->l_flag & (LW_INMEM)) &&					\
+	 ((((l)->l_flag) & (LW_SYSTEM | LW_WEXIT)) == 0) &&		\
 	 (l)->l_holdcnt == 0)
 
 /*
@@ -577,36 +608,40 @@ uvm_swapout_threads(void)
 	 */
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	proclist_lock_read();
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
 	LIST_FOREACH(l, &alllwp, l_list) {
 		KASSERT(l->l_proc != NULL);
-		if (!swappable(l))
+		lwp_lock(l);
+		if (!swappable(l)) {
+			lwp_unlock(l);
 			continue;
+		}
 		switch (l->l_stat) {
 		case LSONPROC:
-			continue;
+			break;
 
 		case LSRUN:
 			if (l->l_swtime > outpri2) {
 				outl2 = l;
 				outpri2 = l->l_swtime;
 			}
-			continue;
+			break;
 
 		case LSSLEEP:
 		case LSSTOP:
 			if (l->l_slptime >= maxslp) {
+				/* uvm_swapout() will release the lock. */
 				uvm_swapout(l);
 				didswap++;
+				continue;
 			} else if (l->l_slptime > outpri) {
 				outl = l;
 				outpri = l->l_slptime;
 			}
-			continue;
+			break;
 		}
+		lwp_unlock(l);
 	}
-	proclist_unlock_read();
-
 	/*
 	 * If we didn't get rid of any real duds, toss out the next most
 	 * likely sleeping/stopped or running candidate.  We only do this
@@ -620,9 +655,15 @@ uvm_swapout_threads(void)
 		if (swapdebug & SDB_SWAPOUT)
 			printf("swapout_threads: no duds, try procp %p\n", l);
 #endif
-		if (l)
+		if (l) {
+			/* uvm_swapout() will release the lock. */
+			lwp_lock(l);
 			uvm_swapout(l);
+		}
 	}
+
+	mutex_exit(&proclist_mutex);
+
 }
 
 /*
@@ -630,6 +671,7 @@ uvm_swapout_threads(void)
  *
  * - currently "swapout" means "unwire U-area" and "pmap_collect()"
  *   the pmap.
+ * - must be called with the LWP locked, and will release the lock.
  * - XXXCDC: should deactivate all process' private anonymous memory
  */
 
@@ -637,8 +679,9 @@ static void
 uvm_swapout(struct lwp *l)
 {
 	vaddr_t addr;
-	int s;
 	struct proc *p = l->l_proc;
+
+	LOCK_ASSERT(lwp_locked(l, NULL));
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
@@ -650,19 +693,20 @@ uvm_swapout(struct lwp *l)
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
-	SCHED_LOCK(s);
 	if (l->l_stat == LSONPROC) {
 		KDASSERT(l->l_cpu != curcpu());
-		SCHED_UNLOCK(s);
+		lwp_unlock(l);
 		return;
 	}
-	l->l_flag &= ~L_INMEM;
+	l->l_flag &= ~LW_INMEM;
+	l->l_swtime = 0;
 	if (l->l_stat == LSRUN)
 		remrunqueue(l);
-	SCHED_UNLOCK(s);
-	l->l_swtime = 0;
-	p->p_stats->p_ru.ru_nswap++;
+	lwp_unlock(l);
+	p->p_stats->p_ru.ru_nswap++;	/* XXXSMP */
 	++uvmexp.swapouts;
+
+	mutex_exit(&proclist_mutex);	/* XXXSMP */
 
 	/*
 	 * Do any machine-specific actions necessary before swapout.
@@ -676,6 +720,8 @@ uvm_swapout(struct lwp *l)
 	addr = USER_TO_UAREA(l->l_addr);
 	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !L_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
+
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
 }
 
 #ifdef COREDUMP

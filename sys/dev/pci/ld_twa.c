@@ -1,11 +1,13 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.2.8.3 2006/12/30 20:48:46 yamt Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.2.8.4 2007/02/26 09:10:30 yamt Exp $ */
+
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jordan Rhody of Wasabi Systems, Inc.
+ * by Andrew Doran, and by Jason R. Thorpe and Jordan Rhody of Wasabi
+ * Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.2.8.3 2006/12/30 20:48:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.2.8.4 2007/02/26 09:10:30 yamt Exp $");
 
 #include "rnd.h"
 
@@ -82,7 +84,7 @@ struct ld_twa_softc {
 
 static void	ld_twa_attach(struct device *, struct device *, void *);
 static int	ld_twa_detach(struct device *, int);
-static int	ld_twa_dobio(struct ld_twa_softc *, void *, int, int,
+static int	ld_twa_dobio(struct ld_twa_softc *, void *, size_t, daddr_t,
 			     struct buf *);
 static int	ld_twa_dump(struct ld_softc *, void *, int, int);
 static int	ld_twa_flush(struct ld_softc *);
@@ -150,8 +152,8 @@ ld_twa_detach(struct device *self, int flags)
 }
 
 static int
-ld_twa_dobio(struct ld_twa_softc *sc, void *data, int datasize,
-    int blkno, struct buf *bp)
+ld_twa_dobio(struct ld_twa_softc *sc, void *data, size_t datasize,
+	     daddr_t blkno, struct buf *bp)
 {
 	int rv;
 	struct twa_request	*tr;
@@ -237,8 +239,14 @@ static int
 ld_twa_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
 
+#if 0
+	/* XXX Unsafe right now. */
 	return (ld_twa_dobio((struct ld_twa_softc *)ld, data,
 	    blkcnt * ld->sc_secsize, blkno, NULL));
+#else
+	return EIO;
+#endif
+
 }
 
 

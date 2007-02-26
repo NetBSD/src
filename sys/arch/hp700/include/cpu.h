@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.2 2006/12/30 20:45:59 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.3 2007/02/26 09:06:35 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -181,14 +181,13 @@ struct clockframe {
 	int	cf_spl;
 	u_int	cf_pc;
 };
-#define	CLKF_BASEPRI(framep)	((framep)->cf_spl == 0)
 #define	CLKF_PC(framep)		((framep)->cf_pc)
 #define	CLKF_INTR(framep)	((framep)->cf_flags & TFF_INTR)
 #define	CLKF_USERMODE(framep)	((framep)->cf_flags & T_USER)
 
-#define	signotify(p)		(setsoftast())
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	cpu_signotify(l)	(setsoftast())
+#define	cpu_need_resched(ci)	(want_resched = 1, setsoftast())
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
 #include <sys/cpu_data.h>
 struct cpu_info {
@@ -196,6 +195,8 @@ struct cpu_info {
 
 	struct	lwp	*ci_curlwp;	/* CPU owner */
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
+	int		ci_mtx_count;
+	int		ci_mtx_oldspl;
 };
 
 #include <machine/intr.h>

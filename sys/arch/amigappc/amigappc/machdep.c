@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27.2.1 2006/06/21 14:48:53 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.27.2.2 2007/02/26 09:05:48 yamt Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.1 2006/06/21 14:48:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.2 2007/02/26 09:05:48 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -724,13 +724,13 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				VM_PHYS_SIZE, 0, FALSE, NULL);
+				VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -795,7 +795,7 @@ kvtop(addr)
 	va = trunc_page((vaddr_t)addr);
 	off = (int)addr - va;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
+	if (pmap_extract(pmap_kernel(), va, &pa) == false) {
 		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
 		return (int)addr;
 	}

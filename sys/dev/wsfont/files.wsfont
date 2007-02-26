@@ -1,8 +1,11 @@
-# 	$NetBSD: files.wsfont,v 1.13 2003/07/14 18:30:41 uwe Exp $
+# 	$NetBSD: files.wsfont,v 1.13.16.1 2007/02/26 09:10:52 yamt Exp $
 
 defpseudo wsfont
 
-file	dev/wsfont/wsfont.c	rasterconsole | wsdisplay | wsfont
+# Note: `wsfont_glue' is only here to force the header file's name
+#	hence it must be mentioned first  (shudder...)
+file	dev/wsfont/wsfont.c	(wsfont_glue & rasops_rotation) |
+    rasterconsole | wsdisplay | wsfont		needs-flag
 
 defflag	opt_wsfont.h		FONT_BOLD8x16
 				FONT_GALLANT12x22

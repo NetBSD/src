@@ -1,6 +1,6 @@
-/*	$NetBSD: gxio.c,v 1.2.8.2 2006/12/30 20:45:49 yamt Exp $ */
+/*	$NetBSD: gxio.c,v 1.2.8.3 2007/02/26 09:06:18 yamt Exp $ */
 /*
- * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
+ * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
  *
  * Written by Takashi Kiyohara and Susumu Miki for WIDE Project and SOUM
@@ -31,7 +31,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.2.8.2 2006/12/30 20:45:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.2.8.3 2007/02/26 09:06:18 yamt Exp $");
+
+#include "opt_gxio.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,39 +52,92 @@ __KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.2.8.2 2006/12/30 20:45:49 yamt Exp $");
 #include "locators.h"
 
 
+struct gpioconf {
+	int pin;
+	u_int value;
+};
+struct gxioconf {
+	const char *name;
+	void (*config)(struct gxio_softc *);
+};
+
 static int gxiomatch(struct device *, struct cfdata *, void *);
 static void gxioattach(struct device *, struct device *, void *);
 static int gxiosearch(struct device *, struct cfdata *, const int *, void *);
 static int gxioprint(void *, const char *);
 
-static void gxio_config_gpio(struct gxio_softc *);
+void gxio_config_pin(void);
+static void
+    gxio_config_gpio(struct gxio_softc *, const struct gxioconf *, char *);
 static void cfstix_config(struct gxio_softc *);
 static void etherstix_config(struct gxio_softc *);
 static void netcf_config(struct gxio_softc *);
+static void netduommc_config(struct gxio_softc *);
 static void netduo_config(struct gxio_softc *);
 static void netmmc_config(struct gxio_softc *);
 
 CFATTACH_DECL(
     gxio, sizeof(struct gxio_softc), gxiomatch, gxioattach, NULL, NULL);
 
-char hirose60p[MAX_BOOT_STRING]; 
 char busheader[MAX_BOOT_STRING]; 
 
-struct gxioconf {
-	const char *name;
-	void (*config)(struct gxio_softc *);
-	uint32_t searchdrv;
+struct gpioconf gpioconf[] = {
+	/* Bluetooth module configuration */
+	{  7, GPIO_OUT | GPIO_SET },	/* power on */
+	{ 12, GPIO_ALT_FN_1_OUT },	/* 32kHz out. required by SingleStone */
+
+	/* AC97 configuration */
+#if 1
+	/* this configuration set by pxaacu_attach()::pxa2x0_ac97.c */
+#else
+	/* Don't reorder */
+	{ 31, GPIO_ALT_FN_2_OUT },	/* SYNC */
+	{ 30, GPIO_ALT_FN_2_OUT },	/* SDATA_OUT */
+	{ 28, GPIO_ALT_FN_1_IN },	/* BITCLK */
+	{ 29, GPIO_ALT_FN_1_IN },	/* SDATA_IN0 */
+#endif
+
+	/* FFUART configuration : is connected only TXD/RXD */
+	{ 34, GPIO_ALT_FN_1_IN },	/* FFRXD */
+	{ 39, GPIO_ALT_FN_2_OUT },	/* FFTXD */
+
+#ifndef GXIO_BLUETOOTH_ON_HWUART
+	/* BTUART configuration */
+	{ 42, GPIO_ALT_FN_1_IN },	/* BTRXD */
+	{ 43, GPIO_ALT_FN_2_OUT },	/* BTTXD */
+	{ 44, GPIO_ALT_FN_1_IN },	/* BTCST */
+	{ 45, GPIO_ALT_FN_2_OUT },	/* BTRST */
+#else
+	/* HWUART configuration */
+	{ 42, GPIO_ALT_FN_3_IN },	/* HWRXD */
+	{ 43, GPIO_ALT_FN_3_OUT },	/* HWTXD */
+	{ 44, GPIO_ALT_FN_3_IN },	/* HWCST */
+	{ 45, GPIO_ALT_FN_3_OUT },	/* HWRST */
+#endif
+
+	/* STUART configuration : is connected only TXD/RXD */
+	{ 46, GPIO_ALT_FN_2_IN },	/* RXD */
+	{ 47, GPIO_ALT_FN_1_OUT },	/* TXD */
+
+#ifndef GXIO_BLUETOOTH_ON_HWUART
+	/* HWUART configuration */
+	{ 48, GPIO_ALT_FN_1_OUT },	/* HWTXD */
+	{ 49, GPIO_ALT_FN_1_IN },	/* HWRXD */
+	{ 50, GPIO_ALT_FN_1_IN },	/* HWCTS */
+	{ 51, GPIO_ALT_FN_1_OUT },	/* HWRTS */
+#endif
+
+	{ -1 }
 };
 
-static const struct gxioconf hirose60p_conf[] = {
-	{ NULL }
-};
 static const struct gxioconf busheader_conf[] = {
 	{ "cfstix",		cfstix_config },
 	{ "etherstix",		etherstix_config },
 	{ "netcf",		netcf_config },
+	{ "netduo-mmc",		netduommc_config },
 	{ "netduo",		netduo_config },
 	{ "netmmc",		netmmc_config },
+	{ "wifistix",		cfstix_config },
 	{ NULL }
 };
 
@@ -107,9 +162,10 @@ gxiomatch(struct device *parent, struct cfdata *match, void *aux)
 static void
 gxioattach(struct device *parent, struct device *self, void *aux)
 {
-	struct gxio_softc *sc = (struct gxio_softc *)self;
+	struct gxio_softc *sc = device_private(self);
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	sc->sc_iot = &pxa2x0_bs_tag;
 
@@ -117,11 +173,11 @@ gxioattach(struct device *parent, struct device *self, void *aux)
 	    PXA2X0_MEMCTL_BASE, PXA2X0_MEMCTL_SIZE, 0, &sc->sc_ioh))
 		return;
 
-	/* configuration for GPIO */
-	gxio_config_gpio(sc);
+	/* configuration for GPIOs of busheader side */
+	gxio_config_gpio(sc, busheader_conf, busheader);
 
 	/*
-	 *  Attach each gumstix expantion devices
+	 *  Attach each gumstix expantion of busheader side devices
 	 */
 	config_search_ia(gxiosearch, self, "gxio", NULL);
 }
@@ -131,7 +187,7 @@ static int
 gxiosearch(
     struct device *parent, struct cfdata *cf, const int *ldesc, void *aux)
 {
-	struct gxio_softc *sc = (struct gxio_softc *)parent;
+	struct gxio_softc *sc = device_private(parent);
 	struct gxio_attach_args gxa;
 
 	gxa.gxa_sc = sc;
@@ -160,35 +216,39 @@ gxioprint(void *aux, const char *name)
 
 
 /*
- * configure for expansion boards.
+ * configure for GPIO pin and expansion boards.
  */
 void
-gxio_config_gpio(struct gxio_softc *sc)
+gxio_config_pin()
+{
+	int i;
+
+	/* XXX: turn off for power of bluetooth module */
+	pxa2x0_gpio_set_function(7, GPIO_OUT | GPIO_CLR);
+	delay(100);
+
+	for (i = 0; gpioconf[i].pin != -1; i++)
+		pxa2x0_gpio_set_function(gpioconf[i].pin, gpioconf[i].value);
+}
+
+static void
+gxio_config_gpio(struct gxio_softc *sc,
+    const struct gxioconf *gxioconflist, char *expansion)
 {
 	int i, rv;
 
-	for (i = 0; i < strlen(hirose60p); i++)
-		hirose60p[i] = tolower(hirose60p[i]);
-	for (i = 0; hirose60p_conf[i].name != NULL; i++) {
-		rv = strncmp(hirose60p, hirose60p_conf[i].name,
-		    strlen(hirose60p_conf[i].name) + 1);
+	for (i = 0; i < strlen(expansion); i++)
+		expansion[i] = tolower(expansion[i]);
+	for (i = 0; gxioconflist[i].name != NULL; i++) {
+		rv = strncmp(expansion, gxioconflist[i].name,
+		    strlen(gxioconflist[i].name) + 1);
 		if (rv == 0) {
-			hirose60p_conf[i].config(sc);
-			break;
-		}
-	}
-
-	for (i = 0; i < strlen(busheader); i++)
-		busheader[i] = tolower(busheader[i]);
-	for (i = 0; busheader_conf[i].name != NULL; i++) {
-		rv = strncmp(busheader, busheader_conf[i].name,
-		    strlen(busheader_conf[i].name) + 1);
-		if (rv == 0) {
-			busheader_conf[i].config(sc);
+			gxioconflist[i].config(sc);
 			break;
 		}
 	}
 }
+
 
 static void
 cfstix_config(struct gxio_softc *sc)
@@ -202,10 +262,10 @@ cfstix_config(struct gxio_softc *sc)
 	delay(50);
 	pxa2x0_gpio_set_function(8, GPIO_OUT | GPIO_CLR);
 
-	pxa2x0_gpio_set_function(4, GPIO_IN); 		     /* nBVD1/nSTSCHG */
+	pxa2x0_gpio_set_function(4, GPIO_IN); 		    /* nBVD1/~nSTSCHG */
 	pxa2x0_gpio_set_function(27, GPIO_IN);			/* ~INPACK */
 	pxa2x0_gpio_set_function(11, GPIO_IN);			/* nPCD1 */
-	pxa2x0_gpio_set_function(26, GPIO_IN);			/* PRDY/IRQ */
+	pxa2x0_gpio_set_function(26, GPIO_IN);			/* PRDY/~IRQ */
 
 	for (gpio = 48, npoe_fn = 0; gpio <= 53 ; gpio++)
 		npoe_fn |= pxa2x0_gpio_get_function(gpio);
@@ -241,6 +301,15 @@ netcf_config(struct gxio_softc *sc)
 
 	etherstix_config(sc);
 	cfstix_config(sc);
+}
+
+static void
+netduommc_config(struct gxio_softc *sc)
+{
+
+	netduo_config(sc);
+
+	/* mmc not yet... */
 }
 
 static void
