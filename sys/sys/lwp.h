@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.52 2007/02/26 09:20:52 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.53 2007/02/26 10:50:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,14 +46,13 @@
 #include <sys/condvar.h>
 #include <sys/signalvar.h>
 #include <sys/specificdata.h>
+#include <sys/syncobj.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
-
-typedef volatile const void *wchan_t;
 
 /*
  * Lightweight process.  Field markings and the corresponding locks: 
