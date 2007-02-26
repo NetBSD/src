@@ -1,8 +1,7 @@
 #!/bin/sh -
+#	$NetBSD: MAKEDEV.local,v 1.7 2007/02/26 20:44:03 apb Exp $
 #
-#	$NetBSD: MAKEDEV.local,v 1.6 2003/12/15 08:57:52 jdolecek Exp $
-#
-# Copyright (c) 1991 The Regents of the University of California.
+# Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -15,41 +14,72 @@
 #    documentation and/or other materials provided with the distribution.
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
-#	This product includes software developed by the University of
-#	California, Berkeley and its contributors.
-# 4. Neither the name of the University nor the names of its contributors
-#    may be used to endorse or promote products derived from this software
-#    without specific prior written permission.
+#        This product includes software developed by the NetBSD
+#        Foundation, Inc. and its contributors.
+# 4. Neither the name of The NetBSD Foundation nor the names of its
+#    contributors may be used to endorse or promote products derived
+#    from this software without specific prior written permission.
 #
-# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-# SUCH DAMAGE.
+# THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+# ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+# TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
 #
-#	@(#)MAKEDEV.local	8.1 (Berkeley) 6/9/93
+###########################################################################
 #
+# MAKEDEV.local can be customised to create site-specific device nodes.
+# By default it does nothing, except parse and accept the same command
+# line options as MAKEDEV.
+#
+# "MAKEDEV all" or "MAKEDEV local" will invoke "MAKEDEV.local all";
+# MAKEDEV.local may also be invoked directly with other args.
 
-# Local device MAKEDEV script.
+PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:/rescue
-umask 77
+# makedev_local special [...]
+#	the main loop
+#
+makedev_local()
+{
 
 for i
 do
+
 case $i in
 
 all)
-	#sh $0 list_of_all_devices
+	# Customise this.  For example:
+	#makedev_local foo
 	;;
+
+# Add more cases here.  You can call functions defined in MAKEDEV.tmpl.
+# For example:
+#foo)
+#	mkdev foo c 0 0 600
+#	;;
+
 *)
-	echo "$0: unknown device type: $*"
+	warn "$i: unknown device"
 	;;
+
 esac
 done
+
+}
+
+#
+# MAIN: Load function definitions from MAKEDEV.subr; call setup function
+# to parse command line args and set some other variables; then call
+# makedev_local function to create requested devices.
+#
+. "$(dirname "$0")/MAKEDEV.subr"
+setup ${1+"$@"}
+shift $((${OPTIND}-1))
+makedev_local ${1+"$@"}
