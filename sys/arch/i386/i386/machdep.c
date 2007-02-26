@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.596.2.5 2007/02/26 09:18:09 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.596.2.6 2007/02/26 20:08:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.5 2007/02/26 09:18:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.6 2007/02/26 20:08:14 rmind Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.5 2007/02/26 09:18:09 yamt Exp $
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 #include <machine/gdt.h>
+#include <machine/intr.h>
 #include <machine/kcore.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
@@ -2451,11 +2452,11 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 
 	if (ci->ci_curlwp != ci->ci_data.cpu_idlelwp) {
 		aston((ci)->ci_curlwp);
+#ifdef MULTIPROCESSOR
 		if (immed && ci != curcpu()) {
 			x86_send_ipi(ci, 0);
 		}
 	} else {
-#ifdef MULTIPROCESSOR
 		if ((ci->ci_feature2_flags & CPUID2_MONITOR) == 0 &&
 		    ci != curcpu())
 			x86_send_ipi(ci, 0);
