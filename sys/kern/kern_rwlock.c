@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.4 2007/02/26 09:20:53 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.5 2007/02/26 19:06:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.4 2007/02/26 09:20:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.5 2007/02/26 19:06:10 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -680,6 +680,12 @@ rw_lock_held(krwlock_t *rw)
 	return (rw->rw_owner & RW_THREAD) != 0;
 }
 
+/*
+ * rw_owner:
+ *
+ *	Return the current owner of an RW lock, but only if it is write
+ *	held.  Used for priority inheritance.
+ */
 static struct lwp *
 rw_owner(wchan_t obj)
 {
