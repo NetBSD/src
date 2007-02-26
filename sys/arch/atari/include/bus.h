@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.32 2005/03/09 19:04:43 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.32.4.1 2007/02/26 09:06:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -649,6 +649,8 @@ struct atari_bus_dma_tag {
 	(void)((t)->_dmamap_sync ?				\
 	    (*(t)->_dmamap_sync)((t), (p), (o), (l), (ops)) : (void)0)
 
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t

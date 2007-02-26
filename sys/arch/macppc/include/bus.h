@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17.4.1 2006/06/21 14:53:28 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.17.4.2 2007/02/26 09:07:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@
 #ifndef _MACPPC_BUS_H_
 #define _MACPPC_BUS_H_
 
-#include <machine/autoconf.h>
 #include <machine/pio.h>
 
 /*
@@ -875,6 +874,9 @@ struct macppc_bus_dma_tag {
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t

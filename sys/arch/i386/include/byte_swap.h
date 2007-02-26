@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.6.34.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.6.34.2 2007/02/26 09:07:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #endif
 
 #ifdef  __GNUC__
-#include <sys/types.h>
 __BEGIN_DECLS
 
 #define	__BYTE_SWAP_U32_VARIABLE __byte_swap_u32_variable

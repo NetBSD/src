@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.13.2.1 2006/06/21 14:56:13 yamt Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.13.2.2 2007/02/26 09:08:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.13.2.1 2006/06/21 14:56:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.13.2.2 2007/02/26 09:08:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -104,6 +104,16 @@ int
 clockintr_4m(void *cap)
 {
 
+	/*
+	 * XXX this needs to be fixed in a more general way
+	 * problem is that the kernel enables interrupts and THEN
+	 * sets up clocks. In between there's an opportunity to catch
+	 * a timer interrupt - if we call hardclock() at that point we'll
+	 * panic
+	 * so for now just bail when cold
+	 */
+	if (cold)
+		return 0;
 	/* read the limit register to clear the interrupt */
 	*((volatile int *)&timerreg4m->t_limit);
 	tickle_tc();

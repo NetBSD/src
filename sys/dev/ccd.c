@@ -1,7 +1,7 @@
-/*	$NetBSD: ccd.c,v 1.104.2.2 2006/12/30 20:47:49 yamt Exp $	*/
+/*	$NetBSD: ccd.c,v 1.104.2.3 2007/02/26 09:09:52 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.2 2006/12/30 20:47:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.3 2007/02/26 09:09:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.104.2.2 2006/12/30 20:47:49 yamt Exp $");
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/conf.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/kauth.h>
 
@@ -262,7 +262,7 @@ ccdattach(int num)
 		cs = &ccd_softc[i];
 		snprintf(cs->sc_xname, sizeof(cs->sc_xname), "ccd%d", i);
 		cs->sc_dkdev.dk_name = cs->sc_xname;	/* XXX */
-		lockinit(&cs->sc_lock, PRIBIO, "ccdlk", 0, 0);
+		mutex_init(&cs->sc_lock, MUTEX_DRIVER, IPL_NONE);
 		pseudo_disk_init(&cs->sc_dkdev);
 	}
 }
@@ -563,8 +563,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
 
-	if ((error = lockmgr(&cs->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&cs->sc_lock);
 
 	lp = cs->sc_dkdev.dk_label;
 
@@ -605,7 +604,7 @@ ccdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	    cs->sc_dkdev.dk_copenmask | cs->sc_dkdev.dk_bopenmask;
 
  done:
-	(void) lockmgr(&cs->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&cs->sc_lock);
 	return (error);
 }
 
@@ -615,7 +614,7 @@ ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
-	int error = 0, part;
+	int part;
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
@@ -626,8 +625,7 @@ ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		return (ENXIO);
 	cs = &ccd_softc[unit];
 
-	if ((error = lockmgr(&cs->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&cs->sc_lock);
 
 	part = DISKPART(dev);
 
@@ -649,7 +647,7 @@ ccdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			cs->sc_flags &= ~CCDF_VLABEL;
 	}
 
-	(void) lockmgr(&cs->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&cs->sc_lock);
 	return (0);
 }
 
@@ -990,7 +988,7 @@ static int
 ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	int unit = ccdunit(dev);
-	int s, i, j, lookedup = 0, error;
+	int s, i, j, lookedup = 0, error = 0;
 	int part, pmask;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
@@ -1023,8 +1021,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return (EBADF);
 	}
 
-	if ((error = lockmgr(&cs->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
-		return (error);
+	mutex_enter(&cs->sc_lock);
 
 	/* Must be initialized for these... */
 	switch (cmd) {
@@ -1309,7 +1306,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 
  out:
-	(void) lockmgr(&cs->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&cs->sc_lock);
 	return (error);
 }
 

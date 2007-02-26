@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.26 2005/06/27 11:05:24 ragge Exp $ */
+/*	$NetBSD: if_ni.c,v 1.26.2.1 2007/02/26 09:09:59 yamt Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.26 2005/06/27 11:05:24 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.26.2.1 2007/02/26 09:09:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -602,7 +602,7 @@ niintr(void *arg)
 	if ((NI_RREG(NI_PSR) & PSR_ERR))
 		printf("%s: PSR %x\n", sc->sc_dev.dv_xname, NI_RREG(NI_PSR));
 
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 	/* Got any response packets?  */
 	while ((NI_RREG(NI_PSR) & PSR_RSQ) && (data = REMQHI(&gvp->nc_forwr))) {
 
@@ -688,7 +688,7 @@ niintr(void *arg)
 	nistart(ifp);
 
 	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~(PSR_OWN|PSR_RSQ));
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*

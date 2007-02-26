@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.1.18.1 2006/06/21 14:48:25 yamt Exp $	*/
+/*	$NetBSD: atomic.h,v 1.1.18.2 2007/02/26 09:05:43 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -52,15 +52,17 @@ x86_atomic_testset_u32(volatile u_int32_t *ptr, u_int32_t val) {
     return val;
 }
 
-
-
 static __inline int32_t
 x86_atomic_testset_i32(volatile int32_t *ptr, int32_t val) {
     __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
     return val;
 }
 
-
+static __inline uint8_t
+x86_atomic_testset_u8(volatile uint8_t *ptr, uint8_t val) {
+    __asm volatile ("xchgb %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    return val;
+}
 
 static __inline void
 x86_atomic_setbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
@@ -71,8 +73,6 @@ static __inline void
 x86_atomic_clearbits_u32(volatile u_int32_t *ptr, u_int32_t bits) {
     __asm volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
 }
-
-
 
 static __inline void
 x86_atomic_setbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
@@ -86,10 +86,12 @@ x86_atomic_clearbits_u64(volatile u_int64_t *ptr, u_int64_t bits) {
 
 #define x86_atomic_testset_ul	x86_atomic_testset_u32
 #define x86_atomic_testset_i	x86_atomic_testset_i32
+#define x86_atomic_testset_b	x86_atomic_testset_u8
 #define x86_atomic_setbits_l	x86_atomic_setbits_u32
 #define x86_atomic_setbits_ul	x86_atomic_setbits_u32
 #define x86_atomic_clearbits_l	x86_atomic_clearbits_u32
 #define x86_atomic_clearbits_ul	x86_atomic_clearbits_u32
 
 #endif
+
 #endif

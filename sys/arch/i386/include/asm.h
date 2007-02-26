@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.28.12.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.28.12.2 2007/02/26 09:07:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,6 +93,8 @@
 
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
+#define _LABEL(x) \
+	.globl x; x:
 
 #ifdef _KERNEL
 
@@ -162,6 +164,7 @@
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	LABEL(y)	_LABEL(_C_LABEL(y))
 
 #define	ASMSTR		.asciz
 
@@ -202,7 +205,5 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(_/**/sym),1,0,0,0
 #endif /* __STDC__ */
-
-
 
 #endif /* !_I386_ASM_H_ */

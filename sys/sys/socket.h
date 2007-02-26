@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.75.4.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: socket.h,v 1.75.4.3 2007/02/26 09:12:15 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -195,7 +195,7 @@ struct	linger {
 #define	pseudo_AF_HDRCMPLT 30		/* Used by BPF to not rewrite hdrs
 					   in interface output routine */
 #endif
-#define AF_BLUETOOTH	31
+#define AF_BLUETOOTH	31		/* Bluetooth: HCI, SCO, L2CAP, RFCOMM */
 
 #define	AF_MAX		32
 

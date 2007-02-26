@@ -1,7 +1,7 @@
-/*	$NetBSD: ccdvar.h,v 1.26.12.1 2006/06/21 15:02:11 yamt Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.26.12.2 2007/02/26 09:09:53 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -117,7 +117,7 @@
 #define	_DEV_CCDVAR_H_
 
 #include <sys/buf.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 /*
@@ -212,7 +212,7 @@ struct ccd_softc {
 	struct ccdgeom   sc_geom;		/* pseudo geometry info */
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
-	struct lock	 sc_lock;		/* lock on this structure */
+	kmutex_t	 sc_lock;		/* lock on this structure */
 #if defined(_KERNEL) /* XXX ccdconfig(8) refers softc directly using kvm */
 	struct bufq_state *sc_bufq;		/* buffer queue */
 #endif

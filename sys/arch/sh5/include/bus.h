@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7.4.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.4.2 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -997,6 +997,9 @@ struct sh5_bus_dma_tag {
 	(*(t)->bd_dmamem_unmap)((t)->bd_cookie, (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->bd_dmamem_mmap)((t)->bd_cookie, (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t

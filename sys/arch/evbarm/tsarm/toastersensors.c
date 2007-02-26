@@ -1,4 +1,4 @@
-/* $NetBSD: toastersensors.c,v 1.2.18.3 2006/12/30 20:45:51 yamt Exp $ */
+/* $NetBSD: toastersensors.c,v 1.2.18.4 2007/02/26 09:06:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.2.18.3 2006/12/30 20:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.2.18.4 2007/02/26 09:06:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: toastersensors.c,v 1.2.18.3 2006/12/30 20:45:51 yamt
 #include <sys/device.h>
 #include <sys/callout.h>
 #include <sys/select.h>
-#include <sys/conf.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>

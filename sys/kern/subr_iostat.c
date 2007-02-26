@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_iostat.c,v 1.10.4.3 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: subr_iostat.c,v 1.10.4.4 2007/02/26 09:11:14 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.69 2005/05/29 22:24:15 christos Exp	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.10.4.3 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.10.4.4 2007/02/26 09:11:14 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -84,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_iostat.c,v 1.10.4.3 2006/12/30 20:50:06 yamt Ex
 #include <sys/malloc.h>
 #include <sys/iostat.h>
 #include <sys/sysctl.h>
+#include <sys/rwlock.h>
 
 /*
  * Function prototypes for sysctl nodes
@@ -102,7 +103,7 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
  */
 struct iostatlist_head iostatlist = TAILQ_HEAD_INITIALIZER(iostatlist);
 int iostat_count;		/* number of drives in global drivelist */
-struct lock iostatlist_lock;
+krwlock_t iostatlist_lock;
 
 /*
  * Initialise the iostat subsystem.
@@ -111,7 +112,7 @@ void
 iostat_init(void)
 {
 
-	lockinit(&iostatlist_lock, PWAIT, "iostatlk", 0, 0);
+	rw_init(&iostatlist_lock);
 }
 
 /*
@@ -125,13 +126,13 @@ iostat_find(const char *name)
 
 	KASSERT(name != NULL);
 
-	lockmgr(&iostatlist_lock, LK_SHARED, NULL);
+	rw_enter(&iostatlist_lock, RW_READER);
 	TAILQ_FOREACH(iostatp, &iostatlist, io_link) {
 		if (strcmp(iostatp->io_name, name) == 0) {
 			break;
 		}
 	}
-	lockmgr(&iostatlist_lock, LK_RELEASE, NULL);
+	rw_exit(&iostatlist_lock);
 
 	return iostatp;
 }
@@ -160,10 +161,10 @@ iostat_alloc(int32_t type, void *parent, const char *name)
 	/*
 	 * Link into the drivelist.
 	 */
-	lockmgr(&iostatlist_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&iostatlist_lock, RW_WRITER);
 	TAILQ_INSERT_TAIL(&iostatlist, stats, io_link);
 	iostat_count++;
-	lockmgr(&iostatlist_lock, LK_RELEASE, NULL);
+	rw_exit(&iostatlist_lock);
 
 	return stats;
 }
@@ -180,10 +181,10 @@ iostat_free(struct io_stats *stats)
 	 */
 	if (iostat_count == 0)
 		panic("iostat_free: iostat_count == 0");
-	lockmgr(&iostatlist_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&iostatlist_lock, RW_WRITER);
 	TAILQ_REMOVE(&iostatlist, stats, io_link);
 	iostat_count--;
-	lockmgr(&iostatlist_lock, LK_RELEASE, NULL);
+	rw_exit(&iostatlist_lock);
 	free(stats, M_DEVBUF);
 }
 
@@ -275,7 +276,7 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
 	needed = 0;
 	left = *oldlenp;
 
-	lockmgr(&iostatlist_lock, LK_SHARED, NULL);
+	rw_enter(&iostatlist_lock, RW_READER);
 	for (stats = TAILQ_FIRST(&iostatlist); stats != NULL;
 	    stats = TAILQ_NEXT(stats, io_link)) {
 		if ((disk_only == 1) && (stats->io_type != IOSTAT_DISK))
@@ -306,7 +307,7 @@ iostati_getnames(int disk_only, char *oldp, size_t *oldlenp, const void *newp,
 			left -= slen;
 		}
 	}
-	lockmgr(&iostatlist_lock, LK_RELEASE, NULL);
+	rw_exit(&iostatlist_lock);
 	*oldlenp = needed;
 	return (error);
 }
@@ -349,7 +350,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 	memset(&sdrive, 0, sizeof(sdrive));
 	*oldlenp = 0;
 
-	lockmgr(&iostatlist_lock, LK_SHARED, NULL);
+	rw_enter(&iostatlist_lock, RW_READER);
 	TAILQ_FOREACH(stats, &iostatlist, io_link) {
 		if (left < tocopy)
 			break;
@@ -376,7 +377,7 @@ sysctl_hw_iostats(SYSCTLFN_ARGS)
 		*oldlenp += tocopy;
 		left -= tocopy;
 	}
-	lockmgr(&iostatlist_lock, LK_RELEASE, NULL);
+	rw_exit(&iostatlist_lock);
 	return (error);
 }
 

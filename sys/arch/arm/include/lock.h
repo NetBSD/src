@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4.16.1 2006/06/21 14:49:16 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.4.16.2 2007/02/26 09:05:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,14 @@
 
 #ifndef _ARM_LOCK_H_
 #define	_ARM_LOCK_H_
+
+#ifdef _KERNEL
+#include <arm/cpufunc.h>
+
+#define	mb_read		drain_writebuf		/* in cpufunc.h */
+#define	mb_write	drain_writebuf		/* in cpufunc.h */
+#define	mb_memory	drain_writebuf		/* in cpufunc.h */
+#endif
 
 static __inline int
 __swp(int __val, volatile int *__ptr)

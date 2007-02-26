@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.19.2.2 2006/12/30 20:46:10 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.19.2.3 2007/02/26 09:06:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.2 2006/12/30 20:46:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.3 2007/02/26 09:06:55 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -148,6 +148,7 @@ static void amd_family6_probe(struct cpu_info *);
 static void intel_family_new_probe(struct cpu_info *);
 
 static const char *intel_family6_name(struct cpu_info *);
+static const char *amd_amd64_name(struct cpu_info *);
 
 static void transmeta_cpu_info(struct cpu_info *);
 
@@ -311,7 +312,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
-				"K6", "K6-2", "K6-III", 0, 0, 0,
+				"K6", "K6-2", "K6-III", "Geode LX", 0, 0,
 				"K6-2+/III+", 0, 0,
 				"K5 or K6"		/* Default */
 			},
@@ -339,7 +340,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
-				"Unknown K7 (Athlon)"	/* Default */
+				"Unknown K8 (Athlon)"	/* Default */
 			},
 			NULL,
 			amd_family6_probe,
@@ -652,8 +653,10 @@ winchip_cpu_setup(struct cpu_info *ci)
 void
 via_cpu_probe(struct cpu_info *ci)
 {
+	u_int model = CPUID2MODEL(ci->ci_signature);
+	u_int stepping = CPUID2STEPPING(ci->ci_signature);
 	u_int descs[4];
-	u_int lfunc;
+	u_int lfunc, msr;
 
 	/*
 	 * Determine the largest extended function value.
@@ -667,6 +670,24 @@ via_cpu_probe(struct cpu_info *ci)
 	if (lfunc >= 0x80000001) {
 		CPUID(0x80000001, descs[0], descs[1], descs[2], descs[3]);
 		ci->ci_feature_flags |= descs[3];
+	}
+
+	if (model >= 0x9) {
+		/* Nehemiah or Esther */
+		CPUID(0xc0000000, descs[0], descs[1], descs[2], descs[3]);
+		lfunc = descs[0];
+		if (lfunc == 0xc0000001) {
+			CPUID(lfunc, descs[0], descs[1], descs[2], descs[3]);
+			lfunc = descs[3];
+			if (model > 0x9 || stepping >= 8) {	/* ACE */
+				if ((lfunc & 0xc0) == 0xc0) {
+					ci->ci_padlock_flags |= CPUID_FEAT_VACE;
+					msr = rdmsr(MSR_VIA_ACE);
+					wrmsr(MSR_VIA_ACE,
+					    msr | MSR_VIA_ACE_ENABLE);
+				}
+			}
+		}
 	}
 }
 
@@ -733,6 +754,140 @@ intel_family6_name(struct cpu_info *ci)
 			}
 			if (ret == NULL)
 				ret = i386_intel_brand[ci->ci_brand_id];
+		}
+	}
+
+	return ret;
+}
+
+/*
+ * Identify AMD64 CPU names from cpuid.
+ *
+ * Based on:
+ * "Revision Guide for AMD Athlon 64 and AMD Opteron Processors"
+ * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/25759.pdf
+ * "Revision Guide for AMD NPT Family 0Fh Processors"
+ * http://www.amd.com/us-en/assets/content_type/white_papers_and_tech_docs/33610.pdf
+ * and other miscellaneous reports.
+ */
+const char *
+amd_amd64_name(struct cpu_info *ci)
+{
+	int extfamily, extmodel, model;
+	const char *ret = NULL;
+
+	model = CPUID2MODEL(ci->ci_signature);
+	extfamily = CPUID2EXTFAMILY(ci->ci_signature);
+	extmodel  = CPUID2EXTMODEL(ci->ci_signature);
+
+	if (extfamily == 0x00) {
+		switch (model) {
+		case 0x1:
+			switch (extmodel) {
+			case 0x2:	/* rev JH-E1/E6 */
+			case 0x4:	/* rev JH-F2 */
+				ret = "Dual-Core Opteron";
+				break;
+			}
+			break;
+		case 0x3:
+			switch (extmodel) {
+			case 0x2:	/* rev JH-E6 (Toledo) */
+				ret = "Dual-Core Opteron or Athlon 64 X2";
+				break;
+			case 0x4:	/* rev JH-F2 (Windsor) */
+				ret = "Athlon 64 FX or Athlon 64 X2";
+				break;
+			}
+			break;
+		case 0x4:
+			switch (extmodel) {
+			case 0x0:	/* rev SH-B0/C0/CG (ClawHammer) */
+			case 0x1:	/* rev SH-D0 */
+				ret = "Athlon 64";
+				break;
+			case 0x2:	/* rev SH-E5 (Lancaster?) */
+				ret = "Mobile Athlon 64 or Turion 64";
+				break;
+			}
+			break;
+		case 0x5:
+			switch (extmodel) {
+			case 0x0:	/* rev SH-B0/B3/C0/CG (SledgeHammer?) */
+				ret = "Opteron or Athlon 64 FX";
+				break;
+			case 0x1:	/* rev SH-D0 */
+			case 0x2:	/* rev SH-E4 */
+				ret = "Opteron";
+				break;
+			}
+			break;
+		case 0x7:
+			switch (extmodel) {
+			case 0x0:	/* rev SH-CG (ClawHammer) */
+			case 0x1:	/* rev SH-D0 */
+				ret = "Athlon 64";
+				break;
+			case 0x2:	/* rev DH-E4, SH-E4 */
+				ret = "Athlon 64 or Athlon 64 FX or Opteron";
+				break;
+			}
+			break;
+		case 0x8:
+			switch (extmodel) {
+			case 0x0:	/* rev CH-CG */
+			case 0x1:	/* rev CH-D0 */
+				ret = "Athlon 64 or Sempron";
+				break;
+			case 0x4:	/* rev BH-F2 */
+				ret = "Turion 64 X2";
+				break;
+			}
+			break;
+		case 0xb:
+			switch (extmodel) {
+			case 0x0:	/* rev CH-CG */
+			case 0x1:	/* rev CH-D0 */
+				ret = "Athlon 64";
+				break;
+			case 0x2:	/* rev BH-E4 (Manchester) */
+			case 0x4:	/* rev BH-F2 (Windsor) */
+			case 0x6:	/* rev BH-G1 (Brisbane) */
+				ret = "Athlon 64 X2";
+				break;
+			}
+			break;
+		case 0xc:
+			switch (extmodel) {
+			case 0x0:	/* rev DH-CG (Newcastle) */
+			case 0x1:	/* rev DH-D0 (Winchester) */
+				ret = "Athlon 64 or Sempron";
+				break;
+			case 0x2:	/* rev DH-E3/E6 */
+				ret = "Sempron";
+				break;
+			}
+			break;
+		case 0xe:
+			switch (extmodel) {
+			case 0x0:	/* rev DH-CG (Newcastle?) */
+				ret = "Athlon 64 or Sempron";
+				break;
+			}
+			break;
+		case 0xf:
+			switch (extmodel) {
+			case 0x0:	/* rev DH-CG (Newcastle/Paris) */
+			case 0x1:	/* rev DH-D0 (Winchester/Victoria) */
+			case 0x2:	/* rev DH-E3/E6 (Venice/Palermo) */
+			case 0x4:	/* rev DH-F2 (Orleans/Manila) */
+			case 0x5:	/* rev DH-F2 (Orleans/Manila) */
+				ret = "Athlon 64 or Sempron";
+				break;
+			}
+			break;
+		default:
+			ret = "Unknown AMD64 CPU";
 		}
 	}
 
@@ -1207,13 +1362,11 @@ transmeta_cpu_info(struct cpu_info *ci)
 {
 	u_int eax, ebx, ecx, edx, nreg = 0;
 
-	/* XXX aprint_verbose()? */
-
 	CPUID(0x80860000, eax, ebx, ecx, edx);
 	nreg = eax;
 	if (nreg >= 0x80860001) {
 		CPUID(0x80860001, eax, ebx, ecx, edx);
-		aprint_normal("%s: Processor revision %u.%u.%u.%u\n",
+		aprint_verbose("%s: Processor revision %u.%u.%u.%u\n",
 		    ci->ci_dev->dv_xname,
 		    (ebx >> 24) & 0xff,
 		    (ebx >> 16) & 0xff,
@@ -1222,7 +1375,7 @@ transmeta_cpu_info(struct cpu_info *ci)
 	}
 	if (nreg >= 0x80860002) {
 		CPUID(0x80860002, eax, ebx, ecx, edx);
-		aprint_normal("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		aprint_verbose("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
 		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
 		    (ebx >> 16) & 0xff,
 		    (ebx >> 8) & 0xff,
@@ -1248,14 +1401,14 @@ transmeta_cpu_info(struct cpu_info *ci)
 			    info.regs[i].ecx, info.regs[i].edx);
 		}
 		info.text[64] = 0;
-		aprint_normal("%s: %s\n", ci->ci_dev->dv_xname, info.text);
+		aprint_verbose("%s: %s\n", ci->ci_dev->dv_xname, info.text);
 	}
 
 	if (nreg >= 0x80860007) {
 		crusoe_longrun = tmx86_get_longrun_mode();
 		tmx86_get_longrun_status(&crusoe_frequency,
 		    &crusoe_voltage, &crusoe_percentage);
-		aprint_normal("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
+		aprint_verbose("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
 		    ci->ci_dev->dv_xname,
 		    crusoe_longrun, crusoe_frequency, crusoe_voltage,
 		    crusoe_percentage);
@@ -1365,17 +1518,30 @@ identifycpu(struct cpu_info *ci)
 					     i386_intel_brand[ci->ci_brand_id];
 			}
 
-			if (vendor == CPUVENDOR_AMD && family == 6 &&
-			    model >= 6) {
-				if (ci->ci_brand_id == 1)
-					/* 
-					 * It's Duron. We override the 
-					 * name, since it might have been 
-					 * misidentified as Athlon.
+			if (vendor == CPUVENDOR_AMD) {
+				if (family == 6 && model >= 6) {
+					if (ci->ci_brand_id == 1)
+						/* 
+						 * It's Duron. We override the 
+						 * name, since it might have
+						 * been misidentified as Athlon.
+						 */
+						name =
+						    amd_brand[ci->ci_brand_id];
+					else
+						brand = amd_brand_name;
+				}
+				if (CPUID2FAMILY(ci->ci_signature) == 0xf) {
+					/*
+					 * Identify AMD64 CPU names.
+					 * Note family value is clipped by
+					 * CPU_MAXFAMILY.
 					 */
-					name = amd_brand[ci->ci_brand_id];
-				else
-					brand = amd_brand_name;
+					const char *tmp;
+					tmp = amd_amd64_name(ci);
+					if (tmp != NULL)
+						name = tmp;
+				}
 			}
 			
 			if (vendor == CPUVENDOR_IDT && family >= 6)
@@ -1472,19 +1638,19 @@ identifycpu(struct cpu_info *ci)
 		if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
 			if ((cpu_feature2 & CPUID2_TM2) &&
 			    (rdmsr(MSR_THERM2_CTL) & (1 << 16)))
-				aprint_normal("%s: using thermal monitor 2\n",
+				aprint_verbose("%s: using thermal monitor 2\n",
 				    cpuname);
 			else
-				aprint_normal("%s: using thermal monitor 1\n",
+				aprint_verbose("%s: using thermal monitor 1\n",
 				    cpuname);
 		} else {
-			aprint_normal("%s: enabling thermal monitor 1 ... ",
+			aprint_verbose("%s: enabling thermal monitor 1 ... ",
 			    cpuname);
 			wrmsr(MSR_MISC_ENABLE, rdmsr(MSR_MISC_ENABLE) | (1<<3));
 			if (rdmsr(MSR_MISC_ENABLE) & (1 << 3)) {
-				aprint_normal("enabled.\n");
+				aprint_verbose("enabled.\n");
 			} else {
-				aprint_normal("failed!\n");
+				aprint_verbose("failed!\n");
 				aprint_error("%s: failed to enable thermal "
 				    "monitoring!\n", cpuname);
 			}
@@ -1628,4 +1794,6 @@ identifycpu(struct cpu_info *ci)
 	}
 #endif /* POWERNOW_K7 || POWERNOW_K8 */
 
+	x86_errata(ci, vendor);
+	x86_patch();
 }

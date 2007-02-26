@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.3.2.2 2006/12/30 20:46:26 yamt Exp $	*/
+/*	$NetBSD: ofb_cons.c,v 1.3.2.3 2007/02/26 09:07:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.3.2.2 2006/12/30 20:46:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.3.2.3 2007/02/26 09:07:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -70,7 +70,6 @@ int ofb_enable_cache = 0;
 
 static int copy_rom_font(void);
 static struct wsdisplay_font openfirm6x11;
-int    console_node = 0, console_instance = 0;
 static vaddr_t fbaddr;
 static int romfont_loaded = 0;
 
@@ -90,24 +89,17 @@ ofb_cnattach()
 	struct rasops_info *ri = &ofb_console_screen.scr_ri;
 	long defattr;
 	int crow = 0;
-	int chosen, stdout, node;
 	char type[16];
-
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	node = OF_instance_to_package(stdout);
-	console_node = node;
-	console_instance = stdout;
 
 	OF_getprop(console_node, "device_type", type, sizeof(type));
 	if (strcmp(type, "display") != 0)
 		return -1;
 
 	/* get current cursor position */
-	OF_interpret("line#", 1, &crow);
+	OF_interpret("line#", 0, 1, &crow);
 
 	/* move (rom monitor) cursor to the lowest line - 1 */
-	OF_interpret("#lines 2 - to line#", 0);
+	OF_interpret("#lines 2 - to line#", 0, 0);
 	
 	wsfont_init();
 	if (copy_rom_font() == 0) {
@@ -137,7 +129,8 @@ ofb_cnattach()
 	ofb_stdscreen.capabilities = ri->ri_caps;
 
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
-	wsdisplay_preattach(&ofb_stdscreen, ri, 0, crow, defattr);
+	wsdisplay_preattach(&ofb_stdscreen, ri, 0, max(0,
+	    min(crow, ri->ri_rows - 1)), defattr);
 	
 #if notyet
 	ofb_init_cmap(NULL);
@@ -154,7 +147,7 @@ copy_rom_font()
 	int chosen, mmu, m, e;
 
 	/* Get ROM FONT address. */
-	OF_interpret("font-adr", 1, &romfont);
+	OF_interpret("font-adr", 0, 1, &romfont);
 	if (romfont == NULL)
 		return -1;
 
@@ -168,8 +161,8 @@ copy_rom_font()
 	OF_call_method("translate", mmu, 1, 3, romfont, &romfont, &m, &e);
  
 	/* Get character size */
-	OF_interpret("char-width", 1, &char_width);
-	OF_interpret("char-height", 1, &char_height);
+	OF_interpret("char-width", 0, 1, &char_width);
+	OF_interpret("char-height", 0, 1, &char_height);
 
 	openfirm6x11.name = "Open Firmware";
 	openfirm6x11.firstchar = 32;
@@ -193,15 +186,15 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 	/* XXX /chaos/control doesn't have "width", "height", ... */
 	width = height = -1;
 	if (OF_getprop(node, "width", &width, 4) != 4)
-		OF_interpret("screen-width", 1, &width);
+		OF_interpret("screen-width", 0, 1, &width);
 	if (OF_getprop(node, "height", &height, 4) != 4)
-		OF_interpret("screen-height", 1, &height);
+		OF_interpret("screen-height", 0, 1, &height);
 	if (OF_getprop(node, "linebytes", &linebytes, 4) != 4)
 		linebytes = width;			/* XXX */
 	if (OF_getprop(node, "depth", &depth, 4) != 4)
 		depth = 8;				/* XXX */
 	if (OF_getprop(node, "address", &fbaddr, 4) != 4)
-		OF_interpret("frame-buffer-adr", 1, &fbaddr);
+		OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
 
 	if (width == -1 || height == -1 || fbaddr == 0 || fbaddr == -1)
 		return FALSE;
@@ -245,8 +238,8 @@ ofb_init_rasops(int node, struct rasops_info *ri)
 		 * XXX this assumes we're the console which may or may not 
 		 * be the case 
 		 */
-		OF_interpret("#lines", 1, &rows);
-		OF_interpret("#columns", 1, &cols);
+		OF_interpret("#lines", 0, 1, &rows);
+		OF_interpret("#columns", 0, 1, &cols);
 		ri->ri_font = &openfirm6x11;
 		ri->ri_wsfcookie = -1;		/* not using wsfont */
 		rasops_init(ri, rows, cols);

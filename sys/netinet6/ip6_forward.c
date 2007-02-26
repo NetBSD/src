@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.45.2.2 2006/12/30 20:50:38 yamt Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.45.2.3 2007/02/26 09:11:51 yamt Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.45.2.2 2006/12/30 20:50:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.45.2.3 2007/02/26 09:11:51 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -64,6 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.45.2.2 2006/12/30 20:50:38 yamt Ex
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif /* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec6.h>
+#include <netipsec/key.h>
+#include <netipsec/xform.h>
+#endif /* FAST_IPSEC */
 
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
@@ -107,6 +114,12 @@ ip6_forward(m, srcrt)
 	struct secpolicy *sp = NULL;
 	int ipsecrt = 0;
 #endif
+#ifdef FAST_IPSEC
+    struct secpolicy *sp = NULL;
+    int needipsec = 0;
+    int s;
+#endif
+
 
 #ifdef IPSEC
 	/*
@@ -332,6 +345,24 @@ ip6_forward(m, srcrt)
     }
     skip_ipsec:
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+	/* Check the security policy (SP) for the packet */
+
+	sp = ipsec6_check_policy(m,NULL,0,&needipsec,&error);
+	if (error != 0) {
+		/*
+		 * Hack: -EINVAL is used to signal that a packet
+		 * should be silently discarded.  This is typically
+		 * because we asked key management for an SA and
+		 * it was delayed (e.g. kicked up to IKE).
+		 */
+	if (error == -EINVAL)
+		error = 0;
+	goto freecopy;
+	}
+#endif /* FAST_IPSEC */
+
+
 
 	dst = &ip6_forward_rt.ro_dst;
 	if (!srcrt) {
@@ -359,7 +390,7 @@ ip6_forward(m, srcrt)
 		else
 			rtcache_check((struct route *)&ip6_forward_rt);
 		if (ip6_forward_rt.ro_rt == NULL) {
-			bzero(dst, sizeof(*dst));
+			memset(dst, 0, sizeof(*dst));
 			dst->sin6_len = sizeof(struct sockaddr_in6);
 			dst->sin6_family = AF_INET6;
 			dst->sin6_addr = ip6->ip6_dst;
@@ -429,6 +460,21 @@ ip6_forward(m, srcrt)
 		m_freem(m);
 		return;
 	}
+#ifdef FAST_IPSEC
+    /*
+     * If we need to encapsulate the packet, do it here
+     * ipsec6_proces_packet will send the packet using ip6_output 
+     */
+	if (needipsec) {
+		s = splsoftnet();
+		error = ipsec6_process_packet(m,sp->req);
+		splx(s);
+		if (mcopy)
+			goto freecopy;
+    }
+#endif   
+
+
 
 	/*
 	 * Destination scope check: if a packet is going to break the scope
@@ -506,7 +552,9 @@ ip6_forward(m, srcrt)
 #endif
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor((struct sockaddr_in6 *)&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
+		    nd6_is_addr_neighbor(
+		        satocsin6(rtcache_getdst((struct route *)&ip6_forward_rt)),
+			rt->rt_ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is

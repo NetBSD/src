@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.7 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: sivar.h,v 1.7.8.1 2007/02/26 09:08:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,9 +62,8 @@ struct si_dma_handle {
 	int 		dh_flags;
 #define	SIDH_BUSY	1		/* This DH is in use */
 #define	SIDH_OUT	2		/* DMA does data out (write) */
-	u_char *	dh_addr;	/* KVA of start of buffer */
-	int 		dh_maplen;	/* Length of KVA mapping. */
-	void *		dh_dvma;	/* VA of buffer in DVMA space */
+	vaddr_t		dh_dmaaddr;	/* VA of buffer in DVMA space */
+	vsize_t		dh_dmalen;	/* Length of KVA mapping. */
 };
 
 /*
@@ -73,7 +72,11 @@ struct si_dma_handle {
  */
 struct si_softc {
 	struct ncr5380_softc	ncr_sc;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
 	volatile struct si_regs	*sc_regs;
+	bus_dma_tag_t		sc_dmat;
+	bus_dmamap_t		sc_dmap;
 	int		sc_adapter_type;
 	int		sc_adapter_iv_am;	/* int. vec + address modifier */
 	int 	sc_options;			/* options for this instance */

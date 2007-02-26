@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.84.2.2 2006/12/30 20:50:17 yamt Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.84.2.3 2007/02/26 09:11:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84.2.2 2006/12/30 20:50:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84.2.3 2007/02/26 09:11:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.84.2.2 2006/12/30 20:50:17 yamt Ex
 #include <miscfs/fdesc/fdesc.h>
 #include <miscfs/genfs/genfs.h>
 
-#define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
+#define cttyvp(p) ((p)->p_lflag & PL_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
 #define FDL_WANT	0x01
 #define FDL_LOCKED	0x02

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.51.2.2 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.51.2.3 2007/02/26 09:07:14 yamt Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,12 +62,11 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.51.2.2 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.51.2.3 2007/02/26 09:07:14 yamt Exp $");
 
 #include "opt_adb.h"
 
 #include <sys/param.h>
-#include <sys/cdefs.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/systm.h>

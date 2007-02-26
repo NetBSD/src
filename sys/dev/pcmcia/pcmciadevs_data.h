@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.214.2.2 2006/12/30 20:49:18 yamt Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.214.2.3 2007/02/26 09:10:39 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.220 2006/11/16 00:52:48 christos Exp
+ *	NetBSD: pcmciadevs,v 1.221 2007/02/10 03:14:03 ichiro Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -797,6 +797,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Motorola Corporation",
 	    "Motorola Montana 33.6",	}
+	,
+	{
+	    PCMCIA_VENDOR_NECINFRONTIA, PCMCIA_PRODUCT_NECINFRONTIA_AX420N,
+	    PCMCIA_CIS_NECINFRONTIA_AX420N,
+	    0,
+	    "NEC Infrontia",
+	    "NEC Infrontia AX420N AirH Modem",	}
 	,
 	{
 	    PCMCIA_VENDOR_NEWMEDIA, PCMCIA_PRODUCT_NEWMEDIA_BASICS,
@@ -2165,6 +2172,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "The Linksys Group",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NECINFRONTIA,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "NEC Infrontia",
 	    NULL,
 	},
 	{

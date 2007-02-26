@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.22.8.2 2006/12/30 20:47:21 yamt Exp $	*/
+/*	$NetBSD: kbd.c,v 1.22.8.3 2007/02/26 09:08:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.22.8.2 2006/12/30 20:47:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.22.8.3 2007/02/26 09:08:43 yamt Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -138,7 +138,7 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 #define KEY_UP(c)    ((c) & 0x80)
 
 void 
-kbdenable(int mode)
+kbdenable(int mode)	/* 1: interrupt, 0: poll */
 {
 
 	intio_set_sysport_keyctrl(8);
@@ -414,7 +414,6 @@ kbd_send_command(int cmd)
 /*
  * for console
  */
-#include "ite.h"
 #if NITE > 0
 int
 kbdcngetc(void)

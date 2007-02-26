@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.16.2.2 2006/12/30 20:49:56 yamt Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.16.2.3 2007/02/26 09:10:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16.2.2 2006/12/30 20:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16.2.3 2007/02/26 09:10:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static int ntfs_uastrcmp(struct ntfsmount *, const wchar *, size_t,
 static wchar *ntfs_toupper_tab;
 #define NTFS_U28(ch)		((((ch) & 0xE0) == 0) ? '_' : (ch) & 0xFF)
 #define NTFS_TOUPPER(ch)	(ntfs_toupper_tab[(unsigned char)(ch)])
-static struct lock ntfs_toupper_lock;
+static kmutex_t ntfs_toupper_lock;
 static signed int ntfs_toupper_usecount;
 
 /* support macro for ntfs_ntvattrget() */
@@ -409,22 +409,30 @@ ntfs_ntlookup(
 	dprintf(("ntfs_ntlookup: looking for ntnode %llu\n",
 	    (unsigned long long)ino));
 
-	do {
-		if ((ip = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
-			ntfs_ntget(ip);
-			dprintf(("ntfs_ntlookup: ntnode %llu: %p,"
-			    " usecount: %d\n",
-			    (unsigned long long)ino, ip, ip->i_usecount));
-			*ipp = ip;
-			return (0);
-		}
-	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE | LK_SLEEPFAIL, NULL));
+	if ((*ipp = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
+		ntfs_ntget(*ipp);
+		dprintf(("ntfs_ntlookup: ntnode %llu: %p,"
+		    " usecount: %d\n",
+		    (unsigned long long)ino, *ipp, (*ipp)->i_usecount));
+		return (0);
+	}
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
 	ddprintf(("ntfs_ntlookup: allocating ntnode: %llu: %p\n",
 	    (unsigned long long)ino, ip));
 	bzero(ip, sizeof(struct ntnode));
+
+	mutex_enter(&ntfs_hashlock);
+	if ((*ipp = ntfs_nthashlookup(ntmp->ntm_dev, ino)) != NULL) {
+		mutex_exit(&ntfs_hashlock);
+		ntfs_ntget(*ipp);
+		FREE(ip, M_NTFSNTNODE);
+		dprintf(("ntfs_ntlookup: ntnode %llu: %p,"
+		    " usecount: %d\n",
+		    (unsigned long long)ino, *ipp, (*ipp)->i_usecount));
+		return (0);
+	}
 
 	/* Generic initialization */
 	ip->i_devvp = ntmp->ntm_devvp;
@@ -441,7 +449,7 @@ ntfs_ntlookup(
 
 	ntfs_nthashins(ip);
 
-	lockmgr(&ntfs_hashlock, LK_RELEASE, NULL);
+	mutex_exit(&ntfs_hashlock);
 
 	*ipp = ip;
 
@@ -2026,7 +2034,7 @@ void
 ntfs_toupper_init()
 {
 	ntfs_toupper_tab = (wchar *) NULL;
-	lockinit(&ntfs_toupper_lock, PVFS, "ntfs_toupper", 0, 0);
+	mutex_init(&ntfs_toupper_lock, MUTEX_DEFAULT, IPL_NONE);
 	ntfs_toupper_usecount = 0;
 }
 
@@ -2043,7 +2051,7 @@ ntfs_toupper_use(mp, ntmp)
 	struct vnode *vp;
 
 	/* get exclusive access */
-	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&ntfs_toupper_lock);
 
 	/* only read the translation data from a file if it hasn't been
 	 * read already */
@@ -2067,7 +2075,7 @@ ntfs_toupper_use(mp, ntmp)
 
     out:
 	ntfs_toupper_usecount++;
-	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
+	mutex_exit(&ntfs_toupper_lock);
 	return (error);
 }
 
@@ -2079,7 +2087,7 @@ void
 ntfs_toupper_unuse()
 {
 	/* get exclusive access */
-	lockmgr(&ntfs_toupper_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&ntfs_toupper_lock);
 
 	ntfs_toupper_usecount--;
 	if (ntfs_toupper_usecount == 0) {
@@ -2094,5 +2102,5 @@ ntfs_toupper_unuse()
 #endif
 
 	/* release the lock */
-	lockmgr(&ntfs_toupper_lock, LK_RELEASE, NULL);
+	mutex_exit(&ntfs_toupper_lock);
 }

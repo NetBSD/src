@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.8.2.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.8.2.2 2007/02/26 09:08:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,9 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.1 2006/06/21 14:55:39 yamt Exp $");
-
-#include "opt_lockdebug.h"
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.2 2007/02/26 09:08:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,15 +134,6 @@ struct lwp *cpu_switch_prepare(struct lwp *, struct lwp *);
 void idle(void);
 int want_resched;
 
-#ifdef LOCKDEBUG
-#define	SCHED_LOCK_IDLE()	sched_lock_idle()
-#define	SCHED_UNLOCK_IDLE()	sched_unlock_idle()
-#else
-#define	SCHED_LOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
-#define	SCHED_UNLOCK_IDLE()	do {} while (/* CONSTCOND */ 0)
-#endif
-
-
 /*
  * Prepare context switch from olwp to nlwp.
  * This code is shared by cpu_switch and cpu_switchto.
@@ -153,7 +142,9 @@ struct lwp *
 cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 {
 
+	sched_lock_idle();
 	nlwp->l_stat = LSONPROC;
+	sched_unlock_idle();
 
 	if (nlwp != olwp) {
 		struct proc *p = nlwp->l_proc;
@@ -187,18 +178,18 @@ cpu_switch_search(struct lwp *olwp)
 
 	curlwp = NULL;
 
-	SCHED_LOCK_IDLE();
+	sched_lock_idle();
 	while (sched_whichqs == 0) {
-		SCHED_UNLOCK_IDLE();
+		sched_unlock_idle();
 		idle();
-		SCHED_LOCK_IDLE();
+		sched_lock_idle();
 	}
 
 	q = &sched_qs[ffs(sched_whichqs) - 1];
 	l = q->ph_link;
 	remrunqueue(l);
 	want_resched = 0;
-	SCHED_UNLOCK_IDLE();
+	sched_unlock_idle();
 
 	return (cpu_switch_prepare(olwp, l));
 }

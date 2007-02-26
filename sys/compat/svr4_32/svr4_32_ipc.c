@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.8.4.1 2006/12/30 20:47:48 yamt Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.8.4.2 2007/02/26 09:09:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.8.4.1 2006/12/30 20:47:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.8.4.2 2007/02/26 09:09:43 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.8.4.1 2006/12/30 20:47:48 yamt Exp
 #include <sys/stat.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4_32/svr4_32_types.h>

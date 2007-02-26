@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.139.2.1 2006/06/21 15:04:21 yamt Exp $
+#	$NetBSD: files.isa,v 1.139.2.2 2007/02/26 09:10:14 yamt Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -6,7 +6,7 @@
 
 # ports should specify appropriate major numbers for the following
 # devices:
-#	mcd, scd, wd, wt
+#	mcd, wd, wt
 
 device	isa {[port = -1], [size = 0],
 	     [iomem = -1], [iosiz = 0],
@@ -144,11 +144,6 @@ device	mcd: disk
 attach	mcd at isa
 file	dev/isa/mcd.c			mcd			needs-flag
 defflag			MCD_PROMISC		# enable "promiscuous" match
-
-# Sony CDU-3[13]A CD-ROM drives
-device	scd: disk
-attach	scd at isa
-file	dev/isa/scd.c			scd			needs-flag
 
 attach	wdc at isa with wdc_isa
 file	dev/isa/wdc_isa.c		wdc_isa
@@ -290,10 +285,6 @@ file	dev/isa/if_tr_isa.c		tr_isa
 attach	tr at isa with tr_isa: tr_isa, elink
 file	dev/isa/if_tribm_isa.c		tr_isa
 file	dev/isa/if_trtcm_isa.c		tr_isa
-
-# ISA NCR/AT&T/Lucent WaveLAN (non-802.11) card
-attach	wl at isa with wl_isa: i82586, wavelan
-file	dev/isa/if_wl_isa.c		wl_isa
 
 #
 # ISA Sound hardware
@@ -469,11 +460,16 @@ device	it: sysmon_envsys
 attach	it at isa with it_isa
 file	dev/isa/it.c			it_isa
 
+# Abit uGuru hardware monitor
+device ug: sysmon_envsys
+attach ug at isa with ug_isa
+file   dev/isa/ug.c                    ug_isa
+
 # ISDN devices
 attach	isic at isa with isic_isa
 file	dev/isa/isic_isa.c		isic_isa
-attach	daic at isa with daic_isa
-file	dev/isa/daic_isa.c		daic_isa
+#attach	daic at isa with daic_isa
+#file	dev/isa/daic_isa.c		daic_isa
 
 defflag	opt_isicisa.h	ISICISA_TEL_S0_8 ISICISA_TEL_S0_16 ISICISA_TEL_S0_16_3
 			ISICISA_AVM_A1 ISICISA_USR_STI ISICISA_ITKIX1

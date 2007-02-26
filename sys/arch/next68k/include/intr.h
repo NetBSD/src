@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.8.2 2006/12/30 20:46:40 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.8.3 2007/02/26 09:07:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -78,8 +78,6 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <sys/spl.h>
-
-#define spllowersoftclock() spl1()
 
 #define spldma()        _splraise(PSL_S|PSL_IPL6)
 

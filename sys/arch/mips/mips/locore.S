@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.159.4.2 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.159.4.3 2007/02/26 09:07:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,10 +152,8 @@ _C_LABEL(verylocore):
  */
 LEAF(mips_idle)
 	sw	zero, _C_LABEL(curlwp)		# set curlwp NULL for stats
-#if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_unlock_idle)	# release sched_lock
 	nop
-#endif
 #ifdef 	IPL_ICU_MASK
 	# all interrupts enable.
 	sw	zero, _C_LABEL(md_imask)
@@ -169,7 +167,7 @@ LEAF(mips_idle)
 	nop
 
 	/* Try to zero some free pages. */
-	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	lbu	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
 	nop
 	beq	t0, zero, 1f
 	nop
@@ -193,11 +191,9 @@ LEAF(mips_idle)
 	nop
 	nop
 	nop
-#if defined(LOCKDEBUG)
 	nop
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
-#endif
 	la	ra, cpu_switch_queuescan
 	j	ra
 	nop
@@ -288,14 +284,13 @@ cpu_switch_queuescan:
 3:
 	/* Squirrel away lwp pointer into s7 */
 	move	s7, a0
-#if defined(LOCKDEBUG)
+
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
 	 */
 	jal	_C_LABEL(sched_unlock_idle)
 	nop
-#endif
 
 	/*
 	 * Regardless of whether a context switch is required, we need
@@ -439,7 +434,6 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	move	s0, a0				# s0 = old proc
 	move	s7, a1				# s7 = newproc
 
-#if defined(LOCKDEBUG)
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
@@ -447,7 +441,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	jal	_C_LABEL(sched_unlock_idle)
 	nop
 	move	a0, s7				# restore proc
-#endif
+
 	/*
 	 * Regardless of whether a context switch is required, we need
 	 * to update curlwp and other globals.  We must do this even
@@ -551,10 +545,9 @@ LEAF(switch_exit)
 	REG_EPILOGUE
 	jal	ra, a1				# lwp already in a0
 	nop
-#if defined(LOCKDEBUG)
 	jal	_C_LABEL(sched_lock_idle)	# acquire sched_lock
 	nop
-#endif
+
 	/*
 	 * Now jump back into the middle of cpu_switch().  Note that
 	 * we must clear s0 to guarantee that the check for switching

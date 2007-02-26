@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.4.2.1 2006/06/21 14:49:34 yamt Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.4.2.2 2007/02/26 09:06:05 yamt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.4.2.1 2006/06/21 14:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.4.2.2 2007/02/26 09:06:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,29 +228,6 @@ delay(u_int n)
 		}
 	}
 	/*NOTREACHED*/
-}
-
-/*
- * inittodr:
- *
- *	Initialize time from the time-of-day register.
- */
-void
-inittodr(time_t base)
-{
-
-	time.tv_sec = base;
-	time.tv_usec = 0;
-}
-
-/*
- * resettodr:
- *
- *	Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
 }
 
 void

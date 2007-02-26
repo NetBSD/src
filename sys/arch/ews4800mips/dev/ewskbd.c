@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.1.18.2 2006/06/21 14:51:09 yamt Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.1.18.3 2007/02/26 09:06:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 Izumi Tsutsui
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.1.18.2 2006/06/21 14:51:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.1.18.3 2007/02/26 09:06:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -549,7 +549,7 @@ static void
 ewskbd_wskbd_pollc(void *cookie, int on)
 {
 
-	static boolean_t __polling = FALSE;
+	static bool __polling = false;
 	static int s;
 
 	if (on && !__polling) {
@@ -557,7 +557,7 @@ ewskbd_wskbd_pollc(void *cookie, int on)
 		s = splhigh();
 	} else if (!on && __polling) {
 		/* enable interrupt driven I/O */
-		__polling = FALSE;
+		__polling = false;
 		splx(s);
 	}
 }

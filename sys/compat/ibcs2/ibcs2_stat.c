@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.31.2.2 2006/12/30 20:47:32 yamt Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.31.2.3 2007/02/26 09:09:09 yamt Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.31.2.2 2006/12/30 20:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.31.2.3 2007/02/26 09:09:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_stat.c,v 1.31.2.2 2006/12/30 20:47:32 yamt Exp
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/ibcs2/ibcs2_types.h>

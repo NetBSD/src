@@ -1,4 +1,4 @@
-/*	$NetBSD: slide.c,v 1.11.2.1 2006/12/30 20:48:48 yamt Exp $	*/
+/*	$NetBSD: slide.c,v 1.11.2.2 2007/02/26 09:10:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.11.2.1 2006/12/30 20:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slide.c,v 1.11.2.2 2007/02/26 09:10:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 
 	/*
@@ -149,11 +149,11 @@ sl82c105_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 * If so, we need to disable DMA on rev. <= 5 of that chip.
 	 */
 	if (pci_find_device(pa, sl82c105_bugchk)) {
-		aprint_normal(" but disabled due to 83c553 rev. <= 0x05");
+		aprint_verbose(" but disabled due to 83c553 rev. <= 0x05");
 		sc->sc_dma_ok = 0;
 	} else
 		pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA32 | ATAC_CAP_DATA16;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;

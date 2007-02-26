@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.63.12.1 2006/06/21 14:59:12 yamt Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.63.12.2 2007/02/26 09:09:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.63.12.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.63.12.2 2007/02/26 09:09:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_param.h>

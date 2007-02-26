@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ipc.c,v 1.11.18.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_ipc.c,v 1.11.18.2 2007/02/26 09:09:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.11.18.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.11.18.2 2007/02/26 09:09:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ipc.c,v 1.11.18.1 2006/06/21 14:58:50 yamt E
 #include <sys/malloc.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/shm.h>

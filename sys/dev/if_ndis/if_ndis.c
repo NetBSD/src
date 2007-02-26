@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.9.4.3 2006/12/30 20:48:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.9.4.4 2007/02/26 09:10:14 yamt Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2772,7 +2772,7 @@ ndis_wi_ioctl_set(ifp, command, data)
 	error = suser(curthread);
 #else /* __NetBSD__ */
 	error = kauth_authorize_generic(curlwp->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag);
+	    KAUTH_GENERIC_ISSUSER, NULL);
 #endif	
 	if (error)
 		return (error);

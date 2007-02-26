@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3lcd.c,v 1.2.18.2 2006/06/21 14:52:02 yamt Exp $	*/
+/*	$NetBSD: psh3lcd.c,v 1.2.18.3 2007/02/26 09:06:39 yamt Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -28,9 +28,11 @@
 
 #include <sys/cdefs.h>
 
+#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
 
@@ -143,8 +145,8 @@ psh3lcd_x0_bcd_get()
 		    bcr2 == psh3lcd_x0_bcd[i].reg2) 
 			break;
 	if (psh3lcd_x0_bcd[i].reg0 == 0)
-		return (BCD_NO_MATCH);
-	return (i);
+		return BCD_NO_MATCH;
+	return i;
 }
 
 static inline int
@@ -161,8 +163,8 @@ psh3lcd_xx0_bcd_get()
 		    bcr2 == psh3lcd_xx0_bcd[i].reg2)
 			break;
 	if (psh3lcd_xx0_bcd[i].reg1 == 0)
-		return (BCD_NO_MATCH);
-	return (i);
+		return BCD_NO_MATCH;
+	return i;
 }
 
 static void
@@ -218,33 +220,37 @@ psh3lcd_set_contrast(int value)
 	delay(1); 
 }
 
+/* ARGSUSED */
 static int
-psh3lcd_match(struct device *parent, struct cfdata *cfp, void *aux)
+psh3lcd_match(struct device *parent __unused, struct cfdata *cfp,
+	      void *aux __unused)
 {
 	uint8_t bcr0;
 
 	if (!platid_match(&platid, &platid_mask_MACH_HITACHI_PERSONA))
-		return (0);
+		return 0;
 
 	if (strcmp(cfp->cf_name, "psh3lcd") != 0)
-		return (0);
+		return 0;
 
 	bcr0 = _reg_read_1(PSH3LCD_BRIGHTNESS_REG0);
 	if (bcr0 == 0) {
 		if (psh3lcd_xx0_bcd_get() == BCD_NO_MATCH)
-			return (0);
+			return 0;
 	} else {
 		if (psh3lcd_x0_bcd_get() == BCD_NO_MATCH)
-			return (0);
+			return 0;
 	}
 
-	return (1);
+	return 1;
 }
 
+/* ARGSUSED */
 static void
-psh3lcd_attach(struct device *parent, struct device *self, void *aux)
+psh3lcd_attach(struct device *parent __unused, struct device *self,
+	       void *aux __unused)
 {
-	struct psh3lcd_softc *sc = (struct psh3lcd_softc *)self;
+	struct psh3lcd_softc *sc = device_private(self);
 	uint8_t bcr0, bcr1, bcr2;
 
 	bcr0 = _reg_read_1(PSH3LCD_BRIGHTNESS_REG0);
@@ -259,7 +265,8 @@ psh3lcd_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_brightness = psh3lcd_x0_bcd_get();
 		sc->sc_brightness_max = PSH3LCD_X0_BRIGHTNESS_MAX;
 	}
-	printf(": brightness %d\n", sc->sc_brightness);
+	aprint_naive("\n");
+	aprint_normal(": brightness %d\n", sc->sc_brightness);
 
 	/* LCD contrast hooks */
         config_hook(CONFIG_HOOK_GET,
@@ -294,19 +301,19 @@ psh3lcd_param(void *ctx, int type, long id, void *msg)
 		switch (id) {
 		case CONFIG_HOOK_CONTRAST:
 			*(int *)msg = PSH3LCD_CONTRAST;
-			return (0);
+			return 0;
 
 		case CONFIG_HOOK_CONTRAST_MAX:
 			*(int *)msg = PSH3LCD_CONTRAST_MAX;
-			return (0);
+			return 0;
 
 		case CONFIG_HOOK_BRIGHTNESS:
 			*(int *)msg = sc->sc_brightness;
-			return (0);
+			return 0;
 
 		case CONFIG_HOOK_BRIGHTNESS_MAX:
 			*(int *)msg = sc->sc_brightness_max;
-			return (0);
+			return 0;
 		}
 		break;
 
@@ -317,9 +324,9 @@ psh3lcd_param(void *ctx, int type, long id, void *msg)
 		case CONFIG_HOOK_CONTRAST:
 			if (value != PSH3LCD_CONTRAST_UP &&
 			    value != PSH3LCD_CONTRAST_DOWN)
-				return (EINVAL);
+				return EINVAL;
 			psh3lcd_set_contrast(value);
-			return (0);
+			return 0;
 
 		case CONFIG_HOOK_BRIGHTNESS:
 			if (value < 0)
@@ -328,12 +335,12 @@ psh3lcd_param(void *ctx, int type, long id, void *msg)
 				value = sc->sc_brightness_max;
 			sc->sc_brightness = value;
 			sc->sc_set_brightness(sc->sc_brightness);
-			return (0);
+			return 0;
 		}
 		break;
 	}
 
-	return (EINVAL);
+	return EINVAL;
 }
 
 
@@ -345,7 +352,7 @@ psh3lcd_power(void *ctx, int type, long id, void *msg)
 
 	if (type != CONFIG_HOOK_POWERCONTROL ||
 	    id != CONFIG_HOOK_POWERCONTROL_LCD)
-		return (EINVAL);
+		return EINVAL;
 
 	on = (int)msg;
 	if (on)
@@ -353,5 +360,5 @@ psh3lcd_power(void *ctx, int type, long id, void *msg)
 	else
 		sc->sc_set_brightness(sc->sc_brightness_max + 1);
 
-	return (0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21.2.1 2006/06/21 14:54:02 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.21.2.2 2007/02/26 09:07:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21.2.1 2006/06/21 14:54:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21.2.2 2007/02/26 09:07:37 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -111,8 +111,6 @@ struct zsdevice {
 	struct	zschan zs_chan_a;
 };
 
-static u_char zs_sir;
-
 /* Default speed for all channels */
 static int zs_defspeed = 9600;
 
@@ -154,7 +152,6 @@ CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
     zs_match, zs_attach, NULL, NULL);
 
 static int zshard(void *);
-void zssoft(void *);
 #if 0
 static int zs_get_speed(struct zs_chanstate *);
 #endif
@@ -275,6 +272,8 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	 * Now safe to install interrupt handlers.
 	 */
 	hb_intr_establish(zs_init_reg[2], zshard, ZSHARD_PRI, zsc);
+	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -288,8 +287,6 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
 
-	if (zs_sir == 0)
-		zs_sir = allocate_sir(zssoft, zsc);
 }
 
 static int
@@ -320,30 +317,10 @@ zshard(void *arg)
 
 	/* We are at splzs here, so no need to lock. */
 	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq) {
-		setsoftint(zs_sir);
+		softintr_schedule(zsc->zsc_softintr_cookie);
 	}
 
 	return rval;
-}
-
-/*
- * Shared among the all chips. We have to look at all of them.
- */
-void
-zssoft(void *arg)
-{
-	struct zsc_softc *zsc;
-	int s, unit;
-
-	/* Make sure we call the tty layer at spltty. */
-	s = spltty();
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-	splx(s);
 }
 
 /*

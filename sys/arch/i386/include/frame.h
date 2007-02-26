@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.25.16.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: frame.h,v 1.25.16.2 2007/02/26 09:07:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@
 #define _I386_FRAME_H_
 
 #include <sys/signal.h>
-#include <sys/sa.h>
 
 /*
  * System stack frames.
@@ -127,7 +126,7 @@ struct intrframe {
 	int	if_edx;
 	int	if_ecx;
 	int	if_eax;
-	uint32_t __if_trapno; /* for compat with trap frame - trapno */
+	uint32_t __if_trapno;	/* for compat with trap frame - trapno */
 	uint32_t __if_err;	/* for compat with trap frame - err */
 	/* below portion defined in 386 hardware */
 	int	if_eip;
@@ -171,18 +170,6 @@ struct sigframe_siginfo {
 	ucontext_t	*sf_ucp;	/* "ucp" argument for handler */
 	siginfo_t	sf_si;		/* actual saved siginfo */
 	ucontext_t	sf_uc;		/* actual saved ucontext */
-};
-
-/*
- * Scheduler activations upcall frame
- */
-struct saframe {
-	int		sa_ra;
-	int		sa_type;
-	struct sa_t**	sa_sas;
-	int		sa_events;
-	int		sa_interrupted;
-	void*		sa_arg;
 };
 
 #ifdef _KERNEL

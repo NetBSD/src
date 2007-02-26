@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.21.4.3 2006/12/30 20:50:01 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.21.4.4 2007/02/26 09:11:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.21.4.3 2006/12/30 20:50:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.21.4.4 2007/02/26 09:11:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -323,7 +323,7 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
  */
 void
 tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
-    boolean_t node_exists)
+    bool node_exists)
 {
 	if (node_exists) {
 		struct tmpfs_node *node;
@@ -530,7 +530,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	/* Allocate a vnode for the new file. */
 	error = tmpfs_alloc_vp(dvp->v_mount, node, vpp);
 	if (error != 0) {
-		tmpfs_free_dirent(tmp, de, TRUE);
+		tmpfs_free_dirent(tmp, de, true);
 		tmpfs_free_node(tmp, node);
 		goto out;
 	}
@@ -623,7 +623,7 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
-	boolean_t found;
+	bool found;
 	struct tmpfs_dirent *de;
 
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
@@ -951,7 +951,7 @@ out:
  * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
- * If 'total' is TRUE, the value returned is the total amount of memory 
+ * If 'total' is true, the value returned is the total amount of memory 
  * pages configured for the system (either in use or free).
  * If it is FALSE, the value returned is the amount of free memory pages.
  *
@@ -960,7 +960,7 @@ out:
  *
  */
 size_t
-tmpfs_mem_info(boolean_t total)
+tmpfs_mem_info(bool total)
 {
 	size_t size;
 
@@ -1006,13 +1006,14 @@ tmpfs_chflags(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    NULL)))
 		return error;
-	if (kauth_cred_geteuid(cred) == 0) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0) {
 		/* The super-user is only allowed to change flags if the file
 		 * wasn't protected before and the securelevel is zero. */
 		if ((node->tn_flags & (SF_IMMUTABLE | SF_APPEND)) &&
-		    securelevel > 0)
+		    kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHSYSFLAGS,
+		     0, NULL, NULL, NULL))
 			return EPERM;
 		node->tn_flags = flags;
 	} else {
@@ -1066,9 +1067,9 @@ tmpfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    NULL)))
 		return error;
-	if (kauth_cred_geteuid(cred) != 0) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return EFTYPE;
 
@@ -1130,7 +1131,7 @@ tmpfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	    (gid != node->tn_gid && !(kauth_cred_getegid(cred) == node->tn_gid ||
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0))
+	    NULL)) != 0))
 		return error;
 
 	node->tn_uid = uid;
@@ -1232,7 +1233,7 @@ tmpfs_chtimes(struct vnode *vp, struct timespec *atime, struct timespec *mtime,
 	 * somewhere? */
 	if (kauth_cred_geteuid(cred) != node->tn_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
+	    NULL)) && ((vaflags & VA_UTIMES_NULL) == 0 ||
 	    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
 		return error;
 
@@ -1312,7 +1313,7 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 int
 tmpfs_truncate(struct vnode *vp, off_t length)
 {
-	boolean_t extended;
+	bool extended;
 	int error;
 	struct tmpfs_node *node;
 

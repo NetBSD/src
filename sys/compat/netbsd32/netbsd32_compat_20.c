@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.2 2006/12/30 20:47:42 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.3 2007/02/26 09:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.2 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.3 2007/02/26 09:09:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.2 2006/12/30 20:47:42 
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/namei.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>

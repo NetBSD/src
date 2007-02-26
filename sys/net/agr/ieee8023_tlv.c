@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023_tlv.c,v 1.1 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: ieee8023_tlv.c,v 1.1.8.1 2007/02/26 09:11:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023_tlv.c,v 1.1 2005/03/18 11:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023_tlv.c,v 1.1.8.1 2007/02/26 09:11:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee8023_tlv.c,v 1.1 2005/03/18 11:11:50 yamt Exp $"
 
 int
 tlv_check(const void *p, size_t size, const struct tlvhdr *tlv,
-    const struct tlv_template *tmpl, boolean_t check_type)
+    const struct tlv_template *tmpl, bool check_type)
 {
 
 	while (/* CONSTCOND */ 1) {

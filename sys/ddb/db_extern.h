@@ -1,4 +1,4 @@
-/*	$NetBSD: db_extern.h,v 1.12 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_extern.h,v 1.12.2.1 2007/02/26 09:09:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -43,14 +43,14 @@
 void ddb_init(int, void *, void *);
 
 /* db_command.c */
-extern int db_cmd_loop_done;
+extern bool db_cmd_loop_done;
 extern label_t *db_recover;
 
 /* db_examine.c */
-void	db_examine_cmd(db_expr_t, int, db_expr_t, const char *);
-void	db_print_cmd(db_expr_t, int, db_expr_t, const char *);
+void	db_examine_cmd(db_expr_t, bool, db_expr_t, const char *);
+void	db_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 void	db_print_loc_and_inst(db_addr_t);
-void	db_search_cmd(db_expr_t, boolean_t, db_expr_t, const char *);
+void	db_search_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* db_expr.c */
 int db_expression(db_expr_t *);
@@ -60,14 +60,14 @@ int	db_readline(char *, int);
 void	db_check_interrupt(void);
 
 /* db_print.c */
-void	db_show_regs(db_expr_t, boolean_t, db_expr_t, const char *);
+void	db_show_regs(db_expr_t, bool, db_expr_t, const char *);
 
 /* db_trap.c */
 extern int	db_trap_type;
 void	db_trap(int, int);
 
 /* db_write_cmd.c */
-void	db_write_cmd(db_expr_t, boolean_t, db_expr_t, const char *);
+void	db_write_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* Callback for MD platform code to manage watchdogs, etc. */
 extern void (*db_trap_callback)(int);

@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.3.18.1 2006/06/21 14:52:30 yamt Exp $ */
+/* $NetBSD: atomic.h,v 1.3.18.2 2007/02/26 09:07:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,6 +52,12 @@ x86_atomic_testset_ul (volatile uint32_t *ptr, unsigned long val) {
 static __inline int
 x86_atomic_testset_i (volatile int *ptr, int val) {
     __asm volatile ("xchgl %0,(%2)" :"=r" (val):"0" (val),"r" (ptr));
+    return val;
+}
+
+static __inline uint8_t
+x86_atomic_testset_b (volatile uint8_t *ptr, uint8_t val) {
+    __asm volatile ("xchgb %0,(%2)" :"=A" (val):"0" (val),"r" (ptr));
     return val;
 }
 

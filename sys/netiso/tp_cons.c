@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.19.4.1 2006/12/30 20:50:45 yamt Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.19.4.2 2007/02/26 09:12:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.19.4.1 2006/12/30 20:50:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.19.4.2 2007/02/26 09:12:01 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.19.4.1 2006/12/30 20:50:45 yamt Exp $"
 #include <netiso/tp_stat.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_trace.h>
-#include <netiso/tp_stat.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/iso.h>
 #include <netiso/iso_errno.h>

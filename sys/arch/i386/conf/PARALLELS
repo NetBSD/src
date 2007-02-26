@@ -1,4 +1,4 @@
-# $NetBSD: PARALLELS,v 1.10.2.2 2006/12/30 20:46:05 yamt Exp $
+# $NetBSD: PARALLELS,v 1.10.2.3 2007/02/26 09:06:52 yamt Exp $
 #
 # PARALLELS machine description file
 #
@@ -383,6 +383,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 #options	FILEASSOC		# fileassoc(9) - required for Veriexec 
+#options	FILEASSOC_NHOOKS=4	# Default number of storage slots
 
 # Veriexec
 #pseudo-device	veriexec

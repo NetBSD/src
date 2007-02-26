@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.36.2.2 2006/12/30 20:47:32 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.36.2.3 2007/02/26 09:09:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.2 2006/12/30 20:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.3 2007/02/26 09:09:03 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.2 2006/12/30 20:47:32 yamt 
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/sa.h>
 #include <sys/tty.h>
 #include <sys/kauth.h>
 
@@ -86,7 +85,7 @@ static const char *darwin_sysctl_hw_machine = "Power Macintosh";
 
 static int darwin_sysctl_dokproc(SYSCTLFN_PROTO);
 static void darwin_fill_kproc(struct proc *, struct darwin_kinfo_proc *);
-static void native_to_darwin_pflag(int *, int);
+static void native_to_darwin_pflag(int *, struct proc *);
 static int darwin_sysctl_procargs(SYSCTLFN_PROTO);
 static int darwin_sysctl_net(SYSCTLFN_PROTO);
 static int darwin_sysctl_kdebug(SYSCTLFN_PROTO);
@@ -649,7 +648,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 
 	pd = proclists;
 again:
@@ -684,11 +683,11 @@ again:
 
 		case DARWIN_KERN_PROC_TTY:
 			if (arg == (int) KERN_PROC_TTY_REVOKE) {
-				if ((p->p_flag & P_CONTROLT) == 0 ||
+				if ((p->p_lflag & PL_CONTROLT) == 0 ||
 				    p->p_session->s_ttyp == NULL ||
 				    p->p_session->s_ttyvp != NULL)
 					continue;
-			} else if ((p->p_flag & P_CONTROLT) == 0 ||
+			} else if ((p->p_lflag & PL_CONTROLT) == 0 ||
 			    p->p_session->s_ttyp == NULL) {
 					continue;
 			} else if (p->p_session->s_ttyp->t_dev !=
@@ -727,7 +726,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	if (where != NULL) {
 		*oldlenp = (caddr_t)dp - where;
@@ -739,7 +738,7 @@ again:
 	}
 	return (0);
  cleanup:
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 	return (error);
 }
 
@@ -756,7 +755,7 @@ darwin_fill_kproc(p, dkp)
 	struct darwin_eproc *de;
 
 	printf("fillkproc: pid %d\n", p->p_pid);
-	l = proc_representative_lwp(p);
+	l = proc_representative_lwp(p, NULL, 1);
 	(void)memset(dkp, 0, sizeof(*dkp));
 
 	dep = (struct darwin_extern_proc *)&dkp->kp_proc;
@@ -765,7 +764,7 @@ darwin_fill_kproc(p, dkp)
 	/* (ptr) dep->p_un */
 	/* (ptr) dep->p_vmspace */
 	/* (ptr) dep->p_sigacts */
-	native_to_darwin_pflag(&dep->p_flag, p->p_flag);
+	native_to_darwin_pflag(&dep->p_flag, p);
 	dep->p_stat = p->p_stat; /* XXX Neary the same */
 	dep->p_pid = p->p_pid;
 	dep->p_oppid = p->p_opptr->p_pid;
@@ -788,12 +787,10 @@ darwin_fill_kproc(p, dkp)
 	dep->p_iticks = p->p_iticks;
 	dep->p_traceflag = p->p_traceflag; /* XXX */
 	/* (ptr) dep->p_tracep */
-	native_sigset13_to_sigset(&dep->p_siglist,
-	    &p->p_sigctx.ps_siglist);
+	native_sigset13_to_sigset(&dep->p_siglist, &l->l_sigpendset->sp_set);
 	/* (ptr) dep->p_textvp */
 	/* dep->p_holdcnt */
-	native_sigset13_to_sigset(&dep->p_sigmask,
-	    &p->p_sigctx.ps_sigmask);
+	native_sigset13_to_sigset(&dep->p_sigmask, &l->l_sigmask);
 	native_sigset13_to_sigset(&dep->p_sigignore,
 	    &p->p_sigctx.ps_sigignore);
 	native_sigset13_to_sigset(&dep->p_sigcatch,
@@ -833,7 +830,7 @@ darwin_fill_kproc(p, dkp)
 	de->e_ppid = p->p_pptr->p_pid;
 	de->e_pgid = p->p_pgid;
 	de->e_jobc = p->p_pgrp->pg_jobc;
-	if ((p->p_flag & P_CONTROLT) && (p->p_session->s_ttyp != NULL)) {
+	if ((p->p_lflag & PL_CONTROLT) && (p->p_session->s_ttyp != NULL)) {
 		de->e_tdev =
 		    native_to_darwin_dev(p->p_session->s_ttyp->t_dev);
 		de->e_tpgid = p->p_session->s_ttyp->t_pgrp ?
@@ -863,43 +860,45 @@ darwin_fill_kproc(p, dkp)
 }
 
 static void
-native_to_darwin_pflag(dfp, bf)
-	int *dfp;
-	int bf;
+native_to_darwin_pflag(int *dfp, struct proc *p)
 {
 	int df = 0;
+	int bf = p->p_flag;
+	int bsf = p->p_sflag;
+	int bslf = p->p_slflag;
+	struct lwp *l = proc_representative_lwp(p, NULL, 1);
+	int lf = l->l_flag;
 
-	if (bf & P_ADVLOCK)
+	if (bf & PK_ADVLOCK)
 		df |= DARWIN_P_ADVLOCK;
-	if (bf & P_CONTROLT)
+	if (bf & PL_CONTROLT)			/* XXXAD */
 		df |= DARWIN_P_CONTROLT;
-	if (bf & P_NOCLDSTOP)
+	if (bsf & PS_NOCLDSTOP)
 		df |= DARWIN_P_NOCLDSTOP;
-	if (bf & P_PPWAIT)
+	if (bsf & PS_PPWAIT)
 		df |= DARWIN_P_PPWAIT;
-	if (bf & P_PROFIL)
+	if (bsf & PST_PROFIL)
 		df |= DARWIN_P_PROFIL;
-	if (bf & P_SUGID)
+	if (bf & PK_SUGID)
 		df |= DARWIN_P_SUGID;
-	if (bf & P_SYSTEM)
+	if (bf & PK_SYSTEM)
 		df |= DARWIN_P_SYSTEM;
-	if (bf & P_TRACED)
+	if (bslf & PSL_TRACED)
 		df |= DARWIN_P_TRACED;
-	if (bf & P_WAITED)
+#if 0
+	if (lf & LP_WAITED)
 		df |= DARWIN_P_WAITED;
-	if (bf & P_WEXIT)
+#endif
+	if (bsf & PS_WEXIT)
 		df |= DARWIN_P_WEXIT;
-	if (bf & P_EXEC)
+	if (bf & PK_EXEC)
 		df |= DARWIN_P_EXEC;
-	if (bf & P_OWEUPC)
+	if (lf & LP_OWEUPC)
 		df |= DARWIN_P_OWEUPC;
-	if (bf & P_FSTRACE)
+	if (bslf & PSL_FSTRACE)
 		df |= DARWIN_P_FSTRACE;
-	if (bf & P_NOCLDWAIT)
+	if (bf & PK_NOCLDWAIT)
 		df |= DARWIN_P_NOCLDWAIT;
-	if (bf & P_NOCLDWAIT)
-		df |= DARWIN_P_NOCLDWAIT;
-
 	*dfp = df;
 	return;
 }
@@ -945,14 +944,14 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	 * Zombies don't have a stack, so we can't read their psstrings.
 	 * System processes also don't have a user stack.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0)
+	if (P_ZOMBIE(p) || (p->p_flag & PK_SYSTEM) != 0)
 		return (EINVAL);
 
 	/*
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
+	if ((p->p_sflag & PS_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
 		return (EFAULT);
 
 	p->p_vmspace->vm_refcnt++;	/* XXX */

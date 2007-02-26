@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.26.1 2006/12/30 20:46:24 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.4.26.2 2007/02/26 09:07:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 #include <machine/psl.h>
 
 #define splnone()	spl0()
-#define spllowersoftclock()  spl1()
 #define splsoftclock()  splraise1()
 #define splsoftnet()    splraise1()
 #define splbio()        spl2()

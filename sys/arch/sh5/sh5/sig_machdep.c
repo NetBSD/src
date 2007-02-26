@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.19 2005/06/01 13:01:36 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.19.2.1 2007/02/26 09:08:10 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2005/06/01 13:01:36 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19.2.1 2007/02/26 09:08:10 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.19 2005/06/01 13:01:36 scw Exp $")
 #include <sys/signalvar.h>
 #include <sys/mount.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -138,35 +136,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		sendsig_siginfo(ksi, mask);
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-	register_t upc;
-
-	tf = l->l_md.md_regs;
-	upc = (register_t)(intptr_t)upcall;
-
-	if (!SH5_EFF_IS_VALID(upc) || (upc & 0x3) == 0x3) {
-		printf("cpu_upcall: warning: bad upcall PC 0x%lx\n",
-		    (long)upc);
-		upcall = (sa_upcall_t)(void *)1;	/* Force fault */
-	}
-
-	tf->tf_state.sf_spc = (register_t)(intptr_t)upcall;
-	tf->tf_state.sf_usr = 0x0007;	/* r0-r23 are dirty */
-	tf->tf_caller.r0 = 0;
-	tf->tf_caller.r2 = (register_t)type;
-	tf->tf_caller.r3 = (register_t)(intptr_t)sas;
-	tf->tf_caller.r4 = (register_t)nevents;
-	tf->tf_caller.r5 = (register_t)ninterrupted;
-	tf->tf_caller.r6 = (register_t)(intptr_t)ap;
-	tf->tf_caller.r14 = 0;
-	tf->tf_caller.r15 = (register_t)(intptr_t)sp;
-	tf->tf_caller.r18 = 0;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.33.2.1 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.33.2.2 2007/02/26 09:07:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.33.2.1 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.33.2.2 2007/02/26 09:07:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ static char asm_buffer[256];
 static char info_buffer[256];
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t moto_syntax)
+db_disasm(db_addr_t loc, bool moto_syntax)
 {
 	u_short opc;
 	dis_func_t *func;

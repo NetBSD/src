@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.72.2.2 2006/12/30 20:50:39 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.72.2.3 2007/02/26 09:11:54 yamt Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.2 2006/12/30 20:50:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.3 2007/02/26 09:11:54 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -97,6 +97,12 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.72.2.2 2006/12/30 20:50:39 yamt Exp $"
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif /* IPSEC */
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec_var.h> /* XXX ipsecstat namespace */
+#include <netipsec/ipsec6.h>
+#endif
 
 #include <machine/stdarg.h>
 
@@ -204,6 +210,12 @@ rip6_input(mp, offp, proto)
 				/* do not inject data into pcb */
 			} else
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+			/*
+			 * Check AH/ESP integrity
+			 */
+			if (!ipsec6_in_reject(m,last)) 
+#endif /* FAST_IPSEC */
 			if ((n = m_copy(m, 0, (int)M_COPYALL)) != NULL) {
 				if (last->in6p_flags & IN6P_CONTROLOPTS)
 					ip6_savecontrol(last, &opts, ip6, n);
@@ -234,6 +246,20 @@ rip6_input(mp, offp, proto)
 		/* do not inject data into pcb */
 	} else
 #endif /* IPSEC */
+#ifdef FAST_IPSEC
+	if (last && ipsec6_in_reject(m, last)) {
+		m_freem(m);
+		/*
+		 * XXX ipsec6_in_reject update stat if there is an error
+		 * so we just need to update stats by hand in the case of last is
+		 * NULL
+		 */
+		if (!last)
+			ipsec6stat.in_polvio++;
+			ip6stat.ip6s_delivered--;
+			/* do not inject data into pcb */
+		} else
+#endif /* FAST_IPSEC */
 	if (last) {
 		if (last->in6p_flags & IN6P_CONTROLOPTS)
 			ip6_savecontrol(last, &opts, ip6, m);
@@ -266,10 +292,7 @@ rip6_input(mp, offp, proto)
 }
 
 void
-rip6_ctlinput(cmd, sa, d)
-	int cmd;
-	struct sockaddr *sa;
-	void *d;
+rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct ip6_hdr *ip6;
 	struct ip6ctlparam *ip6cp = NULL;
@@ -308,7 +331,7 @@ rip6_ctlinput(cmd, sa, d)
 	}
 
 	if (ip6 && cmd == PRC_MSGSIZE) {
-		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+		const struct sockaddr_in6 *sa6 = (const struct sockaddr_in6 *)sa;
 		int valid = 0;
 		struct in6pcb *in6p;
 
@@ -401,7 +424,7 @@ rip6_output(m, va_alist)
 
 	priv = 0;
 	if (curlwp && !kauth_authorize_generic(curlwp->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag))
+	    KAUTH_GENERIC_ISSUSER, NULL))
 		priv = 1;
 
 	dst = &dstsock->sin6_addr;
@@ -461,7 +484,8 @@ rip6_output(m, va_alist)
 	 * Source address selection.
 	 */
 	if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp, &error)) == 0) {
+	    (struct route *)&in6p->in6p_route, &in6p->in6p_laddr, &oifp,
+	    &error)) == 0) {
 		if (error == 0)
 			error = EADDRNOTAVAIL;
 		goto bad;
@@ -543,18 +567,15 @@ rip6_output(m, va_alist)
 		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
 	}
-	return (error);
+	return error;
 }
 
 /*
  * Raw IPv6 socket option processing.
  */
 int
-rip6_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+rip6_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	int error = 0;
 
@@ -576,11 +597,11 @@ rip6_ctloutput(op, so, level, optname, mp)
 				error = ip6_mrouter_get(optname, so, mp);
 			else
 				error = EINVAL;
-			return (error);
+			return error;
 		case IPV6_CHECKSUM:
-			return (ip6_raw_ctloutput(op, so, level, optname, mp));
+			return ip6_raw_ctloutput(op, so, level, optname, mp);
 		default:
-			return (ip6_ctloutput(op, so, level, optname, mp));
+			return ip6_ctloutput(op, so, level, optname, mp);
 		}
 
 	case IPPROTO_ICMPV6:
@@ -588,7 +609,7 @@ rip6_ctloutput(op, so, level, optname, mp)
 		 * XXX: is it better to call icmp6_ctloutput() directly
 		 * from protosw?
 		 */
-		return (icmp6_ctloutput(op, so, level, optname, mp));
+		return icmp6_ctloutput(op, so, level, optname, mp);
 
 	default:
 		if (op == PRCO_SETOPT && *mp)
@@ -614,35 +635,35 @@ rip6_usrreq(so, req, m, nam, control, l)
 
 	priv = 0;
 	if (l && !kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag))
+	    KAUTH_GENERIC_ISSUSER, NULL))
 		priv++;
 
 	if (req == PRU_CONTROL)
-		return (in6_control(so, (u_long)m, (caddr_t)nam,
-		    (struct ifnet *)control, l));
+		return in6_control(so, (u_long)m, (caddr_t)nam,
+		    (struct ifnet *)control, l);
 
 	if (req == PRU_PURGEIF) {
 		in6_pcbpurgeif0(&raw6cbtable, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&raw6cbtable, (struct ifnet *)control);
-		return (0);
+		return 0;
 	}
 
 	switch (req) {
 	case PRU_ATTACH:
-		if (in6p)
+		if (in6p != NULL)
 			panic("rip6_attach");
 		if (!priv) {
 			error = EACCES;
 			break;
 		}
 		s = splsoftnet();
-		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) != 0) {
+		error = soreserve(so, rip6_sendspace, rip6_recvspace);
+		if (error != 0) {
 			splx(s);
 			break;
 		}
-		if ((error = in6_pcballoc(so, &raw6cbtable)) != 0)
-		{
+		if ((error = in6_pcballoc(so, &raw6cbtable)) != 0) {
 			splx(s);
 			break;
 		}
@@ -674,12 +695,12 @@ rip6_usrreq(so, req, m, nam, control, l)
 		soisdisconnected(so);
 		/* Fallthrough */
 	case PRU_DETACH:
-		if (in6p == 0)
+		if (in6p == NULL)
 			panic("rip6_detach");
 		if (so == ip6_mrouter)
 			ip6_mrouter_done();
 		/* xxx: RSVP */
-		if (in6p->in6p_icmp6filt) {
+		if (in6p->in6p_icmp6filt != NULL) {
 			FREE(in6p->in6p_icmp6filt, M_PCB);
 			in6p->in6p_icmp6filt = NULL;
 		}
@@ -756,11 +777,11 @@ rip6_usrreq(so, req, m, nam, control, l)
 		if (addr->sin6_scope_id == 0 && !ip6_use_defzone)
 			scope_ambiguous = 1;
 		if ((error = sa6_embedscope(addr, ip6_use_defzone)) != 0)
-			return(error);
+			return error;
 
 		/* Source address selection. XXX: need pcblookup? */
 		in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
-		    in6p->in6p_moptions, &in6p->in6p_route,
+		    in6p->in6p_moptions, (struct route *)&in6p->in6p_route,
 		    &in6p->in6p_laddr, &ifp, &error);
 		if (in6a == NULL) {
 			if (error == 0)
@@ -837,7 +858,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 		/*
 		 * stat: don't bother with a blocksize
 		 */
-		return (0);
+		return 0;
 	/*
 	 * Not supported.
 	 */
@@ -862,7 +883,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 	}
 	if (m != NULL)
 		m_freem(m);
-	return (error);
+	return error;
 }
 
 SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")

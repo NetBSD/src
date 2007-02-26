@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.51.4.2 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.51.4.3 2007/02/26 09:10:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.51.4.2 2006/12/30 20:48:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.51.4.3 2007/02/26 09:10:11 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -169,6 +169,8 @@ STATIC int rtk_list_tx_init(struct rtk_softc *);
 	CSR_WRITE_1(sc, RTK_EECMD,			\
 		CSR_READ_1(sc, RTK_EECMD) & ~(x))
 
+#define EE_DELAY()	DELAY(100)
+
 #define ETHER_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 /*
@@ -190,11 +192,11 @@ rtk_eeprom_putbyte(struct rtk_softc *sc, int addr, int addr_len)
 		} else {
 			EE_CLR(RTK_EE_DATAIN);
 		}
-		DELAY(4);
+		EE_DELAY();
 		EE_SET(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 		EE_CLR(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 	}
 }
 
@@ -208,14 +210,14 @@ rtk_read_eeprom(struct rtk_softc *sc, int addr, int addr_len)
 	int i;
 
 	/* Enter EEPROM access mode. */
-	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_PROGRAM|RTK_EE_SEL);
+	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_PROGRAM);
+	EE_DELAY();
+	EE_SET(RTK_EE_SEL);
 
 	/*
 	 * Send address of word we want to read.
 	 */
 	rtk_eeprom_putbyte(sc, addr, addr_len);
-
-	CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_PROGRAM|RTK_EE_SEL);
 
 	/*
 	 * Start reading bits from EEPROM.
@@ -223,11 +225,11 @@ rtk_read_eeprom(struct rtk_softc *sc, int addr, int addr_len)
 	word = 0;
 	for (i = 16; i > 0; i--) {
 		EE_SET(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 		if (CSR_READ_1(sc, RTK_EECMD) & RTK_EE_DATAOUT)
 			word |= 1 << (i - 1);
 		EE_CLR(RTK_EE_CLK);
-		DELAY(4);
+		EE_DELAY();
 	}
 
 	/* Turn off EEPROM access mode. */
@@ -537,7 +539,7 @@ rtk_setmulti(struct rtk_softc *sc)
 {
 	struct ifnet *ifp;
 	uint32_t hashes[2] = { 0, 0 };
-	uint32_t rxfilt;
+	uint32_t rxfilt, hwrev;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int h, mcnt;
@@ -585,8 +587,23 @@ rtk_setmulti(struct rtk_softc *sc)
 		rxfilt &= ~RTK_RXCFG_RX_MULTI;
 
 	CSR_WRITE_4(sc, RTK_RXCFG, rxfilt);
-	CSR_WRITE_4(sc, RTK_MAR0, hashes[0]);
-	CSR_WRITE_4(sc, RTK_MAR4, hashes[1]);
+
+	/*
+	 * For some unfathomable reason, RealTek decided to reverse
+	 * the order of the multicast hash registers in the PCI Express
+	 * parts. This means we have to write the hash pattern in reverse
+	 * order for those devices.
+	 */
+	hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
+	if (hwrev == RTK_HWREV_8100E || hwrev == RTK_HWREV_8100E_SPIN2 ||
+	    hwrev == RTK_HWREV_8101E ||
+	    hwrev == RTK_HWREV_8168_SPIN1 || hwrev == RTK_HWREV_8168_SPIN2) {
+		CSR_WRITE_4(sc, RTK_MAR0, bswap32(hashes[1]));
+		CSR_WRITE_4(sc, RTK_MAR4, bswap32(hashes[0]));
+	} else {
+		CSR_WRITE_4(sc, RTK_MAR0, hashes[0]);
+		CSR_WRITE_4(sc, RTK_MAR4, hashes[1]);
+	}
 }
 
 void
@@ -1012,7 +1029,7 @@ rtk_rxeof(struct rtk_softc *sc)
 
 		if ((rxstat & RTK_RXSTAT_RXOK) == 0 ||
 		    total_len < ETHER_MIN_LEN ||
-		    total_len > ETHER_MAX_LEN) {
+		    total_len > (MCLBYTES - RTK_ETHER_ALIGN)) {
 			ifp->if_ierrors++;
 
 			/*

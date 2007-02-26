@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.64.2.2 2006/12/30 20:46:26 yamt Exp $
+#	$NetBSD: files.macppc,v 1.64.2.3 2007/02/26 09:07:19 yamt Exp $
 #
 # macppc-specific configuration info
 
@@ -21,6 +21,8 @@ file arch/macppc/dev/dbdma.c
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
 file arch/powerpc/powerpc/softintr.c
 file dev/cons.c
+
+defflag opt_macppc.h	PB3400_CARDBUS_HACK UMAX_E100_HACK
 
 #Early serial console for G5 (uses RMCI mode of 970 */
 file arch/macppc/macppc/failsafe.c
@@ -144,6 +146,25 @@ file arch/macppc/dev/zs_kgdb.c			zsc & kgdb
 device zstty: tty
 attach zstty at zsc
 file dev/ic/z8530tty.c				zstty needs-flag
+
+include "dev/adb/files.adb"
+
+defflag	opt_cuda.h	CUDA_DEBUG
+device cuda : adb_bus, i2cbus
+attach cuda at obio
+file arch/macppc/dev/cuda.c			cuda needs-flag
+
+defflag	opt_pmu.h	PMU_DEBUG
+defflag opt_pmu.h	PMU_VERBOSE
+define pmu_bus {}
+device pmu : adb_bus, i2cbus, pmu_bus
+attach pmu at obio
+file arch/macppc/dev/pmu.c			pmu needs-flag
+
+device battery : sysmon_envsys, sysmon_power, sysmon_taskq
+attach battery at pmu_bus
+file arch/macppc/dev/battery.c			battery
+defflag opt_battery.h	BATTERY_DEBUG
 
 device adb {}
 attach adb at obio

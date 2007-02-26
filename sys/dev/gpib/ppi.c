@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.3.4.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: ppi.c,v 1.3.4.2 2007/02/26 09:10:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.3.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.3.4.2 2007/02/26 09:10:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ dev_type_ioctl(ppiioctl);
 
 const struct cdevsw ppi_cdevsw = {
         ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
-        nostop, notty, nopoll, nommap, nokqfilter,
+        nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 #define UNIT(x)		minor(x)
@@ -185,10 +185,10 @@ ppiattach(parent, self, aux)
 }
 
 int
-ppiopen(dev, flags, fmt, p)
+ppiopen(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc;
@@ -212,10 +212,10 @@ ppiopen(dev, flags, fmt, p)
 }
 
 int
-ppiclose(dev, flags, fmt, p)
+ppiclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
@@ -306,7 +306,7 @@ ppirw(dev, uio)
 {
 	int unit = UNIT(dev);
 	struct ppi_softc *sc = ppi_cd.cd_devs[unit];
-	int s, len, cnt;
+	int s1, s2, len, cnt;
 	char *cp;
 	int error = 0, gotdata = 0;
 	int buflen, address;
@@ -339,7 +339,8 @@ ppirw(dev, uio)
 				break;
 		}
 again:
-		s = splbio();
+		s1 = splsoftclock();
+		s2 = splbio();
 		if (sc->sc_flags & PPIF_UIO) {
 			if (gpibrequest(sc->sc_ic, sc->sc_hdl) == 0)
 				(void) tsleep(sc, PRIBIO + 1, "ppirw", 0);
@@ -347,7 +348,7 @@ again:
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
-		(void) spllowersoftclock();
+		splx(s2);
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 			DPRINTF(PDB_IO,
 			    ("ppirw: uiomove/sleep timo, flags %x\n",
@@ -356,10 +357,10 @@ again:
 				callout_stop(&sc->sc_timo_ch);
 				sc->sc_flags &= ~PPIF_TIMO;
 			}
-			splx(s);
+			splx(s1);
 			break;
 		}
-		splx(s);
+		splx(s1);
 		/*
 		 * Perform the operation
 		 */
@@ -369,12 +370,12 @@ again:
 		else
 			cnt = gpibrecv(sc->sc_ic, address, sc->sc_sec,
 			    cp, len);
-		s = splbio();
+		s1 = splbio();
 		gpibrelease(sc->sc_ic, sc->sc_hdl);
 		DPRINTF(PDB_IO, ("ppirw: %s(%d, %x, %p, %d) -> %d\n",
 		    uio->uio_rw == UIO_READ ? "recv" : "send",
 		    address, sc->sc_sec, cp, len, cnt));
-		splx(s);
+		splx(s1);
 		if (uio->uio_rw == UIO_READ) {
 			if (cnt) {
 				error = uiomove(cp, cnt, uio);
@@ -389,13 +390,13 @@ again:
 			else if (gotdata)
 				break;
 		}
-		s = splsoftclock();
+		s1 = splsoftclock();
 		/*
 		 * Operation timeout (or non-blocking), quit now.
 		 */
 		if ((sc->sc_flags & PPIF_UIO) == 0) {
 			DPRINTF(PDB_IO, ("ppirw: timeout/done\n"));
-			splx(s);
+			splx(s1);
 			break;
 		}
 		/*
@@ -407,11 +408,11 @@ again:
 			    ppistart, sc);
 			error = tsleep(sc, (PCATCH|PZERO) + 1, "gpib", 0);
 			if (error) {
-				splx(s);
+				splx(s1);
 				break;
 			}
 		}
-		splx(s);
+		splx(s1);
 		/*
 		 * Must not call uiomove again til we've used all data
 		 * that we already grabbed.
@@ -423,7 +424,7 @@ again:
 			goto again;
 		}
 	}
-	s = splsoftclock();
+	s1 = splsoftclock();
 	if (sc->sc_flags & PPIF_TIMO) {
 		callout_stop(&sc->sc_timo_ch);
 		sc->sc_flags &= ~PPIF_TIMO;
@@ -432,7 +433,7 @@ again:
 		callout_stop(&sc->sc_start_ch);
 		sc->sc_flags &= ~PPIF_DELAY;
 	}
-	splx(s);
+	splx(s1);
 	/*
 	 * Adjust for those chars that we uiomove'ed but never wrote
 	 */
@@ -448,12 +449,12 @@ again:
 }
 
 int
-ppiioctl(dev, cmd, data, flag, p)
+ppiioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ppi_softc *sc = ppi_cd.cd_devs[UNIT(dev)];
 	struct ppiparam *pp, *upp;

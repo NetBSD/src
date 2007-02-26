@@ -1,4 +1,40 @@
-/*	$NetBSD: procfs_subr.c,v 1.64.2.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.64.2.3 2007/02/26 09:11:31 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1993
@@ -73,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64.2.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.64.2.3 2007/02/26 09:11:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +133,8 @@ LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
 #define PFSPIDHASH(pid)	((pid) & pfs_ihash)
 
-struct lock pfs_hashlock;
-struct simplelock pfs_hash_slock;
+kmutex_t pfs_hashlock;
+kmutex_t pfs_ihash_lock;
 
 #define	ISSET(t, f)	((t) & (f))
 
@@ -129,29 +165,35 @@ struct simplelock pfs_hash_slock;
  * the vnode free list.
  */
 int
-procfs_allocvp(mp, vpp, pid, pfs_type, fd)
+procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 	struct mount *mp;
 	struct vnode **vpp;
 	pid_t pid;
 	pfstype pfs_type;
 	int fd;
+	struct proc *p;
 {
 	struct pfsnode *pfs;
 	struct vnode *vp;
 	int error;
 
-	do {
-		if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
-			return (0);
-	} while (lockmgr(&pfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL)
+		return (0);
 
 	if ((error = getnewvnode(VT_PROCFS, mp, procfs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
-		lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
 		return (error);
 	}
-
 	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
+
+	mutex_enter(&pfs_hashlock);
+	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp)) != NULL) {
+		mutex_exit(&pfs_hashlock);
+		ungetnewvnode(vp);
+		FREE(pfs, M_TEMP);
+		return (0);
+	}
+
 	vp->v_data = pfs;
 
 	pfs->pfs_pid = pid;
@@ -186,11 +228,14 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 		} else {	/* /proc/N/fd/M = [ps-]rw------- */
 			struct file *fp;
 			struct vnode *vxp;
-			struct proc *pown;
 
-			/* XXX can procfs_getfp() ever fail here? */
-			if ((error = procfs_getfp(pfs, &pown, &fp)) != 0)
+			mutex_enter(&p->p_mutex);
+			fp = fd_getfile(p->p_fd, pfs->pfs_fd);
+			mutex_exit(&p->p_mutex);
+			if (fp == NULL) {
+				error = EBADF;
 				goto bad;
+			}
 			FILE_USE(fp);
 
 			pfs->pfs_mode = S_IRUSR|S_IWUSR;
@@ -221,10 +266,10 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				break;
 			default:
 				error = EOPNOTSUPP;
-				FILE_UNUSE(fp, proc_representative_lwp(pown));
+				FILE_UNUSE(fp, curlwp);
 				goto bad;
 			}
-			FILE_UNUSE(fp, proc_representative_lwp(pown));
+			FILE_UNUSE(fp, curlwp);
 		}
 		break;
 
@@ -270,13 +315,13 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 
 	procfs_hashins(pfs);
 	uvm_vnp_setsize(vp, 0);
-	lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
+	mutex_exit(&pfs_hashlock);
 
 	*vpp = vp;
 	return (0);
 
  bad:
-	lockmgr(&pfs_hashlock, LK_RELEASE, NULL);
+	mutex_exit(&pfs_hashlock);
 	FREE(pfs, M_TEMP);
 	ungetnewvnode(vp);
 	return (error);
@@ -310,12 +355,9 @@ procfs_rw(v)
 
 	if (uio->uio_offset < 0)
 		return EINVAL;
-	p = PFIND(pfs->pfs_pid);
-	if (p == 0)
-		return ESRCH;
 
-	if (ISSET(p->p_flag, P_INEXEC))
-		return (EAGAIN);
+	if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH)) != 0)
+		return error;
 
 	curl = curlwp;
 
@@ -325,80 +367,109 @@ procfs_rw(v)
 	 */
 #define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_CANPROCFS_READ : \
 		 KAUTH_REQ_PROCESS_CANPROCFS_WRITE)
+	mutex_enter(&p->p_mutex);
 	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_CANPROCFS,
 	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
-	if (error)
+	mutex_exit(&p->p_mutex);
+	if (error) {
+		procfs_proc_unlock(p);
 		return (error);
+	}
 #undef	M2K
 
-	/* XXX NJWLWP
-	 * The entire procfs interface needs work to be useful to
-	 * a process with multiple LWPs. For the moment, we'll
-	 * just kluge this and fail on others.
-	 */
-	l = proc_representative_lwp(p);
+	mutex_enter(&p->p_smutex);
+	l = proc_representative_lwp(p, NULL, 1);
+	lwp_addref(l);
+	mutex_exit(&p->p_smutex);
 
 	switch (pfs->pfs_type) {
 	case PFSnote:
 	case PFSnotepg:
-		return (procfs_donote(curl, p, pfs, uio));
+		error = procfs_donote(curl, p, pfs, uio);
+		break;
 
 	case PFSregs:
-		return (procfs_doregs(curl, l, pfs, uio));
+		error = procfs_doregs(curl, l, pfs, uio);
+		break;
 
 	case PFSfpregs:
-		return (procfs_dofpregs(curl, l, pfs, uio));
+		error = procfs_dofpregs(curl, l, pfs, uio);
+		break;
 
 	case PFSctl:
-		return (procfs_doctl(curl, l, pfs, uio));
+		error = procfs_doctl(curl, l, pfs, uio);
+		break;
 
 	case PFSstatus:
-		return (procfs_dostatus(curl, l, pfs, uio));
+		error = procfs_dostatus(curl, l, pfs, uio);
+		break;
 
 	case PFSstat:
-		return (procfs_do_pid_stat(curl, l, pfs, uio));
+		error = procfs_do_pid_stat(curl, l, pfs, uio);
+		break;
 
 	case PFSmap:
-		return (procfs_domap(curl, p, pfs, uio, 0));
+		error = procfs_domap(curl, p, pfs, uio, 0);
+		break;
 
 	case PFSmaps:
-		return (procfs_domap(curl, p, pfs, uio, 1));
+		error = procfs_domap(curl, p, pfs, uio, 1);
+		break;
 
 	case PFSmem:
-		return (procfs_domem(curl, l, pfs, uio));
+		error = procfs_domem(curl, l, pfs, uio);
+		break;
 
 	case PFScmdline:
-		return (procfs_docmdline(curl, p, pfs, uio));
+		error = procfs_docmdline(curl, p, pfs, uio);
+		break;
 
 	case PFSmeminfo:
-		return (procfs_domeminfo(curl, p, pfs, uio));
+		error = procfs_domeminfo(curl, p, pfs, uio);
+		break;
 
 	case PFSdevices:
-		return (procfs_dodevices(curl, p, pfs, uio));
+		error = procfs_dodevices(curl, p, pfs, uio);
+		break;
 
 	case PFScpuinfo:
-		return (procfs_docpuinfo(curl, p, pfs, uio));
+		error = procfs_docpuinfo(curl, p, pfs, uio);
+		break;
 
 	case PFSfd:
-		return (procfs_dofd(curl, p, pfs, uio));
+		error = procfs_dofd(curl, p, pfs, uio);
+		break;
 
 	case PFSuptime:
-		return (procfs_douptime(curl, p, pfs, uio));
+		error = procfs_douptime(curl, p, pfs, uio);
+		break;
 
 	case PFSmounts:
-		return (procfs_domounts(curl, p, pfs, uio));
+		error = procfs_domounts(curl, p, pfs, uio);
+		break;
 
 	case PFSemul:
-		return procfs_doemul(curl, p, pfs, uio);
+		error = procfs_doemul(curl, p, pfs, uio);
+		break;
 
 #ifdef __HAVE_PROCFS_MACHDEP
 	PROCFS_MACHDEP_NODETYPE_CASES
-		return (procfs_machdep_rw(curl, l, pfs, uio));
+		error = procfs_machdep_rw(curl, l, pfs, uio);
+		break;
 #endif
 
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		break;
 	}
+
+	/*
+	 * Release the references that we acquired earlier.
+	 */
+	lwp_delref(l);
+	procfs_proc_unlock(p);
+
+	return (error);
 }
 
 /*
@@ -468,10 +539,10 @@ vfs_findname(nm, bf, buflen)
 void
 procfs_hashinit()
 {
-	lockinit(&pfs_hashlock, PINOD, "pfs_hashlock", 0, 0);
+	mutex_init(&pfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&pfs_ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	pfs_hashtbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
 	    M_WAITOK, &pfs_ihash);
-	simple_lock_init(&pfs_hash_slock);
 }
 
 void
@@ -484,7 +555,7 @@ procfs_hashreinit()
 	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
 	    &mask);
 
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	oldhash = pfs_hashtbl;
 	oldmask = pfs_ihash;
 	pfs_hashtbl = hash;
@@ -496,7 +567,7 @@ procfs_hashreinit()
 			LIST_INSERT_HEAD(&hash[val], pp, pfs_hash);
 		}
 	}
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 	hashdone(oldhash, M_UFSMNT);
 }
 
@@ -521,20 +592,20 @@ procfs_hashget(pid, type, fd, mp)
 	struct vnode *vp;
 
 loop:
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pid)];
 	LIST_FOREACH(pp, ppp, pfs_hash) {
 		vp = PFSTOV(pp);
 		if (pid == pp->pfs_pid && pp->pfs_type == type &&
 		    pp->pfs_fd == fd && vp->v_mount == mp) {
 			simple_lock(&vp->v_interlock);
-			simple_unlock(&pfs_hash_slock);
+			mutex_exit(&pfs_ihash_lock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
 			return (vp);
 		}
 	}
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 	return (NULL);
 }
 
@@ -550,10 +621,10 @@ procfs_hashins(pp)
 	/* lock the pfsnode, then put it on the appropriate hash list */
 	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
 
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
 	LIST_INSERT_HEAD(ppp, pp, pfs_hash);
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 }
 
 /*
@@ -563,9 +634,9 @@ void
 procfs_hashrem(pp)
 	struct pfsnode *pp;
 {
-	simple_lock(&pfs_hash_slock);
+	mutex_enter(&pfs_ihash_lock);
 	LIST_REMOVE(pp, pfs_hash);
-	simple_unlock(&pfs_hash_slock);
+	mutex_exit(&pfs_ihash_lock);
 }
 
 void
@@ -578,7 +649,7 @@ procfs_revoke_vnodes(p, arg)
 	struct mount *mp = (struct mount *)arg;
 	struct pfs_hashhead *ppp;
 
-	if (!(p->p_flag & P_SUGID))
+	if (!(p->p_flag & PK_SUGID))
 		return;
 
 	ppp = &pfs_hashtbl[PFSPIDHASH(p->p_pid)];
@@ -592,24 +663,36 @@ procfs_revoke_vnodes(p, arg)
 }
 
 int
-procfs_getfp(pfs, pown, fp)
-	struct pfsnode *pfs;
-	struct proc **pown;
-	struct file **fp;
+procfs_proc_lock(int pid, struct proc **bunghole, int notfound)
 {
-	struct proc *p = PFIND(pfs->pfs_pid);
+	struct proc *tp;
+	int error = 0;
 
-	if (p == NULL)
-		return ESRCH;
+	rw_enter(&proclist_lock, RW_READER);
 
-	if (pfs->pfs_fd == -1)
-		return EINVAL;
+	if (pid == 0)
+		tp = &proc0;
+	else if ((tp = p_find(pid, PFIND_LOCKED)) == NULL)
+		error = notfound;
 
-	if ((*fp = fd_getfile(p->p_fd, pfs->pfs_fd)) == NULL)
-		return EBADF;
+	if (tp != NULL) {
+		mutex_enter(&tp->p_mutex);
+		error = proc_addref(tp);
+		mutex_exit(&tp->p_mutex);
+	}
 
-	*pown = p;
-	return 0;
+	rw_exit(&proclist_lock);
+
+	*bunghole = tp;
+	return error;
+}
+
+void
+procfs_proc_unlock(struct proc *p)
+{
+	mutex_enter(&p->p_mutex);
+	proc_delref(p);
+	mutex_exit(&p->p_mutex);
 }
 
 int

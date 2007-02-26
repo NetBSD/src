@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.16.2 2006/12/30 20:45:18 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.4.16.3 2007/02/26 09:05:28 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -79,7 +79,6 @@
 #define spllock()	splhigh()
 
 #define spl0()			lowerspl(IPL_NONE)
-#define spllowersoftclock()	lowerspl(IPL_SOFTCLOCK)
 #define splx(s)			lowerspl(s)
 
 extern int splhigh(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.122.2.2 2006/12/30 20:50:05 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.122.2.3 2007/02/26 09:11:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.3 2007/02/26 09:11:06 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.2 2006/12/30 20:50:05 yamt Exp
 #include <sys/systrace.h>
 #include <sys/kauth.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -205,6 +204,11 @@ sys___clone(struct lwp *l, void *v, register_t *retval)
 /* print the 'table full' message once per 10 seconds */
 struct timeval fork_tfmrate = { 10, 0 };
 
+/*
+ * General fork call.  Note that another LWP in the process may call exec()
+ * or exit() while we are forking.  It's safe to continue here, because
+ * neither operation will complete until all LWPs have exited the process.
+ */ 
 int
 fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
@@ -213,9 +217,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	struct proc	*p1, *p2, *parent;
 	uid_t		uid;
 	struct lwp	*l2;
-	int		count, s;
+	int		count;
 	vaddr_t		uaddr;
-	boolean_t	inmem;
+	bool		inmem;
+	int		tmp;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
@@ -225,7 +230,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * processes, maxproc is the limit.
 	 */
 	p1 = l1->l_proc;
+	mutex_enter(&p1->p_mutex);
 	uid = kauth_cred_getuid(p1->p_cred);
+	mutex_exit(&p1->p_mutex);
 	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
 			    nprocs >= maxproc)) {
 		static struct timeval lasttfm;
@@ -284,10 +291,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
 	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
 
-	simple_lock_init(&p2->p_sigctx.ps_silock);
-	CIRCLEQ_INIT(&p2->p_sigctx.ps_siginfo);
-	simple_lock_init(&p2->p_lock);
+	CIRCLEQ_INIT(&p2->p_sigpend.sp_info);
+
 	LIST_INIT(&p2->p_lwps);
+	LIST_INIT(&p2->p_sigwaiters);
 
 	/*
 	 * Duplicate sub-structures as needed.
@@ -297,16 +304,30 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * handling are important in order to keep a consistent behaviour
 	 * for the child after the fork.
 	 */
-	p2->p_flag = p1->p_flag & (P_SUGID | P_STOPFORK | P_STOPEXEC |
-	    P_NOCLDSTOP | P_NOCLDWAIT | P_CLDSIGIGN);
+	p2->p_flag = p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
-	if (p1->p_flag & P_PROFIL)
-		startprofclock(p2);
+	if (flags & FORK_SYSTEM) {
+		/*
+		 * Mark it as a system process.  Set P_NOCLDWAIT so that
+		 * children are reparented to init(8) when they exit. 
+		 * init(8) can easily wait them out for us.
+		 */
+		p2->p_flag |= (PK_SYSTEM | PK_NOCLDWAIT);
+	}
 
-	kauth_cred_hold(p1->p_cred);
-	p2->p_cred = p1->p_cred;
+	/* XXX p_smutex can be IPL_VM except for audio drivers */
+	mutex_init(&p2->p_smutex, MUTEX_SPIN, IPL_SCHED);
+	mutex_init(&p2->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
+	mutex_init(&p2->p_rasmutex, MUTEX_SPIN, IPL_NONE);
+	mutex_init(&p2->p_mutex, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&p2->p_refcv, "drainref");
+	cv_init(&p2->p_waitcv, "wait");
+	cv_init(&p2->p_lwpcv, "lwpwait");
+
+	p2->p_refcnt = 1;
+	kauth_proc_fork(p1, p2);
 
 	LIST_INIT(&p2->p_raslist);
 #if defined(__HAVE_RAS)
@@ -336,27 +357,24 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * (If PL_SHAREMOD is clear, the structure is shared
 	 * copy-on-write.)
 	 */
-	if (p1->p_limit->p_lflags & PL_SHAREMOD)
-		p2->p_limit = limcopy(p1->p_limit);
-	else {
+	if (p1->p_limit->p_lflags & PL_SHAREMOD) {
+		mutex_enter(&p1->p_mutex);
+		p2->p_limit = limcopy(p1);
+		mutex_exit(&p1->p_mutex);
+	} else {
 		simple_lock(&p1->p_limit->p_slock);
 		p1->p_limit->p_refcnt++;
 		simple_unlock(&p1->p_limit->p_slock);
 		p2->p_limit = p1->p_limit;
 	}
 
-	if (p1->p_session->s_ttyvp != NULL && p1->p_flag & P_CONTROLT)
-		p2->p_flag |= P_CONTROLT;
-	if (flags & FORK_PPWAIT)
-		p2->p_flag |= P_PPWAIT;
+	p2->p_sflag = ((flags & FORK_PPWAIT) ? PS_PPWAIT : 0);
+	p2->p_lflag = 0;
+	p2->p_slflag = 0;
 	parent = (flags & FORK_NOWAIT) ? initproc : p1;
 	p2->p_pptr = parent;
 	LIST_INIT(&p2->p_children);
 
-	s = proclist_lock_write();
-	LIST_INSERT_AFTER(p1, p2, p_pglist);
-	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
-	proclist_unlock_write(s);
 
 #ifdef KTRACE
 	/*
@@ -364,18 +382,25 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * If not inherited, these were zeroed above.
 	 */
 	if (p1->p_traceflag & KTRFAC_INHERIT) {
+		mutex_enter(&ktrace_mutex);
 		p2->p_traceflag = p1->p_traceflag;
 		if ((p2->p_tracep = p1->p_tracep) != NULL)
 			ktradref(p2);
+		mutex_exit(&ktrace_mutex);
 	}
 #endif
-
-	scheduler_fork_hook(p1, p2);
 
 	/*
 	 * Create signal actions for the child process.
 	 */
-	sigactsinit(p2, p1, flags & FORK_SHARESIGS);
+	mutex_enter(&p1->p_smutex);
+	p2->p_sigacts = sigactsinit(p1, flags & FORK_SHARESIGS);
+	p2->p_sflag |=
+	    (p1->p_sflag & (PS_STOPFORK | PS_STOPEXEC | PS_NOCLDSTOP));
+	scheduler_fork_hook(p1, p2);
+	mutex_exit(&p1->p_smutex);
+
+	p2->p_stflag = p1->p_stflag;
 
 	/*
 	 * p_stats.
@@ -401,7 +426,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	PHOLD(l1);
 
-	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
+	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
 
 	/*
 	 * Finish creating the child process.
@@ -411,41 +436,34 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	    (func != NULL) ? func : child_return,
 	    arg, &l2);
 
-	/* Now safe for scheduler to see child process */
-	s = proclist_lock_write();
+	/*
+	 * It's now safe for the scheduler and other processes to see the
+	 * child process.
+	 */
+	rw_enter(&proclist_lock, RW_WRITER);
+
+	if (p1->p_session->s_ttyvp != NULL && p1->p_lflag & PL_CONTROLT)
+		p2->p_lflag |= PL_CONTROLT;
+
+	LIST_INSERT_HEAD(&parent->p_children, p2, p_sibling);
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
+
+	mutex_enter(&proclist_mutex);
+	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
-	proclist_unlock_write(s);
+	mutex_exit(&proclist_mutex);
+
+	rw_exit(&proclist_lock);
 
 #ifdef SYSTRACE
 	/* Tell systrace what's happening. */
-	if (ISSET(p1->p_flag, P_SYSTRACE))
+	if (ISSET(p1->p_flag, PK_SYSTRACE))
 		systrace_sys_fork(p1, p2);
 #endif
 
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif
-
-	/*
-	 * Make child runnable, set start time, and add to run queue
-	 * except if the parent requested the child to start in SSTOP state.
-	 */
-	SCHED_LOCK(s);
-	getmicrotime(&p2->p_stats->p_start);
-	p2->p_acflag = AFORK;
-	if (p1->p_flag & P_STOPFORK) {
-		p2->p_nrlwps = 0;
-		p1->p_nstopchild++;
-		p2->p_stat = SSTOP;
-		l2->l_stat = LSSTOP;
-	} else {
-		p2->p_nrlwps = 1;
-		p2->p_stat = SACTIVE;
-		l2->l_stat = LSRUN;
-		setrunqueue(l2);
-	}
-	SCHED_UNLOCK(s);
 
 	/*
 	 * Now can be swapped.
@@ -478,13 +496,55 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 #endif
 
 	/*
+	 * Make child runnable, set start time, and add to run queue except
+	 * if the parent requested the child to start in SSTOP state.
+	 */
+	tmp = (p2->p_userret != NULL ? LW_WUSERRET : 0);
+	mutex_enter(&proclist_mutex);
+	mutex_enter(&p2->p_smutex);
+
+	getmicrotime(&p2->p_stats->p_start);
+	p2->p_acflag = AFORK;
+	if (p2->p_sflag & PS_STOPFORK) {
+		lwp_lock(l2);
+		p2->p_nrlwps = 0;
+		p2->p_stat = SSTOP;
+		p2->p_waited = 0;
+		p1->p_nstopchild++;
+		l2->l_stat = LSSTOP;
+		l2->l_flag |= tmp;
+		lwp_unlock(l2);
+	} else {
+		p2->p_nrlwps = 1;
+		p2->p_stat = SACTIVE;
+		lwp_lock(l2);
+		l2->l_stat = LSRUN;
+		l2->l_flag |= tmp;
+		setrunqueue(l2);
+		lwp_unlock(l2);
+	}
+
+	mutex_exit(&proclist_mutex);
+
+	/*
+	 * Start profiling.
+	 */
+	if ((p2->p_stflag & PST_PROFIL) != 0) {
+		mutex_spin_enter(&p2->p_stmutex);
+		startprofclock(p2);
+		mutex_spin_exit(&p2->p_stmutex);
+	}
+
+	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for
-	 * child to exec or exit, set P_PPWAIT on child, and sleep on our
+	 * child to exec or exit, set PS_PPWAIT on child, and sleep on our
 	 * proc (in case of exit).
 	 */
 	if (flags & FORK_PPWAIT)
-		while (p2->p_flag & P_PPWAIT)
-			tsleep(p1, PWAIT, "ppwait", 0);
+		while (p2->p_sflag & PS_PPWAIT)
+			cv_wait(&p1->p_waitcv, &p2->p_smutex);
+
+	mutex_exit(&p2->p_smutex);
 
 	/*
 	 * Return child pid to parent process,
@@ -510,7 +570,6 @@ proc_trampoline_mp(void)
 
 	l = curlwp;
 
-	SCHED_ASSERT_UNLOCKED();
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 }
 #endif

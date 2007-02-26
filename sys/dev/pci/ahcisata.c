@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata.c,v 1.2.4.2 2006/12/30 20:48:41 yamt Exp $	*/
+/*	$NetBSD: ahcisata.c,v 1.2.4.3 2007/02/26 09:10:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.2.4.2 2006/12/30 20:48:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.2.4.3 2007/02/26 09:10:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -243,7 +243,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		aprint_normal("1.0");
 		break;
 	case AHCI_VS_11:
-		aprint_normal("1.0");
+		aprint_normal("1.1");
 		break;
 	default:
 		aprint_normal("0x%x", ahci_rev);

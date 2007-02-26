@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.24.6.3 2006/12/30 20:50:01 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.24.6.4 2007/02/26 09:11:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.24.6.3 2006/12/30 20:50:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.24.6.4 2007/02/26 09:11:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -222,7 +222,8 @@ tmpfs_lookup(void *v)
 			    (cnp->cn_nameiop == DELETE ||
 			    cnp->cn_nameiop == RENAME)) {
 				if ((dnode->tn_mode & S_ISTXT) != 0 &&
-				    kauth_cred_geteuid(cnp->cn_cred) != 0 &&
+				    kauth_authorize_generic(cnp->cn_cred,
+				     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
 				    kauth_cred_geteuid(cnp->cn_cred) != dnode->tn_uid &&
 				    kauth_cred_geteuid(cnp->cn_cred) != tnode->tn_uid)
 					return EPERM;
@@ -566,7 +567,7 @@ tmpfs_write(void *v)
 	struct uio *uio = ((struct vop_write_args *)v)->a_uio;
 	int ioflag = ((struct vop_write_args *)v)->a_ioflag;
 
-	boolean_t extended;
+	bool extended;
 	int error;
 	int flags;
 	off_t oldsize;
@@ -662,17 +663,16 @@ tmpfs_remove(void *v)
 	KASSERT(VOP_ISLOCKED(dvp));
 	KASSERT(VOP_ISLOCKED(vp));
 
+	if (vp->v_type == VDIR) {
+		error = EPERM;
+		goto out;
+	}
+
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_NODE(vp);
 	tmp = VFS_TO_TMPFS(vp->v_mount);
 	de = node->tn_lookup_dirent;
 	KASSERT(de != NULL);
-
-	/* XXX: Why isn't this done by the caller? */
-	if (vp->v_type == VDIR) {
-		error = EISDIR;
-		goto out;
-	}
 
 	/* Files marked as immutable or append-only cannot be deleted. */
 	if (node->tn_flags & (IMMUTABLE | APPEND)) {
@@ -687,13 +687,16 @@ tmpfs_remove(void *v)
 	/* Free the directory entry we just deleted.  Note that the node
 	 * referred by it will not be removed until the vnode is really
 	 * reclaimed. */
-	tmpfs_free_dirent(tmp, de, TRUE);
+	tmpfs_free_dirent(tmp, de, true);
 
 	error = 0;
 
 out:
-	vput(dvp);
 	vput(vp);
+	if (dvp == vp)
+		vrele(dvp);
+	else
+		vput(dvp);
 
 	KASSERT(!VOP_ISLOCKED(dvp));
 
@@ -936,7 +939,7 @@ tmpfs_rename(void *v)
 		/* Free the directory entry we just deleted.  Note that the
 		 * node referred by it will not be removed until the vnode is
 		 * really reclaimed. */
-		tmpfs_free_dirent(VFS_TO_TMPFS(tvp->v_mount), de, TRUE);
+		tmpfs_free_dirent(VFS_TO_TMPFS(tvp->v_mount), de, true);
 	}
 
 	/* Notify listeners of tdvp about the change in the directory (either
@@ -1004,6 +1007,16 @@ tmpfs_rmdir(void *v)
 	tmp = VFS_TO_TMPFS(dvp->v_mount);
 	dnode = VP_TO_TMPFS_DIR(dvp);
 	node = VP_TO_TMPFS_DIR(vp);
+
+	/* Directories with more than two entries ('.' and '..') cannot be
+	 * removed. */
+	if (node->tn_size > 0) {
+		error = ENOTEMPTY;
+		goto out;
+	}
+
+	/* This invariant holds only if we are not trying to remove "..".
+	 * We checked for that above so this is safe now. */
 	KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
 
 	/* Get the directory entry associated with node (vp).  This was
@@ -1012,13 +1025,6 @@ tmpfs_rmdir(void *v)
 	KASSERT(TMPFS_DIRENT_MATCHES(de,
 	    ((struct vop_rmdir_args *)v)->a_cnp->cn_nameptr,
 	    ((struct vop_rmdir_args *)v)->a_cnp->cn_namelen));
-
-	/* Directories with more than two entries ('.' and '..') cannot be
-	 * removed. */
-	if (node->tn_size > 0) {
-		error = ENOTEMPTY;
-		goto out;
-	}
 
 	/* Check flags to see if we are allowed to remove the directory. */
 	if (dnode->tn_flags & APPEND || node->tn_flags & (IMMUTABLE | APPEND)) {
@@ -1043,7 +1049,7 @@ tmpfs_rmdir(void *v)
 	/* Free the directory entry we just deleted.  Note that the node
 	 * referred by it will not be removed until the vnode is really
 	 * reclaimed. */
-	tmpfs_free_dirent(tmp, de, TRUE);
+	tmpfs_free_dirent(tmp, de, true);
 
 	/* Release the deleted vnode (will destroy the node, notify
 	 * interested parties and clean it from the cache). */

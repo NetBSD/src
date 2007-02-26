@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.7.2.2 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.7.2.3 2007/02/26 09:10:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7.2.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7.2.3 2007/02/26 09:10:00 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -798,15 +798,13 @@ dkwedge_discover(struct disk *pdk)
 		goto out;
 	}
 
-	error = VOP_OPEN(vp, FREAD | FWRITE, NOCRED, 0);
+	error = VOP_OPEN(vp, FREAD, NOCRED, 0);
 	if (error) {
 		aprint_error("%s: unable to open device, error = %d\n",
 		    pdk->dk_name, error);
 		vput(vp);
 		goto out;
 	}
-	/* VOP_OPEN() doesn't do this for us. */
-	vp->v_writecount++;
 	VOP_UNLOCK(vp, 0);
 
 	/*
@@ -822,7 +820,7 @@ dkwedge_discover(struct disk *pdk)
 		}
 	}
 
-	error = vn_close(vp, FREAD | FWRITE, NOCRED, curlwp);
+	error = vn_close(vp, FREAD, NOCRED, curlwp);
 	if (error) {
 		aprint_error("%s: unable to close device, error = %d\n",
 		    pdk->dk_name, error);

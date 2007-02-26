@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.9.4.2 2006/12/30 20:47:32 yamt Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.9.4.3 2007/02/26 09:09:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.2 2006/12/30 20:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.3 2007/02/26 09:09:10 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.9.4.2 2006/12/30 20:47:32 yamt Exp $
 #include <sys/mount.h>
 #include <sys/lock.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>

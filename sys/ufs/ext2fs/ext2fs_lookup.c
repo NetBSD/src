@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.34.2.2 2006/12/30 20:51:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.34.2.3 2007/02/26 09:12:17 yamt Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.34.2.2 2006/12/30 20:51:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.34.2.3 2007/02/26 09:12:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,7 @@ ext2fs_lookup(void *v)
 searchloop:
 	while (dp->i_offset < endsearch) {
 		if (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
-			preempt(1);
+			preempt();
 		/*
 		 * If necessary, get the next directory block.
 		 */
@@ -597,7 +597,7 @@ found:
 		 * implements append-only directories.
 		 */
 		if ((dp->i_e2fs_mode & ISVTX) &&
-		    kauth_cred_geteuid(cred) != 0 &&
+		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) &&
 		    kauth_cred_geteuid(cred) != dp->i_e2fs_uid &&
 		    VTOI(tdp)->i_e2fs_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);

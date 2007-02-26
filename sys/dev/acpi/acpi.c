@@ -1,7 +1,7 @@
-/*	$NetBSD: acpi.c,v 1.76.2.2 2006/12/30 20:47:54 yamt Exp $	*/
+/*	$NetBSD: acpi.c,v 1.76.2.3 2007/02/26 09:09:57 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76.2.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76.2.3 2007/02/26 09:09:57 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.76.2.2 2006/12/30 20:47:54 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -150,8 +151,9 @@ struct acpi_softc *acpi_softc;
 /*
  * Locking stuff.
  */
-static struct simplelock acpi_slock;
+static kmutex_t acpi_slock;
 static int acpi_locked;
+extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
  * sysctl-related information
@@ -189,7 +191,8 @@ acpi_probe(void)
 		panic("acpi_probe: ACPI has already been probed");
 	beenhere = 1;
 
-	simple_lock_init(&acpi_slock);
+	mutex_init(&acpi_slock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DRIVER, IPL_NONE);
 	acpi_locked = 0;
 
 	/*
@@ -562,7 +565,8 @@ acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 		aprint_error("acpi: activate failed for %s\n",
 		       (*di)->HardwareId.Value);
 	} else {
-		aprint_normal("acpi: activated %s\n", (*di)->HardwareId.Value);
+		aprint_verbose("acpi: activated %s\n",
+		    (*di)->HardwareId.Value);
 	}
 
 	(void)AcpiGetObjectInfo(handle, &buf);
@@ -752,7 +756,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	 */
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->PwrButton == 0) {
-		aprint_normal("%s: fixed-feature power button present\n",
+		aprint_verbose("%s: fixed-feature power button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_power.smpsw_name = sc->sc_dev.dv_xname;
 		sc->sc_smpsw_power.smpsw_type = PSWITCH_TYPE_POWER;
@@ -773,7 +777,7 @@ acpi_enable_fixed_events(struct acpi_softc *sc)
 	}
 
 	if (AcpiGbl_FADT != NULL && AcpiGbl_FADT->SleepButton == 0) {
-		aprint_normal("%s: fixed-feature sleep button present\n",
+		aprint_verbose("%s: fixed-feature sleep button present\n",
 		    sc->sc_dev.dv_xname);
 		sc->sc_smpsw_sleep.smpsw_name = sc->sc_dev.dv_xname;
 		sc->sc_smpsw_sleep.smpsw_type = PSWITCH_TYPE_SLEEP;

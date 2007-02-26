@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.62.2.1 2006/06/21 14:49:55 yamt Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.62.2.2 2007/02/26 09:06:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.62.2.1 2006/06/21 14:49:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.62.2.2 2007/02/26 09:06:07 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.62.2.1 2006/06/21 14:49:55 yamt Exp
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/tty.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.8.2.1 2006/06/21 14:52:18 yamt Exp $ */
+/* $NetBSD: kvm86.c,v 1.8.2.2 2007/02/26 09:06:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.8.2.1 2006/06/21 14:52:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.8.2.2 2007/02/26 09:06:56 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -36,7 +36,10 @@ __KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.8.2.1 2006/06/21 14:52:18 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
+
 #include <uvm/uvm.h>
+
 #include <machine/pcb.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
@@ -69,6 +72,8 @@ void *bioscallscratchpage;
 #define BIOSCALLSCRATCHPAGE_VMVA 0x1000
 /* a virtual page to map in vm86 memory temporarily */
 vaddr_t bioscalltmpva;
+
+kmutex_t kvm86_mp_lock;
 
 #define KVM86_IOPL3 /* not strictly necessary, saves a lot of traps */
 
@@ -119,6 +124,7 @@ kvm86_init()
 		  BIOSCALLSCRATCHPAGE_VMVA);
 	bioscallvmd = vmd;
 	bioscalltmpva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0, UVM_KMF_VAONLY);
+	mutex_init(&kvm86_mp_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -135,10 +141,6 @@ kvm86_prepare(vmd)
 	extern paddr_t vm86newptd;
 	extern struct trapframe *vm86frame;
 	extern pt_entry_t *vm86pgtableva;
-
-#ifdef MULTIPROCESSOR
-#error this needs a rewrite for MP
-#endif
 
 	vm86newptd = vtophys((vaddr_t)vmd) | PG_V | PG_RW | PG_U | PG_u;
 	vm86pgtableva = vmd->pgtbl;
@@ -276,7 +278,9 @@ kvm86_bioscall_simple(intno, r)
 	tf.tf_edi = r->EDI;
 	tf.tf_vm86_es = r->ES;
 
+	mutex_enter(&kvm86_mp_lock);
 	res = kvm86_bioscall(intno, &tf);
+	mutex_exit(&kvm86_mp_lock);
 
 	r->EAX = tf.tf_eax;
 	r->EBX = tf.tf_ebx;

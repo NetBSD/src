@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.41.2.2 2006/12/30 20:50:04 yamt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.41.2.3 2007/02/26 09:11:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.41.2.2 2006/12/30 20:50:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.41.2.3 2007/02/26 09:11:03 yamt Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -162,7 +162,7 @@ check_shell:
 	/*
 	 * MNT_NOSUID has already taken care of by check_exec,
 	 * so we don't need to worry about it now or later.  We
-	 * will need to check P_TRACED later, however.
+	 * will need to check PSL_TRACED later, however.
 	 */
 	script_sbits = epp->ep_vap->va_mode & (S_ISUID | S_ISGID);
 	if (script_sbits != 0) {
@@ -231,7 +231,7 @@ check_shell:
 		/* normally can't fail, but check for it if diagnostic */
 #ifdef SYSTRACE
 		error = 1;
-		if (ISSET(l->l_proc->p_flag, P_SYSTRACE)) {
+		if (ISSET(l->l_proc->p_flag, PK_SYSTRACE)) {
 			error = systrace_scriptname(p, *tmpsap);
 			if (error == 0)
 				tmpsap++;
@@ -296,7 +296,7 @@ check_shell:
 #ifdef SETUIDSCRIPTS
 		/*
 		 * set thing up so that set-id scripts will be
-		 * handled appropriately.  P_TRACED will be
+		 * handled appropriately.  PSL_TRACED will be
 		 * checked later when the shell is actually
 		 * exec'd.
 		 */

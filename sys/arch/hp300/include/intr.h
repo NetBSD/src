@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14.10.1 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.10.2 2007/02/26 09:06:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -69,13 +69,14 @@
 #define	IPL_LOCK	IPL_HIGH
 #define	NIPL		12
 
-#define	_IPL_SOFTSERIAL	0	/* serial software interrupts */
-#define	_IPL_SOFTNET	1	/* network software interrupts */
-#define	_IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	_IPL_SOFT	3	/* other software interrupts */
-#define	IPL_NSOFT	4
+#define	SI_SOFTSERIAL	0	/* serial software interrupts */
+#define	SI_SOFTNET	1	/* network software interrupts */
+#define	SI_SOFTCLOCK	2	/* clock software interrupts */
+#define	SI_SOFT		3	/* other software interrupts */
 
-#define	IPL_SOFTNAMES {							\
+#define	SI_NQUEUES	4
+
+#define	SI_QUEUENAMES {							\
 	"serial",							\
 	"net",								\
 	"clock",							\
@@ -118,7 +119,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 /* These spl calls are used by machine-independent code. */
 /* spl0 requires checking for software interrupts */
-#define	spllowersoftclock() spl1()
 #define	splsoft()	splraise1()
 #define	splsoftclock()	splsoft()
 #define	splsoftnet()	splsoft()

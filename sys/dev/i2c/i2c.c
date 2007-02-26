@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.3.12.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: i2c.c,v 1.3.12.3 2007/02/26 09:10:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,6 +40,10 @@
 #include <sys/device.h>
 #include <sys/event.h>
 #include <sys/conf.h>
+#include <sys/malloc.h>
+#include <sys/kthread.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -50,6 +54,9 @@ struct iic_softc {
 	i2c_tag_t sc_tag;
 	int sc_type;
 };
+
+static void	iic_smbus_intr_thread(void *);
+static void	iic_smbus_intr_thread1(void *);
 
 int
 iicbus_print(void *aux, const char *pnp)
@@ -109,12 +116,131 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_tag = iba->iba_tag;
 	sc->sc_type = iba->iba_type;
+	sc->sc_tag->ic_devname = self->dv_xname;
+
+	LIST_INIT(&(sc->sc_tag->ic_list));
+	LIST_INIT(&(sc->sc_tag->ic_proc_list));
+	kthread_create(iic_smbus_intr_thread, sc->sc_tag);
 
 	/*
 	 * Attach all i2c devices described in the kernel
 	 * configuration file.
 	 */
 	config_search_ia(iic_search, self, "iic", NULL);
+}
+
+static void
+iic_smbus_intr_thread1(void *aux)
+{
+	i2c_tag_t ic;
+	struct ic_intr_list *il;
+	int rv;
+
+	ic = (i2c_tag_t)aux;
+	ic->ic_running = 1;
+	ic->ic_pending = 0;
+
+	while (ic->ic_running) {
+		if (ic->ic_pending == 0)
+			rv = tsleep(ic, PZERO, "iicintr", hz);
+		if (ic->ic_pending > 0) {
+			LIST_FOREACH(il, &(ic->ic_proc_list), il_next) {
+				(*il->il_intr)(il->il_intrarg);
+			}
+			ic->ic_pending--;
+		}
+	}
+
+	kthread_exit(0);
+}
+
+static void
+iic_smbus_intr_thread(void *aux)
+{
+	i2c_tag_t ic;
+	int rv;
+
+	ic = (i2c_tag_t)aux;
+
+	rv = kthread_create1(iic_smbus_intr_thread1, ic, &ic->ic_intr_thread,
+	    "%s", ic->ic_devname);
+	if (rv)
+		printf("%s: unable to create intr thread\n", ic->ic_devname);
+}
+
+void *
+iic_smbus_intr_establish(i2c_tag_t ic, int (*intr)(void *), void *intrarg)
+{
+	struct ic_intr_list *il;
+
+	il = malloc(sizeof(struct ic_intr_list), M_DEVBUF, M_WAITOK);
+	if (il == NULL)
+		return NULL;
+	    
+	il->il_intr = intr;
+	il->il_intrarg = intrarg;
+
+	LIST_INSERT_HEAD(&(ic->ic_list), il, il_next);
+
+	return il;
+}
+
+void
+iic_smbus_intr_disestablish(i2c_tag_t ic, void *hdl)
+{
+	struct ic_intr_list *il;
+
+	il = (struct ic_intr_list *)hdl;
+
+	LIST_REMOVE(il, il_next);
+	free(il, M_DEVBUF);
+
+	return;
+}
+
+void *
+iic_smbus_intr_establish_proc(i2c_tag_t ic, int (*intr)(void *), void *intrarg)
+{
+	struct ic_intr_list *il;
+
+	il = malloc(sizeof(struct ic_intr_list), M_DEVBUF, M_WAITOK);
+	if (il == NULL)
+		return NULL;
+	    
+	il->il_intr = intr;
+	il->il_intrarg = intrarg;
+
+	LIST_INSERT_HEAD(&(ic->ic_proc_list), il, il_next);
+
+	return il;
+}
+
+void
+iic_smbus_intr_disestablish_proc(i2c_tag_t ic, void *hdl)
+{
+	struct ic_intr_list *il;
+
+	il = (struct ic_intr_list *)hdl;
+
+	LIST_REMOVE(il, il_next);
+	free(il, M_DEVBUF);
+
+	return;
+}
+
+int
+iic_smbus_intr(i2c_tag_t ic)
+{
+	struct ic_intr_list *il;
+
+	LIST_FOREACH(il, &(ic->ic_list), il_next) {
+		(*il->il_intr)(il->il_intrarg);
+	}
+
+	ic->ic_pending++;
+	wakeup(ic);
+
+	return 1;
 }
 
 CFATTACH_DECL(iic, sizeof(struct iic_softc),

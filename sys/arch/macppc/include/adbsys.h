@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.h,v 1.7 2002/06/18 05:22:51 itojun Exp $	*/
+/*	$NetBSD: adbsys.h,v 1.7.22.1 2007/02/26 09:07:21 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994	Allen K. Briggs, Chris P. Caputo,
@@ -122,6 +122,7 @@ typedef struct adb_dev_s{
 #define ADB_DESIGNKBD	27	/* XXX Needs to be verified XXX */
 #define ADB_PBJPKBD	30
 #define ADB_PBG3KBD	195
+#define ADB_IBOOKKBD	196	/* iBook, probably others? */
 #define ADB_PBG3JPKBD	201
 
 	/* Interesting mouse handler IDs */

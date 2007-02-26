@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.202.2.2 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: wi.c,v 1.202.2.3 2007/02/26 09:10:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.202.2.2 2006/12/30 20:48:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.202.2.3 2007/02/26 09:10:13 yamt Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1407,7 +1407,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCSIFGENERIC:
 		error = kauth_authorize_generic(curlwp->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &curlwp->l_acflag);
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (error)
 			break;
 		error = wi_set_cfg(ifp, cmd, data);

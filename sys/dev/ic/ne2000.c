@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.46.4.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.46.4.3 2007/02/26 09:10:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.46.4.3 2007/02/26 09:10:10 yamt Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -895,6 +895,9 @@ ne2000_ipkdb_attach(kip)
 		dp->sc_flags |= DP8390_DO_AX88190_WORKAROUND;
 		dp->mem_start = dp->mem_size = 8192 * 2;
 		kip->name = "ax88190";
+		break;
+	default:
+		return -1;
 		break;
 	}
 

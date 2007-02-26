@@ -1,4 +1,4 @@
-/*	$NetBSD: testmisc.c,v 1.2 2003/07/14 15:47:30 lukem Exp $	*/
+/*	$NetBSD: testmisc.c,v 1.2.16.1 2007/02/26 09:11:26 yamt Exp $	*/
 
 /*
  * testmisc.c
@@ -40,9 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: testmisc.c,v 1.2 2003/07/14 15:47:30 lukem Exp $");
+__RCSID("$NetBSD: testmisc.c,v 1.2.16.1 2007/02/26 09:11:26 yamt Exp $");
 
 #include <stdio.h>
+#include <stdlib.h>
 
 int
 main()

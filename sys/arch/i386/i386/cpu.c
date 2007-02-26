@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22.2.2 2006/12/30 20:46:09 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.22.2.3 2007/02/26 09:06:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.2.2 2006/12/30 20:46:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.2.3 2007/02/26 09:06:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -145,12 +145,14 @@ struct tlog tlog_primary;
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
+	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
 	.ci_tlog_base = &tlog_primary,
 };
 #else  /* TRAPLOG */
 struct cpu_info cpu_info_primary = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
+	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
 };
 #endif /* !TRAPLOG */
 
@@ -285,6 +287,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ci->ci_self = ci;
+	ci->ci_self150 = (uint8_t *)ci + 0x150;
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
@@ -532,7 +535,7 @@ cpu_start_secondary(ci)
 
 	ci->ci_flags |= CPUF_AP;
 
-	aprint_normal("%s: starting\n", ci->ci_dev->dv_xname);
+	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
 
@@ -623,7 +626,7 @@ cpu_hatch(void *v)
 	lapic_tpr = 0;
 	enable_intr();
 
-	aprint_normal("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
+	aprint_debug("%s: CPU %ld running\n", ci->ci_dev->dv_xname,
 	    ci->ci_cpuid);
 
 	microtime(&ci->ci_schedstate.spc_runtime);

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.14.16.1 2006/06/21 14:56:47 yamt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.14.16.2 2007/02/26 09:08:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.1 2006/06/21 14:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.2 2007/02/26 09:08:25 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.1 2006/06/21 14:56:47 
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sparc64/sparc64/sigdebug.h>
 
@@ -76,9 +75,9 @@ compat_13_sys_sigreturn(l, v, retval)
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sigcontext13 sc, *scp;
 	struct trapframe64 *tf;
+	struct proc *p = l->l_proc;
 	sigset_t mask;
 
 	/* First ensure consistent stack state (see sendsig). */
@@ -90,6 +89,7 @@ compat_13_sys_sigreturn(l, v, retval)
 		Debugger();
 #endif
 #endif
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
@@ -158,14 +158,16 @@ compat_13_sys_sigreturn(l, v, retval)
 	}
 #endif
 
+	mutex_enter(&p->p_smutex);
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask */
 	native_sigset13_to_sigset(&scp->sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

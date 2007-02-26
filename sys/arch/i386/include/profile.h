@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.21.4.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: profile.h,v 1.21.4.2 2007/02/26 09:07:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,6 +36,7 @@
 #endif
 
 #include <machine/cpufunc.h>
+#include <machine/atomic.h>
 
 #define	_MCOUNT_DECL static __inline void _mcount
 
@@ -74,23 +75,35 @@ mcount(void)								\
 #ifdef MULTIPROCESSOR
 __cpu_simple_lock_t __mcount_lock;
 
-#define	MCOUNT_ENTER_MP							\
-	__cpu_simple_lock(&__mcount_lock);
-#define	MCOUNT_EXIT_MP							\
-	__cpu_simple_unlock(&__mcount_lock);
+static inline void
+MCOUNT_ENTER_MP(void)
+{
+	while (x86_atomic_testset_b(&__mcount_lock, __SIMPLELOCK_LOCKED)
+	    != __SIMPLELOCK_UNLOCKED) {
+		while (__mcount_lock == __SIMPLELOCK_LOCKED)
+			;
+	}
+	__insn_barrier();
+}
 
+static inline void
+MCOUNT_EXIT_MP(void)
+{
+	__insn_barrier();
+	__mcount_lock = __SIMPLELOCK_UNLOCKED;
+}
 #else
-#define MCOUNT_ENTER_MP
-#define MCOUNT_EXIT_MP
+#define MCOUNT_ENTER_MP()
+#define MCOUNT_EXIT_MP()
 #endif
 
 #define	MCOUNT_ENTER							\
 	s = (int)read_psl();						\
 	disable_intr();							\
-	MCOUNT_ENTER_MP
+	MCOUNT_ENTER_MP();
 
 #define	MCOUNT_EXIT							\
-	MCOUNT_EXIT_MP							\
+	MCOUNT_EXIT_MP();						\
 	write_psl(s);
 
 #endif /* _KERNEL */

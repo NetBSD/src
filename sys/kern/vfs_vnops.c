@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.92.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.92.2.3 2007/02/26 09:11:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.92.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.92.2.3 2007/02/26 09:11:24 yamt Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -585,7 +585,7 @@ vn_fcntl(struct file *fp, u_int com, void *data, struct lwp *l)
 static int
 vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 {
-	struct vnode *vp = ((struct vnode *)fp->f_data);
+	struct vnode *vp = ((struct vnode *)fp->f_data), *ovp;
 	struct proc *p = l->l_proc;
 	struct vattr vattr;
 	int error;
@@ -637,10 +637,13 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 		error = VOP_IOCTL(vp, com, data, fp->f_flag,
 		    l->l_cred, l);
 		if (error == 0 && com == TIOCSCTTY) {
-			if (p->p_session->s_ttyvp)
-				vrele(p->p_session->s_ttyvp);
-			p->p_session->s_ttyvp = vp;
 			VREF(vp);
+			rw_enter(&proclist_lock, RW_WRITER);
+			ovp = p->p_session->s_ttyvp;
+			p->p_session->s_ttyvp = vp;
+			rw_exit(&proclist_lock);
+			if (ovp != NULL)
+				vrele(ovp);
 		}
 		return (error);
 
@@ -906,6 +909,8 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 }
 
 /*
+ * OBSOLETE -- this function will be removed in the near future!
+ *
  * Preparing to start a filesystem write operation. If the operation is
  * permitted, then we bump the count of operations in progress and
  * proceed. If a suspend request is in progress, we wait until the
@@ -920,8 +925,6 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 int
 vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
 {
-	struct mount *mp;
-	int error, mask, prio;
 
 	/*
 	 * If a vnode is provided, get and return the mount point that
@@ -930,40 +933,12 @@ vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
 	if (vp != NULL) {
 		*mpp = vp->v_mount;
 	}
-	if ((mp = *mpp) == NULL)
-		return (0);
-	mp = mp->mnt_leaf;
-	/*
-	 * Check on status of suspension.
-	 */
-	prio = PUSER - 1;
-	if (flags & V_PCATCH)
-		prio |= PCATCH;
-
-	if ((flags & V_LOWER) == 0)
-		mask = IMNT_SUSPEND;
-	else
-		mask = IMNT_SUSPENDLOW;
-
-	while ((mp->mnt_iflag & mask) != 0) {
-		if ((flags & V_WAIT) == 0)
-			return (EWOULDBLOCK);
-		error = tsleep(&mp->mnt_flag, prio, "suspfs", 0);
-		if (error)
-			return (error);
-	}
-	if (flags & V_SLEEPONLY)
-		return (0);
-	simple_lock(&mp->mnt_slock);
-	if ((flags & V_LOWER) == 0)
-		mp->mnt_writeopcountupper++;
-	else
-		mp->mnt_writeopcountlower++;
-	simple_unlock(&mp->mnt_slock);
-	return (0);
+	return 0;
 }
 
 /*
+ * OBSOLETE -- this function will be removed in the near future!
+ *
  * Filesystem write operation has completed. If we are suspending and this
  * operation is the last one, notify the suspender that the suspension is
  * now in effect.
@@ -971,28 +946,6 @@ vn_start_write(struct vnode *vp, struct mount **mpp, int flags)
 void
 vn_finished_write(struct mount *mp, int flags)
 {
-	if (mp == NULL)
-		return;
-	mp = mp->mnt_leaf;
-	simple_lock(&mp->mnt_slock);
-	if ((flags & V_LOWER) == 0) {
-		mp->mnt_writeopcountupper--;
-		if (mp->mnt_writeopcountupper < 0)
-			printf("vn_finished_write: neg cnt upper=%d\n",
-			       mp->mnt_writeopcountupper);
-		if ((mp->mnt_iflag & IMNT_SUSPEND) != 0 &&
-		    mp->mnt_writeopcountupper <= 0)
-			wakeup(&mp->mnt_writeopcountupper);
-	} else {
-		mp->mnt_writeopcountlower--;
-		if (mp->mnt_writeopcountlower < 0)
-			printf("vn_finished_write: neg cnt lower=%d\n",
-			       mp->mnt_writeopcountlower);
-		if ((mp->mnt_iflag & IMNT_SUSPENDLOW) != 0 &&
-		    mp->mnt_writeopcountupper <= 0)
-			wakeup(&mp->mnt_writeopcountlower);
-	}
-	simple_unlock(&mp->mnt_slock);
 }
 
 void

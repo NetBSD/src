@@ -1,4 +1,4 @@
-/*	$NetBSD: divsim.c,v 1.2 2003/07/15 02:29:42 lukem Exp $	*/
+/*	$NetBSD: divsim.c,v 1.2.16.1 2007/02/26 09:06:46 yamt Exp $	*/
 
 /*	$OpenBSD: divsim.c,v 1.4 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: divsim.c,v 1.2 2003/07/15 02:29:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: divsim.c,v 1.2.16.1 2007/02/26 09:06:46 yamt Exp $");
 
 #include "md.h"
 
@@ -56,7 +56,7 @@ struct mdsfu_register *result;
 
 	/* check divisor for zero */
 	if (opnd2 == 0) {
-		overflow = TRUE;
+		overflow = true;
 		return;
 	}
 
@@ -66,9 +66,9 @@ struct mdsfu_register *result;
 	/* get absolute value of operands */
 	if (opnd1 < 0) {
 		opnd1 = -opnd1;
-		op1_sign = TRUE;
+		op1_sign = true;
 	}
-	else op1_sign = FALSE;
+	else op1_sign = false;
 	if (opnd2 < 0) opnd2 = -opnd2;
 
 	/* check for opnd2 == -2**31 */
@@ -93,17 +93,17 @@ struct mdsfu_register *result;
 		 * is with opnd1 = -2**31 and opnd2 = -1
 		 */
 		if (sign>0 && result_lo<0) {
-			overflow = TRUE;
+			overflow = true;
 			return;
 		}
 	}
-	overflow = FALSE;
+	overflow = false;
 
 	/* return positive residue */
 	if (op1_sign && result_hi) {
 		result_hi = opnd2 - result_hi;
 		if (++result_lo < 0) {
-			overflow = TRUE;
+			overflow = true;
 			return;
 		}
 	}

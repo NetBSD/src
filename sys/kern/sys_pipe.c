@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.65.2.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.65.2.3 2007/02/26 09:11:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.3 2007/02/26 09:11:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.2 2006/12/30 20:50:06 yamt Exp $
 #include <sys/lock.h>
 #include <sys/select.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <uvm/uvm.h>
 #include <sys/sysctl.h>

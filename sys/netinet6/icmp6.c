@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.109.2.2 2006/12/30 20:50:38 yamt Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.109.2.3 2007/02/26 09:11:47 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109.2.2 2006/12/30 20:50:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109.2.3 2007/02/26 09:11:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -101,6 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.109.2.2 2006/12/30 20:50:38 yamt Exp $")
 #include <netinet6/ipsec.h>
 #include <netkey/key.h>
 #endif
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
+#endif
+
 
 #include "faith.h"
 #if defined(NFAITH) && 0 < NFAITH
@@ -615,8 +621,8 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 			}
 			m_freem(n0);
 		}
-		nip6 = mtod(n, struct ip6_hdr *);
-		nicmp6 = (struct icmp6_hdr *)((caddr_t)nip6 + off);
+		IP6_EXTHDR_GET(nicmp6, struct icmp6_hdr *, n, off,
+		    sizeof(*nicmp6));
 		nicmp6->icmp6_type = ICMP6_ECHO_REPLY;
 		nicmp6->icmp6_code = 0;
 		if (n) {
@@ -1953,9 +1959,7 @@ icmp6_rip6_input(mp, off)
  * up, and to make the code simpler at this stage.
  */
 void
-icmp6_reflect(m, off)
-	struct	mbuf *m;
-	size_t off;
+icmp6_reflect(struct mbuf *m, size_t off)
 {
 	struct ip6_hdr *ip6;
 	struct icmp6_hdr *icmp6;
@@ -2059,13 +2063,14 @@ icmp6_reflect(m, off)
 		 * that we do not own.  Select a source address based on the
 		 * source address of the erroneous packet.
 		 */
-		bzero(&sin6, sizeof(sin6));
+		memset(&sin6, 0, sizeof(sin6));
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_len = sizeof(sin6);
 		sin6.sin6_addr = ip6->ip6_dst; /* zone ID should be embedded */
 
-		bzero(&ro, sizeof(ro));
-		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
+		memset(&ro, 0, sizeof(ro));
+		src = in6_selectsrc(&sin6, NULL, NULL, (struct route *)&ro,
+		    NULL, &outif, &e);
 		rtcache_free((struct route *)&ro);
 		if (src == NULL) {
 			nd6log((LOG_DEBUG,
@@ -2330,7 +2335,7 @@ icmp6_redirect_input(m, off)
 		sdst.sin6_len = sizeof(struct sockaddr_in6);
 		bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
 		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
-#ifdef IPSEC
+#if defined(IPSEC) || defined(FAST_IPSEC)
 		key_sa_routechange((struct sockaddr *)&sdst);
 #endif
 	}

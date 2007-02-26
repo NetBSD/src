@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.81.2.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*     $NetBSD: buf.h,v 1.81.2.3 2007/02/26 09:12:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -211,13 +211,15 @@ do {									\
 #define	B_TAPE		0x00200000	/* Magnetic tape I/O. */
 #define	B_WANTED	0x00800000	/* Process wants this buffer. */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
-#define	B_XXX		0x02000000	/* Debugging flag. */
+#define	B_FSPRIVATE	0x01000000	/* File system private flag. */
+#define	B_DEVPRIVATE	0x02000000	/* Device driver private flag. */
 #define	B_VFLUSH	0x04000000	/* Buffer is being synced. */
 
 #define BUF_FLAGBITS \
     "\20\1AGE\3ASYNC\4BAD\5BUSY\6SCANNED\7CALL\10DELWRI" \
     "\11DIRTY\12DONE\14ERROR\15GATHERED\16INVAL\17LOCKED\20NOCACHE" \
-    "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\32XXX\33VFLUSH"
+    "\22CACHE\23PHYS\24RAW\25READ\26TAPE\30WANTED\31FSPRIVATE\32DEVPRIVATE" \
+    "\33VFLUSH"
 
 
 /*

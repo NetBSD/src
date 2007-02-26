@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.28.1 2006/12/30 20:46:34 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.28.2 2007/02/26 09:07:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 #define	IPL_HIGH	15	/* everything */
 #define	IPL_LOCK	IPL_HIGH
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
@@ -80,7 +80,5 @@ splraiseipl(ipl_cookie_t icookie)
 
 #define	spl0()			_cpu_intr_resume(0)
 #define	splx(x)			_cpu_intr_resume(x)
-
-#define	spllowersoftclock()	_cpu_intr_resume(IPL_SOFTCLOCK << 4)
 
 #endif /* !_MMEYE_INTR_H_ */

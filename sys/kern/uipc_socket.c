@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.5 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.6 2007/02/26 09:11:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.5 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.6 2007/02/26 09:11:20 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -255,7 +255,7 @@ sokvafree(vaddr_t sva, vsize_t len)
 }
 
 static void
-sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size, boolean_t mapped)
+sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size, bool mapped)
 {
 	vaddr_t sva, eva;
 	vsize_t len;
@@ -471,10 +471,11 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 	uid_t		uid;
 	int		error, s;
 
-	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
-	    KAUTH_REQ_NETWORK_SOCKET_OPEN, (void *)(u_long)dom,
-	    (void *)(u_long)type, (void *)(u_long)proto) != 0)
-		return (EPERM);
+	error = kauth_authorize_network(l->l_cred, KAUTH_NETWORK_SOCKET,
+	    KAUTH_REQ_NETWORK_SOCKET_OPEN, KAUTH_ARG(dom), KAUTH_ARG(type),
+	    KAUTH_ARG(proto));
+	if (error)
+		return (error);
 
 	if (proto)
 		prp = pffindproto(dom, proto, type);

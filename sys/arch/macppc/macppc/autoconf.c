@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43.2.2 2006/12/30 20:46:30 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.43.2.3 2007/02/26 09:07:22 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43.2.2 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.43.2.3 2007/02/26 09:07:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -60,8 +60,12 @@ void ofw_stack __P((void));
 
 extern char bootpath[256];
 char cbootpath[256];
+int    console_node = 0, console_instance = 0;
 
 u_int *heathrow_FCR = NULL;
+
+static void add_model_specifics(prop_dictionary_t);
+static void copyprops(int, prop_dictionary_t);
 
 /*
  * Determine device configuration for a machine.
@@ -165,7 +169,7 @@ canonicalize_bootpath()
 	lastp = strrchr(cbootpath, '/');
 	if (lastp != NULL) {
 		lastp++;
-		if (strncmp(lastp, "sd@", 3) == 0 
+		if (strncmp(lastp, "sd@", 3) == 0
 		    && strncmp(last, "sd@", 3) == 0)
 			strcpy(lastp, last);
 	} else {
@@ -194,6 +198,37 @@ canonicalize_bootpath()
 		*p = '\0';
 }
 
+static int
+OF_to_intprop(prop_dictionary_t dict, int node, const char *ofname,
+    const char *propname)
+{
+	uint32_t prop;
+
+	if (OF_getprop(node, ofname, &prop, sizeof(prop)) != sizeof(prop))
+		return 0;
+
+	prop_dictionary_set_uint32(dict, propname, prop);
+	return 1;
+}
+
+static int
+OF_to_dataprop(prop_dictionary_t dict, int node, const char *ofname,
+    const char *propname)
+{
+	prop_data_t data;
+	int len;
+	uint8_t prop[256];
+
+	len = OF_getprop(node, ofname, prop, 256);
+	if (len < 1)
+		return 0;
+
+	data = prop_data_create_data(prop, len);
+	prop_dictionary_set(dict, propname, data);
+
+	return 1;
+}
+
 /*
  * device_register is called from config_attach as each device is
  * attached. We use it to find the NetBSD device corresponding to the
@@ -220,6 +255,42 @@ device_register(dev, aux)
 	if (device_is_a(dev, "atapibus") || device_is_a(dev, "pci") ||
 	    device_is_a(dev, "scsibus") || device_is_a(dev, "atabus"))
 		return;
+
+	if (device_is_a(device_parent(dev), "pci")) {
+		/* see if this is going to be console */
+		struct pci_attach_args *pa = aux;
+		prop_dictionary_t dict;
+		int node, sub;
+		int console = 0;
+
+		dict = device_properties(dev);
+		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+		prop_dictionary_set_uint32(dict, "device_node", node);
+
+		console = (node == console_node);
+
+		if (!console) {
+			/*
+			 * see if any child matches since OF attaches nodes for
+			 * each head and /chosen/stdout points to the head
+			 * rather than the device itself in this case
+			 */
+			sub = OF_child(node);
+			while ((sub != 0) && (sub != console_node)) {
+				sub = OF_peer(sub);
+			}
+			if (sub == console_node) {
+				console = TRUE;
+			}
+		}
+
+		if (console) {
+
+			prop_dictionary_set_uint32(dict, "instance_handle",
+			    console_instance);
+			copyprops(console_node, dict);
+		}
+	}
 
 	if (device_is_a(device_parent(dev), "atapibus") ||
 	    device_is_a(device_parent(dev), "atabus") ||
@@ -331,17 +402,15 @@ cpu_rootconf()
 }
 
 int
-OF_interpret(const char *cmd, int nreturns, ...)
+OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 {
 	va_list ap;
-	int i;
+	int i, len, status;
 	static struct {
 		const char *name;
-		int nargs;
-		int nreturns;
-		char *cmd;
-		int status;
-		int results[8];
+		uint32_t nargs;
+		uint32_t nreturns;
+		uint32_t slots[16];
 	} args = {
 		"interpret",
 		1,
@@ -351,19 +420,31 @@ OF_interpret(const char *cmd, int nreturns, ...)
 	ofw_stack();
 	if (nreturns > 8)
 		return -1;
-	if ((i = strlen(cmd)) >= PAGE_SIZE)
+	if ((len = strlen(cmd)) >= PAGE_SIZE)
 		return -1;
-	ofbcopy(cmd, OF_buf, i + 1);
-	args.cmd = OF_buf;
-	args.nargs = 1;
+	ofbcopy(cmd, OF_buf, len + 1);
+	i = 0;
+	args.slots[i] = (uint32_t)OF_buf;
+	args.nargs = nargs + 1;
 	args.nreturns = nreturns + 1;
+	va_start(ap, nreturns);
+	i++;
+	while (i < args.nargs) {
+		args.slots[i] = (uint32_t)va_arg(ap, uint32_t *);
+		i++;
+	}
+
 	if (openfirmware(&args) == -1)
 		return -1;
-	va_start(ap, nreturns);
-	for (i = 0; i < nreturns; i++)
-		*va_arg(ap, int *) = args.results[i];
+	status = args.slots[i];
+	i++;
+
+	while (i < args.nargs + args.nreturns) {
+		*va_arg(ap, uint32_t *) = args.slots[i];
+		i++;
+	}
 	va_end(ap);
-	return args.status;
+	return status;
 }
 
 /*
@@ -429,4 +510,46 @@ getnodebyname(start, target)
 	}
 
 	return node;
+}
+
+static void
+add_model_specifics(prop_dictionary_t dict)
+{
+	const char *bl_rev_models[] = {
+		"PowerBook4,3", "PowerBook6,3", "PowerBook6,5", NULL};
+	int node;
+
+	node = OF_finddevice("/");
+
+	if (of_compatible(node, bl_rev_models) != -1) {
+		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
+	}
+}
+
+static void
+copyprops(int node, prop_dictionary_t dict)
+{
+	uint32_t temp;
+
+	prop_dictionary_set_bool(dict, "is_console", 1);
+	if (!OF_to_intprop(dict, node, "width", "width")) {
+
+		OF_interpret("screen-width", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "width", temp);
+	}
+	if (!OF_to_intprop(dict, console_node, "height", "height")) {
+
+		OF_interpret("screen-height", 0, 1, &temp);
+		prop_dictionary_set_uint32(dict, "height", temp);
+	}
+	OF_to_intprop(dict, console_node, "linebytes", "linebytes");
+	OF_to_intprop(dict, console_node, "depth", "depth");
+	if (!OF_to_intprop(dict, console_node, "address", "address")) {
+		uint32_t fbaddr = 0;
+			OF_interpret("frame-buffer-adr", 0, 1, &fbaddr);
+		if (fbaddr != 0)
+			prop_dictionary_set_uint32(dict, "address", fbaddr);
+	}
+	OF_to_dataprop(dict, console_node, "EDID", "EDID");
+	add_model_specifics(dict);
 }

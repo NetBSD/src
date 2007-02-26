@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.8.12.1 2006/12/30 20:48:41 yamt Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.8.12.2 2007/02/26 09:10:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct auvia_softc {
 
 	struct ac97_host_if host_if;
 	struct ac97_codec_if *codec_if;
-	boolean_t sc_spdif;
+	bool sc_spdif;
 
 	struct auvia_dma *sc_dmas;
 

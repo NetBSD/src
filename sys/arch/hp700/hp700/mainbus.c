@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.28.2.2 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28.2.3 2007/02/26 09:06:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28.2.2 2006/12/30 20:45:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.28.2.3 2007/02/26 09:06:35 yamt Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1395,12 +1395,12 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	bmask  = ~(map->_dm_boundary - 1);
 
 	for (seg = *segp; buflen > 0; ) {
-		boolean_t ok;
+		bool ok;
 		/*
 		 * Get the physical address for this segment.
 		 */
 		ok = pmap_extract(pmap, vaddr, &curaddr);
-		KASSERT(ok == TRUE);
+		KASSERT(ok == true);
 
 		/*
 		 * Compute the segment size, and adjust counts.

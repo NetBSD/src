@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12.2.1 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12.2.2 2007/02/26 09:08:11 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12.2.1 2006/12/30 20:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12.2.2 2007/02/26 09:08:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {
-		if (pmap_extract(upmap, uva, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == false)
 			panic("vmapbuf: null page frame");
 		pmap_kenter_pa(kva, pa, VM_PROT_READ | VM_PROT_WRITE);
 		uva += PAGE_SIZE;

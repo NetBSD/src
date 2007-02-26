@@ -1,4 +1,4 @@
-/*	$NetBSD: ah.h,v 1.21.16.1 2006/06/21 15:11:08 yamt Exp $	*/
+/*	$NetBSD: ah.h,v 1.21.16.2 2007/02/26 09:11:47 yamt Exp $	*/
 /*	$KAME: ah.h,v 1.16 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -90,16 +90,16 @@ extern int ah4_output __P((struct mbuf *, struct ipsecrequest *));
 extern int ah4_calccksum __P((struct mbuf *, u_int8_t *, size_t,
 	const struct ah_algorithm *, struct secasvar *));
 
-extern void *ah4_ctlinput __P((int, struct sockaddr *, void *));
+extern void *ah4_ctlinput(int, const struct sockaddr *, void *);
 
 #ifdef INET6
-extern int ah6_input __P((struct mbuf **, int *, int));
-extern int ah6_output __P((struct mbuf *, u_char *, struct mbuf *,
-	struct ipsecrequest *));
-extern int ah6_calccksum __P((struct mbuf *, u_int8_t *, size_t,
-	const struct ah_algorithm *, struct secasvar *));
+extern int ah6_input(struct mbuf **, int *, int);
+extern int ah6_output(struct mbuf *, u_char *, struct mbuf *,
+	struct ipsecrequest *);
+extern int ah6_calccksum(struct mbuf *, u_int8_t *, size_t,
+	const struct ah_algorithm *, struct secasvar *);
 
-extern void ah6_ctlinput __P((int, struct sockaddr *, void *));
+extern void ah6_ctlinput(int, const struct sockaddr *, void *);
 #endif /* INET6 */
 
 #endif /* _KERNEL */

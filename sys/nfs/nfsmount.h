@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.33.8.2 2006/12/30 20:50:52 yamt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.33.8.3 2007/02/26 09:12:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,6 +38,7 @@
 #ifndef _NFS_NFSMOUNT_H_
 #define _NFS_NFSMOUNT_H_
 #ifdef _KERNEL
+#include <sys/rwlock.h>
 #include <sys/disk.h>
 #endif
 
@@ -152,7 +153,7 @@ struct	nfsmount {
 	char	*nm_authstr;		/* Authenticator string */
 	char	*nm_verfstr;		/* and the verifier */
 	int	nm_verflen;
-	struct lock nm_writeverflock;	/* lock for below */
+	krwlock_t nm_writeverflock;	/* lock for below */
 	u_char	nm_writeverf[NFSX_V3WRITEVERF]; /* V3 write verifier */
 	NFSKERBKEY_T nm_key;		/* and the session key */
 	int	nm_numuids;		/* Number of nfsuid mappings */

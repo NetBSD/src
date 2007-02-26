@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023_tlv.h,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
+/*	$NetBSD: ieee8023_tlv.h,v 1.1.8.2 2007/02/26 09:11:38 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -55,6 +55,6 @@ struct tlv_template {
 };
 
 int tlv_check(const void *, size_t, const struct tlvhdr *,
-    const struct tlv_template *, boolean_t);
+    const struct tlv_template *, bool);
 
 #endif /* !_NET_AGR_IEEE8023_TLV_H_ */

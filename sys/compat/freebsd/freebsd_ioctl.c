@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.9.18.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.9.18.2 2007/02/26 09:09:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.9.18.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.9.18.2 2007/02/26 09:09:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.9.18.1 2006/06/21 14:58:50 yamt 
 #include <sys/mount.h>
 #include <sys/sockio.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <net/if.h>

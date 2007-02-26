@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.90.2.2 2006/12/30 20:47:42 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.90.2.3 2007/02/26 09:09:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.2 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.3 2007/02/26 09:09:31 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -80,8 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.2 2006/12/30 20:47:42 yam
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
@@ -94,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.2 2006/12/30 20:47:42 yam
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
-#include <compat/netbsd32/netbsd32_sa.h>
 
 #include <machine/frame.h>
 
@@ -120,17 +117,6 @@ struct uvm_object *emul_netbsd32_object;
 #endif
 
 extern struct sysctlnode netbsd32_sysctl_root;
-
-const struct sa_emul saemul_netbsd32 = {
-	sizeof(ucontext32_t),
-	sizeof(struct netbsd32_sa_t),
-	sizeof(netbsd32_sa_tp),
-	netbsd32_sacopyout,
-	netbsd32_upcallconv,
-	netbsd32_cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext32,
-	netbsd32_sa_ucsp
-};
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
@@ -175,7 +161,8 @@ const struct emul emul_netbsd32 = {
 
 	netbsd32_vm_default_addr,
 	NULL,
-	&saemul_netbsd32,
+	sizeof(ucontext32_t),
+	startlwp32,
 };
 
 /*
@@ -2326,7 +2313,8 @@ netbsd32_adjust_limits(struct proc *p)
 	struct rlimit val[__arraycount(lm)];
 	size_t i;
 	int needcopy = 0;
-		
+
+	mutex_enter(&p->p_mutex);
 	for (i = 0; i < __arraycount(val); i++) {
 		val[i] = p->p_rlimit[lm[i].id];
 		if (LIMITCHECK(val[i].rlim_cur, lm[i].lim)) {
@@ -2339,19 +2327,23 @@ netbsd32_adjust_limits(struct proc *p)
 		}
 	}
 
-	if (needcopy == 0)
+	if (needcopy == 0) {
+		mutex_exit(&p->p_mutex);
 		return;
+	}
 
 	if (p->p_limit->p_refcnt > 1 &&
 	    (p->p_limit->p_lflags & PL_SHAREMOD) == 0) {
 		struct plimit *oldplim;
-		p->p_limit = limcopy(oldplim = p->p_limit);
+		oldplim = p->p_limit;
+		p->p_limit = limcopy(p);
 		limfree(oldplim);
 	}
 
 	for (i = 0; i < __arraycount(val); i++)
 		p->p_rlimit[lm[i].id] = val[i];
 
+	mutex_exit(&p->p_mutex);
 }
 
 int

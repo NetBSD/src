@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.31.2.1 2006/06/21 15:05:02 yamt Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.31.2.2 2007/02/26 09:10:19 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.31.2.1 2006/06/21 15:05:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.31.2.2 2007/02/26 09:10:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.31.2.1 2006/06/21 15:05:02 yamt Exp $")
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 
 #include <dev/ofw/openfirm.h>
 

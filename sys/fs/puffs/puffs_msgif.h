@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.13.2.2 2006/12/30 20:50:00 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.13.2.3 2007/02/26 09:10:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -59,7 +59,7 @@ enum {
 	PUFFS_VFS_ROOT,		PUFFS_VFS_STATVFS,	PUFFS_VFS_SYNC,
 	PUFFS_VFS_VGET,		PUFFS_VFS_FHTOVP,	PUFFS_VFS_VPTOFH,
 	PUFFS_VFS_INIT,		PUFFS_VFS_DONE,		PUFFS_VFS_SNAPSHOT,
-	PUFFS_VFS_EXTATTCTL
+	PUFFS_VFS_EXTATTCTL,	PUFFS_VFS_SUSPEND
 };
 #define PUFFS_VFS_MAX PUFFS_VFS_EXTATTCTL
 
@@ -84,14 +84,15 @@ enum {
 };
 #define PUFFS_VN_MAX PUFFS_VN_SETEXTATTR
 
-#define PUFFSVERSION	0	/* meaning: *NO* versioning yet */
+#define PUFFSDEVELVERS	0x80000000
+#define PUFFSVERSION	3
 #define PUFFSNAMESIZE	32
 struct puffs_args {
-	int		pa_vers;
+	unsigned int	pa_vers;
 	int		pa_fd;
 	uint32_t	pa_flags;
 	size_t		pa_maxreqlen;
-	char		pa_name[PUFFSNAMESIZE];	/* name for puffs type	*/
+	char		pa_name[PUFFSNAMESIZE+1];   /* name for puffs type */
 	uint8_t		pa_vnopmask[PUFFS_VN_MAX];
 };
 #define PUFFS_KFLAG_ALLOWCTL	0x01	/* ioctl/fcntl commands allowed */
@@ -231,6 +232,48 @@ struct puffs_sizeop {
 };
 
 /*
+ * Flush operation.  This can be used to invalidate:
+ * 1) name cache for one node
+ * 2) name cache for all children 
+ * 3) name cache for the entire mount
+ * 4) page cache for a set of ranges in one node
+ * 5) page cache for one entire node
+ *
+ * It can be used to flush:
+ * 1) page cache for a set of ranges in one node
+ * 2) page cache for one entire node
+ */
+
+/* XXX: only namecache DIR and ALL are currently implemented */
+struct puffs_flush {
+	void		*pf_cookie;
+
+	int		pf_op;
+};
+#define PUFFS_INVAL_NAMECACHE_NODE		0
+#define PUFFS_INVAL_NAMECACHE_DIR		1
+#define PUFFS_INVAL_NAMECACHE_ALL		2
+#define PUFFS_INVAL_PAGECACHE_NODE_RANGE	3
+#define PUFFS_INVAL_PAGECACHE_NODE		4
+#define PUFFS_FLUSH_PAGECACHE_NODE_RANGE	5
+#define PUFFS_FLUSH_PAGECACHE_NODE		6
+
+
+/*
+ * Available ioctl operations
+ */
+#define PUFFSSTARTOP		_IOWR('p', 1, struct puffs_startreq)
+#define PUFFSGETOP		_IOWR('p', 2, struct puffs_reqh_get)
+#define PUFFSPUTOP		_IOWR('p', 3, struct puffs_reqh_put)
+#define PUFFSSIZEOP		_IOWR('p', 4, struct puffs_sizeop)
+#define PUFFSFLUSHOP		_IOW ('p', 5, struct puffs_flush)
+#if 0
+#define PUFFSFLUSHMULTIOP	_IOW ('p', 6, struct puffs_flushmulti)
+#endif
+#define PUFFSSUSPENDOP		_IO  ('p', 7)
+
+
+/*
  * Credentials for an operation.  Can be either struct uucred for
  * ops called from a credential context or NOCRED/FSCRED for ops
  * called from within the kernel.  It is up to the implementation
@@ -243,15 +286,8 @@ struct puffs_cred {
 };
 #define PUFFCRED_TYPE_UUC	1
 #define PUFFCRED_TYPE_INTERNAL	2
-
 #define PUFFCRED_CRED_NOCRED	1
 #define PUFFCRED_CRED_FSCRED	2
-
-
-#define PUFFSSTARTOP	_IOWR('p', 1, struct puffs_startreq)
-#define PUFFSGETOP	_IOWR('p', 2, struct puffs_reqh_get)
-#define PUFFSPUTOP	_IOWR('p', 3, struct puffs_reqh_put)
-#define PUFFSSIZEOP	_IOWR('p', 4, struct puffs_sizeop)
 
 /*
  * 4x MAXPHYS is the max size the system will attempt to copy,
@@ -283,8 +319,8 @@ struct puffs_kcn {
 #define PUFFSLOOKUP_RENAME	3	/* setup for file renaming */
 #define PUFFSLOOKUP_OPMASK	3	/* mask for operation */
 
-#define PUFFSLOOKUP_FOLLOW	0x04	/* follow symlinks */
-#define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow symlinks */
+#define PUFFSLOOKUP_FOLLOW	0x04	/* follow final symlink */
+#define PUFFSLOOKUP_NOFOLLOW	0x08	/* don't follow final symlink */
 #define PUFFSLOOKUP_OPTIONS	0x0c
 
 /*
@@ -329,6 +365,16 @@ struct puffs_vfsreq_sync {
 	pid_t			pvfsr_pid;
 	int			pvfsr_waitfor;
 };
+
+struct puffs_vfsreq_suspend {
+	struct puffs_req	pvfsr_pr;
+
+	int			pvfsr_status;
+};
+#define PUFFS_SUSPEND_START	0
+#define PUFFS_SUSPEND_SUSPENDED	1
+#define PUFFS_SUSPEND_RESUME	2
+#define PUFFS_SUSPEND_ERROR	3
 
 /*
  * aux structures for vnode operations.
@@ -427,12 +473,6 @@ struct puffs_vnreq_poll {
 
 	int			pvnr_events;		/* OUT	*/
 	pid_t			pvnr_pid;		/* OUT	*/
-};
-
-struct puffs_vnreq_revoke {
-	struct puffs_req	pvn_pr;
-
-	int			pvnr_flags;		/* OUT	*/
 };
 
 struct puffs_vnreq_fsync {

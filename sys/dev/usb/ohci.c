@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.166.2.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: ohci.c,v 1.166.2.3 2007/02/26 09:10:44 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.166.2.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.166.2.3 2007/02/26 09:10:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,7 +999,6 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 	if (xfer->busy_free != XFER_BUSY) {
 		printf("ohci_freex: xfer=%p not busy, 0x%08x\n", xfer,
 		       xfer->busy_free);
-		return;
 	}
 	xfer->busy_free = XFER_FREE;
 #endif
@@ -2323,7 +2322,7 @@ Static usb_config_descriptor_t ohci_confd = {
 	1,
 	1,
 	0,
-	UC_SELF_POWERED,
+	UC_ATTR_MBO | UC_SELF_POWERED,
 	0			/* max power */
 };
 

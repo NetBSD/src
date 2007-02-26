@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.146.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.146.2.3 2007/02/26 09:11:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.146.2.3 2007/02/26 09:11:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ bufinit(void)
 	if (bufmem_valimit != 0) {
 		vaddr_t minaddr = 0, maxaddr;
 		buf_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-					  bufmem_valimit, 0, FALSE, 0);
+					  bufmem_valimit, 0, false, 0);
 		if (buf_map == NULL)
 			panic("bufinit: cannot allocate submap");
 	} else
@@ -439,7 +439,7 @@ buf_lotsfree(void)
 	struct lwp *l = curlwp;
 
 	/* Always allocate if doing copy on write */
-	if (l->l_flag & L_COWINPROGRESS)
+	if (l->l_pflag & LP_UFSCOW)
 		return 1;
 
 	/* Always allocate if less than the low water mark. */
@@ -1173,7 +1173,7 @@ allocbuf(struct buf *bp, int size, int preserve)
 			    SPCF_SHOULDYIELD) {
 				simple_unlock(&bqueue_slock);
 				splx(s);
-				preempt(1);
+				preempt();
 				s = splbio();
 				simple_lock(&bqueue_slock);
 			}

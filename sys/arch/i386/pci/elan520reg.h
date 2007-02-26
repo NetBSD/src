@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520reg.h,v 1.1.30.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: elan520reg.h,v 1.1.30.2 2007/02/26 09:07:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,6 +61,43 @@
 
 #define	CPUCTL_CPU_CLK_SPD_MASK	0x03	/* CPU clock speed */
 #define	CPUCTL_CACHE_WR_MODE	0x10	/* cache mode (0 = wb, 1 = wt) */
+
+/*
+ * Performance Registers
+ */
+#define MMCR_DBCTL      0x0040  /* SDRAM Buffer Control */
+
+#define	MMCR_DBCTL_RAB_ENB	__BIT(4)	/* enable read-ahead */
+#define	MMCR_DBCTL_WB_WM_MASK	__BITS(3,2)	/* write buffer watermark */
+#define	MMCR_DBCTL_WB_WM_28DW	__SHIFTIN(0, MMCR_DBCTL_WB_WM_MASK)
+#define	MMCR_DBCTL_WB_WM_24DW	__SHIFTIN(1, MMCR_DBCTL_WB_WM_MASK)
+#define	MMCR_DBCTL_WB_WM_16DW	__SHIFTIN(2, MMCR_DBCTL_WB_WM_MASK)
+#define	MMCR_DBCTL_WB_WM_8DW	__SHIFTIN(3, MMCR_DBCTL_WB_WM_MASK)
+#define	MMCR_DBCTL_WB_FLUSH	__BIT(1)	/* write 1 to flush wr buf */
+#define	MMCR_DBCTL_WB_ENB	__BIT(0)	/* enable write buffer */
+#define MMCR_HBCTL      0x0060  /* Host Bridge Control */
+#define	MMCR_HBCTL_PCI_RST		__BIT(15)
+#define	MMCR_HBCTL_T_PURGE_RD_ENB	__BIT(10)
+#define	MMCR_HBCTL_T_DLYTR_ENB_MASK	__BITS(9,8)
+#define	MMCR_HBCTL_T_DLYTR_ENB_WAIT	\
+    __SHIFTIN(0, MMCR_HBCTL_T_DLYTR_ENB_MASK)
+#define	MMCR_HBCTL_T_DLYTR_ENB_AUTORETRY\
+    __SHIFTIN(1, MMCR_HBCTL_T_DLYTR_ENB_MASK)
+#define	MMCR_HBCTL_T_DLYTR_ENB_RSVD0	\
+    __SHIFTIN(2, MMCR_HBCTL_T_DLYTR_ENB_MASK)
+#define	MMCR_HBCTL_T_DLYTR_ENB_RSVD1	\
+    __SHIFTIN(3, MMCR_HBCTL_T_DLYTR_ENB_MASK)
+#define	MMCR_HBCTL_M_WPOST_ENB		__BIT(3)
+#define MMCR_SYSARBCTL  0x0070  /* System Arbiter Control */
+#define MMCR_SYSARBCTL_CNCR_MODE_ENB	__BIT(1)
+
+/*
+ * PCI Host Bridge Registers
+ */
+#define	MMCR_PCIHOSTMAP	0x0d14	/* PCI Host Bridge Interrupt Mapping */
+
+#define	MMCR_PCIHOSTMAP_PCI_NMI_ENB	__BIT(8)
+#define	MMCR_PCIHOSTMAP_PCI_IRQ_MAP	__BITS(4, 0)
 
 /*
  * General Purpose Bus Registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.43.2.2 2006/12/30 20:50:38 yamt Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.43.2.3 2007/02/26 09:11:48 yamt Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.43.2.2 2006/12/30 20:50:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.43.2.3 2007/02/26 09:11:48 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -92,7 +92,9 @@ in6_gif_output(ifp, family, m)
 	struct mbuf *m;
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;
-	struct sockaddr_in6 *dst = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+	const struct sockaddr_in6 *cdst =
+	    (const struct sockaddr_in6 *)rtcache_getdst(
+	        (struct route *)&sc->gif_ro6);
 	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
 	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
 	struct ip6_hdr *ip6;
@@ -183,14 +185,16 @@ in6_gif_output(ifp, family, m)
 	ip6->ip6_flow &= ~ntohl(0xff00000);
 	ip6->ip6_flow |= htonl((u_int32_t)otos << 20);
 
-	if (dst->sin6_family != sin6_dst->sin6_family ||
-	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr))
+	if (cdst->sin6_family != sin6_dst->sin6_family ||
+	    !IN6_ARE_ADDR_EQUAL(&cdst->sin6_addr, &sin6_dst->sin6_addr))
 		rtcache_free((struct route *)&sc->gif_ro6);
 	else
 		rtcache_check((struct route *)&sc->gif_ro6);
 
 	if (sc->gif_ro6.ro_rt == NULL) {
-		bzero(dst, sizeof(*dst));
+		struct sockaddr_in6 *dst =
+		    (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+		memset(dst, 0, sizeof(*dst));
 		dst->sin6_family = sin6_dst->sin6_family;
 		dst->sin6_len = sizeof(struct sockaddr_in6);
 		dst->sin6_addr = sin6_dst->sin6_addr;
@@ -316,7 +320,7 @@ gif_validate6(ip6, sc, ifp)
 	struct gif_softc *sc;
 	struct ifnet *ifp;
 {
-	struct sockaddr_in6 *src, *dst;
+	const struct sockaddr_in6 *src, *dst;
 
 	src = (struct sockaddr_in6 *)sc->gif_psrc;
 	dst = (struct sockaddr_in6 *)sc->gif_pdst;
@@ -333,7 +337,7 @@ gif_validate6(ip6, sc, ifp)
 		struct sockaddr_in6 sin6;
 		struct rtentry *rt;
 
-		bzero(&sin6, sizeof(sin6));
+		memset(&sin6, 0, sizeof(sin6));
 		sin6.sin6_family = AF_INET6;
 		sin6.sin6_len = sizeof(struct sockaddr_in6);
 		sin6.sin6_addr = ip6->ip6_src;
@@ -423,15 +427,12 @@ in6_gif_detach(sc)
 }
 
 void
-in6_gif_ctlinput(cmd, sa, d)
-	int cmd;
-	struct sockaddr *sa;
-	void *d;
+in6_gif_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct gif_softc *sc;
 	struct ip6ctlparam *ip6cp = NULL;
 	struct ip6_hdr *ip6;
-	struct sockaddr_in6 *dst6;
+	const struct sockaddr_in6 *dst6;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -460,8 +461,7 @@ in6_gif_ctlinput(cmd, sa, d)
 	 * XXX slow.  sc (or sc->encap_cookie6) should be passed from
 	 * ip_encap.c.
 	 */
-	for (sc = LIST_FIRST(&gif_softc_list); sc;
-	     sc = LIST_NEXT(sc, gif_list)) {
+	LIST_FOREACH(sc, &gif_softc_list, gif_list) {
 		if ((sc->gif_if.if_flags & IFF_RUNNING) == 0)
 			continue;
 		if (sc->gif_psrc->sa_family != AF_INET6)
@@ -469,7 +469,7 @@ in6_gif_ctlinput(cmd, sa, d)
 		if (sc->gif_ro6.ro_rt == NULL)
 			continue;
 
-		dst6 = (struct sockaddr_in6 *)&sc->gif_ro6.ro_dst;
+		dst6 = satocsin6(rtcache_getdst((struct route *)&sc->gif_ro6));
 		/* XXX scope */
 		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &dst6->sin6_addr))
 			rtcache_free((struct route *)&sc->gif_ro6);

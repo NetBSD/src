@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.4.2.2 2006/12/30 20:46:53 yamt Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.4.2.3 2007/02/26 09:08:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.4.2.2 2006/12/30 20:46:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.4.2.3 2007/02/26 09:08:02 yamt Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -34,8 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.4.2.2 2006/12/30 20:46:53 yamt Exp $")
  * We presently support the following boards:
  *	o Phobos G100/G130/G160	(if_tlp, lxtphy)
  *	o Set Engineering GFE	(if_tl, nsphy)
- *
- * XXX - G100 is untested. It may use an older chipset -- 21140, I think.
  */
 
 #include "opt_pci.h"

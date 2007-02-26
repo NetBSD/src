@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7.2.1 2006/12/30 20:46:42 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.2.2 2007/02/26 09:07:48 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -32,7 +32,6 @@
 #include <sys/ptrace.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
@@ -82,13 +81,13 @@ cpu_startup()
 	 * At most one process with the full length is allowed.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 NCARGS/4, VM_MAP_PAGEABLE, FALSE, NULL);
+				 NCARGS/4, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free)/4);
 	pbuf[strlen(pbuf)-1] = 0; /* Remove 'B' */
@@ -176,13 +175,6 @@ int
 process_write_regs(struct lwp *p, const struct reg *regs)
 {
 	panic("process_write_regs");
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	panic("cpu_upcall");
 }
 
 void

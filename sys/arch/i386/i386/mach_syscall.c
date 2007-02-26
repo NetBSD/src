@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.13.2.2 2006/12/30 20:46:10 yamt Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.13.2.3 2007/02/26 09:06:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.13.2.2 2006/12/30 20:46:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.13.2.3 2007/02/26 09:06:56 yamt Exp $");
 
 #include "opt_vm86.h"
 
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.13.2.2 2006/12/30 20:46:10 yamt E
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 
 #include <uvm/uvm_extern.h>

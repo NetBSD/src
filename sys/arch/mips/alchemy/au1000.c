@@ -1,4 +1,4 @@
-/* $NetBSD: au1000.c,v 1.4.8.3 2006/12/30 20:46:30 yamt Exp $ */
+/* $NetBSD: au1000.c,v 1.4.8.4 2007/02/26 09:07:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -201,7 +201,7 @@ static struct au_chipdep au1000_chipdep = {
 	au1000_irqnames,
 };
 
-boolean_t
+bool
 au1000_match(struct au_chipdep **cpp)
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.9.12.1 2006/06/21 15:02:12 yamt Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.9.12.2 2007/02/26 09:09:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,10 +39,13 @@
 #ifndef	_DEV_LDVAR_H_
 #define	_DEV_LDVAR_H_
 
+#include <sys/mutex.h>
+
 struct ld_softc {
 	struct	device sc_dv;
 	struct	disk sc_dk;
 	struct	bufq_state *sc_bufq;
+	kmutex_t sc_mutex;
 #if NRND > 0
 	rndsource_element_t	sc_rnd_source;
 #endif

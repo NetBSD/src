@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.3 2003/10/27 13:43:48 junyoung Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.3.16.1 2007/02/26 09:08:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ extern u_int32_t cpus_running;
 int x86_ipi(int,int,int);
 void x86_self_ipi(int);
 int x86_ipi_init(int);
+void x86_errata(struct cpu_info *, int);
 
 void identifycpu(struct cpu_info *);
 void cpu_init(struct cpu_info *);

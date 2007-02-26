@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.13 2005/05/29 22:08:16 christos Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.13.2.1 2007/02/26 09:09:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,12 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.13 2005/05/29 22:08:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.13.2.1 2007/02/26 09:09:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>		/* needed for next include! */
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <sys/swap.h>

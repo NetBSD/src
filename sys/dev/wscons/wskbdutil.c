@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.11.4.1 2006/06/21 15:08:12 yamt Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.11.4.2 2007/02/26 09:10:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,10 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.11.4.1 2006/06/21 15:08:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdutil.c,v 1.11.4.2 2007/02/26 09:10:52 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/cdefs.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

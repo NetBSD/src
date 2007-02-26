@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp.h,v 1.19.2.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: clnp.h,v 1.19.2.2 2007/02/26 09:11:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -469,8 +469,8 @@ struct route_iso;
 
 /* clnp_debug.c */
 char *clnp_hexp (const char *, int, char *);
-char *clnp_iso_addrp (struct iso_addr *);
-char *clnp_saddr_isop (struct sockaddr_iso *);
+char *clnp_iso_addrp(const struct iso_addr *);
+char *clnp_saddr_isop(const struct sockaddr_iso *);
 
 /* clnp_er.c */
 void clnp_er_input (struct mbuf *, struct iso_addr *, u_int);

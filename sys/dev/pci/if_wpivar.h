@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.2.4.2 2006/12/30 20:48:46 yamt Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.2.4.3 2007/02/26 09:10:29 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -53,6 +53,7 @@ struct wpi_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct wpi_dma_info {
+	bus_dma_tag_t		tag;
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
 	bus_addr_t		paddr;
@@ -78,15 +79,28 @@ struct wpi_tx_ring {
 	int			cur;
 };
 
+#define WPI_RBUF_COUNT	(WPI_RX_RING_COUNT + 16)
+
+struct wpi_softc;
+
+struct wpi_rbuf {
+	struct wpi_softc	*sc;
+	caddr_t			vaddr;
+	bus_addr_t		paddr;
+	SLIST_ENTRY(wpi_rbuf)	next;
+};
+
 struct wpi_rx_data {
-	bus_dmamap_t	map;
 	struct mbuf	*m;
 };
 
 struct wpi_rx_ring {
 	struct wpi_dma_info	desc_dma;
+	struct wpi_dma_info	buf_dma;
 	uint32_t		*desc;
 	struct wpi_rx_data	data[WPI_RX_RING_COUNT];
+	struct wpi_rbuf		rbuf[WPI_RBUF_COUNT];
+	SLIST_HEAD(, wpi_rbuf)	freelist;
 	int			cur;
 };
 
@@ -97,10 +111,11 @@ struct wpi_node {
 
 struct wpi_softc {
 	struct device		sc_dev;
-	struct ethercom	 sc_ec;
+	struct ethercom	 	sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
+
 	struct ieee80211_amrr	amrr;
 
 	uint32_t		flags;

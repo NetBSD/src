@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.148.2.2 2006/12/30 20:50:52 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.148.2.3 2007/02/26 09:12:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.2 2006/12/30 20:50:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.3 2007/02/26 09:12:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,7 @@ struct vfsops nfs_vfsops = {
 	nfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	nfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -707,7 +708,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 
 	if (nfs_niothreads < 0) {
 		nfs_niothreads = NFS_DEFAULT_NIOTHREADS;
-		nfs_getset_niothreads(TRUE);
+		nfs_getset_niothreads(true);
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {
@@ -722,7 +723,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		mp->mnt_data = nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
-		lockinit(&nmp->nm_writeverflock, PRIBIO, "nfswverf", 0, 0);
+		rw_init(&nmp->nm_writeverflock);
 		simple_lock_init(&nmp->nm_slock);
 	}
 	vfs_getnewfsid(mp);
@@ -816,6 +817,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	return (0);
 bad:
 	nfs_disconnect(nmp);
+	rw_destroy(&nmp->nm_writeverflock);
 	free((caddr_t)nmp, M_NFSMNT);
 	m_freem(nam);
 	return (error);
@@ -888,6 +890,7 @@ nfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	nfs_disconnect(nmp);
 	m_freem(nmp->nm_nam);
 
+	rw_destroy(&nmp->nm_writeverflock);
 	free(nmp, M_NFSMNT);
 	return (0);
 }

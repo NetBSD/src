@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_13.c,v 1.13.18.1 2006/06/21 14:59:35 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_13.c,v 1.13.18.2 2007/02/26 09:09:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.13.18.1 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.13.18.2 2007/02/26 09:09:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_13.c,v 1.13.18.1 2006/06/21 14:59:35
 #include <sys/proc.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
@@ -113,7 +112,6 @@ compat_13_netbsd32_sigprocmask(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_13_netbsd32_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(int) mask;
@@ -124,7 +122,7 @@ compat_13_netbsd32_sigprocmask(l, v, retval)
 
 	ness = SCARG(uap, mask);
 	native_sigset13_to_sigset(&ness, &nbss);
-	error = sigprocmask1(p, SCARG(uap, how), &nbss, &obss);
+	error = sigprocmask1(l, SCARG(uap, how), &nbss, &obss);
 	if (error)
 		return (error);
 	native_sigset_to_sigset13(&obss, &oess);
@@ -146,5 +144,5 @@ compat_13_netbsd32_sigsuspend(l, v, retval)
 
 	ess = SCARG(uap, mask);
 	native_sigset13_to_sigset(&ess, &bss);
-	return (sigsuspend1(l->l_proc, &bss));
+	return (sigsuspend1(l, &bss));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 2003/07/15 00:24:38 lukem Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4.16.1 2007/02/26 09:05:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.4 2003/07/15 00:24:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.4.16.1 2007/02/26 09:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -70,7 +70,7 @@ db_disasm_printaddr(u_int address)
 }
 
 vaddr_t
-db_disasm(vaddr_t loc, boolean_t altfmt)
+db_disasm(vaddr_t loc, bool altfmt)
 {
 
 	return disasm(&db_disasm_interface, loc, altfmt);

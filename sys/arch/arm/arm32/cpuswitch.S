@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.41.16.1 2006/06/21 14:49:16 yamt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.41.16.2 2007/02/26 09:05:54 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -83,6 +83,7 @@
 #include "opt_lockdebug.h"
 
 #include "assym.h"
+#include <arm/arm32/pte.h>
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -196,9 +197,7 @@ ASENTRY_NP(idle)
 	IRQenable			/* Enable interrupts */
 	ldr	r6, [r6]		/* r6 = cpu_do_powersave */
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_unlock_idle)
-#endif
 
 	/* Drop to spl0 (returns the current spl level in r0). */
 #ifdef __NEWINTR
@@ -243,14 +242,9 @@ ASENTRY_NP(idle)
 	 * scheduler lock if necessary, and jump back into cpu_switch.
 	 */
 2:	mov	r0, r4
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(splx)
 	adr	lr, .Lswitch_search
 	b	_C_LABEL(sched_lock_idle)
-#else
-	adr	lr, .Lswitch_search
-	b	_C_LABEL(splx)
-#endif
 
 
 /*
@@ -401,14 +395,12 @@ ENTRY(cpu_switch)
 	 */
 	str	r0, [r6, #(L_BACK)]
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	/*
 	 * unlock the sched_lock, but leave interrupts off, for now.
 	 */
 	mov	r7, r1
 	bl	_C_LABEL(sched_unlock_idle)
 	mov	r1, r7
-#endif
 
 
 .Lswitch_resume:
@@ -826,13 +818,9 @@ ENTRY(cpu_switchto)
 
 	mov	r6, r1		/* save new lwp */
 
-#if defined(LOCKDEBUG)
 	mov	r5, r0		/* save old lwp */
 	bl	_C_LABEL(sched_unlock_idle)
 	mov	r1, r5
-#else
-	mov	r1, r0
-#endif
 
 	IRQdisable
 
@@ -976,9 +964,7 @@ ENTRY(switch_exit)
 	mov	lr, pc
 	mov	pc, r6
 
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
-#endif
 
 	ldr	r7, .Lwhichqs		/* r7 = &whichqs */
 	mov	r5, #0x00000000		/* r5 = old lwp = NULL */

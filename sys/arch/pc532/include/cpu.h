@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42.12.1 2006/06/21 14:54:32 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.42.12.2 2007/02/26 09:07:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(framep)	USERMODE((framep)->cf_if.if_regs.r_psr)
-#define	CLKF_BASEPRI(framep)	((framep)->cf_if.if_pl == imask[IPL_ZERO])
 #define	CLKF_PC(framep)		((framep)->cf_if.if_regs.r_pc)
 #define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
 

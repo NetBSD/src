@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.78.2.2 2006/12/30 20:50:38 yamt Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.78.2.3 2007/02/26 09:11:52 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.78.2.2 2006/12/30 20:50:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.78.2.3 2007/02/26 09:11:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -111,6 +111,12 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.78.2.2 2006/12/30 20:50:38 yamt Exp 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
 #endif
+
+#ifdef FAST_IPSEC
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec6.h>
+#include <netipsec/key.h>
+#endif /* FAST_IPSEC */
 
 #include <netinet6/ip6protosw.h>
 
@@ -231,8 +237,7 @@ ip6intr()
 extern struct	route_in6 ip6_forward_rt;
 
 void
-ip6_input(m)
-	struct mbuf *m;
+ip6_input(struct mbuf *m)
 {
 	struct ip6_hdr *ip6;
 	int off = sizeof(struct ip6_hdr), nest;
@@ -241,6 +246,12 @@ ip6_input(m)
 	int nxt, ours = 0;
 	struct ifnet *deliverifp = NULL;
 	int srcrt = 0;
+#ifdef FAST_IPSEC
+	struct m_tag *mtag;
+	struct tdb_ident *tdbi;
+	struct secpolicy *sp;
+	int s, error;
+#endif
 
 #ifdef IPSEC
 	/*
@@ -265,7 +276,7 @@ ip6_input(m)
 		else
 			ip6stat.ip6s_mext1++;
 	} else {
-#define M2MMAX	(sizeof(ip6stat.ip6s_m2m)/sizeof(ip6stat.ip6s_m2m[0]))
+#define M2MMAX	__arraycount(ip6stat.ip6s_m2m)
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
 				ip6stat.ip6s_m2m[lo0ifp->if_index]++; /* XXX */
@@ -327,6 +338,8 @@ ip6_input(m)
 	 */
 #ifdef IPSEC
 	if (!ipsec_getnhist(m))
+#elif defined(FAST_IPSEC)
+	if (!ipsec_indone(m))
 #else
 	if (1)
 #endif
@@ -451,7 +464,7 @@ ip6_input(m)
 	 *  Unicast check
 	 */
 	if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-	    &((struct sockaddr_in6 *)(&ip6_forward_rt.ro_dst))->sin6_addr))
+	    &((const struct sockaddr_in6 *)rtcache_getdst((const struct route *)&ip6_forward_rt))->sin6_addr))
 		rtcache_free((struct route *)&ip6_forward_rt);
 	else
 		rtcache_check((struct route *)&ip6_forward_rt);
@@ -463,8 +476,8 @@ ip6_input(m)
 
 		ip6stat.ip6s_forward_cachemiss++;
 
-		bzero(&ip6_forward_rt.ro_dst, sizeof(struct sockaddr_in6));
-		dst6 = (struct sockaddr_in6 *)&ip6_forward_rt.ro_dst;
+		dst6 = &ip6_forward_rt.ro_dst;
+		memset(dst6, 0, sizeof(*dst6));
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
@@ -753,6 +766,46 @@ ip6_input(m)
 			goto bad;
 		}
 #endif
+#ifdef FAST_IPSEC
+	/*
+	 * enforce IPsec policy checking if we are seeing last header.
+	 * note that we do not visit this with protocols with pcb layer
+	 * code - like udp/tcp/raw ip.
+	 */
+	if ((inet6sw[ip_protox[nxt]].pr_flags & PR_LASTHDR) != 0) {
+		/*
+		 * Check if the packet has already had IPsec processing
+		 * done.  If so, then just pass it along.  This tag gets
+		 * set during AH, ESP, etc. input handling, before the
+		 * packet is returned to the ip input queue for delivery.
+		 */
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
+		s = splsoftnet();
+		if (mtag != NULL) {
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			sp = ipsec_getpolicy(tdbi, IPSEC_DIR_INBOUND);
+		} else {
+			sp = ipsec_getpolicybyaddr(m, IPSEC_DIR_INBOUND,
+									IP_FORWARDING, &error);
+		}
+		if (sp != NULL) {
+			/*
+			 * Check security policy against packet attributes.
+			 */
+			error = ipsec_in_reject(sp, m);
+			KEY_FREESP(&sp);
+		} else {
+			/* XXX error stat??? */
+			error = EINVAL;
+			DPRINTF(("ip6_input: no SP, packet discarded\n"));/*XXX*/
+			goto bad;
+		}
+		splx(s);
+		if (error)
+			goto bad;
+	}
+#endif /* FAST_IPSEC */
+
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
@@ -1244,7 +1297,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 
 void
-ip6_notify_pmtu(struct in6pcb *in6p, struct sockaddr_in6 *dst, uint32_t *mtu)
+ip6_notify_pmtu(struct in6pcb *in6p, const struct sockaddr_in6 *dst,
+    uint32_t *mtu)
 {
 	struct socket *so;
 	struct mbuf *m_mtu;
@@ -1270,7 +1324,7 @@ ip6_notify_pmtu(struct in6pcb *in6p, struct sockaddr_in6 *dst, uint32_t *mtu)
 	    IPV6_PATHMTU, IPPROTO_IPV6)) == NULL)
 		return;
 
-	if (sbappendaddr(&so->so_rcv, (struct sockaddr *)dst, NULL, m_mtu)
+	if (sbappendaddr(&so->so_rcv, (const struct sockaddr *)dst, NULL, m_mtu)
 	    == 0) {
 		m_freem(m_mtu);
 		/* XXX: should count statistics */

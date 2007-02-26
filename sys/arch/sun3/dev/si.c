@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.56 2005/01/22 15:36:10 chs Exp $	*/
+/*	$NetBSD: si.c,v 1.56.8.1 2007/02/26 09:08:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.56 2005/01/22 15:36:10 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.56.8.1 2007/02/26 09:08:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.56 2005/01/22 15:36:10 chs Exp $");
 #include <dev/scsipi/scsiconf.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/dvma.h>
 
 /* #define DEBUG XXX */
@@ -271,18 +272,18 @@ si_dma_alloc(struct ncr5380_softc *ncr_sc)
 	struct scsipi_xfer *xs = sr->sr_xs;
 	struct si_dma_handle *dh;
 	int i, xlen;
-	u_long addr;
+	void *addr;
 
 #ifdef	DIAGNOSTIC
 	if (sr->sr_dma_hand != NULL)
 		panic("si_dma_alloc: already have DMA handle");
 #endif
 
-	addr = (u_long) ncr_sc->sc_dataptr;
+	addr = ncr_sc->sc_dataptr;
 	xlen = ncr_sc->sc_datalen;
 
 	/* If the DMA start addr is misaligned then do PIO */
-	if ((addr & 1) || (xlen & 1)) {
+	if (((vaddr_t)addr & 1) || (xlen & 1)) {
 		printf("si_dma_alloc: misaligned.\n");
 		return;
 	}
@@ -314,13 +315,20 @@ found:
 
 	dh = &sc->sc_dma[i];
 	dh->dh_flags = SIDH_BUSY;
-	dh->dh_addr = (u_char*) addr;
-	dh->dh_maplen  = xlen;
-	dh->dh_dvma = 0;
+
+	if (bus_dmamap_load(sc->sc_dmat, sc->sc_dmap, addr, xlen, NULL,
+	    BUS_DMA_NOWAIT) != 0)
+		panic("%s: can't load dmamap", ncr_sc->sc_dev.dv_xname);
+	dh->dh_dmaaddr = sc->sc_dmap->dm_segs[0].ds_addr;
+	dh->dh_dmalen  = xlen;
 
 	/* Copy the "write" flag for convenience. */
 	if (xs->xs_control & XS_CTL_DATA_OUT)
 		dh->dh_flags |= SIDH_OUT;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, dh->dh_dmalen,
+	    (dh->dh_flags & SIDH_OUT) == 0 ?
+	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 #if 0
 	/*
@@ -334,15 +342,6 @@ found:
 		dh->dh_flags |= SIDH_PHYS;
 #endif
 
-	dh->dh_dvma = dvma_mapin((char *)addr, xlen, 0);
-	if (!dh->dh_dvma) {
-		/* Can't remap segment */
-		printf("si_dma_alloc: can't remap %p/0x%x\n",
-			dh->dh_addr, dh->dh_maplen);
-		dh->dh_flags = 0;
-		return;
-	}
-
 	/* success */
 	sr->sr_dma_hand = dh;
 
@@ -353,6 +352,7 @@ found:
 void 
 si_dma_free(struct ncr5380_softc *ncr_sc)
 {
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 
@@ -365,10 +365,11 @@ si_dma_free(struct ncr5380_softc *ncr_sc)
 		panic("si_dma_free: free while in progress");
 
 	if (dh->dh_flags & SIDH_BUSY) {
-		/* XXX - Should separate allocation and mapping. */
-		/* Give back the DVMA space. */
-		dvma_mapout(dh->dh_dvma, dh->dh_maplen);
-		dh->dh_dvma = 0;
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmap, 0, dh->dh_dmalen,
+		    (dh->dh_flags & SIDH_OUT) == 0 ?
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_dmap);
+		dh->dh_dmaaddr = 0;
 		dh->dh_flags = 0;
 	}
 	sr->sr_dma_hand = NULL;

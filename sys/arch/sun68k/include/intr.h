@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.8.2 2006/12/30 20:47:13 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.8.3 2007/02/26 09:08:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -95,7 +95,7 @@ struct softintr_handler {
 	LIST_ENTRY(softintr_handler) sh_link;
 	void (*sh_func)(void *);
 	void *sh_arg;
-	int sh_pending;
+	volatile int sh_pending;
 };
 
 void softintr_init(void);
@@ -110,10 +110,9 @@ static __inline void
 softintr_schedule(void *arg)
 {
 	struct softintr_handler * const sh = arg;
-	if (sh->sh_pending == 0) {
-		sh->sh_pending = 1;
-		isr_soft_request(sh->sh_head->shd_ipl);
-	}
+
+	sh->sh_pending = 1;
+	isr_soft_request(sh->sh_head->shd_ipl);
 }
 
 extern void *softnet_cookie;
@@ -157,7 +156,6 @@ _getsr(void)
 #define splx(x)	_spl(x)
 
 /* IPL used by soft interrupts: netintr(), softclock() */
-#define	spllowersoftclock() spl1()
 #define splsoftclock()  splraise1()
 #define splsoftnet()    splraise1()
 #define	splsoftserial()	splraise3()

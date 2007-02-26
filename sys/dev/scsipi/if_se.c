@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.58.2.2 2006/12/30 20:49:34 yamt Exp $	*/
+/*	$NetBSD: if_se.c,v 1.58.2.3 2007/02/26 09:10:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58.2.2 2006/12/30 20:49:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58.2.3 2007/02/26 09:10:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -150,24 +150,26 @@ int se_max_received = 0;	/* Instrumentation */
 #define	PROTOCMD(p, d) \
 	((d) = (p))
 
-#define	PROTOCMD_DECL(name, val) \
-	static const struct scsi_ctron_ether_generic name = val
+#define	PROTOCMD_DECL(name) \
+	static const struct scsi_ctron_ether_generic name
 
-#define	PROTOCMD_DECL_SPECIAL(name, val) \
-	static const struct __CONCAT(scsi_,name) name = val
+#define	PROTOCMD_DECL_SPECIAL(name) \
+	static const struct __CONCAT(scsi_,name) name
 
 /* Command initializers for commands using scsi_ctron_ether_generic */
-PROTOCMD_DECL(ctron_ether_send, {CTRON_ETHER_SEND});
-PROTOCMD_DECL(ctron_ether_add_proto, {CTRON_ETHER_ADD_PROTO});
-PROTOCMD_DECL(ctron_ether_get_addr, {CTRON_ETHER_GET_ADDR});
-PROTOCMD_DECL(ctron_ether_set_media, {CTRON_ETHER_SET_MEDIA});
-PROTOCMD_DECL(ctron_ether_set_addr, {CTRON_ETHER_SET_ADDR});
-PROTOCMD_DECL(ctron_ether_set_multi, {CTRON_ETHER_SET_MULTI});
-PROTOCMD_DECL(ctron_ether_remove_multi, {CTRON_ETHER_REMOVE_MULTI});
+PROTOCMD_DECL(ctron_ether_send)  = {CTRON_ETHER_SEND, 0, {0,0}, 0};
+PROTOCMD_DECL(ctron_ether_add_proto) = {CTRON_ETHER_ADD_PROTO, 0, {0,0}, 0};
+PROTOCMD_DECL(ctron_ether_get_addr) = {CTRON_ETHER_GET_ADDR, 0, {0,0}, 0};
+PROTOCMD_DECL(ctron_ether_set_media) = {CTRON_ETHER_SET_MEDIA, 0, {0,0}, 0};
+PROTOCMD_DECL(ctron_ether_set_addr) = {CTRON_ETHER_SET_ADDR, 0, {0,0}, 0};
+PROTOCMD_DECL(ctron_ether_set_multi) = {CTRON_ETHER_SET_MULTI, 0, {0,0}, 0};
+PROTOCMD_DECL(ctron_ether_remove_multi) =
+    {CTRON_ETHER_REMOVE_MULTI, 0, {0,0}, 0};
 
 /* Command initializers for commands using their own structures */
-PROTOCMD_DECL_SPECIAL(ctron_ether_recv, {CTRON_ETHER_RECV});
-PROTOCMD_DECL_SPECIAL(ctron_ether_set_mode, {CTRON_ETHER_SET_MODE});
+PROTOCMD_DECL_SPECIAL(ctron_ether_recv) = {CTRON_ETHER_RECV};
+PROTOCMD_DECL_SPECIAL(ctron_ether_set_mode) =
+    {CTRON_ETHER_SET_MODE, 0, {0,0}, 0};
 
 struct se_softc {
 	struct device sc_dev;
@@ -239,7 +241,7 @@ dev_type_ioctl(seioctl);
 
 const struct cdevsw se_cdevsw = {
 	seopen, seclose, noread, nowrite, seioctl,
-	nostop, notty, nopoll, nommap, nokqfilter,
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 const struct scsipi_periphsw se_switch = {

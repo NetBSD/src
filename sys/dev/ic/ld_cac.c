@@ -1,7 +1,7 @@
-/*	$NetBSD: ld_cac.c,v 1.11.4.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.11.4.3 2007/02/26 09:10:09 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.11.4.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.11.4.3 2007/02/26 09:10:09 yamt Exp $");
 
 #include "rnd.h"
 
@@ -67,9 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.11.4.2 2006/12/30 20:48:03 yamt Exp $")
 
 struct ld_cac_softc {
 	struct	ld_softc sc_ld;
+	kmutex_t *sc_mutex;
 	int	sc_hwunit;
-	struct	timeval sc_serrtm;
 	int	sc_serrcnt;
+	struct	timeval sc_serrtm;
 };
 
 void	ld_cac_attach(struct device *, struct device *, void *);
@@ -106,6 +107,7 @@ ld_cac_attach(struct device *parent, struct device *self, void *aux)
 	caca = (struct cac_attach_args *)aux;
 	sc->sc_hwunit = caca->caca_unit;
 	cac = (struct cac_softc *)parent;
+	sc->sc_mutex = &cac->sc_mutex;
 
 	if (cac_cmd(cac, CAC_CMD_GET_LOG_DRV_INFO, &dinfo, sizeof(dinfo),
 	    sc->sc_hwunit, 0, CAC_CCB_DATA_IN, NULL)) {
@@ -194,6 +196,7 @@ ld_cac_done(struct device *dv, void *context, int error)
 
 	bp = context;
 	rv = 0;
+	sc = device_private(dv);
 
 	if ((error & CAC_RET_CMD_REJECTED) == CAC_RET_CMD_REJECTED) {
 		printf("%s: command rejected\n", dv->dv_xname);
@@ -208,12 +211,11 @@ ld_cac_done(struct device *dv, void *context, int error)
 		rv = EIO;
 	}
 	if (rv == 0 && (error & CAC_RET_SOFT_ERROR) != 0) {
-		sc = (struct ld_cac_softc *)dv;
 		sc->sc_serrcnt++;
 		if (ratecheck(&sc->sc_serrtm, &ld_cac_serrintvl)) {
+			sc->sc_serrcnt = 0;
 			printf("%s: %d soft errors; array may be degraded\n",
 			    dv->dv_xname, sc->sc_serrcnt);
-			sc->sc_serrcnt = 0;
 		}
 	}
 
@@ -224,5 +226,7 @@ ld_cac_done(struct device *dv, void *context, int error)
 	} else
 		bp->b_resid = 0;
 
+	mutex_exit(sc->sc_mutex);
 	lddone((struct ld_softc *)dv, bp);
+	mutex_enter(sc->sc_mutex);
 }

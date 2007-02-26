@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.36.6.1 2006/06/21 15:12:31 yamt Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.36.6.2 2007/02/26 09:12:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36.6.1 2006/06/21 15:12:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.36.6.2 2007/02/26 09:12:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ ext2fs_write(void *v)
 	vsize_t bytelen;
 	void *win;
 	off_t oldoff = 0;					/* XXX */
-	boolean_t async;
+	bool async;
 	int extended = 0;
 
 	ioflag = ap->a_ioflag;
@@ -394,7 +394,8 @@ ext2fs_write(void *v)
 
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (resid > uio->uio_resid && ap->a_cred && kauth_cred_geteuid(ap->a_cred) != 0)
+	if (resid > uio->uio_resid && ap->a_cred &&
+	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL))
 		ip->i_e2fs_mode &= ~(ISUID | ISGID);
 	if (resid > uio->uio_resid)
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));

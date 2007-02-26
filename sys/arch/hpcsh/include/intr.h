@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7.16.1 2006/12/30 20:46:04 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.16.2 2007/02/26 09:06:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <hpcsh/dev/hd6446x/hd6446xintcvar.h>
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
@@ -83,7 +83,5 @@ splraiseipl(ipl_cookie_t icookie)
 
 #define	spl0()			hd6446x_intr_resume(0)
 #define	splx(x)			hd6446x_intr_resume(x)
-
-#define	spllowersoftclock()	hd6446x_intr_resume(IPL_SOFTCLOCK << 4)
 
 #endif /* !_HPCSH_INTR_H_ */

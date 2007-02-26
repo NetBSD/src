@@ -33,7 +33,7 @@
  * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGES.
  *
- * $Id: ah_osdep.h,v 1.3.4.2 2006/06/21 15:00:09 yamt Exp $
+ * $Id: ah_osdep.h,v 1.3.4.3 2007/02/26 09:09:46 yamt Exp $
  */
 #ifndef _ATH_AH_OSDEP_H_
 #define _ATH_AH_OSDEP_H_
@@ -94,11 +94,11 @@ extern	u_int32_t ath_hal_getuptime(struct ath_hal *);
  * Register read/write; we assume the registers will always
  * be memory-mapped.  Note that register accesses are done
  * using target-specific functions when debugging is enabled
- * (AH_DEBUG) or we are explicitly configured this way.  The
+ * (ATHHAL_DEBUG) or we are explicitly configured this way.  The
  * latter is used on some platforms where the full i/o space
  * cannot be directly mapped.
  */
-#if defined(AH_DEBUG) || defined(AH_REGOPS_FUNC) || defined(AH_DEBUG_ALQ)
+#if defined(ATHHAL_DEBUG) || defined(AH_REGOPS_FUNC) || defined(ATHHAL_DEBUG_ALQ)
 #define	OS_REG_WRITE(_ah, _reg, _val)	ath_hal_reg_write(_ah, _reg, _val)
 #define	OS_REG_READ(_ah, _reg)		ath_hal_reg_read(_ah, _reg)
 
@@ -137,9 +137,9 @@ extern	u_int32_t ath_hal_reg_read(struct ath_hal *ah, u_int reg);
 #define	OS_REG_READ(_ah, _reg)						\
 	((u_int32_t) bus_space_read_4((_ah)->ah_st, (_ah)->ah_sh, (_reg)))
 #endif /* _BYTE_ORDER */
-#endif /* AH_DEBUG || AH_REGFUNC || AH_DEBUG_ALQ */
+#endif /* ATHHAL_DEBUG || AH_REGFUNC || ATHHAL_DEBUG_ALQ */
 
-#ifdef AH_DEBUG_ALQ
+#ifdef ATHHAL_DEBUG_ALQ
 extern	void OS_MARK(struct ath_hal *, u_int id, u_int32_t value);
 #else
 #define	OS_MARK(_ah, _id, _v)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.1.8.2 2006/12/30 20:48:44 yamt Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.1.8.3 2007/02/26 09:10:25 yamt Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.21 2006/08/21 03:32:11 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.8.2 2006/12/30 20:48:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.8.3 2007/02/26 09:10:25 yamt Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2844,9 +2844,7 @@ void
 bnx_stop(struct bnx_softc *sc)
 {
 	struct ifnet		*ifp = &sc->ethercom.ec_if;
-	struct ifmedia_entry	*ifm;
 	struct mii_data		*mii = NULL;
-	int			mtmp, itmp;
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Entering %s()\n", __FUNCTION__);
 
@@ -2872,26 +2870,6 @@ bnx_stop(struct bnx_softc *sc)
 	/* Free TX buffers. */
 	bnx_free_tx_chain(sc);
 
-	/*
-	 * Isolate/power down the PHY, but leave the media selection
-	 * unchanged so that things will be put back to normal when
-	 * we bring the interface back up.
-	 */
-
-	itmp = ifp->if_flags;
-	ifp->if_flags |= IFF_UP;
-	/*
-	 * If we are called from bnx_detach(), mii is already NULL.
-	 */
-	if (mii != NULL) {
-		ifm = mii->mii_media.ifm_cur;
-		mtmp = ifm->ifm_media;
-		ifm->ifm_media = IFM_ETHER|IFM_NONE;
-		mii_mediachg(mii);
-		ifm->ifm_media = mtmp;
-	}
-
-	ifp->if_flags = itmp;
 	ifp->if_timer = 0;
 
 	sc->bnx_link = 0;
@@ -3204,6 +3182,7 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 #ifdef BNX_DEBUG
 	u_int16_t debug_chain_prod =	*chain_prod;
 #endif
+	u_int16_t first_chain_prod;
 
 	DBPRINT(sc, (BNX_VERBOSE_RESET | BNX_VERBOSE_RECV), "Entering %s()\n", 
 	    __FUNCTION__);
@@ -3263,6 +3242,7 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 
 	/* Map the mbuf cluster into device memory. */
 	map = sc->rx_mbuf_map[*chain_prod];
+	first_chain_prod = *chain_prod;
 	if (bus_dmamap_load_mbuf(sc->bnx_dmatag, map, m_new, BUS_DMA_NOWAIT)) {
 		BNX_PRINTF(sc, "%s(%d): Error mapping mbuf into RX chain!\n",
 		    __FILE__, __LINE__);
@@ -3327,8 +3307,14 @@ bnx_get_buf(struct bnx_softc *sc, struct mbuf *m, u_int16_t *prod,
 	    sizeof(struct rx_bd) * RX_IDX(*chain_prod),
 	    sizeof(struct rx_bd), BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	/* Save the mbuf and update our counter. */
+	/*
+	 * Save the mbuf, ajust the map pointer (swap map for first and
+	 * last rx_bd entry to that rx_mbuf_ptr and rx_mbuf_map matches)
+	 * and update counter.
+	 */
 	sc->rx_mbuf_ptr[*chain_prod] = m_new;
+	sc->rx_mbuf_map[first_chain_prod] = sc->rx_mbuf_map[*chain_prod];
+	sc->rx_mbuf_map[*chain_prod] = map;
 	sc->free_rx_bd -= map->dm_nsegs;
 
 	DBRUN(BNX_VERBOSE_RECV, bnx_dump_rx_mbuf_chain(sc, debug_chain_prod, 

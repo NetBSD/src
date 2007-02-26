@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.94.2.2 2006/12/30 20:51:06 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.94.2.3 2007/02/26 09:12:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.94.2.2 2006/12/30 20:51:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.94.2.3 2007/02/26 09:12:33 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.94.2.2 2006/12/30 20:51:06 yamt Exp $
 #include <sys/blist.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
 #include <sys/kauth.h>
@@ -216,14 +215,14 @@ LIST_HEAD(swap_priority, swappri);
 static struct swap_priority swap_priority;
 
 /* locks */
-static struct lock swap_syscall_lock;
+static krwlock_t swap_syscall_lock;
 
 /*
  * prototypes
  */
 static struct swapdev	*swapdrum_getsdp(int);
 
-static struct swapdev	*swaplist_find(struct vnode *, int);
+static struct swapdev	*swaplist_find(struct vnode *, bool);
 static void		 swaplist_insert(struct swapdev *,
 					 struct swappri *, int);
 static void		 swaplist_trim(void);
@@ -259,8 +258,12 @@ uvm_swap_init(void)
 
 	LIST_INIT(&swap_priority);
 	uvmexp.nswapdev = 0;
-	lockinit(&swap_syscall_lock, PVM, "swapsys", 0, 0);
+	rw_init(&swap_syscall_lock);
+	cv_init(&uvm.scheduler_cv, "schedule");
 	simple_lock_init(&uvm.swap_data_lock);
+
+	/* XXXSMP should be at IPL_VM, but for audio interrupt handlers. */
+	mutex_init(&uvm.scheduler_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
@@ -279,6 +282,7 @@ uvm_swap_init(void)
 	/*
 	 * done!
 	 */
+	uvm.swap_running = true;
 	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
 }
 
@@ -348,7 +352,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
  * => we return the swapdev we found (and removed)
  */
 static struct swapdev *
-swaplist_find(struct vnode *vp, boolean_t remove)
+swaplist_find(struct vnode *vp, bool remove)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
@@ -449,7 +453,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 	/*
 	 * ensure serialized syscall access by grabbing the swap_syscall_lock
 	 */
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&swap_syscall_lock, RW_WRITER);
 
 	userpath = malloc(SWAP_PATH_MAX, M_TEMP, M_WAITOK);
 	/*
@@ -579,7 +583,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		priority = SCARG(uap, misc);
 		spp = malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
 		simple_lock(&uvm.swap_data_lock);
-		if ((sdp = swaplist_find(vp, 1)) == NULL) {
+		if ((sdp = swaplist_find(vp, true)) == NULL) {
 			error = ENOENT;
 		} else {
 			swaplist_insert(sdp, spp, priority);
@@ -608,7 +612,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		bufq_alloc(&sdp->swd_tab, "disksort", BUFQ_SORT_RAWBLOCK);
 		simple_lock(&uvm.swap_data_lock);
-		if (swaplist_find(vp, 0) != NULL) {
+		if (swaplist_find(vp, false) != NULL) {
 			error = EBUSY;
 			simple_unlock(&uvm.swap_data_lock);
 			bufq_free(sdp->swd_tab);
@@ -633,7 +637,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 		if ((error = swap_on(l, sdp)) != 0) {
 			simple_lock(&uvm.swap_data_lock);
-			(void) swaplist_find(vp, 1);  /* kill fake entry */
+			(void) swaplist_find(vp, true);  /* kill fake entry */
 			swaplist_trim();
 			simple_unlock(&uvm.swap_data_lock);
 			bufq_free(sdp->swd_tab);
@@ -645,7 +649,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 	case SWAP_OFF:
 		simple_lock(&uvm.swap_data_lock);
-		if ((sdp = swaplist_find(vp, 0)) == NULL) {
+		if ((sdp = swaplist_find(vp, false)) == NULL) {
 			simple_unlock(&uvm.swap_data_lock);
 			error = ENXIO;
 			break;
@@ -678,7 +682,7 @@ sys_swapctl(struct lwp *l, void *v, register_t *retval)
 
 out:
 	free(userpath, M_TEMP);
-	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
+	rw_exit(&swap_syscall_lock);
 
 	UVMHIST_LOG(pdhist, "<- done!  error=%d", error, 0, 0, 0);
 	return (error);
@@ -697,9 +701,9 @@ void
 uvm_swap_stats(int cmd, struct swapent *sep, int sec, register_t *retval)
 {
 
-	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&swap_syscall_lock, RW_READER);
 	uvm_swap_stats_locked(cmd, sep, sec, retval);
-	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
+	rw_exit(&swap_syscall_lock);
 }
 
 static void
@@ -1027,7 +1031,7 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	uvmexp.swpages -= npages;
 	uvmexp.swpginuse -= sdp->swd_npgbad;
 
-	if (swaplist_find(sdp->swd_vp, 1) == NULL)
+	if (swaplist_find(sdp->swd_vp, true) == NULL)
 		panic("swap_off: swapdev not in list");
 	swaplist_trim();
 	simple_unlock(&uvm.swap_data_lock);
@@ -1435,7 +1439,7 @@ sw_reg_iodone(struct buf *bp)
  * => XXXMRG: "LESSOK" INTERFACE NEEDED TO EXTENT SYSTEM
  */
 int
-uvm_swap_alloc(int *nslots /* IN/OUT */, boolean_t lessok)
+uvm_swap_alloc(int *nslots /* IN/OUT */, bool lessok)
 {
 	struct swapdev *sdp;
 	struct swappri *spp;
@@ -1496,10 +1500,10 @@ ReTry:	/* XXXMRG */
 	return 0;
 }
 
-boolean_t
+bool
 uvm_swapisfull(void)
 {
-	boolean_t rv;
+	bool rv;
 
 	simple_lock(&uvm.swap_data_lock);
 	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
@@ -1638,7 +1642,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	struct	buf *bp;
 	vaddr_t kva;
 	int	error, s, mapinflags;
-	boolean_t write, async;
+	bool write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
 	UVMHIST_LOG(pdhist, "<- called, startslot=%d, npages=%d, flags=%d",

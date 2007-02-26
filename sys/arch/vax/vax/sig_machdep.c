@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.4.18.1 2006/06/21 14:57:34 yamt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.4.18.2 2007/02/26 09:08:43 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4.18.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4.18.2 2007/02/26 09:08:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -108,10 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.4.18.1 2006/06/21 14:57:34 yamt Ex
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/ptrace.h>
-#include <sys/savar.h>
 #include <sys/ksyms.h>
 
 #include <dev/cons.h>
@@ -194,13 +192,16 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
+
+	mutex_enter(&p->p_smutex);
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	native_sigset13_to_sigset(&ksc.sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	scf->fp = ksc.sc_fp;
 	scf->ap = ksc.sc_ap;
@@ -226,6 +227,8 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 {
 	struct sigcontext sigctx;
 	struct otrampframe tramp;
+	struct proc *p = l->l_proc;
+	bool error;
 
 	sigctx.sc_pc = tf->pc;
 	sigctx.sc_ps = tf->psl;
@@ -249,12 +252,17 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	tramp.r0 = tramp.r1 = tramp.r2 = tramp.r3 = tramp.r4 = tramp.r5 = 0;
 	tramp.pc = (register_t)handler;
 	tramp.arg = sp;
+	sendsig_reset(l, ksi->ksi_signo);
+	mutex_exit(&p->p_smutex);
 
 	/* Point stack pointer at pc in trampoline.  */
 	sp =- 8;
 
-	if (copyout(&tramp, (caddr_t)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
-	    copyout(&sigctx, (caddr_t)tramp.scp, sizeof(sigctx)) != 0)
+	error = (copyout(&tramp, (caddr_t)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
+	    copyout(&sigctx, (caddr_t)tramp.scp, sizeof(sigctx)) != 0);
+
+	mutex_enter(&p->p_smutex);
+	if (error)
 		return 0;
 
 	return sp;
@@ -284,12 +292,15 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	    (ksc.sc_ps & PSL_CM)) {
 		return (EINVAL);
 	}
+
+	mutex_enter(&p->p_smutex);
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &ksc.sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	scf->fp = ksc.sc_fp;
 	scf->ap = ksc.sc_ap;
@@ -329,6 +340,8 @@ setupstack_sigcontext2(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 {
 	struct trampoline2 tramp;
 	struct sigcontext sigctx;
+	struct proc *p = l->l_proc;
+	bool error;
 
 	/* The sigcontext struct will be passed back to sigreturn().  */
 	sigctx.sc_pc = tf->pc;
@@ -346,13 +359,18 @@ setupstack_sigcontext2(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	tramp.code = (register_t)ksi->ksi_addr;
 	tramp.scp = sp;
 	sp -= sizeof(tramp);
+	sendsig_reset(l, ksi->ksi_signo);
+	mutex_exit(&p->p_smutex);
 
 	/* Store the handler in the trapframe.  */
 	tf->fp = handler;
 
 	/* Copy out the sigcontext and trampoline.  */
-	if (copyout(&sigctx, (char *)tramp.scp, sizeof(sigctx)) != 0 ||
-	    copyout(&tramp, (char *)sp, sizeof(tramp)) != 0)
+	error = (copyout(&sigctx, (char *)tramp.scp, sizeof(sigctx)) != 0 ||
+	    copyout(&tramp, (char *)sp, sizeof(tramp)) != 0);
+
+	mutex_enter(&p->p_smutex);
+	if (error)
 		return 0;
 
 	/* return updated stack pointer */
@@ -388,7 +406,9 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	vaddr_t handler)
 {
 	struct trampoline3 tramp;
+	struct proc *p = l->l_proc;
 	ucontext_t uc;
+	bool error;
 
 	/*
 	 * Arguments given to the signal handler.
@@ -404,14 +424,19 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	uc.uc_sigmask = *mask;
 	uc.uc_link = NULL;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+	sendsig_reset(l, ksi->ksi_signo);
+	mutex_exit(&p->p_smutex);
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 
 	tf->fp = handler;
 
 	/* Copy the context to the stack.  */
-	if (copyout(&uc, (char *)tramp.ucp, sizeof(uc)) != 0 ||
+	error = (copyout(&uc, (char *)tramp.ucp, sizeof(uc)) != 0 ||
 	    copyout(&ksi->ksi_info, (char *)tramp.sip, sizeof(ksi->ksi_info)) != 0 ||
-	    copyout(&tramp, (char *)sp, sizeof(tramp)) != 0)
+	    copyout(&tramp, (char *)sp, sizeof(tramp)) != 0);
+
+	mutex_enter(&p->p_smutex);
+	if (error)
 		sigexit(l, SIGILL);
 
 	return sp;
@@ -423,7 +448,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = l->l_addr->u_pcb.framep;
-	struct sigaltstack *ss = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *ss = &l->l_sigstk;
 	const struct sigact_sigdesc *sd =
 	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];
 	vaddr_t sp;

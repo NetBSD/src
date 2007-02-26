@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscallargs.h,v 1.13.4.2 2006/12/30 20:47:45 yamt Exp $ */
+/* $NetBSD: pecoff_syscallargs.h,v 1.13.4.3 2007/02/26 09:09:37 yamt Exp $ */
 
 /*
  * System call argument lists.
@@ -797,18 +797,6 @@ int	sys__lwp_wakeup(struct lwp *, void *, register_t *);
 int	sys__lwp_getprivate(struct lwp *, void *, register_t *);
 
 int	sys__lwp_setprivate(struct lwp *, void *, register_t *);
-
-int	sys_sa_register(struct lwp *, void *, register_t *);
-
-int	sys_sa_stacks(struct lwp *, void *, register_t *);
-
-int	sys_sa_enable(struct lwp *, void *, register_t *);
-
-int	sys_sa_setconcurrency(struct lwp *, void *, register_t *);
-
-int	sys_sa_yield(struct lwp *, void *, register_t *);
-
-int	sys_sa_preempt(struct lwp *, void *, register_t *);
 
 int	sys___sigaction_sigtramp(struct lwp *, void *, register_t *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.32.2.2 2006/12/30 20:47:48 yamt Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.32.2.3 2007/02/26 09:09:43 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.32.2.2 2006/12/30 20:47:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.32.2.3 2007/02/26 09:09:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.32.2.2 2006/12/30 20:47:48 yamt E
 #include <sys/signalvar.h>
 
 #include <netinet/in.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -1188,7 +1187,7 @@ svr4_32_sys_waitsys(l, v, retval)
 {
 	struct svr4_32_sys_waitsys_args *uap = v;
 	struct proc *parent = l->l_proc;
-	int options, error;
+	int options, error, status;
 	struct proc *child;
 
 	switch (SCARG(uap, grp)) {
@@ -1222,31 +1221,41 @@ svr4_32_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	error = find_stopped_child(parent, SCARG(uap, id), options, &child);
-	if (error != 0)
+	rw_enter(&proclist_lock, RW_WRITER);
+	error = find_stopped_child(parent, SCARG(uap, id), options, &child,
+	    &status);
+	if (error != 0) {
+		rw_exit(&proclist_lock);
 		return error;
+	}
 	*retval = 0;
-	if (child == NULL)
+	if (child == NULL) {
+		rw_exit(&proclist_lock);
 		return svr4_32_setinfo(NULL, 0, SCARG(uap, info));
+	}
 
 	if (child->p_stat == SZOMB) {
 		DPRINTF(("found %d\n", child->p_pid));
-		error = svr4_32_setinfo(child, child->p_xstat, SCARG(uap,info));
-		if (error)
+		error = svr4_32_setinfo(child, status, SCARG(uap,info));
+		if (error) {
+			rw_exit(&proclist_lock);
 			return error;
+		}
 
 		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
+			rw_exit(&proclist_lock);
 			DPRINTF(("Don't wait\n"));
 			return 0;
 		}
 
-		proc_free(child);
+		/* proc_free() will release the lock */
+		proc_free(child, NULL);
 		return 0;
 	}
 
 	DPRINTF(("jobcontrol %d\n", child->p_pid));
-	return svr4_32_setinfo(child, W_STOPCODE(child->p_xstat),
-					       SCARG(uap, info));
+	rw_exit(&proclist_lock);
+	return svr4_32_setinfo(child, W_STOPCODE(status), SCARG(uap, info));
 }
 
 static int

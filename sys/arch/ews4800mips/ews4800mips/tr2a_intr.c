@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.2.4.3 2006/12/30 20:45:55 yamt Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.2.4.4 2007/02/26 09:06:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.2.4.3 2006/12/30 20:45:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.2.4.4 2007/02/26 09:06:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,27 +218,7 @@ tr2a_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		tr2a_wbflush();
 		*INTC_CLEAR_REG = 0x7c;
 		*INTC_STATUS_REG;
-		if ((status & MIPS_INT_MASK) == MIPS_INT_MASK) {
-			if ((ipending & MIPS_INT_MASK & ~MIPS_INT_MASK_5) ==
-			    0) {
-				/*
-				 * If all interrupts were enabled and
-				 * there is no pending interrupts,
-				 * set MIPS_SR_INT_IE so that
-				 * spllowerclock() in hardclock()
-				 * works properly.
-				 */
-				_splset(MIPS_SR_INT_IE);
-			} else {
-				/*
-				 * If there are any pending interrputs,
-				 * clear MIPS_SR_INT_IE in cf.sr so that
-				 * spllowerclock() in hardclock() will
-				 * not happen.
-				 */
-				cf.sr &= ~MIPS_SR_INT_IE;
-			}
-		}
+
 		hardclock(&cf);
 		timer_tr2a_ev.ev_count++;
 		cause &= ~MIPS_INT_MASK_5;

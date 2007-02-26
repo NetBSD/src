@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.87.2.1 2006/06/21 14:56:12 yamt Exp $ */
+/*	$NetBSD: intr.c,v 1.87.2.2 2007/02/26 09:08:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.87.2.1 2006/06/21 14:56:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.87.2.2 2007/02/26 09:08:20 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -633,8 +633,12 @@ intr_establish(int level, int classipl,
 	int s = splhigh();
 
 #ifdef DIAGNOSTIC
-	if (CPU_ISSUN4 || CPU_ISSUN4C) {
-		/* Check reserved softintr slots */
+	if (CPU_ISSUN4C) {
+		/*
+		 * Check reserved softintr slots on SUN4C only.
+		 * No check for SUN4, as 4/300's have
+		 * esp0 at level 4 and le0 at level 6.
+		 */
 		if (level == 1 || level == 4 || level == 6)
 			panic("intr_establish: reserved softintr level");
 	}
@@ -802,13 +806,13 @@ void
 intr_lock_kernel(void)
 {
 
-	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+	KERNEL_LOCK(1, NULL);
 }
 
 void
 intr_unlock_kernel(void)
 {
 
-	KERNEL_UNLOCK();
+	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif

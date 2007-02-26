@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.8.3 2006/12/30 20:46:05 yamt Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.8.4 2007/02/26 09:06:52 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -69,7 +69,7 @@ options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 #options 	COMPAT_SVR4	# binary compatibility with SVR4
@@ -156,8 +156,8 @@ pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	ppp			# Point-to-Point Protocol
-pseudo-device	sl			# Serial Line IP
+#pseudo-device	ppp			# Point-to-Point Protocol
+#pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel

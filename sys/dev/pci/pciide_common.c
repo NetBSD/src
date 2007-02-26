@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.27.2.2 2006/12/30 20:48:48 yamt Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.27.2.3 2007/02/26 09:10:34 yamt Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.27.2.2 2006/12/30 20:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.27.2.3 2007/02/26 09:10:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -382,14 +382,14 @@ pciide_mapreg_dma(sc, pa)
 		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO,
 		    &addr, NULL, NULL) == 0);
 		if (sc->sc_dma_ok == 0) {
-			aprint_normal(
+			aprint_verbose(
 			    ", but unused (couldn't query registers)");
 			break;
 		}
 		if ((sc->sc_pp->ide_flags & IDE_16BIT_IOSPACE)
 		    && addr >= 0x10000) {
 			sc->sc_dma_ok = 0;
-			aprint_normal(
+			aprint_verbose(
 			    ", but unused (registers at unsafe address "
 			    "%#lx)", (unsigned long)addr);
 			break;
@@ -402,7 +402,7 @@ pciide_mapreg_dma(sc, pa)
 		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
 		sc->sc_dmat = pa->pa_dmat;
 		if (sc->sc_dma_ok == 0) {
-			aprint_normal(", but unused (couldn't map registers)");
+			aprint_verbose(", but unused (couldn't map registers)");
 		} else {
 			sc->sc_wdcdev.dma_arg = sc;
 			sc->sc_wdcdev.dma_init = pciide_dma_init;
@@ -412,7 +412,7 @@ pciide_mapreg_dma(sc, pa)
 
 		if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_NODMA) {
-			aprint_normal(
+			aprint_verbose(
 			    ", but unused (forced off by config file)");
 			sc->sc_dma_ok = 0;
 		}
@@ -420,7 +420,7 @@ pciide_mapreg_dma(sc, pa)
 
 	default:
 		sc->sc_dma_ok = 0;
-		aprint_normal(
+		aprint_verbose(
 		    ", but unsupported register maptype (0x%x)", maptype);
 	}
 
@@ -442,7 +442,7 @@ pciide_mapreg_dma(sc, pa)
 			    IDEDMA_SCH_OFFSET * chan + reg, size,
 			    &pc->dma_iohs[reg]) != 0) {
 				sc->sc_dma_ok = 0;
-				aprint_normal(", but can't subregion offset %d "
+				aprint_verbose(", but can't subregion offset %d "
 					      "size %lu", reg, (u_long)size);
 				return;
 			}
@@ -802,7 +802,7 @@ pciide_chansetup(sc, channel, interface)
 		return 0;
 	}
 	cp->ata_channel.ch_ndrive = 2;
-	aprint_normal("%s: %s channel %s to %s mode\n",
+	aprint_verbose("%s: %s channel %s to %s mode\n",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name,
 	    (interface & PCIIDE_INTERFACE_SETTABLE(channel)) ?
 	    "configured" : "wired",
@@ -881,31 +881,31 @@ default_chip_map(sc, pa)
 
 	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
 #if NATA_DMA
-		aprint_normal("%s: bus-master DMA support present",
+		aprint_verbose("%s: bus-master DMA support present",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 		if (sc->sc_pp == &default_product_desc &&
 		    (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 		    PCIIDE_OPTIONS_DMA) == 0) {
-			aprint_normal(", but unused (no driver support)");
+			aprint_verbose(", but unused (no driver support)");
 			sc->sc_dma_ok = 0;
 		} else {
 			pciide_mapreg_dma(sc, pa);
 			if (sc->sc_dma_ok != 0)
-				aprint_normal(", used without full driver "
+				aprint_verbose(", used without full driver "
 				    "support");
 		}
 #else
-		aprint_normal("%s: bus-master DMA support present, but unused (no driver support)",
+		aprint_verbose("%s: bus-master DMA support present, but unused (no driver support)",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 #endif	/* NATA_DMA */
 	} else {
-		aprint_normal("%s: hardware does not support DMA",
+		aprint_verbose("%s: hardware does not support DMA",
 		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 #if NATA_DMA
 		sc->sc_dma_ok = 0;
 #endif
 	}
-	aprint_normal("\n");
+	aprint_verbose("\n");
 #if NATA_DMA
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;

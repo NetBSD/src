@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.12.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.12.2 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -172,7 +172,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(cf)  (((cf)->cf_state.sf_ssr&SH5_CONREG_SR_MD)==0)
-#define	CLKF_BASEPRI(cf)   (((cf)->cf_state.sf_ssr&SH5_CONREG_SR_IMASK_ALL)==0)
 #define	CLKF_PC(cf)        ((cf)->cf_state.sf_spc)
 
 #define	CLKF_INTR(cf)      (curcpu()->ci_intr_depth > 1)

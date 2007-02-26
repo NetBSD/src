@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.32.2.2 2006/12/30 20:50:28 yamt Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.32.2.3 2007/02/26 09:11:40 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32.2.2 2006/12/30 20:50:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32.2.3 2007/02/26 09:11:40 yamt Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -76,6 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.32.2.2 2006/12/30 20:50:28 ya
 #include <netinet/ip.h>
 #include <net/if_ether.h>
 #endif
+
+static int ieee80211_fragment(struct ieee80211com *, struct mbuf *,
+	u_int hdrsize, u_int ciphdrsize, u_int mtu);
 
 #ifdef IEEE80211_DEBUG
 /*
@@ -522,7 +525,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *key;
 	struct llc *llc;
-	int hdrsize, datalen, addqos;
+	int hdrsize, datalen, addqos, txfrag;
 
 	IASSERT(m->m_len >= sizeof(eh), ("no ethernet header!"));
 	memcpy(&eh, mtod(m, caddr_t), sizeof(struct ether_header));
@@ -648,6 +651,10 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		    htole16(ni->ni_txseqs[0] << IEEE80211_SEQ_SEQ_SHIFT);
 		ni->ni_txseqs[0]++;
 	}
+	/* check if xmit fragmentation is required */
+	txfrag = (m->m_pkthdr.len > ic->ic_fragthreshold &&
+	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (m->m_flags & M_FF) == 0);          /* NB: don't fragment ff's */
 	if (key != NULL) {
 		/*
 		 * IEEE 802.1X: send EAPOL frames always in the clear.
@@ -659,8 +666,7 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 		      !IEEE80211_KEY_UNDEFINED(*key) :
 		      !IEEE80211_KEY_UNDEFINED(ni->ni_ucastkey)))) {
 			wh->i_fc[1] |= IEEE80211_FC1_WEP;
-			/* XXX do fragmentation */
-			if (!ieee80211_crypto_enmic(ic, key, m, 0)) {
+			if (!ieee80211_crypto_enmic(ic, key, m, txfrag)) {
 				IEEE80211_DPRINTF(ic, IEEE80211_MSG_OUTPUT,
 				    "[%s] enmic failed, discard frame\n",
 				    ether_sprintf(eh.ether_dhost));
@@ -669,6 +675,9 @@ ieee80211_encap(struct ieee80211com *ic, struct mbuf *m,
 			}
 		}
 	}
+	if (txfrag && !ieee80211_fragment(ic, m, hdrsize,
+	    key != NULL ? key->wk_cipher->ic_header : 0, ic->ic_fragthreshold))
+		goto bad;
 
 	IEEE80211_NODE_STAT(ni, tx_data);
 	IEEE80211_NODE_STAT_ADD(ni, tx_bytes, datalen);
@@ -859,6 +868,98 @@ ieee80211_compute_duration(const struct ieee80211_frame_min *wh,
 	}
 	return ieee80211_compute_duration1(lastlen + hdrlen, ack, icflags, rate,
 	    dn);
+}
+
+/*
+ * Fragment the frame according to the specified mtu.
+ * The size of the 802.11 header (w/o padding) is provided
+ * so we don't need to recalculate it.  We create a new
+ * mbuf for each fragment and chain it through m_nextpkt;
+ * we might be able to optimize this by reusing the original
+ * packet's mbufs but that is significantly more complicated.
+ */
+static int
+ieee80211_fragment(struct ieee80211com *ic, struct mbuf *m0,
+	u_int hdrsize, u_int ciphdrsize, u_int mtu)
+{
+	struct ieee80211_frame *wh, *whf;
+	struct mbuf *m, *prev, *next;
+	u_int totalhdrsize, fragno, fragsize, off, remainder, payload;
+
+	IASSERT(m0->m_nextpkt == NULL, ("mbuf already chained?"));
+	IASSERT(m0->m_pkthdr.len > mtu,
+		("pktlen %u mtu %u", m0->m_pkthdr.len, mtu));
+
+	wh = mtod(m0, struct ieee80211_frame *);
+	/* NB: mark the first frag; it will be propagated below */
+	wh->i_fc[1] |= IEEE80211_FC1_MORE_FRAG;
+	totalhdrsize = hdrsize + ciphdrsize;
+	fragno = 1;
+	off = mtu - ciphdrsize;
+	remainder = m0->m_pkthdr.len - off;
+	prev = m0;
+	do {
+		fragsize = totalhdrsize + remainder;
+		if (fragsize > mtu)
+			fragsize = mtu;
+		IASSERT(fragsize < MCLBYTES,
+			("fragment size %u too big!", fragsize));
+		if (fragsize > MHLEN)
+			m = m_getcl(M_DONTWAIT, MT_DATA, M_PKTHDR);
+		else
+			m = m_gethdr(M_DONTWAIT, MT_DATA);
+		if (m == NULL)
+			goto bad;
+		/* leave room to prepend any cipher header */
+		m_align(m, fragsize - ciphdrsize);
+
+		/*
+		 * Form the header in the fragment.  Note that since
+		 * we mark the first fragment with the MORE_FRAG bit
+		 * it automatically is propagated to each fragment; we
+		 * need only clear it on the last fragment (done below).
+		 */
+		whf = mtod(m, struct ieee80211_frame *);
+		memcpy(whf, wh, hdrsize);
+		*(u_int16_t *)&whf->i_seq[0] |= htole16(
+			(fragno & IEEE80211_SEQ_FRAG_MASK) <<
+				IEEE80211_SEQ_FRAG_SHIFT);
+		fragno++;
+
+		payload = fragsize - totalhdrsize;
+		/* NB: destination is known to be contiguous */
+		m_copydata(m0, off, payload, mtod(m, u_int8_t *) + hdrsize);
+		m->m_len = hdrsize + payload;
+		m->m_pkthdr.len = hdrsize + payload;
+		m->m_flags |= M_FRAG;
+
+		/* chain up the fragment */
+		prev->m_nextpkt = m;
+		prev = m;
+
+		/* deduct fragment just formed */
+		remainder -= payload;
+		off += payload;
+	} while (remainder != 0);
+	whf->i_fc[1] &= ~IEEE80211_FC1_MORE_FRAG;
+
+	/* strip first mbuf now that everything has been copied */
+	m_adj(m0, -(m0->m_pkthdr.len - (mtu - ciphdrsize)));
+	m0->m_flags |= M_FIRSTFRAG | M_FRAG;
+
+	ic->ic_stats.is_tx_fragframes++;
+	ic->ic_stats.is_tx_frags += fragno-1;
+
+	return 1;
+bad:
+	/* reclaim fragments but leave original frame for caller to free */
+	for (m = m0->m_nextpkt; m != NULL; m = next) {
+		next = m->m_nextpkt;
+		m->m_nextpkt = NULL;            /* XXX paranoid */
+		m_freem(m);
+	}
+	m0->m_nextpkt = NULL;
+	return 0;
 }
 
 /*

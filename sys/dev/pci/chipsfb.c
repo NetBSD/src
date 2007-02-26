@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.6.6.2 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.6.6.3 2007/02/26 09:10:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -27,12 +27,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * A console driver for Chips & Technologies 65550 graphics controllers
+ * tested on macppc only so far
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.2 2006/12/30 20:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.3 2007/02/26 09:10:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,16 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.2 2006/12/30 20:48:43 yamt Exp $")
 #include <sys/kauth.h>
 
 #include <uvm/uvm_extern.h>
-#include <machine/autoconf.h>
-
-#if defined(macppc) || defined (sparc64) || defined(ofppc)
-#define HAVE_OPENFIRMWARE
-#endif
-
-#ifdef HAVE_OPENFIRMWARE
-#include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_pci.h>
-#endif
 
 #include <dev/videomode/videomode.h>
 
@@ -72,10 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.2 2006/12/30 20:48:43 yamt Exp $")
 #include <dev/i2c/i2cvar.h>
 
 #include "opt_wsemul.h"
+#include "opt_chipsfb.h"
 
-/*
-#define CHIPSFB_WAIT
-*/
 struct chipsfb_softc {
 	struct device sc_dev;
 	pci_chipset_tag_t sc_pc;
@@ -83,17 +72,17 @@ struct chipsfb_softc {
 
 	bus_space_tag_t sc_memt;
 	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_memh;	
+	bus_space_handle_t sc_memh;
 
 	bus_space_tag_t sc_fbt;
 	bus_space_tag_t sc_ioregt;
-	bus_space_handle_t sc_fbh;	
-	bus_space_handle_t sc_ioregh;	
+	bus_space_handle_t sc_fbh;
+	bus_space_handle_t sc_ioregh;
 	bus_addr_t sc_fb, sc_ioreg;
 	bus_size_t sc_fbsize, sc_ioregsize;
 
 	void *sc_ih;
-	
+
 	size_t memsize;
 
 	int bits_per_pixel;
@@ -101,13 +90,16 @@ struct chipsfb_softc {
 
 	int sc_mode;
 	uint32_t sc_bg;
-		
+
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
-	u_char sc_cmap_blue[256];	
+	u_char sc_cmap_blue[256];
 	int sc_dacw;
 
-	/* I2C stuff */
+	/*
+	 * I2C stuff
+	 * DDC2 clock is on GPIO1, data on GPIO0
+	 */
 	struct i2c_controller sc_i2c;
 	uint8_t sc_edid[1024];
 	int sc_edidbytes;	/* number of bytes read from the monitor */
@@ -122,11 +114,10 @@ extern const u_char rasops_cmap[768];
 static int	chipsfb_match(struct device *, struct cfdata *, void *);
 static void	chipsfb_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(chipsfb, sizeof(struct chipsfb_softc), chipsfb_match, 
+CFATTACH_DECL(chipsfb, sizeof(struct chipsfb_softc), chipsfb_match,
     chipsfb_attach, NULL, NULL);
 
-static int	chipsfb_is_console(struct pci_attach_args *);
-static void 	chipsfb_init(struct chipsfb_softc *);	
+static void 	chipsfb_init(struct chipsfb_softc *);
 
 static void	chipsfb_cursor(void *, int, int, int);
 static void	chipsfb_copycols(void *, int, int, int, int);
@@ -153,10 +144,10 @@ static void	chipsfb_rectfill(struct chipsfb_softc *, int, int, int, int,
 			    int);
 static void	chipsfb_putchar(void *, int, int, u_int, long);
 static void	chipsfb_setup_mono(struct chipsfb_softc *, int, int, int,
-			    int, uint32_t, uint32_t); 
+			    int, uint32_t, uint32_t);
 static void	chipsfb_feed(struct chipsfb_softc *, int, uint8_t *);
 
-#ifdef chipsfb_DEBUG
+#if 0
 static void	chipsfb_showpal(struct chipsfb_softc *);
 #endif
 static void	chipsfb_restore_palette(struct chipsfb_softc *);
@@ -208,21 +199,21 @@ chipsfb_write32(struct chipsfb_softc *sc, uint32_t reg, uint32_t val)
 }
 
 static inline uint32_t
-chipsfb_read32(struct chipsfb_softc *sc, uint32_t reg) 
+chipsfb_read32(struct chipsfb_softc *sc, uint32_t reg)
 {
 	return bus_space_read_4(sc->sc_fbt, sc->sc_fbh, reg);
 }
 
 static inline void
 chipsfb_write_vga(struct chipsfb_softc *sc, uint32_t reg,  uint8_t val)
-{ 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioregh, reg, val); 
+{
+	bus_space_write_1(sc->sc_iot, sc->sc_ioregh, reg, val);
 }
 
 static inline uint8_t
 chipsfb_read_vga(struct chipsfb_softc *sc, uint32_t reg)
-{ 
-	return bus_space_read_1(sc->sc_iot, sc->sc_ioregh, reg); 
+{
+	return bus_space_read_1(sc->sc_iot, sc->sc_ioregh, reg);
 }
 
 static inline uint8_t
@@ -234,7 +225,7 @@ chipsfb_read_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index)
 }
 
 static inline void
-chipsfb_write_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index, 
+chipsfb_write_indexed(struct chipsfb_softc *sc, uint32_t reg, uint8_t index,
     uint8_t val)
 {
 
@@ -267,8 +258,11 @@ chipsfb_match(struct device *parent, struct cfdata *match, void *aux)
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY ||
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
 		return 0;
-	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CHIPS) && 
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CHIPS) &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CHIPS_65550))
+		return 100;
+	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CHIPS) &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CHIPS_65554))
 		return 100;
 	return 0;
 }
@@ -276,21 +270,19 @@ chipsfb_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 chipsfb_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct chipsfb_softc *sc = (void *)self;	
+	struct chipsfb_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
+	prop_dictionary_t dict;
 	pcireg_t screg;
 	ulong defattr;
-	int console, width, height, node, i, j;
-#ifdef HAVE_OPENFIRMWARE
-	int linebytes, depth;
-#endif
+	int console = 0, width, height, i, j;
 	uint32_t bg, fg, ul;
-		
+
+	dict = device_properties(self);
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dacw = -1;
@@ -298,30 +290,33 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	screg |= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag,PCI_COMMAND_STATUS_REG,screg);
-	
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+#ifdef CHIPSFB_DEBUG
+	printf(prop_dictionary_externalize(dict));
+#endif
 
 	sc->sc_memt = pa->pa_memt;
 	sc->sc_iot = pa->pa_iot;
 
 	/* the framebuffer */
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_LINEAR, 
+	    BUS_SPACE_MAP_LINEAR,
 	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		printf("%s: failed to map the frame buffer.\n", 
+		aprint_error("%s: failed to map the frame buffer.\n",
 		    sc->sc_dev.dv_xname);
 	}
 
 	/* IO-mapped registers */
 	if (bus_space_map(sc->sc_iot, 0x0, PAGE_SIZE, 0, &sc->sc_ioregh) != 0) {
-		printf("%s: failed to map IO-mapped registers.\n", 
+		aprint_error("%s: failed to map IO registers.\n",
 		    sc->sc_dev.dv_xname);
 	}
 
 	sc->memsize = chipsfb_probe_vram(sc);
 	chipsfb_init(sc);
-	
+
 	/* we should read these from the chip instead of depending on OF */
 	width = height = -1;
 
@@ -334,28 +329,18 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	height |= (chipsfb_read_indexed(sc, CT_FP_INDEX, FP_VERT_OVERFLOW_1)
 	    & 0x0f) << 8;
 	height++;
-	printf("Panel size: %d x %d\n", width, height);
+	aprint_verbose("Panel size: %d x %d\n", width, height);
 
-#ifdef HAVE_OPENFIRMWARE
-	if (OF_getprop(node, "width", &width, 4) != 4)
-		OF_interpret("screen-width", 1, &width);
-	if (OF_getprop(node, "height", &height, 4) != 4)
-		OF_interpret("screen-height", 1, &height);
-	if (OF_getprop(node, "linebytes", &linebytes, 4) != 4)
-		linebytes = width;			/* XXX */
-	if (OF_getprop(node, "depth", &depth, 4) != 4)
-		depth = 8;				/* XXX */
+	if (!prop_dictionary_get_uint32(dict, "width", &sc->width))
+		sc->width = width;
+	if (!prop_dictionary_get_uint32(dict, "height", &sc->height))
+		sc->height = height;
+	if (!prop_dictionary_get_uint32(dict, "depth", &sc->bits_per_pixel))
+		sc->bits_per_pixel = 8;
+	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->linebytes))
+		sc->linebytes = (sc->width * sc->bits_per_pixel) >> 3;
 
-	if (width == -1 || height == -1)
-		return;
-
-	sc->width = width;
-	sc->height = height;
-	sc->bits_per_pixel = depth;
-	sc->linebytes = linebytes;
-	printf("%s: initial resolution %dx%d, %d bit\n", sc->sc_dev.dv_xname,
-	    sc->width, sc->height, sc->bits_per_pixel);
-#endif
+	prop_dictionary_get_bool(dict, "is_console", &console);
 
 #ifdef notyet
 	/* XXX this should at least be configurable via kernel config */
@@ -365,8 +350,6 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	vcons_init(&sc->vd, sc, &chipsfb_defaultscreen, &chipsfb_accessops);
 	sc->vd.init_screen = chipsfb_init_screen;
 
-	console = chipsfb_is_console(pa);
-	
 	ri = &chipsfb_console_screen.scr_ri;
 	if (console) {
 		vcons_init_screen(&sc->vd, &chipsfb_console_screen, 1,
@@ -392,16 +375,16 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bg = ri->ri_devcmap[bg];
 	chipsfb_clearscreen(sc);
 
-	printf("%s: %d MB aperture, %d MB VRAM at 0x%08x\n",
-	    sc->sc_dev.dv_xname, (u_int)(sc->sc_fbsize >> 20), 
+	aprint_normal("%s: %d MB aperture, %d MB VRAM at 0x%08x\n",
+	    sc->sc_dev.dv_xname, (u_int)(sc->sc_fbsize >> 20),
 	    sc->memsize >> 20, (u_int)sc->sc_fb);
-#ifdef chipsfb_DEBUG
-	printf("fb: %08lx\n", (ulong)ri->ri_bits);
+#ifdef CHIPSFB_DEBUG
+	aprint_debug("fb: %08lx\n", (ulong)ri->ri_bits);
 #endif
-	
+
 	j = 0;
 	for (i = 0; i < 256; i++) {
-		chipsfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1], 
+		chipsfb_putpalreg(sc, i, rasops_cmap[j], rasops_cmap[j + 1],
 		    rasops_cmap[j + 2]);
 		j += 3;
 	}
@@ -415,10 +398,10 @@ chipsfb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-chipsfb_putpalreg(struct chipsfb_softc *sc, uint8_t index, uint8_t r, 
+chipsfb_putpalreg(struct chipsfb_softc *sc, uint8_t index, uint8_t r,
     uint8_t g, uint8_t b)
 {
-	
+
 	sc->sc_cmap_red[index] = r;
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
@@ -441,9 +424,9 @@ chipsfb_putcmap(struct chipsfb_softc *sc, struct wsdisplay_cmap *cm)
 	int i, error;
 	u_char rbuf[256], gbuf[256], bbuf[256];
 
-#ifdef chipsfb_DEBUG
-	printf("putcmap: %d %d\n",index, count);
-#endif	
+#ifdef CHIPSFB_DEBUG
+	aprint_debug("putcmap: %d %d\n",index, count);
+#endif
 	if (cm->index >= 256 || cm->count > 256 ||
 	    (cm->index + cm->count) > 256)
 		return EINVAL;
@@ -464,7 +447,7 @@ chipsfb_putcmap(struct chipsfb_softc *sc, struct wsdisplay_cmap *cm)
 	r = &sc->sc_cmap_red[index];
 	g = &sc->sc_cmap_green[index];
 	b = &sc->sc_cmap_blue[index];
-	
+
 	for (i = 0; i < count; i++) {
 		chipsfb_putpalreg(sc, index, *r, *g, *b);
 		index++;
@@ -482,7 +465,7 @@ chipsfb_getcmap(struct chipsfb_softc *sc, struct wsdisplay_cmap *cm)
 
 	if (index >= 255 || count > 256 || index + count > 256)
 		return EINVAL;
-	
+
 	error = copyout(&sc->sc_cmap_red[index],   cm->red,   count);
 	if (error)
 		return error;
@@ -494,25 +477,6 @@ chipsfb_getcmap(struct chipsfb_softc *sc, struct wsdisplay_cmap *cm)
 		return error;
 
 	return 0;
-}
-
-static int
-chipsfb_is_console(struct pci_attach_args *pa)
-{
-
-#ifdef HAVE_OPENFIRMWARE
-	/* check if we're the /chosen console device */
-	int chosen, stdout, node, us;
-	
-	us = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdout", &stdout, 4);
-	node = OF_instance_to_package(stdout);
-	return(us == node);
-#else
-	/* XXX how do we know we're console on i386? */
-	return 1;
-#endif
 }
 
 static void
@@ -532,10 +496,10 @@ chipsfb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct chipsfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -573,33 +537,33 @@ chipsfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct chipsfb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 		width = ri->ri_font->fontwidth * ncols;
-		height = ri->ri_font->fontheight;		
+		height = ri->ri_font->fontheight;
 		chipsfb_bitblt(sc, xs, y, xd, y, width, height, ROP_COPY);
 	}
 }
 
 static void
-chipsfb_erasecols(void *cookie, int row, int startcol, int ncols, 
+chipsfb_erasecols(void *cookie, int row, int startcol, int ncols,
     long fillattr)
 {
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	struct chipsfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 		width = ri->ri_font->fontwidth * ncols;
-		height = ri->ri_font->fontheight;		
+		height = ri->ri_font->fontheight;
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
-	
+
 		chipsfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
 	}
 }
@@ -617,7 +581,7 @@ chipsfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 		ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
 		yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
 		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;		
+		height = ri->ri_font->fontheight * nrows;
 		chipsfb_bitblt(sc, x, ys, x, yd, width, height, ROP_COPY);
 	}
 }
@@ -640,7 +604,7 @@ chipsfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 			x = ri->ri_xorigin;
 			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
 			width = ri->ri_emuwidth;
-			height = ri->ri_font->fontheight * nrows;		
+			height = ri->ri_font->fontheight * nrows;
 			chipsfb_rectfill(sc, x, y, width, height,
 			    ri->ri_devcmap[bg]);
 		}
@@ -649,7 +613,7 @@ chipsfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 
 static void
 chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
-    int width, int height, uint8_t rop) 
+    int width, int height, uint8_t rop)
 {
 	uint32_t src, dst, cmd = rop, stride, size;
 
@@ -672,10 +636,10 @@ chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
 		src += (height - 1) * sc->linebytes;
 		dst += (height - 1) * sc->linebytes;
 	}
-	
+
 	stride = (sc->linebytes << 16) | sc->linebytes;
 	size = (height << 16) | width;
-	
+
 	chipsfb_wait_idle(sc);
 	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
 	chipsfb_write32(sc, CT_BLT_SRCADDR, src);
@@ -686,10 +650,10 @@ chipsfb_bitblt(struct chipsfb_softc *sc, int xs, int ys, int xd, int yd,
 	chipsfb_wait_idle(sc);
 #endif
 }
- 
+
 static void
-chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width, 
-    int height, int colour) 
+chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width,
+    int height, int colour)
 {
 	uint32_t dst, cmd, stride, size;
 
@@ -700,7 +664,7 @@ chipsfb_rectfill(struct chipsfb_softc *sc, int x, int y, int width,
 
 	stride = (sc->linebytes << 16) | sc->linebytes;
 	size = (height << 16) | width;
-	
+
 	chipsfb_wait_idle(sc);
 	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
 	chipsfb_write32(sc, CT_BLT_SRCADDR, dst);
@@ -739,7 +703,7 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			chipsfb_rectfill(sc, x, y, wi, he, bg);
 		} else {
 			uc = c-ri->ri_font->firstchar;
-			data = (uint8_t *)ri->ri_font->data + uc * 
+			data = (uint8_t *)ri->ri_font->data + uc *
 			    ri->ri_fontscale;
 			chipsfb_setup_mono(sc, x, y, wi, he, fg, bg);
 			chipsfb_feed(sc, ri->ri_font->stride * he, data);
@@ -747,9 +711,9 @@ chipsfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	}
 }
 
-static void 
+static void
 chipsfb_setup_mono(struct chipsfb_softc *sc, int xd, int yd, int width,
-    int height, uint32_t fg, uint32_t bg) 
+    int height, uint32_t fg, uint32_t bg)
 {
 	uint32_t dst, cmd, stride, size;
 
@@ -757,10 +721,10 @@ chipsfb_setup_mono(struct chipsfb_softc *sc, int xd, int yd, int width,
 
 	/* we assume 8 bit for now */
 	dst = xd + yd * sc->linebytes;
-	
+
 	stride = (sc->linebytes << 16);
 	size = (height << 16) | width;
-	
+
 	chipsfb_wait_idle(sc);
 	chipsfb_write32(sc, CT_BLT_STRIDE, stride);
 	chipsfb_write32(sc, CT_BLT_EXPCTL, MONO_SRC_ALIGN_BYTE);
@@ -772,13 +736,13 @@ chipsfb_setup_mono(struct chipsfb_softc *sc, int xd, int yd, int width,
 	chipsfb_write32(sc, CT_BLT_SIZE, size);
 }
 
-static void 
+static void
 chipsfb_feed(struct chipsfb_softc *sc, int count, uint8_t *data)
 {
 	int i;
 	uint32_t latch = 0, bork;
 	int shift = 0;
-	
+
 	for (i = 0; i < count; i++) {
 		bork = data[i];
 		latch |= (bork << shift);
@@ -789,26 +753,26 @@ chipsfb_feed(struct chipsfb_softc *sc, int count, uint8_t *data)
 		} else
 			shift += 8;
 	}
-	
+
 	if (shift != 0) {
 		chipsfb_write32(sc, CT_OFF_DATA, latch);
 	}
-	
+
 	/* apparently the chip wants 64bit-aligned data or it won't go idle */
 	if ((count + 3) & 0x04) {
 		chipsfb_write32(sc, CT_OFF_DATA, 0);
-	}	
+	}
 #ifdef CHIPSFB_WAIT
 	chipsfb_wait_idle(sc);
 #endif
-}	
+}
 
-#ifdef CHIPSFB_DEBUG
+#if 0
 static void
-chipsfb_showpal(struct chipsfb_softc *sc) 
+chipsfb_showpal(struct chipsfb_softc *sc)
 {
 	int i, x = 0;
-	
+
 	for (i = 0; i < 16; i++) {
 		chipsfb_rectfill(sc, x, 0, 64, 64, i);
 		x += 64;
@@ -829,11 +793,11 @@ static void
 chipsfb_restore_palette(struct chipsfb_softc *sc)
 {
 	int i;
-	
+
 	for (i = 0; i < 256; i++) {
-		chipsfb_putpalreg(sc, 
-		   i, 
-		   sc->sc_cmap_red[i], 
+		chipsfb_putpalreg(sc,
+		   i,
+		   sc->sc_cmap_red[i],
 		   sc->sc_cmap_green[i],
 		   sc->sc_cmap_blue[i]);
 	}
@@ -864,7 +828,7 @@ chipsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 			wdf->depth = ms->scr_ri.ri_depth;
 			wdf->cmsize = 256;
 			return 0;
-			
+
 		case WSDISPLAYIO_GETCMAP:
 			return chipsfb_getcmap(sc,
 			    (struct wsdisplay_cmap *)data);
@@ -878,14 +842,14 @@ chipsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
 		case PCI_IOC_CFGWRITE:
 			return (pci_devioctl(sc->sc_pc, sc->sc_pcitag,
 			    cmd, data, flag, l));
-			    
+
 		case WSDISPLAYIO_SMODE:
 			{
 				int new_mode = *(int*)data;
 				if (new_mode != sc->sc_mode) {
 					sc->sc_mode = new_mode;
 					if(new_mode == WSDISPLAYIO_MODE_EMUL) {
-						chipsfb_restore_palette(sc);						
+						chipsfb_restore_palette(sc);
 						vcons_redraw_screen(ms);
 					}
 				}
@@ -902,11 +866,11 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct chipsfb_softc *sc = vd->cookie;
 	struct lwp *me;
 	paddr_t pa;
-		
+
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->memsize) {
-		pa = bus_space_mmap(sc->sc_fbt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+		pa = bus_space_mmap(sc->sc_fbt, offset, 0, prot,
+		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 
@@ -918,32 +882,32 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (me != NULL) {
 		if (kauth_authorize_generic(me->l_cred, KAUTH_GENERIC_ISSUSER,
 		    NULL) != 0) {
-			printf("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
+			aprint_normal("%s: mmap() rejected.\n", sc->sc_dev.dv_xname);
 			return -1;
 		}
 	}
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+		    BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 
 #ifdef macppc
 	/* allow mapping of IO space */
 	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot,
+		    BUS_SPACE_MAP_LINEAR);
 		return pa;
-	}	
+	}
 #endif
-	
+
 #ifdef OFB_ALLOW_OTHERS
 	if (offset >= 0x80000000) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+		    BUS_SPACE_MAP_LINEAR);
 		return pa;
-	}		
+	}
 #endif
 	return -1;
 }
@@ -954,7 +918,7 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 {
 	struct chipsfb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
-	
+
 	ri->ri_depth = sc->bits_per_pixel;
 	ri->ri_width = sc->width;
 	ri->ri_height = sc->height;
@@ -964,12 +928,12 @@ chipsfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bits = bus_space_vaddr(sc->sc_fbt, sc->sc_fbh);
 
 #ifdef CHIPSFB_DEBUG
-	printf("addr: %08lx\n", (ulong)ri->ri_bits);
+	aprint_debug("addr: %08lx\n", (ulong)ri->ri_bits);
 #endif
 	if (existing) {
 		ri->ri_flg |= RI_CLEAR;
 	}
-	
+
 	rasops_init(ri, sc->height/8, sc->width/8);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 
@@ -999,7 +963,7 @@ chipsfb_init(struct chipsfb_softc *sc)
 {
 
 	chipsfb_wait_idle(sc);
-	
+
 	chipsfb_write_indexed(sc, CT_CONF_INDEX, XR_IO_CONTROL,
 	    ENABLE_CRTC_EXT | ENABLE_ATTR_EXT);
 	chipsfb_write_indexed(sc, CT_CONF_INDEX, XR_ADDR_MAPPING,
@@ -1012,7 +976,7 @@ static uint32_t
 chipsfb_probe_vram(struct chipsfb_softc *sc)
 {
 	uint32_t ofs = 0x00080000;	/* 512kB */
-	
+
 	/*
 	 * advance in 0.5MB steps, see if we can read back what we wrote and
 	 * if what we wrote to 0 is left untouched. Max. fb size is 4MB so
@@ -1020,13 +984,13 @@ chipsfb_probe_vram(struct chipsfb_softc *sc)
 	 */
 	chipsfb_write32(sc, 0, 0xf0f0f0f0);
 	chipsfb_write32(sc, ofs, 0x0f0f0f0f);
-	while ((chipsfb_read32(sc, 0) == 0xf0f0f0f0) && 
+	while ((chipsfb_read32(sc, 0) == 0xf0f0f0f0) &&
 	    (chipsfb_read32(sc, ofs) == 0x0f0f0f0f) &&
 	    (ofs < 0x00400000)) {
-		
+
 		ofs += 0x00080000;
 		chipsfb_write32(sc, ofs, 0x0f0f0f0f);
 	}
-	
+
 	return ofs;
 }

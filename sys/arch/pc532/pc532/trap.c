@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67.2.2 2006/12/30 20:46:42 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.67.2.3 2007/02/26 09:07:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.2 2006/12/30 20:46:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.3 2007/02/26 09:07:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -92,8 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.67.2.2 2006/12/30 20:46:42 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/pool.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kauth.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -389,14 +387,9 @@ trap(struct trapframe frame)
 		 */
 		if (type == T_ABT && va >= KERNBASE)
 			map = kernel_map;
-		else {
+		else
 			map = &vm->vm_map;
-			if (l->l_flag & L_SA) {
-				l->l_savp->savp_faultaddr =
-				    (vaddr_t)frame.tf_tear;
-				l->l_flag |= L_SA_PAGEFAULT;
-			}
-		}
+
 		if ((frame.tf_msr & MSR_DDT) == DDT_WRITE ||
 		    (frame.tf_msr & MSR_STT) == STT_RMW)
 			ftype = VM_PROT_WRITE;
@@ -418,7 +411,6 @@ trap(struct trapframe frame)
 
 			if (type == T_ABT)
 				return;
-			l->l_flag &= ~L_SA_PAGEFAULT;
 			goto out;
 		}
 
@@ -447,7 +439,6 @@ trap(struct trapframe frame)
 		ksi.ksi_code = sig == SIGKILL ? SI_NOINFO : SEGV_MAPERR;
 		ksi.ksi_addr = (void *)frame.tf_tear;
 		(*p->p_emul->e_trapsignal)(l, &ksi);
-		l->l_flag &= ~L_SA_PAGEFAULT;
 		break;
 	}
 
@@ -521,17 +512,6 @@ startlwp(void *arg)
 		printf("Error %d from cpu_setmcontext.", error);
 #endif
 	pool_put(&lwp_uc_pool, uc);
-
-	userret(l, l->l_md.md_regs->r_pc, p->p_sticks);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-	struct proc *p = l->l_proc;
 
 	userret(l, l->l_md.md_regs->r_pc, p->p_sticks);
 }

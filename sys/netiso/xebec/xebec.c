@@ -1,7 +1,7 @@
-/*	$NetBSD: xebec.c,v 1.9 2005/02/26 22:39:49 perry Exp $	*/
+/*	$NetBSD: xebec.c,v 1.9.4.1 2007/02/26 09:12:03 yamt Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: xebec.c,v 1.9 2005/02/26 22:39:49 perry Exp $");
+__RCSID("$NetBSD: xebec.c,v 1.9.4.1 2007/02/26 09:12:03 yamt Exp $");
 
 #include "xebec.h"
 #include "llparse.h"
@@ -13,14 +13,17 @@ __RCSID("$NetBSD: xebec.c,v 1.9 2005/02/26 22:39:49 perry Exp $");
 #include "sets.h"
 #include "procs.h"
 #include <stdio.h>
+#include <string.h>
 
 extern FILE *eventfile_h, *actfile;
 
 void
 llaction(lln,token)
+int lln;
 LLtoken *token;
 {
 	struct llattr *llattr;
+	(void) token;
 	llattr = &llattrdesc[lldescindex-1];
 switch(lln) {
 case 1:

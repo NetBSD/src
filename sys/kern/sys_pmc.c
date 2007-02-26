@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pmc.c,v 1.4 2003/01/20 01:40:48 thorpej Exp $	*/
+/*	$NetBSD: sys_pmc.c,v 1.4.18.1 2007/02/26 09:11:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -38,13 +38,12 @@
 #include "opt_perfctrs.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.4 2003/01/20 01:40:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pmc.c,v 1.4.18.1 2007/02/26 09:11:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/types.h>
 

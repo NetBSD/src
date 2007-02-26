@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.11.12.2 2006/12/30 20:47:45 yamt Exp $
+	$NetBSD: syscalls.master,v 1.11.12.3 2007/02/26 09:09:38 yamt Exp $
 ; based on NetBSD: syscalls.master,v 1.150 2005/11/29 22:52:02 yamt Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -55,7 +55,6 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/shm.h>
 #include <sys/syscallargs.h>
 #include <compat/pecoff/pecoff_syscallargs.h>
@@ -709,14 +708,12 @@
 328	UNIMPL
 329	UNIMPL
 ; Scheduler activation syscalls
-330	NOARGS		{ int sys_sa_register(sa_upcall_t new, \
-				sa_upcall_t *old, int flags, \
-				ssize_t stackinfo_offset); }
-331	NOARGS		{ int sys_sa_stacks(int num, stack_t *stacks); }
-332	NOARGS		{ int sys_sa_enable(void); }
-333	NOARGS		{ int sys_sa_setconcurrency(int concurrency); }
-334	NOARGS		{ int sys_sa_yield(void); }
-335	NOARGS		{ int sys_sa_preempt(int sa_id); }
+330	OBSOL		sys_sa_register
+331	OBSOL		sys_sa_stacks
+332	OBSOL		sys_sa_enable
+333	OBSOL		sys_sa_setconcurrency
+334	OBSOL		sys_sa_yield
+335	OBSOL		sys_sa_preempt
 336	OBSOL		sys_sa_unblockyield
 ;
 ; Syscalls 337-339 are reserved for other scheduler activation syscalls.

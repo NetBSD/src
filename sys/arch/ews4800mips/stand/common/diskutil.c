@@ -1,4 +1,4 @@
-/*	$NetBSD: diskutil.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: diskutil.c,v 1.1.18.3 2007/02/26 09:06:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -152,40 +152,40 @@ fstype(int partition)
 	return -1;
 }
 
-boolean_t
+bool
 find_partition_start(int partition,  int *sector)
 {
 
 	if (!read_vtoc())
-		return FALSE;
+		return false;
 
 	*sector = pdinfo.logical_sector +
 	    vtoc.partition[partition].start_sector;
 	printf("[partition=%d, start sector=%d]", partition, *sector);
 
-	return TRUE;
+	return true;
 }
 
-boolean_t
+bool
 read_vtoc(void)
 {
 
 	if (!DEVICE_CAPABILITY.disk_enabled)
-		return FALSE;
+		return false;
 
 	if (vtoc_readed)
-		return TRUE;
+		return true;
 
 	if (!pdinfo_sector(0, &pdinfo)) {
 		printf("no PDINFO\n");
-		return FALSE;
+		return false;
 	}
 
 	if (!vtoc_sector(0, &vtoc, pdinfo.logical_sector)) {
 		printf("no VTOC\n");
-		return FALSE;
+		return false;
 	}
-	vtoc_readed = TRUE;
+	vtoc_readed = true;
 
-	return TRUE;
+	return true;
 }

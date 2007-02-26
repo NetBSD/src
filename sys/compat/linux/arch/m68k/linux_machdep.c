@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.23.2.2 2006/12/30 20:47:35 yamt Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.23.2.3 2007/02/26 09:09:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23.2.2 2006/12/30 20:47:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23.2.3 2007/02/26 09:09:15 yamt Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.23.2.2 2006/12/30 20:47:35 yamt 
 #include <sys/mount.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
@@ -119,6 +118,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	struct proc *p = l->l_proc;
 	struct linux_sigframe *fp, kf;
 	short ft;
+	int error;
 
 	ft = frame->f_format;
 
@@ -234,8 +234,13 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	kf.sf_c.c_sc.sc_sp = frame->f_regs[SP];
 	kf.sf_c.c_sc.sc_pc = frame->f_pc;
 	kf.sf_c.c_sc.sc_ps = frame->f_sr;
+	sendsig_reset(l, sig);
 
-	if (copyout(&kf, fp, sizeof(struct linux_sigframe))) {
+	mutex_exit(&p->p_smutex);
+	error = copyout(&kf, fp, sizeof(struct linux_sigframe));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("setup_linux_sigframe(%d): copyout failed on sig %d\n",
@@ -279,6 +284,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 {
 	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *fp, kf;
+	int error;
 	short ft;
 
 	ft = frame->f_format;
@@ -410,13 +416,18 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 
 	/* Build the signal context to be used by sigreturn. */
 	native_to_linux_sigset(&kf.sf_uc.uc_sigmask, mask);
-	kf.sf_uc.uc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
+	kf.sf_uc.uc_stack.ss_sp = l->l_sigstk.ss_sp;
 	kf.sf_uc.uc_stack.ss_flags =
-		(p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
-		(p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
-	kf.sf_uc.uc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+		(l->l_sigstk.ss_flags & SS_ONSTACK ? LINUX_SS_ONSTACK : 0) |
+		(l->l_sigstk.ss_flags & SS_DISABLE ? LINUX_SS_DISABLE : 0);
+	kf.sf_uc.uc_stack.ss_size = l->l_sigstk.ss_size;
+	sendsig_reset(l, sig);
 
-	if (copyout(&kf, fp, sizeof(struct linux_rt_sigframe))) {
+	mutex_exit(&p->p_smutex);
+	error = copyout(&kf, fp, sizeof(struct linux_rt_sigframe));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("setup_linux_rt_sigframe(%d): copyout failed on sig %d\n",
@@ -475,7 +486,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -530,8 +541,11 @@ linux_sys_sigreturn(l, v, retval)
 #endif
 
 	/* Grab whole of the sigcontext. */
-	if (copyin((caddr_t) usp, &tsigc2, sizeof tsigc2))
-bad:		sigexit(l, SIGSEGV);
+	if (copyin((caddr_t) usp, &tsigc2, sizeof tsigc2)) {
+bad:
+		mutex_enter(&p->p_smutex);
+		sigexit(l, SIGSEGV);
+	}
 
 	scp = &tsigc2.c_sc;
 
@@ -557,8 +571,10 @@ bad:		sigexit(l, SIGSEGV);
 			sz, frame->f_stackadj);
 #endif
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 #if LINUX__NSIG_WORDS > 1
@@ -567,7 +583,9 @@ bad:		sigexit(l, SIGSEGV);
 #else
 	linux_old_to_native_sigset(&scp->sc_mask, &mask);
 #endif
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	/*
 	 * Restore the user supplied information.
@@ -681,8 +699,11 @@ linux_sys_rt_sigreturn(l, v, retval)
 #endif
 
 	/* Grab whole of the ucontext. */
-	if (copyin(ucp, &tuc, sizeof tuc))
-bad:		sigexit(l, SIGSEGV);
+	if (copyin(ucp, &tuc, sizeof tuc)) {
+bad:		
+		mutex_enter(&p->p_smutex);
+		sigexit(l, SIGSEGV);
+	}
 
 	/*
 	 * Check kernel stack and re-enter to syscall() if needed.
@@ -709,14 +730,18 @@ bad:		sigexit(l, SIGSEGV);
 	if (tuc.uc_mc.mc_version != LINUX_MCONTEXT_VERSION)
 		goto bad;
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags =
-		(p->p_sigctx.ps_sigstk.ss_flags & ~SS_ONSTACK) |
+	l->l_sigstk.ss_flags =
+		(l->l_sigstk.ss_flags & ~SS_ONSTACK) |
 		(tuc.uc_stack.ss_flags & LINUX_SS_ONSTACK ? SS_ONSTACK : 0);
 
 	/* Restore signal mask. */
 	linux_to_native_sigset(&mask, &tuc.uc_sigmask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	/*
 	 * Restore the user supplied information.
@@ -849,7 +874,7 @@ linux_sys_cacheflush(l, v, retval)
 	 */
 	if (scope == LINUX_FLUSH_SCOPE_ALL) {
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return error;
 #if defined(M68040) || defined(M68060)
 		/* entire cache */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8.2.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8.2.3 2007/02/26 09:08:55 yamt Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -72,6 +72,7 @@ struct pmap;
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
+	void	*ci_self150;		/* self-pointer + 0x150 */
 	void	*ci_tlog_base;		/* Trap log base */
 	int32_t ci_tlog_offset;		/* Trap log current offset */
 	struct cpu_info *ci_next;	/* next cpu */
@@ -108,6 +109,8 @@ struct cpu_info {
 
 	struct iplsource *ci_isources[NIPL];
 	u_int32_t	ci_ipending;
+	int		ci_mtx_count;
+	int		ci_mtx_oldspl;
 	int		ci_ilevel;
 	int		ci_idepth;
 #if 0
@@ -210,18 +213,12 @@ curcpu()
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define aston(p)		((p)->p_md.md_astpending = 1)
+#define aston(l)		((l)->l_md.md_astpending = 1)
 
 extern	struct cpu_info *cpu_info[X86_MAXPROCS];
 
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_pcbs(void);
-
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void need_resched(struct cpu_info *);
 
 #else /* !MULTIPROCESSOR */
 
@@ -235,21 +232,15 @@ extern void need_resched(struct cpu_info *);
 #define	cpu_number()		0
 #define CPU_IS_PRIMARY(ci)	1
 
+#define aston(l)		((l)->l_md.md_astpending = 1)
+
+#endif /* MULTIPROCESSOR */
+
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)						\
-do {									\
-	struct cpu_info *__ci = (ci);					\
-	__ci->ci_want_resched = 1;					\
-	if (__ci->ci_curlwp != NULL)					\
-		aston(__ci->ci_curlwp->l_proc);       			\
-} while (/*CONSTCOND*/0)
-
-#define aston(p)		((p)->p_md.md_astpending = 1)
-
-#endif /* MULTIPROCESSOR */
+extern void cpu_need_resched(struct cpu_info *);
 
 extern u_int32_t cpus_attached;
 
@@ -260,17 +251,12 @@ extern u_int32_t cpus_attached;
  * Arguments to hardclock, softclock and statclock
  * encapsulate the previous machine state in an opaque
  * clockframe; for now, use generic intrframe.
- *
- * Note: Since spllowersoftclock() does not actually unmask the currently
- * running (hardclock) interrupt, CLKF_BASEPRI() *must* always be 0; otherwise
- * we could stall hardclock ticks if another interrupt takes too long.
  */
 struct clockframe {
 	struct intrframe cf_if;
 };
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_eflags)
-#define	CLKF_BASEPRI(frame)	(0)
 #define	CLKF_PC(frame)		((frame)->cf_if.if_eip)
 #define	CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
@@ -285,13 +271,13 @@ struct clockframe {
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
+extern void	cpu_need_proftick(struct lwp *l);
 
 /*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
+ * Notify the LWP l that it has a signal pending, process as soon as
+ * possible.
  */
-#define	signotify(p)		aston(p)
+extern void	cpu_signotify(struct lwp *);
 
 /*
  * We need a machine-independent name for this.

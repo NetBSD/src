@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.73.2.2 2006/12/30 20:50:55 yamt Exp $
+#	$NetBSD: Makefile,v 1.73.2.3 2007/02/26 09:12:09 yamt Exp $
 
 INCSDIR= /usr/include/sys
 
 INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	bootblock.h bswap.h buf.h \
 	callout.h cdefs.h cdefs_aout.h \
-	cdefs_elf.h cdio.h chio.h clockctl.h conf.h core.h \
+	cdefs_elf.h cdio.h chio.h clockctl.h condvar.h conf.h core.h \
 	device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
 	disklabel_gpt.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
@@ -18,13 +18,13 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	kcore.h kgdb.h ksem.h ksyms.h ktrace.h \
 	lkm.h localedef.h lock.h lockf.h lwp.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
-	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h \
+	md5.h midiio.h mman.h mount.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h ptrace.h queue.h \
-	ras.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h \
-	sa.h scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
-	shm.h siginfo.h signal.h signalvar.h sigtypes.h socket.h \
+	ras.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h rwlock.h \
+	scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
+	shm.h siginfo.h signal.h signalvar.h sigtypes.h sleepq.h socket.h \
 	socketvar.h sockio.h specificdata.h stat.h statvfs.h \
 	syscall.h syscallargs.h sysctl.h systrace.h stdint.h swap.h \
 	syslimits.h syslog.h \

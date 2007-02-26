@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3.16.2 2006/12/30 20:45:25 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.3.16.3 2007/02/26 09:05:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -65,6 +65,8 @@
 
 #define _ENTRY(x) \
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
+#define _LABEL(x) \
+	.globl x; x:
 
 #ifdef _KERNEL
 /* XXX Can't use __CONCAT() here, as it would be evaluated incorrectly. */
@@ -94,6 +96,7 @@
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	NENTRY(y)	_ENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	LABEL(y)	_LABEL(_C_LABEL(y))
 
 #define	ASMSTR		.asciz
 
@@ -120,27 +123,5 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(sym),1,0,0,0
 #endif /* __STDC__ */
-
-/*
- * Assembley equivalent of spllower().  Label contains the label to jump to
- * if we need to fire off pending interrupts (e.g. _C_LABEL(Xspllower)).
- *
- * On entry %rcx = new SPL.
- */
-#define	SPLLOWER(label)						\
-	movq		CPUVAR(SELF), %r9 ;			\
-	cmpl		CPU_INFO_ILEVEL(%r9), %ecx ;		\
-	jae		99f ;					\
-	movl		CPU_INFO_IUNMASK(%r9,%rcx,4), %edi ;	\
-	pushfq		;					\
-	popq		%rax ;					\
-	cli		;					\
-	testl		CPU_INFO_IPENDING(%r9), %edi ;		\
-	movq		%rcx, %rdi ;				\
-	jnz		label ;					\
-	movl		%ecx, CPU_INFO_ILEVEL(%r9) ;		\
-	pushq		%rax ;					\
-	popfq		;					\
-99:
 
 #endif /* !_AMD64_ASM_H_ */

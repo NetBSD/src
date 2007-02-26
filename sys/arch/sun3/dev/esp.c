@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.20.6.1 2006/06/21 14:57:05 yamt Exp $	*/
+/*	$NetBSD: esp.c,v 1.20.6.2 2007/02/26 09:08:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20.6.1 2006/06/21 14:57:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20.6.2 2007/02/26 09:08:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20.6.1 2006/06/21 14:57:05 yamt Exp $");
 #include <dev/scsipi/scsi_message.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
@@ -69,7 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20.6.1 2006/06/21 14:57:05 yamt Exp $");
 
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
-	volatile u_char *sc_reg;		/* the registers */
+	bus_space_tag_t sc_bst;			/* bus space tag */
+	bus_space_handle_t sc_bsh;		/* bus space handle */
 	struct dma_softc *sc_dma;		/* pointer to my dma */
 };
 
@@ -138,10 +140,14 @@ espattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_glue = &esp_glue;
 
 	/*
-	 * Map in the ESP registers.
+	 * Map the ESP registers.
 	 */
-	esc->sc_reg =
-		bus_mapin(ca->ca_bustype, ca->ca_paddr, ESP_REG_SIZE);
+	esc->sc_bst = ca->ca_bustag;
+	if (bus_space_map(esc->sc_bst, ca->ca_paddr, ESP_REG_SIZE, 0,
+	    &esc->sc_bsh) != 0) {
+		printf(": can't map register\n");
+		return;
+	}
 
 	/* Other settings */
 	sc->sc_id = 7;
@@ -151,7 +157,7 @@ espattach(struct device *parent, struct device *self, void *aux)
 	 * Hook up the DMA driver.
 	 */
 	esc->sc_dma = espdmafind(device_unit(&sc->sc_dev));
-	esc->sc_dma->sc_esp = sc; /* Point back to us */
+	esc->sc_dma->sc_client = sc; /* Point back to us */
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -255,7 +261,7 @@ esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (esc->sc_reg[reg * 4]);
+	return bus_space_read_1(esc->sc_bst, esc->sc_bsh, reg * 4);
 }
 
 void
@@ -263,17 +269,15 @@ esp_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_reg[reg * 4] = val;
+	bus_space_write_1(esc->sc_bst, esc->sc_bsh, reg * 4, val);
 }
 
 int 
 esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	uint32_t csr;
 
-	csr = DMACSR(esc->sc_dma);
-	return (csr & (D_INT_PEND|D_ERR_PEND));
+	return DMA_ISINTR(esc->sc_dma);
 }
 
 void 
@@ -289,7 +293,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (espdmaintr(esc->sc_dma));
+	return espdmaintr(esc->sc_dma);
 }
 
 int 
@@ -298,7 +302,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (dma_setup(esc->sc_dma, addr, len, datain, dmasize));
+	return dma_setup(esc->sc_dma, addr, len, datain, dmasize);
 }
 
 void 
@@ -306,9 +310,7 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	/* Start DMA */
-	DMACSR(esc->sc_dma) |= D_EN_DMA;
-	esc->sc_dma->sc_active = 1;
+	DMA_GO(esc->sc_dma);
 }
 
 void 
@@ -316,7 +318,7 @@ esp_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	DMACSR(esc->sc_dma) &= ~D_EN_DMA;
+	DMA_STOP(esc->sc_dma);
 }
 
 int 
@@ -324,5 +326,5 @@ esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	return (esc->sc_dma->sc_active);
+	return DMA_ISACTIVE(esc->sc_dma);
 }

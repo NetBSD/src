@@ -1,7 +1,7 @@
-/*	$NetBSD: callout.h,v 1.21 2005/03/04 05:51:41 mycroft Exp $	*/
+/*	$NetBSD: callout.h,v 1.21.4.1 2007/02/26 09:12:10 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2003, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,6 +95,7 @@ struct callout {
 	void	*c_arg;				/* function argument */
 	int	c_time;				/* when callout fires */
 	int	c_flags;			/* state of this entry */
+	void	*c_oncpu;			/* MP: running on CPU */
 };
 
 #define	CALLOUT_PENDING		0x0002	/* callout is on the queue */
@@ -102,7 +103,7 @@ struct callout {
 #define	CALLOUT_INVOKING	0x0008	/* callout function is being invoked */
 
 #define	CALLOUT_INITIALIZER_SETFUNC(func, arg)				\
-				{ {{NULL}, {NULL}}, func, arg, 0, 0 }
+				{ {{NULL}, {NULL}}, func, arg, 0, 0, NULL }
 
 #define	CALLOUT_INITIALIZER	CALLOUT_INITIALIZER_SETFUNC(NULL, NULL)
 

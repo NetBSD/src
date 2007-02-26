@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.74.2.2 2006/12/30 20:49:50 yamt Exp $ */
+/* $NetBSD: wsconsio.h,v 1.74.2.3 2007/02/26 09:10:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -75,7 +75,7 @@ struct wscons_event {
 #define	WSCONS_EVENT_MOUSE_DELTA_W	14	/* W delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	15	/* W location */
 
-
+#define WSCONS_EVENT_ASCII			13	/* data is an ASCII code */
 /*
  * Keyboard ioctls (0 - 31)
  */
@@ -203,6 +203,8 @@ struct wskbd_scroll_data {
 #define	WSMOUSE_TYPE_MAPLE	12	/* Dreamcast Maple mouse */
 #define	WSMOUSE_TYPE_SGI	13	/* SGI mouse */
 #define	WSMOUSE_TYPE_BLUETOOTH	14	/* Bluetooth mouse */
+#define WSMOUSE_TYPE_ADB	15	/* ADB mouse or touchpad */
+#define WSMOUSE_TYPE_PSEUDO	16	/* not actually a mouse */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)

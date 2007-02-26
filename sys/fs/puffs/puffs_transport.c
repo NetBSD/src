@@ -1,4 +1,4 @@
-/* $NetBSD: puffs_transport.c,v 1.3.2.2 2006/12/30 20:50:01 yamt Exp $ */
+/* $NetBSD: puffs_transport.c,v 1.3.2.3 2007/02/26 09:10:57 yamt Exp $ */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -32,19 +32,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.3.2.2 2006/12/30 20:50:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_transport.c,v 1.3.2.3 2007/02/26 09:10:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/fstrans.h>
+#include <sys/kthread.h>
 #include <sys/malloc.h>
+#include <sys/namei.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
 
 #include <fs/puffs/puffs_sys.h>
 
-#include <miscfs/syncfs/syncfs.h> /* XXX: for syncer_lock reference */
+#include <miscfs/syncfs/syncfs.h> /* XXX: for syncer_mutex reference */
 
 
 /*
@@ -199,6 +202,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 */
 	mp = PMPTOMP(pmp);
 	simple_unlock(&pi_lock);
+	simple_lock(&pmp->pmp_lock);
 
 	/*
 	 * Free the waiting callers before proceeding any further.
@@ -222,11 +226,31 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * since pmp isn't locked.  We might end up with PMP_DEAD after
 	 * restart and exit from there.
 	 */
-	simple_lock(&pmp->pmp_lock);
 	if (pmp->pmp_unmounting) {
 		ltsleep(&pmp->pmp_unmounting, PNORELOCK | PVFS, "puffsum",
 		    0, &pmp->pmp_lock);
 		DPRINTF(("puffs_fop_close: unmount was in progress for pmp %p, "
+		    "restart\n", pmp));
+		goto restart;
+	}
+	simple_unlock(&pmp->pmp_lock);
+
+	/*
+	 * Check that suspend isn't running.  Issues here:
+	 * + we cannot nuke the mountpoint while suspend is running
+	 *   because we risk nuking it from under us (as usual... does
+	 *   anyone see a pattern forming?)
+	 * + we must have userdead or the suspend thread might deadlock.
+	 *   this has been done above
+	 * + this DOES NOT solve the problem with the regular unmount path.
+	 *   however, it is way way way way less likely a problem.
+	 *   perhaps vfs_busy() in vfs_suspend() would help?
+	 */
+	simple_lock(&pmp->pmp_lock);
+	if (pmp->pmp_suspend) {
+		ltsleep(&pmp->pmp_suspend, PNORELOCK | PVFS, "puffsusum",
+		    0, &pmp->pmp_lock);
+		DPRINTF(("puffs_fop_close: suspend was in progress for pmp %p, "
 		    "restart\n", pmp));
 		goto restart;
 	}
@@ -240,14 +264,14 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * mount point.  See dounmount() for details.
 	 *
 	 * XXX2: take a reference to the mountpoint before starting to
-	 * wait for syncer_lock.  Otherwise the mointpoint can be
+	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
 	simple_lock(&mp->mnt_slock);
 	mp->mnt_wcnt++;
 	simple_unlock(&mp->mnt_slock);
 
-	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&syncer_mutex);
 
 	simple_lock(&mp->mnt_slock);
 	mp->mnt_wcnt--;
@@ -256,7 +280,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	gone = mp->mnt_iflag & IMNT_GONE;
 	simple_unlock(&mp->mnt_slock);
 	if (gone) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		goto out;
 	}
 
@@ -272,7 +296,7 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	 * XXX: skating on the thin ice of modern calling conventions ...
 	 */
 	if (vfs_busy(mp, 0, 0)) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		goto out;
 	}
 
@@ -294,6 +318,92 @@ puffs_fop_close(struct file *fp, struct lwp *l)
 	FREE(pi, M_PUFFS);
 
 	return 0;
+}
+
+static int
+puffs_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
+{
+	struct vnode *vp;
+	int rv;
+
+	/* XXX: slurry */
+	if (pf->pf_op == PUFFS_INVAL_NAMECACHE_ALL) {
+		cache_purgevfs(PMPTOMP(pmp));
+		return 0;
+	}
+
+	rv = 0;
+
+	/*
+	 * Get vnode, don't lock it.  Namecache is protected by its own lock
+	 * and we have a reference to protect against premature harvesting.
+	 *
+	 * The node we want here might be locked and the op is in
+	 * userspace waiting for us to complete ==> deadlock.  Another
+	 * reason we need to eventually bump locking to userspace, as we
+	 * will need to lock the node if we wish to do flushes.
+	 */
+	vp = puffs_pnode2vnode(pmp, pf->pf_cookie, 0);
+	if (vp == NULL)
+		return ENOENT;
+
+	switch (pf->pf_op) {
+#if 0
+	/* not quite ready, yet */
+	case PUFFS_INVAL_NAMECACHE_NODE:
+	struct componentname *pf_cn;
+	char *name;
+		/* get comfortab^Wcomponentname */
+		MALLOC(pf_cn, struct componentname *,
+		    sizeof(struct componentname), M_PUFFS, M_WAITOK | M_ZERO);
+		memset(pf_cn, 0, sizeof(struct componentname));
+		break;
+
+#endif
+	case PUFFS_INVAL_NAMECACHE_DIR:
+		cache_purge1(vp, NULL, PURGE_CHILDREN);
+		break;
+
+	default:
+		rv = EINVAL;
+	}
+
+	vrele(vp);
+
+	return rv;
+}
+
+static void
+dosuspendresume(void *arg)
+{
+	struct puffs_mount *pmp = arg;
+	struct mount *mp;
+	int rv;
+
+	mp = PMPTOMP(pmp);
+	/*
+	 * XXX?  does this really do any good or is it just
+	 * paranoid stupidity?  or stupid paranoia?
+	 */
+	if (mp->mnt_iflag & IMNT_UNMOUNT) {
+		printf("puffs dosuspendresume(): detected suspend on "
+		    "unmounting fs\n");
+		goto out;
+	}
+
+	/* do the dance */
+	rv = vfs_suspend(PMPTOMP(pmp), 0);
+	if (rv == 0)
+		vfs_resume(PMPTOMP(pmp));
+
+	simple_lock(&pmp->pmp_lock);
+	KASSERT(pmp->pmp_suspend);
+	pmp->pmp_suspend = 0;
+	wakeup(&pmp->pmp_suspend);
+	simple_unlock(&pmp->pmp_lock);
+
+ out:
+	kthread_exit(0);
 }
 
 static int
@@ -324,6 +434,23 @@ puffs_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 
 	case PUFFSSTARTOP:
 		rv = puffs_start2(pmp, data);
+		break;
+
+	case PUFFSFLUSHOP:
+		rv = puffs_flush(pmp, data);
+		break;
+
+	case PUFFSSUSPENDOP:
+		rv = 0;
+		simple_lock(&pmp->pmp_lock);
+		if (pmp->pmp_suspend || pmp->pmp_status != PUFFSTAT_RUNNING)
+			rv = EBUSY;
+		else
+			pmp->pmp_suspend = 1;
+		simple_unlock(&pmp->pmp_lock);
+		if (rv)
+			break;
+		rv = kthread_create1(dosuspendresume, pmp, NULL, "puffsusp");
 		break;
 
 	/* already done in sys_ioctl() */

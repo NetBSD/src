@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.60.2.2 2006/12/30 20:51:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.60.2.3 2007/02/26 09:12:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.60.2.2 2006/12/30 20:51:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.60.2.3 2007/02/26 09:12:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,12 +350,15 @@ ext2fs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)))
+		    NULL)))
 			return (error);
 #ifdef EXT2FS_SYSTEM_FLAGS
-		if (kauth_cred_geteuid(cred) == 0) {
+		if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
+		    NULL) == 0) {
 			if ((ip->i_e2fs_flags &
-			    (EXT2_APPEND | EXT2_IMMUTABLE)) && securelevel > 0)
+			    (EXT2_APPEND | EXT2_IMMUTABLE)) &&
+			    kauth_authorize_system(l->l_cred,
+			     KAUTH_SYSTEM_CHSYSFLAGS, 0, NULL, NULL, NULL))
 				return (EPERM);
 			ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
 			ip->i_e2fs_flags |=
@@ -411,7 +414,7 @@ ext2fs_setattr(void *v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 			(error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, 
-			&l->l_acflag)) &&
+			NULL)) &&
 			((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 			(error = VOP_ACCESS(vp, VWRITE, cred, l))))
 			return (error);
@@ -447,9 +450,9 @@ ext2fs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 
 	if (kauth_cred_geteuid(cred) != ip->i_e2fs_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    NULL)))
 		return (error);
-	if (kauth_cred_geteuid(cred)) {
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		if (vp->v_type != VDIR && (mode & S_ISTXT))
 			return (EFTYPE);
 		if ((kauth_cred_ismember_gid(cred, ip->i_e2fs_gid, &ismember) != 0 ||
@@ -488,8 +491,7 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
  	    (gid != ip->i_e2fs_gid &&
 	    !(kauth_cred_getegid(cred) == gid ||
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
-	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
+	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL)))
 		return (error);
 	ogid = ip->i_e2fs_gid;
 	ouid = ip->i_e2fs_uid;
@@ -498,9 +500,11 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	ip->i_e2fs_uid = uid;
 	if (ouid != uid || ogid != gid)
 		ip->i_flag |= IN_CHANGE;
-	if (ouid != uid && kauth_cred_geteuid(cred) != 0)
+	if (ouid != uid && kauth_authorize_generic(cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		ip->i_e2fs_mode &= ~ISUID;
-	if (ogid != gid && kauth_cred_geteuid(cred) != 0)
+	if (ogid != gid && kauth_authorize_generic(cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		ip->i_e2fs_mode &= ~ISGID;
 	return (0);
 }
@@ -863,7 +867,9 @@ abortit:
 		 * otherwise the destination may not be changed (except by
 		 * root). This implements append-only directories.
 		 */
-		if ((dp->i_e2fs_mode & S_ISTXT) && kauth_cred_geteuid(tcnp->cn_cred) != 0 &&
+		if ((dp->i_e2fs_mode & S_ISTXT) &&
+		    kauth_authorize_generic(tcnp->cn_cred,
+		     KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
 		    kauth_cred_geteuid(tcnp->cn_cred) != dp->i_e2fs_uid &&
 		    xp->i_e2fs_uid != kauth_cred_geteuid(tcnp->cn_cred)) {
 			error = EPERM;
@@ -1492,6 +1498,7 @@ ext2fs_reclaim(void *v)
 		return (error);
 	if (ip->i_din.e2fs_din != NULL)
 		pool_put(&ext2fs_dinode_pool, ip->i_din.e2fs_din);
+	genfs_node_destroy(vp);
 	pool_put(&ext2fs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);

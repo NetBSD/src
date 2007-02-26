@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.27.2.2 2006/12/30 20:50:07 yamt Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.27.2.3 2007/02/26 09:11:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.27.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.27.2.3 2007/02/26 09:11:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.27.2.2 2006/12/30 20:50:07 yamt Exp
 
 #include <ufs/ufs/dir.h>	/* XXX only for DIRBLKSIZ */
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*

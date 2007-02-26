@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.13.2.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.13.2.2 2007/02/26 09:11:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -181,10 +181,10 @@ void eonattach   (void);
 int eonioctl    (struct ifnet *, u_long, caddr_t);
 void eoniphdr    (struct eon_iphdr *, const void *, struct route *, int, int);
 void eonrtrequest (int, struct rtentry *, struct rt_addrinfo *);
-int eonoutput   (struct ifnet *, struct mbuf *, struct sockaddr *,
+int eonoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 		     struct rtentry *);
 void eoninput    (struct mbuf *, ...);
-void *eonctlinput (int, struct sockaddr *, void *);
+void *eonctlinput(int, const struct sockaddr *, void *);
 #endif
 
 #endif /* !_NETISO_EONVAR_H_ */

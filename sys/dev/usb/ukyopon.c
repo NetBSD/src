@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.1.6.1 2006/06/21 15:07:44 yamt Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.1.6.2 2007/02/26 09:10:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.1.6.1 2006/06/21 15:07:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.1.6.2 2007/02/26 09:10:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.1.6.1 2006/06/21 15:07:44 yamt Exp $")
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/umodemvar.h>
 #include <dev/usb/ukyopon.h>

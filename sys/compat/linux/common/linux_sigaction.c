@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigaction.c,v 1.26.2.1 2006/12/30 20:47:38 yamt Exp $	*/
+/*	$NetBSD: linux_sigaction.c,v 1.26.2.2 2007/02/26 09:09:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.26.2.1 2006/12/30 20:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.26.2.2 2007/02/26 09:09:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sigaction.c,v 1.26.2.1 2006/12/30 20:47:38 yam
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -77,7 +76,6 @@ linux_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const struct linux_old_sigaction *) nsa;
 		syscallarg(struct linux_old_sigaction *) osa;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct linux_old_sigaction nlsa, olsa;
 	struct sigaction nbsa, obsa;
 	int error, sig;
@@ -100,7 +98,7 @@ linux_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 		sigemptyset(&obsa.sa_mask);
 		obsa.sa_flags = 0;
 	} else {
-		error = sigaction1(p, linux_to_native_signo[sig],
+		error = sigaction1(l, linux_to_native_signo[sig],
 		    SCARG(uap, nsa) ? &nbsa : 0, SCARG(uap, osa) ? &obsa : 0,
 		    NULL, 0);
 		if (error)

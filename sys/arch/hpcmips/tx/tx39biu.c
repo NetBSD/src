@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.9.16.1 2006/06/21 14:51:50 yamt Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.9.16.2 2007/02/26 09:06:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.9.16.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.9.16.2 2007/02/26 09:06:38 yamt Exp $");
 
 #include "opt_tx39_watchdogtimer.h"
 #include "opt_tx39biu_debug.h"
@@ -57,7 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: tx39biu.c,v 1.9.16.1 2006/06/21 14:51:50 yamt Exp $"
 #define DPRINTF_ENABLE
 #define DPRINTF_DEBUG	tx39biu_debug
 #endif
-#include <machine/debug.h>
 
 #define ISSETPRINT(r, s, m) dbg_bitmask_print((u_int32_t)(r),		\
 	TX39_MEMCONFIG ## s ## _ ##m, #m)

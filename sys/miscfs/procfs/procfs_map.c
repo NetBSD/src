@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_map.c,v 1.21.4.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: procfs_map.c,v 1.21.4.3 2007/02/26 09:11:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.21.4.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_map.c,v 1.21.4.3 2007/02/26 09:11:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,9 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	     struct uio *uio, int linuxmode)
 {
 	size_t len;
-	int error;
-	struct vm_map *map = &p->p_vmspace->vm_map;
+	int error, retries;
+	struct vmspace *vm;
+	struct vm_map *map;
 	struct vm_map_entry *entry;
 	char mebuffer[MEBUFFERSIZE];
 	char *path;
@@ -122,6 +123,8 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	struct vattr va;
 	dev_t dev;
 	long fileid;
+	unsigned timestamp;
+	struct uio savuio;
 
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
@@ -130,23 +133,40 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 		return (0);
 
 	error = 0;
-	if (map != &curl->l_proc->p_vmspace->vm_map)
-		vm_map_lock_read(map);
+	path = NULL;
+
+	if (linuxmode != 0) {
+		path = (char *)malloc(MAXPATHLEN * 4, M_TEMP, M_WAITOK);
+		if (path == NULL)
+			return ENOMEM;
+	}
+
+	if ((error = proc_vmspace_getref(p, &vm)) != 0) {
+		if (path != NULL)
+			free(path, M_TEMP);
+		return (error);
+	}
+
+	map = &vm->vm_map;
+	memcpy(&savuio, uio, sizeof(savuio));
+	retries = 0;
+	vm_map_lock_read(map);
+
+ restart:
 	for (entry = map->header.next;
 		((uio->uio_resid > 0) && (entry != &map->header));
 		entry = entry->next) {
+
+		if (retries > 250) {
+			error = EWOULDBLOCK;
+			break;
+		}
 
 		if (UVM_ET_ISSUBMAP(entry))
 			continue;
 
 		if (linuxmode != 0) {
-			path = (char *)malloc(MAXPATHLEN * 4, M_TEMP, M_WAITOK);
-			if (path == NULL) {
-				error = ENOMEM;
-				break;
-			}
 			*path = 0;
-
 			dev = (dev_t)0;
 			fileid = 0;
 			if (UVM_ET_ISOBJ(entry) &&
@@ -172,7 +192,6 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			    (int)sizeof(void *) * 2,
 			    (unsigned long)entry->offset,
 			    major(dev), minor(dev), fileid, path);
-			free(path, M_TEMP);
 		} else {
 			snprintf(mebuffer, sizeof(mebuffer),
 			    "0x%lx 0x%lx %c%c%c %c%c%c %s %s %d %d %d\n",
@@ -196,19 +215,41 @@ procfs_domap(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 			error = EFBIG;
 			break;
 		}
+
+		timestamp = map->timestamp;
+		vm_map_unlock_read(map);
 		error = uiomove(mebuffer, len, uio);
+		vm_map_lock_read(map);
 		if (error)
 			break;
+
+		if (timestamp != map->timestamp) {
+			/*
+			 * The map may have changed, so restart.  We
+			 * make an ugly assumption about uiomove()
+			 * and the vm_map timestamp: it will never
+			 * fall back to copyout_vmspace() because
+			 * we are copying out to curproc.
+			 */
+			KASSERT(uio->uio_vmspace == curproc->p_vmspace);
+			retries++;
+			memcpy(uio, &savuio, sizeof(*uio));
+			goto restart;
+		}
 	}
-	if (map != &curl->l_proc->p_vmspace->vm_map)
-		vm_map_unlock_read(map);
+
+	vm_map_unlock_read(map);
+	uvmspace_free(vm);
+	if (path != NULL)
+		free(path, M_TEMP);
+
 	return error;
 }
 
 int
 procfs_validmap(struct lwp *l, struct mount *mp)
 {
-	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
+	return ((l->l_flag & LW_SYSTEM) == 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.3.12.1 2006/06/21 15:02:46 yamt Exp $ */
+/*	$NetBSD: mt.c,v 1.3.12.2 2007/02/26 09:10:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.3.12.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.3.12.2 2007/02/26 09:10:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ struct	mt_softc {
 
 #define	MTUNIT(x)	(minor(x) & 0x03)
 
-#define B_CMD		B_XXX		/* command buf instead of data */
+#define B_CMD		B_DEVPRIVATE	/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
 int	mtmatch(struct device *, struct cfdata *, void *);
@@ -220,7 +220,7 @@ extern struct cfdriver mt_cd;
 
 struct	mtinfo {
 	u_short	hwid;
-	char	*desc;
+	const char	*desc;
 } mtinfo[] = {
 	{ MT7978ID,	"7978"	},
 	{ MT7979AID,	"7979A"	},
@@ -374,10 +374,10 @@ getstats:
 }
 
 int
-mtopen(dev, flag, mode, p)
+mtopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mt_softc *sc;
 	int req_den;
@@ -394,7 +394,7 @@ mtopen(dev, flag, mode, p)
 	    sc->sc_flags));
 
 	sc->sc_flags |= MTF_OPEN;
-	sc->sc_ttyp = tprintf_open(p);
+	sc->sc_ttyp = tprintf_open(l->l_proc);
 	if ((sc->sc_flags & MTF_ALIVE) == 0) {
 		error = mtcommand(dev, MTRESET, 0);
 		if (error != 0 || (sc->sc_flags & MTF_ALIVE) == 0)
@@ -480,10 +480,10 @@ errout:
 }
 
 int
-mtclose(dev, flag, fmt, p)
+mtclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mt_softc *sc;
 
@@ -576,7 +576,7 @@ mtstrategy(bp)
 		}
 		if (bp->b_bcount > s) {
 			tprintf(sc->sc_ttyp,
-				"%s: write record (%ld) too big: limit (%d)\n",
+				"%s: write record (%d) too big: limit (%d)\n",
 				sc->sc_dev.dv_xname, bp->b_bcount, s);
 #if 0 /* XXX see above */
 	    error:
@@ -995,7 +995,7 @@ mtintr(sc)
 			    sc->sc_dev.dv_xname, bp->b_bcount, bp->b_resid));
 		} else {
 			tprintf(sc->sc_ttyp,
-				"%s: record (%d) larger than wanted (%ld)\n",
+				"%s: record (%d) larger than wanted (%d)\n",
 				sc->sc_dev.dv_xname, i, bp->b_bcount);
 error:
 			sc->sc_flags &= ~MTF_IO;
@@ -1048,12 +1048,12 @@ mtwrite(dev, uio, flags)
 }
 
 int
-mtioctl(dev, cmd, data, flag, p)
+mtioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mtop *op;
 	int cnt;

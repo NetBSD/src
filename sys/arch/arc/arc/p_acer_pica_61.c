@@ -1,4 +1,4 @@
-/*	$NetBSD: p_acer_pica_61.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: p_acer_pica_61.c,v 1.8.8.1 2007/02/26 09:05:50 yamt Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.8.8.1 2007/02/26 09:05:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -94,7 +94,7 @@ p_acer_pica_61_init(void)
 	 * if page zero in the idle loop is enabled,
 	 * commands dump core due to incoherent cache.
 	 */
-	vm_page_zero_enable = FALSE; /* XXX - should be enabled */
+	vm_page_zero_enable = false; /* XXX - should be enabled */
 
 	c_magnum_init();
 

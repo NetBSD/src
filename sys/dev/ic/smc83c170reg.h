@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170reg.h,v 1.9.16.1 2006/06/21 15:02:56 yamt Exp $	*/
+/*	$NetBSD: smc83c170reg.h,v 1.9.16.2 2007/02/26 09:10:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,10 +49,10 @@
  * EPIC transmit descriptor.  Must be 4-byte aligned.
  */
 struct epic_txdesc {
-	uint32_t	et_txstatus;	/* transmit status; see below */
-	uint32_t	et_bufaddr;	/* buffer address */
-	uint32_t	et_control;	/* control word; see below */
-	uint32_t	et_nextdesc;	/* next descriptor pointer */
+	volatile uint32_t et_txstatus;	/* transmit status; see below */
+	volatile uint32_t et_bufaddr;	/* buffer address */
+	volatile uint32_t et_control;	/* control word; see below */
+	volatile uint32_t et_nextdesc;	/* next descriptor pointer */
 };
 
 /* et_txstatus */
@@ -86,10 +86,10 @@ struct epic_txdesc {
  * EPIC receive descriptor.  Must be 4-byte aligned.
  */
 struct epic_rxdesc {
-	uint32_t	er_rxstatus;	/* receive status; see below */
-	uint32_t	er_bufaddr;	/* buffer address */
-	uint32_t	er_control;	/* control word; see below */
-	uint32_t	er_nextdesc;	/* next descriptor pointer */
+	volatile uint32_t er_rxstatus;	/* receive status; see below */
+	volatile uint32_t er_bufaddr;	/* buffer address */
+	volatile uint32_t er_control;	/* control word; see below */
+	volatile uint32_t er_nextdesc;	/* next descriptor pointer */
 };
 
 /* er_rxstatus */
@@ -126,10 +126,10 @@ struct epic_rxdesc {
  * EPIC fraglist descriptor.
  */
 struct epic_fraglist {
-	uint32_t	ef_nfrags;	/* number of frags in list */
+	volatile uint32_t ef_nfrags;	/* number of frags in list */
 	struct {
-		uint32_t ef_addr;	/* address of frag */
-		uint32_t ef_length;	/* length of frag */
+		volatile uint32_t ef_addr;	/* address of frag */
+		volatile uint32_t ef_length;	/* length of frag */
 	} ef_frags[EPIC_NFRAGS];
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.24.4.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.24.4.3 2007/02/26 09:11:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.4.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.4.3 2007/02/26 09:11:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.24.4.2 2006/12/30 20:50:07 yamt Exp $"
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#define cttyvp(p) ((p)->p_flag & P_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
+/* XXXSMP */
+#define cttyvp(p) ((p)->p_lflag & PL_CONTROLT ? (p)->p_session->s_ttyvp : NULL)
 
 /*ARGSUSED*/
 static int
@@ -119,17 +120,21 @@ static int
 cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 {
 	struct vnode *ttyvp = cttyvp(l->l_proc);
+	int rv;
 
 	if (ttyvp == NULL)
 		return (EIO);
 	if (cmd == TIOCSCTTY)		/* XXX */
 		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
+		rw_enter(&proclist_lock, RW_WRITER);
 		if (!SESS_LEADER(l->l_proc)) {
-			l->l_proc->p_flag &= ~P_CONTROLT;
-			return (0);
+			l->l_proc->p_lflag &= ~PL_CONTROLT;
+			rv = 0;
 		} else
-			return (EINVAL);
+			rv = EINVAL;
+		rw_exit(&proclist_lock);
+		return (rv);
 	}
 	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, l));
 }

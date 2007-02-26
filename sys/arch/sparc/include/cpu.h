@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72.2.1 2006/06/21 14:56:12 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.72.2.2 2007/02/26 09:08:16 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,6 @@ typedef struct clockframe clockframe;
 extern int eintstack[];
 
 #define	CLKF_USERMODE(framep)	(((framep)->psr & PSR_PS) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->psr & PSR_PIL) == 0)
 #define	CLKF_LOPRI(framep,n)	(((framep)->psr & PSR_PIL) < (n) << 8)
 #define	CLKF_PC(framep)		((framep)->pc)
 #if defined(MULTIPROCESSOR)
@@ -131,7 +130,7 @@ extern void *softnet_cookie;
  * Preempt the current process on the target CPU if in interrupt from
  * user mode, or after the current trap/syscall if in system mode.
  */
-#define need_resched(ci) do {						\
+#define cpu_need_resched(ci) do {					\
 	(ci)->want_resched = 1;						\
 	(ci)->want_ast = 1;						\
 									\
@@ -145,13 +144,20 @@ extern void *softnet_cookie;
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, cpuinfo.want_ast = 1)
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, cpuinfo.want_ast = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		(cpuinfo.want_ast = 1)
+#define cpu_signotify(l) do {						\
+	struct cpu_info *_ci = (l)->l_cpu;				\
+	_ci->want_ast = 1;						\
+									\
+	/* Just interrupt the target CPU, so it can notice its AST */	\
+	if (_ci->ci_cpuid != cpu_number())				\
+		XCALL0(sparc_noop, 1U << _ci->ci_cpuid);		\
+} while (/*CONSTCOND*/0)
 
 /* CPU architecture version */
 extern int cpu_arch;

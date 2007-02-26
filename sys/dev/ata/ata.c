@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.70.2.2 2006/12/30 20:47:54 yamt Exp $	*/
+/*	$NetBSD: ata.c,v 1.70.2.3 2007/02/26 09:09:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70.2.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70.2.3 2007/02/26 09:09:58 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1023,24 +1023,24 @@ ata_print_modes(struct ata_channel *chp)
 		drvp = &chp->ch_drive[drive];
 		if ((drvp->drive_flags & DRIVE) == 0 || drvp->drv_softc == NULL)
 			continue;
-		aprint_normal("%s(%s:%d:%d): using PIO mode %d",
+		aprint_verbose("%s(%s:%d:%d): using PIO mode %d",
 			drvp->drv_softc->dv_xname,
 			atac->atac_dev.dv_xname,
 			chp->ch_channel, drvp->drive, drvp->PIO_mode);
 #if NATA_DMA
 		if (drvp->drive_flags & DRIVE_DMA)
-			aprint_normal(", DMA mode %d", drvp->DMA_mode);
+			aprint_verbose(", DMA mode %d", drvp->DMA_mode);
 #if NATA_UDMA
 		if (drvp->drive_flags & DRIVE_UDMA) {
-			aprint_normal(", Ultra-DMA mode %d", drvp->UDMA_mode);
+			aprint_verbose(", Ultra-DMA mode %d", drvp->UDMA_mode);
 			if (drvp->UDMA_mode == 2)
-				aprint_normal(" (Ultra/33)");
+				aprint_verbose(" (Ultra/33)");
 			else if (drvp->UDMA_mode == 4)
-				aprint_normal(" (Ultra/66)");
+				aprint_verbose(" (Ultra/66)");
 			else if (drvp->UDMA_mode == 5)
-				aprint_normal(" (Ultra/100)");
+				aprint_verbose(" (Ultra/100)");
 			else if (drvp->UDMA_mode == 6)
-				aprint_normal(" (Ultra/133)");
+				aprint_verbose(" (Ultra/133)");
 		}
 #endif	/* NATA_UDMA */
 #endif	/* NATA_DMA */
@@ -1054,9 +1054,9 @@ ata_print_modes(struct ata_channel *chp)
 		    || (atac->atac_cap & ATAC_CAP_PIOBM)
 #endif
 		    )
-			aprint_normal(" (using DMA)");
+			aprint_verbose(" (using DMA)");
 #endif	/* NATA_DMA || NATA_PIOBM */
-		aprint_normal("\n");
+		aprint_verbose("\n");
 	}
 }
 
@@ -1151,7 +1151,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			drvp->drive_flags &= ~DRIVE_CAP32;
 			splx(s);
 		} else {
-			aprint_normal("%s: 32-bit data port\n",
+			aprint_verbose("%s: 32-bit data port\n",
 			    drv_dev->dv_xname);
 		}
 	}
@@ -1160,7 +1160,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	    params.atap_ata_major != 0xffff) {
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
-				aprint_normal("%s: ATA version %d\n",
+				aprint_verbose("%s: ATA version %d\n",
 				    drv_dev->dv_xname, i);
 				drvp->ata_vers = i;
 				break;
@@ -1206,7 +1206,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				   AT_WAIT) != CMD_OK)
 					continue;
 			if (!printed) {
-				aprint_normal("%s: drive supports PIO mode %d",
+				aprint_verbose("%s: drive supports PIO mode %d",
 				    drv_dev->dv_xname, i + 3);
 				sep = ",";
 				printed = 1;
@@ -1244,7 +1244,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					continue;
 #endif
 			if (!printed) {
-				aprint_normal("%s DMA mode %d", sep, i);
+				aprint_verbose("%s DMA mode %d", sep, i);
 				sep = ",";
 				printed = 1;
 			}
@@ -1276,16 +1276,16 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 						continue;
 #endif
 				if (!printed) {
-					aprint_normal("%s Ultra-DMA mode %d",
+					aprint_verbose("%s Ultra-DMA mode %d",
 					    sep, i);
 					if (i == 2)
-						aprint_normal(" (Ultra/33)");
+						aprint_verbose(" (Ultra/33)");
 					else if (i == 4)
-						aprint_normal(" (Ultra/66)");
+						aprint_verbose(" (Ultra/66)");
 					else if (i == 5)
-						aprint_normal(" (Ultra/100)");
+						aprint_verbose(" (Ultra/100)");
 					else if (i == 6)
-						aprint_normal(" (Ultra/133)");
+						aprint_verbose(" (Ultra/133)");
 					sep = ",";
 					printed = 1;
 				}
@@ -1304,7 +1304,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				break;
 			}
 		}
-		aprint_normal("\n");
+		aprint_verbose("\n");
 	}
 
 	s = splbio();

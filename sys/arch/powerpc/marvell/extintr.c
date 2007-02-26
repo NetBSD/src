@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.13.2.1 2006/06/21 14:55:03 yamt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.13.2.2 2007/02/26 09:07:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -76,14 +76,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.13.2.1 2006/06/21 14:55:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.13.2.2 2007/02/26 09:07:54 yamt Exp $");
 
 #include "opt_marvell.h"
 #include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>

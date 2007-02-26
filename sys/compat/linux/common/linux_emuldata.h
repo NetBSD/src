@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_emuldata.h,v 1.8.2.2 2006/12/30 20:47:38 yamt Exp $	*/
+/*	$NetBSD: linux_emuldata.h,v 1.8.2.3 2007/02/26 09:09:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998,2002 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ struct linux_emuldata_shared {
 };
 
 #define LINUX_LES_INEXITGROUP	0x1	/* thread group doing exit_group() */
+#define LINUX_LES_USE_NPTL	0x2	/* Need to emulate NPTL threads */
 
 struct linux_emuldata {
 #if notyet
