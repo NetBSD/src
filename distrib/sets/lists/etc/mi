@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.187 2007/02/20 16:56:09 kiyohara Exp $
+# $NetBSD: mi,v 1.188 2007/02/26 20:46:31 apb Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -12,6 +12,7 @@
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
 ./dev/MAKEDEV.local				etc-sys-etc
+./dev/MAKEDEV.subr				etc-sys-etc
 ./etc/bootptab					etc-bootserver-etc
 ./etc/changelist				etc-sys-etc
 ./etc/csh.cshrc					etc-util-etc
