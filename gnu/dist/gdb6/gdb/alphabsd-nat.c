@@ -92,7 +92,7 @@ alphabsd_fetch_inferior_registers (int regno)
       struct reg gregs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &gregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &gregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       alphabsd_supply_reg ((char *) &gregs, regno);
@@ -105,7 +105,7 @@ alphabsd_fetch_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       alphabsd_supply_fpreg ((char *) &fpregs, regno);
@@ -122,13 +122,13 @@ alphabsd_store_inferior_registers (int regno)
     {
       struct reg gregs;
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_TYPE_ARG3) &gregs, 0) == -1)
+                  (PTRACE_TYPE_ARG3) &gregs, TIDGET (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       alphabsd_fill_reg ((char *) &gregs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_TYPE_ARG3) &gregs, 0) == -1)
+                  (PTRACE_TYPE_ARG3) &gregs, TIDGET (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
@@ -140,13 +140,13 @@ alphabsd_store_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       alphabsd_fill_fpreg ((char *) &fpregs, regno);
 
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
