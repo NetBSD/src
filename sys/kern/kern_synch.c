@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.8 2007/02/23 15:57:45 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.9 2007/02/26 09:18:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.8 2007/02/23 15:57:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.9 2007/02/26 09:18:09 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -637,9 +637,9 @@ suspendsched(void)
 	sched_lock(0);
 #ifdef MULTIPROCESSOR
 	for (CPU_INFO_FOREACH(cii, ci))
-		cpu_need_resched(ci);
+		cpu_need_resched(ci, 0);
 #else
-	cpu_need_resched(curcpu());
+	cpu_need_resched(curcpu(), 0);
 #endif
 	sched_unlock(0);
 }
@@ -725,5 +725,5 @@ resched_cpu(struct lwp *l, u_char pri)
 	 */
 	ci = (l->l_cpu != NULL) ? l->l_cpu : curcpu();
 	if (pri < ci->ci_schedstate.spc_curpriority)
-		cpu_need_resched(ci);
+		cpu_need_resched(ci, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.6 2007/02/23 15:57:45 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.7 2007/02/26 09:18:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.6 2007/02/23 15:57:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.7 2007/02/26 09:18:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -152,7 +152,7 @@ sched_tick(struct cpu_info *ci)
 		} else
 			spc->spc_flags |= SPCF_SEENRR;
 	}
-	cpu_need_resched(curcpu());
+	cpu_need_resched(curcpu(), 0);
 }
 
 #define	NICE_WEIGHT 2			/* priorities per nice level */
