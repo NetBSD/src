@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.3 2007/02/11 15:41:53 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.4 2007/02/26 09:20:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.3 2007/02/11 15:41:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.4 2007/02/26 09:20:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -61,6 +61,8 @@ syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	cv_unsleep,
 	cv_changepri,
+	sleepq_lendpri,
+	syncobj_noowner,
 };
 
 /*
@@ -149,13 +151,13 @@ cv_changepri(struct lwp *l, int pri)
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 
-	opri = l->l_priority;
+	opri = lwp_eprio(l);
 	l->l_usrpri = pri;
 	l->l_priority = sched_kpri(l);
 
-	if (l->l_priority != opri) {
+	if (lwp_eprio(l) != opri) {
 		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
-		sleepq_insert(sq, l, pri, l->l_syncobj);
+		sleepq_insert(sq, l, l->l_syncobj);
 	}
 }
 

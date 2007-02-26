@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.183 2007/02/23 16:51:47 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.184 2007/02/26 09:20:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.183 2007/02/23 16:51:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.184 2007/02/26 09:20:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -120,6 +120,7 @@ void	updatepri(struct lwp *);
 
 void	sched_unsleep(struct lwp *);
 void	sched_changepri(struct lwp *, int);
+void	sched_lendpri(struct lwp *, int);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
 static unsigned int schedcpu_ticks;
@@ -127,13 +128,17 @@ static unsigned int schedcpu_ticks;
 syncobj_t sleep_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	sleepq_unsleep,
-	sleepq_changepri
+	sleepq_changepri,
+	sleepq_lendpri,
+	syncobj_noowner,
 };
 
 syncobj_t sched_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	sched_unsleep,
-	sched_changepri
+	sched_changepri,
+	sched_lendpri,
+	syncobj_noowner,
 };
 
 /*
@@ -743,9 +748,10 @@ rqinit()
 }
 
 static inline void
-resched_lwp(struct lwp *l, u_char pri)
+resched_lwp(struct lwp *l)
 {
 	struct cpu_info *ci;
+	const int pri = lwp_eprio(l);
 
 	/*
 	 * XXXSMP
@@ -857,7 +863,7 @@ setrunnable(struct lwp *l)
 
 	if (l->l_flag & LW_INMEM) {
 		setrunqueue(l);
-		resched_lwp(l, l->l_priority);
+		resched_lwp(l);
 		lwp_unlock(l);
 	} else {
 		lwp_unlock(l);
@@ -1108,11 +1114,10 @@ sched_changepri(struct lwp *l, int pri)
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
 	l->l_usrpri = pri;
-
 	if (l->l_priority < PUSER)
 		return;
-	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0 ||
-	    (l->l_priority / PPQ) == (pri / PPQ)) {
+
+	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
 		l->l_priority = pri;
 		return;
 	}
@@ -1120,7 +1125,31 @@ sched_changepri(struct lwp *l, int pri)
 	remrunqueue(l);
 	l->l_priority = pri;
 	setrunqueue(l);
-	resched_lwp(l, pri);
+	resched_lwp(l);
+}
+
+void
+sched_lendpri(struct lwp *l, int pri)
+{
+
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+
+	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
+		l->l_inheritedprio = pri;
+		return;
+	}
+
+	remrunqueue(l);
+	l->l_inheritedprio = pri;
+	setrunqueue(l);
+	resched_lwp(l);
+}
+
+struct lwp *
+syncobj_noowner(wchan_t wchan)
+{
+
+	return NULL;
 }
 
 /*
@@ -1212,7 +1241,7 @@ setrunqueue(struct lwp *l)
 {
 	struct prochd *rq;
 	struct lwp *prev;
-	const int whichq = l->l_priority / PPQ;
+	const int whichq = lwp_eprio(l) / PPQ;
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
@@ -1245,7 +1274,7 @@ void
 remrunqueue(struct lwp *l)
 {
 	struct lwp *prev, *next;
-	const int whichq = l->l_priority / PPQ;
+	const int whichq = lwp_eprio(l) / PPQ;
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 

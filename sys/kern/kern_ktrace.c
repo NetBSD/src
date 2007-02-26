@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.116 2007/02/22 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.117 2007/02/26 09:20:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.116 2007/02/22 06:34:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.117 2007/02/26 09:20:53 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -688,7 +688,7 @@ ktrcsw(struct lwp *l, int out, int user)
 	 * Don't record context switches resulting from blocking on 
 	 * locks; it's too easy to get duff results.
 	 */
-	if (l->l_syncobj == &turnstile_syncobj)
+	if (l->l_syncobj == &mutex_syncobj || l->l_syncobj == &rw_syncobj)
 		return;
 
 	/*
