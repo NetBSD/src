@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7.52.2 2007/02/25 13:57:14 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.52.3 2007/02/26 09:18:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -38,8 +38,11 @@ void cpu_idle(void);
 #endif
 
 #ifndef cpu_need_resched
-void cpu_need_resched(struct cpu_info *);
+void cpu_need_resched(struct cpu_info *, int);
 #endif
+
+/* flags for cpu_need_resched */
+#define	RESCHED_IMMED	1
 
 struct lwp *cpu_switchto(struct lwp *, struct lwp *);
 
