@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1011 2007/02/26 10:53:10 yamt Exp $
+#	$NetBSD: mi,v 1.1012 2007/02/26 10:55:36 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1875,6 +1875,7 @@
 ./usr/include/sys/statvfs.h			comp-c-include
 ./usr/include/sys/stdint.h			comp-c-include
 ./usr/include/sys/swap.h			comp-c-include
+./usr/include/sys/syncobj.h			comp-c-include
 ./usr/include/sys/syscall.h			comp-c-include
 ./usr/include/sys/syscallargs.h			comp-c-include
 ./usr/include/sys/sysctl.h			comp-c-include
