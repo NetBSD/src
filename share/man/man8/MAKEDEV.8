@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.16 2007/01/09 15:35:14 pooka Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.17 2007/02/26 22:37:57 apb Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January  9, 2007
+.Dd February 27, 2007
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -67,7 +67,14 @@ or of special targets, like
 .Pa all
 or
 .Pa std ,
-which create a collection of device special files.
+which create a collection of device special files,
+or
+.Pa local ,
+which invokes
+.Xr MAKEDEV.local 8
+with the
+.Pa all
+argument.
 .Pp
 The script is in
 .Pa /dev/MAKEDEV
@@ -743,7 +750,7 @@ special device files directory
 .It Pa /dev/MAKEDEV
 script described in this man page
 .It Pa /dev/MAKEDEV.local
-script for site specific devices
+script for site-specific devices
 .El
 .Sh DIAGNOSTICS
 If the script reports an error that is difficult to understand,
@@ -752,6 +759,7 @@ you can get more debugging output by using
 .Sh SEE ALSO
 .Xr config 1 ,
 .Xr intro 4 ,
+.Xr MAKEDEV.local 8 ,
 .Xr mknod 8
 .Sh HISTORY
 The
