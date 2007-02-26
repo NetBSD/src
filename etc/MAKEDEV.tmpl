@@ -1,7 +1,7 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.73 2007/02/07 03:01:13 riz Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.74 2007/02/26 20:44:03 apb Exp $
 #
-# Copyright (c) 2003 The NetBSD Foundation, Inc.
+# Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -293,167 +293,9 @@
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
-get_opts() {
-	opts="$*"
-	shift $((${OPTIND}-1))
-	opts="${opts%$*}"
-}
-
-usage()
-{
-	cat 1>&2 << _USAGE_
-Usage: ${0##*/} [-f] [-m mknod] [-s]  special [...]
-	Create listed special devices.  Options:
-	-f		Force permissions to be updated on existing devices.
-	-m mknod	Name of mknod(8) program.  [\$TOOL_MKNOD or mknod]
-	-s		Generate mtree(8) specfile instead of creating devices.
-
-_USAGE_
-	exit 1
-}
-
-# zeropad width number
-#	display number with a zero (`0') padding of width digits.
-#
-zeropad()
-{
-	case $(($1 - ${#2})) in
-	5)	echo 00000$2;;
-	4)	echo 0000$2;;
-	3)	echo 000$2;;
-	2)	echo 00$2;;
-	1)	echo 0$2;;
-	0)	echo $2;;
-	*)	echo "$0: bad padding" 1>&2; exit 1;;
-	esac
-}
-
-# hexprint number
-#	display (base10) number as hexadecimal
-#
-hexprint()
-{
-	case $1 in
-	[0-9])	echo $1 ;;
-	10)	echo a ;;
-	11)	echo b ;;
-	12)	echo c ;;
-	13)	echo d ;;
-	14)	echo e ;;
-	15)	echo f ;;
-	*)	echo $(hexprint $(($1 / 16)))$(hexprint $(($1 % 16))) ;;
-	esac
-}
-
-do_force=false
-do_specfile=false
-while getopts fm:s ch; do
-	case ${ch} in
-	f)	do_force=true ;;
-	m)	TOOL_MKNOD=${OPTARG} ;;
-	s)	do_specfile=true ;;
-	*)	usage ;;
-	esac
-done
-
-opts=
-get_opts "$@"
-shift $((${OPTIND} - 1))
-[ $# -gt 0 ] || usage
-
-
-MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
-if $do_force; then
-	MKNOD="${MKNOD} -R"
-else
-	MKNOD="${MKNOD} -r"
-fi
-
-u_root="%uid_root%"
-u_uucp="%uid_uucp%"
-g_kmem="%gid_kmem%"
-g_ntpd="%gid_ntpd%"
-g_operator="%gid_operator%"
-g_wheel="%gid_wheel%"
-dialin=0
-dialout=524288
-callunit=262144
-
-# only allow read&write for owner by default
-umask 077
-
-# Check if we have fdesc mounted
-if [ -d fd ]; then
-        case "$(df fd)" in
-        *fdesc*)	nofdesc=false;;
-        *)		nofdesc=true;;
-        esac
-else
-        nofdesc=true
-fi
-
-
-if $do_specfile; then
-	echo ". type=dir"
-fi
-
-
-#
-# functions available to create nodes:
-#
-# mkdev name [b|c] major minor [mode{=600} [gid{=0} [uid{=0}]]]
-#	create device node `name' with the appropriate permissions
-#
-# lndev src target
-#	create a symlink from src to target
-#
-# makedir dir mode
-#	create directory with appropriate mode
-#
-
-mkdev()
-{
-	if $do_specfile; then
-		case $2 in
-		b)	type=block ;;
-		c)	type=char ;;
-		esac
-		echo "./$1 type=${type} device=netbsd,$3,$4 mode=${5:-600} gid=${6:-$g_wheel} uid=${7:-$u_root}"
-	else
-		${MKNOD} -m ${5:-600} -g \#${6:-$g_wheel} -u \#${7:-$u_root} $1 $2 $3 $4
-	fi
-}
-
-lndev()
-{
-	if $do_specfile; then
-		echo "./$2 type=link link=$1 mode=0700 gid=$g_wheel uid=$u_root"
-	else
-		ln -f -s $1 $2
-	fi
-}
-
-makedir()
-{
-	if $do_specfile; then
-		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
-	else
-		mkdir $1 2>/dev/null
-		chmod $2 $1
-	fi
-}
-
-warn()
-{
-	echo 1>&2 "$0: $*"
-}
-
-
-
 # makedev special [...]
 #	the main loop
 #
-
 makedev()
 {
 
@@ -477,12 +319,12 @@ all)
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random systrace
 	makedev lkm lockstat clockctl
-	makedev local
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev bthub
 	makedev puffs
+	makedev local # do this last
 	;;
 
 init)
@@ -1636,8 +1478,10 @@ midevend)
 local)
 	if [ -f "$0.local" ]; then
 		umask 0
-		sh $0.local $opts all
+		sh "$0.local" $opts all
 		umask 077
+	else
+		warn "missing $0.local"
 	fi
 	;;
 
@@ -1769,4 +1613,12 @@ makedisk_minimal()
 	mkdev r${name}${unit}$rn c $chr $(($unit * $doff + $ro)) 640 $g_operator
 }
 
-makedev $*
+#
+# MAIN: Load function definitions from MAKEDEV.subr; call setup function
+# to parse command line args and set some other variables; then call
+# makedev function to create requested devices.
+#
+. "$(dirname "$0")/MAKEDEV.subr"
+setup ${1+"$@"}
+shift $((${OPTIND}-1))
+makedev ${1+"$@"}
