@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.6.4.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.6.4.3 2007/02/26 09:11:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.6.4.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.6.4.3 2007/02/26 09:11:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,9 +106,6 @@ read_sector(mbr_args_t *a, uint sector, int count)
 {
 	struct buf *bp = a->bp;
 	int error;
-
-	if (a->lp->d_secpercyl == 0)
-		return EINVAL;
 
 	bp->b_blkno = sector;
 	bp->b_bcount = count * a->lp->d_secsize;
@@ -164,11 +161,11 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 			 * Ensure that there are no other partitions in the
 			 * MBR and jump to the real partition table (stored
 			 * in the first sector of the second track). */
-			boolean_t ok = TRUE;
+			bool ok = true;
 
 			for (i = 1; i < MBR_PART_COUNT; i++)
 				if (ptns[i].mbrp_type != MBR_PTYPE_UNUSED)
-					ok = FALSE;
+					ok = false;
 
 			if (ok) {
 				this_ext = le32toh(a->lp->d_secpercyl /

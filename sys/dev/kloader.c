@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.3.2.2 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: kloader.c,v 1.3.2.3 2007/02/26 09:09:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3.2.2 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.3.2.3 2007/02/26 09:09:54 yamt Exp $");
 
 #include "debug_kloader.h"
 
@@ -687,7 +687,7 @@ kloader_pagetag_dump()
 {
 	struct kloader_page_tag *tag = kloader.tagstart;
 	struct kloader_page_tag *p, *op;
-	boolean_t print;
+	bool print;
 	int i, n;
 
 	p = tag;

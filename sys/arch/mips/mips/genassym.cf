@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37 2003/11/26 08:36:49 he Exp $
+#	$NetBSD: genassym.cf,v 1.37.16.1 2007/02/26 09:07:28 yamt Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -39,11 +39,14 @@
 #	from @(#)genassym.c	8.2 (Berkeley) 9/23/93
 #
 
+quote #define	__MUTEX_PRIVATE	1
+
 include <sys/param.h>
 include <sys/buf.h>
 include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/user.h>
+include <sys/mutex.h>
 
 include <uvm/uvm.h>
 
@@ -71,9 +74,9 @@ define	LSONPROC		LSONPROC
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
-define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	U_PCB_FPREGS		offsetof(struct user, u_pcb.pcb_fpregs)
@@ -93,6 +96,8 @@ define	SIGSEGV			SIGSEGV
 
 # CPU info
 define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
+define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 
 #				/* XXX */
@@ -257,3 +262,7 @@ define	SF_REG_S6	offsetof(label_t, val[6])
 define	SF_REG_S7	offsetof(label_t, val[7])
 define	SF_REG_SP	offsetof(label_t, val[8])
 define	SF_REG_S8	offsetof(label_t, val[9])
+
+define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
+define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
+define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.18.2 2006/12/30 20:45:51 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.18.3 2007/02/26 09:06:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -106,8 +106,6 @@ void _clrsoftintr(int);
 #define	splx(s)		(void) _splset(s)
 
 #define	splsoft()	_splraise(ipl_sr_bits[IPL_SOFT])
-
-#define	spllowersoftclock() _spllower(ipl_sr_bits[IPL_SOFTCLOCK])
 
 typedef int ipl_t;
 typedef struct {

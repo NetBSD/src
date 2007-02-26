@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.7.4.2 2006/12/30 20:50:00 yamt Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.7.4.3 2007/02/26 09:10:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.7.4.2 2006/12/30 20:50:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.7.4.3 2007/02/26 09:10:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -381,7 +381,7 @@ ptyfs_setattr(void *v)
 			return EROFS;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) != 0)
+		    NULL)) != 0)
 			return error;
 		/* Immutable and append-only flags are not supported on ptyfs. */
 		if (vap->va_flags & (IMMUTABLE | APPEND))
@@ -423,7 +423,7 @@ ptyfs_setattr(void *v)
 			return EPERM;
 		if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) &&
+		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(vp, VWRITE, cred, l)) != 0))
 			return (error);
@@ -468,7 +468,7 @@ ptyfs_chmod(struct vnode *vp, mode_t mode, kauth_cred_t cred, struct lwp *l)
 
 	if (kauth_cred_geteuid(cred) != ptyfs->ptyfs_uid &&
 	    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    NULL)) != 0)
 		return error;
 	ptyfs->ptyfs_mode &= ~ALLPERMS;
 	ptyfs->ptyfs_mode |= (mode & ALLPERMS);
@@ -501,7 +501,7 @@ ptyfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 	    !(kauth_cred_getegid(cred) == gid ||
 	    (kauth_cred_ismember_gid(cred, gid, &ismember) == 0 && ismember)))) &&
 	    ((error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0))
+	    NULL)) != 0))
 		return error;
 
 	ptyfs->ptyfs_gid = gid;
@@ -935,7 +935,7 @@ ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
 	KASSERT(ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
 
 	getnanotime(&now);
-	if (ptyfs->ptyfs_flag & (PTYFS_ACCESS|PTYFS_MODIFY)) {
+	if (ptyfs->ptyfs_flag & PTYFS_ACCESS) {
 		if (acc == NULL)
 			acc = &now;
 		ptyfs->ptyfs_atime = *acc;

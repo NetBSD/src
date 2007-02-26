@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.11.18.1 2006/06/21 14:48:00 yamt Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.11.18.2 2007/02/26 09:05:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11.18.1 2006/06/21 14:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11.18.2 2007/02/26 09:05:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11.18.1 2006/06/21 14:48:00 
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -69,6 +68,7 @@ compat_13_sys_sigreturn(l, v, retval)
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext13 *scp, ksc;
+	struct proc *p = l->l_proc;
 	sigset13_t mask13;
 	sigset_t mask;
 
@@ -102,19 +102,20 @@ compat_13_sys_sigreturn(l, v, retval)
 	    sizeof(struct fpreg));
 	/* XXX ksc.sc_fp_control ? */
 
+	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/*
 	 * Restore signal mask.  Note the mask is a "long" in the stack
 	 * frame.
 	 */
 	mask13 = ksc.sc_mask;
 	native_sigset13_to_sigset(&mask13, &mask);
-	(void) sigprocmask1(l->l_proc, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfbvar.h,v 1.2.12.2 2006/12/30 20:48:48 yamt Exp $ */
+/* $NetBSD: radeonfbvar.h,v 1.2.12.3 2007/02/26 09:10:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -46,6 +46,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/callout.h>
 #include <dev/pci/pcivar.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -172,6 +173,9 @@ struct radeonfb_display {
 	int			rd_bg;		/* background */
 	int			rd_console;
 
+	struct callout          rd_bl_lvds_co;  /* delayed lvds operation */
+	uint32_t                rd_bl_lvds_val; /* value of delayed lvds */
+
 	int			rd_wsmode;
 
 	int			rd_ncrtcs;
@@ -269,7 +273,7 @@ struct radeonfb_softc {
 	uint8_t			*sc_bios;
 	bus_size_t		sc_biossz;
 
-	char			*sc_modebuf;
+	char			sc_modebuf[64];
 	const char		*sc_defaultmode;
 };
 

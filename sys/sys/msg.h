@@ -1,12 +1,12 @@
-/*	$NetBSD: msg.h,v 1.16.6.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: msg.h,v 1.16.6.3 2007/02/26 09:12:12 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,6 +61,10 @@
 
 #include <sys/featuretest.h>
 #include <sys/ipc.h>
+#ifdef _KERNEL
+#include <sys/condvar.h>
+#include <sys/mutex.h>
+#endif
 
 #ifdef _KERNEL
 struct __msg {
@@ -173,8 +177,14 @@ struct msgmap {
     				/* 0..(MSGSEG-1) -> index of next segment */
 };
 
+typedef struct kmsq {
+	struct msqid_ds msq_u;
+	kcondvar_t	msq_cv;
+} kmsq_t;
+
 extern struct msginfo msginfo;
-extern struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
+extern kmsq_t	*msqs;		/* MSGMNI queues */
+extern kmutex_t	msgmutex;
 
 #define MSG_LOCKED	01000	/* Is this msqid_ds locked? */
 

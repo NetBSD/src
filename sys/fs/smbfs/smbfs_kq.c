@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.8.4.2 2006/12/30 20:50:01 yamt Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.8.4.3 2007/02/26 09:10:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.8.4.2 2006/12/30 20:50:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.8.4.3 2007/02/26 09:10:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,11 @@ smbfs_kqpoll(void *arg)
 	struct kevq *ke;
 	struct vattr attr;
 	int error = 0;
-	struct proc *p = smbkqp;
 	struct lwp *l;
 	u_quad_t osize;
 	int needwake;
+
+	l = curlwp;
 
 	simple_lock(&smbkq_lock);
 	for(;;) {
@@ -155,8 +156,7 @@ smbfs_kqpoll(void *arg)
 			/* save v_size, smbfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			l = proc_representative_lwp(p);
-			error = VOP_GETATTR(ke->vp, &attr, p->p_cred, l);
+			error = VOP_GETATTR(ke->vp, &attr, l->l_cred, l);
 			if (error) {
 				/* relock and proceed with next */
 				simple_lock(&smbkq_lock);

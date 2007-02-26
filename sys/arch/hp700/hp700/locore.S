@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13.12.1 2006/12/30 20:45:58 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.13.12.2 2007/02/26 09:06:35 yamt Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -768,11 +768,8 @@ idle_loop:
 	comb,<>	%r0, %t3, gotprocs
 	nop
 
-#if defined(LOCKDEBUG)
 	/* Release sched_lock */ 
 	CALL(sched_unlock_idle, %r1)
-	nop
-#endif  
 
 	/* spl0() */
 	.call
@@ -787,11 +784,8 @@ idle_loop:
 	bl	spllower, %rp
 	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
 
-#if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
 	CALL(sched_lock_idle, %r1)
-	nop
-#endif
 
 	b	idle_loop
 	nop
@@ -1042,6 +1036,26 @@ ALTENTRY(hppa_fpu_nop1)
 	mtctl	%r1, %ccr
 
 switch_return:
+	/* start stack calling convention */
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	stw	%t3, HPPA_FRAME_ARG(1)(%sp)
+	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)
+	copy	%r3, %r1
+	copy	%sp, %r3
+	stw,ma	%r1, HPPA_FRAME_SIZE(%sp)
+
+	/* Release sched_lock */ 
+	CALL(sched_unlock_idle, %r1)
+
+	/* end stack calling convention */
+	ldw	HPPA_FRAME_CRP(%r3), %rp
+	ldw	HPPA_FRAME_ARG(3)(%r3), %arg3
+	ldw	HPPA_FRAME_ARG(1)(%r3), %t3
+	ldw	HPPA_FRAME_ARG(0)(%r3), %arg0
+	ldo	HPPA_FRAME_SIZE(%r3), %sp
+	ldw,mb	-HPPA_FRAME_SIZE(%sp), %r3
+
 	bv	0(%rp)
 	mtctl	%arg3, %eiem
 
@@ -1093,11 +1107,8 @@ ENTRY(switch_exit,0)
 	bv,n	%r0(%arg1)
 	nop
 
-#if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
 	CALL(sched_lock_idle, %r1)
-	nop
-#endif
 
 	.call
 	b	switch_search

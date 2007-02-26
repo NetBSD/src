@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.60.2.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.60.2.3 2007/02/26 09:11:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.60.2.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.60.2.3 2007/02/26 09:11:31 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -205,7 +205,7 @@ procfs_root(mp, vpp)
 	struct vnode **vpp;
 {
 
-	return (procfs_allocvp(mp, vpp, 0, PFSroot, -1));
+	return (procfs_allocvp(mp, vpp, 0, PFSroot, -1, NULL));
 }
 
 /* ARGSUSED */
@@ -338,6 +338,7 @@ struct vfsops procfs_vfsops = {
 	NULL,				/* vfs_mountroot */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	procfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.218.2.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.218.2.3 2007/02/26 09:11:44 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218.2.2 2006/12/30 20:50:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218.2.3 2007/02/26 09:11:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1675,15 +1675,14 @@ bad:
 struct in_ifaddr *
 ip_rtaddr(struct in_addr dst)
 {
-	struct sockaddr_in *sin;
-
-	sin = satosin(&ipforward_rt.ro_dst);
-
-	if (!in_hosteq(dst, sin->sin_addr))
+	if (!in_hosteq(dst, satocsin(rtcache_getdst(&ipforward_rt))->sin_addr))
 		rtcache_free(&ipforward_rt);
 	else
 		rtcache_check(&ipforward_rt);
+
 	if (ipforward_rt.ro_rt == NULL) {
+		struct sockaddr_in *sin = satosin(&ipforward_rt.ro_dst);
+
 		sin->sin_family = AF_INET;
 		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = dst;
@@ -1692,7 +1691,7 @@ ip_rtaddr(struct in_addr dst)
 		if (ipforward_rt.ro_rt == NULL)
 			return NULL;
 	}
-	return (ifatoia(ipforward_rt.ro_rt->rt_ifa));
+	return ifatoia(ipforward_rt.ro_rt->rt_ifa);
 }
 
 /*
@@ -1839,7 +1838,6 @@ void
 ip_forward(struct mbuf *m, int srcrt)
 {
 	struct ip *ip = mtod(m, struct ip *);
-	struct sockaddr_in *sin;
 	struct rtentry *rt;
 	int error, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy;
@@ -1872,14 +1870,16 @@ ip_forward(struct mbuf *m, int srcrt)
 		return;
 	}
 
-	sin = satosin(&ipforward_rt.ro_dst);
-	if (!in_hosteq(ip->ip_dst, sin->sin_addr))
+	if (!in_hosteq(ip->ip_dst,
+	               satocsin(rtcache_getdst(&ipforward_rt))->sin_addr))
 		rtcache_free(&ipforward_rt);
 	else
 		rtcache_check(&ipforward_rt);
 	if (ipforward_rt.ro_rt == NULL) {
+		struct sockaddr_in *sin = satosin(&ipforward_rt.ro_dst);
+
 		sin->sin_family = AF_INET;
-		sin->sin_len = sizeof(struct sockaddr_in);
+		sin->sin_len = sizeof(*sin);
 		sin->sin_addr = ip->ip_dst;
 
 		rtcache_init(&ipforward_rt);

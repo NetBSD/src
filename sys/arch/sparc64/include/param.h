@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33.10.2 2006/12/30 20:47:02 yamt Exp $ */
+/*	$NetBSD: param.h,v 1.33.10.3 2007/02/26 09:08:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,9 +79,6 @@
 #define	MID_MACHINE	MID_SPARC
 #endif
 
-#ifdef _KERNEL_OPT
-#include "opt_sparc_arch.h"
-#endif
 #ifdef _KERNEL				/* XXX */
 #ifndef _LOCORE				/* XXX */
 #include <machine/cpu.h>		/* XXX */

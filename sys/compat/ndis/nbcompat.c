@@ -99,8 +99,8 @@ ndis_kthread_create(void (*func)(void *), void *arg,
          * to init(8) when they exit.  init(8) can easily wait them
          * out for us.
          */
-        p2->p_flag |= P_SYSTEM | P_NOCLDWAIT;
-        LIST_FIRST(&p2->p_lwps)->l_flag |= L_INMEM;
+        p2->p_flag |= PK_SYSTEM | PK_NOCLDWAIT;
+        LIST_FIRST(&p2->p_lwps)->l_flag |= LW_INMEM;
 
         /* Name it as specified. */
         va_start(ap, fmt);

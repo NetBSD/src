@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6.4.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.6.4.3 2007/02/26 09:08:54 yamt Exp $	*/
 /*	NetBSD: trap.c,v 1.200 2004/03/14 01:08:48 cl Exp 	*/
 
 /*-
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6.4.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6.4.3 2007/02/26 09:08:54 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,8 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.6.4.2 2006/12/30 20:47:25 yamt Exp $");
 #include <sys/kauth.h>
 
 #include <sys/ucontext.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -464,15 +462,15 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		uvmexp.softs++;
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			KERNEL_PROC_LOCK(l);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			KERNEL_LOCK(1, l);
 			ADDUPROF(p);
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		/* Allow a forced task switch. */
 		if (curcpu()->ci_want_resched) /* XXX CSE me? */
-			preempt(0);
+			preempt();
 		goto out;
 
 	case T_DNA|T_USER: {
@@ -527,11 +525,6 @@ copyfault:
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (l == 0)
 			goto we_re_toast;
-#ifdef LOCKDEBUG
-		/* If we page-fault while in scheduler, we're doomed. */
-		if (simple_lock_held(&sched_lock))
-			goto we_re_toast;
-#endif
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
@@ -549,7 +542,7 @@ copyfault:
 #else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
 #endif
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -564,11 +557,7 @@ copyfault:
 #else
 		cr2 = ((uint32_t *)(void *)&frame)[1];
 #endif
-		KERNEL_PROC_LOCK(l);
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
-			l->l_flag |= L_SA_PAGEFAULT;
-		}
+		KERNEL_LOCK(1, l);
 	faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -609,7 +598,7 @@ copyfault:
 				uvm_grow(p, va);
 
 			if (type == T_PAGEFLT) {
-				KERNEL_UNLOCK();
+				KERNEL_UNLOCK_ONE(NULL);
 
 				/*
 				 * we need to switch pmap now if we're in
@@ -624,8 +613,7 @@ copyfault:
 					pmap_load();
 				return;
 			}
-			l->l_flag &= ~L_SA_PAGEFAULT;
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -640,7 +628,7 @@ copyfault:
 
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0) {
-				KERNEL_UNLOCK();
+				KERNEL_UNLOCK_ONE(NULL);
 				goto copyfault;
 			}
 			printf("uvm_fault(%p, %#lx, %d) -> %#x\n",
@@ -658,11 +646,9 @@ copyfault:
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
 		if (type == T_PAGEFLT)
-			KERNEL_UNLOCK();
-		else {
-			l->l_flag &= ~L_SA_PAGEFAULT;
-			KERNEL_PROC_UNLOCK(l);
-		}
+			KERNEL_UNLOCK_ONE(NULL);
+		else
+			KERNEL_UNLOCK_LAST(l);
 		break;
 	}
 
@@ -694,9 +680,9 @@ copyfault:
 			else
 				ksi.ksi_code = TRAP_TRACE;
 			ksi.ksi_addr = (void *)frame->tf_eip;
-			KERNEL_PROC_LOCK(l);
+			KERNEL_LOCK(1, l);
 			(*p->p_emul->e_trapsignal)(l, &ksi);
-			KERNEL_PROC_UNLOCK(l);
+			KERNEL_UNLOCK_LAST(l);
 		}
 		break;
 
@@ -738,9 +724,9 @@ out:
 	userret(l);
 	return;
 trapsignal:
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	(*p->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l);
 }
 
@@ -796,18 +782,7 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_PROC_UNLOCK(l);
-
-	userret(l);
-}
-
-/*
- * XXX This is a terrible name.
- */
-void
-upcallret(struct lwp *l)
-{
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 
 	userret(l);
 }

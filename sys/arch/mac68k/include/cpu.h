@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2005/06/03 11:14:20 rjs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.78.2.1 2007/02/26 09:07:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -118,6 +118,8 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+	int	ci_mtx_oldspl;
+	int	ci_mtx_count;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -147,7 +149,6 @@ struct clockframe {
 } __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0) /* XXX should use PSL_M (see hp300) */
 
@@ -156,20 +157,20 @@ struct clockframe {
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched(ci)	{ want_resched++; aston(); }
+#define	cpu_need_resched(ci)	{ want_resched++; aston(); }
 
 /*
  * Give a profiling tick to the current process from the softclock
  * interrupt.  Request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	( (p)->p_flag |= P_OWEUPC, aston() )
+#define	cpu_need_proftick(l)	( (l)->l_pflag |= LP_OWEUPC, aston() )
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	cpu_signotify(l)	aston()
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)

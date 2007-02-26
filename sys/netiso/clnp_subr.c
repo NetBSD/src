@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.18.2.1 2006/12/30 20:50:44 yamt Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.18.2.2 2007/02/26 09:11:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.18.2.1 2006/12/30 20:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.18.2.2 2007/02/26 09:11:58 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -468,32 +468,31 @@ clnp_route(
 		struct iso_ifaddr *ia;
 
 		rtcache_free((struct route *)ro);
-		bzero((caddr_t) & ro->ro_dst, sizeof(ro->ro_dst));
-		bcopy((caddr_t) dst, (caddr_t) & ro->ro_dst.siso_addr,
-		      1 + (unsigned) dst->isoa_len);
+		memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
+		memcpy(&ro->ro_dst.siso_addr, dst, 1 + (unsigned)dst->isoa_len);
 		ro->ro_dst.siso_family = AF_ISO;
 		ro->ro_dst.siso_len = sizeof(ro->ro_dst);
 		ia = iso_localifa(&ro->ro_dst);
-		if (ia == 0)
+		if (ia == NULL)
 			return EADDRNOTAVAIL;
-		if (ifa)
+		if (ifa != NULL)
 			*ifa = ia;
-		if (first_hop)
+		if (first_hop != NULL)
 			*first_hop = sisotosa(&ro->ro_dst);
 		return 0;
 	}
 
-	if (bcmp(ro->ro_dst.siso_data, dst->isoa_genaddr, dst->isoa_len) != 0)
+	if (memcmp(ro->ro_dst.siso_data, dst->isoa_genaddr, dst->isoa_len) != 0)
 		rtcache_free((struct route *)ro);
 	else
 		rtcache_check((struct route *)ro);
 
 	if (ro->ro_rt == NULL) {
 		/* set up new route structure */
-		bzero((caddr_t) & ro->ro_dst, sizeof(ro->ro_dst));
+		memset(&ro->ro_dst, 0, sizeof(ro->ro_dst));
 		ro->ro_dst.siso_len = sizeof(ro->ro_dst);
 		ro->ro_dst.siso_family = AF_ISO;
-		Bcopy(dst, &ro->ro_dst.siso_addr, 1 + dst->isoa_len);
+		memcpy(&ro->ro_dst.siso_addr, dst, 1 + dst->isoa_len);
 		/* allocate new route */
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
@@ -503,19 +502,19 @@ clnp_route(
 #endif
 		rtcache_init((struct route *)ro);
 		if (ro->ro_rt == NULL)
-			return (ENETUNREACH);
+			return ENETUNREACH;
 	}
 	ro->ro_rt->rt_use++;
-	if (ifa)
-		if ((*ifa = (struct iso_ifaddr *)ro->ro_rt->rt_ifa) == 0)
+	if (ifa != NULL)
+		if ((*ifa = (struct iso_ifaddr *)ro->ro_rt->rt_ifa) == NULL)
 			panic("clnp_route");
-	if (first_hop) {
+	if (first_hop != NULL) {
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			*first_hop = ro->ro_rt->rt_gateway;
 		else
 			*first_hop = sisotosa(&ro->ro_dst);
 	}
-	return (0);
+	return 0;
 }
 
 /*

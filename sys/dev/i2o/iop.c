@@ -1,7 +1,7 @@
-/*	$NetBSD: iop.c,v 1.48.2.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: iop.c,v 1.48.2.3 2007/02/26 09:10:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.48.2.2 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.48.2.3 2007/02/26 09:10:05 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -455,7 +455,8 @@ iop_init(struct iop_softc *sc, const char *intrstr)
 	    sc->sc_maxob, le32toh(sc->sc_status.maxoutboundmframes));
 #endif
 
-	lockinit(&sc->sc_conflock, PRIBIO, "iopconf", hz * 30, 0);
+	mutex_init(&sc->sc_conflock, MUTEX_DRIVER, IPL_NONE);
+	cv_init(&sc->sc_confcv, "iopzzz");
 	return;
 
  bail_out3:
@@ -596,14 +597,13 @@ iop_config_interrupts(struct device *self)
 	/*
 	 * Start device configuration.
 	 */
-	lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL);
-	if ((rv = iop_reconfigure(sc, 0)) == -1) {
+	mutex_enter(&sc->sc_conflock);
+	if ((rv = iop_reconfigure(sc, 0)) == -1)
 		printf("%s: configure failed (%d)\n", sc->sc_dv.dv_xname, rv);
-		return;
-	}
-	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_conflock);
 
-	kthread_create(iop_create_reconf_thread, sc);
+	if (rv == 0)
+		kthread_create(iop_create_reconf_thread, sc);
 }
 
 /*
@@ -645,6 +645,8 @@ iop_reconf_thread(void *cookie)
 	chgind = sc->sc_chgind + 1;
 	l = curlwp;
 
+	mutex_enter(&sc->sc_conflock);
+
 	for (;;) {
 		DPRINTF(("%s: async reconfig: requested 0x%08x\n",
 		    sc->sc_dv.dv_xname, chgind));
@@ -656,14 +658,12 @@ iop_reconf_thread(void *cookie)
 		DPRINTF(("%s: async reconfig: notified (0x%08x, %d)\n",
 		    sc->sc_dv.dv_xname, le32toh(lct.changeindicator), rv));
 
-		if (rv == 0 &&
-		    lockmgr(&sc->sc_conflock, LK_EXCLUSIVE, NULL) == 0) {
+		if (rv == 0) {
 			iop_reconfigure(sc, le32toh(lct.changeindicator));
 			chgind = sc->sc_chgind + 1;
-			lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
 		}
 
-		tsleep(iop_reconf_thread, PWAIT, "iopzzz", hz * 5);
+		cv_timedwait(&sc->sc_confcv, &sc->sc_conflock, hz * 10);
 	}
 }
 
@@ -2523,6 +2523,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	int rv, i;
 
 	sc = device_lookup(&iop_cd, minor(dev));
+	rv = 0;
 
 	switch (cmd) {
 	case IOPIOCPT:
@@ -2556,8 +2557,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		return (ENOTTY);
 	}
 
-	if ((rv = lockmgr(&sc->sc_conflock, LK_SHARED, NULL)) != 0)
-		return (rv);
+	mutex_enter(&sc->sc_conflock);
 
 	switch (cmd) {
 	case IOPIOCGLCT:
@@ -2571,8 +2571,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case IOPIOCRECONFIG:
-		if ((rv = lockmgr(&sc->sc_conflock, LK_UPGRADE, NULL)) == 0)
-			rv = iop_reconfigure(sc, 0);
+		rv = iop_reconfigure(sc, 0);
 		break;
 
 	case IOPIOCGTIDMAP:
@@ -2586,7 +2585,7 @@ iopioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 	}
 
-	lockmgr(&sc->sc_conflock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_conflock);
 	return (rv);
 }
 

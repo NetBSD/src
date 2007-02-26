@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.18.1 2006/12/30 20:46:42 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.18.2 2007/02/26 09:07:47 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -77,7 +77,6 @@ int splvm(void);
 int splnet(void);
 int splsched(void);
 int splclock(void);
-int spllowersoftclock(void);
 int splbio(void);
 int splstatclock(void);
 int splhigh(void);

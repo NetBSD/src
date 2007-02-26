@@ -1,8 +1,8 @@
-#	$NetBSD: files,v 1.722.2.2 2006/12/30 20:47:49 yamt Exp $
+#	$NetBSD: files,v 1.722.2.3 2007/02/26 09:09:46 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20060830
+version 	20070109
 
 #
 # device classes
@@ -170,6 +170,7 @@ obsolete defflag		HDLC		# obsolete
 obsolete defflag		LLC		# obsolete
 obsolete defflag opt_ns.h	NS NSIP		# obsolete
 obsolete defflag		IPX		# obsolete
+obsolete defflag opt_iso.h	TPCONS
 defflag				PFIL_HOOKS	# pfil(9)
 defflag	opt_bridge_ipf.h	BRIDGE_IPF	# bridge(4) use inet_pfil_hooks
 defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
@@ -297,6 +298,7 @@ define	rasops15
 define	rasops16
 define	rasops24
 define	rasops32
+define	rasops_rotation
 
 # splash screen support
 include "dev/splash/files.splash"
@@ -879,12 +881,6 @@ file	dev/ic/wdc_upc.c		wdc_upc
 file	dev/ic/com_upc.c		com_upc
 file	dev/ic/lpt_upc.c		lpt_upc
 
-# Common code for ISA/PCMCIA (non 802.11) WaveLAN adapters
-#
-define	wavelan
-device	wl: ether, ifnet, arp
-file	dev/ic/wavelan.c		wavelan
-
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 #
 device	tlp: arp, ether, ifnet, mii, mii_bitbang
@@ -1113,8 +1109,8 @@ file	dev/ic/isic_bchan.c		isic
 
 # (old) Diehl active ISDN cards
 #
-device	daic: isdndev
-file	dev/ic/daic.c			daic
+#device	daic: isdndev
+#file	dev/ic/daic.c			daic
 
 # AWM B1/T1
 # XXX: passive_isdn
@@ -1149,6 +1145,7 @@ defpseudo strip:	ifnet
 defpseudo gre:		ifnet
 defpseudo gif:		ifnet
 defpseudo faith:	ifnet
+defpseudo srt:		ifnet
 defpseudo stf:		ifnet
 defpseudo tap { }:	ifnet, ether, arp, bpf_filter
 defpseudo carp:		ifnet, ether, arp, bpf_filter
@@ -1279,6 +1276,8 @@ file	kern/init_sysent.c
 file	kern/kern_acct.c
 file	kern/kern_auth.c
 file	kern/kern_clock.c
+file	kern/kern_condvar.c
+file	kern/kern_core.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c
 file	kern/kern_exec.c
@@ -1293,6 +1292,7 @@ file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
+file	kern/kern_mutex.c
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
 file	kern/kern_pax.c			pax_mprotect | pax_segvguard
@@ -1301,15 +1301,18 @@ file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
 file	kern/kern_resource.c
-file	kern/kern_sa.c
+file	kern/kern_rwlock.c
 file	kern/kern_sig.c
-file	kern/kern_systrace.c		systrace
+file	kern/kern_sleepq.c
+file	kern/kern_stub.c
 file	kern/kern_subr.c
+file	kern/kern_systrace.c		systrace
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
 file	kern/kern_time.c
 file	kern/kern_timeout.c
+file	kern/kern_turnstile.c
 file	kern/kern_todr.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
@@ -1318,12 +1321,14 @@ file	kern/subr_autoconf.c
 file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c
 file	kern/subr_callback.c
+file	kern/subr_debug.c		debug
 file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_iostat.c
 file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_kmem.c
+file	kern/subr_lockdebug.c
 file	kern/subr_log.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
@@ -1336,9 +1341,12 @@ file	kern/subr_vmem.c
 file	kern/subr_workqueue.c
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
+file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
 file	kern/sys_process.c		ptrace | ktrace
+file	kern/sys_sig.c
+file	kern/sys_sched.c
 file	kern/sys_socket.c
 file	kern/syscalls.c			syscall_debug
 file	kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
@@ -1370,6 +1378,7 @@ file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
 file	kern/vfs_subr.c
 file	kern/vfs_syscalls.c
+file	kern/vfs_trans.c
 file	kern/vfs_vnops.c
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c
@@ -1403,6 +1412,7 @@ file	net/if_ieee1394subr.c		ieee1394
 file	net/if_loop.c			loop			needs-flag
 file	net/if_media.c
 file	net/if_ppp.c			ppp			needs-flag
+file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5.12.1 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.5.12.2 2007/02/26 09:07:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD");
 
 #include <uvm/uvm_extern.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -74,7 +73,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
-		boolean_t doall = FALSE;
+		bool doall = false;
 		paddr_t pa = 0;
 		vaddr_t end = 0;
 #ifdef COMPAT_HPUX
@@ -113,7 +112,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 			if (!doall &&
 			    (pa == 0 || m68k_page_offset(addr) == 0)) {
 				if (pmap_extract(p->p_vmspace->vm_map.pmap,
-				    addr, &pa) == FALSE)
+				    addr, &pa) == false)
 					doall = 1;
 			}
 			switch (req) {

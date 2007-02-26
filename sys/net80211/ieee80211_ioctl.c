@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.20.2.2 2006/12/30 20:50:28 yamt Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.20.2.3 2007/02/26 09:11:39 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20.2.2 2006/12/30 20:50:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.20.2.3 2007/02/26 09:11:39 yamt Exp $");
 #endif
 
 /*
@@ -1307,40 +1307,20 @@ ieee80211_ioctl_getmaccmd(struct ieee80211com *ic, struct ieee80211req *ireq)
 	return (acl == NULL ? EINVAL : acl->iac_getioctl(ic, ireq));
 }
 
-/*
- * When building the kernel with -O2 on the i386 architecture, gcc
- * seems to want to inline this function into ieee80211_ioctl()
- * (which is the only routine that calls it). When this happens,
- * ieee80211_ioctl() ends up consuming an additional 2K of stack
- * space. (Exactly why it needs so much is unclear.) The problem
- * is that it's possible for ieee80211_ioctl() to invoke other
- * routines (including driver init functions) which could then find
- * themselves perilously close to exhausting the stack.
- *
- * To avoid this, we deliberately prevent gcc from inlining this
- * routine. Another way to avoid this is to use less agressive
- * optimization when compiling this file (i.e. -O instead of -O2)
- * but special-casing the compilation of this one module in the
- * build system would be awkward.
- */
-#ifdef __GNUC__
-__attribute__ ((__noinline__))
-#endif
+#if defined(COMPAT_FREEBSD_NET80211)
 static int
-ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
+ieee80211_ioctl_get80211_fbsd(struct ieee80211com *ic, u_long cmd,
     struct ieee80211req *ireq)
 {
-	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
-	int error = 0;
-#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	u_int kid, len;
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
-#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
+
+	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
+	int error = 0;
 	u_int m;
 
 	switch (ireq->i_type) {
-#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_SSID:
 		switch (ic->ic_state) {
 		case IEEE80211_S_INIT:
@@ -1390,14 +1370,6 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
 	case IEEE80211_IOC_WEPTXKEY:
 		ireq->i_val = ic->ic_def_txkey;
 		break;
-#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
-	case IEEE80211_IOC_AUTHMODE:
-		if (ic->ic_flags & IEEE80211_F_WPA)
-			ireq->i_val = IEEE80211_AUTH_WPA;
-		else
-			ireq->i_val = ic->ic_bss->ni_authmode;
-		break;
-#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
 	case IEEE80211_IOC_CHANNEL:
 		ireq->i_val = ieee80211_chan2ieee(ic, ic->ic_curchan);
 		break;
@@ -1410,7 +1382,56 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
 	case IEEE80211_IOC_POWERSAVESLEEP:
 		ireq->i_val = ic->ic_lintval;
 		break;
-#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
+	case IEEE80211_IOC_BSSID:
+		if (ireq->i_len != IEEE80211_ADDR_LEN)
+			return EINVAL;
+		error = copyout(ic->ic_state == IEEE80211_S_RUN ?
+					ic->ic_bss->ni_bssid :
+					ic->ic_des_bssid,
+				ireq->i_data, ireq->i_len);
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
+	return error;
+}
+#endif /* COMPAT_FREEBSD_NET80211 */
+
+/*
+ * When building the kernel with -O2 on the i386 architecture, gcc
+ * seems to want to inline this function into ieee80211_ioctl()
+ * (which is the only routine that calls it). When this happens,
+ * ieee80211_ioctl() ends up consuming an additional 2K of stack
+ * space. (Exactly why it needs so much is unclear.) The problem
+ * is that it's possible for ieee80211_ioctl() to invoke other
+ * routines (including driver init functions) which could then find
+ * themselves perilously close to exhausting the stack.
+ *
+ * To avoid this, we deliberately prevent gcc from inlining this
+ * routine. Another way to avoid this is to use less agressive
+ * optimization when compiling this file (i.e. -O instead of -O2)
+ * but special-casing the compilation of this one module in the
+ * build system would be awkward.
+ */
+#ifdef __GNUC__
+__attribute__ ((__noinline__))
+#endif
+static int
+ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
+    struct ieee80211req *ireq)
+{
+	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
+	int error = 0;
+	u_int m;
+
+	switch (ireq->i_type) {
+	case IEEE80211_IOC_AUTHMODE:
+		if (ic->ic_flags & IEEE80211_F_WPA)
+			ireq->i_val = IEEE80211_AUTH_WPA;
+		else
+			ireq->i_val = ic->ic_bss->ni_authmode;
+		break;
 	case IEEE80211_IOC_RTSTHRESHOLD:
 		ireq->i_val = ic->ic_rtsthreshold;
 		break;
@@ -1504,16 +1525,6 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
 	case IEEE80211_IOC_CHANINFO:
 		error = ieee80211_ioctl_getchaninfo(ic, ireq);
 		break;
-#if defined(__FreeBSD__) || defined(COMPAT_FREEBSD_NET80211)
-	case IEEE80211_IOC_BSSID:
-		if (ireq->i_len != IEEE80211_ADDR_LEN)
-			return EINVAL;
-		error = copyout(ic->ic_state == IEEE80211_S_RUN ?
-					ic->ic_bss->ni_bssid :
-					ic->ic_des_bssid,
-				ireq->i_data, ireq->i_len);
-		break;
-#endif /* __FreeBSD__ || COMPAT_FREEBSD_NET80211 */
 	case IEEE80211_IOC_WPAIE:
 		error = ieee80211_ioctl_getwpaie(ic, ireq);
 		break;
@@ -1560,7 +1571,11 @@ ieee80211_ioctl_get80211(struct ieee80211com *ic, u_long cmd,
 		error = ieee80211_ioctl_getmaccmd(ic, ireq);
 		break;
 	default:
+#if defined(COMPAT_FREEBSD_NET80211)
+		error = ieee80211_ioctl_get80211_fbsd(ic, cmd, ireq);
+#else
 		error = EINVAL;
+#endif /* COMPAT_FREEBSD_NET80211 */
 		break;
 	}
 	return error;

@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.27.2.2 2006/12/30 20:47:49 yamt Exp $ */
+/* $NetBSD: cgd.c,v 1.27.2.3 2007/02/26 09:09:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.27.2.2 2006/12/30 20:47:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.27.2.3 2007/02/26 09:09:53 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -499,7 +499,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	struct	 cgd_ioctl *ci = data;
 	struct	 vnode *vp;
 	int	 ret;
-	int	 keybytes;			/* key length in bytes */
+	size_t	 keybytes;			/* key length in bytes */
 	const char *cp;
 	char	 *inbuf;
 
@@ -523,7 +523,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	}
 
 	/* right now we only support encblkno, so hard-code it */
-	(void)memset(inbuf, 0, sizeof(inbuf));
+	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	ret = copyinstr(ci->ci_ivmethod, inbuf, MAX_KEYSIZE, NULL);
 	if (ret)
 		goto bail;
@@ -794,6 +794,6 @@ hexprint(const char *start, void *buf, int len)
 	DIAGCONDPANIC(len < 0, ("hexprint: called with len < 0"));
 	printf("%s: len=%06d 0x", start, len);
 	while (len--)
-		printf("%02x", (unsigned) *c++);
+		printf("%02x", (unsigned char) *c++);
 }
 #endif

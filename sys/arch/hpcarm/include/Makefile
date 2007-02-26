@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.12.1 2006/12/30 20:46:03 yamt Exp $
+#	$NetBSD: Makefile,v 1.21.12.2 2007/02/26 09:06:36 yamt Exp $
 
 INCSDIR= /usr/include/hpcarm
 
@@ -12,9 +12,9 @@ INCS=	ansi.h apmvar.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h ipkdb.h \
 	limits.h lock.h \
-	math.h mcontext.h \
+	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	setjmp.h signal.h stdarg.h sysarch.h \
 	trap.h types.h \
 	varargs.h vmparam.h \

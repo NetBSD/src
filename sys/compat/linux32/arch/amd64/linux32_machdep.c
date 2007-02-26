@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.1.16.3 2006/12/30 20:47:38 yamt Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.1.16.4 2007/02/26 09:09:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1.16.3 2006/12/30 20:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1.16.4 2007/02/26 09:09:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1.16.3 2006/12/30 20:47:38 yam
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/filedesc.h>
 #include <sys/exec_elf.h>
@@ -116,10 +115,10 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux32_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sas = &l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 	/* Do we need to jump onto the signal stack? */
@@ -141,7 +140,12 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	linux32_save_sigcontext(l, tf, mask, &frame.sf_sc);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -177,11 +181,11 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux32_rt_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	linux32_siginfo_t *lsi;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sas = &l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 	/* Do we need to jump onto the signal stack? */
@@ -242,9 +246,13 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	/* Save register context. */
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	linux32_save_ucontext(l, tf, mask, sas, &frame.sf_uc);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -301,7 +309,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_gs = 0;
 
 
-	p->p_flag |= P_32;
+	p->p_flag |= PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;
@@ -434,7 +442,7 @@ linux32_restore_sigcontext(l, scp, retval)
 {	
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
-	struct sigaltstack *sas = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *sas = &l->l_sigstk;
 	sigset_t mask;
 	ssize_t ss_gap;
 
@@ -485,6 +493,8 @@ linux32_restore_sigcontext(l, scp, retval)
 	tf->tf_rsp = (register_t)scp->sc_esp_at_signal & 0xffffffff;
 	tf->tf_ss = (register_t)scp->sc_ss & 0xffffffff;
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
 	ss_gap = (ssize_t)
 	    ((caddr_t)NETBSD32PTR64(scp->sc_esp_at_signal) 
@@ -496,7 +506,10 @@ linux32_restore_sigcontext(l, scp, retval)
 
 	/* Restore signal mask. */
 	linux32_old_to_native_sigset(&mask, &scp->sc_mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
+
 #ifdef DEBUG_LINUX
 	printf("linux32_sigreturn: rip = 0x%lx, rsp = 0x%lx, flags = 0x%lx\n",
 	    tf->tf_rip, tf->tf_rsp, tf->tf_rflags);

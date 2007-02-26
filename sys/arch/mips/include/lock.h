@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.5.16.1 2006/06/21 14:53:38 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.5.16.2 2007/02/26 09:07:26 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wayne Knowles.
+ * by Wayne Knowles and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,68 +37,16 @@
  */
 
 /*
- * Machine-dependent spin lock operations for MIPS R4000 Processors.
+ * Machine-dependent spin lock operations for MIPS processors.
  *
- * Note:  R3000 doesn't have any atomic update instructions
+ * Note: R2000/R3000 doesn't have any atomic update instructions; this
+ * will cause problems for user applications using this header.
  */
 
 #ifndef _MIPS_LOCK_H_
 #define	_MIPS_LOCK_H_
 
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *lp)
-{
-
-	__asm volatile(
-		"# -- BEGIN __cpu_simple_lock_init\n"
-		"	.set push		\n"
-		"	.set mips2		\n"
-		"	sw	$0, %0		\n"
-		"	sync			\n"
-		"	.set pop		\n"
-		"# -- END __cpu_simple_lock_init\n"
-		: "=m" (*lp));
-}
-
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *lp)
-{
-	unsigned long t0;
-
-	/*
-	 * Note, if we detect that the lock is held when
-	 * we do the initial load-locked, we spin using
-	 * a non-locked load to save the coherency logic
-	 * some work.
-	 */
-
-	__asm volatile(
-		"# -- BEGIN __cpu_simple_lock	\n"
-		"	.set push		\n"
-		"	.set mips2		\n"
-		"1:	ll	%0, %3		\n"
-		"	bnez	%0, 2f		\n"
-		"	nop	       # BDslot	\n"
-		"	li	%0, %2		\n"
-		"	sc	%0, %1		\n"
-		"	beqz	%0, 1b		\n"
-		"	nop	       # BDslot	\n"
-		"	nop			\n"
-		"	sync			\n"
-		"	j	3f		\n"
-		"	nop			\n"
-		"	nop			\n"
-		"2:	lw	%0, %3		\n"
-		"	bnez	%0, 2b		\n"
-		"	nop	       # BDslot	\n"
-		"	j	1b		\n"
-		"	nop			\n"
-		"3:				\n"
-		"	.set pop		\n"
-		"# -- END __cpu_simple_lock	\n"
-		: "=r" (t0), "+m" (*lp)
-		: "i" (__SIMPLELOCK_LOCKED), "m" (*lp));
-}
+#ifndef _KERNEL
 
 static __inline int
 __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
@@ -131,18 +79,90 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 	return (v0 != 0);
 }
 
+#ifdef MIPS1
+static __inline void
+mb_read(void)
+{
+	__insn_barrier();
+}
+
+static __inline void
+mb_write(void)
+{
+	__insn_barrier();
+}
+
+static __inline void
+mb_memory(void)
+{
+	__insn_barrier();
+}
+#else	/* MIPS1*/
+static __inline void
+mb_read(void)
+{
+	__asm volatile(
+	    "	.set push\n"
+	    "	.set mips2\n"
+	    "	sync\n"
+	    "	.set pop"
+	    ::: "memory"
+	);
+}
+
+static __inline void
+mb_write(void)
+{
+	mb_read();
+}
+
+static __inline void
+mb_memory(void)
+{
+	mb_read();
+}
+#endif	/* MIPS1 */
+
+#else	/* !_KERNEL */
+
+int	_lock_cas4(volatile uint32_t *, uint32_t, uint32_t);
+void	mb_read(void);
+void	mb_write(void);
+void	mb_memory(void);
+
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *lp)
+{
+
+	return _lock_cas4((volatile uint32_t *)lp,
+	    __SIMPLELOCK_UNLOCKED, __SIMPLELOCK_LOCKED);
+}
+
+#endif	/* _KERNEL */
+
+static __inline void
+__cpu_simple_lock_init(__cpu_simple_lock_t *lp)
+{
+
+	*lp = __SIMPLELOCK_UNLOCKED;
+	mb_memory();
+}
+
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *lp)
+{
+
+	while (!__cpu_simple_lock_try(lp))
+		while (*lp == __SIMPLELOCK_LOCKED)
+			/* spin */;
+}
+
 static __inline void
 __cpu_simple_unlock(__cpu_simple_lock_t *lp)
 {
 
-	__asm volatile(
-		"# -- BEGIN __cpu_simple_unlock \n"
-		"	.set push		\n"
-		"	.set mips2		\n"
-		"	sync			\n"
-		"	sw	$0, %0		\n"
-		"	.set pop		\n"
-		"# -- END __cpu_simple_unlock	\n"
-		: "=m" (*lp));
+	mb_memory();
+	*lp = __SIMPLELOCK_UNLOCKED;
 }
+
 #endif /* _MIPS_LOCK_H_ */

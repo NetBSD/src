@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.20.2.2 2006/12/30 20:48:04 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.20.2.3 2007/02/26 09:10:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -574,61 +574,53 @@ re_attach(struct rtk_softc *sc)
 	/* Reset the adapter. */
 	re_reset(sc);
 
+	if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
+		addr_len = RTK_EEADDR_LEN1;
+	else
+		addr_len = RTK_EEADDR_LEN0;
+
+	/*
+	 * Get station address from the EEPROM.
+	 */
+	for (i = 0; i < 3; i++) {
+		val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
+		eaddr[(i * 2) + 0] = val & 0xff;
+		eaddr[(i * 2) + 1] = val >> 8;
+	}
+
 	if (sc->rtk_type == RTK_8169) {
 		uint32_t hwrev;
 
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
-		hwrev = CSR_READ_4(sc, RTK_TXCFG) & 0x7c800000;
-		if (hwrev == (0x1 << 28)) {
+		hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
+		/* These rev numbers are taken from Realtek's driver */
+		if (       hwrev == RTK_HWREV_8100E_SPIN2) {
+			sc->sc_rev = 15;
+		} else if (hwrev == RTK_HWREV_8100E) {
+			sc->sc_rev = 14;
+		} else if (hwrev == RTK_HWREV_8101E) {
+			sc->sc_rev = 13;
+		} else if (hwrev == RTK_HWREV_8168_SPIN2) {
+			sc->sc_rev = 12;
+		} else if (hwrev == RTK_HWREV_8168_SPIN1) {
+			sc->sc_rev = 11;
+		} else if (hwrev == RTK_HWREV_8169_8110SC) {
+			sc->sc_rev = 5;
+		} else if (hwrev == RTK_HWREV_8169_8110SB) {
 			sc->sc_rev = 4;
-		} else if (hwrev == (0x1 << 26)) {
+		} else if (hwrev == RTK_HWREV_8169S) {
 			sc->sc_rev = 3;
-		} else if (hwrev == (0x1 << 23)) {
+		} else if (hwrev == RTK_HWREV_8110S) {
 			sc->sc_rev = 2;
-		} else
+		} else /* RTK_HWREV_8169 */
 			sc->sc_rev = 1;
 
 		/* Set RX length mask */
-
 		sc->re_rxlenmask = RE_RDESC_STAT_GFRAGLEN;
-
-		/* Force station address autoload from the EEPROM */
-
-		CSR_WRITE_1(sc, RTK_EECMD, RTK_EEMODE_AUTOLOAD);
-		for (i = 0; i < RTK_TIMEOUT; i++) {
-			if ((CSR_READ_1(sc, RTK_EECMD) & RTK_EEMODE_AUTOLOAD)
-			    == 0)
-				break;
-			DELAY(100);
-		}
-		if (i == RTK_TIMEOUT)
-			aprint_error("%s: eeprom autoload timed out\n",
-			    sc->sc_dev.dv_xname);
-
-		for (i = 0; i < ETHER_ADDR_LEN; i++)
-			eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
-
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8169;
 	} else {
-
 		/* Set RX length mask */
-
 		sc->re_rxlenmask = RE_RDESC_STAT_FRAGLEN;
-
-		if (rtk_read_eeprom(sc, RTK_EE_ID, RTK_EEADDR_LEN1) == 0x8129)
-			addr_len = RTK_EEADDR_LEN1;
-		else
-			addr_len = RTK_EEADDR_LEN0;
-
-		/*
-		 * Get station address from the EEPROM.
-		 */
-		for (i = 0; i < 3; i++) {
-			val = rtk_read_eeprom(sc, RTK_EE_EADDR0 + i, addr_len);
-			eaddr[(i * 2) + 0] = val & 0xff;
-			eaddr[(i * 2) + 1] = val >> 8;
-		}
-
 		sc->re_ldata.re_tx_desc_cnt = RE_TX_DESC_CNT_8139;
 	}
 
@@ -1353,7 +1345,7 @@ re_txeof(struct rtk_softc *sc)
 
 	sc->re_ldata.re_txq_considx = idx;
 
-	if (sc->re_ldata.re_txq_free > 0)
+	if (sc->re_ldata.re_txq_free > RE_NTXDESC_RSVD)
 		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
@@ -1525,7 +1517,7 @@ re_start(struct ifnet *ifp)
 	uint32_t		cmdstat, re_flags;
 	int			ofree, idx, error, nsegs, seg;
 	int			startdesc, curdesc, lastdesc;
-	boolean_t		pad;
+	bool			pad;
 
 	sc = ifp->if_softc;
 	ofree = sc->re_ldata.re_txq_free;
@@ -1788,7 +1780,7 @@ re_init(struct ifnet *ifp)
 	 */
 
 	/*
-	 * XXX: For 8169 and 8196S revs below 2, set bit 14.
+	 * XXX: For 8169 and 8169S revs below 2, set bit 14.
 	 * For 8169S/8110S rev 2 and above, do not set bit 14.
 	 */
 	if (sc->rtk_type == RTK_8169 && sc->sc_rev == 1)
@@ -1938,7 +1930,7 @@ re_init(struct ifnet *ifp)
 	if (sc->re_testmode)
 		return 0;
 
-	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD | RTK_CFG1_FULLDUPLEX);
+	CSR_WRITE_1(sc, RTK_CFG1, RTK_CFG1_DRVLOAD);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;

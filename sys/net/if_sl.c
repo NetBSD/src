@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.91.2.2 2006/12/30 20:50:20 yamt Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.91.2.3 2007/02/26 09:11:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.91.2.2 2006/12/30 20:50:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.91.2.3 2007/02/26 09:11:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -199,7 +199,7 @@ static int	slclose(struct tty *, int);
 static int	slinput(int, struct tty *);
 static int	slioctl(struct ifnet *, u_long, caddr_t);
 static int	slopen(dev_t, struct tty *);
-static int	sloutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+static int	sloutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 			 struct rtentry *);
 static int	slstart(struct tty *);
 static int	sltioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
@@ -309,7 +309,7 @@ slopen(dev_t dev, struct tty *tp)
 	int s;
 
 	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0)
+	    NULL)) != 0)
 		return error;
 
 	if (tp->t_linesw == &slip_disc)
@@ -452,7 +452,7 @@ sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
  * ordering gets trashed.  It can be done for all packets in slintr().
  */
 static int
-sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+sloutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rtp)
 {
 	struct sl_softc *sc = ifp->if_softc;

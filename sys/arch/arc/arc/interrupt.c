@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1.16.2 2006/12/30 20:45:29 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.1.16.3 2007/02/26 09:05:49 yamt Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.16.2 2006/12/30 20:45:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.1.16.3 2007/02/26 09:05:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,23 +171,6 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 	 */
 	inttab = &cpu_int_tab[ARC_INTPRI_TIMER_INT];
 	if (inttab->int_mask & ipending) {
-		if ((ipending & MIPS_INT_MASK & ~inttab->int_mask) == 0) {
-			/*
-			 * If all interrupts were enabled and there is no
-			 * pending interrupts, set MIPS_SR_INT_IE so that
-			 * spllowerclock() in hardclock() works properly.
-			 */
-#if 0			/* MIPS_SR_INT_IE is enabled above */
-			_splset(MIPS_SR_INT_IE);
-#endif
-		} else {
-			/*
-			 * If there are any pending interrputs, clear
-			 * MIPS_SR_INT_IE in cf.sr so that spllowerclock()
-			 * in hardclock() will not happen.
-			 */
-			cf.sr &= ~MIPS_SR_INT_IE;
-		}
 		cause &= (*inttab->int_hand)(ipending, &cf);
 	}
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);

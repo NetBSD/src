@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.63.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.63.2.3 2007/02/26 09:12:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.63.2.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.63.2.3 2007/02/26 09:12:25 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -79,7 +79,7 @@ READ(void *v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error, flags, ioflag;
-	boolean_t usepc = FALSE;
+	bool usepc = false;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -104,6 +104,10 @@ READ(void *v)
 		return (EFBIG);
 	if (uio->uio_resid == 0)
 		return (0);
+
+	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
+		return error;
+
 	if (uio->uio_offset >= ip->i_size)
 		goto out;
 
@@ -183,6 +187,8 @@ READ(void *v)
 		if ((ap->a_ioflag & IO_SYNC) == IO_SYNC)
 			error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	}
+
+	fstrans_done(vp->v_mount);
 	return (error);
 }
 
@@ -213,10 +219,10 @@ WRITE(void *v)
 	int extended=0;
 	void *win;
 	vsize_t bytelen;
-	boolean_t async;
-	boolean_t usepc = FALSE;
+	bool async;
+	bool usepc = false;
 #ifdef LFS_READWRITE
-	boolean_t need_unreserve = FALSE;
+	bool need_unreserve = false;
 #endif
 	struct ufsmount *ump;
 
@@ -274,6 +280,9 @@ WRITE(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 
+	if ((error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0)
+		return error;
+
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 	async = vp->v_mount->mnt_flag & MNT_ASYNC;
 	origoff = uio->uio_offset;
@@ -283,7 +292,7 @@ WRITE(void *v)
 
 	usepc = vp->v_type == VREG;
 #ifdef LFS_READWRITE
-	async = TRUE;
+	async = true;
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)
@@ -318,7 +327,7 @@ WRITE(void *v)
 
 	ubc_alloc_flags = UBC_WRITE;
 	while (uio->uio_resid > 0) {
-		boolean_t extending; /* if we're extending a whole block */
+		bool extending; /* if we're extending a whole block */
 		off_t newoff;
 
 		if (ioflag & IO_DIRECT) {
@@ -434,7 +443,7 @@ WRITE(void *v)
 		    btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		if (error)
 			break;
-		need_unreserve = TRUE;
+		need_unreserve = true;
 #endif
 		error = UFS_BALLOC(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
@@ -467,7 +476,7 @@ WRITE(void *v)
 		(void)VOP_BWRITE(bp);
 		lfs_reserve(fs, vp, NULL,
 		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
-		need_unreserve = FALSE;
+		need_unreserve = false;
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
@@ -494,7 +503,7 @@ WRITE(void *v)
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred &&
-	    kauth_cred_geteuid(ap->a_cred) != 0) {
+	    kauth_authorize_generic(ap->a_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		ip->i_mode &= ~(ISUID | ISGID);
 		DIP_ASSIGN(ip, mode, ip->i_mode);
 	}
@@ -508,5 +517,8 @@ out:
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)
 		error = UFS_UPDATE(vp, NULL, NULL, UPDATE_WAIT);
 	KASSERT(vp->v_size == ip->i_size);
+
+	fstrans_done(vp->v_mount);
+
 	return (error);
 }

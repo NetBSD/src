@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.12.2 2006/12/30 20:45:25 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.12.3 2007/02/26 09:05:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,7 @@
 struct cpu_info {
 	struct device *ci_dev;
 	struct cpu_info *ci_self;
+	void *ci_self200;		/* self + 0x200, see lock_stubs.S */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
 	struct cpu_info *ci_next;
@@ -81,8 +82,17 @@ struct cpu_info {
 	int ci_idle_tss_sel;
 
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
-	u_int32_t	ci_ipending;
-	int		ci_ilevel;
+	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
+	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
+
+	/* The following must be aligned for cmpxchg8b. */
+	struct {
+		uint32_t	ipending;
+		int		ilevel;
+	} ci_istate __aligned(8);
+#define ci_ipending	ci_istate.ipending
+#define	ci_ilevel	ci_istate.ilevel
+
 	int		ci_idepth;
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];
@@ -155,12 +165,6 @@ void cpu_boot_secondary_processors __P((void));
 void cpu_init_idle_pcbs __P((void));    
 
 
-/*      
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void need_resched __P((struct cpu_info *));
-
 #else /* !MULTIPROCESSOR */
 
 #define X86_MAXPROCS		1
@@ -176,22 +180,15 @@ extern struct cpu_info cpu_info_primary;
 #define	cpu_number()		0
 #define CPU_IS_PRIMARY(ci)	1
 
+#endif
+
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
+extern void cpu_need_resched(struct cpu_info *);
 
-#define need_resched(ci)						\
-do {									\
-	struct cpu_info *__ci = (ci);					\
-	__ci->ci_want_resched = 1;					\
-	if (__ci->ci_curlwp != NULL)					\
-		aston(__ci->ci_curlwp->l_proc);				\
-} while (/*CONSTCOND*/0)
-
-#endif
-
-#define aston(p)	((p)->p_md.md_astpending = 1)
+#define aston(l)	((l)->l_md.md_astpending = 1)
 
 extern u_int32_t cpus_attached;
 
@@ -208,7 +205,6 @@ struct clockframe {
 };
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
-#define CLKF_BASEPRI(frame)	(0)
 #define CLKF_PC(frame)		((frame)->cf_if.if_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 
@@ -223,13 +219,12 @@ struct clockframe {
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
+extern void cpu_need_proftick(struct lwp *);
 
 /*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
+ * Notify an LWP that it has a signal pending, process as soon as possible.
  */
-#define	signotify(p)		aston(p)
+extern void cpu_signotify(struct lwp *);
 
 /*
  * We need a machine-independent name for this.

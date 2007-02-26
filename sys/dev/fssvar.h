@@ -1,7 +1,7 @@
-/*	$NetBSD: fssvar.h,v 1.9.2.1 2006/06/21 15:02:12 yamt Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.9.2.2 2007/02/26 09:09:54 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -144,7 +144,7 @@ struct fss_cache {
 struct fss_softc {
 	int		sc_unit;	/* Logical unit number */
 	struct simplelock sc_slock;	/* Protect this softc */
-	struct lock	sc_lock;	/* Sleep lock for fss_ioctl */
+	kmutex_t	sc_lock;	/* Sleep lock for fss_ioctl */
 	volatile int	sc_flags;	/* Flags */
 #define FSS_ACTIVE	0x01		/* Snapshot is active */
 #define FSS_ERROR	0x02		/* I/O error occurred */

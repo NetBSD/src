@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.19.4.1 2006/06/21 15:07:30 yamt Exp $	*/
+/*	$NetBSD: sunms.c,v 1.19.4.2 2007/02/26 09:10:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.19.4.1 2006/06/21 15:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.19.4.2 2007/02/26 09:10:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.19.4.1 2006/06/21 15:07:30 yamt Exp $");
 
 #include <machine/vuid_event.h>
 
-#include <sys/tty.h>
 #include <dev/sun/event_var.h>
 #include <dev/sun/msvar.h>
 #include <dev/sun/kbd_ms_ttyvar.h>

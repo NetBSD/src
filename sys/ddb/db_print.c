@@ -1,4 +1,4 @@
-/*	$NetBSD: db_print.c,v 1.21.2.1 2006/12/30 20:47:49 yamt Exp $	*/
+/*	$NetBSD: db_print.c,v 1.21.2.2 2007/02/26 09:09:48 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.21.2.1 2006/12/30 20:47:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.21.2.2 2007/02/26 09:09:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_print.c,v 1.21.2.1 2006/12/30 20:47:49 yamt Exp $
 
 /*ARGSUSED*/
 void
-db_show_regs(db_expr_t addr, int have_addr,
+db_show_regs(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	const struct db_variable *regp;
@@ -69,7 +69,7 @@ db_show_regs(db_expr_t addr, int have_addr,
 			if (offset != 0) {
 				char tbuf[24];
 
-				db_format_radix(tbuf, 24, offset, TRUE);
+				db_format_radix(tbuf, 24, offset, true);
 				db_printf("+%s", tbuf);
 			}
 		}

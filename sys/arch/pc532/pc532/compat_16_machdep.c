@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1.18.1 2006/06/21 14:54:32 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.1.18.2 2007/02/26 09:07:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.18.1 2006/06/21 14:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.18.2 2007/02/26 09:07:44 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.18.1 2006/06/21 14:54:32 y
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>

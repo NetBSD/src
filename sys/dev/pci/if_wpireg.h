@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpireg.h,v 1.2.4.2 2006/12/30 20:48:46 yamt Exp $    */
+/*  $NetBSD: if_wpireg.h,v 1.2.4.3 2007/02/26 09:10:29 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -22,6 +22,8 @@
 #define WPI_CMD_RING_COUNT	256
 #define WPI_RX_RING_COUNT	64
 
+#define WPI_BUF_ALIGN       4096
+
 /*
  * Rings must be aligned on a four 4K-pages boundary.
  * I had a hard time figuring this out.
@@ -30,6 +32,9 @@
 
 /* maximum scatter/gather */
 #define WPI_MAX_SCATTER	4
+
+/* maximum Rx buffer size */
+#define WPI_RBUF_SIZE	(3 * 1024)	/* XXX 3000 but must be aligned! */
 
 /*
  * Control and status registers.

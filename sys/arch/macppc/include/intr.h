@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21.16.1 2006/12/30 20:46:29 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.16.2 2007/02/26 09:07:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,14 +105,6 @@ extern int imask[];
 #define SPL_CLOCK	31
 
 /*
- * Software interrupt masks
- *
- * NOTE: splsoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
- */
-#define	spllowersoftclock() spllower(imask[IPL_SOFTCLOCK])
-
-/*
  * Miscellaneous
  */
 #define	spl0()		spllower(0)
@@ -150,8 +142,6 @@ splraiseipl(ipl_cookie_t icookie)
 struct cpu_info;
 void macppc_send_ipi(volatile struct cpu_info *, u_long);
 #endif
-
-#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 
 #endif /* _LOCORE */
 

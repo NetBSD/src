@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34.6.2 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.34.6.3 2007/02/26 09:08:10 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.6.2 2006/12/30 20:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.6.3 2007/02/26 09:08:10 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -120,8 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.34.6.2 2006/12/30 20:46:55 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
 
@@ -310,10 +308,6 @@ trap(struct lwp *l, struct trapframe *tf)
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
-			l->l_flag |= L_SA_PAGEFAULT;
-		}
 		rv = uvm_fault(map, va, ftype);
 
 		/*
@@ -329,8 +323,6 @@ trap(struct lwp *l, struct trapframe *tf)
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
-
-		l->l_flag &= ~L_SA_PAGEFAULT;
 
 		if (rv == 0) {
 			if (traptype & T_USER)
@@ -471,7 +463,7 @@ trap(struct lwp *l, struct trapframe *tf)
 			ADDUPROF(p);
 		}
 		if (curcpu()->ci_want_resched)
-			preempt(0);
+			preempt();
 		userret(l);
 		return;
 

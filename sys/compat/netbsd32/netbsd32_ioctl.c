@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.23.4.2 2006/12/30 20:47:42 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.23.4.3 2007/02/26 09:09:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.23.4.2 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.23.4.3 2007/02/26 09:09:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,12 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.23.4.2 2006/12/30 20:47:42 yamt
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/sockio.h>
 #include <sys/socket.h>
 #include <sys/ttycom.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef __sparc__

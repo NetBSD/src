@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.183.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.183.2.3 2007/02/26 09:12:21 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.183.2.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.183.2.3 2007/02/26 09:12:21 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.183.2.2 2006/12/30 20:51:01 yamt Ex
 #include <miscfs/genfs/genfs_node.h>
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
-static boolean_t lfs_issequential_hole(const struct ufsmount *,
+static bool lfs_issequential_hole(const struct ufsmount *,
     daddr_t, daddr_t);
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
@@ -156,6 +156,7 @@ struct vfsops lfs_vfsops = {
 	lfs_mountroot,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	lfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -428,7 +429,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	 * If mount by non-root, then verify that user has necessary
 	 * permissions on the device.
 	 */
-	if (error == 0 && kauth_cred_geteuid(l->l_cred) != 0) {
+	if (error == 0 && kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
 		accessmode = VREAD;
 		if (update ?
 		    (mp->mnt_iflag & IMNT_WANTRDWR) != 0 :
@@ -727,7 +729,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_sleepers = 0;
 	fs->lfs_pages = 0;
 	simple_lock_init(&fs->lfs_interlock);
-	lockinit(&fs->lfs_fraglock, PINOD, "lfs_fraglock", 0, 0);
+	rw_init(&fs->lfs_fraglock);
 	lockinit(&fs->lfs_iflock, PINOD, "lfs_iflock", 0, 0);
 	lockinit(&fs->lfs_stoplock, PINOD, "lfs_stoplock", 0, 0);
 
@@ -972,6 +974,7 @@ lfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	free(fs->lfs_suflags[1], M_SEGMENT);
 	free(fs->lfs_suflags, M_SEGMENT);
 	lfs_free_resblks(fs);
+	rw_destroy(&fs->lfs_fraglock);
 	free(fs, M_UFSMNT);
 	free(ump, M_UFSMNT);
 
@@ -1067,7 +1070,7 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred,
 	return (error);
 }
 
-extern struct lock ufs_hashlock;
+extern kmutex_t ufs_hashlock;
 
 /*
  * Look up an LFS dinode number to find its incore vnode.  If not already
@@ -1113,12 +1116,12 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		 return (error);
 	}
 
-	do {
-		if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
-			ungetnewvnode(vp);
-			return (0);
-		}
-	} while (lockmgr(&ufs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	mutex_enter(&ufs_hashlock);
+	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL) {
+		mutex_exit(&ufs_hashlock);
+		ungetnewvnode(vp);
+		return (0);
+	}
 
 	/* Translate the inode number to a disk address. */
 	if (ino == LFS_IFILE_INUM)
@@ -1135,8 +1138,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR) {
 			*vpp = NULLVP;
+			mutex_exit(&ufs_hashlock);
 			ungetnewvnode(vp);
-			lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 			return (ENOENT);
 		}
 	}
@@ -1152,7 +1155,7 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	 */
 	ip = VTOI(vp);
 	ufs_ihashins(ip);
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&ufs_hashlock);
 
 	/*
 	 * XXX
@@ -1463,7 +1466,7 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
  * Since blocks will be written to the new segment anyway,
  * we don't care about current daddr of them.
  */
-static boolean_t
+static bool
 lfs_issequential_hole(const struct ufsmount *ump,
     daddr_t daddr0, daddr_t daddr1)
 {
@@ -1482,15 +1485,15 @@ lfs_issequential_hole(const struct ufsmount *ump,
 	 * treat UNWRITTENs and all resident blocks as 'contiguous'
 	 */
 	if (daddr0 != 0 && daddr1 != 0)
-		return TRUE;
+		return true;
 
 	/*
 	 * both are in hole?
 	 */
 	if (daddr0 == 0 && daddr1 == 0)
-		return TRUE; /* all holes are 'contiguous' for us. */
+		return true; /* all holes are 'contiguous' for us. */
 
-	return FALSE;
+	return false;
 }
 
 /*

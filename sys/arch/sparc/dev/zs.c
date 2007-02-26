@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.102.2.1 2006/06/21 14:55:54 yamt Exp $	*/
+/*	$NetBSD: zs.c,v 1.102.2.2 2007/02/26 09:08:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.102.2.1 2006/06/21 14:55:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.102.2.2 2007/02/26 09:08:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -399,6 +399,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	struct zs_chanstate *cs;
 	int s, channel;
 	static int didintr, prevpri;
+	int ch0_is_cons = 0;
 
 	if (zsd == NULL) {
 		printf("configuration incomplete\n");
@@ -445,6 +446,13 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
 			zs_conschan_get = zc;
+			/*
+			 * For SUN4, we need to remember if there is a
+			 * "real" keyboard connected, in order to set up
+			 * the keyboard and mouse line disciplines below.
+			 */
+			if (zsc->zsc_promunit == 1 && !channel)
+				ch0_is_cons = 1;
 		}
 		if ((zsc_args.hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
 			zs_conschan_put = zc;
@@ -495,10 +503,14 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		 * If this was a zstty it has a keyboard
 		 * property on it we need to attach the
 		 * sunkbd and sunms line disciplines.
+		 * There are no properties on SUN4 machines.
+		 * For them, check if we have set the
+		 * ch0_is_cons variable above.
 		 */
-		if ((child != NULL)
-		    && (device_is_a(child, "zstty"))
-		    && (prom_getproplen(zsc->zsc_node, "keyboard") == 0))
+		if ((child != NULL) &&
+		    (device_is_a(child, "zstty")) && (
+		    (CPU_ISSUN4 && ch0_is_cons) || (!CPU_ISSUN4 &&
+		    (prom_getproplen(zsc->zsc_node, "keyboard") == 0))))
 		{
 			struct kbd_ms_tty_attach_args kma;
 			struct tty *tp = zstty_get_tty_from_dev(child);

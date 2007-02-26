@@ -1,4 +1,4 @@
-/* $Id: ar5315_intr.c,v 1.1.8.2 2006/12/30 20:46:30 yamt Exp $ */
+/* $Id: ar5315_intr.c,v 1.1.8.3 2007/02/26 09:07:25 yamt Exp $ */
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315_intr.c,v 1.1.8.2 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315_intr.c,v 1.1.8.3 2007/02/26 09:07:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -120,7 +120,7 @@ const uint32_t	ipl_sr_bits[_IPL_N] = {
 	MIPS_INT_MASK,			/* 8: IPL_{CLOCK,HIGH} */
 };
 
-const uint32_t mips_ipl_si_to_sr[_IPL_NSOFT] = {
+const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
 	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFT */
 	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTCLOCK */
 	MIPS_SOFT_INT_MASK_0,		/* IPL_SOFTNET */

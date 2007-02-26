@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.2 2006/12/30 20:45:58 yamt Exp $
+# $NetBSD: GENERIC,v 1.47.2.3 2007/02/26 09:06:34 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.47.2.2 $"
+#ident 		"GENERIC-$Revision: 1.47.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -434,7 +434,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 
 # GSC network interfaces
 #medusa* at gsc?			# FDDI
-#ie*	at gsc?				# old 82C5[89]6 Ethernet, use iee(4)
+ie*	at gsc?				# old 82C5[89]6 Ethernet, use iee(4)
 iee*	at gsc?				# 82C596 Ethernet
 
 # PCI network interfaces

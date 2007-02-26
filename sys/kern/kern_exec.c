@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.201.2.2 2006/12/30 20:50:05 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.201.2.3 2007/02/26 09:11:05 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.3 2007/02/26 09:11:05 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.2 2006/12/30 20:50:05 yamt Exp
 #include <sys/syscall.h>
 #include <sys/kauth.h>
 
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
@@ -148,17 +146,6 @@ struct uvm_object *emul_netbsd_object;
 void	syscall(void);
 #endif
 
-static const struct sa_emul saemul_netbsd = {
-	sizeof(ucontext_t),
-	sizeof(struct sa_t),
-	sizeof(struct sa_t *),
-	NULL,
-	NULL,
-	cpu_upcall,
-	(void (*)(struct lwp *, void *))getucontext,
-	sa_ucsp
-};
-
 /* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
@@ -203,7 +190,8 @@ const struct emul emul_netbsd = {
 
 	uvm_default_mapaddr,
 	NULL,
-	&saemul_netbsd,
+	sizeof(ucontext_t),
+	startlwp,
 };
 
 #ifdef LKM
@@ -211,7 +199,7 @@ const struct emul emul_netbsd = {
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
  */
-struct lock exec_lock;
+krwlock_t exec_lock;
 
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
@@ -286,14 +274,15 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	VOP_UNLOCK(vp, 0);
 
 #if NVERIEXEC > 0
-	if ((error = veriexec_verify(l, vp, ndp->ni_cnd.cn_pnbuf,
+	error = veriexec_verify(l, vp, ndp->ni_cnd.cn_pnbuf,
 	    epp->ep_flags & EXEC_INDIR ? VERIEXEC_INDIRECT : VERIEXEC_DIRECT,
-	    NULL)) != 0)
+	    NULL);
+	if (error)
 		goto bad2;
 #endif /* NVERIEXEC > 0 */
 
 #ifdef PAX_SEGVGUARD
-	error = pax_segvguard(l, vp, ndp->ni_cnd.cn_pnbuf, FALSE);
+	error = pax_segvguard(l, vp, ndp->ni_cnd.cn_pnbuf, false);
 	if (error)
 		goto bad2;
 #endif /* PAX_SEGVGUARD */
@@ -310,7 +299,7 @@ check_exec(struct lwp *l, struct exec_package *epp)
 	 * Set up default address space limits.  Can be overridden
 	 * by individual exec packages.
 	 *
-	 * XXX probably should be all done in the exec pakages.
+	 * XXX probably should be all done in the exec packages.
 	 */
 	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS;
@@ -427,27 +416,25 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	char			**tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
-	int			oldlwpflags;
+	ksiginfo_t		ksi;
+	ksiginfoq_t		kq;
 #ifdef SYSTRACE
-	int			wassugid = ISSET(p->p_flag, P_SUGID);
+	int			wassugid = ISSET(p->p_flag, PK_SUGID);
 	char			pathbuf[MAXPATHLEN];
 	size_t			pathbuflen;
 #endif /* SYSTRACE */
 
-	/* Disable scheduler activation upcalls. */
-	oldlwpflags = l->l_flag & (L_SA | L_SA_UPCALL);
-	if (l->l_flag & L_SA)
-		l->l_flag &= ~(L_SA | L_SA_UPCALL);
-
 	p = l->l_proc;
+
 	/*
-	 * Lock the process and set the P_INEXEC flag to indicate that
-	 * it should be left alone until we're done here.  This is
-	 * necessary to avoid race conditions - e.g. in ptrace() -
-	 * that might allow a local user to illicitly obtain elevated
-	 * privileges.
+	 * Drain existing references and forbid new ones.  The process
+	 * should be left alone until we're done here.  This is necessary
+	 * to avoid race conditions - e.g. in ptrace() - that might allow
+	 * a local user to illicitly obtain elevated privileges.
 	 */
-	p->p_flag |= P_INEXEC;
+	mutex_enter(&p->p_mutex);
+	proc_drainrefs(p);
+	mutex_exit(&p->p_mutex);
 
 	base_vcp = NULL;
 	/*
@@ -458,7 +445,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * see exec_script_makecmds().
 	 */
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, PK_SYSTRACE))
 		systrace_execve0(p);
 
 	error = copyinstr(path, pathbuf, sizeof(pathbuf),
@@ -490,7 +477,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pack.ep_flags = 0;
 
 #ifdef LKM
-	lockmgr(&exec_lock, LK_SHARED, NULL);
+	rw_enter(&exec_lock, RW_READER);
 #endif
 
 	/* see if we can run it. */
@@ -606,19 +593,17 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto bad;
 	}
 
-	/* Get rid of other LWPs/ */
-	p->p_flag |= P_WEXIT; /* XXX hack. lwp-exit stuff wants to see it. */
-	exit_lwps(l);
-	p->p_flag &= ~P_WEXIT;
+	/* Get rid of other LWPs. */
+	if (p->p_nlwps > 1) {
+		mutex_enter(&p->p_smutex);
+		exit_lwps(l);
+		mutex_exit(&p->p_smutex);
+	}
 	KDASSERT(p->p_nlwps == 1);
 
 	/* This is now LWP 1 */
 	l->l_lid = 1;
 	p->p_nlwpid = 1;
-
-	/* Release any SA state. */
-	if (p->p_sa)
-		sa_release(p);
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
@@ -757,7 +742,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	stopprofclock(p);	/* stop profiling */
 	fdcloseexec(l);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 
@@ -769,17 +753,36 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	p->p_comm[len] = 0;
 	p->p_acflag &= ~AFORK;
 
-	p->p_flag |= P_EXEC;
-	if (p->p_flag & P_PPWAIT) {
-		p->p_flag &= ~P_PPWAIT;
-		wakeup((caddr_t) p->p_pptr);
+	p->p_flag |= PK_EXEC;
+
+	/*
+	 * Stop profiling.
+	 */
+	if ((p->p_stflag & PST_PROFIL) != 0) {
+		mutex_spin_enter(&p->p_stmutex);
+		stopprofclock(p);
+		mutex_spin_exit(&p->p_stmutex);
 	}
 
 	/*
-	 * deal with set[ug]id.
-	 * MNT_NOSUID has already been used to disable s[ug]id.
+	 * It's OK to test PS_PPWAIT unlocked here, as other LWPs have
+	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
-	if ((p->p_flag & P_TRACED) == 0 &&
+	if ((p->p_sflag & PS_PPWAIT) != 0) {
+		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&p->p_smutex);
+		p->p_sflag &= ~PS_PPWAIT;
+		cv_broadcast(&p->p_pptr->p_waitcv);
+		mutex_exit(&p->p_smutex);
+		rw_exit(&proclist_lock);
+	}
+
+	/*
+	 * Deal with set[ug]id.  MNT_NOSUID has already been used to disable
+	 * s[ug]id.  It's OK to check for PSL_TRACED here as we have blocked
+	 * out additional references on the process for the moment.
+	 */
+	if ((p->p_slflag & PSL_TRACED) == 0 &&
 
 	    (((attr.va_mode & S_ISUID) != 0 &&
 	      kauth_cred_geteuid(l->l_cred) != attr.va_uid) ||
@@ -790,7 +793,8 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * Mark the process as SUGID before we do
 		 * anything that might block.
 		 */
-		p_sugid(p);
+		proc_crmod_enter();
+		proc_crmod_leave(NULL, NULL, true);
 
 		/* Make sure file descriptors 0..2 are in use. */
 		if ((error = fdcheckstd(l)) != 0) {
@@ -808,8 +812,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		 * If process is being ktraced, turn off - unless
 		 * root set it.
 		 */
-		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT))
-			ktrderef(p);
+		if (p->p_tracep) {
+			mutex_enter(&ktrace_mutex);
+			if (!(p->p_traceflag & KTRFAC_ROOT))
+				ktrderef(p);
+			mutex_exit(&ktrace_mutex);
+		}
 #endif
 		if (attr.va_mode & S_ISUID)
 			kauth_cred_seteuid(l->l_cred, attr.va_uid);
@@ -820,7 +828,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		    kauth_cred_getuid(l->l_cred) &&
 		    kauth_cred_getegid(l->l_cred) ==
 		    kauth_cred_getgid(l->l_cred))
-			p->p_flag &= ~P_SUGID;
+			p->p_flag &= ~PK_SUGID;
 	}
 
 	/*
@@ -840,10 +848,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		kauth_cred_t ocred;
 
 		kauth_cred_hold(l->l_cred);
-		simple_lock(&p->p_lock);
+		mutex_enter(&p->p_mutex);
 		ocred = p->p_cred;
 		p->p_cred = l->l_cred;
-		simple_unlock(&p->p_lock);
+		mutex_exit(&p->p_mutex);
 		kauth_cred_free(ocred);
 	}
 
@@ -873,9 +881,6 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		DPRINTF(("execve: map sigcode failed %d\n", error));
 		goto exec_abort;
 	}
-
-	if ((p->p_flag & (P_TRACED|P_SYSCALL)) == P_TRACED)
-		psignal(p, SIGTRAP);
 
 	free(pack.ep_hdr, M_EXEC);
 
@@ -915,34 +920,53 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
 #ifdef LKM
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 #endif
-	p->p_flag &= ~P_INEXEC;
 
-	if (p->p_flag & P_STOPEXEC) {
-		int s;
+	mutex_enter(&proclist_mutex);
 
-		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
-		SCHED_LOCK(s);
+	if ((p->p_slflag & (PSL_TRACED|PSL_SYSCALL)) == PSL_TRACED) {
+		KSI_INIT_EMPTY(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_lid = l->l_lid;
+		kpsignal(p, &ksi, NULL);
+	}
+
+	if (p->p_sflag & PS_STOPEXEC) {
+		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
-		p->p_stat = SSTOP;
+		p->p_pptr->p_waited = 0;
+		mutex_enter(&p->p_smutex);
+		ksiginfo_queue_init(&kq);
+		sigclearall(p, &contsigmask, &kq);
+		lwp_lock(l);
+		p->p_refcnt = 1;
 		l->l_stat = LSSTOP;
+		p->p_stat = SSTOP;
 		p->p_nrlwps--;
+		mutex_exit(&p->p_smutex);
+		mutex_exit(&proclist_mutex);
 		mi_switch(l, NULL);
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
+		ksiginfo_queue_drain(&kq);
+		KERNEL_LOCK(l->l_biglocks, l);
+	} else {
+		mutex_exit(&proclist_mutex);
+
+		/* Unlock the process. */
+		mb_write();
+		p->p_refcnt = 1;
 	}
 
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE) &&
-	    wassugid && !ISSET(p->p_flag, P_SUGID))
+	/* XXXSMP */
+	if (ISSET(p->p_flag, PK_SYSTRACE) &&
+	    wassugid && !ISSET(p->p_flag, PK_SUGID))
 		systrace_execve1(pathbuf, p);
 #endif /* SYSTRACE */
 
 	return (EJUSTRETURN);
 
  bad:
-	p->p_flag &= ~P_INEXEC;
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&pack.ep_vmcmds);
 	/* kill any opened file descriptor, if necessary */
@@ -963,18 +987,19 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #ifdef SYSTRACE
  clrflg:
 #endif /* SYSTRACE */
-	l->l_flag |= oldlwpflags;
-	p->p_flag &= ~P_INEXEC;
+	/* Unlock the process. */
+	mb_write();
+	p->p_refcnt = 1;
+
 #ifdef LKM
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 #endif
 
 	return error;
 
  exec_abort:
-	p->p_flag &= ~P_INEXEC;
 #ifdef LKM
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 #endif
 
 	/*
@@ -989,6 +1014,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free(exec_map, (vaddr_t) argp, NCARGS, UVM_KMF_PAGEABLE);
 	free(pack.ep_hdr, M_EXEC);
+
+	/*
+	 * Acquire the sched-state mutex (exit1() will release it).  Since
+	 * this is a failed exec and we are exiting, keep the process locked
+	 * (p->p_refcnt == 0) through exit1().
+	 */
+	mutex_enter(&p->p_smutex);
 	exit1(l, W_EXITCODE(error, SIGABRT));
 
 	/* NOTREACHED */
@@ -1069,7 +1101,7 @@ emul_register(const struct emul *emul, int ro_entry)
 	int			error;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_SHARED, NULL);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	if (emul_search(emul->e_name)) {
 		error = EEXIST;
@@ -1083,7 +1115,7 @@ emul_register(const struct emul *emul, int ro_entry)
 	LIST_INSERT_HEAD(&el_head, ee, el_list);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1099,7 +1131,7 @@ emul_unregister(const char *name)
 	struct proc		*ptmp;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_SHARED, NULL);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	LIST_FOREACH(it, &el_head, el_list) {
 		if (strcmp(it->el_emul->e_name, name) == 0)
@@ -1129,7 +1161,7 @@ emul_unregister(const char *name)
 	 * emul_unregister() is running quite sendomly, it's better
 	 * to do expensive check here than to use any locking.
 	 */
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
 		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
@@ -1138,7 +1170,7 @@ emul_unregister(const char *name)
 			}
 		}
 	}
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 
 	if (error)
 		goto out;
@@ -1149,7 +1181,7 @@ emul_unregister(const char *name)
 	FREE(it, M_EXEC);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1163,7 +1195,7 @@ exec_add(struct execsw *esp, const char *e_name)
 	int			error;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	if (!esp->es_emul) {
 		esp->es_emul = emul_search(e_name);
@@ -1193,7 +1225,7 @@ exec_add(struct execsw *esp, const char *e_name)
 	exec_init(0);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1207,7 +1239,7 @@ exec_remove(const struct execsw *esp)
 	int			error;
 
 	error = 0;
-	lockmgr(&exec_lock, LK_EXCLUSIVE, NULL);
+	rw_enter(&exec_lock, RW_WRITER);
 
 	LIST_FOREACH(it, &ex_head, ex_list) {
 		/* assume tuple (makecmds, probe_func, emulation) is unique */
@@ -1229,7 +1261,7 @@ exec_remove(const struct execsw *esp)
 	exec_init(0);
 
  out:
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_lock);
 	return error;
 }
 
@@ -1293,7 +1325,7 @@ exec_init(int init_boot)
 
 	if (init_boot) {
 		/* do one-time initializations */
-		lockinit(&exec_lock, PWAIT, "execlck", 0, 0);
+		rw_init(&exec_lock);
 
 		/* register compiled-in emulations */
 		for(i=0; i < nexecs_builtin; i++) {

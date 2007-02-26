@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12.2.1 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.12.2.2 2007/02/26 09:07:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12.2.1 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12.2.2 2007/02/26 09:07:14 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -163,6 +163,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->pcb_regs[6] = (int)func;		/* A2 */
 	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
+	pcb->pcb_ps = PSL_LOWIPL;		/* start khreads at IPL 0 */
 }
 
 void
@@ -181,6 +182,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* Nothing to do */
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do */
@@ -281,7 +289,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	do {
-		if (pmap_extract(upmap, uva, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == false)
 			panic("vmapbuf: null page frame");
 #ifdef M68K_VAC
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ | VM_PROT_WRITE,
@@ -367,7 +375,7 @@ kvtop(caddr_t addr)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == false)
 		panic("kvtop: zero page frame");
 	return (int)pa;
 }

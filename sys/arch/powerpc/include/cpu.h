@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44.6.2 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44.6.3 2007/02/26 09:07:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -76,6 +76,8 @@ struct cpu_info {
 	volatile int ci_iactive;
 	volatile int ci_ipending;
 	int ci_intrdepth;
+	int ci_mtx_oldspl;
+	int ci_mtx_count;
 	char *ci_intstk;
 #define	CPUSAVE_LEN	8
 	register_t ci_tempsave[CPUSAVE_LEN];
@@ -280,11 +282,6 @@ cntlzw(uint32_t val)
 })
 #endif /* PPC_IBM4XX || PPC_IBM403 */
 
-/*
- * CLKF_BASEPRI is dependent on the underlying interrupt code
- * and can not be defined here.  It should be defined in
- * <machine/intr.h>
- */
 #define	CLKF_USERMODE(frame)	(((frame)->srr1 & PSL_PR) != 0)
 #define	CLKF_PC(frame)		((frame)->srr0)
 #define	CLKF_INTR(frame)	((frame)->depth > 0)
@@ -313,9 +310,9 @@ void unmapiodev(vaddr_t, vsize_t);
 
 #define	DELAY(n)		delay(n)
 
-#define	need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, curcpu()->ci_astpending = 1)
-#define	signotify(p)		(curcpu()->ci_astpending = 1)
+#define	cpu_need_resched(ci)	(ci->ci_want_resched = 1, ci->ci_astpending = 1)
+#define	cpu_need_proftick(p)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
+#define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 
 #if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 void oea_init(void (*)(void));

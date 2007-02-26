@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.14.2.3 2006/12/30 20:50:51 yamt Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.14.2.4 2007/02/26 09:12:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.14.2.3 2006/12/30 20:50:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.14.2.4 2007/02/26 09:12:05 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -224,7 +224,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	size_t fid_size;
 
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0)
+	    NULL) != 0)
 		return EPERM;
 
 	/* Lookup the file system path. */
@@ -244,21 +244,22 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		}
 	}
 	if (error != 0) {
-		error = EOPNOTSUPP;
-		goto out_locked;
+		vput(vp);
+		return EOPNOTSUPP;
 	}
 
 	/* Mark the file system busy. */
 	error = vfs_busy(mp, LK_NOWAIT, NULL);
+	vput(vp);
 	if (error != 0)
-		goto out_locked;
+		return error;
 
 	netexport_wrlock();
 	ne = netexport_lookup(mp);
 	if (ne == NULL) {
 		error = init_exports(mp, &ne);
 		if (error != 0) {
-			goto out_locked2;
+			goto out;
 		}
 	}
 
@@ -291,12 +292,9 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	}
 #endif
 
-out_locked2:
+out:
 	netexport_wrunlock();
 	vfs_unbusy(mp);
-
-out_locked:
-	vput(vp);
 	return error;
 }
 

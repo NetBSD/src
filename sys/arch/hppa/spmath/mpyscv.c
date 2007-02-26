@@ -1,4 +1,4 @@
-/*	$NetBSD: mpyscv.c,v 1.2 2003/07/15 02:29:42 lukem Exp $	*/
+/*	$NetBSD: mpyscv.c,v 1.2.16.1 2007/02/26 09:06:47 yamt Exp $	*/
 
 /*	$OpenBSD: mpyscv.c,v 1.5 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpyscv.c,v 1.2 2003/07/15 02:29:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpyscv.c,v 1.2.16.1 2007/02/26 09:06:47 yamt Exp $");
 
 #include "md.h"
 
@@ -53,6 +53,6 @@ int opnd1, opnd2;
 struct mdsfu_register *result;
 {
 	impys(&opnd1,&opnd2,result);
-	overflow = FALSE;
+	overflow = false;
 	return;
 }

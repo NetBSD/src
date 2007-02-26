@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.58.16.1 2006/06/21 14:53:44 yamt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.58.16.2 2007/02/26 09:07:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -237,7 +237,6 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 #endif
 	jal	_C_LABEL(trap)
 	sw	a3,	KERNFRAME_RA(sp)	# for debugging
-
 /*
  * Restore registers and return from the exception.
  */
@@ -247,7 +246,18 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	mtc0	a0, MIPS_COP_0_STATUS
 	mtlo	t0
 	mthi	t1
-	lw	k0, TF_BASE+TF_REG_EPC(sp)
+/*
+ * Check for kernel restartable atomic sequences.
+ */
+	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	li	t1, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, k1
+	bne	t1, t0, 1f
+	nop
+	jal	_C_LABEL(_lock_ras)
+1:
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)
@@ -268,20 +278,20 @@ NESTED_NOPROFILE(mips1_KernGenException, KERNFRAME_SIZ, ra)
 	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ
 #ifdef DDBnotyet
-	la	k1, _C_LABEL(kdbaux)
-	lw	s0, SF_REG_S0(k1)
-	lw	s1, SF_REG_S1(k1)
-	lw	s2, SF_REG_S2(k1)
-	lw	s3, SF_REG_S3(k1)
-	lw	s4, SF_REG_S4(k1)
-	lw	s5, SF_REG_S5(k1)
-	lw	s6, SF_REG_S6(k1)
-	lw	s7, SF_REG_S7(k1)
-	lw	sp, SF_REG_SP(k1)
-	lw	s8, SF_REG_S8(k1)
-	lw	gp, SF_REG_RA(k1)
+	la	k0, _C_LABEL(kdbaux)
+	lw	s0, SF_REG_S0(k0)
+	lw	s1, SF_REG_S1(k0)
+	lw	s2, SF_REG_S2(k0)
+	lw	s3, SF_REG_S3(k0)
+	lw	s4, SF_REG_S4(k0)
+	lw	s5, SF_REG_S5(k0)
+	lw	s6, SF_REG_S6(k0)
+	lw	s7, SF_REG_S7(k0)
+	lw	sp, SF_REG_SP(k0)
+	lw	s8, SF_REG_S8(k0)
+	lw	gp, SF_REG_RA(k0)
 #endif
-	j	k0				# return to interrupted point
+	j	k1				# return to interrupted point
 	rfe
 	.set	at
 END(mips1_KernGenException)
@@ -363,9 +373,7 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
  */
 	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
 	nop
-	lw	t0, L_PROC(t0)			# t0 = curlwp->l_proc
-	nop
-	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
+	lw	t0, L_MD_ASTPENDING(t0)		# any pending ast?
 	nop
 	beq	t0, zero, 1f			# if no, skip ast processing
 	nop
@@ -460,9 +468,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
  */
 	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
 	nop
-	lw	t0, L_PROC(t0)			# t0 = curlwp->l_proc
-	nop
-	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
+	lw	t0, L_MD_ASTPENDING(t0)		# any pending ast?
 	nop
 	beq	t0, zero, 1f
 	nop
@@ -540,7 +546,18 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	mtc0	a0, MIPS_COP_0_STATUS		# this should disable interrupts
 	mtlo	t0
 	mthi	t1
-	lw	k0, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
+/*
+ * Check for kernel restartable atomic sequences.
+ */
+	lw	k1, TF_BASE+TF_REG_EPC(sp)	# restore exception PC
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	li	t1, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, k1
+	bne	t1, t0, 1f
+	nop
+	jal	_C_LABEL(_lock_ras)
+1:
 	lw	AT, TF_BASE+TF_REG_AST(sp)
 	lw	v0, TF_BASE+TF_REG_V0(sp)
 	lw	v1, TF_BASE+TF_REG_V1(sp)
@@ -560,7 +577,7 @@ NESTED_NOPROFILE(mips1_KernIntr, KERNFRAME_SIZ, ra)
 	lw	t9, TF_BASE+TF_REG_T9(sp)
 	lw	ra, TF_BASE+TF_REG_RA(sp)
 	addu	sp, sp, KERNFRAME_SIZ		# restore kernel SP
-	j	k0				# return to interrupted point
+	j	k1				# return to interrupted point
 	rfe
 	.set	at
 END(mips1_KernIntr)
@@ -645,9 +662,9 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
  */
 	lw	v0, _C_LABEL(curlwp)		# v0 = curlwp
 	addu	a1, sp, CALLFRAME_SIZ
-	lw	v0, L_PROC(v0)			# v0 = curlwp->l_proc
+	nop
 	lw	a0, FRAME_SR(a1)
-	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
+	lw	v0, L_MD_ASTPENDING(v0)		# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs
 	beq	v0, zero, 1f			# if no, skip ast processing
 	nop					# -delay slot-

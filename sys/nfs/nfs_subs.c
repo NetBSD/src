@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.149.2.3 2006/12/30 20:50:52 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.149.2.4 2007/02/26 09:12:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.3 2006/12/30 20:50:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.4 2007/02/26 09:12:06 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1481,7 +1481,7 @@ nfs_invaldircache(vp, flags)
 	struct nfsnode *np = VTONFS(vp);
 	struct nfsdircache *ndp = NULL;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	const boolean_t forcefree = flags & NFS_INVALDIRCACHE_FORCE;
+	const bool forcefree = flags & NFS_INVALDIRCACHE_FORCE;
 
 #ifdef DIAGNOSTIC
 	if (vp->v_type != VDIR)
@@ -1531,8 +1531,8 @@ nfs_init0(void)
 	rpc_auth_unix = txdr_unsigned(RPCAUTH_UNIX);
 	rpc_auth_kerb = txdr_unsigned(RPCAUTH_KERB4);
 	nfs_prog = txdr_unsigned(NFS_PROG);
-	nfs_true = txdr_unsigned(TRUE);
-	nfs_false = txdr_unsigned(FALSE);
+	nfs_true = txdr_unsigned(true);
+	nfs_false = txdr_unsigned(false);
 	nfs_xdrneg1 = txdr_unsigned(-1);
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
@@ -1696,7 +1696,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			extern int (**fifo_nfsv2nodeop_p) __P((void *));
 			vp->v_op = fifo_nfsv2nodeop_p;
 		} else if (vp->v_type == VREG) {
-			lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
+			mutex_init(&np->n_commitlock, MUTEX_DEFAULT, IPL_NONE);
 		} else if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
 			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
@@ -1898,7 +1898,7 @@ nfs_delayedtruncate(vp)
 
 int
 nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
-    struct timespec *mtime, boolean_t docheck)
+    struct timespec *mtime, bool docheck)
 {
 	int error = 0;
 
@@ -2124,7 +2124,7 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 	/*
 	 * Extract and set starting directory.
 	 */
-	error = nfsrv_fhtovp(nsfh, FALSE, &dp, ndp->ni_cnd.cn_cred, slp,
+	error = nfsrv_fhtovp(nsfh, false, &dp, ndp->ni_cnd.cn_cred, slp,
 	    nam, &rdonly, kerbflag, pubflag);
 	if (error)
 		goto out;
@@ -2585,22 +2585,22 @@ nfs_ispublicfh(const nfsrvfh_t *nsfh)
 	int i;
 
 	if (NFSRVFH_SIZE(nsfh) == 0) {
-		return TRUE;
+		return true;
 	}
 	if (NFSRVFH_SIZE(nsfh) != NFSX_V2FH) {
-		return FALSE;
+		return false;
 	}
 	for (i = 0; i < NFSX_V2FH; i++)
 		if (*cp++ != 0)
-			return FALSE;
-	return TRUE;
+			return false;
+	return true;
 }
 #endif /* NFSSERVER */
 
 /*
- * This function compares two net addresses by family and returns TRUE
+ * This function compares two net addresses by family and returns true
  * if they are the same host.
- * If there is any doubt, return FALSE.
+ * If there is any doubt, return false.
  * The AF_INET family is handled as a special case so that address mbufs
  * don't need to be saved to store "struct in_addr", which is only 4 bytes.
  */
@@ -2668,7 +2668,7 @@ nfs_clearcommit(mp)
 	struct vm_page *pg;
 	struct nfsmount *nmp = VFSTONFS(mp);
 
-	lockmgr(&nmp->nm_writeverflock, LK_EXCLUSIVE, NULL);
+	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
 
 	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
@@ -2688,7 +2688,7 @@ nfs_clearcommit(mp)
 	simple_lock(&nmp->nm_slock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	simple_unlock(&nmp->nm_slock);
-	lockmgr(&nmp->nm_writeverflock, LK_RELEASE, NULL);
+	rw_exit(&nmp->nm_writeverflock);
 }
 
 void
@@ -2963,7 +2963,7 @@ nfs_renewxid(struct nfsreq *req)
 
 #if defined(NFSSERVER)
 int
-nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, boolean_t v3)
+nfsrv_composefh(struct vnode *vp, nfsrvfh_t *nsfh, bool v3)
 {
 	int error;
 	size_t fhsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.28.4.3 2007/02/26 09:11:08 yamt Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.3 2007/02/26 09:11:08 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt E
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
@@ -904,7 +903,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.3 2007/02/26 09:11:08 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -923,7 +922,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.2 2006/12/30 20:50:05 yamt E
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

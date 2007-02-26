@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13.6.1 2006/06/21 14:54:32 yamt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13.6.2 2007/02/26 09:07:44 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13.6.1 2006/06/21 14:54:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.13.6.2 2007/02/26 09:07:44 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -106,14 +106,14 @@ kdb_trap(int type, int code, db_regs_t *regs)
 
 	ddb_regs = *regs;
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 
 	db_trap(type, code);
 	if ((type = T_BPT) &&
-	    (db_get_value(PC_REGS(DDB_REGS), BKPT_SIZE, FALSE) == BKPT_INST))
+	    (db_get_value(PC_REGS(DDB_REGS), BKPT_SIZE, false) == BKPT_INST))
 		PC_REGS(DDB_REGS) += BKPT_SIZE;
 
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	*regs = ddb_regs;
 

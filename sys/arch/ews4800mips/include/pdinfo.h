@@ -1,4 +1,4 @@
-/*	$NetBSD: pdinfo.h,v 1.1.18.2 2006/06/21 14:51:13 yamt Exp $	*/
+/*	$NetBSD: pdinfo.h,v 1.1.18.3 2007/02/26 09:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -82,9 +82,9 @@ struct pdinfo_sector {
 } __attribute__((__packed__));			/* 512 byte */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-boolean_t pdinfo_sector(void *, struct pdinfo_sector *);
-boolean_t pdinfo_sanity(const struct pdinfo_sector *);
-boolean_t pdinfo_valid(const struct pdinfo_sector *);
+bool pdinfo_sector(void *, struct pdinfo_sector *);
+bool pdinfo_sanity(const struct pdinfo_sector *);
+bool pdinfo_valid(const struct pdinfo_sector *);
 #endif
 
 #endif /* _EWS4800MIPS_PDINFO_H_ */

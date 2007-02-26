@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.4.4.1 2006/06/21 14:58:23 yamt Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.4.4.2 2007/02/26 09:08:56 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -47,6 +47,7 @@
 u_int32_t pci_bus_attached[256 / 32];
 
 struct x86_bus_dma_tag pci_bus_dma_tag = {
+	0,				/* _tag_needs_free */
 	0,
 	0,
 	0,
@@ -64,6 +65,8 @@ struct x86_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 
 void

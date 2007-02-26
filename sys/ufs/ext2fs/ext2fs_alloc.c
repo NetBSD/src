@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.24.2.2 2006/12/30 20:51:00 yamt Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.24.2.3 2007/02/26 09:12:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.24.2.2 2006/12/30 20:51:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.24.2.3 2007/02/26 09:12:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,8 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
 #endif /* DIAGNOSTIC */
 	if (fs->e2fs.e2fs_fbcount == 0)
 		goto nospace;
-	if (kauth_cred_geteuid(cred) != 0 && freespace(fs) <= 0)
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) != 0 &&
+	    freespace(fs) <= 0)
 		goto nospace;
 	if (bpref >= fs->e2fs.e2fs_bcount)
 		bpref = 0;

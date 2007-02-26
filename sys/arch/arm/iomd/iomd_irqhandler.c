@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.8.16.2 2006/12/30 20:45:33 yamt Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.8.16.3 2007/02/26 09:06:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.8.16.2 2006/12/30 20:45:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.8.16.3 2007/02/26 09:06:00 yamt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -65,8 +65,6 @@ u_int actual_mask;
 u_int disabled_mask;
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
-
-extern u_int soft_interrupts;	/* Only so we can initialise it */
 
 extern char *_intrnames;
 
@@ -121,7 +119,6 @@ irq_init(void)
 	disabled_mask = 0x00000000;
 	actual_mask = 0x00000000;
 	spl_mask = 0x00000000;
-	soft_interrupts = 0x00000000;
 
 	set_spl_masks();
 

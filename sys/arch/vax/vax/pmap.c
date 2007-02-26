@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134.16.2 2006/12/30 20:47:14 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.134.16.3 2007/02/26 09:08:42 yamt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.16.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134.16.3 2007/02/26 09:08:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -386,10 +386,14 @@ pmap_bootstrap()
 	simple_lock_init(&pmap->pm_lock);
 
 	/* Activate the kernel pmap. */
-	mtpr(pcb->P1BR = pmap->pm_p1br, PR_P1BR);
-	mtpr(pcb->P0BR = pmap->pm_p0br, PR_P0BR);
-	mtpr(pcb->P1LR = pmap->pm_p1lr, PR_P1LR);
-	mtpr(pcb->P0LR = (pmap->pm_p0lr|AST_PCB), PR_P0LR);
+	pcb->P1BR = pmap->pm_p1br;
+	pcb->P0BR = pmap->pm_p0br;
+	pcb->P1LR = pmap->pm_p1lr;
+	pcb->P0LR = pmap->pm_p0lr|AST_PCB;
+	mtpr((uintptr_t)pcb->P1BR, PR_P1BR);
+	mtpr((uintptr_t)pcb->P0BR, PR_P0BR);
+	mtpr(pcb->P1LR, PR_P1LR);
+	mtpr(pcb->P0LR, PR_P0LR);
 
 	/* cpu_info struct */
 	pcb->SSP = scratch + VAX_NBPG;
@@ -397,6 +401,7 @@ pmap_bootstrap()
 	bzero((caddr_t)pcb->SSP,
 	    sizeof(struct cpu_info) + sizeof(struct device));
 	curcpu()->ci_exit = scratch;
+	curcpu()->ci_mtx_count = 1;
 	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
 #if defined(MULTIPROCESSOR)
 	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
@@ -449,7 +454,7 @@ pmap_steal_memory(size, vstartp, vendp)
 	npgs = btoc(size);
 
 #ifdef DIAGNOSTIC
-	if (uvm.page_init_done == TRUE)
+	if (uvm.page_init_done == true)
 		panic("pmap_steal_memory: called _after_ bootstrap");
 #endif
 
@@ -565,9 +570,9 @@ update_pcbs(struct pmap *pm)
 
 	/* If curlwp uses this pmap update the regs too */ 
 	if (pm == curproc->p_vmspace->vm_map.pmap) {
-		mtpr(pm->pm_p0br, PR_P0BR);
+		mtpr((uintptr_t)pm->pm_p0br, PR_P0BR);
 		mtpr(pm->pm_p0lr|AST_PCB, PR_P0LR);
-		mtpr(pm->pm_p1br, PR_P1BR);
+		mtpr((uintptr_t)pm->pm_p1br, PR_P1BR);
 		mtpr(pm->pm_p1lr, PR_P1LR);
 	}
 #if defined(MULTIPROCESSOR) && defined(notyet)
@@ -668,8 +673,9 @@ rmspace(struct pmap *pm)
 
 #undef swappable
 #define swappable(l, pm)						\
-	(((l)->l_flag & (P_SYSTEM | L_INMEM | P_WEXIT)) == L_INMEM &&	\
-	((l)->l_holdcnt == 0) && ((l)->l_proc->p_vmspace->vm_map.pmap != pm))
+	(((l)->l_flag & (LW_SYSTEM | LW_INMEM | LW_WEXIT)) == LW_INMEM	\
+	 && (l)->l_holdcnt == 0						\
+	 && (l)->l_proc->p_vmspace->vm_map.pmap != pm)
 
 static int
 pmap_rmproc(struct pmap *pm)
@@ -683,7 +689,7 @@ pmap_rmproc(struct pmap *pm)
 
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		if (!swappable(l, pm))
 			continue;
@@ -710,7 +716,7 @@ pmap_rmproc(struct pmap *pm)
 			continue;
 		}
 	}
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 	if (didswap == 0) {
 		if ((l = outl) == NULL)
 			l = outl2;
@@ -1214,7 +1220,7 @@ pmap_map(virtuell, pstart, pend, prot)
 }
 
 #if 0
-boolean_t 
+bool 
 pmap_extract(pmap, va, pap)
 	pmap_t pmap;
 	vaddr_t va;
@@ -1230,26 +1236,26 @@ pmap_extract(pmap, va, pap)
 		if (pap)
 			*pap = pa;
 		if (pa)
-			return (TRUE);
-		return (FALSE);
+			return (true);
+		return (false);
 	}
 
 	sva = PG_PFNUM(va);
 	if (va < 0x40000000) {
 		if (sva > pmap->pm_p0lr)
-			return FALSE;
+			return false;
 		pte = (int *)pmap->pm_p0br;
 	} else {
 		if (sva < pmap->pm_p1lr)
-			return FALSE;
+			return false;
 		pte = (int *)pmap->pm_p1br;
 	}
 	if (kvtopte(&pte[sva])->pg_pfn) {
 		if (pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
-		return (TRUE);
+		return (true);
 	}
-	return (FALSE);
+	return (false);
 }
 #endif
 /*
@@ -1417,7 +1423,7 @@ pmap_simulref(int bits, int addr)
 /*
  * Clears valid bit in all ptes referenced to this physical page.
  */
-boolean_t
+bool
 pmap_clear_reference_long(struct pv_entry *pv)
 {
 	struct pte *pte;
@@ -1457,7 +1463,7 @@ pmap_clear_reference_long(struct pv_entry *pv)
 /*
  * Checks if page is modified; returns true or false depending on result.
  */
-boolean_t
+bool
 pmap_is_modified_long(struct pv_entry *pv)
 {
 	struct pte *pte;
@@ -1492,11 +1498,11 @@ pmap_is_modified_long(struct pv_entry *pv)
 /*
  * Clears modify bit in all ptes referenced to this physical page.
  */
-boolean_t
+bool
 pmap_clear_modify_long(struct pv_entry *pv)
 {
 	struct pte *pte;
-	boolean_t rv = FALSE;
+	bool rv = false;
 
 	PMDEBUG(("pmap_clear_modify: pv_entry %p\n", pv));
 
@@ -1505,7 +1511,7 @@ pmap_clear_modify_long(struct pv_entry *pv)
 		pte = vaddrtopte(pv);
 		if (pte[0].pg_m | pte[1].pg_m | pte[2].pg_m | pte[3].pg_m |
 		    pte[4].pg_m | pte[5].pg_m | pte[6].pg_m | pte[7].pg_m) {
-			rv = TRUE;
+			rv = true;
 		}
 		pte[0].pg_m = pte[1].pg_m = pte[2].pg_m = pte[3].pg_m = 
 		    pte[4].pg_m = pte[5].pg_m = pte[6].pg_m = pte[7].pg_m = 0;
@@ -1515,7 +1521,7 @@ pmap_clear_modify_long(struct pv_entry *pv)
 		pte = vaddrtopte(pv);
 		if (pte[0].pg_m | pte[1].pg_m | pte[2].pg_m | pte[3].pg_m |
 		    pte[4].pg_m | pte[5].pg_m | pte[6].pg_m | pte[7].pg_m) {
-			rv = TRUE;
+			rv = true;
 		}
 		pte[0].pg_m = pte[1].pg_m = pte[2].pg_m = pte[3].pg_m = 
 		    pte[4].pg_m = pte[5].pg_m = pte[6].pg_m = pte[7].pg_m = 0;
@@ -1638,9 +1644,9 @@ pmap_activate(struct lwp *l)
 	ps->ps_pcb = pcb;
 
 	if (l == curlwp) {
-		mtpr(pmap->pm_p0br, PR_P0BR);
+		mtpr((uintptr_t)pmap->pm_p0br, PR_P0BR);
 		mtpr(pmap->pm_p0lr|AST_PCB, PR_P0LR);
-		mtpr(pmap->pm_p1br, PR_P1BR);
+		mtpr((uintptr_t)pmap->pm_p1br, PR_P1BR);
 		mtpr(pmap->pm_p1lr, PR_P1LR);
 		mtpr(0, PR_TBIA);
 	}

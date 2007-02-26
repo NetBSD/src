@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_specificdata.c,v 1.7.6.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.7.6.3 2007/02/26 09:11:15 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -63,13 +63,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.7.6.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.7.6.3 2007/02/26 09:11:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/specificdata.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
 
 /*
  * Locking notes:
@@ -96,7 +97,7 @@ struct specificdata_container {
 	(sizeof(struct specificdata_container) + ((n) * sizeof(void *)))
 
 struct specificdata_domain {
-	struct lock	sd_lock;
+	kmutex_t	sd_lock;
 	unsigned int	sd_nkey;
 	LIST_HEAD(, specificdata_container) sd_list;
 	specificdata_key_impl *sd_keys;
@@ -106,21 +107,6 @@ struct specificdata_domain {
 				simple_lock_init(&(ref)->specdataref_slock)
 #define	specdataref_lock(ref)	simple_lock(&(ref)->specdataref_slock)
 #define	specdataref_unlock(ref)	simple_unlock(&(ref)->specdataref_slock)
-
-static void
-specificdata_domain_lock(specificdata_domain_t sd)
-{
-
-	ASSERT_SLEEPABLE(NULL, __func__);
-	lockmgr(&sd->sd_lock, LK_EXCLUSIVE, 0);
-}
-
-static void
-specificdata_domain_unlock(specificdata_domain_t sd)
-{
-
-	lockmgr(&sd->sd_lock, LK_RELEASE, 0);
-}
 
 static void
 specificdata_container_link(specificdata_domain_t sd,
@@ -172,7 +158,7 @@ specificdata_noop_dtor(void *data)
 
 /*
  * specificdata_domain_create --
- *	Create a specifidata domain.
+ *	Create a specificdata domain.
  */
 specificdata_domain_t
 specificdata_domain_create(void)
@@ -181,7 +167,7 @@ specificdata_domain_create(void)
 
 	sd = kmem_zalloc(sizeof(*sd), KM_SLEEP);
 	KASSERT(sd != NULL);
-	lockinit(&sd->sd_lock, PLOCK, "specdata", 0, 0);
+	mutex_init(&sd->sd_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&sd->sd_list);
 
 	return (sd);
@@ -189,7 +175,7 @@ specificdata_domain_create(void)
 
 /*
  * specificdata_domain_delete --
- *	Destroy a specifidata domain.
+ *	Destroy a specificdata domain.
  */
 void
 specificdata_domain_delete(specificdata_domain_t sd)
@@ -217,7 +203,7 @@ specificdata_key_create(specificdata_domain_t sd, specificdata_key_t *keyp,
 	if (dtor == NULL)
 		dtor = specificdata_noop_dtor;
 	
-	specificdata_domain_lock(sd);
+	mutex_enter(&sd->sd_lock);
 
 	if (sd->sd_keys == NULL)
 		goto needalloc;
@@ -229,6 +215,7 @@ specificdata_key_create(specificdata_domain_t sd, specificdata_key_t *keyp,
 
  needalloc:
 	nsz = (sd->sd_nkey + 1) * sizeof(*newkeys);
+	/* XXXSMP allocating memory while holding a lock. */
 	newkeys = kmem_zalloc(nsz, KM_SLEEP);
 	KASSERT(newkeys != NULL);
 	if (sd->sd_keys != NULL) {
@@ -241,7 +228,7 @@ specificdata_key_create(specificdata_domain_t sd, specificdata_key_t *keyp,
  gotit:
 	sd->sd_keys[key].ski_dtor = dtor;
 
-	specificdata_domain_unlock(sd);
+	mutex_exit(&sd->sd_lock);
 
 	*keyp = key;
 	return (0);
@@ -258,7 +245,7 @@ specificdata_key_delete(specificdata_domain_t sd, specificdata_key_t key)
 {
 	specificdata_container_t sc;
 
-	specificdata_domain_lock(sd);
+	mutex_enter(&sd->sd_lock);
 
 	if (key >= sd->sd_nkey)
 		goto out;
@@ -274,7 +261,7 @@ specificdata_key_delete(specificdata_domain_t sd, specificdata_key_t key)
 	sd->sd_keys[key].ski_dtor = NULL;
 
  out:
-	specificdata_domain_unlock(sd);
+	mutex_exit(&sd->sd_lock);
 }
 
 /*
@@ -314,14 +301,14 @@ specificdata_fini(specificdata_domain_t sd, specificdata_reference *ref)
 		return;
 	ref->specdataref_container = NULL;
 	
-	specificdata_domain_lock(sd);
+	mutex_enter(&sd->sd_lock);
 
 	specificdata_container_unlink(sd, sc);
 	for (key = 0; key < sc->sc_nkey; key++) {
 		specificdata_destroy_datum(sd, sc, key);
 	}
 
-	specificdata_domain_unlock(sd);
+	mutex_exit(&sd->sd_lock);
 
 	kmem_free(sc, SPECIFICDATA_CONTAINER_BYTESIZE(sc->sc_nkey));
 }
@@ -404,10 +391,10 @@ specificdata_setspecific(specificdata_domain_t sd,
 	 * Slow path: need to resize.
 	 */
 	
-	specificdata_domain_lock(sd);
+	mutex_enter(&sd->sd_lock);
 	newnkey = sd->sd_nkey;
 	if (key >= newnkey) {
-		specificdata_domain_unlock(sd);
+		mutex_exit(&sd->sd_lock);
 		panic("specificdata_setspecific");
 	}
 	sz = SPECIFICDATA_CONTAINER_BYTESIZE(newnkey);
@@ -426,7 +413,7 @@ specificdata_setspecific(specificdata_domain_t sd,
 			 */
 			sc->sc_data[key] = data;
 			specdataref_unlock(ref);
-			specificdata_domain_unlock(sd);
+			mutex_exit(&sd->sd_lock);
 			kmem_free(newsc, sz);
 			return;
 		}
@@ -439,7 +426,7 @@ specificdata_setspecific(specificdata_domain_t sd,
 	ref->specdataref_container = newsc;
 
 	specdataref_unlock(ref);
-	specificdata_domain_unlock(sd);
+	mutex_exit(&sd->sd_lock);
 
 	if (sc != NULL)
 		kmem_free(sc, SPECIFICDATA_CONTAINER_BYTESIZE(sc->sc_nkey));

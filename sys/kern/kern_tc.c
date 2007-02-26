@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.3.4.3 2006/12/30 20:50:06 yamt Exp $ */
+/* $NetBSD: kern_tc.c,v 1.3.4.4 2007/02/26 09:11:12 yamt Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.3.4.3 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.3.4.4 2007/02/26 09:11:12 yamt Exp $");
 
 #include "opt_ntp.h"
 
@@ -129,7 +129,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 		return error;
 
 	if (l != NULL && (error = kauth_authorize_generic(l->l_cred, 
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 
 	/* XXX locking */
@@ -434,14 +434,14 @@ tc_init(struct timecounter *tc)
 	u /= 10;
 	if (u > hz && tc->tc_quality >= 0) {
 		tc->tc_quality = -2000;
-		if (bootverbose) {
-			printf("timecounter: Timecounter \"%s\" frequency %ju Hz",
+		aprint_verbose(
+		    "timecounter: Timecounter \"%s\" frequency %ju Hz",
 			    tc->tc_name, (uintmax_t)tc->tc_frequency);
-			printf(" -- Insufficient hz, needs at least %u\n", u);
-		}
+		aprint_verbose(" -- Insufficient hz, needs at least %u\n", u);
 	} else if (tc->tc_quality >= 0 || bootverbose) {
-		printf("timecounter: Timecounter \"%s\" frequency %ju Hz quality %d\n",
-		    tc->tc_name, (uintmax_t)tc->tc_frequency,
+		aprint_verbose(
+		    "timecounter: Timecounter \"%s\" frequency %ju Hz "
+		    "quality %d\n", tc->tc_name, (uintmax_t)tc->tc_frequency,
 		    tc->tc_quality);
 	}
 
@@ -903,7 +903,8 @@ inittimecounter(void)
 	else
 		tc_tick = 1;
 	p = (tc_tick * 1000000) / hz;
-	printf("timecounter: Timecounters tick every %d.%03u msec\n", p / 1000, p % 1000);
+	aprint_verbose("timecounter: Timecounters tick every %d.%03u msec\n",
+	    p / 1000, p % 1000);
 
 	/* warm up new timecounter (again) and get rolling. */
 	(void)timecounter->tc_get_timecount(timecounter);

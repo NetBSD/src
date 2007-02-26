@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_file.c,v 1.15.2.2 2006/12/30 20:47:31 yamt Exp $ */
+/*	$NetBSD: compat_file.c,v 1.15.2.3 2007/02/26 09:08:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.15.2.2 2006/12/30 20:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.15.2.3 2007/02/26 09:08:59 yamt Exp $");
 
 #include "opt_compat_darwin.h"
 #include "opt_nfsserver.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_file.c,v 1.15.2.2 2006/12/30 20:47:31 yamt Ex
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socketvar.h>
-#include <sys/sa.h>
 #include <sys/un.h>
 
 #include <uvm/uvm_extern.h>

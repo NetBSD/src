@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.6.16.1 2006/06/21 14:55:31 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.6.16.2 2007/02/26 09:08:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,6 +88,24 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 {
 
 	*alp = __SIMPLELOCK_UNLOCKED;
+}
+
+static __inline void
+mb_read(void)
+{
+	__asm volatile("" : : : "memory");
+}
+
+static __inline void
+mb_write(void)
+{
+	__asm volatile("" : : : "memory");
+}
+
+static __inline void
+mb_memory(void)
+{
+	__asm volatile("" : : : "memory");
 }
 
 #endif /* !_SH3_LOCK_H_ */

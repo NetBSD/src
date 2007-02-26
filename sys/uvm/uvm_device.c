@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.45.2.2 2006/12/30 20:51:05 yamt Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.45.2.3 2007/02/26 09:12:28 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.45.2.2 2006/12/30 20:51:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.45.2.3 2007/02/26 09:12:28 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -187,7 +187,7 @@ udv_attach(void *arg, vm_prot_t accessprot,
 
 			if (lcv->u_flags & UVM_DEVICE_HOLD) {
 				lcv->u_flags |= UVM_DEVICE_WANTED;
-				UVM_UNLOCK_AND_WAIT(lcv, &udv_lock, FALSE,
+				UVM_UNLOCK_AND_WAIT(lcv, &udv_lock, false,
 				    "udv_attach",0);
 				continue;
 			}
@@ -315,7 +315,7 @@ again:
 	if (udv->u_flags & UVM_DEVICE_HOLD) {
 		udv->u_flags |= UVM_DEVICE_WANTED;
 		simple_unlock(&uobj->vmobjlock);
-		UVM_UNLOCK_AND_WAIT(udv, &udv_lock, FALSE, "udv_detach",0);
+		UVM_UNLOCK_AND_WAIT(udv, &udv_lock, false, "udv_detach",0);
 		goto again;
 	}
 

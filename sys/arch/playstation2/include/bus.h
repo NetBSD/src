@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6.4.1 2006/06/21 14:54:42 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.4.2 2007/02/26 09:07:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -842,6 +842,9 @@ struct playstation2_bus_dma_tag {
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t

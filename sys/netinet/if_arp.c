@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.106.2.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.106.2.3 2007/02/26 09:11:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106.2.2 2006/12/30 20:50:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.106.2.3 2007/02/26 09:11:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -149,7 +149,7 @@ int	arpt_refresh = (5*60);	/* time left before refreshing */
 
 static	void arptfree(struct llinfo_arp *);
 static	void arptimer(void *);
-static	struct llinfo_arp *arplookup(struct mbuf *, struct in_addr *,
+static	struct llinfo_arp *arplookup(struct mbuf *, const struct in_addr *,
 					  int, int);
 static	void in_arpinput(struct mbuf *);
 
@@ -369,8 +369,8 @@ arptimer(void *arg)
 			 * refresh, try to renew it before deleting.
 			 */
 			arprequest(rt->rt_ifp,
-			    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
-			    &SIN(rt_key(rt))->sin_addr,
+			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
+			    &satocsin(rt_key(rt))->sin_addr,
 			    LLADDR(rt->rt_ifp->if_sadl));
 		} else if (rt->rt_expire <= time_second)
 			arptfree(la); /* timer has expired; clear */
@@ -515,8 +515,8 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			arprequest(rt->rt_ifp,
-			    &SIN(rt_key(rt))->sin_addr,
-			    &SIN(rt_key(rt))->sin_addr,
+			    &satocsin(rt_key(rt))->sin_addr,
+			    &satocsin(rt_key(rt))->sin_addr,
 			    (u_char *)LLADDR(SDL(gate)));
 		/*FALLTHROUGH*/
 	case RTM_RESOLVE:
@@ -554,7 +554,7 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
 
-		INADDR_TO_IA(SIN(rt_key(rt))->sin_addr, ia);
+		INADDR_TO_IA(satocsin(rt_key(rt))->sin_addr, ia);
 		while (ia && ia->ia_ifp != rt->rt_ifp)
 			NEXT_IA_WITH_SAME_ADDR(ia);
 		if (ia) {
@@ -621,7 +621,8 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
  */
 void
 arprequest(struct ifnet *ifp,
-    struct in_addr *sip, struct in_addr *tip, u_int8_t *enaddr)
+    const struct in_addr *sip, const struct in_addr *tip,
+    const u_int8_t *enaddr)
 {
 	struct mbuf *m;
 	struct arphdr *ah;
@@ -657,15 +658,15 @@ arprequest(struct ifnet *ifp,
 	ah->ar_hln = ifp->if_addrlen;		/* hardware address length */
 	ah->ar_pln = sizeof(struct in_addr);	/* protocol address length */
 	ah->ar_op = htons(ARPOP_REQUEST);
-	bcopy((caddr_t)enaddr, (caddr_t)ar_sha(ah), ah->ar_hln);
-	bcopy((caddr_t)sip, (caddr_t)ar_spa(ah), ah->ar_pln);
-	bcopy((caddr_t)tip, (caddr_t)ar_tpa(ah), ah->ar_pln);
+	memcpy(ar_sha(ah), enaddr, ah->ar_hln);
+	memcpy(ar_spa(ah), sip, ah->ar_pln);
+	memcpy(ar_tpa(ah), tip, ah->ar_pln);
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
 	arpstat.as_sndtotal++;
 	arpstat.as_sndrequest++;
-	(*ifp->if_output)(ifp, m, &sa, (struct rtentry *)0);
+	(*ifp->if_output)(ifp, m, &sa, NULL);
 }
 
 /*
@@ -680,7 +681,7 @@ arprequest(struct ifnet *ifp,
  */
 int
 arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
-    struct sockaddr *dst, u_char *desten)
+    const struct sockaddr *dst, u_char *desten)
 {
 	struct llinfo_arp *la;
 	struct sockaddr_dl *sdl;
@@ -690,14 +691,14 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 	else {
-		if ((la = arplookup(m, &SIN(dst)->sin_addr, 1, 0)) != NULL)
+		if ((la = arplookup(m, &satocsin(dst)->sin_addr, 1, 0)) != NULL)
 			rt = la->la_rt;
 	}
 	if (la == 0 || rt == 0) {
 		arpstat.as_allocfail++;
 		log(LOG_DEBUG,
 		    "arpresolve: can't allocate llinfo on %s for %s\n",
-		    ifp->if_xname, in_fmtaddr(SIN(dst)->sin_addr));
+		    ifp->if_xname, in_fmtaddr(satocsin(dst)->sin_addr));
 		m_freem(m);
 		return (0);
 	}
@@ -747,8 +748,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 			rt->rt_expire = time_second;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(ifp,
-				    &SIN(rt->rt_ifa->ifa_addr)->sin_addr,
-				    &SIN(dst)->sin_addr,
+				    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
+				    &satocsin(dst)->sin_addr,
 #if NCARP > 0
 				    (rt->rt_ifp->if_type == IFT_CARP) ?
 				    LLADDR(rt->rt_ifp->if_sadl):
@@ -1171,7 +1172,7 @@ static void arptfree(struct llinfo_arp *la)
  * Lookup or enter a new address in arptab.
  */
 static struct llinfo_arp *
-arplookup(struct mbuf *m, struct in_addr *addr, int create, int proxy)
+arplookup(struct mbuf *m, const struct in_addr *addr, int create, int proxy)
 {
 	struct arphdr *ah;
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
@@ -1504,7 +1505,7 @@ db_show_radix_node(struct radix_node *rn, void *w)
  * Use this from ddb:  "show arptab"
  */
 void
-db_show_arptab(db_expr_t addr, int have_addr,
+db_show_arptab(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	struct radix_node_head *rnh;

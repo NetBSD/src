@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.h,v 1.13 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_variables.h,v 1.13.2.1 2007/02/26 09:09:49 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -55,6 +55,6 @@ int	db_get_variable(db_expr_t *);
 int	db_set_variable(db_expr_t);
 void	db_read_variable(const struct db_variable *, db_expr_t *);
 void	db_write_variable(const struct db_variable *, db_expr_t *);
-void	db_set_cmd(db_expr_t, int, db_expr_t, const char *);
+void	db_set_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 #endif	/* _DB_VARIABLES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.23.12.2 2006/06/21 14:48:00 yamt Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.23.12.3 2007/02/26 09:05:31 yamt Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.2 2006/06/21 14:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.3 2007/02/26 09:05:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -170,7 +170,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.2 2006/06/21 14:48:00 yamt Exp $"
 #if defined(INET)
 #include <netinet/if_inarp.h>
 #endif
-#include <uvm/uvm_extern.h>
 #include <machine/bus.h>
 #if defined(__alpha__)
 #include <machine/intr.h>

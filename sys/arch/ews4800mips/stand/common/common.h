@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: common.h,v 1.1.18.3 2007/02/26 09:06:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ enum fd_format {
 	FD_FORMAT_2HD	= 2,
 };
 
-boolean_t blk_to_2d_position(uint32_t, uint32_t *, int *);
-boolean_t blk_to_2hc_position(uint32_t, uint32_t *, int *);
-boolean_t blk_to_2hd_position(uint32_t, uint32_t *, int *);
+bool blk_to_2d_position(uint32_t, uint32_t *, int *);
+bool blk_to_2hc_position(uint32_t, uint32_t *, int *);
+bool blk_to_2hd_position(uint32_t, uint32_t *, int *);
 void boot_device(int *, int *, int *);

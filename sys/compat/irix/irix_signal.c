@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.33 2005/06/03 18:53:50 martin Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.33.2.1 2007/02/26 09:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.33 2005/06/03 18:53:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.33.2.1 2007/02/26 09:09:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.33 2005/06/03 18:53:50 martin Exp 
 extern const int native_to_svr4_signo[];
 extern const int svr4_to_native_signo[];
 
-static int irix_wait_siginfo __P((struct proc *, int,
+static int irix_wait_siginfo __P((struct proc *, int, int,
     struct irix_irix5_siginfo *));
 static void irix_signal_siginfo __P((struct irix_irix5_siginfo *,
     int, u_long, caddr_t));
@@ -94,9 +94,9 @@ static void irix_get_sigcontext __P((struct irix_sigcontext*, struct lwp *));
  * This is ripped from svr4_setinfo. See irix_sys_waitsys...
  */
 static int
-irix_wait_siginfo(p, st, s)
+irix_wait_siginfo(p, st, stat, s)
 	struct proc *p;
-	int st;
+	int st, stat;
 	struct irix_irix5_siginfo *s;
 {
 	struct irix_irix5_siginfo i;
@@ -109,7 +109,7 @@ irix_wait_siginfo(p, st, s)
 
 	if (p) {
 		i.isi_pid = p->p_pid;
-		if (p->p_stat == SZOMB) {
+		if (stat == SZOMB) {
 			i.isi_stime = p->p_ru->ru_stime.tv_sec;
 			i.isi_utime = p->p_ru->ru_utime.tv_sec;
 		}
@@ -289,7 +289,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Do we need to jump onto the signal stack?
 	 */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 		&& (SIGACTION(p, ksi->ksi_signo).sa_flags & SA_ONSTACK) != 0;
 #ifdef DEBUG_IRIX
 	if (onstack)
@@ -299,8 +299,8 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		sp = (void *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
-		    + p->p_sigctx.ps_sigstk.ss_size);
+		sp = (void *)((caddr_t)l->l_sigstk.ss_sp
+		    + l->l_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
 		sp = (void *)(u_int32_t)f->f_regs[_R_SP];
@@ -326,7 +326,11 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Install the sigframe onto the stack
 	 */
+	sendsig_reset(l, ksi->ksi_signo);
+	mutex_exit(&p->p_smutex);
 	error = copyout(&sf.isf_ctx, sp, sizeof(sf.isf_ctx));
+	mutex_enter(&p->p_smutex);
+
 	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -381,7 +385,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Remember that we're now on the signal stack.
 	 */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG_IRIX
 	printf("returning from irix_sendsig()\n");
@@ -396,9 +400,10 @@ irix_set_sigcontext (scp, mask, code, l)
 	int code;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	int i;
 	struct frame *f;
+
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 #ifdef DEBUG_IRIX
 	printf("irix_set_sigcontext()\n");
@@ -441,7 +446,7 @@ irix_set_sigcontext (scp, mask, code, l)
 	 * Save signal stack
 	 */
 	scp->isc_ssflags =
-	    (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK) ? IRIX_SS_ONSTACK : 0;
+	    (l->l_sigstk.ss_flags & SS_ONSTACK) ? IRIX_SS_ONSTACK : 0;
 
 	return;
 }
@@ -453,12 +458,14 @@ irix_set_ucontext(ucp, mask, code, l)
 	int code;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct frame *f;
+
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 #ifdef DEBUG_IRIX
 	printf("irix_set_ucontext()\n");
 #endif
+
 	f = (struct frame *)l->l_md.md_regs;
 	/*
 	 * Save general purpose registers
@@ -494,15 +501,15 @@ irix_set_ucontext(ucp, mask, code, l)
 	/*
 	 * Save signal stack
 	 */
-	ucp->iuc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
-	ucp->iuc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+	ucp->iuc_stack.ss_sp = l->l_sigstk.ss_sp;
+	ucp->iuc_stack.ss_size = l->l_sigstk.ss_size;
 
-	if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	if (l->l_sigstk.ss_flags & SS_ONSTACK)
 		ucp->iuc_stack.ss_flags |= IRIX_SS_ONSTACK;
 	else
 		ucp->iuc_stack.ss_flags &= ~IRIX_SS_ONSTACK;
 
-	if (p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE)
+	if (l->l_sigstk.ss_flags & SS_DISABLE)
 		ucp->iuc_stack.ss_flags |= IRIX_SS_DISABLE;
 	else
 		ucp->iuc_stack.ss_flags &= ~IRIX_SS_DISABLE;
@@ -528,6 +535,7 @@ irix_sys_sigreturn(l, v, retval)
 	} */ *uap = v;
 	void *usf;
 	struct irix_sigframe ksf;
+	struct proc *p = l->l_proc;
 	int error;
 
 #ifdef DEBUG_IRIX
@@ -549,14 +557,18 @@ irix_sys_sigreturn(l, v, retval)
 		if ((error = copyin(usf, &ksf.isf_ctx.iss.iuc,
 		    sizeof(ksf.isf_ctx))) != 0)
 			return error;
-
+	
+		mutex_enter(&p->p_smutex);
 		irix_get_ucontext(&ksf.isf_ctx.iss.iuc, l);
+		mutex_exit(&p->p_smutex);
 	} else {
 		if ((error = copyin(usf, &ksf.isf_ctx.isc,
 		    sizeof(ksf.isf_ctx))) != 0)
 			return error;
 
+		mutex_enter(&p->p_smutex);
 		irix_get_sigcontext(&ksf.isf_ctx.isc, l);
+		mutex_exit(&p->p_smutex);
 	}
 
 #ifdef DEBUG_IRIX
@@ -574,9 +586,10 @@ irix_get_ucontext(ucp, l)
 	struct irix_ucontext *ucp;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	struct frame *f;
 	sigset_t mask;
+
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 	/* Restore the register context. */
 	f = (struct frame *)l->l_md.md_regs;
@@ -615,18 +628,18 @@ irix_get_ucontext(ucp, l)
 	 * Restore stack
 	 */
 	if (ucp->iuc_flags & IRIX_UC_STACK) {
-		p->p_sigctx.ps_sigstk.ss_sp = ucp->iuc_stack.ss_sp;
-		p->p_sigctx.ps_sigstk.ss_size = ucp->iuc_stack.ss_size;
+		l->l_sigstk.ss_sp = ucp->iuc_stack.ss_sp;
+		l->l_sigstk.ss_size = ucp->iuc_stack.ss_size;
 
 		if (ucp->iuc_stack.ss_flags & IRIX_SS_ONSTACK)
-			p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+			l->l_sigstk.ss_flags |= SS_ONSTACK;
 		else
-			p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+			l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 		if (ucp->iuc_stack.ss_flags & IRIX_SS_DISABLE)
-			p->p_sigctx.ps_sigstk.ss_flags |= IRIX_SS_DISABLE;
+			l->l_sigstk.ss_flags |= IRIX_SS_DISABLE;
 		else
-			p->p_sigctx.ps_sigstk.ss_flags &= ~IRIX_SS_DISABLE;
+			l->l_sigstk.ss_flags &= ~IRIX_SS_DISABLE;
 	}
 
 	/*
@@ -635,7 +648,7 @@ irix_get_ucontext(ucp, l)
 	if (ucp->iuc_flags & IRIX_UC_SIGMASK) {
 		/* Restore signal mask. */
 		irix_to_native_sigset(&ucp->iuc_sigmask, &mask);
-		(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+		(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 	}
 
 	return;
@@ -646,10 +659,11 @@ irix_get_sigcontext(scp, l)
 	struct irix_sigcontext *scp;
 	struct lwp *l;
 {
-	struct proc *p = l->l_proc;
 	int i;
 	struct frame *f;
 	sigset_t mask;
+
+	KASSERT(mutex_owned(&l->l_proc->p_smutex));
 
 	/* Restore the register context. */
 	f = (struct frame *)l->l_md.md_regs;
@@ -677,14 +691,14 @@ irix_get_sigcontext(scp, l)
 
 	/* Restore signal stack. */
 	if (scp->isc_ssflags & IRIX_SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 
 	/* Restore signal mask. */
 	irix_to_native_sigset(&scp->isc_sigset, &mask);
-	(void)sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void)sigprocmask1(l, SIG_SETMASK, &mask, 0);
 
 	return;
 }
@@ -739,14 +753,17 @@ irix_sys_getcontext(l, v, retval)
 
 	kucp.iuc_flags = IRIX_UC_ALL;
 	kucp.iuc_link = NULL;		/* XXX */
-	native_to_irix_sigset(&p->p_sigctx.ps_sigmask, &kucp.iuc_sigmask);
-	kucp.iuc_stack.ss_sp = p->p_sigctx.ps_sigstk.ss_sp;
-	kucp.iuc_stack.ss_size = p->p_sigctx.ps_sigstk.ss_size;
+
+	mutex_enter(&p->p_smutex);
+	native_to_irix_sigset(&l->l_sigmask, &kucp.iuc_sigmask);
+	kucp.iuc_stack.ss_sp = l->l_sigstk.ss_sp;
+	kucp.iuc_stack.ss_size = l->l_sigstk.ss_size;
 	kucp.iuc_stack.ss_flags = 0;
-	if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	if (l->l_sigstk.ss_flags & SS_ONSTACK)
 		kucp.iuc_stack.ss_flags &= IRIX_SS_ONSTACK;
-	if (p->p_sigctx.ps_sigstk.ss_flags & SS_DISABLE)
+	if (l->l_sigstk.ss_flags & SS_DISABLE)
 		kucp.iuc_stack.ss_flags &= IRIX_SS_DISABLE;
+	mutex_exit(&p->p_smutex);
 
 	for (i = 0; i < 36; i++) /* Is order correct? */
 		kucp.iuc_mcontext.svr4___gregs[i] = f->f_regs[i];
@@ -785,20 +802,24 @@ irix_sys_setcontext(l, v, retval)
 
 	f = (struct frame *)l->l_md.md_regs;
 
+	mutex_enter(&p->p_smutex);
+
 	if (kucp.iuc_flags & IRIX_UC_SIGMASK)
 		irix_to_native_sigset(&kucp.iuc_sigmask,
-		    &p->p_sigctx.ps_sigmask);
+		    &l->l_sigmask);
 
 	if (kucp.iuc_flags & IRIX_UC_STACK) {
-		p->p_sigctx.ps_sigstk.ss_sp = kucp.iuc_stack.ss_sp;
-		p->p_sigctx.ps_sigstk.ss_size =
+		l->l_sigstk.ss_sp = kucp.iuc_stack.ss_sp;
+		l->l_sigstk.ss_size =
 		    (unsigned long)kucp.iuc_stack.ss_sp;
-		p->p_sigctx.ps_sigstk.ss_flags = 0;
+		l->l_sigstk.ss_flags = 0;
 		if (kucp.iuc_stack.ss_flags & IRIX_SS_ONSTACK)
-			p->p_sigctx.ps_sigstk.ss_flags &= SS_ONSTACK;
+			l->l_sigstk.ss_flags &= SS_ONSTACK;
 		if (kucp.iuc_stack.ss_flags & IRIX_SS_DISABLE)
-			p->p_sigctx.ps_sigstk.ss_flags &= SS_DISABLE;
+			l->l_sigstk.ss_flags &= SS_DISABLE;
 	}
+
+	mutex_exit(&p->p_smutex);
 
 	if (kucp.iuc_flags & IRIX_UC_CPU)
 		for (i = 0; i < 36; i++) /* Is register order right? */
@@ -839,10 +860,9 @@ irix_sys_waitsys(l, v, retval)
 		syscallarg(int) options;
 		syscallarg(struct rusage *) ru;
 	} */ *uap = v;
-	struct proc *parent = l->l_proc;
-	int error;
-	struct proc *child;
-	int options;
+	struct proc *parent = l->l_proc, *child;
+	int options, status, error, stat;
+	struct rusage ru;
 
 	switch (SCARG(uap, type)) {
 	case SVR4_P_PID:
@@ -877,37 +897,45 @@ irix_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	error = find_stopped_child(parent, SCARG(uap,pid), options, &child);
-	if (error != 0)
+	rw_enter(&proclist_lock, RW_WRITER);
+	error = find_stopped_child(parent, SCARG(uap,pid), options, &child,
+	    &status);
+	stat = child->p_stat;	/* XXXSMP */
+	if (error != 0) {
+		rw_exit(&proclist_lock);
 		return error;
+	}
 	*retval = 0;
-	if (child == NULL)
-		return irix_wait_siginfo(NULL, 0, SCARG(uap, info));
+	if (child == NULL) {
+		rw_exit(&proclist_lock);
+		return irix_wait_siginfo(NULL, 0, stat, SCARG(uap, info));
+	}
 
-	if (child->p_stat == SZOMB) {
+	if (stat == SZOMB) {
 #ifdef DEBUG_IRIX
 		printf("irix_sys_wait(): found %d\n", child->p_pid);
 #endif
-		if ((error = irix_wait_siginfo(child, child->p_xstat,
-						  SCARG(uap, info))) != 0)
+		if ((error = irix_wait_siginfo(child, status, stat,
+		    SCARG(uap, info))) != 0) {
+			rw_exit(&proclist_lock);
 			return error;
-
+		}
 
 		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 #ifdef DEBUG_IRIX
 			printf(("irix_sys_wait(): Don't wait\n"));
 #endif
+			rw_exit(&proclist_lock);
 			return 0;
 		}
-		if (SCARG(uap, ru) &&
-		    /* XXX (dsl) is this copying out the right data???
-		       child->p_ru would seem more appropriate! */
-		    (error = copyout(&(parent->p_stats->p_ru),
-		    (caddr_t)SCARG(uap, ru), sizeof(struct rusage))))
-			return error;
 
-		proc_free(child);
-		return 0;
+		/* proc_free() will release the lock. */
+		proc_free(child, (SCARG(uap, ru) == NULL ? NULL : &ru));
+
+		if (SCARG(uap, ru))
+			error = copyout(&ru, (caddr_t)SCARG(uap, ru), sizeof(ru));
+
+		return error;
 	}
 
 	/* Child state must be SSTOP */
@@ -915,8 +943,9 @@ irix_sys_waitsys(l, v, retval)
 #ifdef DEBUG_IRIX
 	printf("jobcontrol %d\n", child->p_pid);
 #endif
-	return irix_wait_siginfo(child, W_STOPCODE(child->p_xstat),
-				    SCARG(uap, info));
+	rw_exit(&proclist_lock);
+	return irix_wait_siginfo(child, W_STOPCODE(status), stat,
+	    SCARG(uap, info));
 }
 
 int
@@ -947,7 +976,7 @@ irix_sys_sigprocmask(l, v, retval)
 			return error;
 		SCARG(&cup, set) = stackgap_alloc(p, &sg, sizeof(niss));
 
-		obss = &p->p_sigctx.ps_sigmask;
+		obss = &l->l_sigmask;
 		native_to_irix_sigset(obss, &oiss);
 		/* preserve the higher 32 bits */
 		niss.bits[3] = oiss.bits[3];

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.8.6.1 2006/12/30 20:48:44 yamt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.8.6.2 2007/02/26 09:10:24 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -293,7 +293,16 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	KASSERT(bp != NULL);
 
 	sc->bce_pa = *pa;
-	sc->bce_dmatag = pa->pa_dmat;
+
+	/* BCM440x can only address 30 bits (1GB) */
+	if (bus_dmatag_subregion(pa->pa_dmat, 0, (1 << 30),
+			        &(sc->bce_dmatag), BUS_DMA_NOWAIT) != 0)
+	{
+		APRINT_ERROR("WARNING: %s failed to restrict dma range,"
+			     " falling back to parent bus dma range\n",
+			     sc->bce_dev.dv_xname);
+		sc->bce_dmatag = pa->pa_dmat;
+	}
 
 #if __NetBSD_Version__ >= 106120000
 	 aprint_naive(": Ethernet controller\n");

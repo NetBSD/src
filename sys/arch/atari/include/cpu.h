@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46.2.1 2006/12/30 20:45:45 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.2.2 2007/02/26 09:06:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -98,6 +98,8 @@
 #include <sys/cpu_data.h>
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
+        int	ci_mtx_count;
+        int	ci_mtx_oldspl;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -127,7 +129,6 @@ struct clockframe {
 } __attribute__((packed));
 
 #define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->cf_sr & PSL_IPL) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_pc)
 #if 0
 /* We would like to do it this way... */
@@ -142,21 +143,21 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)	{want_resched = 1; setsoftast();}
+#define	cpu_need_resched(ci)	{want_resched = 1; setsoftast();}
 
 /*
  * Give a profiling tick to the current process from the softclock
  * interrupt.  On hp300, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	profile_tick(p, framep)	((p)->p_flag |= P_OWEUPC, setsoftast())
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	profile_tick(l, framep)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	setsoftast()
+#define	cpu_signotify(l)	setsoftast()
 
 #define setsoftast()	(astpending = 1)
 

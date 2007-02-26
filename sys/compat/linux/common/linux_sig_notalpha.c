@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.29.2.1 2006/12/30 20:47:38 yamt Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.29.2.2 2007/02/26 09:09:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.29.2.1 2006/12/30 20:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.29.2.2 2007/02/26 09:09:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.29.2.1 2006/12/30 20:47:38 
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -81,7 +80,6 @@ linux_sys_signal(l, v, retval)
 		syscallarg(int) signum;
 		syscallarg(linux_handler_t) handler;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sigaction nbsa, obsa;
 	int error, sig;
 
@@ -93,7 +91,7 @@ linux_sys_signal(l, v, retval)
 	nbsa.sa_handler = SCARG(uap, handler);
 	sigemptyset(&nbsa.sa_mask);
 	nbsa.sa_flags = SA_RESETHAND | SA_NODEFER;
-	error = sigaction1(p, linux_to_native_signo[sig],
+	error = sigaction1(l, linux_to_native_signo[sig],
 	    &nbsa, &obsa, NULL, 0);
 	if (error == 0)
 		*retval = (int)(long)obsa.sa_handler; /* XXXmanu cast */
@@ -111,7 +109,9 @@ linux_sys_siggetmask(struct lwp *l, void *v,
 	linux_old_sigset_t lss;
 	int error;
 
-	error = sigprocmask1(p, SIG_SETMASK, 0, &bss);
+	mutex_enter(&p->p_smutex);
+	error = sigprocmask1(l, SIG_SETMASK, 0, &bss);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	native_to_linux_old_sigset(&lss, &bss);
@@ -133,14 +133,16 @@ linux_sys_sigsetmask(l, v, retval)
 	struct linux_sys_sigsetmask_args /* {
 		syscallarg(linux_old_sigset_t) mask;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	sigset_t nbss, obss;
 	linux_old_sigset_t nlss, olss;
+	struct proc *p = l->l_proc;
 	int error;
 
 	nlss = SCARG(uap, mask);
 	linux_old_to_native_sigset(&nbss, &nlss);
-	error = sigprocmask1(p, SIG_SETMASK, &nbss, &obss);
+	mutex_enter(&p->p_smutex);
+	error = sigprocmask1(l, SIG_SETMASK, &nbss, &obss);
+	mutex_exit(&p->p_smutex);
 	if (error)
 		return (error);
 	native_to_linux_old_sigset(&olss, &obss);
@@ -156,9 +158,8 @@ linux_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const linux_old_sigset_t *) set;
 		syscallarg(linux_old_sigset_t *) oset;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 
-	return(linux_sigprocmask1(p, SCARG(uap, how),
+	return(linux_sigprocmask1(l, SCARG(uap, how),
 				SCARG(uap, set), SCARG(uap, oset)));
 }
 #endif /* !__amd64__ */
@@ -170,8 +171,7 @@ linux_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 int
 linux_sys_pause(struct lwp *l, void *v, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 
-	return (sigsuspend1(p, 0));
+	return (sigsuspend1(l, 0));
 }
 

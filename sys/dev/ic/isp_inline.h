@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.26.2.1 2006/12/30 20:48:03 yamt Exp $ */
+/* $NetBSD: isp_inline.h,v 1.26.2.2 2007/02/26 09:10:08 yamt Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -165,12 +165,13 @@ isp_getrqentry(struct ispsoftc *isp, u_int16_t *iptrp,
 	return (0);
 }
 
-static INLINE void isp_print_qentry (struct ispsoftc *, char *, int, void *);
+static INLINE void isp_print_qentry (struct ispsoftc *, const char *, int,
+    void *);
 
 
 #define	TBA	(4 * (((QENTRY_LEN >> 2) * 3) + 1) + 1)
 static INLINE void
-isp_print_qentry(struct ispsoftc *isp, char *msg, int idx, void *arg)
+isp_print_qentry(struct ispsoftc *isp, const char *msg, int idx, void *arg)
 {
 	char tbuf[TBA];
 	int amt, i, j;

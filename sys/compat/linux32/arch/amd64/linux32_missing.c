@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.c,v 1.1.16.2 2006/06/21 14:59:27 yamt Exp $ */
+/*	$NetBSD: linux32_missing.c,v 1.1.16.3 2007/02/26 09:09:24 yamt Exp $ */
 
 #include "opt_compat_linux32.h"
 
@@ -6,7 +6,6 @@
 #include <sys/time.h>
 #include <sys/param.h>
 #include <sys/lwp.h>
-#include <sys/sa.h>
 #include <sys/ucred.h>
 #include <sys/mount.h>
 #include <sys/systm.h>

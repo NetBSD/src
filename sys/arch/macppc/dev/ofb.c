@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.41.10.2 2006/12/30 20:46:26 yamt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.41.10.3 2007/02/26 09:07:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.41.10.2 2006/12/30 20:46:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.41.10.3 2007/02/26 09:07:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -191,7 +191,7 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	
 	sc->sc_fbaddr = 0;
 	if (OF_getprop(sc->sc_node, "address", &sc->sc_fbaddr, 4) != 4)
-		OF_interpret("frame-buffer-adr", 1, &sc->sc_fbaddr);
+		OF_interpret("frame-buffer-adr", 1, 1, &sc->sc_fbaddr);
 	if (sc->sc_fbaddr == 0) {
 		printf("%s: Unable to find the framebuffer address.\n",
 		    sc->sc_dev.dv_xname);

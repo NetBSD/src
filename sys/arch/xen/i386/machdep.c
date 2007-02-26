@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17.2.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.2.3 2007/02/26 09:08:54 yamt Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.2 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.3 2007/02/26 09:08:54 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -118,8 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.2 2006/12/30 20:47:25 yamt Exp $"
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/ksyms.h>
 
 #ifdef IPKDB
@@ -172,7 +170,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.2 2006/12/30 20:47:25 yamt Exp $"
 #include <machine/apmvar.h>
 #endif
 
-#include "isa.h"
 #include "isadma.h"
 #include "npx.h"
 #include "ksyms.h"
@@ -210,16 +207,6 @@ void ddb_trap_hook(int);
 
 #ifdef XENDEBUG_LOW
 void xen_dbglow_init(void);
-#endif
-
-#ifndef BEEP_ONHALT_COUNT
-#define BEEP_ONHALT_COUNT 3
-#endif
-#ifndef BEEP_ONHALT_PITCH
-#define BEEP_ONHALT_PITCH 1500
-#endif
-#ifndef BEEP_ONHALT_PERIOD
-#define BEEP_ONHALT_PERIOD 250
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -352,19 +339,19 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -643,14 +630,13 @@ void *
 getframe(struct lwp *l, int sig, int *onstack)
 {
 	struct proc *p = l->l_proc;
-	struct sigctx *ctx = &p->p_sigctx;
 	struct trapframe *tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
-	*onstack = (ctx->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
+	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (char *)ctx->ps_sigstk.ss_sp + ctx->ps_sigstk.ss_size;
+		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 #ifdef VM86
 	if (tf->tf_eflags & PSL_VM)
 		return (void *)(tf->tf_esp + (tf->tf_ss << 4));
@@ -690,7 +676,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sel = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
 	    GUCODEBIG_SEL : GUCODE_SEL;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -718,15 +704,22 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags = _UC_SIGMASK|_UC_VM;
 	frame.sf_uc.uc_sigmask = *mask;
 	frame.sf_uc.uc_link = NULL;
-	frame.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
+
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
 	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -739,7 +732,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void
@@ -751,44 +744,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		sendsig_siginfo(ksi, mask);
-}
-
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
-	struct saframe *sf, frame;
-	struct trapframe *tf;
-
-	tf = l->l_md.md_regs;
-
-	/* Finally, copy out the rest of the frame. */
-	frame.sa_type = type;
-	frame.sa_sas = sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = ap;
-	frame.sa_ra = 0;
-
-	sf = (struct saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		/* Copying onto the stack didn't work. Die. */
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_eip = (int) upcall;
-	tf->tf_esp = (int) sf;
-	tf->tf_ebp = 0; /* indicate call-frame-top to debuggers */
-	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
-	    GSEL(GUCODEBIG_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 }
 
 int	waittime = -1;
@@ -2329,6 +2284,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
+	struct proc *p = l->l_proc;
 
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
@@ -2420,10 +2376,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
 #endif
 	}
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 	return (0);
 }
 
@@ -2433,21 +2391,42 @@ cpu_initclocks()
 	(*initclock_func)();
 }
 
-#ifdef MULTIPROCESSOR
 void
-need_resched(struct cpu_info *ci)
+cpu_need_resched(struct cpu_info *ci)
 {
 
 	if (ci->ci_want_resched)
 		return;
-
 	ci->ci_want_resched = 1;
+
 	if ((ci)->ci_curlwp != NULL)
-		aston((ci)->ci_curlwp->l_proc);
+		aston((ci)->ci_curlwp);
+#ifdef MULTIPROCESSOR
 	else if (ci != curcpu())
 		x86_send_ipi(ci, 0);
-}
 #endif
+}
+
+void
+cpu_signotify(struct lwp *l)
+{
+
+	aston(l);
+#ifdef MULTIPROCESSOR
+	if (l->l_cpu != NULL && l->l_cpu != curcpu())
+		x86_send_ipi(l->l_cpu, 0);
+#endif
+}
+
+void
+cpu_need_proftick(struct lwp *l)
+{
+
+	KASSERT(l->l_cpu == curcpu());
+
+	l->l_pflag |= LP_OWEUPC;
+	aston(l);
+}
 
 /*
  * Allocate an IDT vector slot within the given range.

@@ -1,4 +1,4 @@
-/* $NetBSD: securelevel.h,v 1.2.6.2 2006/12/30 20:50:55 yamt Exp $ */
+/* $NetBSD: securelevel.h,v 1.2.6.3 2007/02/26 09:12:09 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -11,10 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Elad Efrat.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -36,6 +33,11 @@ int secmodel_bsd44_sysctl_securelevel(SYSCTLFN_PROTO);
 
 void secmodel_bsd44_securelevel_init(void);
 void secmodel_bsd44_securelevel_start(void);
+
+#if defined(_LKM)
+void secmodel_bsd44_securelevel_stop(void);
+SYSCTL_SETUP_PROTO(sysctl_security_bsd44_securelevel_setup);
+#endif /* _LKM */
 
 int secmodel_bsd44_securelevel_system_cb(kauth_cred_t, kauth_action_t, void *,
     void *, void *, void *, void *);

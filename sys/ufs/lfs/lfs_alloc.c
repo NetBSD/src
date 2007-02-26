@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_alloc.c,v 1.83.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.83.2.3 2007/02/26 09:12:20 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.83.2.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.83.2.3 2007/02/26 09:12:20 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -95,7 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.83.2.2 2006/12/30 20:51:01 yamt Exp 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-extern struct lock ufs_hashlock;
+extern kmutex_t ufs_hashlock;
 
 /* Constants for inode free bitmap */
 #define BMSHIFT 5	/* 2 ** 5 = 32 */
@@ -280,7 +280,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	ASSERT_NO_SEGLOCK(fs);
 
 	vp = *vpp;
-	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
+	mutex_enter(&ufs_hashlock);
 	/* Create an inode to associate with the vnode. */
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
 
@@ -300,7 +300,7 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
-	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&ufs_hashlock);
 
 	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, vpp);
 	vp = *vpp;

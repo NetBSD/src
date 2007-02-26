@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2005/05/22 15:54:47 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12.2.1 2007/02/26 09:12:03 yamt Exp $	*/
 
 /*
  * TODO:
@@ -12,8 +12,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.12 2005/05/22 15:54:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.12.2.1 2007/02/26 09:12:03 yamt Exp $");
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <strings.h>
 #include <time.h>
@@ -92,14 +93,12 @@ openfiles(proto)
 		fprintf(OUT, "openfiles %s\n",proto);
 	ENDDEBUG
 
-#define HEADER Header
-#define SOURCE Source
 #define DOIT(X)\
 	/* GAG */\
-	junk = Malloc( 2 + lenp + strlen(X/**/_name) );\
+	junk = Malloc( 2 + lenp + strlen(X ## _name) );\
 	(void) sprintf(junk, "%s_", proto);\
-	X/**/_name = strcat(junk, X/**/_name);\
-	X = fopen(X/**/_name, "w");\
+	X ## _name = strcat(junk, X ## _name);\
+	X = fopen(X ## _name, "w");\
 	if((X)==(FILE *)0)\
 	{ fprintf(stderr,"Open failed: %s\n", "X"); Exit(-1); }\
 	fprintf(X, "/* %cHeader%c */\n",'$', '$' );\
@@ -119,7 +118,8 @@ openfiles(proto)
 	DOIT(statefile);
 	DOIT(actfile);
 	fprintf(actfile,
-		"#ifndef lint\nstatic char *rcsid = \"$Header/**/$\";\n#endif /* lint */\n");
+		"#ifndef lint\nstatic char *rcsid = \"%cHeader%c\";\n#endif /* lint */\n",
+		'$', '$');
 
 	if(pgoption)
 		putdriver(actfile, 15);
@@ -339,7 +339,7 @@ char *argv[];
 	fprintf(eventfile_h, "};/* end struct event */\n");
 	fprintf(eventfile_h, "\n#define %s_NEVENTS 0x%x\n", protocol, Nevents);
 	fprintf(eventfile_h,
-		"\n#define ATTR(X)ev_union.%s/**/X/**/\n",EV_PREFIX);
+		"\n#define ATTR(X)ev_union.%s ## X ## \n",EV_PREFIX);
 	(void) fclose(eventfile_h);
 
 	/* {{ */ fprintf(actfile, "\t}\nreturn 0;\n}\n"); /* end switch; end action() */
@@ -396,6 +396,7 @@ int transno = 0;
 
 void
 Exit(n)
+	int n;
 {
 	fprintf(stderr, "Error at line %d\n",lineno);
 	if(transno) fprintf(stderr, "Transition number %d\n",transno);
@@ -426,8 +427,12 @@ FakeFilename(outfile, name, l)
 	char *name;
 	int l;
 {
-	/*
+#if 0
 	doesn't work
 	fprintf(outfile, "\n\n\n\n# line %d \"%s\"\n", l, name);
-	*/
+#else
+	(void)outfile;
+	(void)name;
+	(void)l;
+#endif
 }

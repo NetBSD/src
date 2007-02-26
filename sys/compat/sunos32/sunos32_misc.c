@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.31.2.2 2006/12/30 20:47:45 yamt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.31.2.3 2007/02/26 09:09:39 yamt Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.31.2.2 2006/12/30 20:47:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.31.2.3 2007/02/26 09:09:39 yamt Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -118,7 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.31.2.2 2006/12/30 20:47:45 yamt E
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
-#include <sys/sa.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/conf.h>
@@ -668,11 +667,10 @@ sunos32_sys_sigpending(l, v, retval)
 	struct sunos32_sys_sigpending_args /* {
 		syscallarg(netbsd32_intp) mask;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	sigset_t ss;
 	int mask;
 
-	sigpending1(p, &ss);
+	sigpending1(l, &ss);
 	native_to_sunos_sigset(&ss, &mask);
 
 	return (copyout((caddr_t)(u_long)&mask, (caddr_t)(u_long)SCARG(uap, mask), sizeof(int)));
@@ -688,12 +686,11 @@ sunos32_sys_sigsuspend(l, v, retval)
 		syscallarg(int) mask;
 	} */ *uap = v;
 	int mask;
-	struct proc *p = l->l_proc;
 	sigset_t ss;
 
 	mask = SCARG(uap, mask);
 	sunos_to_native_sigset(mask, &ss);
-	return (sigsuspend1(p, &ss));
+	return (sigsuspend1(l, &ss));
 }
 
 /*
@@ -1144,7 +1141,8 @@ sunos32_sys_open(l, v, retval)
 
 	ret = sys_open(l, &ua, retval);
 
-	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
+	/* XXXSMP unlocked */
+	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
 		struct file *fp;
 
@@ -1621,7 +1619,6 @@ sunos32_sys_sigvec(l, v, retval)
 		syscallarg(struct sigvec *) nsv;
 		syscallarg(struct sigvec *) osv;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct netbsd32_sigvec sv;
 	struct sigaction nsa, osa;
 	int error;
@@ -1642,7 +1639,7 @@ sunos32_sys_sigvec(l, v, retval)
 
 		sunos32_sigvec_to_sigaction(&sv, &nsa);
 	}
-	error = sigaction1(p, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 			   SCARG(uap, nsv) ? &nsa : 0,
 			   SCARG(uap, osv) ? &osa : 0,
 			   NULL, 0);

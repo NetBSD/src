@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.10.2.2 2006/12/30 20:47:22 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.10.2.3 2007/02/26 09:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.3 2007/02/26 09:08:51 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -296,7 +296,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 
 	ioapic_add(sc);
 
-	printf("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname, aaa->apic_address);
+	aprint_verbose("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname,
+	    aaa->apic_address);
 #ifndef _IOAPIC_CUSTOM_RW
 	{
 	bus_space_handle_t bh;
@@ -343,7 +344,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		    aaa->flags & IOAPIC_PICMODE ? "PIC" : "virtual wire");
 	}
 	
-	printf(", version %x, %d pins\n", sc->sc_apic_vers, sc->sc_apic_sz);
+	aprint_verbose(", version %x, %d pins\n", sc->sc_apic_vers,
+	    sc->sc_apic_sz);
 
 	sc->sc_pins = malloc(sizeof(struct ioapic_pin) * sc->sc_apic_sz,
 	    M_DEVBUF, M_WAITOK);
@@ -362,7 +364,8 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	 * mapping later ...
 	 */
 	if (apic_id != sc->sc_pic.pic_apicid) {
-		printf("%s: misconfigured as apic %d\n", sc->sc_pic.pic_dev.dv_xname, apic_id);
+		aprint_verbose("%s: misconfigured as apic %d\n",
+		    sc->sc_pic.pic_dev.dv_xname, apic_id);
 
 		ioapic_write(sc,IOAPIC_ID,
 		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
@@ -371,11 +374,11 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
 		
 		if (apic_id != sc->sc_pic.pic_apicid) {
-			printf("%s: can't remap to apid %d\n",
+			aprint_error("%s: can't remap to apid %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
 			    sc->sc_pic.pic_apicid);
 		} else {
-			printf("%s: remapped to apic %d\n",
+			aprint_verbose("%s: remapped to apic %d\n",
 			    sc->sc_pic.pic_dev.dv_xname,
 			    sc->sc_pic.pic_apicid);
 		}
@@ -460,14 +463,14 @@ ioapic_enable(void)
 		return;
 
 	if (ioapics->sc_flags & IOAPIC_PICMODE) {
-		printf("%s: writing to IMCR to disable pics\n",
+		aprint_debug("%s: writing to IMCR to disable pics\n",
 		    ioapics->sc_pic.pic_dev.dv_xname);
 		outb(IMCR_ADDR, IMCR_REGISTER);
 		outb(IMCR_DATA, IMCR_APIC);
 	}
 			
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		printf("%s: enabling\n", sc->sc_pic.pic_dev.dv_xname);
+		aprint_debug("%s: enabling\n", sc->sc_pic.pic_dev.dv_xname);
 
 		for (p = 0; p < sc->sc_apic_sz; p++) {
 			ip = &sc->sc_pins[p];

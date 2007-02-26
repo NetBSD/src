@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpcivar.h,v 1.5 2003/06/12 19:18:49 scw Exp $	*/
+/*	$NetBSD: gtpcivar.h,v 1.5.18.1 2007/02/26 09:10:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -53,7 +53,7 @@ struct gtpci_chipset {
 	bus_size_t gtpc_cfgaddr;
 	bus_size_t gtpc_cfgdata;
 	bus_size_t gtpc_syncreg;
-	boolean_t gtpc_host;
+	bool gtpc_host;
 };
 
 

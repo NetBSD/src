@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.5.12.2 2006/12/30 20:48:38 yamt Exp $	*/
+/*	$NetBSD: igphy.c,v 1.5.12.3 2007/02/26 09:10:18 yamt Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.5.12.2 2006/12/30 20:48:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.5.12.3 2007/02/26 09:10:18 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -271,6 +271,16 @@ igphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
+
+		reg = PHY_READ(sc, MII_IGPHY_PORT_CTRL);
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			reg |= PSCR_AUTO_MDIX;
+			reg &= ~PSCR_FORCE_MDI_MDIX;
+			PHY_WRITE(sc, MII_IGPHY_PORT_CTRL, reg);
+		} else {
+			reg &= ~(PSCR_AUTO_MDIX | PSCR_FORCE_MDI_MDIX);
+			PHY_WRITE(sc, MII_IGPHY_PORT_CTRL, reg);
+		}
 
 		mii_phy_setmedia(sc);
 		break;

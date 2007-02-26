@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.47.8.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.47.8.3 2007/02/26 09:12:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.8.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.8.3 2007/02/26 09:12:24 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.8.2 2006/12/30 20:51:01 yamt Exp 
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -80,7 +81,7 @@ ufs_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *mp;
+	struct mount *mp, *transmp;
 	struct lwp *l = ap->a_l;
 	mode_t mode;
 	int error = 0;
@@ -88,6 +89,9 @@ ufs_inactive(void *v)
 	if (prtactive && vp->v_usecount != 0)
 		vprint("ufs_inactive: pushing active", vp);
 
+	transmp = vp->v_mount;
+	if ((error = fstrans_start(transmp, FSTRANS_SHARED)) != 0)
+		return error;
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
@@ -142,6 +146,7 @@ out:
 
 	if (ip->i_mode == 0)
 		vrecycle(vp, NULL, l);
+	fstrans_done(transmp);
 	return (error);
 }
 

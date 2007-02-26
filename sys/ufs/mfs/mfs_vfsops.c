@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.67.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.67.2.3 2007/02/26 09:12:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67.2.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67.2.3 2007/02/26 09:12:23 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -102,6 +102,7 @@ struct vfsops mfs_vfsops = {
 	NULL,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
+	vfs_stdsuspendctl,
 	mfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -359,9 +360,11 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 {
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
+	struct proc *p;
 	struct buf *bp;
 	caddr_t base;
 	int sleepreturn = 0;
+	ksiginfoq_t kq;
 
 	base = mfsp->mfs_baseoff;
 	while (mfsp->mfs_shutdown != 1) {
@@ -381,11 +384,17 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 			 * XXX Freeze syncer.  Must do this before locking
 			 * the mount point.  See dounmount() for details.
 			 */
-			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+			mutex_enter(&syncer_mutex);
 			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
-				lockmgr(&syncer_lock, LK_RELEASE, NULL);
-			else if (dounmount(mp, 0, l) != 0)
-				CLRSIG(l);
+				mutex_exit(&syncer_mutex);
+			else if (dounmount(mp, 0, l) != 0) {
+				p = l->l_proc;
+				ksiginfo_queue_init(&kq);
+				mutex_enter(&p->p_smutex);
+				sigclearall(p, NULL, &kq);
+				mutex_exit(&p->p_smutex);
+				ksiginfo_queue_drain(&kq);
+			}
 			sleepreturn = 0;
 			continue;
 		}

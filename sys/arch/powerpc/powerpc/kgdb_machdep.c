@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.13.12.2 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.13.12.3 2007/02/26 09:07:55 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.13.12.2 2006/12/30 20:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.13.12.3 2007/02/26 09:07:55 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,7 +66,9 @@ kgdb_acc(vaddr_t va, size_t len)
 	vaddr_t   last_va;
 	paddr_t   pa;
 	u_int msr;
+#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	u_int batu, batl;
+#endif
 
 	/* If translation is off, everything is fair game */
 	__asm volatile ("mfmsr %0" : "=r"(msr));
@@ -124,6 +126,12 @@ kgdb_acc(vaddr_t va, size_t len)
 		}
 	}
 #endif /* (PPC_OEA) && !(PPC_OEA64) && !(PPC_OEA64_BRIDGE) */
+
+#if defined(PPC_IBM4XX)
+	/* Is it (supposed to be) TLB-reserved mapping? */
+	if (va < VM_MIN_KERNEL_ADDRESS || va > VM_MAX_KERNEL_ADDRESS)
+		return (1);
+#endif
 
 	last_va = va + len;
 	va  &= ~PGOFSET;

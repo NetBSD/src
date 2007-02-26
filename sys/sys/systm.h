@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.179.2.2 2006/12/30 20:50:56 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.179.2.3 2007/02/26 09:12:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -36,34 +36,6 @@
  *	@(#)systm.h	8.7 (Berkeley) 3/29/95
  */
 
-/*
- * The `securelevel' variable controls the security level of the system.
- * It can only be decreased by process 1 (/sbin/init).
- *
- * Security levels are as follows:
- *   -1	permanently insecure mode - always run system in level 0 mode.
- *    0	insecure mode - immutable and append-only flags may be turned off.
- *	All devices may be read or written subject to permission modes.
- *    1	secure mode - immutable and append-only flags may not be changed;
- *	raw disks of mounted filesystems, /dev/mem, and /dev/kmem are
- *	read-only.
- *    2	highly secure mode - same as (1) plus raw disks are always
- *	read-only whether mounted or not. This level precludes tampering
- *	with filesystems by unmounting them, but also inhibits running
- *	newfs while the system is secured.
- *
- * In normal operation, the system runs in level 0 mode while single user
- * and in level 1 mode while multiuser. If level 2 mode is desired while
- * running multiuser, it can be set in the multiuser startup script
- * (/etc/rc.local) using sysctl(8). If it is desired to run the system
- * in level 0 mode while multiuser, initialize the variable securelevel
- * in /sys/kern/kern_sysctl.c to -1. Note that it is NOT initialized to
- * zero as that would allow the vmunix binary to be patched to -1.
- * Without initialization, securelevel loads in the BSS area which only
- * comes into existence when the kernel is loaded and hence cannot be
- * patched by a stalking hacker.
- */
-
 #ifndef _SYS_SYSTM_H_
 #define _SYS_SYSTM_H_
 
@@ -89,7 +61,6 @@ struct uio;
 struct vnode;
 struct vmspace;
 
-extern int securelevel;		/* system security level */
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
 
@@ -119,6 +90,8 @@ extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
 extern struct device *root_device; /* device equivalent to above */
 extern const char *rootspec;	/* how root device was specified */
+
+extern int ncpu;		/* number of CPUs configured */
 
 extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
 extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
@@ -221,6 +194,8 @@ void	twiddle(void);
 void	panic(const char *, ...)
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
 void	uprintf(const char *, ...)
+    __attribute__((__format__(__printf__,1,2)));
+void	uprintf_locked(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	ttyprintf(struct tty *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
@@ -368,7 +343,7 @@ void	doforkhooks(struct proc *, struct proc *);
  * kernel syscall tracing/debugging hooks.
  */
 #ifdef _KERNEL
-boolean_t trace_is_enabled(struct proc *);
+bool	trace_is_enabled(struct proc *);
 int	trace_enter(struct lwp *, register_t, register_t,
 	    const struct sysent *, void *);
 void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
@@ -469,30 +444,22 @@ void scdebug_ret(struct lwp *, register_t, int, register_t[]);
 
 #if defined(MULTIPROCESSOR)
 void	_kernel_lock_init(void);
-void	_kernel_lock(int);
-void	_kernel_unlock(void);
-void	_kernel_proc_lock(struct lwp *);
-void	_kernel_proc_unlock(struct lwp *);
-int	_kernel_lock_release_all(void);
-void	_kernel_lock_acquire_count(int);
+void	_kernel_lock(int, struct lwp *);
+void	_kernel_unlock(int, struct lwp *, int *);
 
 #define	KERNEL_LOCK_INIT()		_kernel_lock_init()
-#define	KERNEL_LOCK(flag)		_kernel_lock((flag))
-#define	KERNEL_UNLOCK()			_kernel_unlock()
-#define	KERNEL_PROC_LOCK(l)		_kernel_proc_lock((l))
-#define	KERNEL_PROC_UNLOCK(l)		_kernel_proc_unlock((l))
-#define	KERNEL_LOCK_RELEASE_ALL()	_kernel_lock_release_all()
-#define	KERNEL_LOCK_ACQUIRE_COUNT(count) _kernel_lock_acquire_count(count)
+#define	KERNEL_LOCK(count, lwp)			\
+do {						\
+	if ((count) != 0)			\
+		_kernel_lock((count), (lwp));	\
+} while (/* CONSTCOND */ 0)
+#define	KERNEL_UNLOCK(all, lwp, p)	_kernel_unlock((all), (lwp), (p))
 
 #else /* ! MULTIPROCESSOR */
 
 #define	KERNEL_LOCK_INIT()		/* nothing */
-#define	KERNEL_LOCK(flag)		/* nothing */
-#define	KERNEL_UNLOCK()			/* nothing */
-#define	KERNEL_PROC_LOCK(l)		/* nothing */
-#define	KERNEL_PROC_UNLOCK(l)		/* nothing */
-#define	KERNEL_LOCK_RELEASE_ALL()	(0)
-#define	KERNEL_LOCK_ACQUIRE_COUNT(count) /* nothing */
+#define	KERNEL_LOCK(count, lwp)		/* nothing */
+#define	KERNEL_UNLOCK(all, lwp, ptr)	/* nothing */
 
 #endif /* MULTIPROCESSOR */
 
@@ -505,5 +472,9 @@ void _kernel_lock_assert_unlocked(void);
 #define	KERNEL_LOCK_ASSERT_LOCKED()	/* nothing */
 #define	KERNEL_LOCK_ASSERT_UNLOCKED()	/* nothing */
 #endif
+
+#define	KERNEL_UNLOCK_LAST(l)		KERNEL_UNLOCK(-1, (l), NULL)
+#define	KERNEL_UNLOCK_ALL(l, p)		KERNEL_UNLOCK(0, (l), (p))
+#define	KERNEL_UNLOCK_ONE(l)		KERNEL_UNLOCK(1, (l), NULL)
 
 #endif	/* !_SYS_SYSTM_H_ */

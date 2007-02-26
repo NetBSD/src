@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscalls.c,v 1.39 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: ibcs2_syscalls.c,v 1.39.4.1 2007/02/26 09:09:09 yamt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscalls.c,v 1.39 2005/02/26 23:58:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscalls.c,v 1.39.4.1 2007/02/26 09:09:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -18,7 +18,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_syscalls.c,v 1.39 2005/02/26 23:58:19 perry Ex
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_signal.h>

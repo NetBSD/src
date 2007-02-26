@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.8.2.1 2006/06/21 14:48:18 yamt Exp $ */
+/* $NetBSD: cpu.c,v 1.8.2.2 2007/02/26 09:05:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8.2.1 2006/06/21 14:48:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8.2.2 2007/02/26 09:05:38 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -139,7 +139,11 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
  * CPU, on uniprocessors).  The CPU info list is initialized to
  * point at it.
  */
-struct cpu_info cpu_info_primary = { 0, &cpu_info_primary };
+struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
+	.ci_self = &cpu_info_primary,
+	.ci_self200 = (uint8_t *)&cpu_info_primary + 0x200,
+};
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
@@ -272,6 +276,7 @@ cpu_attach(parent, self, aux)
 	}
 
 	ci->ci_self = ci;
+	ci->ci_self200 = (uint8_t *)ci + 0x200;
 	sc->sc_info = ci;
 
 	ci->ci_dev = self;
@@ -473,7 +478,7 @@ cpu_start_secondary (ci)
 
 	ci->ci_flags |= CPUF_AP;
 
-	printf("%s: starting\n", ci->ci_dev->dv_xname);
+	aprint_debug("%s: starting\n", ci->ci_dev->dv_xname);
 
 	CPU_STARTUP(ci);
 
@@ -484,7 +489,7 @@ cpu_start_secondary (ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_PRESENT)) {
-		printf("%s: failed to become ready\n", ci->ci_dev->dv_xname);
+		aprint_error("%s: failed to become ready\n", ci->ci_dev->dv_xname);
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -506,7 +511,7 @@ cpu_boot_secondary(ci)
 		delay(10);
 	}
 	if (! (ci->ci_flags & CPUF_RUNNING)) {
-		printf("CPU failed to start\n");
+		aprint_error("CPU failed to start\n");
 #if defined(MPDEBUG) && defined(DDB)
 		printf("dropping into debugger; continue from here to resume boot\n");
 		Debugger();
@@ -564,7 +569,7 @@ cpu_hatch(void *v)
 	lcr8(0);
 	enable_intr();
 
-	printf("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
+	aprint_debug("%s: CPU %u running\n",ci->ci_dev->dv_xname, ci->ci_cpuid);
 	microtime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 }

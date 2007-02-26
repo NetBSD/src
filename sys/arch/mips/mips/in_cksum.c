@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.10.16.1 2006/06/21 14:53:44 yamt Exp $ */
+/* $NetBSD: in_cksum.c,v 1.10.16.2 2007/02/26 09:07:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1993 Regents of the University of California.
@@ -42,12 +42,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.10.16.1 2006/06/21 14:53:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.10.16.2 2007/02/26 09:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/cdefs.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>

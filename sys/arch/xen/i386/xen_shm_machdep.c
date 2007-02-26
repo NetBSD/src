@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.9.2.2 2006/12/30 20:47:25 yamt Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.9.2.3 2007/02/26 09:08:55 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -65,9 +65,12 @@ static vaddr_t xen_shm_end_address;
 
 /* Grab enouth VM space to map an entire vbd ring. */
 #ifdef XEN3
+/* Xen3 linux guests seems to eat more pages, gives enough for 10 vbd rings */
 #define BLKIF_RING_SIZE __RING_SIZE((blkif_sring_t *)0, PAGE_SIZE)
-#endif
+#define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1) * 10)
+#else
 #define XENSHM_NPAGES (BLKIF_RING_SIZE * (BLKIF_MAX_SEGMENTS_PER_REQUEST + 1))
+#endif
 
 static vsize_t xen_shm_size = (XENSHM_NPAGES * PAGE_SIZE);
 

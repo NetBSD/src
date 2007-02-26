@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.27.2.2 2006/12/30 20:47:33 yamt Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.27.2.3 2007/02/26 09:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27.2.2 2006/12/30 20:47:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.27.2.3 2007/02/26 09:09:11 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -185,7 +185,7 @@ irix_sys_prctl(l, v, retval)
 			return 0;
 
 		pc = l->l_cred;
-		if (!(kauth_cred_geteuid(pc) == 0 || \
+		if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
 		    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 		    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
 		    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
@@ -417,7 +417,7 @@ irix_sproc_child(isc)
 	struct irix_sproc_child_args *isc;
 {
 	struct proc *p2 = *isc->isc_proc;
-	struct lwp *l2 = proc_representative_lwp(p2);
+	struct lwp *l2 = curlwp;
 	int inh = isc->isc_inh;
 	struct lwp *lparent = isc->isc_parent_lwp;
 	struct proc *parent = lparent->l_proc;
@@ -580,7 +580,7 @@ irix_sys_procblk(l, v, retval)
 
 	/* May we stop it? */
 	pc = l->l_cred;
-	if (!(kauth_cred_geteuid(pc) == 0 || \
+	if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
 	    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
 	    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
 	    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
@@ -630,7 +630,7 @@ irix_sys_procblk(l, v, retval)
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
 			/* Recall procblk for this process */
 			SCARG(&cup, pid) = iedp->ied_p->p_pid;
-			ied_lwp = proc_representative_lwp(iedp->ied_p);
+			ied_lwp = proc_representative_lwp(iedp->ied_p, NULL, 0);
 			error = irix_sys_procblk(ied_lwp, &cup, retval);
 			if (error != 0)
 				last_error = error;
@@ -674,7 +674,7 @@ irix_prda_init(p)
 	evc.ev_len = sizeof(struct irix_prda);
 	evc.ev_prot = UVM_PROT_RW;
 	evc.ev_proc = *vmcmd_map_zero;
-	l = proc_representative_lwp(p);
+	l = proc_representative_lwp(p, NULL, 0);
 
 	if ((error = (*evc.ev_proc)(l, &evc)) != 0)
 		return error;

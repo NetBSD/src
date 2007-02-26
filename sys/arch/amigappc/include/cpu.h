@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.11 2004/01/04 11:33:29 jdolecek Exp $ */
+/*      $NetBSD: cpu.h,v 1.11.16.1 2007/02/26 09:05:48 yamt Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -54,7 +54,6 @@ void	physaccess	__P((caddr_t, caddr_t, int, int));
 
 /* ADAM: taken from macppc/cpu.h */
 #define CLKF_USERMODE(frame)    (((frame)->srr1 & PSL_PR) != 0)
-#define CLKF_BASEPRI(frame)     ((frame)->pri == 0)
 #define CLKF_PC(frame)          ((frame)->srr0)
 #define CLKF_INTR(frame)        ((frame)->depth > 0)
 

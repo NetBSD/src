@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.66.2.2 2006/12/30 20:50:20 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.66.2.3 2007/02/26 09:11:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.66.2.2 2006/12/30 20:50:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.66.2.3 2007/02/26 09:11:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ route_init(void)
 void
 rtflushall(int family)
 {
-	struct domain *dom;
+	const struct domain *dom;
 
 	if ((dom = pffinddomain(family)) != NULL && dom->dom_rtflushall != NULL)
 		(*dom->dom_rtflushall)();
@@ -210,14 +210,14 @@ rtflushall(int family)
 void
 rtflush(struct route *ro)
 {
-	struct domain *dom;
+	const struct domain *dom;
 
 	KASSERT(ro->ro_rt != NULL);
 
 	RTFREE(ro->ro_rt);
 	ro->ro_rt = NULL;
 
-	if ((dom = pffinddomain(ro->ro_dst.sa_family)) != NULL &&
+	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) != NULL &&
 	    dom->dom_rtflush != NULL)
 		(*dom->dom_rtflush)(ro);
 }
@@ -225,11 +225,11 @@ rtflush(struct route *ro)
 void
 rtcache(struct route *ro)
 {
-	struct domain *dom;
+	const struct domain *dom;
 
 	KASSERT(ro->ro_rt != NULL);
 
-	if ((dom = pffinddomain(ro->ro_dst.sa_family)) != NULL &&
+	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) != NULL &&
 	    dom->dom_rtcache != NULL)
 		(*dom->dom_rtcache)(ro);
 }
@@ -246,7 +246,7 @@ rtalloc(struct route *ro)
 			return;
 		rtflush(ro);
 	}
-	if ((ro->ro_rt = rtalloc1(&ro->ro_dst, 1)) == NULL)
+	if ((ro->ro_rt = rtalloc1(rtcache_getdst(ro), 1)) == NULL)
 		return;
 	rtcache(ro);
 }
@@ -844,8 +844,8 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		if ((rt = rtalloc1(dst, 0)) != NULL) {
 			rt->rt_refcnt--;
 			if (rt->rt_ifa != ifa)
-				return (flags & RTF_HOST ? EHOSTUNREACH
-							: ENETUNREACH);
+				return (flags & RTF_HOST) ? EHOSTUNREACH
+							: ENETUNREACH;
 		}
 	}
 	memset(&info, 0, sizeof(info));
@@ -882,7 +882,7 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		}
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}
-	return (error);
+	return error;
 }
 
 /*
@@ -935,7 +935,7 @@ rt_timer_queue_create(u_int timeout)
 
 	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
 	if (rtq == NULL)
-		return (NULL);
+		return NULL;
 	Bzero(rtq, sizeof *rtq);
 
 	rtq->rtq_timeout = timeout;
@@ -943,7 +943,7 @@ rt_timer_queue_create(u_int timeout)
 	TAILQ_INIT(&rtq->rtq_head);
 	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
 
-	return (rtq);
+	return rtq;
 }
 
 void
@@ -1023,28 +1023,26 @@ rt_timer_add(struct rtentry *rt,
 	 * If there's already a timer with this action, destroy it before
 	 * we add a new one.
 	 */
-	for (r = LIST_FIRST(&rt->rt_timer); r != NULL;
-	     r = LIST_NEXT(r, rtt_link)) {
-		if (r->rtt_func == func) {
-			LIST_REMOVE(r, rtt_link);
-			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-			if (r->rtt_queue->rtq_count > 0)
-				r->rtt_queue->rtq_count--;
-			else
-				printf("rt_timer_add: rtq_count reached 0\n");
-			s = splsoftnet();
-			pool_put(&rttimer_pool, r);
-			splx(s);
-			break;  /* only one per list, so we can quit... */
-		}
+	LIST_FOREACH(r, &rt->rt_timer, rtt_link) {
+		if (r->rtt_func == func)
+			break;
+	}
+	if (r != NULL) {
+		LIST_REMOVE(r, rtt_link);
+		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		if (r->rtt_queue->rtq_count > 0)
+			r->rtt_queue->rtq_count--;
+		else
+			printf("rt_timer_add: rtq_count reached 0\n");
+	} else {
+		s = splsoftnet();
+		r = pool_get(&rttimer_pool, PR_NOWAIT);
+		splx(s);
+		if (r == NULL)
+			return ENOBUFS;
 	}
 
-	s = splsoftnet();
-	r = pool_get(&rttimer_pool, PR_NOWAIT);
-	splx(s);
-	if (r == NULL)
-		return (ENOBUFS);
-	Bzero(r, sizeof(*r));
+	memset(r, 0, sizeof(*r));
 
 	r->rtt_rt = rt;
 	r->rtt_time = time_uptime;
@@ -1066,8 +1064,7 @@ rt_timer_timer(void *arg)
 	int s;
 
 	s = splsoftnet();
-	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL;
-	     rtq = LIST_NEXT(rtq, rtq_link)) {
+	LIST_FOREACH(rtq, &rttimer_queue_head, rtq_link) {
 		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
 		    (r->rtt_time + rtq->rtq_timeout) < time_uptime) {
 			LIST_REMOVE(r, rtt_link);
@@ -1085,52 +1082,153 @@ rt_timer_timer(void *arg)
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 }
 
+#ifdef RTCACHE_DEBUG
+#ifndef	RTCACHE_DEBUG_SIZE 
+#define	RTCACHE_DEBUG_SIZE (1024 * 1024)
+#endif
+static const char *cache_caller[RTCACHE_DEBUG_SIZE];
+static struct route *cache_entry[RTCACHE_DEBUG_SIZE];
+size_t cache_cur;
+#endif
+
+#ifdef RTCACHE_DEBUG
+static void
+_rtcache_init_debug(const char *caller, struct route *ro, int flag)
+#else
+static void
+_rtcache_init(struct route *ro, int flag)
+#endif
+{
+#ifdef RTCACHE_DEBUG
+	size_t i;
+	for (i = 0; i < cache_cur; ++i) {
+		if (cache_entry[i] == ro)
+			panic("Reinit of route %p, initialised from %s", ro, cache_caller[i]);
+	}
+#endif
+
+	ro->ro_rt = rtalloc1(rtcache_getdst(ro), flag);
+	if (ro->ro_rt != NULL) {
+#ifdef RTCACHE_DEBUG
+		if (cache_cur == RTCACHE_DEBUG_SIZE)
+			panic("Route cache debug overflow");
+		cache_caller[cache_cur] = caller;
+		cache_entry[cache_cur] = ro;
+		++cache_cur;
+#endif
+		rtcache(ro);
+	}
+}
+
+#ifdef RTCACHE_DEBUG
+void
+rtcache_init_debug(const char *caller, struct route *ro)
+{
+	_rtcache_init_debug(caller, ro, 1);
+}
+
+void
+rtcache_init_noclone_debug(const char *caller, struct route *ro)
+{
+	_rtcache_init_debug(caller, ro, 0);
+}
+
+#else
 void
 rtcache_init(struct route *ro)
 {
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 1);
-	if (ro->ro_rt != NULL)
-		rtcache(ro);
+	_rtcache_init(ro, 1);
 }
 
 void
 rtcache_init_noclone(struct route *ro)
 {
-	ro->ro_rt = rtalloc1(&ro->ro_dst, 0);
-	if (ro->ro_rt != NULL)
-		rtcache(ro);
+	_rtcache_init(ro, 0);
+}
+#endif
+
+#ifdef RTCACHE_DEBUG
+void
+rtcache_copy_debug(const char *caller, struct route *new_ro, const struct route *old_ro, size_t new_len)
+#else
+void
+rtcache_copy(struct route *new_ro, const struct route *old_ro, size_t new_len)
+#endif
+{
+#ifdef RTCACHE_DEBUG
+	size_t i;
+
+	for (i = 0; i < cache_cur; ++i) {
+		if (cache_entry[i] == new_ro)
+			panic("Copy to initalised route %p (before %s)", new_ro, cache_caller[i]);
+	}
+#endif
+
+	memset(new_ro, 0, new_len);
+#if 0
+	if (old_ro->ro_sa != NULL)
+		new_ro->ro_sa = sockaddr_dup(old_ro->ro_sa);
+#else
+	if (old_ro->ro_dst.sa_len + offsetof(struct route, ro_dst) > new_len)
+		panic("rtcache_copy: dst address will overflow new route");
+	memcpy(&new_ro->ro_dst, &old_ro->ro_dst, old_ro->ro_dst.sa_len);
+#endif
+	new_ro->ro_rt = old_ro->ro_rt;
+	if (new_ro->ro_rt != NULL) {
+#ifdef RTCACHE_DEBUG
+		if (cache_cur == RTCACHE_DEBUG_SIZE)
+			panic("Route cache debug overflow");
+		cache_caller[cache_cur] = caller;
+		cache_entry[cache_cur] = new_ro;
+		++cache_cur;
+#endif
+		rtcache(new_ro);
+		++new_ro->ro_rt->rt_refcnt;
+	}
 }
 
-void
-rtcache_copy(struct route *new, const struct route *old, size_t new_len)
+static void
+rtcache_clear(struct route *ro)
 {
-	bzero(new, new_len);
-	if (old->ro_dst.sa_len + offsetof(struct route, ro_dst) > new_len)
-		panic("rtcache_copy: dst address will overflow new route");
-	bcopy(&old->ro_dst, &new->ro_dst, old->ro_dst.sa_len);
-	new->ro_rt = old->ro_rt;
-	if (new->ro_rt != NULL) {
-		rtcache(new);
-		++new->ro_rt->rt_refcnt;
+#ifdef RTCACHE_DEBUG
+	size_t j, i = cache_cur;
+	for (i = j = 0; i < cache_cur; ++i, ++j) {
+		if (cache_entry[i] == ro) {
+			if (ro->ro_rt == NULL)
+				panic("Route cache manipulated (allocated by %s)", cache_caller[i]);
+			--j;
+		} else {
+			cache_caller[j] = cache_caller[i];
+			cache_entry[j] = cache_entry[i];
+		}
 	}
+	if (ro->ro_rt != NULL) {
+		if (i != j + 1)
+			panic("Wrong entries after rtcache_free: %zu (expected %zu)", j, i - 1);
+		--cache_cur;
+	}
+#endif
+
+	if (ro->ro_rt != NULL)
+		rtflush(ro);
+	ro->ro_rt = NULL;
 }
 
 void
 rtcache_free(struct route *ro)
 {
-	if (ro->ro_rt != NULL) {
+	rtcache_clear(ro);
 #if 0
-		rtfree(ro->ro_rt);
-#else
-		rtflush(ro);
-#endif
+	if (ro->ro_sa != NULL) {
+		sockaddr_free(ro->ro_sa);
+		ro->ro_sa = NULL;
 	}
-	ro->ro_rt = NULL;
+#endif
 }
 
 void
 rtcache_update(struct route *ro)
 {
-	rtcache_free(ro);
+	rtcache_clear(ro);
 	rtcache_init(ro);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.14.3 2006/12/30 20:46:20 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.14.4 2007/02/26 09:07:06 yamt Exp $	*/
 
 /* XXX: cherry: To Be fixed when we switch on interrupts. */
 
@@ -49,12 +49,8 @@ static __inline void spllower(int dummy) { }
 
 /*
  * Software interrupt masks
- *
- * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
  */
 
-#define spllowersoftclock() spllower(IPL_SOFTCLOCK)
 #define	splsoftclock() splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)
 #define	splsoftserial()	splraise(IPL_SOFTSERIAL)

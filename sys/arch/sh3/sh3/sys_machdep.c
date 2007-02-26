@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10 2003/08/07 16:29:30 agc Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10.16.1 2007/02/26 09:08:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,12 +73,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10 2003/08/07 16:29:30 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.16.1 2007/02/26 09:08:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 int

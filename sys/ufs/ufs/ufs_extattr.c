@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.9.4.3 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.9.4.4 2007/02/26 09:12:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.9.4.3 2006/12/30 20:51:01 yamt Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.9.4.4 2007/02/26 09:12:23 yamt Exp $");
 
 #include "opt_ffs.h"
 
@@ -712,7 +712,7 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 	 * Only privileged processes can configure extended attributes.
 	 */
 	if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)) != 0) {
+	    NULL)) != 0) {
 		if (filename_vp != NULL)
 			VOP_UNLOCK(filename_vp, 0);
 		return (error);

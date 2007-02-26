@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.1.2.4 2007/02/26 09:11:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.2.3 2006/12/30 20:50:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.1.2.4 2007/02/26 09:11:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -223,7 +223,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 
 	case SIOCSBTFLAGS:	/* set unit flags (privileged) */
 		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (err)
 			break;
 
@@ -253,7 +253,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 
 	case SIOCSBTPOLICY:	/* set unit link policy (privileged) */
 		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (err)
 			break;
 
@@ -264,7 +264,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 
 	case SIOCSBTPTYPE:	/* set unit packet types (privileged) */
 		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (err)
 			break;
 
@@ -282,7 +282,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 
 	case SIOCZBTSTATS:	/* get & reset unit statistics */
 		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (err)
 			break;
 
@@ -302,7 +302,7 @@ hci_ioctl(unsigned long cmd, void *data, struct lwp *l)
 		 * integer number of frame sizes, the USB bus locks up.
 		 */
 		err = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag);
+		    KAUTH_GENERIC_ISSUSER, NULL);
 		if (err)
 			break;
 

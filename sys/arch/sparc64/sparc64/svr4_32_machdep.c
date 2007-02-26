@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.20.2.1 2006/06/21 14:56:48 yamt Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.20.2.2 2007/02/26 09:08:29 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.20.2.1 2006/06/21 14:56:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.20.2.2 2007/02/26 09:08:29 yamt Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.20.2.1 2006/06/21 14:56:48 yam
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/types.h>
@@ -148,6 +147,7 @@ svr4_32_getmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
 		Debugger();
 #endif
 #endif
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
 	}
 
@@ -245,6 +245,7 @@ svr4_32_setmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
 		Debugger();
 #endif
 #endif
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
 	}
 
@@ -465,24 +466,25 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	register struct trapframe64 *tf;
 	struct svr4_32_sigframe *fp, frame;
-	int onstack;
+	int onstack, error;
 	vaddr_t oldsp, newsp, addr;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	sigset_t tmask;
 
 	tf = (struct trapframe64 *)l->l_md.md_tf;
 	oldsp = tf->tf_out[6];
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/*
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_32_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
+		fp = (struct svr4_32_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_32_sigframe *)oldsp;
 	fp = (struct svr4_32_sigframe *) ((long) (fp - 1) & ~7);
@@ -500,7 +502,6 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the argument list for the signal handler.
 	 */
-	svr4_32_getcontext(l, &frame.sf_uc, mask);
 	svr4_32_getsiginfo(&frame.sf_si, sig, ksi->ksi_trap,
 	    (caddr_t)(u_long)tf->tf_pc);
 
@@ -516,9 +517,12 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Modify the signal context to be used by sigreturn.
 	 */
+	tmask = *mask;
+	sendsig_reset(l, sig);
 	frame.sf_uc.uc_mcontext.greg[SVR4_SPARC_SP] = oldsp;
-
 	newsp = (u_long)fp - sizeof(struct rwindow32);
+	mutex_exit(&p->p_smutex);
+	svr4_32_getcontext(l, &frame.sf_uc, &tmask);
 	write_user_windows();
 
 #ifdef DEBUG
@@ -526,19 +530,24 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("svr4_32_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), (void *)(u_long)oldsp);
 #endif
-	if (rwindow_save(l) || copyout(&frame, fp, sizeof(frame)) != 0 ||
-	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp))) {
+	error = (rwindow_save(l) || copyout(&frame, fp, sizeof(frame)) != 0 ||
+	    copyout(&oldsp, &((struct rwindow32 *)newsp)->rw_in[6], sizeof(oldsp)));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
 #ifdef DEBUG
+		mutex_exit(&p->p_smutex);
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("svr4_32_sendsig: window save or copyout error\n");
 		printf("svr4_32_sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
 #ifdef DDB
 		Debugger();
 #endif
+		mutex_enter(&p->p_smutex);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
@@ -561,14 +570,16 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		mutex_exit(&p->p_smutex);
 		printf("svr4_32_sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, (void *)(u_long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
+		mutex_enter(&p->p_smutex);
 	}
 #endif
 }

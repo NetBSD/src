@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.18.6.1 2006/12/30 20:46:26 yamt Exp $	*/
+/*	$NetBSD: adb.c,v 1.18.6.2 2007/02/26 09:07:19 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18.6.1 2006/12/30 20:46:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.18.6.2 2007/02/26 09:07:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -141,10 +141,10 @@ adbattach(parent, self, aux)
 
 	switch (adbHardware) {
 	case ADB_HW_CUDA:
-		intr_establish(irq, IST_LEVEL, IPL_HIGH, adb_intr_cuda, sc);
+		intr_establish(irq, IST_LEVEL, IPL_TTY, adb_intr_cuda, sc);
 		break;
 	case ADB_HW_PMU:
-		intr_establish(irq, IST_LEVEL, IPL_HIGH, pm_intr, sc);
+		intr_establish(irq, IST_LEVEL, IPL_TTY, pm_intr, sc);
 		pm_init();
 		break;
 	}

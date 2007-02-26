@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.10.2.2 2006/12/30 20:48:45 yamt Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.10.2.3 2007/02/26 09:10:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -76,11 +76,6 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-/*
- * Default to using PIO access for this driver.
- */
-#define RE_USEIOSPACE
-
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
 #include <dev/ic/rtl8169var.h>
@@ -127,6 +122,9 @@ static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
 	    RTK_HWREV_8169_8110SB,
 	    "RealTek 8169SB/8110SB Single-chip Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
+	    RTK_HWREV_8169_8110SC,
+	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169SC,
 	    RTK_HWREV_8169_8110SC,
 	    "RealTek 8169SC/8110SC Single-chip Gigabit Ethernet" },
@@ -180,13 +178,14 @@ CFATTACH_DECL(re_pci, sizeof(struct re_pci_softc), re_pci_match, re_pci_attach,
 static int
 re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	const struct rtk_type		*t;
+	const struct rtk_type	*t;
 	struct pci_attach_args	*pa = aux;
-	bus_space_tag_t		rtk_btag;
-	bus_space_handle_t	rtk_bhandle;
-	bus_size_t		bsize;
+	bus_space_tag_t		iot, memt, bst;
+	bus_space_handle_t	ioh, memh, bsh;
+	bus_size_t		memsize, iosize, bsize;
 	u_int32_t		hwrev;
 	pcireg_t subid;
+	bool ioh_valid, memh_valid;
 
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
@@ -206,24 +205,25 @@ re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 			 * Temporarily map the I/O space
 			 * so we can read the chip ID register.
 			 */
-#ifdef RE_USEIOSPACE
-			if (pci_mapreg_map(pa, RTK_PCI_LOIO,
-			    PCI_MAPREG_TYPE_IO, 0, &rtk_btag,
-			    &rtk_bhandle, NULL, &bsize)) {
-				aprint_error("can't map i/o space\n");
+			ioh_valid = (pci_mapreg_map(pa, RTK_PCI_LOIO,
+			    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh,
+			    NULL, &iosize) == 0);
+			memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM,
+			    PCI_MAPREG_TYPE_MEM, 0, &memt, &memh,
+			    NULL, &memsize) == 0);
+			if (ioh_valid) {
+				bst = iot;
+				bsh = ioh;
+				bsize = iosize;
+			} else if (memh_valid) {
+				bst = memt;
+				bsh = memh;
+				bsize = memsize;
+			} else
 				return 0;
-			}
-#else
-			if (pci_mapreg_map(pa, RTK_PCI_LOMEM,
-			    PCI_MAPREG_TYPE_MEM, 0, &rtk_btag,
-			    &rtk_bhandle, NULL, &bsize)) {
-				aprint_error("can't map mem space\n");
-				return 0;
-			}
-#endif
-			hwrev = bus_space_read_4(rtk_btag, rtk_bhandle,
-			    RTK_TXCFG) & RTK_TXCFG_HWREV;
-			bus_space_unmap(rtk_btag, rtk_bhandle, bsize);
+			hwrev = bus_space_read_4(bst, bsh, RTK_TXCFG) &
+			    RTK_TXCFG_HWREV;
+			bus_space_unmap(bst, bsh, bsize);
 			if (t->rtk_basetype == hwrev)
 				return 2;	/* defeat rtk(4) */
 		}
@@ -244,11 +244,14 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr = NULL;
 	const struct rtk_type	*t;
 	const struct rtk_hwrev	*hw_rev;
-	int			hwrev;
+	uint32_t		hwrev;
 	int			error = 0;
 	int			pmreg;
+	bool			ioh_valid, memh_valid;
 	pcireg_t		command;
-	bus_size_t		bsize;
+	bus_space_tag_t		iot, memt;
+	bus_space_handle_t	ioh, memh;
+	bus_size_t		iosize, memsize, bsize;
 
 
 	/*
@@ -287,19 +290,23 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	command |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
-#ifdef RE_USEIOSPACE
-	if (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, &bsize)) {
-		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+	ioh_valid = (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, &iosize) == 0);
+	memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &memt, &memh, NULL, &memsize) == 0);
+	if (ioh_valid) {
+		sc->rtk_btag = iot;
+		sc->rtk_bhandle = ioh;
+		bsize = iosize;
+	} else if (memh_valid) {
+		sc->rtk_btag = memt;
+		sc->rtk_bhandle = memh;
+		bsize = memsize;
+	} else {
+		aprint_error("%s: can't map registers\n", sc->sc_dev.dv_xname);
 		return;
 	}
-#else
-	if (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, &bsize)) {
-		aprint_error("%s: can't map mem space\n", sc->sc_dev.dv_xname);
-		return;
-	}
-#endif
+
 	t = re_devs;
 	hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.15.2.1 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.15.2.2 2007/02/26 09:08:10 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15.2.1 2006/12/30 20:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.15.2.2 2007/02/26 09:08:10 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -158,10 +158,11 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	db_sym_t sym;
 	db_expr_t diff, pc_adj;
 	const char *symp;
-	int trace_thread, dump_eframe;
+	int trace_thread, dump_eframe, lwpaddr;
 
 	/* trace_thread is non-zero if tracing a specific process */
-	trace_thread = (strchr(modif, 't') != NULL);
+	lwpaddr = (strchr(modif, 'a') != NULL);
+	trace_thread = ((strchr(modif, 't') != NULL) | lwpaddr);
 	dump_eframe = (strchr(modif, 'e') != NULL);
 
 	if (have_addr == 0) {
@@ -183,14 +184,21 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			 */
 			struct proc *p;
 			struct lwp *l;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
 			}
-			l = LIST_FIRST(&p->p_lwps);	/* XXX: Hardly ideal */
-			if ((l->l_flag & L_INMEM) == 0) {
+			(*pr)("lid %d ", l->l_lid);
+			if ((l->l_flag & LW_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.3.16.1 2006/06/21 14:48:25 yamt Exp $	*/
+/*	$NetBSD: userret.h,v 1.3.16.2 2007/02/26 09:05:44 yamt Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.
@@ -87,6 +87,4 @@ userret(struct lwp *l)
 
 	/* Invoke MI userret code */
 	mi_userret(l);
-
-	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }

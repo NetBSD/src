@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.5.10.2 2006/06/21 15:05:07 yamt Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.5.10.3 2007/02/26 09:10:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5.10.2 2006/06/21 15:05:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5.10.3 2007/02/26 09:10:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,7 @@ struct wsscreen_descr voodoofb_defaultscreen = {
 	NULL,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_HILIT,
+	NULL,
 };
 
 const struct wsscreen_descr *_voodoofb_scrlist[] = {
@@ -196,6 +197,9 @@ static void	voodoofb_init_screen(void *, struct vcons_screen *, int,
 struct wsdisplay_accessops voodoofb_accessops = {
 	voodoofb_ioctl,
 	voodoofb_mmap,
+	NULL,
+	NULL,
+	NULL,
 	NULL,	/* load_font */
 	NULL,	/* polls */
 	NULL,	/* scroll */
@@ -302,14 +306,16 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	ulong defattr;
 	const char *intrstr;
-	int console, width, height, node, i, j;
+	int console, width, height, i, j;
 #ifdef HAVE_OPENFIRMWARE
-	int linebytes, depth;
+	int linebytes, depth, node;
 #endif
 	uint32_t bg, fg, ul;
 		
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+#ifdef HAVE_OPENFIRMWARE
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+#endif
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dacw = -1;
@@ -349,9 +355,9 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	
 #ifdef HAVE_OPENFIRMWARE
 	if (OF_getprop(node, "width", &width, 4) != 4)
-		OF_interpret("screen-width", 1, &width);
+		OF_interpret("screen-width", 1, 1, &width);
 	if (OF_getprop(node, "height", &height, 4) != 4)
-		OF_interpret("screen-height", 1, &height);
+		OF_interpret("screen-height", 1, 1, &height);
 	if (OF_getprop(node, "linebytes", &linebytes, 4) != 4)
 		linebytes = width;			/* XXX */
 	if (OF_getprop(node, "depth", &depth, 4) != 4)

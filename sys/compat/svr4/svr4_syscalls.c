@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscalls.c,v 1.72.4.1 2006/06/21 14:59:52 yamt Exp $ */
+/* $NetBSD: svr4_syscalls.c,v 1.72.4.2 2007/02/26 09:09:42 yamt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscalls.c,v 1.72.4.1 2006/06/21 14:59:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscalls.c,v 1.72.4.2 2007/02/26 09:09:42 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -20,7 +20,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscalls.c,v 1.72.4.1 2006/06/21 14:59:52 yamt 
 #include <sys/signal.h>
 #include <sys/mount.h>
 #include <sys/poll.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_time.h>

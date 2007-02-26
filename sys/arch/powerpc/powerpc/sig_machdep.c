@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.23.12.2 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.23.12.3 2007/02/26 09:07:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23.12.2 2006/12/30 20:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23.12.3 2007/02/26 09:07:57 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ppcarch.h"
@@ -41,8 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.23.12.2 2006/12/30 20:46:44 yamt E
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/systm.h>
 #include <sys/ucontext.h>
@@ -60,12 +58,12 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = trapframe(l);
-	struct sigaltstack *ss = &p->p_sigctx.ps_sigstk;
+	struct sigaltstack *ss = &l->l_sigstk;
 	const struct sigact_sigdesc *sd =
 	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];
 	ucontext_t uc;
 	vaddr_t sp, sip, ucp;
-	int onstack;
+	int onstack, error;
 
 	if (sd->sd_vers < 2) {
 #ifdef COMPAT_16
@@ -99,13 +97,18 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	uc.uc_sigmask = *mask;
 	uc.uc_link = NULL;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
+	sendsig_reset(l, ksi->ksi_signo);
+	mutex_exit(&p->p_smutex);
 	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
 
 	/*
 	 * Copy the siginfo and ucontext onto the user's stack.
 	 */
-	if (copyout(&ksi->ksi_info, (caddr_t)sip, sizeof(ksi->ksi_info)) != 0 ||
-	    copyout(&uc, (caddr_t)ucp, sizeof(uc)) != 0) {
+	error = (copyout(&ksi->ksi_info, (caddr_t)sip, sizeof(ksi->ksi_info)) != 0 ||
+	    copyout(&uc, (caddr_t)ucp, sizeof(uc)) != 0);
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.

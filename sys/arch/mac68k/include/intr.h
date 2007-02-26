@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21.10.2 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.21.10.3 2007/02/26 09:07:16 yamt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -66,7 +66,6 @@ extern unsigned short mac68k_ipls[];
  * 1) ensuring mutual exclusion (why use processor level?)
  * 2) allowing faster devices to take priority
  */
-#define	spllowersoftclock() spl1()
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())

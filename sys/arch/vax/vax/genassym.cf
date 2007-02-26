@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27.16.1 2006/06/21 14:57:33 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.27.16.2 2007/02/26 09:08:41 yamt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -30,6 +30,7 @@
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+quote #define __MUTEX_PRIVATE
 
 include	<sys/param.h>
 include	<sys/proc.h>
@@ -85,6 +86,8 @@ define	UVME_SOFTS	offsetof(struct uvmexp, softs)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_EXIT		offsetof(struct cpu_info, ci_exit)
+define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
+define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 
 # mtpr register numbers
 define	PR_KSP		PR_KSP
@@ -150,3 +153,10 @@ define	SH_PENDING	offsetof(struct softintr_handler, sh_pending)
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
 
 define	PSL_IS		PSL_IS
+
+define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
+define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
+define	MTX_ID		offsetof(struct kmutex, mtx_id)
+
+define	RW_OWNER	offsetof(struct krwlock, rw_owner)
+define	RW_LOCK		offsetof(struct krwlock, rw_lock)

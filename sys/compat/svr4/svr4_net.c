@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.40.2.2 2006/12/30 20:47:45 yamt Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.40.2.3 2007/02/26 09:09:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40.2.2 2006/12/30 20:47:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40.2.3 2007/02/26 09:09:41 yamt Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.40.2.2 2006/12/30 20:47:45 yamt Exp $
 #include <sys/conf.h>
 #include <sys/mount.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7.2.2 2006/12/30 20:46:43 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.7.2.3 2007/02/26 09:07:51 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7.2.2 2006/12/30 20:46:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.7.2.3 2007/02/26 09:07:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -257,13 +257,13 @@ ext_intr(void)
 			splraise(intrs[i].is_mask);
 			wrteei(1);
 
-			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+			KERNEL_LOCK(1, NULL);
 			ih = intrs[i].is_head;
 			while (ih) {
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
 			}
-			KERNEL_UNLOCK();
+			KERNEL_UNLOCK_ONE(NULL);
 
 			mtmsr(msr);
 			ci->ci_cpl = pcpl;
@@ -561,13 +561,13 @@ do_pending_int(void)
 		splraise(intrs[irq].is_mask);
 		mtmsr(emsr);
 
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		ih = intrs[irq].is_head;
 		while(ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 
 		wrteei(0);
 		ci->ci_cpl = pcpl;
@@ -579,9 +579,9 @@ do_pending_int(void)
 		splsoftserial();
 		mtmsr(emsr);
 
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTSERIAL);
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 
 		wrteei(0);
 		ci->ci_cpl = pcpl;
@@ -593,9 +593,9 @@ do_pending_int(void)
 		splsoftnet();
 		mtmsr(emsr);
 
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTNET);
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 
 		wrteei(0);
 		ci->ci_cpl = pcpl;
@@ -607,9 +607,9 @@ do_pending_int(void)
 		splsoftclock();
 		mtmsr(emsr);
 
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTCLOCK);
-		KERNEL_UNLOCK();
+		KERNEL_UNLOCK_ONE(NULL);
 
 		wrteei(0);
 		ci->ci_cpl = pcpl;

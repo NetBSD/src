@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mtio.c,v 1.1.10.1 2006/06/21 14:59:12 yamt Exp $ */
+/* $NetBSD: linux_mtio.c,v 1.1.10.2 2007/02/26 09:09:21 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.1.10.1 2006/06/21 14:59:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.1.10.2 2007/02/26 09:09:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.1.10.1 2006/06/21 14:59:12 yamt Exp
 
 #include <sys/mtio.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>

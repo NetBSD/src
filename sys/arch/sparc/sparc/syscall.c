@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9.10.3 2006/12/30 20:46:58 yamt Exp $ */
+/*	$NetBSD: syscall.c,v 1.9.10.4 2007/02/26 09:08:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.10.3 2006/12/30 20:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.10.4 2007/02/26 09:08:22 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sparc_arch.h"
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9.10.3 2006/12/30 20:46:58 yamt Exp $"
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -240,9 +238,9 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	if (callp->sy_flags & SYCALL_MPSAFE) {
 		error = (*callp->sy_call)(l, &args, rval.o);
 	} else {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		error = (*callp->sy_call)(l, &args, rval.o);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 
 	switch (error) {
@@ -315,9 +313,9 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	if ((error = trace_enter(l, code, code, NULL, args.i)) != 0) {
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		goto out;
 	}
 
@@ -326,11 +324,11 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 
         /* Lock the kernel if the syscall isn't MP-safe. */
 	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		error = (*callp->sy_call)(l, &args, rval.o);
 	} else {
 		error = (*callp->sy_call)(l, &args, rval.o);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 
 out:
@@ -392,15 +390,15 @@ child_return(void *arg)
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	p = l->l_proc;
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ktrsysret(l,
-			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
+			  (p->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+		KERNEL_UNLOCK_LAST(l);
 	}
 #endif
 }

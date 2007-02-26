@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy.h,v 1.2.6.2 2006/12/30 20:51:05 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy.h,v 1.2.6.3 2007/02/26 09:12:32 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -40,13 +40,13 @@ struct vm_anon;
 void uvmpdpol_init(void);
 void uvmpdpol_reinit(void);
 void uvmpdpol_estimatepageable(int *, int *);
-boolean_t uvmpdpol_needsscan_p(void);
+bool uvmpdpol_needsscan_p(void);
 
 void uvmpdpol_pageactivate(struct vm_page *);
 void uvmpdpol_pagedeactivate(struct vm_page *);
 void uvmpdpol_pagedequeue(struct vm_page *);
 void uvmpdpol_pageenqueue(struct vm_page *);
-boolean_t uvmpdpol_pageisqueued_p(struct vm_page *);
+bool uvmpdpol_pageisqueued_p(struct vm_page *);
 void uvmpdpol_anfree(struct vm_anon *);
 
 void uvmpdpol_tune(void);

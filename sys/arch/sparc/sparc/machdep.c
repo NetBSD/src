@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.257.2.2 2006/12/30 20:46:58 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.257.2.3 2007/02/26 09:08:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257.2.2 2006/12/30 20:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257.2.3 2007/02/26 09:08:20 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -102,10 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257.2.2 2006/12/30 20:46:58 yamt Exp $
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
-#include <sys/savar.h>
 #include <sys/ucontext.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
@@ -273,7 +271,7 @@ cpu_startup(void)
 	 * to cut down on VM space allocated for the buffer caches that
 	 * would lead to MMU resource shortage.
 	 */
-	if (CPU_ISSUN4C) {
+	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/* Clip UBC windows */
 		if (cpuinfo.mmu_nsegment <= 128) {
 			/*
@@ -318,7 +316,7 @@ cpu_startup(void)
 	 */
 	minaddr = 0;
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
@@ -336,7 +334,7 @@ cpu_startup(void)
 	 * Finally, allocate mbuf cluster submap.
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
@@ -503,7 +501,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts *ps = p->p_sigacts;
 	struct sigframe_sigcontext *fp;
 	struct trapframe *tf;
-	int addr, onstack, oldsp, newsp;
+	int addr, onstack, oldsp, newsp, error;
 	struct sigframe_sigcontext sf;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
@@ -517,13 +515,13 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
 		fp = (struct sigframe_sigcontext *)
-			((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-			 p->p_sigctx.ps_sigstk.ss_size);
+			((caddr_t)l->l_sigstk.ss_sp +
+			 l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe_sigcontext *)oldsp;
 
@@ -547,7 +545,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
 	/*
@@ -574,10 +572,15 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
-	if (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
+	error = (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
+	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -620,7 +623,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -644,7 +647,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigframe *fp;
 	u_int onstack, oldsp, newsp;
 	u_int catcher;
-	int sig;
+	int sig, error;
 	size_t ucsz;
 
 	sig = ksi->ksi_signo;
@@ -664,13 +667,13 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * one signal frame, and align.
 	 */
 	onstack =
-	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (onstack)
 		fp = (struct sigframe *)
-			((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-				  p->p_sigctx.ps_sigstk.ss_size);
+			((caddr_t)l->l_sigstk.ss_sp +
+				  l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
 
@@ -686,13 +689,11 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Build the signal context to be used by sigreturn.
 	 */
 	uc.uc_flags = _UC_SIGMASK |
-		((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = NULL;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
-	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
-	ucsz = (int)&uc.__uc_pad - (int)&uc;
 
 	/*
 	 * Now copy the stack contents out to user space.
@@ -703,10 +704,17 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Since we're calling the handler directly, allocate a full size
 	 * C stack frame.
 	 */
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	newsp = (int)fp - sizeof(struct frame);
-	if (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
+	cpu_getmcontext(l, &uc.uc_mcontext, &uc.uc_flags);
+	ucsz = (int)&uc.__uc_pad - (int)&uc;
+	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
-	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp)) {
+	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -742,7 +750,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -776,8 +784,10 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
+	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: %s[%d], sigcntxp %p\n",
@@ -804,52 +814,18 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	tf->tf_out[0] = scp->sc_o0;
 	tf->tf_out[6] = scp->sc_sp;
 
+	mutex_enter(&p->p_smutex);
 	if (scp->sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask */
-	(void) sigprocmask1(p, SIG_SETMASK, &scp->sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &scp->sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }
 #endif /* COMPAT_16 */
-
-/*
- * cpu_upcall:
- *
- *	Send an an upcall to userland.
- */
-void
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-	   void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-	vaddr_t addr;
-
-	tf = l->l_md.md_tf;
-	addr = (vaddr_t) upcall;
-
-	/* Arguments to the upcall... */
-	tf->tf_out[0] = type;
-	tf->tf_out[1] = (vaddr_t) sas;
-	tf->tf_out[2] = nevents;
-	tf->tf_out[3] = ninterrupted;
-	tf->tf_out[4] = (vaddr_t) ap;
-
-	/*
-	 * Ensure the stack is double-word aligned, and provide a
-	 * C call frame.
-	 */
-	sp = (void *)(((vaddr_t)sp & ~0x7) - CCFSZ);
-
-	/* Arrange to begin execution at the upcall handler. */
-	tf->tf_pc = addr;
-	tf->tf_npc = addr + 4;
-	tf->tf_out[6] = (vaddr_t) sp;
-	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
-}
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
@@ -867,8 +843,10 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	 * registers into the pcb; we need them in the process's memory.
 	 */
 	write_user_windows();
-	if ((l->l_flag & L_SA_SWITCHING) == 0 && rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&l->l_proc->p_smutex);
 		sigexit(l, SIGILL);
+	}
 
 	/*
 	 * Get the general purpose registers
@@ -940,14 +918,17 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf;
 	const __greg_t *r = mcp->__gregs;
+	struct proc *p = l->l_proc;
 #ifdef FPU_CONTEXT
 	__fpregset_t *f = &mcp->__fpregs;
 	struct fpstate *fps = l->l_md.md_fpstate;
 #endif
 
 	write_user_windows();
-	if (rwindow_save(l))
+	if (rwindow_save(l)) {
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
+	}
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -1022,10 +1003,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	}
 #endif
 
+	mutex_enter(&p->p_smutex);
 	if (flags & _UC_SETSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	if (flags & _UC_CLRSTACK)
-		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }

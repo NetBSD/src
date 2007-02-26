@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.23.8.1 2006/06/21 14:57:48 yamt Exp $	*/
+/*	$NetBSD: par.c,v 1.23.8.2 2007/02/26 09:08:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.23.8.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.23.8.2 2007/02/26 09:08:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -302,11 +302,10 @@ parrw(dev_t dev, struct uio *uio)
 				break;
 		}
 	      again:
-		s = spl1();
+	      	s = splsoftclock();
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
-		(void) spllowersoftclock();
 		if ((sc->sc_flags & PARF_UIO) == 0) {
 #ifdef DEBUG
 			if (pardebug & PDB_IO)

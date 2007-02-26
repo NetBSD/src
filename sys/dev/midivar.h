@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.10.12.1 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: midivar.h,v 1.10.12.2 2007/02/26 09:09:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -230,6 +230,8 @@ struct midi_softc {
 	struct	selinfo wsel;	/* write selector */
 	struct	selinfo rsel;	/* read selector */
 	struct	proc *async;	/* process who wants audio SIGIO */
+	void	*sih_rd;
+	void	*sih_wr;
 
 	struct callout xmt_asense_co;
 	struct callout rcv_asense_co;

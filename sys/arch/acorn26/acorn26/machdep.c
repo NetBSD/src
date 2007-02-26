@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.15.2.1 2006/06/21 14:47:47 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.15.2.2 2007/02/26 09:05:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.1 2006/06/21 14:47:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.2 2007/02/26 09:05:27 yamt Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -164,13 +164,13 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   512 * 1024, 0, FALSE, NULL);
+				   512 * 1024, 0, false, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters

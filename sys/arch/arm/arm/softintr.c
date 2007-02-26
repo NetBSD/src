@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2.16.1 2007/02/26 09:05:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2 2003/07/15 00:24:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: softintr.c,v 1.2.16.1 2007/02/26 09:05:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -62,7 +62,7 @@ void	netintr(void);
 void
 softintr_init(void)
 {
-	static const char *softintr_names[] = SI_QUEUENAMES;
+	static const char * const softintr_names[] = SI_QUEUENAMES;
 	struct soft_intrq *siq;
 	int i;
 

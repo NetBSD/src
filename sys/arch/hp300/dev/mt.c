@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.29.2.2 2006/12/30 20:45:56 yamt Exp $	*/
+/*	$NetBSD: mt.c,v 1.29.2.3 2007/02/26 09:06:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.29.2.2 2006/12/30 20:45:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.29.2.3 2007/02/26 09:06:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ int	mtdebug = 0;
 
 #define	UNIT(x)		(minor(x) & 3)
 
-#define B_CMD		B_XXX		/* command buf instead of data */
+#define B_CMD		B_DEVPRIVATE	/* command buf instead of data */
 #define	b_cmd		b_blkno		/* blkno holds cmd when B_CMD */
 
 static int	mtmatch(struct device *, struct cfdata *, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.25.4.2 2006/12/30 20:49:18 yamt Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.25.4.3 2007/02/26 09:10:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.25.4.2 2006/12/30 20:49:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.25.4.3 2007/02/26 09:10:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,14 +196,38 @@ static const struct pcmcia_config_entry pcmcia_fujitsu_j181_func0_cfe0 = {
 	.irqmask = 0xffff,		/* irqmask */
 };
 
+static const struct pcmcia_function pcmcia_necinfrontia_ax420n_func0 = {
+	.number = 0,			/* function number */
+	.function = PCMCIA_FUNCTION_SERIAL,
+	.last_config_index = 0x38,	/* last cfe number */
+	.ccr_base = 0x200,		/* ccr_base */
+	.ccr_mask = 0x1f,		/* ccr_mask */
+};
+
+static const struct pcmcia_config_entry pcmcia_necinfrontia_ax420n_func0_cfe0 = {
+	.number = 0x25,			/* cfe number */
+	.flags = PCMCIA_CFE_RDYBSY_ACTIVE | PCMCIA_CFE_IO8 |
+		 PCMCIA_CFE_IRQLEVEL | PCMCIA_CFE_POWERDOWN |
+		 PCMCIA_CFE_AUDIO,
+	.iftype = PCMCIA_IFTYPE_IO,
+	.num_iospace = 1,		/* num_iospace */
+	.iomask = 10,			/* iomask */
+	.iospace = { { .length = 0x8, .start = 0x3f8 } },	/* iospace */
+	.irqmask = 0x86bc,		/* irqmask */
+};
+
 static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID,
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
+	  PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556, PCMCIA_CIS_INVALID,
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
+	  PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT, PCMCIA_CIS_INVALID,
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT,
+	  PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func0, &pcmcia_3cxem556_func0_cfe0 },
-	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT, PCMCIA_CIS_INVALID,
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556INT,
+	  PCMCIA_CIS_INVALID,
 	  &pcmcia_3cxem556_func1, &pcmcia_3cxem556_func1_cfe0 },
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
 	  PCMCIA_CIS_INVALID,
@@ -211,15 +235,22 @@ static const struct pcmcia_cis_quirk pcmcia_cis_quirks[] = {
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CCFEM556BI,
 	  PCMCIA_CIS_INVALID,
 	  &pcmcia_3ccfem556bi_func1, &pcmcia_3ccfem556bi_func1_cfe0 },
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_SVEC_LANCARD,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_SVEC_LANCARD,
 	  &pcmcia_sveclancard_func0, &pcmcia_sveclancard_func0_cfe0 },
-	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID, PCMCIA_CIS_NDC_ND5100_E,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+	  PCMCIA_CIS_NDC_ND5100_E,
 	  &pcmcia_ndc_nd5100_func0, &pcmcia_ndc_nd5100_func0_cfe0 },
-	{ PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN, PCMCIA_CIS_INVALID,
+	{ PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
+	  PCMCIA_CIS_INVALID,
 	  &pcmcia_emtac_a2424i_func0, &pcmcia_emtac_a2424i_func0_cfe0 },
 	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_FUJITSU_FMV_J181,
 	  &pcmcia_fujitsu_j181_func0, &pcmcia_fujitsu_j181_func0_cfe0 },
+	{ PCMCIA_VENDOR_NECINFRONTIA, PCMCIA_PRODUCT_NECINFRONTIA_AX420N,
+	  PCMCIA_CIS_INVALID,
+	  &pcmcia_necinfrontia_ax420n_func0,
+	  &pcmcia_necinfrontia_ax420n_func0_cfe0 },
 };
 
 static const int pcmcia_cis_nquirks =

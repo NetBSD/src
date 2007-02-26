@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.18.2.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: iopl.c,v 1.18.2.3 2007/02/26 09:10:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.2 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.18.2.3 2007/02/26 09:10:05 yamt Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -194,7 +194,7 @@ iopl_attach(struct device *parent, struct device *self, void *aux)
 	struct iopl_softc *sc;
 	struct iop_softc *iop;
 	struct ifnet *ifp;
-	int rv, iff, ifcap, orphanlimit, maxpktsize;
+	int rv, iff = 0, ifcap, orphanlimit = 0, maxpktsize; /* XXX */
 	struct {
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
@@ -563,7 +563,7 @@ iopl_rx_alloc(struct iopl_softc *sc, int count)
 {
 	struct iopl_rx *rx;
 	struct mbuf *m;
-	int i, size, rv, state;
+	int i, size, rv = 0, state = 0;
 
 	if (count > sc->sc_rx_maxbkt)
 		count = sc->sc_rx_maxbkt;
@@ -862,8 +862,8 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 	struct ifnet *ifp;
 	struct mbuf *m, *m0;
 	u_int32_t *p;
-	int off, err, flg, first, lastpkt, lastbkt, rv;
-	int len, i, pkt, pktlen[IOPL_MAX_BATCH], csumflgs[IOPL_MAX_BATCH];
+	int off, err, flg, first, lastpkt, lastbkt, rv, pkt = 0; /* XXX */
+	int len, i, pktlen[IOPL_MAX_BATCH], csumflgs[IOPL_MAX_BATCH];
 	struct mbuf *head[IOPL_MAX_BATCH], *tail[IOPL_MAX_BATCH];
 
 	rb = (struct i2o_lan_receive_reply *)reply;
@@ -1113,6 +1113,7 @@ iopl_intr_tx(struct device *dv, struct iop_msg *im, void *reply)
 	int i, bktcnt;
 
 	sc = (struct iopl_softc *)dv;
+	ifp = &sc->sc_if.sci_if;
 	rb = (struct i2o_lan_send_reply *)reply;
 
 	if ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0) {
@@ -1236,7 +1237,7 @@ iopl_getpg(struct iopl_softc *sc, int pg)
 static void
 iopl_ifmedia_status(struct ifnet *ifp, struct ifmediareq *req)
 {
-	const struct iopl_media *ilm;
+	const struct iopl_media *ilm = NULL; /* XXX */
 	struct iopl_softc *sc;
 	int s, conntype;
 
@@ -1281,7 +1282,7 @@ iopl_ifmedia_change(struct ifnet *ifp)
 {
 	struct iop_softc *iop;
 	struct iopl_softc *sc;
-	const struct iopl_media *ilm;
+	const struct iopl_media *ilm = NULL; /* XXX */
 	u_int subtype;
 	u_int32_t ciontype;
 	u_int8_t fdx;
@@ -1550,7 +1551,8 @@ iopl_start(struct ifnet *ifp)
 	bus_dmamap_t dm;
 	bus_dma_segment_t *ds;
 	bus_addr_t saddr, eaddr;
-	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)], *p, *lp;
+	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
+	u_int32_t *p = NULL, *lp = NULL; /* XXX */
 	u_int rv, i, slen, tlen, size;
 	int frameleft, nxmits;
 	SLIST_HEAD(,iopl_tx) pending;
@@ -1592,7 +1594,7 @@ iopl_start(struct ifnet *ifp)
 		dm = tx->tx_dmamap;
 		rv = bus_dmamap_load_mbuf(sc->sc_dmat, dm, m,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
-		if (rv == NULL) {
+		if (!rv) {
 			printf("%s: unable to load TX buffer; error = %d\n",
 			    sc->sc_dv.dv_xname, rv);
 			m_freem(m);

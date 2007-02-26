@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.57.2.2 2006/12/30 20:47:42 yamt Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.57.2.3 2007/02/26 09:09:26 yamt Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.57.2.2 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.57.2.3 2007/02/26 09:09:26 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -122,7 +122,8 @@ const struct emul emul_mach = {
 
 	uvm_default_mapaddr,
 	NULL,	/* e_usertrap */
-	NULL,	/* e_sa */
+	0,	/* e_ucsize */
+	NULL,	/* e_startlwp */
 };
 
 /*
@@ -204,7 +205,7 @@ mach_e_proc_exec(p, epp)
 	mach_e_proc_init(p, p->p_vmspace);
 
 	if (p->p_emul != epp->ep_es->es_emul)
-		mach_e_lwp_fork(NULL, proc_representative_lwp(p));
+		mach_e_lwp_fork(NULL, proc_representative_lwp(p, NULL, 1));
 
 	return;
 }
@@ -367,7 +368,7 @@ mach_e_proc_exit(p)
 	int i;
 
 	/* There is only one lwp remaining... */
-	mach_e_lwp_exit(proc_representative_lwp(p));
+	mach_e_lwp_exit(proc_representative_lwp(p, NULL, 1));
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 

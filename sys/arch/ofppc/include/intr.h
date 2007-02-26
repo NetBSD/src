@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.16.2 2006/12/30 20:46:41 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.16.3 2007/02/26 09:07:42 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -97,7 +97,6 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-#define	CLKF_BASEPRI(frame)	((frame)->pri == IPL_NONE)
 
 struct clockframe;
 
@@ -131,7 +130,6 @@ extern struct machvec machine_interface;
 #define	splsoft()	_splraise(imask[IPL_SOFT])
 
 #define	spl0()		_spllower(imask[IPL_NONE])
-#define	spllowersoftclock() _spllower(imask[IPL_SOFTCLOCK])
 
 #define	setsoftnet()	setsoftintr(IPL_SOFTNET)
 #define	setsoftclock()	setsoftintr(IPL_SOFTCLOCK)

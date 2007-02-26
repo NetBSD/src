@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.9.2.2 2006/12/30 20:46:09 yamt Exp $	*/
+/*	$NetBSD: est.c,v 1.9.2.3 2007/02/26 09:06:54 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.9.2.2 2006/12/30 20:46:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.9.2.3 2007/02/26 09:06:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -937,6 +937,13 @@ est_init(struct cpu_info *ci, int vendor)
 	if (est_fqlist == NULL) {
                 aprint_normal("%s: unknown Enhanced SpeedStep CPU.\n",
                     cpuname);
+
+		/*
+		 * Some CPUs report the same frequency in idhi and idlo,
+		 * so do not run est on them.
+		 */
+		if (idhi == idlo)
+			return;
                 /*
                  * Generate a fake table with the power states we know.
                  */

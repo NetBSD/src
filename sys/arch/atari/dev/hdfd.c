@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.45.2.1 2006/06/21 14:49:56 yamt Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.45.2.2 2007/02/26 09:06:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.45.2.1 2006/06/21 14:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.45.2.2 2007/02/26 09:06:08 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.45.2.1 2006/06/21 14:49:56 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/fdio.h>
 #include <sys/conf.h>
-#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -164,8 +163,8 @@ static void	*intr_arg = NULL; /* XXX: arg. to intr_establish() */
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
-/* XXX misuse a flag to identify format operation */
-#define B_FORMAT B_XXX
+/* (mis)use device use flag to identify format operation */
+#define B_FORMAT B_DEVPRIVATE
 
 enum fdc_state {
 	DEVIDLE = 0,

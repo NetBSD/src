@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14 2005/03/09 19:04:45 matt Exp $	*/
+/*	$NetBSD: bus.h,v 1.14.4.1 2007/02/26 09:07:53 yamt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -761,6 +761,9 @@ struct powerpc_bus_dma_tag {
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t

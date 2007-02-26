@@ -1,7 +1,7 @@
-/*	$NetBSD: sysv_shm.c,v 1.84.2.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.84.2.3 2007/02/26 09:11:19 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,20 +68,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.84.2.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.84.2.3 2007/02/26 09:11:19 yamt Exp $");
 
 #define SYSVSHM
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/shm.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>		/* XXX for <sys/syscallargs.h> */
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/queue.h>
 #include <sys/pool.h>
@@ -113,7 +112,7 @@ struct shmmap_entry {
 	int shmid;
 };
 
-struct lock	shm_lock;
+static kmutex_t	shm_lock;
 static int	shm_last_free, shm_committed, shm_use_phys;
 
 static POOL_INIT(shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
@@ -309,7 +308,7 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(const void *) shmaddr;
 		syscallarg(int) shmflg;
 	} */ *uap = v;
-	int error, flags;
+	int error, flags = 0;
 	struct proc *p = l->l_proc;
 	kauth_cred_t cred = l->l_cred;
 	struct shmid_ds *shmseg;
@@ -336,9 +335,8 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	prot = VM_PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
 		prot |= VM_PROT_WRITE;
-	flags = MAP_ANON | MAP_SHARED;
 	if (SCARG(uap, shmaddr)) {
-		flags |= MAP_FIXED;
+		flags |= UVM_FLAG_FIXED;
 		if (SCARG(uap, shmflg) & SHM_RND)
 			attach_va =
 			    (vaddr_t)SCARG(uap, shmaddr) & ~(SHMLBA-1);
@@ -355,14 +353,14 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	(*uobj->pgops->pgo_reference)(uobj);
 	error = uvm_map(&p->p_vmspace->vm_map, &attach_va, size,
 	    uobj, 0, 0,
-	    UVM_MAPFLAG(prot, prot, UVM_INH_SHARE, UVM_ADV_RANDOM, 0));
+	    UVM_MAPFLAG(prot, prot, UVM_INH_SHARE, UVM_ADV_RANDOM, flags));
 	if (error)
 		goto out;
 	/* Lock the memory */
 	if (shm_use_phys || (shmseg->shm_perm.mode & SHMSEG_WIRED)) {
 		/* Wire the map */
 		error = uvm_map_pageable(&p->p_vmspace->vm_map, attach_va,
-		    attach_va + size, FALSE, 0);
+		    attach_va + size, false, 0);
 		if (error) {
 			if (error == EFAULT)
 				error = ENOMEM;
@@ -481,7 +479,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 					return EIO;
 				/* Wire the map */
 				error = uvm_map_pageable(&p->p_vmspace->vm_map,
-				    shmmap_se->va, shmmap_se->va + size, FALSE,
+				    shmmap_se->va, shmmap_se->va + size, false,
 				    0);
 				if (error) {
 					uobj_unwirepages(shmseg->_shm_internal,
@@ -499,7 +497,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 				uobj_unwirepages(shmseg->_shm_internal, 0,
 				    round_page(shmseg->shm_segsz));
 				error = uvm_map_pageable(&p->p_vmspace->vm_map,
-				    shmmap_se->va, shmmap_se->va + size, TRUE,
+				    shmmap_se->va, shmmap_se->va + size, true,
 				    0);
 				if (error) {
 					/*
@@ -730,7 +728,7 @@ shmrealloc(int newshmni)
 	if (newshmni < 1)
 		return EINVAL;
 
-	/* We can't reallocate lesser memory than we use */
+	/* We can't reallocate less memory than we use */
 	if (shm_nused > newshmni)
 		return EPERM;
 
@@ -766,7 +764,7 @@ shminit(void)
 	int i, sz;
 	vaddr_t v;
 
-	lockinit(&shm_lock, PWAIT, "shmlk", 0, 0);
+	mutex_init(&shm_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Allocate pageable memory for our structures */
 	sz = shminfo.shmmni * sizeof(struct shmid_ds);
@@ -799,11 +797,11 @@ sysctl_ipc_shmmni(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	lockmgr(&shm_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&shm_lock);
 	error = shmrealloc(newsize);
 	if (error == 0)
 		shminfo.shmmni = newsize;
-	lockmgr(&shm_lock, LK_RELEASE, NULL);
+	mutex_exit(&shm_lock);
 
 	return error;
 }

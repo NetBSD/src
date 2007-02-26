@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.2.2 2006/12/30 20:47:14 yamt Exp $     */
+/*	$NetBSD: trap.c,v 1.96.2.3 2007/02/26 09:08:43 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.3 2007/02/26 09:08:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.2 2006/12/30 20:47:14 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
 
@@ -215,19 +213,15 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if (umode) {
-			KERNEL_PROC_LOCK(l);
-			if (l->l_flag & L_SA) {
-				l->l_savp->savp_faultaddr = (vaddr_t)frame->code;
-				l->l_flag |= L_SA_PAGEFAULT;
-			}
-		} else
-			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		if (umode)
+			KERNEL_LOCK(1, l);
+		else
+			KERNEL_LOCK(1, NULL);
 
 		rv = uvm_fault(map, addr, ftype);
 		if (rv != 0) {
 			if (umode == 0) {
-				KERNEL_UNLOCK();
+				KERNEL_UNLOCK_ONE(NULL);
 				FAULTCHK;
 				panic("Segv in kernel mode: pc %x addr %x",
 				    (u_int)frame->pc, (u_int)frame->code);
@@ -250,11 +244,10 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			if (map != kernel_map && (caddr_t)addr >= vm->vm_maxsaddr)
 				uvm_grow(p, addr);
 		}
-		if (umode) {
-			l->l_flag &= ~L_SA_PAGEFAULT;
-			KERNEL_PROC_UNLOCK(l);
-		} else
-			KERNEL_UNLOCK();
+		if (umode)
+			KERNEL_UNLOCK_LAST(l);
+		else
+			KERNEL_UNLOCK_ONE(NULL);
 		break;
 
 	case T_BPTFLT|T_USER:
@@ -308,14 +301,14 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			printf("pid %d.%d (%s): sig %d: type %lx, code %lx, pc %lx, psl %lx\n",
 			       p->p_pid, l->l_lid, p->p_comm, sig, frame->trap,
 			       frame->code, frame->pc, frame->psl);
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = sig;
 		ksi.ksi_trap = frame->trap;
 		ksi.ksi_addr = (void *)frame->code;
 		ksi.ksi_code = code;
 		trapsignal(l, &ksi);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 
 	if (umode == 0)
@@ -361,12 +354,3 @@ startlwp(arg)
 	/* XXX - profiling spoiled here */
 	userret(l, l->l_addr->u_pcb.framep, l->l_proc->p_sticks);
 }
-
-void
-upcallret(struct lwp *l)
-{
-
-	/* XXX - profiling */
-	userret(l, l->l_addr->u_pcb.framep, l->l_proc->p_sticks);
-}
-

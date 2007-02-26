@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.115.2.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.115.2.3 2007/02/26 09:10:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115.2.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.115.2.3 2007/02/26 09:10:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ int ncr53c9x_notag = 0;
 /*static*/ void	ncr53c9x_select(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
 /*static*/ int ncr53c9x_reselect(struct ncr53c9x_softc *, int, int, int);
 /*static*/ void	ncr53c9x_scsi_reset(struct ncr53c9x_softc *);
+/*static*/ void ncr53c9x_clear(struct ncr53c9x_softc *, scsipi_xfer_result_t);
 /*static*/ int	ncr53c9x_poll(struct ncr53c9x_softc *,
 			      struct scsipi_xfer *, int);
 /*static*/ void	ncr53c9x_sched(struct ncr53c9x_softc *);
@@ -203,6 +204,8 @@ ncr53c9x_attach(sc)
 
 	simple_lock_init(&sc->sc_lock);
 
+	callout_init(&sc->sc_watchdog);
+
 	/*
 	 * Note, the front-end has set us up to print the chip variation.
 	 */
@@ -236,8 +239,6 @@ ncr53c9x_attach(sc)
 		printf("out of memory\n");
 		return;
 	}
-
-	callout_init(&sc->sc_watchdog);
 
 	/*
 	 * Treat NCR53C90 with the 86C01 DMA chip exactly as ESP100
@@ -319,9 +320,25 @@ ncr53c9x_detach(sc, flags)
 	struct ncr53c9x_softc *sc;
 	int flags;
 {
+	struct ncr53c9x_linfo *li, *nextli;
+	int t;
 	int error;
 
 	callout_stop(&sc->sc_watchdog);
+
+	if (sc->sc_tinfo) {
+		/* Cancel all commands. */
+		ncr53c9x_clear(sc, XS_DRIVER_STUFFUP);
+
+		/* Free logical units. */
+		for (t = 0; t < sc->sc_ntarg; t++) {
+			for (li = LIST_FIRST(&sc->sc_tinfo[t].luns); li;
+			    li = nextli) {
+				nextli = LIST_NEXT(li, link);
+				free(li, M_DEVBUF);
+			}
+		}
+	}
 
 	if (sc->sc_child) {
 		error = config_detach(sc->sc_child, flags);
@@ -329,8 +346,10 @@ ncr53c9x_detach(sc, flags)
 			return (error);
 	}
 
-	free(sc->sc_imess, M_DEVBUF);
-	free(sc->sc_omess, M_DEVBUF);
+	if (sc->sc_imess)
+		free(sc->sc_imess, M_DEVBUF);
+	if (sc->sc_omess)
+		free(sc->sc_omess, M_DEVBUF);
 
 	return (0);
 }
@@ -430,6 +449,51 @@ ncr53c9x_scsi_reset(sc)
 }
 
 /*
+ * Clear all commands
+ */
+void
+ncr53c9x_clear(sc, result)
+	struct ncr53c9x_softc *sc;
+	scsipi_xfer_result_t result;
+{
+	struct ncr53c9x_ecb *ecb;
+	struct ncr53c9x_linfo *li;
+	int i, r;
+
+	/* Cancel any active commands. */
+	sc->sc_state = NCR_CLEANING;
+	sc->sc_msgify = 0;
+	if ((ecb = sc->sc_nexus) != NULL) {
+		ecb->xs->error = result;
+		ncr53c9x_done(sc, ecb);
+	}
+	/* Cancel outstanding disconnected commands on each LUN */
+	for (r = 0; r < sc->sc_ntarg; r++) {
+		LIST_FOREACH(li, &sc->sc_tinfo[r].luns, link) {
+			if ((ecb = li->untagged) != NULL) {
+				li->untagged = NULL;
+				/*
+				 * XXXXXXX
+				 *
+				 * Should we terminate a command
+				 * that never reached the disk?
+				 */
+				li->busy = 0;
+				ecb->xs->error = result;
+				ncr53c9x_done(sc, ecb);
+			}
+			for (i = 0; i < 256; i++)
+				if ((ecb = li->queued[i])) {
+					li->queued[i] = NULL;
+					ecb->xs->error = result;
+					ncr53c9x_done(sc, ecb);
+				}
+			li->used = 0;
+		}
+	}
+}
+
+/*
  * Initialize ncr53c9x state machine
  */
 void
@@ -437,9 +501,7 @@ ncr53c9x_init(sc, doreset)
 	struct ncr53c9x_softc *sc;
 	int doreset;
 {
-	struct ncr53c9x_ecb *ecb;
-	struct ncr53c9x_linfo *li;
-	int i, r;
+	int r;
 
 	NCR_MISC(("[NCR_INIT(%d) %d] ", doreset, sc->sc_state));
 
@@ -464,37 +526,7 @@ ncr53c9x_init(sc, doreset)
 			LIST_INIT(&sc->sc_tinfo[r].luns);
 		}
 	} else {
-		/* Cancel any active commands. */
-		sc->sc_state = NCR_CLEANING;
-		sc->sc_msgify = 0;
-		if ((ecb = sc->sc_nexus) != NULL) {
-			ecb->xs->error = XS_TIMEOUT;
-			ncr53c9x_done(sc, ecb);
-		}
-		/* Cancel outstanding disconnected commands on each LUN */
-		for (r = 0; r < sc->sc_ntarg; r++) {
-			LIST_FOREACH(li, &sc->sc_tinfo[r].luns, link) {
-				if ((ecb = li->untagged) != NULL) {
-					li->untagged = NULL;
-					/*
-					 * XXXXXXX
-					 *
-					 * Should we terminate a command
-					 * that never reached the disk?
-					 */
-					li->busy = 0;
-					ecb->xs->error = XS_TIMEOUT;
-					ncr53c9x_done(sc, ecb);
-				}
-				for (i = 0; i < 256; i++)
-					if ((ecb = li->queued[i])) {
-						li->queued[i] = NULL;
-						ecb->xs->error = XS_TIMEOUT;
-						ncr53c9x_done(sc, ecb);
-					}
-				li->used = 0;
-			}
-		}
+		ncr53c9x_clear(sc, XS_TIMEOUT);
 	}
 
 	/*

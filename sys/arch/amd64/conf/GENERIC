@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55.2.2 2006/12/30 20:45:25 yamt Exp $
+# $NetBSD: GENERIC,v 1.55.2.3 2007/02/26 09:05:41 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55.2.2 $"
+#ident 		"GENERIC-$Revision: 1.55.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -100,7 +100,7 @@ options 	COMPAT_16	# NetBSD 1.6,
 options 	COMPAT_20	# NetBSD 2.0,
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
-options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_NETBSD32
 #options 	COMPAT_LINUX
@@ -371,6 +371,9 @@ amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 
 # iTE IT87xxF and compatible hardware monitors
 #it0 	at isa? port 0x290 		# other ports: 0xc00, 0xd00.
+
+# Abit uGuru Hardware system monitor
+#ug0	at isa? port 0xe0
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -915,6 +918,7 @@ pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+pseudo-device	lockstat		# lock profiling
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

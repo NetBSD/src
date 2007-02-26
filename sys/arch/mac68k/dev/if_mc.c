@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.25.10.1 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.25.10.2 2007/02/26 09:07:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.25.10.1 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.25.10.2 2007/02/26 09:07:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.25.10.1 2006/12/30 20:46:25 yamt Exp $")
 #endif
 
 
-
-#include <uvm/uvm_extern.h>
 
 #include "bpfilter.h"
 #if NBPFILTER > 0

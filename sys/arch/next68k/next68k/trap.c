@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.54.2.2 2006/12/30 20:46:40 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.54.2.3 2007/02/26 09:07:41 yamt Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.2.2 2006/12/30 20:46:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.2.3 2007/02/26 09:07:41 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -99,8 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.54.2.2 2006/12/30 20:46:40 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -249,10 +247,10 @@ again:
 	/*
 	 * If profiling, charge system time to the trapped pc.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, fp->f_pc,
+		addupc_task(l, fp->f_pc,
 			    (int)(p->p_sticks - oticks) * psratio);
 	}
 #ifdef M68040
@@ -415,10 +413,14 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		       type==T_COPERR ? "coprocessor" : "format");
 		type |= T_USER;
+
+		mutex_enter(&p->p_smutex);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(&p->p_sigctx.ps_sigmask, SIGILL);
+		sigdelset(&l->l_sigmask, SIGILL);
+		mutex_exit(&p->p_smutex);
+
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)frame.f_format;
 				/* XXX was ILL_RESAD_FAULT */
@@ -598,12 +600,12 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 			return;
 		}
 		spl0();
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 		if (want_resched)
-			preempt(0);
+			preempt();
 		goto out;
 
 	case T_MMUFLT:		/* kernel mode page fault */
@@ -641,13 +643,8 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 		if ((type & T_USER) == 0 &&
 		    ((l->l_addr->u_pcb.pcb_onfault == 0) || KDFAULT(code)))
 			map = kernel_map;
-		else {
+		else
 			map = vm ? &vm->vm_map : kernel_map;
-			if (l->l_flag & L_SA) {
-				l->l_savp->savp_faultaddr = (vaddr_t)v;
-				l->l_flag |= L_SA_PAGEFAULT;
-			}
-		}
 
 		if (WRFAULT(code))
 			ftype = VM_PROT_WRITE;
@@ -708,7 +705,6 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 #endif
 				return;
 			}
-			l->l_flag &= ~L_SA_PAGEFAULT;
 			goto out;
 		}
 		if (rv == EACCES) {
@@ -725,7 +721,6 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 			       type, code);
 			goto dopanic;
 		}
-		l->l_flag &= ~L_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",

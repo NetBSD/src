@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.16.16.1 2006/06/21 14:57:34 yamt Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.16.16.2 2007/02/26 09:08:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.16.16.1 2006/06/21 14:57:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.16.16.2 2007/02/26 09:08:42 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -125,6 +125,7 @@ cpu_slavesetup(struct device *dev)
 	ci = &sc->sc_ci;
 	ci->ci_dev = dev;
 	ci->ci_exit = scratch;
+	ci->ci_mtx_count = 1;
 	ci->ci_pcb = (void *)((intptr_t)pcb & ~KERNBASE);
 	ci->ci_istack = istackbase + PAGE_SIZE;
 	SIMPLEQ_INSERT_TAIL(&cpus, ci, ci_next);

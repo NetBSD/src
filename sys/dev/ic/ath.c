@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.53.2.2 2006/12/30 20:48:01 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.53.2.3 2007/02/26 09:10:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.2 2006/12/30 20:48:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.3 2007/02/26 09:10:06 yamt Exp $");
 #endif
 
 /*
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.2 2006/12/30 20:48:01 yamt Exp $");
 #include <sys/callout.h>
 #include <machine/bus.h>
 #include <sys/endian.h>
-
-#include <machine/bus.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -546,6 +544,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		| IEEE80211_C_SHPREAMBLE	/* short preamble supported */
 		| IEEE80211_C_SHSLOT		/* short slot time supported */
 		| IEEE80211_C_WPA		/* capable of WPA1+WPA2 */
+		| IEEE80211_C_TXFRAG		/* handle tx frags */
 		;
 	/*
 	 * Query the hal to figure out h/w crypto support.
@@ -1236,6 +1235,54 @@ ath_reset(struct ifnet *ifp)
 	return 0;
 }
 
+/*
+ * Cleanup driver resources when we run out of buffers
+ * while processing fragments; return the tx buffers
+ * allocated and drop node references.
+ */
+static void
+ath_txfrag_cleanup(struct ath_softc *sc,
+	ath_bufhead *frags, struct ieee80211_node *ni)
+{
+	struct ath_buf *bf;
+
+	ATH_TXBUF_LOCK_ASSERT(sc);
+
+	while ((bf = STAILQ_FIRST(frags)) != NULL) {
+		STAILQ_REMOVE_HEAD(frags, bf_list);
+		STAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
+		ieee80211_node_decref(ni);
+	}
+}
+
+/*
+ * Setup xmit of a fragmented frame.  Allocate a buffer
+ * for each frag and bump the node reference count to
+ * reflect the held reference to be setup by ath_tx_start.
+ */
+static int
+ath_txfrag_setup(struct ath_softc *sc, ath_bufhead *frags,
+	struct mbuf *m0, struct ieee80211_node *ni)
+{
+	struct mbuf *m;
+	struct ath_buf *bf;
+
+	ATH_TXBUF_LOCK(sc);
+	for (m = m0->m_nextpkt; m != NULL; m = m->m_nextpkt) {
+		bf = STAILQ_FIRST(&sc->sc_txbuf);
+		if (bf == NULL) {       /* out of buffers, cleanup */
+			ath_txfrag_cleanup(sc, frags, ni);
+			break;
+		}
+		STAILQ_REMOVE_HEAD(&sc->sc_txbuf, bf_list);
+		ieee80211_node_incref(ni);
+		STAILQ_INSERT_TAIL(frags, bf, bf_list);
+	}
+	ATH_TXBUF_UNLOCK(sc);
+
+	return !STAILQ_EMPTY(frags);
+}
+
 static void
 ath_start(struct ifnet *ifp)
 {
@@ -1244,9 +1291,10 @@ ath_start(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
 	struct ath_buf *bf;
-	struct mbuf *m;
+	struct mbuf *m, *next;
 	struct ieee80211_frame *wh;
 	struct ether_header *eh;
+	ath_bufhead frags;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 || sc->sc_invalid)
 		return;
@@ -1293,6 +1341,7 @@ ath_start(struct ifnet *ifp)
 				ATH_TXBUF_UNLOCK(sc);
 				break;
 			}
+			STAILQ_INIT(&frags);
 			/*
 			 * Find the node for the destination so we can do
 			 * things like power save and fast frames aggregation.
@@ -1345,6 +1394,19 @@ ath_start(struct ifnet *ifp)
 				sc->sc_stats.ast_tx_encap++;
 				goto bad;
 			}
+			/*
+			 * Check for fragmentation.  If this has frame
+			 * has been broken up verify we have enough
+			 * buffers to send all the fragments so all
+			 * go out or none...
+			 */
+			if ((m->m_flags & M_FRAG) && 
+			    !ath_txfrag_setup(sc, &frags, m, ni)) {
+				DPRINTF(sc, ATH_DEBUG_ANY,
+				    "%s: out of txfrag buffers\n", __func__);
+				ic->ic_stats.is_tx_nobuf++;     /* XXX */
+				goto bad;
+			}
 		} else {
 			/*
 			 * Hack!  The referenced node pointer is in the
@@ -1375,16 +1437,26 @@ ath_start(struct ifnet *ifp)
 			sc->sc_stats.ast_tx_mgmt++;
 		}
 
+	nextfrag:
+		next = m->m_nextpkt;
 		if (ath_tx_start(sc, ni, bf, m)) {
 	bad:
 			ifp->if_oerrors++;
 	reclaim:
 			ATH_TXBUF_LOCK(sc);
 			STAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
+			ath_txfrag_cleanup(sc, &frags, ni);
 			ATH_TXBUF_UNLOCK(sc);
 			if (ni != NULL)
 				ieee80211_free_node(ni);
 			continue;
+		}
+		if (next != NULL) {
+			m = next;
+			bf = STAILQ_FIRST(&frags);
+			KASSERT(bf != NULL, ("no buf for txfrag"));
+			STAILQ_REMOVE_HEAD(&frags, bf_list);
+			goto nextfrag;
 		}
 
 		sc->sc_tx_timer = 5;
@@ -3413,6 +3485,18 @@ ath_tx_findrix(const HAL_RATE_TABLE *rt, int rate)
 	return 0;		/* NB: lowest rate */
 }
 
+static void
+ath_freetx(struct mbuf *m)
+{
+	struct mbuf *next;
+
+	do {
+		next = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+		m_freem(m);
+	} while ((m = next) != NULL);
+}
+
 static int
 ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf,
     struct mbuf *m0)
@@ -3421,7 +3505,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	struct ath_hal *ah = sc->sc_ah;
 	struct ifnet *ifp = &sc->sc_if;
 	const struct chanAccParams *cap = &ic->ic_wme.wme_chanParams;
-	int i, error, iswep, ismcast, ismrr;
+	int i, error, iswep, ismcast, isfrag, ismrr;
 	int keyix, hdrlen, pktlen, try0;
 	u_int8_t rix, txrate, ctsrate;
 	u_int8_t cix = 0xff;		/* NB: silence compiler */
@@ -3439,6 +3523,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	wh = mtod(m0, struct ieee80211_frame *);
 	iswep = wh->i_fc[1] & IEEE80211_FC1_WEP;
 	ismcast = IEEE80211_IS_MULTICAST(wh->i_addr1);
+	isfrag = m0->m_flags & M_FRAG;
 	hdrlen = ieee80211_anyhdrsize(wh);
 	/*
 	 * Packet length must not include any
@@ -3463,21 +3548,22 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			 * 802.11 layer counts failures and provides
 			 * debugging/diagnostics.
 			 */
-			m_freem(m0);
+			ath_freetx(m0);
 			return EIO;
 		}
 		/*
 		 * Adjust the packet + header lengths for the crypto
 		 * additions and calculate the h/w key index.  When
 		 * a s/w mic is done the frame will have had any mic
-		 * added to it prior to entry so skb->len above will
+		 * added to it prior to entry so m0->m_pkthdr.len above will
 		 * account for it. Otherwise we need to add it to the
 		 * packet length.
 		 */
 		cip = k->wk_cipher;
 		hdrlen += cip->ic_header;
 		pktlen += cip->ic_header + cip->ic_trailer;
-		if ((k->wk_flags & IEEE80211_KEY_SWMIC) == 0)
+		/* NB: frags always have any TKIP MIC done in s/w */
+		if ((k->wk_flags & IEEE80211_KEY_SWMIC) == 0 && !isfrag)
 			pktlen += cip->ic_miclen;
 		keyix = k->wk_keyix;
 
@@ -3506,7 +3592,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		bf->bf_nseg = ATH_TXDESC+1;
 	} else if (error != 0) {
 		sc->sc_stats.ast_tx_busdma++;
-		m_freem(m0);
+		ath_freetx(m0);
 		return error;
 	}
 	/*
@@ -3518,7 +3604,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		sc->sc_stats.ast_tx_linear++;
 		m = ath_defrag(m0, M_DONTWAIT, ATH_TXDESC);
 		if (m == NULL) {
-			m_freem(m0);
+			ath_freetx(m0);
 			sc->sc_stats.ast_tx_nombuf++;
 			return ENOMEM;
 		}
@@ -3527,14 +3613,14 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 					     BUS_DMA_NOWAIT);
 		if (error != 0) {
 			sc->sc_stats.ast_tx_busdma++;
-			m_freem(m0);
+			ath_freetx(m0);
 			return error;
 		}
 		KASSERT(bf->bf_nseg <= ATH_TXDESC,
 		    ("too many segments after defrag; nseg %u", bf->bf_nseg));
 	} else if (bf->bf_nseg == 0) {		/* null packet, discard */
 		sc->sc_stats.ast_tx_nodata++;
-		m_freem(m0);
+		ath_freetx(m0);
 		return EIO;
 	}
 	DPRINTF(sc, ATH_DEBUG_XMIT, "%s: m %p len %u\n", __func__, m0, pktlen);
@@ -3642,7 +3728,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		if_printf(ifp, "bogus frame type 0x%x (%s)\n",
 			wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK, __func__);
 		/* XXX statistic */
-		m_freem(m0);
+		ath_freetx(m0);
 		return EIO;
 	}
 	txq = sc->sc_ac2q[pri];
@@ -3683,7 +3769,17 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			flags |= HAL_TXDESC_RTSENA;
 		else if (ic->ic_protmode == IEEE80211_PROT_CTSONLY)
 			flags |= HAL_TXDESC_CTSENA;
-		cix = rt->info[sc->sc_protrix].controlRate;
+		if (isfrag) {
+			/*
+			 * For frags it would be desirable to use the
+			 * highest CCK rate for RTS/CTS.  But stations
+			 * farther away may detect it at a lower CCK rate
+			 * so use the configured protection rate instead
+			 * (for now).
+			 */
+			cix = rt->info[sc->sc_protrix].controlRate;
+		} else
+			cix = rt->info[sc->sc_protrix].controlRate;
 		sc->sc_stats.ast_tx_protect++;
 	}
 
@@ -3701,6 +3797,26 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			dur = rt->info[rix].spAckDuration;
 		else
 			dur = rt->info[rix].lpAckDuration;
+		if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG) {
+			dur += dur;             /* additional SIFS+ACK */
+			KASSERT(m0->m_nextpkt != NULL, ("no fragment"));
+			/*
+			 * Include the size of next fragment so NAV is
+			 * updated properly.  The last fragment uses only
+			 * the ACK duration
+			 */
+			dur += ath_hal_computetxtime(ah, rt,
+					m0->m_nextpkt->m_pkthdr.len,
+					rix, shortPreamble);
+		}
+		if (isfrag) {
+			/*
+			 * Force hardware to use computed duration for next
+			 * fragment by disabling multi-rate retry which updates
+			 * duration based on the multi-rate duration table.
+			 */
+			try0 = ATH_TXMAXTRY;
+		}
 		*(u_int16_t *)wh->i_dur = htole16(dur);
 	}
 
@@ -3763,6 +3879,8 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		sc->sc_tx_th.wt_flags = sc->sc_hwmap[txrate].txflags;
 		if (iswep)
 			sc->sc_tx_th.wt_flags |= IEEE80211_RADIOTAP_F_WEP;
+		if (isfrag)
+			sc->sc_tx_th.wt_flags |= IEEE80211_RADIOTAP_F_FRAG;
 		sc->sc_tx_th.wt_rate = sc->sc_hwmap[txrate].ieeerate;
 		sc->sc_tx_th.wt_txpower = ni->ni_txpower;
 		sc->sc_tx_th.wt_antenna = sc->sc_txantenna;

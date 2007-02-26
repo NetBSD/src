@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.12.4.3 2006/12/30 20:47:25 yamt Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.12.4.4 2007/02/26 09:08:57 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.12.4.3 2006/12/30 20:47:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.12.4.4 2007/02/26 09:08:57 yamt Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -388,12 +388,15 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 		xenbus_switch_state(sc->sc_xbusd, NULL, XenbusStateClosed);
 		break;
 	case XenbusStateConnected:
-		s = splbio();
+		/*
+		 * note that xbd_backend_changed() can only be called by
+		 * the xenbus thread.
+		 */
+
 		if (sc->sc_backend_status == BLKIF_STATE_CONNECTED)
 			/* already connected */
 			return;
-		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
-		splx(s);
+
 		xbd_connect(sc);
 		sc->sc_shutdown = 0;
 		hypervisor_enable_event(sc->sc_evtchn);
@@ -409,8 +412,10 @@ static void xbd_backend_changed(void *arg, XenbusState new_state)
 
 		bufq_alloc(&sc->sc_dksc.sc_bufq, "fcfs", 0);
 		sc->sc_dksc.sc_flags |= DKF_INITED;
-
 		disk_attach(&sc->sc_dksc.sc_dkdev);
+
+		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
+
 		/* try to read the disklabel */
 		dk_getdisklabel(sc->sc_di, &sc->sc_dksc, 0 /* XXX ? */);
 		format_bytes(buf, sizeof(buf), (uint64_t)sc->sc_dksc.sc_size *
@@ -469,6 +474,8 @@ xbd_handler(void *arg)
 
 	DPRINTF(("xbd_handler(%s)\n", sc->sc_dev.dv_xname));
 
+	if (__predict_false(sc->sc_backend_status != BLKIF_STATE_CONNECTED))
+		return 0;
 again:
 	resp_prod = sc->sc_ring.sring->rsp_prod;
 	x86_lfence(); /* ensure we see replies up to resp_prod */
@@ -485,7 +492,7 @@ again:
 				    sc->sc_dev.dv_xname);
 				sc->sc_ring.rsp_cons = i;
 				xbdreq->req_nr_segments = seg + 1;
-				return 1;
+				goto done;
 			}
 			xengnt_revoke_access(
 			    xbdreq->req_gntref[seg]);
@@ -514,7 +521,6 @@ next:
 		    (bp->b_bcount - bp->b_resid),
 		    (bp->b_flags & B_READ));
 		biodone(bp);
-		dk_iodone(sc->sc_di, &sc->sc_dksc);
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
 	x86_lfence();
@@ -522,6 +528,8 @@ next:
 	RING_FINAL_CHECK_FOR_RESPONSES(&sc->sc_ring, more_to_do);
 	if (more_to_do)
 		goto again;
+done:
+	dk_iodone(sc->sc_di, &sc->sc_dksc);
 	return 1;
 }
 

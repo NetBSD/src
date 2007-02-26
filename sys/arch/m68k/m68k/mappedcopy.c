@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.20.2.1 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.20.2.2 2007/02/26 09:07:13 yamt Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@NetBSD.org
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.20.2.1 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.20.2.2 2007/02/26 09:07:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ mappedcopyin(void *f, void *t, size_t count)
 		 * Map in the page and memcpy data in from it
 		 */
 		if (pmap_extract(upmap, trunc_page((vaddr_t)fromp), &upa)
-		    == FALSE)
+		    == false)
 			panic("mappedcopyin: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,
@@ -203,7 +203,7 @@ mappedcopyout(void *f, void *t, size_t count)
 		 * Map in the page and memcpy data out to it
 		 */
 		if (pmap_extract(upmap, trunc_page((vaddr_t)top), &upa)
-		    == FALSE)
+		    == false)
 			panic("mappedcopyout: null page frame");
 		len = min(count, (PAGE_SIZE - off));
 		pmap_enter(pmap_kernel(), kva, upa,

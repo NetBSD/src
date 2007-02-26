@@ -1,4 +1,4 @@
-/*	$NetBSD: ewsms.c,v 1.1.18.3 2006/12/30 20:45:55 yamt Exp $	*/
+/*	$NetBSD: ewsms.c,v 1.1.18.4 2007/02/26 09:06:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.1.18.3 2006/12/30 20:45:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewsms.c,v 1.1.18.4 2007/02/26 09:06:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ static void
 ewsms_wsmouse_input(struct ewsms_softc *sc)
 {
 	u_int btns;
-	boolean_t bl, bm, br;
+	bool bl, bm, br;
 	int dx, dy;
 
 	btns = (uint8_t)sc->sc_packet[EWSMS_PACKET_SYNC] & EWSMS_SYNC_BTN_MASK;

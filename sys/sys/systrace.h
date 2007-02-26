@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.h,v 1.15.2.2 2006/12/30 20:50:56 yamt Exp $	*/
+/*	$NetBSD: systrace.h,v 1.15.2.3 2007/02/26 09:12:16 yamt Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -35,7 +35,8 @@
 
 #include <sys/select.h>
 #include <sys/ioccom.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
 
 #define SYSTR_EMULEN	8	/* sync with sys proc */
 
@@ -194,7 +195,7 @@ struct systrace_replace {
 #include <sys/namei.h>
 
 struct fsystrace {
-	struct lock lock;
+	kmutex_t mutex;
 	struct selinfo si;
 
 	TAILQ_HEAD(strprocessq, str_process) processes;
@@ -219,6 +220,7 @@ struct fsystrace {
 
 /* Internal prototypes */
 
+void systrace_init(void);
 int systrace_enter(struct lwp *, register_t, void *);
 void systrace_namei(struct nameidata *);
 void systrace_exit(struct lwp *, register_t, void *, register_t [], int);

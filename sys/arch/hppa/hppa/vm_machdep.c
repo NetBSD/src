@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18.2.1 2006/12/30 20:46:04 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18.2.2 2007/02/26 09:06:43 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.1 2006/12/30 20:46:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.2 2007/02/26 09:06:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,6 +232,13 @@ cpu_lwp_free(struct lwp *l, int proc)
 }
 
 void
+cpu_lwp_free2(struct lwp *l)
+{
+
+	(void)l;
+}
+
+void
 cpu_exit(struct lwp *l)
 {
 	(void) splsched();
@@ -264,7 +271,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = (caddr_t)(kva + off);
 	npf = btoc(size);
 	while (npf--) {
-		if (pmap_extract(upmap, uva, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == false)
 			panic("vmapbuf: null page frame");
 		pmap_enter(kpmap, kva, pa,
 		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);

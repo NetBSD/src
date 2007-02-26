@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_param.h,v 1.15.6.1 2006/06/21 15:11:37 yamt Exp $	*/
+/*	$NetBSD: tp_param.h,v 1.15.6.2 2007/02/26 09:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -206,14 +206,6 @@ extern int      N_TPREF;
 /******************************************************
  * Some fundamental data types
  *****************************************************/
-#ifndef		TRUE
-#define		TRUE				1
-#endif				/* TRUE */
-
-#ifndef		FALSE
-#define		FALSE				0
-#endif				/* FALSE */
-
 #define		TP_LOCAL				22
 #define		TP_FOREIGN				33
 

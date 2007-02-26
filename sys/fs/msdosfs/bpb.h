@@ -1,4 +1,4 @@
-/*	$NetBSD: bpb.h,v 1.3.12.2 2006/12/30 20:49:56 yamt Exp $	*/
+/*	$NetBSD: bpb.h,v 1.3.12.3 2007/02/26 09:10:55 yamt Exp $	*/
 
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
@@ -110,36 +110,14 @@ struct bpb_a {
  * and longs are just character arrays of the appropriate length.  This is
  * because the compiler forces shorts and longs to align on word or
  * halfword boundaries.
- *
- * XXX The little-endian code here assumes that the processor can access
- * 16-bit and 32-bit quantities on byte boundaries.  If this is not true,
- * use the macros for the big-endian case.
  */
-#include <machine/endian.h>
-#ifdef __STDC__
-#define __ICAST(q,a,x)	((q u_int ## a ## _t *)(q void *)(x))
-#else
-#define __ICAST(q,a,x)	((q u_int/**/a/**/_t *)(q void *)(x))
-#endif
-#if (BYTE_ORDER == LITTLE_ENDIAN) && defined(UNALIGNED_ACCESS)
-#define	getushort(x)	*__ICAST(const,16,x)
-#define	getulong(x)	*__ICAST(const,32,x)
-#define	putushort(p, v)	(void)(*__ICAST(,16,p) = (v))
-#define	putulong(p, v)	(void)(*__ICAST(,32,p) = (v))
-#else
-#define getushort(x)	((u_int16_t)(__ICAST(const,8,x)[0] \
-			 | (__ICAST(const,8,x)[1] << 8)))
-#define getulong(x)	((u_int32_t)(__ICAST(const,8,x)[0] \
-			 | (__ICAST(const,8,x)[1] << 8) \
-			 | (__ICAST(const,8,x)[2] << 16) \
-			 | (__ICAST(const,8,x)[3] << 24)))
-#define putushort(p, v)	(void)(__ICAST(,8,p)[0] = (v),	\
-			 __ICAST(,8,p)[1] = (v) >> 8)
-#define putulong(p, v)	(void)(__ICAST(,8,p)[0] = (v),	\
-			 __ICAST(,8,p)[1] = (v) >> 8, \
-			 __ICAST(,8,p)[2] = (v) >> 16,\
-			 __ICAST(,8,p)[3] = (v) >> 24)
-#endif
+
+#include <sys/endian.h>
+
+#define	getushort(p)	le16dec(p)
+#define	getulong(p)	le32dec(p)
+#define	putushort(p, v) le16enc((p), (v))
+#define	putulong(p, v)	le32enc((p), (v))
 
 /*
  * BIOS Parameter Block (BPB) for DOS 3.3

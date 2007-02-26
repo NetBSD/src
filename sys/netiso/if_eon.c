@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.47.2.2 2006/12/30 20:50:45 yamt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.47.2.3 2007/02/26 09:12:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47.2.2 2006/12/30 20:50:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.47.2.3 2007/02/26 09:12:00 yamt Exp $");
 
 #include "opt_eon.h"
 
@@ -215,8 +215,8 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro,
 	struct mbuf     mhead;
 	struct sockaddr_in *sin = satosin(&ro->ro_dst);
 	if (zero) {
-		bzero((caddr_t) hdr, sizeof(*hdr));
-		bzero((caddr_t) ro, sizeof(*ro));
+		memset(hdr, 0, sizeof(*hdr));
+		memset(ro, 0, sizeof(*ro));
 	}
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
@@ -238,9 +238,9 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro,
 	hdr->ei_eh.eonh_class = class;
 	hdr->ei_eh.eonh_vers = EON_VERSION;
 	hdr->ei_eh.eonh_csum = 0;
-	mhead.m_data = (caddr_t) & hdr->ei_eh;
+	mhead.m_data = (caddr_t)&hdr->ei_eh;
 	mhead.m_len = sizeof(struct eon_hdr);
-	mhead.m_next = 0;
+	mhead.m_next = NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
 		printf("eonoutput : gen csum (%p, offset %lu, datalen %ld)\n",
@@ -273,10 +273,10 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	switch (cmd) {
 	case RTM_DELETE:
 		if (el) {
-			remque(&(el->el_qhdr));
+			remque(&el->el_qhdr);
 			rtcache_free(&el->el_iproute);
 			Free(el);
-			rt->rt_llinfo = 0;
+			rt->rt_llinfo = NULL;
 		}
 		return;
 
@@ -285,14 +285,15 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 		rt->rt_rmx.rmx_mtu = lo0ifp->if_mtu;	/* unless better below */
 		R_Malloc(el, struct eon_llinfo *, sizeof(*el));
 		rt->rt_llinfo = (caddr_t) el;
-		if (el == 0)
+		if (el == NULL)
 			return;
-		Bzero(el, sizeof(*el));
-		insque(&(el->el_qhdr), &eon_llinfo.el_qhdr);
+		memset(el, 0, sizeof(*el));
+		insque(&el->el_qhdr, &eon_llinfo.el_qhdr);
 		el->el_rt = rt;
 		break;
 	}
-	if (info && (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
+	if (info != NULL &&
+	    (gate = info->rti_info[RTAX_GATEWAY]) != NULL) { /*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((const struct sockaddr_dl *)x)
@@ -308,6 +309,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 		default:
 			return;
 		}
+	}
 	el->el_flags |= RTF_UP;
 	eoniphdr(&el->el_ei, ipaddrloc, &el->el_iproute, EON_NORMAL_ADDR, 0);
 	if (el->el_iproute.ro_rt != NULL)
@@ -330,17 +332,17 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
  *
  */
 int
-eonoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sdst,
+eonoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sdst,
 	struct rtentry *rt)
 {
-	struct sockaddr_iso *dst = (struct sockaddr_iso *) sdst;
+	const struct sockaddr_iso *dst = (const struct sockaddr_iso *)sdst;
 	struct eon_llinfo *el;
 	struct eon_iphdr *ei;
 	struct route   *ro;
 	int             datalen;
 	struct mbuf    *mh;
 	int             error = 0, class = 0, alen = 0;
-	caddr_t         ipaddrloc = NULL;
+	const u_char *ipaddrloc = NULL;
 	static struct eon_iphdr eon_iphdr;
 	static struct route route;
 
@@ -351,20 +353,21 @@ eonoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sdst,
 #endif
 
 	ifp->if_opackets++;
-	if (rt == 0 || (el = (struct eon_llinfo *) rt->rt_llinfo) == 0) {
+	if (rt == NULL || (el = (struct eon_llinfo *)rt->rt_llinfo) == NULL) {
 		if (dst->siso_family == AF_LINK) {
-			struct sockaddr_dl *sdl = (struct sockaddr_dl *) dst;
+			const struct sockaddr_dl *sdl =
+			    (const struct sockaddr_dl *)dst;
 
-			ipaddrloc = LLADDR(sdl);
+			ipaddrloc = CLLADDR(sdl);
 			alen = sdl->sdl_alen;
 		} else if (dst->siso_family == AF_ISO &&
 			   dst->siso_data[0] == AFI_SNA) {
 			alen = dst->siso_nlen - 1;
-			ipaddrloc = (caddr_t) dst->siso_data + 1;
+			ipaddrloc = (const char *)dst->siso_data + 1;
 		}
 		switch (alen) {
 		case 5:
-			class = 4[(u_char *) ipaddrloc];
+			class = ipaddrloc[4];
 		case 4:
 			ro = &route;
 			ei = &eon_iphdr;
@@ -388,13 +391,13 @@ einval:
 	}
 	ei = &el->el_ei;
 	ro = &el->el_iproute;
-	if (el->el_snpaoffset) {
-		if (dst->siso_family == AF_ISO) {
-			bcopy((caddr_t) & dst->siso_data[el->el_snpaoffset],
-			      (caddr_t) & ei->ei_ip.ip_dst, sizeof(ei->ei_ip.ip_dst));
-		} else
-			goto einval;
-	}
+	if (el->el_snpaoffset == 0)
+		;
+	else if (dst->siso_family == AF_ISO) {
+		memcpy(&ei->ei_ip.ip_dst, &dst->siso_data[el->el_snpaoffset],
+		    sizeof(ei->ei_ip.ip_dst));
+	} else
+		goto einval;
 send:
 	/* put an eon_hdr in the buffer, prepended by an ip header */
 	datalen = m->m_pkthdr.len + EONIPLEN;
@@ -403,7 +406,7 @@ send:
 		goto flush;
 	}
 	MGETHDR(mh, M_DONTWAIT, MT_HEADER);
-	if (mh == (struct mbuf *) 0) {
+	if (mh == NULL) {
 		error = ENOBUFS;
 		goto flush;
 	}
@@ -424,16 +427,15 @@ send:
 	}
 #endif
 
-	error = ip_output(m, (struct mbuf *) 0, ro, 0,
-	    (struct ip_moptions *)NULL, (struct socket *)NULL);
-	m = 0;
+	error = ip_output(m, NULL, ro, 0, NULL, NULL);
+	m = NULL;
 	if (error) {
 		ifp->if_oerrors++;
 		ifp->if_opackets--;
 		ifp->if_obytes -= datalen;
 	}
 flush:
-	if (m)
+	if (m != NULL)
 		m_freem(m);
 	return error;
 }
@@ -462,12 +464,12 @@ eoninput(struct mbuf *m, ...)
 	}
 #endif
 
-	if (m == 0)
+	if (m == NULL)
 		return;
 	if (iphlen > sizeof(struct ip))
-		ip_stripoptions(m, (struct mbuf *) 0);
+		ip_stripoptions(m, NULL);
 	if (m->m_len < EONIPLEN) {
-		if ((m = m_pullup(m, EONIPLEN)) == 0) {
+		if ((m = m_pullup(m, EONIPLEN)) == NULL) {
 			IncStat(es_badhdr);
 	drop:
 #ifdef ARGO_DEBUG
@@ -565,13 +567,13 @@ eoninput(struct mbuf *m, ...)
 }
 
 void *
-eonctlinput(int cmd, struct sockaddr *sa, void *dummy)
+eonctlinput(int cmd, const struct sockaddr *sa, void *dummy)
 {
-	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
 		printf("eonctlinput: cmd 0x%x addr: ", cmd);
-		dump_isoaddr((struct sockaddr_iso *) sin);
+		dump_isoaddr((const struct sockaddr_iso *)sin);
 		printf("\n");
 	}
 #endif

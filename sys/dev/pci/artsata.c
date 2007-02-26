@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.7.4.2 2006/12/30 20:48:41 yamt Exp $	*/
+/*	$NetBSD: artsata.c,v 1.7.4.3 2007/02/26 09:10:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_pciide.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.7.4.2 2006/12/30 20:48:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.7.4.3 2007/02/26 09:10:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	u_int32_t dma_ctl;
 	u_int32_t cacheline_len;
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 
 	sc->sc_dma_ok = 1;
@@ -273,7 +273,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 	cacheline_len = PCI_CACHELINE(pci_conf_read (pa->pa_pc, pa->pa_tag,
 	    PCI_BHLC_REG));
 	if (cacheline_len == 0) {
-		aprint_normal(", but unused (cacheline size not set in PCI conf)\n");
+		aprint_verbose(", but unused (cacheline size not set in PCI conf)\n");
 		sc->sc_dma_ok = 0;
 		return;
 	}
@@ -295,7 +295,7 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
-		aprint_normal(
+		aprint_verbose(
 		    ", but unused (forced off by config file)\n");
 		sc->sc_dma_ok = 0;
 		return;
@@ -318,12 +318,12 @@ artisea_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    ARTISEA_DPA_PORT_BASE(chan) + ARTISEA_SUPDDDTPR, 4,
 		    &pc->dma_iohs[IDEDMA_TBL]) != 0) {
 			sc->sc_dma_ok = 0;
-			aprint_normal(", but can't subregion registers\n");
+			aprint_verbose(", but can't subregion registers\n");
 			return;
 		}
 	}
 
-	aprint_normal("\n");
+	aprint_verbose("\n");
 }
 
 static void
@@ -412,17 +412,17 @@ artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 #ifdef PCIIDE_I31244_DISABLEDMA
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_31244 &&
 	    PCI_REVISION(pa->pa_class) == 0) {
-		aprint_normal(" but disabled due to rev. 0");
+		aprint_verbose(" but disabled due to rev. 0");
 		sc->sc_dma_ok = 0;
 	} else
 #endif
 		pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	/*
 	 * XXX Configure LEDs to show activity.

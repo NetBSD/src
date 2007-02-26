@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_resource.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $ */
+/* $NetBSD: osf1_resource.c,v 1.5.18.1 2007/02/26 09:09:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,13 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.5 2003/01/18 08:32:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_resource.c,v 1.5.18.1 2007/02/26 09:09:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>

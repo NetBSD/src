@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13.2.1 2006/06/21 14:55:47 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.13.2.2 2007/02/26 09:08:10 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.1 2006/06/21 14:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.2 2007/02/26 09:08:10 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -141,7 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.1 2006/06/21 14:55:47 yamt Exp $"
 #include <sys/syscall.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
+#include <sys/syscall.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #ifdef KTRACE
@@ -375,13 +375,6 @@ startlwp(void *arg)
 #endif
 
 	pool_put(&lwp_uc_pool, uc);
-	userret(l);
-}
-
-void
-upcallret(struct lwp *l)
-{
-
 	userret(l);
 }
 

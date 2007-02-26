@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.16.2.2 2006/12/30 20:50:29 yamt Exp $	*/
+/*	$NetBSD: aarp.c,v 1.16.2.3 2007/02/26 09:11:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16.2.2 2006/12/30 20:50:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16.2.3 2007/02/26 09:11:41 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -54,11 +54,11 @@ __KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.16.2.2 2006/12/30 20:50:29 yamt Exp $");
 #include <netatalk/phase2.h>
 #include <netatalk/at_extern.h>
 
-static struct aarptab *aarptnew __P((struct at_addr *));
-static void aarptfree __P((struct aarptab *));
-static void at_aarpinput __P((struct ifnet *, struct mbuf *));
-static void aarptimer __P((void *));
-static void aarpwhohas __P((struct ifnet *, struct sockaddr_at *));
+static struct aarptab *aarptnew(const struct at_addr *);
+static void aarptfree(struct aarptab *);
+static void at_aarpinput(struct ifnet *, struct mbuf *);
+static void aarptimer(void *);
+static void aarpwhohas(struct ifnet *, const struct sockaddr_at *);
 
 #define AARPTAB_BSIZ	9
 #define AARPTAB_NB	19
@@ -155,7 +155,7 @@ at_ifawithnet(sat, ifp)
 static void
 aarpwhohas(ifp, sat)
 	struct ifnet *ifp;
-	struct sockaddr_at *sat;
+	const struct sockaddr_at *sat;
 {
 	struct mbuf    *m;
 	struct ether_header *eh;
@@ -237,11 +237,8 @@ aarpwhohas(ifp, sat)
 }
 
 int
-aarpresolve(ifp, m, destsat, desten)
-	struct ifnet   *ifp;
-	struct mbuf    *m;
-	struct sockaddr_at *destsat;
-	u_char         *desten;
+aarpresolve(struct ifnet *ifp, struct mbuf *m,
+    const struct sockaddr_at *destsat, u_char *desten)
 {
 	struct at_ifaddr *aa;
 	struct aarptab *aat;
@@ -500,8 +497,7 @@ aarptfree(aat)
 }
 
 static struct aarptab *
-aarptnew(addr)
-	struct at_addr *addr;
+aarptnew(const struct at_addr *addr)
 {
 	int             n;
 	int             oldest = -1;

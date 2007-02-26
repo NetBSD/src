@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.15.4.2 2006/12/30 20:50:44 yamt Exp $
+ *	$Id: i4b_tel.c,v 1.15.4.3 2007/02/26 09:11:58 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.15.4.2 2006/12/30 20:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.15.4.3 2007/02/26 09:11:58 yamt Exp $");
 
 #include "isdntel.h"
 
@@ -97,9 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.15.4.2 2006/12/30 20:50:44 yamt Exp $"
 #include <netisdn/i4b_l4.h>
 
 /* minor number: lower 6 bits = unit number */
-
-#include <netisdn/i4b_l4.h>
-
 #define UNITBITS	6
 #define UNITMASK	0x3f
 #define	UNIT(n)		(minor(n) & UNITMASK)

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.22.2.1 2006/12/30 20:46:26 yamt Exp $	*/
+/*	$NetBSD: obio.c,v 1.22.2.2 2007/02/26 09:07:21 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.22.2.1 2006/12/30 20:46:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.22.2.2 2007/02/26 09:07:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,7 @@ obio_attach(parent, self, aux)
 		name[namelen] = 0;
 		ca.ca_name = name;
 		ca.ca_node = child;
+		ca.ca_tag = pa->pa_memt;
 
 		ca.ca_nreg = OF_getprop(child, "reg", reg, sizeof(reg));
 

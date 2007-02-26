@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.1.8.2 2007/02/26 09:11:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.1.8.1 2006/06/21 15:10:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.1.8.2 2007/02/26 09:11:39 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -213,7 +213,7 @@ agrmc_mc_del_callback(struct agr_mc_entry *ame, void *arg)
 
 int
 agr_configmulti_port(struct agr_multiaddrs *ama, struct agr_port *port,
-    boolean_t add)
+    bool add)
 {
 
 	return agr_mc_foreach(ama,
@@ -238,7 +238,7 @@ agrport_mc_del_callback(struct agr_port *port, void *arg)
 
 int
 agr_configmulti_ifreq(struct agr_softc *sc, struct agr_multiaddrs *ama,
-    struct ifreq *ifr, boolean_t add)
+    struct ifreq *ifr, bool add)
 {
 	int error;
 

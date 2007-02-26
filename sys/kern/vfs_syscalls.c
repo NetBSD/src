@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.223.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.223.2.3 2007/02/26 09:11:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.223.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.223.2.3 2007/02/26 09:11:22 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.223.2.2 2006/12/30 20:50:07 yamt 
 #include <sys/kmem.h>
 #include <sys/dirent.h>
 #include <sys/sysctl.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -170,39 +169,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		error = EOPNOTSUPP;	/* Needs translation */
 		goto out;
 	}
-	/*
-	 * In "highly secure" mode, don't let the caller do anything
-	 * but downgrade a filesystem from read-write to read-only.
-	 */
-	if (securelevel >= 2 &&
-	    flags !=
-	    (mp->mnt_flag | MNT_RDONLY | MNT_RELOAD | MNT_FORCE | MNT_UPDATE)) {
-		error = EPERM;
+
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_UPDATE, mp, KAUTH_ARG(flags), data);
+	if (error)
 		goto out;
-	}
-	/*
-	 * Only root, or the user that did the original mount is
-	 * permitted to update it.
-	 */
- 	if (mp->mnt_stat.f_owner != kauth_cred_geteuid(l->l_cred) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0) {
-		goto out;
-	}
-	/*
-	 * Do not allow NFS export by non-root users. For non-root
-	 * users, silently enforce MNT_NOSUID and MNT_NODEV, and
-	 * MNT_NOEXEC if mount point is already MNT_NOEXEC.
-	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
-		if (flags & MNT_EXPORTED) {
-			error = EPERM;
-			goto out;
-		}
-		flags |= MNT_NOSUID | MNT_NODEV;
-		if (saved_flags & MNT_NOEXEC)
-			flags |= MNT_NOEXEC;
-	}
+
 	if (vfs_busy(mp, LK_NOWAIT, 0)) {
 		error = EPERM;
 		goto out;
@@ -273,9 +245,9 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 	char fstypename[MFSNAMELEN];
 	int error;
 
-	/* XXX secmodel stuff. */
-	if (securelevel >= 2) {
-		error = EPERM;
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_NEW, vp, KAUTH_ARG(flags), data);
+	if (error) {
 		vput(vp);
 		goto out;
 	}
@@ -303,13 +275,6 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		error = EINVAL;
 		vput(vp);
 		goto out;
-	}
-
-	/*
-	 * For non-root users, silently enforce MNT_NOSUID and MNT_NODEV.
-	 */
-	if (kauth_cred_geteuid(l->l_cred) != 0) {
-		flags |= MNT_NOSUID | MNT_NODEV;
 	}
 
 	/*
@@ -367,6 +332,7 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		goto out;
 	}
 
+	TAILQ_INIT(&mp->mnt_vnodelist);
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	simple_lock_init(&mp->mnt_slock);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
@@ -403,8 +369,8 @@ mount_domount(struct lwp *l, struct vnode *vp, const char *fstype,
 		simple_lock(&mountlist_slock);
 		CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 		simple_unlock(&mountlist_slock);
-		checkdirs(vp);
 		VOP_UNLOCK(vp, 0);
+		checkdirs(vp);
 		if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 			error = vfs_allocate_syncvnode(mp);
 		vfs_unbusy(mp);
@@ -431,7 +397,19 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	struct mount *mp;
 	int error;
 
+	/* If MNT_GETARGS is specified, it should be the only flag. */
+	if (flags & ~MNT_GETARGS) {
+		error = EINVAL;
+		goto out;
+	}
+
 	mp = vp->v_mount;
+
+	/* XXX: probably some notion of "can see" here if we want isolation. */ 
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_GET, mp, data, NULL);
+	if (error)
+		goto out;
 
 	if ((vp->v_flag & VROOT) == 0) {
 		error = EINVAL;
@@ -468,20 +446,6 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	int error;
 
 	/*
-	 * if MNT_GETARGS is specified, it should be only flag.
-	 */
-	if ((SCARG(uap, flags) & MNT_GETARGS) != 0 &&
-	    (SCARG(uap, flags) & ~MNT_GETARGS) != 0) {
-		return EINVAL;
-	}
-
-	/* XXX secmodel stuff. */
-	if (dovfsusermount == 0 && (SCARG(uap, flags) & MNT_GETARGS) == 0 &&
-	    (error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag)))
-		return (error);
-
-	/*
 	 * Get vnode to be covered
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE,
@@ -496,7 +460,7 @@ sys_mount(struct lwp *l, void *v, register_t *retval)
 	 */
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_SETRECURSE);
 
-	if (SCARG(uap, flags) == MNT_GETARGS) {
+	if (SCARG(uap, flags) & MNT_GETARGS) {
 		error = mount_getargs(l, vp, SCARG(uap, path),
 		    SCARG(uap, flags), SCARG(uap, data), &nd);
 		vput(vp);
@@ -529,7 +493,7 @@ checkdirs(struct vnode *olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	proclist_lock_read();
+	rw_enter(&proclist_lock, RW_READER);
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
 		if (!cwdi)
@@ -545,7 +509,7 @@ checkdirs(struct vnode *olddp)
 			cwdi->cwdi_rdir = newdp;
 		}
 	}
-	proclist_unlock_read();
+	rw_exit(&proclist_lock);
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);
@@ -580,13 +544,9 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 
-	/*
-	 * Only root, or the user that did the original mount is
-	 * permitted to unmount this filesystem.
-	 */
-	if ((mp->mnt_stat.f_owner != kauth_cred_geteuid(l->l_cred)) &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	 	KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0) {
+	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
+	    KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT, mp, NULL, NULL);
+	if (error) {
 		vput(vp);
 		return (error);
 	}
@@ -612,10 +572,10 @@ sys_unmount(struct lwp *l, void *v, register_t *retval)
 	 * XXX Freeze syncer.  Must do this before locking the
 	 * mount point.  See dounmount() for details.
 	 */
-	lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&syncer_mutex);
 
 	if (vfs_busy(mp, 0, 0)) {
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 		return (EBUSY);
 	}
 
@@ -651,15 +611,15 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	 * per-mountpoint basis, so the softdep code would become a maze
 	 * of vfs_busy() calls.
 	 *
-	 * The caller of dounmount() must acquire syncer_lock because
-	 * the syncer itself acquires locks in syncer_lock -> vfs_busy
+	 * The caller of dounmount() must acquire syncer_mutex because
+	 * the syncer itself acquires locks in syncer_mutex -> vfs_busy
 	 * order, and we must preserve that order to avoid deadlock.
 	 *
 	 * So, if the file system did not use the syncer, now is
-	 * the time to release the syncer_lock.
+	 * the time to release the syncer_mutex.
 	 */
 	if (used_syncer == 0)
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 
 	mp->mnt_iflag |= IMNT_UNMOUNT;
 	mp->mnt_unmounter = l;
@@ -692,7 +652,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
 		if (used_syncer)
-			lockmgr(&syncer_lock, LK_RELEASE, NULL);
+			mutex_exit(&syncer_mutex);
 		simple_lock(&mp->mnt_slock);
 		while (mp->mnt_wcnt > 0) {
 			wakeup(mp);
@@ -703,18 +663,18 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
-	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
+	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;
-		vrele(coveredvp);
-	}
 	mp->mnt_op->vfs_refcount--;
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
 	mp->mnt_iflag |= IMNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
+	if (coveredvp != NULLVP)
+		vrele(coveredvp);
 	mount_finispecific(mp);
 	if (used_syncer)
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 	simple_lock(&mp->mnt_slock);
 	while (mp->mnt_wcnt > 0) {
 		wakeup(mp);
@@ -1038,15 +998,15 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
+
+		vput(vp);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error)
 			break;
-		vput(vp);
 		vp = tdp;
 	}
 	if (error) {
-		vput(vp);
 		goto out;
 	}
 	VOP_UNLOCK(vp, 0);
@@ -1797,13 +1757,14 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	struct mount *mp;
 	struct vattr vattr;
-	int error;
-	int whiteout = 0;
+	int error, optype;
 	struct nameidata nd;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
 	    0, NULL, NULL, NULL)) != 0)
 		return (error);
+
+	optype = VOP_MKNOD_DESCOFFSET;
 restart:
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
@@ -1816,7 +1777,6 @@ restart:
 		vattr.va_mode =
 		    (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 		vattr.va_rdev = SCARG(uap, dev);
-		whiteout = 0;
 
 		switch (SCARG(uap, mode) & S_IFMT) {
 		case S_IFMT:	/* used by badsect to flag bad sectors */
@@ -1829,7 +1789,12 @@ restart:
 			vattr.va_type = VBLK;
 			break;
 		case S_IFWHT:
-			whiteout = 1;
+			optype = VOP_WHITEOUT_DESCOFFSET;
+			break;
+		case S_IFREG:
+			vattr.va_type = VREG;
+			vattr.va_rdev = VNOVAL;
+			optype = VOP_CREATE_DESCOFFSET;
 			break;
 		default:
 			error = EINVAL;
@@ -1851,16 +1816,27 @@ restart:
 	}
 	if (!error) {
 		VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
-		if (whiteout) {
+		switch (optype) {
+		case VOP_WHITEOUT_DESCOFFSET:
 			error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, CREATE);
 			if (error)
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
-		} else {
+			break;
+
+		case VOP_MKNOD_DESCOFFSET:
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp,
 						&nd.ni_cnd, &vattr);
 			if (error == 0)
 				vput(nd.ni_vp);
+			break;
+
+		case VOP_CREATE_DESCOFFSET:
+			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp,
+						&nd.ni_cnd, &vattr);
+			if (error == 0)
+				vput(nd.ni_vp);
+			break;
 		}
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
@@ -2100,7 +2076,7 @@ sys_unlink(struct lwp *l, void *v, register_t *retval)
 	int error;
 	struct nameidata nd;
 #if NVERIEXEC > 0
-	pathname_t pathbuf;
+	pathname_t pathbuf = NULL;
 #endif /* NVERIEXEC > 0 */
 
 restart:
@@ -2695,8 +2671,7 @@ change_flags(struct vnode *vp, u_long flags, struct lwp *l)
 	 * Non-superusers cannot change the flags on devices, even if they
 	 * own them.
 	 */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0) {
+	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL)) {
 		if ((error = VOP_GETATTR(vp, &vattr, l->l_cred, l)) != 0)
 			goto out;
 		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
@@ -3280,14 +3255,15 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 		return (error);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		FILE_UNUSE(fp, l);
-		return (EBADF);
+		error = EBADF;
+		goto out;
 	}
 
 	flags = SCARG(uap, flags);
 	if (((flags & (FDATASYNC | FFILESYNC)) == 0) ||
 	    ((~flags & (FDATASYNC | FFILESYNC)) == 0)) {
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 	/* Now set up the flags for value(s) to pass to VOP_FSYNC() */
 	if (flags & FDATASYNC)
@@ -3303,8 +3279,8 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 		s = SCARG(uap, start);
 		e = s + len;
 		if (e < s) {
-			FILE_UNUSE(fp, l);
-			return (EINVAL);
+			error = EINVAL;
+			goto out;
 		}
 	} else {
 		e = 0;
@@ -3320,6 +3296,7 @@ sys_fsync_range(struct lwp *l, void *v, register_t *retval)
 		(*bioops.io_fsync)(vp, nflags);
 
 	VOP_UNLOCK(vp, 0);
+out:
 	FILE_UNUSE(fp, l);
 	return (error);
 }
@@ -3407,7 +3384,8 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 	    from, l);
 	if ((error = namei(&fromnd)) != 0)
 		return (error);
-	VOP_UNLOCK(fromnd.ni_dvp, 0);
+	if (fromnd.ni_dvp != fromnd.ni_vp)
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
 	fvp = fromnd.ni_vp;
 	error = vn_start_write(fvp, &mp, V_WAIT | V_PCATCH);
 	if (error != 0) {
@@ -3459,7 +3437,7 @@ rename_files(const char *from, const char *to, struct lwp *l, int retain)
 
 #if NVERIEXEC > 0
 	if (!error) {
-		pathname_t frompath, topath;
+		pathname_t frompath = NULL, topath = NULL;
 
 		error = pathname_get(fromnd.ni_dirp, fromnd.ni_segflg,
 		    &frompath);
@@ -3712,7 +3690,7 @@ sys_revoke(struct lwp *l, void *v, register_t *retval)
 		goto out;
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
 	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 	if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
 		goto out;

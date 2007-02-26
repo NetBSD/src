@@ -1,10 +1,10 @@
-# 	$NetBSD: files.rasops,v 1.10 2005/02/27 00:27:47 perry Exp $
+# 	$NetBSD: files.rasops,v 1.10.4.1 2007/02/26 09:10:39 yamt Exp $
 
 # Note: `rasops_glue' is only here to force the header file's name
 #       hence it must be mentioned first  (shudder...)
 file dev/rasops/rasops.c ( (rasops_glue |
     rasops1 | rasops2 | rasops4 | rasops8 | rasops15 | rasops16 | rasops24 |
-    rasops32) &
+    rasops32 | rasops_rotation) &
     (rasterconsole | wsdisplay)) needs-flag
 
 file dev/rasops/rasops_masks.c ((rasterconsole | wsdisplay) &

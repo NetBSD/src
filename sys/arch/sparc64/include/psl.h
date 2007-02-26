@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.28.2.2 2006/12/30 20:47:02 yamt Exp $ */
+/*	$NetBSD: psl.h,v 1.28.2.3 2007/02/26 09:08:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -397,8 +397,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 SPL(spl0, 0)
 
-SPL(spllowersoftclock, 1)
-
 SPLHOLD(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
@@ -453,7 +451,6 @@ SPLHOLD(splhigh, PIL_HIGH)
 /* splx does not have a return value */
 #ifdef SPLDEBUG
 #define	spl0()	spl0X(__FILE__, __LINE__)
-#define	spllowersoftclock() spllowersoftclockX(__FILE__, __LINE__)
 #define	splsoftint()	splsoftintX(__FILE__, __LINE__)
 #define	splsoftserial()	splsoftserialX(__FILE__, __LINE__)
 #define	splausoft()	splausoftX(__FILE__, __LINE__)

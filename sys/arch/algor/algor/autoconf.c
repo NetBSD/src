@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.2.2 2006/12/30 20:45:21 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.3 2007/02/26 09:05:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.2 2006/12/30 20:45:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.3 2007/02/26 09:05:30 yamt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h"
@@ -122,7 +122,7 @@ device_register(struct device *dev, void *aux)
 			    algor_ethaddr, ETHER_ADDR_LEN);
 			KASSERT(pd != NULL);
 			if (prop_dictionary_set(device_properties(dev),
-						"mac-addr", pd) == FALSE) {
+						"mac-addr", pd) == false) {
 				printf("WARNING: unable to set mac-addr "
 				    "property for %s\n", dev->dv_xname);
 			}

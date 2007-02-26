@@ -27,7 +27,7 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.13.4.2 2006/12/30 20:50:44 yamt Exp $
+ *	$Id: i4b_ctl.c,v 1.13.4.3 2007/02/26 09:11:57 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.13.4.2 2006/12/30 20:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.13.4.3 2007/02/26 09:11:57 yamt Exp $");
 
 #include "isdnctl.h"
 
@@ -91,7 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.13.4.2 2006/12/30 20:50:44 yamt Exp $"
 
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
-#include <netisdn/i4b_l2.h>
 
 static int openflag = 0;
 

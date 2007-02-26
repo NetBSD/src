@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.59.2.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.59.2.3 2007/02/26 09:12:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -93,6 +93,13 @@
  */
 struct simplelock {
 	__cpu_simple_lock_t lock_data;
+#ifdef __CPU_SIMPLE_LOCK_PAD
+	/*
+	 * For binary compatibility where the lock word has been
+	 * made shorter.
+	 */
+	uint8_t lock_pad[3];
+#endif
 #ifdef LOCKDEBUG
 	const char *lock_file;
 	const char *unlock_file;
@@ -103,12 +110,21 @@ struct simplelock {
 #endif
 };
 
+#ifdef __CPU_SIMPLE_LOCK_PAD
 #ifdef LOCKDEBUG
-#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0,	\
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, { 0, 0, 0}, NULL, \
+				  NULL, 0, 0, { NULL, NULL }, LK_NOCPU }
+#else
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, { 0, 0, 0 } }
+#endif
+#else	/* __CPU_SIMPLE_LOCK_PAD */
+#ifdef LOCKDEBUG
+#define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED, NULL, NULL, 0, \
 				  0, { NULL, NULL }, LK_NOCPU }
 #else
 #define	SIMPLELOCK_INITIALIZER	{ __SIMPLELOCK_UNLOCKED }
 #endif
+#endif	/* __CPU_SIMPLE_LOCK_PAD */
 
 /*
  * The general lock structure.  Provides for multiple shared locks,
@@ -284,6 +300,25 @@ struct lock {
 					   getting lk_interlock */
 #define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
+#define __LK_FLAG_BITS \
+	"\20" \
+	"\23LK_SPIN" \
+	"\22LK_RECURSEFAIL" \
+	"\21LK_SETRECURSE" \
+	"\20LK_WAIT_NOZERO" \
+	"\19LK_SHARE_NOZERO" \
+	"\18LK_RETRY" \
+	"\17LK_INTERLOCK" \
+	"\16LK_DRAINED" \
+	"\15LK_DRAINING" \
+	"\12LK_WAITDRAIN" \
+	"\11LK_HAVE_EXCL" \
+	"\10LK_WANT_EXCL" \
+	"\09LK_WANT_UPGRADE" \
+	"\08LK_REENABLE" \
+	"\07LK_CANRECURSE" \
+	"\06LK_SLEEPFAIL" \
+	"\05LK_NOWAIT"
 /*
  * Lock return status.
  *
@@ -407,28 +442,36 @@ void	simple_lock_switchcheck(void);
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
 
-int	lock_owner_onproc(uintptr_t);
-
-#ifndef SPINLOCK_SPIN_HOOK		/* from <machine/lock.h> */
-#define	SPINLOCK_SPIN_HOOK		/* nothing */
+/*
+ * From <machine/lock.h>.
+ */
+#ifndef SPINLOCK_SPIN_HOOK
+#define	SPINLOCK_SPIN_HOOK
 #endif
-
+#ifndef SPINLOCK_BACKOFF_HOOK
+#define	SPINLOCK_BACKOFF_HOOK		nullop(NULL)
+#endif
 #ifndef	SPINLOCK_BACKOFF_MIN
-#define	SPINLOCK_BACKOFF_MIN	32
+#define	SPINLOCK_BACKOFF_MIN	8
 #endif
 #ifndef	SPINLOCK_BACKOFF_MAX
-#define	SPINLOCK_BACKOFF_MAX	1024
+#define	SPINLOCK_BACKOFF_MAX	512
 #endif
+
 #define	SPINLOCK_BACKOFF(count)					\
 do {								\
 	int __i;						\
-	for (__i = 0; __i < (count); __i++) {			\
-		SPINLOCK_SPIN_HOOK;				\
-		nullop(NULL);					\
+	for (__i = (count); __i != 0; __i--) {			\
+		SPINLOCK_BACKOFF_HOOK;				\
 	}							\
-	if ((__i <<= 1) <= SPINLOCK_BACKOFF_MAX)		\
-		(count) = SPINLOCK_BACKOFF_MAX;			\
+	if ((count) < SPINLOCK_BACKOFF_MAX)			\
+		(count) += (count);				\
 } while (/* CONSTCOND */ 0);
+
+#define	SPINLOCK_RUN_HOOK(count)	((count) >= SPINLOCK_BACKOFF_MAX)
+#define	SPINLOCK_SPINOUT(spins)		((spins)++ > 0x0fffffff)
+
+extern __cpu_simple_lock_t	kernel_lock;
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.92.2.2 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.92.2.3 2007/02/26 09:11:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.92.2.2 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.92.2.3 2007/02/26 09:11:20 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.92.2.2 2006/12/30 20:50:07 yamt 
 #include <sys/event.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -537,8 +536,11 @@ sendit(struct lwp *l, int s, struct msghdr *mp, int flags, register_t *retsize)
 		if (auio.uio_resid != len && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
 			error = 0;
-		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0)
+		if (error == EPIPE && (flags & MSG_NOSIGNAL) == 0) {
+			mutex_enter(&proclist_mutex);
 			psignal(p, SIGPIPE);
+			mutex_exit(&proclist_mutex);
+		}
 	}
 	if (error == 0)
 		*retsize = len - auio.uio_resid;

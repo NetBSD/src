@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.70.12.2 2006/12/30 20:47:14 yamt Exp $      */
+/*      $NetBSD: cpu.h,v 1.70.12.3 2007/02/26 09:08:39 yamt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -132,6 +132,8 @@ struct cpu_info {
 	 */
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	int ci_mtx_oldspl;		/* saved spl */
+	int ci_mtx_count;		/* negative count of mutexes */
 
 	/*
 	 * Private members.
@@ -170,13 +172,14 @@ struct cpu_mp_softc {
 #define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
 #define	curlwp			(curcpu()->ci_curlwp)
 #define	cpu_number()		(curcpu()->ci_cpuid)
-#define	need_resched(ci)			\
+#define	cpu_need_resched(ci)			\
 	do {					\
 		(ci)->ci_want_resched = 1;	\
 		mtpr(AST_OK,PR_ASTLVL);		\
 	} while (/*CONSTCOND*/ 0)
 #define	cpu_proc_fork(x, y)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
+#define	cpu_lwp_free2(l)	do { } while (/*CONSCOND*/0)
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
@@ -194,7 +197,7 @@ extern char vax_mp_tramp;
  * process as soon as possible.
  */
 
-#define signotify(p)     mtpr(AST_OK,PR_ASTLVL);
+#define cpu_signotify(l)     mtpr(AST_OK,PR_ASTLVL)
 
 
 /*
@@ -202,7 +205,7 @@ extern char vax_mp_tramp;
  * buffer pages are invalid.  On the hp300, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define need_proftick(p) {(p)->p_flag |= P_OWEUPC; mtpr(AST_OK,PR_ASTLVL); }
+#define cpu_need_proftick(l) do { (l)->l_pflag |= LP_OWEUPC; mtpr(AST_OK,PR_ASTLVL); } while (/*CONSTCOND*/ 0)
 
 /*
  * This defines the I/O device register space size in pages.

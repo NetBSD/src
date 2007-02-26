@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.3.18.1 2006/06/21 15:02:51 yamt Exp $
+#	$NetBSD: files.i2c,v 1.3.18.2 2007/02/26 09:10:02 yamt Exp $
 
 define	i2cbus { }
 define	i2cexec
@@ -91,3 +91,18 @@ device	ddc
 define	ddc_read_edid
 attach	ddc at iic
 file	dev/i2c/ddc.c			ddc | ddc_read_edid
+
+# SGS TDA7433 audio mixer
+device sgsmix
+attach sgsmix at iic
+file	dev/i2c/sgsmix.c		sgsmix needs-flag
+
+# Xbox PIC16LC System Management Controller
+device	pic16lc: sysmon_envsys
+attach	pic16lc at iic
+file	dev/i2c/pic16lc.c		pic16lc needs-flag
+
+# Xbox Serial EEPROM
+device	xbseeprom
+attach	xbseeprom at iic
+file	dev/i2c/xbseeprom.c		xbseeprom

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.56.2.2 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: cons.c,v 1.56.2.3 2007/02/26 09:09:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.56.2.2 2006/12/30 20:47:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.56.2.3 2007/02/26 09:09:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.56.2.2 2006/12/30 20:47:50 yamt Exp $");
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
 
 #include <dev/cons.h>
 
@@ -232,17 +233,24 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	const struct cdevsw *cdev;
 	int error;
 
+	error = 0;
+
 	/*
 	 * Superuser can always use this to wrest control of console
 	 * output from the "virtual" console.
 	 */
+#ifdef notyet
+	mutex_enter(&tty_mutex);
+#endif
 	if (cmd == TIOCCONS && constty != NULL) {
 		error = kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_ISSUSER, NULL);
-		if (error)
-			return (error);
-		constty = NULL;
-		return (0);
+		if (!error)
+			constty = NULL;
+#ifdef notyet
+		mutex_exit(&tty_mutex);
+#endif
+		return (error);
 	}
 
 	/*
@@ -252,9 +260,12 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	 * out from under it.
 	 */
 	cdev = cn_redirect(&dev, 0, &error);
-	if (cdev == NULL)
-		return error;
-	return ((*cdev->d_ioctl)(dev, cmd, data, flag, l));
+#ifdef notyet
+	mutex_exit(&tty_mutex);
+#endif
+	if (cdev != NULL)
+		error = (*cdev->d_ioctl)(dev, cmd, data, flag, l);
+	return (error);
 }
 
 /*ARGSUSED*/
@@ -407,15 +418,17 @@ cnhalt(void)
 	(*cn_tab->cn_halt)(cn_tab->cn_dev);
 }
 
+/*
+ * Redirect output, if that's appropriate.  If there's no real console,
+ * return ENXIO.
+ *
+ * Call with tty_mutex held.
+ */
 static const struct cdevsw *
 cn_redirect(dev_t *devp, int is_read, int *error)
 {
 	dev_t dev = *devp;
 
-	/*
-	 * Redirect output, if that's appropriate.
-	 * If there's no real console, return ENXIO.
-	 */
 	*error = ENXIO;
 	if (constty != NULL && minor(dev) == 0 &&
 	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE))) {

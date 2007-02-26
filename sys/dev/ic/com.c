@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.234.2.2 2006/12/30 20:48:02 yamt Exp $	*/
+/*	$NetBSD: com.c,v 1.234.2.3 2007/02/26 09:10:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234.2.2 2006/12/30 20:48:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234.2.3 2007/02/26 09:10:07 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -597,30 +597,30 @@ com_config(struct com_softc *sc)
 	if (sc->sc_type == COM_TYPE_HAYESP) {
 
 		/* Set 16550 compatibility mode */
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD1,
 				  HAYESP_SETMODE);
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
 				  HAYESP_MODE_SCALE);
 
 		/* Set RTS/CTS flow control */
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD1,
 				  HAYESP_SETFLOWTYPE);
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_FLOW_RTS);
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_FLOW_CTS);
 
 		/* Set flow control levels */
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD1,
 				  HAYESP_SETRXFLOW);
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_HIBYTE(HAYESP_RXHIWMARK));
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_LOBYTE(HAYESP_RXHIWMARK));
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_HIBYTE(HAYESP_RXLOWMARK));
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 				  HAYESP_LOBYTE(HAYESP_RXLOWMARK));
 	}
 #endif
@@ -1632,9 +1632,9 @@ com_loadchannelregs(struct com_softc *sc)
 	CSR_WRITE_1(regsp, COM_REG_FIFO, sc->sc_fifo);
 #ifdef COM_HAYESP
 	if (sc->sc_type == COM_TYPE_HAYESP) {
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD1,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD1,
 		    HAYESP_SETPRESCALER);
-		bus_space_write_1(iot, sc->sc_hayespioh, HAYESP_CMD2,
+		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD2,
 		    sc->sc_prescaler);
 	}
 #endif

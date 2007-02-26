@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.2.2.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.2.2.3 2007/02/26 09:10:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@ dev_type_write(pcfrtc_write);
 
 const struct cdevsw pcfrtc_cdevsw = {
 	pcfrtc_open, pcfrtc_close, pcfrtc_read, pcfrtc_write, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter
+	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int pcfrtc_clock_read(struct pcfrtc_softc *, struct clock_ymdhms *,

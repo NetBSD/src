@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.19.4.2 2006/12/30 20:50:45 yamt Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.19.4.3 2007/02/26 09:12:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19.4.2 2006/12/30 20:50:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19.4.3 2007/02/26 09:12:01 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19.4.2 2006/12/30 20:50:45 yamt Exp $")
 #include <netiso/tp_stat.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_trace.h>
-#include <netiso/tp_stat.h>
 #include <netiso/tp_tpdu.h>
 #include <netiso/tp_clnp.h>
 #include <netiso/tp_var.h>
@@ -183,7 +182,7 @@ iso_putsufx(void *v, caddr_t sufxloc, int sufxlen, int which)
 			m->m_len = len;
 		}
 	}
-	bcopy(sufxloc, TSEL(addr), sufxlen);
+	memcpy(WRITABLE_TSEL(addr), sufxloc, sufxlen);
 	addr->siso_tlen = sufxlen;
 	addr->siso_len = len;
 }
@@ -609,9 +608,9 @@ tpiso_quench(struct isopcb *isop)
  * 	(siso) is the address of the guy who sent the ER CLNPDU
  */
 void *
-tpclnp_ctlinput(int cmd, struct sockaddr *saddr, void *dummy)
+tpclnp_ctlinput(int cmd, const struct sockaddr *sa, void *dummy)
 {
-	struct sockaddr_iso *siso = (struct sockaddr_iso *) saddr;
+	const struct sockaddr_iso *siso = (const struct sockaddr_iso *)sa;
 
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_TPINPUT]) {

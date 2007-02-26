@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.24.2.2 2006/12/30 20:47:13 yamt Exp $	*/
+/*	$NetBSD: obio.c,v 1.24.2.3 2007/02/26 09:08:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.24.2.2 2006/12/30 20:47:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.24.2.3 2007/02/26 09:08:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.24.2.2 2006/12/30 20:47:13 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#define _SUN68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/dvma.h>
 #include <machine/mon.h>
 #include <machine/pte.h>
 
@@ -73,6 +75,8 @@ static int obio_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
     int, vaddr_t, bus_space_handle_t *);
 static paddr_t obio_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t,
     off_t, int, int);
+static int obio_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int);
 
 static struct sun68k_bus_space_tag obio_space_tag = {
 	NULL,				/* cookie */
@@ -86,6 +90,8 @@ static struct sun68k_bus_space_tag obio_space_tag = {
 	NULL,				/* bus_space_peek_N */
 	NULL				/* bus_space_poke_N */
 };
+
+static struct sun68k_bus_dma_tag obio_dma_tag;
 
 static int 
 obio_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -177,8 +183,13 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	obio_space_tag.cookie = sc;
 	obio_space_tag.parent = sc->sc_bustag;
 
+	obio_dma_tag = *sc->sc_dmatag;
+	obio_dma_tag._cookie = sc;
+	obio_dma_tag._dmamap_load = obio_dmamap_load;
+
 	oba = *ca;
 	oba.ca_bustag = &obio_space_tag;
+	oba.ca_dmatag = &obio_dma_tag;
 
 	/* Configure these in the order listed above. */
 	for (i = 0; i < OBIO_ALIST_LEN; i++) {
@@ -404,3 +415,16 @@ obio_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
 	return bus_space_mmap2(sc->sc_bustag, PMAP_OBIO, paddr, off, prot,
 	    flags);
 }
+
+static int
+obio_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
+{
+	int error;
+
+	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
+	if (error == 0)
+		map->dm_segs[0].ds_addr &= DVMA_OBIO_SLAVE_MASK;
+	return error;
+}
+

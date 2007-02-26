@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.8.6.1 2006/06/21 14:55:47 yamt Exp $	*/
+/*	$NetBSD: profile.c,v 1.8.6.2 2007/02/26 09:08:14 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.8.6.1 2006/06/21 14:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.8.6.2 2007/02/26 09:08:14 yamt Exp $");
 
 #include "profiler.h"
 
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.8.6.1 2006/06/21 14:55:47 yamt Exp $")
 #include <sys/fcntl.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
-#include <sys/proc.h>
 
 #include <shark/shark/hat.h>
 #include <machine/profileio.h>

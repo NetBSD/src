@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.28.10.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.28.10.2 2007/02/26 09:11:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28.10.1 2006/06/21 15:10:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28.10.2 2007/02/26 09:11:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -85,12 +85,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28.10.1 2006/06/21 15:10:27 ya
 
 #define	senderr(e)	do { error = (e); goto bad; } while(0/*CONSTCOND*/)
 
-static int  ieee1394_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-		struct rtentry *);
+static int  ieee1394_output(struct ifnet *, struct mbuf *,
+		const struct sockaddr *, struct rtentry *);
 static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *, u_int16_t);
 
 static int
-ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
@@ -194,8 +194,8 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
-		if (unicast &&
-		    (!nd6_storelladdr(ifp, rt, m0, dst, (u_char *)hwdst))) {
+		if (unicast && (!nd6_storelladdr(ifp, rt, m0, dst,
+		    hwdst->iha_uid, IEEE1394_ADDR_LEN))) {
 			/* something bad happened */
 			return 0;
 		}

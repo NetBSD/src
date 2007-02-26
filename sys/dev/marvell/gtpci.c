@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.12.4.1 2006/06/21 15:04:36 yamt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.12.4.2 2007/02/26 09:10:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.12.4.1 2006/06/21 15:04:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.12.4.2 2007/02/26 09:10:17 yamt Exp $");
 
 #include "opt_marvell.h"
 #include <sys/param.h>
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: gtpci.c,v 1.12.4.1 2006/06/21 15:04:36 yamt Exp $");
 #include <dev/marvell/gtintrreg.h>
 #include <dev/marvell/gtpcireg.h>
 #include <dev/marvell/gtpcivar.h>
-#include <dev/marvell/gtvar.h>
 
 static int	gtpci_error_intr(void *);
 

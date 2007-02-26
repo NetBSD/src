@@ -1,0 +1,3 @@
+/*	$NetBSD: cputypes.h,v 1.2.4.2 2007/02/26 09:05:43 yamt Exp $	*/
+
+#include <x86/cputypes.h>

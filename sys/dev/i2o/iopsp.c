@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.19.4.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.19.4.3 2007/02/26 09:10:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.19.4.2 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.19.4.3 2007/02/26 09:10:05 yamt Exp $");
 
 #include "opt_i2o.h"
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.19.4.2 2006/12/30 20:48:00 yamt Exp $");
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/scsiio.h>
-#include <sys/lock.h>
 
 #include <sys/bswap.h>
 #include <machine/bus.h>
@@ -371,14 +370,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 
 	iop = (struct iop_softc *)device_parent(&sc->sc_dv);
 
-	rv = lockmgr(&iop->sc_conflock, LK_EXCLUSIVE, NULL);
-	if (rv != 0) {
-#ifdef I2ODEBUG
-		printf("iopsp_rescan: unable to acquire lock\n");
-#endif
-		return (rv);
-	}
-
+	mutex_enter(&iop->sc_conflock);
 	im = iop_msg_alloc(iop, IM_WAIT);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_hba_bus_scan);
@@ -395,7 +387,7 @@ iopsp_rescan(struct iopsp_softc *sc)
 	if ((rv = iop_lct_get(iop)) == 0)
 		rv = iopsp_reconfig(&sc->sc_dv);
 
-	lockmgr(&iop->sc_conflock, LK_RELEASE, NULL);
+	mutex_exit(&iop->sc_conflock);
 	return (rv);
 }
 

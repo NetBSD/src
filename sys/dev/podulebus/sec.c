@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.4.8.2 2006/12/30 20:49:30 yamt Exp $ */
+/* $NetBSD: sec.c,v 1.4.8.3 2007/02/26 09:10:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4.8.2 2006/12/30 20:49:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.4.8.3 2007/02/26 09:10:39 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -77,11 +77,11 @@ struct sec_softc {
 	uint8_t			sc_mpr;
 
 	/* Details of the current DMA transfer */
-	boolean_t		sc_dmaactive;
+	bool			sc_dmaactive;
 	caddr_t			sc_dmaaddr;
 	int			sc_dmaoff;
 	size_t			sc_dmalen;
-	boolean_t		sc_dmain;
+	bool			sc_dmain;
 	/* Details of the current block within the above transfer */
 	size_t			sc_dmablk;
 };

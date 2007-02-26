@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.5.14.3 2006/12/30 20:46:30 yamt Exp $ */
+/* $NetBSD: aupci.c,v 1.5.14.4 2007/02/26 09:07:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5.14.3 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.5.14.4 2007/02/26 09:07:24 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -329,7 +329,7 @@ aupci_decompose_tag(void *v, pcitag_t tag, int *b, int *d, int *f)
 		*f = (tag >> 8) & 0x07;
 }
 
-static inline boolean_t
+static inline bool
 aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 {
 	struct aupci_softc	*sc = (struct aupci_softc *)v;

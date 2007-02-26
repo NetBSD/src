@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.17.2.2 2006/12/30 20:51:00 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.17.2.3 2007/02/26 09:12:19 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17.2.2 2006/12/30 20:51:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17.2.3 2007/02/26 09:12:19 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17.2.2 2006/12/30 20:51:00 yamt E
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -183,7 +184,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	if (vp->v_usecount != 1 || vp->v_writecount != 0)
 		return EBUSY;
 	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag) != 0 &&
+	    NULL) != 0 &&
 	    VTOI(vp)->i_uid != kauth_cred_geteuid(l->l_cred))
 		return EACCES;
 
@@ -291,7 +292,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	 *
 	 * Suspend operation on filesystem.
 	 */
-	if ((error = vfs_write_suspend(vp->v_mount, PUSER|PCATCH, 0)) != 0) {
+	if ((error = vfs_suspend(vp->v_mount, 0)) != 0) {
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		goto out;
 	}
@@ -389,23 +390,18 @@ loop:
 			MNT_ILOCK(mp);
 			continue;
 		}
-		if (vn_lock(xvp, LK_EXCLUSIVE | LK_INTERLOCK) != 0) {
-			MNT_ILOCK(mp);
-			goto loop;
-		}
+		VI_UNLOCK(xvp);
 #ifdef DEBUG
 		if (snapdebug)
 			vprint("ffs_snapshot: busy vnode", xvp);
 #endif
 		if (VOP_GETATTR(xvp, &vat, l->l_cred, l) == 0 &&
 		    vat.va_nlink > 0) {
-			VOP_UNLOCK(xvp, 0);
 			MNT_ILOCK(mp);
 			continue;
 		}
 		xp = VTOI(xvp);
 		if (ffs_checkfreefile(copy_fs, vp, xp->i_number)) {
-			VOP_UNLOCK(xvp, 0);
 			MNT_ILOCK(mp);
 			continue;
 		}
@@ -435,7 +431,6 @@ loop:
 		if (!error)
 			error = ffs_freefile(copy_fs, vp, xp->i_number,
 			    xp->i_mode);
-		VOP_UNLOCK(xvp, 0);
 		if (error) {
 			free(copy_fs->fs_csp, M_UFSMNT);
 			goto out1;
@@ -518,7 +513,7 @@ out1:
 	/*
 	 * Resume operation on filesystem.
 	 */
-	vfs_write_resume(vp->v_mount);
+	vfs_resume(vp->v_mount);
 	/*
 	 * Set the mtime to the time the snapshot has been taken.
 	 */
@@ -1917,7 +1912,7 @@ retry:
 		if (blkno != 0)
 			continue;
 #ifdef DIAGNOSTIC
-		if (curlwp->l_flag & L_COWINPROGRESS)
+		if (curlwp->l_pflag & LP_UFSCOW)
 			printf("ffs_copyonwrite: recursive call\n");
 #endif
 		/*
@@ -2086,7 +2081,7 @@ writevnblk(struct vnode *vp, caddr_t data, ufs2_daddr_t lbn)
 }
 
 /*
- * Set/reset lwp's L_COWINPROGRESS flag.
+ * Set/reset lwp's LP_UFSCOW flag.
  * May be called recursive.
  */
 static inline int
@@ -2094,11 +2089,11 @@ cow_enter(void)
 {
 	struct lwp *l = curlwp;
 
-	if (l->l_flag & L_COWINPROGRESS) {
+	if (l->l_pflag & LP_UFSCOW) {
 		return 0;
 	} else {
-		l->l_flag |= L_COWINPROGRESS;
-		return L_COWINPROGRESS;
+		l->l_pflag |= LP_UFSCOW;
+		return LP_UFSCOW;
 	}
 }
 
@@ -2107,7 +2102,7 @@ cow_leave(int flag)
 {
 	struct lwp *l = curlwp;
 
-	l->l_flag &= ~flag;
+	l->l_pflag &= ~flag;
 }
 
 /*

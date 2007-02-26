@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.99.2.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.99.2.3 2007/02/26 09:11:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99.2.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99.2.3 2007/02/26 09:11:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -234,7 +234,7 @@ panic(const char *fmt, ...)
 			printf("Begin traceback...\n");
 			db_stack_trace_print(
 			    (db_expr_t)(intptr_t)__builtin_frame_address(0),
-			    TRUE, 65535, "", printf);
+			    true, 65535, "", printf);
 			printf("End traceback...\n");
 			intrace = 0;
 		} else
@@ -428,7 +428,25 @@ uprintf(const char *fmt, ...)
 	struct proc *p = curproc;
 	va_list ap;
 
-	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
+	/* mutex_enter(&proclist_mutex); XXXSMP */
+
+	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
+		/* No mutex needed; going to process TTY. */
+		va_start(ap, fmt);
+		kprintf(fmt, TOTTY, p->p_session->s_ttyp, NULL, ap);
+		va_end(ap);
+	}
+
+	/* mutex_exit(&proclist_mutex); XXXSMP */
+}
+
+void
+uprintf_locked(const char *fmt, ...)
+{
+	struct proc *p = curproc;
+	va_list ap;
+
+	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		/* No mutex needed; going to process TTY. */
 		va_start(ap, fmt);
 		kprintf(fmt, TOTTY, p->p_session->s_ttyp, NULL, ap);
@@ -454,12 +472,18 @@ uprintf(const char *fmt, ...)
 tpr_t
 tprintf_open(struct proc *p)
 {
+	tpr_t cookie;
 
-	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
+	cookie = NULL;
+
+	/* mutex_enter(&proclist_mutex); XXXSMP */
+	if (p->p_lflag & PL_CONTROLT && p->p_session->s_ttyvp) {
 		SESSHOLD(p->p_session);
-		return ((tpr_t) p->p_session);
+		cookie = (tpr_t)p->p_session;
 	}
-	return ((tpr_t) NULL);
+	/* mutex_exit(&proclist_mutex) XXXSMP */
+
+	return cookie;
 }
 
 /*
@@ -488,6 +512,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	int s, flags = TOLOG;
 	va_list ap;
 
+	/* mutex_enter(&proclist_mutex); XXXSMP */
 	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp, 0)) {
 		flags |= TOTTY;
 		tp = sess->s_ttyp;
@@ -501,6 +526,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	va_end(ap);
 
 	KPRINTF_MUTEX_EXIT(s);
+	/* mutex_exit(&proclist_mutex);	XXXSMP */
 
 	logwakeup();
 }

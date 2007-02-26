@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2002/01/02 12:36:21 uch Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.34.1 2007/02/26 09:07:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ extern u_int32_t __icu_mask[_IPL_N];
 #define	splsoftnet()		splraise(__icu_mask[IPL_SOFTNET])
 #define	splsoftserial()		splraise(__icu_mask[IPL_SOFTSERIAL])
 
-#define	spllowersoftclock()	splset(__icu_mask[IPL_SOFTCLOCK])
 void	spllowersofthigh(void);
 
 /*

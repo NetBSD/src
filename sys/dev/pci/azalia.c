@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.4.2 2006/12/30 20:48:41 yamt Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.4.3 2007/02/26 09:10:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.4.2 2006/12/30 20:48:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.4.3 2007/02/26 09:10:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,9 +135,9 @@ typedef struct azalia_t {
 	rirb_entry_t *unsolq;
 	int unsolq_wp;
 	int unsolq_rp;
-	boolean_t unsolq_kick;
+	bool unsolq_kick;
 
-	boolean_t ok64;
+	bool ok64;
 	int nistreams, nostreams, nbstreams;
 	stream_t pstream;
 	stream_t rstream;
@@ -1101,6 +1101,87 @@ azalia_codec_init(codec_t *this)
 		if (err)
 			return err;
 	}
+#if defined(AZALIA_DEBUG) &&  defined(AZALIA_DEBUG_DOT)
+	DPRINTF(("-------- Graphviz DOT starts\n"));
+	if (this->name == NULL) {
+		DPRINTF(("digraph \"0x%4.4x/0x%4.4x (rev. %u.%u)\" {\n",
+		    id >> 16, id & 0xffff,
+		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev)));
+	} else {
+		DPRINTF(("digraph \"%s (rev. %u.%u)\" {\n", this->name,
+		    COP_RID_REVISION(rev), COP_RID_STEPPING(rev)));
+	}
+	FOR_EACH_WIDGET(this, i) {
+		const widget_t *w;
+		int j;
+		w = &this->w[i];
+		switch (w->type) {
+		case COP_AWTYPE_AUDIO_OUTPUT:
+			DPRINTF((" %s [shape=box,style=filled,fillcolor=\""
+			    "#88ff88\"];\n", w->name));
+			break;
+		case COP_AWTYPE_AUDIO_INPUT:
+			DPRINTF((" %s [shape=box,style=filled,fillcolor=\""
+			    "#ff8888\"];\n", w->name));
+			break;
+		case COP_AWTYPE_AUDIO_MIXER:
+			DPRINTF((" %s [shape=invhouse];\n", w->name));
+			break;
+		case COP_AWTYPE_AUDIO_SELECTOR:
+			DPRINTF((" %s [shape=invtrapezium];\n", w->name));
+			break;
+		case COP_AWTYPE_PIN_COMPLEX:
+			DPRINTF((" %s [label=\"%s\\ndevice=%s\",style=filled",
+			    w->name, w->name, pin_devices[w->d.pin.device]));
+			if (w->d.pin.cap & COP_PINCAP_OUTPUT &&
+			    w->d.pin.cap & COP_PINCAP_INPUT)
+				DPRINTF((",shape=doublecircle,fillcolor=\""
+				    "#ffff88\"];\n"));
+			else if (w->d.pin.cap & COP_PINCAP_OUTPUT)
+				DPRINTF((",shape=circle,fillcolor=\"#88ff88\"];\n"));
+			else
+				DPRINTF((",shape=circle,fillcolor=\"#ff8888\"];\n"));
+			break;
+		}
+		if ((w->widgetcap & COP_AWCAP_CONNLIST) == 0)
+			continue;
+		for (j = 0; j < w->nconnections; j++) {
+			int src = w->connections[j];
+			if (!VALID_WIDGET_NID(src, this))
+				continue;
+			DPRINTF((" %s -> %s [sametail=%s];\n",
+			    this->w[src].name, w->name, this->w[src].name));
+		}
+	}
+
+	DPRINTF((" {rank=min;"));
+	FOR_EACH_WIDGET(this, i) {
+		const widget_t *w;
+		w = &this->w[i];
+		switch (w->type) {
+		case COP_AWTYPE_AUDIO_OUTPUT:
+		case COP_AWTYPE_AUDIO_INPUT:
+			DPRINTF((" %s;", w->name));
+			break;
+		}
+	}
+	DPRINTF(("}\n"));
+
+	DPRINTF((" {rank=max;"));
+	FOR_EACH_WIDGET(this, i) {
+		const widget_t *w;
+		w = &this->w[i];
+		switch (w->type) {
+		case COP_AWTYPE_PIN_COMPLEX:
+			DPRINTF((" %s;", w->name));
+			break;
+		}
+	}
+	DPRINTF(("}\n"));
+
+	DPRINTF(("}\n"));
+	DPRINTF(("-------- Graphviz DOT ends\n"));
+#endif	/* AZALIA_DEBUG && AZALIA_DEBUG_DOT */
 
 	err = this->init_dacgroup(this);
 	if (err)
@@ -1351,7 +1432,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	uint32_t v;
 	int i, err, startchan, nchan;
 	nid_t nid;
-	boolean_t flag222;
+	bool flag222;
 
 	DPRINTF(("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
@@ -1645,7 +1726,7 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 {
 	uint32_t result;
 	int err;
-	boolean_t longform;
+	bool longform;
 	int length, i;
 
 	this->selected = -1;

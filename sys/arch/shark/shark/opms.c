@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.14.2.1 2006/06/21 14:55:47 yamt Exp $        */
+/*      $NetBSD: opms.c,v 1.14.2.2 2007/02/26 09:08:14 yamt Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14.2.1 2006/06/21 14:55:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14.2.2 2007/02/26 09:08:14 yamt Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.14.2.1 2006/06/21 14:55:47 yamt Exp $");
 #include <machine/pio.h>
 #include <machine/mouse.h>
 
-#include <dev/isa/isavar.h>
 #include <shark/shark/i8042reg.h>
 
 /*

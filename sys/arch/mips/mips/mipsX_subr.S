@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.16.2.2 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.16.2.3 2007/02/26 09:07:29 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -610,12 +610,24 @@ NESTED_NOPROFILE(MIPSX(KernGenException), KERNFRAME_SIZ, ra)
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
-	REG_L	k0, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
+	REG_L	k1, TF_BASE+TF_REG_EPC(sp)	# might be changed inside trap
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	COP0_SYNC
 	mtlo	t0
 	mthi	t1
-	_MTC0	k0, MIPS_COP_0_EXC_PC		# set return address
+
+#ifdef notyet
+	/* Check for restartable sequences. */
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	li	t1, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, k1
+	bne	t1, t0, 1f
+	jal	_C_LABEL(_lock_ras)
+	nop
+#endif
+
+1:	_MTC0	k1, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
 	REG_L	AT, TF_BASE+TF_REG_AST(sp)
 	REG_L	v0, TF_BASE+TF_REG_V0(sp)
@@ -738,9 +750,7 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
  */
 	lw	t0, _C_LABEL(curlwp)		# t0 = curlwp
 	nop
-	lw	t0, L_PROC(t0)			# t0 = curlwp->l_proc
-	nop
-	lw	t0, P_MD_ASTPENDING(t0)
+	lw	t0, L_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
 /*
@@ -907,8 +917,8 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
  * Check pending asynchronous traps.
  */
 	lw	t0, _C_LABEL(curlwp)
-	lw	t0, L_PROC(t0)
-	lw	t0, P_MD_ASTPENDING(t0)	# curlwp->l_proc->p_md.md_astpending
+	nop
+	lw	t0, L_MD_ASTPENDING(t0)
 	beq	t0, zero, 1f
 	nop
 /*
@@ -1118,7 +1128,21 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	COP0_SYNC
 	mtlo	t0
 	mthi	t1
-	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
+
+#ifdef notyet
+	/* Check for restartable sequences. */
+	lui	t0, %hi(_C_LABEL(_lock_ras_start))
+	ori	t0, zero, %lo(_C_LABEL(_lock_ras_start))
+	li	t1, -MIPS_LOCK_RAS_SIZE
+	and	t1, t1, v0
+	bne	t1, t0, 1f
+	move	k1, v0
+	jal	_C_LABEL(_lock_ras)
+	nop
+	mov	v0, k1
+#endif
+
+1:	_MTC0	v0, MIPS_COP_0_EXC_PC		# set return address
 	COP0_SYNC
 
 	REG_L	AT, TF_BASE+TF_REG_AST(sp)
@@ -1246,10 +1270,10 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	nop
 	lw	v0, _C_LABEL(curlwp)
 	addu	a1, sp, CALLFRAME_SIZ
-	lw	v0, L_PROC(v0)
  #	REG_L	a0, FRAME_SR(a1)
-	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
+	lw	v0, L_MD_ASTPENDING(v0)		# any pending ast?
  #	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
+	nop
 /*
  * Check pending asynchronous traps.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.9 2005/06/03 22:05:25 tsutsui Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.9.2.1 2007/02/26 09:08:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.9 2005/06/03 22:05:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.9.2.1 2007/02/26 09:08:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,7 +365,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	/* Double map the SCP */
-	if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_maddr, &pa) == false)
 		panic("ie pmap_extract");
 
 	pmap_enter(pmap_kernel(), m68k_trunc_page(IEOB_ADBASE+IE_SCP_ADDR),

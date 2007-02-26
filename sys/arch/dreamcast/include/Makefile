@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13.12.1 2006/12/30 20:45:48 yamt Exp $
+#	$NetBSD: Makefile,v 1.13.12.2 2007/02/26 09:06:16 yamt Exp $
 
 INCSDIR= /usr/include/dreamcast
 
@@ -12,9 +12,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
 	limits.h lock.h \
-	math.h mcontext.h \
+	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \
 	varargs.h vmparam.h \

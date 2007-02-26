@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.4.4.1 2006/06/21 15:02:46 yamt Exp $ */
+/*	$NetBSD: ct.c,v 1.4.4.2 2007/02/26 09:10:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.4.4.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.4.4.2 2007/02/26 09:10:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ extern struct cfdriver ct_cd;
 struct	ctinfo {
 	short	hwid;
 	short	punit;
-	char	*desc;
+	const char	*desc;
 } ctinfo[] = {
 	{ CT7946ID,	1,	"7946A"	},
 	{ CT7912PID,	1,	"7912P"	},
@@ -378,10 +378,10 @@ ctattach(parent, self, aux)
 
 /*ARGSUSED*/
 int
-ctopen(dev, flag, type, p)
+ctopen(dev, flag, type, l)
 	dev_t dev;
 	int flag, type;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ct_softc *sc;
 	u_int8_t opt;
@@ -402,7 +402,7 @@ ctopen(dev, flag, type, p)
 	    sc->sc_punit, opt))
 		return (EBUSY);
 
-	sc->sc_tpr = tprintf_open(p);
+	sc->sc_tpr = tprintf_open(l->l_proc);
 	sc->sc_flags |= CTF_OPEN;
 
 	return (0);
@@ -410,10 +410,10 @@ ctopen(dev, flag, type, p)
 
 /*ARGSUSED*/
 int
-ctclose(dev, flag, fmt, p)
+ctclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct ct_softc *sc;
 
@@ -910,12 +910,12 @@ ctwrite(dev, uio, flags)
 
 /*ARGSUSED*/
 int
-ctioctl(dev, cmd, data, flag, p)
+ctioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	int flag;
 	caddr_t data;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mtop *op;
 	int cnt;

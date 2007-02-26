@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24.2.2 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24.2.3 2007/02/26 09:07:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -43,8 +43,6 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/user.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -65,7 +63,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.2 2006/12/30 20:46:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.3 2007/02/26 09:07:57 yamt Exp $");
 
 void
 child_return(void *arg)
@@ -76,7 +74,7 @@ child_return(void *arg)
 #endif
 	struct trapframe * const tf = trapframe(l);
 
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 
 	tf->fixreg[FIRSTARG] = 0;
 	tf->fixreg[FIRSTARG + 1] = 1;
@@ -86,9 +84,9 @@ child_return(void *arg)
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 #ifdef	KTRACE
 	if (KTRPOINT(p, KTR_SYSRET)) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ktrsysret(l, SYS_fork, 0, 0);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 #endif
 	/* Profiling?							XXX */
@@ -150,11 +148,11 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 
 	if (argsize > n * sizeof(register_t)) {
 		memcpy(args, params, n * sizeof(register_t));
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		error = copyin(MOREARGS(frame->fixreg[1]),
 		       args + n,
 		       argsize - n * sizeof(register_t));
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		if (error)
 			goto bad;
 		params = args;
@@ -164,13 +162,13 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	rval[1] = 0;
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 	}
 
 	error = (*callp->sy_call)(l, params, rval);
 
 	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 	switch (error) {
 	case 0:
@@ -225,7 +223,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 
 	LWP_CACHE_CREDS(l, p);
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	curcpu()->ci_ev_scalls.ev_count++;
 
 	code = frame->fixreg[0];
@@ -314,7 +312,7 @@ out:
 		frame->cr |= 0x10000000;
 		break;
 	}
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	trace_exit(l, realcode, params, rval, error);
 	userret(l, frame);
 }

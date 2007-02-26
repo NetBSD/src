@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11.2.2 2006/12/30 20:45:22 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11.2.3 2007/02/26 09:05:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11.2.2 2006/12/30 20:45:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11.2.3 2007/02/26 09:05:41 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -114,8 +114,8 @@ void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
 {
 	p2->p_md.md_flags = p1->p_md.md_flags;
-	if (p1->p_flag & P_32)
-		p2->p_flag |= P_32;
+	if (p1->p_flag & PK_32)
+		p2->p_flag |= PK_32;
 }
 
 /*
@@ -206,7 +206,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
-	if (func == child_return && !(l2->l_proc->p_flag & P_32))
+	if (func == child_return && !(l2->l_proc->p_flag & PK_32))
 		sf->sf_rip = (u_int64_t)child_trampoline;
 	else
 		sf->sf_rip = (u_int64_t)proc_trampoline;
@@ -226,7 +226,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 	sf->sf_r12 = (u_int64_t)func;
 	sf->sf_r13 = (u_int64_t)arg;
-	if (func == child_return && !(l->l_proc->p_flag & P_32))
+	if (func == child_return && !(l->l_proc->p_flag & PK_32))
 		sf->sf_rip = (u_int64_t)child_trampoline;
 	else
 		sf->sf_rip = (u_int64_t)proc_trampoline;
@@ -261,7 +261,11 @@ cpu_lwp_free(struct lwp *l, int proc)
 
 	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
+}
 
+void
+cpu_lwp_free2(struct lwp *l)
+{
 	/* Nuke the TSS. */
 	tss_free(l->l_md.md_tss_sel);
 }
@@ -277,7 +281,7 @@ void
 cpu_exit(struct lwp *l)
 {
 
-	switch_exit(l, lwp_exit2);
+	switch_exit(l, (void (*)(struct lwp *))nullop);
 }
 
 #ifdef COREDUMP
@@ -349,7 +353,7 @@ kvtop(addr)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == false)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }

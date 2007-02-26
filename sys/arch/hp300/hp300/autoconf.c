@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.72.2.2 2006/12/30 20:45:56 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.72.2.3 2007/02/26 09:06:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,13 +143,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72.2.2 2006/12/30 20:45:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72.2.3 2007/02/26 09:06:32 yamt Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
 #include "gbox.h"
 #include "hyper.h"
-#include "rbox.h"
 #include "rbox.h"
 #include "topcat.h"
 #include "com_dio.h"
@@ -161,7 +160,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.72.2.2 2006/12/30 20:45:56 yamt Exp $
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
-#include <sys/device.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/malloc.h>

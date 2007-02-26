@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.85.2.2 2006/12/30 20:50:20 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.85.2.3 2007/02/26 09:11:35 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.2 2006/12/30 20:50:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.3 2007/02/26 09:11:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -270,7 +270,7 @@ static u_short interactive_ports[8] = {
 	int debug = ifp->if_flags & IFF_DEBUG
 
 static int sppp_output(struct ifnet *ifp, struct mbuf *m,
-		       struct sockaddr *dst, struct rtentry *rt);
+		       const struct sockaddr *dst, struct rtentry *rt);
 
 static void sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2);
 static void sppp_cisco_input(struct sppp *sp, struct mbuf *m);
@@ -676,7 +676,7 @@ queue_pkt:
  */
 static int
 sppp_output(struct ifnet *ifp, struct mbuf *m,
-    struct sockaddr *dst, struct rtentry *rt)
+    const struct sockaddr *dst, struct rtentry *rt)
 {
 	struct sppp *sp = (struct sppp *) ifp;
 	struct ppp_header *h = NULL;

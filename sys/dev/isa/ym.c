@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.25.2.2 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: ym.c,v 1.25.2.3 2007/02/26 09:10:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.2 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.3 2007/02/26 09:10:16 yamt Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -99,10 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.25.2.2 2006/12/30 20:48:27 yamt Exp $");
 #endif
 #include <dev/isa/ymvar.h>
 #include <dev/isa/sbreg.h>
-
-#ifndef spllowersoftclock
- #error "We depend on the new semantics of splsoftclock(9)."
-#endif
 
 /* Power management mode. */
 #ifndef YM_POWER_MODE

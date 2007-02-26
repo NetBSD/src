@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.29.8.1 2006/06/21 14:57:06 yamt Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.29.8.2 2007/02/26 09:08:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.29.8.1 2006/06/21 14:57:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.29.8.2 2007/02/26 09:08:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,6 +168,22 @@ si_obio_attach(struct device *parent, struct device *self, void *args)
 	struct cfdata *cf = device_cfdata(self);
 	struct confargs *ca = args;
 
+	sc->sc_bst = ca->ca_bustag;
+	sc->sc_dmat = ca->ca_dmatag;
+
+	if (bus_space_map(sc->sc_bst, ca->ca_paddr, sizeof(struct si_regs), 0,
+	    &sc->sc_bsh) != 0) {
+		printf(": can't map register\n");
+		return;
+	}
+	sc->sc_regs = bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
+
+	if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1, MAXPHYS, 0,
+	    BUS_DMA_NOWAIT, &sc->sc_dmap) != 0) {
+		printf(": can't create DMA map\n");
+		return;
+	}
+
 	/* Get options from config flags if specified. */
 	if (cf->cf_flags)
 		sc->sc_options = cf->cf_flags;
@@ -177,8 +193,6 @@ si_obio_attach(struct device *parent, struct device *self, void *args)
 	printf(": options=0x%x\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
-	sc->sc_regs = bus_mapin(ca->ca_bustype,
-		ca->ca_paddr, sizeof(struct si_regs));
 
 	/*
 	 * MD function pointers used by the MI code.
@@ -280,11 +294,10 @@ si_obio_dma_setup(struct ncr5380_softc *ncr_sc)
 	 * Get the DVMA mapping for this segment.
 	 * XXX - Should separate allocation and mapin.
 	 */
-	data_pa = dvma_kvtopa(dh->dh_dvma, sc->sc_adapter_type);
-	data_pa += (ncr_sc->sc_dataptr - dh->dh_addr);
+	data_pa = dh->dh_dmaaddr;
 	if (data_pa & 1)
 		panic("si_dma_start: bad pa=0x%lx", data_pa);
-	xlen = ncr_sc->sc_datalen;
+	xlen = dh->dh_dmalen;
 	sc->sc_reqlen = xlen; 	/* XXX: or less? */
 
 #ifdef	DEBUG

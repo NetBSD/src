@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.15.2.1 2006/06/21 15:06:47 yamt Exp $	*/
+/*	$NetBSD: zx.c,v 1.15.2.2 2007/02/26 09:10:40 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.15.2.1 2006/06/21 15:06:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.15.2.2 2007/02/26 09:10:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,7 +476,7 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	default:
 #ifdef DEBUG
 		log(LOG_NOTICE, "zxioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
+		    l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 		return (ENOTTY);
 	}

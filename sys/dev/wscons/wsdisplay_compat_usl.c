@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.26.10.2 2006/12/30 20:49:51 yamt Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.26.10.3 2007/02/26 09:10:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.26.10.2 2006/12/30 20:49:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.26.10.3 2007/02/26 09:10:51 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -138,7 +138,11 @@ usl_sync_done(struct usl_syncdata *sd)
 static int
 usl_sync_check(struct usl_syncdata *sd)
 {
-	if (sd->s_proc == pfind(sd->s_pid))
+	int rv;
+	mutex_enter(&proclist_mutex);	/* XXXSMP */
+	rv = (sd->s_proc == p_find(sd->s_pid, PFIND_LOCKED));
+	mutex_exit(&proclist_mutex);	/* XXXSMP */
+	if (rv)
 		return (1);
 	printf("usl_sync_check: process %d died\n", sd->s_pid);
 	usl_sync_done(sd);
@@ -176,7 +180,9 @@ usl_detachproc(void *cookie, int waitok,
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
+	mutex_enter(&proclist_mutex);
 	psignal(sd->s_proc, sd->s_relsig);
+	mutex_exit(&proclist_mutex);
 	callout_reset(&sd->s_detach_ch, wscompat_usl_synctimeout * hz,
 	    usl_detachtimeout, sd);
 
@@ -236,7 +242,9 @@ usl_attachproc(void *cookie, int waitok,
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
+	mutex_enter(&proclist_mutex);
 	psignal(sd->s_proc, sd->s_acqsig);
+	mutex_exit(&proclist_mutex);
 	callout_reset(&sd->s_attach_ch, wscompat_usl_synctimeout * hz,
 	    usl_attachtimeout, sd);
 

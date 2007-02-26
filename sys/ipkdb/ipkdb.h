@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb.h,v 1.4 2000/03/22 20:58:29 ws Exp $	*/
+/*	$NetBSD: ipkdb.h,v 1.4.44.1 2007/02/26 09:11:02 yamt Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -54,7 +54,7 @@ struct ipkdb_if {
 	u_int16_t	asslen;
 	u_int8_t	flags;		/* driver marks IPKDB_MYHW here */
 	/* Data from here on is to be filled by the driver */
-	char		*name;
+	const char	*name;
 	void		*port;
 	void		(*start) __P((struct ipkdb_if *));
 	void		(*leave) __P((struct ipkdb_if *));
@@ -95,7 +95,7 @@ extern int ipkdbifinit __P((struct ipkdb_if *));
 /*
  * Utilities (used to avoid calling system routines during debugging).
  */
-extern void ipkdbcopy __P((void *, void *, int));
+extern void ipkdbcopy __P((const void *, void *, int));
 extern void ipkdbzero __P((void *, int));
 extern int ipkdbcmp __P((void *, void *, int));
 

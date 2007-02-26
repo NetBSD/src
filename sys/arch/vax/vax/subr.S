@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.11.2.1 2006/06/21 14:57:34 yamt Exp $	   */
+/*	$NetBSD: subr.S,v 1.11.2.2 2007/02/26 09:08:43 yamt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -315,11 +315,7 @@ remrq:	.asciz	"remrunqueue"
 # pi or something.
 #
 idle:
-#if defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(sched_unlock_idle)
-#elif defined(MULTIPROCESSOR)
-	clrl	_C_LABEL(sched_lock)	# release sched lock
-#endif
 	mtpr	$1,$PR_IPL 		# IPL cannot be 0 because we are
 					# running on the interrupt stack
 					# and may get interrupts
@@ -328,11 +324,7 @@ idle:
 	beql	1b			# no, run the idle loop again.
 /* Now try the test the long way */
 	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
-#if defined(LOCKDEBUG)
-	calls	$0,_C_LABEL(sched_lock_idle)
-#elif defined(MULTIPROCESSOR)
-3:	bbssi	$0,_C_LABEL(sched_lock),3b	# acquire sched lock
-#endif
+3:	calls	$0,_C_LABEL(sched_lock_idle)
 	brb	lp			# check sched_whichqs again
 
 #
@@ -392,13 +384,9 @@ lp:	ffs	$0,$32,_C_LABEL(sched_whichqs),%r3 # Search for bit set
 
 1:	mtpr	%r3,$PR_PCBB
 	ldpctx
-#if defined(LOCKDEBUG)
 	pushl	%r0
 	calls	$0,_C_LABEL(sched_unlock_idle)
 	movl	(%sp)+,%r0
-#elif defined(MULTIPROCESSOR)
-	clrl	_C_LABEL(sched_lock)	# clear sched lock
-#endif
 	rei
 
 #if defined(MULTIPROCESSOR)
@@ -432,13 +420,9 @@ JSBENTRY(Swtchto)
 
 	mtpr	%r3,$PR_PCBB
 	ldpctx
-#if defined(LOCKDEBUG)
 	pushl	%r0
 	calls	$0,_C_LABEL(sched_unlock_idle)
 	movl	(%sp)+,%r0
-#elif defined(MULTIPROCESSOR)
-	clrl	_C_LABEL(sched_lock)	# clear sched lock
-#endif
 	rei	
 
 #
@@ -458,11 +442,7 @@ ENTRY(cpu_exit,0)
 	pushl	%r6
 	calls	$1,_C_LABEL(lwp_exit2)	# release last resources.
 	mtpr	$IPL_HIGH,$PR_IPL	# block all types of interrupts
-#if defined(LOCKDEBUG)
 	calls	$0,_C_LABEL(sched_lock_idle)
-#elif defined(MULTIPROCESSOR)
-1:	bbssi	$0,_C_LABEL(sched_lock),1b	# acquire sched lock
-#endif
 	clrl	%r6
 	brw	Swtch
 

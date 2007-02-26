@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.31.12.1 2006/12/30 20:50:52 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.31.12.2 2007/02/26 09:12:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.31.12.1 2006/12/30 20:50:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.31.12.2 2007/02/26 09:12:06 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -81,6 +81,10 @@ TAILQ_HEAD(nfsrvlru, nfsrvcache) nfsrvlruhead;
 struct simplelock nfsrv_reqcache_lock = SIMPLELOCK_INITIALIZER;
 u_long nfsrvhash;
 
+#if defined(MBUFTRACE)
+static struct mowner nfsd_cache_mowner = MOWNER_INIT("nfsd", "cache");
+#endif /* defined(MBUFTRACE) */
+
 #define	NETFAMILY(rp) \
 		(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_ISO)
 
@@ -91,52 +95,65 @@ static void nfsrv_unlockcache(struct nfsrvcache *rp);
  * Static array that defines which nfs rpc's are nonidempotent
  */
 const int nonidempotent[NFS_NPROCS] = {
-	FALSE,	/* NULL */
-	FALSE,	/* GETATTR */
-	TRUE,	/* SETATTR */
-	FALSE,	/* LOOKUP */
-	FALSE,	/* ACCESS */
-	FALSE,	/* READLINK */
-	FALSE,	/* READ */
-	TRUE,	/* WRITE */
-	TRUE,	/* CREATE */
-	TRUE,	/* MKDIR */
-	TRUE,	/* SYMLINK */
-	TRUE,	/* MKNOD */
-	TRUE,	/* REMOVE */
-	TRUE,	/* RMDIR */
-	TRUE,	/* RENAME */
-	TRUE,	/* LINK */
-	FALSE,	/* READDIR */
-	FALSE,	/* READDIRPLUS */
-	FALSE,	/* FSSTAT */
-	FALSE,	/* FSINFO */
-	FALSE,	/* PATHCONF */
-	FALSE,	/* COMMIT */
-	FALSE,	/* NOOP */
+	false,	/* NULL */
+	false,	/* GETATTR */
+	true,	/* SETATTR */
+	false,	/* LOOKUP */
+	false,	/* ACCESS */
+	false,	/* READLINK */
+	false,	/* READ */
+	true,	/* WRITE */
+	true,	/* CREATE */
+	true,	/* MKDIR */
+	true,	/* SYMLINK */
+	true,	/* MKNOD */
+	true,	/* REMOVE */
+	true,	/* RMDIR */
+	true,	/* RENAME */
+	true,	/* LINK */
+	false,	/* READDIR */
+	false,	/* READDIRPLUS */
+	false,	/* FSSTAT */
+	false,	/* FSINFO */
+	false,	/* PATHCONF */
+	false,	/* COMMIT */
+	false,	/* NOOP */
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
 static const int nfsv2_repstat[NFS_NPROCS] = {
-	FALSE,	/* NULL */
-	FALSE,	/* GETATTR */
-	FALSE,	/* SETATTR */
-	FALSE,	/* NOOP */
-	FALSE,	/* LOOKUP */
-	FALSE,	/* READLINK */
-	FALSE,	/* READ */
-	FALSE,	/* Obsolete WRITECACHE */
-	FALSE,	/* WRITE */
-	FALSE,	/* CREATE */
-	TRUE,	/* REMOVE */
-	TRUE,	/* RENAME */
-	TRUE,	/* LINK */
-	TRUE,	/* SYMLINK */
-	FALSE,	/* MKDIR */
-	TRUE,	/* RMDIR */
-	FALSE,	/* READDIR */
-	FALSE,	/* STATFS */
+	false,	/* NULL */
+	false,	/* GETATTR */
+	false,	/* SETATTR */
+	false,	/* NOOP */
+	false,	/* LOOKUP */
+	false,	/* READLINK */
+	false,	/* READ */
+	false,	/* Obsolete WRITECACHE */
+	false,	/* WRITE */
+	false,	/* CREATE */
+	true,	/* REMOVE */
+	true,	/* RENAME */
+	true,	/* LINK */
+	true,	/* SYMLINK */
+	false,	/* MKDIR */
+	true,	/* RMDIR */
+	false,	/* READDIR */
+	false,	/* STATFS */
 };
+
+static void
+cleanentry(struct nfsrvcache *rp)
+{
+
+	if ((rp->rc_flag & RC_REPMBUF) != 0) {
+		m_freem(rp->rc_reply);
+	}
+	if ((rp->rc_flag & RC_NAM) != 0) {
+		m_free(rp->rc_nam);
+	}
+	rp->rc_flag &= ~(RC_REPSTATUS|RC_REPMBUF);
+}
 
 /*
  * Initialize the server request cache list
@@ -150,6 +167,7 @@ nfsrv_initcache()
 	TAILQ_INIT(&nfsrvlruhead);
 	pool_init(&nfs_reqcache_pool, sizeof(struct nfsrvcache), 0, 0, 0,
 	    "nfsreqcachepl", &pool_allocator_nointr);
+	MOWNER_ATTACH(&nfsd_cache_mowner);
 }
 
 /*
@@ -281,10 +299,7 @@ found:
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 		simple_unlock(&nfsrv_reqcache_lock);
-		if (rp->rc_flag & RC_REPMBUF)
-			m_freem(rp->rc_reply);
-		if (rp->rc_flag & RC_NAM)
-			(void) m_free(rp->rc_nam);
+		cleanentry(rp);
 		rp->rc_flag &= (RC_LOCKED | RC_WANTED);
 	}
 	rp->rc_state = RC_INPROG;
@@ -299,6 +314,7 @@ found:
 	default:
 		rp->rc_flag |= RC_NAM;
 		rp->rc_nam = m_copym(nd->nd_nam, 0, M_COPYALL, M_WAIT);
+		m_claimm(rp->rc_nam, &nfsd_cache_mowner);
 		break;
 	};
 	rp->rc_proc = nd->nd_procnum;
@@ -331,12 +347,11 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 {
 	struct nfsrvcache *rp;
 
-	if (!nd->nd_nam2)
-		return;
 	simple_lock(&nfsrv_reqcache_lock);
 	rp = nfsrv_lookupcache(nd);
 	simple_unlock(&nfsrv_reqcache_lock);
 	if (rp) {
+		cleanentry(rp);
 		rp->rc_state = RC_DONE;
 		/*
 		 * If we have a valid reply update status and save
@@ -350,6 +365,7 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 			} else {
 				rp->rc_reply = m_copym(repmbuf,
 					0, M_COPYALL, M_WAIT);
+				m_claimm(rp->rc_reply, &nfsd_cache_mowner);
 				rp->rc_flag |= RC_REPMBUF;
 			}
 		}
@@ -372,6 +388,8 @@ nfsrv_cleancache()
 		nextrp = TAILQ_NEXT(rp, rc_lru);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
+		KASSERT((rp->rc_flag & (RC_LOCKED|RC_WANTED)) == 0);
+		cleanentry(rp);
 		pool_put(&nfs_reqcache_pool, rp);
 	}
 	numnfsrvcache = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.16.2.1 2006/06/21 14:57:16 yamt Exp $	*/
+/*	$NetBSD: vme.c,v 1.16.2.2 2007/02/26 09:08:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,13 +37,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16.2.1 2006/06/21 14:57:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.16.2.2 2007/02/26 09:08:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <uvm/uvm_extern.h>
+
+#define _SUN68K_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
+#include <machine/bus.h>
+#include <machine/dvma.h>
+#include <machine/pmap.h>
+
+#include <sun3/sun3/vme.h>
 
 /* Does this machine have a VME bus? */
 extern int cpu_has_vme;
@@ -56,21 +64,53 @@ extern int cpu_has_vme;
 #define VME_UNITS	6
 static const struct {
 	int bustype;
-	char name[8];
+	const char *name;
+	int pmtype;
+	vaddr_t base;
+	vaddr_t mask;
 } vme_info[VME_UNITS] = {
-	{ BUS_VME16D16, "A16/D16" },
-	{ BUS_VME16D32, "A16/D32" },
-	{ BUS_VME24D16, "A24/D16" },
-	{ BUS_VME24D32, "A24/D32" },
-	{ BUS_VME32D16, "A32/D16" },
-	{ BUS_VME32D32, "A32/D32" },
+	{ BUS_VME16D16, "A16/D16", PMAP_VME16, VME16_BASE, VME16_MASK },
+	{ BUS_VME16D32, "A16/D32", PMAP_VME32, VME16_BASE, VME16_MASK },
+	{ BUS_VME24D16, "A24/D16", PMAP_VME16, VME24_BASE, VME24_MASK },
+	{ BUS_VME24D32, "A24/D32", PMAP_VME32, VME24_BASE, VME24_MASK },
+	{ BUS_VME32D16, "A32/D16", PMAP_VME16, VME32_BASE, VME32_MASK },
+	{ BUS_VME32D32, "A32/D32", PMAP_VME32, VME32_BASE, VME32_MASK },
 };
 
 static int  vme_match(struct device *, struct cfdata *, void *);
 static void vme_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(vme, sizeof(struct device),
+struct vme_softc {
+	struct device	sc_dev;
+	bus_space_tag_t	sc_bustag;
+	bus_dma_tag_t	sc_dmatag;
+	int		sc_bustype;
+};
+
+CFATTACH_DECL(vme, sizeof(struct vme_softc),
     vme_match, vme_attach, NULL, NULL);
+
+static int vme_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
+    int, vaddr_t, bus_space_handle_t *);
+static paddr_t vme_bus_mmap(bus_space_tag_t, bus_type_t, bus_addr_t,
+    off_t, int, int);
+static int vme_dmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+    struct proc *, int);
+
+static struct sun68k_bus_space_tag vme_space_tag = {
+	NULL,				/* cookie */
+	NULL,				/* parent bus space tag */
+	vme_bus_map,			/* bus_space_map */
+	NULL,				/* bus_space_unmap */
+	NULL,				/* bus_space_subregion */
+	NULL,				/* bus_space_barrier */
+	vme_bus_mmap,			/* bus_space_mmap */
+	NULL,				/* bus_intr_establish */
+	NULL,				/* bus_space_peek_N */
+	NULL				/* bus_space_poke_N */
+};
+
+static struct sun68k_bus_dma_tag vme_dma_tag;
 
 static int 
 vme_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -92,13 +132,78 @@ vme_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void 
-vme_attach(struct device *parent, struct device *self, void *args)
+vme_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct confargs *ca = aux;
+	struct vme_softc *sc = (void *)self;
+	struct confargs vmea;
 	int unit;
 
 	unit = device_unit(self);
 	printf(": (%s)\n", vme_info[unit].name);
 
+	sc->sc_bustag = ca->ca_bustag;
+	sc->sc_dmatag = ca->ca_dmatag;
+	sc->sc_bustype = unit;
+
+	vme_space_tag.cookie = sc;
+	vme_space_tag.parent = sc->sc_bustag;
+
+	vme_dma_tag = *sc->sc_dmatag;
+	vme_dma_tag._cookie = sc;
+	vme_dma_tag._dmamap_load = vme_dmamap_load;
+
+	vmea = *ca;
+	vmea.ca_bustag = &vme_space_tag;
+	vmea.ca_dmatag = &vme_dma_tag;
+
 	/* We know ca_bustype == BUS_VMExx */
-	config_search_ia(bus_scan, self, "vme", args);
+	config_search_ia(bus_scan, self, "vme", &vmea);
+}
+
+int
+vme_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
+    bus_size_t size, int flags, vaddr_t vaddr, bus_space_handle_t *hp)
+{
+	struct vme_softc *sc = t->cookie;
+	paddr_t pa;
+	int bustype, pmtype;
+
+	bustype = sc->sc_bustype;
+	pa = paddr;
+	pa &= vme_info[bustype].mask;
+	pa |= vme_info[bustype].base;
+	pmtype = vme_info[bustype].pmtype;
+
+	return bus_space_map2(sc->sc_bustag, pmtype, pa, size,
+	    flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp);
+}
+
+paddr_t
+vme_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
+    int prot, int flags)
+{
+	struct vme_softc *sc = t->cookie;
+	paddr_t pa;
+	int bustype, pmtype;
+
+	bustype = sc->sc_bustype;
+	pa = paddr;
+	pa &= vme_info[bustype].mask;
+	pa |= vme_info[bustype].base;
+	pmtype = vme_info[bustype].pmtype;
+
+	return bus_space_mmap2(sc->sc_bustag, pmtype, pa, off, prot, flags);
+}
+
+static int
+vme_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags)
+{
+	int error;
+
+	error = _bus_dmamap_load(t, map, buf, buflen, p, flags);
+	if (error == 0)
+		map->dm_segs[0].ds_addr &= DVMA_VME_SLAVE_MASK;
+	return error;
 }

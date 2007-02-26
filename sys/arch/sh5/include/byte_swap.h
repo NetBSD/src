@@ -1,4 +1,4 @@
-/*      $NetBSD: byte_swap.h,v 1.2.18.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*      $NetBSD: byte_swap.h,v 1.2.18.2 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,6 @@
 
 #include <sys/types.h>
 #ifdef __GNUC__
-#include <sys/types.h>
 __BEGIN_DECLS
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.17 2005/02/26 22:39:49 perry Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.17.4.1 2007/02/26 09:11:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.17 2005/02/26 22:39:49 perry Exp $
+ *	$Id: i4b_l2.c,v 1.17.4.1 2007/02/26 09:11:58 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.17 2005/02/26 22:39:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.17.4.1 2007/02/26 09:11:58 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -73,7 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.17 2005/02/26 22:39:49 perry Exp $");
 #include <netisdn/i4b_mbuf.h>
 #include <netisdn/i4b_global.h>
 
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 
 /* this layers debug level */

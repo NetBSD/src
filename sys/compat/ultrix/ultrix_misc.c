@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.99.2.1 2006/06/21 15:00:00 yamt Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.99.2.2 2007/02/26 09:09:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.1 2006/06/21 15:00:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.2 2007/02/26 09:09:45 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -121,7 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.99.2.1 2006/06/21 15:00:00 yamt Ex
 #include <sys/unistd.h>
 #include <sys/ipc.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm_extern.h>
@@ -602,7 +601,7 @@ ultrix_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 	sigset_t ss;
 	int mask;
 
-	sigpending1(l->l_proc, &ss);
+	sigpending1(l, &ss);
 	mask = ss.__bits[0];
 
 	return (copyout((caddr_t)&mask, (caddr_t)SCARG(uap, mask), sizeof(int)));
@@ -640,7 +639,7 @@ ultrix_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 	ss.__bits[2] = 0;
 	ss.__bits[3] = 0;
 
-	return (sigsuspend1(l->l_proc, &ss));
+	return (sigsuspend1(l, &ss));
 }
 
 #define ULTRIX_SV_ONSTACK 0x0001  /* take signal on signal stack */
@@ -675,7 +674,7 @@ ultrix_sys_sigvec(struct lwp *l, void *v, register_t *retval)
 #endif
 		native_sigset13_to_sigset(&nsv.sv_mask, &nsa.sa_mask);
 	}
-	error = sigaction1(l->l_proc, SCARG(uap, signum),
+	error = sigaction1(l, SCARG(uap, signum),
 	    SCARG(uap, nsv) ? &nsa : 0, SCARG(uap, osv) ? &osa : 0,
 	    NULL, 0);
 	if (error)

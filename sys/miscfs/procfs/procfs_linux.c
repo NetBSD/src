@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.23.2.2 2006/12/30 20:50:18 yamt Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.23.2.3 2007/02/26 09:11:30 yamt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.23.2.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.23.2.3 2007/02/26 09:11:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,15 +185,19 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	struct tty *tty = p->p_session->s_ttyp;
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
-	struct vm_map *map = &p->p_vmspace->vm_map;
+	struct vmspace *vm;
+	struct vm_map *map;
 	struct vm_map_entry *entry;
 	unsigned long stext = 0, etext = 0, sstack = 0;
+	struct timeval rt;
 	int error = 0;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	if (map != &curproc->p_vmspace->vm_map)
-		vm_map_lock_read(map);
+	proc_vmspace_getref(p, &vm);
+	map = &vm->vm_map;
+	vm_map_lock_read(map);
+
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
 		if (UVM_ET_ISSUBMAP(entry))
@@ -213,8 +217,14 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 #endif
 		sstack = (unsigned long) USRSTACK;
 
-	if (map != &curproc->p_vmspace->vm_map)
-		vm_map_unlock_read(map);
+	vm_map_unlock_read(map);
+	uvmspace_free(vm);
+
+	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&p->p_mutex);
+	mutex_enter(&p->p_smutex);
+
+	calcru(p, NULL, NULL, NULL, &rt);
 
 	len = snprintf(bf, LBFSZ,
 	    "%d (%s) %c %d %d %d %d %d "
@@ -252,7 +262,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    p->p_nice,
 	    0,
 
-	    p->p_rtime.tv_sec,
+	    rt.tv_sec,
 	    p->p_stats->p_start.tv_sec,
 	    ru->ru_ixrss + ru->ru_idrss + ru->ru_isrss,
 	    ru->ru_maxrss,
@@ -263,8 +273,8 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    sstack,					/* mm start stack */
 	    0,						/* XXX: pc */
 	    0,						/* XXX: sp */
-	    p->p_sigctx.ps_siglist.__bits[0],		/* pending */
-	    p->p_sigctx.ps_sigmask.__bits[0],		/* blocked */
+	    p->p_sigpend.sp_set.__bits[0],		/* XXX: pending */
+	    0,						/* XXX: held */
 	    p->p_sigctx.ps_sigignore.__bits[0],		/* ignored */
 	    p->p_sigctx.ps_sigcatch.__bits[0],		/* caught */
 
@@ -273,6 +283,10 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	    ru->ru_nivcsw,
 	    p->p_exitsig,
 	    0);						/* XXX: processor */
+
+	mutex_exit(&p->p_smutex);
+	mutex_exit(&p->p_mutex);
+	rw_exit(&proclist_lock);
 
 	if (len == 0)
 		goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.1.8.2 2006/12/30 20:47:02 yamt Exp $	*/
+/*	$NetBSD: fdc.c,v 1.1.8.3 2007/02/26 09:08:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.1.8.2 2006/12/30 20:47:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.1.8.3 2007/02/26 09:08:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -161,8 +161,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.1.8.2 2006/12/30 20:47:02 yamt Exp $");
 #define FTC_FLIP
 #endif
 
-/* XXX misuse a flag to identify format operation */
-#define B_FORMAT B_XXX
+/* (mis)use device use flag to identify format operation */
+#define B_FORMAT B_DEVPRIVATE
 
 #define FD_DEBUG
 #ifdef FD_DEBUG

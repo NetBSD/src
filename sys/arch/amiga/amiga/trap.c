@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.103.2.2 2006/12/30 20:45:25 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.103.2.3 2007/02/26 09:05:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103.2.2 2006/12/30 20:45:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103.2.3 2007/02/26 09:05:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,8 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103.2.2 2006/12/30 20:45:25 yamt Exp $");
 #include <sys/resourcevar.h>
 #include <sys/syslog.h>
 #include <sys/syscall.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
@@ -250,10 +248,10 @@ userret(l, pc, oticks)
 	/*
 	 * If profiling, charge recent system time.
 	 */
-	if (p->p_flag & P_PROFIL) {
+	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
 	}
 	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
@@ -402,13 +400,8 @@ trapmmufault(type, code, v, fp, l, sticks)
 	     mmutype == MMU_68040 ? (code & SSW_TMMASK) == FC_SUPERD :
 	     (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
 		map = kernel_map;
-	else {
+	else
 		map = &vm->vm_map;
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)v;
-			l->l_flag |= L_SA_PAGEFAULT;
-		}
-	}
 
 	if (
 #ifdef M68060
@@ -509,7 +502,6 @@ trapmmufault(type, code, v, fp, l, sticks)
 
 		if (type == T_MMUFLT)
 			return;
-		l->l_flag &= ~L_SA_PAGEFAULT;
 		userret(l, fp->f_pc, sticks);
 		return;
 	}
@@ -542,7 +534,6 @@ nogo:
 	trapsignal(l, &ksi);
 	if ((type & T_USER) == 0)
 		return;
-	l->l_flag &= ~L_SA_PAGEFAULT;
 	userret(l, fp->f_pc, sticks);
 }
 /*
@@ -692,10 +683,13 @@ trap(type, code, v, frame)
 		printf("pid %d: kernel %s exception\n", p->p_pid,
 		    type==T_COPERR ? "coprocessor" : "format");
 #endif
+		mutex_enter(&p->p_smutex);
 		SIGACTION(p, SIGILL).sa_handler = SIG_DFL;
 		sigdelset(&p->p_sigctx.ps_sigignore, SIGILL);
 		sigdelset(&p->p_sigctx.ps_sigcatch, SIGILL);
-		sigdelset(&p->p_sigctx.ps_sigmask, SIGILL);
+		sigdelset(&l->l_sigmask, SIGILL);
+		mutex_exit(&p->p_smutex);
+
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_addr = (void *)(int)frame.f_format;
 				/* XXX was ILL_RESAD_FAULT */
@@ -745,12 +739,12 @@ trap(type, code, v, frame)
 	case T_ASTFLT|T_USER:
 		astpending = 0;
 		spl0();
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 		if (want_resched)
-			preempt(0);
+			preempt();
 
 		userret(l, frame.f_pc, sticks);
 		return;

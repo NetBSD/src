@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.50.2.2 2006/12/30 20:45:22 yamt Exp $ */
+/* $NetBSD: intr.h,v 1.50.2.3 2007/02/26 09:05:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,9 @@
 #include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
+
 #include <machine/atomic.h>
+#include <machine/cpu.h>
 
 /*
  * The Alpha System Control Block.  This is 8k long, and you get
@@ -133,7 +135,7 @@ struct scbvec {
 
 typedef int ipl_t;
 typedef struct {
-	int _psl;
+	uint8_t _psl;
 } ipl_cookie_t;
 
 ipl_cookie_t makeiplcookie(ipl_t);
@@ -174,8 +176,6 @@ splx(int s)
 	else
 		alpha_pal_swpipl(s);
 }
-#define	spllowersoftclock()	((void)alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT))
-
 /* IPL-raising functions/macros */
 static __inline int
 _splraise(int s)

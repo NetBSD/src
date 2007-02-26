@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.26.6.2 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.26.6.3 2007/02/26 09:10:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.26.6.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.26.6.3 2007/02/26 09:10:00 yamt Exp $");
 
 #include "opt_cardslot.h"
 
@@ -123,7 +123,7 @@ cardslotattach(struct device *parent, struct device *self,
 					      cardslot_cb_print);
 		if (csc) {
 			/* cardbus found */
-			DPRINTF(("cardslotattach: found cardbus on %s\n",
+			DPRINTF(("%s: found cardbus on %s\n", __func__,
 				 sc->sc_dev.dv_xname));
 			sc->sc_cb_softc = csc;
 		}
@@ -134,7 +134,7 @@ cardslotattach(struct device *parent, struct device *self,
 			cardslot_16_print, cardslot_16_submatch);
 		if (psc) {
 			/* pcmcia 16-bit bus found */
-			DPRINTF(("cardslotattach: found 16-bit pcmcia bus\n"));
+			DPRINTF(("%s: found 16-bit pcmcia bus\n", __func__));
 			sc->sc_16_softc = psc;
 			/*
 			 * XXX:
@@ -150,13 +150,13 @@ cardslotattach(struct device *parent, struct device *self,
 	}
 
 	if (csc && (csc->sc_cf->cardbus_ctrl)(csc->sc_cc, CARDBUS_CD)) {
-		DPRINTF(("cardslotattach: CardBus card found\n"));
+		DPRINTF(("%s: CardBus card found\n", __func__));
 		/* attach deferred */
 		cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_CB);
 	}
 
 	if (psc && (psc->pct->card_detect)(psc->pch)) {
-		DPRINTF(("cardbusattach: 16-bit card found\n"));
+		DPRINTF(("%s: 16-bit card found\n", __func__));
 		/* attach deferred */
 		cardslot_event_throw(sc, CARDSLOT_EVENT_INSERTION_16);
 	}
@@ -165,13 +165,11 @@ cardslotattach(struct device *parent, struct device *self,
 
 
 STATIC int
-cardslot_cb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+cardslot_cb_print(void *aux, const char *pnp)
 {
 	struct cbslot_attach_args *cba = aux;
 
-	if (pnp) {
+	if (pnp != NULL) {
 		aprint_normal("cardbus at %s subordinate bus %d",
 		    pnp, cba->cba_bus);
 	}
@@ -203,7 +201,7 @@ static int
 cardslot_16_print(void *arg, const char *pnp)
 {
 
-	if (pnp) {
+	if (pnp != NULL) {
 		aprint_normal("pcmciabus at %s", pnp);
 	}
 
@@ -214,8 +212,7 @@ cardslot_16_print(void *arg, const char *pnp)
 
 
 static void
-create_slot_manager(arg)
-	void *arg;
+create_slot_manager(void *arg)
 {
 	struct cardslot_softc *sc = (struct cardslot_softc *)arg;
 
@@ -239,9 +236,7 @@ create_slot_manager(arg)
  *   of a slot is changed, it should be noticed using this function.
  */
 void
-cardslot_event_throw(sc, ev)
-	struct cardslot_softc *sc;
-	int ev;
+cardslot_event_throw(struct cardslot_softc *sc, int ev)
 {
 	struct cardslot_event *ce;
 

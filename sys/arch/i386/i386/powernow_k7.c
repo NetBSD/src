@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow_k7.c,v 1.9.8.3 2006/12/30 20:46:10 yamt Exp $ */
+/*	$NetBSD: powernow_k7.c,v 1.9.8.4 2007/02/26 09:06:58 yamt Exp $ */
 /*	$OpenBSD: powernow-k7.c,v 1.24 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -66,7 +66,7 @@
 /* AMD POWERNOW K7 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.9.8.3 2006/12/30 20:46:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow_k7.c,v 1.9.8.4 2007/02/26 09:06:58 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,13 +122,13 @@ static char *freq_names;
 static size_t freq_names_len;
 static uint8_t k7pnow_flag;
 
-static boolean_t pnow_cpu_check(uint32_t, uint32_t);
+static bool pnow_cpu_check(uint32_t, uint32_t);
 int k7_powernow_setperf(unsigned int);
 int k7pnow_sysctl_helper(SYSCTLFN_PROTO);
 int k7pnow_decode_pst(struct powernow_cpu_state *, uint8_t *, int);
 int k7pnow_states(struct powernow_cpu_state *, uint32_t, unsigned int, unsigned int);
 
-static boolean_t
+static bool
 pnow_cpu_check(uint32_t real_cpusig, uint32_t pst_cpusig)
 {
 	int j;
@@ -287,7 +287,7 @@ k7pnow_states(struct powernow_cpu_state *cstate, uint32_t cpusig,
 	struct powernow_psb_s *psb;
 	struct powernow_pst_s *pst;
 	uint8_t *p;
-	boolean_t cpusig_ok;
+	bool cpusig_ok;
 
 	j = 0;
 	/*
@@ -470,7 +470,7 @@ k7_powernow_init(void)
 
 	cur_freq = cstate->state_table[cstate->n_states-1].freq;
 
-	aprint_normal("%s: AMD %s Technology %d (MHz)\n",
+	aprint_normal("%s: AMD %s Technology %d MHz\n",
 	    cpuname, techname, cur_freq);
 	aprint_normal("%s: frequencies available (Mhz): %s\n",
 	    cpuname, freq_names);

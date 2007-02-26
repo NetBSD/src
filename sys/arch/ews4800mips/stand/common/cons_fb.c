@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_fb.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: cons_fb.c,v 1.1.18.3 2007/02/26 09:06:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -75,12 +75,12 @@ fb_init(void)
 
 	cons.x = X_INIT;
 	cons.y = Y_INIT;
-	fb.active = TRUE;
+	fb.active = true;
 	fb_clear(0, 0, FB_WIDTH, FB_HEIGHT, CONS_BG);
 }
 
 void
-fb_active(boolean_t on)
+fb_active(bool on)
 {
 
 	if (fb.active && !on)

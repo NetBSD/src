@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.99.2.2 2006/12/30 20:50:05 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.99.2.3 2007/02/26 09:11:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99.2.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99.2.3 2007/02/26 09:11:07 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99.2.2 2006/12/30 20:50:05 yamt Ex
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/debug.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -163,6 +164,10 @@ struct kmemusage {
 struct kmembuckets kmembuckets[MINBUCKET + 16];
 struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
+
+#ifdef DEBUG
+static void *malloc_freecheck;
+#endif
 
 /*
  * Turn virtual addresses into kmem map indicies
@@ -327,8 +332,11 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		ASSERT_SLEEPABLE(NULL, "malloc");
 #endif
 #ifdef MALLOC_DEBUG
-	if (debug_malloc(size, ksp, flags, (void *) &va))
+	if (debug_malloc(size, ksp, flags, (void *) &va)) {
+		if (va != 0)
+			FREECHECK_OUT(&malloc_freecheck, (void *)va);
 		return ((void *) va);
+	}
 #endif
 	indx = BUCKETINDX(size);
 	kbp = &kmembuckets[indx];
@@ -507,6 +515,7 @@ out:
 	splx(s);
 	if ((flags & M_ZERO) != 0)
 		memset(va, 0, size);
+	FREECHECK_OUT(&malloc_freecheck, (void *)va);
 	return ((void *) va);
 }
 
@@ -531,6 +540,8 @@ free(void *addr, struct malloc_type *ksp)
 	int32_t *end, *lp;
 	long alloc, copysize;
 #endif
+
+	FREECHECK_IN(&malloc_freecheck, addr);
 
 #ifdef MALLOC_DEBUG
 	if (debug_free(addr, ksp))
@@ -902,7 +913,7 @@ kmeminit(void)
 	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
 	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT),
-	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
+	    VM_MAP_INTRSAFE, false, &kmem_map_store);
 	uvm_km_vacache_init(kmem_map, "kvakmem", 0);
 	kmembase = (char *)kmb;
 	kmemlimit = (char *)kml;

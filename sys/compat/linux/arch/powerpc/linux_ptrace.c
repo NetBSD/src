@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.11.4.1 2006/12/30 20:47:38 yamt Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.11.4.2 2007/02/26 09:09:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.4.1 2006/12/30 20:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.4.2 2007/02/26 09:09:17 yamt Exp $");
 
 #include "opt_ptrace.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.11.4.1 2006/12/30 20:47:38 yamt E
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <uvm/uvm_extern.h>
 
@@ -147,14 +146,14 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	 * You can't do what you want to the process if:
 	 *	(1) It's not being traced at all,
 	 */
-	if (!ISSET(t->p_flag, P_TRACED))
+	if (!ISSET(t->p_slflag, PSL_TRACED))	/* XXXSMP */
 		return EPERM;
 
 	/*
 	 *	(2) it's being traced by procfs (which has
 	 *		 different signal delivery semantics),
 	 */
-	if (ISSET(t->p_flag, P_FSTRACE))
+	if (ISSET(t->p_slflag, PSL_FSTRACE))
 		return EBUSY;
 
 	/*
@@ -166,7 +165,7 @@ linux_sys_ptrace_arch(l, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 	/*
 	 *	(4) it's not currently stopped.
 	 */
-	if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+	if (t->p_stat != SSTOP || !t->p_waited)
 		return EBUSY;
 
 	lt = LIST_FIRST(&t->p_lwps);

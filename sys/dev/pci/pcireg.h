@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.46.12.2 2006/12/30 20:48:48 yamt Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.46.12.3 2007/02/26 09:10:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -458,6 +458,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PMCR_D2SUPP		0x0400
 /* Power Management Control Status Register */
 #define PCI_PMCSR		0x04
+#define	PCI_PMCSR_PME_EN	0x100
 #define PCI_PMCSR_STATE_MASK	0x03
 #define PCI_PMCSR_STATE_D0      0x00
 #define PCI_PMCSR_STATE_D1      0x01

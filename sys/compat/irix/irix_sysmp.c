@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysmp.c,v 1.13.2.1 2006/12/30 20:47:33 yamt Exp $ */
+/*	$NetBSD: irix_sysmp.c,v 1.13.2.2 2007/02/26 09:09:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.13.2.1 2006/12/30 20:47:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_sysmp.c,v 1.13.2.2 2007/02/26 09:09:11 yamt Exp $");
 
 #include <sys/errno.h>
 #include <sys/param.h>
@@ -82,7 +82,6 @@ irix_sys_sysmp(l, v, retval)
 		syscallarg(void *) arg4;
 	} */ *uap = v;
 	int cmd = SCARG(uap, cmd);
-	int error = 0;
 
 #ifdef DEBUG_IRIX
 	printf("irix_sys_sysmp(): cmd = %d\n", cmd);
@@ -91,22 +90,8 @@ irix_sys_sysmp(l, v, retval)
 	switch(cmd) {
 	case IRIX_MP_NPROCS:	/* Number of processors in complex */
 	case IRIX_MP_NAPROCS: {	/* Number of active processors in complex */
-		int ncpu, name[2];
-		size_t sz;
-
-		name[0] = CTL_HW;
-		name[1] = HW_NCPU;
-		sz = sizeof(ncpu);
-		/*
-		 * by passing a NULL lwp pointer, we indicate that oldp
-		 * (and newp) are kernel addresses, not userspace
-		 * addresses, making this whole thing simpler
-		 */
-		error = old_sysctl(&name[0], 2, &ncpu, &sz, NULL, 0, NULL);
-		if (!error)
-			*retval = ncpu;
-
-		return error;
+		*retval = ncpu;
+		return 0;
 		break;
 	}
 	case IRIX_MP_PGSIZE:	/* Page size */

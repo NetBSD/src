@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.76.2.2 2006/12/30 20:49:39 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.76.2.3 2007/02/26 09:10:46 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.2 2006/12/30 20:49:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.3 2007/02/26 09:10:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ struct uhub_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_device_handle	sc_hub;		/* USB device */
 	usbd_pipe_handle	sc_ipipe;	/* interrupt pipe */
-	u_int8_t		sc_status[1];	/* XXX more ports */
+	u_int8_t		*sc_status;
 	u_char			sc_running;
 };
 #define UHUB_PROTO(sc) ((sc)->sc_hub->ddesc.bDeviceProtocol)
@@ -153,6 +153,7 @@ USB_ATTACH(uhub)
 #if 0 /* notyet */
 	struct usbd_tt *tts = NULL;
 #endif
+	size_t statuslen;
 
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
@@ -259,9 +260,14 @@ USB_ATTACH(uhub)
 		goto bad;
 	}
 
+	statuslen = (nports + 1 + 7) / 8;
+	sc->sc_status = malloc(statuslen, M_USBDEV, M_NOWAIT);
+	if (!sc->sc_status)
+		goto bad;
+
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status,
-		  sizeof(sc->sc_status), uhub_intr, USBD_DEFAULT_INTERVAL);
+		  statuslen, uhub_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		printf("%s: cannot open interrupt pipe\n",
 		       USBDEVNAME(sc->sc_dev));
@@ -352,6 +358,8 @@ USB_ATTACH(uhub)
 	USB_ATTACH_SUCCESS_RETURN;
 
  bad:
+	if (sc->sc_status)
+		free(sc->sc_status, M_USBDEV);
 	if (hub)
 		free(hub, M_USBDEV);
 	dev->hub = NULL;
@@ -378,7 +386,7 @@ uhub_explore(usbd_device_handle dev)
 	if (dev->depth > USB_HUB_MAX_DEPTH)
 		return (USBD_TOO_DEEP);
 
-	for(port = 1; port <= hd->bNbrPorts; port++) {
+	for (port = 1; port <= hd->bNbrPorts; port++) {
 		up = &dev->hub->ports[port-1];
 		err = usbd_get_port_status(dev, port, &up->status);
 		if (err) {
@@ -607,6 +615,8 @@ USB_DETACH(uhub)
 #endif
 	free(hub, M_USBDEV);
 	sc->sc_hub->hub = NULL;
+	if (sc->sc_status)
+		free(sc->sc_status, M_USBDEV);
 
 	return (0);
 }
@@ -655,6 +665,10 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 {
 	struct uhub_softc *sc = addr;
 
+#if 0
+	void *buf; int cnt;
+	usbd_get_xfer_status(xfer, NULL, &buf, &cnt, NULL);
+#endif
 	DPRINTFN(5,("uhub_intr: sc=%p\n", sc));
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);

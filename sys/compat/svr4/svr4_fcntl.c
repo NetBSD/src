@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.47.4.2 2006/12/30 20:47:45 yamt Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.47.4.3 2007/02/26 09:09:40 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.47.4.2 2006/12/30 20:47:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.47.4.3 2007/02/26 09:09:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.47.4.2 2006/12/30 20:47:45 yamt Exp
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -287,7 +286,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 
 	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
 	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		goto out;
 
 	if ((error = vn_start_write(vp, &mp, V_WAIT | V_PCATCH)) != 0)
@@ -388,8 +387,10 @@ svr4_sys_open(l, v, retval)
 	if (error)
 		return error;
 
+	/* XXXAD locking */
+
 	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
-	    !(p->p_flag & P_CONTROLT)) {
+	    !(p->p_lflag & PL_CONTROLT)) {
 		struct filedesc	*fdp = p->p_fd;
 		struct file	*fp;
 

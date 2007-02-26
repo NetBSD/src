@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.2 2006/12/30 20:49:56 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.3 2007/02/26 09:10:56 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.2 2006/12/30 20:49:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.3 2007/02/26 09:10:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -390,7 +390,7 @@ msdosfs_setattr(v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &ap->a_l->l_acflag)) &&
+		    NULL)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 ||
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_l))))
 			return (error);
@@ -413,7 +413,7 @@ msdosfs_setattr(v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &ap->a_l->l_acflag)))
+		    NULL)))
 			return (error);
 		/* We ignore the read and execute bits. */
 		if (vap->va_mode & S_IWUSR)
@@ -431,7 +431,7 @@ msdosfs_setattr(v)
 			return (EROFS);
 		if (kauth_cred_geteuid(cred) != pmp->pm_uid &&
 		    (error = kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER,
-		    &ap->a_l->l_acflag)))
+		    NULL)))
 			return (error);
 		if (vap->va_flags & SF_ARCHIVED)
 			dep->de_Attributes &= ~ATTR_ARCHIVE;
@@ -570,7 +570,7 @@ msdosfs_write(v)
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
 	kauth_cred_t cred = ap->a_cred;
-	boolean_t async;
+	bool async;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(vp %p, uio %p, ioflag %x, cred %p\n",

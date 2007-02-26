@@ -1,4 +1,4 @@
-/* $NetBSD: au1550.c,v 1.8.8.3 2006/12/30 20:46:30 yamt Exp $ */
+/* $NetBSD: au1550.c,v 1.8.8.4 2007/02/26 09:07:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au1550.c,v 1.8.8.3 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au1550.c,v 1.8.8.4 2007/02/26 09:07:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <machine/bus.h>
@@ -203,7 +203,7 @@ static struct au_chipdep au1550_chipdep = {
 	au1550_irqnames,
 };
 
-boolean_t
+bool
 au1550_match(struct au_chipdep **cpp)
 {
 

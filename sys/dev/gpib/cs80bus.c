@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.2.12.1 2006/06/21 15:02:46 yamt Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.2.12.2 2007/02/26 09:10:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.2.12.1 2006/06/21 15:02:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.2.12.2 2007/02/26 09:10:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ cs80busattach(parent, self, aux)
 }
 
 int
-cs80bussearch(parent, cf, aux)
+cs80bussearch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	const int *ldesc;

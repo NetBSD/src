@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.2 2006/12/30 20:46:36 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.3 2007/02/26 09:07:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.2 2006/12/30 20:46:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.3 2007/02/26 09:07:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -999,65 +999,8 @@ news1200_init(void)
  * XXX should do better handling XXX
  */
 
-void intrhand_lev2(void);
 void intrhand_lev3(void);
 void intrhand_lev4(void);
-
-void (*sir_routines[NSIR])(void *);
-void *sir_args[NSIR];
-u_char ssir;
-u_int next_sir;
-
-void
-intrhand_lev2(void)
-{
-	int s;
-	u_int bit;
-	u_char sintr;
-
-	/* disable level 2 interrupt */
-	*ctrl_int2 = 0;
-
-	s = splhigh();
-	sintr = ssir;
-	ssir = 0;
-	splx(s);
-
-	intrcnt[2]++;
-	uvmexp.intrs++;
-
-	for (bit = 0; bit < next_sir; bit++) {
-		if (sintr & (1 << bit)) {
-			uvmexp.softs++;
-			if (sir_routines[bit])
-				sir_routines[bit](sir_args[bit]);
-		}
-	}
-}
-/*
- * Allocation routines for software interrupts.
- */
-u_char
-allocate_sir(void (*proc)(void *), void *arg)
-{
-	int bit;
-
-	if (next_sir >= NSIR)
-		panic("allocate_sir: none left");
-	bit = next_sir++;
-	sir_routines[bit] = proc;
-	sir_args[bit] = arg;
-	return 1 << bit;
-}
-
-void
-init_sir(void)
-{
-
-	sir_routines[SIR_NET]   = (void (*)(void *))netintr;
-	sir_routines[SIR_CLOCK] = softclock;
-	next_sir = NEXT_SIR;
-}
 
 void
 intrhand_lev3(void)

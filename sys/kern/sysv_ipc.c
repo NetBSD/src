@@ -1,7 +1,7 @@
-/*	$NetBSD: sysv_ipc.c,v 1.15.32.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.15.32.3 2007/02/26 09:11:18 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.15.32.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.15.32.3 2007/02/26 09:11:18 yamt Exp $");
 
 #include "opt_sysv.h"
 
@@ -72,7 +72,7 @@ ipcperm(kauth_cred_t cred, struct ipc_perm *perm, int mode)
 	mode_t mask;
 	int ismember = 0;
 
-	if (kauth_cred_geteuid(cred) == 0)
+	if (kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) == 0)
 		return (0);
 
 	if (mode == IPC_M) {
@@ -266,7 +266,9 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 			switch (*name) {
 #ifdef SYSVMSG
 			case KERN_SYSVIPC_MSG_INFO:
-				FILL_MSG(msqids[i], msgsi->msgids[i]);
+				mutex_enter(&msgmutex);
+				FILL_MSG(msqs[i].msq_u, msgsi->msgids[i]);
+				mutex_exit(&msgmutex);
 				break;
 #endif
 #ifdef SYSVSEM

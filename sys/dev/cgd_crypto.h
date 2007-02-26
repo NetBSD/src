@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.h,v 1.2.12.1 2006/12/30 20:47:49 yamt Exp $ */
+/* $NetBSD: cgd_crypto.h,v 1.2.12.2 2007/02/26 09:09:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #define CGD_CIPHER_DECRYPT	1
 #define CGD_CIPHER_ENCRYPT	2
 
-typedef void *(cfunc_init)(size_t, void *, size_t *);
+typedef void *(cfunc_init)(size_t, const void *, size_t *);
 typedef void  (cfunc_destroy)(void *);
 typedef void  (cfunc_cipher)(void *, struct uio *, struct uio *, void *, int);
 

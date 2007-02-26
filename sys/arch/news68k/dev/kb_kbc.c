@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_kbc.c,v 1.5 2004/09/04 13:43:11 tsutsui Exp $	*/
+/*	$NetBSD: kb_kbc.c,v 1.5.12.1 2007/02/26 09:07:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.5 2004/09/04 13:43:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kb_kbc.c,v 1.5.12.1 2007/02/26 09:07:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ kb_kbc_attach(struct device *parent, struct device *self, void *aux)
 
 	kb_kbc_init(sc);
 
-	isrlink_autovec(kb_kbc_intr, (void *)sc, ipl, ISRPRI_TTY);
+	isrlink_autovec(kb_kbc_intr, (void *)sc, ipl, IPL_TTY);
 
 	wsa.console = kb_kbc_conssc.cs_isconsole;
 	wsa.keymap = &kb_keymapdata;

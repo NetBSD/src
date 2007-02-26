@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.4.6.2 2006/12/30 20:47:22 yamt Exp $ */
+/*	$NetBSD: ipmi.c,v 1.4.6.3 2007/02/26 09:08:51 yamt Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.6.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.6.3 2007/02/26 09:08:51 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1409,11 +1409,8 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	int		rxlen, rv = -1;
 	struct envsys_tre_data *sdata = &sc->sc_sensor_data[psensor->i_envnum];
 
-	if (!cold) {
-		rv = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
-		if (rv)
-			return rv;
-	}
+	if (!cold)
+		mutex_enter(&sc->sc_lock);
 
 	memset(data, 0, sizeof(data));
 	data[0] = psensor->i_num;
@@ -1436,7 +1433,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	rv = 0;
 done:
 	if (!cold)
-		(void) lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_lock);
 	return (rv);
 }
 
@@ -1444,13 +1441,10 @@ int
 ipmi_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct ipmi_softc *sc = sme->sme_cookie;
-	int rv;
 
-	rv = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
-	if (rv)
-		return rv;
+	mutex_enter(&sc->sc_lock);
 	*tred = sc->sc_sensor_data[tred->sensor];
-	(void) lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_lock);
 	return 0;
 }
 
@@ -1848,7 +1842,7 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sysmon_wdog_register(&sc->sc_wdog);
 
 	/* lock around read_sensor so that no one messes with the bmc regs */
-	lockinit(&sc->sc_lock, PRIBIO, "ipmilk", 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* setup ticker */
 	sc->sc_retries = 0;

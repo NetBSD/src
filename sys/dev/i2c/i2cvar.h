@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.1.18.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.1.18.3 2007/02/26 09:10:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -48,6 +48,12 @@
 #define	I2C_F_POLL		0x08	/* poll, don't sleep */
 #define	I2C_F_PEC		0x10	/* smbus packet error checking */
 
+struct ic_intr_list {
+	LIST_ENTRY(ic_intr_list) il_next;
+	int (*il_intr)(void *);
+	void *il_intrarg;
+};
+
 /*
  * This structure provides the interface between the i2c framework
  * and the underlying i2c controller.
@@ -88,6 +94,13 @@ typedef struct i2c_controller {
 	int	(*ic_initiate_xfer)(void *, i2c_addr_t, int);
 	int	(*ic_read_byte)(void *, uint8_t *, int);
 	int	(*ic_write_byte)(void *, uint8_t, int);
+
+	LIST_HEAD(, ic_intr_list) ic_list;
+	LIST_HEAD(, ic_intr_list) ic_proc_list;
+	volatile int	ic_running;
+	volatile int	ic_pending;
+	struct proc *ic_intr_thread;
+	const char *ic_devname;
 } *i2c_tag_t;
 
 /* I2C bus types */
@@ -153,5 +166,11 @@ int	iic_smbus_block_read(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *,
 	    size_t, int);
 int	iic_smbus_block_write(i2c_tag_t, i2c_addr_t, uint8_t, uint8_t *,
 	    size_t, int);
+
+void *	iic_smbus_intr_establish(i2c_tag_t, int (*)(void *), void *);
+void *	iic_smbus_intr_establish_proc(i2c_tag_t, int (*)(void *), void *);
+void	iic_smbus_intr_disestablish(i2c_tag_t, void *);
+void	iic_smbus_intr_disestablish_proc(i2c_tag_t, void *);
+int	iic_smbus_intr(i2c_tag_t);
 
 #endif /* _DEV_I2C_I2CVAR_H_ */

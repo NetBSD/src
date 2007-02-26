@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2.18.1 2006/06/21 14:54:41 yamt Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2.18.2 2007/02/26 09:07:47 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -74,9 +74,9 @@ extern db_regs_t	ddb_regs;
  * Functions needed for software single-stepping.
  */
 
-boolean_t	inst_branch(int inst);
+bool		inst_branch(int inst);
 db_addr_t	branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
-boolean_t	inst_unconditional_flow_transfer(int inst);
+bool		inst_unconditional_flow_transfer(int inst);
 
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE		36

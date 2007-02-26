@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.h,v 1.8 2005/06/01 12:25:27 drochner Exp $	*/
+/*	$NetBSD: db_run.h,v 1.8.2.1 2007/02/26 09:09:48 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -39,8 +39,8 @@ extern int	db_inst_count;
 extern int	db_load_count;
 extern int	db_store_count;
 
-boolean_t	db_stop_at_pc(db_regs_t *, boolean_t *);
-void		db_restart_at_pc(db_regs_t *, boolean_t);
+bool		db_stop_at_pc(db_regs_t *, bool *);
+void		db_restart_at_pc(db_regs_t *, bool);
 void		db_single_step(db_regs_t *);
 #ifndef db_set_single_step
 void		db_set_single_step(db_regs_t *);
@@ -48,9 +48,9 @@ void		db_set_single_step(db_regs_t *);
 #ifndef db_clear_single_step
 void		db_clear_single_step(db_regs_t *);
 #endif
-void		db_single_step_cmd(db_expr_t, int, db_expr_t, const char *);
-void		db_trace_until_call_cmd(db_expr_t, int, db_expr_t, const char *);
-void		db_trace_until_matching_cmd(db_expr_t, int, db_expr_t, const char *);
-void		db_continue_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_single_step_cmd(db_expr_t, bool, db_expr_t, const char *);
+void		db_trace_until_call_cmd(db_expr_t, bool, db_expr_t, const char *);
+void		db_trace_until_matching_cmd(db_expr_t, bool, db_expr_t, const char *);
+void		db_continue_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 #endif	/* _DDB_DB_RUN_ */

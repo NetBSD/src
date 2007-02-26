@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.26.2.2 2006/12/30 20:46:05 yamt Exp $
+#	$NetBSD: majors.i386,v 1.26.2.3 2007/02/26 09:06:53 yamt Exp $
 #
 # Device majors for i386
 #
@@ -14,7 +14,7 @@ device-major	log		char 7
 device-major	com		char 8			com
 device-major	fd		char 9   block 2	fdc
 device-major	wt		char 10  block 3	wt
-device-major	scd		char 11  block 15	scd
+#device-major	scd		char 11  block 15	scd
 device-major	pc		char 12			pc
 device-major	sd		char 13  block 4	sd
 device-major	st		char 14  block 5	st
@@ -87,7 +87,7 @@ device-major	dpti		char 84			dpti
 device-major	irframe		char 85			irframedrv
 device-major	cir		char 86			cir
 device-major	radio		char 87			radio
-# major 88 free
+device-major	cmos		char 88			cmos
 device-major	clockctl	char 89			clockctl
 device-major	systrace	char 90			systrace
 device-major	kttcp		char 91			kttcp

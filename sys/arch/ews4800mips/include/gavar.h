@@ -1,4 +1,4 @@
-/*	$NetBSD: gavar.h,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp $	*/
+/*	$NetBSD: gavar.h,v 1.1.18.3 2007/02/26 09:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ struct ga {
 	int flags;
 	uint8_t clut[256][3];
 };
-boolean_t ga_init(struct ga *);
+bool ga_init(struct ga *);
 void ga_clut_get(struct ga *);
 void ga_clut_set(const struct ga *);
 

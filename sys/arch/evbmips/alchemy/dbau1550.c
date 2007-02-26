@@ -1,4 +1,4 @@
-/* $NetBSD: dbau1550.c,v 1.6.8.3 2006/12/30 20:45:51 yamt Exp $ */
+/* $NetBSD: dbau1550.c,v 1.6.8.4 2007/02/26 09:06:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,11 +32,10 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.6.8.3 2006/12/30 20:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbau1550.c,v 1.6.8.4 2007/02/26 09:06:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <machine/bus.h>

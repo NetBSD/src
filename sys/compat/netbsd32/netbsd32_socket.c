@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.14.2.1 2006/06/21 14:59:35 yamt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.14.2.2 2007/02/26 09:09:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.1 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.2 2007/02/26 09:09:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.1 2006/06/21 14:59:35 yam
 #include <sys/ktrace.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>

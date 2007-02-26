@@ -1,4 +1,4 @@
-/*	$NetBSD: bufq_disksort.c,v 1.3.12.1 2006/06/21 15:09:37 yamt Exp $	*/
+/*	$NetBSD: bufq_disksort.c,v 1.3.12.2 2007/02/26 09:11:02 yamt Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.61 2004/09/25 03:30:44 thorpej Exp 	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.3.12.1 2006/06/21 15:09:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bufq_disksort.c,v 1.3.12.2 2007/02/26 09:11:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,10 +203,9 @@ bufq_disksort_init(struct bufq_state *bufq)
 {
 	struct bufq_disksort *disksort;
 
+	disksort = malloc(sizeof(*disksort), M_DEVBUF, M_ZERO);
+	bufq->bq_private = disksort;
 	bufq->bq_get = bufq_disksort_get;
 	bufq->bq_put = bufq_disksort_put;
-	bufq->bq_private = malloc(sizeof(struct bufq_disksort),
-	    M_DEVBUF, M_ZERO);
-	disksort = (struct bufq_disksort *)bufq->bq_private;
 	TAILQ_INIT(&disksort->bq_head);
 }

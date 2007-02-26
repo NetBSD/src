@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.10.2.3 2006/12/30 20:50:01 yamt Exp $ */
+/* $NetBSD: udf_subr.c,v 1.10.2.4 2007/02/26 09:11:01 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.10.2.3 2006/12/30 20:50:01 yamt Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.10.2.4 2007/02/26 09:11:01 yamt Exp $");
 #endif /* not lint */
 
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: udf_subr.c,v 1.10.2.3 2006/12/30 20:50:01 yamt Exp $");
 #include <sys/stat.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <dev/clock_subr.h>
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
@@ -1298,7 +1299,7 @@ static int
 udf_read_sparables(struct udf_mount *ump, union udf_pmap *mapping)
 {
 	union dscrptr *dscr;
-	struct part_map_spare *pms = (struct part_map_spare *) mapping;
+	struct part_map_spare *pms = &mapping->pms;
 	uint32_t lb_num;
 	int spar, error;
 
@@ -1338,6 +1339,76 @@ udf_read_sparables(struct udf_mount *ump, union udf_pmap *mapping)
 
 /* --------------------------------------------------------------------- */
 
+#define UDF_SET_SYSTEMFILE(vp) \
+	simple_lock(&(vp)->v_interlock);	\
+	(vp)->v_flag |= VSYSTEM;		\
+	simple_unlock(&(vp)->v_interlock);\
+	vref(vp);			\
+	vput(vp);			\
+
+static int
+udf_read_metadata_files(struct udf_mount *ump, union udf_pmap *mapping)
+{
+	struct part_map_meta *pmm = &mapping->pmm;
+	struct long_ad	 icb_loc;
+	struct vnode *vp;
+	int error;
+
+	DPRINTF(VOLUMES, ("Reading in Metadata files\n"));
+	icb_loc.loc.part_num = pmm->part_num;
+	icb_loc.loc.lb_num   = pmm->meta_file_lbn;
+	DPRINTF(VOLUMES, ("Metadata file\n"));
+	error = udf_get_node(ump, &icb_loc, &ump->metadata_file);
+	if (ump->metadata_file) {
+		vp = ump->metadata_file->vnode;
+		UDF_SET_SYSTEMFILE(vp);
+	}
+
+	icb_loc.loc.lb_num   = pmm->meta_mirror_file_lbn;
+	if (icb_loc.loc.lb_num != -1) {
+		DPRINTF(VOLUMES, ("Metadata copy file\n"));
+		error = udf_get_node(ump, &icb_loc, &ump->metadatamirror_file);
+		if (ump->metadatamirror_file) {
+			vp = ump->metadatamirror_file->vnode;
+			UDF_SET_SYSTEMFILE(vp);
+		}
+	}
+
+	icb_loc.loc.lb_num   = pmm->meta_bitmap_file_lbn;
+	if (icb_loc.loc.lb_num != -1) {
+		DPRINTF(VOLUMES, ("Metadata bitmap file\n"));
+		error = udf_get_node(ump, &icb_loc, &ump->metadatabitmap_file);
+		if (ump->metadatabitmap_file) {
+			vp = ump->metadatabitmap_file->vnode;
+			UDF_SET_SYSTEMFILE(vp);
+		}
+	}
+
+	/* if we're mounting read-only we relax the requirements */
+	if (ump->vfs_mountp->mnt_flag & MNT_RDONLY) {
+		error = EFAULT;
+		if (ump->metadata_file)
+			error = 0;
+		if ((ump->metadata_file == NULL) && (ump->metadatamirror_file)) {
+			printf( "udf mount: Metadata file not readable, "
+				"substituting Metadata copy file\n");
+			ump->metadata_file = ump->metadatamirror_file;
+			ump->metadatamirror_file = NULL;
+			error = 0;
+		}
+	} else {
+		/* mounting read/write */
+		DPRINTF(VOLUMES, ("udf mount: read only file system\n"));
+		error = EROFS;
+	}
+	DPRINTFIF(VOLUMES, error, ("udf mount: failed to read "
+				   "metadata files\n"));
+	return error;
+}
+#undef UDF_SET_SYSTEMFILE
+
+/* --------------------------------------------------------------------- */
+
 int
 udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 {
@@ -1372,8 +1443,11 @@ udf_read_vds_tables(struct udf_mount *ump, struct udf_args *args)
 				return ENOENT;
 			break;
 		case UDF_VTOP_TYPE_META :
-			/* TODO load metafile and metabitmapfile FE/EFEs */
-			return ENOENT;
+			/* load the associated file descriptors */
+			error = udf_read_metadata_files(ump, mapping);
+			if (error)
+				return ENOENT;
+			break;
 		default:
 			break;
 		}
@@ -1514,9 +1588,16 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 {
 	struct part_desc       *pdesc;
 	struct spare_map_entry *sme;
+	struct file_entry      *fe;
+	struct extfile_entry   *efe;
+	struct short_ad        *s_ad;
+	struct long_ad         *l_ad;
+	uint64_t  cur_offset;
 	uint32_t *trans;
-	uint32_t  lb_num, lb_rel, lb_packet;
-	int rel, vpart, part;
+	uint32_t  lb_num, plb_num, lb_rel, lb_packet;
+	uint32_t  sector_size, len, alloclen;
+	uint8_t *pos;
+	int rel, vpart, part, addr_type, icblen, icbflags, flags;
 
 	assert(ump && icb_loc && lb_numres);
 
@@ -1524,6 +1605,9 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 	lb_num = udf_rw32(icb_loc->loc.lb_num);
 	if (vpart < 0 || vpart > UDF_VTOP_RAWPART)
 		return EINVAL;
+
+	part = ump->vtop[vpart];
+	pdesc = ump->partitions[part];
 
 	switch (ump->vtop_tp[vpart]) {
 	case UDF_VTOP_TYPE_RAW :
@@ -1533,8 +1617,6 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 		return 0;
 	case UDF_VTOP_TYPE_PHYS :
 		/* transform into its disc logical block */
-		part = ump->vtop[vpart];
-		pdesc = ump->partitions[part];
 		if (lb_num > udf_rw32(pdesc->part_len))
 			return EINVAL;
 		*lb_numres = lb_num + udf_rw32(pdesc->start_loc);
@@ -1552,8 +1634,6 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 		lb_num = udf_rw32(trans[lb_num]);
 
 		/* transform into its disc logical block */
-		part = ump->vtop[vpart];
-		pdesc = ump->partitions[part];
 		if (lb_num > udf_rw32(pdesc->part_len))
 			return EINVAL;
 		*lb_numres = lb_num + udf_rw32(pdesc->start_loc);
@@ -1577,8 +1657,6 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 		}
 
 		/* transform into its disc logical block */
-		part = ump->vtop[vpart];
-		pdesc = ump->partitions[part];
 		if (lb_num > udf_rw32(pdesc->part_len))
 			return EINVAL;
 		*lb_numres = lb_num + udf_rw32(pdesc->start_loc);
@@ -1587,6 +1665,61 @@ udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 		*extres = ump->sparable_packet_len - lb_rel;
 		return 0;
 	case UDF_VTOP_TYPE_META :
+		/* we have to look into the file's allocation descriptors */
+		/* free after udf_translate_file_extent() */
+		/* XXX sector size or lb_size? */
+		sector_size = ump->discinfo.sector_size;
+		/* XXX should we claim exclusive access to the metafile ? */
+		fe  = ump->metadata_file->fe;
+		efe = ump->metadata_file->efe;
+		if (fe) {
+			alloclen = udf_rw32(fe->l_ad);
+			pos      = &fe->data[0] + udf_rw32(fe->l_ea);
+			icbflags = udf_rw16(fe->icbtag.flags);
+		} else {
+			assert(efe);
+			alloclen = udf_rw32(efe->l_ad);
+			pos      = &efe->data[0] + udf_rw32(efe->l_ea);
+			icbflags = udf_rw16(efe->icbtag.flags);
+		}
+		addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
+
+		cur_offset = 0;
+		while (alloclen) {
+			if (addr_type == UDF_ICB_SHORT_ALLOC) {
+				icblen = sizeof(struct short_ad);
+				s_ad   = (struct short_ad *) pos;
+				len        = udf_rw32(s_ad->len);
+				plb_num    = udf_rw32(s_ad->lb_num);
+			} else {
+				/* should not be present, but why not */
+				icblen = sizeof(struct long_ad);
+				l_ad   = (struct long_ad *) pos;
+				len        = udf_rw32(l_ad->len);
+				plb_num    = udf_rw32(l_ad->loc.lb_num);
+				/* pvpart_num = udf_rw16(l_ad->loc.part_num); */
+			}
+			/* process extent */
+			flags   = UDF_EXT_FLAGS(len);
+			len     = UDF_EXT_LEN(len);
+
+			if (cur_offset + len > lb_num * sector_size) {
+				if (flags != UDF_EXT_ALLOCATED)
+					return EINVAL;
+				lb_rel = lb_num - cur_offset / sector_size;
+				/* remainder of this extent */
+				*lb_numres = plb_num + lb_rel + 
+					udf_rw32(pdesc->start_loc);
+				*extres = (len / sector_size) - lb_rel;
+				return 0;
+			}
+			cur_offset += len;
+			pos        += icblen;
+			alloclen   -= icblen;
+		}
+		/* not found */
+		DPRINTF(TRANSLATE, ("Metadata partition translation failed\n"));
+		return EINVAL;
 	default:
 		printf("UDF vtop translation scheme %d unimplemented yet\n",
 			ump->vtop_tp[vpart]);
@@ -1700,6 +1833,9 @@ udf_dispose_node(struct udf_node *node)
 
 	/* remove from our hash lookup table */
 	udf_hashrem(node);
+
+	/* destroy genfs structures */
+	genfs_node_destroy(vp);
 
 	/* dissociate our udf_node from the vnode */
 	vp->v_data = NULL;
@@ -2011,11 +2147,13 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	case UDF_ICB_FILETYPE_SYMLINK :
 		nvp->v_type = VLNK;
 		break;
+	case UDF_ICB_FILETYPE_VAT :
 	case UDF_ICB_FILETYPE_META_MAIN :
 	case UDF_ICB_FILETYPE_META_MIRROR :
 		nvp->v_type = VNON;
 		break;
 	case UDF_ICB_FILETYPE_RANDOMACCESS :
+	case UDF_ICB_FILETYPE_REALTIME :
 		nvp->v_type = VREG;
 		break;
 	default:
@@ -2089,6 +2227,7 @@ udf_icb_to_unix_filetype(uint32_t icbftype)
 	case UDF_ICB_FILETYPE_BLOCKDEVICE :
 		return S_IFBLK;
 	case UDF_ICB_FILETYPE_RANDOMACCESS :
+	case UDF_ICB_FILETYPE_REALTIME :
 		return S_IFREG;
 	case UDF_ICB_FILETYPE_SYMLINK :
 		return S_IFLNK;
@@ -2173,75 +2312,29 @@ unix_to_udf_name(char *result, char *name,
 
 /* --------------------------------------------------------------------- */
 
-/*       
- * Timestamp to timespec conversion code is taken with small modifications
- * from FreeBSDs /sys/fs/udf by Scott Long <scottl@freebsd.org>. Added with
- * permission from Scott.
- */
-
-static int mon_lens[2][12] = {
-	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
-	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}
-};
-
-
-static int
-udf_isaleapyear(int year)
-{       
-	int i;
-	
-	i  = (year % 4) ? 0 : 1;
-	i &= (year % 100) ? 1 : 0;
-	i |= (year % 400) ? 0 : 1;
-	
-	return i;
-}
-
-
 void
 udf_timestamp_to_timespec(struct udf_mount *ump,
 			  struct timestamp *timestamp,
-		          struct timespec  *timespec)
+			  struct timespec  *timespec)
 {
+	struct clock_ymdhms ymdhms;
 	uint32_t usecs, secs, nsecs;
 	uint16_t tz;
-	int i, lpyear, daysinyear, year;
 
-	timespec->tv_sec  = secs  = 0;
-	timespec->tv_nsec = nsecs = 0;
+	/* fill in ymdhms structure from timestamp */
+	memset(&ymdhms, 0, sizeof(ymdhms));
+	ymdhms.dt_year = udf_rw16(timestamp->year);
+	ymdhms.dt_mon  = timestamp->month;
+	ymdhms.dt_day  = timestamp->day;
+	ymdhms.dt_wday = 0; /* ? */
+	ymdhms.dt_hour = timestamp->hour;
+	ymdhms.dt_min  = timestamp->minute;
+	ymdhms.dt_sec  = timestamp->second;
 
-       /*
-	* DirectCD seems to like using bogus year values.
-	*
-	* Distrust time->month especially, since it will be used for an array
-	* index.
-	*/
-	year = udf_rw16(timestamp->year);
-	if ((year < 1970) || (timestamp->month > 12)) {
-		return;
-	}
-	
-	/* Calculate the time and day
-	 * Day is 1-31, Month is 1-12
-	 */
-
+	secs = clock_ymdhms_to_secs(&ymdhms);
 	usecs = timestamp->usec +
 		100*timestamp->hund_usec + 10000*timestamp->centisec;
 	nsecs = usecs * 1000;
-	secs  = timestamp->second; 
-	secs += timestamp->minute * 60;
-	secs += timestamp->hour * 3600;
-	secs += (timestamp->day-1) * 3600 * 24;
-	
-	/* Calclulate the month */
-	lpyear = udf_isaleapyear(year);
-	for (i = 1; i < timestamp->month; i++)
-		secs += mon_lens[lpyear][i-1] * 3600 * 24;
- 
-	for (i = 1970; i < year; i++) { 
-		daysinyear = udf_isaleapyear(i) + 365 ;
-		secs += daysinyear * 3600 * 24;
-	}
 
 	/*
 	 * Calculate the time zone.  The timezone is 12 bit signed 2's
@@ -2342,8 +2435,17 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 
 	found = 0;
 	diroffset = dir_node->last_diroffset;
+
+	/*
+	 * if the directory is trunced or if we have never visited it yet,
+	 * start at the end.
+	 */
+	if ((diroffset >= file_size) || (diroffset == 0)) {
+		diroffset = dir_node->last_diroffset = file_size;
+	}
+
 	while (!found) {
-		/* if not found in this track, turn trough zero */
+		/* if at the end, go trough zero */
 		if (diroffset >= file_size)
 			diroffset = 0;
 

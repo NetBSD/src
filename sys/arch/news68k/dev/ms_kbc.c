@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_kbc.c,v 1.6.12.1 2006/06/21 14:54:02 yamt Exp $	*/
+/*	$NetBSD: ms_kbc.c,v 1.6.12.2 2007/02/26 09:07:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.6.12.1 2006/06/21 14:54:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_kbc.c,v 1.6.12.2 2007/02/26 09:07:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -92,7 +92,7 @@ ms_kbc_attach(struct device *parent, struct device *self, void *aux)
 
 	ms_kbc_init(sc);
 
-	isrlink_autovec(ms_kbc_intr, (void *)sc, ipl, ISRPRI_TTY);
+	isrlink_autovec(ms_kbc_intr, (void *)sc, ipl, IPL_TTY);
 
 	wsa.accessops = &ms_kbc_accessops;
 	wsa.accesscookie = sc;

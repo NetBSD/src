@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.2.2.2 2006/12/30 20:47:50 yamt Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.2.2.3 2007/02/26 09:09:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,7 +46,6 @@
 #include <sys/types.h>
 #include <sys/ioccom.h>
 #include <sys/queue.h>
-#include <sys/types.h>
 #include <sys/time.h>
 
 #if defined(_KERNEL) && defined(__HAVE_CPU_COUNTER)
@@ -120,7 +119,8 @@ typedef struct lsdisable {
 #define	LB_RWLOCK		0x00000300
 #define	LB_LOCKMGR		0x00000400
 #define	LB_KERNEL_LOCK		0x00000500
-#define	LB_NLOCK		0x00000500
+#define	LB_MISC			0x00000600
+#define	LB_NLOCK		0x00000600
 #define	LB_LOCK_MASK		0x0000ff00
 #define	LB_LOCK_SHIFT		8
 
@@ -144,32 +144,37 @@ typedef struct lsbuf {
 
 #if defined(_KERNEL) && defined(__HAVE_CPU_COUNTER) && NLOCKSTAT > 0
 
-#define	LOCKSTAT_EVENT(lock, type, count, time)				\
+#define	LOCKSTAT_EVENT(flag, lock, type, count, time)			\
 do {									\
-	if (__predict_false(lockstat_enabled))				\
+	if (__predict_false(flag))					\
 		lockstat_event((uintptr_t)(lock),			\
 		    (uintptr_t)__builtin_return_address(0),		\
 		    (type), (count), (time));				\
 } while (/* CONSTCOND */ 0);
 
-#define	LOCKSTAT_EVENT_RA(lock, type, count, time, ra)			\
+#define	LOCKSTAT_EVENT_RA(flag, lock, type, count, time, ra)		\
 do {									\
-	if (__predict_false(lockstat_enabled))				\
+	if (__predict_false(flag))					\
 		lockstat_event((uintptr_t)(lock), (uintptr_t)ra,	\
 		    (type), (count), (time));				\
 } while (/* CONSTCOND */ 0);
 
 #define	LOCKSTAT_TIMER(name)	uint64_t name = 0
 #define	LOCKSTAT_COUNTER(name)	uint64_t name = 0
+#define	LOCKSTAT_FLAG(name)	int name
+#define	LOCKSTAT_ENTER(name)	name = lockstat_enabled
+#define	LOCKSTAT_EXIT(name)
 
-#define	LOCKSTAT_START_TIMER(name)					\
+#define	LOCKSTAT_START_TIMER(flag, name)				\
 do {									\
-	(name) -= cpu_counter();					\
+	if (__predict_false(flag))					\
+		(name) -= cpu_counter();				\
 } while (/* CONSTCOND */ 0)
 
-#define	LOCKSTAT_STOP_TIMER(name)					\
+#define	LOCKSTAT_STOP_TIMER(flag, name)					\
 do {									\
-	(name) += cpu_counter();					\
+	if (__predict_false(flag))					\
+		(name) += cpu_counter();				\
 } while (/* CONSTCOND */ 0)
 
 #define	LOCKSTAT_COUNT(name, inc)					\
@@ -183,13 +188,16 @@ extern volatile u_int	lockstat_enabled;
 
 #else
 
-#define	LOCKSTAT_EVENT(lock, type, count, time)		/* nothing */
-#define	LOCKSTAT_EVENT_RA(lock, type, count, time, ra)	/* nothing */
-#define	LOCKSTAT_TIMER(void)				/* nothing */
-#define	LOCKSTAT_COUNTER(void)				/* nothing */
-#define	LOCKSTAT_START_TIMER(void)			/* nothing */
-#define	LOCKSTAT_STOP_TIMER(void)			/* nothing */
-#define	LOCKSTAT_COUNT(name, int)			/* nothing */
+#define	LOCKSTAT_FLAG(name)					/* nothing */
+#define	LOCKSTAT_ENTER(name)					/* nothing */
+#define	LOCKSTAT_EXIT(name)					/* nothing */
+#define	LOCKSTAT_EVENT(flag, lock, type, count, time)		/* nothing */
+#define	LOCKSTAT_EVENT_RA(flag, lock, type, count, time, ra)	/* nothing */
+#define	LOCKSTAT_TIMER(void)					/* nothing */
+#define	LOCKSTAT_COUNTER(void)					/* nothing */
+#define	LOCKSTAT_START_TIMER(flag, void)			/* nothing */
+#define	LOCKSTAT_STOP_TIMER(flag, void)				/* nothing */
+#define	LOCKSTAT_COUNT(name, int)				/* nothing */
 
 #endif
 

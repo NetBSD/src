@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrvar_impl.h,v 1.1.8.2 2006/12/30 20:50:28 yamt Exp $	*/
+/*	$NetBSD: if_agrvar_impl.h,v 1.1.8.3 2007/02/26 09:11:39 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -92,9 +92,9 @@ struct agr_iftype_ops {
 	uint32_t (*iftop_hashmbuf)(struct agr_softc *, struct mbuf *);
 
 	int (*iftop_configmulti_port)(struct agr_softc *, struct agr_port *,
-	    boolean_t);
+	    bool);
 	int (*iftop_configmulti_ifreq)(struct agr_softc *, struct ifreq *,
-	    boolean_t);
+	    bool);
 };
 
 struct agr_ifreq {

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17 2003/08/27 20:20:08 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.17.16.1 2007/02/26 09:07:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -128,12 +128,6 @@ struct callframe {
 	register_t lr;
 	register_t r30;
 	register_t r31;
-};
-
-struct saframe {
-	register_t r1;		/* stack pointer */
-	register_t lr;		/* Callee lr save area */
-	register_t fill[2];	/* Pad to multiple of 16 bytes */
 };
 
 #define	IFRAMELEN	roundup(sizeof(struct intrframe), CALLFRAMELEN)

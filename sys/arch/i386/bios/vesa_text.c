@@ -1,7 +1,7 @@
-/* $NetBSD: vesa_text.c,v 1.5.16.1 2006/06/21 14:52:09 yamt Exp $ */
+/* $NetBSD: vesa_text.c,v 1.5.16.2 2007/02/26 09:06:49 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesa_text.c,v 1.5.16.1 2006/06/21 14:52:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesa_text.c,v 1.5.16.2 2007/02/26 09:06:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -27,23 +27,18 @@ CFATTACH_DECL(vesatext, sizeof(struct vesatextsc),
     vesatext_match, vesatext_attach, NULL, NULL);
 
 static int
-vesatext_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vesatext_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct vesabiosdev_attach_args *vaa = aux;
 
 	if (strcmp(vaa->vbaa_type, "text"))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void
-vesatext_attach(parent, dev, aux)
-	struct device *parent, *dev;
-	void *aux;
+vesatext_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct vesatextsc *sc = (struct vesatextsc *)dev;
 	struct vesabiosdev_attach_args *vaa = aux;

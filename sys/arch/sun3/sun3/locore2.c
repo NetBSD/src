@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.86.2.1 2006/12/30 20:47:12 yamt Exp $	*/
+/*	$NetBSD: locore2.c,v 1.86.2.2 2007/02/26 09:08:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.86.2.1 2006/12/30 20:47:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.86.2.2 2007/02/26 09:08:36 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -267,21 +267,21 @@ _verify_hardware(void)
 		cpu_match++;
 		cpu_string = "110";
 		delay_divisor = 120;	/* 17 MHz */
-		cpu_has_vme = TRUE;
+		cpu_has_vme = true;
 		break;
 
 	case ID_SUN3_160:
 		cpu_match++;
 		cpu_string = "160";
 		delay_divisor = 120;	/* 17 MHz */
-		cpu_has_vme = TRUE;
+		cpu_has_vme = true;
 		break;
 
 	case ID_SUN3_260:
 		cpu_match++;
 		cpu_string = "260";
 		delay_divisor = 82; 	/* 25 MHz */
-		cpu_has_vme = TRUE;
+		cpu_has_vme = true;
 #ifdef	HAVECACHE
 		cache_size = 0x10000;	/* 64K */
 #endif
@@ -291,7 +291,7 @@ _verify_hardware(void)
 		cpu_match++;
 		cpu_string = "E";
 		delay_divisor = 102;	/* 20 MHz  XXX: Correct? */
-		cpu_has_vme = TRUE;
+		cpu_has_vme = true;
 		break;
 
 	default:

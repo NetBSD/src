@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.98.2.2 2006/12/30 20:50:17 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.98.2.3 2007/02/26 09:11:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.98.2.2 2006/12/30 20:50:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.98.2.3 2007/02/26 09:11:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.98.2.2 2006/12/30 20:50:17 yamt Ex
 #include <sys/mman.h>
 #include <sys/file.h>
 #include <sys/kauth.h>
+#include <sys/fstrans.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -434,11 +435,12 @@ genfs_getpages(void *v)
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
 	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
-	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
-	boolean_t sawhole = FALSE;
-	boolean_t overwrite = (flags & PGO_OVERWRITE) != 0;
-	boolean_t blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
+	bool async = (flags & PGO_SYNCIO) == 0;
+	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	bool sawhole = false;
+	bool has_trans = false;
+	bool overwrite = (flags & PGO_OVERWRITE) != 0;
+	bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
 	voff_t origvsize;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
@@ -452,6 +454,9 @@ genfs_getpages(void *v)
 	if (*ap->a_count > MAX_READ_PAGES) {
 		panic("genfs_getpages: too many pages");
 	}
+
+	pgs = pgs_onstack;
+	pgs_size = sizeof(pgs_onstack);
 
 startover:
 	error = 0;
@@ -480,7 +485,8 @@ startover:
 		}
 		UVMHIST_LOG(ubchist, "off 0x%x count %d goes past EOF 0x%x",
 		    origoffset, *ap->a_count, memeof,0);
-		return (EINVAL);
+		error = EINVAL;
+		goto out_err;
 	}
 
 	/* uobj is locked */
@@ -529,9 +535,10 @@ startover:
 		    ap->a_m, UFP_NOWAIT|UFP_NOALLOC|(write ? UFP_NORDONLY : 0));
 		KASSERT(npages == *ap->a_count);
 		if (nfound == 0) {
-			return EBUSY;
+			error = EBUSY;
+			goto out_err;
 		}
-		if (lockmgr(&gp->g_glock, LK_SHARED | LK_NOWAIT, NULL)) {
+		if (!rw_tryenter(&gp->g_glock, RW_READER)) {
 			genfs_rel_pages(ap->a_m, npages);
 
 			/*
@@ -546,9 +553,10 @@ startover:
 				}
 			}
 		} else {
-			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+			rw_exit(&gp->g_glock);
 		}
-		return (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
+		error = (ap->a_m[ap->a_centeridx] == NULL ? EBUSY : 0);
+		goto out_err;
 	}
 	simple_unlock(&uobj->vmobjlock);
 
@@ -580,14 +588,22 @@ startover:
 	if (pgs_size > sizeof(pgs_onstack)) {
 		pgs = kmem_zalloc(pgs_size, async ? KM_NOSLEEP : KM_SLEEP);
 		if (pgs == NULL) {
-			return (ENOMEM);
+			pgs = pgs_onstack;
+			error = ENOMEM;
+			goto out_err;
 		}
 	} else {
-		pgs = pgs_onstack;
+		/* pgs == pgs_onstack */
 		memset(pgs, 0, pgs_size);
 	}
 	UVMHIST_LOG(ubchist, "ridx %d npages %d startoff %ld endoff %ld",
 	    ridx, npages, startoffset, endoffset);
+
+	if (!has_trans &&
+	    (error = fstrans_start(vp->v_mount, FSTRANS_SHARED)) != 0) {
+		goto out_err;
+	}
+	has_trans = true;
 
 	/*
 	 * hold g_glock to prevent a race with truncate.
@@ -596,13 +612,13 @@ startover:
 	 */
 
 	if (blockalloc) {
-		lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+		rw_enter(&gp->g_glock, RW_WRITER);
 	} else {
-		lockmgr(&gp->g_glock, LK_SHARED, NULL);
+		rw_enter(&gp->g_glock, RW_READER);
 	}
 	simple_lock(&uobj->vmobjlock);
 	if (vp->v_size < origvsize) {
-		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+		rw_exit(&gp->g_glock);
 		if (pgs != pgs_onstack)
 			kmem_free(pgs, pgs_size);
 		goto startover;
@@ -610,13 +626,12 @@ startover:
 
 	if (uvn_findpages(uobj, origoffset, &npages, &pgs[ridx],
 	    async ? UFP_NOWAIT : UFP_ALL) != orignpages) {
-		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+		rw_exit(&gp->g_glock);
 		KASSERT(async != 0);
 		genfs_rel_pages(&pgs[ridx], orignpages);
 		simple_unlock(&uobj->vmobjlock);
-		if (pgs != pgs_onstack)
-			kmem_free(pgs, pgs_size);
-		return (EBUSY);
+		error = EBUSY;
+		goto out_err;
 	}
 
 	/*
@@ -632,7 +647,7 @@ startover:
 		}
 	}
 	if (i == npages) {
-		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+		rw_exit(&gp->g_glock);
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
 		npages += ridx;
 		goto out;
@@ -643,7 +658,7 @@ startover:
 	 */
 
 	if (overwrite) {
-		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+		rw_exit(&gp->g_glock);
 		UVMHIST_LOG(ubchist, "PGO_OVERWRITE",0,0,0,0);
 
 		for (i = 0; i < npages; i++) {
@@ -678,13 +693,12 @@ startover:
 		npgs = npages;
 		if (uvn_findpages(uobj, startoffset, &npgs, pgs,
 		    async ? UFP_NOWAIT : UFP_ALL) != npages) {
-			lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+			rw_exit(&gp->g_glock);
 			KASSERT(async != 0);
 			genfs_rel_pages(pgs, npages);
 			simple_unlock(&uobj->vmobjlock);
-			if (pgs != pgs_onstack)
-				kmem_free(pgs, pgs_size);
-			return (EBUSY);
+			error = EBUSY;
+			goto out_err;
 		}
 	}
 	simple_unlock(&uobj->vmobjlock);
@@ -750,7 +764,7 @@ startover:
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
 			if ((pgs[pidx]->flags & PG_RDONLY)) {
-				sawhole = TRUE;
+				sawhole = true;
 			}
 			b = MIN(PAGE_SIZE, bytes);
 			offset += b;
@@ -808,7 +822,7 @@ startover:
 			    trunc_page(offset)) >> PAGE_SHIFT;
 			UVMHIST_LOG(ubchist, "lbn 0x%x -> HOLE", lbn,0,0,0);
 
-			sawhole = TRUE;
+			sawhole = true;
 			memset((char *)kva + (offset - startoffset), 0,
 			    iobytes);
 			skipbytes += iobytes;
@@ -853,10 +867,9 @@ loopdone:
 	nestiobuf_done(mbp, skipbytes, error);
 	if (async) {
 		UVMHIST_LOG(ubchist, "returning 0 (async)",0,0,0,0);
-		lockmgr(&gp->g_glock, LK_RELEASE, NULL);
-		if (pgs != pgs_onstack)
-			kmem_free(pgs, pgs_size);
-		return (0);
+		rw_exit(&gp->g_glock);
+		error = 0;
+		goto out_err;
 	}
 	if (bp != NULL) {
 		error = biowait(mbp);
@@ -888,7 +901,7 @@ loopdone:
 			}
 		}
 	}
-	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+	rw_exit(&gp->g_glock);
 	simple_lock(&uobj->vmobjlock);
 
 	/*
@@ -914,13 +927,12 @@ loopdone:
 		uvm_unlock_pageq();
 		simple_unlock(&uobj->vmobjlock);
 		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
-		if (pgs != pgs_onstack)
-			kmem_free(pgs, pgs_size);
-		return (error);
+		goto out_err;
 	}
 
 out:
 	UVMHIST_LOG(ubchist, "succeeding, npages %d", npages,0,0,0);
+	error = 0;
 	uvm_lock_pageq();
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
@@ -959,9 +971,13 @@ out:
 		memcpy(ap->a_m, &pgs[ridx],
 		    orignpages * sizeof(struct vm_page *));
 	}
+
+out_err:
 	if (pgs != pgs_onstack)
 		kmem_free(pgs, pgs_size);
-	return (0);
+	if (has_trans)
+		fstrans_done(vp->v_mount);
+	return (error);
 }
 
 /*
@@ -1033,14 +1049,15 @@ genfs_putpages(void *v)
 	int i, s, error, npages, nback;
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
-	boolean_t wasclean, by_list, needs_clean, yld;
-	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	boolean_t pagedaemon = curproc == uvm.pagedaemon_proc;
+	bool wasclean, by_list, needs_clean, yld;
+	bool async = (flags & PGO_SYNCIO) == 0;
+	bool pagedaemon = curproc == uvm.pagedaemon_proc;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct genfs_node *gp = VTOG(vp);
 	int dirtygen;
-	boolean_t modified = FALSE;
-	boolean_t cleanall;
+	bool modified = false;
+	bool has_trans = false;
+	bool cleanall;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
@@ -1068,6 +1085,18 @@ genfs_putpages(void *v)
 	/*
 	 * the vnode has pages, set up to process the request.
 	 */
+
+	if ((flags & PGO_CLEANIT) != 0) {
+		simple_unlock(slock);
+		if (pagedaemon)
+			error = fstrans_start_nowait(vp->v_mount, FSTRANS_LAZY);
+		else
+			error = fstrans_start(vp->v_mount, FSTRANS_LAZY);
+		if (error)
+			return error;
+		has_trans = true;
+		simple_lock(slock);
+	}
 
 	error = 0;
 	s = splbio();
@@ -1139,7 +1168,7 @@ genfs_putpages(void *v)
 			if (pg->offset < startoff || pg->offset >= endoff ||
 			    pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
 				if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
-					wasclean = FALSE;
+					wasclean = false;
 				}
 				pg = TAILQ_NEXT(pg, listq);
 				continue;
@@ -1147,7 +1176,7 @@ genfs_putpages(void *v)
 			off = pg->offset;
 		} else if (pg == NULL || pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
 			if (pg != NULL) {
-				wasclean = FALSE;
+				wasclean = false;
 			}
 			off += PAGE_SIZE;
 			if (off < endoff) {
@@ -1178,7 +1207,7 @@ genfs_putpages(void *v)
 			}
 			if (yld) {
 				simple_unlock(slock);
-				preempt(1);
+				preempt();
 				simple_lock(slock);
 			} else {
 				pg->flags |= PG_WANTED;
@@ -1222,7 +1251,7 @@ genfs_putpages(void *v)
 					pmap_page_protect(pg,
 					    VM_PROT_READ|VM_PROT_EXECUTE);
 				} else {
-					cleanall = FALSE;
+					cleanall = false;
 				}
 			}
 		}
@@ -1232,7 +1261,7 @@ genfs_putpages(void *v)
 			    (pg->flags & PG_CLEAN) == 0;
 			pg->flags |= PG_CLEAN;
 		} else {
-			needs_clean = FALSE;
+			needs_clean = false;
 		}
 
 		/*
@@ -1244,7 +1273,7 @@ genfs_putpages(void *v)
 
 		if (needs_clean) {
 			KDASSERT((vp->v_flag & VONWORKLST));
-			wasclean = FALSE;
+			wasclean = false;
 			memset(pgs, 0, sizeof(pgs));
 			pg->flags |= PG_BUSY;
 			UVM_PAGE_OWN(pg, "genfs_putpages");
@@ -1334,7 +1363,7 @@ genfs_putpages(void *v)
 			uvm_unlock_pageq();
 		}
 		if (needs_clean) {
-			modified = TRUE;
+			modified = true;
 
 			/*
 			 * start the i/o.  if we're traversing by list,
@@ -1417,13 +1446,17 @@ skip_scan:
 		 */
 		while (vp->v_numoutput != 0) {
 			vp->v_flag |= VBWAIT;
-			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, slock, FALSE,
+			UVM_UNLOCK_AND_WAIT(&vp->v_numoutput, slock, false,
 			    "genput2", hz);
 			simple_lock(slock);
 		}
 		splx(s);
 	}
 	simple_unlock(slock);
+
+	if (has_trans)
+		fstrans_done(vp->v_mount);
+
 	return (error);
 }
 
@@ -1467,8 +1500,8 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	daddr_t lbn, blkno;
 	struct buf *mbp, *bp;
 	struct vnode *devvp;
-	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	boolean_t write = rw == UIO_WRITE;
+	bool async = (flags & PGO_SYNCIO) == 0;
+	bool write = rw == UIO_WRITE;
 	int brw = write ? B_WRITE : B_READ;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
@@ -1598,8 +1631,16 @@ genfs_node_init(struct vnode *vp, const struct genfs_ops *ops)
 {
 	struct genfs_node *gp = VTOG(vp);
 
-	lockinit(&gp->g_glock, PINOD, "glock", 0, 0);
+	rw_init(&gp->g_glock);
 	gp->g_op = ops;
+}
+
+void
+genfs_node_destroy(struct vnode *vp)
+{
+	struct genfs_node *gp = VTOG(vp);
+
+	rw_destroy(&gp->g_glock);
 }
 
 void
@@ -1634,7 +1675,7 @@ genfs_compat_getpages(void *v)
 	struct iovec iov;
 	struct uio uio;
 	kauth_cred_t cred = curlwp->l_cred;
-	boolean_t write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 
 	error = 0;
 	origoffset = ap->a_offset;
@@ -2043,7 +2084,7 @@ genfs_node_wrlock(struct vnode *vp)
 {
 	struct genfs_node *gp = VTOG(vp);
 
-	lockmgr(&gp->g_glock, LK_EXCLUSIVE, NULL);
+	rw_enter(&gp->g_glock, RW_WRITER);
 }
 
 void
@@ -2051,7 +2092,7 @@ genfs_node_rdlock(struct vnode *vp)
 {
 	struct genfs_node *gp = VTOG(vp);
 
-	lockmgr(&gp->g_glock, LK_SHARED, NULL);
+	rw_enter(&gp->g_glock, RW_READER);
 }
 
 void
@@ -2059,5 +2100,5 @@ genfs_node_unlock(struct vnode *vp)
 {
 	struct genfs_node *gp = VTOG(vp);
 
-	lockmgr(&gp->g_glock, LK_RELEASE, NULL);
+	rw_exit(&gp->g_glock);
 }

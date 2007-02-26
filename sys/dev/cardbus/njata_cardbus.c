@@ -1,4 +1,4 @@
-/*	$Id: njata_cardbus.c,v 1.3.4.2 2006/12/30 20:47:57 yamt Exp $	*/
+/*	$Id: njata_cardbus.c,v 1.3.4.3 2007/02/26 09:10:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.3.4.2 2006/12/30 20:47:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njata_cardbus.c,v 1.3.4.3 2007/02/26 09:10:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,8 @@ static const struct njata32_cardbus_product {
 	{ PCI_VENDOR_WORKBIT,	PCI_PRODUCT_WORKBIT_NJATA32BI_KME,
 	  0 },
 	{ PCI_VENDOR_WORKBIT,	PCI_PRODUCT_WORKBIT_NPATA32_CF32A,
+	  NJATA32_FL_IOMAP_ONLY },
+	{ PCI_VENDOR_WORKBIT,	PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO,
 	  NJATA32_FL_IOMAP_ONLY },
 	{ PCI_VENDOR_WORKBIT,	PCI_PRODUCT_WORKBIT_NPATA32_KME,
 	  NJATA32_FL_IOMAP_ONLY },

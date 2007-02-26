@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.22.8.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.22.8.3 2007/02/26 09:12:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22.8.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.22.8.3 2007/02/26 09:12:25 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -126,7 +126,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg, struct lwp *l)
 		/* fall through */
 	default:
 		if ((error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    &l->l_acflag)) != 0)
+		    NULL)) != 0)
 			return (error);
 	}
 

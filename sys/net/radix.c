@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.29.2.2 2006/12/30 20:50:20 yamt Exp $	*/
+/*	$NetBSD: radix.c,v 1.29.2.3 2007/02/26 09:11:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.29.2.2 2006/12/30 20:50:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.29.2.3 2007/02/26 09:11:37 yamt Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -349,9 +349,6 @@ rn_nodeprint(struct radix_node *rn, rn_printer_t printer, void *arg,
 }
 
 #ifdef RN_DEBUG
-int	rn_nodenum;
-struct	radix_node *rn_clist;
-int	rn_saveinfo;
 int	rn_debug =  1;
 
 static void
@@ -405,10 +402,6 @@ rn_newpair(
 	t->rn_l = tt; t->rn_off = b >> 3;
 	tt->rn_b = -1; tt->rn_key = v; tt->rn_p = t;
 	tt->rn_flags = t->rn_flags = RNF_ACTIVE;
-#ifdef RN_DEBUG
-	tt->rn_info = rn_nodenum++; t->rn_info = rn_nodenum++;
-	tt->rn_twin = t; tt->rn_ybro = rn_clist; rn_clist = tt;
-#endif
 	return t;
 }
 
@@ -604,13 +597,9 @@ rn_addroute(
 	struct radix_node_head *head,
 	struct radix_node treenodes[2])
 {
-	const char *v = v_arg;
-	const char *netmask = n_arg;
-	struct radix_node *t;
-	struct radix_node *x = 0;
-	struct radix_node *tt;
-	struct radix_node *saved_tt;
-	struct radix_node *top = head->rnh_treetop;
+	const char *v = v_arg, *netmask = n_arg;
+	struct radix_node *t, *x = NULL, *tt;
+	struct radix_node *saved_tt, *top = head->rnh_treetop;
 	short b = 0, b_leaf = 0;
 	int keyduplicated;
 	const char *mmask;
@@ -665,8 +654,12 @@ rn_addroute(
 			tt->rn_flags = t->rn_flags;
 			tt->rn_p = x = t->rn_p;
 			t->rn_p = tt;
-			if (x->rn_l == t) x->rn_l = tt; else x->rn_r = tt;
-			saved_tt = tt; x = xx;
+			if (x->rn_l == t)
+				x->rn_l = tt;
+			else
+				x->rn_r = tt;
+			saved_tt = tt;
+			x = xx;
 		} else {
 			(tt = treenodes)->rn_dupedkey = t->rn_dupedkey;
 			t->rn_dupedkey = tt;
@@ -674,10 +667,6 @@ rn_addroute(
 			if (tt->rn_dupedkey)
 				tt->rn_dupedkey->rn_p = tt;
 		}
-#ifdef RN_DEBUG
-		t=tt+1; tt->rn_info = rn_nodenum++; t->rn_info = rn_nodenum++;
-		tt->rn_twin = t; tt->rn_ybro = rn_clist; rn_clist = tt;
-#endif
 		tt->rn_key = __UNCONST(v); /*XXXUNCONST*/
 		tt->rn_b = -1;
 		tt->rn_flags = RNF_ACTIVE;
@@ -694,7 +683,10 @@ rn_addroute(
 	if (keyduplicated)
 		goto on2;
 	b_leaf = -1 - t->rn_b;
-	if (t->rn_r == saved_tt) x = t->rn_l; else x = t->rn_r;
+	if (t->rn_r == saved_tt)
+		x = t->rn_l;
+	else
+		x = t->rn_r;
 	/* Promote general routes from below */
 	if (x->rn_b < 0) {
 	    for (mp = &t->rn_mklist; x; x = x->rn_dupedkey)
@@ -710,7 +702,8 @@ rn_addroute(
 		for (mp = &x->rn_mklist; (m = *mp); mp = &m->rm_mklist)
 			if (m->rm_b >= b_leaf)
 				break;
-		t->rn_mklist = m; *mp = 0;
+		t->rn_mklist = m;
+		*mp = 0;
 	}
 on2:
 	/* Add new route to highest possible ancestor's list */
@@ -754,25 +747,20 @@ on2:
 }
 
 struct radix_node *
-rn_delete(
+rn_delete1(
 	const void *v_arg,
 	const void *netmask_arg,
-	struct radix_node_head *head)
+	struct radix_node_head *head,
+	struct radix_node *rn)
 {
-	struct radix_node *t;
-	struct radix_node *p;
-	struct radix_node *x;
-	struct radix_node *tt;
-	struct radix_node *dupedkey;
-	struct radix_node *saved_tt;
-	struct radix_node *top;
-	struct radix_mask *m;
-	struct radix_mask *saved_m;
-	struct radix_mask **mp;
-	const char *v = v_arg;
-	const char *netmask = netmask_arg;
+	struct radix_node *t, *p, *x, *tt;
+	struct radix_mask *m, *saved_m, **mp;
+	struct radix_node *dupedkey, *saved_tt, *top;
+	const char *v, *netmask;
 	int b, head_off, vlen;
 
+	v = v_arg;
+	netmask = netmask_arg;
 	x = head->rnh_treetop;
 	tt = rn_search(v, x);
 	head_off = x->rn_off;
@@ -834,9 +822,6 @@ on1:
 	if (tt->rn_flags & RNF_ROOT)
 		return (0);
 #ifdef RN_DEBUG
-	/* Get us out of the creation list */
-	for (t = rn_clist; t && t->rn_ybro != tt; t = t->rn_ybro) {}
-	if (t) t->rn_ybro = tt->rn_ybro;
 	if (rn_debug)
 		log(LOG_DEBUG, "%s: Going In:\n", __func__), traverse(head, tt);
 #endif
@@ -848,8 +833,12 @@ on1:
 		 * saved_tt is the head of the dupedkey chain.
 		 */
 		if (tt == saved_tt) {
-			x = dupedkey; x->rn_p = t;
-			if (t->rn_l == tt) t->rn_l = x; else t->rn_r = x;
+			x = dupedkey;
+			x->rn_p = t;
+			if (t->rn_l == tt)
+				t->rn_l = x;
+			else
+				t->rn_r = x;
 		} else {
 			/* find node in front of tt on the chain */
 			for (x = p = saved_tt; p && p->rn_dupedkey != tt;)
@@ -862,19 +851,26 @@ on1:
 		}
 		t = tt + 1;
 		if  (t->rn_flags & RNF_ACTIVE) {
-#ifndef RN_DEBUG
-			*++x = *t; p = t->rn_p;
-#else
-			b = t->rn_info; *++x = *t; t->rn_info = b; p = t->rn_p;
-#endif
-			if (p->rn_l == t) p->rn_l = x; else p->rn_r = x;
-			x->rn_l->rn_p = x; x->rn_r->rn_p = x;
+			*++x = *t;
+			p = t->rn_p;
+			if (p->rn_l == t)
+				p->rn_l = x;
+			else
+				p->rn_r = x;
+			x->rn_l->rn_p = x;
+			x->rn_r->rn_p = x;
 		}
 		goto out;
 	}
-	if (t->rn_l == tt) x = t->rn_r; else x = t->rn_l;
+	if (t->rn_l == tt)
+		x = t->rn_r;
+	else
+		x = t->rn_l;
 	p = t->rn_p;
-	if (p->rn_r == t) p->rn_r = x; else p->rn_l = x;
+	if (p->rn_r == t)
+		p->rn_r = x;
+	else
+		p->rn_l = x;
 	x->rn_p = p;
 	/*
 	 * Demote routes attached to us.
@@ -906,14 +902,14 @@ on1:
 	 */
 	x = tt + 1;
 	if (t != x) {
-#ifndef RN_DEBUG
 		*t = *x;
-#else
-		b = t->rn_info; *t = *x; t->rn_info = b;
-#endif
-		t->rn_l->rn_p = t; t->rn_r->rn_p = t;
+		t->rn_l->rn_p = t;
+		t->rn_r->rn_p = t;
 		p = x->rn_p;
-		if (p->rn_l == x) p->rn_l = t; else p->rn_r = t;
+		if (p->rn_l == x)
+			p->rn_l = t;
+		else
+			p->rn_r = t;
 	}
 out:
 #ifdef RN_DEBUG
@@ -925,6 +921,15 @@ out:
 	tt->rn_flags &= ~RNF_ACTIVE;
 	tt[1].rn_flags &= ~RNF_ACTIVE;
 	return (tt);
+}
+
+struct radix_node *
+rn_delete(
+	const void *v_arg,
+	const void *netmask_arg,
+	struct radix_node_head *head)
+{
+	return rn_delete1(v_arg, netmask_arg, head, NULL);
 }
 
 static struct radix_node *

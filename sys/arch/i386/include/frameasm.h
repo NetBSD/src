@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.5.12.1 2006/12/30 20:46:11 yamt Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.5.12.2 2007/02/26 09:07:01 yamt Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -95,10 +95,9 @@
 #define	CHECK_ASTPENDING(reg)	movl	CPUVAR(CURLWP),reg	; \
 				cmpl	$0, reg			; \
 				je	1f			; \
-				movl	L_PROC(reg),reg		; \
-				cmpl	$0, P_MD_ASTPENDING(reg); \
+				cmpl	$0, L_MD_ASTPENDING(reg); \
 				1:
-#define	CLEAR_ASTPENDING(reg)	movl	$0, P_MD_ASTPENDING(reg)
+#define	CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
 
 /*
  * IDEPTH_INCR:

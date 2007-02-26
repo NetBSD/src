@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.9 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.10 2007/02/26 09:12:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.

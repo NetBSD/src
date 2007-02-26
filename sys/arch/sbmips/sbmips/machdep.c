@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.27.2.2 2006/12/30 20:46:50 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.27.2.3 2007/02/26 09:08:01 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.2 2006/12/30 20:46:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.3 2007/02/26 09:08:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.27.2.2 2006/12/30 20:46:50 yamt Exp $"
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
@@ -366,12 +365,12 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
-	    VM_MAP_PAGEABLE, FALSE, NULL);
+	    VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, VM_PHYS_SIZE,
-	    0, FALSE, NULL);
+	    0, false, NULL);
 
 
 	/*

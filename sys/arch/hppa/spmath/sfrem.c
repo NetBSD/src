@@ -1,4 +1,4 @@
-/*	$NetBSD: sfrem.c,v 1.2 2003/07/15 02:29:43 lukem Exp $	*/
+/*	$NetBSD: sfrem.c,v 1.2.16.1 2007/02/26 09:06:48 yamt Exp $	*/
 
 /*	$OpenBSD: sfrem.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfrem.c,v 1.2 2003/07/15 02:29:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfrem.c,v 1.2.16.1 2007/02/26 09:06:48 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -58,7 +58,7 @@ unsigned int *status;
 {
 	register unsigned int opnd1, opnd2, result;
 	register int opnd1_exponent, opnd2_exponent, dest_exponent, stepcount;
-	register int roundup = FALSE;
+	register int roundup = false;
 
 	opnd1 = *srcptr1;
 	opnd2 = *srcptr2;
@@ -232,7 +232,7 @@ unsigned int *status;
 	 */
 	if (Sgl_isnotlessthan(opnd1,opnd2)) {
 		Sgl_subtract(opnd1,opnd2,opnd1);
-		roundup = TRUE;
+		roundup = true;
 	}
 	if (stepcount > 0 || Sgl_iszero(opnd1)) {
 		/* division is exact, remainder is zero */

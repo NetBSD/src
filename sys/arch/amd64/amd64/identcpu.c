@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.2.16.2 2006/12/30 20:45:22 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.2.16.3 2007/02/26 09:05:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.2 2006/12/30 20:45:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.3 2007/02/26 09:05:39 yamt Exp $");
 
 #include "opt_powernow_k8.h"
 
@@ -45,8 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.2 2006/12/30 20:45:22 yamt Exp $
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 
-#include <x86/include/cpuvar.h>
-#include <x86/include/powernow.h>
+#include <x86/cpuvar.h>
+#include <x86/cputypes.h>
+#include <x86/powernow.h>
 
 /* sysctl wants this. */
 char cpu_model[48];
@@ -58,6 +59,7 @@ identifycpu(struct cpu_info *ci)
 	u_int32_t dummy, val;
 	char buf[512];
 	u_int32_t brand[12];
+	int vendor;
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000001, dummy, dummy, dummy, val);
@@ -68,8 +70,12 @@ identifycpu(struct cpu_info *ci)
 	CPUID(0x80000004, brand[8], brand[9], brand[10], brand[11]);
 
 	strcpy(cpu_model, (char *)brand);
+
+	vendor = CPUVENDOR_AMD;
 	if (cpu_model[0] == 0)
 		strcpy(cpu_model, "Opteron or Athlon 64");
+	else if (strstr(cpu_model, "AMD") == NULL)
+		vendor = CPUVENDOR_INTEL;
 
 	last_tsc = rdtsc();
 	delay(100000);
@@ -94,7 +100,7 @@ identifycpu(struct cpu_info *ci)
 		    CPUID_EXT_FLAGS2, buf, sizeof(buf));
 		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
 	}
-	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
+		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    CPUID_EXT_FLAGS3, buf, sizeof(buf));
 		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
@@ -108,6 +114,9 @@ identifycpu(struct cpu_info *ci)
 	    powernow_probe(ci))
 		k8_powernow_init();
 #endif
+
+	x86_errata(ci, vendor);
+	x86_patch();
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.63.16.1 2006/06/21 14:48:15 yamt Exp $ */
+/* $NetBSD: pmap.h,v 1.63.16.2 2007/02/26 09:05:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -250,7 +250,7 @@ pmap_remove_all(struct pmap *pmap)
  */
 #define	POOL_VTOPHYS(va)		ALPHA_K0SEG_TO_PHYS((vaddr_t) (va))
 
-boolean_t			pmap_pageidlezero(paddr_t);
+bool	pmap_pageidlezero(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 paddr_t vtophys(vaddr_t);

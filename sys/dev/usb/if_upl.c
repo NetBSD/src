@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.22.2.2 2006/12/30 20:49:38 yamt Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.22.2.3 2007/02/26 09:10:43 yamt Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.22.2.2 2006/12/30 20:49:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.22.2.3 2007/02/26 09:10:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -203,7 +203,7 @@ Static void upl_init(void *);
 Static void upl_stop(struct upl_softc *);
 Static void upl_watchdog(struct ifnet *);
 
-Static int upl_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+Static int upl_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 		      struct rtentry *);
 Static void upl_input(struct ifnet *, struct mbuf *);
 
@@ -1014,7 +1014,7 @@ upl_stop(struct upl_softc *sc)
 }
 
 Static int
-upl_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	int s, len, error;

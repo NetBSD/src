@@ -1,4 +1,4 @@
-#	$NetBSD: files.sa11x0,v 1.5 2003/04/14 14:20:10 rjs Exp $
+#	$NetBSD: files.sa11x0,v 1.5.18.1 2007/02/26 09:05:56 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -28,23 +28,8 @@ device	sacc { [addr=-1], [size=0], [intr=-1] }
 attach	sacc at saip
 file	arch/arm/sa11x0/sa1111.c		sacc
 
-#
-# Workstation Console
-#
-include "dev/wscons/files.wscons"
-
-# XXX this is a hack to use dev/pcmcia without fdc.c
-device	fdc
-
-# PCMCIA
-include "dev/pcmcia/files.pcmcia"
-
 device	sacpcic: pcmciabus
 attach	sacpcic at sacc
 file	arch/arm/sa11x0/sa11x1_pcic.c	sacpcic needs-flag
 
 file	arch/arm/sa11x0/sa11xx_pcic.c	sacpcic | ipaqpcic
-
-# USB
-
-include "dev/usb/files.usb"

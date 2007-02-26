@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.1.8.2 2006/12/30 20:47:22 yamt Exp $ */
+/* $NetBSD: ipmivar.h,v 1.1.8.3 2007/02/26 09:08:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -26,6 +26,8 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/mutex.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -94,7 +96,7 @@ struct ipmi_softc {
 	int			sc_retries;
 	int			sc_wakeup;
 
-	struct lock		sc_lock;
+	kmutex_t		sc_lock;
 
 	struct ipmi_bmc_args	*sc_iowait_args;
 

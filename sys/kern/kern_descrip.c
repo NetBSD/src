@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.134.2.2 2006/12/30 20:50:05 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.134.2.3 2007/02/26 09:11:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.2 2006/12/30 20:50:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.3 2007/02/26 09:11:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.2 2006/12/30 20:50:05 yamt 
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /*
@@ -586,7 +585,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= P_ADVLOCK;
+			p->p_flag |= PK_ADVLOCK;
 			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
@@ -595,7 +594,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= P_ADVLOCK;
+			p->p_flag |= PK_ADVLOCK;
 			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
@@ -1015,6 +1014,7 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 void
 ffree(struct file *fp)
 {
+	kauth_cred_t cred;
 
 #ifdef DIAGNOSTIC
 	if (fp->f_usecount)
@@ -1023,13 +1023,15 @@ ffree(struct file *fp)
 
 	simple_lock(&filelist_slock);
 	LIST_REMOVE(fp, f_list);
-	kauth_cred_free(fp->f_cred);
+	cred = fp->f_cred;
 #ifdef DIAGNOSTIC
+	fp->f_cred = NULL;
 	fp->f_count = 0; /* What's the point? */
 #endif
 	nfiles--;
 	simple_unlock(&filelist_slock);
 	pool_put(&file_pool, fp);
+	kauth_cred_free(cred);
 }
 
 /*
@@ -1374,7 +1376,7 @@ closef(struct file *fp, struct lwp *l)
 	 * If the descriptor was in a message, POSIX-style locks
 	 * aren't passed with the descriptor.
 	 */
-	if (p && (p->p_flag & P_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
+	if (p && (p->p_flag & PK_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;
@@ -1817,12 +1819,16 @@ restart:
 	if (devnullfp)
 		FILE_UNUSE(devnullfp, l);
 	if (closed[0] != '\0') {
+		rw_enter(&proclist_lock, RW_READER);
 		pp = p->p_pptr;
+		mutex_enter(&pp->p_mutex);
 		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
 		    "was invoked by uid %d ppid %d (%s) "
 		    "with fd %s closed\n",
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, &closed[1]);
+		mutex_exit(&pp->p_mutex);
+		rw_exit(&proclist_lock);
 	}
 	return (0);
 }
@@ -1884,6 +1890,7 @@ void
 fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 {
 	struct proc *p1;
+	struct pgrp *pgrp;
 	ksiginfo_t ksi;
 
 	KSI_INIT(&ksi);
@@ -1891,10 +1898,16 @@ fownsignal(pid_t pgid, int signo, int code, int band, void *fdescdata)
 	ksi.ksi_code = code;
 	ksi.ksi_band = band;
 
-	if (pgid > 0 && (p1 = pfind(pgid)))
+	/*
+	 * Since we may be called from an interrupt context, we must use
+	 * the proclist_mutex.
+	 */
+	mutex_enter(&proclist_mutex);
+	if (pgid > 0 && (p1 = p_find(pgid, PFIND_LOCKED)))
 		kpsignal(p1, &ksi, fdescdata);
-	else if (pgid < 0)
-		kgsignal(-pgid, &ksi, fdescdata);
+	else if (pgid < 0 && (pgrp = pg_find(-pgid, PFIND_LOCKED)))
+		kpgsignal(pgrp, &ksi, fdescdata, 0);
+	mutex_exit(&proclist_mutex);
 }
 
 int

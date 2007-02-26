@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.13.4.2 2006/12/30 20:50:29 yamt Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.13.4.3 2007/02/26 09:11:41 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.2 2006/12/30 20:50:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.3 2007/02/26 09:11:41 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -274,8 +274,7 @@ at_pcbsetaddr(ddp, addr, l)
 
 			if (sat->sat_port < ATPORT_RESERVED && l &&
 			    kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_ISSUSER,
-			    &l->l_acflag))
+			    KAUTH_GENERIC_ISSUSER, NULL))
 				return (EACCES);
 		}
 	} else {
@@ -337,7 +336,7 @@ at_pcbconnect(ddp, addr, l)
 	struct lwp     *l;
 {
 	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
-	struct route   *ro;
+	struct route *ro;
 	struct at_ifaddr *aa = 0;
 	struct ifnet   *ifp;
 	u_short         hintnet = 0, net;
@@ -383,9 +382,9 @@ at_pcbconnect(ddp, addr, l)
 				}
 			}
 		}
-		if (aa == NULL || (satosat(&ro->ro_dst)->sat_addr.s_net !=
+		if (aa == NULL || (satocsat(rtcache_getdst(ro))->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
-		    satosat(&ro->ro_dst)->sat_addr.s_node !=
+		    satocsat(rtcache_getdst(ro))->sat_addr.s_node !=
 		    sat->sat_addr.s_node))
 			rtcache_free(ro);
 	}
@@ -393,7 +392,7 @@ at_pcbconnect(ddp, addr, l)
          * If we've got no route for this interface, try to find one.
          */
 	if (ro->ro_rt == NULL) {
-		bzero(&ro->ro_dst, sizeof(struct sockaddr_at));
+		memset(&ro->ro_dst, 0, sizeof(struct sockaddr_at));
 		ro->ro_dst.sa_len = sizeof(struct sockaddr_at);
 		ro->ro_dst.sa_family = AF_APPLETALK;
 		if (hintnet) {
@@ -409,7 +408,7 @@ at_pcbconnect(ddp, addr, l)
          * Make sure any route that we have has a valid interface.
          */
 	aa = 0;
-	if (ro->ro_rt && (ifp = ro->ro_rt->rt_ifp)) {
+	if (ro->ro_rt != NULL && (ifp = ro->ro_rt->rt_ifp) != NULL) {
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp) {
 				break;

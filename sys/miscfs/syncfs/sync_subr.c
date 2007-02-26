@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.18.2.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.18.2.3 2007/02/26 09:11:32 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18.2.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18.2.3 2007/02/26 09:11:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,7 @@ time_t filedelay = 30;			/* time to delay syncing files */
 time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
 
-struct lock syncer_lock;		/* used to freeze syncer */
+kmutex_t syncer_mutex;			/* used to freeze syncer */
 
 static int rushjob;			/* number of slots to run ASAP */
 static int stat_rush_requests;		/* number of times I/O speeded up */
@@ -81,7 +81,7 @@ vn_initialize_syncerd()
 	for (i = 0; i < syncer_last; i++)
 		TAILQ_INIT(&syncer_workitem_pending[i]);
 
-	lockinit(&syncer_lock, PVFS, "synclk", 0, 0);
+	mutex_init(&syncer_mutex, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -187,7 +187,7 @@ sched_sync(void *v)
 			syncer_delayno = 0;
 		splx(s);
 
-		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&syncer_mutex);
 
 		while ((vp = TAILQ_FIRST(slp)) != NULL) {
 			if (vn_start_write(vp, &mp, V_NOWAIT) == 0) {
@@ -220,7 +220,7 @@ sched_sync(void *v)
 		if (bioops.io_sync)
 			(*bioops.io_sync)(NULL);
 
-		lockmgr(&syncer_lock, LK_RELEASE, NULL);
+		mutex_exit(&syncer_mutex);
 
 		/*
 		 * The variable rushjob allows the kernel to speed up the

@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.12.2.1 2006/06/21 14:53:01 yamt Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.12.2.2 2007/02/26 09:07:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -131,10 +131,8 @@ ENTRY(switch_lwp_exit)
 	jbsr	_C_LABEL(lwp_exit2)
 	lea	%sp@(4),%sp		| pop args
 
-#if defined(LOCKDEBUG)
 	/* Acquire sched_lock */ 
 	jbsr	_C_LABEL(sched_lock_idle)
-#endif
 
 	jra	_C_LABEL(cpu_switch)
 
@@ -143,17 +141,13 @@ ENTRY(switch_lwp_exit)
  * to wait for something to come ready.
  */
 ASENTRY_NOPROFILE(Idle)
-#if defined(LOCKDEBUG)
 	/* Release sched_lock */
 	jbsr	_C_LABEL(sched_unlock_idle)
-#endif
 	stop	#PSL_LOWIPL
 GLOBAL(_Idle)				/* For sun2/sun3's clock.c ... */
 	movw	#PSL_HIGHIPL,%sr
-#if defined(LOCKDEBUG)
 	/* Acquire sched_lock */
 	jbsr	_C_LABEL(sched_lock_idle)
-#endif
 	movl    _C_LABEL(sched_whichqs),%d0
 	jeq     _ASM_LABEL(Idle)
 #if defined(M68010)
@@ -312,7 +306,6 @@ Lcpu_switch_noctxsave:
 	movl	%a0@(L_ADDR),%a1	| get l_addr
 	movl	%a1,_C_LABEL(curpcb)
 
-#if defined(LOCKDEBUG)
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
@@ -322,7 +315,6 @@ Lcpu_switch_noctxsave:
 	jbsr	_C_LABEL(sched_unlock_idle)
 	movl	%sp@+,%a1
 	movl	%sp@+,%a0
-#endif
 
 #if defined(sun2) || defined(sun3)
 	movl	%a0@(L_PROC),%a2

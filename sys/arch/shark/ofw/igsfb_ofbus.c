@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_ofbus.c,v 1.1.4.2 2006/12/30 20:46:57 yamt Exp $ */
+/*	$NetBSD: igsfb_ofbus.c,v 1.1.4.3 2007/02/26 09:08:13 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.1.4.2 2006/12/30 20:46:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_ofbus.c,v 1.1.4.3 2007/02/26 09:08:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,8 @@ static const char *compat_strings[] = { "igs,cyperpro2010", 0 };
 vaddr_t igsfb_mem_vaddr = 0, igsfb_mmio_vaddr = 0;
 paddr_t igsfb_mem_paddr;
 struct bus_space igsfb_memt, igsfb_iot;
+
+extern int console_ihandle;
 
 int
 igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
@@ -141,6 +143,7 @@ igsfb_ofbus_cnattach(bus_space_tag_t iot, bus_space_tag_t memt)
 
 	igsfb_ofbus_console = 1;
 	igsfb_ofbus_phandle = stdout_phandle;
+	console_ihandle = stdout_ihandle;
 	return 0;
 }
 

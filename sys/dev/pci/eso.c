@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.40.6.2 2006/12/30 20:48:43 yamt Exp $	*/
+/*	$NetBSD: eso.c,v 1.40.6.3 2007/02/26 09:10:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40.6.2 2006/12/30 20:48:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40.6.3 2007/02/26 09:10:23 yamt Exp $");
 
 #include "mpu.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40.6.2 2006/12/30 20:48:43 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/queue.h>
 #include <sys/proc.h>
 
 #include <dev/pci/pcidevs.h>
@@ -82,14 +83,14 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.40.6.2 2006/12/30 20:48:43 yamt Exp $");
 struct eso_dma {
 	bus_dma_tag_t		ed_dmat;
 	bus_dmamap_t		ed_map;
-	caddr_t			ed_addr;
+	caddr_t			ed_kva;
 	bus_dma_segment_t	ed_segs[1];
 	int			ed_nsegs;
 	size_t			ed_size;
-	struct eso_dma *	ed_next;
+	SLIST_ENTRY(eso_dma)	ed_slist;
 };
 
-#define KVADDR(dma)	((void *)(dma)->ed_addr)
+#define KVADDR(dma)	((void *)(dma)->ed_kva)
 #define DMAADDR(dma)	((dma)->ed_map->dm_segs[0].ds_addr)
 
 /* Autoconfiguration interface */
@@ -205,6 +206,7 @@ static void	eso_write_mixreg(struct eso_softc *, uint8_t, uint8_t);
 static int	eso_allocmem(struct eso_softc *, size_t, size_t, size_t,
 		    int, int, struct eso_dma *);
 static void	eso_freemem(struct eso_dma *);
+static struct eso_dma *	eso_kva2dma(const struct eso_softc *, const caddr_t);
 
 
 static int
@@ -280,7 +282,7 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
-	sc->sc_dmas = NULL;
+	SLIST_INIT(&sc->sc_dmas);
 	sc->sc_dmac_configured = 0;
 
 	/* Enable bus mastering. */
@@ -1473,7 +1475,7 @@ eso_allocmem(struct eso_softc *sc, size_t size, size_t align,
 		goto out;
 
 	error = bus_dmamem_map(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs,
-	    ed->ed_size, &ed->ed_addr, wait | BUS_DMA_COHERENT);
+	    ed->ed_size, &ed->ed_kva, wait | BUS_DMA_COHERENT);
 	if (error)
 		goto free;
 
@@ -1482,7 +1484,7 @@ eso_allocmem(struct eso_softc *sc, size_t size, size_t align,
 	if (error)
 		goto unmap;
 
-	error = bus_dmamap_load(ed->ed_dmat, ed->ed_map, ed->ed_addr,
+	error = bus_dmamap_load(ed->ed_dmat, ed->ed_map, ed->ed_kva,
 	    ed->ed_size, NULL, wait |
 	    (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
 	if (error)
@@ -1493,7 +1495,7 @@ eso_allocmem(struct eso_softc *sc, size_t size, size_t align,
  destroy:
 	bus_dmamap_destroy(ed->ed_dmat, ed->ed_map);
  unmap:
-	bus_dmamem_unmap(ed->ed_dmat, ed->ed_addr, ed->ed_size);
+	bus_dmamem_unmap(ed->ed_dmat, ed->ed_kva, ed->ed_size);
  free:
 	bus_dmamem_free(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs);
  out:
@@ -1506,8 +1508,22 @@ eso_freemem(struct eso_dma *ed)
 
 	bus_dmamap_unload(ed->ed_dmat, ed->ed_map);
 	bus_dmamap_destroy(ed->ed_dmat, ed->ed_map);
-	bus_dmamem_unmap(ed->ed_dmat, ed->ed_addr, ed->ed_size);
+	bus_dmamem_unmap(ed->ed_dmat, ed->ed_kva, ed->ed_size);
 	bus_dmamem_free(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs);
+}
+
+static struct eso_dma *
+eso_kva2dma(const struct eso_softc *sc, const caddr_t kva)
+{
+	struct eso_dma *p;
+
+	SLIST_FOREACH(p, &sc->sc_dmas, ed_slist) {
+		if (KVADDR(p) == kva)
+			return p;
+	}
+
+	panic("%s: kva2dma: bad kva: %p", sc->sc_dev.dv_xname, kva);
+	/* NOTREACHED */
 }
 
 static void *
@@ -1561,8 +1577,7 @@ eso_allocm(void *hdl, int direction, size_t size, struct malloc_type *type,
 		free(ed, type);
 		return NULL;
 	}
-	ed->ed_next = sc->sc_dmas;
-	sc->sc_dmas = ed;
+	SLIST_INSERT_HEAD(&sc->sc_dmas, ed, ed_slist);
 
 	return KVADDR(ed);
 }
@@ -1571,17 +1586,14 @@ static void
 eso_freem(void *hdl, void *addr, struct malloc_type *type)
 {
 	struct eso_softc *sc;
-	struct eso_dma *p, **pp;
+	struct eso_dma *p;
 
 	sc = hdl;
-	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->ed_next) {
-		if (KVADDR(p) == addr) {
-			eso_freemem(p);
-			*pp = p->ed_next;
-			free(p, type);
-			return;
-		}
-	}
+	p = eso_kva2dma(sc, addr);
+
+	SLIST_REMOVE(&sc->sc_dmas, p, eso_dma, ed_slist);
+	eso_freemem(p);
+	free(p, type);
 }
 
 static size_t
@@ -1616,11 +1628,7 @@ eso_mappage(void *hdl, void *addr, off_t offs, int prot)
 	sc = hdl;
 	if (offs < 0)
 		return -1;
-	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) != addr;
-	     ed = ed->ed_next)
-		continue;
-	if (ed == NULL)
-		return -1;
+	ed = eso_kva2dma(sc, addr);
 
 	return bus_dmamem_mmap(ed->ed_dmat, ed->ed_segs, ed->ed_nsegs,
 	    offs, prot, BUS_DMA_WAITOK);
@@ -1652,14 +1660,7 @@ eso_trigger_output(void *hdl, void *start, void *end, int blksize,
 	    param->precision, param->channels));
 
 	/* Find DMA buffer. */
-	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) != start;
-	     ed = ed->ed_next)
-		continue;
-	if (ed == NULL) {
-		printf("%s: trigger_output: bad addr %p\n",
-		    sc->sc_dev.dv_xname, start);
-		return EINVAL;
-	}
+	ed = eso_kva2dma(sc, start);
 	DPRINTF(("%s: dmaaddr %lx\n",
 	    sc->sc_dev.dv_xname, (unsigned long)DMAADDR(ed)));
 
@@ -1737,14 +1738,7 @@ eso_trigger_input(void *hdl, void *start, void *end, int blksize,
 		return EIO;
 
 	/* Find DMA buffer. */
-	for (ed = sc->sc_dmas; ed != NULL && KVADDR(ed) != start;
-	     ed = ed->ed_next)
-		continue;
-	if (ed == NULL) {
-		printf("%s: trigger_output: bad addr %p\n",
-		    sc->sc_dev.dv_xname, start);
-		return EINVAL;
-	}
+	ed = eso_kva2dma(sc, start);
 	DPRINTF(("%s: dmaaddr %lx\n",
 	    sc->sc_dev.dv_xname, (unsigned long)DMAADDR(ed)));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.25.2.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.25.2.3 2007/02/26 09:11:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.25.2.2 2006/12/30 20:50:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.25.2.3 2007/02/26 09:11:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,9 @@ procfs_dostatus(
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
 
+	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&p->p_mutex);
+
 	pid = p->p_pid;
 	ppid = p->p_pptr ? p->p_pptr->p_pid : 0,
 	pgid = p->p_pgrp->pg_id;
@@ -125,7 +128,7 @@ procfs_dostatus(
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %d %d %d %d ",
 	    pid, ppid, pgid, sid);
 
-	if ((p->p_flag&P_CONTROLT) && (tp = sess->s_ttyp))
+	if ((p->p_lflag & PL_CONTROLT) && (tp = sess->s_ttyp))
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "%d,%d ",
 		    major(tp->t_dev), minor(tp->t_dev));
 	else
@@ -144,7 +147,8 @@ procfs_dostatus(
 	if (*sep != ',')
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "noflags");
 
-	if (l->l_flag & L_INMEM)
+	mutex_enter(&p->p_smutex);
+	if (l->l_flag & LW_INMEM)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %ld,%ld",
 		    p->p_stats->p_start.tv_sec, p->p_stats->p_start.tv_usec);
 	else
@@ -153,14 +157,17 @@ procfs_dostatus(
 	{
 		struct timeval ut, st;
 
-		calcru(p, &ut, &st, (void *) 0);
+		calcru(p, &ut, &st, (void *) 0, NULL);
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf),
 		    " %ld,%ld %ld,%ld", ut.tv_sec, ut.tv_usec, st.tv_sec,
 		    st.tv_usec);
 	}
+	mutex_exit(&p->p_smutex);
 
+	lwp_lock(l);
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %s",
 	    (l->l_wchan && l->l_wmesg) ? l->l_wmesg : "nochan");
+	lwp_unlock(l);
 
 	cr = p->p_cred;
 
@@ -173,6 +180,9 @@ procfs_dostatus(
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), ",%d",
 		    kauth_cred_group(cr, i));
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "\n");
+
+	mutex_exit(&p->p_mutex);
+	rw_exit(&proclist_lock);
 
 	return (uiomove_frombuf(psbuf, ps - psbuf, uio));
 }

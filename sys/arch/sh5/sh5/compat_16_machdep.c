@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1 2003/10/05 09:57:47 scw Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.1.18.1 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2003/10/05 09:57:47 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1.18.1 2007/02/26 09:08:09 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -49,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2003/10/05 09:57:47 scw Ex
 #include <sys/signalvar.h>
 #include <sys/mount.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>

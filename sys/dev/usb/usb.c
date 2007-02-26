@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.82.2.2 2006/12/30 20:49:39 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.82.2.3 2007/02/26 09:10:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82.2.2 2006/12/30 20:49:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82.2.3 2007/02/26 09:10:47 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -864,8 +864,11 @@ usb_add_event(int type, struct usb_event *uep)
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
 	wakeup(&usb_events);
 	selnotify(&usb_selevent, 0);
-	if (usb_async_proc != NULL)
+	if (usb_async_proc != NULL) {
+		mutex_enter(&proclist_mutex);
 		psignal(usb_async_proc, SIGIO);
+		mutex_exit(&proclist_mutex);
+	}
 	splx(s);
 }
 

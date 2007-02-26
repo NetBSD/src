@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24.2.2 2006/12/30 20:46:53 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24.2.3 2007/02/26 09:08:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.2.2 2006/12/30 20:46:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24.2.3 2007/02/26 09:08:04 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -192,12 +192,12 @@ device_register(struct device *dev, void *aux)
 		struct pci_attach_args *pa = aux;
 
 		if (BUILTIN_AHC_P(pa)) {
-			prop_bool_t usetd = prop_bool_create(TRUE);
+			prop_bool_t usetd = prop_bool_create(true);
 			KASSERT(usetd != NULL);
 
 			if (prop_dictionary_set(device_properties(dev),
 						"aic7xxx-use-target-defaults",
-						usetd) == FALSE) {
+						usetd) == false) {
 				printf("WARNING: unable to set "
 				    "aic7xxx-use-target-defaults property "
 				    "for %s\n", dev->dv_xname);
@@ -220,7 +220,7 @@ device_register(struct device *dev, void *aux)
 			KASSERT(gfe_boundary != NULL);
 
 			if (prop_dictionary_set(device_properties(dev),
-			    "tl-dma-page-boundary", gfe_boundary) == FALSE) {
+			    "tl-dma-page-boundary", gfe_boundary) == false) {
 				printf("WARNING: unable to set "
 				    "tl-dma-page-boundary property "
 				    "for %s\n", dev->dv_xname);

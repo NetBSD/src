@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.69.2.2 2006/12/30 20:47:38 yamt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.69.2.3 2007/02/26 09:09:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.2 2006/12/30 20:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.3 2007/02/26 09:09:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.2 2006/12/30 20:47:38 yamt Exp
 #include <sys/conf.h>
 #include <sys/pipe.h>
 
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -209,7 +208,7 @@ linux_sys_open(l, v, retval)
 	 * terminal yet, and the O_NOCTTY flag is not set, try to make
 	 * this the controlling terminal.
 	 */
-        if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
+        if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
                 struct filedesc *fdp = p->p_fd;
                 struct file     *fp;
 
@@ -462,18 +461,22 @@ linux_sys_fcntl(l, v, retval)
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			return 0;
 		}
+		rw_enter(&proclist_lock, RW_READER);
 		if ((long)arg <= 0) {
 			pgid = -(long)arg;
 		} else {
-			struct proc *p1 = pfind((long)arg);
+			struct proc *p1 = p_find((long)arg, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 			if (p1 == NULL)
 				return (ESRCH);
 			pgid = (long)p1->p_pgrp->pg_id;
 		}
-		pgrp = pgfind(pgid);
-		if (pgrp == NULL || pgrp->pg_session != p->p_session)
+		pgrp = pg_find(pgid, PFIND_LOCKED);
+		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
+			rw_exit(&proclist_lock);
 			return EPERM;
+		}
 		tp->t_pgrp = pgrp;
+		rw_exit(&proclist_lock);
 		return 0;
 
 	default:

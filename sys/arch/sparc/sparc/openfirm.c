@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.10.2.1 2006/06/21 14:56:12 yamt Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.10.2.2 2007/02/26 09:08:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.10.2.1 2006/06/21 14:56:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.10.2.2 2007/02/26 09:08:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,7 +773,7 @@ OF_sym2val(void *cells)
 	symbol = (char *)(u_long)args->symbol;
 	if (obp_symbol_debug)
 		prom_printf("looking up symbol %s\n", symbol);
-	args->result = (db_value_of_name(symbol, &value) == TRUE) ? 0 : -1;
+	args->result = (db_value_of_name(symbol, &value) == true) ? 0 : -1;
 	if (obp_symbol_debug)
 		prom_printf("%s is %lx\n", symbol, value);
 	args->value = ADR2CELL(value);

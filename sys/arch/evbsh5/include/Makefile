@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.12.1 2006/12/30 20:45:55 yamt Exp $
+#	$NetBSD: Makefile,v 1.12.12.2 2007/02/26 09:06:24 yamt Exp $
 
 INCSDIR= /usr/include/evbsh5
 
@@ -11,10 +11,10 @@ INCS=	alphaledio.h ansi.h aout_machdep.h asm.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	limits.h lock.h \
-	math.h mcontext.h \
+	math.h mcontext.h mutex.h \
 	netbsd32_machdep.h \
 	param.h pcb.h pci_machdep.h pmap.h pmc.h proc.h profile.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \
 	varargs.h vmparam.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.40.2.2 2006/12/30 20:51:05 yamt Exp $	*/
+/*	$NetBSD: uvm.h,v 1.40.2.3 2007/02/26 09:12:26 yamt Exp $	*/
 
 /*
  *
@@ -86,8 +86,8 @@ struct uvm {
 	int page_free_nextcolor;	/* next color to allocate from */
 	struct simplelock pageqlock;	/* lock for active/inactive page q */
 	struct simplelock fpageqlock;	/* lock for free page q */
-	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
-	boolean_t page_idle_zero;	/* TRUE if we should try to zero
+	bool page_init_done;		/* TRUE if uvm_page_init() finished */
+	bool page_idle_zero;		/* TRUE if we should try to zero
 					   pages in the idle loop */
 
 		/* page daemon trigger */
@@ -111,9 +111,14 @@ struct uvm {
 
 	/* swap-related items */
 	struct simplelock swap_data_lock;
+	bool swap_running;
+	kcondvar_t scheduler_cv;
+	kmutex_t scheduler_mutex;
+	bool scheduler_kicked;
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;
+
 };
 
 #endif /* _KERNEL */

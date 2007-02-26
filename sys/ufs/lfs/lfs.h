@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.88.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.88.2.3 2007/02/26 09:12:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@
 
 #ifndef _UFS_LFS_LFS_H_
 #define _UFS_LFS_LFS_H_
+
+#include <sys/rwlock.h>
 
 /*
  * Compile-time options for LFS.
@@ -822,7 +824,7 @@ struct lfs {
 	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 	size_t lfs_devbsize;		/* Device block size */
 	size_t lfs_devbshift;		/* Device block shift */
-	struct lock lfs_fraglock;
+	krwlock_t lfs_fraglock;
 	struct lock lfs_iflock;		/* Ifile lock */
 	struct lock lfs_stoplock;	/* Wrap lock */
 	pid_t lfs_rfpid;		/* Process ID of roll-forward agent */

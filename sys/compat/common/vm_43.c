@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.10.12.1 2006/12/30 20:47:31 yamt Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.10.12.2 2007/02/26 09:09:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.10.12.1 2006/12/30 20:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.10.12.2 2007/02/26 09:09:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_43.c,v 1.10.12.1 2006/12/30 20:47:31 yamt Exp $")
 #include <sys/mman.h>
 
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <miscfs/specfs/specdev.h>

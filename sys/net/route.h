@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.41.2.2 2006/12/30 20:50:21 yamt Exp $	*/
+/*	$NetBSD: route.h,v 1.41.2.3 2007/02/26 09:11:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -327,11 +327,37 @@ void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
 
 struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 
+#ifdef RTCACHE_DEBUG
+#define	rtcache_init(ro)		rtcache_init_debug(__func__, ro)
+#define	rtcache_init_noclone(ro)	rtcache_init_noclone_debug(__func__, ro)
+#define	rtcache_copy(ro, oro, len)	rtcache_copy_debug(__func__, ro, oro, len)
+void	rtcache_init_debug(const char *, struct route *);
+void	rtcache_init_noclone_debug(const char *, struct route *);
+void	rtcache_copy_debug(const char *, struct route *, const struct route *, size_t);
+#else
 void	rtcache_init(struct route *);
 void	rtcache_init_noclone(struct route *);
 void	rtcache_copy(struct route *, const struct route *, size_t);
+#endif
+
 void	rtcache_update(struct route *);
 void	rtcache_free(struct route *);
+
+static inline const struct sockaddr *
+rtcache_getdst(const struct route *ro)
+{
+	return &ro->ro_dst;
+}
+
+static inline void
+rtcache_setdst(struct route *ro, struct sockaddr *sa)
+{
+#if 0
+	KASSERT(ro->ro_sa != sa);
+	rtcache_free(ro);
+	ro->ro_sa = sa;
+#endif
+}
 
 static inline void
 rtcache_check(struct route *ro)

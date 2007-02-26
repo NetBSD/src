@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.17.12.2 2006/12/30 20:46:25 yamt Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.17.12.3 2007/02/26 09:07:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.17.12.2 2006/12/30 20:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.17.12.3 2007/02/26 09:07:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.17.12.2 2006/12/30 20:46:25 yamt 
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/exec_elf.h>
 #include <sys/kauth.h>
@@ -243,7 +242,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
-	int onstack;
+	int onstack, error;
 	struct svr4_sigframe *sfp = getframe(l, sig, &onstack), sf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
@@ -264,7 +263,12 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    sf.sf_signum, sf.sf_sip, sf.sf_ucp, sf.sf_handler);
 #endif
 
-	if(copyout(&sf, sfp, sizeof (sf)) != 0) {
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
+	error = copyout(&sf, sfp, sizeof (sf));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -276,7 +280,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	buildcontext(l, p->p_sigctx.ps_sigcode, sfp);
 
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -296,7 +300,7 @@ svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 	switch (SCARG(uap, op)) {
 	case SVR4_SYSARCH_SETNAME:
 		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			return (error);
 		if ((error = copyinstr(SCARG(uap, a1), tmp, sizeof (tmp), &len))
 		    != 0)

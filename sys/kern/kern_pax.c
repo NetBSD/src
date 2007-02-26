@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.3.10.3 2006/12/30 20:50:05 yamt Exp $ */
+/* $NetBSD: kern_pax.c,v 1.3.10.4 2007/02/26 09:11:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Elad Efrat.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -277,14 +274,14 @@ pax_segvguard_cb(void *v)
  */
 int
 pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
-    boolean_t crashed)
+    bool crashed)
 {
 	struct pax_segvguard_entry *p;
 	struct pax_segvguard_uid_entry *up;
 	struct timeval tv;
 	uid_t uid;
 	void *t;
-	boolean_t have_uid;
+	bool have_uid;
 
 	if (!pax_segvguard_enabled)
 		return (0);
@@ -312,10 +309,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 */
 	if (p == NULL) {
 		p = malloc(sizeof(*p), M_TEMP, M_WAITOK);
-		if (fileassoc_add(vp, segvguard_id, p) != 0) {
-			fileassoc_table_add(vp->v_mount, 16);
-			fileassoc_add(vp, segvguard_id, p);
-		}
+		fileassoc_add(vp, segvguard_id, p);
 		LIST_INIT(&p->segv_uids);
 
 		/*
@@ -339,10 +333,10 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 * See if it's a culprit we're familiar with.
 	 */
 	uid = kauth_cred_getuid(l->l_cred);
-	have_uid = FALSE;
+	have_uid = false;
 	LIST_FOREACH(up, &p->segv_uids, sue_list) {
 		if (up->sue_uid == uid) {
-			have_uid = TRUE;
+			have_uid = true;
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.14.2.2 2006/12/30 20:47:49 yamt Exp $
+# $NetBSD: majors,v 1.14.2.3 2007/02/26 09:09:46 yamt Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -28,4 +28,5 @@ device-major	bthub		char 175		bthub
 device-major	amr		char 176		amr
 device-major	lockstat	char 177		lockstat
 device-major	puffs		char 178		puffs
+device-major	srt		char 179		srt
 device-major	twa		char 187		twa

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81.2.2 2006/12/30 20:46:40 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81.2.3 2007/02/26 09:07:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.2 2006/12/30 20:46:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.3 2007/02/26 09:07:40 yamt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -101,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.2 2006/12/30 20:46:40 yamt Exp $"
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
@@ -135,7 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81.2.2 2006/12/30 20:46:40 yamt Exp $"
 
 #include <machine/adrsmap.h>
 #include <machine/machConst.h>
-#include <machine/intr.h>
 #include <newsmips/newsmips/machid.h>
 #include <dev/cons.h>
 

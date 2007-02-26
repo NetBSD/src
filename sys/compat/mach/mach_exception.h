@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.h,v 1.5 2005/06/25 08:28:34 christos Exp $ */
+/*	$NetBSD: mach_exception.h,v 1.5.2.1 2007/02/26 09:09:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -159,8 +159,8 @@ struct mach_exc_info {
 	int mei_behavior;
 };
 
-void mach_trapsignal(struct lwp *, const struct ksiginfo *);
-int mach_trapsignal1(struct lwp *, const struct ksiginfo *);
+void mach_trapsignal(struct lwp *, struct ksiginfo *);
+int mach_trapsignal1(struct lwp *, struct ksiginfo *);
 int mach_exception(struct lwp *, int, int *);
 
 #endif /* _MACH_EXCEPTION_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.25.2.2 2006/12/30 20:48:49 yamt Exp $	*/
+/*	$NetBSD: viaide.c,v 1.25.2.3 2007/02/26 09:10:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.25.2.2 2006/12/30 20:48:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.25.2.3 2007/02/26 09:10:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,11 @@ static const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC8111_IDE,
 	  0,
 	  "Advanced Micro Devices AMD8111 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_AMD_CS5536_IDE,
+	  0,
+	  "Advanced Micro Devices CS5536 IDE Controller",
 	  via_chip_map
 	},
 	{ 0,
@@ -413,6 +418,10 @@ via_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			aprint_normal("VT8237 ATA133 controller\n");
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
+		case PCI_PRODUCT_VIATECH_VT8237A_ISA:
+			aprint_normal("VT8237A ATA133 controller\n");
+			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+			break;
 		default:
 unknown:
 			aprint_normal("unknown VIA ATA controller\n");
@@ -458,10 +467,10 @@ unknown:
 		panic("via_chip_map: unknown vendor");
 	}
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
@@ -656,10 +665,10 @@ via_sata_chip_map_common(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return 0;
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_UDMA | ATAC_CAP_DMA;

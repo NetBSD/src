@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.5.4.2 2006/12/30 20:47:32 yamt Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.5.4.3 2007/02/26 09:09:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.2 2006/12/30 20:47:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.3 2007/02/26 09:09:03 yamt Exp $");
 
 #include "opt_ptrace.h"
 
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.5.4.2 2006/12/30 20:47:32 yamt E
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
-#include <sys/sa.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -89,6 +88,8 @@ darwin_sys_ptrace(l, v, retval)
 		return ENOSYS;
 #endif
 
+	/* XXXAD locking */
+
 	ded = (struct darwin_emuldata *)p->p_emuldata;
 
 	switch (req) {
@@ -113,7 +114,7 @@ darwin_sys_ptrace(l, v, retval)
 		break;
 
 	case DARWIN_PT_SIGEXC:
-		if ((p->p_flag & P_TRACED) == 0)
+		if ((p->p_slflag & PSL_TRACED) == 0)
 			return EBUSY;
 
 		ded->ded_flags |= DARWIN_DED_SIGEXC;
@@ -126,7 +127,7 @@ darwin_sys_ptrace(l, v, retval)
 			return (ESRCH);
 
 		if ((t->p_emul == &emul_darwin) &&
-		    (t->p_flag & P_TRACED) &&
+		    (t->p_slflag & PSL_TRACED) &&
 		    (t->p_pptr == p)) {
 			ded = t->p_emuldata;
 			if (ded->ded_flags & DARWIN_DED_SIGEXC) {
@@ -139,10 +140,18 @@ darwin_sys_ptrace(l, v, retval)
 		 * If the process is not marked as stopped,
 		 * sys_ptrace sanity checks will return EBUSY.
 		 */
-		proc_stop(t, 0);
+		mutex_enter(&proclist_mutex);
+		mutex_enter(&t->p_smutex);
+		proc_stop(t, 0, SIGSTOP);
+		mutex_exit(&t->p_smutex);
+		mutex_exit(&proclist_mutex);
 
 		if ((error = sys_ptrace(l, v, retval)) != 0) {
+			mutex_enter(&proclist_mutex);
+			mutex_enter(&t->p_smutex);
 			proc_unstop(t);
+			mutex_exit(&t->p_smutex);
+			mutex_exit(&proclist_mutex);
 			if (had_sigexc)
 				ded->ded_flags |= DARWIN_DED_SIGEXC;
 		}
@@ -157,17 +166,17 @@ darwin_sys_ptrace(l, v, retval)
 			return ESRCH;
 
 		/* Checks from native ptrace */
-		if (!ISSET(t->p_flag, P_TRACED))
+		if (!ISSET(t->p_slflag, PSL_TRACED))
 			return EPERM;
 
-		if (ISSET(t->p_flag, P_FSTRACE))
+		if (ISSET(t->p_slflag, PSL_FSTRACE))
 			return EBUSY;
 
 		if (t->p_pptr != p)
 			return EBUSY;
 
 #if 0
-		if (t->p_stat != SSTOP || !ISSET(t->p_flag, P_WAITED))
+		if (t->p_stat != SSTOP || !ISSET(t->p_sflag, PS_WAITED))
 			return EBUSY;
 #endif
 		if ((signo < 0) || (signo > NSIG))
@@ -175,7 +184,7 @@ darwin_sys_ptrace(l, v, retval)
 
 		t->p_xstat = signo;
 		if (signo != 0)
-			sigaddset(&p->p_sigctx.ps_siglist, signo);
+			sigaddset(&p->p_sigpend.sp_set, signo);
 
 		break;
 	}

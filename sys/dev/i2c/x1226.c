@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.6.2.2 2006/12/30 20:48:00 yamt Exp $	*/
+/*	$NetBSD: x1226.c,v 1.6.2.3 2007/02/26 09:10:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.6.2.2 2006/12/30 20:48:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.6.2.3 2007/02/26 09:10:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ dev_type_write(xrtc_write);
 
 const struct cdevsw xrtc_cdevsw = {
 	xrtc_open, xrtc_close, xrtc_read, xrtc_write,
-	noioctl, nostop, notty, nopoll, nommap, nokqfilter
+	noioctl, nostop, notty, nopoll, nommap, nokqfilter, D_OTHER
 };
 
 static int xrtc_clock_read(struct xrtc_softc *, struct clock_ymdhms *);

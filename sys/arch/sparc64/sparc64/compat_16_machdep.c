@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.5.2.1 2006/06/21 14:56:47 yamt Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.5.2.2 2007/02/26 09:08:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5.2.1 2006/06/21 14:56:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5.2.2 2007/02/26 09:08:25 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.5.2.1 2006/06/21 14:56:47 ya
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/signal.h>
@@ -99,7 +98,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 #ifdef NOT_DEBUG
 	struct rwindow tmpwin;
 #endif
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack);
 	struct sigframe_sigcontext sf;
@@ -134,7 +133,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
-	sf.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	sf.sf_sc.sc_onstack = l->l_sigstk.ss_flags & SS_ONSTACK;
 	sf.sf_sc.sc_mask = *mask;
 #ifdef COMPAT_13
 	/*
@@ -166,6 +165,8 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * joins seamlessly with the frame it was in when the signal occurred,
 	 * so that the debugger and _longjmp code can back up through it.
 	 */
+	sendsig_reset(l, sig);
+	mutex_exit(&p->p_smutex);
 	newsp = (struct rwindow *)((vaddr_t)fp - sizeof(struct rwindow));
 	write_user_windows();
 #ifdef DEBUG
@@ -174,22 +175,27 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		   fp, &(((struct rwindow *)newsp)->rw_in[6]),
 		   (void *)(unsigned long)tf->tf_out[6]);
 #endif
-	if (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	error = (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 #ifdef NOT_DEBUG
 	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
 #endif
-	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6])) {
+	    CPOUTREG(&(((struct rwindow *)newsp)->rw_in[6]), tf->tf_out[6]));
+	mutex_enter(&p->p_smutex);
+
+	if (error) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
 #ifdef DEBUG
+		mutex_exit(&p->p_smutex);
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig: window save or copyout error\n");
 		printf("sendsig: stack was trashed trying to send sig %d, sending SIGILL\n", sig);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
+		mutex_enter(&p->p_smutex);
 #endif
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
@@ -228,15 +234,17 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
+		mutex_exit(&p->p_smutex);
 		printf("sendsig: about to return to catcher %p thru %p\n", 
 		       catcher, (void *)(unsigned long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
+		mutex_enter(&p->p_smutex);
 	}
 #endif
 }
@@ -259,13 +267,13 @@ compat_16_sys___sigreturn14(l, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct proc *p = l->l_proc;
 	struct compat_16_sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext sc, *scp;
 	register struct trapframe64 *tf;
 	int error = EINVAL;
+	struct proc *p = l->l_proc;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
@@ -276,6 +284,7 @@ compat_16_sys___sigreturn14(l, v, retval)
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
 #endif
+		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
@@ -345,14 +354,15 @@ compat_16_sys___sigreturn14(l, v, retval)
 	}
 #endif
 
+	mutex_enter(&p->p_smutex);
 	/* Restore signal stack. */
 	if (sc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &sc.sc_mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &sc.sc_mask, 0);
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.11.2.2 2006/12/30 20:47:25 yamt Exp $	*/
+/*	$NetBSD: vector.S,v 1.11.2.3 2007/02/26 09:08:55 yamt Exp $	*/
 /*	NetBSD: 1.13 2004/03/11 11:39:26 yamt Exp 	*/
 
 /*
@@ -591,6 +591,7 @@ calltrap:
 .Lalltraps_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
+	movl	CPUVAR(CURLWP),%eax
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 5:	CLEAR_ASTPENDING(%eax)
@@ -656,6 +657,7 @@ IDTVEC(trap0e)
 trap0e_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
+	movl	CPUVAR(CURLWP),%eax
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 5:	CLEAR_ASTPENDING(%eax)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.34.2.2 2006/12/30 20:46:10 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.34.2.3 2007/02/26 09:06:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -720,6 +720,13 @@ NENTRY(lgdt)
 	pushl	%eax
 	lret
 
+NENTRY(x86_flush)
+	/* Reload code selector by doing intersegment return. */
+	popl	%eax
+	pushl	$GSEL(GCODE_SEL, SEL_KPL)
+	pushl	%eax
+	lret
+
 /*****************************************************************************/
 
 /*
@@ -879,12 +886,10 @@ ENTRY(cpu_switch)
 	xorl	%esi,%esi
 	sti
 idle_unlock:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_unlock_idle)
-#endif
 	/* Interrupts are okay again. */
 	pushl	$IPL_NONE		# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
+	call	_C_LABEL(spllower)	# process pending interrupts
 	addl	$4,%esp
 	jmp	idle_start
 idle_zero:
@@ -908,9 +913,7 @@ idle_start:
 idle_exit:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)		# splhigh
 	sti
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)
-#endif
 	movl	_C_LABEL(sched_whichqs),%ecx
 	bsfl	%ecx,%ebx
 	jz	idle_unlock
@@ -1005,7 +1008,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have P_SYSTEM!
+	testl	$PK_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have PK_SYSTEM!
 	jnz	switch_restored
 #endif
 
@@ -1062,13 +1065,11 @@ switch_restored:
 	movl	$1,%ebx
 
 switch_return:
-#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call    _C_LABEL(sched_unlock_idle)
-#endif
 	cmpl	$0,CPUVAR(IPENDING)
 	jz	3f
 	pushl	$IPL_NONE		# spl0()
-	call	_C_LABEL(Xspllower)	# process pending interrupts
+	call	_C_LABEL(spllower)	# process pending interrupts
 	addl	$4,%esp
 3:
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)	# splhigh()
@@ -1155,8 +1156,6 @@ ENTRY(cpu_exit)
 	movl	CPUVAR(IDLE_PCB),%esi
 	movl	CPUVAR(IDLE_TSS_SEL),%edx
 #endif
-	/* In case we fault... */
-	movl	$0,CPUVAR(CURLWP)
 
 	/* Restore the idle context. */
 	cli
@@ -1187,19 +1186,14 @@ ENTRY(cpu_exit)
 	/* Record new pcb. */
 	SET_CURPCB(%esi)
 
+	/* Now off the CPU. */
+	movl	$0,CPUVAR(CURLWP)
+
 	/* Interrupts are okay again. */
 	sti
 
-	/*
-	 * Schedule the dead LWP's stack to be freed.
-	 */
-	pushl	%edi
-	call	_C_LABEL(lwp_exit2)
-	addl	$4,%esp
-
 	/* Jump into cpu_switch() with the right state. */
 	xorl	%esi,%esi
-	movl	%esi,CPUVAR(CURLWP)
 	jmp	idle_start
 
 /*
@@ -1208,7 +1202,7 @@ ENTRY(cpu_exit)
  */
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
-	movl	4(%esp),%edx		# edx = p->p_addr
+	movl	4(%esp),%edx		# edx = pcb
 
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)

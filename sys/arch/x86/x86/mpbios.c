@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.25.2.2 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.25.2.3 2007/02/26 09:08:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.25.2.2 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.25.2.3 2007/02/26 09:08:51 yamt Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -490,7 +490,7 @@ static struct mp_bus nmi_bus = {
  *	nintrs
  */
 void
-mpbios_scan(struct device *self, int *ncpu, int *napic)
+mpbios_scan(struct device *self, int *ncpup, int *napic)
 {
 	const uint8_t 	*position, *end;
 	int		count;
@@ -551,8 +551,15 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 		/* XXX */
 		printf("%s: WARNING: interrupts not configured\n",
 		    self->dv_xname);
+
+		/*
+		 * XXX rpaulo: I have a machine that can boot, so I
+		 * commented this (for now).
+		 */
+#if 0
 		panic("lazy bum");
 		return;
+#endif
 	} else {
 		/*
 		 * should not happen; mp_probe returns 0 in this case,
@@ -684,7 +691,7 @@ mpbios_scan(struct device *self, int *ncpu, int *napic)
 	}
 	mpbios_scanned = 1;
 
-	*ncpu = mpbios_ncpu;
+	*ncpup = mpbios_ncpu;
 	*napic = mpbios_nioapic;
 }
 

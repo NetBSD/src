@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.15.10.3 2006/12/30 20:47:05 yamt Exp $ */
+/*	$NetBSD: syscall.c,v 1.15.10.4 2007/02/26 09:08:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15.10.3 2006/12/30 20:47:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15.10.4 2007/02/26 09:08:30 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15.10.3 2006/12/30 20:47:05 yamt Exp $
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #ifdef KTRACE
@@ -199,7 +197,7 @@ getargs(struct proc *p, struct trapframe64 *tf, register_t *code,
 		register64_t *argp;
 #ifdef DEBUG
 #ifdef __arch64__
-		if ((p->p_flag & P_32) != 0) {
+		if ((p->p_flag & PK_32) != 0) {
 			printf("syscall(): 64-bit stack but P_32 set\n");
 #ifdef DDB
 			Debugger();
@@ -330,9 +328,9 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	if (callp->sy_flags & SYCALL_MPSAFE) {
 		error = (*callp->sy_call)(l, &args, rval);
 	} else {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		error = (*callp->sy_call)(l, &args, rval);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 
 	switch (error) {
@@ -418,9 +416,9 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #else
 	ap = &args;
 #endif
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	if ((error = trace_enter(l, code, code, NULL, ap->r)) != 0) {
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		goto out;
 	}
 #ifdef __arch64__
@@ -433,11 +431,11 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[1] = tf->tf_out[1];
 
 	if (callp->sy_flags & SYCALL_MPSAFE) {
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 		error = (*callp->sy_call)(l, &args, rval);
 	} else {
 		error = (*callp->sy_call)(l, &args, rval);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 out:
 	switch (error) {
@@ -494,12 +492,12 @@ child_return(arg)
 	/*
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(l,
-			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
+			  (p->p_sflag & PS_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
 }
 
@@ -524,14 +522,6 @@ startlwp(arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
-	KERNEL_PROC_UNLOCK(l);
-	userret(l, 0, 0);
-}
-
-void
-upcallret(struct lwp *l)
-{
-
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }

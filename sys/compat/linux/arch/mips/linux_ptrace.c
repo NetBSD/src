@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.4.18.1 2006/12/30 20:47:38 yamt Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.4.18.2 2007/02/26 09:09:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.4.18.1 2006/12/30 20:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.4.18.2 2007/02/26 09:09:16 yamt Exp $");
 #include "opt_ptrace.h"
 
 #include <sys/param.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.4.18.1 2006/12/30 20:47:38 yamt E
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/systm.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <uvm/uvm_extern.h>
 

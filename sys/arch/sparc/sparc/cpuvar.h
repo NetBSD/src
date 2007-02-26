@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.65.2.1 2006/06/21 14:56:12 yamt Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.65.2.2 2007/02/26 09:08:19 yamt Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -202,6 +202,9 @@ struct cpu_info {
 	 */
 	struct	lwp	*ci_curlwp;		/* CPU owner */
 	struct	lwp 	*fplwp;			/* FPU owner */
+
+	int		ci_mtx_count;
+	int		ci_mtx_oldspl;
 
 	/*
 	 * Idle PCB and Interrupt stack;

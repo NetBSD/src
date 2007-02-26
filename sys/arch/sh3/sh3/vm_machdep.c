@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48.2.2 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48.2.3 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48.2.2 2006/12/30 20:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48.2.3 2007/02/26 09:08:09 yamt Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -307,6 +307,13 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 
 void
 cpu_lwp_free(struct lwp *l, int proc)
+{
+
+	/* Nothing to do */
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
 {
 
 	/* Nothing to do */

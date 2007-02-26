@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.17.4.1 2006/06/21 15:07:30 yamt Exp $	*/
+/*	$NetBSD: event.c,v 1.17.4.2 2007/02/26 09:10:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17.4.1 2006/06/21 15:07:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17.4.2 2007/02/26 09:10:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -127,7 +127,7 @@ ev_read(ev, uio, flags)
 	n = howmany(uio->uio_resid, sizeof(struct firm_event));
 	if (cnt > n)
 		cnt = n;
-	if ((curproc->p_flag & P_32) && ev_out32_hook != NULL)
+	if ((curproc->p_flag & PK_32) && ev_out32_hook != NULL)
 		error = (*ev_out32_hook)(&ev->ev_q[ev->ev_get], cnt, uio);
 	else
 		error = uiomove((caddr_t)&ev->ev_q[ev->ev_get],
@@ -143,7 +143,7 @@ ev_read(ev, uio, flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	if ((curproc->p_flag & P_32) && ev_out32_hook != NULL)
+	if ((curproc->p_flag & PK_32) && ev_out32_hook != NULL)
 		error = (*ev_out32_hook)(&ev->ev_q[0], cnt, uio);
 	else
 		error = uiomove((caddr_t)&ev->ev_q[0],

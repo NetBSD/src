@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.45.2.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.45.2.3 2007/02/26 09:11:43 yamt Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.45.2.2 2006/12/30 20:50:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.45.2.3 2007/02/26 09:11:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -185,7 +185,7 @@ in_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 	else
 		rtcache_check(&sc->gif_ro);
 	if (sc->gif_ro.ro_rt == NULL) {
-		bzero(dst, sizeof(*dst));
+		memset(dst, 0, sizeof(*dst));
 		dst->sin_family = sin_dst->sin_family;
 		dst->sin_len = sizeof(struct sockaddr_in);
 		dst->sin_addr = sin_dst->sin_addr;

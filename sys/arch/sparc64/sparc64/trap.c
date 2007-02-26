@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120.2.2 2006/12/30 20:47:05 yamt Exp $ */
+/*	$NetBSD: trap.c,v 1.120.2.3 2007/02/26 09:08:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120.2.2 2006/12/30 20:47:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120.2.3 2007/02/26 09:08:30 yamt Exp $");
 
 #define NEW_FPSTATE
 
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120.2.2 2006/12/30 20:47:05 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -621,12 +619,8 @@ badtrap:
 
 	case T_AST:
 #if 1
-		if (want_resched) {
-			extern int sadebug;
-			if (sadebug)
-				printf("trap: T_AST, preempt\n");
-			preempt(0);
-		}
+		if (want_resched)
+			preempt();
 		want_ast = 0;
 #endif
 		break;	/* the work is all in userret() */
@@ -862,10 +856,10 @@ badtrap:
 		break;
 	}
 	if (sig != 0) {
-		KERNEL_PROC_LOCK(l);
+		KERNEL_LOCK(1, l);
 		ksi.ksi_signo = sig;
 		trapsignal(l, &ksi);
-		KERNEL_PROC_UNLOCK(l);
+		KERNEL_UNLOCK_LAST(l);
 	}
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
@@ -1069,7 +1063,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curlwp->l_sigmask.__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
@@ -1132,13 +1126,8 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 				return;
 			goto kfault;
 		}
-	} else {
+	} else
 		l->l_md.md_tf = tf;
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = addr;
-			l->l_flag |= L_SA_PAGEFAULT;
-		}
-	}
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1236,7 +1225,6 @@ kfault:
 		trapsignal(l, &ksi);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
-		l->l_flag &= ~L_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}
@@ -1344,7 +1332,7 @@ data_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t afva,
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curlwp->l_sigmask.__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
@@ -1650,7 +1638,7 @@ text_access_error(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
-			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curlwp->l_sigmask.__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif

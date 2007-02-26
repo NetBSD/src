@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_var.h,v 1.2.14.1 2006/06/21 15:11:24 yamt Exp $	*/
+/*	$NetBSD: ipcomp_var.h,v 1.2.14.2 2007/02/26 09:11:55 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipcomp_var.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipcomp.h,v 1.8 2000/09/26 07:55:14 itojun Exp $	*/
 
@@ -56,6 +56,7 @@ struct ipcompstat {
 	u_int64_t	ipcomps_ibytes;	/* Input bytes */
 	u_int64_t	ipcomps_obytes;	/* Output bytes */
 	u_int64_t	ipcomps_toobig;	/* Packet got > IP_MAXPACKET */
+	u_int64_t   ipcomps_minlen; /* Packet too short for compress */
 	u_int64_t	ipcomps_pdrops;	/* Packet blocked due to policy */
 	u_int64_t	ipcomps_crypto;	/* "Crypto" processing failure */
 	u_int64_t	ipcomps_hist[IPCOMP_ALG_MAX];/* Per-algorithm op count */

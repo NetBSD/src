@@ -27,7 +27,7 @@
  *	i4b_tei.c - tei handling procedures
  *	-----------------------------------
  *
- *	$Id: i4b_tei.c,v 1.7.4.1 2006/06/21 15:11:24 yamt Exp $
+ *	$Id: i4b_tei.c,v 1.7.4.2 2007/02/26 09:11:58 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.7.4.1 2006/06/21 15:11:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.7.4.2 2007/02/26 09:11:58 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_tei.c,v 1.7.4.1 2006/06/21 15:11:24 yamt Exp $")
 #include <netisdn/i4b_isdnq931.h>
 #include <netisdn/i4b_mbuf.h>
 
-#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l2fsm.h>
 #include <netisdn/i4b_l3l4.h>
 

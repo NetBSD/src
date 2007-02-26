@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.183.2.2 2006/12/30 20:50:06 yamt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.183.2.3 2007/02/26 09:11:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183.2.2 2006/12/30 20:50:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183.2.3 2007/02/26 09:11:11 yamt Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_ktrace.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.183.2.2 2006/12/30 20:50:06 yamt E
 #include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #ifdef KTRACE
@@ -153,7 +152,7 @@ __link_set_decl(sysctl_funcs, sysctl_setup_func);
  * memory, if there is one, so that it can be released more easily
  * from anywhere.
  */
-struct lock sysctl_treelock;
+krwlock_t sysctl_treelock;
 caddr_t sysctl_memaddr;
 size_t sysctl_memsize;
 
@@ -262,7 +261,7 @@ sysctl_init(void)
 {
 	sysctl_setup_func * const *sysctl_setup, f;
 
-	lockinit(&sysctl_treelock, PRIBIO|PCATCH, "sysctl", 0, 0);
+	rw_init(&sysctl_treelock);
 
 	/*
 	 * dynamic mib numbers start here
@@ -385,11 +384,9 @@ sys___sysctl(struct lwp *l, void *v, register_t *retval)
 int
 sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 {
-	int error = 0;
+	int error;
 
-	error = lockmgr(&sysctl_treelock, LK_EXCLUSIVE, NULL);
-	if (error)
-		return (error);
+	rw_enter(&sysctl_treelock, RW_WRITER);	/* XXX write */
 
 	if (l != NULL && oldp != NULL && savelen) {
 
@@ -399,13 +396,13 @@ sysctl_lock(struct lwp *l, void *oldp, size_t savelen)
 		 */
 
 		if (uvmexp.wired + atop(savelen) > uvmexp.wiredmax) {
-			lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+			rw_exit(&sysctl_treelock);
 			return (ENOMEM);
 		}
 		error = uvm_vslock(l->l_proc->p_vmspace, oldp, savelen,
 				   VM_PROT_WRITE);
 		if (error) {
-			(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+			rw_exit(&sysctl_treelock);
 			return (error);
 		}
 		sysctl_memaddr = oldp;
@@ -510,7 +507,7 @@ sysctl_unlock(struct lwp *l)
 		sysctl_memsize = 0;
 	}
 
-	(void) lockmgr(&sysctl_treelock, LK_RELEASE, NULL);
+	rw_exit(&sysctl_treelock);	/* XXX write */
 }
 
 /*
@@ -1481,7 +1478,7 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	if (l != NULL && newp != NULL &&
 	    !(rnode->sysctl_flags & CTLFLAG_ANYWRITE) &&
 	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 		return (error);
 
 	/*

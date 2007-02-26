@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.36.2.2 2006/12/30 20:45:26 yamt Exp $ */
+/*	$NetBSD: mfc.c,v 1.36.2.3 2007/02/26 09:05:46 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -28,9 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include "opt_kgdb.h"
-
 /*
  * Copyright (c) 1994 Michael L. Hitch
  *
@@ -58,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.36.2.2 2006/12/30 20:45:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.36.2.3 2007/02/26 09:05:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.36.2.2 2006/12/30 20:45:26 yamt Exp $");
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/uio.h>
-#include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>

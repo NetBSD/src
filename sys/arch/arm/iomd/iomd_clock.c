@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.15.2.2 2006/12/30 20:45:33 yamt Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.15.2.3 2007/02/26 09:06:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.15.2.2 2006/12/30 20:45:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_clock.c,v 1.15.2.3 2007/02/26 09:06:00 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -330,7 +330,7 @@ static u_int iomd_timecounter0_get(struct timecounter *tc)
 	
 
 	if (timer0_count &&
-	    (tm < timer0_lastcount || (!timer0_ticked && FALSE/* XXX: clkintr_pending */))) {
+	    (tm < timer0_lastcount || (!timer0_ticked && false/* XXX: clkintr_pending */))) {
 		timer0_ticked = 1;
 		timer0_offset += timer0_count;
 	}

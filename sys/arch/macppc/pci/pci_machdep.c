@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28.2.1 2006/12/30 20:46:30 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.2.2 2007/02/26 09:07:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.2.1 2006/12/30 20:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.2.2 2007/02/26 09:07:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,19 +57,28 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.2.1 2006/12/30 20:46:30 yamt Ex
 #define _MACPPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/ppbreg.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
+#include "opt_macppc.h"
+
 static void fixpci __P((int, pci_chipset_tag_t));
 static int find_node_intr __P((int, u_int32_t *, u_int32_t *));
+static void fix_cardbus_bridge(int, pci_chipset_tag_t, pcitag_t);
+
+#ifdef PB3400_CARDBUS_HACK
+int cardbus_number = 2;
+const char *pb3400_compat[] = {"AAPL,3400/2400", NULL};
+#endif
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -197,12 +206,12 @@ pci_intr_map(pa, ihp)
 
 	if (pin == 0) {
 		/* No IRQ used. */
-		printf("pci_intr_map: interrupt pin %d\n", pin);
+		aprint_error("pci_intr_map: interrupt pin %d\n", pin);
 		goto bad;
 	}
 
 	if (pin > 4) {
-		printf("pci_intr_map: bad interrupt pin %d\n", pin);
+		aprint_error("pci_intr_map: bad interrupt pin %d\n", pin);
 		goto bad;
 	}
 
@@ -221,11 +230,11 @@ pci_intr_map(pa, ihp)
 	 * the BIOS has not configured the device.
 	 */
 	if (line == 0 || line == 255) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		aprint_error("pci_intr_map: no mapping for pin %c\n", '@' + pin);
 		goto bad;
 	} else {
 		if (line >= ICU_LEN) {
-			printf("pci_intr_map: bad interrupt line %d\n", line);
+			aprint_error("pci_intr_map: bad interrupt line %d\n", line);
 			goto bad;
 		}
 	}
@@ -300,7 +309,7 @@ fixpci(parent, pc)
 {
 	int node;
 	pcitag_t tag;
-	pcireg_t csr, intr, id;
+	pcireg_t csr, intr, id, cr;
 	int len, i, ilen;
 	int32_t irqs[4];
 	struct {
@@ -311,6 +320,50 @@ fixpci(parent, pc)
 		u_int32_t phys_hi, phys_mid, phys_lo;
 		u_int32_t icells[5];
 	} iaddr;
+
+	/*
+	 * first hack - here we make the Ethernet portion of a
+	 * UMAX E100 card work
+	 */
+#ifdef UMAX_E100_HACK
+	tag = pci_make_tag(pc, 0, 17, 0);
+	id = pci_conf_read(pc, tag, PCI_ID_REG);
+	if ((PCI_VENDOR(id) == PCI_VENDOR_DEC) &&
+	    (PCI_PRODUCT(id) == PCI_PRODUCT_DEC_21140)) {
+		/* this could be one */
+		pcireg_t isp, reg;
+		pcitag_t tag_isp = pci_make_tag(pc, 0, 13, 0);
+		/*
+		 * here we go. We shouldn't encounter this anywhere else
+		 * than on a UMAX S900 with an E100 board 
+		 * look at 00:0d:00 for a Qlogic ISP 1020 to
+		 * make sure we really have an E100 here 
+		 */
+		printf("\nfound E100 candidate tlp");
+		isp = pci_conf_read(pc, tag_isp, PCI_ID_REG);
+		if ((PCI_VENDOR(isp) == PCI_VENDOR_QLOGIC) &&
+		    (PCI_PRODUCT(isp) == PCI_PRODUCT_QLOGIC_ISP1020)) {
+
+			aprint_verbose("\nenabling UMAX E100 ethernet");
+
+			pci_conf_write(pc, tag, 0x14, 0x80000000);
+
+			/* now enable MMIO and busmastering */
+			reg = pci_conf_read(pc, tag,
+			    PCI_COMMAND_STATUS_REG);
+			reg |= PCI_COMMAND_MEM_ENABLE |
+			       PCI_COMMAND_MASTER_ENABLE;
+			pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
+			    reg);
+
+			/* and finally the interrupt */
+			reg = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+			reg &= ~PCI_INTERRUPT_LINE_MASK;
+			reg |= 23;
+			pci_conf_write(pc, tag, PCI_INTERRUPT_REG, reg);
+		}
+	}
+#endif
 
 	len = OF_getprop(parent, "#interrupt-cells", &ilen, sizeof(ilen));
 	if (len < 0)            
@@ -399,7 +452,7 @@ fixpci(parent, pc)
 			if (OF_finddevice("/bandit/pci106b,7") != -1) {
 
 				irqs[0] = 60;
-				printf("\nohare: frobbing tlp IRQ to 60");
+				aprint_verbose("\nohare: frobbing tlp IRQ to 60");
 			}
 		}
 
@@ -407,6 +460,64 @@ fixpci(parent, pc)
 		intr &= ~PCI_INTERRUPT_LINE_MASK;
 		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
 		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+
+		/* fix secondary bus numbers on CardBus bridges */
+		cr = pci_conf_read(pc, tag, PCI_CLASS_REG);
+		if ((PCI_CLASS(cr) == PCI_CLASS_BRIDGE) &&
+		    (PCI_SUBCLASS(cr) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
+			uint32_t bi, busid;
+
+			/*
+			 * we found a CardBus bridge. Check if the bus number
+			 * is sane
+			 */
+			bi = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+			busid = bi & 0xff;
+			if (busid == 0) {
+				fix_cardbus_bridge(node, pc, tag);
+			}
+		}
+	}
+}
+
+static void
+fix_cardbus_bridge(int node, pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint32_t bus_number = 0xffffffff;
+	pcireg_t bi;
+	int bus, dev, fn, ih, len;
+	char path[256];
+
+#if PB3400_CARDBUS_HACK
+	int root_node;
+
+	root_node = OF_finddevice("/");
+	if (of_compatible(root_node, pb3400_compat) != -1) {
+
+		bus_number = cardbus_number;
+		cardbus_number++;
+	} else {
+#endif		
+		ih = OF_open(path);
+		OF_call_method("load-ata", ih, 0, 0);
+		OF_close(ih);
+
+		OF_getprop(node, "AAPL,bus-id", &bus_number,
+		    sizeof(bus_number));
+#if PB3400_CARDBUS_HACK
+	}
+#endif
+	if (bus_number != 0xffffffff) {
+
+		len = OF_package_to_path(node, path, sizeof(path));
+		path[len] = 0;
+		aprint_verbose("\n%s: fixing bus number to %d", path, bus_number);
+		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
+		bi = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+		bi &= 0xff000000;
+		/* XXX subordinate is always 32 here */
+		bi |= (bus & 0xff) | (bus_number << 8) | 0x200000;
+		pci_conf_write(pc, tag, PPB_REG_BUSINFO, bi);
 	}
 }
 
@@ -453,7 +564,7 @@ again:
 
 #ifdef DIAGNOSTIC
 	if (mlen == sizeof(imapmask)) {
-		printf("interrupt-map too long\n");
+		aprint_error("interrupt-map too long\n");
 		return -1;
 	}
 #endif
@@ -506,7 +617,7 @@ again:
 			    imapmask, sizeof(imapmask));
 #ifdef DIAGNOSTIC
 			if (mlen != (acells + icells)*4) {
-				printf("interrupt-map inconsistent (%d, %d)\n",
+				aprint_error("interrupt-map inconsistent (%d, %d)\n",
 				    mlen, (acells + icells)*4);
 				return -1;
 			}

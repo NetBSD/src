@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.35.12.2 2006/12/30 20:50:45 yamt Exp $	*/
+/*	$NetBSD: iso.c,v 1.35.12.3 2007/02/26 09:12:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.35.12.2 2006/12/30 20:50:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.35.12.3 2007/02/26 09:12:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -933,14 +933,14 @@ iso_nlctloutput(
  *
  */
 void
-dump_isoaddr(struct sockaddr_iso *s)
+dump_isoaddr(const struct sockaddr_iso *s)
 {
 	if (s->siso_family == AF_ISO) {
 		printf("ISO address: suffixlen %d, %s\n",
 		       s->siso_tlen, clnp_saddr_isop(s));
 	} else if (s->siso_family == AF_INET) {
 		/* hack */
-		struct sockaddr_in *sin = satosin(s);
+		const struct sockaddr_in *sin = satocsin(s);
 
 		printf("%d.%d.%d.%d: %d",
 		       (sin->sin_addr.s_addr >> 24) & 0xff,

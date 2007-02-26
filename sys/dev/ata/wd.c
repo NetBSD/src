@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.305.2.2 2006/12/30 20:47:54 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.305.2.3 2007/02/26 09:09:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.2 2006/12/30 20:47:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.3 2007/02/26 09:09:59 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -358,7 +358,7 @@ wdattach(struct device *parent, struct device *self, void *aux)
 		wd->sc_multi = 1;
 	}
 
-	aprint_normal("%s: drive supports %d-sector PIO transfers,",
+	aprint_verbose("%s: drive supports %d-sector PIO transfers,",
 	    wd->sc_dev.dv_xname, wd->sc_multi);
 
 	/* 48-bit LBA addressing */
@@ -376,19 +376,19 @@ wdattach(struct device *parent, struct device *self, void *aux)
 #endif
 
 	if ((wd->sc_flags & WDF_LBA48) != 0) {
-		aprint_normal(" LBA48 addressing\n");
+		aprint_verbose(" LBA48 addressing\n");
 		wd->sc_capacity =
 		    ((u_int64_t) wd->sc_params.__reserved6[11] << 48) |
 		    ((u_int64_t) wd->sc_params.__reserved6[10] << 32) |
 		    ((u_int64_t) wd->sc_params.__reserved6[9]  << 16) |
 		    ((u_int64_t) wd->sc_params.__reserved6[8]  << 0);
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
-		aprint_normal(" LBA addressing\n");
+		aprint_verbose(" LBA addressing\n");
 		wd->sc_capacity =
 		    ((u_int64_t)wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
 	} else {
-		aprint_normal(" chs addressing\n");
+		aprint_verbose(" chs addressing\n");
 		wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *

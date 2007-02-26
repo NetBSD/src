@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.17 2005/06/01 13:05:29 scw Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.17.2.1 2007/02/26 09:08:10 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17 2005/06/01 13:05:29 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.17.2.1 2007/02/26 09:08:10 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1088,7 +1088,7 @@ static char oper1[128], oper2[128], oper3[128];
 static char extra_info[256];
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t dummy)
+db_disasm(db_addr_t loc, bool dummy)
 {
 	format_func_t fp;
 	opcode_t op;

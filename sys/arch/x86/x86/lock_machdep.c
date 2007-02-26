@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock_machdep.c,v 1.5 2005/05/29 21:36:40 christos Exp $ */
+/* 	$NetBSD: lock_machdep.c,v 1.5.2.1 2007/02/26 09:08:51 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.5 2005/05/29 21:36:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_machdep.c,v 1.5.2.1 2007/02/26 09:08:51 yamt Exp $");
 
 /*
  * Machine-dependent spin lock operations.
@@ -86,7 +86,7 @@ __cpu_simple_lock(lockp)
 #endif
 #endif
 
-	while (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED) ==
+	while (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED) ==
 	    __SIMPLELOCK_LOCKED) {
 		x86_pause();
 #if defined(DEBUG) && defined(DDB)
@@ -123,7 +123,7 @@ __cpu_simple_lock_try(lockp)
 
 	KDASSERT((v == __SIMPLELOCK_LOCKED) || (v == __SIMPLELOCK_UNLOCKED));
 #endif
-	r = (x86_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	r = (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
 	    == __SIMPLELOCK_UNLOCKED);
 
 	__insn_barrier();

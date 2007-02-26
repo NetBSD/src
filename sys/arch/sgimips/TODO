@@ -13,10 +13,7 @@ Things to be done:
 * light cursor support
 * impact support
 * light and grtwo drivers for x11
-* sq(4) on IOPLUS's HPC3 (Challenge S)
-* wdsc GIO adapter support (implies sq(4) and wdsc(4) probes)
 * ip22 eisa support
 * return haltwo to a state where the Indy poweroff tune isn't garbled
 * r4000 <= 2.2 end of page bug
 * ip12/ip20 parallel port
-* verify that Phobos G100 works

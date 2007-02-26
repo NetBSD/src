@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.10 2003/04/01 01:53:40 thorpej Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.10.18.1 2007/02/26 09:09:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.10 2003/04/01 01:53:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.10.18.1 2007/02/26 09:09:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <uvm/uvm.h>				/* XXX see mmap emulation */
 

@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.11 2004/03/28 10:07:24 he Exp $
+# $NetBSD: genassym.cf,v 1.11.16.1 2007/02/26 09:05:32 yamt Exp $
 
 #
 # Copyright (c) 1994, 1995 Gordon W. Ross
@@ -122,11 +122,11 @@ define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_PCBPADDR		offsetof(struct lwp, l_md.md_pcbpaddr)
 define	L_MD_TF			offsetof(struct lwp, l_md.md_tf)
+define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
-define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
 define	PH_LINK			offsetof(struct prochd, ph_link)
 define	PH_RLINK		offsetof(struct prochd, ph_rlink)
 

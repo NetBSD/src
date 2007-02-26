@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.56.12.2 2006/12/30 20:50:18 yamt Exp $	*/
+/*	$NetBSD: procfs.h,v 1.56.12.3 2007/02/26 09:11:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -179,9 +179,11 @@ struct vfs_namemap {
 int vfs_getuserstr(struct uio *, char *, int *);
 const vfs_namemap_t *vfs_findname(const vfs_namemap_t *, const char *, int);
 
-#define PFIND(pid) ((pid) ? pfind(pid) : &proc0)
+int procfs_proc_lock(int, struct proc **, int);
+void procfs_proc_unlock(struct proc *);
 int procfs_freevp(struct vnode *);
-int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype, int);
+int procfs_allocvp(struct mount *, struct vnode **, pid_t, pfstype, int,
+    struct proc *);
 int procfs_donote(struct lwp *, struct proc *, struct pfsnode *,
     struct uio *);
 int procfs_doregs(struct lwp *, struct lwp *, struct pfsnode *,
@@ -219,7 +221,7 @@ void procfs_revoke_vnodes(struct proc *, void *);
 void procfs_hashinit(void);
 void procfs_hashreinit(void);
 void procfs_hashdone(void);
-int procfs_getfp(struct pfsnode *, struct proc **, struct file **);
+int procfs_getfp(struct pfsnode *, struct proc *, struct file **);
 
 /* functions to check whether or not files should be displayed */
 int procfs_validfile(struct lwp *, struct mount *);

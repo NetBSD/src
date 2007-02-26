@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.53.2.2 2006/12/30 20:51:01 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.53.2.3 2007/02/26 09:12:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.53.2.2 2006/12/30 20:51:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.53.2.3 2007/02/26 09:12:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,7 +325,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	LFS_ENTER_LOG("seglock", __FILE__, __LINE__, 0, flags, curproc->p_pid);
 #endif
 	/* Drain fragment size changes out */
-	lockmgr(&fs->lfs_fraglock, LK_EXCLUSIVE, 0);
+	rw_enter(&fs->lfs_fraglock, RW_WRITER);
 
 	sp = fs->lfs_sp = pool_get(&fs->lfs_segpool, PR_WAITOK);
 	sp->bpp = pool_get(&fs->lfs_bpppool, PR_WAITOK);
@@ -562,7 +562,7 @@ lfs_segunlock(struct lfs *fs)
 			wakeup(&fs->lfs_seglock);
 		}
 		/* Reenable fragment size changes */
-		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
+		rw_exit(&fs->lfs_fraglock);
 		if (do_unmark_dirop)
 			lfs_unmark_dirop(fs);
 	} else if (fs->lfs_seglock == 0) {
@@ -606,7 +606,7 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 void
 lfs_writer_leave(struct lfs *fs)
 {
-	boolean_t dowakeup;
+	bool dowakeup;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	simple_lock(&fs->lfs_interlock);

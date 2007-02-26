@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.14.4.1 2006/06/21 14:49:16 yamt Exp $	*/
+/*	$NetBSD: bus.h,v 1.14.4.2 2007/02/26 09:05:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -901,6 +901,9 @@ do {									\
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t

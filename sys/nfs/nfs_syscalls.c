@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.78.4.2 2006/12/30 20:50:52 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.78.4.3 2007/02/26 09:12:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78.4.2 2006/12/30 20:50:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78.4.3 2007/02/26 09:12:06 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.78.4.2 2006/12/30 20:50:52 yamt E
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
 #include <sys/kauth.h>
-
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <netinet/in.h>
@@ -165,7 +163,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 	 * Must be super user
 	 */
 	error = kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-	    &l->l_acflag);
+	    NULL);
 	if (error)
 		return (error);
 
@@ -702,13 +700,13 @@ nfssvc_nfsd(nsd, argp, l)
 				}
 				if (error) {
 					nfsstats.srv_errs++;
-					nfsrv_updatecache(nd, FALSE, mreq);
+					nfsrv_updatecache(nd, false, mreq);
 					if (nd->nd_nam2)
 						m_freem(nd->nd_nam2);
 					break;
 				}
 				nfsstats.srvrpccnt[nd->nd_procnum]++;
-				nfsrv_updatecache(nd, TRUE, mreq);
+				nfsrv_updatecache(nd, true, mreq);
 				nd->nd_mrep = (struct mbuf *)0;
 			case RC_REPLY:
 				m = mreq;
@@ -792,7 +790,7 @@ done:
 	free((caddr_t)nfsd, M_NFSD);
 	nsd->nsd_nfsd = (struct nfsd *)0;
 	if (--nfs_numnfsd == 0)
-		nfsrv_init(TRUE);	/* Reinitialize everything */
+		nfsrv_init(true);	/* Reinitialize everything */
 	return (error);
 }
 
@@ -812,6 +810,7 @@ nfsrv_zapsock(slp)
 	struct nfsuid *nuidp, *nnuidp;
 	struct nfsrv_descript *nwp, *nnwp;
 	struct socket *so;
+	struct mbuf *m;
 	int s;
 
 	if (nfsdsock_drain(slp)) {
@@ -833,7 +832,14 @@ nfsrv_zapsock(slp)
 	if (slp->ns_nam)
 		m_free(slp->ns_nam);
 	m_freem(slp->ns_raw);
-	m_freem(slp->ns_rec);
+	m = slp->ns_rec;
+	while (m != NULL) {
+		struct mbuf *n;
+
+		n = m->m_nextpkt;
+		m_freem(m);
+		m = n;
+	}
 	for (nuidp = TAILQ_FIRST(&slp->ns_uidlruhead); nuidp != 0;
 	    nuidp = nnuidp) {
 		nnuidp = TAILQ_NEXT(nuidp, nu_lru);
@@ -1022,7 +1028,7 @@ nfssvc_iod(l)
 	 * Just loop around doing our stuff until SIGKILL
 	 */
 	for (;;) {
-		while (/*CONSTCOND*/ TRUE) {
+		while (/*CONSTCOND*/ true) {
 			simple_lock(&myiod->nid_slock);
 			nmp = myiod->nid_mount;
 			if (nmp) {
@@ -1049,7 +1055,7 @@ nfssvc_iod(l)
 			nmp->nm_bufqlen--;
 			if (nmp->nm_bufqwant &&
 			    nmp->nm_bufqlen < 2 * nfs_numasync) {
-				nmp->nm_bufqwant = FALSE;
+				nmp->nm_bufqwant = false;
 				wakeup(&nmp->nm_bufq);
 			}
 			simple_unlock(&nmp->nm_slock);

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.63.12.1 2006/06/21 14:48:15 yamt Exp $ */
+/* $NetBSD: cpu.h,v 1.63.12.2 2007/02/26 09:05:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
+	int ci_mtx_count;
+	int ci_mtx_oldspl;
 
 	/*
 	 * Private members.
@@ -219,8 +221,6 @@ struct clockframe {
 };
 #define	CLKF_USERMODE(framep)						\
 	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0)
-#define	CLKF_BASEPRI(framep)						\
-	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_IPL_MASK) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_tf.tf_regs[FRAME_PC])
 
 /*
@@ -240,11 +240,11 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)						\
+#define	cpu_need_resched(ci)						\
 do {									\
 	(ci)->ci_want_resched = 1;					\
 	if ((ci)->ci_curlwp != NULL)					\
-		aston((ci)->ci_curlwp->l_proc);       			\
+		aston((ci)->ci_curlwp); 	      			\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -252,17 +252,17 @@ do {									\
  * buffer pages are invalid.  On the Alpha, request an AST to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)						\
+#define	cpu_need_proftick(l)						\
 do {									\
-	(p)->p_flag |= P_OWEUPC;					\
-	aston(p);							\
+	(l)->l_pflag |= LP_OWEUPC;					\
+	aston(l);							\
 } while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston(p)
+#define	cpu_signotify(l)	aston(l)
 
 /*
  * XXXSMP
@@ -270,7 +270,7 @@ do {									\
  * it sees a normal kernel entry?  I guess letting it happen later
  * follows the `asynchronous' part of the name...
  */
-#define	aston(p)	((p)->p_md.md_astpending = 1)
+#define	aston(l)	((l)->l_md.md_astpending = 1)
 #endif /* _KERNEL */
 
 /*

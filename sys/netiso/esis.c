@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.34.2.2 2006/12/30 20:50:44 yamt Exp $	*/
+/*	$NetBSD: esis.c,v 1.34.2.3 2007/02/26 09:11:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34.2.2 2006/12/30 20:50:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.34.2.3 2007/02/26 09:11:59 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -288,8 +288,7 @@ esis_input(struct mbuf *m0, ...)
 	shp = va_arg(ap, struct snpa_hdr *);
 	va_end(ap);
 
-	for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
-	     ifa = ifa->ifa_list.tqe_next)
+	TAILQ_FOREACH(ifa, &shp->snh_ifp->if_addrlist, ifa_list)
 		if (ifa->ifa_addr->sa_family == AF_ISO)
 			break;
 	/* if we have no iso address just send it to the sockets */
@@ -586,8 +585,7 @@ esis_eshinput(
 		 * See if we want to compress out multiple nsaps
 		 * differing only by nsel
 		 */
-		for (ifa = shp->snh_ifp->if_addrlist.tqh_first; ifa != 0;
-		     ifa = ifa->ifa_list.tqe_next)
+		TAILQ_FOREACH(ifa, &shp->snh_ifp->if_addrlist, ifa_list)
 			if (ifa->ifa_addr->sa_family == AF_ISO) {
 				nsellength =
 				((struct iso_ifaddr *) ifa)->ia_addr.siso_tlen;
@@ -848,14 +846,13 @@ esis_config(void *v)
 	 * work to advantage for non-broadcast media
 	 */
 
-	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next) {
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if ((ifp->if_flags & IFF_UP) &&
 		    (ifp->if_flags & IFF_BROADCAST)) {
 			/* search for an ISO address family */
 			struct ifaddr  *ifa;
 
-			for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-			     ifa = ifa->ifa_list.tqe_next) {
+			TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 				if (ifa->ifa_addr->sa_family == AF_ISO) {
 					esis_shoutput(ifp,
 			      iso_systype & SNPA_ES ? ESIS_ESH : ESIS_ISH,
@@ -956,15 +953,14 @@ esis_shoutput(
 		(void) esis_insert_addr(&cp, &len, isoa, m, 0);
 		naddr = 1;
 	}
-	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
+	TAILQ_FOREACH(ia, &iso_ifaddr, ia_list) {
 		int nsellen = (type == ESIS_ISH ? ia->ia_addr.siso_tlen : 0);
 		int n = ia->ia_addr.siso_nlen;
 		struct iso_ifaddr *ia2;
 
 		if (type == ESIS_ISH && naddr > 0)
 			break;
-		for (ia2 = iso_ifaddr.tqh_first; ia2 != ia;
-		     ia2 = ia2->ia_list.tqe_next)
+		TAILQ_FOREACH(ia2, &iso_ifaddr, ia_list)
 			if (Bcmp(ia->ia_addr.siso_data,
 				 ia2->ia_addr.siso_data, n) == 0)
 				break;
@@ -1192,7 +1188,7 @@ release:
 void *
 esis_ctlinput(
     int    req,			/* request: we handle only PRC_IFDOWN */
-    struct sockaddr *siso,	/* address of ifp */
+    const struct sockaddr *siso,	/* address of ifp */
     void *dummy)
 {
 	struct iso_ifaddr *ia;	/* scan through interface addresses */
@@ -1201,10 +1197,9 @@ esis_ctlinput(
 	if (siso->sa_family != AF_ISO)
 		return NULL;
 	if (req == PRC_IFDOWN)
-		for (ia = iso_ifaddr.tqh_first; ia != 0;
-		     ia = ia->ia_list.tqe_next) {
+		TAILQ_FOREACH(ia, &iso_ifaddr, ia_list) {
 			if (iso_addrmatch(IA_SIS(ia),
-					  (struct sockaddr_iso *) siso))
+					  (const struct sockaddr_iso *)siso))
 				snpac_flushifp(ia->ia_ifp);
 		}
 	return NULL;

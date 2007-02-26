@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.54.2.2 2006/12/30 20:50:20 yamt Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.54.2.3 2007/02/26 09:11:34 yamt Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.54.2.2 2006/12/30 20:50:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.54.2.3 2007/02/26 09:11:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -188,6 +188,7 @@ gif_clone_destroy(struct ifnet *ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	rtcache_free(&sc->gif_ro);
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF);
@@ -261,7 +262,7 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 #endif
 
 int
-gif_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct gif_softc *sc = (struct gif_softc*)ifp;

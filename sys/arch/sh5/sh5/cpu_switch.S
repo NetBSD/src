@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_switch.S,v 1.19 2003/11/04 10:33:15 dsl Exp $	*/
+/*	$NetBSD: cpu_switch.S,v 1.19.16.1 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -233,11 +233,9 @@ ASENTRY_NOPROFILE(idle)
 	pta/u	1f, tr0
 
 1:
-#ifdef LOCKDEBUG
 	LEAF(_C_LABEL(sched_unlock_idle), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18
-#endif
 	movi	SH5_CONREG_SR_IMASK_IPL0, r0
 	putcon	r0, sr			/* Enable interrupts */
 
@@ -249,12 +247,10 @@ ASENTRY_NOPROFILE(idle)
 	movi	SH5_CONREG_SR_IMASK_ALL, r0
 	putcon	r0, sr			/* Disable interrupts */
 
-#ifdef LOCKDEBUG
 	LEAF(_C_LABEL(sched_lock_idle), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18
 	pta/u	1b, tr0
-#endif
 
 	ld.l	r29, 0, r0		/* Fetch sched_whichqs */
 	beq/u	r0, r63, tr0		/* Back around if nobody's awake */
@@ -355,11 +351,9 @@ Lsw3:
 	/*
 	 * Release the scheduler lock now that we're done with the run queue.
 	 */
-#ifdef LOCKDEBUG
 	LEAF(_C_LABEL(sched_unlock_idle), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18
-#endif
 
 	/*
 	 * At this point:
@@ -497,11 +491,9 @@ ENTRY(switch_exit)
 
 	blink	tr0, r18		/* (*exit_func)(l) */
 
-#ifdef LOCKDEBUG
 	LEAF(_C_LABEL(sched_lock_idle), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18
-#endif
 
 	pta/l	Lsw1, tr0
 	add	r63, r63, r30		/* Previous LWP is NULL in cpu_switch */

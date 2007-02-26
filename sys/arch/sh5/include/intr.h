@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.22.1 2006/12/30 20:46:55 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.22.2 2007/02/26 09:08:09 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -68,8 +68,6 @@
 #define	IPL_LOCK	IPL_HIGH
 
 #define	spl0()			splx(IPL_NONE)
-
-#define	spllowersoftclock()	splx(IPL_SOFTCLOCK);
 
 #ifndef _LOCORE
 extern void	splx(int);

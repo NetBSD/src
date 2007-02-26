@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.5 2005/06/03 18:58:40 martin Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.5.2.1 2007/02/26 09:08:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -35,7 +35,7 @@
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
 
-int arcemu_init(void);
+int arcemu_init(char **env);
 
 #ifdef _ARCEMU_PRIVATE
 
@@ -47,7 +47,7 @@ static int	arcemu_identify(void);
  */
 
 /* Prom Emulators */
-static void	arcemu_ip12_init(void);
+static void	arcemu_ip12_init(char **);
 static void *	arcemu_ip12_GetPeer(void *);
 static void *	arcemu_ip12_GetChild(void *);
 static const char *	arcemu_ip12_GetEnvironmentVariable(const char *); 

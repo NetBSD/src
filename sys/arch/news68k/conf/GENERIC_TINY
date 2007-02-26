@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.38.2.2 2006/12/30 20:46:36 yamt Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.38.2.3 2007/02/26 09:07:36 yamt Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.38.2.2 $"
+#ident 		"GENERIC_TINY-$Revision: 1.38.2.3 $"
 
 maxusers	4
 
@@ -193,7 +193,7 @@ zstty1	at zsc0 channel 1
 # For example: "flags 0x1000f" would disable DMA interrupts,
 # and disable disconnect/reselect for targets 0-3
 #
-si0	at hb0 addr 0xe0cc0000 ipl 4 flags 0xf
+si0	at hb0 addr 0xe0cc0000 ipl 4 flags 0x0
 scsibus* at si0
 
 sd*	at scsibus? target ? lun ?		# SCSI disks

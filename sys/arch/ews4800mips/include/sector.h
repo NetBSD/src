@@ -1,4 +1,4 @@
-/*	$NetBSD: sector.h,v 1.1.18.2 2006/06/21 14:51:13 yamt Exp $	*/
+/*	$NetBSD: sector.h,v 1.1.18.3 2007/02/26 09:06:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -42,10 +42,10 @@
 void *sector_init(dev_t, void (*)(struct buf *));
 #endif
 void sector_fini(void *);
-boolean_t sector_read_n(void *, uint8_t *, daddr_t, int);
-boolean_t sector_read(void *, uint8_t *, daddr_t);
-boolean_t sector_write_n(void *, uint8_t *, daddr_t, int);
-boolean_t sector_write(void *, uint8_t *, daddr_t);
+bool sector_read_n(void *, uint8_t *, daddr_t, int);
+bool sector_read(void *, uint8_t *, daddr_t);
+bool sector_write_n(void *, uint8_t *, daddr_t, int);
+bool sector_write(void *, uint8_t *, daddr_t);
 
 #define	ROUND_SECTOR(x)		(((x) + 511) & ~511)
 #define	TRUNC_SECTOR(x)		((x) & ~511)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esovar.h,v 1.6 2005/01/15 15:19:52 kent Exp $	*/
+/*	$NetBSD: esovar.h,v 1.6.10.1 2007/02/26 09:10:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -95,7 +95,7 @@ struct eso_softc {
 
 	/* DMA */
 	bus_dma_tag_t		sc_dmat;
-	struct eso_dma *	sc_dmas;
+	SLIST_HEAD(, eso_dma)	sc_dmas;
 
 	/* I/O Base device */
 	bus_space_tag_t		sc_iot;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.15 2003/01/18 10:06:26 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.15.18.1 2007/02/26 09:11:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.15 2003/01/18 10:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.15.18.1 2007/02/26 09:11:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,18 +72,10 @@ kthread_create1(void (*func)(void *), void *arg,
 
 	/* First, create the new process. */
 	error = fork1(&lwp0, FORK_SHAREVM | FORK_SHARECWD | FORK_SHAREFILES |
-	    FORK_SHARESIGS, SIGCHLD, NULL, 0, func, arg, NULL, &p2);
+	    FORK_SHARESIGS | FORK_SYSTEM, SIGCHLD, NULL, 0, func, arg, NULL,
+	    &p2);
 	if (__predict_false(error != 0))
 		return (error);
-
-	/*
-	 * Mark it as a system process and not a candidate for
-	 * swapping.  Set P_NOCLDWAIT so that children are reparented
-	 * to init(8) when they exit.  init(8) can easily wait them
-	 * out for us.
-	 */
-	p2->p_flag |= P_SYSTEM | P_NOCLDWAIT;
-	LIST_FIRST(&p2->p_lwps)->l_flag |= L_INMEM;
 
 	/* Name it as specified. */
 	va_start(ap, fmt);
@@ -103,6 +95,7 @@ kthread_create1(void (*func)(void *), void *arg,
 void
 kthread_exit(int ecode)
 {
+	struct proc *p = curproc;
 
 	/*
 	 * XXX What do we do with the exit code?  Should we even bother
@@ -111,8 +104,10 @@ kthread_exit(int ecode)
 	 */
 	if (ecode != 0)
 		printf("WARNING: thread `%s' (%d) exits with status %d\n",
-		    curproc->p_comm, curproc->p_pid, ecode);
+		    p->p_comm, p->p_pid, ecode);
 
+	/* Acquire the sched state mutex.  exit1() will release it. */
+	mutex_enter(&p->p_smutex);
 	exit1(curlwp, W_EXITCODE(ecode, 0));
 
 	/*

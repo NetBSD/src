@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.95.2.2 2006/12/30 20:49:33 yamt Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.95.2.3 2007/02/26 09:10:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95.2.2 2006/12/30 20:49:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.95.2.3 2007/02/26 09:10:40 yamt Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -395,19 +395,31 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			 */
 			xfer->c_flags &= ~C_DMA;
 		}
+
 		/*
-		 * DMA can't deal with transfers which are not a multiple of
-		 * 2 bytes. It's a bug to request such transfers for ATAPI
-		 * but as the request can come from userland, we have to
-		 * protect against it.
-		 * Some devices can't cope with unaligned DMA xfers. These are
-		 * normally only small structures since bulkdata is aligned.
-		 * Also some devices seem to not handle DMA xfers of less than
-		 * 4 bytes.
+		 * DMA normally can't deal with transfers which are not a
+		 * multiple of its databus width. It's a bug to request odd
+		 * length transfers for ATAPI.
+		 *
+		 * Some devices also can't cope with unaligned DMA xfers
+		 * either. Also some devices seem to not handle DMA xfers of
+		 * less than 4 bytes.
+		 *
+		 * By enforcing at least 4 byte aligned offset and length for
+		 * DMA, we might use PIO where DMA could be allowed but better
+		 * safe than sorry as recent problems proved.
+		 *
+		 * Offending structures that are thus done by PIO instead of
+		 * DMA are normally small structures since all bulkdata is
+		 * aligned. But as the request may come from userland, we have
+		 * to protect against it anyway.
+		 *
+		 * XXX check for the 32 bit wide flag?
 		 */
-		if (((uintptr_t) sc_xfer->data) & 0x01)
+
+		if (((uintptr_t) sc_xfer->data) & 0x03)
 			xfer->c_flags &= ~C_DMA;
-		if (sc_xfer->datalen < 4 || (sc_xfer->datalen & 0x01))
+		if ((sc_xfer->datalen < 4) || (sc_xfer->datalen & 0x03))
 			xfer->c_flags &= ~C_DMA;
 #endif	/* NATA_DMA */
 

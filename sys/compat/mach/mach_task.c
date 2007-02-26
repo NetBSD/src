@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.54.4.2 2006/12/30 20:47:42 yamt Exp $ */
+/*	$NetBSD: mach_task.c,v 1.54.4.3 2007/02/26 09:09:27 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.54.4.2 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.54.4.3 2007/02/26 09:09:27 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -49,9 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.54.4.2 2006/12/30 20:47:42 yamt Exp 
 #include <sys/ktrace.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
-#include <sys/sa.h>
 #include <sys/mount.h>
-#include <sys/ktrace.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 
@@ -571,14 +569,17 @@ mach_task_suspend(args)
 		case LSSLEEP:
 		case LSSUSPENDED:
 		case LSZOMB:
-		case LSDEAD:
 			break;
 		default:
 			return mach_msg_error(args, 0);
 			break;
 		}
 	}
-	proc_stop(tp, 0);
+	mutex_enter(&proclist_mutex);
+	mutex_enter(&tp->p_smutex);
+	proc_stop(tp, 0, SIGSTOP);
+	mutex_enter(&tp->p_smutex);
+	mutex_enter(&proclist_mutex);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
@@ -612,7 +613,11 @@ mach_task_resume(args)
 #ifdef DEBUG_MACH
 	printf("resuming pid %d\n", tp->p_pid);
 #endif
+	mutex_enter(&proclist_mutex);
+	mutex_enter(&tp->p_smutex);
 	(void)proc_unstop(tp);
+	mutex_enter(&tp->p_smutex);
+	mutex_enter(&proclist_mutex);
 
 	*msglen = sizeof(*rep);
 	mach_set_header(rep, req, *msglen);
@@ -679,8 +684,8 @@ mach_sys_task_for_pid(struct lwp *l, void *v, register_t *retval)
 
 	/* Allowed only if the UID match, if setuid, or if superuser */
 	if ((kauth_cred_getuid(t->p_cred) != kauth_cred_getuid(l->l_cred) ||
-	    ISSET(t->p_flag, P_SUGID)) && (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, &l->l_acflag)) != 0)
+	    ISSET(t->p_flag, PK_SUGID)) && (error = kauth_authorize_generic(l->l_cred,
+	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			    return (error);
 
 	/* This will only work on a Mach process */

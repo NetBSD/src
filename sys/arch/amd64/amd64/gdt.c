@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.7.2.1 2006/06/21 14:48:18 yamt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.7.2.2 2007/02/26 09:05:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.7.2.1 2006/06/21 14:48:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.7.2.2 2007/02/26 09:05:38 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -194,7 +194,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 #if 0
         ci->ci_gdt = (char *)uvm_km_valloc(kernel_map, MAXGDTSIZ);
         uvm_map_pageable(kernel_map, (vaddr_t)ci->ci_gdt,
-            (vaddr_t)ci->ci_gdt + MINGDTSIZ, FALSE, FALSE);
+            (vaddr_t)ci->ci_gdt + MINGDTSIZ, false, false);
         memset(ci->ci_gdt, 0, MINGDTSIZ);
         memcpy(ci->ci_gdt, gdtstore,
 	   DYNSEL_START + gdt_dyncount * sizeof(struct sys_segment_descriptor));

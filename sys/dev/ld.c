@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.37.2.1 2006/06/21 15:02:12 yamt Exp $	*/
+/*	$NetBSD: ld.c,v 1.37.2.2 2007/02/26 09:09:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37.2.1 2006/06/21 15:02:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37.2.2 2007/02/26 09:09:54 yamt Exp $");
 
 #include "rnd.h"
 
@@ -63,17 +63,22 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.37.2.1 2006/06/21 15:02:12 yamt Exp $");
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
+#include <sys/mutex.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 
 #include <dev/ldvar.h>
 
+#include <prop/proplib.h>
+
 static void	ldgetdefaultlabel(struct ld_softc *, struct disklabel *);
 static void	ldgetdisklabel(struct ld_softc *);
 static void	ldminphys(struct buf *bp);
 static void	ldshutdown(void *);
-static void	ldstart(struct ld_softc *);
+static void	ldstart(struct ld_softc *, struct buf *);
+static void	ld_set_properties(struct ld_softc *);
+static void	ld_config_interrupts (struct device *);
 
 extern struct	cfdriver ld_cd;
 
@@ -102,6 +107,8 @@ void
 ldattach(struct ld_softc *sc)
 {
 	char tbuf[9];
+
+	mutex_init(&sc->sc_mutex, MUTEX_DRIVER, IPL_BIO);
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		aprint_normal("%s: disabled\n", sc->sc_dv.dv_xname);
@@ -146,6 +153,8 @@ ldattach(struct ld_softc *sc)
 	    sc->sc_dv.dv_xname, tbuf, sc->sc_ncylinders, sc->sc_nheads,
 	    sc->sc_nsectors, sc->sc_secsize, sc->sc_secperunit);
 
+	ld_set_properties(sc);
+
 #if NRND > 0
 	/* Attach the device into the rnd source list. */
 	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dv.dv_xname,
@@ -158,7 +167,7 @@ ldattach(struct ld_softc *sc)
 	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	/* Discover wedges on this disk. */
-	dkwedge_discover(&sc->sc_dk);
+	config_interrupts(&sc->sc_dv, ld_config_interrupts);
 }
 
 int
@@ -389,6 +398,10 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct lwp *l)
 	sc = device_lookup(&ld_cd, unit);
 	error = 0;
 
+	error = disk_ioctl(&sc->sc_dk, cmd, addr, flag, l);
+	if (error != EPASSTHROUGH)
+		return (error);
+
 	switch (cmd) {
 	case DIOCGDINFO:
 		memcpy(addr, sc->sc_dk.dk_label, sizeof(struct disklabel));
@@ -589,8 +602,7 @@ ldstrategy(struct buf *bp)
 	bp->b_rawblkno = blkno;
 
 	s = splbio();
-	BUFQ_PUT(sc->sc_bufq, bp);
-	ldstart(sc);
+	ldstart(sc, bp);
 	splx(s);
 	return;
 
@@ -602,10 +614,14 @@ ldstrategy(struct buf *bp)
 }
 
 static void
-ldstart(struct ld_softc *sc)
+ldstart(struct ld_softc *sc, struct buf *bp)
 {
-	struct buf *bp;
 	int error;
+
+	mutex_enter(&sc->sc_mutex);
+
+	if (bp != NULL)
+		BUFQ_PUT(sc->sc_bufq, bp);
 
 	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
 		/* See if there is work to do. */
@@ -639,10 +655,14 @@ ldstart(struct ld_softc *sc)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
+				mutex_exit(&sc->sc_mutex);
 				biodone(bp);
+				mutex_enter(&sc->sc_mutex);
 			}
 		}
 	}
+
+	mutex_exit(&sc->sc_mutex);
 }
 
 void
@@ -661,13 +681,16 @@ lddone(struct ld_softc *sc, struct buf *bp)
 #endif
 	biodone(bp);
 
+	mutex_enter(&sc->sc_mutex);
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
 		if ((sc->sc_flags & LDF_DRAIN) != 0) {
 			sc->sc_flags &= ~LDF_DRAIN;
 			wakeup(&sc->sc_queuecnt);
 		}
-		ldstart(sc);
-	}
+		mutex_exit(&sc->sc_mutex);
+		ldstart(sc, NULL);
+	} else
+		mutex_exit(&sc->sc_mutex);
 }
 
 static int
@@ -823,4 +846,52 @@ ldminphys(struct buf *bp)
 	if (bp->b_bcount > sc->sc_maxxfer)
 		bp->b_bcount = sc->sc_maxxfer;
 	minphys(bp);
+}
+
+static void
+ld_set_properties(struct ld_softc *ld)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    ld->sc_secperunit);
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    ld->sc_secsize);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+	    ld->sc_nsectors);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+	    ld->sc_nheads);
+
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    ld->sc_ncylinders);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&ld->sc_dv),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = ld->sc_dk.dk_info;
+	ld->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}
+
+static void
+ld_config_interrupts (struct device *d)
+{
+	struct ld_softc *sc = (struct ld_softc *)d;
+	dkwedge_discover(&sc->sc_dk);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.196.2.2 2006/12/30 20:46:33 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.196.2.3 2007/02/26 09:07:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196.2.2 2006/12/30 20:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196.2.3 2007/02/26 09:07:31 yamt Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -97,8 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.196.2.2 2006/12/30 20:46:33 yamt Exp $");
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/kauth.h>
 
 #include <mips/cache.h>
@@ -376,11 +374,6 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
 
-		if (l->l_flag & L_SA) {
-			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
-			l->l_flag |= L_SA_PAGEFAULT;
-		}
-
 		if (p->p_emul->e_fault)
 			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
@@ -403,7 +396,6 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
-		l->l_flag &= ~L_SA_PAGEFAULT;
 		if (rv == 0) {
 			if (type & T_USER) {
 				userret(l);
@@ -617,30 +609,24 @@ void
 ast(unsigned pc)	/* pc is program counter where to continue */
 {
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-	int sig;
 
-	while (p->p_md.md_astpending) {
+	while (l->l_md.md_astpending) {
 		uvmexp.softs++;
-		p->p_md.md_astpending = 0;
+		l->l_md.md_astpending = 0;
 
-		if (p->p_flag & P_OWEUPC) {
-			p->p_flag &= ~P_OWEUPC;
-			ADDUPROF(p);
+		if (l->l_pflag & LP_OWEUPC) {
+			l->l_pflag &= ~LP_OWEUPC;
+			ADDUPROF(l);
 		}
 
-		/* Take pending signals. */
-		while ((sig = CURSIG(l)) != 0)
-			postsig(sig);
+		userret(l);
 
 		if (want_resched) {
 			/*
 			 * We are being preempted.
 			 */
-			preempt(0);
+			preempt();
 		}
-
-		userret(l);
 	}
 }
 

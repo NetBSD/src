@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.3.12.3 2006/12/30 20:48:45 yamt Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.3.12.4 2007/02/26 09:10:27 yamt Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.3.12.3 2006/12/30 20:48:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.3.12.4 2007/02/26 09:10:27 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -203,6 +203,11 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	bus_size_t memsize;
 	pcireg_t memtype;
+	char devinfo[256];
+
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
+	aprint_normal(": %s (rev. 0x%02x)\n",
+	    devinfo, PCI_REVISION(pa->pa_class));
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NFE_PCI_BA);
 	switch (memtype) {
@@ -213,30 +218,32 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		/* FALLTHROUGH */
 	default:
-		printf(": could not map mem space\n");
+		printf("%s: could not map mem space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
-		printf(": could not map interrupt\n");
+		printf("%s: could not map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, nfe_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf(": could not establish interrupt");
+		printf("%s: could not establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 
 	nfe_get_macaddr(sc, sc->sc_enaddr);
-	printf(", address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf("%s: Ethernet address %s\n",
+	    sc->sc_dev.dv_xname, ether_sprintf(sc->sc_enaddr));
 
 	sc->sc_flags = 0;
 
@@ -312,12 +319,12 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ethercom.ec_capabilities |=
 			ETHERCAP_VLAN_HWTAGGING | ETHERCAP_VLAN_MTU;
 #endif
-#ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM) {
-		ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-		    IFCAP_CSUM_UDPv4;
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 	}
-#endif
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = nfe_miibus_readreg;
@@ -490,6 +497,8 @@ nfe_intr(void *arg)
 
 	DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
 
+	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
+
 	if (r & NFE_IRQ_LINK) {
 		NFE_READ(sc, NFE_PHY_STATUS);
 		NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
@@ -503,6 +512,12 @@ nfe_intr(void *arg)
 		/* check Tx ring */
 		nfe_txeof(sc);
 	}
+
+	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
+
+	if (ifp->if_flags & IFF_RUNNING &&
+	    !IF_IS_EMPTY(&ifp->if_snd))
+		nfe_start(ifp);
 
 	return 1;
 }
@@ -794,19 +809,31 @@ nfe_rxeof(struct nfe_softc *sc)
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_pkthdr.rcvif = ifp;
 
-#ifdef notyet
-		if (sc->sc_flags & NFE_HW_CSUM) {
-			if (flags & NFE_RX_IP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
-			if (flags & NFE_RX_UDP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
-			if (flags & NFE_RX_TCP_CSUMOK)
-				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+		if ((sc->sc_flags & NFE_HW_CSUM) != 0) {
+			/*
+			 * XXX
+			 * no way to check M_CSUM_IPv4_BAD or non-IPv4 packets?
+			 */
+			if (flags & NFE_RX_IP_CSUMOK) {
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+				DPRINTFN(3, ("%s: ip4csum-rx ok\n",
+				    sc->sc_dev.dv_xname));
+			}
+			/*
+			 * XXX
+			 * no way to check M_CSUM_TCP_UDP_BAD or
+			 * other protocols?
+			 */
+			if (flags & NFE_RX_UDP_CSUMOK) {
+				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+				DPRINTFN(3, ("%s: udp4csum-rx ok\n",
+				    sc->sc_dev.dv_xname));
+			} else if (flags & NFE_RX_TCP_CSUMOK) {
+				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+				DPRINTFN(3, ("%s: tcp4csum-rx ok\n",
+				    sc->sc_dev.dv_xname));
+			}
 		}
-#elif defined(NFE_CSUM)
-		if ((sc->sc_flags & NFE_HW_CSUM) && (flags & NFE_RX_CSUMOK))
-			m->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
-#endif
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -922,17 +949,22 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	struct nfe_desc64 *desc64;
 	struct nfe_tx_data *data;
 	bus_dmamap_t map;
-	uint16_t flags = NFE_TX_VALID;
+	uint16_t flags, csumflags;
 #if NVLAN > 0
 	struct m_tag *mtag;
 	uint32_t vtag = 0;
 #endif
-	int error, i;
+	int error, i, first;
 
 	desc32 = NULL;
 	desc64 = NULL;
 	data = NULL;
-	map = sc->txq.data[sc->txq.cur].map;
+
+	flags = 0;
+	csumflags = 0;
+	first = sc->txq.cur;
+
+	map = sc->txq.data[first].map;
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m0, BUS_DMA_NOWAIT);
 	if (error != 0) {
@@ -951,12 +983,12 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 	if ((mtag = VLAN_OUTPUT_TAG(&sc->sc_ethercom, m0)) != NULL)
 		vtag = NFE_TX_VTAG | VLAN_TAG_VALUE(mtag);
 #endif
-#ifdef NFE_CSUM
-	if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
-		flags |= NFE_TX_IP_CSUM;
-	if (m0->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT))
-		flags |= NFE_TX_TCP_CSUM;
-#endif
+	if ((sc->sc_flags & NFE_HW_CSUM) != 0) {
+		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4)
+			csumflags |= NFE_TX_IP_CSUM;
+		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4))
+			csumflags |= NFE_TX_TCP_CSUM;
+	}
 
 	for (i = 0; i < map->dm_nsegs; i++) {
 		data = &sc->txq.data[sc->txq.cur];
@@ -971,9 +1003,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			    htole32(map->dm_segs[i].ds_addr & 0xffffffff);
 			desc64->length = htole16(map->dm_segs[i].ds_len - 1);
 			desc64->flags = htole16(flags);
-#if NVLAN > 0
-			desc64->vtag = htole32(vtag);
-#endif
+			desc64->vtag = 0;
 		} else {
 			desc32 = &sc->txq.desc32[sc->txq.cur];
 
@@ -982,28 +1012,43 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 			desc32->flags = htole16(flags);
 		}
 
-		/* csum flags and vtag belong to the first fragment only */
-		if (map->dm_nsegs > 1) {
-			flags &= ~(NFE_TX_IP_CSUM | NFE_TX_TCP_CSUM);
-#if NVLAN > 0
-			vtag = 0;
-#endif
-		}
+		/*
+		 * Setting of the valid bit in the first descriptor is
+		 * deferred until the whole chain is fully setup.
+		 */
+		flags |= NFE_TX_VALID;
 
 		sc->txq.queued++;
 		sc->txq.cur = (sc->txq.cur + 1) % NFE_TX_RING_COUNT;
 	}
 
-	/* the whole mbuf chain has been DMA mapped, fix last descriptor */
+	/* the whole mbuf chain has been setup */
 	if (sc->sc_flags & NFE_40BIT_ADDR) {
+		/* fix last descriptor */
 		flags |= NFE_TX_LASTFRAG_V2;
 		desc64->flags = htole16(flags);
+
+		/* Checksum flags and vtag belong to the first fragment only. */
+#if NVLAN > 0
+		sc->txq.desc64[first].vtag = htole32(vtag);
+#endif
+		sc->txq.desc64[first].flags |= htole16(csumflags);
+
+		/* finally, set the valid bit in the first descriptor */
+		sc->txq.desc64[first].flags |= htole16(NFE_TX_VALID);
 	} else {
+		/* fix last descriptor */
 		if (sc->sc_flags & NFE_JUMBO_SUP)
 			flags |= NFE_TX_LASTFRAG_V2;
 		else
 			flags |= NFE_TX_LASTFRAG_V1;
 		desc32->flags = htole16(flags);
+
+		/* Checksum flags belong to the first fragment only. */
+		sc->txq.desc32[first].flags |= htole16(csumflags);
+
+		/* finally, set the valid bit in the first descriptor */
+		sc->txq.desc32[first].flags |= htole16(NFE_TX_VALID);
 	}
 
 	data->m = m0;
@@ -1075,6 +1120,7 @@ nfe_init(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 	uint32_t tmp;
+	int s;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
@@ -1089,10 +1135,8 @@ nfe_init(struct ifnet *ifp)
 		sc->rxtxctl |= NFE_RXTX_V3MAGIC;
 	else if (sc->sc_flags & NFE_JUMBO_SUP)
 		sc->rxtxctl |= NFE_RXTX_V2MAGIC;
-#ifdef NFE_CSUM
 	if (sc->sc_flags & NFE_HW_CSUM)
 		sc->rxtxctl |= NFE_RXTX_RXCSUM;
-#endif
 #if NVLAN > 0
 	/*
 	 * Although the adapter is capable of stripping VLAN tags from received
@@ -1139,6 +1183,10 @@ nfe_init(struct ifnet *ifp)
 	tmp = NFE_READ(sc, NFE_PWR_STATE);
 	NFE_WRITE(sc, NFE_PWR_STATE, tmp | NFE_PWR_VALID);
 
+	s = splnet();
+	nfe_intr(sc); /* XXX clear IRQ status registers */
+	splx(s);
+
 #if 1
 	/* configure interrupts coalescing/mitigation */
 	NFE_WRITE(sc, NFE_IMTIMER, NFE_IM_DEFAULT);
@@ -1166,6 +1214,8 @@ nfe_init(struct ifnet *ifp)
 	nfe_setmulti(sc);
 
 	nfe_ifmedia_upd(ifp);
+
+	nfe_tick(sc);
 
 	/* enable Rx */
 	NFE_WRITE(sc, NFE_RX_CTL, NFE_RX_START);

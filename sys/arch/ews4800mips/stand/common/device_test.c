@@ -1,4 +1,4 @@
-/*	$NetBSD: device_test.c,v 1.1.18.3 2006/12/30 20:45:55 yamt Exp $	*/
+/*	$NetBSD: device_test.c,v 1.1.18.4 2007/02/26 09:06:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 struct ga ga;
 
-extern boolean_t lance_test(void);
+extern bool lance_test(void);
 int fdd_test(void);
 int i82589_test(void);
 int picnic_test(void);

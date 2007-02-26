@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.35.2.2 2006/12/30 20:47:38 yamt Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.35.2.3 2007/02/26 09:09:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -135,11 +135,10 @@ void linux_setregs __P((struct lwp *, struct exec_package *, u_long));
 int exec_linux_aout_makecmds __P((struct lwp *, struct exec_package *));
 int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
     struct ps_strings *, char **, void *));
-void linux_trapsignal __P((struct lwp *, const ksiginfo_t *));
+void linux_trapsignal __P((struct lwp *, ksiginfo_t *));
 int linux_usertrap __P((struct lwp *, vaddr_t, void *));
 #ifdef LINUX_NPTL
-void linux_nptl_proc_fork __P((struct proc *, struct proc *,
-	void (luserret)(struct lwp *, void *)));
+void linux_nptl_proc_fork(struct proc *, struct proc *, void (luserret)(void));
 void linux_nptl_proc_exit __P((struct proc *));      
 void linux_nptl_proc_init __P((struct proc *, struct proc *));
 #endif

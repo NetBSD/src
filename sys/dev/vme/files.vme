@@ -1,4 +1,4 @@
-#	$NetBSD: files.vme,v 1.9 2001/06/11 15:09:54 fredette Exp $
+#	$NetBSD: files.vme,v 1.9.38.1 2007/02/26 09:10:50 yamt Exp $
 #
 # Config file and device description for machine-independent VME code.
 # Included by ports that need it.
@@ -43,7 +43,3 @@ file	dev/vme/si.c		si
 device	sc: scsi, sunscpal
 attach	sc at vme with sc_vme
 file	dev/vme/sc_vme.c	sc_vme
-
-device	vmegeneric
-attach	vmegeneric at vme
-file	dev/vme/vmegeneric.c	vmegeneric			needs-flag

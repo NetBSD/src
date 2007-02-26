@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.42.10.1 2006/12/30 20:45:33 yamt Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.42.10.2 2007/02/26 09:06:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.42.10.1 2006/12/30 20:45:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.42.10.2 2007/02/26 09:06:00 yamt Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -227,7 +227,7 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
-		sc->sc_is16bit = TRUE;
+		sc->sc_is16bit = true;
 		sc->sc_dma_intr = IRQ_SDMA;
 		break;
 	default:

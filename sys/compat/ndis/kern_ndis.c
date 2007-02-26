@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4.6.3 2006/12/30 20:47:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4.6.4 2007/02/26 09:09:28 yamt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.4.6.3 2006/12/30 20:47:42 yamt Exp $
 #endif
 
 #ifdef __NetBSD__
-#include <machine/bus.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #endif
@@ -939,11 +938,11 @@ ndis_thsuspend(p, m, timo)
  */
 	if (m != NULL) {
 		//mtx_unlock(m);
-		error = ltsleep(&p->p_siglist, curlwp->l_priority, 
+		error = ltsleep(&p->p_sigpend.sp_set, curlwp->l_priority, 
 				"ndissp", timo, m);
 		//mtx_lock(m);
 	} else {
-		error = ltsleep(&p->p_siglist, curlwp->l_priority/*|PNORELOCK*/, 
+		error = ltsleep(&p->p_sigpend.sp_set, curlwp->l_priority/*|PNORELOCK*/, 
 				"ndissp", timo, 0 /*&p->p_lock*/);
 	}
 
@@ -956,7 +955,7 @@ void
 ndis_thresume(p)
 	struct proc		*p;
 {
-	wakeup(&p->p_siglist);
+	wakeup(&p->p_sigpend.sp_set);
 	
 	return;
 }

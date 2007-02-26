@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_timeout.c,v 1.16 2005/06/01 12:27:15 drochner Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.16.2.1 2007/02/26 09:11:13 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16 2005/06/01 12:27:15 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16.2.1 2007/02/26 09:11:13 yamt Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.16 2005/06/01 12:27:15 drochner E
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/callout.h>
+#include <sys/mutex.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -121,19 +122,7 @@ static struct callout_circq timeout_todo;		/* Worklist */
  * All wheels are locked with the same lock (which must also block out all
  * interrupts).
  */
-static struct simplelock callout_slock;
-
-#define	CALLOUT_LOCK(s)							\
-do {									\
-	s = splsched();							\
-	simple_lock(&callout_slock);					\
-} while (/*CONSTCOND*/0)
-
-#define	CALLOUT_UNLOCK(s)						\
-do {									\
-	simple_unlock(&callout_slock);					\
-	splx((s));							\
-} while (/*CONSTCOND*/0)
+kmutex_t callout_mutex;
 
 /*
  * Circular queue definitions.
@@ -194,6 +183,45 @@ static struct evcnt callout_ev_late;
 #endif
 
 /*
+ * callout_barrier:
+ *
+ *	If the callout is running on another CPU, busy wait until it
+ *	completes.
+ */
+static inline void
+callout_barrier(struct callout *c)
+{
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci, *ci_cur;
+
+	LOCK_ASSERT(mutex_owned(&callout_mutex));
+
+	/*
+	 * The callout may have already been dispatched to run on the
+	 * current CPU.  It's possible for us to arrive here before it
+	 * actually runs because the SPL is dropped from IPL_SCHED in
+	 * softclock(), and IPL_SOFTCLOCK is low priority. We can't deal
+	 * with that race easily, so for now the caller must deal with
+	 * it.
+	 */
+#if 1
+	ci_cur = curcpu();	/* XXXgcc get around alpha problem */
+	while ((ci = c->c_oncpu) != NULL && ci != ci_cur &&
+	    ci->ci_data.cpu_callout == c) {
+#else
+	while ((ci = c->c_oncpu) != NULL && ci != curcpu() &&
+	    ci->ci_data.cpu_callout == c) {
+#endif
+		mutex_spin_exit(&callout_mutex);
+		while (ci->ci_data.cpu_callout == c)
+			;
+		mutex_spin_enter(&callout_mutex);
+	}
+	c->c_oncpu = NULL;
+#endif
+}
+
+/*
  * callout_startup:
  *
  *	Initialize the callout facility, called at system startup time.
@@ -206,7 +234,7 @@ callout_startup(void)
 	CIRCQ_INIT(&timeout_todo);
 	for (b = 0; b < BUCKETS; b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
-	simple_lock_init(&callout_slock);
+	mutex_init(&callout_mutex, MUTEX_SPIN, IPL_SCHED);
 
 #ifdef CALLOUT_EVENT_COUNTERS
 	evcnt_attach_dynamic(&callout_ev_late, EVCNT_TYPE_MISC,
@@ -235,11 +263,13 @@ callout_init(struct callout *c)
 void
 callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 {
-	int s, old_time;
+	int old_time;
 
 	KASSERT(to_ticks >= 0);
 
-	CALLOUT_LOCK(s);
+	mutex_spin_enter(&callout_mutex);
+
+	callout_barrier(c);
 
 	/* Initialize the time here, it won't change. */
 	old_time = c->c_time;
@@ -264,7 +294,7 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 		CIRCQ_INSERT(&c->c_list, &timeout_todo);
 	}
 
-	CALLOUT_UNLOCK(s);
+	mutex_spin_exit(&callout_mutex);
 }
 
 /*
@@ -276,11 +306,13 @@ callout_reset(struct callout *c, int to_ticks, void (*func)(void *), void *arg)
 void
 callout_schedule(struct callout *c, int to_ticks)
 {
-	int s, old_time;
+	int old_time;
 
 	KASSERT(to_ticks >= 0);
 
-	CALLOUT_LOCK(s);
+	mutex_spin_enter(&callout_mutex);
+
+	callout_barrier(c);
 
 	/* Initialize the time here, it won't change. */
 	old_time = c->c_time;
@@ -302,7 +334,7 @@ callout_schedule(struct callout *c, int to_ticks)
 		CIRCQ_INSERT(&c->c_list, &timeout_todo);
 	}
 
-	CALLOUT_UNLOCK(s);
+	mutex_spin_exit(&callout_mutex);
 }
 
 /*
@@ -313,16 +345,17 @@ callout_schedule(struct callout *c, int to_ticks)
 void
 callout_stop(struct callout *c)
 {
-	int s;
 
-	CALLOUT_LOCK(s);
+	mutex_spin_enter(&callout_mutex);
+
+	callout_barrier(c);
 
 	if (callout_pending(c))
 		CIRCQ_REMOVE(&c->c_list);
 
 	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
 
-	CALLOUT_UNLOCK(s);
+	mutex_spin_exit(&callout_mutex);
 }
 
 /*
@@ -332,10 +365,9 @@ callout_stop(struct callout *c)
 int
 callout_hardclock(void)
 {
-	int s;
 	int needsoftclock;
 
-	CALLOUT_LOCK(s);
+	mutex_spin_enter(&callout_mutex);
 
 	MOVEBUCKET(0, hardclock_ticks);
 	if (MASKWHEEL(0, hardclock_ticks) == 0) {
@@ -348,7 +380,7 @@ callout_hardclock(void)
 	}
 
 	needsoftclock = !CIRCQ_EMPTY(&timeout_todo);
-	CALLOUT_UNLOCK(s);
+	mutex_spin_exit(&callout_mutex);
 
 	return needsoftclock;
 }
@@ -357,12 +389,14 @@ callout_hardclock(void)
 void
 softclock(void *v)
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci = curcpu();
+#endif
 	struct callout *c;
 	void (*func)(void *);
 	void *arg;
-	int s;
 
-	CALLOUT_LOCK(s);
+	mutex_spin_enter(&callout_mutex);
 
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
 		c = CIRCQ_FIRST(&timeout_todo);
@@ -377,19 +411,30 @@ softclock(void *v)
 			if (c->c_time - hardclock_ticks < 0)
 				callout_ev_late.ev_count++;
 #endif
-			c->c_flags = (c->c_flags  & ~CALLOUT_PENDING) |
+			c->c_flags = (c->c_flags & ~CALLOUT_PENDING) |
 			    (CALLOUT_FIRED|CALLOUT_INVOKING);
 
 			func = c->c_func;
 			arg = c->c_arg;
 
-			CALLOUT_UNLOCK(s);
+#ifdef MULTIPROCESSOR
+			c->c_oncpu = ci;
+			ci->ci_data.cpu_callout = c;
+#endif
+			mutex_spin_exit(&callout_mutex);
 			(*func)(arg);
-			CALLOUT_LOCK(s);
+			mutex_spin_enter(&callout_mutex);
+#ifdef MULTIPROCESSOR
+			ci->ci_data.cpu_callout = NULL;
+			/*
+			 * we can't touch 'c' here because it might be
+			 * freed already.
+			 */
+#endif
 		}
 	}
 
-	CALLOUT_UNLOCK(s);
+	mutex_spin_exit(&callout_mutex);
 }
 
 #ifdef DDB
@@ -424,7 +469,7 @@ db_show_callout_bucket(struct callout_circq *bucket)
 }
 
 void
-db_show_callout(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
 	int b;
 

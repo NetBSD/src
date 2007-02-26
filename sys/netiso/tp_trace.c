@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_trace.c,v 1.10 2004/04/19 05:16:46 matt Exp $	*/
+/*	$NetBSD: tp_trace.c,v 1.10.12.1 2007/02/26 09:12:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.10 2004/04/19 05:16:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.10.12.1 2007/02/26 09:12:02 yamt Exp $");
 
 #define TP_TRACEFILE
 
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: tp_trace.c,v 1.10 2004/04/19 05:16:46 matt Exp $");
 #include <netiso/tp_param.h>
 #include <netiso/tp_timer.h>
 #include <netiso/tp_stat.h>
-#include <netiso/tp_param.h>
 #include <netiso/tp_ip.h>
 #include <netiso/tp_pcb.h>
 #include <netiso/tp_tpdu.h>

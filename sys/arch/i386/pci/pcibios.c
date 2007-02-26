@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.28.2.1 2006/06/21 14:52:31 yamt Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.28.2.2 2007/02/26 09:07:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.28.2.1 2006/06/21 14:52:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.28.2.2 2007/02/26 09:07:04 yamt Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -670,7 +670,8 @@ pcibios_mm20_fixup(void)
 	tag = pci_make_tag(pc, MM20_PCI_BUS, MM20_PCI_EHCI_DEV,
 			   MM20_PCI_EHCI_FUNC);
 	/* Set interrupt register in EHCI controller */
-	pci_conf_write(pc, tag, 0x3c, 0x50000400 + MM20_PCI_EHCI_INTR);
+	pci_conf_write(pc, tag, PCI_INTERRUPT_REG,
+	    0x50000400 + MM20_PCI_EHCI_INTR);
 	tag = pci_make_tag(pc, MM20_PCI_BUS, MM20_PCI_ISA_DEV,
 			   MM20_PCI_ISA_FUNC);
 	/* Set some unknown registers in the ISA bridge. */

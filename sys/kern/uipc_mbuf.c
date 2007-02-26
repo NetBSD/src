@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.11 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.12 2007/02/26 09:11:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.11 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.12 2007/02/26 09:11:19 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -161,10 +161,10 @@ mcl_inc_reference(struct mbuf *m)
 	splx(s);
 }
 
-static inline boolean_t
+static inline bool
 mcl_dec_and_test_reference(struct mbuf *m)
 {
-	boolean_t gotzero;
+	bool gotzero;
 	int s;
 
 	s = splvm();
@@ -392,7 +392,7 @@ SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 static void *
 mclpool_alloc(struct pool *pp, int flags)
 {
-	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
+	bool waitok = (flags & PR_WAITOK) ? true : false;
 
 	return ((void *)uvm_km_alloc_poolpage(mb_map, waitok));
 }
@@ -1471,8 +1471,8 @@ m_getptr(struct mbuf *m, int loc, int *off)
 void
 m_ext_free(struct mbuf *m)
 {
-	boolean_t embedded = MEXT_ISEMBEDDED(m);
-	boolean_t dofree = TRUE;
+	bool embedded = MEXT_ISEMBEDDED(m);
+	bool dofree = true;
 
 	KASSERT((m->m_flags & M_EXT) != 0);
 	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
@@ -1482,7 +1482,7 @@ m_ext_free(struct mbuf *m)
 
 	if (!mcl_dec_and_test_reference(m)) {
 		if (embedded) {
-			dofree = FALSE;
+			dofree = false;
 		} else {
 			m->m_ext_ref = m;
 		}
@@ -1505,7 +1505,7 @@ m_ext_free(struct mbuf *m)
 			/*
 			 * 'm' is already freed by the ext_free callback.
 			 */
-			dofree = FALSE;
+			dofree = false;
 		} else {
 			free(m->m_ext.ext_buf, m->m_ext.ext_type);
 		}
@@ -1558,13 +1558,13 @@ void
 m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 {
 	char ch;
-	boolean_t opt_c = FALSE;
+	bool opt_c = false;
 	char buf[512];
 
 	while ((ch = *(modif++)) != '\0') {
 		switch (ch) {
 		case 'c':
-			opt_c = TRUE;
+			opt_c = true;
 			break;
 		}
 	}

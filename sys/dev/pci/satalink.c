@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.25.2.2 2006/12/30 20:48:48 yamt Exp $	*/
+/*	$NetBSD: satalink.c,v 1.25.2.3 2007/02/26 09:10:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.25.2.2 2006/12/30 20:48:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.25.2.3 2007/02/26 09:10:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,10 +463,10 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			       cfgctl | CFGCTL_BA5INDEN);
 	}
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	/*
 	 * Rev. <= 0x01 of the 3112 have a bug that can cause data
@@ -535,7 +535,7 @@ sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 
 	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    PCIIDE_OPTIONS_NODMA) {
-		aprint_normal(
+		aprint_verbose(
 		    ", but unused (forced off by config file)");
 		sc->sc_dma_ok = 0;
 		return;
@@ -558,7 +558,7 @@ sii3114_mapreg_dma(struct pciide_softc *sc, struct pci_attach_args *pa)
 			    satalink_ba5_regmap[chan].ba5_IDEDMA_CMD + reg,
 			    size, &pc->dma_iohs[reg]) != 0) {
 				sc->sc_dma_ok = 0;
-				aprint_normal(", but can't subregion offset "
+				aprint_verbose(", but can't subregion offset "
 				    "%lu size %lu",
 				    (u_long) satalink_ba5_regmap[
 						chan].ba5_IDEDMA_CMD + reg,
@@ -720,10 +720,10 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	 */
 	BA5_WRITE_4(sc, 2, ba5_IDEDMA_CMD, IDEDMA_CMD_INT_STEER);
 
-	aprint_normal("%s: bus-master DMA support present",
+	aprint_verbose("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	sii3114_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	sii_fixup_cacheline(sc, pa);
 

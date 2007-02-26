@@ -1,4 +1,4 @@
-/*	$NetBSD: it.c,v 1.4.4.3 2006/12/30 20:48:27 yamt Exp $	*/
+/*	$NetBSD: it.c,v 1.4.4.4 2007/02/26 09:10:15 yamt Exp $	*/
 /*	$OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.4.4.3 2006/12/30 20:48:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: it.c,v 1.4.4.4 2007/02/26 09:10:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,16 @@ __KERNEL_RCSID(0, "$NetBSD: it.c,v 1.4.4.3 2006/12/30 20:48:27 yamt Exp $");
 #define DPRINTF(x)
 #endif
 
+/*
+ * IT87-compatible chips can typically measure voltages up to 4.096 V.
+ * To measure higher voltages the input is attenuated with (external)
+ * resistors.  Negative voltages are measured using a reference
+ * voltage.  So we have to convert the sensor values back to real
+ * voltages by applying the appropriate resistor factor.
+ */
+#define RFACT_NONE	10000
+#define RFACT(x, y)	(RFACT_NONE * ((x) + (y)) / (y))
+
 /* autoconf(9) functions */
 static int  it_isa_match(struct device *, struct cfdata *, void *);
 static void it_isa_attach(struct device *, struct device *, void *);
@@ -74,23 +84,36 @@ static uint8_t it_readreg(struct it_softc *, int);
 static void it_writereg(struct it_softc *, int, int);
 
 /* envsys(9) glue */
-static void it_setup_volt(struct it_softc *, int, int);
-static void it_setup_temp(struct it_softc *, int, int);
-static void it_setup_fan(struct it_softc *, int, int);
-static void it_refresh_temp(struct it_softc *, envsys_tre_data_t *);
-static void it_refresh_volts(struct it_softc *, envsys_tre_data_t *,
-    envsys_basic_info_t *);
-static void it_refresh_fans(struct it_softc *, envsys_tre_data_t *);
+static void it_setup_sensors(struct it_softc *);
+static void it_refresh_temp(struct it_softc *);
+static void it_refresh_volts(struct it_softc *);
+static void it_refresh_fans(struct it_softc *);
 static int it_gtredata(struct sysmon_envsys *, envsys_tre_data_t *);
 static int it_streinfo(struct sysmon_envsys *, envsys_basic_info_t *);
 
+/* voltage sensors used */
+static const int it_sensorvolt[] = {
+	IT_SENSORVCORE0,
+	IT_SENSORV33,
+	IT_SENSORV5,
+	IT_SENSORV12,
+	IT_SENSORVBAT
+};
+
+/* rfact values for voltage sensors */
+static const int it_vrfact[] = {
+	RFACT_NONE,	/* VCORE */
+	RFACT_NONE,	/* +3.3V */
+	RFACT(68, 100),	/* +5V   */
+	RFACT(30, 10),	/* +12V  */
+	RFACT_NONE	/* VBAT  */
+};
 
 static int
-it_isa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+it_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
-	int iobase, rv = 0;
+	int rv = 0;
 
 	/* Must supply an address */
 	if (ia->ia_nio < 1)
@@ -102,8 +125,7 @@ it_isa_match(struct device *parent, struct cfdata *match,
 	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return 0;
 
-	iobase = ia->ia_io[0].ir_addr;
-	rv = it_check(ia->ia_iot, iobase);
+	rv = it_check(ia->ia_iot, ia->ia_io[0].ir_addr);
 
 	if (rv) {
 		ia->ia_nio = 1;
@@ -119,43 +141,34 @@ it_isa_match(struct device *parent, struct cfdata *match,
 static void
 it_isa_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct it_softc *sc = (void *)self;
+	struct it_softc *sc = (struct it_softc *)self;
 	struct isa_attach_args *ia = aux;
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
-	int iobase, i;
+	int i;
 	uint8_t idr, cr;
 
-	iot = ia->ia_iot = sc->sc_iot;
-	ioh = sc->sc_ioh;
-	iobase = ia->ia_io[0].ir_addr;
+	ia->ia_iot = sc->sc_iot;
 
-	if (bus_space_map(iot, iobase, 8, 0, &sc->sc_ioh)) {
-		printf(": can't map i/o space\n");
+	if (bus_space_map(sc->sc_iot, ia->ia_io[0].ir_addr, 8, 0,
+	    &sc->sc_ioh)) {
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	/* Indicate we have never read the registers */
-	timerclear(&sc->lastread);
-
 	idr = it_readreg(sc, IT_COREID);
 	if (idr == IT_REV_8712)
-		printf(": IT8712F Hardware monitor\n");
+		aprint_normal(": IT8712F Hardware monitor\n");
 	else {
 		idr = it_readreg(sc, IT_VENDORID);
 		if (idr == IT_REV_8705)
-			printf(": IT8705F Hardware monitor\n");
+			aprint_normal(": IT8705F Hardware monitor\n");
 		else
-			printf("iTE unknown vendor id: 0x%x\n", idr);
+			aprint_normal(": iTE unknown vendor id (0x%x)\n", idr);
 	}
-
-	it_setup_fan(sc, 0, 3);
-	it_setup_volt(sc, 3, 9);
-	it_setup_temp(sc, 12, 3);
 
 	/* Activate monitoring */
 	cr = it_readreg(sc, IT_CONFIG);
-	cr |= 0x01 | 0x08;
+	SET(cr, 0x01);
+	SET(cr, 0x08);
 	it_writereg(sc, IT_CONFIG, cr);
 
 	/* Initialize sensors */
@@ -165,6 +178,8 @@ it_isa_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_info[i].validflags = ENVSYS_FVALID;
 		sc->sc_data[i].warnflags = ENVSYS_WARN_OK;
 	}
+
+	it_setup_sensors(sc);
 
 	/*
 	 * Hook into the system monitor.
@@ -221,127 +236,86 @@ it_writereg(struct it_softc *sc, int reg, int val)
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, IT_DATA, val);
 }
 
+#define COPYDESCR(x, y)				\
+	do {					\
+		strlcpy((x), (y), sizeof(x));	\
+	} while (0)
+
 static void
-it_setup_volt(struct it_softc *sc, int start, int n)
+it_setup_sensors(struct it_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < n; ++i) {
-		sc->sc_data[start + i].units = ENVSYS_SVOLTS_DC;
-		sc->sc_info[start + i].units = ENVSYS_SVOLTS_DC;
+	/* temperatures */
+	for (i = 0; i < 2; i++) {
+		sc->sc_data[i].units = ENVSYS_STEMP;
+		sc->sc_info[i].units = ENVSYS_STEMP;
 	}
 
-	sc->sc_info[start + 0].rfact = 10000;
-	snprintf(sc->sc_info[start + 0].desc, sizeof(sc->sc_info[0].desc),
-	    "VCORE_A");
-	sc->sc_info[start + 1].rfact = 10000;
-	snprintf(sc->sc_info[start + 1].desc, sizeof(sc->sc_info[1].desc),
-	    "VCORE_B");
-	sc->sc_info[start + 2].rfact = 10000;
-	snprintf(sc->sc_info[start + 2].desc, sizeof(sc->sc_info[2].desc),
-	    "+3.3V");
-	sc->sc_info[start + 3].rfact = 16800;
-	snprintf(sc->sc_info[start + 3].desc, sizeof(sc->sc_info[3].desc),
-	    "+5V");
-	sc->sc_info[start + 4].rfact = 40000;
-	snprintf(sc->sc_info[start + 4].desc, sizeof(sc->sc_info[4].desc),
-	    "+12V");
-	sc->sc_info[start + 5].rfact = 40000;
-	snprintf(sc->sc_info[start + 5].desc, sizeof(sc->sc_info[5].desc),
-	    "-12V");
-	sc->sc_info[start + 6].rfact = 16800;
-	snprintf(sc->sc_info[start + 6].desc, sizeof(sc->sc_info[6].desc),
-	    "-5V");
-	sc->sc_info[start + 7].rfact = 16800;
-	snprintf(sc->sc_info[start + 7].desc, sizeof(sc->sc_info[7].desc),
-	    "+5VSB");
-	sc->sc_info[start + 8].rfact = 10000;
-	snprintf(sc->sc_info[start + 8].desc, sizeof(sc->sc_info[8].desc),
-	    "VBAT");
-}
+	COPYDESCR(sc->sc_info[0].desc, "CPU Temp");
+	COPYDESCR(sc->sc_info[1].desc, "System Temp");
 
-static void
-it_setup_temp(struct it_softc *sc, int start, int n)
-{
-	int i;
-
-	for (i = 0; i < n; ++i) {
-		sc->sc_data[start + i].units = ENVSYS_STEMP;
-		sc->sc_info[start + i].units = ENVSYS_STEMP;
+	/* voltages */
+	for (i = 2; i < 7; i++) {
+		sc->sc_data[i].units = ENVSYS_SVOLTS_DC;
+		sc->sc_info[i].units = ENVSYS_SVOLTS_DC;
 	}
-	snprintf(sc->sc_info[start + 0].desc,
-	    sizeof(sc->sc_info[start + 0].desc), "CPU Temp");
-	snprintf(sc->sc_info[start + 1].desc,
-	    sizeof(sc->sc_info[start + 1].desc), "Chassis Temp");
-	snprintf(sc->sc_info[start + 2].desc,
-	    sizeof(sc->sc_info[start + 2].desc), "External Temp");
-}
 
-static void
-it_setup_fan(struct it_softc *sc, int start, int n)
-{
-	int i;
+	COPYDESCR(sc->sc_info[2].desc, "VCORE_A");
+	COPYDESCR(sc->sc_info[3].desc, "+3.3V");
+	COPYDESCR(sc->sc_info[4].desc, "+5V");
+	COPYDESCR(sc->sc_info[5].desc, "+12V");
+	COPYDESCR(sc->sc_info[6].desc, "VBAT");
 
-	for (i = 0; i < n; ++i) {
-		sc->sc_data[start + i].units = ENVSYS_SFANRPM;
-		sc->sc_info[start + i].units = ENVSYS_SFANRPM;
+	/* fans */
+	for (i = 7; i < 9; i++) {
+		sc->sc_data[i].units = ENVSYS_SFANRPM;
+		sc->sc_info[i].units = ENVSYS_SFANRPM;
 	}
-	snprintf(sc->sc_info[start + 0].desc,
-	    sizeof(sc->sc_info[start + 0].desc), "CPU Fan");
-	snprintf(sc->sc_info[start + 1].desc,
-	    sizeof(sc->sc_info[start + 1].desc), "Chassis Fan");
-	snprintf(sc->sc_info[start + 2].desc,
-	    sizeof(sc->sc_info[start + 2].desc), "External Fan");
+
+	COPYDESCR(sc->sc_info[7].desc, "CPU Fan");
+	COPYDESCR(sc->sc_info[8].desc, "System Fan");
 }
+#undef COPYDESCR
 
 static void
-it_refresh_temp(struct it_softc *sc, envsys_tre_data_t *tred)
+it_refresh_temp(struct it_softc *sc)
 {
 	int i, sdata;
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 2; i++) {
 		sdata = it_readreg(sc, IT_SENSORTEMPBASE + i);
 		DPRINTF(("sdata[temp%d] 0x%x\n", i, sdata));
 		/* Convert temperature to Fahrenheit degres */
-		tred[i].cur.data_us = sdata * 1000000 + 273150000;
+		sc->sc_data[i].cur.data_us = sdata * 1000000 + 273150000;
 	}
 }
 
 static void
-it_refresh_volts(struct it_softc *sc, envsys_tre_data_t *tred,
-    envsys_basic_info_t *info)
+it_refresh_volts(struct it_softc *sc)
 {
 	int i, sdata;
 
-	for (i = 0; i < 9; i++) {
-		sdata = it_readreg(sc, IT_SENSORVOLTBASE + i);
+	for (i = 0; i < 5; i++) {
+		sdata = it_readreg(sc, it_sensorvolt[i]);
 		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
 		/* voltage returned as (mV >> 4) */
-		tred[i].cur.data_s = (sdata << 4);
+		sc->sc_data[2 + i].cur.data_s = (sdata << 4);
 		/* rfact is (factor * 10^4) */
-		tred[i].cur.data_s *= info[i].rfact;
-		/*
-		 * xtraeme: looks like on my motherboard, these two values
-		 * are null, so disable them.
-		 */
-		if (tred[i].cur.data_s != 0) {
-			if (i == 5 || i == 6)
-				tred[i].cur.data_s -=
-			    	    (info[i].rfact - 10000) * IT_VREF;
-		}
+		sc->sc_data[2 + i].cur.data_s *= it_vrfact[i];
 		/* division by 10 gets us back to uVDC */
-		tred[i].cur.data_s /= 10;
-
+		sc->sc_data[2 + i].cur.data_s /= 10;
+		sc->sc_info[2 + i].rfact = sc->sc_data[2 + i].cur.data_s;
 	}
 }
 
 static void
-it_refresh_fans(struct it_softc *sc, envsys_tre_data_t *tred)
+it_refresh_fans(struct it_softc *sc)
 {
 	int i, sdata, divisor, odivisor, ndivisor;
 
 	odivisor = ndivisor = divisor = it_readreg(sc, IT_FAN);
-	for (i = 0; i < 3; i++, divisor >>= 3) {
+	for (i = 0; i < 2; i++, divisor >>= 3) {
 		if ((sdata = it_readreg(sc, IT_SENSORFANBASE + i)) == 0xff) {
 			if (i == 2)
 				ndivisor ^= 0x40;
@@ -349,18 +323,13 @@ it_refresh_fans(struct it_softc *sc, envsys_tre_data_t *tred)
 				ndivisor &= ~(7 << (i * 3));
 				ndivisor |= ((divisor + 1) & 7) << (i * 3);
 			}
-		} else if (sdata == 0) {
-			tred[i].cur.data_us = 0;
-			sc->sc_data[i].validflags &=
-			    (ENVSYS_FVALID|ENVSYS_FCURVALID);
-			sc->sc_info[i].validflags &= ENVSYS_FVALID;
 		} else {
 			if (i == 2)
 				divisor = divisor & 1 ? 3 : 1;
-			tred[i].cur.data_us =
+			sc->sc_data[7 + i].cur.data_us =
 			    1350000 / (sdata << (divisor & 7));
 		}
-		DPRINTF(("sdata[%d] 0x%x div: 0x%x\n", i, sdata, divisor));
+		DPRINTF(("sdata[fan%d] 0x%x div: 0x%x\n", i, sdata, divisor));
 	}
 	if (ndivisor != odivisor)
 		it_writereg(sc, IT_FAN, ndivisor);
@@ -370,19 +339,11 @@ static int
 it_gtredata(struct sysmon_envsys *sme, struct envsys_tre_data *tred)
 {
 	struct it_softc *sc = sme->sme_cookie;
-	static const struct timeval onepointfive = { 0, 500000 };
-	struct timeval tv, utv;
 
-	/* read new values at most once every 0.5 seconds */
-	getmicrouptime(&utv);
-	timeradd(&sc->lastread, &onepointfive, &tv);
-	if (timercmp(&utv, &tv, >)) {
-		sc->lastread  = utv;
-		/* Refresh our stored data for every sensor */
-		it_refresh_temp(sc, &sc->sc_data[12]); 
-		it_refresh_volts(sc, &sc->sc_data[3], &sc->sc_info[3]);
-		it_refresh_fans(sc, &sc->sc_data[0]);
-	}
+	/* Refresh our stored data for every sensor */
+	it_refresh_temp(sc); 
+	it_refresh_volts(sc);
+	it_refresh_fans(sc);
         
 	*tred = sc->sc_data[tred->sensor]; 
                                 

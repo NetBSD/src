@@ -1,4 +1,6 @@
-/*	$NetBSD: bus.h,v 1.1 2002/02/10 01:57:10 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.36.1 2007/02/26 09:08:11 yamt Exp $	*/
+
+#define __BUS_SPACE_HAS_STREAM_METHODS
 
 #include <arm/bus.h>
 

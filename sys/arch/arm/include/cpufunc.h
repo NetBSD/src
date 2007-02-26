@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.34.2.1 2006/06/21 14:49:16 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.34.2.2 2007/02/26 09:05:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -334,9 +334,7 @@ extern unsigned arm9_dcache_index_max;
 extern unsigned arm9_dcache_index_inc;
 #endif
 
-#ifdef CPU_ARM10
-void	arm10_setttb		__P((u_int));
-
+#if defined(CPU_ARM9E) || defined(CPU_ARM10)
 void	arm10_tlb_flushID_SE	__P((u_int));
 void	arm10_tlb_flushI_SE	__P((u_int));
 
@@ -362,7 +360,24 @@ void	arm11_tlb_flushD_SE	__P((u_int va));
 void	arm11_drain_writebuf	__P((void));
 #endif
 
+#if defined(CPU_ARM9E) || defined (CPU_ARM10)
+void	armv5_ec_setttb			__P((u_int));
+
+void	armv5_ec_icache_sync_all	__P((void));
+void	armv5_ec_icache_sync_range	__P((vaddr_t, vsize_t));
+
+void	armv5_ec_dcache_wbinv_all	__P((void));
+void	armv5_ec_dcache_wbinv_range	__P((vaddr_t, vsize_t));
+void	armv5_ec_dcache_inv_range	__P((vaddr_t, vsize_t));
+void	armv5_ec_dcache_wb_range	__P((vaddr_t, vsize_t));
+
+void	armv5_ec_idcache_wbinv_all	__P((void));
+void	armv5_ec_idcache_wbinv_range	__P((vaddr_t, vsize_t));
+#endif
+
 #if defined (CPU_ARM10) || defined (CPU_ARM11)
+void	armv5_setttb		__P((u_int));
+
 void	armv5_icache_sync_all	__P((void));
 void	armv5_icache_sync_range	__P((vaddr_t, vsize_t));
 
@@ -380,8 +395,8 @@ extern unsigned armv5_dcache_index_max;
 extern unsigned armv5_dcache_index_inc;
 #endif
 
-#if defined(CPU_ARM9) || defined(CPU_ARM10) || defined(CPU_SA110) || \
-    defined(CPU_SA1100) || defined(CPU_SA1110) || \
+#if defined(CPU_ARM9) || defined(CPU_ARM9E) || defined(CPU_ARM10) || \
+    defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) || \
     defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32.c,v 1.3.2.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: ninjascsi32.c,v 1.3.2.3 2007/02/26 09:10:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.3.2.2 2006/12/30 20:48:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjascsi32.c,v 1.3.2.3 2007/02/26 09:10:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1707,7 +1707,7 @@ njsc32_msgin(struct njsc32_softc *sc)
 	int cctl = 0;
 	u_int32_t ptr;	/* unsigned type ensures 2-complement calculation */
 	u_int32_t msgout = 0;
-	boolean_t reload_params = FALSE;
+	bool reload_params = FALSE;
 	struct njsc32_target *target;
 	int idx, period, offset;
 

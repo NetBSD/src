@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx_12.c,v 1.5.16.2 2006/12/30 20:47:31 yamt Exp $	*/
+/*	$NetBSD: kern_xxx_12.c,v 1.5.16.3 2007/02/26 09:09:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.5.16.2 2006/12/30 20:47:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.5.16.3 2007/02/26 09:09:00 yamt Exp $");
 
 /*#ifdef COMPAT_12*/
 
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx_12.c,v 1.5.16.2 2006/12/30 20:47:31 yamt Ex
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 

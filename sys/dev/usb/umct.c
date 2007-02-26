@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.17.2.1 2006/12/30 20:49:39 yamt Exp $	*/
+/*	$NetBSD: umct.c,v 1.17.2.2 2007/02/26 09:10:47 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.17.2.1 2006/12/30 20:49:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.17.2.2 2007/02/26 09:10:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.17.2.1 2006/12/30 20:49:39 yamt Exp $");
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usb_quirks.h>
 
-#include <dev/usb/usbdevs.h>
 #include <dev/usb/ucomvar.h>
-
 #include <dev/usb/umct.h>
 
 #ifdef UMCT_DEBUG

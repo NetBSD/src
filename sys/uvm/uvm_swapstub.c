@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swapstub.c,v 1.4.18.2 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_swapstub.c,v 1.4.18.3 2007/02/26 09:12:33 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -31,12 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.4.18.2 2006/06/21 15:12:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.4.18.3 2007/02/26 09:12:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <uvm/uvm.h>

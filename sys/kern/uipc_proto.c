@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.17.4.1 2006/12/30 20:50:07 yamt Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.17.4.2 2007/02/26 09:11:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.17.4.1 2006/12/30 20:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.17.4.2 2007/02/26 09:11:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -52,21 +52,24 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_proto.c,v 1.17.4.1 2006/12/30 20:50:07 yamt Exp
 DOMAIN_DEFINE(unixdomain);	/* forward define and add to link set */
 
 const struct protosw unixsw[] = {
-{ SOCK_STREAM,	&unixdomain,	0,	PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS|PR_LISTEN,
-  0,		0,		0,		uipc_ctloutput,
-  uipc_usrreq,
-  0,		0,		0,		0,
-},
-{ SOCK_DGRAM,	&unixdomain,	0,		PR_ATOMIC|PR_ADDR|PR_RIGHTS,
-  0,		0,		0,		uipc_ctloutput,
-  uipc_usrreq,
-  0,		0,		0,		0,
-},
-{ 0,		0,		0,		0,
-  raw_input,	0,		raw_ctlinput,	0,
-  raw_usrreq,
-  raw_init,	0,		0,		0,
-}
+	{
+		.pr_type = SOCK_STREAM,
+		.pr_domain = &unixdomain,
+		.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_RIGHTS|PR_LISTEN,
+		.pr_ctloutput = uipc_ctloutput,
+		.pr_usrreq = uipc_usrreq,
+	}, {
+		.pr_type = SOCK_DGRAM,
+		.pr_domain = &unixdomain,
+		.pr_flags = PR_ATOMIC|PR_ADDR|PR_RIGHTS,
+		.pr_ctloutput = uipc_ctloutput,
+		.pr_usrreq = uipc_usrreq,
+	}, {
+		.pr_input = raw_input,
+		.pr_ctlinput = raw_ctlinput,
+		.pr_usrreq = raw_usrreq,
+		.pr_init = raw_init,
+	}
 };
 
 struct domain unixdomain = {
@@ -75,5 +78,5 @@ struct domain unixdomain = {
 	.dom_externalize = unp_externalize,
 	.dom_dispose = unp_dispose,
 	.dom_protosw = unixsw,
-	.dom_protoswNPROTOSW = &unixsw[sizeof(unixsw)/sizeof(unixsw[0])],
+	.dom_protoswNPROTOSW = &unixsw[__arraycount(unixsw)],
 };

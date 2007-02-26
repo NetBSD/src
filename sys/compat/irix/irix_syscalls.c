@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscalls.c,v 1.54 2005/02/26 23:58:19 perry Exp $ */
+/* $NetBSD: irix_syscalls.c,v 1.54.4.1 2007/02/26 09:09:11 yamt Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.54 2005/02/26 23:58:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.54.4.1 2007/02/26 09:09:11 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -22,7 +22,6 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syscalls.c,v 1.54 2005/02/26 23:58:19 perry Exp
 #include <sys/mount.h>
 #include <sys/poll.h>
 #include <sys/ioctl_compat.h>
-#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_signal.h>

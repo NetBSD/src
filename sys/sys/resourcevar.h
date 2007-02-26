@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.29.2.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.29.2.3 2007/02/26 09:12:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -78,13 +78,14 @@ struct plimit {
 	struct simplelock p_slock;	/* mutex for p_refcnt */
 };
 
-/* add user profiling from AST */
+/* add user profiling from AST XXXSMP */
 #define	ADDUPROF(p)							\
 	do {								\
-		addupc_task(p,						\
-		    (p)->p_stats->p_prof.pr_addr,			\
-		    (p)->p_stats->p_prof.pr_ticks);			\
-		(p)->p_stats->p_prof.pr_ticks = 0;			\
+		struct proc *_p = l->l_proc;				\
+		addupc_task(l,						\
+		    (_p)->p_stats->p_prof.pr_addr,			\
+		    (_p)->p_stats->p_prof.pr_ticks);			\
+		(_p)->p_stats->p_prof.pr_ticks = 0;			\
 	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
@@ -126,11 +127,11 @@ extern uid_t security_setidcore_owner;
 extern gid_t security_setidcore_group;
 extern mode_t security_setidcore_mode;
 
-void	 addupc_intr(struct proc *, u_long);
-void	 addupc_task(struct proc *, u_long, u_int);
+void	 addupc_intr(struct lwp *, u_long);
+void	 addupc_task(struct lwp *, u_long, u_int);
 void	 calcru(struct proc *, struct timeval *, struct timeval *,
-	    struct timeval *);
-struct plimit *limcopy(struct plimit *);
+	    struct timeval *, struct timeval *);
+struct plimit *limcopy(struct proc *);
 void limfree(struct plimit *);
 void	ruadd(struct rusage *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);

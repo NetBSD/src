@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.12.2 2006/12/30 20:46:21 yamt Exp $
+#	$NetBSD: Makefile,v 1.1.12.3 2007/02/26 09:07:08 yamt Exp $
 
 INCSDIR= /usr/include/landisk
 
@@ -13,9 +13,9 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
 	limits.h lock.h loadfile_machdep.h \
-	math.h mcontext.h \
+	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
-	reg.h \
+	reg.h rwlock.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \
 	varargs.h vmparam.h \

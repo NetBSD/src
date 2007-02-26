@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.10.4.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.10.4.2 2007/02/26 09:11:36 yamt Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
@@ -60,9 +60,10 @@
 #define PPP_MAXMRU	65000	/* Largest MRU we allow */
 #define PPP_MINMRU	128
 
-#define PPP_ADDRESS(p)	(((u_char *)(p))[0])
-#define PPP_CONTROL(p)	(((u_char *)(p))[1])
-#define PPP_PROTOCOL(p)	((((u_char *)(p))[2] << 8) + ((u_char *)(p))[3])
+#define PPP_ADDRESS(p)	(((const u_char *)(p))[0])
+#define PPP_CONTROL(p)	(((const u_char *)(p))[1])
+#define PPP_PROTOCOL(p)	\
+    ((((const u_char *)(p))[2] << 8) + ((const u_char *)(p))[3])
 
 /*
  * Significant octet values.

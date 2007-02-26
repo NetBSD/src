@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.6.2.1 2006/06/21 14:59:35 yamt Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.6.2.2 2007/02/26 09:09:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.6.2.1 2006/06/21 14:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.6.2.2 2007/02/26 09:09:26 yamt Exp $");
 
 #include "opt_compat_darwin.h"
 
@@ -75,9 +75,7 @@ static void mach_siginfo_to_exception(const struct ksiginfo *, int *);
  * mach_trapinfo1 and handle signals if it gets a non zero return value.
  */
 void
-mach_trapsignal(l, ksi)
-	struct lwp *l;
-	const struct ksiginfo *ksi;
+mach_trapsignal(struct lwp *l, struct ksiginfo *ksi)
 {
 	if (mach_trapsignal1(l, ksi) != 0)
 		trapsignal(l, ksi);
@@ -85,9 +83,7 @@ mach_trapsignal(l, ksi)
 }
 
 int
-mach_trapsignal1(l, ksi)
-	struct lwp *l;
-	const struct ksiginfo *ksi;
+mach_trapsignal1(struct lwp *l, struct ksiginfo *ksi)
 {
 	struct proc *p = l->l_proc;
 	struct mach_emuldata *med;
@@ -161,18 +157,17 @@ mach_exception(exc_l, exc, code)
 	 * the process at the time it dies.
 	 */
 	if (mach_exception_hang) {
-		int s;
 		struct proc *p = exc_l->l_proc;
 
-		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
-		SCHED_LOCK(s);
+		sigminusset(&contsigmask, &exc_l->l_sigpendset->sp_set);
+		lwp_lock(exc_l);
 		p->p_pptr->p_nstopchild++;
 		p->p_stat = SSTOP;
 		exc_l->l_stat = LSSTOP;
 		p->p_nrlwps--;
+		KERNEL_UNLOCK_ALL(exc_l, &exc_l->l_biglocks);
 		mi_switch(exc_l, NULL);
-		SCHED_ASSERT_UNLOCKED();
-		splx(s);
+		KERNEL_LOCK(exc_l->l_biglocks, exc_l);
 	}
 
 	/*
@@ -223,8 +218,8 @@ mach_exception(exc_l, exc, code)
 	 * a dying parent, a signal is sent instead of the
 	 * notification, this fixes the problem.
 	 */
-	if ((exc_l->l_proc->p_flag & P_TRACED) &&
-	    (exc_l->l_proc->p_pptr->p_flag & P_WEXIT)) {
+	if ((exc_l->l_proc->p_slflag & PSL_TRACED) &&
+	    (exc_l->l_proc->p_pptr->p_sflag & PS_WEXIT)) {
 #ifdef DEBUG_MACH
 		printf("mach_exception: deadlock avoided\n");
 #endif

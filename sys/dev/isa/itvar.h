@@ -1,4 +1,4 @@
-/*	$NetBSD: itvar.h,v 1.2.4.2 2006/06/21 15:04:21 yamt Exp $	*/
+/*	$NetBSD: itvar.h,v 1.2.4.3 2007/02/26 09:10:15 yamt Exp $	*/
 /*	$OpenBSD: itvar.h,v 1.2 2003/11/05 20:57:10 grange Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
 #ifndef _DEV_ISA_ITVAR_H
 #define _DEV_ISA_ITVAR_H
 
-#define IT_NUM_SENSORS	15
+#define IT_NUM_SENSORS	9
 
 /* Identification chip registers */
 #define IT_VENDORID	0x58
@@ -66,6 +66,12 @@
 #define IT_SENSORVOLTBASE	0x20	/* Fan from 0x20 to 0x28 */
 #define IT_SENSORTEMPBASE	0x29	/* Fan from 0x29 to 0x2b */
 
+#define IT_SENSORVCORE0		0x20
+#define IT_SENSORV33		0x22
+#define IT_SENSORV5		0x23
+#define IT_SENSORV12		0x24
+#define IT_SENSORVBAT		0x28
+
 #define IT_VOLTMAXBASE		0x30
 #define IT_VOLTMINBASE		0x31
 
@@ -80,17 +86,14 @@
 
 #define IT_VREF	(4096) /* Vref = 4.096 V */
 
-/*
- * sc->sensors sub-intervals for each unit type.
- */
 static const struct envsys_range it_ranges[] = {
-	{ 7, 7,    ENVSYS_STEMP   },
-	{ 8, 10,   ENVSYS_SFANRPM },
-	{ 1, 0,    ENVSYS_SVOLTS_AC },  /* None */
-	{ 0, 6,    ENVSYS_SVOLTS_DC },
-	{ 1, 0,    ENVSYS_SOHMS },      /* None */
-	{ 1, 0,    ENVSYS_SWATTS },     /* None */
-	{ 1, 0,    ENVSYS_SAMPS }       /* None */
+	{ 0, 2,		ENVSYS_STEMP   },
+	{ 8, 9,		ENVSYS_SFANRPM },
+	{ 1, 0,		ENVSYS_SVOLTS_AC },	/* None */
+	{ 3, 7,		ENVSYS_SVOLTS_DC },
+	{ 1, 0,		ENVSYS_SOHMS },		/* None */
+	{ 1, 0,		ENVSYS_SWATTS },	/* None */
+	{ 1, 0,		ENVSYS_SAMPS }		/* None */
 };
 
 struct it_softc {
@@ -99,14 +102,9 @@ struct it_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	struct timeval lastread;	/* only allow reads every 1.5 secs */
-
 	struct sysmon_envsys sc_sysmon;
 	envsys_tre_data_t sc_data[IT_NUM_SENSORS];
 	envsys_basic_info_t sc_info[IT_NUM_SENSORS];
-
-	uint8_t (*it_readreg)(struct it_softc *, int);
-	void (*it_writereg)(struct it_softc *, int, int);
 };
 
 #endif /* _DEV_ISA_ITVAR_H_ */
