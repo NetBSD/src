@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.34 2007/02/23 20:51:49 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.35 2007/02/26 00:25:40 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.34 2007/02/23 20:51:49 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.35 2007/02/26 00:25:40 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -853,6 +853,11 @@ puffs_fuse_node_readdir(struct puffs_cc *pcc, void *opc,
 	fuse = (struct fuse *)pu->pu_privdata;
 	if (fuse->op.readdir == NULL && fuse->op.getdir == NULL) {
 		return ENOSYS;
+	}
+
+	/* XXX: how to handle this??? */
+	if (*readoff != 0) {
+		return 0;
 	}
 
 	deh.dent = dent;
