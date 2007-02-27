@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.156 2006/12/15 14:18:38 he Exp $
+$NetBSD: UPDATING,v 1.157 2007/02/27 13:42:35 apb Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,17 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20070209:
+        The threading model was changed when the newlock2 branch
+        was merged to NetBSD-current.  If you boot with a new
+        kernel (version 4.99.10), then you also need a new pthread
+        library (/usr/lib/libpthread.so.0.7).  If you boot with
+        an old kernel, then you need the old pthread library
+        (/usr/lib/libpthread.so.0.6).  Provided you keep the kernel and
+        the pthread library in sync, old threaded applications should
+        continue to work with an old or new kernel.  Note that named(8)
+	is the only threaded application in the base system.
 
 20061214:
 	Following the move of string_to_flags() and flags_to_string()
