@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.47 2006/11/19 11:21:19 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.48 2007/02/27 18:17:28 he Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -31,6 +31,7 @@ INSTALLATION_DIRS+=	installation/floppy
 # i386 specific distrib stuff
 snap_md_post:
 	cd ${KERNSRCDIR}/arch/i386/stand/dosboot && ${MAKE} release
+	cd ${KERNSRCDIR}/arch/i386/stand/pxeboot && ${MAKE} release
 	cd ${KERNSRCDIR}/arch/i386/stand/misc && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/floppy '*.fs'
