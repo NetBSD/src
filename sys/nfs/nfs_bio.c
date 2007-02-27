@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.149 2007/02/22 06:14:28 thorpej Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.150 2007/02/27 10:03:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.149 2007/02/22 06:14:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.150 2007/02/27 10:03:56 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1313,8 +1313,7 @@ nfs_getpages(v)
 		if (!locked) {
 			mutex_enter(&np->n_commitlock);
 		} else {
-			error = mutex_tryenter(&np->n_commitlock);
-			if (error) {
+			if (!mutex_tryenter(&np->n_commitlock)) {
 
 				/*
 				 * Since PGO_LOCKED is set, we need to unbusy
@@ -1329,7 +1328,7 @@ nfs_getpages(v)
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));
-				return (error);
+				return EBUSY;
 			}
 		}
 		nfs_del_committed_range(vp, origoffset, len);
