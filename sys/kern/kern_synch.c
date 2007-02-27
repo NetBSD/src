@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.184 2007/02/26 09:20:53 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.185 2007/02/27 15:07:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.184 2007/02/26 09:20:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.185 2007/02/27 15:07:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kstack.h"
@@ -119,8 +119,8 @@ void	schedcpu(void *);
 void	updatepri(struct lwp *);
 
 void	sched_unsleep(struct lwp *);
-void	sched_changepri(struct lwp *, int);
-void	sched_lendpri(struct lwp *, int);
+void	sched_changepri(struct lwp *, pri_t);
+void	sched_lendpri(struct lwp *, pri_t);
 
 struct callout schedcpu_ch = CALLOUT_INITIALIZER_SETFUNC(schedcpu, NULL);
 static unsigned int schedcpu_ticks;
@@ -466,7 +466,7 @@ int	safepri;
  * return.
  */
 int
-ltsleep(wchan_t ident, int priority, const char *wmesg, int timo,
+ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	volatile struct simplelock *interlock)
 {
 	struct lwp *l = curlwp;
@@ -751,7 +751,7 @@ static inline void
 resched_lwp(struct lwp *l)
 {
 	struct cpu_info *ci;
-	const int pri = lwp_eprio(l);
+	const pri_t pri = lwp_eprio(l);
 
 	/*
 	 * XXXSMP
@@ -879,7 +879,7 @@ setrunnable(struct lwp *l)
 void
 resetpriority(struct lwp *l)
 {
-	unsigned int newpriority;
+	pri_t newpriority;
 	struct proc *p = l->l_proc;
 
 	/* XXXSMP LOCK_ASSERT(mutex_owned(&p->p_stmutex)); */
@@ -1056,7 +1056,7 @@ scheduler_wait_hook(struct proc *parent, struct proc *child)
  *	Scale a priority level to a kernel priority level, usually
  *	for an LWP that is about to sleep.
  */
-int
+pri_t
 sched_kpri(struct lwp *l)
 {
 	/*
@@ -1084,7 +1084,7 @@ sched_kpri(struct lwp *l)
 		46,  46,  47,  47,  48,  48,  49,  49,
 	};
 
-	return kpri_tab[l->l_usrpri];
+	return (pri_t)kpri_tab[l->l_usrpri];
 }
 
 /*
@@ -1108,7 +1108,7 @@ sched_unsleep(struct lwp *l)
  *	Adjust the priority of an LWP.
  */
 void
-sched_changepri(struct lwp *l, int pri)
+sched_changepri(struct lwp *l, pri_t pri)
 {
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
@@ -1129,7 +1129,7 @@ sched_changepri(struct lwp *l, int pri)
 }
 
 void
-sched_lendpri(struct lwp *l, int pri)
+sched_lendpri(struct lwp *l, pri_t pri)
 {
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
