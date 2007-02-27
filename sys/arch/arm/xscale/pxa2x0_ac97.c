@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.4 2007/02/22 05:14:05 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.4.2.1 2007/02/27 14:15:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -82,6 +82,7 @@ struct acu_softc {
 	int sc_in_reset;
 	u_int sc_dac_rate;
 	u_int sc_adc_rate;
+	kmutex_t sc_lock;
 
 	/* List of DMA ring-buffers allocated by acu_malloc() */
 	struct acu_dma *sc_dmas;
@@ -147,6 +148,7 @@ static void acu_free(void *, void *, struct malloc_type *);
 static size_t acu_round_buffersize(void *, int, size_t);
 static paddr_t acu_mappage(void *, void *, off_t, int);
 static int acu_get_props(void *);
+static kmutex_t acu_get_lock(void *);
 
 struct audio_hw_if acu_hw_if = {
 	acu_open,
@@ -176,6 +178,7 @@ struct audio_hw_if acu_hw_if = {
 	acu_trigger_output,
 	acu_trigger_input,
 	NULL,
+	acu_get_lock,
 };
 
 struct audio_device acu_device = {
@@ -260,6 +263,7 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 	sc->sc_irqcookie = pxa2x0_intr_establish(pxa->pxa_intr, IPL_AUDIO,
 	    acu_intr, sc);
 	KASSERT(sc->sc_irqcookie != NULL);
@@ -353,7 +357,7 @@ acu_codec_read(void *arg, u_int8_t codec_reg, u_int16_t *valp)
 {
 	struct acu_softc *sc = arg;
 	u_int32_t val;
-	int s, reg, rv = 1;
+	int reg, rv = 1;
 
 	/*
 	 * If we're currently closed, return non-zero. The ac97 frontend
@@ -363,8 +367,6 @@ acu_codec_read(void *arg, u_int8_t codec_reg, u_int16_t *valp)
 		return (1);
 
 	reg = AC97_CODEC_BASE(0) + codec_reg * 2;
-
-	s = splaudio();
 
 	if (!acu_codec_ready(sc) || (acu_reg_read(sc, AC97_CAR) & CAR_CAIP))
 		goto out_nocar;
@@ -397,7 +399,6 @@ acu_codec_read(void *arg, u_int8_t codec_reg, u_int16_t *valp)
 out:
 	acu_reg_write(sc, AC97_CAR, 0);
 out_nocar:
-	splx(s);
 	delay(10);
 	return (rv);
 }
@@ -407,7 +408,6 @@ acu_codec_write(void *arg, u_int8_t codec_reg, u_int16_t val)
 {
 	struct acu_softc *sc = arg;
 	u_int16_t rv;
-	int s;
 
 	/*
 	 * If we're currently closed, chances are the user is just
@@ -418,12 +418,8 @@ acu_codec_write(void *arg, u_int8_t codec_reg, u_int16_t val)
 	if (sc->sc_in_reset)
 		return (0);
 
-	s = splaudio();
-
-	if (!acu_codec_ready(sc) || (acu_reg_read(sc, AC97_CAR) & CAR_CAIP)) {
-		splx(s);
+	if (!acu_codec_ready(sc) || (acu_reg_read(sc, AC97_CAR) & CAR_CAIP))
 		return (1);
-	}
 
 	rv = acu_reg_read(sc, AC97_GSR);
 	rv |= GSR_RDCS | GSR_CDONE;
@@ -437,7 +433,6 @@ acu_codec_write(void *arg, u_int8_t codec_reg, u_int16_t val)
 	(void) acu_wait_gsr(sc, GSR_CDONE);
 	acu_reg_write(sc, AC97_CAR, 0);
 
-	splx(s);
 	delay(10);
 	return (0);
 }
@@ -760,16 +755,13 @@ static int
 acu_halt_output(void *arg)
 {
 	struct acu_softc *sc = arg;
-	int s;
 
-	s = splaudio();
 	if (sc->sc_txdma) {
 		acu_reg_write(sc, AC97_POCR, 0);
 		acu_reg_write(sc, AC97_POSR, AC97_FIFOE);
 		pxa2x0_dmac_abort_xfer(sc->sc_txdma->ad_dx);
 		sc->sc_txdma = NULL;
 	}
-	splx(s);
 	return (0);
 }
 
@@ -777,16 +769,13 @@ static int
 acu_halt_input(void *arg)
 {
 	struct acu_softc *sc = arg;
-	int s;
 
-	s = splaudio();
 	if (sc->sc_rxdma) {
 		acu_reg_write(sc, AC97_PICR, 0);
 		acu_reg_write(sc, AC97_PISR, AC97_FIFOE);
 		pxa2x0_dmac_abort_xfer(sc->sc_rxdma->ad_dx);
 		sc->sc_rxdma = NULL;
 	}
-	splx(s);
 	return (0);
 }
 
@@ -910,6 +899,8 @@ acu_tx_loop_segment(struct dmac_xfer *dx, int status)
 	struct acu_dma *ad;
 	int s;
 
+	mutex_enter(&sc->sc_lock);
+
 	if ((ad = sc->sc_txdma) == NULL)
 		panic("acu_tx_loop_segment: bad TX dma descriptor!");
 
@@ -922,9 +913,8 @@ acu_tx_loop_segment(struct dmac_xfer *dx, int status)
 		    sc->sc_dev.dv_xname, status);
 	}
 
-	s = splaudio();
 	(sc->sc_txfunc)(sc->sc_txarg);
-	splx(s);
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
@@ -932,7 +922,8 @@ acu_rx_loop_segment(struct dmac_xfer *dx, int status)
 {
 	struct acu_softc *sc = dx->dx_cookie;
 	struct acu_dma *ad;
-	int s;
+
+	mutex_enter(&sc->sc_lock);
 
 	if ((ad = sc->sc_rxdma) == NULL)
 		panic("acu_rx_loop_segment: bad RX dma descriptor!");
@@ -946,7 +937,14 @@ acu_rx_loop_segment(struct dmac_xfer *dx, int status)
 		    sc->sc_dev.dv_xname, status);
 	}
 
-	s = splaudio();
 	(sc->sc_rxfunc)(sc->sc_rxarg);
-	splx(s);
+	mutex_exit(&sc->sc_lock);
+}
+
+static kmutex_t *
+acu_get_lock(void *arg)
+{
+	struct acu_softc *sc = arg;
+
+	return &sc->sc_lock;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.34 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.34.6.1 2007/02/27 14:16:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.34 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isa.c,v 1.34.6.1 2007/02/27 14:16:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,9 @@ sb_isa_attach(parent, self, aux)
 		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, sbdsp_intr, sc);

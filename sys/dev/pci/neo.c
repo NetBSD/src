@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.35 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: neo.c,v 1.35.6.1 2007/02/27 14:16:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.6.1 2007/02/27 14:16:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35 2006/11/16 01:33:09 christos Exp $");
 /* device private data */
 struct neo_softc {
 	struct device	dev;
+	kmutex_t	lock;
+	kmutex_t	intr_lock;
 
 	bus_space_tag_t bufiot;
 	bus_space_handle_t bufioh;
@@ -208,6 +210,7 @@ static size_t	neo_round_buffersize(void *, int, size_t);
 static paddr_t	neo_mappage(void *, void *, off_t, int);
 static int	neo_get_props(void *);
 static void	neo_power(int, void *);
+static void	neo_get_locks(void *, kmutex_t **, kmutex_t **);
 
 CFATTACH_DECL(neo, sizeof(struct neo_softc),
     neo_match, neo_attach, NULL, NULL);
@@ -274,6 +277,7 @@ static const struct audio_hw_if neo_hw_if = {
 	neo_trigger_input,
 	NULL,
 	NULL,
+	neo_get_locks,
 };
 
 /* -------------------------------------------------------------------- */
@@ -368,6 +372,8 @@ neo_intr(void *p)
 	int rv;
 
 	sc = (struct neo_softc *)p;
+	mutex_enter(&sc->intr_lock);
+
 	rv = 0;
 	status = (sc->irsz == 2) ?
 	    nm_rd_2(sc, NM_INT_REG) :
@@ -423,6 +429,7 @@ neo_intr(void *p)
 		rv = 1;
 	}
 
+	mutex_exit(&sc->intr_lock);
 	return rv;
 }
 
@@ -558,10 +565,14 @@ neo_power(int why, void *addr)
 	struct neo_softc *sc;
 
 	sc = (struct neo_softc *)addr;
+	mutex_enter(&sc->lock);
+
 	if (why == PWR_RESUME) {
 		nm_init(sc);
 		sc->codec_if->vtbl->restore_ports(sc->codec_if);
 	}
+
+	mutex_exit(&sc->lock);
 }
 
 static void
@@ -602,6 +613,9 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	intrstr = pci_intr_string(pc, ih);
 	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, neo_intr, sc);
 
@@ -631,7 +645,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset  = neo_reset_codec;
 	sc->host_if.flags  = neo_flags_codec;
 
-	if (ac97_attach(&sc->host_if, self) != 0)
+	if (ac97_attach(&sc->host_if, self, &sc->lock) != 0)
 		return;
 
 	sc->powerhook = powerhook_establish(sc->dev.dv_xname, neo_power, sc);
@@ -1004,6 +1018,7 @@ neo_mappage(void *addr, void *mem, off_t off, int prot)
 	struct neo_softc *sc;
 	vaddr_t v;
 	bus_addr_t pciaddr;
+	paddr_t pa;
 
 	sc = addr;
 	v = (vaddr_t)mem;
@@ -1014,8 +1029,12 @@ neo_mappage(void *addr, void *mem, off_t off, int prot)
 	else
 		return -1;
 
-	return bus_space_mmap(sc->bufiot, pciaddr, off, prot,
+	mutex_exit(&sc->lock);
+	pa = bus_space_mmap(sc->bufiot, pciaddr, off, prot,
 	    BUS_SPACE_MAP_LINEAR);
+	mutex_enter(&sc->lock);
+
+	return pa;
 }
 
 static int
@@ -1024,4 +1043,14 @@ neo_get_props(void *addr)
 
 	return AUDIO_PROP_INDEPENDENT | AUDIO_PROP_MMAP |
 	    AUDIO_PROP_FULLDUPLEX;
+}
+
+static void
+neo_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct neo_softc *sc;
+
+	sc = addr;
+	*intr = &sc->intr_lock;
+	*proc = &sc->lock;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.22 2006/10/15 19:43:45 martin Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.22.6.1 2007/02/27 14:16:01 ad Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22 2006/10/15 19:43:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.22.6.1 2007/02/27 14:16:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ const struct audio_hw_if audiocs_ebus_hw_if = {
 	cs4231_ebus_trigger_input,
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	cs4231_get_lock,
 };
 
 #ifdef AUDIO_DEBUG
@@ -199,6 +200,8 @@ cs4231_ebus_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to map capture DMA registers\n");
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	/* establish interrupt channels */
 	for (i = 0; i < ea->ea_nintr; ++i)
@@ -493,6 +496,9 @@ cs4231_ebus_intr(void *arg)
 
 	ebsc = arg;
 	sc = &ebsc->sc_cs4231;
+
+	mutex_enter(&sc->sc_lock);
+
 	status = ADREAD(&sc->sc_ad1848, AD1848_STATUS);
 
 #ifdef AUDIO_DEBUG
@@ -530,6 +536,8 @@ cs4231_ebus_intr(void *arg)
 		++sc->sc_intrcnt.ev_count;
 		ret = 1;
 	}
+
+	mutex_exit(&sc->sc_lock);
 
 	return ret;
 }

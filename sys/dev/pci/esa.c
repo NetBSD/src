@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.40 2006/11/16 01:33:08 christos Exp $ */
+/* $NetBSD: esa.c,v 1.40.6.1 2007/02/27 14:16:27 ad Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.40 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.40.6.1 2007/02/27 14:16:27 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -128,6 +128,7 @@ static int		esa_trigger_output(void *, void *, void *, int,
 static int		esa_trigger_input(void *, void *, void *, int,
 					  void (*)(void *), void *,
 					  const audio_params_t *);
+static void		esa_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static int		esa_intr(void *);
 static int		esa_allocmem(struct esa_softc *, size_t, size_t,
@@ -225,6 +226,7 @@ static const struct audio_hw_if esa_hw_if = {
 	esa_trigger_input,
 	NULL,	/* dev_ioctl */
 	NULL,	/* powerstate */
+	esa_get_locks,
 };
 
 CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
@@ -837,12 +839,16 @@ esa_intr(void *hdl)
 	int i;
 
 	sc = hdl;
+	mutex_enter(&sc->sc_intr_lock);
+
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
 	status = bus_space_read_1(iot, ioh, ESA_HOST_INT_STATUS);
-	if (status == 0xff)
+	if (status == 0xff) {
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	/* ack the interrupt */
 	bus_space_write_1(iot, ioh, ESA_HOST_INT_STATUS, status);
@@ -871,8 +877,10 @@ esa_intr(void *hdl)
 	    (bus_space_read_1(iot, ioh,
 	     ESA_ASSP_CONTROL_B) & ESA_STOP_ASSP_CLOCK) != 0 ||
 	    (bus_space_read_1(iot, ioh,
-	     ESA_ASSP_HOST_INT_STATUS) & ESA_DSP2HOST_REQ_TIMER) == 0)
+	     ESA_ASSP_HOST_INT_STATUS) & ESA_DSP2HOST_REQ_TIMER) == 0) {
+		mutex_exit(&sc->sc_intr_lock);
 		return 1;
+	}
 
 	bus_space_write_1(iot, ioh, ESA_ASSP_HOST_INT_STATUS,
 	    ESA_DSP2HOST_REQ_TIMER);
@@ -911,6 +919,7 @@ esa_intr(void *hdl)
 		}
 	}
 
+	mutex_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -1041,6 +1050,9 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pct = pc;
 	sc->sc_dmat = pa->pa_dmat;
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
@@ -1109,7 +1121,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset = esa_reset_codec;
 	sc->host_if.flags = esa_flags_codec;
 
-	if (ac97_attach(&sc->host_if, self) != 0)
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0)
 		return;
 
 	/* initialize list management structures */
@@ -1643,6 +1655,8 @@ esa_powerhook(int why, void *hdl)
 	struct esa_softc *sc;
 
 	sc = (struct esa_softc *)hdl;
+	mutex_enter(&sc->sc_lock);
+
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -1653,6 +1667,8 @@ esa_powerhook(int why, void *hdl)
 		sc->codec_if->vtbl->restore_ports(sc->codec_if);
 		break;
 	}
+
+	mutex_exit(&sc->sc_lock);
 }
 
 static int
@@ -1758,4 +1774,14 @@ esa_mappage(void *addr, void *mem, off_t off, int prot)
 		return -1;
 	return bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs,
 			       off, prot, BUS_DMA_WAITOK);
+}
+
+static void
+esa_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct esa_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }

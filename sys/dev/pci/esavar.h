@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.7 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: esavar.h,v 1.7.28.1 2007/02/27 14:16:28 ad Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -98,6 +98,9 @@ struct esa_voice {
 struct esa_softc
 {
 	struct device		sc_dev;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
+
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_addr_t		sc_iob;

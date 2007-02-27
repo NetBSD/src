@@ -1,7 +1,7 @@
-/*	$NetBSD: auacer.c,v 1.15 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: auacer.c,v 1.15.6.1 2007/02/27 14:16:13 ad Exp $	*/
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.15 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.15.6.1 2007/02/27 14:16:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ struct auacer_chan {
 struct auacer_softc {
 	struct device sc_dev;
 	void *sc_ih;
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
 	audio_device_t sc_audev;
 
@@ -196,6 +198,7 @@ static int	auacer_freemem(struct auacer_softc *, struct auacer_dma *);
 
 static void	auacer_powerhook(int, void *);
 static int	auacer_set_rate(struct auacer_softc *, int, u_int);
+static void	auacer_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static void auacer_reset(struct auacer_softc *sc);
 
@@ -228,6 +231,7 @@ static struct audio_hw_if auacer_hw_if = {
 	auacer_trigger_input,
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	auacer_get_locks,
 };
 
 #define AUACER_FORMATS_4CH	1
@@ -291,6 +295,9 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    v | PCI_COMMAND_MASTER_ENABLE);
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
@@ -329,7 +336,7 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.write = auacer_write_codec;
 	sc->host_if.reset = auacer_reset_codec;
 
-	if (ac97_attach(&sc->host_if, self) != 0)
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0)
 		return;
 
 	/* setup audio_format */
@@ -746,6 +753,7 @@ auacer_mappage(void *v, void *mem, off_t off, int prot)
 {
 	struct auacer_softc *sc;
 	struct auacer_dma *p;
+	paddr_t pa;
 
 	if (off < 0)
 		return -1;
@@ -754,8 +762,13 @@ auacer_mappage(void *v, void *mem, off_t off, int prot)
 		continue;
 	if (p == NULL)
 		return -1;
-	return bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
+
+	mutex_exit(&sc->sc_lock);
+	pa = bus_dmamem_mmap(sc->dmat, p->segs, p->nsegs,
 	    off, prot, BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+
+	return pa;
 }
 
 static int
@@ -844,6 +857,9 @@ auacer_intr(void *v)
 	int ret, intrs;
 
 	sc = v;
+
+	mutex_enter(&sc->sc_intr_lock);
+
 	intrs = READ4(sc, ALI_INTERRUPTSR);
 	DPRINTF(ALI_DEBUG_INTR, ("auacer_intr: intrs=0x%x\n", intrs));
 
@@ -852,6 +868,8 @@ auacer_intr(void *v)
 		auacer_upd_chan(sc, &sc->sc_pcmo);
 		ret++;
 	}
+
+	mutex_exit(&sc->sc_intr_lock);
 
 	return ret != 0;
 }
@@ -1036,6 +1054,9 @@ auacer_powerhook(int why, void *addr)
 	struct auacer_softc *sc;
 
 	sc = (struct auacer_softc *)addr;
+
+	mutex_enter(&sc->sc_lock);
+
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -1051,7 +1072,7 @@ auacer_powerhook(int why, void *addr)
 			printf("%s: resume without suspend.\n",
 			    sc->sc_dev.dv_xname);
 			sc->sc_suspend = why;
-			return;
+			break;
 		}
 		sc->sc_suspend = why;
 		auacer_reset_codec(sc);
@@ -1064,4 +1085,16 @@ auacer_powerhook(int why, void *addr)
 	case PWR_SOFTRESUME:
 		break;
 	}
+
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+auacer_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct auacer_softc *sc;
+
+	sc = (struct auacer_softc *)addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }
