@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.14 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: mpu.c,v 1.14.6.1 2007/02/27 14:16:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.14 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu.c,v 1.14.6.1 2007/02/27 14:16:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ const struct midi_hw_if mpu_midi_hw_if = {
 	mpu_output,
 	mpu_getinfo,
 	0,			/* ioctl */
+	NULL,			/* XXXAD */
 };
 
 int

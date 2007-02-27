@@ -1,4 +1,4 @@
-/*	$NetBSD: esl.c,v 1.21 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: esl.c,v 1.21.6.1 2007/02/27 14:16:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.21 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl.c,v 1.21.6.1 2007/02/27 14:16:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ int	esl_query_devinfo(void *, mixer_devinfo_t *);
 int	esl_get_props(void *);
 int	esl_trigger_output(void *, void *, void *, int, void (*)(void *),
 			   void *, const audio_params_t *);
+kmutex_t *esl_get_lock(void *);
 
 /* Supporting subroutines */
 int	esl_reset(struct esl_pcmcia_softc *);
@@ -137,6 +138,7 @@ const struct audio_hw_if esl_hw_if = {
 	NULL,
 	NULL,
 	NULL,
+	esl_get_lock,
 };
 
 static const char *eslmodel[] = {
@@ -553,6 +555,16 @@ esl_trigger_output(void *hdl, void *start, void *end, int blksize,
 	return 0;
 }
 
+kmutex_t *
+esl_get_lock(void *addr)
+{
+	struct esl_pcmcia_softc *sc;
+
+	sc = addr;
+
+	return &sc->sc_lock;
+}
+
 /* Additional subroutines used by the above (NOT required by audio(9)) */
 
 int
@@ -643,6 +655,9 @@ esl_intr(void *hdl)
 	sc = hdl;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
+
+	mutex_enter(&sc->sc_lock);
+
 	/* Clear interrupt */
 	reg = bus_space_read_1(iot, ioh, ESS_CLEAR_INTR);
 
@@ -666,6 +681,8 @@ esl_intr(void *hdl)
 			reg = bus_space_read_1(iot, ioh, ESS_DSP_RW_STATUS);
 		}
 	}
+
+	mutex_exit(&sc->sc_lock);
 
 	return 1;
 }
@@ -901,18 +918,11 @@ esl_read_mix_reg(struct esl_pcmcia_softc *sc, u_char reg)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	u_char val;
-#if 0
-	int s;
 
-	s = splaudio();
-#endif
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 	val = bus_space_read_1(iot, ioh, ESS_MIX_REG_DATA);
-#if 0
-	splx(s);
-#endif
 
 	return val;
 }
@@ -922,18 +932,11 @@ esl_write_mix_reg(struct esl_pcmcia_softc *sc, u_char reg, u_char val)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-#if 0
-	int s;
 
-	s = splaudio();
-#endif
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_DATA, val);
-#if 0
-	splx(s);
-#endif
 
 	return;
 }
@@ -962,18 +965,11 @@ esl_read_multi_mix_reg(struct esl_pcmcia_softc *sc, u_char reg,
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-#if 0
-	int s;
 
-	s = splaudio();
-#endif
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	bus_space_write_1(iot, ioh, ESS_MIX_REG_SELECT, reg);
 	bus_space_read_multi_1(iot, ioh, ESS_MIX_REG_DATA, datap, count);
-#if 0
-	splx(s);
-#endif
 
 	return;
 }

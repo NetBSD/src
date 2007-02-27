@@ -1,4 +1,4 @@
-/*	$NetBSD: eslvar.h,v 1.8 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: eslvar.h,v 1.8.28.1 2007/02/27 14:16:39 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.ca>
@@ -55,6 +55,7 @@
 struct esl_softc
 {
 	struct	device sc_dev;		/* base device */
+	kmutex_t sc_lock;
 	u_char	gain[ESS_MAX_NDEVS][2];	/* kept in input levels */
 #define ESS_LEFT 0
 #define ESS_RIGHT 1

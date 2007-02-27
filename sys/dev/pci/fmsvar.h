@@ -1,4 +1,4 @@
-/*	$NetBSD: fmsvar.h,v 1.3 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: fmsvar.h,v 1.3.28.1 2007/02/27 14:16:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 struct fms_softc {
 	struct device sc_dev;
 	void *sc_ih;
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;

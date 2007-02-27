@@ -1,5 +1,0 @@
-# $NetBSD: Big5.alias,v 1.1 2006/06/19 17:28:25 tnozaki Exp $
-
-E		big5e big-5e
-ETen		big5 big5eten
-Plus		big5+ big-5+

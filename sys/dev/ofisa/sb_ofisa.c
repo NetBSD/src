@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.14 2006/03/29 07:09:33 thorpej Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.14.16.1 2007/02/27 14:16:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.14 2006/03/29 07:09:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_ofisa.c,v 1.14.16.1 2007/02/27 14:16:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ sb_ofisa_attach(parent, self, aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 	sc->sc_ih = isa_intr_establish(aa->ic, intr.irq, IST_EDGE, IPL_AUDIO,
 	    sbdsp_intr, sc);
 

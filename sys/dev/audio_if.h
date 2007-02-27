@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.62 2007/02/21 22:59:58 thorpej Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.62.2.1 2007/02/27 14:15:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -36,8 +36,10 @@
 
 #ifndef _SYS_DEV_AUDIO_IF_H_
 #define _SYS_DEV_AUDIO_IF_H_
+
 #include <sys/types.h>
 #include <sys/audioio.h>
+#include <sys/mutex.h>
 
 /* check we have an audio(4) configured into kernel */
 #if defined(_KERNEL_OPT)
@@ -237,6 +239,7 @@ struct audio_hw_if {
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, caddr_t, int, struct lwp *);
 	int	(*powerstate)(void *, int);
+	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
 #define	AUDIOPOWER_ON	1
 #define	AUDIOPOWER_OFF	0
 };

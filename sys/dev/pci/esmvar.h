@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.13 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.13.28.1 2007/02/27 14:16:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -151,6 +151,8 @@ struct esm_chinfo {
 
 struct esm_softc {
 	struct device		sc_dev;
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 
 	bus_space_tag_t		st;
 	bus_space_handle_t	sh;
@@ -227,6 +229,7 @@ void	esm_free(void *, void *, struct malloc_type *);
 size_t	esm_round_buffersize(void *, int, size_t);
 paddr_t	esm_mappage(void *, void *, off_t, int);
 int	esm_get_props(void *);
+void	esm_get_locks(void *, kmutex_t **, kmutex_t **);
 
 int	esm_match(struct device *, struct cfdata *, void *);
 void	esm_attach(struct device *, struct device *, void *);

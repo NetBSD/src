@@ -1,7 +1,7 @@
-/*	$NetBSD: auvia.c,v 1.59 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.59.2.1 2007/02/27 14:16:14 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,13 +47,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.59 2007/02/21 23:00:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.59.2.1 2007/02/27 14:16:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -128,6 +129,7 @@ static int	auvia_reset_codec(void *);
 static int	auvia_waitready_codec(struct auvia_softc *);
 static int	auvia_waitvalid_codec(struct auvia_softc *);
 static void	auvia_spdif_event(void *, bool);
+static void	auvia_get_locks(void *, kmutex_t **, kmutex_t **);
 
 CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
     auvia_match, auvia_attach, NULL, NULL);
@@ -237,6 +239,7 @@ static const struct audio_hw_if auvia_hw_if = {
 	auvia_trigger_input,
 	NULL, /* dev_ioctl */
 	NULL, /* powerstate */
+	auvia_get_locks,
 };
 
 #define AUVIA_FORMATS_4CH_16	2
@@ -373,13 +376,15 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		    "(rev %s)\n", sc->sc_revision);
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error(": couldn't map interrupt\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auvia_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt",
@@ -413,7 +418,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset = auvia_reset_codec;
 	sc->host_if.spdif_event = auvia_spdif_event;
 
-	if ((r = ac97_attach(&sc->host_if, self)) != 0) {
+	if ((r = ac97_attach(&sc->host_if, self, &sc->sc_lock)) != 0) {
 		aprint_error("%s: can't attach codec (error 0x%X)\n",
 			sc->sc_dev.dv_xname, r);
 		pci_intr_disestablish(pc, sc->sc_ih);
@@ -899,6 +904,7 @@ auvia_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct auvia_softc *sc;
 	struct auvia_dma *p;
+	paddr_t pa;
 
 	if (off < 0)
 		return -1;
@@ -909,8 +915,12 @@ auvia_mappage(void *addr, void *mem, off_t off, int prot)
 	if (!p)
 		return -1;
 
-	return bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot,
+	mutex_exit(&sc->sc_lock);
+	pa = bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot,
 	    BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+
+	return pa;
 }
 
 static int
@@ -946,13 +956,13 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	segs = (l + blksize - 1) / blksize;
 
 	if (segs > (ch->sc_dma_op_count)) {
-		/* if old list was too small, free it */
+		mutex_exit(&sc->sc_intr_lock);
 		if (ch->sc_dma_ops) {
 			auvia_free(sc, ch->sc_dma_ops, M_DEVBUF);
 		}
-
 		ch->sc_dma_ops = auvia_malloc(sc, 0,
 			sizeof(struct auvia_dma_op) * segs, M_DEVBUF, M_WAITOK);
+		mutex_enter(&sc->sc_intr_lock);
 
 		if (ch->sc_dma_ops == NULL) {
 			printf("%s: couldn't build dmaops\n", sc->sc_dev.dv_xname);
@@ -1088,6 +1098,8 @@ auvia_intr(void *arg)
 	sc = arg;
 	rval = 0;
 
+	mutex_enter(&sc->sc_intr_lock);
+
 	ch = &sc->sc_record;
 	r = CH_READ1(sc, ch, AUVIA_RP_STAT);
 	if (r & AUVIA_RPSTAT_INTR) {
@@ -1110,6 +1122,8 @@ auvia_intr(void *arg)
 		rval = 1;
 	}
 
+	mutex_exit(&sc->sc_intr_lock);
+
 	return rval;
 }
 
@@ -1119,6 +1133,9 @@ auvia_powerhook(int why, void *addr)
 	struct auvia_softc *sc;
 
 	sc = addr;
+
+	mutex_enter(&sc->sc_lock);
+
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
@@ -1145,4 +1162,16 @@ auvia_powerhook(int why, void *addr)
 	case PWR_SOFTRESUME:
 		break;
 	}
+
+	mutex_exit(&sc->sc_lock);
+}
+
+static void
+auvia_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct auvia_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: midivar.h,v 1.13 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: midivar.h,v 1.13.4.1 2007/02/27 14:16:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include <sys/callout.h>
 #include <sys/cdefs.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/condvar.h>
 
 /*
  * In both xmt and rcv direction, the midi_fst runs at the time data are
@@ -198,32 +198,10 @@ struct midi_softc {
 	struct	midi_buffer outbuf;
 	struct	midi_buffer inbuf;
 	int	props;
-	int	rchan, wchan;
-	struct  simplelock out_lock; /* overkill or no? */
-	struct  simplelock in_lock;
-
-#define MIDI_OUT_LOCK(sc,s) \
-	do { \
-		(s) = splaudio(); \
-		simple_lock(&(sc)->out_lock); \
-	} while (/*CONSTCOND*/0)
-#define MIDI_OUT_UNLOCK(sc,s) \
-	do { \
-		simple_unlock(&(sc)->out_lock); \
-		splx((s)); \
-	} while (/*CONSTCOND*/0)
-#define MIDI_IN_LOCK(sc,s) \
-	do { \
-		(s) = splaudio(); \
-		simple_lock(&(sc)->in_lock); \
-	} while (/*CONSTCOND*/0)
-#define MIDI_IN_UNLOCK(sc,s) \
-	do { \
-		simple_unlock(&(sc)->in_lock); \
-		splx((s)); \
-	} while (/*CONSTCOND*/0)
-
-	int	pbus;
+	kcondvar_t rchan;
+	kcondvar_t wchan;
+	kmutex_t *intr_lock;
+	kmutex_t lock;
 	int	rcv_expect_asense;
 	int	rcv_quiescent;
 	int	rcv_eof;

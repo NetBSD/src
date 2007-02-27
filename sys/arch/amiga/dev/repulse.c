@@ -1,7 +1,7 @@
-/*	$NetBSD: repulse.c,v 1.15 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: repulse.c,v 1.15.28.1 2007/02/27 14:15:51 ad Exp $ */
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.15 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.15.28.1 2007/02/27 14:15:51 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,6 +93,7 @@ int rep_set_port(void *, mixer_ctrl_t *);
 int rep_get_port(void *, mixer_ctrl_t *);
 int rep_query_devinfo(void *, mixer_devinfo_t *);
 size_t rep_round_buffersize(void *, int, size_t);
+kmutex_t *rep_get_lock(void *);
 
 int rep_start_input(void *, void *, int, void (*)(void *), void *);
 int rep_start_output(void *, void *, int, void (*)(void *), void *);
@@ -130,6 +131,7 @@ const struct audio_hw_if rep_hw_if = {
 	/* trigger_output */ 0,
 	/* trigger_input */ 0,
 	/* dev_ioctl */ 0,
+	rep_get_lock,
 };
 
 /* hardware registers */
@@ -208,6 +210,7 @@ struct repulse_softc {
 	struct isr		sc_isr;
 	struct ac97_host_if	sc_achost;
 	struct ac97_codec_if	*sc_codec_if;
+	kmutex_t		sc_lock;
 
 	struct repulse_hw	*sc_boardp;
 
@@ -340,6 +343,8 @@ repulse_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_dev.dv_xname);
 	}
 #endif
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, 2);
 
 	sc->sc_isr.isr_ipl = 2;
 	sc->sc_isr.isr_arg = sc;
@@ -943,6 +948,15 @@ rep_start_input(void *addr, void *block, int blksize,
 	return 0;
 }
 
+kmutex_t *
+rep_get_lock(void *addr)
+{
+	struct repulse_softc *sc;
+
+	sc = addr;
+	return &sc->sc_lock;
+}
+
 /* irq handler */
 
 int
@@ -956,6 +970,9 @@ rep_intr(void *tag)
 	foundone = 0;
 
 	sc = tag;
+
+	mutex_enter(&sc->sc_lock);
+
 	bp = sc->sc_boardp;
 	status = bp->rhw_status;
 
@@ -974,6 +991,8 @@ rep_intr(void *tag)
 			sc->sc_captflags);
 		(*sc->sc_captmore)(sc->sc_captarg);
 	}
+
+	mutex_exit(&sc->sc_lock);
 
 	return foundone;
 }

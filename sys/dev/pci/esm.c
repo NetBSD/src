@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.41 2006/11/16 01:33:08 christos Exp $      */
+/*      $NetBSD: esm.c,v 1.41.6.1 2007/02/27 14:16:29 ad Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.41 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.41.6.1 2007/02/27 14:16:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,7 @@ const struct audio_hw_if esm_hw_if = {
 	esm_trigger_input,
 	NULL,
 	NULL,
+	esm_get_locks,
 };
 
 struct audio_device esm_device = {
@@ -1681,7 +1682,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	ess->host_if.reset = esm_reset_codec;
 	ess->host_if.flags = esm_flags_codec;
 
-	if (ac97_attach(&ess->host_if, self) != 0)
+	if (ac97_attach(&ess->host_if, self, &ess->sc_lock) != 0)
 		return;
 
 	/* allocate our DMA region */
@@ -1712,6 +1713,8 @@ esm_powerhook(int why, void *v)
 	struct esm_softc *ess;
 
 	ess = (struct esm_softc *)v;
+	mutex_enter(&ess->sc_lock);
+
 	DPRINTF(ESM_DEBUG_PARAM,
 	    ("%s: ESS maestro 2E why=%d\n", ess->sc_dev.dv_xname, why));
 	switch (why) {
@@ -1728,20 +1731,21 @@ esm_powerhook(int why, void *v)
 		DPRINTF(ESM_DEBUG_RESUME, ("esm_resumed\n"));
 		break;
 	}
+
+	mutex_exit(&ess->sc_lock);
 }
 
 int
 esm_suspend(struct esm_softc *ess)
 {
-	int x;
 
-	x = splaudio();
+	mutex_enter(&ess->sc_intr_lock);
 	wp_stoptimer(ess);
 	bus_space_write_2(ess->st, ess->sh, PORT_HOSTINT_CTRL, 0);
 
 	esm_halt_output(ess);
 	esm_halt_input(ess);
-	splx(x);
+	mutex_exit(&ess->sc_intr_lock);
 
 	/* Power down everything except clock. */
 	esm_write_codec(ess, AC97_REG_POWER, 0xdf00);
@@ -1755,7 +1759,6 @@ esm_suspend(struct esm_softc *ess)
 int
 esm_resume(struct esm_softc *ess)
 {
-	int x;
 	uint16_t pcmbar;
 
 	delay(100000);
@@ -1775,7 +1778,7 @@ esm_resume(struct esm_softc *ess)
 	}
 #endif
 
-	x = splaudio();
+	mutex_enter(&ess->sc_intr_lock);
 #if TODO
 	if (ess->pactive)
 		esm_start_output(ess);
@@ -1786,7 +1789,7 @@ esm_resume(struct esm_softc *ess)
 		set_timer(ess);
 		wp_starttimer(ess);
 	}
-	splx(x);
+	mutex_exit(&ess->sc_intr_lock);
 	return 0;
 }
 
@@ -1805,3 +1808,13 @@ esm_shutdown(struct esm_softc *ess)
 	return 0;
 }
 #endif
+
+void
+esm_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct esm_softc *esm;
+
+	esm = addr;
+	*intr = &esm->sc_intr_lock;
+	*proc = &esm->sc_lock;
+}

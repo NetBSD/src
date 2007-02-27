@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxkivar.h,v 1.9 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: emuxkivar.h,v 1.9.28.1 2007/02/27 14:16:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -240,6 +240,8 @@ struct emuxki_softc {
 	pci_chipset_tag_t	sc_pc;		/* PCI tag */
 	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih;		/* interrupt handler */
+	kmutex_t		sc_intr_lock;
+	kmutex_t		sc_lock;
 
 	/* EMU10K1 device structures */
 	LIST_HEAD(, emuxki_mem) mem;

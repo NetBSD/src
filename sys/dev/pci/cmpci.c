@@ -1,7 +1,7 @@
-/*	$NetBSD: cmpci.c,v 1.34 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.34.6.1 2007/02/27 14:16:19 ad Exp $	*/
 
 /*
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.34 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.34.6.1 2007/02/27 14:16:19 ad Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -150,6 +150,8 @@ static int cmpci_trigger_output(void *, void *, void *, int,
 static int cmpci_trigger_input(void *, void *, void *, int,
 	void (*)(void *), void *, const audio_params_t *);
 
+static void cmpci_get_locks(void *, kmutex_t **, kmutex_t **);
+
 static const struct audio_hw_if cmpci_hw_if = {
 	NULL,			/* open */
 	NULL,			/* close */
@@ -179,6 +181,7 @@ static const struct audio_hw_if cmpci_hw_if = {
 	cmpci_trigger_input,	/* trigger_input */
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	cmpci_get_locks,	/* get_locks */
 };
 
 #define CMPCI_NFORMATS	4
@@ -416,6 +419,9 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	/* interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error("%s: failed to map interrupt\n",
@@ -528,11 +534,15 @@ cmpci_intr(void *handle)
 	uint32_t intrstat;
 
 	sc = handle;
+	mutex_enter(&sc->sc_intr_lock);
+
 	intrstat = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    CMPCI_REG_INTR_STATUS);
 
-	if (!(intrstat & CMPCI_REG_ANY_INTR))
+	if (!(intrstat & CMPCI_REG_ANY_INTR)) {
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	delay(10);
 
@@ -566,6 +576,7 @@ cmpci_intr(void *handle)
 		mpu_intr(sc->sc_mpudev);
 #endif
 
+	mutex_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -721,10 +732,8 @@ static int
 cmpci_halt_output(void *handle)
 {
 	struct cmpci_softc *sc;
-	int s;
 
 	sc = handle;
-	s = splaudio();
 	sc->sc_play.intr = NULL;
 	cmpci_reg_clear_4(sc, CMPCI_REG_INTR_CTRL, CMPCI_REG_CH0_INTR_ENABLE);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH0_ENABLE);
@@ -732,7 +741,6 @@ cmpci_halt_output(void *handle)
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH0_RESET);
 	delay(10);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH0_RESET);
-	splx(s);
 
 	return 0;
 }
@@ -741,10 +749,8 @@ static int
 cmpci_halt_input(void *handle)
 {
 	struct cmpci_softc *sc;
-	int s;
 
 	sc = handle;
-	s = splaudio();
 	sc->sc_rec.intr = NULL;
 	cmpci_reg_clear_4(sc, CMPCI_REG_INTR_CTRL, CMPCI_REG_CH1_INTR_ENABLE);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_ENABLE);
@@ -752,7 +758,6 @@ cmpci_halt_input(void *handle)
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_RESET);
 	delay(10);
 	cmpci_reg_clear_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_RESET);
-	splx(s);
 
 	return 0;
 }
@@ -1651,13 +1656,21 @@ static paddr_t
 cmpci_mappage(void *handle, void *addr, off_t offset, int prot)
 {
 	struct cmpci_dmanode *p;
+	struct cmpci_softc *sc;
+	paddr_t pa;
+
+	sc = handle;
 
 	if (offset < 0 || NULL == (p = cmpci_find_dmamem(handle, addr)))
 		return -1;
 
-	return bus_dmamem_mmap(p->cd_tag, p->cd_segs,
+	mutex_exit(&sc->sc_lock);
+	pa = bus_dmamem_mmap(p->cd_tag, p->cd_segs,
 		   sizeof(p->cd_segs)/sizeof(p->cd_segs[0]),
 		   offset, prot, BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+
+	return pa;
 }
 
 /* ARGSUSED */
@@ -1744,6 +1757,16 @@ cmpci_trigger_input(void *handle, void *start, void *end, int blksize,
 	cmpci_reg_set_4(sc, CMPCI_REG_FUNC_0, CMPCI_REG_CH1_ENABLE);
 
 	return 0;
+}
+
+static void
+cmpci_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct cmpci_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }
 
 /* end of file */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.45 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.45.6.1 2007/02/27 14:16:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.45 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.45.6.1 2007/02/27 14:16:23 ad Exp $");
 
 #include "midi.h"
 
@@ -188,6 +188,7 @@ static const struct audio_hw_if cs4280_hw_if = {
 	cs4280_trigger_input,
 	NULL,
 	NULL,
+	cs428x_get_locks,
 };
 
 #if NMIDI > 0
@@ -204,6 +205,7 @@ static const struct midi_hw_if cs4280_midi_hw_if = {
 	cs4280_midi_output,
 	cs4280_midi_getinfo,
 	0,
+	cs428x_get_locks,
 };
 #endif
 
@@ -316,6 +318,9 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih);
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, cs4280_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt",
@@ -351,7 +356,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset  = NULL;
 #endif
 	sc->host_if.flags  = cs4280_flags_codec;
-	if (ac97_attach(&sc->host_if, self) != 0) {
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0) {
 		aprint_error("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -400,13 +405,18 @@ cs4280_intr(void *p)
 
 	sc = p;
 	handled = 0;
+
+	mutex_enter(&sc->sc_intr_lock);
+
 	/* grab interrupt register then clear it */
 	intr = BA0READ4(sc, CS4280_HISR);
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 
 	/* not for us ? */
-	if ((intr & HISR_INTENA) == 0)
+	if ((intr & HISR_INTENA) == 0) {
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
@@ -544,6 +554,7 @@ cs4280_intr(void *p)
 	}
 #endif
 
+	mutex_exit(&sc->sc_intr_lock);
 	return handled;
 }
 
@@ -918,6 +929,9 @@ cs4280_power(int why, void *v)
 	struct cs428x_softc *sc;
 
 	sc = (struct cs428x_softc *)v;
+
+	mutex_enter(&sc->sc_lock);
+
 	DPRINTF(("%s: cs4280_power why=%d\n", sc->sc_dev.dv_xname, why));
 	switch (why) {
 	case PWR_SUSPEND:
@@ -951,7 +965,7 @@ cs4280_power(int why, void *v)
 		if (sc->sc_suspend == PWR_RESUME) {
 			printf("cs4280_power: odd, resume without suspend.\n");
 			sc->sc_suspend = why;
-			return;
+			break;
 		}
 		sc->sc_suspend = why;
 		cs4280_init(sc, 0);
@@ -986,6 +1000,8 @@ cs4280_power(int why, void *v)
 	case PWR_SOFTRESUME:
 		break;
 	}
+
+	mutex_exit(&sc->sc_lock);
 }
 
 static int

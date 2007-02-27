@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.58 2006/04/13 09:47:19 cube Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.58.16.1 2007/02/27 14:16:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -97,6 +97,8 @@ struct sbdsp_softc {
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 	void	*sc_ih;			/* interrupt vectoring */
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
 	/* XXX These are only for setting chip configuration registers. */
 	int	sc_iobase;		/* I/O port base address */
@@ -252,7 +254,7 @@ size_t	sb_round_buffersize(void *, int, size_t);
 paddr_t	sb_mappage(void *, void *, off_t, int);
 
 int	sbdsp_get_props(void *);
-
+void	sbdsp_get_locks(void *, kmutex_t **, kmutex_t **);
 
 int	sbdsp_midi_open(void *, int, void (*iintr)(void *, int),
 	    void (*ointr)(void *), void *);

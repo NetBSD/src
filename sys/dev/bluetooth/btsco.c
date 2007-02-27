@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.11 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: btsco.c,v 1.11.8.1 2007/02/27 14:16:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.11 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.11.8.1 2007/02/27 14:16:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -90,6 +90,8 @@ struct btsco_softc {
 
 	struct device		*sc_audio;	/* MI audio device */
 	void			*sc_intr;	/* interrupt cookie */
+	kmutex_t		 sc_intr_lock;	/* audio lock */
+	kmutex_t		 sc_lock;	/* audio lock */
 
 	/* Bluetooth */
 	bdaddr_t		 sc_laddr;	/* local address */
@@ -158,6 +160,7 @@ static void *btsco_allocm(void *, int, size_t, struct malloc_type *, int);
 static void btsco_freem(void *, void *, struct malloc_type *);
 static int btsco_get_props(void *);
 static int btsco_dev_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static void btsco_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if btsco_if = {
 	btsco_open,		/* open */
@@ -188,6 +191,7 @@ static const struct audio_hw_if btsco_if = {
 	NULL,			/* trigger_input */
 	btsco_dev_ioctl,	/* dev_ioctl */
 	NULL,			/* powerstate */
+	btsco_get_locks,	/* get_lock */
 };
 
 static const struct audio_device btsco_device = {
@@ -283,6 +287,9 @@ btsco_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_vgs = 200;
 	sc->sc_vgm = 200;
 	sc->sc_state = BTSCO_CLOSED;
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_SOFTNET);
 
 	/*
 	 * copy in our configuration info
@@ -424,7 +431,6 @@ static void
 btsco_sco_disconnected(void *arg, int err)
 {
 	struct btsco_softc *sc = arg;
-	int s;
 
 	DPRINTF("%s sc_state %d\n",
 		device_xname((struct device *)sc), sc->sc_state);
@@ -448,7 +454,7 @@ btsco_sco_disconnected(void *arg, int err)
 		 * has completed so that when it tries to send more, we
 		 * can indicate an error.
 		 */
-		s = splaudio();
+		mutex_enter(&sc->sc_intr_lock);
 		if (sc->sc_tx_pending > 0) {
 			sc->sc_tx_pending = 0;
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
@@ -457,7 +463,7 @@ btsco_sco_disconnected(void *arg, int err)
 			sc->sc_rx_want = 0;
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
 		}
-		splx(s);
+		mutex_exit(&sc->sc_intr_lock);
 		break;
 
 	default:
@@ -487,18 +493,17 @@ static void
 btsco_sco_complete(void *arg, int count)
 {
 	struct btsco_softc *sc = arg;
-	int s;
 
 	DPRINTFN(10, "%s count %d\n",
 		device_xname((struct device *)sc), count);
 
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
 	if (sc->sc_tx_pending > 0) {
 		sc->sc_tx_pending -= count;
 		if (sc->sc_tx_pending == 0)
 			(*sc->sc_tx_intr)(sc->sc_tx_intrarg);
 	}
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -510,7 +515,7 @@ btsco_sco_input(void *arg, struct mbuf *m)
 	DPRINTFN(10, "%s len=%d\n",
 		device_xname((struct device *)sc), m->m_pkthdr.len);
 
-	s = splaudio();
+	s = splsoftnet();
 	if (sc->sc_rx_want == 0) {
 		m_freem(m);
 	} else {
@@ -533,8 +538,11 @@ btsco_sco_input(void *arg, struct mbuf *m)
 			m_freem(m);
 		}
 
+		mutex_enter(&sc->sc_intr_lock);
 		if (sc->sc_rx_want == 0)
 			(*sc->sc_rx_intr)(sc->sc_rx_intrarg);
+		mutex_exit(&sc->sc_intr_lock);
+
 	}
 	splx(s);
 }
@@ -854,6 +862,7 @@ static int
 btsco_halt_input(void *hdl)
 {
 	struct btsco_softc *sc = hdl;
+	struct mbuf *m;
 
 	DPRINTFN(5, "%s\n", device_xname((struct device *)sc));
 
@@ -863,8 +872,11 @@ btsco_halt_input(void *hdl)
 	sc->sc_rx_intrarg = NULL;
 
 	if (sc->sc_rx_mbuf != NULL) {
-		m_freem(sc->sc_rx_mbuf);
+		m = sc->sc_rx_mbuf;
 		sc->sc_rx_mbuf = NULL;
+		mutex_exit(&sc->sc_intr_lock);
+		m_freem(m);
+		mutex_enter(&sc->sc_intr_lock);
 	}
 
 	return 0;
@@ -1091,6 +1103,15 @@ btsco_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag,
 	}
 
 	return err;
+}
+
+static void
+btsco_get_locks(void *hdl, kmutex_t **intr, kmutex_t **proc)
+{
+	struct btsco_softc *sc = hdl;
+
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }
 
 

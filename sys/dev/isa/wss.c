@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.67 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: wss.c,v 1.67.6.1 2007/02/27 14:16:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.67 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.67.6.1 2007/02/27 14:16:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ const struct audio_hw_if wss_hw_if = {
 	ad1848_isa_trigger_input,
 	NULL,
 	NULL,	/* powerstate */
+	ad1848_get_locks,
 };
 
 /*
@@ -128,6 +129,10 @@ wssattach(struct wss_softc *sc)
 #endif
 
 	ac = &sc->sc_ad1848.sc_ad1848;
+
+	mutex_init(&ac->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&ac->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	madattach(sc);
 
 	sc->sc_ad1848.sc_ih = isa_intr_establish(sc->wss_ic, sc->wss_irq,
@@ -388,7 +393,6 @@ mad_read(struct wss_softc *sc, int port)
 {
 	u_int tmp;
 	int pwd;
-	int s;
 
 	switch (sc->mad_chip_type) {	/* Output password */
 	case MAD_82C928:
@@ -404,10 +408,8 @@ mad_read(struct wss_softc *sc, int port)
 	default:
 		panic("mad_read: Bad chip type=%d", sc->mad_chip_type);
 	}
-	s = splaudio();		/* don't want an interrupt between outb&inb */
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);
 	tmp = bus_space_read_1(sc->sc_iot, sc->mad_ioh, port);
-	splx(s);
 	return tmp;
 }
 
@@ -415,7 +417,6 @@ void
 mad_write(struct wss_softc *sc, int port, int value)
 {
 	int pwd;
-	int s;
 
 	switch (sc->mad_chip_type) {	/* Output password */
 	case MAD_82C928:
@@ -431,10 +432,8 @@ mad_write(struct wss_softc *sc, int port, int value)
 	default:
 		panic("mad_write: Bad chip type=%d", sc->mad_chip_type);
 	}
-	s = splaudio();
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, port, value & 0xff);
-	splx(s);
 }
 
 void

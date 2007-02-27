@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.7 2006/06/19 13:55:41 jmcneill Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.7.12.1 2007/02/27 14:16:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -56,6 +56,8 @@ struct yds_codec_softc {
 
 struct yds_softc {
 	struct device		sc_dev;		/* base device */
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 	pcireg_t		sc_id;

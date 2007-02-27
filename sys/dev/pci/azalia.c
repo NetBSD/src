@@ -1,7 +1,7 @@
-/*	$NetBSD: azalia.c,v 1.44 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: azalia.c,v 1.44.2.1 2007/02/27 14:16:17 ad Exp $	*/
 
 /*-
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.44 2007/02/21 23:00:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.44.2.1 2007/02/27 14:16:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,6 +112,8 @@ typedef struct {
 typedef struct azalia_t {
 	struct device dev;
 	struct device *audiodev;
+	kmutex_t lock;
+	kmutex_t intr_lock;
 
 	pci_chipset_tag_t pc;
 	void *ih;
@@ -178,6 +180,8 @@ static void	azalia_codec_add_format(codec_t *, int, int, int, uint32_t,
 	int32_t);
 static int	azalia_codec_comresp(const codec_t *, nid_t, uint32_t,
 	uint32_t, uint32_t *);
+static int	azalia_codec_comresp_unlocked(const codec_t *, nid_t, uint32_t,
+	uint32_t, uint32_t *);
 static int	azalia_codec_connect_stream(codec_t *, int, uint16_t, int);
 static int	azalia_codec_disconnect_stream(codec_t *, int);
 
@@ -216,6 +220,7 @@ static int	azalia_trigger_output(void *, void *, void *, int,
 	void (*)(void *), void *, const audio_params_t *);
 static int	azalia_trigger_input(void *, void *, void *, int,
 	void (*)(void *), void *, const audio_params_t *);
+static void	azalia_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static int	azalia_params2fmt(const audio_params_t *, uint16_t *);
 
@@ -252,6 +257,7 @@ static const struct audio_hw_if azalia_hw_if = {
 	azalia_trigger_input,
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	azalia_get_locks,
 };
 
 static const char *pin_colors[16] = {
@@ -305,6 +311,9 @@ azalia_pci_attach(struct device *parent, struct device *self,
 
 	sc->dmat = pa->pa_dmat;
 	aprint_normal(": Generic High Definition Audio Controller\n");
+
+	mutex_init(&sc->lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->intr_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	v = pci_conf_read(pa->pa_pc, pa->pa_tag, ICH_PCI_HDBARL);
 	v &= PCI_MAPREG_TYPE_MASK | PCI_MAPREG_MEM_TYPE_MASK;
@@ -390,6 +399,8 @@ azalia_pci_detach(struct device *self, int flags)
 		az->audiodev = NULL;
 	}
 
+	mutex_enter(&az->lock);
+
 	DPRINTF(("%s: delete streams\n", __func__));
 	azalia_stream_delete(&az->rstream, az);
 	azalia_stream_delete(&az->pstream, az);
@@ -403,6 +414,9 @@ azalia_pci_detach(struct device *self, int flags)
 	DPRINTF(("%s: delete CORB and RIRB\n", __func__));
 	azalia_delete_corb(az);
 	azalia_delete_rirb(az);
+
+	mutex_exit(&az->lock);
+	mutex_destroy(&az->lock);
 
 	DPRINTF(("%s: delete PCI resources\n", __func__));
 	if (az->ih != NULL) {
@@ -427,9 +441,13 @@ azalia_intr(void *v)
 	az = v;
 	ret = 0;
 
+	mutex_enter(&az->lock);
+
 	intsts = AZ_READ_4(az, INTSTS);
-	if (intsts == 0)
+	if (intsts == 0) {
+		mutex_exit(&az->lock);
 		return ret;
+	}
 
 	ret += azalia_stream_intr(&az->pstream, intsts);
 	ret += azalia_stream_intr(&az->rstream, intsts);
@@ -446,6 +464,7 @@ azalia_intr(void *v)
 		ret++;
 	}
 
+	mutex_exit(&az->lock);
 	return ret;
 }
 
@@ -977,7 +996,8 @@ azalia_codec_init(codec_t *this)
 	uint32_t rev, id, result;
 	int err, addr, n, i;
 
-	this->comresp = azalia_codec_comresp;
+	this->comresp_locked = azalia_codec_comresp;
+	this->comresp = azalia_codec_comresp_unlocked;
 	addr = this->address;
 	DPRINTF(("%s: information of codec[%d] follows:\n",
 	    XNAME(this->az), addr));
@@ -1413,15 +1433,30 @@ static int
 azalia_codec_comresp(const codec_t *codec, nid_t nid, uint32_t control,
 		     uint32_t param, uint32_t* result)
 {
-	int err, s;
+	int err;
 
-	s = splaudio();
+	KASSERT(mutex_owned(&codec->az->intr_lock));
+
 	err = azalia_set_command(codec->az, codec->address, nid, control, param);
-	if (err)
-		goto EXIT;
-	err = azalia_get_response(codec->az, result);
-EXIT:
-	splx(s);
+	if (!err)
+		err = azalia_get_response(codec->az, result);
+
+	return err;
+}
+
+static int
+azalia_codec_comresp_unlocked(const codec_t *codec, nid_t nid,
+			      uint32_t control, uint32_t param,
+			      uint32_t* result)
+{
+	int err;
+
+	mutex_enter(&codec->az->intr_lock);
+	err = azalia_set_command(codec->az, codec->address, nid, control, param);
+	if (!err)
+		err = azalia_get_response(codec->az, result);
+	mutex_exit(&codec->az->intr_lock);
+
 	return err;
 }
 
@@ -1433,6 +1468,8 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	int i, err, startchan, nchan;
 	nid_t nid;
 	bool flag222;
+
+	KASSERT(mutex_owned(&this->az->intr_lock));
 
 	DPRINTF(("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
@@ -1456,20 +1493,22 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 			nid = group->conv[1];
 		}
 
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_FORMAT, fmt, NULL);
+		err = this->comresp_locked(this, nid,
+		   CORB_SET_CONVERTER_FORMAT, fmt, NULL);
 		if (err)
 			goto exit;
-		err = this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-				    (number << 4) | startchan, NULL);
+		err = this->comresp_locked(this, nid,
+		    CORB_SET_CONVERTER_STREAM_CHANNEL,
+		    (number << 4) | startchan, NULL);
 		if (err)
 			goto exit;
 		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
 			/* enable S/PDIF */
-			this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL,
-			    0, &v);
+			this->comresp_locked(this, nid,
+			    CORB_GET_DIGITAL_CONTROL, 0, &v);
 			v = (v & 0xff) | CORB_DCC_DIGEN;
-			this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L,
-			    v, NULL);
+			this->comresp_locked(this, nid,
+			    CORB_SET_DIGITAL_CONTROL_L, v, NULL);
 		}
 		startchan += WIDGET_CHANNELS(&this->w[nid]);
 	}
@@ -1486,6 +1525,8 @@ azalia_codec_disconnect_stream(codec_t *this, int dir)
 	uint32_t v;
 	int i;
 	nid_t nid;
+	
+	KASSERT(mutex_owned(&this->az->intr_lock));
 
 	if (dir == AUMODE_RECORD)
 		group = &this->adcs.groups[this->adcs.cur];
@@ -1493,13 +1534,15 @@ azalia_codec_disconnect_stream(codec_t *this, int dir)
 		group = &this->dacs.groups[this->dacs.cur];
 	for (i = 0; i < group->nconv; i++) {
 		nid = group->conv[i];
-		this->comresp(this, nid, CORB_SET_CONVERTER_STREAM_CHANNEL,
-		    0, NULL);	/* stream#0 */
+		this->comresp_locked(this, nid,
+		    CORB_SET_CONVERTER_STREAM_CHANNEL, 0, NULL);/* stream#0 */
 		if (this->w[nid].widgetcap & COP_AWCAP_DIGITAL) {
 			/* disable S/PDIF */
-			this->comresp(this, nid, CORB_GET_DIGITAL_CONTROL, 0, &v);
+			this->comresp_locked(this, nid,
+			    CORB_GET_DIGITAL_CONTROL, 0, &v);
 			v = (v & ~CORB_DCC_DIGEN) & 0xff;
-			this->comresp(this, nid, CORB_SET_DIGITAL_CONTROL_L, v, NULL);
+			this->comresp_locked(this, nid,
+			    CORB_SET_DIGITAL_CONTROL_L, v, NULL);
 		}
 	}
 	return 0;
@@ -2259,4 +2302,14 @@ azalia_params2fmt(const audio_params_t *param, uint16_t *fmt)
 	}
 	*fmt = ret;
 	return 0;
+}
+
+static void
+azalia_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	azalia_t *az;
+
+	az = addr;
+	*intr = &az->intr_lock;
+	*proc = &az->lock;
 }

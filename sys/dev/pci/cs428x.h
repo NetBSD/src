@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.11 2006/08/06 16:21:11 jmcneill Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.11.12.1 2007/02/27 14:16:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -73,6 +73,8 @@ enum cs428x_flags {
  */
 struct cs428x_softc {
 	struct device	      sc_dev;
+	kmutex_t              sc_lock;
+	kmutex_t              sc_intr_lock;
 
 	pci_intr_handle_t *   sc_ih;
 
@@ -161,6 +163,7 @@ void *cs428x_malloc(void *, int, size_t, struct malloc_type *, int);
 size_t cs428x_round_buffersize(void *, int, size_t);
 void cs428x_free(void *, void *, struct malloc_type *);
 paddr_t cs428x_mappage(void *, void *, off_t, int);
+void cs428x_get_locks(void *, kmutex_t **, kmutex_t **);
 
 /* internal functions */
 int cs428x_allocmem(struct cs428x_softc *, size_t, struct malloc_type *,

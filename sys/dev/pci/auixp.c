@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.21 2006/11/16 01:33:08 christos Exp $ */
+/* $NetBSD: auixp.c,v 1.21.6.1 2007/02/27 14:16:13 ad Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.21 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.21.6.1 2007/02/27 14:16:13 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -163,7 +163,7 @@ static int	auixp_allocmem(struct auixp_softc *, size_t, size_t,
 		struct auixp_dma *);
 static int	auixp_freemem(struct auixp_softc *, struct auixp_dma *);
 static paddr_t	auixp_mappage(void *, void *, off_t, int);
-
+static void	auixp_get_locks(void *, kmutex_t **, kmutex_t **);
 
 /* power management (do we support that already?) */
 #if 0
@@ -242,6 +242,7 @@ static const struct audio_hw_if auixp_hw_if = {
 	auixp_trigger_input,
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	auixp_get_locks,
 };
 
 
@@ -918,14 +919,18 @@ auixp_intr(void *softc)
 	int ret;
 
 	sc = softc;
+	mutex_enter(&sc->sc_intr_lock);
+
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	ret = 0;
 	/* get status from the interrupt status register */
 	status = bus_space_read_4(iot, ioh, ATI_REG_ISR);
 
-	if (status == 0)
+	if (status == 0) {
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	DPRINTF(("%s: (status = %x)\n", sc->sc_dev.dv_xname, status));
 
@@ -966,6 +971,7 @@ auixp_intr(void *softc)
 	/* acknowledge interrupt sources */
 	bus_space_write_4(iot, ioh, ATI_REG_ISR, status);
 
+	mutex_exit(&sc->sc_intr_lock);
 	return ret;
 }
 
@@ -1045,6 +1051,7 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
 	struct auixp_dma *p;
+	paddr_t pa;
 
 	co = (struct auixp_codec *) hdl;
 	sc  = co->sc;
@@ -1063,8 +1070,12 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 		return -1;
 
 	/* return mmap'd region */
-	return bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs,
+	mutex_exit(&sc->sc_lock);
+	pa = bus_dmamem_mmap(sc->sc_dmat, p->segs, p->nsegs,
 			       off, prot, BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+
+	return pa;
 }
 
 
@@ -1174,6 +1185,9 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 
 	/* where are we connected at ? */
 	intrstr = pci_intr_string(pc, ih);
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	/* establish interrupt routine hookup at IPL_AUDIO level */
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auixp_intr, self);
@@ -1603,21 +1617,24 @@ auixp_autodetect_codecs(struct auixp_softc *sc)
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC0_NOT_READY)) {
 		/* codec 0 present */
 		DPRINTF(("auixp : YAY! codec 0 present!\n"));
-		if (ac97_attach(&sc->sc_codec[0].host_if, &sc->sc_dev) == 0)
+		if (ac97_attach(&sc->sc_codec[0].host_if, &sc->sc_dev,
+		    &sc->sc_lock) == 0)
 			sc->sc_num_codecs++;
 	}
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC1_NOT_READY)) {
 		/* codec 1 present */
 		DPRINTF(("auixp : YAY! codec 1 present!\n"));
-		if (ac97_attach(&sc->sc_codec[1].host_if, &sc->sc_dev) == 0)
+		if (ac97_attach(&sc->sc_codec[1].host_if, &sc->sc_dev,
+		    &sc->sc_lock) == 0)
 			sc->sc_num_codecs++;
 	}
 
 	if (!(sc->sc_codec_not_ready_bits & ATI_REG_ISR_CODEC2_NOT_READY)) {
 		/* codec 2 present */
 		DPRINTF(("auixp : YAY! codec 2 present!\n"));
-		if (ac97_attach(&sc->sc_codec[2].host_if, &sc->sc_dev) == 0)
+		if (ac97_attach(&sc->sc_codec[2].host_if, &sc->sc_dev,
+		    &sc->sc_lock) == 0)
 			sc->sc_num_codecs++;
 	}
 
@@ -1852,3 +1869,13 @@ auixp_dumpreg(void)
 	printf("\n");
 }
 #endif
+
+static void
+auixp_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct auixp_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
+}

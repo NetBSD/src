@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.11 2002/10/02 04:55:52 thorpej Exp $ */
+/*	$NetBSD: melody.c,v 1.11.62.1 2007/02/27 14:15:51 ad Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.11 2002/10/02 04:55:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: melody.c,v 1.11.62.1 2007/02/27 14:15:51 ad Exp $");
 
 /*
  * Melody audio driver.
@@ -128,6 +128,8 @@ melody_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(" #%d", zap->serno);
 	tms320av110_attach_mi(&sc->sc_tav);
+
+	mutex_init(&sc->sc_tav.sc_lock, MUTEX_DRIVER, 6);
 	sc->sc_isr.isr_ipl = 6;
 	sc->sc_isr.isr_arg = &sc->sc_tav;
 	sc->sc_isr.isr_intr = tms320av110_intr;

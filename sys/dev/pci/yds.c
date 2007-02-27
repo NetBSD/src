@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.37 2006/11/16 01:33:10 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.37.6.1 2007/02/27 14:16:37 ad Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.37.6.1 2007/02/27 14:16:37 ad Exp $");
 
 #include "mpu.h"
 
@@ -173,6 +173,7 @@ static size_t	yds_round_buffersize(void *, int, size_t);
 static paddr_t yds_mappage(void *, void *, off_t, int);
 static int	yds_get_props(void *);
 static int	yds_query_devinfo(void *, mixer_devinfo_t *);
+static void	yds_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static int     yds_attach_codec(void *, struct ac97_codec_if *);
 static int	yds_read_codec(void *, uint8_t, uint16_t *);
@@ -231,6 +232,7 @@ static const struct audio_hw_if yds_hw_if = {
 	yds_trigger_input,
 	NULL,
 	NULL,	/* powerstate */
+	yds_get_locks,
 };
 
 static const struct audio_device yds_device = {
@@ -686,13 +688,13 @@ yds_powerhook(int why, void *addr)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pcireg_t reg;
-	int s;
 
 	sc = (struct yds_softc *)addr;
 	pc = sc->sc_pc;
 	tag = sc->sc_pcitag;
 
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
+
 	switch (why) {
 	case PWR_SUSPEND:
 		pci_conf_capture(pc, tag, &sc->sc_pciconf);
@@ -719,8 +721,7 @@ yds_powerhook(int why, void *addr)
 		if (yds_init(sc)) {
 			printf("%s: reinitialize failed\n",
 				sc->sc_dev.dv_xname);
-			splx(s);
-			return;
+			break;
 		}
 		pci_conf_write(pc, tag, YDS_PCI_DSCTRL, sc->sc_dsctrl);
 		sc->sc_codec[0].codec_if->vtbl->restore_ports(sc->sc_codec[0].codec_if);
@@ -734,7 +735,7 @@ yds_powerhook(int why, void *addr)
 #endif
 		break;
 	}
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 
 	return;
 }
@@ -767,6 +768,9 @@ yds_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: can't map memory space\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
@@ -913,7 +917,8 @@ detected:
 		codec->host_if.write = yds_write_codec;
 		codec->host_if.reset = yds_reset_codec;
 
-		if ((r = ac97_attach(&codec->host_if, self)) != 0) {
+		if ((r = ac97_attach(&codec->host_if, self,
+		    &sc->sc_lock)) != 0) {
 			printf("%s: can't attach codec (error 0x%X)\n",
 			       sc->sc_dev.dv_xname, r);
 			return;
@@ -1035,13 +1040,19 @@ yds_intr(void *p)
 	u_int status;
 
 	sc = p;
+	mutex_enter(&sc->sc_intr_lock);
+
 	status = YREAD4(sc, YDS_STATUS);
 	DPRINTFN(1, ("yds_intr: status=%08x\n", status));
 	if ((status & (YDS_STAT_INT|YDS_STAT_TINT)) == 0) {
 #if NMPU > 0
-		if (sc->sc_mpu)
-			return mpu_intr(sc->sc_mpu);
+		if (sc->sc_mpu) {
+			status = mpu_intr(sc->sc_mpu);
+			mutex_exit(&sc->sc_intr_lock);
+			return status;
+		}
 #endif
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 	}
 
@@ -1142,6 +1153,7 @@ yds_intr(void *p)
 		}
 	}
 
+	mutex_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -1212,9 +1224,6 @@ yds_open(void *addr, int flags)
 	return 0;
 }
 
-/*
- * Close function is called at splaudio().
- */
 static void
 yds_close(void *addr)
 {
@@ -1714,6 +1723,7 @@ yds_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct yds_softc *sc;
 	struct yds_dma *p;
+	paddr_t pa;
 
 	if (off < 0)
 		return -1;
@@ -1721,8 +1731,13 @@ yds_mappage(void *addr, void *mem, off_t off, int prot)
 	p = yds_find_dma(sc, mem);
 	if (p == NULL)
 		return -1;
-	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
+
+	mutex_exit(&sc->sc_lock);
+	pa = bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
 	    off, prot, BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+
+	return pa;
 }
 
 static int
@@ -1731,4 +1746,14 @@ yds_get_props(void *addr)
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	    AUDIO_PROP_FULLDUPLEX;
+}
+
+static void
+yds_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct yds_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }

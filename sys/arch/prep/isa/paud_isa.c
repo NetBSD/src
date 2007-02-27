@@ -1,7 +1,7 @@
-/*	$NetBSD: paud_isa.c,v 1.10 2005/12/11 12:18:47 christos Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.10.28.1 2007/02/27 14:15:53 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.10 2005/12/11 12:18:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.10.28.1 2007/02/27 14:15:53 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -127,6 +127,7 @@ static const struct audio_hw_if paud_hw_if = {
 	ad1848_isa_trigger_output,
 	ad1848_isa_trigger_input,
 	NULL,
+	ad1848_get_lock,
 };
 
 /* autoconfig routines */
@@ -170,6 +171,7 @@ paud_attach_isa(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_playdrq = ia->ia_drq[0].ir_drq;
 	sc->sc_recdrq = ia->ia_drq[1].ir_drq;
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, ad1848_isa_intr, sc);
 	ad1848_isa_attach(sc);

@@ -1,7 +1,7 @@
-/*	$NetBSD: gus.c,v 1.96 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: gus.c,v 1.96.6.1 2007/02/27 14:16:07 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.96 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.96.6.1 2007/02/27 14:16:07 ad Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -180,6 +180,8 @@ struct gus_voice {
 
 struct gus_softc {
 	struct device sc_dev;		/* base device */
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 	void *sc_ih;			/* interrupt vector */
 	bus_space_tag_t sc_iot;		/* tag */
 	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
@@ -386,6 +388,7 @@ int	gusmax_halt_out_dma(void *);
 int	gusmax_halt_in_dma(void *);
 int	gusmax_speaker_ctl(void *, int);
 int	gus_getdev(void *, struct audio_device *);
+void	gus_get_locks(void *, kmutex_t **, kmutex_t **);
 
 STATIC void	gus_deinterleave(struct gus_softc *, void *, int);
 
@@ -576,9 +579,9 @@ static const unsigned short gus_log_volumes[512] = {
 
 #define GUS_PREC_BYTES (sc->sc_precision >> 3) /* precision to bytes */
 
-/* splgus() must be splaudio() */
+/* splaudio() must be splaudio() */
 
-#define splgus splaudio
+#define splaudio splaudio
 
 /*
  * Interface to higher level audio driver
@@ -613,6 +616,7 @@ const struct audio_hw_if gus_hw_if = {
 	NULL,
 	NULL,
 	NULL,
+	gus_get_locks,
 };
 
 static const struct audio_hw_if gusmax_hw_if = {
@@ -644,6 +648,7 @@ static const struct audio_hw_if gusmax_hw_if = {
 	NULL,
 	NULL,
 	NULL,
+	gus_get_locks,
 };
 
 /*
@@ -772,7 +777,7 @@ gus_test_iobase (bus_space_tag_t iot, int iobase)
 	 * Reset GUS to an initial state before we do anything.
 	 */
 
-	s = splgus();
+	s = splaudio();
 	delay(500);
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
@@ -1047,9 +1052,6 @@ gusattach(struct device *parent, struct device *self, void *aux)
 	 * Setup a default interrupt handler
 	 */
 
-	/* XXX we shouldn't have to use splgus == splclock, nor should
-	 * we use IPL_CLOCK.
-	 */
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_AUDIO, gusintr, sc /* sc->sc_gusdsp */);
 
@@ -1208,7 +1210,7 @@ gusmax_dma_output(void *addr, void *tbuf, int size,
 }
 
 /*
- * called at splgus() from interrupt handler.
+ * called at splaudio() from interrupt handler.
  */
 void
 stereo_dmaintr(void *arg)
@@ -1251,7 +1253,7 @@ stereo_dmaintr(void *arg)
 
 /*
  * Start up DMA output to the card.
- * Called at splgus/splaudio already, either from intr handler or from
+ * Called at splaudio/splaudio already, either from intr handler or from
  * generic audio code.
  */
 int
@@ -1353,7 +1355,7 @@ gusmax_close(void *addr)
 }
 
 /*
- * Close out device stuff.  Called at splgus() from generic audio layer.
+ * Close out device stuff.  Called at splaudio() from generic audio layer.
  */
 void
 gusclose(void *addr)
@@ -1476,7 +1478,7 @@ gus_dmaout_timeout(void *arg)
 	/*
 	 * Stop any DMA.
 	 */
-	s = splgus();
+	s = splaudio();
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 #if 0
@@ -2006,7 +2008,7 @@ gus_continue_playing(struct gus_softc *sc, int voice)
 }
 
 /*
- * Send/receive data into GUS's DRAM using DMA.  Called at splgus()
+ * Send/receive data into GUS's DRAM using DMA.  Called at splaudio()
  */
 STATIC void
 gusdmaout(struct gus_softc *sc, int flags,
@@ -2079,7 +2081,7 @@ gusdmaout(struct gus_softc *sc, int flags,
 
 /*
  * Start a voice playing on the GUS.  Called from interrupt handler at
- * splgus().
+ * splaudio().
  */
 
 STATIC void
@@ -2176,7 +2178,7 @@ gus_start_voice(struct gus_softc *sc, int voice, int intrs)
 }
 
 /*
- * Stop a given voice.  called at splgus()
+ * Stop a given voice.  called at splaudio()
  */
 STATIC void
 gus_stop_voice(struct gus_softc *sc, int voice, int intrs_too)
@@ -2218,7 +2220,7 @@ gus_stop_voice(struct gus_softc *sc, int voice, int intrs_too)
 
 
 /*
- * Set the volume of a given voice.  Called at splgus().
+ * Set the volume of a given voice.  Called at splaudio().
  */
 STATIC void
 gus_set_volume(struct gus_softc *sc, int voice, int volume)
@@ -2285,7 +2287,6 @@ gus_set_params(
 {
 	audio_params_t hw;
 	struct gus_softc *sc;
-	int s;
 
 	sc = addr;
 	switch (p->encoding) {
@@ -2300,7 +2301,7 @@ gus_set_params(
 		return EINVAL;
 	}
 
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
 
 	if (p->precision == 8) {
 		sc->sc_voc[GUS_VOICE_LEFT].voccntl &= ~GUSMASK_DATA_SIZE16;
@@ -2314,7 +2315,7 @@ gus_set_params(
 	sc->sc_precision = p->precision;
 	sc->sc_channels = p->channels;
 
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 
 	if (p->sample_rate > gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES])
 		p->sample_rate = gus_max_frequency[sc->sc_voices - GUS_MIN_VOICES];
@@ -2468,7 +2469,7 @@ gus_commit_settings(void *addr)
 	DPRINTF(("gus_commit_settings called (gain = %d)\n",sc->sc_ogain));
 
 
-	s = splgus();
+	s = splaudio();
 
 	gus_set_recrate(sc, sc->sc_irate);
 	gus_set_volume(sc, GUS_VOICE_LEFT, sc->sc_ogain);
@@ -2516,7 +2517,7 @@ gus_set_chan_addrs(struct gus_softc *sc)
 }
 
 /*
- * Set the sample rate of the given voice.  Called at splgus().
+ * Set the sample rate of the given voice.  Called at splaudio().
  */
 STATIC void
 gus_set_samprate(struct gus_softc *sc, int voice, int freq)
@@ -2553,7 +2554,7 @@ gus_set_samprate(struct gus_softc *sc, int voice, int freq)
 
 /*
  * Set the sample rate of the recording frequency.  Formula is from the GUS
- * SDK.  Called at splgus().
+ * SDK.  Called at splaudio().
  */
 STATIC void
 gus_set_recrate(struct gus_softc *sc, u_long rate)
@@ -2665,7 +2666,7 @@ gus_mic_ctl(void *addr, int newstate)
 }
 
 /*
- * Set the end address of a give voice.  Called at splgus()
+ * Set the end address of a give voice.  Called at splaudio()
  */
 STATIC void
 gus_set_endaddr(struct gus_softc *sc, int voice, u_long addr)
@@ -2689,7 +2690,7 @@ gus_set_endaddr(struct gus_softc *sc, int voice, u_long addr)
 
 #ifdef GUSPLAYDEBUG
 /*
- * Set current address.  called at splgus()
+ * Set current address.  called at splaudio()
  */
 STATIC void
 gus_set_curaddr(struct gus_softc *sc, int voice, u_long addr)
@@ -2714,7 +2715,7 @@ gus_set_curaddr(struct gus_softc *sc, int voice, u_long addr)
 }
 
 /*
- * Get current GUS playback address.  Called at splgus().
+ * Get current GUS playback address.  Called at splaudio().
  */
 STATIC u_long
 gus_get_curaddr(struct gus_softc *sc, int voice)
@@ -2822,7 +2823,7 @@ gusreset(struct gus_softc *sc, int voices)
 	ioh1 = sc->sc_ioh1;
 	ioh2 = sc->sc_ioh2;
 	ioh4 = sc->sc_ioh4;
-	s = splgus();
+	s = splaudio();
 
 	/*
 	 * Reset the GF1 chip
@@ -3037,7 +3038,7 @@ gusmax_dma_input(void *addr, void *tbuf, int size,
 
 /*
  * Start sampling the input source into the requested DMA buffer.
- * Called at splgus(), either from top-half or from interrupt handler.
+ * Called at splaudio(), either from top-half or from interrupt handler.
  */
 int
 gus_dma_input(void *addr, void *tbuf, int size,
@@ -3137,7 +3138,7 @@ gusmax_halt_in_dma(void *addr)
 }
 
 /*
- * Stop any DMA output.  Called at splgus().
+ * Stop any DMA output.  Called at splaudio().
  */
 int
 gus_halt_out_dma(void *addr)
@@ -3175,7 +3176,7 @@ gus_halt_out_dma(void *addr)
 }
 
 /*
- * Stop any DMA output.  Called at splgus().
+ * Stop any DMA output.  Called at splaudio().
  */
 int
 gus_halt_in_dma(void *addr)

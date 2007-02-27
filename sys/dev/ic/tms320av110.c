@@ -1,7 +1,7 @@
-/*	$NetBSD: tms320av110.c,v 1.18 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.18.28.1 2007/02/27 14:16:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.18 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.18.28.1 2007/02/27 14:16:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,8 @@ const struct audio_hw_if tav_audio_if = {
 	0 /* round_buffersize */,	/* optional */
 	0 /* mappage */,		/* optional */
 	tav_get_props,
-	0 /* dev_ioctl */		/* optional */
+	0 /* dev_ioctl */		/* optional */,
+	tav_get_lock,
 };
 
 void
@@ -153,11 +154,16 @@ tms320av110_intr(void *p)
 	uint16_t intlist;
 
 	sc = p;
+
+	mutex_enter(&sc->sc_lock);
+
 	intlist = tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR)
 	    /* & tav_read_short(sc->sc_iot, sc->sc_ioh, TAV_INTR_EN)*/;
 
-	if (!intlist)
+	if (!intlist) {
+		mutex_exit(&sc->sc_lock);
 		return 0;
+	}
 
 	/* ack now, so that we don't miss later interrupts */
 	if (sc->sc_intack)
@@ -170,6 +176,8 @@ tms320av110_intr(void *p)
 	if (intlist & TAV_INTR_PCM_OUTPUT_UNDERFLOW) {
 		 wakeup(sc);
 	}
+
+	mutex_exit(&sc->sc_lock);
 
 	return 1;
 }
@@ -228,7 +236,7 @@ tav_drain(void *hdl)
 
 		/* still more than zero? */
 		if (tav_read_short(iot, ioh, TAV_BUFF))
-			(void)tsleep(sc, PCATCH, "tavdrain", 32*hz);
+			kpause("tavdrain", &sc->sc_lock, TRUE, 32*hz);
 
 		/* can be really that long for mpeg */
 

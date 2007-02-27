@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.50 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.50.6.1 2007/02/27 14:16:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.50 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.50.6.1 2007/02/27 14:16:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,6 +160,7 @@ sb_isapnp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_AUDIO, sbdsp_intr, sc);
 
