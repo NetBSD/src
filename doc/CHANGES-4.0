@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.83 2007/02/24 19:07:11 snj Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.84 2007/02/27 23:35:21 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1647,4 +1647,25 @@ sys/arch/news68k/dev/si.c			1.19
 	Make disconnect/reselect work on news68k si(4) with DMA and
 	enable it by default.
 	[tsutsui, ticket #464]
+
+sys/fs/msdosfs/msdosfs_vfsops.c			1.41-1.44 via patch
+
+	Fix the problem reported in kern/35457, "cant mount msdosfs on floppy".
+	[kochi, ticket #453]
+
+sys/net/if_ethersubr.c				1.144
+
+	Drop M_PROMISC before passing the packet to a carp device, for the same
+	reason it's dropped before passing to bridge: when a vlan interface is
+	in promisc mode, it will loop the packet back to ether_input() with
+	M_PROMISC set, and when carp calls ether_input again the flag is still
+	there and the packet is dropped. If the carp interface doesn't take
+	the packet M_PROMISC is set just after is needed anyway.
+	[bouyer, ticket #465]
+
+sys/dev/pci/if_bge.c				1.124-1.125
+sys/dev/pci/if_bgereg.h				1.40
+
+	Fix bge(4) on architectures where bus_dmamap_sync() isn't a noop.
+	[bouyer, ticket #466]
 
