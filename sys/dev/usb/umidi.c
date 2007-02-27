@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.28 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: umidi.c,v 1.28.4.1 2007/02/27 16:54:08 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.28 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.28.4.1 2007/02/27 16:54:08 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -652,6 +652,7 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 {
 	/* This driver currently supports max 1in/1out bulk endpoints */
 	usb_descriptor_t *desc;
+	umidi_cs_descriptor_t *udesc;
 	usb_endpoint_descriptor_t *epd;
 	int out_addr, in_addr, i;
 	int dir;
@@ -673,28 +674,28 @@ alloc_all_endpoints_yamaha(struct umidi_softc *sc)
 				in_addr = epd->bEndpointAddress;
 		}
 	}
-	desc = NEXT_D(desc);
+	udesc = (umidi_cs_descriptor_t *)NEXT_D(desc);
 
 	/* count jacks */
-	if (!(desc->bDescriptorType==UDESC_CS_INTERFACE &&
-	      desc->bDescriptorSubtype==UMIDI_MS_HEADER))
+	if (!(udesc->bDescriptorType==UDESC_CS_INTERFACE &&
+	      udesc->bDescriptorSubtype==UMIDI_MS_HEADER))
 		return USBD_INVAL;
-	remain = (size_t)UGETW(TO_CSIFD(desc)->wTotalLength) -
-		(size_t)desc->bLength;
-	desc = NEXT_D(desc);
+	remain = (size_t)UGETW(TO_CSIFD(udesc)->wTotalLength) -
+		(size_t)udesc->bLength;
+	udesc = (umidi_cs_descriptor_t *)NEXT_D(udesc);
 
 	while (remain>=sizeof(usb_descriptor_t)) {
-		descsize = desc->bLength;
+		descsize = udesc->bLength;
 		if (descsize>remain || descsize==0)
 			break;
-		if (desc->bDescriptorType==UDESC_CS_INTERFACE &&
+		if (udesc->bDescriptorType==UDESC_CS_INTERFACE &&
 		    remain>=UMIDI_JACK_DESCRIPTOR_SIZE) {
-			if (desc->bDescriptorSubtype==UMIDI_OUT_JACK)
+			if (udesc->bDescriptorSubtype==UMIDI_OUT_JACK)
 				sc->sc_out_num_jacks++;
-			else if (desc->bDescriptorSubtype==UMIDI_IN_JACK)
+			else if (udesc->bDescriptorSubtype==UMIDI_IN_JACK)
 				sc->sc_in_num_jacks++;
 		}
-		desc = NEXT_D(desc);
+		udesc = (umidi_cs_descriptor_t *)NEXT_D(udesc);
 		remain-=descsize;
 	}
 

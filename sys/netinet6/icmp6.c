@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.129 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.129.2.1 2007/02/27 16:54:59 yamt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.129 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.129.2.1 2007/02/27 16:54:59 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1959,9 +1959,7 @@ icmp6_rip6_input(mp, off)
  * up, and to make the code simpler at this stage.
  */
 void
-icmp6_reflect(m, off)
-	struct	mbuf *m;
-	size_t off;
+icmp6_reflect(struct mbuf *m, size_t off)
 {
 	struct ip6_hdr *ip6;
 	struct icmp6_hdr *icmp6;
@@ -2071,7 +2069,8 @@ icmp6_reflect(m, off)
 		sin6.sin6_addr = ip6->ip6_dst; /* zone ID should be embedded */
 
 		memset(&ro, 0, sizeof(ro));
-		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
+		src = in6_selectsrc(&sin6, NULL, NULL, (struct route *)&ro,
+		    NULL, &outif, &e);
 		rtcache_free((struct route *)&ro);
 		if (src == NULL) {
 			nd6log((LOG_DEBUG,

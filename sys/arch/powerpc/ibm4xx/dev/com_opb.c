@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.18 2006/07/13 22:56:01 gdamore Exp $ */
+/* $NetBSD: com_opb.c,v 1.18.10.1 2007/02/27 16:52:44 yamt Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.18 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.18.10.1 2007/02/27 16:52:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,7 @@ com_opb_device_register(struct device *dev, int frequency)
 	KASSERT(pn != NULL);
 
 	if (prop_dictionary_set(device_properties(dev),
-				"clock-frequency", pn) == FALSE) {
+				"clock-frequency", pn) == false) {
 		printf("WARNING: unable to set clock-frequency "
 			"property for %s\n", dev->dv_xname);
 	}

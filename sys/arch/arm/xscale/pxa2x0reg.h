@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.13 2006/12/17 16:03:33 peter Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.13.2.1 2007/02/27 16:49:49 yamt Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -99,8 +99,9 @@
 #define PXA270_USBDC_SIZE 	0x460
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
 #define PXA2X0_ICP_BASE 	0x40800000
-#define PXA2X0_RTC_BASE 	0x40900000
-#define PXA2X0_RTC_SIZE 	0x10
+#define PXA2X0_RTC_BASE 	0x40900000 /* Real-time Clock */
+#define PXA250_RTC_SIZE 	0x10
+#define PXA270_RTC_SIZE 	0x3c
 #define PXA2X0_OST_BASE 	0x40a00000 /* OS Timer */
 #define PXA2X0_OST_SIZE		0x24
 #define PXA2X0_PWM0_BASE	0x40b00000
@@ -299,6 +300,35 @@ struct pxa2x0_dma_desc {
 #define RTC_RTAR	0x0004	/* alarm register */
 #define RTC_RTSR	0x0008	/* status register */
 #define RTC_RTTR	0x000c	/* trim register */
+#define RTC_RDCR	0x0010	/* day counter register */
+#define RTC_RYCR	0x0014	/* year counter register */
+#define RTC_RDAR1	0x0018	/* wristwatch day alarm register 1 */
+#define RTC_RYAR1	0x001c	/* wristwatch year alarm register 1 */
+#define RTC_RDAR2	0x0020	/* wristwatch day alarm register 2 */
+#define RTC_RYAR2	0x0024	/* wristwatch year alarm register 2 */
+#define RTC_SWCR	0x0028	/* stopwatch counter register */
+#define RTC_SWAR1	0x002c	/* stopwatch alarm register 1 */
+#define RTC_SWAR2	0x0030	/* stopwatch alarm register 2 */
+#define RTC_RTCPICR	0x0034	/* periodic interrupt counter register */
+#define RTC_PIAR	0x0038	/* periodic interrupt alarm register */
+
+#define RDCR_SECOND_SHIFT	0
+#define RDCR_SECOND_MASK	0x3f
+#define RDCR_MINUTE_SHIFT	6
+#define RDCR_MINUTE_MASK	0x3f
+#define RDCR_HOUR_SHIFT		12
+#define RDCR_HOUR_MASK		0x1f
+#define RDCR_DOW_SHIFT		17
+#define RDCR_DOW_MASK		0x7
+#define RDCR_WOM_SHIFT		20
+#define RDCR_WOM_MASK		0x7
+#define RYCR_DOM_SHIFT		0
+#define RYCR_DOM_MASK		0x1f
+#define RYCR_MONTH_SHIFT	5
+#define RYCR_MONTH_MASK		0xf
+#define RYCR_YEAR_SHIFT		9
+#define RYCR_YEAR_MASK		0xfff
+
 /*
  * GPIO
  */

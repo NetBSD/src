@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.63 2006/12/15 13:51:30 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.63.2.1 2007/02/27 16:55:26 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.63 2006/12/15 13:51:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.63.2.1 2007/02/27 16:55:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ uvm_loanentry(struct uvm_faultinfo *ufi, void ***output, int flags)
 
 	if (aref->ar_amap)
 		amap_unlock(aref->ar_amap);
-	uvmfault_unlockmaps(ufi, FALSE);
+	uvmfault_unlockmaps(ufi, false);
 	UVMHIST_LOG(loanhist, "done %d", result, 0,0,0);
 	return (result);
 }
@@ -280,7 +280,7 @@ uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
 		 * an unmapped region (an error)
 		 */
 
-		if (!uvmfault_lookup(&ufi, FALSE)) {
+		if (!uvmfault_lookup(&ufi, false)) {
 			error = ENOENT;
 			goto fail;
 		}
@@ -628,7 +628,7 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 	struct vm_page *pg;
 	struct vm_anon *anon;
 	int error, npages;
-	boolean_t locked;
+	bool locked;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(loanhist);
 
@@ -702,14 +702,14 @@ uvm_loanuobj(struct uvm_faultinfo *ufi, void ***output, int flags, vaddr_t va)
 		    ufi->orig_rvaddr - ufi->entry->start))) {
 			if (locked)
 				uvmfault_unlockall(ufi, amap, NULL, NULL);
-			locked = FALSE;
+			locked = false;
 		}
 
 		/*
 		 * didn't get the lock?   release the page and retry.
 		 */
 
-		if (locked == FALSE) {
+		if (locked == false) {
 			if (pg->flags & PG_WANTED) {
 				wakeup(pg);
 			}

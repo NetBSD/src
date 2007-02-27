@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.3 2007/02/10 21:07:52 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.3.2.1 2007/02/27 16:54:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.3 2007/02/10 21:07:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.3.2.1 2007/02/27 16:54:24 yamt Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -145,11 +145,20 @@ __strong_alias(rw_exit, rw_vector_exit);
 #endif
 
 void	rw_dump(volatile void *);
+static struct lwp *rw_owner(wchan_t);
 
 lockops_t rwlock_lockops = {
 	"Reader / writer lock",
 	1,
 	rw_dump
+};
+
+syncobj_t rw_syncobj = {
+	SOBJ_SLEEPQ_SORTED,
+	turnstile_unsleep,
+	turnstile_changepri,
+	sleepq_lendpri,
+	rw_owner,
 };
 
 /*
@@ -299,7 +308,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 
 		LOCKSTAT_START_TIMER(lsflag, slptime);
 
-		turnstile_block(ts, queue, rw);
+		turnstile_block(ts, queue, rw, &rw_syncobj);
 
 		/* If we wake up and arrive here, we've been handed the lock. */
 		RW_RECEIVE(rw);
@@ -669,4 +678,22 @@ rw_lock_held(krwlock_t *rw)
 		return 1;
 
 	return (rw->rw_owner & RW_THREAD) != 0;
+}
+
+/*
+ * rw_owner:
+ *
+ *	Return the current owner of an RW lock, but only if it is write
+ *	held.  Used for priority inheritance.
+ */
+static struct lwp *
+rw_owner(wchan_t obj)
+{
+	krwlock_t *rw = (void *)(uintptr_t)obj; /* discard qualifiers */
+	uintptr_t owner = rw->rw_owner;
+
+	if ((owner & RW_WRITE_LOCKED) == 0)
+		return NULL;
+
+	return (void *)(owner & RW_THREAD);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.8 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.8.2.1 2007/02/27 16:51:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,7 +73,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
 		int inc = 0;
-		boolean_t doall = FALSE;
+		bool doall = false;
 		paddr_t pa = 0;
 		vaddr_t end = 0;
 #ifdef COMPAT_HPUX
@@ -112,7 +112,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 			if (!doall &&
 			    (pa == 0 || m68k_page_offset(addr) == 0)) {
 				if (pmap_extract(p->p_vmspace->vm_map.pmap,
-				    addr, &pa) == FALSE)
+				    addr, &pa) == false)
 					doall = 1;
 			}
 			switch (req) {

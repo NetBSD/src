@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.2.1 2007/02/27 16:52:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,17 +49,17 @@
 #define	FULL
 #endif
 
-#ifdef MIPS64
+#if defined(__mips_n32) || defined(_LP64)
 #define	LL	lld
 #define	SC	scd
 #define	LDPTR	ld
 #define	STPTR	sd
-#else
+#else /* !(n32 || LP64) */
 #define	LL	ll
 #define	SC	sc
 #define	LDPTR	lw
 #define	STPTR	sw
-#endif
+#endif /* !(n32 || LP64) */
 
 #if MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR)
 #define	SYNC		sync
@@ -69,9 +69,9 @@
 #define	BDSYNC		nop
 #endif	/* MIPS_HAS_LLSC != 0 && defined(MULTIPROCESSOR) */
 
-#ifndef MIPS64
+#if !(defined(__mips_n32) || defined(_LP64))
 STRONG_ALIAS(_lock_cas4, _lock_cas)
-#endif	/* MIPS64 */
+#endif	/* !(n32 || LP64) */
 
 STRONG_ALIAS(mb_read, mb_memory)
 STRONG_ALIAS(mb_write, mb_memory)
@@ -109,7 +109,7 @@ LEAF(_lock_cas)
 	 addu	v0, zero, zero
 END(_lock_cas)
 
-#ifdef MIPS64
+#if defined(__mips_n32) || defined(_LP64)
 /*
  * int _lock_cas4(uint32_t *val, uint32_t old, uint32_t new);
  */
@@ -128,7 +128,7 @@ LEAF(_lock_cas4)
 	j	ra
 	 addu	v0, zero, zero
 END(_lock_cas4)
-#endif	/* MIPS64 */
+#endif	/* n32 || LP64 */
 
 #ifndef LOCKDEBUG
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscreg.h,v 1.8 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: mscreg.h,v 1.8.26.1 2007/02/27 16:49:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 Regents of the University of California.
@@ -233,8 +233,3 @@ struct mscdevice {
 
 /* tty number given slot */
 #define	MSCTTYSLOT(slot)	((slot)<<1)
-
-#ifndef TRUE
-#define	TRUE	1
-#define	FALSE	0
-#endif

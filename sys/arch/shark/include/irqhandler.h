@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.1 2002/02/10 01:57:23 thorpej Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.1.74.1 2007/02/27 16:53:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -45,6 +45,7 @@
 
 #ifndef _LOCORE
 #include <sys/types.h>
+#include <sys/evcnt.h>
 #endif /* _LOCORE */
 
 /* Define the IRQ bits */
@@ -127,11 +128,12 @@ typedef struct irqhandler {
 	void *ih_arg;			/* Argument to handler */
 	int ih_level;			/* Interrupt level */
 	int ih_num;			/* Interrupt number (for accounting) */
-	const char *ih_name;		/* Name of interrupt (for vmstat -i) */
 	u_int ih_flags;			/* Interrupt flags */
 	u_int ih_maskaddr;		/* mask address for expansion cards */
 	u_int ih_maskbits;		/* interrupt bit for expansion cards */
 	struct irqhandler *ih_next;	/* next handler */
+	struct evcnt ih_ev;		/* evcnt structure */
+	char ih_evname[8];		/* name buffer */
 } irqhandler_t;
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.3 2007/02/23 15:57:45 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.4 2007/02/27 16:55:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ struct emul {
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
 
 	size_t		e_ucsize;	/* size of ucontext_t */
+	void		(*e_startlwp)(void *);
 };
 
 /*
@@ -349,18 +350,17 @@ struct proc {
  * These flags are kept in p_flag and are protected by p_mutex.  Access from
  * process context only.
  */
-#define	P_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
-#define	P_SYSTEM	0x00000002 /* System process (kthread) */
-#define	P_SUGID		0x00000100 /* Had set id privileges since last exec */
-#define	P_EXEC		0x00004000 /* Process called exec */
-#define	P_NOCLDWAIT	0x00020000 /* No zombies if child dies */
-#define	P_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
-#define	P_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
-#define	P_SYSTRACE	0x00200000 /* Process system call tracing active */
-#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
-#define	P_PAXMPROTECT  	0x08000000 /* Explicitly enable PaX MPROTECT */
-#define	P_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
-#define	P_MARKER	0x80000000 /* Is a dummy marker process */
+#define	PK_ADVLOCK	0x00000001 /* Process may hold a POSIX advisory lock */
+#define	PK_SYSTEM	0x00000002 /* System process (kthread) */
+#define	PK_SUGID	0x00000100 /* Had set id privileges since last exec */
+#define	PK_EXEC		0x00004000 /* Process called exec */
+#define	PK_NOCLDWAIT	0x00020000 /* No zombies if child dies */
+#define	PK_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
+#define	PK_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
+#define	PK_SYSTRACE	0x00200000 /* Process system call tracing active */
+#define	PK_PAXMPROTECT 	0x08000000 /* Explicitly enable PaX MPROTECT */
+#define	PK_PAXNOMPROTECT	0x10000000 /* Explicitly disable PaX MPROTECT */
+#define	PK_MARKER	0x80000000 /* Is a dummy marker process */
 
 /*
  * These flags are kept in p_sflag and are protected by p_smutex.  Access from
@@ -402,22 +402,6 @@ struct proc {
  */
 #define	P_EXITSIG(p)	\
     (((p)->p_slflag & (PSL_TRACED|PSL_FSTRACE)) ? SIGCHLD : p->p_exitsig)
-
-/*
- * MOVE TO ucred.h?
- *
- * Shareable process credentials (always resident).  This includes a reference
- * to the current user credentials as well as real and saved ids that may be
- * used to change ids.
- */
-struct pcred {
-	struct ucred	*pc_ucred;	/* Current credentials */
-	uid_t		p_ruid;		/* Real user id */
-	uid_t		p_svuid;	/* Saved effective user id */
-	gid_t		p_rgid;		/* Real group id */
-	gid_t		p_svgid;	/* Saved effective group id */
-	int		p_refcnt;	/* Number of references */
-};
 
 LIST_HEAD(proclist, proc);		/* A list of processes */
 
@@ -539,11 +523,11 @@ void	yield(void);
 void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	suspendsched(void);
-int	ltsleep(wchan_t, int, const char *, int,
+int	ltsleep(wchan_t, pri_t, const char *, int,
 	    volatile struct simplelock *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
-int	kpause(const char *, boolean_t, int, kmutex_t *);
+int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int);
 int	find_stopped_child(struct proc *, pid_t, int, struct proc **, int *);
 struct proc *proc_alloc(void);
@@ -573,7 +557,7 @@ void	proc_stop(struct proc *, int, int);
 void	p_sugid(struct proc *);
 
 int	proc_vmspace_getref(struct proc *, struct vmspace **);
-void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, boolean_t);
+void	proc_crmod_leave(kauth_cred_t, kauth_cred_t, bool);
 void	proc_crmod_enter(void);
 int	proc_addref(struct proc *);
 void	proc_delref(struct proc *);
@@ -595,7 +579,7 @@ _proclist_skipmarker(struct proc *p0)
 {
 	struct proc *p = p0;
 
-	while (p != NULL && p->p_flag & P_MARKER)
+	while (p != NULL && p->p_flag & PK_MARKER)
 		p = LIST_NEXT(p, p_list);
 
 	return p;

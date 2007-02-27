@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.22 2002/11/13 05:59:28 yamt Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.22.60.1 2007/02/27 16:53:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.22 2002/11/13 05:59:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_elf.c,v 1.22.60.1 2007/02/27 16:53:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,15 +67,15 @@ static char	*db_elf_find_strtab(db_symtab_t *);
 #define	STAB_TO_EHDR(stab)	((Elf_Ehdr *)((stab)->private))
 #define	STAB_TO_SHDR(stab, e)	((Elf_Shdr *)((stab)->private + (e)->e_shoff))
 
-static boolean_t db_elf_sym_init(int, void *, void *, const char *);
+static bool db_elf_sym_init(int, void *, void *, const char *);
 static db_sym_t	db_elf_lookup(db_symtab_t *, char *);
 static db_sym_t	db_elf_search_symbol(db_symtab_t *, db_addr_t, db_strategy_t,
 		    db_expr_t *);
 static void	db_elf_symbol_values(db_symtab_t *, db_sym_t, char **,
 		    db_expr_t *);
-static boolean_t db_elf_line_at_pc(db_symtab_t *, db_sym_t, char **, int *,
+static bool db_elf_line_at_pc(db_symtab_t *, db_sym_t, char **, int *,
 		    db_expr_t);
-static boolean_t db_elf_sym_numargs(db_symtab_t *, db_sym_t, int *, char **);
+static bool db_elf_sym_numargs(db_symtab_t *, db_sym_t, int *, char **);
 static void	db_elf_forall(db_symtab_t *, db_forall_func_t db_forall_func,
 		    void *);
 
@@ -93,7 +93,7 @@ const db_symformat_t db_symformat_elf = {
 /*
  * Find the symbol table and strings; tell ddb about them.
  */
-static boolean_t
+static bool
 db_elf_sym_init(
 	int symsize,		/* size of symbol table */
 	void *symtab,		/* pointer to start of symbol table */
@@ -112,7 +112,7 @@ db_elf_sym_init(
 	if (ALIGNED_POINTER(symtab, long) == 0) {
 		printf("[ %s symbol table has bad start address %p ]\n",
 		    name, symtab);
-		return (FALSE);
+		return (false);
 	}
 
 	symtab_start = symtab_end = NULL;
@@ -195,14 +195,14 @@ db_elf_sym_init(
 		printf("[ using %lu bytes of %s ELF symbol table ]\n",
 		    (u_long)roundup(((char *)esymtab - (char *)symtab),
 		    sizeof(u_long)), name);
-		return (TRUE);
+		return (true);
 	}
 
-	return (FALSE);
+	return (false);
 
  badheader:
 	printf("[ %s ELF symbol table not valid ]\n", name);
-	return (FALSE);
+	return (false);
 }
 
 /*
@@ -347,7 +347,7 @@ db_elf_symbol_values(db_symtab_t *symtab, db_sym_t sym, char **namep,
  * Return the file and line number of the current program counter
  * if we can find the appropriate debugging symbol.
  */
-static boolean_t
+static bool
 db_elf_line_at_pc(symtab, cursym, filename, linenum, off)
 	db_symtab_t *symtab;
 	db_sym_t cursym;
@@ -359,14 +359,14 @@ db_elf_line_at_pc(symtab, cursym, filename, linenum, off)
 	/*
 	 * XXX We don't support this (yet).
 	 */
-	return (FALSE);
+	return (false);
 }
 
 /*
  * Returns the number of arguments to a function and their
  * names if we can find the appropriate debugging symbol.
  */
-static boolean_t
+static bool
 db_elf_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
     char **argnamep)
 {
@@ -374,7 +374,7 @@ db_elf_sym_numargs(db_symtab_t *symtab, db_sym_t cursym, int *nargp,
 	/*
 	 * XXX We don't support this (yet).
 	 */
-	return (FALSE);
+	return (false);
 }
 
 static void

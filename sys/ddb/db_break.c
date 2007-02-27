@@ -1,4 +1,4 @@
-/*	$NetBSD: db_break.c,v 1.23 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_break.c,v 1.23.4.1 2007/02/27 16:53:42 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.23 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_break.c,v 1.23.4.1 2007/02/27 16:53:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -156,7 +156,7 @@ db_find_breakpoint_here(db_addr_t addr)
 	return db_find_breakpoint(db_map_addr(addr), addr);
 }
 
-static boolean_t db_breakpoints_inserted = TRUE;
+static bool db_breakpoints_inserted = true;
 
 void
 db_set_breakpoints(void)
@@ -170,12 +170,12 @@ db_set_breakpoints(void)
 		     bkpt = bkpt->link)
 			if (db_map_current(bkpt->map)) {
 				bkpt->bkpt_inst = db_get_value(bkpt->address,
-				    BKPT_SIZE, FALSE);
+				    BKPT_SIZE, false);
 				db_put_value(bkpt->address,
 				    BKPT_SIZE,
 				    BKPT_SET(bkpt->bkpt_inst, bkpt->address));
 			}
-		db_breakpoints_inserted = TRUE;
+		db_breakpoints_inserted = true;
 	}
 }
 
@@ -192,7 +192,7 @@ db_clear_breakpoints(void)
 			if (db_map_current(bkpt->map))
 			    db_put_value(bkpt->address, BKPT_SIZE,
 				bkpt->bkpt_inst);
-		db_breakpoints_inserted = FALSE;
+		db_breakpoints_inserted = false;
 	}
 }
 
@@ -224,7 +224,7 @@ db_list_breakpoints(void)
 /* Delete breakpoint */
 /*ARGSUSED*/
 void
-db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_delete_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 
@@ -234,7 +234,7 @@ db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 /* Set breakpoint with skip count */
 /*ARGSUSED*/
 void
-db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_breakpoint_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 
@@ -247,7 +247,7 @@ db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 /* list breakpoints */
 /*ARGSUSED*/
 void
-db_listbreak_cmd(db_expr_t addr, int have_addr,
+db_listbreak_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
@@ -262,7 +262,7 @@ db_listbreak_cmd(db_expr_t addr, int have_addr,
  *	(or both) may be null.
  */
 
-boolean_t
+bool
 db_map_equal(struct vm_map *map1, struct vm_map *map2)
 {
 
@@ -271,7 +271,7 @@ db_map_equal(struct vm_map *map1, struct vm_map *map2)
 		((map1 == kernel_map) && (map2 == NULL)));
 }
 
-boolean_t
+bool
 db_map_current(struct vm_map *map)
 {
 #if 0

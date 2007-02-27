@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.9 2006/02/25 00:58:35 wiz Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.9.20.1 2007/02/27 16:51:04 yamt Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9 2006/02/25 00:58:35 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.9.20.1 2007/02/27 16:51:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2240,7 +2240,7 @@ fmpyaddDasm(const struct inst *i, OFS ofs, union insn w)
 }
 
 vaddr_t
-db_disasm(vaddr_t loc, boolean_t flag)
+db_disasm(vaddr_t loc, bool flag)
 {
 	const struct inst *i;
 	const struct majoropcode *m;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.44 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: ld.c,v 1.44.2.1 2007/02/27 16:53:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.44 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.44.2.1 2007/02/27 16:53:48 yamt Exp $");
 
 #include "rnd.h"
 
@@ -78,6 +78,7 @@ static void	ldminphys(struct buf *bp);
 static void	ldshutdown(void *);
 static void	ldstart(struct ld_softc *, struct buf *);
 static void	ld_set_properties(struct ld_softc *);
+static void	ld_config_interrupts (struct device *);
 
 extern struct	cfdriver ld_cd;
 
@@ -166,7 +167,7 @@ ldattach(struct ld_softc *sc)
 	bufq_alloc(&sc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
 
 	/* Discover wedges on this disk. */
-	dkwedge_discover(&sc->sc_dk);
+	config_interrupts(&sc->sc_dv, ld_config_interrupts);
 }
 
 int
@@ -886,4 +887,11 @@ ld_set_properties(struct ld_softc *ld)
 	ld->sc_dk.dk_info = disk_info;
 	if (odisk_info)
 		prop_object_release(odisk_info);
+}
+
+static void
+ld_config_interrupts (struct device *d)
+{
+	struct ld_softc *sc = (struct ld_softc *)d;
+	dkwedge_discover(&sc->sc_dk);
 }

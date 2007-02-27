@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.165 2007/02/10 11:32:21 ad Exp $
+	$NetBSD: syscalls.master,v 1.165.2.1 2007/02/27 16:54:32 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -654,7 +654,7 @@
 320	STD MPSAFE	{ int sys__lwp_park(const struct timespec *ts, \
 				struct __ucontext *ucp, const void *hint); }
 321	STD MPSAFE	{ int sys__lwp_unpark(lwpid_t target, const void *hint); }
-322	STD MPSAFE	{ size_t sys__lwp_unpark_all(const lwpid_t *targets, \
+322	STD MPSAFE	{ ssize_t sys__lwp_unpark_all(const lwpid_t *targets, \
 				size_t ntargets, const void *hint); }
 ; Syscalls 323-339 reserved for LWP syscalls.
 323	UNIMPL

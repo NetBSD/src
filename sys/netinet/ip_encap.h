@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.10 2005/12/10 23:36:23 elad Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.10.26.1 2007/02/27 16:54:55 yamt Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ const struct encaptab *encap_attach(int, int, const struct sockaddr *,
 const struct encaptab *encap_attach_func(int, int,
 	int (*)(struct mbuf *, int, int, void *),
 	const struct protosw *, void *);
-void	encap6_ctlinput(int, struct sockaddr *, void *);
+void	encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
 void	*encap_getarg(struct mbuf *);
 #endif

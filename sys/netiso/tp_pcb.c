@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.32 2006/09/03 06:55:56 christos Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.32.8.1 2007/02/27 16:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.32 2006/09/03 06:55:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.32.8.1 2007/02/27 16:55:12 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -897,7 +897,8 @@ struct que {
 u_short         tp_unique;
 
 int
-tp_tselinuse(int tlen, caddr_t tsel, struct sockaddr_iso *siso, int reuseaddr)
+tp_tselinuse(int tlen, const char *tsel, struct sockaddr_iso *siso,
+    int reuseaddr)
 {
 	struct tp_pcb  *b = tp_bound_pcbs.next, *l = tp_listeners;
 	struct tp_pcb *t;
@@ -935,7 +936,7 @@ tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	struct tp_pcb *tpcb = v;
 	struct sockaddr_iso *siso = 0;
 	int             tlen = 0, wrapped = 0;
-	caddr_t         tsel = NULL;
+	const char *tsel = NULL;
 	u_short         tutil;
 
 	if (tpcb->tp_state != TP_CLOSED)
@@ -984,7 +985,7 @@ tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 				switch (siso->siso_family) {
 #ifdef ISO
 				case AF_ISO:
-					bcopy(tsel, TSEL(siso), tlen);
+					memcpy(WRITABLE_TSEL(siso), tsel, tlen);
 					siso->siso_tlen = tlen;
 					break;
 #endif

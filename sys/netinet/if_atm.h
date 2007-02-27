@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.9 2005/12/10 23:36:23 elad Exp $       */
+/*      $NetBSD: if_atm.h,v 1.9.26.1 2007/02/27 16:54:52 yamt Exp $       */
 
 /*
  *
@@ -40,7 +40,7 @@
  */
 
 void atm_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
-int atmresolve(struct rtentry *, struct mbuf *, struct sockaddr *,
+int atmresolve(struct rtentry *, struct mbuf *, const struct sockaddr *,
 		struct atm_pseudohdr *);
 
 #endif /* !_NETINET_IF_ATM_H_ */

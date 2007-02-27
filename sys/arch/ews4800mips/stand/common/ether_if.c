@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_if.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: ether_if.c,v 1.1.28.1 2007/02/27 16:50:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -66,10 +66,10 @@ int ether_get(struct iodesc *, void *, size_t, time_t);
 int ether_put(struct iodesc *, void *, size_t);
 void ether_end(struct netif *);
 
-extern boolean_t lance_init(void);
+extern bool lance_init(void);
 extern void lance_eaddr(uint8_t *);
-extern boolean_t lance_get(void *, size_t);
-extern boolean_t lance_put(void *, size_t);
+extern bool lance_get(void *, size_t);
+extern bool lance_put(void *, size_t);
 
 struct netif_stats ether_stats[1];
 

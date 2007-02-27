@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.52 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.52.2.1 2007/02/27 16:51:36 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.52 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.52.2.1 2007/02/27 16:51:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ struct i386_frame {
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_kdintr_symbol_value = 0;
-boolean_t	db_trace_symbols_found = FALSE;
+bool		db_trace_symbols_found = FALSE;
 
 #if 0
 static void
@@ -357,7 +357,7 @@ db_nextframe(
 	return 1;
 }
 
-static boolean_t
+static bool
 db_intrstack_p(const void *vp)
 {
 	const struct cpu_info *ci;
@@ -378,7 +378,7 @@ db_intrstack_p(const void *vp)
 }
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		     const char *modif, void (*pr)(const char *, ...))
 {
 	int *frame, *lastframe;
@@ -386,8 +386,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	int		*argp;
 	db_addr_t	callpc;
 	int		is_trap;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	bool		kernel_only = TRUE;
+	bool		trace_thread = FALSE;
+	bool		lwpaddr = FALSE;
 
 #if 0
 	if (!db_trace_symbols_found)
@@ -399,6 +400,10 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		char c;
 
 		while ((c = *cp++) != 0) {
+			if (c == 'a') {
+				lwpaddr = TRUE;
+				trace_thread = TRUE;
+			}
 			if (c == 't')
 				trace_thread = TRUE;
 			if (c == 'u')
@@ -414,14 +419,21 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			struct proc *p;
 			struct user *u;
 			struct lwp *l;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
 			}
-			l = proc_representative_lwp(p, NULL, 0); /* XXX NJWLWP */
-			if (!(l->l_flag & L_INMEM)) {
+			(*pr)("lid %d ", l->l_lid);
+			if (!(l->l_flag & LW_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}
@@ -429,12 +441,12 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			if (p == curproc && l == curlwp) {
 				frame = (int *)ddb_regs.tf_ebp;
 				callpc = (db_addr_t)ddb_regs.tf_eip;
-				(*pr)(" at %p\n", frame);
+				(*pr)("at %p\n", frame);
 			} else {
 				frame = (int *)u->u_pcb.pcb_ebp;
 				callpc = (db_addr_t)
 				    db_get_value((int)(frame + 1), 4, FALSE);
-				(*pr)(" at %p\n", frame);
+				(*pr)("at %p\n", frame);
 				frame = (int *)*frame; /* XXXfvdl db_get_value? */
 			}
 		} else {

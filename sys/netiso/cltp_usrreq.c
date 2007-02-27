@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.30 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.30.4.1 2007/02/27 16:55:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.30 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.30.4.1 2007/02/27 16:55:08 yamt Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -108,7 +108,8 @@ cltp_input(struct mbuf *m0, ...)
 		switch (*up) {	/* process options */
 		case CLTPOVAL_SRC:
 			src->siso_tlen = up[1];
-			src->siso_len = up[1] + TSEL(src) - (caddr_t) src;
+			src->siso_len = up[1] +
+			    ((const char *)TSEL(src) - (const char *)src);
 			if (src->siso_len < sizeof(*src))
 				src->siso_len = sizeof(*src);
 			else if (src->siso_len > sizeof(*src)) {
@@ -119,7 +120,7 @@ cltp_input(struct mbuf *m0, ...)
 				src = mtod(m_src, struct sockaddr_iso *);
 				bcopy((caddr_t) srcsa, (caddr_t) src, srcsa->sa_len);
 			}
-			bcopy((caddr_t) up + 2, TSEL(src), up[1]);
+			bcopy((caddr_t) up + 2, WRITABLE_TSEL(src), up[1]);
 			up += 2 + src->siso_tlen;
 			continue;
 
@@ -185,16 +186,16 @@ cltp_notify(isop)
 void
 cltp_ctlinput(
     int cmd,
-    struct sockaddr *sa,
+    const struct sockaddr *sa,
     void *dummy)
 {
-	struct sockaddr_iso *siso;
+	const struct sockaddr_iso *siso;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 	if (sa->sa_family != AF_ISO && sa->sa_family != AF_CCITT)
 		return;
-	siso = satosiso(sa);
+	siso = satocsiso(sa);
 	if (siso == 0 || siso->siso_nlen == 0)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.12 2006/12/15 21:18:53 joerg Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.12.2.1 2007/02/27 16:54:51 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.12 2006/12/15 21:18:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.12.2.1 2007/02/27 16:54:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,13 +267,13 @@ ddp_input(m, ifp, elh, phase)
 			m_freem(m);
 			return;
 		}
-		if (satosat(&forwro.ro_dst)->sat_addr.s_net != to.sat_addr.s_net ||
-		    satosat(&forwro.ro_dst)->sat_addr.s_node != to.sat_addr.s_node)
+		if (satocsat(rtcache_getdst(&forwro))->sat_addr.s_net != to.sat_addr.s_net ||
+		    satocsat(rtcache_getdst(&forwro))->sat_addr.s_node != to.sat_addr.s_node)
 			rtcache_free(&forwro);
 		else
 			rtcache_check(&forwro);
 		if (forwro.ro_rt == NULL) {
-			bzero(&forwro.ro_dst, sizeof(struct sockaddr_at));
+			memset(&forwro.ro_dst, 0, sizeof(struct sockaddr_at));
 			forwro.ro_dst.sa_len = sizeof(struct sockaddr_at);
 			forwro.ro_dst.sa_family = AF_APPLETALK;
 			satosat(&forwro.ro_dst)->sat_addr.s_net =
@@ -283,7 +283,7 @@ ddp_input(m, ifp, elh, phase)
 			rtcache_init(&forwro);
 		}
 		if (to.sat_addr.s_net !=
-		    satosat(&forwro.ro_dst)->sat_addr.s_net &&
+		    satocsat(rtcache_getdst(&forwro))->sat_addr.s_net &&
 		    ddpe.deh_hops == DDP_MAXHOPS) {
 			m_freem(m);
 			return;

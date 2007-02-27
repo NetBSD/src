@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2006/10/30 17:52:12 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.4.1 2007/02/27 16:52:51 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2006/10/30 17:52:12 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.4.1 2007/02/27 16:52:51 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -932,7 +932,7 @@ pmap_pte_insert(int ptegidx, struct pte *pvo_pt)
  */
 
 int
-pmap_pte_spill(struct pmap *pm, vaddr_t addr, boolean_t exec)
+pmap_pte_spill(struct pmap *pm, vaddr_t addr, bool exec)
 {
 	struct pvo_entry *source_pvo, *victim_pvo, *next_pvo;
 	struct pvo_entry *pvo;
@@ -1745,7 +1745,7 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		 * If this is a kernel page, make sure it's active.
 		 */
 		if (pm == pmap_kernel()) {
-			i = pmap_pte_spill(pm, va, FALSE);
+			i = pmap_pte_spill(pm, va, false);
 			KASSERT(i);
 		}
 	}
@@ -2122,7 +2122,7 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pvo_entry *pvo;
@@ -2149,7 +2149,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 				    (~(batu & BAT_BL) << 15) & ~0x1ffffL;
 				if (pap)
 					*pap = (batl & mask) | (va & ~mask);
-				return TRUE;
+				return true;
 			}
 		} else {
 			register_t batu = battable[va >> 23].batu;
@@ -2161,15 +2161,15 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 				    (~(batl & BAT601_BSM) << 17) & ~0x1ffffL;
 				if (pap)
 					*pap = (batl & mask) | (va & ~mask);
-				return TRUE;
+				return true;
 			} else if (SR601_VALID_P(sr) &&
 				   SR601_PA_MATCH_P(sr, va)) {
 				if (pap)
 					*pap = va;
-				return TRUE;
+				return true;
 			}
 		}
-		return FALSE;
+		return false;
 #elif defined (PPC_OEA64_BRIDGE)
 	panic("%s: pm: %s, va: 0x%08lx\n", __FUNCTION__, 
 		(pm == pmap_kernel() ? "kernel" : "user"), va);
@@ -2394,7 +2394,7 @@ pmap_deactivate(struct lwp *l)
 {
 }
 
-boolean_t
+bool
 pmap_query_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_entry *pvo;
@@ -2402,7 +2402,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 	register_t msr;
 
 	if (pmap_attr_fetch(pg) & ptebit)
-		return TRUE;
+		return true;
 
 	msr = pmap_interrupts_off();
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
@@ -2415,7 +2415,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 			pmap_attr_save(pg, ptebit);
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
 			pmap_interrupts_restore(msr);
-			return TRUE;
+			return true;
 		}
 	}
 	/*
@@ -2438,15 +2438,15 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 				pmap_attr_save(pg, ptebit);
 				PMAP_PVO_CHECK(pvo);		/* sanity check */
 				pmap_interrupts_restore(msr);
-				return TRUE;
+				return true;
 			}
 		}
 	}
 	pmap_interrupts_restore(msr);
-	return FALSE;
+	return false;
 }
 
-boolean_t
+bool
 pmap_clear_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_head *pvoh = vm_page_to_pvoh(pg);
@@ -2828,7 +2828,7 @@ pmap_pool_ualloc(struct pool *pp, int flags)
 		SIMPLEQ_REMOVE_HEAD(&pmap_upvop_head, pvop_link);
 		return pvop;
 	}
-	if (uvm.page_init_done != TRUE) {
+	if (uvm.page_init_done != true) {
 		return (void *) uvm_pageboot_alloc(PAGE_SIZE);
 	}
 	return pmap_pool_malloc(pp, flags);
@@ -2906,7 +2906,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	int npgs, bank;
 	struct vm_physseg *ps;
 
-	if (uvm.page_init_done == TRUE)
+	if (uvm.page_init_done == true)
 		panic("pmap_steal_memory: called _after_ bootstrap");
 
 	*vstartp = VM_MIN_KERNEL_ADDRESS;

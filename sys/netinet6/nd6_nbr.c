@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.69 2007/01/29 06:20:43 dyoung Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.69.2.1 2007/02/27 16:55:05 yamt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.69 2007/01/29 06:20:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.69.2.1 2007/02/27 16:55:05 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -462,7 +462,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 			dst_sa.sin6_addr = ip6->ip6_dst;
 
 			src = in6_selectsrc(&dst_sa, NULL,
-			    NULL, &ro, NULL, NULL, &error);
+			    NULL, (struct route *)&ro, NULL, NULL, &error);
 			if (src == NULL) {
 				nd6log((LOG_DEBUG,
 				    "nd6_ns_output: source can't be "
@@ -939,7 +939,8 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	 * Select a source whose scope is the same as that of the dest.
 	 */
 	ro.ro_dst = dst_sa;
-	src = in6_selectsrc(&dst_sa, NULL, NULL, &ro, NULL, NULL, &error);
+	src = in6_selectsrc(&dst_sa, NULL, NULL, (struct route *)&ro, NULL,
+	    NULL, &error);
 	if (src == NULL) {
 		nd6log((LOG_DEBUG, "nd6_na_output: source can't be "
 		    "determined: dst=%s, error=%d\n",

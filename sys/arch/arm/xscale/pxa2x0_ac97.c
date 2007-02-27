@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ac97.c,v 1.3 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: pxa2x0_ac97.c,v 1.3.26.1 2007/02/27 16:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -265,7 +265,7 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 	KASSERT(sc->sc_irqcookie != NULL);
 
 	/* Make sure the AC97 clock is enabled */
-	pxa2x0_clkman_config(CKEN_AC97, TRUE);
+	pxa2x0_clkman_config(CKEN_AC97, true);
 	delay(100);
 	pxa2x0_gpio_set_function(31, GPIO_CLR | GPIO_ALT_FN_2_OUT);
 	pxa2x0_gpio_set_function(30, GPIO_CLR | GPIO_ALT_FN_2_OUT);
@@ -283,7 +283,7 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
 	if (acu_wait_gsr(sc, GSR_PCR)) {
 		acu_reg_write(sc, AC97_GCR, 0);
 		delay(100);
-		pxa2x0_clkman_config(CKEN_AC97, FALSE);
+		pxa2x0_clkman_config(CKEN_AC97, false);
 		bus_space_unmap(sc->sc_bust, sc->sc_bush, pxa->pxa_size);
 		aprint_error("%s: Primary codec not ready\n",
 		    sc->sc_dev.dv_xname);
@@ -309,7 +309,7 @@ pxaacu_attach(struct device *parent, struct device *self, void *aux)
  fail:
 		acu_reg_write(sc, AC97_GCR, 0);
 		delay(100);
-		pxa2x0_clkman_config(CKEN_AC97, FALSE);
+		pxa2x0_clkman_config(CKEN_AC97, false);
 		bus_space_unmap(sc->sc_bust, sc->sc_bush, pxa->pxa_size);
 		return;
 	}
@@ -593,7 +593,7 @@ acu_set_params(void *arg, int setmode, int usemode,
 
 		fil = (mode == AUMODE_PLAY) ? pfil : rfil;
 		err = auconv_set_converter(acu_formats, ACU_NFORMATS,
-		    mode, p, TRUE, fil);
+		    mode, p, true, fil);
 		if (err < 0)
 			return (EINVAL);
 
@@ -826,10 +826,10 @@ acu_trigger_output(void *arg, void *start, void *end, int blksize,
 	dx->dx_peripheral = DMAC_PERIPH_AC97AUDIOTX;
 	dx->dx_flow = DMAC_FLOW_CTRL_DEST;
 	dx->dx_loop_notify = blksize;
-	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = FALSE;
+	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = false;
 	dx->dx_desc[DMAC_DESC_SRC].xd_nsegs = ad->ad_nsegs;
 	dx->dx_desc[DMAC_DESC_SRC].xd_dma_segs = ad->ad_segs;
-	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = TRUE;
+	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = true;
 	dx->dx_desc[DMAC_DESC_DST].xd_nsegs = 1;
 	dx->dx_desc[DMAC_DESC_DST].xd_dma_segs = &sc->sc_dr;
 
@@ -882,10 +882,10 @@ acu_trigger_input(void *arg, void *start, void *end, int blksize,
 	dx->dx_peripheral = DMAC_PERIPH_AC97AUDIORX;
 	dx->dx_flow = DMAC_FLOW_CTRL_SRC;
 	dx->dx_loop_notify = blksize;
-	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = FALSE;
+	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = false;
 	dx->dx_desc[DMAC_DESC_DST].xd_nsegs = ad->ad_nsegs;
 	dx->dx_desc[DMAC_DESC_DST].xd_dma_segs = ad->ad_segs;
-	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = TRUE;
+	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = true;
 	dx->dx_desc[DMAC_DESC_SRC].xd_nsegs = 1;
 	dx->dx_desc[DMAC_DESC_SRC].xd_dma_segs = &sc->sc_dr;
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.3 2006/12/15 21:18:53 joerg Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.3.6.1 2007/02/27 16:54:55 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -93,12 +93,11 @@ int
 ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 {
 	struct etherip_softc *sc = (struct etherip_softc*)ifp->if_softc;
-	struct sockaddr_in *dst, *sin_src, *sin_dst;
+	struct sockaddr_in *sin_src, *sin_dst;
 	struct ip iphdr;        /* capsule IP header, host byte ordered */
 	struct etherip_header eiphdr;
 	int proto, error;
 
-	dst = (struct sockaddr_in *)&sc->sc_ro.ro_dst;
 	sin_src = (struct sockaddr_in *)sc->sc_src;
 	sin_dst = (struct sockaddr_in *)sc->sc_dst;
 
@@ -153,13 +152,15 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		m = m_pullup(m, sizeof(struct ip));
 	memcpy(mtod(m, struct ip *), &iphdr, sizeof(struct ip));
 
-	if (dst->sin_family != sin_dst->sin_family ||
-	    !in_hosteq(dst->sin_addr, sin_dst->sin_addr))
+	if (rtcache_getdst(&sc->sc_ro)->sa_family != sin_dst->sin_family ||
+	    !in_hosteq(satocsin(rtcache_getdst(&sc->sc_ro))->sin_addr,
+	               sin_dst->sin_addr))
 		rtcache_free(&sc->sc_ro);
 	else
 		rtcache_check(&sc->sc_ro);
 
 	if (sc->sc_ro.ro_rt == NULL) {
+		struct sockaddr_in *dst = satosin(&sc->sc_ro.ro_dst);
 		memset(dst, 0, sizeof(struct sockaddr_in));
 		dst->sin_family = sin_dst->sin_family;
 		dst->sin_len    = sizeof(struct sockaddr_in);

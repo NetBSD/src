@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.18 2006/12/22 23:25:28 rumble Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.18.2.1 2007/02/27 16:52:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -195,9 +195,9 @@ struct hpc_dma_desc {
 
 #define HPC3_ENETR_DMACFG	0x00001018	/* Recv: DMA configururation */
 
-#define	HPC3_ENETR_DMACFG_D1	0x0000f		/* DMA D1 state cycles */
-#define	HPC3_ENETR_DMACFG_D2	0x000f0		/* DMA D2 state cycles */
-#define	HPC3_ENETR_DMACFG_D3	0x00f00		/* DMA D3 state cycles */
+#define	HPC3_ENETR_DMACFG_D1(_x) (((_x) << 0) & 0x000f)	/* D1 gio_clk cycles */
+#define	HPC3_ENETR_DMACFG_D2(_x) (((_x) << 4) & 0x00f0)	/* D2 gio_clk cycles */
+#define	HPC3_ENETR_DMACFG_D3(_x) (((_x) << 8) & 0x0f00)	/* D3 gio_clk cycles */
 #define	HPC3_ENETR_DMACFG_WRCTL	0x01000		/* Enable IPG write */
 
 /*
@@ -205,11 +205,15 @@ struct hpc_dma_desc {
  * don't set them, the Seeq gets wonky pretty often.
  */
 #define	HPC3_ENETR_DMACFG_FIX_RXDC 0x02000	/* Clear EOP bits on RXDC */
-#define	HPC3_ENETR_DMACFG_FIX_EOP 0x04000	/* Enable rxintr timeout */
+#define	HPC3_ENETR_DMACFG_FIX_EOP  0x04000	/* Enable rxintr timeout */
 #define	HPC3_ENETR_DMACFG_FIX_INTR 0x08000	/* Enable EOP timeout */
-#define	HPC3_ENETR_DMACFG_TIMO	0x30000		/* Timeout for above two */
+#define	HPC3_ENETR_DMACFG_TIMEOUT  0x30000	/* Timeout value for above two*/
 
 #define HPC3_ENETR_PIOCFG	0x0000101c	/* Recv: PIO configururation */
+
+#define HPC3_ENETR_PIOCFG_P1(_x) (((_x) << 0) & 0x000f)	/* P1 gio_clk cycles */
+#define HPC3_ENETR_PIOCFG_P2(_x) (((_x) << 4) & 0x00f0)	/* P2 gio_clk cycles */
+#define HPC3_ENETR_PIOCFG_P3(_x) (((_x) << 8) & 0x0f00)	/* P3 gio_clk cycles */
 
 #define HPC3_ENETX_CBP		0x00002000	/* Xmit: Current buffer ptr */
 #define HPC3_ENETX_NDBP		0x00002004	/* Xmit: Next descriptor ptr */

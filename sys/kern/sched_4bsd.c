@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.7 2007/02/26 09:18:09 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.8 2007/02/27 16:54:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.7 2007/02/26 09:18:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.8 2007/02/27 16:54:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -319,7 +319,7 @@ schedcpu(void *arg)
 		mutex_enter(&p->p_smutex);
 		runtm = p->p_rtime.tv_sec;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if ((l->l_flag & L_IDLE) != 0)
+			if ((l->l_flag & LW_IDLE) != 0)
 				continue;
 			lwp_lock(l);
 			runtm += l->l_rtime.tv_sec;
@@ -385,7 +385,7 @@ schedcpu(void *arg)
 			p->p_estcpu = decay_cpu(loadfac, p->p_estcpu);
 
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-				if ((l->l_flag & L_IDLE) != 0)
+				if ((l->l_flag & LW_IDLE) != 0)
 					continue;
 				lwp_lock(l);
 				if (l->l_slptime <= 1 &&
@@ -487,7 +487,7 @@ resetpriority(struct lwp *l)
 	/* XXXSMP LOCK_ASSERT(mutex_owned(&p->p_stmutex)); */
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
-	if ((l->l_flag & L_SYSTEM) != 0)
+	if ((l->l_flag & LW_SYSTEM) != 0)
 		return;
 
 	newpriority = PUSER + (p->p_estcpu >> ESTCPU_SHIFT) +
@@ -539,7 +539,7 @@ sched_clock(struct lwp *l)
 	lwp_lock(l);
 	resetpriority(l);
 	mutex_spin_exit(&p->p_stmutex);
-	if ((l->l_flag & L_SYSTEM) == 0 && l->l_priority >= PUSER)
+	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_priority >= PUSER)
 		l->l_priority = l->l_usrpri;
 	lwp_unlock(l);
 }
@@ -579,33 +579,6 @@ sched_proc_exit(struct proc *parent, struct proc *child)
 		parent->p_estcpu =
 		    ESTCPULIM(parent->p_estcpu + child->p_estcpu - estcpu);
 	mutex_spin_exit(&parent->p_stmutex);
-}
-
-/*
- * sched_changepri:
- *
- *	Adjust the priority of an LWP.
- */
-void
-sched_changepri(struct lwp *l, int pri)
-{
-
-	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
-
-	l->l_usrpri = pri;
-
-	if (l->l_priority < PUSER)
-		return;
-	if (l->l_stat != LSRUN || (l->l_flag & L_INMEM) == 0 ||
-	    (l->l_priority / PPQ) == (pri / PPQ)) {
-		l->l_priority = pri;
-		return;
-	}
-
-	sched_dequeue(l);
-	l->l_priority = pri;
-	sched_enqueue(l);
-	resched_cpu(l, pri);
 }
 
 /*
@@ -697,7 +670,7 @@ sched_enqueue(struct lwp *l)
 {
 	struct prochd*rq;
 	struct lwp *prev;
-	const int whichq = l->l_priority / PPQ;
+	const int whichq = lwp_eprio(l) / PPQ;
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 
@@ -730,7 +703,7 @@ void
 sched_dequeue(struct lwp *l)
 {
 	struct lwp *prev, *next;
-	const int whichq = l->l_priority / PPQ;
+	const int whichq = lwp_eprio(l) / PPQ;
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
 

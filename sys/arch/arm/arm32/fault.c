@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.63 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: fault.c,v 1.63.2.1 2007/02/27 16:49:20 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.63 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.63.2.1 2007/02/27 16:49:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,9 +174,9 @@ static inline void
 call_trapsignal(struct lwp *l, ksiginfo_t *ksi)
 {
 
-	KERNEL_PROC_LOCK(l);
+	KERNEL_LOCK(1, l);
 	TRAPSIGNAL(l, ksi);
-	KERNEL_PROC_UNLOCK(l);
+	KERNEL_UNLOCK_LAST(l);
 }
 
 static inline int

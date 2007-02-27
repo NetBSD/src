@@ -1,4 +1,4 @@
-/*	$NetBSD: umidireg.h,v 1.4 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: umidireg.h,v 1.4.26.1 2007/02/27 16:54:08 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -43,6 +43,13 @@
 /* Jack Type */
 #define UMIDI_EMBEDDED	0x01
 #define UMIDI_EXTERNAL	0x02
+
+/* generic, for iteration */
+typedef struct {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+} UPACKED umidi_cs_descriptor_t;
 
 typedef struct {
 	uByte		bLength;

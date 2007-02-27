@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.c,v 1.1 2006/04/07 14:21:37 cherry Exp $	*/
+/*	$NetBSD: stackframe.c,v 1.1.26.1 2007/02/27 16:51:56 yamt Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains routines to use decoded unwind descriptor entries
@@ -37,7 +37,7 @@ void buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 	uint64_t unwindstart, unwindend;
 	uint64_t unwindlen;
 	uint64_t region_len = 0;
-	boolean_t region_type = FALSE; /* Prologue */
+	bool region_type = FALSE; /* Prologue */
 
 	struct unwind_hdr_t {
 		uint64_t uwh;
@@ -937,7 +937,7 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 	char *spill_mask = NULL;	/* Specifies when preserved registers are spilled, as a bit mask */
 
 	spill_mask = NULL;
-	boolean_t rtype;
+	bool rtype;
 
 	unwind_rsp = recordstack; /* Start with bottom of staterecord stack. */
 

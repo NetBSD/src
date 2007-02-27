@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: lance.c,v 1.1.28.1 2007/02/27 16:50:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -64,38 +64,38 @@ struct {
 	uint8_t rxdata[RX_BUFSIZE] __attribute__((__aligned__(0x1000)));
 } lance_mem __attribute__((__aligned__(64)));
 
-boolean_t lance_init(void);
+bool lance_init(void);
 void lance_eaddr(uint8_t *);
-boolean_t lance_get(void *, size_t);
-boolean_t lance_put(void *, size_t);
+bool lance_get(void *, size_t);
+bool lance_put(void *, size_t);
 
 void lance_setup(void);
-boolean_t lance_set_initblock(struct leinit *);
-boolean_t lacne_do_initialize(void);
+bool lance_set_initblock(struct leinit *);
+bool lacne_do_initialize(void);
 
-boolean_t lance_test(void);
-boolean_t lance_internal_loopback_test(boolean_t);
-void lance_internal_loopback_setup(boolean_t);
+bool lance_test(void);
+bool lance_internal_loopback_test(bool);
+void lance_internal_loopback_setup(bool);
 void lance_internal_loopback_testdata(void);
-boolean_t lance_internal_loopback_data_check(boolean_t);
-boolean_t __poll_interrupt(void);
-boolean_t __poll_lance_c0(uint16_t);
+bool lance_internal_loopback_data_check(bool);
+bool __poll_interrupt(void);
+bool __poll_lance_c0(uint16_t);
 
-boolean_t
+bool
 lance_init(void)
 {
 
 	lance_setup();
 
 	if (!lance_set_initblock(&lance_mem.leinit))
-		return FALSE;
+		return false;
 
 	if (!lacne_do_initialize())
-		return FALSE;
+		return false;
 
 	*LANCE_RDP = LE_C0_STRT;
 
-	return TRUE;
+	return true;
 }
 
 void
@@ -107,7 +107,7 @@ lance_eaddr(uint8_t *p)
 		p[i] = lance_mem.eaddr[i];
 }
 
-boolean_t
+bool
 lance_get(void *data, size_t len)
 {
 	static int current;
@@ -136,7 +136,7 @@ lance_get(void *data, size_t len)
 	printf("%s: %d [%d,%d] %d\n", __FUNCTION__, len, start, end, n);
 #endif
 	if (start < 0 || end < 0)
-		return FALSE;
+		return false;
 
 	for (i = start; i <= end; i++) {
 		rmd = &lance_mem.lermd[(current + i) & 0x7];
@@ -151,10 +151,10 @@ lance_get(void *data, size_t len)
 	}
 	current = (current + i) & 0x7;
 
-	return TRUE;
+	return true;
 }
 
-boolean_t
+bool
 lance_put(void *data, size_t len)
 {
 	static int current;
@@ -199,11 +199,11 @@ lance_put(void *data, size_t len)
 			r = *LANCE_RDP;
 			if (r & LE_C0_ERR) {
 				printf("Error. CSR0=%x\n", r);
-				return FALSE;
+				return false;
 			}
 			if (j++ > 0xa0000) {
 				printf("Timeout CSR0=%x\n", r);
-				return FALSE;
+				return false;
 			}
 		} while ((r & (LE_C0_TINT | LE_C0_INTR)) == 0);
 
@@ -214,15 +214,15 @@ lance_put(void *data, size_t len)
 		uint8_t *bits = &lance_mem.letmd[i].tmd1_bits;
 		if (*bits & LE_T1_OWN || *bits & LE_T1_ERR) {
 			printf("desc%d not transmitted. cause=%x\n", i, *bits);
-			return FALSE;
+			return false;
 		}
 		*bits = 0;
 	}
 
-	return TRUE;
+	return true;
 }
 
-boolean_t
+bool
 lance_set_initblock(struct leinit *leinit)
 {
 	uint16_t test_data[] = { 0xffff, 0xaaaa, 0x5555, 0x0000 };
@@ -279,14 +279,14 @@ lance_set_initblock(struct leinit *leinit)
 
 	*LANCE_RDP = LE_C3_BSWP | LE_C3_BCON;
 
-	return TRUE;
+	return true;
 
  reg_rw_error:
 	printf("LANCE register r/w error.\n");
-	return FALSE;
+	return false;
 }
 
-boolean_t
+bool
 lacne_do_initialize(void)
 {
 
@@ -296,10 +296,10 @@ lacne_do_initialize(void)
 
 	/* Wait interrupt */
 	if (!__poll_interrupt())
-		return FALSE;
+		return false;
 	*LANCE_RDP = *LANCE_RDP;
 
-	return TRUE;
+	return true;
 }
 
 void
@@ -363,32 +363,32 @@ lance_setup(void)
 /*
  * Internal loopback test.
  */
-boolean_t
+bool
 lance_test(void)
 {
 
 	/* Internal loop back test. (no CRC) */
-	if (!lance_internal_loopback_test(FALSE))
-		return FALSE;
+	if (!lance_internal_loopback_test(false))
+		return false;
 
 	/* Internal loop back test. (with CRC) */
-	if (!lance_internal_loopback_test(TRUE))
-		return FALSE;
+	if (!lance_internal_loopback_test(true))
+		return false;
 
-	return TRUE;
+	return true;
 }
 
-boolean_t
-lance_internal_loopback_test(boolean_t crc)
+bool
+lance_internal_loopback_test(bool crc)
 {
 
 	lance_internal_loopback_setup(crc);
 
 	if (!lance_set_initblock(&lance_mem.leinit))
-		return FALSE;
+		return false;
 
 	if (!lacne_do_initialize())
-		return FALSE;
+		return false;
 
 	/* Transmit Start */
 	*LANCE_RAP = LE_CSR0;	/* Control and status register */
@@ -399,7 +399,7 @@ lance_internal_loopback_test(boolean_t crc)
 }
 
 void
-lance_internal_loopback_setup(boolean_t crc)
+lance_internal_loopback_setup(bool crc)
 {
 	struct leinit *init = &lance_mem.leinit;
 	struct lermd *lermd = lance_mem.lermd;
@@ -487,8 +487,8 @@ lance_internal_loopback_testdata(void)
 	}
 }
 
-boolean_t
-lance_internal_loopback_data_check(boolean_t crc_check)
+bool
+lance_internal_loopback_data_check(bool crc_check)
 {
 	uint32_t *p = (uint32_t *)lance_mem.txdata;
 	uint32_t *q = (uint32_t *)lance_mem.rxdata;
@@ -538,19 +538,19 @@ lance_internal_loopback_data_check(boolean_t crc_check)
 		p += 9;	/* 36byte skip */
 		q += 9;
 	}
-	return TRUE;
+	return true;
  timeout_error:
 	printf("LANCE timeout.\n");
-	return FALSE;
+	return false;
  tx_rx_error:
 	printf("LANCE Tx/Rx data error.\n");
-	return FALSE;
+	return false;
  crc_error:
 	printf("LANCE CRC error.\n");
-	return FALSE;
+	return false;
 }
 
-boolean_t
+bool
 __poll_interrupt(void)
 {
 	int j;
@@ -562,13 +562,13 @@ __poll_interrupt(void)
 	}
 	if (j == 0x10000) {
 		printf ("interrupt timeout.\n");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
-boolean_t
+bool
 __poll_lance_c0(uint16_t r)
 {
 	int j;
@@ -578,10 +578,10 @@ __poll_lance_c0(uint16_t r)
 			break;
 	if (j == 0x60000) {
 		printf("lance CSR0 %x != %x\n", *LANCE_RDP, r);
-		return FALSE;
+		return false;
 	}
 
 	*LANCE_RDP = (LE_C0_RINT | LE_C0_TINT| LE_C0_INEA) & r;
 
-	return TRUE;
+	return true;
 }

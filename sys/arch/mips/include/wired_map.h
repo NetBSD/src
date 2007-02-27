@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.2 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.2.28.1 2007/02/27 16:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tadpole Computer Inc.
@@ -93,11 +93,11 @@ extern int mips3_nwired_page;
 /*
  * Wire down a region of the specified size.
  */
-boolean_t mips3_wired_enter_region(vaddr_t, paddr_t, vsize_t);
+bool	mips3_wired_enter_region(vaddr_t, paddr_t, vsize_t);
 
 /*
  * Wire down a single page using specified page size.
  */
-boolean_t mips3_wired_enter_page(vaddr_t, paddr_t, vsize_t);
+bool	mips3_wired_enter_page(vaddr_t, paddr_t, vsize_t);
 
 #endif	/* _MIPS_WIRED_MAP_H */

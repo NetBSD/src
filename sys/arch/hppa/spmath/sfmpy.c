@@ -1,4 +1,4 @@
-/*	$NetBSD: sfmpy.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: sfmpy.c,v 1.3.26.1 2007/02/27 16:51:28 yamt Exp $	*/
 
 /*	$OpenBSD: sfmpy.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfmpy.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfmpy.c,v 1.3.26.1 2007/02/27 16:51:28 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -58,7 +58,7 @@ unsigned int *status;
 {
 	register unsigned int opnd1, opnd2, opnd3, result;
 	register int dest_exponent, count;
-	register int inexact = FALSE, guardbit = FALSE, stickybit = FALSE;
+	register int inexact = false, guardbit = false, stickybit = false;
 	int is_tiny;
 
 	opnd1 = *srcptr1;
@@ -287,7 +287,7 @@ unsigned int *status;
 			}
 			return(OVERFLOWEXCEPTION);
 		}
-		inexact = TRUE;
+		inexact = true;
 		Set_overflowflag();
 		/* set result to infinity or largest number */
 		Sgl_setoverflow(result);
@@ -312,14 +312,14 @@ unsigned int *status;
 		}
 
 		/* Determine if should set underflow flag */
-		is_tiny = TRUE;
+		is_tiny = true;
 		if (dest_exponent == 0 && inexact) {
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
 				if (Sgl_iszero_sign(result)) {
 					Sgl_increment(opnd3);
 					if (Sgl_isone_hiddenoverflow(opnd3))
-						is_tiny = FALSE;
+						is_tiny = false;
 					Sgl_decrement(opnd3);
 				}
 				break;
@@ -327,7 +327,7 @@ unsigned int *status;
 				if (Sgl_isone_sign(result)) {
 					Sgl_increment(opnd3);
 					if (Sgl_isone_hiddenoverflow(opnd3))
-						is_tiny = FALSE;
+						is_tiny = false;
 					Sgl_decrement(opnd3);
 				}
 				break;
@@ -336,7 +336,7 @@ unsigned int *status;
 				    Sgl_isone_lowmantissa(opnd3))) {
 					Sgl_increment(opnd3);
 					if (Sgl_isone_hiddenoverflow(opnd3))
-						is_tiny = FALSE;
+						is_tiny = false;
 					Sgl_decrement(opnd3);
 				}
 				break;

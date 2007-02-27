@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.114 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.114.2.1 2007/02/27 16:54:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.114 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.114.2.1 2007/02/27 16:54:21 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -519,7 +519,7 @@ ktrsyscall(struct lwp *l, register_t code, register_t realcode,
 
 	argsize = callp[code].sy_argsize;
 #ifdef _LP64
-	if (p->p_flag & P_32)
+	if (p->p_flag & PK_32)
 		argsize = argsize << 1;
 #endif
 	len = sizeof(struct ktr_syscall) + argsize;
@@ -688,7 +688,7 @@ ktrcsw(struct lwp *l, int out, int user)
 	 * Don't record context switches resulting from blocking on 
 	 * locks; it's too easy to get duff results.
 	 */
-	if (l->l_syncobj == &turnstile_syncobj)
+	if (l->l_syncobj == &mutex_syncobj || l->l_syncobj == &rw_syncobj)
 		return;
 
 	/*
@@ -1244,7 +1244,7 @@ again:
 		break;
 
 	case EWOULDBLOCK:
-		kpause("ktrzzz", FALSE, 1, NULL);
+		kpause("ktrzzz", false, 1, NULL);
 		goto again;
 
 	default:

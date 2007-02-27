@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.18 2006/12/22 23:36:42 rumble Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.18.2.1 2007/02/27 16:52:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wayne Knowles
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.18 2006/12/22 23:36:42 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.18.2.1 2007/02/27 16:52:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdsc.c,v 1.18 2006/12/22 23:36:42 rumble Exp $");
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/machtype.h>
+#include <machine/sysconf.h>
 
 #include <sgimips/hpc/hpcvar.h>
 #include <sgimips/hpc/hpcreg.h>
@@ -91,15 +92,42 @@ int	wdsc_dmaintr	(void *);
 int	wdsc_scsiintr	(void *);
 
 /*
- * Match for SCSI devices on the onboard WD33C93 chip
+ * Match for SCSI devices on the onboard and GIO32 adapter WD33C93 chips
  */
 int
 wdsc_match(struct device *pdp, struct cfdata *cf, void *auxp)
 {
 	struct hpc_attach_args *haa = auxp;
 
-	if (strcmp(haa->ha_name, cf->cf_name) == 0)
-		return (1);
+	if (strcmp(haa->ha_name, cf->cf_name) == 0) {
+		uint32_t reset, asr, reg;
+
+		reset = MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_dmaoff +
+		    haa->hpc_regs->scsi0_ctl);
+		asr = MIPS_PHYS_TO_KSEG1(haa->ha_sh + haa->ha_devoff);
+
+		/* XXX: hpc1 offset due to SGIMIPS_BUS_SPACE_HPC brain damage */
+		asr = (asr + 3) & ~0x3;
+
+		if (platform.badaddr((void *)reset, sizeof(reset)))
+			return (0);
+
+		*(volatile uint32_t *)reset = haa->hpc_regs->scsi_dmactl_reset;
+		delay(1000);
+		*(volatile uint32_t *)reset = 0x0;
+
+		if (platform.badaddr((void *)asr, sizeof(asr)))
+			return (0);
+
+		reg = *(volatile uint32_t *)asr;
+		if (haa->hpc_regs->revision == 3) {
+			if ((reg & 0xff) == SBIC_ASR_INT)
+				return (1);
+		} else {
+			if (((reg >> 8) & 0xff) == SBIC_ASR_INT)
+				return (1);
+		}
+	}
 
 	return (0);
 }

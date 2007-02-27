@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.h,v 1.16 2006/05/25 14:27:28 yamt Exp $	*/
+/*	$NetBSD: uvm_km.h,v 1.16.12.1 2007/02/27 16:55:26 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@ void uvm_km_init(vaddr_t, vaddr_t);
 void uvm_km_pgremove(vaddr_t, vaddr_t);
 void uvm_km_pgremove_intrsafe(vaddr_t, vaddr_t);
 #if defined(DEBUG)
-void uvm_km_check_empty(vaddr_t, vaddr_t, boolean_t);
+void uvm_km_check_empty(vaddr_t, vaddr_t, bool);
 #else
 #define	uvm_km_check_empty(a, b, c)	/* nothing */
 #endif /* defined(DEBUG) */

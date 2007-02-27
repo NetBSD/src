@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 2006/05/10 06:24:02 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.35.14.1 2007/02/27 16:49:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35 2006/05/10 06:24:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35.14.1 2007/02/27 16:49:33 yamt Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -249,6 +249,11 @@ cpu_lwp_free(struct lwp *l, int proc)
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
 	}
 #endif	/* STACKCHECKS */
+}
+
+void
+cpu_lwp_free2(struct lwp *l)
+{
 }
 
 void

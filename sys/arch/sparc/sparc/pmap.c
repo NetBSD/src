@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.307 2005/12/24 23:24:02 perry Exp $ */
+/*	$NetBSD: pmap.c,v 1.307.26.1 2007/02/27 16:53:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307 2005/12/24 23:24:02 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.307.26.1 2007/02/27 16:53:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -615,12 +615,12 @@ static void  mmu_setup4m_L3(int, struct segmap *);
 
 /* function pointer declarations */
 /* from pmap.h: */
-boolean_t	(*pmap_clear_modify_p)(struct vm_page *);
-boolean_t	(*pmap_clear_reference_p)(struct vm_page *);
+bool		(*pmap_clear_modify_p)(struct vm_page *);
+bool		(*pmap_clear_reference_p)(struct vm_page *);
 int		(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
-boolean_t	(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
-boolean_t	(*pmap_is_modified_p)(struct vm_page *);
-boolean_t	(*pmap_is_referenced_p)(struct vm_page *);
+bool		(*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
+bool		(*pmap_is_modified_p)(struct vm_page *);
+bool		(*pmap_is_referenced_p)(struct vm_page *);
 void		(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
 void		(*pmap_kremove_p)(vaddr_t, vsize_t);
 void		(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);
@@ -948,7 +948,7 @@ pgt_page_free(struct pool *pp, void *v)
 {
 	vaddr_t va;
 	paddr_t pa;
-	boolean_t rv;
+	bool rv;
 
 	va = (vaddr_t)v;
 	rv = pmap_extract(pmap_kernel(), va, &pa);
@@ -5453,7 +5453,7 @@ pmap_changeprot4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags)
 	int pte, newprot;
 	struct regmap *rp;
 	struct segmap *sp;
-	boolean_t owired;
+	bool owired;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_CHANGEPROT)
@@ -6272,7 +6272,7 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 	int error = 0;
 	struct regmap *rp;
 	struct segmap *sp;
-	boolean_t owired;
+	bool owired;
 
 #ifdef DEBUG
 	if (KERNBASE < va)
@@ -6346,7 +6346,7 @@ pmap_enu4m(struct pmap *pm, vaddr_t va, vm_prot_t prot, int flags,
 
 	sp = &rp->rg_segmap[vs];
 
-	owired = FALSE;
+	owired = false;
 	if ((pte = sp->sg_pte) == NULL) {
 		/* definitely a new mapping */
 		int i;
@@ -6602,14 +6602,14 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	int vr, vs, *ptep;
 	struct regmap *rp;
 	struct segmap *sp;
-	boolean_t owired;
+	bool owired;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 	rp = &pm->pm_regmap[vr];
 	sp = &rp->rg_segmap[vs];
 
-	owired = FALSE;
+	owired = false;
 	if (CPU_HAS_SUNMMU) {
 		ptep = &sp->sg_pte[VA_VPG(va)];
 		owired = *ptep & PG_WIRED;
@@ -6645,7 +6645,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
  */
 
 #if defined(SUN4) || defined(SUN4C)
-boolean_t
+bool
 pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
 {
 	int vr, vs;
@@ -6661,7 +6661,7 @@ pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid segment (%d)\n", vr);
 #endif
-		return (FALSE);
+		return (false);
 	}
 	sp = &rp->rg_segmap[vs];
 	ptep = sp->sg_pte;
@@ -6670,7 +6670,7 @@ pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid segment\n");
 #endif
-		return (FALSE);
+		return (false);
 	}
 	pte = ptep[VA_VPG(va)];
 
@@ -6679,12 +6679,12 @@ pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		if (pmapdebug & PDB_FOLLOW)
 			printf("pmap_extract: invalid pte\n");
 #endif
-		return (FALSE);
+		return (false);
 	}
 	pte &= PG_PFNUM;
 	if (pap != NULL)
 		*pap = (pte << PGSHIFT) | (va & PGOFSET);
-	return (TRUE);
+	return (true);
 }
 #endif /* SUN4 || SUN4C */
 
@@ -6694,13 +6694,13 @@ pmap_extract4_4c(struct pmap *pm, vaddr_t va, paddr_t *pap)
  * with the given map/virtual_address pair.
  * GRR, the vm code knows; we should not have to do this!
  */
-boolean_t
+bool
 pmap_extract4m(struct pmap *pm, vaddr_t va, paddr_t *pap)
 {
 	struct regmap *rp;
 	struct segmap *sp;
 	int pte;
-	int vr, vs, s, v = FALSE;
+	int vr, vs, s, v = false;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
@@ -6758,7 +6758,7 @@ pmap_extract4m(struct pmap *pm, vaddr_t va, paddr_t *pap)
 		*pap = ptoa((pte & SRMMU_PPNMASK) >> SRMMU_PPNSHIFT) |
 		    VA_OFF(va);
 
-	v = TRUE;
+	v = true;
 out:
 	if (pm != pmap_kernel())
 		simple_unlock(&pm->pm_lock);
@@ -6851,10 +6851,10 @@ pmap_collect(struct pmap *pm)
 /*
  * Clear the modify bit for the given physical page.
  */
-boolean_t
+bool
 pmap_clear_modify4_4c(struct vm_page *pg)
 {
-	boolean_t rv;
+	bool rv;
 
 	(void) pv_syncflags4_4c(pg);
 	rv = VM_MDPAGE_PVHEAD(pg)->pv_flags & PV_MOD;
@@ -6865,7 +6865,7 @@ pmap_clear_modify4_4c(struct vm_page *pg)
 /*
  * Tell whether the given physical page has been modified.
  */
-boolean_t
+bool
 pmap_is_modified4_4c(struct vm_page *pg)
 {
 
@@ -6876,10 +6876,10 @@ pmap_is_modified4_4c(struct vm_page *pg)
 /*
  * Clear the reference bit for the given physical page.
  */
-boolean_t
+bool
 pmap_clear_reference4_4c(struct vm_page *pg)
 {
-	boolean_t rv;
+	bool rv;
 
 	(void) pv_syncflags4_4c(pg);
 	rv = VM_MDPAGE_PVHEAD(pg)->pv_flags & PV_REF;
@@ -6890,7 +6890,7 @@ pmap_clear_reference4_4c(struct vm_page *pg)
 /*
  * Tell whether the given physical page has been referenced.
  */
-boolean_t
+bool
 pmap_is_referenced4_4c(struct vm_page *pg)
 {
 
@@ -6913,10 +6913,10 @@ pmap_is_referenced4_4c(struct vm_page *pg)
 /*
  * Clear the modify bit for the given physical page.
  */
-boolean_t
+bool
 pmap_clear_modify4m(struct vm_page *pg)
 {
-	boolean_t rv;
+	bool rv;
 
 	(void) pv_syncflags4m(pg);
 	rv = VM_MDPAGE_PVHEAD(pg)->pv_flags & PV_MOD4M;
@@ -6927,7 +6927,7 @@ pmap_clear_modify4m(struct vm_page *pg)
 /*
  * Tell whether the given physical page has been modified.
  */
-boolean_t
+bool
 pmap_is_modified4m(struct vm_page *pg)
 {
 
@@ -6938,10 +6938,10 @@ pmap_is_modified4m(struct vm_page *pg)
 /*
  * Clear the reference bit for the given physical page.
  */
-boolean_t
+bool
 pmap_clear_reference4m(struct vm_page *pg)
 {
-	boolean_t rv;
+	bool rv;
 
 	(void) pv_syncflags4m(pg);
 	rv = VM_MDPAGE_PVHEAD(pg)->pv_flags & PV_REF4M;
@@ -6952,7 +6952,7 @@ pmap_clear_reference4m(struct vm_page *pg)
 /*
  * Tell whether the given physical page has been referenced.
  */
-int
+bool
 pmap_is_referenced4m(struct vm_page *pg)
 {
 

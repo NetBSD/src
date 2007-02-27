@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.12 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.12.26.1 2007/02/27 16:52:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.12 2005/12/11 12:18:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.12.26.1 2007/02/27 16:52:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,11 +107,11 @@ static struct arcbios_fv arcemu_v = {
  * Establish our emulated ARCBIOS vector or return ARCBIOS failure.
  */
 int
-arcemu_init()
+arcemu_init(char **env)
 {
 	switch (arcemu_identify()) {
 	case MACH_SGI_IP12:
-		arcemu_ip12_init();
+		arcemu_ip12_init(env);
 		break;
 
 	default:
@@ -169,6 +169,19 @@ static struct arcemu_ip12_nvramdata {
 	uint8_t enaddr[6];
 } ip12nvram;
 static char ip12enaddr[18];
+
+static struct arcemu_ip12env {
+	char dbaud[5];
+	char rbaud[5];
+	char bootmode;
+	char console;
+	char diskless;
+	char volume[4];
+	char cpufreq[3];
+	char gfx[32];
+	char netaddr[32];
+	char dlserver[32];
+} ip12env;
 
 static void
 arcemu_ip12_eeprom_read()
@@ -233,8 +246,9 @@ arcemu_ip12_eeprom_read()
 }
 
 static void
-arcemu_ip12_init()
+arcemu_ip12_init(char **env)
 {
+	int i;
 
 	arcemu_v.GetPeer =		  arcemu_ip12_GetPeer;
 	arcemu_v.GetChild =		  arcemu_ip12_GetChild;
@@ -246,6 +260,40 @@ arcemu_ip12_init()
 
 	cn_tab = &arcemu_ip12_cn;
 	arcemu_ip12_eeprom_read();
+
+	memset(&ip12env, 0, sizeof(ip12env));
+	for (i = 0; env[i] != NULL; i++) {
+		if (strncasecmp(env[i], "dbaud=", 6) == 0)
+			strlcpy(ip12env.dbaud, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.dbaud));
+		else if (strncasecmp(env[i], "rbaud=", 6) == 0)
+			strlcpy(ip12env.rbaud, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.rbaud));
+		else if (strncasecmp(env[i], "bootmode=", 9) == 0)
+			strlcpy(&ip12env.bootmode, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.bootmode));
+		else if (strncasecmp(env[i], "console=", 8) == 0)
+			strlcpy(&ip12env.console, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.console));
+		else if (strncasecmp(env[i], "diskless=", 9) == 0)
+			strlcpy(&ip12env.diskless, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.diskless));
+		else if (strncasecmp(env[i], "volume=", 7) == 0)
+			strlcpy(ip12env.volume, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.volume));
+		else if (strncasecmp(env[i], "cpufreq=", 8) == 0)
+			strlcpy(ip12env.cpufreq, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.cpufreq));
+		else if (strncasecmp(env[i], "gfx=", 4) == 0)
+			strlcpy(ip12env.gfx, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.gfx));
+		else if (strncasecmp(env[i], "netaddr=", 8) == 0)
+			strlcpy(ip12env.netaddr, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.netaddr));
+		else if (strncasecmp(env[i], "dlserver=", 9) == 0)
+			strlcpy(ip12env.dlserver, strchr(env[i], '=') + 1,
+			    sizeof(ip12env.dlserver));
+	}
 
 	strcpy(arcbios_system_identifier, "SGI-IP12");
 	strcpy(arcbios_sysid_vendor, "SGI");
@@ -290,6 +338,10 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 
 	/* XXX This does not indicate the actual current console */
 	if (strcasecmp("ConsoleOut", var) == 0) {
+		/* if no keyboard is attached, we should default to serial */
+		if (strstr(ip12env.gfx, "dead") != NULL)
+			return "serial(0)";
+
 		switch (ip12nvram.console) {
 		case 'd':
 		case 'D':
@@ -306,15 +358,23 @@ arcemu_ip12_GetEnvironmentVariable(const char *var)
 		}
 	}
 
-	/* Not super-important.  My IP12 is 33MHz ;p */ 
-	if (strcasecmp("cpufreq", var) == 0)
-		return ("33");
+	if (strcasecmp("cpufreq", var) == 0) {
+		if (ip12env.cpufreq[0] != '\0')
+			return (ip12env.cpufreq);
+		else
+			return ("33");
+	}
 
 	if (strcasecmp("dbaud", var) == 0)
 		return (ip12nvram.lbaud);
 
 	if (strcasecmp("eaddr", var) == 0)
 		return (ip12enaddr);
+
+	if (strcasecmp("gfx", var) == 0) {
+		if (ip12env.gfx[0] != '\0')
+			return (ip12env.gfx);
+	}
 
 	/* makebootdev() can handle "dksc(a,b,c)/netbsd", etc already */
 	if (strcasecmp("OSLoadPartition", var) == 0)

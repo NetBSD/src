@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.17 2006/05/11 01:14:55 mrg Exp $	*/
+/*	$NetBSD: iso.h,v 1.17.14.1 2007/02/27 16:55:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -159,7 +159,17 @@ struct sockaddr_iso {
 #define siso_nlen siso_addr.isoa_len
 #define siso_data siso_addr.isoa_genaddr
 
-#define TSEL(s) ((caddr_t)((s)->siso_data + (s)->siso_nlen))
+static inline void *
+WRITABLE_TSEL(struct sockaddr_iso *siso)
+{
+	return &siso->siso_data[siso->siso_nlen];
+}
+
+static inline const char *
+TSEL(const struct sockaddr_iso *siso)
+{
+	return &siso->siso_data[siso->siso_nlen];
+}
 
 #define SAME_ISOADDR(a, b) \
 	(bcmp((a)->siso_data, (b)->siso_data, (unsigned)(a)->siso_nlen)==0)
@@ -182,6 +192,7 @@ extern struct domain isodomain;
 extern const struct protosw isosw[];
 
 #define	satosiso(sa)	((struct sockaddr_iso *)(sa))
+#define	satocsiso(sa)	((const struct sockaddr_iso *)(sa))
 #define	sisotosa(siso)	((struct sockaddr *)(siso))
 
 #else

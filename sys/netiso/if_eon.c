@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.55 2007/01/29 06:55:41 dyoung Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.55.2.1 2007/02/27 16:55:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.55 2007/01/29 06:55:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.55.2.1 2007/02/27 16:55:10 yamt Exp $");
 
 #include "opt_eon.h"
 
@@ -332,17 +332,17 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
  *
  */
 int
-eonoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sdst,
+eonoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sdst,
 	struct rtentry *rt)
 {
-	struct sockaddr_iso *dst = (struct sockaddr_iso *)sdst;
+	const struct sockaddr_iso *dst = (const struct sockaddr_iso *)sdst;
 	struct eon_llinfo *el;
 	struct eon_iphdr *ei;
 	struct route   *ro;
 	int             datalen;
 	struct mbuf    *mh;
 	int             error = 0, class = 0, alen = 0;
-	caddr_t         ipaddrloc = NULL;
+	const u_char *ipaddrloc = NULL;
 	static struct eon_iphdr eon_iphdr;
 	static struct route route;
 
@@ -355,18 +355,19 @@ eonoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *sdst,
 	ifp->if_opackets++;
 	if (rt == NULL || (el = (struct eon_llinfo *)rt->rt_llinfo) == NULL) {
 		if (dst->siso_family == AF_LINK) {
-			struct sockaddr_dl *sdl = (struct sockaddr_dl *) dst;
+			const struct sockaddr_dl *sdl =
+			    (const struct sockaddr_dl *)dst;
 
-			ipaddrloc = LLADDR(sdl);
+			ipaddrloc = CLLADDR(sdl);
 			alen = sdl->sdl_alen;
 		} else if (dst->siso_family == AF_ISO &&
 			   dst->siso_data[0] == AFI_SNA) {
 			alen = dst->siso_nlen - 1;
-			ipaddrloc = (caddr_t) dst->siso_data + 1;
+			ipaddrloc = (const char *)dst->siso_data + 1;
 		}
 		switch (alen) {
 		case 5:
-			class = 4[(u_char *) ipaddrloc];
+			class = ipaddrloc[4];
 		case 4:
 			ro = &route;
 			ei = &eon_iphdr;
@@ -566,13 +567,13 @@ eoninput(struct mbuf *m, ...)
 }
 
 void *
-eonctlinput(int cmd, struct sockaddr *sa, void *dummy)
+eonctlinput(int cmd, const struct sockaddr *sa, void *dummy)
 {
-	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_EON]) {
 		printf("eonctlinput: cmd 0x%x addr: ", cmd);
-		dump_isoaddr((struct sockaddr_iso *) sin);
+		dump_isoaddr((const struct sockaddr_iso *)sin);
 		printf("\n");
 	}
 #endif

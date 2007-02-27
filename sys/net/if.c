@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.180 2006/12/03 19:17:41 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.180.2.1 2007/02/27 16:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.180 2006/12/03 19:17:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.180.2.1 2007/02/27 16:54:39 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -205,7 +205,7 @@ ifinit(void)
 
 int
 if_nulloutput(struct ifnet *ifp, struct mbuf *m,
-    struct sockaddr *so, struct rtentry *rt)
+    const struct sockaddr *so, struct rtentry *rt)
 {
 
 	return (ENXIO);
@@ -1617,7 +1617,7 @@ ifconf(u_long cmd, caddr_t data)
 		    sizeof(ifr.ifr_name));
 		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
 			return ENAMETOOLONG;
-		if ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) == NULL) {
+		if (TAILQ_EMPTY(&ifp->if_addrlist)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (ifrp != NULL && space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
@@ -1629,7 +1629,7 @@ ifconf(u_long cmd, caddr_t data)
 			continue;
 		}
 
-		for (; ifa != 0; ifa = TAILQ_NEXT(ifa, ifa_list)) {
+		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #ifdef COMPAT_OSOCK
 			if (cmd == OSIOCGIFCONF) {

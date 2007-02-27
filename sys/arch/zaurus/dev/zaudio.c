@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudio.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: zaudio.c,v 1.2.8.1 2007/02/27 16:53:30 yamt Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -617,7 +617,7 @@ zaudio_set_params(void *hdl, int setmode, int usemode,
 
 		fil = (mode == AUMODE_PLAY) ? pfil : rfil;
 		i = auconv_set_converter(zaudio_formats, ZAUDIO_NFORMATS,
-					 mode, p, FALSE, fil);
+					 mode, p, false, fil);
 		if (i < 0)
 			return EINVAL;
 	}

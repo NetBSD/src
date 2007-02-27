@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.105.2.1 2007/02/17 10:30:56 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.105.2.2 2007/02/27 16:54:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.1 2007/02/17 10:30:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.105.2.2 2007/02/27 16:54:21 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -178,7 +178,7 @@ int simple_lock_debugger = 0;
 #define	SLOCK_DEBUGGER()	if (simple_lock_debugger && db_onpanic) Debugger()
 #define	SLOCK_TRACE()							\
 	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
-	    TRUE, 65535, "", lock_printf);
+	    true, 65535, "", lock_printf);
 #else
 #define	SLOCK_DEBUGGER()	/* nothing */
 #define	SLOCK_TRACE()		/* nothing */
@@ -424,7 +424,7 @@ transferlockers(struct lock *from, struct lock *to)
  * Initialize a lock; required before use.
  */
 void
-lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
+lockinit(struct lock *lkp, pri_t prio, const char *wmesg, int timo, int flags)
 {
 
 	memset(lkp, 0, sizeof(struct lock));
@@ -1528,6 +1528,9 @@ _kernel_lock(int nlocks, struct lwp *l)
 		return;
 	}
 
+	LOCKDEBUG_WANTLOCK(kernel_lock_id,
+	    (uintptr_t)__builtin_return_address(0), 0);
+
 	if (__cpu_simple_lock_try(&kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		LOCKDEBUG_LOCKED(kernel_lock_id,
@@ -1574,8 +1577,10 @@ _kernel_lock(int nlocks, struct lwp *l)
 	 * Again, another store fence is required (see kern_mutex.c).
 	 */
 	mb_write();
-	LOCKSTAT_EVENT(lsflag, &kernel_lock, LB_KERNEL_LOCK | LB_SPIN, 1,
-	    spintime);
+	if (owant == NULL) {
+		LOCKSTAT_EVENT(lsflag, &kernel_lock, LB_KERNEL_LOCK | LB_SPIN,
+		    1, spintime);
+	}
 	LOCKSTAT_EXIT(lsflag);
 }
 

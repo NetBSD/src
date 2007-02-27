@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.232 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.232.4.1 2007/02/27 16:55:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.232 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.232.4.1 2007/02/27 16:55:27 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -418,21 +418,21 @@ _uvm_map_check(struct vm_map *map, const char *name,
 int
 _uvm_map_sanity(struct vm_map *map)
 {
-	boolean_t first_free_found = FALSE;
-	boolean_t hint_found = FALSE;
+	bool first_free_found = false;
+	bool hint_found = false;
 	const struct vm_map_entry *e;
 
 	e = &map->header; 
 	for (;;) {
 		if (map->first_free == e) {
-			first_free_found = TRUE;
+			first_free_found = true;
 		} else if (!first_free_found && e->next->start > e->end) {
 			printf("first_free %p should be %p\n",
 			    map->first_free, e);
 			return -1;
 		}
 		if (map->hint == e) {
-			hint_found = TRUE;
+			hint_found = true;
 		}
 
 		e = e->next;
@@ -992,7 +992,7 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 	 */
 
 retry:
-	if (vm_map_lock_try(map) == FALSE) {
+	if (vm_map_lock_try(map) == false) {
 		if (flags & UVM_FLAG_TRYLOCK) {
 			return EAGAIN;
 		}
@@ -1421,12 +1421,12 @@ done:
  * => return value is true if address is in the returned entry
  */
 
-boolean_t
+bool
 uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
     struct vm_map_entry **entry	/* OUT */)
 {
 	struct vm_map_entry *cur;
-	boolean_t use_tree = FALSE;
+	bool use_tree = false;
 	UVMHIST_FUNC("uvm_map_lookup_entry");
 	UVMHIST_CALLED(maphist);
 
@@ -1466,17 +1466,17 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 			UVMHIST_LOG(maphist,"<- got it via hint (0x%x)",
 			    cur, 0, 0, 0);
 			uvm_mapent_check(*entry);
-			return (TRUE);
+			return (true);
 		}
 
 		if (map->nentries > 30)
-			use_tree = TRUE;
+			use_tree = true;
 	} else {
 
 		/*
 		 * invalid hint.  use tree.
 		 */
-		use_tree = TRUE;
+		use_tree = true;
 	}
 
 	uvm_map_check(map, __func__);
@@ -1524,7 +1524,7 @@ got:
 				KDASSERT((*entry)->start <= address);
 				KDASSERT(address < (*entry)->end);
 				uvm_mapent_check(*entry);
-				return (TRUE);
+				return (true);
 			}
 			break;
 		}
@@ -1537,7 +1537,7 @@ failed:
 	KDASSERT((*entry) == &map->header || (*entry)->end <= address);
 	KDASSERT((*entry)->next == &map->header ||
 	    address < (*entry)->next->start);
-	return (FALSE);
+	return (false);
 }
 
 /*
@@ -1961,7 +1961,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 * find first entry
 	 */
 
-	if (uvm_map_lookup_entry(map, start, &first_entry) == TRUE) {
+	if (uvm_map_lookup_entry(map, start, &first_entry) == true) {
 		/* clip and go... */
 		entry = first_entry;
 		UVM_MAP_CLIP_START(map, entry, start, umr);
@@ -2236,11 +2236,11 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	    UVM_ADV_RANDOM, UVM_FLAG_NOMERGE|flags)) != 0) {
 	    UVMHIST_LOG(maphist, "<- done (no VM)", 0,0,0,0);
-		return (FALSE);
+		return (false);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (*raddr=0x%x)", *raddr,0,0,0);
-	return (TRUE);
+	return (true);
 }
 
 /*
@@ -2248,7 +2248,7 @@ uvm_map_reserve(struct vm_map *map, vsize_t size,
  * real mappings.
  *
  * => caller must WRITE-LOCK the map
- * => we return TRUE if replacement was a success
+ * => we return true if replacement was a success
  * => we expect the newents chain to have nnewents entrys on it and
  *    we expect newents->prev to point to the last entry on the list
  * => note newents is allowed to be NULL
@@ -2267,7 +2267,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 */
 
 	if (!uvm_map_lookup_entry(map, start, &oldent)) {
-		return (FALSE);
+		return (false);
 	}
 
 	/*
@@ -2279,7 +2279,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	}
 	if (oldent->start != start || oldent->end != end ||
 	    oldent->object.uvm_obj != NULL || oldent->aref.ar_amap != NULL) {
-		return (FALSE);
+		return (false);
 	}
 
 #ifdef DIAGNOSTIC
@@ -2364,7 +2364,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 */
 
 	uvm_mapent_free(oldent);
-	return (TRUE);
+	return (true);
 }
 
 /*
@@ -2585,7 +2585,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	 *   0 => dstmap unlocked, NO pmap_copy, and we will "replace" in step 7
 	 */
 
-	if (srcmap == dstmap || vm_map_lock_try(dstmap) == TRUE) {
+	if (srcmap == dstmap || vm_map_lock_try(dstmap) == true) {
 		copy_ok = 1;
 		if (!uvm_map_replace(dstmap, dstaddr, dstaddr+len, chain,
 		    nchain)) {
@@ -2678,7 +2678,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		    nchain);
 		vm_map_unlock(dstmap);
 
-		if (error == FALSE) {
+		if (error == false) {
 			error = EIO;
 			goto bad2;
 		}
@@ -2797,7 +2797,7 @@ uvm_map_setup_kernel(struct vm_map_kernel *map,
 
 int
 uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
-    vm_prot_t new_prot, boolean_t set_max)
+    vm_prot_t new_prot, bool set_max)
 {
 	struct vm_map_entry *current, *entry;
 	int error = 0;
@@ -2897,7 +2897,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 		    old_prot == VM_PROT_NONE &&
 		    new_prot != VM_PROT_NONE) {
 			if (uvm_map_pageable(map, entry->start,
-			    entry->end, FALSE,
+			    entry->end, false,
 			    UVM_LK_ENTER|UVM_LK_EXIT) != 0) {
 
 				/*
@@ -3034,7 +3034,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
  * => regions specified as not pageable require lock-down (wired) memory
  *	and page tables.
  * => map must never be read-locked
- * => if islocked is TRUE, map is already write-locked
+ * => if islocked is true, map is already write-locked
  * => we always unlock the map, since we must downgrade to a read-lock
  *	to call uvm_fault_wire()
  * => XXXCDC: check this and try and clean it up.
@@ -3042,7 +3042,7 @@ uvm_map_advice(struct vm_map *map, vaddr_t start, vaddr_t end, int new_advice)
 
 int
 uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
-    boolean_t new_pageable, int lockflags)
+    bool new_pageable, int lockflags)
 {
 	struct vm_map_entry *entry, *start_entry, *failed_entry;
 	int rv;
@@ -3066,7 +3066,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 	 * making any changes.
 	 */
 
-	if (uvm_map_lookup_entry(map, start, &start_entry) == FALSE) {
+	if (uvm_map_lookup_entry(map, start, &start_entry) == false) {
 		if ((lockflags & UVM_LK_EXIT) == 0)
 			vm_map_unlock(map);
 
@@ -3544,7 +3544,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 	vm_map_lock_read(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
-	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
+	if (uvm_map_lookup_entry(map, start, &entry) == false) {
 		vm_map_unlock_read(map);
 		return EFAULT;
 	}
@@ -3690,7 +3690,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
  * => map must be read or write locked by caller.
  */
 
-boolean_t
+bool
 uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
     vm_prot_t protection)
 {
@@ -3698,12 +3698,12 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
 	struct vm_map_entry *tmp_entry;
 
 	if (!uvm_map_lookup_entry(map, start, &tmp_entry)) {
-		return (FALSE);
+		return (false);
 	}
 	entry = tmp_entry;
 	while (start < end) {
 		if (entry == &map->header) {
-			return (FALSE);
+			return (false);
 		}
 
 		/*
@@ -3711,7 +3711,7 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 */
 
 		if (start < entry->start) {
-			return (FALSE);
+			return (false);
 		}
 
 		/*
@@ -3719,12 +3719,12 @@ uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
 		 */
 
 		if ((entry->protection & protection) != protection) {
-			return (FALSE);
+			return (false);
 		}
 		start = entry->end;
 		entry = entry->next;
 	}
-	return (TRUE);
+	return (true);
 }
 
 /*
@@ -4528,7 +4528,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
 	struct vm_map_entry *prev;
 	vsize_t size;
 	int merged = 0;
-	boolean_t copying;
+	bool copying;
 	int newetype;
 
 	if (VM_MAP_USE_KMAPENT(map)) {
@@ -4640,7 +4640,7 @@ uvm_mapent_trymerge(struct vm_map *map, struct vm_map_entry *entry, int flags)
  */
 
 void
-uvm_map_printit(struct vm_map *map, boolean_t full,
+uvm_map_printit(struct vm_map *map, bool full,
     void (*pr)(const char *, ...))
 {
 	struct vm_map_entry *entry;
@@ -4676,7 +4676,7 @@ uvm_map_printit(struct vm_map *map, boolean_t full,
  */
 
 void
-uvm_object_printit(struct uvm_object *uobj, boolean_t full,
+uvm_object_printit(struct uvm_object *uobj, bool full,
     void (*pr)(const char *, ...))
 {
 	struct vm_page *pg;
@@ -4713,7 +4713,7 @@ static const char page_flagbits[] = UVM_PGFLAGBITS;
 static const char page_pqflagbits[] = UVM_PQFLAGBITS;
 
 void
-uvm_page_printit(struct vm_page *pg, boolean_t full,
+uvm_page_printit(struct vm_page *pg, bool full,
     void (*pr)(const char *, ...))
 {
 	struct vm_page *tpg;
@@ -4927,16 +4927,16 @@ vm_map_to_kernel(struct vm_map *map)
 	return (struct vm_map_kernel *)map;
 }
 
-boolean_t
+bool
 vm_map_starved_p(struct vm_map *map)
 {
 
 	if ((map->flags & VM_MAP_WANTVA) != 0) {
-		return TRUE;
+		return true;
 	}
 	/* XXX */
 	if ((vm_map_max(map) - vm_map_min(map)) / 16 * 15 < map->size) {
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }

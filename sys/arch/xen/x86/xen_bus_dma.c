@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.8 2006/09/03 19:04:20 bouyer Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.8.8.1 2007/02/27 16:53:29 yamt Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.8 2006/09/03 19:04:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.8.8.1 2007/02/27 16:53:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ static inline int get_order(unsigned long size)
 
 static int
 _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
-    struct pglist *mlistp, int flags)
+    struct pglist *mlistp, int flags, bus_addr_t low, bus_addr_t high)
 {
 	int order, i;
 	unsigned long npagesreq, npages, mfn;
@@ -138,7 +138,7 @@ _xen_alloc_contig(bus_size_t size, bus_size_t alignment, bus_size_t boundary,
 	res.extent_start = &mfn;
 	res.nr_extents = 1;
 	res.extent_order = order;
-	res.address_bits = 31;
+	res.address_bits = get_order(high) + PAGE_SHIFT;
 	res.domid = DOMID_SELF;
 	if (HYPERVISOR_memory_op(XENMEM_increase_reservation, &res) < 0) {
 #ifdef DEBUG
@@ -205,7 +205,7 @@ failed:
 		res.extent_start = &mfn;
 		res.nr_extents = 1;
 		res.extent_order = 0;
-		res.address_bits = 31;
+		res.address_bits = 32;
 		res.domid = DOMID_SELF;
 		if (HYPERVISOR_memory_op(XENMEM_increase_reservation, &res)
 		    < 0) {
@@ -277,7 +277,9 @@ again:
 	 */
 	m = mlist.tqh_first;
 	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = _BUS_VM_PAGE_TO_BUS(m);
+	curaddr = lastaddr = segs[curseg].ds_addr = _BUS_VM_PAGE_TO_BUS(m);
+	if (curaddr < low || curaddr >= high)
+		goto badaddr;
 	segs[curseg].ds_len = PAGE_SIZE;
 	m = m->pageq.tqe_next;
 	if ((segs[curseg].ds_addr & (alignment - 1)) != 0)
@@ -285,49 +287,16 @@ again:
 
 	for (; m != NULL; m = m->pageq.tqe_next) {
 		curaddr = _BUS_VM_PAGE_TO_BUS(m);
-		if ((lastaddr < low || lastaddr >= high) ||
-		    (curaddr < low || curaddr >= high)) {
-			/*
-			 * If machine addresses are outside the allowed
-			 * range we have to bail. Xen2 doesn't offer an
-			 * interface to get memory in a specific address
-			 * range.
-			 */
-			printf("_xen_bus_dmamem_alloc_range: no way to "
-			    "enforce address range\n");
-			uvm_pglistfree(&mlist);
-			return EINVAL;
-		}
+		if (curaddr < low || curaddr >= high)
+			goto badaddr;
 		if (curaddr == (lastaddr + PAGE_SIZE)) {
 			segs[curseg].ds_len += PAGE_SIZE;
-			if ((lastaddr & boundary) !=
-			    (curaddr & boundary))
+			if ((lastaddr & boundary) != (curaddr & boundary))
 				goto dorealloc;
 		} else {
 			curseg++;
-			if (curseg >= nsegs ||
-			    (curaddr & (alignment - 1)) != 0) {
-dorealloc:
-				if (doingrealloc == 1)
-					panic("_xen_bus_dmamem_alloc_range: "
-					   "xen_alloc_contig returned "
-					   "too much segments");
-				doingrealloc = 1;
-				/*
-				 * Too much segments. Free this memory and
-				 * get a contigous segment from the hypervisor.
-				 */
-				uvm_pglistfree(&mlist);
-				for (curseg = 0; curseg < nsegs; curseg++) {
-					segs[curseg].ds_addr = 0;
-					segs[curseg].ds_len = 0;
-				}
-				error = _xen_alloc_contig(size, alignment,
-				    boundary, &mlist, flags);
-				if (error)
-					return error;
-				goto again;
-			}
+			if (curseg >= nsegs || (curaddr & (alignment - 1)) != 0)
+				goto dorealloc;
 			segs[curseg].ds_addr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
@@ -335,6 +304,54 @@ dorealloc:
 	}
 
 	*rsegs = curseg + 1;
-
 	return (0);
+
+badaddr:
+#ifdef XEN3
+	if (doingrealloc == 0)
+		goto dorealloc;
+	if (curaddr < low) {
+		/* no way to enforce this */
+		printf("_xen_bus_dmamem_alloc_range: no way to "
+		    "enforce address range\n");
+		uvm_pglistfree(&mlist);
+		return EINVAL;
+	}
+	printf("xen_bus_dmamem_alloc_range: "
+	    "curraddr=0x%lx > high=0x%lx\n",
+	    (u_long)curaddr, (u_long)high);
+	panic("xen_bus_dmamem_alloc_range 1");
+#else /* !XEN3 */
+	/*
+	 * If machine addresses are outside the allowed
+	 * range we have to bail. Xen2 doesn't offer an
+	 * interface to get memory in a specific address
+	 * range.
+	 */
+	printf("_xen_bus_dmamem_alloc_range: no way to "
+	    "enforce address range\n");
+	uvm_pglistfree(&mlist);
+	return EINVAL;
+#endif /* XEN3 */
+dorealloc:
+	if (doingrealloc == 1)
+		panic("_xen_bus_dmamem_alloc_range: "
+		   "xen_alloc_contig returned "
+		   "too much segments");
+	doingrealloc = 1;
+	/*
+	 * Too much segments, or memory doesn't fit
+	 * constraints. Free this memory and
+	 * get a contigous segment from the hypervisor.
+	 */
+	uvm_pglistfree(&mlist);
+	for (curseg = 0; curseg < nsegs; curseg++) {
+		segs[curseg].ds_addr = 0;
+		segs[curseg].ds_len = 0;
+	}
+	error = _xen_alloc_contig(size, alignment,
+	    boundary, &mlist, flags, low, high);
+	if (error)
+		return error;
+	goto again;
 }

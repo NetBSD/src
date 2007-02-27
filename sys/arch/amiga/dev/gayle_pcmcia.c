@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.20 2006/03/30 04:06:42 chs Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.20.14.1 2007/02/27 16:49:00 yamt Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.20 2006/03/30 04:06:42 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.20.14.1 2007/02/27 16:49:00 yamt Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -129,7 +129,7 @@ pccard_attach(struct device *parent, struct device *myself, void *aux)
 	for (i = GAYLE_PCMCIA_START; i < GAYLE_PCMCIA_END; i += PAGE_SIZE)
 		pmap_enter(vm_map_pmap(kernel_map),
 		    i - GAYLE_PCMCIA_START + pcmcia_base, i,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, true);
 	pmap_update(vm_map_pmap(kernel_map));
 
 	/* override the one-byte access methods for I/O space */

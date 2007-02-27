@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.82 2006/12/27 17:59:08 alc Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.82.2.1 2007/02/27 16:55:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.82 2006/12/27 17:59:08 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.82.2.1 2007/02/27 16:55:28 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -154,7 +154,7 @@ uvm_wait(const char *wmsg)
 
 	simple_lock(&uvm.pagedaemon_lock);
 	wakeup(&uvm.pagedaemon);		/* wake the daemon! */
-	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, FALSE, wmsg,
+	UVM_UNLOCK_AND_WAIT(&uvmexp.free, &uvm.pagedaemon_lock, false, wmsg,
 	    timo);
 
 	splx(s);
@@ -243,7 +243,7 @@ uvm_pageout(void *arg)
 
 		UVMHIST_LOG(pdhist,"  <<SLEEPING>>",0,0,0,0);
 		UVM_UNLOCK_AND_WAIT(&uvm.pagedaemon,
-		    &uvm.pagedaemon_lock, FALSE, "pgdaemon", 0);
+		    &uvm.pagedaemon_lock, false, "pgdaemon", 0);
 		uvmexp.pdwoke++;
 		UVMHIST_LOG(pdhist,"  <<WOKE UP>>",0,0,0,0);
 
@@ -307,7 +307,7 @@ uvm_pageout(void *arg)
 		/*
 		 * free any cached u-areas we don't need
 		 */
-		uvm_uarea_drain(TRUE);
+		uvm_uarea_drain(true);
 
 	}
 	/*NOTREACHED*/
@@ -416,7 +416,7 @@ swapcluster_allocslots(struct swapcluster *swc)
 	/* Even with strange MAXPHYS, the shift
 	   implicitly rounds down to a page. */
 	npages = MAXPHYS >> PAGE_SHIFT;
-	slot = uvm_swap_alloc(&npages, TRUE);
+	slot = uvm_swap_alloc(&npages, true);
 	if (slot == 0) {
 		return ENOMEM;
 	}
@@ -458,7 +458,7 @@ swapcluster_add(struct swapcluster *swc, struct vm_page *pg)
 }
 
 static void
-swapcluster_flush(struct swapcluster *swc, boolean_t now)
+swapcluster_flush(struct swapcluster *swc, bool now)
 {
 	int slot;
 	int nused;
@@ -506,27 +506,27 @@ swapcluster_flush(struct swapcluster *swc, boolean_t now)
  * uvmpd_dropswap: free any swap allocated to this page.
  *
  * => called with owner locked.
- * => return TRUE if a page had an associated slot.
+ * => return true if a page had an associated slot.
  */
 
-static boolean_t
+static bool
 uvmpd_dropswap(struct vm_page *pg)
 {
-	boolean_t result = FALSE;
+	bool result = false;
 	struct vm_anon *anon = pg->uanon;
 
 	if ((pg->pqflags & PQ_ANON) && anon->an_swslot) {
 		uvm_swap_free(anon->an_swslot, 1);
 		anon->an_swslot = 0;
 		pg->flags &= ~PG_CLEAN;
-		result = TRUE;
+		result = true;
 	} else if (pg->pqflags & PQ_AOBJ) {
 		int slot = uao_set_swslot(pg->uobject,
 		    pg->offset >> PAGE_SHIFT, 0);
 		if (slot) {
 			uvm_swap_free(slot, 1);
 			pg->flags &= ~PG_CLEAN;
-			result = TRUE;
+			result = true;
 		}
 	}
 
@@ -536,17 +536,17 @@ uvmpd_dropswap(struct vm_page *pg)
 /*
  * uvmpd_trydropswap: try to free any swap allocated to this page.
  *
- * => return TRUE if a slot is successfully freed.
+ * => return true if a slot is successfully freed.
  */
 
-boolean_t
+bool
 uvmpd_trydropswap(struct vm_page *pg)
 {
 	struct simplelock *slock;
-	boolean_t result;
+	bool result;
 
 	if ((pg->flags & PG_BUSY) != 0) {
-		return FALSE;
+		return false;
 	}
 
 	/*
@@ -555,7 +555,7 @@ uvmpd_trydropswap(struct vm_page *pg)
 
 	slock = uvmpd_trylockowner(pg);
 	if (slock == NULL) {
-		return FALSE;
+		return false;
 	}
 
 	/*
@@ -564,7 +564,7 @@ uvmpd_trydropswap(struct vm_page *pg)
 
 	if ((pg->flags & PG_BUSY) != 0) {
 		simple_unlock(slock);
-		return FALSE;
+		return false;
 	}
 
 	result = uvmpd_dropswap(pg);
@@ -821,7 +821,7 @@ uvmpd_scan_queue(void)
 		}
 		simple_unlock(slock);
 
-		swapcluster_flush(&swc, FALSE);
+		swapcluster_flush(&swc, false);
 		uvm_lock_pageq();
 
 		/*
@@ -839,7 +839,7 @@ uvmpd_scan_queue(void)
 
 #if defined(VMSWAP)
 	uvm_unlock_pageq();
-	swapcluster_flush(&swc, TRUE);
+	swapcluster_flush(&swc, true);
 	uvm_lock_pageq();
 #endif /* defined(VMSWAP) */
 }
@@ -908,13 +908,13 @@ uvmpd_scan(void)
 /*
  * uvm_reclaimable: decide whether to wait for pagedaemon.
  *
- * => return TRUE if it seems to be worth to do uvm_wait.
+ * => return true if it seems to be worth to do uvm_wait.
  *
  * XXX should be tunable.
  * XXX should consider pools, etc?
  */
 
-boolean_t
+bool
 uvm_reclaimable(void)
 {
 	int filepages;
@@ -925,7 +925,7 @@ uvm_reclaimable(void)
 	 */
 
 	if (!uvm_swapisfull()) {
-		return TRUE;
+		return true;
 	}
 
 	/*
@@ -942,14 +942,14 @@ uvm_reclaimable(void)
 	uvm_estimatepageable(&active, &inactive);
 	if (filepages >= MIN((active + inactive) >> 4,
 	    5 * 1024 * 1024 >> PAGE_SHIFT)) {
-		return TRUE;
+		return true;
 	}
 
 	/*
 	 * kill the process, fail allocation, etc..
 	 */
 
-	return FALSE;
+	return false;
 }
 
 void

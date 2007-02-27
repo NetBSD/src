@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.19 2006/09/01 13:58:46 matt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.19.8.1 2007/02/27 16:52:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -74,7 +74,7 @@ extern db_regs_t	ddb_regs;	/* register state */
 /*
  * Interface to  disassembly (shared with mdb)
  */
-db_addr_t  db_disasm_insn(int insn, db_addr_t loc,  boolean_t altfmt);
+db_addr_t	db_disasm_insn(int insn, db_addr_t loc, bool altfmt);
 
 
 /*
@@ -99,14 +99,14 @@ typedef	mips_reg_t	kgdb_reg_t;
 
 #define inst_trap_return(ins)	((ins)&0)
 
-boolean_t inst_branch(int inst);
-boolean_t inst_call(int inst);
-boolean_t inst_return(int inst);
-boolean_t inst_load(int inst);
-boolean_t inst_store(int inst);
-boolean_t inst_unconditional_flow_transfer(int inst);
+bool	inst_branch(int inst);
+bool	inst_call(int inst);
+bool	inst_return(int inst);
+bool	inst_load(int inst);
+bool	inst_store(int inst);
+bool	inst_unconditional_flow_transfer(int inst);
 db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
-db_addr_t next_instr_address(db_addr_t pc, boolean_t bd);
+db_addr_t next_instr_address(db_addr_t pc, bool bd);
 
 /*
  * We have machine-dependent commands.

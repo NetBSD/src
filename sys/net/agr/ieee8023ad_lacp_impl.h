@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_impl.h,v 1.4 2006/10/29 22:14:14 yamt Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_impl.h,v 1.4.4.1 2007/02/27 16:54:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -62,7 +62,7 @@ struct lacp_aggregator {
 struct lacp_softc {
 	struct lacp_aggregator *lsc_active_aggregator;
 	TAILQ_HEAD(, lacp_aggregator) lsc_aggregators;
-	boolean_t lsc_suppress_distributing;
+	bool lsc_suppress_distributing;
 	struct callout lsc_transit_callout;
 };
 

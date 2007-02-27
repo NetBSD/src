@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.34 2006/10/01 20:31:50 elad Exp $ */
+/*	$NetBSD: txcom.c,v 1.34.4.1 2007/02/27 16:50:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.34 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.34.4.1 2007/02/27 16:50:55 yamt Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -145,7 +145,7 @@ void	txcomstart(struct tty *);
 int	txcomparam(struct tty *, struct termios *);
 
 void	txcom_reset	(struct txcom_chip *);
-int	txcom_enable	(struct txcom_chip *, boolean_t);
+int	txcom_enable	(struct txcom_chip *, bool);
 void	txcom_disable	(struct txcom_chip *);
 void	txcom_setmode	(struct txcom_chip *);
 void	txcom_setbaudrate(struct txcom_chip *);
@@ -328,7 +328,7 @@ txcom_reset(struct txcom_chip *chip)
 }
 
 int
-txcom_enable(struct txcom_chip *chip, boolean_t console)
+txcom_enable(struct txcom_chip *chip, bool console)
 {
 	tx_chipset_tag_t tc;
 	txreg_t reg;
@@ -577,7 +577,7 @@ txcom_cnattach(int slot, int speed, int cflag)
 	txcom_setmode(&txcom_chip);
 	txcom_setbaudrate(&txcom_chip);
 
-	if (txcom_enable(&txcom_chip, TRUE) != 0)
+	if (txcom_enable(&txcom_chip, true) != 0)
 		return 1;
 
 	return 0;
@@ -799,7 +799,7 @@ txcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	s = spltty();
 
-	if (txcom_enable(sc->sc_chip, FALSE)) {
+	if (txcom_enable(sc->sc_chip, false)) {
 		splx(s);
 		goto out;
 	}

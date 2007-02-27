@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.74 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.74.2.1 2007/02/27 16:55:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.74 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.74.2.1 2007/02/27 16:55:23 yamt Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -79,7 +79,7 @@ READ(void *v)
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
 	int error, flags, ioflag;
-	boolean_t usepc = FALSE;
+	bool usepc = false;
 
 	vp = ap->a_vp;
 	ip = VTOI(vp);
@@ -219,10 +219,10 @@ WRITE(void *v)
 	int extended=0;
 	void *win;
 	vsize_t bytelen;
-	boolean_t async;
-	boolean_t usepc = FALSE;
+	bool async;
+	bool usepc = false;
 #ifdef LFS_READWRITE
-	boolean_t need_unreserve = FALSE;
+	bool need_unreserve = false;
 #endif
 	struct ufsmount *ump;
 
@@ -292,7 +292,7 @@ WRITE(void *v)
 
 	usepc = vp->v_type == VREG;
 #ifdef LFS_READWRITE
-	async = TRUE;
+	async = true;
 	lfs_check(vp, LFS_UNUSED_LBN, 0);
 #endif /* !LFS_READWRITE */
 	if (!usepc)
@@ -327,7 +327,7 @@ WRITE(void *v)
 
 	ubc_alloc_flags = UBC_WRITE;
 	while (uio->uio_resid > 0) {
-		boolean_t extending; /* if we're extending a whole block */
+		bool extending; /* if we're extending a whole block */
 		off_t newoff;
 
 		if (ioflag & IO_DIRECT) {
@@ -443,7 +443,7 @@ WRITE(void *v)
 		    btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
 		if (error)
 			break;
-		need_unreserve = TRUE;
+		need_unreserve = true;
 #endif
 		error = UFS_BALLOC(vp, uio->uio_offset, xfersize,
 		    ap->a_cred, flags, &bp);
@@ -476,7 +476,7 @@ WRITE(void *v)
 		(void)VOP_BWRITE(bp);
 		lfs_reserve(fs, vp, NULL,
 		    -btofsb(fs, (NIADDR + 1) << fs->lfs_bshift));
-		need_unreserve = FALSE;
+		need_unreserve = false;
 #else
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);

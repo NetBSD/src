@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.13 2006/04/01 15:45:00 cherry Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.13.14.1 2007/02/27 16:53:02 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -105,10 +105,10 @@ extern int kdb_trap(int, void *);
  * Far easier to just use software single-stepping.
  */
 #define	SOFTWARE_SSTEP
-extern boolean_t inst_branch(int);
-extern boolean_t inst_load(int);
-extern boolean_t inst_store(int);
-extern boolean_t inst_unconditional_flow_transfer(int);
+extern bool inst_branch(int);
+extern bool inst_load(int);
+extern bool inst_store(int);
+extern bool inst_unconditional_flow_transfer(int);
 extern db_addr_t branch_taken(int, db_addr_t, db_regs_t *);
 #define next_instr_address(v, b) ((db_addr_t) ((b) ? (v) : ((v) + 4)))
 #define	inst_call(ins)		(((ins) & M_CALL) == I_CALL)

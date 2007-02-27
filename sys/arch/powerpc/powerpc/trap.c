@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.116 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.116.2.1 2007/02/27 16:52:52 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.116.2.1 2007/02/27 16:52:52 yamt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -136,7 +136,7 @@ trap(struct trapframe *frame)
 				if ((frame->dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_ste_evictions > 0 &&
 				    pmap_ste_spill(vm_map_pmap(map),
-					    trunc_page(va), FALSE)) {
+					    trunc_page(va), false)) {
 					/* KERNEL_UNLOCK_LAST(l); */
 					KERNEL_UNLOCK_ONE(NULL);
 					return;
@@ -146,7 +146,7 @@ trap(struct trapframe *frame)
 				if ((frame->dsisr & DSISR_NOTFOUND) &&
 				    vm_map_pmap(map)->pm_evictions > 0 &&
 				    pmap_pte_spill(vm_map_pmap(map),
-					    trunc_page(va), FALSE)) {
+					    trunc_page(va), false)) {
 					/* KERNEL_UNLOCK_LAST(l); */
 					KERNEL_UNLOCK_ONE(NULL);
 					return;
@@ -227,7 +227,7 @@ trap(struct trapframe *frame)
 		if ((frame->dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_ste_evictions > 0 &&
 		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->dar),
-				   FALSE)) {
+				   false)) {
 			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
@@ -236,7 +236,7 @@ trap(struct trapframe *frame)
 		if ((frame->dsisr & DSISR_NOTFOUND) &&
 		    vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->dar),
-				   FALSE)) {
+				   false)) {
 			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
@@ -296,7 +296,7 @@ trap(struct trapframe *frame)
 #ifdef PPC_OEA64
 		if (vm_map_pmap(map)->pm_ste_evictions > 0 &&
 		    pmap_ste_spill(vm_map_pmap(map), trunc_page(frame->srr0),
-				   TRUE)) {
+				   true)) {
 			KERNEL_UNLOCK_LAST(l);
 			break;
 		}
@@ -304,7 +304,7 @@ trap(struct trapframe *frame)
 
 		if (vm_map_pmap(map)->pm_evictions > 0 &&
 		    pmap_pte_spill(vm_map_pmap(map), trunc_page(frame->srr0),
-				   TRUE)) {
+				   true)) {
 			KERNEL_UNLOCK_LAST(l);
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_select.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_select.c,v 1.3.26.1 2007/02/27 16:54:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_select.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_select.c,v 1.3.26.1 2007/02/27 16:54:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -51,9 +51,9 @@ static void lacp_fill_aggregator_id(struct lacp_aggregator *,
     const struct lacp_port *);
 static void lacp_fill_aggregator_id_peer(struct lacp_peerinfo *,
     const struct lacp_peerinfo *);
-static boolean_t lacp_aggregator_is_compatible(const struct lacp_aggregator *,
+static bool lacp_aggregator_is_compatible(const struct lacp_aggregator *,
     const struct lacp_port *);
-static boolean_t lacp_peerinfo_is_compatible(const struct lacp_peerinfo *,
+static bool lacp_peerinfo_is_compatible(const struct lacp_peerinfo *,
     const struct lacp_peerinfo *);
 
 static struct lacp_aggregator *lacp_aggregator_get(struct lacp_softc *,
@@ -157,46 +157,46 @@ lacp_fill_aggregator_id_peer(struct lacp_peerinfo *lpi_aggr,
  * lacp_aggregator_is_compatible: check if a port can join to an aggregator.
  */
 
-static boolean_t
+static bool
 lacp_aggregator_is_compatible(const struct lacp_aggregator *la,
     const struct lacp_port *lp)
 {
 
 	if (!(lp->lp_state & LACP_STATE_AGGREGATION) ||
 	    !(lp->lp_partner.lip_state & LACP_STATE_AGGREGATION)) {
-		return FALSE;
+		return false;
 	}
 
 	if (!(la->la_actor.lip_state & LACP_STATE_AGGREGATION)) {
-		return FALSE;
+		return false;
 	}
 
 	if (!lacp_peerinfo_is_compatible(&la->la_partner, &lp->lp_partner)) {
-		return FALSE;
+		return false;
 	}
 
 	if (!lacp_peerinfo_is_compatible(&la->la_actor, &lp->lp_actor)) {
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
-static boolean_t
+static bool
 lacp_peerinfo_is_compatible(const struct lacp_peerinfo *a,
     const struct lacp_peerinfo *b)
 {
 
 	if (memcmp(&a->lip_systemid, &b->lip_systemid,
 	    sizeof(a->lip_systemid))) {
-		return FALSE;
+		return false;
 	}
 
 	if (memcmp(&a->lip_key, &b->lip_key, sizeof(a->lip_key))) {
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }
 
 /*

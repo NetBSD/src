@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.37 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.37.4.1 2007/02/27 16:54:41 yamt Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.37 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.37.4.1 2007/02/27 16:54:41 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.37 2006/11/16 01:33:40 christos Exp $
 #include <net/net_osdep.h>
 
 static int	faithioctl(struct ifnet *, u_long, caddr_t);
-static int	faithoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
-			    struct rtentry *);
+static int	faithoutput(struct ifnet *, struct mbuf *,
+		            const struct sockaddr *, struct rtentry *);
 static void	faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
 void	faithattach(int);
@@ -146,26 +146,26 @@ faith_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-int
-faithoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+static int
+faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	int s, isr;
+	uint32_t af;
 	struct ifqueue *ifq = 0;
 
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("faithoutput no HDR");
+	af = dst->sa_family;
 #if NBPFILTER > 0
 	/* BPF write needs to be handled specially */
-	if (dst->sa_family == AF_UNSPEC) {
-		dst->sa_family = *(mtod(m, int *));
-		m->m_len -= sizeof(int);
-		m->m_pkthdr.len -= sizeof(int);
-		m->m_data += sizeof(int);
+	if (af == AF_UNSPEC) {
+		af = *(mtod(m, int *));
+		m_adj(m, sizeof(int));
 	}
 
 	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m);
+		bpf_mtap_af(ifp->if_bpf, af, m);
 #endif
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
@@ -175,7 +175,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
-	switch (dst->sa_family) {
+	switch (af) {
 #ifdef INET
 	case AF_INET:
 		ifq = &ipintrq;

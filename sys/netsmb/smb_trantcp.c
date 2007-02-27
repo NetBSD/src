@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.27 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.27.4.1 2007/02/27 16:55:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.27 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.27.4.1 2007/02/27 16:55:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 
  retry:
 	ncoll = nselcoll;
-	l->l_flag |= L_SELECT;
+	l->l_flag |= LW_SELECT;
 	error = nb_poll(nbp, events, l);
 	if (error) {
 		error = 0;
@@ -188,11 +188,11 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 	}
 
 	s = splsched();
-	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK, "smbsel", timo);
 	splx(s);
 
@@ -200,7 +200,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		goto retry;
 
 done:
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
 		error = 0;

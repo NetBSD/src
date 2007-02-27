@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pax.c,v 1.13 2007/02/06 01:09:48 elad Exp $ */
+/* $NetBSD: kern_pax.c,v 1.13.2.1 2007/02/27 16:54:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -274,14 +274,14 @@ pax_segvguard_cb(void *v)
  */
 int
 pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
-    boolean_t crashed)
+    bool crashed)
 {
 	struct pax_segvguard_entry *p;
 	struct pax_segvguard_uid_entry *up;
 	struct timeval tv;
 	uid_t uid;
 	void *t;
-	boolean_t have_uid;
+	bool have_uid;
 
 	if (!pax_segvguard_enabled)
 		return (0);
@@ -333,10 +333,10 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 * See if it's a culprit we're familiar with.
 	 */
 	uid = kauth_cred_getuid(l->l_cred);
-	have_uid = FALSE;
+	have_uid = false;
 	LIST_FOREACH(up, &p->segv_uids, sue_list) {
 		if (up->sue_uid == uid) {
-			have_uid = TRUE;
+			have_uid = true;
 			break;
 		}
 	}

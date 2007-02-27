@@ -1,4 +1,4 @@
-/*	$NetBSD: mpys.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: mpys.c,v 1.3.26.1 2007/02/27 16:51:19 yamt Exp $	*/
 
 /*	$OpenBSD: mpys.c,v 1.5 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpys.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpys.c,v 1.3.26.1 2007/02/27 16:51:19 yamt Exp $");
 
 #include "md.h"
 
@@ -56,7 +56,7 @@ struct mdsfu_register *result;
 
 	/* determine overflow status */
 	if ((result_hi == 0 && result_lo >= 0) ||
-	    (result_hi == -1 && result_lo < 0)) overflow = FALSE;
-	else overflow = TRUE;
+	    (result_hi == -1 && result_lo < 0)) overflow = false;
+	else overflow = true;
 	return;
 }

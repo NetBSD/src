@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.56 2006/12/15 21:18:53 joerg Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.56.2.1 2007/02/27 16:54:44 yamt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.56 2006/12/15 21:18:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.56.2.1 2007/02/27 16:54:44 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -131,7 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.56 2006/12/15 21:18:53 joerg Exp $");
 #endif
 
 #define IN6_IS_ADDR_6TO4(x)	(ntohs((x)->s6_addr16[0]) == 0x2002)
-#define GET_V4(x)	((struct in_addr *)(&(x)->s6_addr16[1]))
+#define GET_V4(x)	((const struct in_addr *)(&(x)->s6_addr16[1]))
 
 struct stf_softc {
 	struct ifnet	sc_if;	   /* common area */
@@ -170,12 +170,12 @@ void	stfattach(int);
 
 static int stf_encapcheck(struct mbuf *, int, int, void *);
 static struct in6_ifaddr *stf_getsrcifa6(struct ifnet *);
-static int stf_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+static int stf_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	struct rtentry *);
-static int isrfc1918addr(struct in_addr *);
-static int stf_checkaddr4(struct stf_softc *, struct in_addr *,
+static int isrfc1918addr(const struct in_addr *);
+static int stf_checkaddr4(struct stf_softc *, const struct in_addr *,
 	struct ifnet *);
-static int stf_checkaddr6(struct stf_softc *, struct in6_addr *,
+static int stf_checkaddr6(struct stf_softc *, const struct in6_addr *,
 	struct ifnet *);
 static void stf_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
 static int stf_ioctl(struct ifnet *, u_long, caddr_t);
@@ -332,12 +332,12 @@ stf_getsrcifa6(struct ifnet *ifp)
 }
 
 static int
-stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct stf_softc *sc;
-	struct sockaddr_in6 *dst6;
-	struct in_addr *in4;
+	const struct sockaddr_in6 *dst6;
+	const struct in_addr *in4;
 	struct sockaddr_in *dst4;
 	u_int8_t tos;
 	struct ip *ip;
@@ -345,7 +345,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct in6_ifaddr *ia6;
 
 	sc = (struct stf_softc*)ifp;
-	dst6 = (struct sockaddr_in6 *)dst;
+	dst6 = (const struct sockaddr_in6 *)dst;
 
 	/* just in case */
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -448,7 +448,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 }
 
 static int
-isrfc1918addr(struct in_addr *in)
+isrfc1918addr(const struct in_addr *in)
 {
 	/*
 	 * returns 1 if private address range:
@@ -463,7 +463,7 @@ isrfc1918addr(struct in_addr *in)
 }
 
 static int
-stf_checkaddr4(struct stf_softc *sc, struct in_addr *in,
+stf_checkaddr4(struct stf_softc *sc, const struct in_addr *in,
     struct ifnet *inifp /*incoming interface*/)
 {
 	struct in_ifaddr *ia4;
@@ -534,7 +534,7 @@ stf_checkaddr4(struct stf_softc *sc, struct in_addr *in,
 }
 
 static int
-stf_checkaddr6(struct stf_softc *sc, struct in6_addr *in6,
+stf_checkaddr6(struct stf_softc *sc, const struct in6_addr *in6,
     struct ifnet *inifp /*incoming interface*/)
 {
 

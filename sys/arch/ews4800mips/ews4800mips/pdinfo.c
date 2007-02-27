@@ -1,4 +1,4 @@
-/*	$NetBSD: pdinfo.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: pdinfo.c,v 1.1.28.1 2007/02/27 16:50:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdinfo.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdinfo.c,v 1.1.28.1 2007/02/27 16:50:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -55,27 +55,27 @@ __KERNEL_RCSID(0, "$NetBSD: pdinfo.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
 #include <machine/sector.h>
 #include <machine/pdinfo.h>
 
-boolean_t
+bool
 pdinfo_sector(void *rwops, struct pdinfo_sector *pdinfo)
 {
 
 	if (!sector_read(rwops, (void *)pdinfo, PDINFO_SECTOR))
-		return FALSE;
+		return false;
 
 	if (!pdinfo_sanity(pdinfo))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
-boolean_t
+bool
 pdinfo_valid(const struct pdinfo_sector *disk)
 {
 
 	return disk->magic == PDINFO_MAGIC;
 }
 
-boolean_t
+bool
 pdinfo_sanity(const struct pdinfo_sector *disk)
 {
 	const struct disk_geometory *geom;
@@ -83,7 +83,7 @@ pdinfo_sanity(const struct pdinfo_sector *disk)
 
 	if (!pdinfo_valid(disk)) {
 		DPRINTF("no physical disk info.\n");
-		return FALSE;
+		return false;
 	}
 
 	geom = &disk->geometory;
@@ -129,5 +129,5 @@ pdinfo_sanity(const struct pdinfo_sector *disk)
 		}
 	}
 
-	return TRUE;
+	return true;
 }

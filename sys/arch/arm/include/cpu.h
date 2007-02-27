@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41 2007/02/16 02:53:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.1 2007/02/27 16:49:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -213,6 +213,8 @@ struct cpu_info {
 	u_int32_t ci_arm_cpurev;	/* CPU revision */
 	u_int32_t ci_ctrl;		/* The CPU control register */
 	struct evcnt ci_arm700bugcount;
+	int32_t ci_mtx_count;
+	int ci_mtx_oldspl;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
 #endif
@@ -242,21 +244,21 @@ extern int astpending;
  * process as soon as possible.
  */
 
-#define signotify(p)            setsoftast()
+#define cpu_signotify(l)            setsoftast()
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
 extern int want_resched;	/* resched() was called */
-#define	need_resched(ci)	(want_resched = 1, setsoftast())
+#define	cpu_need_resched(ci)	(want_resched = 1, setsoftast())
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
+#define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, setsoftast())
 
 #ifndef acorn26
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.111 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.111.4.1 2007/02/27 16:54:43 yamt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.111 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.111.4.1 2007/02/27 16:54:43 yamt Exp $");
 
 #include "ppp.h"
 
@@ -877,7 +877,7 @@ pppsioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * Packet is placed in Information field of PPP frame.
  */
 int
-pppoutput(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rtp)
 {
     struct ppp_softc *sc = ifp->if_softc;

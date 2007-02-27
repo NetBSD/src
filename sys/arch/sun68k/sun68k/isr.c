@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.11 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.11.2.1 2007/02/27 16:53:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.11 2006/12/21 15:55:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.11.2.1 2007/02/27 16:53:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,34 +66,37 @@ extern int intrcnt[];	/* statistics */
 #define NUM_LEVELS 8
 
 struct isr {
-	struct	isr *isr_next;
+	struct isr *isr_next;
 	isr_func_t isr_intr;
 	void *isr_arg;
-	int	isr_ipl;
+	int isr_ipl;
 };
 
 /*
  * Generic soft interrupt support.
  */
-struct softintr_head soft_level_heads[(_IPL_SOFT_LEVEL_MAX - _IPL_SOFT_LEVEL_MIN) + 1];
+#define _IPL_NSOFT	(_IPL_SOFT_LEVEL_MAX - _IPL_SOFT_LEVEL_MIN + 1)
+
+struct softintr_head soft_level_heads[_IPL_NSOFT];
 void *softnet_cookie;
 static int softintr_handler(void *);
 
 void set_vector_entry(int, void *);
-void * get_vector_entry(int);
+void *get_vector_entry(int);
 
 /*
  * These are called from locore.  The "struct clockframe" arg
  * is really just the normal H/W interrupt frame format.
  * (kern_clock really wants it to be named that...)
  */
-void	isr_autovec (struct clockframe);
-void	isr_vectored(struct clockframe);
+void isr_autovec (struct clockframe);
+void isr_vectored(struct clockframe);
 
 
 void 
 isr_add_custom(int level, void *handler)
 {
+
 	set_vector_entry(AUTOVEC_BASE + level, handler);
 }
 
@@ -117,7 +120,7 @@ netintr(void)
 #define DONETISR(bit, fn) do {		\
 	if (n & (1 << bit))		\
 		fn();			\
-} while (0)
+} while (/* CONSTCOND */0)
 
 #include <net/netisr_dispatch.h>
 
@@ -138,12 +141,12 @@ isr_autovec(struct clockframe cf)
 	int n, ipl, vec;
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
-	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE+8)))
+	if ((vec < AUTOVEC_BASE) || (vec >= (AUTOVEC_BASE + NUM_LEVELS)))
 		panic("isr_autovec: bad vec");
 	ipl = vec - AUTOVEC_BASE;
 
 	n = intrcnt[ipl];
-	intrcnt[ipl] = n+1;
+	intrcnt[ipl] = n + 1;
 	uvmexp.intrs++;
 
 	isr = isr_autovec_list[ipl];
@@ -156,10 +159,10 @@ isr_autovec(struct clockframe cf)
 	/* Give all the handlers a chance. */
 	n = 0;
 	while (isr) {
-		n |= isr->isr_intr(isr->isr_arg);
+		n |= (*isr->isr_intr)(isr->isr_arg);
 		isr = isr->isr_next;
 	}
-	if (!n)
+	if (n == 0)
 		printf("isr_autovec: ipl %d not claimed\n", ipl);
 }
 
@@ -174,9 +177,8 @@ isr_add_autovect(isr_func_t handler, void *arg, int level)
 
 	if ((level < 0) || (level >= NUM_LEVELS))
 		panic("isr_add: bad level=%d", level);
-	new_isr = (struct isr *)
-		malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
-	if (!new_isr)
+	new_isr = malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
+	if (new_isr == NULL)
 		panic("isr_add: malloc failed");
 
 	new_isr->isr_intr = handler;
@@ -221,7 +223,7 @@ isr_vectored(struct clockframe cf)
 	}
 
 	/* OK, call the isr function. */
-	if (vh->func(vh->arg) == 0)
+	if ((*vh->func)(vh->arg) == 0)
 		printf("isr_vectored: vector=0x%x (not claimed)\n", vec);
 }
 
@@ -230,6 +232,7 @@ isr_vectored(struct clockframe cf)
  * Called by driver attach functions.
  */
 extern void _isr_vectored(void);
+
 void
 isr_add_vectored(isr_func_t func, void *arg, int level, int vec)
 {
@@ -267,14 +270,16 @@ softintr_handler(void *arg)
 	uvmexp.softs++;
 
 	/* Dispatch any pending handlers. */
-	for(sh = LIST_FIRST(&shd->shd_intrs); sh != NULL; sh = LIST_NEXT(sh, sh_link)) {
+	for (sh = LIST_FIRST(&shd->shd_intrs);
+	    sh != NULL;
+	    sh = LIST_NEXT(sh, sh_link)) {
 		if (sh->sh_pending) {
 			sh->sh_pending = 0;
 			(*sh->sh_func)(sh->sh_arg);
 		}
 	}
 
-	return (1);
+	return 1;
 }
 
 /*
@@ -286,7 +291,7 @@ softintr_init(void)
 	int ipl;
 	struct softintr_head *shd;
 
-	for(ipl = _IPL_SOFT_LEVEL_MIN; ipl <= _IPL_SOFT_LEVEL_MAX; ipl++) {
+	for (ipl = _IPL_SOFT_LEVEL_MIN; ipl <= _IPL_SOFT_LEVEL_MAX; ipl++) {
 		shd = &soft_level_heads[ipl - _IPL_SOFT_LEVEL_MIN];
 		shd->shd_ipl = ipl;
 		LIST_INIT(&shd->shd_intrs);
@@ -294,7 +299,7 @@ softintr_init(void)
 	}
 
 	softnet_cookie = softintr_establish(IPL_SOFTNET,
-					    (void (*)(void *)) netintr, NULL);
+	    (void (*)(void *))netintr, NULL);
 }
 
 static int
@@ -364,7 +369,8 @@ softintr_disestablish(void *arg)
 void 
 set_vector_entry(int entry, void *handler)
 {
-	if ((entry <0) || (entry >= NVECTORS))
+
+	if ((entry < 0) || (entry >= NVECTORS))
 	panic("set_vector_entry: setting vector too high or low");
 	vector_table[entry] = handler;
 }
@@ -372,9 +378,10 @@ set_vector_entry(int entry, void *handler)
 void *
 get_vector_entry(int entry)
 {
-	if ((entry <0) || (entry >= NVECTORS))
+
+	if ((entry < 0) || (entry >= NVECTORS))
 	panic("get_vector_entry: setting vector too high or low");
-	return ((void *) vector_table[entry]);
+	return (void *)vector_table[entry];
 }
 
 static const int ipl2psl_table[] = {

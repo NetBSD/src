@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.22 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: uirda.c,v 1.22.4.1 2007/02/27 16:54:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.22 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.22.4.1 2007/02/27 16:54:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,8 +339,14 @@ USB_ATTACH(uirda)
 		  USB_IRDA_DESCRIPTOR_SIZE, &sc->sc_irdadesc);
 	if (err) {
 		/* maybe it's embedded in the config desc? */
-		const void *d = usb_find_desc(sc->sc_udev, UDESC_IRDA,
-					      USBD_SUBTYPE_ANY);
+		usbd_desc_iter_t iter;
+		const usb_descriptor_t *d;
+		usb_desc_iter_init(sc->sc_udev, &iter);
+		for (;;) {
+			d = usb_desc_iter_next(&iter);
+			if (!d || d->bDescriptorType == UDESC_IRDA)
+				break;
+		}
 		if (d == NULL) {
 			printf("%s: Cannot get IrDA descriptor\n",
 			       USBDEVNAME(sc->sc_dev));

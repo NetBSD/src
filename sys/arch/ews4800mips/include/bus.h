@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 2006/05/26 13:25:21 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.3.14.1 2007/02/27 16:50:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2005 The NetBSD Foundation, Inc.
@@ -804,6 +804,9 @@ struct ews4800mips_bus_dma_tag {
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  *	bus_dmamap_t

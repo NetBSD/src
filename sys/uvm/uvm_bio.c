@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.54 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.54.4.1 2007/02/27 16:55:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.54 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.54.4.1 2007/02/27 16:55:25 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -311,7 +311,7 @@ again:
 
 	UVMHIST_LOG(ubchist, "va 0x%lx eva 0x%lx", va, eva, 0, 0);
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
-		boolean_t rdonly;
+		bool rdonly;
 		vm_prot_t mask;
 
 		/*
@@ -548,7 +548,7 @@ ubc_release(void *va, int flags)
 	struct ubc_map *umap;
 	struct uvm_object *uobj;
 	vaddr_t umapva;
-	boolean_t unmapped;
+	bool unmapped;
 	UVMHIST_FUNC("ubc_release"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "va %p", va, 0, 0, 0);
@@ -566,7 +566,7 @@ ubc_release(void *va, int flags)
 		struct vm_page *pgs[npages];
 		paddr_t pa;
 		int i;
-		boolean_t rv;
+		bool rv;
 
 		if (zerolen) {
 			memset((char *)umapva + endoff, 0, zerolen);
@@ -588,9 +588,9 @@ ubc_release(void *va, int flags)
 		simple_lock(&uobj->vmobjlock);
 		uvm_page_unbusy(pgs, npages);
 		simple_unlock(&uobj->vmobjlock);
-		unmapped = TRUE;
+		unmapped = true;
 	} else {
-		unmapped = FALSE;
+		unmapped = false;
 	}
 
 	simple_lock(&ubc_object.uobj.vmobjlock);

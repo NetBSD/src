@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.21 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.21.26.1 2007/02/27 16:50:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -75,11 +75,6 @@
  *
  *	@(#)hilvar.h	8.1 (Berkeley) 6/10/93
  */
-
-#ifndef TRUE
-#define TRUE	1
-#define FALSE	0
-#endif
 
 #define NHILD		8		/* 7 actual + loop pseudo (dev 0) */
 #define NHILQ		8		/* must be <= sizeof(int) */

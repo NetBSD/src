@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.44 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: pmap.h,v 1.44.14.1 2007/02/27 16:52:17 yamt Exp $	*/
 
 /*
  *
@@ -339,12 +339,12 @@ extern int nkpde;			/* current # of PDEs for kernel */
  */
 
 void		pmap_bootstrap(vaddr_t);
-boolean_t	pmap_change_attrs(struct vm_page *, int, int);
+bool		pmap_change_attrs(struct vm_page *, int, int);
 static void	pmap_page_protect(struct vm_page *, vm_prot_t);
 void		pmap_page_remove(struct vm_page *);
 static void	pmap_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
-boolean_t	pmap_test_attrs(struct vm_page *, int);
+bool		pmap_test_attrs(struct vm_page *, int);
 static void	pmap_update_pg(vaddr_t);
 static void	pmap_update_2pg(vaddr_t,vaddr_t);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
@@ -356,7 +356,7 @@ vaddr_t reserve_dumppages(vaddr_t);	/* XXX: not a pmap fn */
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t	pmap_zero_page_uncached(paddr_t);
+bool	pmap_zero_page_uncached(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_zero_page_uncached((pa))
 
 /*

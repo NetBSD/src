@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.23 2007/02/04 04:39:38 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.23.2.1 2007/02/27 16:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -185,7 +185,7 @@ re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 	bus_size_t		memsize, iosize, bsize;
 	u_int32_t		hwrev;
 	pcireg_t subid;
-	boolean_t ioh_valid, memh_valid;
+	bool ioh_valid, memh_valid;
 
 	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 
@@ -247,7 +247,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t		hwrev;
 	int			error = 0;
 	int			pmreg;
-	boolean_t		ioh_valid, memh_valid;
+	bool			ioh_valid, memh_valid;
 	pcireg_t		command;
 	bus_space_tag_t		iot, memt;
 	bus_space_handle_t	ioh, memh;

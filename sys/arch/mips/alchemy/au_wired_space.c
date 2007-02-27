@@ -1,4 +1,4 @@
-/* $NetBSD: au_wired_space.c,v 1.3 2006/03/16 14:23:19 simonb Exp $ */
+/* $NetBSD: au_wired_space.c,v 1.3.22.1 2007/02/27 16:52:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.3 2006/03/16 14:23:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_wired_space.c,v 1.3.22.1 2007/02/27 16:52:00 yamt Exp $");
 
 /*
  * This provides mappings for the upper I/O regions used on some
@@ -98,7 +98,7 @@ typedef struct au_wired_cookie {
 	paddr_t		c_pbase;
 	int		c_flags;
 	int		c_swswap;
-	boolean_t	c_hwswap;
+	bool		c_hwswap;
 	struct extent	*c_extent;
 	long		c_exstore[AU_WIRED_EXTENT_SZ/sizeof (long)];
 } au_wired_cookie_t;

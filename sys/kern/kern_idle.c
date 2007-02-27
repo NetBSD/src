@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.1.2.2 2007/02/23 15:57:45 yamt Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.1.2.3 2007/02/27 16:54:21 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.2 2007/02/23 15:57:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.3 2007/02/27 16:54:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -55,7 +55,7 @@ idle_loop(void *dummy)
 	while (1 /* CONSTCOND */) {
 		KERNEL_LOCK_ASSERT_UNLOCKED();
 		LOCKDEBUG_BARRIER(NULL, 0);
-		KASSERT((l->l_flag & L_IDLE) != 0);
+		KASSERT((l->l_flag & LW_IDLE) != 0);
 		KASSERT(ci == curcpu());
 		KASSERT(l == curlwp);
 		KASSERT(CURCPU_IDLE_P());
@@ -102,7 +102,7 @@ create_idle_lwp(struct cpu_info *ci)
 	}
 	PHOLD(l);
 	l->l_stat = LSRUN;
-	l->l_flag |= L_IDLE;
+	l->l_flag |= LW_IDLE;
 	l->l_cpu = ci;
 	ci->ci_data.cpu_idlelwp = l;
 	return error;

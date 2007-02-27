@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.c,v 1.1 2007/01/06 00:29:52 christos Exp $	*/
+/*	$NetBSD: omap_intr.c,v 1.1.4.1 2007/02/27 16:49:38 yamt Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_intr.c
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.1 2007/01/06 00:29:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_intr.c,v 1.1.4.1 2007/02/27 16:49:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,19 +170,19 @@ omapintc_attach(struct device *parent, struct device *self, void *args)
 	}
 
 	/* Set all interrupts to be stray and to have event counters. */
-	omapintc_set_name(OMAP_INT_L2_IRQ, "IRQ from L2", FALSE);
-	omapintc_set_name(OMAP_INT_L2_FIQ, "FIQ from L2", FALSE);
-	omapintc_set_name(omap_si_to_irq[SI_SOFT], "SOFT", FALSE);
-	omapintc_set_name(omap_si_to_irq[SI_SOFTCLOCK], "SOFTCLOCK", FALSE);
-	omapintc_set_name(omap_si_to_irq[SI_SOFTNET], "SOFTNET", FALSE);
-	omapintc_set_name(omap_si_to_irq[SI_SOFTSERIAL], "SOFTSERIAL", FALSE);
+	omapintc_set_name(OMAP_INT_L2_IRQ, "IRQ from L2", false);
+	omapintc_set_name(OMAP_INT_L2_FIQ, "FIQ from L2", false);
+	omapintc_set_name(omap_si_to_irq[SI_SOFT], "SOFT", false);
+	omapintc_set_name(omap_si_to_irq[SI_SOFTCLOCK], "SOFTCLOCK", false);
+	omapintc_set_name(omap_si_to_irq[SI_SOFTNET], "SOFTNET", false);
+	omapintc_set_name(omap_si_to_irq[SI_SOFTSERIAL], "SOFTSERIAL", false);
 	for(i = 0; i < __arraycount(handler); ++i) {
 		handler[i].func = stray_interrupt;
 		handler[i].cookie = (void *)(intptr_t) i;
 		extirq_level[i] = IPL_SERIAL;
 		sprintf(handler[i].irq_num_str, "#%d", i);
 		if (handler[i].name == NULL)
-			omapintc_set_name(i, handler[i].irq_num_str, FALSE);
+			omapintc_set_name(i, handler[i].irq_num_str, false);
 	}
 	/* and then set up the software interrupts. */
 	for(i = 0; i < __arraycount(omap_si_to_irq); ++i) {
@@ -484,7 +484,7 @@ omap_intr_establish(int irqno, int level, const char *name,
 	 * Name the evcnt what they passed us.  Note this will zero the
 	 * count.
 	 */
-	omapintc_set_name(irqno, name, TRUE);
+	omapintc_set_name(irqno, name, true);
 
 	/* Clear any existing interrupt by writing a zero into its ITR bit. */
 	info = &omap_intr_info[irqno];
@@ -517,7 +517,7 @@ omap_intr_disestablish(void *v)
 	 * Put the evcnt name back to our number string.  Note this will zero
 	 * the count.
 	 */
-	omapintc_set_name(irqno, handler[irqno].irq_num_str, TRUE);
+	omapintc_set_name(irqno, handler[irqno].irq_num_str, true);
 
 	irq_handler->cookie = (void *)(intptr_t) irqno;
 	irq_handler->func = stray_interrupt;

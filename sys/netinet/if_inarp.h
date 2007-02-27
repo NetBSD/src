@@ -1,4 +1,4 @@
-/*	$NetBSD: if_inarp.h,v 1.37 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if_inarp.h,v 1.37.14.1 2007/02/27 16:54:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -64,9 +64,10 @@ extern struct ifqueue arpintrq;
 void arp_ifinit(struct ifnet *, struct ifaddr *);
 void arp_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
 int arpresolve(struct ifnet *, struct rtentry *, struct mbuf *,
-		    struct sockaddr *, u_char *);
+		    const struct sockaddr *, u_char *);
 void arpintr(void);
-void arprequest(struct ifnet *, struct in_addr *, struct in_addr *, u_int8_t *);
+void arprequest(struct ifnet *, const struct in_addr *, const struct in_addr *,
+    const u_int8_t *);
 void arp_drain(void);
 int arpioctl(u_long, caddr_t);
 void arpwhohas(struct ifnet *, struct in_addr *);

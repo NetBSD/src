@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.17 2006/09/04 23:45:30 gdamore Exp $	*/
+/*	$NetBSD: rtc.c,v 1.17.8.1 2007/02/27 16:50:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17 2006/09/04 23:45:30 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.17.8.1 2007/02/27 16:50:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ static void	rtcattach(struct device *, struct device *, void *aux);
 CFATTACH_DECL(rtc, sizeof (struct rtc_softc),
     rtcmatch, rtcattach, NULL, NULL);
 
-static int	rtc_gettime(todr_chip_handle_t, volatile struct timeval *);
-static int	rtc_settime(todr_chip_handle_t, volatile struct timeval *);
+static int	rtc_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+static int	rtc_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 static uint8_t	rtc_readreg(struct rtc_softc *, int);
 static uint8_t	rtc_writereg(struct rtc_softc *, int, uint8_t);
 
@@ -144,69 +144,64 @@ rtcattach(struct device *parent, struct device *self, void *aux)
 
 	todr_handle = &sc->sc_handle;
 	todr_handle->cookie = sc;
-	todr_handle->todr_gettime = rtc_gettime;
-	todr_handle->todr_settime = rtc_settime;
+	todr_handle->todr_gettime = NULL;
+	todr_handle->todr_settime = NULL;
+	todr_handle->todr_gettime_ymdhms = rtc_gettime_ymdhms;
+	todr_handle->todr_settime_ymdhms = rtc_settime_ymdhms;
 	todr_handle->todr_setwen = NULL;
 
 	todr_attach(todr_handle);
 }
 
 static int
-rtc_gettime(todr_chip_handle_t handle, volatile struct timeval *tv)
+rtc_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *sc = (struct rtc_softc *)handle->cookie;
-	int i, read_okay, year;
-	struct clock_ymdhms dt;
+	struct rtc_softc *sc;
+	int i, year;
+	bool read_okay;
 	uint8_t rtc_registers[NUM_RTC_REGS];
 
+	sc = handle->cookie;
+
 	/* read rtc registers */
-	read_okay = 0;
+	read_okay = false;
 	while (!read_okay) {
-		read_okay = 1;
+		read_okay = true;
 		for (i = 0; i < NUM_RTC_REGS; i++)
 			rtc_registers[i] = rtc_readreg(sc, i);
 		for (i = 0; i < NUM_RTC_REGS; i++)
 			if (rtc_registers[i] != rtc_readreg(sc, i))
-				read_okay = 0;
+				read_okay = false;
 	}
 
 #define	rtc_to_decimal(a,b) 	(rtc_registers[a] * 10 + rtc_registers[b])
 
-	dt.dt_sec  = rtc_to_decimal(1, 0);
-	dt.dt_min  = rtc_to_decimal(3, 2);
-	dt.dt_hour = (rtc_registers[5] & RTC_REG5_HOUR) * 10 + rtc_registers[4];
-	dt.dt_day  = rtc_to_decimal(8, 7);
-	dt.dt_mon  = rtc_to_decimal(10, 9);
+	dt->dt_sec  = rtc_to_decimal(1, 0);
+	dt->dt_min  = rtc_to_decimal(3, 2);
+	dt->dt_hour = (rtc_registers[5] & RTC_REG5_HOUR) * 10 +
+	    rtc_registers[4];
+	dt->dt_day  = rtc_to_decimal(8, 7);
+	dt->dt_mon  = rtc_to_decimal(10, 9);
 
 	year = rtc_to_decimal(12, 11) + RTC_BASE_YEAR;
 	if (year < POSIX_BASE_YEAR)
 		year += 100;
-	dt.dt_year = year;
+	dt->dt_year = year;
 
 #undef	rtc_to_decimal
 
-	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31 ||
-	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return 1;
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
 	return 0;
 }
 
 static int
-rtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
+rtc_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *sc = (struct rtc_softc *)handle->cookie;
+	struct rtc_softc *sc;
 	int i, year;
-	struct clock_ymdhms dt;
 	uint8_t rtc_registers[NUM_RTC_REGS];
 
-	/* Note: we ignore `tv_usec' */
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	year = dt.dt_year - RTC_BASE_YEAR;
+	sc = handle->cookie;
+	year = dt->dt_year - RTC_BASE_YEAR;
 	if (year > 99)
 		year -= 100;
 
@@ -214,14 +209,14 @@ rtc_settime(todr_chip_handle_t handle, volatile struct timeval *tv)
 	rtc_registers[a] = (n) % 10;	\
 	rtc_registers[b] = (n) / 10;
 
-	decimal_to_rtc(0, 1, dt.dt_sec);
-	decimal_to_rtc(2, 3, dt.dt_min);
-	decimal_to_rtc(7, 8, dt.dt_day);
-	decimal_to_rtc(9, 10, dt.dt_mon);
+	decimal_to_rtc(0, 1, dt->dt_sec);
+	decimal_to_rtc(2, 3, dt->dt_min);
+	decimal_to_rtc(7, 8, dt->dt_day);
+	decimal_to_rtc(9, 10, dt->dt_mon);
 	decimal_to_rtc(11, 12, year);
 
-	rtc_registers[4] = dt.dt_hour % 10;
-	rtc_registers[5] = ((dt.dt_hour / 10) & RTC_REG5_HOUR) | RTC_REG5_24HR;
+	rtc_registers[4] = dt->dt_hour % 10;
+	rtc_registers[5] = ((dt->dt_hour / 10) & RTC_REG5_HOUR) | RTC_REG5_24HR;
 
 	rtc_registers[6] = 0;
 

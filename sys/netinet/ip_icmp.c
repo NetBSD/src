@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.108 2007/01/29 05:46:33 dyoung Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.108.2.1 2007/02/27 16:54:55 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.108 2007/01/29 05:46:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.108.2.1 2007/02/27 16:54:55 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -396,7 +396,7 @@ icmp_input(struct mbuf *m, ...)
 	int icmplen;
 	int i;
 	struct in_ifaddr *ia;
-	void *(*ctlfunc)(int, struct sockaddr *, void *);
+	void *(*ctlfunc)(int, const struct sockaddr *, void *);
 	int code;
 	int hlen;
 	va_list ap;
@@ -966,7 +966,7 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	if (icmp_redirect_timeout_q != NULL) {
 		if (icmp_redirtimeout == 0) {
 			rt_timer_queue_destroy(icmp_redirect_timeout_q,
-			    TRUE);
+			    true);
 			icmp_redirect_timeout_q = NULL;
 		} else {
 			rt_timer_queue_change(icmp_redirect_timeout_q,

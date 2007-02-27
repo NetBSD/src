@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2006/11/29 19:56:46 freza Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.4.1 2007/02/27 16:52:43 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2006/11/29 19:56:46 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44.4.1 2007/02/27 16:52:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -181,7 +181,7 @@ static inline char *pa_to_attr(paddr_t);
 static inline volatile u_int *pte_find(struct pmap *, vaddr_t);
 static inline int pte_enter(struct pmap *, vaddr_t, u_int);
 
-static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, boolean_t);
+static inline int pmap_enter_pv(struct pmap *, vaddr_t, paddr_t, bool);
 static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
 
 static int ppc4xx_tlb_size_mask(size_t, int *, int *);
@@ -719,7 +719,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  * This returns whether this is the first mapping of a page.
  */
 static inline int
-pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, boolean_t wired)
+pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, bool wired)
 {
 	struct pv_entry *pv, *npv = NULL;
 	int s;
@@ -1012,7 +1012,7 @@ pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-boolean_t
+bool
 pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 {
 	int seg = STIDX(va);
@@ -1065,7 +1065,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	splx(s);
 }
 
-boolean_t
+bool
 pmap_check_attr(struct vm_page *pg, u_int mask, int clear)
 {
 	paddr_t pa;
@@ -1078,7 +1078,7 @@ pmap_check_attr(struct vm_page *pg, u_int mask, int clear)
 	pa = VM_PAGE_TO_PHYS(pg);
 	attr = pa_to_attr(pa);
 	if (attr == NULL)
-		return FALSE;
+		return false;
 
 	s = splvm();
 	rv = ((*attr & mask) != 0);

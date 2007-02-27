@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.66 2007/02/15 15:40:54 ad Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.66.2.1 2007/02/27 16:55:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.66 2007/02/15 15:40:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.66.2.1 2007/02/27 16:55:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,7 +606,7 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 void
 lfs_writer_leave(struct lfs *fs)
 {
-	boolean_t dowakeup;
+	bool dowakeup;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
 	simple_lock(&fs->lfs_interlock);

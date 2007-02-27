@@ -1,4 +1,4 @@
-/*	$NetBSD: ns87307.c,v 1.4 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: ns87307.c,v 1.4.26.1 2007/02/27 16:53:06 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -57,7 +57,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns87307.c,v 1.4 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns87307.c,v 1.4.26.1 2007/02/27 16:53:06 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -108,8 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: ns87307.c,v 1.4 2005/12/11 12:19:05 christos Exp $")
 **
 **  function value or completion codes
 **
-**      TRUE    configuration of the kdb device was successful.
-**      FALSE   configuration of the kdb device failed.
+**      true    configuration of the kdb device was successful.
+**      false   configuration of the kdb device failed.
 **
 **  SIDE EFFECTS:
 **
@@ -121,7 +121,7 @@ i87307KbdConfig(bus_space_tag_t iot,
 		u_int           kbdBase, 
 		u_int           irqNum )
 {
-    u_int                configured = FALSE;
+    u_int                configured = false;
     bus_space_handle_t   ioh;	     
 
 
@@ -140,7 +140,7 @@ i87307KbdConfig(bus_space_tag_t iot,
 	*/
 	bus_space_unmap( iot, ioh, NSIO_NPORTS );
 
-	configured = TRUE;
+	configured = true;
     }
 
     return (configured);
@@ -176,8 +176,8 @@ i87307KbdConfig(bus_space_tag_t iot,
 **
 **  function value or completion codes
 **
-**      TRUE    configuration of the kdb device was successful.
-**      FALSE   configuration of the kdb device failed.
+**      true    configuration of the kdb device was successful.
+**      false   configuration of the kdb device failed.
 **
 **  SIDE EFFECTS:
 **
@@ -191,7 +191,7 @@ i87307MouseConfig(bus_space_tag_t iot,
     u_int                configured;
     bus_space_handle_t   ioh;	     
 
-    configured = FALSE; /* be a pessimist */
+    configured = false; /* be a pessimist */
 
     if (!(bus_space_map( iot, CONNSIOADDR, NSIO_NPORTS, 0 , &ioh )))
     {
@@ -206,7 +206,7 @@ i87307MouseConfig(bus_space_tag_t iot,
 	*/
 	bus_space_unmap( iot, ioh, NSIO_NPORTS );
 
-	configured = TRUE;
+	configured = true;
     }
 
 
@@ -242,8 +242,8 @@ i87307MouseConfig(bus_space_tag_t iot,
 **
 **  function value or completion codes
 **
-**      TRUE    configuration of the kdb device was successful.
-**      FALSE   configuration of the kdb device failed.
+**      true    configuration of the kdb device was successful.
+**      false   configuration of the kdb device failed.
 **
 **  SIDE EFFECTS:
 **
@@ -254,7 +254,7 @@ int
 i87307PrinterConfig(bus_space_tag_t iot,
 		  u_int           irqNum )
 {
-    u_int                configured = FALSE;
+    u_int                configured = false;
     bus_space_handle_t   ioh;	     
 
     u_char value;
@@ -284,7 +284,7 @@ i87307PrinterConfig(bus_space_tag_t iot,
         /* unmap the space so can probe later */
     	bus_space_unmap( iot, ioh, NSIO_NPORTS );
     
-    	configured = TRUE;
+    	configured = true;
     }
 
     

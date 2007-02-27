@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.8 2007/02/16 02:17:42 ad Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.8.2.1 2007/02/27 16:53:23 yamt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8 2007/02/16 02:17:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8.2.1 2007/02/27 16:53:23 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -228,7 +228,7 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	struct sigcontext sigctx;
 	struct otrampframe tramp;
 	struct proc *p = l->l_proc;
-	boolean_t error;
+	bool error;
 
 	sigctx.sc_pc = tf->pc;
 	sigctx.sc_ps = tf->psl;
@@ -341,7 +341,7 @@ setupstack_sigcontext2(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	struct trampoline2 tramp;
 	struct sigcontext sigctx;
 	struct proc *p = l->l_proc;
-	boolean_t error;
+	bool error;
 
 	/* The sigcontext struct will be passed back to sigreturn().  */
 	sigctx.sc_pc = tf->pc;
@@ -408,7 +408,7 @@ setupstack_siginfo3(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	struct trampoline3 tramp;
 	struct proc *p = l->l_proc;
 	ucontext_t uc;
-	boolean_t error;
+	bool error;
 
 	/*
 	 * Arguments given to the signal handler.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.98 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.98.2.1 2007/02/27 16:54:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.98 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.98.2.1 2007/02/27 16:54:30 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -829,7 +829,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 
  retry:
 	ncoll = nselcoll;
-	l->l_flag |= L_SELECT;
+	l->l_flag |= LW_SELECT;
 	error = selscan(l, (fd_mask *)(bits + ni * 0),
 			   (fd_mask *)(bits + ni * 3), nd, retval);
 	if (error || *retval)
@@ -837,11 +837,11 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 		goto donemask;
 	s = splsched();
-	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
@@ -852,7 +852,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		l->l_sigmask = oldmask;
 		mutex_exit(&p->p_smutex);
 	}
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
  done:
 	/* select is not restarted after signals... */
 	if (error == ERESTART)
@@ -1018,18 +1018,18 @@ pollcommon(struct lwp *l, register_t *retval,
 
  retry:
 	ncoll = nselcoll;
-	l->l_flag |= L_SELECT;
+	l->l_flag |= LW_SELECT;
 	error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 	if (error || *retval)
 		goto donemask;
 	if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 		goto donemask;
 	s = splsched();
-	if ((l->l_flag & L_SELECT) == 0 || nselcoll != ncoll) {
+	if ((l->l_flag & LW_SELECT) == 0 || nselcoll != ncoll) {
 		splx(s);
 		goto retry;
 	}
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
 	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "poll", timo);
 	splx(s);
 	if (error == 0)
@@ -1041,7 +1041,7 @@ pollcommon(struct lwp *l, register_t *retval,
 		mutex_exit(&p->p_smutex);
 	}
 
-	l->l_flag &= ~L_SELECT;
+	l->l_flag &= ~LW_SELECT;
  done:
 	/* poll is not restarted after signals... */
 	if (error == ERESTART)
@@ -1175,8 +1175,8 @@ selwakeup(sip)
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 		} else {
-			if (l->l_flag & L_SELECT)
-				l->l_flag &= ~L_SELECT;
+			if (l->l_flag & LW_SELECT)
+				l->l_flag &= ~LW_SELECT;
 			lwp_unlock(l);
 		}
 	}

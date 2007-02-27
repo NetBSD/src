@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.23 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.23.2.1 2007/02/27 16:54:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.23 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.23.2.1 2007/02/27 16:54:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,11 +161,11 @@ scan_mbr(mbr_args_t *a, int (*actn)(mbr_args_t *, mbr_partition_t *, int, uint))
 			 * Ensure that there are no other partitions in the
 			 * MBR and jump to the real partition table (stored
 			 * in the first sector of the second track). */
-			boolean_t ok = TRUE;
+			bool ok = true;
 
 			for (i = 1; i < MBR_PART_COUNT; i++)
 				if (ptns[i].mbrp_type != MBR_PTYPE_UNUSED)
-					ok = FALSE;
+					ok = false;
 
 			if (ok) {
 				this_ext = le32toh(a->lp->d_secpercyl /

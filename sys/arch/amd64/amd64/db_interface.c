@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.5 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5.26.1 2007/02/27 16:48:42 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5.26.1 2007/02/27 16:48:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -69,7 +69,7 @@ int	db_active;
 db_regs_t ddb_regs;	/* register state */
 db_regs_t *ddb_regp;
 
-void db_mach_cpu (db_expr_t, int, db_expr_t, const char *);
+void db_mach_cpu (db_expr_t, bool, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
@@ -210,9 +210,9 @@ kdb_trap(type, code, regs)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(type, code);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 #ifdef MULTIPROCESSOR  
@@ -272,7 +272,7 @@ extern void cpu_debug_dump(void); /* XXX */
 void
 db_mach_cpu(addr, have_addr, count, modif)
 	db_expr_t	addr;
-	int		have_addr;
+	bool		have_addr;
 	db_expr_t	count;
 	const char *	modif;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.3 2007/02/26 09:18:08 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.4 2007/02/27 16:54:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.3 2007/02/26 09:18:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.4 2007/02/27 16:54:24 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -135,7 +135,7 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
-	l->l_flag &= ~L_SINTR;
+	l->l_flag &= ~LW_SINTR;
 
 	/*
 	 * If not sleeping, the LWP must have been suspended.  Let whoever
@@ -175,9 +175,9 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
-	if ((l->l_flag & L_INMEM) != 0) {
+	if ((l->l_flag & LW_INMEM) != 0) {
 		sched_enqueue(l);
-		if (l->l_priority < ci->ci_schedstate.spc_curpriority)
+		if (lwp_eprio(l) < ci->ci_schedstate.spc_curpriority)
 			cpu_need_resched(ci, 0);
 		sched_unlock(1);
 		return 0;
@@ -193,13 +193,14 @@ sleepq_remove(sleepq_t *sq, struct lwp *l)
  *	Insert an LWP into the sleep queue, optionally sorting by priority.
  */
 inline void
-sleepq_insert(sleepq_t *sq, struct lwp *l, int pri, syncobj_t *sobj)
+sleepq_insert(sleepq_t *sq, struct lwp *l, syncobj_t *sobj)
 {
 	struct lwp *l2;
+	const int pri = lwp_eprio(l);
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		TAILQ_FOREACH(l2, &sq->sq_queue, l_sleepchain) {
-			if (l2->l_priority > pri) {
+			if (lwp_eprio(l2) > pri) {
 				TAILQ_INSERT_BEFORE(l2, l, l_sleepchain);
 				return;
 			}
@@ -209,19 +210,9 @@ sleepq_insert(sleepq_t *sq, struct lwp *l, int pri, syncobj_t *sobj)
 	TAILQ_INSERT_TAIL(&sq->sq_queue, l, l_sleepchain);
 }
 
-/*
- * sleepq_block:
- *
- *	Enter an LWP into the sleep queue and prepare for sleep.  The sleep
- *	queue must already be locked, and any interlock (such as the kernel
- *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
- *
- * 	sleepq_block() may return early under exceptional conditions, for
- * 	example if the LWP's containing process is exiting.
- */
 void
-sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
-	     int catch, syncobj_t *sobj)
+sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
+    syncobj_t *sobj)
 {
 	struct lwp *l = curlwp;
 
@@ -240,7 +231,13 @@ sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 	l->l_nvcsw++;
 
 	sq->sq_waiters++;
-	sleepq_insert(sq, l, pri, sobj);
+	sleepq_insert(sq, l, sobj);
+}
+
+void
+sleepq_switch(int timo, int catch)
+{
+	struct lwp *l = curlwp;
 
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_CSW))
@@ -252,15 +249,15 @@ sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 	 * core dump events.
 	 */
 	if (catch) {
-		l->l_flag |= L_SINTR;
-		if ((l->l_flag & L_PENDSIG) != 0 && sigispending(l, 0)) {
+		l->l_flag |= LW_SINTR;
+		if ((l->l_flag & LW_PENDSIG) != 0 && sigispending(l, 0)) {
 			l->l_sleeperr = EPASSTHROUGH;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
 			return;
 		}
-		if ((l->l_flag & (L_CANCELLED|L_WEXIT|L_WCORE)) != 0) {
-			l->l_flag &= ~L_CANCELLED;
+		if ((l->l_flag & (LW_CANCELLED|LW_WEXIT|LW_WCORE)) != 0) {
+			l->l_flag &= ~LW_CANCELLED;
 			l->l_sleeperr = EINTR;
 			/* lwp_unsleep() will release the lock */
 			lwp_unsleep(l);
@@ -278,6 +275,25 @@ sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
 	 * When we reach this point, the LWP and sleep queue are unlocked.
 	 */
 	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
+}
+
+/*
+ * sleepq_block:
+ *
+ *	Enter an LWP into the sleep queue and prepare for sleep.  The sleep
+ *	queue must already be locked, and any interlock (such as the kernel
+ *	lock) must have be released (see sleeptab_lookup(), sleepq_enter()).
+ *
+ * 	sleepq_block() may return early under exceptional conditions, for
+ * 	example if the LWP's containing process is exiting.
+ */
+void
+sleepq_block(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
+	     int timo, int catch, syncobj_t *sobj)
+{
+
+	sleepq_enqueue(sq, pri, wchan, wmesg, sobj);
+	sleepq_switch(timo, catch);
 }
 
 /*
@@ -315,9 +331,9 @@ sleepq_unblock(int timo, int catch)
 	if (catch && (error == 0 || error == EPASSTHROUGH)) {
 		l->l_sleeperr = 0;
 		p = l->l_proc;
-		if ((l->l_flag & (L_CANCELLED | L_WEXIT | L_WCORE)) != 0)
+		if ((l->l_flag & (LW_CANCELLED | LW_WEXIT | LW_WCORE)) != 0)
 			error = EINTR;
-		else if ((l->l_flag & L_PENDSIG) != 0) {
+		else if ((l->l_flag & LW_PENDSIG) != 0) {
 			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() */
 			mutex_enter(&p->p_smutex);
 			if ((sig = issignal(l)) != 0)
@@ -478,9 +494,27 @@ sleepq_abort(kmutex_t *mtx, int unlock)
  *	assumed to have been fixed at the time of insertion into the queue.
  */
 void
-sleepq_changepri(struct lwp *l, int pri)
+sleepq_changepri(struct lwp *l, pri_t pri)
 {
 
 	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
 	l->l_usrpri = pri;
+}
+
+void
+sleepq_lendpri(struct lwp *l, pri_t pri)
+{
+	sleepq_t *sq = l->l_sleepq;
+	pri_t opri;
+
+	KASSERT(lwp_locked(l, sq->sq_mutex));
+
+	opri = lwp_eprio(l);
+	l->l_inheritedprio = pri;
+
+	if (lwp_eprio(l) != opri &&
+	    (l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
+		TAILQ_REMOVE(&sq->sq_queue, l, l_sleepchain);
+		sleepq_insert(sq, l, l->l_syncobj);
+	}
 }

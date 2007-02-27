@@ -1,9 +1,9 @@
-#	$NetBSD: GUMSTIX,v 1.6 2007/01/18 10:24:53 kiyohara Exp $
+#	$NetBSD: GUMSTIX,v 1.6.2.1 2007/02/27 16:50:04 yamt Exp $
 #
 #	GUMSTIX -- Gumstix, Inc. gumstix platforms kernel
 #
 
-include	"arch/evbarm/conf/std.gumstix"
+include 	"arch/evbarm/conf/std.gumstix"
 
 # estimated number of users
 
@@ -139,14 +139,11 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB
-#options 	IPKDB_NE
-#options 	IPKDBKEY="\"Debug_it_over_network\""
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
-#options  	DEBUG_KGDB
+#options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
 options 	SYMTAB_SPACE=350000
 #options 	AUDIO_DEBUG=2
@@ -155,10 +152,10 @@ config		netbsd		root on ? type ?
 config		netbsd-sm0	root on sm0 type nfs
 
 # The main bus device
-mainbus0	at root
+mainbus0 at root
 
 # The boot cpu
-cpu0		at mainbus?
+cpu0	at mainbus?
 
 # integrated peripherals
 pxaip0	at mainbus?
@@ -170,15 +167,15 @@ pxagpio0 at pxaip?				# GPIO
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
-com0	at pxaip?  addr 0x40100000 intr 22      # Full Function UART
-com1	at pxaip?  addr 0x40700000 intr 20	# Standard UART (waysmall-ST)
-com2	at pxaip?  addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
-com3	at pxaip?  addr 0x41600000 intr 7	# Hardware UART (waysmall, -bt)
+com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
+com1	at pxaip? addr 0x40700000 intr 20	# Standard UART (waysmall-ST)
+com2	at pxaip? addr 0x40200000 intr 21	# Bluetooth UART (older -bt)
+com3	at pxaip? addr 0x41600000 intr 7	# Hardware UART (waysmall, -bt)
 options 	FFUARTCONSOLE
 #options 	STUARTCONSOLE
 #options 	BTUARTCONSOLE
 #options 	HWUARTCONSOLE
-#options 	KGDB_DEVNAME="\"ffuart\""   	# or stuart or btuart or hwuart
+#options 	KGDB_DEVNAME="\"ffuart\""	# or stuart or btuart or hwuart
 #options 	KGDB_DEVRATE=115200
 
 # DMAC support
@@ -355,13 +352,40 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 # USB Generic driver
 #ugen*	at uhub? port ?
 
+# Bluetooth Controller and Device support
+
+# Bluetooth PCMCIA Controllers
+#bt3c*	at pcmcia? function ?		# 3Com 3CRWB6096-A
+
+# Bluetooth USB Controllers
+#ubt*	at uhub? port ? configuration ? interface ?
+
+# Bluetooth Device Hub
+#bthub*	at bt3c?
+#bthub*	at ubt?
+bthub*	at btuart?
+
+# Bluetooth HID support
+#bthidev* at bthub?
+
+# Bluetooth Mouse
+#btms*	at bthidev? reportid ?
+#wsmouse* at btms? mux 0
+
+# Bluetooth Keyboard
+#btkbd*	at bthidev? reportid ?
+#wskbd*	at btkbd? console ? mux 1
+
+# Bluetooth Audio support
+#btsco*	at bthub?
+
 # Pseudo-Devices
 
 pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device  cgd		4	# cryptographic disk devices
+#pseudo-device	cgd		4	# cryptographic disk devices
 #pseudo-device	raid		8	# RAIDframe disk driver
 #options	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
@@ -407,6 +431,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 options		RND_COM
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
@@ -422,16 +447,16 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	swdmover		# softare dmover(9) back-end
 #pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
-# Veriexec      
-#pseudo-device   veriexec
+# Veriexec
+#pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
-# code size.    
+# code size.
 #
 #options VERIFIED_EXEC_FP_RMD160
 #options VERIFIED_EXEC_FP_SHA256
 #options VERIFIED_EXEC_FP_SHA384 
 #options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1   
+#options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5

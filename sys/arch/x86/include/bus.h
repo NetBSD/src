@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.11.20.1 2007/02/27 16:53:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1074,6 +1074,7 @@ struct x86_bus_dma_tag {
 	 * bounce the transfer.  If this value is 0, it will be
 	 * ignored.
 	 */
+	int        _tag_needs_free;
 	bus_addr_t _bounce_thresh;
 	bus_addr_t _bounce_alloc_lo;
 	bus_addr_t _bounce_alloc_hi;
@@ -1108,6 +1109,9 @@ struct x86_bus_dma_tag {
 	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
+	int 	(*_dmatag_subregion)(bus_dma_tag_t, bus_addr_t, bus_addr_t,
+		    bus_dma_tag_t *, int);
+	void	(*_dmatag_destroy)(bus_dma_tag_t);
 };
 
 static __inline void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t,
@@ -1147,6 +1151,11 @@ bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t p, bus_addr_t o, bus_size_t l,
 	(*(t)->_dmamem_unmap)((t), (k), (s))
 #define	bus_dmamem_mmap(t, sg, n, o, p, f)			\
 	(*(t)->_dmamem_mmap)((t), (sg), (n), (o), (p), (f))
+
+#define	bus_dmatag_subregion(t, mna, mxa, nt, f)		\
+	(*(t)->_dmatag_subregion)((t), (mna), (mxa), (nt), (f))
+#define	bus_dmatag_destroy(t)					\
+	(*(t)->_dmatag_destroy)((t))
 
 /*
  *	bus_dmamap_t

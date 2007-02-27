@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $	*/
+/*	$NetBSD: errata.c,v 1.6.2.1 2007/02/27 16:53:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.6 2007/02/05 21:05:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.6.2.1 2007/02/27 16:53:25 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #ifdef i386
@@ -76,7 +76,7 @@ typedef struct errata {
 	u_short		e_reported;
 	u_int		e_data1;
 	const uint8_t	*e_set;
-	boolean_t	(*e_act)(struct cpu_info *, struct errata *);
+	bool		(*e_act)(struct cpu_info *, struct errata *);
 	uint64_t	e_data2;
 } errata_t;
 
@@ -136,8 +136,8 @@ static const uint8_t x86_errata_set8[] = {
 	SH_D0, SH_D0, SH_D0, SH_E4, SH_E4, SH_E5, OINK
 };
 
-static boolean_t x86_errata_setmsr(struct cpu_info *, errata_t *);
-static boolean_t x86_errata_testmsr(struct cpu_info *, errata_t *);
+static bool x86_errata_setmsr(struct cpu_info *, errata_t *);
+static bool x86_errata_testmsr(struct cpu_info *, errata_t *);
 
 static errata_t errata[] = {
 	/*
@@ -243,7 +243,7 @@ static errata_t errata[] = {
 #endif	/* MULTIPROCESSOR */
 };
 
-static boolean_t 
+static bool 
 x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
 {
 	uint64_t val;
@@ -258,7 +258,7 @@ x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
 	return TRUE;
 }
 
-static boolean_t 
+static bool 
 x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 {
 	uint64_t val;

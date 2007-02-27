@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.19 2006/07/22 06:58:17 tsutsui Exp $ */
+/* $NetBSD: bus_dma.c,v 1.19.10.1 2007/02/27 16:51:57 yamt Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.10.1 2007/02/27 16:51:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ _bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
-	boolean_t rv;
+	bool rv;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.32 2007/01/04 15:42:37 elad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.32.2.1 2007/02/27 16:54:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.32 2007/01/04 15:42:37 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.32.2.1 2007/02/27 16:54:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -323,7 +323,7 @@ tmpfs_alloc_dirent(struct tmpfs_mount *tmp, struct tmpfs_node *node,
  */
 void
 tmpfs_free_dirent(struct tmpfs_mount *tmp, struct tmpfs_dirent *de,
-    boolean_t node_exists)
+    bool node_exists)
 {
 	if (node_exists) {
 		struct tmpfs_node *node;
@@ -530,7 +530,7 @@ tmpfs_alloc_file(struct vnode *dvp, struct vnode **vpp, struct vattr *vap,
 	/* Allocate a vnode for the new file. */
 	error = tmpfs_alloc_vp(dvp->v_mount, node, vpp);
 	if (error != 0) {
-		tmpfs_free_dirent(tmp, de, TRUE);
+		tmpfs_free_dirent(tmp, de, true);
 		tmpfs_free_node(tmp, node);
 		goto out;
 	}
@@ -623,7 +623,7 @@ tmpfs_dir_detach(struct vnode *vp, struct tmpfs_dirent *de)
 struct tmpfs_dirent *
 tmpfs_dir_lookup(struct tmpfs_node *node, struct componentname *cnp)
 {
-	boolean_t found;
+	bool found;
 	struct tmpfs_dirent *de;
 
 	KASSERT(IMPLIES(cnp->cn_namelen == 1, cnp->cn_nameptr[0] != '.'));
@@ -951,7 +951,7 @@ out:
  * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
- * If 'total' is TRUE, the value returned is the total amount of memory 
+ * If 'total' is true, the value returned is the total amount of memory 
  * pages configured for the system (either in use or free).
  * If it is FALSE, the value returned is the amount of free memory pages.
  *
@@ -960,7 +960,7 @@ out:
  *
  */
 size_t
-tmpfs_mem_info(boolean_t total)
+tmpfs_mem_info(bool total)
 {
 	size_t size;
 
@@ -1313,7 +1313,7 @@ tmpfs_update(struct vnode *vp, const struct timespec *acc,
 int
 tmpfs_truncate(struct vnode *vp, off_t length)
 {
-	boolean_t extended;
+	bool extended;
 	int error;
 	struct tmpfs_node *node;
 

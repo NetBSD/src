@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.67 2006/11/05 08:04:55 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.67.4.1 2007/02/27 16:52:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67 2006/11/05 08:04:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.67.4.1 2007/02/27 16:52:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +319,7 @@ kvtop(caddr_t addr)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == false)
 		panic("kvtop: zero page frame");
 	return((int)pa);
 }

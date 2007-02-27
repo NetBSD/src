@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.24 2006/11/16 01:33:35 christos Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.24.4.1 2007/02/27 16:54:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.24 2006/11/16 01:33:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.24.4.1 2007/02/27 16:54:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,7 +634,7 @@ cd9660_readlink(v)
 	u_short	symlen;
 	int	error;
 	char	*symname;
-	boolean_t use_pnbuf;
+	bool use_pnbuf;
 
 	ip  = VTOI(ap->a_vp);
 	imp = ip->i_mnt;

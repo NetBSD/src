@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.70 2007/01/04 19:07:03 elad Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.70.2.1 2007/02/27 16:54:44 yamt Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.70 2007/01/04 19:07:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.70.2.1 2007/02/27 16:54:44 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -336,7 +336,7 @@ static int	stripinput(int, struct tty *);
 static int	stripioctl(struct ifnet *, u_long, caddr_t);
 static int	stripopen(dev_t, struct tty *);
 static int	stripoutput(struct ifnet *,
-		    struct mbuf *, struct sockaddr *, struct rtentry *);
+		    struct mbuf *, const struct sockaddr *, struct rtentry *);
 static int	stripstart(struct tty *);
 static int	striptioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
 
@@ -742,7 +742,7 @@ strip_send(struct strip_softc *sc, struct mbuf *m0)
  * ordering gets trashed.  It can be done for all packets in stripintr().
  */
 int
-stripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct strip_softc *sc = ifp->if_softc;
@@ -767,7 +767,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		return (EHOSTUNREACH);
 	}
 
-#define SDL(a)          ((struct sockaddr_dl *) (a))
+#define SDL(__a)          ((const struct sockaddr_dl *)(__a))
 
 #ifdef DEBUG
 	if (rt) {
@@ -775,7 +775,7 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		    rt_key(rt)->sa_family, rt->rt_gateway->sa_family);
 		if (rt_key(rt)->sa_family == AF_INET)
 		  printf(" dst %x",
-		      ((struct sockaddr_in *)rt_key(rt))->sin_addr.s_addr);
+		      satocsin(rt_key(rt))->sin_addr.s_addr);
 		printf("\n");
 	}
 #endif
@@ -788,17 +788,17 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
                 if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK
                     || SDL(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
 		  	DPRINTF(("strip: could not arp starmode addr %x\n",
-			 ((struct sockaddr_in *)dst)->sin_addr.s_addr));
+			 satocsin(dst)->sin_addr.s_addr));
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
 		/*bcopy(LLADDR(SDL(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
-                dldst = LLADDR(SDL(rt->rt_gateway));
+                dldst = CLLADDR(SDL(rt->rt_gateway));
                 break;
 
 	case AF_LINK:
 		/*bcopy(LLADDR(SDL(rt->rt_gateway)), dldst, ifp->if_addrlen);*/
-		dldst = LLADDR(SDL(dst));
+		dldst = CLLADDR(SDL(dst));
 		break;
 
 	default:

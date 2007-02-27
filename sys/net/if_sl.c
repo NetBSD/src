@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.103 2007/01/04 19:07:03 elad Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.103.2.1 2007/02/27 16:54:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.103 2007/01/04 19:07:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.103.2.1 2007/02/27 16:54:43 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -199,7 +199,7 @@ static int	slclose(struct tty *, int);
 static int	slinput(int, struct tty *);
 static int	slioctl(struct ifnet *, u_long, caddr_t);
 static int	slopen(dev_t, struct tty *);
-static int	sloutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+static int	sloutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 			 struct rtentry *);
 static int	slstart(struct tty *);
 static int	sltioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
@@ -452,7 +452,7 @@ sltioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
  * ordering gets trashed.  It can be done for all packets in slintr().
  */
 static int
-sloutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+sloutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rtp)
 {
 	struct sl_softc *sc = ifp->if_softc;

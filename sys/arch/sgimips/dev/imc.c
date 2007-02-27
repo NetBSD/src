@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.27 2006/12/22 01:32:37 rumble Exp $	*/
+/*	$NetBSD: imc.c,v 1.27.2.1 2007/02/27 16:52:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.27 2006/12/22 01:32:37 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.27.2.1 2007/02/27 16:52:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -375,6 +375,26 @@ imc_gio64_arb_config(int slot, uint32_t flags)
 		else if (slot == GIO_SLOT_EXP1)
 			reg &= ~IMC_GIO64ARB_EXP1PIPE;
 	}
+
+	if (flags & GIO_ARB_32BIT) {
+		if (slot == GIO_SLOT_EXP0)
+			reg &= ~IMC_GIO64ARB_EXP064;
+		else if (slot == GIO_SLOT_EXP1)
+			reg &= ~IMC_GIO64ARB_EXP164;
+	}
+
+	if (flags & GIO_ARB_64BIT) {
+		if (slot == GIO_SLOT_EXP0)
+			reg |= IMC_GIO64ARB_EXP064;
+		else if (slot == GIO_SLOT_EXP1)
+			reg |= IMC_GIO64ARB_EXP164;
+	}
+
+	if (flags & GIO_ARB_HPC2_32BIT)
+		reg &= ~IMC_GIO64ARB_HPCEXP64;
+
+	if (flags & GIO_ARB_HPC2_64BIT)
+		reg |= IMC_GIO64ARB_HPCEXP64;
 
 	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO64ARB, reg);
 

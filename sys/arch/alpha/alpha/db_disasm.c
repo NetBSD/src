@@ -1,4 +1,4 @@
-/* $NetBSD: db_disasm.c,v 1.12 2005/12/11 12:16:10 christos Exp $ */
+/* $NetBSD: db_disasm.c,v 1.12.26.1 2007/02/27 16:48:40 yamt Exp $ */
 
 /* 
  * Mach Operating System
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12 2005/12/11 12:16:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.12.26.1 2007/02/27 16:48:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -805,16 +805,16 @@ register_name(int ireg)
 
 static int
 alpha_print_instruction(db_addr_t iadr, alpha_instruction i,
-    boolean_t showregs)
+    bool showregs)
 {
 	const char	*opcode;
 	int		ireg;
 	long		signed_immediate;
-	boolean_t	fstore;
+	bool		fstore;
 	pal_instruction	p;
 
 	regcount = 0;
-	fstore = FALSE;
+	fstore = false;
 	opcode = op_name[i.mem_format.opcode];
 
 	/*
@@ -983,7 +983,7 @@ foperate:
 	case op_stg:
 	case op_sts:
 	case op_stt:
-		fstore = TRUE;
+		fstore = true;
 		/* fall through */
 	case op_ldl:
 	case op_ldq:
@@ -1007,7 +1007,7 @@ loadstore_address:
 		{
 			char tbuf[24];
 
-			db_format_hex(tbuf, 24, signed_immediate, FALSE);
+			db_format_hex(tbuf, 24, signed_immediate, false);
 			db_printf("%s(%s)", tbuf,
 				register_name(i.mem_format.rb));
 		}
@@ -1073,7 +1073,7 @@ branch_displacement:
 }
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	alpha_instruction inst;
 

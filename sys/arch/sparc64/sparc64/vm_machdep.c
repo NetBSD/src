@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.68 2007/02/09 21:55:13 ad Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.68.2.1 2007/02/27 16:53:17 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.68.2.1 2007/02/27 16:53:17 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -240,8 +240,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	} else
 		l2->l_md.md_fpstate = NULL;
 
-	if (l1->l_proc->p_flag & P_32)
-		l2->l_proc->p_flag |= P_32;
+	if (l1->l_proc->p_flag & PK_32)
+		l2->l_proc->p_flag |= PK_32;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child

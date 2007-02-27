@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22.2.1 2007/02/27 16:53:28 yamt Exp $	*/
 /*	NetBSD: pmap.c,v 1.179 2004/10/10 09:55:24 yamt Exp		*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22.2.1 2007/02/27 16:53:28 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -359,7 +359,7 @@ int pmap_pg_g = 0;
 #ifdef LARGEPAGES
 /*
  * pmap_largepages: if our processor supports PG_PS and we are
- * using it, this is set to TRUE.
+ * using it, this is set to true.
  */
 
 int pmap_largepages;
@@ -384,8 +384,8 @@ paddr_t pmap_mem_end = HYPERVISOR_VIRT_START; /* updated for domain-0 */
  * other data structures
  */
 
-static pt_entry_t protection_codes[8];     /* maps MI prot to i386 prot code */
-static boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
+static pt_entry_t protection_codes[8];	/* maps MI prot to i386 prot code */
+static bool pmap_initialized = false;	/* pmap_init done yet? */
 
 /*
  * the following two vaddr_t's are used during system startup
@@ -487,7 +487,7 @@ extern vaddr_t pentium_idt_vaddr;
  * local prototypes
  */
 
-static struct pv_entry	*pmap_add_pvpage(struct pv_page *, boolean_t);
+static struct pv_entry	*pmap_add_pvpage(struct pv_page *, bool);
 static struct vm_page	*pmap_alloc_ptp(struct pmap *, int);
 static struct pv_entry	*pmap_alloc_pv(struct pmap *, int); /* see codes below */
 #define ALLOCPV_NEED	0	/* need PV now */
@@ -502,13 +502,13 @@ static void		 pmap_free_pvs(struct pmap *, struct pv_entry *);
 static void		 pmap_free_pv_doit(struct pv_entry *);
 static void		 pmap_free_pvpage(void);
 static struct vm_page	*pmap_get_ptp(struct pmap *, int);
-static boolean_t	 pmap_is_curpmap(struct pmap *);
-static boolean_t	 pmap_is_active(struct pmap *, int);
+static bool		 pmap_is_curpmap(struct pmap *);
+static bool		 pmap_is_active(struct pmap *, int);
 static pt_entry_t	*pmap_map_ptes(struct pmap *);
 static struct pv_entry	*pmap_remove_pv(struct pv_head *, struct pmap *,
 					vaddr_t);
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
-static boolean_t	 pmap_remove_pte(struct pmap *, struct vm_page *,
+static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t, int32_t *, int);
 static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 					  vaddr_t, vaddr_t, vaddr_t, int32_t *,
@@ -518,7 +518,7 @@ static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
 
 static void		 pmap_unmap_ptes(struct pmap *);
 
-static boolean_t	 pmap_reactivate(struct pmap *);
+static bool		 pmap_reactivate(struct pmap *);
 
 #ifdef DEBUG
 u_int	curapdp;
@@ -533,7 +533,7 @@ u_int	curapdp;
  *		of course the kernel is always loaded
  */
 
-inline static boolean_t
+inline static bool
 pmap_is_curpmap(pmap)
 	struct pmap *pmap;
 {
@@ -546,7 +546,7 @@ pmap_is_curpmap(pmap)
  * pmap_is_active: is this pmap loaded into the specified processor's %cr3?
  */
 
-inline static boolean_t
+inline static bool
 pmap_is_active(pmap, cpu_id)
 	struct pmap *pmap;
 	int cpu_id;
@@ -1308,7 +1308,7 @@ pmap_init()
 	 * done: pmap module is up (and ready for business)
 	 */
 
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 }
 
 /*
@@ -1445,7 +1445,7 @@ pmap_alloc_pvpage(pmap, mode)
 static struct pv_entry *
 pmap_add_pvpage(pvp, need_entry)
 	struct pv_page *pvp;
-	boolean_t need_entry;
+	bool need_entry;
 {
 	int tofree, lcv;
 
@@ -2099,13 +2099,13 @@ pmap_activate(l)
  * pmap_reactivate: try to regain reference to the pmap.
  */
 
-static boolean_t
+static bool
 pmap_reactivate(struct pmap *pmap)
 {
 	struct cpu_info *ci = curcpu();
 	u_int32_t cpumask = 1U << ci->ci_cpuid;
 	int s;
-	boolean_t result;
+	bool result;
 	u_int32_t oldcpus;
 
 	/*
@@ -2124,10 +2124,10 @@ pmap_reactivate(struct pmap *pmap)
 	if (oldcpus & cpumask) {
 		KASSERT(ci->ci_tlbstate == TLBSTATE_LAZY);
 		/* got it */
-		result = TRUE;
+		result = true;
 	} else {
 		KASSERT(ci->ci_tlbstate == TLBSTATE_STALE);
-		result = FALSE;
+		result = false;
 	}
 	ci->ci_tlbstate = TLBSTATE_VALID;
 	splx(s);
@@ -2299,7 +2299,7 @@ pmap_deactivate2(l)
  * pmap_extract: extract a PA for the given VA
  */
 
-boolean_t
+bool
 pmap_extract(pmap, va, pap)
 	struct pmap *pmap;
 	vaddr_t va;
@@ -2313,7 +2313,7 @@ pmap_extract(pmap, va, pap)
 		if (pde & PG_PS) {
 			if (pap != NULL)
 				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
-			return (TRUE);
+			return (true);
 		}
 #endif
 
@@ -2324,17 +2324,17 @@ pmap_extract(pmap, va, pap)
 		if (__predict_true((pte & PG_V) != 0)) {
 			if (pap != NULL)
 				*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
-			return (TRUE);
+			return (true);
 		}
 	}
-	return (FALSE);
+	return (false);
 }
 
 /*
  * pmap_extract_ma: like pmap_extract, but returns machine address
  */
 
-boolean_t
+bool
 pmap_extract_ma(pmap, va, pap)
 	struct pmap *pmap;
 	vaddr_t va;
@@ -2348,7 +2348,7 @@ pmap_extract_ma(pmap, va, pap)
 		if (pde & PG_PS) {
 			if (pap != NULL)
 				*pap = (pde & PG_LGFRAME) | (va & ~PG_LGFRAME);
-			return (TRUE);
+			return (true);
 		}
 #endif
 
@@ -2359,10 +2359,10 @@ pmap_extract_ma(pmap, va, pap)
 		if (__predict_true((pte & PG_V) != 0)) {
 			if (pap != NULL)
 				*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
-			return (TRUE);
+			return (true);
 		}
 	}
-	return (FALSE);
+	return (false);
 }
 
 
@@ -2377,7 +2377,7 @@ vtophys(va)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
+	if (pmap_extract(pmap_kernel(), va, &pa) == true)
 		return (pa);
 	return (0);
 }
@@ -2450,11 +2450,11 @@ pmap_zero_page(pa)
 
 /*
  * pmap_pagezeroidle: the same, for the idle loop page zero'er.
- * Returns TRUE if the page was zero'd, FALSE if we aborted for
+ * Returns true if the page was zero'd, false if we aborted for
  * some reason.
  */
 
-boolean_t
+bool
 pmap_pageidlezero(pa)
 	paddr_t pa;
 {
@@ -2464,7 +2464,7 @@ pmap_pageidlezero(pa)
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	pt_entry_t *maptp;
 	caddr_t zerova = VASLEW(zerop, id);
-	boolean_t rv = TRUE;
+	bool rv = true;
 	int *ptr;
 	int *ep;
 #if defined(I686_CPU)
@@ -2490,7 +2490,7 @@ pmap_pageidlezero(pa)
 			 * page.
 			 */
 
-			rv = FALSE;
+			rv = false;
 			break;
 		}
 #if defined(I686_CPU)
@@ -2662,7 +2662,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
  * => returns true if we removed a mapping
  */
 
-static boolean_t
+static bool
 pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	struct pmap *pmap;
 	struct vm_page *ptp;
@@ -2678,9 +2678,9 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 	struct vm_page_md *mdpg;
 
 	if (!pmap_valid_entry(*pte))
-		return(FALSE);		/* VA not mapped */
+		return(false);		/* VA not mapped */
 	if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
-		return(FALSE);
+		return(false);
 	}
 
 	/* atomically save the old PTE and zap! it */
@@ -2714,7 +2714,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 			panic("pmap_remove_pte: managed page without "
 			      "PG_PVLIST for 0x%lx", va);
 #endif
-		return(TRUE);
+		return(true);
 	}
 
 	pg = PHYS_TO_VM_PAGE(opte & PG_FRAME);
@@ -2734,7 +2734,7 @@ pmap_remove_pte(pmap, ptp, pte, va, cpumaskp, flags)
 
 	if (pve)
 		pmap_free_pv(pmap, pve);
-	return(TRUE);
+	return(true);
 }
 
 /*
@@ -2765,7 +2765,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 {
 	pt_entry_t *ptes, opte;
 	pt_entry_t *maptp;
-	boolean_t result;
+	bool result;
 	paddr_t ptppa;
 	vaddr_t blkendva;
 	struct vm_page *ptp;
@@ -3120,7 +3120,7 @@ pmap_page_remove(pg)
  * => we set pv_head => pmap locking
  */
 
-boolean_t
+bool
 pmap_test_attrs(pg, testbits)
 	struct vm_page *pg;
 	int testbits;
@@ -3148,12 +3148,12 @@ pmap_test_attrs(pg, testbits)
 
 	myattrs = &mdpg->mp_attrs;
 	if (*myattrs & testbits)
-		return(TRUE);
+		return(true);
 
 	/* test to see if there is a list before bothering to lock */
 	pvh = &mdpg->mp_pvhead;
 	if (SPLAY_ROOT(&pvh->pvh_root) == NULL) {
-		return(FALSE);
+		return(false);
 	}
 
 	/* nope, gonna have to do it the hard way */
@@ -3184,10 +3184,10 @@ pmap_test_attrs(pg, testbits)
  * pmap_clear_attrs: clear the specified attribute for a page.
  *
  * => we set pv_head => pmap locking
- * => we return TRUE if we cleared one of the bits we were asked to
+ * => we return true if we cleared one of the bits we were asked to
  */
 
-boolean_t
+bool
 pmap_clear_attrs(pg, clearbits)
 	struct vm_page *pg;
 	int clearbits;
@@ -3467,7 +3467,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	struct pv_head *old_pvh, *new_pvh;
 	struct pv_entry *pve = NULL; /* XXX gcc */
 	int error;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
+	bool wired = (flags & PMAP_WIRED) != 0;
 	int resid_delta = 0;
 	int wired_delta = 0;
 
@@ -3775,7 +3775,7 @@ pmap_growkernel(maxkvaddr)
 	for (/*null*/ ; nkpde < needed_kpde ; nkpde++) {
 
 		mapdp = (pt_entry_t *)vtomach((vaddr_t)&kpm->pm_pdir[PDSLOT_KERN + nkpde]);
-		if (uvm.page_init_done == FALSE) {
+		if (uvm.page_init_done == false) {
 
 			/*
 			 * we're growing the kernel pmap early (from
@@ -3783,7 +3783,7 @@ pmap_growkernel(maxkvaddr)
 			 * handled a little differently.
 			 */
 
-			if (uvm_page_physget(&ptaddr) == FALSE)
+			if (uvm_page_physget(&ptaddr) == false)
 				panic("pmap_growkernel: out of memory");
 			pmap_zero_page(ptaddr);
 
@@ -3797,7 +3797,7 @@ pmap_growkernel(maxkvaddr)
 
 		/*
 		 * THIS *MUST* BE CODED SO AS TO WORK IN THE
-		 * pmap_initialized == FALSE CASE!  WE MAY BE
+		 * pmap_initialized == false CASE!  WE MAY BE
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 
@@ -3971,7 +3971,7 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
 		va &= PG_LGFRAME;
 #endif
 
-	if (pmap_initialized == FALSE || cpus_attached == 0) {
+	if (pmap_initialized == false || cpus_attached == 0) {
 		pmap_update_pg(va);
 		return;
 	}
@@ -4068,9 +4068,9 @@ pmap_tlb_shootdown(pmap, va, pte, cpumaskp)
  *
  * => called at splipi if MULTIPROCESSOR.
  * => called at splvm if !MULTIPROCESSOR.
- * => return TRUE if we need to maintain user tlbs.
+ * => return true if we need to maintain user tlbs.
  */
-static inline boolean_t
+static inline bool
 pmap_do_tlb_shootdown_checktlbstate(struct cpu_info *ci)
 {
 
@@ -4093,9 +4093,9 @@ pmap_do_tlb_shootdown_checktlbstate(struct cpu_info *ci)
 	}
 
 	if (ci->ci_tlbstate == TLBSTATE_STALE)
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 /*

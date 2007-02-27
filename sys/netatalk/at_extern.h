@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.13 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.13.8.1 2007/02/27 16:54:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -41,30 +41,30 @@ struct socket;
 extern struct mowner atalk_rx_mowner;
 extern struct mowner atalk_tx_mowner;
 
-void	atintr		__P((void));
-void	aarpprobe	__P((void *));
-int	aarpresolve	__P((struct ifnet *, struct mbuf *,
-    struct sockaddr_at *, u_char *));
-void	aarpinput	__P((struct ifnet *, struct mbuf *));
-int	at_broadcast	__P((struct sockaddr_at  *));
-void	aarp_clean	__P((void));
-int	at_control	__P((u_long, caddr_t, struct ifnet *, struct lwp *));
-int	at_inithead	__P((void **, int));
-void	at_purgeaddr	__P((struct ifaddr *, struct ifnet *));
-void	at_purgeif	__P((struct ifnet *));
+void	atintr(void);
+void	aarpprobe(void *);
+int	aarpresolve(struct ifnet *, struct mbuf *, const struct sockaddr_at *,
+    u_char *);
+void	aarpinput(struct ifnet *, struct mbuf *);
+int	at_broadcast(const struct sockaddr_at *);
+void	aarp_clean(void);
+int	at_control(u_long, caddr_t, struct ifnet *, struct lwp *);
+int	at_inithead(void **, int);
+void	at_purgeaddr(struct ifaddr *, struct ifnet *);
+void	at_purgeif(struct ifnet *);
 u_int16_t
-	at_cksum	__P((struct mbuf *, int));
-int	ddp_usrreq	__P((struct socket *, int, struct mbuf *, struct mbuf *,
-    struct mbuf *, struct lwp *));
-void	ddp_init	__P((void ));
+	at_cksum(struct mbuf *, int);
+int	ddp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+    struct mbuf *, struct lwp *);
+void	ddp_init(void);
 struct ifaddr *
-	at_ifawithnet	__P((const struct sockaddr_at *, struct ifnet *));
-int	ddp_output	__P((struct mbuf *, ...));
+	at_ifawithnet(const struct sockaddr_at *, struct ifnet *);
+int	ddp_output(struct mbuf *, ...);
 struct ddpcb  *
-	ddp_search	__P((struct sockaddr_at *, struct sockaddr_at *,
-    struct at_ifaddr *));
-int     ddp_route	__P((struct mbuf *, struct route *));
-char *	prsockaddr	__P((const void *));
+	ddp_search(struct sockaddr_at *, struct sockaddr_at *,
+    struct at_ifaddr *);
+int     ddp_route(struct mbuf *, struct route *);
+char *	prsockaddr(const void *);
 
 
 #endif /* !_NETATALK_AT_EXTERN_H_ */

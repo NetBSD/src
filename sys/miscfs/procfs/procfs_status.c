@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.30 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.30.2.1 2007/02/27 16:54:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.30 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.30.2.1 2007/02/27 16:54:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ procfs_dostatus(
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "noflags");
 
 	mutex_enter(&p->p_smutex);
-	if (l->l_flag & L_INMEM)
+	if (l->l_flag & LW_INMEM)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %ld,%ld",
 		    p->p_stats->p_start.tv_sec, p->p_stats->p_start.tv_usec);
 	else

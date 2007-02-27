@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.62 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.62.4.1 2007/02/27 16:54:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.62 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.62.4.1 2007/02/27 16:54:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -358,24 +358,26 @@ SYSCTL_SETUP(sysctl_net_setup, "sysctl net subtree setup")
 }
 
 void
-pfctlinput(int cmd, struct sockaddr *sa)
+pfctlinput(int cmd, const struct sockaddr *sa)
 {
 	struct domain *dp;
 	const struct protosw *pr;
 
-	DOMAIN_FOREACH(dp)
-		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
-			if (pr->pr_ctlinput)
+	DOMAIN_FOREACH(dp) {
+		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
+			if (pr->pr_ctlinput != NULL)
 				(*pr->pr_ctlinput)(cmd, sa, NULL);
+		}
+	}
 }
 
 void
-pfctlinput2(int cmd, struct sockaddr *sa, void *ctlparam)
+pfctlinput2(int cmd, const struct sockaddr *sa, void *ctlparam)
 {
 	struct domain *dp;
 	const struct protosw *pr;
 
-	if (!sa)
+	if (sa == NULL)
 		return;
 
 	DOMAIN_FOREACH(dp) {
@@ -387,9 +389,10 @@ pfctlinput2(int cmd, struct sockaddr *sa, void *ctlparam)
 		if (dp->dom_family != sa->sa_family)
 			continue;
 
-		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
-			if (pr->pr_ctlinput)
+		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++) {
+			if (pr->pr_ctlinput != NULL)
 				(*pr->pr_ctlinput)(cmd, sa, ctlparam);
+		}
 	}
 }
 

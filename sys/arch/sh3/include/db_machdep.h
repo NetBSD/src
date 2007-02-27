@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 2006/05/10 06:24:03 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12.14.1 2007/02/27 16:52:59 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -92,9 +92,9 @@ typedef	long	kgdb_reg_t;
 #define	db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
 int kdb_trap(int, int, db_regs_t *);
-boolean_t inst_call(int);
-boolean_t inst_return(int);
-boolean_t inst_trap_return(int);
+bool inst_call(int);
+bool inst_return(int);
+bool inst_trap_return(int);
 
 /*
  * We use ELF symbols in DDB.

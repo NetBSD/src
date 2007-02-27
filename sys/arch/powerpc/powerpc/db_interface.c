@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.36 2005/12/24 22:45:36 perry Exp $ */
+/*	$NetBSD: db_interface.c,v 1.36.26.1 2007/02/27 16:52:51 yamt Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36.26.1 2007/02/27 16:52:51 yamt Exp $");
 
 #define USERACC
 
@@ -47,16 +47,16 @@ db_regs_t ddb_regs;
 void ddb_trap(void);				/* Call into trap_subr.S */
 int ddb_trap_glue(struct trapframe *);		/* Called from trap_subr.S */
 #ifdef PPC_IBM4XX
-static void db_ppc4xx_ctx(db_expr_t, int, db_expr_t, const char *);
-static void db_ppc4xx_pv(db_expr_t, int, db_expr_t, const char *);
-static void db_ppc4xx_reset(db_expr_t, int, db_expr_t, const char *);
-static void db_ppc4xx_tf(db_expr_t, int, db_expr_t, const char *);
-static void db_ppc4xx_dumptlb(db_expr_t, int, db_expr_t, const char *);
-static void db_ppc4xx_dcr(db_expr_t, int, db_expr_t, const char *);
+static void db_ppc4xx_ctx(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppc4xx_pv(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppc4xx_reset(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppc4xx_tf(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppc4xx_dumptlb(db_expr_t, bool, db_expr_t, const char *);
+static void db_ppc4xx_dcr(db_expr_t, bool, db_expr_t, const char *);
 static db_expr_t db_ppc4xx_mfdcr(db_expr_t);
 static void db_ppc4xx_mtdcr(db_expr_t, db_expr_t);
 #ifdef USERACC
-static void db_ppc4xx_useracc(db_expr_t, int, db_expr_t, const char *);
+static void db_ppc4xx_useracc(db_expr_t, bool, db_expr_t, const char *);
 #endif
 #endif /* PPC_IBM4XX */
 
@@ -205,7 +205,7 @@ const struct db_command db_machine_command_table[] = {
 };
 
 static void
-db_ppc4xx_ctx(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_ppc4xx_ctx(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct proc *p;
 
@@ -223,7 +223,7 @@ db_ppc4xx_ctx(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 static void
-db_ppc4xx_pv(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_ppc4xx_pv(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct pv_entry {
 		struct pv_entry *pv_next;	/* Linked list of mappings */
@@ -247,7 +247,7 @@ db_ppc4xx_pv(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 static void
-db_ppc4xx_reset(db_expr_t addr, int have_addr, db_expr_t count,
+db_ppc4xx_reset(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	printf("Reseting...\n");
@@ -255,7 +255,7 @@ db_ppc4xx_reset(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 static void
-db_ppc4xx_tf(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_ppc4xx_tf(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct trapframe *f;
 
@@ -311,7 +311,7 @@ static const char *const tlbsizes[] = {
 };
 
 static void
-db_ppc4xx_dumptlb(db_expr_t addr, int have_addr, db_expr_t count,
+db_ppc4xx_dumptlb(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	int i, zone, tlbsize;
@@ -367,7 +367,7 @@ db_ppc4xx_dumptlb(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 static void
-db_ppc4xx_dcr(db_expr_t address, int have_addr, db_expr_t count,
+db_ppc4xx_dcr(db_expr_t address, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	db_expr_t new_value;
@@ -442,7 +442,7 @@ db_ppc4xx_mtdcr(db_expr_t reg, db_expr_t val)
 
 #ifdef USERACC
 static void
-db_ppc4xx_useracc(db_expr_t addr, int have_addr, db_expr_t count,
+db_ppc4xx_useracc(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	static paddr_t oldaddr = -1;

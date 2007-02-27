@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.73 2006/09/09 11:12:53 tsutsui Exp $	*/
+/*	$NetBSD: hil.c,v 1.73.6.1 2007/02/27 16:50:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.73 2006/09/09 11:12:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.73.6.1 2007/02/27 16:50:42 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -208,9 +208,9 @@ hilattach(struct device *parent, struct device *self, void *aux)
 	 * Initialize loop information
 	 */
 	hilp->hl_addr = (struct hil_dev *)ia->ia_addr;
-	hilp->hl_cmdending = FALSE;
+	hilp->hl_cmdending = false;
 	hilp->hl_actdev = hilp->hl_cmddev = 0;
-	hilp->hl_cmddone = FALSE;
+	hilp->hl_cmddone = false;
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	hilp->hl_pollbp = hilp->hl_pollbuf;
 	hilp->hl_kbddev = 0;
@@ -998,7 +998,7 @@ hil_process_int(struct hil_softc *hilp, u_char stat, u_char c)
 
 	case HIL_STATUS:			/* The status info. */
 		if (c & HIL_ERROR) {
-			hilp->hl_cmddone = TRUE;
+			hilp->hl_cmddone = true;
 			if (c == HIL_RECONFIG)
 				hilconfig(hilp);
 			break;
@@ -1007,7 +1007,7 @@ hil_process_int(struct hil_softc *hilp, u_char stat, u_char c)
 			if (c & HIL_POLLDATA)	/* End of data */
 				hilevent(hilp);
 			else			/* End of command */
-				hilp->hl_cmdending = TRUE;
+				hilp->hl_cmdending = true;
 			hilp->hl_actdev = 0;
 		} else {
 			if (c & HIL_POLLDATA) {	/* Start of polled data */
@@ -1030,8 +1030,8 @@ hil_process_int(struct hil_softc *hilp, u_char stat, u_char c)
 		else {
 			if (hilp->hl_cmddev != 0) {  /* Collecting cmd data */
 				if (hilp->hl_cmdending) {
-					hilp->hl_cmddone = TRUE;
-					hilp->hl_cmdending = FALSE;
+					hilp->hl_cmddone = true;
+					hilp->hl_cmdending = false;
 				} else
 					*hilp->hl_cmdbp++ = c;
 			}
@@ -1802,7 +1802,7 @@ send_hildev_cmd(struct hil_softc *hilp, char device, char cmd)
 	 */
 	HILWAIT(hildevice);
 	WRITEHILCMD(hildevice, HIL_TRIGGER);
-	hilp->hl_cmddone = FALSE;
+	hilp->hl_cmddone = false;
 	do {
 		HILDATAWAIT(hildevice);
 		status = READHILSTAT(hildevice);

@@ -1,4 +1,4 @@
-/* $NetBSD: userret.h,v 1.10 2007/02/09 21:55:37 ad Exp $ */
+/* $NetBSD: userret.h,v 1.10.2.1 2007/02/27 16:55:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ mi_userret(struct lwp *l)
 	 * posted as we are reading unlocked.
 	 */
 	p = l->l_proc;
-	if ((l->l_flag & L_USERRET) != 0)
+	if ((l->l_flag & LW_USERRET) != 0)
 		lwp_userret(l);
 
 	/* XXXSMP unlocked */

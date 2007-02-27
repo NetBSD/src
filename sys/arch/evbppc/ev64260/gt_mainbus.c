@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.13 2006/02/10 20:52:57 gdamore Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.13.20.1 2007/02/27 16:50:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.13 2006/02/10 20:52:57 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.13.20.1 2007/02/27 16:50:12 yamt Exp $");
 
 #include "opt_ev64260.h"
 
@@ -130,10 +130,10 @@ gt_attach(struct device *parent, struct device *self, void *aux)
 	gt->gt_memt = &gt_mem_bs_tag;
 	gt->gt_pci0_memt = &gt_pci0_mem_bs_tag;
 	gt->gt_pci0_iot =  &gt_pci0_io_bs_tag;
-	gt->gt_pci0_host = TRUE;
+	gt->gt_pci0_host = true;
 	gt->gt_pci1_memt = &gt_pci1_mem_bs_tag;
 	gt->gt_pci1_iot =  &gt_pci1_io_bs_tag;
-	gt->gt_pci1_host = TRUE;
+	gt->gt_pci1_host = true;
 
 	gt->gt_memh = gt_memh;
 

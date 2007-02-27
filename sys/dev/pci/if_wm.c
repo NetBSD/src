@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.131.4.1 2007/02/27 16:54:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131 2006/11/23 19:42:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.4.1 2007/02/27 16:54:02 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1641,7 +1641,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
 		int hlen = offset + iphl;
-		boolean_t v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+		bool v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
 
 		if (__predict_false(m0->m_len <
 				    (hlen + sizeof(struct tcphdr)))) {
@@ -3837,11 +3837,23 @@ wm_tbi_mediachange(struct ifnet *ifp)
 	int i;
 
 	sc->sc_txcw = ife->ifm_data;
+	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x on entry\n",
+		    sc->sc_dev.dv_xname,sc->sc_txcw));
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO ||
 	    (sc->sc_mii.mii_media.ifm_media & IFM_FLOW) != 0)
 		sc->sc_txcw |= ANAR_X_PAUSE_SYM | ANAR_X_PAUSE_ASYM;
-	sc->sc_txcw |= TXCW_ANE;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) { 
+		sc->sc_txcw |= TXCW_ANE; 
+	} else {
+		/*If autonegotiation is turned off, force link up and turn on full duplex*/
+		sc->sc_txcw &= ~TXCW_ANE;
+		sc->sc_ctrl |= CTRL_SLU | CTRL_FD;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		delay(1000);
+	}
 
+	DPRINTF(WM_DEBUG_LINK,("%s: sc_txcw = 0x%x after autoneg check\n",
+		    sc->sc_dev.dv_xname,sc->sc_txcw));
 	CSR_WRITE(sc, WMREG_TXCW, sc->sc_txcw);
 	delay(10000);
 
@@ -3849,15 +3861,41 @@ wm_tbi_mediachange(struct ifnet *ifp)
 
 	sc->sc_tbi_anstate = 0;
 
-	if ((CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1)) == 0) {
+	i = CSR_READ(sc, WMREG_CTRL) & CTRL_SWDPIN(1);
+	DPRINTF(WM_DEBUG_LINK,("%s: i = 0x%x\n", sc->sc_dev.dv_xname,i));
+
+	/* 
+	 * On 82544 chips and later, the CTRL_SWDPIN(1) bit will be set if the
+	 * optics detect a signal, 0 if they don't.
+	 */
+	if (((i != 0) && (sc->sc_type >= WM_T_82544)) || (i == 0)) {
 		/* Have signal; wait for the link to come up. */
+
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			/*
+			 * Reset the link, and let autonegotiation do its thing
+			 */
+			sc->sc_ctrl |= CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			delay(1000);
+			sc->sc_ctrl &= ~CTRL_LRST;
+			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+			delay(1000);
+		}
+
 		for (i = 0; i < 50; i++) {
 			delay(10000);
 			if (CSR_READ(sc, WMREG_STATUS) & STATUS_LU)
 				break;
 		}
 
+		DPRINTF(WM_DEBUG_LINK,("%s: i = %d after waiting for link\n",
+			    sc->sc_dev.dv_xname,i));
+
 		status = CSR_READ(sc, WMREG_STATUS);
+		DPRINTF(WM_DEBUG_LINK,
+		    ("%s: status after final read = 0x%x, STATUS_LU = 0x%x\n",
+			sc->sc_dev.dv_xname,status, STATUS_LU));
 		if (status & STATUS_LU) {
 			/* Link is up. */
 			DPRINTF(WM_DEBUG_LINK,
@@ -3992,6 +4030,15 @@ wm_gmii_reset(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		delay(20000);
 	} else {
+                /*
+                 * With 82543, we need to force speed and duplex on the MAC
+                 * equal to what the PHY speed and duplex configuration is.
+                 * In addition, we need to perform a hardware reset on the PHY
+                 * to take it out of reset.
+                 */
+                sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+                CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+
 		/* The PHY reset pin is active-low. */
 		reg = CSR_READ(sc, WMREG_CTRL_EXT);
 		reg &= ~((CTRL_EXT_SWDPIO_MASK << CTRL_EXT_SWDPIO_SHIFT) |
@@ -4002,7 +4049,7 @@ wm_gmii_reset(struct wm_softc *sc)
 		delay(10);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
-		delay(10);
+		delay(10000);
 
 		CSR_WRITE(sc, WMREG_CTRL_EXT, reg | CTRL_EXT_SWDPIN(4));
 		delay(10);
@@ -4038,7 +4085,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 	 * XXXbouyer - I'm not sure this is right for the 80003,
 	 * the em driver only sets CTRL_SLU here - but it seems to work.
 	 */
-	sc->sc_ctrl |= CTRL_SLU | CTRL_ASDE;
+	sc->sc_ctrl |= CTRL_SLU;
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 	/* Initialize our media structures and probe the GMII. */
@@ -4100,8 +4147,9 @@ wm_gmii_mediachange(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_UP) {
 		sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
 		sc->sc_ctrl |= CTRL_SLU;
-		if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-			sc->sc_ctrl |= CTRL_ASDE;
+		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+		    || (sc->sc_type > WM_T_82543)) {
+			sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
 		} else {
 			sc->sc_ctrl &= ~CTRL_ASDE;
 			sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
@@ -4123,6 +4171,8 @@ wm_gmii_mediachange(struct ifnet *ifp)
 			}
 		}
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		if (sc->sc_type <= WM_T_82543)
+			wm_gmii_reset(sc);
 		mii_mediachg(&sc->sc_mii);
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.34 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.34.2.1 2007/02/27 16:53:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.34 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.34.2.1 2007/02/27 16:53:00 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,7 +145,7 @@ void
 general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
-	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
+	bool usermode = !KERNELMODE(tf->tf_ssr);
 	int ipl;
 	ksiginfo_t ksi;
 
@@ -265,7 +265,7 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	struct vm_map *map;
 	pmap_t pmap;
 	ksiginfo_t ksi;
-	boolean_t usermode;
+	bool usermode;
 	int err, track, ftype;
 	const char *panic_msg;
 
@@ -383,7 +383,7 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
-		boolean_t loaded = __pmap_pte_load(pmap, va, track);
+		bool loaded = __pmap_pte_load(pmap, va, track);
 		TLB_ASSERT(loaded, "page table entry not found");
 		if (usermode)
 			userret(l);

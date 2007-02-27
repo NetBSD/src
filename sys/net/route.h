@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.50 2007/01/05 16:40:08 joerg Exp $	*/
+/*	$NetBSD: route.h,v 1.50.2.1 2007/02/27 16:54:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -342,6 +342,22 @@ void	rtcache_copy(struct route *, const struct route *, size_t);
 
 void	rtcache_update(struct route *);
 void	rtcache_free(struct route *);
+
+static inline const struct sockaddr *
+rtcache_getdst(const struct route *ro)
+{
+	return &ro->ro_dst;
+}
+
+static inline void
+rtcache_setdst(struct route *ro, struct sockaddr *sa)
+{
+#if 0
+	KASSERT(ro->ro_sa != sa);
+	rtcache_free(ro);
+	ro->ro_sa = sa;
+#endif
+}
 
 static inline void
 rtcache_check(struct route *ro)
