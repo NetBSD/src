@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.5 2007/02/22 06:34:45 thorpej Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.6 2007/02/27 15:19:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.5 2007/02/22 06:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.6 2007/02/27 15:19:54 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -483,9 +483,11 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * Previously held signals may now have become visible.  Ensure that
 	 * we check for them before returning to userspace.
 	 */
-	lwp_lock(l);
-	l->l_flag |= LW_PENDSIG;
-	lwp_unlock(l);
+	if (sigispending(l, 0)) {
+		lwp_lock(l);
+		l->l_flag |= LW_PENDSIG;
+		lwp_unlock(l);
+	}
  out:
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
@@ -521,7 +523,7 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 			return (EINVAL);
 		}
 		sigminusset(&sigcantmask, &l->l_sigmask);
-		if (more) {
+		if (more && sigispending(l, 0)) {
 			/*
 			 * Check for pending signals on return to user.
 			 */
@@ -568,9 +570,11 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		sigminusset(&sigcantmask, &l->l_sigmask);
 
 		/* Check for pending signals when sleeping. */
-		lwp_lock(l);
-		l->l_flag |= LW_PENDSIG;
-		lwp_unlock(l);
+		if (sigispending(l, 0)) {
+			lwp_lock(l);
+			l->l_flag |= LW_PENDSIG;
+			lwp_unlock(l);
+		}
 		mutex_exit(&p->p_smutex);
 	}
 
