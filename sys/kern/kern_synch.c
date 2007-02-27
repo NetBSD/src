@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.10 2007/02/27 16:54:25 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.11 2007/02/27 17:23:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.10 2007/02/27 16:54:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.11 2007/02/27 17:23:24 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -749,14 +749,14 @@ sched_changepri(struct lwp *l, pri_t pri)
 		return;
 	}
 
-	remrunqueue(l);
+	sched_dequeue(l);
 	l->l_priority = pri;
-	setrunqueue(l);
+	sched_enqueue(l);
 	resched_cpu(l);
 }
 
 static void
-static sched_lendpri(struct lwp *l, pri_t pri)
+sched_lendpri(struct lwp *l, pri_t pri)
 {
 
 	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
@@ -766,9 +766,9 @@ static sched_lendpri(struct lwp *l, pri_t pri)
 		return;
 	}
 
-	remrunqueue(l);
+	sched_dequeue(l);
 	l->l_inheritedprio = pri;
-	setrunqueue(l);
+	sched_enqueue(l);
 	resched_cpu(l);
 }
 
