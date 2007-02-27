@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.5 2007/02/15 13:07:29 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.6 2007/02/27 13:28:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -188,13 +188,13 @@ int	psbuf_get_str(struct psbuf *, char **, uint32_t *);
 int	psbuf_get_vattr(struct psbuf *, struct vattr *);
 
 int	psbuf_expect_status(struct psbuf *);
-int	psbuf_expect_handle(struct psbuf *, char **, size_t *);
+int	psbuf_expect_handle(struct psbuf *, char **, uint32_t *);
 int	psbuf_expect_name(struct psbuf *, uint32_t *);
 int	psbuf_expect_attrs(struct psbuf *, struct vattr *);
 
-int	psbuf_do_data(struct psbuf *, uint8_t *, size_t *);
+int	psbuf_do_data(struct psbuf *, uint8_t *, uint32_t *);
 
-int	psbuf_req_data(struct psbuf *, int, uint32_t, const void *, size_t);
+int	psbuf_req_data(struct psbuf *, int, uint32_t, const void *, uint32_t);
 int	psbuf_req_str(struct psbuf *, int, uint32_t, const char *);
 
 
