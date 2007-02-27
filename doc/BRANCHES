@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.155 2007/02/20 22:11:16 rmind Exp $
+#	$NetBSD: BRANCHES,v 1.156 2007/02/27 14:50:40 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -1115,6 +1115,39 @@ Scope:		kernel
 Notes:		Results in consolidation of Alchemy (mips/dev/alchemy/aucom.c)
 		com support, and also removes a nasty hack from Atheros com.
 
+Branch:		ad-audiomp
+Description:	Add MP locking to the audio drivers
+Status:		Active
+Start Date:	28 Febuary 2006
+End Date:
+Base Tag:	ad-audiomp-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		kernel
+Notes:		Making the audio drivers MP safe is necessary before efforts
+		can be made to make the VM system MP safe. About 1/2 of the
+		drivers are converted, the remaining 1/2 need more changes.
+
+		As of import this is snapshot of work in progress and so
+		may not compile; in particular the midi changes are very
+		much "in progress". The audio component has been tested
+		and verified to work with emuxki and auvia. There may
+		be a locking issue in the ac97 code at boot.
+
+		The are two locks per device instance, an ISR lock and
+		a character device lock. The ISR lock replaces calls to
+		splaudio()/splx(), and will be held across calls to device
+		methods which were called at splaudio() before (e.g.
+		trigger_output). The character device lock is held across
+		calls to nearly all of the methods, excluding some only
+		used for initializtion, e.g. get_locks. This needs to be
+		documented at merge time.
+
+		To test on a multi way x86 system, search for "mpsafe" in
+		x86/x86/intr.c and change IPL_SCHED to IPL_AUDIO. Run a job
+		that will acquire the ISR lock (depends on the hardware, but
+		"while true; do mixerctl -a > /dev/null; done" may suffice).
+		Play audio, run lockstat and verify that that there is
+		contention on the ISR lock.
 
 ########################################################################
 # Other:
