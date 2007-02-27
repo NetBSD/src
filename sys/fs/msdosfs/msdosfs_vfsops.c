@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.40 2006/11/25 12:17:30 scw Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.40.2.1 2007/02/27 23:11:36 riz Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.40 2006/11/25 12:17:30 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.40.2.1 2007/02/27 23:11:36 riz Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.40 2006/11/25 12:17:30 scw Exp 
 #include <sys/file.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
@@ -426,8 +427,9 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	struct byte_bpb50 *b50;
 	struct byte_bpb710 *b710;
 	u_int8_t SecPerClust;
-	int	ronly, error;
-	int	bsize = 0, dtype = 0, tmp;
+	int	ronly, error, tmp;
+	int	bsize, dtype, fstype, secsize;
+	u_int64_t psize;
 
 	/* Flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
@@ -449,24 +451,43 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	 * Let's root them out...
 	 */
 	error = VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, NOCRED, l);
-	if (error)
-		goto error_exit;
-	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		tmp   = dpart.part->p_fstype;
+	if (error == 0) {
+		secsize = dpart.disklab->d_secsize;
 		dtype = dpart.disklab->d_type;
-		bsize = dpart.disklab->d_secsize;
-		if (bsize != 512 || (dtype!=DTYPE_FLOPPY && tmp!=FS_MSDOS)) {
+		fstype = dpart.part->p_fstype;
+		psize = dpart.part->p_size;
+	} else {
+		struct dkwedge_info dkw;
+		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD,
+		    NOCRED, l);
+		secsize = 512;	/* XXX */
+		dtype = DTYPE_FLOPPY; /* XXX */
+		fstype = FS_MSDOS;
+		psize = -1;
+		if (error) {
+			if (error != ENOTTY)
+				goto error_exit;
+		} else {
+			fstype = strcmp(dkw.dkw_ptype, DKW_PTYPE_FAT) == 0 ?
+			    FS_MSDOS : -1;
+			psize = dkw.dkw_size;
+		}
+	}
+	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
+		bsize = secsize;
+		if (bsize != 512 ||
+		    (dtype != DTYPE_FLOPPY && fstype != FS_MSDOS)) {
 			error = EINVAL;
 			goto error_exit;
 		}
-	}
+	} else
+		bsize = 0;
 
 	/*
 	 * Read the boot sector of the filesystem, and then check the
 	 * boot signature.  If not a dos boot sector then error out.
 	 */
-	if ((error = bread(devvp, 0, dpart.disklab->d_secsize, NOCRED,
-	    &bp)) != 0)
+	if ((error = bread(devvp, 0, secsize, NOCRED, &bp)) != 0)
 		goto error_exit;
 	bp->b_flags |= B_AGE;
 	bsp = (union bootsector *)bp->b_data;
@@ -520,14 +541,13 @@ msdosfs_mountfs(devvp, mp, l, argp)
 	}
 
 	if (pmp->pm_RootDirEnts == 0) {
+		unsigned short vers = getushort(b710->bpbFSVers);
 		/*
 		 * Some say that bsBootSectSig[23] must be zero, but
 		 * Windows does not require this and some digital cameras
 		 * do not set these to zero.  Therefore, do not insist.
 		 */
-		if (pmp->pm_Sectors
-		    || pmp->pm_FATsecs
-		    || getushort(b710->bpbFSVers)) {
+		if (pmp->pm_Sectors || pmp->pm_FATsecs || vers) {
 			error = EINVAL;
 			goto error_exit;
 		}
@@ -565,8 +585,7 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		  || (pmp->pm_BytesPerSec & (pmp->pm_BytesPerSec - 1))
 		  || (pmp->pm_HugeSectors == 0)
 		  || (pmp->pm_HugeSectors * (pmp->pm_BytesPerSec / bsize)
-							> dpart.part->p_size)
-		   ) {
+		      > psize)) {
 			error = EINVAL;
 			goto error_exit;
 		}
