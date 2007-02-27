@@ -1,4 +1,4 @@
-/*	$NetBSD: dfrem.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: dfrem.c,v 1.3.26.1 2007/02/27 16:51:10 yamt Exp $	*/
 
 /*	$OpenBSD: dfrem.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfrem.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfrem.c,v 1.3.26.1 2007/02/27 16:51:10 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -59,7 +59,7 @@ unsigned int *status;
 	register unsigned int opnd1p1, opnd1p2, opnd2p1, opnd2p2;
 	register unsigned int resultp1, resultp2;
 	register int opnd1_exponent, opnd2_exponent, dest_exponent, stepcount;
-	register int roundup = FALSE;
+	register int roundup = false;
 
 	Dbl_copyfromptr(srcptr1,opnd1p1,opnd1p2);
 	Dbl_copyfromptr(srcptr2,opnd2p1,opnd2p2);
@@ -237,7 +237,7 @@ unsigned int *status;
 	 */
 	if (Dbl_isnotlessthan(opnd1p1,opnd1p2,opnd2p1,opnd2p2)) {
 		Dbl_subtract(opnd1p1,opnd1p2,opnd2p1,opnd2p2,opnd1p1,opnd1p2);
-		roundup = TRUE;
+		roundup = true;
 	}
 	if (stepcount > 0 || Dbl_iszero(opnd1p1,opnd1p2)) {
 		/* division is exact, remainder is zero */

@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.28.1 2007/02/27 16:50:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ devopen(struct open_file *f, const char *request, char **file)
 			printf("Network disabled.\n");
 			return -1;
 		}
-		try_bootp = TRUE;
+		try_bootp = true;
 		file_system[0] = nfs_ops;
 		f->f_dev = &netdevsw;
 		if (*filename == '\0') {

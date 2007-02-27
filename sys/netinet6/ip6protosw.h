@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.17 2006/08/27 23:55:54 christos Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.17.8.1 2007/02/27 16:55:04 yamt Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -119,29 +119,29 @@ struct ip6protosw {
 
 /* protocol-protocol hooks */
 	int	(*pr_input)		/* input to protocol (from below) */
-			__P((struct mbuf **, int *, int));
+			(struct mbuf **, int *, int);
 	int	(*pr_output)		/* output to protocol (from above) */
-			__P((struct mbuf *, ...));
+			(struct mbuf *, ...);
 	void	(*pr_ctlinput)		/* control input (from below) */
-			__P((int, struct sockaddr *, void *));
+			(int, const struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
-			__P((int, struct socket *, int, int, struct mbuf **));
+			(int, struct socket *, int, int, struct mbuf **);
 
 /* user-protocol hook */
 	int	(*pr_usrreq)		/* user request: see list below */
-			__P((struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *, struct lwp *));
+			(struct socket *, int, struct mbuf *,
+			     struct mbuf *, struct mbuf *, struct lwp *);
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
-			__P((void));
+			(void);
 
 	void	(*pr_fasttimo)		/* fast timeout (200ms) */
-			__P((void));
+			(void);
 	void	(*pr_slowtimo)		/* slow timeout (500ms) */
-			__P((void));
+			(void);
 	void	(*pr_drain)		/* flush any excess space possible */
-			__P((void));
+			(void);
 };
 
 extern const struct ip6protosw inet6sw[];

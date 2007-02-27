@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.54 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.54.2.1 2007/02/27 16:54:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.54 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.54.2.1 2007/02/27 16:54:16 yamt Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -231,7 +231,7 @@ check_shell:
 		/* normally can't fail, but check for it if diagnostic */
 #ifdef SYSTRACE
 		error = 1;
-		if (ISSET(l->l_proc->p_flag, P_SYSTRACE)) {
+		if (ISSET(l->l_proc->p_flag, PK_SYSTRACE)) {
 			error = systrace_scriptname(p, *tmpsap);
 			if (error == 0)
 				tmpsap++;

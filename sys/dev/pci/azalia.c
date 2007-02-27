@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.43 2007/02/05 13:52:26 kent Exp $	*/
+/*	$NetBSD: azalia.c,v 1.43.2.1 2007/02/27 16:53:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.43 2007/02/05 13:52:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.43.2.1 2007/02/27 16:53:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,9 +135,9 @@ typedef struct azalia_t {
 	rirb_entry_t *unsolq;
 	int unsolq_wp;
 	int unsolq_rp;
-	boolean_t unsolq_kick;
+	bool unsolq_kick;
 
-	boolean_t ok64;
+	bool ok64;
 	int nistreams, nostreams, nbstreams;
 	stream_t pstream;
 	stream_t rstream;
@@ -1432,7 +1432,7 @@ azalia_codec_connect_stream(codec_t *this, int dir, uint16_t fmt, int number)
 	uint32_t v;
 	int i, err, startchan, nchan;
 	nid_t nid;
-	boolean_t flag222;
+	bool flag222;
 
 	DPRINTF(("%s: fmt=0x%4.4x number=%d\n", __func__, fmt, number));
 	err = 0;
@@ -1726,7 +1726,7 @@ azalia_widget_init_connection(widget_t *this, const codec_t *codec)
 {
 	uint32_t result;
 	int err;
-	boolean_t longform;
+	bool longform;
 	int length, i;
 
 	this->selected = -1;

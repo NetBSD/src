@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.301.2.1 2007/02/17 10:30:43 yamt Exp $
+#	$NetBSD: files.i386,v 1.301.2.2 2007/02/27 16:51:34 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -54,8 +54,9 @@ defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
 
 # Beep on halt
 defflag opt_beep.h		BEEP_ONHALT
-defparam opt_beep.h		BEEP_ONHALT_COUNT
-defparam opt_beep.h		BEEP_ONHALT_PITCH BEEP_ONHALT_PERIOD
+defparam opt_beep.h		BEEP_ONHALT_COUNT=3
+defparam opt_beep.h		BEEP_ONHALT_PITCH=1500
+defparam opt_beep.h		BEEP_ONHALT_PERIOD=250
 
 # Enhanced SpeedStep
 defflag			ENHANCED_SPEEDSTEP

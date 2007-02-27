@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.808.2.3 2007/02/21 11:57:28 yamt Exp $
+# $NetBSD: GENERIC,v 1.808.2.4 2007/02/27 16:51:32 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.808.2.3 $"
+#ident 		"GENERIC-$Revision: 1.808.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -129,6 +129,9 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
+#options 	SYSCALL_STATS	# per syscall counts
+#options 	SYSCALL_TIMES	# per syscall times
+#options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI

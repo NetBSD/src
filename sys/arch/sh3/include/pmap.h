@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2006/09/24 00:43:44 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29.4.1 2007/02/27 16:52:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,5 +92,5 @@ void pmap_prefer(vaddr_t, vaddr_t *);
 /* MD pmap utils. */
 pt_entry_t *__pmap_pte_lookup(pmap_t, vaddr_t);
 pt_entry_t *__pmap_kpte_lookup(vaddr_t);
-boolean_t __pmap_pte_load(pmap_t, vaddr_t, int);
+bool __pmap_pte_load(pmap_t, vaddr_t, int);
 #endif /* !_SH3_PMAP_H_ */

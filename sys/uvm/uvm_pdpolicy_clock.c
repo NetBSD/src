@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.6 2007/01/19 15:52:24 skrll Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.6.2.1 2007/02/27 16:55:29 yamt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.6 2007/01/19 15:52:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.6.2.1 2007/02/27 16:55:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -110,8 +110,8 @@ struct uvmpdpol_globalstate {
 };
 
 struct uvmpdpol_scanstate {
-	boolean_t ss_first;
-	boolean_t ss_anonreact, ss_filereact, ss_execreact;
+	bool ss_first;
+	bool ss_anonreact, ss_filereact, ss_execreact;
 	struct vm_page *ss_nextpg;
 };
 
@@ -140,9 +140,9 @@ uvmpdpol_scaninit(void)
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
 	int t;
-	boolean_t anonunder, fileunder, execunder;
-	boolean_t anonover, fileover, execover;
-	boolean_t anonreact, filereact, execreact;
+	bool anonunder, fileunder, execunder;
+	bool anonover, fileover, execover;
+	bool anonreact, filereact, execreact;
 
 	/*
 	 * decide which types of pages we want to reactivate instead of freeing
@@ -160,13 +160,13 @@ uvmpdpol_scaninit(void)
 	filereact = fileunder || (!fileover && (anonover || execover));
 	execreact = execunder || (!execover && (anonover || fileover));
 	if (filereact && execreact && (anonreact || uvm_swapisfull())) {
-		anonreact = filereact = execreact = FALSE;
+		anonreact = filereact = execreact = false;
 	}
 	ss->ss_anonreact = anonreact;
 	ss->ss_filereact = filereact;
 	ss->ss_execreact = execreact;
 
-	ss->ss_first = TRUE;
+	ss->ss_first = true;
 }
 
 struct vm_page *
@@ -183,7 +183,7 @@ uvmpdpol_selectvictim(void)
 
 		if (ss->ss_first) {
 			pg = TAILQ_FIRST(&pdpol_state.s_inactiveq);
-			ss->ss_first = FALSE;
+			ss->ss_first = false;
 		} else {
 			pg = ss->ss_nextpg;
 			if (pg != NULL && (pg->pqflags & PQ_INACTIVE) == 0) {
@@ -343,7 +343,7 @@ uvmpdpol_anfree(struct vm_anon *an)
 {
 }
 
-boolean_t
+bool
 uvmpdpol_pageisqueued_p(struct vm_page *pg)
 {
 
@@ -406,7 +406,7 @@ uvmpdpol_reinit(void)
 {
 }
 
-boolean_t
+bool
 uvmpdpol_needsscan_p(void)
 {
 

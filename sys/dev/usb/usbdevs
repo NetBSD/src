@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.459 2007/02/10 14:28:55 salo Exp $
+$NetBSD: usbdevs,v 1.459.2.1 2007/02/27 16:54:09 yamt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -715,6 +715,7 @@ product CANON G1		0x3048	PowerShot G1
 product CANON A20		0x304e	PowerShot A20
 product CANON S200		0x3065	PowerShot S200
 product CANON EOS300D		0x3084	EOS 300D / Digital Rebel
+product CANON SD630		0x30fe	PowerShot SD630
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter

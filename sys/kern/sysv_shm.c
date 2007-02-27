@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.96 2007/02/15 15:40:52 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.96.2.1 2007/02/27 16:54:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.96 2007/02/15 15:40:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.96.2.1 2007/02/27 16:54:33 yamt Exp $");
 
 #define SYSVSHM
 
@@ -360,7 +360,7 @@ sys_shmat(struct lwp *l, void *v, register_t *retval)
 	if (shm_use_phys || (shmseg->shm_perm.mode & SHMSEG_WIRED)) {
 		/* Wire the map */
 		error = uvm_map_pageable(&p->p_vmspace->vm_map, attach_va,
-		    attach_va + size, FALSE, 0);
+		    attach_va + size, false, 0);
 		if (error) {
 			if (error == EFAULT)
 				error = ENOMEM;
@@ -479,7 +479,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 					return EIO;
 				/* Wire the map */
 				error = uvm_map_pageable(&p->p_vmspace->vm_map,
-				    shmmap_se->va, shmmap_se->va + size, FALSE,
+				    shmmap_se->va, shmmap_se->va + size, false,
 				    0);
 				if (error) {
 					uobj_unwirepages(shmseg->_shm_internal,
@@ -497,7 +497,7 @@ shmctl1(struct lwp *l, int shmid, int cmd, struct shmid_ds *shmbuf)
 				uobj_unwirepages(shmseg->_shm_internal, 0,
 				    round_page(shmseg->shm_segsz));
 				error = uvm_map_pageable(&p->p_vmspace->vm_map,
-				    shmmap_se->va, shmmap_se->va + size, TRUE,
+				    shmmap_se->va, shmmap_se->va + size, true,
 				    0);
 				if (error) {
 					/*

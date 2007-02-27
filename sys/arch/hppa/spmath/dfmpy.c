@@ -1,4 +1,4 @@
-/*	$NetBSD: dfmpy.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: dfmpy.c,v 1.3.26.1 2007/02/27 16:51:10 yamt Exp $	*/
 
 /*	$OpenBSD: dfmpy.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dfmpy.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dfmpy.c,v 1.3.26.1 2007/02/27 16:51:10 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
@@ -60,7 +60,7 @@ unsigned int *status;
 	register unsigned int opnd1p1, opnd1p2, opnd2p1, opnd2p2;
 	register unsigned int opnd3p1, opnd3p2, resultp1, resultp2;
 	register int dest_exponent, count;
-	register int inexact = FALSE, guardbit = FALSE, stickybit = FALSE;
+	register int inexact = false, guardbit = false, stickybit = false;
 	int is_tiny;
 
 	Dbl_copyfromptr(srcptr1,opnd1p1,opnd1p2);
@@ -303,7 +303,7 @@ unsigned int *status;
 			}
 			return (OVERFLOWEXCEPTION);
 		}
-		inexact = TRUE;
+		inexact = true;
 		Set_overflowflag();
 		/* set result to infinity or largest number */
 		Dbl_setoverflow(resultp1,resultp2);
@@ -329,14 +329,14 @@ unsigned int *status;
 		}
 
 		/* Determine if should set underflow flag */
-		is_tiny = TRUE;
+		is_tiny = true;
 		if (dest_exponent == 0 && inexact) {
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
 				if (Dbl_iszero_sign(resultp1)) {
 					Dbl_increment(opnd3p1,opnd3p2);
 					if (Dbl_isone_hiddenoverflow(opnd3p1))
-						is_tiny = FALSE;
+						is_tiny = false;
 					Dbl_decrement(opnd3p1,opnd3p2);
 				}
 				break;
@@ -344,7 +344,7 @@ unsigned int *status;
 				if (Dbl_isone_sign(resultp1)) {
 					Dbl_increment(opnd3p1,opnd3p2);
 					if (Dbl_isone_hiddenoverflow(opnd3p1))
-						is_tiny = FALSE;
+						is_tiny = false;
 					Dbl_decrement(opnd3p1,opnd3p2);
 				}
 				break;
@@ -353,7 +353,7 @@ unsigned int *status;
 				    Dbl_isone_lowmantissap2(opnd3p2))) {
 					Dbl_increment(opnd3p1,opnd3p2);
 					if (Dbl_isone_hiddenoverflow(opnd3p1))
-					is_tiny = FALSE;
+					is_tiny = false;
 					Dbl_decrement(opnd3p1,opnd3p2);
 				}
 				break;

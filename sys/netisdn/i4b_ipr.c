@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.24 2006/11/16 01:33:49 christos Exp $
+ *	$Id: i4b_ipr.c,v 1.24.4.1 2007/02/27 16:55:07 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.24 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.24.4.1 2007/02/27 16:55:07 yamt Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -257,7 +257,7 @@ static int iprwatchdog(int unit);
 static void iprwatchdog(struct ifnet *ifp);
 #endif
 static void ipr_tx_queue_empty(void *);
-static int iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst, struct rtentry *rtp);
+static int iripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst, struct rtentry *rtp);
 static void iripclearqueues(struct ipr_softc *sc);
 static void ipr_set_linktab(void *softc, isdn_link_t *ilt);
 static void ipr_activity(void *softc, int rxtx);
@@ -414,7 +414,7 @@ iripattach()
  *	output a packet to the ISDN B-channel
  *---------------------------------------------------------------------------*/
 static int
-iripoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+iripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 struct rtentry *rtp)
 {
 	struct ipr_softc *sc;

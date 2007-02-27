@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.181 2007/02/10 07:52:29 mlelstv Exp $	*/
+/*	$NetBSD: ohci.c,v 1.181.2.1 2007/02/27 16:54:04 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.181 2007/02/10 07:52:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.181.2.1 2007/02/27 16:54:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ struct ohci_pipe {
 
 #define OHCI_INTR_ENDPT 1
 
-Static struct usbd_bus_methods ohci_bus_methods = {
+Static const struct usbd_bus_methods ohci_bus_methods = {
 	ohci_open,
 	ohci_softintr,
 	ohci_poll,
@@ -308,7 +308,7 @@ Static struct usbd_bus_methods ohci_bus_methods = {
 	ohci_freex,
 };
 
-Static struct usbd_pipe_methods ohci_root_ctrl_methods = {
+Static const struct usbd_pipe_methods ohci_root_ctrl_methods = {
 	ohci_root_ctrl_transfer,
 	ohci_root_ctrl_start,
 	ohci_root_ctrl_abort,
@@ -317,7 +317,7 @@ Static struct usbd_pipe_methods ohci_root_ctrl_methods = {
 	ohci_root_ctrl_done,
 };
 
-Static struct usbd_pipe_methods ohci_root_intr_methods = {
+Static const struct usbd_pipe_methods ohci_root_intr_methods = {
 	ohci_root_intr_transfer,
 	ohci_root_intr_start,
 	ohci_root_intr_abort,
@@ -326,7 +326,7 @@ Static struct usbd_pipe_methods ohci_root_intr_methods = {
 	ohci_root_intr_done,
 };
 
-Static struct usbd_pipe_methods ohci_device_ctrl_methods = {
+Static const struct usbd_pipe_methods ohci_device_ctrl_methods = {
 	ohci_device_ctrl_transfer,
 	ohci_device_ctrl_start,
 	ohci_device_ctrl_abort,
@@ -335,7 +335,7 @@ Static struct usbd_pipe_methods ohci_device_ctrl_methods = {
 	ohci_device_ctrl_done,
 };
 
-Static struct usbd_pipe_methods ohci_device_intr_methods = {
+Static const struct usbd_pipe_methods ohci_device_intr_methods = {
 	ohci_device_intr_transfer,
 	ohci_device_intr_start,
 	ohci_device_intr_abort,
@@ -344,7 +344,7 @@ Static struct usbd_pipe_methods ohci_device_intr_methods = {
 	ohci_device_intr_done,
 };
 
-Static struct usbd_pipe_methods ohci_device_bulk_methods = {
+Static const struct usbd_pipe_methods ohci_device_bulk_methods = {
 	ohci_device_bulk_transfer,
 	ohci_device_bulk_start,
 	ohci_device_bulk_abort,
@@ -353,7 +353,7 @@ Static struct usbd_pipe_methods ohci_device_bulk_methods = {
 	ohci_device_bulk_done,
 };
 
-Static struct usbd_pipe_methods ohci_device_isoc_methods = {
+Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
 	ohci_device_isoc_transfer,
 	ohci_device_isoc_start,
 	ohci_device_isoc_abort,
@@ -2313,7 +2313,7 @@ Static usb_device_descriptor_t ohci_devd = {
 	1			/* # of configurations */
 };
 
-Static usb_config_descriptor_t ohci_confd = {
+Static const usb_config_descriptor_t ohci_confd = {
 	USB_CONFIG_DESCRIPTOR_SIZE,
 	UDESC_CONFIG,
 	{USB_CONFIG_DESCRIPTOR_SIZE +
@@ -2326,7 +2326,7 @@ Static usb_config_descriptor_t ohci_confd = {
 	0			/* max power */
 };
 
-Static usb_interface_descriptor_t ohci_ifcd = {
+Static const usb_interface_descriptor_t ohci_ifcd = {
 	USB_INTERFACE_DESCRIPTOR_SIZE,
 	UDESC_INTERFACE,
 	0,
@@ -2338,7 +2338,7 @@ Static usb_interface_descriptor_t ohci_ifcd = {
 	0
 };
 
-Static usb_endpoint_descriptor_t ohci_endpd = {
+Static const usb_endpoint_descriptor_t ohci_endpd = {
 	.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_ENDPOINT,
 	.bEndpointAddress = UE_DIR_IN | OHCI_INTR_ENDPT,
@@ -2347,7 +2347,7 @@ Static usb_endpoint_descriptor_t ohci_endpd = {
 	.bInterval = 255,
 };
 
-Static usb_hub_descriptor_t ohci_hubd = {
+Static const usb_hub_descriptor_t ohci_hubd = {
 	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
 	.bDescriptorType = UDESC_HUB,
 };
@@ -2472,7 +2472,12 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			totlen = 1;
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				totlen = ohci_str(buf, len, "\001");
+				if (len > 0)
+					*(u_int8_t *)buf = 4;
+				if (len >=  4) {
+		USETW(((usb_string_descriptor_t *)buf)->bString[0], 0x0409);
+					totlen = 4;
+				}
 				break;
 			case 1: /* Vendor */
 				totlen = ohci_str(buf, len, sc->sc_vendor);

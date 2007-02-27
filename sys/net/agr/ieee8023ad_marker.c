@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_marker.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_marker.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_marker.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_marker.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -96,7 +96,7 @@ ieee8023ad_marker_input(struct ifnet *ifp, struct mbuf *m)
 	switch (mdu->mdu_tlv.tlv_type) {
 	case MARKER_TYPE_INFO:
 		if (tlv_check(mdu, sizeof(*mdu), &mdu->mdu_tlv,
-		    marker_info_tlv_template, TRUE)) {
+		    marker_info_tlv_template, true)) {
 			goto bad;
 		}
 		mdu->mdu_tlv.tlv_type = MARKER_TYPE_RESPONSE;
@@ -109,7 +109,7 @@ ieee8023ad_marker_input(struct ifnet *ifp, struct mbuf *m)
 
 	case MARKER_TYPE_RESPONSE:
 		if (tlv_check(mdu, sizeof(*mdu), &mdu->mdu_tlv,
-		    marker_response_tlv_template, TRUE)) {
+		    marker_response_tlv_template, true)) {
 			goto bad;
 		}
 		/*

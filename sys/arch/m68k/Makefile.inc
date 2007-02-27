@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1998/11/15 20:36:30 perry Exp $
-
-SYSDIR?=	/sys
+#	$NetBSD: Makefile.inc,v 1.2.98.1 2007/02/27 16:51:56 yamt Exp $
 
 SM68K=	${SYSDIR}/arch/m68k/m68k/*.[ch] ${SYSDIR}/arch/m68k/include/*.h
 AM68K=	${SYSDIR}/arch/m68k/m68k/*.s

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.3.26.1 2007/02/27 16:54:47 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.3.26.1 2007/02/27 16:54:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -50,9 +50,9 @@ void
 lacp_sm_mux(struct lacp_port *lp)
 {
 	enum lacp_mux_state new_state;
-	boolean_t p_sync =
+	bool p_sync =
 		    (lp->lp_partner.lip_state & LACP_STATE_SYNC) != 0;
-	boolean_t p_collecting =
+	bool p_collecting =
 	    (lp->lp_partner.lip_state & LACP_STATE_COLLECTING) != 0;
 	enum lacp_selected selected = lp->lp_selected;
 	struct lacp_aggregator *la;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.23 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.23.2.1 2007/02/27 16:53:28 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -903,7 +903,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have P_SYSTEM!
+	testl	$PK_SYSTEM,L_FLAG(%edi);	XXX NJWLWP lwp's don't have PK_SYSTEM!
 	jnz	switch_restored	; XXX skip stack_switch+pmap_activate
 #endif
 

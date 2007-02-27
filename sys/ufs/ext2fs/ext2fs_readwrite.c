@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.44 2007/01/04 16:55:29 elad Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.44.2.1 2007/02/27 16:55:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.44 2007/01/04 16:55:29 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.44.2.1 2007/02/27 16:55:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ ext2fs_write(void *v)
 	vsize_t bytelen;
 	void *win;
 	off_t oldoff = 0;					/* XXX */
-	boolean_t async;
+	bool async;
 	int extended = 0;
 
 	ioflag = ap->a_ioflag;

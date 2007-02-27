@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.2.26.1 2007/02/27 16:52:30 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <ddb/db_output.h>
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	int foo = *(int *)loc;
 	db_printf("addr 0%o: 0%012o\n", loc, foo);

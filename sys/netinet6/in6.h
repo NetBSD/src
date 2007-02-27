@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.58 2007/02/15 16:28:37 seanb Exp $	*/
+/*	$NetBSD: in6.h,v 1.58.2.1 2007/02/27 16:54:59 yamt Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -717,6 +717,7 @@ extern void addrsel_policy_init __P((void));
 extern	u_char	ip6_protox[];
 
 #define	satosin6(sa)	((struct sockaddr_in6 *)(sa))
+#define	satocsin6(sa)	((const struct sockaddr_in6 *)(sa))
 #define	sin6tosa(sin6)	((struct sockaddr *)(sin6))
 #define	ifatoia6(ifa)	((struct in6_ifaddr *)(ifa))
 #endif /* _KERNEL */

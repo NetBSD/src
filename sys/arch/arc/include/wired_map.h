@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.h,v 1.2 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: wired_map.h,v 1.2.28.1 2007/02/27 16:49:04 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -39,4 +39,4 @@ void	arc_init_wired_map(void);
 void	arc_wired_enter_page(vaddr_t, paddr_t, vsize_t);
 vaddr_t	arc_contiguously_wired_mapped(paddr_t, vsize_t);
 vaddr_t	arc_map_wired(paddr_t, vsize_t);
-boolean_t arc_wired_map_extract(vaddr_t, paddr_t *);
+bool	 arc_wired_map_extract(vaddr_t, paddr_t *);

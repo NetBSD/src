@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.93 2007/02/09 21:55:13 ad Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.93.2.1 2007/02/27 16:53:23 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.93.2.1 2007/02/27 16:53:23 yamt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -328,7 +328,7 @@ vmapbuf(bp, len)
 	len = atop(len);
 	while (len--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
-		    &pa) == FALSE)
+		    &pa) == false)
 			panic("vmapbuf: null page frame");
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
 		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);

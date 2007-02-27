@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.2 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.2.2.1 2007/02/27 16:54:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.2 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.2.2.1 2007/02/27 16:54:19 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -100,7 +100,7 @@ coredump(struct lwp *l, const char *pattern)
 	 * Make sure the process has not set-id, to prevent data leaks,
 	 * unless it was specifically requested to allow set-id coredumps.
 	 */
-	if ((p->p_flag & P_SUGID) && !security_setidcore_dump) {
+	if ((p->p_flag & PK_SUGID) && !security_setidcore_dump) {
 		mutex_exit(&p->p_mutex);
 		rw_exit(&proclist_lock);
 		return EPERM;
@@ -140,7 +140,7 @@ restart:
 		goto done;
 	}
 
-	if ((p->p_flag & P_SUGID) && security_setidcore_dump)
+	if ((p->p_flag & PK_SUGID) && security_setidcore_dump)
 		pattern = security_setidcore_path;
 
 	if (pattern == NULL)
@@ -180,7 +180,7 @@ restart:
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
 
-	if ((p->p_flag & P_SUGID) && security_setidcore_dump) {
+	if ((p->p_flag & PK_SUGID) && security_setidcore_dump) {
 		vattr.va_uid = security_setidcore_owner;
 		vattr.va_gid = security_setidcore_group;
 		vattr.va_mode = security_setidcore_mode;

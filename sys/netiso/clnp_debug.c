@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_debug.c,v 1.17 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_debug.c,v 1.17.26.1 2007/02/27 16:55:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.17 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.17.26.1 2007/02/27 16:55:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -138,8 +138,8 @@ main()
 unsigned int    clnp_debug;
 
 char           *clnp_hexp (const char *, int, char *);
-char           *clnp_iso_addrp (struct iso_addr *);
-char           *clnp_saddr_isop (struct sockaddr_iso *);
+char           *clnp_iso_addrp(const struct iso_addr *);
+char           *clnp_saddr_isop(const struct sockaddr_iso *);
 
 /*
  *	Print buffer in hex, return addr of where we left off.
@@ -165,7 +165,7 @@ static char     iso_addr_b[50];
 #define	DELIM	'.';
 
 char *
-clnp_iso_addrp(struct iso_addr *isoa)
+clnp_iso_addrp(const struct iso_addr *isoa)
 {
 	char           *cp;
 #ifdef notdef
@@ -251,7 +251,7 @@ clnp_iso_addrp(struct iso_addr *isoa)
 }
 
 char *
-clnp_saddr_isop(struct sockaddr_iso *s)
+clnp_saddr_isop(const struct sockaddr_iso *s)
 {
 	char  *cp = clnp_iso_addrp(&s->siso_addr);
 

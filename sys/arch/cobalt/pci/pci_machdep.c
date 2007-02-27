@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.24 2006/08/22 21:42:19 riz Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.24.8.1 2007/02/27 16:49:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24 2006/08/22 21:42:19 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.24.8.1 2007/02/27 16:49:54 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,12 +156,19 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	 * directly to the CPU.
 	 */
 
-	if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A)
-		*ihp = 16 + 1;
-	else if (bus == 0 && dev == 12 && pin == PCI_INTERRUPT_PIN_A)
-		*ihp = 16 + 2;
-	else
-		*ihp = line;
+	if (cobalt_id == COBALT_ID_QUBE2700) {
+		if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A)
+			*ihp = 16 + 2;
+		else
+			*ihp = line;
+	} else {
+		if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A)
+			*ihp = 16 + 1;
+		else if (bus == 0 && dev == 12 && pin == PCI_INTERRUPT_PIN_A)
+			*ihp = 16 + 2;
+		else
+			*ihp = line;
+	}
 
 	return 0;
 }

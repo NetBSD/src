@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.42 2006/11/20 04:34:16 dyoung Exp $	*/
+/*	$NetBSD: nd6.h,v 1.42.4.1 2007/02/27 16:55:05 yamt Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -380,11 +380,11 @@ union nd_opts {
 void nd6_init __P((void));
 struct nd_ifinfo *nd6_ifattach __P((struct ifnet *));
 void nd6_ifdetach __P((struct nd_ifinfo *));
-int nd6_is_addr_neighbor __P((struct sockaddr_in6 *, struct ifnet *));
+int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);
 void nd6_option_init __P((void *, int, union nd_opts *));
 struct nd_opt_hdr *nd6_option __P((union nd_opts *));
 int nd6_options __P((union nd_opts *));
-struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
+struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *);
 void nd6_setmtu __P((struct ifnet *));
 void nd6_llinfo_settimer __P((struct llinfo_nd6 *, long));
 void nd6_timer __P((void *));
@@ -398,8 +398,8 @@ struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));
 int nd6_output __P((struct ifnet *, struct ifnet *, struct mbuf *,
 	struct sockaddr_in6 *, struct rtentry *));
-int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
-	struct sockaddr *, u_char *));
+int nd6_storelladdr(const struct ifnet *, const struct rtentry *, struct mbuf *,
+	const struct sockaddr *, uint8_t *, size_t);
 int nd6_sysctl __P((int, void *, size_t *, void *, size_t));
 int nd6_need_cache __P((struct ifnet *));
 

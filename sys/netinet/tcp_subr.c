@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.210 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.210.2.1 2007/02/27 16:54:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.210 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.210.2.1 2007/02/27 16:54:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1391,14 +1391,14 @@ tcp6_notify(struct in6pcb *in6p, int error)
 
 #ifdef INET6
 void
-tcp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
+tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct tcphdr th;
 	void (*notify)(struct in6pcb *, int) = tcp6_notify;
 	int nmatch;
 	struct ip6_hdr *ip6;
 	const struct sockaddr_in6 *sa6_src = NULL;
-	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+	const struct sockaddr_in6 *sa6 = (const struct sockaddr_in6 *)sa;
 	struct mbuf *m;
 	int off;
 
@@ -1461,7 +1461,8 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 			 * payload.
 			 */
 			if (in6_pcblookup_connect(&tcbtable, &sa6->sin6_addr,
-			    th.th_dport, (const struct in6_addr *)&sa6_src->sin6_addr,
+			    th.th_dport,
+			    (const struct in6_addr *)&sa6_src->sin6_addr,
 			    th.th_sport, 0))
 				valid++;
 
@@ -1499,7 +1500,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, void *d)
 #ifdef INET
 /* assumes that ip header and tcp header are contiguous on mbuf */
 void *
-tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
+tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct tcphdr *th;
@@ -1625,7 +1626,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		return NULL;
 	if (ip && ip->ip_v == 4 && sa->sa_family == AF_INET) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		nmatch = in_pcbnotify(&tcbtable, satosin(sa)->sin_addr,
+		nmatch = in_pcbnotify(&tcbtable, satocsin(sa)->sin_addr,
 		    th->th_dport, ip->ip_src, th->th_sport, errno, notify);
 		if (nmatch == 0 && syn_cache_count &&
 		    (inetctlerrmap[cmd] == EHOSTUNREACH ||
@@ -1642,7 +1643,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 
 		/* XXX mapped address case */
 	} else
-		in_pcbnotifyall(&tcbtable, satosin(sa)->sin_addr, errno,
+		in_pcbnotifyall(&tcbtable, satocsin(sa)->sin_addr, errno,
 		    notify);
 	return NULL;
 }

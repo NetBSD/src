@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.8 2006/10/29 11:38:56 yamt Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.8.4.1 2007/02/27 16:54:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.8 2006/10/29 11:38:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.8.4.1 2007/02/27 16:54:48 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -79,7 +79,7 @@ static int agr_ioctl_filter(struct ifnet *, u_long, caddr_t);
 static void agr_reset_iftype(struct ifnet *);
 static int agr_config_promisc(struct agr_softc *);
 static int agrport_config_promisc_callback(struct agr_port *, void *);
-static int agrport_config_promisc(struct agr_port *, boolean_t);
+static int agrport_config_promisc(struct agr_port *, bool);
 static int agrport_cleanup(struct agr_softc *, struct agr_port *);
 
 static struct if_clone agr_cloner =
@@ -569,7 +569,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	ifp->if_flags |= IFF_RUNNING;
 
 	agrport_config_promisc(port, (ifp->if_flags & IFF_PROMISC) != 0);
-	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, TRUE);
+	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, true);
 	if (error) {
 		printf("%s: configmulti error %d\n", __func__, error);
 		goto cleanup;
@@ -644,7 +644,7 @@ agr_remport(struct ifnet *ifp, struct ifnet *ifp_port)
 		goto out;
 	}
 
-	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, FALSE);
+	error = (*sc->sc_iftop->iftop_configmulti_port)(sc, port, false);
 	if (error) {
 		/* XXX XXX */
 		printf("%s: configmulti_port error %d\n", __func__, error);
@@ -683,7 +683,7 @@ agrport_cleanup(struct agr_softc *sc, struct agr_port *port)
 	int result = 0;
 	int s;
 
-	error = agrport_config_promisc(port, FALSE);
+	error = agrport_config_promisc(port, false);
 	if (error) {
 		printf("%s: config_promisc error %d\n", __func__, error);
 		result = error;
@@ -923,7 +923,7 @@ agrport_config_promisc_callback(struct agr_port *port, void *arg)
 	struct agr_softc *sc = AGR_SC_FROM_PORT(port);
 	int *errorp = arg;
 	int error;
-	boolean_t promisc;
+	bool promisc;
 
 	promisc = (sc->sc_if.if_flags & IFF_PROMISC) != 0;
 
@@ -936,7 +936,7 @@ agrport_config_promisc_callback(struct agr_port *port, void *arg)
 }
 
 static int
-agrport_config_promisc(struct agr_port *port, boolean_t promisc)
+agrport_config_promisc(struct agr_port *port, bool promisc)
 {
 	int error;
 

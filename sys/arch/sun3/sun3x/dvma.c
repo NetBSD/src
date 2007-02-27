@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.34 2007/02/03 05:20:31 tsutsui Exp $	*/
+/*	$NetBSD: dvma.c,v 1.34.2.1 2007/02/27 16:53:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.34 2007/02/03 05:20:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvma.c,v 1.34.2.1 2007/02/27 16:53:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 	int npf, s, error;
 	paddr_t pa;
 	long off;
-	boolean_t rv;
+	bool rv;
 
 	kva = (vaddr_t)kmem_va;
 #ifdef	DIAGNOSTIC
@@ -221,7 +221,7 @@ dvma_mapin(void *kmem_va, int len, int canwait)
 		 */
 		rv = pmap_extract(pmap_kernel(), kva, &pa);
 #ifdef	DEBUG
-		if (rv == FALSE)
+		if (rv == false)
 			panic("dvma_mapin: null page frame");
 #endif	/* DEBUG */
 
@@ -353,7 +353,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	while (sgsize > 0) {
 		rv = pmap_extract(pmap, kva, &pa);
 #ifdef DIAGNOSTIC
-		if (rv == FALSE)
+		if (rv == false)
 			panic("%s: unmapped VA", __func__);
 #endif
 		iommu_enter((dva & IOMMU_VA_MASK), pa);

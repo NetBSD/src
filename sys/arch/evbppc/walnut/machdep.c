@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2007/02/09 21:55:03 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:16 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2007/02/09 21:55:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:16 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -402,13 +402,13 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, FALSE, NULL);
+				 VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -427,7 +427,7 @@ cpu_startup(void)
 
 	pn = prop_number_create_integer(board_data.mem_size);
 	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == false)
 		panic("setting mem-size");
 	prop_object_release(pn);
 
@@ -435,7 +435,7 @@ cpu_startup(void)
 					  sizeof(board_data.mac_address_local));
 	KASSERT(pd != NULL);
 	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
-				pd) == FALSE)
+				pd) == false)
 		panic("setting emac0-mac-addr");
 	prop_object_release(pd);
 
@@ -443,14 +443,14 @@ cpu_startup(void)
 					  sizeof(board_data.mac_address_pci));
 	KASSERT(pd != NULL);
 	if (prop_dictionary_set(board_properties, "sip0-mac-addr",
-				pd) == FALSE)
+				pd) == false)
 		panic("setting sip0-mac-addr");
 	prop_object_release(pd);
 
 	pn = prop_number_create_integer(board_data.processor_speed);
 	KASSERT(pn != NULL);
 	if (prop_dictionary_set(board_properties, "processor-frequency",
-				pn) == FALSE)
+				pn) == false)
 		panic("setting processor-frequency");
 	prop_object_release(pn);
 

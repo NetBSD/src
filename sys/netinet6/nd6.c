@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.109 2006/11/24 19:47:00 christos Exp $	*/
+/*	$NetBSD: nd6.c,v 1.109.4.1 2007/02/27 16:55:04 yamt Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.109 2006/11/24 19:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.109.4.1 2007/02/27 16:55:04 yamt Exp $");
 
 #include "opt_ipsec.h"
 
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.109 2006/11/24 19:47:00 christos Exp $");
 #define ND6_SLOWTIMER_INTERVAL (60 * 60) /* 1 hour */
 #define ND6_RECALC_REACHTM_INTERVAL (60 * 120) /* 2 hours */
 
-#define SIN6(s) ((struct sockaddr_in6 *)s)
+#define SIN6(s) ((const struct sockaddr_in6 *)s)
 #define SDL(s) ((struct sockaddr_dl *)s)
 
 /* timer values */
@@ -800,7 +800,7 @@ nd6_purge(ifp)
 
 struct rtentry *
 nd6_lookup(addr6, create, ifp)
-	struct in6_addr *addr6;
+	const struct in6_addr *addr6;
 	int create;
 	struct ifnet *ifp;
 {
@@ -904,9 +904,7 @@ nd6_lookup(addr6, create, ifp)
  * XXX: should take care of the destination of a p2p link?
  */
 int
-nd6_is_addr_neighbor(addr, ifp)
-	struct sockaddr_in6 *addr;
-	struct ifnet *ifp;
+nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 {
 	struct nd_prefix *pr;
 
@@ -1163,7 +1161,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 
 	if (req == RTM_RESOLVE &&
 	    (nd6_need_cache(ifp) == 0 || /* stf case */
-	     !nd6_is_addr_neighbor((struct sockaddr_in6 *)rt_key(rt), ifp))) {
+	     !nd6_is_addr_neighbor(satocsin6(rt_key(rt)), ifp))) {
 		/*
 		 * FreeBSD and BSD/OS often make a cloned host route based
 		 * on a less-specific route (e.g. the default route).
@@ -2121,55 +2119,51 @@ nd6_need_cache(ifp)
 }
 
 int
-nd6_storelladdr(ifp, rt, m, dst, desten)
-	struct ifnet *ifp;
-	struct rtentry *rt;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	u_char *desten;
+nd6_storelladdr(const struct ifnet *ifp, const struct rtentry *rt,
+    struct mbuf *m, const struct sockaddr *dst, u_char *lldst,
+    size_t dstsize)
 {
-	struct sockaddr_dl *sdl;
+	const struct sockaddr_dl *sdl;
 
 	if (m->m_flags & M_MCAST) {
 		switch (ifp->if_type) {
 		case IFT_ETHER:
 		case IFT_FDDI:
-			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
-						 desten);
-			return (1);
+			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr, lldst);
+			return 1;
 		case IFT_IEEE1394:
-			bcopy(ifp->if_broadcastaddr, desten, ifp->if_addrlen);
-			return (1);
+			bcopy(ifp->if_broadcastaddr, lldst, ifp->if_addrlen);
+			return 1;
 		case IFT_ARCNET:
-			*desten = 0;
-			return (1);
+			*lldst = 0;
+			return 1;
 		default:
 			m_freem(m);
-			return (0);
+			return 0;
 		}
 	}
 
 	if (rt == NULL) {
 		/* this could happen, if we could not allocate memory */
 		m_freem(m);
-		return (0);
+		return 0;
 	}
 	if (rt->rt_gateway->sa_family != AF_LINK) {
-		printf("nd6_storelladdr: something odd happens\n");
+		printf("%s: something odd happens\n", __func__);
 		m_freem(m);
-		return (0);
+		return 0;
 	}
 	sdl = SDL(rt->rt_gateway);
-	if (sdl->sdl_alen == 0) {
+	if (sdl->sdl_alen == 0 || sdl->sdl_alen > dstsize) {
 		/* this should be impossible, but we bark here for debugging */
-		printf("nd6_storelladdr: sdl_alen == 0, dst=%s, if=%s\n",
+		printf("%s: sdl_alen == 0, dst=%s, if=%s\n", __func__,
 		    ip6_sprintf(&SIN6(dst)->sin6_addr), if_name(ifp));
 		m_freem(m);
-		return (0);
+		return 0;
 	}
 
-	bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-	return (1);
+	memcpy(lldst, CLLADDR(sdl), MIN(dstsize, sdl->sdl_alen));
+	return 1;
 }
 
 static void 

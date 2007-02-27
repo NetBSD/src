@@ -1,5 +1,5 @@
-# $NetBSD: KRUPS,v 1.41 2006/11/11 18:47:12 jmmv Exp $
-# From: NetBSD: GENERIC,v 1.180 2005/09/10 19:20:50 jmmv Exp
+# $NetBSD: KRUPS,v 1.41.4.1 2007/02/27 16:53:07 yamt Exp $
+# From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Krups (JavaStation-NC) machine description file
 #
@@ -8,7 +8,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"KRUPS-$Revision: 1.41 $"
+#ident 		"KRUPS-$Revision: 1.41.4.1 $"
 
 maxusers	32
 
@@ -83,10 +83,20 @@ options 	NFS_BOOT_DHCP
 options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 options 	WSEMUL_DEFAULT="\"vt100\""
-# different kernel output - see dev/wscons/wsdisplayvar.h
+
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
 options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_BG=WSCOL_BLACK
 options 	WS_KERNEL_COLATTR=WSATTR_HILIT
+
+# customization of console border color
+options 	WSDISPLAY_CUSTOM_BORDER	# custom border colors via wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
+
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
@@ -95,8 +105,12 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 
 options 	FONT_GALLANT12x22		# PROM font look-alike
 
+#options 	WSKBD_EVENT_AUTOREPEAT		# auto repeat in event mode
+#options 	WSKBD_USONLY			# strip off non-US keymaps
+
 # see dev/pckbport/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+
 # allocate a number of virtual screens at autoconfiguration time
 #options 	WSDISPLAY_DEFAULTSCREENS=4
 
@@ -191,6 +205,7 @@ file-system	UNION		# union file system
 #file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 #file-system	TMPFS		# Efficient memory file-system
+#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 ## File system options.
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
@@ -301,6 +316,8 @@ pseudo-device	loop
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter
 
+#pseudo-device	carp			# Common Address Redundancy Protocol
+
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
 #pseudo-device	ipfilter
@@ -349,3 +366,28 @@ pseudo-device	wsfont
 
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+
+#pseudo-device	pf			# PF packet filter
+#pseudo-device	pflog			# PF log if
+#pseudo-device	fss		4	# file system snapshot device
+
+#options	FILEASSOC		# fileassoc(9)
+
+# Veriexec
+#
+# a pseudo device needed for veriexec
+#pseudo-device	veriexec		1
+#
+# Uncomment the fingerprint methods below that are desired. Note that
+# removing fingerprint methods will have almost no impact on the kernel
+# code size.
+#
+#options VERIFIED_EXEC_FP_RMD160
+#options VERIFIED_EXEC_FP_SHA256
+#options VERIFIED_EXEC_FP_SHA384
+#options VERIFIED_EXEC_FP_SHA512
+#options VERIFIED_EXEC_FP_SHA1
+#options VERIFIED_EXEC_FP_MD5
+
+#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+					# (for static binaries only for now)

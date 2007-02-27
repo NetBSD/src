@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 2005/12/11 12:19:36 christos Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.16.26.1 2007/02/27 16:53:22 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16.26.1 2007/02/27 16:53:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -146,7 +146,7 @@ void add_off	__P((inst_buffer * ib, int i));
 db_addr_t
 db_disasm(loc, altfmt)
 	db_addr_t	loc;
-	boolean_t	altfmt;
+	bool		altfmt;
 {
 	db_expr_t	diff;
 	db_sym_t	sym;

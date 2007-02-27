@@ -1,4 +1,4 @@
-/*	$NetBSD: ucred.h,v 1.31 2006/07/16 21:13:00 elad Exp $	*/
+/*	$NetBSD: ucred.h,v 1.31.10.1 2007/02/27 16:55:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,15 +46,6 @@ struct uucred {
 	uid_t		cr_uid;			/* effective user id */
 	gid_t		cr_gid;			/* effective group id */
 	short		cr_ngroups;		/* number of groups */
-	gid_t		cr_groups[NGROUPS];	/* groups */
-};
-
-struct ucred {
-	uint32_t	cr_ref;			/* reference count */
-#define cr_startcopy	cr_uid			/* for dup & copy */
-	uid_t		cr_uid;			/* effective user id */
-	gid_t		cr_gid;			/* effective group id */
-	uint32_t	cr_ngroups;		/* number of groups */
 	gid_t		cr_groups[NGROUPS];	/* groups */
 };
 

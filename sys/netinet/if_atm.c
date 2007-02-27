@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.21 2006/11/16 01:33:45 christos Exp $       */
+/*      $NetBSD: if_atm.c,v 1.21.4.1 2007/02/27 16:54:52 yamt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.21 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.21.4.1 2007/02/27 16:54:52 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -228,7 +228,7 @@ failed:
  */
 
 int
-atmresolve(struct rtentry *rt, struct mbuf *m, struct sockaddr *dst,
+atmresolve(struct rtentry *rt, struct mbuf *m, const struct sockaddr *dst,
     struct atm_pseudohdr *desten /* OUT */)
 {
 	struct sockaddr_dl *sdl;

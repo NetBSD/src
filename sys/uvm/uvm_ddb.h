@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_ddb.h,v 1.10 2006/02/19 18:52:29 bjh21 Exp $	*/
+/*	$NetBSD: uvm_ddb.h,v 1.10.20.1 2007/02/27 16:55:25 yamt Exp $	*/
 
 /*
  *
@@ -40,11 +40,11 @@
 #ifdef _KERNEL
 
 #ifdef DDB
-void	uvm_map_printit(struct vm_map *, boolean_t,
+void	uvm_map_printit(struct vm_map *, bool,
 	    void (*)(const char *, ...));
-void	uvm_object_printit(struct uvm_object *, boolean_t,
+void	uvm_object_printit(struct uvm_object *, bool,
 	    void (*)(const char *, ...));
-void	uvm_page_printit(struct vm_page *, boolean_t,
+void	uvm_page_printit(struct vm_page *, bool,
 	    void (*)(const char *, ...));
 void	uvm_page_printall(void (*)(const char *, ...));
 void	uvmexp_print(void (*)(const char *, ...));

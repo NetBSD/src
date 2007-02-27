@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map_machdep.c,v 1.3 2006/06/25 16:52:01 tsutsui Exp $	*/
+/*	$NetBSD: wired_map_machdep.c,v 1.3.10.1 2007/02/27 16:49:03 yamt Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.3 2006/06/25 16:52:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.3.10.1 2007/02/27 16:49:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: wired_map_machdep.c,v 1.3 2006/06/25 16:52:01 tsutsu
 #include <mips/locore.h>
 #include <mips/pte.h>
 
-static boolean_t arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap,
+static bool arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap,
     vsize_t *sizep);
-static boolean_t arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap,
+static bool arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap,
     vsize_t *sizep);
 
 static struct extent *arc_wired_map_ex;
@@ -88,7 +88,7 @@ arc_wired_enter_page(vaddr_t va, paddr_t pa, vaddr_t pg_size)
 	mips3_wired_enter_page(va, pa, pg_size);
 }
 
-static boolean_t
+static bool
 arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep)
 {
 	vsize_t size;
@@ -102,20 +102,20 @@ arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep)
 		    pa >= entry->pa0 && pa < entry->pa0 + size) {
 			*vap = entry->va;
 			*sizep = size;
-			return TRUE;
+			return true;
 		}
 		if (entry->pa1 != 0 &&
 		    pa >= entry->pa1 && pa < entry->pa1 + size) {
 			*vap = entry->va + size;
 			*sizep = size;
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 /* XXX: Using tlbp makes this easier... */
-static boolean_t
+static bool
 arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep)
 {
 	vsize_t size;
@@ -132,11 +132,11 @@ arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep)
 			if (pa != 0) {
 				*pap = pa;
 				*sizep = size;
-				return TRUE;
+				return true;
 			}
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 vaddr_t
@@ -203,7 +203,7 @@ arc_map_wired(paddr_t pa, vsize_t size)
 	return va + off;
 }
 
-boolean_t
+bool
 arc_wired_map_extract(vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
@@ -211,8 +211,8 @@ arc_wired_map_extract(vaddr_t va, paddr_t *pap)
 
 	if (arc_wired_map_vaddr_entry(va, &pa, &size)) {
 		*pap = pa + (va & (size - 1));
-		return TRUE;
+		return true;
 	} else {
-		return FALSE;
+		return false;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.27 2007/02/16 15:42:02 ad Exp $ */
+/*	$NetBSD: lock.h,v 1.27.2.1 2007/02/27 16:53:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2006 The NetBSD Foundation, Inc.
@@ -145,12 +145,11 @@ mb_memory(void)
 static __inline void
 mb_read(void)
 {
-	/* LINTED */
 	static volatile int junk;
-	/* LINTED */
-	__insn_barrier();
-	/* LINTED */
-	junk = 1;
+	__asm volatile("st %%g0,[%0]"
+	    :
+	    : "r" (&junk)
+	    : "memory");
 }
 
 static __inline void

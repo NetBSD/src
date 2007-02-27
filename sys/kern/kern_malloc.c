@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.106 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.106.2.1 2007/02/27 16:54:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.1 2007/02/27 16:54:22 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -913,7 +913,7 @@ kmeminit(void)
 	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
 	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT),
-	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
+	    VM_MAP_INTRSAFE, false, &kmem_map_store);
 	uvm_km_vacache_init(kmem_map, "kvakmem", 0);
 	kmembase = (char *)kmb;
 	kmemlimit = (char *)kml;

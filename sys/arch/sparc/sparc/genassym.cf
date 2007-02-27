@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.49 2007/02/09 21:55:12 ad Exp $
+#	$NetBSD: genassym.cf,v 1.49.2.1 2007/02/27 16:53:11 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -271,5 +271,9 @@ define	FDC_DATA	offsetof(struct fdcio, fdcio_data)
 define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
 define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)
 
+# locking
 define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
 define	MTX_IPL		offsetof(struct kmutex, u.s.mtxs_ipl)
+
+define	__SIMPLELOCK_LOCKED	__SIMPLELOCK_LOCKED
+define	__SIMPLELOCK_UNLOCKED	__SIMPLELOCK_UNLOCKED

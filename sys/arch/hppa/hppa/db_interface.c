@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.9 2006/08/26 06:27:40 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.9.8.1 2007/02/27 16:51:04 yamt Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -33,10 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9 2006/08/26 06:27:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.9.8.1 2007/02/27 16:51:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/user.h> 
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>
@@ -184,9 +186,9 @@ kdb_trap(int type, int code, db_regs_t *regs)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(type, code);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 
@@ -205,25 +207,76 @@ db_valid_breakpoint(db_addr_t addr)
 }
 
 void
-db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
 	register_t *fp, pc, rp, nargs, *argp;
+	char **argnp, *argnames[HPPA_FRAME_NARGS];
+	bool kernel_only = true;
+	bool trace_thread = false;
+	bool lwpaddr = false;
 	db_sym_t sym;
 	db_expr_t off;
 	const char *name;
-	char **argnp, *argnames[HPPA_FRAME_NARGS];
+	const char *cp = modif;
+	char c;
 
 	if (count < 0)
 		count = 65536;
+
+	while ((c = *cp++) != 0) {
+		if (c == 'a') {
+			lwpaddr = true;
+			trace_thread = true;
+		}
+		if (c == 't')
+			trace_thread = true;
+		if (c == 'u')
+			kernel_only = false;
+	}
 
 	if (!have_addr) {
 		fp = (register_t *)ddb_regs.tf_r3;
 		pc = ddb_regs.tf_iioq_head;
 		rp = ddb_regs.tf_rp;
 	} else {
-		fp = (register_t *)addr;
-		pc = 0;
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+			struct lwp *l;
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
+			}
+			(*pr)("lid %d ", l->l_lid);
+			if (!(l->l_flag & LW_INMEM)) {
+				(*pr)("swapped out\n");
+				return;
+			}
+			u = l->l_addr;
+			if (p == curproc && l == curlwp) {
+				fp = (int *)ddb_regs.tf_t3;
+				pc = ddb_regs.tf_iioq_head;
+				(*pr)("at %p\n", fp);
+			} else {
+				fp = (int *)(u->u_pcb.pcb_ksp -
+				    (HPPA_FRAME_SIZE + 16*4));
+				pc = 0;
+				(*pr)("at %p\n", fp);
+			}
+		} else {
+			pc = 0;
+			fp = (register_t *)addr;
+		}
 		rp = ((register_t *)fp)[-5];
 	}
 
@@ -254,7 +307,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		for (argp = &fp[-9]; nargs--; argp--) {
 			if (argnp)
 				pr("%s=", *argnp++);
-			pr("%lx%s", db_get_value((int)argp, 4, FALSE),
+			pr("%lx%s", db_get_value((int)argp, 4, false),
 				  nargs? ",":"");
 		}
 		pr(") at ");

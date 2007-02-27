@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.22 2006/04/01 15:45:00 cherry Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.22.14.1 2007/02/27 16:53:08 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -79,13 +79,13 @@ extern db_regs_t	*ddb_regp;
  */
 #define SOFTWARE_SSTEP
 
-boolean_t	db_inst_trap_return(int inst);
-boolean_t	db_inst_return(int inst);
-boolean_t	db_inst_call(int inst);
-boolean_t	db_inst_branch(int inst);
+bool		db_inst_trap_return(int inst);
+bool		db_inst_return(int inst);
+bool		db_inst_call(int inst);
+bool		db_inst_branch(int inst);
 int		db_inst_load(int inst);
 int		db_inst_store(int inst);
-boolean_t	db_inst_unconditional_flow_transfer(int inst);
+bool		db_inst_unconditional_flow_transfer(int inst);
 db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 #define inst_trap_return(ins)	db_inst_trap_return(ins)

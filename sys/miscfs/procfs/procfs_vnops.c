@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.148 2007/02/16 21:37:56 pooka Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.148.2.1 2007/02/27 16:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.148 2007/02/16 21:37:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.148.2.1 2007/02/27 16:54:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -712,7 +712,7 @@ procfs_getattr(v)
 		 * privilege, then rip away read/write permission so
 		 * that only root can gain access.
 		 */
-		if (procp->p_flag & P_SUGID)
+		if (procp->p_flag & PK_SUGID)
 			vap->va_mode &= ~(S_IRUSR|S_IWUSR);
 		/* FALLTHROUGH */
 	case PFSctl:
@@ -1001,11 +1001,14 @@ procfs_lookup(v)
 
 		for (i = 0; i < nproc_root_targets; i++) {
 			pt = &proc_root_targets[i];
+			/*
+			 * check for node match.  proc is always NULL here,
+			 * so call pt_valid with constant NULL lwp.
+			 */
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
-			    (pt->pt_valid == NULL || (p != NULL &&
-			     (*pt->pt_valid)(LIST_FIRST(&p->p_lwps),
-			     		     dvp->v_mount))))
+			    (pt->pt_valid == NULL ||
+			     (*pt->pt_valid)(NULL, dvp->v_mount)))
 				break;
 		}
 
@@ -1053,11 +1056,19 @@ procfs_lookup(v)
 			break;
 
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
-			if (cnp->cn_namelen == pt->pt_namlen &&
+			struct lwp *plwp;
+			int found;
+
+			mutex_enter(&p->p_smutex);
+			plwp = proc_representative_lwp(p, NULL, 1);
+			lwp_addref(plwp);
+			mutex_exit(&p->p_smutex);
+			found = cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
-			    (pt->pt_valid == NULL || (p != NULL &&
-			      (*pt->pt_valid)(LIST_FIRST(&p->p_lwps),
-					      dvp->v_mount))))
+			    (pt->pt_valid == NULL
+			      || (*pt->pt_valid)(plwp, dvp->v_mount));
+			lwp_delref(plwp);
+			if (found)
 				break;
 		}
 		if (i == nproc_targets) {

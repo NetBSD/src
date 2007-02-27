@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_cmdline.c,v 1.25 2007/02/09 21:55:36 ad Exp $	*/
+/*	$NetBSD: procfs_cmdline.c,v 1.25.2.1 2007/02/27 16:54:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Jaromir Dolecek <dolecek@ics.muni.cz>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.25 2007/02/09 21:55:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_cmdline.c,v 1.25.2.1 2007/02/27 16:54:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ procfs_docmdline(
 	 * System processes also don't have a user stack.  This is what
 	 * ps(1) would display.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
+	if (P_ZOMBIE(p) || (p->p_flag & PK_SYSTEM) != 0) {
 		len = snprintf(arg, PAGE_SIZE, "(%s)", p->p_comm) + 1;
 		error = uiomove_frombuf(arg, len, uio);
 		free(arg, M_TEMP);

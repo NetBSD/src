@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.47 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.47.2.1 2007/02/27 16:53:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.47 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.47.2.1 2007/02/27 16:53:33 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -869,7 +869,7 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 	struct lwp *l = proc_representative_lwp(p, NULL, 1);
 	int lf = l->l_flag;
 
-	if (bf & P_ADVLOCK)
+	if (bf & PK_ADVLOCK)
 		df |= DARWIN_P_ADVLOCK;
 	if (bf & PL_CONTROLT)			/* XXXAD */
 		df |= DARWIN_P_CONTROLT;
@@ -879,9 +879,9 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 		df |= DARWIN_P_PPWAIT;
 	if (bsf & PST_PROFIL)
 		df |= DARWIN_P_PROFIL;
-	if (bf & P_SUGID)
+	if (bf & PK_SUGID)
 		df |= DARWIN_P_SUGID;
-	if (bf & P_SYSTEM)
+	if (bf & PK_SYSTEM)
 		df |= DARWIN_P_SYSTEM;
 	if (bslf & PSL_TRACED)
 		df |= DARWIN_P_TRACED;
@@ -891,13 +891,13 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 #endif
 	if (bsf & PS_WEXIT)
 		df |= DARWIN_P_WEXIT;
-	if (bf & P_EXEC)
+	if (bf & PK_EXEC)
 		df |= DARWIN_P_EXEC;
 	if (lf & LP_OWEUPC)
 		df |= DARWIN_P_OWEUPC;
 	if (bslf & PSL_FSTRACE)
 		df |= DARWIN_P_FSTRACE;
-	if (bf & P_NOCLDWAIT)
+	if (bf & PK_NOCLDWAIT)
 		df |= DARWIN_P_NOCLDWAIT;
 	*dfp = df;
 	return;
@@ -944,7 +944,7 @@ darwin_sysctl_procargs(SYSCTLFN_ARGS)
 	 * Zombies don't have a stack, so we can't read their psstrings.
 	 * System processes also don't have a user stack.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0)
+	if (P_ZOMBIE(p) || (p->p_flag & PK_SYSTEM) != 0)
 		return (EINVAL);
 
 	/*

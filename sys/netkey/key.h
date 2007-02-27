@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.20 2005/12/11 00:02:28 elad Exp $	*/
+/*	$NetBSD: key.h,v 1.20.26.1 2007/02/27 16:55:13 yamt Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -59,8 +59,8 @@ extern struct secpolicy *key_allocsp __P((u_int16_t, struct secpolicyindex *,
 	u_int));
 extern int key_checkrequest
 	__P((struct ipsecrequest *isr, struct secasindex *));
-extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t, u_int, 
-					 u_int32_t, u_int16_t, u_int16_t));
+extern struct secasvar *key_allocsa(u_int, const void *, const void *, u_int, 
+				    u_int32_t, u_int16_t, u_int16_t);
 extern struct secpolicy *key_getspbyid __P((u_int32_t));
 extern void key_freesp __P((struct secpolicy *));
 extern void key_freesav __P((struct secasvar *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.30 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.30.4.1 2007/02/27 16:54:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.30 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.30.4.1 2007/02/27 16:54:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -137,7 +137,7 @@ raw_input(struct mbuf *m0, ...)
 
 /*ARGSUSED*/
 void *
-raw_ctlinput(int cmd, struct sockaddr *arg, void *d)
+raw_ctlinput(int cmd, const struct sockaddr *arg, void *d)
 {
 
 	if ((unsigned)cmd >= PRC_NCMDS)

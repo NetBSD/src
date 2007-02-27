@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.77 2006/11/13 05:13:41 dyoung Exp $	*/
+/*	$NetBSD: in.h,v 1.77.4.1 2007/02/27 16:54:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -550,6 +550,7 @@ void	in_socktrim(struct sockaddr_in *);
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)
 
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
+#define	satocsin(sa)	((const struct sockaddr_in *)(sa))
 #define	sintosa(sin)	((struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 #endif /* _KERNEL */

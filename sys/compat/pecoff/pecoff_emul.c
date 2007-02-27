@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_emul.c,v 1.17 2007/02/09 21:55:24 ad Exp $	*/
+/*	$NetBSD: pecoff_emul.c,v 1.17.2.1 2007/02/27 16:53:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.17 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_emul.c,v 1.17.2.1 2007/02/27 16:53:41 yamt Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -124,4 +124,5 @@ const struct emul emul_pecoff = {
 	uvm_default_mapaddr,
 	NULL,
 	sizeof(ucontext_t),
+	NULL,
 };

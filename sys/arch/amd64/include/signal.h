@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.8.26.1 2007/02/27 16:48:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -47,7 +47,15 @@ typedef int sig_atomic_t;
 #include <machine/mcontext.h>
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#include "opt_compat_netbsd32.h"
+#endif
+#if defined(COMPAT_16) && defined(COMPAT_NETBSD32)
+#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
 #define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
 #endif
 
 #endif	/* _NETBSD_SOURCE */

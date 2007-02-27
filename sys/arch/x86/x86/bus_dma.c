@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.33 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.33.2.1 2007/02/27 16:53:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33.2.1 2007/02/27 16:53:25 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -1192,3 +1192,49 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	return (0);
 }
 
+int
+_bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
+		      bus_addr_t max_addr, bus_dma_tag_t *newtag, int flags)
+{
+
+	if ((tag->_bounce_thresh != 0   && max_addr >= tag->_bounce_thresh) &&
+	    (tag->_bounce_alloc_hi != 0 && max_addr >= tag->_bounce_alloc_hi) &&
+	    (min_addr <= tag->_bounce_alloc_lo)) {
+		*newtag = tag;
+		/* if the tag must be freed, add a reference */
+		if (tag->_tag_needs_free)
+			(tag->_tag_needs_free)++;
+		return 0;
+	}
+
+	if ((*newtag = malloc(sizeof(struct x86_bus_dma_tag), M_DMAMAP,
+	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+		return ENOMEM;
+
+	**newtag = *tag;
+	(*newtag)->_tag_needs_free = 1;
+
+	if (tag->_bounce_thresh == 0 || max_addr < tag->_bounce_thresh)
+		(*newtag)->_bounce_thresh = max_addr;
+	if (tag->_bounce_alloc_hi == 0 || max_addr < tag->_bounce_alloc_hi)
+		(*newtag)->_bounce_alloc_hi = max_addr;
+	if (min_addr > tag->_bounce_alloc_lo)
+		(*newtag)->_bounce_alloc_lo = min_addr;
+
+	return 0;
+}
+
+void
+_bus_dmatag_destroy(bus_dma_tag_t tag)
+{
+
+	switch (tag->_tag_needs_free) {
+	case 0:
+		break;				/* not allocated with malloc */
+	case 1:
+		free(tag, M_DMAMAP);		/* last reference to tag */
+		break;
+	default:
+		(tag->_tag_needs_free)--;	/* one less reference */
+	}
+}

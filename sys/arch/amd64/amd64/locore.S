@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.19.2.1 2007/02/27 16:48:43 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -976,7 +976,7 @@ switch_exited:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$P_SYSTEM,P_FLAG(%r12)
+	testl	$PK_SYSTEM,P_FLAG(%r12)
 	jnz	switch_restored
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.28 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.28.4.1 2007/02/27 16:51:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.28 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.28.4.1 2007/02/27 16:51:35 yamt Exp $");
 
 #include "ioapic.h"
 
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.28 2006/11/16 01:32:38 christos E
  * of these funcions.
  */
 struct x86_bus_dma_tag eisa_bus_dma_tag = {
+	0,			/* _tag_needs_free */
 	0,			/* _bounce_thresh */
 	0,			/* _bounce_alloc_lo */
 	0,			/* _bounce_alloc_hi */
@@ -118,6 +119,8 @@ struct x86_bus_dma_tag eisa_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 
 void

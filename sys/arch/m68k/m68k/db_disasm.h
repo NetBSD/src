@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.7 2005/12/11 12:17:59 christos Exp $	*/
+/*	$NetBSD: db_disasm.h,v 1.7.26.1 2007/02/27 16:51:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -425,4 +425,4 @@ typedef struct dis_buffer dis_buffer_t;
 #define PRINT_DREG(dbuf, reg) addstr(dbuf, dregs[reg])
 #define PRINT_AREG(dbuf, reg) addstr(dbuf, aregs[reg])
 
-db_addr_t	db_disasm __P((db_addr_t loc, boolean_t moto_syntax));
+db_addr_t	db_disasm __P((db_addr_t loc, bool moto_syntax));

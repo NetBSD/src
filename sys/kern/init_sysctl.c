@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.96 2007/02/15 20:32:48 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.96.2.1 2007/02/27 16:54:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96 2007/02/15 20:32:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.1 2007/02/27 16:54:16 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -91,57 +91,57 @@ gid_t security_setidcore_group = 0;
 mode_t security_setidcore_mode = (S_IRUSR|S_IWUSR);
 
 static const u_int sysctl_flagmap[] = {
-	P_ADVLOCK, KP_ADVLOCK,
-	P_EXEC, KP_EXEC,
-	P_NOCLDWAIT, KP_NOCLDWAIT,
-	P_32, KP_32,
-	P_CLDSIGIGN, KP_CLDSIGIGN,
-	P_PAXMPROTECT, KP_PAXMPROTECT,
-	P_PAXNOMPROTECT, KP_PAXNOMPROTECT,
-	P_SYSTRACE, KP_SYSTRACE,
-	P_SUGID, KP_SUGID,
+	PK_ADVLOCK, P_ADVLOCK,
+	PK_EXEC, P_EXEC,
+	PK_NOCLDWAIT, P_NOCLDWAIT,
+	PK_32, P_32,
+	PK_CLDSIGIGN, P_CLDSIGIGN,
+	PK_PAXMPROTECT, P_PAXMPROTECT,
+	PK_PAXNOMPROTECT, P_PAXNOMPROTECT,
+	PK_SYSTRACE, P_SYSTRACE,
+	PK_SUGID, P_SUGID,
 	0
 };
 
 static const u_int sysctl_sflagmap[] = {
-	PS_NOCLDSTOP, KP_NOCLDSTOP,
-	PS_PPWAIT, KP_PPWAIT,
-	PS_WEXIT, KP_WEXIT,
-	PS_STOPFORK, KP_STOPFORK,
-	PS_STOPEXEC, KP_STOPEXEC,
-	PS_STOPEXIT, KP_STOPEXIT,
+	PS_NOCLDSTOP, P_NOCLDSTOP,
+	PS_PPWAIT, P_PPWAIT,
+	PS_WEXIT, P_WEXIT,
+	PS_STOPFORK, P_STOPFORK,
+	PS_STOPEXEC, P_STOPEXEC,
+	PS_STOPEXIT, P_STOPEXIT,
 	0
 };
 
 static const u_int sysctl_slflagmap[] = {
-	PSL_TRACED, KP_TRACED,
-	PSL_FSTRACE, KP_FSTRACE,
-	PSL_CHTRACED, KP_CHTRACED,
-	PSL_SYSCALL, KP_SYSCALL,
+	PSL_TRACED, P_TRACED,
+	PSL_FSTRACE, P_FSTRACE,
+	PSL_CHTRACED, P_CHTRACED,
+	PSL_SYSCALL, P_SYSCALL,
 	0
 };
 
 static const u_int sysctl_lflagmap[] = {
-	PL_CONTROLT, KP_CONTROLT,
+	PL_CONTROLT, P_CONTROLT,
 	0
 };
 
 static const u_int sysctl_stflagmap[] = {
-	PST_PROFIL, KP_PROFIL,
+	PST_PROFIL, P_PROFIL,
 	0
 
 };
 
 static const u_int sysctl_lwpflagmap[] = {
-	L_INMEM, KP_INMEM,
-	L_SELECT, KP_SELECT,
-	L_SINTR, KP_SINTR,
-	L_SYSTEM, KP_SYSTEM,
+	LW_INMEM, P_INMEM,
+	LW_SELECT, P_SELECT,
+	LW_SINTR, P_SINTR,
+	LW_SYSTEM, P_SYSTEM,
 	0
 };
 
 static const u_int sysctl_lwpprflagmap[] = {
-	LPR_DETACHED, KL_DETACHED,
+	LPR_DETACHED, L_DETACHED,
 	0
 };
 
@@ -2278,7 +2278,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	 * Zombies don't have a stack, so we can't read their psstrings.
 	 * System processes also don't have a user stack.
 	 */
-	if (P_ZOMBIE(p) || (p->p_flag & P_SYSTEM) != 0) {
+	if (P_ZOMBIE(p) || (p->p_flag & PK_SYSTEM) != 0) {
 		error = EINVAL;
 		goto out_locked;
 	}
@@ -2287,7 +2287,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	 * Lock the process down in memory.
 	 */
 	/* XXXCDC: how should locking work here? */
-	if ((l->l_flag & L_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
+	if ((l->l_flag & LW_WEXIT) || (p->p_vmspace->vm_refcnt < 1)) {
 		error = EFAULT;
 		goto out_locked;
 	}
@@ -2345,7 +2345,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	}
 
 #ifdef COMPAT_NETBSD32
-	if (p->p_flag & P_32)
+	if (p->p_flag & PK_32)
 		len = sizeof(netbsd32_charp) * nargv;
 	else
 #endif
@@ -2376,7 +2376,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		int j;
 
 #ifdef COMPAT_NETBSD32
-		if (p->p_flag & P_32) {
+		if (p->p_flag & PK_32) {
 			netbsd32_charp *argv32;
 
 			argv32 = (netbsd32_charp *)argv;

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.8 2007/02/09 21:55:01 ad Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.8.2.1 2007/02/27 16:48:43 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.8 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.8.2.1 2007/02/27 16:48:43 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -242,7 +242,7 @@ linux32_syscall_fancy(frame)
 	    KTRPOINT(p, KTR_SYSCALL) ||
 #endif
 #ifdef SYSTRACE
-	    ISSET(p->p_flag, P_SYSTRACE)
+	    ISSET(p->p_flag, PK_SYSTRACE)
 #else
 	0
 #endif

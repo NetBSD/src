@@ -1,4 +1,4 @@
-/*	$NetBSD: decode.h,v 1.1 2006/04/07 14:21:37 cherry Exp $	*/
+/*	$NetBSD: decode.h,v 1.1.26.1 2007/02/27 16:51:56 yamt Exp $	*/
 
 /* Contributed to the NetBSD Foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains prototypes to decode unwind descriptors.
@@ -29,7 +29,7 @@
 #define IS_X4(byte) ((byte) == (char) 0xfc)
 
 struct unwind_desc_R1 {
-	boolean_t r;
+	bool r;
 	vsize_t rlen;
 };
 
@@ -44,7 +44,7 @@ struct unwind_desc_R2 {
 };
 
 struct unwind_desc_R3 {
-	boolean_t r;
+	bool r;
 	vsize_t rlen;
 };
 
@@ -72,7 +72,7 @@ struct unwind_desc_P5 {
 };
 
 struct unwind_desc_P6 {
-	boolean_t r;
+	bool r;
 	u_int rmask;
 };
 
@@ -98,7 +98,7 @@ struct unwind_desc_P10 {
 };
 
 struct unwind_desc_B1 {
-	boolean_t r;
+	bool r;
 	u_int label;
 };
 
@@ -113,25 +113,25 @@ struct unwind_desc_B3 {
 };
 
 struct unwind_desc_B4 {
-	boolean_t r;
+	bool r;
 	vsize_t label;
 };
 
 struct unwind_desc_X1 {
-	boolean_t r;
-	boolean_t a;
-	boolean_t b;
+	bool r;
+	bool a;
+	bool b;
 	u_int reg;
 	vsize_t t;
 	vsize_t offset;
 };
 
 struct unwind_desc_X2 {
-	boolean_t x;
-	boolean_t a;
-	boolean_t b;
+	bool x;
+	bool a;
+	bool b;
 	u_int reg;
-	boolean_t y;
+	bool y;
 	u_int treg;
 	vsize_t t;
 };
@@ -139,10 +139,10 @@ struct unwind_desc_X2 {
 
 
 struct unwind_desc_X3 {
-	boolean_t r;
+	bool r;
 	u_int qp;
-	boolean_t a;
-	boolean_t b;
+	bool a;
+	bool b;
 	u_int reg;
 	vsize_t t;
 	vsize_t offset;
@@ -150,11 +150,11 @@ struct unwind_desc_X3 {
 
 struct unwind_desc_X4 {
 	u_int qp;
-	boolean_t x;
-	boolean_t a;
-	boolean_t b;
+	bool x;
+	bool a;
+	bool b;
 	u_int reg;
-	boolean_t y;
+	bool y;
 	u_int treg;
 	vsize_t t;
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_osta.c,v 1.3 2006/08/10 12:26:44 reinoud Exp $ */
+/* $NetBSD: udf_osta.c,v 1.3.10.1 2007/02/27 16:54:15 yamt Exp $ */
 
 /*
  * Various routines from the OSTA 2.01 specs.  Copyrights are included with
@@ -246,8 +246,6 @@ main()
 #define	ILLEGAL_CHAR_MARK	0x005F
 #define	CRC_MARK	0x0023
 #define	EXT_SIZE	5
-#define	TRUE	1
-#define	FALSE	0
 #define	PERIOD	0x002E
 #define	SPACE	0x0020
 
@@ -294,8 +292,8 @@ int UDFTransName(
 	unicode_t *udfName,	/* (Input) Name from UDF volume.*/
 	int udfLen)		/* (Input) Length of UDF Name. */
 {
-	int Index, newIndex = 0, needsCRC = FALSE;	/* index is shadowed */
-	int extIndex = 0, newExtIndex = 0, hasExt = FALSE;
+	int Index, newIndex = 0, needsCRC = false;	/* index is shadowed */
+	int extIndex = 0, newExtIndex = 0, hasExt = false;
 #if defined OS2 || defined WIN_95 || defined WIN_NT
 	int trailIndex = 0;
 #endif
@@ -307,7 +305,7 @@ int UDFTransName(
 		current = udfName[Index];
 
 		if (IsIllegal(current) || !UnicodeIsPrint(current)) {
-			needsCRC = TRUE;
+			needsCRC = true;
 			/* Replace Illegal and non-displayable chars with
 			 * underscore.
 			 */
@@ -325,9 +323,9 @@ int UDFTransName(
 		if (current == PERIOD && (udfLen - Index -1) <= EXT_SIZE) {
 			if (udfLen == Index + 1) {
 				/* A trailing period is NOT an extension. */
-				hasExt = FALSE;
+				hasExt = false;
 			} else {
-				hasExt = TRUE;
+				hasExt = true;
 				extIndex = Index;
 				newExtIndex = newIndex;
 			}
@@ -343,7 +341,7 @@ int UDFTransName(
 		if (newIndex < MAXLEN) {
 			newName[newIndex++] = current;
 		} else {
-			needsCRC = TRUE;
+			needsCRC = true;
 		}
 	}
 
@@ -351,8 +349,8 @@ int UDFTransName(
 	/* For OS2, 95 & NT, truncate any trailing periods and\or spaces. */
 	if (trailIndex != newIndex - 1) {
 		newIndex = trailIndex + 1;
-		needsCRC = TRUE;
-		hasExt = FALSE; /* Trailing period does not make an
+		needsCRC = true;
+		hasExt = false; /* Trailing period does not make an
 				 * extension. */
 	}
 #endif
@@ -437,12 +435,12 @@ int UnicodeInString(
 	unsigned char *string,	/* (Input) String to search through. */
 	unicode_t ch)		/* (Input) Unicode char to search for. */
 {
-	int found = FALSE;
-	while (*string != '\0' && found == FALSE) {
+	int found = false;
+	while (*string != '\0' && found == false) {
 		/* These types should compare, since both are unsigned
 		 * numbers. */
 		if (*string == ch) {
-			found = TRUE;
+			found = true;
 		}
 		string++;
 	}

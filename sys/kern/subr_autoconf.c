@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.115 2006/10/02 02:59:38 chs Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.115.4.1 2007/02/27 16:54:27 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.115 2006/10/02 02:59:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.115.4.1 2007/02/27 16:54:27 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1563,7 +1563,7 @@ device_parent(device_t dev)
 	return (dev->dv_parent);
 }
 
-boolean_t
+bool
 device_is_active(device_t dev)
 {
 
@@ -1602,7 +1602,7 @@ device_properties(device_t dev)
  *	Returns true if the device is an instance of the specified
  *	driver.
  */
-boolean_t
+bool
 device_is_a(device_t dev, const char *dname)
 {
 

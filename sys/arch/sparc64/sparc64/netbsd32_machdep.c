@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.66 2007/02/09 21:55:13 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.66.2.1 2007/02/27 16:53:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.66 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.66.2.1 2007/02/27 16:53:15 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.66 2007/02/09 21:55:13 ad Exp
 #include <machine/vmparam.h>
 #include <machine/vuid_event.h>
 #include <machine/netbsd32_machdep.h>
+#include <machine/userret.h>
 
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "sparc";	
@@ -110,7 +111,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
-	p->p_flag |= P_32;
+	p->p_flag |= PK_32;
 
 	netbsd32_adjust_limits(p);
 
@@ -1353,6 +1354,25 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	} else {
 		mcp->__fpregs.__fpu_en = 0;
 	}
+}
+
+void
+startlwp32(void *arg)
+{
+	int err;
+	ucontext32_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	KERNEL_UNLOCK_LAST(l);
+	userret(l, 0, 0);
 }
 
 vaddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.53 2007/01/11 16:24:48 elad Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.53.2.1 2007/02/27 16:55:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -104,12 +104,12 @@ int veriexec_fpops_add(const char *, size_t, size_t, veriexec_fpop_init_t,
 int veriexec_table_add(struct lwp *, prop_dictionary_t);
 int veriexec_file_add(struct lwp *, prop_dictionary_t);
 int veriexec_verify(struct lwp *, struct vnode *, const u_char *, int,
-    boolean_t *);
+    bool *);
 #ifdef notyet
 int veriexec_page_verify(struct veriexec_file_entry *, struct vm_page *,
     size_t, struct lwp *);
 #endif /* notyet */
-boolean_t veriexec_lookup(struct vnode *);
+bool veriexec_lookup(struct vnode *);
 int veriexec_file_delete(struct lwp *, struct vnode *);
 int veriexec_table_delete(struct lwp *, struct mount *);
 int veriexec_convert(struct vnode *, prop_dictionary_t);

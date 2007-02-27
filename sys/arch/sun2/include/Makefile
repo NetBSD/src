@@ -1,4 +1,4 @@
-]#	$NetBSD: Makefile,v 1.9 2007/02/09 21:55:13 ad Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2007/02/27 16:53:18 yamt Exp $
 
 INCSDIR= /usr/include/sun2
 

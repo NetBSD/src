@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.24 2006/09/06 23:58:20 ad Exp $ */
+/*	$NetBSD: db_trace.c,v 1.24.8.1 2007/02/27 16:53:10 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24.8.1 2007/02/27 16:53:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,14 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.24 2006/09/06 23:58:20 ad Exp $");
 )
 
 void
-db_stack_trace_print(db_expr_t addr, int have_addr,
+db_stack_trace_print(db_expr_t addr, bool have_addr,
 		     db_expr_t count, const char *modif,
 		     void (*pr)(const char *, ...))
 {
 	struct frame	*frame, *prevframe;
 	db_addr_t	pc;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 	const char	*cp = modif;
 	char		c;
 
@@ -61,10 +62,14 @@ db_stack_trace_print(db_expr_t addr, int have_addr,
 		ddb_cpuinfo = curcpu();
 
 	while ((c = *cp++) != 0) {
+		if (c == 'a') {
+			lwpaddr = true;
+			trace_thread = true;
+		}
 		if (c == 't')
-			trace_thread = TRUE;
+			trace_thread = true;
 		if (c == 'u')
-			kernel_only = FALSE;
+			kernel_only = false;
 	}
 
 	if (!have_addr) {
@@ -75,14 +80,21 @@ db_stack_trace_print(db_expr_t addr, int have_addr,
 			struct proc *p;
 			struct user *u;
 			struct lwp *l;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
 			}
-			l = LIST_FIRST(&p->p_lwps);	/* XXX NJWLWP */
-			if ((l->l_flag & L_INMEM) == 0) {
+			(*pr)("lid %d ", l->l_lid);
+			if ((l->l_flag & LW_INMEM) == 0) {
 				(*pr)("swapped out\n");
 				return;
 			}

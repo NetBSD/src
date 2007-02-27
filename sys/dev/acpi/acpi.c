@@ -1,7 +1,7 @@
-/*	$NetBSD: acpi.c,v 1.99 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: acpi.c,v 1.99.2.1 2007/02/27 16:53:49 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.99 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.99.2.1 2007/02/27 16:53:49 yamt Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.99 2007/02/09 21:55:26 ad Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
@@ -150,8 +151,9 @@ struct acpi_softc *acpi_softc;
 /*
  * Locking stuff.
  */
-static struct simplelock acpi_slock;
+static kmutex_t acpi_slock;
 static int acpi_locked;
+extern kmutex_t acpi_interrupt_list_mtx;
 
 /*
  * sysctl-related information
@@ -189,7 +191,8 @@ acpi_probe(void)
 		panic("acpi_probe: ACPI has already been probed");
 	beenhere = 1;
 
-	simple_lock_init(&acpi_slock);
+	mutex_init(&acpi_slock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&acpi_interrupt_list_mtx, MUTEX_DRIVER, IPL_NONE);
 	acpi_locked = 0;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.20 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.20.2.1 2007/02/27 16:54:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.20 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.20.2.1 2007/02/27 16:54:26 yamt Exp $");
 
 /*
  * Adapted from OpenBSD: kern_timeout.c,v 1.15 2002/12/08 04:21:07 art Exp,
@@ -469,7 +469,7 @@ db_show_callout_bucket(struct callout_circq *bucket)
 }
 
 void
-db_show_callout(db_expr_t addr, int haddr, db_expr_t count, const char *modif)
+db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
 	int b;
 

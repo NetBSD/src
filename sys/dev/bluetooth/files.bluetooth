@@ -1,4 +1,4 @@
-#	$NetBSD: files.bluetooth,v 1.10 2006/09/10 15:45:56 plunky Exp $
+#	$NetBSD: files.bluetooth,v 1.10.6.1 2007/02/27 16:53:51 yamt Exp $
 #
 # Config file for machine independent Bluetooth devices
 
@@ -31,3 +31,7 @@ file dev/bluetooth/btms.c		btms
 device btsco: bluetooth, audiobus, auconv, mulaw, aurateconv
 attach btsco at bthub
 file dev/bluetooth/btsco.c		btsco
+
+# Bluetooth HCI UART (H4)
+defpseudo btuart: btbus, bluetooth, firmload
+file dev/bluetooth/btuart.c		btuart

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.35 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.35.2.1 2007/02/27 16:54:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.35 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.35.2.1 2007/02/27 16:54:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -380,7 +380,7 @@ filt_procattach(struct knote *kn)
 	 * setuid/setgid privs (unless you're root).
 	 */
 	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
-	    (p->p_flag & P_SUGID)) && kauth_authorize_generic(curl->l_cred,
+	    (p->p_flag & PK_SUGID)) && kauth_authorize_generic(curl->l_cred,
 	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
 		return (EACCES);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdInterrupt.c,v 1.2 2006/08/27 22:33:49 christos Exp $	*/
+/*	$NetBSD: OsdInterrupt.c,v 1.2.10.1 2007/02/27 16:53:49 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,11 +42,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.2 2006/08/27 22:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdInterrupt.c,v 1.2.10.1 2007/02/27 16:53:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 #include <dev/acpi/acpica.h>
@@ -74,19 +74,8 @@ struct acpi_interrupt_handler {
 
 static LIST_HEAD(, acpi_interrupt_handler) acpi_interrupt_list =
     LIST_HEAD_INITIALIZER(&acpi_interrupt_list);
-static struct simplelock acpi_interrupt_list_slock = SIMPLELOCK_INITIALIZER;
 
-#define	ACPI_INTERRUPT_LIST_LOCK(s)					\
-do {									\
-	(s) = splhigh();						\
-	simple_lock(&acpi_interrupt_list_slock);			\
-} while (/*CONSTCOND*/0)
-
-#define	ACPI_INTERRUPT_LIST_UNLOCK(s)					\
-do {									\
-	simple_unlock(&acpi_interrupt_list_slock);			\
-	splx((s));							\
-} while (/*CONSTCOND*/0)
+kmutex_t acpi_interrupt_list_mtx;
 
 /*
  * AcpiOsInstallInterruptHandler:
@@ -99,7 +88,6 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 {
 	struct acpi_interrupt_handler *aih;
 	ACPI_STATUS rv;
-	int s;
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
@@ -118,9 +106,9 @@ AcpiOsInstallInterruptHandler(UINT32 InterruptNumber,
 	rv = acpi_md_OsInstallInterruptHandler(InterruptNumber,
 	    ServiceRoutine, Context, &aih->aih_ih);
 	if (rv == AE_OK) {
-		ACPI_INTERRUPT_LIST_LOCK(s);
+		mutex_enter(&acpi_interrupt_list_mtx);
 		LIST_INSERT_HEAD(&acpi_interrupt_list, aih, aih_list);
-		ACPI_INTERRUPT_LIST_UNLOCK(s);
+		mutex_exit(&acpi_interrupt_list_mtx);
 	} else
 		free(aih, M_ACPI);
 
@@ -137,7 +125,6 @@ AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber,
     ACPI_OSD_HANDLER ServiceRoutine)
 {
 	struct acpi_interrupt_handler *aih;
-	int s;
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
@@ -146,17 +133,17 @@ AcpiOsRemoveInterruptHandler(UINT32 InterruptNumber,
 	if (ServiceRoutine == NULL)
 		return_ACPI_STATUS(AE_BAD_PARAMETER);
 
-	ACPI_INTERRUPT_LIST_LOCK(s);
+	mutex_enter(&acpi_interrupt_list_mtx);
 	LIST_FOREACH(aih, &acpi_interrupt_list, aih_list) {
 		if (aih->aih_intrnum == InterruptNumber &&
 		    aih->aih_func == ServiceRoutine) {
 			LIST_REMOVE(aih, aih_list);
-			ACPI_INTERRUPT_LIST_UNLOCK(s);
+			mutex_exit(&acpi_interrupt_list_mtx);
 			acpi_md_OsRemoveInterruptHandler(aih->aih_ih);
 			free(aih, M_ACPI);
 			return_ACPI_STATUS(AE_OK);
 		}
 	}
-	ACPI_INTERRUPT_LIST_UNLOCK(s);
+	mutex_exit(&acpi_interrupt_list_mtx);
 	return_ACPI_STATUS(AE_NOT_EXIST);
 }

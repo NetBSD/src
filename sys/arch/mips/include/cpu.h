@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80 2007/02/16 03:30:48 oster Exp $	*/
+/*	$NetBSD: cpu.h,v 1.80.2.1 2007/02/27 16:52:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -345,10 +345,10 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 /*
- * Notify the current process (p) that it has a signal pending,
+ * Notify the current lwp (l) that it has a signal pending,
  * process as soon as possible.
  */
-#define	cpu_signotify(p)	aston(l)
+#define	cpu_signotify(l)	aston(l)
 
 #define aston(l)		((l)->l_md.md_astpending = 1)
 

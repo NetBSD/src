@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.196 2006/12/21 15:55:26 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.196.2.1 2007/02/27 16:55:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196 2006/12/21 15:55:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196.2.1 2007/02/27 16:55:22 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -494,15 +494,9 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 	int error = 0;
 
 	ASSERT_SEGLOCK(fs);
-#if 0
+ loop:
 	/* start at last (newest) vnode. */
- loop:
 	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
-#else
-	/* start at oldest accessed vnode */
- loop:
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-#endif
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.

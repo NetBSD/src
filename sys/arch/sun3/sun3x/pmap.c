@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2006/11/24 19:46:59 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93.4.1 2007/02/27 16:53:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2006/11/24 19:46:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93.4.1 2007/02/27 16:53:20 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -270,7 +270,7 @@ static TAILQ_HEAD(c_pool_head_struct, c_tmgr_struct) c_pool;
  * resources.
  */
 /* Safe to use pmap_bootstrap_alloc(). */
-static boolean_t bootstrap_alloc_enabled = FALSE;
+static bool bootstrap_alloc_enabled = false;
 /* Temporary virtual pages are in use */
 int tmp_vpages_inuse;
 
@@ -559,9 +559,9 @@ current_pmap(void)
 a_tmgr_t *get_a_table(void);
 b_tmgr_t *get_b_table(void);
 c_tmgr_t *get_c_table(void);
-int free_a_table(a_tmgr_t *, boolean_t);
-int free_b_table(b_tmgr_t *, boolean_t);
-int free_c_table(c_tmgr_t *, boolean_t);
+int free_a_table(a_tmgr_t *, bool);
+int free_b_table(b_tmgr_t *, bool);
+int free_c_table(c_tmgr_t *, bool);
 
 void pmap_bootstrap_aalign(int);
 void pmap_alloc_usermmu(void);
@@ -572,21 +572,21 @@ void pmap_init_b_tables(void);
 void pmap_init_c_tables(void);
 void pmap_init_pv(void);
 void pmap_clear_pv(paddr_t, int);
-static INLINE boolean_t is_managed(paddr_t);
+static INLINE bool is_managed(paddr_t);
 
-boolean_t pmap_remove_a(a_tmgr_t *, vaddr_t, vaddr_t);
-boolean_t pmap_remove_b(b_tmgr_t *, vaddr_t, vaddr_t);
-boolean_t pmap_remove_c(c_tmgr_t *, vaddr_t, vaddr_t);
+bool pmap_remove_a(a_tmgr_t *, vaddr_t, vaddr_t);
+bool pmap_remove_b(b_tmgr_t *, vaddr_t, vaddr_t);
+bool pmap_remove_c(c_tmgr_t *, vaddr_t, vaddr_t);
 void pmap_remove_pte(mmu_short_pte_t *);
 
 void pmap_enter_kernel(vaddr_t, paddr_t, vm_prot_t);
 static INLINE void pmap_remove_kernel(vaddr_t, vaddr_t);
 static INLINE void pmap_protect_kernel(vaddr_t, vaddr_t, vm_prot_t);
-static INLINE boolean_t pmap_extract_kernel(vaddr_t, paddr_t *);
+static INLINE bool pmap_extract_kernel(vaddr_t, paddr_t *);
 vaddr_t pmap_get_pteinfo(u_int, pmap_t *, c_tmgr_t **);
 static INLINE int pmap_dereference(pmap_t);
 
-boolean_t pmap_stroll(pmap_t, vaddr_t, a_tmgr_t **, b_tmgr_t **, c_tmgr_t **,
+bool pmap_stroll(pmap_t, vaddr_t, a_tmgr_t **, b_tmgr_t **, c_tmgr_t **,
     mmu_short_pte_t **, int *, int *, int *);
 void pmap_bootstrap_copyprom(void);
 void pmap_takeover_mmu(void);
@@ -655,7 +655,7 @@ pmap_bootstrap(vaddr_t nextva)
 	/* Don't need avail_start til later. */
 
 	/* We may now call pmap_bootstrap_alloc(). */
-	bootstrap_alloc_enabled = TRUE;
+	bootstrap_alloc_enabled = true;
 
 	/*
 	 * This is a somewhat unwrapped loop to deal with
@@ -804,7 +804,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * to prevent use of pmap_bootstrap_alloc() hereafter.
 	 */
 	pmap_bootstrap_aalign(PAGE_SIZE);
-	bootstrap_alloc_enabled = FALSE;
+	bootstrap_alloc_enabled = false;
 
 	/*
 	 * Now that we are done with pmap_bootstrap_alloc(), we
@@ -1242,13 +1242,13 @@ pmap_init_pv(void)
  * those pages which belong to the ROM monitor and the memory allocated before
  * the VM system was started.
  */
-static INLINE boolean_t 
+static INLINE bool 
 is_managed(paddr_t pa)
 {
 	if (pa >= avail_start && pa < avail_end)
-		return TRUE;
+		return true;
 	else
-		return FALSE;
+		return false;
 }
 
 /* get_a_table			INTERNAL
@@ -1287,14 +1287,14 @@ get_a_table(void)
 	 * No re-entrancy worries here.  This table would not be in the
 	 * table pool unless it was available for use.
 	 *
-	 * Note that the second argument to free_a_table() is FALSE.  This
+	 * Note that the second argument to free_a_table() is false.  This
 	 * indicates that the table should not be relinked into the A table
 	 * pool.  That is a job for the function that called us.
 	 */
 	if (tbl->at_parent) {
 		KASSERT(tbl->at_wcnt == 0);
 		pmap = tbl->at_parent;
-		free_a_table(tbl, FALSE);
+		free_a_table(tbl, false);
 		pmap->pm_a_tmgr = NULL;
 		pmap->pm_a_phys = kernAphys;
 	}
@@ -1319,7 +1319,7 @@ get_b_table(void)
 		KASSERT(tbl->bt_wcnt == 0);
 		tbl->bt_parent->at_dtbl[tbl->bt_pidx].attr.raw = MMU_DT_INVALID;
 		tbl->bt_parent->at_ecnt--;
-		free_b_table(tbl, FALSE);
+		free_b_table(tbl, false);
 	}
 	return tbl;
 }
@@ -1342,7 +1342,7 @@ get_c_table(void)
 		KASSERT(tbl->ct_wcnt == 0);
 		tbl->ct_parent->bt_dtbl[tbl->ct_pidx].attr.raw = MMU_DT_INVALID;
 		tbl->ct_parent->bt_ecnt--;
-		free_c_table(tbl, FALSE);
+		free_c_table(tbl, false);
 	}
 	return tbl;
 }
@@ -1375,7 +1375,7 @@ get_c_table(void)
  * PFLUSHR.
  */
 int 
-free_a_table(a_tmgr_t *a_tbl, boolean_t relink)
+free_a_table(a_tmgr_t *a_tbl, bool relink)
 {
 	int i, removed_cnt;
 	mmu_long_dte_t	*dte;
@@ -1434,7 +1434,7 @@ free_a_table(a_tmgr_t *a_tbl, boolean_t relink)
 				dtbl = mmu_ptov(dte[i].addr.raw);
 				b_tbl = mmuB2tmgr(dtbl);
 				bt_wired = b_tbl->bt_wcnt;
-				removed_cnt += free_b_table(b_tbl, TRUE);
+				removed_cnt += free_b_table(b_tbl, true);
 				if (bt_wired)
 					a_tbl->at_wcnt--;
 				dte[i].attr.raw = MMU_DT_INVALID;
@@ -1460,7 +1460,7 @@ free_a_table(a_tmgr_t *a_tbl, boolean_t relink)
  * (For comments, see 'free_a_table()').
  */
 int 
-free_b_table(b_tmgr_t *b_tbl, boolean_t relink)
+free_b_table(b_tmgr_t *b_tbl, bool relink)
 {
 	int i, removed_cnt;
 	mmu_short_dte_t *dte;
@@ -1477,7 +1477,7 @@ free_b_table(b_tmgr_t *b_tbl, boolean_t relink)
 				dtbl = mmu_ptov(MMU_DTE_PA(dte[i]));
 				c_tbl = mmuC2tmgr(dtbl);
 				ct_wired = c_tbl->ct_wcnt;
-				removed_cnt += free_c_table(c_tbl, TRUE);
+				removed_cnt += free_c_table(c_tbl, true);
 				if (ct_wired)
 					b_tbl->bt_wcnt--;
 				dte[i].attr.raw = MMU_DT_INVALID;
@@ -1506,7 +1506,7 @@ free_b_table(b_tmgr_t *b_tbl, boolean_t relink)
  * 'pmap_remove_pte().'
  */
 int 
-free_c_table(c_tmgr_t *c_tbl, boolean_t relink)
+free_c_table(c_tmgr_t *c_tbl, bool relink)
 {
 	mmu_short_pte_t *c_pte;
 	int i, removed_cnt;
@@ -1615,13 +1615,13 @@ pmap_remove_pte(mmu_short_pte_t *pte)
  **
  * Retrieve the addresses of all table managers involved in the mapping of
  * the given virtual address.  If the table walk completed successfully,
- * return TRUE.  If it was only partially successful, return FALSE.
+ * return true.  If it was only partially successful, return false.
  * The table walk performed by this function is important to many other
  * functions in this module.
  *
  * Note: This function ought to be easier to read.
  */
-boolean_t
+bool
 pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
     c_tmgr_t **c_tbl, mmu_short_pte_t **pte, int *a_idx, int *b_idx,
     int *pte_idx)
@@ -1630,19 +1630,19 @@ pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
 	mmu_short_dte_t *b_dte;  /* B: short descriptor table         */
 
 	if (pmap == pmap_kernel())
-		return FALSE;
+		return false;
 
 	/* Does the given pmap have its own A table? */
 	*a_tbl = pmap->pm_a_tmgr;
 	if (*a_tbl == NULL)
-		return FALSE; /* No.  Return unknown. */
+		return false; /* No.  Return unknown. */
 	/* Does the A table have a valid B table
 	 * under the corresponding table entry?
 	 */
 	*a_idx = MMU_TIA(va);
 	a_dte = &((*a_tbl)->at_dtbl[*a_idx]);
 	if (!MMU_VALID_DT(*a_dte))
-		return FALSE; /* No. Return unknown. */
+		return false; /* No. Return unknown. */
 	/* Yes. Extract B table from the A table. */
 	*b_tbl = mmuB2tmgr(mmu_ptov(a_dte->addr.raw));
 	/*
@@ -1652,13 +1652,13 @@ pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
 	*b_idx = MMU_TIB(va);
 	b_dte = &((*b_tbl)->bt_dtbl[*b_idx]);
 	if (!MMU_VALID_DT(*b_dte))
-		return FALSE; /* No. Return unknown. */
+		return false; /* No. Return unknown. */
 	/* Yes. Extract C table from the B table. */
 	*c_tbl = mmuC2tmgr(mmu_ptov(MMU_DTE_PA(*b_dte)));
 	*pte_idx = MMU_TIC(va);
 	*pte = &((*c_tbl)->ct_dtbl[*pte_idx]);
 	
-	return TRUE;
+	return true;
 }
 	
 /* pmap_enter			INTERFACE
@@ -1674,7 +1674,7 @@ pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
 int 
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
-	boolean_t insert, managed; /* Marks the need for PV insertion.*/
+	bool insert, managed; /* Marks the need for PV insertion.*/
 	u_short nidx;            /* PV list index                     */
 	int mapflags;            /* Flags for the mapping (see NOTE1) */
 	u_int a_idx, b_idx, pte_idx; /* table indices                 */
@@ -1685,7 +1685,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	mmu_short_dte_t *b_dte;  /* B: short descriptor table         */
 	mmu_short_pte_t *c_pte;  /* C: short page descriptor table    */
 	pv_t      *pv;           /* pv list head                      */
-	boolean_t wired;         /* is the mapping to be wired?       */
+	bool wired;         /* is the mapping to be wired?       */
 	enum {NONE, NEWA, NEWB, NEWC} llevel; /* used at end   */
 
 	if (pmap == pmap_kernel()) {
@@ -1724,7 +1724,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Any other area of the address space is likely to belong to a
 	 * device and hence it would be disasterous to cache its contents.
 	 */
-	if ((managed = is_managed(pa)) == FALSE)
+	if ((managed = is_managed(pa)) == false)
 		mapflags |= PMAP_NC;
 
 	/*
@@ -1954,7 +1954,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			 * Yes, mark that it does not need to be reinserted
 			 * into the PV list.
 			 */
-			insert = FALSE;
+			insert = false;
 
 			/*
 			 * Clear all but the modified, referenced and wired
@@ -1965,7 +1965,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		} else {
 			/* No, remove the old entry */
 			pmap_remove_pte(c_pte);
-			insert = TRUE;
+			insert = true;
 		}
 
 		/*
@@ -1985,7 +1985,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		c_pte->attr.raw = 0;
 
 		/* It will also need to be inserted into the PV list. */
-		insert = TRUE;
+		insert = true;
 	}
 
 	/*
@@ -2087,7 +2087,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 void 
 pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
-	boolean_t       was_valid, insert;
+	bool       was_valid, insert;
 	u_short         pte_idx;
 	int             flags;
 	mmu_short_pte_t *pte;
@@ -2098,9 +2098,9 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pa &= MMU_PAGE_MASK;
 
 	if (is_managed(pa))
-		insert = TRUE; 
+		insert = true; 
 	else
-		insert = FALSE;
+		insert = false;
 
 	/*
 	 * Calculate the index of the PTE being modified.
@@ -2111,7 +2111,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	pte = &kernCbase[pte_idx];
 
 	if (MMU_VALID_DT(*pte)) {
-		was_valid = TRUE;
+		was_valid = true;
 		/*
 		 * If the PTE already maps a different
 		 * physical address, umap and pv_unlink.
@@ -2124,7 +2124,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		     * Old PA and new PA are the same.  No need to
 		     * relink the mapping within the PV list.
 		     */
-		     insert = FALSE;
+		     insert = false;
 
 		    /*
 		     * Save any mod/ref bits on the PTE.
@@ -2133,7 +2133,7 @@ pmap_enter_kernel(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		}
 	} else {
 		pte->attr.raw = MMU_DT_INVALID;
-		was_valid = FALSE;
+		was_valid = false;
 	}
 
 	/*
@@ -2272,7 +2272,7 @@ pmap_protect_kernel(vaddr_t startva, vaddr_t endva, vm_prot_t prot)
 void 
 pmap_protect(pmap_t pmap, vaddr_t startva, vaddr_t endva, vm_prot_t prot)
 {
-	boolean_t iscurpmap;
+	bool iscurpmap;
 	int a_idx, b_idx, c_idx;
 	a_tmgr_t *a_tbl;
 	b_tmgr_t *b_tbl;
@@ -2408,7 +2408,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	 * Return immediately.
 	 */
 	if (pmap_stroll(pmap, va, &a_tbl, &b_tbl, &c_tbl, &pte, &a_idx,
-		&b_idx, &c_idx) == FALSE)
+		&b_idx, &c_idx) == false)
 		return;
 
 
@@ -2613,7 +2613,7 @@ pmap_release(pmap_t pmap)
 		printf("pmap_release: still have table\n");
 		Debugger();
 #endif
-		free_a_table(pmap->pm_a_tmgr, TRUE);
+		free_a_table(pmap->pm_a_tmgr, true);
 		pmap->pm_a_tmgr = NULL;
 		pmap->pm_a_phys = kernAphys;
 	}
@@ -2669,7 +2669,7 @@ pmap_destroy(pmap_t pmap)
  * Determine if the given physical page has been
  * referenced (read from [or written to.])
  */
-boolean_t
+bool
 pmap_is_referenced(struct vm_page *pg)
 {
 	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
@@ -2683,7 +2683,7 @@ pmap_is_referenced(struct vm_page *pg)
 
 	pv = pa2pv(pa);
 	if (pv->pv_flags & PV_FLAGS_USED)
-		return TRUE;
+		return true;
 
 	/*
 	 * Search through all pv elements pointing
@@ -2692,10 +2692,10 @@ pmap_is_referenced(struct vm_page *pg)
 
 	for (idx = pv->pv_idx; idx != PVE_EOL; idx = pvebase[idx].pve_next) {
 		if (MMU_PTE_USED(kernCbase[idx])) {
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 /* pmap_is_modified			INTERFACE
@@ -2703,7 +2703,7 @@ pmap_is_referenced(struct vm_page *pg)
  * Determine if the given physical page has been
  * modified (written to.)
  */
-boolean_t
+bool
 pmap_is_modified(struct vm_page *pg)
 {
 	paddr_t   pa = VM_PAGE_TO_PHYS(pg);
@@ -2713,18 +2713,18 @@ pmap_is_modified(struct vm_page *pg)
 	/* see comments in pmap_is_referenced() */
 	pv = pa2pv(pa);
 	if (pv->pv_flags & PV_FLAGS_MDFY)
-		return TRUE;
+		return true;
 
 	for (idx = pv->pv_idx;
 		 idx != PVE_EOL;
 		 idx = pvebase[idx].pve_next) {
 
 		if (MMU_PTE_MODIFIED(kernCbase[idx])) {
-			return TRUE;
+			return true;
 		}
 	}
 
-	return FALSE;
+	return false;
 }
 
 /* pmap_page_protect			INTERFACE
@@ -2860,11 +2860,11 @@ pmap_get_pteinfo(u_int idx, pmap_t *pmap, c_tmgr_t **tbl)
  * physical address.
  *
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t rv;
+	bool rv;
 
 	rv = pmap_is_modified(pg);
 	pmap_clear_pv(pa, PV_FLAGS_MDFY);
@@ -2876,11 +2876,11 @@ pmap_clear_modify(struct vm_page *pg)
  * Clear the referenced bit on the page at the specified
  * physical address.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	boolean_t rv;
+	bool rv;
 
 	rv = pmap_is_referenced(pg);
 	pmap_clear_pv(pa, PV_FLAGS_USED);
@@ -2941,17 +2941,17 @@ pmap_clear_pv(paddr_t pa, int flag)
  **
  * Extract a translation from the kernel address space.
  */
-static INLINE boolean_t 
+static INLINE bool 
 pmap_extract_kernel(vaddr_t va, paddr_t *pap)
 {
 	mmu_short_pte_t *pte;
 
 	pte = &kernCbase[(u_int)m68k_btop(va - KERNBASE)];
 	if (!MMU_VALID_DT(*pte))
-		return FALSE;
+		return false;
 	if (pap != NULL)
 		*pap = MMU_PTE_PA(*pte);
-	return TRUE;
+	return true;
 }
 
 /* pmap_extract			INTERFACE
@@ -2962,7 +2962,7 @@ pmap_extract_kernel(vaddr_t va, paddr_t *pap)
  * Note: this function should also apply an exclusive lock
  * on the pmap system during its duration.
  */
-boolean_t 
+bool 
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	int a_idx, b_idx, pte_idx;
@@ -2975,15 +2975,15 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		return pmap_extract_kernel(va, pap);
 
 	if (pmap_stroll(pmap, va, &a_tbl, &b_tbl, &c_tbl,
-		&c_pte, &a_idx, &b_idx, &pte_idx) == FALSE)
-		return FALSE;
+		&c_pte, &a_idx, &b_idx, &pte_idx) == false)
+		return false;
 
 	if (!MMU_VALID_DT(*c_pte))
-		return FALSE;
+		return false;
 
 	if (pap != NULL)
 		*pap = MMU_PTE_PA(*c_pte);
-	return TRUE;
+	return true;
 }
 
 /* pmap_remove_kernel		INTERNAL
@@ -3070,14 +3070,14 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
  * pmap_remove_b().
  *
  * If the removal operation results in an empty A table, the function returns
- * TRUE.
+ * true.
  *
  * It's ugly but will do for now.
  */
-boolean_t 
+bool 
 pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 {
-	boolean_t empty;
+	bool empty;
 	int idx;
 	vaddr_t nstart, nend;
 	b_tmgr_t *b_tbl;
@@ -3200,7 +3200,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 				b_tbl = mmuB2tmgr(b_dte);
 				bt_wired = b_tbl->bt_wcnt;
 
-				free_b_table(b_tbl, TRUE);
+				free_b_table(b_tbl, true);
 
 				/*
 				 * All child entries has been removed.
@@ -3268,7 +3268,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 
 	/*
 	 * If there are no more entries in the A table, release it
-	 * back to the available pool and return TRUE.
+	 * back to the available pool and return true.
 	 */
 	if (a_tbl->at_ecnt == 0) {
 		KASSERT(a_tbl->at_wcnt == 0);
@@ -3276,7 +3276,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 		if (!at_wired)
 			TAILQ_REMOVE(&a_pool, a_tbl, at_link);
 		TAILQ_INSERT_HEAD(&a_pool, a_tbl, at_link);
-		empty = TRUE;
+		empty = true;
 	} else {
 		/*
 		 * If the table doesn't have wired entries any longer
@@ -3285,7 +3285,7 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
 		 */
 		if (at_wired && a_tbl->at_wcnt == 0)
 			TAILQ_INSERT_TAIL(&a_pool, a_tbl, at_link);
-		empty = FALSE;
+		empty = false;
 	}
 
 	return empty;
@@ -3296,12 +3296,12 @@ pmap_remove_a(a_tmgr_t *a_tbl, vaddr_t sva, vaddr_t eva)
  * Remove a range of addresses from an address space, trying to remove entire
  * C tables if possible.
  *
- * If the operation results in an empty B table, the function returns TRUE.
+ * If the operation results in an empty B table, the function returns true.
  */
-boolean_t 
+bool 
 pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
 {
-	boolean_t empty;
+	bool empty;
 	int idx;
 	vaddr_t nstart, nend, rstart;
 	c_tmgr_t *c_tbl;
@@ -3350,7 +3350,7 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
 				c_tbl = mmuC2tmgr(c_dte);
 				ct_wired = c_tbl->ct_wcnt;
 
-				free_c_table(c_tbl, TRUE);
+				free_c_table(c_tbl, true);
 
 				/*
 				 * All child entries has been removed.
@@ -3396,7 +3396,7 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
 		if (!bt_wired)
 			TAILQ_REMOVE(&b_pool, b_tbl, bt_link);
 		TAILQ_INSERT_HEAD(&b_pool, b_tbl, bt_link);
-		empty = TRUE;
+		empty = true;
 	} else {
 		/*
 		 * If the table doesn't have wired entries any longer
@@ -3406,7 +3406,7 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
 		if (bt_wired && b_tbl->bt_wcnt == 0)
 			TAILQ_INSERT_TAIL(&b_pool, b_tbl, bt_link);
 
-		empty = FALSE;
+		empty = false;
 	}
 
 	return empty;
@@ -3416,10 +3416,10 @@ pmap_remove_b(b_tmgr_t *b_tbl, vaddr_t sva, vaddr_t eva)
  **
  * Remove a range of addresses from the given C table.
  */
-boolean_t 
+bool 
 pmap_remove_c(c_tmgr_t *c_tbl, vaddr_t sva, vaddr_t eva)
 {
-	boolean_t empty;
+	bool empty;
 	int idx;
 	mmu_short_pte_t *c_pte;
 	uint8_t ct_wired;
@@ -3443,7 +3443,7 @@ pmap_remove_c(c_tmgr_t *c_tbl, vaddr_t sva, vaddr_t eva)
 		if (!ct_wired)
 			TAILQ_REMOVE(&c_pool, c_tbl, ct_link);
 		TAILQ_INSERT_HEAD(&c_pool, c_tbl, ct_link);
-		empty = TRUE;
+		empty = true;
 	} else {
 		/*
 		 * If the table doesn't have wired entries any longer
@@ -3452,7 +3452,7 @@ pmap_remove_c(c_tmgr_t *c_tbl, vaddr_t sva, vaddr_t eva)
 		 */
 		if (ct_wired && c_tbl->ct_wcnt == 0)
 			TAILQ_INSERT_TAIL(&c_pool, c_tbl, ct_link);
-		empty = FALSE;
+		empty = false;
 	}
 
 	return empty;
@@ -3471,7 +3471,7 @@ pmap_bootstrap_alloc(int size)
 	void *rtn;
 
 #ifdef	PMAP_DEBUG
-	if (bootstrap_alloc_enabled == FALSE) {
+	if (bootstrap_alloc_enabled == false) {
 		mon_printf("pmap_bootstrap_alloc: disabled\n");
 		sunmon_abort();
 	}

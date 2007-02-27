@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.194 2007/02/15 20:32:47 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.194.2.1 2007/02/27 16:55:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -343,7 +343,7 @@ void	doforkhooks(struct proc *, struct proc *);
  * kernel syscall tracing/debugging hooks.
  */
 #ifdef _KERNEL
-boolean_t trace_is_enabled(struct proc *);
+bool	trace_is_enabled(struct proc *);
 int	trace_enter(struct lwp *, register_t, register_t,
 	    const struct sysent *, void *);
 void	trace_exit(struct lwp *, register_t, void *, register_t [], int);

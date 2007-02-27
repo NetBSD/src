@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.7 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.7.26.1 2007/02/27 16:50:06 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -32,7 +32,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.7 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.7.26.1 2007/02/27 16:50:06 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: pl030_rtc.c,v 1.7 2005/12/11 12:17:09 christos Exp $
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/device.h>
+
+#include <dev/clock_subr.h>
 
 #include <arm/cpufunc.h>
 #include <machine/intr.h>
@@ -53,6 +55,7 @@ struct plrtc_softc {
 	struct device		    sc_dev;
 	bus_space_tag_t		    sc_iot;
 	bus_space_handle_t	    sc_ioh;
+	struct todr_chip_handle     sc_todr;
 };
 
 static int  plrtc_probe  (struct device *, struct cfdata *, void *);
@@ -61,11 +64,26 @@ static void plrtc_attach (struct device *, struct device *, void *);
 CFATTACH_DECL(plrtc, sizeof(struct plrtc_softc),
     plrtc_probe, plrtc_attach, NULL, NULL);
 
-/* Remember our handle, since it isn't passed in by inittodr and
-   resettodr.  */
-static struct plrtc_softc *plrtc_sc;
+static int
+plrtc_gettime(todr_chip_handle_t todr, volatile struct timeval *tv)
+{
+	struct plrtc_softc *sc;
 
-static int timeset = 0;
+ 	sc = (struct plrtc_softc *)todr->cookie;
+	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IFPGA_RTC_DR);
+	/* initialize tv_usec? */
+	return 0;
+}
+
+static int
+plrtc_settime(todr_chip_handle_t todr, volatile struct timeval *tv)
+{
+	struct plrtc_softc *sc;
+
+ 	sc = (struct plrtc_softc *)todr->cookie;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IFPGA_RTC_LR, tv->tv_sec);
+	return 0;
+}
 
 static int
 plrtc_probe(struct device *parent, struct cfdata *cf, void *aux)
@@ -86,46 +104,12 @@ plrtc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	plrtc_sc = sc;
+	memset(&sc->sc_todr, 0, sizeof(struct todr_chip_handle));
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime = plrtc_gettime;
+	sc->sc_todr.todr_settime = plrtc_settime;
+
+	todr_attach( &sc->sc_todr );
 
 	printf("\n");
-}
-
-void
-inittodr(time_t base)
-{
-	time_t rtc_time;
-	struct plrtc_softc *sc = plrtc_sc;
-
-	if (sc == NULL)
-		panic("RTC not attached");
-
-	/* Default to the suggested time, but replace that with one from the
-	   RTC if it seems more sensible.  */
-	rtc_time = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IFPGA_RTC_DR);
-	
-	time.tv_usec = 0;
-	time.tv_sec = rtc_time;
-
-	timeset = 1;
-
-	if (base > rtc_time) {
-		printf("inittodr: rtc value suspect, ignoring it.\n");
-		time.tv_usec = 0;
-		time.tv_sec = base;
-		return;
-	}
-}
-
-void
-resettodr()
-{
-	struct plrtc_softc *sc = plrtc_sc;
-
-	/* The time hasn't been set yet, so avoid writing a dubious value
-	   to the RTC.  */
-	if (!timeset)
-		return;
-
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IFPGA_RTC_LR, time.tv_sec);
 }

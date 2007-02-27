@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.60 2006/11/28 17:27:09 elad Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.60.4.1 2007/02/27 16:51:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.60 2006/11/28 17:27:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.60.4.1 2007/02/27 16:51:45 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -558,7 +558,7 @@ process_machdep_validxmmregs(p)
 	struct proc *p;
 {
 
-	if (p->p_flag & P_SYSTEM)
+	if (p->p_flag & PK_SYSTEM)
 		return (0);
 
 	return (i386_use_fxsave);

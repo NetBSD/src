@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2006/09/09 22:33:13 gdamore Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.6.1 2007/02/27 16:53:03 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2006/09/09 22:33:13 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44.6.1 2007/02/27 16:53:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -2317,12 +2317,12 @@ pmap_remove(pmap_t pm, vaddr_t va, vaddr_t endva)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pvo_entry *pvo;
 	int s, idx;
-	boolean_t found = FALSE;
+	bool found = false;
 
 	PMPRINTF(("pmap_extract: %s: va 0x%lx - ", PMSTR(pm), va));
 
@@ -2336,7 +2336,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		if (__predict_true(pap != NULL))
 			*pap = (paddr_t)(va - SH5_KSEG0_BASE) + pmap_kseg0_pa;
 		PMPRINTF(("KSEG0. pa 0x%lx\n", *pap));
-		return (TRUE);
+		return (true);
 	}
 
 	s = splvm();
@@ -2346,7 +2346,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		if (__predict_true(pap != NULL))
 			*pap = (pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
 			    sh5_page_offset(va);
-		found = TRUE;
+		found = true;
 		PMPRINTF(("%smanaged pvo. pa 0x%lx\n",
 		    PVO_ISMANAGED(pvo) ? "" : "un",
 		    pap ? *pap : ((pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
@@ -2360,7 +2360,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 			if (__predict_true(pap != NULL))
 				*pap = (ptel & SH5_PTEL_PPN_MASK) |
 				    sh5_page_offset(va);
-			found = TRUE;
+			found = true;
 			PMPRINTF(("no pvo, but kipt pa 0x%lx\n",
 			    pap ? *pap : ((pvo->pvo_ptel & SH5_PTEL_PPN_MASK) |
 			    sh5_page_offset(va))));
@@ -2629,7 +2629,7 @@ pmap_deactivate(struct lwp *p)
 {
 }
 
-boolean_t
+bool
 pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 {
 	struct pvo_entry *pvo;
@@ -2641,7 +2641,7 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 
 	if ((ptel_t)pmap_attr_fetch(pg) & ptebit) {
 		PMPRINTF(("yes. Cached in pg attr.\n"));
-		return (TRUE);
+		return (true);
 	}
 
 	s = splvm();
@@ -2657,7 +2657,7 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 			PMPRINTF(("yes. Cached in pvo for 0x%lx.\n",
 			    PVO_VADDR(pvo)));
 			splx(s);
-			return (TRUE);
+			return (true);
 		}
 	}
 
@@ -2685,7 +2685,7 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 					    "yes. Cached in ptel for 0x%lx.\n",
 					    PVO_VADDR(pvo)));
 					splx(s);
-					return (TRUE);
+					return (true);
 				}
 			}
 		} else {
@@ -2699,7 +2699,7 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 				PMPRINTF(("yes. Cached in kipt for 0x%lx.\n",
 				    PVO_VADDR(pvo)));
 				splx(s);
-				return (TRUE);
+				return (true);
 			}
 		}
 	}
@@ -2708,10 +2708,10 @@ pmap_query_bit(struct vm_page *pg, ptel_t ptebit)
 
 	splx(s);
 
-	return (FALSE);
+	return (false);
 }
 
-boolean_t
+bool
 pmap_clear_bit(struct vm_page *pg, ptel_t ptebit)
 {
 	struct pvo_entry *pvo;
@@ -2969,11 +2969,11 @@ pmap_pool_ualloc(struct pool *pp, int flags)
 		return (pvop);
 	}
 
-	if (uvm.page_init_done != TRUE)
+	if (uvm.page_init_done != true)
 		return ((void *)uvm_pageboot_alloc(PAGE_SIZE));
 
 	return ((void *)uvm_km_alloc_poolpage(kmem_map,
-	    (flags & PR_WAITOK) ? TRUE : FALSE));
+	    (flags & PR_WAITOK) ? true : false));
 }
 
 static void
@@ -2995,7 +2995,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	int npgs, bank;
 	struct vm_physseg *ps;
 
-	if (uvm.page_init_done == TRUE)
+	if (uvm.page_init_done == true)
 		panic("pmap_steal_memory: called _after_ bootstrap");
 
 	size = round_page(vsize);

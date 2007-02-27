@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.132 2007/01/17 12:21:34 elad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.132.2.1 2007/02/27 16:54:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132 2007/01/17 12:21:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.1 2007/02/27 16:54:34 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -271,7 +271,7 @@ sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
 		pgs = alloca(npgs * sizeof(*pgs));
 
 		for (i = 0, va = sva; va < eva; i++, va += PAGE_SIZE) {
-			if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+			if (pmap_extract(pmap_kernel(), va, &pa) == false)
 				panic("sodoloanfree: va 0x%lx not mapped", va);
 			pgs[i] = PHYS_TO_VM_PAGE(pa);
 		}

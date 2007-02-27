@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.245 2007/02/16 00:35:20 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.245.2.1 2007/02/27 16:54:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.245 2007/02/16 00:35:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.245.2.1 2007/02/27 16:54:24 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -117,7 +117,7 @@ int	sigunwait(struct proc *, const ksiginfo_t *);
 void	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 int	sigpost(struct lwp *, sig_t, int, int);
 int	sigchecktrace(sigpend_t **);
-void	sigswitch(boolean_t, int, int);
+void	sigswitch(bool, int, int);
 void	sigrealloc(ksiginfo_t *);
 
 sigset_t	contsigmask, stopsigmask, sigcantmask;
@@ -382,7 +382,7 @@ execsigs(struct proc *p)
 	/*
 	 * Reset no zombies if child dies flag as Solaris does.
 	 */
-	p->p_flag &= ~(P_NOCLDWAIT | P_CLDSIGIGN);
+	p->p_flag &= ~(PK_NOCLDWAIT | PK_CLDSIGIGN);
 	if (SIGACTION_PS(ps, SIGCHLD).sa_handler == SIG_IGN)
 		SIGACTION_PS(ps, SIGCHLD).sa_handler = SIG_DFL;
 
@@ -814,7 +814,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		 * broadcast
 		 */
 		PROCLIST_FOREACH(p, &allproc) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || p == cp)
+			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM || p == cp)
 				continue;
 			mutex_enter(&p->p_mutex);
 			if (kauth_authorize_process(pc,
@@ -843,7 +843,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 				goto out;
 		}
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
-			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM)
+			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM)
 				continue;
 			mutex_enter(&p->p_mutex);
 			if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
@@ -1053,7 +1053,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
 	 */
-	l->l_flag |= L_PENDSIG;
+	l->l_flag |= LW_PENDSIG;
 
 	/*
 	 * SIGCONT can be masked, but must always restart stopped LWPs.
@@ -1063,6 +1063,13 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 		lwp_unlock(l);
 		return 0;
 	}
+
+	/*
+	 * If killing the process, make it run fast.
+	 */
+	if (__predict_false((prop & SA_KILL) != 0) &&
+	    action == SIG_DFL && l->l_priority > PUSER)
+		lwp_changepri(l, PUSER);
 
 	/*
 	 * If the LWP is running or on a run queue, then we win.  If it's
@@ -1082,7 +1089,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 		break;
 
 	case LSSLEEP:
-		if ((l->l_flag & L_SINTR) != 0) {
+		if ((l->l_flag & LW_SINTR) != 0) {
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 			return 1;
@@ -1115,7 +1122,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 			return 1;
-		} else if (l->l_wchan == NULL || (l->l_flag & L_SINTR) != 0) {
+		} else if (l->l_wchan == NULL || (l->l_flag & LW_SINTR) != 0) {
 			/* setrunnable() will release the lock. */
 			setrunnable(l);
 			return 1;
@@ -1138,7 +1145,7 @@ signotify(struct lwp *l)
 {
 	LOCK_ASSERT(lwp_locked(l, NULL));
 
-	l->l_flag |= L_PENDSIG;
+	l->l_flag |= LW_PENDSIG;
 	lwp_need_userret(l);
 }
 
@@ -1449,7 +1456,7 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
  * Stop the current process and switch away when being stopped or traced.
  */
 void
-sigswitch(boolean_t ppsig, int ppmask, int signo)
+sigswitch(bool ppsig, int ppmask, int signo)
 {
 	struct lwp *l = curlwp, *l2;
 	struct proc *p = l->l_proc;
@@ -1475,7 +1482,7 @@ sigswitch(boolean_t ppsig, int ppmask, int signo)
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			lwp_lock(l2);
 			if (l2->l_stat == LSSLEEP &&
-			    (l2->l_flag & L_SINTR) != 0) {
+			    (l2->l_flag & LW_SINTR) != 0) {
 				l2->l_stat = LSSTOP;
 				p->p_nrlwps--;
 			}
@@ -1618,7 +1625,7 @@ issignal(struct lwp *l)
 		 * we awaken, check for a signal from the debugger.
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
-			sigswitch(TRUE, PS_NOCLDSTOP, 0);
+			sigswitch(true, PS_NOCLDSTOP, 0);
 			signo = sigchecktrace(&sp);
 		} else
 			signo = 0;
@@ -1648,7 +1655,7 @@ issignal(struct lwp *l)
 					 * indicator and bail out.
 					 */
 					lwp_lock(l);
-					l->l_flag &= ~L_PENDSIG;
+					l->l_flag &= ~LW_PENDSIG;
 					lwp_unlock(l);
 					sp = NULL;
 					break;
@@ -1727,7 +1734,7 @@ issignal(struct lwp *l)
 				(void)sigget(sp, NULL, signo, NULL);
 				p->p_xstat = signo;
 				signo = 0;
-				sigswitch(TRUE, PS_NOCLDSTOP, p->p_xstat);
+				sigswitch(true, PS_NOCLDSTOP, p->p_xstat);
 			} else if (prop & SA_IGNORE) {
 				/*
 				 * Except for SIGCONT, shouldn't get here.
@@ -1899,11 +1906,11 @@ sigexit(struct lwp *l, int signo)
 	 * Don't permit coredump() multiple times in the same process.
 	 * Call back into sigexit, where we will be suspended until
 	 * the deed is done.  Note that this is a recursive call, but
-	 * L_WCORE will prevent us from coming back this way.
+	 * LW_WCORE will prevent us from coming back this way.
 	 */
 	if ((p->p_sflag & PS_WCORE) != 0) {
 		lwp_lock(l);
-		l->l_flag |= (L_WCORE | L_WEXIT | L_WSUSPEND);
+		l->l_flag |= (LW_WCORE | LW_WEXIT | LW_WSUSPEND);
 		lwp_unlock(l);
 		mutex_exit(&p->p_smutex);
 		lwp_userret(l);
@@ -1923,11 +1930,11 @@ sigexit(struct lwp *l, int signo)
 			LIST_FOREACH(t, &p->p_lwps, l_sibling) {
 				lwp_lock(t);
 				if (t == l) {
-					t->l_flag &= ~L_WSUSPEND;
+					t->l_flag &= ~LW_WSUSPEND;
 					lwp_unlock(t);
 					continue;
 				}
-				t->l_flag |= (L_WCORE | L_WEXIT);
+				t->l_flag |= (LW_WCORE | LW_WEXIT);
 				lwp_suspend(l, t);
 			}
 
@@ -1969,7 +1976,7 @@ sigexit(struct lwp *l, int signo)
 		}
 
 #ifdef PAX_SEGVGUARD
-		pax_segvguard(l, p->p_textvp, p->p_comm, TRUE);
+		pax_segvguard(l, p->p_textvp, p->p_comm, true);
 #endif /* PAX_SEGVGUARD */
 	}
 
@@ -2004,7 +2011,7 @@ proc_stop(struct proc *p, int notify, int signo)
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
-		if (l->l_stat == LSSLEEP && (l->l_flag & L_SINTR) != 0) {
+		if (l->l_stat == LSSLEEP && (l->l_flag & LW_SINTR) != 0) {
 			l->l_stat = LSSTOP;
 			p->p_nrlwps--;
 		}
@@ -2066,15 +2073,15 @@ proc_stop(struct proc *p, int notify, int signo)
 static void
 proc_stop_callout(void *cookie)
 {
-	boolean_t more, restart;
+	bool more, restart;
 	struct proc *p;
 	struct lwp *l;
 
 	(void)cookie;
 
 	do {
-		restart = FALSE;
-		more = FALSE;
+		restart = false;
+		more = false;
 
 		mutex_enter(&proclist_mutex);
 		PROCLIST_FOREACH(p, &allproc) {
@@ -2089,7 +2096,7 @@ proc_stop_callout(void *cookie)
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 				lwp_lock(l);
 				if (l->l_stat == LSSLEEP &&
-				    (l->l_flag & L_SINTR) != 0) {
+				    (l->l_flag & LW_SINTR) != 0) {
 				    	l->l_stat = LSSTOP;
 				    	p->p_nrlwps--;
 				}
@@ -2113,12 +2120,12 @@ proc_stop_callout(void *cookie)
 					 * Arrange to restart and check
 					 * all processes again.
 					 */
-					restart = TRUE;
+					restart = true;
 					child_psignal(p, PS_NOCLDSTOP);
 					cv_broadcast(&p->p_pptr->p_waitcv);
 				}
 			} else
-				more = TRUE;
+				more = true;
 
 			mutex_exit(&p->p_smutex);
 			if (restart)
@@ -2166,7 +2173,7 @@ proc_unstop(struct proc *p)
 			continue;
 		}
 		l->l_stat = LSSLEEP;
-		if (sig && (l->l_flag & L_SINTR) != 0) {
+		if (sig && (l->l_flag & LW_SINTR) != 0) {
 		        setrunnable(l);
 		        sig = 0;
 		} else

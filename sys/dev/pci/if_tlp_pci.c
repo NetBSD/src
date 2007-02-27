@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.100 2007/02/10 12:22:26 dsl Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.100.2.1 2007/02/27 16:54:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.100 2007/02/10 12:22:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.100.2.1 2007/02/27 16:54:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,8 @@ CFATTACH_DECL(tlp_pci, sizeof(struct tulip_pci_softc),
     tlp_pci_match, tlp_pci_attach, NULL, NULL);
 
 static const struct tulip_pci_product {
-	u_int32_t	tpp_vendor;	/* PCI vendor ID */
-	u_int32_t	tpp_product;	/* PCI product ID */
+	uint32_t	tpp_vendor;	/* PCI vendor ID */
+	uint32_t	tpp_product;	/* PCI product ID */
 	tulip_chip_t	tpp_chip;	/* base Tulip chip type */
 } tlp_pci_products[] = {
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21040,
@@ -185,35 +185,35 @@ static const struct tulip_pci_product {
 
 struct tlp_pci_quirks {
 	void		(*tpq_func)(struct tulip_pci_softc *,
-			    const u_int8_t *);
-	u_int8_t	tpq_oui[3];
+			    const uint8_t *);
+	uint8_t		tpq_oui[3];
 };
 
 static void	tlp_pci_dec_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 
 static void	tlp_pci_znyx_21040_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_smc_21040_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_accton_21040_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 
 static void	tlp_pci_cobalt_21142_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_algor_21142_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_netwinder_21142_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 
 static void	tlp_pci_adaptec_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 
 static const struct tlp_pci_quirks tlp_pci_21040_quirks[] = {
 	{ tlp_pci_znyx_21040_quirks,	{ 0x00, 0xc0, 0x95 } },
@@ -230,15 +230,15 @@ static const struct tlp_pci_quirks tlp_pci_21041_quirks[] = {
 };
 
 static void	tlp_pci_asante_21140_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_e100_quirks(struct tulip_pci_softc *,
-	   		const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_smc_21140_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 static void	tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *,
-		    const u_int8_t *);
+		    const uint8_t *);
 
 static const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
@@ -282,13 +282,13 @@ tlp_pci_lookup(const struct pci_attach_args *pa)
 	     tpp++) {
 		if (PCI_VENDOR(pa->pa_id) == tpp->tpp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == tpp->tpp_product)
-			return (tpp);
+			return tpp;
 	}
-	return (NULL);
+	return NULL;
 }
 
 static void
-tlp_pci_get_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr,
+tlp_pci_get_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr,
     const struct tlp_pci_quirks *tpq)
 {
 
@@ -336,15 +336,14 @@ tlp_pci_check_slaved(struct tulip_pci_softc *psc, int shared, int slaved)
 }
 
 static int
-tlp_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+tlp_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
 	if (tlp_pci_lookup(pa) != NULL)
-		return (10);	/* beat if_de.c */
+		return 10;	/* beat if_de.c */
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -361,8 +360,8 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	int ioh_valid, memh_valid, i, j;
 	const struct tulip_pci_product *tpp;
 	prop_data_t ea;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
-	u_int32_t val = 0;
+	uint8_t enaddr[ETHER_ADDR_LEN];
+	uint32_t val = 0;
 	pcireg_t reg;
 	int error;
 
@@ -419,8 +418,8 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	case TULIP_CHIP_MX98715:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_MX98715A;
- 		if (sc->sc_rev >= 0x25)
- 			sc->sc_chip = TULIP_CHIP_MX98715AEC_X;
+		if (sc->sc_rev >= 0x25)
+			sc->sc_chip = TULIP_CHIP_MX98715AEC_X;
 		if (sc->sc_rev >= 0x30)
 			sc->sc_chip = TULIP_CHIP_MX98725;
 		break;
@@ -536,7 +535,7 @@ tlp_pci_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Map the device.
 	 */
-	 	 
+
 	ioh_valid = (pci_mapreg_map(pa, TULIP_PCI_IOBA,
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
@@ -1042,11 +1041,11 @@ tlp_pci_shared_intr(void *arg)
 	     slave = LIST_NEXT(slave, sc_intrq))
 		rv |= tlp_intr(&slave->sc_tulip);
 
-	return (rv);
+	return rv;
 }
 
 static void
-tlp_pci_dec_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_dec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1064,10 +1063,10 @@ tlp_pci_dec_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 }
 
 static void
-tlp_pci_znyx_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
+tlp_pci_znyx_21040_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
-	u_int16_t id = 0;
+	uint16_t id = 0;
 
 	/*
 	 * If we have a slaved ROM, just copy the bits from the master.
@@ -1139,8 +1138,7 @@ tlp_pci_znyx_21040_quirks(struct tulip_pci_softc *psc, const u_int8_t *enaddr)
 static void	tlp_pci_znyx_21142_qs6611_reset(struct tulip_softc *);
 
 static void
-tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_znyx_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	pcireg_t subid;
@@ -1189,11 +1187,10 @@ tlp_pci_znyx_21142_qs6611_reset(struct tulip_softc *sc)
 }
 
 static void
-tlp_pci_smc_21040_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_smc_21040_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
-	u_int16_t id1, id2, ei;
+	uint16_t id1, id2, ei;
 	int auibnc = 0, utp = 0;
 	char *cp;
 
@@ -1232,8 +1229,7 @@ tlp_pci_smc_21040_quirks(struct tulip_pci_softc *psc,
 }
 
 static void
-tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 
 	strcpy(psc->sc_tulip.sc_name, "Cogent multi-port");
@@ -1241,8 +1237,7 @@ tlp_pci_cogent_21040_quirks(struct tulip_pci_softc *psc,
 }
 
 static void
-tlp_pci_accton_21040_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_accton_21040_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 
 	strcpy(psc->sc_tulip.sc_name, "ACCTON EN1203");
@@ -1251,8 +1246,7 @@ tlp_pci_accton_21040_quirks(struct tulip_pci_softc *psc,
 static void	tlp_pci_asante_21140_reset(struct tulip_softc *);
 
 static void
-tlp_pci_asante_21140_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_asante_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1273,9 +1267,8 @@ tlp_pci_asante_21140_quirks(struct tulip_pci_softc *psc,
 	sc->sc_mediasw = &tlp_sio_mii_mediasw;
 }
 
-static void tlp_pci_e100_quirks(psc, enaddr)
-	struct tulip_pci_softc *psc;
-	const u_int8_t *enaddr;
+static void
+tlp_pci_e100_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1302,8 +1295,7 @@ tlp_pci_asante_21140_reset(struct tulip_softc *sc)
 static void	tlp_pci_phobos_21140_reset(struct tulip_softc *);
 
 static void
-tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_phobos_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1343,8 +1335,7 @@ static const struct tulip_mediasw tlp_smc9332dst_mediasw = {
 };
 
 static void
-tlp_pci_smc_21140_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_smc_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1427,8 +1418,7 @@ tlp_smc9332dst_tmsw_init(struct tulip_softc *sc)
 }
 
 static void
-tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	char *p1 = (char *) &sc->sc_srom[32];
@@ -1445,8 +1435,7 @@ tlp_pci_vpc_21140_quirks(struct tulip_pci_softc *psc,
 static void	tlp_pci_cobalt_21142_reset(struct tulip_softc *);
 
 static void
-tlp_pci_cobalt_21142_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_cobalt_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1467,6 +1456,7 @@ tlp_pci_cobalt_21142_quirks(struct tulip_pci_softc *psc,
 static void
 tlp_pci_cobalt_21142_reset(struct tulip_softc *sc)
 {
+
 	/*
 	 * Reset PHY.
 	 */
@@ -1477,8 +1467,7 @@ tlp_pci_cobalt_21142_reset(struct tulip_softc *sc)
 }
 
 static void
-tlp_pci_algor_21142_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_algor_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1503,8 +1492,7 @@ static const struct tulip_mediasw tlp_cogent_em1x0_mediasw = {
 };
 
 static void
-tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 	uint8_t *srom = sc->sc_srom, id0;
@@ -1515,18 +1503,18 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc,
 		switch (id0) {
 		case 0x12:
 			strcpy(psc->sc_tulip.sc_name, "Cogent EM100TX");
- 			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
+			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
 			break;
 
 		case 0x15:
 			strcpy(psc->sc_tulip.sc_name, "Cogent EM100FX");
- 			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
+			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
 			break;
 
 #if 0
 		case XXX:
 			strcpy(psc->sc_tulip.sc_name, "Cogent EM110TX");
- 			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
+			sc->sc_mediasw = &tlp_cogent_em1x0_mediasw;
 			break;
 #endif
 
@@ -1563,7 +1551,7 @@ tlp_pci_adaptec_quirks(struct tulip_pci_softc *psc,
 		break;
 
 	default:
-unknown:
+ unknown:
 		printf("%s: unknown Adaptec/Cogent board ID 0x%04x/0x%04x\n",
 		    sc->sc_dev.dv_xname, id1, id2);
 	}
@@ -1622,7 +1610,7 @@ static void	tlp_pci_netwinder_21142_reset(struct tulip_softc *);
 
 static void
 tlp_pci_netwinder_21142_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+    const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 
@@ -1651,8 +1639,7 @@ tlp_pci_netwinder_21142_reset(struct tulip_softc *sc)
 static void	tlp_pci_phobos_21142_reset(struct tulip_softc *);
 
 static void
-tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *psc,
-    const u_int8_t *enaddr)
+tlp_pci_phobos_21142_quirks(struct tulip_pci_softc *psc, const uint8_t *enaddr)
 {
 	struct tulip_softc *sc = &psc->sc_tulip;
 

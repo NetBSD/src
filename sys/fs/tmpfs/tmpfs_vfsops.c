@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.18 2007/01/19 14:49:10 hannken Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.18.2.1 2007/02/27 16:54:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.18 2007/01/19 14:49:10 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.18.2.1 2007/02/27 16:54:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -134,7 +134,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 
 	/* Do not allow mounts if we do not have enough memory to preserve
 	 * the minimum reserved pages. */
-	if (tmpfs_mem_info(TRUE) < TMPFS_PAGES_RESERVED)
+	if (tmpfs_mem_info(true) < TMPFS_PAGES_RESERVED)
 		return EINVAL;
 
 	/* Get the maximum number of memory pages this file system is
@@ -238,7 +238,7 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 
 				nde = TAILQ_NEXT(de, td_entries);
 				KASSERT(de->td_node->tn_vnode == NULL);
-				tmpfs_free_dirent(tmp, de, FALSE);
+				tmpfs_free_dirent(tmp, de, false);
 				de = nde;
 				node->tn_size -= sizeof(struct tmpfs_dirent);
 			}
@@ -307,7 +307,7 @@ tmpfs_vget(struct mount *mp, ino_t ino,
 static int
 tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
-	boolean_t found;
+	bool found;
 	struct tmpfs_fid tfh;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
@@ -322,11 +322,11 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if (tfh.tf_id >= tmp->tm_nodes_max)
 		return EINVAL;
 
-	found = FALSE;
+	found = false;
 	LIST_FOREACH(node, &tmp->tm_nodes_used, tn_entries) {
 		if (node->tn_id == tfh.tf_id &&
 		    node->tn_gen == tfh.tf_gen) {
-			found = TRUE;
+			found = true;
 			break;
 		}
 	}

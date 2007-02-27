@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166.2.2 2007/02/20 21:48:45 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166.2.3 2007/02/27 16:54:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.2 2007/02/20 21:48:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.3 2007/02/27 16:54:20 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -312,7 +312,7 @@ exit1(struct lwp *l, int rv)
 	proc_finispecific(p);
 
 	/* Collect child u-areas. */
-	uvm_uarea_drain(FALSE);
+	uvm_uarea_drain(false);
 
 	/*
 	 * Free the VM resources we're still holding on to.
@@ -502,7 +502,7 @@ exit1(struct lwp *l, int rv)
 	 * this situation).
 	 */
 	mutex_enter(&q->p_mutex);
-	if (q->p_flag & (P_NOCLDWAIT|P_CLDSIGIGN)) {
+	if (q->p_flag & (PK_NOCLDWAIT|PK_CLDSIGIGN)) {
 		proc_reparent(p, initproc);
 		wakeinit = 1;
 
@@ -621,8 +621,8 @@ exit_lwps(struct lwp *l)
 		if (l2 == l)
 			continue;
 		lwp_lock(l2);
-		l2->l_flag |= L_WEXIT;
-		if ((l2->l_stat == LSSLEEP && (l2->l_flag & L_SINTR)) ||
+		l2->l_flag |= LW_WEXIT;
+		if ((l2->l_stat == LSSLEEP && (l2->l_flag & LW_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
 		    	/* setrunnable() will release the lock. */
 			setrunnable(l2);
@@ -981,7 +981,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	/*
 	 * Collect child u-areas.
 	 */
-	uvm_uarea_drain(FALSE);
+	uvm_uarea_drain(false);
 	pool_put(&rusage_pool, ru);
 }
 

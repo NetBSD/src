@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.235 2007/02/15 09:02:12 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.235.2.1 2007/02/27 16:53:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5026,30 +5026,32 @@ _C_LABEL(cpu_initialize):
 	/*
 	 * Step 7: change the trap base register, and install our TSB pointers
 	 */
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_dmmu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
+
+	/*
+	 * install our TSB pointers
+	 */
+	sethi	%hi(_C_LABEL(tsb_dmmu)), %l0
+	sethi	%hi(_C_LABEL(tsb_immu)), %l1
+	sethi	%hi(_C_LABEL(tsbsize)), %l2
+	sethi	%hi(0x1fff), %l3
+	sethi	%hi(TSB), %l4
+	LDPTR	[%l0 + %lo(_C_LABEL(tsb_dmmu))], %l0
+	LDPTR	[%l1 + %lo(_C_LABEL(tsb_immu))], %l1
+	ld	[%l2 + %lo(_C_LABEL(tsbsize))], %l2
+	or	%l3, %lo(0x1fff), %l3
+	or	%l4, %lo(TSB), %l4
+
+	andn	%l0, %l3, %l0			! Mask off size and split bits
+	or	%l0, %l2, %l0			! Make a TSB pointer
+	stxa	%l0, [%l4] ASI_DMMU		! Install data TSB pointer
 	membar	#Sync
 
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_immu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
+	andn	%l1, %l3, %l1			! Mask off size and split bits
+	or	%l1, %l2, %l1			! Make a TSB pointer
+	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
 
+	/* set trap table */
 	set	_C_LABEL(trapbase), %l1
 	call	_C_LABEL(prom_set_trap_table)	! Now we should be running 100% from our handlers
 	 mov	%l1, %o0
@@ -5182,28 +5184,25 @@ ENTRY(cpu_mp_startup)
 	/*
 	 * install our TSB pointers
 	 */
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_dmmu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_DMMU		! Install data TSB pointer
+	sethi	%hi(_C_LABEL(tsb_dmmu)), %l0
+	sethi	%hi(_C_LABEL(tsb_immu)), %l1
+	sethi	%hi(_C_LABEL(tsbsize)), %l2
+	sethi	%hi(0x1fff), %l3
+	sethi	%hi(TSB), %l4
+	LDPTR	[%l0 + %lo(_C_LABEL(tsb_dmmu))], %l0
+	LDPTR	[%l1 + %lo(_C_LABEL(tsb_immu))], %l1
+	ld	[%l2 + %lo(_C_LABEL(tsbsize))], %l2
+	or	%l3, %lo(0x1fff), %l3
+	or	%l4, %lo(TSB), %l4
+
+	andn	%l0, %l3, %l0			! Mask off size and split bits
+	or	%l0, %l2, %l0			! Make a TSB pointer
+	stxa	%l0, [%l4] ASI_DMMU		! Install data TSB pointer
 	membar	#Sync
 
-	sethi	%hi(0x1fff), %l2
-	set	_C_LABEL(tsb_immu), %l0
-	LDPTR	[%l0], %l0
-	set	_C_LABEL(tsbsize), %l1
-	or	%l2, %lo(0x1fff), %l2
-	ld	[%l1], %l1
-	andn	%l0, %l2, %l0			! Mask off size and split bits
-	or	%l0, %l1, %l0			! Make a TSB pointer
-	set	TSB, %l2
-	stxa	%l0, [%l2] ASI_IMMU		! Install instruction TSB pointer
+	andn	%l1, %l3, %l1			! Mask off size and split bits
+	or	%l1, %l2, %l1			! Make a TSB pointer
+	stxa	%l1, [%l4] ASI_IMMU		! Install instruction TSB pointer
 	membar	#Sync
 
 	/* set trap table */
@@ -6792,9 +6791,8 @@ ENTRY_NOPROFILE(idle_switch)
 #endif
 
 ENTRY_NOPROFILE(idle)
-	STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
 	call	_C_LABEL(sched_unlock_idle)	! Release sched_lock
-	 EMPTY
+	 STPTR	%g0, [%l7 + %lo(CURLWP)] ! curlwp = NULL;
 idle_nolock:
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "idle: pcb %p, idle_u %p",
@@ -6813,7 +6811,7 @@ idle_nolock:
 #ifdef UVM_PAGE_IDLE_ZERO
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
-	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
+	ldub	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
 	brz,pn	%o3, 1b
 	 nop
 
@@ -7037,13 +7035,12 @@ cpu_loadproc:
 	st	%g0, [%o0 + %lo(CPUINFO_VA+CI_WANT_RESCHED)]	! want_resched = 0;
 	LDPTR	[%l3 + L_ADDR], %l1		! newpcb = l->l_addr;
 	STPTR	%g0, [%l3 + L_BACK]		! l->l_back = NULL;
-	STPTR	%l3, [%l7 + %lo(CURLWP)]	! store new lwp
 	/*
 	 * Done mucking with the run queues, release the
 	 * scheduler lock, but keep interrupts out.
 	 */
 	call	_C_LABEL(sched_unlock_idle)
-	 EMPTY
+	 STPTR	%l3, [%l7 + %lo(CURLWP)]	! store new lwp
 
 #if KTR_COMPILE & KTR_PROC
 	CATR(KTR_TRAP, "cpu_switch: %p->%p",
@@ -7429,7 +7426,7 @@ ALTENTRY(fuiword)
 ENTRY(fuword)
 	btst	3, %o0			! has low bits set...
 	bnz	Lfsbadaddr		!	go return -1
-	EMPTY
+	 EMPTY
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	set	Lfserr, %o3
 	LDPTR	[%o2 + %lo(CPCB)], %o2
@@ -7509,7 +7506,7 @@ ALTENTRY(suiword)
 ENTRY(suword)
 	btst	3, %o0			! or has low bits set ...
 	bnz	Lfsbadaddr		!	go return error
-	EMPTY
+	 EMPTY
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	LDPTR	[%o2 + %lo(CPCB)], %o2
 	set	Lfserr, %o3
@@ -10821,9 +10818,6 @@ _C_LABEL(ssym):
 _C_LABEL(proc0paddr):
 	POINTER	0
 
-#if !defined(MULTIPROCESSOR)
-	.comm	_C_LABEL(curlwp), PTRSZ
-#endif
 	.comm	_C_LABEL(promvec), PTRSZ
 
 #ifdef DEBUG

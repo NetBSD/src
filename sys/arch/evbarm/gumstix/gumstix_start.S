@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_start.S,v 1.1 2006/10/16 16:40:14 kiyohara Exp $ */
+/*	$NetBSD: gumstix_start.S,v 1.1.10.1 2007/02/27 16:50:06 yamt Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -143,19 +143,21 @@ _C_LABEL(gumstix_start):
 Lstart:
 	.word	start
 
+#ifndef STARTUP_PAGETABLE_ADDR
+#define STARTUP_PAGETABLE_ADDR 0xa0000000	/* aligned 16kByte */
+#endif
+Lstartup_pagetable:
+	.word	STARTUP_PAGETABLE_ADDR
+
+	.globl _C_LABEL(u_boot_args)
+u_boot_args:
+	.space 16			/* r3, r4, r5, r6 */
+
+
 #define MMU_INIT(va,pa,n_sec,attr) \
 	.word	n_sec					    ; \
 	.word	4*((va)>>L1_S_SHIFT)			    ; \
 	.word	(pa)|(attr)				    ;
-
-#ifndef STARTUP_PAGETABLE_ADDR
-#define STARTUP_PAGETABLE_ADDR 0xa0000000	/* aligned 16kByte */
-#endif
-Lstartup_pagetable:	.word	STARTUP_PAGETABLE_ADDR
-		.globl _C_LABEL(u_boot_args)
-u_boot_args:
-			.space 16			/* r3, r4, r5, r6 */
-
 mmu_init_table:	
 	/* fill all table VA==PA */
 	MMU_INIT(0x00000000, 0x00000000,

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.64 2006/12/29 00:42:01 rumble Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.64.2.1 2007/02/27 16:52:54 yamt Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.64 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.64.2.1 $"
 
 maxusers	32
 
@@ -244,7 +244,7 @@ tlphy*		at mii? phy ?		 # ThunderLAN PHY (unused)
 
 # HPC devices
 sq* 		at hpc? offset ?	# On-board ethernet / E++ adapter
-wdsc* 		at hpc0 offset ?
+wdsc* 		at hpc? offset ?	# On-board SCSI / GIO32 SCSI adapter
 dpclock*	at hpc0 offset ?	# IP12 / IP20
 dsclock*	at hpc0 offset ?	# IP22 / 24
 haltwo*         at hpc0 offset ?	# IP22 / 24

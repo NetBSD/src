@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16.14.1 2007/02/27 16:52:21 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2006/05/12 06:05:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16.14.1 2007/02/27 16:52:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ enum { NONE, TRAP, INTERRUPT, SYSCALL };
 db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_intr_symbol_value = 0;
-boolean_t	db_trace_symbols_found = FALSE;
+bool		db_trace_symbols_found = false;
 
 /*
  * Figure out how many arguments were passed into the frame at "fp".
@@ -124,7 +124,7 @@ db_numargs(struct ns532_frame *fp)
 	int		i;
 	extern char	etext[];
 
-	argp = (db_addr_t) db_get_value((db_addr_t)&fp->f_retaddr, 4, FALSE);
+	argp = (db_addr_t) db_get_value((db_addr_t)&fp->f_retaddr, 4, false);
 	if (argp < (db_addr_t)VM_MIN_KERNEL_ADDRESS || argp > (db_addr_t)etext)
 		return(db_numargs_default);
 
@@ -138,8 +138,8 @@ db_numargs(struct ns532_frame *fp)
 		 * Gcc sometimes delays emitting these instructions and
 		 * may even throw a branch between our feet.
 		 */
-		inst = db_get_value((db_addr_t) argp	, 4, FALSE);
-		args = db_get_value((db_addr_t) argp + 2, 4, FALSE);
+		inst = db_get_value((db_addr_t) argp	, 4, false);
+		args = db_get_value((db_addr_t) argp + 2, 4, false);
 		if ((inst & 0xff) == 0xea) {		/* br */
 			args = ((inst >> 8) & 0xffffff) | (args << 24);
 			if (args & 0x80) {
@@ -207,9 +207,9 @@ db_nextframe(struct ns532_frame **fp, db_addr_t *ip, int *argp, int is_trap,
 		(*pr)("--- interrupt ---\n");
 	case NONE:
 		*ip = (db_addr_t)
-		      db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
+		      db_get_value((int) &(*fp)->f_retaddr, 4, false);
 		*fp = (struct ns532_frame *)
-		      db_get_value((int) &(*fp)->f_frame, 4, FALSE);
+		      db_get_value((int) &(*fp)->f_frame, 4, false);
 		break;
 
 	/* The only argument to trap() or syscall() is the trapframe. */
@@ -230,25 +230,30 @@ db_nextframe(struct ns532_frame **fp, db_addr_t *ip, int *argp, int is_trap,
 }
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     char *modif, void (*pr)(const char *, ...))
 {
 	struct ns532_frame *frame, *lastframe;
 	int		*argp;
 	db_addr_t	callpc;
 	int		is_trap = 0;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 
 	{
 		char *cp = modif;
 		char c;
 
 		while ((c = *cp++) != 0) {
+			if (c == 'a') {
+				lwpaddr = true;
+				trace_thread = true;
+			}
 			if (c == 't')
-				trace_thread = TRUE;
+				trace_thread = true;
 			if (c == 'u')
-				kernel_only = FALSE;
+				kernel_only = false;
 		}
 	}
 
@@ -260,7 +265,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	} else {
 		frame = (struct ns532_frame *)addr;
 		callpc = (db_addr_t)
-			db_get_value((int)&frame->f_retaddr, 4, FALSE);
+			db_get_value((int)&frame->f_retaddr, 4, false);
 	}
 
 	lastframe = 0;
@@ -277,7 +282,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 
 		if (lastframe == NULL && sym == 0) {
 			/* Symbol not found, peek at code */
-			int	instr = db_get_value(callpc, 1, FALSE);
+			int	instr = db_get_value(callpc, 1, false);
 
 			offset = 1;
 			if ((instr & 0xff) == 0x82) /* enter [],c */
@@ -318,7 +323,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		while (narg) {
 			if (argnp)
 				(*pr)("%s=", *argnp++);
-			(*pr)("%lx", db_get_value((int)argp, 4, FALSE));
+			(*pr)("%lx", db_get_value((int)argp, 4, false));
 			argp++;
 			if (--narg != 0)
 				(*pr)(",");
@@ -331,7 +336,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 			/* Frame really belongs to next callpc */
 			lastframe = (struct ns532_frame *)(ddb_regs.tf_regs.r_sp-4);
 			callpc = (db_addr_t)
-				 db_get_value((int)&lastframe->f_retaddr, 4, FALSE);
+				 db_get_value((int)&lastframe->f_retaddr, 4, false);
 			continue;
 		}
 

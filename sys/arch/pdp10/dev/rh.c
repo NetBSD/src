@@ -1,4 +1,4 @@
-/*	$NetBSD: rh.c,v 1.3 2005/12/11 12:18:34 christos Exp $ */
+/*	$NetBSD: rh.c,v 1.3.26.1 2007/02/27 16:52:24 yamt Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -286,7 +286,7 @@ rhstart(struct rh_softc *sc)
 	int blkcnt = ncnt/128;
 	paddr_t pap;
 
-	if (pmap_extract(pmap_kernel(), (vaddr_t)bp->b_data, &pap) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)bp->b_data, &pap) == false)
 		panic("rhstart");
 
 	if (pap & 03777)

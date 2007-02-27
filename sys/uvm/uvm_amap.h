@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.30 2006/06/25 08:03:46 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.30.10.1 2007/02/27 16:55:24 yamt Exp $	*/
 
 /*
  *
@@ -71,7 +71,7 @@ struct vm_amap;
 
 void		amap_add 	/* add an anon to an amap */
 			(struct vm_aref *, vaddr_t,
-			 struct vm_anon *, boolean_t);
+			 struct vm_anon *, bool);
 struct vm_amap	*amap_alloc	/* allocate a new amap */
 			(vaddr_t, vaddr_t, int);
 void		amap_copy	/* clear amap needs-copy flag */
@@ -105,10 +105,10 @@ void		amap_unadd	/* remove an anon from an amap */
 void		amap_unlock	/* unlock amap */
 			(struct vm_amap *);
 void		amap_unref	/* drop reference to an amap */
-			(struct vm_amap *, vaddr_t, vsize_t, int);
+			(struct vm_amap *, vaddr_t, vsize_t, bool);
 void		amap_wipeout	/* remove all anons from amap */
 			(struct vm_amap *);
-boolean_t	amap_swap_off
+bool		amap_swap_off
 			(int, int);
 
 /*

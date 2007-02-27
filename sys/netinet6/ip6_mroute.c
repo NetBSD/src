@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.77 2007/01/29 06:05:10 dyoung Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.77.2.1 2007/02/27 16:55:03 yamt Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.77 2007/01/29 06:05:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.77.2.1 2007/02/27 16:55:03 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -1615,8 +1615,10 @@ phyint_send(ip6, mifp, m)
 	dst6.sin6_addr = ip6->ip6_dst;
 
 	IN6_LOOKUP_MULTI(ip6->ip6_dst, ifp, in6m);
-	if (in6m != NULL)
-		ip6_mloopback(ifp, m, &ro.ro_dst);
+	if (in6m != NULL) {
+		ip6_mloopback(ifp, m,
+		    satocsin6(rtcache_getdst((struct route *)&ro)));
+	}
 
 	/*
 	 * Put the packet into the sending queue of the outgoing interface

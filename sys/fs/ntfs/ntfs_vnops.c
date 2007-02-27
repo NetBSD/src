@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.31 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.31.2.1 2007/02/27 16:54:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.31 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.31.2.1 2007/02/27 16:54:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,6 +296,7 @@ ntfs_reclaim(void *v)
 		ip->i_devvp = NULL;
 	}
 
+	genfs_node_destroy(vp);
 	ntfs_frele(fp);
 	ntfs_ntput(ip);
 	vp->v_data = NULL;

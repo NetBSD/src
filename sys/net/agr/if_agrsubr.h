@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.h,v 1.3 2006/10/29 22:14:14 yamt Exp $	*/
+/*	$NetBSD: if_agrsubr.h,v 1.3.4.1 2007/02/27 16:54:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -45,9 +45,9 @@ int agr_mc_foreach(struct agr_multiaddrs *,
 int agr_port_foreach(struct agr_softc *, int (*)(struct agr_port *, void *),
     void *);
 
-int agr_configmulti_port(struct agr_multiaddrs *, struct agr_port *, boolean_t);
+int agr_configmulti_port(struct agr_multiaddrs *, struct agr_port *, bool);
 int agr_configmulti_ifreq(struct agr_softc *, struct agr_multiaddrs *,
-    struct ifreq *, boolean_t);
+    struct ifreq *, bool);
 
 int agr_port_getmedia(struct agr_port *, u_int *, u_int *);
 

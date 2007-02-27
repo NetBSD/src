@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.108 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.108.2.1 2007/02/27 16:54:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.108 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.108.2.1 2007/02/27 16:54:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ struct terminal_list {
 
 struct io_terminal {
 	union {
-		const usb_descriptor_t *desc;
+		const uaudio_cs_descriptor_t *desc;
 		const struct usb_audio_input_terminal *it;
 		const struct usb_audio_output_terminal *ot;
 		const struct usb_audio_mixer_unit *mu;
@@ -655,7 +655,7 @@ Static struct usb_audio_cluster
 uaudio_get_cluster(int id, const struct io_terminal *iot)
 {
 	struct usb_audio_cluster r;
-	const usb_descriptor_t *dp;
+	const uaudio_cs_descriptor_t *dp;
 	int i;
 
 	for (i = 0; i < 25; i++) { /* avoid infinite loops */
@@ -1832,7 +1832,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	struct io_terminal* iot;
 	const usb_interface_descriptor_t *id;
 	const struct usb_audio_control_descriptor *acdp;
-	const usb_descriptor_t *dp;
+	const uaudio_cs_descriptor_t *dp;
 	const struct usb_audio_output_terminal *pot;
 	struct terminal_list *tml;
 	const char *tbuf, *ibuf, *ibufend;
@@ -1873,7 +1873,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 
 	/* Scan through all the AC specific descriptors */
 	ibufend = ibuf + aclen;
-	dp = (const usb_descriptor_t *)ibuf;
+	dp = (const uaudio_cs_descriptor_t *)ibuf;
 	ndps = 0;
 	iot = malloc(sizeof(struct io_terminal) * 256, M_TEMP, M_NOWAIT | M_ZERO);
 	if (iot == NULL) {
@@ -1884,7 +1884,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 		ibuf += dp->bLength;
 		if (ibuf >= ibufend)
 			break;
-		dp = (const usb_descriptor_t *)ibuf;
+		dp = (const uaudio_cs_descriptor_t *)ibuf;
 		if (ibuf + dp->bLength > ibufend) {
 			free(iot, M_TEMP);
 			return USBD_INVAL;

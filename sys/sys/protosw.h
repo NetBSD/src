@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.39 2006/08/27 23:55:16 christos Exp $	*/
+/*	$NetBSD: protosw.h,v 1.39.8.1 2007/02/27 16:55:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -76,7 +76,7 @@ struct protosw {
 	int	(*pr_output)		/* output to protocol (from above) */
 			(struct mbuf *, ...);
 	void	*(*pr_ctlinput)		/* control input (from below) */
-			(int, struct sockaddr *, void *);
+			(int, const struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
 			(int, struct socket *, int, int, struct mbuf **);
 
@@ -262,8 +262,8 @@ struct sockaddr;
 const struct protosw *pffindproto(int, int, int);
 const struct protosw *pffindtype(int, int);
 struct domain *pffinddomain(int);
-void pfctlinput(int, struct sockaddr *);
-void pfctlinput2(int, struct sockaddr *, void *);
+void pfctlinput(int, const struct sockaddr *);
+void pfctlinput2(int, const struct sockaddr *, void *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_PROTOSW_H_ */

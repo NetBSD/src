@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.6 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.6 2005/12/11 12:19:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_shark_machdep.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,8 @@ isa_init8259s(void)
 const struct evcnt *
 isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
+	if (irqhandlers[irq] != NULL)
+		return &irqhandlers[irq]->ih_ev;
 
 	/* XXX for now, no evcnt parent reported */
 	return NULL;
@@ -153,10 +155,10 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
  * Set up an interrupt handler to start being called.
  */
 static const char * const isa_intr_names[16] = {
-	"isa intr  0", "isa intr  1", "isa intr  2", "isa intr  3",
-	"isa intr  4", "isa intr  5", "isa intr  6", "isa intr  7",
-	"isa intr  8", "isa intr  9", "isa intr 10", "isa intr 11",
-	"isa intr 12", "isa intr 13", "isa intr 14", "isa intr 15"
+	"irq  0", "irq  1", "irq  2", "irq  3",
+	"irq  4", "irq  5", "irq  6", "irq  7",
+	"irq  8", "irq  9", "irq 10", "irq 11",
+	"irq 12", "irq 13", "irq 14", "irq 15"
 };
 
 void *
@@ -168,35 +170,37 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	int (*ih_fun) __P((void *));
 	void *ih_arg;
 {
-	    irqhandler_t *ih;
+	const char *name;
+	irqhandler_t *ih;
 
-	    /* no point in sleeping unless someone can free memory. */
-	    ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	    if (ih == NULL)
+	/* no point in sleeping unless someone can free memory. */
+	ih = malloc(sizeof *ih, M_DEVBUF, M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
+	if (ih == NULL)
 		panic("isa_intr_establish: can't malloc handler info");
 
-	    if (!LEGAL_IRQ(irq) || type == IST_NONE)
+	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
 
-	    /* Note: sequoia doesn't allow configuration of edge vs. level
-	       on an IRQ-by-IRQ basis.  */
-	    if (type != IST_LEVEL)
-	      printf("WARNING: irq %d not level triggered\n", irq);
+	/* Note: sequoia doesn't allow configuration of edge vs. level
+	   on an IRQ-by-IRQ basis.  */
+	if (type != IST_LEVEL)
+		printf("WARNING: irq %d not level triggered\n", irq);
 
-	    memset(ih, 0, sizeof *ih);
-	    ih->ih_func = ih_fun;
-	    ih->ih_arg = ih_arg;
-	    ih->ih_level = level;
-	    if (irq >= 0 &&
-		irq < (sizeof isa_intr_names / sizeof isa_intr_names[0]))
-		    ih->ih_name = isa_intr_names[irq];
-	    else
-		    ih->ih_name = "isa intr";
+	ih->ih_func = ih_fun;
+	ih->ih_arg = ih_arg;
+	ih->ih_level = level;
+	if (irq >= 0 && irq < __arraycount(isa_intr_names)) {
+		name = isa_intr_names[irq];
+	} else {
+		snprintf(ih->ih_evname, sizeof(ih->ih_evname), "irq %2d", irq);
+		name = ih->ih_evname;
+	}
+	evcnt_attach_dynamic(&ih->ih_ev, EVCNT_TYPE_INTR, NULL, "isa", name);
 
-	    if (irq_claim(irq, ih) == -1)
+	if (irq_claim(irq, ih) == -1)
 		panic("isa_intr_establish: can't install handler");
 
-	    return (ih);
+	return (ih);
 }
 
 
@@ -208,21 +212,21 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-    panic("isa_intr_disestablish");
+	panic("isa_intr_disestablish");
 }
 
 /* isa_init() might eventually become the ISA attach routine */
 void
 isa_init(vaddr_t isa_io_addr, vaddr_t isa_mem_addr)
 {
-  /* initialize the bus space functions */
-  isa_io_init(isa_io_addr, isa_mem_addr);
+	/* initialize the bus space functions */
+	isa_io_init(isa_io_addr, isa_mem_addr);
 
-  /* Clear the IRQ/FIQ masks */
-  isa_init8259s();
+	/* Clear the IRQ/FIQ masks */
+	isa_init8259s();
 
-  /* Initialize the ISA interrupt handling code */
-  irq_init();
+	/* Initialize the ISA interrupt handling code */
+	irq_init();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.13 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.13.10.1 2007/02/27 16:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ struct in_addr;
 
 /* tp_cons.c */
 int tpcons_pcbconnect (void *, struct mbuf *);
-void *tpcons_ctlinput (int, struct sockaddr *, void *);
+void *tpcons_ctlinput(int, const struct sockaddr *, void *);
 void tpcons_input (struct mbuf *, ...);
 int tpcons_output (struct mbuf *, ...);
 int tpcons_output_dg (struct mbuf *, ...);
@@ -85,7 +85,7 @@ int tpip_output (struct mbuf *, ...);
 int tpip_output_dg (struct mbuf *, ...);
 void tpip_input (struct mbuf *, ...);
 void tpin_quench (struct inpcb *, int);
-void *tpip_ctlinput (int, struct sockaddr *, void *);
+void *tpip_ctlinput(int, const struct sockaddr *, void *);
 void tpin_abort (struct inpcb *, int);
 void dump_inaddr (struct sockaddr_in *);
 
@@ -108,7 +108,7 @@ void tpclnp_input (struct mbuf *, ...);
 void iso_rtchange (struct isopcb *);
 void tpiso_decbit (struct isopcb *);
 void tpiso_quench (struct isopcb *);
-void *tpclnp_ctlinput (int, struct sockaddr *, void *);
+void *tpclnp_ctlinput(int, const struct sockaddr *, void *);
 void tpclnp_ctlinput1 (int, struct iso_addr *);
 void tpiso_abort (struct isopcb *);
 void tpiso_reset (struct isopcb *);
@@ -129,7 +129,7 @@ u_long tp_getref (struct tp_pcb *);
 int tp_set_npcb (struct tp_pcb *);
 int tp_attach   (struct socket *, int);
 void tp_detach  (struct tp_pcb *);
-int tp_tselinuse (int, caddr_t, struct sockaddr_iso *, int);
+int tp_tselinuse(int, const char *, struct sockaddr_iso *, int);
 int tp_pcbbind  (void *, struct mbuf *, struct lwp *);
 
 /* tp_subr.c */
@@ -194,7 +194,7 @@ void cons_init (void);
 int tp_incoming (struct mbuf *, void *);
 int cons_tpinput (struct mbuf *, void *);
 int cons_connect (struct isopcb *);
-void *cons_ctlinput (int, struct sockaddr *, void *);
+void *cons_ctlinput(int, const struct sockaddr *, void *);
 int find_error_reason (struct x25_packet *);
 #endif
 

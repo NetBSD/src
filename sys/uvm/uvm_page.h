@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.46 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.46.6.1 2007/02/27 16:55:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -237,7 +237,7 @@ struct vm_physseg {
  * globals
  */
 
-extern boolean_t vm_page_zero_enable;
+extern bool vm_page_zero_enable;
 
 /*
  * physical memory config is stored in vm_physmem.
@@ -255,7 +255,7 @@ void uvm_page_init(vaddr_t *, vaddr_t *);
 void uvm_page_own(struct vm_page *, const char *);
 #endif
 #if !defined(PMAP_STEAL_MEMORY)
-boolean_t uvm_page_physget(paddr_t *);
+bool uvm_page_physget(paddr_t *);
 #endif
 void uvm_page_rehash(void);
 void uvm_page_recolor(int);

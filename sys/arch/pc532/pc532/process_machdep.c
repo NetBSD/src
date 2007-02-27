@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.17 2006/05/12 06:05:23 simonb Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.17.14.1 2007/02/27 16:52:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17 2006/05/12 06:05:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.17.14.1 2007/02/27 16:52:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	if ((l->l_flag & L_INMEM) == 0)
+	if ((l->l_flag & LW_INMEM) == 0)
 		return (EIO);
 
 	if (fpu_lwp == l) {
@@ -155,7 +155,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
-	if ((l->l_flag & L_INMEM) == 0)
+	if ((l->l_flag & LW_INMEM) == 0)
 		return (EIO);
 
 	if (fpu_lwp == l)

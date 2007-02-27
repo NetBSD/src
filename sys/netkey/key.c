@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.151 2007/01/24 13:08:11 hubertf Exp $	*/
+/*	$NetBSD: key.c,v 1.151.2.1 2007/02/27 16:55:13 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.151 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.151.2.1 2007/02/27 16:55:13 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -749,8 +749,8 @@ key_do_allocsa_policy(sah, state)
 struct secasvar *
 key_allocsa(
     u_int family,
-    caddr_t src,
-    caddr_t dst,
+    const void *src,
+    const void *dst,
     u_int proto,
     u_int32_t spi,
     u_int16_t sport,
@@ -8230,8 +8230,8 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (dst->sa_len == ro->ro_dst.sa_len &&
-		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+		if (dst->sa_len == rtcache_getdst(ro)->sa_len &&
+		    memcmp(dst, rtcache_getdst(ro), dst->sa_len) == 0)
 			rtcache_free(ro);
 	}
 

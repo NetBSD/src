@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.36 2007/01/31 10:08:23 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.36.2.1 2007/02/27 16:55:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -36,8 +36,8 @@
 #define	_SYS_KAUTH_H_
 
 struct uucred;
-struct ucred;
-struct pcred;
+struct ki_ucred;
+struct ki_pcred;
 struct proc;
 struct tty;
 struct vnode;
@@ -311,8 +311,8 @@ int kauth_cred_uidmatch(kauth_cred_t, kauth_cred_t);
 void kauth_uucred_to_cred(kauth_cred_t, const struct uucred *);
 void kauth_cred_to_uucred(struct uucred *, const kauth_cred_t);
 int kauth_cred_uucmp(kauth_cred_t, const struct uucred *);
-void kauth_cred_toucred(kauth_cred_t, struct ucred *);
-void kauth_cred_topcred(kauth_cred_t, struct pcred *);
+void kauth_cred_toucred(kauth_cred_t, struct ki_ucred *);
+void kauth_cred_topcred(kauth_cred_t, struct ki_pcred *);
 
 kauth_cred_t kauth_cred_get(void);
 

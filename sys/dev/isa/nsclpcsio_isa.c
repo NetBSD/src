@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.15 2006/11/16 01:33:00 christos Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.15.4.1 2007/02/27 16:53:54 yamt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.15 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.15.4.1 2007/02/27 16:53:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/gpio.h>
 #include <machine/bus.h>
 
@@ -60,7 +60,7 @@ struct nsclpcsio_softc {
 	struct envsys_tre_data sc_data[3];
 	struct envsys_basic_info sc_info[3];
 	struct sysmon_envsys sc_sysmon;
-	struct simplelock sc_lock;
+	kmutex_t sc_lock;
 
 #if NGPIO > 0
 	/* GPIO */
@@ -204,7 +204,7 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self,
 	sc->sc_ioh = ioh;
 	printf(": NSC PC87366 rev. %d\n", nsread(iot, ioh, 0x27));
 
-	simple_lock_init(&sc->sc_lock);
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
 
 	nswrite(iot, ioh, 0x07, 0x07); /* select gpio */
 
@@ -317,7 +317,7 @@ tms_update(sc, chan)
 	u_int8_t status;
 	int8_t temp, ctemp; /* signed!! */
 
-	simple_lock(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 
 	nswrite(iot, ioh, 0x07, 0x0e); /* select tms */
 
@@ -329,7 +329,7 @@ tms_update(sc, chan)
 		sc->sc_info[chan].validflags = ENVSYS_FVALID;
 	}else {
 		sc->sc_info[chan].validflags = 0;
-		simple_unlock(&sc->sc_lock);
+		mutex_exit(&sc->sc_lock);
 		return;
 	}
 
@@ -344,7 +344,7 @@ tms_update(sc, chan)
 		 * XXX should have a warning for it
 		 */
 		sc->sc_data[chan].warnflags = ENVSYS_WARN_OK; /* XXX */
-		simple_unlock(&sc->sc_lock);
+		mutex_exit(&sc->sc_lock);
 		return;
 	}
 
@@ -391,7 +391,7 @@ tms_update(sc, chan)
 			bus_space_write_1(iot, ioh, 0x0a, status);
 	}
 
-	simple_unlock(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return;
 }
@@ -520,7 +520,7 @@ nsclpcsio_gpio_pin_ctl(void *aux, int pin, int flags)
 	struct nsclpcsio_softc *sc = (struct nsclpcsio_softc *)aux;
 	u_int8_t conf;
 
-	simple_lock(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 
 	nswrite(sc->sc_iot, sc->sc_ioh, 0x07, 0x07); /* select gpio */
 	nsclpcsio_gpio_pin_select(sc, pin);
@@ -537,7 +537,7 @@ nsclpcsio_gpio_pin_ctl(void *aux, int pin, int flags)
 
 	nswrite(sc->sc_iot, sc->sc_ioh, 0xf1, conf);
 
-	simple_unlock(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return;
 }

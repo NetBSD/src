@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.31 2007/01/17 13:02:44 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.31.2.1 2007/02/27 16:54:15 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.31 2007/01/17 13:02:44 reinoud Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.31.2.1 2007/02/27 16:54:15 yamt Exp $");
 #endif /* not lint */
 
 
@@ -1833,6 +1833,9 @@ udf_dispose_node(struct udf_node *node)
 
 	/* remove from our hash lookup table */
 	udf_hashrem(node);
+
+	/* destroy genfs structures */
+	genfs_node_destroy(vp);
 
 	/* dissociate our udf_node from the vnode */
 	vp->v_data = NULL;

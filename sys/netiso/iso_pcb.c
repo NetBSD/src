@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.36 2007/01/04 19:07:04 elad Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.36.2.1 2007/02/27 16:55:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.36 2007/01/04 19:07:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.36.2.1 2007/02/27 16:55:11 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -229,7 +229,7 @@ iso_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 	} else {
 		char  *cp;
 noname:
-		cp = TSEL(isop->isop_laddr);
+		cp = WRITABLE_TSEL(isop->isop_laddr);
 		isop->isop_laddr->siso_tlen = 2;
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ISO]) {
@@ -296,8 +296,11 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 	if (siso->siso_nlen == 0) {
 		if ((ia = iso_ifaddr.tqh_first) != NULL) {
 			int             nlen = ia->ia_addr.siso_nlen;
-			memmove(nlen + TSEL(siso), TSEL(siso),
-			siso->siso_plen + siso->siso_tlen + siso->siso_slen);
+			char *tmp;
+			tmp = WRITABLE_TSEL(siso);
+			memmove(tmp + nlen, TSEL(siso),
+			    siso->siso_plen + siso->siso_tlen +
+			    siso->siso_slen);
 			bcopy((caddr_t) & ia->ia_addr.siso_addr,
 			      (caddr_t) & siso->siso_addr, nlen + 1);
 			/* includes siso->siso_nlen = nlen; */
@@ -344,7 +347,8 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 #endif
 	if (local_zero) {
 		int             nlen, tlen, totlen;
-		caddr_t         oldtsel, newtsel;
+		void *newtsel;
+		const void *oldtsel;
 		siso = isop->isop_laddr;
 		if (siso == 0 || siso->siso_tlen == 0)
 			(void) iso_pcbbind(isop, (struct mbuf *)0,
@@ -369,7 +373,7 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			isop->isop_laddr = siso = mtod(m, struct sockaddr_iso *);
 		}
 		siso->siso_nlen = ia->ia_addr.siso_nlen;
-		newtsel = TSEL(siso);
+		newtsel = WRITABLE_TSEL(siso);
 		memmove(newtsel, oldtsel, tlen);
 		bcopy(ia->ia_addr.siso_data, siso->siso_data, nlen);
 		siso->siso_tlen = tlen;
@@ -445,9 +449,9 @@ iso_pcbdisconnect(void *v)
 	 * Preserver binding infnormation if already bound.
 	 */
 	if ((siso = isop->isop_laddr) && siso->siso_nlen && siso->siso_tlen) {
-		caddr_t         otsel = TSEL(siso);
+		const void *otsel = TSEL(siso);
 		siso->siso_nlen = 0;
-		memmove(TSEL(siso), otsel, siso->siso_tlen);
+		memmove(WRITABLE_TSEL(siso), otsel, siso->siso_tlen);
 	}
 	if (isop->isop_faddr && isop->isop_faddr != &isop->isop_sfaddr)
 		m_freem(isop->isop_mfaddr);
@@ -567,7 +571,7 @@ iso_pcbdetach(void *v)
  * NOTES:		(notify) is called at splnet!
  */
 void
-iso_pcbnotify(struct isopcb *head, struct sockaddr_iso *siso, int errno,
+iso_pcbnotify(struct isopcb *head, const struct sockaddr_iso *siso, int errno,
 	void (*notify) (struct isopcb *))
 {
 	struct isopcb *isop;
@@ -626,10 +630,10 @@ iso_pcblookup(
 	struct isopcb  *head,
 	int             fportlen,
 	caddr_t         fport,
-	struct sockaddr_iso *laddr)
+	const struct sockaddr_iso *laddr)
 {
 	struct isopcb *isop;
-	caddr_t lp = TSEL(laddr);
+	const void *lp = TSEL(laddr);
 	unsigned int    llen = laddr->siso_tlen;
 
 #ifdef ARGO_DEBUG

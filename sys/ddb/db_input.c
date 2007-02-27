@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.21 2005/12/11 12:20:53 christos Exp $	*/
+/*	$NetBSD: db_input.c,v 1.21.26.1 2007/02/27 16:53:44 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.21 2005/12/11 12:20:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_input.c,v 1.21.26.1 2007/02/27 16:53:44 yamt Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -148,7 +148,7 @@ db_delete_line(void)
 	} while (/*CONSTCOND*/ 0)
 #endif
 
-/* returns TRUE at end-of-line */
+/* returns true at end-of-line */
 static int
 db_inputchar(int c)
 {
@@ -304,7 +304,7 @@ db_inputchar(int c)
 				/* Repeted previous line, not saved */
 				db_history_curr = db_history_last;
 				*db_le++ = c;
-				return (TRUE);
+				return (true);
 			}
 		}
 		if (db_le != db_lbuf_start) {

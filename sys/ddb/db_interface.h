@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.17 2006/01/21 01:11:43 uwe Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.17.24.1 2007/02/27 16:53:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -40,30 +40,30 @@
 #define _DDB_DB_INTERFACE_H_
 
 /* arch/<arch>/<arch>/db_disasm.c */
-db_addr_t	db_disasm(db_addr_t, boolean_t);
+db_addr_t	db_disasm(db_addr_t, bool);
 
 /* arch/<arch>/<arch>/db_trace.c */
 /* arch/vax/vax/db_machdep.c */
-void		db_stack_trace_print(db_expr_t, int, db_expr_t, const char *,
+void		db_stack_trace_print(db_expr_t, bool, db_expr_t, const char *,
 		    void (*)(const char *, ...));
 
 /* ddb/db_xxx.c */
-void		db_kgdb_cmd(db_expr_t, int, db_expr_t, const char *);
+void		db_kgdb_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_proc.c */
-void		db_kill_proc(db_expr_t, int, db_expr_t, const char *);
-void		db_show_all_procs(db_expr_t, int, db_expr_t, const char *);
-void		db_show_all_pools(db_expr_t, int, db_expr_t, const char *);
-void		db_show_sched_qs(db_expr_t, int, db_expr_t, const char *);
+void		db_kill_proc(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_all_procs(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_all_pools(db_expr_t, bool, db_expr_t, const char *);
+void		db_show_sched_qs(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/kern_clock.c */
-void		db_show_callout(db_expr_t, int, db_expr_t, const char *);
+void		db_show_callout(db_expr_t, bool, db_expr_t, const char *);
 
 /* kern/subr_log.c */
-void		db_dmesg(db_expr_t, int, db_expr_t, const char *);
+void		db_dmesg(db_expr_t, bool, db_expr_t, const char *);
 
 /* netinet/if_arp.c */
-void		db_show_arptab(db_expr_t, int, db_expr_t, const char *);
+void		db_show_arptab(db_expr_t, bool, db_expr_t, const char *);
 
 /*
  * This is used in several places to determine which printf format

@@ -1,4 +1,4 @@
-/*	$NetBSD: vtoc.h,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: vtoc.h,v 1.1.28.1 2007/02/27 16:50:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,11 +86,11 @@ struct vtoc_sector {
 struct pdinfo_sector;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-boolean_t vtoc_sector(void *, struct vtoc_sector *, int);
-boolean_t vtoc_valid(const struct vtoc_sector *);
-boolean_t vtoc_sanity(const struct vtoc_sector *);
+bool vtoc_sector(void *, struct vtoc_sector *, int);
+bool vtoc_valid(const struct vtoc_sector *);
+bool vtoc_sanity(const struct vtoc_sector *);
 const struct ux_partition *vtoc_find_bfs(const struct vtoc_sector *);
-boolean_t vtoc_write(struct vtoc_sector *, struct pdinfo_sector *);
+bool vtoc_write(struct vtoc_sector *, struct pdinfo_sector *);
 #endif
 
 #endif /* _EWS4800MIPS_VTOC_H_ */

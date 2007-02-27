@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.24 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.24.4.1 2007/02/27 16:53:45 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.24 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.24.4.1 2007/02/27 16:53:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_watch.c,v 1.24 2006/11/16 01:32:44 christos Exp $
  * Watchpoints.
  */
 
-static boolean_t		db_watchpoints_inserted = TRUE;
+static bool			db_watchpoints_inserted = true;
 
 #define	NWATCHPOINTS	100
 static struct db_watchpoint	db_watch_table[NWATCHPOINTS];
@@ -126,7 +126,7 @@ db_set_watchpoint(struct vm_map *map, db_addr_t addr, vsize_t size)
 	watch->link = db_watchpoint_list;
 	db_watchpoint_list = watch;
 
-	db_watchpoints_inserted = FALSE;
+	db_watchpoints_inserted = false;
 }
 
 static void
@@ -170,7 +170,7 @@ db_list_watchpoints(void)
 /* Delete watchpoint */
 /*ARGSUSED*/
 void
-db_deletewatch_cmd(db_expr_t addr, int have_addr,
+db_deletewatch_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
@@ -180,7 +180,7 @@ db_deletewatch_cmd(db_expr_t addr, int have_addr,
 /* Set watchpoint */
 /*ARGSUSED*/
 void
-db_watchpoint_cmd(db_expr_t addr, int have_addr,
+db_watchpoint_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 	vsize_t size;
@@ -198,7 +198,7 @@ db_watchpoint_cmd(db_expr_t addr, int have_addr,
 /* list watchpoints */
 /*ARGSUSED*/
 void
-db_listwatch_cmd(db_expr_t addr, int have_addr,
+db_listwatch_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
@@ -221,7 +221,7 @@ db_set_watchpoints(void)
 			pmap_update(watch->map->pmap);
 		}
 
-		db_watchpoints_inserted = TRUE;
+		db_watchpoints_inserted = true;
 	}
 }
 
@@ -229,5 +229,5 @@ void
 db_clear_watchpoints(void)
 {
 
-	db_watchpoints_inserted = FALSE;
+	db_watchpoints_inserted = false;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.20 2007/02/06 03:13:37 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.20.2.1 2007/02/27 16:53:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20 2007/02/06 03:13:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.20.2.1 2007/02/27 16:53:25 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -188,6 +188,7 @@ struct {
  * of these functions.
  */
 struct x86_bus_dma_tag pci_bus_dma_tag = {
+	0,				/* tag_needs_free */
 #if defined(_LP64) || defined(PAE)
 	PCI32_DMA_BOUNCE_THRESHOLD,	/* bounce_thresh */
 	ISA_DMA_BOUNCE_THRESHOLD,	/* bounce_alloclo */
@@ -205,20 +206,19 @@ struct x86_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_load_uio,
 	_bus_dmamap_load_raw,
 	_bus_dmamap_unload,
-#if defined(_LP64) || defined(PAE)
 	_bus_dmamap_sync,
-#else
-	NULL,
-#endif
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 
 #ifdef _LP64
 struct x86_bus_dma_tag pci_bus_dma64_tag = {
+	0,				/* tag_needs_free */
 	0,
 	0,
 	0,
@@ -236,6 +236,8 @@ struct x86_bus_dma_tag pci_bus_dma64_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 #endif
 

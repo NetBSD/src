@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6.4.1 2007/02/27 16:53:29 yamt Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.4.1 2007/02/27 16:53:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2006/09/28 18:53:16 bouyer Exp $
 static int _isa_dma_may_bounce(bus_dma_tag_t, bus_dmamap_t, int, int *);
 
 struct x86_bus_dma_tag isa_bus_dma_tag = {
+	0,				/* _tag_needs_free */
 	ISA_DMA_BOUNCE_THRESHOLD,	/* _bounce_thresh */
 	0,				/* _bounce_alloc_lo */
 	ISA_DMA_BOUNCE_THRESHOLD,	/* _bounce_alloc_hi */
@@ -115,6 +116,8 @@ struct x86_bus_dma_tag isa_bus_dma_tag = {
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
+	_bus_dmatag_subregion,
+	_bus_dmatag_destroy,
 };
 
 #define	IDTVEC(name)	__CONCAT(X,name)

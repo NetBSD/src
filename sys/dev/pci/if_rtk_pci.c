@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.30 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.30.4.1 2007/02/27 16:54:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.30 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.30.4.1 2007/02/27 16:54:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,18 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.30 2006/11/16 01:33:09 christos Exp
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-
-/*
- * Default to using PIO access for this driver. On SMP systems,
- * there appear to be problems with memory mapped mode: it looks like
- * doing too many memory mapped access back to back in rapid succession
- * can hang the bus. I'm inclined to blame this on crummy design/construction
- * on the part of Realtek. Memory mapped mode does appear to work on
- * uniprocessor systems though.
- */
-#if !defined(__sh__)		/* XXX: dreamcast, landisk */
-#define RTK_USEIOSPACE
-#endif
 
 #include <dev/ic/rtl81x9reg.h>
 #include <dev/ic/rtl81x9var.h>
@@ -167,9 +155,12 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
 	int pmreg;
+	int ioh_valid, memh_valid;
 
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
@@ -212,20 +203,34 @@ rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Map control/status registers.
+	 *
+	 * The original FreeBSD's driver has the following comment:
+	 *
+	 *   Default to using PIO access for this driver. On SMP systems,
+	 *   there appear to be problems with memory mapped mode:
+	 *   it looks like doing too many memory mapped access
+	 *   back to back in rapid succession can hang the bus.
+	 *   I'm inclined to blame this on crummy design/construction
+	 *   on the part of Realtek. Memory mapped mode does appear to
+	 *   work on uniprocessor systems though.
+	 *
+	 * On NetBSD, some port doesn't support PCI I/O space properly,
+	 * so we try to map both and prefer I/O space to mem space.
 	 */
-#ifdef RTK_USEIOSPACE
-	if (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+	ioh_valid = (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) == 0);
+	memh_valid = (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
+	    &memt, &memh, NULL, NULL) == 0);
+	if (ioh_valid) {
+		sc->rtk_btag = iot;
+		sc->rtk_bhandle = ioh;
+	} else if (memh_valid) {
+		sc->rtk_btag = memt;
+		sc->rtk_bhandle = memh;
+	} else {
+		aprint_error("%s: can't map registers\n", sc->sc_dev.dv_xname);
 		return;
 	}
-#else
-	if (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, NULL)) {
-		printf("%s: can't map mem space\n", sc->sc_dev.dv_xname);
-		return;
-	}
-#endif
 
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {

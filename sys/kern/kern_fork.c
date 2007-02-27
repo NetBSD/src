@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.131.2.2 2007/02/20 21:48:45 rmind Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131.2.3 2007/02/27 16:54:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.2 2007/02/20 21:48:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.3 2007/02/27 16:54:21 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -219,7 +219,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	struct lwp	*l2;
 	int		count;
 	vaddr_t		uaddr;
-	boolean_t	inmem;
+	bool		inmem;
 	int		tmp;
 
 	/*
@@ -304,7 +304,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * handling are important in order to keep a consistent behaviour
 	 * for the child after the fork.
 	 */
-	p2->p_flag = p1->p_flag & (P_SUGID | P_NOCLDWAIT | P_CLDSIGIGN);
+	p2->p_flag = p1->p_flag & (PK_SUGID | PK_NOCLDWAIT | PK_CLDSIGIGN);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
@@ -314,7 +314,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		 * children are reparented to init(8) when they exit. 
 		 * init(8) can easily wait them out for us.
 		 */
-		p2->p_flag |= (P_SYSTEM | P_NOCLDWAIT);
+		p2->p_flag |= (PK_SYSTEM | PK_NOCLDWAIT);
 	}
 
 	/* XXX p_smutex can be IPL_VM except for audio drivers */
@@ -426,7 +426,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	PHOLD(l1);
 
-	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? TRUE : FALSE);
+	uvm_proc_fork(p1, p2, (flags & FORK_SHAREVM) ? true : false);
 
 	/*
 	 * Finish creating the child process.
@@ -457,7 +457,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 #ifdef SYSTRACE
 	/* Tell systrace what's happening. */
-	if (ISSET(p1->p_flag, P_SYSTRACE))
+	if (ISSET(p1->p_flag, PK_SYSTRACE))
 		systrace_sys_fork(p1, p2);
 #endif
 
@@ -499,7 +499,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Make child runnable, set start time, and add to run queue except
 	 * if the parent requested the child to start in SSTOP state.
 	 */
-	tmp = (p2->p_userret != NULL ? L_WUSERRET : 0);
+	tmp = (p2->p_userret != NULL ? LW_WUSERRET : 0);
 	mutex_enter(&proclist_mutex);
 	mutex_enter(&p2->p_smutex);
 

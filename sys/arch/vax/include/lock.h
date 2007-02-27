@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.22 2007/02/16 01:34:02 matt Exp $	*/
+/*	$NetBSD: lock.h,v 1.22.2.1 2007/02/27 16:53:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -41,36 +41,38 @@
 #include <machine/cpu.h>
 #endif
 
-static inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *);
+static __inline void
+__cpu_simple_lock_init(__cpu_simple_lock_t *__alp)
 {
 #ifdef _KERNEL
 	__asm volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
-		: "g"(alp)
+		: "g"(__alp)
 		: "r1","cc","memory");
 #else
 	__asm volatile ("bbcci $0,%0,1f;1:"
 		: /* No output */
-		: "m"(*alp)
+		: "m"(*__alp)
 		: "cc");
 #endif
 }
 
-static inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *);
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *__alp)
 {
 	int ret;
 
 #ifdef _KERNEL
 	__asm volatile ("movl %1,%%r1;jsb Slocktry;movl %%r0,%0"
 		: "=&r"(ret)
-		: "g"(alp)
+		: "g"(__alp)
 		: "r0","r1","cc","memory");
 #else
 	__asm volatile ("clrl %0;bbssi $0,%1,1f;incl %0;1:"
 		: "=&r"(ret)
-		: "m"(*alp)
+		: "m"(*__alp)
 		: "cc");
 #endif
 
@@ -79,38 +81,40 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 
 #ifdef _KERNEL
 #define	VAX_LOCK_CHECKS ((1 << IPI_SEND_CNCHAR) | (1 << IPI_DDB))
-#define	__cpu_simple_lock(alp)						\
+#define	__cpu_simple_lock(__alp)					\
 do {									\
 	struct cpu_info *__ci = curcpu();				\
 									\
-	while (__cpu_simple_lock_try(alp) == 0) {			\
-		int ___s;						\
+	while (__cpu_simple_lock_try(__alp) == 0) {			\
+		int __s;						\
 									\
 		if (__ci->ci_ipimsgs & VAX_LOCK_CHECKS) {		\
-			___s = splipi();				\
+			__s = splipi();				\
 			cpu_handle_ipi();				\
-			splx(___s);					\
+			splx(__s);					\
 		}							\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 #else
-static _inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *);
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *__alp)
 {
 	__asm volatile ("1:bbssi $0,%0,1b"
 		: /* No outputs */
-		: "m"(*alp)
+		: "m"(*__alp)
 		: "cc");
 }
 #endif /* _KERNEL */
 
 #if 0
-static inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
+static __inline void __cpu_simple_lock(__cpu_simple_lock_t *);
+static __inline void
+__cpu_simple_lock(__cpu_simple_lock_t *__alp)
 {
 	struct cpu_info *ci = curcpu();
 
-	while (__cpu_simple_lock_try(alp) == 0) {
+	while (__cpu_simple_lock_try(__alp) == 0) {
 		int s;
 
 		if (ci->ci_ipimsgs & IPI_SEND_CNCHAR) {
@@ -123,29 +127,30 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 #if 0
 	__asm volatile ("movl %0,%%r1;jsb Slock"
 		: /* No output */
-		: "g"(alp)
+		: "g"(__alp)
 		: "r0","r1","cc","memory");
 #endif
 #if 0
 	__asm volatile ("1:;bbssi $0, %0, 1b"
 		: /* No output */
-		: "m"(*alp));
+		: "m"(*__alp));
 #endif
 }
 #endif
 
-static inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *);
+static __inline void
+__cpu_simple_unlock(__cpu_simple_lock_t *__alp)
 {
 #ifdef _KERNEL
 	__asm volatile ("movl %0,%%r1;jsb Sunlock"
 		: /* No output */
-		: "g"(alp)
+		: "g"(__alp)
 		: "r1","cc","memory");
 #else
 	__asm volatile ("bbcci $0,%0,1f;1:"
 		: /* No output */
-		: "m"(*alp)
+		: "m"(*__alp)
 		: "cc");
 #endif
 }
@@ -163,24 +168,26 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 #define SPINLOCK_SPIN_HOOK						\
 do {									\
 	struct cpu_info *__ci = curcpu();				\
-	int ___s;							\
+	int __s;							\
 									\
 	if (__ci->ci_ipimsgs != 0) {					\
 		/* printf("CPU %lu has IPIs pending\n",			\
 		    __ci->ci_cpuid); */					\
-		___s = splipi();					\
+		__s = splipi();						\
 		cpu_handle_ipi();					\
-		splx(___s);						\
+		splx(__s);						\
 	}								\
-} while (0)
+} while (/*CONSTCOND*/0)
 #endif /* MULTIPROCESSOR */
 
-static inline void
+static __inline void mb_read(void);
+static __inline void
 mb_read(void)
 {
 }
 
-static inline void
+static __inline void mb_write(void);
+static __inline void
 mb_write(void)
 {
 }

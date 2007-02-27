@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.34 2007/01/26 19:02:02 dyoung Exp $	*/
+/*	$NetBSD: frag6.c,v 1.34.2.1 2007/02/27 16:54:58 yamt Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.34 2007/01/26 19:02:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.34.2.1 2007/02/27 16:54:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	struct ifnet *dstifp;
 #ifdef IN6_IFSTAT_STRICT
 	static struct route_in6 ro;
-	struct sockaddr_in6 *dst;
+	const struct sockaddr_in6 *cdst;
 #endif
 
 	ip6 = mtod(m, struct ip6_hdr *);
@@ -199,12 +199,15 @@ frag6_input(struct mbuf **mp, int *offp, int proto)
 	dstifp = NULL;
 #ifdef IN6_IFSTAT_STRICT
 	/* find the destination interface of the packet. */
-	dst = (struct sockaddr_in6 *)&ro.ro_dst;
-	if (!IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &ip6->ip6_dst))
+	cdst = (const struct sockaddr_in6 *)rtcache_getdst((struct route *)&ro);
+	if (!IN6_ARE_ADDR_EQUAL(&cdst->sin6_addr, &ip6->ip6_dst))
 		rtcache_free((struct route *)&ro);
 	else
 		rtcache_check((struct route *)&ro);
 	if (ro.ro_rt == NULL) {
+		struct sockaddr_in6 *dst;
+
+		dst = (struct sockaddr_in6 *)&ro.ro_dst;
 		memset(dst, 0, sizeof(*dst));
 		dst->sin6_family = AF_INET6;
 		dst->sin6_len = sizeof(struct sockaddr_in6);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.105 2007/02/09 21:55:43 ad Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.105.2.1 2007/02/27 16:55:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105 2007/02/09 21:55:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105.2.1 2007/02/27 16:55:27 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -177,7 +177,7 @@ sys_mincore(struct lwp *l, void *v, register_t *retval)
 	}
 	vm_map_lock_read(map);
 
-	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
+	if (uvm_map_lookup_entry(map, start, &entry) == false) {
 		error = ENOMEM;
 		goto out;
 	}
@@ -607,12 +607,12 @@ sys___msync13(struct lwp *l, void *v, register_t *retval)
 
 		vm_map_lock_read(map);
 		rv = uvm_map_lookup_entry(map, addr, &entry);
-		if (rv == TRUE) {
+		if (rv == true) {
 			addr = entry->start;
 			size = entry->end - entry->start;
 		}
 		vm_map_unlock_read(map);
-		if (rv == FALSE)
+		if (rv == false)
 			return (EINVAL);
 	}
 
@@ -736,7 +736,7 @@ sys_mprotect(struct lwp *l, void *v, register_t *retval)
 	size = round_page(size);
 
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
-				FALSE);
+				false);
 	return error;
 }
 
@@ -923,7 +923,7 @@ sys_mlock(struct lwp *l, void *v, register_t *retval)
 			p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur)
 		return (EAGAIN);
 
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
+	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, false,
 	    0);
 	if (error == EFAULT)
 		error = ENOMEM;
@@ -966,7 +966,7 @@ sys_munlock(struct lwp *l, void *v, register_t *retval)
 	if (addr + size < addr)
 		return (EINVAL);
 
-	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
+	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
 	    0);
 	if (error == EFAULT)
 		error = ENOMEM;
@@ -1035,7 +1035,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	int error;
 	int advice = UVM_ADV_NORMAL;
 	uvm_flag_t uvmflag = 0;
-	boolean_t needwritemap;
+	bool needwritemap;
 
 	/*
 	 * check params
@@ -1216,7 +1216,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 */
 
 		error = uvm_map_pageable(map, *addr, *addr + size,
-					 FALSE, UVM_LK_ENTER);
+					 false, UVM_LK_ENTER);
 		if (error) {
 			uvm_unmap(map, *addr, *addr + size);
 			return error;

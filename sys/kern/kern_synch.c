@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.9 2007/02/26 09:18:09 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.10 2007/02/27 16:54:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.9 2007/02/26 09:18:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.10 2007/02/27 16:54:25 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.9 2007/02/26 09:18:09 yamt Ex
 #include <sys/cpu.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
+#include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
 
@@ -106,18 +107,24 @@ int	lbolt;			/* once a second sleep address */
  */
 kmutex_t	sched_mutex;		/* global sched state mutex */
 
-void	sched_unsleep(struct lwp *);
+static void	sched_unsleep(struct lwp *);
+static void	sched_changepri(struct lwp *, pri_t);
+static void	sched_lendpri(struct lwp *, pri_t);
 
 syncobj_t sleep_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	sleepq_unsleep,
-	sleepq_changepri
+	sleepq_changepri,
+	sleepq_lendpri,
+	syncobj_noowner,
 };
 
 syncobj_t sched_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
 	sched_unsleep,
-	sched_changepri
+	sched_changepri,
+	sched_lendpri,
+	syncobj_noowner,
 };
 
 /*
@@ -149,7 +156,7 @@ int	safepri;
  * return.
  */
 int
-ltsleep(wchan_t ident, int priority, const char *wmesg, int timo,
+ltsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 	volatile struct simplelock *interlock)
 {
 	struct lwp *l = curlwp;
@@ -186,7 +193,7 @@ ltsleep(wchan_t ident, int priority, const char *wmesg, int timo,
  * General sleep call for situations where a wake-up is not expected.
  */
 int
-kpause(const char *wmesg, boolean_t intr, int timo, kmutex_t *mtx)
+kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 {
 	struct lwp *l = curlwp;
 	sleepq_t *sq;
@@ -320,7 +327,7 @@ updatertime(struct lwp *l, struct schedstate_percpu *spc)
 	struct timeval tv;
 	long s, u;
 
-	if ((l->l_flag & L_IDLE) != 0) {
+	if ((l->l_flag & LW_IDLE) != 0) {
 		microtime(&spc->spc_runtime);
 		return;
 	}
@@ -371,6 +378,9 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	KDASSERT(l->l_cpu == curcpu());
 	spc = &l->l_cpu->ci_schedstate;
 
+	/* Count time spent in current system call */
+	SYSCALL_TIME_SLEEP(l);
+
 	/*
 	 * XXXSMP If we are using h/w performance counters, save context.
 	 */
@@ -387,7 +397,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	if (l->l_stat == LSONPROC) {
 		KASSERT(lwp_locked(l, &sched_mutex));
 		l->l_stat = LSRUN;
-		if ((l->l_flag & L_IDLE) == 0) {
+		if ((l->l_flag & LW_IDLE) == 0) {
 			sched_enqueue(l);
 		}
 	}
@@ -468,6 +478,7 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	 * be running on a new CPU now, so don't use the cached
 	 * schedstate_percpu pointer.
 	 */
+	SYSCALL_TIME_WAKEUP(l);
 	KDASSERT(l->l_cpu == curcpu());
 
 	(void)splsched();
@@ -487,9 +498,9 @@ setrunnable(struct lwp *l)
 	struct proc *p = l->l_proc;
 	sigset_t *ss;
 
-	KASSERT((l->l_flag & L_IDLE) == 0);
-	LOCK_ASSERT(mutex_owned(&p->p_smutex));
-	LOCK_ASSERT(lwp_locked(l, NULL));
+	KASSERT((l->l_flag & LW_IDLE) == 0);
+	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT(lwp_locked(l, NULL));
 
 	switch (l->l_stat) {
 	case LSSTOP:
@@ -508,7 +519,7 @@ setrunnable(struct lwp *l)
 		p->p_nrlwps++;
 		break;
 	case LSSUSPENDED:
-		l->l_flag &= ~L_WSUSPEND;
+		l->l_flag &= ~LW_WSUSPEND;
 		p->p_nrlwps++;
 		break;
 	case LSSLEEP:
@@ -524,14 +535,8 @@ setrunnable(struct lwp *l)
 	 */
 	if (l->l_wchan != NULL) {
 		l->l_stat = LSSLEEP;
-		if ((l->l_flag & L_SINTR) != 0)
-			lwp_unsleep(l);
-		else {
-			lwp_unlock(l);
-#ifdef DIAGNOSTIC
-			panic("setrunnable: !L_SINTR");
-#endif
-		}
+		/* lwp_unsleep() will release the lock. */
+		lwp_unsleep(l);
 		return;
 	}
 
@@ -562,9 +567,9 @@ setrunnable(struct lwp *l)
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
 
-	if (l->l_flag & L_INMEM) {
+	if (l->l_flag & LW_INMEM) {
 		sched_enqueue(l);
-		resched_cpu(l, l->l_priority);
+		resched_cpu(l);
 		lwp_unlock(l);
 	} else {
 		lwp_unlock(l);
@@ -594,7 +599,7 @@ suspendsched(void)
 	PROCLIST_FOREACH(p, &allproc) {
 		mutex_enter(&p->p_smutex);
 
-		if ((p->p_flag & P_SYSTEM) != 0) {
+		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(&p->p_smutex);
 			continue;
 		}
@@ -614,10 +619,10 @@ suspendsched(void)
 			 * the user / kernel boundary, so that they will
 			 * release any locks that they hold.
 			 */
-			l->l_flag |= (L_WREBOOT | L_WSUSPEND);
+			l->l_flag |= (LW_WREBOOT | LW_WSUSPEND);
 
 			if (l->l_stat == LSSLEEP &&
-			    (l->l_flag & L_SINTR) != 0) {
+			    (l->l_flag & LW_SINTR) != 0) {
 				/* setrunnable() will release the lock. */
 				setrunnable(l);
 				continue;
@@ -650,7 +655,7 @@ suspendsched(void)
  *	Scale a priority level to a kernel priority level, usually
  *	for an LWP that is about to sleep.
  */
-int
+pri_t
 sched_kpri(struct lwp *l)
 {
 	/*
@@ -678,7 +683,7 @@ sched_kpri(struct lwp *l)
 		46,  46,  47,  47,  48,  48,  49,  49,
 	};
 
-	return kpri_tab[l->l_usrpri];
+	return (pri_t)kpri_tab[l->l_usrpri];
 }
 
 /*
@@ -688,7 +693,7 @@ sched_kpri(struct lwp *l)
  *	interrupted: for example, if the sleep timed out.  Because of this,
  *	it's not a valid action for running or idle LWPs.
  */
-void
+static void
 sched_unsleep(struct lwp *l)
 {
 
@@ -697,9 +702,10 @@ sched_unsleep(struct lwp *l)
 }
 
 inline void
-resched_cpu(struct lwp *l, u_char pri)
+resched_cpu(struct lwp *l)
 {
 	struct cpu_info *ci;
+	const pri_t pri = lwp_eprio(l);
 
 	/*
 	 * XXXSMP
@@ -726,4 +732,49 @@ resched_cpu(struct lwp *l, u_char pri)
 	ci = (l->l_cpu != NULL) ? l->l_cpu : curcpu();
 	if (pri < ci->ci_schedstate.spc_curpriority)
 		cpu_need_resched(ci, 0);
+}
+
+static void
+sched_changepri(struct lwp *l, pri_t pri)
+{
+
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+
+	l->l_usrpri = pri;
+	if (l->l_priority < PUSER)
+		return;
+
+	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
+		l->l_priority = pri;
+		return;
+	}
+
+	remrunqueue(l);
+	l->l_priority = pri;
+	setrunqueue(l);
+	resched_cpu(l);
+}
+
+static void
+static sched_lendpri(struct lwp *l, pri_t pri)
+{
+
+	LOCK_ASSERT(lwp_locked(l, &sched_mutex));
+
+	if (l->l_stat != LSRUN || (l->l_flag & LW_INMEM) == 0) {
+		l->l_inheritedprio = pri;
+		return;
+	}
+
+	remrunqueue(l);
+	l->l_inheritedprio = pri;
+	setrunqueue(l);
+	resched_cpu(l);
+}
+
+struct lwp *
+syncobj_noowner(wchan_t wchan)
+{
+
+	return NULL;
 }
