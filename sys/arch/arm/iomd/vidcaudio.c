@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.45 2007/02/22 05:14:05 thorpej Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.45.2.1 2007/02/27 14:15:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.45 2007/02/22 05:14:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.45.2.1 2007/02/27 14:15:52 ad Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -110,6 +110,7 @@ struct vidcaudio_softc {
 
 	irqhandler_t	sc_ih;
 	int	sc_dma_intr;
+	kmutex_t	sc_lock;
 
 	int	sc_is16bit;
 
@@ -189,6 +190,7 @@ static const struct audio_hw_if vidcaudio_hw_if = {
 	vidcaudio_trigger_output,
 	vidcaudio_trigger_input,
 	NULL,
+	vidcaudio_get_lock,
 };
 
 static int
@@ -240,6 +242,8 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 	else
 		aprint_normal(": 8-bit internal DAC\n");
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	/* Install the irq handler for the DMA interrupt */
 	sc->sc_ih.ih_func = vidcaudio_intr;
 	sc->sc_ih.ih_arg = sc;
@@ -264,6 +268,7 @@ static void
 vidcaudio_close(void *addr)
 {
 	struct vidcaudio_softc *sc;
+	void *p;
 
 	DPRINTF(("DEBUG: vidcaudio_close called\n"));
 	sc = addr;
@@ -273,8 +278,11 @@ vidcaudio_close(void *addr)
 	 * (audio_pint()->audio_clear()->vidcaudio_halt_output()).
 	 */
 	if (sc->sc_ppages != NULL) {
-		free(sc->sc_ppages, M_DEVBUF);
+		p = sc->sc_ppages;
 		sc->sc_ppages = NULL;
+		mutex_exit(&sc->sc_lock);
+		free(p, M_DEVBUF);
+		mutex_exit(&sc->sc_lock);
 	}
 }
 
@@ -585,10 +593,15 @@ vidcaudio_intr(void *arg)
 	paddr_t pnext, pend;
 
 	sc = arg;
+
+	mutex_enter(&sc->sc_lock);
+
 	status = IOMD_READ_BYTE(IOMD_SD0ST);
 	DPRINTF(("I[%x]", status));
-	if ((status & IOMD_DMAST_INT) == 0)
+	if ((status & IOMD_DMAST_INT) == 0) {
+		mutex_exit(&sc->sc_lock);
 		return 0;
+	}
 
 	pnext = sc->sc_ppages[sc->sc_poffset >> PGSHIFT] |
 	    (sc->sc_poffset & PGOFSET);
@@ -620,6 +633,8 @@ vidcaudio_intr(void *arg)
 		sc->sc_pcountdown--;
 	else
 		(*sc->sc_pintr)(sc->sc_parg);
+
+	mutex_exit(&sc->sc_lock);
 
 	return 1;
 }

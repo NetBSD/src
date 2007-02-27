@@ -1,7 +1,7 @@
-/*	$NetBSD: auviavar.h,v 1.11 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.11.2.1 2007/02/27 14:16:15 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,6 +53,8 @@ struct auvia_softc_chan {
 
 struct auvia_softc {
 	struct device sc_dev;
+	kmutex_t sc_intr_lock;
+	kmutex_t sc_lock;
 
 	char sc_revision[8];
 	u_int	sc_flags;

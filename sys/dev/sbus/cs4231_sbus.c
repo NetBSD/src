@@ -1,7 +1,7 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.34 2006/10/15 19:45:06 martin Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.34.6.1 2007/02/27 14:16:39 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.34 2006/10/15 19:45:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_sbus.c,v 1.34.6.1 2007/02/27 14:16:39 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -130,6 +130,7 @@ const struct audio_hw_if audiocs_sbus_hw_if = {
 	cs4231_sbus_trigger_input,
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	cs4231_get_lock,
 };
 
 
@@ -188,6 +189,8 @@ cs4231_sbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sbus_establish(&sbsc->sc_sd, &sc->sc_ad1848.sc_dev);
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	/* Establish interrupt channel */
 	if (sa->sa_nintr)
@@ -340,7 +343,8 @@ cs4231_sbus_halt_output(void *addr)
 	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
 
 	/* let the curernt transfer complete */
-	if (csr & PDMA_GO)
+	if (csr & PDMA_GO) {
+		mutex_exit(&sc->sc_mutex);
 		do {
 			csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh,
 				APC_DMA_CSR);
@@ -348,6 +352,8 @@ cs4231_sbus_halt_output(void *addr)
 				 bitmask_snprintf(csr, APC_BITS,
 						  bits, sizeof(bits))));
 		} while ((csr & APC_PM) == 0);
+		mutex_enter(&sc->sc_mutex);
+	}
 
 	cfg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,(cfg & ~PLAYBACK_ENABLE));
@@ -496,9 +502,14 @@ cs4231_sbus_intr(void *arg)
 
 	sbsc = arg;
 	sc = &sbsc->sc_cs4231;
+
+	mutex_enter(&sc->sc_mutex);
+
 	csr = bus_space_read_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR);
-	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pedning? */
+	if ((csr & APC_INTR_MASK) == 0)	/* any interrupt pedning? */ {
+		mutex_exit(&sc->sc_mutex);
 		return 0;
+	}
 
 	/* write back DMA status to clear interrupt */
 	bus_space_write_4(sbsc->sc_bt, sbsc->sc_bh, APC_DMA_CSR, csr);
@@ -574,6 +585,8 @@ cs4231_sbus_intr(void *arg)
 #endif
 		/* evcnt? */
 	}
+
+	mutex_exit(&sc->sc_mutex);
 
 	return 1;
 }

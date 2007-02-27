@@ -1,13 +1,13 @@
-/*	$NetBSD: eap.c,v 1.88 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.88.6.1 2007/02/27 14:16:25 ad Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
- * Copyright (c) 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson <augustss@NetBSD.org>, Charles M. Hannum, and
- * Antti Kantee <pooka@NetBSD.org>.
+ * by Lennart Augustsson <augustss@NetBSD.org>, Charles M. Hannum,
+ * Antti Kantee <pooka@NetBSD.org>, and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.88 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.88.6.1 2007/02/27 14:16:25 ad Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.88 2006/11/16 01:33:08 christos Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/select.h>
+#include <sys/mutex.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
@@ -144,6 +145,8 @@ struct eap_softc {
 	bus_space_handle_t ioh;
 	bus_size_t iosz;
 	bus_dma_tag_t sc_dmatag;	/* DMA tag */
+	kmutex_t sc_intr_lock;
+	kmutex_t sc_lock;
 
 	struct eap_dma *sc_dmas;
 
@@ -229,6 +232,8 @@ static int	eap1371_attach_codec(void *, struct ac97_codec_if *);
 static int	eap1371_read_codec(void *, uint8_t, uint16_t *);
 static int	eap1371_write_codec(void *, uint8_t, uint16_t );
 static int	eap1371_reset_codec(void *);
+static void	eap_get_locks(void *, kmutex_t **, kmutex_t **);
+
 #if NMIDI > 0
 static void	eap_midi_close(void *);
 static void	eap_midi_getinfo(void *, struct midi_info *);
@@ -267,6 +272,7 @@ static const struct audio_hw_if eap1370_hw_if = {
 	eap_trigger_input,
 	NULL,
 	NULL,
+	eap_get_locks,
 };
 
 static const struct audio_hw_if eap1371_hw_if = {
@@ -298,6 +304,7 @@ static const struct audio_hw_if eap1371_hw_if = {
 	eap_trigger_input,
 	NULL,
 	NULL,
+	eap_get_locks,
 };
 
 #if NMIDI > 0
@@ -380,7 +387,7 @@ eap1370_write_codec(struct eap_softc *sc, int a, int d)
 static inline void
 eap1371_ready_codec(struct eap_softc *sc, uint8_t a, uint32_t wd)
 {
-	int to, s;
+	int to;
 	uint32_t src, t;
 
 	for (to = 0; to < EAP_WRITE_TIMEOUT; to++) {
@@ -392,7 +399,7 @@ eap1371_ready_codec(struct eap_softc *sc, uint8_t a, uint32_t wd)
 		printf("%s: eap1371_ready_codec timeout 1\n",
 		       sc->sc_dev.dv_xname);
 
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
 	src = eap1371_src_wait(sc) & E1371_SRC_CTLMASK;
 	EWRITE4(sc, E1371_SRC, src | E1371_SRC_STATE_OK);
 
@@ -421,7 +428,7 @@ eap1371_ready_codec(struct eap_softc *sc, uint8_t a, uint32_t wd)
 	eap1371_src_wait(sc);
 	EWRITE4(sc, E1371_SRC, src);
 
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static int
@@ -527,7 +534,6 @@ eap1371_set_adc_rate(struct eap_softc *sc, int rate)
 {
 	int freq, n, truncm;
 	int out;
-	int s;
 
 	/* Whatever, it works, so I'll leave it :) */
 
@@ -550,7 +556,7 @@ eap1371_set_adc_rate(struct eap_softc *sc, int rate)
 		out = ESRC_SMF | ESRC_SET_TRUNC((119 - truncm) / 2);
 	}
 	out |= ESRC_SET_N(n);
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
 	eap1371_src_write(sc, ESRC_ADC+ESRC_TRUNC_N, out);
 
 	out = eap1371_src_read(sc, ESRC_ADC+ESRC_IREGS) & 0xff;
@@ -559,7 +565,7 @@ eap1371_set_adc_rate(struct eap_softc *sc, int rate)
 	eap1371_src_write(sc, ESRC_ADC+ESRC_VFF, freq & 0x7fff);
 	eap1371_src_write(sc, ESRC_ADC_VOLL, ESRC_SET_ADC_VOL(n));
 	eap1371_src_write(sc, ESRC_ADC_VOLR, ESRC_SET_ADC_VOL(n));
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -568,7 +574,6 @@ eap1371_set_dac_rate(struct eap_instance *ei, int rate)
 	struct eap_softc *sc;
 	int dac;
 	int freq, r;
-	int s;
 
 	DPRINTFN(2, ("eap1371_set_dac_date: set rate for %d\n", ei->index));
 	sc = (struct eap_softc *)ei->parent;
@@ -582,7 +587,7 @@ eap1371_set_dac_rate(struct eap_instance *ei, int rate)
 	    rate = 4000;
 	freq = ((rate << 15) + 1500) / 3000;
 
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
 	eap1371_src_wait(sc);
 	r = EREAD4(sc, E1371_SRC) & (E1371_SRC_DISABLE |
 	    E1371_SRC_DISP2 | E1371_SRC_DISP1 | E1371_SRC_DISREC);
@@ -595,7 +600,7 @@ eap1371_set_dac_rate(struct eap_instance *ei, int rate)
 	    E1371_SRC_DISP2 | E1371_SRC_DISP1 | E1371_SRC_DISREC);
 	r &= ~(ei->index == EAP_DAC1 ? E1371_SRC_DISP1 : E1371_SRC_DISP2);
 	EWRITE4(sc, E1371_SRC, r);
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -622,6 +627,9 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	pc = pa->pa_pc;
 	revstr = "";
 	aprint_naive(": Audio controller\n");
+
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	/* Stash this away for detach */
 	sc->sc_pc = pc;
@@ -787,7 +795,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		sc->host_if.write = eap1371_write_codec;
 		sc->host_if.reset = eap1371_reset_codec;
 
-		if (ac97_attach(&sc->host_if, self) == 0) {
+		if (ac97_attach(&sc->host_if, self, &sc->sc_lock) == 0) {
 			/* Interrupt enable */
 			EWRITE4(sc, EAP_SIC, EAP_P2_INTR_EN | EAP_R1_INTR_EN);
 		} else
@@ -878,16 +886,15 @@ eap1371_reset_codec(void *sc_)
 {
 	struct eap_softc *sc;
 	uint32_t icsc;
-	int s;
 
 	sc = sc_;
-	s = splaudio();
+	mutex_enter(&sc->sc_intr_lock);
 	icsc = EREAD4(sc, EAP_ICSC);
 	EWRITE4(sc, EAP_ICSC, icsc | E1371_SYNC_RES);
 	delay(20);
 	EWRITE4(sc, EAP_ICSC, icsc & ~E1371_SYNC_RES);
 	delay(1);
-	splx(s);
+	mutex_exit(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -899,9 +906,12 @@ eap_intr(void *p)
 	uint32_t intr, sic;
 
 	sc = p;
+	mutex_enter(&sc->sc_intr_lock);
 	intr = EREAD4(sc, EAP_ICSS);
-	if (!(intr & EAP_INTR))
+	if (!(intr & EAP_INTR)) {
+		mutex_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 	sic = EREAD4(sc, EAP_SIC);
 	DPRINTFN(5, ("eap_intr: ICSS=0x%08x, SIC=0x%08x\n", intr, sic));
 	if (intr & EAP_I_ADC) {
@@ -967,6 +977,7 @@ eap_intr(void *p)
 			eap_uart_txrdy(sc);
 	}
 #endif
+	mutex_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -1851,6 +1862,7 @@ eap_mappage(void *addr, void *mem, off_t off, int prot)
 	struct eap_instance *ei;
 	struct eap_softc *sc;
 	struct eap_dma *p;
+	paddr_t rv;
 
 	if (off < 0)
 		return -1;
@@ -1860,8 +1872,12 @@ eap_mappage(void *addr, void *mem, off_t off, int prot)
 		continue;
 	if (!p)
 		return -1;
-	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
+
+	mutex_exit(&sc->sc_lock);
+	rv = bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
 			       off, prot, BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+	return rv;
 }
 
 static int
@@ -1870,6 +1886,18 @@ eap_get_props(void *addr)
 
 	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
 	    AUDIO_PROP_FULLDUPLEX;
+}
+
+static void
+eap_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct eap_instance *ei;
+	struct eap_softc *sc;
+
+	ei = addr;
+	sc = (struct eap_softc *)ei->parent;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }
 
 #if NMIDI > 0

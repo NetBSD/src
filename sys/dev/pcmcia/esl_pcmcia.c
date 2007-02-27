@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.17 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.17.6.1 2007/02/27 14:16:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.17 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.17.6.1 2007/02/27 14:16:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,8 @@ esl_pcmcia_attach(struct device *parent, struct device *self,
 	int error;
 
 	esc = (void *)self;
+	mutex_init(&esc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	pa = aux;
 	pf = pa->pf;
 	esc->sc_pf = pf;
@@ -148,6 +150,7 @@ esl_pcmcia_detach(struct device *self, int flags)
 	int rv;
 
 	esc = (void *)self;
+
 	if (esc->sc_state != ESL_PCMCIA_ATTACHED)
 		return 0;
 
@@ -163,6 +166,7 @@ esl_pcmcia_detach(struct device *self, int flags)
 	}
 
 	pcmcia_function_unconfigure(esc->sc_pf);
+	mutex_destroy(&esc->sc_lock);
 
 	return 0;
 }

@@ -1,7 +1,7 @@
-/* $NetBSD: toccata.c,v 1.11 2005/12/11 12:16:28 christos Exp $ */
+/* $NetBSD: toccata.c,v 1.11.28.1 2007/02/27 14:15:51 ad Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2001, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.11 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.11.28.1 2007/02/27 14:15:51 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,6 +171,7 @@ int toccata_open(void *, int);
 void toccata_close(void *);
 int toccata_getdev(void *, struct audio_device *);
 int toccata_get_props(void *);
+kmutex_t *toccata_get_lock(void *);
 
 int toccata_halt_input(void *);
 int toccata_halt_output(void *);
@@ -213,6 +214,7 @@ const struct audio_hw_if audiocs_hw_if = {
 	toccata_get_props,
 	0,	/* trigger_output */
 	0,
+	ad1848_get_lock,
 };
 
 struct toccata_softc {
@@ -274,6 +276,8 @@ toccata_attach(struct device *parent, struct device *self, void *aux)
 	asc->sc_readreg = toccata_readreg;
 	asc->sc_writereg = toccata_writereg;
 
+	mutex_init(&asc->sc_lock, MUTEX_DRIVER, 6);
+
 	asc->chip_name = "ad1848";
 	asc->mode = 1;
 	ad1848_attach(asc);
@@ -301,14 +305,20 @@ toccata_intr(void *tag) {
 	int i;
 
 	sc = tag;
+
+	mutex_enter(&sc->sc_ad.sc_lock);
+
 	status = *(sc->sc_boardp);
 
-	if (status & TOCC_FIFO_INT)	/* active low */
+	if (status & TOCC_FIFO_INT)	/* active low */ {
+		mutex_exit(&sc->sc_ad.sc_lock);
 		return 0;
+	}
 
 	if (status & TOCC_FIFO_PBHE) {
 		if (sc->sc_playmore) {
 			(*sc->sc_playmore)(sc->sc_playarg);
+			mutex_exit(&sc->sc_ad.sc_lock);
 			return 1;
 		}
 	} else if (status & TOCC_FIFO_CPHF) {
@@ -325,6 +335,7 @@ toccata_intr(void *tag) {
 
 			/* XXX if (sc->sc_captmore) { */
 			(*sc->sc_captmore)(sc->sc_captarg);
+			mutex_exit(&sc->sc_ad.sc_lock);
 			return 1;
 		}
 	}
@@ -340,6 +351,7 @@ toccata_intr(void *tag) {
 	    status);
 #endif
 	*sc->sc_boardp = TOCC_ACT;
+	mutex_exit(&sc->sc_ad.sc_lock);
 	return 1;
 }
 

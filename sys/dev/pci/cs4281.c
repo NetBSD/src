@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.33 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.33.6.1 2007/02/27 14:16:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.33 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.33.6.1 2007/02/27 14:16:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.read   = cs428x_read_codec;
 	sc->host_if.write  = cs428x_write_codec;
 	sc->host_if.reset  = cs4281_reset_codec;
-	if (ac97_attach(&sc->host_if, self) != 0) {
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0) {
 		aprint_error("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}

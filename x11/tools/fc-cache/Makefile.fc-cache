@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.fc-cache,v 1.1 2004/02/09 04:30:05 lukem Exp $
-
-FCCACHEDIR!=	cd ${NETBSDSRCDIR}/x11/tools/fc-cache && ${PRINTOBJDIR}
-FCCACHE=	${FCCACHEDIR}/fc-cache
-
-${FCCACHE}:
-	(cd ${NETBSDSRCDIR}/x11/tools/fc-cache && ${MAKE})

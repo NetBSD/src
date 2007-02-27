@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.21 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.21.28.1 2007/02/27 14:15:54 ad Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audioamd.c,v 1.21.28.1 2007/02/27 14:15:54 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -82,6 +82,7 @@ struct am7930_intrhand {
 
 struct audioamd_softc {
 	struct am7930_softc sc_am7930;	/* glue to MI code */
+	kmutex_t sc_hi_lock;		/* high level lock */
 
 	bus_space_tag_t sc_bt;		/* bus cookie */
 	bus_space_handle_t sc_bh;	/* device registers */
@@ -97,6 +98,8 @@ struct audioamd_softc {
 #define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
 	void	*sc_sicookie;		/* softintr(9) cookie */
 };
+
+#define	sc_lo_lock	sc_am7930.sc_lock
 
 void	audioamd_mainbus_attach(struct device *, struct device *, void *);
 int	audioamd_mainbus_match(struct device *, struct cfdata *, void *);
@@ -175,6 +178,7 @@ const struct audio_hw_if sa_hw_if = {
 	0,
 	0,
 	0,
+	am7930_get_lock,
 };
 
 struct audio_device audioamd_device = {
@@ -294,7 +298,8 @@ audioamd_attach(struct audioamd_softc *sc, int pri)
 	 * Set up glue for MI code early; we use some of it here.
 	 */
 	sc->sc_am7930.sc_glue = &audioamd_glue;
-
+	mutex_init(&sc->sc_lo_lock, MUTEX_DRIVER, IPL_SOFTAUDIO);
+	mutex_init(&sc->sc_hi_lock, MUTEX_DRIVER, IPL_AUDIO);
 	am7930_init(&sc->sc_am7930, AUDIOAMD_POLL_MODE);
 
 	auiop = &sc->sc_au;
@@ -397,12 +402,17 @@ am7930hwintr(void *v)
 	int k;
 
 	sc = v;
+
+	mutex_enter(&sc->sc_hi_lock);
+
 	au = &sc->sc_au;
 	/* clear interrupt */
 	k = audioamd_codec_dread(sc, AM7930_DREG_IR);
 	if ((k & (AM7930_IR_DTTHRSH|AM7930_IR_DRTHRSH|AM7930_IR_DSRI|
-		  AM7930_IR_DERI|AM7930_IR_BBUFF)) == 0)
+		  AM7930_IR_DERI|AM7930_IR_BBUFF)) == 0) {
+		mutex_exit(&sc->sc_hi_lock);
 		return 0;
+	}
 
 	/* receive incoming data */
 	d = au->au_rdata;
@@ -429,6 +439,8 @@ am7930hwintr(void *v)
 	}
 
 	au->au_intrcnt.ev_count++;
+	mutex_exit(&sc->sc_hi_lock);
+
 	return 1;
 }
 
@@ -437,23 +449,25 @@ am7930swintr(void *sc0)
 {
 	struct audioamd_softc *sc;
 	struct auio *au;
-	int s;
+	int rint, pint;
 
 	sc = sc0;
 	DPRINTFN(1, ("audiointr: sc=%p\n", sc););
 
 	au = &sc->sc_au;
-	s = splaudio();
-	if (au->au_rdata > au->au_rend && sc->sc_rintr != NULL) {
-		splx(s);
+	rint = 0; pint = 0;
+
+	mutex_enter(&sc->sc_hi_lock);
+	rint = (au->au_rdata > au->au_rend && sc->sc_rintr != NULL);
+	pint = (au->au_pdata > au->au_pend && sc->sc_pintr != NULL);
+	mutex_exit(&sc->sc_hi_lock);
+	
+	mutex_enter(&sc->sc_lo_lock);
+	if (rint)
 		(*sc->sc_rintr)(sc->sc_rarg);
-		s = splaudio();
-	}
-	if (au->au_pdata > au->au_pend && sc->sc_pintr != NULL) {
-		splx(s);
+	if (pint)
 		(*sc->sc_pintr)(sc->sc_parg);
-	} else
-		splx(s);
+	mutex_exit(&sc->sc_lo_lock);
 }
 
 
@@ -464,8 +478,11 @@ audioamd_codec_iwrite(struct am7930_softc *sc, int reg, uint8_t val)
 	struct audioamd_softc *mdsc;
 
 	mdsc = (struct audioamd_softc *)sc;
+
+	mutex_enter(&sc->sc_hi_lock);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val);
+	mutex_exit(&sc->sc_hi_lock);
 }
 
 void
@@ -474,9 +491,12 @@ audioamd_codec_iwrite16(struct am7930_softc *sc, int reg, uint16_t val)
 	struct audioamd_softc *mdsc;
 
 	mdsc = (struct audioamd_softc *)sc;
+
+	mutex_enter(&sc->sc_hi_lock);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_DR, val>>8);
+	mutex_exit(&sc->sc_hi_lock);
 }
 
 
@@ -485,10 +505,14 @@ uint8_t
 audioamd_codec_iread(struct am7930_softc *sc, int reg)
 {
 	struct audioamd_softc *mdsc;
+	uint8_t rv;
 
 	mdsc = (struct audioamd_softc *)sc;
+
+	mutex_enter(&sc->sc_hi_lock);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
-	return (audioamd_codec_dread(mdsc, AM7930_DREG_DR));
+	rv = audioamd_codec_dread(mdsc, AM7930_DREG_DR));
+	mutex_exit(&sc->sc_hi_lock);
 }
 
 uint16_t
@@ -498,9 +522,13 @@ audioamd_codec_iread16(struct am7930_softc *sc, int reg)
 	uint8_t lo, hi;
 
 	mdsc = (struct audioamd_softc *)sc;
+
+	mutex_enter(&sc->sc_hi_lock);
 	audioamd_codec_dwrite(mdsc, AM7930_DREG_CR, reg);
 	lo = audioamd_codec_dread(mdsc, AM7930_DREG_DR);
 	hi = audioamd_codec_dread(mdsc, AM7930_DREG_DR);
+	mutex_exit(&sc->sc_hi_lock);
+
 	return (hi << 8) | lo;
 }
 
@@ -508,8 +536,13 @@ audioamd_codec_iread16(struct am7930_softc *sc, int reg)
 uint8_t
 audioamd_codec_dread(struct audioamd_softc *sc, int reg)
 {
+	uint8_t rv;
 
-	return bus_space_read_1(sc->sc_bt, sc->sc_bh, reg);
+	mutex_enter(&sc->sc_hi_lock);
+	rv = bus_space_read_1(sc->sc_bt, sc->sc_bh, reg);
+	mutex_exit(&sc->sc_hi_lock);
+
+	return rv;
 }
 
 /* direct write */
@@ -517,7 +550,9 @@ void
 audioamd_codec_dwrite(struct audioamd_softc *sc, int reg, uint8_t val)
 {
 
+	mutex_enter(&sc->sc_hi_lock);
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, reg, val);
+	mutex_exit(&sc->sc_hi_lock);
 }
 
 int

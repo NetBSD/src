@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.65 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: pas.c,v 1.65.6.1 2007/02/27 14:16:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.65 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.65.6.1 2007/02/27 14:16:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ const struct audio_hw_if pas_hw_if = {
 	sbdsp_trigger_input,
 	0,
 	NULL,
+	sbdsp_get_locks,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to
@@ -472,6 +473,9 @@ pasattach(struct device *parent, struct device *self, void *aux)
 		printf("%s: pasfind failed\n", sc->sc_sbdsp.sc_dev.dv_xname);
 		return;
 	}
+
+	mutex_init(&sc->sc_sbdsp.sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_sbdsp.sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	sc->sc_sbdsp.sc_ic = ia->ia_ic;
 	sc->sc_sbdsp.sc_iobase = iobase;

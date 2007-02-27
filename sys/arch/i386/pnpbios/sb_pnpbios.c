@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.12 2006/11/16 01:32:39 christos Exp $ */
+/* $NetBSD: sb_pnpbios.c,v 1.12.6.1 2007/02/27 14:15:53 ad Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.12 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.12.6.1 2007/02/27 14:15:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ sb_pnpbios_attach(struct device *parent, struct device *self,
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 	sc->sc_ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_AUDIO,
 					   sbdsp_intr, sc);
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: fms.c,v 1.28 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: fms.c,v 1.28.6.1 2007/02/27 14:16:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.28 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.28.6.1 2007/02/27 14:16:34 ad Exp $");
 
 #include "mpu.h"
 
@@ -106,6 +106,7 @@ static int	fms_trigger_output(void *, void *, void *, int,
 static int	fms_trigger_input(void *, void *, void *, int,
 				  void (*)(void *), void *,
 				  const audio_params_t *);
+static void	fms_get_locks(void *, kmutex_t **, kmutex_t **);
 
 CFATTACH_DECL(fms, sizeof (struct fms_softc),
     fms_match, fms_attach, NULL, NULL);
@@ -146,6 +147,7 @@ static const struct audio_hw_if fms_hw_if = {
 	fms_trigger_input,
 	NULL,
 	NULL,
+	fms_get_locks,
 };
 
 static int	fms_attach_codec(void *, struct ac97_codec_if *);
@@ -257,6 +259,9 @@ fms_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, ih);
 
+	mutex_init(&sc->sc_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DRIVER, IPL_AUDIO);
+
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, fms_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error("%s: couldn't establish interrupt",
@@ -316,7 +321,7 @@ fms_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.write = fms_write_codec;
 	sc->host_if.reset = fms_reset_codec;
 
-	if (ac97_attach(&sc->host_if, self) != 0)
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0)
 		return;
 
 	audio_attach_mi(&fms_hw_if, sc, &sc->sc_dev);
@@ -425,6 +430,9 @@ fms_intr(void *arg)
 	uint16_t istat;
 
 	sc = arg;
+
+	mutex_enter(&sc->sc_intr_lock);
+
 	istat = bus_space_read_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS);
 
 	if (istat & FM_INTSTATUS_PLAY) {
@@ -464,6 +472,8 @@ fms_intr(void *arg)
 
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_INTSTATUS,
 			  istat & (FM_INTSTATUS_PLAY | FM_INTSTATUS_REC));
+
+	mutex_exit(&sc->sc_intr_lock);
 
 	return 1;
 }
@@ -767,6 +777,7 @@ fms_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct fms_softc *sc;
 	struct fms_dma *p;
+	paddr_t pa;
 
 	sc = addr;
 	if (off < 0)
@@ -777,8 +788,12 @@ fms_mappage(void *addr, void *mem, off_t off, int prot)
 	if (p == NULL)
 		return -1;
 
-	return bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot,
-			       BUS_DMA_WAITOK);
+	mutex_exit(&sc->sc_lock);
+	pa = bus_dmamem_mmap(sc->sc_dmat, &p->seg, 1, off, prot,
+	    BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+
+	return pa;			 
 }
 
 static int
@@ -862,4 +877,14 @@ fms_trigger_input(void *addr, void *start, void *end, int blksize,
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, FM_REC_CTL,
 			  FM_REC_START | FM_REC_STOPNOW | sc->sc_rec_reg);
 	return 0;
+}
+
+static void
+fms_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct fms_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }

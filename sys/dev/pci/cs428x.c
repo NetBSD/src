@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.13 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.13.6.1 2007/02/27 14:16:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.13 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.13.6.1 2007/02/27 14:16:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,6 +177,7 @@ cs428x_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct cs428x_softc *sc;
 	struct cs428x_dma *p;
+	paddr_t pa;
 
 	sc = addr;
 
@@ -191,8 +192,11 @@ cs428x_mappage(void *addr, void *mem, off_t off, int prot)
 		return -1;
 	}
 
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK));
+	mutex_exit(&sc->sc_lock);
+	pa = bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
+	    off, prot, BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_lock);
+	return pa;
 }
 
 int
@@ -368,4 +372,14 @@ cs428x_src_wait(struct cs428x_softc *sc)
 		}
 	}
 	return 0;
+}
+
+void
+cs428x_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct cs428x_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }

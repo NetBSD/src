@@ -1,7 +1,7 @@
-/* $NetBSD: bba.c,v 1.30 2006/03/31 07:34:31 he Exp $ */
+/* $NetBSD: bba.c,v 1.30.16.1 2007/02/27 14:16:40 ad Exp $ */
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
 /* maxine/alpha baseboard audio (bba) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.30 2006/03/31 07:34:31 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bba.c,v 1.30.16.1 2007/02/27 14:16:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,7 @@ static const struct audio_hw_if sa_hw_if = {
 	bba_trigger_output,		/* md */
 	bba_trigger_input,		/* md */
 	0,
+	am7930_get_lock,
 };
 
 static struct audio_device bba_device = {
@@ -240,6 +241,7 @@ bba_attach(struct device *parent, struct device *self, void *aux)
 	 * Set up glue for MI code early; we use some of it here.
 	 */
 	asc->sc_glue = &bba_glue;
+	mutex_init(&asc->sc_am7930.sc_lock, MUTEX_DRIVER, IPL_AUDIO);
 
 	/*
 	 *  MI initialisation.  We will be doing DMA.
@@ -589,7 +591,7 @@ bba_intr(void *addr)
 	int s, mask;
 
 	sc = addr;
-	s = splaudio();
+	mutex_enter(&sc->sc_am7930.sc_lock);
 
 	mask = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
@@ -612,7 +614,7 @@ bba_intr(void *addr)
 			(*d->intr)(d->intr_arg);
 	}
 
-	splx(s);
+	mutex_exit(&sc->sc_am7930.sc_lock);
 
 	return 0;
 }
@@ -631,6 +633,7 @@ bba_mappage(void *addr, void *mem, off_t offset, int prot)
 	struct bba_mem **mp;
 	bus_dma_segment_t seg;
 	caddr_t kva;
+	paddr_t pa;
 
 	sc = addr;
 	kva = (caddr_t)mem;
@@ -644,8 +647,12 @@ bba_mappage(void *addr, void *mem, off_t offset, int prot)
 	seg.ds_addr = (*mp)->addr;
 	seg.ds_len = (*mp)->size;
 
-	return bus_dmamem_mmap(sc->sc_dmat, &seg, 1, offset,
+	mutex_exit(&sc->sc_am7930.sc_lock);
+	pa = bus_dmamem_mmap(sc->sc_dmat, &seg, 1, offset,
 	    prot, BUS_DMA_WAITOK);
+	mutex_enter(&sc->sc_am7930.sc_lock);
+
+	return pa;
 }
 
 static stream_filter_t *
