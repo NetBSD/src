@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.72 2007/02/19 07:28:58 dyoung Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.73 2007/02/27 22:19:05 degroote Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.72 2007/02/19 07:28:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.73 2007/02/27 22:19:05 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -241,20 +241,25 @@ const struct ip6protosw inet6sw[] = {
 },
 #endif /* IPSEC */
 #ifdef FAST_IPSEC
-{ SOCK_RAW,    &inet6domain,   IPPROTO_AH,     PR_ATOMIC|PR_ADDR,
-  ipsec6_common_input, 0,              ah6_ctlinput,   0,
-  0,
-  0,           0,              0,              0,      
+{ .pr_type = SOCK_RAW,
+  .pr_domain = &inet6domain,
+  .pr_protocol = IPPROTO_AH,
+  .pr_flags = PR_ATOMIC|PR_ADDR,
+  .pr_input = ipsec6_common_input,
+  .pr_ctlinput = ah6_ctlinput,
 },
-{ SOCK_RAW,    &inet6domain,   IPPROTO_ESP,    PR_ATOMIC|PR_ADDR,
-  ipsec6_common_input,    0,           esp6_ctlinput,  0,
-  0,
-  0,           0,              0,              0,              
+{ .pr_type = SOCK_RAW,
+  .pr_domain = &inet6domain,
+  .pr_protocol = IPPROTO_ESP,
+  .pr_flags = PR_ATOMIC|PR_ADDR,
+  .pr_input = ipsec6_common_input,
+  .pr_ctlinput = esp6_ctlinput,
 },
-{ SOCK_RAW,    &inet6domain,   IPPROTO_IPCOMP, PR_ATOMIC|PR_ADDR,
-  ipsec6_common_input,    0,           0,              0,
-  0,
-  0,           0,              0,              0,              
+{ .pr_type = SOCK_RAW,
+  .pr_domain = &inet6domain,
+  .pr_protocol = IPPROTO_IPCOMP,
+  .pr_flags = PR_ATOMIC|PR_ADDR,
+  .pr_input = ipsec6_common_input,
 },
 #endif /* FAST_IPSEC */
 #ifdef INET
