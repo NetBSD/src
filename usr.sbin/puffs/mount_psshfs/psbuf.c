@@ -1,4 +1,4 @@
-/*      $NetBSD: psbuf.c,v 1.2 2007/01/07 19:31:48 pooka Exp $        */
+/*      $NetBSD: psbuf.c,v 1.3 2007/02/27 13:28:39 pooka Exp $        */
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psbuf.c,v 1.2 2007/01/07 19:31:48 pooka Exp $");
+__RCSID("$NetBSD: psbuf.c,v 1.3 2007/02/27 13:28:39 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -194,9 +194,9 @@ psbuf_recycle(struct psbuf *pb, int incoming)
 }
 
 static void
-psbuf_putspace(struct psbuf *pb, size_t space)
+psbuf_putspace(struct psbuf *pb, uint32_t space)
 {
-	size_t morespace;
+	uint32_t morespace;
 	uint8_t *nb;
 
 	if (pb->remain >= space)
@@ -557,7 +557,7 @@ psbuf_expect_status(struct psbuf *pb)
 }
 
 int
-psbuf_expect_handle(struct psbuf *pb, char **hand, size_t *handlen)
+psbuf_expect_handle(struct psbuf *pb, char **hand, uint32_t *handlen)
 {
 
 	CHECKCODE(pb, SSH_FXP_HANDLE);
@@ -629,7 +629,7 @@ psbuf_expect_attrs(struct psbuf *pb, struct vattr *vap)
 
 int
 psbuf_req_data(struct psbuf *pb, int type, uint32_t reqid, const void *data,
-	size_t dlen)
+	uint32_t dlen)
 {
 
 	psbuf_put_1(pb, type);
