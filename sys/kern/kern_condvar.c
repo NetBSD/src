@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.4 2007/02/26 09:20:52 yamt Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.5 2007/02/27 15:07:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.4 2007/02/26 09:20:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.5 2007/02/27 15:07:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.4 2007/02/26 09:20:52 yamt Exp $"
 #include <sys/sleepq.h>
 
 static void	cv_unsleep(struct lwp *);
-static void	cv_changepri(struct lwp *, int);
+static void	cv_changepri(struct lwp *, pri_t);
 
 syncobj_t cv_syncobj = {
 	SOBJ_SLEEPQ_SORTED,
@@ -144,10 +144,10 @@ cv_unsleep(struct lwp *l)
  *	Adjust the real (user) priority of an LWP blocked on a CV.
  */
 static void
-cv_changepri(struct lwp *l, int pri)
+cv_changepri(struct lwp *l, pri_t pri)
 {
 	sleepq_t *sq = l->l_sleepq;
-	int opri;
+	pri_t opri;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 

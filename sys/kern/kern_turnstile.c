@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.5 2007/02/27 12:17:55 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.6 2007/02/27 15:07:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.5 2007/02/27 12:17:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.6 2007/02/27 15:07:29 yamt Exp $");
 
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -231,7 +231,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 	turnstile_t *ots;
 	tschain_t *tc;
 	sleepq_t *sq;
-	u_char prio;
+	pri_t prio;
 
 	tc = &turnstile_tab[TS_HASH(obj)];
 	l = cur = curlwp;
@@ -369,7 +369,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, struct lwp *nl)
 		turnstile_t *iter;
 		turnstile_t *next;
 		turnstile_t *prev = NULL;
-		u_char prio;
+		pri_t prio;
 
 		ts->ts_inheritor = NULL;
 		l = curlwp;
@@ -455,7 +455,7 @@ turnstile_unsleep(struct lwp *l)
  *	Adjust the priority of an LWP residing on a turnstile.
  */
 void
-turnstile_changepri(struct lwp *l, int pri)
+turnstile_changepri(struct lwp *l, pri_t pri)
 {
 
 	/* XXX priority inheritance */
