@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.c,v 1.9 2007/02/15 13:07:29 pooka Exp $        */
+/*      $NetBSD: subr.c,v 1.10 2007/02/27 14:17:14 pooka Exp $        */
         
 /*      
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
         
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.9 2007/02/15 13:07:29 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.10 2007/02/27 14:17:14 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -173,9 +173,9 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	struct psshfs_dir *olddir, *testd;
 	struct psbuf *pb;
 	uint32_t reqid = NEXTREQ(pctx);
-	uint32_t count;
+	uint32_t count, dhandlen;
 	char *dhand = NULL;
-	size_t dhandlen, nent;
+	size_t nent;
 	char *longname;
 	int idx, rv;
 
