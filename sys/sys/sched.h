@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.6 2007/02/27 16:55:17 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.7 2007/02/27 17:20:53 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ void sched_setrunnable(struct lwp *);	/* Scheduler-specific actions for setrunna
 void sched_wakeup(volatile const void *);
 pri_t sched_kpri(struct lwp *);
 
-inline void resched_cpu(struct lwp *, u_char); /* Arrange reschedule */
+inline void resched_cpu(struct lwp *); /* Arrange reschedule */
 void setrunnable(struct lwp *);
 void preempt(void);
 int mi_switch(struct lwp *, struct lwp *);
