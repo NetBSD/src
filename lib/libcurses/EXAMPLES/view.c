@@ -23,7 +23,7 @@
  * scroll operation worked, and the refresh() code only had to do a
  * partial repaint.
  *
- * $Id: view.c,v 1.1.2.1 2007/01/21 12:05:54 blymn Exp $
+ * $Id: view.c,v 1.1.2.2 2007/02/27 09:56:01 blymn Exp $
  */
 
 #include <stdlib.h>
@@ -72,6 +72,7 @@ static bool try_color = FALSE;
 static char *fname;
 static CURSES_CH_T **my_lines;
 static CURSES_CH_T **lptr;
+static unsigned num_lines;
 
 static void usage(void)
 {
@@ -232,6 +233,7 @@ int main(int argc, char *argv[])
     }
 
     /* slurp the file */
+    num_lines = 0;
     for (lptr = &my_lines[0]; (lptr - my_lines) < MAXLINES; lptr++) {
 	    char temp[BUFSIZ], *s, *d;
 	    int col;
@@ -263,6 +265,7 @@ int main(int argc, char *argv[])
 #endif
 	    }
 	    *lptr = ch_dup(temp);
+	    num_lines++;
     }
     (void) fclose(fp);
     length = lptr - my_lines;
@@ -506,14 +509,16 @@ static void show_all(const char *tag)
 	    printw("%3ld:", (long) (lptr + i - my_lines));
 	    clrtoeol();
 	    if ((s = lptr[i - 1]) != 0) {
-	        int len = ch_len(s);
-	        if (len > shift) {
+		    if (i < num_lines) {
+			    int len = ch_len(s);
+			    if (len > shift) {
 #ifdef HAVE_WCHAR
-		        add_wchstr(s + shift);
+				    add_wchstr(s + shift);
 #else
-		        addchstr(s + shift);
+				    addchstr(s + shift);
 #endif
-	        }
+			    }
+		    }
 	    }
     }
     setscrreg(1, LINES - 1);
