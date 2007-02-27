@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.16 2005/12/11 12:22:48 christos Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.16.26.1 2007/02/27 16:53:55 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.16 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.16.26.1 2007/02/27 16:53:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,7 @@ ofisa_intr_get(phandle, descp, ndescs)
 #ifdef DIAGNOSTIC
 		default:
 			/* Dunno what to do, so fail. */
-			printf("ofisa_intr_get: unknown intrerrupt type %d\n",
+			printf("ofisa_intr_get: unknown interrupt type %d\n",
 			    of_decode_int(&bp[4]));
 			rv = -1;
 			goto out;

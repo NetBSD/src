@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.94 2007/02/09 21:55:29 ad Exp $	*/
+/*	$NetBSD: usb.c,v 1.94.2.1 2007/02/27 16:54:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.94 2007/02/09 21:55:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.94.2.1 2007/02/27 16:54:08 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -175,7 +175,6 @@ USB_ATTACH(usb)
 
 	DPRINTF(("usbd_attach\n"));
 
-	usbd_init();
 	sc->sc_bus = aux;
 	sc->sc_bus->usbctl = sc;
 	sc->sc_port.power = USB_MAX_POWER;
@@ -937,8 +936,6 @@ usb_detach(device_ptr_t self, int flags)
 			       USBDEVNAME(sc->sc_dev));
 		DPRINTF(("usb_detach: event thread dead\n"));
 	}
-
-	usbd_finish();
 
 #ifdef USB_USE_SOFTINTR
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.166 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.166.2.1 2007/02/27 16:55:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -391,6 +391,23 @@ struct clockinfo {
 #define	KERN_PROC_TTY_NODEV	NODEV		/* no controlling tty */
 #define	KERN_PROC_TTY_REVOKE	((dev_t)-2)	/* revoked tty */
 
+struct ki_pcred {
+	void		*p_pad;
+	uid_t		p_ruid;		/* Real user id */
+	uid_t		p_svuid;	/* Saved effective user id */
+	gid_t		p_rgid;		/* Real group id */
+	gid_t		p_svgid;	/* Saved effective group id */
+	int		p_refcnt;	/* Number of references */
+};
+
+struct ki_ucred {
+	uint32_t	cr_ref;			/* reference count */
+	uid_t		cr_uid;			/* effective user id */
+	gid_t		cr_gid;			/* effective group id */
+	uint32_t	cr_ngroups;		/* number of groups */
+	gid_t		cr_groups[NGROUPS];	/* groups */
+};
+
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
  */
@@ -399,8 +416,8 @@ struct kinfo_proc {
 	struct	eproc {
 		struct	proc *e_paddr;		/* address of proc */
 		struct	session *e_sess;	/* session pointer */
-		struct	pcred e_pcred;		/* process credentials */
-		struct	ucred e_ucred;		/* current credentials */
+		struct	ki_pcred e_pcred;	/* process credentials */
+		struct	ki_ucred e_ucred;	/* current credentials */
 		struct	vmspace e_vm;		/* address space */
 		pid_t	e_ppid;			/* parent process id */
 		pid_t	e_pgid;			/* process group id */
@@ -568,42 +585,47 @@ struct kinfo_proc2 {
 
 /*
  * Compat flags for kinfo_proc, kinfo_proc2.  Not guarenteed to be stable.
+ * Some of them used to be shared with LWP flags.
  * XXXAD Trim to the minimum necessary...
  */
 
-#define	KP_ADVLOCK		0x00000001
-#define	KP_CONTROLT		0x00000002
-#define	KP_INMEM		0x00000004
-#define	KP_NOCLDSTOP		0x00000008
-#define	KP_PPWAIT		0x00000010
-#define	KP_PROFIL		0x00000020
-#define	KP_SELECT		0x00000040
-#define	KP_SINTR		0x00000080
-#define	KP_SUGID		0x00000100
-#define	KP_SYSTEM		0x00000200
-#define	KP_SA			0x00000400
-#define	KP_TRACED		0x00000800
-#define	KP_WAITED		0x00001000
-#define	KP_WEXIT		0x00002000
-#define	KP_EXEC			0x00004000
-#define	KP_OWEUPC		0x00008000
-#define	KP_FSTRACE		0x00010000
-#define	KP_NOCLDWAIT		0x00020000
-#define	KP_32			0x00040000
-#define	KP_CLDSIGIGN		0x00080000
-#define	KP_SYSTRACE		0x00200000
-#define	KP_CHTRACED		0x00400000
-#define	KP_STOPFORK		0x00800000
-#define	KP_STOPEXEC		0x01000000
-#define	KP_STOPEXIT		0x02000000
-#define	KP_SYSCALL		0x04000000
-#define	KP_PAXMPROTECT		0x08000000
-#define	KP_PAXNOMPROTECT	0x10000000
+#define	P_ADVLOCK		0x00000001
+#define	P_CONTROLT		0x00000002
+#define	L_INMEM			0x00000004
+#define	P_INMEM		     /* 0x00000004 */	L_INMEM
+#define	P_NOCLDSTOP		0x00000008
+#define	P_PPWAIT		0x00000010
+#define	P_PROFIL		0x00000020
+#define	L_SELECT		0x00000040
+#define	P_SELECT	     /* 0x00000040 */	L_SELECT
+#define	L_SINTR			0x00000080
+#define	P_SINTR		     /* 0x00000080 */	L_SINTR
+#define	P_SUGID			0x00000100
+#define	P_SYSTEM		0x00000200
+#define	L_SA			0x00000400
+#define	P_SA		     /* 0x00000400 */	L_SA
+#define	P_TRACED		0x00000800
+#define	P_WAITED		0x00001000
+#define	P_WEXIT			0x00002000
+#define	P_EXEC			0x00004000
+#define	P_OWEUPC		0x00008000
+#define	P_FSTRACE		0x00010000
+#define	P_NOCLDWAIT		0x00020000
+#define	P_32			0x00040000
+#define	P_CLDSIGIGN		0x00080000
+#define	P_SYSTRACE		0x00200000
+#define	P_CHTRACED		0x00400000
+#define	P_STOPFORK		0x00800000
+#define	P_STOPEXEC		0x01000000
+#define	P_STOPEXIT		0x02000000
+#define	P_SYSCALL		0x04000000
+#define	P_PAXMPROTECT		0x08000000
+#define	P_PAXNOMPROTECT		0x10000000
 
 /*
  * LWP compat flags.
  */
-#define	KL_DETACHED		0x00800000
+#define	L_DETACHED		0x00800000
 
 /*
  * KERN_LWP structure. See notes on KERN_PROC2 about adding elements.

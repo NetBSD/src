@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.7 2007/01/05 15:43:51 elad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.7.2.1 2007/02/27 16:53:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.7 2007/01/05 15:43:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.7.2.1 2007/02/27 16:53:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -65,6 +65,45 @@ freebsd_sys_yield(struct lwp *l, void *v,
 	return 0;
 }
 
+/*
+ * Verify access to the target process.
+ * If we did any work this would need to return a reference to the
+ * proc and have the mutex still held.
+ * But we don't do anything, so it is ok.
+ */
+static int
+check_proc_access(struct lwp *l, pid_t pid)
+{
+	struct proc *p;
+	kauth_cred_t pc;
+
+	if (pid == 0)
+		return 0;
+	if (pid < 0)
+		return EINVAL;
+
+	rw_enter(&proclist_lock, RW_READER);
+
+	p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	if (p == NULL)
+		return ESRCH;
+
+	pc = l->l_cred;
+
+	if (!(l->l_proc == p ||
+	    kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
+	    kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
+	    kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
+	    kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred))) {
+		rw_exit(&proclist_lock);
+		if (kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) != 0)
+		    return EPERM;
+	} else
+		rw_exit(&proclist_lock);
+
+	return 0;
+}
+
 int
 freebsd_sys_sched_setparam(struct lwp *l, void *v, register_t *retval)
 {
@@ -74,31 +113,20 @@ freebsd_sys_sched_setparam(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	int error;
 	struct freebsd_sched_param lp;
-	struct proc *p;
 
 	/*
 	 * We only check for valid parameters and return afterwards.
 	 */
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
+	if (SCARG(uap, sp) == NULL)
 		return EINVAL;
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		return error;
 
-	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
-
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
-			return EPERM;
-	}
+	error = check_proc_access(l, SCARG(uap, pid));
+	if (error)
+		return error;
 
 	return 0;
 }
@@ -110,29 +138,19 @@ freebsd_sys_sched_getparam(struct lwp *l, void *v, register_t *retval)
 		syscallarg(pid_t) pid;
 		syscallarg(struct freebsd_sched_param *) sp;
 	} */ *uap = v;
-	struct proc *p;
 	struct freebsd_sched_param lp;
+	int error;
 
 	/*
 	 * We only check for valid parameters and return a dummy
 	 * priority afterwards.
 	 */
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
+	if (SCARG(uap, sp) == NULL)
 		return EINVAL;
 
-	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
-
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
-			return EPERM;
-	}
+	error = check_proc_access(l, SCARG(uap, pid));
+	if (error)
+		return error;
 
 	lp.sched_priority = 0;
 	return copyout(&lp, SCARG(uap, sp), sizeof(lp));
@@ -149,31 +167,20 @@ freebsd_sys_sched_setscheduler(struct lwp *l, void *v,
 	} */ *uap = v;
 	int error;
 	struct freebsd_sched_param lp;
-	struct proc *p;
 
 	/*
 	 * We only check for valid parameters and return afterwards.
 	 */
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
+	if (SCARG(uap, sp) == NULL)
 		return EINVAL;
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		return error;
 
-	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
-
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
-			return EPERM;
-	}
+	error = check_proc_access(l, SCARG(uap, pid));
+	if (error)
+		return error;
 
 	/*
 	 * We can't emulate anything put the default scheduling policy.
@@ -193,26 +200,17 @@ freebsd_sys_sched_getscheduler(l, v, retval)
 	struct freebsd_sys_sched_getscheduler_args /* {
 		syscallarg(pid_t) pid;
 	} */ *uap = v;
-	struct proc *p;
+	int error;
 
 	*retval = -1;
 
 	/*
 	 * We only check for valid parameters and return afterwards.
 	 */
-	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
 
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
-			return EPERM;
-	}
+	error = check_proc_access(l, SCARG(uap, pid));
+	if (error)
+		return error;
 
 	/*
 	 * We can't emulate anything put the default scheduling policy.

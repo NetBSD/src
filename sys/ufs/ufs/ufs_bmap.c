@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.42 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.42.2.1 2007/02/27 16:55:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.42 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.42.2.1 2007/02/27 16:55:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,13 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_bmap.c,v 1.42 2007/01/29 15:42:50 hannken Exp $"
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_bswap.h>
 
-static boolean_t
+static bool
 ufs_issequential(const struct ufsmount *ump, daddr_t daddr0, daddr_t daddr1)
 {
 
 	/* for ufs, blocks in a hole is not 'contiguous'. */
 	if (daddr0 == 0)
-		return FALSE;
+		return false;
 
 	return (daddr0 + ump->um_seqinc == daddr1);
 }

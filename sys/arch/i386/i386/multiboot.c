@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.9 2006/11/06 13:35:35 jmmv Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.9.4.1 2007/02/27 16:51:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.9 2006/11/06 13:35:35 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.9.4.1 2007/02/27 16:51:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ extern int *		esym;
 static char			Multiboot_Cmdline[255];
 static uint8_t			Multiboot_Drives[255];
 static struct multiboot_info	Multiboot_Info;
-static boolean_t		Multiboot_Loader = FALSE;
+static bool			Multiboot_Loader = FALSE;
 static char			Multiboot_Loader_Name[255];
 static uint8_t			Multiboot_Mmap[1024];
 static struct multiboot_symbols	Multiboot_Symbols;
@@ -140,7 +140,7 @@ multiboot_pre_reloc(struct multiboot_info *mi)
 	struct multiboot_info *midest =
 	    RELOC(struct multiboot_info *, &Multiboot_Info);
 
-	*RELOC(boolean_t *, &Multiboot_Loader) = TRUE;
+	*RELOC(bool *, &Multiboot_Loader) = TRUE;
 	memcpy(midest, mi, sizeof(Multiboot_Info));
 
 	if (mi->mi_flags & MULTIBOOT_INFO_HAS_CMDLINE) {
@@ -437,7 +437,7 @@ setup_biosgeom(struct multiboot_info *mi)
 static void
 setup_bootdisk(struct multiboot_info *mi)
 {
-	boolean_t found;
+	bool found;
 	struct btinfo_rootdevice bi;
 
 	found = FALSE;
@@ -535,7 +535,7 @@ static void
 setup_console(struct multiboot_info *mi)
 {
 	struct btinfo_console bi;
-	boolean_t found;
+	bool found;
 
 	found = FALSE;
 
@@ -680,7 +680,7 @@ setup_memory(struct multiboot_info *mi)
  * Sets up the initial kernel symbol table.  Returns true if this was
  * passed in by Multiboot; false otherwise.
  */
-boolean_t
+bool
 multiboot_ksyms_init(void)
 {
 	struct multiboot_info *mi = &Multiboot_Info;

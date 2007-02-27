@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.21 2006/09/23 22:47:11 aymeric Exp $	*/
+/*	$NetBSD: advnops.c,v 1.21.4.1 2007/02/27 16:54:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.21 2006/09/23 22:47:11 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.21.4.1 2007/02/27 16:54:11 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -891,6 +891,7 @@ adosfs_reclaim(v)
 		free(ap->tab, M_ANODE);
 	else if (vp->v_type == VLNK && ap->slinkto)
 		free(ap->slinkto, M_ANODE);
+	genfs_node_destroy(vp);
 	pool_put(&adosfs_node_pool, ap);
 	vp->v_data = NULL;
 	return(0);

@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.3 2006/12/15 21:18:55 joerg Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.3.6.1 2007/02/27 16:55:02 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -99,11 +99,13 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 	struct sockaddr_in6 *dst, *sin6_src, *sin6_dst;
+	const struct sockaddr_in6 *cdst;
 	struct ip6_hdr *ip6;    /* capsule IP header, host byte ordered */
 	struct etherip_header eiphdr;
 	int proto, error;
 
 	dst = (struct sockaddr_in6 *)&sc->sc_ro.ro_dst;
+	cdst = satocsin6(rtcache_getdst(&sc->sc_ro));
 	sin6_src = (struct sockaddr_in6 *)sc->sc_src;
 	sin6_dst = (struct sockaddr_in6 *)sc->sc_dst;
 
@@ -158,8 +160,8 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 		return ENETUNREACH;
 	}
 
-	if (dst->sin6_family != sin6_dst->sin6_family ||
-	    !IN6_ARE_ADDR_EQUAL(&dst->sin6_addr, &sin6_dst->sin6_addr))
+	if (cdst->sin6_family != sin6_dst->sin6_family ||
+	    !IN6_ARE_ADDR_EQUAL(&cdst->sin6_addr, &sin6_dst->sin6_addr))
 		rtcache_free((struct route *)&sc->sc_ro6);
 	else
 		rtcache_check((struct route *)&sc->sc_ro6);

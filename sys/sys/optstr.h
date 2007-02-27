@@ -1,4 +1,4 @@
-/*	$NetBSD: optstr.h,v 1.1 2006/02/03 11:04:47 jmmv Exp $	*/
+/*	$NetBSD: optstr.h,v 1.1.28.1 2007/02/27 16:55:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -42,6 +42,6 @@
 /*
  * Prototypes for functions defined in sys/kern/subr_optstr.c.
  */
-boolean_t optstr_get(const char *, const char *, char *, size_t);
+bool optstr_get(const char *, const char *, char *, size_t);
 
 #endif /* !defined(_SYS_OPTSTR_H_) */

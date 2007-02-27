@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.3 2006/12/25 18:39:48 wiz Exp $ */
+/* $NetBSD: arspi.c,v 1.3.4.1 2007/02/27 16:52:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.3 2006/12/25 18:39:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.3.4.1 2007/02/27 16:52:01 yamt Exp $");
 
 #include "locators.h"
 
@@ -100,7 +100,7 @@ struct arspi_softc {
 	struct device		sc_dev;
 	struct spi_controller	sc_spi;
 	void			*sc_ih;
-	boolean_t		sc_interrupts;
+	bool			sc_interrupts;
 
 	struct spi_transfer	*sc_transfer;
 	struct spi_chunk	*sc_wchunk;	/* for partial writes */

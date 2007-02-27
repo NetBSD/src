@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.99.2.1 2007/02/20 21:48:47 rmind Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.99.2.2 2007/02/27 16:55:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.99.2.1 2007/02/20 21:48:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.99.2.2 2007/02/27 16:55:26 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -113,10 +113,10 @@ static void uvm_uarea_free(vaddr_t);
  * - used only by /dev/kmem driver (mem.c)
  */
 
-boolean_t
+bool
 uvm_kernacc(caddr_t addr, size_t len, int rw)
 {
-	boolean_t rv;
+	bool rv;
 	vaddr_t saddr, eaddr;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
@@ -155,7 +155,7 @@ uvm_chgkprot(caddr_t addr, size_t len, int rw)
 		/*
 		 * Extract physical address for the page.
 		 */
-		if (pmap_extract(pmap_kernel(), sva, &pa) == FALSE)
+		if (pmap_extract(pmap_kernel(), sva, &pa) == false)
 			panic("chgkprot: invalid page");
 		pmap_enter(pmap_kernel(), sva, pa, prot, PMAP_WIRED);
 	}
@@ -204,10 +204,10 @@ uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
  * - the address space is copied as per parent map's inherit values
  */
 void
-uvm_proc_fork(struct proc *p1, struct proc *p2, boolean_t shared)
+uvm_proc_fork(struct proc *p1, struct proc *p2, bool shared)
 {
 
-	if (shared == TRUE) {
+	if (shared == true) {
 		p2->p_vmspace = NULL;
 		uvmspace_share(p1, p2);
 	} else {
@@ -248,7 +248,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Note the kernel stack gets read/write accesses right off the bat.
 	 */
 
-	if ((l2->l_flag & L_INMEM) == 0) {
+	if ((l2->l_flag & LW_INMEM) == 0) {
 		vaddr_t uarea = USER_TO_UAREA(l2->l_addr);
 
 		error = uvm_fault_wire(kernel_map, uarea,
@@ -259,7 +259,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		/* Tell the pmap this is a u-area mapping */
 		PMAP_UAREA(uarea);
 #endif
-		l2->l_flag |= L_INMEM;
+		l2->l_flag |= LW_INMEM;
 	}
 
 #ifdef KSTACK_CHECK_MAGIC
@@ -283,7 +283,7 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
  * uvm_uarea_alloc: allocate a u-area
  */
 
-boolean_t
+bool
 uvm_uarea_alloc(vaddr_t *uaddrp)
 {
 	vaddr_t uaddr;
@@ -299,12 +299,12 @@ uvm_uarea_alloc(vaddr_t *uaddrp)
 		uvm_nuarea--;
 		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uaddr;
-		return TRUE;
+		return true;
 	} else {
 		simple_unlock(&uvm_uareas_slock);
 		*uaddrp = uvm_km_alloc(kernel_map, USPACE, USPACE_ALIGN,
 		    UVM_KMF_PAGEABLE);
-		return FALSE;
+		return false;
 	}
 }
 
@@ -328,7 +328,7 @@ uvm_uarea_free(vaddr_t uaddr)
  */
 
 void
-uvm_uarea_drain(boolean_t empty)
+uvm_uarea_drain(bool empty)
 {
 	int leave = empty ? 0 : UVM_NUAREA_MAX;
 	vaddr_t uaddr;
@@ -381,7 +381,7 @@ uvm_lwp_exit(struct lwp *l)
 {
 	vaddr_t va = USER_TO_UAREA(l->l_addr);
 
-	l->l_flag &= ~L_INMEM;
+	l->l_flag &= ~LW_INMEM;
 	uvm_uarea_free(va);
 	l->l_addr = NULL;
 }
@@ -444,7 +444,7 @@ uvm_swapin(struct lwp *l)
 	lwp_lock(l);
 	if (l->l_stat == LSRUN)
 		sched_enqueue(l);
-	l->l_flag |= L_INMEM;
+	l->l_flag |= LW_INMEM;
 	l->l_swtime = 0;
 	lwp_unlock(l);
 	++uvmexp.swapins;
@@ -460,8 +460,11 @@ void
 uvm_kick_scheduler(void)
 {
 
+	if (uvm.swap_running == false)
+		return;
+
 	mutex_enter(&uvm.scheduler_mutex);
-	uvm.scheduler_kicked = TRUE;
+	uvm.scheduler_kicked = true;
 	cv_signal(&uvm.scheduler_cv);
 	mutex_exit(&uvm.scheduler_mutex);
 }
@@ -499,7 +502,7 @@ uvm_scheduler(void)
 		mutex_enter(&proclist_mutex);
 		LIST_FOREACH(l, &alllwp, l_list) {
 			/* is it a runnable swapped out process? */
-			if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
+			if (l->l_stat == LSRUN && !(l->l_flag & LW_INMEM)) {
 				pri = l->l_swtime + l->l_slptime -
 				    (l->l_proc->p_nice - NZERO) * 8;
 				if (pri > ppri) {   /* higher priority? */
@@ -519,10 +522,10 @@ uvm_scheduler(void)
 		 */
 		if ((l = ll) == NULL) {
 			mutex_enter(&uvm.scheduler_mutex);
-			if (uvm.scheduler_kicked == FALSE)
+			if (uvm.scheduler_kicked == false)
 				cv_wait(&uvm.scheduler_cv,
 				    &uvm.scheduler_mutex);
-			uvm.scheduler_kicked = FALSE;
+			uvm.scheduler_kicked = false;
 			mutex_exit(&uvm.scheduler_mutex);
 			continue;
 		}
@@ -569,8 +572,8 @@ uvm_scheduler(void)
  */
 
 #define	swappable(l)							\
-	(((l)->l_flag & (L_INMEM)) &&					\
-	 ((((l)->l_flag) & (L_SYSTEM | L_WEXIT)) == 0) &&		\
+	(((l)->l_flag & (LW_INMEM)) &&					\
+	 ((((l)->l_flag) & (LW_SYSTEM | LW_WEXIT)) == 0) &&		\
 	 (l)->l_holdcnt == 0)
 
 /*
@@ -695,7 +698,7 @@ uvm_swapout(struct lwp *l)
 		lwp_unlock(l);
 		return;
 	}
-	l->l_flag &= ~L_INMEM;
+	l->l_flag &= ~LW_INMEM;
 	l->l_swtime = 0;
 	if (l->l_stat == LSRUN)
 		sched_dequeue(l);

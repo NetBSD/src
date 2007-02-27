@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2006/02/16 20:17:13 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9.20.1 2007/02/27 16:48:55 yamt Exp $	*/
 
 /*
  *
@@ -422,14 +422,14 @@ extern long nkptp[], nbpd[], nkptpmax[];
 
 void		pmap_activate __P((struct lwp *));
 void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_clear_attrs __P((struct vm_page *, unsigned));
+bool		pmap_clear_attrs __P((struct vm_page *, unsigned));
 void		pmap_deactivate __P((struct lwp *));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
 static void	pmap_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
-boolean_t	pmap_test_attrs __P((struct vm_page *, unsigned));
+bool		pmap_test_attrs __P((struct vm_page *, unsigned));
 static void	pmap_update_pg __P((vaddr_t));
 static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
@@ -448,7 +448,7 @@ void	pmap_prealloc_lowmem_ptps __P((void));
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t	pmap_pageidlezero __P((paddr_t));
+bool		pmap_pageidlezero __P((paddr_t));
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.92 2006/08/28 01:46:10 christos Exp $ */
+/* $NetBSD: device.h,v 1.92.8.1 2007/02/27 16:55:14 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -364,12 +364,12 @@ cfattach_t	device_cfattach(device_t);
 int		device_unit(device_t);
 const char	*device_xname(device_t);
 device_t	device_parent(device_t);
-boolean_t	device_is_active(device_t);
+bool		device_is_active(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
 prop_dictionary_t device_properties(device_t);
 
-boolean_t	device_is_a(device_t, const char *);
+bool		device_is_a(device_t, const char *);
 
 #endif /* _KERNEL */
 

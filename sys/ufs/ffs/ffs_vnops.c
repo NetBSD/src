@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.85 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.85.2.1 2007/02/27 16:55:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.85 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.85.2.1 2007/02/27 16:55:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,6 +509,7 @@ ffs_reclaim(void *v)
 	 * XXX MFS ends up here, too, to free an inode.  Should we create
 	 * XXX a separate pool for MFS inodes?
 	 */
+	genfs_node_destroy(vp);
 	pool_put(&ffs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	fstrans_done(mp);

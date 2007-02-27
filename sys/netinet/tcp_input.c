@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.260 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.260.2.1 2007/02/27 16:54:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.260 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.260.2.1 2007/02/27 16:54:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1977,7 +1977,7 @@ after_listen:
 	}
 
 	todrop = tp->rcv_nxt - th->th_seq;
-	dupseg = FALSE;
+	dupseg = false;
 	if (todrop > 0) {
 		if (tiflags & TH_SYN) {
 			tiflags &= ~TH_SYN;
@@ -2006,7 +2006,7 @@ after_listen:
 			 */
 			tp->t_flags |= TF_ACKNOW;
 			todrop = tlen;
-			dupseg = TRUE;
+			dupseg = true;
 			tcpstat.tcps_rcvdupbyte += todrop;
 			tcpstat.tcps_rcvduppack++;
 		} else if ((tiflags & TH_RST) &&

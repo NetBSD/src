@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.3 2007/02/20 21:48:46 rmind Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.4 2007/02/27 16:55:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,14 +46,13 @@
 #include <sys/condvar.h>
 #include <sys/signalvar.h>
 #include <sys/specificdata.h>
+#include <sys/syncobj.h>
 
 #if defined(_KERNEL)
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
-
-typedef volatile const void *wchan_t;
 
 /*
  * Lightweight process.  Field markings and the corresponding locks: 
@@ -83,8 +82,10 @@ struct	lwp {
 	u_int		l_swtime;	/* l: time swapped in or out */
 	int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
-	u_char		l_priority;	/* l: process priority */
-	u_char		l_usrpri;	/* l: user-priority */
+	pri_t		l_priority;	/* l: process priority */
+	pri_t		l_usrpri;	/* l: user-priority */
+	pri_t		l_inheritedprio;/* l: inherited priority */
+	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	long		l_nvcsw;	/* l: voluntary context switches */
 	long		l_nivcsw;	/* l: involuntary context switches */
 
@@ -136,6 +137,10 @@ struct	lwp {
 	u_short		l_locks;	/* !: lockmgr count of held locks */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
+
+	/* These are only used by 'options SYSCALL_TIMES' */
+	uint32_t        l_syscall_time; /* !: time epoch for current syscall */
+	uint64_t        *l_syscall_counter; /* !: counter for current process */
 };
 
 #if !defined(USER_TO_UAREA)
@@ -159,18 +164,18 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #endif
 
 /* These flags are kept in l_flag. */
-#define	L_IDLE		0x00000001 /* Idle lwp. */
-#define	L_INMEM		0x00000004 /* Loaded into memory. */
-#define	L_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
-#define	L_SINTR		0x00000080 /* Sleep is interruptible. */
-#define	L_SYSTEM	0x00000200 /* Kernel thread */
-#define	L_WSUSPEND	0x00020000 /* Suspend before return to user */
-#define	L_WCORE		0x00080000 /* Stop for core dump on return to user */
-#define	L_WEXIT		0x00100000 /* Exit before return to user */
-#define	L_PENDSIG	0x01000000 /* Pending signal for us */
-#define	L_CANCELLED	0x02000000 /* tsleep should not sleep */
-#define	L_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
-#define	L_WREBOOT	0x08000000 /* System is rebooting, please suspend */
+#define	LW_IDLE		0x00000001 /* Idle lwp. */
+#define	LW_INMEM	0x00000004 /* Loaded into memory. */
+#define	LW_SELECT	0x00000040 /* Selecting; wakeup/waiting danger. */
+#define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
+#define	LW_SYSTEM	0x00000200 /* Kernel thread */
+#define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
+#define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
+#define	LW_WEXIT	0x00100000 /* Exit before return to user */
+#define	LW_PENDSIG	0x01000000 /* Pending signal for us */
+#define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
+#define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
+#define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -186,7 +191,8 @@ extern struct lwp lwp0;			/* LWP for proc0 */
  * Mask indicating that there is "exceptional" work to be done on return to
  * user.
  */
-#define	L_USERRET (L_WEXIT|L_PENDSIG|L_WREBOOT|L_WSUSPEND|L_WCORE|L_WUSERRET)
+#define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
+		    LW_WUSERRET)
 
 /*
  * Status values.
@@ -201,13 +207,15 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LSSLEEP		3	/* Sleeping on an address. */
 #define	LSSTOP		4	/* Process debugging or suspension. */
 #define	LSZOMB		5	/* Awaiting collection by parent. */
+/* unused, for source compatibility with NetBSD 4.0 and earlier. */
+#define	LSDEAD		6	/* Process is almost a zombie. */
 #define	LSONPROC	7	/* Process is currently on a CPU. */
 #define	LSSUSPENDED	8	/* Not running, not signalable. */
 
 #ifdef _KERNEL
 #define	PHOLD(l)							\
 do {									\
-	if ((l)->l_holdcnt++ == 0 && ((l)->l_flag & L_INMEM) == 0)	\
+	if ((l)->l_holdcnt++ == 0 && ((l)->l_flag & LW_INMEM) == 0)	\
 		uvm_swapin(l);						\
 } while (/* CONSTCOND */ 0)
 #define	PRELE(l)	(--(l)->l_holdcnt)
@@ -225,6 +233,7 @@ void	lwp_setlock(struct lwp *, kmutex_t *);
 void	lwp_unlock_to(struct lwp *, kmutex_t *);
 void	lwp_lock_retry(struct lwp *, kmutex_t *);
 void	lwp_relock(struct lwp *, kmutex_t *);
+int	lwp_trylock(struct lwp *);
 void	lwp_addref(struct lwp *);
 void	lwp_delref(struct lwp *);
 void	lwp_drainrefs(struct lwp *);
@@ -293,11 +302,25 @@ lwp_unlock(struct lwp *l)
 }
 
 static inline void
-lwp_changepri(struct lwp *l, int pri)
+lwp_changepri(struct lwp *l, pri_t pri)
 {
 	LOCK_ASSERT(mutex_owned(l->l_mutex));
 
+	if (l->l_priority == pri)
+		return;
+
 	(*l->l_syncobj->sobj_changepri)(l, pri);
+}
+
+static inline void
+lwp_lendpri(struct lwp *l, pri_t pri)
+{
+	LOCK_ASSERT(mutex_owned(l->l_mutex));
+
+	if (l->l_inheritedprio == pri)
+		return;
+
+	(*l->l_syncobj->sobj_lendpri)(l, pri);
 }
 
 static inline void
@@ -308,7 +331,14 @@ lwp_unsleep(struct lwp *l)
 	(*l->l_syncobj->sobj_unsleep)(l);
 }
 
-int newlwp(struct lwp *, struct proc *, vaddr_t, int, int,
+static inline int
+lwp_eprio(struct lwp *l)
+{
+
+	return MIN(l->l_inheritedprio, l->l_priority);
+}
+
+int newlwp(struct lwp *, struct proc *, vaddr_t, bool, int,
     void *, size_t, void (*)(void *), void *, struct lwp **);
 
 /*

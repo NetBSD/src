@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.32 2007/02/10 10:12:34 ad Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.32.2.1 2007/02/27 16:53:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.32 2007/02/10 10:12:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_sig.c,v 1.32.2.1 2007/02/27 16:53:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ hpux_sys_sigprocmask(l, v, retval)
 			error = EINVAL;
 			break;
 		}
-		l->l_flag |= L_PENDSIG;
+		l->l_flag |= LW_PENDSIG;
 		mutex_exit(&l->l_proc->p_smutex);
 	}
 	return (error);

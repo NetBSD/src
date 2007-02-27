@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.142 2007/01/24 12:36:56 drochner Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.142.2.1 2007/02/27 16:54:09 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.142 2007/01/24 12:36:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.142.2.1 2007/02/27 16:54:09 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_usbverbose.h"
@@ -171,16 +171,7 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, UDESC_STRING, sindex);
 	USETW(req.wIndex, langid);
-	USETW(req.wLength, 2);	/* only size byte first */
-	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
-		&actlen, USBD_DEFAULT_TIMEOUT);
-	if (err)
-		return (err);
-
-	if (actlen < 2)
-		return (USBD_SHORT_XFER);
-
-	USETW(req.wLength, sdesc->bLength);	/* the whole string */
+	USETW(req.wLength, sizeof(usb_string_descriptor_t));
 	err = usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
 		&actlen, USBD_DEFAULT_TIMEOUT);
 	if (err)

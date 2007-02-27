@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.50 2006/10/05 14:48:32 chs Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.50.4.1 2007/02/27 16:54:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.50 2006/10/05 14:48:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.50.4.1 2007/02/27 16:54:16 yamt Exp $");
 
 #include "opt_pax.h"
 
@@ -283,7 +283,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 		error = uvm_map_protect(&p->p_vmspace->vm_map,
 				trunc_page(cmd->ev_addr),
 				round_page(cmd->ev_addr + cmd->ev_len),
-				maxprot, TRUE);
+				maxprot, true);
 		if (error)
 			return (error);
 	}
@@ -292,7 +292,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 		error = uvm_map_protect(&p->p_vmspace->vm_map,
 				trunc_page(cmd->ev_addr),
 				round_page(cmd->ev_addr + cmd->ev_len),
-				prot, FALSE);
+				prot, false);
 		if (error)
 			return (error);
 	}

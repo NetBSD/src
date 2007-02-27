@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.5 2007/02/25 13:57:14 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.6 2007/02/27 16:55:17 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -99,8 +99,6 @@ struct sched_param {
 
 #if defined(_NETBSD_SOURCE)
 
-#include <sys/time.h>
-
 /*
  * CPU states.
  * XXX Not really scheduler state, but no other good place to put
@@ -113,6 +111,10 @@ struct sched_param {
 #define	CP_IDLE		4
 #define	CPUSTATES	5
 
+#if defined(_KERNEL)
+
+#include <sys/time.h>
+
 /*
  * Per-CPU scheduler state.
  */
@@ -121,7 +123,7 @@ struct schedstate_percpu {
 	volatile int spc_flags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
 	uint64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
-	u_char spc_curpriority;		/* usrpri of curproc */
+	pri_t spc_curpriority;		/* usrpri of curproc */
 	int spc_ticks;		        /* ticks until sched_tick() */
 	int spc_pscnt;			/* prof/stat counter */
 	int spc_psdiv;			/* prof/stat divisor */
@@ -132,6 +134,8 @@ struct schedstate_percpu {
 #define	SPCF_SHOULDYIELD	0x0002	/* process should yield the CPU */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
+
+#endif /* defined(_KERNEL) */
 
 /*
  * Flags passed to the Linux-compatible __clone(2) system call.
@@ -176,7 +180,6 @@ void sched_dequeue(struct lwp *);	/* Remove a process from its runqueue */
 
 /* Priority adjustment */
 void sched_nice(struct proc *, int);		/* Recalc priority according to its nice value */
-void sched_changepri(struct lwp *, int);	/* Change priority of a LWP */
 
 /* General helper functions */
 void sched_proc_fork(struct proc *, struct proc *);	/* Inherit scheduling history */
@@ -186,27 +189,12 @@ void sched_setrunnable(struct lwp *);	/* Scheduler-specific actions for setrunna
 
 /* Functions common to all scheduler implementations */
 void sched_wakeup(volatile const void *);
-int sched_kpri(struct lwp *);
+pri_t sched_kpri(struct lwp *);
 
 inline void resched_cpu(struct lwp *, u_char); /* Arrange reschedule */
 void setrunnable(struct lwp *);
 void preempt(void);
 int mi_switch(struct lwp *, struct lwp *);
-
-/*
- * Synchronisation object operations set.
- */
-typedef struct syncobj {
-	u_int	sobj_flag;
-	void	(*sobj_unsleep)(struct lwp *);
-	void	(*sobj_changepri)(struct lwp *, int);
-} syncobj_t;
-
-#define	SOBJ_SLEEPQ_SORTED	0x01
-#define	SOBJ_SLEEPQ_FIFO	0x02
-
-extern syncobj_t	sched_syncobj;
-extern syncobj_t	turnstile_syncobj;
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

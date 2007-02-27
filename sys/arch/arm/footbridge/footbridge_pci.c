@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.12 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.12.26.1 2007/02/27 16:49:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.12 2005/12/11 12:16:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.12.26.1 2007/02/27 16:49:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,8 +179,8 @@ footbridge_pci_decompose_tag(pcv, tag, busp, devicep, functionp)
 	int *busp, *devicep, *functionp;
 {
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_decompose_tag(pcv=%p, tag=0x%08x, bp=%x, dp=%x, fp=%x)\n",
-	    pcv, tag, busp, devicep, functionp);
+	printf("footbridge_pci_decompose_tag(pcv=%p, tag=0x%08x, bp=%p, dp=%p, fp=%p)\n",
+	    pcv, (uint32_t)tag, busp, devicep, functionp);
 #endif
 
 	if (busp != NULL)
@@ -214,7 +214,7 @@ footbridge_pci_conf_read(pcv, tag, reg)
 	data = *((unsigned int *)address);
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_conf_read(pcv=%p tag=0x%08x reg=0x%02x)=0x%08x\n",
-	    pcv, tag, reg, data);
+	    pcv, (uint32_t)tag, reg, data);
 #endif
 	return(data);
 }
@@ -240,7 +240,7 @@ footbridge_pci_conf_write(pcv, tag, reg, data)
 
 #ifdef PCI_DEBUG
 	printf("footbridge_pci_conf_write(pcv=%p tag=0x%08x reg=0x%02x, 0x%08x)\n",
-	    pcv, tag, reg, data);
+	    pcv, (uint32_t)tag, reg, data);
 #endif
 
 	*((unsigned int *)address) = data;
@@ -260,8 +260,8 @@ footbridge_pci_intr_map(pa, ihp)
 	int bus, device, function;
 
 	footbridge_pci_decompose_tag(pcv, intrtag, &bus, &device, &function);
-	printf("footbride_pci_intr_map: pcv=%p, tag=%08lx pin=%d line=%d dev=%d\n",
-	    pcv, intrtag, pin, line, device);
+	printf("footbridge_pci_intr_map: pcv=%p, tag=%08x pin=%d line=%d dev=%d\n",
+	    pcv, (uint32_t)intrtag, pin, line, device);
 #endif
 
 	/*
@@ -399,7 +399,7 @@ footbridge_pci_intr_disestablish(pcv, cookie)
 	void *cookie;
 {
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_disestablish(pcv=%p, cookie=0x%x)\n",
+	printf("footbridge_pci_intr_disestablish(pcv=%p, cookie=0x%p)\n",
 	    pcv, cookie);
 #endif
 	/* XXXX Need to free the string */

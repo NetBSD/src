@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.23 2005/12/11 12:21:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.23.26.1 2007/02/27 16:53:52 yamt Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -76,7 +76,7 @@ struct cfdriver daic_cd = {
 #endif
 
 /* local function prototypes */
-static char * cardtypename(int cardtype);
+static const char * cardtypename(int cardtype);
 static int daic_download(void *, int portcount, struct isdn_dr_prot *data);
 static int daic_diagnostic(void *, struct isdn_diagnostic_request *req);
 static void daic_connect_request(struct call_desc *cd);
@@ -102,11 +102,11 @@ static void daic_dump_request(struct daic_softc *sc, int port, u_int req, u_int 
 #endif
 
 /* static data */
-static char *cardnames[] = {
+static const char * const cardnames[] = {
 	"S", "SX", "SCOM", "QUADRO"
 };
 
-static char *err_codes[DAIC_RC_ERRMASK+1] = {
+static const char * const err_codes[DAIC_RC_ERRMASK+1] = {
 	"NO ERROR",
 	"UNKNOWN COMMAND",
 	"WRONG COMMAND",
@@ -139,7 +139,7 @@ static u_int8_t parm_global_assign[] = {
 /*---------------------------------------------------------------------------*
  *	Return the name of a card with given cardtype
  *---------------------------------------------------------------------------*/
-static char *
+static const char *
 cardtypename(cardtype)
 	int cardtype;
 {
@@ -575,7 +575,7 @@ daic_diagnostic(token, req)
 	int s, err = 0;
 
 	/* validate parameters */
-	if (req->cmd < 0 || req->cmd > DAIC_DIAG_MAXCMD) {
+	if (req->cmd > DAIC_DIAG_MAXCMD) {
 		printf("%s: daic_diagnostic: illegal cmd %d\n",
 			sc->sc_dev.dv_xname, req->cmd);
 		return EIO;

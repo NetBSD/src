@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.164 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.164.2.1 2007/02/27 16:52:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,7 +167,7 @@ LEAF(mips_idle)
 	nop
 
 	/* Try to zero some free pages. */
-	lw	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
+	lbu	t0, _C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO
 	nop
 	beq	t0, zero, 1f
 	nop

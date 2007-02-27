@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.24 2007/02/09 21:55:01 ad Exp $ */
+/* $NetBSD: syscall.c,v 1.24.2.1 2007/02/27 16:48:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24.2.1 2007/02/27 16:48:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	u_int64_t *args, copyargs[10];				/* XXX */
 	u_int hidden, nargs;
 	struct proc *p = l->l_proc;
-	boolean_t needlock;
+	bool needlock;
 
 	LWP_CACHE_CREDS(l, p);
 

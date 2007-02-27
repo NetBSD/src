@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.76 2007/01/19 22:46:21 drochner Exp $	*/
+/*	$NetBSD: usb.h,v 1.76.2.1 2007/02/27 16:54:09 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -183,7 +183,6 @@ typedef struct {
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
-	uByte		bDescriptorSubtype;
 } UPACKED usb_descriptor_t;
 
 typedef struct {
@@ -266,7 +265,7 @@ typedef struct {
 typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
-	uWord		bString[127];
+	uWord		bString[126];
 } UPACKED usb_string_descriptor_t;
 #define USB_MAX_STRING_LEN 128
 #define USB_LANGUAGE_TABLE 0	/* # of the string language id table */

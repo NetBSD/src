@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.28 2007/02/09 21:55:23 ad Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.28.2.1 2007/02/27 16:53:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.28 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.28.2.1 2007/02/27 16:53:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,14 +339,14 @@ osf1_sys_sigprocmask(l, v, retval)
 	case OSF1_SIG_UNBLOCK:
 		*l->l_sigmask &= ~bss;
 		lwp_lock(l);
-		l->l_flag |= L_PENDSIG;
+		l->l_flag |= LW_PENDSIG;
 		lwp_unlock(l);
 		break;
 
 	case OSF1_SIG_SETMASK:
 		*l->l_sigmask = bss & ~sigcantmask;
 		lwp_lock(l);
-		l->l_flag |= L_PENDSIG;
+		l->l_flag |= LW_PENDSIG;
 		lwp_unlock(l);
 		break;
 

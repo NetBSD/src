@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.84 2007/01/07 16:50:02 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.84.2.1 2007/02/27 16:54:07 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.84 2007/01/07 16:50:02 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.84.2.1 2007/02/27 16:54:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,19 +222,6 @@ USB_ATTACH(uhub)
 	dev->hub->hubsoftc = sc;
 	hub->explore = uhub_explore;
 	hub->hubdesc = hubdesc;
-
-	DPRINTFN(1,("usbhub_init_hub: selfpowered=%d, parent=%p, "
-		    "parent->selfpowered=%d\n",
-		 dev->self_powered, dev->powersrc->parent,
-		 dev->powersrc->parent ?
-		 dev->powersrc->parent->self_powered : 0));
-
-	if (!dev->self_powered && dev->powersrc->parent != NULL &&
-	    !dev->powersrc->parent->self_powered) {
-		printf("%s: bus powered hub connected to bus powered hub, "
-		       "ignored\n", USBDEVNAME(sc->sc_dev));
-		goto bad;
-	}
 
 	/* Set up interrupt pipe. */
 	err = usbd_device2interface_handle(dev, 0, &iface);

@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.28 2006/05/28 11:07:04 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.28.12.1 2007/02/27 16:54:55 yamt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -685,7 +685,7 @@ fail:
 
 #ifdef INET6
 void
-encap6_ctlinput(int cmd, struct sockaddr *sa, void *d0)
+encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 {
 	void *d = d0;
 	struct ip6_hdr *ip6;

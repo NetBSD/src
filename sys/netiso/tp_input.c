@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_input.c,v 1.26 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: tp_input.c,v 1.26.8.1 2007/02/27 16:55:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,7 +79,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.26 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_input.c,v 1.26.8.1 2007/02/27 16:55:12 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -450,7 +450,7 @@ again:
 	hdr = mtod(m, struct tpdu *);
 	tpcb = 0;
 	error = errlen = tpdu_len = 0;
-	takes_data = fcc_present = FALSE;
+	takes_data = fcc_present = false;
 	acktime = 2;
 	sref = subseq = 0;
 	fsufxloc = lsufxloc = NULL;
@@ -860,7 +860,7 @@ again:
 			       tpcb, tpcb->tp_flags);
 		}
 #endif
-		takes_data = TRUE;
+		takes_data = true;
 		e.TPDU_ATTR(CR).e_cdt = hdr->tpdu_CRcdt;
 		e.ev_number = CR_TPDU;
 
@@ -1184,7 +1184,7 @@ again:
 				u_int           ylwe;
 				u_short         ysubseq, ycredit;
 
-				fcc_present = TRUE;
+				fcc_present = true;
 				vb_getval(P, u_int, ylwe);
 				vb_getval(P, u_short, ysubseq);
 				vb_getval(P, u_short, ycredit);
@@ -1307,7 +1307,7 @@ again:
 			}
 			e.TPDU_ATTR(CC).e_sref = sref;
 			e.TPDU_ATTR(CC).e_cdt = hdr->tpdu_CCcdt;
-			takes_data = TRUE;
+			takes_data = true;
 			e.ev_number = CC_TPDU;
 			IncStat(ts_CC_rcvd);
 			break;
@@ -1340,7 +1340,7 @@ again:
 			 (1 + (caddr_t) & hdr->tpdu_DRsref - (caddr_t) hdr))
 				e.TPDU_ATTR(DR).e_reason = hdr->tpdu_DRreason;
 			e.TPDU_ATTR(DR).e_sref = (u_short) sref;
-			takes_data = TRUE;
+			takes_data = true;
 			e.ev_number = DR_TPDU;
 			IncStat(ts_DR_rcvd);
 			break;
@@ -1420,7 +1420,7 @@ again:
 			} else {
 				e.TPDU_ATTR(XPD).e_seq = hdr->tpdu_XPDseq;
 			}
-			takes_data = TRUE;
+			takes_data = true;
 			e.ev_number = XPD_TPDU;
 			IncStat(ts_XPD_rcvd);
 			IncPStat(tpcb, tps_XPD_rcvd);
@@ -1465,7 +1465,7 @@ again:
 			}
 			if (e.TPDU_ATTR(DT).e_eot)
 				IncStat(ts_eot_input);
-			takes_data = TRUE;
+			takes_data = true;
 			e.ev_number = DT_TPDU;
 			IncStat(ts_DT_rcvd);
 			IncPStat(tpcb, tps_DT_rcvd);

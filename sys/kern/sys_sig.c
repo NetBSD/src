@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.3 2007/02/10 11:32:22 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.3.2.1 2007/02/27 16:54:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.3 2007/02/10 11:32:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.3.2.1 2007/02/27 16:54:31 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -431,22 +431,22 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 			 * to set SA_NOCLDWAIT.
 			 */
 			if (p->p_pid == 1)
-				p->p_flag &= ~P_NOCLDWAIT;
+				p->p_flag &= ~PK_NOCLDWAIT;
 			else
-				p->p_flag |= P_NOCLDWAIT;
+				p->p_flag |= PK_NOCLDWAIT;
 		} else
-			p->p_flag &= ~P_NOCLDWAIT;
+			p->p_flag &= ~PK_NOCLDWAIT;
 
 		if (nsa->sa_handler == SIG_IGN) {
 			/*
 			 * Paranoia: same as above.
 			 */
 			if (p->p_pid == 1)
-				p->p_flag &= ~P_CLDSIGIGN;
+				p->p_flag &= ~PK_CLDSIGIGN;
 			else
-				p->p_flag |= P_CLDSIGIGN;
+				p->p_flag |= PK_CLDSIGIGN;
 		} else
-			p->p_flag &= ~P_CLDSIGIGN;
+			p->p_flag &= ~PK_CLDSIGIGN;
 	}
 
 	if ((nsa->sa_flags & SA_NODEFER) == 0)
@@ -483,9 +483,11 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * Previously held signals may now have become visible.  Ensure that
 	 * we check for them before returning to userspace.
 	 */
-	lwp_lock(l);
-	l->l_flag |= L_PENDSIG;
-	lwp_unlock(l);
+	if (sigispending(l, 0)) {
+		lwp_lock(l);
+		l->l_flag |= LW_PENDSIG;
+		lwp_unlock(l);
+	}
  out:
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
@@ -521,12 +523,12 @@ sigprocmask1(struct lwp *l, int how, const sigset_t *nss, sigset_t *oss)
 			return (EINVAL);
 		}
 		sigminusset(&sigcantmask, &l->l_sigmask);
-		if (more) {
+		if (more && sigispending(l, 0)) {
 			/*
 			 * Check for pending signals on return to user.
 			 */
 			lwp_lock(l);
-			l->l_flag |= L_PENDSIG;
+			l->l_flag |= LW_PENDSIG;
 			lwp_unlock(l);
 		}
 	}
@@ -568,13 +570,15 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 		sigminusset(&sigcantmask, &l->l_sigmask);
 
 		/* Check for pending signals when sleeping. */
-		lwp_lock(l);
-		l->l_flag |= L_PENDSIG;
-		lwp_unlock(l);
+		if (sigispending(l, 0)) {
+			lwp_lock(l);
+			l->l_flag |= LW_PENDSIG;
+			lwp_unlock(l);
+		}
 		mutex_exit(&p->p_smutex);
 	}
 
-	while (kpause("pause", TRUE, 0, NULL) == 0)
+	while (kpause("pause", true, 0, NULL) == 0)
 		;
 
 	/* always return EINTR rather than ERESTART... */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2007/02/09 21:55:03 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.2.2.1 2007/02/27 16:50:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2007/02/09 21:55:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.1 2007/02/27 16:50:14 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -328,13 +328,13 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, FALSE, NULL);
+				 VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -352,14 +352,14 @@ cpu_startup(void)
 
 	pn = prop_number_create_integer(memsize);
 	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == false)
 		panic("setting mem-size");
 	prop_object_release(pn);
 
 	pn = prop_number_create_integer(cpuspeed);
 	KASSERT(pn != NULL);
 	if (prop_dictionary_set(board_properties, "processor-frequency",
-	    pn) == FALSE)
+	    pn) == false)
 		panic("setting processor-frequency");
 	prop_object_release(pn);
 

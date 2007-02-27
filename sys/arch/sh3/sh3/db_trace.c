@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19.24.1 2007/02/27 16:53:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19 2006/01/21 22:10:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.19.24.1 2007/02/27 16:53:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ const struct db_variable * const db_eregs =
 	db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*print)(const char *, ...))
 {
 	db_addr_t callpc, frame, lastframe;
@@ -158,7 +158,7 @@ db_nextframe(
 		goto out;
 
 	for (i = 0; i < 30; i++) {
-		inst = db_get_value(pc, 2, FALSE);
+		inst = db_get_value(pc, 2, false);
 		pc += 2;
 
 		if (inst == 0x6ef3)	/* mov r15,r14 -- end of prologue */
@@ -190,7 +190,7 @@ db_nextframe(
 			continue;
 		}
 		if ((inst & 0xf000) == 0x9000) {
-			if (db_get_value(pc, 2, FALSE) == 0x3f38) {
+			if (db_get_value(pc, 2, false) == 0x3f38) {
 				/* "mov #n,r3; sub r3,r15" */
 				unsigned int disp = (int)(inst & 0xff);
 				int r3;

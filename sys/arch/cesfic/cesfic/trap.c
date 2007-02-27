@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.2.1 2007/02/27 16:49:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.30.2.1 2007/02/27 16:49:53 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -1038,7 +1038,7 @@ dumpwb(num, s, a, d)
 	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
 	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("               PA ");
-	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == FALSE)
+	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == false)
 		printf("<invalid address>");
 	else
 		printf("%lx, current value %lx", pa, fuword((caddr_t)a));

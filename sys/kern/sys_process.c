@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.120 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.120.2.1 2007/02/27 16:54:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.120 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.120.2.1 2007/02/27 16:54:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		/*
 		 *  (2) it's a system process
 		 */
-		if (t->p_flag & P_SYSTEM) {
+		if (t->p_flag & PK_SYSTEM) {
 			error = EPERM;
 			break;
 		}
@@ -801,7 +801,7 @@ process_validregs(struct lwp *l)
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((l->l_flag & L_SYSTEM) == 0);
+	return ((l->l_flag & LW_SYSTEM) == 0);
 #else
 	return (0);
 #endif
@@ -855,7 +855,7 @@ process_validfpregs(struct lwp *l)
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((l->l_flag & L_SYSTEM) == 0);
+	return ((l->l_flag & LW_SYSTEM) == 0);
 #else
 	return (0);
 #endif
@@ -890,7 +890,7 @@ process_domem(struct lwp *curl /*tracer*/,
 	vm = p->p_vmspace;
 
 	simple_lock(&vm->vm_map.ref_lock);
-	if ((l->l_flag & L_WEXIT) || vm->vm_refcnt < 1)
+	if ((l->l_flag & LW_WEXIT) || vm->vm_refcnt < 1)
 		error = EFAULT;
 	if (error == 0)
 		p->p_vmspace->vm_refcnt++;  /* XXX */

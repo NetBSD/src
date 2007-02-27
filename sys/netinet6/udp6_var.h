@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.20 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.20.10.1 2007/02/27 16:55:06 yamt Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -102,15 +102,15 @@ struct	udp6stat {
 #ifdef _KERNEL
 extern	struct	udp6stat udp6stat;
 
-void	udp6_ctlinput __P((int, struct sockaddr *, void *));
-void	udp6_init __P((void));
-int	udp6_input __P((struct mbuf **, int *, int));
-int	udp6_output __P((struct in6pcb *, struct mbuf *, struct mbuf *,
-	struct mbuf *, struct lwp *));
-int	udp6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
-int	udp6_usrreq __P((struct socket *,
+void	udp6_ctlinput(int, const struct sockaddr *, void *);
+void	udp6_init(void);
+int	udp6_input(struct mbuf **, int *, int);
+int	udp6_output(struct in6pcb *, struct mbuf *, struct mbuf *,
+	struct mbuf *, struct lwp *);
+int	udp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+int	udp6_usrreq(struct socket *,
 			 int, struct mbuf *, struct mbuf *, struct mbuf *,
-			 struct lwp *));
+			 struct lwp *);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_UDP6_VAR_H_ */

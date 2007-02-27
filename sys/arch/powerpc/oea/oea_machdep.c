@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.30 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.30.2.1 2007/02/27 16:52:50 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.30 2007/02/09 21:55:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.30.2.1 2007/02/27 16:52:50 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -724,13 +724,13 @@ oea_startup(const char *model)
 	 * submaps will be allocated after the dead zone.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, FALSE, NULL);
+				 VM_PHYS_SIZE, 0, false, NULL);
 
 #ifndef PMAP_MAP_POOLPAGE
 	/*
@@ -739,7 +739,7 @@ oea_startup(const char *model)
 	 * pool pages.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, FALSE, NULL);
+	    mclbytes*nmbclusters, VM_MAP_INTRSAFE, false, NULL);
 #endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
@@ -791,7 +791,7 @@ kvtop(caddr_t addr)
 	va = trunc_page((vaddr_t)addr);
 	off = (uintptr_t)addr - va;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE) {
+	if (pmap_extract(pmap_kernel(), va, &pa) == false) {
 		/*printf("kvtop: zero page frame (va=0x%x)\n", addr);*/
 		return (paddr_t)addr;
 	}

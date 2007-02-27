@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.25 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.25.4.1 2007/02/27 16:54:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.25 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.25.4.1 2007/02/27 16:54:42 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -69,15 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.25 2006/11/16 01:33:40 christos E
 
 #define senderr(e) { error = (e); goto bad;}
 
-#define SIN(x) ((struct sockaddr_in *)x)
-#define SDL(x) ((struct sockaddr_dl *)x)
+#define SDL(x) ((const struct sockaddr_dl *)x)
 
 #ifndef llc_snap
 #define	llc_snap	llc_un.type_snap
 #endif
 
 static int	hippi_output(struct ifnet *, struct mbuf *,
-			     struct sockaddr *, struct rtentry *);
+			     const struct sockaddr *, struct rtentry *);
 static void	hippi_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -88,7 +87,7 @@ static void	hippi_input(struct ifnet *, struct mbuf *);
  */
 
 static int
-hippi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t htype;
@@ -151,10 +150,10 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef INET
 	case AF_INET:
 		if (rt) {
-			struct sockaddr_dl *sdl =
-				(struct sockaddr_dl *) SDL(rt->rt_gateway);
+			const struct sockaddr_dl *sdl =
+				(const struct sockaddr_dl *)SDL(rt->rt_gateway);
 			if (sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0)
-				bcopy(LLADDR(sdl), &ifield, sizeof(ifield));
+				bcopy(CLLADDR(sdl), &ifield, sizeof(ifield));
 		}
 		if (!ifield)  /* XXX:  bogus check, but helps us get going */
 			senderr(EHOSTUNREACH);
@@ -165,10 +164,10 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef INET6
 	case AF_INET6:
 		if (rt) {
-			struct sockaddr_dl *sdl =
-				(struct sockaddr_dl *) SDL(rt->rt_gateway);
+			const struct sockaddr_dl *sdl =
+				(const struct sockaddr_dl *)SDL(rt->rt_gateway);
 			if (sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0)
-				bcopy(LLADDR(sdl), &ifield, sizeof(ifield));
+				bcopy(CLLADDR(sdl), &ifield, sizeof(ifield));
 		}
 		if (!ifield)  /* XXX:  bogus check, but helps us get going */
 			senderr(EHOSTUNREACH);

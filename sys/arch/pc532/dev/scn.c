@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.76 2006/10/01 20:31:50 elad Exp $ */
+/*	$NetBSD: scn.c,v 1.76.4.1 2007/02/27 16:52:15 yamt Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.76 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.76.4.1 2007/02/27 16:52:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -801,7 +801,7 @@ scnattach(struct device *parent, struct device *self, void *aux)
 	enum scntype scntype = SCNUNK;
 	const char *duart_type = "Unknown";
 	char *intrname;
-	boolean_t console, first;
+	bool console, first;
 
 	sc = (void *) self;
 	unit = device_unit(self);
@@ -1345,7 +1345,7 @@ scnintr(void *arg)
 
 	do {
 		/* Loop to pick up ALL pending interrupts for device. */
-		rs_work = FALSE;
+		rs_work = false;
 		rs_stat = duart->base[DU_ISR];
 
 /* channel a */
@@ -1363,7 +1363,7 @@ scnintr(void *arg)
 				}
 
 				(*tp0->t_linesw->l_start) (tp0);
-				rs_work = TRUE;
+				rs_work = true;
 			}
 		}
 		/* channel b */
@@ -1381,11 +1381,11 @@ scnintr(void *arg)
 				}
 
 				(*tp1->t_linesw->l_start) (tp1);
-				rs_work = TRUE;
+				rs_work = true;
 			}
 		}
 		if (rs_stat & INT_IP) {
-			rs_work = TRUE;
+			rs_work = true;
 			rs_ipcr = duart->base[DU_IPCR];
 
 			if (rs_ipcr & IPCR_DELTA_DCDA && tp0 != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.45 2007/02/15 20:22:43 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.45.2.1 2007/02/27 16:55:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.45 2007/02/15 20:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.45.2.1 2007/02/27 16:55:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -107,7 +107,7 @@ uvm_loadav(struct loadavg *avg)
 
 	mutex_enter(&proclist_mutex);
 	LIST_FOREACH(l, &alllwp, l_list) {
-		if ((l->l_flag & (L_SINTR | L_SYSTEM)) != 0)
+		if ((l->l_flag & (LW_SINTR | LW_SYSTEM)) != 0)
 			continue;
 		switch (l->l_stat) {
 		case LSSLEEP:
@@ -369,7 +369,7 @@ uvm_total(struct vmtotal *totalp)
 	 */
 	mutex_enter(&proclist_mutex);
 	LIST_FOREACH(l, &alllwp, l_list) {
-		if (l->l_proc->p_flag & P_SYSTEM)
+		if (l->l_proc->p_flag & PK_SYSTEM)
 			continue;
 		switch (l->l_stat) {
 		case 0:
@@ -377,8 +377,8 @@ uvm_total(struct vmtotal *totalp)
 
 		case LSSLEEP:
 		case LSSTOP:
-			if (l->l_flag & L_INMEM) {
-				if (l->l_priority <= PZERO)
+			if (l->l_flag & LW_INMEM) {
+				if (lwp_eprio(l) <= PZERO)
 					totalp->t_dw++;
 				else if (l->l_slptime < maxslp)
 					totalp->t_sl++;
@@ -391,7 +391,7 @@ uvm_total(struct vmtotal *totalp)
 		case LSRUN:
 		case LSONPROC:
 		case LSIDL:
-			if (l->l_flag & L_INMEM)
+			if (l->l_flag & LW_INMEM)
 				totalp->t_rq++;
 			else
 				totalp->t_sw++;

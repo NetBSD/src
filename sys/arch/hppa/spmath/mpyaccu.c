@@ -1,4 +1,4 @@
-/*	$NetBSD: mpyaccu.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: mpyaccu.c,v 1.3.26.1 2007/02/27 16:51:19 yamt Exp $	*/
 
 /*	$OpenBSD: mpyaccu.c,v 1.5 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpyaccu.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpyaccu.c,v 1.3.26.1 2007/02/27 16:51:19 yamt Exp $");
 
 #include "md.h"
 
@@ -64,7 +64,7 @@ struct mdsfu_register *result;
 
 	/* get result of high word add, and determine overflow status */
 	if ((result_hi += (unsigned)temp.rslt_hi + carry) <
-		(unsigned)temp.rslt_hi) overflow = TRUE;
+		(unsigned)temp.rslt_hi) overflow = true;
 
 	return;
 }

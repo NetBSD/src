@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_dmac.c,v 1.3 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: pxa2x0_dmac.c,v 1.3.26.1 2007/02/27 16:49:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Wasabi Systems, Inc.
@@ -433,8 +433,8 @@ dmac_dmover_attach(struct pxadmac_softc *sc)
 		ds->ds_xfer.dxs_dev_width = DMAC_DEV_WIDTH_DEFAULT;
 		ds->ds_xfer.dxs_burst_size = DMAC_BURST_SIZE_8;	/* XXX */
 		ds->ds_xfer.dxs_loop_notify = DMAC_DONT_LOOP;
-		ds->ds_src_addr_hold = FALSE;
-		ds->ds_dst_addr_hold = FALSE;
+		ds->ds_src_addr_hold = false;
+		ds->ds_dst_addr_hold = false;
 		ds->ds_src_nsegs = 0;
 		ds->ds_dst_nsegs = 0;
 		LIST_INSERT_HEAD(&dd->dd_free, ds, ds_link);
@@ -457,7 +457,7 @@ dmac_dmover_attach(struct pxadmac_softc *sc)
 		 * Allocate some dma memory to be used as source buffers
 		 * for the zero-fill and fill-8 operations. We only need
 		 * small buffers here, since we set up the DMAC source
-		 * descriptor with 'ds_addr_hold' set to TRUE.
+		 * descriptor with 'ds_addr_hold' set to true.
 		 */
 		if (bus_dmamem_alloc(sc->sc_dmat,
 				arm_pdcache_line_size, arm_pdcache_line_size, 0,
@@ -578,7 +578,7 @@ dmac_dmover_run(struct dmover_backend *dmb)
 				goto error;
 			}
 
-			ds->ds_src_addr_hold = FALSE;
+			ds->ds_src_addr_hold = false;
 		} else
 		if (dreq->dreq_assignment->das_algdesc->dad_name ==
 		    DMOVER_FUNC_ZERO) {
@@ -591,7 +591,7 @@ dmac_dmover_run(struct dmover_backend *dmb)
 			    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_READ))
 				goto error;
 
-			ds->ds_src_addr_hold = TRUE;
+			ds->ds_src_addr_hold = true;
 		} else
 		if (dreq->dreq_assignment->das_algdesc->dad_name ==
 		    DMOVER_FUNC_FILL8) {
@@ -611,7 +611,7 @@ dmac_dmover_run(struct dmover_backend *dmb)
 			    BUS_DMA_NOWAIT | BUS_DMA_STREAMING | BUS_DMA_READ))
 				goto error;
 
-			ds->ds_src_addr_hold = TRUE;
+			ds->ds_src_addr_hold = true;
 		} else {
 			goto error;
 		}
@@ -815,14 +815,14 @@ pxa2x0_dmac_start_xfer(struct dmac_xfer *dx)
 
 	if ((err = dmac_init_desc(&dxs->dxs_segs[DMAC_DESC_SRC], src, &size)))
 		return (err);
-	if (src->xd_addr_hold == FALSE &&
+	if (src->xd_addr_hold == false &&
 	    dxs->dxs_loop_notify != DMAC_DONT_LOOP &&
 	    (size % dxs->dxs_loop_notify) != 0)
 		return (EINVAL);
 
 	if ((err = dmac_init_desc(&dxs->dxs_segs[DMAC_DESC_DST], dst, &size)))
 		return (err);
-	if (dst->xd_addr_hold == FALSE &&
+	if (dst->xd_addr_hold == false &&
 	    dxs->dxs_loop_notify != DMAC_DONT_LOOP &&
 	    (size % dxs->dxs_loop_notify) != 0)
 		return (EINVAL);
@@ -843,9 +843,9 @@ pxa2x0_dmac_start_xfer(struct dmac_xfer *dx)
 		break;
 	}
 
-	if (src->xd_addr_hold == FALSE)
+	if (src->xd_addr_hold == false)
 		dxs->dxs_dcmd |= DCMD_INCSRCADDR;
-	if (dst->xd_addr_hold == FALSE)
+	if (dst->xd_addr_hold == false)
 		dxs->dxs_dcmd |= DCMD_INCTRGADDR;
 
 	s = splbio();
@@ -1013,7 +1013,7 @@ dmac_continue_xfer(struct pxadmac_softc *sc, struct dmac_xfer_state *dxs)
 	while (src_ds->ds_nsegs && dst_ds->ds_nsegs && sc->sc_free_descs) {
 		src_seg = src_ds->ds_curseg;
 		src_mem_addr = src_seg->ds_addr + src_ds->ds_offset;
-		if (src_xd->xd_addr_hold == FALSE &&
+		if (src_xd->xd_addr_hold == false &&
 		    dxs->dxs_loop_notify != DMAC_DONT_LOOP)
 			src_size = dxs->dxs_loop_notify;
 		else
@@ -1021,7 +1021,7 @@ dmac_continue_xfer(struct pxadmac_softc *sc, struct dmac_xfer_state *dxs)
 
 		dst_seg = dst_ds->ds_curseg;
 		dst_mem_addr = dst_seg->ds_addr + dst_ds->ds_offset;
-		if (dst_xd->xd_addr_hold == FALSE &&
+		if (dst_xd->xd_addr_hold == false &&
 		    dxs->dxs_loop_notify != DMAC_DONT_LOOP)
 			dst_size = dxs->dxs_loop_notify;
 		else
@@ -1077,7 +1077,7 @@ dmac_continue_xfer(struct pxadmac_softc *sc, struct dmac_xfer_state *dxs)
 			/*
 			 * Update the source/destination pointers
 			 */
-			if (src_xd->xd_addr_hold == FALSE) {
+			if (src_xd->xd_addr_hold == false) {
 				src_size -= this_size;
 				src_ds->ds_offset += this_size;
 				if (src_ds->ds_offset == src_seg->ds_len) {
@@ -1089,7 +1089,7 @@ dmac_continue_xfer(struct pxadmac_softc *sc, struct dmac_xfer_state *dxs)
 					src_mem_addr += this_size;
 			}
 
-			if (dst_xd->xd_addr_hold == FALSE) {
+			if (dst_xd->xd_addr_hold == false) {
 				dst_size -= this_size;
 				dst_ds->ds_offset += this_size;
 				if (dst_ds->ds_offset == dst_seg->ds_len) {

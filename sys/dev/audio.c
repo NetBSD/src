@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.217 2007/02/15 18:12:05 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.217.2.1 2007/02/27 16:53:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.217 2007/02/15 18:12:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.217.2.1 2007/02/27 16:53:46 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2022,7 +2022,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	struct audio_offset *ao;
 	u_long stamp;
 	int error, s, offs, fd;
-	boolean_t rbus, pbus;
+	bool rbus, pbus;
 
 	DPRINTF(("audio_ioctl(%lu,'%c',%lu)\n",
 		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
@@ -3179,8 +3179,8 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	unsigned int blks;
 	int oldpblksize, oldrblksize;
 	u_int gain;
-	boolean_t rbus, pbus;
-	boolean_t cleared, modechange, pausechange;
+	bool rbus, pbus;
+	bool cleared, modechange, pausechange;
 	u_char balance;
 
 	hw = sc->hw_if;

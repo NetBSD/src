@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.8 2006/12/21 15:55:25 yamt Exp $	*/
+/*	$NetBSD: hci.h,v 1.8.2.1 2007/02/27 16:54:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.8 2006/12/21 15:55:25 yamt Exp $
+ * $Id: hci.h,v 1.8.2.1 2007/02/27 16:54:51 yamt Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -1589,7 +1589,11 @@ typedef hci_status_rp	hci_enable_unit_under_test_rp;
 
 /* Ericsson specific FC */
 #define HCI_CMD_ERICSSON_WRITE_PCM_SETTINGS		0xFC07
+#define HCI_CMD_ERICSSON_SET_UART_BAUD_RATE		0xFC09
 #define HCI_CMD_ERICSSON_SET_SCO_DATA_PATH		0xFC1D
+
+/* Cambridge Silicon Radio specific FC */
+#define HCI_CMD_CSR_EXTN				0xFC00
 
 
 /**************************************************************************

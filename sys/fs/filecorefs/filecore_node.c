@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.7 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.7.26.1 2007/02/27 16:54:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.7 2005/12/11 12:24:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.7.26.1 2007/02/27 16:54:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,6 +277,7 @@ filecore_reclaim(v)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
+	genfs_node_destroy(vp);
 	pool_put(&filecore_node_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.150 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.150.2.1 2007/02/27 16:54:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.150 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.150.2.1 2007/02/27 16:54:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -585,7 +585,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= P_ADVLOCK;
+			p->p_flag |= PK_ADVLOCK;
 			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
@@ -594,7 +594,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				error = EBADF;
 				goto out;
 			}
-			p->p_flag |= P_ADVLOCK;
+			p->p_flag |= PK_ADVLOCK;
 			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
@@ -1376,7 +1376,7 @@ closef(struct file *fp, struct lwp *l)
 	 * If the descriptor was in a message, POSIX-style locks
 	 * aren't passed with the descriptor.
 	 */
-	if (p && (p->p_flag & P_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
+	if (p && (p->p_flag & PK_ADVLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;

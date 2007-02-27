@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.16 2006/10/25 23:30:35 elad Exp $	 */
+/*	$NetBSD: at_control.c,v 1.16.4.1 2007/02/27 16:54:50 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.16 2006/10/25 23:30:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.16.4.1 2007/02/27 16:54:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -680,8 +680,7 @@ at_ifinit(ifp, aa, sat)
  * check whether a given address is a broadcast address for us..
  */
 int
-at_broadcast(sat)
-	struct sockaddr_at *sat;
+at_broadcast(const struct sockaddr_at *sat)
 {
 	struct at_ifaddr *aa;
 

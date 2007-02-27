@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.41 2006/11/01 10:18:27 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.41.4.1 2007/02/27 16:55:24 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.41 2006/11/01 10:18:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.41.4.1 2007/02/27 16:55:24 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -272,7 +272,7 @@ struct vm_page *
 uvm_anon_lockloanpg(struct vm_anon *anon)
 {
 	struct vm_page *pg;
-	boolean_t locked = FALSE;
+	bool locked = false;
 
 	LOCK_ASSERT(simple_lock_held(&anon->an_lock));
 
@@ -301,7 +301,7 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 				    simple_lock_try(&pg->uobject->vmobjlock);
 			} else {
 				/* object disowned before we got PQ lock */
-				locked = TRUE;
+				locked = true;
 			}
 			uvm_unlock_pageq();
 
@@ -345,10 +345,10 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
  * fetch an anon's page.
  *
  * => anon must be locked, and is unlocked upon return.
- * => returns TRUE if pagein was aborted due to lack of memory.
+ * => returns true if pagein was aborted due to lack of memory.
  */
 
-boolean_t
+bool
 uvm_anon_pagein(struct vm_anon *anon)
 {
 	struct vm_page *pg;
@@ -378,10 +378,10 @@ uvm_anon_pagein(struct vm_anon *anon)
 		 * so again there's nothing to do.
 		 */
 
-		return FALSE;
+		return false;
 
 	default:
-		return TRUE;
+		return true;
 	}
 
 	/*
@@ -419,7 +419,7 @@ uvm_anon_pagein(struct vm_anon *anon)
 	if (uobj) {
 		simple_unlock(&uobj->vmobjlock);
 	}
-	return FALSE;
+	return false;
 }
 
 #endif /* defined(VMSWAP) */

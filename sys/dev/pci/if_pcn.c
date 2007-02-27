@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.36 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.36.4.1 2007/02/27 16:54:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.36 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.36.4.1 2007/02/27 16:54:00 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -507,7 +507,7 @@ pcn_bcr_write(struct pcn_softc *sc, int reg, uint32_t val)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, PCN32_BDP, val);
 }
 
-static boolean_t
+static bool
 pcn_is_vmware(const char *enaddr)
 {
 
@@ -591,7 +591,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	prop_object_t obj;
-	boolean_t is_vmware;
+	bool is_vmware;
 
 	callout_init(&sc->sc_tick_ch);
 

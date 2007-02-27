@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.121 2006/11/23 19:41:58 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.121.4.1 2007/02/27 16:54:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -255,7 +255,7 @@ struct ifnet {				/* and the entries */
 	 * corresponding NULL stub in if.c.
 	 */
 	int	(*if_output)		/* output routine (enqueue) */
-		    (struct ifnet *, struct mbuf *, struct sockaddr *,
+		    (struct ifnet *, struct mbuf *, const struct sockaddr *,
 		     struct rtentry *);
 	void	(*if_input)		/* input routine (from h/w driver) */
 		    (struct ifnet *, struct mbuf *);
@@ -838,7 +838,7 @@ int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf * ALTQ_COMMA
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
 int	looutput(struct ifnet *,
-	   struct mbuf *, struct sockaddr *, struct rtentry *);
+	   struct mbuf *, const struct sockaddr *, struct rtentry *);
 void	lortrequest(int, struct rtentry *, struct rt_addrinfo *);
 
 /*
@@ -846,7 +846,7 @@ void	lortrequest(int, struct rtentry *, struct rt_addrinfo *);
  * an interface is going away without having to burn a flag.
  */
 int	if_nulloutput(struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *);
+	    const struct sockaddr *, struct rtentry *);
 void	if_nullinput(struct ifnet *, struct mbuf *);
 void	if_nullstart(struct ifnet *);
 int	if_nullioctl(struct ifnet *, u_long, caddr_t);

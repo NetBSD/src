@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.9 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.9.2.1 2007/02/27 16:55:07 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.9 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.9.2.1 2007/02/27 16:55:07 yamt Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -448,7 +448,8 @@ ipcomp_output(
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = sav->sah->saidx.dst;
 	tc->tc_proto = sav->sah->saidx.proto;
-	tc->tc_skip = skip + hlen;
+	tc->tc_skip = skip;
+	tc->tc_protoff = protoff;
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */

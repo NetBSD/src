@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.21 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.21.20.1 2007/02/27 16:55:26 yamt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 static __inline void
-uvmfault_unlockmaps(struct uvm_faultinfo *ufi, boolean_t write_locked)
+uvmfault_unlockmaps(struct uvm_faultinfo *ufi, bool write_locked)
 {
 	/*
 	 * ufi can be NULL when this isn't really a fault,
@@ -81,7 +81,7 @@ uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		simple_unlock(&uobj->vmobjlock);
 	if (amap)
 		amap_unlock(amap);
-	uvmfault_unlockmaps(ufi, FALSE);
+	uvmfault_unlockmaps(ufi, false);
 }
 
 /*
@@ -91,7 +91,7 @@ uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
  *	params properly filled in
  * => we will lookup the map entry (handling submaps) as we go
  * => if the lookup is a success we will return with the maps locked
- * => if "write_lock" is TRUE, we write_lock the map, otherwise we only
+ * => if "write_lock" is true, we write_lock the map, otherwise we only
  *	get a read lock.
  * => note that submaps can only appear in the kernel and they are
  *	required to use the same virtual addresses as the map they
@@ -99,8 +99,8 @@ uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
  *	map and the submap is unnecessary).
  */
 
-static __inline boolean_t
-uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
+static __inline bool
+uvmfault_lookup(struct uvm_faultinfo *ufi, bool write_lock)
 {
 	struct vm_map *tmpmap;
 
@@ -124,7 +124,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 		 * a fault.
 		 */
 		if (ufi->map->flags & VM_MAP_INTRSAFE)
-			return (FALSE);
+			return (false);
 
 		/*
 		 * lock map
@@ -141,7 +141,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 		if (!uvm_map_lookup_entry(ufi->map, ufi->orig_rvaddr,
 								&ufi->entry)) {
 			uvmfault_unlockmaps(ufi, write_lock);
-			return(FALSE);
+			return(false);
 		}
 
 		/*
@@ -170,7 +170,7 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
 		 */
 
 		ufi->mapv = ufi->map->timestamp;
-		return(TRUE);
+		return(true);
 
 	}	/* while loop */
 
@@ -181,10 +181,10 @@ uvmfault_lookup(struct uvm_faultinfo *ufi, boolean_t write_lock)
  * uvmfault_relock: attempt to relock the same version of the map
  *
  * => fault data structures should be unlocked before calling.
- * => if a success (TRUE) maps will be locked after call.
+ * => if a success (true) maps will be locked after call.
  */
 
-static __inline boolean_t
+static __inline bool
 uvmfault_relock(struct uvm_faultinfo *ufi)
 {
 	/*
@@ -193,7 +193,7 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 	 */
 
 	if (ufi == NULL) {
-		return TRUE;
+		return true;
 	}
 
 	uvmexp.fltrelck++;
@@ -206,11 +206,11 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 	vm_map_lock_read(ufi->map);
 	if (ufi->mapv != ufi->map->timestamp) {
 		vm_map_unlock_read(ufi->map);
-		return(FALSE);
+		return(false);
 	}
 
 	uvmexp.fltrelckok++;
-	return(TRUE);
+	return(true);
 }
 
 #endif /* _UVM_UVM_FAULT_I_H_ */

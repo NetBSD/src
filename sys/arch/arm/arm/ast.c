@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.9 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: ast.c,v 1.9.2.1 2007/02/27 16:49:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.9 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.9.2.1 2007/02/27 16:49:04 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -117,8 +117,8 @@ ast(struct trapframe *tf)
 
 	p = l->l_proc;
 
-	if (p->p_flag & P_OWEUPC) {
-		p->p_flag &= ~P_OWEUPC;
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
 		ADDUPROF(p);
 	}
 

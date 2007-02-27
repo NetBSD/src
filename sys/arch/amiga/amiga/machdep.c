@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.200 2006/12/21 15:55:21 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.200.2.1 2007/02/27 16:48:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2006/12/21 15:55:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200.2.1 2007/02/27 16:48:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,20 +301,20 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 FALSE, NULL);
+				 false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

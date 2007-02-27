@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.33 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.33.4.1 2007/02/27 16:51:35 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.33 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.33.4.1 2007/02/27 16:51:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1077,7 +1077,7 @@ db_disasm_esc(
 db_addr_t
 db_disasm(
     db_addr_t	loc,
-    boolean_t	altfmt)
+    bool	altfmt)
 {
 	int	inst;
 	int	size;
@@ -1088,7 +1088,7 @@ db_disasm(
 	int	i_size;
 	int	i_mode;
 	int	regmodrm = 0;
-	boolean_t	first;
+	bool	first;
 	int	displ;
 	int	prefix;
 	int	imm;

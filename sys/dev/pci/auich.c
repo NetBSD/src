@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.115 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: auich.c,v 1.115.4.1 2007/02/27 16:53:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.115 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.115.4.1 2007/02/27 16:53:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ struct auich_softc {
 	int sc_codecnum;
 	int sc_codectype;
 	enum ac97_host_flags sc_codecflags;
-	boolean_t sc_spdif;
+	bool sc_spdif;
 
 	/* DMA scatter-gather lists. */
 	bus_dmamap_t sc_cddmamap;
@@ -303,7 +303,7 @@ static int	auich_read_codec(void *, uint8_t, uint16_t *);
 static int	auich_write_codec(void *, uint8_t, uint16_t);
 static int	auich_reset_codec(void *);
 static enum ac97_host_flags	auich_flags_codec(void *);
-static void	auich_spdif_event(void *, boolean_t);
+static void	auich_spdif_event(void *, bool);
 
 static const struct audio_hw_if auich_hw_if = {
 	auich_open,
@@ -911,7 +911,7 @@ auich_flags_codec(void *v)
 }
 
 static void
-auich_spdif_event(void *addr, boolean_t flag)
+auich_spdif_event(void *addr, bool flag)
 {
 	struct auich_softc *sc;
 

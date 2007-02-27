@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.300 2007/02/09 21:55:32 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.300.2.1 2007/02/27 16:54:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.300 2007/02/09 21:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.300.2.1 2007/02/27 16:54:35 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1757,13 +1757,14 @@ sys_mknod(struct lwp *l, void *v, register_t *retval)
 	struct vnode *vp;
 	struct mount *mp;
 	struct vattr vattr;
-	int error;
-	int whiteout = 0;
+	int error, optype;
 	struct nameidata nd;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MKNOD,
 	    0, NULL, NULL, NULL)) != 0)
 		return (error);
+
+	optype = VOP_MKNOD_DESCOFFSET;
 restart:
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, path), l);
 	if ((error = namei(&nd)) != 0)
@@ -1776,7 +1777,6 @@ restart:
 		vattr.va_mode =
 		    (SCARG(uap, mode) & ALLPERMS) &~ p->p_cwdi->cwdi_cmask;
 		vattr.va_rdev = SCARG(uap, dev);
-		whiteout = 0;
 
 		switch (SCARG(uap, mode) & S_IFMT) {
 		case S_IFMT:	/* used by badsect to flag bad sectors */
@@ -1789,7 +1789,12 @@ restart:
 			vattr.va_type = VBLK;
 			break;
 		case S_IFWHT:
-			whiteout = 1;
+			optype = VOP_WHITEOUT_DESCOFFSET;
+			break;
+		case S_IFREG:
+			vattr.va_type = VREG;
+			vattr.va_rdev = VNOVAL;
+			optype = VOP_CREATE_DESCOFFSET;
 			break;
 		default:
 			error = EINVAL;
@@ -1811,16 +1816,27 @@ restart:
 	}
 	if (!error) {
 		VOP_LEASE(nd.ni_dvp, l, l->l_cred, LEASE_WRITE);
-		if (whiteout) {
+		switch (optype) {
+		case VOP_WHITEOUT_DESCOFFSET:
 			error = VOP_WHITEOUT(nd.ni_dvp, &nd.ni_cnd, CREATE);
 			if (error)
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
-		} else {
+			break;
+
+		case VOP_MKNOD_DESCOFFSET:
 			error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp,
 						&nd.ni_cnd, &vattr);
 			if (error == 0)
 				vput(nd.ni_vp);
+			break;
+
+		case VOP_CREATE_DESCOFFSET:
+			error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp,
+						&nd.ni_cnd, &vattr);
+			if (error == 0)
+				vput(nd.ni_vp);
+			break;
 		}
 	} else {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);

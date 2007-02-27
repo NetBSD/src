@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.17 2006/10/14 20:39:21 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.17.4.1 2007/02/27 16:48:28 yamt Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.17 2006/10/14 20:39:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.17.4.1 2007/02/27 16:48:28 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -65,7 +65,7 @@ static void do_fault(struct trapframe *, struct lwp *, struct vm_map *,
 static void data_abort_fixup(struct trapframe *);
 static vaddr_t data_abort_address(struct trapframe *, vsize_t *);
 static vm_prot_t data_abort_atype(struct trapframe *);
-static boolean_t data_abort_usrmode(struct trapframe *);
+static bool data_abort_usrmode(struct trapframe *);
 #ifdef DEBUG
 static void printregs(struct trapframe *tf);
 #endif
@@ -147,7 +147,7 @@ data_abort_handler(struct trapframe *tf)
 	struct proc *p;
 	struct lwp *l;
 	vm_prot_t atype;
-	boolean_t usrmode, twopages;
+	bool usrmode, twopages;
 	struct vm_map *map;
 
 	/*
@@ -222,7 +222,7 @@ do_fault(struct trapframe *tf, struct lwp *l,
 		}
 #ifdef DDB
 		if (db_validating) {
-			db_faulted = TRUE;
+			db_faulted = true;
 			tf->tf_r15 += INSN_SIZE;
 			return;
 		}
@@ -441,18 +441,18 @@ data_abort_atype(struct trapframe *tf)
 /*
  * Work out what effective mode was in use when a data abort occurred.
  */
-static boolean_t
+static bool
 data_abort_usrmode(struct trapframe *tf)
 {
 	register_t insn;
 
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
-		return TRUE;
+		return true;
 	insn = *(register_t *)(tf->tf_r15 & R15_PC);
 	if ((insn & 0x0d200000) == 0x04200000)
 		/* LDR[B]T and STR[B]T */
-		return TRUE;
-	return FALSE;
+		return true;
+	return false;
 }
 
 void

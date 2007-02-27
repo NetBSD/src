@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2s.c,v 1.1 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_i2s.c,v 1.1.8.1 2007/02/27 16:49:41 yamt Exp $	*/
 /*	$OpenBSD: pxa2x0_i2s.c,v 1.7 2006/04/04 11:45:40 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1 2006/12/17 16:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2s.c,v 1.1.8.1 2007/02/27 16:49:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,10 +391,10 @@ pxa2x0_i2s_start_output(void *hdl, void *block, int bsize,
 	dx->dx_peripheral = DMAC_PERIPH_I2STX;
 	dx->dx_flow = DMAC_FLOW_CTRL_DEST;
 	dx->dx_loop_notify = DMAC_DONT_LOOP;
-	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = FALSE;
+	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = false;
 	dx->dx_desc[DMAC_DESC_SRC].xd_nsegs = p->nsegs;
 	dx->dx_desc[DMAC_DESC_SRC].xd_dma_segs = p->segs;
-	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = TRUE;
+	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = true;
 	dx->dx_desc[DMAC_DESC_DST].xd_nsegs = 1;
 	dx->dx_desc[DMAC_DESC_DST].xd_dma_segs = &sc->sc_dr;
 
@@ -440,10 +440,10 @@ pxa2x0_i2s_start_input(void *hdl, void *block, int bsize,
 	dx->dx_peripheral = DMAC_PERIPH_I2SRX;
 	dx->dx_flow = DMAC_FLOW_CTRL_SRC;
 	dx->dx_loop_notify = DMAC_DONT_LOOP;
-	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = TRUE;
+	dx->dx_desc[DMAC_DESC_SRC].xd_addr_hold = true;
 	dx->dx_desc[DMAC_DESC_SRC].xd_nsegs = 1;
 	dx->dx_desc[DMAC_DESC_SRC].xd_dma_segs = &sc->sc_dr;
-	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = FALSE;
+	dx->dx_desc[DMAC_DESC_DST].xd_addr_hold = false;
 	dx->dx_desc[DMAC_DESC_DST].xd_nsegs = p->nsegs;
 	dx->dx_desc[DMAC_DESC_DST].xd_dma_segs = p->segs;
 

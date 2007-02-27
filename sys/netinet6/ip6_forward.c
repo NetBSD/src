@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.54 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.54.2.1 2007/02/27 16:55:02 yamt Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.54 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.54.2.1 2007/02/27 16:55:02 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -552,7 +552,9 @@ ip6_forward(m, srcrt)
 #endif
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor((struct sockaddr_in6 *)&ip6_forward_rt.ro_dst, rt->rt_ifp)) {
+		    nd6_is_addr_neighbor(
+		        satocsin6(rtcache_getdst((struct route *)&ip6_forward_rt)),
+			rt->rt_ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is

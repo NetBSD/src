@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.32 2005/12/11 12:18:58 christos Exp $
+#	$NetBSD: files.sh3,v 1.32.26.1 2007/02/27 16:52:58 yamt Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -17,6 +17,7 @@ file	arch/sh3/sh3/exception.c
 file	arch/sh3/sh3/exception_vector.S
 file	arch/sh3/sh3/locore_c.c
 file	arch/sh3/sh3/locore_subr.S
+file	arch/sh3/sh3/lock_stubs.S
 file	arch/sh3/sh3/mem.c
 file	netns/ns_cksum.c		ns
 file	arch/sh3/sh3/pmap.c

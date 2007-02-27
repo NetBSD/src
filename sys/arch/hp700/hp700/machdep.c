@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2007/02/09 21:55:03 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2007/02/09 21:55:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:49 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -820,12 +820,12 @@ do {									\
 	 * works because, currently, the mainbus.c bus_space 
 	 * implementation directly-maps things in I/O space.
 	 */
-	hp700_kgdb_attached = FALSE;
+	hp700_kgdb_attached = false;
 #if NCOM > 0
 	if (!strcmp(KGDB_DEVNAME, "com")) {
 		int com_gsc_kgdb_attach(void);
 		if (com_gsc_kgdb_attach() == 0)
-			hp700_kgdb_attached = TRUE;
+			hp700_kgdb_attached = true;
 	}
 #endif /* NCOM > 0 */
 #endif /* KGDB */
@@ -880,16 +880,16 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
@@ -1109,15 +1109,15 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
 	case TLB_AR_KRW:
 	case TLB_AR_UR:
 	case TLB_AR_URW:
-		need_dbtlb = TRUE;
-		need_ibtlb = FALSE;
+		need_dbtlb = true;
+		need_ibtlb = false;
 		break;
 	case TLB_AR_KRX:
 	case TLB_AR_KRWX:
 	case TLB_AR_URX:
 	case TLB_AR_URWX:
-		need_dbtlb = TRUE;
-		need_ibtlb = TRUE;
+		need_dbtlb = true;
+		need_ibtlb = true;
 		break;
 	default:
 		panic("btlb_insert: bad tlbprot");
@@ -1230,9 +1230,9 @@ hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, vsize_t *sizep,
 		 * Note what slots we no longer need.
 		 */
 		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_DBTLB)
-			need_dbtlb = FALSE;
+			need_dbtlb = false;
 		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_IBTLB)
-			need_ibtlb = FALSE;
+			need_ibtlb = false;
 	}
 
 	/* Success. */

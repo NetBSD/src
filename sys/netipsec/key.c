@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.35 2007/02/11 13:35:00 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.35.2.1 2007/02/27 16:55:06 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.35 2007/02/11 13:35:00 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.35.2.1 2007/02/27 16:55:06 yamt Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1040,7 +1040,7 @@ key_do_allocsa_policy(struct secashead *sah, u_int state)
  */
 struct secasvar *
 key_allocsa(
-	union sockaddr_union *dst,
+	const union sockaddr_union *dst,
 	u_int proto,
 	u_int32_t spi,
 	const char* where, int tag)
@@ -7542,8 +7542,8 @@ key_sa_routechange(dst)
 
 	LIST_FOREACH(sah, &sahtree, chain) {
 		ro = &sah->sa_route;
-		if (dst->sa_len == ro->ro_dst.sa_len &&
-		    bcmp(dst, &ro->ro_dst, dst->sa_len) == 0)
+		if (dst->sa_len == rtcache_getdst(ro)->sa_len &&
+		    memcmp(dst, rtcache_getdst(ro), dst->sa_len) == 0)
 			rtcache_free(ro);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.57 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.57.2.1 2007/02/27 16:53:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -672,6 +672,8 @@ void netbsd32_adjust_limits(struct proc *);
 
 void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
+
+void	startlwp32(void *);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(netbsd32_sysctl_emul_setup);

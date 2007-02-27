@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.24 2006/11/13 11:47:37 jmmv Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.24.4.1 2007/02/27 16:54:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -371,7 +371,7 @@ void	tmpfs_free_node(struct tmpfs_mount *, struct tmpfs_node *);
 int	tmpfs_alloc_dirent(struct tmpfs_mount *, struct tmpfs_node *,
 	    const char *, uint16_t, struct tmpfs_dirent **);
 void	tmpfs_free_dirent(struct tmpfs_mount *, struct tmpfs_dirent *,
-	    boolean_t);
+	    bool);
 int	tmpfs_alloc_vp(struct mount *, struct tmpfs_node *, struct vnode **);
 void	tmpfs_free_vp(struct vnode *);
 int	tmpfs_alloc_file(struct vnode *, struct vnode **, struct vattr *,
@@ -385,7 +385,7 @@ int	tmpfs_dir_getdotdotdent(struct tmpfs_node *, struct uio *);
 struct tmpfs_dirent *	tmpfs_dir_lookupbycookie(struct tmpfs_node *, off_t);
 int	tmpfs_dir_getdents(struct tmpfs_node *, struct uio *, off_t *);
 int	tmpfs_reg_resize(struct vnode *, off_t);
-size_t	tmpfs_mem_info(boolean_t);
+size_t	tmpfs_mem_info(bool);
 int	tmpfs_chflags(struct vnode *, int, kauth_cred_t, struct lwp *);
 int	tmpfs_chmod(struct vnode *, mode_t, kauth_cred_t, struct lwp *);
 int	tmpfs_chown(struct vnode *, uid_t, gid_t, kauth_cred_t, struct lwp *);
@@ -456,7 +456,7 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 {
 	size_t freepages;
 
-	freepages = tmpfs_mem_info(FALSE);
+	freepages = tmpfs_mem_info(false);
 	if (freepages < TMPFS_PAGES_RESERVED)
 		freepages = 0;
 	else

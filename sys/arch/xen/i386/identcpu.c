@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.12 2006/05/27 20:48:40 bouyer Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.12.12.1 2007/02/27 16:53:27 yamt Exp $	*/
 /*	NetBSD: identcpu.c,v 1.16 2004/04/05 02:09:41 mrg Exp 	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.12 2006/05/27 20:48:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.12.12.1 2007/02/27 16:53:27 yamt Exp $");
 
 #include "opt_cputype.h"
 
@@ -580,7 +580,7 @@ cyrix6x86_cpu_setup(ci)
 	 * XXX disable page zero in the idle loop, it seems to
 	 * cause panics on these CPUs.
 	 */
-	vm_page_zero_enable = FALSE;
+	vm_page_zero_enable = false;
 }
 
 void

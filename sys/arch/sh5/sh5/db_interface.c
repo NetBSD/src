@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.16.26.1 2007/02/27 16:53:02 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16 2005/12/24 22:45:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.16.26.1 2007/02/27 16:53:02 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -263,7 +263,7 @@ kdb_trap(int type, void *v)
 
 	if (IS_BREAKPOINT_TRAP(type, 0)) {
 		int bkpt;
-		bkpt = db_get_value(PC_REGS(DDB_REGS), BKPT_SIZE, FALSE);
+		bkpt = db_get_value(PC_REGS(DDB_REGS), BKPT_SIZE, false);
 		if (bkpt == BKPT_INST)
 			PC_ADVANCE(DDB_REGS);
 	}
@@ -275,7 +275,7 @@ kdb_trap(int type, void *v)
 	return (1);
 }
 
-boolean_t
+bool
 inst_branch(int inst)
 {
 	/*
@@ -290,22 +290,22 @@ inst_branch(int inst)
 	case 0x640f0000:	/* BGTU Rm, Rn, TRc */
 	case 0x64050000:	/* BNE  Rm, Rn, TRc */
 	case 0xe4050000:	/* BNEI Rm, imm, TRc */
-		return (TRUE);
+		return (true);
 	}
 
-	return (FALSE);
+	return (false);
 }
 
-boolean_t
+bool
 inst_unconditional_flow_transfer(int inst)
 {
 	/*
 	 * Deal with blink <anything>
 	 */
 	if ((inst & 0xff8ffc0f) == 0x4401fc00)
-		return (TRUE);
+		return (true);
 
-	return (FALSE);
+	return (false);
 }
 
 db_addr_t
@@ -441,7 +441,7 @@ db_sh5_fpr(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 	flagf = (strchr(modif, 'f') != NULL);
 
 	if (have_addr) {
-		struct proc *p = pfind(addr);
+		struct proc *p = p_find(addr, PFIND_LOCKED);
 		if (p == NULL) {
 			db_printf("Invalid PID\n");
 			return;

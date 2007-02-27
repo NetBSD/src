@@ -1,4 +1,4 @@
-/* $NetBSD: if_srt.c,v 1.3 2007/01/05 06:32:48 mouse Exp $ */
+/* $NetBSD: if_srt.c,v 1.3.4.1 2007/02/27 16:54:44 yamt Exp $ */
 /* This file is in the public domain. */
 
 #include "opt_inet.h"
@@ -175,7 +175,7 @@ static int srt_if_ioctl(struct ifnet *intf, u_long cmd, caddr_t data)
 static int srt_if_output(
 	struct ifnet *intf,
 	struct mbuf *m,
-	struct sockaddr *to,
+	const struct sockaddr *to,
 	struct rtentry *rtp )
 {
  SOFTC *sc;

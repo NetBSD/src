@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.228 2007/02/15 17:47:56 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.228.2.1 2007/02/27 16:55:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.228 2007/02/15 17:47:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.228.2.1 2007/02/27 16:55:22 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.228 2007/02/15 17:47:56 ad Exp $");
 #include <miscfs/genfs/genfs_node.h>
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
-static boolean_t lfs_issequential_hole(const struct ufsmount *,
+static bool lfs_issequential_hole(const struct ufsmount *,
     daddr_t, daddr_t);
 
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
@@ -1138,8 +1138,8 @@ lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		brelse(bp);
 		if (daddr == LFS_UNUSED_DADDR) {
 			*vpp = NULLVP;
-			ungetnewvnode(vp);
 			mutex_exit(&ufs_hashlock);
+			ungetnewvnode(vp);
 			return (ENOENT);
 		}
 	}
@@ -1466,7 +1466,7 @@ SYSCTL_SETUP(sysctl_vfs_lfs_setup, "sysctl vfs.lfs subtree setup")
  * Since blocks will be written to the new segment anyway,
  * we don't care about current daddr of them.
  */
-static boolean_t
+static bool
 lfs_issequential_hole(const struct ufsmount *ump,
     daddr_t daddr0, daddr_t daddr1)
 {
@@ -1485,15 +1485,15 @@ lfs_issequential_hole(const struct ufsmount *ump,
 	 * treat UNWRITTENs and all resident blocks as 'contiguous'
 	 */
 	if (daddr0 != 0 && daddr1 != 0)
-		return TRUE;
+		return true;
 
 	/*
 	 * both are in hole?
 	 */
 	if (daddr0 == 0 && daddr1 == 0)
-		return TRUE; /* all holes are 'contiguous' for us. */
+		return true; /* all holes are 'contiguous' for us. */
 
-	return FALSE;
+	return false;
 }
 
 /*

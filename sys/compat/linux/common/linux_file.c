@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.77 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.77.2.1 2007/02/27 16:53:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.77 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.77.2.1 2007/02/27 16:53:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,18 +461,22 @@ linux_sys_fcntl(l, v, retval)
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			return 0;
 		}
+		rw_enter(&proclist_lock, RW_READER);
 		if ((long)arg <= 0) {
 			pgid = -(long)arg;
 		} else {
-			struct proc *p1 = pfind((long)arg);
+			struct proc *p1 = p_find((long)arg, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 			if (p1 == NULL)
 				return (ESRCH);
 			pgid = (long)p1->p_pgrp->pg_id;
 		}
-		pgrp = pgfind(pgid);
-		if (pgrp == NULL || pgrp->pg_session != p->p_session)
+		pgrp = pg_find(pgid, PFIND_LOCKED);
+		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
+			rw_exit(&proclist_lock);
 			return EPERM;
+		}
 		tp->t_pgrp = pgrp;
+		rw_exit(&proclist_lock);
 		return 0;
 
 	default:

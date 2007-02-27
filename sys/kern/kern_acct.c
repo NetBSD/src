@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.70 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.70.2.1 2007/02/27 16:54:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.70 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.70.2.1 2007/02/27 16:54:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ acctwatch(void *arg)
 			printf("acctwatch: failed to statvfs, error = %d\n",
 			    error);
 #endif
-		error = kpause("actwat", FALSE, acctchkfreq * hz, &acct_mutex);
+		error = kpause("actwat", false, acctchkfreq * hz, &acct_mutex);
 #ifdef DIAGNOSTIC
 		if (error != 0 && error != EWOULDBLOCK)
 			printf("acctwatch: sleep error %d\n", error);

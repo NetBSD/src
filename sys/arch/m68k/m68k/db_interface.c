@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.33 2006/07/22 06:34:42 tsutsui Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.33.10.1 2007/02/27 16:51:58 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33 2006/07/22 06:34:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.33.10.1 2007/02/27 16:51:58 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -108,11 +108,11 @@ kdb_trap(int type, db_regs_t *regs)
 	ddb_regs = *regs;
 
 	db_active++;
-	cnpollc(TRUE);	/* set polling mode, unblank video */
+	cnpollc(true);	/* set polling mode, unblank video */
 
 	db_trap(type, 0);	/* where the work happens */
 
-	cnpollc(FALSE);	/* resume interrupt mode */
+	cnpollc(false);	/* resume interrupt mode */
 	db_active--;
 
 	*regs = ddb_regs;

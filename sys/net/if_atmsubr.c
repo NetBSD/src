@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.37 2005/12/11 23:05:24 thorpej Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.37.26.1 2007/02/27 16:54:40 yamt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.37 2005/12/11 23:05:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.37.26.1 2007/02/27 16:54:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.37 2005/12/11 23:05:24 thorpej Exp 
  */
 
 int
-atm_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t etype = 0;			/* if using LLC/SNAP */

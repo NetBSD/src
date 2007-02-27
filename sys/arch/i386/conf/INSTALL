@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.303 2007/01/24 19:46:26 tls Exp $
+#	$NetBSD: INSTALL,v 1.303.2.1 2007/02/27 16:51:33 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -615,6 +615,7 @@ acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
 amhphy* at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
+#ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
 glxtphy* at mii? phy ?			# Level One LXT-1000 PHYs

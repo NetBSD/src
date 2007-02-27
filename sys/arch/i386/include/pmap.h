@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.88 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.88.4.1 2007/02/27 16:51:54 yamt Exp $	*/
 
 /*
  *
@@ -340,12 +340,12 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 void		pmap_activate(struct lwp *);
 void		pmap_bootstrap(vaddr_t);
-boolean_t	pmap_clear_attrs(struct vm_page *, int);
+bool		pmap_clear_attrs(struct vm_page *, int);
 void		pmap_deactivate(struct lwp *);
 void		pmap_deactivate2(struct lwp *);
 void		pmap_page_remove (struct vm_page *);
 void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
-boolean_t	pmap_test_attrs(struct vm_page *, int);
+bool		pmap_test_attrs(struct vm_page *, int);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 int		pmap_exec_fixup(struct vm_map *, struct trapframe *,
 		    struct pcb *);
@@ -362,7 +362,7 @@ void	pmap_do_tlb_shootdown(struct cpu_info *);
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.
  */
-boolean_t			pmap_pageidlezero(paddr_t);
+bool	pmap_pageidlezero(paddr_t);
 #define	PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*

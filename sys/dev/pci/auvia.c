@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.58 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: auvia.c,v 1.58.4.1 2007/02/27 16:53:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.58 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.58.4.1 2007/02/27 16:53:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ static int	auvia_read_codec(void *, uint8_t, uint16_t *);
 static int	auvia_reset_codec(void *);
 static int	auvia_waitready_codec(struct auvia_softc *);
 static int	auvia_waitvalid_codec(struct auvia_softc *);
-static void	auvia_spdif_event(void *, boolean_t);
+static void	auvia_spdif_event(void *, bool);
 
 CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
     auvia_match, auvia_attach, NULL, NULL);
@@ -575,7 +575,7 @@ auvia_read_codec(void *addr, u_int8_t reg, u_int16_t *val)
 }
 
 static void
-auvia_spdif_event(void *addr, boolean_t flag)
+auvia_spdif_event(void *addr, bool flag)
 {
 	struct auvia_softc *sc;
 

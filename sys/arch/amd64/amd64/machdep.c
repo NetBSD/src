@@ -1,7 +1,8 @@
-/*	$NetBSD: machdep.c,v 1.47 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47.2.1 2007/02/27 16:48:43 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -72,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47.2.1 2007/02/27 16:48:43 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -280,19 +281,19 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef LKM
 	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
@@ -447,12 +448,14 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack, tocopy;
+	int onstack, tocopy, error;
 	int sig = ksi->ksi_signo;
 	struct sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
 	char *sp;
+
+	KASSERT(mutex_owned(&p->p_smutex));
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -499,9 +502,14 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
-	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	sendsig_reset(l, sig);
 
-	if (copyout(&frame, fp, tocopy) != 0) {
+	mutex_exit(&p->p_smutex);
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	error = copyout(&frame, fp, tocopy);
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -875,7 +883,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
-	l->l_proc->p_flag &= ~P_32;
+	l->l_proc->p_flag &= ~PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);

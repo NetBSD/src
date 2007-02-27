@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.14 2006/09/15 06:09:36 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.14.6.1 2007/02/27 16:51:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -110,9 +110,9 @@
  */
 
 	.section .data
-	.align	2048
-$trap_tmp_save:			/* XXX assumed to be aligned on 2048 */
-	.block	TF_PHYS		/* XXX must be aligned to 64 */
+	.align	64
+$trap_tmp_save:
+	.block	TF_PHYS
 	.align	64
 	.export emergency_stack_start, data
 emergency_stack_start:
@@ -414,6 +414,7 @@ $syscall_return:
 	 */
 	copy	%t3, %arg0
 	ldil	L%$trap_tmp_save, %arg1
+	ldo	R%$trap_tmp_save(%arg1), %arg1
 	ldi	TF_PHYS - 4, %arg2
 $syscall_return_copy_loop:
 	ldwm	4(%arg0), %t1
@@ -505,6 +506,7 @@ $syscall_return_copy_loop:
 $syscall_return_phys:
 
 	ldil	L%$trap_tmp_save, %t3
+	ldo     R%$trap_tmp_save(%t3), %t3
 
 	/* finally we can restore the space and offset queues and the ipsw */
 	ldw	TF_IISQH(%t3), %t1
@@ -1885,6 +1887,7 @@ ENTRY(TLABEL(all),0)
 	mtctl	%t3, %tr2
 
 	ldil	L%$trap_tmp_save, %t3
+	ldo	R%$trap_tmp_save(%t3), %t3
 	stw	%t1, TF_R22(%t3)	/* use ,bc */
 	stw	%t2, TF_R21(%t3)
 
@@ -2083,23 +2086,16 @@ $trapnowvirt:
 	 * Copy partially saved state from the store into the frame
 	 */
 	ldil	L%$trap_tmp_save, %t2
+	ldo	R%$trap_tmp_save(%t2), %t2
 	/* use ,bc each line */
-	ldw  0(%t2), %r1 ! ldw  4(%t2), %t1
-	stw %r1,  0(%t3) ! stw %t1,  4(%t3)
-	ldw  8(%t2), %r1 ! ldw 12(%t2), %t1
-	stw %r1,  8(%t3) ! stw %t1, 12(%t3)
-	ldw 16(%t2), %r1 ! ldw 20(%t2), %t1
-	stw %r1, 16(%t3) ! stw %t1, 20(%t3)
-	ldw 24(%t2), %r1 ! ldw 28(%t2), %t1
-	stw %r1, 24(%t3) ! stw %t1, 28(%t3)
-	ldw 32(%t2), %r1 ! ldw 36(%t2), %t1
-	stw %r1, 32(%t3) ! stw %t1, 36(%t3)
-	ldw 40(%t2), %r1 ! ldw 44(%t2), %t1
-	stw %r1, 40(%t3) ! stw %t1, 44(%t3)
-	ldw 48(%t2), %r1 ! ldw 52(%t2), %t1
-	stw %r1, 48(%t3) ! stw %t1, 52(%t3)
-	ldw 56(%t2), %r1 ! ldw 60(%t2), %t1
-	stw %r1, 56(%t3) ! stw %t1, 60(%t3)
+	ldw  0(%t2), %r1 ! ldw  4(%t2), %t1 ! stw %r1,  0(%t3) ! stw %t1,  4(%t3)
+	ldw  8(%t2), %r1 ! ldw 12(%t2), %t1 ! stw %r1,  8(%t3) ! stw %t1, 12(%t3)
+	ldw 16(%t2), %r1 ! ldw 20(%t2), %t1 ! stw %r1, 16(%t3) ! stw %t1, 20(%t3)
+	ldw 24(%t2), %r1 ! ldw 28(%t2), %t1 ! stw %r1, 24(%t3) ! stw %t1, 28(%t3)
+	ldw 32(%t2), %r1 ! ldw 36(%t2), %t1 ! stw %r1, 32(%t3) ! stw %t1, 36(%t3)
+	ldw 40(%t2), %r1 ! ldw 44(%t2), %t1 ! stw %r1, 40(%t3) ! stw %t1, 44(%t3)
+	ldw 48(%t2), %r1 ! ldw 52(%t2), %t1 ! stw %r1, 48(%t3) ! stw %t1, 52(%t3)
+	ldw 56(%t2), %r1 ! ldw 60(%t2), %t1 ! stw %r1, 56(%t3) ! stw %t1, 60(%t3)
 
 	/*
 	 * Normally, we'd only have to save and restore the 

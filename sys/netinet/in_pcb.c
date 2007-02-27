@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.113 2007/01/26 19:15:26 dyoung Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.113.2.1 2007/02/27 16:54:53 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.113 2007/01/26 19:15:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.113.2.1 2007/02/27 16:54:53 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -674,8 +674,8 @@ in_losing(struct inpcb *inp)
 		return;
 
 	if ((rt = inp->inp_route.ro_rt) != NULL) {
-		bzero((caddr_t)&info, sizeof(info));
-		info.rti_info[RTAX_DST] = &inp->inp_route.ro_dst;
+		memset(&info, 0, sizeof(info));
+		info.rti_info[RTAX_DST] = rtcache_getdst(&inp->inp_route);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
@@ -880,7 +880,7 @@ in_pcbrtentry(struct inpcb *inp)
 
 	ro = &inp->inp_route;
 
-	if (!in_hosteq(satosin(&ro->ro_dst)->sin_addr, inp->inp_faddr))
+	if (!in_hosteq(satocsin(rtcache_getdst(ro))->sin_addr, inp->inp_faddr))
 		rtcache_free(ro);
 	else
 		rtcache_check(ro);
@@ -906,8 +906,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 * Note that we should check the address family of the cached
 	 * destination, in case of sharing the cache with IPv6.
 	 */
-	if (ro->ro_dst.sa_family != AF_INET ||
-	    !in_hosteq(satosin(&ro->ro_dst)->sin_addr, sin->sin_addr) ||
+	if (rtcache_getdst(ro)->sa_family != AF_INET ||
+	    !in_hosteq(satocsin(rtcache_getdst(ro))->sin_addr, sin->sin_addr) ||
 	    (soopts & SO_DONTROUTE) != 0)
 		rtcache_free(ro);
 	else

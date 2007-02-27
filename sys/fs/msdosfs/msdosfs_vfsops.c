@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.43 2007/01/22 16:07:33 reinoud Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.43.2.1 2007/02/27 16:54:12 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.43 2007/01/22 16:07:33 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.43.2.1 2007/02/27 16:54:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -489,15 +489,21 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		struct dkwedge_info dkw;
 		error = VOP_IOCTL(devvp, DIOCGWEDGEINFO, &dkw, FREAD,
 		    NOCRED, l);
-		if (error) {
-			DPRINTF(("Error getting partition info %d\n", error));
-			goto error_exit;
-		}
 		secsize = 512;	/* XXX */
 		dtype = DTYPE_FLOPPY; /* XXX */
-		fstype = strcmp(dkw.dkw_ptype, DKW_PTYPE_FAT) == 0 ?
-		    FS_MSDOS : -1;
-		psize = dkw.dkw_size;
+		fstype = FS_MSDOS;
+		psize = -1;
+		if (error) {
+			if (error != ENOTTY) {
+				DPRINTF(("Error getting partition info %d\n",
+				    error));
+				goto error_exit;
+			}
+		} else {
+			fstype = strcmp(dkw.dkw_ptype, DKW_PTYPE_FAT) == 0 ?
+			    FS_MSDOS : -1;
+			psize = dkw.dkw_size;
+		}
 	}
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
 		bsize = secsize;

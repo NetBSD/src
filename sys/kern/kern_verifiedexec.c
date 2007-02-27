@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.95 2007/02/06 01:09:48 elad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.95.2.1 2007/02/27 16:54:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.95 2007/02/06 01:09:48 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.95.2.1 2007/02/27 16:54:26 yamt Exp $");
 
 #include "opt_veriexec.h"
 
@@ -510,10 +510,10 @@ veriexec_get(struct vnode *vp)
 	return (fileassoc_lookup(vp, veriexec_hook));
 }
 
-boolean_t
+bool
 veriexec_lookup(struct vnode *vp)
 {
-	return (veriexec_get(vp) == NULL ? FALSE : TRUE);
+	return (veriexec_get(vp) == NULL ? false : true);
 }
 
 /*
@@ -524,7 +524,7 @@ veriexec_lookup(struct vnode *vp)
  */
 int
 veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
-    boolean_t *found)
+    bool *found)
 {
 	struct veriexec_file_entry *vfe;
 	u_char *digest;
@@ -537,9 +537,9 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	vfe = veriexec_get(vp);
 	if (found != NULL) {
 		if (vfe != NULL)
-			*found = TRUE;
+			*found = true;
 		else
-			*found = FALSE;
+			*found = false;
 	}
 	if (vfe == NULL)
 		goto out;
@@ -1036,13 +1036,13 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	 */
 	hh = veriexec_get(nid.ni_vp);
 	if (hh != NULL) {
-		boolean_t fp_mismatch;
+		bool fp_mismatch;
 
 		if (strcmp(vfe->ops->type, fp_type) ||
 		    memcmp(hh->fp, vfe->fp, hh->ops->hash_len))
-			fp_mismatch = TRUE;
+			fp_mismatch = true;
 		else
-			fp_mismatch = FALSE;
+			fp_mismatch = false;
 
 		if ((veriexec_verbose >= 1) || fp_mismatch)
 			log(LOG_NOTICE, "Veriexec: Duplicate entry for `%s' "
@@ -1229,7 +1229,7 @@ veriexec_unmountchk(struct mount *mp)
 int
 veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 {
-	boolean_t monitored = FALSE;
+	bool monitored = false;
 	int error = 0;
 
 	if (vp == NULL) {

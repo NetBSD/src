@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.45 2006/09/06 23:58:20 ad Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.45.8.1 2007/02/27 16:51:58 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45 2006/09/06 23:58:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.45.8.1 2007/02/27 16:51:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -92,9 +92,9 @@ extern struct pcb *curpcb;
 				 ((u_int)(va) < ((u_int)(pcb) + USPACE)))
 
 #define	get(addr, space) \
-		(db_get_value((db_addr_t)(addr), sizeof(int), FALSE))
+		(db_get_value((db_addr_t)(addr), sizeof(int), false))
 #define	get16(addr, space) \
-		(db_get_value((db_addr_t)(addr), sizeof(u_short), FALSE))
+		(db_get_value((db_addr_t)(addr), sizeof(u_short), false))
 
 #define	NREGISTERS	16
 
@@ -397,7 +397,7 @@ findregs(struct stackpos *sp, db_addr_t addr)
  *	Frame tracing.
  */
 void
-db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
 	int i, nargs;
@@ -406,8 +406,9 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	const char *	name;
 	struct stackpos pos;
 	struct pcb	*pcb = curpcb;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	bool		kernel_only = true;
+	bool		trace_thread = false;
+	bool		lwpaddr = false;
 	int		fault_pc = 0;
 
 	{
@@ -415,11 +416,13 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		char c;
 
 		while ((c = *cp++) != 0)
-			if (c == 't')
-				trace_thread = TRUE;
-			else
-			if (c == 'u')
-				kernel_only = FALSE;
+			if (c == 'a') {
+				lwpaddr = true;
+				trace_thread = true;
+			} else if (c == 't')
+				trace_thread = true;
+			else if (c == 'u')
+				kernel_only = false;
 	}
 
 	if (!have_addr)
@@ -429,15 +432,21 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			struct proc *p;
 			struct user *u;
 			struct lwp *l;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
 			}
-			/* XXX: Have to pick on some thread... */
-			l = LIST_FIRST(&p->p_lwps);
-			if (!(l->l_flag & L_INMEM)) {
+			(*pr)("lid %d ", l->l_lid);
+			if (!(l->l_flag & LW_INMEM)) {
 				(*pr)("swapped out\n");
 				return;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.45 2006/03/07 17:56:00 pooka Exp $	*/
+/*	$NetBSD: queue.h,v 1.45.16.1 2007/02/27 16:55:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -220,6 +220,11 @@ struct {								\
 		curelm->field.sle_next =				\
 		    curelm->field.sle_next->field.sle_next;		\
 	}								\
+} while (/*CONSTCOND*/0)
+
+#define	SLIST_REMOVE_AFTER(slistelm, field) do {			\
+	(slistelm)->field.sle_next =					\
+	    SLIST_NEXT(SLIST_NEXT((slistelm), field), field);		\
 } while (/*CONSTCOND*/0)
 
 #define	SLIST_FOREACH(var, head, field)					\

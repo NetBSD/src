@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.8 2006/10/15 12:45:32 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.8.4.1 2007/02/27 16:48:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.8 2006/10/15 12:45:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.8.4.1 2007/02/27 16:48:26 yamt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -65,16 +65,12 @@ void
 idle()
 {
 
-#if defined(LOCKDEBUG)
 	sched_unlock_idle();
-#endif
 	spl0();
 	while (sched_whichqs == 0)
 		continue;
 	splhigh();
-#if defined(LOCKDEBUG)
 	sched_lock_idle();
-#endif
 }
 
 extern int want_resched; /* XXX should be in <machine/cpu.h> */
@@ -109,9 +105,7 @@ cpu_switch(struct lwp *l1, struct lwp *newl)
 	l2 = q->ph_link;
 	remrunqueue(l2);
 	want_resched = 0;
-#ifdef LOCKDEBUG
 	sched_unlock_idle();
-#endif
 	/* p->p_cpu initialized in fork1() for single-processor */
 	l2->l_stat = LSONPROC;
 	curlwp = l2;
@@ -157,13 +151,11 @@ cpu_switchto(struct lwp *old, struct lwp *new)
 	printf("cpu_switchto: %p -> %p", old, new);
 #endif
 	want_resched = 0;
-#ifdef LOCKDEBUG
-	sched_unlock_idle();
-#endif
 	/* p->p_cpu initialized in fork1() for single-processor */
 	new->l_stat = LSONPROC;
 	curlwp = new;
 	curpcb = &curlwp->l_addr->u_pcb;
+	sched_unlock_idle();
 	pmap_deactivate(old);
 	pmap_activate(new);
 	cpu_loswitch(&old->l_addr->u_pcb.pcb_sf, new->l_addr->u_pcb.pcb_sf);

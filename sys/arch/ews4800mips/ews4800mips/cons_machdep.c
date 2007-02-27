@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.1.28.1 2007/02/27 16:50:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.1.28.1 2007/02/27 16:50:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,14 +169,14 @@ rom_cngetc(dev_t dev)
 void
 rom_cnpollc(dev_t dev, int on)
 {
-	static boolean_t __polling = FALSE;
+	static bool __polling = false;
 	static int s;
 
 	if (on && !__polling) {
 		s = splhigh();	/* Disable interrupt driven I/O */
-		__polling = TRUE;
+		__polling = true;
 	} else if (!on && __polling) {
-		__polling = FALSE;
+		__polling = false;
 		splx(s);	/* Enable interrupt driven I/O */
 	}
 }

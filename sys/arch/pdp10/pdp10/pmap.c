@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.2.26.1 2007/02/27 16:52:32 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -217,7 +217,7 @@ pmap_kremove(vaddr_t v, vsize_t size)
 	panic("pmap_kremove");
 }
 
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *vm)
 {
 	panic("pmap_clear_modify");
@@ -229,7 +229,7 @@ pmap_page_protect(struct vm_page *vm, vm_prot_t prot)
 	panic("pmap_page_protect");
 }
 
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *vm)
 {
 	panic("pmap_clear_reference");
@@ -243,9 +243,9 @@ pmap_remove(pmap_t pmap, vaddr_t v1, vaddr_t v2)
 
 /*
  * Get the physical page address for the virtual address v.
- * Return FALSE if no mapping exists.
+ * Return false if no mapping exists.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pmap, vaddr_t v, paddr_t *pp)
 {
 	int nv = v >> PTOV_COMP;
@@ -255,14 +255,14 @@ pmap_extract(pmap_t pmap, vaddr_t v, paddr_t *pp)
 		panic("pmap_extract");
 	seg = SEGNO(nv);
 	if (((pga = ept->ept_section[seg]) & PG_IMM) == 0)
-		return FALSE;
+		return false;
 	pg = PGINSEG(nv);
 	pgp = (int *)(((pga << PGSH) & 017777777) << PTOV_COMP);
 	if (((paddr = pgp[pg]) & PG_IMM) == 0)
-		return FALSE;
+		return false;
 	*pp = (paddr << PGSH) & 037777777;
 	*pp <<= PTOV_COMP;
-	return TRUE;
+	return true;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: msc.c,v 1.36 2006/10/01 20:31:49 elad Exp $ */
+/*	$NetBSD: msc.c,v 1.36.4.1 2007/02/27 16:49:01 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.36 2006/10/01 20:31:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msc.c,v 1.36.4.1 2007/02/27 16:49:01 yamt Exp $");
 
 #include "msc.h"
 
@@ -297,7 +297,7 @@ mscattach(struct device *pdp, struct device *dp, void *auxp)
 		msc->openflags = 0;
 		msc->active = 1;
 		msc->unit = unit;
-		msc->closing = FALSE;
+		msc->closing = false;
 		msc_tty[MSCTTYSLOT(MSCSLOTUL(unit, Count))] = NULL;
 		msc_tty[MSCTTYSLOT(MSCSLOTUL(unit, Count)) + 1] = NULL;
 	}
@@ -373,8 +373,8 @@ mscopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* if port is still closing, just bitbucket remaining characters */
 	if (msc->closing) {
-		ms->OutFlush = TRUE;
-		msc->closing = FALSE;
+		ms->OutFlush = true;
+		msc->closing = false;
 	}
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
@@ -499,9 +499,9 @@ mscclose(dev_t dev, int flag, int mode, struct lwp *l)
 	ttyclose(tp);
 
 	if (msc->flags & TIOCM_DTR)
-		msc->closing = TRUE; /* flush remaining characters before dropping DTR */
+		msc->closing = true; /* flush remaining characters before dropping DTR */
 	else
-		ms->OutFlush = TRUE; /* just bitbucket remaining characters */
+		ms->OutFlush = true; /* just bitbucket remaining characters */
 
 	return (0);
 }
@@ -615,9 +615,9 @@ mscmint(register void *data)
 					ms = &msc->board->Status[msc->port];
 					ms->Command = (ms->Command & ~MSCCMD_CMask) |
 						 MSCCMD_Close;
-					ms->Setup = TRUE;
+					ms->Setup = true;
 					msc->flags &= ~(TIOCM_DTR | TIOCM_RTS);
-					ms->OutFlush = TRUE;
+					ms->OutFlush = true;
 				    }
 				}
 			    }
@@ -764,13 +764,13 @@ NoRoomForYa:
 	    if (msc->closing) {
 		/* if DTR is off, just bitbucket remaining characters */
 		if ( (msc->flags & TIOCM_DTR) == 0) {
-		    ms->OutFlush = TRUE;
-		    msc->closing = FALSE;
+		    ms->OutFlush = true;
+		    msc->closing = false;
 		}
 		/* if output has drained, drop DTR */
 		else if (ms->OutHead == ms->OutTail) {
 		    (void) mscmctl(tp->t_dev, 0, DMSET);
-		    msc->closing = FALSE;
+		    msc->closing = false;
 		}
 	    }
 	}  /* For all ports */
@@ -816,7 +816,7 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		case TIOCSBRK:
 			s = spltty();
 			ms->Command = (ms->Command & (~MSCCMD_RTSMask)) | MSCCMD_Break;
-			ms->Setup = TRUE;
+			ms->Setup = true;
 			splx(s);
 			break;
 
@@ -824,7 +824,7 @@ mscioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		case TIOCCBRK:
 			s = spltty();
 			ms->Command = (ms->Command & (~MSCCMD_RTSMask)) | MSCCMD_RTSOn;
-			ms->Setup = TRUE;
+			ms->Setup = true;
 			splx(s);
 			break;
 
@@ -1042,7 +1042,7 @@ mscstart(register struct tty *tp)
 		cp = &msc->tmpbuf[0];
 
 		/* enable output */
-		ms->OutDisable = FALSE;
+		ms->OutDisable = false;
 
 #if 0
 		msc->tmpbuf[cc] = 0;
@@ -1096,7 +1096,7 @@ mscstop(register struct tty *tp, int flag)
 			msc = &mscdev[MSCSLOT(tp->t_dev)];
 			ms = &msc->board->Status[msc->port];
 			printf("stopped output on msc%d\n", MSCSLOT(tp->t_dev));
-			ms->OutDisable = TRUE;
+			ms->OutDisable = true;
 #endif
 		}
 	}
@@ -1160,11 +1160,11 @@ mscmctl(dev_t dev, int bits, int how)
 			newcmd |= MSCCMD_Enable;
 
 		ms->Command = (ms->Command & (~MSCCMD_RTSMask & ~MSCCMD_Enable)) | newcmd;
-		ms->Setup = TRUE;
+		ms->Setup = true;
 
 		/* if we've dropped DTR, bitbucket any pending output */
 		if ( (OldFlags & TIOCM_DTR) && ((bits & TIOCM_DTR) == 0))
-			ms->OutFlush = TRUE;
+			ms->OutFlush = true;
 	}
 
 	bits = msc->flags;

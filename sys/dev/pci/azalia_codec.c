@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.28 2007/01/06 18:35:35 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.28.2.1 2007/02/27 16:53:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.28 2007/01/06 18:35:35 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.28.2.1 2007/02/27 16:53:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -100,7 +100,7 @@ static u_char	generic_mixer_from_device_value
 static uint32_t	generic_mixer_to_device_value
 	(const codec_t *, nid_t, int, u_char);
 static uint32_t	generic_mixer_max(const codec_t *, nid_t, int);
-static boolean_t generic_mixer_validate_value
+static bool	generic_mixer_validate_value
 	(const codec_t *, nid_t, int, u_char);
 static int	generic_set_port(codec_t *, mixer_ctrl_t *);
 static int	generic_get_port(codec_t *, mixer_ctrl_t *);
@@ -228,7 +228,7 @@ generic_codec_init_dacgroup(codec_t *this)
 	/* find DACs which do not connect with any pins by default */
 	DPRINTF(("%s: find non-connected DACs\n", __func__));
 	FOR_EACH_WIDGET(this, i) {
-		boolean_t found;
+		bool found;
 
 		if (this->w[i].type != COP_AWTYPE_AUDIO_OUTPUT)
 			continue;
@@ -1542,7 +1542,7 @@ generic_mixer_max(const codec_t *this, nid_t nid,
 #endif
 }
 
-static boolean_t
+static bool
 generic_mixer_validate_value(const codec_t *this, nid_t nid,
     int target, u_char uv)
 {

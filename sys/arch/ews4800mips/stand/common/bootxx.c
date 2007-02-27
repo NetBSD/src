@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.2 2006/08/26 14:13:40 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.2.8.1 2007/02/27 16:50:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ const char *boottab[] = {
 };
 
 int __dk_unit, __dk_type;
-boolean_t (*fd_position)(uint32_t, uint32_t *, int *);
+bool (*fd_position)(uint32_t, uint32_t *, int *);
 
 int
 main(void)

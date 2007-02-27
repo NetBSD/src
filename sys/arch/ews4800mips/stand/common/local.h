@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.1 2005/12/29 15:20:09 tsutsui Exp $	*/
+/*	$NetBSD: local.h,v 1.1.28.1 2007/02/27 16:50:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -56,22 +56,22 @@ enum fstype {
 };
 
 struct device_capability {
-	boolean_t active;
+	bool active;
 	int booted_device;
 	int booted_unit;
 	int active_device;
-	boolean_t disk_enabled;
-	boolean_t network_enabled;
-	boolean_t fd_enabled;
+	bool disk_enabled;
+	bool network_enabled;
+	bool fd_enabled;
 };
 extern struct device_capability DEVICE_CAPABILITY;
 
-boolean_t find_partition_start(int,  int *);
+bool find_partition_start(int,  int *);
 int fstype(int);
 void delay(int);
-boolean_t device_attach(int, int, int);
+bool device_attach(int, int, int);
 void data_attach(void *, size_t);
-boolean_t ustarfs_load(const char *, void **, size_t *);
-boolean_t prompt_yesno(int);
+bool ustarfs_load(const char *, void **, size_t *);
+bool prompt_yesno(int);
 void prompt(void);
-boolean_t read_vtoc(void);
+bool read_vtoc(void);

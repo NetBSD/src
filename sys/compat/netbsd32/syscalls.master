@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55 2007/02/09 21:55:22 ad Exp $
+	$NetBSD: syscalls.master,v 1.55.2.1 2007/02/27 16:53:40 yamt Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -89,8 +89,8 @@
 21	STD		{ int netbsd32_mount(const netbsd32_charp type, const netbsd32_charp path, int flags, netbsd32_voidp data); }
 22	STD		{ int netbsd32_unmount(const netbsd32_charp path, int flags); }
 23	STD		{ int netbsd32_setuid(uid_t uid); }
-24	NOARGS		{ uid_t sys_getuid(void); }
-25	NOARGS		{ uid_t sys_geteuid(void); }
+24	NOARGS MPSAFE	{ uid_t sys_getuid(void); }
+25	NOARGS MPSAFE	{ uid_t sys_geteuid(void); }
 26	STD		{ int netbsd32_ptrace(int req, pid_t pid, netbsd32_caddr_t addr, int data); }
 27	STD		{ netbsd32_ssize_t netbsd32_recvmsg(int s, netbsd32_msghdrp_t msg, int flags); }
 28	STD		{ netbsd32_ssize_t netbsd32_sendmsg(int s, const netbsd32_msghdrp_t msg, int flags); }
@@ -104,11 +104,11 @@
 36	NOARGS		{ void sys_sync(void); }
 37	STD		{ int netbsd32_kill(int pid, int signum); }
 38	COMPAT_43	{ int netbsd32_stat43(const netbsd32_charp path, netbsd32_stat43p_t ub); }
-39	NOARGS		{ pid_t sys_getppid(void); }
+39	NOARGS MPSAFE	{ pid_t sys_getppid(void); }
 40	COMPAT_43	{ int netbsd32_lstat43(const netbsd32_charp path, netbsd32_stat43p_t ub); }
 41	STD		{ int netbsd32_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
-43	NOARGS		{ gid_t sys_getegid(void); }
+43	NOARGS MPSAFE	{ gid_t sys_getegid(void); }
 44	STD		{ int netbsd32_profil(netbsd32_caddr_t samples, netbsd32_size_t size, netbsd32_u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
 45	STD		{ int netbsd32_ktrace(const netbsd32_charp fname, int ops, int facs, int pid); }
@@ -116,13 +116,13 @@
 45	EXCL		netbsd32_ktrace
 #endif
 46	STD		{ int netbsd32_sigaction(int signum, const netbsd32_sigactionp_t nsa, netbsd32_sigactionp_t osa); }
-47	NOARGS		{ gid_t sys_getgid(void); }
+47	NOARGS MPSAFE	{ gid_t sys_getgid(void); }
 48	COMPAT_13	{ int netbsd32_sigprocmask(int how, \
 			    int mask); } sigprocmask13
 49	STD		{ int netbsd32___getlogin(netbsd32_charp namebuf, u_int namelen); }
 50	STD		{ int netbsd32_setlogin(const netbsd32_charp namebuf); }
 51	STD		{ int netbsd32_acct(const netbsd32_charp path); }
-52	COMPAT_13	{ int sys_sigpending(void); } sigpending13
+52	COMPAT_13 MPSAFE	{ int sys_sigpending(void); } sigpending13
 53	COMPAT_13	{ int netbsd32_sigaltstack13(const netbsd32_sigaltstack13p_t nss, netbsd32_sigaltstack13p_t oss); }
 54	STD		{ int netbsd32_ioctl(int fd, netbsd32_u_long com, ... netbsd32_voidp data); }
 55	COMPAT_12	{ int netbsd32_reboot(int opt); }
@@ -152,7 +152,7 @@
 78	STD		{ int netbsd32_mincore(netbsd32_caddr_t addr, netbsd32_size_t len, netbsd32_charp vec); }
 79	STD		{ int netbsd32_getgroups(int gidsetsize, netbsd32_gid_tp gidset); }
 80	STD		{ int netbsd32_setgroups(int gidsetsize, const netbsd32_gid_tp gidset); }
-81	NOARGS		{ int sys_getpgrp(void); }
+81	NOARGS MPSAFE	{ int sys_getpgrp(void); }
 82	STD		{ int netbsd32_setpgid(int pid, int pgid); }
 83	STD		{ int netbsd32_setitimer(int which, const netbsd32_itimervalp_t itv, netbsd32_itimervalp_t oitv); }
 84	COMPAT_43	{ int sys_wait(void); } owait
@@ -493,34 +493,30 @@
 303	EXCL		__shmctl13
 #endif
 304	STD		{ int netbsd32_lchflags(const netbsd32_charp path, netbsd32_u_long flags); }
-305	STD		{ int sys_issetugid(void); }
+305	NOARGS MPSAFE	{ int sys_issetugid(void); }
 306	STD		{ int netbsd32_utrace(const netbsd32_charp label, netbsd32_voidp addr, \
 			    netbsd32_size_t len); }
-;
-; Syscalls 307 and 308 are reserved for getcontext and setcontext
-;
 307	STD		{ int netbsd32_getcontext(netbsd32_ucontextp ucp); }
 308	STD		{ int netbsd32_setcontext(netbsd32_ucontextp ucp, \
 			    uint32_t flags, netbsd32_lwpidp new_lwp); }
-;
-; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
-;
 309	STD		{ int netbsd32__lwp_create(const netbsd32_ucontextp ucp, \
 			    netbsd32_u_long flags, netbsd32_lwpidp new_lwp); }
 310	NOARGS		{ int sys__lwp_exit(void); }
-311	NOARGS		{ lwpid_t sys__lwp_self(void); }
+311	NOARGS MPSAFE	{ lwpid_t sys__lwp_self(void); }
 312	STD		{ int netbsd32__lwp_wait(lwpid_t wait_for, \
 			    netbsd32_lwpidp departed); }
 313	STD		{ int netbsd32__lwp_suspend(lwpid_t target); }
 314	STD		{ int netbsd32__lwp_continue(lwpid_t target); }
 315	STD		{ int netbsd32__lwp_wakeup(lwpid_t target); }
-316	NOARGS		{ void *sys__lwp_getprivate(void); }
+316	NOARGS MPSAFE	{ void *sys__lwp_getprivate(void); }
 317	STD		{ void netbsd32__lwp_setprivate(netbsd32_voidp ptr); }
-318	UNIMPL
-319	UNIMPL
-320	UNIMPL
-321	UNIMPL
-322	UNIMPL
+318	STD		{ int netbsd32__lwp_kill(lwpid_t target, int signo); }
+319	STD		{ int netbsd32__lwp_detach(lwpid_t target); }
+320	STD		{ int netbsd32__lwp_park(const netbsd32_timespecp_t ts, \
+				netbsd32_ucontextp ucp, const netbsd32_voidp hint); }
+321	STD		{ int netbsd32__lwp_unpark(lwpid_t target, const netbsd32_voidp hint); }
+322	STD		{ netbsd32_size_t netbsd32__lwp_unpark_all(const netbsd32_lwpidp targets, \
+				netbsd32_size_t ntargets, const netbsd32_voidp hint); }
 323	UNIMPL
 324	UNIMPL
 325	UNIMPL
@@ -555,7 +551,7 @@
 347	UNIMPL
 348	UNIMPL
 349	UNIMPL
-350	UNIMPL
+350	NOARGS MPSAFE	{ int sys_sched_yield(void); }
 351	UNIMPL
 352	UNIMPL
 353	UNIMPL

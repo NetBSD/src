@@ -1,4 +1,4 @@
-/*	$NetBSD: at_proto.c,v 1.11 2006/12/09 05:33:06 dyoung Exp $	*/
+/*	$NetBSD: at_proto.c,v 1.11.2.1 2007/02/27 16:54:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.11 2006/12/09 05:33:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_proto.c,v 1.11.2.1 2007/02/27 16:54:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,25 +52,17 @@ DOMAIN_DEFINE(atalkdomain);	/* forward declare and add to link set */
 
 const struct protosw atalksw[] = {
     {
-	/* Identifiers */
-	SOCK_DGRAM,	&atalkdomain,	ATPROTO_DDP,	PR_ATOMIC|PR_ADDR,
-	/*
-	 * protocol-protocol interface.
-	 * fields are pr_input, pr_output, pr_ctlinput, and pr_ctloutput.
-	 * pr_input can be called from the udp protocol stack for iptalk
-	 * packets bound for a local socket.
-	 * pr_output can be used by higher level appletalk protocols, should
-	 * they be included in the kernel.
-	 */
-	0,		ddp_output,	0,		0,
-	/* socket-protocol interface. */
-	ddp_usrreq,
-	/* utility routines. */
-	ddp_init,	0,		0,		0,
+	.pr_type = SOCK_DGRAM,
+	.pr_domain = &atalkdomain,
+	.pr_protocol = ATPROTO_DDP,
+	.pr_flags = PR_ATOMIC|PR_ADDR,
+	.pr_output = ddp_output,
+	.pr_usrreq = ddp_usrreq,
+	.pr_init = ddp_init,
     },
 };
 
-struct domain		atalkdomain = {
+struct domain atalkdomain = {
 	.dom_family = PF_APPLETALK,
 	.dom_name = "appletalk",
 	.dom_init = NULL,

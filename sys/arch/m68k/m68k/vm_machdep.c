@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18 2007/02/15 02:55:39 mhitch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18.2.1 2007/02/27 16:51:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18 2007/02/15 02:55:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.1 2007/02/27 16:51:59 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -289,7 +289,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
 	do {
-		if (pmap_extract(upmap, uva, &pa) == FALSE)
+		if (pmap_extract(upmap, uva, &pa) == false)
 			panic("vmapbuf: null page frame");
 #ifdef M68K_VAC
 		pmap_enter(kpmap, kva, pa, VM_PROT_READ | VM_PROT_WRITE,
@@ -375,7 +375,7 @@ kvtop(caddr_t addr)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == false)
 		panic("kvtop: zero page frame");
 	return (int)pa;
 }

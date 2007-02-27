@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.24 2006/11/18 07:51:54 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.24.6.1 2007/02/27 16:54:30 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24 2006/11/18 07:51:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24.6.1 2007/02/27 16:54:30 yamt Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -525,13 +525,13 @@ qc_destroy(vmem_t *vm)
 	}
 }
 
-static boolean_t
+static bool
 qc_reap(vmem_t *vm)
 {
 	const qcache_t *prevqc;
 	int i;
 	int qcache_idx_max;
-	boolean_t didsomething = FALSE;
+	bool didsomething = false;
 
 	qcache_idx_max = vm->vm_qcache_max >> vm->vm_quantum_shift;
 	prevqc = NULL;
@@ -542,7 +542,7 @@ qc_reap(vmem_t *vm)
 			continue;
 		}
 		if (pool_reclaim(&qc->qc_pool) != 0) {
-			didsomething = TRUE;
+			didsomething = true;
 		}
 		prevqc = qc;
 	}
@@ -1101,13 +1101,13 @@ vmem_add(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags)
 /*
  * vmem_reap: reap unused resources.
  *
- * => return TRUE if we successfully reaped something.
+ * => return true if we successfully reaped something.
  */
 
-boolean_t
+bool
 vmem_reap(vmem_t *vm)
 {
-	boolean_t didsomething = FALSE;
+	bool didsomething = false;
 
 	VMEM_ASSERT_UNLOCKED(vm);
 
@@ -1175,7 +1175,7 @@ main()
 	struct reg {
 		vmem_addr_t p;
 		vmem_size_t sz;
-		boolean_t x;
+		bool x;
 	} *reg = NULL;
 	int nreg = 0;
 	int nalloc = 0;
@@ -1208,12 +1208,12 @@ main()
 		if (t > 45) {
 			/* alloc */
 			vmem_size_t sz = rand() % 500 + 1;
-			boolean_t x;
+			bool x;
 			vmem_size_t align, phase, nocross;
 			vmem_addr_t minaddr, maxaddr;
 
 			if (t > 70) {
-				x = TRUE;
+				x = true;
 				/* XXX */
 				align = 1 << (rand() % 15);
 				phase = rand() % 65536;
@@ -1244,7 +1244,7 @@ main()
 				p = vmem_xalloc(vm, sz, align, phase, nocross,
 				    minaddr, maxaddr, strat|VM_SLEEP);
 			} else {
-				x = FALSE;
+				x = false;
 				printf("=== alloc %" PRIu64 "\n", (uint64_t)sz);
 				p = vmem_alloc(vm, sz, strat|VM_SLEEP);
 			}

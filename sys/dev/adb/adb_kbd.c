@@ -1,7 +1,8 @@
-/*	$NetBSD: adb_kbd.c,v 1.2 2007/01/18 00:49:17 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.2.4.1 2007/02/27 16:53:50 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
+ * Copyright (C) 2006, 2007 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.2 2007/01/18 00:49:17 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.2.4.1 2007/02/27 16:53:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,6 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.2 2007/01/18 00:49:17 macallan Exp $")
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wsmousevar.h>
 
+#include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
+
 #include <machine/autoconf.h>
 #include <machine/keyboard.h>
 #include <machine/adbsys.h>
@@ -64,6 +68,7 @@ struct adbkbd_softc {
 	struct adb_bus_accessops *sc_ops;
 	struct device *sc_wskbddev;
 	struct device *sc_wsmousedev;
+	struct sysmon_pswitch sc_sm_pbutton;
 	int sc_leds;
 	int sc_have_led_control;
 	int sc_msg_len;
@@ -294,6 +299,15 @@ adbkbd_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_wsmousedev != NULL)
 		adbkbd_setup_sysctl(sc);
+
+	/* finally register the power button */
+	sysmon_task_queue_init();
+	memset(&sc->sc_sm_pbutton, 0, sizeof(struct sysmon_pswitch));
+	sc->sc_sm_pbutton.smpsw_name = sc->sc_dev.dv_xname;
+	sc->sc_sm_pbutton.smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(&sc->sc_sm_pbutton) != 0)
+		printf("%s: unable to register power button with sysmon\n",
+		    sc->sc_dev.dv_xname);
 }
 
 static void
@@ -344,14 +358,19 @@ adbkbd_wait(struct adbkbd_softc *sc, int timeout)
 static void
 adbkbd_keys(struct adbkbd_softc *sc, uint8_t k1, uint8_t k2)
 {
+
 	/* keyboard event processing */
+
 	DPRINTF("[%02x %02x]", k1, k2);
+
 	if (((k1 == k2) && (k1 == 0x7f)) || (k1 == 0x7e)) {
-		/* power button, handle separately */
-#ifdef ADBKBD_POWER_PANIC
-		panic("power button pressed");
-#endif
+
+		/* power button, report to sysmon */
+		sysmon_pswitch_event(&sc->sc_sm_pbutton, 
+		    ADBK_PRESS(k1) ? PSWITCH_EVENT_PRESSED :
+		    PSWITCH_EVENT_RELEASED);
 	} else {
+
 		adbkbd_key(sc, k1);
 		if (k2 != 0xff)
 			adbkbd_key(sc, k2);

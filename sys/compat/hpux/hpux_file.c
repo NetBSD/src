@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.31 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.31.2.1 2007/02/27 16:53:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.31 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.31.2.1 2007/02/27 16:53:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,13 +352,13 @@ hpux_sys_fcntl(l, v, retval)
 			if ((fp->f_flag & FREAD) == 0)
 				return (EBADF);
 
-			p->p_flag |= P_ADVLOCK;
+			p->p_flag |= PK_ADVLOCK;
 			return (VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg));
 
 		case F_WRLCK:
 			if ((fp->f_flag & FWRITE) == 0)
 				return (EBADF);
-			p->p_flag |= P_ADVLOCK;
+			p->p_flag |= PK_ADVLOCK;
 			return (VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg));
 
 		case F_UNLCK:

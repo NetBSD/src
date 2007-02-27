@@ -1,4 +1,4 @@
-/*	$NetBSD: divsfm.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: divsfm.c,v 1.3.26.1 2007/02/27 16:51:16 yamt Exp $	*/
 
 /*	$OpenBSD: divsfm.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: divsfm.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: divsfm.c,v 1.3.26.1 2007/02/27 16:51:16 yamt Exp $");
 
 #include "md.h"
 
@@ -56,7 +56,7 @@ struct mdsfu_register *result;
 
 	/* check divisor for zero */
 	if (opnd2 == 0) {
-		overflow = TRUE;
+		overflow = true;
 		return;
 	}
 
@@ -66,9 +66,9 @@ struct mdsfu_register *result;
 	/* get absolute value of operands */
 	if (opnd1 < 0) {
 		opnd1 = -opnd1;
-		op1_sign = TRUE;
+		op1_sign = true;
 	}
-	else op1_sign = FALSE;
+	else op1_sign = false;
 	if (opnd2 < 0) opnd2 = -opnd2;
 
 	/*
@@ -84,7 +84,7 @@ struct mdsfu_register *result;
 			result_lo = opnd1 << 1;
 		}
 		else {
-			overflow = TRUE;
+			overflow = true;
 			return;
 		}
 	}
@@ -101,10 +101,10 @@ struct mdsfu_register *result;
 
 	/* check for overflow */
 	if (result_lo < 0) {
-		overflow = TRUE;
+		overflow = true;
 		return;
 	}
-	overflow = FALSE;
+	overflow = false;
 
 	/* return appropriately signed result */
 	if (sign<0) result_lo = -result_lo;

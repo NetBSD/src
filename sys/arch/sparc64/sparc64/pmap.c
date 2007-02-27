@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184 2006/11/24 22:52:16 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.184.4.1 2007/02/27 16:53:15 yamt Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184 2006/11/24 22:52:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.4.1 2007/02/27 16:53:15 yamt Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1538,7 +1538,7 @@ pmap_kremove(va, size)
 	int64_t data;
 	paddr_t pa;
 	int rv;
-	boolean_t flush = FALSE;
+	bool flush = FALSE;
 
 	KASSERT(va < INTSTACK || va > EINTSTACK);
 	KASSERT(va < kdata || va > ekdata);
@@ -1612,9 +1612,9 @@ pmap_enter(pm, va, pa, prot, flags)
 	struct vm_page *pg, *opg, *ptpg;
 	int s, i, uncached = 0;
 	int size = PGSZ_8K; /* PMAP_SZ_TO_TTE(pa); */
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-	boolean_t wasmapped = FALSE;
-	boolean_t dopv = TRUE;
+	bool wired = (flags & PMAP_WIRED) != 0;
+	bool wasmapped = FALSE;
+	bool dopv = TRUE;
 
 	/*
 	 * Is this part of the permanent mappings?
@@ -1865,7 +1865,7 @@ pmap_remove(pm, va, endva)
 	struct vm_page *pg;
 	pv_entry_t pv;
 	int rv;
-	boolean_t flush = FALSE;
+	bool flush = FALSE;
 
 	/*
 	 * In here we should check each pseg and if there are no more entries,
@@ -2037,7 +2037,7 @@ pmap_protect(pm, sva, eva, prot)
  * Extract the physical page address associated
  * with the given map/virtual_address pair.
  */
-boolean_t
+bool
 pmap_extract(pm, va, pap)
 	struct pmap *pm;
 	vaddr_t va;
@@ -2325,7 +2325,7 @@ ptelookup_va(vaddr_t va)
  * Do whatever is needed to sync the MOD/REF flags
  */
 
-boolean_t
+bool
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
@@ -2406,7 +2406,7 @@ pmap_clear_modify(pg)
 	return (changed);
 }
 
-boolean_t
+bool
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
@@ -2488,7 +2488,7 @@ pmap_clear_reference(pg)
 	return (changed);
 }
 
-boolean_t
+bool
 pmap_is_modified(pg)
 	struct vm_page *pg;
 {
@@ -2535,7 +2535,7 @@ pmap_is_modified(pg)
 	return (i);
 }
 
-boolean_t
+bool
 pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
@@ -2637,7 +2637,7 @@ pmap_page_protect(pg, prot)
 	pv_entry_t pv, npv, firstpv;
 	struct pmap *pmap;
 	vaddr_t va;
-	boolean_t needflush = FALSE;
+	bool needflush = FALSE;
 
 	DPRINTF(PDB_CHANGEPROT,
 	    ("pmap_page_protect: pg %p prot %x\n", pg, prot));

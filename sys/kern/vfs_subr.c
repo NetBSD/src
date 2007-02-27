@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.281 2007/02/09 21:55:32 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.281.2.1 2007/02/27 16:54:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.281 2007/02/09 21:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.281.2.1 2007/02/27 16:54:35 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1748,7 +1748,7 @@ vgonel(struct vnode *vp, struct lwp *l)
 
 	vp->v_type = VBAD;
 	if (vp->v_usecount == 0) {
-		boolean_t dofree;
+		bool dofree;
 
 		simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)

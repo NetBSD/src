@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.44 2006/12/10 14:52:29 is Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.44.2.1 2007/02/27 16:54:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.44 2006/12/10 14:52:29 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.44.2.1 2007/02/27 16:54:45 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -176,7 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.44 2006/12/10 14:52:29 is Exp $")
 #define RCF_SINGLEROUTE (2 << 8) | TOKEN_RCF_FRAME2 | TOKEN_RCF_BROADCAST_SINGLE
 
 static int	token_output(struct ifnet *, struct mbuf *,
-			     struct sockaddr *, struct rtentry *);
+			     const struct sockaddr *, struct rtentry *);
 static void	token_input(struct ifnet *, struct mbuf *);
 
 /*
@@ -186,7 +186,7 @@ static void	token_input(struct ifnet *, struct mbuf *);
  * XXX route info has to go into the same mbuf as the header
  */
 static int
-token_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
+token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 	u_int16_t etype;
@@ -354,9 +354,8 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 		    sdl->sdl_family == AF_LINK && sdl->sdl_alen > 0) {
 			bcopy(LLADDR(sdl), (caddr_t)edst, sizeof(edst));
 		}
-		else if ((error =
-			    iso_snparesolve(ifp, (struct sockaddr_iso *)dst,
-					    (char *)edst, &snpalen)))
+		else if ((error = iso_snparesolve(ifp,
+		    (const struct sockaddr_iso *)dst, (char *)edst, &snpalen)))
 			goto bad; /* Not resolved */
 		/* If broadcasting on a simplex interface, loopback a copy. */
 		if (*edst & 1)
@@ -393,9 +392,9 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, struct sockaddr *dst,
 
 	case AF_UNSPEC:
 	{
-		struct ether_header *eh;
-		eh = (struct ether_header *)dst->sa_data;
-		bcopy((caddr_t)eh->ether_dhost, (caddr_t)edst, sizeof (edst));
+		const struct ether_header *eh;
+		eh = (const struct ether_header *)dst->sa_data;
+		memcpy(edst, eh->ether_dhost, sizeof(edst));
 		if (*edst & 1)
 			m->m_flags |= (M_BCAST|M_MCAST);
 		etype = TYPEHTONS(eh->ether_type);

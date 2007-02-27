@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.54 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.54.4.1 2007/02/27 16:53:44 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.54 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.54.4.1 2007/02/27 16:53:44 yamt Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -67,26 +67,26 @@ ddb_init(int symsize, void *vss, void *vse)
 {
 #ifdef DB_AOUT_SYMBOLS
 	db_symformat = &db_symformat_aout;
-	if ((*db_symformat->sym_init)(symsize, vss, vse, TBLNAME) == TRUE) {
-		using_aout_symtab = TRUE;
+	if ((*db_symformat->sym_init)(symsize, vss, vse, TBLNAME) == true) {
+		using_aout_symtab = true;
 		return;
 	}
 #endif
 	ksyms_init(symsize, vss, vse);	/* Will complain if necessary */
 }
 
-boolean_t
+bool
 db_eqname(const char *src, const char *dst, int c)
 {
 
 	if (!strcmp(src, dst))
-		return (TRUE);
+		return (true);
 	if (src[0] == c)
 		return (!strcmp(src+1,dst));
-	return (FALSE);
+	return (false);
 }
 
-boolean_t
+bool
 db_value_of_name(const char *name, db_expr_t *valuep)
 {
 	char symbol[128];
@@ -104,9 +104,9 @@ db_value_of_name(const char *name, db_expr_t *valuep)
 		 */
 		ssym = (*db_symformat->sym_lookup)(NULL, name);
 		if (ssym == DB_SYM_NULL)
-			return (FALSE);
+			return (false);
 		db_symbol_values(ssym, &name, valuep);
-		return (TRUE);
+		return (true);
 	}
 #endif
 	(void)strlcpy(symbol, name, sizeof(symbol));
@@ -114,14 +114,14 @@ db_value_of_name(const char *name, db_expr_t *valuep)
 	if (ksyms_getval(mod, sym, &uval, KSYMS_EXTERN) == 0) {
 		val = (long) uval;
 		*valuep = (db_expr_t)val;
-		return TRUE;
+		return true;
 	}
 	if (ksyms_getval(mod, sym, &uval, KSYMS_ANY) == 0) {
 		val = (long) uval;
 		*valuep = (db_expr_t)val;
-		return TRUE;
+		return true;
 	}
-	return FALSE;
+	return false;
 }
 
 #ifdef DB_AOUT_SYMBOLS
@@ -318,7 +318,7 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 				if (d) {
 					strlcat(buf, "+", buflen);
 					db_format_radix(buf+strlen(buf),
-					    24, d, TRUE);
+					    24, d, true);
 				}
 				if (strategy == DB_STGY_PROC) {
 					if ((*db_symformat->sym_line_at_pc)
@@ -344,7 +344,7 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 			if (off - val) {
 				strlcat(buf, "+", buflen);
 				db_format_radix(buf+strlen(buf),
-				    24, off - val, TRUE);
+				    24, off - val, true);
 			}
 #ifdef notyet
 			if (strategy & KSYMS_PROC) {
@@ -390,7 +390,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 				if (d) {
 					char tbuf[24];
 
-					db_format_radix(tbuf, 24, d, TRUE);
+					db_format_radix(tbuf, 24, d, true);
 					(*pr)("+%s", tbuf);
 				}
 				if (strategy == DB_STGY_PROC) {
@@ -416,7 +416,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 			if (off - val) {
 				char tbuf[24];
 
-				db_format_radix(tbuf, 24, off - val, TRUE);
+				db_format_radix(tbuf, 24, off - val, true);
 				(*pr)("+%s", tbuf);
 			}
 #ifdef notyet
@@ -450,7 +450,7 @@ db_symsplit(char *str, char **mod, char **sym)
 	}
 }
 
-boolean_t
+bool
 db_sym_numargs(db_sym_t cursym, int *nargp, char **argnamep)
 {
 #ifdef DB_AOUT_SYMBOLS
@@ -458,6 +458,6 @@ db_sym_numargs(db_sym_t cursym, int *nargp, char **argnamep)
 		return ((*db_symformat->sym_numargs)(NULL, cursym, nargp,
 		    argnamep));
 #endif
-	return (FALSE);
+	return (false);
 }
 

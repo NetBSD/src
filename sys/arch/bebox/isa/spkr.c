@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.16 2006/03/29 04:16:45 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.16.14.1 2007/02/27 16:49:52 yamt Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.16 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spkr.c,v 1.16.14.1 2007/02/27 16:49:52 yamt Exp $");
 
 #include "spkr.h"
 #if NSPKR > 0
@@ -136,10 +136,6 @@ rest(ticks)
  * except possibly at physical block boundaries.
  */
 
-typedef int	bool;
-#define TRUE	1
-#define FALSE	0
-
 #define toupper(c)	((c) - ' ' * (((c) >= 'a') && ((c) <= 'z')))
 #define isdigit(c)	(((c) >= '0') && ((c) <= '9'))
 #define dtoi(c)		((c) - '0')
@@ -198,8 +194,8 @@ playinit()
     whole = (hz * SECS_PER_MIN * WHOLE_NOTE) / DFLT_TEMPO;
     fill = NORMAL;
     value = DFLT_VALUE;
-    octtrack = FALSE;
-    octprefix = TRUE;	/* act as though there was an initial O(n) */
+    octtrack = false;
+    octprefix = true;	/* act as though there was an initial O(n) */
 }
 
 static void
@@ -294,7 +290,7 @@ playstring(cp, slen)
 		    pitch -= OCTAVE_NOTES;
 		}
 	    }
-	    octprefix = FALSE;
+	    octprefix = false;
 	    lastpitch = pitch;
 
 	    /* ...which may in turn be followed by an override time value */
@@ -316,13 +312,13 @@ playstring(cp, slen)
 	case 'O':
 	    if (slen > 0 && (cp[1] == 'N' || cp[1] == 'n'))
 	    {
-		octprefix = octtrack = FALSE;
+		octprefix = octtrack = false;
 		++cp;
 		slen--;
 	    }
 	    else if (slen > 0 && (cp[1] == 'L' || cp[1] == 'l'))
 	    {
-		octtrack = TRUE;
+		octtrack = true;
 		++cp;
 		slen--;
 	    }
@@ -331,20 +327,20 @@ playstring(cp, slen)
 		GETNUM(cp, octave);
 		if (octave >= NOCTAVES)
 		    octave = DFLT_OCTAVE;
-		octprefix = TRUE;
+		octprefix = true;
 	    }
 	    break;
 
 	case '>':
 	    if (octave < NOCTAVES - 1)
 		octave++;
-	    octprefix = TRUE;
+	    octprefix = true;
 	    break;
 
 	case '<':
 	    if (octave > 0)
 		octave--;
-	    octprefix = TRUE;
+	    octprefix = true;
 	    break;
 
 	case 'N':

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 2007/02/09 21:55:13 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.194.2.1 2007/02/27 16:53:15 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194.2.1 2007/02/27 16:53:15 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -252,7 +252,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #endif
 
 	/* Clear the P_32 flag. */
-	l->l_proc->p_flag &= ~P_32;
+	l->l_proc->p_flag &= ~PK_32;
 
 	/* Don't allow misaligned code by default */
 	l->l_proc->p_md.md_flags &= ~MDP_FIXALIGN;

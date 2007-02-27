@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 2006/12/21 15:55:22 yamt Exp $	*/
+/*	$NetBSD: psl.h,v 1.7.2.1 2007/02/27 16:49:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,6 +45,9 @@
 #ifndef _ARM_PSL_H_
 #define _ARM_PSL_H_
 #include <machine/intr.h>
+#ifndef _LOCORE
+#include <arm/softintr.h>
+#endif
 
 /*
  * These are the different SPL states
@@ -54,6 +57,7 @@
  */
 
 #define _SPL_0		0
+#define _SPL_SOFT	1
 #define _SPL_SOFTCLOCK	1
 #define _SPL_SOFTNET	2
 #define _SPL_BIO	3
@@ -69,7 +73,7 @@
 #define _SPL_LEVELS	13
 
 #define spl0()		splx(_SPL_0)
-/*#define splsoft()	raisespl(_SPL_SOFT)*/
+#define splsoft()	raisespl(_SPL_SOFT)
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
 #define spllowersoftclock() lowerspl(_SPL_SOFTCLOCK)
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
@@ -94,16 +98,11 @@ int raisespl	__P((int));
 int lowerspl	__P((int));
 int splx	__P((int));
 
-void setsoftast		__P((void));
-void setsoftclock	__P((void));
-void setsoftnet		__P((void));
-void setsoftserial	__P((void));
-void setsoftintr	__P((u_int intrmask));
+void _setsoftintr	(int si);
 
 extern int current_spl_level;
 
 extern u_int spl_masks[_SPL_LEVELS + 1];
-extern u_int spl_smasks[_SPL_LEVELS];
 
 typedef int ipl_t;
 typedef struct {

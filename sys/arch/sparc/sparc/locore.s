@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.228 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.228.2.1 2007/02/27 16:53:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4929,8 +4929,6 @@ ENTRY(cpu_exit)
 #endif
 	wr	%g0, PSR_S|PSR_ET, %psr	! and then enable traps
 	 nop
-	call	lwp_exit2		! lwp_exit2(l)
-	 mov	%g2, %o0
 
 	/*
 	 * Now fall through to `the last switch'.  %l6 was set to
@@ -5022,7 +5020,7 @@ idle_enter:
 
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
-	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
+	ldub	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
 	tst	%o3
 	bz	ispin2
 	 nop

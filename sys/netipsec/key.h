@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.4 2005/12/10 23:44:08 elad Exp $	*/
+/*	$NetBSD: key.h,v 1.4.26.1 2007/02/27 16:55:07 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key.h,v 1.21 2001/07/27 03:51:30 itojun Exp $	*/
 
@@ -77,8 +77,8 @@ extern void _key_freesp(struct secpolicy **, const char*, int);
 #define	KEY_FREESP(spp)						\
 	_key_freesp(spp, __FILE__, __LINE__)
 
-extern struct secasvar *key_allocsa(union sockaddr_union *, u_int, u_int32_t,
-	const char*, int);
+extern struct secasvar *key_allocsa(const union sockaddr_union *, 
+		u_int, u_int32_t,const char*, int);
 extern void key_freesav(struct secasvar **, const char*, int);
 
 #define	KEY_ALLOCSA(dst, proto, spi)				\

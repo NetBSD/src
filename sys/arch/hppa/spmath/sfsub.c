@@ -1,4 +1,4 @@
-/*	$NetBSD: sfsub.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: sfsub.c,v 1.3.26.1 2007/02/27 16:51:30 yamt Exp $	*/
 
 /*	$OpenBSD: sfsub.c,v 1.4 2001/03/29 03:58:19 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfsub.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfsub.c,v 1.3.26.1 2007/02/27 16:51:30 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -60,7 +60,7 @@ sgl_fsub(leftptr, rightptr, dstptr, status)
 
     register int result_exponent, right_exponent, diff_exponent;
     register int sign_save, jumpsize;
-    register int inexact = FALSE, underflowtrap;
+    register int inexact = false, underflowtrap;
 
     /* Create local copies of the numbers */
     left = *leftptr;
@@ -211,7 +211,7 @@ sgl_fsub(leftptr, rightptr, dstptr, status)
 		    Sgl_set_sign(left,/*using*/sign_save);
 		    Sgl_setwrapped_exponent(left,result_exponent,unfl);
 		    *dstptr = left;
-		    /* inexact = FALSE */
+		    /* inexact = false */
 		    return(UNDERFLOWEXCEPTION);
 		    }
 		}
@@ -261,7 +261,7 @@ sgl_fsub(leftptr, rightptr, dstptr, status)
 		Sgl_set_sign(result,/*using*/sign_save);
 		Sgl_setwrapped_exponent(result,result_exponent,unfl);
 		*dstptr = result;
-		/* inexact = FALSE */
+		/* inexact = false */
 		return(UNDERFLOWEXCEPTION);
 		}
 	    *dstptr = result;
@@ -424,7 +424,7 @@ sgl_fsub(leftptr, rightptr, dstptr, status)
 		Sgl_set_sign(result,sign_save);
 		Sgl_setwrapped_exponent(result,result_exponent,unfl);
 		*dstptr = result;
-		/* inexact = FALSE */
+		/* inexact = false */
 		return(UNDERFLOWEXCEPTION);
 		}
 	    /*
@@ -459,7 +459,7 @@ sgl_fsub(leftptr, rightptr, dstptr, status)
   round:
     if(Ext_isnotzero(extent))
 	{
-	inexact = TRUE;
+	inexact = true;
 	switch(Rounding_mode())
 	    {
 	    case ROUNDNEAREST: /* The default. */
@@ -512,7 +512,7 @@ sgl_fsub(leftptr, rightptr, dstptr, status)
 	else
 	    {
 	    Set_overflowflag();
-	    inexact = TRUE;
+	    inexact = true;
 	    Sgl_setoverflow(result);
 	    }
 	}

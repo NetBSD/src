@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.41 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.41.26.1 2007/02/27 16:53:22 yamt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.41 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.41.26.1 2007/02/27 16:53:22 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -208,9 +208,9 @@ kdb_trap(struct trapframe *frame)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(frame->trap, frame->code);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 
@@ -414,7 +414,7 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t	addr;		/* Address parameter */
-	boolean_t	have_addr;	/* True if addr is valid */
+	bool		have_addr;	/* True if addr is valid */
 	db_expr_t	count;		/* Optional count */
 	const char	*modif;		/* pointer to flag modifier 't' */
 	void		(*pr) __P((const char *, ...)); /* Print function */
@@ -453,7 +453,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	 */
 	if (have_addr) {
 		if (trace_proc) {
-			p = pfind((int)addr);
+			p = p_find((int)addr, PFIND_LOCKED);
 			/* Try to be helpful by looking at it as if it were decimal */
 			if (p == NULL) {
 				u_int	tpid = 0;
@@ -468,7 +468,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 					tpid = tpid * 10 + digit;
 					foo = foo << 4;
 				}
-				p = pfind(tpid);
+				p = p_find(tpid, PFIND_LOCKED);
 				if (p == NULL) {
 					(*pr)("	 No such process.\n");
 					return;
@@ -630,7 +630,7 @@ kdbrint(tkn)
 #ifdef MULTIPROCESSOR
 
 static void
-db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_mp_softc *sc;
 	struct cpu_info *ci;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.74 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.74.4.1 2007/02/27 16:53:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.74 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.74.4.1 2007/02/27 16:53:51 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -397,7 +397,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
-		DPRINTF(("cardbusattach: no CardBus card on cb%d\n",
+		DPRINTF(("%s: no CardBus card on cb%d\n", __func__,
 		    device_unit(&sc->sc_dev)));
 		return (0);
 	}
@@ -426,7 +426,7 @@ cardbus_rescan(struct device *self, const char *ifattr,
 
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
-		DPRINTF(("cardbusattach: no CardBus card on cb%d\n",
+		DPRINTF(("%s: no CardBus card on cb%d\n", __func__,
 		    device_unit(&sc->sc_dev)));
 		return (0);
 	}

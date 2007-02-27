@@ -1,4 +1,4 @@
-/*	$NetBSD: mvphy.c,v 1.2 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: mvphy.c,v 1.2.6.1 2007/02/27 16:53:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.2 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvphy.c,v 1.2.6.1 2007/02/27 16:53:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,20 @@ struct mvPhyConfig {
 	uint16_t switchPortAddr;/* switch port associated with PHY */
 	uint16_t vlanSetting;	/* VLAN table setting  for PHY */
 	uint32_t portControl;	/* switch port control setting for PHY */
+};
+static const struct mvPhyConfig dumbConfig[] = {
+	{ 0x18, 0x2e,		/* PHY port 0 = LAN port 0 */
+	  MV_PORT_CONTROL_PORT_STATE_FORWARDING },
+	{ 0x19, 0x2d,		/* PHY port 1 = LAN port 1 */
+	  MV_PORT_CONTROL_PORT_STATE_FORWARDING },
+	{ 0x1a, 0x2b,		/* PHY port 2 = LAN port 2 */
+	  MV_PORT_CONTROL_PORT_STATE_FORWARDING },
+	{ 0x1b, 0x27,		/* PHY port 3 = LAN port 3 */
+	  MV_PORT_CONTROL_PORT_STATE_FORWARDING },
+	{ 0x1c, 0x25,		/* PHY port 4 = LAN port 4 */
+	  MV_PORT_CONTROL_PORT_STATE_FORWARDING },
+	{ 0x1d, 0x1f,		/* PHY port 5 = CPU port */
+	  MV_PORT_CONTROL_PORT_STATE_FORWARDING }
 };
 static const struct mvPhyConfig routerConfig[] = {
 	{ 0x18, 0x2e,		/* PHY port 0 = LAN port 0 */
@@ -301,7 +315,9 @@ static void
 mvphy_switchconfig(struct mii_softc *sc, int port)
 {
 	/* XXX router vs bridge */
-	const struct mvPhyConfig *conf = &routerConfig[port];
+	/*const struct mvPhyConfig *conf = &routerConfig[port];*/
+	/*const struct mvPhyConfig *conf = &bridgeConfig[port];*/
+	const struct mvPhyConfig *conf = &dumbConfig[port];
 
 	MV_WRITE(sc, conf->switchPortAddr, MV_PORT_BASED_VLAN_MAP,
 	    conf->vlanSetting);
@@ -319,7 +335,6 @@ mvphy_flushatu(struct mii_softc *sc)
 	uint16_t status;
 	int i;
 
-printf("%s: %s\n", sc->mii_dev.dv_xname, __func__);/*XXX*/
 	/* wait for any previous request to complete */
 	/* XXX if busy defer to tick */
 	/* XXX timeout */
@@ -332,7 +347,7 @@ printf("%s: %s\n", sc->mii_dev.dv_xname, __func__);/*XXX*/
 	if (i != 1000) {
 		MV_WRITE(sc, MII_MV_SWITCH_GLOBAL_ADDR, MV_ATU_OPERATION,
 		    MV_ATU_OP_FLUSH_ALL | MV_ATU_BUSY);
-	} else
+	} /*else
 		printf("%s: timeout waiting for ATU flush\n",
-		    sc->mii_dev.dv_xname);
+		    sc->mii_dev.dv_xname);*/
 }

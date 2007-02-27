@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.95 2007/01/04 19:07:03 elad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.95.2.1 2007/02/27 16:54:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.95 2007/01/04 19:07:03 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.95.2.1 2007/02/27 16:54:45 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -72,8 +72,8 @@ static LIST_HEAD(, tun_softc) tunz_softc_list;
 static struct simplelock tun_softc_lock;
 
 static int	tun_ioctl(struct ifnet *, u_long, caddr_t);
-static int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-		       struct rtentry *rt);
+static int	tun_output(struct ifnet *, struct mbuf *,
+			const struct sockaddr *, struct rtentry *rt);
 static int	tun_clone_create(struct if_clone *, int);
 static int	tun_clone_destroy(struct ifnet *);
 
@@ -487,7 +487,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * tun_output - queue packets from higher level ready to put out.
  */
 static int
-tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
+tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct tun_softc *tp = ifp->if_softc;

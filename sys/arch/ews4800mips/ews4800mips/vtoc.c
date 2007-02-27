@@ -1,4 +1,4 @@
-/*	$NetBSD: vtoc.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $	*/
+/*	$NetBSD: vtoc.c,v 1.1.28.1 2007/02/27 16:50:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vtoc.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vtoc.c,v 1.1.28.1 2007/02/27 16:50:20 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -60,17 +60,17 @@ __KERNEL_RCSID(0, "$NetBSD: vtoc.c,v 1.1 2005/12/29 15:20:08 tsutsui Exp $");
 void vtoc_print_partition_table(const struct ux_partition *);
 #endif /* VTOC_DEBUG */
 
-boolean_t
+bool
 vtoc_sector(void *rwops, struct vtoc_sector *vtoc, int start)
 {
 
 	if (!sector_read(rwops, (void *)vtoc, start + VTOC_SECTOR))
-		return FALSE;
+		return false;
 
 	if (!vtoc_sanity(vtoc))
-		return FALSE;
+		return false;
 
-	return TRUE;
+	return true;
 }
 
 const struct ux_partition *
@@ -95,20 +95,20 @@ vtoc_find_bfs(const struct vtoc_sector *vtoc)
 	return &vtoc->partition[i];
 }
 
-boolean_t
+bool
 vtoc_valid(const struct vtoc_sector *vtoc)
 {
 
 	return (vtoc->magic == VTOC_MAGIC) && (vtoc->version == VTOC_VERSION);
 }
 
-boolean_t
+bool
 vtoc_sanity(const struct vtoc_sector *vtoc)
 {
 
 	if (!vtoc_valid(vtoc)) {
 		DPRINTF("Invalid VTOC.\n");
-		return FALSE;
+		return false;
 	}
 
 	DPRINTF("[VTOC] (%d byte)\n", sizeof *vtoc);
@@ -122,7 +122,7 @@ vtoc_sanity(const struct vtoc_sector *vtoc)
 #ifdef VTOC_DEBUG
 	vtoc_print_partition_table(vtoc->partition);
 #endif
-	return TRUE;
+	return true;
 }
 
 #ifdef VTOC_DEBUG

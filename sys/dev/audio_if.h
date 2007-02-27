@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.61 2006/04/19 14:10:58 jmcneill Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.61.14.1 2007/02/27 16:53:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -80,7 +80,7 @@ typedef struct audio_stream {
 	const uint8_t *outp;	/* address to be read next */
 	int used;		/* valid data size in this stream */
 	audio_params_t param;	/* represents this stream */
-	boolean_t loop;
+	bool loop;
 } audio_stream_t;
 
 static __inline int

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.190 2007/02/09 21:55:32 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.190.2.1 2007/02/27 16:54:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.190 2007/02/09 21:55:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.190.2.1 2007/02/27 16:54:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1192,32 +1192,43 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (tp->t_session != NULL && !isctty(p, tp))
 			return (ENOTTY);
 
-		if (pgid < 0)
-			pgrp = pgfind(-pgid);
-		else {
-			struct proc *p1 = pfind(pgid);
+		rw_enter(&proclist_lock, RW_READER); 
+
+		if (pgid < 0) {
+			pgrp = pg_find(-pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+			if (pgrp == NULL)
+				return (EINVAL);
+		} else {
+			struct proc *p1;
+			p1 = p_find(pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 			if (!p1)
 				return (ESRCH);
 			pgrp = p1->p_pgrp;
 		}
 
-		if (pgrp == NULL)
-			return (EINVAL);
-		else if (pgrp->pg_session != p->p_session)
+		if (pgrp->pg_session != p->p_session) {
+			rw_exit(&proclist_lock);
 			return (EPERM);
+		}
 		tp->t_pgrp = pgrp;
+		rw_exit(&proclist_lock);
 		break;
 	}
 	case TIOCSPGRP: {		/* set pgrp of tty */
-		struct pgrp *pgrp = pgfind(*(int *)data);
+		struct pgrp *pgrp;
 
 		if (!isctty(p, tp))
 			return (ENOTTY);
-		else if (pgrp == NULL)
+		rw_enter(&proclist_lock, RW_READER); 
+		pgrp = pg_find(*(int *)data, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+		if (pgrp == NULL)
 			return (EINVAL);
-		else if (pgrp->pg_session != p->p_session)
+		if (pgrp->pg_session != p->p_session) {
+			rw_exit(&proclist_lock);
 			return (EPERM);
+		}
 		tp->t_pgrp = pgrp;
+		rw_exit(&proclist_lock);
 		break;
 	}
 	case TIOCSTAT:			/* get load avg stats */

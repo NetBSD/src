@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_sm_rx.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_sm_rx.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_sm_rx.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_sm_rx.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -147,7 +147,7 @@ lacp_sm_rx_timer(struct lacp_port *lp)
 static void
 lacp_sm_rx_record_pdu(struct lacp_port *lp, const struct lacpdu *du)
 {
-	boolean_t active;
+	bool active;
 	uint8_t oldpstate;
 #if defined(LACP_DEBUG)
 	char buf[LACP_STATESTR_MAX+1];

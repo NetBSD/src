@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.41.2.2 2007/02/17 14:00:31 yamt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.41.2.3 2007/02/27 16:53:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.41.2.2 2007/02/17 14:00:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.41.2.3 2007/02/27 16:53:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.41.2.2 2007/02/17 14:00:31 yamt Exp $")
 #endif
 
 void
-db_kill_proc(db_expr_t addr, int haddr,
+db_kill_proc(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 	struct proc *p;
@@ -105,7 +105,7 @@ db_kill_proc(db_expr_t addr, int haddr,
 
 #ifdef KGDB
 void
-db_kgdb_cmd(db_expr_t addr, int haddr,
+db_kgdb_cmd(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 	kgdb_active++;
@@ -115,7 +115,7 @@ db_kgdb_cmd(db_expr_t addr, int haddr,
 #endif
 
 void
-db_show_all_procs(db_expr_t addr, int haddr,
+db_show_all_procs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 	int i;
@@ -233,7 +233,7 @@ db_show_all_procs(db_expr_t addr, int haddr,
 }
 
 void
-db_show_all_pools(db_expr_t addr, int haddr,
+db_show_all_pools(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 
@@ -241,7 +241,7 @@ db_show_all_pools(db_expr_t addr, int haddr,
 }
 
 void
-db_dmesg(db_expr_t addr, int haddr, db_expr_t count,
+db_dmesg(db_expr_t addr, bool haddr, db_expr_t count,
     const char *modif)
 {
 	struct kern_msgbuf *mbp;
@@ -289,7 +289,7 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count,
 }
 
 void
-db_show_sched_qs(db_expr_t addr, int haddr,
+db_show_sched_qs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
 

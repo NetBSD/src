@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.17 2006/11/25 12:17:30 scw Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.17.4.1 2007/02/27 16:54:12 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.17 2006/11/25 12:17:30 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.17.4.1 2007/02/27 16:54:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,6 +623,7 @@ msdosfs_reclaim(v)
 #if 0 /* XXX */
 	dep->de_flag = 0;
 #endif
+	genfs_node_destroy(vp);
 	pool_put(&msdosfs_denode_pool, dep);
 	vp->v_data = NULL;
 	return (0);

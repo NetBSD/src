@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.75 2006/07/23 22:06:13 ad Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.75.10.1 2007/02/27 16:55:06 yamt Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.75 2006/07/23 22:06:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.75.10.1 2007/02/27 16:55:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -123,9 +123,7 @@ udp6_init()
  * just wake up so that he can collect error status.
  */
 static	void
-udp6_notify(in6p, errno)
-	struct in6pcb *in6p;
-	int errno;
+udp6_notify(struct in6pcb *in6p, int errno)
 {
 	in6p->in6p_socket->so_error = errno;
 	sorwakeup(in6p->in6p_socket);
@@ -133,20 +131,17 @@ udp6_notify(in6p, errno)
 }
 
 void
-udp6_ctlinput(cmd, sa, d)
-	int cmd;
-	struct sockaddr *sa;
-	void *d;
+udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	struct udphdr uh;
 	struct ip6_hdr *ip6;
-	struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
+	const struct sockaddr_in6 *sa6 = (const struct sockaddr_in6 *)sa;
 	struct mbuf *m;
 	int off;
 	void *cmdarg;
 	struct ip6ctlparam *ip6cp = NULL;
 	const struct sockaddr_in6 *sa6_src = NULL;
-	void (*notify) __P((struct in6pcb *, int)) = udp6_notify;
+	void (*notify)(struct in6pcb *, int) = udp6_notify;
 	struct udp_portonly {
 		u_int16_t uh_sport;
 		u_int16_t uh_dport;
@@ -258,11 +253,8 @@ extern	int udp6_sendspace;
 extern	int udp6_recvspace;
 
 int
-udp6_usrreq(so, req, m, addr6, control, l)
-	struct socket *so;
-	int req;
-	struct mbuf *m, *addr6, *control;
-	struct lwp *l;
+udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
+    struct mbuf *control, struct lwp *l)
 {
 	struct	in6pcb *in6p = sotoin6pcb(so);
 	int	error = 0;

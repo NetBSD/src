@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.51 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.51.4.1 2007/02/27 16:54:58 yamt Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.51 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_input.c,v 1.51.4.1 2007/02/27 16:54:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -144,7 +144,8 @@ ah4_input(m, va_alist)
 	spi = ah->ah_spi;
 
 	if ((sav = key_allocsa(AF_INET,
-	                      (caddr_t)&ip->ip_src, (caddr_t)&ip->ip_dst,
+	                      (const caddr_t)&ip->ip_src,
+			      (const caddr_t)&ip->ip_dst,
 	                      IPPROTO_AH, spi, sport, dport)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv4 AH input: no key association found for spi %u\n",
@@ -510,7 +511,7 @@ fail:
 void *
 ah4_ctlinput(cmd, sa, v)
 	int cmd;
-	struct sockaddr *sa;
+	const struct sockaddr *sa;
 	void *v;
 {
 	struct ip *ip = v;
@@ -911,10 +912,7 @@ fail:
 }
 
 void
-ah6_ctlinput(cmd, sa, d)
-	int cmd;
-	struct sockaddr *sa;
-	void *d;
+ah6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newah *ahp;
 	struct newah ah;
@@ -923,7 +921,7 @@ ah6_ctlinput(cmd, sa, d)
 	struct mbuf *m;
 	struct ip6ctlparam *ip6cp = NULL;
 	int off;
-	struct sockaddr_in6 *sa6_src, *sa6_dst;
+	const struct sockaddr_in6 *sa6_src, *sa6_dst;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -971,10 +969,10 @@ ah6_ctlinput(cmd, sa, d)
 			 * the address in the ICMP message payload.
 			 */
 			sa6_src = ip6cp->ip6c_src;
-			sa6_dst = (struct sockaddr_in6 *)sa;
+			sa6_dst = (const struct sockaddr_in6 *)sa;
 			sav = key_allocsa(AF_INET6,
-					  (caddr_t)&sa6_src->sin6_addr,
-					  (caddr_t)&sa6_dst->sin6_addr,
+					  (const void *)&sa6_src->sin6_addr,
+					  (const void *)&sa6_dst->sin6_addr,
 					  IPPROTO_AH, ahp->ah_spi, 0, 0);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||

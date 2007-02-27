@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 2005/12/11 12:19:15 christos Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.18.26.1 2007/02/27 16:53:16 yamt Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2005/12/11 12:19:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.26.1 2007/02/27 16:53:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 	int i;
 
 #ifdef __arch64__
-	if (!(curproc->p_flag & P_32)) {
+	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy out regs */
 		regs->r_tstate = tf->tf_tstate;
 		regs->r_pc = tf->tf_pc;
@@ -152,7 +152,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	int i;
 
 #ifdef __arch64__
-	if (!(curproc->p_flag & P_32)) {
+	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy in regs */
 		tf->tf_pc = regs->r_pc;
 		tf->tf_npc = regs->r_npc;
@@ -208,7 +208,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 	int i;
 
 #ifdef __arch64__
-	if (!(curproc->p_flag & P_32)) {
+	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy out fregs */
 		/* NOTE: struct fpreg == struct fpstate */
 		if (l->l_md.md_fpstate)
@@ -236,7 +236,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 	int i;
 
 #ifdef __arch64__
-	if (!(curproc->p_flag & P_32)) {
+	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy in fregs */
 		if (l->l_md.md_fpstate == NULL)
 			return EINVAL;

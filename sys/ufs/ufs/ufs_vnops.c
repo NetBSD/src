@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.149 2007/01/29 15:42:50 hannken Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.149.2.1 2007/02/27 16:55:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.149 2007/01/29 15:42:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.149.2.1 2007/02/27 16:55:24 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1746,7 +1746,7 @@ ufs_readdir(void *v)
 				continue;
 			}
 			/*
-			 * invlid cookie.
+			 * invalid cookie.
 			 */
 			error = EINVAL;
 			goto out;
@@ -1787,10 +1787,13 @@ ufs_readdir(void *v)
 	error = uiomove(ndbuf, count, uio);
 out:
 	if (ap->a_cookies) {
-		if (error)
+		if (error) {
 			free(*(ap->a_cookies), M_TEMP);
-		else
+			*(ap->a_cookies) = NULL;
+			*(ap->a_ncookies) = 0;
+		} else {
 			*ap->a_ncookies = ccp - *(ap->a_cookies);
+		}
 	}
 	uio->uio_offset = off;
 	free(ndbuf, M_TEMP);

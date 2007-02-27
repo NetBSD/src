@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.4 2007/02/25 13:57:15 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.5 2007/02/27 16:54:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.4 2007/02/25 13:57:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.5 2007/02/27 16:54:22 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -217,6 +217,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.4 2007/02/25 13:57:15 yamt Exp $
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
+#include <sys/syscall_stats.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -271,7 +272,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 	 * If the current LWP has been told to exit, we must not suspend anyone
 	 * else or deadlock could occur.  We won't return to userspace.
 	 */
-	if ((curl->l_stat & (L_WEXIT | L_WCORE)) != 0) {
+	if ((curl->l_stat & (LW_WEXIT | LW_WCORE)) != 0) {
 		lwp_unlock(t);
 		return (EDEADLK);
 	}
@@ -281,20 +282,20 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 	switch (t->l_stat) {
 	case LSRUN:
 	case LSONPROC:
-		t->l_flag |= L_WSUSPEND;
+		t->l_flag |= LW_WSUSPEND;
 		lwp_need_userret(t);
 		lwp_unlock(t);
 		break;
 
 	case LSSLEEP:
-		t->l_flag |= L_WSUSPEND;
+		t->l_flag |= LW_WSUSPEND;
 
 		/*
 		 * Kick the LWP and try to get it to the kernel boundary
 		 * so that it will release any locks that it holds.
 		 * setrunnable() will release the lock.
 		 */
-		if ((t->l_flag & L_SINTR) != 0)
+		if ((t->l_flag & LW_SINTR) != 0)
 			setrunnable(t);
 		else
 			lwp_unlock(t);
@@ -305,7 +306,7 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 		break;
 
 	case LSSTOP:
-		t->l_flag |= L_WSUSPEND;
+		t->l_flag |= LW_WSUSPEND;
 		setrunnable(t);
 		break;
 
@@ -346,12 +347,12 @@ lwp_continue(struct lwp *l)
 	    l->l_wchan));
 
 	/* If rebooting or not suspended, then just bail out. */
-	if ((l->l_flag & L_WREBOOT) != 0) {
+	if ((l->l_flag & LW_WREBOOT) != 0) {
 		lwp_unlock(l);
 		return;
 	}
 
-	l->l_flag &= ~L_WSUSPEND;
+	l->l_flag &= ~LW_WSUSPEND;
 
 	if (l->l_stat != LSSUSPENDED) {
 		lwp_unlock(l);
@@ -480,7 +481,7 @@ lwp_wait1(struct lwp *l, lwpid_t lid, lwpid_t *departed, int flags)
  * suspended, or stopped by the caller.
  */
 int
-newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
+newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, bool inmem,
     int flags, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, struct lwp **rnewlwpp)
 {
@@ -504,9 +505,12 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 		l2 = pool_get(&lwp_pool, PR_WAITOK);
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = pool_cache_get(&turnstile_cache, PR_WAITOK);
+		SLIST_INIT(&l2->l_pi_lenders);
 	} else {
 		l2 = isfree;
 		ts = l2->l_ts;
+		KASSERT(l2->l_inheritedprio == MAXPRI);
+		KASSERT(SLIST_EMPTY(&l2->l_pi_lenders));
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = ts;
 	}
@@ -516,17 +520,18 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	l2->l_refcnt = 1;
 	l2->l_priority = l1->l_priority;
 	l2->l_usrpri = l1->l_usrpri;
+	l2->l_inheritedprio = MAXPRI;
 	l2->l_mutex = &sched_mutex;
 	l2->l_cpu = l1->l_cpu;
-	l2->l_flag = inmem ? L_INMEM : 0;
+	l2->l_flag = inmem ? LW_INMEM : 0;
 	lwp_initspecific(l2);
 
-	if (p2->p_flag & P_SYSTEM) {
+	if (p2->p_flag & PK_SYSTEM) {
 		/*
 		 * Mark it as a system process and not a candidate for
 		 * swapping.
 		 */
-		l2->l_flag |= L_SYSTEM;
+		l2->l_flag |= LW_SYSTEM;
 	}
 
 	lwp_update_creds(l2);
@@ -565,6 +570,8 @@ newlwp(struct lwp *l1, struct proc *p2, vaddr_t uaddr, boolean_t inmem,
 	mutex_enter(&proclist_mutex);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(&proclist_mutex);
+
+	SYSCALL_TIME_LWP_INIT(l2);
 
 	if (p2->p_emul->e_lwp_fork)
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
@@ -659,11 +666,11 @@ lwp_exit(struct lwp *l)
 	 * asked to check for signals, then we loose: arrange to have
 	 * all other LWPs in the process check for signals.
 	 */
-	if ((l->l_flag & L_PENDSIG) != 0 &&
+	if ((l->l_flag & LW_PENDSIG) != 0 &&
 	    firstsig(&p->p_sigpend.sp_set) != 0) {
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			lwp_lock(l2);
-			l2->l_flag |= L_PENDSIG;
+			l2->l_flag |= LW_PENDSIG;
 			lwp_unlock(l2);
 		}
 	}
@@ -784,6 +791,8 @@ lwp_free(struct lwp *l, int recycle, int last)
 	cpu_lwp_free2(l);
 #endif
 	uvm_lwp_exit(l);
+	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
+	KASSERT(l->l_inheritedprio == MAXPRI);
 	if (!recycle)
 		pool_put(&lwp_pool, l);
 	KERNEL_UNLOCK_ONE(curlwp);	/* XXXSMP */
@@ -827,7 +836,7 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 		onproc = running = sleeping = stopped = suspended = NULL;
 		signalled = NULL;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-			if ((l->l_flag & L_IDLE) != 0) {
+			if ((l->l_flag & LW_IDLE) != 0) {
 				continue;
 			}
 			if (l->l_lid == p->p_sigctx.ps_lwp)
@@ -1070,8 +1079,26 @@ lwp_relock(struct lwp *l, kmutex_t *new)
 #endif
 }
 
+int
+lwp_trylock(struct lwp *l)
+{
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+	kmutex_t *old;
+
+	for (;;) {
+		if (!mutex_tryenter(old = l->l_mutex))
+			return 0;
+		if (__predict_true(l->l_mutex == old))
+			return 1;
+		mutex_spin_exit(old);
+	}
+#else
+	return mutex_tryenter(l->l_mutex);
+#endif
+}
+
 /*
- * Handle exceptions for mi_userret().  Called if a member of L_USERRET is
+ * Handle exceptions for mi_userret().  Called if a member of LW_USERRET is
  * set.
  */
 void
@@ -1087,13 +1114,13 @@ lwp_userret(struct lwp *l)
 	 * It should be safe to do this read unlocked on a multiprocessor
 	 * system..
 	 */
-	while ((l->l_flag & L_USERRET) != 0) {
+	while ((l->l_flag & LW_USERRET) != 0) {
 		/*
 		 * Process pending signals first, unless the process
 		 * is dumping core, where we will instead enter the 
 		 * L_WSUSPEND case below.
 		 */
-		if ((l->l_flag & (L_PENDSIG | L_WCORE)) == L_PENDSIG) {
+		if ((l->l_flag & (LW_PENDSIG | LW_WCORE)) == LW_PENDSIG) {
 			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() below */
 			mutex_enter(&p->p_smutex);
 			while ((sig = issignal(l)) != 0)
@@ -1112,7 +1139,7 @@ lwp_userret(struct lwp *l)
 		 * will write the core file out once all other LWPs are
 		 * suspended.
 		 */
-		if ((l->l_flag & L_WSUSPEND) != 0) {
+		if ((l->l_flag & LW_WSUSPEND) != 0) {
 			mutex_enter(&p->p_smutex);
 			p->p_nrlwps--;
 			cv_broadcast(&p->p_lwpcv);
@@ -1123,7 +1150,7 @@ lwp_userret(struct lwp *l)
 		}
 
 		/* Process is exiting. */
-		if ((l->l_flag & L_WEXIT) != 0) {
+		if ((l->l_flag & LW_WEXIT) != 0) {
 			KERNEL_LOCK(1, l);
 			lwp_exit(l);
 			KASSERT(0);
@@ -1131,9 +1158,9 @@ lwp_userret(struct lwp *l)
 		}
 
 		/* Call userret hook; used by Linux emulation. */
-		if ((l->l_flag & L_WUSERRET) != 0) {
+		if ((l->l_flag & LW_WUSERRET) != 0) {
 			lwp_lock(l);
-			l->l_flag &= ~L_WUSERRET;
+			l->l_flag &= ~LW_WUSERRET;
 			lwp_unlock(l);
 			hook = p->p_userret;
 			p->p_userret = NULL;
@@ -1156,9 +1183,6 @@ lwp_need_userret(struct lwp *l)
 	 * kernel mode.
 	 */
 	mb_write();
-
-	if (l->l_priority > PUSER)
-		lwp_changepri(l, PUSER);
 	cpu_signotify(l);
 }
 

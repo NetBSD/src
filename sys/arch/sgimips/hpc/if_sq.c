@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.30 2006/12/22 08:17:14 rumble Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.30.2.1 2007/02/27 16:52:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.30 2006/12/22 08:17:14 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.30.2.1 2007/02/27 16:52:57 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.30 2006/12/22 08:17:14 rumble Exp $");
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/sysconf.h>
 
 #include <dev/ic/seeq8003reg.h>
 
@@ -149,8 +150,27 @@ sq_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_name) == 0)
-		return (1);
+	if (strcmp(ha->ha_name, cf->cf_name) == 0) {
+		uint32_t reset, txstat;
+
+		reset = MIPS_PHYS_TO_KSEG1(ha->ha_sh +
+		    ha->ha_dmaoff + ha->hpc_regs->enetr_reset);
+		txstat = MIPS_PHYS_TO_KSEG1(ha->ha_sh +
+		    ha->ha_devoff + (SEEQ_TXSTAT << 2));
+
+		if (platform.badaddr((void *)reset, sizeof(reset)))
+			return (0);
+
+		*(volatile uint32_t *)reset = 0x1;
+		delay(20);
+		*(volatile uint32_t *)reset = 0x0;
+
+		if (platform.badaddr((void *)txstat, sizeof(txstat)))
+			return (0);
+
+		if ((*(volatile uint32_t *)txstat & 0xff) == TXSTAT_OLDNEW)
+			return (1);
+	}
 
 	return (0);
 }
@@ -354,7 +374,6 @@ int
 sq_init(struct ifnet *ifp)
 {
 	int i;
-	u_int32_t reg;
 	struct sq_softc *sc = ifp->if_softc;
 
 	/* Cancel any in-progress I/O */
@@ -397,13 +416,30 @@ sq_init(struct ifnet *ifp)
 	/* Now write the receive command register. */
 	sq_seeq_write(sc, SEEQ_RXCMD, sc->sc_rxcmd);
 
-	/* Set up HPC ethernet DMA config */
+	/*
+	 * Set up HPC ethernet PIO and DMA configurations.
+	 *
+	 * The PROM appears to do most of this for the onboard HPC3, but
+	 * not for the Challenge S's IOPLUS chip. We copy how the onboard 
+	 * chip is configured and assume that it's correct for both.
+	 */
 	if (sc->hpc_regs->revision == 3) {
-		reg = sq_hpc_read(sc, HPC3_ENETR_DMACFG);	
-		sq_hpc_write(sc, HPC3_ENETR_DMACFG, reg |
-		    HPC3_ENETR_DMACFG_FIX_RXDC |
-		    HPC3_ENETR_DMACFG_FIX_INTR |
-		    HPC3_ENETR_DMACFG_FIX_EOP);
+		u_int32_t dmareg, pioreg;
+
+		pioreg = HPC3_ENETR_PIOCFG_P1(1) |
+			 HPC3_ENETR_PIOCFG_P2(6) |
+			 HPC3_ENETR_PIOCFG_P3(1);
+
+		dmareg = HPC3_ENETR_DMACFG_D1(6) |
+			 HPC3_ENETR_DMACFG_D2(2) |
+			 HPC3_ENETR_DMACFG_D3(0) |
+			 HPC3_ENETR_DMACFG_FIX_RXDC |
+			 HPC3_ENETR_DMACFG_FIX_INTR |
+			 HPC3_ENETR_DMACFG_FIX_EOP |
+			 HPC3_ENETR_DMACFG_TIMEOUT;
+
+		sq_hpc_write(sc, HPC3_ENETR_PIOCFG, pioreg);
+		sq_hpc_write(sc, HPC3_ENETR_DMACFG, dmareg);
 	}
 
 	/* Pass the start of the receive ring to the HPC */

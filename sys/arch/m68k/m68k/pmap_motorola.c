@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.22 2006/12/30 01:28:57 martin Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.22.2.1 2007/02/27 16:51:58 yamt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.22 2006/12/30 01:28:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.22.2.1 2007/02/27 16:51:58 yamt Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -256,7 +256,7 @@ vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */
 
-boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
+bool		pmap_initialized = false;	/* Has pmap_init completed? */
 struct pv_entry	*pv_table;
 char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
@@ -307,9 +307,9 @@ int	pmap_mapmulti(pmap_t, vaddr_t);
  */
 void	pmap_remove_mapping(pmap_t, vaddr_t, pt_entry_t *, int);
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
-boolean_t pmap_testbit(paddr_t, int);
-boolean_t pmap_changebit(paddr_t, int, int);
-boolean_t pmap_enter_ptpage(pmap_t, vaddr_t, boolean_t);
+bool	pmap_testbit(paddr_t, int);
+bool	pmap_changebit(paddr_t, int, int);
+int	pmap_enter_ptpage(pmap_t, vaddr_t, bool);
 void	pmap_ptpage_addref(vaddr_t);
 int	pmap_ptpage_delref(vaddr_t);
 void	pmap_collect1(pmap_t, paddr_t, paddr_t);
@@ -470,7 +470,7 @@ pmap_init(void)
 	 * Allocate the segment table map and the page table map.
 	 */
 	s = maxproc * M68K_STSIZE;
-	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, FALSE,
+	st_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0, false,
 	    &st_map_store);
 
 	addr = M68K_PTBASE;
@@ -486,7 +486,7 @@ pmap_init(void)
 	} else
 		s = (maxproc * M68K_MAX_PTSIZE);
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
-	    TRUE, &pt_map_store);
+	    true, &pt_map_store);
 
 #if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040) {
@@ -535,7 +535,7 @@ pmap_init(void)
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
-	pmap_initialized = TRUE;
+	pmap_initialized = true;
 }
 
 /*
@@ -877,7 +877,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 	pt_entry_t *pte;
 	int flags;
 #ifdef M68K_MMU_HP
-	boolean_t firstpage = TRUE, needcflush = FALSE;
+	bool firstpage = true, needcflush = false;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
@@ -931,10 +931,10 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 					 */
 
 					if (!needcflush && !pmap_pte_ci(pte))
-						needcflush = TRUE;
+						needcflush = true;
 
 				}
-				firstpage = FALSE;
+				firstpage = false;
 #endif
 				pmap_remove_mapping(pmap, sva, pte, flags);
 			}
@@ -962,7 +962,7 @@ pmap_do_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, int remove_wired)
 	 */
 
 	if (pmap_aliasmask && !active_user_pmap(pmap))
-		needcflush = FALSE;
+		needcflush = false;
 	if (needcflush) {
 		if (pmap == pmap_kernel()) {
 			DCIS();
@@ -1036,7 +1036,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
-	boolean_t firstpage, needtflush;
+	bool firstpage, needtflush;
 	int isro;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_PROTECT,
@@ -1052,7 +1052,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	}
 	isro = pte_prot(pmap, prot);
 	needtflush = active_pmap(pmap);
-	firstpage = TRUE;
+	firstpage = true;
 	while (sva < eva) {
 		nssva = m68k_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
@@ -1113,7 +1113,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				pmap_pte_set_prot(pte, isro);
 				if (needtflush)
 					TBIS(sva);
-				firstpage = FALSE;
+				firstpage = false;
 			}
 			pte++;
 			sva += PAGE_SIZE;
@@ -1141,10 +1141,10 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	pt_entry_t *pte;
 	int npte;
 	paddr_t opa;
-	boolean_t cacheable = TRUE;
-	boolean_t checkpv = TRUE;
-	boolean_t wired = (flags & PMAP_WIRED) != 0;
-	boolean_t can_fail = (flags & PMAP_CANFAIL) != 0;
+	bool cacheable = true;
+	bool checkpv = true;
+	bool wired = (flags & PMAP_WIRED) != 0;
+	bool can_fail = (flags & PMAP_CANFAIL) != 0;
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
 	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
@@ -1207,9 +1207,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		/*
 		 * Retain cache inhibition status
 		 */
-		checkpv = FALSE;
+		checkpv = false;
 		if (pmap_pte_ci(pte))
-			cacheable = FALSE;
+			cacheable = false;
 		goto validate;
 	}
 
@@ -1307,7 +1307,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 					PMAP_DPRINTF(PDB_CACHE,
 					    ("enter: pa %lx already CI'ed\n",
 					    pa));
-					checkpv = cacheable = FALSE;
+					checkpv = cacheable = false;
 				} else if (npv->pv_next ||
 					   ((pmap == pv->pv_pmap ||
 					     pmap == pmap_kernel() ||
@@ -1317,7 +1317,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 					PMAP_DPRINTF(PDB_CACHE,
 					    ("enter: pa %lx CI'ing all\n",
 					    pa));
-					cacheable = FALSE;
+					cacheable = false;
 					pv->pv_flags |= PV_CI;
 				}
 			}
@@ -1344,7 +1344,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * then it must be device memory which may be volitile.
 	 */
 	else if (pmap_initialized) {
-		checkpv = cacheable = FALSE;
+		checkpv = cacheable = false;
 	}
 
 	/*
@@ -1454,7 +1454,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	if (!pmap_ste_v(pmap, va)) {
 		s = splvm();
-		pmap_enter_ptpage(pmap, va, FALSE);
+		pmap_enter_ptpage(pmap, va, false);
 		splx(s);
 	}
 
@@ -1502,15 +1502,15 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	vaddr_t nssva;
 	vaddr_t eva = va + size;
 #ifdef M68K_MMU_HP
-	boolean_t firstpage, needcflush;
+	bool firstpage, needcflush;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_kremove(%lx, %lx)\n", va, size));
 
 #ifdef M68K_MMU_HP
-	firstpage = TRUE;
-	needcflush = FALSE;
+	firstpage = true;
+	needcflush = false;
 #endif
 	while (va < eva) {
 		nssva = m68k_trunc_seg(va) + NBSEG;
@@ -1549,7 +1549,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 
 				if (firstpage) {
 					DCIS();
-					firstpage = FALSE;
+					firstpage = false;
 				}
 
 				/*
@@ -1557,7 +1557,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 				 * flush the VAC.
 				 */
 
-				needcflush = TRUE;
+				needcflush = true;
 			}
 #endif
 			pmap->pm_stats.wired_count--;
@@ -1581,7 +1581,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	 */
 
 	if (pmap_aliasmask && !active_user_pmap(pmap))
-		needcflush = FALSE;
+		needcflush = false;
 	if (needcflush) {
 		if (pmap == pmap_kernel()) {
 			DCIS();
@@ -1616,7 +1616,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	 */
 
 	if (pmap_pte_w_chg(pte, 0)) {
-		pmap_pte_set_w(pte, FALSE);
+		pmap_pte_set_w(pte, false);
 		pmap->pm_stats.wired_count--;
 	}
 }
@@ -1627,7 +1627,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
@@ -1646,14 +1646,14 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			if (pmapdebug & PDB_FOLLOW)
 				printf("%lx\n", pa);
 #endif
-			return TRUE;
+			return true;
 		}
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("failed\n");
 #endif
-	return FALSE;
+	return false;
 }
 
 /*
@@ -1957,7 +1957,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
  *
  *	Clear the modify bits on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1972,7 +1972,7 @@ pmap_clear_modify(struct vm_page *pg)
  *
  *	Clear the reference bit on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1988,7 +1988,7 @@ pmap_clear_reference(struct vm_page *pg)
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
-boolean_t
+bool
 pmap_is_referenced(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2002,7 +2002,7 @@ pmap_is_referenced(struct vm_page *pg)
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
-boolean_t
+bool
 pmap_is_modified(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -2396,7 +2396,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags)
  *	Test the modified/referenced bits of a physical page.
  */
 /* static */
-boolean_t
+bool
 pmap_testbit(paddr_t pa, int bit)
 {
 	struct pv_entry *pv;
@@ -2412,7 +2412,7 @@ pmap_testbit(paddr_t pa, int bit)
 
 	if (*pa_to_attribute(pa) & bit) {
 		splx(s);
-		return TRUE;
+		return true;
 	}
 
 #ifdef M68K_MMU_HP
@@ -2436,12 +2436,12 @@ pmap_testbit(paddr_t pa, int bit)
 			if (*pte & bit) {
 				*pa_to_attribute(pa) |= bit;
 				splx(s);
-				return TRUE;
+				return true;
 			}
 		}
 	}
 	splx(s);
-	return FALSE;
+	return false;
 }
 
 /*
@@ -2451,7 +2451,7 @@ pmap_testbit(paddr_t pa, int bit)
  *	for a physical page.
  */
 /* static */
-boolean_t
+bool
 pmap_changebit(paddr_t pa, int set, int mask)
 {
 	struct pv_entry *pv;
@@ -2460,9 +2460,9 @@ pmap_changebit(paddr_t pa, int set, int mask)
 	char *attrp;
 	int s;
 #if defined(M68K_MMU_HP) || defined(M68040) || defined(M68060)
-	boolean_t firstpage = TRUE;
+	bool firstpage = true;
 #endif
-	boolean_t r;
+	bool r;
 
 	PMAP_DPRINTF(PDB_BITS,
 	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
@@ -2501,13 +2501,13 @@ pmap_changebit(paddr_t pa, int set, int mask)
 			 */
 
 			if (firstpage && pmap_aliasmask) {
-				firstpage = FALSE;
+				firstpage = false;
 				DCIS();
 			}
 #endif
 			npte = (*pte | set) & mask;
 			if (*pte != npte) {
-				r = TRUE;
+				r = true;
 #if defined(M68040) || defined(M68060)
 				/*
 				 * If we are changing caching status or
@@ -2521,7 +2521,7 @@ pmap_changebit(paddr_t pa, int set, int mask)
 				    ((set == PG_RO) ||
 				     (set & PG_CMASK) ||
 				     (mask & PG_CMASK) == 0)) {
-					firstpage = FALSE;
+					firstpage = false;
 					DCFP(pa);
 					ICPP(pa);
 				}
@@ -2543,7 +2543,7 @@ pmap_changebit(paddr_t pa, int set, int mask)
  */
 /* static */
 int
-pmap_enter_ptpage(pmap_t pmap, vaddr_t va, boolean_t can_fail)
+pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 {
 	paddr_t ptpa;
 	struct vm_page *pg;

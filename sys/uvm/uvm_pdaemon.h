@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.h,v 1.13 2006/09/15 15:51:13 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.h,v 1.13.6.1 2007/02/27 16:55:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -80,10 +80,10 @@
  */
 
 void uvm_wait(const char *);
-boolean_t uvm_reclaimable(void);
+bool uvm_reclaimable(void);
 
 struct simplelock *uvmpd_trylockowner(struct vm_page *);
-boolean_t uvmpd_trydropswap(struct vm_page *);
+bool uvmpd_trydropswap(struct vm_page *);
 
 #endif /* _KERNEL */
 

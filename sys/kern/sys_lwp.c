@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.3.2.1 2007/02/20 21:48:46 rmind Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.3.2.2 2007/02/27 16:54:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3.2.1 2007/02/20 21:48:46 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3.2.2 2007/02/27 16:54:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.3.2.1 2007/02/20 21:48:46 rmind Exp $"
 syncobj_t lwp_park_sobj = {
 	SOBJ_SLEEPQ_SORTED,
 	sleepq_unsleep,
-	sleepq_changepri
+	sleepq_changepri,
+	sleepq_lendpri,
+	syncobj_noowner,
 };
 
 sleeptab_t	lwp_park_tab;
@@ -111,7 +113,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
 	vaddr_t uaddr;
-	boolean_t inmem;
+	bool inmem;
 	ucontext_t *newuc;
 	int error, lid;
 
@@ -133,7 +135,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 
 	newlwp(l, p, uaddr, inmem,
 	    SCARG(uap, flags) & LWP_DETACHED,
-	    NULL, 0, startlwp, newuc, &l2);
+	    NULL, 0, p->p_emul->e_startlwp, newuc, &l2);
 
 	/*
 	 * Set the new LWP running, unless the caller has requested that
@@ -144,7 +146,7 @@ sys__lwp_create(struct lwp *l, void *v, register_t *retval)
 	lwp_lock(l2);
 	lid = l2->l_lid;
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0 &&
-	    (l->l_flag & (L_WREBOOT | L_WSUSPEND | L_WEXIT)) == 0) {
+	    (l->l_flag & (LW_WREBOOT | LW_WSUSPEND | LW_WEXIT)) == 0) {
 	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0)
 	    		l2->l_stat = LSSTOP;
 		else {
@@ -225,7 +227,7 @@ sys__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 	 */
 	lwp_lock(t);
 	if ((t == l && p->p_nrlwps == 1) ||
-	    (l->l_flag & (L_WCORE | L_WEXIT)) != 0) {
+	    (l->l_flag & (LW_WCORE | LW_WEXIT)) != 0) {
 		lwp_unlock(t);
 		mutex_exit(&p->p_smutex);
 		return EDEADLK;
@@ -293,13 +295,13 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 		goto bad;
 	}
 
-	if ((t->l_flag & L_SINTR) == 0) {
+	if ((t->l_flag & LW_SINTR) == 0) {
 		error = EBUSY;
 		goto bad;
 	}
 
 	/* wake it up  setrunnable() will release the LWP lock. */
-	t->l_flag |= L_CANCELLED;
+	t->l_flag |= LW_CANCELLED;
 	setrunnable(t);
 	mutex_exit(&p->p_smutex);
 	return 0;
@@ -481,9 +483,9 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	 * Before going the full route and blocking, check to see if an
 	 * unpark op is pending.
 	 */
-	if ((l->l_flag & L_CANCELLED) != 0) {
+	if ((l->l_flag & LW_CANCELLED) != 0) {
 		sleepq_lwp_lock(l);
-		l->l_flag &= ~L_CANCELLED;
+		l->l_flag &= ~LW_CANCELLED;
 		sleepq_lwp_unlock(l);
 		sleepq_unlock(sq);
 		LWP_COUNT(lwp_ev_park_early, 1);
@@ -559,7 +561,7 @@ sys__lwp_unpark(struct lwp *l, void *v, register_t *retval)
 			 * on a different user sync object.  The
 			 * latter is an application error.
 			 */
-			t->l_flag |= L_CANCELLED;
+			t->l_flag |= LW_CANCELLED;
 			lwp_unlock(t);
 			return 0;
 		}
@@ -680,7 +682,7 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 			 * on a different user sync object.  The
 			 * latter is an application error.
 			 */
-			t->l_flag |= L_CANCELLED;
+			t->l_flag |= LW_CANCELLED;
 			lwp_unlock(t);
 			sleepq_lock(sq);
 		}

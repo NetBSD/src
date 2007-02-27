@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.11 2007/02/11 15:37:20 yamt Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.11.2.1 2007/02/27 16:54:30 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.11 2007/02/11 15:37:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.11.2.1 2007/02/27 16:54:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ struct workqueue {
 	void (*wq_func)(struct work *, void *);
 	void *wq_arg;
 	const char *wq_name;
-	int wq_prio;
+	pri_t wq_prio;
 	ipl_cookie_t wq_ipl;
 };
 
@@ -120,7 +120,7 @@ workqueue_worker(void *arg)
 static void
 workqueue_init(struct workqueue *wq, const char *name,
     void (*callback_func)(struct work *, void *), void *callback_arg,
-    int prio, int ipl)
+    pri_t prio, int ipl)
 {
 
 	wq->wq_ipl = makeiplcookie(ipl);
@@ -195,7 +195,7 @@ workqueue_finiqueue(struct workqueue *wq)
 int
 workqueue_create(struct workqueue **wqp, const char *name,
     void (*callback_func)(struct work *, void *), void *callback_arg,
-    int prio, int ipl, int flags)
+    pri_t prio, int ipl, int flags)
 {
 	struct workqueue *wq;
 	int error;

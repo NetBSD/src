@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.45.2.2 2007/02/17 15:19:52 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.45.2.3 2007/02/27 16:51:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -804,7 +804,7 @@ switch_skipsave:
 
 #if 0
 	/* Don't bother with the rest if switching to a system process. */
-	testl	$L_SYSTEM,L_FLAG(%edi);
+	testl	$LK_SYSTEM,L_FLAG(%edi);
 	jnz	switch_restored
 #endif
 
@@ -881,7 +881,7 @@ check_ras:
  */
 /* LINTSTUB: Func: void savectx(struct pcb *pcb) */
 ENTRY(savectx)
-	movl	4(%esp),%edx		# edx = p->p_addr
+	movl	4(%esp),%edx		# edx = pcb
 
 	/* Save stack pointers. */
 	movl	%esp,PCB_ESP(%edx)

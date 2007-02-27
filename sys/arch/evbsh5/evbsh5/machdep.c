@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.26.1 2007/02/27 16:50:17 yamt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.26.1 2007/02/27 16:50:17 yamt Exp $");
 
 #include "opt_sh5_debug.h"
 #include "opt_sh5_cpu.h"
@@ -330,19 +330,19 @@ cpu_startup(void)
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				 16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, FALSE, NULL);
+				 VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
-				 FALSE, NULL);
+				 false, NULL);
 
 	printf("%s%s", copyright, version);
 	strcpy(cpu_model, bootparams.bp_machine);

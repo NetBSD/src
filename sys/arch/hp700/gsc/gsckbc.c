@@ -1,4 +1,4 @@
-/* $NetBSD: gsckbc.c,v 1.2 2005/12/11 12:17:24 christos Exp $ */
+/* $NetBSD: gsckbc.c,v 1.2.26.1 2007/02/27 16:50:47 yamt Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.2 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gsckbc.c,v 1.2.26.1 2007/02/27 16:50:47 yamt Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -295,7 +295,7 @@ gsckbc_attach(struct device *parent, struct device *self, void *aux)
 		if ((hppa_hpa_t)PAGE0->mem_kbd.pz_hpa == ga->ga_hpa) {
 			if (pckbport_cnattach(sc, &gsckbc_accessops, 
 			    sc->sc_slot) != 0)
-				aprint_normal("Faild to attach console "
+				aprint_normal("Failed to attach console "
 				    "keyboard!\n");
 			else
 				sc->sc_enable = 1;

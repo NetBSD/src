@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.151 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.151.2.1 2007/02/27 16:54:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.151 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.151.2.1 2007/02/27 16:54:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1329,28 +1329,28 @@ format_bytes(char *buf, size_t len, uint64_t bytes)
 }
 
 /*
- * Return TRUE if system call tracing is enabled for the specified process.
+ * Return true if system call tracing is enabled for the specified process.
  */
-boolean_t
+bool
 trace_is_enabled(struct proc *p)
 {
 #ifdef SYSCALL_DEBUG
-	return (TRUE);
+	return (true);
 #endif
 #ifdef KTRACE
 	if (ISSET(p->p_traceflag, (KTRFAC_SYSCALL | KTRFAC_SYSRET)))
-		return (TRUE);
+		return (true);
 #endif
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
-		return (TRUE);
+	if (ISSET(p->p_flag, PK_SYSTRACE))
+		return (true);
 #endif
 #ifdef PTRACE
 	if (ISSET(p->p_slflag, PSL_SYSCALL))
-		return (TRUE);
+		return (true);
 #endif
 
-	return (FALSE);
+	return (false);
 }
 
 /*
@@ -1384,7 +1384,7 @@ trace_enter(struct lwp *l, register_t code,
 #endif
 
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE))
+	if (ISSET(p->p_flag, PK_SYSTRACE))
 		return systrace_enter(l, code, args);
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
@@ -1421,7 +1421,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 #endif
 
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, P_SYSTRACE)) {
+	if (ISSET(p->p_flag, PK_SYSTRACE)) {
 		KERNEL_LOCK(1, l);
 		systrace_exit(l, code, args, rval, error);
 		KERNEL_UNLOCK_LAST(l);

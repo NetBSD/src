@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.4 2006/09/15 15:51:12 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.4.6.1 2007/02/27 16:51:56 yamt Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2006/09/15 15:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.1 2007/02/27 16:51:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ static uint64_t *pmap_ridmap;
 struct lock pmap_rid_lock;
 
 
-boolean_t	pmap_initialized;	/* Has pmap_init completed? */
+bool		pmap_initialized;	/* Has pmap_init completed? */
 u_long		pmap_pages_stolen;	/* instrumentation */
 
 struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
@@ -187,7 +187,7 @@ struct pool_allocator pmap_pv_page_allocator = {
 	pmap_pv_page_alloc, pmap_pv_page_free, 0,
 };
 
-boolean_t pmap_poolpage_alloc(paddr_t *);
+bool pmap_poolpage_alloc(paddr_t *);
 void pmap_poolpage_free(paddr_t);
 
 /*
@@ -261,7 +261,7 @@ static pmap_t	pmap_install(pmap_t);
 static struct ia64_lpte *pmap_find_kpte(vaddr_t);
 
 static void
-pmap_set_pte(struct ia64_lpte *, vaddr_t, vaddr_t, boolean_t, boolean_t);
+pmap_set_pte(struct ia64_lpte *, vaddr_t, vaddr_t, bool, bool);
 static void
 pmap_free_pte(struct ia64_lpte *pte, vaddr_t va);
 
@@ -1246,7 +1246,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
  *	Extract the physical address associated with the given
  *	pmap/virtual address pair.
  */
-boolean_t
+bool
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
         struct ia64_lpte *pte;
@@ -1272,10 +1272,10 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  *
  *	Clear the modify bits on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	boolean_t rv = FALSE;
+	bool rv = FALSE;
 	struct ia64_lpte *pte;
 	pmap_t oldpmap;
 	pv_entry_t pv;
@@ -1360,7 +1360,7 @@ pmap_reference(pmap_t pmap)
  *
  *	Clear the reference bit on the specified physical page.
  */
-boolean_t
+bool
 pmap_clear_reference(struct vm_page *pg)
 {
 	return (FALSE);
@@ -1404,7 +1404,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
         vaddr_t opa;
         struct ia64_lpte origpte;
         struct ia64_lpte *pte;
-        boolean_t managed, wired;
+        bool managed, wired;
 	struct vm_page *pg;
 	int error = 0;
 
@@ -1776,7 +1776,7 @@ pmap_pte_prot(pmap_t pm, struct ia64_lpte *pte, vm_prot_t prot)
  */
 static void
 pmap_set_pte(struct ia64_lpte *pte, vaddr_t va, vaddr_t pa,
-    boolean_t wired, boolean_t managed)
+    bool wired, bool managed)
 {
 
         pte->pte &= PTE_PROT_MASK | PTE_PL_MASK | PTE_AR_MASK;
@@ -2125,7 +2125,7 @@ pmap_pv_page_free(struct pool *pp, void *v)
  *	Allocate a single page from the VM system and return the
  *	physical address for that page.
  */
-boolean_t
+bool
 pmap_poolpage_alloc(paddr_t *pap)
 {
 	struct vm_page *pg;

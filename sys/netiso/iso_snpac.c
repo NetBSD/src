@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.41 2007/01/04 19:07:04 elad Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.41.2.1 2007/02/27 16:55:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.41 2007/01/04 19:07:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.41.2.1 2007/02/27 16:55:11 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -314,7 +314,7 @@ iso_setmcasts(struct ifnet *ifp, int req)
 int
 iso_snparesolve(
 	struct ifnet   *ifp,		/* outgoing interface */
-	struct sockaddr_iso *dest,	/* destination */
+	const struct sockaddr_iso *dest,	/* destination */
 	caddr_t         snpa,		/* RESULT: snpa to be used */
 	int            *snpa_len)	/* RESULT: length of snpa */
 {

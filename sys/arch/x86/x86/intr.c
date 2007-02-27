@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.27 2007/02/09 21:55:14 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.27.2.1 2007/02/27 16:53:25 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27 2007/02/09 21:55:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.27.2.1 2007/02/27 16:53:25 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -576,7 +576,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	struct intrsource *source;
 	struct intrstub *stubp;
 #ifdef MULTIPROCESSOR
-	boolean_t mpsafe = level >= IPL_SCHED;
+	bool mpsafe = level >= IPL_SCHED;
 #endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC

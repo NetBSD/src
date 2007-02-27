@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.1 2006/04/07 14:21:18 cherry Exp $ */
+/* $NetBSD: db_interface.c,v 1.1.26.1 2007/02/27 16:51:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1 2006/04/07 14:21:18 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.1.26.1 2007/02/27 16:51:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -431,7 +431,7 @@ db_pc_advance(db_regs_t *regs)
 }
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	char buf[32];
 	struct asm_bundle bundle;

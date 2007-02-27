@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.34 2006/12/15 21:18:52 joerg Exp $	*/
+/*	$NetBSD: pf.c,v 1.34.2.1 2007/02/27 16:54:10 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -5350,16 +5350,18 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af,
 #ifdef __OpenBSD__
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
 #else
-	rtalloc((struct route *)&ro);
+	rtcache_init((struct route *)&ro);
 #endif
 
-	if (ro.ro_rt != NULL) {
 #ifdef __OpenBSD__
+	if (ro.ro_rt != NULL) {
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;
-#endif
 		RTFREE(ro.ro_rt);
 	}
+#else
+	rtcache_free((struct route *)&ro);
+#endif
 
 	return (ret);
 #else

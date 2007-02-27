@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.5 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.5.2.1 2007/02/27 16:55:06 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -65,16 +65,14 @@ struct in6pcb;
 #define	out_polvio		ips_out_polvio
 #define	key_freesp(_x)		KEY_FREESP(&_x)
 
-extern int ipsec6_delete_pcbpolicy __P((struct in6pcb *));
-extern int ipsec6_set_policy __P((struct in6pcb *inp, int optname,
-	caddr_t request, size_t len, int priv));
-extern int ipsec6_get_policy
-	__P((struct in6pcb *inp, caddr_t request, size_t len, struct mbuf **mp));
-extern struct secpolicy *ipsec6_checkpolicy __P((struct mbuf *, u_int, 
-    u_int, int *, struct in6pcb *));
+int ipsec6_delete_pcbpolicy (struct in6pcb *);
+int ipsec6_set_policy (struct in6pcb *, int, caddr_t, size_t, int);
+int ipsec6_get_policy (struct in6pcb *, caddr_t, size_t, struct mbuf **);
+struct secpolicy *ipsec6_checkpolicy (struct mbuf *, u_int, 
+    u_int, int *, struct in6pcb *);
 struct secpolicy * ipsec6_check_policy(struct mbuf *, 
 				const struct socket *, int, int*,int*);
-extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
+int ipsec6_in_reject (struct mbuf *, struct in6pcb *);
 /*
  * KAME ipsec6_in_reject_so(struct mbuf*, struct so)  compatibility shim
  */
@@ -83,27 +81,29 @@ extern int ipsec6_in_reject __P((struct mbuf *, struct in6pcb *));
 
 struct tcp6cb;
 
-extern size_t ipsec6_hdrsiz __P((struct mbuf *, u_int, struct in6pcb *));
-extern size_t ipsec6_hdrsiz_tcp __P((struct tcpcb*));
+size_t ipsec6_hdrsiz (struct mbuf *, u_int, struct in6pcb *);
+size_t ipsec6_hdrsiz_tcp (struct tcpcb*);
 
 struct ip6_hdr;
-extern const char *ipsec6_logpacketstr __P((struct ip6_hdr *, u_int32_t));
+const char *ipsec6_logpacketstr (struct ip6_hdr *, u_int32_t);
 
 #ifdef __NetBSD__
 /* NetBSD protosw ctlin entrypoint */
-extern void esp6_ctlinput __P((int, struct sockaddr *, void *));
-extern void ah6_ctlinput __P((int, struct sockaddr *, void *));
+void esp6_ctlinput(int, const struct sockaddr *, void *);
+void ah6_ctlinput(int, const struct sockaddr *, void *);
 #endif /* __NetBSD__ */
 
 struct m_tag;
-extern int ipsec6_common_input(struct mbuf **mp, int *offp, int proto);
-extern int ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav,
-			int skip, int protoff, struct m_tag *mt);
-extern void esp6_ctlinput(int, struct sockaddr *, void *);
+int ipsec6_common_input(struct mbuf **, int *, int);
+int ipsec6_common_input_cb(struct mbuf *, struct secasvar *, 
+									int, int, struct m_tag *);
 
-struct ipsec_output_state;
+#ifdef __FreeBSD__
+/* FreeBSD protosw ctlin entrypoint */
+void esp6_ctlinput(int, struct sockaddr *, void *);
+#endif /* __FreeBSD__ */
 
-int ipsec6_process_packet __P((struct mbuf*,struct ipsecrequest *)); 
+int ipsec6_process_packet (struct mbuf*,struct ipsecrequest *); 
 #endif /*_KERNEL*/
 
 #endif /* !_NETIPSEC_IPSEC6_H_ */

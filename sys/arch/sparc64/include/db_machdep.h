@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.21 2006/10/07 18:14:42 rjs Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.21.4.1 2007/02/27 16:53:13 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -67,11 +67,11 @@ extern db_regs_t	*ddb_regp;
 #define	DDB_FP		(&ddb_regp->db_fpstate)
 
 /* DDB commands not in db_interface.c */
-void	db_dump_ts(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_trap(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_fpstate(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_window(db_expr_t, int, db_expr_t, const char *);
-void	db_dump_stack(db_expr_t, int, db_expr_t, const char *);
+void	db_dump_ts(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_trap(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_fpstate(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_window(db_expr_t, bool, db_expr_t, const char *);
+void	db_dump_stack(db_expr_t, bool, db_expr_t, const char *);
 
 #define	PC_REGS(regs)	((regs)->db_tf.tf_pc)
 #define	PC_ADVANCE(regs) do {				\
@@ -95,13 +95,13 @@ void	db_dump_stack(db_expr_t, int, db_expr_t, const char *);
  */
 #define SOFTWARE_SSTEP
 
-boolean_t	db_inst_trap_return(int inst);
-boolean_t	db_inst_return(int inst);
-boolean_t	db_inst_call(int inst);
-boolean_t	db_inst_branch(int inst);
+bool		db_inst_trap_return(int inst);
+bool		db_inst_return(int inst);
+bool		db_inst_call(int inst);
+bool		db_inst_branch(int inst);
 int		db_inst_load(int inst);
 int		db_inst_store(int inst);
-boolean_t	db_inst_unconditional_flow_transfer(int inst);
+bool		db_inst_unconditional_flow_transfer(int inst);
 db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 #define inst_trap_return(ins)	db_inst_trap_return(ins)

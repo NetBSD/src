@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.79 2006/12/01 20:48:50 drochner Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.79.4.1 2007/02/27 16:54:10 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ struct usb_softc;
 struct usbd_bus {
 	/* Filled by HC driver */
 	USBBASEDEVICE		bdev; /* base device, host adapter */
-	struct usbd_bus_methods	*methods;
+	const struct usbd_bus_methods *methods;
 	u_int32_t		pipe_size; /* size of a pipe struct */
 	/* Filled by usb driver */
 	struct usbd_device     *root_hub;
@@ -189,7 +189,7 @@ struct usbd_pipe {
 	int			interval;
 
 	/* Filled by HC driver. */
-	struct usbd_pipe_methods *methods;
+	const struct usbd_pipe_methods *methods;
 };
 
 struct usbd_xfer {

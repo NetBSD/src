@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2007/02/09 21:55:01 ad Exp $
+#	$NetBSD: genassym.cf,v 1.6.2.1 2007/02/27 16:48:43 yamt Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,8 +166,8 @@ define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 define	P_MD_FLAGS		offsetof(struct proc, p_md.md_flags)
 
-define	P_SYSTEM		P_SYSTEM
-define	P_32			P_32
+define	PK_SYSTEM		PK_SYSTEM
+define	PK_32			PK_32
 
 define	M_DATA			offsetof(struct mbuf, m_data)
 define	M_LEN			offsetof(struct mbuf, m_len)

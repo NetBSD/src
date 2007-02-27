@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.36 2007/01/04 15:42:38 elad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.36.2.1 2007/02/27 16:54:12 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.36 2007/01/04 15:42:38 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.36.2.1 2007/02/27 16:54:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,7 @@ msdosfs_write(v)
 	struct denode *dep = VTODE(vp);
 	struct msdosfsmount *pmp = dep->de_pmp;
 	kauth_cred_t cred = ap->a_cred;
-	boolean_t async;
+	bool async;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_write(vp %p, uio %p, ioflag %x, cred %p\n",

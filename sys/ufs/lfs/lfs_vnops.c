@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.198 2007/02/09 21:55:42 ad Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.198.2.1 2007/02/27 16:55:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.198 2007/02/09 21:55:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.198.2.1 2007/02/27 16:55:23 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1086,6 +1086,7 @@ lfs_reclaim(void *v)
 	lfs_deregister_all(vp);
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
 	ip->inode_ext.lfs = NULL;
+	genfs_node_destroy(vp);
 	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
@@ -1888,7 +1889,7 @@ lfs_putpages(void *v)
 	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
 	off_t off, max_endoffset;
 	int s;
-	boolean_t seglocked, sync, pagedaemon;
+	bool seglocked, sync, pagedaemon;
 	struct vm_page *pg;
 	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
 

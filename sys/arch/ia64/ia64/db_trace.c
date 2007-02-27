@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.1.26.1 2007/02/27 16:51:55 yamt Exp $	*/
 
 /* Inspired by reading alpha/db_trace.c */
 
@@ -71,13 +71,13 @@ void
 rewindframe(struct unwind_frame *uwf, db_addr_t ip);
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		     const char *modif, void (*pr)(const char *, ...))
 {
 	char c;
 	const char *cp = modif;
-	boolean_t trace_thread = FALSE;
-	boolean_t trace_user = FALSE;
+	bool trace_thread = FALSE;
+	bool trace_user = FALSE;
 	struct trapframe *tf;
 	struct unwind_frame current_frame;
 	db_addr_t ip;

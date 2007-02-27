@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.10 2007/02/09 21:55:02 ad Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.10.2.1 2007/02/27 16:49:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10 2007/02/09 21:55:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.10.2.1 2007/02/27 16:49:11 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/signalvar.h>
@@ -57,9 +57,9 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sigcontext13 *scp, context;
 	struct trapframe *tf;
+	struct proc *p = l->l_proc;
 	sigset_t mask;
 
 	/*
@@ -99,15 +99,19 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	tf->tf_pc    = context.sc_pc;
 	tf->tf_spsr  = context.sc_spsr;
 
+	mutex_enter(&p->p_smutex);
+
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	native_sigset13_to_sigset(&context.sc_mask, &mask);
-	(void) sigprocmask1(p, SIG_SETMASK, &mask, 0);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+
+	mutex_exit(&p->p_smutex);
 
 	return (EJUSTRETURN);
 }

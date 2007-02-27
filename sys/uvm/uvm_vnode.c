@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.78 2006/12/09 16:11:52 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.78.2.1 2007/02/27 16:55:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.78 2006/12/09 16:11:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.78.2.1 2007/02/27 16:55:30 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -142,7 +142,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 	while (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
-		UVM_UNLOCK_AND_WAIT(uobj, &uobj->vmobjlock, FALSE,
+		UVM_UNLOCK_AND_WAIT(uobj, &uobj->vmobjlock, false,
 		    "uvn_attach", 0);
 		simple_lock(&uobj->vmobjlock);
 		UVMHIST_LOG(maphist,"  WOKE UP",0,0,0,0);
@@ -364,7 +364,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
     int flags)
 {
 	struct vm_page *pg;
-	boolean_t dirty;
+	bool dirty;
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %p off 0x%lx", uobj, offset,0,0);
 
@@ -506,7 +506,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	}
 }
 
-boolean_t
+bool
 uvn_text_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
@@ -514,7 +514,7 @@ uvn_text_p(struct uvm_object *uobj)
 	return (vp->v_flag & VEXECMAP) != 0;
 }
 
-boolean_t
+bool
 uvn_clean_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
@@ -522,7 +522,7 @@ uvn_clean_p(struct uvm_object *uobj)
 	return (vp->v_flag & VONWORKLST) == 0;
 }
 
-boolean_t
+bool
 uvn_needs_writefault_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;

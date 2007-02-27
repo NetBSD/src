@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.68 2005/12/24 22:45:39 perry Exp $ */
+/*	$NetBSD: db_interface.c,v 1.68.26.1 2007/02/27 16:53:09 yamt Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2005/12/24 22:45:39 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68.26.1 2007/02/27 16:53:09 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -196,16 +196,16 @@ int	db_active = 0;
 extern char *trap_type[];
 
 void kdb_kbd_trap(struct trapframe *);
-void db_prom_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_proc_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_dump_pcb(db_expr_t, int, db_expr_t, const char *);
-void db_lock_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_simple_lock_cmd(db_expr_t, int, db_expr_t, const char *);
-void db_uvmhistdump(db_expr_t, int, db_expr_t, const char *);
+void db_prom_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_proc_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_dump_pcb(db_expr_t, bool, db_expr_t, const char *);
+void db_lock_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_simple_lock_cmd(db_expr_t, bool, db_expr_t, const char *);
+void db_uvmhistdump(db_expr_t, bool, db_expr_t, const char *);
 #ifdef MULTIPROCESSOR
-void db_cpu_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
-void db_page_cmd(db_expr_t, int, db_expr_t, const char *);
+void db_page_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 /*
  * Received keyboard interrupt sequence.
@@ -330,9 +330,9 @@ kdb_trap(int type, struct trapframe *tf)
 
 	s = splhigh();
 	db_active++;
-	cnpollc(TRUE);
+	cnpollc(true);
 	db_trap(type, 0/*code*/);
-	cnpollc(FALSE);
+	cnpollc(false);
 	db_active--;
 	splx(s);
 
@@ -350,7 +350,7 @@ kdb_trap(int type, struct trapframe *tf)
 }
 
 void
-db_proc_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct lwp *l;
 	struct proc *p;
@@ -387,7 +387,7 @@ db_proc_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 void
-db_dump_pcb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_pcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct pcb *pcb;
 	char bits[64];
@@ -430,14 +430,14 @@ db_dump_pcb(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 void
-db_prom_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_prom_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 
 	prom_abort();
 }
 
 void
-db_page_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_page_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 
 	if (!have_addr) {
@@ -450,7 +450,7 @@ db_page_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 void
-db_lock_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct lock *l;
 
@@ -468,7 +468,7 @@ db_lock_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 void
-db_simple_lock_cmd(db_expr_t addr, int have_addr, db_expr_t count,
+db_simple_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		   const char *modif)
 {
 	struct simplelock *l;
@@ -493,7 +493,7 @@ db_simple_lock_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 extern void cpu_debug_dump(void); /* XXX */
 
 void
-db_cpu_cmd(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct cpu_info *ci;
 	if (!have_addr) {
@@ -535,7 +535,7 @@ extern void uvmhist_dump(struct uvm_history *);
 extern struct uvm_history_head uvm_histories;
 
 void
-db_uvmhistdump(db_expr_t addr, int have_addr, db_expr_t count,
+db_uvmhistdump(db_expr_t addr, bool have_addr, db_expr_t count,
 	       const char *modif)
 {
 
@@ -610,7 +610,7 @@ db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
     }
 }
 
-boolean_t
+bool
 db_inst_branch(int inst)
 {
     union instr insn;
@@ -618,7 +618,7 @@ db_inst_branch(int inst)
     insn.i_int = inst;
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return false;
 
     switch (insn.i_op2.i_op2) {
       case IOP2_BPcc:
@@ -627,15 +627,15 @@ db_inst_branch(int inst)
       case IOP2_FBPfcc:
       case IOP2_FBfcc:
       case IOP2_CBccc:
-	return TRUE;
+	return true;
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
 
-boolean_t
+bool
 db_inst_call(int inst)
 {
     union instr insn;
@@ -644,18 +644,18 @@ db_inst_call(int inst)
 
     switch (insn.i_any.i_op) {
       case IOP_CALL:
-	return TRUE;
+	return true;
 
       case IOP_reg:
 	return (insn.i_op3.i_op3 == IOP3_JMPL) && !db_inst_return(inst);
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
 
-boolean_t
+bool
 db_inst_unconditional_flow_transfer(int inst)
 {
     union instr insn;
@@ -663,10 +663,10 @@ db_inst_unconditional_flow_transfer(int inst)
     insn.i_int = inst;
 
     if (db_inst_call(inst))
-	return TRUE;
+	return true;
 
     if (insn.i_any.i_op != IOP_OP2)
-	return FALSE;
+	return false;
 
     switch (insn.i_op2.i_op2)
     {
@@ -678,12 +678,12 @@ db_inst_unconditional_flow_transfer(int inst)
 	return insn.i_branch.i_cond == Icc_A;
 
       default:
-	return FALSE;
+	return false;
     }
 }
 
 
-boolean_t
+bool
 db_inst_return(int inst)
 {
 
@@ -691,7 +691,7 @@ db_inst_return(int inst)
 	    inst == I_JMPLri(I_G0, I_I7, 8));		/* retl */
 }
 
-boolean_t
+bool
 db_inst_trap_return(int inst)
 {
     union instr insn;

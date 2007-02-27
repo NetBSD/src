@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.24 2006/11/24 01:04:30 rpaulo Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.24.4.1 2007/02/27 16:54:45 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.24 2006/11/24 01:04:30 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.24.4.1 2007/02/27 16:54:45 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -259,9 +259,6 @@ tap_attach(struct device *parent, struct device *self,
 	uint32_t ui;
 	int error;
 
-	aprint_normal("%s: faking Ethernet device\n",
-	    self->dv_xname);
-
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
 	 * do some randomisation using the current uptime.  It's not meant
@@ -271,7 +268,7 @@ tap_attach(struct device *parent, struct device *self,
 	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
 	memcpy(enaddr+3, (u_int8_t *)&ui, 3);
 
-	aprint_normal("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
+	aprint_verbose("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
 	/*

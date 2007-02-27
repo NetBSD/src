@@ -1,4 +1,4 @@
-/*	$NetBSD: fcnvff.c,v 1.4 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: fcnvff.c,v 1.4.26.1 2007/02/27 16:51:18 yamt Exp $	*/
 
 /*	$OpenBSD: fcnvff.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcnvff.c,v 1.4 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcnvff.c,v 1.4.26.1 2007/02/27 16:51:18 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -149,9 +149,9 @@ unsigned int *status;
 {
 	register unsigned int srcp1, srcp2, result;
 	register int src_exponent, dest_exponent, dest_mantissa;
-	register int inexact = FALSE, guardbit = FALSE, stickybit = FALSE;
-	register int lsb_odd = FALSE;
-	int is_tiny = FALSE;
+	register int inexact = false, guardbit = false, stickybit = false;
+	register int lsb_odd = false;
+	int is_tiny = false;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1);
@@ -270,7 +270,7 @@ unsigned int *status;
 			return(OVERFLOWEXCEPTION);
 		}
 		Set_overflowflag();
-		inexact = TRUE;
+		inexact = true;
 		/* set result to infinity or largest number */
 		Sgl_setoverflow(result);
 	}

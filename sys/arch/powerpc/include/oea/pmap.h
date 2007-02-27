@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9.10.1 2007/02/27 16:52:50 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -91,12 +91,12 @@ pmap_remove_all(struct pmap *pmap)
 }
 
 void pmap_bootstrap (vaddr_t, vaddr_t);
-boolean_t pmap_extract (struct pmap *, vaddr_t, paddr_t *);
-boolean_t pmap_query_bit (struct vm_page *, int);
-boolean_t pmap_clear_bit (struct vm_page *, int);
+bool pmap_extract (struct pmap *, vaddr_t, paddr_t *);
+bool pmap_query_bit (struct vm_page *, int);
+bool pmap_clear_bit (struct vm_page *, int);
 void pmap_real_memory (paddr_t *, psize_t *);
 void pmap_pinit (struct pmap *);
-boolean_t pmap_pageidlezero (paddr_t);
+bool pmap_pageidlezero (paddr_t);
 void pmap_syncicache (paddr_t, psize_t);
 #ifdef PPC_OEA64
 vaddr_t pmap_setusr (vaddr_t);
@@ -106,7 +106,7 @@ vaddr_t pmap_unsetusr (void);
 #define PMAP_NEED_PROCWR
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 
-int pmap_pte_spill(struct pmap *, vaddr_t, boolean_t);
+int pmap_pte_spill(struct pmap *, vaddr_t, bool);
 
 #define	PMAP_NC			0x1000
 

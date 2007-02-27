@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.4 2005/12/11 12:19:02 christos Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.4.26.1 2007/02/27 16:53:05 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -239,25 +239,16 @@ irqloop:
 	add	r1, r1, #0x00000001
 	str	r1, [r0, #(V_INTR)]
 
-	/*
-	 * XXX: Should stats be accumlated for every interrupt routine called
-	 * or for every physical interrupt that is serviced.
-	 */
-
-#ifdef IRQSTATS
-        ldr	r0, Lintrcnt
-	ldr	r1, [r6, #(IH_NUM)]
-
-	add	r0, r0, r1, lsl #2
-	ldr	r1, [r0]
-	add	r1, r1, #0x00000001
-	str	r1, [r0]
-#endif	/* IRQSTATS */
-
 irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame */
+	add	r3, r6, #IH_EV_COUNT	/* get address of ih's ev_count */
+	ldmia   r3, {r1-r2}		/* load ev_count */
+	adds	r1, r1, #0x00000001	/* 64bit incr (lo) */
+        adc     r2, r2, #0x00000000	/* 64bit incr (hi) */
+	stmia   r3, {r1-r2}		/* store ev_count */
+
 	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
@@ -389,114 +380,8 @@ ENTRY(irq_setmasks)
 Lcnt:
 	.word	_C_LABEL(uvmexp)
 
-Lintrcnt:
-	.word	_C_LABEL(intrcnt)
-
 Li8259_mask:
 	.word	_C_LABEL(i8259_mask)
 
 Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */
-
-#ifdef IRQSTATS
-/* These symbols are used by vmstat */
-
-	.text
-	.global	_C_LABEL(_intrnames)
-_C_LABEL(_intrnames):
-	.word	_C_LABEL(intrnames)
-
-	.data
-
-	/* XXX fix */
-        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(sintrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
-	.asciz	"interrupt  0 "
-	.asciz	"interrupt  1 "
-	.asciz	"interrupt  2 "
-	.asciz	"interrupt  3 "
-	.asciz	"interrupt  4 "
-	.asciz	"interrupt  5 "
-	.asciz	"interrupt  6 "
-	.asciz	"interrupt  7 "
-	.asciz	"interrupt  8 "
-	.asciz	"interrupt  9 "
-	.asciz	"interrupt 10 "
-	.asciz	"interrupt 11 "
-	.asciz	"interrupt 12 "
-	.asciz	"interrupt 13 "
-	.asciz	"interrupt 14 "
-	.asciz	"interrupt 15 "
-	.asciz	"interrupt 16 "
-	.asciz	"interrupt 17 "
-	.asciz	"interrupt 18 "
-	.asciz	"interrupt 19 "
-	.asciz	"interrupt 20 "
-	.asciz	"interrupt 21 "
-	.asciz	"interrupt 22 "
-	.asciz	"interrupt 23 "
-	.asciz	"interrupt 24 "
-	.asciz	"interrupt 25 "
-	.asciz	"interrupt 26 "
-	.asciz	"interrupt 27 "
-	.asciz	"interrupt 28 "
-	.asciz	"interrupt 29 "
-	.asciz	"interrupt 30 "
-	.asciz	"interrupt 31 "
-
-_C_LABEL(sintrnames):
-	.asciz	"soft int  0  "
-	.asciz	"soft int  1  "
-	.asciz	"soft int  2  "
-	.asciz	"soft int  3  "
-	.asciz	"soft int  4  "
-	.asciz	"soft int  5  "
-	.asciz	"soft int  6  "
-	.asciz	"soft int  7  "
-	.asciz	"soft int  8  "
-	.asciz	"soft int  9  "
-	.asciz	"soft int 10  "
-	.asciz	"soft int 11  "
-	.asciz	"soft int 12  "
-	.asciz	"soft int 13  "
-	.asciz	"soft int 14  "
-	.asciz	"soft int 15  "
-	.asciz	"soft int 16  "
-	.asciz	"soft int 17  "
-	.asciz	"soft int 18  "
-	.asciz	"soft int 19  "
-	.asciz	"soft int 20  "
-	.asciz	"soft int 21  "
-	.asciz	"soft int 22  "
-	.asciz	"soft int 23  "
-	.asciz	"soft int 24  "
-	.asciz	"soft int 25  "
-	.asciz	"soft int 26  "
-	.asciz	"soft int 27  "
-	.asciz	"soft int 28  "
-	.asciz	"soft int 29  "
-	.asciz	"soft int 30  "
-	.asciz	"soft int 31  "
-_C_LABEL(eintrnames):
-
-	.bss
-	.align	0
-_C_LABEL(intrcnt):
-	.space	32*4	/* XXX Should be linked to number of interrupts */
-_C_LABEL(sintrcnt):
-	.space	32*4	/* XXX Should be linked to number of soft ints */
-_C_LABEL(eintrcnt):
-
-#else	/* IRQSTATS */
-	/* Dummy entries to keep vmstat happy */
-
-	.text
-        .globl  _C_LABEL(intrnames), _C_LABEL(eintrnames), _C_LABEL(intrcnt), _C_LABEL(eintrcnt)
-_C_LABEL(intrnames):
-	.long	0
-_C_LABEL(eintrnames):
-
-_C_LABEL(intrcnt):
-	.long	0
-_C_LABEL(eintrcnt):
-#endif	/* IRQSTATS */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.100.2.1 2007/02/17 10:30:57 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.100.2.2 2007/02/27 16:54:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.1 2007/02/17 10:30:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.2 2007/02/27 16:54:23 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.1 2007/02/17 10:30:57 yamt Exp
 #include <sys/signalvar.h>
 #include <sys/ras.h>
 #include <sys/filedesc.h>
+#include "sys/syscall_stats.h"
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 
@@ -337,7 +338,7 @@ proc0_init(void)
 	 * init(8) when they exit.  init(8) can easily wait them out
 	 * for us.
 	 */
-	p->p_flag = P_SYSTEM | P_NOCLDWAIT;
+	p->p_flag = PK_SYSTEM | PK_NOCLDWAIT;
 	p->p_stat = SACTIVE;
 	p->p_nice = NZERO;
 	p->p_emul = &emul_netbsd;
@@ -347,7 +348,7 @@ proc0_init(void)
 	strncpy(p->p_comm, "swapper", MAXCOMLEN);
 
 	l->l_mutex = &sched_mutex;
-	l->l_flag = L_INMEM | L_SYSTEM;
+	l->l_flag = LW_INMEM | LW_SYSTEM;
 	l->l_stat = LSONPROC;
 	l->l_ts = &turnstile0;
 	l->l_syncobj = &sched_syncobj;
@@ -355,6 +356,8 @@ proc0_init(void)
 	l->l_cpu = curcpu();
 	l->l_priority = PRIBIO;
 	l->l_usrpri = PRIBIO;
+	l->l_inheritedprio = MAXPRI;
+	SLIST_INIT(&l->l_pi_lenders);
 
 	callout_init(&l->l_tsleep_ch);
 	cv_init(&l->l_sigcv, "sigwait");
@@ -420,6 +423,8 @@ proc0_init(void)
 
 	proc_initspecific(p);
 	lwp_initspecific(l);
+
+	SYSCALL_TIME_LWP_INIT(l);
 }
 
 /*
@@ -432,18 +437,23 @@ int
 pgid_in_session(struct proc *p, pid_t pg_id)
 {
 	struct pgrp *pgrp;
+	struct session *session;
+
+	rw_enter(&proclist_lock, RW_READER);
 
 	if (pg_id < 0) {
-		struct proc *p1 = pfind(-pg_id);
+		struct proc *p1 = p_find(-pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 		if (p1 == NULL)
 			return EINVAL;
 		pgrp = p1->p_pgrp;
 	} else {
-		pgrp = pgfind(pg_id);
+		pgrp = pg_find(pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 		if (pgrp == NULL)
 			return EINVAL;
 	}
-	if (pgrp->pg_session != p->p_pgrp->pg_session)
+	session = pgrp->pg_session;
+	rw_exit(&proclist_lock);
+	if (session != p->p_pgrp->pg_session)
 		return EPERM;
 	return 0;
 }
@@ -487,7 +497,7 @@ p_find(pid_t pid, uint flags)
 		return p;
 	}
 	if (flags & PFIND_UNLOCK_FAIL)
-		 rw_exit(&proclist_lock);
+		rw_exit(&proclist_lock);
 	return NULL;
 }
 
@@ -744,7 +754,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		if (pgrp != NULL && pgrp->pg_session != p->p_session)
 			goto done;
 		/* ... and not done an exec. */
-		if (p->p_flag & P_EXEC) {
+		if (p->p_flag & PK_EXEC) {
 			rval = EACCES;
 			goto done;
 		}
@@ -1241,11 +1251,11 @@ proclist_foreach_call(struct proclist *list,
 	struct lwp * const l = curlwp;
 	int ret = 0;
 
-	marker.p_flag = P_MARKER;
+	marker.p_flag = PK_MARKER;
 	PHOLD(l);
 	rw_enter(&proclist_lock, RW_READER);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
-		if (p->p_flag & P_MARKER) {
+		if (p->p_flag & PK_MARKER) {
 			p = LIST_NEXT(p, p_list);
 			continue;
 		}
@@ -1326,7 +1336,7 @@ proc_crmod_enter(void)
  * briefly acquire the sched state mutex.
  */
 void
-proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, boolean_t sugid)
+proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1351,7 +1361,7 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, boolean_t sugid)
 		 * Mark process as having changed credentials, stops
 		 * tracing etc.
 		 */
-		p->p_flag |= P_SUGID;
+		p->p_flag |= PK_SUGID;
 	}
 
 	mutex_exit(&p->p_mutex);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.16 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.16.26.1 2007/02/27 16:52:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2005/12/11 12:18:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16.26.1 2007/02/27 16:52:04 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.16 2005/12/11 12:18:09 christos Exp 
 #include <ddb/db_extern.h>
 #include <ddb/db_sym.h>
 
-static const char *op_name[64] = {
+static const char * const op_name[64] = {
 /* 0 */ "spec", "bcond","j",	"jal",	"beq",	"bne",	"blez", "bgtz",
 /* 8 */ "addi", "addiu","slti", "sltiu","andi", "ori",	"xori", "lui",
 /*16 */ "cop0", "cop1", "cop2", "cop3", "beql", "bnel", "blezl","bgtzl",
@@ -63,7 +63,7 @@ static const char *op_name[64] = {
 /*56 */ "sc",	"swc1", "swc2", "swc3", "scd",	"sdc1", "sdc2", "sd"
 };
 
-static const char *spec_name[64] = {
+static const char * const spec_name[64] = {
 /* 0 */ "sll",	"spec01","srl", "sra",	"sllv", "spec05","srlv","srav",
 /* 8 */ "jr",	"jalr", "spec12","spec13","syscall","break","spec16","sync",
 /*16 */ "mfhi", "mthi", "mflo", "mtlo", "dsllv","spec25","dsrlv","dsrav",
@@ -74,18 +74,18 @@ static const char *spec_name[64] = {
 /*56 */ "dsll","spec71","dsrl","dsra","dsll32","spec75","dsrl32","dsra32"
 };
 
-static const char *spec2_name[4] = {		/* QED RM4650, R5000, etc. */
+static const char * const spec2_name[4] = {		/* QED RM4650, R5000, etc. */
 /* 0 */ "mad", "madu", "mul", "spec3"
 };
 
-static const char *bcond_name[32] = {
+static const char * const bcond_name[32] = {
 /* 0 */ "bltz", "bgez", "bltzl", "bgezl", "?", "?", "?", "?",
 /* 8 */ "tgei", "tgeiu", "tlti", "tltiu", "teqi", "?", "tnei", "?",
 /*16 */ "bltzal", "bgezal", "bltzall", "bgezall", "?", "?", "?", "?",
 /*24 */ "?", "?", "?", "?", "?", "?", "?", "?",
 };
 
-static const char *cop1_name[64] = {
+static const char * const cop1_name[64] = {
 /* 0 */ "fadd",  "fsub", "fmpy", "fdiv", "fsqrt","fabs", "fmov", "fneg",
 /* 8 */ "fop08","fop09","fop0a","fop0b","fop0c","fop0d","fop0e","fop0f",
 /*16 */ "fop10","fop11","fop12","fop13","fop14","fop15","fop16","fop17",
@@ -98,7 +98,7 @@ static const char *cop1_name[64] = {
 	"fcmp.le","fcmp.ngt"
 };
 
-static const char *fmt_name[16] = {
+static const char * const fmt_name[16] = {
 	"s",	"d",	"e",	"fmt3",
 	"w",	"fmt5", "fmt6", "fmt7",
 	"fmt8", "fmt9", "fmta", "fmtb",
@@ -106,14 +106,14 @@ static const char *fmt_name[16] = {
 };
 
 #if defined(__mips_n32) || defined(__mips_n64)
-static const char *reg_name[32] = {
+static const char * const reg_name[32] = {
 	"zero", "at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3",
 	"a4",	"a5",	"a6",	"a7",	"t0",	"t1",	"t2",	"t3",
 	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7",
 	"t8",	"t9",	"k0",	"k1",	"gp",	"sp",	"s8",	"ra"
 };
 #else
-static const char *reg_name[32] = {
+static const char * const reg_name[32] = {
 	"zero", "at",	"v0",	"v1",	"a0",	"a1",	"a2",	"a3",
 	"t0",	"t1",	"t2",	"t3",	"t4",	"t5",	"t6",	"t7",
 	"s0",	"s1",	"s2",	"s3",	"s4",	"s5",	"s6",	"s7",
@@ -121,7 +121,7 @@ static const char *reg_name[32] = {
 };
 #endif /* __mips_n32 || __mips_n64 */
 
-static const char *c0_opname[64] = {
+static const char * const c0_opname[64] = {
 	"c0op00","tlbr",  "tlbwi", "c0op03","c0op04","c0op05","tlbwr", "c0op07",
 	"tlbp",	 "c0op11","c0op12","c0op13","c0op14","c0op15","c0op16","c0op17",
 	"rfe",	 "c0op21","c0op22","c0op23","c0op24","c0op25","c0op26","c0op27",
@@ -132,7 +132,7 @@ static const char *c0_opname[64] = {
 	"c0op70","c0op71","c0op72","c0op73","c0op74","c0op75","c0op77","c0op77",
 };
 
-static const char *c0_reg[32] = {
+static const char * const c0_reg[32] = {
 	"index",    "random",   "tlblo0",  "tlblo1",
 	"context",  "pagemask", "wired",   "cp0r7",
 	"badvaddr", "count",    "tlbhi",   "compare",
@@ -155,7 +155,7 @@ static void print_addr(db_addr_t);
  * be executed but the 'linear' next instruction.
  */
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	u_int32_t instr;
 
@@ -184,9 +184,9 @@ db_disasm(db_addr_t loc, boolean_t altfmt)
  * 'loc' may in fact contain a breakpoint instruction.
  */
 db_addr_t
-db_disasm_insn(int insn, db_addr_t loc, boolean_t altfmt)
+db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 {
-	boolean_t bdslot = FALSE;
+	bool bdslot = FALSE;
 	InstFmt i;
 
 	i.word = insn;

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.156 2006/11/14 12:05:55 rpaulo Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.156.4.1 2007/02/27 16:54:57 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.156 2006/11/14 12:05:55 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.156.4.1 2007/02/27 16:54:57 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -963,7 +963,7 @@ udp_notify(struct inpcb *inp, int errno)
 }
 
 void *
-udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
+udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	struct udphdr *uh;
@@ -984,12 +984,12 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 		return NULL;
 	if (ip) {
 		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-		in_pcbnotify(&udbtable, satosin(sa)->sin_addr, uh->uh_dport,
+		in_pcbnotify(&udbtable, satocsin(sa)->sin_addr, uh->uh_dport,
 		    ip->ip_src, uh->uh_sport, errno, notify);
 
 		/* XXX mapped address case */
 	} else
-		in_pcbnotifyall(&udbtable, satosin(sa)->sin_addr, errno,
+		in_pcbnotifyall(&udbtable, satocsin(sa)->sin_addr, errno,
 		    notify);
 	return NULL;
 }

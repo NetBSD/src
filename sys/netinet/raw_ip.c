@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.94 2006/10/25 22:49:23 elad Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.94.4.1 2007/02/27 16:54:56 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.94 2006/10/25 22:49:23 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.94.4.1 2007/02/27 16:54:56 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -266,7 +266,7 @@ rip_pcbnotify(struct inpcbtable *table,
 }
 
 void *
-rip_ctlinput(int cmd, struct sockaddr *sa, void *v)
+rip_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 {
 	struct ip *ip = v;
 	void (*notify)(struct inpcb *, int) = in_rtchange;
@@ -285,12 +285,12 @@ rip_ctlinput(int cmd, struct sockaddr *sa, void *v)
 	else if (errno == 0)
 		return NULL;
 	if (ip) {
-		rip_pcbnotify(&rawcbtable, satosin(sa)->sin_addr,
+		rip_pcbnotify(&rawcbtable, satocsin(sa)->sin_addr,
 		    ip->ip_src, ip->ip_p, errno, notify);
 
 		/* XXX mapped address case */
 	} else
-		in_pcbnotifyall(&rawcbtable, satosin(sa)->sin_addr, errno,
+		in_pcbnotifyall(&rawcbtable, satocsin(sa)->sin_addr, errno,
 		    notify);
 	return NULL;
 }

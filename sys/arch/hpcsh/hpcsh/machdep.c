@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2006/04/09 01:18:14 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53.14.1 2007/02/27 16:50:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2006/04/09 01:18:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53.14.1 2007/02/27 16:50:59 yamt Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -266,7 +266,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	dbg_lcd_test();
 #endif
 	/* copy boot parameter for kloader */
-	kloader_bootinfo_set(&kbi, argc, argv, bi, TRUE);
+	kloader_bootinfo_set(&kbi, argc, argv, bi, true);
 
 	/* Find memory cluster. and load to UVM */
 	physmem = mem_cluster_init(SH3_P1SEG_TO_PHYS(kernend));

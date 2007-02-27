@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.15 2006/02/16 20:17:15 perry Exp $	*/
+/*	$NetBSD: bus.h,v 1.15.20.1 2007/02/27 16:53:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -901,6 +901,9 @@ int	x68k_bus_dmamem_alloc_range(bus_dma_tag_t tag, bus_size_t size,
 	((*((t)->x68k_dmamem_unmap)) ((t),(k),(s)))
 #define	bus_dmamem_mmap(t,sg,n,o,p,f) \
 	((*((t)->x68k_dmamem_mmap)) ((t),(sg),(n),(o),(p),(f)))
+
+#define bus_dmatag_subregion(t, mna, mxa, nt, f) EOPNOTSUPP
+#define bus_dmatag_destroy(t)
 
 /*
  * Flags used in various bus DMA methods.

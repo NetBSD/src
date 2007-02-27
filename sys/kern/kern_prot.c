@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.97 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.97.2.1 2007/02/27 16:54:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.97 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.97.2.1 2007/02/27 16:54:23 yamt Exp $");
 
 #include "opt_compat_43.h"
 
@@ -350,7 +350,7 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 		error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
 		    p, NULL, NULL, NULL);
 		if (error != 0) {
-		 	proc_crmod_leave(cred, ncred, FALSE);
+		 	proc_crmod_leave(cred, ncred, false);
 			return error;
 		}
 	}
@@ -359,7 +359,7 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 	if ((r == -1 || r == kauth_cred_getuid(cred))
 	    && (e == -1 || e == kauth_cred_geteuid(cred))
 	    && (sv == -1 || sv == kauth_cred_getsvuid(cred))) {
-		proc_crmod_leave(cred, ncred, FALSE);
+		proc_crmod_leave(cred, ncred, false);
 		return 0;
 	}
 
@@ -377,7 +377,7 @@ do_setresuid(struct lwp *l, uid_t r, uid_t e, uid_t sv, u_int flags)
 		kauth_cred_seteuid(ncred, e);
 
 	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, cred, TRUE);
+ 	proc_crmod_leave(ncred, cred, true);
 
 	return 0;
 }
@@ -422,7 +422,7 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 		error = kauth_authorize_process(cred, KAUTH_PROCESS_SETID,
 		    p, NULL, NULL, NULL);
 		if (error != 0) {
-		 	proc_crmod_leave(cred, ncred, FALSE);
+		 	proc_crmod_leave(cred, ncred, false);
 			return error;
 		}
 	}
@@ -431,7 +431,7 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 	if ((r == -1 || r == kauth_cred_getgid(cred))
 	    && (e == -1 || e == kauth_cred_getegid(cred))
 	    && (sv == -1 || sv == kauth_cred_getsvgid(cred))) {
-	 	proc_crmod_leave(cred, ncred, FALSE);
+	 	proc_crmod_leave(cred, ncred, false);
 		return 0;
 	}
 
@@ -445,7 +445,7 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 		kauth_cred_setegid(ncred, e);
 
 	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, cred, TRUE);
+ 	proc_crmod_leave(ncred, cred, true);
 
 	return 0;
 }
@@ -559,13 +559,13 @@ sys_issetugid(struct lwp *l, void *v, register_t *retval)
 
 	/*
 	 * Note: OpenBSD sets a P_SUGIDEXEC flag set at execve() time,
-	 * we use P_SUGID because we consider changing the owners as
+	 * we use PK_SUGID because we consider changing the owners as
 	 * "tainting" as well.
 	 * This is significant for procs that start as root and "become"
 	 * a user without an exec - programs cannot know *everything*
 	 * that libc *might* have put in their data segment.
 	 */
-	*retval = (p->p_flag & P_SUGID) != 0;
+	*retval = (p->p_flag & PK_SUGID) != 0;
 	return (0);
 }
 
@@ -645,11 +645,11 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
 	kauth_cred_setgroups(ncred, grp, ngrp, -1);
 
 	/* Broadcast our credentials to the process and other LWPs. */
- 	proc_crmod_leave(ncred, cred, TRUE);
+ 	proc_crmod_leave(ncred, cred, true);
 
 	return (0);
   bad:
-  	proc_crmod_leave(cred, ncred, FALSE); 
+  	proc_crmod_leave(cred, ncred, false); 
 	return (error);
 }
 

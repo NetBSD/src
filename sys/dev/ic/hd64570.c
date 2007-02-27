@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.34 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.34.4.1 2007/02/27 16:53:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.34 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.34.4.1 2007/02/27 16:53:52 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -169,7 +169,7 @@ static	void sca_port_starttx(sca_port_t *);
 static	void sca_port_up(sca_port_t *);
 static	void sca_port_down(sca_port_t *);
 
-static	int sca_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+static	int sca_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 			    struct rtentry *);
 static	int sca_ioctl(struct ifnet *, u_long, caddr_t);
 static	void sca_start(struct ifnet *);
@@ -800,7 +800,7 @@ static int
 sca_output(
     struct ifnet *ifp,
     struct mbuf *m,
-    struct sockaddr *dst,
+    const struct sockaddr *dst,
     struct rtentry *rt0)
 {
 #ifdef ISO

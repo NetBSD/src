@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.32 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.32.2.1 2007/02/27 16:48:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32.2.1 2007/02/27 16:48:43 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.32 2007/02/09 21:55:01 ad Exp
 #include <machine/mtrr.h>
 #include <machine/netbsd32_machdep.h>
 #include <machine/sysarch.h>
+#include <machine/userret.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -134,7 +135,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	pcb->pcb_savefpu.fp_fxsave.fx_mxcsr_mask = __INITIAL_MXCSR_MASK__;
 
 
-	p->p_flag |= P_32;
+	p->p_flag |= PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
@@ -169,7 +170,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct netbsd32_sigframe_sigcontext *fp, frame;
-	int onstack;
+	int onstack, error;
 	struct sigacts *ps = p->p_sigacts;
 
 	tf = l->l_md.md_regs;
@@ -230,7 +231,13 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
 
-	if (copyout(&frame, fp, sizeof frame) != 0) {
+	sendsig_reset(l, sig);
+
+	mutex_exit(&p->p_smutex);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -265,7 +272,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	int onstack;
+	int onstack, error;
 	int sig = ksi->ksi_signo;
 	struct netbsd32_sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
@@ -309,9 +316,14 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
-	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	sendsig_reset(l, sig);
 
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
+	mutex_exit(&p->p_smutex);
+	cpu_getmcontext32(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+	error = copyout(&frame, fp, sizeof(frame));
+	mutex_enter(&p->p_smutex);
+
+	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -893,6 +905,21 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
 	}
+}
+
+void
+startlwp32(void *arg)
+{
+	int err;
+	ucontext32_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
+	pool_put(&lwp_uc_pool, uc);
+
+	KERNEL_UNLOCK_LAST(l);
+
+	userret(l);
 }
 
 /*

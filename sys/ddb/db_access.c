@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.17 2002/02/15 07:33:49 simonb Exp $	*/
+/*	$NetBSD: db_access.c,v 1.17.70.1 2007/02/27 16:53:42 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.17 2002/02/15 07:33:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.17.70.1 2007/02/27 16:53:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,7 +53,7 @@ const int db_extend[] = {	/* table for sign-extending */
 };
 
 db_expr_t
-db_get_value(db_addr_t addr, size_t size, boolean_t is_signed)
+db_get_value(db_addr_t addr, size_t size, bool is_signed)
 {
 	char data[sizeof(db_expr_t)];
 	db_expr_t value;

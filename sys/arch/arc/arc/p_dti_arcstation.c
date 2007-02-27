@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_arcstation.c,v 1.8 2005/12/11 12:16:37 christos Exp $	*/
+/*	$NetBSD: p_dti_arcstation.c,v 1.8.26.1 2007/02/27 16:49:03 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.8 2005/12/11 12:16:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_arcstation.c,v 1.8.26.1 2007/02/27 16:49:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ p_dti_arcstation_init(void)
 	 * We use safe default for now, because this platform is untested.
 	 * In other words, the following may not be needed at all.
 	 */
-	vm_page_zero_enable = FALSE;
+	vm_page_zero_enable = false;
 
 	/*
 	 * Initialize I/O address offset

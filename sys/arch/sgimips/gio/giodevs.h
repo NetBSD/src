@@ -1,4 +1,4 @@
-/*	$NetBSD: giodevs.h,v 1.6 2006/07/20 13:12:32 rumble Exp $	*/
+/*	$NetBSD: giodevs.h,v 1.6.10.1 2007/02/27 16:52:55 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -16,8 +16,8 @@
 #define IVAS	0x30	/* Lyon Lamb IVAS */
 #define PHOBOS_G160	0x35	/* Phobos G160 10/100 Ethernet */
 #define PHOBOS_G130	0x36	/* Phobos G130 10/100 Ethernet */
-#define PHOBOS_G100	0x37	/* Phobos G100 10/100 Ethernet */
-#define SETENG_GFE	0x38	/* Set Engineering GIO 100BaseTX Fast Ethernet */
+#define PHOBOS_G100	0x37	/* Phobos G100 100baseTX Fast Ethernet */
+#define SETENG_GFE	0x38	/* Set Engineering GFE 10/100 Ethernet */
 #define ATM	0x85	/* ATM board */
 #define SCSI	0x87	/* 16 bit SCSI Card */
 #define SMPTE	0x8c	/* SMPTE 259M Video */

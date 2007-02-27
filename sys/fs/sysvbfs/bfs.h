@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs.h,v 1.2 2006/08/26 14:04:55 tsutsui Exp $	*/
+/*	$NetBSD: bfs.h,v 1.2.8.1 2007/02/27 16:54:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -139,17 +139,17 @@ struct bfs {
 	/* Sector I/O operation */
 	struct sector_io_ops *io;
 
-	boolean_t debug;
+	bool debug;
 };
 
 struct sector_io_ops {
-	boolean_t (*read)(void *, uint8_t *, daddr_t);
-	boolean_t (*read_n)(void *, uint8_t *, daddr_t, int);
-	boolean_t (*write)(void *, uint8_t *, daddr_t);
-	boolean_t (*write_n)(void *, uint8_t *, daddr_t, int);
+	bool (*read)(void *, uint8_t *, daddr_t);
+	bool (*read_n)(void *, uint8_t *, daddr_t, int);
+	bool (*write)(void *, uint8_t *, daddr_t);
+	bool (*write_n)(void *, uint8_t *, daddr_t, int);
 };
 
-int bfs_init2(struct bfs **, int, struct sector_io_ops *, boolean_t);
+int bfs_init2(struct bfs **, int, struct sector_io_ops *, bool);
 void bfs_fini(struct bfs *);
 int bfs_file_read(const struct bfs *, const char *, void *, size_t, size_t *);
 int bfs_file_write(struct bfs *, const char *, void *, size_t);
@@ -157,19 +157,19 @@ int bfs_file_create(struct bfs *, const char *, void *,  size_t,
     const struct bfs_fileattr *);
 int bfs_file_delete(struct bfs *, const char *);
 int bfs_file_rename(struct bfs *, const char *, const char *);
-boolean_t bfs_file_lookup(const struct bfs *, const char *, int *, int *,
+bool bfs_file_lookup(const struct bfs *, const char *, int *, int *,
     size_t *);
 size_t bfs_file_size(const struct bfs_inode *);
-boolean_t bfs_dump(const struct bfs *);
+bool bfs_dump(const struct bfs *);
 
 /* filesystem ops */
 struct vnode;
 int sysvbfs_bfs_init(struct bfs **, struct vnode *);
 void sysvbfs_bfs_fini(struct bfs *);
-boolean_t bfs_inode_lookup(const struct bfs *, ino_t, struct bfs_inode **);
-boolean_t bfs_dirent_lookup_by_name(const struct bfs *, const char *,
+bool bfs_inode_lookup(const struct bfs *, ino_t, struct bfs_inode **);
+bool bfs_dirent_lookup_by_name(const struct bfs *, const char *,
     struct bfs_dirent **);
-boolean_t bfs_dirent_lookup_by_inode(const struct bfs *, int,
+bool bfs_dirent_lookup_by_inode(const struct bfs *, int,
     struct bfs_dirent **);
 void bfs_inode_set_attr(const struct bfs *, struct bfs_inode *,
     const struct bfs_fileattr *attr);

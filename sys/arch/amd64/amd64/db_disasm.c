@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.4 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.4.26.1 2007/02/27 16:48:42 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.4 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.4.26.1 2007/02/27 16:48:42 yamt Exp $");
 
 #ifndef _KERNEL
 #include "stubs.h"
@@ -173,162 +173,162 @@ const char * const db_Grp9[] = {
 };
 
 const struct inst db_inst_0f0x[] = {
-/*00*/	{ "",	   TRUE,  NONE,  op1(Ew),     (const char *)db_Grp6 },
-/*01*/	{ "",	   TRUE,  NONE,  op1(Ew),     (const char *)db_Grp7 },
-/*02*/	{ "lar",   TRUE,  LONG,  op2(E,R),    0 },
-/*03*/	{ "lsl",   TRUE,  LONG,  op2(E,R),    0 },
-/*04*/	{ "",      FALSE, NONE,  0,	      0 },
-/*05*/	{ "",      FALSE, NONE,  0,	      0 },
-/*06*/	{ "clts",  FALSE, NONE,  0,	      0 },
-/*07*/	{ "",      FALSE, NONE,  0,	      0 },
+/*00*/	{ "",	   true,  NONE,  op1(Ew),     (const char *)db_Grp6 },
+/*01*/	{ "",	   true,  NONE,  op1(Ew),     (const char *)db_Grp7 },
+/*02*/	{ "lar",   true,  LONG,  op2(E,R),    0 },
+/*03*/	{ "lsl",   true,  LONG,  op2(E,R),    0 },
+/*04*/	{ "",      false, NONE,  0,	      0 },
+/*05*/	{ "",      false, NONE,  0,	      0 },
+/*06*/	{ "clts",  false, NONE,  0,	      0 },
+/*07*/	{ "",      false, NONE,  0,	      0 },
 
-/*08*/	{ "invd",  FALSE, NONE,  0,	      0 },
-/*09*/	{ "wbinvd",FALSE, NONE,  0,	      0 },
-/*0a*/	{ "",      FALSE, NONE,  0,	      0 },
-/*0b*/	{ "",      FALSE, NONE,  0,	      0 },
-/*0c*/	{ "",      FALSE, NONE,  0,	      0 },
-/*0d*/	{ "",      FALSE, NONE,  0,	      0 },
-/*0e*/	{ "",      FALSE, NONE,  0,	      0 },
-/*0f*/	{ "",      FALSE, NONE,  0,	      0 },
+/*08*/	{ "invd",  false, NONE,  0,	      0 },
+/*09*/	{ "wbinvd",false, NONE,  0,	      0 },
+/*0a*/	{ "",      false, NONE,  0,	      0 },
+/*0b*/	{ "",      false, NONE,  0,	      0 },
+/*0c*/	{ "",      false, NONE,  0,	      0 },
+/*0d*/	{ "",      false, NONE,  0,	      0 },
+/*0e*/	{ "",      false, NONE,  0,	      0 },
+/*0f*/	{ "",      false, NONE,  0,	      0 },
 };
 
 const struct inst	db_inst_0f2x[] = {
-/*20*/	{ "mov",   TRUE,  LONG,  op2(CR,E),   0 }, /* use E for reg */
-/*21*/	{ "mov",   TRUE,  LONG,  op2(DR,E),   0 }, /* since mod == 11 */
-/*22*/	{ "mov",   TRUE,  LONG,  op2(E,CR),   0 },
-/*23*/	{ "mov",   TRUE,  LONG,  op2(E,DR),   0 },
-/*24*/	{ "mov",   TRUE,  LONG,  op2(TR,E),   0 },
-/*25*/	{ "",      FALSE, NONE,  0,	      0 },
-/*26*/	{ "mov",   TRUE,  LONG,  op2(E,TR),   0 },
-/*27*/	{ "",      FALSE, NONE,  0,	      0 },
+/*20*/	{ "mov",   true,  LONG,  op2(CR,E),   0 }, /* use E for reg */
+/*21*/	{ "mov",   true,  LONG,  op2(DR,E),   0 }, /* since mod == 11 */
+/*22*/	{ "mov",   true,  LONG,  op2(E,CR),   0 },
+/*23*/	{ "mov",   true,  LONG,  op2(E,DR),   0 },
+/*24*/	{ "mov",   true,  LONG,  op2(TR,E),   0 },
+/*25*/	{ "",      false, NONE,  0,	      0 },
+/*26*/	{ "mov",   true,  LONG,  op2(E,TR),   0 },
+/*27*/	{ "",      false, NONE,  0,	      0 },
 
-/*28*/	{ "",      FALSE, NONE,  0,	      0 },
-/*29*/	{ "",      FALSE, NONE,  0,	      0 },
-/*2a*/	{ "",      FALSE, NONE,  0,	      0 },
-/*2b*/	{ "",      FALSE, NONE,  0,	      0 },
-/*2c*/	{ "",      FALSE, NONE,  0,	      0 },
-/*2d*/	{ "",      FALSE, NONE,  0,	      0 },
-/*2e*/	{ "",      FALSE, NONE,  0,	      0 },
-/*2f*/	{ "",      FALSE, NONE,  0,	      0 },
+/*28*/	{ "",      false, NONE,  0,	      0 },
+/*29*/	{ "",      false, NONE,  0,	      0 },
+/*2a*/	{ "",      false, NONE,  0,	      0 },
+/*2b*/	{ "",      false, NONE,  0,	      0 },
+/*2c*/	{ "",      false, NONE,  0,	      0 },
+/*2d*/	{ "",      false, NONE,  0,	      0 },
+/*2e*/	{ "",      false, NONE,  0,	      0 },
+/*2f*/	{ "",      false, NONE,  0,	      0 },
 };
 
 const struct inst	db_inst_0f3x[] = {
-/*30*/	{ "wrmsr", FALSE, NONE,  0,	      0 },
-/*31*/	{ "rdtsc", FALSE, NONE,  0,	      0 },
-/*32*/	{ "rdmsr", FALSE, NONE,  0,	      0 },
-/*33*/	{ "rdpmc", FALSE, NONE,  0,	      0 },
-/*34*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*35*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*36*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*37*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*30*/	{ "wrmsr", false, NONE,  0,	      0 },
+/*31*/	{ "rdtsc", false, NONE,  0,	      0 },
+/*32*/	{ "rdmsr", false, NONE,  0,	      0 },
+/*33*/	{ "rdpmc", false, NONE,  0,	      0 },
+/*34*/	{ "",	   false, NONE,  0,	      0 },
+/*35*/	{ "",	   false, NONE,  0,	      0 },
+/*36*/	{ "",	   false, NONE,  0,	      0 },
+/*37*/	{ "",	   false, NONE,  0,	      0 },
 
-/*38*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*39*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*3a*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*3v*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*3c*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*3d*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*3e*/	{ "",	   FALSE, NONE,  0,	      0 },
-/*3f*/	{ "",	   FALSE, NONE,  0,	      0 },
+/*38*/	{ "",	   false, NONE,  0,	      0 },
+/*39*/	{ "",	   false, NONE,  0,	      0 },
+/*3a*/	{ "",	   false, NONE,  0,	      0 },
+/*3v*/	{ "",	   false, NONE,  0,	      0 },
+/*3c*/	{ "",	   false, NONE,  0,	      0 },
+/*3d*/	{ "",	   false, NONE,  0,	      0 },
+/*3e*/	{ "",	   false, NONE,  0,	      0 },
+/*3f*/	{ "",	   false, NONE,  0,	      0 },
 };
 
 const struct inst	db_inst_0f8x[] = {
-/*80*/	{ "jo",    FALSE, NONE,  op1(Dl),     0 },
-/*81*/	{ "jno",   FALSE, NONE,  op1(Dl),     0 },
-/*82*/	{ "jb",    FALSE, NONE,  op1(Dl),     0 },
-/*83*/	{ "jnb",   FALSE, NONE,  op1(Dl),     0 },
-/*84*/	{ "jz",    FALSE, NONE,  op1(Dl),     0 },
-/*85*/	{ "jnz",   FALSE, NONE,  op1(Dl),     0 },
-/*86*/	{ "jbe",   FALSE, NONE,  op1(Dl),     0 },
-/*87*/	{ "jnbe",  FALSE, NONE,  op1(Dl),     0 },
+/*80*/	{ "jo",    false, NONE,  op1(Dl),     0 },
+/*81*/	{ "jno",   false, NONE,  op1(Dl),     0 },
+/*82*/	{ "jb",    false, NONE,  op1(Dl),     0 },
+/*83*/	{ "jnb",   false, NONE,  op1(Dl),     0 },
+/*84*/	{ "jz",    false, NONE,  op1(Dl),     0 },
+/*85*/	{ "jnz",   false, NONE,  op1(Dl),     0 },
+/*86*/	{ "jbe",   false, NONE,  op1(Dl),     0 },
+/*87*/	{ "jnbe",  false, NONE,  op1(Dl),     0 },
 
-/*88*/	{ "js",    FALSE, NONE,  op1(Dl),     0 },
-/*89*/	{ "jns",   FALSE, NONE,  op1(Dl),     0 },
-/*8a*/	{ "jp",    FALSE, NONE,  op1(Dl),     0 },
-/*8b*/	{ "jnp",   FALSE, NONE,  op1(Dl),     0 },
-/*8c*/	{ "jl",    FALSE, NONE,  op1(Dl),     0 },
-/*8d*/	{ "jnl",   FALSE, NONE,  op1(Dl),     0 },
-/*8e*/	{ "jle",   FALSE, NONE,  op1(Dl),     0 },
-/*8f*/	{ "jnle",  FALSE, NONE,  op1(Dl),     0 },
+/*88*/	{ "js",    false, NONE,  op1(Dl),     0 },
+/*89*/	{ "jns",   false, NONE,  op1(Dl),     0 },
+/*8a*/	{ "jp",    false, NONE,  op1(Dl),     0 },
+/*8b*/	{ "jnp",   false, NONE,  op1(Dl),     0 },
+/*8c*/	{ "jl",    false, NONE,  op1(Dl),     0 },
+/*8d*/	{ "jnl",   false, NONE,  op1(Dl),     0 },
+/*8e*/	{ "jle",   false, NONE,  op1(Dl),     0 },
+/*8f*/	{ "jnle",  false, NONE,  op1(Dl),     0 },
 };
 
 const struct inst	db_inst_0f9x[] = {
-/*90*/	{ "seto",  TRUE,  NONE,  op1(Eb),     0 },
-/*91*/	{ "setno", TRUE,  NONE,  op1(Eb),     0 },
-/*92*/	{ "setb",  TRUE,  NONE,  op1(Eb),     0 },
-/*93*/	{ "setnb", TRUE,  NONE,  op1(Eb),     0 },
-/*94*/	{ "setz",  TRUE,  NONE,  op1(Eb),     0 },
-/*95*/	{ "setnz", TRUE,  NONE,  op1(Eb),     0 },
-/*96*/	{ "setbe", TRUE,  NONE,  op1(Eb),     0 },
-/*97*/	{ "setnbe",TRUE,  NONE,  op1(Eb),     0 },
+/*90*/	{ "seto",  true,  NONE,  op1(Eb),     0 },
+/*91*/	{ "setno", true,  NONE,  op1(Eb),     0 },
+/*92*/	{ "setb",  true,  NONE,  op1(Eb),     0 },
+/*93*/	{ "setnb", true,  NONE,  op1(Eb),     0 },
+/*94*/	{ "setz",  true,  NONE,  op1(Eb),     0 },
+/*95*/	{ "setnz", true,  NONE,  op1(Eb),     0 },
+/*96*/	{ "setbe", true,  NONE,  op1(Eb),     0 },
+/*97*/	{ "setnbe",true,  NONE,  op1(Eb),     0 },
 
-/*98*/	{ "sets",  TRUE,  NONE,  op1(Eb),     0 },
-/*99*/	{ "setns", TRUE,  NONE,  op1(Eb),     0 },
-/*9a*/	{ "setp",  TRUE,  NONE,  op1(Eb),     0 },
-/*9b*/	{ "setnp", TRUE,  NONE,  op1(Eb),     0 },
-/*9c*/	{ "setl",  TRUE,  NONE,  op1(Eb),     0 },
-/*9d*/	{ "setnl", TRUE,  NONE,  op1(Eb),     0 },
-/*9e*/	{ "setle", TRUE,  NONE,  op1(Eb),     0 },
-/*9f*/	{ "setnle",TRUE,  NONE,  op1(Eb),     0 },
+/*98*/	{ "sets",  true,  NONE,  op1(Eb),     0 },
+/*99*/	{ "setns", true,  NONE,  op1(Eb),     0 },
+/*9a*/	{ "setp",  true,  NONE,  op1(Eb),     0 },
+/*9b*/	{ "setnp", true,  NONE,  op1(Eb),     0 },
+/*9c*/	{ "setl",  true,  NONE,  op1(Eb),     0 },
+/*9d*/	{ "setnl", true,  NONE,  op1(Eb),     0 },
+/*9e*/	{ "setle", true,  NONE,  op1(Eb),     0 },
+/*9f*/	{ "setnle",true,  NONE,  op1(Eb),     0 },
 };
 
 const struct inst	db_inst_0fax[] = {
-/*a0*/	{ "push",  FALSE, NONE,  op1(Si),     0 },
-/*a1*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
-/*a2*/	{ "cpuid", FALSE, NONE,  0,	      0 },
-/*a3*/	{ "bt",    TRUE,  LONG,  op2(R,E),    0 },
-/*a4*/	{ "shld",  TRUE,  LONG,  op3(Ib,E,R), 0 },
-/*a5*/	{ "shld",  TRUE,  LONG,  op3(CL,E,R), 0 },
-/*a6*/	{ "",      FALSE, NONE,  0,	      0 },
-/*a7*/	{ "",      FALSE, NONE,  0,	      0 },
+/*a0*/	{ "push",  false, NONE,  op1(Si),     0 },
+/*a1*/	{ "pop",   false, NONE,  op1(Si),     0 },
+/*a2*/	{ "cpuid", false, NONE,  0,	      0 },
+/*a3*/	{ "bt",    true,  LONG,  op2(R,E),    0 },
+/*a4*/	{ "shld",  true,  LONG,  op3(Ib,E,R), 0 },
+/*a5*/	{ "shld",  true,  LONG,  op3(CL,E,R), 0 },
+/*a6*/	{ "",      false, NONE,  0,	      0 },
+/*a7*/	{ "",      false, NONE,  0,	      0 },
 
-/*a8*/	{ "push",  FALSE, NONE,  op1(Si),     0 },
-/*a9*/	{ "pop",   FALSE, NONE,  op1(Si),     0 },
-/*aa*/	{ "rsm",   FALSE, NONE,  0,	      0 },
-/*ab*/	{ "bts",   TRUE,  LONG,  op2(R,E),    0 },
-/*ac*/	{ "shrd",  TRUE,  LONG,  op3(Ib,E,R), 0 },
-/*ad*/	{ "shrd",  TRUE,  LONG,  op3(CL,E,R), 0 },
-/*ae*/	{ "fxsave",TRUE,  LONG,  0,	      0 },
-/*af*/	{ "imul",  TRUE,  LONG,  op2(E,R),    0 },
+/*a8*/	{ "push",  false, NONE,  op1(Si),     0 },
+/*a9*/	{ "pop",   false, NONE,  op1(Si),     0 },
+/*aa*/	{ "rsm",   false, NONE,  0,	      0 },
+/*ab*/	{ "bts",   true,  LONG,  op2(R,E),    0 },
+/*ac*/	{ "shrd",  true,  LONG,  op3(Ib,E,R), 0 },
+/*ad*/	{ "shrd",  true,  LONG,  op3(CL,E,R), 0 },
+/*ae*/	{ "fxsave",true,  LONG,  0,	      0 },
+/*af*/	{ "imul",  true,  LONG,  op2(E,R),    0 },
 };
 
 const struct inst	db_inst_0fbx[] = {
-/*b0*/	{ "cmpxchg",TRUE, BYTE,	op2(R, E),   0 },
-/*b1*/	{ "cmpxchg",TRUE, LONG,	op2(R, E),   0 },
-/*b2*/	{ "lss",   TRUE,  LONG,  op2(E, R),   0 },
-/*b3*/	{ "btr",   TRUE,  LONG,  op2(R, E),   0 },
-/*b4*/	{ "lfs",   TRUE,  LONG,  op2(E, R),   0 },
-/*b5*/	{ "lgs",   TRUE,  LONG,  op2(E, R),   0 },
-/*b6*/	{ "movzb", TRUE,  LONG,  op2(E, R),   0 },
-/*b7*/	{ "movzw", TRUE,  LONG,  op2(E, R),   0 },
+/*b0*/	{ "cmpxchg",true, BYTE,	op2(R, E),   0 },
+/*b1*/	{ "cmpxchg",true, LONG,	op2(R, E),   0 },
+/*b2*/	{ "lss",   true,  LONG,  op2(E, R),   0 },
+/*b3*/	{ "btr",   true,  LONG,  op2(R, E),   0 },
+/*b4*/	{ "lfs",   true,  LONG,  op2(E, R),   0 },
+/*b5*/	{ "lgs",   true,  LONG,  op2(E, R),   0 },
+/*b6*/	{ "movzb", true,  LONG,  op2(E, R),   0 },
+/*b7*/	{ "movzw", true,  LONG,  op2(E, R),   0 },
 
-/*b8*/	{ "",      FALSE, NONE,  0,	      0 },
-/*b9*/	{ "",      FALSE, NONE,  0,	      0 },
-/*ba*/	{ "",      TRUE,  LONG,  op2(Ib, E),  (const char *)db_Grp8 },
-/*bb*/	{ "btc",   TRUE,  LONG,  op2(R, E),   0 },
-/*bc*/	{ "bsf",   TRUE,  LONG,  op2(E, R),   0 },
-/*bd*/	{ "bsr",   TRUE,  LONG,  op2(E, R),   0 },
-/*be*/	{ "movsb", TRUE,  LONG,  op2(E, R),   0 },
-/*bf*/	{ "movsw", TRUE,  LONG,  op2(E, R),   0 },
+/*b8*/	{ "",      false, NONE,  0,	      0 },
+/*b9*/	{ "",      false, NONE,  0,	      0 },
+/*ba*/	{ "",      true,  LONG,  op2(Ib, E),  (const char *)db_Grp8 },
+/*bb*/	{ "btc",   true,  LONG,  op2(R, E),   0 },
+/*bc*/	{ "bsf",   true,  LONG,  op2(E, R),   0 },
+/*bd*/	{ "bsr",   true,  LONG,  op2(E, R),   0 },
+/*be*/	{ "movsb", true,  LONG,  op2(E, R),   0 },
+/*bf*/	{ "movsw", true,  LONG,  op2(E, R),   0 },
 };
 
 const struct inst	db_inst_0fcx[] = {
-/*c0*/	{ "xadd",  TRUE,  BYTE,	op2(R, E),   0 },
-/*c1*/	{ "xadd",  TRUE,  LONG,	op2(R, E),   0 },
-/*c2*/	{ "",	   FALSE, NONE,	0,	      0 },
-/*c3*/	{ "",	   FALSE, NONE,	0,	      0 },
-/*c4*/	{ "",	   FALSE, NONE,	0,	      0 },
-/*c5*/	{ "",	   FALSE, NONE,	0,	      0 },
-/*c6*/	{ "",	   FALSE, NONE,	0,	      0 },
-/*c7*/	{ "",	   TRUE,  NONE,	op1(E),      (const char *)db_Grp9 },
-/*c8*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
-/*c9*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
-/*ca*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
-/*cb*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
-/*cc*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
-/*cd*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
-/*ce*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
-/*cf*/	{ "bswap", FALSE, LONG,  op1(Ri),     0 },
+/*c0*/	{ "xadd",  true,  BYTE,	op2(R, E),   0 },
+/*c1*/	{ "xadd",  true,  LONG,	op2(R, E),   0 },
+/*c2*/	{ "",	   false, NONE,	0,	      0 },
+/*c3*/	{ "",	   false, NONE,	0,	      0 },
+/*c4*/	{ "",	   false, NONE,	0,	      0 },
+/*c5*/	{ "",	   false, NONE,	0,	      0 },
+/*c6*/	{ "",	   false, NONE,	0,	      0 },
+/*c7*/	{ "",	   true,  NONE,	op1(E),      (const char *)db_Grp9 },
+/*c8*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*c9*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*ca*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*cb*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*cc*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*cd*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*ce*/	{ "bswap", false, LONG,  op1(Ri),     0 },
+/*cf*/	{ "bswap", false, LONG,  op1(Ri),     0 },
 };
 
 const struct inst * const db_inst_0f[] = {
@@ -502,335 +502,335 @@ const char * const db_Grp2[] = {
 };
 
 const struct inst db_Grp3[] = {
-	{ "test",  TRUE, NONE, op2(I,E), 0 },
-	{ "test",  TRUE, NONE, op2(I,E), 0 },
-	{ "not",   TRUE, NONE, op1(E),   0 },
-	{ "neg",   TRUE, NONE, op1(E),   0 },
-	{ "mul",   TRUE, NONE, op2(E,A), 0 },
-	{ "imul",  TRUE, NONE, op2(E,A), 0 },
-	{ "div",   TRUE, NONE, op2(E,A), 0 },
-	{ "idiv",  TRUE, NONE, op2(E,A), 0 },
+	{ "test",  true, NONE, op2(I,E), 0 },
+	{ "test",  true, NONE, op2(I,E), 0 },
+	{ "not",   true, NONE, op1(E),   0 },
+	{ "neg",   true, NONE, op1(E),   0 },
+	{ "mul",   true, NONE, op2(E,A), 0 },
+	{ "imul",  true, NONE, op2(E,A), 0 },
+	{ "div",   true, NONE, op2(E,A), 0 },
+	{ "idiv",  true, NONE, op2(E,A), 0 },
 };
 
 const struct inst	db_Grp4[] = {
-	{ "inc",   TRUE, BYTE, op1(E),   0 },
-	{ "dec",   TRUE, BYTE, op1(E),   0 },
-	{ "",      TRUE, NONE, 0,	0 },
-	{ "",      TRUE, NONE, 0,	0 },
-	{ "",      TRUE, NONE, 0,	0 },
-	{ "",      TRUE, NONE, 0,	0 },
-	{ "",      TRUE, NONE, 0,	0 },
-	{ "",      TRUE, NONE, 0,	0 }
+	{ "inc",   true, BYTE, op1(E),   0 },
+	{ "dec",   true, BYTE, op1(E),   0 },
+	{ "",      true, NONE, 0,	0 },
+	{ "",      true, NONE, 0,	0 },
+	{ "",      true, NONE, 0,	0 },
+	{ "",      true, NONE, 0,	0 },
+	{ "",      true, NONE, 0,	0 },
+	{ "",      true, NONE, 0,	0 }
 };
 
 const struct inst	db_Grp5[] = {
-	{ "inc",   TRUE, LONG, op1(E),   0 },
-	{ "dec",   TRUE, LONG, op1(E),   0 },
-	{ "call",  TRUE, NONE, op1(Eind),0 },
-	{ "lcall", TRUE, NONE, op1(Eind),0 },
-	{ "jmp",   TRUE, NONE, op1(Eind),0 },
-	{ "ljmp",  TRUE, NONE, op1(Eind),0 },
-	{ "push",  TRUE, LONG, op1(E),   0 },
-	{ "",      TRUE, NONE, 0,	0 }
+	{ "inc",   true, LONG, op1(E),   0 },
+	{ "dec",   true, LONG, op1(E),   0 },
+	{ "call",  true, NONE, op1(Eind),0 },
+	{ "lcall", true, NONE, op1(Eind),0 },
+	{ "jmp",   true, NONE, op1(Eind),0 },
+	{ "ljmp",  true, NONE, op1(Eind),0 },
+	{ "push",  true, LONG, op1(E),   0 },
+	{ "",      true, NONE, 0,	0 }
 };
 
 const struct inst db_inst_table[256] = {
-/*00*/	{ "add",   TRUE,  BYTE,  op2(R, E),  0 },
-/*01*/	{ "add",   TRUE,  LONG,  op2(R, E),  0 },
-/*02*/	{ "add",   TRUE,  BYTE,  op2(E, R),  0 },
-/*03*/	{ "add",   TRUE,  LONG,  op2(E, R),  0 },
-/*04*/	{ "add",   FALSE, BYTE,  op2(Is, A), 0 },
-/*05*/	{ "add",   FALSE, LONG,  op2(Is, A), 0 },
-/*06*/	{ "push",  FALSE, NONE,  op1(Si),    0 },
-/*07*/	{ "pop",   FALSE, NONE,  op1(Si),    0 },
+/*00*/	{ "add",   true,  BYTE,  op2(R, E),  0 },
+/*01*/	{ "add",   true,  LONG,  op2(R, E),  0 },
+/*02*/	{ "add",   true,  BYTE,  op2(E, R),  0 },
+/*03*/	{ "add",   true,  LONG,  op2(E, R),  0 },
+/*04*/	{ "add",   false, BYTE,  op2(Is, A), 0 },
+/*05*/	{ "add",   false, LONG,  op2(Is, A), 0 },
+/*06*/	{ "push",  false, NONE,  op1(Si),    0 },
+/*07*/	{ "pop",   false, NONE,  op1(Si),    0 },
 
-/*08*/	{ "or",    TRUE,  BYTE,  op2(R, E),  0 },
-/*09*/	{ "or",    TRUE,  LONG,  op2(R, E),  0 },
-/*0a*/	{ "or",    TRUE,  BYTE,  op2(E, R),  0 },
-/*0b*/	{ "or",    TRUE,  LONG,  op2(E, R),  0 },
-/*0c*/	{ "or",    FALSE, BYTE,  op2(I, A),  0 },
-/*0d*/	{ "or",    FALSE, LONG,  op2(I, A),  0 },
-/*0e*/	{ "push",  FALSE, NONE,  op1(Si),    0 },
-/*0f*/	{ "",      FALSE, NONE,  0,	     0 },
+/*08*/	{ "or",    true,  BYTE,  op2(R, E),  0 },
+/*09*/	{ "or",    true,  LONG,  op2(R, E),  0 },
+/*0a*/	{ "or",    true,  BYTE,  op2(E, R),  0 },
+/*0b*/	{ "or",    true,  LONG,  op2(E, R),  0 },
+/*0c*/	{ "or",    false, BYTE,  op2(I, A),  0 },
+/*0d*/	{ "or",    false, LONG,  op2(I, A),  0 },
+/*0e*/	{ "push",  false, NONE,  op1(Si),    0 },
+/*0f*/	{ "",      false, NONE,  0,	     0 },
 
-/*10*/	{ "adc",   TRUE,  BYTE,  op2(R, E),  0 },
-/*11*/	{ "adc",   TRUE,  LONG,  op2(R, E),  0 },
-/*12*/	{ "adc",   TRUE,  BYTE,  op2(E, R),  0 },
-/*13*/	{ "adc",   TRUE,  LONG,  op2(E, R),  0 },
-/*14*/	{ "adc",   FALSE, BYTE,  op2(Is, A), 0 },
-/*15*/	{ "adc",   FALSE, LONG,  op2(Is, A), 0 },
-/*16*/	{ "push",  FALSE, NONE,  op1(Si),    0 },
-/*17*/	{ "pop",   FALSE, NONE,  op1(Si),    0 },
+/*10*/	{ "adc",   true,  BYTE,  op2(R, E),  0 },
+/*11*/	{ "adc",   true,  LONG,  op2(R, E),  0 },
+/*12*/	{ "adc",   true,  BYTE,  op2(E, R),  0 },
+/*13*/	{ "adc",   true,  LONG,  op2(E, R),  0 },
+/*14*/	{ "adc",   false, BYTE,  op2(Is, A), 0 },
+/*15*/	{ "adc",   false, LONG,  op2(Is, A), 0 },
+/*16*/	{ "push",  false, NONE,  op1(Si),    0 },
+/*17*/	{ "pop",   false, NONE,  op1(Si),    0 },
 
-/*18*/	{ "sbb",   TRUE,  BYTE,  op2(R, E),  0 },
-/*19*/	{ "sbb",   TRUE,  LONG,  op2(R, E),  0 },
-/*1a*/	{ "sbb",   TRUE,  BYTE,  op2(E, R),  0 },
-/*1b*/	{ "sbb",   TRUE,  LONG,  op2(E, R),  0 },
-/*1c*/	{ "sbb",   FALSE, BYTE,  op2(Is, A), 0 },
-/*1d*/	{ "sbb",   FALSE, LONG,  op2(Is, A), 0 },
-/*1e*/	{ "push",  FALSE, NONE,  op1(Si),    0 },
-/*1f*/	{ "pop",   FALSE, NONE,  op1(Si),    0 },
+/*18*/	{ "sbb",   true,  BYTE,  op2(R, E),  0 },
+/*19*/	{ "sbb",   true,  LONG,  op2(R, E),  0 },
+/*1a*/	{ "sbb",   true,  BYTE,  op2(E, R),  0 },
+/*1b*/	{ "sbb",   true,  LONG,  op2(E, R),  0 },
+/*1c*/	{ "sbb",   false, BYTE,  op2(Is, A), 0 },
+/*1d*/	{ "sbb",   false, LONG,  op2(Is, A), 0 },
+/*1e*/	{ "push",  false, NONE,  op1(Si),    0 },
+/*1f*/	{ "pop",   false, NONE,  op1(Si),    0 },
 
-/*20*/	{ "and",   TRUE,  BYTE,  op2(R, E),  0 },
-/*21*/	{ "and",   TRUE,  LONG,  op2(R, E),  0 },
-/*22*/	{ "and",   TRUE,  BYTE,  op2(E, R),  0 },
-/*23*/	{ "and",   TRUE,  LONG,  op2(E, R),  0 },
-/*24*/	{ "and",   FALSE, BYTE,  op2(I, A),  0 },
-/*25*/	{ "and",   FALSE, LONG,  op2(I, A),  0 },
-/*26*/	{ "",      FALSE, NONE,  0,	     0 },
-/*27*/	{ "aaa",   FALSE, NONE,  0,	     0 },
+/*20*/	{ "and",   true,  BYTE,  op2(R, E),  0 },
+/*21*/	{ "and",   true,  LONG,  op2(R, E),  0 },
+/*22*/	{ "and",   true,  BYTE,  op2(E, R),  0 },
+/*23*/	{ "and",   true,  LONG,  op2(E, R),  0 },
+/*24*/	{ "and",   false, BYTE,  op2(I, A),  0 },
+/*25*/	{ "and",   false, LONG,  op2(I, A),  0 },
+/*26*/	{ "",      false, NONE,  0,	     0 },
+/*27*/	{ "aaa",   false, NONE,  0,	     0 },
 
-/*28*/	{ "sub",   TRUE,  BYTE,  op2(R, E),  0 },
-/*29*/	{ "sub",   TRUE,  LONG,  op2(R, E),  0 },
-/*2a*/	{ "sub",   TRUE,  BYTE,  op2(E, R),  0 },
-/*2b*/	{ "sub",   TRUE,  LONG,  op2(E, R),  0 },
-/*2c*/	{ "sub",   FALSE, BYTE,  op2(Is, A), 0 },
-/*2d*/	{ "sub",   FALSE, LONG,  op2(Is, A), 0 },
-/*2e*/	{ "",      FALSE, NONE,  0,	     0 },
-/*2f*/	{ "das",   FALSE, NONE,  0,	     0 },
+/*28*/	{ "sub",   true,  BYTE,  op2(R, E),  0 },
+/*29*/	{ "sub",   true,  LONG,  op2(R, E),  0 },
+/*2a*/	{ "sub",   true,  BYTE,  op2(E, R),  0 },
+/*2b*/	{ "sub",   true,  LONG,  op2(E, R),  0 },
+/*2c*/	{ "sub",   false, BYTE,  op2(Is, A), 0 },
+/*2d*/	{ "sub",   false, LONG,  op2(Is, A), 0 },
+/*2e*/	{ "",      false, NONE,  0,	     0 },
+/*2f*/	{ "das",   false, NONE,  0,	     0 },
 
-/*30*/	{ "xor",   TRUE,  BYTE,  op2(R, E),  0 },
-/*31*/	{ "xor",   TRUE,  LONG,  op2(R, E),  0 },
-/*32*/	{ "xor",   TRUE,  BYTE,  op2(E, R),  0 },
-/*33*/	{ "xor",   TRUE,  LONG,  op2(E, R),  0 },
-/*34*/	{ "xor",   FALSE, BYTE,  op2(I, A),  0 },
-/*35*/	{ "xor",   FALSE, LONG,  op2(I, A),  0 },
-/*36*/	{ "",      FALSE, NONE,  0,	     0 },
-/*37*/	{ "daa",   FALSE, NONE,  0,	     0 },
+/*30*/	{ "xor",   true,  BYTE,  op2(R, E),  0 },
+/*31*/	{ "xor",   true,  LONG,  op2(R, E),  0 },
+/*32*/	{ "xor",   true,  BYTE,  op2(E, R),  0 },
+/*33*/	{ "xor",   true,  LONG,  op2(E, R),  0 },
+/*34*/	{ "xor",   false, BYTE,  op2(I, A),  0 },
+/*35*/	{ "xor",   false, LONG,  op2(I, A),  0 },
+/*36*/	{ "",      false, NONE,  0,	     0 },
+/*37*/	{ "daa",   false, NONE,  0,	     0 },
 
-/*38*/	{ "cmp",   TRUE,  BYTE,  op2(R, E),  0 },
-/*39*/	{ "cmp",   TRUE,  LONG,  op2(R, E),  0 },
-/*3a*/	{ "cmp",   TRUE,  BYTE,  op2(E, R),  0 },
-/*3b*/	{ "cmp",   TRUE,  LONG,  op2(E, R),  0 },
-/*3c*/	{ "cmp",   FALSE, BYTE,  op2(Is, A), 0 },
-/*3d*/	{ "cmp",   FALSE, LONG,  op2(Is, A), 0 },
-/*3e*/	{ "",      FALSE, NONE,  0,	     0 },
-/*3f*/	{ "aas",   FALSE, NONE,  0,	     0 },
+/*38*/	{ "cmp",   true,  BYTE,  op2(R, E),  0 },
+/*39*/	{ "cmp",   true,  LONG,  op2(R, E),  0 },
+/*3a*/	{ "cmp",   true,  BYTE,  op2(E, R),  0 },
+/*3b*/	{ "cmp",   true,  LONG,  op2(E, R),  0 },
+/*3c*/	{ "cmp",   false, BYTE,  op2(Is, A), 0 },
+/*3d*/	{ "cmp",   false, LONG,  op2(Is, A), 0 },
+/*3e*/	{ "",      false, NONE,  0,	     0 },
+/*3f*/	{ "aas",   false, NONE,  0,	     0 },
 
-/*40*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
-/*41*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
-/*42*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
-/*43*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
-/*44*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
-/*45*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
-/*46*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
-/*47*/	{ "inc",   FALSE, LONG,  op1(Ri),    0 },
+/*40*/	{ "inc",   false, LONG,  op1(Ri),    0 },
+/*41*/	{ "inc",   false, LONG,  op1(Ri),    0 },
+/*42*/	{ "inc",   false, LONG,  op1(Ri),    0 },
+/*43*/	{ "inc",   false, LONG,  op1(Ri),    0 },
+/*44*/	{ "inc",   false, LONG,  op1(Ri),    0 },
+/*45*/	{ "inc",   false, LONG,  op1(Ri),    0 },
+/*46*/	{ "inc",   false, LONG,  op1(Ri),    0 },
+/*47*/	{ "inc",   false, LONG,  op1(Ri),    0 },
 
-/*48*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
-/*49*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
-/*4a*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
-/*4b*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
-/*4c*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
-/*4d*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
-/*4e*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
-/*4f*/	{ "dec",   FALSE, LONG,  op1(Ri),    0 },
+/*48*/	{ "dec",   false, LONG,  op1(Ri),    0 },
+/*49*/	{ "dec",   false, LONG,  op1(Ri),    0 },
+/*4a*/	{ "dec",   false, LONG,  op1(Ri),    0 },
+/*4b*/	{ "dec",   false, LONG,  op1(Ri),    0 },
+/*4c*/	{ "dec",   false, LONG,  op1(Ri),    0 },
+/*4d*/	{ "dec",   false, LONG,  op1(Ri),    0 },
+/*4e*/	{ "dec",   false, LONG,  op1(Ri),    0 },
+/*4f*/	{ "dec",   false, LONG,  op1(Ri),    0 },
 
-/*50*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
-/*51*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
-/*52*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
-/*53*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
-/*54*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
-/*55*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
-/*56*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
-/*57*/	{ "push",  FALSE, QUAD,  op1(Ri),    0 },
+/*50*/	{ "push",  false, QUAD,  op1(Ri),    0 },
+/*51*/	{ "push",  false, QUAD,  op1(Ri),    0 },
+/*52*/	{ "push",  false, QUAD,  op1(Ri),    0 },
+/*53*/	{ "push",  false, QUAD,  op1(Ri),    0 },
+/*54*/	{ "push",  false, QUAD,  op1(Ri),    0 },
+/*55*/	{ "push",  false, QUAD,  op1(Ri),    0 },
+/*56*/	{ "push",  false, QUAD,  op1(Ri),    0 },
+/*57*/	{ "push",  false, QUAD,  op1(Ri),    0 },
 
-/*58*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
-/*59*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
-/*5a*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
-/*5b*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
-/*5c*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
-/*5d*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
-/*5e*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
-/*5f*/	{ "pop",   FALSE, QUAD,  op1(Ri),    0 },
+/*58*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
+/*59*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
+/*5a*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
+/*5b*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
+/*5c*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
+/*5d*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
+/*5e*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
+/*5f*/	{ "pop",   false, QUAD,  op1(Ri),    0 },
 
-/*60*/	{ "pusha", FALSE, LONG,  0,	     0 },
-/*61*/	{ "popa",  FALSE, LONG,  0,	     0 },
-/*62*/  { "bound", TRUE,  LONG,  op2(E, R),  0 },
+/*60*/	{ "pusha", false, LONG,  0,	     0 },
+/*61*/	{ "popa",  false, LONG,  0,	     0 },
+/*62*/  { "bound", true,  LONG,  op2(E, R),  0 },
 #if 0
-/*63*/	{ "arpl",  TRUE,  NONE,  op2(Ew,Rw), 0 },/* XXX in 32 bit mode */
+/*63*/	{ "arpl",  true,  NONE,  op2(Ew,Rw), 0 },/* XXX in 32 bit mode */
 #else
-/*63*/	{ "movslq",TRUE,  NONE,  op2(Ed, R), 0 },/* aka MOVSXD, in 64bit mode */
+/*63*/	{ "movslq",true,  NONE,  op2(Ed, R), 0 },/* aka MOVSXD, in 64bit mode */
 #endif
 
-/*64*/	{ "",      FALSE, NONE,  0,	     0 },
-/*65*/	{ "",      FALSE, NONE,  0,	     0 },
-/*66*/	{ "",      FALSE, NONE,  0,	     0 },
-/*67*/	{ "",      FALSE, NONE,  0,	     0 },
+/*64*/	{ "",      false, NONE,  0,	     0 },
+/*65*/	{ "",      false, NONE,  0,	     0 },
+/*66*/	{ "",      false, NONE,  0,	     0 },
+/*67*/	{ "",      false, NONE,  0,	     0 },
 
-/*68*/	{ "push",  FALSE, LONG,  op1(I),     0 },
-/*69*/  { "imul",  TRUE,  LONG,  op3(I,E,R), 0 },
-/*6a*/	{ "push",  FALSE, LONG,  op1(Ib),    0 },
-/*6b*/  { "imul",  TRUE,  LONG,  op3(Ibs,E,R),0 },
-/*6c*/	{ "ins",   FALSE, BYTE,  op2(DX, DI), 0 },
-/*6d*/	{ "ins",   FALSE, LONG,  op2(DX, DI), 0 },
-/*6e*/	{ "outs",  FALSE, BYTE,  op2(SI, DX), 0 },
-/*6f*/	{ "outs",  FALSE, LONG,  op2(SI, DX), 0 },
+/*68*/	{ "push",  false, LONG,  op1(I),     0 },
+/*69*/  { "imul",  true,  LONG,  op3(I,E,R), 0 },
+/*6a*/	{ "push",  false, LONG,  op1(Ib),    0 },
+/*6b*/  { "imul",  true,  LONG,  op3(Ibs,E,R),0 },
+/*6c*/	{ "ins",   false, BYTE,  op2(DX, DI), 0 },
+/*6d*/	{ "ins",   false, LONG,  op2(DX, DI), 0 },
+/*6e*/	{ "outs",  false, BYTE,  op2(SI, DX), 0 },
+/*6f*/	{ "outs",  false, LONG,  op2(SI, DX), 0 },
 
-/*70*/	{ "jo",    FALSE, NONE,  op1(Db),     0 },
-/*71*/	{ "jno",   FALSE, NONE,  op1(Db),     0 },
-/*72*/	{ "jb",    FALSE, NONE,  op1(Db),     0 },
-/*73*/	{ "jnb",   FALSE, NONE,  op1(Db),     0 },
-/*74*/	{ "jz",    FALSE, NONE,  op1(Db),     0 },
-/*75*/	{ "jnz",   FALSE, NONE,  op1(Db),     0 },
-/*76*/	{ "jbe",   FALSE, NONE,  op1(Db),     0 },
-/*77*/	{ "jnbe",  FALSE, NONE,  op1(Db),     0 },
+/*70*/	{ "jo",    false, NONE,  op1(Db),     0 },
+/*71*/	{ "jno",   false, NONE,  op1(Db),     0 },
+/*72*/	{ "jb",    false, NONE,  op1(Db),     0 },
+/*73*/	{ "jnb",   false, NONE,  op1(Db),     0 },
+/*74*/	{ "jz",    false, NONE,  op1(Db),     0 },
+/*75*/	{ "jnz",   false, NONE,  op1(Db),     0 },
+/*76*/	{ "jbe",   false, NONE,  op1(Db),     0 },
+/*77*/	{ "jnbe",  false, NONE,  op1(Db),     0 },
 
-/*78*/	{ "js",    FALSE, NONE,  op1(Db),     0 },
-/*79*/	{ "jns",   FALSE, NONE,  op1(Db),     0 },
-/*7a*/	{ "jp",    FALSE, NONE,  op1(Db),     0 },
-/*7b*/	{ "jnp",   FALSE, NONE,  op1(Db),     0 },
-/*7c*/	{ "jl",    FALSE, NONE,  op1(Db),     0 },
-/*7d*/	{ "jnl",   FALSE, NONE,  op1(Db),     0 },
-/*7e*/	{ "jle",   FALSE, NONE,  op1(Db),     0 },
-/*7f*/	{ "jnle",  FALSE, NONE,  op1(Db),     0 },
+/*78*/	{ "js",    false, NONE,  op1(Db),     0 },
+/*79*/	{ "jns",   false, NONE,  op1(Db),     0 },
+/*7a*/	{ "jp",    false, NONE,  op1(Db),     0 },
+/*7b*/	{ "jnp",   false, NONE,  op1(Db),     0 },
+/*7c*/	{ "jl",    false, NONE,  op1(Db),     0 },
+/*7d*/	{ "jnl",   false, NONE,  op1(Db),     0 },
+/*7e*/	{ "jle",   false, NONE,  op1(Db),     0 },
+/*7f*/	{ "jnle",  false, NONE,  op1(Db),     0 },
 
-/*80*/  { "",	   TRUE,  BYTE,  op2(I, E),   (const char *)db_Grp1 },
-/*81*/  { "",	   TRUE,  LONG,  op2(I, E),   (const char *)db_Grp1 },
-/*82*/  { "",	   TRUE,  BYTE,  op2(Is,E),   (const char *)db_Grp1 },
-/*83*/  { "",	   TRUE,  LONG,  op2(Ibs,E),  (const char *)db_Grp1 },
-/*84*/	{ "test",  TRUE,  BYTE,  op2(R, E),   0 },
-/*85*/	{ "test",  TRUE,  LONG,  op2(R, E),   0 },
-/*86*/	{ "xchg",  TRUE,  BYTE,  op2(R, E),   0 },
-/*87*/	{ "xchg",  TRUE,  LONG,  op2(R, E),   0 },
+/*80*/  { "",	   true,  BYTE,  op2(I, E),   (const char *)db_Grp1 },
+/*81*/  { "",	   true,  LONG,  op2(I, E),   (const char *)db_Grp1 },
+/*82*/  { "",	   true,  BYTE,  op2(Is,E),   (const char *)db_Grp1 },
+/*83*/  { "",	   true,  LONG,  op2(Ibs,E),  (const char *)db_Grp1 },
+/*84*/	{ "test",  true,  BYTE,  op2(R, E),   0 },
+/*85*/	{ "test",  true,  LONG,  op2(R, E),   0 },
+/*86*/	{ "xchg",  true,  BYTE,  op2(R, E),   0 },
+/*87*/	{ "xchg",  true,  LONG,  op2(R, E),   0 },
 
-/*88*/	{ "mov",   TRUE,  BYTE,  op2(R, E),   0 },
-/*89*/	{ "mov",   TRUE,  LONG,  op2(R, E),   0 },
-/*8a*/	{ "mov",   TRUE,  BYTE,  op2(E, R),   0 },
-/*8b*/	{ "mov",   TRUE,  LONG,  op2(E, R),   0 },
-/*8c*/  { "mov",   TRUE,  NONE,  op2(S, Ew),  0 },
-/*8d*/	{ "lea",   TRUE,  LONG,  op2(E, R),   0 },
-/*8e*/	{ "mov",   TRUE,  NONE,  op2(Ew, S),  0 },
-/*8f*/	{ "pop",   TRUE,  LONG,  op1(E),      0 },
+/*88*/	{ "mov",   true,  BYTE,  op2(R, E),   0 },
+/*89*/	{ "mov",   true,  LONG,  op2(R, E),   0 },
+/*8a*/	{ "mov",   true,  BYTE,  op2(E, R),   0 },
+/*8b*/	{ "mov",   true,  LONG,  op2(E, R),   0 },
+/*8c*/  { "mov",   true,  NONE,  op2(S, Ew),  0 },
+/*8d*/	{ "lea",   true,  LONG,  op2(E, R),   0 },
+/*8e*/	{ "mov",   true,  NONE,  op2(Ew, S),  0 },
+/*8f*/	{ "pop",   true,  LONG,  op1(E),      0 },
 
-/*90*/	{ "nop",   FALSE, NONE,  0,	      0 },
-/*91*/	{ "xchg",  FALSE, LONG,  op2(A, Ri),  0 },
-/*92*/	{ "xchg",  FALSE, LONG,  op2(A, Ri),  0 },
-/*93*/	{ "xchg",  FALSE, LONG,  op2(A, Ri),  0 },
-/*94*/	{ "xchg",  FALSE, LONG,  op2(A, Ri),  0 },
-/*95*/	{ "xchg",  FALSE, LONG,  op2(A, Ri),  0 },
-/*96*/	{ "xchg",  FALSE, LONG,  op2(A, Ri),  0 },
-/*97*/	{ "xchg",  FALSE, LONG,  op2(A, Ri),  0 },
+/*90*/	{ "nop",   false, NONE,  0,	      0 },
+/*91*/	{ "xchg",  false, LONG,  op2(A, Ri),  0 },
+/*92*/	{ "xchg",  false, LONG,  op2(A, Ri),  0 },
+/*93*/	{ "xchg",  false, LONG,  op2(A, Ri),  0 },
+/*94*/	{ "xchg",  false, LONG,  op2(A, Ri),  0 },
+/*95*/	{ "xchg",  false, LONG,  op2(A, Ri),  0 },
+/*96*/	{ "xchg",  false, LONG,  op2(A, Ri),  0 },
+/*97*/	{ "xchg",  false, LONG,  op2(A, Ri),  0 },
 
-/*98*/	{ "cbw",   FALSE, SDEP,  0,	      "cwde" },	/* cbw/cwde */
-/*99*/	{ "cwd",   FALSE, SDEP,  0,	      "cdq"  },	/* cwd/cdq */
-/*9a*/	{ "lcall", FALSE, NONE,  op1(OS),     0 },
-/*9b*/	{ "wait",  FALSE, NONE,  0,	      0 },
-/*9c*/	{ "pushf", FALSE, LONG,  0,	      0 },
-/*9d*/	{ "popf",  FALSE, LONG,  0,	      0 },
-/*9e*/	{ "sahf",  FALSE, NONE,  0,	      0 },
-/*9f*/	{ "lahf",  FALSE, NONE,  0,	      0 },
+/*98*/	{ "cbw",   false, SDEP,  0,	      "cwde" },	/* cbw/cwde */
+/*99*/	{ "cwd",   false, SDEP,  0,	      "cdq"  },	/* cwd/cdq */
+/*9a*/	{ "lcall", false, NONE,  op1(OS),     0 },
+/*9b*/	{ "wait",  false, NONE,  0,	      0 },
+/*9c*/	{ "pushf", false, LONG,  0,	      0 },
+/*9d*/	{ "popf",  false, LONG,  0,	      0 },
+/*9e*/	{ "sahf",  false, NONE,  0,	      0 },
+/*9f*/	{ "lahf",  false, NONE,  0,	      0 },
 
-/*a0*/	{ "mov",   FALSE, BYTE,  op2(O, A),   0 },
-/*a1*/	{ "mov",   FALSE, LONG,  op2(O, A),   0 },
-/*a2*/	{ "mov",   FALSE, BYTE,  op2(A, O),   0 },
-/*a3*/	{ "mov",   FALSE, LONG,  op2(A, O),   0 },
-/*a4*/	{ "movs",  FALSE, BYTE,  op2(SI,DI),  0 },
-/*a5*/	{ "movs",  FALSE, LONG,  op2(SI,DI),  0 },
-/*a6*/	{ "cmps",  FALSE, BYTE,  op2(SI,DI),  0 },
-/*a7*/	{ "cmps",  FALSE, LONG,  op2(SI,DI),  0 },
+/*a0*/	{ "mov",   false, BYTE,  op2(O, A),   0 },
+/*a1*/	{ "mov",   false, LONG,  op2(O, A),   0 },
+/*a2*/	{ "mov",   false, BYTE,  op2(A, O),   0 },
+/*a3*/	{ "mov",   false, LONG,  op2(A, O),   0 },
+/*a4*/	{ "movs",  false, BYTE,  op2(SI,DI),  0 },
+/*a5*/	{ "movs",  false, LONG,  op2(SI,DI),  0 },
+/*a6*/	{ "cmps",  false, BYTE,  op2(SI,DI),  0 },
+/*a7*/	{ "cmps",  false, LONG,  op2(SI,DI),  0 },
 
-/*a8*/	{ "test",  FALSE, BYTE,  op2(I, A),   0 },
-/*a9*/	{ "test",  FALSE, LONG,  op2(I, A),   0 },
-/*aa*/	{ "stos",  FALSE, BYTE,  op1(DI),     0 },
-/*ab*/	{ "stos",  FALSE, LONG,  op1(DI),     0 },
-/*ac*/	{ "lods",  FALSE, BYTE,  op1(SI),     0 },
-/*ad*/	{ "lods",  FALSE, LONG,  op1(SI),     0 },
-/*ae*/	{ "scas",  FALSE, BYTE,  op1(SI),     0 },
-/*af*/	{ "scas",  FALSE, LONG,  op1(SI),     0 },
+/*a8*/	{ "test",  false, BYTE,  op2(I, A),   0 },
+/*a9*/	{ "test",  false, LONG,  op2(I, A),   0 },
+/*aa*/	{ "stos",  false, BYTE,  op1(DI),     0 },
+/*ab*/	{ "stos",  false, LONG,  op1(DI),     0 },
+/*ac*/	{ "lods",  false, BYTE,  op1(SI),     0 },
+/*ad*/	{ "lods",  false, LONG,  op1(SI),     0 },
+/*ae*/	{ "scas",  false, BYTE,  op1(SI),     0 },
+/*af*/	{ "scas",  false, LONG,  op1(SI),     0 },
 
-/*b0*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
-/*b1*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
-/*b2*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
-/*b3*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
-/*b4*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
-/*b5*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
-/*b6*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
-/*b7*/	{ "mov",   FALSE, BYTE,  op2(I, Ri),  0 },
+/*b0*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
+/*b1*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
+/*b2*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
+/*b3*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
+/*b4*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
+/*b5*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
+/*b6*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
+/*b7*/	{ "mov",   false, BYTE,  op2(I, Ri),  0 },
 
-/*b8*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
-/*b9*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
-/*ba*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
-/*bb*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
-/*bc*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
-/*bd*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
-/*be*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
-/*bf*/	{ "mov",   FALSE, LONG,  op2(I, Ri),  0 },
+/*b8*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*b9*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*ba*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*bb*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*bc*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*bd*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*be*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
+/*bf*/	{ "mov",   false, LONG,  op2(I, Ri),  0 },
 
-/*c0*/	{ "",	   TRUE,  BYTE,  op2(Ib, E),  (const char *)db_Grp2 },
-/*c1*/	{ "",	   TRUE,  LONG,  op2(Ib, E),  (const char *)db_Grp2 },
-/*c2*/	{ "ret",   FALSE, NONE,  op1(Iw),     0 },
-/*c3*/	{ "ret",   FALSE, NONE,  0,	      0 },
-/*c4*/	{ "les",   TRUE,  LONG,  op2(E, R),   0 },
-/*c5*/	{ "lds",   TRUE,  LONG,  op2(E, R),   0 },
-/*c6*/	{ "mov",   TRUE,  BYTE,  op2(I, E),   0 },
-/*c7*/	{ "mov",   TRUE,  LONG,  op2(I, E),   0 },
+/*c0*/	{ "",	   true,  BYTE,  op2(Ib, E),  (const char *)db_Grp2 },
+/*c1*/	{ "",	   true,  LONG,  op2(Ib, E),  (const char *)db_Grp2 },
+/*c2*/	{ "ret",   false, NONE,  op1(Iw),     0 },
+/*c3*/	{ "ret",   false, NONE,  0,	      0 },
+/*c4*/	{ "les",   true,  LONG,  op2(E, R),   0 },
+/*c5*/	{ "lds",   true,  LONG,  op2(E, R),   0 },
+/*c6*/	{ "mov",   true,  BYTE,  op2(I, E),   0 },
+/*c7*/	{ "mov",   true,  LONG,  op2(I, E),   0 },
 
-/*c8*/	{ "enter", FALSE, NONE,  op2(Ib, Iw), 0 },
-/*c9*/	{ "leave", FALSE, NONE,  0,           0 },
-/*ca*/	{ "lret",  FALSE, NONE,  op1(Iw),     0 },
-/*cb*/	{ "lret",  FALSE, NONE,  0,	      0 },
-/*cc*/	{ "int",   FALSE, NONE,  op1(o3),     0 },
-/*cd*/	{ "int",   FALSE, NONE,  op1(Ib),     0 },
-/*ce*/	{ "into",  FALSE, NONE,  0,	      0 },
-/*cf*/	{ "iret",  FALSE, NONE,  0,	      0 },
+/*c8*/	{ "enter", false, NONE,  op2(Ib, Iw), 0 },
+/*c9*/	{ "leave", false, NONE,  0,           0 },
+/*ca*/	{ "lret",  false, NONE,  op1(Iw),     0 },
+/*cb*/	{ "lret",  false, NONE,  0,	      0 },
+/*cc*/	{ "int",   false, NONE,  op1(o3),     0 },
+/*cd*/	{ "int",   false, NONE,  op1(Ib),     0 },
+/*ce*/	{ "into",  false, NONE,  0,	      0 },
+/*cf*/	{ "iret",  false, NONE,  0,	      0 },
 
-/*d0*/	{ "",	   TRUE,  BYTE,  op2(o1, E),  (const char *)db_Grp2 },
-/*d1*/	{ "",	   TRUE,  LONG,  op2(o1, E),  (const char *)db_Grp2 },
-/*d2*/	{ "",	   TRUE,  BYTE,  op2(CL, E),  (const char *)db_Grp2 },
-/*d3*/	{ "",	   TRUE,  LONG,  op2(CL, E),  (const char *)db_Grp2 },
-/*d4*/	{ "aam",   TRUE,  NONE,  0,	      0 },
-/*d5*/	{ "aad",   TRUE,  NONE,  0,	      0 },
-/*d6*/	{ "",      FALSE, NONE,  0,	      0 },
-/*d7*/	{ "xlat",  FALSE, BYTE,  op1(BX),     0 },
+/*d0*/	{ "",	   true,  BYTE,  op2(o1, E),  (const char *)db_Grp2 },
+/*d1*/	{ "",	   true,  LONG,  op2(o1, E),  (const char *)db_Grp2 },
+/*d2*/	{ "",	   true,  BYTE,  op2(CL, E),  (const char *)db_Grp2 },
+/*d3*/	{ "",	   true,  LONG,  op2(CL, E),  (const char *)db_Grp2 },
+/*d4*/	{ "aam",   true,  NONE,  0,	      0 },
+/*d5*/	{ "aad",   true,  NONE,  0,	      0 },
+/*d6*/	{ "",      false, NONE,  0,	      0 },
+/*d7*/	{ "xlat",  false, BYTE,  op1(BX),     0 },
 
-/*d8*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esc8 },
-/*d9*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esc9 },
-/*da*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esca },
-/*db*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escb },
-/*dc*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escc },
-/*dd*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escd },
-/*de*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Esce },
-/*df*/  { "",      TRUE,  NONE,  0,	      (const char *)db_Escf },
+/*d8*/  { "",      true,  NONE,  0,	      (const char *)db_Esc8 },
+/*d9*/  { "",      true,  NONE,  0,	      (const char *)db_Esc9 },
+/*da*/  { "",      true,  NONE,  0,	      (const char *)db_Esca },
+/*db*/  { "",      true,  NONE,  0,	      (const char *)db_Escb },
+/*dc*/  { "",      true,  NONE,  0,	      (const char *)db_Escc },
+/*dd*/  { "",      true,  NONE,  0,	      (const char *)db_Escd },
+/*de*/  { "",      true,  NONE,  0,	      (const char *)db_Esce },
+/*df*/  { "",      true,  NONE,  0,	      (const char *)db_Escf },
 
-/*e0*/	{ "loopne",FALSE, NONE,  op1(Db),     0 },
-/*e1*/	{ "loope", FALSE, NONE,  op1(Db),     0 },
-/*e2*/	{ "loop",  FALSE, NONE,  op1(Db),     0 },
-/*e3*/	{ "jcxz",  FALSE, SDEP,  op1(Db),     "jecxz" },
-/*e4*/	{ "in",    FALSE, BYTE,  op2(Ib, A),  0 },
-/*e5*/	{ "in",    FALSE, LONG,  op2(Ib, A) , 0 },
-/*e6*/	{ "out",   FALSE, BYTE,  op2(A, Ib),  0 },
-/*e7*/	{ "out",   FALSE, LONG,  op2(A, Ib) , 0 },
+/*e0*/	{ "loopne",false, NONE,  op1(Db),     0 },
+/*e1*/	{ "loope", false, NONE,  op1(Db),     0 },
+/*e2*/	{ "loop",  false, NONE,  op1(Db),     0 },
+/*e3*/	{ "jcxz",  false, SDEP,  op1(Db),     "jecxz" },
+/*e4*/	{ "in",    false, BYTE,  op2(Ib, A),  0 },
+/*e5*/	{ "in",    false, LONG,  op2(Ib, A) , 0 },
+/*e6*/	{ "out",   false, BYTE,  op2(A, Ib),  0 },
+/*e7*/	{ "out",   false, LONG,  op2(A, Ib) , 0 },
 
-/*e8*/	{ "call",  FALSE, NONE,  op1(Dl),     0 },
-/*e9*/	{ "jmp",   FALSE, NONE,  op1(Dl),     0 },
-/*ea*/	{ "ljmp",  FALSE, NONE,  op1(OS),     0 },
-/*eb*/	{ "jmp",   FALSE, NONE,  op1(Db),     0 },
-/*ec*/	{ "in",    FALSE, BYTE,  op2(DX, A),  0 },
-/*ed*/	{ "in",    FALSE, LONG,  op2(DX, A) , 0 },
-/*ee*/	{ "out",   FALSE, BYTE,  op2(A, DX),  0 },
-/*ef*/	{ "out",   FALSE, LONG,  op2(A, DX) , 0 },
+/*e8*/	{ "call",  false, NONE,  op1(Dl),     0 },
+/*e9*/	{ "jmp",   false, NONE,  op1(Dl),     0 },
+/*ea*/	{ "ljmp",  false, NONE,  op1(OS),     0 },
+/*eb*/	{ "jmp",   false, NONE,  op1(Db),     0 },
+/*ec*/	{ "in",    false, BYTE,  op2(DX, A),  0 },
+/*ed*/	{ "in",    false, LONG,  op2(DX, A) , 0 },
+/*ee*/	{ "out",   false, BYTE,  op2(A, DX),  0 },
+/*ef*/	{ "out",   false, LONG,  op2(A, DX) , 0 },
 
-/*f0*/	{ "",      FALSE, NONE,  0,	     0 },
-/*f1*/	{ "",      FALSE, NONE,  0,	     0 },
-/*f2*/	{ "",      FALSE, NONE,  0,	     0 },
-/*f3*/	{ "",      FALSE, NONE,  0,	     0 },
-/*f4*/	{ "hlt",   FALSE, NONE,  0,	     0 },
-/*f5*/	{ "cmc",   FALSE, NONE,  0,	     0 },
-/*f6*/	{ "",      TRUE,  BYTE,  0,	     (const char *)db_Grp3 },
-/*f7*/	{ "",	   TRUE,  LONG,  0,	     (const char *)db_Grp3 },
+/*f0*/	{ "",      false, NONE,  0,	     0 },
+/*f1*/	{ "",      false, NONE,  0,	     0 },
+/*f2*/	{ "",      false, NONE,  0,	     0 },
+/*f3*/	{ "",      false, NONE,  0,	     0 },
+/*f4*/	{ "hlt",   false, NONE,  0,	     0 },
+/*f5*/	{ "cmc",   false, NONE,  0,	     0 },
+/*f6*/	{ "",      true,  BYTE,  0,	     (const char *)db_Grp3 },
+/*f7*/	{ "",	   true,  LONG,  0,	     (const char *)db_Grp3 },
 
-/*f8*/	{ "clc",   FALSE, NONE,  0,	     0 },
-/*f9*/	{ "stc",   FALSE, NONE,  0,	     0 },
-/*fa*/	{ "cli",   FALSE, NONE,  0,	     0 },
-/*fb*/	{ "sti",   FALSE, NONE,  0,	     0 },
-/*fc*/	{ "cld",   FALSE, NONE,  0,	     0 },
-/*fd*/	{ "std",   FALSE, NONE,  0,	     0 },
-/*fe*/	{ "",	   TRUE,  NONE,  0,	     (const char *)db_Grp4 },
-/*ff*/	{ "",	   TRUE,  NONE,  0,	     (const char *)db_Grp5 },
+/*f8*/	{ "clc",   false, NONE,  0,	     0 },
+/*f9*/	{ "stc",   false, NONE,  0,	     0 },
+/*fa*/	{ "cli",   false, NONE,  0,	     0 },
+/*fb*/	{ "sti",   false, NONE,  0,	     0 },
+/*fc*/	{ "cld",   false, NONE,  0,	     0 },
+/*fd*/	{ "std",   false, NONE,  0,	     0 },
+/*fe*/	{ "",	   true,  NONE,  0,	     (const char *)db_Grp4 },
+/*ff*/	{ "",	   true,  NONE,  0,	     (const char *)db_Grp5 },
 };
 
 const struct inst	db_bad_inst =
-	{ "???",   FALSE, NONE,  0,	      0 }
+	{ "???",   false, NONE,  0,	      0 }
 ;
 
 #define	f_mod(byte)	((byte)>>6)
@@ -957,18 +957,18 @@ db_read_address(loc, rex, short_addr, regmodrm, addrp)
 	rm  = f_rm(regmodrm);
 
 	if (mod == 3) {
-		addrp->is_reg = TRUE;
+		addrp->is_reg = true;
 		addrp->disp = rm;
 		return (loc);
 	}
-	addrp->is_reg = FALSE;
+	addrp->is_reg = false;
 	addrp->index = 0;
 
 	if (short_addr) {
 		/* x86_64 32 bit address mode */
 		if (mod != 3 && rm == 4) {
 			ext = ((rex & REX_x) != 0);
-			get_value_inc(sib, loc, 1, FALSE);
+			get_value_inc(sib, loc, 1, false);
 			rm = sib_base(sib);
 			index = sib_index(sib);
 			if (index != 4)
@@ -980,7 +980,7 @@ db_read_address(loc, rex, short_addr, regmodrm, addrp)
 		switch (mod) {
 		    case 0:
 			if (rm == 5) {
-				get_value_inc(addrp->disp, loc, 4, FALSE);
+				get_value_inc(addrp->disp, loc, 4, false);
 				addrp->base = 0;
 			} else {
 				addrp->disp = 0;
@@ -988,12 +988,12 @@ db_read_address(loc, rex, short_addr, regmodrm, addrp)
 			}
 			break;
 		    case 1:
-			get_value_inc(disp, loc, 1, TRUE);
+			get_value_inc(disp, loc, 1, true);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][LONG][rm];
 			break;
 		    case 2:
-			get_value_inc(disp, loc, 4, FALSE);
+			get_value_inc(disp, loc, 4, false);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][LONG][rm];
 			break;
@@ -1003,7 +1003,7 @@ db_read_address(loc, rex, short_addr, regmodrm, addrp)
 
 		if (mod != 3 && rm == 4) {
 			ext = ((rex & REX_x) != 0);
-			get_value_inc(sib, loc, 1, FALSE);
+			get_value_inc(sib, loc, 1, false);
 			rm = sib_base(sib);
 			index = sib_index(sib);
 			if (index != 4)
@@ -1016,7 +1016,7 @@ db_read_address(loc, rex, short_addr, regmodrm, addrp)
 		    case 0:
 			if (rm == 5) {
 				/* x86_64 RIP-relative addressing */
-				get_value_inc(addrp->disp, loc, 4, FALSE);
+				get_value_inc(addrp->disp, loc, 4, false);
 				addrp->base = "%rip";
 			} else {
 				addrp->disp = 0;
@@ -1024,12 +1024,12 @@ db_read_address(loc, rex, short_addr, regmodrm, addrp)
 			}
 			break;
 		    case 1:
-			get_value_inc(disp, loc, 1, TRUE);
+			get_value_inc(disp, loc, 1, true);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][QUAD][rm];
 			break;
 		    case 2:
-			get_value_inc(disp, loc, 4, FALSE);
+			get_value_inc(disp, loc, 4, false);
 			addrp->disp = disp;
 			addrp->base = db_reg[ext][QUAD][rm];
 			break;
@@ -1085,7 +1085,7 @@ db_disasm_esc(loc, inst, rex, short_addr, size, seg)
 	struct i_addr	address;
 	const char *	name;
 
-	get_value_inc(regmodrm, loc, 1, FALSE);
+	get_value_inc(regmodrm, loc, 1, false);
 	fp = &db_Esc_inst[inst - 0xd8][f_reg(regmodrm)];
 	mod = f_mod(regmodrm);
 	if (mod != 3) {
@@ -1159,7 +1159,7 @@ db_disasm_esc(loc, inst, rex, short_addr, size, seg)
 db_addr_t
 db_disasm(loc, altfmt)
 	db_addr_t	loc;
-	boolean_t	altfmt;
+	bool		altfmt;
 {
 	int	inst;
 	int	size;
@@ -1170,7 +1170,7 @@ db_disasm(loc, altfmt)
 	int	i_size;
 	int	i_mode;
 	int	regmodrm = 0;
-	boolean_t	first;
+	bool	first;
 	int	displ;
 	int	prefix;
 	int	imm;
@@ -1200,15 +1200,15 @@ db_disasm(loc, altfmt)
 	}
 #endif
 
-	get_value_inc(inst, loc, 1, FALSE);
-	short_addr = FALSE;
+	get_value_inc(inst, loc, 1, false);
+	short_addr = false;
 	size = LONG;
 	seg = 0;
 
 	/*
 	* Get prefixes
 	*/
-	prefix = TRUE;
+	prefix = true;
 	do {
 		if ((inst & 0xf0) == 0x40) { 
 			rex |= inst;
@@ -1218,7 +1218,7 @@ db_disasm(loc, altfmt)
 			size = WORD;
 			break;
 		    case 0x67:
-			short_addr = TRUE;
+			short_addr = true;
 			break;
 		    case 0x26:
 			seg = "%es";
@@ -1248,17 +1248,17 @@ db_disasm(loc, altfmt)
 			db_printf("repe ");	/* XXX repe VS rep */
 			break;
 		    default:
-			prefix = FALSE;
+			prefix = false;
 			break;
 		}
 		if (prefix)
-			get_value_inc(inst, loc, 1, FALSE);
+			get_value_inc(inst, loc, 1, false);
 	} while (prefix);
 
 	if (rex != 0) {
 		if (rex & REX_w)
 			size = QUAD;
-		if (altfmt == TRUE)				/* XXX */
+		if (altfmt == true)				/* XXX */
 			db_printf("%s", rex_str[rex & 0x0f]);
 	}
 
@@ -1269,7 +1269,7 @@ db_disasm(loc, altfmt)
 	}
 
 	if (inst == 0x0f) {
-		get_value_inc(inst, loc, 1, FALSE);
+		get_value_inc(inst, loc, 1, false);
 		ip = db_inst_0f[inst>>4];
 		if (ip == 0)
 			ip = &db_bad_inst;
@@ -1280,7 +1280,7 @@ db_disasm(loc, altfmt)
 	}
 
 	if (ip->i_has_modrm) {
-		get_value_inc(regmodrm, loc, 1, FALSE);
+		get_value_inc(regmodrm, loc, 1, false);
 		loc = db_read_address(loc, rex, short_addr, regmodrm, &address);
 	}
 
@@ -1335,9 +1335,9 @@ db_disasm(loc, altfmt)
 		}
 	}
 	db_printf("\t");
-	for (first = TRUE;
+	for (first = true;
 	     i_mode != 0;
-	     i_mode >>= 8, first = FALSE) {
+	     i_mode >>= 8, first = false) {
 		char tbuf[24];
 
 		if (!first)
@@ -1416,55 +1416,55 @@ db_disasm(loc, altfmt)
 			break;
 		    case I:
 			len = db_lengths[size];
-			get_value_inc(imm, loc, len, FALSE);/* unsigned */
-			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			get_value_inc(imm, loc, len, false);/* unsigned */
+			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
 		    case Is:
 			len = db_lengths[size];
-			get_value_inc(imm, loc, len, TRUE);	/* signed */
-			db_format_radix(tbuf, 24, imm, TRUE);
+			get_value_inc(imm, loc, len, true);	/* signed */
+			db_format_radix(tbuf, 24, imm, true);
 			db_printf("$%s", tbuf);
 			break;
 		    case Ib:
-			get_value_inc(imm, loc, 1, FALSE);	/* unsigned */
-			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			get_value_inc(imm, loc, 1, false);	/* unsigned */
+			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
 		    case Ibs:
-			get_value_inc(imm, loc, 1, TRUE);	/* signed */
-			db_format_radix(tbuf, 24, imm, TRUE);
+			get_value_inc(imm, loc, 1, true);	/* signed */
+			db_format_radix(tbuf, 24, imm, true);
 			db_printf("$%s", tbuf);
 			break;
 		    case Iw:
-			get_value_inc(imm, loc, 2, FALSE);	/* unsigned */
-			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			get_value_inc(imm, loc, 2, false);	/* unsigned */
+			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
 		    case Il:
-			get_value_inc(imm, loc, 4, FALSE);
-			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			get_value_inc(imm, loc, 4, false);
+			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
 			break;
 		    case O:
 			if (short_addr)
-				get_value_inc(displ, loc, 2, TRUE);
+				get_value_inc(displ, loc, 2, true);
 			else
-				get_value_inc(displ, loc, 4, TRUE);
+				get_value_inc(displ, loc, 4, true);
 			if (seg) {
-				db_format_radix(tbuf, 24, displ, TRUE);
+				db_format_radix(tbuf, 24, displ, true);
 				db_printf("%s:%s", seg, tbuf);
 			} else
 				db_printsym((db_addr_t)displ, DB_STGY_ANY,
 				    db_printf);
 			break;
 		    case Db:
-			get_value_inc(displ, loc, 1, TRUE);
+			get_value_inc(displ, loc, 1, true);
 			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
 			    db_printf);
 			break;
 		    case Dl:
-			get_value_inc(displ, loc, 4, TRUE);
+			get_value_inc(displ, loc, 4, true);
 			db_printsym((db_addr_t)(displ + loc), DB_STGY_XTRN,
 			    db_printf);
 			break;
@@ -1475,11 +1475,11 @@ db_disasm(loc, altfmt)
 			db_printf("$3");
 			break;
 		    case OS:
-			get_value_inc(imm, loc, 4, FALSE);	/* offset */
-			db_format_radix(tbuf, 24, (unsigned int)imm, TRUE);
+			get_value_inc(imm, loc, 4, false);	/* offset */
+			db_format_radix(tbuf, 24, (unsigned int)imm, true);
 			db_printf("$%s", tbuf);
-			get_value_inc(imm2, loc, 2, FALSE);	/* segment */
-			db_format_radix(tbuf, 24, (unsigned int)imm2, TRUE);
+			get_value_inc(imm2, loc, 2, false);	/* segment */
+			db_format_radix(tbuf, 24, (unsigned int)imm2, true);
 			db_printf(",%s", tbuf);
 			break;
 		}

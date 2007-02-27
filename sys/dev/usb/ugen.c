@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.89 2006/12/03 22:34:58 pavel Exp $	*/
+/*	$NetBSD: ugen.c,v 1.89.2.1 2007/02/27 16:54:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.89 2006/12/03 22:34:58 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.89.2.1 2007/02/27 16:54:05 yamt Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -628,7 +628,7 @@ ugen_do_read(struct ugen_softc *sc, int endpt, struct uio *uio, int flag)
 	case UE_BULK:
 #ifdef UGEN_BULK_RA_WB
 		if (sce->state & UGEN_BULK_RA) {
-			DPRINTFN(5, ("ugenread: BULK_RA req: %d used: %d\n",
+			DPRINTFN(5, ("ugenread: BULK_RA req: %zd used: %d\n",
 				     uio->uio_resid, sce->ra_wb_used));
 			xfer = sce->ra_wb_xfer;
 
@@ -826,7 +826,7 @@ ugen_do_write(struct ugen_softc *sc, int endpt, struct uio *uio,
 	case UE_BULK:
 #ifdef UGEN_BULK_RA_WB
 		if (sce->state & UGEN_BULK_WB) {
-			DPRINTFN(5, ("ugenwrite: BULK_WB req: %d used: %d\n",
+			DPRINTFN(5, ("ugenwrite: BULK_WB req: %zd used: %d\n",
 				     uio->uio_resid, sce->ra_wb_used));
 			xfer = sce->ra_wb_xfer;
 
@@ -1804,12 +1804,12 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	}
 	case USB_GET_DEVICEINFO:
 		usbd_fill_deviceinfo(sc->sc_udev,
-				     (struct usb_device_info *)addr, 1);
+				     (struct usb_device_info *)addr, 0);
 		break;
 #ifdef COMPAT_30
 	case USB_GET_DEVICEINFO_OLD:
 		usbd_fill_deviceinfo_old(sc->sc_udev,
-					 (struct usb_device_info_old *)addr, 1);
+					 (struct usb_device_info_old *)addr, 0);
 
 		break;
 #endif

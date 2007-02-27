@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.19 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.19.26.1 2007/02/27 16:55:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -106,10 +106,10 @@ void		pmap_deactivate(struct lwp *);
 void		pmap_unwire(pmap_t, vaddr_t);
 
 #if !defined(pmap_clear_modify)
-boolean_t	pmap_clear_modify(struct vm_page *);
+bool		pmap_clear_modify(struct vm_page *);
 #endif
 #if !defined(pmap_clear_reference)
-boolean_t	pmap_clear_reference(struct vm_page *);
+bool		pmap_clear_reference(struct vm_page *);
 #endif
 
 #if !defined(pmap_collect)
@@ -124,7 +124,7 @@ void		pmap_copy_page(paddr_t, paddr_t);
 struct pmap	*pmap_create(void);
 void		pmap_destroy(pmap_t);
 int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
-boolean_t	pmap_extract(pmap_t, vaddr_t, paddr_t *);
+bool		pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #if defined(PMAP_GROWKERNEL)
 vaddr_t		pmap_growkernel(vaddr_t);
 #endif
@@ -134,10 +134,10 @@ void		pmap_init(void);
 void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_kremove(vaddr_t, vsize_t);
 #if !defined(pmap_is_modified)
-boolean_t	pmap_is_modified(struct vm_page *);
+bool		pmap_is_modified(struct vm_page *);
 #endif
 #if !defined(pmap_is_referenced)
-boolean_t	pmap_is_referenced(struct vm_page *);
+bool		pmap_is_referenced(struct vm_page *);
 #endif
 
 void		pmap_page_protect(struct vm_page *, vm_prot_t);

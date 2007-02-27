@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.2 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.2.2.1 2007/02/27 16:53:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -45,12 +45,12 @@
 #include "assym.h"
 
 #undef CURLWP
-#if defined(MULTIPROCESSOR)
 #define	CURLWP	(CPUINFO_VA+CI_CURLWP)
+
+#if defined(MULTIPROCESSOR)
 #define	MB_READ	membar #LoadLoad
-#define	MB_MEM	membar #LoadLoad | #StoreLoad | #LoadStore	
+#define	MB_MEM	membar #LoadStore | #StoreStore
 #else
-#define	CURLWP	_C_LABEL(curlwp)
 #define	MB_READ	/* nothing */
 #define	MB_MEM	/* nothing */
 #endif
@@ -59,57 +59,62 @@
 #define	CASPTR	casx
 #define	LDPTR	ldx
 #define	STPTR	stx
+#define	CCCR	%xcc
 #else
 #define	CASPTR	cas
 #define	LDPTR	ld
 #define	STPTR	st
+#define	CCCR	%icc
 #endif /* __arch64__ */
 
 /*
- * void _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
+ * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
+.align	32
 _ENTRY(_C_LABEL(_lock_cas))
 	CASPTR	[%o0], %o1, %o2			! compare-and-swap
 	MB_MEM
-	cmp	%o1, %o2			! expected == actual?
-	bne	1f				! nope
-	 or	%g0, 1, %o0
+	xor	%o1, %o2, %o2			! expected == actual?
+	clr	%o0
 	retl
-	 nop
-1:	retl
-	 mov	%g0, %o0
+	 movrz	%o2, 1, %o0
 
 #if !defined(LOCKDEBUG)
 
 /*
  * void mutex_enter(kmutex_t *);
  */
+.align	32
 _ENTRY(_C_LABEL(mutex_enter))
-	sethi	%hi(CURLWP), %o3
-	LDPTR	[%o3 + %lo(CURLWP)], %o3	! current thread
-	CASPTR	[%o0], %g0, %o3			! compare-and-swap
+	sethi	%hi(CURLWP), %o1
+	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
+	CASPTR	[%o0], %g0, %o1			! compare-and-swap
 	MB_READ
-	tst	%o3				! lock was unowned?
-	bnz	_C_LABEL(mutex_vector_enter)	! nope, hard case
+	brnz,pn	%o1, 1f				! lock was unowned?
 	 nop
-	retl
+	retl					! - yes, done
 	 nop
+1:	ba	_C_LABEL(mutex_vector_enter)	! nope, do it the
+	 nop					! hard way
 
 /*
  * void mutex_exit(kmutex_t *);
  *
  * XXX This should use a restartable sequence.  See mutex_vector_enter().
  */
+.align	32
 _ENTRY(_C_LABEL(mutex_exit))
-	sethi	%hi(CURLWP), %o3
-	LDPTR	[%o3 + %lo(CURLWP)], %o3	! current thread
-	mov	%g0, %o4			! new value (0)
+	sethi	%hi(CURLWP), %o1
+	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
+	clr	%o2				! new value (0)
 	MB_MEM
-	CASPTR	[%o0], %o3, %o4			! compare-and-swap
-	cmp	%o3, %o4			! were they the same?
-	bne	_C_LABEL(mutex_vector_exit)	! nope, hard case
+	CASPTR	[%o0], %o1, %o2			! compare-and-swap
+	cmp	%o1, %o2
+	bne,pn	CCCR, 1f			! nope, hard case
 	 nop
 	retl
+	 nop
+1:	ba _C_LABEL(mutex_vector_exit)
 	 nop
 
 #endif	/* !LOCKDEBUG */

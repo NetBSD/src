@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3tp.c,v 1.7 2007/01/21 11:01:09 kiyohara Exp $	*/
+/*	$NetBSD: psh3tp.c,v 1.7.2.1 2007/02/27 16:50:55 yamt Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -300,7 +300,7 @@ psh3tp_intr(void *self)
 #define TREMOR_THRESHOLD 0x300
 	steady = 0;
 	tremor_timeout = TREMOR_THRESHOLD * 16;	/* XXX: arbitrary */
-	touched = TRUE;		/* we start with "touched" state */
+	touched = true;		/* we start with "touched" state */
 
 	do {
 		uint8_t state;

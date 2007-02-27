@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.41 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.41.4.1 2007/02/27 16:54:58 yamt Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.41 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.41.4.1 2007/02/27 16:54:58 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -474,7 +474,7 @@ bad:
 void *
 esp4_ctlinput(cmd, sa, v)
 	int cmd;
-	struct sockaddr *sa;
+	const struct sockaddr *sa;
 	void *v;
 {
 	struct ip *ip = v;
@@ -886,10 +886,7 @@ bad:
 }
 
 void
-esp6_ctlinput(cmd, sa, d)
-	int cmd;
-	struct sockaddr *sa;
-	void *d;
+esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 {
 	const struct newesp *espp;
 	struct newesp esp;
@@ -898,7 +895,7 @@ esp6_ctlinput(cmd, sa, d)
 	struct ip6_hdr *ip6;
 	struct mbuf *m;
 	int off;
-	struct sockaddr_in6 *sa6_src, *sa6_dst;
+	const struct sockaddr_in6 *sa6_src, *sa6_dst;
 
 	if (sa->sa_family != AF_INET6 ||
 	    sa->sa_len != sizeof(struct sockaddr_in6))
@@ -964,10 +961,10 @@ esp6_ctlinput(cmd, sa, d)
 			 * the address in the ICMP message payload.
 			 */
 			sa6_src = ip6cp->ip6c_src;
-			sa6_dst = (struct sockaddr_in6 *)sa;
+			sa6_dst = (const struct sockaddr_in6 *)sa;
 			sav = key_allocsa(AF_INET6,
-					  (caddr_t)&sa6_src->sin6_addr,
-					  (caddr_t)&sa6_dst->sin6_addr,
+					  (const void *)&sa6_src->sin6_addr,
+					  (const void *)&sa6_dst->sin6_addr,
 					  IPPROTO_ESP, espp->esp_spi, 0, 0);
 			if (sav) {
 				if (sav->state == SADB_SASTATE_MATURE ||

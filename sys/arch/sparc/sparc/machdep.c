@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.267 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.267.2.1 2007/02/27 16:53:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267.2.1 2007/02/27 16:53:11 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -316,7 +316,7 @@ cpu_startup(void)
 	 */
 	minaddr = 0;
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
@@ -334,7 +334,7 @@ cpu_startup(void)
 	 * Finally, allocate mbuf cluster submap.
 	 */
         mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 #ifdef DEBUG
 	pmapdebug = opmapdebug;

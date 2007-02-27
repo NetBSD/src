@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.34 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: db_trace.c,v 1.34.6.1 2007/02/27 16:53:14 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.34 2006/09/13 11:35:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.34.6.1 2007/02/27 16:53:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,18 +56,23 @@ void db_print_window(uint64_t);
 void
 db_stack_trace_print(addr, have_addr, count, modif, pr)
 	db_expr_t       addr;
-	int             have_addr;
+	bool            have_addr;
 	db_expr_t       count;
 	const char      *modif;
  	void		(*pr) (const char *, ...);
 {
 	vaddr_t		frame;
-	boolean_t	kernel_only = TRUE;
-	boolean_t	trace_thread = FALSE;
+	bool		kernel_only = TRUE;
+	bool		trace_thread = FALSE;
+	bool		lwpaddr = FALSE;
 	char		c;
 	const char	*cp = modif;
 
 	while ((c = *cp++) != 0) {
+		if (c == 'a') {
+			lwpaddr = TRUE;
+			trace_thread = TRUE;
+		}
 		if (c == 't')
 			trace_thread = TRUE;
 		if (c == 'u')
@@ -81,14 +86,21 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			struct proc *p;
 			struct lwp *l;
 			struct user *u;
-			(*pr)("trace: pid %d ", (int)addr);
-			p = p_find(addr, PFIND_LOCKED);
-			if (p == NULL) {
-				(*pr)("not found\n");
-				return;
-			}	
-                        l = LIST_FIRST(&p->p_lwps);     /* XXX NJWLWP */
-                        if ((l->l_flag & L_INMEM) == 0) {
+			if (lwpaddr) {
+				l = (struct lwp *)addr;
+				p = l->l_proc;
+				(*pr)("trace: pid %d ", p->p_pid);
+			} else {
+				(*pr)("trace: pid %d ", (int)addr);
+				p = p_find(addr, PFIND_LOCKED);
+				if (p == NULL) {
+					(*pr)("not found\n");
+					return;
+				}
+				l = proc_representative_lwp(p, NULL, 0);
+			}
+			(*pr)("lid %d ", l->l_lid);
+                        if ((l->l_flag & LW_INMEM) == 0) {
                                 (*pr)("swapped out\n");
                                 return;
                         }
@@ -165,7 +177,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 
 
 void
-db_dump_window(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_window(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	int i;
 	uint64_t frame = DDB_TF->tf_out[6];
@@ -270,11 +282,11 @@ db_print_window(uint64_t frame)
 }
 
 void
-db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_stack(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	int		i;
 	uint64_t	frame, oldframe;
-	boolean_t	kernel_only = TRUE;
+	bool		kernel_only = TRUE;
 	char		c;
 	const char	*cp = modif;
 
@@ -327,7 +339,7 @@ db_dump_stack(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 
 
 void
-db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_trap(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct trapframe64 *tf;
 
@@ -408,7 +420,7 @@ db_dump_trap(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
 }
 
 void
-db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_fpstate(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct fpstate64 *fpstate;
 
@@ -496,7 +508,7 @@ db_dump_fpstate(db_expr_t addr, int have_addr, db_expr_t count, const char *modi
 }
 
 void
-db_dump_ts(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_dump_ts(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct trapstate	*ts;
 	int			i, tl;

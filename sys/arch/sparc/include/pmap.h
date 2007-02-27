@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.76 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: pmap.h,v 1.76.26.1 2007/02/27 16:53:09 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -283,13 +283,13 @@ void		pmap_remove_all(struct pmap *pm);
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 
 #if defined(SUN4) || defined(SUN4C)
-boolean_t	pmap_clear_modify4_4c(struct vm_page *);
-boolean_t	pmap_clear_reference4_4c(struct vm_page *);
+bool		pmap_clear_modify4_4c(struct vm_page *);
+bool		pmap_clear_reference4_4c(struct vm_page *);
 void		pmap_copy_page4_4c(paddr_t, paddr_t);
 int		pmap_enter4_4c(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
-boolean_t	pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
-boolean_t	pmap_is_modified4_4c(struct vm_page *);
-boolean_t	pmap_is_referenced4_4c(struct vm_page *);
+bool		pmap_extract4_4c(pmap_t, vaddr_t, paddr_t *);
+bool		pmap_is_modified4_4c(struct vm_page *);
+bool		pmap_is_referenced4_4c(struct vm_page *);
 void		pmap_kenter_pa4_4c(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_kremove4_4c(vaddr_t, vsize_t);
 void		pmap_kprotect4_4c(vaddr_t, vsize_t, vm_prot_t);
@@ -301,15 +301,15 @@ void		pmap_zero_page4_4c(paddr_t);
 /* SIMILAR DECLARATIONS FOR SUN4M/SUN4D MODULE */
 
 #if defined(SUN4M) || defined(SUN4D)
-boolean_t	pmap_clear_modify4m(struct vm_page *);
-boolean_t	pmap_clear_reference4m(struct vm_page *);
+bool		pmap_clear_modify4m(struct vm_page *);
+bool		pmap_clear_reference4m(struct vm_page *);
 void		pmap_copy_page4m(paddr_t, paddr_t);
 void		pmap_copy_page_viking_mxcc(paddr_t, paddr_t);
 void		pmap_copy_page_hypersparc(paddr_t, paddr_t);
 int		pmap_enter4m(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
-boolean_t	pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
-boolean_t	pmap_is_modified4m(struct vm_page *);
-boolean_t	pmap_is_referenced4m(struct vm_page *);
+bool		pmap_extract4m(pmap_t, vaddr_t, paddr_t *);
+bool		pmap_is_modified4m(struct vm_page *);
+bool		pmap_is_referenced4m(struct vm_page *);
 void		pmap_kenter_pa4m(vaddr_t, paddr_t, vm_prot_t);
 void		pmap_kremove4m(vaddr_t, vsize_t);
 void		pmap_kprotect4m(vaddr_t, vsize_t, vm_prot_t);
@@ -350,12 +350,12 @@ void		pmap_zero_page_hypersparc(paddr_t);
 
 #else  /* must use function pointers */
 
-extern boolean_t(*pmap_clear_modify_p)(struct vm_page *);
-extern boolean_t(*pmap_clear_reference_p)(struct vm_page *);
+extern bool	(*pmap_clear_modify_p)(struct vm_page *);
+extern bool	(*pmap_clear_reference_p)(struct vm_page *);
 extern int	(*pmap_enter_p)(pmap_t, vaddr_t, paddr_t, vm_prot_t, int);
-extern boolean_t (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
-extern boolean_t(*pmap_is_modified_p)(struct vm_page *);
-extern boolean_t(*pmap_is_referenced_p)(struct vm_page *);
+extern bool	 (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
+extern bool	(*pmap_is_modified_p)(struct vm_page *);
+extern bool	(*pmap_is_referenced_p)(struct vm_page *);
 extern void	(*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t);
 extern void	(*pmap_kremove_p)(vaddr_t, vsize_t);
 extern void	(*pmap_kprotect_p)(vaddr_t, vsize_t, vm_prot_t);

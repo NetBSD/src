@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.47 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.47.4.1 2007/02/27 16:54:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.47 2006/11/16 01:33:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.47.4.1 2007/02/27 16:54:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,17 +525,17 @@ usb_detach_wakeup(device_ptr_t dv)
 	wakeup(dv);
 }
 
-const usb_descriptor_t *
+const usb_cdc_descriptor_t *
 usb_find_desc(usbd_device_handle dev, int type, int subtype)
 {
 	usbd_desc_iter_t iter;
-	const usb_descriptor_t *desc;
+	const usb_cdc_descriptor_t *desc;
 
 	usb_desc_iter_init(dev, &iter);
 	for (;;) {
-		desc = usb_desc_iter_next(&iter);
+		desc = (const usb_cdc_descriptor_t *)usb_desc_iter_next(&iter);
 		if (!desc || (desc->bDescriptorType == type &&
-			      (subtype == USBD_SUBTYPE_ANY ||
+			      (subtype == USBD_CDCSUBTYPE_ANY ||
 			       subtype == desc->bDescriptorSubtype)))
 			break;
 	}
@@ -543,25 +543,26 @@ usb_find_desc(usbd_device_handle dev, int type, int subtype)
 }
 
 /* same as usb_find_desc(), but searches only in the specified interface. */
-const usb_descriptor_t *
+const usb_cdc_descriptor_t *
 usb_find_desc_if(usbd_device_handle dev, int type, int subtype,
 		 usb_interface_descriptor_t *id)
 {
 	usbd_desc_iter_t iter;
-	const usb_descriptor_t *desc;
+	const usb_cdc_descriptor_t *desc;
 
 	usb_desc_iter_init(dev, &iter);
 
 	iter.cur = (void *)id;		/* start from the interface desc */
 	usb_desc_iter_next(&iter);	/* and skip it */
 
-	while ((desc = usb_desc_iter_next(&iter)) != NULL) {
+	while ((desc = (const usb_cdc_descriptor_t *)usb_desc_iter_next(&iter))
+	       != NULL) {
 		if (desc->bDescriptorType == UDESC_INTERFACE) {
 			/* we ran into the next interface --- not found */
 			return NULL;
 		}
 		if (desc->bDescriptorType == type &&
-		    (subtype == USBD_SUBTYPE_ANY ||
+		    (subtype == USBD_CDCSUBTYPE_ANY ||
 		     subtype == desc->bDescriptorSubtype))
 			break;
 	}

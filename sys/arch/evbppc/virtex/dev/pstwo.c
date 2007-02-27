@@ -1,4 +1,4 @@
-/* 	$NetBSD: pstwo.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: pstwo.c,v 1.1.8.1 2007/02/27 16:50:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstwo.c,v 1.1.8.1 2007/02/27 16:50:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ struct pstwo_softc {
 };
 
 static int 	pstwo_intr(void *);
-static void 	pstwo_reset(bus_space_tag_t, bus_space_handle_t, boolean_t);
+static void 	pstwo_reset(bus_space_tag_t, bus_space_handle_t, bool);
 #if 0
 static void 	pstwo_printreg(struct pstwo_softc *);
 #endif
@@ -168,7 +168,7 @@ pstwo_intr(void *arg)
 }
 
 static void
-pstwo_reset(bus_space_tag_t iot, bus_space_handle_t ioh, boolean_t restart)
+pstwo_reset(bus_space_tag_t iot, bus_space_handle_t ioh, bool restart)
 {
 	bus_space_write_4(iot, ioh, PSTWO_CTRL, CTRL_RESET);
 
@@ -187,7 +187,7 @@ pstwo_reset(bus_space_tag_t iot, bus_space_handle_t ioh, boolean_t restart)
  * 	Return zero on success, one on timeout.
  */
 static int
-pstwo_wait(struct pstwo_softc *sc, uint32_t mask, boolean_t set)
+pstwo_wait(struct pstwo_softc *sc, uint32_t mask, bool set)
 {
 	uint32_t 		val = (set ? mask : 0);
 	int 			i = 1000;

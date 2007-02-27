@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.125 2007/02/15 20:21:13 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.125.2.1 2007/02/27 16:55:25 yamt Exp $	*/
 
 /*
  *
@@ -204,7 +204,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #ifdef PMAP_CACHE_VIVT
 #define UBC_WANT_UNMAP(vp) (((vp)->v_flag & VTEXT) != 0)
 #else
-#define UBC_WANT_UNMAP(vp) FALSE
+#define UBC_WANT_UNMAP(vp) false
 #endif
 
 /*
@@ -566,7 +566,7 @@ int		uvm_fault_internal(struct vm_map *, vaddr_t, vm_prot_t, int);
 #if defined(KGDB)
 void			uvm_chgkprot(caddr_t, size_t, int);
 #endif
-void			uvm_proc_fork(struct proc *, struct proc *, boolean_t);
+void			uvm_proc_fork(struct proc *, struct proc *, bool);
 void			uvm_lwp_fork(struct lwp *, struct lwp *,
 			    void *, size_t, void (*)(void *), void *);
 int			uvm_coredump_walkmap(struct proc *,
@@ -576,12 +576,12 @@ int			uvm_coredump_walkmap(struct proc *,
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
-boolean_t		uvm_kernacc(caddr_t, size_t, int);
+bool			uvm_kernacc(caddr_t, size_t, int);
 __dead void		uvm_scheduler(void) __attribute__((noreturn));
 void			uvm_kick_scheduler(void);
 void			uvm_swapin(struct lwp *);
-boolean_t		uvm_uarea_alloc(vaddr_t *);
-void			uvm_uarea_drain(boolean_t);
+bool			uvm_uarea_alloc(vaddr_t *);
+void			uvm_uarea_drain(bool);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
 
@@ -599,11 +599,11 @@ void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t,
 			    uvm_flag_t);
 
 struct vm_map		*uvm_km_suballoc(struct vm_map *, vaddr_t *,
-			    vaddr_t *, vsize_t, int, boolean_t,
+			    vaddr_t *, vsize_t, int, bool,
 			    struct vm_map_kernel *);
-vaddr_t			uvm_km_alloc_poolpage(struct vm_map *, boolean_t);
+vaddr_t			uvm_km_alloc_poolpage(struct vm_map *, bool);
 void			uvm_km_free_poolpage(struct vm_map *, vaddr_t);
-vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *, boolean_t);
+vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *, bool);
 void			uvm_km_free_poolpage_cache(struct vm_map *, vaddr_t);
 void			uvm_km_vacache_init(struct vm_map *,
 			    const char *, size_t);
@@ -613,12 +613,12 @@ int			uvm_map(struct vm_map *, vaddr_t *, vsize_t,
 			    struct uvm_object *, voff_t, vsize_t,
 			    uvm_flag_t);
 int			uvm_map_pageable(struct vm_map *, vaddr_t,
-			    vaddr_t, boolean_t, int);
+			    vaddr_t, bool, int);
 int			uvm_map_pageable_all(struct vm_map *, int, vsize_t);
-boolean_t		uvm_map_checkprot(struct vm_map *, vaddr_t,
+bool			uvm_map_checkprot(struct vm_map *, vaddr_t,
 			    vaddr_t, vm_prot_t);
 int			uvm_map_protect(struct vm_map *, vaddr_t,
-			    vaddr_t, vm_prot_t, boolean_t);
+			    vaddr_t, vm_prot_t, bool);
 struct vmspace		*uvmspace_alloc(vaddr_t, vaddr_t);
 void			uvmspace_init(struct vmspace *, struct pmap *,
 			    vaddr_t, vaddr_t);
@@ -707,9 +707,9 @@ struct uvm_object	*uvn_attach(void *, vm_prot_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
 			    int *, struct vm_page **, int);
 void			uvm_vnp_zerorange(struct vnode *, off_t, size_t);
-boolean_t		uvn_text_p(struct uvm_object *);
-boolean_t		uvn_clean_p(struct uvm_object *);
-boolean_t		uvn_needs_writefault_p(struct uvm_object *);
+bool			uvn_text_p(struct uvm_object *);
+bool			uvn_clean_p(struct uvm_object *);
+bool			uvn_needs_writefault_p(struct uvm_object *);
 
 /* kern_malloc.c */
 void			kmeminit_nkmempages(void);

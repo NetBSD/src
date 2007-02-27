@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.20 2006/11/24 19:46:58 christos Exp $	*/
+/*	$NetBSD: scr.c,v 1.20.4.1 2007/02/27 16:53:07 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.20 2006/11/24 19:46:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.20.4.1 2007/02/27 16:53:07 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -174,20 +174,9 @@ __KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.20 2006/11/24 19:46:58 christos Exp $");
     #define ASSERT(f)
     #define TOGGLE_TEST_PIN()
     //#define INVALID_STATE_CMD(sc,state,cmd)  panic("scr: invalid state/cmd, sc = %X, state = %X, cmd = %X, line = %d",sc,state,cmd,__LINE__);
-    #define INVALID_STATE_CMD(sc,state,cmd)  sc->bigTrouble = TRUE;
+    #define INVALID_STATE_CMD(sc,state,cmd)  sc->bigTrouble = true;
 
 #endif
-
-#ifndef FALSE
-    #define FALSE 0
-#endif
-
-#ifndef TRUE
-    #define TRUE 1
-#endif
-
-
-
 
 
 /* 
@@ -527,7 +516,7 @@ static int tsleepIdent;
 ** only 1 device is using the hat at any one time
 ** variable below must be acquired using splhigh before using the hat
 */
-static int hatLock = FALSE;     
+static int hatLock = false;     
 
 
 
@@ -773,7 +762,7 @@ void scrattach(parent, self, aux)
         /* set initial state machine values */
         scrClkInit();
         initStates(sc);
-        sc->open = FALSE;
+        sc->open = false;
     } 
 
     else
@@ -903,7 +892,7 @@ struct lwp *l;
 
 
     /* set all initial conditions */
-    sc->open = TRUE;
+    sc->open = true;
 #endif
 
     KERN_DEBUG (scrdebug, SCROPEN_DEBUG_INFO,("scropen: success \n"));
@@ -970,7 +959,7 @@ int scrclose(dev, flag, mode, l)
         /* put everything in the idle state */
         scrClkInit();
         initStates(sc);
-        sc->open = FALSE;
+        sc->open = false;
 
     } 
     
@@ -1115,7 +1104,7 @@ struct lwp  *l;
                 s = splhigh();
                 if(!hatLock)
                 {
-                    hatLock = TRUE;
+                    hatLock = true;
                     splx(s);
                     break;
                 }
@@ -1145,8 +1134,8 @@ struct lwp  *l;
             else             
             {   
                 // set up the top half 
-                sc->masterDone = FALSE;
-                sc->bigTrouble = FALSE;    /* david/jim, remove this when the dust settles  */
+                sc->masterDone = false;
+                sc->bigTrouble = false;    /* david/jim, remove this when the dust settles  */
 
                         
                 
@@ -1171,7 +1160,7 @@ struct lwp  *l;
                         initStates(sc);
                         cardOff(sc);
                         sc->status = ERROR_CARD_REMOVED;
-                        sc->masterDone = TRUE;
+                        sc->masterDone = true;
                         restore_interrupts(savedInts);
                         // dont stop clock, done at bottom of case 
                     }
@@ -1223,7 +1212,7 @@ struct lwp  *l;
             // release  the hat lock. 
             s = splhigh();
             ASSERT(hatlock);
-            hatLock = FALSE;
+            hatLock = false;
             splx(s);
             
             // david,jim hack to stop ioctl memcpy problem, to be removed when problem fixed ejg
@@ -1259,7 +1248,7 @@ struct lwp  *l;
                 s = splhigh();
                 if(!hatLock)
                 {
-                    hatLock = TRUE;
+                    hatLock = true;
                     splx(s);
                     break;
                 }
@@ -1289,8 +1278,8 @@ struct lwp  *l;
 
             {   
                 // set up the top half 
-                sc->masterDone = FALSE;
-                sc->bigTrouble = FALSE;    /* david/jim, remove this when the dust settles  */
+                sc->masterDone = false;
+                sc->bigTrouble = false;    /* david/jim, remove this when the dust settles  */
                 
                 // start bottom half
                 scrClkStart (sc,sc->clkCountDataSend);
@@ -1319,7 +1308,7 @@ struct lwp  *l;
                         initStates(sc);
                         cardOff(sc);
                         sc->status = ERROR_CARD_REMOVED;
-                        sc->masterDone = TRUE;
+                        sc->masterDone = true;
                         restore_interrupts(savedInts);
                      }
                      masterDoneRetries++;
@@ -1354,7 +1343,7 @@ struct lwp  *l;
             
             // release  the hat lock. 
             s = splhigh();
-            hatLock = FALSE;
+            hatLock = false;
             splx(s);
             
             
@@ -1481,7 +1470,7 @@ static void masterSM(struct scr_softc * sc,int cmd)
                     {
                         /* card not inserted, so just set status and give up */
                         sc->status = ERROR_CARD_REMOVED;
-                        sc->masterDone = TRUE;
+                        sc->masterDone = true;
                     }
                     break;
 
@@ -1527,7 +1516,7 @@ static void masterSM(struct scr_softc * sc,int cmd)
                     {
                         sc->masterS = msIdleOff;
                     }
-                    sc->masterDone = TRUE;
+                    sc->masterDone = true;
                     break;
 
 
@@ -1578,7 +1567,7 @@ static void masterSM(struct scr_softc * sc,int cmd)
                     ** t0SendSM has tried to send , so lets give back results
                     */
                     sc->masterS = msIdleOn;
-                    sc->masterDone = TRUE;
+                    sc->masterDone = true;
                     break;
 
                 default:
@@ -1598,7 +1587,7 @@ static void masterSM(struct scr_softc * sc,int cmd)
                     */
                     sc->pIoctlT0->dataLen = sc->dataCount;
                     sc->masterS = msIdleOn;
-                    sc->masterDone = TRUE;
+                    sc->masterDone = true;
                     break;
 
                 default:
@@ -2269,10 +2258,10 @@ static void   coldResetSM(struct scr_softc * sc,int cmd)
             switch (cmd)
             {
                 case crcStart:
-                    scrSetReset(TRUE);
-                    scrSetClock(TRUE);
+                    scrSetReset(true);
+                    scrSetClock(true);
                     scrSetDataHighZ();
-                    scrSetPower(TRUE);
+                    scrSetPower(true);
 
                     /* start a t2 timer */
                     scrTimeout(coldResetSM,sc,crcT2,T_t2);
@@ -2290,7 +2279,7 @@ static void   coldResetSM(struct scr_softc * sc,int cmd)
             {
                 case crcT2:
                     /* turn off rst */
-                    scrSetReset(FALSE);
+                    scrSetReset(false);
 
                     /* tell master state machine that we are all done */
                     sc->coldResetS = crsIdle;
@@ -3047,13 +3036,13 @@ static void   t0RecvByteSM(struct scr_softc* sc,int cmd)
             {
                 case t0rbcTErrorStart:
                     /* start sending error bit */
-                    scrSetData(FALSE);
+                    scrSetData(false);
                     scrTimeout(t0RecvByteSM,sc,t0rbcTErrorStop,sc->clkCountDataRecv * 2);
                     break;
 
                 case t0rbcTErrorStop:
                     /* stop sending parity error & reset information*/
-                    scrSetData(TRUE);
+                    scrSetData(true);
                     sc->shiftBits   = 0;
                     sc->shiftByte   = 0;
                     sc->shiftParity = 0;
@@ -3156,7 +3145,7 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
                     {
                         /* can send start bit now */
                         scrTimeout(t0SendByteSM,sc,t0sbcTClockData,sc->clkCountDataSend);
-                        scrSetData(FALSE);
+                        scrSetData(false);
                         sc->t0SendByteS = t0sbsClockData;
                     }
                     else
@@ -3182,7 +3171,7 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
                     TOGGLE_TEST_PIN();
                     /*  set start bit */
                     scrTimeout(t0SendByteSM,sc,t0sbcTClockData,sc->clkCountDataSend);
-                    scrSetData(FALSE);
+                    scrSetData(false);
                     sc->t0SendByteS = t0sbsClockData;
                     break;
 
@@ -3205,12 +3194,12 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
                         {
                             if (sc->shiftByte & 0x80)
                             {
-                                scrSetData(FALSE);
+                                scrSetData(false);
                                 sc->shiftParity++;
                             }
                             else
                             {
-                                scrSetData(TRUE);
+                                scrSetData(true);
                             }
                             sc->shiftByte = sc->shiftByte << 1;
                         }
@@ -3219,12 +3208,12 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
                             ASSERT(sc->convention == CONVENTION_DIRECT);
                             if (sc->shiftByte & 0x01)
                             {
-                                scrSetData(TRUE);
+                                scrSetData(true);
                                 sc->shiftParity++;
                             }
                             else
                             {
-                                scrSetData(FALSE);
+                                scrSetData(false);
                             }
                             sc->shiftByte = sc->shiftByte >> 1;
                         }
@@ -3238,11 +3227,11 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
                         if ( ((sc->shiftParity & 0x01) &&  (sc->convention == CONVENTION_INVERSE))  ||
                              (!(sc->shiftParity & 0x01) && (sc->convention == CONVENTION_DIRECT))     )
                         {
-                            scrSetData(FALSE);
+                            scrSetData(false);
                         }
                         else
                         {
-                            scrSetData(TRUE);
+                            scrSetData(true);
                         }
                         sc->shiftBits++;
                         scrTimeout(t0SendByteSM,sc,t0sbcTClockData,sc->clkCountDataSend);
@@ -3252,7 +3241,7 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
                     else
                     {
                         ASSERT(sc->shiftBits > 8);
-                        scrSetData(TRUE);
+                        scrSetData(true);
                         scrTimeout(t0SendByteSM,sc,t0sbcTError,sc->clkCountDataSend);
                         sc->t0SendByteS = t0sbsWaitError;
                     }
@@ -3311,7 +3300,7 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
                     /*  set start bit */
 
                     scrTimeout(t0SendByteSM,sc,t0sbcTClockData,sc->clkCountDataSend);
-                    scrSetData(FALSE);
+                    scrSetData(false);
                     sc->t0SendByteS = t0sbsClockData;
                     break;
 
@@ -3369,10 +3358,10 @@ static void t0SendByteSM (struct scr_softc * sc,int cmd)
 */
 static void   cardOff  (struct scr_softc * sc)
 {
-    scrSetReset(TRUE);
+    scrSetReset(true);
     scrSetDataHighZ();
-    scrSetClock(FALSE);
-    scrSetPower(FALSE);
+    scrSetClock(false);
+    scrSetPower(false);
 }
 
 

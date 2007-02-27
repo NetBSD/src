@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 2005/12/11 12:18:34 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.3.26.1 2007/02/27 16:52:31 yamt Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -93,7 +93,7 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
-db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     char *modif, void (*pr)(const char *, ...))
 {
 	(*pr)("db_stack_trace_print\n");
@@ -103,16 +103,16 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
  * XXX - must fix the sstep functions.
  */
 
-boolean_t
+bool
 inst_branch(int inst)
 {
-	return TRUE;
+	return true;
 }
 
-boolean_t
+bool
 inst_unconditional_flow_transfer(int inst)
 {
-	return TRUE;
+	return true;
 }
 
 db_addr_t

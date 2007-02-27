@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.38 2007/02/09 21:55:26 ad Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.38.2.1 2007/02/27 16:53:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -99,10 +99,10 @@ struct audio_ringbuffer {
 	u_long	fstamp;		/* bytes transferred from/to the buffer near to userland */
 	u_long	drops;		/* missed samples from over/underrun */
 	u_long	pdrops;		/* paused samples */
-	boolean_t pause;	/* transfer is paused */
-	boolean_t copying;	/* data is being copied */
-	boolean_t needfill;	/* buffer needs filling when copying is done */
-	boolean_t mmapped;	/* device is mmap()-ed */
+	bool pause;		/* transfer is paused */
+	bool copying;		/* data is being copied */
+	bool needfill;		/* buffer needs filling when copying is done */
+	bool mmapped;		/* device is mmap()-ed */
 };
 
 #define AUDIO_N_PORTS 4
@@ -111,12 +111,12 @@ struct au_mixer_ports {
 	int	index;		/* index of port-selector mixerctl */
 	int	master;		/* index of master mixerctl */
 	int	nports;		/* number of selectable ports */
-	boolean_t isenum;	/* selector is enum type */
+	bool	isenum;		/* selector is enum type */
 	u_int	allports;	/* all aumasks or'd */
 	u_int	aumask[AUDIO_N_PORTS];	/* exposed value of "ports" */
 	u_int	misel [AUDIO_N_PORTS];	/* ord of port, for selector */
 	u_int	miport[AUDIO_N_PORTS];	/* index of port's mixerctl */
-	boolean_t isdual;	/* has working mixerout */
+	bool	isdual;		/* has working mixerout */
 	int	mixerout;	/* ord of mixerout, for dual case */
 	int	cur_port;	/* the port that gain actually controls when
 				   mixerout is selected, for dual case */
@@ -149,13 +149,13 @@ struct audio_softc {
 	int		sc_rchan;
 	int		sc_wchan;
 
-	boolean_t	sc_blkset;	/* Blocksize has been set */
+	bool		sc_blkset;	/* Blocksize has been set */
 
 	uint8_t		*sc_sil_start;	/* start of silence in buffer */
 	int		sc_sil_count;	/* # of silence bytes */
 
-	boolean_t	sc_rbus;	/* input DMA in progress */
-	boolean_t	sc_pbus;	/* output DMA in progress */
+	bool		sc_rbus;	/* input DMA in progress */
+	bool		sc_pbus;	/* output DMA in progress */
 
 	/**
 	 *  userland
@@ -212,7 +212,7 @@ struct audio_softc {
 
 	int		sc_refcnt;
 	int		sc_opencnt;
-	boolean_t	sc_dying;
+	bool		sc_dying;
 
 #ifdef AUDIO_INTR_TIME
 	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */

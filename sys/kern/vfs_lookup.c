@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.81 2007/02/04 15:03:20 chs Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.81.2.1 2007/02/27 16:54:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.81 2007/02/04 15:03:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.81.2.1 2007/02/27 16:54:35 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.81 2007/02/04 15:03:20 chs Exp $");
 
 struct pathname_internal {
 	char *pathbuf;
-	boolean_t needfree;
+	bool needfree;
 };
 
 int vfs_magiclinks = MAGICLINKS;
@@ -217,10 +217,10 @@ pathname_get(const char *dirp, enum uio_seg segflg, pathname_t *path)
 			*path = NULL;
 			return (error);
 		}
-		(*path)->needfree = TRUE;
+		(*path)->needfree = true;
 	} else {
 		(*path)->pathbuf = __UNCONST(dirp);
-		(*path)->needfree = FALSE;
+		(*path)->needfree = false;
 	}
 
 	return (0);
@@ -315,7 +315,7 @@ namei(struct nameidata *ndp)
 		ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf);
 #endif
 #ifdef SYSTRACE
-	if (ISSET(cnp->cn_lwp->l_proc->p_flag, P_SYSTRACE))
+	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
 		systrace_namei(ndp);
 #endif
 

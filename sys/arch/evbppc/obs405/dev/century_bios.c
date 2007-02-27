@@ -1,4 +1,4 @@
-/*	$NetBSD: century_bios.c,v 1.3 2006/05/05 18:04:41 thorpej Exp $	*/
+/*	$NetBSD: century_bios.c,v 1.3.14.1 2007/02/27 16:50:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.3 2006/05/05 18:04:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: century_bios.c,v 1.3.14.1 2007/02/27 16:50:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ bios_board_info_set(void)
 
 	pn = prop_number_create_integer(board_mem_size);
 	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "mem-size", pn) == FALSE)
+	if (prop_dictionary_set(board_properties, "mem-size", pn) == false)
 		panic("setting mem-size");
 	prop_object_release(pn);
 
@@ -98,26 +98,26 @@ bios_board_info_set(void)
 					  sizeof(board_bios.mac_address_local));
 	KASSERT(pd != NULL);
 	if (prop_dictionary_set(board_properties, "emac0-mac-addr",
-				pd) == FALSE)
+				pd) == false)
 		panic("setting emac0-mac-addr");
 	prop_object_release(pd);
 
 	pn = prop_number_create_integer(board_cpu_speed);
 	KASSERT(pn != NULL);
 	if (prop_dictionary_set(board_properties, "processor-frequency",
-				pn) == FALSE)
+				pn) == false)
 		panic("setting processor-frequency");
 	prop_object_release(pn);
 
 	pn = prop_number_create_integer(board_plb_speed);
 	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "plb-frequency", pn) == FALSE)
+	if (prop_dictionary_set(board_properties, "plb-frequency", pn) == false)
 		panic("setting plb-frequency");
 	prop_object_release(pn);
 
 	pn = prop_number_create_integer(board_pci_speed);
 	KASSERT(pn != NULL);
-	if (prop_dictionary_set(board_properties, "pci-frequency", pn) == FALSE)
+	if (prop_dictionary_set(board_properties, "pci-frequency", pn) == false)
 		panic("setting pci-frequency");
 	prop_object_release(pn);
 }

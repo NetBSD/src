@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.6 2006/01/15 22:09:52 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.6.24.1 2007/02/27 16:53:29 yamt Exp $	*/
 /*	NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6 2006/01/15 22:09:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.6.24.1 2007/02/27 16:53:29 yamt Exp $");
 
 #include "opt_xen.h"
 
@@ -390,7 +390,7 @@ _x86_memio_unmap(t, bsh, size, adrp)
 			}
 #endif
 
-			if (pmap_extract_ma(pmap_kernel(), va, &bpa) == FALSE) {
+			if (pmap_extract_ma(pmap_kernel(), va, &bpa) == false) {
 				panic("_x86_memio_unmap:"
 				    " wrong virtual address");
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.27 2007/01/04 19:07:04 elad Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.27.2.1 2007/02/27 16:55:05 yamt Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.27 2007/01/04 19:07:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.27.2.1 2007/02/27 16:55:05 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -238,7 +238,8 @@ udp6_output(in6p, m, addr6, control, l)
 
 		if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
 			laddr = in6_selectsrc(sin6, optp,
-			    in6p->in6p_moptions, &in6p->in6p_route,
+			    in6p->in6p_moptions,
+			    (struct route *)&in6p->in6p_route,
 			    &in6p->in6p_laddr, &oifp, &error);
 			if (oifp && scope_ambiguous &&
 			    (error = in6_setscope(&sin6->sin6_addr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.42 2007/02/09 21:55:05 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.42.2.1 2007/02/27 16:51:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2007/02/09 21:55:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42.2.1 2007/02/27 16:51:45 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ktrace.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2007/02/09 21:55:05 ad Exp $");
 #include <sys/ktrace.h>
 #endif
 #include <sys/syscall.h>
+#include <sys/syscall_stats.h>
 
 
 #include <uvm/uvm_extern.h>
@@ -107,6 +108,7 @@ syscall_plain(frame)
 		/*
 		 * Code is first argument, followed by actual args.
 		 */
+		SYSCALL_COUNT(syscall_counts, SYS_syscall & (SYS_NSYSENT - 1));
 		code = fuword(params);
 		params += sizeof(int);
 		break;
@@ -115,6 +117,7 @@ syscall_plain(frame)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
+		SYSCALL_COUNT(syscall_counts, SYS___syscall & (SYS_NSYSENT - 1));
 		code = fuword(params + _QUAD_LOWWORD * sizeof(int));
 		params += sizeof(quad_t);
 		break;
@@ -123,6 +126,8 @@ syscall_plain(frame)
 	}
 
 	code &= (SYS_NSYSENT - 1);
+	SYSCALL_COUNT(syscall_counts, code);
+	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
@@ -174,6 +179,7 @@ syscall_plain(frame)
 		break;
 	}
 
+	SYSCALL_TIME_SYS_EXIT(l);
 	userret(l);
 }
 
@@ -219,6 +225,8 @@ syscall_fancy(frame)
 	}
 
 	code &= (SYS_NSYSENT - 1);
+	SYSCALL_COUNT(syscall_counts, code);
+	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
@@ -278,6 +286,7 @@ out:
 
 	trace_exit(l, code, args, rval, error);
 
+	SYSCALL_TIME_SYS_EXIT(l);
 	userret(l);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.3 2005/12/11 12:24:54 christos Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.3 2005/12/11 12:24:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -57,9 +57,9 @@ static int agrether_portfini(struct agr_softc *, struct agr_port *);
 static struct agr_port *agrether_select_tx_port(struct agr_softc *,
     struct mbuf *);
 static int agrether_configmulti_port(struct agr_softc *, struct agr_port *,
-    boolean_t);
+    bool);
 static int agrether_configmulti_ifreq(struct agr_softc *, struct ifreq *,
-    boolean_t);
+    bool);
 
 const struct agr_iftype_ops agrether_ops = {
 	.iftop_tick = NULL,
@@ -214,7 +214,7 @@ agrether_portfini(struct agr_softc *sc, struct agr_port *port)
 
 static int
 agrether_configmulti_port(struct agr_softc *sc, struct agr_port *port,
-    boolean_t add)
+    bool add)
 {
 	struct agrether_private *priv = sc->sc_iftprivate;
 
@@ -223,7 +223,7 @@ agrether_configmulti_port(struct agr_softc *sc, struct agr_port *port,
 
 static int
 agrether_configmulti_ifreq(struct agr_softc *sc, struct ifreq *ifr,
-    boolean_t add)
+    bool add)
 {
 	struct agrether_private *priv = sc->sc_iftprivate;
 

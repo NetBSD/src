@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.25 2006/04/01 15:44:59 cherry Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.25.14.1 2007/02/27 16:51:45 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -96,8 +96,8 @@ extern db_regs_t *ddb_regp;
 	 ((user) && (addr) < VM_MAX_ADDRESS))
 
 #if 0
-boolean_t 	db_check_access(vaddr_t, int, task_t);
-boolean_t	db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
+bool	 	db_check_access(vaddr_t, int, task_t);
+bool		db_phys_eq(task_t, vaddr_t, task_t, vaddr_t);
 #endif
 
 /* macros for printing OS server dependent task name */

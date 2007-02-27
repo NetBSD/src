@@ -1,4 +1,4 @@
-/* $Id: com_arbus.c,v 1.4 2006/09/04 05:17:26 gdamore Exp $ */
+/* $Id: com_arbus.c,v 1.4.10.1 2007/02/27 16:52:01 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.4 2006/09/04 05:17:26 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.4.10.1 2007/02/27 16:52:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: com_arbus.c,v 1.4 2006/09/04 05:17:26 gdamore Exp $"
 #include <mips/cpuregs.h>
 #include <mips/atheros/include/arbusvar.h>
 #include <mips/atheros/include/ar531xvar.h>
+
+#include "opt_com.h"
 
 struct com_arbus_softc {
 	struct com_softc sc_com;
@@ -147,7 +149,10 @@ CFATTACH_DECL(com_arbus, sizeof(struct com_arbus_softc),
 #define	COM_ARBUS_BAUD	115200
 #endif
 #endif
+
+#ifndef COM_ARBUS_BAUD
 #define	COM_ARBUS_BAUD	115200
+#endif
 
 int	com_arbus_baud = COM_ARBUS_BAUD;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.22 2005/12/11 12:19:27 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.22.26.1 2007/02/27 16:53:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22 2005/12/11 12:19:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22.26.1 2007/02/27 16:53:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.22 2005/12/11 12:19:27 christos Exp
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
-static void db_mach_abort  (db_expr_t, int, db_expr_t, const char *);
-static void db_mach_halt   (db_expr_t, int, db_expr_t, const char *);
-static void db_mach_reboot (db_expr_t, int, db_expr_t, const char *);
-static void db_mach_pagemap(db_expr_t, int, db_expr_t, const char *);
+static void db_mach_abort  (db_expr_t, bool, db_expr_t, const char *);
+static void db_mach_halt   (db_expr_t, bool, db_expr_t, const char *);
+static void db_mach_reboot (db_expr_t, bool, db_expr_t, const char *);
+static void db_mach_pagemap(db_expr_t, bool, db_expr_t, const char *);
 
 const struct db_command db_machine_command_table[] = {
 	{ "abort",	db_mach_abort,	0,	NULL },
@@ -80,21 +80,25 @@ const struct db_command db_machine_command_table[] = {
  */
 
 static void 
-db_mach_abort(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_mach_abort(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
 {
+
 	sunmon_abort();
 }
 
 static void 
-db_mach_halt(db_expr_t addr, int have_addr, db_expr_t count, const char *modif)
+db_mach_halt(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
+
 	sunmon_halt();
 }
 
 static void 
-db_mach_reboot(db_expr_t addr, int have_addr, db_expr_t count,
+db_mach_reboot(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
+
 	sunmon_reboot("");
 }
 
@@ -102,7 +106,7 @@ db_mach_reboot(db_expr_t addr, int have_addr, db_expr_t count,
 static void pte_print(int);
 
 static void 
-db_mach_pagemap(db_expr_t addr, int have_addr, db_expr_t count,
+db_mach_pagemap(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
 	u_long va = m68k_trunc_page((u_long)addr);

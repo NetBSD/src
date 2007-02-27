@@ -1,4 +1,4 @@
-/*	$NetBSD: frnd.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: frnd.c,v 1.3.26.1 2007/02/27 16:51:18 yamt Exp $	*/
 
 /*	$OpenBSD: frnd.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frnd.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frnd.c,v 1.3.26.1 2007/02/27 16:51:18 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -63,7 +63,7 @@ unsigned int *status;
 {
 	register unsigned int src, result;
 	register int src_exponent;
-	register int inexact = FALSE;
+	register int inexact = false;
 
 	src = *srcptr;
 	/*
@@ -102,7 +102,7 @@ unsigned int *status;
 		Sgl_rightshift(result,(SGL_P-1) - (src_exponent));
 		/* check for inexact */
 		if (Sgl_isinexact_to_fix(src,src_exponent)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -128,7 +128,7 @@ unsigned int *status;
 		Sgl_setzero_exponentmantissa(result);
 		/* check for inexact */
 		if (Sgl_isnotzero_exponentmantissa(src)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -167,7 +167,7 @@ unsigned int *status;
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register int src_exponent;
-	register int inexact = FALSE;
+	register int inexact = false;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	/*
@@ -207,7 +207,7 @@ unsigned int *status;
 		Dbl_rightshift(resultp1,resultp2,(DBL_P-1) - (src_exponent));
 		/* check for inexact */
 		if (Dbl_isinexact_to_fix(srcp1,srcp2,src_exponent)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -235,7 +235,7 @@ unsigned int *status;
 		Dbl_setzero_exponentmantissa(resultp1,resultp2);
 		/* check for inexact */
 		if (Dbl_isnotzero_exponentmantissa(srcp1,srcp2)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:

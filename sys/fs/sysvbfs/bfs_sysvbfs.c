@@ -1,4 +1,4 @@
-/*	$NetBSD: bfs_sysvbfs.c,v 1.4 2006/07/06 21:55:06 martin Exp $	*/
+/*	$NetBSD: bfs_sysvbfs.c,v 1.4.10.1 2007/02/27 16:54:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.4 2006/07/06 21:55:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bfs_sysvbfs.c,v 1.4.10.1 2007/02/27 16:54:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,10 +56,10 @@ struct bc_io_ops {
 
 #define	STATIC
 
-STATIC boolean_t bc_read_n(void *, uint8_t *, daddr_t, int);
-STATIC boolean_t bc_read(void *, uint8_t *, daddr_t);
-STATIC boolean_t bc_write_n(void *, uint8_t *, daddr_t, int);
-STATIC boolean_t bc_write(void *, uint8_t *, daddr_t);
+STATIC bool bc_read_n(void *, uint8_t *, daddr_t, int);
+STATIC bool bc_read(void *, uint8_t *, daddr_t);
+STATIC bool bc_write_n(void *, uint8_t *, daddr_t, int);
+STATIC bool bc_write(void *, uint8_t *, daddr_t);
 
 int
 sysvbfs_bfs_init(struct bfs **bfsp, struct vnode *vp)
@@ -78,7 +78,7 @@ sysvbfs_bfs_init(struct bfs **bfsp, struct vnode *vp)
 	bio->vp = vp;
 	bio->cred = NOCRED;	/* sysvbfs layer check cred. */
 
-	return bfs_init2(bfsp, 0, (struct sector_io_ops *)bio, FALSE);
+	return bfs_init2(bfsp, 0, (struct sector_io_ops *)bio, false);
 }
 
 void
@@ -89,22 +89,22 @@ sysvbfs_bfs_fini(struct bfs *bfs)
 	bfs_fini(bfs);
 }
 
-STATIC boolean_t
+STATIC bool
 bc_read_n(void *self, uint8_t *buf, daddr_t block, int count)
 {
 	int i;
 
 	for (i = 0; i < count; i++) {
 		if (!bc_read(self, buf, block))
-			return FALSE;
+			return false;
 		buf += DEV_BSIZE;
 		block++;
 	}
 
-	return TRUE;
+	return true;
 }
 
-STATIC boolean_t
+STATIC bool
 bc_read(void *self, uint8_t *buf, daddr_t block)
 {
 	struct bc_io_ops *bio = self;
@@ -115,32 +115,32 @@ bc_read(void *self, uint8_t *buf, daddr_t block)
 	memcpy(buf, bp->b_data, DEV_BSIZE);
 	brelse(bp);
 
-	return TRUE;
+	return true;
  error_exit:
 	printf("%s: block %lld read failed.\n", __FUNCTION__, 
 	    (long long int)block);
 
 	if (bp != NULL)
 		brelse(bp);
-	return FALSE;
+	return false;
 }
 
-STATIC boolean_t
+STATIC bool
 bc_write_n(void *self, uint8_t *buf, daddr_t block, int count)
 {
 	int i;
 
 	for (i = 0; i < count; i++) {
 		if (!bc_write(self, buf, block))
-			return FALSE;
+			return false;
 		buf += DEV_BSIZE;
 		block++;
 	}
 
-	return TRUE;
+	return true;
 }
 
-STATIC boolean_t
+STATIC bool
 bc_write(void *self, uint8_t *buf, daddr_t block)
 {
 	struct bc_io_ops *bio = self;
@@ -151,14 +151,14 @@ bc_write(void *self, uint8_t *buf, daddr_t block)
 #endif
 	if ((bp = getblk(bio->vp, block, DEV_BSIZE, 0, 0)) == 0) {
 		printf("getblk failed.\n");
-		return FALSE;
+		return false;
 	}
 	memcpy(bp->b_data, buf, DEV_BSIZE);
 
 	if (bwrite(bp) != 0) {
 		printf("bwrite failed.\n");
-		return FALSE;
+		return false;
 	}
 
-	return TRUE;
+	return true;
 }

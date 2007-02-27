@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.10 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.10.26.1 2007/02/27 16:49:19 yamt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.10 2005/12/11 12:16:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.10.26.1 2007/02/27 16:49:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.10 2005/12/11 12:16:41 christos Exp
 void
 db_show_panic_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
-	int             have_addr;
+	bool            have_addr;
 	db_expr_t       count;
 	const char     *modif;
 {
@@ -63,7 +63,7 @@ db_show_panic_cmd(addr, have_addr, count, modif)
 void
 db_show_frame_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
-	int             have_addr;
+	bool            have_addr;
 	db_expr_t       count;
 	const char     *modif;
 {

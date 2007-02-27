@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.3 2006/01/31 14:03:53 yamt Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.3.28.1 2007/02/27 16:55:27 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.3 2006/01/31 14:03:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.3.28.1 2007/02/27 16:55:27 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -112,7 +112,7 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	vsize_t movesize;
 	vaddr_t newva;
 	int error = 0;
-	const boolean_t fixed = (flags & UVM_MREMAP_FIXED) != 0;
+	const bool fixed = (flags & UVM_MREMAP_FIXED) != 0;
 
 	if (fixed) {
 		newva = *newvap;

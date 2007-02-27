@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.23 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.23.26.1 2007/02/27 16:55:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -159,7 +159,7 @@ int iso_ck_addr (struct iso_addr *);
 int iso_eqtype (struct iso_addr *, struct iso_addr *);
 struct iso_ifaddr *iso_localifa (struct sockaddr_iso *);
 int iso_nlctloutput (int, int, caddr_t, struct mbuf *);
-void dump_isoaddr (struct sockaddr_iso *);
+void dump_isoaddr(const struct sockaddr_iso *);
 
 /* iso_chksum.c */
 int iso_check_csum (struct mbuf *, int);
@@ -170,7 +170,7 @@ int m_compress (struct mbuf *, struct mbuf **);
 /* iso_snpac.c */
 void llc_rtrequest (int, struct rtentry *, struct rt_addrinfo *);
 void iso_setmcasts (struct ifnet *, int);
-int iso_snparesolve (struct ifnet *, struct sockaddr_iso *,
+int iso_snparesolve(struct ifnet *, const struct sockaddr_iso *,
 			 caddr_t, int *);
 void snpac_free (struct llinfo_llc *);
 int snpac_add (struct ifnet *, struct iso_addr *, caddr_t, int,

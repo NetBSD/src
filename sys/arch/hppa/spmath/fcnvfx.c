@@ -1,4 +1,4 @@
-/*	$NetBSD: fcnvfx.c,v 1.3 2005/12/11 12:17:40 christos Exp $	*/
+/*	$NetBSD: fcnvfx.c,v 1.3.26.1 2007/02/27 16:51:18 yamt Exp $	*/
 
 /*	$OpenBSD: fcnvfx.c,v 1.5 2001/03/29 03:58:18 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fcnvfx.c,v 1.3 2005/12/11 12:17:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fcnvfx.c,v 1.3.26.1 2007/02/27 16:51:18 yamt Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/sgl_float.h"
@@ -62,7 +62,7 @@ unsigned int *status;
 {
 	register unsigned int src, temp;
 	register int src_exponent, result;
-	register int inexact = FALSE;
+	register int inexact = false;
 
 	src = *srcptr;
 	src_exponent = Sgl_exponent(src) - SGL_BIAS;
@@ -94,7 +94,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Sgl_isinexact_to_fix(src,src_exponent)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -119,7 +119,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Sgl_isnotzero_exponentmantissa(src)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -158,7 +158,7 @@ unsigned int *status;
 {
 	register int src_exponent, resultp1;
 	register unsigned int src, temp, resultp2;
-	register int inexact = FALSE;
+	register int inexact = false;
 
 	src = *srcptr;
 	src_exponent = Sgl_exponent(src) - SGL_BIAS;
@@ -194,7 +194,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Sgl_isinexact_to_fix(src,src_exponent)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -226,7 +226,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Sgl_isnotzero_exponentmantissa(src)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -273,7 +273,7 @@ unsigned int *status;
 {
 	register unsigned int srcp1,srcp2, tempp1,tempp2;
 	register int src_exponent, result;
-	register int inexact = FALSE;
+	register int inexact = false;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1) - DBL_BIAS;
@@ -306,7 +306,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Dbl_isinexact_to_fix(srcp1,srcp2,src_exponent)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -335,7 +335,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Dbl_isnotzero_exponentmantissa(srcp1,srcp2)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -374,7 +374,7 @@ unsigned int *status;
 {
 	register int src_exponent, resultp1;
 	register unsigned int srcp1, srcp2, tempp1, tempp2, resultp2;
-	register int inexact = FALSE;
+	register int inexact = false;
 
 	Dbl_copyfromptr(srcptr,srcp1,srcp2);
 	src_exponent = Dbl_exponent(srcp1) - DBL_BIAS;
@@ -410,7 +410,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Dbl_isinexact_to_fix(srcp1,srcp2,src_exponent)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:
@@ -442,7 +442,7 @@ unsigned int *status;
 
 		/* check for inexact */
 		if (Dbl_isnotzero_exponentmantissa(srcp1,srcp2)) {
-			inexact = TRUE;
+			inexact = true;
 			/*  round result  */
 			switch (Rounding_mode()) {
 			case ROUNDPLUS:

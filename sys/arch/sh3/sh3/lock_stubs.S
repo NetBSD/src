@@ -1,7 +1,7 @@
-/*	$NetBSD: kauth_impl.h,v 1.2 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.6.2 2007/02/27 16:53:00 yamt Exp $	*/
 
-/*-
- * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
+/*
+ * Copyright (c) 2007 Valeriy E. Ushakov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,7 +13,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,35 +27,33 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sh3/asm.h>
+#include <sh3/psl.h>
+
 /*
- * Implementation private definitions used by kauth, and kernel memory
- * grovellers.
+ * LINTSTUB: include <sys/types.h>
  */
 
-#ifndef	_SYS_KAUTH_IMPL_H_
-#define	_SYS_KAUTH_IMPL_H_	1
 
-#include <sys/types.h>
-#include <sys/mutex.h>
-#include <sys/specificdata.h>
-
-#ifdef _KAUTH_PRIVATE
-/* 
- * Credentials.
+/*
+ * LINTSTUB: Func: int _lock_cas(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new);
+ *
+ *	Brute force with splhigh() for now.  Need to be redone as RAS.
  */
-struct kauth_cred {
-	kmutex_t cr_lock;		/* lock on cr_refcnt */
-	u_int cr_refcnt;		/* reference count */
-	uid_t cr_uid;			/* user id */
-	uid_t cr_euid;			/* effective user id */
-	uid_t cr_svuid;			/* saved effective user id */
-	gid_t cr_gid;			/* group id */
-	gid_t cr_egid;			/* effective group id */
-	gid_t cr_svgid;			/* saved effective group id */
-	u_int cr_ngroups;		/* number of groups */
-	gid_t cr_groups[NGROUPS];	/* group memberships */
-	specificdata_reference cr_sd;	/* specific data */
-};
-#endif	/* _KAUTH_PRIVATE */
+NENTRY(_lock_cas)
+	mov	#PSL_IMASK, r2	! 0xf0 - gets sign extended
+	stc	sr, r3
+	extu.b	r2, r2		! undo sign extention
+	mov	r3, r7		! preserve SR
+	or	r2, r3		! mask all interrupts
+	ldc	r3, sr
 
-#endif	/* _SYS_KAUTH_IMPL_H_	*/
+	mov.l	@r4, r1
+	cmp/eq	r1, r5		! T = (*ptr == old)
+	bf.s	1f
+	 movt	r0		! retval = T
+	mov.l	r6, @r4		! *ptr = new
+1:
+	ldc	r7, sr		! restore SR (cannot be in delay slot)
+	rts
+	 nop

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.23 2006/12/26 10:43:44 elad Exp $	*/
+/*	$NetBSD: mem.c,v 1.23.2.1 2007/02/27 16:53:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2006/12/26 10:43:44 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23.2.1 2007/02/27 16:53:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2006/12/26 10:43:44 elad Exp $");
 #include <uvm/uvm_extern.h>
 
 caddr_t zeropage;
-boolean_t __mm_mem_addr(paddr_t);
+bool __mm_mem_addr(paddr_t);
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -200,13 +200,13 @@ mmmmap(dev_t dev, off_t off, int prot)
 }
 
 /*
- * boolean_t __mm_mem_addr(paddr_t pa):
+ * bool __mm_mem_addr(paddr_t pa):
  *	Check specified physical address is memory device.
  */
-boolean_t
+bool
 __mm_mem_addr(paddr_t pa)
 {
 
 	return ((atop(pa) < vm_physmem[0].start || PHYS_TO_VM_PAGE(pa) != NULL)
-	    ? TRUE : FALSE);
+	    ? true : false);
 }

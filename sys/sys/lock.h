@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.68 2007/02/16 20:54:12 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.68.2.1 2007/02/27 16:55:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ struct lock {
 			lwpid_t lk_sleep_locklwp;
 
 			/* priority at which to sleep */
-			int lk_sleep_prio;
+			pri_t lk_sleep_prio;
 
 			/* maximum sleep time (for tsleep) */
 			int lk_sleep_timo;
@@ -347,7 +347,7 @@ struct lock {
 
 struct proc;
 
-void	lockinit(struct lock *, int, const char *, int, int);
+void	lockinit(struct lock *, pri_t, const char *, int, int);
 #if defined(LOCKDEBUG)
 int	_lockmgr(volatile struct lock *, u_int, struct simplelock *,
 	    const char *, int);

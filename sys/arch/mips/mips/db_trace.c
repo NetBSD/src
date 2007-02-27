@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.30 2006/12/26 12:28:31 martin Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.30.2.1 2007/02/27 16:52:05 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30 2006/12/26 12:28:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30.2.1 2007/02/27 16:52:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,7 +59,7 @@ vaddr_t getreg_val(db_expr_t regno);
 		 ((int *)(&((struct mips_kernel_state *)0)->sp) - (int *)0):  \
 	 -1)
 
-db_sym_t localsym(db_sym_t sym, boolean_t isreg, int *lex_level);
+db_sym_t localsym(db_sym_t sym, bool isreg, int *lex_level);
 
 /*
  * Machine register set.
@@ -132,7 +132,7 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 void
-db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif, void (*pr)(const char *, ...))
 {
 #ifndef DDB_TRACE
@@ -162,7 +162,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		return;
 	}	
 	l = LIST_FIRST(&p->p_lwps); /* XXX NJWLWP */
-	if (!(l->l_flag & L_INMEM)) {
+	if (!(l->l_flag & LW_INMEM)) {
 		(*pr)("swapped out\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.79 2005/12/24 20:06:52 perry Exp $	*/
+/*	$NetBSD: pmap.h,v 1.79.26.1 2007/02/27 16:49:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -170,7 +170,7 @@ struct pmap_devmap {
  */
 struct pmap {
 	u_int8_t		pm_domain;
-	boolean_t		pm_remove_all;
+	bool			pm_remove_all;
 	struct l1_ttable	*pm_l1;
 	union pmap_cache_state	pm_cstate;
 	struct uvm_object	pm_obj;
@@ -252,7 +252,7 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
  */
 void	pmap_procwr(struct proc *, vaddr_t, int);
 void	pmap_remove_all(pmap_t);
-boolean_t pmap_extract(pmap_t, vaddr_t, paddr_t *);
+bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
@@ -262,8 +262,8 @@ void	pmap_bootstrap(pd_entry_t *, vaddr_t, vaddr_t);
 
 void	pmap_do_remove(pmap_t, vaddr_t, vaddr_t, int);
 int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t, int);
-boolean_t pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
-boolean_t pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
+bool	pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
+bool	pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
 void	pmap_set_pcb_pagedir(pmap_t, struct pcb *);
 
 void	pmap_debug(int);
@@ -285,7 +285,7 @@ void	pmap_devmap_register(const struct pmap_devmap *);
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 
  */
-boolean_t	pmap_pageidlezero(paddr_t);
+bool	pmap_pageidlezero(paddr_t);
 #define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*
@@ -304,7 +304,7 @@ vtopte(vaddr_t va)
 	pd_entry_t *pdep;
 	pt_entry_t *ptep;
 
-	if (pmap_get_pde_pte(pmap_kernel(), va, &pdep, &ptep) == FALSE)
+	if (pmap_get_pde_pte(pmap_kernel(), va, &pdep, &ptep) == false)
 		return (NULL);
 	return (ptep);
 }
@@ -317,7 +317,7 @@ vtophys(vaddr_t va)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+	if (pmap_extract(pmap_kernel(), va, &pa) == false)
 		return (0);	/* XXXSCW: Panic? */
 
 	return (pa);

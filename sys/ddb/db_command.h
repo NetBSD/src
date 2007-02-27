@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.h,v 1.26 2006/09/05 21:52:11 uwe Exp $	*/
+/*	$NetBSD: db_command.h,v 1.26.8.1 2007/02/27 16:53:43 yamt Exp $	*/
 
 /*
  * Mach Operating System
@@ -53,7 +53,7 @@ extern char db_cmd_on_enter[];
 struct db_command {
 	const char	*name;		/* command name */
 	/* function to call */
-	void		(*fcn)(db_expr_t, int, db_expr_t, const char *);
+	void		(*fcn)(db_expr_t, bool, db_expr_t, const char *);
 	int		flag;		/* extra info: */
 #define	CS_OWN		0x1		/* non-standard syntax */
 #define	CS_MORE		0x2		/* standard syntax, but may have other

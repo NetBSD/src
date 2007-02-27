@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2006/04/09 01:18:14 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16.14.1 2007/02/27 16:52:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2006/04/09 01:18:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.14.1 2007/02/27 16:52:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -195,12 +195,12 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 	/*
 	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
@@ -236,7 +236,7 @@ cpu_reboot(int howto, char *bootstr)
 
 #ifdef KLOADER
 	/* No bootinfo is required. */
-	kloader_bootinfo_set(&kbi, 0, NULL, NULL, TRUE);
+	kloader_bootinfo_set(&kbi, 0, NULL, NULL, true);
 #ifndef KLOADER_KERNEL_PATH
 #define	KLOADER_KERNEL_PATH	"/netbsd"
 #endif

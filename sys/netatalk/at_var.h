@@ -1,4 +1,4 @@
-/*	$NetBSD: at_var.h,v 1.4 2005/12/10 23:29:05 elad Exp $	 */
+/*	$NetBSD: at_var.h,v 1.4.26.1 2007/02/27 16:54:51 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -60,6 +60,7 @@ struct at_aliasreq {
 #define AA_SAT(aa) \
     (&(aa->aa_addr))
 #define satosat(sa)	((struct sockaddr_at *)(sa))
+#define satocsat(sa)	((const struct sockaddr_at *)(sa))
 
 #define AFA_ROUTE	0x0001
 #define AFA_PROBING	0x0002

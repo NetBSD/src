@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2005/12/24 23:24:00 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32.26.1 2007/02/27 16:50:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2005/12/24 23:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32.26.1 2007/02/27 16:50:03 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -217,7 +217,7 @@ cpu_reboot(int howto, char *bootstr)
 
 #ifdef KLOADER
 	/* No bootinfo is required. */
-	kloader_bootinfo_set(&kbi, 0, NULL, NULL, TRUE);
+	kloader_bootinfo_set(&kbi, 0, NULL, NULL, true);
 	if ((howto & RB_HALT) == 0) {
 		if ((howto & RB_STRING) && bootstr != NULL) {
 			printf("loading a new kernel: %s\n", bootstr);

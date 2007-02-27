@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.19 2006/10/23 21:13:00 uwe Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.19.4.1 2007/02/27 16:52:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19 2006/10/23 21:13:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.19.4.1 2007/02/27 16:52:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ static	rasm_t	f[16][16] = {
 };
 
 db_addr_t
-db_disasm(db_addr_t loc, boolean_t altfmt)
+db_disasm(db_addr_t loc, bool altfmt)
 {
 	const void *pc = (void *)loc;
 	char line[40];

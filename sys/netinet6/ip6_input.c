@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.94 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.94.2.1 2007/02/27 16:55:03 yamt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.94 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.94.2.1 2007/02/27 16:55:03 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -237,8 +237,7 @@ ip6intr()
 extern struct	route_in6 ip6_forward_rt;
 
 void
-ip6_input(m)
-	struct mbuf *m;
+ip6_input(struct mbuf *m)
 {
 	struct ip6_hdr *ip6;
 	int off = sizeof(struct ip6_hdr), nest;
@@ -277,7 +276,7 @@ ip6_input(m)
 		else
 			ip6stat.ip6s_mext1++;
 	} else {
-#define M2MMAX	(sizeof(ip6stat.ip6s_m2m)/sizeof(ip6stat.ip6s_m2m[0]))
+#define M2MMAX	__arraycount(ip6stat.ip6s_m2m)
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
 				ip6stat.ip6s_m2m[lo0ifp->if_index]++; /* XXX */
@@ -465,7 +464,7 @@ ip6_input(m)
 	 *  Unicast check
 	 */
 	if (!IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst,
-	    &((struct sockaddr_in6 *)(&ip6_forward_rt.ro_dst))->sin6_addr))
+	    &((const struct sockaddr_in6 *)rtcache_getdst((const struct route *)&ip6_forward_rt))->sin6_addr))
 		rtcache_free((struct route *)&ip6_forward_rt);
 	else
 		rtcache_check((struct route *)&ip6_forward_rt);
@@ -477,8 +476,8 @@ ip6_input(m)
 
 		ip6stat.ip6s_forward_cachemiss++;
 
-		bzero(&ip6_forward_rt.ro_dst, sizeof(struct sockaddr_in6));
-		dst6 = (struct sockaddr_in6 *)&ip6_forward_rt.ro_dst;
+		dst6 = &ip6_forward_rt.ro_dst;
+		memset(dst6, 0, sizeof(*dst6));
 		dst6->sin6_len = sizeof(struct sockaddr_in6);
 		dst6->sin6_family = AF_INET6;
 		dst6->sin6_addr = ip6->ip6_dst;
@@ -1298,7 +1297,8 @@ ip6_savecontrol(in6p, mp, ip6, m)
 
 
 void
-ip6_notify_pmtu(struct in6pcb *in6p, struct sockaddr_in6 *dst, uint32_t *mtu)
+ip6_notify_pmtu(struct in6pcb *in6p, const struct sockaddr_in6 *dst,
+    uint32_t *mtu)
 {
 	struct socket *so;
 	struct mbuf *m_mtu;
@@ -1324,7 +1324,7 @@ ip6_notify_pmtu(struct in6pcb *in6p, struct sockaddr_in6 *dst, uint32_t *mtu)
 	    IPV6_PATHMTU, IPPROTO_IPV6)) == NULL)
 		return;
 
-	if (sbappendaddr(&so->so_rcv, (struct sockaddr *)dst, NULL, m_mtu)
+	if (sbappendaddr(&so->so_rcv, (const struct sockaddr *)dst, NULL, m_mtu)
 	    == 0) {
 		m_freem(m_mtu);
 		/* XXX: should count statistics */

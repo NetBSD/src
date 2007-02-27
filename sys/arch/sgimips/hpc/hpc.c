@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.51 2006/12/29 07:15:01 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.51.2.1 2007/02/27 16:52:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.51 2006/12/29 07:15:01 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.51.2.1 2007/02/27 16:52:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,30 @@ static const struct hpc_device hpc1_devices[] = {
 	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */    
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
+	{ "wdsc",	/* GIO32 SCSI adapter slot 0 (Indigo) */
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  6,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "wdsc",	/* GIO32 SCSI adapter slot 0 (Indy) */
+	  HPC_BASE_ADDRESS_1,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  22,
+	  HPCDEV_IP24 }, 
+
+	{ "wdsc",	/* GIO32 SCSI adapter slot 1 (Indigo) */
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  6,
+	  HPCDEV_IP12 | HPCDEV_IP20 },
+
+	{ "wdsc",	/* GIO32 SCSI adapter slot 1 (Indy/Challenge S) */
+	  HPC_BASE_ADDRESS_2,
+	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
+	  23,
+	  HPCDEV_IP24 },
+
 	{ "dpclock",	/* Personal Iris/Indigo clock */
 	  HPC_BASE_ADDRESS_0,
 	  HPC1_PBUS_BBRAM, 0,
@@ -157,7 +181,7 @@ static const struct hpc_device hpc3_devices[] = {
 	{ "sq",		/* Challenge S IOPLUS secondary ethernet */
 	  HPC_BASE_ADDRESS_1,
 	  HPC3_ENET_DEVREGS, HPC3_ENET_REGS,
-	  22,
+	  0,
 	  HPCDEV_IP24 },
 
 	{ "wdsc",	/* Indigo2/Indy/Challenge S/Challenge M onboard SCSI */
@@ -342,7 +366,7 @@ static int	hpc_revision(struct hpc_softc *, struct gio_attach_args *);
 static int	hpc_submatch(struct device *, struct cfdata *,
 		     const int *, void *);
 
-static int	hpc_power_intr(void *);
+//static int	hpc_power_intr(void *);
 
 #if defined(BLINK)
 static struct callout hpc_blink_ch = CALLOUT_INITIALIZER;
@@ -419,8 +443,46 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	    (hpctype == 15) ? ".5" : "", (isonboard) ? "onboard" :
 	    (isioplus) ? "IOPLUS mezzanine" : "GIO slot");
 
-	/* configure the bus arbiter appropriately (never happens on Indigo2) */
-	if (!isonboard) {
+	/*
+	 * Configure the bus arbiter appropriately.
+	 *
+	 * In the case of Challenge S, we must tell the IOPLUS board which
+	 * DMA channel to use (we steal it from one of the slots). SGI permits
+	 * an HPC1.5 in slot 1, in which case IOPLUS must use EXP0, or any
+	 * other DMA-capable board in slot 0, which leaves us to use EXP1. Of
+	 * course, this means that only one GIO board may use DMA.
+	 *
+	 * Note that this never happens on Indigo2.
+	 */
+	if (isioplus) {
+		int arb_slot;
+
+		if (platform.badaddr(
+		    (void *)MIPS_PHYS_TO_KSEG1(HPC_BASE_ADDRESS_2), 4))
+			arb_slot = GIO_SLOT_EXP1;
+		else
+			arb_slot = GIO_SLOT_EXP0;
+
+		if (gio_arb_config(arb_slot, GIO_ARB_LB | GIO_ARB_MST |
+		    GIO_ARB_64BIT | GIO_ARB_HPC2_64BIT)) {
+			printf("%s: failed to configure GIO bus arbiter\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+
+		printf("%s: using EXP%d's DMA channel\n", sc->sc_dev.dv_xname,
+		    (arb_slot == GIO_SLOT_EXP0) ? 0 : 1);
+
+		bus_space_write_4(ga->ga_iot, ga->ga_ioh,
+		    HPC3_PBUS_CFGPIO_REGS, 0x0003ffff);
+
+		if (arb_slot == GIO_SLOT_EXP0)
+			bus_space_write_4(ga->ga_iot, ga->ga_ioh,
+			    HPC3_PBUS_CH0_DEVREGS, 0x20202020);
+		else
+			bus_space_write_4(ga->ga_iot, ga->ga_ioh,
+			    HPC3_PBUS_CH0_DEVREGS, 0x30303030);
+	} else if (!isonboard) {
 		int arb_slot;
 
 		arb_slot = (ga->ga_addr == HPC_BASE_ADDRESS_1) ?
@@ -437,6 +499,10 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ch = ga->ga_ioh;
 
 	sc->sc_base = ga->ga_addr;
+
+	hpc_read_eeprom(hpctype, SGIMIPS_BUS_SPACE_HPC,
+	    MIPS_PHYS_TO_KSEG1(sc->sc_base), ha.hpc_eeprom,
+	    sizeof(ha.hpc_eeprom));
 
 	hd = (hpctype == 3) ? hpc3_devices : hpc1_devices;
 	for (; hd->hd_name != NULL; hd++) {
@@ -457,11 +523,15 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		else
 			ha.hpc_regs = &hpc1_values;
 		ha.hpc_regs->revision = hpctype;
-		hpc_read_eeprom(hpctype, ha.ha_st, ha.ha_sh, ha.hpc_eeprom,
-		    sizeof(ha.hpc_eeprom));
 
-		(void) config_found_sm_loc(self, "hpc", NULL, &ha, hpc_print,
-					   hpc_submatch);
+		/* XXXgross! avoid complaining in E++ and GIO32 SCSI cases */
+		if (hpctype != 3 && sc->sc_base != HPC_BASE_ADDRESS_0) {
+			(void)config_found_sm_loc(self, "hpc", NULL, &ha,
+			    NULL, hpc_submatch);
+		} else {
+			(void)config_found_sm_loc(self, "hpc", NULL, &ha,
+			    hpc_print, hpc_submatch);
+		}
 	}
 
 	/*
@@ -473,7 +543,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	 * it gets attached, as long as it only happens once.
 	 */
 	if (mach_type == MACH_SGI_IP22 && !powerintr_established) {
-		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
+//		cpu_intr_establish(9, IPL_NONE, hpc_power_intr, sc);
 		powerintr_established++;
 	}
 
@@ -590,6 +660,7 @@ hpc_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+#if 0
 static int
 hpc_power_intr(void *arg)
 {
@@ -605,6 +676,7 @@ hpc_power_intr(void *arg)
 
 	return 1;
 }
+#endif
 
 #if defined(BLINK)
 static void

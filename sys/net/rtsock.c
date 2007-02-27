@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.91 2006/11/13 19:16:01 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.91.4.1 2007/02/27 16:54:46 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.91 2006/11/13 19:16:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.91.4.1 2007/02/27 16:54:46 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1184,12 +1184,17 @@ again:
  */
 
 const struct protosw routesw[] = {
-{
-	SOCK_RAW,	&routedomain,	0,		PR_ATOMIC|PR_ADDR,
-	raw_input,	route_output,	raw_ctlinput,	0,
-	route_usrreq,
-	raw_init,	0,		0,		0,
-} };
+	{
+		.pr_type = SOCK_RAW,
+		.pr_domain = &routedomain,
+		.pr_flags = PR_ATOMIC|PR_ADDR,
+		.pr_input = raw_input,
+		.pr_output = route_output,
+		.pr_ctlinput = raw_ctlinput,
+		.pr_usrreq = route_usrreq,
+		.pr_init = raw_init,
+	},
+};
 
 struct domain routedomain = {
 	.dom_family = PF_ROUTE,

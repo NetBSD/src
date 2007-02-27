@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.133 2006/11/23 19:41:58 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.133.4.1 2007/02/27 16:55:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -932,7 +932,7 @@ void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 
 /* Inline routines. */
 static __inline u_int m_length(struct mbuf *) __unused;
-static __inline void m_ext_free(struct mbuf *, boolean_t) __unused;
+static __inline void m_ext_free(struct mbuf *, bool) __unused;
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);
@@ -1002,7 +1002,7 @@ m_length(struct mbuf *m)
  * => called at splvm.
  */
 static __inline void
-m_ext_free(struct mbuf *m, boolean_t dofree)
+m_ext_free(struct mbuf *m, bool dofree)
 {
 
 	if (MCLISREFERENCED(m)) {

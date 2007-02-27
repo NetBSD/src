@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.294.2.2 2007/02/20 21:48:44 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.294.2.3 2007/02/27 16:54:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.2 2007/02/20 21:48:44 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.3 2007/02/27 16:54:16 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -572,7 +572,7 @@ main(void)
 	boottime = time;
 	rw_enter(&proclist_lock, RW_READER);
 	LIST_FOREACH(p, &allproc, p_list) {
-		KASSERT((p->p_flag & P_MARKER) == 0);
+		KASSERT((p->p_flag & PK_MARKER) == 0);
 		mutex_enter(&p->p_smutex);
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.6 2006/02/16 20:17:12 perry Exp $ */
+/* $NetBSD: pmap.h,v 1.6.20.1 2007/02/27 16:48:38 yamt Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -45,7 +45,7 @@ extern struct pmap kernel_pmap_store;
 
 #define pmap_kernel()	(&kernel_pmap_store)
 
-extern boolean_t pmap_fault(pmap_t, vaddr_t, vm_prot_t);
+extern bool pmap_fault(pmap_t, vaddr_t, vm_prot_t);
 
 /* These have to be macros, whatever pmap(9) says. */
 #define pmap_resident_count(pmap)	_pmap_resident_count(pmap)

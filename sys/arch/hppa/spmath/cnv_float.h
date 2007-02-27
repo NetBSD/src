@@ -1,4 +1,4 @@
-/*	$NetBSD: cnv_float.h,v 1.1 2002/06/05 01:04:24 fredette Exp $	*/
+/*	$NetBSD: cnv_float.h,v 1.1.64.1 2007/02/27 16:51:08 yamt Exp $	*/
 
 /*	$OpenBSD: cnv_float.h,v 1.5 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -73,7 +73,7 @@
 
 #define Sgl_isinexact_to_fix(sgl_value,exponent)	\
     ((exponent < (SGL_P - 1)) ?				\
-     (Sall(sgl_value) << (SGL_EXP_LENGTH + 1 + exponent)) : FALSE)
+     (Sall(sgl_value) << (SGL_EXP_LENGTH + 1 + exponent)) : false)
 
 #define Int_isinexact_to_sgl(int_value)	(int_value << (33 - SGL_EXP_LENGTH))
 
@@ -103,7 +103,7 @@
 
 #define Sgl_isone_stickybit(sgl_value,exponent)		\
     (exponent < (SGL_P - 2) ?				\
-     Sall(sgl_value) << (SGL_EXP_LENGTH + 2 + exponent) : FALSE)
+     Sall(sgl_value) << (SGL_EXP_LENGTH + 2 + exponent) : false)
 
 
 /*
@@ -122,7 +122,7 @@
 
 #define Dbl_to_sgl_denormalized(srcA,srcB,exp,dest,inexact,guard,sticky,odd,tiny) \
     Deposit_dexponent(srcA,1);						\
-    tiny = TRUE;							\
+    tiny = true;							\
     if (exp >= -2) {							\
 	if (exp == 0) {							\
 	    inexact = Dallp2(srcB) << 3;				\
@@ -136,7 +136,7 @@
 			if (Dbl_iszero_sign(srcA)) {			\
 			    dest++;					\
 			    if (Sgl_isone_hidden(dest))	\
-				tiny = FALSE;				\
+				tiny = false;				\
 			    dest--;					\
 			}						\
 			break;						\
@@ -144,7 +144,7 @@
 			if (Dbl_isone_sign(srcA)) {			\
 			    dest++;					\
 			    if (Sgl_isone_hidden(dest))	\
-				tiny = FALSE;				\
+				tiny = false;				\
 			    dest--;					\
 			}						\
 			break;						\
@@ -152,7 +152,7 @@
 			if (guard && (sticky || odd)) {			\
 			    dest++;					\
 			    if (Sgl_isone_hidden(dest))	\
-				tiny = FALSE;				\
+				tiny = false;				\
 			    dest--;					\
 			}						\
 			break;						\
@@ -207,7 +207,7 @@
     (exponent < (DBL_P-33) ?						\
      Dallp2(dbl_valueB) || Dallp1(dbl_valueA) << (DBL_EXP_LENGTH+1+exponent) : \
      (exponent < (DBL_P-1) ? Dallp2(dbl_valueB) << (exponent + (33-DBL_P)) :   \
-      FALSE))
+      false))
 
 #define Dbl_isoverflow_to_int(exponent,dbl_valueA,dbl_valueB)		\
     ((exponent > SGL_FX_MAX_EXP + 1) || Dsign(dbl_valueA)==0 ||		\
@@ -222,7 +222,7 @@
     (exponent < (DBL_P-34) ?						\
      (Dallp2(dbl_valueB) || Dallp1(dbl_valueA)<<(DBL_EXP_LENGTH+2+exponent)) : \
      (exponent<(DBL_P-2) ? (Dallp2(dbl_valueB) << (exponent + (34-DBL_P))) : \
-      FALSE))
+      false))
 
 
 /* Int macros */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.106.2.3 2007/02/23 12:00:29 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.106.2.4 2007/02/27 16:54:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.3 2007/02/23 12:00:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.106.2.4 2007/02/27 16:54:19 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -1157,7 +1157,7 @@ statclock(struct clockframe *frame)
 		}
 	}
 	l = curlwp;
-	if ((l->l_flag & L_IDLE) != 0) {
+	if ((l->l_flag & LW_IDLE) != 0) {
 		/*
 		 * don't account idle lwps as swapper.
 		 */

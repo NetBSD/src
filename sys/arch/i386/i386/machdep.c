@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.596.2.6 2007/02/26 20:08:14 rmind Exp $	*/
+/*	$NetBSD: machdep.c,v 1.596.2.7 2007/02/27 16:51:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.6 2007/02/26 20:08:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.7 2007/02/27 16:51:40 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -203,16 +203,6 @@ uint32_t arch_i386_xbox_memsize = 0;
 #ifdef MULTIPROCESSOR		/* XXX */
 #include <machine/mpbiosvar.h>	/* XXX */
 #endif				/* XXX */
-
-#ifndef BEEP_ONHALT_COUNT
-#define BEEP_ONHALT_COUNT 3
-#endif
-#ifndef BEEP_ONHALT_PITCH
-#define BEEP_ONHALT_PITCH 1500
-#endif
-#ifndef BEEP_ONHALT_PERIOD
-#define BEEP_ONHALT_PERIOD 250
-#endif
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* CPU "architecture" */
@@ -787,14 +777,13 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	frame.sf_uc.uc_flags |= (l->l_sigstk.ss_flags & SS_ONSTACK)
 	    ? _UC_SETSTACK : _UC_CLRSTACK;
 	memset(&frame.sf_uc.uc_stack, 0, sizeof(frame.sf_uc.uc_stack));
-	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 
 	if (tf->tf_eflags & PSL_VM)
 		(*p->p_emul->e_syscall_intern)(p);
-
 	sendsig_reset(l, sig);
 
 	mutex_exit(&p->p_smutex);
+	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
 	error = copyout(&frame, fp, sizeof(frame));
 	mutex_enter(&p->p_smutex);
 
@@ -2014,7 +2003,7 @@ init386(paddr_t first_avail)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
-		boolean_t loaded;
+		bool loaded;
 		struct btinfo_symtab *symtab;
 
 #ifdef DDB

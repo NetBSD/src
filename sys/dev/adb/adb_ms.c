@@ -1,7 +1,8 @@
-/*	$NetBSD: adb_ms.c,v 1.4 2007/02/10 03:38:47 tsutsui Exp $	*/
+/*	$NetBSD: adb_ms.c,v 1.4.2.1 2007/02/27 16:53:50 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
+ * Copyright (C) 2006, 2007 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.4 2007/02/10 03:38:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_ms.c,v 1.4.2.1 2007/02/27 16:53:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

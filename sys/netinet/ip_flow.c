@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.39 2007/01/26 19:12:21 dyoung Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.39.2.1 2007/02/27 16:54:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39 2007/01/26 19:12:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39.2.1 2007/02/27 16:54:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ ipflow_fastforward(struct mbuf *m)
 	struct ip *ip, ip_store;
 	struct ipflow *ipf;
 	struct rtentry *rt;
-	struct sockaddr *dst;
+	const struct sockaddr *dst;
 	int error;
 	int iplen;
 
@@ -255,7 +255,7 @@ ipflow_fastforward(struct mbuf *m)
 	if (rt->rt_flags & RTF_GATEWAY)
 		dst = rt->rt_gateway;
 	else
-		dst = &ipf->ipf_ro.ro_dst;
+		dst = rtcache_getdst(&ipf->ipf_ro);
 
 	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
 		if (error == ENOBUFS)

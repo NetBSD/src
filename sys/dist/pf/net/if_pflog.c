@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.8 2006/11/16 01:33:34 christos Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.8.4.1 2007/02/27 16:54:10 yamt Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.12 2004/05/19 17:50:51 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -83,7 +83,7 @@ void	pflogattach(int);
 #ifdef _LKM
 void	pflogdetach(void);
 #endif
-int	pflogoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
+int	pflogoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	    	       struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, caddr_t);
 void	pflogrtrequest(int, struct rtentry *, struct sockaddr *);
@@ -167,7 +167,7 @@ pflogstart(struct ifnet *ifp)
 
 int
 pflogoutput(struct ifnet *ifp, struct mbuf *m,
-    struct sockaddr *dst, struct rtentry *rt)
+    const struct sockaddr *dst, struct rtentry *rt)
 {
 	m_freem(m);
 	return (0);

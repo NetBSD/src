@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2005/12/11 12:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6.26.1 2007/02/27 16:53:06 yamt Exp $");
 
 #include "opt_md.h"
 
@@ -186,6 +186,7 @@ cpu_configure()
 #if NISA > 0 && !defined(SHARK)
 	isa_intr_init();
 #endif
+	softintr_init();
 
 	config_rootfound("mainbus", NULL);
 #if defined(OFWGENCFG) || defined(SHARK)

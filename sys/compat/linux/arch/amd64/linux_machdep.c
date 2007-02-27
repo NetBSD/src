@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.17 2007/02/15 15:13:33 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.17.2.1 2007/02/27 16:53:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17 2007/02/15 15:13:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.17.2.1 2007/02/27 16:53:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,7 +85,7 @@ linux_setregs(l, epp, stack)
 	pcb->pcb_fs = 0;
 	pcb->pcb_gs = 0;
 
-	l->l_proc->p_flag &= ~P_32;
+	l->l_proc->p_flag &= ~PK_32;
 
 	tf = l->l_md.md_regs;
 	tf->tf_rax = 0;

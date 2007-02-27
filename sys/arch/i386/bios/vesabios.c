@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.22 2006/11/16 01:32:38 christos Exp $ */
+/* $NetBSD: vesabios.c,v 1.22.4.1 2007/02/27 16:51:31 yamt Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.22 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.22.4.1 2007/02/27 16:51:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,11 @@ vesabios_match( struct device *parent, struct cfdata *match,
     void *aux)
 {
 
-	return (1);
+	return 1;
 }
 
 static int
-vbegetinfo(vip)
-	struct vbeinfoblock **vip;
+vbegetinfo(struct vbeinfoblock **vip)
 {
 	unsigned char *buf;
 	struct trapframe tf;
@@ -88,7 +87,7 @@ vbegetinfo(vip)
 	buf = kvm86_bios_addpage(0x2000);
 	if (!buf) {
 		printf("vbegetinfo: kvm86_bios_addpage(0x2000) failed\n");
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
 	memcpy(buf, "VBE2", 4);
@@ -112,36 +111,34 @@ vbegetinfo(vip)
 
 	if (vip)
 		*vip = (struct vbeinfoblock *)buf;
-	return (0);
+	return 0;
 
 out:
 	kvm86_bios_delpage(0x2000, buf);
-	return (error);
+	return error;
 }
 
 static void
-vbefreeinfo(vip)
-	struct vbeinfoblock *vip;
+vbefreeinfo(struct vbeinfoblock *vip)
 {
 
 	kvm86_bios_delpage(0x2000, vip);
 }
 
 int
-vbeprobe()
+vbeprobe(void)
 {
 	struct vbeinfoblock *vi;
 
 	if (vbegetinfo(&vi))
-		return (0);
+		return 0;
 	vbefreeinfo(vi);
-	return (1);
+	return 1;
 }
 
 #ifdef VESABIOSVERBOSE
 static const char *
-mm2txt(mm)
-	unsigned int mm;
+mm2txt(unsigned int mm)
 {
 	static char buf[30];
 	static const char *names[] = {
@@ -155,10 +152,10 @@ mm2txt(mm)
 		"YUV"
 	};
 
-	if (mm < sizeof(names)/sizeof(names[0]))
-		return (names[mm]);
+	if (mm < __arraycount(names))
+		return names[mm];
 	snprintf(buf, sizeof(buf), "unknown memory model %d", mm);
-	return (buf);
+	return buf;
 }
 #endif
 
@@ -292,13 +289,11 @@ vesabios_attach(struct device *parent, struct device *dev,
 }
 
 static int
-vesabios_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+vesabios_print(void *aux, const char *pnp)
 {
 	struct vesabiosdev_attach_args *vbaa = aux;
 
 	if (pnp)
 		aprint_normal("%s at %s", vbaa->vbaa_type, pnp);
-	return (UNCONF);
+	return UNCONF;
 }
