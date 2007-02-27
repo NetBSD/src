@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.108 2007/02/22 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.109 2007/02/27 15:07:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.108 2007/02/22 06:34:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.109 2007/02/27 15:07:28 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -424,7 +424,7 @@ transferlockers(struct lock *from, struct lock *to)
  * Initialize a lock; required before use.
  */
 void
-lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
+lockinit(struct lock *lkp, pri_t prio, const char *wmesg, int timo, int flags)
 {
 
 	memset(lkp, 0, sizeof(struct lock));
