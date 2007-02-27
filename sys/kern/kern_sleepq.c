@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.6 2007/02/26 09:20:53 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.7 2007/02/27 15:07:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.6 2007/02/26 09:20:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.7 2007/02/27 15:07:29 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -211,7 +211,7 @@ sleepq_insert(sleepq_t *sq, struct lwp *l, syncobj_t *sobj)
 }
 
 void
-sleepq_enqueue(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg,
+sleepq_enqueue(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
     syncobj_t *sobj)
 {
 	struct lwp *l = curlwp;
@@ -288,8 +288,8 @@ sleepq_switch(int timo, int catch)
  * 	example if the LWP's containing process is exiting.
  */
 void
-sleepq_block(sleepq_t *sq, int pri, wchan_t wchan, const char *wmesg, int timo,
-	     int catch, syncobj_t *sobj)
+sleepq_block(sleepq_t *sq, pri_t pri, wchan_t wchan, const char *wmesg,
+	     int timo, int catch, syncobj_t *sobj)
 {
 
 	sleepq_enqueue(sq, pri, wchan, wmesg, sobj);
@@ -494,7 +494,7 @@ sleepq_abort(kmutex_t *mtx, int unlock)
  *	assumed to have been fixed at the time of insertion into the queue.
  */
 void
-sleepq_changepri(struct lwp *l, int pri)
+sleepq_changepri(struct lwp *l, pri_t pri)
 {
 
 	KASSERT(lwp_locked(l, l->l_sleepq->sq_mutex));
@@ -502,10 +502,10 @@ sleepq_changepri(struct lwp *l, int pri)
 }
 
 void
-sleepq_lendpri(struct lwp *l, int pri)
+sleepq_lendpri(struct lwp *l, pri_t pri)
 {
 	sleepq_t *sq = l->l_sleepq;
-	int opri;
+	pri_t opri;
 
 	KASSERT(lwp_locked(l, sq->sq_mutex));
 

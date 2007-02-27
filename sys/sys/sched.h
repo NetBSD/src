@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.32 2007/02/26 10:50:30 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.33 2007/02/27 15:07:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -97,6 +97,20 @@ struct sched_param {
 
 #if defined(_NETBSD_SOURCE)
 
+/*
+ * CPU states.
+ * XXX Not really scheduler state, but no other good place to put
+ * it right now, and it really is per-CPU.
+ */
+#define	CP_USER		0
+#define	CP_NICE		1
+#define	CP_SYS		2
+#define	CP_INTR		3
+#define	CP_IDLE		4
+#define	CPUSTATES	5
+
+#if defined(_KERNEL)
+
 #include <sys/time.h>
 
 /*
@@ -115,18 +129,6 @@ struct prochd {
 };
 
 /*
- * CPU states.
- * XXX Not really scheduler state, but no other good place to put
- * it right now, and it really is per-CPU.
- */
-#define	CP_USER		0
-#define	CP_NICE		1
-#define	CP_SYS		2
-#define	CP_INTR		3
-#define	CP_IDLE		4
-#define	CPUSTATES	5
-
-/*
  * Per-CPU scheduler state.
  */
 struct schedstate_percpu {
@@ -134,7 +136,7 @@ struct schedstate_percpu {
 	volatile int spc_flags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
 	uint64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
-	u_char spc_curpriority;		/* usrpri of curproc */
+	pri_t spc_curpriority;		/* usrpri of curproc */
 	int spc_rrticks;		/* ticks until roundrobin() */
 	int spc_pscnt;			/* prof/stat counter */
 	int spc_psdiv;			/* prof/stat divisor */
@@ -145,6 +147,8 @@ struct schedstate_percpu {
 #define	SPCF_SHOULDYIELD	0x0002	/* process should yield the CPU */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
+
+#endif /* defined(_KERNEL) */
 
 /*
  * Flags passed to the Linux-compatible __clone(2) system call.
@@ -183,7 +187,7 @@ struct cpu_info;
 
 void schedclock(struct lwp *);
 void roundrobin(struct cpu_info *);
-int sched_kpri(struct lwp *);
+pri_t sched_kpri(struct lwp *);
 
 void scheduler_fork_hook(struct proc *, struct proc *);
 void scheduler_wait_hook(struct proc *, struct proc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.72 2007/02/21 23:00:10 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.73 2007/02/27 15:07:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -306,6 +306,8 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 #define	NBBY	__NBBY
 
 typedef struct kauth_cred *kauth_cred_t;
+
+typedef unsigned int pri_t;
 
 #endif
 

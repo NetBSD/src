@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.4 2007/02/26 10:50:30 yamt Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.5 2007/02/27 15:07:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -89,18 +89,18 @@ typedef struct sleeptab {
 
 void	sleepq_init(sleepq_t *, kmutex_t *);
 int	sleepq_remove(sleepq_t *, struct lwp *);
-void	sleepq_block(sleepq_t *, int, wchan_t, const char *, int, int,
+void	sleepq_block(sleepq_t *, pri_t, wchan_t, const char *, int, int,
 		     syncobj_t *);
 void	sleepq_unsleep(struct lwp *);
 void	sleepq_timeout(void *);
 void	sleepq_wake(sleepq_t *, wchan_t, u_int);
 int	sleepq_abort(kmutex_t *, int);
-void	sleepq_changepri(struct lwp *, int);
-void	sleepq_lendpri(struct lwp *, int);
+void	sleepq_changepri(struct lwp *, pri_t);
+void	sleepq_lendpri(struct lwp *, pri_t);
 int	sleepq_unblock(int, int);
 void	sleepq_insert(sleepq_t *, struct lwp *, syncobj_t *);
 
-void	sleepq_enqueue(sleepq_t *, int, wchan_t, const char *, syncobj_t *);
+void	sleepq_enqueue(sleepq_t *, pri_t, wchan_t, const char *, syncobj_t *);
 void	sleepq_switch(int, int);
 
 void	sleeptab_init(sleeptab_t *);
@@ -196,7 +196,7 @@ typedef struct turnstile {
 	sleepq_t		ts_sleepq[2];	/* sleep queues */
 
 	/* priority inheritance */
-	u_char			ts_eprio;
+	pri_t			ts_eprio;
 	struct lwp		*ts_inheritor;
 	SLIST_ENTRY(turnstile)	ts_pichain;
 } turnstile_t;
@@ -243,7 +243,7 @@ turnstile_unblock(void)
 }
 
 void	turnstile_unsleep(struct lwp *);
-void	turnstile_changepri(struct lwp *, int);
+void	turnstile_changepri(struct lwp *, pri_t);
 
 extern struct pool_cache turnstile_cache;
 extern struct turnstile turnstile0;
