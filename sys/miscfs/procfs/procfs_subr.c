@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.77 2007/02/17 22:31:44 pavel Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.78 2007/02/27 16:11:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.77 2007/02/17 22:31:44 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.78 2007/02/27 16:11:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,6 +578,8 @@ void
 procfs_hashdone()
 {
 	hashdone(pfs_hashtbl, M_UFSMNT);
+	mutex_destroy(&pfs_hashlock);
+	mutex_destroy(&pfs_ihash_lock);
 }
 
 struct vnode *

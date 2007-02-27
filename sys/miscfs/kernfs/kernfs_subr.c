@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.10 2007/02/15 15:40:53 ad Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.11 2007/02/27 16:11:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.10 2007/02/15 15:40:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.11 2007/02/27 16:11:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -304,6 +304,8 @@ kernfs_hashdone()
 {
 
 	hashdone(kfs_hashtbl, M_UFSMNT);
+	mutex_destroy(&kfs_hashlock);
+	mutex_destroy(&kfs_ihash_lock);
 }
 
 struct vnode *
