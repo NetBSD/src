@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.8 2007/02/15 13:07:29 pooka Exp $	*/
+/*	$NetBSD: node.c,v 1.9 2007/02/27 13:28:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.8 2007/02/15 13:07:29 pooka Exp $");
+__RCSID("$NetBSD: node.c,v 1.9 2007/02/27 13:28:39 pooka Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -180,7 +180,7 @@ psshfs_node_create(struct puffs_cc *pcc, void *opc, void **newnode,
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 	char *fhand = NULL;
-	size_t fhandlen;
+	uint32_t fhandlen;
 
 	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
 	if (!pn) {
@@ -253,9 +253,8 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn = opc;
 	char *fhand = NULL;
-	size_t fhandlen;
 	struct vattr va;
-	uint32_t readlen;
+	uint32_t readlen, fhandlen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
@@ -311,9 +310,8 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 	PSSHFSAUTOVAR(pcc);
 	struct puffs_node *pn = opc;
 	char *fhand = NULL;
-	size_t fhandlen;
 	struct vattr va, kludgeva1, kludgeva2;
-	uint32_t writelen, oflags;
+	uint32_t writelen, oflags, fhandlen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
@@ -426,7 +424,7 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 		rv = EPROTO;
 		goto out;
 	}
-	rv = psbuf_get_str(pb, &linktmp, linklen);
+	rv = psbuf_get_str(pb, &linktmp, (uint32_t *)linklen);
 	if (rv)
 		rv = 0;
 	else {
