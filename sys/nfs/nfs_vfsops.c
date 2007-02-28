@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.172 2007/02/15 16:01:51 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.172.2.1 2007/02/28 09:35:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.172 2007/02/15 16:01:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.172.2.1 2007/02/28 09:35:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -708,7 +708,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 
 	if (nfs_niothreads < 0) {
 		nfs_niothreads = NFS_DEFAULT_NIOTHREADS;
-		nfs_getset_niothreads(TRUE);
+		nfs_getset_niothreads(true);
 	}
 
 	if (mp->mnt_flag & MNT_UPDATE) {

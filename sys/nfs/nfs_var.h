@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.64 2006/12/27 12:10:09 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.64.2.1 2007/02/28 09:35:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ int nfs_null(struct vnode *, kauth_cred_t, struct lwp *);
 int nfs_setattrrpc(struct vnode *, struct vattr *, kauth_cred_t, struct lwp *);
 int nfs_readlinkrpc(struct vnode *, struct uio *, kauth_cred_t);
 int nfs_readrpc(struct vnode *, struct uio *);
-int nfs_writerpc(struct vnode *, struct uio *, int *, boolean_t, boolean_t *);
+int nfs_writerpc(struct vnode *, struct uio *, int *, bool, bool *);
 int nfs_mknodrpc(struct vnode *, struct vnode **, struct componentname *,
 	struct vattr *);
 int nfs_removeit(struct sillyrename *);
@@ -118,7 +118,7 @@ int nfs_renamerpc(struct vnode *, const char *, int, struct vnode *,
 int nfs_readdirrpc(struct vnode *, struct uio *, kauth_cred_t);
 int nfs_readdirplusrpc(struct vnode *, struct uio *, kauth_cred_t);
 int nfs_sillyrename(struct vnode *, struct vnode *, struct componentname *,
-	boolean_t);
+	bool);
 int nfs_lookitup(struct vnode *, const char *, int, kauth_cred_t,
 	struct lwp *, struct nfsnode **);
 int nfs_commit(struct vnode *, off_t, uint32_t, struct lwp *);
@@ -202,7 +202,7 @@ void nfsrv_rcv(struct socket *, caddr_t, int);
 int nfsrv_getstream(struct nfssvc_sock *, int);
 int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **);
 void nfsrv_wakenfsd(struct nfssvc_sock *);
-int nfsdsock_lock(struct nfssvc_sock *, boolean_t);
+int nfsdsock_lock(struct nfssvc_sock *, bool);
 void nfsdsock_unlock(struct nfssvc_sock *);
 int nfsdsock_drain(struct nfssvc_sock *);
 int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
@@ -244,7 +244,7 @@ int nfs_loadattrcache(struct vnode **, struct nfs_fattr *, struct vattr *,
 int nfs_getattrcache(struct vnode *, struct vattr *);
 void nfs_delayedtruncate(struct vnode *);
 int nfs_check_wccdata(struct nfsnode *, const struct timespec *,
-	struct timespec *, boolean_t);
+	struct timespec *, bool);
 int nfs_namei(struct nameidata *, nfsrvfh_t *, uint32_t, struct nfssvc_sock *,
 	struct mbuf *, struct mbuf **, caddr_t *, struct vnode **, struct lwp *,
 	int, int);
@@ -277,7 +277,7 @@ void nfs_cookieheuristic(struct vnode *, int *, struct lwp *, kauth_cred_t);
 u_int32_t nfs_getxid(void);
 void nfs_renewxid(struct nfsreq *);
 
-int nfsrv_composefh(struct vnode *, nfsrvfh_t *, boolean_t);
+int nfsrv_composefh(struct vnode *, nfsrvfh_t *, bool);
 int nfsrv_comparefh(const nfsrvfh_t *, const nfsrvfh_t *);
 void nfsrv_copyfh(nfsrvfh_t *, const nfsrvfh_t *);
 

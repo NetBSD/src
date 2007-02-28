@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.36 2007/02/05 11:55:45 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.36.2.1 2007/02/28 09:35:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.36 2007/02/05 11:55:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.36.2.1 2007/02/28 09:35:39 yamt Exp $");
 
 #include "opt_iso.h"
 
@@ -95,51 +95,51 @@ static void nfsrv_unlockcache(struct nfsrvcache *rp);
  * Static array that defines which nfs rpc's are nonidempotent
  */
 const int nonidempotent[NFS_NPROCS] = {
-	FALSE,	/* NULL */
-	FALSE,	/* GETATTR */
-	TRUE,	/* SETATTR */
-	FALSE,	/* LOOKUP */
-	FALSE,	/* ACCESS */
-	FALSE,	/* READLINK */
-	FALSE,	/* READ */
-	TRUE,	/* WRITE */
-	TRUE,	/* CREATE */
-	TRUE,	/* MKDIR */
-	TRUE,	/* SYMLINK */
-	TRUE,	/* MKNOD */
-	TRUE,	/* REMOVE */
-	TRUE,	/* RMDIR */
-	TRUE,	/* RENAME */
-	TRUE,	/* LINK */
-	FALSE,	/* READDIR */
-	FALSE,	/* READDIRPLUS */
-	FALSE,	/* FSSTAT */
-	FALSE,	/* FSINFO */
-	FALSE,	/* PATHCONF */
-	FALSE,	/* COMMIT */
-	FALSE,	/* NOOP */
+	false,	/* NULL */
+	false,	/* GETATTR */
+	true,	/* SETATTR */
+	false,	/* LOOKUP */
+	false,	/* ACCESS */
+	false,	/* READLINK */
+	false,	/* READ */
+	true,	/* WRITE */
+	true,	/* CREATE */
+	true,	/* MKDIR */
+	true,	/* SYMLINK */
+	true,	/* MKNOD */
+	true,	/* REMOVE */
+	true,	/* RMDIR */
+	true,	/* RENAME */
+	true,	/* LINK */
+	false,	/* READDIR */
+	false,	/* READDIRPLUS */
+	false,	/* FSSTAT */
+	false,	/* FSINFO */
+	false,	/* PATHCONF */
+	false,	/* COMMIT */
+	false,	/* NOOP */
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
 static const int nfsv2_repstat[NFS_NPROCS] = {
-	FALSE,	/* NULL */
-	FALSE,	/* GETATTR */
-	FALSE,	/* SETATTR */
-	FALSE,	/* NOOP */
-	FALSE,	/* LOOKUP */
-	FALSE,	/* READLINK */
-	FALSE,	/* READ */
-	FALSE,	/* Obsolete WRITECACHE */
-	FALSE,	/* WRITE */
-	FALSE,	/* CREATE */
-	TRUE,	/* REMOVE */
-	TRUE,	/* RENAME */
-	TRUE,	/* LINK */
-	TRUE,	/* SYMLINK */
-	FALSE,	/* MKDIR */
-	TRUE,	/* RMDIR */
-	FALSE,	/* READDIR */
-	FALSE,	/* STATFS */
+	false,	/* NULL */
+	false,	/* GETATTR */
+	false,	/* SETATTR */
+	false,	/* NOOP */
+	false,	/* LOOKUP */
+	false,	/* READLINK */
+	false,	/* READ */
+	false,	/* Obsolete WRITECACHE */
+	false,	/* WRITE */
+	false,	/* CREATE */
+	true,	/* REMOVE */
+	true,	/* RENAME */
+	true,	/* LINK */
+	true,	/* SYMLINK */
+	false,	/* MKDIR */
+	true,	/* RMDIR */
+	false,	/* READDIR */
+	false,	/* STATFS */
 };
 
 static void
