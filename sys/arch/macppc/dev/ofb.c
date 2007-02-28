@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.54 2007/01/20 21:42:12 he Exp $	*/
+/*	$NetBSD: ofb.c,v 1.55 2007/02/28 04:21:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.54 2007/01/20 21:42:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.55 2007/02/28 04:21:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -164,7 +164,7 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 			sub = OF_peer(sub);
 		}
 		if (sub == console_node) {
-			console = TRUE;
+			console = true;
 		}
 	}
 	

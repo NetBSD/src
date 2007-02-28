@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2007/01/24 13:08:11 hubertf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2007/02/28 04:21:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2007/02/28 04:21:52 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -215,7 +215,7 @@ landisk_startup(int howto, void *bi)
 
 #ifdef KLOADER
 	/* copy boot parameter for kloader */
-	kloader_bootinfo_set(&kbootinfo, 0, NULL, NULL, TRUE);
+	kloader_bootinfo_set(&kbootinfo, 0, NULL, NULL, true);
 #endif
 
 	/* Load memory to UVM */
