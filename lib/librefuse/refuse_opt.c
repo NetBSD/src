@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.1 2007/02/28 16:23:00 xtraeme Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.2 2007/02/28 21:48:46 agc Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -42,7 +42,7 @@
 #include "fuse_opt.h"
 
 #ifdef FUSE_OPT_DEBUG
-#define DPRINTF(x)	do { printf x; } while (0)
+#define DPRINTF(x)	do { printf x; } while ( /* CONSTCOND */ 0)
 #else
 #define DPRINTF(x)
 #endif
@@ -194,6 +194,7 @@ fuse_opt_popt(struct fuse_opt_option *foo, const struct fuse_opt *opts)
 	return EXIT_SUCCESS;
 }
 
+/* ARGSUSED1 */
 int
 fuse_opt_parse(struct fuse_args *args, void *data,
         const struct fuse_opt *opts, fuse_opt_proc_t proc)
@@ -218,7 +219,8 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 		if (buf[0] != '-') {
 
 			foo.key = FUSE_OPT_KEY_NONOPT;
-			if ((rv = proc(foo.data, foo.option, foo.key, args)))
+			rv = proc(foo.data, foo.option, foo.key, args);
+			if (rv != 0)
 				break;
 
 		/* -o was specified... */
@@ -238,7 +240,8 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 				foo.option = args->argv[i];
 			}
 
-			if ((rv = fuse_opt_popt(&foo, opts)))
+			rv = fuse_opt_popt(&foo, opts);
+			if (rv != 0)
 				break;
 
 		/* help/version/verbose argument */
@@ -247,7 +250,8 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 			 * check if the argument matches
 			 * with any template in opts.
 			 */
-			if ((rv = fuse_opt_popt(&foo, opts))) {
+			rv = fuse_opt_popt(&foo, opts);
+			if (rv != 0) {
 				break;
 			} else {
 				DPRINTF(("%s: foo.fop->templ='%s' "
@@ -270,8 +274,9 @@ fuse_opt_parse(struct fuse_args *args, void *data,
 					break;
 				} else {
 					/* process verbose argument */
-					if ((rv = proc(foo.data, foo.option,
-						       foo.key, args)))
+					rv = proc(foo.data, foo.option,
+						       foo.key, args);
+					if (rv != 0)
 						break;
 				}
 			}
