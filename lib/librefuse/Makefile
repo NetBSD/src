@@ -1,13 +1,18 @@
-# $NetBSD: Makefile,v 1.2 2007/02/16 15:44:37 pooka Exp $
+# $NetBSD: Makefile,v 1.3 2007/02/28 16:23:00 xtraeme Exp $
 
 LIB=		refuse
 LIBDPLIBS=	puffs	${.CURDIR}/../libpuffs
 
-SRCS=		refuse.c
+.ifdef DEBUG
+FUSE_OPT_DEBUG_FLAGS=	-g -DFUSE_OPT_DEBUG
+.endif
+
+CFLAGS+=	${FUSE_OPT_DEBUG_FLAGS}
+SRCS=		refuse.c refuse_opt.c
 CPPFLAGS+=	-I.
 MAN=		refuse.3
 WARNS=		4
-INCS=           fuse.h
+INCS=           fuse.h fuse_opt.h
 INCSDIR=        /usr/include
 
 .include <bsd.lib.mk>

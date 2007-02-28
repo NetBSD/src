@@ -61,12 +61,6 @@ struct fuse_conn_info {
 	uint32_t reserved[27];
 };
 
-struct fuse_opt {
-	const char	*templ;
-	uint32_t	offset;
-	int32_t		value;
-};
-
 /* equivalent'ish of puffs_cc */
 struct fuse_context {
 	struct fuse	*fuse;
@@ -75,10 +69,6 @@ struct fuse_context {
 	pid_t		pid;
 	void		*private_data;
 };
-
-#define FUSE_OPT_KEY(templ, key) { templ, -1U, key }
-
-#define FUSE_OPT_END { .templ = NULL }
 
 /**
  * Argument list
@@ -93,13 +83,6 @@ struct fuse_args {
  * Initializer for 'struct fuse_args'
  */
 #define FUSE_ARGS_INIT(argc, argv) { argc, argv, 0 }
-
-enum {
-	FUSE_OPT_KEY_OPT = -1,
-	FUSE_OPT_KEY_NONOPT = -2,
-	FUSE_OPT_KEY_KEEP = -3,
-	FUSE_OPT_KEY_DISCARD = -4
-};
 
 typedef struct puffs_fuse_dirh *fuse_dirh_t;
 
@@ -159,13 +142,6 @@ struct fuse_operations {
 	struct puffs_ops	puffs_ops;	/* pointer to puffs operations */
 };
 
-
-typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
-
-
-int fuse_opt_add_arg(struct fuse_args *, const char *);
-void fuse_opt_free_args(struct fuse_args *);
-int fuse_opt_parse(struct fuse_args *, void *, const struct fuse_opt *, fuse_opt_proc_t);
 
 struct fuse_chan *fuse_mount(const char *, struct fuse_args *);
 struct fuse *fuse_new(struct fuse_chan *, struct fuse_args *,

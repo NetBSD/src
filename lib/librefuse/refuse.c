@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.39 2007/02/26 22:28:11 agc Exp $	*/
+/*	$NetBSD: refuse.c,v 1.40 2007/02/28 16:23:00 xtraeme Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.39 2007/02/26 22:28:11 agc Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.40 2007/02/28 16:23:00 xtraeme Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -211,38 +211,6 @@ puffs_fuse_dirfil(fuse_dirh_t h, const char *name, int type, ino_t ino)
 		dino = fakeino++;
 
 	return fill_dirbuf(h, name, dino, dtype);
-}
-
-int
-fuse_opt_add_arg(struct fuse_args *args, const char *arg)
-{
-	char	**oldargv;
-	int	oldargc;
-
-	if (args->allocated) {
-		RENEW(char *, args->argv, args->argc + 1,
-		    "fuse_opt_add_arg1", return 0);
-	} else {
-		oldargv = args->argv;
-		oldargc = args->argc;
-		NEWARRAY(char *, args->argv, oldargc + 1,
-		    "fuse_opt_add_arg2", return 0);
-		(void) memcpy(args->argv, oldargv, oldargc * sizeof(char *));
-		args->allocated = 1;
-	}
-	args->argv[args->argc++] = strdup(arg);
-	return 1;
-}
-
-void
-fuse_opt_free_args(struct fuse_args *args)
-{
-	if (args && args->argv) {
-		int i;
-		for (i = 0; i < args->argc; i++)
-			FREE(args->argv[i]);
-		FREE(args->argv);
-	}
 }
 
 #define FUSE_ERR_UNLINK(fuse, file) if (fuse->op.unlink) fuse->op.unlink(file)
@@ -1157,14 +1125,6 @@ fuse_destroy(struct fuse *fuse)
 
 	/* XXXXXX: missing stuff */
 	FREE(fuse);
-}
-
-/* ARGSUSED0 */
-int
-fuse_opt_parse(struct fuse_args *args, void *data,
-	const struct fuse_opt *opts, fuse_opt_proc_t proc)
-{
-	return 0;
 }
 
 /* XXX: threads */
