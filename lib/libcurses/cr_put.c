@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.23.12.3 2007/02/06 09:59:29 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.23.12.4 2007/02/28 10:34:42 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.23.12.3 2007/02/06 09:59:29 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.23.12.4 2007/02/28 10:34:42 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -414,6 +414,9 @@ dontcr:while (outline < destline) {
 				    == curscr->wattr ) {
 					if (WCOL(curscr->lines[outline]->line[outcol]) > 0) {
 						__cputwchar(curscr->lines[outline]->line[outcol].ch);
+						__cursesi_putnsp(curscr->lines[outline]->line[outcol].nsp,
+								outline,
+								outcol);
 #ifdef DEBUG
 						__CTRACE(__CTRACE_OUTPUT,
 						    "plod: (%d,%d)WCOL(%d), "
