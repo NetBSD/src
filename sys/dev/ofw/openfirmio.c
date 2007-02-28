@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.9 2005/12/11 12:22:48 christos Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.10 2007/02/28 20:33:50 macallan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.9 2005/12/11 12:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.10 2007/02/28 20:33:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		error = copyout(value, of->of_buf, len);
 		break;
 
-#if 0
+
 	case OFIOCSET:
 		if ((flags & FWRITE) == 0)
 			return (EBADF);
@@ -183,10 +183,16 @@ openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		s = splhigh();
 		len = OF_setprop(node, name, value, of->of_buflen + 1);
 		splx(s);
-		if (len != of->of_buflen)
+
+		/* 
+		 * XXX
+		 * some OF implementations return the buffer length including 
+		 * the trailing zero ( like macppc ) and some without ( like
+		 * FirmWorks OF used in Shark )
+		 */
+		if ((len != (of->of_buflen + 1)) && (len != of->of_buflen))
 			error = EINVAL;
 		break;
-#endif
 
 	case OFIOCNEXTPROP: {
 		char newname[32];
