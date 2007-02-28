@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.302 2007/02/18 20:36:36 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.303 2007/02/28 20:39:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.302 2007/02/18 20:36:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.303 2007/02/28 20:39:06 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -995,6 +995,10 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, l->l_cred, l);
+	if (error) {
+		vput(vp);
+		goto out;
+	}
 	while (!error && (mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
@@ -1003,11 +1007,8 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error)
-			break;
+			goto out;
 		vp = tdp;
-	}
-	if (error) {
-		goto out;
 	}
 	VOP_UNLOCK(vp, 0);
 
