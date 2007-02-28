@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.795 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.796 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -45,3 +45,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[kiyohara 20070221]
 	btuartd(8): Add support for Bluetooth HCI UART (H4) daemon.
 		[kiyohara 20070221]
+        MAKEDEV(8): Added MAKEDEV.subr with functions shared between
+        	MAKEDEV and MAKEDEV.local. [apb 20070227]
