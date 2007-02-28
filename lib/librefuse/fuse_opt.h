@@ -1,3 +1,5 @@
+/*	$NetBSD: fuse_opt.h,v 1.2 2007/02/28 16:28:25 xtraeme Exp $	*/
+
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
  *
