@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.84 2007/02/27 23:35:21 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.85 2007/02/28 23:03:55 pavel Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1668,4 +1668,11 @@ sys/dev/pci/if_bgereg.h				1.40
 
 	Fix bge(4) on architectures where bus_dmamap_sync() isn't a noop.
 	[bouyer, ticket #466]
+
+sys/kern/vfs_syscalls.c				1.303
+
+	Avoid lock leak in error branch of sys_fchdir(). Fixes a bug
+	introduced in ticket #422 which shows up e.g. as an unkillable find
+	process wedged in vnlock.
+	[pooka, ticket #480]
 
