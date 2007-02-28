@@ -1,4 +1,4 @@
-/* $NetBSD: arspi.c,v 1.4 2007/02/21 22:59:47 thorpej Exp $ */
+/* $NetBSD: arspi.c,v 1.5 2007/02/28 04:21:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.4 2007/02/21 22:59:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arspi.c,v 1.5 2007/02/28 04:21:53 thorpej Exp $");
 
 #include "locators.h"
 
@@ -212,7 +212,7 @@ arspi_interrupts(struct device *self)
 	int	s;
 
 	s = splserial();
-	sc->sc_interrupts = TRUE;
+	sc->sc_interrupts = true;
 	splx(s);
 #endif
 }
