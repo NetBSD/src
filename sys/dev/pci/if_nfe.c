@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.13 2007/01/09 10:29:27 tsutsui Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.14 2007/02/28 17:40:11 tsutsui Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.13 2007/01/09 10:29:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.14 2007/02/28 17:40:11 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -490,36 +490,50 @@ nfe_intr(void *arg)
 	struct nfe_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t r;
+	int handled;
 
-	if ((r = NFE_READ(sc, NFE_IRQ_STATUS)) == 0)
-		return 0;	/* not for us */
-	NFE_WRITE(sc, NFE_IRQ_STATUS, r);
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
 
-	DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
+	handled = 0;
 
 	NFE_WRITE(sc, NFE_IRQ_MASK, 0);
 
-	if (r & NFE_IRQ_LINK) {
-		NFE_READ(sc, NFE_PHY_STATUS);
-		NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
-		DPRINTF(("%s: link state changed\n", sc->sc_dev.dv_xname));
-	}
+	for (;;) {
+		r = NFE_READ(sc, NFE_IRQ_STATUS);
+		if ((r & NFE_IRQ_WANTED) == 0)
+			break;
 
-	if (ifp->if_flags & IFF_RUNNING) {
-		/* check Rx ring */
-		nfe_rxeof(sc);
+		NFE_WRITE(sc, NFE_IRQ_STATUS, r);
+		handled = 1;
+		DPRINTFN(5, ("nfe_intr: interrupt register %x\n", r));
 
-		/* check Tx ring */
-		nfe_txeof(sc);
+		if ((r & (NFE_IRQ_RXERR | NFE_IRQ_RX_NOBUF | NFE_IRQ_RX))
+		    != 0) {
+			/* check Rx ring */
+			nfe_rxeof(sc);
+		}
+
+		if ((r & (NFE_IRQ_TXERR | NFE_IRQ_TXERR2 | NFE_IRQ_TX_DONE))
+		    != 0) {
+			/* check Tx ring */
+			nfe_txeof(sc);
+		}
+
+		if ((r & NFE_IRQ_LINK) != 0) {
+			NFE_READ(sc, NFE_PHY_STATUS);
+			NFE_WRITE(sc, NFE_PHY_STATUS, 0xf);
+			DPRINTF(("%s: link state changed\n",
+			    sc->sc_dev.dv_xname));
+		}
 	}
 
 	NFE_WRITE(sc, NFE_IRQ_MASK, NFE_IRQ_WANTED);
 
-	if (ifp->if_flags & IFF_RUNNING &&
-	    !IF_IS_EMPTY(&ifp->if_snd))
+	if (handled && !IF_IS_EMPTY(&ifp->if_snd))
 		nfe_start(ifp);
 
-	return 1;
+	return handled;
 }
 
 int
@@ -692,32 +706,34 @@ nfe_rxeof(struct nfe_softc *sc)
 	struct mbuf *m, *mnew;
 	bus_addr_t physaddr;
 	uint16_t flags;
-	int error, len;
+	int error, len, i;
 
 	desc32 = NULL;
 	desc64 = NULL;
-	for (;;) {
-		data = &sc->rxq.data[sc->rxq.cur];
+	for (i = sc->rxq.cur;; i = NFE_RX_NEXTDESC(i)) {
+		data = &sc->rxq.data[i];
 
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
-			desc64 = &sc->rxq.desc64[sc->rxq.cur];
-			nfe_rxdesc64_sync(sc, desc64, BUS_DMASYNC_POSTREAD);
+			desc64 = &sc->rxq.desc64[i];
+			nfe_rxdesc64_sync(sc, desc64,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc64->flags);
 			len = le16toh(desc64->length) & 0x3fff;
 		} else {
-			desc32 = &sc->rxq.desc32[sc->rxq.cur];
-			nfe_rxdesc32_sync(sc, desc32, BUS_DMASYNC_POSTREAD);
+			desc32 = &sc->rxq.desc32[i];
+			nfe_rxdesc32_sync(sc, desc32,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc32->flags);
 			len = le16toh(desc32->length) & 0x3fff;
 		}
 
-		if (flags & NFE_RX_READY)
+		if ((flags & NFE_RX_READY) != 0)
 			break;
 
 		if ((sc->sc_flags & (NFE_JUMBO_SUP | NFE_40BIT_ADDR)) == 0) {
-			if (!(flags & NFE_RX_VALID_V1))
+			if ((flags & NFE_RX_VALID_V1) == 0)
 				goto skip;
 
 			if ((flags & NFE_RX_FIXME_V1) == NFE_RX_FIXME_V1) {
@@ -725,7 +741,7 @@ nfe_rxeof(struct nfe_softc *sc)
 				len--;	/* fix buffer length */
 			}
 		} else {
-			if (!(flags & NFE_RX_VALID_V2))
+			if ((flags & NFE_RX_VALID_V2) == 0)
 				goto skip;
 
 			if ((flags & NFE_RX_FIXME_V2) == NFE_RX_FIXME_V2) {
@@ -767,7 +783,7 @@ nfe_rxeof(struct nfe_softc *sc)
 			physaddr = jbuf->physaddr;
 		} else {
 			MCLGET(mnew, M_DONTWAIT);
-			if (!(mnew->m_flags & M_EXT)) {
+			if ((mnew->m_flags & M_EXT) == 0) {
 				m_freem(mnew);
 				ifp->if_ierrors++;
 				goto skip;
@@ -777,15 +793,14 @@ nfe_rxeof(struct nfe_softc *sc)
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, data->map);
 
-			error = bus_dmamap_load(sc->sc_dmat, data->map,
-			    mtod(mnew, void *), MCLBYTES, NULL,
-			    BUS_DMA_READ | BUS_DMA_NOWAIT);
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map,
+			    mnew, BUS_DMA_READ | BUS_DMA_NOWAIT);
 			if (error != 0) {
 				m_freem(mnew);
 
 				/* try to reload the old mbuf */
-				error = bus_dmamap_load(sc->sc_dmat, data->map,
-				    mtod(data->m, void *), MCLBYTES, NULL,
+				error = bus_dmamap_load_mbuf(sc->sc_dmat,
+				    data->map, data->m,
 				    BUS_DMA_READ | BUS_DMA_NOWAIT);
 				if (error != 0) {
 					/* very unlikely that it will fail.. */
@@ -852,20 +867,23 @@ nfe_rxeof(struct nfe_softc *sc)
 			desc32->physaddr = htole32(physaddr);
 		}
 
-skip:		if (sc->sc_flags & NFE_40BIT_ADDR) {
+ skip:
+		if (sc->sc_flags & NFE_40BIT_ADDR) {
 			desc64->length = htole16(sc->rxq.bufsz);
 			desc64->flags = htole16(NFE_RX_READY);
 
-			nfe_rxdesc64_sync(sc, desc64, BUS_DMASYNC_PREWRITE);
+			nfe_rxdesc64_sync(sc, desc64,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		} else {
 			desc32->length = htole16(sc->rxq.bufsz);
 			desc32->flags = htole16(NFE_RX_READY);
 
-			nfe_rxdesc32_sync(sc, desc32, BUS_DMASYNC_PREWRITE);
+			nfe_rxdesc32_sync(sc, desc32,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
-
-		sc->rxq.cur = (sc->rxq.cur + 1) % NFE_RX_RING_COUNT;
 	}
+	/* update current RX pointer */
+	sc->rxq.cur = i;
 }
 
 void
@@ -875,29 +893,35 @@ nfe_txeof(struct nfe_softc *sc)
 	struct nfe_desc32 *desc32;
 	struct nfe_desc64 *desc64;
 	struct nfe_tx_data *data = NULL;
+	int i;
 	uint16_t flags;
 
-	while (sc->txq.next != sc->txq.cur) {
+	for (i = sc->txq.next;
+	    sc->txq.queued > 0;
+	    i = NFE_TX_NEXTDESC(i), sc->txq.queued--) {
 		if (sc->sc_flags & NFE_40BIT_ADDR) {
-			desc64 = &sc->txq.desc64[sc->txq.next];
-			nfe_txdesc64_sync(sc, desc64, BUS_DMASYNC_POSTREAD);
+			desc64 = &sc->txq.desc64[i];
+			nfe_txdesc64_sync(sc, desc64,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc64->flags);
 		} else {
-			desc32 = &sc->txq.desc32[sc->txq.next];
-			nfe_txdesc32_sync(sc, desc32, BUS_DMASYNC_POSTREAD);
+			desc32 = &sc->txq.desc32[i];
+			nfe_txdesc32_sync(sc, desc32,
+			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 			flags = le16toh(desc32->flags);
 		}
 
-		if (flags & NFE_TX_VALID)
+		if ((flags & NFE_TX_VALID) != 0)
 			break;
 
-		data = &sc->txq.data[sc->txq.next];
+		data = &sc->txq.data[i];
 
 		if ((sc->sc_flags & (NFE_JUMBO_SUP | NFE_40BIT_ADDR)) == 0) {
-			if (!(flags & NFE_TX_LASTFRAG_V1) && data->m == NULL)
-				goto skip;
+			if ((flags & NFE_TX_LASTFRAG_V1) == 0 &&
+			    data->m == NULL)
+				continue;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
 				printf("%s: tx v1 error 0x%04x\n",
@@ -906,8 +930,9 @@ nfe_txeof(struct nfe_softc *sc)
 			} else
 				ifp->if_opackets++;
 		} else {
-			if (!(flags & NFE_TX_LASTFRAG_V2) && data->m == NULL)
-				goto skip;
+			if ((flags & NFE_TX_LASTFRAG_V2) == 0 &&
+			    data->m == NULL)
+				continue;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
 				printf("%s: tx v2 error 0x%04x\n",
@@ -920,7 +945,7 @@ nfe_txeof(struct nfe_softc *sc)
 		if (data->m == NULL) {	/* should not get there */
 			printf("%s: last fragment bit w/o associated mbuf!\n",
 			    sc->sc_dev.dv_xname);
-			goto skip;
+			continue;
 		}
 
 		/* last fragment of the mbuf chain transmitted */
@@ -929,16 +954,18 @@ nfe_txeof(struct nfe_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->active);
 		m_freem(data->m);
 		data->m = NULL;
-
-		ifp->if_timer = 0;
-
-skip:		sc->txq.queued--;
-		sc->txq.next = (sc->txq.next + 1) % NFE_TX_RING_COUNT;
 	}
 
-	if (data != NULL) {	/* at least one slot freed */
+	sc->txq.next = i;
+
+	if (sc->txq.queued < NFE_TX_RING_COUNT) {
+		/* at least one slot freed */
 		ifp->if_flags &= ~IFF_OACTIVE;
-		nfe_start(ifp);
+	}
+
+	if (sc->txq.queued == 0) {
+		/* all queued packets are sent */
+		ifp->if_timer = 0;
 	}
 }
 
@@ -987,7 +1014,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4)
 			csumflags |= NFE_TX_IP_CSUM;
 		if (m0->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4))
-			csumflags |= NFE_TX_TCP_CSUM;
+			csumflags |= NFE_TX_TCP_UDP_CSUM;
 	}
 
 	for (i = 0; i < map->dm_nsegs; i++) {
@@ -1019,7 +1046,7 @@ nfe_encap(struct nfe_softc *sc, struct mbuf *m0)
 		flags |= NFE_TX_VALID;
 
 		sc->txq.queued++;
-		sc->txq.cur = (sc->txq.cur + 1) % NFE_TX_RING_COUNT;
+		sc->txq.cur = NFE_TX_NEXTDESC(sc->txq.cur);
 	}
 
 	/* the whole mbuf chain has been setup */
@@ -1064,7 +1091,7 @@ void
 nfe_start(struct ifnet *ifp)
 {
 	struct nfe_softc *sc = ifp->if_softc;
-	int old = sc->txq.cur;
+	int old = sc->txq.queued;
 	struct mbuf *m0;
 
 	for (;;) {
@@ -1085,21 +1112,23 @@ nfe_start(struct ifnet *ifp)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 	}
-	if (sc->txq.cur == old)	/* nothing sent */
-		return;
 
-	if (sc->sc_flags & NFE_40BIT_ADDR)
-		nfe_txdesc64_rsync(sc, old, sc->txq.cur, BUS_DMASYNC_PREWRITE);
-	else
-		nfe_txdesc32_rsync(sc, old, sc->txq.cur, BUS_DMASYNC_PREWRITE);
+	if (sc->txq.queued != old) {
+		/* packets are queued */
+		if (sc->sc_flags & NFE_40BIT_ADDR)
+			nfe_txdesc64_rsync(sc, old, sc->txq.cur,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		else
+			nfe_txdesc32_rsync(sc, old, sc->txq.cur,
+			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		/* kick Tx */
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_KICKTX | sc->rxtxctl);
 
-	/* kick Tx */
-	NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_KICKTX | sc->rxtxctl);
-
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
+		/*
+		 * Set a timeout in case the chip goes out to lunch.
+		 */
+		ifp->if_timer = 5;
+	}
 }
 
 void
