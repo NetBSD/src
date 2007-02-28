@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.47 2006/09/02 12:40:36 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.47.8.1 2007/02/28 09:35:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -250,7 +250,7 @@
  *	NFSV3_WCCCHK	return true if pre_op_attr's mtime is the same
  *			as our n_mtime.  (ie. our cache isn't stale.)
  * flags: (IN) flags for nfsm_loadattrcache
- * docheck: (IN) TRUE if timestamp change is expected
+ * docheck: (IN) true if timestamp change is expected
  */
 
 /* Used as (f) for nfsm_wcc_data() */
@@ -261,10 +261,10 @@
 		{ int ttattrf, ttretf = 0, renewctime = 0, renewnctime = 0; \
 		struct timespec ctime, mtime; \
 		struct nfsnode *nfsp = VTONFS(v); \
-		boolean_t haspreopattr = FALSE; \
+		bool haspreopattr = false; \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
-			haspreopattr = TRUE; \
+			haspreopattr = true; \
 			nfsm_dissect(tl, u_int32_t *, 6 * NFSX_UNSIGNED); \
 			fxdr_nfsv3time(tl + 2, &mtime); \
 			fxdr_nfsv3time(tl + 4, &ctime); \

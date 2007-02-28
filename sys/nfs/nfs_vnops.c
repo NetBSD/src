@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.249 2007/01/24 13:08:15 hubertf Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.249.2.1 2007/02/28 09:35:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.249 2007/01/24 13:08:15 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.249.2.1 2007/02/28 09:35:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -727,7 +727,7 @@ nfs_setattrrpc(vp, vap, cred, l)
 	nfsm_fhtom(np, v3);
 #ifndef NFS_V2_ONLY
 	if (v3) {
-		nfsm_v3attrbuild(vap, TRUE);
+		nfsm_v3attrbuild(vap, true);
 		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 		*tl = nfs_false;
 	} else {
@@ -754,7 +754,7 @@ nfs_setattrrpc(vp, vap, cred, l)
 	nfsm_request(np, NFSPROC_SETATTR, l, cred);
 #ifndef NFS_V2_ONLY
 	if (v3) {
-		nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, FALSE);
+		nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, false);
 	} else
 #endif
 		nfsm_loadattr(vp, (struct vattr *)0, NAC_NOTRUNC);
@@ -1292,8 +1292,8 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 	struct vnode *vp;
 	struct uio *uiop;
 	int *iomode;
-	boolean_t pageprotected;
-	boolean_t *stalewriteverfp;
+	bool pageprotected;
+	bool *stalewriteverfp;
 {
 	u_int32_t *tl;
 	caddr_t cp;
@@ -1340,7 +1340,7 @@ retry:
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
 		uint32_t backup;
-		boolean_t stalewriteverf = FALSE;
+		bool stalewriteverf = false;
 
 		nfsstats.rpccnt[NFSPROC_WRITE]++;
 		len = min(tsiz, nmp->nm_wsize);
@@ -1453,7 +1453,7 @@ retry:
 					 */
 					if ((nmp->nm_iflag &
 					    NFSMNT_STALEWRITEVERF) == 0) {
-						stalewriteverf = TRUE;
+						stalewriteverf = true;
 						nmp->nm_iflag |=
 						    NFSMNT_STALEWRITEVERF;
 					}
@@ -1471,8 +1471,8 @@ retry:
 		tsiz -= len;
 		byte_count += len;
 		if (stalewriteverf) {
-			*stalewriteverfp = TRUE;
-			stalewriteverf = FALSE;
+			*stalewriteverfp = true;
+			stalewriteverf = false;
 			if (committed == NFSV3WRITE_UNSTABLE &&
 			    len != origresid) {
 				/*
@@ -1557,7 +1557,7 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 	if (v3) {
 		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
 		*tl++ = vtonfsv3_type(vap->va_type);
-		nfsm_v3attrbuild(vap, FALSE);
+		nfsm_v3attrbuild(vap, false);
 		if (vap->va_type == VCHR || vap->va_type == VBLK) {
 			nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(major(vap->va_rdev));
@@ -1699,7 +1699,7 @@ again:
 			*tl = ++create_verf;
 		} else {
 			*tl = txdr_unsigned(NFSV3CREATE_UNCHECKED);
-			nfsm_v3attrbuild(vap, FALSE);
+			nfsm_v3attrbuild(vap, false);
 		}
 	} else
 #endif
@@ -1833,7 +1833,7 @@ nfs_remove(v)
 			error = nfs_removerpc(dvp, cnp->cn_nameptr,
 				cnp->cn_namelen, cnp->cn_cred, cnp->cn_lwp);
 	} else if (!np->n_sillyrename)
-		error = nfs_sillyrename(dvp, vp, cnp, FALSE);
+		error = nfs_sillyrename(dvp, vp, cnp, false);
 	PNBUF_PUT(cnp->cn_pnbuf);
 	if (!error && nfs_getattrcache(vp, &vattr) == 0 &&
 	    vattr.va_nlink == 1) {
@@ -1956,7 +1956,7 @@ nfs_rename(v)
 	 * that there's no window when the "to" file doesn't exist.
 	 */
 	if (tvp && tvp->v_usecount > 1 && !VTONFS(tvp)->n_sillyrename &&
-	    tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp, TRUE)) {
+	    tvp->v_type != VDIR && !nfs_sillyrename(tdvp, tvp, tcnp, true)) {
 		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
 		tvp = NULL;
@@ -2204,7 +2204,7 @@ nfs_symlink(v)
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
 #ifndef NFS_V2_ONlY
 	if (v3)
-		nfsm_v3attrbuild(vap, FALSE);
+		nfsm_v3attrbuild(vap, false);
 #endif
 	nfsm_strtom(ap->a_target, slen, NFS_MAXPATHLEN);
 #ifndef NFS_V2_ONlY
@@ -2296,7 +2296,7 @@ nfs_mkdir(v)
 	nfsm_strtom(cnp->cn_nameptr, len, NFS_MAXNAMLEN);
 #ifndef NFS_V2_ONLY
 	if (v3) {
-		nfsm_v3attrbuild(vap, FALSE);
+		nfsm_v3attrbuild(vap, false);
 	} else
 #endif
 	{
@@ -2974,7 +2974,7 @@ int
 nfs_sillyrename(dvp, vp, cnp, dolink)
 	struct vnode *dvp, *vp;
 	struct componentname *cnp;
-	boolean_t dolink;
+	bool dolink;
 {
 	struct sillyrename *sp;
 	struct nfsnode *np;
@@ -3165,7 +3165,7 @@ nfs_commit(vp, offset, cnt, l)
 	tl += 2;
 	*tl = txdr_unsigned(cnt);
 	nfsm_request(np, NFSPROC_COMMIT, l, np->n_wcred);
-	nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, FALSE);
+	nfsm_wcc_data(vp, wccflag, NAC_NOTRUNC, false);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
 		simple_lock(&nmp->nm_slock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.90 2007/02/15 16:01:51 yamt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.90.2.1 2007/02/28 09:35:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.90 2007/02/15 16:01:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.90.2.1 2007/02/28 09:35:39 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -230,7 +230,7 @@ nfs_inactive(v)
 	struct sillyrename *sp;
 	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
-	boolean_t removed;
+	bool removed;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -320,6 +320,7 @@ nfs_reclaim(v)
 	if (vp->v_type == VREG) {
 		mutex_destroy(&np->n_commitlock);
 	}
+	genfs_node_destroy(vp);
 	pool_put(&nfs_node_pool, np);
 	vp->v_data = NULL;
 	return (0);
