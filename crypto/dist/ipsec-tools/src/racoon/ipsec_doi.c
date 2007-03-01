@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.23.4.2 2007/02/21 11:00:43 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.23.4.3 2007/03/01 06:55:35 mgrooms Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -3330,6 +3330,63 @@ doi2ipproto(proto)
 }
 
 /*
+ * Check if a subnet id is valid for comparison
+ * with an address id ( address length mask )
+ * and compare them
+ * Return value
+ * =  0 for match
+ * =  1 for mismatch
+ */
+
+int
+ipsecdoi_subnetisaddr_v4( subnet, address )
+	const vchar_t *subnet;
+	const vchar_t *address;
+{
+	struct in_addr *mask;
+
+	if (address->l != sizeof(struct in_addr))
+		return 1;
+
+	if (subnet->l != (sizeof(struct in_addr)*2))
+		return 1;
+
+	mask = (struct in_addr*)(subnet->v + sizeof(struct in_addr));
+
+	if (mask->s_addr!=0xffffffff)
+		return 1;
+
+	return memcmp(subnet->v,address->v,address->l);
+}
+
+#ifdef INET6
+
+int
+ipsecdoi_subnetisaddr_v6( subnet, address )
+	const vchar_t *subnet;
+	const vchar_t *address;
+{
+	struct in6_addr *mask;
+	int i;
+
+	if (address->l != sizeof(struct in6_addr))
+		return 1;
+
+	if (subnet->l != (sizeof(struct in6_addr)*2))
+		return 1;
+
+	mask = (struct in6_addr*)(subnet->v + sizeof(struct in6_addr));
+
+	for (i=0; i<16; i++)
+		if(mask->s6_addr[i]!=0xff)
+			return 1;
+
+	return memcmp(subnet->v,address->v,address->l);
+}
+
+#endif
+
+/*
  * Check and Compare two IDs
  * - specify 0 for exact if wildcards are allowed
  * Return value
@@ -3372,21 +3429,54 @@ ipsecdoi_chkcmpids( idt, ids, exact )
 
 	id_bt = (struct ipsecdoi_id_b *) idt->v;
 	id_bs = (struct ipsecdoi_id_b *) ids->v;
-	if (id_bs->type != id_bt->type)
-	{
-		plog(LLV_DEBUG, LOCATION, NULL,
-			"check and compare ids : id type mismatch %s != %s\n",
-			s_ipsecdoi_ident(id_bs->type),
-			s_ipsecdoi_ident(id_bt->type));
-		return 1;
-	}
-
-	/* compare the ID data. */
 
 	ident_t.v = idt->v + sizeof(*id_bt);
 	ident_t.l = idt->l - sizeof(*id_bt);
 	ident_s.v = ids->v + sizeof(*id_bs);
 	ident_s.l = ids->l - sizeof(*id_bs);
+
+	if (id_bs->type != id_bt->type)
+	{
+		/*
+		 * special exception for comparing
+                 * address to subnet id types when
+                 * the netmask is address length
+                 */
+
+		if ((id_bs->type == IPSECDOI_ID_IPV4_ADDR)&&
+		    (id_bt->type == IPSECDOI_ID_IPV4_ADDR_SUBNET)) {
+			result = ipsecdoi_subnetisaddr_v4(&ident_t,&ident_s);
+			goto cmpid_result;
+		}
+
+		if ((id_bs->type == IPSECDOI_ID_IPV4_ADDR_SUBNET)&&
+		    (id_bt->type == IPSECDOI_ID_IPV4_ADDR)) {
+			result = ipsecdoi_subnetisaddr_v4(&ident_s,&ident_t);
+			goto cmpid_result;
+		}
+
+#ifdef INET6
+		if ((id_bs->type == IPSECDOI_ID_IPV6_ADDR)&&
+		    (id_bt->type == IPSECDOI_ID_IPV6_ADDR_SUBNET)) {
+			result = ipsecdoi_subnetisaddr_v6(&ident_t,&ident_s);
+			goto cmpid_result;
+		}
+
+		if ((id_bs->type == IPSECDOI_ID_IPV6_ADDR_SUBNET)&&
+		    (id_bt->type == IPSECDOI_ID_IPV6_ADDR)) {
+			result = ipsecdoi_subnetisaddr_v6(&ident_s,&ident_t);
+			goto cmpid_result;
+		}
+#endif
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"check and compare ids : id type mismatch %s != %s\n",
+			s_ipsecdoi_ident(id_bs->type),
+			s_ipsecdoi_ident(id_bt->type));
+
+		return 1;
+	}
+
+	/* compare the ID data. */
 
 	switch (id_bt->type) {
 	        case IPSECDOI_ID_DER_ASN1_DN:
