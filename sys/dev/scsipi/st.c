@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.194 2006/11/16 01:33:26 christos Exp $ */
+/*	$NetBSD: st.c,v 1.195 2007/03/01 17:31:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.194 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.195 2007/03/01 17:31:36 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -99,9 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.194 2006/11/16 01:33:26 christos Exp $");
 #define NOREW_MODE	1
 #define EJECT_MODE	2
 #define CTRL_MODE	3
-
-#define	FALSE		0
-#define	TRUE		1
 
 #ifndef		ST_MOUNT_DELAY
 #define		ST_MOUNT_DELAY		0
@@ -1481,7 +1478,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
 		case MTBSR:	/* backward space record */
 			number = -number;
 		case MTFSR:	/* forward space record */
-			error = st_check_eod(st, TRUE, &nmarks, flags);
+			error = st_check_eod(st, true, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
