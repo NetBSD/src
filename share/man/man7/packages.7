@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.95 2006/09/13 23:35:48 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.96 2007/03/01 18:38:34 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd September 14, 2006
+.Dd March 1, 2007
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -29,10 +29,6 @@ This section documents variables that typically apply to an individual
 package.
 Non-Boolean variables without defaults are *mandatory*.
 .Bl -tag -offset indent -width XXXXXXXX
-.It SCRIPTDIR
-A directory containing any auxiliary scripts.
-The default is
-.Pa ${.CURDIR}/scripts .
 .It PKGDIR
 A direction containing any package creation files.
 The default is
@@ -74,10 +70,7 @@ Don't register a package install as a package.
 .It NO_DEPENDS
 Don't verify build of dependencies.
 .It SCRIPTS_ENV
-Additional environment variables passed to scripts in
-.Pa ${SCRIPTDIR}
-executed by
-.Pa bsd.pkg.mk .
+Additional environment variables passed to xmkmf.
 .El
 .Sh SPECIAL VARIABLES
 Variables to change if you want a special behavior:
