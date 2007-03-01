@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.88 2007/02/15 22:39:12 tron Exp $	*/
+/*	$NetBSD: init.c,v 1.89 2007/03/01 07:18:07 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.88 2007/02/15 22:39:12 tron Exp $");
+__RCSID("$NetBSD: init.c,v 1.89 2007/03/01 07:18:07 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,16 +216,19 @@ state_t requested_transition = single_user;
 	+ 2 * 8192		/* two copies of superblock */		\
 	+ 4096			/* cylinder group info */		\
 	+ NINODE * (128 + 18)	/* inode and directory entry */		\
-	+ mfile[0].len		/* size of MAKEDEV file */		\
+	+ mfile[0].len		/* size of MAKEDEV* files */		\
+	+ mfile[1].len							\
+	+ mfile[2].len							\
 	+ 2 * 4096) / 512)	/* some slack */
 
 struct mappedfile {
-	const char *path;
-	char	*buf;
-	size_t	len;
+	const char *path;	/* filename */
+	char	*buf;		/* contents of file, or target of symlink */
+	size_t	len;		/* 0: no such file; -1: symlink; else size */
 } mfile[] = {
 	{ "/dev/MAKEDEV",	NULL,	0 },
-	{ "/dev/MAKEDEV.local",	NULL,	0 }
+	{ "/dev/MAKEDEV.local",	NULL,	0 },
+	{ "/dev/MAKEDEV.subr",	NULL,	0 }
 };
 
 static int mfs_dev(void);
@@ -1676,6 +1679,7 @@ mfs_dev(void)
 	/*
 	 * We cannot print errors so we bail out silently...
 	 */
+	int i;
 	pid_t pid;
 	int status;
 	dev_t dev;
@@ -1689,11 +1693,9 @@ mfs_dev(void)
 	if (access(_PATH_CONSOLE, F_OK) != -1)
 		return(0);
 
-	/* Grab the contents of MAKEDEV */
-	mapfile(&mfile[0]);
-
-	/* Grab the contents of MAKEDEV.local */
-	mapfile(&mfile[1]);
+	/* Grab the contents of MAKEDEV* files */
+	for (i = 0; i < __arraycount(mfile); i++)
+		mapfile(&mfile[i]);
 
 	/* Mount an mfs over /dev so we can create devices */
 	switch ((pid = fork())) {
@@ -1735,11 +1737,9 @@ mfs_dev(void)
 
 	warnx("Creating mfs /dev (%zu blocks, %d inodes)", FSSIZE, NINODE);
 
-	/* Create a MAKEDEV script in the mfs /dev */
-	writefile(&mfile[0]);
-
-	/* Create a MAKEDEV.local script in the mfs /dev */
-	writefile(&mfile[1]);
+	/* Create MAKEDEV* files in the mfs /dev */
+	for (i = 0; i < __arraycount(mfile); i++)
+		writefile(&mfile[i]);
 
 	/* Run the makedev script to create devices */
 	switch ((pid = fork())) {
