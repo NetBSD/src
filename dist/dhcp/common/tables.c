@@ -34,7 +34,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.5 2005/08/11 17:13:21 drochner Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.6 2007/03/01 01:02:33 dogcow Exp $ Copyright (c) 2004 Internet Systems Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -89,7 +89,7 @@ HASH_FUNCTIONS (option, const char *, struct option, option_hash_t, 0, 0)
 */
 
 struct universe dhcp_universe;
-struct option dhcp_options [256] = {
+struct option dhcp_options[] = {
 	{ "pad", "",					&dhcp_universe, 0 },
 	{ "subnet-mask", "I",				&dhcp_universe, 1 },
 	{ "time-offset", "l",				&dhcp_universe, 2 },
@@ -349,7 +349,7 @@ struct option dhcp_options [256] = {
 };
 
 struct universe nwip_universe;
-struct option nwip_options [256] = {
+struct option nwip_options[] = {
 	{ "pad", "",					&nwip_universe, 0 },
 	{ "illegal-1", "",				&nwip_universe, 1 },
 	{ "illegal-2", "",				&nwip_universe, 2 },
@@ -362,6 +362,7 @@ struct option nwip_options [256] = {
 	{ "autoretry-secs", "B",			&nwip_universe, 9 },
 	{ "nwip-1-1", "f",				&nwip_universe, 10 },
 	{ "primary-dss", "I",				&nwip_universe, 11 },
+#ifndef SMALL
 	{ "unknown-12", "X",				&nwip_universe, 12 },
 	{ "unknown-13", "X",				&nwip_universe, 13 },
 	{ "unknown-14", "X",				&nwip_universe, 14 },
@@ -605,11 +606,12 @@ struct option nwip_options [256] = {
 	{ "unknown-252", "X",				&nwip_universe, 252 },
 	{ "unknown-253", "X",				&nwip_universe, 253 },
 	{ "unknown-254", "X",				&nwip_universe, 254 },
+#endif
 	{ "unknown-end", "e",				&nwip_universe, 255 },
 };
 
 struct universe fqdn_universe;
-struct option fqdn_options [256] = {
+struct option fqdn_options[] = {
 	{ "pad", "",					&fqdn_universe, 0 },
 	{ "no-client-update", "f",			&fqdn_universe, 1 },
 	{ "server-update", "f",				&fqdn_universe, 2 },
@@ -619,6 +621,7 @@ struct option fqdn_options [256] = {
 	{ "hostname", "t",				&fqdn_universe, 6 },
 	{ "domainname", "t",				&fqdn_universe, 7 },
 	{ "fqdn", "t",					&fqdn_universe, 8 },
+#ifndef SMALL
 	{ "unknown-9", "X",				&fqdn_universe, 9 },
 	{ "unknown-10", "X",				&fqdn_universe, 10 },
 	{ "unknown-11", "X",				&fqdn_universe, 11 },
@@ -865,10 +868,11 @@ struct option fqdn_options [256] = {
 	{ "unknown-252", "X",				&fqdn_universe, 252 },
 	{ "unknown-253", "X",				&fqdn_universe, 253 },
 	{ "unknown-254", "X",				&fqdn_universe, 254 },
+#endif
 	{ "unknown-end", "e",				&fqdn_universe, 255 },
 };
 
-const char *hardware_types [] = {
+const char *hardware_types[] = {
 	"unknown-0",
 	"ethernet",
 	"unknown-2",
@@ -878,6 +882,7 @@ const char *hardware_types [] = {
 	"token-ring",
 	"unknown-7",
 	"fddi",
+#ifndef SMALL
 	"unknown-9",
 	"unknown-10",
 	"unknown-11",
@@ -1124,7 +1129,9 @@ const char *hardware_types [] = {
 	"unknown-252",
 	"unknown-253",
 	"unknown-254",
-	"unknown-255" };
+	"unknown-255"
+#endif
+};
 
 universe_hash_t *universe_hash;
 struct universe **universes;
@@ -1192,7 +1199,8 @@ void initialize_common_option_spaces()
 	option_new_hash (&nwip_universe.hash, 1, MDL);
 	if (!nwip_universe.hash)
 		log_fatal ("Can't allocate nwip option hash table.");
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < __arraycount(nwip_options); i++) {
+		if (!nwip_options[i].name) break;
 		nwip_universe.options [i] = &nwip_options [i];
 		option_hash_add (nwip_universe.hash,
 				 nwip_options [i].name, 0,
@@ -1219,7 +1227,8 @@ void initialize_common_option_spaces()
 	option_new_hash (&fqdn_universe.hash, 1, MDL);
 	if (!fqdn_universe.hash)
 		log_fatal ("Can't allocate fqdn option hash table.");
-	for (i = 0; i < 256; i++) {
+	for (i = 0; i < __arraycount(fqdn_options); i++) {
+		if (!fqdn_options[i].name) break;
 		fqdn_universe.options [i] = &fqdn_options [i];
 		option_hash_add (fqdn_universe.hash,
 				 fqdn_options [i].name, 0,
