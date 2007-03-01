@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.303 2007/02/28 20:39:06 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.304 2007/03/01 10:02:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.303 2007/02/28 20:39:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.304 2007/03/01 10:02:31 pooka Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -999,7 +999,7 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 		vput(vp);
 		goto out;
 	}
-	while (!error && (mp = vp->v_mountedhere) != NULL) {
+	while ((mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
 
