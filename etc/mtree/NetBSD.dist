@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.332 2007/01/20 16:50:29 kardel Exp $
+#	$NetBSD: NetBSD.dist,v 1.333 2007/03/01 18:47:49 garbled Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -727,6 +727,7 @@
 ./usr/share/man/cat4/pc532
 ./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/pmppc
+./usr/share/man/cat4/prep
 ./usr/share/man/cat4/sgimips
 ./usr/share/man/cat4/sparc
 ./usr/share/man/cat4/sparc64
@@ -834,6 +835,7 @@
 ./usr/share/man/man4/pc532
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/pmppc
+./usr/share/man/man4/prep
 ./usr/share/man/man4/sgimips
 ./usr/share/man/man4/sparc
 ./usr/share/man/man4/sparc64
@@ -941,6 +943,7 @@
 ./usr/share/man/html4/pc532
 ./usr/share/man/html4/pmax
 ./usr/share/man/html4/pmppc
+./usr/share/man/html4/prep
 ./usr/share/man/html4/sgimips
 ./usr/share/man/html4/sparc
 ./usr/share/man/html4/sparc64
