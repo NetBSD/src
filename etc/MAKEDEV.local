@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.local,v 1.9 2007/02/28 19:45:37 apb Exp $
+#	$NetBSD: MAKEDEV.local,v 1.10 2007/03/01 20:48:26 apb Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -79,7 +79,10 @@ done
 # to parse command line args and set some other variables; then call
 # makedev_local function to create requested devices.
 #
-. "$0.subr"
+case "$0" in
+*/*)	. "${0%/*}/MAKEDEV.subr" ;;
+*)	. ./MAKEDEV.subr ;;
+esac
 setup ${1+"$@"}
 shift $((${OPTIND}-1))
 makedev_local ${1+"$@"}
