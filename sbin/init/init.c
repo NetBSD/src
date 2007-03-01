@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.89 2007/03/01 07:18:07 apb Exp $	*/
+/*	$NetBSD: init.c,v 1.90 2007/03/01 18:25:58 apb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.89 2007/03/01 07:18:07 apb Exp $");
+__RCSID("$NetBSD: init.c,v 1.90 2007/03/01 18:25:58 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,9 +216,11 @@ state_t requested_transition = single_user;
 	+ 2 * 8192		/* two copies of superblock */		\
 	+ 4096			/* cylinder group info */		\
 	+ NINODE * (128 + 18)	/* inode and directory entry */		\
-	+ mfile[0].len		/* size of MAKEDEV* files */		\
-	+ mfile[1].len							\
-	+ mfile[2].len							\
+				/* size of MAKEDEV* files, */		\
+				/* rounded up to fragment size */	\
+	+ roundup(mfile[0].len, 512)					\
+	+ roundup(mfile[1].len, 512)					\
+	+ roundup(mfile[2].len, 512)					\
 	+ 2 * 4096) / 512)	/* some slack */
 
 struct mappedfile {
