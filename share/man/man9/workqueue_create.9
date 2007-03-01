@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue_create.9,v 1.4 2006/12/23 07:30:26 yamt Exp $
+.\"	$NetBSD: workqueue_create.9,v 1.5 2007/03/01 14:24:25 yamt Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd December 23, 2006
+.Dd March 1, 2007
 .Dt WORKQUEUE_CREATE 9
 .Os
 .\" ------------------------------------------------------------
@@ -40,7 +40,7 @@
 .Fn workqueue_create \
 "struct workqueue **wqp" "const char *name" \
 "void (*func)(struct work *, void *)" "void *arg" \
-"int prio" "int ipl" "int flags"
+"pri_t prio" "int ipl" "int flags"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn workqueue_create
