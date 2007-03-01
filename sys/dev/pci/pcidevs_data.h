@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.867 2007/02/16 01:35:53 markd Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.868 2007/03/01 22:15:09 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.868 2007/02/16 01:35:04 markd Exp
+ *	NetBSD: pcidevs,v 1.869 2007/03/01 22:14:48 jmcneill Exp
  */
 
 /*
@@ -5382,6 +5382,22 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_LANFINITY,
 	    "LANfinity MiniPCI 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388X,
+	    "CX23880/1/2/3 PCI Video/Audio Decoder",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XAUDIO,
+	    "CX23880/1/2/3 PCI Audio Port",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XMPEG,
+	    "CX23880/1/2/3 PCI MPEG Port",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XIR,
+	    "CX23880/1/2/3 PCI IR Port",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -12800,4 +12816,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2606;
+const int pci_nproducts = 2610;
