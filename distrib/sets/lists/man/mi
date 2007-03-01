@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.978 2007/03/01 18:43:47 garbled Exp $
+# $NetBSD: mi,v 1.979 2007/03/01 23:55:44 martin Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1849,6 +1849,7 @@
 ./usr/share/man/cat8/diskless.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/diskpart.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/dkscan_bsdlabel.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dnssec-keygen.0		man-bind-catman		.cat
 ./usr/share/man/cat8/dnssec-makekeyset.0	man-obsolete		obsolete
@@ -4268,6 +4269,7 @@
 ./usr/share/man/man8/diskless.8			man-sysutil-man		.man
 ./usr/share/man/man8/diskpart.8			man-sysutil-man		.man
 ./usr/share/man/man8/dkctl.8			man-sysutil-man		.man
+./usr/share/man/man8/dkscan_bsdlabel.8		man-sysutil-man		.man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man		.man
 ./usr/share/man/man8/dnssec-keygen.8		man-bind-man		.man
 ./usr/share/man/man8/dnssec-makekeyset.8	man-obsolete		obsolete
