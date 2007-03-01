@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.10 2007/03/01 21:30:50 martin Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.11 2007/03/01 21:38:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,10 +86,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.10 2007/03/01 21:30:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.11 2007/03/01 21:38:17 martin Exp $");
 
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/systm.h>
+#endif
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/disk.h>
@@ -329,7 +331,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 			 * These get historical disk naming style
 			 * wedge names.
 			 */
-			snprintf(dkw.dkw_wname, sizeof(dkw.dkw_wname),
+			snprintf((char *)&dkw.dkw_wname, sizeof(dkw.dkw_wname),
 			    "%s%c", a->pdk->dk_name, 'a' + i);
 
 			error = dkwedge_add(&dkw);
@@ -442,6 +444,14 @@ look_netbsd_part(mbr_args_t *a, struct mbr_partition *dp, int slot,
 
 	return (SCAN_CONTINUE);
 }
+ 
+#ifdef _KERNEL
+#define	DKW_MALLOC(SZ)	malloc((SZ), M_DEVBUF, M_WAITOK)
+#define	DKW_FREE(PTR)	free((PTR), M_DEVBUF)
+#else
+#define	DKW_MALLOC(SZ)	malloc((SZ))
+#define	DKW_FREE(PTR)	free((PTR))
+#endif
 
 static int
 dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
@@ -452,7 +462,7 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 
 	a.pdk = pdk;
 	a.vp = vp;
-	a.buf = malloc(DEV_BSIZE, M_DEVBUF, M_WAITOK);
+	a.buf = DKW_MALLOC(DEV_BSIZE);
 	a.error = 0;
 
 	/* MBR search. */
@@ -476,8 +486,10 @@ dkwedge_discover_bsdlabel(struct disk *pdk, struct vnode *vp)
 	/* No NetBSD disklabel found. */
 	a.error = ESRCH;
  out:
-	free(a.buf, M_DEVBUF);
+	DKW_FREE(a.buf);
 	return (a.error);
 }
 
+#ifdef _KERNEL
 DKWEDGE_DISCOVERY_METHOD_DECL(BSD44, 5, dkwedge_discover_bsdlabel);
+#endif
