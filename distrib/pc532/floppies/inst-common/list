@@ -1,9 +1,10 @@
-#	$NetBSD: list,v 1.15 2003/05/11 19:19:08 ragge Exp $
+#	$NetBSD: list,v 1.16 2007/03/01 07:11:04 apb Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+COPY	${DESTDIR}/dev/MAKEDEV.subr	dev/MAKEDEV.subr
 SPECIAL	cd dev; sh MAKEDEV floppy
-SPECIAL	/bin/rm dev/MAKEDEV
+SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.subr
 
 # we need the contents of /usr/mdec (XXX)
 COPY	${DESTDIR}/usr/mdec/*	usr/mdec
