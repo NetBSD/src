@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.2 2006/08/16 03:24:57 macallan Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 2007/03/01 16:49:48 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,5 +42,6 @@
 #define _PATH_EEPROM "/dev/eeprom"
 #define _PATH_OPENPROM "/dev/openprom"
 #define _PATH_OPENFIRM "/dev/openfirm"
+#define _PATH_PREPNVRAM "/dev/nvram"
 
 #endif
