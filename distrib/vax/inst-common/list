@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.6 2004/05/10 01:49:36 mhitch Exp $
+#	$NetBSD: list,v 1.7 2007/03/01 07:11:05 apb Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -50,6 +50,7 @@ SPECIAL	/bin/rm instbin
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+COPY	${DESTDIR}/dev/MAKEDEV.subr	dev/MAKEDEV.subr
 SPECIAL	cd dev; sh MAKEDEV all
 
 # various files that we need in /etc for the install
