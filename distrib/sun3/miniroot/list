@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.12 2006/08/02 09:30:46 tsutsui Exp $
+# $NetBSD: list,v 1.13 2007/03/01 07:11:04 apb Exp $
 #
 
 COPY	${KERNEL3}			netbsd.sun3
@@ -38,6 +38,7 @@ SYMLINK	/tmp/hosts			etc/hosts
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV		555
+COPY	${DESTDIR}/dev/MAKEDEV.subr	dev/MAKEDEV.subr	555
 COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local	555
 
 # copy the miniroot installation tools
