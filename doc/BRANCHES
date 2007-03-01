@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.156 2007/02/27 14:50:40 ad Exp $
+#	$NetBSD: BRANCHES,v 1.157 2007/03/01 15:13:15 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -396,7 +396,7 @@ Description:	idle lwp, and some changes depending on it.
 Status:		Active
 Start Date:	Fri Feb 17 2007
 End Date:	
-Base Tag:	yamt-idlelwp-base
+Base Tag:	yamt-idlelwp-base2
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
@@ -413,7 +413,7 @@ Description:	implement and evaluate lazy mapping of mbuf external data pages
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
-Base Tag:	yamt-lazymbuf-base3
+Base Tag:	yamt-lazymbuf-base4
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
