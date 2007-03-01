@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.796 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.797 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -47,3 +47,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[kiyohara 20070221]
         MAKEDEV(8): Added MAKEDEV.subr with functions shared between
         	MAKEDEV and MAKEDEV.local. [apb 20070227]
+	eeprom(8): Add the missing kernel bits on arm and powerpc that kept
+		eeprom from actually changing firmware settings
+		[macallan 20070228]
