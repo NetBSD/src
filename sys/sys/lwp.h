@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.54 2007/02/27 15:07:28 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.55 2007/03/01 14:55:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -174,6 +174,7 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
+#define	LW_UNPARKED	0x01000000 /* unpark op pending */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 
 /* The second set of flags is kept in l_pflag. */
