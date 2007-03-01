@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.9 2006/11/16 01:32:50 christos Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.10 2007/03/01 21:30:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.9 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.10 2007/03/01 21:30:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,6 +226,7 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	struct disklabel *lp;
 	caddr_t lp_lim;
 	int i, error;
+	u_int checksum;
 
 	error = dkwedge_read(a->pdk, a->vp, label_sector, a->buf, DEV_BSIZE);
 	if (error) {
@@ -264,6 +265,8 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 					    bswap16(lp->d_npartitions));
 					continue;
 				}
+				checksum = dkcksum_sized(lp,
+				    bswap16(lp->d_npartitions));
 				swap_disklabel(lp);
 			} else
 				continue;
@@ -279,13 +282,14 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 				    label_offset, lp->d_npartitions);
 				continue;
 			}
+			checksum = dkcksum(lp);
 		}
 
 		/*
 		 * Disklabel is now in the right order and we have validated
 		 * the partition count, checksum it as the final check.
 		 */
-		if (dkcksum(lp) != 0) {
+		if (checksum != 0) {
 			aprint_error("%s: BSD disklabel @ %" PRId64
 			    "+%zd has bad checksum\n", a->pdk->dk_name,
 			    label_sector, label_offset);

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.97 2005/12/29 14:53:47 tsutsui Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.98 2007/03/01 21:30:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -436,6 +436,7 @@ struct disk;
 void	 diskerr(const struct buf *, const char *, const char *, int,
 	    int, const struct disklabel *);
 u_int	 dkcksum(struct disklabel *);
+u_int	 dkcksum_sized(struct disklabel *, size_t);
 int	 setdisklabel(struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *);
 const char *readdisklabel(dev_t, void (*)(struct buf *),
