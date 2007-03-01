@@ -1,4 +1,4 @@
-.\" $NetBSD: rfcomm_sppd.1,v 1.3 2007/02/01 06:54:40 wiz Exp $
+.\" $NetBSD: rfcomm_sppd.1,v 1.4 2007/03/01 21:44:30 plunky Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -52,9 +52,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/usr.bin/bluetooth/rfcomm_sppd/rfcomm_sppd.1,v 1.9 2005/12/07 19:41:58 emax Exp $
-.\"
-.Dd January 24, 2007
+.Dd February 28, 2007
 .Dt RFCOMM_SPPD 1
 .Os
 .Sh NAME
@@ -62,15 +60,10 @@
 .Nd RFCOMM Serial Port Profile daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl c Ar channel
 .Op Fl d Ar device
+.Op Fl s Ar service
 .Op Fl t Ar tty
-.Fl a Ar address
-.Nm
-.Op Fl d Ar device
-.Op Fl t Ar tty
-.Fl c Ar channel
-.Fl s Ar service
+.Fl a Ar address | Fl c Ar channel
 .Sh DESCRIPTION
 The
 .Nm
@@ -81,14 +74,14 @@ can work in client or server mode.
 .Pp
 In client mode,
 .Nm
-initiates an RFCOMM connection to the remote
-.Ar address
-and
-.Ar channel .
+initiates an RFCOMM connection to the
+.Ar service
+at the remote
+.Ar address .
 .Pp
 In server mode,
 .Nm
-registers the given
+registers the
 .Ar service
 with the local SDP server and listens on the specified RFCOMM
 .Ar channel
@@ -97,43 +90,52 @@ for an incoming connection.
 The options are as follows:
 .Bl -tag -width ".Fl c Ar channel"
 .It Fl a Ar address
-Specify the address of the remote RFCOMM device, to connect in client mode.
+Client mode.
+Specify the address of the remote RFCOMM device.
 The address can be specified as BD_ADDR or name.
 If given as a name, then the
 .Nm
 utility will attempt to resolve the name via
 .Xr bt_gethostbyname 3 .
 .It Fl c Ar channel
-This option specifies the RFCOMM channel to use.
-The
-.Ar channel
-may be specified as a number or, in client mode, the name of
-the service on the remote device.
-If no remote
-.Ar channel
-is specified, then
+Server mode.
+Specify the RFCOMM channel number to listen on.
 .Nm
-will search for the Serial Port service by default.
+will register the service with the local
+.Xr sdpd 8
+daemon.
+Note that registering services with
+.Xr sdpd 8
+is a privileged operation.
 .It Fl d Ar device
 Use the local device with the specifed address.
 The device can be specified by BD_ADDR or device name.
 See
 .Xr btconfig 8
-for a list of devices available.
+for a list of available devices.
 If no
 .Ar device
 is specified, the connection will be set up on a system determined device.
 .It Fl s Ar service
-Server mode.
-When this option is given,
-.Nm
-will register as the
+This is the service class that will be searched for on the remote device.
+If no
 .Ar service
-with the local SDP server and listen for an incoming connection on the given
-.Ar channel .
-Note that registering services with
-.Xr sdpd 8
-is a privileged operation.
+is given, the default
+.Qq Serial Port
+service class will be used.
+Known service classes are:
+.Pp
+.Bl -tag -compact -offset indent
+.It DUN
+Dialup Networking
+.It LAN
+LAN access using PPP
+.It SP
+Serial Port
+.El
+.Pp
+In client mode, the service class may be given as a channel number, for instances
+where the remote device does not provide Service Discovery.
 .It Fl t Ar tty
 Slave pseudo tty name.
 If this option is given,
@@ -143,17 +145,6 @@ made, and operate over the named
 .Xr pty 4
 pair.
 Otherwise, stdin/stdout will be used.
-.El
-.Pp
-Known services are:
-.Pp
-.Bl -tag -compact -offset indent
-.It DUN
-Dialup Networking
-.It LAN
-LAN access using PPP
-.It SP
-Serial Port service
 .El
 .Sh EXIT STATUS
 .Ex -std
@@ -165,7 +156,7 @@ master pseudo terminals
 slave pseudo terminals
 .El
 .Sh EXAMPLES
-.Dl rfcomm_sppd -a 00:01:02:03:04:05 -c 1 -t /dev/ttyp1
+.Dl rfcomm_sppd -a 00:01:02:03:04:05 -s 1 -t /dev/ttyp1
 .Pp
 Will open an RFCOMM connection to the server at
 .Li 00:01:02:03:04:05
@@ -185,7 +176,7 @@ In order to use
 to automatically create a link for
 .Xr pppd 8 ,
 use
-.Dl pty Qo rfcomm_sppd -a 00:01:02:03:04:05 -c dun Qc
+.Dl pty Qo rfcomm_sppd -a 00:01:02:03:04:05 -s DUN Qc
 .Pp
 in your
 .Xr pppd 8
