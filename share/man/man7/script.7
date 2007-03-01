@@ -1,4 +1,4 @@
-.\"	$NetBSD: script.7,v 1.3 2005/06/10 17:48:34 wiz Exp $
+.\"	$NetBSD: script.7,v 1.4 2007/03/01 19:35:47 wiz Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -321,53 +321,6 @@ not currently standardized, should not be relied on, and may be
 changed in future releases.
 In general, pass at most one argument, and do not rely on multiple
 arguments being concatenated.
-.Sh SECURITY CONSIDERATIONS
-Numerous security problems are associated with setuid interpreter
-scripts.
-.Pp
-In addition to the fact that many interpreters (and scripts) are
-simply not designed to be robust in a setuid context, a race condition
-exists between the moment that the kernel examines the interpreter
-script file and the moment that the newly invoked interpreter opens
-the file itself.
-.Pp
-Because of these security issues,
-.Nx
-does not allow setuid interpreter scripts by default.
-In order to turn on setuid interpreter scripts,
-.D1 Cd options SETUIDSCRIPTS
-must be set in the configuration of the running kernel.
-Setting this option implies the
-.Cd FDSCRIPTS
-option, which causes the kernel to open the script file on behalf of
-the interpreter and pass it in
-.Va argv
-as
-.Pa /dev/fd/[fdnum] .
-(See
-.Xr fd 4
-for an explanation of the
-.Pa /dev/fd/[fdnum]
-devices.)
-This design avoids the race condition, at the cost of denying the
-interpreter the actual name of the script file.
-See
-.Xr options 4
-for more information.
-.Pp
-However, the
-.Cd FDSCRIPTS
-mechanism is not a cure-all for security issues in setuid interpreters
-and scripts.
-Subtle techniques can be used to subvert even seemingly well written scripts.
-Scripts executed by Bourne type shells can be subverted in numerous
-ways, such as by setting the
-.Ev IFS
-variable before executing the script.
-Other interpreters possess their own vulnerabilities.
-Turning on
-.Cd SETUIDSCRIPTS
-is therefore very dangerous, and should not be done lightly if at all.
 .Sh SEE ALSO
 .Xr awk 1 ,
 .Xr csh 1 ,
@@ -418,3 +371,50 @@ Information on precisely when it was first implemented, and in which
 version of
 .Ux ,
 is solicited.
+.Sh SECURITY CONSIDERATIONS
+Numerous security problems are associated with setuid interpreter
+scripts.
+.Pp
+In addition to the fact that many interpreters (and scripts) are
+simply not designed to be robust in a setuid context, a race condition
+exists between the moment that the kernel examines the interpreter
+script file and the moment that the newly invoked interpreter opens
+the file itself.
+.Pp
+Because of these security issues,
+.Nx
+does not allow setuid interpreter scripts by default.
+In order to turn on setuid interpreter scripts,
+.D1 Cd options SETUIDSCRIPTS
+must be set in the configuration of the running kernel.
+Setting this option implies the
+.Cd FDSCRIPTS
+option, which causes the kernel to open the script file on behalf of
+the interpreter and pass it in
+.Va argv
+as
+.Pa /dev/fd/[fdnum] .
+(See
+.Xr fd 4
+for an explanation of the
+.Pa /dev/fd/[fdnum]
+devices.)
+This design avoids the race condition, at the cost of denying the
+interpreter the actual name of the script file.
+See
+.Xr options 4
+for more information.
+.Pp
+However, the
+.Cd FDSCRIPTS
+mechanism is not a cure-all for security issues in setuid interpreters
+and scripts.
+Subtle techniques can be used to subvert even seemingly well written scripts.
+Scripts executed by Bourne type shells can be subverted in numerous
+ways, such as by setting the
+.Ev IFS
+variable before executing the script.
+Other interpreters possess their own vulnerabilities.
+Turning on
+.Cd SETUIDSCRIPTS
+is therefore very dangerous, and should not be done lightly if at all.
