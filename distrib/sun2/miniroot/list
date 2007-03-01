@@ -1,5 +1,5 @@
 #
-# $NetBSD: list,v 1.2 2002/06/05 11:22:05 lukem Exp $
+# $NetBSD: list,v 1.3 2007/03/01 07:11:05 apb Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -39,6 +39,7 @@ SYMLINK	/tmp/hosts			etc/hosts
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV		555
+COPY	${DESTDIR}/dev/MAKEDEV.subr	dev/MAKEDEV.subr	555
 COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local	555
 
 # copy the miniroot installation tools
