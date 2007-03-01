@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2006/08/02 09:30:46 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.34 2007/03/01 09:25:42 apb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -27,6 +27,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${KERNEL3} ${KERNEL3X} \
 		fstab install.md profile termcap \
 		${DESTDIR}/dev/MAKEDEV ${DESTDIR}/dev/MAKEDEV.local \
+		${DESTDIR}/dev/MAKEDEV.subr \
 		${DESTDIR}/etc/disktab ${DESTDIR}/etc/group \
 		${DESTDIR}/etc/master.passwd ${DESTDIR}/etc/netconfig \
 		${DESTDIR}/etc/passwd ${DESTDIR}/etc/protocols \
