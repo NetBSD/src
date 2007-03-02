@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.22 2007/03/02 18:53:52 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.23 2007/03/02 19:56:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.22 2007/03/02 18:53:52 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.23 2007/03/02 19:56:47 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -129,18 +129,18 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		    "Multiple mutexes used for condition wait", 
 		    cond->ptc_mutex == mutex);
 #endif
+	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
+	self->pt_sleeponq = 1;
 	pthread_mutex_unlock(mutex);
 	(void)pthread__park(self, &cond->ptc_lock, cond,
-	    &cond->ptc_waiters, NULL, 0, 1);
-	pthread_spinunlock(self, &cond->ptc_lock);
-
-	pthread_mutex_lock(mutex);
+	    NULL, NULL, 0, 1);
 #ifdef ERRORCHECK
-	pthread_spinlock(self, &cond->ptc_lock);
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
-	pthread_spinunlock(self, &cond->ptc_lock);
 #endif		
+	pthread_spinunlock(self, &cond->ptc_lock);
+	pthread_mutex_lock(mutex);
+
 	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
 
@@ -161,7 +161,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
     const struct timespec *abstime)
 {
 	pthread_t self;
-	struct pthread_cond__waitarg wait;
 	int retval;
 
 	pthread__error(EINVAL, "Invalid condition variable",
@@ -181,10 +180,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	if (__predict_false(pthread__started == 0))
 		return pthread_cond_wait_nothread(self, mutex, abstime);
 
-	wait.ptw_thread = self;
-	wait.ptw_cond = cond;
-	retval = 0;
-
 	SDPRINTF(("(cond timed wait %p) Waiting on %p until %d.%06ld\n",
 	    self, cond, abstime->tv_sec, abstime->tv_nsec/1000));
 
@@ -199,9 +194,15 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		    "Multiple mutexes used for condition wait",
 		    cond->ptc_mutex == mutex);
 #endif
+	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
+	self->pt_sleeponq = 1;
 	pthread_mutex_unlock(mutex);
 	retval = pthread__park(self, &cond->ptc_lock, cond,
-	    &cond->ptc_waiters, abstime, 0, 1);
+	    NULL, abstime, 0, 1);
+#ifdef ERRORCHECK
+	if (PTQ_EMPTY(&cond->ptc_waiters))
+		cond->ptc_mutex = NULL;
+#endif		
 	pthread_spinunlock(self, &cond->ptc_lock);
 
 	SDPRINTF(("(cond timed wait %p) Woke up on %p, mutex %p\n",
@@ -209,12 +210,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	SDPRINTF(("(cond timed wait %p) %s\n",
 	    self, (retval == ETIMEDOUT) ? "(timed out)" : ""));
 	pthread_mutex_lock(mutex);
-#ifdef ERRORCHECK
-	pthread_spinlock(self, &cond->ptc_lock);
-	if (PTQ_EMPTY(&cond->ptc_waiters))
-		cond->ptc_mutex = NULL;
-	pthread_spinunlock(self, &cond->ptc_lock);
-#endif		
 	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
 
