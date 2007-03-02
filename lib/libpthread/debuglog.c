@@ -1,4 +1,4 @@
-/*	$NetBSD: debuglog.c,v 1.6 2006/12/14 20:39:04 ad Exp $	*/
+/*	$NetBSD: debuglog.c,v 1.7 2007/03/02 18:53:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ pthread__debuglog_read(int follow, int trunc)
 			debugbuf->msg_bufr = writep;
 
 		if (follow)
-			sleep(1);
+                      sched_yield();
 	} while (follow);
 }
 

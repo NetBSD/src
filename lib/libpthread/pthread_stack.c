@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_stack.c,v 1.19 2007/01/20 18:58:11 christos Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.20 2007/03/02 18:53:54 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.19 2007/01/20 18:58:11 christos Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.20 2007/03/02 18:53:54 ad Exp $");
 
 #define __EXPOSE_STACK 1
 #include <sys/param.h>
@@ -207,29 +207,6 @@ pthread__stackid_setup(void *base, size_t size, pthread_t *tp)
 	if (ret == -1) {
 		return errno;
 	}
-#ifdef PTHREAD_MLOCK_KLUDGE
-	ret = mlock(t, sizeof(struct __pthread_st));
-	if (ret < 0) {
-		return errno;
-	}
-#endif
 	*tp = t;
 	return 0;
 }
-
-
-#ifdef PTHREAD_SA
-ssize_t
-pthread__stackinfo_offset()
-{
-	size_t pagesize;
-
-	pagesize = (size_t)sysconf(_SC_PAGESIZE);
-
-#ifdef __MACHINE_STACK_GROWS_UP
-	return (-pagesize + offsetof(struct __pthread_st, pt_stackinfo));
-#else
-	return (-(2 * pagesize) + offsetof(struct __pthread_st, pt_stackinfo));
-#endif
-}
-#endif

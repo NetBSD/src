@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.39 2007/02/09 22:08:48 ad Exp $
+#	$NetBSD: Makefile,v 1.40 2007/03/02 18:53:51 ad Exp $
 #
 
-#PTHREAD_SA=1
 WARNS=	4
 
 # Define PT_FIXEDSTACKSIZE_LG to set a fixed stacksize
@@ -29,10 +28,6 @@ ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
 CPPFLAGS+=	-D__LIBPTHREAD_SOURCE__
 
-.if defined(PTHREAD_SA)
-CPPFLAGS+=	-DPTHREAD_SA -DPTHREAD_MLOCK_KLUDGE
-.endif
-
 # XXX: This crappy poke at libc's internals needs to be fixed.
 # We need to put this *after our own includes, so that our "assym.h"
 # gets picked, instead of the libc one
@@ -55,18 +50,14 @@ LIB=	pthread
 # library semantics will end up discarding potentially important objects.
 #
 SRCS=	pthread.c 
-SRCS+=	pthread_alarms.c
 SRCS+=	pthread_attr.c
 SRCS+=	pthread_barrier.c
 SRCS+=	pthread_cancelstub.c
 SRCS+=	pthread_cond.c
 SRCS+=	pthread_lock.c 
+SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
-SRCS+=	pthread_run.c
 SRCS+=	pthread_rwlock.c
-SRCS+=	pthread_sa.c
-SRCS+=	pthread_sig.c
-SRCS+=	pthread_sleep.c
 SRCS+=	pthread_specific.c
 SRCS+=  pthread_stack.c
 SRCS+=	pthread_tsd.c
@@ -75,9 +66,6 @@ SRCS+=	res_state.c
 SRCS+=	sched.c
 SRCS+=	sem.c
 # Architecture-dependent files
-.if defined(PTHREAD_SA)
-SRCS+=	pthread_switch.S
-.endif
 SRCS+=	_context_u.S
 .if exists(${ARCHDIR}/pthread_md.c)
 SRCS+= pthread_md.c

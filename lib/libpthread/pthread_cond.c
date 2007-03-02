@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_cond.c,v 1.21 2007/03/02 17:47:40 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.22 2007/03/02 18:53:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.21 2007/03/02 17:47:40 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.22 2007/03/02 18:53:52 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -56,9 +56,6 @@ int	_sys_nanosleep(const struct timespec *, struct timespec *);
 
 extern int pthread__started;
 
-#ifdef PTHREAD_SA
-static void pthread_cond_wait__callback(void *);
-#endif
 static int pthread_cond_wait_nothread(pthread_t, pthread_mutex_t *,
     const struct timespec *);
 
@@ -119,38 +116,6 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	if (__predict_false(pthread__started == 0))
 		return pthread_cond_wait_nothread(self, mutex, NULL);
 
-#ifdef PTHREAD_SA
-	pthread_spinlock(self, &cond->ptc_lock);
-	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
-	    self, cond, mutex));
-
-#ifdef ERRORCHECK
-	if (cond->ptc_mutex == NULL)
-		cond->ptc_mutex = mutex;
-	else
-		pthread__error(EINVAL,
-		    "Multiple mutexes used for condition wait", 
-		    cond->ptc_mutex == mutex);
-#endif
-
-	pthread_spinlock(self, &self->pt_statelock);
-	if (__predict_false(self->pt_cancel)) {
-		pthread_spinunlock(self, &self->pt_statelock);
-		pthread_spinunlock(self, &cond->ptc_lock);
-		pthread_exit(PTHREAD_CANCELED);
-	}
-
-	self->pt_sleepobj = cond;
-	self->pt_state = PT_STATE_BLOCKED_QUEUE;
-	self->pt_sleepq = &cond->ptc_waiters;
-	self->pt_sleeplock = &cond->ptc_lock;
-	pthread_spinunlock(self, &self->pt_statelock);
-	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
-	pthread_mutex_unlock(mutex);
-
-	pthread__block(self, &cond->ptc_lock);
-	/* Spinlock is unlocked on return */
-#else	/* PTHREAD_SA */
 	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
 	    self, cond, mutex));
 	if (__predict_false(self->pt_cancel))
@@ -168,7 +133,6 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	(void)pthread__park(self, &cond->ptc_lock, cond,
 	    &cond->ptc_waiters, NULL, 0, 1);
 	pthread_spinunlock(self, &cond->ptc_lock);
-#endif	/* PTHREAD_SA */
 
 	pthread_mutex_lock(mutex);
 #ifdef ERRORCHECK
@@ -198,9 +162,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 {
 	pthread_t self;
 	struct pthread_cond__waitarg wait;
-#ifdef PTHREAD_SA
-	struct pt_alarm_t alarm;
-#endif
 	int retval;
 
 	pthread__error(EINVAL, "Invalid condition variable",
@@ -224,43 +185,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	wait.ptw_cond = cond;
 	retval = 0;
 
-#ifdef PTHREAD_SA
-	pthread_spinlock(self, &cond->ptc_lock);
-	SDPRINTF(("(cond timed wait %p) Waiting on %p until %d.%06ld\n",
-	    self, cond, abstime->tv_sec, abstime->tv_nsec/1000));
-
-	pthread_spinlock(self, &self->pt_statelock);
-	if (__predict_false(self->pt_cancel)) {
-		pthread_spinunlock(self, &self->pt_statelock);
-		pthread_spinunlock(self, &cond->ptc_lock);
-		pthread_exit(PTHREAD_CANCELED);
-	}
-#ifdef ERRORCHECK
-	if (cond->ptc_mutex == NULL)
-		cond->ptc_mutex = mutex;
-	else
-		pthread__error(EINVAL,
-		    "Multiple mutexes used for condition wait",
-		    cond->ptc_mutex == mutex);
-#endif
-
-	pthread__alarm_add(self, &alarm, abstime, pthread_cond_wait__callback,
-	    &wait);
-	self->pt_state = PT_STATE_BLOCKED_QUEUE;
-	self->pt_sleepobj = cond;
-	self->pt_sleepq = &cond->ptc_waiters;
-	self->pt_sleeplock = &cond->ptc_lock;
-	pthread_spinunlock(self, &self->pt_statelock);
-
-	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
-	pthread_mutex_unlock(mutex);
-
-	pthread__block(self, &cond->ptc_lock);
-	/* Spinlock is unlocked on return */
-	pthread__alarm_del(self, &alarm);
-	if (pthread__alarm_fired(&alarm))
-		retval = ETIMEDOUT;
-#else	/* PTHREAD_SA */
 	SDPRINTF(("(cond timed wait %p) Waiting on %p until %d.%06ld\n",
 	    self, cond, abstime->tv_sec, abstime->tv_nsec/1000));
 
@@ -279,7 +203,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	retval = pthread__park(self, &cond->ptc_lock, cond,
 	    &cond->ptc_waiters, abstime, 0, 1);
 	pthread_spinunlock(self, &cond->ptc_lock);
-#endif	/* PTHREAD_SA */
 
 	SDPRINTF(("(cond timed wait %p) Woke up on %p, mutex %p\n",
 	    self, cond));
@@ -298,35 +221,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	return retval;
 }
 
-#ifdef PTHREAD_SA
-static void
-pthread_cond_wait__callback(void *arg)
-{
-	struct pthread_cond__waitarg *a;
-	pthread_t self;
-
-	a = arg;
-	self = pthread__self();
-
-	/*
-	 * Don't dequeue and schedule the thread if it's already been
-	 * queued up by a signal or broadcast (but hasn't yet run as far
-	 * as pthread__alarm_del(), or we wouldn't be here, and hence can't
-	 * have become blocked on some *other* queue).
-	 */
-	pthread_spinlock(self, &a->ptw_cond->ptc_lock);
-	if (a->ptw_thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
-		PTQ_REMOVE(&a->ptw_cond->ptc_waiters, a->ptw_thread, pt_sleep);
-#ifdef ERRORCHECK
-		if (PTQ_EMPTY(&a->ptw_cond->ptc_waiters))
-			a->ptw_cond->ptc_mutex = NULL;
-#endif
-		pthread__sched(self, a->ptw_thread);
-	}
-	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
-}
-#endif	/* PTHREAD_SA */
-
 int
 pthread_cond_signal(pthread_cond_t *cond)
 {
@@ -339,23 +233,6 @@ pthread_cond_signal(pthread_cond_t *cond)
 	SDPRINTF(("(cond signal %p) Signaling %p\n",
 	    pthread__self(), cond));
 
-#ifdef PTHREAD_SA
-	if (!PTQ_EMPTY(&cond->ptc_waiters)) {
-		self = pthread__self();
-		pthread_spinlock(self, &cond->ptc_lock);
-		signaled = PTQ_FIRST(&cond->ptc_waiters);
-		if (signaled != NULL) {
-			PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
-			pthread__sched(self, signaled);
-			PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-		}
-#ifdef ERRORCHECK
-		if (PTQ_EMPTY(&cond->ptc_waiters))
-			cond->ptc_mutex = NULL;
-#endif
-		pthread_spinunlock(self, &cond->ptc_lock);
-	}
-#else	/* PTHREAD_SA */
 	if (!PTQ_EMPTY(&cond->ptc_waiters)) {
 		self = pthread__self();
 		pthread_spinlock(self, &cond->ptc_lock);
@@ -375,7 +252,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 			pthread_spinunlock(self, &cond->ptc_lock);
 		}
 	}
-#endif
+
 	return 0;
 }
 
@@ -384,9 +261,6 @@ int
 pthread_cond_broadcast(pthread_cond_t *cond)
 {
 	pthread_t self;
-#ifdef PTHREAD_SA
-	struct pthread_queue_t blockedq;
-#endif
 
 	pthread__error(EINVAL, "Invalid condition variable", cond->ptc_magic == _PT_COND_MAGIC);
 
@@ -400,16 +274,8 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 #ifdef ERRORCHECK
 		cond->ptc_mutex = NULL;
 #endif
-#ifdef PTHREAD_SA
-		blockedq = cond->ptc_waiters;
-		PTQ_INIT(&cond->ptc_waiters);
-		pthread__sched_sleepers(self, &blockedq);
-		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-		pthread_spinunlock(self, &cond->ptc_lock);
-#else	/* PTHREAD_SA */
 		pthread__unpark_all(self, &cond->ptc_lock, cond, &cond->ptc_waiters);
 		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
-#endif	/* PTHREAD_SA */
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.17 2007/03/02 17:34:21 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.18 2007/03/02 18:53:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.17 2007/03/02 17:34:21 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.18 2007/03/02 18:53:52 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -195,16 +195,8 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 		 * (in case (a), we should let the code finish and 
 		 * we will bail out in pthread_spinunlock()).
 		 */
-#ifdef PTHREAD_SA
-		if (thread->pt_next != NULL) {
-			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
-			pthread__assert(thread->pt_blockgen == thread->pt_unblockgen);
-			pthread__switch(thread, thread->pt_next);
-		}
-#else
 		/* XXXLWP far from ideal */
 		sched_yield();
-#endif
 		/* try again */
 		count = pthread__nspins;
 	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
@@ -224,24 +216,11 @@ pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
 
 	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
 		thread, thread->pt_spinlocks));
+
 	++thread->pt_spinlocks;
-
 	ret = pthread__simple_lock_try(lock);
-
-#ifdef PTHREAD_SA
-	if (ret == 0) {
-	SDPRINTF(("(pthread_spintrylock %p) decrementing spinlock from %d\n",
-		thread, thread->pt_spinlocks));
+	if (!ret)
 		--thread->pt_spinlocks;
-		/* See above. */
-		if (thread->pt_next != NULL) {
-			PTHREADD_ADD(PTHREADD_SPINPREEMPT);
-			pthread__assert(thread->pt_blockgen == thread->pt_unblockgen);
-			pthread__switch(thread, thread->pt_next);
-		}
-	}
-#endif
-
 	return ret;
 }
 
@@ -258,22 +237,6 @@ pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 	pthread__assert(thread->pt_spinlocks >= 0);
 #endif
 	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
-
-#ifdef PTHREAD_SA
-	/*
-	 * If we were preempted while holding a spinlock, the
-	 * scheduler will notice this and continue us. To be good
-	 * citzens, we must now get out of here if that was our
-	 * last spinlock.
-	 * XXX when will we ever have more than one?
-	 */
-	
-	if ((thread->pt_spinlocks == 0) && (thread->pt_next != NULL)) {
-		PTHREADD_ADD(PTHREADD_SPINPREEMPT);
-		/* pthread__assert(thread->pt_blockgen == thread->pt_unblockgen); */
-		pthread__switch(thread, thread->pt_next);
-	}
-#endif
 }
 
 

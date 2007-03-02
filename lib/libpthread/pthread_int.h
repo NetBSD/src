@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_int.h,v 1.37 2007/02/06 15:24:37 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.38 2007/03/02 18:53:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,12 +47,7 @@
 #include "pthread_debug.h"
 #include "pthread_md.h"
 
-#ifndef PTHREAD_SA
 #include <lwp.h>
-#else
-#include <sa.h>
-#endif
-
 #include <signal.h>
 
 #define PTHREAD_KEYS_MAX 256
@@ -64,15 +59,6 @@ struct pt_clean_t {
 	PTQ_ENTRY(pt_clean_t)	ptc_next;
 	void	(*ptc_cleanup)(void *);
 	void	*ptc_arg;
-};
-
-struct pt_alarm_t {
-	PTQ_ENTRY(pt_alarm_t)	pta_next;
-	pthread_spin_t	pta_lock;
-	const struct timespec	*pta_time;
-	void	(*pta_func)(void *);
-	void	*pta_arg;
-	int	pta_fired;
 };
 
 /* Private data for pthread_attr_t */
@@ -89,30 +75,16 @@ struct	__pthread_st {
 	/* Identifier, for debugging and for preventing recycling. */
 	int		pt_num;
 
-#ifdef PTHREAD_SA
-	int	pt_type;	/* normal, upcall, or idle */
-#else
 	lwpid_t	pt_lid;		/* LWP ID */
-#endif
 	int	pt_state;	/* running, blocked, etc. */
 	pthread_spin_t pt_statelock;	/* lock on pt_state */
 	int	pt_flags;	/* see PT_FLAG_* below */
 	pthread_spin_t pt_flaglock;	/* lock on pt_flag */
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
-	int	pt_blockedlwp;	/* LWP/SA number when blocked */
-	int	pt_vpid;	/* VP number */
-	int	pt_blockgen;	/* SA_UPCALL_BLOCKED counter */
-#ifdef PTHREAD_SA
-	int	pt_unblockgen;	/* SA_UPCALL_UNBLOCKED counter */
-#else
 	int	pt_sleeponq;	/* on a sleep queue */
-#endif
-
 	int	pt_errno;	/* Thread-specific errno. */
 
-	/* Entry on the run queue */
-	PTQ_ENTRY(__pthread_st)	pt_runq;
 	/* Entry on the list of all threads */
 	PTQ_ENTRY(__pthread_st)	pt_allq;
 	/* Entry on the sleep queue (xxx should be same as run queue?) */
@@ -125,28 +97,14 @@ struct	__pthread_st {
 	void			*pt_sleepobj;
 	/* Queue we're sleeping on */
 	struct pthread_queue_t	*pt_sleepq;
-	/* Lock protecting that queue */
-	pthread_spin_t		*pt_sleeplock;
 
 	stack_t		pt_stack;	/* Our stack */
 	ucontext_t	*pt_uc;		/* Saved context when we're stopped */
-	ucontext_t	*pt_trapuc;   	/* Kernel-saved context */
-	ucontext_t	*__pt_blockuc;  /* Kernel-saved context when blocked */
-
-	sigset_t	pt_sigmask;	/* Signals we won't take. */
-	sigset_t	pt_siglist;	/* Signals pending for us. */
-	sigset_t	pt_sigblocked;	/* Signals delivered while blocked. */
-	sigset_t	*pt_sigwait;	/* Signals waited for in sigwait */
-	siginfo_t	*pt_wsig;	
-	pthread_spin_t	pt_siglock;	/* Lock on above */
-
-	void *		pt_exitval;	/* Read by pthread_join() */
+	void		*pt_exitval;	/* Read by pthread_join() */
+	char		*pt_name;	/* Thread's name, set by the app. */
 
 	/* Stack of cancellation cleanup handlers and their arguments */
 	PTQ_HEAD(, pt_clean_t)	pt_cleanup_stack;
-
-	/* Thread's name, set by the application. */
-	char*		pt_name;
 
 	/* Other threads trying to pthread_join() us. */
 	struct pthread_queue_t	pt_joiners;
@@ -155,42 +113,8 @@ struct	__pthread_st {
 	 */
 	pthread_spin_t	pt_join_lock;
 
-	/* Thread we were going to switch to before we were preempted
-	 * ourselves. Will be used by the upcall that's continuing us.
-	 */
-	pthread_t	pt_switchto;
-	ucontext_t*	pt_switchtouc;
-
-	/* Threads that are preempted with spinlocks held will be
-	 * continued until they unlock their spinlock. When they do
-	 * so, they should jump ship to the thread pointed to by
-	 * pt_next.
-	 */
-	pthread_t	pt_next;
-
-	/* The upcall that is continuing this thread */
-	pthread_t	pt_parent;
-	
-	/* A queue lock that this thread held while trying to 
-	 * context switch to another process.
-	 */
-	pthread_spin_t*	pt_heldlock;
-
-#ifdef PTHREAD_SA
-	/* Upcall stack information shared between kernel and
-	 * userland.
-	 */
-	struct sa_stackinfo_t	pt_stackinfo;
-#endif
-
 	/* Thread-specific data */
 	void*		pt_specific[PTHREAD_KEYS_MAX];
-
-#ifdef PTHREAD__DEBUG
-	int	blocks;
-	int	preempts;
-	int	rescheds;
-#endif
 };
 
 struct pthread_lock_ops {
@@ -199,43 +123,20 @@ struct pthread_lock_ops {
 	void	(*plo_unlock)(__cpu_simple_lock_t *);
 };
 
-#ifdef PTHREAD_SA
-
-/* Thread types */
-#define PT_THREAD_NORMAL	1
-#define PT_THREAD_UPCALL	2
-#define PT_THREAD_IDLE		3
-
-/* Thread states */
-#define PT_STATE_RUNNING	1
-#define PT_STATE_RUNNABLE	2
-#define _PT_STATE_BLOCKED_SYS	3	/* Only used in libpthread_dbg */
-#define PT_STATE_BLOCKED_QUEUE	4
-#define PT_STATE_ZOMBIE		5
-#define PT_STATE_DEAD		6
-#define PT_STATE_SUSPENDED	7
-
-#else	/* PTHREAD_SA */
-
 /* Thread states */
 #define PT_STATE_RUNNING	1
 #define PT_STATE_ZOMBIE		5
 #define PT_STATE_DEAD		6
-
-#endif	/* PTHREAD_SA */
 
 /* Flag values */
 
 #define PT_FLAG_DETACHED	0x0001
-#define PT_FLAG_IDLED		0x0002
 #define PT_FLAG_CS_DISABLED	0x0004	/* Cancellation disabled */
 #define PT_FLAG_CS_ASYNC	0x0008  /* Cancellation is async */
 #define PT_FLAG_CS_PENDING	0x0010
-#define PT_FLAG_SIGDEFERRED     0x0020	/* There are signals to take */
 #define PT_FLAG_SCOPE_SYSTEM	0x0040
 #define PT_FLAG_EXPLICIT_SCHED	0x0080
 #define PT_FLAG_SUSPENDED	0x0100	/* In the suspended queue */
-#define PT_FLAG_SIGNALED	0x0200
 
 #define PT_MAGIC	0x11110001
 #define PT_DEAD		0xDEAD0001
@@ -261,13 +162,6 @@ extern	vaddr_t		pthread_stackmask;
 
 #endif /* PT_FIXEDSTACKSIZE_LG */
 
-
-#define PT_UPCALLSTACKS	16
-
-#define PT_ALARMTIMER_MAGIC	0x88880010
-#define PT_RRTIMER_MAGIC	0x88880020
-#define NIDLETHREADS	4
-
 /* Flag to be used in a ucontext_t's uc_flags indicating that
  * the saved register state is "user" state only, not full
  * trap state.
@@ -284,24 +178,6 @@ void	pthread__initthread(pthread_t self, pthread_t t);
 /* Get offset from stack start to struct sa_stackinfo */
 ssize_t	pthread__stackinfo_offset(void);
 
-/* Go do something else. Don't go back on the run queue */
-void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
-/* Put a thread back on the suspended queue */
-void	pthread__suspend(pthread_t self, pthread_t thread);
-/* Put a thread back on the run queue */
-void	pthread__sched(pthread_t self, pthread_t thread);
-void	pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq);
-void	pthread__sched_idle(pthread_t self, pthread_t thread);
-void	pthread__sched_idle2(pthread_t self);
-
-void	pthread__sched_bulk(pthread_t self, pthread_t qhead);
-
-void	pthread__idle(void);
-
-/* Get the next thread */
-pthread_t pthread__next(pthread_t self);
-
-#ifndef PTHREAD_SA
 void	pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
 			    void *obj, struct pthread_queue_t *threadq);
 void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
@@ -310,22 +186,9 @@ int	pthread__park(pthread_t self, pthread_spin_t *lock,
 		      void *obj, struct pthread_queue_t *threadq,
 		      const struct timespec *abs_timeout, int tail,
 		      int cancelpt);
-#endif
 
 int	pthread__stackalloc(pthread_t *t);
 void	pthread__initmain(pthread_t *t);
-
-void	pthread__sa_start(void);
-void	pthread__sa_recycle(pthread_t old, pthread_t new);
-void	pthread__setconcurrency(int);
-
-/* Alarm code */
-void	pthread__alarm_init(void);
-void	pthread__alarm_add(pthread_t, struct pt_alarm_t *,
-    const struct timespec *, void (*)(void *), void *);
-void	pthread__alarm_del(pthread_t, struct pt_alarm_t *);
-int	pthread__alarm_fired(struct pt_alarm_t *);
-void	pthread__alarm_process(pthread_t self, void *arg);
 
 /* Internal locking primitives */
 void	pthread__lockprim_init(int ncpu);
@@ -392,21 +255,6 @@ int	pthread__find(pthread_t self, pthread_t target);
 	       return (err);						\
 	} 								\
         } while (/*CONSTCOND*/0)
-
-
-
-/* These three routines are defined in processor-specific code. */
-void	pthread__upcall_switch(pthread_t self, pthread_t next);
-void	pthread__switch(pthread_t self, pthread_t next);
-void	pthread__locked_switch(pthread_t self, pthread_t next, 
-    pthread_spin_t *lock);
-
-void	pthread__signal_init(void);
-void	pthread__signal_start(void);
-
-void	pthread__signal(pthread_t self, pthread_t t, siginfo_t *si);
-void	pthread__deliver_signal(pthread_t self, pthread_t t, siginfo_t *si);
-void	pthread__signal_deferred(pthread_t self, pthread_t t);
 
 void	pthread__destroy_tsd(pthread_t self);
 void	pthread__assertfunc(const char *file, int line, const char *function,
