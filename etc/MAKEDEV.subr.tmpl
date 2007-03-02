@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.subr.tmpl,v 1.1 2007/02/26 20:44:03 apb Exp $
+#	$NetBSD: MAKEDEV.subr.tmpl,v 1.2 2007/03/02 21:29:23 dsl Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -103,6 +103,10 @@ hexprint()
 
 mkdev()
 {
+	if [ -n "$count_nodes" ]; then
+		count_nodes=$((count_nodes + 1))
+		return
+	fi
 	if $do_specfile; then
 		case $2 in
 		b)	type=block ;;
@@ -116,6 +120,10 @@ mkdev()
 
 lndev()
 {
+	if [ -n "$count_nodes" ]; then
+		count_nodes=$((count_nodes + 1))
+		return
+	fi
 	if $do_specfile; then
 		echo "./$2 type=link link=$1 mode=0700 gid=$g_wheel uid=$u_root"
 	else
@@ -125,6 +133,10 @@ lndev()
 
 makedir()
 {
+	if [ -n "$count_nodes" ]; then
+		count_nodes=$((count_nodes + 1))
+		return
+	fi
 	if $do_specfile; then
 		echo "./$1 type=dir mode=$2 gid=$g_wheel uid=$u_root"
 	else
