@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.12 2007/02/21 00:11:55 gmcgarry Exp $
+.\"     $NetBSD: nls.7,v 1.13 2007/03/02 20:28:54 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 17, 2003
+.Dd February 21, 2007
 .Dt NLS 7
 .Os
 .Sh NAME
@@ -103,17 +103,17 @@ ISO C specifies the following six standard categories supported by
 .Nx :
 .Pp
 .Bl -tag -compact -width LC_MONETARYXX
-.It LC_COLLATE
+.It Ev LC_COLLATE
 string-collation order information
-.It LC_CTYPE
+.It Ev LC_CTYPE
 character classification, case conversion, and other character attributes
-.It LC_MESSAGES
+.It Ev LC_MESSAGES
 the format for affirmative and negative responses
-.It LC_MONETARY
+.It Ev LC_MONETARY
 rules and symbols for formatting monetary numeric information
-.It LC_NUMERIC
+.It Ev LC_NUMERIC
 rules and symbols for formatting nonmonetary numeric information
-.It LC_TIME
+.It Ev LC_TIME
 rules and symbols for formatting time and date information
 .El
 .Pp
@@ -361,7 +361,7 @@ The standard is divided into 15 numbered parts, with each
 part specifying broad script similarities.
 Examples include Western European, Central European, Arabic, Cyrillic,
 Hebrew, Greek, and Turkish.
-The character sets use an 8-bit character encoding scheme which is 
+The character sets use an 8-bit character encoding scheme which is
 compatible with the ASCII character set.
 .It Unicode
 The Unicode character set is the full set of known abstract characters of
@@ -439,7 +439,9 @@ or may contain state (i.e., adjacent characters are dependent).
 ISO C specifies a set of functions using 'wide characters' which can handle
 multi-byte encodings properly.
 The behaviour of these functions is affected
-by the LC_CTYPE category of the current locale.
+by the
+.Ev LC_CTYPE
+category of the current locale.
 .Pp
 A wide character is specified in ISO C
 as being a fixed number of bits wide and is stateless.
@@ -466,7 +468,7 @@ There are some additional functions that operate on
 See
 .Xr wctype 3
 and
-.Xr wctran 3
+.Xr wctrans 3
 for details.
 .Pp
 Wide characters should be used for all I/O processing which may rely
