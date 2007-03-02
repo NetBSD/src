@@ -1,3 +1,4 @@
+.\" $NetBSD: nvram.4,v 1.2 2007/03/02 20:51:21 wiz Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,7 +48,7 @@ The file
 is an interface to the PReP NVRAM, including the Global Environment Area.
 This interface is highly stylized;
 ioctls are used for all operations.
-These ioctls refer to individual variables in the 
+These ioctls refer to individual variables in the
 Global Environment Area and thier values.
 .Pp
 The calls that take and/or return a variable
@@ -84,14 +85,16 @@ The following ioctls are supported:
 .Bl -tag -width PNVIOCGETNEXTNAME
 .It PNVIOCGETNEXTNAME
 Takes a variable name and returns the name of the following variable.
-If a NULL is passed as the variable name, the first variable name
+If a
+.Dv NULL
+is passed as the variable name, the first variable name
 will be returned.
 If the last variable is given as an argument, the ioctl will return
 .Er EINVAL .
 .It Dv PNVIOCGET
 Fills in the value of the named property for the given variable.
 If no such property is associated with that variable,
-the value length is set to -1.
+the value length is set to \-1.
 If the named property exists but has no value,
 the value length is set to 0.
 .It Dv PNVIOCSET
