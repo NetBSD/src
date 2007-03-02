@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.101 2007/02/20 15:17:28 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.102 2007/03/02 07:50:09 pooka Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd February 20, 2007
+.Dd March 2, 2007
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -613,6 +613,11 @@ Set the named variable or register to the value of
 .Ar expression .
 Valid variable names are described in
 .Sx VARIABLES .
+.It Ic show all callout
+Display information about callouts in the system.
+See
+.Xr callout 9
+for more information on callouts.
 .It Ic show all pages
 Display basic information about all physical pages managed by the VM system.
 For more detailed information about a single page, use
@@ -654,6 +659,11 @@ address, and wait channel message.
 show each process' associated LWP information, including each LWP's
 LID, flags, kernel LWP structure address, u-area, and wait channel.
 .El
+.It Ic show arptab
+Dump the entire
+.Dv AF_INET
+routing table.
+This command is available only on systems which support inet and ARP.
 .It Ic show breaks
 Display all breakpoints.
 .It Xo
@@ -674,6 +684,25 @@ event counters.
 If
 .Cm /f
 is specified, all event counters with a count of zero are printed as well.
+.It Xo
+.Ic show lock
+.Ar address
+.Xc
+Display information about a lock at
+.Ar address .
+This command is useful only if a kernel is compiled with
+.Cd options LOCKDEBUG .
+.It Xo
+.Ic show malloc
+.Ar address
+.Xc
+If
+.Ar address
+is supplied, display the kernel memory allocator's idea on the
+allocation status for it.
+Also, print out global statistics for the memory allocator.
+This command is useful only if a kernel is compiled with
+.Cd options MALLOC_DEBUG .
 .It Xo
 .Ic show map Ns Op Cm /f
 .Ar address
