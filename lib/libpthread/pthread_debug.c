@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_debug.c,v 1.11 2007/01/20 18:57:41 christos Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.12 2007/03/02 18:53:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_debug.c,v 1.11 2007/01/20 18:57:41 christos Exp $");
+__RCSID("$NetBSD: pthread_debug.c,v 1.12 2007/03/02 18:53:52 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -160,15 +160,7 @@ pthread__debuglog_printf(const char *fmt, ...)
 	if (debugbuf == NULL || linebuf == NULL) 
 		return;
 
-#ifdef PTHREAD_SA
-	if (pthread__maxconcurrency > 1) {
-		vpid = pthread_self()->pt_vpid;
-	} else
-		vpid = 0;
-#else
 	vpid = (int)_lwp_self();
-#endif
-
 	tmpbuf = linebuf[vpid].buf;
 	len = linebuf[vpid].len;
 
@@ -236,15 +228,9 @@ pthread__debuglog_newline(void)
 	if (debugbuf == NULL) 
 		return 1;
 
-#ifdef PTHREAD_SA
-	if (pthread__maxconcurrency > 1)
-		vpid = pthread_self()->pt_vpid;
-	else
-		vpid = 0;
-#else
 	vpid = (int)_lwp_self();
-#endif
-	
 	return (linebuf[vpid].len == 0);
 }
-#endif
+
+#endif	/* PTHREAD__DEBUG */
+
