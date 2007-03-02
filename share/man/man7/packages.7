@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.99 2007/03/02 08:50:11 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.100 2007/03/02 09:09:14 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -43,17 +43,6 @@ If set, will not invoke mtree from
 from the
 .Dq install
 target.
-.It MTREE_FILE
-The name of the mtree file.
-The default is
-.Pa /etc/mtree/BSD.x11.dist
-if
-.Dv USE_IMAKE
-or
-.Dv USE_X11BASE
-is set, or
-.Pa /etc/mtree/BSD.pkg.dist
-otherwise.
 .It NO_BUILD
 Use a dummy (do-nothing) build target.
 .It NO_CONFIGURE
