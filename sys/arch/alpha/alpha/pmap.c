@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.217 2007/02/22 04:51:26 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.218 2007/03/02 17:42:00 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2007/02/22 04:51:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.218 2007/03/02 17:42:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,8 +550,8 @@ static int	pmap_physpage_delref(void *);
 	 */								\
 	int isactive_ = PMAP_ISACTIVE_TEST(pm, cpu_id);			\
 									\
-	if (curlwp != NULL && curproc->p_vmspace != NULL &&	\
-	   ((curproc->p_flag & P_WEXIT) == 0) &&			\
+	if (curlwp != NULL && curproc->p_vmspace != NULL &&		\
+	   ((curproc->p_sflag & PS_WEXIT) == 0) &&			\
 	   (isactive_ ^ ((pm) == curproc->p_vmspace->vm_map.pmap)))	\
 		panic("PMAP_ISACTIVE");					\
 	(isactive_);							\
