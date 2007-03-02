@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.98 2007/03/02 05:58:55 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.99 2007/03/02 08:50:11 wiz Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -37,9 +37,6 @@ The default is
 Where package installation is recorded.
 The default is
 .Pa /var/db/pkg .
-.It FORCE_PKG_REGISTER
-If set, it will overwrite any existing package registration information in
-.Pa ${PKG_DBDIR}/${PKGNAME} .
 .It NO_MTREE
 If set, will not invoke mtree from
 .Pa bsd.pkg.mk
