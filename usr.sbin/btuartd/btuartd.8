@@ -1,4 +1,4 @@
-.\" $NetBSD: btuartd.8,v 1.1 2007/02/20 16:59:36 kiyohara Exp $
+.\" $NetBSD: btuartd.8,v 1.2 2007/03/02 20:18:59 wiz Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -11,7 +11,7 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 .\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -24,14 +24,14 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $Id: btuartd.8,v 1.1 2007/02/20 16:59:36 kiyohara Exp $
+.\" $Id: btuartd.8,v 1.2 2007/03/02 20:18:59 wiz Exp $
 .\"
 .Dd February 19, 2007
 .Dt BTUARTD 8
 .Os
 .Sh NAME
 .Nm btuartd
-.Nd Bluetooth HCI UART (H4) daemon.
+.Nd Bluetooth HCI UART (H4) daemon
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
@@ -44,32 +44,40 @@
 .Sh DESCRIPTION
 The
 .Nm
-daemon configure and attach Bluetooth HCI UART devices.  It opens
+daemon configures and attaches Bluetooth HCI UART devices.
+It opens
 .Ar comdev
 like
 .Xr com 4
-and compatible devices, also configure
+and compatible devices, also configures
 .Ar speed
-and flow.  The
+and flow.
+The
 .Nm
-daemon support HCI UART.  The former is read the configuration file.  And
-working on the daemon mode.  The latter sets the device given by the
-argument. 
+daemon supports HCI UART.
+With
+.Fl c
+it reads the configuration file and with
+.Fl d
+it runs in daemon mode.
+With a
+.Ar comdev
+argument, it configures that device.
 .Pp
-When the SIGHUP is received in the daemon mode, all devices are closed.
-And, it works reading the configuration file again. 
+When the SIGHUP signal is received in daemon mode, all devices are closed,
+and the daemon rereads the configuration files.
 .Pp
 If the
 .Ar type
 is given, then
 .Nm
-set
-.Ar type
+sets
+.Xr btuart 4
 to
-.Xr btuart 4 .
-The
-.Ar type
-supports:
+.Ar type .
+Supported
+.Ar types
+are:
 .Bl -tag -width XXXXXX
 .It Cm ericsson
 Ericsson based modules
@@ -106,7 +114,7 @@ Run in foreground (do not detach).
 Enable flow control as
 .Xr com 4 .
 .It Fl i Ar init_speed
-Specify the initial speed for Bluetooth module.
+Specify the initial speed for the Bluetooth module.
 .El
 .Sh FILES
 .Bl -tag -compact
@@ -114,8 +122,8 @@ Specify the initial speed for Bluetooth module.
 .It Pa /var/run/btuartd.pid
 .El
 .Sh SEE ALSO
-.Xr btuart 4 ,
 .Xr bluetooth 4 ,
+.Xr btuart 4 ,
 .Xr btconfig 8
 .Sh HISTORY
 The
