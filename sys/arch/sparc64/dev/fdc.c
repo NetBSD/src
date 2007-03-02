@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.4 2007/03/02 09:17:00 jnemeth Exp $	*/
+/*	$NetBSD: fdc.c,v 1.5 2007/03/02 22:26:14 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.4 2007/03/02 09:17:00 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.5 2007/03/02 22:26:14 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -760,8 +760,10 @@ fdcattach_ebus(struct device *parent, struct device *self, void *aux)
 	if (prom_getproplen(ea->ea_node, "manual") >= 0)
 		fdc->sc_flags |= FDC_NOEJECT;
 
-	/* XXX unmapping if it fails */
-	fdcattach(fdc, ea->ea_intr[0]);
+	if (fdcattach(fdc, ea->ea_intr[0]) != 0)
+		if (map_vaddr == 0)
+			bus_space_unmap(ea->ea_bustag, fdc->sc_handle,
+			    ea->ea_reg[0].size);
 }
 #endif
 
@@ -806,19 +808,6 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	}
 
 #ifdef SUN4
-	fdciop = &fdc->sc_io;
-	if (bus_intr_establish2(fdc->sc_bustag, pri, 0
-				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
-#elif SUN4U
-	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
-				fdc_c_hwintr, fdc) == NULL) {
-#endif
-		printf("\n%s: cannot register interrupt handler\n",
-			fdc->sc_dev.dv_xname);
-		return -1;
-	}
-
-#ifdef SUN4
 	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
 #elif SUN4U
 	fdc->sc_sicookie = softintr_establish(IPL_FDSOFT, fdcswintr, fdc);
@@ -826,6 +815,8 @@ fdcattach(struct fdc_softc *fdc, int pri)
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
 			fdc->sc_dev.dv_xname);
+		callout_stop(&fdc->sc_timo_ch);
+		callout_stop(&fdc->sc_intr_ch);
 		return -1;
 	}
 #ifdef SUN4
@@ -836,6 +827,22 @@ fdcattach(struct fdc_softc *fdc, int pri)
 		printf(": manual eject");
 	printf("\n");
 #endif
+
+#ifdef SUN4
+	fdciop = &fdc->sc_io;
+	if (bus_intr_establish2(fdc->sc_bustag, pri, 0
+				fdc_c_hwintr, fdc, fdchwintr) == NULL) {
+#elif SUN4U
+	if (bus_intr_establish(fdc->sc_bustag, pri, IPL_BIO,
+				fdc_c_hwintr, fdc) == NULL) {
+#endif
+		printf("\n%s: cannot register interrupt handler\n",
+			fdc->sc_dev.dv_xname);
+		callout_stop(&fdc->sc_timo_ch);
+		callout_stop(&fdc->sc_intr_ch);
+		softintr_disestablish(fdc->sc_sicookie);
+		return -1;
+	}
 
 	evcnt_attach_dynamic(&fdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    fdc->sc_dev.dv_xname, "intr");
@@ -1196,7 +1203,7 @@ fd_motor_on(void *arg)
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
 	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
-		(void) fdcstate(fdc);
+		(void)fdcstate(fdc);
 	splx(s);
 }
 
