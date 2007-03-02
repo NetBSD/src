@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.980 2007/03/02 06:38:52 riz Exp $
+# $NetBSD: mi,v 1.981 2007/03/02 09:45:32 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1715,7 +1715,7 @@
 ./usr/share/man/cat7/miscellaneous.0		man-obsolete		obsolete
 ./usr/share/man/cat7/msafer.0			man-obsolete		obsolete
 ./usr/share/man/cat7/nls.0			man-reference-catman	.cat
-./usr/share/man/cat7/packages.0			man-reference-catman	.cat
+./usr/share/man/cat7/packages.0			man-obsolete		obsolete
 ./usr/share/man/cat7/pkgsrc.0			man-reference-catman	.cat
 ./usr/share/man/cat7/re_format.0		man-reference-catman	.cat
 ./usr/share/man/cat7/release.0			man-reference-catman	.cat
@@ -4135,7 +4135,7 @@
 ./usr/share/man/man7/mdoc.7			man-groff-man		.man
 ./usr/share/man/man7/msafer.7			man-obsolete		obsolete
 ./usr/share/man/man7/nls.7			man-reference-man	.man
-./usr/share/man/man7/packages.7			man-reference-man	.man
+./usr/share/man/man7/packages.7			man-obsolete		obsolete
 ./usr/share/man/man7/pkgsrc.7			man-reference-man	.man
 ./usr/share/man/man7/re_format.7		man-reference-man	.man
 ./usr/share/man/man7/release.7			man-reference-man	.man
