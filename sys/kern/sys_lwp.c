@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.10 2007/03/02 16:14:37 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.11 2007/03/02 21:06:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.10 2007/03/02 16:14:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.11 2007/03/02 21:06:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,6 +292,7 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 	}
 
 	lwp_lock(t);
+	t->l_flag |= LW_CANCELLED;
 
 	if (t->l_stat != LSSLEEP) {
 		error = ENODEV;
@@ -303,8 +304,7 @@ sys__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 		goto bad;
 	}
 
-	/* wake it up  setrunnable() will release the LWP lock. */
-	t->l_flag |= LW_CANCELLED;
+	/* Wake it up.  setrunnable() will release the LWP lock. */
 	setrunnable(t);
 	mutex_exit(&p->p_smutex);
 	return 0;
