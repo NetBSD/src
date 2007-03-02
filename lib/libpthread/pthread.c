@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.62 2007/02/21 22:31:38 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.63 2007/03/02 17:40:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.62 2007/02/21 22:31:38 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.63 2007/03/02 17:40:55 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: pthread.c,v 1.62 2007/02/21 22:31:38 ad Exp $");
 #define	PTHREAD__UNPARK_MAX	128
 
 /* How many times to try acquiring spin locks on MP systems. */
-#define	PTHREAD__NSPINS		1000
+#define	PTHREAD__NSPINS		1024
 
 static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 static void	pthread__dead(pthread_t, pthread_t);
@@ -943,7 +943,9 @@ pthread_detach(pthread_t thread)
 
 	return 0;
 #else
+	pthread_spinlock(self, &self->pt_join_lock);
 	thread->pt_flags |= PT_FLAG_DETACHED;
+	pthread_spinunlock(self, &self->pt_join_lock);
 	return _lwp_detach(thread->pt_lid);
 #endif
 }
