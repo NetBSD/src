@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.6 2007/02/26 19:11:28 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.7 2007/03/02 13:14:12 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.6 2007/02/26 19:11:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.7 2007/03/02 13:14:12 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -187,7 +187,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 {
 	int rv;
 	rv = MUTEX_CAS(&mtx->mtx_owner, 0UL, curthread);
-	MUTEX_RECEIVE();
+	MUTEX_RECEIVE(mtx);
 	return rv;
 }
 
@@ -196,14 +196,14 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 {
 	int rv;
 	rv = MUTEX_CAS(&mtx->mtx_owner, owner, owner | MUTEX_BIT_WAITERS);
-	MUTEX_RECEIVE();
+	MUTEX_RECEIVE(mtx);
 	return rv;
 }
 
 static inline void
 MUTEX_RELEASE(kmutex_t *mtx)
 {
-	MUTEX_GIVE();
+	MUTEX_GIVE(mtx);
 	mtx->mtx_owner = 0;
 }
 
