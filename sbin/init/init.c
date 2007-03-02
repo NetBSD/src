@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.90 2007/03/01 18:25:58 apb Exp $	*/
+/*	$NetBSD: init.c,v 1.91 2007/03/02 22:43:24 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.90 2007/03/01 18:25:58 apb Exp $");
+__RCSID("$NetBSD: init.c,v 1.91 2007/03/02 22:43:24 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,31 +211,7 @@ state_t requested_transition = single_user;
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
 
-#define NINODE 1280
-#define FSSIZE ((8192		/* boot area */				\
-	+ 2 * 8192		/* two copies of superblock */		\
-	+ 4096			/* cylinder group info */		\
-	+ NINODE * (128 + 18)	/* inode and directory entry */		\
-				/* size of MAKEDEV* files, */		\
-				/* rounded up to fragment size */	\
-	+ roundup(mfile[0].len, 512)					\
-	+ roundup(mfile[1].len, 512)					\
-	+ roundup(mfile[2].len, 512)					\
-	+ 2 * 4096) / 512)	/* some slack */
-
-struct mappedfile {
-	const char *path;	/* filename */
-	char	*buf;		/* contents of file, or target of symlink */
-	size_t	len;		/* 0: no such file; -1: symlink; else size */
-} mfile[] = {
-	{ "/dev/MAKEDEV",	NULL,	0 },
-	{ "/dev/MAKEDEV.local",	NULL,	0 },
-	{ "/dev/MAKEDEV.subr",	NULL,	0 }
-};
-
 static int mfs_dev(void);
-static void mapfile(struct mappedfile *);
-static void writefile(struct mappedfile *);
 
 #endif
 
@@ -400,6 +376,34 @@ delset(sigset_t *maskp, ...)
 	va_end(ap);
 }
 
+#if 0	/* Enable to get error messages from init ! */
+#define vsyslog(level, fmt, ap) print_console(level, fmt, ap)
+#define closelog()
+
+static void
+print_console(int level, const char *message, va_list ap)
+{
+	/*
+	 * XXX: syslog seems to just plain not work in console-only
+	 * XXX: situation... that should be fixed.  Let's leave this
+	 * XXX: note + code here in case someone gets in trouble and
+	 * XXX: wants to debug. -- Jachym Holecek <freza@liberouter.org>
+	 */
+	char errbuf[1024];
+	int fd, len;
+
+	/* We can't do anything on errors, anyway... */
+	fd = open(_PATH_CONSOLE, O_WRONLY);
+	if (fd == -1)
+		return ;
+
+	/* %m will get lost... */
+	len = vsnprintf(errbuf, sizeof(errbuf), message, ap);
+	(void)write(fd, (void *)errbuf, len);
+	(void)close(fd);
+}
+#endif
+
 /*
  * Log a message and sleep for a while (to give someone an opportunity
  * to read it and to save log or hardcopy output if the problem is chronic).
@@ -431,29 +435,6 @@ warning(const char *message, ...)
 	vsyslog(LOG_ALERT, message, ap);
 	va_end(ap);
 	closelog();
-
-#if 0
-	/*
-	 * XXX: syslog seems to just plain not work in console-only
-	 * XXX: situation... that should be fixed.  Let's leave this
-	 * XXX: note + code here in case someone gets in trouble and
-	 * XXX: wants to debug. -- Jachym Holecek <freza@liberouter.org>
-	 */
-	{
-		char errbuf[1024];
-		int fd, len;
-
-		/* We can't do anything on errors, anyway... */
-		fd = open(_PATH_CONSOLE, O_WRONLY);
-		if (fd == -1)
-			return ;
-
-		/* %m will get lost... */
-		len = vsnprintf(errbuf, sizeof(errbuf), message, ap);
-		(void)write(fd, (void *)errbuf, len);
-		(void)close(fd);
-	}
-#endif
 }
 
 /*
@@ -610,7 +591,7 @@ setctty(const char *name)
 	}
 	if (login_tty(fd) == -1) {
 		stall("can't get %s for controlling terminal: %m", name);
-		_exit(1);
+		_exit(2);
 	}
 }
 
@@ -733,7 +714,7 @@ single_user(void)
 		(void)execv(INIT_BSHELL, __UNCONST(argv));
 		emergency("can't exec `%s' for single user: %m", INIT_BSHELL);
 		(void)sleep(STALL_TIMEOUT);
-		_exit(1);
+		_exit(3);
 	}
 
 	if (pid == -1) {
@@ -781,7 +762,8 @@ single_user(void)
 			for (;;)
 				(void)sigsuspend(&s);
 		} else {	
-			warning("single user shell terminated, restarting");
+			warning("single user shell terminated (%x), restarting",
+				status);
 			(void)sigaction(SIGTSTP, &satstp, NULL);
 			(void)sigaction(SIGHUP, &sahup, NULL);
 			return (state_func_t) single_user;
@@ -831,13 +813,13 @@ runetcrc(int trychroot)
 			if (chroot(rootdir) != 0) {
 				warning("failed to chroot to `%s': %m",
 				    rootdir);
-				_exit(1); 	/* force single user mode */
+				_exit(4); 	/* force single user mode */
 			}
 #endif /* CHROOT */
 
 		(void)execv(INIT_BSHELL, __UNCONST(argv));
 		stall("can't exec `%s' for `%s': %m", INIT_BSHELL, _PATH_RUNCOM);
-		_exit(1);	/* force single user mode */
+		_exit(5);	/* force single user mode */
 		/*NOTREACHED*/
 	case -1:
 		emergency("can't fork for `%s' on `%s': %m", INIT_BSHELL,
@@ -1235,7 +1217,7 @@ start_window_system(session_t *sp)
 	(void)execv(sp->se_window_argv[0], sp->se_window_argv);
 	stall("can't exec window system `%s' for port `%s': %m",
 	    sp->se_window_argv[0], sp->se_device);
-	_exit(1);
+	_exit(6);
 }
 
 /*
@@ -1266,7 +1248,7 @@ start_getty(session_t *sp)
 		if (chroot(rootdir) != 0) {
 			stall("can't chroot getty `%s' inside `%s': %m",
 			    sp->se_getty_argv[0], rootdir);
-			_exit(1);
+			_exit(7);
 		}
 #endif /* CHROOT */
 
@@ -1288,7 +1270,7 @@ start_getty(session_t *sp)
 	(void)execv(sp->se_getty_argv[0], sp->se_getty_argv);
 	stall("can't exec getty `%s' for port `%s': %m",
 	    sp->se_getty_argv[0], sp->se_device);
-	_exit(1);
+	_exit(8);
 	/*NOTREACHED*/
 }
 #ifdef SUPPORT_UTMPX
@@ -1623,94 +1605,31 @@ death(void)
 
 #ifdef MFS_DEV_IF_NO_CONSOLE
 
-static void
-mapfile(struct mappedfile *mf)
-{
-	int fd;
-	struct stat st;
-	size_t len;
-
-	if (lstat(mf->path, &st) == -1)
-		return;
-
-	len = (size_t)st.st_size;
-	if ((st.st_mode & S_IFMT) == S_IFLNK) {
-		mf->buf = malloc(len + 1);
-		if (mf->buf == NULL)
-			return;
-		mf->buf[len] = 0;
-		if (readlink(mf->path, mf->buf, len) != len)
-			return;
-		mf->len = (size_t)-1;
-		return;
-	}
-
-	if ((fd = open(mf->path, O_RDONLY)) == -1)
-		return;
-	mf->buf = mmap(0, len, PROT_READ, MAP_FILE|MAP_SHARED, fd, (off_t)0);
-	(void)close(fd);
-	if (mf->buf == MAP_FAILED)
-		return;
-	mf->len = len;
-}
-
-static void
-writefile(struct mappedfile *mf)
-{
-	int fd;
-
-	if (mf->len == (size_t)-1) {
-		(void)symlink(mf->buf, mf->path);
-		free(mf->buf);
-		return;
-	}
-
-	if (mf->len == 0)
-		return;
-	fd = open(mf->path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
-	if (fd == -1)
-		return;
-	(void)write(fd, mf->buf, mf->len);
-	(void)munmap(mf->buf, mf->len);
-	(void)close(fd);
-}
-
 static int
 mfs_dev(void)
 {
 	/*
 	 * We cannot print errors so we bail out silently...
 	 */
-	int i;
 	pid_t pid;
 	int status;
-	dev_t dev;
-	char *fs_size;
-#ifdef CPU_CONSDEV
-	static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
-	size_t olen;
-#endif
 
 	/* If we have /dev/console, assume all is OK  */
-	if (access(_PATH_CONSOLE, F_OK) != -1)
-		return(0);
+	if (access(_PATH_CONSOLE, F_OK) == 0)
+		return 0;
 
-	/* Grab the contents of MAKEDEV* files */
-	for (i = 0; i < __arraycount(mfile); i++)
-		mapfile(&mfile[i]);
-
-	/* Mount an mfs over /dev so we can create devices */
+#if 0	/* Useful for testing MAKEDEV */
+	/* Mount an mfs over /mnt so we can create a console entry */
 	switch ((pid = fork())) {
 	case 0:
-		(void)asprintf(&fs_size, "%zu", FSSIZE);
 		if (fs_size == NULL)
 			return(-1);
 		(void)execl(INIT_MOUNT_MFS, "mount_mfs",
 		    "-b", "4096", "-f", "512",
-		    "-s", fs_size, "-n", STR(NINODE),
+		    "-s", 64, "-n", 10,
 		    "-p", "0755",
-		    "swap", "/dev", NULL);
-		_exit(1);
+		    "swap", "/mnt", NULL);
+		_exit(9);
 		/*NOTREACHED*/
 
 	case -1:
@@ -1724,24 +1643,23 @@ mfs_dev(void)
 		break;
 	}
 
+	{
 #ifdef CPU_CONSDEV
-	olen = sizeof(dev);
-	if (sysctl(name, sizeof(name) / sizeof(name[0]), &dev, &olen,
-	    NULL, 0) == -1)
+		static int name[2] = { CTL_MACHDEP, CPU_CONSDEV };
+		size_t olen;
+		olen = sizeof(dev);
+		if (sysctl(name, sizeof(name) / sizeof(name[0]), &dev, &olen,
+		    NULL, 0) == -1)
 #endif
-		dev = makedev(0, 0);
+			dev = makedev(0, 0);
+	}
 
 	/* Make a console for us, so we can see things happening */
-	if (mknod(_PATH_CONSOLE, 0666 | S_IFCHR, dev) == -1)
+	if (mknod("/mnt/console", 0666 | S_IFCHR, dev) == -1)
 		return(-1);
 
-	(void)freopen(_PATH_CONSOLE, "a", stderr);
-
-	warnx("Creating mfs /dev (%zu blocks, %d inodes)", FSSIZE, NINODE);
-
-	/* Create MAKEDEV* files in the mfs /dev */
-	for (i = 0; i < __arraycount(mfile); i++)
-		writefile(&mfile[i]);
+	(void)freopen("/mnt/console", "a", stderr);
+#endif
 
 	/* Run the makedev script to create devices */
 	switch ((pid = fork())) {
@@ -1749,9 +1667,10 @@ mfs_dev(void)
 		(void)dup2(2, 1);	/* Give the script stdout */
 		if (chdir("/dev") == 0)
 			(void)execl(INIT_BSHELL, "sh",
-			    mfile[0].len ? "./MAKEDEV" : "/etc/MAKEDEV",
-			    "init", NULL); 
-		_exit(1);
+			    access("./MAKEDEV", X_OK) == 0
+				? "./MAKEDEV" : "/etc/MAKEDEV",
+			    "-M", "init", NULL); 
+		_exit(10);
 		/* NOTREACHED */
 
 	case -1:
@@ -1764,10 +1683,13 @@ mfs_dev(void)
 			errno = EINVAL;
 			break;
 		}
-		return 0;
+		/* Check /dev/console got created */
+		if (access(_PATH_CONSOLE, F_OK) == 0)
+			return 0;
+		_exit(11);
 	}
 	warn("Unable to run MAKEDEV");
-	return (-1);
+	_exit(12);
 }
 #endif
 
