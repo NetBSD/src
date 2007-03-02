@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.6 2007/02/15 15:39:33 yamt Exp $
+$NetBSD: TODO,v 1.7 2007/03/02 17:47:40 ad Exp $
 
 Bugs to fix, mostly with SA:
 
@@ -107,10 +107,6 @@ Future work for 1:1 threads:
   memory to hold state. It might also be useful to have a nanosleep call
   that does something similar. Again, lots of thought and benchmarking
   required. (Original idea from matt@)
-
-- It's possible that we don't need to take so many spinlocks around
-  cancellation points like pthread_cond_wait() given that _lwp_wakeup()
-  and _lwp_unpark() need to synchronise anyway.
 
 - Need to give consideration to the order in which threads enter and exit
   synchronisation objects, both in the pthread library and in the kernel.
