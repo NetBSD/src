@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.76 2007/03/01 20:48:26 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.77 2007/03/02 21:29:23 dsl Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1476,12 +1476,14 @@ puffs)
 midevend)
 %MI_DEVICES_END%
 local)
+	if [ -n "$count_nodes" ]; then
 	if [ -f "$0.local" ]; then
 		umask 0
 		sh "$0.local" $opts all
 		umask 077
 	else
 		warn "missing $0.local"
+	fi
 	fi
 	;;
 
@@ -1613,6 +1615,30 @@ makedisk_minimal()
 	mkdev r${name}${unit}$rn c $chr $(($unit * $doff + $ro)) 640 $g_operator
 }
 
+create_mfs_dev()
+{
+	ninode=$((${1-1200} * 11 / 10))
+	fs_size=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
+	fs_size=$((fs_size/512))
+	
+	dev_mountpoint=${PWD:-/dev}
+	mount_mfs -b 4096 -f 512 -s $fs_size -n $ninode -p 07555 -o union swap $dev_mountpoint
+      
+	cd $dev_mountpoint
+	mknod -m 600 -g 0 -u 0 temp_console c 0 0
+	exec >temp_console 2>&1
+	rm temp_console
+	echo "Created mfs $dev_mountpoint ($fs_size blocks, $ninode inodes)"
+}       
+
+# We don't want to pass -M to MAKEDEV.local
+if [ "$1" = -M ]; then
+        do_create_mfs=true
+        shift
+else
+        do_create_mfs=false
+fi
+
 #
 # MAIN: Load function definitions from MAKEDEV.subr; call setup function
 # to parse command line args and set some other variables; then call
@@ -1622,6 +1648,15 @@ case "$0" in
 */*)	. "${0%/*}/MAKEDEV.subr" ;;
 *)	. ./MAKEDEV.subr ;;
 esac
+
 setup ${1+"$@"}
 shift $((${OPTIND}-1))
+
+if $do_create_mfs; then
+	count_nodes=0
+	makedev ${1+"$@"}
+	create_mfs_dev $count_nodes
+	unset count_nodes
+fi
+
 makedev ${1+"$@"}
