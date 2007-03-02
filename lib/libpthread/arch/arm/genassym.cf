@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2003/09/07 14:47:47 cl Exp $
+#	$NetBSD: genassym.cf,v 1.7 2007/03/02 18:53:55 ad Exp $
 
 # Copyright (c) 2001 Wasabi Systems, Inc.
 # All rights reserved.
@@ -52,16 +52,6 @@ define _REG_CPSR	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_CPSR])
 # uc_flags
 define _UC_CPU		_UC_CPU
 define _UC_USER		_UC_USER
-
-#========================================================================
-# for pthread_switch.S
-define PT_UC		offsetof(struct __pthread_st, pt_uc)
-define PT_TRAPUC	offsetof(struct __pthread_st, pt_trapuc)
-define PT_NEXT		offsetof(struct __pthread_st, pt_next)
-define PT_SPINLOCKS	offsetof(struct __pthread_st, pt_spinlocks)
-define PT_SWITCHTO	offsetof(struct __pthread_st, pt_switchto)
-define PT_SWITCHTOUC	offsetof(struct __pthread_st, pt_switchtouc)
-define PT_HELDLOCK	offsetof(struct __pthread_st, pt_heldlock)
 
 define RND_CTXSIZE	((sizeof(ucontext_t) + 7) & ~7)
 define STACKSPACE	STACKSPACE

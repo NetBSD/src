@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.11 2006/12/24 18:39:46 ad Exp $	*/
+/*	$NetBSD: sem.c,v 1.12 2007/03/02 18:53:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.11 2006/12/24 18:39:46 ad Exp $");
+__RCSID("$NetBSD: sem.c,v 1.12 2007/03/02 18:53:54 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -332,19 +332,6 @@ sem_wait(sem_t *sem)
 			break;
 		}
 
-#ifdef PTHREAD_SA
-		PTQ_INSERT_TAIL(&(*sem)->usem_waiters, self, pt_sleep);
-		self->pt_sleepobj = *sem;
-		self->pt_state = PT_STATE_BLOCKED_QUEUE;
-		self->pt_sleepq = &(*sem)->usem_waiters;
-		self->pt_sleeplock = &(*sem)->usem_interlock;
-		pthread_spinunlock(self, &self->pt_statelock);
-
-		/* XXX What about signals? */
-
-		pthread__block(self, &(*sem)->usem_interlock);
-		/* interlock is not held when we return */
-#else
 		/*
 		 * Should be no race against self->pt_cancel here, as the
 		 * kernel needs to preserve L_CANCELLED.
@@ -355,7 +342,6 @@ sem_wait(sem_t *sem)
 		(void)pthread__park(self, &(*sem)->usem_interlock, *sem,
 		    &(*sem)->usem_waiters, NULL, 1, 1);
 		pthread_spinunlock(self, &(*sem)->usem_interlock);
-#endif
 	}
 
 	(*sem)->usem_count--;
@@ -437,13 +423,8 @@ sem_post(sem_t *sem)
 	if (blocked) {
 		PTQ_REMOVE(&(*sem)->usem_waiters, blocked, pt_sleep);
 		/* Give the head of the blocked queue another try. */
-#ifdef PTHREAD_SA
-		pthread__sched(self, blocked);
-		pthread_spinunlock(self, &(*sem)->usem_interlock);
-#else
 		pthread__unpark(self, &(*sem)->usem_interlock, *sem,
 		    blocked);
-#endif
 	} else
 		pthread_spinunlock(self, &(*sem)->usem_interlock);
 
