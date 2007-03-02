@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.9 2007/03/02 16:09:53 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.10 2007/03/02 16:14:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.9 2007/03/02 16:09:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.10 2007/03/02 16:14:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -504,7 +504,7 @@ sys__lwp_park(struct lwp *l, void *v, register_t *retval)
 	 * function could call sleepq_unblock() on our behalf.
 	 */
 	LWP_COUNT(lwp_ev_park, 1);
-	l->l_biglocks = 0;	/* For sleepq_unblock() */
+	KERNEL_UNLOCK_ALL(l, &l->l_biglocks); /* XXX for compat32 */
 	sleepq_block(sq, sched_kpri(l), wchan, "parked", timo, 1,
 	    &lwp_park_sobj);
 	error = sleepq_unblock(timo, 1);
