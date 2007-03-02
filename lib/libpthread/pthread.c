@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.64 2007/03/02 18:53:51 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.65 2007/03/02 18:58:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.64 2007/03/02 18:53:51 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.65 2007/03/02 18:58:45 ad Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -1059,7 +1059,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock, void *obj,
 		    struct pthread_queue_t *queue)
 {
 	lwpid_t waiters[PTHREAD__UNPARK_MAX];
-	int n, rv;
+	ssize_t n, rv;
 	pthread_t thread, next;
 
 	if (PTQ_EMPTY(queue)) {
@@ -1112,7 +1112,7 @@ pthread__unpark_all(pthread_t self, pthread_spin_t *lock, void *obj,
 		case 0:
 			return;
 		case 1:
-			rv = _lwp_unpark(waiters[0], obj);
+			rv = (ssize_t)_lwp_unpark(waiters[0], obj);
 			if (rv != 0 && errno != EALREADY && errno != EINTR) {
 				OOPS("_lwp_unpark failed");
 				SDPRINTF(("(pthread__unpark_all %p) "
