@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.16 2006/12/24 18:39:46 ad Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.17 2007/03/02 17:34:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.16 2006/12/24 18:39:46 ad Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.17 2007/03/02 17:34:21 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -53,6 +53,13 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.16 2006/12/24 18:39:46 ad Exp $");
 #define SDPRINTF(x) DPRINTF(x)
 #else
 #define SDPRINTF(x)
+#endif
+
+/* This does not belong here. */
+#if defined(i386) || defined(__x86_64__)
+#define	smt_pause()	__asm __volatile("rep; nop" ::: "memory")
+#else
+#define	smt_pause()	/* nothing */
 #endif
 
 extern int pthread__nspins;
@@ -166,8 +173,9 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 	++thread->pt_spinlocks;
 
 	do {
-		while (((ret = pthread__simple_lock_try(lock)) == 0) && --count)
-			/* XXX For at least x86, issue 'pause' instruction */;
+		while (((ret = pthread__simple_lock_try(lock)) == 0) && --count) {
+			smt_pause();
+		}
 
 		if (ret == 1)
 			break;
@@ -323,8 +331,9 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 		return EINVAL;
 #endif
 
-	while (pthread__simple_lock_try(&lock->pts_spin) == 0)
-		/* spin */ ;
+	while (pthread__simple_lock_try(&lock->pts_spin) == 0) {
+		smt_pause();
+	}
 
 	return 0;
 }
