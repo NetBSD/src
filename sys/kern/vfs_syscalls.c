@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.217.2.9 2006/01/20 20:48:41 riz Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.217.2.9.2.1 2007/03/03 22:56:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.9 2006/01/20 20:48:41 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.217.2.9.2.1 2007/03/03 22:56:35 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3093,14 +3093,15 @@ sys_fsync_range(l, v, retval)
 		return (error);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		FILE_UNUSE(fp, p);
-		return (EBADF);
+		error = EBADF;
+		goto out;
 	}
 
 	flags = SCARG(uap, flags);
 	if (((flags & (FDATASYNC | FFILESYNC)) == 0) ||
 	    ((~flags & (FDATASYNC | FFILESYNC)) == 0)) {
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 	/* Now set up the flags for value(s) to pass to VOP_FSYNC() */
 	if (flags & FDATASYNC)
@@ -3117,7 +3118,8 @@ sys_fsync_range(l, v, retval)
 		e = s + len;
 		if (e < s) {
 			FILE_UNUSE(fp, p);
-			return (EINVAL);
+			error = EINVAL;
+			goto out;
 		}
 	} else {
 		e = 0;
@@ -3133,6 +3135,7 @@ sys_fsync_range(l, v, retval)
 		(*bioops.io_fsync)(vp, nflags);
 
 	VOP_UNLOCK(vp, 0);
+out:
 	FILE_UNUSE(fp, p);
 	return (error);
 }
