@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.local,v 1.10 2007/03/01 20:48:26 apb Exp $
+#	$NetBSD: MAKEDEV.local,v 1.11 2007/03/03 06:36:00 apb Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -59,7 +59,7 @@ all)
 	#makedev_local foo
 	;;
 
-# Add more cases here.  You can call functions defined in MAKEDEV.subr.
+# Add more cases here.  You can call functions defined in MAKEDEV.
 # For example:
 #foo)
 #	mkdev foo c 0 0 600
@@ -75,14 +75,19 @@ done
 }
 
 #
-# MAIN: Load function definitions from MAKEDEV.subr; call setup function
-# to parse command line args and set some other variables; then call
-# makedev_local function to create requested devices.
+# MAIN: Figure out where MAKEDEV is; load MAKEDEV as a function library;
+# call the setup function to parse command line args and set some other
+# variables; then call the makedev_local function to create requested
+# devices.
 #
 case "$0" in
-*/*)	. "${0%/*}/MAKEDEV.subr" ;;
-*)	. ./MAKEDEV.subr ;;
+*/*)    MAKEDEV="${0%/*}/MAKEDEV" ;;
+*)      MAKEDEV="./MAKEDEV" ;;
 esac
+[ -f "${MAKEDEV}" ] || MAKEDEV="/dev/MAKEDEV"
+
+MAKEDEV_AS_LIBRARY=1 . "${MAKEDEV}" || exit 1
+
 setup ${1+"$@"}
 shift $((${OPTIND}-1))
 makedev_local ${1+"$@"}

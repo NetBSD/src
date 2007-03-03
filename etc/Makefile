@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.339 2007/02/26 20:44:03 apb Exp $
+#	$NetBSD: Makefile,v 1.340 2007/03/03 06:36:01 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -163,18 +163,12 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 .endif	# !DISTRIBUTION_DONE
 
 
-CLEANFILES+=	MAKEDEV MAKEDEV.subr
+CLEANFILES+=	MAKEDEV
 MAKEDEV: .EXEC
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
-MAKEDEV.subr: .EXEC
-	${_MKTARGET_CREATE}
-	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
-	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
-	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.subr.tmpl \
-	    > ${.TARGET}
 
 RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		DESTDIR EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
@@ -273,7 +267,7 @@ CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
-install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV MAKEDEV.subr
+install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/master.passwd
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    master.passwd ${DESTDIR}/etc
@@ -292,9 +286,6 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV MAKEDEV.subr
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
-	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV.subr
-	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
-	    MAKEDEV.subr ${DESTDIR}/dev
 .for owner group mode file in \
 		${BINOWN} operator	664	/etc/dumpdates  \
 		${BINOWN} operator	600	/etc/skeykeys \
