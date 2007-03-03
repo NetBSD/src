@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.596.2.8 2007/03/01 14:26:58 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.596.2.9 2007/03/03 08:39:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.8 2007/03/01 14:26:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.596.2.9 2007/03/03 08:39:56 yamt Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2432,7 +2432,6 @@ cpu_initclocks()
 void
 cpu_need_resched(struct cpu_info *ci, int flags)
 {
-
 	bool immed = (flags & RESCHED_IMMED) != 0;
 
 	if (ci->ci_want_resched && !immed)
