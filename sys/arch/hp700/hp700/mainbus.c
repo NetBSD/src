@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.38 2007/02/22 05:33:44 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.39 2007/03/03 14:37:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.38 2007/02/22 05:33:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.39 2007/03/03 14:37:54 skrll Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -330,7 +330,7 @@ mbus_map(void *v, bus_addr_t bpa, bus_size_t size, int flags,
 	offset = (bpa & PGOFSET);
 	bpa -= offset;
 	size += offset;
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.
@@ -368,7 +368,7 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 	offset = bsh & PGOFSET;
 	bsh -= offset;
 	size += offset;
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/*
 	 * Unmap the region of I/O space.
@@ -405,7 +405,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 	 */
 	if (align < PAGE_SIZE)
 		align = PAGE_SIZE;
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/*
 	 * Allocate the region of I/O space.

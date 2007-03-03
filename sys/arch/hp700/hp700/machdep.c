@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2007/02/22 05:33:44 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2007/03/03 14:37:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2007/02/22 05:33:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/03/03 14:37:54 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -703,7 +703,7 @@ hppa_init(paddr_t start)
 	    (caddr_t)hp700_io_extent_store, sizeof(hp700_io_extent_store),
 	    EX_NOCOALESCE|EX_NOWAIT);
 
-	vstart = hppa_round_page(start);
+	vstart = round_page(start);
 	vend = VM_MAX_KERNEL_ADDRESS;
 
 	/*
@@ -715,14 +715,14 @@ hppa_init(paddr_t start)
 	/* Allocate the msgbuf. */
 	msgbufaddr = (caddr_t) vstart;
 	vstart += MSGBUFSIZE;
-	vstart = hppa_round_page(vstart);
+	vstart = round_page(vstart);
 
 	/* Allocate the 24-bit DMA region. */
 	dma24_ex = extent_create("dma24", vstart, vstart + DMA24_SIZE, M_DEVBUF,
 	    (caddr_t)dma24_ex_storage, sizeof(dma24_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	vstart += DMA24_SIZE;
-	vstart = hppa_round_page(vstart);
+	vstart = round_page(vstart);
 
 	/* Allocate and initialize the BTLB slots array. */
 	btlb_slots = (struct btlb_slot *) ALIGN(vstart);
@@ -746,7 +746,7 @@ do {									\
 	BTLB_SLOTS(vinfo.num_c, BTLB_SLOT_CBTLB | BTLB_SLOT_VARIABLE_RANGE);
 #undef BTLB_SLOTS
 	btlb_slots_count = (btlb_slot - btlb_slots);
-	vstart = hppa_round_page((vaddr_t) btlb_slot);
+	vstart = round_page((vaddr_t) btlb_slot);
 	
 	/* Calculate the OS_TOC handler checksum. */
 	p = (u_int *) &os_toc;
