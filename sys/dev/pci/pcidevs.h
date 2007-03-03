@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.869 2007/03/01 22:15:08 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.870 2007/03/03 23:50:40 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.869 2007/03/01 22:14:48 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.870 2007/03/03 23:49:49 jmcneill Exp
  */
 
 /*
@@ -2948,6 +2948,7 @@
 
 /* pcHDTV products */
 #define	PCI_PRODUCT_PCHDTV_HD2000	0x2000		/* HD-2000 HDTV video capture */
+#define	PCI_PRODUCT_PCHDTV_HD5500	0x5500		/* HD-5500 HDTV video capture */
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
