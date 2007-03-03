@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.53 2007/02/24 12:42:40 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.54 2007/03/03 22:57:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2881,3 +2881,12 @@ usr.sbin/amd/pawd/Makefile			patch
 
 	Update am-utils to version 6.1.3. This should fix PR bin/35581.
 	[tron, ticket #1665]
+
+sys/kern/vfs_syscalls.c				1.293 via patch
+
+	Fix issue noted by Ilja van Sprundel and disclosed at 23C3.
+	Make sure we always FILE_UNUSE the file. To make it easier, exit
+	via a new "out:" exit path that does so, setting error beforehand.
+	Fix suggested by Elad, hand-typed by me.
+	[wrstuden, ticket #1616]
+
