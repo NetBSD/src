@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.869 2007/03/01 22:14:48 jmcneill Exp $
+$NetBSD: pcidevs,v 1.870 2007/03/03 23:49:49 jmcneill Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2941,6 +2941,7 @@ product PACKETENGINES GNICII	0x0911	G-NIC II Ethernet
 
 /* pcHDTV products */
 product PCHDTV HD2000	0x2000	HD-2000 HDTV video capture
+product PCHDTV HD5500	0x5500	HD-5500 HDTV video capture
 
 /* PC Tech products */
 product PCTECH RZ1000	0x1000	RZ1000
