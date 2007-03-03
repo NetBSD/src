@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.32 2007/03/01 07:47:13 apb Exp $
+# $NetBSD: etcupdate,v 1.33 2007/03/03 06:44:38 apb Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -149,9 +149,6 @@ install_file() {
 	# Check if this was a special file
 	case "${1}" in
 	/dev/MAKEDEV)
-		NEED_MAKEDEV=true
-		;;
-	/dev/MAKEDEV.subr)
 		NEED_MAKEDEV=true
 		;;
 	/dev/MAKEDEV.local)

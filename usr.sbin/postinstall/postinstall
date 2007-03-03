@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.36 2007/03/01 07:51:26 apb Exp $
+# $NetBSD: postinstall,v 1.37 2007/03/03 06:43:46 apb Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -654,32 +654,25 @@ do_iscsi()
 #
 #	makedev
 #
-additem makedev "/dev/MAKEDEV and /dev/MAKEDEV.subr being up to date"
+additem makedev "/dev/MAKEDEV being up to date"
 do_makedev()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_makedev   fix|check"
-	local _rv=0
 
-	for f in MAKEDEV MAKEDEV.subr; do
-		if [ -f "${SRC_DIR}/etc/${f}.tmpl" ]; then
-			# generate file from source if source is available
-			env MACHINE=${MACHINE} \
-			    MACHINE_ARCH=${MACHINE_ARCH} \
-			    NETBSDSRCDIR="${SRC_DIR}" \
-			    awk -f ${SRC_DIR}/etc/MAKEDEV.awk \
-			    ${SRC_DIR}/etc/${f}.tmpl > ${SCRATCHDIR}/${f}
-		fi
+	if [ -f "${SRC_DIR}/etc/MAKEDEV.tmpl" ]; then
+			# generate MAKEDEV from source if source is available
+		env MACHINE=${MACHINE} \
+		    MACHINE_ARCH=${MACHINE_ARCH} \
+		    NETBSDSRCDIR="${SRC_DIR}" \
+		    awk -f ${SRC_DIR}/etc/MAKEDEV.awk \
+		    ${SRC_DIR}/etc/MAKEDEV.tmpl > ${SCRATCHDIR}/MAKEDEV
+	fi
 
-		if ! find_file_in_dirlist ${f} "${f}" \
-		    ${SCRATCHDIR} ${SRC_DIR}/dev
-		then
-		    _rv=1
-		    continue
-		fi
+	find_file_in_dirlist MAKEDEV "MAKEDEV" \
+	    ${SCRATCHDIR} ${SRC_DIR}/dev \
+	    || return 1
 			# ${dir} is set by find_file_in_dirlist()
-		compare_dir $1 ${dir} ${DEST_DIR}/dev 555 ${f} \
-		|| _rv=1
-	done
+	compare_dir $1 ${dir} ${DEST_DIR}/dev 555 MAKEDEV
 }
 
 #
