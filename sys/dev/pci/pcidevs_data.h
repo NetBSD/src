@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.868 2007/03/01 22:15:09 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.869 2007/03/03 23:50:40 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.869 2007/03/01 22:14:48 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.870 2007/03/03 23:49:49 jmcneill Exp
  */
 
 /*
@@ -10212,6 +10212,10 @@ static const struct pci_product pci_products[] = {
 	    "HD-2000 HDTV video capture",
 	},
 	{
+	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD5500,
+	    "HD-5500 HDTV video capture",
+	},
+	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
 	    "RZ1000",
 	},
@@ -12816,4 +12820,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2610;
+const int pci_nproducts = 2611;
