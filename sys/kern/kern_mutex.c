@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.7 2007/03/02 13:14:12 itohy Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.8 2007/03/03 10:08:19 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.7 2007/03/02 13:14:12 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.8 2007/03/03 10:08:19 itohy Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -224,13 +224,13 @@ MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
 #endif
 
 #ifndef __HAVE_MUTEX_STUBS
-__strong_alias(mutex_enter, mutex_vector_enter);
-__strong_alias(mutex_exit, mutex_vector_exit);
+__strong_alias(mutex_enter,mutex_vector_enter);
+__strong_alias(mutex_exit,mutex_vector_exit);
 #endif
 
 #ifndef __HAVE_SPIN_MUTEX_STUBS
-__strong_alias(mutex_spin_enter, mutex_vector_enter);
-__strong_alias(mutex_spin_exit, mutex_vector_exit);
+__strong_alias(mutex_spin_enter,mutex_vector_enter);
+__strong_alias(mutex_spin_exit,mutex_vector_exit);
 #endif
 
 void	mutex_abort(kmutex_t *, const char *, const char *);
@@ -280,7 +280,11 @@ mutex_dump(volatile void *cookie)
  *	generates a lot of machine code in the DIAGNOSTIC case, so
  *	we ask the compiler to not inline it.
  */
-__attribute ((noinline)) __attribute ((noreturn)) void
+
+#if __GNUC_PREREQ__(3, 0)
+__attribute ((noinline)) __attribute ((noreturn))
+#endif
+void
 mutex_abort(kmutex_t *mtx, const char *func, const char *msg)
 {
 
