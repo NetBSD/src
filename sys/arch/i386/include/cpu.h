@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133.2.3 2007/02/23 15:57:46 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.133.2.4 2007/03/03 09:23:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -246,7 +246,7 @@ void cpu_init_idle_lwps(void);
 extern uint32_t cpus_attached;
 
 #define	curlwp			curcpu()->ci_curlwp
-#define	curpcb			&curlwp->l_addr->u_pcb
+#define	curpcb			(&curlwp->l_addr->u_pcb)
 
 /*
  * Arguments to hardclock, softclock and statclock
