@@ -1,4 +1,4 @@
-.\"	$NetBSD: re.4,v 1.7.2.1 2006/08/25 11:43:46 ghen Exp $
+.\"	$NetBSD: re.4,v 1.7.2.2 2007/03/03 23:30:20 bouyer Exp $
 .\"
 .\" Copyright (c) 2003
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man4/re.4,v 1.4 2004/03/04 06:42:46 sanpei Exp $
 .\"
-.Dd August 7, 2006
+.Dd January 8, 2007
 .Dt RE 4
 .Os
 .Sh NAME
@@ -40,11 +40,12 @@
 .Nd "RealTek 8139C+/8169/8169S/8110S PCI Ethernet adapter driver"
 .Sh SYNOPSIS
 .Cd "re* at pci? dev ? function ?"
+.Cd "re* at cardbus? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for various NICs based on the RealTek RTL8139C+,
-RTL8169, RTL8169S, and RTL8110S PCI Ethernet controllers, including
+RTL8169, RTL8169S, and RTL8110S PCI/Cardbus Ethernet controllers, including
 the following:
 .Pp
 .Bl -bullet -compact
@@ -60,6 +61,14 @@ NETGEAR GA311 (8169S)
 PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
 .It
 Xterasys XN-152 10/100/1000 NIC (8169)
+.It
+Corega CG-LAPCIGT Gigabit Ethernet (8169S)
+.It
+D-Link DGE-528T Gigabit Ethernet (8169S)
+.It
+US Robotics (3Com) USR997902 Gigabit Ethernet (8169S)
+.It
+Linksys EG1032 rev. 3 Gigabit Ethernet (8169S)
 .El
 .Pp
 NICs based on the 8139C+ are capable of 10 and 100Mbps speeds over
@@ -72,13 +81,16 @@ All NICs supported by the
 driver have TCP/IP checksum offload and hardware VLAN tagging/insertion
 features, and use a descriptor-based DMA mechanism.
 They are also capable of TCP large send (TCP segmentation offload).
-There are issues with hardware VLAN tagging in this version of the
-driver, so this feature is currently disabled.
 .Pp
-The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY.
-The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY.
+The 8139C+ is a single-chip solution combining both a 10/100 MAC and PHY,
+and its PHY is supported by
+.Xr rlphy 4 .
+The 8169 is a 10/100/1000 MAC only, requiring a GMII or TBI external PHY
+and some 8169 based boards have Marvell 88E1000 PHY supported by
+.Xr makphy 4 .
 The 8169S and 8110S are single-chip devices containing both a 10/100/1000
-MAC and 10/100/1000 copper PHY.
+MAC and 10/100/1000 copper PHY, which is supported by
+.Xr rgephy 4 .
 Standalone 10/100/1000 cards are available in both 32-bit PCI and
 64-bit PCI models.
 The 8110S is designed for embedded LAN-on-motherboard applications.
@@ -146,30 +158,24 @@ For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "re%d: couldn't map memory"
+.It "re%d: can't map i/o space"
 A fatal initialization error has occurred.
-.It "re%d: couldn't map ports"
+.It "re%d: can't map mem space"
 A fatal initialization error has occurred.
 .It "re%d: couldn't map interrupt"
 A fatal initialization error has occurred.
-.It "re%d: no memory for softc struct!"
-The driver failed to allocate memory for per-device instance information
-during initialization.
-.It "re%d: failed to enable memory mapping!"
-The driver failed to initialize PCI shared memory mapping.
-This might happen if the card is not in a bus-master slot.
-.It "re%d: no memory for jumbo buffers!"
-The driver failed to allocate memory for jumbo frames during
-initialization.
 .It "re%d: watchdog timeout"
 The device has stopped responding to the network, or there is a problem with
 the network connection (cable).
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr cardbus 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr pci 4 ,
+.Xr rgephy 4 ,
+.Xr rlphy 4 ,
 .Xr ifconfig 8
 .Rs
 .%T RealTek Semiconductor RTL8139C+, RTL8169, RTL8169S, and RTL8110S datasheets
@@ -213,7 +219,3 @@ avoid this problem.
 .Pp
 The RealTek 8169, 8169S, and 8110S chips appear to only be capable of
 transmitting jumbo frames up to 7.5K in size.
-.Pp
-The
-.Nm
-driver does not work on the sparc64 platform yet.

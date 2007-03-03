@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.768.2.39 2007/01/08 16:36:20 ghen Exp $
+# $NetBSD: mi,v 1.768.2.40 2007/03/03 23:30:17 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1122,7 +1122,9 @@
 ./usr/share/man/cat4/ray.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rcons.0			man-sys-catman		.cat
 ./usr/share/man/cat4/re.0			man-sys-catman		.cat
+./usr/share/man/cat4/rgephy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rl.0			man-obsolete		obsolete
+./usr/share/man/cat4/rlphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rmidi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/rnd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/route.0			man-sys-catman		.cat
@@ -3367,7 +3369,9 @@
 ./usr/share/man/man4/ray.4			man-sys-man		.man
 ./usr/share/man/man4/rcons.4			man-sys-man		.man
 ./usr/share/man/man4/re.4			man-sys-man		.man
+./usr/share/man/man4/rgephy.4			man-sys-man		.man
 ./usr/share/man/man4/rl.4			man-obsolete		obsolete
+./usr/share/man/man4/rlphy.4			man-sys-man		.man
 ./usr/share/man/man4/rmidi.4			man-sys-man		.man
 ./usr/share/man/man4/rnd.4			man-sys-man		.man
 ./usr/share/man/man4/route.4			man-sys-man		.man
