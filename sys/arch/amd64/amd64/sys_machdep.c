@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11.2.1 2007/03/03 15:42:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.11.2.1 2007/03/03 15:42:48 yamt Exp $");
 
 #if 0
 #include "opt_user_ldt.h"
@@ -371,8 +371,8 @@ i386_set_ldt(l, args, retval)
 			pmap->pm_flags |= PMF_USER_LDT;
 		ldt_alloc(pmap, new_ldt, new_len);
 		pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
-		if (pcb == curpcb)
-			lldt(pcb->pcb_ldt_sel);
+
+		lldt(pcb->pcb_ldt_sel);
 
 	}
 copy:
