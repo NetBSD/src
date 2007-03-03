@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.151 2007/02/19 00:08:18 pooka Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.152 2007/03/03 01:18:32 salo Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.151 2007/02/19 00:08:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.152 2007/03/03 01:18:32 salo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,6 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
 		vp = target->p_cwdi->cwdi_rdir;
 		break;
 	case PFSexe:
-		rvp = rootvnode;
 		vp = target->p_textvp;
 		break;
 	default:
