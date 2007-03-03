@@ -1,4 +1,4 @@
-/*	$NetBSD: idle_machdep.c,v 1.1.2.3 2007/02/23 15:57:45 yamt Exp $	*/
+/*	$NetBSD: idle_machdep.c,v 1.1.2.1 2007/03/03 15:34:18 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,14 +28,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.1.2.3 2007/02/23 15:57:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idle_machdep.c,v 1.1.2.1 2007/03/03 15:34:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 
 #include <machine/cpufunc.h>
 
-#if defined(I686_CPU)
+#if defined(I686_CPU) || defined(__x86_64__)
 
 static void
 monitor(const void *addr)
@@ -69,7 +69,7 @@ cpu_idle_mwait(struct cpu_info *ci)
 	ci->ci_want_resched = 0;
 }
 
-#endif /* defined(I686_CPU) */
+#endif /* defined(I686_CPU) || defined(__x86_64__) */
 
 static void
 cpu_idle_halt(struct cpu_info *ci)
@@ -90,13 +90,13 @@ cpu_idle(void)
 {
 	struct cpu_info *ci = curcpu();
 
-#if defined(I686_CPU)
+#if defined(I686_CPU) || defined(__x86_64__)
 	if ((ci->ci_feature2_flags & CPUID2_MONITOR) != 0) {
 		cpu_idle_mwait(ci);
 	} else {
 		cpu_idle_halt(ci);
 	}
-#else /* defined(I686_CPU) */
+#else /* defined(I686_CPU) || defined(__x86_64__) */
 	cpu_idle_halt(ci);
-#endif /* defined(I686_CPU) */
+#endif /* defined(I686_CPU) || defined(__x86_64__) */
 }
