@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2007/03/01 07:11:04 apb Exp $
+#	$NetBSD: list,v 1.5 2007/03/03 06:40:06 apb Exp $
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/master.passwd		etc/master.passwd
@@ -27,9 +27,8 @@ COPY	${CURDIR}/../ramdiskcommon/shells		etc/shells
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
-COPY	${DESTDIR}/dev/MAKEDEV.subr	dev/MAKEDEV.subr	555
 SPECIAL	cd dev; sh MAKEDEV ramdisk
-SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.subr
+SPECIAL	/bin/rm dev/MAKEDEV
 
 #SPECIAL chmod 755			etc/rc
 
