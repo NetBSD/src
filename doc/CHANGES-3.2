@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.54 2007/03/03 22:57:43 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.55 2007/03/03 23:33:31 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2889,4 +2889,62 @@ sys/kern/vfs_syscalls.c				1.293 via patch
 	via a new "out:" exit path that does so, setting error beforehand.
 	Fix suggested by Elad, hand-typed by me.
 	[wrstuden, ticket #1616]
+
+sbin/newfs/newfs.c				1.96
+
+	PR/28884: Izumi Tsutsui: mount_mfs(8) doesn't set default fssize if
+	"swap" is specified
+	[tsutsui, ticket #1672]
+
+sbin/restore/tape.c				1.59
+
+	Add support for Solaris ufsdump volumes with more than 512*1024 inodes.
+
+	Reviewed by: Manuel Bouyer <bouyer@netbsd.org>
+	[hannken, ticket #1674]
+
+distrib/sets/lists/man/mi			1.844, 1.871
+share/man/man4/Makefile				1.372, 1.379 via patch
+share/man/man4/re.4				1.8, 1.9, 1.11, 1.12 
+share/man/man4/rgephy.4				1.1
+share/man/man4/rlphy.4				1.1, 1.2
+sys/arch/amd64/conf/GENERIC			1.79, 1.89
+sys/arch/amd64/conf/INSTALL			1.45, 1.49
+sys/arch/i386/conf/GENERIC			1.717, 1.747
+sys/arch/i386/conf/GENERIC_LAPTOP		1.164
+sys/arch/i386/conf/INSTALL			1.277, 1.283
+sys/arch/i386/conf/INSTALL_LAPTOP		1.96, 1.98
+sys/arch/i386/conf/XEN2_DOM0			1.22 via patch
+sys/arch/macppc/conf/GENERIC			1.220, 1.246
+sys/arch/macppc/conf/INSTALL			1.96, 1.100
+sys/dev/cardbus/if_re_cardbus.c			1.10
+sys/dev/cardbus/if_rtk_cardbus.c 		1.29-1.31
+sys/dev/ic/rtl8169.c				1.14, 1.20, 1.24, 1.25, 1.28-1.61, 1.63, 1.64-1.81 via patch
+sys/dev/ic/rtl81x9.c				1.52, 1.54-1.63, 1.65, 1.67-1.70
+sys/dev/ic/rtl81x9reg.h				1.15-1.26
+sys/dev/ic/rtl81x9var.h				1.19, 1.21-1.37
+sys/dev/mii/files.mii				1.38
+sys/dev/mii/miidevs				1.62, 1.64
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+sys/dev/mii/rgephy.c				1.10, 1.13-1.16
+sys/dev/mii/rlphy.c				1.1, 1.6, 1.7, 1.11 via patch
+sys/dev/pci/if_re_pci.c				1.13, 1.15-1.17, 1.19-1.23
+sys/dev/pci/if_rtk_pci.c			1.25, 1.28, 1.29, 1.31
+sys/dev/pci/pcidevs				1.851, 1.852
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	on re(4):
+	- improve stability (I believe ;-)
+	- add a workaround for hardware ip4csum-tx bug
+	- support newer chips (8169SB/SC, PCIe based 8168 etc.)
+	- fix 8139C+ support
+	- enable hardware VLAN
+	- misc bus_dma(9) fix (which makes re(4) work on mips ports)
+	   
+	on rtk(4):
+	- fix kern/31348
+	- fix possible panic on dreamcast
+	[tsutsui, ticket #1673]
 
