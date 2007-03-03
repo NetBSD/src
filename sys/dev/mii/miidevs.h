@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.60.2.4 2006/04/28 22:25:19 riz Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.60.2.5 2007/03/03 23:32:30 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: miidevs,v 1.58.2.5 2007/03/03 23:30:25 bouyer Exp
  */
 
 /*-
@@ -65,6 +65,7 @@
 #define	MII_OUI_CICADA	0x0003F1	/* Cicada Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
+#define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
@@ -106,7 +107,7 @@
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 
 #define	MII_OUI_xxREALTEK	0x000732	/* Realtek */
-
+#define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 /*
  * List of known models.  Grouped by oui.
  */
@@ -190,6 +191,10 @@
 #define	MII_STR_xxDAVICOM_DM9101	"DM9101 (AMD Am79C873) 10/100 media interface"
 #define	MII_MODEL_xxDAVICOM_DM9102	0x0004
 #define	MII_STR_xxDAVICOM_DM9102	"DM9102 10/100 media interface"
+
+/* IC Plus Corp. PHYs */
+#define	MII_MODEL_ICPLUS_IP101	0x0005
+#define	MII_STR_ICPLUS_IP101	"IP101 10/100 PHY"
 
 /* Integrated Circuit Systems PHYs */
 #define	MII_MODEL_ICS_1889	0x0001
@@ -277,6 +282,8 @@
 #define	MII_STR_xxQUALSEMI_QS6612	"QS6612 10/100 media interface"
 
 /* RealTek PHYs */
+#define	MII_MODEL_yyREALTEK_RTL8201L	0x0020
+#define	MII_STR_yyREALTEK_RTL8201L	"RTL8201L 10/100 media interface"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
 #define	MII_STR_xxREALTEK_RTL8169S	"RTL8169S/8110S 1000BASE-T media interface"
 #define	MII_MODEL_REALTEK_RTL8169S	0x0011
