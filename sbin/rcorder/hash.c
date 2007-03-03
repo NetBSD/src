@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.4 2006/08/26 18:14:29 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.5 2007/03/03 00:09:30 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: hash.c,v 1.4 2006/08/26 18:14:29 christos Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.5 2007/03/03 00:09:30 simonb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.4 2006/08/26 18:14:29 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.5 2007/03/03 00:09:30 simonb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -187,10 +187,10 @@ Hash_DeleteTable(Hash_Table *t)
 	for (hp = t->bucketPtr, i = t->size; --i >= 0;) {
 		for (h = *hp++; h != NULL; h = nexth) {
 			nexth = h->next;
-			free((char *)h);
+			free(h);
 		}
 	}
-	free((char *)t->bucketPtr);
+	free(t->bucketPtr);
 
 	/*
 	 * Set up the hash table to cause memory faults on any future access
@@ -335,7 +335,7 @@ Hash_DeleteEntry(Hash_Table *t, Hash_Entry *e)
 	     (p = *hp) != NULL; hp = &p->next) {
 		if (p == e) {
 			*hp = p->next;
-			free((char *)p);
+			free(p);
 			t->numEntries--;
 			return;
 		}
@@ -464,5 +464,5 @@ RebuildTable(Hash_Table *t)
 			*xp = e;
 		}
 	}
-	free((char *)oldhp);
+	free(oldhp);
 }
