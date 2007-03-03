@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2007/02/22 05:46:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2007/03/03 14:37:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2007/02/22 05:46:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2007/03/03 14:37:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,7 +838,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	/*
 	 * Allocate various tables and structures.
 	 */
-	addr = hppa_round_page(*vstart);
+	addr = round_page(*vstart);
 	virtual_end = *vend;
 
 	/*
@@ -912,7 +912,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * as it only leads to lost virtual space, not lost physical
 	 * pages.
 	 */
-	addr = hppa_round_page(addr);
+	addr = round_page(addr);
 	virtual_steal = addr;
 	addr += totalphysmem * sizeof(struct vm_page);
 	memset((caddr_t) virtual_steal, 0, addr - virtual_steal);
@@ -922,7 +922,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * space will begin, and we can start mapping everything
 	 * before that.
 	 */
-	addr = hppa_round_page(addr);
+	addr = round_page(addr);
 	*vstart = addr;
 	
 	/*
@@ -932,7 +932,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 * before the kernel text that can be mapped for page copying 
 	 * and zeroing.
 	 */
-	tmp_vpages[1] = hppa_trunc_page((vaddr_t) &kernel_text) - PAGE_SIZE;
+	tmp_vpages[1] = trunc_page((vaddr_t) &kernel_text) - PAGE_SIZE;
 	tmp_vpages[0] = tmp_vpages[1] - PAGE_SIZE;
 
 	/*
@@ -1081,7 +1081,7 @@ pmap_bootstrap(vaddr_t *vstart, vaddr_t *vend)
 	 
 	/* The first segment runs from [resvmem..kernel_text). */
 	phys_start = resvmem;
-	phys_end = atop(hppa_trunc_page(&kernel_text));
+	phys_end = atop(&kernel_text);
 
 	PMAP_PRINTF(PDB_INIT, (": phys segment 0x%05x 0x%05x\n",
 	    (u_int)phys_start, (u_int)phys_end));
@@ -1143,7 +1143,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *startp, vaddr_t *endp)
 		*endp = virtual_end;
 
 	/* Round the allocation up to a page. */
-	size = hppa_round_page(size);
+	size = round_page(size);
 
 	/* We must panic if we cannot steal the memory. */
 	if (size > virtual_start - virtual_steal)
@@ -1368,8 +1368,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/* Get a handle on the mapping we want to enter. */
 	space = pmap_sid(pmap, va);
-	va = hppa_trunc_page(va);
-	pa = hppa_trunc_page(pa);
+	va = trunc_page(va);
+	pa = trunc_page(pa);
 	tlbpage = tlbbtop(pa);
 	tlbprot = pmap_prot(pmap, prot) | pmap->pmap_pid;
 	if (wired)
@@ -1457,7 +1457,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	PMAP_PRINTF(PDB_REMOVE, ("(%p, %p, %p)\n", 
 				 pmap, (caddr_t)sva, (caddr_t)eva));
 
-	sva = hppa_trunc_page(sva);
+	sva = trunc_page(sva);
 	space = pmap_sid(pmap, sva);
 
 	s = splvm();
@@ -1574,7 +1574,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return;
 	}
 
-	sva = hppa_trunc_page(sva);
+	sva = trunc_page(sva);
 	space = pmap_sid(pmap, sva);
 	tlbprot = pmap_prot(pmap, prot);
 
@@ -1610,7 +1610,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	struct pv_entry *pv;
 	int s;
 
-	va = hppa_trunc_page(va);
+	va = trunc_page(va);
 	PMAP_PRINTF(PDB_WIRING, ("(%p, %p)\n", pmap, (caddr_t)va));
 
 	simple_lock(&pmap->pmap_lock);
@@ -1644,7 +1644,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	int s;
 
 	off = va;
-	off -= (va = hppa_trunc_page(va));
+	off -= (va = trunc_page(va));
 
 	s = splvm();
 	if ((pv = pmap_pv_find_va(pmap_sid(pmap, va), va))) {
@@ -1865,7 +1865,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	PMAP_PRINTF(PDB_KENTER, ("(%p, %p, %x)\n", 
 				 (caddr_t)va, (caddr_t)pa, prot));
-	va = hppa_trunc_page(va);
+	va = trunc_page(va);
 	tlbprot = TLB_WIRED | TLB_UNMANAGED;
 	tlbprot |= (prot & PMAP_NC) ? TLB_UNCACHEABLE : 0;
 	tlbprot |= pmap_prot(pmap_kernel(), prot & VM_PROT_ALL);
@@ -1901,10 +1901,10 @@ pmap_kremove(vaddr_t va, vsize_t size)
 				 (caddr_t)va, (u_int)size));
 
 	size += va;
-	va = hppa_trunc_page(va);
+	va = trunc_page(va);
 	size -= va;
 	s = splvm();
-	for (size = hppa_round_page(size); size;
+	for (size = round_page(size); size;
 	    size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pv = pmap_pv_find_va(HPPA_SID_KERNEL, va);
 		if (pv) {
@@ -1934,7 +1934,7 @@ pmap_redzone(vaddr_t sva, vaddr_t eva, int create)
 	u_int tlbprot;
 	int s;
 	
-	sva = hppa_trunc_page(sva);
+	sva = trunc_page(sva);
 	tlbprot = (create ? TLB_AR_NA : TLB_AR_KRW);
 	s = splvm();
 	for(va = sva; va < eva; va += PAGE_SIZE) {
