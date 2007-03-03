@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.local.8,v 1.2 2007/03/02 20:42:10 wiz Exp $
+.\" $NetBSD: MAKEDEV.local.8,v 1.3 2007/03/03 06:53:41 apb Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 26, 2007
+.Dd March 2, 2007
 .Dt MAKEDEV.LOCAL 8
 .Os
 .Sh NAME
@@ -59,18 +59,6 @@ The script is in
 and must be called from the
 .Pa /dev
 directory.
-.Pp
-If
-.Xr MAKEDEV 8
-is invoked with the
-.Pa all
-or
-.Pa local
-argument, then it will invoke
-.Nm
-with the
-.Pa all
-argument.
 .Pp
 Supported options for
 .Nm
@@ -108,3 +96,50 @@ script described in this man page
 .Xr intro 4 ,
 .Xr MAKEDEV 8 ,
 .Xr mknod 8
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
+Handling of the same command line options as
+.Xr MAKEDEV 8 ,
+and the use of
+.Xr MAKEDEV 8
+as a function library, was added in
+.Nx 5.0 .
+.Sh NOTES
+The relationship between
+.Nm
+and
+.Xr MAKEDEV 8
+is complex:
+.Bl -bullet
+.It
+If
+.Xr MAKEDEV 8
+is invoked with the
+.Pa all
+or
+.Pa local
+argument, then it will invoke
+.Nm
+as a child process, with the same options that were originally passed to
+.Xr MAKEDEV 8 ,
+as well as the
+.Pa all
+argument.
+.It
+.Nm
+uses shell functions defined in
+.Xr MAKEDEV 8 .
+This is done by loading
+.Xr MAKEDEV 8
+using the shell
+.Dq \&.
+command, with the
+.Ev MAKEDEV_AS_LIBRARY
+variable set (to inform
+.Xr MAKEDEV 8
+that it should behave as a function library,
+not as an independent program).
+.El
