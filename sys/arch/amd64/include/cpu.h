@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2007/02/16 02:53:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14.2.1 2007/03/03 15:42:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,10 +77,6 @@ struct cpu_info {
 
 	volatile u_int32_t ci_tlb_ipi_mask;
 
-	struct pcb *ci_curpcb;
-	struct pcb *ci_idle_pcb;
-	int ci_idle_tss_sel;
-
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
@@ -102,6 +98,7 @@ struct cpu_info {
 	u_int32_t	ci_ipis;
 
 	u_int32_t	ci_feature_flags;
+	u_int32_t	ci_feature2_flags;
 	u_int32_t	ci_signature;
 	u_int64_t	ci_tsc_freq;
 
@@ -161,8 +158,8 @@ extern struct cpu_info *cpu_info_list;
 
 extern struct cpu_info *cpu_info[X86_MAXPROCS];
 
-void cpu_boot_secondary_processors __P((void));
-void cpu_init_idle_pcbs __P((void));    
+void cpu_boot_secondary_processors(void);
+void cpu_init_idle_lwps(void);    
 
 
 #else /* !MULTIPROCESSOR */
@@ -182,18 +179,12 @@ extern struct cpu_info cpu_info_primary;
 
 #endif
 
-/*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-extern void cpu_need_resched(struct cpu_info *);
-
 #define aston(l)	((l)->l_md.md_astpending = 1)
 
 extern u_int32_t cpus_attached;
 
-#define curpcb		curcpu()->ci_curpcb
 #define curlwp		curcpu()->ci_curlwp
+#define curpcb		(&curlwp->l_addr->u_pcb)
 
 /*
  * Arguments to hardclock, softclock and statclock
@@ -257,7 +248,6 @@ void	dumpconf __P((void));
 int	cpu_maxproc __P((void));
 void	cpu_reset __P((void));
 void	x86_64_proc0_tss_ldt_init __P((void));
-void	x86_64_init_pcb_tss_ldt __P((struct cpu_info *));
 void	cpu_proc_fork __P((struct proc *, struct proc *));
 
 struct region_descriptor;
@@ -267,7 +257,7 @@ void	fillw __P((short, void *, size_t));
 struct pcb;
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct lwp *, void (*)(struct lwp *)));
-void	proc_trampoline __P((void));
+void	lwp_trampoline __P((void));
 void	child_trampoline __P((void));
 
 /* clock.c */
