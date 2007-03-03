@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.24 2007/02/21 23:00:01 thorpej Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.25 2007/03/03 17:23:12 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -100,6 +100,9 @@ static const struct rtk_type re_devs[] = {
 	    "RealTek 8139C+ 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
 	    RTK_HWREV_8100E,
+	    "RealTek 8100E PCIe 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
+	    RTK_HWREV_8100E_SPIN2,
 	    "RealTek 8100E PCIe 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
 	    RTK_HWREV_8101E,
