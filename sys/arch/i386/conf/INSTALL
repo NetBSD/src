@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.262.2.8 2007/01/03 14:27:12 ghen Exp $
+#	$NetBSD: INSTALL,v 1.262.2.9 2007/03/03 23:30:22 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -620,6 +620,8 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs

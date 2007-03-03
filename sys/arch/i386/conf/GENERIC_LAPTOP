@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.135.2.8 2006/12/23 14:43:46 ghen Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.135.2.9 2007/03/03 23:30:21 bouyer Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135.2.8 $"
+#ident 		"GENERIC-$Revision: 1.135.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -613,6 +613,7 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rgephy*	at mii? phy ?			# Realtek 8169S/8110 internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.83.2.4 2007/01/04 09:29:40 ghen Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.83.2.5 2007/03/03 23:30:22 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -479,6 +479,8 @@ makphy*	at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs

@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.58.2.4 2006/04/28 22:23:56 riz Exp $
+$NetBSD: miidevs,v 1.58.2.5 2007/03/03 23:30:25 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ oui BROADCOM			0x001018	Broadcom Corporation
 oui CICADA			0x0003F1	Cicada Semiconductor
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
+oui ICPLUS			0x0090c3	IC Plus Corp.
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
@@ -99,7 +100,7 @@ oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 oui xxPMCSIERRA2		0x009057	PMC-Sierra
 
 oui xxREALTEK			0x000732	Realtek
-
+oui yyREALTEK			0x000004	Realtek
 /*
  * List of known models.  Grouped by oui.
  */
@@ -150,6 +151,9 @@ model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 /* AMD Am79C873 seems to be a relabeled DM9101 */
 model xxDAVICOM DM9101		0x0000 DM9101 (AMD Am79C873) 10/100 media interface
 model xxDAVICOM DM9102		0x0004 DM9102 10/100 media interface
+
+/* IC Plus Corp. PHYs */
+model ICPLUS IP101		0x0005 IP101 10/100 PHY
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1889			0x0001 ICS1889 10/100 media interface
@@ -203,6 +207,7 @@ model PMCSIERRA PM8354		0x0004 PM8354 QuadPHY Gigabit interface
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* RealTek PHYs */
+model yyREALTEK RTL8201L	0x0020 RTL8201L 10/100 media interface
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S 1000BASE-T media interface
 model REALTEK RTL8169S		0x0011 RTL8169S/8110S 1000BASE-T media interface
 
