@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.28 2007/03/03 06:40:06 apb Exp $
+.\"	$NetBSD: netboot,v 1.29 2007/03/03 07:41:17 apb Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -805,29 +805,9 @@ Create device nodes
 .No # Ic "./MAKEDEV all"
 .disp)
 .Pp
-The above procedure works only if the server is a
+This procedure only works on
 .Nx
-host.
-If the server is running a foreign operating system
-(or an incompatible version of
-.Nx ) ,
-then you can use a
-.Nx
-host to create an archive of device nodes in
-.Dq ustar
-format, and then unpack the archive on the foreign server
-using the server's equivalent of the
-.Xr pax 1
-or
-.Xr tar 1
-commands, as follows:
-.Pp
-.(disp
-.No on the
-.No # mkdir temp
-.No # mkdir temp
-
-.disp)
+hosts.
 .Pp
 .It
 Set up the client's
