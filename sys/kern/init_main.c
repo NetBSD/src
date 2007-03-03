@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.295 2007/02/17 22:31:42 pavel Exp $	*/
+/*	$NetBSD: init_main.c,v 1.296 2007/03/03 10:08:18 itohy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.295 2007/02/17 22:31:42 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.296 2007/03/03 10:08:18 itohy Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -217,7 +217,7 @@ __stack_chk_fail(void)
 #endif
 
 void __secmodel_none(void);
-__weak_alias(secmodel_start, __secmodel_none);
+__weak_alias(secmodel_start,__secmodel_none);
 void
 __secmodel_none(void)
 {
