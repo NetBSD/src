@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.11 2007/02/27 17:23:24 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.12 2007/03/03 15:37:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.11 2007/02/27 17:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.12 2007/03/03 15:37:41 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -300,6 +300,7 @@ sched_switch_unlock(struct lwp *old, struct lwp *new)
 {
 
 	KASSERT(old == NULL || old == curlwp);
+	KASSERT(new != NULL);
 
 	if (old != NULL) {
 		LOCKDEBUG_BARRIER(old->l_mutex, 1);
