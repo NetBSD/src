@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.18 2007/02/26 22:54:40 apb Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.19 2007/03/03 06:53:41 apb Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 27, 2007
+.Dd March  2, 2007
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -743,6 +743,21 @@ wscons event multiplexor, see
 Xen event interface
 . El
 .El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm :
+.Pp
+.Bl -tag -width indent
+.It Ev MAKEDEV_AS_LIBRARY
+If this is set, then
+.Nm
+will define several shell functions and then return,
+ignoring all its command line options and arguments.
+This is used to enable
+.Xr MAKEDEV.local 8
+to use the shell functions defined in
+.Nm .
+.El
 .Sh FILES
 .Bl -tag -width "/dev/MAKEDEV.local" -compact
 .It Pa /dev
@@ -769,6 +784,8 @@ The
 .Nm
 command appeared in
 .Bx 4.2 .
+The ability to be used as a function library was added in
+.Nx 5.0 .
 .Sh NOTES
 Not all devices listed in this manpage are supported on all platforms.
 .Pp
