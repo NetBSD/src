@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.5 2007/02/18 23:02:32 ad Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.6 2007/03/03 00:00:30 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -113,8 +113,8 @@ _ENTRY(_C_LABEL(mutex_exit))
 	sethi	%hi(0xff000000), %o2		! finish constructing
 	or	%o1, %o2, %o1			!   lock word
 	ld	[%o0], %o2			! get lock word
-	sub	%o1, %o2, %o2			! -> 0 if we own lock
-	bnz	_C_LABEL(mutex_vector_exit)	! no, hard case
+	cmp	%o1, %o2			! -> 0 if we own lock
+	bne	_C_LABEL(mutex_vector_exit)	! no, hard case
 	 nop
 	st	%g0, [%o0]			! and release lock
 	ldub	[%o0 + MTX_LOCK], %o3		! get has-waiters indicator
