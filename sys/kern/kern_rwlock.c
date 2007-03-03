@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.5 2007/02/26 19:06:10 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.6 2007/03/03 10:08:19 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.5 2007/02/26 19:06:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.6 2007/03/03 10:08:19 itohy Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -140,8 +140,8 @@ RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
 #endif
 
 #ifndef __HAVE_RW_STUBS
-__strong_alias(rw_enter, rw_vector_enter);
-__strong_alias(rw_exit, rw_vector_exit);
+__strong_alias(rw_enter,rw_vector_enter);
+__strong_alias(rw_exit,rw_vector_exit);
 #endif
 
 void	rw_dump(volatile void *);
