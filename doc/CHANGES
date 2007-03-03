@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.798 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.799 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -46,8 +46,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	btuartd(8): Add support for Bluetooth HCI UART (H4) daemon.
 		[kiyohara 20070221]
         mutex(9), rwlock(9): Support priority inheritance. [yamt 20070226]
-        MAKEDEV(8): Added MAKEDEV.subr with functions shared between
-        	MAKEDEV and MAKEDEV.local. [apb 20070227]
 	eeprom(8): Add the missing kernel bits on arm and powerpc that kept
 		eeprom from actually changing firmware settings
 		[macallan 20070228]
+	MAKEDEV(8), MAKEDEV.local(8): Let MAKEDEV.local use functions
+		defined in MAKEDEV. [apb 20070303]
