@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.30 2007/02/19 22:22:02 tron Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.31 2007/03/03 22:56:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -194,4 +194,12 @@ usr.sbin/etcupdate/etcupdate			1.31
 	Run pwd_mkdb(8) before running mtree(8) to get updated user and
 	group information. This fixes PR bin/35570.
 	[martti, ticket #1666]
+
+sys/kern/vfs_syscalls.c				1.293 via patch
+
+	Fix issue noted by Ilja van Sprundel and disclosed at 23C3.
+	Make sure we always FILE_UNUSE the file. To make it easier, exit
+	via a new "out:" exit path that does so, setting error beforehand.
+	Fix suggested by Elad, hand-typed by me.
+	[wrstuden, ticket #1616]
 
