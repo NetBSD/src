@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.10 2007/03/03 06:53:41 apb Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.11 2007/03/03 08:10:09 dsl Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nd create system and device special files
 .Sh SYNOPSIS
 .Nm
+.Op Fl M
 .Op Fl fs
 .Op Fl m Ar mknod
 .Ar special Op Ar ...
@@ -87,6 +88,14 @@ Supported options are:
 .Bl -tag -width XmXmknodXX
 .It Fl f
 Force permissions to be updated on existing devices.
+.It Fl M
+Create a memory filesystem, union mounted over the current directory,
+to contain the device special files.
+This is used by
+.Xr init 1
+when
+.Pa /dev/console
+does not exit.
 .It Fl m Ar mknod
 Name of
 .Xr mknod 8
@@ -141,6 +150,7 @@ you can get more debugging output by using
 .Dl Ic sh Fl x Ar MAKEDEV Ar argument .
 .Sh SEE ALSO
 .Xr config 1 ,
+.Xr init 1 ,
 .Xr pax 1 ,
 .Xr intro 4 ,
 .Xr MAKEDEV.local 8 ,
