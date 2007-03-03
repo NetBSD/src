@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.87.4.3 2005/06/18 05:25:51 riz Exp $
+#	$NetBSD: INSTALL,v 1.87.4.4 2007/03/03 23:30:23 bouyer Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -123,6 +123,8 @@ lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs

@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.1.2.9 2007/01/08 16:45:57 ghen Exp $
+# $NetBSD: XEN2_DOM0,v 1.1.2.10 2007/03/03 23:30:23 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -324,6 +324,8 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs

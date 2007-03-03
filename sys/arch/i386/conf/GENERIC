@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.661.2.17 2007/01/08 16:36:20 ghen Exp $
+# $NetBSD: GENERIC,v 1.661.2.18 2007/03/03 23:30:21 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.661.2.17 $"
+#ident 		"GENERIC-$Revision: 1.661.2.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -922,6 +922,8 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ? 		# NS83843 PHYs
 pnaphy* at mii? phy ?			# generic HomePNA PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
+rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
