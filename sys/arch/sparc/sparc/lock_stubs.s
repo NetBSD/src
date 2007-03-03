@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.7 2007/03/03 09:21:19 macallan Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.8 2007/03/03 23:42:20 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -116,11 +116,10 @@ _ENTRY(_C_LABEL(mutex_exit))
 	cmp	%o1, %o2			! -> 0 if we own lock
 	bne	_C_LABEL(mutex_vector_exit)	! no, hard case
 	 nop
-	st	%g0, [%o0]			! and release lock
 	ldub	[%o0 + MTX_LOCK], %o3		! get has-waiters indicator
 	tst	%o3				! has waiters?
 	bnz	_C_LABEL(mutex_wakeup)		! yes, hard case
-	 nop
+	 st	%g0, [%o0]			! and release lock
 	retl
 	 nop
 
