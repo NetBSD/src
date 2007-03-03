@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2007/03/01 09:25:42 apb Exp $
+#	$NetBSD: Makefile,v 1.21 2007/03/03 06:40:09 apb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -31,7 +31,6 @@ IMAGEDEPENDS=	${KERNEL} \
 		${DESTDIR}/bin/sleep ${DESTDIR}/bin/stty ${DESTDIR}/bin/sync \
 		${DESTDIR}/bin/test  \
 		${DESTDIR}/dev/MAKEDEV ${DESTDIR}/dev/MAKEDEV.local \
-		${DESTDIR}/dev/MAKEDEV.subr \
 		${DESTDIR}/etc/disktab ${DESTDIR}/etc/group \
 		${DESTDIR}/etc/master.passwd ${DESTDIR}/etc/netconfig \
 		${DESTDIR}/etc/passwd ${DESTDIR}/etc/protocols \

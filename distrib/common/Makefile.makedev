@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.makedev,v 1.12 2007/03/01 09:20:59 apb Exp $
+#	$NetBSD: Makefile.makedev,v 1.13 2007/03/03 06:40:06 apb Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy .OJBDIR-of-etc/MAKEDEV to ./dev
@@ -15,11 +15,10 @@
 #
 # Variables modified by this:
 #	MAKEDEVSCRIPT	path to .OBJDIR-of-etc/MAKEDEV
-#	MAKEDEVSUBR	path to .OBJDIR-of-etc/MAKEDEV.subr
 #	MTREECONF	may get "devices.spec" added
 #	LISTS		may get "list.makedev" added
-#	IMAGEDEPENDS	may get ${MAKEDEVSCRIPT} and ${MAKEDEVSUBR} added
-#	PARSELISTENV	may get MAKEDEVSCRIPT=... and MAKEDEVSUBR=... added
+#	IMAGEDEPENDS	may get ${MAKEDEVSCRIPT} added
+#	PARSELISTENV	may get MAKEDEVSCRIPT=... added
 #
 
 .if !defined(_MAKEFILE_MAKEDEV_)
@@ -30,7 +29,6 @@ MAKEDEVSPEC?=	devices.spec
 
 _MAKEDEVOBJDIR!=cd ${NETBSDSRCDIR}/etc && ${PRINTOBJDIR}
 MAKEDEVSCRIPT=	${_MAKEDEVOBJDIR}/MAKEDEV
-MAKEDEVSUBR=	${_MAKEDEVOBJDIR}/MAKEDEV.subr
 
 CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
 
@@ -43,7 +41,7 @@ CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
 #
 MTREECONF+=	${MAKEDEVSPEC}
 
-${MAKEDEVSPEC}:	${MAKEDEVSCRIPT} ${MAKEDEVSUBR}
+${MAKEDEVSPEC}:	${MAKEDEVSCRIPT}
 	${_MKTARGET_CREATE}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
@@ -59,9 +57,8 @@ ${MAKEDEVSPEC}:	${MAKEDEVSCRIPT} ${MAKEDEVSUBR}
 #	(effectively) running "cd /dev ; ./MAKEDEV all"
 #
 LISTS+=		${DISTRIBDIR}/common/list.makedev
-IMAGEDEPENDS+=	${MAKEDEVSCRIPT} ${MAKEDEVSUBR}
+IMAGEDEPENDS+=	${MAKEDEVSCRIPT}
 PARSELISTENV+=	MAKEDEVSCRIPT=${MAKEDEVSCRIPT:Q}
-PARSELISTENV+=	MAKEDEVSUBR=${MAKEDEVSUBR:Q}
 
 ${MAKEDEVSPEC}:	.PHONY
 
