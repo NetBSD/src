@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.9 2007/02/09 21:55:01 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.10 2007/03/03 10:55:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9 2007/02/09 21:55:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10 2007/03/03 10:55:34 yamt Exp $");
 
 #include "opt_powernow_k8.h"
 
@@ -100,7 +100,7 @@ identifycpu(struct cpu_info *ci)
 		    CPUID_EXT_FLAGS2, buf, sizeof(buf));
 		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
 	}
-		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
+	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
 		    CPUID_EXT_FLAGS3, buf, sizeof(buf));
 		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
