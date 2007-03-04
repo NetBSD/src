@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.35 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.36 2007/03/04 11:53:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.35 2007/03/04 05:59:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.36 2007/03/04 11:53:21 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -162,7 +162,7 @@ static u_char crtc_init_data[CRTC_DATA_LENGTH] = {
 	0x30, 0x00, 0x0f, 0x00, 0x00, 0x00, 0x00
 };
 
-static int	gb_init(struct grf_data *gp, int, void *);
+static int	gb_init(struct grf_data *gp, int, uint8_t *);
 static int	gb_mode(struct grf_data *gp, int, void *);
 static void	gb_microcode(struct gboxfb *);
 
@@ -284,11 +284,12 @@ gbox_dio_attach(struct device *parent, struct device *self, void *aux)
  * Returns 0 if hardware not present, non-zero ow.
  */
 int
-gb_init(struct grf_data *gp, int scode, void *addr)
+gb_init(struct grf_data *gp, int scode, uint8_t *addr)
 {
 	struct gboxfb *gbp;
 	struct grfinfo *gi = &gp->g_display;
-	u_char *fbp, save;
+	volatile uint8_t *fbp;
+	uint8_t save;
 	int fboff;
 
 	/*
@@ -296,9 +297,9 @@ gb_init(struct grf_data *gp, int scode, void *addr)
 	 * no need to repeat this.
 	 */
 	if (scode != gbconscode) {
-		gbp = (struct gboxfb *) addr;
+		gbp = (struct gboxfb *)addr;
 		if (ISIIOVA(addr))
-			gi->gd_regaddr = (void *) IIOP(addr);
+			gi->gd_regaddr = (void *)IIOP(addr);
 		else
 			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x10000;
@@ -306,7 +307,7 @@ gb_init(struct grf_data *gp, int scode, void *addr)
 		gi->gd_fbheight = 1024;		/* XXX */
 		gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
 		fboff = (gbp->fbomsb << 8) | gbp->fbolsb;
-		gi->gd_fbaddr = (void *) (*((u_char *)addr + fboff) << 16);
+		gi->gd_fbaddr = (void *)(*(addr + fboff) << 16);
 		gp->g_regkva = addr;
 		gp->g_fbkva = iomap(gi->gd_fbaddr, gi->gd_fbsize);
 		gi->gd_dwidth = 1024;		/* XXX */
@@ -315,7 +316,7 @@ gb_init(struct grf_data *gp, int scode, void *addr)
 		/*
 		 * The minimal info here is from the Gatorbox X driver.
 		 */
-		fbp = (u_char *) gp->g_fbkva;
+		fbp = gp->g_fbkva;
 		gbp->write_protect = 0;
 		gbp->interrupt = 4;		/** fb_enable ? **/
 		gbp->rep_rule = 3;		/* GXcopy */
