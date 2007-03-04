@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.26 2007/03/04 06:00:05 christos Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.27 2007/03/04 11:09:39 tsutsui Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.26 2007/03/04 06:00:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.27 2007/03/04 11:09:39 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -268,8 +268,6 @@ int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #if defined(M68040) || defined(M68060)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
-
-extern void *	CADDR1, CADDR2;
 
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
 pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
