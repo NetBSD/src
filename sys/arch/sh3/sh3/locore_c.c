@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.15 2007/03/04 06:00:41 christos Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.16 2007/03/04 10:41:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.15 2007/03/04 06:00:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.16 2007/03/04 10:41:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.15 2007/03/04 06:00:41 christos Exp $
 #include <sys/proc.h>
 #include <sys/ras.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <sh3/locore.h>
@@ -204,7 +205,8 @@ idle()
 {
 
 	spl0();
-	uvm_pageidlezero();
+	if (uvm.page_idle_zero)
+		uvm_pageidlezero();
 	__asm volatile("sleep");
 	splsched();
 }
