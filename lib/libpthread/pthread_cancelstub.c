@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.13 2005/09/13 02:45:38 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.14 2007/03/04 20:07:13 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.13 2005/09/13 02:45:38 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.14 2007/03/04 20:07:13 ad Exp $");
 
 /*
  * This is necessary because the names are always weak (they are not
@@ -99,6 +99,10 @@ int	_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int	_sys_wait4(pid_t, int *, int, struct rusage *);
 ssize_t	_sys_write(int, const void *, size_t);
 ssize_t	_sys_writev(int, const struct iovec *, int);
+int	_sys___sigsuspend14(const sigset_t *);
+int	_sigtimedwait(const sigset_t * __restrict, siginfo_t * __restrict,
+	    const struct timespec * __restrict);
+int	__sigsuspend14(const sigset_t *);
 
 #define TESTCANCEL(id) 	do {						\
 	if (__predict_false((id)->pt_cancel))				\
@@ -424,6 +428,34 @@ writev(int d, const struct iovec *iov, int iovcnt)
 	return retval;
 }
 
+int
+__sigsuspend14(const sigset_t *sigmask)
+{
+	pthread_t self;
+	int retval;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys___sigsuspend14(sigmask);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
+	     const struct timespec * __restrict timeout)
+{
+	pthread_t self;
+	int retval;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sigtimedwait(set, info, timeout);
+	TESTCANCEL(self);
+
+	return retval;
+}
 
 __strong_alias(_close, close)
 __strong_alias(_fcntl, fcntl)
