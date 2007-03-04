@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.200 2007/03/04 05:59:57 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.201 2007/03/04 18:00:28 ad Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2007/03/04 05:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2007/03/04 18:00:28 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -1619,19 +1619,17 @@ pmap_destroy(pmap)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 #endif /* DIAGNOSTIC */
-	extern int _lock_cas(uintptr_t *, uintptr_t, uintptr_t);
 
 	/*
 	 * drop reference count
-	 * XXX using _lock_cas() ugly, but worth it for now.
 	 */
-	do {
-		refs = pmap->pm_obj.uo_refs;
-	} while (!_lock_cas(&pmap->pm_obj.uo_refs, refs, refs - 1));
-	if (refs > 0)
-		return;
 
-	KERNEL_LOCK(1, NULL);
+	simple_lock(&pmap->pm_obj.vmobjlock);
+	refs = --pmap->pm_obj.uo_refs;
+	simple_unlock(&pmap->pm_obj.vmobjlock);
+	if (refs > 0) {
+		return;
+	}
 
 #ifdef DIAGNOSTIC
 	for (CPU_INFO_FOREACH(cii, ci))
@@ -1680,23 +1678,19 @@ pmap_destroy(pmap)
 #endif
 
 	pool_put(&pmap_pmap_pool, pmap);
-	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
  *	Add a reference to the specified pmap.
- *	 XXX using _lock_cas() ugly, but worth it for now.
  */
 
 void
 pmap_reference(pmap)
 	struct pmap *pmap;
 {
-	extern int _lock_cas(uintptr_t *, uintptr_t, uintptr_t);
-	int refs;
-	do {
-		refs = pmap->pm_obj.uo_refs;
-	} while (!_lock_cas(&pmap->pm_obj.uo_refs, refs, refs + 1));
+	simple_lock(&pmap->pm_obj.vmobjlock);
+	pmap->pm_obj.uo_refs++;
+	simple_unlock(&pmap->pm_obj.vmobjlock);
 }
 
 #if defined(PMAP_FORK)
@@ -1916,7 +1910,9 @@ pmap_load()
 	KASSERT(oldpmap->pm_pdirpa == rcr3());
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
 
+	KERNEL_LOCK(1, NULL);
 	pmap_reference(pmap);
+	KERNEL_UNLOCK_ONE(NULL);
 
 	/*
 	 * mark the pmap in use by this processor.
@@ -1942,7 +1938,9 @@ pmap_load()
 
 	ci->ci_want_pmapload = 0;
 
+	KERNEL_LOCK(1, NULL);
 	pmap_destroy(oldpmap);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
