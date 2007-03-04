@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.128 2007/03/04 06:00:43 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.129 2007/03/04 22:12:43 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.128 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.129 2007/03/04 22:12:43 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1571,7 +1571,7 @@ loop:
 		read = bp->b_flags & B_READ;
 
 		/* Setup for pseudo DMA */
-		fdc->sc_data = bp->b_data + fd->sc_skip;
+		fdc->sc_data = (char *)bp->b_data + fd->sc_skip;
 		fdc->sc_tc = fd->sc_nbytes;
 
 		bus_space_write_1(fdc->sc_bustag, fdc->sc_handle,

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.66 2007/03/04 06:02:50 christos Exp $	*/
+/*	$NetBSD: xd.c,v 1.67 2007/03/04 22:12:44 mrg Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.66 2007/03/04 06:02:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.67 2007/03/04 22:12:44 mrg Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -737,7 +737,7 @@ xdattach(parent, self, aux)
 	bus_dma_segment_t	seg;
 	bus_addr_t		busaddr;
 	void *			dmaddr;
-	void *			buf;
+	char *			buf;
 
 	/*
 	 * Always re-initialize the disk structure.  We want statistics
@@ -2393,7 +2393,7 @@ xdc_ioctlcmd(xd, dev, xio)
 
 {
 	int     s, rqno, dummy;
-	void *dvmabuf = NULL, buf = NULL;
+	char *dvmabuf = NULL, *buf = NULL;
 	struct xdc_softc *xdcsc;
 	int			rseg, error;
 	bus_dma_segment_t	seg;
@@ -2484,7 +2484,7 @@ xdc_ioctlcmd(xd, dev, xio)
 
 		if ((error = xd_dmamem_alloc(xdcsc->dmatag, xdcsc->auxmap,
 					     &seg, &rseg,
-					     xio->dlen, &buf,
+					     xio->dlen, (void **)&buf,
 					     &busbuf)) != 0) {
 			return (error);
 		}

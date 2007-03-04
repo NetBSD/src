@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.270 2007/03/04 09:22:04 macallan Exp $ */
+/*	$NetBSD: machdep.c,v 1.271 2007/03/04 22:12:44 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2007/03/04 09:22:04 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2007/03/04 22:12:44 mrg Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -520,7 +520,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (onstack)
 		fp = (struct sigframe_sigcontext *)
-			((void *)l->l_sigstk.ss_sp +
+			((char *)l->l_sigstk.ss_sp +
 			 l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe_sigcontext *)oldsp;
