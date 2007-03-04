@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.c,v 1.23 2007/03/04 06:01:37 christos Exp $	 */
+/*	$NetBSD: svr4_32_stat.c,v 1.24 2007/03/04 07:54:10 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.23 2007/03/04 06:01:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_stat.c,v 1.24 2007/03/04 07:54:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -719,7 +719,7 @@ svr4_32_sys_systeminfo(l, v, retval)
 			if (rlen > 0) {
 				/* make sure we are NULL terminated */
 				buf[0] = '\0';
-				error = copyout(buf, &(((void *)(u_long)
+				error = copyout(buf, &(((char *)(u_long)
 				    SCARG(uap, buf))[rlen - 1]), 1);
 			}
 		}

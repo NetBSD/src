@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.18 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.19 2007/03/04 07:54:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -162,7 +162,7 @@ struct	netbsd32_ifreq {
 		short	ifru_flags;
 		int	ifru_metric;
 		int	ifru_mtu;
-		netbsd32_void *	ifru_data;
+		netbsd32_caddr_t ifru_data;
 	} ifr_ifru;
 #define	ifr_addr	ifr_ifru.ifru_addr	/* address */
 #define	ifr_dstaddr	ifr_ifru.ifru_dstaddr	/* other end of p-to-p link */
@@ -214,7 +214,7 @@ struct	netbsd32_ifreq {
 struct	netbsd32_ifconf {
 	int	ifc_len;		/* size of associated buffer */
 	union {
-		netbsd32_void *	ifcu_buf;
+		netbsd32_caddr_t ifcu_buf;
 		netbsd32_ifreq_tp_t ifcu_req;
 	} ifc_ifcu;
 #define	ifc_buf	ifc_ifcu.ifcu_buf	/* buffer address */

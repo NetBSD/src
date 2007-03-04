@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.118 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.119 2007/03/04 07:54:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.118 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.119 2007/03/04 07:54:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -465,7 +465,7 @@ netbsd32_ptrace(l, v, retval)
 	struct netbsd32_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
-		syscallarg(netbsd32_void *) addr;
+		syscallarg(netbsd32_caddr_t) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
 	struct sys_ptrace_args ua;
@@ -658,7 +658,7 @@ netbsd32_profil(l, v, retval)
 	register_t *retval;
 {
 	struct netbsd32_profil_args /* {
-		syscallarg(netbsd32_void *) samples;
+		syscallarg(netbsd32_caddr_t) samples;
 		syscallarg(netbsd32_size_t) size;
 		syscallarg(netbsd32_u_long) offset;
 		syscallarg(u_int) scale;
@@ -943,7 +943,7 @@ netbsd32_mincore(l, v, retval)
 	register_t *retval;
 {
 	struct netbsd32_mincore_args /* {
-		syscallarg(netbsd32_void *) addr;
+		syscallarg(netbsd32_caddr_t) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(netbsd32_charp) vec;
 	} */ *uap = v;
@@ -1438,7 +1438,7 @@ netbsd32_quotactl(l, v, retval)
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(int) cmd;
 		syscallarg(int) uid;
-		syscallarg(netbsd32_void *) arg;
+		syscallarg(netbsd32_caddr_t) arg;
 	} */ *uap = v;
 	struct sys_quotactl_args ua;
 
@@ -2653,7 +2653,7 @@ int
 netbsd32_rasctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct netbsd32_rasctl_args /* {
-		syscallarg(netbsd32_void *) addr;
+		syscallarg(netbsd32_caddr_t) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) op;
 	} */ *uap = v;

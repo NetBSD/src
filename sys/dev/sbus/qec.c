@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.35 2007/03/04 06:02:41 christos Exp $ */
+/*	$NetBSD: qec.c,v 1.36 2007/03/04 07:54:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.35 2007/03/04 06:02:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.36 2007/03/04 07:54:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -340,7 +340,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_txd = (struct qec_xd *)p;
 	qr->rb_txddma = dma;
-	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	p = (char *)p + QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 
 	/*
@@ -348,7 +348,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_rxd = (struct qec_xd *)p;
 	qr->rb_rxddma = dma;
-	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	p = (char *)p + QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 
 
@@ -357,7 +357,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_txbuf = p;
 	txbufdma = dma;
-	p += ntbuf * pktbufsz;
+	p = (char *)p + ntbuf * pktbufsz;
 	dma += ntbuf * pktbufsz;
 
 	/*
@@ -365,7 +365,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_rxbuf = p;
 	rxbufdma = dma;
-	p += nrbuf * pktbufsz;
+	p = (char *)p + nrbuf * pktbufsz;
 	dma += nrbuf * pktbufsz;
 
 	/*

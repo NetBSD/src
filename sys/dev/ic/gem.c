@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.53 2007/03/04 06:01:55 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.54 2007/03/04 07:54:11 christos Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.53 2007/03/04 06:01:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.54 2007/03/04 07:54:11 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -179,7 +179,7 @@ gem_attach(sc, enaddr)
 	}
 
 	nullbuf =
-	    (void *)sc->sc_control_data + sizeof(struct gem_control_data);
+	    (char *)sc->sc_control_data + sizeof(struct gem_control_data);
 
 	if ((error = bus_dmamap_create(sc->sc_dmatag,
 	    sizeof(struct gem_control_data), 1,
@@ -1553,7 +1553,7 @@ gem_rint(sc)
 			}
 			if (ntohs(eh->ether_type) != ETHERTYPE_IP)
 				goto swcsum;
-			ip = (struct ip *) ((void *)eh + ETHER_HDR_LEN);
+			ip = (struct ip *) ((char *)eh + ETHER_HDR_LEN);
 
 			/* IPv4 only */
 			if (ip->ip_v != IPVERSION)
@@ -1585,7 +1585,7 @@ gem_rint(sc)
 					goto swcsum;
 				if (pktlen < (hlen + sizeof(struct udphdr)))
 					goto swcsum;
-				uh = (struct udphdr *)((void *)ip + hlen);
+				uh = (struct udphdr *)((char *)ip + hlen);
 				/* no checksum */
 				if (uh->uh_sum == 0)
 					goto swcsum;
@@ -1605,7 +1605,7 @@ gem_rint(sc)
 
 				optsum = 0;
 				temp = hlen - sizeof(struct ip);
-				opts = (uint16_t *) ((void *) ip +
+				opts = (uint16_t *) ((char *) ip +
 					sizeof(struct ip));
 
 				while (temp > 1) {
