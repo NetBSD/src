@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.311 2007/03/04 06:00:46 christos Exp $ */
+/*	$NetBSD: pmap.c,v 1.312 2007/03/04 09:32:39 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.311 2007/03/04 06:00:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.312 2007/03/04 09:32:39 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1024,7 +1024,7 @@ void
 get_phys_mem(void **top)
 {
 	struct memarr *mp;
-	void *p;
+	char *p;
 	int i;
 
 	/* Load the memory descriptor array at the current kernel top */
@@ -7131,7 +7131,7 @@ pmap_zero_page_hypersparc(paddr_t pa)
 	va = cpuinfo.vpage[0];
 	setpgt4m(cpuinfo.vpage_pte[0], pte);
 	for (offset = 0; offset < NBPG; offset += 32) {
-		sta(va + offset, ASI_BLOCKFILL, 0);
+		sta((char *)va + offset, ASI_BLOCKFILL, 0);
 	}
 	/* Remove temporary mapping */
 	sp_tlb_flush((int)va, 0, ASI_SRMMUFP_L3);
@@ -7151,7 +7151,7 @@ void
 pmap_copy_page4m(paddr_t src, paddr_t dst)
 {
 	struct vm_page *pg;
-	void *sva, dva;
+	void *sva, *dva;
 	int spte, dpte;
 
 	if ((pg = PHYS_TO_VM_PAGE(src)) != NULL) {
@@ -7214,7 +7214,7 @@ void
 pmap_copy_page_hypersparc(paddr_t src, paddr_t dst)
 {
 	struct vm_page *pg;
-	void *sva, dva;
+	void *sva, *dva;
 	int spte, dpte;
 	int offset;
 
@@ -7249,7 +7249,7 @@ pmap_copy_page_hypersparc(paddr_t src, paddr_t dst)
 	setpgt4m(cpuinfo.vpage_pte[1], dpte);
 
 	for (offset = 0; offset < NBPG; offset += 32) {
-		sta(dva + offset, ASI_BLOCKCOPY, sva + offset);
+		sta((char *)dva + offset, ASI_BLOCKCOPY, (char *)sva + offset);
 	}
 
 	sp_tlb_flush((int)sva, 0, ASI_SRMMUFP_L3);
@@ -7285,7 +7285,7 @@ kvm_uncache(void *va, int npages)
 
 	if (CPU_HAS_SRMMU) {
 #if defined(SUN4M) || defined(SUN4D)
-		for (; --npages >= 0; va += NBPG) {
+		for (; --npages >= 0; va = (char *)va + NBPG) {
 			pte = getpte4m((vaddr_t) va);
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE)
 				panic("kvm_uncache: table entry not pte");
