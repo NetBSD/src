@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxg.c,v 1.26 2007/03/04 06:02:46 christos Exp $	*/
+/* 	$NetBSD: pxg.c,v 1.27 2007/03/04 15:55:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.26 2007/03/04 06:02:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxg.c,v 1.27 2007/03/04 15:55:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ static void
 pxg_init(struct stic_info *si)
 {
 	volatile u_int32_t *slot;
-	void *kva;
+	char *kva;
 
 	kva = (void *)si->si_slotbase;
 
@@ -317,7 +317,7 @@ pxg_pbuf_get(struct stic_info *si)
 
 	si->si_pbuf_select ^= STIC_PACKET_SIZE;
 	off = si->si_pbuf_select + STIC_XCOMM_SIZE;
-	return ((u_int32_t *)((void *)si->si_buf + off));
+	return ((u_int32_t *)((char *)si->si_buf + off));
 }
 
 static int
@@ -332,7 +332,7 @@ pxg_pbuf_post(struct stic_info *si, u_int32_t *buf)
 
 	/* Get address of poll register for this buffer. */
 	v = ((u_long)buf - (u_long)si->si_buf) >> 9;
-	poll = (volatile u_int32_t *)((void *)si->si_slotbase + v);
+	poll = (volatile u_int32_t *)((char *)si->si_slotbase + v);
 
 	/*
 	 * Read the poll register and make sure the stamp wants to accept

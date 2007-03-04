@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.32 2007/03/04 06:01:28 christos Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.33 2007/03/04 15:48:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.32 2007/03/04 06:01:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.33 2007/03/04 15:48:01 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -150,7 +150,7 @@ osf1_sys_getfsstat(l, v, retval)
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct osf1_statfs osfs;
-	void *osf_sfsp;
+	char *osf_sfsp;
 	long count, maxcount, error;
 
 	if (SCARG(uap, flags) & ~OSF1_GETFSSTAT_FLAGS)
