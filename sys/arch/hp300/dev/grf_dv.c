@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.36 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.37 2007/03/04 11:53:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.36 2007/03/04 05:59:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.37 2007/03/04 11:53:21 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.36 2007/03/04 05:59:48 christos Exp $")
 
 #include "ite.h"
 
-static int	dv_init(struct grf_data *, int, void *);
+static int	dv_init(struct grf_data *, int, uint8_t *);
 static int	dv_mode(struct grf_data *, int, void *);
 static void	dv_reset(struct dvboxfb *);
 
@@ -274,7 +274,7 @@ dvbox_dio_attach(struct device *parent, struct device *self, void *aux)
  * Returns 0 if hardware not present, non-zero ow.
  */
 static int
-dv_init(struct grf_data *gp, int scode, void *addr)
+dv_init(struct grf_data *gp, int scode, uint8_t *addr)
 {
 	struct dvboxfb *dbp;
 	struct grfinfo *gi = &gp->g_display;
@@ -285,9 +285,9 @@ dv_init(struct grf_data *gp, int scode, void *addr)
 	 * no need to repeat this.
 	 */
 	if (scode != dvconscode) {
-		dbp = (struct dvboxfb *) addr;
+		dbp = (struct dvboxfb *)addr;
 		if (ISIIOVA(addr))
-			gi->gd_regaddr = (void *) IIOP(addr);
+			gi->gd_regaddr = (void *)IIOP(addr);
 		else
 			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x20000;
@@ -295,16 +295,16 @@ dv_init(struct grf_data *gp, int scode, void *addr)
 		gi->gd_fbheight = (dbp->fbhmsb << 8) | dbp->fbhlsb;
 		gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
 			fboff = (dbp->fbomsb << 8) | dbp->fbolsb;
-		gi->gd_fbaddr = (void *) (*((u_char *)addr + fboff) << 16);
-		if (gi->gd_regaddr >= (void *)DIOIIBASE) {
+		gi->gd_fbaddr = (void *)(*(addr + fboff) << 16);
+		if ((vaddr_t)gi->gd_regaddr >= DIOIIBASE) {
 			/*
 			 * For DIO II space the fbaddr just computed is
 			 * the offset from the select code base (regaddr)
 			 * of the framebuffer.  Hence it is also implicitly
 			 * the size of the set.
 			 */
-			gi->gd_regsize = (int) gi->gd_fbaddr;
-			gi->gd_fbaddr += (int) gi->gd_regaddr;
+			gi->gd_regsize = (int)gi->gd_fbaddr;
+			gi->gd_fbaddr += (int)gi->gd_regaddr;
 			gp->g_regkva = addr;
 			gp->g_fbkva = addr + gi->gd_regsize;
 		} else {
