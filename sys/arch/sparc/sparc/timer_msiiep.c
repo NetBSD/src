@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.20 2006/06/07 22:38:50 kardel Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.21 2007/03/04 01:53:44 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.20 2006/06/07 22:38:50 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.21 2007/03/04 01:53:44 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -245,6 +245,18 @@ clockintr_msiiep(void *cap)
 	volatile uint32_t junk;
 	
 	junk = mspcic_read_4(pcic_sclr); /* clear the interrupt */
+
+	/*
+	 * XXX this needs to be fixed in a more general way
+	 * problem is that the kernel enables interrupts and THEN
+	 * sets up clocks. In between there's an opportunity to catch
+	 * a timer interrupt - if we call hardclock() at that point we'll
+	 * panic
+	 * so for now just bail when cold
+	 */
+	if (__predict_false(cold))
+		return 0;
+
 	if (timecounter->tc_get_timecount == timer_get_timecount) {
 		cntr.offset += cntr.limit;
 	}
