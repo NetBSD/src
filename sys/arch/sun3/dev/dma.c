@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.18 2007/03/04 06:00:52 christos Exp $ */
+/*	$NetBSD: dma.c,v 1.19 2007/03/04 13:59:47 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.18 2007/03/04 06:00:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.19 2007/03/04 13:59:47 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -407,7 +407,7 @@ espdmaintr(struct dma_softc *sc)
 	}
 
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr += trans;
+	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||

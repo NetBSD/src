@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.22 2007/03/04 06:00:53 christos Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.23 2007/03/04 13:59:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.22 2007/03/04 06:00:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.23 2007/03/04 13:59:47 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -146,7 +146,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *args)
 	 * SCP happens to fall in a page used by the
 	 * PROM monitor, which the PROM knows about.
 	 */
-	sc->scp = (volatile void *) (sc->sc_iobase + IE_SCP_ADDR);
+	sc->scp = (volatile void *)((char *)sc->sc_iobase + IE_SCP_ADDR);
 
 	/*
 	 * The rest of ram is used for buffers.
