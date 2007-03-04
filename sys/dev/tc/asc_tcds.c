@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.18 2007/03/04 06:02:46 christos Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.19 2007/03/04 15:17:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.18 2007/03/04 06:02:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.19 2007/03/04 15:17:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ struct asc_softc {
 	bus_space_handle_t sc_scsi_bsh;		/* ASC register handle */
 	bus_dma_tag_t sc_dmat;			/* bus DMA tag */
 	bus_dmamap_t sc_dmamap;			/* bus dmamap */
-	void **sc_dmaaddr;
+	char **sc_dmaaddr;
 	size_t *sc_dmalen;
 	size_t sc_dmasize;
 	unsigned sc_flags;
@@ -268,7 +268,7 @@ tcds_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	 * of this DMA chip (64k) and we cannot cross a 8k boundary.
 	 */
 	size = min(*dmasize, DMAMAX((size_t)*addr));
-	asc->sc_dmaaddr = addr;
+	asc->sc_dmaaddr = (char **)addr;
 	asc->sc_dmalen = len;
 	asc->sc_flags = (ispullup) ? ASC_ISPULLUP : 0;
 	*dmasize = asc->sc_dmasize = size;
