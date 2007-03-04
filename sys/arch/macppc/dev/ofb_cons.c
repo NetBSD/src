@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb_cons.c,v 1.1.4.2 2007/01/12 23:48:40 bouyer Exp $	*/
+/*	$NetBSD: ofb_cons.c,v 1.1.4.3 2007/03/04 12:31:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.1.4.2 2007/01/12 23:48:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb_cons.c,v 1.1.4.3 2007/03/04 12:31:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -70,7 +70,6 @@ int ofb_enable_cache = 0;
 
 static int copy_rom_font(void);
 static struct wsdisplay_font openfirm6x11;
-int    console_node = 0, console_instance = 0;
 static vaddr_t fbaddr;
 static int romfont_loaded = 0;
 
@@ -90,14 +89,7 @@ ofb_cnattach()
 	struct rasops_info *ri = &ofb_console_screen.scr_ri;
 	long defattr;
 	int crow = 0;
-	int chosen, stdout, node;
 	char type[16];
-
-	chosen = OF_finddevice("/chosen");
-	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
-	node = OF_instance_to_package(stdout);
-	console_node = node;
-	console_instance = stdout;
 
 	OF_getprop(console_node, "device_type", type, sizeof(type));
 	if (strcmp(type, "display") != 0)
@@ -137,7 +129,8 @@ ofb_cnattach()
 	ofb_stdscreen.capabilities = ri->ri_caps;
 
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
-	wsdisplay_preattach(&ofb_stdscreen, ri, 0, crow, defattr);
+	wsdisplay_preattach(&ofb_stdscreen, ri, 0, max(0,
+	    min(crow, ri->ri_rows - 1)), defattr);
 	
 #if notyet
 	ofb_init_cmap(NULL);
