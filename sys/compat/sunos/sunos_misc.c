@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.145 2007/03/04 06:01:30 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.146 2007/03/04 11:15:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.145 2007/03/04 06:01:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.146 2007/03/04 11:15:04 tsutsui Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -489,9 +489,9 @@ sunos_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	void *inp, buf;	/* BSD-format */
+	char *inp, *buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	void *outp;		/* Sun-format */
+	char *outp;		/* Sun-format */
 	int resid, sunos_reclen;/* Sun-format */
 	struct file *fp;
 	struct uio auio;
