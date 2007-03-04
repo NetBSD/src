@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.8 2007/03/04 05:59:37 christos Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.9 2007/03/04 17:55:10 chris Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.8 2007/03/04 05:59:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.9 2007/03/04 17:55:10 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -566,7 +566,7 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				memcpy(mtod(m, void *) + moff,
+				memcpy(mtod(m, char *) + moff,
 				    (char *)cookie->id_bouncebuf + offset,
 				    minlen);
 
