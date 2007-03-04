@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.9 2007/02/18 04:01:27 dyoung Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.10 2007/03/04 20:04:14 jnemeth Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -213,7 +213,7 @@ caddr_t	data;
 int iplioctl(dev, cmd, data, mode)
 int dev;
 ioctlcmd_t cmd;
-caddr_t data;
+void *data;
 int mode;
 {
 	int error = 0, unit = 0, tmp;
@@ -820,14 +820,14 @@ mb_t *m;
 void m_copydata(m, off, len, cp)
 mb_t *m;
 int off, len;
-caddr_t cp;
+void *cp;
 {
 	bcopy((char *)m + off, cp, len);
 }
 
 
 int ipfuiomove(buf, len, rwflag, uio)
-caddr_t buf;
+void *buf;
 int len, rwflag;
 struct uio *uio;
 {
