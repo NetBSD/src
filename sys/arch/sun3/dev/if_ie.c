@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.45 2007/03/04 06:00:53 christos Exp $ */
+/*	$NetBSD: if_ie.c,v 1.46 2007/03/04 14:00:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.45 2007/03/04 06:00:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.46 2007/03/04 14:00:54 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -204,7 +204,7 @@ static void mc_reset(struct ie_softc *);
 static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
 static void iememinit(struct ie_softc *);
 
-static inline char * Align(char *);
+static inline char *Align(char *);
 static inline u_int Swap32(u_int);
 static inline u_int vtop24(struct ie_softc *, void *);
 static inline u_short vtop16sw(struct ie_softc *, void *);
@@ -229,7 +229,7 @@ vtop24(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
 
-	pa = ((void *)ptr) - sc->sc_iobase;
+	pa = (vaddr_t)ptr - (vaddr_t)sc->sc_iobase;
 #ifdef	IEDEBUG
 	if (pa & ~0xffFFff)
 		panic("ie:vtop24");
@@ -243,7 +243,7 @@ vtop16sw(struct ie_softc *sc, void *ptr)
 {
 	u_int pa;
 
-	pa = ((void *)ptr) - sc->sc_maddr;
+	pa = (vaddr_t)ptr - (vaddr_t)sc->sc_maddr;
 #ifdef	IEDEBUG
 	if (pa & ~0xFFff)
 		panic("ie:vtop16");
@@ -269,7 +269,7 @@ Swap32(u_int x)
 }
 
 static inline char *
-Align(void *ptr)
+Align(char *ptr)
 {
 	u_long  l = (u_long)ptr;
 
@@ -865,7 +865,7 @@ ieget(struct ie_softc *sc, int *to_bpf)
 		}
 
 		if (mp == &top) {
-			void *newdata = (void *)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data; 
@@ -900,7 +900,7 @@ ieget(struct ie_softc *sc, int *to_bpf)
 		int thismblen = m->m_len - thismboff;
 
 		len = min(thisrblen, thismblen);
-		(sc->sc_memcpy)(mtod(m, void *) + thismboff,
+		(sc->sc_memcpy)(mtod(m, char *) + thismboff,
 		    (void *)(sc->cbuffs[head] + thisrboff),
 		    (u_int)len);
 		resid -= len;
