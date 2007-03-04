@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 2007/03/04 06:00:54 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 2007/03/04 14:01:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2007/03/04 06:00:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2007/03/04 14:01:22 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -216,7 +216,7 @@ consinit(void)
 void 
 cpu_startup(void)
 {
-	void *v;
+	char *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
@@ -230,8 +230,8 @@ cpu_startup(void)
 	 * Its mapping was prepared in pmap_bootstrap().
 	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (void *) KERNBASE;
-	msgbufaddr = (void *)(v + MSGBUFOFF);
+	v = (char *)KERNBASE;
+	msgbufaddr = v + MSGBUFOFF;
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
