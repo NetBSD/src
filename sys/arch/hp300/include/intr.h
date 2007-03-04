@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2007/03/04 05:28:38 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2007/03/04 09:59:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@
 #define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
-#ifdef _KERNEL
-
 extern u_short hp300_ipl2psl[];
 
 typedef int ipl_t;
@@ -147,7 +145,5 @@ void	*intr_establish(int (*)(void *), void *, int, int);
 void	intr_disestablish(void *);
 void	intr_dispatch(int);
 void	intr_printlevels(void);
-
-#endif /* _KERNEL */
 
 #endif /* _HP300_INTR_H_ */
