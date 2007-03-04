@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.69 2007/03/04 06:00:38 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.70 2007/03/04 10:26:25 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2007/03/04 06:00:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70 2007/03/04 10:26:25 macallan Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -85,7 +85,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
-	void *stktop1, stktop2;
+	char *stktop1, *stktop2;
 	void fork_trampoline(void);
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 
