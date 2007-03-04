@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.7 2007/03/04 02:23:16 tsutsui Exp $ */
+/* $NetBSD: intr.h,v 1.8 2007/03/04 05:28:38 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,8 +102,9 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(icookie._spl);
 }
-#endif /* _KERNEL */
 
 #include <m68k/softintr.h>
+
+#endif /* _KERNEL */
 
 #endif	/* _MACHINE_INTR_H */
