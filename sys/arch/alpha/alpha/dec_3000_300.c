@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.42 2007/03/04 05:59:09 christos Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.43 2007/03/04 15:18:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.42 2007/03/04 05:59:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.43 2007/03/04 15:18:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ dec_3000_300_cons_init()
 {
 	struct ctb *ctb;
 
-	ctb = (struct ctb *)(((void *)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_GRAPHICS:
