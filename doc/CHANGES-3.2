@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.55 2007/03/03 23:33:31 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.56 2007/03/04 21:00:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2947,4 +2947,12 @@ sys/dev/pci/pcidevs_data.h			regen
 	- fix kern/31348
 	- fix possible panic on dreamcast
 	[tsutsui, ticket #1673]
+
+dist/bind/lib/dns/resolver.c                    patch
+dist/bind/lib/dns/validator.c                   patch
+dist/bind/lib/dns/include/dns/validator.h       patch   
+dist/bind/version                               patch
+
+	Fix CVE-2007-0493 and CVE-2007-0494.
+	[adrianp, ticket #1675]
 
