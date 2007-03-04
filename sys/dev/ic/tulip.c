@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.147 2006/09/24 03:53:08 jmcneill Exp $	*/
+/*	$NetBSD: tulip.c,v 1.147.2.1 2007/03/04 13:58:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.147 2006/09/24 03:53:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.147.2.1 2007/03/04 13:58:23 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -2510,10 +2510,26 @@ tlp_parse_old_srom(struct tulip_softc *sc, u_int8_t *enaddr)
 
 	if (memcmp(&sc->sc_srom[0], &sc->sc_srom[16], 8) != 0) {
 		/*
-		 * Phobos interfaces have the address at offsets 20
-		 * and 84, but each pair of bytes is swapped. The
-		 * first and last two bytes appear to contain
-		 * checksums. Everything else is 0.
+		 * Phobos G100 interfaces have the address at
+		 * offsets 0 and 20, but each pair of bytes is
+		 * swapped.
+		 */
+		if (sc->sc_srom_addrbits == 6 &&
+		    sc->sc_srom[1] == 0x00 &&
+		    sc->sc_srom[0] == 0x60 &&
+		    sc->sc_srom[3] == 0xf5 &&
+		    memcmp(&sc->sc_srom[0], &sc->sc_srom[20], 6) == 0) {
+			for (i = 0; i < 6; i += 2) {
+				enaddr[i] = sc->sc_srom[i + 1];
+				enaddr[i + 1] = sc->sc_srom[i];
+			}
+			return (1);
+		}
+
+		/*
+		 * Phobos G130/G160 interfaces have the address at
+		 * offsets 20 and 84, but each pair of bytes is
+		 * swapped.
 		 */
 		if (sc->sc_srom_addrbits == 6 &&
 		    sc->sc_srom[21] == 0x00 &&
