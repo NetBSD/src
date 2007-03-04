@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.20 2007/03/04 06:01:19 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.21 2007/03/04 10:21:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.20 2007/03/04 06:01:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2007/03/04 10:21:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_sigframe *)((void *)l->l_sigstk.ss_sp +
+		fp = (struct linux_sigframe *)((char *)l->l_sigstk.ss_sp +
 					  l->l_sigstk.ss_size);
 	else
 		fp = (struct linux_sigframe *)tf->tf_usr_sp;
