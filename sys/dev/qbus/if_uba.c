@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.26 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.27 2007/03/04 06:02:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.26 2005/12/11 12:23:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.27 2007/03/04 06:02:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ if_ubaminit(struct ifubinfo *ifu, struct uba_softc *uh, int size,
 	struct mbuf *m;
 	int totsz, i, error, rseg, nm = nr;
 	bus_dma_segment_t seg;
-	caddr_t vaddr;
+	void *vaddr;
 
 #ifdef DIAGNOSTIC
 	if (size > MCLBYTES)

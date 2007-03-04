@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 2007/02/22 17:03:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 2007/03/04 06:00:30 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -82,7 +82,7 @@ void
 pmap_bootstrap()
 {
 	int i, guardpage;
-	extern caddr_t msgbufaddr;
+	extern void *msgbufaddr;
 	TUNION uu;
 
 	/*

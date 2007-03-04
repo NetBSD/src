@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscallargs.h,v 1.17 2006/07/13 23:40:55 pavel Exp $ */
+/* $NetBSD: sunos32_syscallargs.h,v 1.18 2007/03/04 06:01:32 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -63,7 +63,7 @@ struct sunos32_sys_stime_args {
 struct sunos32_sys_ptrace_args {
 	syscallarg(int) req;
 	syscallarg(pid_t) pid;
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 	syscallarg(int) data;
 	syscallarg(netbsd32_charp) addr2;
 };
@@ -93,7 +93,7 @@ struct sunos32_sys_mctl_args {
 struct sunos32_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(netbsd32_u_long) com;
-	syscallarg(netbsd32_caddr_t) data;
+	syscallarg(netbsd32_void *) data;
 };
 
 struct sunos32_sys_reboot_args {
@@ -108,7 +108,7 @@ struct sunos32_sys_execve_args {
 };
 
 struct sunos32_sys_omsync_args {
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 	syscallarg(netbsd32_size_t) len;
 	syscallarg(int) flags;
 };
@@ -143,7 +143,7 @@ struct sunos32_sys_setsockopt_args {
 	syscallarg(int) s;
 	syscallarg(int) level;
 	syscallarg(int) name;
-	syscallarg(netbsd32_caddr_t) val;
+	syscallarg(netbsd32_void *) val;
 	syscallarg(int) valsize;
 };
 
@@ -206,7 +206,7 @@ struct sunos32_sys_quotactl_args {
 	syscallarg(int) cmd;
 	syscallarg(netbsd32_charp) special;
 	syscallarg(int) uid;
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 };
 
 struct sunos32_sys_exportfs_args {
@@ -218,7 +218,7 @@ struct sunos32_sys_mount_args {
 	syscallarg(netbsd32_charp) type;
 	syscallarg(netbsd32_charp) path;
 	syscallarg(int) flags;
-	syscallarg(netbsd32_caddr_t) data;
+	syscallarg(netbsd32_void *) data;
 };
 
 struct sunos32_sys_ustat_args {

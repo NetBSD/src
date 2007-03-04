@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.37 2007/02/22 06:14:28 thorpej Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.38 2007/03/04 06:03:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.37 2007/02/22 06:14:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.38 2007/03/04 06:03:37 christos Exp $");
 
 #include "opt_iso.h"
 
@@ -240,7 +240,7 @@ nfsrv_getcache(nd, slp, repp)
 	struct nfsrvcache *rp, *rpdup;
 	struct mbuf *mb;
 	struct sockaddr_in *saddr;
-	caddr_t bpos;
+	char *bpos;
 	int ret;
 
 	simple_lock(&nfsrv_reqcache_lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.234 2007/02/22 06:05:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.235 2007/03/04 06:03:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.234 2007/02/22 06:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.235 2007/03/04 06:03:48 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3977,7 +3977,7 @@ uvmspace_fork(struct vmspace *vm1)
 
 	vm2 = uvmspace_alloc(vm_map_min(old_map), vm_map_max(old_map));
 	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
-	    (caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
+	    (char *) (vm1 + 1) - (char *) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */
 
 	old_entry = old_map->header.next;

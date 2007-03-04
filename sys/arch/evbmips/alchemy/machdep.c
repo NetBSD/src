@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.32 2007/02/22 05:26:18 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.33 2007/03/04 05:59:45 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2007/02/22 05:26:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2007/03/04 05:59:45 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -186,10 +186,10 @@ void
 mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
 	bus_space_handle_t sh;
-	caddr_t kernend;
+	void *kernend;
 	const char *cp;
 	u_long first, last;
-	caddr_t v;
+	void *v;
 	int freqok, howto, i;
 	const struct alchemy_board *board;
 
@@ -199,8 +199,8 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	KASSERT(board != NULL);
 
 	/* clear the BSS segment */
-	kernend = (caddr_t)mips_round_page(end);
-	memset(edata, 0, kernend - (caddr_t)edata);
+	kernend = (void *)mips_round_page(end);
+	memset(edata, 0, kernend - (void *)edata);
 
 	/* set CPU model info for sysctl_hw */
 	strcpy(cpu_model, board->ab_name);
@@ -364,7 +364,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Init mapping for u page(s) for proc0.
 	 */
-	v = (caddr_t) uvm_pageboot_alloc(USPACE);
+	v = (void *) uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;

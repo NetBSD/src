@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.67 2006/03/26 04:35:37 thorpej Exp $ */
+/*	$NetBSD: fd.c,v 1.68 2007/03/04 05:59:18 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.67 2006/03/26 04:35:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68 2007/03/04 05:59:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,7 +548,7 @@ fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *sc;
 	int error, wlab;

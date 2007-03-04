@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.107 2007/02/16 02:17:42 ad Exp $     */
+/*	$NetBSD: trap.c,v 1.108 2007/03/04 06:01:02 christos Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.107 2007/02/16 02:17:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.108 2007/03/04 06:01:02 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -241,7 +241,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			}
 		} else {
 			trapsig = 0;
-			if (map != kernel_map && (caddr_t)addr >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)addr >= vm->vm_maxsaddr)
 				uvm_grow(p, addr);
 		}
 		if (umode)

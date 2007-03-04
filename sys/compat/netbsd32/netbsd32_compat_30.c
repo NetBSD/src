@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.16 2007/02/09 21:55:22 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.17 2007/03/04 06:01:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.16 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.17 2007/03/04 06:01:26 christos Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -112,7 +112,7 @@ compat_30_netbsd32___stat13(l, v, retval)
 	struct stat sb;
 	int error;
 	struct nameidata nd;
-	caddr_t sg;
+	void *sg;
 	const char *path;
 	struct proc *p = l->l_proc;
 
@@ -128,7 +128,7 @@ compat_30_netbsd32___stat13(l, v, retval)
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
+	error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
 	return (error);
 }
@@ -160,7 +160,7 @@ compat_30_netbsd32___fstat13(l, v, retval)
 
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
-		error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, sb)),
+		error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, sb)),
 		    sizeof(sb32));
 	}
 	return (error);
@@ -180,7 +180,7 @@ compat_30_netbsd32___lstat13(l, v, retval)
 	struct stat sb;
 	int error;
 	struct nameidata nd;
-	caddr_t sg;
+	void *sg;
 	const char *path;
 	struct proc *p = l->l_proc;
 
@@ -196,7 +196,7 @@ compat_30_netbsd32___lstat13(l, v, retval)
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, (caddr_t)NETBSD32PTR64(SCARG(uap, ub)),
+	error = copyout(&sb32, (void *)NETBSD32PTR64(SCARG(uap, ub)),
 	    sizeof(sb32));
 	return (error);
 }
@@ -284,7 +284,7 @@ compat_30_netbsd32_fhstatvfs1(l, v, retval)
 	s32 = (struct netbsd32_statvfs *)
 	    malloc(sizeof(struct netbsd32_statvfs), M_TEMP, M_WAITOK);
 	netbsd32_from_statvfs(sbuf, s32);
-	error = copyout(s32, (caddr_t)NETBSD32PTR64(SCARG(uap, buf)),
+	error = copyout(s32, (void *)NETBSD32PTR64(SCARG(uap, buf)),
 	    sizeof(struct netbsd32_statvfs));
 	free(s32, M_TEMP);
 

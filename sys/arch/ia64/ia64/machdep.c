@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2007/02/28 04:21:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2007/03/04 06:00:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -138,7 +138,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-caddr_t msgbufaddr;
+void *msgbufaddr;
 int	physmem;
 
 char	cpu_model[64];
@@ -675,7 +675,7 @@ ia64_init(void)
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-	msgbufaddr = (caddr_t) uvm_pageboot_alloc(MSGBUFSIZE);
+	msgbufaddr = (void *) uvm_pageboot_alloc(MSGBUFSIZE);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
@@ -845,16 +845,16 @@ setregs(l, pack, stack)
 		 */
 
 		/* in0 = sp */
-		suword((caddr_t)tf->tf_special.bspstore - 32, stack);
+		suword((void *)tf->tf_special.bspstore - 32, stack);
 
 		/* in1 == *cleanup */
-		suword((caddr_t)tf->tf_special.bspstore -  24, 0);
+		suword((void *)tf->tf_special.bspstore -  24, 0);
 
 		/* in2 == *obj */
-		suword((caddr_t)tf->tf_special.bspstore -  16, 0);
+		suword((void *)tf->tf_special.bspstore -  16, 0);
 
 		/* in3 = ps_strings */		
-		suword((caddr_t)tf->tf_special.bspstore - 8, 
+		suword((void *)tf->tf_special.bspstore - 8, 
 		       (u_int64_t)l->l_proc->p_psstr); 
 
 	}

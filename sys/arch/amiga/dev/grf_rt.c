@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.50 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.51 2007/03/04 05:59:19 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.50 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.51 2007/03/04 05:59:19 christos Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -291,7 +291,7 @@ static int
 rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 {
 	struct grfinfo *gi = &gp->g_display;
-	volatile caddr_t ba, fb;
+	volatile void *ba, fb;
 	short FW, clksel, HDE, VDE;
 
 	for (clksel = 15; clksel; clksel--) {
@@ -624,7 +624,7 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 		/* first set the whole font memory to a test-pattern, so we
 		   can see if something that shouldn't be drawn IS drawn.. */
 		{
-			volatile caddr_t c = fb;
+			volatile void *c = fb;
 			long x;
 			Map(2);
 
@@ -634,7 +634,7 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 		}
 
 		{
-			volatile caddr_t c = fb;
+			volatile void *c = fb;
 			long x;
 			Map(3);
 
@@ -646,7 +646,7 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 		{
 		  /* ok, now position at first defined character, and
 		     copy over the images */
-		  volatile caddr_t c = fb + md->FLo * 32;
+		  volatile void *c = fb + md->FLo * 32;
 		  const unsigned char * f = md->FData;
 		  unsigned short z;
 
@@ -737,11 +737,11 @@ rt_load_mon(struct grf_softc *gp, struct MonDef *md)
 	        ;
 	}
 
-	gp->g_data	= (caddr_t)md;
-	gi->gd_regaddr  = (caddr_t)ztwopa(ba);
+	gp->g_data	= (void *)md;
+	gi->gd_regaddr  = (void *)ztwopa(ba);
 	gi->gd_regsize  = 64*1024;
 
-	gi->gd_fbaddr   = (caddr_t)ztwopa(fb);
+	gi->gd_fbaddr   = (void *)ztwopa(fb);
 	gi->gd_fbsize   = 64*1024;	/* larger, but that's whats mappable */
 
 	gi->gd_colors   = 1 << md->DEP;
@@ -858,8 +858,8 @@ grfrtattach(struct device *pdp, struct device *dp, void *auxp)
 		bcopy(&congrf.g_display, &gp->g_display,
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
-		gp->g_regkva = (volatile caddr_t)zap->va;
-		gp->g_fbkva = (volatile caddr_t)zap->va + 64 * 1024;
+		gp->g_regkva = (volatile void *)zap->va;
+		gp->g_fbkva = (volatile void *)zap->va + 64 * 1024;
 		gp->g_unit = GRF_RETINAII_UNIT;
 		gp->g_flags = GF_ALIVE;
 		gp->g_mode = rt_mode;
@@ -1157,7 +1157,7 @@ rt_setspritepos(struct grf_softc *gp, struct grf_position *pos)
 int
 rt_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile caddr_t ba, fb;
+	volatile void *ba, fb;
 
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
@@ -1209,7 +1209,7 @@ rt_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 int
 rt_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile caddr_t ba, fb;
+	volatile void *ba, fb;
 	u_char control;
 
 	ba = gp->g_regkva;
@@ -1284,7 +1284,7 @@ rt_bitblt(struct grf_softc *gp, struct grf_bitblt *bb)
 	return (EINVAL);
 
 #if 0
-  volatile caddr_t ba, fb;
+  volatile void *ba, fb;
   u_char control;
   u_char saved_bank_lo;
   u_char saved_bank_hi;

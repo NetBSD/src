@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.218 2007/03/02 17:42:00 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.219 2007/03/04 05:59:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.218 2007/03/02 17:42:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.219 2007/03/04 05:59:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1121,7 +1121,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		}
 
 		va = ALPHA_PHYS_TO_K0SEG(pa);
-		memset((caddr_t)va, 0, size);
+		memset((void *)va, 0, size);
 		pmap_pages_stolen += npgs;
 		return (va);
 	}
@@ -2409,14 +2409,14 @@ pmap_zero_page(paddr_t phys)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-	caddr_t s, d;
+	void *s, d;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-        s = (caddr_t)ALPHA_PHYS_TO_K0SEG(src);
-        d = (caddr_t)ALPHA_PHYS_TO_K0SEG(dst);
+        s = (void *)ALPHA_PHYS_TO_K0SEG(src);
+        d = (void *)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
 }
 

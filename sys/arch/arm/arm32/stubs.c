@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.16 2006/10/21 05:54:31 mrg Exp $	*/
+/*	$NetBSD: stubs.c,v 1.17 2007/03/04 05:59:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.16 2006/10/21 05:54:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.17 2007/03/04 05:59:37 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ dumpsys()
 			pmap_update(pmap_kernel());
 
 			error = (*bdev->d_dump)(dumpdev,
-			    blkno, (caddr_t) dumpspace, PAGE_SIZE);
+			    blkno, (void *) dumpspace, PAGE_SIZE);
 			pmap_kremove(dumpspace, PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			if (error) break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.195 2007/03/01 17:31:36 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.196 2007/03/04 06:02:44 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.195 2007/03/01 17:31:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.196 2007/03/04 06:02:44 christos Exp $");
 
 #include "opt_scsi.h"
 
@@ -1175,7 +1175,7 @@ ststart(struct scsipi_periph *periph)
 		/* if a special awaits, let it proceed first */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -1387,7 +1387,7 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
  * knows about the internals of this device
  */
 static int
-stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
+stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 {
 	int error = 0;
 	int unit;
@@ -2395,7 +2395,7 @@ bad:			free(bf, M_TEMP);
 }
 
 static int
-stdump(dev_t dev, daddr_t blkno, caddr_t va,
+stdump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 

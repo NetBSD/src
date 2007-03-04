@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.c,v 1.10 2007/02/28 20:33:50 macallan Exp $ */
+/*	$NetBSD: openfirmio.c,v 1.11 2007/03/04 06:02:15 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.10 2007/02/28 20:33:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirmio.c,v 1.11 2007/03/04 06:02:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ openfirmgetstr(int len, char *user, char **cpp)
 }
 
 int
-openfirmioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+openfirmioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct ofiocdesc *of;
 	int node, len, ok, error, s;

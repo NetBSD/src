@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.74 2007/02/22 05:33:05 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.75 2007/03/04 05:59:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.74 2007/02/22 05:33:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.75 2007/03/04 05:59:48 christos Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -468,7 +468,7 @@ hilread(dev_t dev, struct uio *uio, int flag)
 			return EWOULDBLOCK;
 		}
 		dptr->hd_flags |= HIL_ASLEEP;
-		if ((error = tsleep((caddr_t)dptr,
+		if ((error = tsleep((void *)dptr,
 		    TTIPRI | PCATCH, hilin, 0))) {
 			(void)spl0();
 			return error;
@@ -488,7 +488,7 @@ hilread(dev_t dev, struct uio *uio, int flag)
 }
 
 static int
-hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+hilioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
@@ -545,7 +545,7 @@ hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #endif
 
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
-	memset((caddr_t)hilp->hl_cmdbuf, 0, HILBUFSIZE);
+	memset((void *)hilp->hl_cmdbuf, 0, HILBUFSIZE);
 	hilp->hl_cmddev = HILUNIT(dev);
 	error = 0;
 	switch (cmd) {
@@ -664,7 +664,7 @@ hilioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 #ifdef COMPAT_HPUX
 /* ARGSUSED */
 int
-hpuxhilioctl(dev_t dev, int cmd, caddr_t data, int flag)
+hpuxhilioctl(dev_t dev, int cmd, void *data, int flag)
 {
 	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
@@ -674,7 +674,7 @@ hpuxhilioctl(dev_t dev, int cmd, caddr_t data, int flag)
 	hilp = device_lookup(&hil_cd, HILLOOP(dev));
 
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
-	memset((caddr_t)hilp->hl_cmdbuf, 0, HILBUFSIZE);
+	memset((void *)hilp->hl_cmdbuf, 0, HILBUFSIZE);
 	hilp->hl_cmddev = HILUNIT(dev);
 	switch (cmd) {
 
@@ -1179,7 +1179,7 @@ hpuxhilevent(struct hil_softc *hilp, struct hilloopdev *dptr)
 	 */
 	if (dptr->hd_flags & HIL_ASLEEP) {
 		dptr->hd_flags &= ~HIL_ASLEEP;
-		wakeup((caddr_t)dptr);
+		wakeup((void *)dptr);
 	}
 	selnotify(&dptr->hd_selr, 0);
 }
@@ -1360,7 +1360,7 @@ hilkbdcngetc(int *statp)
 int
 hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 {
-	caddr_t va;
+	void *va;
 	struct kbdmap *km;
 	bus_space_handle_t bsh;
 	u_char lang;

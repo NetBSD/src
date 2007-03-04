@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.5 2006/01/25 18:28:26 christos Exp $	*/
+/*	$NetBSD: am7990.c,v 1.6 2007/03/04 05:59:59 christos Exp $	*/
 
 /* mostly from netbsd:sys/arch/i386/netboot/ne2100.c
  memory allocation now 1 chunk, added deallocation
@@ -28,7 +28,7 @@ extern u_char eth_myaddr[6];
 
 extern int lance_rap, lance_rdp;
 
-static caddr_t dmamem;
+static void *dmamem;
 
 #define LA(adr) vtophys(adr)
 

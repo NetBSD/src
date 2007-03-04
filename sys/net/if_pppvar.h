@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.24 2007/02/17 22:34:09 dyoung Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.25 2007/03/04 06:03:16 christos Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -156,7 +156,7 @@ struct ppp_softc {
 
 struct	ppp_softc *pppalloc(pid_t);
 void	pppdealloc(struct ppp_softc *);
-int	pppioctl(struct ppp_softc *, u_long, caddr_t, int, struct lwp *);
+int	pppioctl(struct ppp_softc *, u_long, void *, int, struct lwp *);
 void	ppp_restart(struct ppp_softc *);
 void	ppppktin(struct ppp_softc *, struct mbuf *, int);
 struct	mbuf *ppp_dequeue(struct ppp_softc *);

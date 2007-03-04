@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.h,v 1.3 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_32_sockio.h,v 1.4 2007/03/04 06:01:37 christos Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -55,16 +55,16 @@ struct svr4_32_ifreq {
 
 	} ifr_ifru;
 };
-typedef netbsd32_caddr_t svr4_32_ifreqp;
+typedef netbsd32_void *svr4_32_ifreqp;
 
 struct svr4_32_ifconf {
 	int	svr4_32_ifc_len;
 	union {
-		netbsd32_caddr_t	ifcu_buf;
+		netbsd32_void *	ifcu_buf;
 		svr4_32_ifreqp		ifcu_req;
 	} ifc_ifcu;
 };
-typedef netbsd32_caddr_t svr4_32_ifconfp;
+typedef netbsd32_void *svr4_32_ifconfp;
 
 #define	SVR4_32_SIOCGIFFLAGS	SVR4_IOWR('i', 17, struct svr4_32_ifreq)
 #define	SVR4_32_SIOCGIFCONF	SVR4_IOWR('i', 20, struct svr4_32_ifconf)

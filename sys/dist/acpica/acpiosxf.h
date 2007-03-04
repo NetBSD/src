@@ -232,7 +232,7 @@ AcpiOsAllocate (
 
 void
 AcpiOsFree (
-    void *                  Memory);
+    void *                 Memory);
 
 ACPI_STATUS
 AcpiOsMapMemory (

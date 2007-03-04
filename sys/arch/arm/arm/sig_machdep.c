@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.31 2007/02/18 21:10:32 ad Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.32 2007/03/04 05:59:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.31 2007/02/18 21:10:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.32 2007/03/04 05:59:36 christos Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -217,7 +217,7 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_CPSR] = tf->tf_spsr;
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_PC])) != -1)
+	    (void *) gr[_REG_PC])) != -1)
 		gr[_REG_PC] = ras_pc;
 
 	*flags |= _UC_CPU;

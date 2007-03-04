@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.296 2007/03/03 10:08:18 itohy Exp $	*/
+/*	$NetBSD: init_main.c,v 1.297 2007/03/04 06:03:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.296 2007/03/03 10:08:18 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.297 2007/03/04 06:03:03 christos Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -703,7 +703,7 @@ start_init(void *arg)
 		    UVM_ADV_NORMAL,
                     UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
 		panic("init: couldn't allocate argument space");
-	p->p_vmspace->vm_maxsaddr = (caddr_t)STACK_MAX(addr, PAGE_SIZE);
+	p->p_vmspace->vm_maxsaddr = (void *)STACK_MAX(addr, PAGE_SIZE);
 
 	ipx = 0;
 	while (1) {
@@ -758,7 +758,7 @@ start_init(void *arg)
 #endif
 			arg1 = STACK_ALLOC(ucp, i);
 			ucp = STACK_MAX(arg1, i);
-			(void)copyout((caddr_t)flags, arg1, i);
+			(void)copyout((void *)flags, arg1, i);
 		}
 
 		/*
@@ -778,20 +778,20 @@ start_init(void *arg)
 		/*
 		 * Move out the arg pointers.
 		 */
-		ucp = (caddr_t)STACK_ALIGN(ucp, ALIGNBYTES);
+		ucp = (void *)STACK_ALIGN(ucp, ALIGNBYTES);
 		uap = (char **)STACK_ALLOC(ucp, sizeof(char *) * 3);
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;
 		SCARG(&args, envp) = NULL;
 		slash = strrchr(path, '/');
 		if (slash)
-			(void)suword((caddr_t)uap++,
+			(void)suword((void *)uap++,
 			    (long)arg0 + (slash + 1 - path));
 		else
-			(void)suword((caddr_t)uap++, (long)arg0);
+			(void)suword((void *)uap++, (long)arg0);
 		if (options != 0)
-			(void)suword((caddr_t)uap++, (long)arg1);
-		(void)suword((caddr_t)uap++, 0);	/* terminator */
+			(void)suword((void *)uap++, (long)arg1);
+		(void)suword((void *)uap++, 0);	/* terminator */
 
 		/*
 		 * Now try to exec the program.  If can't for any reason

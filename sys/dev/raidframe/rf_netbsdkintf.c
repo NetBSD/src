@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.224 2006/11/30 23:01:50 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.225 2007/03/04 06:02:38 christos Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224 2006/11/30 23:01:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.225 2007/03/04 06:02:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -209,7 +209,7 @@ MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 /* prototypes */
 static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
-    dev_t, RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*) (struct buf *),
+    dev_t, RF_SectorNum_t, RF_SectorCount_t, void *, void (*) (struct buf *),
     void *, int, struct proc *);
 static void raidinit(RF_Raid_t *);
 
@@ -542,7 +542,7 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev, daddr_t blkno, caddr_t va,
+raiddump(dev_t dev, daddr_t blkno, void *va,
     size_t  size)
 {
 	/* Not implemented. */
@@ -803,7 +803,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
@@ -2035,7 +2035,7 @@ KernelWakeupFunc(struct buf *bp)
  */
 static void
 InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
-       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t bf,
+       RF_SectorNum_t startSect, RF_SectorCount_t numSect, void *bf,
        void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
        struct proc *b_proc)
 {

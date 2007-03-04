@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.44 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: azalia.c,v 1.45 2007/03/04 06:02:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.44 2007/02/21 23:00:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.45 2007/03/04 06:02:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.44 2007/02/21 23:00:00 thorpej Exp $");
 
 typedef struct {
 	bus_dmamap_t map;
-	caddr_t addr;		/* kernel virtual address */
+	void *addr;		/* kernel virtual address */
 	bus_dma_segment_t segments[1];
 	size_t size;
 } azalia_dma_t;
@@ -1870,7 +1870,7 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 
 	/* setup BDL */
 	dmaaddr = AZALIA_DMA_DMAADDR(&this->buffer);
-	this->dmaend = dmaaddr + ((caddr_t)end - (caddr_t)start);
+	this->dmaend = dmaaddr + ((char *)end - (char *)start);
 	bdlist = (bdlist_entry_t*)this->bdlist.addr;
 	for (index = 0; index < HDA_BDL_MAX; index++) {
 		bdlist[index].low = dmaaddr;
@@ -1893,7 +1893,7 @@ azalia_stream_start(stream_t *this, void *start, void *end, int blk,
 	ctl2 = STR_READ_1(this, CTL2);
 	STR_WRITE_1(this, CTL2,
 	    (ctl2 & ~HDA_SD_CTL2_STRM) | (this->number << HDA_SD_CTL2_STRM_SHIFT));
-	STR_WRITE_4(this, CBL, ((caddr_t)end - (caddr_t)start));
+	STR_WRITE_4(this, CBL, ((char *)end - (char *)start));
 
 	STR_WRITE_2(this, FMT, fmt);
 

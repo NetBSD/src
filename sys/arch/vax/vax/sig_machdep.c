@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.9 2007/02/21 23:48:12 thorpej Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.10 2007/03/04 06:01:02 christos Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.9 2007/02/21 23:48:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.10 2007/03/04 06:01:02 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -183,7 +183,7 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 
 	scf = l->l_addr->u_pcb.framep;
 	ucntx = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
+	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 
 	/* Compatibility mode? */
@@ -258,8 +258,8 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	/* Point stack pointer at pc in trampoline.  */
 	sp =- 8;
 
-	error = (copyout(&tramp, (caddr_t)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
-	    copyout(&sigctx, (caddr_t)tramp.scp, sizeof(sigctx)) != 0);
+	error = (copyout(&tramp, (void *)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
+	    copyout(&sigctx, (void *)tramp.scp, sizeof(sigctx)) != 0);
 
 	mutex_enter(&p->p_smutex);
 	if (error)
@@ -284,7 +284,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	scf = l->l_addr->u_pcb.framep;
 	ucntx = SCARG(uap, sigcntxp);
 
-	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
+	if (copyin((void *)ucntx, (void *)&ksc, sizeof(struct sigcontext)))
 		return EINVAL;
 	/* Compatibility mode? */
 	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||

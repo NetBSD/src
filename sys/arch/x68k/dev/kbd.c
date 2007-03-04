@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.27 2007/03/04 02:08:08 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.28 2007/03/04 06:01:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27 2007/03/04 02:08:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.28 2007/03/04 06:01:06 christos Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -221,7 +221,7 @@ void opm_bell_off(void);
 #endif
 
 int 
-kbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 	int cmd_data;

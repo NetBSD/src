@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.h,v 1.1 2001/02/06 16:37:57 eeh Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.h,v 1.2 2007/03/04 06:01:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct svr4_32_flock_svr3 {
 	short		l_sysid;
 	svr4_32_o_pid_t	l_pid;
 };
-typedef netbsd32_caddr_t svr4_32_flock_svr3p;
+typedef netbsd32_void *svr4_32_flock_svr3p;
 
 struct svr4_32_flock {
 	short		l_type;
@@ -63,7 +63,7 @@ struct svr4_32_flock {
 	svr4_32_pid_t	l_pid;
 	netbsd32_long	pad[4];
 };
-typedef netbsd32_caddr_t svr4_32_flockp;
+typedef netbsd32_void *svr4_32_flockp;
 
 struct svr4_32_flock64 {
 	short		l_type;
@@ -74,6 +74,6 @@ struct svr4_32_flock64 {
 	svr4_32_pid_t	l_pid;
 	netbsd32_long	pad[4];
 };
-typedef netbsd32_caddr_t svr4_32_flock64p;
+typedef netbsd32_void *svr4_32_flock64p;
 
 #endif /* !_SVR4_32_FCNTL_H_ */

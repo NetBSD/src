@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.9 2006/11/16 01:32:50 christos Exp $ */
+/*	$NetBSD: apmdev.c,v 1.10 2007/03/04 06:01:47 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.9 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.10 2007/03/04 06:01:47 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -841,7 +841,7 @@ apmdevclose(dev_t dev, int flag, int mode,
 }
 
 int
-apmdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+apmdevioctl(dev_t dev, u_long cmd, void *data, int flag,
 	    struct lwp *l)
 {
 	struct apm_softc *sc = apmdev_cd.cd_devs[APMUNIT(dev)];

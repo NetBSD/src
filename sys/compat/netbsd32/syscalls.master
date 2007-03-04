@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.57 2007/02/19 15:32:43 cube Exp $
+	$NetBSD: syscalls.master,v 1.58 2007/03/04 06:01:27 christos Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -91,7 +91,7 @@
 23	STD		{ int netbsd32_setuid(uid_t uid); }
 24	NOARGS MPSAFE	{ uid_t sys_getuid(void); }
 25	NOARGS MPSAFE	{ uid_t sys_geteuid(void); }
-26	STD		{ int netbsd32_ptrace(int req, pid_t pid, netbsd32_caddr_t addr, int data); }
+26	STD		{ int netbsd32_ptrace(int req, pid_t pid, netbsd32_void *addr, int data); }
 27	STD		{ netbsd32_ssize_t netbsd32_recvmsg(int s, netbsd32_msghdrp_t msg, int flags); }
 28	STD		{ netbsd32_ssize_t netbsd32_sendmsg(int s, const netbsd32_msghdrp_t msg, int flags); }
 29	STD		{ netbsd32_ssize_t netbsd32_recvfrom(int s, netbsd32_voidp buf, netbsd32_size_t len, int flags, netbsd32_sockaddrp_t from, netbsd32_intp fromlenaddr); }
@@ -109,7 +109,7 @@
 41	STD		{ int netbsd32_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	NOARGS MPSAFE	{ gid_t sys_getegid(void); }
-44	STD		{ int netbsd32_profil(netbsd32_caddr_t samples, netbsd32_size_t size, netbsd32_u_long offset, u_int scale); }
+44	STD		{ int netbsd32_profil(netbsd32_void *samples, netbsd32_size_t size, netbsd32_u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
 45	STD		{ int netbsd32_ktrace(const netbsd32_charp fname, int ops, int facs, int pid); }
 #else
@@ -135,21 +135,21 @@
 62	COMPAT_43	{ int netbsd32_fstat43(int fd, netbsd32_stat43p_t sb); }
 63	COMPAT_43	{ int netbsd32_ogetkerninfo(int op, netbsd32_charp where, netbsd32_intp size, int arg); }
 64	COMPAT_43	{ int sys_getpagesize(void); } ogetpagesize
-65	COMPAT_12	{ int netbsd32_msync(netbsd32_caddr_t addr, netbsd32_size_t len); }
+65	COMPAT_12	{ int netbsd32_msync(netbsd32_void *addr, netbsd32_size_t len); }
 ; XXX COMPAT_??? for 4.4BSD-compatible vfork(2)?
 66	NOARGS		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	STD		{ int netbsd32_sbrk(netbsd32_intptr_t incr); }
 70	STD		{ int netbsd32_sstk(int incr); }
-71	COMPAT_43	{ int netbsd32_ommap(netbsd32_caddr_t addr, netbsd32_size_t len, int prot, int flags, int fd, netbsd32_long pos); }
+71	COMPAT_43	{ int netbsd32_ommap(netbsd32_void *addr, netbsd32_size_t len, int prot, int flags, int fd, netbsd32_long pos); }
 72	STD		{ int netbsd32_ovadvise(int anom); } vadvise
 73	STD		{ int netbsd32_munmap(netbsd32_voidp addr, netbsd32_size_t len); }
 74	STD		{ int netbsd32_mprotect(netbsd32_voidp addr, netbsd32_size_t len, int prot); }
 75	STD		{ int netbsd32_madvise(netbsd32_voidp addr, netbsd32_size_t len, int behav); }
 76	OBSOL		vhangup
 77	OBSOL		vlimit
-78	STD		{ int netbsd32_mincore(netbsd32_caddr_t addr, netbsd32_size_t len, netbsd32_charp vec); }
+78	STD		{ int netbsd32_mincore(netbsd32_void *addr, netbsd32_size_t len, netbsd32_charp vec); }
 79	STD		{ int netbsd32_getgroups(int gidsetsize, netbsd32_gid_tp gidset); }
 80	STD		{ int netbsd32_setgroups(int gidsetsize, const netbsd32_gid_tp gidset); }
 81	NOARGS MPSAFE	{ int sys_getpgrp(void); }
@@ -170,10 +170,10 @@
 96	STD		{ int netbsd32_setpriority(int which, int who, int prio); }
 97	COMPAT_30	{ int netbsd32_socket(int domain, int type, int protocol); }
 98	STD		{ int netbsd32_connect(int s, const netbsd32_sockaddrp_t name, int namelen); }
-99	COMPAT_43	{ int netbsd32_oaccept(int s, netbsd32_caddr_t name, netbsd32_intp anamelen); }
+99	COMPAT_43	{ int netbsd32_oaccept(int s, netbsd32_void *name, netbsd32_intp anamelen); }
 100	STD		{ int netbsd32_getpriority(int which, int who); }
-101	COMPAT_43	{ int netbsd32_osend(int s, netbsd32_caddr_t buf, int len, int flags); }
-102	COMPAT_43	{ int netbsd32_orecv(int s, netbsd32_caddr_t buf, int len, int flags); }
+101	COMPAT_43	{ int netbsd32_osend(int s, netbsd32_void *buf, int len, int flags); }
+102	COMPAT_43	{ int netbsd32_orecv(int s, netbsd32_void *buf, int len, int flags); }
 103	COMPAT_13	{ int netbsd32_sigreturn(netbsd32_sigcontextp_t sigcntxp); } sigreturn13
 104	STD		{ int netbsd32_bind(int s, const netbsd32_sockaddrp_t name, int namelen); }
 105	STD		{ int netbsd32_setsockopt(int s, int level, int name, const netbsd32_voidp val, int valsize); }
@@ -185,7 +185,7 @@
 111	COMPAT_13	{ int netbsd32_sigsuspend(int mask); } sigsuspend13
 112	COMPAT_43	{ int netbsd32_osigstack(netbsd32_sigstackp_t nss, netbsd32_sigstackp_t oss); }
 113	COMPAT_43	{ int netbsd32_orecvmsg(int s, netbsd32_omsghdrp_t msg, int flags); }
-114	COMPAT_43	{ int netbsd32_osendmsg(int s, netbsd32_caddr_t msg, int flags); }
+114	COMPAT_43	{ int netbsd32_osendmsg(int s, netbsd32_void *msg, int flags); }
 115	OBSOL		vtrace
 116	STD		{ int netbsd32_gettimeofday(netbsd32_timevalp_t tp, netbsd32_timezonep_t tzp); }
 117	STD		{ int netbsd32_getrusage(int who, netbsd32_rusagep_t rusage); }
@@ -196,7 +196,7 @@
 122	STD		{ int netbsd32_settimeofday(const netbsd32_timevalp_t tv, const netbsd32_timezonep_t tzp); }
 123	STD		{ int netbsd32_fchown(int fd, uid_t uid, gid_t gid); }
 124	STD		{ int netbsd32_fchmod(int fd, mode_t mode); }
-125	COMPAT_43	{ int netbsd32_orecvfrom(int s, netbsd32_caddr_t buf, netbsd32_size_t len, int flags, netbsd32_caddr_t from, netbsd32_intp fromlenaddr); }
+125	COMPAT_43	{ int netbsd32_orecvfrom(int s, netbsd32_void *buf, netbsd32_size_t len, int flags, netbsd32_void *from, netbsd32_intp fromlenaddr); }
 126	STD		{ int netbsd32_setreuid(uid_t ruid, uid_t euid); }
 127	STD		{ int netbsd32_setregid(gid_t rgid, gid_t egid); }
 128	STD		{ int netbsd32_rename(const netbsd32_charp from, const netbsd32_charp to); }
@@ -212,16 +212,16 @@
 138	STD		{ int netbsd32_utimes(const netbsd32_charp path, const netbsd32_timevalp_t tptr); }
 139	OBSOL		4.2 sigreturn
 140	STD		{ int netbsd32_adjtime(const netbsd32_timevalp_t delta, netbsd32_timevalp_t olddelta); }
-141	COMPAT_43	{ int netbsd32_ogetpeername(int fdes, netbsd32_caddr_t asa, netbsd32_intp alen); }
+141	COMPAT_43	{ int netbsd32_ogetpeername(int fdes, netbsd32_void *asa, netbsd32_intp alen); }
 142	COMPAT_43	{ int32_t sys_gethostid(void); } ogethostid
 143	COMPAT_43	{ int netbsd32_sethostid(int32_t hostid); }
 144	COMPAT_43	{ int netbsd32_ogetrlimit(int which, netbsd32_orlimitp_t rlp); }
 145	COMPAT_43	{ int netbsd32_osetrlimit(int which, const netbsd32_orlimitp_t rlp); }
 146	COMPAT_43	{ int netbsd32_killpg(int pgid, int signum); }
 147	NOARGS		{ int sys_setsid(void); }
-148	STD		{ int netbsd32_quotactl(const netbsd32_charp path, int cmd, int uid, netbsd32_caddr_t arg); }
+148	STD		{ int netbsd32_quotactl(const netbsd32_charp path, int cmd, int uid, netbsd32_void *arg); }
 149	COMPAT_43	{ int sys_quota(void); } oquota
-150	COMPAT_43	{ int netbsd32_ogetsockname(int fdec, netbsd32_caddr_t asa, netbsd32_intp alen); }
+150	COMPAT_43	{ int netbsd32_ogetsockname(int fdec, netbsd32_void *asa, netbsd32_intp alen); }
 
 ; Syscalls 151-180 inclusive are reserved for vendor-specific
 ; system calls.  (This includes various calls added for compatibity
@@ -540,7 +540,7 @@
 			    netbsd32_voidp tramp, int vers); }
 341	UNIMPL
 342	UNIMPL
-343	STD		{ int netbsd32_rasctl(netbsd32_caddr_t addr, netbsd32_size_t len, \
+343	STD		{ int netbsd32_rasctl(netbsd32_void *addr, netbsd32_size_t len, \
 			    int op); }
 344	NOARGS		{ int sys_kqueue(void); }
 345	STD		{ int netbsd32_kevent(int fd, \

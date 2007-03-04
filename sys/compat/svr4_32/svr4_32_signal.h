@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_signal.h,v 1.8 2005/12/11 12:20:26 christos Exp $	 */
+/*	$NetBSD: svr4_32_signal.h,v 1.9 2007/03/04 06:01:37 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <compat/svr4/svr4_signal.h>
 
 
-typedef netbsd32_caddr_t svr4_32_sig_t;
+typedef netbsd32_void *svr4_32_sig_t;
 #define	SVR4_32_SIG_DFL		(svr4_32_sig_t)	 0
 #define	SVR4_32_SIG_ERR		(svr4_32_sig_t)	-1
 #define	SVR4_32_SIG_IGN		(svr4_32_sig_t)	 1
@@ -52,7 +52,7 @@ typedef netbsd32_caddr_t svr4_32_sig_t;
 typedef struct {
         netbsd32_u_long bits[4];
 } svr4_32_sigset_t;
-typedef netbsd32_caddr_t svr4_32_sigset_tp;
+typedef netbsd32_void *svr4_32_sigset_tp;
 
 struct svr4_32_sigaction {
 	int			svr4_32_sa_flags;
@@ -60,14 +60,14 @@ struct svr4_32_sigaction {
 	svr4_32_sigset_t	svr4_32_sa_mask;
 	int			svr4_32_sa_reserved[2];
 };
-typedef netbsd32_caddr_t svr4_32_sigactionp;
+typedef netbsd32_void *svr4_32_sigactionp;
 
 struct svr4_32_sigaltstack {
 	netbsd32_charp	ss_sp;
 	int		ss_size;
 	int		ss_flags;
 };
-typedef netbsd32_caddr_t svr4_32_sigaltstackp;
+typedef netbsd32_void *svr4_32_sigaltstackp;
 
 void native_to_svr4_32_sigset __P((const sigset_t *, svr4_32_sigset_t *));
 void svr4_32_to_native_sigset __P((const svr4_32_sigset_t *, sigset_t *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2007/02/22 16:52:56 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2007/03/04 06:00:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2007/02/22 16:52:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2007/03/04 06:00:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ pmap_bootstrap()
 {
 
 	/* Steal msgbuf area */
-	initmsgbuf((caddr_t)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
+	initmsgbuf((void *)uvm_pageboot_alloc(MSGBUFSIZE), MSGBUFSIZE);
 
 	avail_start = ptoa(vm_physmem[0].start);
 	avail_end = ptoa(vm_physmem[vm_nphysseg - 1].end);
@@ -159,7 +159,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	}
 
 	va = SH3_PHYS_TO_P1SEG(pa);
-	memset((caddr_t)va, 0, size);
+	memset((void *)va, 0, size);
 
 	return (va);
 }

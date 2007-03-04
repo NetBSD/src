@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.35 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.36 2007/03/04 06:01:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.35 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.36 2007/03/04 06:01:13 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -125,7 +125,7 @@ compat_43_sys_stat(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
 
@@ -196,7 +196,7 @@ again:
 		sb.st_blocks = sb1.st_blocks;
 	}
 	cvtstat(&sb, &osb);
-	error = copyout((caddr_t)&osb, (caddr_t)SCARG(uap, ub), sizeof (osb));
+	error = copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
 	return (error);
 }
 
@@ -228,7 +228,7 @@ compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval)
 
 	if (error == 0) {
 		cvtstat(&ub, &oub);
-		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),
+		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
 		    sizeof (oub));
 	}
 
@@ -361,7 +361,7 @@ compat_43_sys_getdirentries(struct lwp *l, void *v, register_t *retval)
 	struct uio auio, kuio;
 	struct iovec aiov, kiov;
 	struct dirent *dp, *edp;
-	caddr_t dirbuf;
+	char *dirbuf;
 	size_t count = min(MAXBSIZE, (size_t)SCARG(uap, count));
 
 	int error, eofflag, readcnt;
@@ -477,7 +477,7 @@ unionread:
 				vrele(lvp);
 				goto out;
 			}
-			fp->f_data = (caddr_t) lvp;
+			fp->f_data = (void *) lvp;
 			fp->f_offset = 0;
 			error = vn_close(vp, FREAD, fp->f_cred, l);
 			if (error)
@@ -495,12 +495,12 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
-		fp->f_data = (caddr_t) vp;
+		fp->f_data = (void *) vp;
 		fp->f_offset = 0;
 		vrele(tvp);
 		goto unionread;
 	}
-	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
+	error = copyout((void *)&loff, (void *)SCARG(uap, basep),
 	    sizeof(long));
 	*retval = count - auio.uio_resid;
  out:

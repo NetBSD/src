@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.23 2006/09/18 22:10:49 gdamore Exp $ */
+/*	$NetBSD: ms.c,v 1.24 2007/03/04 06:01:06 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.23 2006/09/18 22:10:49 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.24 2007/03/04 06:01:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -270,7 +270,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 }
 
 int 
-msioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+msioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ms_softc *ms;
 

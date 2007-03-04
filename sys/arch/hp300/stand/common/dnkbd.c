@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.10 2006/07/19 19:23:56 tsutsui Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.11 2007/03/04 05:59:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ dnkbd_init(void)
 	 * Look for a Frodo utility chip.  If we find one, assume there
 	 * is a Domain keyboard attached.
 	 */
-	if (badaddr((caddr_t)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0))))
+	if (badaddr((void *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0))))
 		return 0;
 
 	/*

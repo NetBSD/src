@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.26 2007/02/16 14:00:17 ad Exp $	*/
+/*	$NetBSD: par.c,v 1.27 2007/03/04 06:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.26 2007/02/16 14:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.27 2007/03/04 06:01:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -400,7 +400,7 @@ parrw(dev_t dev, struct uio *uio)
 }
 
 int 
-parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct par_softc *sc = par_cd.cd_devs[UNIT(dev)];
 	struct parparam *pp, *upp;

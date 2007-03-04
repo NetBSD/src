@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2007/02/28 04:21:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2007/03/04 06:00:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2007/02/28 04:21:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2007/03/04 06:00:03 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -207,7 +207,7 @@ landisk_startup(int howto, void *bi)
 	        size_t fssz;
 		fssz = sh3_round_page(mfs_initminiroot((void *)kernend));
 #ifdef MEMORY_DISK_DYNAMIC
-		md_root_setconf((caddr_t)kernend, fssz);
+		md_root_setconf((void *)kernend, fssz);
 #endif
 		kernend += fssz;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.41 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: ncr.c,v 1.42 2007/03/04 06:01:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.41 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.42 2007/03/04 06:01:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct si_dma_handle {
 	int	dh_flags;
 #define SIDH_BUSY	1
 #define SIDH_OUT	2
-	caddr_t dh_addr;
+	void *dh_addr;
 	int	dh_len;
 	struct	proc *dh_proc;
 };
@@ -92,7 +92,7 @@ struct si_dma_handle {
 struct si_softc {
 	struct	ncr5380_softc	ncr_sc;
 	struct	evcnt		ncr_intrcnt;
-	caddr_t ncr_addr;
+	void *ncr_addr;
 	int	ncr_off;
 	int	ncr_dmaaddr;
 	int	ncr_dmacount;
@@ -161,7 +161,7 @@ si_vsbus_attach(struct device *parent, struct device *self, void *aux)
 		sc->ncr_off = DMASIZE;
 		sc->onlyscsi = 1;
 	}
-	sc->ncr_addr = (caddr_t)va->va_dmaaddr;
+	sc->ncr_addr = (void *)va->va_dmaaddr;
 	ncr_dmasize = min(va->va_dmasize, MAXPHYS);
 
 	/*
