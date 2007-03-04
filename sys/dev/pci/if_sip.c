@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.111 2007/03/04 06:02:22 christos Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.112 2007/03/04 15:05:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.111 2007/03/04 06:02:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.112 2007/03/04 15:05:24 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1982,7 +1982,7 @@ SIP_DECL(rxintr)(struct sip_softc *sc)
 			 * of the data two bytes further in (in the first
 			 * buffer of the chain only).
 			 */
-			memmove(mtod(m, void *) + 2, mtod(m, void *),
+			memmove(mtod(m, char *) + 2, mtod(m, void *),
 			    m->m_len);
 			m->m_data += 2;
 		}
