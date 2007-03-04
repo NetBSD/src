@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.26 2007/03/04 06:00:51 christos Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.27 2007/03/04 07:54:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.26 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.27 2007/03/04 07:54:07 christos Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -338,7 +338,7 @@ svr4_32_getsiginfo(union svr4_32_siginfo *si, int sig, u_long code,
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
-	si->si_addr  = (netbsd32_void *)(u_long)addr;
+	si->si_addr  = (netbsd32_caddr_t)(u_long)addr;
 	/*
 	 * we can do this direct map as they are the same as all sparc
 	 * architectures.
@@ -483,7 +483,7 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_32_sigframe *)((void *)l->l_sigstk.ss_sp +
+		fp = (struct svr4_32_sigframe *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_32_sigframe *)oldsp;
@@ -507,8 +507,8 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;
-	frame.sf_sip = (netbsd32_void *)(u_long)&fp->sf_si;
-	frame.sf_ucp = (netbsd32_void *)(u_long)&fp->sf_uc;
+	frame.sf_sip = (netbsd32_caddr_t)(u_long)&fp->sf_si;
+	frame.sf_ucp = (netbsd32_caddr_t)(u_long)&fp->sf_uc;
 	frame.sf_handler = catcher;
 
 	DPRINTF(("svr4_32_sendsig signum=%d si = %p uc = %p handler = %p\n",

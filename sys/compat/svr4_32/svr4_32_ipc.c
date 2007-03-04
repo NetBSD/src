@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.c,v 1.13 2007/03/04 06:01:37 christos Exp $	*/
+/*	$NetBSD: svr4_32_ipc.c,v 1.14 2007/03/04 07:54:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.13 2007/03/04 06:01:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_ipc.c,v 1.14 2007/03/04 07:54:09 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -545,7 +545,7 @@ bsd_to_svr4_32_shmid_ds(bds, sds)
 	sds->shm_lkcnt = 0;
 	sds->shm_lpid = bds->shm_lpid;
 	sds->shm_cpid = bds->shm_cpid;
-	sds->shm_amp = (netbsd32_void *)(u_long)bds->_shm_internal;
+	sds->shm_amp = (netbsd32_caddr_t)(u_long)bds->_shm_internal;
 	sds->shm_nattch = bds->shm_nattch;
 	sds->shm_cnattch = 0;
 	sds->shm_atime = bds->shm_atime;

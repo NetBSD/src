@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.8 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.9 2007/03/04 07:54:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.8 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.9 2007/03/04 07:54:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 				vfs_unbusy(mp);
 				return (error);
 			}
-			sfsp += sizeof(sb32);
+			sfsp = (char *)sfsp + sizeof(sb32);
 		}
 		count++;
 		simple_lock(&mountlist_slock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_timod.h,v 1.2 2007/03/04 06:01:38 christos Exp $	 */
+/*	$NetBSD: svr4_32_timod.h,v 1.3 2007/03/04 07:54:10 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,6 +46,6 @@ struct svr4_32_netbuf {
 	u_int		len;
 	netbsd32_charp	buf;
 };
-typedef netbsd32_void *svr4_32_netbufp;
+typedef netbsd32_caddr_t svr4_32_netbufp;
 
 #endif /* !_SVR4_32_TIMOD_H_ */

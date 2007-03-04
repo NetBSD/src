@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.18 2007/03/04 06:01:32 christos Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.19 2007/03/04 07:54:09 christos Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.18 2007/03/04 06:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.19 2007/03/04 07:54:09 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -444,7 +444,7 @@ sunos32_sys_ioctl(l, v, retval)
 	struct sunos32_sys_ioctl_args /* {
 		int	fd;
 		netbsd32_u_long	com;
-		netbsd32_void *	data;
+		netbsd32_caddr_t	data;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;

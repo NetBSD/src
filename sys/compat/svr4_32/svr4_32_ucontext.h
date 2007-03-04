@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ucontext.h,v 1.6 2007/03/04 06:01:38 christos Exp $	 */
+/*	$NetBSD: svr4_32_ucontext.h,v 1.7 2007/03/04 07:54:10 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 /*
  * Machine context
  */
-typedef netbsd32_void *svr4_32_ucontext_tp;
+typedef netbsd32_caddr_t svr4_32_ucontext_tp;
 typedef struct svr4_32_ucontext {
 	netbsd32_u_long			uc_flags;
 	svr4_32_ucontext_tp		uc_link;

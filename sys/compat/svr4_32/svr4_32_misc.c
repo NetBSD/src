@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.41 2007/03/04 06:01:37 christos Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.42 2007/03/04 07:54:09 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.41 2007/03/04 06:01:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.42 2007/03/04 07:54:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,9 +266,9 @@ svr4_32_sys_getdents64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	void *inp, sbuf;	/* BSD-format */
+	char *inp, *sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	void *outp;		/* SVR4-format */
+	char *outp;		/* SVR4-format */
 	int resid, svr4_32_reclen;	/* SVR4-format */
 	struct file *fp;
 	struct uio auio;
@@ -391,9 +391,9 @@ svr4_32_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	void *inp, sbuf;	/* BSD-format */
+	char *inp, *sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	void *outp;		/* SVR4-format */
+	char *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
 	struct file *fp;
 	struct uio auio;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.9 2007/03/04 06:01:58 christos Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.10 2007/03/04 07:54:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ struct lsi64854_softc {
 	bus_dmamap_t		sc_dmamap;	/* DMA map for bus_dma_* */
 	void *			sc_dvmaaddr;	/* DVMA cookie */
 	size_t			sc_dmasize;
-	void *			*sc_dmaaddr;
+	void 			**sc_dmaaddr;
 	size_t			*sc_dmalen;
 
 	void	(*reset)(struct lsi64854_softc *);/* reset routine */

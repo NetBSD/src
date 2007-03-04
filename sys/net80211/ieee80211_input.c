@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.65 2007/03/04 06:03:18 christos Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.66 2007/03/04 07:54:11 christos Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.65 2007/03/04 06:03:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.66 2007/03/04 07:54:11 christos Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -832,7 +832,7 @@ ieee80211_decap(struct ieee80211com *ic, struct mbuf *m, int hdrlen)
 		break;
 	}
 #ifdef ALIGNED_POINTER
-	if (!ALIGNED_POINTER(mtod(m, void *) + sizeof(*eh), u_int32_t)) {
+	if (!ALIGNED_POINTER(mtod(m, char *) + sizeof(*eh), u_int32_t)) {
 		struct mbuf *n, *n0, **np;
 		char *newdata;
 		int off, pktlen;

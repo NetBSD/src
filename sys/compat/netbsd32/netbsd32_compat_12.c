@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.22 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.23 2007/03/04 07:54:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.22 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.23 2007/03/04 07:54:07 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -104,7 +104,7 @@ compat_12_netbsd32_msync(l, v, retval)
 	register_t *retval;
 {
 	struct compat_12_netbsd32_msync_args /* {
-		syscallarg(netbsd32_void *) addr;
+		syscallarg(netbsd32_caddr_t) addr;
 		syscallarg(netbsd32_size_t) len;
 	} */ *uap = v;
 	struct sys___msync13_args ua;
