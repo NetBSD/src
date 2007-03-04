@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.13 2007/03/04 06:03:30 christos Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.14 2007/03/04 19:54:49 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.13 2007/03/04 06:03:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.14 2007/03/04 19:54:49 degroote Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -776,7 +776,7 @@ esp_output(
 	}
 
 	/* Initialize ESP header. */
-	bcopy((void *) &sav->spi, mtod(mo, void *) + roff, sizeof(u_int32_t));
+	bcopy((void *) &sav->spi, mtod(mo, char *) + roff, sizeof(u_int32_t));
 	if (sav->replay) {
 		u_int32_t replay;
 
@@ -788,7 +788,7 @@ esp_output(
 
 		replay = htonl(sav->replay->count);
 		bcopy((void *) &replay,
-		    mtod(mo, void *) + roff + sizeof(u_int32_t),
+		    mtod(mo,char *) + roff + sizeof(u_int32_t),
 		    sizeof(u_int32_t));
 	}
 
