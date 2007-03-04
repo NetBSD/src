@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.312 2007/03/04 09:32:39 macallan Exp $ */
+/*	$NetBSD: pmap.c,v 1.313 2007/03/04 22:12:44 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.312 2007/03/04 09:32:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.313 2007/03/04 22:12:44 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -994,7 +994,9 @@ pgt_page_free(struct pool *pp, void *v)
 
 
 static void get_phys_mem(void **);
-void	kvm_iocache(void *, int);
+#if 0 /* not used */
+void	kvm_iocache(char *, int);
+#endif
 
 #ifdef DEBUG
 void	pm_check(char *, struct pmap *);
@@ -7006,7 +7008,7 @@ void
 pmap_copy_page4_4c(paddr_t src, paddr_t dst)
 {
 	struct vm_page *pg;
-	void *sva, dva;
+	char *sva, *dva;
 	int spte, dpte;
 
 	if ((pg = PHYS_TO_VM_PAGE(src)) != NULL) {
@@ -7278,7 +7280,7 @@ pmap_phys_address(int x)
  * in locked kernel space.  A cache flush is also done.
  */
 void
-kvm_uncache(void *va, int npages)
+kvm_uncache(char *va, int npages)
 {
 	struct vm_page *pg;
 	int pte;
@@ -7323,6 +7325,7 @@ kvm_uncache(void *va, int npages)
 	}
 }
 
+#if 0 /* not used */
 /*
  * Turn on IO cache for a given (va, number of pages).
  *
@@ -7330,7 +7333,7 @@ kvm_uncache(void *va, int npages)
  * in locked kernel space.  A cache flush is also done.
  */
 void
-kvm_iocache(void *va, int npages)
+kvm_iocache(char *va, int npages)
 {
 
 #if defined(SUN4M)
@@ -7351,6 +7354,7 @@ kvm_iocache(void *va, int npages)
 	}
 #endif
 }
+#endif
 
 /*
  * Find first virtual address >= *va that is

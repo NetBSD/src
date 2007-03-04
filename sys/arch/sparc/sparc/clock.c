@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.99 2007/03/04 06:00:45 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.100 2007/03/04 22:12:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.99 2007/03/04 06:00:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.100 2007/03/04 22:12:43 mrg Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -220,7 +220,7 @@ eeprom_uio(struct uio *uio)
 	int error;
 	int off;	/* NOT off_t */
 	u_int cnt, bcnt;
-	void *buf = NULL;
+	char *buf = NULL;
 
 	if (!CPU_ISSUN4)
 		return (ENODEV);
@@ -255,7 +255,7 @@ eeprom_uio(struct uio *uio)
 
 	if (uio->uio_rw == UIO_READ)
 		for (bcnt = 0; bcnt < EEPROM_SIZE; ++bcnt)
-			*(char *)(buf + bcnt) = *(char *)(eeprom_va + bcnt);
+			buf[bcnt] = eeprom_va[bcnt];
 
 	if ((error = uiomove(buf + off, (int)cnt, uio)) != 0)
 		goto out;
