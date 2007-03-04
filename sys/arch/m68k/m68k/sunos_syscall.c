@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.15 2007/03/04 06:00:06 christos Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.16 2007/03/04 11:18:25 tsutsui Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.15 2007/03/04 06:00:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.16 2007/03/04 11:18:25 tsutsui Exp $");
 
 #include "opt_execfmt.h"
 
@@ -150,7 +150,7 @@ static void
 sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 {
 	struct proc *p = l->l_proc;
-	void *params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -185,7 +185,7 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	} else
 		l->l_md.md_flags &= ~MDL_STACKADJ;
 
-	params = (void *)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
 	case SUNOS_SYS_syscall:
@@ -255,7 +255,7 @@ static void
 sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
 	struct proc *p = l->l_proc;
-	void *params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -290,7 +290,7 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	} else
 		l->l_md.md_flags &= ~MDL_STACKADJ;
 
-	params = (void *)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
 	case SUNOS_SYS_syscall:
