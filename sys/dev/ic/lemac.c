@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.31 2007/03/04 06:01:57 christos Exp $ */
+/* $NetBSD: lemac.c,v 1.32 2007/03/04 15:35:20 yamt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.31 2007/03/04 06:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.32 2007/03/04 15:35:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -306,7 +306,7 @@ lemac_input(
 		   mtod(m, char *) + sizeof(eh));
     } else {
 	LEMAC_GETBUF16(sc, offset + sizeof(eh), (length - sizeof(eh)) / 2,
-		      mtod(m, char *) + sizeof(eh));
+		      (void *)(mtod(m, char *) + sizeof(eh)));
 	if (length & 1)
 	    m->m_data[length - 1] = LEMAC_GET8(sc, offset + length - 1);
     }
