@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.27 2007/03/04 06:03:28 christos Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.28 2007/03/04 21:17:54 degroote Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.27 2007/03/04 06:03:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.28 2007/03/04 21:17:54 degroote Exp $");
 
 /*
  * IPsec controller part.
@@ -888,7 +888,7 @@ ipsec_setspidx(m, spidx, needport)
 	if (m->m_len >= sizeof(*ip))
 		ip = mtod(m, struct ip *);
 	else {
-		m_copydata(m, 0, sizeof(ipbuf), (void *)&ipbuf);
+		m_copydata(m, 0, sizeof(ipbuf), &ipbuf);
 		ip = &ipbuf;
 	}
 #ifdef _IP_VHL
@@ -951,7 +951,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	} else {
 		struct ip ih;
 
-		m_copydata(m, 0, sizeof (struct ip), (void *) &ih);
+		m_copydata(m, 0, sizeof (struct ip), &ih);
 		if (ih.ip_off & (IP_MF | IP_OFFMASK))
 			goto done;
 #ifdef _IP_VHL
@@ -974,7 +974,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 				goto done_proto;
 			if (off + sizeof(struct tcphdr) > m->m_pkthdr.len)
 				goto done;
-			m_copydata(m, off, sizeof (th), (void *) &th);
+			m_copydata(m, off, sizeof (th), &th);
 			spidx->src.sin.sin_port = th.th_sport;
 			spidx->dst.sin.sin_port = th.th_dport;
 			return;
@@ -984,7 +984,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 				goto done_proto;
 			if (off + sizeof(struct udphdr) > m->m_pkthdr.len)
 				goto done;
-			m_copydata(m, off, sizeof (uh), (void *) &uh);
+			m_copydata(m, off, sizeof (uh), &uh);
 			spidx->src.sin.sin_port = uh.uh_sport;
 			spidx->dst.sin.sin_port = uh.uh_dport;
 			return;
@@ -992,7 +992,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 			if (m->m_pkthdr.len > off + sizeof(ip6e))
 				goto done;
 			/* XXX sigh, this works but is totally bogus */
-			m_copydata(m, off, sizeof(ip6e), (void *) &ip6e);
+			m_copydata(m, off, sizeof(ip6e), &ip6e);
 			off += (ip6e.ip6e_len + 2) << 2;
 			nxt = ip6e.ip6e_nxt;
 			break;
@@ -1026,10 +1026,10 @@ ipsec4_setspidx_ipaddr(struct mbuf *m, struct secpolicyindex *spidx)
 	if (m->m_len < sizeof (struct ip)) {
 		m_copydata(m, offsetof(struct ip, ip_src),
 			   sizeof (struct  in_addr),
-			   (void *) &spidx->src.sin.sin_addr);
+			   &spidx->src.sin.sin_addr);
 		m_copydata(m, offsetof(struct ip, ip_dst),
 			   sizeof (struct  in_addr),
-			   (void *) &spidx->dst.sin.sin_addr);
+			   &spidx->dst.sin.sin_addr);
 	} else {
 		struct ip *ip = mtod(m, struct ip *);
 		spidx->src.sin.sin_addr = ip->ip_src;
@@ -1077,7 +1077,7 @@ ipsec6_get_ulp(m, spidx, needport)
 			break;
 		if (off + sizeof(struct tcphdr) > m->m_pkthdr.len)
 			break;
-		m_copydata(m, off, sizeof(th), (void *)&th);
+		m_copydata(m, off, sizeof(th), &th);
 		((struct sockaddr_in6 *)&spidx->src)->sin6_port = th.th_sport;
 		((struct sockaddr_in6 *)&spidx->dst)->sin6_port = th.th_dport;
 		break;
@@ -1087,7 +1087,7 @@ ipsec6_get_ulp(m, spidx, needport)
 			break;
 		if (off + sizeof(struct udphdr) > m->m_pkthdr.len)
 			break;
-		m_copydata(m, off, sizeof(uh), (void *)&uh);
+		m_copydata(m, off, sizeof(uh), &uh);
 		((struct sockaddr_in6 *)&spidx->src)->sin6_port = uh.uh_sport;
 		((struct sockaddr_in6 *)&spidx->dst)->sin6_port = uh.uh_dport;
 		break;
@@ -1112,7 +1112,7 @@ ipsec6_setspidx_ipaddr(m, spidx)
 	if (m->m_len >= sizeof(*ip6))
 		ip6 = mtod(m, struct ip6_hdr *);
 	else {
-		m_copydata(m, 0, sizeof(ip6buf), (void *)&ip6buf);
+		m_copydata(m, 0, sizeof(ip6buf), &ip6buf);
 		ip6 = &ip6buf;
 	}
 
