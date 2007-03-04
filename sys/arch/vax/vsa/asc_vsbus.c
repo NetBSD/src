@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.34 2007/03/04 06:01:05 christos Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.35 2007/03/04 19:21:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.34 2007/03/04 06:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.35 2007/03/04 19:21:56 christos Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -396,7 +396,7 @@ asc_vsbus_dma_intr(sc)
 	    tcl, tcm, trans, resid));
 
 	*asc->sc_dmalen -= trans;
-	*asc->sc_dmaaddr += trans;
+	*asc->sc_dmaaddr = (char *)*asc->sc_dmaaddr + trans;
 	
 	asc->sc_xfers++;
 	return 0;
