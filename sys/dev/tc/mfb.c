@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.48 2007/03/04 06:02:46 christos Exp $ */
+/* $NetBSD: mfb.c,v 1.49 2007/03/04 15:46:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.48 2007/03/04 06:02:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.49 2007/03/04 15:46:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,9 +261,9 @@ mfbattach(struct device *parent, struct device *self, void *aux)
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, mfbintr, sc);
 
 	/* clear any pending interrupts */
-	*(u_int8_t *)((void *)ri->ri_hw + MX_IREQ_OFFSET) = 0;
-	junk = *(u_int8_t *)((void *)ri->ri_hw + MX_IREQ_OFFSET);
-	*(u_int8_t *)((void *)ri->ri_hw + MX_IREQ_OFFSET) = 1;
+	*(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 0;
+	junk = *(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET);
+	*(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 1;
 
 	waa.console = console;
 	waa.scrdata = &mfb_screenlist;
@@ -276,7 +276,7 @@ mfbattach(struct device *parent, struct device *self, void *aux)
 static void
 mfb_common_init(struct rasops_info *ri)
 {
-	void *base;
+	char *base;
 	int cookie;
 
 	base = (void *)ri->ri_hw;
@@ -466,7 +466,7 @@ static int
 mfbintr(void *arg)
 {
 	struct mfb_softc *sc = arg;
-	void *base, vdac, curs;
+	char *base, *vdac, *curs;
 	int v;
 	volatile register int junk;
 
@@ -559,11 +559,11 @@ mfbintr(void *arg)
 static void
 mfbhwinit(void *mfbbase)
 {
-	void *vdac, curs;
+	char *vdac, *curs;
 	int i;
 
-	vdac = mfbbase + MX_BT455_OFFSET;
-	curs = mfbbase + MX_BT431_OFFSET;
+	vdac = (char *)mfbbase + MX_BT455_OFFSET;
+	curs = (char *)mfbbase + MX_BT431_OFFSET;
 	SELECT431(curs, BT431_REG_COMMAND);
 	REGWRITE32(curs, bt_ctl, 0x0404);
 	REGWRITE32(curs, bt_ctl, 0); /* XLO */
