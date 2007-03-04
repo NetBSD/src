@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142.2.1 2007/01/12 23:48:40 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142.2.2 2007/03/04 12:29:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142.2.1 2007/01/12 23:48:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142.2.2 2007/03/04 12:29:43 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -116,6 +116,8 @@ extern struct consdev consdev_ofcons;
 extern struct consdev comcons;
 extern struct consdev consdev_zs;
 
+extern int console_node, console_ihandle;
+
 char bootpath[256];
 static int chosen;
 struct pmap ofw_pmap;
@@ -161,7 +163,7 @@ initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
 	char *args;
 {
-	int ofmaplen;
+	int ofmaplen, node, stdout;
 	extern int enable_RMCI(void);
 #if defined (PPC_OEA64_BRIDGE)
 	register_t scratch;
@@ -178,6 +180,11 @@ initppc(startkernel, endkernel, args)
 	
 	if (chosen == -1)
 		printf("/chosen not found\n");
+
+	OF_getprop(chosen, "stdout", &stdout, sizeof(stdout));
+	node = OF_instance_to_package(stdout);
+	console_node = node;
+	console_instance = stdout;
 
 	/*
 	 * i386 port says, that this shouldn't be here,
@@ -498,8 +505,14 @@ cpu_reboot(howto, what)
 	doshutdownhooks();
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-#if NADB > 0
 		delay(1000000);
+#if NCUDA > 0
+		cuda_poweroff();
+#endif
+#if NPMU > 0
+		pmu_poweroff();
+#endif
+#if NADB > 0
 		adb_poweroff();
 		printf("WARNING: powerdown failed!\n");
 #endif
@@ -536,6 +549,12 @@ cpu_reboot(howto, what)
 	/* flush cache for msgbuf */
 	__syncicache((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
 
+#if NCUDA > 0
+	cuda_restart();
+#endif
+#if NPMU > 0
+	pmu_restart();
+#endif
 #if NADB > 0
 	adb_restart();	/* not return */
 #endif
@@ -583,12 +602,10 @@ cninit()
 	if (OF_getprop(node, "device_type", type, sizeof(type)) == -1)
 		goto nocons;
 
-#if NOFB > 0
 	if (strcmp(type, "display") == 0) {
 		cninit_kd();
 		return;
 	}
-#endif /* NOFB > 0 */
 
 #if NZSTTY > 0
 	if (strcmp(type, "serial") == 0) {
@@ -620,7 +637,6 @@ nocons:
 	return;
 }
 
-#if NOFB > 0
 struct usb_kbd_ihandles {
 	struct usb_kbd_ihandles *next;
 	int ihandle;
@@ -631,7 +647,7 @@ cninit_kd()
 {
 	int stdin, node;
 	char name[16];
-#if NAKBD > 0
+#if (NAKBD > 0) || (NADBKBD > 0)
 	int akbd;
 #endif
 #if NUKBD > 0
@@ -668,6 +684,15 @@ cninit_kd()
 	if (strcmp(name, "adb") == 0) {
 		printf("console keyboard type: ADB\n");
 		akbd_cnattach();
+		goto kbd_found;
+	}
+#endif
+#if NADBKBD > 0
+	memset(name, 0, sizeof(name));
+	OF_getprop(OF_parent(node), "name", name, sizeof(name));
+	if (strcmp(name, "adb") == 0) {
+		printf("console keyboard type: ADB\n");
+		adbkbd_cnattach();
 		goto kbd_found;
 	}
 #endif
@@ -720,6 +745,9 @@ cninit_kd()
 #if NAKBD > 0
 		akbd_cnattach();
 #endif
+#if NADBKBD > 0
+		adbkbd_cnattach();
+#endif
 		goto kbd_found;
 	}
 
@@ -751,14 +779,19 @@ cninit_kd()
 	}
 #endif
 
-#if NAKBD > 0
+#if (NAKBD > 0) || (NADBKBD > 0)
 	if (OF_call_method("`adb-kbd-ihandle", stdin, 0, 1, &akbd) >= 0 &&
 	    akbd != 0 &&
 	    OF_instance_to_package(akbd) != -1) {
 		printf("adb-kbd-ihandle matches\n");
 		printf("console keyboard type: ADB\n");
 		stdin = akbd;
+#if NAKBD > 0
 		akbd_cnattach();
+#endif
+#if NADBKBD > 0
+		adbkbd_cnattach();
+#endif
 		goto kbd_found;
 	}
 #endif
@@ -781,7 +814,7 @@ cninit_kd()
 	return;
 
 kbd_found:;
-#if NAKBD + NUKBD > 0
+#if NAKBD + NUKBD + NADBKBD > 0
 	/*
 	 * XXX This is a little gross, but we don't get to call
 	 * XXX wskbd_cnattach() twice.
@@ -792,7 +825,6 @@ kbd_found:;
 #endif
 #endif
 }
-#endif
 
 /*
  * Bootstrap console keyboard routines, using OpenFirmware I/O.
