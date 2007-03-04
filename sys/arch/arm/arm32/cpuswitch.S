@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.44 2006/05/13 08:56:08 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.44.12.1 2007/03/04 12:15:39 bouyer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -83,6 +83,7 @@
 #include "opt_lockdebug.h"
 
 #include "assym.h"
+#include <arm/arm32/pte.h>
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
