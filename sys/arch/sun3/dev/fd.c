@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.54 2007/03/04 06:00:53 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.55 2007/03/04 13:59:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.54 2007/03/04 06:00:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.55 2007/03/04 13:59:47 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -1250,7 +1250,7 @@ loop:
 		read = bp->b_flags & B_READ;
 
 		/* Setup for pseudo DMA */
-		fdc->sc_data = bp->b_data + fd->sc_skip;
+		fdc->sc_data = (char *)bp->b_data + fd->sc_skip;
 		fdc->sc_tc = fd->sc_nbytes;
 
 		*fdc->sc_reg_drs = type->rate;
