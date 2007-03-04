@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2007/03/04 06:00:37 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2007/03/04 10:18:03 macallan Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2007/03/04 06:00:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2007/03/04 10:18:03 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -550,7 +550,7 @@ mfrtcltbl(void)
 void
 tlbia(void)
 {
-	void *i;
+	char *i;
 	
 	SYNC();
 #if defined(PPC_OEA)
@@ -560,7 +560,7 @@ tlbia(void)
 	 * This needs to be a per-CPU callback to do the appropriate thing
 	 * for the CPU. XXX
 	 */
-	for (i = 0; i < (void *)0x00040000; i += 0x00001000) {
+	for (i = 0; i < (char *)0x00040000; i += 0x00001000) {
 		TLBIE(i);
 		EIEIO();
 		SYNC();
