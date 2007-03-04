@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.96 2007/03/04 06:00:45 christos Exp $ */
+/*	$NetBSD: cache.c,v 1.97 2007/03/04 09:03:34 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.96 2007/03/04 06:00:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.97 2007/03/04 09:03:34 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -824,7 +824,7 @@ srmmu_cache_flush(void *base, u_int len)
 #else
 		srmmu_vcache_flush_region(VA_VREG(base), ctx);
 #endif
-		base += NBPRG;
+		base = ((char *)base + NBPRG);
 	}
 }
 
