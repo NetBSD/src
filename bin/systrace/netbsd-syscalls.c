@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd-syscalls.c,v 1.20 2006/12/10 01:22:02 christos Exp $	*/
+/*	$NetBSD: netbsd-syscalls.c,v 1.21 2007/03/04 09:23:32 dogcow Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netbsd-syscalls.c,v 1.20 2006/12/10 01:22:02 christos Exp $");
+__RCSID("$NetBSD: netbsd-syscalls.c,v 1.21 2007/03/04 09:23:32 dogcow Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -489,7 +489,7 @@ nbsd_replace(int fd, pid_t pid, u_int16_t seqnr,
 		}
 
 		replace.strr_off[i] = off;
-		memcpy(replace.strr_base + off,
+		memcpy((char *)replace.strr_base + off,
 		    repl->address[i], repl->len[i]);
 		if (repl->flags[i] & ICTRANS_NOLINKS) {
 			replace.strr_flags[i] = SYSTR_NOLINKS;
