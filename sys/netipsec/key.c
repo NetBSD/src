@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.38 2007/03/04 06:03:29 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.39 2007/03/04 19:54:49 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.38 2007/03/04 06:03:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.39 2007/03/04 19:54:49 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1535,7 +1535,7 @@ key_msg2sp(xpl0, len, error)
 				bcopy(paddr, &(*p_isr)->saidx.src,
 					paddr->sa_len);
 
-				paddr = (struct sockaddr *)((void *)paddr
+				paddr = (struct sockaddr *)((char *)paddr
 							+ paddr->sa_len);
 
 				/* validity check */
@@ -1566,7 +1566,7 @@ key_msg2sp(xpl0, len, error)
 				return NULL;
 			}
 
-			xisr = (struct sadb_x_ipsecrequest *)((void *)xisr
+			xisr = (struct sadb_x_ipsecrequest *)((char *)xisr
 			                 + xisr->sadb_x_ipsecrequest_len);
 		}
 	    }
@@ -1604,7 +1604,7 @@ key_sp2msg(sp)
 {
 	struct sadb_x_policy *xpl;
 	int tlen;
-	void *p;
+	char *p;
 	struct mbuf *m;
 
 	/* sanity check. */
@@ -1630,7 +1630,7 @@ key_sp2msg(sp)
 	xpl->sadb_x_policy_type = sp->policy;
 	xpl->sadb_x_policy_dir = sp->spidx.dir;
 	xpl->sadb_x_policy_id = sp->id;
-	p = (void *)xpl + sizeof(*xpl);
+	p = (char *)xpl + sizeof(*xpl);
 
 	/* if is the policy for ipsec ? */
 	if (sp->policy == IPSEC_POLICY_IPSEC) {
@@ -1968,7 +1968,7 @@ key_spdadd(so, m, mhp)
 		/* n is already freed */
 		return key_senderror(so, m, ENOBUFS);
 	}
-	xpl = (struct sadb_x_policy *)(mtod(mpolicy, void *) + off);
+	xpl = (struct sadb_x_policy *)(mtod(mpolicy, char *) + off);
 	if (xpl->sadb_x_policy_exttype != SADB_X_EXT_POLICY) {
 		m_freem(n);
 		return key_senderror(so, m, EINVAL);
@@ -2191,7 +2191,7 @@ key_spddelete2(so, m, mhp)
 	n->m_next = NULL;
 	off = 0;
 
-	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, void *) + off);
+	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, char *) + off);
 	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
 #ifdef DIAGNOSTIC
@@ -2680,7 +2680,7 @@ key_spdexpire(sp)
 	lt->sadb_lifetime_bytes = 0;
 	lt->sadb_lifetime_addtime = sp->created;
 	lt->sadb_lifetime_usetime = sp->lastused;
-	lt = (struct sadb_lifetime *)(mtod(m, void *) + len / 2);
+	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_HARD;
 	lt->sadb_lifetime_allocations = 0;
@@ -3712,7 +3712,7 @@ key_setsadbaddr(exttype, saddr, prefixlen, ul_proto)
 	p->sadb_address_reserved = 0;
 
 	bcopy(saddr,
-	    mtod(m, void *) + PFKEY_ALIGN8(sizeof(struct sadb_address)),
+	    mtod(m, char *) + PFKEY_ALIGN8(sizeof(struct sadb_address)),
 	    saddr->sa_len);
 
 	return m;
@@ -4754,10 +4754,10 @@ key_getspi(so, m, mhp)
 	n->m_next = NULL;
 	off = 0;
 
-	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, void *) + off);
+	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, char *) + off);
 	off += PFKEY_ALIGN8(sizeof(struct sadb_msg));
 
-	m_sa = (struct sadb_sa *)(mtod(n, void *) + off);
+	m_sa = (struct sadb_sa *)(mtod(n, char *) + off);
 	m_sa->sadb_sa_len = PFKEY_UNIT64(sizeof(struct sadb_sa));
 	m_sa->sadb_sa_exttype = SADB_EXT_SA;
 	m_sa->sadb_sa_spi = htonl(spi);
@@ -5651,7 +5651,7 @@ key_getcomb_esp()
 				/* m is already freed */
 				goto fail;
 			}
-			comb = (struct sadb_comb *)(mtod(n, void *) + o);
+			comb = (struct sadb_comb *)(mtod(n, char *) + o);
 			bzero(comb, sizeof(*comb));
 			key_getcomb_setlifetime(comb);
 			comb->sadb_comb_encrypt = i;
@@ -6346,7 +6346,7 @@ key_register(so, m, mhp)
 	n->m_next = NULL;
 	off = 0;
 
-	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, void *) + off);
+	m_copydata(m, 0, sizeof(struct sadb_msg), mtod(n, char *) + off);
 	newmsg = mtod(n, struct sadb_msg *);
 	newmsg->sadb_msg_errno = 0;
 	newmsg->sadb_msg_len = PFKEY_UNIT64(len);
@@ -6354,7 +6354,7 @@ key_register(so, m, mhp)
 
 	/* for authentication algorithm */
 	if (alen) {
-		sup = (struct sadb_supported *)(mtod(n, void *) + off);
+		sup = (struct sadb_supported *)(mtod(n, char *) + off);
 		sup->sadb_supported_len = PFKEY_UNIT64(alen);
 		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_AUTH;
 		off += PFKEY_ALIGN8(sizeof(*sup));
@@ -6366,7 +6366,7 @@ key_register(so, m, mhp)
 			aalgo = ah_algorithm_lookup(i);
 			if (!aalgo)
 				continue;
-			alg = (struct sadb_alg *)(mtod(n, void *) + off);
+			alg = (struct sadb_alg *)(mtod(n, char *) + off);
 			alg->sadb_alg_id = i;
 			alg->sadb_alg_ivlen = 0;
 			key_getsizes_ah(aalgo, i, &minkeysize, &maxkeysize);
@@ -6378,7 +6378,7 @@ key_register(so, m, mhp)
 
 	/* for encryption algorithm */
 	if (elen) {
-		sup = (struct sadb_supported *)(mtod(n, void *) + off);
+		sup = (struct sadb_supported *)(mtod(n, char *) + off);
 		sup->sadb_supported_len = PFKEY_UNIT64(elen);
 		sup->sadb_supported_exttype = SADB_EXT_SUPPORTED_ENCRYPT;
 		off += PFKEY_ALIGN8(sizeof(*sup));
@@ -6389,7 +6389,7 @@ key_register(so, m, mhp)
 			ealgo = esp_algorithm_lookup(i);
 			if (!ealgo)
 				continue;
-			alg = (struct sadb_alg *)(mtod(n, void *) + off);
+			alg = (struct sadb_alg *)(mtod(n, char *) + off);
 			alg->sadb_alg_id = i;
 			alg->sadb_alg_ivlen = ealgo->blocksize;
 			alg->sadb_alg_minbits = _BITS(ealgo->minkey);
@@ -6517,7 +6517,7 @@ key_expire(sav)
 	lt->sadb_lifetime_bytes = sav->lft_c->sadb_lifetime_bytes;
 	lt->sadb_lifetime_addtime = sav->lft_c->sadb_lifetime_addtime;
 	lt->sadb_lifetime_usetime = sav->lft_c->sadb_lifetime_usetime;
-	lt = (struct sadb_lifetime *)(mtod(m, void *) + len / 2);
+	lt = (struct sadb_lifetime *)(mtod(m, char *) + len / 2);
 	bcopy(sav->lft_s, lt, sizeof(*lt));
 	m_cat(result, m);
 
@@ -7228,7 +7228,7 @@ key_align(m, mhp)
 			/* m is already freed */
 			return ENOBUFS;
 		}
-		ext = (struct sadb_ext *)(mtod(n, void *) + toff);
+		ext = (struct sadb_ext *)(mtod(n, char *) + toff);
 
 		/* set pointer */
 		switch (ext->sadb_ext_type) {
@@ -7286,7 +7286,7 @@ key_align(m, mhp)
 			/* m is already freed */
 			return ENOBUFS;
 		}
-		ext = (struct sadb_ext *)(mtod(n, void *) + toff);
+		ext = (struct sadb_ext *)(mtod(n, char *) + toff);
 
 		mhp->ext[ext->sadb_ext_type] = ext;
 		mhp->extoff[ext->sadb_ext_type] = off;
