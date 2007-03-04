@@ -1,4 +1,4 @@
-#	$NetBSD: majors.prep,v 1.17 2006/11/24 22:04:24 wiz Exp $
+#	$NetBSD: majors.prep,v 1.17.2.1 2007/03/04 14:17:08 bouyer Exp $
 #
 # Device majors for prep
 #
@@ -32,6 +32,8 @@ device-major	md		char 24  block 17	md
 device-major	joy		char 26			joy
 device-major	spkr		char 27			spkr
 device-major	lkm		char 28			prep
+
+device-major	nvram		char 33			nvram
 
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2006/11/17 22:13:08 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.9.2.1 2007/03/04 14:17:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,6 +38,10 @@
 
 #ifdef USE_OPENFIRM
 #include <dev/ofw/openfirmio.h>
+#endif
+
+#ifdef USE_PREPNVRAM
+#include <machine/nvram.h>
 #endif
 
 #undef BUFSIZE
@@ -102,6 +106,16 @@ struct	extabent {
 };
 #endif
 
+#ifdef USE_PREPNVRAM
+struct	extabent {
+	char	*ex_keyword;		/* keyword for this entry */
+	void	(*ex_handler) (struct extabent *,
+		    struct pnviocdesc *, char *);
+					/* handler function for this entry */
+};
+#endif
+
+
 /* Sun 3/4 EEPROM handlers. */
 void	ee_action (char *, char *);
 void	ee_dump (void);
@@ -134,3 +148,8 @@ int	check_for_openprom (void);
 char	*of_handler (char *, char *);
 void	of_action (char *, char *);
 void	of_dump (void);
+
+/* PReP nvram handlers. */
+char	*prep_handler (char *, char *);
+void	prep_action (char *, char *);
+void	prep_dump (void);

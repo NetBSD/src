@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.4 2007/02/06 22:20:45 tron Exp $
+# $NetBSD: mi,v 1.955.2.5 2007/03/04 14:17:09 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -3595,6 +3595,8 @@
 ./usr/share/man/man4/ppi.4			man-obsolete		obsolete
 ./usr/share/man/man4/ppp.4			man-sys-man		.man
 ./usr/share/man/man4/pppoe.4			man-sys-man		.man
+./usr/share/man/man4/prep/intro.4		man-sys-man		.man
+./usr/share/man/man4/prep/nvram.4		man-sys-man		.man
 ./usr/share/man/man4/pss.4			man-obsolete		obsolete
 ./usr/share/man/man4/ptm.4			man-sys-man		.man
 ./usr/share/man/man4/pty.4			man-sys-man		.man

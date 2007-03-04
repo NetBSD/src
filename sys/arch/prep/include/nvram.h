@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.2 2006/06/15 18:15:32 garbled Exp $ */
+/* $NetBSD: nvram.h,v 1.2.12.1 2007/03/04 14:17:10 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,8 +46,10 @@
 #ifndef _MACHINE_NVRAM_H
 #define _MACHINE_NVRAM_H
 
+#if defined(_KERNEL)
 /* for the motorola machines */
 #include <dev/ic/mk48txxvar.h>
+#endif
 
 #define MAX_PREP_NVRAM 0x8000	/* maxmum size of the nvram */
 
@@ -199,6 +201,7 @@ struct pnviocdesc {
 	int	pnv_num;	/* number of something */
 };
 
+#if defined(_KERNEL)
 struct prep_mk48txx_softc {
 	struct device   sc_dev;
 	bus_space_tag_t sc_bst;	 /* bus tag & handle */
@@ -237,7 +240,11 @@ struct nvram_pnpbus_softc {
 	u_char  sc_open;		/* single use device */
 };
 
+#endif /* _KERNEL */
+
 #define PNVIOCGET	_IOWR('O', 1, struct pnviocdesc) /* get var contents */
 #define PNVIOCGETNEXTNAME _IOWR('O', 2, struct pnviocdesc) /* get next var */
+#define PNVIOCGETNUMGE	_IOWR('O', 3, struct pnviocdesc) /* get nrof vars */
+#define PNVIOCSET	_IOW('O', 4, struct pnviocdesc) /* set nvram var */
 
 #endif /* _MACHINE_NVRAM_H */

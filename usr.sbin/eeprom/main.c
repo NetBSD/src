@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2006/08/16 03:24:57 macallan Exp $	*/
+/*	$NetBSD: main.c,v 1.16.2.1 2007/03/04 14:17:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996 The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: main.c,v 1.16 2006/08/16 03:24:57 macallan Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.2.1 2007/03/04 14:17:08 bouyer Exp $");
 #endif
 
 #include <sys/param.h>
@@ -75,6 +75,7 @@ static	void usage (void);
 char	*path_eeprom = _PATH_EEPROM;
 char	*path_openprom = _PATH_OPENPROM;
 char	*path_openfirm = _PATH_OPENFIRM;
+char	*path_prepnvram = _PATH_PREPNVRAM;
 int	fix_checksum = 0;
 int	ignore_checksum = 0;
 int	update_checksums = 0;
@@ -85,7 +86,7 @@ int	eval = 0;
 int	verbose = 0;
 int	use_openprom;
 #endif
-#ifdef USE_OPENFIRM
+#if defined(USE_OPENFIRM) || defined (USE_PREPNVRAM)
 int	verbose=0;
 #endif
 
@@ -96,7 +97,7 @@ main(argc, argv)
 {
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
-#if defined(USE_OPENPROM) || defined(USE_OPENFIRM)
+#if defined(USE_OPENPROM) || defined(USE_OPENFIRM) || defined(USE_PREPNVRAM)
 	char *optstring = "-cf:iv";
 #else
 	char *optstring = "-cf:i";
@@ -120,7 +121,7 @@ main(argc, argv)
 			ignore_checksum = 1;
 			break;
 
-#if defined(USE_OPENPROM) || defined(USE_OPENFIRM)
+#if defined(USE_OPENPROM) || defined(USE_OPENFIRM) || defined(USE_PREPNVRAM)
 		case 'v':
 			verbose = 1;
 			break;
@@ -138,7 +139,7 @@ main(argc, argv)
 
 	if (use_openprom == 0) {
 #endif /* USE_OPENPROM */
-#ifndef USE_OPENFIRM
+#if !defined(USE_OPENFIRM) && !defined(USE_PREPNVRAM)
 		ee_verifychecksums();
 		if (fix_checksum || cksumfail)
 			exit(cksumfail);
@@ -173,7 +174,7 @@ main(argc, argv)
 #ifdef USE_OPENPROM
 	if (use_openprom == 0)
 #endif /* USE_OPENPROM */
-#ifndef USE_OPENFIRM
+#if !defined(USE_OPENFIRM) && !defined(USE_PREPNVRAM)
 		if (update_checksums) {
 			++writecount;
 			ee_updatechecksums();
@@ -198,6 +199,9 @@ action(line)
 	if ((arg = strrchr(keyword, '=')) != NULL)
 		*arg++ = '\0';
 
+#ifdef USE_PREPNVRAM
+	prep_action(keyword, arg);
+#else
 #ifdef USE_OPENFIRM
 	of_action(keyword, arg);
 #else
@@ -208,6 +212,7 @@ action(line)
 #endif /* USE_OPENPROM */
 		ee_action(keyword, arg);
 #endif /* USE_OPENFIRM */
+#endif /* USE_PREPNVRAM */
 }
 
 /*
@@ -217,6 +222,9 @@ static void
 dump_prom()
 {
 
+#ifdef USE_PREPNVRAM
+	prep_dump();
+#else
 #ifdef USE_OPENFIRM
 	of_dump();
 #else
@@ -230,13 +238,14 @@ dump_prom()
 #endif /* USE_OPENPROM */
 		ee_dump();
 #endif /* USE_OPENFIRM */
+#endif /* USE_PREPNVRAM */
 }
 
 static void
 usage()
 {
 
-#if defined(USE_OPENPROM) || defined(USE_OPENFIRM)
+#if defined(USE_OPENPROM) || defined(USE_OPENFIRM) || defined(USE_PREPNVRAM)
 	fprintf(stderr, "usage: %s %s\n", getprogname(),
 	    "[-] [-c] [-f device] [-i] [-v] [field[=value] ...]");
 #else
