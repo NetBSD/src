@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.8 2007/02/28 23:46:17 bjh21 Exp $ */
+/* $NetBSD: atomic.h,v 1.9 2007/03/04 06:51:53 matt Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -46,7 +46,7 @@
 
 
 #ifndef _LOCORE
-
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <arm/armreg.h>			/* I32_bit */
 
@@ -128,5 +128,6 @@ inline_atomic_cas(volatile uintptr_t *cell, uintptr_t old, uintptr_t new)
 
 #undef __with_interrupts_disabled
 
+#endif /* _KERNEL */
 #endif /* _LOCORE */
 #endif /* _ARM_ATOMIC_H_ */
