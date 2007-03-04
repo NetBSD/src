@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2006/06/02 22:35:22 hubertf Exp $
+#	$NetBSD: Makefile.inc,v 1.5.4.1 2007/03/04 12:10:41 bouyer Exp $
 #
 #	etc.amd64/Makefile.inc -- amd64-specific etc Makefile targets
 #
@@ -9,10 +9,13 @@ BUILD_KERNELS=		INSTALL INSTALL_ACPI
 
 INSTALLATION_DIRS+= 	installation/cdrom
 INSTALLATION_DIRS+= 	installation/floppy
+INSTALLATION_DIRS+= 	installation/misc
 
 # mkisofs arguments to generate bootable iso image
 MKISOFS_FLAGS+=	-b ${MACHINE}/installation/floppy/boot-big.fs
 
 snap_md_post:
+	cd ${KERNSRCDIR}/arch/i386/stand/pxeboot && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/cdrom '*.iso'
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/floppy '*.fs'
+	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/misc '*.*'
