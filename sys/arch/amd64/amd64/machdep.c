@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2007/03/04 05:59:12 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2007/03/04 14:36:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2007/03/04 14:36:11 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -323,7 +323,7 @@ x86_64_proc0_tss_ldt_init(void)
 
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((void *)pcb->pcb_iomap - (void *)&pcb->pcb_tss);
+	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
@@ -352,7 +352,7 @@ x86_64_init_pcb_tss_ldt(struct cpu_info *ci)
 	struct pcb *pcb = ci->ci_idle_pcb;
  
 	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((void *)pcb->pcb_iomap - (void *)&pcb->pcb_tss);
+	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
@@ -464,9 +464,9 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((void *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
-		sp = (void *)tf->tf_rsp - 128;
+		sp = (char *)tf->tf_rsp - 128;
 
 	sp -= sizeof(struct sigframe_siginfo);
 	/*
