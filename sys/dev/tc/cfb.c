@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.51 2007/03/04 06:02:46 christos Exp $ */
+/* $NetBSD: cfb.c,v 1.52 2007/03/04 15:17:06 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.51 2007/03/04 06:02:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.52 2007/03/04 15:17:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,7 +284,7 @@ cfbattach(struct device *parent, struct device *self, void *aux)
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, cfbintr, sc);
 
 	/* clear any pending interrupts */
-	*(volatile u_int8_t *)((void *)ri->ri_hw + CX_OFFSET_IREQ) = 0;
+	*(volatile u_int8_t *)((char *)ri->ri_hw + CX_OFFSET_IREQ) = 0;
 
 	waa.console = console;
 	waa.scrdata = &cfb_screenlist;
@@ -313,7 +313,7 @@ cfb_cmap_init(struct cfb_softc *sc)
 static void
 cfb_common_init(struct rasops_info *ri)
 {
-	void *base;
+	char *base;
 	int cookie;
 
 	base = (void *)ri->ri_hw;
@@ -503,7 +503,7 @@ static int
 cfbintr(void *arg)
 {
 	struct cfb_softc *sc = arg;
-	void *base, vdac;
+	char *base, *vdac;
 	int v;
 
 	base = (void *)sc->sc_ri->ri_hw;
@@ -597,7 +597,7 @@ cfbintr(void *arg)
 static void
 cfbhwinit(void *cfbbase)
 {
-	void *vdac = cfbbase + CX_BT459_OFFSET;
+	char *vdac = (char *)cfbbase + CX_BT459_OFFSET;
 	const u_int8_t *p;
 	int i;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.29 2007/03/04 06:02:45 christos Exp $ */
+/* $NetBSD: asc_tc.c,v 1.30 2007/03/04 15:17:06 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.29 2007/03/04 06:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.30 2007/03/04 15:17:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,14 @@ struct asc_softc {
 	bus_space_handle_t sc_bsh;
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
-	void **sc_dmaaddr;
+	char **sc_dmaaddr;
 	size_t	*sc_dmalen;
 	size_t	sc_dmasize;
 	int	sc_active;			/* DMA active ? */
 	int	sc_ispullup;			/* DMA into main memory? */
 
 	/* XXX XXX XXX */
-	void *sc_base, sc_bounce, sc_target;
+	char *sc_base, *sc_bounce, *sc_target;
 };
 
 static int  asc_tc_match(struct device *, struct cfdata *, void *);
@@ -239,7 +239,7 @@ asc_tc_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	u_int32_t tc_dmar;
 	size_t size;
 
-	asc->sc_dmaaddr = addr;
+	asc->sc_dmaaddr = (char **)addr;
 	asc->sc_dmalen = len;
 	asc->sc_ispullup = datain;
 
