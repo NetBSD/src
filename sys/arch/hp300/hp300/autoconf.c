@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.83 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.84 2007/03/04 11:23:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.83 2007/03/04 05:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84 2007/03/04 11:23:25 tsutsui Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -219,7 +219,6 @@ static int	dio_scode_probe(int,
 		    int (*func)(bus_space_tag_t, bus_addr_t, int));
 
 extern	void *internalhpib;
-extern	char *extiobase;
 
 /* How we were booted. */
 u_int	bootdev;
@@ -318,8 +317,8 @@ mainbusattach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-mainbussearch(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+mainbussearch(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 
 	if (config_match(parent, cf, NULL) > 0)
@@ -911,12 +910,11 @@ dio_scan(int (*func)(bus_space_tag_t, bus_addr_t, int))
 }
 
 static int
-dio_scode_probe(int scode,
-    int (*func)(bus_space_tag_t, bus_addr_t, int))
+dio_scode_probe(int scode, int (*func)(bus_space_tag_t, bus_addr_t, int))
 {
 	struct bus_space_tag tag;
 	bus_space_tag_t bst;
-	void *pa, va;
+	void *pa, *va;
 
 	bst = &tag;
 	memset(bst, 0, sizeof(struct bus_space_tag));

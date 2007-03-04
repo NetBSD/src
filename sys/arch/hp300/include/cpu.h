@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2007/03/04 05:59:50 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2007/03/04 11:23:26 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -185,7 +185,7 @@ extern int astpending;		/* need to trap before returning to user mode */
  */
 
 #ifdef _KERNEL
-extern	char *intiobase, *intiolimit;
+extern	char *intiobase, *intiolimit, *extiobase;
 extern	void (*vectab[])(void);
 
 struct frame;
