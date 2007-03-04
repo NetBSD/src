@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2007/02/20 18:09:05 mrg Exp $
+# $NetBSD: Makefile,v 1.31 2007/03/04 03:52:08 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -80,7 +80,7 @@ MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${PRINTOBJDIR}
 MACPPC_MKBOOTHFSDIR!= cd ${.CURDIR}/macppc_mkboothfs && ${PRINTOBJDIR}
 .endif
 
-RSYNC_SITE?=	rsync://rsync.NetBSD.org/NetBSD/${RELEASENAME}/
+RSYNC_SITE?=	rsync://rsync.NetBSD.org/NetBSD/${RELEASENAME}
 RSYNC_ARGS?=	-va --delete
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
