@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.35 2007/03/04 05:59:09 christos Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.36 2007/03/04 15:18:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.35 2007/03/04 05:59:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.36 2007/03/04 15:18:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ dec_eb64plus_cons_init()
 	acp = &apecs_configuration;
 	apecs_init(acp, 0);
 
-	ctb = (struct ctb *)(((void *)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT: 
