@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2007/03/04 01:57:21 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2007/03/04 05:28:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -136,6 +136,8 @@ struct hp300_intr {
 	struct evcnt hi_evcnt;
 };
 
+#include <m68k/softintr.h>
+
 /* locore.s */
 int	spl0(void);
 
@@ -147,7 +149,5 @@ void	intr_dispatch(int);
 void	intr_printlevels(void);
 
 #endif /* _KERNEL */
-
-#include <m68k/softintr.h>
 
 #endif /* _HP300_INTR_H_ */
