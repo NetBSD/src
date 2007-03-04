@@ -168,11 +168,11 @@ static int dev_crypto_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
     cryp.flags=0;
     cryp.len=inl;
     assert((inl&(ctx->cipher->block_size-1)) == 0);
-    cryp.src=(caddr_t)in;
-    cryp.dst=(caddr_t)out;
+    cryp.src=(void *)in;
+    cryp.dst=(void *)out;
     cryp.mac=0;
     if(ctx->cipher->iv_len)
-	cryp.iv=(caddr_t)ctx->iv;
+	cryp.iv=(void *)ctx->iv;
 
     if(!ctx->encrypt)
 	memcpy(lb,&in[cryp.len-ctx->cipher->iv_len],ctx->cipher->iv_len);
@@ -333,9 +333,9 @@ static int do_digest(int ses,unsigned char *md,const void *data,int len)
     cryp.ses=ses;
     cryp.op=COP_ENCRYPT;/* required to do the MAC rather than check it */
     cryp.len=len;
-    cryp.src=(caddr_t)data;
-    cryp.dst=(caddr_t)data; // FIXME!!!
-    cryp.mac=(caddr_t)md;
+    cryp.src=(void *)data;
+    cryp.dst=(void *)data; // FIXME!!!
+    cryp.mac=(void *)md;
 
     if(ioctl(fd, CIOCCRYPT, &cryp) == -1)
 	{
