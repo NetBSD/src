@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.229 2007/02/26 06:06:32 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.230 2007/03/04 04:00:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4432,12 +4432,14 @@ Lgandul:	nop
 	b,a	2f
 
 1:
+#if 0 /* currently there are no NOP_ON_4_4C_* */
 	MUNGE(NOP_ON_4_4C_1)
+#endif
 
 2:
 
 #undef MUNGE
-#endif
+#endif /* (SUN4 || SUN4C) && (SUN4M || SUN4D) */
 
 	/*
 	 * Step 4: change the trap base register, now that our trap handlers
@@ -6533,10 +6535,6 @@ _ENTRY(_C_LABEL(hypersparc_pure_vcache_flush))
 
 #endif /* SUN4M */
 
-#if (defined(SUN4C) || defined(SUN4)) && defined(SUN4M)
-NOP_ON_4_4C_1:
-	 add	%g3, 4, %g3
-#endif
 
 /*
  * delay function
