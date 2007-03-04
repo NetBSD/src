@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.84 2007/02/22 06:49:34 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.85 2007/03/04 02:08:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.84 2007/02/22 06:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2007/03/04 02:08:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -596,39 +596,9 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		if (ssir & SIR_NET) {
-			void netintr(void);
-			siroff(SIR_NET);
-			uvmexp.softs++;
-			netintr();
-		}
-		if (ssir & SIR_CLOCK) {
-			siroff(SIR_CLOCK);
-			uvmexp.softs++;
-			softclock(NULL);
-		}
-		if (ssir & SIR_SERIAL) {
-#include "zsc.h"
-#if NZSC > 0
-			void zssoft(int);
-#endif
-			siroff(SIR_SERIAL);
-			uvmexp.softs++;
-#if NZSC > 0
-			zssoft(0);
-#endif
-		}
-		if (ssir & SIR_KBD) {
-#include "kbd.h"
-#if NKBD > 0
-			void	kbdsoftint(void);
-#endif
-			siroff(SIR_KBD);
-			uvmexp.softs++;
-#if NKBD > 0
-			kbdsoftint();
-#endif
-		}
+
+		softintr_dispatch();
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
