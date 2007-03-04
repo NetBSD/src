@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.343 2007/02/24 21:42:28 pooka Exp $
+.\"	$NetBSD: options.4,v 1.344 2007/03/04 05:14:55 dyoung Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd February 24, 2007
+.Dd March 3, 2007
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1581,6 +1581,9 @@ The option is not recommended as it degrades system stability.
 Increases the allowed size of the network interface packet queues.
 The default queue size is 50 packets, and you do not normally need
 to increase it.
+.It Cd options IPSELSRC
+Includes support for source-address selection policies.  See
+.Xr in_getifa 9 .
 .It Cd options MROUTING
 Includes support for IP multicast routers.
 You certainly want
@@ -2703,6 +2706,7 @@ bolded
 .Xr gettimeofday 2 ,
 .Xr i386_get_mtrr 2 ,
 .Xr i386_iopl 2 ,
+.Xr in_getifa 9 ,
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
