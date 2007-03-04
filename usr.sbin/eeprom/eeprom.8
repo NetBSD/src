@@ -1,4 +1,4 @@
-.\"	$NetBSD: eeprom.8,v 1.11 2003/03/31 01:31:39 perry Exp $
+.\"	$NetBSD: eeprom.8,v 1.11.16.1 2007/03/04 14:17:07 bouyer Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 19, 2000
+.Dd February 27, 2007
 .Dt EEPROM 8
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@
 .Li = Ns Ar value
 .Oc ...
 .Oc
-.Sh SPARC and SPARC64 SYNOPSIS
+.Sh SPARC, SPARC64, MACPPC and PREP SYNOPSIS
 .Nm
 .Op Fl
 .Op Fl c
@@ -110,7 +110,7 @@ with an EEPROM are always verbose.
 .Pp
 The
 .Fl v
-option is also present on sparc64 systems.
+option is also present on sparc64, macppc and prep systems.
 .Sh FIELDS AND VALUES
 The following fields and values are for systems with an EEPROM:
 .Bl -tag -width "watchdog_reboot  "
@@ -332,6 +332,8 @@ If true, the system will boot and run in diagnostic mode.
 The EEPROM device on systems with an EEPROM.
 .It /dev/openprom
 The openprom device on systems with an openprom.
+.It /dev/nvram
+The nvram device on PReP systems.
 .El
 .Sh BUGS
 The fields and their values are not necessarily well defined on

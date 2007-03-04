@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.5 2006/10/30 17:54:29 garbled Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.5.2.1 2007/03/04 14:17:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.5 2006/10/30 17:54:29 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.5.2.1 2007/03/04 14:17:09 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,7 +94,7 @@ dev_type_open(prep_nvramopen);
 dev_type_ioctl(prep_nvramioctl);
 dev_type_close(prep_nvramclose);
 
-const struct cdevsw prep_nvram_cdevsw = {
+const struct cdevsw nvram_cdevsw = {
 	prep_nvramopen, prep_nvramclose, noread, nowrite, prep_nvramioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_OTHER,
 };
@@ -263,6 +263,9 @@ prep_nvram_next_var(char *name)
 {
 	char *cp;
 
+	if (name == NULL)
+		return NULL;
+
 	cp = name;
 	/* skip forward to the first null char */
 	while ((cp - nvramGEAp) < nvram->Header.GELength && (*cp != '\0'))
@@ -297,6 +300,8 @@ prep_nvram_get_var(const char *name)
 	char *cp = nvramGEAp;
 	size_t len;
 
+	if (name == NULL)
+		return NULL;
 	len = strlen(name);
 	while (cp != NULL) {
 		if ((strncmp(name, cp, len) == 0) && (cp[len] == '='))
@@ -312,6 +317,9 @@ prep_nvram_get_var_len(const char *name)
 	char *cp = nvramGEAp;
 	char *ep;
 	size_t len;
+
+	if (name == NULL)
+		return -1;
 
 	len = strlen(name);
 	while (cp != NULL) {
@@ -341,28 +349,46 @@ prep_nvram_count_vars(void)
 	return i;
 }
 
+static int
+nvramgetstr(int len, char *user, char **cpp)
+{
+	int error;
+	char *cp;
+
+	/* Reject obvious bogus requests */
+	if ((u_int)len > (8 * 1024) - 1)
+		return ENAMETOOLONG;
+
+	*cpp = cp = malloc(len + 1, M_TEMP, M_WAITOK);
+	error = copyin(user, cp, len);
+	cp[len] = '\0';
+	return error;
+}
+
 int
 prep_nvramioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	int len, error;
 	struct pnviocdesc *pnv;
-	char *np, *cp;
+	char *np, *cp, *name;
 
 	pnv = (struct pnviocdesc *)data;
 	error = 0;
+	cp = name = NULL;
 
 	switch (cmd) {
 	case PNVIOCGET:
 		if (pnv->pnv_name == NULL)
 			return EINVAL;
 
+		error = nvramgetstr(pnv->pnv_namelen, pnv->pnv_name, &name);
 		simple_lock(&nvram_slock);
-		np = prep_nvram_get_var(pnv->pnv_name);
+		np = prep_nvram_get_var(name);
 		simple_unlock(&nvram_slock);
 		if (np == NULL)
 			return EINVAL;
 		simple_lock(&nvram_slock);
-		len = prep_nvram_get_var_len(pnv->pnv_name);
+		len = prep_nvram_get_var_len(name);
 		simple_unlock(&nvram_slock);
 
 		if (len > pnv->pnv_buflen) {
@@ -379,13 +405,21 @@ prep_nvramioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 		/* if the first one is null, we give them the first name */
 		simple_lock(&nvram_slock);
 		if (pnv->pnv_name == NULL) {
-			np = nvramGEAp;
-			cp = prep_nvram_next_var(np);
+			cp = nvramGEAp;
 		} else {
-			np = prep_nvram_find_var(pnv->pnv_name);
-			cp = prep_nvram_next_var(np);
+			error = nvramgetstr(pnv->pnv_namelen, pnv->pnv_name,
+			    &name);
+			if (!error) {
+				np = prep_nvram_find_var(name);
+				cp = prep_nvram_next_var(np);
+			}
 		}
 		simple_unlock(&nvram_slock);
+		if (cp == NULL)
+			error = EINVAL;
+		if (error)
+			break;
+
 		np = cp;
 		while (*np != '=')
 			np++;
@@ -395,12 +429,27 @@ prep_nvramioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 			break;
 		}
 		error = copyout(cp, pnv->pnv_buf, len);
+		if (error)
+			break;
 		pnv->pnv_buflen = len;
 		break;
+
+	case PNVIOCGETNUMGE:
+		/* count the GE variables */
+		simple_lock(&nvram_slock);
+		pnv->pnv_num = prep_nvram_count_vars();
+		simple_unlock(&nvram_slock);
+		break;
+	case PNVIOCSET:
+		/* this will require some real work.  Not ready yet */
+		return ENOTSUP;
+	
 	default:
-		return (ENOTTY);
+		return ENOTTY;
 	}
-	return (error);
+	if (name)
+		free(name, M_TEMP);
+	return error;
 }
 
 int
@@ -408,7 +457,7 @@ prep_nvramopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	sc = device_lookup(&nvram_cd, dev);
+	sc = device_lookup(&nvram_cd, minor(dev));
 	if (sc == NULL)
 		return ENODEV;
 
@@ -425,7 +474,7 @@ prep_nvramclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct nvram_pnpbus_softc *sc;
 
-	sc = device_lookup(&nvram_cd, dev);
+	sc = device_lookup(&nvram_cd, minor(dev));
 	if (sc == NULL) 
 		return ENODEV;
 	sc->sc_open = 0;
