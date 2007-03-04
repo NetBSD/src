@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26 2007/01/24 13:08:11 hubertf Exp $	*/
+/*	$NetBSD: kbd.c,v 1.27 2007/03/04 02:08:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.27 2007/03/04 02:08:08 tsutsui Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -67,11 +67,12 @@ struct kbd_softc {
 
 	int sc_event_mode;	/* if true, collect events, else pass to ite */
 	struct evvar sc_events; /* event queue state */
+	void *sc_softintr_cookie;
 };
 
 void	kbdenable(int);
 int	kbdintr (void *);
-void	kbdsoftint(void);
+void	kbdsoftint(void *);
 void	kbd_bell(int);
 int	kbdcngetc(void);
 void	kbd_setLED(void);
@@ -113,8 +114,8 @@ kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 static void 
 kbdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct kbd_softc *k = (void*) self;
-	struct mfp_softc *mfp = (void*) parent;
+	struct kbd_softc *sc = (void *)self;
+	struct mfp_softc *mfp = (void *)parent;
 	int s;
 
 	kbd_attached = 1;
@@ -122,11 +123,12 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 	s = spltty();
 
 	/* MFP interrupt #12 is for USART receive buffer full */
-	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, self);
+	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, sc);
+	sc->sc_softintr_cookie = softintr_establish(IPL_SOFT, kbdsoftint, sc);
 
 	kbdenable(1);
-	k->sc_event_mode = 0;
-	k->sc_events.ev_io = 0;
+	sc->sc_event_mode = 0;
+	sc->sc_events.ev_io = 0;
 	splx(s);
 
 	printf("\n");
@@ -318,7 +320,7 @@ int
 kbdintr(void *arg)
 {
 	u_char c, st;
-	struct kbd_softc *k = arg; /* XXX */
+	struct kbd_softc *sc = arg;
 	struct firm_event *fe;
 	int put;
 
@@ -331,9 +333,9 @@ kbdintr(void *arg)
 		return 0;	/* intr caused by an err -- no char received */
 
 	/* if not in event mode, deliver straight to ite to process key stroke */
-	if (! k->sc_event_mode) {
+	if (!sc->sc_event_mode) {
 		kbdbuf[kbdputoff++ & KBDBUFMASK] = c;
-		setsoftkbd();
+		softintr_schedule(sc->sc_softintr_cookie);
 		return 0;
 	}
 
@@ -341,24 +343,24 @@ kbdintr(void *arg)
 	   event and put it in the queue.  If the queue is full, the
 	   keystroke is lost (sorry!). */
 
-	put = k->sc_events.ev_put;
-	fe = &k->sc_events.ev_q[put];
+	put = sc->sc_events.ev_put;
+	fe = &sc->sc_events.ev_q[put];
 	put = (put + 1) % EV_QSIZE;
-	if (put == k->sc_events.ev_get) {
+	if (put == sc->sc_events.ev_get) {
 		log(LOG_WARNING, "keyboard event queue overflow\n"); /* ??? */
 		return 0;
 	}
 	fe->id = KEY_CODE(c);
 	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
 	getmicrotime(&fe->time);
-	k->sc_events.ev_put = put;
-	EV_WAKEUP(&k->sc_events);
+	sc->sc_events.ev_put = put;
+	EV_WAKEUP(&sc->sc_events);
 
 	return 0;
 }
 
 void 
-kbdsoftint(void)			/* what if ite is not configured? */
+kbdsoftint(void *arg)			/* what if ite is not configured? */
 {
 	int s;
 

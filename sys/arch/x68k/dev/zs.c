@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.30 2007/03/04 02:08:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.30 2007/03/04 02:08:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,6 @@ CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
 extern struct cfdriver zsc_cd;
 
 static int zshard(void *);
-int zssoft(void *);
 static int zs_get_speed(struct zs_chanstate *);
 
 
@@ -277,6 +276,8 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (intio_intr_establish(ia->ia_intr, "zs", zshard, zsc))
 		panic("zs_attach: interrupt vector busy");
+	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
 	/* XXX; evcnt_attach() ? */
 
 	/*
@@ -329,33 +330,10 @@ zshard(void *arg)
 
 	/* We are at splzs here, so no need to lock. */
 	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq)
-		setsoftserial();
+		softintr_schedule(zsc->zsc_softintr_cookie);
 
 	return (rval);
 }
-
-/*
- * Shared among the all chips. We have to look at all of them.
- */
-int 
-zssoft(void *arg)
-{
-	struct zsc_softc *zsc;
-	int s, unit;
-
-	/* Make sure we call the tty layer at spltty. */
-	s = spltty();
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-	splx(s);
-
-	return (1);
-}
-
 
 /*
  * Compute the current baud rate given a ZS channel.
