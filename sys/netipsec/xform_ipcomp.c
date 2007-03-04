@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.12 2007/03/04 19:54:49 degroote Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.13 2007/03/04 21:17:55 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.12 2007/03/04 19:54:49 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.13 2007/03/04 21:17:55 degroote Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -182,10 +182,10 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (void *) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_input_cb;
 	crp->crp_sid = sav->tdb_cryptoid;
-	crp->crp_opaque = (void *) tc;
+	crp->crp_opaque = tc;
 
 	/* These are passed as-is to the callback */
 	tc->tc_spi = sav->spi;
@@ -454,9 +454,9 @@ ipcomp_output(
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (void *) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_output_cb;
-	crp->crp_opaque = (void *) tc;
+	crp->crp_opaque = tc;
 	crp->crp_sid = sav->tdb_cryptoid;
 
 	return crypto_dispatch(crp);

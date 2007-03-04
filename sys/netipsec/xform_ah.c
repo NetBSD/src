@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.14 2007/03/04 19:54:49 degroote Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.15 2007/03/04 21:17:55 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.14 2007/03/04 19:54:49 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.15 2007/03/04 21:17:55 degroote Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -439,7 +439,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 #ifdef INET6
 	case AF_INET6:  /* Ugly... */
 		/* Copy and "cook" the IPv6 header. */
-		m_copydata(m, 0, sizeof(ip6), (void *) &ip6);
+		m_copydata(m, 0, sizeof(ip6), &ip6);
 
 		/* We don't do IPv6 Jumbograms. */
 		if (ip6.ip6_plen == 0) {
@@ -460,7 +460,7 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 			ip6.ip6_dst.s6_addr16[1] = 0;
 
 		/* Done with IPv6 header. */
-		m_copyback(m, 0, sizeof(struct ip6_hdr), (void *) &ip6);
+		m_copyback(m, 0, sizeof(struct ip6_hdr), &ip6);
 
 		/* Let's deal with the remaining headers (if any). */
 		if (skip - sizeof(struct ip6_hdr) > 0) {
@@ -737,10 +737,10 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (void *) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ah_input_cb;
 	crp->crp_sid = sav->tdb_cryptoid;
-	crp->crp_opaque = (void *) tc;
+	crp->crp_opaque = tc;
 
 	/* These are passed as-is to the callback. */
 	tc->tc_spi = sav->spi;
@@ -749,7 +749,7 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	tc->tc_nxt = ah->ah_nxt;
 	tc->tc_protoff = protoff;
 	tc->tc_skip = skip;
-	tc->tc_ptr = (void *) mtag; /* Save the mtag we've identified. */
+	tc->tc_ptr = mtag; /* Save the mtag we've identified. */
 
 	DPRINTF(("ah: hash over %d bytes, skip %d: "
 		 "crda len %d skip %d inject %d\n",
@@ -912,7 +912,7 @@ ah_input_cb(struct cryptop *crp)
 		u_int32_t seq;
 
 		m_copydata(m, skip + offsetof(struct newah, ah_seq),
-			   sizeof (seq), (void *) &seq);
+			   sizeof (seq), &seq);
 		if (ipsec_updatereplay(ntohl(seq), sav)) {
 			ahstat.ahs_replay++;
 			error = ENOBUFS;			/*XXX as above*/
@@ -1112,7 +1112,7 @@ ah_output(
 	}
 
 	/* Save the skipped portion of the packet. */
-	m_copydata(m, 0, skip, (void *) (tc + 1));
+	m_copydata(m, 0, skip, (tc + 1));
 
 	/*
 	 * Fix IP header length on the header used for
@@ -1124,10 +1124,10 @@ ah_output(
 	case AF_INET:
 		bcopy(((char *)(tc + 1)) +
 		    offsetof(struct ip, ip_len),
-		    (void *) &iplen, sizeof(u_int16_t));
+		    &iplen, sizeof(u_int16_t));
 		iplen = htons(ntohs(iplen) + rplen + authsize);
 		m_copyback(m, offsetof(struct ip, ip_len),
-		    sizeof(u_int16_t), (void *) &iplen);
+		    sizeof(u_int16_t), &iplen);
 		break;
 #endif /* INET */
 
@@ -1135,10 +1135,10 @@ ah_output(
 	case AF_INET6:
 		bcopy(((char *)(tc + 1)) +
 		    offsetof(struct ip6_hdr, ip6_plen),
-		    (void *) &iplen, sizeof(u_int16_t));
+		    &iplen, sizeof(u_int16_t));
 		iplen = htons(ntohs(iplen) + rplen + authsize);
 		m_copyback(m, offsetof(struct ip6_hdr, ip6_plen),
-		    sizeof(u_int16_t), (void *) &iplen);
+		    sizeof(u_int16_t), &iplen);
 		break;
 #endif /* INET6 */
 	}
@@ -1148,7 +1148,7 @@ ah_output(
 
 	/* Update the Next Protocol field in the IP header. */
 	prot = IPPROTO_AH;
-	m_copyback(m, protoff, sizeof(u_int8_t), (void *) &prot);
+	m_copyback(m, protoff, sizeof(u_int8_t), &prot);
 
 	/* "Massage" the packet headers for crypto processing. */
 	error = ah_massage_headers(&m, sav->sah->saidx.dst.sa.sa_family,
@@ -1163,10 +1163,10 @@ ah_output(
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (void *) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ah_output_cb;
 	crp->crp_sid = sav->tdb_cryptoid;
-	crp->crp_opaque = (void *) tc;
+	crp->crp_opaque = tc;
 
 	/* These are passed as-is to the callback. */
 	tc->tc_isr = isr;
@@ -1201,7 +1201,7 @@ ah_output_cb(struct cryptop *crp)
 	IPSEC_ASSERT(tc != NULL, ("ah_output_cb: null opaque data area!"));
 	skip = tc->tc_skip;
 	protoff = tc->tc_protoff;
-	ptr = (void *) (tc + 1);
+	ptr = (tc + 1);
 	m = (struct mbuf *) crp->crp_buf;
 
 	s = splsoftnet();

@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.7 2007/03/04 19:54:49 degroote Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.8 2007/03/04 21:17:55 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.7 2007/03/04 19:54:49 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.8 2007/03/04 21:17:55 degroote Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -525,10 +525,10 @@ kdebug_secpolicyindex(spidx)
 	printf("secpolicyindex{ dir=%u prefs=%u prefd=%u ul_proto=%u\n",
 		spidx->dir, spidx->prefs, spidx->prefd, spidx->ul_proto);
 
-	ipsec_hexdump((void *)&spidx->src,
+	ipsec_hexdump((char *)&spidx->src,
 		((struct sockaddr *)&spidx->src)->sa_len);
 	printf("\n");
-	ipsec_hexdump((void *)&spidx->dst,
+	ipsec_hexdump((char *)&spidx->dst,
 		((struct sockaddr *)&spidx->dst)->sa_len);
 	printf("}\n");
 
@@ -546,10 +546,10 @@ kdebug_secasindex(saidx)
 	printf("secasindex{ mode=%u proto=%u\n",
 		saidx->mode, saidx->proto);
 
-	ipsec_hexdump((void *)&saidx->src,
+	ipsec_hexdump((char *)&saidx->src,
 		((struct sockaddr *)&saidx->src)->sa_len);
 	printf("\n");
-	ipsec_hexdump((void *)&saidx->dst,
+	ipsec_hexdump((char *)&saidx->dst,
 		((struct sockaddr *)&saidx->dst)->sa_len);
 	printf("\n");
 
@@ -578,7 +578,7 @@ kdebug_secasv(sav)
 		kdebug_sadb_key((struct sadb_ext *)sav->key_enc);
 	if (sav->iv != NULL) {
 		printf("  iv=");
-		ipsec_hexdump(sav->iv, sav->ivlen ? sav->ivlen : 8);
+		ipsec_hexdump((char *)sav->iv, sav->ivlen ? sav->ivlen : 8);
 		printf("\n");
 	}
 
@@ -702,7 +702,7 @@ kdebug_sockaddr(addr)
 	case AF_INET:
 		sin4 = (struct sockaddr_in *)addr;
 		printf(" port=%u\n", ntohs(sin4->sin_port));
-		ipsec_hexdump((void *)&sin4->sin_addr, sizeof(sin4->sin_addr));
+		ipsec_hexdump((char *)&sin4->sin_addr, sizeof(sin4->sin_addr));
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -710,8 +710,7 @@ kdebug_sockaddr(addr)
 		printf(" port=%u\n", ntohs(sin6->sin6_port));
 		printf("  flowinfo=0x%08x, scope_id=0x%08x\n",
 		    sin6->sin6_flowinfo, sin6->sin6_scope_id);
-		ipsec_hexdump((void *)&sin6->sin6_addr,
-		    sizeof(sin6->sin6_addr));
+		ipsec_hexdump((char *)&sin6->sin6_addr, sizeof(sin6->sin6_addr));
 		break;
 #endif
 	}

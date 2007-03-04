@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.23 2007/03/04 19:54:48 degroote Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.24 2007/03/04 21:17:55 degroote Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.23 2007/03/04 19:54:48 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.24 2007/03/04 21:17:55 degroote Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -236,7 +236,7 @@ ah6_ctlinput(cmd, sa, d)
                         * this should be rare case,
                         * so we compromise on this copy...
                         */
-                       m_copydata(m, off, sizeof(ah), (void *)&ah);
+                       m_copydata(m, off, sizeof(ah), &ah);
                        ahp = &ah;
                } else
                        ahp = (struct newah *)(mtod(m, char *) + off);
@@ -326,7 +326,7 @@ esp6_ctlinput(cmd, sa, d)
 		 */
 		memset(&ip6cp1, 0, sizeof(ip6cp1));
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
-		pfctlinput2(cmd, sa, (void *)&ip6cp1);
+		pfctlinput2(cmd, sa, &ip6cp1);
 
 		/*
 		 * Then go to special cases that need ESP header information.
@@ -343,7 +343,7 @@ esp6_ctlinput(cmd, sa, d)
 			 * this should be rare case,
 			 * so we compromise on this copy...
 			 */
-			m_copydata(m, off, sizeof(esp), (void *)&esp);
+			m_copydata(m, off, sizeof(esp), &esp);
 			espp = &esp;
 		} else
 			espp = (struct newesp*)(mtod(m, char *) + off);
