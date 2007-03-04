@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.119 2007/03/04 06:03:10 christos Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.120 2007/03/04 14:33:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.119 2007/03/04 06:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.120 2007/03/04 14:33:57 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -268,8 +268,7 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 				error = ENOMEM;
 				break;
 			}
-			error = copyout(mo, (void *) oldp + len,
-					sizeof(*mo));
+			error = copyout(mo, (char *)oldp + len, sizeof(*mo));
 			if (error)
 				break;
 		}
