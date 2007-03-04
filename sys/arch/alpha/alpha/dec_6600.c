@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.25 2007/03/04 05:59:09 christos Exp $ */
+/* $NetBSD: dec_6600.c,v 1.26 2007/03/04 15:18:10 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.25 2007/03/04 05:59:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.26 2007/03/04 15:18:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ dec_6600_cons_init()
 	u_int64_t ctbslot;
 	struct tsp_config *tsp;
 
-	ctb = (struct ctb *)(((void *)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 	ctbslot = ctb->ctb_turboslot;
 
 	/* Console hose defaults to hose 0. */
