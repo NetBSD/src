@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.79 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: rd.c,v 1.80 2007/03/04 12:06:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.79 2007/03/04 05:59:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.80 2007/03/04 12:06:16 tsutsui Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -1377,7 +1377,7 @@ rddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		/* update block count */
 		totwrt -= nwrt;
 		blkno += nwrt;
-		va += sectorsize * nwrt;
+		va = (char *)va + sectorsize * nwrt;
 	}
 	rddoingadump = 0;
 	return 0;
