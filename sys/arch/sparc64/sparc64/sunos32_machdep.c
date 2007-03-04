@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.23 2007/03/04 06:00:51 christos Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.24 2007/03/04 07:54:07 christos Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.23 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.24 2007/03/04 07:54:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -192,7 +192,7 @@ sunos32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (onstack)
 		fp = (struct sunos32_sigframe *)
-		     ((void *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		     ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		fp = (struct sunos32_sigframe *)oldsp;
 

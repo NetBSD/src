@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.28 2007/03/04 06:02:40 christos Exp $ */
+/*	$NetBSD: bpp.c,v 1.29 2007/03/04 07:54:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.28 2007/03/04 06:02:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.29 2007/03/04 07:54:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -359,8 +359,10 @@ bppwrite(dev, uio, flags)
 #ifdef DEBUG
 			if (bppdebug) {
 				int i;
+				unsigned char *b = bp;
 				printf("bpp: writing %ld : ", len);
-				for (i=0; i<len; i++) printf("%c(0x%x)", bp[i], bp[i]);
+				for (i=0; i<len; i++) printf("%c(0x%x)", b[i],
+				    b[i]);
 				printf("\n");
 			}
 #endif

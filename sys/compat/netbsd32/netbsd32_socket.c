@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.21 2007/03/04 06:01:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.22 2007/03/04 07:54:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.21 2007/03/04 06:01:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.22 2007/03/04 07:54:08 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -220,12 +220,12 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 				    (unsigned)i);
 				if (m->m_next)
 					i = ALIGN(i);
-				cp += i;
+				cp = (char *)cp + i;
 				len -= i;
 				if (error != 0 || len <= 0)
 					break;
 			} while ((m = m->m_next) != NULL);
-			len = cp - (void *)NETBSD32PTR64(mp->msg_control);
+			len = (char *)cp - (char *)NETBSD32PTR64(mp->msg_control);
 		}
 		mp->msg_controllen = len;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.28 2007/03/04 06:01:57 christos Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.29 2007/03/04 07:54:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.28 2007/03/04 06:01:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.29 2007/03/04 07:54:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,7 +490,7 @@ lsi64854_scsi_intr(arg)
 	}
 
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr += trans;
+	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
@@ -667,7 +667,7 @@ lsi64854_pp_intr(arg)
 		trans = sc->sc_dmasize;
 	}
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr += trans;
+	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
 
 	if (sc->sc_dmamap->dm_nsegs > 0) {
 		bus_dmamap_sync(sc->sc_dmatag, sc->sc_dmamap, 0, sc->sc_dmasize,
