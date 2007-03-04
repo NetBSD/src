@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 2006/10/19 14:25:29 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.49.2.1 2007/03/04 12:29:43 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49 2006/10/19 14:25:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.49.2.1 2007/03/04 12:29:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -60,8 +60,12 @@ void ofw_stack __P((void));
 
 extern char bootpath[256];
 char cbootpath[256];
+int    console_node = 0, console_instance = 0;
 
 u_int *heathrow_FCR = NULL;
+
+static void add_model_specifics(prop_dictionary_t);
+static void copyprops(int, prop_dictionary_t);
 
 /*
  * Determine device configuration for a machine.
@@ -165,7 +169,7 @@ canonicalize_bootpath()
 	lastp = strrchr(cbootpath, '/');
 	if (lastp != NULL) {
 		lastp++;
-		if (strncmp(lastp, "sd@", 3) == 0 
+		if (strncmp(lastp, "sd@", 3) == 0
 		    && strncmp(last, "sd@", 3) == 0)
 			strcpy(lastp, last);
 	} else {
@@ -194,6 +198,37 @@ canonicalize_bootpath()
 		*p = '\0';
 }
 
+static int
+OF_to_intprop(prop_dictionary_t dict, int node, const char *ofname,
+    const char *propname)
+{
+	uint32_t prop;
+
+	if (OF_getprop(node, ofname, &prop, sizeof(prop)) != sizeof(prop))
+		return 0;
+
+	prop_dictionary_set_uint32(dict, propname, prop);
+	return 1;
+}
+
+static int
+OF_to_dataprop(prop_dictionary_t dict, int node, const char *ofname,
+    const char *propname)
+{
+	prop_data_t data;
+	int len;
+	uint8_t prop[256];
+
+	len = OF_getprop(node, ofname, prop, 256);
+	if (len < 1)
+		return 0;
+
+	data = prop_data_create_data(prop, len);
+	prop_dictionary_set(dict, propname, data);
+
+	return 1;
+}
+
 /*
  * device_register is called from config_attach as each device is
  * attached. We use it to find the NetBSD device corresponding to the
@@ -220,6 +255,38 @@ device_register(dev, aux)
 	if (device_is_a(dev, "atapibus") || device_is_a(dev, "pci") ||
 	    device_is_a(dev, "scsibus") || device_is_a(dev, "atabus"))
 		return;
+
+	if (device_is_a(device_parent(dev), "pci")) {
+		/* see if this is going to be console */
+		struct pci_attach_args *pa = aux;
+		int node, sub;
+		int console = 0;
+
+		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
+		console = (node == console_node);
+
+		if (!console) {
+			/*
+			 * see if any child matches since OF attaches nodes for
+			 * each head and /chosen/stdout points to the head
+			 * rather than the device itself in this case
+			 */
+			sub = OF_child(node);
+			while ((sub != 0) && (sub != console_node)) {
+				sub = OF_peer(sub);
+			}
+			if (sub == console_node) {
+				console = TRUE;
+			}
+		}
+
+		if (console) {
+			prop_dictionary_t dict;
+
+			dict = device_properties(dev);
+			copyprops(console_node, dict);
+		}
+	}
 
 	if (device_is_a(device_parent(dev), "atapibus") ||
 	    device_is_a(device_parent(dev), "atabus") ||
@@ -429,4 +496,39 @@ getnodebyname(start, target)
 	}
 
 	return node;
+}
+
+static void
+add_model_specifics(prop_dictionary_t dict)
+{
+	const char *bl_rev_models[] = {
+		"PowerBook4,3", "PowerBook6,3", "PowerBook6,5", NULL};
+	int node;
+
+	node = OF_finddevice("/");
+
+	if (of_compatible(node, bl_rev_models)) {
+		prop_dictionary_set_bool(dict, "backlight_level_reverted", 1);
+	}
+}
+
+static void
+copyprops(int node, prop_dictionary_t dict)
+{
+
+	prop_dictionary_set_bool(dict, "is_console", 1);
+	if (!OF_to_intprop(dict, node, "width", "width"))
+		OF_to_intprop(dict, console_node, "screen-width", "width");
+	if (!OF_to_intprop(dict, console_node, "height", "height"))
+		OF_to_intprop(dict, console_node, "screen-height", "height");
+	OF_to_intprop(dict, console_node, "linebytes", "linebytes");
+	OF_to_intprop(dict, console_node, "depth", "depth");
+	if (!OF_to_intprop(dict, console_node, "address", "address")) {
+		uint32_t fbaddr = 0;
+			OF_interpret("frame-buffer-adr", 1, &fbaddr);
+		if (fbaddr != 0)
+			prop_dictionary_set_uint32(dict, "address", fbaddr);
+	}
+	OF_to_dataprop(dict, console_node, "EDID", "EDID");
+	add_model_specifics(dict);
 }
