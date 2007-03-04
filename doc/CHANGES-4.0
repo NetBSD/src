@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.88 2007/03/04 14:48:49 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.89 2007/03/04 20:54:03 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1825,4 +1825,12 @@ sys/kern/subr_kmem.c				1.14
 
 	kmem_backend_alloc: fix a null dereference.
 	[yamt, ticket #488]
+
+dist/bind/lib/dns/resolver.c                    patch
+dist/bind/lib/dns/validator.c                   patch
+dist/bind/lib/dns/include/dns/validator.h       patch   
+dist/bind/version                               patch
+
+	Fix CVE-2007-0493 and CVE-2007-0494.
+	[adrianp, ticket #489]
 
