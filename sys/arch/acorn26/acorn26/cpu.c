@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22 2007/03/04 05:59:03 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.23 2007/03/04 14:47:18 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2007/03/04 05:59:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.23 2007/03/04 14:47:18 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -62,8 +62,6 @@ static void cpu_arm3_setup(struct device *, int);
 #endif
 static void cpu_delay_calibrate(struct device *);
 
-register_t cpu_type;
-
 struct cpu_softc {
 	struct device sc_dev;
 };
@@ -92,9 +90,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 	the_cpu = (struct cpu_softc *)self;
 	printf(": ");
-	cpu_type = cpu_identify();
+	cputype = cpu_identify();
 	supported = 0;
-	switch (cpu_type) {
+	switch (cputype) {
 	case CPU_ID_ARM2:
 		printf("ARM2");
 #ifdef CPU_ARM2
@@ -110,17 +108,18 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		break;
 	case CPU_ID_ARM3:
-		printf("ARM3 (rev. %d)", cpu_type & CPU_ID_REVISION_MASK);
+		printf("ARM3 (rev. %d)", cputype & CPU_ID_REVISION_MASK);
 #ifdef CPU_ARM3
 		supported = 1;
 		cpu_arm3_setup(self, device_cfdata(self)->cf_flags);
 #endif
 		break;
 	default:
-		printf("Unknown type, ID=0x%08x", cpu_type);
+		printf("Unknown type, ID=0x%08x", cputype);
 		break;
 	}
 	printf("\n");
+	set_cpufuncs();
 	if (!supported)
 		printf("%s: WARNING: CPU type not supported by kernel\n",
 		       self->dv_xname);
@@ -286,7 +285,7 @@ cpu_cache_flush(void)
 
 #ifdef CPU_ARM3
 #if defined(CPU_ARM2) || defined(CPU_ARM250)
-	if ((cpu_type & CPU_ID_CPU_MASK) == CPU_ID_ARM3)
+	if ((cputype & CPU_ID_CPU_MASK) == CPU_ID_ARM3)
 #endif
 		ARM3_WRITE(ARM3_CP15_FLUSH, 0);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.39 2007/03/04 13:42:51 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.40 2007/03/04 14:47:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -197,6 +197,7 @@ extern u_int cputype;
 #define cpu_setup(a)			cpufuncs.cf_setup(a)
 
 int	set_cpufuncs		(void);
+int	set_cpufuncs_id		(u_int);
 #define ARCHITECTURE_NOT_PRESENT	1	/* known but not configured */
 #define ARCHITECTURE_NOT_SUPPORTED	2	/* not known */
 
@@ -209,6 +210,14 @@ u_int	cpufunc_control		(u_int, u_int);
 void	cpufunc_domains		(u_int);
 u_int	cpufunc_faultstatus	(void);
 u_int	cpufunc_faultaddress	(void);
+
+#ifdef CPU_ARM2
+u_int	arm2_id			(void);
+#endif /* CPU_ARM2 */
+
+#ifdef CPU_ARM250
+u_int	arm250_id		(void);
+#endif
 
 #ifdef CPU_ARM3
 u_int	arm3_control		(u_int, u_int);
