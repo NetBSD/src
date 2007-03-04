@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.14 2007/02/16 02:53:48 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.15 2007/03/04 02:23:16 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -157,22 +157,6 @@ struct clockframe {
 
 extern int	astpending;	/* need to trap before returning to user mode */
 extern int	want_resched;	/* resched() was called */
-
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define siron(x)	\
-	__asm volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
-#define siroff(x)	\
-	__asm volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
-
-#define setsoftnet()	siron(SIR_NET)
-#define setsoftclock()	siron(SIR_CLOCK)
 
 #endif /* _KERNEL */
 
