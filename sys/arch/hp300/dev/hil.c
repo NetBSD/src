@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.75 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: hil.c,v 1.76 2007/03/04 11:55:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.75 2007/03/04 05:59:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.76 2007/03/04 11:55:04 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"
@@ -492,6 +492,7 @@ hilioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
+	uint8_t *buf;
 	int i;
 	u_char hold;
 	int error;
@@ -562,18 +563,20 @@ hilioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		/* Transfer the real time to the 8042 data buffer */
 		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), NULL, 0, NULL);
 		/* Read each byte of the real time */
+		buf = data;
 		for (i = 0; i < 5; i++) {
 			send_hil_cmd(hilp->hl_addr, HIL_READTIME + i, NULL,
 					0, &hold);
-			data[4-i] = hold;
+			buf[4 - i] = hold;
 		}
 		break;
 
 	case HILIOCRT:
+		buf = data;
 		for (i = 0; i < 4; i++) {
 			send_hil_cmd(hilp->hl_addr, (cmd & 0xFF) + i,
 					NULL, 0, &hold);
-			data[i] = hold;
+			buf[i] = hold;
 		}
 		break;
 
@@ -668,6 +671,7 @@ hpuxhilioctl(dev_t dev, int cmd, void *data, int flag)
 {
 	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
+	uint8_t *buf;
 	int i;
 	u_char hold;
 
@@ -728,25 +732,28 @@ hpuxhilioctl(dev_t dev, int cmd, void *data, int flag)
 		/* Transfer the real time to the 8042 data buffer */
 		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), NULL, 0, NULL);
 		/* Read each byte of the real time */
+		buf = data;
 		for (i = 0; i < 5; i++) {
 			send_hil_cmd(hilp->hl_addr, HIL_READTIME + i, NULL,
 					0, &hold);
-			data[4-i] = hold;
+			buf[4 - i] = hold;
 		}
 		break;
 
 	case EFTRT:
+		buf = data;
 		for (i = 0; i < 4; i++) {
 			send_hil_cmd(hilp->hl_addr, (cmd & 0xFF) + i,
 					NULL, 0, &hold);
-			data[i] = hold;
+			buf[i] = hold;
 		}
 		break;
 
 	case EFTRLC:
 	case EFTRCC:
+		buf = data;
 		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), NULL, 0, &hold);
-		*data = hold;
+		*buf = hold;
 		break;
 
 	case EFTSRPG:
