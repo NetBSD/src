@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.41 2007/03/04 06:00:58 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.42 2007/03/04 19:21:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.41 2007/03/04 06:00:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.42 2007/03/04 19:21:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	if (biowait(bp)) {
 		msg = "I/O error";
 	} else {
-		dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+		dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
@@ -260,7 +260,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *),
 	(*strat)(bp);
 	if ((error = biowait(bp)))
 		goto done;
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_flags &= ~(B_READ|B_DONE);
 	bp->b_flags |= B_WRITE;

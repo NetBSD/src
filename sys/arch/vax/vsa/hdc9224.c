@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.38 2007/03/04 06:01:05 christos Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.39 2007/03/04 19:21:56 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.38 2007/03/04 06:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.39 2007/03/04 19:21:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ hdcintr(void *arg)
 	}
 	sc->sc_diskblk += (sc->sc_xfer/DEV_BSIZE);
 	sc->sc_bytecnt -= sc->sc_xfer;
-	sc->sc_bufaddr += sc->sc_xfer;
+	sc->sc_bufaddr = (char *)sc->sc_bufaddr + sc->sc_xfer;
 
 	if (sc->sc_bytecnt == 0) { /* Finished transfer */
 		biodone(bp);

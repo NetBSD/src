@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.14 2007/03/04 06:00:58 christos Exp $ */
+/*	$NetBSD: ibus.c,v 1.15 2007/03/04 19:21:55 christos Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.14 2007/03/04 06:00:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.15 2007/03/04 19:21:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,7 +103,7 @@ ibus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	bp.type = "shac";
 	va = vax_map_physmem(SHACADDR, 1);
-	if (badaddr((void *)va + 0x48, 4) == 0)
+	if (badaddr((char *)va + 0x48, 4) == 0)
 		config_found(self, &bp, ibus_print);
 	vax_unmap_physmem(va, 1);
 

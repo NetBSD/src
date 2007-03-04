@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.42 2007/03/04 06:01:05 christos Exp $ */
+/*	$NetBSD: smg.c,v 1.43 2007/03/04 19:21:56 christos Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.42 2007/03/04 06:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.43 2007/03/04 19:21:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.42 2007/03/04 06:01:05 christos Exp $");
 #define	CUR_YBIAS	33
 
 #define	WRITECUR(addr, val)	*(volatile short *)(curaddr + (addr)) = (val)
-static	void *	curaddr;
+static	char *curaddr;
 static	short curcmd, curx, cury, hotX, hotY;
 static	int bgmask, fgmask; 
 
@@ -154,7 +154,7 @@ const struct wsscreen_list smg_screenlist = {
 	_smg_scrlist,
 };
 
-static	void *	sm_addr;
+static	char *sm_addr;
 
 static  u_char *qf;
 

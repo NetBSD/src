@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.10 2007/03/04 06:01:02 christos Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.11 2007/03/04 19:21:55 christos Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.10 2007/03/04 06:01:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.11 2007/03/04 19:21:55 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -258,8 +258,8 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	/* Point stack pointer at pc in trampoline.  */
 	sp =- 8;
 
-	error = (copyout(&tramp, (void *)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
-	    copyout(&sigctx, (void *)tramp.scp, sizeof(sigctx)) != 0);
+	error = copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
+	    copyout(&sigctx, (void *)tramp.scp, sizeof(sigctx)) != 0;
 
 	mutex_enter(&p->p_smutex);
 	if (error)
