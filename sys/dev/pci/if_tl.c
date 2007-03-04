@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.77 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.77.2.1 2007/03/04 13:58:23 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.77 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.77.2.1 2007/03/04 13:58:23 bouyer Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -605,6 +605,8 @@ static int tl_init(ifp)
 {
 	tl_softc_t *sc = ifp->if_softc;
 	int i, s, error;
+	bus_size_t boundary;
+	prop_number_t prop_boundary;
 	const char *errstring;
 	char *nullbuf;
 
@@ -647,6 +649,20 @@ static int tl_init(ifp)
 		error = ENOMEM;
 		goto bad;
 	}
+
+	/*
+	 * Some boards (Set Engineering GFE) do not permit DMA transfers
+	 * across page boundaries.
+	 */
+	prop_boundary = prop_dictionary_get(device_properties(&sc->sc_dev),
+	    "tl-dma-page-boundary");
+	if (prop_boundary != NULL) {
+		KASSERT(prop_object_type(prop_boundary) == PROP_TYPE_NUMBER);
+		boundary = (bus_size_t)prop_number_integer_value(prop_boundary);
+	} else {
+		boundary = 0;
+	}
+
 	error = bus_dmamap_create(sc->tl_dmatag,
 	    sizeof(struct tl_Rx_list) * TL_NBUF, 1,
 	    sizeof(struct tl_Rx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,
@@ -654,11 +670,11 @@ static int tl_init(ifp)
 	if (error == 0)
 		error = bus_dmamap_create(sc->tl_dmatag,
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 1,
-		    sizeof(struct tl_Tx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,
-		    &sc->Tx_dmamap);
+		    sizeof(struct tl_Tx_list) * TL_NBUF, boundary,
+		    BUS_DMA_WAITOK, &sc->Tx_dmamap);
 	if (error == 0)
 		error = bus_dmamap_create(sc->tl_dmatag, ETHER_MIN_TX, 1,
-		    ETHER_MIN_TX, 0, BUS_DMA_WAITOK,
+		    ETHER_MIN_TX, boundary, BUS_DMA_WAITOK,
 		    &sc->null_dmamap);
 	if (error) {
 		errstring = "can't allocate DMA maps for lists";
@@ -686,11 +702,11 @@ static int tl_init(ifp)
 	}
 	for (i=0; i< TL_NBUF; i++) {
 		error = bus_dmamap_create(sc->tl_dmatag, MCLBYTES,
-		    1, MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+		    1, MCLBYTES, boundary, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->Rx_list[i].m_dmamap);
 		if (error == 0) {
 			error = bus_dmamap_create(sc->tl_dmatag, MCLBYTES,
-			    TL_NSEG, MCLBYTES, 0,
+			    TL_NSEG, MCLBYTES, boundary,
 			    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 			    &sc->Tx_list[i].m_dmamap);
 		}
