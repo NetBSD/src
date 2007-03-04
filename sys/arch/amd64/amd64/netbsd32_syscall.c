@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.16 2007/03/04 05:59:12 christos Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.17 2007/03/04 14:36:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.16 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.17 2007/03/04 14:36:12 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -79,7 +79,7 @@ void
 netbsd32_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	void *params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -95,7 +95,7 @@ netbsd32_syscall_plain(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (void *)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -167,7 +167,7 @@ void
 netbsd32_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	void *params;
+	char *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -187,7 +187,7 @@ netbsd32_syscall_fancy(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (void *)frame->tf_rsp + sizeof(int);
+	params = (char *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
