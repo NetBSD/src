@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.29 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: fss.c,v 1.29.2.1 2007/03/04 14:26:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.29 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.29.2.1 2007/03/04 14:26:51 bouyer Exp $");
 
 #include "fss.h"
 
@@ -1085,7 +1085,9 @@ fss_bs_thread(void *arg)
 				bp->b_error = error;
 				bp->b_flags |= B_ERROR;
 				bp->b_resid = bp->b_bcount;
-			}
+			} else
+				bp->b_resid = 0;
+
 			biodone(bp);
 
 			continue;
