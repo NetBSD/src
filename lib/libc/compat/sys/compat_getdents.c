@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getdents.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_getdents.c,v 1.1.4.1 2007/03/04 14:28:42 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getdents.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_getdents.c,v 1.1.4.1 2007/03/04 14:28:42 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -73,7 +73,8 @@ getdents(int fd, char *buf, size_t nbytes)
 	 */
 	for (; ndp < endp; ndp = nndp) {
 		nndp = _DIRENT_NEXT(ndp);
-		odp->d_ino = (u_int32_t)ndp->d_ino;
+		/* XXX: avoid unaligned 64-bit access on sparc64 */
+		odp->d_ino = ((u_int32_t *)(void *)&ndp->d_ino)[_QUAD_LOWWORD];
 		if (ndp->d_namlen >= sizeof(odp->d_name))
 			odp->d_namlen = sizeof(odp->d_name) - 1;
 		else
