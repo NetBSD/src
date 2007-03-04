@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.57 2006/10/30 01:21:53 christos Exp $	*/
+/*	$NetBSD: tape.c,v 1.57.2.1 2007/03/04 14:22:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.57 2006/10/30 01:21:53 christos Exp $");
+__RCSID("$NetBSD: tape.c,v 1.57.2.1 2007/03/04 14:22:25 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,6 @@ static const char *host = NULL;
 #endif
 
 static int	ofile;
-static char	*map;
 static char	lnkbuf[MAXPATHLEN + 1];
 static int	pathlen;
 
@@ -157,6 +156,7 @@ static void	 accthdr(struct s_spcl *);
 static int	 checksum(int *);
 static void	 findinode(struct s_spcl *);
 static void	 findtapeblksize(void);
+static void	 getbitmap(char **);
 static int	 gethead(struct s_spcl *);
 static void	 readtape(char *);
 static void	 setdumpnum(void);
@@ -164,8 +164,6 @@ static void	 terminateinput(void);
 static void	 xtrfile(char *, long);
 static void	 xtrlnkfile(char *, long);
 static void	 xtrlnkskip(char *, long);
-static void	 xtrmap(char *, long);
-static void	 xtrmapskip(char *, long);
 static void	 xtrskip(char *, long);
 static void	 swap_header(struct s_spcl *);
 static void	 swap_old_header(struct s_ospcl *);
@@ -324,24 +322,8 @@ setup(void)
 		fprintf(stderr, "Cannot find file removal list\n");
 		exit(1);
 	}
-	maxino = (spcl.c_count * TP_BSIZE * NBBY) + 1;
-	dprintf(stdout, "maxino = %llu\n", (unsigned long long)maxino);
-	map = calloc((unsigned)1, (unsigned)howmany(maxino, NBBY));
-	if (map == NULL)
-		panic("no memory for active inode map\n");
-	usedinomap = map;
-	curfile.action = USING;
-	getfile(xtrmap, xtrmapskip);
-	if (spcl.c_type != TS_BITS) {
-		fprintf(stderr, "Cannot find file dump list\n");
-		exit(1);
-	}
-	map = calloc((unsigned)1, (unsigned)howmany(maxino, NBBY));
-	if (map == (char *)NULL)
-		panic("no memory for file dump list\n");
-	dumpmap = map;
-	curfile.action = USING;
-	getfile(xtrmap, xtrmapskip);
+	getbitmap(&usedinomap);
+	getbitmap(&dumpmap);
 	/*
 	 * If there may be whiteout entries on the tape, pretend that the
 	 * whiteout inode exists, so that the whiteout entries can be
@@ -805,6 +787,53 @@ skipfile(void)
 }
 
 /*
+ * Extract a bitmap from the tape.
+ * The first bitmap sets maxino;
+ * other bitmaps must be of same size.
+ */
+void
+getbitmap(char **map)
+{
+	int i;
+	size_t volatile size = spcl.c_size;
+	size_t volatile mapsize = size;
+	char *mapptr;
+
+	curfile.action = USING;
+	if (spcl.c_type == TS_END)
+		panic("ran off end of tape\n");
+	if (spcl.c_magic != FS_UFS2_MAGIC)
+		panic("not at beginning of a file\n");
+	if (!gettingfile && setjmp(restart) != 0)
+		return;
+	gettingfile++;
+	mapptr = *map = malloc(size);
+loop:
+	if (*map == NULL)
+		panic("no memory for %s\n", curfile.name);
+	for (i = 0; i < spcl.c_count && size >= TP_BSIZE; i++) {
+		readtape(mapptr);
+		mapptr += TP_BSIZE;
+		size -= TP_BSIZE;
+	}
+	if (size != 0 || i != spcl.c_count)
+		panic("%s: inconsistent map size\n", curfile.name);
+	if (gethead(&spcl) == GOOD && spcl.c_type == TS_ADDR) {
+		size = spcl.c_count * TP_BSIZE;
+		*map = realloc(*map, mapsize + size);
+		mapptr = *map + mapsize;
+		mapsize += size;
+		goto loop;
+	}
+	if (maxino == 0)
+		maxino = mapsize * NBBY + 1;
+	else if (maxino != mapsize * NBBY + 1)
+		panic("%s: map size changed\n", curfile.name);
+	findinode(&spcl);
+	gettingfile = 0;
+}
+
+/*
  * Extract a file from the tape.
  * When an allocated block is found it is passed to the fill function;
  * when an unallocated block (hole) is found, a zeroed buffer is passed
@@ -835,8 +864,7 @@ getfile(void (*fill)(char *buf, long size),
 	gettingfile++;
 loop:
 	for (i = 0; i < spcl.c_count; i++) {
-		if (spcl.c_type == TS_BITS || spcl.c_type == TS_CLRI ||
-		    spcl.c_addr[i]) {
+		if (spcl.c_addr[i]) {
 			readtape(&buf[curblk++][0]);
 			if (curblk == fssize / TP_BSIZE) {
 				(*fill)((char *)buf, (long)(size > TP_BSIZE ?
@@ -854,21 +882,9 @@ loop:
 				TP_BSIZE : size));
 		}
 		if ((size -= TP_BSIZE) <= 0) {
-			if (spcl.c_type == TS_BITS || spcl.c_type == TS_CLRI) {
-				/*
-				 * In this case, the following expression
-				 * should always be false since the size was
-				 * initially set to spcl.c_size and
-				 * it is initialized to spcl.c_count * TP_BSIZE
-				 * in gethead().
-				 */
-				if (!(size == 0 && i == spcl.c_count - 1))
-					panic("inconsistent map size\n");
-			} else {
-				for (i++; i < spcl.c_count; i++)
-					if (spcl.c_addr[i])
-						readtape(junk);
-			}
+			for (i++; i < spcl.c_count; i++)
+				if (spcl.c_addr[i])
+					readtape(junk);
 			break;
 		}
 	}
@@ -953,29 +969,6 @@ xtrlnkskip(char *buf, long size)
 	fprintf(stderr, "unallocated block in symbolic link %s\n",
 		curfile.name);
 	exit(1);
-}
-
-/*
- * Collect the next block of a bit map.
- */
-static void
-xtrmap(char *buf, long size)
-{
-
-	memmove(map, buf, size);
-	map += size;
-}
-
-/*
- * Skip over a hole in a bit map (should never happen).
- */
-/* ARGSUSED */
-static void
-xtrmapskip(char *buf, long size)
-{
-
-	panic("hole in map\n");
-	map += size;
 }
 
 /*
