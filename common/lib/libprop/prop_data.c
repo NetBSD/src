@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.5 2006/10/18 14:41:08 martin Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.6 2007/03/04 22:31:43 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -497,12 +497,15 @@ _prop_data_internalize_decode(struct _prop_object_internalize_context *ctx,
 			 * We know this char is a =.  Is there anything but
 			 * whitespace after it?
 			 */
-			for (; ch != '<'; ch = (unsigned char) *src++) {
+			for (ch = (unsigned char) *src++;
+			     ch != '<'; ch = (unsigned char) *src++) {
 				if (_PROP_EOF(ch))
 					return (FALSE);
 				if (!_PROP_ISSPACE(ch))
 					return (FALSE);
 			}
+			/* back up to '<' */
+			src--;
 		}
 	} else {
 		/*
