@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.86 2007/03/04 12:37:31 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.87 2007/03/04 14:29:54 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1745,4 +1745,62 @@ sys/dev/pci/radeonfbvar.h			1.4
 
 	don't hardcode inverted backlight levels needed on some macppc models
 	[macallan, ticket #477]
+
+sys/dev/ic/tulip.c				1.148
+sys/dev/pci/if_tl.c				1.78-1.80
+
+	Make the ThunderLAN part of the Set Engineering GIO board for
+	sgimips (IP22) work.
+	Extract mac addresses on Phobos G100 boards.
+	[rumble, ticket #478]
+
+share/man/man9/in_getifa.9			1.3
+sys/netinet/in_selsrc.c				1.4-1.5
+
+	Add net.inet.ip.selectsrc.default even if GETIFA_DEBUG is not
+	#define'd.
+	Reverse sense of preference numbers: prefer source addresses with
+	higher preference numbers.
+	[dyoung, ticket #481]
+
+distrib/sets/lists/base/md.prep			1.13
+distrib/sets/lists/comp/md.prep			1.22
+distrib/sets/lists/man/mi			1.978
+etc/etc.prep/MAKEDEV.conf			1.5
+etc/mtree/NetBSD.dist				1.333
+share/man/man4/Makefile				1.421
+share/man/man4/man4.prep/Makefile		1.1
+share/man/man4/man4.prep/intro.4		1.1
+share/man/man4/man4.prep/nvram.4		1.1
+sys/arch/prep/conf/majors.prep			1.19
+sys/arch/prep/include/Makefile			1.19
+sys/arch/prep/include/nvram.h			1.3
+sys/arch/prep/pnpbus/nvram_pnpbus.c		1.6
+usr.sbin/eeprom/Makefile			1.14
+usr.sbin/eeprom/defs.h				1.10
+usr.sbin/eeprom/eeprom.8			1.12
+usr.sbin/eeprom/main.c				1.17
+usr.sbin/eeprom/pathnames.h			1.3
+usr.sbin/eeprom/prephandlers.c			1.1
+
+	Finish the code in the prep nvram driver that makes it an actual
+	device (/dev/nvram) and implement all the associated ioctls fully.
+	Tested with a hacked up copy of eeprom(8).  Right now it can only
+	be used to see the nvram GEV contents, not actually edit them.
+	[garbled, ticket #482]
+
+sbin/restore/tape.c				1.59 via patch
+
+	Add support for Solaris ufsdump volumes with more than 512*1024 inodes.
+	[hannken, ticket #483]
+
+sys/dev/fss.c					1.30 via patch
+
+	Initialize resid to prevent a kernel assertion on DEBUG-enabled kernels.
+	[hannken, ticket #484]
+
+lib/libc/compat/sys/compat_getdents.c		1.2
+
+	PR lib/34210: Avoid bus error (unaligned 64-bit access) on sparc64.
+	[nakayama, ticket #485]
 
