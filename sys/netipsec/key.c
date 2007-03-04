@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.39 2007/03/04 19:54:49 degroote Exp $	*/
+/*	$NetBSD: key.c,v 1.40 2007/03/04 21:17:55 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.39 2007/03/04 19:54:49 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.40 2007/03/04 21:17:55 degroote Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -318,7 +318,7 @@ MALLOC_DEFINE(M_SECA, "key mgmt", "security associations, key management");
 #define KMALLOC(p, t, n)                                                     \
 	((p) = (t) malloc((unsigned long)(n), M_SECA, M_NOWAIT))
 #define KFREE(p)                                                             \
-	free((void *)(p), M_SECA)
+	free((p), M_SECA)
 #else
 #define KMALLOC(p, t, n) \
 do { \
@@ -330,7 +330,7 @@ do { \
 #define KFREE(p)                                                             \
 	do {                                                                 \
 		printf("%s %d: %p -> KFREE()\n", __FILE__, __LINE__, (p));   \
-		free((void *)(p), M_SECA);                                  \
+		free((p), M_SECA);                                  \
 	} while (0)
 #endif
 
@@ -2868,7 +2868,7 @@ key_newsav(m, mhp, sah, errp, where, tag)
 		*errp = ENOBUFS;
 		goto done;
 	}
-	bzero((void *)newsav, sizeof(struct secasvar));
+	bzero(newsav, sizeof(struct secasvar));
 
 	switch (mhp->msg->sadb_msg_type) {
 	case SADB_GETSPI:
@@ -3148,7 +3148,7 @@ key_setsaval(sav, m, mhp)
 				goto fail;
 			}
 			if (sa0->sadb_sa_replay != 0)
-				sav->replay->bitmap = (void *)(sav->replay+1);
+				sav->replay->bitmap = (char*)(sav->replay+1);
 			sav->replay->wsize = sa0->sadb_sa_replay;
 		}
 	}
@@ -4485,7 +4485,7 @@ key_timehandler(void* arg)
 
 #ifndef IPSEC_DEBUG2
 	/* do exchange to tick time !! */
-	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
+	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
 #endif /* IPSEC_DEBUG2 */
 
 	splx(s);
@@ -6292,7 +6292,7 @@ key_register(so, m, mhp)
 		ipseclog((LOG_DEBUG, "key_register: No more memory.\n"));
 		return key_senderror(so, m, ENOBUFS);
 	}
-	bzero((void *)newreg, sizeof(*newreg));
+	bzero(newreg, sizeof(*newreg));
 
 	newreg->so = so;
 	((struct keycb *)sotorawcb(so))->kp_registered++;
@@ -7389,7 +7389,7 @@ key_init()
 
 
 #ifndef IPSEC_DEBUG2
-	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
+	callout_reset(&key_timehandler_ch, hz, key_timehandler, NULL);
 #endif /*IPSEC_DEBUG2*/
 
 	/* initialize key statistics */
