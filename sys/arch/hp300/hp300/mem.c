@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.45 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.46 2007/03/04 12:02:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.45 2007/03/04 05:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.46 2007/03/04 12:02:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((void *)vmmap + o, c, uio);
+			error = uiomove(vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -174,9 +174,9 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			 * corruption of device registers.
 			 */
 			if (ISIIOVA(v) ||
-			    ((void *)v >= extiobase &&
-			    (void *)v <
-			    (extiobase + (EIOMAPSIZE * PAGE_SIZE))))
+			    (v >= (vaddr_t)extiobase &&
+			    v < ((vaddr_t)extiobase +
+			    (EIOMAPSIZE * PAGE_SIZE))))
 				return EFAULT;
 
 			error = uiomove((void *)v, c, uio);
@@ -209,7 +209,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		if (error)
 			break;
-		iov->iov_base = (void *)iov->iov_base + c;
+		iov->iov_base = (char *)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
