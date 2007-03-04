@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.95 2007/02/26 13:38:09 drochner Exp $	*/
+/*	$NetBSD: usb.c,v 1.96 2007/03/04 06:02:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.95 2007/02/26 13:38:09 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.96 2007/03/04 06:02:50 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -531,7 +531,7 @@ usbclose(dev_t dev, int flag, int mode,
 }
 
 int
-usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct lwp *l)
+usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct usb_softc *sc;
 	int unit = minor(devt);
@@ -594,7 +594,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		    sc->sc_bus->devices[addr] == 0)
 			return (EINVAL);
 		if (len != 0) {
-			iov.iov_base = (caddr_t)ur->ucr_data;
+			iov.iov_base = (void *)ur->ucr_data;
 			iov.iov_len = len;
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;

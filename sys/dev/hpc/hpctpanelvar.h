@@ -1,4 +1,4 @@
-/*	$NetBSD: hpctpanelvar.h,v 1.2 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: hpctpanelvar.h,v 1.3 2007/03/04 06:01:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,5 +38,5 @@
 
 #include <dev/wscons/tpcalibvar.h>
 
-int	hpc_tpanel_ioctl(struct tpcalib_softc *, u_long, caddr_t, int,
+int	hpc_tpanel_ioctl(struct tpcalib_softc *, u_long, void *, int,
 	    struct lwp *);

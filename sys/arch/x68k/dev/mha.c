@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.42 2007/01/08 10:06:29 isaki Exp $	*/
+/*	$NetBSD: mha.c,v 1.43 2007/03/04 06:01:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.42 2007/01/08 10:06:29 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.43 2007/03/04 06:01:06 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -803,7 +803,7 @@ mha_poll(struct mha_softc *sc, struct acb *acb)
 
 	if (count == 0) {
 		SPC_MISC(("mha_poll: timeout"));
-		mha_timeout((caddr_t)acb);
+		mha_timeout((void *)acb);
 	}
 	splx(s);
 	scsipi_done(xs);

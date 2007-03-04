@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.59 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: auvia.c,v 1.60 2007/03/04 06:02:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.59 2007/02/21 23:00:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.60 2007/03/04 06:02:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.59 2007/02/21 23:00:00 thorpej Exp $");
 
 struct auvia_dma {
 	struct auvia_dma *next;
-	caddr_t addr;
+	void *addr;
 	size_t size;
 	bus_dmamap_t map;
 	bus_dma_segment_t seg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.52 2007/02/15 18:12:05 ad Exp $	*/
+/*	$NetBSD: midi.c,v 1.53 2007/03/04 06:01:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.52 2007/02/15 18:12:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.53 2007/03/04 06:01:42 christos Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1561,7 +1561,7 @@ midi_writebytes(int unit, u_char *bf, int cc)
 }
 
 int
-midiioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];

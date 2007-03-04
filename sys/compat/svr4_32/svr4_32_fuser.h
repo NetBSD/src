@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fuser.h,v 1.1 2001/02/06 16:37:57 eeh Exp $	 */
+/*	$NetBSD: svr4_32_fuser.h,v 1.2 2007/03/04 06:01:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -43,6 +43,6 @@
 #include <compat/svr4_32/svr4_32_types.h>
 #include <compat/svr4/svr4_fuser.h>
 
-typedef netbsd32_caddr_t svr4_f_user_tp;
+typedef netbsd32_void *svr4_f_user_tp;
 
 #endif /* !_SVR4_32_FUSER_H_ */

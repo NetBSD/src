@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1 2007/02/17 00:28:25 daniel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.2 2007/03/04 06:01:09 christos Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -47,9 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1 2007/02/17 00:28:25 daniel Exp $
 int	via_padlock_crypto_newsession(void *, u_int32_t *, struct cryptoini *);
 int	via_padlock_crypto_process(void *, struct cryptop *, int);
 int	via_padlock_crypto_swauth(struct cryptop *, struct cryptodesc *,
-	    struct swcr_data *, caddr_t);
+	    struct swcr_data *, void *);
 int	via_padlock_crypto_encdec(struct cryptop *, struct cryptodesc *,
-	    struct via_padlock_session *, struct via_padlock_softc *, caddr_t);
+	    struct via_padlock_session *, struct via_padlock_softc *, void *);
 int	via_padlock_crypto_freesession(void *, u_int64_t);
 static	__inline void via_padlock_cbc(void *, void *, void *, void *, int,
 	    void *);
@@ -314,7 +314,7 @@ via_padlock_cbc(void *cw, void *src, void *dst, void *key, int rep,
 
 int
 via_padlock_crypto_swauth(struct cryptop *crp, struct cryptodesc *crd,
-    struct swcr_data *sw, caddr_t buf)
+    struct swcr_data *sw, void *buf)
 {
 	int	type;
 
@@ -328,7 +328,7 @@ via_padlock_crypto_swauth(struct cryptop *crp, struct cryptodesc *crd,
 
 int
 via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
-    struct via_padlock_session *ses, struct via_padlock_softc *sc, caddr_t buf)
+    struct via_padlock_session *ses, struct via_padlock_softc *sc, void *buf)
 {
 	u_int32_t *key;
 	int err = 0;

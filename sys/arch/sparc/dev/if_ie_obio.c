@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.34 2007/02/22 16:48:59 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.35 2007/03/04 06:00:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.34 2007/02/22 16:48:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_obio.c,v 1.35 2007/03/04 06:00:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,7 @@ ie_obio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, memsize,
-				    (caddr_t *)&sc->sc_maddr,
+				    (void **)&sc->sc_maddr,
 				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			sc->sc_dev.dv_xname, error);

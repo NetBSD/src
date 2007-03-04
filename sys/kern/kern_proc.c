@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.105 2007/02/26 09:20:53 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.106 2007/03/04 06:03:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.105 2007/02/26 09:20:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.106 2007/03/04 06:03:05 christos Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1183,7 +1183,7 @@ kstack_setup_magic(const struct lwp *l)
 	 * so that later modification on it can be detected.
 	 */
 	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	end = (uint32_t *)((void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++) {
 		*ip = KSTACK_MAGIC;
 	}
@@ -1203,17 +1203,17 @@ kstack_check_magic(const struct lwp *l)
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/* stack grows upwards (eg. hppa) */
-	ip = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	ip = (uint32_t *)((void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	end = (uint32_t *)KSTACK_LOWEST_ADDR(l);
 	for (ip--; ip >= end; ip--)
 		if (*ip != KSTACK_MAGIC)
 			break;
 
-	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (caddr_t)ip;
+	stackleft = (void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (void *)ip;
 #else /* __MACHINE_STACK_GROWS_UP */
 	/* stack grows downwards (eg. i386) */
 	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	end = (uint32_t *)((void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++)
 		if (*ip != KSTACK_MAGIC)
 			break;

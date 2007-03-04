@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.121 2007/02/22 06:05:02 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.122 2007/03/04 06:03:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.121 2007/02/22 06:05:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.122 2007/03/04 06:03:49 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -1183,7 +1183,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	struct vnode	*vp;
 	struct vndxfer	*vnx;
 	daddr_t		nbn;
-	caddr_t		addr;
+	char 		*addr;
 	off_t		byteoff;
 	int		s, off, nra, error, sz, resid;
 	UVMHIST_FUNC("sw_reg_strategy"); UVMHIST_CALLED(pdhist);
@@ -1680,7 +1680,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
-	bp->b_data = (caddr_t)kva;
+	bp->b_data = (void *)kva;
 	bp->b_blkno = startblk;
 	bp->b_vp = swapdev_vp;
 	bp->b_bufsize = bp->b_bcount = npages << PAGE_SHIFT;

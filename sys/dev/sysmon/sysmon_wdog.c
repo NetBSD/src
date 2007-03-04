@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.17 2007/02/19 06:08:37 ad Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.18 2007/03/04 06:02:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.17 2007/02/19 06:08:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.18 2007/03/04 06:02:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -151,7 +151,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode,
  *	Perform a watchdog control request.
  */
 int
-sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag,
+sysmonioctl_wdog(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct sysmon_wdog *smw;

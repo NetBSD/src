@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.6 2007/02/18 21:10:32 ad Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.7 2007/03/04 05:59:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,7 +45,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6 2007/02/18 21:10:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.7 2007/03/04 05:59:36 christos Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -230,7 +230,7 @@ compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
 	 * program jumps out of a signal handler.
 	 */
 	scp = SCARG(uap, sigcntxp);
-	if (copyin((caddr_t)scp, &context, sizeof(*scp)) != 0)
+	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
 		return (EFAULT);
 
 	/*

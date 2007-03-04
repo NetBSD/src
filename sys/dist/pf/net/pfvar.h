@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.13 2006/12/04 02:58:06 dyoung Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.14 2007/03/04 06:02:59 christos Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
 
 /*
@@ -1216,7 +1216,7 @@ struct pfioc_state_kill {
 struct pfioc_states {
 	int	ps_len;
 	union {
-		caddr_t		 psu_buf;
+		void *		 psu_buf;
 		struct pf_state	*psu_states;
 	} ps_u;
 #define ps_buf		ps_u.psu_buf
@@ -1226,7 +1226,7 @@ struct pfioc_states {
 struct pfioc_src_nodes {
 	int	psn_len;
 	union {
-		caddr_t		 psu_buf;
+		void *		 psu_buf;
 		struct pf_src_node	*psu_src_nodes;
 	} psn_u;
 #define psn_buf		psn_u.psu_buf

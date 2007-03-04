@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.54 2007/02/17 05:31:39 dyoung Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.55 2007/03/04 06:03:20 christos Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.54 2007/02/17 05:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.55 2007/03/04 06:03:20 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -368,7 +368,7 @@ gif_encapcheck4(struct mbuf *m, int off, int proto, void *arg)
 	/* sanity check done in caller */
 	sc = (struct gif_softc *)arg;
 
-	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (void *)&ip);
 	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
 
 	return gif_validate4(&ip, sc, ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.10 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.11 2007/03/04 06:02:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.10 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.11 2007/03/04 06:02:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,7 +467,7 @@ umodem_param(void *addr, int portno, struct termios *t)
 }
 
 int
-umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data,
+umodem_ioctl(void *addr, int portno, u_long cmd, void *data,
     int flag, usb_proc_ptr p)
 {
 	struct umodem_softc *sc = addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.25 2007/02/17 05:01:47 dyoung Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.26 2007/03/04 06:03:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.25 2007/02/17 05:01:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.26 2007/03/04 06:03:31 christos Exp $");
 
 #include "opt_iso.h"
 
@@ -149,9 +149,9 @@ clnp_data_ck(
  *
  * NOTES:
  */
-caddr_t
+void *
 clnp_extract_addr(
-	caddr_t         bufp,	/* ptr to buffer containing addresses */
+	void *        bufp,	/* ptr to buffer containing addresses */
 	int             buflen,	/* length of buffer */
 	struct iso_addr *srcp,	/* ptr to source address buffer */
 	struct iso_addr *destp)	/* ptr to destination address
@@ -163,10 +163,10 @@ clnp_extract_addr(
 	 * check that we have enough data. Plus1 is for length octet
 	 */
 	if ((u_char) * bufp + 1 > buflen) {
-		return ((caddr_t) 0);
+		return ((void *) 0);
 	}
 	len = destp->isoa_len = (u_char) * bufp++;
-	(void) bcopy(bufp, (caddr_t) destp, len);
+	(void) bcopy(bufp, (void *) destp, len);
 	buflen -= len;
 	bufp += len;
 
@@ -174,10 +174,10 @@ clnp_extract_addr(
 	 * check that we have enough data. Plus1 is for length octet
 	 */
 	if ((u_char) * bufp + 1 > buflen) {
-		return ((caddr_t) 0);
+		return ((void *) 0);
 	}
 	len = srcp->isoa_len = (u_char) * bufp++;
-	(void) bcopy(bufp, (caddr_t) srcp, len);
+	(void) bcopy(bufp, (void *) srcp, len);
 	bufp += len;
 
 	/*
@@ -186,7 +186,7 @@ clnp_extract_addr(
 	if (iso_ck_addr(srcp) && iso_ck_addr(destp))
 		return bufp;
 	else
-		return (caddr_t) 0;
+		return (void *) 0;
 }
 #endif				/* notdef */
 
@@ -221,8 +221,8 @@ clnp_ours(
 		 * We are overloading siso_tlen in the if's address, as an nsel length.
 		 */
 		if (dst->isoa_len == ia->ia_addr.siso_nlen &&
-		    bcmp((caddr_t) ia->ia_addr.siso_addr.isoa_genaddr,
-			 (caddr_t) dst->isoa_genaddr,
+		    bcmp((void *) ia->ia_addr.siso_addr.isoa_genaddr,
+			 (void *) dst->isoa_genaddr,
 			 ia->ia_addr.siso_nlen - ia->ia_addr.siso_tlen) == 0)
 			return 1;
 	}
@@ -266,7 +266,7 @@ clnp_forward(
 	extern int      iso_systype;
 
 	clnp = mtod(m, struct clnp_fixed *);
-	bzero((caddr_t) & route, sizeof(route));	/* MUST be done before
+	bzero((void *) & route, sizeof(route));	/* MUST be done before
 							 * "bad:" */
 
 	/*
@@ -372,7 +372,7 @@ clnp_forward(
 		}
 #endif
 		if ((oidx) && (oidx->cni_qos_formatp)) {
-			caddr_t         qosp = CLNP_OFFTOOPT(m, oidx->cni_qos_formatp);
+			char *         qosp = CLNP_OFFTOOPT(m, oidx->cni_qos_formatp);
 			u_char          qos = *qosp;
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_FORWARD]) {
@@ -417,18 +417,18 @@ done:
  *
  * NOTES:			Assume that there is enough space for the address part.
  */
-caddr_t
+void *
 clnp_insert_addr(
-	caddr_t         bufp,	/* address of where addr part goes */
+	void *        bufp,	/* address of where addr part goes */
 	struct iso_addr *srcp,	/* ptr to src addr */
 	struct iso_addr *dstp)	/* ptr to dst addr */
 {
 	*bufp++ = dstp->isoa_len;
-	(void) bcopy((caddr_t) dstp, bufp, dstp->isoa_len);
+	(void) bcopy((void *) dstp, bufp, dstp->isoa_len);
 	bufp += dstp->isoa_len;
 
 	*bufp++ = srcp->isoa_len;
-	(void) bcopy((caddr_t) srcp, bufp, srcp->isoa_len);
+	(void) bcopy((void *) srcp, bufp, srcp->isoa_len);
 	bufp += srcp->isoa_len;
 
 	return bufp;
@@ -664,11 +664,11 @@ clnp_badmtu(
  */
 void
 clnp_ypocb(
-	caddr_t         from,	/* src buffer */
-	caddr_t         to,	/* dst buffer */
+	void *        from,	/* src buffer */
+	void *        to,	/* dst buffer */
 	u_int           len)	/* number of bytes */
 {
 	while (len--)
-		*(to + len) = *(from + len);
+		*((char *)to + len) = *((char *)from + len);
 }
 #endif				/* ISO */

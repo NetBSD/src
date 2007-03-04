@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.14 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.15 2007/03/04 06:01:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct cac_softc {
 	bus_dmamap_t		sc_dmamap;
 	int			sc_nunits;
 	void			*sc_ih;
-	caddr_t			sc_ccbs;
+	void *			sc_ccbs;
 	paddr_t			sc_ccbs_paddr;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_free;
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_queue;

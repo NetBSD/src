@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.241 2007/02/27 15:07:28 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.242 2007/03/04 06:03:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -619,7 +619,7 @@ void kstack_check_magic(const struct lwp *);
  */
 /* the lowest address of kernel stack */
 #ifndef KSTACK_LOWEST_ADDR
-#define	KSTACK_LOWEST_ADDR(l)	((caddr_t)ALIGN((l)->l_addr + 1))
+#define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((l)->l_addr + 1))
 #endif
 /* size of kernel stack */
 #ifndef KSTACK_SIZE

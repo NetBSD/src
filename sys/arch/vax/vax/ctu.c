@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.23 2005/12/11 12:19:36 christos Exp $ */
+/*	$NetBSD: ctu.c,v 1.24 2007/03/04 06:00:58 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.23 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.24 2007/03/04 06:00:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ ctuopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	tu_sc.sc_step = 0;
 	mtpr(0100, PR_CSRS);	/* Enable receive interrupt */
 	mtpr(0101, PR_CSTS);	/* Enable transmit interrupt + send break */
-	if ((error = tsleep((caddr_t)&tu_sc, (PZERO + 10)|PCATCH, "reset", 0)))
+	if ((error = tsleep((void *)&tu_sc, (PZERO + 10)|PCATCH, "reset", 0)))
 		return error;
 	
 #ifdef TUDEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.6 2006/09/24 03:54:00 jmcneill Exp $	*/
+/*	$NetBSD: dbri.c,v 1.7 2007/03/04 06:02:40 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.6 2006/09/24 03:54:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.7 2007/03/04 06:02:40 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1689,7 +1689,7 @@ dbri_trigger_output(void *hdl, void *start, void *end, int blksize,
 	struct dbri_softc *sc = hdl;
 	unsigned long count, current, num;
 
-	count = (unsigned long)(((caddr_t)end - (caddr_t)start));
+	count = (unsigned long)(((void *)end - (void *)start));
 	num = count / blksize;
 
 	DPRINTF(("trigger_output(%lx %lx) : %d %ld %ld\n",

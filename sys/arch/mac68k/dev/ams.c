@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.17 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: ams.c,v 1.18 2007/03/04 06:00:07 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.17 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.18 2007/03/04 06:00:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,7 +80,7 @@ CFATTACH_DECL(ams, sizeof(struct ams_softc),
 extern struct cfdriver ams_cd;
 
 int ams_enable(void *);
-int ams_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int ams_ioctl(void *, u_long, void *, int, struct lwp *);
 void ams_disable(void *);
 
 const struct wsmouse_accessops ams_accessops = {
@@ -122,7 +122,7 @@ amsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_devid[4] = 0;
 
 	adbinfo.siServiceRtPtr = (Ptr)adb_ms_asmcomplete;
-	adbinfo.siDataAreaAddr = (caddr_t)sc;
+	adbinfo.siDataAreaAddr = (void *)sc;
 
 	ems_init(sc);
 
@@ -384,7 +384,7 @@ ems_init(struct ams_softc *sc)
  * an ADB event record.
  */
 void 
-ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
+ms_adbcomplete(void *buffer, void *data_area, int adb_command)
 {
 	adb_event_t event;
 	struct ams_softc *amsc;
@@ -519,7 +519,7 @@ ams_enable(void *v)
 }
 
 int
-ams_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ams_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	return (EPASSTHROUGH);
 }

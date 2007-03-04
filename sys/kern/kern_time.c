@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.115 2007/02/22 06:34:44 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.116 2007/03/04 06:03:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.115 2007/02/22 06:34:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.116 2007/03/04 06:03:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -356,7 +356,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		if (rmt.tv_sec < 0)
 			timespecclear(&rmt);
 
-		error1 = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
+		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
 			sizeof(rmt));
 		if (error1)
 			return (error1);
@@ -409,7 +409,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 			timerclear(&utv);
 
 		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
-		error1 = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
+		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
 			sizeof(rmt));
 		if (error1)
 			return (error1);

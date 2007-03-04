@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.71 2007/02/15 18:33:26 reinoud Exp $	*/
+/*	$NetBSD: fd.c,v 1.72 2007/03/04 06:02:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.71 2007/02/15 18:33:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2007/03/04 06:02:10 christos Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1065,7 +1065,7 @@ loop:
 #endif
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 		isa_dmastart(fdc->sc_ic, fdc->sc_drq,
-		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
+		    (char *)bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    NULL, read | DMAMODE_DEMAND, BUS_DMA_NOWAIT);
 		bus_space_write_1(iot, fdc->sc_fdctlioh, 0, type->rate);
 #ifdef FD_DEBUG
@@ -1298,7 +1298,7 @@ int
 fdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct lwp *l;
 {
@@ -1532,7 +1532,7 @@ fdformat(dev, finfo, l)
 		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
-	bp->b_data = (caddr_t)finfo;
+	bp->b_data = (void *)finfo;
 
 #ifdef DEBUG
 	printf("fdformat: blkno %" PRIx64 " count %x\n",

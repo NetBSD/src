@@ -1,4 +1,4 @@
-/*	$NetBSD: mips.c,v 1.3 2000/01/16 03:07:32 takemura Exp $	*/
+/*	$NetBSD: mips.c,v 1.4 2007/03/04 05:59:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -41,7 +41,7 @@
 int dummy_buf[DUMMYBUFSIZE];
 
 int
-mips_boot(caddr_t map)
+mips_boot(void *map)
 {
 	unsigned char *mem;
 	unsigned long jump_instruction, phys_mem;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ustat.h,v 1.1 2001/02/06 16:38:00 eeh Exp $	 */
+/*	$NetBSD: svr4_32_ustat.h,v 1.2 2007/03/04 06:01:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,6 +47,6 @@ struct svr4_32_ustat {
 	char		f_fname[6];
 	char		f_fpack[6];
 };
-typedef netbsd32_caddr_t svr4_32_ustatp;
+typedef netbsd32_void *svr4_32_ustatp;
 
 #endif /* !_SVR4_32_USTAT_H_ */

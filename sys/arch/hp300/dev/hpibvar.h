@@ -1,4 +1,4 @@
-/*	$NetBSD: hpibvar.h,v 1.17 2005/12/11 12:17:14 christos Exp $	*/
+/*	$NetBSD: hpibvar.h,v 1.18 2007/03/04 05:59:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ struct hpibbus_softc {
 #define	HPIBF_DMA16	0x8000
 
 #ifdef _KERNEL
-extern	caddr_t internalhpib;
+extern	void *internalhpib;
 extern	int hpibtimeout;
 extern	int hpibdmathresh;
 

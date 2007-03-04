@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.39 2007/02/22 05:39:44 thorpej Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.40 2007/03/04 05:59:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.39 2007/02/22 05:39:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.40 2007/03/04 05:59:54 christos Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -155,7 +155,7 @@ STATIC void hd64461video_dump(void) __attribute__((__unused__));
 CFATTACH_DECL(hd64461video, sizeof(struct hd64461video_softc),
     hd64461video_match, hd64461video_attach, NULL, NULL);
 
-STATIC int hd64461video_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+STATIC int hd64461video_ioctl(void *, u_long, void *, int, struct lwp *);
 STATIC paddr_t hd64461video_mmap(void *, off_t, int);
 
 #ifdef HD64461VIDEO_HWACCEL
@@ -419,7 +419,7 @@ hd64461video_hwaccel_init(struct hd64461video_chip *hvc)
 
 /* hpcfb ops */
 STATIC int
-hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+hd64461video_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct hd64461video_softc *sc = (struct hd64461video_softc *)v;
 	struct hpcfb_fbconf *hf = &sc->sc_vc->hf;

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.33 2007/02/09 21:55:04 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.34 2007/03/04 05:59:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2007/03/04 05:59:57 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -671,7 +671,7 @@ cpu_copy_trampoline()
 	pmap_kenter_pa((vaddr_t)MP_TRAMPOLINE,	/* virtual */
 	    (paddr_t)MP_TRAMPOLINE,	/* physical */
 	    VM_PROT_ALL);		/* protection */
-	memcpy((caddr_t)MP_TRAMPOLINE,
+	memcpy((void *)MP_TRAMPOLINE,
 	    cpu_spinup_trampoline,
 	    cpu_spinup_trampoline_end-cpu_spinup_trampoline);
 }

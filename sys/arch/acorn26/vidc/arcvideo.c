@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.10 2006/04/12 19:38:22 jmmv Exp $ */
+/* $NetBSD: arcvideo.c,v 1.11 2007/03/04 05:59:05 christos Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.10 2006/04/12 19:38:22 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.11 2007/03/04 05:59:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -72,7 +72,7 @@ static int arcvideo_setmode(struct device *self, struct arcvideo_mode *mode);
 static void arcvideo_await_vsync(struct device *self);
 #endif
 static int arcvideo_intr(void *cookie);
-static int arcvideo_ioctl(void *cookie, void *vs, u_long cmd, caddr_t data,
+static int arcvideo_ioctl(void *cookie, void *vs, u_long cmd, void *data,
 			       int flag, struct lwp *l);
 static paddr_t arcvideo_mmap(void *cookie, void *vs, off_t off, int prot);
 static int arcvideo_alloc_screen(void *cookie, const struct wsscreen_descr *scr,
@@ -392,7 +392,7 @@ arccons_8bpp_hack(struct rasops_info *ri)
 /* wsdisplay access functions */
 
 static int
-arcvideo_ioctl(void *cookie, void *vs, u_long cmd, caddr_t data, int flag,
+arcvideo_ioctl(void *cookie, void *vs, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct arcvideo_softc *sc = cookie;

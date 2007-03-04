@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.25 2007/02/26 23:52:18 cube Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.26 2007/03/04 06:03:17 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.25 2007/02/26 23:52:18 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.26 2007/03/04 06:03:17 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -130,7 +130,7 @@ extern struct cfdriver tap_cd;
 static int	tap_dev_close(struct tap_softc *);
 static int	tap_dev_read(int, struct uio *, int);
 static int	tap_dev_write(int, struct uio *, int);
-static int	tap_dev_ioctl(int, u_long, caddr_t, struct lwp *);
+static int	tap_dev_ioctl(int, u_long, void *, struct lwp *);
 static int	tap_dev_poll(int, int, struct lwp *);
 static int	tap_dev_kqfilter(int, struct knote *);
 
@@ -164,7 +164,7 @@ static int	tap_cdev_open(dev_t, int, int, struct lwp *);
 static int	tap_cdev_close(dev_t, int, int, struct lwp *);
 static int	tap_cdev_read(dev_t, struct uio *, int);
 static int	tap_cdev_write(dev_t, struct uio *, int);
-static int	tap_cdev_ioctl(dev_t, u_long, caddr_t, int, struct lwp *);
+static int	tap_cdev_ioctl(dev_t, u_long, void *, int, struct lwp *);
 static int	tap_cdev_poll(dev_t, int, struct lwp *);
 static int	tap_cdev_kqfilter(dev_t, struct knote *);
 
@@ -199,7 +199,7 @@ static void	tap_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	tap_start(struct ifnet *);
 static void	tap_stop(struct ifnet *, int);
 static int	tap_init(struct ifnet *);
-static int	tap_ioctl(struct ifnet *, u_long, caddr_t);
+static int	tap_ioctl(struct ifnet *, u_long, void *);
 
 /* This is an internal function to keep tap_ioctl readable */
 static int	tap_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
@@ -483,7 +483,7 @@ tap_start(struct ifnet *ifp)
  * called under splnet().
  */
 static int
-tap_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct tap_softc *sc = (struct tap_softc *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -890,7 +890,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	 * One read is one packet.
 	 */
 	do {
-		error = uiomove(mtod(m, caddr_t),
+		error = uiomove(mtod(m, void *),
 		    min(m->m_len, uio->uio_resid), uio);
 		MFREE(m, n);
 		m = n;
@@ -950,7 +950,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 			}
 		}
 		(*mp)->m_len = min(MHLEN, uio->uio_resid);
-		error = uiomove(mtod(*mp, caddr_t), (*mp)->m_len, uio);
+		error = uiomove(mtod(*mp, void *), (*mp)->m_len, uio);
 		mp = &(*mp)->m_next;
 	}
 	if (error) {
@@ -974,7 +974,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 }
 
 static int
-tap_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+tap_cdev_ioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
 	return tap_dev_ioctl(minor(dev), cmd, data, l);
@@ -983,11 +983,11 @@ tap_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 static int
 tap_fops_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
-	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, (caddr_t)data, l);
+	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, (void *)data, l);
 }
 
 static int
-tap_dev_ioctl(int unit, u_long cmd, caddr_t data, struct lwp *l)
+tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, unit);

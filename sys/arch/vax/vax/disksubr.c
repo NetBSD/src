@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.40 2006/11/25 11:59:58 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.41 2007/03/04 06:00:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.40 2006/11/25 11:59:58 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.41 2007/03/04 06:00:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ disk_reallymapin(struct buf *bp, struct pte *map, int reg, int flag)
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
 	int pfnum, npf, o;
-	caddr_t addr;
+	void *addr;
 
 	o = (int)bp->b_data & VAX_PGOFSET;
 	npf = vax_btoc(bp->b_bcount + o) + 1;

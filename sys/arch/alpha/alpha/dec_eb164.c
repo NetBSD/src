@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.54 2006/02/26 21:42:16 he Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.55 2007/03/04 05:59:09 christos Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.54 2006/02/26 21:42:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.55 2007/03/04 05:59:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ dec_eb164_cons_init()
 	ccp = &cia_configuration;
 	cia_init(ccp, 0);
 
-	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((void *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT: 

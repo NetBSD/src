@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.39 2005/12/24 20:06:47 perry Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.40 2007/03/04 05:59:20 christos Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.39 2005/12/24 20:06:47 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.40 2007/03/04 05:59:20 christos Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -224,7 +224,7 @@ ul_load_code(gp)
 	ba = (struct gspregs *)gp->g_regkva;
 	gi = &gp->g_display;
 
-	gi->gd_regaddr	= ztwopa((caddr_t)ba);
+	gi->gd_regaddr	= ztwopa((void *)ba);
 	gi->gd_regsize	= sizeof(struct gspregs);
 	gi->gd_fbaddr	= NULL;
 	gi->gd_fbsize	= 0;
@@ -541,7 +541,7 @@ grfulattach(pdp, dp, auxp)
 		add_isr(&gup->gus_isr);
 		remove_isr(&congrf.gus_isr);
 	} else {
-		gp->g_regkva = (caddr_t)zap->va;
+		gp->g_regkva = (void *)zap->va;
 		gp->g_fbkva = NULL;
 		gp->g_unit = GRF_ULOWELL_UNIT;
 		gp->g_flags = GF_ALIVE;

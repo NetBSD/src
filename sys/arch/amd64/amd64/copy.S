@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.3 2005/12/11 12:16:21 christos Exp $	*/
+/*	$NetBSD: copy.S,v 1.4 2007/03/04 05:59:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
 /*
  * XXXfvdl appears only to be used by pccons.
  *
- * fillw(short pattern, caddr_t addr, size_t len);
+ * fillw(short pattern, void *addr, size_t len);
  * Write len copies of pattern at addr.
  * appears to be used by pccons.
  */

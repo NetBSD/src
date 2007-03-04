@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.33 2006/03/08 23:46:24 lukem Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.34 2007/03/04 06:01:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.33 2006/03/08 23:46:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.34 2007/03/04 06:01:05 christos Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -83,7 +83,7 @@ struct asc_vsbus_softc {
 	bus_space_handle_t sc_ncrh;		/* ncr bus space handle */
 	bus_dma_tag_t sc_dmat;			/* bus DMA tag */
 	bus_dmamap_t sc_dmamap;
-	caddr_t *sc_dmaaddr;
+	void **sc_dmaaddr;
 	size_t *sc_dmalen;
 	size_t sc_dmasize;
 	unsigned int sc_flags;
@@ -117,7 +117,7 @@ static void	asc_vsbus_write_reg(struct ncr53c9x_softc *, int, u_char);
 static int	asc_vsbus_dma_isintr(struct ncr53c9x_softc *);
 static void	asc_vsbus_dma_reset(struct ncr53c9x_softc *);
 static int	asc_vsbus_dma_intr(struct ncr53c9x_softc *);
-static int	asc_vsbus_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+static int	asc_vsbus_dma_setup(struct ncr53c9x_softc *, void **,
 		    size_t *, int, size_t *);
 static void	asc_vsbus_dma_go(struct ncr53c9x_softc *);
 static void	asc_vsbus_dma_stop(struct ncr53c9x_softc *);
@@ -403,7 +403,7 @@ asc_vsbus_dma_intr(sc)
 }
 
 static int
-asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 		    int datain, size_t *dmasize)
 {
 	struct asc_vsbus_softc *asc = (struct asc_vsbus_softc *)sc;

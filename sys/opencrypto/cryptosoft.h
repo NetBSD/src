@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.h,v 1.4 2007/02/17 00:28:25 daniel Exp $ */
+/*	$NetBSD: cryptosoft.h,v 1.5 2007/03/04 06:03:40 christos Exp $ */
 /*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ struct swcr_data {
 
 #ifdef _KERNEL
 int swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
-    struct swcr_data *sw, caddr_t buf, int outtype);
+    struct swcr_data *sw, void *buf, int outtype);
 #endif /* _KERNEL */
 
 #endif /* _CRYPTO_CRYPTO_H_ */

@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.11 2005/12/10 23:51:50 elad Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.12 2007/03/04 06:03:30 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  * structure.
  */
 
-typedef void * isdn_layer1token;
+typedef void *isdn_layer1token;
 
 /*
  * Each driver attaching to layer 2 via this interface provides a pointer

@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.25 2006/03/29 04:16:45 thorpej Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.26 2007/03/04 05:59:17 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.25 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.26 2007/03/04 05:59:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ void	bztzsc_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	bztzsc_dma_isintr(struct ncr53c9x_softc *);
 void	bztzsc_dma_reset(struct ncr53c9x_softc *);
 int	bztzsc_dma_intr(struct ncr53c9x_softc *);
-int	bztzsc_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+int	bztzsc_dma_setup(struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *);
 void	bztzsc_dma_go(struct ncr53c9x_softc *);
 void	bztzsc_dma_stop(struct ncr53c9x_softc *);
@@ -141,7 +141,7 @@ bztzscmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (zap->manid != 0x2140 || zap->prodid != 24)
 		return(0);
 	regs = &((volatile u_char *)zap->va)[0x1ff00];
-	if (badaddr((caddr_t)__UNVOLATILE(regs)))
+	if (badaddr((void *)__UNVOLATILE(regs)))
 		return(0);
 	regs[NCR_CFG1 * 4] = 0;
 	regs[NCR_CFG1 * 4] = NCRCFG1_PARENB | 7;
@@ -337,7 +337,7 @@ bztzsc_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-bztzsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+bztzsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
                  int datain, size_t *dmasize)
 {
 	struct bztzsc_softc *bsc = (struct bztzsc_softc *)sc;
@@ -376,7 +376,7 @@ bztzsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	 * If unaligned address, read unaligned bytes into alignment buffer
 	 */
 	else if ((int)ptr & 1) {
-		pa = kvtop((caddr_t)&bsc->sc_alignbuf);
+		pa = kvtop((void *)&bsc->sc_alignbuf);
 		xfer = bsc->sc_dmasize = min(xfer, sizeof (bsc->sc_alignbuf));
 		NCR_DMA(("bztzsc_dma_setup: align read by %d bytes\n", xfer));
 		bsc->sc_xfr_align = 1;

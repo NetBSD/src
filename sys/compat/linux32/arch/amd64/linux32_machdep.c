@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.6 2007/02/17 22:31:41 pavel Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.7 2007/03/04 06:01:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.6 2007/02/17 22:31:41 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.7 2007/03/04 06:01:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux32_sigframe *)((caddr_t)sas->ss_sp +
+		fp = (struct linux32_sigframe *)((void *)sas->ss_sp +
 		    sas->ss_size);
 	else
 		fp = (struct linux32_sigframe *)tf->tf_rsp;
@@ -195,7 +195,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux32_rt_sigframe *)((caddr_t)sas->ss_sp +
+		fp = (struct linux32_rt_sigframe *)((void *)sas->ss_sp +
 		    sas->ss_size);
 	else
 		fp = (struct linux32_rt_sigframe *)tf->tf_rsp;
@@ -497,8 +497,8 @@ linux32_restore_sigcontext(l, scp, retval)
 
 	/* Restore signal stack. */
 	ss_gap = (ssize_t)
-	    ((caddr_t)NETBSD32PTR64(scp->sc_esp_at_signal) 
-	     - (caddr_t)sas->ss_sp);
+	    ((void *)NETBSD32PTR64(scp->sc_esp_at_signal) 
+	     - (void *)sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
 		sas->ss_flags |= SS_ONSTACK;
 	else

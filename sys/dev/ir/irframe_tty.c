@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.40 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.41 2007/03/04 06:02:09 christos Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.40 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.41 2007/03/04 06:02:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -127,7 +127,7 @@ struct irframet_softc {
 /* line discipline methods */
 int	irframetopen(dev_t, struct tty *);
 int	irframetclose(struct tty *, int);
-int	irframetioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+int	irframetioctl(struct tty *, u_long, void *, int, struct lwp *);
 int	irframetinput(int, struct tty *);
 int	irframetstart(struct tty *);
 
@@ -296,7 +296,7 @@ irframetclose(struct tty *tp, int flag)
  */
 /* ARGSUSED */
 int
-irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
+irframetioctl(struct tty *tp, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -878,7 +878,7 @@ irt_setline(struct tty *tp, u_int line)
 	irt_ioctl(tp, TIOCMGET, &mline);
 	mline &= ~(TIOCM_DTR | TIOCM_RTS);
 	mline |= line;
-	irt_ioctl(tp, TIOCMSET, (caddr_t)&mline);
+	irt_ioctl(tp, TIOCMSET, (void *)&mline);
 }
 
 void

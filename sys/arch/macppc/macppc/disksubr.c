@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38 2006/11/25 11:59:56 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.39 2007/03/04 06:00:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2007/03/04 06:00:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ get_netbsd_label(dev, strat, lp, osdep)
 		    && dlp->d_npartitions <= MAXPARTITIONS
 		    && dkcksum(dlp) == 0) {
 			*lp = *dlp;
-			osdep->cd_labeloffset = (caddr_t)dlp - bp->b_data;
+			osdep->cd_labeloffset = (void *)dlp - bp->b_data;
 			brelse(bp);
 			return 1;
 		}
@@ -694,7 +694,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_flags &= ~(B_READ|B_DONE);
 	bp->b_flags |= B_WRITE;
 
-	memcpy((caddr_t)bp->b_data + osdep->cd_labeloffset, (caddr_t)lp,
+	memcpy((void *)bp->b_data + osdep->cd_labeloffset, (void *)lp,
 	    sizeof *lp);
 
 	(*strat)(bp);

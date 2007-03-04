@@ -1,4 +1,4 @@
-/*	$NetBSD: mmemcard.c,v 1.8 2006/03/28 17:38:24 thorpej Exp $	*/
+/*	$NetBSD: mmemcard.c,v 1.9 2007/03/04 05:59:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.8 2006/03/28 17:38:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mmemcard.c,v 1.9 2007/03/04 05:59:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -916,7 +916,7 @@ mmemwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-mmemioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mmemioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int diskunit, unit, part;
 	struct mmem_softc *sc;

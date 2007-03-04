@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.14 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.15 2007/03/04 06:01:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.14 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.15 2007/03/04 06:01:06 christos Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -186,7 +186,7 @@ bellclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int 
-bellioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+bellioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	int unit = UNIT(dev);
 	struct bell_softc *sc = &bell_softc[unit];

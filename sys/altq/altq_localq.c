@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_localq.c,v 1.9 2006/11/16 01:32:37 christos Exp $	*/
+/*	$NetBSD: altq_localq.c,v 1.10 2007/03/04 05:59:01 christos Exp $	*/
 /*	$KAME: altq_localq.c,v 1.7 2003/07/10 12:07:48 kjc Exp $	*/
 /*
  * a skeleton file for implementing a new queueing discipline.
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.9 2006/11/16 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_localq.c,v 1.10 2007/03/04 05:59:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -49,7 +49,7 @@ localqclose(dev_t dev, int flag, int fmt,
 }
 
 int
-localqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr,
+localqioctl(dev_t dev, ioctlcmd_t cmd, void *addr,
     int flag, struct lwp *l)
 {
 	int error = 0;

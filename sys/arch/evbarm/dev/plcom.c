@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.19 2006/10/01 20:31:50 elad Exp $	*/
+/*	$NetBSD: plcom.c,v 1.20 2007/03/04 05:59:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.19 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.20 2007/03/04 05:59:44 christos Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -838,7 +838,7 @@ plcomtty(dev_t dev)
 }
 
 int
-plcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct plcom_softc *sc = device_lookup(&plcom_cd, PLCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;

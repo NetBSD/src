@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.146 2007/01/08 16:54:15 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.147 2007/03/04 06:00:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -1221,7 +1221,7 @@ Ldoboot1:
 Lebootcode:
 
 /*
- * u_long ptest040(caddr_t addr, u_int fc);
+ * u_long ptest040(void *addr, u_int fc);
  *
  * ptest040() does an 040 PTESTR (addr) and returns the 040 MMUSR iff
  * translation is enabled.  This allows us to find the physical address

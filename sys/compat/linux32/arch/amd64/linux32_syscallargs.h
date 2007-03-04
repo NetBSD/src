@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscallargs.h,v 1.13 2007/02/16 20:49:40 njoly Exp $ */
+/* $NetBSD: linux32_syscallargs.h,v 1.14 2007/03/04 06:01:25 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -283,7 +283,7 @@ struct linux32_sys_llseek_args {
 	syscallarg(int) fd;
 	syscallarg(u_int32_t) ohigh;
 	syscallarg(u_int32_t) olow;
-	syscallarg(netbsd32_caddr_t) res;
+	syscallarg(netbsd32_void *) res;
 	syscallarg(int) whence;
 };
 

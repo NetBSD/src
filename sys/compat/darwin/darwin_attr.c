@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.13 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.14 2007/03/04 06:01:13 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.13 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.14 2007/03/04 06:01:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ darwin_sys_getattrlist(l, v, retval)
 	struct vnode *vp;
 	kauth_cred_t cred;
 	const char *path;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int fl;
 
 	if ((error = copyin(SCARG(uap, alist), &kalist, sizeof(kalist))) != 0)

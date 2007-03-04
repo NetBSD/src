@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_termios.h,v 1.1 2001/02/06 16:38:00 eeh Exp $	 */
+/*	$NetBSD: svr4_32_termios.h,v 1.2 2007/03/04 06:01:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -51,9 +51,9 @@ struct svr4_32_termios {
 	svr4_tcflag_t	c_lflag;
 	svr4_cc_t	c_cc[SVR4_NCCS];
 };
-typedef netbsd32_caddr_t svr4_32_termiosp;
+typedef netbsd32_void *svr4_32_termiosp;
 
-typedef netbsd32_caddr_t svr4_termiop;
-typedef netbsd32_caddr_t svr4_winsizep;
+typedef netbsd32_void *svr4_termiop;
+typedef netbsd32_void *svr4_winsizep;
 
 #endif /* !_SVR4_TERMIOS_H_ */

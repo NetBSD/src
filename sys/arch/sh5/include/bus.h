@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2007/02/21 20:41:25 mrg Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2007/03/04 06:00:41 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -964,8 +964,8 @@ struct sh5_bus_dma_tag {
 		    bus_size_t, bus_dma_segment_t *, int, int *, int);
 	void	(*bd_dmamem_free)(void *, bus_dma_segment_t *, int);
 	int	(*bd_dmamem_map)(void *, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
-	void	(*bd_dmamem_unmap)(void *, caddr_t, size_t);
+		    int, size_t, void **, int);
+	void	(*bd_dmamem_unmap)(void *, void *, size_t);
 	paddr_t	(*bd_dmamem_mmap)(void *, bus_dma_segment_t *,
 		    int, off_t, int, int);
 };

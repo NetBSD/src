@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.21 2007/01/29 01:52:46 hubertf Exp $	*/
+/*	$NetBSD: xencons.c,v 1.22 2007/03/04 06:01:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.21 2007/01/29 01:52:46 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22 2007/03/04 06:01:11 christos Exp $");
 
 #include "opt_xen.h"
 
@@ -326,7 +326,7 @@ xencons_tty(dev_t dev)
 }
 
 int
-xencons_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+xencons_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct xencons_softc *sc = device_lookup(&xencons_cd,
 	    XENCONS_UNIT(dev));

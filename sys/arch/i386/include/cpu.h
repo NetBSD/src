@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133 2007/02/17 00:28:25 daniel Exp $	*/
+/*	$NetBSD: cpu.h,v 1.134 2007/03/04 05:59:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -392,7 +392,7 @@ void	npxsave_lwp(struct lwp *, int);
 void	npxsave_cpu(struct cpu_info *, int);
 
 /* vm_machdep.c */
-int kvtop(caddr_t);
+int kvtop(void *);
 
 #ifdef MATH_EMULATE
 /* math_emulate.c */

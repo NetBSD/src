@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.5 2007/02/21 23:00:01 thorpej Exp $ */
+/* $NetBSD: sec.c,v 1.6 2007/03/04 06:02:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.5 2007/02/21 23:00:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.6 2007/03/04 06:02:28 christos Exp $");
 
 #include <sys/param.h>
 
@@ -78,7 +78,7 @@ struct sec_softc {
 
 	/* Details of the current DMA transfer */
 	bool			sc_dmaactive;
-	caddr_t			sc_dmaaddr;
+	void *			sc_dmaaddr;
 	int			sc_dmaoff;
 	size_t			sc_dmalen;
 	bool			sc_dmain;
@@ -98,7 +98,7 @@ static void sec_attach(struct device *, struct device *, void *);
 static void sec_shutdown(void *);
 
 /* callbacks from MI WD33C93 driver */
-static int sec_dmasetup(struct wd33c93_softc *, caddr_t *, size_t *, int,
+static int sec_dmasetup(struct wd33c93_softc *, void **, size_t *, int,
     size_t *);
 static int sec_dmago(struct wd33c93_softc *);
 static void sec_dmastop(struct wd33c93_softc *);
@@ -379,7 +379,7 @@ sec_copyinblk(struct sec_softc *sc, int blk)
 }
 
 static int
-sec_dmasetup(struct wd33c93_softc *sc_sbic, caddr_t *addr, size_t *len,
+sec_dmasetup(struct wd33c93_softc *sc_sbic, void **addr, size_t *len,
     int datain, size_t *dmasize)
 {
 	struct sec_softc *sc = (struct sec_softc *)sc_sbic;

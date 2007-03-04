@@ -1,4 +1,4 @@
-/*	$NetBSD: ka53.c,v 1.13 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka53.c,v 1.14 2007/03/04 06:00:59 christos Exp $	*/
 /*
  * Copyright (c) 2002 Hugh Graham.
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.13 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.14 2007/03/04 06:00:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka53.c,v 1.13 2006/09/05 19:32:57 matt Exp $");
 
 static void    ka53_conf(void);
 static void    ka53_memerr(void);
-static int     ka53_mchk(caddr_t);
+static int     ka53_mchk(void *);
 static void    ka53_softmem(void *);
 static void    ka53_hardmem(void *);
 static void    ka53_steal_pages(void);
@@ -213,7 +213,7 @@ ka53_memerr()
 }
 
 int
-ka53_mchk(caddr_t addr)
+ka53_mchk(void *addr)
 {
 	mtpr(0x00, PR_MCESR);
 	printf("Machine Check\n");

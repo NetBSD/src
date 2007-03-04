@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.51 2007/02/17 22:34:10 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.52 2007/03/04 06:03:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -107,7 +107,7 @@ struct rtentry {
 	struct	ifaddr *rt_ifa;		/* the answer: interface to use */
 	uint32_t rt_ifa_seqno;
 	const struct sockaddr *rt_genmask; /* for generation of cloned routes */
-	caddr_t	rt_llinfo;		/* pointer to link level info cache */
+	void *	rt_llinfo;		/* pointer to link level info cache */
 	struct	rt_metrics rt_rmx;	/* metrics used by rx'ing protocols */
 	struct	rtentry *rt_gwroute;	/* implied entry for gatewayed routes */
 	LIST_HEAD(, rttimer) rt_timer;  /* queue of timeouts for misc funcs */
@@ -313,7 +313,7 @@ struct rtentry *
 void	 rtfree(struct rtentry *);
 int	 rt_getifa(struct rt_addrinfo *);
 int	 rtinit(struct ifaddr *, int, int);
-int	 rtioctl(u_long, caddr_t, struct lwp *);
+int	 rtioctl(u_long, void *, struct lwp *);
 void	 rtredirect(const struct sockaddr *, const struct sockaddr *,
 	    const struct sockaddr *, int, const struct sockaddr *,
 	    struct rtentry **);

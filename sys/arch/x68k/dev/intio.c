@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.28 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: intio.c,v 1.29 2007/03/04 06:01:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.28 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.29 2007/03/04 06:01:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,7 +812,7 @@ _intio_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				memcpy(mtod(m, caddr_t) + moff,
+				memcpy(mtod(m, void *) + moff,
 				    (char *)cookie->id_bouncebuf + offset,
 				    minlen);
 
@@ -885,7 +885,7 @@ _intio_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t size,
 		goto out;
 	error = x68k_bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
-	    (caddr_t *)&cookie->id_bouncebuf, flags);
+	    (void **)&cookie->id_bouncebuf, flags);
 
  out:
 	if (error) {

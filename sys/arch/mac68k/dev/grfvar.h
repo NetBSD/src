@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.28 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.29 2007/03/04 06:00:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -122,7 +122,7 @@ struct grfbus_attach_args {
 	int		(*ga_mode)(struct grf_softc *, int, void *);
 };
 
-typedef	caddr_t (*grf_phys_t)(struct grf_softc *, vaddr_t);
+typedef	void *(*grf_phys_t)(struct grf_softc *, vaddr_t);
 
 /* flags */
 #define	GF_ALIVE	0x01

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.40 2007/02/17 19:47:07 bouyer Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.41 2007/03/04 06:02:19 christos Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2336,8 +2336,8 @@ struct bge_chain_data {
 	bus_dmamap_t		bge_rx_std_map[BGE_STD_RX_RING_CNT];
 	bus_dmamap_t		bge_rx_jumbo_map;
 	/* Stick the jumbo mem management stuff here too. */
-	caddr_t			bge_jslots[BGE_JSLOTS];
-	caddr_t			bge_jumbo_buf;
+	void *			bge_jslots[BGE_JSLOTS];
+	void *			bge_jumbo_buf;
 };
 
 #define BGE_JUMBO_DMA_ADDR(sc, m) \

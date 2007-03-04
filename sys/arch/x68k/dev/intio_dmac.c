@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.23 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.24 2007/03/04 06:01:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.23 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.24 2007/03/04 06:01:06 christos Exp $");
 
 #include "opt_m680x0.h"
 
@@ -197,7 +197,7 @@ dmac_alloc_channel(struct device *self, int ch, const char *name, int normalv,
 	r = bus_dmamem_map(intio->sc_dmat,
 			   &chan->ch_seg[0], 1,
 			   sizeof(struct dmac_sg_array) * DMAC_MAPSIZE,
-			   (caddr_t*) &chan->ch_map,
+			   (void **) &chan->ch_map,
 			   BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (r)
 		panic ("DMAC: cannot map DMA safe memory");
@@ -264,7 +264,7 @@ dmac_free_channel(struct device *self, int ch, void *channel)
 		return -1;
 
 #ifdef DMAC_ARRAYCHAIN
-	bus_dmamem_unmap(intio->sc_dmat, (caddr_t) chan->ch_map,
+	bus_dmamem_unmap(intio->sc_dmat, (void *) chan->ch_map,
 			 sizeof(struct dmac_sg_array) * DMAC_MAPSIZE);
 	bus_dmamem_free(intio->sc_dmat, &chan->ch_seg[0], 1);
 #endif
@@ -440,7 +440,7 @@ dmac_start_xfer_offset(struct device *self, struct dmac_dma_xfer *xf,
 #if defined(M68040) || defined(M68060)
 	/* flush data cache for the map */
 	if (dmamap->dm_nsegs != 1 && mmutype == MMU_68040)
-		dma_cachectl((caddr_t) xf->dx_array,
+		dma_cachectl((void *) xf->dx_array,
 			     sizeof(struct dmac_sg_array) * c);
 #endif
 #endif

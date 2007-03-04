@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.133 2007/02/16 17:24:00 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.134 2007/03/04 06:03:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.133 2007/02/16 17:24:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.134 2007/03/04 06:03:12 christos Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -309,7 +309,7 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
  * Package up an I/O request on a vnode into a uio and do it.
  */
 int
-vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
+vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
     enum uio_seg segflg, int ioflg, kauth_cred_t cred, size_t *aresid,
     struct lwp *l)
 {

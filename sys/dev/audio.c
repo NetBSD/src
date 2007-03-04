@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.219 2007/03/01 17:31:35 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.220 2007/03/04 06:01:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.219 2007/03/01 17:31:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.220 2007/03/04 06:01:40 christos Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -110,14 +110,14 @@ int	audio_open(dev_t, struct audio_softc *, int, int, struct lwp *);
 int	audio_close(struct audio_softc *, int, int, struct lwp *);
 int	audio_read(struct audio_softc *, struct uio *, int);
 int	audio_write(struct audio_softc *, struct uio *, int);
-int	audio_ioctl(struct audio_softc *, u_long, caddr_t, int, struct lwp *);
+int	audio_ioctl(struct audio_softc *, u_long, void *, int, struct lwp *);
 int	audio_poll(struct audio_softc *, int, struct lwp *);
 int	audio_kqfilter(struct audio_softc *, struct knote *);
 paddr_t	audio_mmap(struct audio_softc *, off_t, int);
 
 int	mixer_open(dev_t, struct audio_softc *, int, int, struct lwp *);
 int	mixer_close(struct audio_softc *, int, int, struct lwp *);
-int	mixer_ioctl(struct audio_softc *, u_long, caddr_t, int, struct lwp *);
+int	mixer_ioctl(struct audio_softc *, u_long, void *, int, struct lwp *);
 static	void mixer_remove(struct audio_softc *, struct lwp *);
 static	void mixer_signal(struct audio_softc *);
 
@@ -1066,7 +1066,7 @@ audiowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+audioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct audio_softc *sc;
 	int error;
@@ -2015,7 +2015,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 }
 
 int
-audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
+audio_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	    struct lwp *l)
 {
 	const struct audio_hw_if *hw;
@@ -3685,7 +3685,7 @@ mixer_close(struct audio_softc *sc, int flags, int ifmt,
 }
 
 int
-mixer_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
+mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	    struct lwp *l)
 {
 	const struct audio_hw_if *hw;

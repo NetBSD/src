@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.64 2007/02/19 15:33:20 cube Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.65 2007/03/04 06:01:27 christos Exp $ */
 
 /*
  * System call argument lists.
@@ -134,7 +134,7 @@ struct netbsd32_setuid_args {
 struct netbsd32_ptrace_args {
 	syscallarg(int) req;
 	syscallarg(pid_t) pid;
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 	syscallarg(int) data;
 };
 
@@ -212,7 +212,7 @@ struct netbsd32_dup_args {
 };
 
 struct netbsd32_profil_args {
-	syscallarg(netbsd32_caddr_t) samples;
+	syscallarg(netbsd32_void *) samples;
 	syscallarg(netbsd32_size_t) size;
 	syscallarg(netbsd32_u_long) offset;
 	syscallarg(u_int) scale;
@@ -309,7 +309,7 @@ struct compat_43_netbsd32_ogetkerninfo_args {
 };
 
 struct compat_12_netbsd32_msync_args {
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 	syscallarg(netbsd32_size_t) len;
 };
 
@@ -322,7 +322,7 @@ struct netbsd32_sstk_args {
 };
 
 struct compat_43_netbsd32_ommap_args {
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 	syscallarg(netbsd32_size_t) len;
 	syscallarg(int) prot;
 	syscallarg(int) flags;
@@ -352,7 +352,7 @@ struct netbsd32_madvise_args {
 };
 
 struct netbsd32_mincore_args {
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 	syscallarg(netbsd32_size_t) len;
 	syscallarg(netbsd32_charp) vec;
 };
@@ -440,7 +440,7 @@ struct netbsd32_connect_args {
 
 struct compat_43_netbsd32_oaccept_args {
 	syscallarg(int) s;
-	syscallarg(netbsd32_caddr_t) name;
+	syscallarg(netbsd32_void *) name;
 	syscallarg(netbsd32_intp) anamelen;
 };
 
@@ -451,14 +451,14 @@ struct netbsd32_getpriority_args {
 
 struct compat_43_netbsd32_osend_args {
 	syscallarg(int) s;
-	syscallarg(netbsd32_caddr_t) buf;
+	syscallarg(netbsd32_void *) buf;
 	syscallarg(int) len;
 	syscallarg(int) flags;
 };
 
 struct compat_43_netbsd32_orecv_args {
 	syscallarg(int) s;
-	syscallarg(netbsd32_caddr_t) buf;
+	syscallarg(netbsd32_void *) buf;
 	syscallarg(int) len;
 	syscallarg(int) flags;
 };
@@ -517,7 +517,7 @@ struct compat_43_netbsd32_orecvmsg_args {
 
 struct compat_43_netbsd32_osendmsg_args {
 	syscallarg(int) s;
-	syscallarg(netbsd32_caddr_t) msg;
+	syscallarg(netbsd32_void *) msg;
 	syscallarg(int) flags;
 };
 
@@ -569,10 +569,10 @@ struct netbsd32_fchmod_args {
 
 struct compat_43_netbsd32_orecvfrom_args {
 	syscallarg(int) s;
-	syscallarg(netbsd32_caddr_t) buf;
+	syscallarg(netbsd32_void *) buf;
 	syscallarg(netbsd32_size_t) len;
 	syscallarg(int) flags;
-	syscallarg(netbsd32_caddr_t) from;
+	syscallarg(netbsd32_void *) from;
 	syscallarg(netbsd32_intp) fromlenaddr;
 };
 
@@ -653,7 +653,7 @@ struct netbsd32_adjtime_args {
 
 struct compat_43_netbsd32_ogetpeername_args {
 	syscallarg(int) fdes;
-	syscallarg(netbsd32_caddr_t) asa;
+	syscallarg(netbsd32_void *) asa;
 	syscallarg(netbsd32_intp) alen;
 };
 
@@ -680,12 +680,12 @@ struct netbsd32_quotactl_args {
 	syscallarg(const netbsd32_charp) path;
 	syscallarg(int) cmd;
 	syscallarg(int) uid;
-	syscallarg(netbsd32_caddr_t) arg;
+	syscallarg(netbsd32_void *) arg;
 };
 
 struct compat_43_netbsd32_ogetsockname_args {
 	syscallarg(int) fdec;
-	syscallarg(netbsd32_caddr_t) asa;
+	syscallarg(netbsd32_void *) asa;
 	syscallarg(netbsd32_intp) alen;
 };
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
@@ -1411,7 +1411,7 @@ struct netbsd32___sigaction_sigtramp_args {
 };
 
 struct netbsd32_rasctl_args {
-	syscallarg(netbsd32_caddr_t) addr;
+	syscallarg(netbsd32_void *) addr;
 	syscallarg(netbsd32_size_t) len;
 	syscallarg(int) op;
 };

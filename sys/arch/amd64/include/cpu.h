@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2007/02/16 02:53:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2007/03/04 05:59:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -281,7 +281,7 @@ void cpu_init_msrs __P((struct cpu_info *));
 
 
 /* vm_machdep.c */
-int kvtop __P((caddr_t));
+int kvtop __P((void *));
 
 /* trap.c */
 void	child_return __P((void *));

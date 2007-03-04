@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.27 2006/01/27 01:11:27 uwe Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.28 2007/03/04 06:03:13 christos Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -532,7 +532,7 @@ ustarfs_read(f, start, size, resid)
 			seg = infile;
 		memcpy(start, space512 + bufferoffset, seg);
 		ustf->uas_fseek += seg;
-		start = (caddr_t)start + seg;
+		start = (void *)start + seg;
 		size  -= seg;
 	}
 	if (resid)

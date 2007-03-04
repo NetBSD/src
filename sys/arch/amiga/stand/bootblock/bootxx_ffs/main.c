@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.6 2006/01/25 18:28:25 christos Exp $
+ * $NetBSD: main.c,v 1.7 2007/03/04 05:59:31 christos Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -75,7 +75,7 @@ int
 pain(void *aio)
 {
 	long int io = 0;
-	caddr_t kp;
+	void *kp;
 	int ksize;
 	struct stat sb;
 

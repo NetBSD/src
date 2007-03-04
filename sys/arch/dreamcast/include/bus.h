@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2007/02/21 20:41:23 mrg Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2007/03/04 05:59:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -531,8 +531,8 @@ struct dreamcast_bus_dma_tag {
 	void	(*_dmamem_free)(bus_dma_tag_t,
 		    bus_dma_segment_t *, int);
 	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, caddr_t *, int);
-	void	(*_dmamem_unmap)(bus_dma_tag_t, caddr_t, size_t);
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
 	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
 		    int, off_t, int, int);
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2007/02/22 17:03:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2007/03/04 06:00:30 christos Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -50,7 +50,7 @@ struct vm_map *exec_map, *mb_map;
 char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char cpu_model[100];
-caddr_t msgbufaddr;
+void *msgbufaddr;
 
 void
 cpu_startup()
@@ -160,7 +160,7 @@ cpu_reboot(int howto, char *b)
 }
 
 int
-process_set_pc(struct lwp *p, caddr_t addr)
+process_set_pc(struct lwp *p, void *addr)
 {
 	panic("process_set_pc");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.20 2006/03/29 06:55:32 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.21 2007/03/04 06:02:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.20 2006/03/29 06:55:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.21 2007/03/04 06:02:14 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -151,7 +151,7 @@ STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int,
 	size_t, int);
 STATIC void gfe_dmamem_free(struct gfe_softc *, struct gfe_dmamem *);
 
-STATIC int gfe_ifioctl (struct ifnet *, u_long, caddr_t);
+STATIC int gfe_ifioctl (struct ifnet *, u_long, void *);
 STATIC void gfe_ifstart (struct ifnet *);
 STATIC void gfe_ifwatchdog (struct ifnet *);
 
@@ -426,7 +426,7 @@ gfe_dmamem_free(struct gfe_softc *sc, struct gfe_dmamem *gdm)
 }
 
 int
-gfe_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct gfe_softc * const sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cfdev.h,v 1.5 2002/04/25 09:20:27 aymeric Exp $	*/
+/*	$NetBSD: cfdev.h,v 1.6 2007/03/04 05:59:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -57,7 +57,7 @@ struct cfdev {
 	u_char	flags;
 	u_char	pad;
 	struct	expanrom rom;	/* 16 */
-	caddr_t	addr;		/* 32 */
+	void *	addr;		/* 32 */
 	u_long	size;		/* 36 */
 	u_char	resv1[28];	/* 40 */
 };

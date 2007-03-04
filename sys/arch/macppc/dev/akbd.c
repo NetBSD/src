@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.34 2005/12/11 12:18:03 christos Exp $	*/
+/*	$NetBSD: akbd.c,v 1.35 2007/03/04 06:00:10 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.34 2005/12/11 12:18:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.35 2007/03/04 06:00:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.34 2005/12/11 12:18:03 christos Exp $");
  */
 static int	akbdmatch __P((struct device *, struct cfdata *, void *));
 static void	akbdattach __P((struct device *, struct device *, void *));
-void		kbd_adbcomplete __P((caddr_t buffer, caddr_t data_area, int adb_command));
+void		kbd_adbcomplete __P((void *buffer, void *data_area, int adb_command));
 static void	kbd_processevent __P((adb_event_t *event, struct akbd_softc *));
 #ifdef notyet
 static u_char	getleds __P((int));
@@ -81,7 +81,7 @@ extern struct cfdriver akbd_cd;
 
 int akbd_enable __P((void *, int));
 void akbd_set_leds __P((void *, int));
-int akbd_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+int akbd_ioctl __P((void *, u_long, void *, int, struct lwp *));
 
 struct wskbd_accessops akbd_accessops = {
 	akbd_enable,
@@ -148,7 +148,7 @@ akbdattach(parent, self, aux)
 	sc->sc_leds = (u_int8_t)0x00;	/* initially off */
 
 	adbinfo.siServiceRtPtr = (Ptr)kbd_adbcomplete;
-	adbinfo.siDataAreaAddr = (caddr_t)sc;
+	adbinfo.siDataAreaAddr = (void *)sc;
 
 	switch (sc->handler_id) {
 	case ADB_STDKBD:
@@ -265,8 +265,8 @@ akbdattach(parent, self, aux)
  */
 void 
 kbd_adbcomplete(buffer, data_area, adb_command)
-	caddr_t buffer;
-	caddr_t data_area;
+	void *buffer;
+	void *data_area;
 	int adb_command;
 {
 	adb_event_t event;
@@ -449,7 +449,7 @@ int
 akbd_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

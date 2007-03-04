@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.35 2007/02/17 22:34:12 dyoung Exp $	*/
+/*	$NetBSD: frag6.c,v 1.36 2007/03/04 06:03:25 christos Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.35 2007/02/17 22:34:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.36 2007/03/04 06:03:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,8 +541,7 @@ insert:
 	 * Delete frag6 header with as a few cost as possible.
 	 */
 	if (offset < m->m_len) {
-		ovbcopy((caddr_t)ip6, (caddr_t)ip6 + sizeof(struct ip6_frag),
-			offset);
+		memmove((char *)ip6 + sizeof(struct ip6_frag), ip6, offset);
 		m->m_data += sizeof(struct ip6_frag);
 		m->m_len -= sizeof(struct ip6_frag);
 	} else {

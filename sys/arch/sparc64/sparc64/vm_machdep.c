@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.69 2007/02/17 22:31:39 pavel Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.70 2007/03/04 06:00:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.69 2007/02/17 22:31:39 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.70 2007/03/04 06:00:51 christos Exp $");
 
 #include "opt_coredump.h"
 
@@ -97,7 +97,7 @@ vmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - uva;
 	len = round_page(off + len);
 	kva = uvm_km_alloc(kernel_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(kva + off);
+	bp->b_data = (void *)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);

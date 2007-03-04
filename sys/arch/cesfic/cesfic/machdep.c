@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2007/02/22 05:17:25 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2007/03/04 05:59:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2007/02/22 05:17:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/03/04 05:59:42 christos Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -157,7 +157,7 @@ extern vaddr_t virtual_avail;
 /*
  * Declare these as initialized data so we can patch them.
  */
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 /*int	maxmem;*/			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
@@ -528,7 +528,7 @@ dumpsys()
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump) __P((dev_t, daddr_t, void *, size_t));
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -616,7 +616,7 @@ int	*nofault;
 
 int
 badaddr(addr)
-	caddr_t addr;
+	void *addr;
 {
 	int i;
 	label_t	faultbuf;
@@ -633,7 +633,7 @@ badaddr(addr)
 
 int
 badbaddr(addr)
-	caddr_t addr;
+	void *addr;
 {
 	int i;
 	label_t	faultbuf;

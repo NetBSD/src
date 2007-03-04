@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.1 2007/02/20 16:53:20 kiyohara Exp $	*/
+/*	$NetBSD: btuart.c,v 1.2 2007/03/04 06:01:45 christos Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1 2007/02/20 16:53:20 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.2 2007/03/04 06:01:45 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,7 @@ static void bth4init_input(struct hci_unit *, struct mbuf *);
 
 static int bth4open(dev_t, struct tty *);
 static int bth4close(struct tty *, int);
-static int bth4ioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+static int bth4ioctl(struct tty *, u_long, void *, int, struct lwp *);
 static int bth4input(int, struct tty *);
 static int bth4start(struct tty *);
 
@@ -1150,7 +1150,7 @@ bth4close(struct tty *tp, int flag __unused)
 
 /* ARGSUSED */
 static int
-bth4ioctl(struct tty *tp, u_long cmd, caddr_t data,
+bth4ioctl(struct tty *tp, u_long cmd, void *data,
     int flag __unused, struct lwp *l __unused)
 {
 	struct btuart_softc *sc = (struct btuart_softc *)tp->t_sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2007/02/16 02:53:52 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2007/03/04 06:01:10 christos Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -386,7 +386,7 @@ void	npxsave_lwp(struct lwp *, int);
 void	npxsave_cpu(struct cpu_info *, int);
 
 /* vm_machdep.c */
-int kvtop(caddr_t);
+int kvtop(void *);
 
 #ifdef MATH_EMULATE
 /* math_emulate.c */

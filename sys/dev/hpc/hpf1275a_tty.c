@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.19 2006/11/16 01:32:50 christos Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.20 2007/03/04 06:01:47 christos Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.19 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.20 2007/03/04 06:01:47 christos Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -83,7 +83,7 @@ static int	hpf1275a_detach(struct device *, int);
 /* wskbd(4) accessops */
 static int	hpf1275a_wskbd_enable(void *, int);
 static void	hpf1275a_wskbd_set_leds(void *, int);
-static int	hpf1275a_wskbd_ioctl(void *, u_long, caddr_t, int,
+static int	hpf1275a_wskbd_ioctl(void *, u_long, void *, int,
 				     struct lwp *);
 
 
@@ -427,7 +427,7 @@ hpf1275a_wskbd_set_leds(void *self, int leds)
 
 
 static int
-hpf1275a_wskbd_ioctl(void *self, u_long cmd, caddr_t data, int flag,
+hpf1275a_wskbd_ioctl(void *self, u_long cmd, void *data, int flag,
 		     struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD

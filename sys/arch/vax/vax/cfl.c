@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.12 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: cfl.c,v 1.13 2007/03/04 06:00:57 christos Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.12 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.13 2007/03/04 06:00:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ cflrw(dev, uio, flag)
 		}
 	}
 	cfltab.cfl_state = OPEN;
-	wakeup((caddr_t)&cfltab);
+	wakeup((void *)&cfltab);
 	return (error);
 }
 

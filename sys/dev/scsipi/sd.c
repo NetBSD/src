@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.260 2007/03/03 02:44:44 jnemeth Exp $	*/
+/*	$NetBSD: sd.c,v 1.261 2007/03/04 06:02:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.260 2007/03/03 02:44:44 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.261 2007/03/04 06:02:43 christos Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -800,7 +800,7 @@ sdstart(struct scsipi_periph *periph)
 		 */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -1010,7 +1010,7 @@ sdwrite(dev_t dev, struct uio *uio, int ioflag)
  * Knows about the internals of this device
  */
 static int
-sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+sdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct sd_softc *sd = sd_cd.cd_devs[SDUNIT(dev)];
 	struct scsipi_periph *periph = sd->sc_periph;
@@ -1492,7 +1492,7 @@ static int sddoingadump;
  * at offset 'dumplo' into the partition.
  */
 static int
-sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+sddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	struct sd_softc *sd;	/* disk unit to do the I/O */
 	struct disklabel *lp;	/* disk's disklabel */
@@ -1598,7 +1598,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		/* update block count */
 		totwrt -= nwrt;
 		blkno += nwrt;
-		va += sectorsize * nwrt;
+		va = (char *)va + sectorsize * nwrt;
 	}
 	sddoingadump = 0;
 	return (0);

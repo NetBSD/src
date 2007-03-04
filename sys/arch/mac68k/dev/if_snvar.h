@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.17 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.18 2007/03/04 06:00:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -43,7 +43,7 @@
 					((sc)->sc_reg_map[reg]),	\
 					(val)))
 
-#define	SONIC_GETDMA(p)	(u_int32_t)(kvtop((caddr_t)(p)))
+#define	SONIC_GETDMA(p)	(u_int32_t)(kvtop((void *)(p)))
 
 #define	SN_REGSIZE	SN_NREGS*4
 
@@ -87,7 +87,7 @@
 typedef struct mtd {
 	void		*mtd_txp;
 	u_int32_t	mtd_vtxp;
-	caddr_t		mtd_buf;
+	void *		mtd_buf;
 	u_int32_t	mtd_vbuf;
 	struct mbuf	*mtd_mbuf;
 } mtd_t;
@@ -118,10 +118,10 @@ typedef struct sn_softc {
 	int		sc_rxmark;	/* current hw pos in rda ring */
 	int		sc_rdamark;	/* current sw pos in rda ring */
 	int		sc_nrda;	/* total number of RDAs */
-	caddr_t		p_rda;
+	void *		p_rda;
 	u_int32_t	v_rda;
 
-	caddr_t		rbuf[NRBA];
+	void *		rbuf[NRBA];
 
 	struct mtd	mtda[NTDA];
 	int		mtd_hw;		/* idx of first mtd given to hw */

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.14 2007/02/09 21:55:18 ad Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.15 2007/03/04 06:01:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.14 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.15 2007/03/04 06:01:18 christos Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -140,7 +140,7 @@ irix_sys_xstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sys___stat30_args cup;
 	struct stat st;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
@@ -198,7 +198,7 @@ irix_sys_lxstat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sys___lstat30_args cup;
 	struct stat st;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
@@ -257,7 +257,7 @@ irix_sys_fxstat(l, v, retval)
 	struct sys___fstat30_args cup;
 	struct stat st;
 	int error;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	SCARG(&cup, sb) = stackgap_alloc(p, &sg, sizeof(struct stat));
 	SCARG(&cup, fd) = SCARG(uap, fd);

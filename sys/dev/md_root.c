@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.12 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: md_root.c,v 1.13 2007/03/04 06:01:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.12 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.13 2007/03/04 06:01:42 christos Exp $");
 
 #include "opt_md.h"
 
@@ -105,7 +105,7 @@ md_attach_hook(int unit, struct md_conf *md)
 
 	if (unit == 0) {
 		/* Setup root ramdisk */
-		md->md_addr = (caddr_t)md_root_image;
+		md->md_addr = (void *)md_root_image;
 		md->md_size = (size_t)md_root_size;
 		md->md_type = MD_KMEM_FIXED;
 		format_bytes(pbuf, sizeof(pbuf), md->md_size);

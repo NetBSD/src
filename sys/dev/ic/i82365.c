@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.97 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: i82365.c,v 1.98 2007/03/04 06:01:55 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.97 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.98 2007/03/04 06:01:55 christos Exp $");
 
 #define	PCICDEBUG
 
@@ -565,7 +565,7 @@ pcic_event_thread(arg)
 		} else {
 			splx(s);
 			/* sleep .25s to be enqueued chatterling interrupts */
-			(void) tsleep((caddr_t)pcic_event_thread, PWAIT,
+			(void) tsleep((void *)pcic_event_thread, PWAIT,
 			    "pcicss", hz/4);
 		}
 		s = splhigh();

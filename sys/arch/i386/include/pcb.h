@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.39 2007/03/02 17:29:13 ad Exp $	*/
+/*	$NetBSD: pcb.h,v 1.40 2007/03/04 05:59:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ struct pcb {
 /*
  * Software pcb (extension)
  */
-	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
+	void *	pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */

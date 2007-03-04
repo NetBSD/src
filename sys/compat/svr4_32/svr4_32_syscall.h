@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_32_syscall.h,v 1.13 2006/05/29 09:46:54 drochner Exp $ */
+/* $NetBSD: svr4_32_syscall.h,v 1.14 2007/03/04 06:01:38 christos Exp $ */
 
 /*
  * System call numbers.
@@ -61,7 +61,7 @@
 /* syscall: "chown" ret: "int" args: "const netbsd32_charp" "uid_t" "gid_t" */
 #define	SVR4_32_SYS_chown	16
 
-/* syscall: "break" ret: "int" args: "netbsd32_caddr_t" */
+/* syscall: "break" ret: "int" args: "netbsd32_void *" */
 #define	SVR4_32_SYS_break	17
 
 /* syscall: "stat" ret: "int" args: "const netbsd32_charp" "svr4_32_statp" */
@@ -145,7 +145,7 @@
 
 #else
 #endif
-/* syscall: "ioctl" ret: "int" args: "int" "netbsd32_u_long" "netbsd32_caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "netbsd32_u_long" "netbsd32_void *" */
 #define	SVR4_32_SYS_ioctl	54
 
 /* syscall: "utssys" ret: "int" args: "netbsd32_voidp" "netbsd32_voidp" "int" "netbsd32_voidp" */
@@ -464,28 +464,28 @@
 /* syscall: "netbsd32_shutdown" ret: "int" args: "int" "int" */
 #define	SVR4_32_SYS_netbsd32_shutdown	236
 
-/* syscall: "compat_43_netbsd32_orecv" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
+/* syscall: "compat_43_netbsd32_orecv" ret: "int" args: "int" "netbsd32_void *" "int" "int" */
 #define	SVR4_32_SYS_compat_43_netbsd32_orecv	237
 
-/* syscall: "compat_43_netbsd32_orecvfrom" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_size_t" "int" "netbsd32_caddr_t" "netbsd32_intp" */
+/* syscall: "compat_43_netbsd32_orecvfrom" ret: "int" args: "int" "netbsd32_void *" "netbsd32_size_t" "int" "netbsd32_void *" "netbsd32_intp" */
 #define	SVR4_32_SYS_compat_43_netbsd32_orecvfrom	238
 
 /* syscall: "compat_43_netbsd32_orecvmsg" ret: "int" args: "int" "netbsd32_omsghdrp_t" "int" */
 #define	SVR4_32_SYS_compat_43_netbsd32_orecvmsg	239
 
-/* syscall: "compat_43_netbsd32_osend" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
+/* syscall: "compat_43_netbsd32_osend" ret: "int" args: "int" "netbsd32_void *" "int" "int" */
 #define	SVR4_32_SYS_compat_43_netbsd32_osend	240
 
-/* syscall: "compat_43_netbsd32_osendmsg" ret: "int" args: "int" "netbsd32_caddr_t" "int" */
+/* syscall: "compat_43_netbsd32_osendmsg" ret: "int" args: "int" "netbsd32_void *" "int" */
 #define	SVR4_32_SYS_compat_43_netbsd32_osendmsg	241
 
 /* syscall: "netbsd32_sendto" ret: "netbsd32_ssize_t" args: "int" "const netbsd32_voidp" "netbsd32_size_t" "int" "const netbsd32_sockaddrp_t" "int" */
 #define	SVR4_32_SYS_netbsd32_sendto	242
 
-/* syscall: "compat_43_netbsd32_ogetpeername" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_intp" */
+/* syscall: "compat_43_netbsd32_ogetpeername" ret: "int" args: "int" "netbsd32_void *" "netbsd32_intp" */
 #define	SVR4_32_SYS_compat_43_netbsd32_ogetpeername	243
 
-/* syscall: "compat_43_netbsd32_ogetsockname" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_intp" */
+/* syscall: "compat_43_netbsd32_ogetsockname" ret: "int" args: "int" "netbsd32_void *" "netbsd32_intp" */
 #define	SVR4_32_SYS_compat_43_netbsd32_ogetsockname	244
 
 /* syscall: "netbsd32_getsockopt" ret: "int" args: "int" "int" "int" "netbsd32_voidp" "netbsd32_intp" */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2007/02/28 04:21:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 2007/03/04 06:00:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2007/02/28 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2007/03/04 06:00:14 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -157,7 +157,7 @@ struct vm_map *phys_map = NULL;
  */
 struct	mvmeprom_brdid  boardid;
 
-caddr_t	msgbufaddr;		/* KVA of message buffer */
+void *	msgbufaddr;		/* KVA of message buffer */
 paddr_t msgbufpa;		/* PA of message buffer */
 
 int	maxmem;			/* max memory per process */
@@ -193,7 +193,7 @@ void	initcpu __P((void));
 void	dumpsys __P((void));
 
 int	cpu_dumpsize __P((void));
-int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+int	cpu_dump __P((int (*)(dev_t, daddr_t, void *, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 int	cpu_exec_aout_makecmds __P((struct lwp *, struct exec_package *));
@@ -887,7 +887,7 @@ cpu_dump_mempagecnt()
  */
 int
 cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t)); 
+	int (*dump) __P((dev_t, daddr_t, void *, size_t)); 
 	daddr_t *blknop;
 {
 	int buf[MDHDRSIZE / sizeof(int)]; 
@@ -904,7 +904,7 @@ cpu_dump(dump, blknop)
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);
 }
@@ -973,7 +973,7 @@ dumpsys()
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump) __P((dev_t, daddr_t, void *, size_t));
 	int error;
 
 	/* XXX Should save registers. */
@@ -1081,7 +1081,7 @@ void
 initcpu()
 {
 #if defined(M68060)
-	extern caddr_t vectab[256];
+	extern void *vectab[256];
 #if defined(M060SP)
 	extern u_int8_t I_CALL_TOP[];
 	extern u_int8_t FP_CALL_TOP[];

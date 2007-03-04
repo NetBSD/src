@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.30 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: vs.c,v 1.31 2007/03/04 06:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.30 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.31 2007/03/04 06:01:07 christos Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -228,7 +228,7 @@ vs_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_hw_if = &vs_hw_if;
-	sc->sc_addr = (caddr_t) ia->ia_addr;
+	sc->sc_addr = (void *) ia->ia_addr;
 	sc->sc_dmas = NULL;
 
 	/* XXX */

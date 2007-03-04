@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.230 2007/03/04 04:00:00 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.231 2007/03/04 06:00:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5596,7 +5596,7 @@ ENTRY(subyte)
 /* probeget and probeset are meant to be used during autoconfiguration */
 
 /*
- * probeget(addr, size) caddr_t addr; int size;
+ * probeget(addr, size) void *addr; int size;
  *
  * Read or write a (byte,word,longword) from the given address.
  * Like {fu,su}{byte,halfword,word} but our caller is supposed
@@ -5623,7 +5623,7 @@ ENTRY(probeget)
 	 st	%g0, [%o2 + PCB_ONFAULT]
 
 /*
- * probeset(addr, size, val) caddr_t addr; int size, val;
+ * probeset(addr, size, val) void *addr; int size, val;
  *
  * As above, but we return 0 on success.
  */
@@ -5647,7 +5647,7 @@ ENTRY(probeset)
 	 st	%g0, [%o3 + PCB_ONFAULT]
 
 /*
- * int xldcontrolb(caddr_t, pcb)
+ * int xldcontrolb(void *, pcb)
  *		    %o0     %o1
  *
  * read a byte from the specified address in ASI_CONTROL space.
@@ -5663,7 +5663,7 @@ ENTRY(xldcontrolb)
 	 st	%g0, [%o2 + PCB_ONFAULT]
 
 /*
- * int fkbyte(caddr_t, pcb)
+ * int fkbyte(void *, pcb)
  *	      %o0      %o1
  *
  * Just like fubyte(), but for kernel space.

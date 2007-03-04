@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.8 2007/02/16 13:42:29 ad Exp $	*/
+/*	$NetBSD: ppi.c,v 1.9 2007/03/04 06:01:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.8 2007/02/16 13:42:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.9 2007/03/04 06:01:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,7 @@ int
 ppiioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

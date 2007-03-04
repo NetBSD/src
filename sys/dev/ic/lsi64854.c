@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.27 2005/12/11 12:21:27 christos Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.28 2007/03/04 06:01:57 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.27 2005/12/11 12:21:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.28 2007/03/04 06:01:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.27 2005/12/11 12:21:27 christos Exp $
 #include <dev/ic/ncr53c9xvar.h>
 
 void	lsi64854_reset(struct lsi64854_softc *);
-int	lsi64854_setup(struct lsi64854_softc *, caddr_t *, size_t *,
+int	lsi64854_setup(struct lsi64854_softc *, void **, size_t *,
 			     int, size_t *);
-int	lsi64854_setup_pp(struct lsi64854_softc *, caddr_t *, size_t *,
+int	lsi64854_setup_pp(struct lsi64854_softc *, void **, size_t *,
 			     int, size_t *);
 
 #ifdef DEBUG
@@ -293,7 +293,7 @@ lsi64854_reset(sc)
 int
 lsi64854_setup(sc, addr, len, datain, dmasize)
 	struct lsi64854_softc *sc;
-	caddr_t *addr;
+	void **addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;	/* IN-OUT */
@@ -551,7 +551,7 @@ lsi64854_enet_intr(arg)
 int
 lsi64854_setup_pp(sc, addr, len, datain, dmasize)
 	struct lsi64854_softc *sc;
-	caddr_t *addr;
+	void **addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;	/* IN-OUT */

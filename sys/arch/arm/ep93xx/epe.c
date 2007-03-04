@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $	*/
+/*	$NetBSD: epe.c,v 1.10 2007/03/04 05:59:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.9 2007/01/24 13:08:14 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.10 2007/03/04 05:59:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -123,7 +123,7 @@ int		epe_mii_readreg (struct device *, int, int);
 void		epe_mii_writereg (struct device *, int, int, int);
 void		epe_statchg (struct device *);
 void		epe_tick (void *);
-static int	epe_ifioctl (struct ifnet *, u_long, caddr_t);
+static int	epe_ifioctl (struct ifnet *, u_long, void *);
 static void	epe_ifstart (struct ifnet *);
 static void	epe_ifwatchdog (struct ifnet *);
 static int	epe_ifinit (struct ifnet *);
@@ -309,7 +309,7 @@ static void
 epe_init(struct epe_softc *sc)
 {
 	bus_dma_segment_t segs;
-	caddr_t addr;
+	void *addr;
 	int rsegs, err, i;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
 	int mdcdiv = DEFAULT_MDCDIV;
@@ -372,7 +372,7 @@ epe_init(struct epe_softc *sc)
 	/* Program each queue's start addr, cur addr, and len registers
 	 * with the physical addresses. 
 	 */
-	addr = (caddr_t)sc->ctrlpage_dmamap->dm_segs[0].ds_addr;
+	addr = (void *)sc->ctrlpage_dmamap->dm_segs[0].ds_addr;
 	EPE_WRITE(TXDQBAdd, (u_int32_t)addr);
 	EPE_WRITE(TXDQCurAdd, (u_int32_t)addr);
 	EPE_WRITE(TXDQBLen, TX_QLEN * 2 * sizeof(u_int32_t)); 
@@ -572,7 +572,7 @@ static int
 epe_ifioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct epe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -646,8 +646,8 @@ more:
 				goto stop;
 			}
 		}
-		mn->m_data = (caddr_t)(((u_int32_t)mn->m_data + 0x3) & (~0x3)); 
-		m_copydata(m, 0, m->m_pkthdr.len, mtod(mn, caddr_t));
+		mn->m_data = (void *)(((u_int32_t)mn->m_data + 0x3) & (~0x3)); 
+		m_copydata(m, 0, m->m_pkthdr.len, mtod(mn, void *));
 		mn->m_pkthdr.len = mn->m_len = m->m_pkthdr.len;
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		m_freem(m);

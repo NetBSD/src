@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.14 2007/02/28 17:40:11 tsutsui Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.15 2007/03/04 06:02:22 christos Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.14 2007/02/28 17:40:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.15 2007/03/04 06:02:22 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -80,7 +80,7 @@ void	nfe_miibus_statchg(struct device *);
 int	nfe_miibus_readreg(struct device *, int, int);
 void	nfe_miibus_writereg(struct device *, int, int, int);
 int	nfe_intr(void *);
-int	nfe_ioctl(struct ifnet *, u_long, caddr_t);
+int	nfe_ioctl(struct ifnet *, u_long, void *);
 void	nfe_txdesc32_sync(struct nfe_softc *, struct nfe_desc32 *, int);
 void	nfe_txdesc64_sync(struct nfe_softc *, struct nfe_desc64 *, int);
 void	nfe_txdesc32_rsync(struct nfe_softc *, int, int, int);
@@ -95,7 +95,7 @@ void	nfe_watchdog(struct ifnet *);
 int	nfe_init(struct ifnet *);
 void	nfe_stop(struct ifnet *, int);
 struct	nfe_jbuf *nfe_jalloc(struct nfe_softc *);
-void	nfe_jfree(struct mbuf *, caddr_t, size_t, void *);
+void	nfe_jfree(struct mbuf *, void *, size_t, void *);
 int	nfe_jpool_alloc(struct nfe_softc *);
 void	nfe_jpool_free(struct nfe_softc *);
 int	nfe_alloc_rx_ring(struct nfe_softc *, struct nfe_rx_ring *);
@@ -537,7 +537,7 @@ nfe_intr(void *arg)
 }
 
 int
-nfe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct nfe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -625,7 +625,7 @@ void
 nfe_txdesc32_sync(struct nfe_softc *sc, struct nfe_desc32 *desc32, int ops)
 {
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
-	    (caddr_t)desc32 - (caddr_t)sc->txq.desc32,
+	    (char *)desc32 - (char *)sc->txq.desc32,
 	    sizeof (struct nfe_desc32), ops);
 }
 
@@ -633,7 +633,7 @@ void
 nfe_txdesc64_sync(struct nfe_softc *sc, struct nfe_desc64 *desc64, int ops)
 {
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
-	    (caddr_t)desc64 - (caddr_t)sc->txq.desc64,
+	    (char *)desc64 - (char *)sc->txq.desc64,
 	    sizeof (struct nfe_desc64), ops);
 }
 
@@ -642,20 +642,20 @@ nfe_txdesc32_rsync(struct nfe_softc *sc, int start, int end, int ops)
 {
 	if (end > start) {
 		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
-		    (caddr_t)&sc->txq.desc32[start] - (caddr_t)sc->txq.desc32,
-		    (caddr_t)&sc->txq.desc32[end] -
-		    (caddr_t)&sc->txq.desc32[start], ops);
+		    (char *)&sc->txq.desc32[start] - (char *)sc->txq.desc32,
+		    (char *)&sc->txq.desc32[end] -
+		    (char *)&sc->txq.desc32[start], ops);
 		return;
 	}
 	/* sync from 'start' to end of ring */
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
-	    (caddr_t)&sc->txq.desc32[start] - (caddr_t)sc->txq.desc32,
-	    (caddr_t)&sc->txq.desc32[NFE_TX_RING_COUNT] -
-	    (caddr_t)&sc->txq.desc32[start], ops);
+	    (char *)&sc->txq.desc32[start] - (char *)sc->txq.desc32,
+	    (char *)&sc->txq.desc32[NFE_TX_RING_COUNT] -
+	    (char *)&sc->txq.desc32[start], ops);
 
 	/* sync from start of ring to 'end' */
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.map, 0,
-	    (caddr_t)&sc->txq.desc32[end] - (caddr_t)sc->txq.desc32, ops);
+	    (char *)&sc->txq.desc32[end] - (char *)sc->txq.desc32, ops);
 }
 
 void
@@ -663,27 +663,27 @@ nfe_txdesc64_rsync(struct nfe_softc *sc, int start, int end, int ops)
 {
 	if (end > start) {
 		bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
-		    (caddr_t)&sc->txq.desc64[start] - (caddr_t)sc->txq.desc64,
-		    (caddr_t)&sc->txq.desc64[end] -
-		    (caddr_t)&sc->txq.desc64[start], ops);
+		    (char *)&sc->txq.desc64[start] - (char *)sc->txq.desc64,
+		    (char *)&sc->txq.desc64[end] -
+		    (char *)&sc->txq.desc64[start], ops);
 		return;
 	}
 	/* sync from 'start' to end of ring */
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.map,
-	    (caddr_t)&sc->txq.desc64[start] - (caddr_t)sc->txq.desc64,
-	    (caddr_t)&sc->txq.desc64[NFE_TX_RING_COUNT] -
-	    (caddr_t)&sc->txq.desc64[start], ops);
+	    (char *)&sc->txq.desc64[start] - (char *)sc->txq.desc64,
+	    (char *)&sc->txq.desc64[NFE_TX_RING_COUNT] -
+	    (char *)&sc->txq.desc64[start], ops);
 
 	/* sync from start of ring to 'end' */
 	bus_dmamap_sync(sc->sc_dmat, sc->txq.map, 0,
-	    (caddr_t)&sc->txq.desc64[end] - (caddr_t)sc->txq.desc64, ops);
+	    (char *)&sc->txq.desc64[end] - (char *)sc->txq.desc64, ops);
 }
 
 void
 nfe_rxdesc32_sync(struct nfe_softc *sc, struct nfe_desc32 *desc32, int ops)
 {
 	bus_dmamap_sync(sc->sc_dmat, sc->rxq.map,
-	    (caddr_t)desc32 - (caddr_t)sc->rxq.desc32,
+	    (char *)desc32 - (char *)sc->rxq.desc32,
 	    sizeof (struct nfe_desc32), ops);
 }
 
@@ -691,7 +691,7 @@ void
 nfe_rxdesc64_sync(struct nfe_softc *sc, struct nfe_desc64 *desc64, int ops)
 {
 	bus_dmamap_sync(sc->sc_dmat, sc->rxq.map,
-	    (caddr_t)desc64 - (caddr_t)sc->rxq.desc64,
+	    (char *)desc64 - (char *)sc->rxq.desc64,
 	    sizeof (struct nfe_desc64), ops);
 }
 
@@ -777,8 +777,8 @@ nfe_rxeof(struct nfe_softc *sc)
 			MEXTADD(mnew, jbuf->buf, NFE_JBYTES, 0, nfe_jfree, sc);
 
 			bus_dmamap_sync(sc->sc_dmat, sc->rxq.jmap,
-			    mtod(data->m, caddr_t) - sc->rxq.jpool, NFE_JBYTES,
-			    BUS_DMASYNC_POSTREAD);
+			    mtod(data->m, char *) - (char *)sc->rxq.jpool,
+			    NFE_JBYTES, BUS_DMASYNC_POSTREAD);
 
 			physaddr = jbuf->physaddr;
 		} else {
@@ -1330,7 +1330,7 @@ nfe_alloc_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    NFE_RX_RING_COUNT * descsize, (caddr_t *)desc, BUS_DMA_NOWAIT);
+	    NFE_RX_RING_COUNT * descsize, (void **)desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -1473,7 +1473,7 @@ nfe_free_rx_ring(struct nfe_softc *sc, struct nfe_rx_ring *ring)
 		bus_dmamap_sync(sc->sc_dmat, ring->map, 0,
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)desc,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)desc,
 		    NFE_RX_RING_COUNT * descsize);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}
@@ -1510,14 +1510,14 @@ nfe_jalloc(struct nfe_softc *sc)
  * freed.
  */
 void
-nfe_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+nfe_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct nfe_softc *sc = arg;
 	struct nfe_jbuf *jbuf;
 	int i;
 
 	/* find the jbuf from the base pointer */
-	i = (buf - sc->rxq.jpool) / NFE_JBYTES;
+	i = ((char *)buf - (char *)sc->rxq.jpool) / NFE_JBYTES;
 	if (i < 0 || i >= NFE_JPOOL_COUNT) {
 		printf("%s: request to free a buffer (%p) not managed by us\n",
 		    sc->sc_dev.dv_xname, buf);
@@ -1538,7 +1538,7 @@ nfe_jpool_alloc(struct nfe_softc *sc)
 	struct nfe_rx_ring *ring = &sc->rxq;
 	struct nfe_jbuf *jbuf;
 	bus_addr_t physaddr;
-	caddr_t buf;
+	char *buf;
 	int i, nsegs, error;
 
 	/*
@@ -1652,7 +1652,7 @@ nfe_alloc_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->seg, nsegs,
-	    NFE_TX_RING_COUNT * descsize, (caddr_t *)desc, BUS_DMA_NOWAIT);
+	    NFE_TX_RING_COUNT * descsize, (void **)desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		printf("%s: could not map desc DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -1736,7 +1736,7 @@ nfe_free_tx_ring(struct nfe_softc *sc, struct nfe_tx_ring *ring)
 		bus_dmamap_sync(sc->sc_dmat, ring->map, 0,
 		    ring->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, ring->map);
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)desc,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)desc,
 		    NFE_TX_RING_COUNT * descsize);
 		bus_dmamem_free(sc->sc_dmat, &ring->seg, 1);
 	}

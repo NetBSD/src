@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.162 2007/02/21 22:59:58 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.163 2007/03/04 06:01:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.162 2007/02/21 22:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.163 2007/03/04 06:01:43 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -918,7 +918,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 
 /* ARGSUSED */
 static int
-vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -1019,7 +1019,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			M_TEMP, M_WAITOK);
  
 			/* read compressed file header */
-			error = vn_rdwr(UIO_READ, nd.ni_vp, (caddr_t)ch,
+			error = vn_rdwr(UIO_READ, nd.ni_vp, (void *)ch,
 			  sizeof(struct vnd_comp_header), 0, UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
 			if(error) {
@@ -1059,7 +1059,7 @@ vndioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  
 			/* read in the offsets */
 			error = vn_rdwr(UIO_READ, nd.ni_vp,
-			  (caddr_t)vnd->sc_comp_offsets,
+			  (void *)vnd->sc_comp_offsets,
 			  sizeof(u_int64_t) * vnd->sc_comp_numoffs,
 			  sizeof(struct vnd_comp_header), UIO_SYSSPACE,
 			  IO_UNIT|IO_NODELOCKED, l->l_cred, NULL, NULL);
@@ -1595,7 +1595,7 @@ vndsize(dev_t dev)
 }
 
 static int
-vnddump(dev_t dev, daddr_t blkno, caddr_t va,
+vnddump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 
@@ -1736,7 +1736,7 @@ compstrategy(struct buf *bp, off_t bn)
 	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
 	u_int32_t comp_block;
 	struct uio auio;
-	caddr_t addr;
+	char *addr;
 	int s;
 
 	/* set up constants for data move */

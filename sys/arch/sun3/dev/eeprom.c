@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.28 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.29 2007/03/04 06:00:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.28 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eeprom.c,v 1.29 2007/03/04 06:00:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ eeprom_uio(struct uio *uio)
 {
 	int cnt, error;
 	int off;	/* NOT off_t */
-	caddr_t va;
+	void *va;
 
 	if (eeprom_copy == NULL)
 		return (ENXIO);

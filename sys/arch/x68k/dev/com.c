@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.42 2006/10/01 20:31:50 elad Exp $	*/
+/*	$NetBSD: com.c,v 1.43 2007/03/04 06:01:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.42 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.43 2007/03/04 06:01:05 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -596,7 +596,7 @@ tiocm_xxx2mcr(int data)
 }
 
 int
-comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = COMUNIT(dev);
 	struct com_softc *sc = xcom_cd.cd_devs[unit];

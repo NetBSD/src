@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.44 2007/02/17 22:34:08 dyoung Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.45 2007/03/04 06:03:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -173,7 +173,7 @@ extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
-int	ether_ioctl(struct ifnet *, u_long, caddr_t);
+int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti (struct ifreq *, struct ethercom *);
 int	ether_delmulti (struct ifreq *, struct ethercom *);
 int	ether_changeaddr (struct ifreq *, struct ethercom *);

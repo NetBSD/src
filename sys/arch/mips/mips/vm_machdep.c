@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.114 2007/02/28 04:21:54 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.115 2007/03/04 06:00:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.114 2007/02/28 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2007/03/04 06:00:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * will be to right address, with correct registers.
 	 */
 	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
-	f = (struct frame *)((caddr_t)l2->l_addr + USPACE) - 1;
+	f = (struct frame *)((void *)l2->l_addr + USPACE) - 1;
 	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
 
 	/*
@@ -185,7 +185,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct pcb *pcb;
 	struct frame *f;
 
-	f = (struct frame *)((caddr_t)l->l_addr + USPACE) - 1;
+	f = (struct frame *)((void *)l->l_addr + USPACE) - 1;
 	KASSERT(l->l_md.md_regs == f);
 
 	pcb = &l->l_addr->u_pcb;
@@ -317,7 +317,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	len = mips_round_page(off + len);
 	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(kva + off);
+	bp->b_data = (void *)(kva + off);
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {
 		if (pmap_extract(upmap, uva, &pa) == false)

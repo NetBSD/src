@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.49 2007/02/28 04:21:52 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.50 2007/03/04 06:00:04 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2007/02/28 04:21:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2007/03/04 06:00:04 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,7 +105,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem;		/* set by locore */
 /*
@@ -122,7 +122,7 @@ void straytrap __P((int, u_short));
 void nmihand __P((struct frame));
 
 int  cpu_dumpsize __P((void));
-int  cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+int  cpu_dump __P((int (*)(dev_t, daddr_t, void *, size_t), daddr_t *));
 void cpu_init_kcore_hdr __P((void));
 
 /*
@@ -525,7 +525,7 @@ cpu_dumpsize()
  */
 int
 cpu_dump(dump, blknop)
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t)); 
+	int (*dump) __P((dev_t, daddr_t, void *, size_t)); 
 	daddr_t *blknop;
 {
 	int buf[MDHDRSIZE / sizeof(int)]; 
@@ -542,7 +542,7 @@ cpu_dump(dump, blknop)
 	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
 
 	bcopy(&cpu_kcore_hdr, chdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (caddr_t)buf, sizeof(buf));
+	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
 	*blknop += btodb(sizeof(buf));
 	return (error);
 }
@@ -607,7 +607,7 @@ dumpsys()
 	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
-	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+	int (*dump) __P((dev_t, daddr_t, void *, size_t));
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
@@ -704,7 +704,7 @@ int	*nofault;
 
 int
 badaddr(addr, nbytes)
-	register caddr_t addr;
+	register void *addr;
 	int nbytes;
 {
 	register int i;

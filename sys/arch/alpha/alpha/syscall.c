@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.25 2007/02/21 22:59:36 thorpej Exp $ */
+/* $NetBSD: syscall.c,v 1.26 2007/03/04 05:59:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2007/02/21 22:59:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2007/03/04 05:59:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {
 	default:
-		error = copyin((caddr_t)alpha_pal_rdusp(), &copyargs[6],
+		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
 		    (nargs - 6) * sizeof(u_int64_t));
 		if (error)
 			goto bad;
@@ -279,7 +279,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {
 	default:
-		error = copyin((caddr_t)alpha_pal_rdusp(), &copyargs[6],
+		error = copyin((void *)alpha_pal_rdusp(), &copyargs[6],
 		    (nargs - 6) * sizeof(u_int64_t));
 		if (error) {
 			args = copyargs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.95 2007/02/22 05:10:30 matt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.96 2007/03/04 06:00:50 christos Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.95 2007/02/22 05:10:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.96 2007/03/04 06:00:50 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -439,7 +439,7 @@ kdb_trap(int type, register struct trapframe64 *tf)
 		if ((unsigned)(tf->tf_out[6] + BIAS) > (unsigned)KERNBASE)
 			dbregs.db_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
 		else
-			copyin((caddr_t)(tf->tf_out[6] + BIAS), &dbregs.db_fr, sizeof(struct frame64));
+			copyin((void *)(tf->tf_out[6] + BIAS), &dbregs.db_fr, sizeof(struct frame64));
 	} else {
 		struct frame32 tfr;
 		
@@ -447,7 +447,7 @@ kdb_trap(int type, register struct trapframe64 *tf)
 		if ((unsigned)(tf->tf_out[6]) > (unsigned)KERNBASE)
 			tfr = *(struct frame32 *)tf->tf_out[6];
 		else
-			copyin((caddr_t)(tf->tf_out[6]), &tfr, sizeof(struct frame32));
+			copyin((void *)(tf->tf_out[6]), &tfr, sizeof(struct frame32));
 		/* Now copy each field from the 32-bit value to the 64-bit value */
 		for (i=0; i<8; i++)
 			dbregs.db_fr.fr_local[i] = tfr.fr_local[i];

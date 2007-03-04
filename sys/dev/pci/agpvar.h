@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.12 2006/08/17 17:11:28 christos Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.13 2007/03/04 06:02:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -92,7 +92,7 @@ struct agp_memory {
 	off_t		am_offset;		/* page offset if bound */
 	int		am_is_bound;		/* non-zero if bound */
 	bus_addr_t	  am_physical;
-	caddr_t		  am_virtual;
+	void *		  am_virtual;
 	bus_dmamap_t	  am_dmamap;
 	bus_dma_segment_t *am_dmaseg;
 	int		  am_nseg;
@@ -189,9 +189,9 @@ int agp_intel_attach(struct device *, struct device *, void *);
 int agp_via_attach(struct device *, struct device *, void *);
 int agp_sis_attach(struct device *, struct device *, void *);
 
-int agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *, caddr_t *,
+int agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *, void **,
 		     bus_addr_t *, bus_dma_segment_t *, int, int *);
-void agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t, caddr_t,
+void agp_free_dmamem(bus_dma_tag_t, size_t, bus_dmamap_t, void *,
 		     bus_dma_segment_t *, int) ;
 
 MALLOC_DECLARE(M_AGP);

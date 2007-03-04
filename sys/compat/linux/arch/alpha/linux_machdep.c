@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.36 2007/02/09 21:55:18 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.37 2007/03/04 06:01:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.36 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37 2007/03/04 06:01:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,11 +138,11 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 
 	if (onstack)
 		sfp = (struct linux_rt_sigframe *)
-					((caddr_t)l->l_sigstk.ss_sp +
+					((void *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		sfp = (struct linux_rt_sigframe *)(alpha_pal_rdusp());
-	sfp = (struct linux_rt_sigframe *)((caddr_t)sfp - rndfsize);
+	sfp = (struct linux_rt_sigframe *)((void *)sfp - rndfsize);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid))
@@ -189,7 +189,7 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
-	error = copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize);
+	error = copyout((void *)&sigframe, (void *)sfp, fsize);
 	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {
@@ -244,11 +244,11 @@ void setup_linux_sigframe(tf, sig, mask)
 
 	if (onstack)
 		sfp = (struct linux_sigframe *)
-					((caddr_t)l->l_sigstk.ss_sp +
+					((void *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		sfp = (struct linux_sigframe *)(alpha_pal_rdusp());
-	sfp = (struct linux_sigframe *)((caddr_t)sfp - rndfsize);
+	sfp = (struct linux_sigframe *)((void *)sfp - rndfsize);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid))
@@ -282,7 +282,7 @@ void setup_linux_sigframe(tf, sig, mask)
 
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
-	error = copyout((caddr_t)&sigframe, (caddr_t)sfp, fsize);
+	error = copyout((void *)&sigframe, (void *)sfp, fsize);
 	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {
@@ -457,7 +457,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	/*
 	 * Fetch the frame structure.
 	 */
-	if (copyin((caddr_t)sfp, &sigframe,
+	if (copyin((void *)sfp, &sigframe,
 			sizeof(struct linux_rt_sigframe)) != 0)
 		return (EFAULT);
 
@@ -493,7 +493,7 @@ linux_sys_sigreturn(l, v, retval)
 	/*
 	 * Fetch the frame structure.
 	 */
-	if (copyin((caddr_t)sfp, &frame, sizeof(struct linux_sigframe)) != 0)
+	if (copyin((void *)sfp, &frame, sizeof(struct linux_sigframe)) != 0)
 		return(EFAULT);
 
 	/* Grab the signal mask. */
@@ -516,7 +516,7 @@ linux_machdepioctl(l, v, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;

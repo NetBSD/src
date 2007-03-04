@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.4 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: itevar.h,v 1.5 2007/03/04 05:59:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -96,7 +96,7 @@ struct ite_data {
 	struct	tty *tty;
 	struct  itesw *isw;
 	struct  grf_data *grf;
-	caddr_t regbase, fbbase;
+	void *regbase, fbbase;
 	short	curx, cury;
 	short   cursorx, cursory;
 	short   cblankx, cblanky;
@@ -111,7 +111,7 @@ struct ite_data {
 	short	planemask;
 	short	pos;
 	char	imode, escape, fpd, hold;
-	caddr_t	devdata;			/* display dependent data */
+	void *	devdata;			/* display dependent data */
 };
 
 struct itesw {

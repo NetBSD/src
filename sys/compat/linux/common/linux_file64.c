@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.35 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.36 2007/03/04 06:01:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.35 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.36 2007/03/04 06:01:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ linux_sys_fstat64(l, v, retval)
 	struct sys___fstat30_args fsa;
 	struct linux_stat64 tmplst;
 	struct stat *st,tmpst;
-	caddr_t sg;
+	void *sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
@@ -169,7 +169,7 @@ linux_do_stat64(l, v, retval, dolstat)
 	struct sys___stat30_args sa;
 	struct linux_stat64 tmplst;
 	struct stat *st, tmpst;
-	caddr_t sg;
+	void *sg;
 	int error;
 	struct linux_sys_stat64_args *uap = v;
 
@@ -235,7 +235,7 @@ linux_sys_truncate64(l, v, retval)
 	} */ *uap = v;
 	struct sys_truncate_args ta;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -336,7 +336,7 @@ linux_sys_fcntl64(l, v, retval)
 	struct linux_flock64 lfl;
 	struct flock bfl, *bfp;
 	int error;
-	caddr_t sg;
+	void *sg;
 	void *arg = SCARG(uap, arg);
 	int cmd = SCARG(uap, cmd);
 	int fd = SCARG(uap, fd);
@@ -409,9 +409,9 @@ linux_sys_getdents64(l, v, retval)
 	} */ *uap = v;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t	inp, tbuf;		/* BSD-format */
+	char *inp, *tbuf;		/* BSD-format */
 	int len, reclen;		/* BSD-format */
-	caddr_t outp;			/* Linux-format */
+	char *outp;			/* Linux-format */
 	int resid, linux_reclen = 0;	/* Linux-format */
 	struct file *fp;
 	struct uio auio;
@@ -468,7 +468,7 @@ again:
 		goto out;
 
 	inp = tbuf;
-	outp = (caddr_t)SCARG(uap, dent);
+	outp = (void *)SCARG(uap, dent);
 	resid = nbytes;
 	if ((len = buflen - auio.uio_resid) == 0)
 		goto eof;
@@ -506,7 +506,7 @@ again:
 		idb.d_off = off;
 		idb.d_reclen = (u_short)linux_reclen;
 		strcpy(idb.d_name, bdp->d_name);
-		if ((error = copyout((caddr_t)&idb, outp, linux_reclen)))
+		if ((error = copyout((void *)&idb, outp, linux_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
@@ -516,7 +516,7 @@ again:
 	}
 
 	/* if we squished out the whole block, try again */
-	if (outp == (caddr_t)SCARG(uap, dent))
+	if (outp == (void *)SCARG(uap, dent))
 		goto again;
 	fp->f_offset = off;	/* update the vnode offset */
 

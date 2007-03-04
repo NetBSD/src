@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.16 2007/02/19 06:08:37 ad Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.17 2007/03/04 06:02:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.16 2007/02/19 06:08:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.17 2007/03/04 06:02:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -117,7 +117,7 @@ sysmonclose_envsys(dev_t dev, int flag, int mode,
  *	Perform an envsys control request.
  */
 int
-sysmonioctl_envsys(dev_t dev, u_long cmd, caddr_t data,
+sysmonioctl_envsys(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	struct sysmon_envsys *sme;

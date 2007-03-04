@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: pcb.h,v 1.5 2007/03/04 05:59:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ struct pcb {
 #define	PCB_USER_LDT	0x01		/* has user-set LDT */
 #define PCB_GS64	0x02
 #define PCB_FS64	0x04
-	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
+	void *	pcb_onfault;		/* copyin/out fault recovery */
 	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	unsigned pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 	struct pmap *pcb_pmap;		/* back pointer to our pmap */

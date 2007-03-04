@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_venus.c,v 1.24 2006/05/14 21:24:49 elad Exp $	*/
+/*	$NetBSD: coda_venus.c,v 1.25 2007/03/04 06:01:12 christos Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.24 2006/05/14 21:24:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_venus.c,v 1.25 2007/03/04 06:01:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,7 @@ venus_write(void)
  */
 int
 venus_ioctl(void *mdp, CodaFid *fid,
-	int com, int flag, caddr_t data,
+	int com, int flag, void *data,
 	kauth_cred_t cred, struct lwp *l)
 {
     DECL(coda_ioctl);			/* sets Isize & Osize */

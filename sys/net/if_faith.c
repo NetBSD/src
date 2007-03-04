@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.38 2007/02/17 22:34:08 dyoung Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.39 2007/03/04 06:03:15 christos Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.38 2007/02/17 22:34:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.39 2007/03/04 06:03:15 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.38 2007/02/17 22:34:08 dyoung Exp $")
 
 #include <net/net_osdep.h>
 
-static int	faithioctl(struct ifnet *, u_long, caddr_t);
+static int	faithioctl(struct ifnet *, u_long, void *);
 static int	faithoutput(struct ifnet *, struct mbuf *,
 		            const struct sockaddr *, struct rtentry *);
 static void	faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
@@ -225,7 +225,7 @@ faithrtrequest(int cmd, struct rtentry *rt,
  */
 /* ARGSUSED */
 static int
-faithioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+faithioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
 	struct ifreq *ifr = (struct ifreq *)data;

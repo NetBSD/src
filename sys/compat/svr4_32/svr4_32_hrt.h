@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_hrt.h,v 1.1 2001/02/06 16:37:57 eeh Exp $	 */
+/*	$NetBSD: svr4_32_hrt.h,v 1.2 2007/03/04 06:01:36 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,13 +46,13 @@ typedef	struct {
 	netbsd32_u_long	i_word2;
 	int		i_clock;
 } svr4_32_hrt_interval_t;
-typedef netbsd32_caddr_t svr4_32_hrt_interval_tp;
+typedef netbsd32_void *svr4_32_hrt_interval_tp;
 
 typedef struct {
 	netbsd32_u_long	h_sec;
 	netbsd32_long	h_rem;
 	netbsd32_u_long	h_res;
 } svr4_32_hrt_time_t;
-typedef netbsd32_caddr_t svr4_32_hrt_time_tp;
+typedef netbsd32_void *svr4_32_hrt_time_tp;
 
 #endif /* !_SVR4_32_HRT_H_ */

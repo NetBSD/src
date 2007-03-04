@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.99 2007/02/22 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.100 2007/03/04 06:03:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.99 2007/02/22 06:34:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.100 2007/03/04 06:03:06 christos Exp $");
 
 #include "opt_compat_43.h"
 
@@ -251,7 +251,7 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 
 	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
 	kauth_cred_getgroups(cred, grbuf, ngrp);
-	error = copyout(grbuf, (caddr_t)SCARG(uap, gidset),
+	error = copyout(grbuf, (void *)SCARG(uap, gidset),
 			ngrp * sizeof(gid_t));
 	free(grbuf, M_TEMP);
 	if (error)

@@ -1,4 +1,4 @@
-/* $NetBSD: wsmousevar.h,v 1.9 2006/11/12 19:00:43 plunky Exp $ */
+/* $NetBSD: wsmousevar.h,v 1.10 2007/03/04 06:02:52 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 struct wsmouse_accessops {
 	int	(*enable)(void *);
-	int	(*ioctl)(void *, u_long, caddr_t, int, struct lwp *);
+	int	(*ioctl)(void *, u_long, void *, int, struct lwp *);
 	void	(*disable)(void *);
 };
 

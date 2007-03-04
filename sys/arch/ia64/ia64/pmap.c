@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.6 2007/02/28 04:21:51 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.7 2007/03/04 06:00:02 christos Exp $ */
 
 
 /*-
@@ -92,7 +92,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2007/02/28 04:21:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2007/03/04 06:00:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		}
 
 		va = IA64_PHYS_TO_RR7(pa);
-		memset((caddr_t)va, 0, size);
+		memset((void *)va, 0, size);
 		pmap_pages_stolen += npgs;
 		return (va);
 	}
@@ -515,7 +515,7 @@ pmap_steal_vhpt_memory(vsize_t size)
 	 */
 	pa = ptoa(vhpt_start);
 	va = IA64_PHYS_TO_RR7(pa);
-	memset((caddr_t)va, 0, size);
+	memset((void *)va, 0, size);
 	pmap_pages_stolen += npgs;
 	return (va);
 }
@@ -936,7 +936,7 @@ void
 pmap_zero_page(paddr_t phys)
 {
 	vaddr_t va = IA64_PHYS_TO_RR7(phys);
-	bzero((caddr_t) va, PAGE_SIZE);
+	bzero((void *) va, PAGE_SIZE);
 }
 
 /*
@@ -953,7 +953,7 @@ pmap_copy_page(paddr_t psrc, paddr_t pdst)
 {
 	vaddr_t vsrc = IA64_PHYS_TO_RR7(psrc);
 	vaddr_t vdst = IA64_PHYS_TO_RR7(pdst);
-	bcopy((caddr_t) vsrc, (caddr_t) vdst, PAGE_SIZE);
+	bcopy((void *) vsrc, (void *) vdst, PAGE_SIZE);
 }
 
 

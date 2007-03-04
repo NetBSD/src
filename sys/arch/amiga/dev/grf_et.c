@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.22 2006/11/24 22:04:21 wiz Exp $ */
+/*	$NetBSD: grf_et.c,v 1.23 2007/03/04 05:59:19 christos Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.22 2006/11/24 22:04:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.23 2007/03/04 05:59:19 christos Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -295,8 +295,8 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 		bcopy(&congrf.g_display, &gp->g_display,
 		    (char *) &gp[1] - (char *) &gp->g_display);
 	} else {
-		gp->g_regkva = (volatile caddr_t) et_regaddr;
-		gp->g_fbkva = (volatile caddr_t) et_fbaddr;
+		gp->g_regkva = (volatile void *) et_regaddr;
+		gp->g_fbkva = (volatile void *) et_fbaddr;
 
 		gp->g_unit = GRF_ET4000_UNIT;
 		gp->g_mode = et_mode;
@@ -1066,11 +1066,11 @@ et_load_mon(struct grf_softc *gp, struct grfettext_mode *md)
 	ba = gp->g_regkva;
 
 	/* provide all needed information in grf device-independent locations */
-	gp->g_data = (caddr_t) gv;
+	gp->g_data = (void *) gv;
 	gi = &gp->g_display;
-	gi->gd_regaddr = (caddr_t) ztwopa(ba);
+	gi->gd_regaddr = (void *) ztwopa(ba);
 	gi->gd_regsize = 64 * 1024;
-	gi->gd_fbaddr = (caddr_t) kvtop(gp->g_fbkva);
+	gi->gd_fbaddr = (void *) kvtop(gp->g_fbkva);
 	gi->gd_fbsize = et_fbsize;
 	gi->gd_colors = 1 << gv->depth;
 	gi->gd_planes = gv->depth;

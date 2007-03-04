@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.13 2007/02/16 20:49:40 njoly Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.14 2007/03/04 06:01:25 christos Exp $ */
 
 /*
  * System call numbers.
@@ -230,7 +230,7 @@
 /* syscall: "old_mmap" ret: "int" args: "linux32_oldmmapp" */
 #define	LINUX32_SYS_old_mmap	90
 
-/* syscall: "netbsd32_munmap" ret: "int" args: "netbsd32_caddr_t" "int" */
+/* syscall: "netbsd32_munmap" ret: "int" args: "netbsd32_void *" "int" */
 #define	LINUX32_SYS_netbsd32_munmap	91
 
 /* syscall: "truncate" ret: "int" args: "const netbsd32_charp" "netbsd32_long" */
@@ -293,7 +293,7 @@
 /* syscall: "getfsuid16" ret: "int" args: */
 #define	LINUX32_SYS_getfsuid16	139
 
-/* syscall: "llseek" ret: "int" args: "int" "u_int32_t" "u_int32_t" "netbsd32_caddr_t" "int" */
+/* syscall: "llseek" ret: "int" args: "int" "u_int32_t" "u_int32_t" "netbsd32_void *" "int" */
 #define	LINUX32_SYS_llseek	140
 
 /* syscall: "getdents" ret: "int" args: "int" "linux32_direntp_t" "unsigned int" */

@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.9 2007/02/17 22:31:37 pavel Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.10 2007/03/04 05:59:12 christos Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.9 2007/02/17 22:31:37 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.10 2007/03/04 05:59:12 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -45,7 +45,7 @@ void
 linux32_syscall_plain(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -61,7 +61,7 @@ linux32_syscall_plain(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (void *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -154,7 +154,7 @@ void
 linux32_syscall_fancy(frame)
 	struct trapframe *frame;
 {
-	caddr_t params;
+	void *params;
 	const struct sysent *callp;
 	struct proc *p;
 	struct lwp *l;
@@ -174,7 +174,7 @@ linux32_syscall_fancy(frame)
 
 	code = frame->tf_rax;
 	callp = p->p_emul->e_sysent;
-	params = (caddr_t)frame->tf_rsp + sizeof(int);
+	params = (void *)frame->tf_rsp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:

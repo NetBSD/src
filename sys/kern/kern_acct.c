@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.71 2007/02/22 06:34:42 thorpej Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.72 2007/03/04 06:03:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.71 2007/02/22 06:34:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.72 2007/03/04 06:03:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,7 +457,7 @@ acct_process(struct lwp *l)
 	 * Now, just write the accounting information to the file.
 	 */
 	VOP_LEASE(acct_vp, l, l->l_cred, LEASE_WRITE);
-	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
+	error = vn_rdwr(UIO_WRITE, acct_vp, (void *)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
 	    acct_cred, NULL, NULL);
 	if (error != 0)

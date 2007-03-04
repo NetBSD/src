@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.46 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vr.c,v 1.47 2007/03/04 05:59:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.46 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.47 2007/03/04 05:59:54 christos Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -166,7 +166,7 @@ void vr_init(void);
 void VR_INTR(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern void vr_idle(void);
 STATIC void vr_cons_init(void);
-STATIC void vr_fb_init(caddr_t *);
+STATIC void vr_fb_init(void **);
 STATIC void vr_mem_init(paddr_t);
 STATIC void vr_find_dram(paddr_t, paddr_t);
 STATIC void vr_reboot(int, char *);
@@ -343,7 +343,7 @@ void
 vr_find_dram(paddr_t addr, paddr_t end)
 {
 	int n;
-	caddr_t page;
+	void *page;
 #ifdef NARLY_MEMORY_PROBE
 	int x, i;
 #endif
@@ -409,7 +409,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 }
 
 void
-vr_fb_init(caddr_t *kernend)
+vr_fb_init(void **kernend)
 {
 	/* Nothing to do */
 }

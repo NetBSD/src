@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_siginfo.h,v 1.1 2001/02/06 16:37:58 eeh Exp $	 */
+/*	$NetBSD: svr4_32_siginfo.h,v 1.2 2007/03/04 06:01:37 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -56,12 +56,12 @@ typedef union svr4_32_siginfo {
 			} _child;
 
 			struct {
-				netbsd32_caddr_t	_addr;
+				netbsd32_void *	_addr;
 				int			_trap;
 			} _fault;
 		} _reason;
 	} _info;
 } svr4_32_siginfo_t;
-typedef netbsd32_caddr_t svr4_32_siginfo_tp;
+typedef netbsd32_void *svr4_32_siginfo_tp;
 
 #endif /* !_SVR4_32_SIGINFO_H_ */
