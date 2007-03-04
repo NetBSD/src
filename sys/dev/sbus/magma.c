@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.39 2007/03/04 06:02:40 christos Exp $	*/
+/*	$NetBSD: magma.c,v 1.40 2007/03/04 22:12:44 mrg Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.39 2007/03/04 06:02:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.40 2007/03/04 22:12:44 mrg Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -404,11 +404,11 @@ magma_attach(parent, self, aux)
 	}
 
 	/* the SVCACK* lines are daisychained */
-	sc->ms_svcackr = (void *)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackr = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackr;
-	sc->ms_svcackt = (void *)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackt = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackt;
-	sc->ms_svcackm = (void *)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackm = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackm;
 
 	/*
@@ -430,7 +430,7 @@ magma_attach(parent, self, aux)
 		struct cd1400 *cd = &sc->ms_cd1400[chip];
 
 		cd->cd_clock = cd_clock;
-		cd->cd_reg = (void *)bh + card->mb_cd1400[chip];
+		cd->cd_reg = (char *)bh + card->mb_cd1400[chip];
 
 		/* prom_getpropstring(node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
@@ -469,7 +469,7 @@ magma_attach(parent, self, aux)
 	for( chip = 0 ; chip < card->mb_ncd1190 ; chip++ ) {
 		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
-		cd->cd_reg = (void *)bh + card->mb_cd1190[chip];
+		cd->cd_reg = (char *)bh + card->mb_cd1190[chip];
 
 		/* XXX don't know anything about these chips yet */
 		printf("%s: CD1190 %d addr %p (unsupported)\n",
@@ -1624,7 +1624,7 @@ mbpp_rw(dev, uio, flag)
 	int port = MAGMA_PORT(dev);
 	struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
 	struct mbpp_port *mp = &ms->ms_port[port];
-	void *buffer, ptr;
+	char *buffer, *ptr;
 	int buflen, cnt, len;
 	int s, error = 0;
 	int gotdata = 0;

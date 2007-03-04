@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.199 2007/03/04 06:00:45 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.200 2007/03/04 22:12:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.199 2007/03/04 06:00:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.200 2007/03/04 22:12:43 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1243,7 +1243,7 @@ sun4_hotfix(struct cpu_info *sc)
 {
 
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0)
-		kvm_uncache((void *)trapbase, 1);
+		kvm_uncache((char *)trapbase, 1);
 
 	/* Use the hardware-assisted page flush routine, if present */
 	if (sc->cacheinfo.c_hwflush)
