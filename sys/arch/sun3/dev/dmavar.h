@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.8 2007/03/04 06:00:52 christos Exp $ */
+/*	$NetBSD: dmavar.h,v 1.9 2007/03/04 14:00:24 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -41,7 +41,7 @@ struct dma_softc {
 	u_int	sc_rev;				/* revision */
 	int	sc_burst;			/* DVMA burst size in effect */
 	size_t	sc_dmasize;
-	void *	*sc_dmaaddr;
+	void 	**sc_dmaaddr;
 	size_t  *sc_dmalen;
 #if 0
 	void (*reset)(struct dma_softc *);	/* reset routine */
