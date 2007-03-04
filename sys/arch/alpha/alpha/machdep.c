@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.295 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.296 2007/03/04 14:46:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.295 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.296 2007/03/04 14:46:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -444,7 +444,7 @@ nobootinfo:
 	 * its best to detect things things that have never been seen
 	 * before...
 	 */
-	mddtp = (struct mddt *)(((void *)hwrpb) + hwrpb->rpb_memdat_off);
+	mddtp = (struct mddt *)(((char *)hwrpb) + hwrpb->rpb_memdat_off);
 
 	/* MDDT SANITY CHECKING */
 	mddtweird = 0;
@@ -906,8 +906,8 @@ alpha_dsr_sysname()
 	if (hwrpb->rpb_version < HWRPB_DSRDB_MINVERS)
 		return (NULL);
 
-	dsr = (struct dsrdb *)(((void *)hwrpb) + hwrpb->rpb_dsrdb_off);
-	sysname = (const char *)((void *)dsr + (dsr->dsr_sysname_off +
+	dsr = (struct dsrdb *)(((char *)hwrpb) + hwrpb->rpb_dsrdb_off);
+	sysname = (const char *)((char *)dsr + (dsr->dsr_sysname_off +
 	    sizeof(u_int64_t)));
 	return (sysname);
 }
@@ -1440,7 +1440,7 @@ getframe(const struct lwp *l, int sig, int *onstack)
 	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		frame = (void *)((void *)l->l_sigstk.ss_sp +
+		frame = (void *)((char *)l->l_sigstk.ss_sp +
 					l->l_sigstk.ss_size);
 	else
 		frame = (void *)(alpha_pal_rdusp());
