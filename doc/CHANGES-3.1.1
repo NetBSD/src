@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.1,v 1.1.2.31 2007/03/03 22:56:58 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.1,v 1.1.2.32 2007/03/04 21:02:42 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.1.1
 release:
@@ -202,4 +202,12 @@ sys/kern/vfs_syscalls.c				1.293 via patch
 	via a new "out:" exit path that does so, setting error beforehand.
 	Fix suggested by Elad, hand-typed by me.
 	[wrstuden, ticket #1616]
+
+dist/bind/lib/dns/resolver.c                    patch
+dist/bind/lib/dns/validator.c                   patch
+dist/bind/lib/dns/include/dns/validator.h       patch   
+dist/bind/version                               patch
+
+	Fix CVE-2007-0493 and CVE-2007-0494.
+	[adrianp, ticket #1675]
 
