@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.15 2006/10/31 21:16:23 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.16 2007/03/04 15:22:10 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -66,9 +66,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.35 2006/10/31 19:37:17 christos Exp")
+FILE_RCSID("@(#)$File: magic.c,v 1.40 2007/03/01 22:14:55 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.15 2006/10/31 21:16:23 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.16 2007/03/04 15:22:10 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -100,7 +100,7 @@ magic_open(int flags)
 		goto free1;
 	}
 
-	ms->o.ptr = ms->o.buf = malloc(ms->o.size = 1024);
+	ms->o.ptr = ms->o.buf = malloc(ms->o.left = ms->o.size = 1024);
 	if (ms->o.buf == NULL)
 		goto free1;
 
@@ -108,11 +108,10 @@ magic_open(int flags)
 	if (ms->o.pbuf == NULL)
 		goto free2;
 
-	ms->c.off = malloc((ms->c.len = 10) * sizeof(*ms->c.off));
-	if (ms->c.off == NULL)
+	ms->c.li = malloc((ms->c.len = 10) * sizeof(*ms->c.li));
+	if (ms->c.li == NULL)
 		goto free3;
 	
-	ms->o.len = 0;
 	ms->haderr = 0;
 	ms->error = -1;
 	ms->mlist = NULL;
@@ -168,7 +167,7 @@ magic_close(struct magic_set *ms)
 	free_mlist(ms->mlist);
 	free(ms->o.pbuf);
 	free(ms->o.buf);
-	free(ms->c.off);
+	free(ms->c.li);
 	free(ms);
 }
 
@@ -311,7 +310,7 @@ magic_file(struct magic_set *ms, const char *inname)
 		ssize_t r = 0;
 
 		while ((r = sread(fd, (void *)&buf[nbytes],
-		    (size_t)(HOWMANY - nbytes))) > 0) {
+		    (size_t)(HOWMANY - nbytes), 1)) > 0) {
 			nbytes += r;
 			if (r < PIPE_BUF) break;
 		}
@@ -340,32 +339,8 @@ magic_file(struct magic_set *ms, const char *inname)
 			goto done;
 	} else {
 		(void)memset(buf + nbytes, 0, SLOP); /* NUL terminate */
-#ifdef __EMX__
-		switch (file_os2_apptype(ms, inname, buf, nbytes)) {
-		case -1:
+		if (file_buffer(ms, fd, inname, buf, (size_t)nbytes) == -1)
 			goto done;
-		case 0:
-			break;
-		default:
-			rv = 0;
-			goto done;
-		}
-#endif
-		if (file_buffer(ms, fd, buf, (size_t)nbytes) == -1)
-			goto done;
-#ifdef BUILTIN_ELF
-		if (nbytes > 5) {
-			/*
-			 * We matched something in the file, so this *might*
-			 * be an ELF file, and the file is at least 5 bytes
-			 * long, so if it's an ELF file it has at least one
-			 * byte past the ELF magic number - try extracting
-			 * information from the ELF headers that cannot easily
-			 * be extracted with rules in the magic file.
-			 */
-			file_tryelf(ms, fd, buf, (size_t)nbytes);
-		}
-#endif
 	}
 	rv = 0;
 done:
@@ -384,7 +359,7 @@ magic_buffer(struct magic_set *ms, const void *buf, size_t nb)
 	 * The main work is done here!
 	 * We have the file name and/or the data buffer to be identified. 
 	 */
-	if (file_buffer(ms, -1, buf, nb) == -1) {
+	if (file_buffer(ms, -1, NULL, buf, nb) == -1) {
 		return NULL;
 	}
 	return file_getbuffer(ms);

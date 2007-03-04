@@ -1,4 +1,4 @@
-/*	$NetBSD: names.h,v 1.3 2005/10/17 18:00:00 pooka Exp $	*/
+/*	$NetBSD: names.h,v 1.4 2007/03/04 15:22:10 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -34,7 +34,7 @@
  * appear at fixed offsets into the file. Don't make HOWMANY
  * too high unless you have a very fast CPU.
  *
- * Id: names.h,v 1.25 2004/09/11 19:15:57 christos Exp
+ * $File: names.h,v 1.26 2007/01/12 17:38:28 christos Exp $
  */
 
 /*
