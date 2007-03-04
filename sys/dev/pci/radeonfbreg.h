@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfbreg.h,v 1.2 2006/08/29 17:09:33 macallan Exp $	*/
+/*	$NetBSD: radeonfbreg.h,v 1.2.10.1 2007/03/04 12:25:15 bouyer Exp $	*/
 
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/ati/radeon_reg.h,v 1.31 2003/11/10 18:41:23 tsi Exp $ */
 /*
@@ -816,6 +816,12 @@
 #       define RADEON_LVDS_DIGON            (1   << 18)
 #       define RADEON_LVDS_BLON             (1   << 19)
 #       define RADEON_LVDS_SEL_CRTC2        (1   << 23)
+#       define RADEON_LVDS_BL_MOD_LEV_MASK  0x0000ff00
+#       define RADEON_LVDS_BL_MOD_LEV_SHIFT 8
+#       define RADEON_LVDS_BL_MOD_EN        (1 << 16)
+#       define RADEON_LVDS_STATE_MASK					      \
+        (RADEON_LVDS_ON | RADEON_LVDS_DISPLAY_DIS |			      \
+         RADEON_LVDS_BL_MOD_LEV_MASK | RADEON_LVDS_BLON)
 #define RADEON_LVDS_PLL_CNTL                0x02d4
 #       define RADEON_HSYNC_DELAY_SHIFT     28
 #       define RADEON_HSYNC_DELAY_MASK      (0xf << 28)
