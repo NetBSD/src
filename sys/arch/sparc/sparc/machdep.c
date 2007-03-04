@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.269 2007/03/04 06:00:46 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.270 2007/03/04 09:22:04 macallan Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2007/03/04 06:00:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2007/03/04 09:22:04 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -672,7 +672,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (onstack)
 		fp = (struct sigframe *)
-			((void *)l->l_sigstk.ss_sp +
+			((char *)l->l_sigstk.ss_sp +
 				  l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
@@ -1166,7 +1166,7 @@ reserve_dumppages(void *p)
 {
 
 	dumpspace = (vaddr_t)p;
-	return (p + BYTES_PER_DUMP);
+	return ((char *)p + BYTES_PER_DUMP);
 }
 
 /*
@@ -2234,7 +2234,7 @@ bus_space_probe(bus_space_tag_t tag, bus_addr_t paddr, bus_size_t size,
 		return (0);
 
 	tmp = (void *)bh;
-	result = (probeget(tmp + offset, size) != -1);
+	result = (probeget((char *)tmp + offset, size) != -1);
 	if (result && callback != NULL)
 		result = (*callback)(tmp, arg);
 	bus_space_unmap(tag, bh, size);
