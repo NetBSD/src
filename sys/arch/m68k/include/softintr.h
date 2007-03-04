@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.h,v 1.1 2007/03/04 01:54:04 tsutsui Exp $	*/
+/*	$NetBSD: softintr.h,v 1.2 2007/03/04 05:28:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 #ifndef _M68K_SOFTINTR_H_
 #define	_M68K_SOFTINTR_H_
 
+#include <sys/device.h>
+#include <sys/queue.h>
+#include <machine/psl.h>
+
 #define	SI_SOFTSERIAL	0	/* serial software interrupts */
 #define	SI_SOFTNET	1	/* network software interrupts */
 #define	SI_SOFTCLOCK	2	/* clock software interrupts */
@@ -52,11 +56,6 @@
 	"clock",							\
 	"misc",								\
 }
-
-#ifdef _KERNEL
-#include <sys/device.h>
-#include <sys/queue.h>
-#include <machine/psl.h>
 
 struct m68k_soft_intrhand {
 	LIST_ENTRY(m68k_soft_intrhand) sih_q;
@@ -90,7 +89,5 @@ do {							\
 /* XXX For legacy software interrupts */
 extern struct m68k_soft_intrhand *softnet_intrhand;
 #define setsoftnet()	softintr_schedule(softnet_intrhand)
-
-#endif /* _KERNEL */
 
 #endif /* _M68K_SOFTINTR_H_ */
