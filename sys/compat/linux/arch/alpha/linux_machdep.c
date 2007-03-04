@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.37 2007/03/04 06:01:18 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.38 2007/03/04 15:42:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.37 2007/03/04 06:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.38 2007/03/04 15:42:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,11 +138,10 @@ setup_linux_rt_sigframe(struct trapframe *tf, int sig, const sigset_t *mask)
 
 	if (onstack)
 		sfp = (struct linux_rt_sigframe *)
-					((void *)l->l_sigstk.ss_sp +
-						l->l_sigstk.ss_size);
+		    ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		sfp = (struct linux_rt_sigframe *)(alpha_pal_rdusp());
-	sfp = (struct linux_rt_sigframe *)((void *)sfp - rndfsize);
+	sfp = (struct linux_rt_sigframe *)((char *)sfp - rndfsize);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid))
@@ -244,11 +243,10 @@ void setup_linux_sigframe(tf, sig, mask)
 
 	if (onstack)
 		sfp = (struct linux_sigframe *)
-					((void *)l->l_sigstk.ss_sp +
-						l->l_sigstk.ss_size);
+		    ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		sfp = (struct linux_sigframe *)(alpha_pal_rdusp());
-	sfp = (struct linux_sigframe *)((void *)sfp - rndfsize);
+	sfp = (struct linux_sigframe *)((char *)sfp - rndfsize);
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid))
