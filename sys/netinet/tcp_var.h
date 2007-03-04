@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.144 2007/02/17 22:34:12 dyoung Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.145 2007/03/04 06:03:22 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -836,7 +836,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
 #ifdef TCP_SIGNATURE
-int	 tcp_signature_apply(void *, caddr_t, u_int);
+int	 tcp_signature_apply(void *, void *, u_int);
 struct secasvar *tcp_signature_getsav(struct mbuf *, struct tcphdr *);
 int	 tcp_signature(struct mbuf *, struct tcphdr *, int, struct secasvar *,
 	    char *);

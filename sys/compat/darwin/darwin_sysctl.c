@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.48 2007/02/17 22:31:41 pavel Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.49 2007/03/04 06:01:14 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.48 2007/02/17 22:31:41 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.49 2007/03/04 06:01:14 christos Exp $");
 
 #include "opt_ktrace.h"
 
@@ -715,7 +715,7 @@ again:
 		}
 		if (buflen >= sizeof(struct darwin_kinfo_proc)) {
 			darwin_fill_kproc(p, &kproc);
-			error = copyout((caddr_t)&kproc, dp, sizeof(kproc));
+			error = copyout((void *)&kproc, dp, sizeof(kproc));
 			if (error)
 				goto cleanup;
 			dp++;
@@ -729,7 +729,7 @@ again:
 	rw_exit(&proclist_lock);
 
 	if (where != NULL) {
-		*oldlenp = (caddr_t)dp - where;
+		*oldlenp = (char *)dp - where;
 		if (needed > *oldlenp)
 			return (ENOMEM);
 	} else {

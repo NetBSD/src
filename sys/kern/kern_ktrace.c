@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.117 2007/02/26 09:20:53 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.118 2007/03/04 06:03:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.117 2007/02/26 09:20:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.118 2007/03/04 06:03:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -592,7 +592,7 @@ ktrgenio(struct lwp *l, int fd, enum uio_rw rw, struct iovec *iov,
 	struct ktrace_entry *kte;
 	struct ktr_genio *ktp;
 	int resid = len, cnt;
-	caddr_t cp;
+	void *cp;
 	int buflen;
 
 	if (error)
@@ -607,7 +607,7 @@ ktrgenio(struct lwp *l, int fd, enum uio_rw rw, struct iovec *iov,
 	ktp->ktr_fd = fd;
 	ktp->ktr_rw = rw;
 
-	cp = (caddr_t)(ktp + 1);
+	cp = (void *)(ktp + 1);
 	buflen -= sizeof(struct ktr_genio);
 	kte->kte_kth.ktr_len = sizeof(struct ktr_genio);
 
@@ -622,7 +622,7 @@ ktrgenio(struct lwp *l, int fd, enum uio_rw rw, struct iovec *iov,
 		if (iov->iov_len == 0)
 			iov++;
 		else
-			iov->iov_base = (caddr_t)iov->iov_base + cnt;
+			iov->iov_base = (char *)iov->iov_base + cnt;
 	}
 
 	/*
@@ -771,7 +771,7 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 {
 	struct ktrace_entry *kte;
 	struct ktr_user *ktp;
-	caddr_t user_dta;
+	void *user_dta;
 	int error;
 
 	if (len > KTR_USER_MAXLEN)
@@ -788,7 +788,7 @@ ktruser(struct lwp *l, const char *id, void *addr, size_t len, int ustr)
 		strncpy(ktp->ktr_id, id, KTR_USER_MAXIDLEN);
 	ktp->ktr_id[KTR_USER_MAXIDLEN-1] = '\0';
 
-	user_dta = (caddr_t)(ktp + 1);
+	user_dta = (void *)(ktp + 1);
 	if ((error = copyin(addr, (void *)user_dta, len)) != 0)
 		len = 0;
 
@@ -1077,7 +1077,7 @@ sys_ktrace(struct lwp *l, void *v, register_t *retval)
 		fp->f_flag = FWRITE;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
-		fp->f_data = (caddr_t)vp;
+		fp->f_data = (void *)vp;
 		FILE_SET_MATURE(fp);
 		vp = NULL;
 	}
@@ -1215,7 +1215,7 @@ next:
 			TIMESPEC_TO_TIMEVAL(&kth->ktr_tv, &kth->ktr_time);
 			kth->ktr_unused = NULL;
 		}
-		iov->iov_base = (caddr_t)kth;
+		iov->iov_base = (void *)kth;
 		iov++->iov_len = sizeof(struct ktr_header);
 		auio.uio_resid += sizeof(struct ktr_header);
 		auio.uio_iovcnt++;

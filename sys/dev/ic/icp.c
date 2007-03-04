@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.22 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: icp.c,v 1.23 2007/03/04 06:01:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.22 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.23 2007/03/04 06:01:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,7 +784,7 @@ icp_ucmd_intr(struct icp_ccb *ic)
 		    ICP_SCRATCH_UCMD, iu->iu_cnt,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 		memcpy(ucmd->data,
-		    icp->icp_scr + ICP_SCRATCH_UCMD, iu->iu_cnt);
+		    (char *)icp->icp_scr + ICP_SCRATCH_UCMD, iu->iu_cnt);
 	}
 
 	icp->icp_ucmd_ccb = NULL;
@@ -1062,7 +1062,7 @@ icp_ccb_enqueue(struct icp_softc *icp, struct icp_ccb *ic)
 			icp->icp_ucmd_ccb = ic;
 
 			if (iu->iu_cnt != 0) {
-				memcpy(icp->icp_scr + ICP_SCRATCH_UCMD,
+				memcpy((char *)icp->icp_scr + ICP_SCRATCH_UCMD,
 				    ucmd->data, iu->iu_cnt);
 				bus_dmamap_sync(icp->icp_dmat,
 				    icp->icp_scr_dmamap,

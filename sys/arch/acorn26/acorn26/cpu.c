@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.21 2006/10/05 14:48:32 chs Exp $ */
+/* $NetBSD: cpu.c,v 1.22 2007/03/04 05:59:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2006/10/05 14:48:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2007/03/04 05:59:03 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -204,7 +204,7 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 	struct proc *p = curlwp->l_proc;
 	int rd, rm, rn, byte;
 	register_t temp;
-	caddr_t uaddr;
+	void *uaddr;
 	int err;
 	
 	KASSERT(fault_code & FAULT_USER);
@@ -216,7 +216,7 @@ swp_handler(u_int addr, u_int insn, struct trapframe *tf, int fault_code)
 	if (rd == 15 || rm == 15 || rn == 15)
 		/* UNPREDICTABLE.  Arbitrarily do nothing. */
 		return 0;
-	uaddr = (caddr_t)getreg(rn);
+	uaddr = (void *)getreg(rn);
 	/* We want the page wired so we won't sleep */
 	/* XXX only wire one byte due to weirdness with unaligned words */
 	err = uvm_vslock(p->p_vmspace, uaddr, 1, VM_PROT_READ | VM_PROT_WRITE);

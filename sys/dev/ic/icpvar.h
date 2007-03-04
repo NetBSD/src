@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.7 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.8 2007/03/04 06:01:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ struct icp_softc {
 
 	bus_dmamap_t		icp_scr_dmamap;
 	bus_dma_segment_t	icp_scr_seg[1];
-	caddr_t			icp_scr;
+	void *			icp_scr;
 
 	struct icp_ccb		*icp_ccbs;
 	u_int			icp_nccbs;

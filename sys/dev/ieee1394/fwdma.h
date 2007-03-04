@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdma.h,v 1.4 2006/02/16 20:17:19 perry Exp $	*/
+/*	$NetBSD: fwdma.h,v 1.5 2007/03/04 06:02:05 christos Exp $	*/
 /*-
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -62,7 +62,7 @@ fwdma_v_addr(struct fwdma_alloc_multi *am, int index)
 	bus_size_t ssize = am->ssize;
 	int offset = am->esize * index;
 
-	return ((caddr_t)am->seg[offset / ssize].v_addr + (offset % ssize));
+	return ((char *)am->seg[offset / ssize].v_addr + (offset % ssize));
 }
 
 static __inline bus_addr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_types.h,v 1.2 2001/02/11 01:10:25 eeh Exp $	 */
+/*	$NetBSD: svr4_32_types.h,v 1.3 2007/03/04 06:01:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ typedef netbsd32_long	 svr4_32_pid_t;
 typedef netbsd32_long	 svr4_32_time_t;
 typedef netbsd32_long	 svr4_32_blkcnt_t;
 typedef netbsd32_u_long	 svr4_32_fsblkcnt_t;
-typedef netbsd32_caddr_t svr4_32_caddr_t;
+typedef netbsd32_void *svr4_32_void *;
 typedef u_int		 svr4_32_size_t;
 
 typedef short		 svr4_32_o_dev_t;
@@ -75,7 +75,7 @@ typedef int		 svr4_32_key_t;
 typedef struct netbsd32_timespec  svr4_32_timestruc_t;
 
 /* Pointer types used by svr4_32_syscallargs.h */
-#define PTR	typedef netbsd32_caddr_t
+#define PTR	typedef netbsd32_void *
 PTR svr4_32_utimbufp;
 PTR svr4_32_tms_tp;
 PTR svr4_32_strbuf_tp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.31 2007/02/22 05:17:25 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.32 2007/03/04 05:59:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.31 2007/02/22 05:17:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.32 2007/03/04 05:59:42 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -695,7 +695,7 @@ trap(type, code, v, frame)
 		 * error.
 		 */
 		if (rv == 0) {
-			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
 			if (type == T_MMUFLT) {
@@ -769,7 +769,7 @@ writeback(fp, docachepush)
 	struct proc *p = l->l_proc;
 	int err = 0;
 	u_int fa;
-	caddr_t oonfault = l->l_addr->u_pcb.pcb_onfault;
+	void *oonfault = l->l_addr->u_pcb.pcb_onfault;
 	paddr_t pa;
 
 #ifdef DEBUG
@@ -812,7 +812,7 @@ writeback(fp, docachepush)
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
+			bcopy((void *)&f->f_pd0, (void *)fa, 16);
 			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
@@ -837,9 +837,9 @@ writeback(fp, docachepush)
 		wbstats.move16s++;
 #endif
 		if (KDFAULT(f->f_wb1s))
-			bcopy((caddr_t)&f->f_pd0, (caddr_t)(f->f_fa & ~0xF), 16);
+			bcopy((void *)&f->f_pd0, (void *)(f->f_fa & ~0xF), 16);
 		else
-			err = suline((caddr_t)(f->f_fa & ~0xF), (caddr_t)&f->f_pd0);
+			err = suline((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0);
 		if (err) {
 			fa = f->f_fa & ~0xF;
 #ifdef DEBUG
@@ -871,7 +871,7 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(long *)f->f_wb1a = wb1d;
 			else
-				err = suword((caddr_t)f->f_wb1a, wb1d);
+				err = suword((void *)f->f_wb1a, wb1d);
 			break;
 		case SSW4_SZB:
 			off = 24 - off;
@@ -880,7 +880,7 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(char *)f->f_wb1a = wb1d;
 			else
-				err = subyte((caddr_t)f->f_wb1a, wb1d);
+				err = subyte((void *)f->f_wb1a, wb1d);
 			break;
 		case SSW4_SZW:
 			off = (off + 16) % 32;
@@ -889,7 +889,7 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb1s))
 				*(short *)f->f_wb1a = wb1d;
 			else
-				err = susword((caddr_t)f->f_wb1a, wb1d);
+				err = susword((void *)f->f_wb1a, wb1d);
 			break;
 		}
 		if (err) {
@@ -921,19 +921,19 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb2s))
 				*(long *)f->f_wb2a = f->f_wb2d;
 			else
-				err = suword((caddr_t)f->f_wb2a, f->f_wb2d);
+				err = suword((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb2s))
 				*(char *)f->f_wb2a = f->f_wb2d;
 			else
-				err = subyte((caddr_t)f->f_wb2a, f->f_wb2d);
+				err = subyte((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb2s))
 				*(short *)f->f_wb2a = f->f_wb2d;
 			else
-				err = susword((caddr_t)f->f_wb2a, f->f_wb2d);
+				err = susword((void *)f->f_wb2a, f->f_wb2d);
 			break;
 		}
 		if (err) {
@@ -961,19 +961,19 @@ writeback(fp, docachepush)
 			if (KDFAULT(f->f_wb3s))
 				*(long *)f->f_wb3a = f->f_wb3d;
 			else
-				err = suword((caddr_t)f->f_wb3a, f->f_wb3d);
+				err = suword((void *)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZB:
 			if (KDFAULT(f->f_wb3s))
 				*(char *)f->f_wb3a = f->f_wb3d;
 			else
-				err = subyte((caddr_t)f->f_wb3a, f->f_wb3d);
+				err = subyte((void *)f->f_wb3a, f->f_wb3d);
 			break;
 		case SSW4_SZW:
 			if (KDFAULT(f->f_wb3s))
 				*(short *)f->f_wb3a = f->f_wb3d;
 			else
-				err = susword((caddr_t)f->f_wb3a, f->f_wb3d);
+				err = susword((void *)f->f_wb3a, f->f_wb3d);
 			break;
 #ifdef DEBUG
 		case SSW4_SZLN:
@@ -1041,7 +1041,7 @@ dumpwb(num, s, a, d)
 	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == false)
 		printf("<invalid address>");
 	else
-		printf("%lx, current value %lx", pa, fuword((caddr_t)a));
+		printf("%lx, current value %lx", pa, fuword((void *)a));
 	printf("\n");
 }
 #endif

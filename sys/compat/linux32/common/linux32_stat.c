@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.2 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.3 2007/03/04 06:01:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.2 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.3 2007/03/04 06:01:25 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,7 @@ linux32_sys_stat64(l, v, retval)
 	        syscallarg(linux32_statp) sp;
 	} */ *uap = v;
 	struct sys___stat30_args ua;
-	caddr_t sg = stackgap_init(l->l_proc, 0);
+	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
@@ -158,7 +158,7 @@ linux32_sys_lstat64(l, v, retval)
 	        syscallarg(linux32_stat64p) sp;
 	} */ *uap = v;
 	struct sys___lstat30_args ua;
-	caddr_t sg = stackgap_init(l->l_proc, 0);
+	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;
@@ -199,7 +199,7 @@ linux32_sys_fstat64(l, v, retval)
 	        syscallarg(linux32_stat64p) sp;
 	} */ *uap = v;
 	struct sys___fstat30_args ua;
-	caddr_t sg = stackgap_init(l->l_proc, 0);
+	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 	struct stat st;
 	struct linux32_stat64 st32;

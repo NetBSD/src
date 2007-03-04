@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.7 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: esavar.h,v 1.8 2007/03/04 06:02:18 christos Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,7 +61,7 @@ struct esa_list {
 
 struct esa_dma {
 	bus_dmamap_t		map;
-	caddr_t			addr;
+	void *			addr;
 	bus_dma_segment_t	segs[1];
 	int			nsegs;
 	size_t			size;

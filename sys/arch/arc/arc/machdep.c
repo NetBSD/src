@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2007/02/22 05:09:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2007/03/04 05:59:33 christos Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2007/02/22 05:09:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2007/03/04 05:59:33 christos Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -238,7 +238,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	const char *cp;
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
-	caddr_t kernend, v;
+	void *kernend, v;
 #if NKSYMS > 0 || defined(DDB) || defined(LKM)
 	char *ssym = NULL;
 	char *esym = NULL;
@@ -279,7 +279,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	} else
 #endif
 	{
-		kernend = (caddr_t)mips_round_page(end);
+		kernend = (void *)mips_round_page(end);
 		memset(edata, 0, kernend - edata);
 	}
 
@@ -504,7 +504,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	/*
 	 * Allocate space for proc0's USPACE.
 	 */
-	v = (caddr_t)uvm_pageboot_alloc(USPACE);
+	v = (void *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;

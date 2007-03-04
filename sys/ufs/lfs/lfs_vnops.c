@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.200 2007/02/21 23:00:11 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.201 2007/03/04 06:03:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.200 2007/02/21 23:00:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.201 2007/03/04 06:03:46 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1395,7 +1395,7 @@ lfs_fcntl(void *v)
 	struct vop_fcntl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void * a_data;
 		int  a_fflag;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;

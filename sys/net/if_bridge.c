@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.49 2007/02/21 02:24:14 dyoung Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.50 2007/03/04 06:03:15 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.49 2007/02/21 02:24:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.50 2007/03/04 06:03:15 christos Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -178,7 +178,7 @@ void	bridgeattach(int);
 static int	bridge_clone_create(struct if_clone *, int);
 static int	bridge_clone_destroy(struct ifnet *);
 
-static int	bridge_ioctl(struct ifnet *, u_long, caddr_t);
+static int	bridge_ioctl(struct ifnet *, u_long, void *);
 static int	bridge_init(struct ifnet *);
 static void	bridge_stop(struct ifnet *, int);
 static void	bridge_start(struct ifnet *);
@@ -446,7 +446,7 @@ bridge_clone_destroy(struct ifnet *ifp)
  *	Handle a control request from the operator.
  */
 static int
-bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+bridge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct bridge_softc *sc = ifp->if_softc;
 	struct lwp *l = curlwp;	/* XXX */
@@ -2016,12 +2016,12 @@ bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	}
 
 	/* Strip off the Ethernet header and keep a copy. */
-	m_copydata(*mp, 0, ETHER_HDR_LEN, (caddr_t) &eh2);
+	m_copydata(*mp, 0, ETHER_HDR_LEN, (void *) &eh2);
 	m_adj(*mp, ETHER_HDR_LEN);
 
 	/* Strip off snap header, if present */
 	if (snap) {
-		m_copydata(*mp, 0, sizeof(struct llc), (caddr_t) &llc1);
+		m_copydata(*mp, 0, sizeof(struct llc), (void *) &llc1);
 		m_adj(*mp, sizeof(struct llc));
 	}
 
@@ -2061,13 +2061,13 @@ bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		M_PREPEND(*mp, sizeof(struct llc), M_DONTWAIT);
 		if (*mp == NULL)
 			return error;
-		bcopy(&llc1, mtod(*mp, caddr_t), sizeof(struct llc));
+		bcopy(&llc1, mtod(*mp, void *), sizeof(struct llc));
 	}
 
 	M_PREPEND(*mp, ETHER_HDR_LEN, M_DONTWAIT);
 	if (*mp == NULL)
 		return error;
-	bcopy(&eh2, mtod(*mp, caddr_t), ETHER_HDR_LEN);
+	bcopy(&eh2, mtod(*mp, void *), ETHER_HDR_LEN);
 
 	return 0;
 
@@ -2099,7 +2099,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
 	if (*mp == NULL)
 		return -1;
 
-	if (IP_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip),
 			(max_linkhdr + 3) & ~3)) == NULL) {
 			/* XXXJRT new stat, please */
@@ -2201,7 +2201,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
          * it.  Otherwise, if it is aligned, make sure the entire base
          * IPv6 header is in the first mbuf of the chain.
          */
-        if (IP6_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0) {
+        if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
                 struct ifnet *inifp = m->m_pkthdr.rcvif;
                 if ((m = m_copyup(m, sizeof(struct ip6_hdr),
                                   (max_linkhdr + 3) & ~3)) == NULL) {

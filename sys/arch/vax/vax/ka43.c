@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.31 2006/09/05 19:32:57 matt Exp $ */
+/*	$NetBSD: ka43.c,v 1.32 2007/03/04 06:00:59 christos Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.31 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.32 2007/03/04 06:00:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka43.c,v 1.31 2006/09/05 19:32:57 matt Exp $");
 static	void ka43_conf __P((void));
 static	void ka43_steal_pages __P((void));
 
-static	int ka43_mchk __P((caddr_t));
+static	int ka43_mchk __P((void *));
 static	void ka43_memerr __P((void));
 #if 0
 static	void ka43_clear_errors __P((void));
@@ -140,7 +140,7 @@ static int ka43_error_count = 0;
 
 int
 ka43_mchk(addr)
-	caddr_t addr;
+	void *addr;
 {
 	register struct ka43_mcframe *mcf = (void*)addr;
 

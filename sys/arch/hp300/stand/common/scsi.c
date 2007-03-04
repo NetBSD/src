@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.8 2006/06/25 17:40:14 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.9 2007/03/04 05:59:50 christos Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -130,7 +130,7 @@ scsiinit(void)
 		scsireset(i);
 		if (howto & RB_ASKNAME)
 			printf("scsi%d at sc%d\n", i, hw->hw_sc);
-		hw->hw_pa = (caddr_t) i;	/* XXX for autoconfig */
+		hw->hw_pa = (void *) i;	/* XXX for autoconfig */
 		hs->sc_alive = 1;
 		i++;
 	}

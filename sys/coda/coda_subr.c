@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_subr.c,v 1.22 2006/11/16 01:32:41 christos Exp $	*/
+/*	$NetBSD: coda_subr.c,v 1.23 2007/03/04 06:01:12 christos Exp $	*/
 
 /*
  *
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.22 2006/11/16 01:32:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_subr.c,v 1.23 2007/03/04 06:01:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ coda_unmounting(struct mount *whoIam)
 				if (cp->c_flags & (C_LOCKED|C_WANTED)) {
 					printf("coda_unmounting: Unlocking %p\n", cp);
 					cp->c_flags &= ~(C_LOCKED|C_WANTED);
-					wakeup((caddr_t) cp);
+					wakeup((void *) cp);
 				}
 				cp->c_flags |= C_UNMOUNTING;
 			}

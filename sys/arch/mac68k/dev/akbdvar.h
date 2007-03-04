@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.7 2005/12/11 12:18:02 christos Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.8 2007/03/04 06:00:07 christos Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -56,6 +56,6 @@ struct akbd_softc {
 #define LED_SCROLL_LOCK	0x4
 
 int	akbd_cnattach(void);
-void    akbd_adbcomplete(caddr_t, caddr_t, int);
+void    akbd_adbcomplete(void *, void *, int);
 
 #endif /* _MAC68K_KBDVAR_H_ */

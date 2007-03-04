@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cv3d.c,v 1.5 2002/01/28 09:57:00 aymeric Exp $ */
+/*	$NetBSD: ite_cv3d.c,v 1.6 2007/03/04 05:59:22 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cv3d.c,v 1.5 2002/01/28 09:57:00 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cv3d.c,v 1.6 2007/03/04 05:59:22 christos Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -180,7 +180,7 @@ cv3d_ite_init(register struct ite_softc *ip)
 void
 cv3d_cursor(struct ite_softc *ip, int flag)
 {
-	volatile caddr_t ba = ip->grf->g_regkva;
+	volatile void *ba = ip->grf->g_regkva;
 
 	switch (flag) {
 	    case DRAW_CURSOR:
@@ -205,7 +205,7 @@ cv3d_cursor(struct ite_softc *ip, int flag)
 void
 cv3d_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
-	caddr_t fb = ip->grf->g_fbkva;
+	void *fb = ip->grf->g_fbkva;
 	unsigned char attr;
 	unsigned char *cp;
 

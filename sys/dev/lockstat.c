@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.7 2007/02/15 20:32:47 ad Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.8 2007/03/04 06:01:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.7 2007/02/15 20:32:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.8 2007/03/04 06:01:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -470,7 +470,7 @@ lockstat_close(dev_t dev, int flag, int mode,
  * Handle control operations.
  */
 int
-lockstat_ioctl(dev_t dev, u_long cmd, caddr_t data,
+lockstat_ioctl(dev_t dev, u_long cmd, void *data,
 	int flag, struct lwp *l)
 {
 	lsenable_t *le;

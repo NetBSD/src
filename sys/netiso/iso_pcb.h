@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.h,v 1.15 2007/02/17 22:34:17 dyoung Exp $	*/
+/*	$NetBSD: iso_pcb.h,v 1.16 2007/03/04 06:03:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -80,7 +80,7 @@ struct isopcb {
 	struct mbuf    *isop_options;	/* CLNP options */
 	struct mbuf    *isop_optindex;	/* CLNP options index */
 	struct mbuf    *isop_clnpcache;	/* CLNP cached hdr */
-	caddr_t         isop_chan;	/* actually struct pklcb * */
+	void *        isop_chan;	/* actually struct pklcb * */
 	u_short         isop_refcnt;	/* mult TP4 tpcb's -> here */
 	u_short         isop_lport;	/* MISLEADLING work var */
 	u_short         isop_tuba_cached;	/* for tuba address ref cnts */
@@ -124,7 +124,7 @@ void iso_pcbdisconnect (void *);
 void iso_pcbdetach (void *);
 void iso_pcbnotify(struct isopcb *, const struct sockaddr_iso *, int,
                    void (*)(struct isopcb *));
-struct isopcb  *iso_pcblookup (struct isopcb *, int, caddr_t,
+struct isopcb  *iso_pcblookup (struct isopcb *, int, void *,
 				   const struct sockaddr_iso *);
 #endif
 

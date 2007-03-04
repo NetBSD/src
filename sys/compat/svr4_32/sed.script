@@ -8,7 +8,7 @@ s/char\* /netbsd32_charp /
 s/void \*/netbsd32_voidp /
 s/int \*/netbsd32_intp /
 s/svr4_32_time_t \*/svr4_32_time_tp /
-s/caddr_t/netbsd32_caddr_t/
+s/void */netbsd32_void */
 s/struct svr4_32_stat \*/svr4_32_stat_tp /
 s/struct svr4_32_utimbuf \*/svr4_32_utimbuf_tp /
 s/struct tms \*/svr4_32_tms_tp /

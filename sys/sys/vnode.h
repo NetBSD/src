@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.164 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.165 2007/03/04 06:03:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -412,7 +412,7 @@ struct vnodeop_desc {
 	 * for each transport layer.  (Support to manage this list is not
 	 * yet part of BSD.)
 	 */
-	caddr_t		*vdesc_transports;
+	void *		*vdesc_transports;
 };
 
 #ifdef _KERNEL
@@ -555,7 +555,7 @@ int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
 int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
-int 	vn_rdwr(enum uio_rw, struct vnode *, caddr_t, int, off_t, enum uio_seg,
+int 	vn_rdwr(enum uio_rw, struct vnode *, void *, int, off_t, enum uio_seg,
     int, kauth_cred_t, size_t *, struct lwp *);
 int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
     off_t **, int *);

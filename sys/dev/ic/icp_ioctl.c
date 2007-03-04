@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.14 2006/12/02 03:10:43 elad Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.15 2007/03/04 06:01:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.14 2006/12/02 03:10:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.15 2007/03/04 06:01:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ icpopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+icpioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	int error;

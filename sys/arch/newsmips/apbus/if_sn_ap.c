@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.8 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.9 2007/03/04 06:00:25 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.8 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.9 2007/03/04 06:00:25 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -88,7 +88,7 @@ sn_ap_attach(struct device *parent, struct device *self, void *aux)
 	uint8_t myaddr[ETHER_ADDR_LEN];
 	u_int intrmask;
 
-	sc->sc_hwbase = (caddr_t)apa->apa_hwbase;
+	sc->sc_hwbase = (void *)apa->apa_hwbase;
 	sc->sc_regbase = (void *)(apa->apa_hwbase + SONIC_APBUS_REG_OFFSET);
 	sc->space = (void *)(apa->apa_hwbase + SONIC_APBUS_MEM_OFFSET);
 

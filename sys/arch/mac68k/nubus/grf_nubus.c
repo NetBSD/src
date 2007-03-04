@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.71 2006/12/06 21:21:12 hauke Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.72 2007/03/04 06:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.71 2006/12/06 21:21:12 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.72 2007/03/04 06:00:09 christos Exp $");
 
 #include <sys/param.h>
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.71 2006/12/06 21:21:12 hauke Exp $")
 #include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/grfvar.h>
 
-static void	load_image_data(caddr_t, struct image_data *);
+static void	load_image_data(void *, struct image_data *);
 
 static void	grfmv_intr_generic_write1(void *);
 static void	grfmv_intr_generic_write4(void *);
@@ -81,7 +81,7 @@ CFATTACH_DECL(macvid, sizeof(struct grfbus_softc),
     grfmv_match, grfmv_attach, NULL, NULL);
 
 static void
-load_image_data(caddr_t	data, struct image_data *image)
+load_image_data(void *	data, struct image_data *image)
 {
 	memcpy(&image->size,       data     , 4);
 	memcpy(&image->offset,     data +  4, 4);
@@ -186,14 +186,14 @@ bad:
 	}
 
 	if (nubus_get_ind_data(sc->sc_tag, sc->sc_handle, &sc->sc_slot,
-	    &dirent, (caddr_t)&image_store, sizeof(struct image_data)) <= 0) {
+	    &dirent, (void *)&image_store, sizeof(struct image_data)) <= 0) {
 		printf(": probe failed to get indirect mode data.\n");
 		goto bad;
 	}
 
 	/* Need to load display info (and driver?), etc... (?) */
 
-	load_image_data((caddr_t)&image_store, &image);
+	load_image_data((void *)&image_store, &image);
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
@@ -205,7 +205,7 @@ bad:
 	gm->hres = image.hRes;
 	gm->vres = image.vRes;
 	gm->fbsize = gm->height * gm->rowbytes;
-	gm->fbbase = (caddr_t)(sc->sc_handle.base);	/* XXX evil hack */
+	gm->fbbase = (void *)(sc->sc_handle.base);	/* XXX evil hack */
 	gm->fboff = image.offset;
 
 	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_handle,

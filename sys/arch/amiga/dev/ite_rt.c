@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.20 2005/12/24 22:45:34 perry Exp $ */
+/*	$NetBSD: ite_rt.c,v 1.21 2007/03/04 05:59:23 christos Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.20 2005/12/24 22:45:34 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.21 2007/03/04 05:59:23 christos Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -116,7 +116,7 @@ retina_init(struct ite_softc *ip)
 void
 retina_cursor(struct ite_softc *ip, int flag)
 {
-      volatile caddr_t ba = ip->grf->g_regkva;
+      volatile void *ba = ip->grf->g_regkva;
 
       if (flag == ERASE_CURSOR)
         {
@@ -145,8 +145,8 @@ retina_cursor(struct ite_softc *ip, int flag)
 static void
 screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 {
-	volatile caddr_t ba = ip->grf->g_regkva;
-	volatile caddr_t fb = ip->grf->g_fbkva;
+	volatile void *ba = ip->grf->g_regkva;
+	volatile void *fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
 
 	/* do some bounds-checking here.. */
@@ -194,7 +194,7 @@ screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 		WSeq (ba, SEQ_ID_SEC_HOST_OFF_HI, ((unsigned char)(fromloc >> 8))) ;
 	}
 	{
-		caddr_t p = (caddr_t)fb;
+		void *p = (void *)fb;
 		/* transfer all characters but LINES lines, unroll by 16 */
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		do {
@@ -273,8 +273,8 @@ screen_up(struct ite_softc *ip, int top, int bottom, int lines)
 static void
 screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 {
-	volatile caddr_t ba = ip->grf->g_regkva;
-	volatile caddr_t fb = ip->grf->g_fbkva;
+	volatile void *ba = ip->grf->g_regkva;
+	volatile void *fb = ip->grf->g_fbkva;
 	const struct MonDef * md = (struct MonDef *) ip->priv;
 
 	/* do some bounds-checking here.. */
@@ -313,7 +313,7 @@ screen_down(struct ite_softc *ip, int top, int bottom, int lines)
 	}
 
 	{
-		caddr_t p = (caddr_t)fb;
+		void *p = (void *)fb;
 		short x = (1 + bottom - (top + lines)) * (md->TX / 16) - 1;
 		p += (1 + bottom - (top + lines)) * md->TX;
 		do {
@@ -398,7 +398,7 @@ retina_deinit(struct ite_softc *ip)
 void
 retina_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
-	volatile caddr_t fb = ip->grf->g_fbkva;
+	volatile void *fb = ip->grf->g_fbkva;
 	register u_char attr;
 
 	attr = (mode & ATTR_INV) ? 0x21 : 0x10;
@@ -436,7 +436,7 @@ retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 void
 retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 {
-	volatile caddr_t ba;
+	volatile void *ba;
 	u_long *fb;
 
 	ba = ip->grf->g_regkva;

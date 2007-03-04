@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.33 2007/02/17 07:46:38 dyoung Exp $	*/
+/*	$NetBSD: radix.c,v 1.34 2007/03/04 06:03:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.33 2007/02/17 07:46:38 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.34 2007/03/04 06:03:18 christos Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -521,8 +521,8 @@ rn_addmask(
 	if ((saved_x = x) == 0)
 		return (0);
 	Bzero(x, max_keylen + 2 * sizeof (*x));
-	cp = netmask = (caddr_t)(x + 2);
-	Bcopy(addmask_key, (caddr_t)(x + 2), mlen);
+	cp = netmask = (void *)(x + 2);
+	Bcopy(addmask_key, (void *)(x + 2), mlen);
 	x = rn_insert(cp, mask_rnhead, &maskduplicated, x);
 	if (maskduplicated) {
 		log(LOG_ERR, "rn_addmask: mask impossibly already in tree\n");

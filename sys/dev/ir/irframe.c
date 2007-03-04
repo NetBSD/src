@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.36 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: irframe.c,v 1.37 2007/03/04 06:02:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.36 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.37 2007/03/04 06:02:09 christos Exp $");
 
 #include "irframe.h"
 
@@ -339,7 +339,7 @@ irf_reset_params(struct irframe_softc *sc)
 }
 
 int
-irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+irframeioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct irframe_softc *sc;

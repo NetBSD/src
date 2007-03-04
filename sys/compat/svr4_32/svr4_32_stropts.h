@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stropts.h,v 1.1 2001/02/06 16:37:59 eeh Exp $	 */
+/*	$NetBSD: svr4_32_stropts.h,v 1.2 2007/03/04 06:01:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ struct svr4_32_strbuf {
 	int		len;
 	netbsd32_charp	buf;
 };
-typedef netbsd32_caddr_t svr4_32_strbufp;
+typedef netbsd32_void *svr4_32_strbufp;
 
 /* Struct passed for SVR4_I_STR */
 struct svr4_32_strioctl {
@@ -55,8 +55,8 @@ struct svr4_32_strioctl {
 	int		len;
 	netbsd32_charp	buf;
 };
-typedef netbsd32_caddr_t svr4_32_strioctlp;
-typedef netbsd32_caddr_t svr4_32_strmp;
+typedef netbsd32_void *svr4_32_strioctlp;
+typedef netbsd32_void *svr4_32_strmp;
 
 /*
  * The following structures are determined empirically.
@@ -67,7 +67,7 @@ struct svr4_32_strmcmd {
 	netbsd32_long	offs;		/* Address offset	*/
 	netbsd32_long	pad[61];
 };
-typedef netbsd32_caddr_t svr4_32_strmcmdp;
+typedef netbsd32_void *svr4_32_strmcmdp;
 
 struct svr4_32_infocmd {
 	netbsd32_long	cmd;
@@ -82,7 +82,7 @@ struct svr4_32_infocmd {
 	netbsd32_long	current;
 	netbsd32_long	provider;
 };
-typedef netbsd32_caddr_t svr4_32_infocmdp;
+typedef netbsd32_void *svr4_32_infocmdp;
 
 struct svr4_32_strfdinsert {
 	struct svr4_32_strbuf	ctl;
@@ -91,20 +91,20 @@ struct svr4_32_strfdinsert {
 	int 			fd;
 	int			offset;
 };
-typedef netbsd32_caddr_t svr4_32_strfdinsertp;
+typedef netbsd32_void *svr4_32_strfdinsertp;
 
 struct svr4_32_netaddr_in {
 	u_short		family;
 	u_short		port;
 	netbsd32_u_long	addr;
 };
-typedef netbsd32_caddr_t svr4_32_netaddr_inp;
+typedef netbsd32_void *svr4_32_netaddr_inp;
 
 struct svr4_32_netaddr_un {
 	u_short	family;
 	char 	path[1];
 };
-typedef netbsd32_caddr_t svr4_32_netaddr_unp;
+typedef netbsd32_void *svr4_32_netaddr_unp;
 
 struct svr4_strm *svr4_32_stream_get __P((struct file *fp));
 

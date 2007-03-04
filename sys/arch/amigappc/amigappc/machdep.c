@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.31 2007/02/22 05:07:48 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.32 2007/03/04 05:59:31 christos Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2007/02/22 05:07:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2007/03/04 05:59:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -702,14 +702,14 @@ identifycpu()
 void
 cpu_startup()
 {
-	caddr_t	v;
+	void *	v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
-	initmsgbuf((caddr_t)msgbuf_paddr, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf_paddr, round_page(MSGBUFSIZE));
 
 	proc0.p_addr = proc0paddr;
-	v = (caddr_t)proc0paddr + USPACE;
+	v = (void *)proc0paddr + USPACE;
 
 	printf("%s%s", copyright, version);
 	identifycpu();
@@ -782,7 +782,7 @@ lcsplx(ipl)
  */
 int
 kvtop(addr)
-	caddr_t addr;
+	void *addr;
 {
 	vaddr_t va;
 	paddr_t pa;

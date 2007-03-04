@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 2007/03/04 05:59:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -206,7 +206,7 @@ leinit(void)
 			printf("le%d at sc%d physical address %s\n",
 				i, hw->hw_sc, ether_sprintf(sc->sc_addr));
 #endif
-		hw->hw_pa = (caddr_t) i;	/* XXX for autoconfig */
+		hw->hw_pa = (void *) i;	/* XXX for autoconfig */
 		i++;
 	}
 }

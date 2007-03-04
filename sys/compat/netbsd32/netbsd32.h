@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.58 2007/02/19 15:10:03 cube Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.59 2007/03/04 06:01:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -59,7 +59,7 @@ typedef u_int32_t netbsd32_clock_t;
 typedef u_int32_t netbsd32_size_t;
 typedef int32_t netbsd32_ssize_t;
 typedef int32_t netbsd32_clockid_t;
-typedef u_int32_t netbsd32_caddr_t;
+typedef u_int32_t netbsd32_void *;
 typedef int32_t netbsd32_key_t;
 typedef int32_t netbsd32_intptr_t;
 typedef u_int32_t netbsd32_uintptr_t;
@@ -422,22 +422,22 @@ typedef netbsd32_pointer_t netbsd32_osockaddrp_t;
 
 typedef netbsd32_pointer_t netbsd32_msghdrp_t;
 struct netbsd32_msghdr {
-	netbsd32_caddr_t	msg_name;		/* optional address */
+	netbsd32_void *	msg_name;		/* optional address */
 	u_int	msg_namelen;		/* size of address */
 	netbsd32_iovecp_t msg_iov;		/* scatter/gather array */
 	u_int	msg_iovlen;		/* # elements in msg_iov */
-	netbsd32_caddr_t	msg_control;		/* ancillary data, see below */
+	netbsd32_void *	msg_control;		/* ancillary data, see below */
 	u_int	msg_controllen;		/* ancillary data buffer len */
 	int	msg_flags;		/* flags on received message */
 };
 
 typedef netbsd32_pointer_t netbsd32_omsghdrp_t;
 struct netbsd32_omsghdr {
-	netbsd32_caddr_t	msg_name;		/* optional address */
+	netbsd32_void *	msg_name;		/* optional address */
 	int	msg_namelen;		/* size of address */
 	netbsd32_iovecp_t msg_iov;		/* scatter/gather array */
 	int	msg_iovlen;		/* # elements in msg_iov */
-	netbsd32_caddr_t	msg_accrights;		/* access rights sent/received */
+	netbsd32_void *	msg_accrights;		/* access rights sent/received */
 	int	msg_accrightslen;
 };
 

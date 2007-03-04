@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.16 2007/02/19 06:08:37 ad Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.17 2007/03/04 06:02:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.16 2007/02/19 06:08:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.17 2007/03/04 06:02:45 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -315,7 +315,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
  *	Perform a power managmenet control request.
  */
 int
-sysmonioctl_power(dev_t dev, u_long cmd, caddr_t data,
+sysmonioctl_power(dev_t dev, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	int error = 0;

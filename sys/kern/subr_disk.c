@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.84 2007/03/01 21:30:50 martin Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.85 2007/03/04 06:03:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.84 2007/03/01 21:30:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.85 2007/03/04 06:03:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -435,7 +435,7 @@ bad:
  *	Generic disk ioctl handling.
  */
 int
-disk_ioctl(struct disk *diskp, u_long cmd, caddr_t data, int flag,
+disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 	   struct lwp *l)
 {
 	int error;
