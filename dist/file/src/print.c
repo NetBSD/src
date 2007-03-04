@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.6 2007/03/04 15:22:10 pooka Exp $	*/
+/*	$NetBSD: print.c,v 1.7 2007/03/04 21:50:43 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -46,7 +46,7 @@
 #if 0
 FILE_RCSID("@(#)$File: print.c,v 1.58 2007/01/16 14:58:48 ljt Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.6 2007/03/04 15:22:10 pooka Exp $");
+__RCSID("$NetBSD: print.c,v 1.7 2007/03/04 21:50:43 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -58,8 +58,8 @@ file_mdump(struct magic *m)
 {
 	private const char optyp[] = { FILE_OPS };
 
-	(void) fprintf(stderr, "[%zu", m->lineno);
-	(void) fprintf(stderr, ">>>>>>>> %d" + 8 - (m->cont_level & 7),
+	(void) fprintf(stderr, "[%u", m->lineno);
+	(void) fprintf(stderr, ">>>>>>>> %u" + 8 - (m->cont_level & 7),
 		       m->offset);
 
 	if (m->flag & INDIR) {
@@ -69,7 +69,7 @@ file_mdump(struct magic *m)
 					file_names[m->in_type] : "*bad*");
 		if (m->in_op & FILE_OPINVERSE)
 			(void) fputc('~', stderr);
-		(void) fprintf(stderr, "%c%d),",
+		(void) fprintf(stderr, "%c%u),",
 			       ((m->in_op & FILE_OPS_MASK) < SZOF(optyp)) ? 
 					optyp[m->in_op & FILE_OPS_MASK] : '?',
 				m->in_offset);
