@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.191 2007/02/17 21:43:08 dsl Exp $	*/
+/*	$NetBSD: tty.c,v 1.192 2007/03/04 06:03:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.191 2007/02/17 21:43:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.192 2007/03/04 06:03:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ ttyoutput(int c, struct tty *tp)
  */
 /* ARGSUSED */
 int
-ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
 	struct proc *p = l ? l->l_proc : NULL;
@@ -1239,7 +1239,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		splx(s);
 		break;
 	case TIOCSWINSZ:		/* set window size */
-		if (memcmp((caddr_t)&tp->t_winsize, data,
+		if (memcmp((void *)&tp->t_winsize, data,
 		    sizeof(struct winsize))) {
 			tp->t_winsize = *(struct winsize *)data;
 			mutex_enter(&proclist_mutex);
@@ -1481,7 +1481,7 @@ ttyflush(struct tty *tp, int rw)
 		if (cdev != NULL)
 			(*cdev->d_stop)(tp, rw);
 		FLUSHQ(&tp->t_outq);
-		wakeup((caddr_t)&tp->t_outq);
+		wakeup((void *)&tp->t_outq);
 		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 }
@@ -2333,7 +2333,7 @@ ttwakeup(struct tty *tp)
 		pgsignal(tp->t_pgrp, SIGIO, tp->t_session != NULL);
 		mutex_exit(&proclist_mutex);
 	}
-	wakeup((caddr_t)&tp->t_rawq);
+	wakeup((void *)&tp->t_rawq);
 }
 
 /*

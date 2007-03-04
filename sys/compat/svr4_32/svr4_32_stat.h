@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stat.h,v 1.1 2001/02/06 16:37:59 eeh Exp $	 */
+/*	$NetBSD: svr4_32_stat.h,v 1.2 2007/03/04 06:01:37 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ struct svr4_32_xstat {
 	char			st_fstype[16];
 	netbsd32_long		st_pad4[8];
 };
-typedef netbsd32_caddr_t svr4_32_xstatp;
+typedef netbsd32_void *svr4_32_xstatp;
 
 struct svr4_32_stat64 {
 	svr4_32_dev_t		st_dev;
@@ -98,6 +98,6 @@ struct svr4_32_stat64 {
 	char			st_fstype[16];
 	netbsd32_long		st_pad4[8];
 };
-typedef netbsd32_caddr_t svr4_32_xstat64p;
+typedef netbsd32_void *svr4_32_xstat64p;
 
 #endif /* !_SVR4_32_STAT_H_ */

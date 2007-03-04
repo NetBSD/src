@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.80 2007/02/22 06:05:02 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.81 2007/03/04 06:03:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.80 2007/02/22 06:05:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.81 2007/03/04 06:03:49 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -184,7 +184,7 @@ uvn_attach(void *arg, vm_prot_t accessprot)
 		bdev = bdevsw_lookup(vp->v_rdev);
 		if (bdev != NULL) {
 			result = (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART,
-						  (caddr_t)&pi, FREAD, curlwp);
+						  (void *)&pi, FREAD, curlwp);
 		} else {
 			result = ENXIO;
 		}

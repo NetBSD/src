@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_bsdlabel.c,v 1.11 2007/03/01 21:38:17 martin Exp $	*/
+/*	$NetBSD: dkwedge_bsdlabel.c,v 1.12 2007/03/04 06:01:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.11 2007/03/01 21:38:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_bsdlabel.c,v 1.12 2007/03/04 06:01:45 christos Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -226,7 +226,7 @@ static int
 validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 {
 	struct disklabel *lp;
-	caddr_t lp_lim;
+	void *lp_lim;
 	int i, error;
 	u_int checksum;
 
@@ -244,11 +244,11 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 	 * in the sector.
 	 */
 	lp = a->buf;
-	lp_lim = (caddr_t)a->buf + DEV_BSIZE - DISKLABEL_MINSIZE;
-	for (;; lp = (void *)((caddr_t)lp + sizeof(uint32_t))) {
-		if ((caddr_t)lp > lp_lim)
+	lp_lim = (char *)a->buf + DEV_BSIZE - DISKLABEL_MINSIZE;
+	for (;; lp = (void *)((char *)lp + sizeof(uint32_t))) {
+		if ((char *)lp > (char *)lp_lim)
 			return (SCAN_CONTINUE);
-		label_offset = (size_t)((caddr_t)lp - (caddr_t)a->buf);
+		label_offset = (size_t)((char *)lp - (char *)a->buf);
 		if (lp->d_magic != DISKMAGIC || lp->d_magic2 != DISKMAGIC) {
 			if (lp->d_magic == bswap32(DISKMAGIC) &&
 			    lp->d_magic2 == bswap32(DISKMAGIC)) {
@@ -256,9 +256,9 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 				 * Label is in the other byte order; validate
 				 * its length, then byte-swap it.
 				 */
-				if ((caddr_t)lp +
+				if ((char *)lp +
 				    DISKLABEL_SIZE(bswap16(lp->d_npartitions)) >
-				    (caddr_t)a->buf + DEV_BSIZE) {
+				    (char *)a->buf + DEV_BSIZE) {
 					aprint_error("%s: BSD disklabel @ "
 					    "%" PRId64
 					    "+%zd has bogus partition "
@@ -276,8 +276,8 @@ validate_label(mbr_args_t *a, daddr_t label_sector, size_t label_offset)
 			/*
 			 * Validate the disklabel length.
 			 */
-			if ((caddr_t)lp + DISKLABEL_SIZE(lp->d_npartitions) >
-			    (caddr_t)a->buf + DEV_BSIZE) {
+			if ((char *)lp + DISKLABEL_SIZE(lp->d_npartitions) >
+			    (char *)a->buf + DEV_BSIZE) {
 				aprint_error("%s: BSD disklabel @ %" PRId64
 				    "+%zd has bogus partition count (%u)\n",
 				    a->pdk->dk_name, label_sector,

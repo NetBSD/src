@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.64 2007/02/19 15:33:20 cube Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.65 2007/03/04 06:01:27 christos Exp $ */
 
 /*
  * System call numbers.
@@ -86,7 +86,7 @@
 /* syscall: "geteuid" ret: "uid_t" args: */
 #define	netbsd32_SYS_geteuid	25
 
-/* syscall: "netbsd32_ptrace" ret: "int" args: "int" "pid_t" "netbsd32_caddr_t" "int" */
+/* syscall: "netbsd32_ptrace" ret: "int" args: "int" "pid_t" "netbsd32_void *" "int" */
 #define	netbsd32_SYS_netbsd32_ptrace	26
 
 /* syscall: "netbsd32_recvmsg" ret: "netbsd32_ssize_t" args: "int" "netbsd32_msghdrp_t" "int" */
@@ -140,7 +140,7 @@
 /* syscall: "getegid" ret: "gid_t" args: */
 #define	netbsd32_SYS_getegid	43
 
-/* syscall: "netbsd32_profil" ret: "int" args: "netbsd32_caddr_t" "netbsd32_size_t" "netbsd32_u_long" "u_int" */
+/* syscall: "netbsd32_profil" ret: "int" args: "netbsd32_void *" "netbsd32_size_t" "netbsd32_u_long" "u_int" */
 #define	netbsd32_SYS_netbsd32_profil	44
 
 #if defined(KTRACE) || !defined(_KERNEL)
@@ -207,7 +207,7 @@
 /* syscall: "compat_43_ogetpagesize" ret: "int" args: */
 #define	netbsd32_SYS_compat_43_ogetpagesize	64
 
-/* syscall: "compat_12_netbsd32_msync" ret: "int" args: "netbsd32_caddr_t" "netbsd32_size_t" */
+/* syscall: "compat_12_netbsd32_msync" ret: "int" args: "netbsd32_void *" "netbsd32_size_t" */
 #define	netbsd32_SYS_compat_12_netbsd32_msync	65
 
 /* syscall: "vfork" ret: "int" args: */
@@ -221,7 +221,7 @@
 /* syscall: "netbsd32_sstk" ret: "int" args: "int" */
 #define	netbsd32_SYS_netbsd32_sstk	70
 
-/* syscall: "compat_43_netbsd32_ommap" ret: "int" args: "netbsd32_caddr_t" "netbsd32_size_t" "int" "int" "int" "netbsd32_long" */
+/* syscall: "compat_43_netbsd32_ommap" ret: "int" args: "netbsd32_void *" "netbsd32_size_t" "int" "int" "int" "netbsd32_long" */
 #define	netbsd32_SYS_compat_43_netbsd32_ommap	71
 
 /* syscall: "vadvise" ret: "int" args: "int" */
@@ -238,7 +238,7 @@
 
 				/* 76 is obsolete vhangup */
 				/* 77 is obsolete vlimit */
-/* syscall: "netbsd32_mincore" ret: "int" args: "netbsd32_caddr_t" "netbsd32_size_t" "netbsd32_charp" */
+/* syscall: "netbsd32_mincore" ret: "int" args: "netbsd32_void *" "netbsd32_size_t" "netbsd32_charp" */
 #define	netbsd32_SYS_netbsd32_mincore	78
 
 /* syscall: "netbsd32_getgroups" ret: "int" args: "int" "netbsd32_gid_tp" */
@@ -295,16 +295,16 @@
 /* syscall: "netbsd32_connect" ret: "int" args: "int" "const netbsd32_sockaddrp_t" "int" */
 #define	netbsd32_SYS_netbsd32_connect	98
 
-/* syscall: "compat_43_netbsd32_oaccept" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_intp" */
+/* syscall: "compat_43_netbsd32_oaccept" ret: "int" args: "int" "netbsd32_void *" "netbsd32_intp" */
 #define	netbsd32_SYS_compat_43_netbsd32_oaccept	99
 
 /* syscall: "netbsd32_getpriority" ret: "int" args: "int" "int" */
 #define	netbsd32_SYS_netbsd32_getpriority	100
 
-/* syscall: "compat_43_netbsd32_osend" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
+/* syscall: "compat_43_netbsd32_osend" ret: "int" args: "int" "netbsd32_void *" "int" "int" */
 #define	netbsd32_SYS_compat_43_netbsd32_osend	101
 
-/* syscall: "compat_43_netbsd32_orecv" ret: "int" args: "int" "netbsd32_caddr_t" "int" "int" */
+/* syscall: "compat_43_netbsd32_orecv" ret: "int" args: "int" "netbsd32_void *" "int" "int" */
 #define	netbsd32_SYS_compat_43_netbsd32_orecv	102
 
 /* syscall: "compat_13_sigreturn13" ret: "int" args: "netbsd32_sigcontextp_t" */
@@ -338,7 +338,7 @@
 /* syscall: "compat_43_netbsd32_orecvmsg" ret: "int" args: "int" "netbsd32_omsghdrp_t" "int" */
 #define	netbsd32_SYS_compat_43_netbsd32_orecvmsg	113
 
-/* syscall: "compat_43_netbsd32_osendmsg" ret: "int" args: "int" "netbsd32_caddr_t" "int" */
+/* syscall: "compat_43_netbsd32_osendmsg" ret: "int" args: "int" "netbsd32_void *" "int" */
 #define	netbsd32_SYS_compat_43_netbsd32_osendmsg	114
 
 				/* 115 is obsolete vtrace */
@@ -367,7 +367,7 @@
 /* syscall: "netbsd32_fchmod" ret: "int" args: "int" "mode_t" */
 #define	netbsd32_SYS_netbsd32_fchmod	124
 
-/* syscall: "compat_43_netbsd32_orecvfrom" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_size_t" "int" "netbsd32_caddr_t" "netbsd32_intp" */
+/* syscall: "compat_43_netbsd32_orecvfrom" ret: "int" args: "int" "netbsd32_void *" "netbsd32_size_t" "int" "netbsd32_void *" "netbsd32_intp" */
 #define	netbsd32_SYS_compat_43_netbsd32_orecvfrom	125
 
 /* syscall: "netbsd32_setreuid" ret: "int" args: "uid_t" "uid_t" */
@@ -413,7 +413,7 @@
 /* syscall: "netbsd32_adjtime" ret: "int" args: "const netbsd32_timevalp_t" "netbsd32_timevalp_t" */
 #define	netbsd32_SYS_netbsd32_adjtime	140
 
-/* syscall: "compat_43_netbsd32_ogetpeername" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_intp" */
+/* syscall: "compat_43_netbsd32_ogetpeername" ret: "int" args: "int" "netbsd32_void *" "netbsd32_intp" */
 #define	netbsd32_SYS_compat_43_netbsd32_ogetpeername	141
 
 /* syscall: "compat_43_ogethostid" ret: "int32_t" args: */
@@ -434,13 +434,13 @@
 /* syscall: "setsid" ret: "int" args: */
 #define	netbsd32_SYS_setsid	147
 
-/* syscall: "netbsd32_quotactl" ret: "int" args: "const netbsd32_charp" "int" "int" "netbsd32_caddr_t" */
+/* syscall: "netbsd32_quotactl" ret: "int" args: "const netbsd32_charp" "int" "int" "netbsd32_void *" */
 #define	netbsd32_SYS_netbsd32_quotactl	148
 
 /* syscall: "compat_43_oquota" ret: "int" args: */
 #define	netbsd32_SYS_compat_43_oquota	149
 
-/* syscall: "compat_43_netbsd32_ogetsockname" ret: "int" args: "int" "netbsd32_caddr_t" "netbsd32_intp" */
+/* syscall: "compat_43_netbsd32_ogetsockname" ret: "int" args: "int" "netbsd32_void *" "netbsd32_intp" */
 #define	netbsd32_SYS_compat_43_netbsd32_ogetsockname	150
 
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
@@ -931,7 +931,7 @@
 /* syscall: "netbsd32___sigaction_sigtramp" ret: "int" args: "int" "const netbsd32_sigactionp_t" "netbsd32_sigactionp_t" "netbsd32_voidp" "int" */
 #define	netbsd32_SYS_netbsd32___sigaction_sigtramp	340
 
-/* syscall: "netbsd32_rasctl" ret: "int" args: "netbsd32_caddr_t" "netbsd32_size_t" "int" */
+/* syscall: "netbsd32_rasctl" ret: "int" args: "netbsd32_void *" "netbsd32_size_t" "int" */
 #define	netbsd32_SYS_netbsd32_rasctl	343
 
 /* syscall: "kqueue" ret: "int" args: */

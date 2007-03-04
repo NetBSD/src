@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.52 2006/03/08 23:46:23 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.53 2007/03/04 06:00:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.52 2006/03/08 23:46:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.53 2007/03/04 06:00:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,7 +170,7 @@ void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	esp_dma_isintr(struct ncr53c9x_softc *);
 void	esp_dma_reset(struct ncr53c9x_softc *);
 int	esp_dma_intr(struct ncr53c9x_softc *);
-int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+int	esp_dma_setup(struct ncr53c9x_softc *, void **, size_t *, int,
 	    size_t *);
 void	esp_dma_go(struct ncr53c9x_softc *);
 void	esp_dma_stop(struct ncr53c9x_softc *);
@@ -745,7 +745,7 @@ esp_dma_reset(struct ncr53c9x_softc *sc)
  */
 
 int
-esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
+esp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len, int datain,
     size_t *dmasize)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -885,7 +885,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
 					esc->sc_main_size += slop_end_size;
 					slop_end_size = 0;
 					if (!esc->sc_datain) {
-						esc->sc_main_size = DMA_ENDALIGN(caddr_t,esc->sc_main+esc->sc_main_size)-esc->sc_main;
+						esc->sc_main_size = DMA_ENDALIGN(void *,esc->sc_main+esc->sc_main_size)-esc->sc_main;
 					}
 				}
 
@@ -926,13 +926,13 @@ esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
 
 		/* Load the tail DMA map */
 		if (slop_end_size) {
-			esc->sc_tail      = DMA_ENDALIGN(caddr_t,esc->sc_tailbuf+slop_end_size)-slop_end_size;
+			esc->sc_tail      = DMA_ENDALIGN(void *,esc->sc_tailbuf+slop_end_size)-slop_end_size;
 			/* If the beginning of the tail is not correctly aligned,
 			 * we have no choice but to align the start, which might then unalign the end.
 			 */
-			esc->sc_tail      = DMA_SCSI_ALIGN(caddr_t,esc->sc_tail);
+			esc->sc_tail      = DMA_SCSI_ALIGN(void *,esc->sc_tail);
 			/* So therefore, we change the tail size to be end aligned again. */
-			esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+slop_end_size)-esc->sc_tail;
+			esc->sc_tail_size = DMA_ENDALIGN(void *,esc->sc_tail+slop_end_size)-esc->sc_tail;
 
 			/* @@@ next DMA overrun lossage */
 			if (!esc->sc_datain) {
@@ -972,7 +972,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
 
 			esc->sc_begin_size = slop_bgn_size;
 			esc->sc_main = *esc->sc_dmaaddr+slop_bgn_size;
-			esc->sc_main_size = DMA_ENDALIGN(caddr_t,esc->sc_main+esc->sc_dmasize-slop_bgn_size)-esc->sc_main;
+			esc->sc_main_size = DMA_ENDALIGN(void *,esc->sc_main+esc->sc_dmasize-slop_bgn_size)-esc->sc_main;
 
 			if (!esc->sc_datain) {
 				esc->sc_main_size += ESP_DMA_OVERRUN;
@@ -992,14 +992,14 @@ esp_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len, int datain,
 			esc->sc_main_size = 0;
 
 #if 0
-			esc->sc_tail      = DMA_ENDALIGN(caddr_t,esc->sc_tailbuf+slop_bgn_size)-slop_bgn_size;
+			esc->sc_tail      = DMA_ENDALIGN(void *,esc->sc_tailbuf+slop_bgn_size)-slop_bgn_size;
 			/* If the beginning of the tail is not correctly aligned,
 			 * we have no choice but to align the start, which might then unalign the end.
 			 */
 #endif
-			esc->sc_tail      = DMA_SCSI_ALIGN(caddr_t,esc->sc_tailbuf);
+			esc->sc_tail      = DMA_SCSI_ALIGN(void *,esc->sc_tailbuf);
 			/* So therefore, we change the tail size to be end aligned again. */
-			esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+esc->sc_dmasize)-esc->sc_tail;
+			esc->sc_tail_size = DMA_ENDALIGN(void *,esc->sc_tail+esc->sc_dmasize)-esc->sc_tail;
 
 			/* @@@ next DMA overrun lossage */
 			if (!esc->sc_datain) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.114 2007/02/22 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.115 2007/03/04 06:03:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.114 2007/02/22 06:34:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.115 2007/03/04 06:03:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,11 +607,11 @@ pstatscopy(struct pstats *ps)
 	newps = pool_get(&pstats_pool, PR_WAITOK);
 
 	memset(&newps->pstat_startzero, 0,
-	(unsigned) ((caddr_t)&newps->pstat_endzero -
-		    (caddr_t)&newps->pstat_startzero));
+	(unsigned) ((char *)&newps->pstat_endzero -
+		    (char *)&newps->pstat_startzero));
 	memcpy(&newps->pstat_startcopy, &ps->pstat_startcopy,
-	((caddr_t)&newps->pstat_endcopy -
-	 (caddr_t)&newps->pstat_startcopy));
+	((char *)&newps->pstat_endcopy -
+	 (char *)&newps->pstat_startcopy));
 
 	return (newps);
 

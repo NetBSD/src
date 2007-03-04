@@ -1584,7 +1584,7 @@ extern int ndis_isr(void *, int *, int *);
 #ifdef __FreeBSD__
 extern void ndis_return_packet(void *, void *);
 #else
-extern void ndis_return_packet(struct mbuf *, caddr_t, size_t, void *);
+extern void ndis_return_packet(struct mbuf *, void *, size_t, void *);
 #endif
 extern void ndis_enable_intr(void *);
 extern void ndis_disable_intr(void *);

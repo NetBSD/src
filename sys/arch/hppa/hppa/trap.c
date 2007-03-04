@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.41 2007/03/03 14:37:54 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.42 2007/03/04 05:59:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.41 2007/03/03 14:37:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.42 2007/03/04 05:59:55 christos Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -452,7 +452,7 @@ do {							\
 	} else {
 		SANITY(USERMODE(tf->tf_iioq_head));
 		SANITY(USERMODE(tf->tf_iioq_tail));
-		SANITY(l != NULL && tf->tf_cr30 == kvtop((caddr_t)l->l_addr));
+		SANITY(l != NULL && tf->tf_cr30 == kvtop((void *)l->l_addr));
 	}
 #undef SANITY
 	if (sanity_frame == tf) {

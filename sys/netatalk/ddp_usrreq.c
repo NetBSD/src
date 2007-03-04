@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.23 2007/02/17 22:34:10 dyoung Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.24 2007/03/04 06:03:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.23 2007/02/17 22:34:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.24 2007/03/04 06:03:19 christos Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -88,7 +88,7 @@ ddp_usrreq(so, req, m, addr, rights, l)
 	ddp = sotoddpcb(so);
 
 	if (req == PRU_CONTROL) {
-		return (at_control((long) m, (caddr_t) addr,
+		return (at_control((long) m, (void *) addr,
 		    (struct ifnet *) rights, l));
 	}
 	if (req == PRU_PURGEIF) {
@@ -278,7 +278,7 @@ at_pcbsetaddr(ddp, addr, l)
 				return (EACCES);
 		}
 	} else {
-		bzero((caddr_t) & lsat, sizeof(struct sockaddr_at));
+		bzero((void *) & lsat, sizeof(struct sockaddr_at));
 		lsat.sat_len = sizeof(struct sockaddr_at);
 		lsat.sat_addr.s_node = ATADDR_ANYNODE;
 		lsat.sat_addr.s_net = ATADDR_ANYNET;
@@ -455,7 +455,7 @@ at_pcballoc(so)
 	ddpcb = ddp;
 
 	ddp->ddp_socket = so;
-	so->so_pcb = (caddr_t) ddp;
+	so->so_pcb = (void *) ddp;
 #ifdef MBUFTRACE
 	so->so_rcv.sb_mowner = &atalk_rx_mowner;
 	so->so_snd.sb_mowner = &atalk_tx_mowner;

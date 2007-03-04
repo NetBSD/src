@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.134 2007/02/22 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.135 2007/03/04 06:03:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.134 2007/02/22 06:34:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.135 2007/03/04 06:03:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -287,9 +287,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * then copy the section that is copied directly from the parent.
 	 */
 	memset(&p2->p_startzero, 0,
-	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
+	    (unsigned) ((char *)&p2->p_endzero - (char *)&p2->p_startzero));
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
-	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+	    (unsigned) ((char *)&p2->p_endcopy - (char *)&p2->p_startcopy));
 
 	CIRCLEQ_INIT(&p2->p_sigpend.sp_info);
 

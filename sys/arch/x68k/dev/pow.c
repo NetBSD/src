@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.14 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: pow.c,v 1.15 2007/03/04 06:01:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.14 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.15 2007/03/04 06:01:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ setalarm(struct x68k_alarminfo *bp)
 
 /*ARGSUSED*/
 int 
-powioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
 

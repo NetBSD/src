@@ -134,7 +134,7 @@ struct rum_softc {
 	uint8_t				bbp17;
 
 #if NBPFILTER > 0
-	caddr_t				sc_drvbpf;
+	void *				sc_drvbpf;
 
 	union {
 		struct rum_rx_radiotap_header th;

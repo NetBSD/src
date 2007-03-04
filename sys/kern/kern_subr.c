@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.154 2007/02/22 06:34:44 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.155 2007/03/04 06:03:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.154 2007/02/22 06:34:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.155 2007/03/04 06:03:06 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -188,7 +188,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		if (error) {
 			break;
 		}
-		iov->iov_base = (caddr_t)iov->iov_base + cnt;
+		iov->iov_base = (char *)iov->iov_base + cnt;
 		iov->iov_len -= cnt;
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
@@ -242,7 +242,7 @@ again:
 	} else {
 		*(char *)iov->iov_base = c;
 	}
-	iov->iov_base = (caddr_t)iov->iov_base + 1;
+	iov->iov_base = (char *)iov->iov_base + 1;
 	iov->iov_len--;
 	uio->uio_resid--;
 	uio->uio_offset++;

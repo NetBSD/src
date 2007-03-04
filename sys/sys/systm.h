@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.195 2007/02/21 23:00:10 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.196 2007/03/04 06:03:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -134,7 +134,7 @@ extern void (*v_putc)(int); /* Virtual console putc routine */
 extern	void	_insque(void *, void *);
 extern	void	_remque(void *);
 
-/* casts to keep lint happy, but it should be happy with void * */
+/* casts to keep lint happy, but it should be happy with void **/
 #define	insque(q,p)	_insque(q, p)
 #define	remque(q)	_remque(q)
 

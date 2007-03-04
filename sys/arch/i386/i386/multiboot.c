@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.10 2007/02/21 22:59:44 thorpej Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.11 2007/03/04 05:59:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.10 2007/02/21 22:59:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.11 2007/03/04 05:59:57 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,9 @@ __KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.10 2007/02/21 22:59:44 thorpej Exp $
  */
 
 struct multiboot_symbols {
-	caddr_t		s_symstart;
+	void *		s_symstart;
 	size_t		s_symsize;
-	caddr_t		s_strstart;
+	void *		s_strstart;
 	size_t		s_strsize;
 };
 
@@ -375,9 +375,9 @@ copy_syms(struct multiboot_info *mi)
 	}
 	*RELOC(int *, &esym) = (int)(strstart + strsize + KERNBASE);
 
-	ms->s_symstart = (caddr_t)(symstart + KERNBASE);
+	ms->s_symstart = (void *)(symstart + KERNBASE);
 	ms->s_symsize  = symsize;
-	ms->s_strstart = (caddr_t)(strstart + KERNBASE);
+	ms->s_strstart = (void *)(strstart + KERNBASE);
 	ms->s_strsize  = strsize;
 #undef RELOC
 }
@@ -700,7 +700,7 @@ multiboot_ksyms_init(void)
 		ehdr.e_version = 1;
 		ehdr.e_ehsize = sizeof(ehdr);
 
-		ksyms_init_explicit((caddr_t)&ehdr,
+		ksyms_init_explicit((void *)&ehdr,
 		    ms->s_symstart, ms->s_symsize,
 		    ms->s_strstart, ms->s_strsize);
 	}

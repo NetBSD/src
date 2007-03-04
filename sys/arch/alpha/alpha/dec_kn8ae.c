@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.36 2007/01/24 13:08:11 hubertf Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.36 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.37 2007/03/04 05:59:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.36 2007/01/24 13:08:11 hubertf Exp $
 #include <alpha/tlsb/tlsbvar.h>
 #include <alpha/tlsb/kftxxreg.h>
 #include <alpha/tlsb/kftxxvar.h>
-#define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define	KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 
 void dec_kn8ae_init __P((void));

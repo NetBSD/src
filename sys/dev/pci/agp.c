@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.44 2006/12/18 12:01:48 christos Exp $	*/
+/*	$NetBSD: agp.c,v 1.45 2007/03/04 06:02:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.44 2006/12/18 12:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.45 2007/03/04 06:02:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ agp_alloc_gatt(struct agp_softc *sc)
 	u_int32_t apsize = AGP_GET_APERTURE(sc);
 	u_int32_t entries = apsize >> AGP_PAGE_SHIFT;
 	struct agp_gatt *gatt;
-	caddr_t virtual;
+	void *virtual;
 	int dummyseg;
 
 	gatt = malloc(sizeof(struct agp_gatt), M_AGP, M_NOWAIT);
@@ -343,7 +343,7 @@ void
 agp_free_gatt(struct agp_softc *sc, struct agp_gatt *gatt)
 {
 	agp_free_dmamem(sc->as_dmat, gatt->ag_size, gatt->ag_dmamap,
-	    (caddr_t)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
+	    (void *)gatt->ag_virtual, &gatt->ag_dmaseg, 1);
 	free(gatt, M_AGP);
 }
 
@@ -834,7 +834,7 @@ agpclose(dev_t dev, int fflag, int devtype,
 }
 
 static int
-agpioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+agpioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
 
@@ -982,7 +982,7 @@ void agp_memory_info(void *dev, void *handle,
 
 int
 agp_alloc_dmamem(bus_dma_tag_t tag, size_t size, int flags,
-		 bus_dmamap_t *mapp, caddr_t *vaddr, bus_addr_t *baddr,
+		 bus_dmamap_t *mapp, void **vaddr, bus_addr_t *baddr,
 		 bus_dma_segment_t *seg, int nseg, int *rseg)
 
 {
@@ -1030,7 +1030,7 @@ out:
 
 void
 agp_free_dmamem(bus_dma_tag_t tag, size_t size, bus_dmamap_t map,
-		caddr_t vaddr, bus_dma_segment_t *seg, int nseg)
+		void *vaddr, bus_dma_segment_t *seg, int nseg)
 {
 
 	bus_dmamap_unload(tag, map);

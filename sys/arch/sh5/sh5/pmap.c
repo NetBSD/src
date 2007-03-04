@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2007/02/22 16:51:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2007/03/04 06:00:42 christos Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2007/02/22 16:51:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2007/03/04 06:00:42 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernel_ipt.h"
@@ -1108,7 +1108,7 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	 * Allocate the kernel message buffer
 	 */
 	size = sh5_round_page(MSGBUFSIZE);
-	initmsgbuf((caddr_t)avail, size);
+	initmsgbuf((void *)avail, size);
 
 	avail = sh5_round_page(avail + size);
 	mr[0].mr_start += size;
@@ -1283,7 +1283,7 @@ pmap_create(void)
 	pmap_t pm;
 	
 	pm = pool_get(&pmap_pool, PR_WAITOK);
-	memset((caddr_t)pm, 0, sizeof *pm);
+	memset((void *)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	return (pm);
 }
@@ -3039,7 +3039,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	}
 
 	va = (vaddr_t)(SH5_KSEG0_BASE + (pa - pmap_kseg0_pa));
-	memset((caddr_t) va, 0, size);
+	memset((void *) va, 0, size);
 
 	return (va);
 }

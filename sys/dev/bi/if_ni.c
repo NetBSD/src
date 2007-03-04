@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.28 2007/02/16 13:41:45 ad Exp $ */
+/*	$NetBSD: if_ni.c,v 1.29 2007/03/04 06:01:45 christos Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.28 2007/02/16 13:41:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.29 2007/03/04 06:01:45 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -145,12 +145,12 @@ static	void	niattach(struct device *, struct device *, void *);
 static	void	niinit(struct ni_softc *);
 static	void	nistart(struct ifnet *);
 static	void	niintr(void *);
-static	int	niioctl(struct ifnet *, u_long, caddr_t);
+static	int	niioctl(struct ifnet *, u_long, void *);
 static	int	ni_add_rxbuf(struct ni_softc *, struct ni_dg *, int);
 static	void	ni_setup(struct ni_softc *);
 static	void	nitimeout(struct ifnet *);
 static	void	ni_shutdown(void *);
-static	void ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p);
+static	void ni_getpgs(struct ni_softc *sc, int size, void **v, paddr_t *p);
 static	int failtest(struct ni_softc *, int, int, int, const char *);
 
 volatile int endwait, retry;	/* Used during autoconfig */
@@ -192,7 +192,7 @@ nimatch(parent, cf, aux)
  * We need to get the structures from the beginning of its own pages.
  */
 static void
-ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p)
+ni_getpgs(struct ni_softc *sc, int size, void **v, paddr_t *p)
 {
 	bus_dma_segment_t seg;
 	int nsegs, error;
@@ -242,7 +242,7 @@ niattach(parent, self, aux)
 	struct ifnet *ifp = (struct ifnet *)&sc->sc_if;
 	struct ni_msg *msg;
 	struct ni_ptdb *ptdb;
-	caddr_t va;
+	void *va;
 	int i, j, s, res;
 	u_short type;
 
@@ -258,11 +258,11 @@ niattach(parent, self, aux)
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		sc->sc_dev.dv_xname, "intr");
 
-	ni_getpgs(sc, sizeof(struct ni_gvppqb), (caddr_t *)&sc->sc_gvppqb,
+	ni_getpgs(sc, sizeof(struct ni_gvppqb), (void **)&sc->sc_gvppqb,
 	    (paddr_t *)&sc->sc_pgvppqb);
-	ni_getpgs(sc, sizeof(struct ni_fqb), (caddr_t *)&sc->sc_fqb, 0);
+	ni_getpgs(sc, sizeof(struct ni_fqb), (void **)&sc->sc_fqb, 0);
 	ni_getpgs(sc, NBDESCS * sizeof(struct ni_bbd),
-	    (caddr_t *)&sc->sc_bbd, 0);
+	    (void **)&sc->sc_bbd, 0);
 	/*
 	 * Zero the newly allocated memory.
 	 */
@@ -698,7 +698,7 @@ int
 niioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ni_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

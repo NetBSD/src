@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 2007/01/20 21:42:12 he Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.11 2007/03/04 06:00:10 christos Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -66,7 +66,7 @@ void identifycpu __P((char *));
 void initppc __P((u_int, u_int, char *));
 void install_extint __P((void (*) __P((void)))); 
 void *mapiodev __P((paddr_t, psize_t));
-paddr_t kvtop __P((caddr_t));
+paddr_t kvtop __P((void *));
 
 /* these are in extintr.c */
 void ext_intr __P((void));

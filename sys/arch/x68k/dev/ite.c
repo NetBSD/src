@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.47 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: ite.c,v 1.48 2007/03/04 06:01:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.47 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.48 2007/03/04 06:01:06 christos Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -471,7 +471,7 @@ itetty(dev_t dev)
 }
 
 int 
-iteioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+iteioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct iterepeat *irp;
 	struct tty *tp = ite_tty[UNIT(dev)];
@@ -565,7 +565,7 @@ itestart(struct tty *tp)
 	if (rbp->c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)rbp);
+			wakeup((void *)rbp);
 		}
 		selwakeup(&tp->t_wsel);
 	}

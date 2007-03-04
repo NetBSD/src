@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.58 2007/02/08 04:22:27 elad Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -30,9 +30,9 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.58 2007/02/08 04:22:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $");
 #else
-__RCSID("$Id: verified_exec.c,v 1.58 2007/02/08 04:22:27 elad Exp $\n$NetBSD: verified_exec.c,v 1.58 2007/02/08 04:22:27 elad Exp $");
+__RCSID("$Id: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $\n$NetBSD: verified_exec.c,v 1.59 2007/03/04 06:01:43 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ veriexecclose(dev_t dev, int flags, int fmt,
 }
 
 int
-veriexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+veriexecioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
 	struct plistref *plistref;

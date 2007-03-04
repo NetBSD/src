@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.9 2007/02/17 22:34:07 dyoung Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.10 2007/03/04 06:02:58 christos Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.12 2004/05/19 17:50:51 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -85,7 +85,7 @@ void	pflogdetach(void);
 #endif
 int	pflogoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
 	    	       struct rtentry *);
-int	pflogioctl(struct ifnet *, u_long, caddr_t);
+int	pflogioctl(struct ifnet *, u_long, void *);
 void	pflogrtrequest(int, struct rtentry *, struct sockaddr *);
 void	pflogstart(struct ifnet *);
 
@@ -184,7 +184,7 @@ pflogrtrequest(int cmd, struct rtentry *rt,
 
 /* ARGSUSED */
 int
-pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+pflogioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	switch (cmd) {
 	case SIOCSIFADDR:

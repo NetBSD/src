@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.17 2006/05/14 21:47:00 elad Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.18 2007/03/04 06:02:46 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.17 2006/05/14 21:47:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.18 2007/03/04 06:02:46 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ struct asc_softc {
 	bus_space_handle_t sc_scsi_bsh;		/* ASC register handle */
 	bus_dma_tag_t sc_dmat;			/* bus DMA tag */
 	bus_dmamap_t sc_dmamap;			/* bus dmamap */
-	caddr_t *sc_dmaaddr;
+	void **sc_dmaaddr;
 	size_t *sc_dmalen;
 	size_t sc_dmasize;
 	unsigned sc_flags;
@@ -119,7 +119,7 @@ static void	asc_write_reg(struct ncr53c9x_softc *, int, u_char);
 static int	tcds_dma_isintr(struct ncr53c9x_softc *);
 static void	tcds_dma_reset(struct ncr53c9x_softc *);
 static int	tcds_dma_intr(struct ncr53c9x_softc *);
-static int	tcds_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+static int	tcds_dma_setup(struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *);
 static void	tcds_dma_go(struct ncr53c9x_softc *);
 static void	tcds_dma_stop(struct ncr53c9x_softc *);
@@ -251,7 +251,7 @@ tcds_dma_reset(struct ncr53c9x_softc *sc)
  * start a DMA transfer or keep it going
  */
 int
-tcds_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+tcds_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
     int ispullup, size_t *dmasize)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;

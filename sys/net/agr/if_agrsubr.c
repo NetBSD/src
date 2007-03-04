@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrsubr.c,v 1.4 2007/02/21 23:00:07 thorpej Exp $	*/
+/*	$NetBSD: if_agrsubr.c,v 1.5 2007/03/04 06:03:18 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.4 2007/02/21 23:00:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrsubr.c,v 1.5 2007/03/04 06:03:18 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -264,7 +264,7 @@ agr_port_getmedia(struct agr_port *port, u_int *media, u_int *status)
 
 	memset(&ifmr, 0, sizeof(ifmr));
 	ifmr.ifm_count = 0;
-	error = agrport_ioctl(port, SIOCGIFMEDIA, (caddr_t)&ifmr);
+	error = agrport_ioctl(port, SIOCGIFMEDIA, (void *)&ifmr);
 
 	if (error == 0) {
 		*media = ifmr.ifm_active;

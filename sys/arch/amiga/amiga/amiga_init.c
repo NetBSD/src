@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.93 2007/01/24 13:08:15 hubertf Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.94 2007/03/04 05:59:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.93 2007/01/24 13:08:15 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.94 2007/03/04 05:59:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1026,7 +1026,7 @@ kernel_reload_write(uio)
 		/*
 		 * Pull in the exec header and check it.
 		 */
-		if ((error = uiomove((caddr_t)&kernel_exec, sizeof(kernel_exec),
+		if ((error = uiomove((void *)&kernel_exec, sizeof(kernel_exec),
 		     uio)) != 0)
 			return(error);
 		printf("loading kernel %ld+%ld+%ld+%ld\n", kernel_exec.a_text,

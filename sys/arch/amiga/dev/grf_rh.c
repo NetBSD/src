@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.46 2006/11/24 22:04:21 wiz Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.47 2007/03/04 05:59:19 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.46 2006/11/24 22:04:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.47 2007/03/04 05:59:19 christos Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -724,8 +724,8 @@ int
 rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 {
 	struct grfinfo *gi = &gp->g_display;
-	volatile caddr_t ba;
-	volatile caddr_t fb;
+	volatile void *ba;
+	volatile void *fb;
 	short FW, clksel, HDE = 0, VDE;
 	unsigned short *c, z;
 	const unsigned char *f;
@@ -735,10 +735,10 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 
 	/* provide all needed information in grf device-independent
 	 * locations */
-	gp->g_data 		= (caddr_t) md;
-	gi->gd_regaddr	 	= (caddr_t) kvtop (ba);
+	gp->g_data 		= (void *) md;
+	gi->gd_regaddr	 	= (void *) kvtop (ba);
 	gi->gd_regsize		= LM_OFFSET;
-	gi->gd_fbaddr		= (caddr_t) kvtop (fb);
+	gi->gd_fbaddr		= (void *) kvtop (fb);
 	gi->gd_fbsize		= MEMSIZE *1024*1024;
 	gi->gd_colors		= 1 << md->DEP;
 	gi->gd_planes		= md->DEP;
@@ -1590,8 +1590,8 @@ grfrhattach(struct device *pdp, struct device *dp, void *auxp)
 		bcopy(&congrf.g_display, &gp->g_display,
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
-		gp->g_regkva = (volatile caddr_t)zap->va;
-		gp->g_fbkva = (volatile caddr_t)zap->va + LM_OFFSET;
+		gp->g_regkva = (volatile void *)zap->va;
+		gp->g_fbkva = (volatile void *)zap->va + LM_OFFSET;
 		gp->g_unit = GRF_RETINAIII_UNIT;
 		gp->g_mode = rh_mode;
 		gp->g_conpri = grfrh_cnprobe();

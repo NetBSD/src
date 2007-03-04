@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.11 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: profile.c,v 1.12 2007/03/04 06:00:43 christos Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.11 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.12 2007/03/04 06:00:43 christos Exp $");
 
 #include "profiler.h"
 
@@ -288,7 +288,7 @@ int
 profioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {
