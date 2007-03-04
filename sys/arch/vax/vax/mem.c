@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.35 2007/03/04 06:01:02 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.36 2007/03/04 19:21:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.35 2007/03/04 06:01:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.36 2007/03/04 19:21:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -135,7 +135,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			}
 
 			c = min(iov->iov_len, MAXPHYS);
-			error = uiomove((void *)v + KERNBASE, c, uio);
+			error = uiomove((char *)v + KERNBASE, c, uio);
 			continue;
 		case DEV_KMEM:
 			v = uio->uio_offset;
@@ -176,7 +176,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		if (error)
 			break;
-		iov->iov_base = (void *)iov->iov_base + c;
+		iov->iov_base = (char *)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;

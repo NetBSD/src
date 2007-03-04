@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.51 2007/03/04 06:01:05 christos Exp $ */
+/*	$NetBSD: vsbus.c,v 1.52 2007/03/04 19:21:56 christos Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.51 2007/03/04 06:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.52 2007/03/04 19:21:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,8 +306,9 @@ vsbus_clrintr(mask)
  * Use the physical memory directly.
  */
 void
-vsbus_copytoproc(struct proc *p, void *from, void *to, int len)
+vsbus_copytoproc(struct proc *p, void *fromv, void *tov, int len)
 {
+	char *from = fromv, *to = tov;
 	struct pte *pte;
 	paddr_t pa;
 
@@ -346,8 +347,9 @@ vsbus_copytoproc(struct proc *p, void *from, void *to, int len)
 }
 
 void
-vsbus_copyfromproc(struct proc *p, void *from, void *to, int len)
+vsbus_copyfromproc(struct proc *p, void *fromv, void *tov, int len)
 {
+	char *from = fromv, *to = tov;
 	struct pte *pte;
 	paddr_t pa;
 
