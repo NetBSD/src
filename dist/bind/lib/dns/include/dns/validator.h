@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.1.1.2.4.1 2007/02/10 19:20:56 tron Exp $	*/
+/*	$NetBSD: validator.h,v 1.1.1.2.4.2 2007/03/04 20:58:23 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -131,6 +131,7 @@ struct dns_validator {
 };
 
 #define DNS_VALIDATOR_DLV 1
+#define DNS_VALIDATOR_DEFER 2
 
 ISC_LANG_BEGINDECLS
 
@@ -172,6 +173,15 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
  * Its 'result' field will be ISC_R_SUCCESS iff the
  * response was successfully proven to be either secure or
  * part of a known insecure domain.
+ */
+
+void
+dns_validator_send(dns_validator_t *validator);
+/*%<
+ * Send a deferred validation request
+ *
+ * Requires:
+ *     'validator' to points to a valid DNSSEC validator.
  */
 
 void
