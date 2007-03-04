@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.5 2005/10/17 18:00:00 pooka Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.6 2007/03/04 15:22:10 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -60,9 +60,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: fsmagic.c,v 1.46 2005/06/25 15:52:14 christos Exp")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.47 2007/01/12 17:38:28 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.5 2005/10/17 18:00:00 pooka Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.6 2007/03/04 15:22:10 pooka Exp $");
 #endif
 #endif	/* lint */
 
