@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.27 2007/03/04 06:00:04 christos Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.28 2007/03/04 10:56:21 tsutsui Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.27 2007/03/04 06:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.28 2007/03/04 10:56:21 tsutsui Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ktrace.h"
@@ -204,7 +204,7 @@ aoutm68k_syscall_intern(struct proc *p)
 static void
 syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 {
-	void *params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -214,7 +214,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	params = (void *)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -320,7 +320,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 static void
 syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
-	void *params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -330,7 +330,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
 
-	params = (void *)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
