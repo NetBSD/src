@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.32 2007/03/04 06:00:37 christos Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.33 2007/03/04 10:14:51 macallan Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.32 2007/03/04 06:00:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.33 2007/03/04 10:14:51 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -785,7 +785,7 @@ kvtop(void *addr)
 	uintptr_t off;
 	extern char end[];
 
-	if (addr < end)
+	if (addr < (void *)end)
 		return (paddr_t)addr;
 
 	va = trunc_page((vaddr_t)addr);
