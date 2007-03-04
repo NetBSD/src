@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.64 2007/03/04 06:02:42 christos Exp $	*/
+/*	$NetBSD: if_se.c,v 1.65 2007/03/04 15:17:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.64 2007/03/04 06:02:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.65 2007/03/04 15:17:20 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -606,7 +606,7 @@ se_get(sc, data, totlen)
 		}
 
 		if (m == m0) {
-			void *newdata = (void *)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
