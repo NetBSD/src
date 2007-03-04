@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.61 2007/03/04 06:02:20 christos Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.62 2007/03/04 19:14:25 sketch Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.61 2007/03/04 06:02:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.62 2007/03/04 19:14:25 sketch Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -2296,7 +2296,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	}
 
 	hdr = (const struct iwi_firmware_hdr *)sc->sc_blob;
-	printf("firmware version = %d\n", le32toh(hdr->version));
+	DPRINTF(("firmware version = %d\n", le32toh(hdr->version)));
 	if ((IWI_FW_GET_MAJOR(le32toh(hdr->version)) != IWI_FW_REQ_MAJOR) ||
 	    (IWI_FW_GET_MINOR(le32toh(hdr->version)) != IWI_FW_REQ_MINOR)) {
 		aprint_error("%s: version for '%s' %d.%d != %d.%d\n",
