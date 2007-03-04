@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.7 2006/11/28 13:38:39 christos Exp $ */
+/* $NetBSD: radeonfb.c,v 1.7.2.1 2007/03/04 12:25:14 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.7 2006/11/28 13:38:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.7.2.1 2007/03/04 12:25:14 bouyer Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -163,12 +163,16 @@ static void radeonfb_cursor(void *, int, int, int);
 static void radeonfb_putchar(void *, int, int, unsigned, long);
 static int radeonfb_allocattr(void *, int, int, int, long *);
 
+static int radeonfb_get_backlight(struct radeonfb_display *);
+static int radeonfb_set_backlight(struct radeonfb_display *, int);
+static void radeonfb_lvds_callout(void *);
+
 static struct videomode *radeonfb_best_refresh(struct videomode *,
     struct videomode *);
 static void radeonfb_pickres(struct radeonfb_display *, uint16_t *,
     uint16_t *, int);
-static const struct videomode *radeonfb_port_mode(struct radeonfb_port *,
-    int, int);
+static const struct videomode *radeonfb_port_mode(struct radeonfb_softc *, 
+    struct radeonfb_port *, int, int);
 
 
 #define	RADEON_DEBUG
@@ -394,6 +398,8 @@ static const struct {
 	{ RADEON_R420,	{{-1, 0xb01cb}}},
 };
 
+#define RADEONFB_BACKLIGHT_MAX    255  /* Maximum backlight level. */
+
 
 CFATTACH_DECL(radeonfb, sizeof (struct radeonfb_softc),
     radeonfb_match, radeonfb_attach, NULL, NULL);
@@ -420,6 +426,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct radeonfb_softc	*sc = (struct radeonfb_softc *)dev;
 	struct pci_attach_args	*pa = aux;
+	const char		*mptr;
 	bus_size_t		bsz;
 	pcireg_t		screg;
 	int			i, j;
@@ -665,17 +672,14 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 	    (int)sc->sc_memsz >> 20, (unsigned)sc->sc_memaddr,
 	    (int)sc->sc_regsz >> 10, (unsigned)sc->sc_regaddr);
 
-#if 0
 	/* setup default video mode from devprop (allows PROM override) */
 	sc->sc_defaultmode = radeonfb_default_mode;
-	ps = prop_dictionary_get(device_properties(&sc->sc_dev),
-	    "videomode");
-	if (ps != NULL) {
-		sc->sc_modebuf = prop_string_cstring(ps);
-		if (sc->sc_modebuf)
-			sc->sc_defaultmode = sc->sc_modebuf;
+	if (prop_dictionary_get_cstring_nocopy(device_properties(&sc->sc_dev),
+	    "videomode", &mptr)) {
+
+		strncpy(sc->sc_modebuf, mptr, sizeof(sc->sc_modebuf));
+		sc->sc_defaultmode = sc->sc_modebuf;
 	}
-#endif
 
 	/* initialize some basic display parameters */
 	for (i = 0; i < sc->sc_ndisplays; i++) {
@@ -727,7 +731,7 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 		/* now select the *video mode* that we will use */
 		for (j = 0; j < dp->rd_ncrtcs; j++) {
 			const struct videomode *vmp;
-			vmp = radeonfb_port_mode(dp->rd_crtcs[j].rc_port,
+			vmp = radeonfb_port_mode(sc, dp->rd_crtcs[j].rc_port,
 			    dp->rd_virtx, dp->rd_virty);
 			dp->rd_crtcs[j].rc_videomode = *vmp;
 			printf("%s: port %d: physical %dx%d %dHz\n",
@@ -849,6 +853,11 @@ radeonfb_attach(struct device *parent, struct device *dev, void *aux)
 
 		config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
 		radeonfb_blank(dp, 0);
+		
+		/* Initialise delayed lvds operations for backlight. */
+		callout_init(&dp->rd_bl_lvds_co);
+		callout_setfunc(&dp->rd_bl_lvds_co,
+				radeonfb_lvds_callout, dp);
 	}
 
 	return;
@@ -871,6 +880,7 @@ radeonfb_ioctl(void *v, void *vs,
 	struct vcons_data	*vd;
 	struct radeonfb_display	*dp;
 	struct radeonfb_softc	*sc;
+	struct wsdisplay_param  *param;
 
 	vd = (struct vcons_data *)v;
 	dp = (struct radeonfb_display *)vd->cookie;
@@ -974,6 +984,22 @@ radeonfb_ioctl(void *v, void *vs,
 #else
 		return ENODEV;
 #endif
+	case WSDISPLAYIO_GETPARAM:
+		param = (struct wsdisplay_param *)d;
+		if (param->param == WSDISPLAYIO_PARAM_BACKLIGHT) {
+			param->min = 0;
+			param->max = RADEONFB_BACKLIGHT_MAX;
+			param->curval = radeonfb_get_backlight(dp);
+			return 0;
+		}
+		return EPASSTHROUGH;
+
+	case WSDISPLAYIO_SETPARAM:
+		param = (struct wsdisplay_param *)d;
+		if (param->param == WSDISPLAYIO_PARAM_BACKLIGHT) {
+			return radeonfb_set_backlight(dp, param->curval);
+		}
+		return EPASSTHROUGH;
 
 	default:
 		return EPASSTHROUGH;
@@ -3088,7 +3114,8 @@ radeonfb_best_refresh(struct videomode *m1, struct videomode *m2)
 }
 
 static const struct videomode *
-radeonfb_port_mode(struct radeonfb_port *rp, int x, int y)
+radeonfb_port_mode(struct radeonfb_softc *sc, struct radeonfb_port *rp,
+    int x, int y)
 {
 	struct edid_info	*ep = &rp->rp_edid;
 	struct videomode	*vmp = NULL;
@@ -3096,7 +3123,7 @@ radeonfb_port_mode(struct radeonfb_port *rp, int x, int y)
 
 	if (!rp->rp_edid_valid) {
 		/* fallback to safe mode */
-		return radeonfb_modelookup(RADEON_DEFAULT_MODE);
+		return radeonfb_modelookup(sc->sc_defaultmode);
 	}
 	
 	/* always choose the preferred mode first! */
@@ -3152,7 +3179,7 @@ radeonfb_port_mode(struct radeonfb_port *rp, int x, int y)
 		vmp = radeonfb_best_refresh(vmp, &ep->edid_modes[i]);
 	}
 
-	return (vmp ? vmp : radeonfb_modelookup(RADEON_DEFAULT_MODE));
+	return (vmp ? vmp : radeonfb_modelookup(sc->sc_defaultmode));
 }
 
 static int
@@ -3282,4 +3309,115 @@ radeonfb_pickres(struct radeonfb_display *dp, uint16_t *x, uint16_t *y,
 		*x = 640;
 		*y = 480;
 	}
+}
+
+
+/* Get the current backlight level for the display.  */
+
+static int 
+radeonfb_get_backlight(struct radeonfb_display *dp)
+{
+	int s;
+	uint32_t level;
+
+	s = spltty();
+
+	level = radeonfb_get32(dp->rd_softc, RADEON_LVDS_GEN_CNTL);
+	level &= RADEON_LVDS_BL_MOD_LEV_MASK;
+	level >>= RADEON_LVDS_BL_MOD_LEV_SHIFT;
+
+	/* 
+	 * On some chips, we should negate the backlight level. 
+	 * XXX Find out on which chips. 
+	 */
+#ifdef RADEONFB_BACKLIGHT_NEGATED
+	level = RADEONFB_BACKLIGHT_MAX - level;
+#endif /* RADEONFB_BACKLIGHT_NEGATED */
+
+	splx(s);
+
+	return level;
+}	
+
+/* Set the backlight to the given level for the display.  */
+
+static int 
+radeonfb_set_backlight(struct radeonfb_display *dp, int level)
+{
+	struct radeonfb_softc *sc;
+	int rlevel, s;
+	uint32_t lvds;
+
+	s = spltty();
+	
+	if (level < 0)
+		level = 0;
+	else if (level >= RADEONFB_BACKLIGHT_MAX)
+		level = RADEONFB_BACKLIGHT_MAX;
+
+	sc = dp->rd_softc;
+
+	/* On some chips, we should negate the backlight level. */
+#ifdef RADEONFB_BACKLIGHT_NEGATED
+	rlevel = RADEONFB_BACKLIGHT_MAX - level;
+#else
+	rlevel = level;
+#endif /* RADEONFB_BACKLIGHT_NEGATED */
+
+	callout_stop(&dp->rd_bl_lvds_co);
+	radeonfb_engine_idle(sc);
+
+	/* 
+	 * Turn off the display if the backlight is set to 0, since the
+	 * display is useless without backlight anyway. 
+	 */
+	if (level == 0)
+		radeonfb_blank(dp, 1);
+	else if (radeonfb_get_backlight(dp) == 0)
+		radeonfb_blank(dp, 0);
+	
+	lvds = radeonfb_get32(sc, RADEON_LVDS_GEN_CNTL);
+	lvds &= ~RADEON_LVDS_DISPLAY_DIS;
+	if (!(lvds & RADEON_LVDS_BLON) || !(lvds & RADEON_LVDS_ON)) {
+		lvds |= dp->rd_bl_lvds_val & RADEON_LVDS_DIGON;
+		lvds |= RADEON_LVDS_BLON | RADEON_LVDS_EN;
+		radeonfb_put32(sc, RADEON_LVDS_GEN_CNTL, lvds);
+		lvds &= ~RADEON_LVDS_BL_MOD_LEV_MASK;
+		lvds |= rlevel << RADEON_LVDS_BL_MOD_LEV_SHIFT;
+		lvds |= RADEON_LVDS_ON;
+		lvds |= dp->rd_bl_lvds_val & RADEON_LVDS_BL_MOD_EN;
+	} else {
+		lvds &= ~RADEON_LVDS_BL_MOD_LEV_MASK;
+		lvds |= rlevel << RADEON_LVDS_BL_MOD_LEV_SHIFT;
+		radeonfb_put32(sc, RADEON_LVDS_GEN_CNTL, lvds);
+	}
+	
+	dp->rd_bl_lvds_val &= ~RADEON_LVDS_STATE_MASK;
+	dp->rd_bl_lvds_val |= lvds & RADEON_LVDS_STATE_MASK;
+	/* XXX What is the correct delay? */
+	callout_schedule(&dp->rd_bl_lvds_co, 200 * hz); 
+
+	splx(s);
+
+	return 0;
+}
+
+/* 
+ * Callout function for delayed operations on the LVDS_GEN_CNTL register. 
+ * Set the delayed bits in the register, and clear the stored delayed
+ * value.
+ */
+
+static void radeonfb_lvds_callout(void *arg)
+{
+	struct radeonfb_display *dp = arg;
+	int s;
+
+	s = splhigh();
+
+	radeonfb_mask32(dp->rd_softc, RADEON_LVDS_GEN_CNTL, ~0, 
+			dp->rd_bl_lvds_val);
+	dp->rd_bl_lvds_val = 0;
+
+	splx(s);
 }
