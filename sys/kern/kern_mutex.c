@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.8 2007/03/03 10:08:19 itohy Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.9 2007/03/04 21:06:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.8 2007/03/03 10:08:19 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.9 2007/03/04 21:06:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -905,7 +905,7 @@ sched_unlock_idle(void)
 	kmutex_t *mtx = &sched_mutex;
 
 	if (mtx->mtx_lock != __SIMPLELOCK_LOCKED)
-		MUTEX_ABORT(mtx, "sched_unlock_idle");
+		MUTEX_ABORT(mtx, "sched_mutex not locked");
 
 	MUTEX_UNLOCKED(mtx);
 	__cpu_simple_unlock(&mtx->mtx_lock);
