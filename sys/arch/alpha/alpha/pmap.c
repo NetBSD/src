@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.219 2007/03/04 05:59:10 christos Exp $ */
+/* $NetBSD: pmap.c,v 1.220 2007/03/04 14:46:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.219 2007/03/04 05:59:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220 2007/03/04 14:46:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2409,13 +2409,14 @@ pmap_zero_page(paddr_t phys)
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
-	void *s, d;
+	const void *s;
+	void *d;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
 #endif
-        s = (void *)ALPHA_PHYS_TO_K0SEG(src);
+        s = (const void *)ALPHA_PHYS_TO_K0SEG(src);
         d = (void *)ALPHA_PHYS_TO_K0SEG(dst);
 	memcpy(d, s, PAGE_SIZE);
 }
