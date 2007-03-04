@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.30 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.31 2007/03/04 10:06:49 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.30 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.31 2007/03/04 10:06:49 macallan Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -502,7 +502,7 @@ bmac_rint(v)
 			goto next;
 		}
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
-		data = sc->sc_rxbuf + BMAC_BUFLEN * i;
+		data = (char *)sc->sc_rxbuf + BMAC_BUFLEN * i;
 
 		/* XXX Sometimes bmac reads one extra byte. */
 		if (datalen == ETHER_MAX_LEN + 1)
@@ -659,7 +659,7 @@ bmac_put(sc, buff, m)
 			continue;
 		}
 		memcpy(buff, mtod(m, void *), len);
-		buff += len;
+		buff = (char *)buff + len;
 		tlen += len;
 		MFREE(m, n);
 	}
@@ -708,7 +708,7 @@ bmac_get(sc, pkt, totlen)
 		}
 		m->m_len = len = min(totlen, len);
 		memcpy(mtod(m, void *), pkt, len);
-		pkt += len;
+		pkt = (char *)pkt + len;
 		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
