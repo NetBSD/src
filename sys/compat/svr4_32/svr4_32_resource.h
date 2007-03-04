@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.h,v 1.2 2007/03/04 06:01:37 christos Exp $	*/
+/*	$NetBSD: svr4_32_resource.h,v 1.3 2007/03/04 07:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <compat/svr4/svr4_resource.h>
 
-typedef netbsd32_void *svr4_rlimitp;
-typedef netbsd32_void *svr4_rlimit64;
+typedef netbsd32_caddr_t svr4_rlimitp;
+typedef netbsd32_caddr_t svr4_rlimit64;
 
 #endif /* !_SVR4_32_RESOURCE_H_ */

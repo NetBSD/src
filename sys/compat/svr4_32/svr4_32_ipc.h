@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.h,v 1.4 2007/03/04 06:01:37 christos Exp $	*/
+/*	$NetBSD: svr4_32_ipc.h,v 1.5 2007/03/04 07:54:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -53,11 +53,11 @@ struct svr4_32_ipc_perm {
 	svr4_32_key_t	key;
 	netbsd32_long	pad[4];
 };
-typedef netbsd32_void *svr4_32_ipc_permp;
+typedef netbsd32_caddr_t svr4_32_ipc_permp;
 /*
  * Message queues
  */
-typedef netbsd32_void *svr4_32_msgp;
+typedef netbsd32_caddr_t svr4_32_msgp;
 struct svr4_32_msg {
 	svr4_32_msgp	msg_next;
 	netbsd32_long	msg_type;
@@ -84,15 +84,15 @@ struct svr4_32_msqid_ds {
 	short			msg_qnum_cv;
 	netbsd32_long		msg_pad4[3];
 };
-typedef netbsd32_void *svr4_32_msqid_dsp;
+typedef netbsd32_caddr_t svr4_32_msqid_dsp;
 
 struct svr4_32_msgbuf {
 	netbsd32_long	mtype;		/* message type */
 	char		mtext[1];	/* message text */
 };
-typedef netbsd32_void *svr4_32_msgbufp;
+typedef netbsd32_caddr_t svr4_32_msgbufp;
 
-typedef netbsd32_void *svr4_32_msginfop;
+typedef netbsd32_caddr_t svr4_32_msginfop;
 
 /*
  * Shared memory
@@ -101,7 +101,7 @@ typedef netbsd32_void *svr4_32_msginfop;
 struct svr4_32_shmid_ds {
 	struct svr4_32_ipc_perm	shm_perm;
 	int			shm_segsz;
-	netbsd32_void *	shm_amp;
+	netbsd32_caddr_t 	shm_amp;
 	u_short			shm_lkcnt;
 	svr4_32_pid_t		shm_lpid;
 	svr4_32_pid_t		shm_cpid;
@@ -115,13 +115,13 @@ struct svr4_32_shmid_ds {
 	netbsd32_long		shm_pad3;
 	netbsd32_long		shm_pad4[4];
 };
-typedef netbsd32_void *svr4_32_shmid_dsp;
+typedef netbsd32_caddr_t svr4_32_shmid_dsp;
 
 /*
  * Semaphores
  */
 
-typedef netbsd32_void *svr4_32_semp;
+typedef netbsd32_caddr_t svr4_32_semp;
 
 struct svr4_32_semid_ds {
 	struct svr4_32_ipc_perm sem_perm;
@@ -133,7 +133,7 @@ struct svr4_32_semid_ds {
 	netbsd32_long		sem_pad2;
 	netbsd32_long		sem_pad3[4];
 };
-typedef netbsd32_void *svr4_32_semid_dsp;
-typedef netbsd32_void *svr4_32_sembufp;
+typedef netbsd32_caddr_t svr4_32_semid_dsp;
+typedef netbsd32_caddr_t svr4_32_sembufp;
 
 #endif	/* _SVR4_32_IPC_H */

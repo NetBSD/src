@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.29 2007/03/04 06:01:26 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.30 2007/03/04 07:54:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.29 2007/03/04 06:01:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.30 2007/03/04 07:54:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ netbsd32_from_ifreq(p, s32p, cmd)
 	 */
 	*s32p->ifr_name = *p->ifr_name;
 	if (cmd == SIOCGIFDATA || cmd == SIOCZIFDATA)
-		s32p->ifr_data = (netbsd32_void *)(u_long)s32p->ifr_data;
+		s32p->ifr_data = (netbsd32_caddr_t)(u_long)s32p->ifr_data;
 }
 
 static inline void
@@ -280,7 +280,7 @@ netbsd32_from_ifconf(p, s32p, cmd)
 
 	s32p->ifc_len = p->ifc_len;
 	/* ifc_buf & ifc_req are the same size so this works */
-	s32p->ifc_buf = (netbsd32_void *)(u_long)p->ifc_buf;
+	s32p->ifc_buf = (netbsd32_caddr_t)(u_long)p->ifc_buf;
 }
 
 static inline void
@@ -363,8 +363,8 @@ netbsd32_ioctl(l, v, retval)
 	u_long com;
 	int error = 0;
 	u_int size, size32;
-	void *data, memp = NULL;
-	void *data32, memp32 = NULL;
+	void *data, *memp = NULL;
+	void *data32, *memp32 = NULL;
 	int tmp;
 #define STK_PARAMS	128
 	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
@@ -419,7 +419,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	}
 	memp = NULL;
 	if (size32 > sizeof(stkbuf)) {
-		memp32 = (void *)malloc((u_long)size32, M_IOCTLOPS, M_WAITOK);
+		memp32 = malloc((u_long)size32, M_IOCTLOPS, M_WAITOK);
 		data32 = memp32;
 	} else
 		data32 = (void *)stkbuf32;

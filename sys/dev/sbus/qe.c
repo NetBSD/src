@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.40 2007/03/04 06:02:41 christos Exp $	*/
+/*	$NetBSD: qe.c,v 1.41 2007/03/04 07:54:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.40 2007/03/04 06:02:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.41 2007/03/04 07:54:11 christos Exp $");
 
 #define QEDEBUG
 
@@ -348,7 +348,7 @@ qe_get(sc, idx, totlen)
 	int len, pad, boff = 0;
 	void *bp;
 
-	bp = sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * QE_PKT_BUF_SZ;
+	bp = (char *)sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * QE_PKT_BUF_SZ;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -376,7 +376,7 @@ qe_get(sc, idx, totlen)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy(bp + boff, mtod(m, void *), len);
+		memcpy(mtod(m, void *), (char *)bp + boff, len);
 		boff += len;
 		totlen -= len;
 		*mp = m;
@@ -400,7 +400,7 @@ qe_put(sc, idx, m)
 	int len, tlen = 0, boff = 0;
 	void *bp;
 
-	bp = sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * QE_PKT_BUF_SZ;
+	bp = (char *)sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * QE_PKT_BUF_SZ;
 
 	for (; m; m = n) {
 		len = m->m_len;
@@ -408,7 +408,7 @@ qe_put(sc, idx, m)
 			MFREE(m, n);
 			continue;
 		}
-		bcopy(mtod(m, void *), bp+boff, len);
+		memcpy((char *)bp + boff, mtod(m, void *), len);
 		boff += len;
 		tlen += len;
 		MFREE(m, n);

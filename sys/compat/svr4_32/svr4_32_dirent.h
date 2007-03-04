@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_dirent.h,v 1.2 2007/03/04 06:01:36 christos Exp $	 */
+/*	$NetBSD: svr4_32_dirent.h,v 1.3 2007/03/04 07:54:09 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct svr4_32_dirent {
 	u_short		d_reclen;
 	char		d_name[SVR4_MAXNAMLEN + 1];
 };
-typedef netbsd32_void *svr4_32_dirent_tp;
+typedef netbsd32_caddr_t svr4_32_dirent_tp;
 
 struct svr4_32_dirent64 {
 	svr4_32_ino64_t	d_ino;

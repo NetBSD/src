@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_lwp.h,v 1.2 2007/03/04 06:01:37 christos Exp $	*/
+/*	$NetBSD: svr4_32_lwp.h,v 1.3 2007/03/04 07:54:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,6 +46,6 @@ struct svr4_32_lwpinfo {
 	svr4_32_timestruc_t	lwp_stime;
 	netbsd32_long		lwpinfo_pad[64];
 };
-typedef netbsd32_void *svr4_32_lwpinfop;
+typedef netbsd32_caddr_t svr4_32_lwpinfop;
 
 #endif /* _SVR4_32_LWP_H_ */

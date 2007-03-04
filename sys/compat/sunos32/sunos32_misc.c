@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.44 2007/03/04 06:01:32 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.45 2007/03/04 07:54:09 christos Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.44 2007/03/04 06:01:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.45 2007/03/04 07:54:09 christos Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -472,7 +472,7 @@ sunos32_sys_omsync(l, v, retval)
 	register_t *retval;
 {
 	struct sunos32_sys_omsync_args /* {
-		syscallarg(netbsd32_void *) addr;
+		syscallarg(netbsd32_caddr_t) addr;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -536,7 +536,7 @@ sunos32_sys_mount(l, v, retval)
 		syscallarg(netbsd32_charp) type;
 		syscallarg(netbsd32_charp) path;
 		syscallarg(int) flags;
-		syscallarg(netbsd32_void *) data;
+		syscallarg(netbsd32_caddr_t) data;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_mount_args ua;
@@ -714,9 +714,9 @@ sunos32_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	void *inp, sbuf;	/* BSD-format */
+	char *inp, *sbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	void *outp;		/* Sun-format */
+	char *outp;		/* Sun-format */
 	int resid, sunos_reclen;/* Sun-format */
 	struct file *fp;
 	struct uio auio;
@@ -918,7 +918,7 @@ sunos32_sys_setsockopt(l, v, retval)
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
-		syscallarg(netbsd32_void *) val;
+		syscallarg(netbsd32_caddr_t) val;
 		syscallarg(int) valsize;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -1500,7 +1500,7 @@ sunos32_sys_ptrace(l, v, retval)
 	struct sunos32_sys_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
-		syscallarg(netbsd32_void *) addr;
+		syscallarg(netbsd32_caddr_t) addr;
 		syscallarg(int) data;
 		syscallarg(netbsd32_charp) addr2;
 	} */ *uap = v;

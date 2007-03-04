@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.69 2007/03/04 06:00:50 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.70 2007/03/04 07:54:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.69 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.70 2007/03/04 07:54:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -252,7 +252,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	kwin = (struct rwindow32 *)(((void *)tf)-CCFSZ);
+	kwin = (struct rwindow32 *)((char *)tf - CCFSZ);
 	error = (rwindow_save(l) || 
 	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
@@ -336,7 +336,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sparc32_sigframe_siginfo *)
-		    ((void *)l->l_sigstk.ss_sp +
+		    ((char *)l->l_sigstk.ss_sp +
 					  l->l_sigstk.ss_size);
 	else
 		fp = (struct sparc32_sigframe_siginfo *)oldsp;
@@ -1137,7 +1137,7 @@ netbsd32_md_ioctl(fp, cmd, data32, l)
 	struct lwp *l;
 {
 	u_int size;
-	void *data, memp = NULL;
+	void *data, *memp = NULL;
 #define STK_PARAMS	128
 	u_long stkbuf[STK_PARAMS/sizeof(u_long)];
 	int error;

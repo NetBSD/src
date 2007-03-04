@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.43 2007/03/04 06:00:51 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.44 2007/03/04 07:54:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.43 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.44 2007/03/04 07:54:07 christos Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -511,7 +511,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_sigframe *)((void *)l->l_sigstk.ss_sp +
+		fp = (struct svr4_sigframe *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_sigframe *)oldsp;

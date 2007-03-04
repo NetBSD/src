@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.196 2007/03/04 06:00:50 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2007/03/04 07:54:07 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -459,7 +459,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		return ((void *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		return ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
 		return (void *)((uintptr_t)tf->tf_out[6] + STACK_OFFSET);
 }
@@ -698,7 +698,7 @@ reserve_dumppages(void *p)
 {
 
 	dumpspace = (vaddr_t)p;
-	return (p + BYTES_PER_DUMP);
+	return (char *)p + BYTES_PER_DUMP;
 }
 
 /*
