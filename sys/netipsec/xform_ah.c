@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ah.c,v 1.13 2007/03/04 06:03:30 christos Exp $	*/
+/*	$NetBSD: xform_ah.c,v 1.14 2007/03/04 19:54:49 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ah.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ah.c,v 1.63 2001/06/26 06:18:58 angelos Exp $ */
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.13 2007/03/04 06:03:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ah.c,v 1.14 2007/03/04 19:54:49 degroote Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -707,10 +707,10 @@ ah_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		 * Save the authenticator, the skipped portion of the packet,
 		 * and the AH header.
 		 */
-		m_copydata(m, 0, skip + rplen + authsize, (void *)(tc+1));
+		m_copydata(m, 0, skip + rplen + authsize, (char *)(tc+1));
 
 		{
-			u_int8_t *pppp = ((void *)(tc+1))+skip+rplen;
+			u_int8_t *pppp = ((char *)(tc+1))+skip+rplen;
 			DPRINTF(("ah_input: zeroing %d bytes of authent " \
 		    "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
 				 authsize,
@@ -791,7 +791,7 @@ ah_input_cb(struct cryptop *crp)
 	struct secasvar *sav;
 	struct secasindex *saidx;
 	u_int8_t nxt;
-	void *ptr;
+	char *ptr;
 	int s, authsize;
 
 	crd = crp->crp_desc;
@@ -863,7 +863,7 @@ ah_input_cb(struct cryptop *crp)
 	 * it has been verified by an IPsec-aware NIC.
 	 */
 	if (mtag == NULL) {
-		ptr = (void *) (tc + 1);
+		ptr = (char *) (tc + 1);
 
 		/* Verify authenticator. */
 		if (bcmp(ptr + skip + rplen, calc, authsize)) {
@@ -1049,10 +1049,10 @@ ah_output(
 	 * The AH header is guaranteed by m_makespace() to be in
 	 * contiguous memory, at roff bytes offset into the returned mbuf.
 	 */
-	ah = (struct newah *)(mtod(mi, void *) + roff);
+	ah = (struct newah *)(mtod(mi, char *) + roff);
 
 	/* Initialize the AH header. */
-	m_copydata(m, protoff, sizeof(u_int8_t), (void *) &ah->ah_nxt);
+	m_copydata(m, protoff, sizeof(u_int8_t), (char *) &ah->ah_nxt);
 	ah->ah_len = (rplen + authsize - sizeof(struct ah)) / sizeof(u_int32_t);
 	ah->ah_reserve = 0;
 	ah->ah_spi = sav->spi;
@@ -1122,7 +1122,7 @@ ah_output(
 	switch (sav->sah->saidx.dst.sa.sa_family) {
 #ifdef INET
 	case AF_INET:
-		bcopy(((void *)(tc + 1)) +
+		bcopy(((char *)(tc + 1)) +
 		    offsetof(struct ip, ip_len),
 		    (void *) &iplen, sizeof(u_int16_t));
 		iplen = htons(ntohs(iplen) + rplen + authsize);
@@ -1133,7 +1133,7 @@ ah_output(
 
 #ifdef INET6
 	case AF_INET6:
-		bcopy(((void *)(tc + 1)) +
+		bcopy(((char *)(tc + 1)) +
 		    offsetof(struct ip6_hdr, ip6_plen),
 		    (void *) &iplen, sizeof(u_int16_t));
 		iplen = htons(ntohs(iplen) + rplen + authsize);

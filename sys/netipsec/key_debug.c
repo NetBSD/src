@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.6 2007/03/04 06:03:29 christos Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.7 2007/03/04 19:54:49 degroote Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.6 2007/03/04 06:03:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.7 2007/03/04 19:54:49 degroote Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -104,7 +104,7 @@ kdebug_sadb(base)
 	    base->sadb_msg_seq, base->sadb_msg_pid);
 
 	tlen = PFKEY_UNUNIT64(base->sadb_msg_len) - sizeof(struct sadb_msg);
-	ext = (struct sadb_ext *)((void *)base + sizeof(struct sadb_msg));
+	ext = (struct sadb_ext *)((char *)base + sizeof(struct sadb_msg));
 
 	while (tlen > 0) {
 		printf("sadb_ext{ len=%u type=%u }\n",
@@ -167,7 +167,7 @@ kdebug_sadb(base)
 
 		extlen = PFKEY_UNUNIT64(ext->sadb_ext_len);
 		tlen -= extlen;
-		ext = (struct sadb_ext *)((void *)ext + extlen);
+		ext = (struct sadb_ext *)((char *)ext + extlen);
 	}
 
 	return;
@@ -243,7 +243,7 @@ kdebug_sadb_identity(ext)
 			id->sadb_ident_type, (u_long)id->sadb_ident_id);
 		if (len) {
 #ifdef _KERNEL
-			ipsec_hexdump((void *)(id + 1), len); /*XXX cast ?*/
+			ipsec_hexdump((char *)(id + 1), len); /*XXX cast ?*/
 #else
 			char *p, *ep;
 			printf("\n  str=\"");
@@ -347,7 +347,7 @@ kdebug_sadb_address(ext)
 	    ((u_char *)&addr->sadb_address_reserved)[0],
 	    ((u_char *)&addr->sadb_address_reserved)[1]);
 
-	kdebug_sockaddr((struct sockaddr *)((void *)ext + sizeof(*addr)));
+	kdebug_sockaddr((struct sockaddr *)((char *)ext + sizeof(*addr)));
 
 	return;
 }
@@ -374,7 +374,7 @@ kdebug_sadb_key(ext)
 			(long)PFKEY_UNUNIT64(key->sadb_key_len) - sizeof(struct sadb_key));
 	}
 
-	ipsec_hexdump((void *)key + sizeof(struct sadb_key),
+	ipsec_hexdump((char *)key + sizeof(struct sadb_key),
 	              key->sadb_key_bits >> 3);
 	printf(" }\n");
 	return;
@@ -432,7 +432,7 @@ kdebug_sadb_x_policy(ext)
 			if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
 				addr = (struct sockaddr *)(xisr + 1);
 				kdebug_sockaddr(addr);
-				addr = (struct sockaddr *)((void *)addr
+				addr = (struct sockaddr *)((char *)addr
 							+ addr->sa_len);
 				kdebug_sockaddr(addr);
 			}
@@ -452,7 +452,7 @@ kdebug_sadb_x_policy(ext)
 
 			tlen -= xisr->sadb_x_ipsecrequest_len;
 
-			xisr = (struct sadb_x_ipsecrequest *)((void *)xisr
+			xisr = (struct sadb_x_ipsecrequest *)((char *)xisr
 			                + xisr->sadb_x_ipsecrequest_len);
 		}
 
@@ -723,7 +723,7 @@ kdebug_sockaddr(addr)
 
 void
 ipsec_bindump(buf, len)
-	void *buf;
+	char *buf;
 	int len;
 {
 	int i;
@@ -737,7 +737,7 @@ ipsec_bindump(buf, len)
 
 void
 ipsec_hexdump(buf, len)
-	void *buf;
+	char *buf;
 	int len;
 {
 	int i;
