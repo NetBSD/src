@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.47 2007/03/04 06:02:20 christos Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.48 2007/03/04 17:55:10 chris Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -878,11 +878,11 @@ static void tulip_softintr(void);
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NORX)
 #define TULIP_RXDESC_PRESYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_rxdescmap, \
-		   (void *) di - (void *) (sc)->tulip_rxdescs, \
+		   (char *) di - (char *) (sc)->tulip_rxdescs, \
 		   (s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
 #define TULIP_RXDESC_POSTSYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_rxdescmap, \
-		   (void *) di - (void *) (sc)->tulip_rxdescs, \
+		   (char *) di - (char *) (sc)->tulip_rxdescs, \
 		   (s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
 #define	TULIP_RXMAP_PRESYNC(sc, map) \
 	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \
@@ -905,11 +905,11 @@ static void tulip_softintr(void);
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
 #define TULIP_TXDESC_PRESYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_txdescmap, \
-			(void *) di - (void *) (sc)->tulip_txdescs, \
+			(char *) di - (char *) (sc)->tulip_txdescs, \
 			(s), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
 #define TULIP_TXDESC_POSTSYNC(sc, di, s)	\
 	bus_dmamap_sync((sc)->tulip_dmatag, (sc)->tulip_txdescmap, \
-			(void *) di - (void *) (sc)->tulip_txdescs, \
+			(char *) di - (char *) (sc)->tulip_txdescs, \
 			(s), BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
 #define	TULIP_TXMAP_PRESYNC(sc, map) \
 	bus_dmamap_sync((sc)->tulip_dmatag, (map), 0, (map)->dm_mapsize, \
