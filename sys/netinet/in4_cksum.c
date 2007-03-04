@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.13 2007/03/04 06:03:20 christos Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.14 2007/03/04 10:53:32 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.13 2007/03/04 06:03:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.14 2007/03/04 10:53:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -135,7 +135,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	for (;m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = (u_int16_t *)(mtod(m, void *) + off);
+		w = (u_int16_t *)(mtod(m, char *) + off);
 		if (mlen == -1) {
 			/*
 			 * The first byte of this mbuf is the continuation
