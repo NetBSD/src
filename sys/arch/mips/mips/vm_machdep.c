@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.115 2007/03/04 06:00:12 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.116 2007/03/04 12:33:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@
 #include "opt_coredump.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.115 2007/03/04 06:00:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.116 2007/03/04 12:33:32 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * will be to right address, with correct registers.
 	 */
 	memcpy(&l2->l_addr->u_pcb, &l1->l_addr->u_pcb, sizeof(struct pcb));
-	f = (struct frame *)((void *)l2->l_addr + USPACE) - 1;
+	f = (struct frame *)((char *)l2->l_addr + USPACE) - 1;
 	memcpy(f, l1->l_md.md_regs, sizeof(struct frame));
 
 	/*
@@ -185,7 +185,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	struct pcb *pcb;
 	struct frame *f;
 
-	f = (struct frame *)((void *)l->l_addr + USPACE) - 1;
+	f = (struct frame *)((char *)l->l_addr + USPACE) - 1;
 	KASSERT(l->l_md.md_regs == f);
 
 	pcb = &l->l_addr->u_pcb;
