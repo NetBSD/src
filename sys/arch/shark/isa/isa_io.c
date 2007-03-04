@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.6.24.1 2007/01/12 23:44:04 bouyer Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.6.24.2 2007/03/04 12:33:25 bouyer Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.6.24.1 2007/01/12 23:44:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.6.24.2 2007/03/04 12:33:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,44 @@ struct bus_space isa_io_bs_tag = {
 	isa_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
+
+	/* stream methods are identical to regular read/write here */
+	/* read stream single */
+	isa_bs_r_1,
+	isa_bs_r_2,
+	isa_bs_r_4,
+	bs_notimpl_bs_r_8,
+
+	/* read stream multiple */
+	isa_bs_rm_1,
+	isa_bs_rm_2,
+	isa_bs_rm_4,
+	bs_notimpl_bs_rm_8,
+
+	/* read region stream */
+	isa_bs_rr_1,
+	isa_bs_rr_2,
+	isa_bs_rr_4,
+	bs_notimpl_bs_rr_8,
+
+	/* write stream single */
+	isa_bs_w_1,
+	isa_bs_w_2,
+	isa_bs_w_4,
+	bs_notimpl_bs_w_8,
+
+	/* write stream multiple */
+	isa_bs_wm_1,
+	isa_bs_wm_2,
+	isa_bs_wm_4,
+	bs_notimpl_bs_wm_8,
+
+	/* write region stream */
+	isa_bs_wr_1,
+	isa_bs_wr_2,
+	isa_bs_wr_4,
+	bs_notimpl_bs_wr_8,
+	
 };
 
 /*
@@ -224,6 +262,43 @@ struct bus_space isa_mem_bs_tag = {
 	isa_bs_c_2,
 	bs_notimpl_bs_c_4,
 	bs_notimpl_bs_c_8,
+
+	/* stream methods are identical to regular read/write here */
+	/* read stream single */
+	isa_bs_r_1,
+	isa_bs_r_2,
+	isa_bs_r_4,
+	bs_notimpl_bs_r_8,
+
+	/* read stream multiple */
+	isa_bs_rm_1,
+	isa_bs_rm_2,
+	isa_bs_rm_4,
+	bs_notimpl_bs_rm_8,
+
+	/* read region stream */
+	isa_bs_rr_1,
+	isa_bs_rr_2,
+	isa_bs_rr_4,
+	bs_notimpl_bs_rr_8,
+
+	/* write stream single */
+	isa_bs_w_1,
+	isa_bs_w_2,
+	isa_bs_w_4,
+	bs_notimpl_bs_w_8,
+
+	/* write stream multiple */
+	isa_bs_wm_1,
+	isa_bs_wm_2,
+	isa_bs_wm_4,
+	bs_notimpl_bs_wm_8,
+
+	/* write region stream */
+	isa_bs_wr_1,
+	isa_bs_wr_2,
+	isa_bs_wr_4,
+	bs_notimpl_bs_wr_8,
 };
 
 /* bus space functions */
