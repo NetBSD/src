@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.799 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.800 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -51,3 +51,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[macallan 20070228]
 	MAKEDEV(8), MAKEDEV.local(8): Let MAKEDEV.local use functions
 		defined in MAKEDEV. [apb 20070303]
+	file(1): update to 4.20.  [pooka 20070304]
