@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofw,v 1.12 2002/09/27 06:23:09 thorpej Exp $
+#	$NetBSD: files.ofw,v 1.12.58.1 2007/03/04 12:27:38 bouyer Exp $
 #
 # First cut on Openfirmware interface
 #
@@ -9,7 +9,7 @@ define	of_network_dev
 defpseudo openfirm
 file	dev/ofw/openfirmio.c		openfirm needs-flag
 
-file	dev/ofw/ofw_subr.c		ofbus
+file	dev/ofw/ofw_subr.c		ofbus | openfirm
 
 file	dev/ofw/ofw_network_subr.c	of_network_dev
 
