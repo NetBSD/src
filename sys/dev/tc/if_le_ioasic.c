@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.28 2007/03/04 06:02:46 christos Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.29 2007/03/04 15:17:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.28 2007/03/04 06:02:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.29 2007/03/04 15:17:06 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -191,7 +191,7 @@ void
 le_ioasic_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
 	volatile void *buf = sc->sc_mem;
-	void *from = fromv;
+	char *from = fromv;
 	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
@@ -216,7 +216,7 @@ void
 le_ioasic_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
 	volatile void *buf = sc->sc_mem;
-	void *to = tov;
+	char *to = tov;
 	volatile u_int16_t *bptr;
 	u_int16_t tmp;
 
@@ -249,9 +249,9 @@ void
 le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
     int len)
 {
-	volatile void *buf = sc->sc_mem;
-	void *from = fromv;
-	void *bptr;
+	char *buf = (char *)sc->sc_mem;
+	char *from = fromv;
+	char *bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -331,9 +331,9 @@ void
 le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
     int len)
 {
-	volatile void *buf = sc->sc_mem;
-	void *to = tov;
-	void *bptr;
+	char *buf = sc->sc_mem;
+	char *to = tov;
+	char *bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -404,8 +404,8 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 void
 le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 {
-	volatile void *buf = sc->sc_mem;
-	void *bptr;
+	char *buf = sc->sc_mem;
+	char *bptr;
 	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
