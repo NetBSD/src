@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.51 2007/03/04 06:02:47 christos Exp $ */
+/* $NetBSD: tfb.c,v 1.52 2007/03/04 15:57:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.51 2007/03/04 06:02:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.52 2007/03/04 15:57:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,8 +317,8 @@ tfbattach(struct device *parent, struct device *self, void *aux)
 
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, tfbintr, sc);
 
-	*(u_int8_t *)((void *)ri->ri_hw + TX_CONTROL) &= ~0x40;
-	*(u_int8_t *)((void *)ri->ri_hw + TX_CONTROL) |= 0x40;
+	*(u_int8_t *)((char *)ri->ri_hw + TX_CONTROL) &= ~0x40;
+	*(u_int8_t *)((char *)ri->ri_hw + TX_CONTROL) |= 0x40;
 
 	waa.console = console;
 	waa.scrdata = &tfb_screenlist;
@@ -331,7 +331,7 @@ tfbattach(struct device *parent, struct device *self, void *aux)
 static void
 tfb_common_init(struct rasops_info *ri)
 {
-	void *base;
+	char *base;
 	int cookie;
 
 	base = (void *)ri->ri_hw;
@@ -541,7 +541,7 @@ static int
 tfbintr(void *arg)
 {
 	struct tfb_softc *sc = arg;
-	void *base, vdac, curs;
+	char *base, *vdac, *curs;
 	int v;
 
 	base = (void *)sc->sc_ri->ri_hw;
@@ -647,12 +647,12 @@ done:
 static void
 tfbhwinit(void *tfbbase)
 {
-	void *vdac, curs;
+	char *vdac, *curs;
 	const u_int8_t *p;
 	int i;
 
-	vdac = tfbbase + TX_BT463_OFFSET;
-	curs = tfbbase + TX_BT431_OFFSET;
+	vdac = (char *)tfbbase + TX_BT463_OFFSET;
+	curs = (char *)tfbbase + TX_BT431_OFFSET;
 	SELECT463(vdac, BT463_IREG_COMMAND_0);
 	REGWRITE32(vdac, bt_reg, 0x40);	/* CMD 0 */
 	REGWRITE32(vdac, bt_reg, 0x46);	/* CMD 1 */
