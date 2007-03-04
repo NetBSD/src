@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.65 2007/03/04 06:02:25 christos Exp $ */
+/* $NetBSD: tga.c,v 1.66 2007/03/04 15:59:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.65 2007/03/04 06:02:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.66 2007/03/04 15:59:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1260,12 +1260,12 @@ void tga_putchar (c, row, col, uc, attr)
 		*rp = fr[0] | (fr[1] << 8) | (fr[2] << 16) | (fr[3] << 24);
 
 		fr += fs;
-		rp = (int32_t *)((void *)rp + ri->ri_stride);
+		rp = (int32_t *)((char *)rp + ri->ri_stride);
 	}
 
 	/* Do underline */
 	if ((attr & 1) != 0) {
-		rp = (int32_t *)((void *)rp - (ri->ri_stride << 1));
+		rp = (int32_t *)((char *)rp - (ri->ri_stride << 1));
 		*rp = 0xffffffff;
 	}
 
@@ -1321,7 +1321,7 @@ tga_eraserows(c, row, num, attr)
 
 	while (lines--) {
 		*rp = pixels;
-		rp = (int32_t *)((void *)rp + ri->ri_stride);
+		rp = (int32_t *)((char *)rp + ri->ri_stride);
 	}
 
 	/* Set grapics mode back to normal. */
@@ -1375,7 +1375,7 @@ long attr;
 
 	while (lines--) {
 		*rp = pixels;
-		rp = (int32_t *)((void *)rp + ri->ri_stride);
+		rp = (int32_t *)((char *)rp + ri->ri_stride);
 	}
 
 	/* Set grapics mode back to normal. */
