@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2007/03/04 05:59:12 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2007/03/04 14:36:12 yamt Exp $	*/
 
 /*
  *
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2007/03/04 14:36:12 yamt Exp $");
 
 #ifndef __x86_64__
 #include "opt_cputype.h"
@@ -483,7 +483,7 @@ struct pool pmap_pmap_pool;
  * special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
-static void *csrcp, cdstp, zerop, ptpp, early_zerop;
+static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
 
 /*
  * pool and cache that PDPs are allocated from
@@ -998,11 +998,11 @@ pmap_bootstrap(kva_start)
 	 */
 	csrcp = (void *) virtual_avail;  csrc_pte = pte;
 
-	cdstp = (void *) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
+	cdstp = (char *) virtual_avail+PAGE_SIZE;  cdst_pte = pte+1;
 
-	zerop = (void *) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
+	zerop = (char *) virtual_avail+PAGE_SIZE*2;  zero_pte = pte+2;
 
-	ptpp = (void *) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
+	ptpp = (char *) virtual_avail+PAGE_SIZE*3;  ptp_pte = pte+3;
 
 	virtual_avail += PAGE_SIZE * X86_MAXPROCS * NPTECL;
 	pte += X86_MAXPROCS * NPTECL;

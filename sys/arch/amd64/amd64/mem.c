@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 2007/03/04 05:59:12 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 2007/03/04 14:36:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.9 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2007/03/04 14:36:11 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -164,7 +164,7 @@ mmrw(dev, uio, flags)
 			    trunc_page(v), prot, PMAP_WIRED|prot);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((void *)vmmap + o, c, uio);
+			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			break;

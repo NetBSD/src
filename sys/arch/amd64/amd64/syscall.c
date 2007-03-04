@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.23 2007/03/04 05:59:13 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.24 2007/03/04 14:36:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2007/03/04 05:59:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2007/03/04 14:36:12 yamt Exp $");
 
 #include "opt_ktrace.h"
 
@@ -158,7 +158,7 @@ syscall_plain(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (void *)frame->tf_rsp + sizeof(register_t);
+			params = (char *)frame->tf_rsp + sizeof(register_t);
 			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
@@ -265,7 +265,7 @@ syscall_fancy(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (void *)frame->tf_rsp + sizeof(register_t);
+			params = (char *)frame->tf_rsp + sizeof(register_t);
 			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
