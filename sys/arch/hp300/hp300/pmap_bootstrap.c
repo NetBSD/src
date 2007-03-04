@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.28 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.29 2007/03/04 12:03:48 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.28 2007/03/04 05:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.29 2007/03/04 12:03:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -82,8 +82,9 @@ void	pmap_bootstrap __P((paddr_t, paddr_t));
  *	ledbase:	SPU LEDs
  *	msgbufaddr:	kernel message buffer
  */
-void *		CADDR1, CADDR2, vmmap, ledbase;
-extern void *	msgbufaddr;
+void *CADDR1, *CADDR2, *ledbase;
+char *vmmap;
+extern void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.
