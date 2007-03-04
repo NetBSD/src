@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2007/03/04 03:52:08 tsutsui Exp $
+# $NetBSD: Makefile,v 1.32 2007/03/04 04:27:21 tsutsui Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -392,7 +392,7 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 	if [ "${BASE_PORTS.${image}:Mvax}" != "" ]; then \
 		size=$$(($$size + $$(($$((`ls -l ${BOOTFILE.vax} | awk '{print $$5}'` + 511)) / 512 * 512)))); \
 	fi && \
-	if [ "${BASE_PORTS.${image}:Msgimips}" != "" && \
+	if [ "${BASE_PORTS.${image}:Msgimips}" != "" -a \
 	    "${EXTFILES.sgimips}" != "" ]; then \
 		size=$$(($$size + ${SGIVOLHDR.size:sh} * 512)); \
 	fi && \
