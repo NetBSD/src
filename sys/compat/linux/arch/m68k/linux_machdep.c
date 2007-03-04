@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.31 2007/03/04 06:01:21 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.32 2007/03/04 11:56:26 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.31 2007/03/04 06:01:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32 2007/03/04 11:56:26 tsutsui Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -689,7 +689,8 @@ linux_sys_rt_sigreturn(l, v, retval)
 	 * usp + 8 is a pointer to ucontext structure.
 	 */
 	frame = (struct frame *) l->l_md.md_regs;
-	error = copyin((void *) frame->f_regs[SP] + 8, (void *) &ucp, sizeof(void *));
+	error = copyin((char *)frame->f_regs[SP] + 8, (void *)&ucp,
+	    sizeof(void *));
 	if (error || (int) ucp & 1)
 		goto bad;		/* error or odd address */
 
