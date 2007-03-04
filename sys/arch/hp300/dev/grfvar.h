@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.21 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.22 2007/03/04 11:53:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -87,8 +87,8 @@ struct	grf_lockpage {
 struct	grf_data {
 	int	g_flags;		/* software flags */
 	struct  grfsw *g_sw;		/* static configuration info */
-	void *	g_regkva;		/* KVA of registers */
-	void *	g_fbkva;		/* KVA of framebuffer */
+	uint8_t *g_regkva;		/* KVA of registers */
+	uint8_t *g_fbkva;		/* KVA of framebuffer */
 	struct	grfinfo g_display;	/* hardware description (for ioctl) */
 	struct	grf_lockpage *g_lock;	/* lock page associated with device */
 	struct	proc *g_lockp;		/* process holding lock */
@@ -105,7 +105,7 @@ struct	grfsw {
 	int	gd_swid;	/* id to be returned by software */
 	const char *gd_desc;	/* description printed at config time */
 				/* boot time init routine */
-	int	(*gd_init)(struct grf_data *, int, void *);
+	int	(*gd_init)(struct grf_data *, int, uint8_t *);
 				/* misc function routine */
 	int	(*gd_mode)(struct grf_data *, int, void *);
 };
@@ -188,7 +188,7 @@ int	grflckunmmap(dev_t, void *);
 
 /* grf_subr.c prototypes */
 void	grfdev_attach(struct grfdev_softc *,
-	    int (*init)(struct grf_data *, int, void *),
+	    int (*init)(struct grf_data *, int, uint8_t *),
 	    void *, struct grfsw *);
 
 #endif /* _KERNEL */

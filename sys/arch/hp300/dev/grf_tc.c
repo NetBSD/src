@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.38 2007/03/04 05:59:48 christos Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.39 2007/03/04 11:53:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.38 2007/03/04 05:59:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.39 2007/03/04 11:53:21 tsutsui Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -152,7 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.38 2007/03/04 05:59:48 christos Exp $")
 
 #include "ite.h"
 
-static int	tc_init(struct grf_data *, int, void *);
+static int	tc_init(struct grf_data *, int, uint8_t *);
 static int	tc_mode(struct grf_data *, int, void *);
 
 static void	topcat_common_attach(struct grfdev_softc *, void *, uint8_t);
@@ -342,12 +342,12 @@ topcat_common_attach(struct grfdev_softc *sc, void *grf, uint8_t secid)
  * Returns 0 if hardware not present, non-zero ow.
  */
 static int
-tc_init(struct grf_data *gp, int scode, void *addr)
+tc_init(struct grf_data *gp, int scode, uint8_t *addr)
 {
-	struct tcboxfb *tp = (struct tcboxfb *) addr;
+	struct tcboxfb *tp = (struct tcboxfb *)addr;
 	struct grfinfo *gi = &gp->g_display;
-	volatile u_char *fbp;
-	u_char save;
+	volatile uint8_t *fbp;
+	uint8_t save;
 	int fboff;
 
 	/*
@@ -356,7 +356,7 @@ tc_init(struct grf_data *gp, int scode, void *addr)
 	 */
 	if (scode != tcconscode) {
 		if (ISIIOVA(addr))
-			gi->gd_regaddr = (void *) IIOP(addr);
+			gi->gd_regaddr = (void *)IIOP(addr);
 		else
 			gi->gd_regaddr = dio_scodetopa(scode);
 		gi->gd_regsize = 0x10000;
@@ -364,16 +364,16 @@ tc_init(struct grf_data *gp, int scode, void *addr)
 		gi->gd_fbheight = (tp->fbhmsb << 8) | tp->fbhlsb;
 		gi->gd_fbsize = gi->gd_fbwidth * gi->gd_fbheight;
 		fboff = (tp->fbomsb << 8) | tp->fbolsb;
-		gi->gd_fbaddr = (void *) (*((u_char *)addr + fboff) << 16);
-		if (gi->gd_regaddr >= (void *)DIOIIBASE) {
+		gi->gd_fbaddr = (void *)(*(addr + fboff) << 16);
+		if ((vaddr_t)gi->gd_regaddr >= DIOIIBASE) {
 			/*
 			 * For DIO II space the fbaddr just computed is the
 			 * offset from the select code base (regaddr) of the
 			 * framebuffer.  Hence it is also implicitly the
 			 * size of the set.
 			 */
-			gi->gd_regsize = (int) gi->gd_fbaddr;
-			gi->gd_fbaddr += (int) gi->gd_regaddr;
+			gi->gd_regsize = (int)gi->gd_fbaddr;
+			gi->gd_fbaddr += (int)gi->gd_regaddr;
 			gp->g_regkva = addr;
 			gp->g_fbkva = addr + gi->gd_regsize;
 		} else {
@@ -389,7 +389,7 @@ tc_init(struct grf_data *gp, int scode, void *addr)
 		gi->gd_planes = tp->num_planes;
 		gi->gd_colors = 1 << gi->gd_planes;
 		if (gi->gd_colors == 1) {
-			fbp = (u_char *) gp->g_fbkva;
+			fbp = gp->g_fbkva;
 			tp->wen = ~0;
 			tp->prr = 0x3;
 			tp->fben = ~0;
