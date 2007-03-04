@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32 2006/09/27 22:44:18 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32.2.1 2007/03/04 12:21:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2006/09/27 22:44:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32.2.1 2007/03/04 12:21:28 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,12 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2006/09/27 22:44:18 macallan Ex
 #define _MACPPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
-#include <machine/bus.h>
+#include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/ppbreg.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/ofw/openfirm.h>
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2006/09/27 22:44:18 macallan Ex
 
 static void fixpci __P((int, pci_chipset_tag_t));
 static int find_node_intr __P((int, u_int32_t *, u_int32_t *));
+static void fix_cardbus_bridge(int, pci_chipset_tag_t, pcitag_t);
 
 /*
  * PCI doesn't have any special needs; just use the generic versions
@@ -300,7 +302,7 @@ fixpci(parent, pc)
 {
 	int node;
 	pcitag_t tag;
-	pcireg_t csr, intr, id;
+	pcireg_t csr, intr, id, cr;
 	int len, i, ilen;
 	int32_t irqs[4];
 	struct {
@@ -407,6 +409,51 @@ fixpci(parent, pc)
 		intr &= ~PCI_INTERRUPT_LINE_MASK;
 		intr |= irqs[0] & PCI_INTERRUPT_LINE_MASK;
 		pci_conf_write(pc, tag, PCI_INTERRUPT_REG, intr);
+
+		/* fix secondary bus numbers on CardBus bridges */
+		cr = pci_conf_read(pc, tag, PCI_CLASS_REG);
+		if ((PCI_CLASS(cr) == PCI_CLASS_BRIDGE) &&
+		    (PCI_SUBCLASS(cr) == PCI_SUBCLASS_BRIDGE_CARDBUS)) {
+			uint32_t bi, busid;
+
+			/*
+			 * we found a CardBus bridge. Check if the bus number
+			 * is sane
+			 */
+			bi = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+			busid = bi & 0xff;
+			if (busid == 0) {
+				fix_cardbus_bridge(node, pc, tag);
+			}
+		}
+	}
+}
+
+static void
+fix_cardbus_bridge(int node, pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint32_t bus_number;
+	pcireg_t bi;
+	int bus, dev, fn, ih, len;
+	char path[256];
+
+	len = OF_package_to_path(node, path, sizeof(path));
+	path[len] = 0;
+
+	ih = OF_open(path);
+	OF_call_method("load-ata", ih, 0, 0);
+	OF_close(ih);
+	
+	if (OF_getprop(node, "AAPL,bus-id", &bus_number, sizeof(bus_number))
+	    > 0) {
+
+		printf("\n%s: fixing bus number to %d", path, bus_number);
+		pci_decompose_tag(pc, tag, &bus, &dev, &fn);
+		bi = pci_conf_read(pc, tag, PPB_REG_BUSINFO);
+		bi &= 0xff000000;
+		/* XXX subordinate is always 32 here */
+		bi |= (bus & 0xff) | (bus_number << 8) | 0x200000;
+		pci_conf_write(pc, tag, PPB_REG_BUSINFO, bi);
 	}
 }
 
