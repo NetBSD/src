@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.38 2007/03/04 06:02:47 christos Exp $	*/
+/*	$NetBSD: stic.c,v 1.39 2007/03/04 15:55:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.38 2007/03/04 06:02:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.39 2007/03/04 15:55:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1045,7 +1045,7 @@ stic_putchar(void *cookie, int r, int c, u_int uc, long attr)
 	r *= font->fontheight;
 	c *= font->fontwidth;
 	uc = (uc - font->firstchar) * font->stride * font->fontheight;
-	fr = (u_short *)((void *)font->data + uc);
+	fr = (u_short *)((char *)font->data + uc);
 	bgcolor = DUPBYTE0((attr & 0xf0) >> 4);
 	fgcolor = DUPBYTE0(attr & 0x0f);
 
