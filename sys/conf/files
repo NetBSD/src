@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.831 2007/02/10 11:55:23 ad Exp $
+#	$NetBSD: files,v 1.832 2007/03/05 23:18:05 dillo Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1192,6 +1192,7 @@ include "coda/files.coda"
 include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
 include "fs/filecorefs/files.filecorefs"
+include "fs/hfsp/files.hfsp"
 include "fs/msdosfs/files.msdosfs"
 include "fs/ntfs/files.ntfs"
 include "fs/ptyfs/files.ptyfs"
