@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.13 2007/03/04 06:01:11 christos Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.14 2007/03/05 04:03:57 dogcow Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -918,7 +918,7 @@ xennetback_ifsoftstart(void *arg)
 				    "0x%x ma 0x%x\n", (u_int)xmit_va,
 				    (u_int)xmit_ma));
 				m_copydata(m, 0, m->m_pkthdr.len,
-				    (void *)xmit_va + LINUX_REQUESTED_OFFSET);
+				    (char *)xmit_va + LINUX_REQUESTED_OFFSET);
 				offset = LINUX_REQUESTED_OFFSET;
 				pages_pool_free[nppitems].va = xmit_va;
 				pages_pool_free[nppitems].pa = xmit_pa;
