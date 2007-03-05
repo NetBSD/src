@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.12 2007/03/04 05:59:12 christos Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.13 2007/03/05 14:30:16 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.12 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.13 2007/03/05 14:30:16 xtraeme Exp $");
 
 #include "opt_compat_linux.h"
 
@@ -127,7 +127,7 @@ linux_syscall_plain(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (void *)frame->tf_rsp + sizeof(register_t);
+			params = (char *)frame->tf_rsp + sizeof(register_t);
 			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
@@ -212,7 +212,7 @@ linux_syscall_fancy(struct trapframe *frame)
 		}
 		if (argsize > 6) {
 			argsize -= 6;
-			params = (void *)frame->tf_rsp + sizeof(register_t);
+			params = (char *)frame->tf_rsp + sizeof(register_t);
 			error = copyin(params, (void *)&args[6],
 					argsize << 3);
 			if (error != 0)
