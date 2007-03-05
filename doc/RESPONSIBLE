@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.75 2007/02/20 21:21:19 heas Exp $
+#	$NetBSD: RESPONSIBLE,v 1.76 2007/03/05 23:24:00 dillo Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -155,6 +155,7 @@ trm		tsutsui
 file systems:
 
 coda		gdt
+hfsp		dillo
 lfs		perseant
 msdosfs		jdolecek
 nfs		fvdl
