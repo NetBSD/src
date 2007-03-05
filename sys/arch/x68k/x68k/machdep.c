@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2007/03/05 12:50:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2007/03/05 20:51:11 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2007/03/05 12:50:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2007/03/05 20:51:11 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1073,7 +1073,7 @@ mem_exists(void *mem, u_long basemax)
 	int baseismem;
 	int exists = 0;
 	void *base;
-	void *begin_check, end_check;
+	void *begin_check, *end_check;
 	label_t	faultbuf;
 
 	DPRINTF (("Enter mem_exists(%p, %x)\n", mem, basemax));
@@ -1098,7 +1098,7 @@ mem_exists(void *mem, u_long basemax)
 	__asm("lea %%pc@(begin_check_mem),%0" : "=a"(begin_check));
 	__asm("lea %%pc@(end_check_mem),%0" : "=a"(end_check));
 	if (base >= begin_check && base < end_check) {
-		size_t off = end_check - begin_check;
+		size_t off = (char*)end_check - (char*)begin_check;
 
 		DPRINTF ((" Adjusting the testing area.\n"));
 		m -= off;
@@ -1221,9 +1221,9 @@ setmemrange(void)
 		h = 0;
 		/* range check */
 		for (s = minimum; s <= maximum; s += 0x00100000) {
-			if (!mem_exists(mlist[i].base + s - 4, basemax))
+			if (!mem_exists((char*)mlist[i].base + s - 4, basemax))
 				break;
-			h = (u_long)(mlist[i].base + s);
+			h = (u_long)((char*)mlist[i].base + s);
 		}
 		if ((u_long)mlist[i].base < h) {
 			uvm_page_physload(atop(mlist[i].base), atop(h),
