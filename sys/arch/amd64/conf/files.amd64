@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.31 2007/02/09 21:55:01 ad Exp $
+#	$NetBSD: files.amd64,v 1.32 2007/03/05 16:51:00 drochner Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -89,7 +89,7 @@ file	arch/amd64/amd64/bios32.c		bios32 needs-flag
 #
 
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, pcibus, bios32, acpibus, cpubus
+device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 

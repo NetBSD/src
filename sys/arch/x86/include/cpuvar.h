@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.6 2007/01/01 20:56:59 ad Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.7 2007/03/05 16:51:02 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,20 +76,17 @@ struct cpu_functions {
 	void (*cleanup)(struct cpu_info *);
 };
 
-extern struct cpu_functions mp_cpu_funcs;
+extern const struct cpu_functions mp_cpu_funcs;
 
 #define CPU_ROLE_SP	0
 #define CPU_ROLE_BP	1
 #define CPU_ROLE_AP	2
 
 struct cpu_attach_args {
-	const char *caa_name;
 	int cpu_number;
 	int cpu_role;
-	struct cpu_functions *cpu_func;
+	const struct cpu_functions *cpu_func;
 };
-
-#define MP_PICMODE	0x00000001      /* System booted in picmode */
 
 #ifdef _KERNEL
 
