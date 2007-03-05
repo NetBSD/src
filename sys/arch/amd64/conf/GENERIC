@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.127 2007/03/01 14:57:38 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.128 2007/03/05 23:30:18 dillo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.127 $"
+#ident 		"GENERIC-$Revision: 1.128 $"
 
 maxusers	32		# estimated number of users
 
@@ -129,6 +129,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFSP		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
