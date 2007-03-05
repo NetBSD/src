@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.34 2007/03/04 05:59:57 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.35 2007/03/05 16:51:02 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 2007/03/04 05:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.35 2007/03/05 16:51:02 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -128,8 +128,8 @@ struct cpu_softc {
 
 int mp_cpu_start(struct cpu_info *); 
 void mp_cpu_start_cleanup(struct cpu_info *);
-struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
-				      mp_cpu_start_cleanup };
+const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
+					    mp_cpu_start_cleanup };
 
 
 CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
@@ -345,7 +345,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	case CPU_ROLE_BP:
-		aprint_normal(": apid %d (boot processor)\n", caa->cpu_number);
+		aprint_normal(": (boot processor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
 		identifycpu(ci);
@@ -368,8 +368,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		/*
 		 * report on an AP
 		 */
-		aprint_normal(": apid %d (application processor)\n",
-		    caa->cpu_number);
+		aprint_normal(": (application processor)\n");
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2007/03/04 05:59:15 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2007/03/05 16:51:00 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -105,7 +105,7 @@ struct cpu_info {
 	u_int32_t	ci_signature;
 	u_int64_t	ci_tsc_freq;
 
-	struct cpu_functions *ci_func;
+	const struct cpu_functions *ci_func;
 	void (*cpu_setup) __P((struct cpu_info *));
 	void (*ci_info) __P((struct cpu_info *));
 
