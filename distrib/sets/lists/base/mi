@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.691 2007/03/05 16:57:06 tnozaki Exp $
+# $NetBSD: mi,v 1.692 2007/03/05 23:18:02 dillo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -121,6 +121,7 @@
 ./root						base-sys-root
 ./sbin						base-sys-root
 ./sbin/amrctl					base-sysutil-root
+./sbin/apmlabel					base-sysutil-root
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
 ./sbin/brconfig					base-netutil-root
@@ -167,6 +168,7 @@
 ./sbin/mount_fdesc				base-miscfs-root
 ./sbin/mount_ffs				base-sysutil-root
 ./sbin/mount_filecore				base-filecorefs-root
+./sbin/mount_hfsp				base-hfsp-root
 ./sbin/mount_kernfs				base-sysutil-root
 ./sbin/mount_lfs				base-sysutil-root
 ./sbin/mount_mfs				base-sysutil-root
@@ -767,6 +769,7 @@
 ./usr/include/dev/wscons			base-c-usr
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
+./usr/include/fs/hfsp				base-c-usr
 ./usr/include/fs/puffs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr
