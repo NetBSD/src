@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.71 2007/03/04 06:01:05 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.72 2007/03/05 20:41:48 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.71 2007/03/04 06:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2007/03/05 20:41:48 he Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -1187,8 +1187,8 @@ loop:
 		if (fd->sc_part != SEC_P11)
 			goto docopy;
 
-		fdc_dmastart(fdc,
-			     read, bp->b_data + fd->sc_skip, fd->sc_nbytes);
+		fdc_dmastart(fdc, read, (char*)bp->b_data + fd->sc_skip,
+			     fd->sc_nbytes);
 		if (read)
 			out_fdc(iot, ioh, NE7CMD_READ);	/* READ */
 		else
@@ -1260,15 +1260,15 @@ loop:
 		}
 #endif
 		if ((read = bp->b_flags & B_READ)) {
-			memcpy(bp->b_data + fd->sc_skip, fd->sc_copybuf
+			memcpy((char*)bp->b_data + fd->sc_skip, fd->sc_copybuf
 			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
 			    FDC_BSIZE);
 			fdc->sc_state = IOCOMPLETE;
 			goto iocomplete2;
 		} else {
-			memcpy(fd->sc_copybuf
+			memcpy((char*)fd->sc_copybuf
 			    + (fd->sc_part & SEC_P01 ? FDC_BSIZE : 0),
-			    bp->b_data + fd->sc_skip, FDC_BSIZE);
+			    (char*)bp->b_data + fd->sc_skip, FDC_BSIZE);
 			fdc_dmastart(fdc, read, fd->sc_copybuf, 1024);
 		}
 		out_fdc(iot, ioh, NE7CMD_WRITE);	/* WRITE */
