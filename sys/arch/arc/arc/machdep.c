@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 2007/03/04 05:59:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 2007/03/05 21:05:00 dogcow Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2007/03/04 05:59:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2007/03/05 21:05:00 dogcow Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -238,7 +238,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 	const char *cp;
 	int i;
 	paddr_t kernstartpfn, kernendpfn, first, last;
-	void *kernend, v;
+	void *kernend, *v;
 #if NKSYMS > 0 || defined(DDB) || defined(LKM)
 	char *ssym = NULL;
 	char *esym = NULL;

@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.73 2007/03/04 15:55:29 yamt Exp $ */
+/* $NetBSD: sfb.c,v 1.74 2007/03/05 21:05:02 dogcow Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.73 2007/03/04 15:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.74 2007/03/05 21:05:02 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -999,7 +999,7 @@ static void
 sfb_copycols(void *id, int row, int srccol, int dstcol, int ncols)
 {
 	struct rasops_info *ri = id;
-	void *sp, dp, basex, sfb;
+	void *sp, *dp, *basex, *sfb;
 	int scanspan, height, width, aligns, alignd, shift, w, y;
 	u_int32_t lmaskd, rmaskd;
 

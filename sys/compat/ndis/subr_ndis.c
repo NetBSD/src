@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.7 2007/03/04 06:01:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.8 2007/03/05 21:05:02 dogcow Exp $");
 #endif
 
 /*
@@ -3249,7 +3249,7 @@ NdisOpenFile(status, filehandle, filelength, filename, highestaddr)
 	ndis_fh			*fh;
 	char			*path;
 	linker_file_t		head, lf;
-	void *			kldstart, kldend;
+	void			*kldstart, *kldend;
 
 	ndis_unicode_to_ascii(filename->us_buf,
 	    filename->us_len, &afilename);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.24 2007/03/04 06:00:05 christos Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.25 2007/03/05 21:05:01 dogcow Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@NetBSD.org
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.24 2007/03/04 06:00:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.25 2007/03/05 21:05:01 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ static void *caddr1 = 0;
 int
 mappedcopyin(void *f, void *t, size_t count)
 {
-	void *fromp = f, top = t;
+	void *fromp = f, *top = t;
 	vaddr_t kva;
 	paddr_t upa;
 	register size_t len;
@@ -169,7 +169,7 @@ mappedcopyin(void *f, void *t, size_t count)
 int
 mappedcopyout(void *f, void *t, size_t count)
 {
-	void *fromp = f, top = t;
+	void *fromp = f, *top = t;
 	vaddr_t kva;
 	paddr_t upa;
 	size_t len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.36 2007/03/04 05:59:53 christos Exp $ */
+/*	$NetBSD: tx39.c,v 1.37 2007/03/05 21:05:01 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.36 2007/03/04 05:59:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.37 2007/03/05 21:05:01 dogcow Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -186,7 +186,7 @@ tx_mem_init(paddr_t kernend)
 void
 tx_find_dram(paddr_t start, paddr_t end)
 {
-	void *page, startaddr, endaddr;
+	void *page, *startaddr, *endaddr;
 	u_int32_t magic0, magic1;
 #define MAGIC0		(*(volatile u_int32_t *)(page + 0))
 #define MAGIC1		(*(volatile u_int32_t *)(page + 4))

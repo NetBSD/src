@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.27 2007/03/04 06:02:47 christos Exp $ */
+/* $NetBSD: sfbplus.c,v 1.28 2007/03/05 21:05:02 dogcow Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.27 2007/03/04 06:02:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.28 2007/03/05 21:05:02 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,7 @@ sfbp_cmap_init(struct sfbp_softc *sc)
 static void
 sfbp_common_init(struct rasops_info *ri)
 {
-	void *base, asic;
+	void *base, *asic;
 	int i, depth, hsetup, vsetup, vbase, cookie;
 
 	base = (void *)ri->ri_hw;
@@ -575,7 +575,7 @@ sfbpintr(void *arg)
 {
 #define	cc (&sc->sc_cursor)
 	struct sfbp_softc *sc = arg;
-	void *base, asic;
+	void *base, *asic;
 	u_int32_t sisr;
 	int v;
 
@@ -1053,7 +1053,7 @@ static void
 sfbp_putchar(void *id, int row, int col, u_int uc, long attr)
 {
 	struct rasops_info *ri = id;
-	void *sfb, p;
+	void *sfb, *p;
 	int scanspan, height, width, align, x, y;
 	u_int32_t lmask, rmask, glyph;
 	u_int8_t *g;
@@ -1107,7 +1107,7 @@ static void
 sfbp_erasecols(void *id, int row, int startcol, int ncols, long attr)
 {
 	struct rasops_info *ri = id;
-	void *sfb, p;
+	void *sfb, *p;
 	int scanspan, startx, height, width, align, w, y;
 	u_int32_t lmask, rmask;
 
@@ -1169,7 +1169,7 @@ static void
 sfbp_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
-	void *sfb, p;
+	void *sfb, *p;
 	int scanspan, offset, srcy, height, width, align, w;
 	u_int32_t lmask, rmask;
 
@@ -1229,7 +1229,7 @@ static void
 sfbp_copyrows(void *id, int srcrow, int dstrow, int nrows)
 {
 	struct rasops_info *ri = id;
-	void *sfb, p, q;
+	void *sfb, *p, *q;
 	int scanspan, offset, srcy, height, width, w, align;
 	u_int32_t rmask, lmask;
 
@@ -1264,8 +1264,8 @@ sfbp_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	else {
 		while (height > 0) {
 			while (width >= SFBCOPY64BITS) {
-				SFBCOPY64SRC(sfb, p);
-				SFBCOPY64DST(sfb, p + offset);
+				SFBCOPY64SRC(sfb, *p);
+				SFBCOPY64DST(sfb, *p + offset);
 				p += SFBCOPY64BYTESDONE;
 				width -= SFBCOPY64BITS;
 			}
@@ -1296,7 +1296,7 @@ static void
 sfbp_eraserows(void *id, int startrow, int nrows, long attr)
 {
 	struct rasops_info *ri = id;
-	void *sfb, p;
+	void *sfb, *p;
 	int scanspan, starty, height, width, align, w;
 	u_int32_t lmask, rmask;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.17 2007/03/04 06:01:17 christos Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.18 2007/03/05 21:05:02 dogcow Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.17 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.18 2007/03/05 21:05:02 dogcow Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -85,7 +85,7 @@ irix_sys_ngetdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	void *inp, buf;	/* BSD-format */
+	void *inp, *buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	void *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
@@ -244,7 +244,7 @@ irix_sys_ngetdents64(l, v, retval)
 	struct dirent *bdp;
 	struct proc *p = l->l_proc;
 	struct vnode *vp;
-	void *inp, buf;	/* BSD-format */
+	void *inp, *buf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
 	void *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */

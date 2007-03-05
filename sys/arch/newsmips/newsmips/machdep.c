@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 2007/03/05 21:05:01 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2007/03/04 06:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2007/03/05 21:05:01 dogcow Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -243,7 +243,7 @@ void
 mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 {
 	u_long first, last;
-	void *kernend, v;
+	void *kernend, *v;
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;

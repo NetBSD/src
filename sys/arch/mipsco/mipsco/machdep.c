@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2007/03/04 06:00:13 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2007/03/05 21:05:01 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.52 2007/03/04 06:00:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2007/03/05 21:05:01 dogcow Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -235,7 +235,7 @@ mach_init(argc, argv, envp, bim, bip)
 	char   *bip;
 {
 	u_long first, last;
-	void *kernend, v;
+	void *kernend, *v;
 	char *cp;
 	int i, howto;
 	extern char edata[], end[];

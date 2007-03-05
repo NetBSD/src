@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2007/03/04 05:59:43 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 2007/03/05 21:05:00 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2007/03/04 05:59:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2007/03/05 21:05:00 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -163,7 +163,7 @@ extern struct user *proc0paddr;
 void
 mach_init(unsigned int memsize, u_int bim, char *bip)
 {
-	void *kernend, v;
+	void *kernend, *v;
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;

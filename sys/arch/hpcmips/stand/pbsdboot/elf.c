@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.8 2007/03/04 05:59:53 christos Exp $	*/
+/*	$NetBSD: elf.c,v 1.9 2007/03/05 21:05:01 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -73,7 +73,7 @@ int
 vmem_sub(int opr, void* xxx, void *addr, int nbytes, int *byte_count)
 {
 	int n;
-	void *end_addr, vaddr;
+	void *end_addr, *vaddr;
 	int count = 0;
 	int progress = 0;
 	int fd = (int)xxx;
@@ -134,7 +134,7 @@ scanfile(int fd, void **start, void **end, void **entry, int load)
 	int progress;
 	Elf_Shdr *shtbl = NULL;
 	Elf_Phdr *phtbl = NULL;
-	void *min_addr, max_addr;
+	void *min_addr, *max_addr;
 	int sh_symidx, sh_stridx;
 	int dbg_hdr_size = sizeof(Elf_Ehdr) + sizeof(Elf_Shdr) * 2;
 
