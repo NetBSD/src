@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.23 2007/03/02 19:56:47 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.24 2007/03/05 22:11:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.23 2007/03/02 19:56:47 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.24 2007/03/05 22:11:40 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -118,8 +118,12 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 
 	SDPRINTF(("(cond wait %p) Waiting on %p, mutex %p\n",
 	    self, cond, mutex));
-	if (__predict_false(self->pt_cancel))
+
+	if (__predict_false(self->pt_cancel)) {
+		pthread_mutex_unlock(mutex);
 		pthread_exit(PTHREAD_CANCELED);
+	}
+
 	pthread_spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
@@ -139,10 +143,11 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		cond->ptc_mutex = NULL;
 #endif		
 	pthread_spinunlock(self, &cond->ptc_lock);
-	pthread_mutex_lock(mutex);
 
 	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
+
+	pthread_mutex_lock(mutex);
 
 	SDPRINTF(("(cond wait %p) Woke up on %p, mutex %p\n",
 	    self, cond, mutex));
@@ -183,8 +188,11 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	SDPRINTF(("(cond timed wait %p) Waiting on %p until %d.%06ld\n",
 	    self, cond, abstime->tv_sec, abstime->tv_nsec/1000));
 
-	if (__predict_false(self->pt_cancel))
+	if (__predict_false(self->pt_cancel)) {
+		pthread_mutex_unlock(mutex);
 		pthread_exit(PTHREAD_CANCELED);
+	}
+
 	pthread_spinlock(self, &cond->ptc_lock);
 #ifdef ERRORCHECK
 	if (cond->ptc_mutex == NULL)
@@ -209,9 +217,11 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	    self, cond));
 	SDPRINTF(("(cond timed wait %p) %s\n",
 	    self, (retval == ETIMEDOUT) ? "(timed out)" : ""));
-	pthread_mutex_lock(mutex);
+
 	if (__predict_false(self->pt_cancel))
 		pthread_exit(PTHREAD_CANCELED);
+
+	pthread_mutex_lock(mutex);
 
 	return retval;
 }
