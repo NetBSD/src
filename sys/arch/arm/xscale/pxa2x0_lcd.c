@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.17 2007/03/04 05:59:39 christos Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.18 2007/03/05 00:30:58 nonaka Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.17 2007/03/04 05:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.18 2007/03/05 00:30:58 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,7 @@ pxa2x0_lcd_new_screen(struct pxa2x0_lcd_softc *sc, int depth,
 
 	/* make descriptors at the top of mapped memory */
 	desc = (struct lcd_dma_descriptor *)(
-		(void *)(scr->buf_va) + roundup(size, PAGE_SIZE) -
+		(char *)(scr->buf_va) + roundup(size, PAGE_SIZE) -
 			  3*sizeof *desc);
 
 	desc[0].fdadr = desc_pa;
