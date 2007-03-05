@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2006/11/29 15:45:26 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.6 2007/03/05 16:58:33 tnozaki Exp $
 
 .PATH: ${.CURDIR}/JIS
 
@@ -15,6 +15,8 @@ MAPS_JIS=		JISX0201-KANA%UCS.mps \
 			JISX0212@MS%UCS.mps \
 			JISX0212VDC@IBM%UCS.mps \
 			JISX0212UDC%UCS.mps \
+			JISX0213-1%UCS@BMP.mps JISX0213-1%UCS@SIP.mps \
+			JISX0213-2%UCS@BMP.mps JISX0213-2%UCS@SIP.mps \
 			UCS%JISX0201-KANA.mps \
 			UCS%JISX0208@1978.mps \
 			UCS%JISX0208@1990.mps \
@@ -24,7 +26,9 @@ MAPS_JIS=		JISX0201-KANA%UCS.mps \
 			UCS%JISX0208UDC.mps \
 			UCS%JISX0212@MS.mps \
 			UCS%JISX0212VDC@IBM.mps \
-			UCS%JISX0212UDC.mps
+			UCS%JISX0212UDC.mps \
+			UCS@BMP%JISX0213-1.mps UCS@SIP%JISX0213-1.mps \
+			UCS@BMP%JISX0213-2.mps UCS@SIP%JISX0213-2.mps
 
 mapper.dir.JIS: ${.CURDIR}/JIS/mapper.dir.JIS.src
 	${_MKTARGET_CREATE}
