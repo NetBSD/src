@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 2007/03/04 06:00:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 2007/03/05 21:05:01 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.18 2007/03/04 06:00:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2007/03/05 21:05:01 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -99,7 +99,7 @@ mach_init()
 {
 	extern char kernel_text[], edata[], end[];
 	extern struct user *proc0paddr;
-	void *kernend, v;
+	void *kernend, *v;
 	paddr_t start;
 	size_t size;
 
