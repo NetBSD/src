@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2007/03/04 06:01:10 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2007/03/05 16:51:03 drochner Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -133,7 +133,7 @@ struct cpu_info {
 	u_int32_t	ci_cpu_serial[3]; /* PIII serial number */
 	u_int64_t	ci_tsc_freq;	 /* cpu cycles/second */
 
-	struct cpu_functions *ci_func;  /* start/stop functions */
+	const struct cpu_functions *ci_func;  /* start/stop functions */
 	void (*cpu_setup)(struct cpu_info *);
  					/* proc-dependant init */
 	void (*ci_info)(struct cpu_info *);

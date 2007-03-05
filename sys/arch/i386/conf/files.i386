@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.302 2007/02/18 18:20:26 dsl Exp $
+#	$NetBSD: files.i386,v 1.303 2007/03/05 16:51:01 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -148,7 +148,7 @@ define vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
+	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
