@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.15 2007/03/04 05:59:03 christos Exp $ */
+/* $NetBSD: pmap.c,v 1.16 2007/03/05 16:42:38 he Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2007/03/04 05:59:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2007/03/05 16:42:38 he Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -300,7 +300,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	for (i = 0; i < vm_nphysseg; i++) {
 		if (vm_physmem[i].avail_start < vm_physmem[i].avail_end) {
 			addr = (vaddr_t)
-			    (MEMC_PHYS_BASE + ptoa(vm_physmem[i].avail_start));
+			    ((char*)MEMC_PHYS_BASE +
+				ptoa(vm_physmem[i].avail_start));
 			vm_physmem[i].avail_start++;
 			break;
 		}
@@ -1062,7 +1063,7 @@ pmap_find(paddr_t pa)
 		if (pv->pv_pmap != NULL && (pv->pv_pmap->pm_flags & PM_ACTIVE))
 			return (void *)ptoa(pv->pv_lpn);
 #endif
-	return MEMC_PHYS_BASE + pa;
+	return (char*)MEMC_PHYS_BASE + pa;
 }
 
 void

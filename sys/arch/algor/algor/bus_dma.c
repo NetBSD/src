@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.17 2007/03/04 05:59:08 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.18 2007/03/05 16:41:03 he Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.17 2007/03/04 05:59:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2007/03/05 16:41:03 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -742,7 +742,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (mips_btop((void *)segs[i].ds_addr + off));
+		return (mips_btop((char *)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */
