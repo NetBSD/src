@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.30 2007/03/04 06:01:08 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.31 2007/03/05 12:26:55 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.30 2007/03/04 06:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.31 2007/03/05 12:26:55 tsutsui Exp $");
 
 #include "opt_m680x0.h"
 
@@ -74,8 +74,9 @@ void	pmap_bootstrap(paddr_t, paddr_t);
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	msgbufaddr:	kernel message buffer
  */
-void *		CADDR1, CADDR2, vmmap;
-extern void *	msgbufaddr;
+void *CADDR1, *CADDR2;
+char *vmmap;
+extern void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.
