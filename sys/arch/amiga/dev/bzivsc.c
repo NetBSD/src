@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.21 2007/03/04 05:59:16 christos Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.22 2007/03/05 18:35:58 he Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.21 2007/03/04 05:59:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.22 2007/03/05 18:35:58 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -336,7 +336,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	bsc->sc_dmaaddr = addr;
+	bsc->sc_dmaaddr = *addr;
 	bsc->sc_pdmalen = len;
 	bsc->sc_datain = datain;
 	bsc->sc_dmasize = *dmasize;
@@ -375,7 +375,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 ++bzivsc_cnt_dma;		/* number of DMA operations */
 
 	while (xfer < bsc->sc_dmasize) {
-		if ((pa + xfer) != kvtop(*addr + xfer))
+		if ((pa + xfer) != kvtop((char*)*addr + xfer))
 			break;
 		if ((bsc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = bsc->sc_dmasize;
