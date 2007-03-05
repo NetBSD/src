@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.25 2007/03/03 17:23:12 tsutsui Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.26 2007/03/05 10:32:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -226,7 +226,10 @@ re_pci_match(struct device *parent, struct cfdata *match, void *aux)
 				return 0;
 			hwrev = bus_space_read_4(bst, bsh, RTK_TXCFG) &
 			    RTK_TXCFG_HWREV;
-			bus_space_unmap(bst, bsh, bsize);
+			if (ioh_valid)
+				bus_space_unmap(iot, ioh, iosize);
+			if (memh_valid)
+				bus_space_unmap(memt, memh, memsize);
 			if (t->rtk_basetype == hwrev)
 				return 2;	/* defeat rtk(4) */
 		}
@@ -382,9 +385,10 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 				psc->sc_ih = NULL;
 			}
 
-			if (bsize)
-				bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle,
-				    bsize);
+			if (ioh_valid)
+				bus_space_unmap(iot, ioh, iosize);
+			if (memh_valid)
+				bus_space_unmap(memt, memh, memsize);
 		}
 	}
 }
