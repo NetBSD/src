@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.20 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.21 2007/03/05 10:50:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.20 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.21 2007/03/05 10:50:01 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -86,8 +86,8 @@ hide void	mcreset __P((struct mc_softc *sc));
 
 integrate u_int	maceput __P((struct mc_softc *sc, struct mbuf *m0));
 integrate void	mc_tint __P((struct mc_softc *sc));
-integrate void	mace_read __P((struct mc_softc *, void *, int));
-integrate struct mbuf *mace_get __P((struct mc_softc *, void *, int));
+integrate void	mace_read __P((struct mc_softc *, uint8_t *, int));
+integrate struct mbuf *mace_get __P((struct mc_softc *, uint8_t *, int));
 static void mace_calcladrf __P((struct ethercom *ac, u_int8_t *af));
 static inline u_int16_t ether_cmp __P((void *, void *));
 static int mc_mediachange __P((struct ifnet *));
@@ -599,7 +599,7 @@ mc_rint(sc)
 integrate void
 mace_read(sc, pkt, len)
 	struct mc_softc *sc;
-	void *pkt;
+	uint8_t *pkt;
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -642,7 +642,7 @@ mace_read(sc, pkt, len)
 integrate struct mbuf *
 mace_get(sc, pkt, totlen)
 	struct mc_softc *sc;
-	void *pkt;
+	uint8_t *pkt;
 	int totlen;
 {
 	register struct mbuf *m;
