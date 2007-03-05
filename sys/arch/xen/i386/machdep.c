@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2007/03/04 06:01:10 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2007/03/05 03:31:29 dogcow Exp $	*/
 /*	NetBSD: machdep.c,v 1.559 2004/07/22 15:12:46 mycroft Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/03/04 06:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/03/05 03:31:29 dogcow Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -376,7 +376,7 @@ i386_proc0_tss_ldt_init()
 	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((void *)pcb->pcb_iomap - (void *)&pcb->pcb_tss) << 16
+	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16
 		| SEL_KPL;		/* i/o pl */
 
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
@@ -412,7 +412,7 @@ i386_init_pcb_tss_ldt(struct cpu_info *ci)
 	struct pcb *pcb = ci->ci_idle_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((void *)pcb->pcb_iomap - (void *)&pcb->pcb_tss) << 16
+	    ((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss) << 16
 		| SEL_KPL;		/* i/o pl */
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
