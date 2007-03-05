@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.690 2007/03/02 06:38:40 riz Exp $
+# $NetBSD: mi,v 1.691 2007/03/05 16:57:06 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1506,24 +1506,52 @@
 ./usr/share/i18n/csmapper/BIG5/Big5@1984%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/Big5EXT@2003%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/Big5EXT@E%UCS.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/BIG5/Big5EXT@ETen%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/Big5EXT@ETen%UCS.mps	base-obsolete	obsolete
 ./usr/share/i18n/csmapper/BIG5/Big5EXT@IBM%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/Big5EXT@Plus%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/Big5UDA%UCS.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/ETen%UCS@BMP.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/ETen%UCS@SIP.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/HKSCS%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/HKSCS%UCS@SIP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS%Big5@1984.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS%Big5EXT@2003.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS%Big5EXT@E.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/BIG5/UCS%Big5EXT@ETen.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/UCS%Big5EXT@ETen.mps	base-obsolete	obsolete
 ./usr/share/i18n/csmapper/BIG5/UCS%Big5EXT@IBM.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS%Big5EXT@Plus.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/BIG5/UCS%Big5UDA.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/UCS@BMP%ETen.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/UCS@BMP%HKSCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/UCS@SIP%ETen.mps		base-sysutil-share	nls
+./usr/share/i18n/csmapper/BIG5/UCS@SIP%HKSCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS			base-sysutil-share
 ./usr/share/i18n/csmapper/CNS/CNS11643-1%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS/CNS11643-2%UCS.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/CNS/CNS11643-3%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-3%UCS.mps	base-obsolete	obsolete
+./usr/share/i18n/csmapper/CNS/CNS11643-3%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-3%UCS@SIP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-4%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-4%UCS@SIP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-5%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-5%UCS@SIP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-6%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-6%UCS@SIP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-7%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/CNS11643-7%UCS@SIP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS/UCS%CNS11643-1.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CNS/UCS%CNS11643-2.mps	base-sysutil-share	nls
-./usr/share/i18n/csmapper/CNS/UCS%CNS11643-3.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS%CNS11643-3.mps	base-obsolete	obsolete
+./usr/share/i18n/csmapper/CNS/UCS@BMP%CNS11643-3.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@BMP%CNS11643-4.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@BMP%CNS11643-5.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@BMP%CNS11643-6.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@BMP%CNS11643-7.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@SIP%CNS11643-3.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@SIP%CNS11643-4.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@SIP%CNS11643-5.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@SIP%CNS11643-6.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/CNS/UCS@SIP%CNS11643-7.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP			base-sysutil-share
 ./usr/share/i18n/csmapper/CP/CP037%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/CP/CP038%UCS.mps	base-sysutil-share	nls
@@ -1799,6 +1827,10 @@
 ./usr/share/i18n/csmapper/JIS/JISX0212@MS%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/JISX0212UDC%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/JISX0212VDC@IBM%UCS.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0213-1%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0213-1%UCS@SIP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0213-2%UCS@BMP.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/JISX0213-2%UCS@SIP.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0201-KANA.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0208@1978.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0208@1990.mps	base-sysutil-share	nls
@@ -1809,6 +1841,10 @@
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0212@MS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0212UDC.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/JIS/UCS%JISX0212VDC@IBM.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS@BMP%JISX0213-1.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS@BMP%JISX0213-2.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS@SIP%JISX0213-1.mps	base-sysutil-share	nls
+./usr/share/i18n/csmapper/JIS/UCS@SIP%JISX0213-2.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI			base-sysutil-share
 ./usr/share/i18n/csmapper/KOI/GOST19768-74%UCS.mps	base-sysutil-share	nls
 ./usr/share/i18n/csmapper/KOI/ISO-5427%UCS.mps	base-sysutil-share	nls
@@ -1892,6 +1928,7 @@
 ./usr/share/i18n/esdb/BIG5/Big5-2003.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/BIG5/Big5-E.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/BIG5/Big5-ETen.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/BIG5/Big5-HKSCS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/BIG5/Big5-IBM.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/BIG5/Big5-Plus.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/CP			base-sysutil-share
@@ -1990,6 +2027,7 @@
 ./usr/share/i18n/esdb/EBCDIC/EBCDIC-UK.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC			base-sysutil-share
 ./usr/share/i18n/esdb/EUC/EUC-CN.esdb		base-sysutil-share	nls
+./usr/share/i18n/esdb/EUC/EUC-JIS-2004.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC/EUC-JP-MS.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC/EUC-JP.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/EUC/EUC-KR.esdb		base-sysutil-share	nls
@@ -2008,6 +2046,7 @@
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-CN.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-1.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP-2004.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-JP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-2022/ISO-2022-KR.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/ISO-8859			base-sysutil-share
@@ -2081,6 +2120,7 @@
 ./usr/share/i18n/esdb/MISC/NEXTSTEP.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/PTCP154.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share	nls
+./usr/share/i18n/esdb/MISC/Shift_JIS-2004.esdb	base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/TDS565.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/MISC/ZW.esdb		base-sysutil-share	nls
 ./usr/share/i18n/esdb/TCVN			base-sysutil-share
