@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.21 2007/03/04 06:00:27 christos Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.22 2007/03/05 12:26:55 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.21 2007/03/04 06:00:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.22 2007/03/05 12:26:55 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -92,8 +92,9 @@ void	pmap_bootstrap(paddr_t, paddr_t);
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	msgbufaddr:	kernel message buffer
  */
-void *		CADDR1, CADDR2, vmmap;
-extern void *	msgbufaddr;
+void *CADDR1, *CADDR2;
+char *vmmap;
+extern void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.
