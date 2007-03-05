@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.126 2007/03/04 06:02:19 christos Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.127 2007/03/05 10:39:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.126 2007/03/04 06:02:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.127 2007/03/05 10:39:09 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2971,7 +2971,7 @@ bge_rxeof(struct bge_softc *sc)
                  * If our CPU requires alignment, re-align by copying.
                  */
 		if (sc->bge_rx_alignment_bug) {
-			memmove(mtod(m, void *) + ETHER_ALIGN, m->m_data,
+			memmove(mtod(m, char *) + ETHER_ALIGN, m->m_data,
                                 cur_rx->bge_len);
 			m->m_data += ETHER_ALIGN;
 		}
