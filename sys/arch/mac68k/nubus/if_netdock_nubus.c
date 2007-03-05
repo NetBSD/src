@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.12 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.13 2007/03/05 21:27:10 he Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.12 2007/03/04 06:00:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.13 2007/03/05 21:27:10 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -822,7 +822,7 @@ netdock_get(struct netdock_softc *sc, int datalen)
 		}
 
 		if (mp == &top) {
-			void *newdata = (void *)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
