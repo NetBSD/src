@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.38 2007/03/04 06:00:08 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.39 2007/03/05 12:30:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.38 2007/03/04 06:00:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.39 2007/03/05 12:30:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -154,7 +154,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = m68k_page_offset(uio->uio_offset);
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((void *)vmmap + o, c, uio);
+			error = uiomove(vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -197,7 +197,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		}
 		if (error)
 			break;
-		iov->iov_base = (void *)iov->iov_base + c;
+		iov->iov_base = (char *)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
