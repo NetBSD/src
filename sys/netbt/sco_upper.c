@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.4 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.5 2007/03/05 19:11:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.4 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.5 2007/03/05 19:11:55 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -325,6 +325,7 @@ sco_setopt(struct sco_pcb *pcb, int opt, void *addr)
 
 	switch (opt) {
 	default:
+		err = ENOPROTOOPT;
 		break;
 	}
 
