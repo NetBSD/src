@@ -1,4 +1,4 @@
-# $NetBSD: UCS%Big5UDA.src,v 1.1 2006/06/19 17:28:25 tnozaki Exp $
+# $NetBSD: UCS%Big5UDA.src,v 1.2 2007/03/05 16:57:11 tnozaki Exp $
 
 # Copyright (c)2006 Citrus Project,
 # All rights reserved.
@@ -27,7 +27,7 @@
 
 TYPE		ROWCOL
 NAME		"UCS/Big5UDA"
-SRC_ZONE	0xE000 - 0xF6BA
+SRC_ZONE	0xE000 - 0xF848
 OOB_MODE	INVALID
 DST_INVALID	0xFFFF
 DST_UNIT_BITS	16
@@ -107,4 +107,9 @@ BEGIN_MAP
 0xF5B6 - 0xF613 = 0x8CA1 -
 0xF614 - 0xF652 = 0x8D40 -
 0xF653 - 0xF6B0 = 0x8DA1 -
+0xF6B1 - 0xF70E = 0xC6A1 -
+0xF70F - 0xF74D = 0xC740 -
+0xF74E - 0xF7AB = 0xC7A1 -
+0xF7AC - 0xF7EA = 0xC840 -
+0xF7EB - 0xF848 = 0xC8A1 -
 END_MAP

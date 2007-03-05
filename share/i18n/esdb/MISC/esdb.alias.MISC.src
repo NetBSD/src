@@ -1,4 +1,4 @@
-# $NetBSD: esdb.alias.MISC.src,v 1.14 2006/11/29 15:45:26 tnozaki Exp $
+# $NetBSD: esdb.alias.MISC.src,v 1.15 2007/03/05 16:58:35 tnozaki Exp $
 
 c99				C99
 ctext				CTEXT
@@ -13,4 +13,5 @@ PT-154				PTCP154
 paratype-154			PTCP154
 shift_jis			Shift_JIS
 sjis				Shift_JIS
+shift_jisx0213			Shift_JIS-2004
 ISO-IR-230			TDS565
