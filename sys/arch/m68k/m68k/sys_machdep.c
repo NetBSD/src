@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 2007/03/04 06:00:06 christos Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.12 2007/03/05 20:43:30 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -218,7 +218,7 @@ dma_cachectl(void *addr, int len)
 		return 0;
 	}
 
-	end = addr + len;
+	end = (char*)addr + len;
 	if (len <= 1024) {
 		addr = (void *)((vaddr_t)addr & ~0xf);
 		inc = 16;
@@ -241,7 +241,7 @@ dma_cachectl(void *addr, int len)
 			ICPP(pa);
 		}
 		pa += inc;
-		addr += inc;
+		addr = (char*)addr + inc;
 	} while (addr < end);
 #endif	/* defined(M68040) || defined(M68060) */
 	return 0;
