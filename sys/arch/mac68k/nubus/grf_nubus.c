@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.72 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.73 2007/03/05 21:13:36 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.72 2007/03/04 06:00:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.73 2007/03/05 21:13:36 he Exp $");
 
 #include <sys/param.h>
 
@@ -83,23 +83,25 @@ CFATTACH_DECL(macvid, sizeof(struct grfbus_softc),
 static void
 load_image_data(void *	data, struct image_data *image)
 {
-	memcpy(&image->size,       data     , 4);
-	memcpy(&image->offset,     data +  4, 4);
-	memcpy(&image->rowbytes,   data +  8, 2);
-	memcpy(&image->top,        data + 10, 2);
-	memcpy(&image->left,       data + 12, 2);
-	memcpy(&image->bottom,     data + 14, 2);
-	memcpy(&image->right,      data + 16, 2);
-	memcpy(&image->version,    data + 18, 2);
-	memcpy(&image->packType,   data + 20, 2);
-	memcpy(&image->packSize,   data + 22, 4);
-	memcpy(&image->hRes,       data + 26, 4);
-	memcpy(&image->vRes,       data + 30, 4);
-	memcpy(&image->pixelType,  data + 34, 2);
-	memcpy(&image->pixelSize,  data + 36, 2);
-	memcpy(&image->cmpCount,   data + 38, 2);
-	memcpy(&image->cmpSize,    data + 40, 2);
-	memcpy(&image->planeBytes, data + 42, 4);
+	char *d = (char*)data;
+
+	memcpy(&image->size,       d     , 4);
+	memcpy(&image->offset,     d +  4, 4);
+	memcpy(&image->rowbytes,   d +  8, 2);
+	memcpy(&image->top,        d + 10, 2);
+	memcpy(&image->left,       d + 12, 2);
+	memcpy(&image->bottom,     d + 14, 2);
+	memcpy(&image->right,      d + 16, 2);
+	memcpy(&image->version,    d + 18, 2);
+	memcpy(&image->packType,   d + 20, 2);
+	memcpy(&image->packSize,   d + 22, 4);
+	memcpy(&image->hRes,       d + 26, 4);
+	memcpy(&image->vRes,       d + 30, 4);
+	memcpy(&image->pixelType,  d + 34, 2);
+	memcpy(&image->pixelSize,  d + 36, 2);
+	memcpy(&image->cmpCount,   d + 38, 2);
+	memcpy(&image->cmpSize,    d + 40, 2);
+	memcpy(&image->planeBytes, d + 42, 4);
 }
 
 
