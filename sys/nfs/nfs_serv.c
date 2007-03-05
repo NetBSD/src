@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.126 2007/03/04 06:03:37 christos Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.127 2007/03/05 23:18:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.126 2007/03/04 06:03:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.127 2007/03/05 23:18:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,6 +243,7 @@ nfsrv_setattr(nfsd, slp, lwp, mrq)
 	vn_start_write(NULL, &mp, V_WAIT);
 	VATTR_NULL(&va);
 	if (v3) {
+		nfsm_srvsattr(&va);
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 		gcheck = fxdr_unsigned(int, *tl);
 		if (gcheck) {
