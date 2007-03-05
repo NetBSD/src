@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.6 2007/03/04 06:02:28 christos Exp $ */
+/* $NetBSD: sec.c,v 1.7 2007/03/05 17:37:06 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.6 2007/03/04 06:02:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.7 2007/03/05 17:37:06 he Exp $");
 
 #include <sys/param.h>
 
@@ -361,7 +361,7 @@ sec_copyoutblk(struct sec_softc *sc, int blk)
 	KASSERT(!sc->sc_dmain);
 	off = (blk % SEC_NBLKS) * SEC_DMABLK + sc->sc_dmaoff;
 	len = MIN(SEC_DMABLK, sc->sc_dmalen - (blk * SEC_DMABLK));
-	sec_copyout(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
+	sec_copyout(sc, (char*)sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
 }
 
 static void
@@ -375,7 +375,7 @@ sec_copyinblk(struct sec_softc *sc, int blk)
 	KASSERT(sc->sc_dmain);
 	off = (blk % SEC_NBLKS) * SEC_DMABLK + sc->sc_dmaoff;
 	len = MIN(SEC_DMABLK, sc->sc_dmalen - (blk * SEC_DMABLK));
-	sec_copyin(sc, sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
+	sec_copyin(sc, (char*)sc->sc_dmaaddr + (blk * SEC_DMABLK), off, len);
 }
 
 static int
