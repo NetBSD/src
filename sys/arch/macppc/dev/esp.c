@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.21 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.22 2007/03/05 10:50:24 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.21 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.22 2007/03/05 10:50:24 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -511,7 +511,7 @@ espdmaintr(sc)
 #endif
 
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr += trans;
+	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||
