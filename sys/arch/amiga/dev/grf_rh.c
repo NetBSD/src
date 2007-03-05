@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.47 2007/03/04 05:59:19 christos Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.48 2007/03/05 19:48:19 he Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.47 2007/03/04 05:59:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.48 2007/03/05 19:48:19 he Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -727,7 +727,8 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 	volatile void *ba;
 	volatile void *fb;
 	short FW, clksel, HDE = 0, VDE;
-	unsigned short *c, z;
+	volatile unsigned short *c;
+	unsigned short z;
 	const unsigned char *f;
 
 	ba = gp->g_regkva;
@@ -736,9 +737,9 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 	/* provide all needed information in grf device-independent
 	 * locations */
 	gp->g_data 		= (void *) md;
-	gi->gd_regaddr	 	= (void *) kvtop (ba);
+	gi->gd_regaddr	 	= (void *) kvtop (__UNVOLATILE(ba));
 	gi->gd_regsize		= LM_OFFSET;
-	gi->gd_fbaddr		= (void *) kvtop (fb);
+	gi->gd_fbaddr		= (void *) kvtop (__UNVOLATILE(fb));
 	gi->gd_fbsize		= MEMSIZE *1024*1024;
 	gi->gd_colors		= 1 << md->DEP;
 	gi->gd_planes		= md->DEP;
@@ -1075,7 +1076,7 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 			RZ3BitBlit(gp, &bb);
 		}
 
-		c = (unsigned short *)(ba + LM_OFFSET);
+		c = (volatile unsigned short *)((volatile char*)ba + LM_OFFSET);
 		c += 2 * md->FLo*32;
 		c += 1;
 		f = md->FData;
@@ -1097,8 +1098,9 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 			c += 2 * (32-md->FY);
 		}
 		{
-			unsigned long *pt = (unsigned long *)
-						(ba + LM_OFFSET + PAT_MEM_OFF);
+			volatile unsigned long *pt = (volatile unsigned long *)
+						((volatile char *)ba +
+						 LM_OFFSET + PAT_MEM_OFF);
 			unsigned long tmp  = 0xffff0000;
 			*pt++ = tmp;
 			*pt = tmp;
@@ -1106,7 +1108,7 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 
 		WSeq(ba, SEQ_ID_MAP_MASK, 3);
 
-		c = (unsigned short *)(ba + LM_OFFSET);
+		c = (volatile unsigned short *)((volatile char*)ba + LM_OFFSET);
 		c += (md->TX-6)*2;
 		{
 		  	/* it's show-time :-) */
@@ -1591,7 +1593,7 @@ grfrhattach(struct device *pdp, struct device *dp, void *auxp)
 		    (char *)&gp[1] - (char *)&gp->g_display);
 	} else {
 		gp->g_regkva = (volatile void *)zap->va;
-		gp->g_fbkva = (volatile void *)zap->va + LM_OFFSET;
+		gp->g_fbkva = (volatile char *)zap->va + LM_OFFSET;
 		gp->g_unit = GRF_RETINAIII_UNIT;
 		gp->g_mode = rh_mode;
 		gp->g_conpri = grfrh_cnprobe();

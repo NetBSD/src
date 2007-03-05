@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.8 2007/03/04 05:59:19 christos Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.9 2007/03/05 19:48:19 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -60,53 +60,56 @@ struct grfcv3dtext_mode {
 #define MAXCOLS 200
 
 /* read VGA register */
-#define vgar(ba, reg) (*((volatile void *)(((void *)ba)+(reg ^ 3))))
+#define vgar(ba, reg) \
+	*(((volatile char *)ba)+(reg ^ 3))
 
 /* write VGA register */
 #define vgaw(ba, reg, val) \
-	*((volatile void *)(((void *)ba)+(reg ^ 3))) = ((val) & 0xff)
+	*(((volatile char *)ba)+(reg ^ 3)) = ((val) & 0xff)
 
 /* MMIO access */
 #define ByteAccessIO(x)	( ((x) & 0x3ffc) | (((x) & 3)^3) | (((x) & 3) <<14) )
 
 #define vgario(ba, reg) \
-	(*((volatile void *)(((void *)ba) + ( ByteAccessIO(reg) ))))
+	*(((volatile char *)ba) + ( ByteAccessIO(reg) ))
 
 #define vgawio(ba, reg, val) \
 	do { \
 		if (!cv3d_zorroIII) { \
-		        *((volatile void *)(((void *)cv3d_vcode_switch_base) + \
-			    0x04)) = (0x01 & 0xffff); \
+		        *(((volatile char *)cv3d_vcode_switch_base) + \
+			    0x04) = (0x01 & 0xffff); \
 			__asm volatile ("nop"); \
 		} \
-		*((volatile void *)(((void *)cv3d_special_register_base) + \
-		    ( ByteAccessIO(reg) & 0xffff ))) = ((val) & 0xff); \
+		*(((volatile char *)cv3d_special_register_base) + \
+		    ( ByteAccessIO(reg) & 0xffff )) = ((val) & 0xff); \
 		if (!cv3d_zorroIII) { \
-		        *((volatile void *)(((void *)cv3d_vcode_switch_base) + \
-			    0x04)) = (0x02 & 0xffff); \
+		        *(((volatile char *)cv3d_vcode_switch_base) + \
+			    0x04) = (0x02 & 0xffff); \
 			__asm volatile ("nop"); \
 		} \
 	} while (0)
 
 /* read 32 Bit VGA register */
-#define vgar32(ba, reg) ( *((unsigned long *) (((volatile void *)ba)+reg)) )
+#define vgar32(ba, reg) \
+	*((volatile unsigned long *) (((volatile char *)ba)+reg))
 
 /* write 32 Bit VGA register */
 #define vgaw32(ba, reg, val) \
-	*((unsigned long *) (((volatile void *)ba)+reg)) = val
+	*((volatile unsigned long *) (((volatile char *)ba)+reg)) = val
 
 /* read 16 Bit VGA register */
-#define vgar16(ba, reg) ( *((unsigned short *) (((volatile void *)ba)+reg)) )
+#define vgar16(ba, reg) \
+	*((volatile unsigned short *) (((volatile char *)ba)+reg))
 
 /* write 16 Bit VGA register */
 #define vgaw16(ba, reg, val) \
-	*((unsigned short *) (((volatile void *)ba)+reg)) = val
+	*((volatile unsigned short *) (((volatile char *)ba)+reg)) = val
 
 /* XXX This is totaly untested */
 #define	Select_Zorro2_FrameBuffer(flag) \
 	do { \
-		*((volatile void *)(((void *)cv3d_vcode_switch_base) + \
-		    0x08)) = ((flag * 0x40) & 0xffff); \
+		*(((volatile char *)cv3d_vcode_switch_base) + \
+		    0x08) = ((flag * 0x40) & 0xffff); \
 		__asm volatile ("nop"); \
 } while (0)
 

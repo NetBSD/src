@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.43 2007/03/04 05:59:19 christos Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.44 2007/03/05 19:48:19 he Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.43 2007/03/04 05:59:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.44 2007/03/05 19:48:19 he Exp $");
 
 #include "grfcv.h"
 #if NGRFCV > 0
@@ -318,8 +318,8 @@ cvintr(void *arg)
 		/* update the hardware cursor, if necessary */
 		if (curs_update_flag) {
 			csrc = (unsigned long *)cv_cursor_storage;
-			cdest = (volatile unsigned long *)(gp->g_fbkva + 
-			    HWC_OFF);
+			cdest = (volatile unsigned long *)
+				((volatile char*)gp->g_fbkva + HWC_OFF);
 			for (i = 0; i < HWC_SIZE / sizeof(long); i++)
 				*cdest++ = *csrc++;
 			curs_update_flag = 0;
@@ -356,15 +356,15 @@ cv_has_4mb(volatile void *fb)
 
 	/* write patterns in memory and test if they can be read */
 	testfbw = (volatile unsigned long *)fb;
-	testfbr = (volatile unsigned long *)(fb + 0x02000000);
+	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02000000);
 	*testfbw = 0x87654321;
 	__asm volatile("nop");
 	if (*testfbr != 0x87654321)
 		return (0);
 
 	/* upper memory region */
-	testfbw = (volatile unsigned long *)(fb + 0x00200000);
-	testfbr = (volatile unsigned long *)(fb + 0x02200000);
+	testfbw = (volatile unsigned long *)((volatile char*)fb + 0x00200000);
+	testfbr = (volatile unsigned long *)((volatile char*)fb + 0x02200000);
 	*testfbw = 0x87654321;
 	__asm volatile("nop");
 	if (*testfbr != 0x87654321)
@@ -453,8 +453,8 @@ grfcvattach(struct device *pdp, struct device *dp, void *auxp)
 		add_isr(&gcp->gcs_isr);
 		remove_isr(&congrf.gcs_isr);
 	} else {
-		gp->g_regkva = (volatile void *)cv_boardaddr + 0x02000000;
-		gp->g_fbkva = (volatile void *)cv_boardaddr + 0x01400000;
+		gp->g_regkva = (volatile char *)cv_boardaddr + 0x02000000;
+		gp->g_fbkva = (volatile char *)cv_boardaddr + 0x01400000;
 
 		gp->g_unit = GRF_CV64_UNIT;
 		gp->g_mode = cv_mode;
@@ -564,10 +564,11 @@ cv_boardinit(struct grf_softc *gp)
 	ba = gp->g_regkva;
 	/* Reset board */
 	for (i = 0; i < 6; i++)
-		cv_write_port (0xff, ba - 0x02000000);	/* Clear all bits */
+		/* Clear all bits */
+		cv_write_port (0xff, (volatile char*)ba - 0x02000000);
 
 	/* Return to operational Mode */
-	cv_write_port(0x8004, ba - 0x02000000);
+	cv_write_port(0x8004, (volatile char*)ba - 0x02000000);
 
 	/* Wakeup Chip */
 	vgaw(ba, SREG_VIDEO_SUBS_ENABLE, 0x10);
@@ -588,7 +589,7 @@ cv_boardinit(struct grf_softc *gp)
 #endif
 
 	/* Enable board interrupts */
-	cv_write_port(0x8008, ba - 0x02000000);
+	cv_write_port(0x8008, (volatile char*)ba - 0x02000000);
 
 	test = RCrt(ba, CRT_ID_SYSTEM_CONFIG);
 	test = test | 0x01;	/* enable enhaced register access */
@@ -746,8 +747,8 @@ cv_boardinit(struct grf_softc *gp)
 
 	vgaw(ba, VDAC_MASK, 0xFF);	/* DAC Mask */
 
-	*((unsigned long *)(ba + ECR_FRGD_COLOR)) = 0xFF;
-	*((unsigned long *)(ba + ECR_BKGD_COLOR)) = 0;
+	*((volatile unsigned long *)((volatile char*)ba + ECR_FRGD_COLOR)) = 0xFF;
+	*((volatile unsigned long *)((volatile char*)ba + ECR_BKGD_COLOR)) = 0;
 
 	/* colors initially set to greyscale */
 
@@ -765,7 +766,7 @@ cv_boardinit(struct grf_softc *gp)
 	WCrt(ba, CRT_ID_LAW_CNTL, 0x13);
 
 	/* find *correct* fbsize of z3 board */
-	if (cv_has_4mb((volatile void *)cv_boardaddr + 0x01400000)) {
+	if (cv_has_4mb((volatile char *)cv_boardaddr + 0x01400000)) {
 		cv_fbsize = 1024 * 1024 * 4;
 		WCrt(ba, CRT_ID_LAW_CNTL, 0x13); /* 4 MB */
 	} else {
@@ -813,9 +814,9 @@ cv_boardinit(struct grf_softc *gp)
 	WAttr(ba, 0x33, 0);
 
 	gi = &gp->g_display;
-	gi->gd_regaddr	= (void *) kvtop (ba);
+	gi->gd_regaddr	= (void *) kvtop (__UNVOLATILE(ba));
 	gi->gd_regsize	= 64 * 1024;
-	gi->gd_fbaddr	= (void *) kvtop (gp->g_fbkva);
+	gi->gd_fbaddr	= (void *) kvtop (__UNVOLATILE(gp->g_fbkva));
 	gi->gd_fbsize	= cv_fbsize;
 }
 
@@ -1120,10 +1121,10 @@ cv_toggle(struct grf_softc *gp)
 #endif /* !CV64CONSOLE */
 
 	if (cv_pass_toggle) {
-		cvscreen(0, ba - 0x02000000);
+		cvscreen(0, (volatile char*)ba - 0x02000000);
 		cv_pass_toggle = 0;
 	} else {
-		cvscreen(1, ba - 0x02000000);
+		cvscreen(1, (volatile char*)ba - 0x02000000);
 		cv_pass_toggle = 1;
 	}
 
@@ -1200,7 +1201,7 @@ cv_load_mon(struct grf_softc *gp, struct grfcvtext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile void *ba, fb;
+	volatile void *ba, *fb;
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
@@ -1598,7 +1599,7 @@ cv_load_mon(struct grf_softc *gp, struct grfcvtext_mode *md)
 #endif
 
 	/* Pass-through */
-	cvscreen(0, ba - 0x02000000);
+	cvscreen(0, (volatile char*)ba - 0x02000000);
 
 	return (1);
 }
@@ -1608,8 +1609,9 @@ void
 cv_inittextmode(struct grf_softc *gp)
 {
 	struct grfcvtext_mode *tm = (struct grfcvtext_mode *)gp->g_data;
-	volatile void *ba, fb;
-	unsigned char *c, *f, y;
+	volatile void *ba, *fb;
+	volatile unsigned char *c;
+	unsigned char *f, y;
 	unsigned short z;
 
 	ba = gp->g_regkva;
@@ -1624,7 +1626,7 @@ cv_inittextmode(struct grf_softc *gp)
 	 * The font is loaded in plane 2.
 	 */
 
-	c = (unsigned char *) fb;
+	c = (volatile unsigned char *) fb;
 
 	/* clear screen */
 	for (z = 0; z < tm->cols * tm->rows * 3; z++) {
@@ -1634,7 +1636,7 @@ cv_inittextmode(struct grf_softc *gp)
 		*c++ = 0;
 	}
 
-	c = (unsigned char *) (fb) + (32 * tm->fdstart * 4 + 2);
+	c = (volatile unsigned char *)fb + (32 * tm->fdstart * 4 + 2);
 	f = tm->fdata;
 	for (z = tm->fdstart; z <= tm->fdend; z++, c += (32 - tm->fy) * 4)
 		for (y = 0; y < tm->fy; y++) {
@@ -1643,7 +1645,7 @@ cv_inittextmode(struct grf_softc *gp)
 		}
 
 	/* print out a little init msg */
-	c = (unsigned char *)(fb) + (tm->cols - 6) * 4;
+	c = (volatile unsigned char *)fb + (tm->cols - 6) * 4;
 	*c++ = 'C';
 	*c++ = 0x0a;
 	c +=2;
@@ -1661,10 +1663,10 @@ cv_inittextmode(struct grf_softc *gp)
 static inline void
 cv_write_port(unsigned short bits, volatile void *BoardAddr)
 {
-	volatile void *addr;
+	volatile char *addr;
 	static unsigned char CVPortBits = 0;	/* mirror port bits here */
 
-	addr = BoardAddr + 0x40001;
+	addr = (volatile char*)BoardAddr + 0x40001;
 	if (bits & 0x8000)
 		CVPortBits |= bits & 0xFF;	/* Set bits */
 	else {
@@ -1788,7 +1790,7 @@ M2I(short val)
 int
 cv_getspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile void *ba, fb;
+	volatile void *ba, *fb;
 
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
@@ -1837,7 +1839,7 @@ void
 cv_setup_hwc(struct grf_softc *gp)
 {
 	volatile void *ba = gp->g_regkva;
-	volatile void *hwc;
+	volatile char *hwc;
 	int test;
 
 	if (gp->g_display.gd_planes <= 4)
@@ -1857,7 +1859,7 @@ cv_setup_hwc(struct grf_softc *gp)
 
 	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
 
-	hwc = ba + CRT_ADDRESS_W;
+	hwc = (volatile char*)ba + CRT_ADDRESS_W;
 	*hwc = 0;
 	*hwc = 0;
 
@@ -1915,7 +1917,7 @@ cv_setup_hwc(struct grf_softc *gp)
 int
 cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 {
-	volatile void *ba, fb;
+	volatile void *ba, *fb;
 	int depth = gp->g_display.gd_planes;
 
 	ba = gp->g_regkva;
@@ -2100,7 +2102,7 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 #endif	/* CV_NO_INT */
 	}
 	if (info->set & GRFSPRSET_CMAP) {
-		volatile void *hwc;
+		volatile char *hwc;
 		int test;
 
 		/* reset colour stack */
@@ -2111,13 +2113,13 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		    case 15:
 		    case 16:
 			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
-			hwc = ba + CRT_ADDRESS_W;
+			hwc = (volatile char*)ba + CRT_ADDRESS_W;
 			*hwc = 0;
 			break;
 		    case 32:
 		    case 24:
 			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
-			hwc = ba + CRT_ADDRESS_W;
+			hwc = (volatile char*)ba + CRT_ADDRESS_W;
 			*hwc = 0;
 			*hwc = 0;
 			break;
@@ -2128,19 +2130,19 @@ cv_setspriteinfo(struct grf_softc *gp, struct grf_spriteinfo *info)
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);
-			hwc = ba + CRT_ADDRESS_W;
+			hwc = (volatile char*)ba + CRT_ADDRESS_W;
 			*hwc = 1;
 			break;
 		    case 15:
 		    case 16:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
-			hwc = ba + CRT_ADDRESS_W;
+			hwc = (volatile char*)ba + CRT_ADDRESS_W;
 			*hwc = 0xff;
 			break;
 		    case 32:
 		    case 24:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
-			hwc = ba + CRT_ADDRESS_W;
+			hwc = (volatile char*)ba + CRT_ADDRESS_W;
 			*hwc = 0xff;
 			*hwc = 0xff;
 			break;

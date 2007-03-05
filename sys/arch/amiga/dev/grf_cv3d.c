@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.20 2007/03/04 05:59:19 christos Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.21 2007/03/05 19:48:19 he Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.20 2007/03/04 05:59:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.21 2007/03/05 19:48:19 he Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -383,26 +383,26 @@ grfcv3dattach(struct device *pdp, struct device *dp, void *auxp)
 	} else {
 		if (cv3d_zorroIII) {
 			gp->g_fbkva =
-			    (volatile void *)cv3d_boardaddr + 0x04800000;
+			    (volatile char *)cv3d_boardaddr + 0x04800000;
 			cv3d_memory_io_base =
-			    (volatile void *)cv3d_boardaddr + 0x05000000;
+			    (volatile char *)cv3d_boardaddr + 0x05000000;
 			cv3d_register_base =
-			    (volatile void *)cv3d_boardaddr + 0x05008000;
+			    (volatile char *)cv3d_boardaddr + 0x05008000;
 			cv3d_vcode_switch_base =
-			    (volatile void *)cv3d_boardaddr + 0x08000000;
+			    (volatile char *)cv3d_boardaddr + 0x08000000;
 			cv3d_special_register_base =
-			    (volatile void *)cv3d_boardaddr + 0x0C000000;
+			    (volatile char *)cv3d_boardaddr + 0x0C000000;
 		} else {
 			gp->g_fbkva =
-			    (volatile void *)cv3d_boardaddr + 0x00000000;
+			    (volatile char *)cv3d_boardaddr + 0x00000000;
 			cv3d_memory_io_base =
-			    (volatile void *)cv3d_boardaddr + 0x003E0000;
+			    (volatile char *)cv3d_boardaddr + 0x003E0000;
 			cv3d_register_base =
-			    (volatile void *)cv3d_boardaddr + 0x003C8000;
+			    (volatile char *)cv3d_boardaddr + 0x003C8000;
 			cv3d_vcode_switch_base =
-			    (volatile void *)cv3d_boardaddr + 0x003A0000;
+			    (volatile char *)cv3d_boardaddr + 0x003A0000;
 			cv3d_special_register_base =
-			    (volatile void *)cv3d_boardaddr + 0x003C0000;
+			    (volatile char *)cv3d_boardaddr + 0x003C0000;
 		}
 
 		gp->g_regkva = (volatile void *)cv3d_register_base;
@@ -500,7 +500,8 @@ cv3d_compute_clock(unsigned long freq)
 void
 cv3d_boardinit(struct grf_softc *gp)
 {
-	volatile void *ba, special;
+	volatile void *ba;
+	volatile char *special;
 	unsigned char test;
 	unsigned int clockpar;
 	int i;
@@ -510,12 +511,13 @@ cv3d_boardinit(struct grf_softc *gp)
 
 	/* PCI config */
 	if (cv3d_zorroIII) {
-		special = (cv3d_special_register_base + 0x000E0000);
+		special = ((volatile char*)cv3d_special_register_base +
+			0x000E0000);
 	} else {
-		special = (cv3d_special_register_base);
+		special = ((volatile char*)cv3d_special_register_base);
 	}
-	*((short *)(special + 0x10)) = 0;
-	*((long *)(special + 0x4)) = 0x02000003;
+	*((volatile short *)(special + 0x10)) = 0;
+	*((volatile long *)(special + 0x4)) = 0x02000003;
 
 	/* Wakeup Chip */
 	vgawio(cv3d_boardaddr, SREG_VIDEO_SUBS_ENABLE, 1);
@@ -728,9 +730,9 @@ cv3d_boardinit(struct grf_softc *gp)
 
 
 	gi = &gp->g_display;
-	gi->gd_regaddr	= (void *) kvtop (ba);
+	gi->gd_regaddr	= (void *) kvtop (__UNVOLATILE(ba));
 	gi->gd_regsize	= 64 * 1024;
-	gi->gd_fbaddr	= (void *) kvtop (gp->g_fbkva);
+	gi->gd_fbaddr	= (void *) kvtop (__UNVOLATILE(gp->g_fbkva));
 	gi->gd_fbsize	= cv3d_fbsize;
 }
 
@@ -1115,7 +1117,7 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile void *ba, fb;
+	volatile void *ba, *fb;
 	unsigned short mnr;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 		VSE, VT;
@@ -1397,7 +1399,7 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 	}
 
 	if (cv3d_zorroIII) {
-		gp->g_fbkva = (volatile void *)cv3d_boardaddr + 0x04000000 +
+		gp->g_fbkva = (volatile char *)cv3d_boardaddr + 0x04000000 +
 				(0x00400000 * fb_flag);
 	} else {
 		/* XXX This is totaly untested */
@@ -1485,8 +1487,9 @@ void
 cv3d_inittextmode(struct grf_softc *gp)
 {
 	struct grfcv3dtext_mode *tm = (struct grfcv3dtext_mode *)gp->g_data;
-	volatile void *ba, fb;
-	unsigned char *c, *f, y;
+	volatile void *ba, *fb;
+	volatile unsigned char *c;
+	unsigned char *f, y;
 	unsigned short z;
 
 	ba = gp->g_regkva;
@@ -1501,7 +1504,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 	 * The font is loaded in plane 2.
 	 */
 
-	c = (unsigned char *) fb;
+	c = (volatile unsigned char *) fb;
 
 	/* clear screen */
 	for (z = 0; z < tm->cols * tm->rows * 3; z++) {
@@ -1511,7 +1514,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 		*c++ = 0;
 	}
 
-	c = (unsigned char *) (fb) + (32 * tm->fdstart * 4 + 2);
+	c = (volatile unsigned char *)fb + (32 * tm->fdstart * 4 + 2);
 	f = tm->fdata;
 	for (z = tm->fdstart; z <= tm->fdend; z++, c += (32 - tm->fy) * 4)
 		for (y = 0; y < tm->fy; y++) {
@@ -1520,7 +1523,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 		}
 
 	/* print out a little init msg */
-	c = (unsigned char *)(fb) + (tm->cols - 9) * 4;
+	c = (volatile unsigned char *)fb + (tm->cols - 9) * 4;
 	*c++ = 'C';
 	*c++ = 0x0c;
 	c +=2;
@@ -1552,7 +1555,7 @@ cv3d_inittextmode(struct grf_softc *gp)
 static inline void
 cv3dscreen(int toggle, volatile void *ba)
 {
-	*((short *)(ba)) = (toggle & 1);
+	*((volatile short *)(ba)) = (toggle & 1);
 }
 
 
