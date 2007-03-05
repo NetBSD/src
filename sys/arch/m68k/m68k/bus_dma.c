@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.21 2007/03/04 06:00:04 christos Exp $ */
+/* $NetBSD: bus_dma.c,v 1.22 2007/03/05 14:31:08 tsutsui Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.21 2007/03/04 06:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2007/03/05 14:31:08 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,7 +702,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return m68k_btop((void *)segs[i].ds_addr + off);
+		return m68k_btop((char *)segs[i].ds_addr + off);
 	}
 
 	/* Page not found. */
