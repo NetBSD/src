@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.18 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: ams.c,v 1.19 2007/03/05 21:05:35 he Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.18 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.19 2007/03/05 21:05:35 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -388,6 +388,7 @@ ms_adbcomplete(void *buffer, void *data_area, int adb_command)
 {
 	adb_event_t event;
 	struct ams_softc *amsc;
+	uint8_t *buf = (uint8_t*)buffer;
 	int adbaddr;
 #ifdef ADB_DEBUG
 	int i;
@@ -401,32 +402,32 @@ ms_adbcomplete(void *buffer, void *data_area, int adb_command)
 
 	if ((amsc->handler_id == ADBMS_EXTENDED) && (amsc->sc_devid[0] == 0)) {
 		/* massage the data to look like EMP data */
-		if ((buffer[3] & 0x04) == 0x04)
-			buffer[1] &= 0x7f;
+		if ((buf[3] & 0x04) == 0x04)
+			buf[1] &= 0x7f;
 		else
-			buffer[1] |= 0x80;
-		if ((buffer[3] & 0x02) == 0x02)
-			buffer[2] &= 0x7f;
+			buf[1] |= 0x80;
+		if ((buf[3] & 0x02) == 0x02)
+			buf[2] &= 0x7f;
 		else
-			buffer[2] |= 0x80;
-		if ((buffer[3] & 0x01) == 0x01)
-			buffer[3] = 0x00;
+			buf[2] |= 0x80;
+		if ((buf[3] & 0x01) == 0x01)
+			buf[3] = 0x00;
 		else
-			buffer[3] = 0x80;
+			buf[3] = 0x80;
 	}
 
 	event.addr = adbaddr;
 	event.hand_id = amsc->handler_id;
 	event.def_addr = amsc->origaddr;
-	event.byte_count = buffer[0];
-	memcpy(event.bytes, buffer + 1, event.byte_count);
+	event.byte_count = buf[0];
+	memcpy(event.bytes, buf + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
-		printf("ams: from %d at %d (org %d) %d:", event.addr,
-		    event.hand_id, event.def_addr, buffer[0]);
-		for (i = 1; i <= buffer[0]; i++)
-			printf(" %x", buffer[i]);
+		printf("ams: from %d at %d (org %d) %u:", event.addr,
+		    event.hand_id, event.def_addr, buf[0]);
+		for (i = 1; i <= buf[0]; i++)
+			printf(" %x", buf[i]);
 		printf("\n");
 	}
 #endif
