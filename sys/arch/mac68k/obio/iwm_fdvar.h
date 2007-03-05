@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fdvar.h,v 1.12 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: iwm_fdvar.h,v 1.13 2007/03/05 15:32:33 he Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -162,7 +162,7 @@ struct fd_softc {
 	daddr_t	startBlk;		/* Starting block # */
 	int	bytesLeft;		/* Bytes left to transfer */
 	int	bytesDone;		/* Bytes transferred */
-	void *current_buffer; 	/* target of current data transfer */
+	char *current_buffer; 	/* target of current data transfer */
 	unsigned char *cbuf;		/* ptr to cylinder cache */
 	int	cachedSide;		/* Which head is cached? */
 	cylCacheSlot_t r_slots[IWM_MAX_GCR_SECTORS];
