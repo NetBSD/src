@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.38 2007/03/04 05:59:18 christos Exp $ */
+/*	$NetBSD: flsc.c,v 1.39 2007/03/05 18:46:41 he Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.38 2007/03/04 05:59:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.39 2007/03/05 18:46:41 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -485,7 +485,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	fsc->sc_dmaaddr = addr;
+	fsc->sc_dmaaddr = *addr;
 	fsc->sc_pdmalen = len;
 	fsc->sc_datain = datain;
 	fsc->sc_dmasize = *dmasize;
@@ -584,7 +584,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 	}
 
 	while (xfer < fsc->sc_dmasize) {
-		if ((pa + xfer) != kvtop(*addr + xfer))
+		if ((pa + xfer) != kvtop((char*)*addr + xfer))
 			break;
 		if ((fsc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = fsc->sc_dmasize;
