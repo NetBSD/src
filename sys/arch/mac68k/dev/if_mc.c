@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.30 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.31 2007/03/05 21:17:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.30 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.31 2007/03/05 21:17:27 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -409,7 +409,7 @@ maceput(struct mc_softc *sc, struct mbuf *m)
 	u_int len, totlen = 0;
 	u_char *buff;
 
-	buff = sc->sc_txbuf + (sc->sc_txset == 0 ? 0 : 0x800);
+	buff = (u_char*)sc->sc_txbuf + (sc->sc_txset == 0 ? 0 : 0x800);
 
 	for (; m; m = n) {
 		u_char *data = mtod(m, u_char *);
@@ -643,7 +643,7 @@ mace_get(struct mc_softc *sc, void *pkt, int totlen)
 		}
 		m->m_len = len = min(totlen, len);
 		memcpy(mtod(m, void *), pkt, len);
-		pkt += len;
+		pkt = (char*)pkt + len;
 		totlen -= len;
 		*mp = m;
 		mp = &m->m_next;
