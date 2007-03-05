@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 2007/03/04 05:59:03 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 2007/03/05 16:39:21 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.9 2007/03/04 05:59:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2007/03/05 16:39:21 he Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -137,9 +137,10 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			/* XXX Should use pmap_find(). */
 			if (v < 0 ||
-			    (void *)v + c > MEMC_PHYS_BASE + ptoa(physmem))
+			    (char *)v + c > 
+			    		(char*)MEMC_PHYS_BASE + ptoa(physmem))
 				return EFAULT;
-			error = uiomove(MEMC_PHYS_BASE + uio->uio_offset,
+			error = uiomove((char*)MEMC_PHYS_BASE + uio->uio_offset,
 					uio->uio_resid, uio);
 			continue;
 
@@ -148,8 +149,8 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			/* Allow reading from physically mapped space. */
 			if (((void *)v >= MEMC_PHYS_BASE &&
-			     (void *)v + c <
-			                     MEMC_PHYS_BASE + ptoa(physmem)) ||
+			     (char *)v + c <
+			     	(char*)MEMC_PHYS_BASE + ptoa(physmem)) ||
 			    uvm_kernacc((void *)v, c,
 					uio->uio_rw == UIO_READ ?
 					B_READ : B_WRITE))
