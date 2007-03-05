@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.32 2007/03/05 12:50:17 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.33 2007/03/05 20:55:45 he Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.32 2007/03/05 12:50:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.33 2007/03/05 20:55:45 he Exp $");
 
 #include "opt_m680x0.h"
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.32 2007/03/05 12:50:17 tsutsui 
 #include <arch/x68k/x68k/iodevice.h>
 
 
-#define RELOC(v, t)	*((t*)((void *)&(v) + firstpa))
+#define RELOC(v, t)	*((t*)((char *)&(v) + firstpa))
 
 extern char *etext;
 extern int Sysptsize;
