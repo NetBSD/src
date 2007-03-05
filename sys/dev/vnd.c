@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.163 2007/03/04 06:01:43 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.164 2007/03/05 02:55:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.163 2007/03/04 06:01:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.164 2007/03/05 02:55:32 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -491,6 +491,7 @@ vndstrategy(struct buf *bp)
 		    bp, vnd->sc_flags & (VNF_WLABEL|VNF_LABELLING)) <= 0)
 			goto done;
 	}
+	bp->b_resid = bp->b_bcount;
 
 	/* If it's a nil transfer, wake up the top half now. */
 	if (bp->b_bcount == 0)
