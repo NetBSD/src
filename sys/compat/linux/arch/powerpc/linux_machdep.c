@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.33 2007/03/04 06:01:22 christos Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.34 2007/03/05 10:44:24 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.33 2007/03/04 06:01:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34 2007/03/05 10:44:24 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (onstack) {
 		fp = (register_t)
-		    ((void *)l->l_sigstk.ss_sp +
+		    ((char *)l->l_sigstk.ss_sp +
 		    l->l_sigstk.ss_size);
 	} else {
 		fp = tf->fixreg[1];
