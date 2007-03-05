@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.45 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: esp.c,v 1.46 2007/03/05 21:08:24 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.45 2007/03/04 06:00:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.46 2007/03/05 21:08:24 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -454,7 +454,7 @@ esp_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len, int datain,
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = *addr;
 	esc->sc_dmalen = len;
 	esc->sc_datain = datain;
 	esc->sc_dmasize = *dmasize;
@@ -555,7 +555,7 @@ esp_quick_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	esc->sc_dmaaddr = addr;
+	esc->sc_dmaaddr = *addr;
 	esc->sc_dmalen = len;
 
 	if (*len & 1) {
