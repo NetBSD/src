@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1013 2007/02/28 16:23:22 xtraeme Exp $
+#	$NetBSD: mi,v 1.1014 2007/03/05 23:18:02 dillo Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -535,6 +535,8 @@
 ./usr/include/fnmatch.h				comp-c-include
 ./usr/include/form.h				comp-c-include
 ./usr/include/frame.h				comp-obsolete		obsolete
+./usr/include/fs/hfsp/hfsp.h			comp-c-inlcude
+./usr/include/fs/hfsp/libhfsp.h			comp-c-inlcude
 ./usr/include/fs/puffs/puffs_msgif.h		comp-c-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
 ./usr/include/fs/udf/ecma167-udf.h		comp-c-include
