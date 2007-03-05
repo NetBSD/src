@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rt.c,v 1.21 2007/03/04 05:59:23 christos Exp $ */
+/*	$NetBSD: ite_rt.c,v 1.22 2007/03/05 20:29:07 he Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.21 2007/03/04 05:59:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_rt.c,v 1.22 2007/03/05 20:29:07 he Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -398,7 +398,7 @@ retina_deinit(struct ite_softc *ip)
 void
 retina_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 {
-	volatile void *fb = ip->grf->g_fbkva;
+	volatile char *fb = (volatile char*)ip->grf->g_fbkva;
 	register u_char attr;
 
 	attr = (mode & ATTR_INV) ? 0x21 : 0x10;
@@ -414,7 +414,7 @@ retina_putc(struct ite_softc *ip, int c, int dy, int dx, int mode)
 void
 retina_clear(struct ite_softc *ip, int sy, int sx, int h, int w)
 {
-	u_short * fb = (u_short *) ip->grf->g_fbkva;
+	volatile u_short * fb = (volatile u_short *) ip->grf->g_fbkva;
 	short x;
 	const u_short fillval = 0x2010;
 
@@ -440,7 +440,7 @@ retina_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 	u_long *fb;
 
 	ba = ip->grf->g_regkva;
-	fb = (u_long *)ip->grf->g_fbkva;
+	fb = (u_long *)__UNVOLATILE(ip->grf->g_fbkva);
 
 	retina_cursor(ip, ERASE_CURSOR);
 
