@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.2 2007/03/05 19:11:55 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.2 2007/03/05 19:11:55 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -432,7 +432,7 @@ rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, void *addr)
 		break;
 
 	default:
-		err = EINVAL;
+		err = ENOPROTOOPT;
 		break;
 	}
 	return err;
