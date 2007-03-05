@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.16 2007/03/02 18:53:53 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.17 2007/03/05 23:56:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.16 2007/03/02 18:53:53 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.17 2007/03/05 23:56:18 ad Exp $");
 
 #include <errno.h>
 
@@ -114,8 +114,11 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 	 */
 	while ((rwlock->ptr_writer != NULL) ||
 	    (!PTQ_EMPTY(&rwlock->ptr_wblocked))) {
+	    	PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
+		self->pt_sleeponq = 1;
+		self->pt_sleepobj = &rwlock->ptr_rblocked;
 		(void)pthread__park(self, &rwlock->ptr_interlock,
-		    rwlock, &rwlock->ptr_rblocked, NULL, 1, 0);
+		    &rwlock->ptr_rblocked, NULL, 0);
 	}
 	
 	rwlock->ptr_nreaders++;
@@ -184,8 +187,11 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 			return EDEADLK;
 		}
 #endif
+	    	PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
+		self->pt_sleeponq = 1;
+		self->pt_sleepobj = &rwlock->ptr_wblocked;
 		(void)pthread__park(self, &rwlock->ptr_interlock,
-		    rwlock, &rwlock->ptr_wblocked, NULL, 1, 0);
+		    &rwlock->ptr_wblocked, NULL, 0);
 	}
 
 	rwlock->ptr_writer = self;
@@ -262,8 +268,11 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 	retval = 0;
 	while ((retval == 0) && ((rwlock->ptr_writer != NULL) ||
 	    (!PTQ_EMPTY(&rwlock->ptr_wblocked)))) {
+	    	PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
+		self->pt_sleeponq = 1;
+		self->pt_sleepobj = &rwlock->ptr_rblocked;
 		retval = pthread__park(self, &rwlock->ptr_interlock,
-		    rwlock, &rwlock->ptr_rblocked, abs_timeout, 1, 0);
+		    &rwlock->ptr_rblocked, abs_timeout, 0);
 	}
 
 	/* One last chance to get the lock, in case it was released between
@@ -320,8 +329,11 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 			return EDEADLK;
 		}
 #endif
+	    	PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
+		self->pt_sleeponq = 1;
+		self->pt_sleepobj = &rwlock->ptr_wblocked;
 		retval = pthread__park(self, &rwlock->ptr_interlock,
-		    rwlock, &rwlock->ptr_wblocked, abs_timeout, 1, 0);
+		    &rwlock->ptr_wblocked, abs_timeout, 0);
 	}
 
 	if ((rwlock->ptr_nreaders == 0) && (rwlock->ptr_writer == NULL)) {
@@ -380,9 +392,10 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 	}
 
 	if (writer != NULL)
-		pthread__unpark(self, &rwlock->ptr_interlock, rwlock, writer);
+		pthread__unpark(self, &rwlock->ptr_interlock,
+		    &rwlock->ptr_wblocked, writer);
 	else
-		pthread__unpark_all(self, &rwlock->ptr_interlock, rwlock,
+		pthread__unpark_all(self, &rwlock->ptr_interlock,
 		    &rwlock->ptr_rblocked);
 
 	return 0;

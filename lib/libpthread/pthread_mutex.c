@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.25 2007/03/02 18:53:52 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.26 2007/03/05 23:56:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.25 2007/03/02 18:53:52 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.26 2007/03/05 23:56:18 ad Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -267,8 +267,10 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 			 * but it's okay since we're just going to
 			 * retry.
 			 */
+			self->pt_sleeponq = 1;
+			self->pt_sleepobj = &mutex->ptm_blocked;
 			(void)pthread__park(self, &mutex->ptm_interlock,
-			    mutex, NULL, NULL, 0, 0);
+			    &mutex->ptm_blocked, NULL, 0);
 			pthread_spinunlock(self, &mutex->ptm_interlock);
 		} else {
 			PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
@@ -377,7 +379,8 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 	if ((blocked = PTQ_FIRST(&mutex->ptm_blocked)) != NULL) {
 		PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
 		PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK_UNBLOCK);
-		pthread__unpark(self, &mutex->ptm_interlock, mutex, blocked);
+		pthread__unpark(self, &mutex->ptm_interlock,
+		    &mutex->ptm_blocked, blocked);
 	} else
 		pthread_spinunlock(self, &mutex->ptm_interlock);
 

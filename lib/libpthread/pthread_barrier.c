@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_barrier.c,v 1.10 2007/03/02 18:53:52 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.11 2007/03/05 23:56:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams, and by Jason R. Thorpe.
+ * by Nathan J. Williams, by Jason R. Thorpe, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.10 2007/03/02 18:53:52 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.11 2007/03/05 23:56:17 ad Exp $");
 
 #include <errno.h>
 
@@ -167,7 +167,7 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		    self, barrier));
 
 		barrier->ptb_generation++;
-		pthread__unpark_all(self, &barrier->ptb_lock, barrier,
+		pthread__unpark_all(self, &barrier->ptb_lock,
 		    &barrier->ptb_waiters);
 		return PTHREAD_BARRIER_SERIAL_THREAD;
 	}
@@ -177,8 +177,11 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	while (gen == barrier->ptb_generation) {
 		SDPRINTF(("(barrier wait %p) Waiting on %p\n",
 		    self, barrier));
-		(void)pthread__park(self, &barrier->ptb_lock, barrier,
-		    &barrier->ptb_waiters, NULL, 1, 0);
+		PTQ_INSERT_TAIL(&barrier->ptb_waiters, self, pt_sleep);
+		self->pt_sleeponq = 1;
+		self->pt_sleepobj = &barrier->ptb_waiters;
+		(void)pthread__park(self, &barrier->ptb_lock,
+		    &barrier->ptb_waiters, NULL, 0);
 		SDPRINTF(("(barrier wait %p) Woke up on %p\n",
 		    self, barrier));
 	}
