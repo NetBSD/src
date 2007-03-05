@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.27 2007/03/04 06:00:56 christos Exp $ */
+/* $NetBSD: bootxx.c,v 1.28 2007/03/05 20:53:34 christos Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -146,7 +146,7 @@ Xmain()
 		Elf32_Phdr ph;
 		size_t off = sizeof(hdr.elf);
 		vax_load_failure += 2;
-		read(io, (void *)(&hdr.elf) + sizeof(hdr.aout),
+		read(io, (char *)&hdr.elf + sizeof(hdr.aout),
 		     sizeof(hdr.elf) - sizeof(hdr.aout));
 		if (hdr.elf.e_machine != EM_VAX || hdr.elf.e_type != ET_EXEC
 		    || hdr.elf.e_phnum != 1)
