@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.2 2007/03/04 06:01:09 christos Exp $	*/
+/*	$NetBSD: bios32.c,v 1.3 2007/03/05 03:22:06 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2 2007/03/04 06:01:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.3 2007/03/05 03:22:06 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,12 +125,12 @@ void
 bios32_init()
 {
 	paddr_t entry = 0;
-	void *p;
+	char *p;
 	unsigned char cksum;
 	int i;
 
-	for (p = (void *)ISA_HOLE_VADDR(BIOS32_START);
-	     p < (void *)ISA_HOLE_VADDR(BIOS32_END);
+	for (p = ISA_HOLE_VADDR(BIOS32_START);
+	     p < (char *) ISA_HOLE_VADDR(BIOS32_END);
 	     p += 16) {
 		if (*(int *)p != BIOS32_MAKESIG('_', '3', '2', '_'))
 			continue;
@@ -165,7 +165,7 @@ bios32_init()
 #if NIPMI > 0
 	/* see if we have SMBIOS extentions */
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
-	    p < (void *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
+	    p < ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
 		struct smbhdr * sh = (struct smbhdr *)p;
 		u_int8_t chksum;
 		vaddr_t eva;
