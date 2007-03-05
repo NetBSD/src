@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2007/03/04 06:01:08 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2007/03/05 12:50:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2007/03/04 06:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2007/03/05 12:50:17 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -164,7 +164,6 @@ extern u_int lowram;
 extern int end, *esym;
 extern psize_t mem_size;
 
-void *	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 

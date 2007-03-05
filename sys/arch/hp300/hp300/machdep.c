@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 2007/03/04 05:59:49 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 2007/03/05 12:50:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2007/03/04 05:59:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2007/03/05 12:50:15 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -169,7 +169,6 @@ extern paddr_t avail_end;
 paddr_t	bootinfo_pa;
 vaddr_t	bootinfo_va;
 
-void *	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 /*
