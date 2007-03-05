@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.244 2007/03/04 06:03:21 christos Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.245 2007/03/05 00:50:53 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.244 2007/03/04 06:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.245 2007/03/05 00:50:53 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1407,9 +1407,6 @@ ip_slowtimo(void)
 		dropscanidx = i;
 	}
 	IPQ_UNLOCK();
-#ifdef GATEWAY
-	ipflow_slowtimo();
-#endif
 	splx(s);
 }
 
