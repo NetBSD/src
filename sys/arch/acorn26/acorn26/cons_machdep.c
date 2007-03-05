@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.6 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.7 2007/03/05 15:42:23 he Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.6 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.7 2007/03/05 15:42:23 he Exp $");
 
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -68,7 +68,7 @@ consinit()
 #endif /* DDB */
 #if NKSYMS || defined(DDB) || defined(LKM)
 	ksyms_init(bootconfig.esym - bootconfig.ssym,
-		 MEMC_PHYS_BASE + bootconfig.ssym,
-		 MEMC_PHYS_BASE + bootconfig.esym);
+		 (char*)MEMC_PHYS_BASE + bootconfig.ssym,
+		 (char*)MEMC_PHYS_BASE + bootconfig.esym);
 #endif
 }
