@@ -1,4 +1,4 @@
-/* $NetBSD: arcvideo.c,v 1.11 2007/03/04 05:59:05 christos Exp $ */
+/* $NetBSD: arcvideo.c,v 1.12 2007/03/05 15:40:28 he Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.11 2007/03/04 05:59:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcvideo.c,v 1.12 2007/03/05 15:40:28 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -319,7 +319,7 @@ arccons_init(void)
 	/* Set up arccons_ri */
 	memset(ri, 0, sizeof(*ri));
 	ri->ri_depth = bootconfig.bpp;
-	ri->ri_bits = (u_char *)(MEMC_PHYS_BASE + 0);
+	ri->ri_bits = (u_char *)(MEMC_PHYS_BASE);
 	ri->ri_width = bootconfig.xpixels;
 	ri->ri_height = bootconfig.ypixels;
 	ri->ri_stride = ((bootconfig.xpixels * bootconfig.bpp + 31) >> 5) << 2;
