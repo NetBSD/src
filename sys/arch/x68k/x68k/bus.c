@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.30 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: bus.c,v 1.31 2007/03/05 20:39:43 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.30 2007/03/04 06:01:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.31 2007/03/05 20:39:43 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,7 +527,7 @@ x68k_bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			continue;
 		}
 
-		return (m68k_btop((void *)segs[i].ds_addr + off));
+		return (m68k_btop((char *)segs[i].ds_addr + off));
 	}
 
 	/* Page not found. */
