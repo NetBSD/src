@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2007/03/04 05:59:46 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2007/03/05 21:05:00 dogcow Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2007/03/04 05:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2007/03/05 21:05:00 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -200,7 +200,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 {
 	struct malta_config *mcp = &malta_configuration;
 	bus_space_handle_t sh;
-	void *kernend, v;
+	void *kernend, *v;
         u_long first, last;
 	char *cp;
 	int freqok, i, howto;
