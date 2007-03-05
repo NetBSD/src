@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121 2007/03/04 05:59:16 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.122 2007/03/05 20:34:51 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2007/03/04 05:59:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 2007/03/05 20:34:51 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ void		pmap_collect1(pmap_t, paddr_t, paddr_t);
 /*
  * All those kernel PT submaps that BSD is so fond of
  */
-void *	CADDR1, CADDR2, vmmap;
+void 	*CADDR1, *CADDR2, *vmmap;
 u_int	*CMAP1, *CMAP2, *vmpte, *msgbufmap;
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized			\
