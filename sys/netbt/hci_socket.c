@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.6 2007/03/04 06:03:19 christos Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.7 2007/03/05 19:11:54 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.6 2007/03/04 06:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.7 2007/03/05 19:11:54 plunky Exp $");
 
 #include "opt_bluetooth.h"
 #ifdef BLUETOOTH_DEBUG
@@ -513,7 +513,7 @@ hci_ctloutput(int req, struct socket *so, int level,
 		return EINVAL;
 
 	if (level != BTPROTO_HCI)
-		return 0;
+		return ENOPROTOOPT;
 
 	switch(req) {
 	case PRCO_GETOPT:
@@ -538,7 +538,7 @@ hci_ctloutput(int req, struct socket *so, int level,
 			break;
 
 		default:
-			err = EINVAL;
+			err = ENOPROTOOPT;
 			m_freem(m);
 			m = NULL;
 			break;
@@ -567,14 +567,14 @@ hci_ctloutput(int req, struct socket *so, int level,
 			break;
 
 		default:
-			err = EINVAL;
+			err = ENOPROTOOPT;
 			break;
 		}
 		m_freem(m);
 		break;
 
 	default:
-		err = EINVAL;
+		err = ENOPROTOOPT;
 		break;
 	}
 
