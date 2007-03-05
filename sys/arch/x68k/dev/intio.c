@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.29 2007/03/04 06:01:06 christos Exp $	*/
+/*	$NetBSD: intio.c,v 1.30 2007/03/05 20:46:21 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.29 2007/03/04 06:01:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.30 2007/03/05 20:46:21 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -812,7 +812,7 @@ _intio_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				memcpy(mtod(m, void *) + moff,
+				memcpy(mtod(m, char *) + moff,
 				    (char *)cookie->id_bouncebuf + offset,
 				    minlen);
 
