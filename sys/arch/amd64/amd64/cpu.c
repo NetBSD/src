@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.14 2007/03/04 05:59:12 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.15 2007/03/05 16:50:59 drochner Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.14 2007/03/04 05:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.15 2007/03/05 16:50:59 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -127,8 +127,8 @@ struct cpu_softc {
 
 int mp_cpu_start __P((struct cpu_info *)); 
 void mp_cpu_start_cleanup __P((struct cpu_info *));
-struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
-				      mp_cpu_start_cleanup };
+const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
+					    mp_cpu_start_cleanup };
 
 
 CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
@@ -191,11 +191,8 @@ cpu_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cpu_attach_args *caa = aux;
 
-	if (strcmp(caa->caa_name, match->cf_name) == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 static void
@@ -331,7 +328,7 @@ cpu_attach(parent, self, aux)
 		break;
 
 	case CPU_ROLE_BP:
-		printf("apid %d (boot processor)\n", caa->cpu_number);
+		printf("(boot processor)\n");
 		ci->ci_flags |= CPUF_PRESENT | CPUF_BSP | CPUF_PRIMARY;
 		cpu_intr_init(ci);
 		identifycpu(ci);
@@ -353,7 +350,7 @@ cpu_attach(parent, self, aux)
 		/*
 		 * report on an AP
 		 */
-		printf("apid %d (application processor)\n", caa->cpu_number);
+		printf("(application processor)\n");
 
 #if defined(MULTIPROCESSOR)
 		cpu_intr_init(ci);
