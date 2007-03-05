@@ -1,7 +1,8 @@
-# $NetBSD: EUC.part,v 1.2 2003/07/19 20:20:44 tshiozak Exp $
+# $NetBSD: EUC.part,v 1.3 2007/03/05 16:58:35 tnozaki Exp $
 
 CN
 JP
 JP-MS
+JIS-2004
 KR
 TW
