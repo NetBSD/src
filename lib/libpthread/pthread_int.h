@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.38 2007/03/02 18:53:52 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.39 2007/03/05 23:55:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -179,12 +179,12 @@ void	pthread__initthread(pthread_t self, pthread_t t);
 ssize_t	pthread__stackinfo_offset(void);
 
 void	pthread__unpark_all(pthread_t self, pthread_spin_t *lock,
-			    void *obj, struct pthread_queue_t *threadq);
+			    struct pthread_queue_t *threadq);
 void	pthread__unpark(pthread_t self, pthread_spin_t *lock,
-			void *obj, pthread_t target);
+			struct pthread_queue_t *queue, pthread_t target);
 int	pthread__park(pthread_t self, pthread_spin_t *lock,
-		      void *obj, struct pthread_queue_t *threadq,
-		      const struct timespec *abs_timeout, int tail,
+		      struct pthread_queue_t *threadq,
+		      const struct timespec *abs_timeout,
 		      int cancelpt);
 
 int	pthread__stackalloc(pthread_t *t);
