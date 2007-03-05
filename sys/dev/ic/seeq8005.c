@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.39 2007/03/04 06:02:01 christos Exp $ */
+/* $NetBSD: seeq8005.c,v 1.40 2007/03/05 17:47:49 he Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.39 2007/03/04 06:02:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.40 2007/03/05 17:47:49 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1321,8 +1321,9 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
                 }
 		if (top == 0) {
 			/* Make sure the payload is aligned */
-			void *newdata = (void *)
-			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			char *newdata = (char *)
+			    ALIGN((char*)m->m_data + 
+				sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
 			m->m_len = len;
