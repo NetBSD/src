@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.11 2007/03/04 05:59:19 christos Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.12 2007/03/05 19:48:19 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -60,26 +60,28 @@ struct grfcvtext_mode {
 #define MAXCOLS 200
 
 /* read VGA register */
-#define vgar(ba, reg) (*(((volatile void *)ba)+reg))
+#define vgar(ba, reg) (*(((volatile char *)ba)+reg))
 
 /* write VGA register */
 #define vgaw(ba, reg, val) \
-	*(((volatile void *)ba)+reg) = ((val) & 0xff)
+	*(((volatile char *)ba)+reg) = ((val) & 0xff)
 
 
 /* read 32 Bit VGA register */
-#define vgar32(ba, reg) (  *((unsigned long *) (((volatile void *)ba)+reg)) )
+#define vgar32(ba, reg) \
+	(  *((volatile unsigned long *) (((volatile char *)ba)+reg)) )
 
 /* write 32 Bit VGA register */
 #define vgaw32(ba, reg, val) \
-	*((unsigned long *)  (((volatile void *)ba)+reg)) = val
+	*((unsigned long *)  (((volatile char *)ba)+reg)) = val
 
 /* read 16 Bit VGA register */
-#define vgar16(ba, reg) (  *((unsigned short *) (((volatile void *)ba)+reg)) )
+#define vgar16(ba, reg) \
+	(  *((volatile unsigned short *) (((volatile char *)ba)+reg)) )
 
 /* write 16 Bit VGA register */
 #define vgaw16(ba, reg, val) \
-	*((unsigned short *)  (((volatile void *)ba)+reg)) = val
+	*((volatile unsigned short *)  (((volatile char *)ba)+reg)) = val
 
 int grfcv_cnprobe(void);
 void grfcv_iteinit(struct grf_softc *);

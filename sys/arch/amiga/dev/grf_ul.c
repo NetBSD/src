@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.40 2007/03/04 05:59:20 christos Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.41 2007/03/05 19:48:20 he Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.40 2007/03/04 05:59:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.41 2007/03/05 19:48:20 he Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -173,13 +173,13 @@ ulisr(arg)
 	void *arg;
 {
 	struct grf_softc *gp = arg;
-	struct gspregs *ba;
+	volatile struct gspregs *ba;
 	u_int16_t	thebits;
 
 	if (gp == NULL)
 		return 0;
 
-	ba = (struct gspregs *)gp->g_regkva;
+	ba = (volatile struct gspregs *)gp->g_regkva;
 
 	if (ba == NULL)
 		return 0;
@@ -213,7 +213,7 @@ ul_load_code(gp)
 	struct grf_softc *gp;
 {
 	struct grf_ul_softc *gup;
-	struct gspregs *ba;
+	volatile struct gspregs *ba;
 	struct grfinfo *gi;
 	int i,j;
 #if 0
@@ -221,10 +221,10 @@ ul_load_code(gp)
 #endif
 
 	gup = (struct grf_ul_softc *)gp;
-	ba = (struct gspregs *)gp->g_regkva;
+	ba = (volatile struct gspregs *)gp->g_regkva;
 	gi = &gp->g_display;
 
-	gi->gd_regaddr	= ztwopa((void *)ba);
+	gi->gd_regaddr	= ztwopa((volatile void *)ba);
 	gi->gd_regsize	= sizeof(struct gspregs);
 	gi->gd_fbaddr	= NULL;
 	gi->gd_fbsize	= 0;
@@ -373,12 +373,12 @@ ul_load_mon(gp, md)
 {
 	struct grf_ul_softc *gup;
 	struct grfinfo *gi;
-	struct gspregs *ba;
+	volatile struct gspregs *ba;
 	u_int16_t buf[8];
 
 	gup = (struct grf_ul_softc *)gp;
 	gi = &gp->g_display;
-	ba = (struct gspregs *)gp->g_regkva;
+	ba = (volatile struct gspregs *)gp->g_regkva;
 
 	gi->gd_dyn.gdi_fbx	= 0;
 	gi->gd_dyn.gdi_fby	= 0;
@@ -621,13 +621,13 @@ ul_setvmode (gp, mode)
 	unsigned mode;
 {
 	struct grf_ul_softc *gup;
-	struct gspregs *ba;
+	volatile struct gspregs *ba;
 	int error;
 
 	if (!mode || mode > ulowell_mon_max)
 		return EINVAL;
 
-	ba = (struct gspregs *)gp->g_regkva;
+	ba = (volatile struct gspregs *)gp->g_regkva;
 	gup = (struct grf_ul_softc *)gp;
 	current_mon = ul_monitor_defs + mode - 1;
 
@@ -647,11 +647,11 @@ ul_setfb(gp, cmd)
 	u_long cmd;
 {
 	struct grf_ul_softc *gup;
-	struct gspregs *ba;
+	volatile struct gspregs *ba;
 
 	gup = (struct grf_ul_softc *)gp;
 
-	ba = (struct gspregs *)gp->g_regkva;
+	ba = (volatile struct gspregs *)gp->g_regkva;
 	ba->ctrl = LBL;
 	ba->hstadrh = 0xfe80;
 	ba->hstadrl = 0x0000;
@@ -822,7 +822,7 @@ ul_putcmap (gp, cmap, dev)
 	dev_t dev;
 {
 	struct grf_ul_softc *gup;
-	struct gspregs *ba;
+	volatile struct gspregs *ba;
 	u_int16_t cmd[8];
 	int x, mxidx, error;
 	u_int8_t *mymap;
@@ -857,7 +857,7 @@ ul_putcmap (gp, cmap, dev)
 
 
 	/* then write from there to the hardware */
-	ba = (struct gspregs *)gp->g_regkva;
+	ba = (volatile struct gspregs *)gp->g_regkva;
 	/*
 	 * XXX This is a bad thing to do.
 	 * We should always use the gsp call, or have a means to arbitrate
@@ -902,9 +902,9 @@ ul_blank(gp, onoff, dev)
 	int *onoff;
 	dev_t dev;
 {
-	struct gspregs *gsp;
+	volatile struct gspregs *gsp;
 
-	gsp = (struct gspregs *)gp->g_regkva;
+	gsp = (volatile struct gspregs *)gp->g_regkva;
 	gsp->ctrl = (gsp->ctrl & ~(INCR | INCW)) | LBL;
 	gsp->hstadrh = 0xC000;
 	gsp->hstadrl = 0x0080;
@@ -935,7 +935,7 @@ ul_bitblt (gp, bb, dev)
 
 void
 gsp_write(gsp, ptr, size)
-	struct gspregs *gsp;
+	volatile struct gspregs *gsp;
 	u_short *ptr;
 	size_t size;
 {
