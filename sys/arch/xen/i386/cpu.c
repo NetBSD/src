@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2007/03/05 16:51:03 drochner Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2007/03/05 23:26:40 dogcow Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2007/03/05 16:51:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2007/03/05 23:26:40 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -300,11 +300,7 @@ vcpu_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct cpu_attach_args *caa = aux;
-
-	if (strcmp(caa->caa_name, match->cf_name) == 0)
-		return 1;
-	return 0;
+	return 1;
 }
 
 void
