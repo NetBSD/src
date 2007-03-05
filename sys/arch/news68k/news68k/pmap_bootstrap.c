@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.16 2007/03/04 11:05:53 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.17 2007/03/05 12:50:17 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.16 2007/03/04 11:05:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.17 2007/03/05 12:50:17 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -76,7 +76,7 @@ void pmap_bootstrap(paddr_t, paddr_t);
  */
 void *CADDR1, *CADDR2;
 char *vmmap;
-extern void *msgbufaddr;
+void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.
