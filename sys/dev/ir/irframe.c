@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.37 2007/03/04 06:02:09 christos Exp $	*/
+/*	$NetBSD: irframe.c,v 1.38 2007/03/05 20:23:14 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.37 2007/03/04 06:02:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.38 2007/03/05 20:23:14 drochner Exp $");
 
 #include "irframe.h"
 
@@ -415,30 +415,27 @@ struct device *
 irframe_alloc(size_t size, const struct irframe_methods *m, void *h)
 {
 	struct cfdriver *cd = &irframe_cd;
+	struct cfdata *cfdata;
 	struct device *dev;
 	struct ir_attach_args ia;
 	int unit;
 
-	/*
-	 * XXXJRT This is wrong -- needs to be done using regular
-	 * XXXJRT autoconfiguration code.
-	 */
+	/* XXX This is wrong */
 
+	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	for (unit = 0; unit < cd->cd_ndevs; unit++)
 		if (cd->cd_devs[unit] == NULL)
 			break;
-	dev = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	snprintf(dev->dv_xname, sizeof dev->dv_xname, "irframe%d", unit);
-	dev->dv_unit = unit;
-	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
+	cfdata->cf_name = "irframe";
+	cfdata->cf_atname = "irframe"; /* ??? */
+	cfdata->cf_unit = unit;
+	cfdata->cf_fstate = FSTATE_STAR;
 
-	config_makeroom(unit, cd);
-	cd->cd_devs[unit] = dev;
+	dev = config_attach_pseudo(cfdata);
 
 	ia.ia_methods = m;
 	ia.ia_handle = h;
 	printf("%s", dev->dv_xname);
-	irframe_attach(NULL, dev, &ia);
 
 	return (dev);
 }
