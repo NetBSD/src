@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.240 2007/02/22 06:34:43 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.241 2007/03/05 04:59:20 dogcow Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.240 2007/02/22 06:34:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.241 2007/03/05 04:59:20 dogcow Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -626,13 +626,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Now map address space */
 	vm = p->p_vmspace;
-	vm->vm_taddr = (caddr_t) pack.ep_taddr;
+	vm->vm_taddr = (void *)pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
-	vm->vm_daddr = (caddr_t) pack.ep_daddr;
+	vm->vm_daddr = (void*)pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
-	vm->vm_maxsaddr = (caddr_t) pack.ep_maxsaddr;
-	vm->vm_minsaddr = (caddr_t) pack.ep_minsaddr;
+	vm->vm_maxsaddr = (void *)pack.ep_maxsaddr;
+	vm->vm_minsaddr = (void *)pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
