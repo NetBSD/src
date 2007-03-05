@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.810 2007/03/01 14:57:38 kiyohara Exp $
+# $NetBSD: GENERIC,v 1.811 2007/03/05 23:30:18 dillo Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.810 $"
+#ident 		"GENERIC-$Revision: 1.811 $"
 
 maxusers	32		# estimated number of users
 
@@ -183,6 +183,7 @@ file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+#file-system	HFSP		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
