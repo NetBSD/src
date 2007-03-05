@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.87.2.5 2006/06/04 08:59:42 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.87.2.6 2007/03/05 15:07:14 ghen Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.87.2.5 2006/06/04 08:59:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.87.2.6 2007/03/05 15:07:14 ghen Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -925,19 +925,19 @@ bge_newbuf_std(sc, i, m, dmamap)
 			return(ENOBUFS);
 		}
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
-		if (!sc->bge_rx_alignment_bug)
-		    m_adj(m_new, ETHER_ALIGN);
 
-		if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
-		    BUS_DMA_READ|BUS_DMA_NOWAIT))
-			return(ENOBUFS);
 	} else {
 		m_new = m;
 		m_new->m_len = m_new->m_pkthdr.len = MCLBYTES;
 		m_new->m_data = m_new->m_ext.ext_buf;
-		if (!sc->bge_rx_alignment_bug)
-		    m_adj(m_new, ETHER_ALIGN);
 	}
+	if (!sc->bge_rx_alignment_bug)
+	    m_adj(m_new, ETHER_ALIGN);
+	if (bus_dmamap_load_mbuf(sc->bge_dmatag, dmamap, m_new,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT))
+		return(ENOBUFS);
+	bus_dmamap_sync(sc->bge_dmatag, dmamap, 0, dmamap->dm_mapsize, 
+	    BUS_DMASYNC_PREREAD);
 
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
 	r = &sc->bge_rdata->bge_rx_std_ring[i];
@@ -968,9 +968,9 @@ bge_newbuf_jumbo(sc, i, m)
 {
 	struct mbuf *m_new = NULL;
 	struct bge_rx_bd *r;
+	caddr_t buf = NULL;
 
 	if (m == NULL) {
-		caddr_t			buf = NULL;
 
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -994,12 +994,14 @@ bge_newbuf_jumbo(sc, i, m)
 		m_new->m_flags |= M_EXT_RW;
 	} else {
 		m_new = m;
-		m_new->m_data = m_new->m_ext.ext_buf;
+		buf = m_new->m_data = m_new->m_ext.ext_buf;
 		m_new->m_ext.ext_size = BGE_JUMBO_FRAMELEN;
 	}
-
 	if (!sc->bge_rx_alignment_bug)
 	    m_adj(m_new, ETHER_ALIGN);
+	bus_dmamap_sync(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
+	    mtod(m_new, caddr_t) - sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
+	    BUS_DMASYNC_PREREAD);
 	/* Set up the descriptor. */
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
 	sc->bge_cdata.bge_rx_jumbo_chain[i] = m_new;
@@ -2986,6 +2988,10 @@ bge_rxeof(sc)
 			m = sc->bge_cdata.bge_rx_jumbo_chain[rxidx];
 			sc->bge_cdata.bge_rx_jumbo_chain[rxidx] = NULL;
 			jumbocnt++;
+			bus_dmamap_sync(sc->bge_dmatag,
+			    sc->bge_cdata.bge_rx_jumbo_map,
+			    mtod(m, caddr_t) - sc->bge_cdata.bge_jumbo_buf,
+			    BGE_JLEN, BUS_DMASYNC_POSTREAD);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
 				ifp->if_ierrors++;
 				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
@@ -3000,10 +3006,14 @@ bge_rxeof(sc)
 		} else {
 			BGE_INC(sc->bge_std, BGE_STD_RX_RING_CNT);
 			m = sc->bge_cdata.bge_rx_std_chain[rxidx];
+
 			sc->bge_cdata.bge_rx_std_chain[rxidx] = NULL;
 			stdcnt++;
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			sc->bge_cdata.bge_rx_std_map[rxidx] = 0;
+			bus_dmamap_sync(sc->bge_dmatag, dmamap, 0,
+			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
+			bus_dmamap_unload(sc->bge_dmatag, dmamap);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
 				ifp->if_ierrors++;
 				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
