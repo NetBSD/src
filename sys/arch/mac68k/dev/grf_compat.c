@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.19 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.20 2007/03/05 21:11:04 he Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.19 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.20 2007/03/05 21:11:04 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ grfmap(dev_t dev, struct macfb_softc *sc, void **addrp, struct proc *p)
 	    flags, (void *)&vn, 0, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 
 	/* Offset into page: */
-	*addrp += sc->sc_dc->dc_offset;
+	*addrp = (char*)*addrp + sc->sc_dc->dc_offset;
 
 	return (error);
 }
@@ -336,7 +336,7 @@ grfunmap(dev_t dev, struct macfb_softc *sc, void *addr, struct proc *p)
 {
 	vm_size_t size;
 
-	addr -= sc->sc_dc->dc_offset;
+	addr = (char*)addr - sc->sc_dc->dc_offset;
 
 	if (addr <= 0)
 		return (-1);
