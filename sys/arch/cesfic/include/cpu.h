@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 2007/03/04 05:59:42 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15 2007/03/05 13:06:44 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -155,22 +155,6 @@ extern int want_resched;	/* resched() was called */
 
 extern int astpending;		/* need to trap before returning to user mode */
 #define aston() (astpending++)
-
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-#define SIR_ZS		0x4
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
-#define setsoftzs()	ssir |= SIR_ZS
-
-void softzs __P((void));
 
 #endif /* _KERNEL */
 
