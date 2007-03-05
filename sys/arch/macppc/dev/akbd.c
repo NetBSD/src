@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.35 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: akbd.c,v 1.36 2007/03/05 10:47:06 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.35 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.36 2007/03/05 10:47:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.35 2007/03/04 06:00:10 christos Exp $");
  */
 static int	akbdmatch __P((struct device *, struct cfdata *, void *));
 static void	akbdattach __P((struct device *, struct device *, void *));
-void		kbd_adbcomplete __P((void *buffer, void *data_area, int adb_command));
 static void	kbd_processevent __P((adb_event_t *event, struct akbd_softc *));
 #ifdef notyet
 static u_char	getleds __P((int));
@@ -265,8 +264,8 @@ akbdattach(parent, self, aux)
  */
 void 
 kbd_adbcomplete(buffer, data_area, adb_command)
-	void *buffer;
-	void *data_area;
+	uint8_t *buffer;
+	uint8_t *data_area;
 	int adb_command;
 {
 	adb_event_t event;

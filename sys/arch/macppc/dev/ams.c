@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.24 2007/03/04 06:00:10 christos Exp $	*/
+/*	$NetBSD: ams.c,v 1.25 2007/03/05 10:47:06 tsutsui Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.24 2007/03/04 06:00:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ams.c,v 1.25 2007/03/05 10:47:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -408,7 +408,7 @@ ems_init(struct ams_softc *sc)
  * an ADB event record.
  */
 void
-ms_adbcomplete(void *buffer, void *data_area, int adb_command)
+ms_adbcomplete(uint8_t *buffer, uint8_t *data_area, int adb_command)
 {
 	adb_event_t event;
 	struct ams_softc *sc;
