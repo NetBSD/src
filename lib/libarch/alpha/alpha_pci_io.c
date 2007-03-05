@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_pci_io.c,v 1.3 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: alpha_pci_io.c,v 1.4 2007/03/05 03:05:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ alpha_pci_io_swiz(bus_addr_t ioaddr, int size)
 	uint32_t *port;
 
 	/* LINTED */
-	port = (uint32_t *) (abw->abw_addr +
+	port = (uint32_t *) ((char *)abw->abw_addr +
 	    (((ioaddr - abw->abw_abst.abst_bus_start) <<
 	      abw->abw_abst.abst_addr_shift) |
 	     (size << abw->abw_abst.abst_size_shift)));
@@ -239,7 +239,7 @@ uint8_t
 alpha_pci_io_bwx_inb(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	uint8_t *port = (uint8_t *) (abw->abw_addr +
+	uint8_t *port = (uint8_t *) ((char *)abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_mb();
@@ -252,7 +252,7 @@ alpha_pci_io_bwx_inw(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
 	/* LINTED */
-	uint16_t *port = (uint16_t *) (abw->abw_addr +
+	uint16_t *port = (uint16_t *) ((char *)abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_mb();
@@ -265,7 +265,7 @@ alpha_pci_io_bwx_inl(bus_addr_t ioaddr)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
 	/* LINTED */
-	uint32_t *port = (uint32_t *) (abw->abw_addr +
+	uint32_t *port = (uint32_t *) ((char *)abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_mb();
@@ -277,7 +277,7 @@ void
 alpha_pci_io_bwx_outb(bus_addr_t ioaddr, uint8_t val)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
-	uint8_t *port = (uint8_t *) (abw->abw_addr +
+	uint8_t *port = (uint8_t *) ((char *)abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_stb(port, val);
@@ -289,7 +289,7 @@ alpha_pci_io_bwx_outw(bus_addr_t ioaddr, uint16_t val)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
 	/* LINTED */
-	uint16_t *port = (uint16_t *) (abw->abw_addr +
+	uint16_t *port = (uint16_t *) ((char *)abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	alpha_stw(port, val);
@@ -301,7 +301,7 @@ alpha_pci_io_bwx_outl(bus_addr_t ioaddr, uint32_t val)
 {
 	struct alpha_bus_window *abw = alpha_pci_io_findwindow(ioaddr);
 	/* LINTED */
-	uint32_t *port = (uint32_t *) (abw->abw_addr +
+	uint32_t *port = (uint32_t *) ((char *)abw->abw_addr +
 	    (ioaddr - abw->abw_abst.abst_bus_start));
 
 	*port = val;
