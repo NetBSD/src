@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.26 2007/03/04 05:59:20 christos Exp $ */
+/*	$NetBSD: if_qn.c,v 1.27 2007/03/05 20:00:00 he Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.26 2007/03/04 05:59:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.27 2007/03/05 20:00:00 he Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -592,7 +592,7 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 			len1 = amount;
 
 		word_copy_from_card(nic_fifo_ptr,
-		    (u_short *)(mtod(m, void *) + m->m_len),
+		    (u_short *)(mtod(m, char *) + m->m_len),
 		    len1);
 		m->m_len += len1;
 		len -= len1;
