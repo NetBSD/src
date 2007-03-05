@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.121 2007/03/05 04:59:19 dogcow Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.121 2007/03/05 04:59:19 dogcow Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.122 2007/03/05 09:22:02 yamt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -792,7 +792,7 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 		if (np->n_type != ELF_NOTE_TYPE_NETBSD_TAG ||
 		    np->n_namesz != ELF_NOTE_NETBSD_NAMESZ ||
 		    np->n_descsz != ELF_NOTE_NETBSD_DESCSZ ||
-		    memcmp((char *)np + 1, ELF_NOTE_NETBSD_NAME,
+		    memcmp(np + 1, ELF_NOTE_NETBSD_NAME,
 		    ELF_NOTE_NETBSD_NAMESZ))
 			goto next;
 
