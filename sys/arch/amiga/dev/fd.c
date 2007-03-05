@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.68 2007/03/04 05:59:18 christos Exp $ */
+/*	$NetBSD: fd.c,v 1.69 2007/03/05 18:45:10 he Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.68 2007/03/04 05:59:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.69 2007/03/05 18:45:10 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -802,7 +802,7 @@ fdgetdisklabel(struct fd_softc *sc, dev_t dev)
 	fdstrategy(bp);
 	if ((error = biowait(bp)) != 0)
 		goto nolabel;
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
 	if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(dlp)) {
 		error = EINVAL;
@@ -911,7 +911,7 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	/*
 	 * copy disklabel to buf and write it out synchronous
 	 */
-	dlp = (struct disklabel *)(bp->b_data + LABELOFFSET);
+	dlp = (struct disklabel *)((char*)bp->b_data + LABELOFFSET);
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
@@ -1300,7 +1300,7 @@ fdcont(struct fd_softc *sc)
 
 	dp = &sc->curbuf;
 	bp = BUFQ_PEEK(sc->bufq);
-	dp->b_data += (dp->b_bcount - bp->b_resid);
+	dp->b_data = (char*)dp->b_data + (dp->b_bcount - bp->b_resid);
 	dp->b_blkno += (dp->b_bcount - bp->b_resid) / FDSECSIZE;
 	dp->b_bcount = bp->b_resid;
 
