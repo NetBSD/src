@@ -1,11 +1,11 @@
-/*	$NetBSD: pthread_cond.c,v 1.25 2007/03/05 22:25:27 ad Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.26 2007/03/05 23:55:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
+ * by Nathan J. Williams and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.25 2007/03/05 22:25:27 ad Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.26 2007/03/05 23:55:54 ad Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -131,9 +131,10 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 #endif
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	self->pt_sleeponq = 1;
+	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
-	(void)pthread__park(self, &cond->ptc_lock, cond,
-	    NULL, NULL, 0, 1);
+	(void)pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
+	    NULL, 1);
 #ifdef ERRORCHECK
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
@@ -149,12 +150,6 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 
 	return 0;
 }
-
-
-struct pthread_cond__waitarg {
-	pthread_t ptw_thread;
-	pthread_cond_t *ptw_cond;
-};
 
 int
 pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
@@ -196,9 +191,10 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 #endif
 	PTQ_INSERT_HEAD(&cond->ptc_waiters, self, pt_sleep);
 	self->pt_sleeponq = 1;
+	self->pt_sleepobj = &cond->ptc_waiters;
 	pthread_mutex_unlock(mutex);
-	retval = pthread__park(self, &cond->ptc_lock, cond,
-	    NULL, abstime, 0, 1);
+	retval = pthread__park(self, &cond->ptc_lock, &cond->ptc_waiters,
+	    abstime, 1);
 #ifdef ERRORCHECK
 	if (PTQ_EMPTY(&cond->ptc_waiters))
 		cond->ptc_mutex = NULL;
@@ -238,7 +234,8 @@ pthread_cond_signal(pthread_cond_t *cond)
 			if (PTQ_EMPTY(&cond->ptc_waiters))
 				cond->ptc_mutex = NULL;
 #endif
-			pthread__unpark(self, &cond->ptc_lock, cond, signaled);
+			pthread__unpark(self, &cond->ptc_lock,
+			    &cond->ptc_waiters, signaled);
 			PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 		} else {
 #ifdef ERRORCHECK
@@ -269,7 +266,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 #ifdef ERRORCHECK
 		cond->ptc_mutex = NULL;
 #endif
-		pthread__unpark_all(self, &cond->ptc_lock, cond, &cond->ptc_waiters);
+		pthread__unpark_all(self, &cond->ptc_lock, &cond->ptc_waiters);
 		PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 	}
 
