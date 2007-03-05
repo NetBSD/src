@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.107 2007/03/04 06:02:51 christos Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.108 2007/03/05 16:06:52 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.107 2007/03/04 06:02:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.108 2007/03/05 16:06:52 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -423,7 +423,13 @@ void
 wsdisplay_scroll(void *arg, int op)
 {
 	struct wsdisplay_softc *sc = arg;
+	struct wsscreen *scr;
 	int lines;
+
+	scr = sc->sc_focus;
+
+	if (!scr)
+		return;
 
 	if (op == WSDISPLAY_SCROLL_RESET)
 		lines = 0;
