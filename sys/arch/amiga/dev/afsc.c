@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.38 2007/03/04 05:59:16 christos Exp $ */
+/*	$NetBSD: afsc.c,v 1.39 2007/03/05 18:25:29 he Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.38 2007/03/04 05:59:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.39 2007/03/05 18:25:29 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ afscattach(struct device *pdp, struct device *dp, void *auxp)
 	zap = auxp;
 
 	if (zap->manid == 514 && zap->prodid == 84)
-		sc->sc_siopp = rp = (siop_regmap_p)((void *)zap->va +
+		sc->sc_siopp = rp = (siop_regmap_p)((char *)zap->va +
 						    0x00800000);
 	else
 		sc->sc_siopp = rp = ztwomap(0xdd0040);
