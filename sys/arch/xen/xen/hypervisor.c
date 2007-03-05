@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.29 2007/01/29 01:52:46 hubertf Exp $ */
+/* $NetBSD: hypervisor.c,v 1.30 2007/03/05 23:26:40 dogcow Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.29 2007/01/29 01:52:46 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.30 2007/03/05 23:26:40 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,6 @@ hypervisor_attach(parent, self, aux)
 	xengnt_init();
 
 	memset(&hac.hac_caa, 0, sizeof(hac.hac_caa));
-	hac.hac_caa.caa_name = "vcpu";
 	hac.hac_caa.cpu_number = 0;
 	hac.hac_caa.cpu_role = CPU_ROLE_SP;
 	hac.hac_caa.cpu_func = 0;
