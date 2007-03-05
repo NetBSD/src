@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.313 2007/03/04 06:00:08 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.314 2007/03/05 12:50:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.313 2007/03/04 06:00:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.314 2007/03/05 12:50:16 tsutsui Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -230,7 +230,6 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-void *	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120 2007/03/04 06:00:14 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.121 2007/03/05 12:50:16 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2007/03/04 06:00:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2007/03/05 12:50:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -157,7 +157,6 @@ struct vm_map *phys_map = NULL;
  */
 struct	mvmeprom_brdid  boardid;
 
-void *	msgbufaddr;		/* KVA of message buffer */
 paddr_t msgbufpa;		/* PA of message buffer */
 
 int	maxmem;			/* max memory per process */

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.50 2007/03/04 06:00:04 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.51 2007/03/05 12:50:16 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2007/03/04 06:00:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2007/03/05 12:50:16 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -105,7 +105,6 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-void *	msgbufaddr;
 int	maxmem;			/* max memory per process */
 int	physmem;		/* set by locore */
 /*
