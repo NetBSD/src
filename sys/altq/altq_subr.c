@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.20 2007/03/04 05:59:02 christos Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.21 2007/03/05 22:50:32 he Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.20 2007/03/04 05:59:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.21 2007/03/05 22:50:32 he Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1085,7 +1085,7 @@ extract_ports4(struct mbuf *m, struct ip *ip, struct flowinfo_in *fin)
 		if (fin->fi_gpi == 0){
 			u_int32_t *gpi;
 
-			gpi = (u_int32_t *)(mtod(m0, void *) + off);
+			gpi = (u_int32_t *)(mtod(m0, char *) + off);
 			fin->fi_gpi   = *gpi;
 		}
 		fin->fi_proto = proto;
@@ -1095,7 +1095,7 @@ extract_ports4(struct mbuf *m, struct ip *ip, struct flowinfo_in *fin)
 			/* get next header and header length */
 			struct _opt6 *opt6;
 
-			opt6 = (struct _opt6 *)(mtod(m0, void *) + off);
+			opt6 = (struct _opt6 *)(mtod(m0, char *) + off);
 			proto = opt6->opt6_nxt;
 			off += 8 + (opt6->opt6_hlen * 4);
 			if (fin->fi_gpi == 0 && m0->m_len >= off + 8)
