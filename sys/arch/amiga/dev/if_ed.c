@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.50 2007/03/04 05:59:20 christos Exp $ */
+/*	$NetBSD: if_ed.c,v 1.51 2007/03/05 19:58:43 he Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.50 2007/03/04 05:59:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.51 2007/03/05 19:58:43 he Exp $");
 
 #include "bpfilter.h"
 
@@ -215,7 +215,7 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	if (zap->manid == HYDRA_MANID) {
 		sc->mem_start = zap->va;
 		sc->mem_size = 16384;
-		sc->nic_addr = sc->mem_start + HYDRA_NIC_BASE;
+		sc->nic_addr = (u_char *)sc->mem_start + HYDRA_NIC_BASE;
 		prom = (u_char *)sc->mem_start + HYDRA_ADDRPROM;
 	} else {
 		sc->mem_start = (u_char *)zap->va + 0x8000;
@@ -226,7 +226,7 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->cr_proto = ED_CR_RD2;
 	sc->tx_page_start = 0;
 
-	sc->mem_end = sc->mem_start + sc->mem_size;
+	sc->mem_end = (u_char *)sc->mem_start + sc->mem_size;
 
 	/*
 	 * Use one xmit buffer if < 16k, two buffers otherwise (if not told
@@ -242,7 +242,8 @@ ed_zbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
 
 	sc->mem_ring =
-	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+	    (u_char *)sc->mem_start + 
+		((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	/*
 	 * Interrupts must be inactive when reading the prom, as the interrupt
@@ -534,7 +535,8 @@ outloop:
 	m0 = m;
 
 	/* txb_new points to next open buffer slot. */
-	buffer = sc->mem_start + ((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+	buffer = (char*)sc->mem_start +
+		((sc->txb_new * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
 
 	len = ed_put(sc, m, buffer);
 
@@ -595,7 +597,7 @@ loop:
 
 	do {
 		/* Get pointer to this buffer's header structure. */
-		packet_ptr = sc->mem_ring +
+		packet_ptr = (char*)sc->mem_ring +
 		    ((sc->next_packet - sc->rec_page_start) << ED_PAGE_SHIFT);
 
 		/*
@@ -649,7 +651,8 @@ loop:
 		    packet_hdr.next_packet >= sc->rec_page_start &&
 		    packet_hdr.next_packet < sc->rec_page_stop) {
 			/* Go get packet. */
-			ed_get_packet(sc, packet_ptr + sizeof(struct ed_ring),
+			ed_get_packet(sc, (char*)packet_ptr +
+			    sizeof(struct ed_ring),
 			    len - sizeof(struct ed_ring));
 			++ifp->if_ipackets;
 		} else {
@@ -984,7 +987,7 @@ ed_get_packet(struct ed_softc *sc, void *buf, u_short len)
 	m->m_data += EOFF;
 
 	word_copy(buf, mtod(m, void *), sizeof(struct ether_header));
-	buf += sizeof(struct ether_header);
+	buf = (char*)buf + sizeof(struct ether_header);
 	m->m_len += sizeof(struct ether_header);
 	len -= sizeof(struct ether_header);
 
@@ -1020,20 +1023,20 @@ ed_ring_copy(struct ed_softc *sc, void *src, void *dst, u_short amount)
 	u_short tmp_amount;
 
 	/* Does copy wrap to lower addr in ring buffer? */
-	if (src + amount > sc->mem_end) {
-		tmp_amount = sc->mem_end - src;
+	if ((char*)src + amount > (char*)sc->mem_end) {
+		tmp_amount = (char*)sc->mem_end - (char*)src;
 
 		/* Copy amount up to end of NIC memory. */
 		word_copy(src, dst, tmp_amount);
 
 		amount -= tmp_amount;
 		src = sc->mem_ring;
-		dst += tmp_amount;
+		dst = (char*)dst + tmp_amount;
 	}
 
 	word_copy(src, dst, amount);
 
-	return (src + amount);
+	return ((char*)src + amount);
 }
 
 /*
@@ -1083,7 +1086,7 @@ ed_ring_to_mbuf(struct ed_softc *sc, void *src, struct mbuf *dst,
 			amount = min(total_len, M_TRAILINGSPACE(m));
 		}
 
-		src = ed_ring_copy(sc, src, mtod(m, void *) + m->m_len,
+		src = ed_ring_copy(sc, src, mtod(m, char *) + m->m_len,
 		    amount);
 
 		m->m_len += amount;
@@ -1187,7 +1190,7 @@ ed_put(struct ed_softc *sc, struct mbuf *m, void *buf)
 			if (wantbyte) {
 				savebyte[1] = *data;
 				word_copy(savebyte, buf, 2);
-				buf += 2;
+				buf = (char*)buf + 2;
 				data++;
 				len--;
 				wantbyte = 0;
@@ -1195,7 +1198,7 @@ ed_put(struct ed_softc *sc, struct mbuf *m, void *buf)
 			/* Output contiguous words. */
 			if (len > 1) {
 				word_copy(data, buf, len);
-				buf += len & ~1;
+				buf = (char*)buf + (len & ~1);
 				data += len & ~1;
 				len &= 1;
 			}
@@ -1210,7 +1213,7 @@ ed_put(struct ed_softc *sc, struct mbuf *m, void *buf)
 	if (wantbyte) {
 		savebyte[1] = 0;
 		word_copy(savebyte, buf, 2);
-		buf += 2;
+		buf = (char*)buf + 2;
 		totlen++;
 	}
 	if (totlen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
