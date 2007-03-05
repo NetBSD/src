@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.15 2007/03/04 05:59:15 christos Exp $	*/
+/*	$NetBSD: cc.h,v 1.16 2007/03/05 18:33:34 he Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -165,7 +165,7 @@ struct mem_node {
 #define CM_BLOCKSIZE 0x4
 #define CM_BLOCKMASK (~(CM_BLOCKSIZE - 1))
 #define MNODES_MEM(mn) ((u_char *)(&mn[1]))
-#define PREP_DMA_MEM(mem) (void *)((void *)mem - CHIPMEMADDR)
+#define PREP_DMA_MEM(mem) (void *)((char*)(mem) - CHIPMEMADDR)
 
 extern vaddr_t CHIPMEMADDR;
 extern vaddr_t chipmem_start;
