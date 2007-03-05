@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.19 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: akbd.c,v 1.20 2007/03/05 21:06:24 he Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.19 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.20 2007/03/05 21:06:24 he Exp $");
 
 #include "opt_adb.h"
 
@@ -291,8 +291,8 @@ kbd_adbcomplete(void *buffer, void *data_area, int adb_command)
 	event.addr = adbaddr;
 	event.hand_id = ksc->handler_id;
 	event.def_addr = ksc->origaddr;
-	event.byte_count = buffer[0];
-	memcpy(event.bytes, buffer + 1, event.byte_count);
+	event.byte_count = ((uint8_t*)buffer)[0];
+	memcpy(event.bytes, (char*)buffer + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
