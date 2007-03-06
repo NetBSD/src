@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.38 2007/03/04 05:59:19 christos Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.39 2007/03/06 00:46:00 he Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.38 2007/03/04 05:59:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.39 2007/03/06 00:46:00 he Exp $");
 
 #include "grfcl.h"
 #if NGRFCL > 0
@@ -462,7 +462,7 @@ void
 cl_boardinit(gp)
 	struct grf_softc *gp;
 {
-	unsigned char *ba = gp->g_regkva;
+	volatile unsigned char *ba = gp->g_regkva;
 	int     x;
 
 	if ((cltype == PICASSO) && (cl_64bit == 1)) { /* PicassoIV */
@@ -1376,7 +1376,7 @@ cl_load_mon(gp, md)
 {
 	struct grfvideo_mode *gv;
 	struct grfinfo *gi;
-	volatile void *ba, fb;
+	volatile void *ba, *fb;
 	unsigned char num0, denom0, clkdoub;
 	unsigned short HT, HDE, HBS, HBE, HSS, HSE, VDE, VBS, VBE, VSS,
 	        VSE, VT;
@@ -1401,9 +1401,9 @@ cl_load_mon(gp, md)
 	/* provide all needed information in grf device-independent locations */
 	gp->g_data = (void *) gv;
 	gi = &gp->g_display;
-	gi->gd_regaddr = (void *) kvtop(ba);
+	gi->gd_regaddr = (void *) kvtop(__UNVOLATILE(ba));
 	gi->gd_regsize = 64 * 1024;
-	gi->gd_fbaddr = (void *) kvtop(fb);
+	gi->gd_fbaddr = (void *) kvtop(__UNVOLATILE(fb));
 	gi->gd_fbsize = cl_fbsize;
 	gi->gd_colors = 1 << gv->depth;
 	gi->gd_planes = gv->depth;
@@ -1690,7 +1690,7 @@ cl_inittextmode(gp)
 {
 	struct grfcltext_mode *tm = (struct grfcltext_mode *) gp->g_data;
 	volatile unsigned char *ba = gp->g_regkva;
-	unsigned char *fb = gp->g_fbkva;
+	unsigned char *fb = __UNVOLATILE(gp->g_fbkva);
 	unsigned char *c, *f, y;
 	unsigned short z;
 
