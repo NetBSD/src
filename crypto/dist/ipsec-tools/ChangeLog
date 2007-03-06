@@ -1,3 +1,7 @@
+---------------------------------------------
+
+	0.7.beta2 released
+
 2007-02-27  Matthew Grooms  <mgrooms@shrew.net>
 	* src/racoon/ipsec_doi.c: add logic to match ip address ids to
 	  ip subnet ids when appropriate. reported by Yvan.
