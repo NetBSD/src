@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2004/05/12 16:56:41 cl Exp $
+#	$NetBSD: Makefile,v 1.14 2007/03/06 21:56:47 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -17,5 +17,6 @@ SUBDIR+= utils
 .endif
 
 TARGETS+=release
+TARGETS+=iso_image
 
 .include <bsd.subdir.mk>
