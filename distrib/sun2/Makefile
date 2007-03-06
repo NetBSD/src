@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2003/01/03 15:34:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2007/03/06 21:57:24 bouyer Exp $
 
-SUBDIR=		ramdisk miniroot
+SUBDIR=		ramdisk miniroot cdroms
 TARGETS+=	release
 
 .include <bsd.own.mk>
@@ -15,5 +15,8 @@ release: check_RELEASEDIR .WAIT \
 	${RELEASE_INSTALL} ${DESTDIR}/usr/mdec/tapeboot \
 	    ${.CURDIR}/MakeBootTape ${.CURDIR}/MakeInstTape \
 	    ${RELEASEDIR}/${MACHINE}/installation/tapeimage
+
+iso_image:
+	${MAKEDIRTARGET} cdroms iso_image
 
 .include <bsd.subdir.mk>
