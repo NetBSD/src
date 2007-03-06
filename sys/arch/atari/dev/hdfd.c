@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.53 2007/03/04 05:59:40 christos Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.54 2007/03/06 14:10:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.53 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.54 2007/03/06 14:10:07 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -1090,7 +1090,7 @@ loop:
 		/*
 		 * Setup pseudo-DMA address & count
 		 */
-		fddmaaddr = bp->b_data + fd->sc_skip;
+		fddmaaddr = (char *)bp->b_data + fd->sc_skip;
 		fddmalen  = fd->sc_nbytes;
 
 		wrt_fdc_reg(fdctl, type->rate);
