@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.19 2007/03/04 06:00:11 christos Exp $ */
+/* $NetBSD: if_aumac.c,v 1.20 2007/03/06 00:43:50 simonb Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.19 2007/03/04 06:00:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.20 2007/03/06 00:43:50 simonb Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.19 2007/03/04 06:00:11 christos Exp $
 #define	AUMAC_BUFSIZE		(MAC_BUFLEN * (AUMAC_NTXDESC + AUMAC_NRXDESC))
 
 struct aumac_buf {
-	void *buf_vaddr;		/* virtual address of buffer */
+	vaddr_t buf_vaddr;		/* virtual address of buffer */
 	bus_addr_t buf_paddr;		/* DMA address of buffer */
 };
 
@@ -234,7 +234,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct pglist pglist;
 	paddr_t bufaddr;
-	void *vbufaddr;
+	vaddr_t vbufaddr;
 	int i;
 
 	callout_init(&sc->sc_tick_ch);
@@ -297,7 +297,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	bufaddr = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
-	vbufaddr = (void *)MIPS_PHYS_TO_KSEG0(bufaddr);
+	vbufaddr = MIPS_PHYS_TO_KSEG0(bufaddr);
 
 	for (i = 0; i < AUMAC_NTXDESC; i++) {
 		int offset = AUMAC_TXBUF_OFFSET + (i * MAC_BUFLEN);
@@ -437,11 +437,11 @@ aumac_start(struct ifnet *ifp)
 		 */
 
 		m_copydata(m, 0, m->m_pkthdr.len,
-		    sc->sc_txbufs[nexttx].buf_vaddr);
+		    (void *)sc->sc_txbufs[nexttx].buf_vaddr);
 
 		/* Zero out the remainder of any short packets. */
 		if (m->m_pkthdr.len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
-			memset(sc->sc_txbufs[nexttx].buf_vaddr +
+			memset((char *)sc->sc_txbufs[nexttx].buf_vaddr +
 			    m->m_pkthdr.len, 0,
 			    ETHER_MIN_LEN - ETHER_CRC_LEN - m->m_pkthdr.len);
 
@@ -738,7 +738,7 @@ aumac_rxintr(struct aumac_softc *sc)
 
 		m->m_data += 2;		/* align payload */
 		memcpy(mtod(m, void *),
-		    sc->sc_rxbufs[i].buf_vaddr, len);
+		    (void *)sc->sc_rxbufs[i].buf_vaddr, len);
 		AUMAC_INIT_RXDESC(sc, i);
 
 		m->m_pkthdr.rcvif = ifp;
