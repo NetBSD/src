@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129 2007/03/06 11:28:46 dillo Exp $
+# $NetBSD: GENERIC,v 1.130 2007/03/06 21:47:46 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129 $"
+#ident 		"GENERIC-$Revision: 1.130 $"
 
 maxusers	32		# estimated number of users
 
@@ -79,20 +79,20 @@ options 	POWERNOW_K8
 #options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-#options 	DIAGNOSTIC	# expensive kernel consistency checks
+options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
+options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 
 #
 # Because gcc omits the frame pointer for any -O level, the line below
 # is needed to make backtraces in DDB work.
 #
 #makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
-#options 	DDB		# in-kernel debugger
+options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_15	# compatibility with NetBSD 1.5,
@@ -231,8 +231,9 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-#acpi0 		at mainbus0
-#options 	ACPI_SCANPCI		# find PCI roots using ACPI
+# ACPI will be used if present. If not it will fall back to MPBIOS
+acpi0 		at mainbus0
+options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
