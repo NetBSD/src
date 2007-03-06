@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.33 2007/03/04 05:59:45 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.34 2007/03/06 00:48:07 simonb Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2007/03/04 05:59:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2007/03/06 00:48:07 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -200,7 +200,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 
 	/* clear the BSS segment */
 	kernend = (void *)mips_round_page(end);
-	memset(edata, 0, kernend - (void *)edata);
+	memset(edata, 0, (char *)kernend - edata);
 
 	/* set CPU model info for sysctl_hw */
 	strcpy(cpu_model, board->ab_name);
@@ -366,7 +366,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	v = (void *) uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 

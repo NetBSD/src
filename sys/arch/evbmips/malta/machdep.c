@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2007/03/05 21:05:00 dogcow Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2007/03/06 00:48:08 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2007/03/05 21:05:00 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2007/03/06 00:48:08 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -217,7 +217,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 * Clear the BSS segment.
 	 */
 	kernend = (void *)mips_round_page(end);
-	memset(edata, 0, kernend - edata);
+	memset(edata, 0, (char *)kernend - edata);
 
 	/* save the yamon environment pointer */
 	yamon_envp = envp;
@@ -322,7 +322,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	 */
 	v = (void *)uvm_pageboot_alloc(USPACE); 
 	lwp0.l_addr = proc0paddr = (struct user *)v;
-	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
