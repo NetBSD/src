@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.39 2007/03/04 06:03:09 christos Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.40 2007/03/06 16:16:02 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.39 2007/03/04 06:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.40 2007/03/06 16:16:02 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,7 @@ int
 sys_profil(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_profil_args /* {
-		syscallarg(void *) samples;
+		syscallarg(char *) samples;
 		syscallarg(u_int) size;
 		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
@@ -288,7 +288,7 @@ addupc_intr(struct lwp *l, u_long pc)
 	    (i = PC_TO_INDEX(pc, prof)) >= prof->pr_size)
 		return;			/* out of range; ignore */
 
-	addr = (char *)prof->pr_base + i;
+	addr = prof->pr_base + i;
 	mutex_spin_exit(&p->p_stmutex);
 	if ((v = fuswintr(addr)) == -1 || suswintr(addr, v + 1) == -1) {
 		/* XXXSMP */
@@ -328,7 +328,7 @@ addupc_task(struct lwp *l, u_long pc, u_int ticks)
 		return;
 	}
 
-	addr = (char *)prof->pr_base + i;
+	addr = prof->pr_base + i;
 	mutex_spin_exit(&p->p_stmutex);
 	if ((error = copyin(addr, (void *)&v, sizeof(v))) == 0) {
 		v += ticks;
