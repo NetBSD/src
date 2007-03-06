@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.15 2006/03/22 00:08:09 christos Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.16 2007/03/06 16:13:58 tnozaki Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.15 2006/03/22 00:08:09 christos Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.16 2007/03/06 16:13:58 tnozaki Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -166,11 +166,17 @@ _UTF8_findlen(wchar_t v)
 	return -1;	/*out of range*/
 }
 
+static __inline int
+_UTF8_surrogate(wchar_t wc)
+{
+	return wc >= 0xd800 && wc <= 0xdfff;
+}
+
 static __inline void
 /*ARGSUSED*/
 _citrus_UTF8_init_state(_UTF8EncodingInfo *ei, _UTF8State *s)
 {
-	memset(s, 0, sizeof(*s));
+	s->chlen = 0;
 }
 
 static __inline void
@@ -197,7 +203,6 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 	const char *s0;
 	int c;
 	int i;
-	int chlenbak;
 
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
@@ -208,45 +213,28 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 	if (s0 == NULL) {
 		_citrus_UTF8_init_state(ei, psenc);
 		*nresult = 0; /* state independent */
-		return (0);
+		return 0;
 	}
 
-	chlenbak = psenc->chlen;
-
 	/* make sure we have the first byte in the buffer */
-	switch (psenc->chlen) {
-	case 0:
-		if (n < 1) {
+	if (psenc->chlen == 0) {
+		if (n-- < 1)
 			goto restart;
-		}
-		psenc->ch[0] = *s0++;
-		psenc->chlen = 1;
-		n--;
-		break;
-	case 1: case 2: case 3: case 4: case 5:
-		break;
-	default:
-		/* illegal state */
-		goto ilseq;
+		psenc->ch[psenc->chlen++] = *s0++;
 	}
 
 	c = _UTF8_count[psenc->ch[0] & 0xff];
-	if (c == 0)
+	if (c < 1 || c < psenc->chlen)
 		goto ilseq;
-	while (psenc->chlen < c) {
-		if (n < 1) {
-			goto restart;
-		}
-		psenc->ch[psenc->chlen] = *s0++;
-		psenc->chlen++;
-		n--;
-	}
 
-	switch (c) {
-	case 1:
+	if (c == 1)
 		wchar = psenc->ch[0] & 0xff;
-		break;
-	case 2: case 3: case 4: case 5: case 6:
+	else {
+		while (psenc->chlen < c) {
+			if (n-- < 1)
+				goto restart;
+			psenc->ch[psenc->chlen++] = *s0++;
+		}
 		wchar = psenc->ch[0] & (0x7f >> c);
 		for (i = 1; i < c; i++) {
 			if ((psenc->ch[i] & 0xc0) != 0x80)
@@ -254,38 +242,25 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 			wchar <<= 6;
 			wchar |= (psenc->ch[i] & 0x3f);
 		}
-
-		_DIAGASSERT(findlen(wchar) == c);
-
-		break;
-	default:
-		/* illegal state */
-		goto ilseq;
+		if (_UTF8_surrogate(wchar) || _UTF8_findlen(wchar) != c)
+			goto ilseq;
 	}
-
+	if (pwc != NULL)
+		*pwc = wchar;
+	*nresult = (wchar == 0) ? 0 : s0 - *s;
 	*s = s0;
-
 	psenc->chlen = 0;
 
-	if (pwc)
-		*pwc = wchar;
-
-	if (!wchar)
-		*nresult = 0;
-	else
-		*nresult = c - chlenbak;
-
-	return (0);
+	return 0;
 
 ilseq:
-	psenc->chlen = 0;
 	*nresult = (size_t)-1;
-	return (EILSEQ);
+	return EILSEQ;
 
 restart:
 	*s = s0;
 	*nresult = (size_t)-2;
-	return (0);
+	return 0;
 }
 
 static int
@@ -298,6 +273,10 @@ _citrus_UTF8_wcrtomb_priv(_UTF8EncodingInfo *ei, char *s, size_t n, wchar_t wc,
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
 
+	if (_UTF8_surrogate(wc)) {
+		ret = EILSEQ;
+		goto err;
+	}
 	cnt = _UTF8_findlen(wc);
 	if (cnt <= 0 || cnt > 6) {
 		/* invalid UCS4 value */
