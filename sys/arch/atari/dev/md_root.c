@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.21 2007/03/04 05:59:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.22 2007/03/06 14:15:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,8 @@ struct read_info {
     struct buf	*bp;		/* buffer for strategy function		*/
     long	nbytes;		/* total number of bytes to read	*/
     long	offset;		/* offset in input medium		*/
-    void *	bufp;		/* current output buffer		*/
-    void *	ebufp;		/* absolute maximum for bufp		*/
+    char	*bufp;		/* current output buffer		*/
+    char	*ebufp;		/* absolute maximum for bufp		*/
     int		chunk;		/* chunk size on input medium		*/
     int		media_sz;	/* size of input medium			*/
     void	(*strat)(struct buf *);	/* strategy function for read	*/
@@ -184,7 +184,7 @@ struct lwp		*lwp;
 	rs.nbytes   = md->md_size;
 	rs.offset   = 0;
 	rs.bufp     = md->md_addr;
-	rs.ebufp    = md->md_addr + md->md_size;
+	rs.ebufp    = (char *)md->md_addr + md->md_size;
 	rs.chunk    = RAMD_CHUNK;
 	rs.media_sz = md->md_size;
 	rs.strat    = bdp->d_strategy;
