@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.9 2007/03/05 23:26:40 dogcow Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10 2007/03/06 12:35:39 yamt Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2007/03/05 23:26:40 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2007/03/06 12:35:39 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -105,6 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2007/03/05 23:26:40 dogcow Exp $");
 #include <machine/mtrr.h>
 #include <machine/tlog.h>
 #include <machine/pio.h>
+
+#ifdef XEN3
+#include <machine/vcpuvar.h>
+#endif
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -300,7 +304,11 @@ vcpu_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	return 1;
+	struct vcpu_attach_args *vcaa = aux;
+
+	if (strcmp(vcaa->vcaa_name, match->cf_name) == 0)
+		return 1;
+	return 0;
 }
 
 void
@@ -308,7 +316,9 @@ vcpu_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	cpu_attach_common(parent, self, aux);
+	struct vcpu_attach_args *vcaa = aux;
+
+	cpu_attach_common(parent, self, &vcaa->vcaa_caa);
 }
 #endif
 
