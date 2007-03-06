@@ -1,4 +1,4 @@
-/*	$NetBSD: hfsp_nhash.c,v 1.1.1.1 2007/03/06 00:10:34 dillo Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.1 2007/03/06 00:22:04 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
