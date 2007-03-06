@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.17 2007/03/05 23:18:01 dillo Exp $
+# $NetBSD: lkm.mi,v 1.18 2007/03/06 11:28:44 dillo Exp $
 ./usr/lkm/adosfs.o				base-vfs-lkm
 ./usr/lkm/bsdcomp.o				base-ppp-lkm
 ./usr/lkm/cd9660.o				base-vfs-lkm
@@ -8,7 +8,8 @@
 ./usr/lkm/ext2fs.o				base-vfs-lkm
 ./usr/lkm/fdesc.o				base-vfs-lkm
 ./usr/lkm/filecorefs.o				base-vfs-lkm
-./usr/lkm/hfsp.o				base-vfs-lkm
+./usr/lkm/hfs.o					base-vfs-lkm
+./usr/lkm/hfsp.o				base-obsolete	obsolete
 ./usr/lkm/if_ipl.o				base-ipf-lkm	ipfilter
 ./usr/lkm/lfs.o					base-vfs-lkm
 ./usr/lkm/kernfs.o				base-vfs-lkm
