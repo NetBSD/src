@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.17 2007/03/04 06:00:33 christos Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.18 2007/03/06 22:31:36 simonb Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.17 2007/03/04 06:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.18 2007/03/06 22:31:36 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -407,7 +407,7 @@ asc_ioasic_intr(sc)
 	asc->sc_flags &= ~ASC_MAPLOADED;
 
 	*asc->sc_dmalen -= trans;
-	*asc->sc_dmaaddr += trans;
+	*asc->sc_dmaaddr = (char *)(*asc->sc_dmaaddr) + trans;
 	
 	return 0;
 }
