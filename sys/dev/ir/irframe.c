@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.38 2007/03/05 20:23:14 drochner Exp $	*/
+/*	$NetBSD: irframe.c,v 1.39 2007/03/06 20:45:59 drochner Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.38 2007/03/05 20:23:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.39 2007/03/06 20:45:59 drochner Exp $");
 
 #include "irframe.h"
 
@@ -79,9 +79,7 @@ const struct cdevsw irframe_cdevsw = {
 };
 
 int irframe_match(struct device *parent, struct cfdata *match, void *aux);
-void irframe_attach(struct device *parent, struct device *self, void *aux);
 int irframe_activate(struct device *self, enum devact act);
-int irframe_detach(struct device *self, int flags);
 
 Static int irf_set_params(struct irframe_softc *sc, struct irda_params *p);
 Static int irf_reset_params(struct irframe_softc *sc);
@@ -405,58 +403,4 @@ irframekqfilter(dev_t dev, struct knote *kn)
 		return (1);
 
 	return (sc->sc_methods->im_kqfilter(sc->sc_handle, kn));
-}
-
-
-/*********/
-
-
-struct device *
-irframe_alloc(size_t size, const struct irframe_methods *m, void *h)
-{
-	struct cfdriver *cd = &irframe_cd;
-	struct cfdata *cfdata;
-	struct device *dev;
-	struct ir_attach_args ia;
-	int unit;
-
-	/* XXX This is wrong */
-
-	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
-	for (unit = 0; unit < cd->cd_ndevs; unit++)
-		if (cd->cd_devs[unit] == NULL)
-			break;
-	cfdata->cf_name = "irframe";
-	cfdata->cf_atname = "irframe"; /* ??? */
-	cfdata->cf_unit = unit;
-	cfdata->cf_fstate = FSTATE_STAR;
-
-	dev = config_attach_pseudo(cfdata);
-
-	ia.ia_methods = m;
-	ia.ia_handle = h;
-	printf("%s", dev->dv_xname);
-
-	return (dev);
-}
-
-void
-irframe_dealloc(struct device *dev)
-{
-	struct cfdriver *cd = &irframe_cd;
-	int unit;
-
-	/*
-	 * XXXJRT This is wrong -- needs to be done using regular
-	 * XXXJRT autoconfiguration code.
-	 */
-
-	for (unit = 0; unit < cd->cd_ndevs; unit++) {
-		if (cd->cd_devs[unit] == dev) {
-			cd->cd_devs[unit] = NULL;
-			free(dev, M_DEVBUF);
-			return;
-		}
-	}
-	panic("irframe_dealloc: device not found");
 }
