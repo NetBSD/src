@@ -1,0 +1,10 @@
+#	$NetBSD: files.hfsp,v 1.1.1.1 2007/03/06 00:10:34 dillo Exp $
+
+deffs	HFSP
+
+file	fs/hfsp/hfsp_nhash.c	hfsp
+file	fs/hfsp/hfsp_subr.c	hfsp
+file	fs/hfsp/hfsp_vfsops.c	hfsp
+file	fs/hfsp/hfsp_vnops.c	hfsp
+file	fs/hfsp/libhfsp.c	hfsp
+file	fs/hfsp/unicode.c	hfsp
