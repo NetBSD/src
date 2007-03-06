@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.45 2007/03/04 06:01:17 christos Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.46 2007/03/06 12:43:08 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.45 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.46 2007/03/06 12:43:08 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -288,5 +288,5 @@ irix_e_proc_fork(p, parent, forkflags)
 	ied2 = parent->p_emuldata;
 
 	(void) memcpy(ied1, ied2, (unsigned)
-	    ((void *)&ied1->ied_endcopy - (void *)&ied1->ied_startcopy));
+	    ((char *)&ied1->ied_endcopy - (char *)&ied1->ied_startcopy));
 }

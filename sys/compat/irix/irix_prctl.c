@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.36 2007/03/04 06:01:17 christos Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.37 2007/03/06 12:43:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.36 2007/03/04 06:01:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.37 2007/03/06 12:43:09 tsutsui Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -364,7 +364,8 @@ irix_sproc(entry, inh, arg, sp, len, pid, l, retval)
 
 		/* Update stack parameters for the share group members */
 		ied = (struct irix_emuldata *)p->p_emuldata;
-		stacksize = (p->p_vmspace->vm_minsaddr - sp) / PAGE_SIZE;
+		stacksize = ((char *)p->p_vmspace->vm_minsaddr - (char *)sp)
+		    / PAGE_SIZE;
 
 
 		(void)lockmgr(&isg->isg_lock, LK_EXCLUSIVE, NULL);
