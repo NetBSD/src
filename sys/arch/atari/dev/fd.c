@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.55 2007/03/06 13:54:45 he Exp $	*/
+/*	$NetBSD: fd.c,v 1.56 2007/03/06 14:03:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.55 2007/03/06 13:54:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.56 2007/03/06 14:03:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ struct fd_softc {
 	short		flags;		/* misc flags			*/
 	short		part;		/* Current open partition	*/
 	int		sector;		/* logical sector for I/O	*/
-	void *		io_data;	/* KVA for data transfer	*/
+	char		*io_data;	/* KVA for data transfer	*/
 	int		io_bytes;	/* bytes left for I/O		*/
 	int		io_dir;		/* B_READ/B_WRITE		*/
 	int		errcnt;		/* current error count		*/
@@ -1038,7 +1038,7 @@ struct fd_softc	*sc;
 			sc->flags &= ~FLPF_BOUNCE;
 
 			sc->sector++;
-			sc->io_data  = (char *)sc->io_data + SECTOR_SIZE;
+			sc->io_data  += SECTOR_SIZE;
 			sc->io_bytes -= SECTOR_SIZE;
 			if(sc->io_bytes <= 0)
 				fd_state = FLP_MON;
