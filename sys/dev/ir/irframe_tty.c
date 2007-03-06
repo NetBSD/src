@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.41 2007/03/04 06:02:09 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.42 2007/03/06 20:45:59 drochner Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.41 2007/03/04 06:02:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.42 2007/03/06 20:45:59 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -201,11 +201,43 @@ static struct linesw irframet_disc = {
 	.l_poll = ttyerrpoll
 };
 
+/* glue to attach irframe device */
+static void irframet_attach(struct device *, struct device *, void *);
+static int irframet_detach(struct device *, int);
+
+CFATTACH_DECL(irframet, sizeof(struct irframet_softc),
+	NULL, irframet_attach, irframet_detach, NULL);
+
 void
 irframettyattach(int n)
 {
 
 	(void) ttyldisc_attach(&irframet_disc);
+
+	config_cfattach_attach("irframe", &irframet_ca);
+}
+
+static void
+irframet_attach(struct device *parent, struct device *self, void *aux)
+{
+
+	/* pseudo-device attachment does not print name */
+	printf("%s", self->dv_xname);
+#if 0 /* XXX can't do it yet because pseudo-devices don't get aux */
+	struct ir_attach_args ia;
+
+	ia.ia_methods = &irframet_methods;
+	ia.ia_handle = aux->xxx;
+
+	irframe_attach(parent, self, &ia);
+#endif
+}
+
+static int
+irframet_detach(struct device *dev, int flags)
+{
+
+	return (irframe_detach(dev, flags));
 }
 
 /*
@@ -220,6 +252,8 @@ irframetopen(dev_t dev, struct tty *tp)
 	struct lwp *l = curlwp;		/* XXX */
 	struct irframet_softc *sc;
 	int error, s;
+	struct cfdata *cfdata;
+	struct ir_attach_args ia;
 
 	DPRINTF(("%s\n", __FUNCTION__));
 
@@ -240,9 +274,19 @@ irframetopen(dev_t dev, struct tty *tp)
 		}
 	}
 
-	tp->t_sc = irframe_alloc(sizeof (struct irframet_softc),
-			&irframet_methods, tp);
-	sc = (struct irframet_softc *)tp->t_sc;
+	cfdata = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
+	cfdata->cf_name = "irframe";
+	cfdata->cf_atname = "irframet";
+	cfdata->cf_fstate = FSTATE_STAR;
+	cfdata->cf_unit = 0;
+	sc = (struct irframet_softc *)config_attach_pseudo(cfdata);
+
+	/* XXX should be done in irframet_attach() */
+	ia.ia_methods = &irframet_methods;
+	ia.ia_handle = tp;
+	irframe_attach(0, (struct device *)sc, &ia);
+
+	tp->t_sc = sc;
 	sc->sc_tp = tp;
 	printf("%s attached at tty%02d\n", sc->sc_irp.sc_dev.dv_xname,
 	    minor(tp->t_dev));
@@ -270,6 +314,7 @@ irframetclose(struct tty *tp, int flag)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int s;
+	struct cfdata *cfdata;
 
 	DPRINTF(("%s: tp=%p\n", __FUNCTION__, tp));
 
@@ -282,8 +327,11 @@ irframetclose(struct tty *tp, int flag)
 		printf("%s detached from tty%02d\n", sc->sc_irp.sc_dev.dv_xname,
 		    minor(tp->t_dev));
 
-		if (sc->sc_tp == tp)
-			irframe_dealloc(&sc->sc_irp.sc_dev);
+		if (sc->sc_tp == tp) {
+			cfdata = sc->sc_irp.sc_dev.dv_cfdata;
+			config_detach(&sc->sc_irp.sc_dev, 0);
+			free(cfdata, M_DEVBUF);
+		}
 	}
 	splx(s);
 	return (0);
