@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.52 2007/03/04 05:59:41 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.53 2007/03/06 14:13:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.52 2007/03/04 05:59:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.53 2007/03/06 14:13:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,7 +821,7 @@ again:
 			if(tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
 			else ndflush(&tp->t_outq,cs->cs_tba
-						- (void *)tp->t_outq.c_cf);
+						- tp->t_outq.c_cf);
 			line->l_start(tp);
 			break;
 
