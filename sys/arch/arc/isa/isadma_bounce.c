@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.9 2007/03/04 05:59:35 christos Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.10 2007/03/06 13:54:45 he Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.9 2007/03/04 05:59:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.10 2007/03/06 13:54:45 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ isadma_bounce_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				memcpy(mtod(m, void *) + moff,
+				memcpy(mtod(m, char *) + moff,
 				    (char *)cookie->id_bouncebuf + offset,
 				    minlen);
 
