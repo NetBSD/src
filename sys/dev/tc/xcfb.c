@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.43 2007/03/04 06:02:47 christos Exp $ */
+/* $NetBSD: xcfb.c,v 1.44 2007/03/06 22:29:29 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.43 2007/03/04 06:02:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.44 2007/03/06 22:29:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ xcfbhwinit(void *base)
 	u_int32_t i;
 	const u_int8_t *p;
 
-	csr = (volatile u_int32_t *)(base + IOASIC_CSR);
+	csr = (volatile u_int32_t *)((char *)base + IOASIC_CSR);
 	i = *csr;
 	i &= ~XINE_CSR_VDAC_ENABLE;
 	*csr = i;
@@ -523,7 +523,7 @@ xcfbintr(void *v)
 	struct xcfb_softc *sc = v;
 	u_int32_t *intr, i;
 
-	intr = (u_int32_t *)((void *)sc->sc_ri->ri_hw + IOASIC_INTR);
+	intr = (u_int32_t *)((char *)sc->sc_ri->ri_hw + IOASIC_INTR);
 	i = *intr;
 	i &= ~XINE_INTR_VINT;
 	*intr = i;
@@ -754,7 +754,7 @@ static void
 ims332_write_reg(int regno, u_int32_t val)
 {
 	void *high8 = (void *)(ioasic_base + IMS332_HIGH);
-	void *low16 = (void *)(ioasic_base + IMS332_WLOW) + (regno << 4);
+	void *low16 = (void *)(ioasic_base + IMS332_WLOW + (regno << 4));
 
 	*(volatile u_int16_t *)high8 = (val & 0xff0000) >> 8;
 	*(volatile u_int16_t *)low16 = val;
