@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2006/03/28 14:44:01 tnozaki Exp $
+# $NetBSD: Makefile,v 1.24 2007/03/06 15:50:45 tnozaki Exp $
 
 NOMAN=	# defined
 
@@ -272,6 +272,9 @@ LOCALES += zh_CN.eucCN
 
 LOCALES += zh_CN.GB18030
  LOCALESRC_zh_CN.GB18030 = zh_CN.GB18030
+
+LOCALES += zh_HK.Big5-HKSCS
+ LOCALESRC_zh_HK.Big5-HKSCS = zh_HK.Big5-HKSCS
 
 LOCALES += zh_TW.Big5
  LOCALESRC_zh_TW.Big5 = zh_TW.BIG5

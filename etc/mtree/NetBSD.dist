@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.333 2007/03/01 18:47:49 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.334 2007/03/06 15:50:45 tnozaki Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -692,6 +692,7 @@
 ./usr/share/locale/zh_CN.GB18030
 ./usr/share/locale/zh_CN.eucCN
 ./usr/share/locale/zh_CN/LC_MESSAGES
+./usr/share/locale/zh_HK.Big5-HKSCS
 ./usr/share/locale/zh_TW
 ./usr/share/locale/zh_TW.Big5
 ./usr/share/locale/zh_TW.eucTW
