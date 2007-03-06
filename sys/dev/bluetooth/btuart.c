@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.2 2007/03/04 06:01:45 christos Exp $	*/
+/*	$NetBSD: btuart.c,v 1.3 2007/03/06 19:50:28 plunky Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.2 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.3 2007/03/06 19:50:28 plunky Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1088,7 +1088,7 @@ bth4open(dev_t device __unused, struct tty *tp)
 	cfdata->cf_name = name;
 	cfdata->cf_atname = name;
 	cfdata->cf_unit = unit;
-	cfdata->cf_fstate = FSTATE_STAR,
+	cfdata->cf_fstate = FSTATE_STAR;
 
 	printf("%s%d at tty major %d minor %d",
 	    name, unit, major(tp->t_dev), minor(tp->t_dev));
