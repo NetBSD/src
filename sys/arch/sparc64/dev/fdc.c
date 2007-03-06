@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.7 2007/03/04 07:54:07 christos Exp $	*/
+/*	$NetBSD: fdc.c,v 1.8 2007/03/06 02:30:16 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.7 2007/03/04 07:54:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.8 2007/03/06 02:30:16 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2516,12 +2516,12 @@ fd_mountroot_hook(struct device *dev)
 #define FDMICROROOTSIZE ((2*18*80) << DEV_BSHIFT)
 
 int
-fd_read_md_image(size_t	*sizep, void *	*addrp)
+fd_read_md_image(size_t	*sizep, void **addrp)
 {
 	struct buf buf, *bp = &buf;
 	dev_t dev;
 	off_t offset;
-	void *addr;
+	char *addr;
 
 	dev = makedev(54,0);	/* XXX */
 
