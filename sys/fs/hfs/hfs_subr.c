@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.1 2007/03/06 00:22:04 dillo Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.1 2007/03/06 00:22:04 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.2 2007/03/06 11:28:48 dillo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,31 +47,31 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.1 2007/03/06 00:22:04 dillo Exp $");
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
-#include <fs/hfsp/hfsp.h>
+#include <fs/hfs/hfs.h>
 
 /*
- * Initialize the vnode associated with a new hfspnode.
+ * Initialize the vnode associated with a new hfsnode.
  */
 void
-hfsp_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
+hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 	   struct vnode **vpp)
 {
-	struct hfspnode	*hp;
+	struct hfsnode	*hp;
 	struct vnode	*vp;
 	struct vnode    *nvp;
 
 	vp = *vpp;
 	hp = VTOH(vp);
 
-	vp->v_type = hfsp_catalog_keyed_record_vtype(
-		(hfsp_catalog_keyed_record_t *)&hp->h_rec);
+	vp->v_type = hfs_catalog_keyed_record_vtype(
+		(hfs_catalog_keyed_record_t *)&hp->h_rec);
 
 	switch(vp->v_type) {
 		case VCHR:
 		case VBLK:
 			vp->v_op = specops;
 			if ((nvp = checkalias(vp,
-					      HFSP_CONVERT_RDEV(hp->h_rec.file.bsd.special.raw_device),
+					      HFS_CONVERT_RDEV(hp->h_rec.file.bsd.special.raw_device),
 					      mp)) != NULL) {
 			    /*
 			     * Discard unneeded vnode, but save its inode.
@@ -107,30 +107,30 @@ hfsp_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 			break;
 	}
 
-	if (hp->h_rec.cnid == HFSP_CNID_ROOT_FOLDER)
+	if (hp->h_rec.cnid == HFS_CNID_ROOT_FOLDER)
 		vp->v_flag |= VROOT;
 
 	*vpp = vp;
 }
 
 /*
- * Callbacks for libhfsp
+ * Callbacks for libhfs
  */
 
 void
-hfsp_libcb_error(
+hfs_libcb_error(
 	const char* format,
 	const char* file,
 	int line,
 	va_list args)
 {
-#ifdef HFSP_DEBUG
+#ifdef HFS_DEBUG
 	if (file != NULL)
 		printf("%s:%i: ", file, line);
 	else
-		printf("hfsp: ");
+		printf("hfs: ");
 #else
-	printf("hfsp: ");
+	printf("hfs: ");
 #endif
 
 	/* XXX Should we really display this if debugging is off? */
@@ -141,52 +141,52 @@ hfsp_libcb_error(
 /* XXX change malloc/realloc/free to use pools */
 
 void*
-hfsp_libcb_malloc(size_t size, hfsp_callback_args* cbargs)
+hfs_libcb_malloc(size_t size, hfs_callback_args* cbargs)
 {
-	return malloc(size, /*M_HFSPMNT*/ M_TEMP, M_WAITOK);
+	return malloc(size, /*M_HFSMNT*/ M_TEMP, M_WAITOK);
 }
 
 void*
-hfsp_libcb_realloc(void* ptr, size_t size, hfsp_callback_args* cbargs)
+hfs_libcb_realloc(void* ptr, size_t size, hfs_callback_args* cbargs)
 {
-	return realloc(ptr, size, /*M_HFSPMNT*/ M_TEMP, M_WAITOK);
+	return realloc(ptr, size, /*M_HFSMNT*/ M_TEMP, M_WAITOK);
 }
 
 void
-hfsp_libcb_free(void* ptr, hfsp_callback_args* cbargs)
+hfs_libcb_free(void* ptr, hfs_callback_args* cbargs)
 {
-	free(ptr, /*M_HFSPMNT*/ M_TEMP);
+	free(ptr, /*M_HFSMNT*/ M_TEMP);
 }
 
 /*
- * hfsp_libcb_opendev()
+ * hfs_libcb_opendev()
  *
- * hfsplib uses this callback to open a volume's device node by name. However,
+ * hfslib uses this callback to open a volume's device node by name. However,
  * by the time this is called here, the device node has already been opened by
  * VFS. So we are passed the vnode to this volume's block device and use that
  * instead of the device's name.
  */
 int
-hfsp_libcb_opendev(
-	hfsp_volume* vol,
+hfs_libcb_opendev(
+	hfs_volume* vol,
 	const char* devname,
 	uint64_t voloffset,
-	hfsp_callback_args* cbargs)
+	hfs_callback_args* cbargs)
 {
-	hfsp_libcb_data* cbdata = NULL;
-	hfsp_libcb_argsopen* args;
+	hfs_libcb_data* cbdata = NULL;
+	hfs_libcb_argsopen* args;
 	struct partinfo dpart;
 	int result;
 
 	result = 0;
-	args = (hfsp_libcb_argsopen*)(cbargs->openvol);
+	args = (hfs_libcb_argsopen*)(cbargs->openvol);
 
 	if (vol == NULL || devname == NULL) {
 		result = EINVAL;
 		goto error;
 	}
 
-	cbdata = malloc(sizeof(hfsp_libcb_data), M_HFSPMNT, M_WAITOK);
+	cbdata = malloc(sizeof(hfs_libcb_data), M_HFSMNT, M_WAITOK);
 	if (cbdata == NULL) {
 		result = ENOMEM;
 		goto error;
@@ -227,7 +227,7 @@ error:
 				FREAD | FWRITE, NOCRED, args->l);
 			VOP_UNLOCK(cbdata->devvp, 0);
 		}
-		free(cbdata, M_HFSPMNT);
+		free(cbdata, M_HFSMNT);
 		vol->cbdata = NULL;
 	}
 
@@ -235,7 +235,7 @@ error:
 }
 
 void
-hfsp_libcb_closedev(hfsp_volume* in_vol, hfsp_callback_args* cbargs)
+hfs_libcb_closedev(hfs_volume* in_vol, hfs_callback_args* cbargs)
 {
 	struct vnode *devvp;
 	
@@ -243,39 +243,39 @@ hfsp_libcb_closedev(hfsp_volume* in_vol, hfsp_callback_args* cbargs)
 		return;
 	
 	if (in_vol->cbdata != NULL) {
-		devvp = ((hfsp_libcb_data*)in_vol->cbdata)->devvp;
+		devvp = ((hfs_libcb_data*)in_vol->cbdata)->devvp;
 		if (devvp != NULL) {
 			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 			(void)VOP_CLOSE(devvp, in_vol->readonly ? FREAD : FREAD | FWRITE,
-				NOCRED, ((hfsp_libcb_argsclose*)cbargs->closevol)->l);
+				NOCRED, ((hfs_libcb_argsclose*)cbargs->closevol)->l);
 			/* XXX do we need a VOP_UNLOCK() here? */
 		}
 
-		free(in_vol->cbdata, M_HFSPMNT);
+		free(in_vol->cbdata, M_HFSMNT);
 		in_vol->cbdata = NULL;
 	}
 }
 
 int
-hfsp_libcb_read(
-	hfsp_volume* vol,
+hfs_libcb_read(
+	hfs_volume* vol,
 	void* outbytes,
 	uint64_t length,
 	uint64_t offset,
-	hfsp_callback_args* cbargs)
+	hfs_callback_args* cbargs)
 {
-	hfsp_libcb_data *cbdata;
-	hfsp_libcb_argsread* argsread;
+	hfs_libcb_data *cbdata;
+	hfs_libcb_argsread* argsread;
 	kauth_cred_t cred;
 	uint64_t physoffset; /* physical offset from start of device(?) */
 	
 	if (vol == NULL || outbytes == NULL)
 		return -1;
 	
-	cbdata = (hfsp_libcb_data*)vol->cbdata;
+	cbdata = (hfs_libcb_data*)vol->cbdata;
 
 	if (cbargs != NULL
-		&& (argsread = (hfsp_libcb_argsread*)cbargs->read) != NULL
+		&& (argsread = (hfs_libcb_argsread*)cbargs->read) != NULL
 		&& argsread->cred != NULL)
 		cred = argsread->cred;
 	else
@@ -289,7 +289,7 @@ hfsp_libcb_read(
 	 */
 	physoffset = offset + /* XXX Temporary */ cbdata->offset;
 
-	return hfsp_pread(cbdata->devvp, outbytes, cbdata->devblksz, physoffset,
+	return hfs_pread(cbdata->devvp, outbytes, cbdata->devblksz, physoffset,
 			length, cred);
 }
 
@@ -298,11 +298,11 @@ hfsp_libcb_read(
  * parameter to be an integral multiple of the device's block size, but also
  * requires the block number to be on a boundary of that same block size -- and
  * yet be given as an integral multiple of DEV_BSIZE! So after much toil and
- * bloodshed, hfsp_pread() was written as a convenience (and a model of how sane
+ * bloodshed, hfs_pread() was written as a convenience (and a model of how sane
  * people take their bread()). Returns 0 on success.
  */
 int
-hfsp_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
+hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 	uint64_t len, kauth_cred_t cred)
 {
 	struct buf *bp;
@@ -359,7 +359,7 @@ hfsp_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 
 /* Convert from HFS+ time representation to UNIX time since epoch. */
 void
-hfsp_time_to_timespec(uint32_t hfstime, struct timespec *unixtime)
+hfs_time_to_timespec(uint32_t hfstime, struct timespec *unixtime)
 {
 	/*
 	 * HFS+ time is calculated in seconds since midnight, Jan 1st, 1904.
@@ -435,12 +435,12 @@ uint64_t be64tohp(void** inout_ptr)
 }
 
 enum vtype
-hfsp_catalog_keyed_record_vtype(const hfsp_catalog_keyed_record_t *rec)
+hfs_catalog_keyed_record_vtype(const hfs_catalog_keyed_record_t *rec)
 {
-    	if (rec->type == HFSP_REC_FILE) {
+    	if (rec->type == HFS_REC_FILE) {
 		uint32_t mode;
 
-		mode = ((const hfsp_file_record_t *)rec)->bsd.file_mode;
+		mode = ((const hfs_file_record_t *)rec)->bsd.file_mode;
 		if (mode != 0)
 			return IFTOVT(mode);
 		else

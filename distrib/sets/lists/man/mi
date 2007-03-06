@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.982 2007/03/05 23:18:04 dillo Exp $
+# $NetBSD: mi,v 1.983 2007/03/06 11:28:45 dillo Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2067,7 +2067,8 @@
 ./usr/share/man/cat8/mount_fdesc.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_ffs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_filecore.0		man-filecorefs-catman	.cat
-./usr/share/man/cat8/mount_hfsp.0		man-hfsp-catman		.cat
+./usr/share/man/cat8/mount_hfs.0		man-hfs-catman		.cat
+./usr/share/man/cat8/mount_hfsp.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mount_kernfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_mfs.0		man-sysutil-catman	.cat
@@ -4490,7 +4491,8 @@
 ./usr/share/man/man8/mount_fdesc.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_ffs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_filecore.8		man-filecorefs-man	.man
-./usr/share/man/man8/mount_hfsp.8		man-hfsp-man		.man
+./usr/share/man/man8/mount_hfs.8		man-hfs-man		.man
+./usr/share/man/man8/mount_hfsp.8		man-obsolete		obsolete
 ./usr/share/man/man8/mount_kernfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_mfs.8		man-sysutil-man		.man

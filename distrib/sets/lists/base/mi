@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.692 2007/03/05 23:18:02 dillo Exp $
+# $NetBSD: mi,v 1.693 2007/03/06 11:28:44 dillo Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -168,7 +168,8 @@
 ./sbin/mount_fdesc				base-miscfs-root
 ./sbin/mount_ffs				base-sysutil-root
 ./sbin/mount_filecore				base-filecorefs-root
-./sbin/mount_hfsp				base-hfsp-root
+./sbin/mount_hfs				base-hfs-root
+./sbin/mount_hfsp				base-obsolete		obsolete
 ./sbin/mount_kernfs				base-sysutil-root
 ./sbin/mount_lfs				base-sysutil-root
 ./sbin/mount_mfs				base-sysutil-root
@@ -769,7 +770,8 @@
 ./usr/include/dev/wscons			base-c-usr
 ./usr/include/filecorefs			base-c-usr
 ./usr/include/fs				base-c-usr
-./usr/include/fs/hfsp				base-c-usr
+./usr/include/fs/hfs				base-c-usr
+./usr/include/fs/hfsp				base-obsolete		obsolete
 ./usr/include/fs/puffs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr

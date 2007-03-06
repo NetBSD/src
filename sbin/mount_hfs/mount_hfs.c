@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_hfs.c,v 1.1.1.1 2007/03/06 11:21:58 dillo Exp $	*/
+/*	$NetBSD: mount_hfs.c,v 1.2 2007/03/06 11:28:47 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_hfs.c,v 1.1.1.1 2007/03/06 11:21:58 dillo Exp $");
+__RCSID("$NetBSD: mount_hfs.c,v 1.2 2007/03/06 11:28:47 dillo Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ __RCSID("$NetBSD: mount_hfs.c,v 1.1.1.1 2007/03/06 11:21:58 dillo Exp $");
 
 #include <mntopts.h>
 
-#include <fs/hfsp/hfsp.h>
+#include <fs/hfs/hfs.h>
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -89,7 +89,7 @@ static const struct mntopt mopts[] = {
 };
 
 int	main __P((int, char *[]));
-int	mount_hfsp __P((int argc, char **argv));
+int	mount_hfs __P((int argc, char **argv));
 static void	usage __P((void));
 
 #ifndef MOUNT_NOMAIN
@@ -98,16 +98,16 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	return mount_hfsp(argc, argv);
+	return mount_hfs(argc, argv);
 }
 #endif
 
 int
-mount_hfsp(argc, argv)
+mount_hfs(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct hfsp_args args;
+	struct hfs_args args;
 	mntoptparse_t optparse;
 	int ch, mntflags;
 	char *fs_name;
@@ -146,7 +146,7 @@ mount_hfsp(argc, argv)
 	fs_name = argv[1];		/* The mount point. */
 
 
-	if (mount(MOUNT_HFSP, fs_name, mntflags, &args))
+	if (mount(MOUNT_HFS, fs_name, mntflags, &args))
 		err(1, "%s on %s", args.fspec, fs_name);
 
 	exit(0);
@@ -155,6 +155,6 @@ mount_hfsp(argc, argv)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: mount_hfsp [-o options] special node\n");
+	(void)fprintf(stderr, "usage: mount_hfs [-o options] special node\n");
 	exit(1);
 }

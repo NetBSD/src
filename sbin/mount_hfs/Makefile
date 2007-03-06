@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2007/03/06 11:21:58 dillo Exp $
+#	$NetBSD: Makefile,v 1.2 2007/03/06 11:28:47 dillo Exp $
 
 .include <bsd.own.mk>
 
-PROG=	mount_hfsp
-SRCS=	mount_hfsp.c
-MAN=	mount_hfsp.8
+PROG=	mount_hfs
+SRCS=	mount_hfs.c
+MAN=	mount_hfs.8
 
 DPADD+=${LIBUTIL}
 LDADD+=-lutil

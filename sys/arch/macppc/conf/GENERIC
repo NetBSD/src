@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.253 2007/03/05 23:30:18 dillo Exp $
+# $NetBSD: GENERIC,v 1.254 2007/03/06 11:28:47 dillo Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.253 $"
+#ident 		"GENERIC-$Revision: 1.254 $"
 
 maxusers	32
 
@@ -110,7 +110,7 @@ file-system	SMBFS		# CIFS; also needs nsmb (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFSP		# experimental - Apple HFS+ (read-only)
+#file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas

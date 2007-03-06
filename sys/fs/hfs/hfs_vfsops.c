@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.1 2007/03/06 00:22:04 dillo Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.1 2007/03/06 00:22:04 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -130,66 +130,66 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.1 2007/03/06 00:22:04 dillo Exp $")
 
 #include <miscfs/specfs/specdev.h>
 
-#include <fs/hfsp/hfsp.h>
-#include <fs/hfsp/libhfsp.h>
+#include <fs/hfs/hfs.h>
+#include <fs/hfs/libhfs.h>
 
-MALLOC_DEFINE(M_HFSPMNT, "hfsp mount", "hfsp mount structures");
+MALLOC_DEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
-extern struct lock hfsp_hashlock;
+extern struct lock hfs_hashlock;
 
-const struct vnodeopv_desc * const hfsp_vnodeopv_descs[] = {
-	&hfsp_vnodeop_opv_desc,
-	&hfsp_specop_opv_desc,
-	&hfsp_fifoop_opv_desc,
+const struct vnodeopv_desc * const hfs_vnodeopv_descs[] = {
+	&hfs_vnodeop_opv_desc,
+	&hfs_specop_opv_desc,
+	&hfs_fifoop_opv_desc,
 	NULL,
 };
 
-struct vfsops hfsp_vfsops = {
-	MOUNT_HFSP,
-	hfsp_mount,
-	hfsp_start,
-	hfsp_unmount,
-	hfsp_root,
-	hfsp_quotactl,
-	hfsp_statvfs,
-	hfsp_sync,
-	hfsp_vget,
-	hfsp_fhtovp,
-	hfsp_vptofh,
-	hfsp_init,
-	hfsp_reinit,
-	hfsp_done,
+struct vfsops hfs_vfsops = {
+	MOUNT_HFS,
+	hfs_mount,
+	hfs_start,
+	hfs_unmount,
+	hfs_root,
+	hfs_quotactl,
+	hfs_statvfs,
+	hfs_sync,
+	hfs_vget,
+	hfs_fhtovp,
+	hfs_vptofh,
+	hfs_init,
+	hfs_reinit,
+	hfs_done,
 	NULL,				/* vfs_mountroot */
 	NULL,				/* vfs_snapshot */
-	hfsp_extattrctl,
+	hfs_extattrctl,
 	NULL,				/* vfs_suspendctl */
-	hfsp_vnodeopv_descs,
+	hfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
 };
-VFS_ATTACH(hfsp_vfsops); /* XXX Is this needed? */
+VFS_ATTACH(hfs_vfsops); /* XXX Is this needed? */
 
-static const struct genfs_ops hfsp_genfsops = {
+static const struct genfs_ops hfs_genfsops = {
         .gop_size = genfs_size,
 };
 
 int
-hfsp_mount(struct mount *mp, const char *path, void *data,
+hfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct lwp *l)
 {
-	struct hfsp_args args;
+	struct hfs_args args;
 	struct vnode *devvp;
-	struct hfspmount *hmp;
+	struct hfsmount *hmp;
 	int error;
 	int update;
 	mode_t accessmode;
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_mount()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_mount()\n");
+#endif /* HFS_DEBUG */
 	
 	if (mp->mnt_flag & MNT_GETARGS) {
-		hmp = VFSTOHFSP(mp);
+		hmp = VFSTOHFS(mp);
 		if (hmp == NULL)
 			return EIO;
 		args.fspec = NULL;
@@ -199,7 +199,7 @@ hfsp_mount(struct mount *mp, const char *path, void *data,
 	if (data == NULL)
 		return EINVAL;
 
-	if ((error = copyin(data, &args, sizeof (struct hfsp_args))) != 0)
+	if ((error = copyin(data, &args, sizeof (struct hfs_args))) != 0)
 		return error;
 
 /* FIXME: For development ONLY - disallow remounting for now */
@@ -232,14 +232,14 @@ hfsp_mount(struct mount *mp, const char *path, void *data,
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
-			hmp = VFSTOHFSP(mp);
+			hmp = VFSTOHFS(mp);
 			if (devvp != hmp->hm_devvp)
 				error = EINVAL;
 		}
 	} else {
 		if (update) {
 			/* Use the extant mount */
-			hmp = VFSTOHFSP(mp);
+			hmp = VFSTOHFS(mp);
 			devvp = hmp->hm_devvp;
 			vref(devvp);
 		} else {
@@ -269,7 +269,7 @@ hfsp_mount(struct mount *mp, const char *path, void *data,
 		goto error;
 
 	if (update) {
-		printf("HFSP: live remounting not yet supported!\n");
+		printf("HFS: live remounting not yet supported!\n");
 		error = EINVAL;
 		goto error;
 	}
@@ -287,22 +287,22 @@ hfsp_mount(struct mount *mp, const char *path, void *data,
 		goto error;
 	}
 
-	if ((error = hfsp_mountfs(devvp, mp, l, args.fspec, args.offset)) != 0)
+	if ((error = hfs_mountfs(devvp, mp, l, args.fspec, args.offset)) != 0)
 		goto error;
 	
 	error = set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_SYSSPACE,
 		mp, l);
 
-#ifdef HFSP_DEBUG
+#ifdef HFS_DEBUG
 	if(!update) {
 		char* volname;
 		
-		hmp = VFSTOHFSP(mp);
+		hmp = VFSTOHFS(mp);
 		volname = malloc(hmp->hm_vol.name.length + 1, M_TEMP, M_WAITOK);
 		if (volname == NULL)
 			printf("could not allocate volname; ignored\n");
 		else {
-			if (hfsp_unicode_to_ascii(hmp->hm_vol.name.unicode,
+			if (hfs_unicode_to_ascii(hmp->hm_vol.name.unicode,
 				hmp->hm_vol.name.length, volname) == NULL)
 				printf("could not convert volume name to ascii; ignored\n");
 			else
@@ -310,7 +310,7 @@ hfsp_mount(struct mount *mp, const char *path, void *data,
 			free(volname, M_TEMP);
 		}
 	}
-#endif /* HFSP_DEBUG */
+#endif /* HFS_DEBUG */
 		
 	return error;
 	
@@ -320,24 +320,24 @@ error:
 }
 
 int
-hfsp_start(struct mount *mp, int flags, struct lwp *l)
+hfs_start(struct mount *mp, int flags, struct lwp *l)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_start()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_start()\n");
+#endif /* HFS_DEBUG */
 
 	return 0;
 }
 
 int
-hfsp_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
+hfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
     const char *devpath, uint64_t offset)
 {
-	hfsp_callback_args cbargs;
-	hfsp_libcb_argsopen argsopen;
-	hfsp_libcb_argsread argsread;
-	struct hfspmount *hmp;
+	hfs_callback_args cbargs;
+	hfs_libcb_argsopen argsopen;
+	hfs_libcb_argsread argsread;
+	struct hfsmount *hmp;
 	kauth_cred_t cred;
 	int error;
 	
@@ -346,13 +346,13 @@ hfsp_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	hmp = NULL;
 
 	/* Create mounted volume structure. */
-	hmp = (struct hfspmount*)malloc(sizeof(struct hfspmount),
-            M_HFSPMNT, M_WAITOK);
+	hmp = (struct hfsmount*)malloc(sizeof(struct hfsmount),
+            M_HFSMNT, M_WAITOK);
 	if (hmp == NULL) {
 		error = ENOMEM;
 		goto error;
 	}
-	memset(hmp, 0, sizeof(struct hfspmount));
+	memset(hmp, 0, sizeof(struct hfsmount));
 	
 	mp->mnt_data = hmp;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -363,23 +363,23 @@ hfsp_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	hmp->hm_devvp = devvp;
 	
 	/*
-	 * Use libhfsp to open the volume and read the volume header and other
+	 * Use libhfs to open the volume and read the volume header and other
 	 * useful information.
 	 */
 	 
-	hfsplib_init_cbargs(&cbargs);
+	hfslib_init_cbargs(&cbargs);
 	argsopen.cred = argsread.cred = cred;
 	argsopen.l = argsread.l = l;
 	argsopen.devvp = devvp;
 	cbargs.read = (void*)&argsread;
 	cbargs.openvol = (void*)&argsopen;
 
-	if ((error = hfsplib_open_volume(devpath, offset, mp->mnt_flag & MNT_RDONLY,
+	if ((error = hfslib_open_volume(devpath, offset, mp->mnt_flag & MNT_RDONLY,
 		&hmp->hm_vol, &cbargs)) != 0)
 		goto error;
 		
 	/* Make sure this is not a journaled volume whose journal is dirty. */
-	if (!hfsplib_is_journal_clean(&hmp->hm_vol)) {
+	if (!hfslib_is_journal_clean(&hmp->hm_vol)) {
 		printf("volume journal is dirty; not mounting\n");
 		error = EIO;
 		goto error;
@@ -395,25 +395,25 @@ hfsp_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
 	
 error:
 	if (hmp != NULL)
-		free(hmp, M_HFSPMNT);
+		free(hmp, M_HFSMNT);
 		
 	return error;
 }
 
 int
-hfsp_unmount(struct mount *mp, int mntflags, struct lwp *l)
+hfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 {
-	hfsp_callback_args cbargs;
-	hfsp_libcb_argsread argsclose;
-	struct hfspmount* hmp;
+	hfs_callback_args cbargs;
+	hfs_libcb_argsread argsclose;
+	struct hfsmount* hmp;
 	int error;
 	int flags;
 	
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_unmount()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_unmount()\n");
+#endif /* HFS_DEBUG */
 
-	hmp = VFSTOHFSP(mp);
+	hmp = VFSTOHFS(mp);
 	
 	flags = 0;
 	if (mntflags & MNT_FORCE)
@@ -422,14 +422,14 @@ hfsp_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return error;
 
-	hfsplib_init_cbargs(&cbargs);
+	hfslib_init_cbargs(&cbargs);
 	argsclose.l = l;
 	cbargs.closevol = (void*)&argsclose;
-	hfsplib_close_volume(&hmp->hm_vol, &cbargs);
+	hfslib_close_volume(&hmp->hm_vol, &cbargs);
 	
 	vput(hmp->hm_devvp);
 
-	free(hmp, M_HFSPMNT);
+	free(hmp, M_HFSMNT);
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	
@@ -437,16 +437,16 @@ hfsp_unmount(struct mount *mp, int mntflags, struct lwp *l)
 }
 
 int
-hfsp_root(struct mount *mp, struct vnode **vpp)
+hfs_root(struct mount *mp, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_root()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_root()\n");
+#endif /* HFS_DEBUG */
 	
-	if ((error = VFS_VGET(mp, HFSP_CNID_ROOT_FOLDER, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, HFS_CNID_ROOT_FOLDER, &nvp)) != 0)
 		return error;
 	*vpp = nvp;
 	
@@ -454,27 +454,27 @@ hfsp_root(struct mount *mp, struct vnode **vpp)
 }
 
 int
-hfsp_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg,
+hfs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg,
     struct lwp *l)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_quotactl()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_quotactl()\n");
+#endif /* HFS_DEBUG */
 
 	return EOPNOTSUPP;
 }
 
 int
-hfsp_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+hfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 {
-	hfsp_volume_header_t *vh;
+	hfs_volume_header_t *vh;
 	
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_statvfs()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_statvfs()\n");
+#endif /* HFS_DEBUG */
 
-	vh = &VFSTOHFSP(mp)->hm_vol.vh;
+	vh = &VFSTOHFS(mp)->hm_vol.vh;
 	
 	sbp->f_bsize = vh->block_size;
 	sbp->f_frsize = sbp->f_bsize;
@@ -491,12 +491,12 @@ hfsp_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 }
 
 int
-hfsp_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
+hfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_sync()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_sync()\n");
+#endif /* HFS_DEBUG */
 
 	return 0;
 }
@@ -506,47 +506,47 @@ hfsp_sync(struct mount *mp, int waitfor, kauth_cred_t cred, struct lwp *l)
  * since both are conveniently 32-bit numbers
  */
 int
-hfsp_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+hfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
-    return hfsp_vget_internal(mp, ino, HFSP_DATAFORK, vpp);
+    return hfs_vget_internal(mp, ino, HFS_DATAFORK, vpp);
 }
 
 /*
  * internal version with extra arguments to allow accessing resource fork
  */
 int
-hfsp_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
+hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
     struct vnode **vpp)
 {
-	struct hfspmount *hmp;
-	struct hfspnode *hnode;
+	struct hfsmount *hmp;
+	struct hfsnode *hnode;
 	struct vnode *vp;
-	hfsp_callback_args cbargs;
-	hfsp_cnid_t cnid;
-	hfsp_catalog_keyed_record_t rec;
-	hfsp_catalog_key_t key; /* the search key used to find this file on disk */
+	hfs_callback_args cbargs;
+	hfs_cnid_t cnid;
+	hfs_catalog_keyed_record_t rec;
+	hfs_catalog_key_t key; /* the search key used to find this file on disk */
 	dev_t dev;
 	int error;
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_vget()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_vget()\n");
+#endif /* HFS_DEBUG */
 
 	hnode = NULL;
 	vp = NULL;
-	hmp = VFSTOHFSP(mp);
+	hmp = VFSTOHFS(mp);
 	dev = hmp->hm_dev;
-	cnid = (hfsp_cnid_t)ino;
+	cnid = (hfs_cnid_t)ino;
 
-	if (fork != HFSP_RSRCFORK)
-	    fork = HFSP_DATAFORK;
+	if (fork != HFS_RSRCFORK)
+	    fork = HFS_DATAFORK;
 
 	/* Check if this vnode has already been allocated. If so, just return it. */
-	if ((*vpp = hfsp_nhashget(dev, cnid, fork, LK_EXCLUSIVE)) != NULL)
+	if ((*vpp = hfs_nhashget(dev, cnid, fork, LK_EXCLUSIVE)) != NULL)
 		return 0;
 
 	/* Allocate a new vnode/inode. */
-	if ((error = getnewvnode(VT_HFSP, mp, hfsp_vnodeop_p, &vp)) != 0)
+	if ((error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, &vp)) != 0)
 		goto error;
 
 	/*
@@ -555,16 +555,16 @@ hfsp_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	 */
 
 	do {
-		if ((*vpp = hfsp_nhashget(dev, cnid, fork, LK_EXCLUSIVE))
+		if ((*vpp = hfs_nhashget(dev, cnid, fork, LK_EXCLUSIVE))
 		    != NULL) {
 			ungetnewvnode(vp);
 			return 0;
 		}
-	} while (lockmgr(&hfsp_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	} while (lockmgr(&hfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
 
 	vp->v_flag |= VLOCKSWORK;
 	
-	MALLOC(hnode, struct hfspnode *, sizeof(struct hfspnode), M_TEMP,
+	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
 		M_WAITOK + M_ZERO);
 	vp->v_data = hnode;
 	
@@ -578,23 +578,23 @@ hfsp_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	 * waiting for old data structures to be purged or for the contents of the
 	 * disk portion of this inode to be read. The hash chain requires the node's
 	 * device and cnid to be known. Since this information was passed in the
-	 * arguments, fill in the appropriate hfspnode fields without reading having
+	 * arguments, fill in the appropriate hfsnode fields without reading having
 	 * to read the disk.
 	 */
 	hnode->h_dev = dev;
 	hnode->h_rec.cnid = cnid;
 	hnode->h_fork = fork;
 
-	hfsp_nhashinsert(hnode);
-	lockmgr(&hfsp_hashlock, LK_RELEASE, 0);
+	hfs_nhashinsert(hnode);
+	lockmgr(&hfs_hashlock, LK_RELEASE, 0);
 
 
 	/*
 	 * Read catalog record from disk.
 	 */
-	hfsplib_init_cbargs(&cbargs);
+	hfslib_init_cbargs(&cbargs);
 	
-	if (hfsplib_find_catalog_record_with_cnid(&hmp->hm_vol, cnid,
+	if (hfslib_find_catalog_record_with_cnid(&hmp->hm_vol, cnid,
 		&rec, &key, &cbargs) != 0) {
 		vput(vp);
 		error = EBADF;
@@ -613,19 +613,19 @@ hfsp_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	/* DATE AND TIME */
 
 	/*
-	 * Initialize the vnode from the hfspnode, check for aliases.
+	 * Initialize the vnode from the hfsnode, check for aliases.
 	 * Note that the underlying vnode may have changed.
 	 */
 
-	hfsp_vinit(mp, hfsp_specop_p, hfsp_fifoop_p, &vp);
+	hfs_vinit(mp, hfs_specop_p, hfs_fifoop_p, &vp);
 
-	genfs_node_init(vp, &hfsp_genfsops);
+	genfs_node_init(vp, &hfs_genfsops);
 	hnode->h_devvp = hmp->hm_devvp;	
 	VREF(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
 
 	/* Make sure UVM has allocated enough memory. (?) */
-	if (hnode->h_rec.rec_type == HFSP_REC_FILE) {
-		if (hnode->h_fork == HFSP_DATAFORK)
+	if (hnode->h_rec.rec_type == HFS_REC_FILE) {
+		if (hnode->h_fork == HFS_DATAFORK)
 			uvm_vnp_setsize(vp,
 			    hnode->h_rec.file.data_fork.logical_size);
 		else
@@ -645,97 +645,97 @@ error:
 }
 
 int
-hfsp_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+hfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_fhtovp()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_fhtovp()\n");
+#endif /* HFS_DEBUG */
 
 	return EOPNOTSUPP;
 }
 
 int
-hfsp_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
+hfs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_vptofh()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_vptofh()\n");
+#endif /* HFS_DEBUG */
 
 	return EOPNOTSUPP;
 }
 
 void
-hfsp_init(void)
+hfs_init(void)
 {
-	hfsp_callbacks	callbacks;
+	hfs_callbacks	callbacks;
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_init()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_init()\n");
+#endif /* HFS_DEBUG */
 
 #ifdef _LKM
-	malloc_type_attach(M_HFSPMNT);
+	malloc_type_attach(M_HFSMNT);
 #endif
 
-	callbacks.error = hfsp_libcb_error;
-	callbacks.allocmem = hfsp_libcb_malloc;
-	callbacks.reallocmem = hfsp_libcb_realloc;
-	callbacks.freemem = hfsp_libcb_free;
-	callbacks.openvol = hfsp_libcb_opendev;
-	callbacks.closevol = hfsp_libcb_closedev;
-	callbacks.read = hfsp_libcb_read;
+	callbacks.error = hfs_libcb_error;
+	callbacks.allocmem = hfs_libcb_malloc;
+	callbacks.reallocmem = hfs_libcb_realloc;
+	callbacks.freemem = hfs_libcb_free;
+	callbacks.openvol = hfs_libcb_opendev;
+	callbacks.closevol = hfs_libcb_closedev;
+	callbacks.read = hfs_libcb_read;
 
-	hfsp_nhashinit();
-	hfsplib_init(&callbacks);
+	hfs_nhashinit();
+	hfslib_init(&callbacks);
 }
 
 void
-hfsp_reinit(void)
+hfs_reinit(void)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_reinit()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_reinit()\n");
+#endif /* HFS_DEBUG */
 
 	return;
 }
 
 void
-hfsp_done(void)
+hfs_done(void)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_done()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_done()\n");
+#endif /* HFS_DEBUG */
 
 #ifdef _LKM
-	malloc_type_detach(M_HFSPMNT);
+	malloc_type_detach(M_HFSMNT);
 #endif
 
-	hfsplib_done();
-	hfsp_nhashdone();
+	hfslib_done();
+	hfs_nhashdone();
 }
 
 int
-hfsp_mountroot(void)
+hfs_mountroot(void)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_mountroot()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_mountroot()\n");
+#endif /* HFS_DEBUG */
 
 	return EOPNOTSUPP;
 }
 
-int hfsp_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
+int hfs_extattrctl(struct mount *mp, int cmd, struct vnode *vp,
     int attrnamespace, const char *attrname, struct lwp *l)
 {
 
-#ifdef HFSP_DEBUG	
-	printf("vfsop = hfsp_checkexp()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG	
+	printf("vfsop = hfs_checkexp()\n");
+#endif /* HFS_DEBUG */
 
 	return EOPNOTSUPP;
 }
