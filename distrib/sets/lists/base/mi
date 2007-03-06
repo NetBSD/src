@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.2 2007/02/06 22:20:42 tron Exp $
+# $NetBSD: mi,v 1.678.2.3 2007/03/06 20:43:48 bouyer Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2493,6 +2493,7 @@
 ./usr/share/man/cat4/pc532			base-man-share
 ./usr/share/man/cat4/pmax			base-man-share
 ./usr/share/man/cat4/pmppc			base-man-share
+./usr/share/man/cat4/prep			base-man-share
 ./usr/share/man/cat4/sgimips			base-man-share
 ./usr/share/man/cat4/sparc			base-man-share
 ./usr/share/man/cat4/sparc64			base-man-share
@@ -2610,6 +2611,7 @@
 ./usr/share/man/html4/pc532			base-man-share
 ./usr/share/man/html4/pmax			base-man-share
 ./usr/share/man/html4/pmppc			base-man-share
+./usr/share/man/html4/prep			base-man-share
 ./usr/share/man/html4/sgimips			base-man-share
 ./usr/share/man/html4/sparc			base-man-share
 ./usr/share/man/html4/sparc64			base-man-share
@@ -2728,6 +2730,7 @@
 ./usr/share/man/man4/pc532			base-man-share
 ./usr/share/man/man4/pmax			base-man-share
 ./usr/share/man/man4/pmppc			base-man-share
+./usr/share/man/man4/prep			base-man-share
 ./usr/share/man/man4/sgimips			base-man-share
 ./usr/share/man/man4/sparc			base-man-share
 ./usr/share/man/man4/sparc64			base-man-share
