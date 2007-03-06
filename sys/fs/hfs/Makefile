@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2007/03/06 00:10:34 dillo Exp $
+#	$NetBSD: Makefile,v 1.2 2007/03/06 11:28:47 dillo Exp $
 
-INCSDIR= /usr/include/fs/hfsp
+INCSDIR= /usr/include/fs/hfs
 
-INCS=	hfsp.h libhfsp.h
+INCS=	hfs.h libhfs.h
 
 .include <bsd.kinc.mk>

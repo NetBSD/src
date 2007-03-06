@@ -6,9 +6,9 @@
 - mount options: default uid/gid/mode
 - return correct error for device not ready (CD) (not Operation not Permitted)
 - use lookup cache
-- use pool for struct hfspnode
+- use pool for struct hfsnode
 - reduce use of malloc and memcpy
-- slim down libhfsp (e.g. replace cbargs with void *)
+- slim down libhfs (e.g. replace cbargs with void *)
 - union/nfs support
 - KNF
 - update copyright of apmlabel
@@ -42,6 +42,6 @@ This is, of course, in addition to the missing major features:
 
 - write support
 - journal support
-- fsck_hfsp, newfs_hfsp
+- fsck_hfs, newfs_hfs
 - vanilla HFS support
 - man pages and lots of other documentation
