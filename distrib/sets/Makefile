@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2006/11/05 18:04:44 he Exp $
+#	$NetBSD: Makefile,v 1.54.2.1 2007/03/06 20:33:29 bouyer Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -125,9 +125,9 @@ makesetfiles: .PHONY
 	    -N ${NETBSDSRCDIR}/etc ${MAKEFLIST_FLAGS} -t ${TARDIR}
 
 .for tar in ${MAKETARSETS}
-do-${tar}: .PHONY
+do-${tar}: .PHONY sanitise_METALOG
 	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} \
-	${METALOG.sanitised.unpriv} \
+	    ${METALOG.sanitised.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc -t ${TARDIR} ${tar} \
 	|| rm -f ${TARDIR}/${tar}.tgz
 .endfor
