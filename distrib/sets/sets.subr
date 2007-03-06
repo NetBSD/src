@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.54 2006/11/12 02:43:39 christos Exp $
+#	$NetBSD: sets.subr,v 1.54.2.1 2007/03/06 20:37:28 bouyer Exp $
 #
 
 #
@@ -218,7 +218,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.54 2006/11/12 02:43:39 christos Exp $
+# 	# $NetBSD: sets.subr,v 1.54.2.1 2007/03/06 20:37:28 bouyer Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -452,7 +452,7 @@ list_set_lists()
 #
 arch_to_cpu()
 {
-	MACHINE_ARCH=${1} ${MAKE} -f- all <<EOMAKE
+	MACHINE_ARCH=${1} ${MAKE} -B -f- all <<EOMAKE
 .include <bsd.own.mk>
 all:
 	@echo \${MACHINE_CPU}
@@ -466,7 +466,7 @@ EOMAKE
 #
 arch_to_endian()
 {
-	MACHINE_ARCH=${1} ${MAKE} -f- all <<EOMAKE
+	MACHINE_ARCH=${1} ${MAKE} -B -f- all <<EOMAKE
 .include <bsd.endian.mk>
 all:
 	@echo \${TARGET_ENDIANNESS}

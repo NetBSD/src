@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.8 2006/01/28 19:01:23 apb Exp $
+# $NetBSD: regpkgset,v 1.8.4.1 2007/03/06 20:37:28 bouyer Exp $
 #
 # Copyright (c) 2003 Alistair G. Crooks.  All rights reserved.
 #
@@ -138,7 +138,7 @@ if ${cache}; then
 	# environment, not the target.
 	echo "OPSYS=$(${UNAME} -s)"
 	echo "OS_VERSION=$(${UNAME} -r)"
-	${MAKE} -f- all <<EOF
+	${MAKE} -B -f- all <<EOF
 .include <bsd.own.mk>
 all:
 	@echo OBJECT_FMT=${OBJECT_FMT}
