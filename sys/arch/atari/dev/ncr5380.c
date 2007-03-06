@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.53 2007/03/04 05:59:41 christos Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.54 2007/03/06 13:54:45 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.53 2007/03/04 05:59:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.54 2007/03/06 13:54:45 he Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -1813,7 +1813,7 @@ SC_REQ	*reqp;
 {
 	u_long			phy_buf;
 	u_long			phy_len;
-	void *			req_addr;
+	void 			*req_addr;
 	u_long			req_len;
 	struct dma_chain	*dm;
 
@@ -1858,7 +1858,7 @@ SC_REQ	*reqp;
 		    (phy_len = PAGE_SIZE - ((u_long)req_addr & PGOFSET)))
 			phy_len = req_len;
 
-		req_addr     += phy_len;
+		req_addr     = (char *)req_addr + phy_len;
 		req_len      -= phy_len;
 		dm->dm_count += phy_len;
 

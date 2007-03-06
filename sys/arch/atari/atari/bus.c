@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.43 2007/03/04 05:59:39 christos Exp $	*/
+/*	$NetBSD: bus.c,v 1.44 2007/03/06 13:54:45 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.43 2007/03/04 05:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.44 2007/03/06 13:54:45 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ bus_size_t		size;
 	paddr_t bpa;
 
 	va = m68k_trunc_page(bsh);
-	endva = m68k_round_page((bsh + size) - 1);
+	endva = m68k_round_page(((char *)bsh + size) - 1);
 #ifdef DIAGNOSTIC
 	if (endva < va)
 		panic("unmap_iospace: overflow");
@@ -338,7 +338,7 @@ bus_space_handle_t	memh;
 bus_size_t		off, sz;
 bus_space_handle_t	*mhp;
 {
-	*mhp = memh + off;
+	*mhp = (char *)memh + off;
 	return 0;
 }
 
@@ -802,7 +802,7 @@ bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 			continue;
 		}
 
-		return (m68k_btop((void *)segs[i].ds_addr - offset + off));
+		return (m68k_btop((char *)segs[i].ds_addr - offset + off));
 	}
 
 	/* Page not found. */
