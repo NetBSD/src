@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.1 2007/03/06 00:22:05 dillo Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.1 2007/03/06 00:22:05 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.2 2007/03/06 11:28:48 dillo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -126,38 +126,38 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.1 2007/03/06 00:22:05 dillo Exp $");
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
 
-#include <fs/hfsp/hfsp.h>
-#include <fs/hfsp/unicode.h>
+#include <fs/hfs/hfs.h>
+#include <fs/hfs/unicode.h>
 
 #include <miscfs/genfs/genfs.h>
 
-int	hfsp_vop_lookup		(void *);
-int	hfsp_vop_open		(void *);
-int	hfsp_vop_close		(void *);
-int	hfsp_vop_access		(void *);
-int	hfsp_vop_getattr	(void *);
-int	hfsp_vop_setattr	(void *);
-int	hfsp_vop_bmap		(void *);
-int	hfsp_vop_read		(void *);
-int	hfsp_vop_readdir	(void *);
-int	hfsp_vop_readlink	(void *);
-int	hfsp_vop_reclaim	(void *);
-int	hfsp_vop_print		(void *);
+int	hfs_vop_lookup		(void *);
+int	hfs_vop_open		(void *);
+int	hfs_vop_close		(void *);
+int	hfs_vop_access		(void *);
+int	hfs_vop_getattr	(void *);
+int	hfs_vop_setattr	(void *);
+int	hfs_vop_bmap		(void *);
+int	hfs_vop_read		(void *);
+int	hfs_vop_readdir	(void *);
+int	hfs_vop_readlink	(void *);
+int	hfs_vop_reclaim	(void *);
+int	hfs_vop_print		(void *);
 
 
-int (**hfsp_vnodeop_p) (void *);
-const struct vnodeopv_entry_desc hfsp_vnodeop_entries[] = {
+int (**hfs_vnodeop_p) (void *);
+const struct vnodeopv_entry_desc hfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, hfsp_vop_lookup },		/* lookup */
+	{ &vop_lookup_desc, hfs_vop_lookup },		/* lookup */
 	{ &vop_create_desc, genfs_eopnotsupp },		/* create */
 	{ &vop_whiteout_desc, genfs_eopnotsupp },	/* whiteout */
 	{ &vop_mknod_desc, genfs_eopnotsupp },		/* mknod */
-	{ &vop_open_desc, hfsp_vop_open },		/* open */
-	{ &vop_close_desc, hfsp_vop_close },		/* close */
-	{ &vop_access_desc, hfsp_vop_access },		/* access */
-	{ &vop_getattr_desc, hfsp_vop_getattr },	/* getattr */
-	{ &vop_setattr_desc, hfsp_vop_setattr },	/* setattr */
-	{ &vop_read_desc, hfsp_vop_read },		/* read */
+	{ &vop_open_desc, hfs_vop_open },		/* open */
+	{ &vop_close_desc, hfs_vop_close },		/* close */
+	{ &vop_access_desc, hfs_vop_access },		/* access */
+	{ &vop_getattr_desc, hfs_vop_getattr },	/* getattr */
+	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
+	{ &vop_read_desc, hfs_vop_read },		/* read */
 	{ &vop_write_desc, genfs_eopnotsupp },		/* write */
 	{ &vop_lease_desc, genfs_eopnotsupp },		/* lease */
 	{ &vop_ioctl_desc, genfs_eopnotsupp },		/* ioctl */
@@ -174,16 +174,16 @@ const struct vnodeopv_entry_desc hfsp_vnodeop_entries[] = {
 	{ &vop_mkdir_desc, genfs_eopnotsupp },		/* mkdir */
 	{ &vop_rmdir_desc, genfs_eopnotsupp },		/* rmdir */
 	{ &vop_symlink_desc, genfs_eopnotsupp },	/* symlink */
-	{ &vop_readdir_desc, hfsp_vop_readdir },	/* readdir */
-	{ &vop_readlink_desc, hfsp_vop_readlink },	/* readlink */
+	{ &vop_readdir_desc, hfs_vop_readdir },	/* readdir */
+	{ &vop_readlink_desc, hfs_vop_readlink },	/* readlink */
 	{ &vop_abortop_desc, genfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, genfs_eopnotsupp },	/* inactive */
-	{ &vop_reclaim_desc, hfsp_vop_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, hfs_vop_reclaim },	/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
-	{ &vop_bmap_desc, hfsp_vop_bmap },		/* bmap */
+	{ &vop_bmap_desc, hfs_vop_bmap },		/* bmap */
 	{ &vop_strategy_desc, genfs_eopnotsupp },	/* strategy */
-	{ &vop_print_desc, hfsp_vop_print },		/* print */
+	{ &vop_print_desc, hfs_vop_print },		/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, genfs_eopnotsupp },	/* pathconf */
 	{ &vop_advlock_desc, genfs_eopnotsupp },	/* advlock */
@@ -198,20 +198,20 @@ const struct vnodeopv_entry_desc hfsp_vnodeop_entries[] = {
 	{ &vop_deleteextattr_desc, genfs_eopnotsupp },	/* deleteextattr */
 	{ NULL, NULL }
 };
-const struct vnodeopv_desc hfsp_vnodeop_opv_desc =
-	{ &hfsp_vnodeop_p, hfsp_vnodeop_entries };
+const struct vnodeopv_desc hfs_vnodeop_opv_desc =
+	{ &hfs_vnodeop_p, hfs_vnodeop_entries };
 
-int (**hfsp_specop_p) (void *);
-const struct vnodeopv_entry_desc hfsp_specop_entries[] = {
+int (**hfs_specop_p) (void *);
+const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
 	{ &vop_mknod_desc, spec_mknod },		/* mknod */
 	{ &vop_open_desc, spec_open },			/* open */
 	{ &vop_close_desc, spec_close },		/* close */
-	{ &vop_access_desc, hfsp_vop_access },		/* access */
-	{ &vop_getattr_desc, hfsp_vop_getattr },	/* getattr */
-	{ &vop_setattr_desc, hfsp_vop_setattr },	/* setattr */
+	{ &vop_access_desc, hfs_vop_access },		/* access */
+	{ &vop_getattr_desc, hfs_vop_getattr },	/* getattr */
+	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
@@ -233,12 +233,12 @@ const struct vnodeopv_entry_desc hfsp_specop_entries[] = {
 	{ &vop_readlink_desc, spec_readlink },		/* readlink */
 	{ &vop_abortop_desc, spec_abortop },		/* abortop */
 	{ &vop_inactive_desc, genfs_eopnotsupp },	/* inactive */
-	{ &vop_reclaim_desc, hfsp_vop_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, hfs_vop_reclaim },	/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, spec_bmap },			/* bmap */
 	{ &vop_strategy_desc, spec_strategy },		/* strategy */
-	{ &vop_print_desc, hfsp_vop_print },		/* print */
+	{ &vop_print_desc, hfs_vop_print },		/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, spec_advlock },		/* advlock */
@@ -255,20 +255,20 @@ const struct vnodeopv_entry_desc hfsp_specop_entries[] = {
 #endif
 	{ NULL, NULL }
 };
-const struct vnodeopv_desc hfsp_specop_opv_desc =
-	{ &hfsp_specop_p, hfsp_specop_entries };
+const struct vnodeopv_desc hfs_specop_opv_desc =
+	{ &hfs_specop_p, hfs_specop_entries };
 
-int (**hfsp_fifoop_p) (void *);
-const struct vnodeopv_entry_desc hfsp_fifoop_entries[] = {
+int (**hfs_fifoop_p) (void *);
+const struct vnodeopv_entry_desc hfs_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
 	{ &vop_create_desc, fifo_create },		/* create */
 	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
 	{ &vop_open_desc, fifo_open },			/* open */
 	{ &vop_close_desc, fifo_close },		/* close */
-	{ &vop_access_desc, hfsp_vop_access },		/* access */
-	{ &vop_getattr_desc, hfsp_vop_getattr },	/* getattr */
-	{ &vop_setattr_desc, hfsp_vop_setattr },	/* setattr */
+	{ &vop_access_desc, hfs_vop_access },		/* access */
+	{ &vop_getattr_desc, hfs_vop_getattr },	/* getattr */
+	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
 	{ &vop_lease_desc, fifo_lease_check },		/* lease */
@@ -290,12 +290,12 @@ const struct vnodeopv_entry_desc hfsp_fifoop_entries[] = {
 	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
 	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
 	{ &vop_inactive_desc, genfs_eopnotsupp },	/* inactive */
-	{ &vop_reclaim_desc, hfsp_vop_reclaim },	/* reclaim */
+	{ &vop_reclaim_desc, hfs_vop_reclaim },	/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
 	{ &vop_strategy_desc, fifo_strategy },		/* strategy */
-	{ &vop_print_desc, hfsp_vop_print },		/* print */
+	{ &vop_print_desc, hfs_vop_print },		/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
 	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
@@ -311,11 +311,11 @@ const struct vnodeopv_entry_desc hfsp_fifoop_entries[] = {
 #endif
 	{ NULL, NULL }
 };
-const struct vnodeopv_desc hfsp_fifoop_opv_desc =
-	{ &hfsp_fifoop_p, hfsp_fifoop_entries };
+const struct vnodeopv_desc hfs_fifoop_opv_desc =
+	{ &hfs_fifoop_p, hfs_fifoop_entries };
 
 int
-hfsp_vop_lookup(void *v)
+hfs_vop_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode * a_dvp;
@@ -324,24 +324,24 @@ hfsp_vop_lookup(void *v)
 	} */ *ap = v;
 	struct buf *bp;			/* a buffer of directory entries */
 	struct componentname *cnp;
-	struct hfspnode *dp;	/* hfspnode for directory being searched */
+	struct hfsnode *dp;	/* hfsnode for directory being searched */
 	kauth_cred_t cred;
 	struct vnode **vpp;		/* resultant vnode */
 	struct vnode *pdp;		/* saved dp during symlink work */
 	struct vnode *tdp;		/* returned by VFS_VGET */
 	struct vnode *vdp;		/* vnode for directory being searched */
-	hfsp_catalog_key_t key;	/* hfs+ catalog search key for requested child */
-	hfsp_catalog_keyed_record_t rec; /* catalog record of requested child */
+	hfs_catalog_key_t key;	/* hfs+ catalog search key for requested child */
+	hfs_catalog_keyed_record_t rec; /* catalog record of requested child */
 	unichar_t* unicn;		/* name of component, in Unicode */
 	const char *pname;
 	int error;
 	int flags;
 	int lockparent;			/* 1 => lockparent flag is set */
-	int result;				/* result of libhfsp operations */
+	int result;				/* result of libhfs operations */
 
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_lookup()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_lookup()\n");
+#endif /* HFS_DEBUG */
 
 	bp = NULL;
 	cnp = ap->a_cnp;
@@ -409,11 +409,11 @@ hfsp_vop_lookup(void *v)
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		hfsp_callback_args cbargs;
-		hfsp_libcb_argsread argsread;
+		hfs_callback_args cbargs;
+		hfs_libcb_argsread argsread;
 		uint8_t len;
 
-		hfsplib_init_cbargs(&cbargs);
+		hfslib_init_cbargs(&cbargs);
 		argsread.l = cnp->cn_lwp;
 		argsread.cred = cnp->cn_cred;
 
@@ -423,14 +423,14 @@ hfsp_vop_lookup(void *v)
 		len = utf8_to_utf16(unicn, cnp->cn_namelen,
 				    cnp->cn_nameptr, cnp->cn_namelen, 0, NULL);
 		/* XXX: check conversion errors? */
-		if (hfsplib_make_catalog_key(VTOH(vdp)->h_rec.cnid, len, unicn,
+		if (hfslib_make_catalog_key(VTOH(vdp)->h_rec.cnid, len, unicn,
 			&key) == 0) {
-/*printf("ERROR in hfsplib_make_catalog_key\n");*/
+/*printf("ERROR in hfslib_make_catalog_key\n");*/
 			error = EINVAL;
 			goto error;
 		}
 			
-		result = hfsplib_find_catalog_record_with_key(&dp->h_hmp->hm_vol, &key,
+		result = hfslib_find_catalog_record_with_key(&dp->h_hmp->hm_vol, &key,
 			&rec, &cbargs);
 		if (result > 0) {
 			error = EINVAL;
@@ -444,10 +444,10 @@ hfsp_vop_lookup(void *v)
 			goto error;
 		}
 
-		if (rec.file.user_info.file_type == HFSP_HARD_LINK_FILE_TYPE
+		if (rec.file.user_info.file_type == HFS_HARD_LINK_FILE_TYPE
 		    && rec.file.user_info.file_creator
-		    == HFSP_HFSPLUS_CREATOR) {
-			if (hfsplib_get_hardlink(&dp->h_hmp->hm_vol,
+		    == HFS_HFSLUS_CREATOR) {
+			if (hfslib_get_hardlink(&dp->h_hmp->hm_vol,
 					 rec.file.bsd.special.inode_num,
 					 &rec, &cbargs) != 0) {
 				error = EINVAL;
@@ -455,14 +455,14 @@ hfsp_vop_lookup(void *v)
 			}
 		}
 
-		if (rec.type == HFSP_REC_FILE
+		if (rec.type == HFS_REC_FILE
 		    && strcmp(cnp->cn_nameptr+cnp->cn_namelen, "/rsrc") == 0
 		    && rec.file.rsrc_fork.logical_size > 0) {
 		    /* advance namei next pointer to end of stirng */
 		    cnp->cn_consume = 5;
 		    cnp->cn_flags &= ~REQUIREDIR; /* XXX: needed? */
-		    error = hfsp_vget_internal(vdp->v_mount, rec.file.cnid,
-			HFSP_RSRCFORK, &tdp);
+		    error = hfs_vget_internal(vdp->v_mount, rec.file.cnid,
+			HFS_RSRCFORK, &tdp);
 		}
 		else
 			error = VFS_VGET(vdp->v_mount, rec.file.cnid, &tdp);
@@ -492,7 +492,7 @@ error:
 }
 
 int
-hfsp_vop_open(void *v)
+hfs_vop_open(void *v)
 {
 #if 0
 	struct vop_open_args /* {
@@ -501,11 +501,11 @@ hfsp_vop_open(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
-	struct hfspnode *hn = VTOH(ap->a_vp);
+	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_open()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_open()\n");
+#endif /* HFS_DEBUG */
 
 	/*
 	 * XXX This is a good place to read and cache the file's extents to avoid
@@ -517,7 +517,7 @@ hfsp_vop_open(void *v)
 }
 
 int
-hfsp_vop_close(void *v)
+hfs_vop_close(void *v)
 {
 #if 0
 	struct vop_close_args /* {
@@ -526,11 +526,11 @@ hfsp_vop_close(void *v)
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
 	} */ *ap = v;
-	struct hfspnode *hn = VTOH(ap->a_vp);
+	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_close()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_close()\n");
+#endif /* HFS_DEBUG */
 
 	/* Release extents cache here. */
 	
@@ -538,7 +538,7 @@ hfsp_vop_close(void *v)
 }
 
 int
-hfsp_vop_access(void *v)
+hfs_vop_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -549,9 +549,9 @@ hfsp_vop_access(void *v)
 	struct vattr va;
 	int error;
 
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_access()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_access()\n");
+#endif /* HFS_DEBUG */
 
 	/*
 	 * Disallow writes on files, directories, and symlinks
@@ -577,7 +577,7 @@ hfsp_vop_access(void *v)
 }
 
 int
-hfsp_vop_getattr(void *v)
+hfs_vop_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode	*a_vp;
@@ -586,14 +586,14 @@ hfsp_vop_getattr(void *v)
 		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct hfspnode	*hp;
+	struct hfsnode	*hp;
 	struct vattr	*vap;
-	hfsp_bsd_data_t *bsd;
-	hfsp_fork_t     *fork;
+	hfs_bsd_data_t *bsd;
+	hfs_fork_t     *fork;
 
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_getattr()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_getattr()\n");
+#endif /* HFS_DEBUG */
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);
@@ -606,44 +606,44 @@ hfsp_vop_getattr(void *v)
 	 * XXX record those values are not set on files created under Mac OS 9.
 	 */
 	vap->va_type = ap->a_vp->v_type;
-	if (hp->h_rec.rec_type == HFSP_REC_FILE) {
-		if (hp->h_fork == HFSP_RSRCFORK)
+	if (hp->h_rec.rec_type == HFS_REC_FILE) {
+		if (hp->h_fork == HFS_RSRCFORK)
 			fork = &hp->h_rec.file.rsrc_fork;
 		else
 			fork = &hp->h_rec.file.data_fork;
 		vap->va_fileid = hp->h_rec.file.cnid;
 		bsd = &hp->h_rec.file.bsd;
-		vap->va_bytes = fork->total_blocks * HFSP_BLOCKSIZE(vp);
+		vap->va_bytes = fork->total_blocks * HFS_BLOCKSIZE(vp);
 		vap->va_size = fork->logical_size;
-		hfsp_time_to_timespec(hp->h_rec.file.date_created, &vap->va_ctime);
-		hfsp_time_to_timespec(hp->h_rec.file.date_content_mod, &vap->va_mtime);
-		hfsp_time_to_timespec(hp->h_rec.file.date_accessed, &vap->va_atime);
+		hfs_time_to_timespec(hp->h_rec.file.date_created, &vap->va_ctime);
+		hfs_time_to_timespec(hp->h_rec.file.date_content_mod, &vap->va_mtime);
+		hfs_time_to_timespec(hp->h_rec.file.date_accessed, &vap->va_atime);
 		vap->va_nlink = 1;
 	}
-	else if (hp->h_rec.rec_type == HFSP_REC_FLDR) {
+	else if (hp->h_rec.rec_type == HFS_REC_FLDR) {
 		vap->va_fileid = hp->h_rec.folder.cnid;
 		bsd = &hp->h_rec.folder.bsd;
 		vap->va_size = 512; /* XXX Temporary */
 		vap->va_bytes = 512; /* XXX Temporary */
-		hfsp_time_to_timespec(hp->h_rec.folder.date_created, &vap->va_ctime);
-		hfsp_time_to_timespec(hp->h_rec.folder.date_content_mod,&vap->va_mtime);
-		hfsp_time_to_timespec(hp->h_rec.folder.date_accessed, &vap->va_atime);
+		hfs_time_to_timespec(hp->h_rec.folder.date_created, &vap->va_ctime);
+		hfs_time_to_timespec(hp->h_rec.folder.date_content_mod,&vap->va_mtime);
+		hfs_time_to_timespec(hp->h_rec.folder.date_accessed, &vap->va_atime);
 		vap->va_nlink = 2; /* XXX */
 	}
 	else {
-		printf("hfsplus: hfsp_vop_getattr(): invalid record type %i",
+		printf("hfslus: hfs_vop_getattr(): invalid record type %i",
 			hp->h_rec.rec_type);
 		return EINVAL;
 	}
 
 	if ((bsd->file_mode & S_IFMT) == 0) {
 		/* no bsd permissions recorded, use default values */
-		if (hp->h_rec.rec_type == HFSP_REC_FILE)
-			vap->va_mode = (S_IFREG | HFSP_DEFAULT_FILE_MODE);
+		if (hp->h_rec.rec_type == HFS_REC_FILE)
+			vap->va_mode = (S_IFREG | HFS_DEFAULT_FILE_MODE);
 		else
-			vap->va_mode = (S_IFDIR | HFSP_DEFAULT_DIR_MODE);
-		vap->va_uid = HFSP_DEFAULT_UID;
-		vap->va_gid = HFSP_DEFAULT_GID;
+			vap->va_mode = (S_IFDIR | HFS_DEFAULT_DIR_MODE);
+		vap->va_uid = HFS_DEFAULT_UID;
+		vap->va_gid = HFS_DEFAULT_GID;
 	}
 	else {
 		vap->va_mode = bsd->file_mode;
@@ -652,7 +652,7 @@ hfsp_vop_getattr(void *v)
 		if ((vap->va_mode & S_IFMT) == S_IFCHR
 		    || (vap->va_mode & S_IFMT) == S_IFBLK) {
 			vap->va_rdev
-			    = HFSP_CONVERT_RDEV(bsd->special.raw_device);
+			    = HFS_CONVERT_RDEV(bsd->special.raw_device);
 		}
 		else if (bsd->special.link_count != 0) {
 		    /* XXX: only if in metadata directory */
@@ -669,7 +669,7 @@ hfsp_vop_getattr(void *v)
 }
 
 int
-hfsp_vop_setattr(void *v)
+hfs_vop_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnode	*a_vp;
@@ -725,7 +725,7 @@ hfsp_vop_setattr(void *v)
 }
 
 int
-hfsp_vop_bmap(void *v)
+hfs_vop_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;
@@ -735,11 +735,11 @@ hfsp_vop_bmap(void *v)
 		int *a_runp;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct hfspnode *hp;
+	struct hfsnode *hp;
 	daddr_t lblkno;
-	hfsp_callback_args cbargs;
-	hfsp_libcb_argsread argsread;
-	hfsp_extent_descriptor_t *extents;
+	hfs_callback_args cbargs;
+	hfs_libcb_argsread argsread;
+	hfs_extent_descriptor_t *extents;
 	uint16_t numextents, i;
 	int bshift;
 
@@ -757,12 +757,12 @@ hfsp_vop_bmap(void *v)
 	if (ap->a_bnp == NULL)
 		return (0);
 
-	hfsplib_init_cbargs(&cbargs);
+	hfslib_init_cbargs(&cbargs);
 	argsread.cred = NULL;
 	argsread.l = NULL;
 	cbargs.read = &argsread;
 
-	numextents = hfsplib_get_file_extents(&hp->h_hmp->hm_vol,
+	numextents = hfslib_get_file_extents(&hp->h_hmp->hm_vol,
 	    hp->h_rec.cnid, hp->h_fork, &extents, &cbargs);
 
 	/* XXX: is this correct for 0-length files? */
@@ -797,13 +797,13 @@ hfsp_vop_bmap(void *v)
 
 	}
 
-	free(extents, /*M_HFSPMNT*/ M_TEMP);
+	free(extents, /*M_HFSMNT*/ M_TEMP);
 
 	return 0;
 }
 
 int
-hfsp_vop_read(void *v)
+hfs_vop_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -812,7 +812,7 @@ hfsp_vop_read(void *v)
 		kauth_cred_t a_cred;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct hfspnode *hp;
+	struct hfsnode *hp;
 	struct uio *uio;
 	uint64_t fsize; /* logical size of file */
 	int advice;
@@ -821,7 +821,7 @@ hfsp_vop_read(void *v)
 	vp = ap->a_vp;
 	hp = VTOH(vp);
 	uio = ap->a_uio;
-	if (hp->h_fork == HFSP_RSRCFORK)
+	if (hp->h_fork == HFS_RSRCFORK)
 		fsize = hp->h_rec.file.rsrc_fork.logical_size;
 	else
 		fsize = hp->h_rec.file.data_fork.logical_size;
@@ -858,7 +858,7 @@ hfsp_vop_read(void *v)
 }
 
 int
-hfsp_vop_readdir(void *v)
+hfs_vop_readdir(void *v)
 {
 struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -869,16 +869,16 @@ struct vop_readdir_args /* {
 		int a_*ncookies;
 	} */ *ap = v;
 
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_readdir()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_readdir()\n");
+#endif /* HFS_DEBUG */
 
 	struct dirent curent; /* the dirent entry we're currently constructing */
-	struct hfspnode *hp;
-	hfsp_catalog_keyed_record_t *children;
-	hfsp_unistr255_t *childnames;
-	hfsp_callback_args cbargs;
-	hfsp_libcb_argsread argsread;
+	struct hfsnode *hp;
+	hfs_catalog_keyed_record_t *children;
+	hfs_unistr255_t *childnames;
+	hfs_callback_args cbargs;
+	hfs_libcb_argsread argsread;
 	struct uio *uio;
 	off_t bufoff; /* current position in buffer relative to start of dirents */
 	uint32_t numchildren;
@@ -904,13 +904,13 @@ struct vop_readdir_args /* {
 		return EOPNOTSUPP;*/
 /*printf("READDIR uio: offset=%i, resid=%i\n",
 (int)uio->uio_offset, (int)uio->uio_resid);*/
-	hfsplib_init_cbargs(&cbargs);
+	hfslib_init_cbargs(&cbargs);
 	argsread.cred = ap->a_cred;
 	argsread.l = NULL;
 	cbargs.read = &argsread;
 	
 	/* XXX Should we cache this? */
-	if (hfsplib_get_directory_contents(&hp->h_hmp->hm_vol, hp->h_rec.cnid,
+	if (hfslib_get_directory_contents(&hp->h_hmp->hm_vol, hp->h_rec.cnid,
 		&children, &childnames, &numchildren, &cbargs) != 0) {
 /*printf("NOENT\n");*/
 		error = ENOENT;
@@ -944,7 +944,7 @@ struct vop_readdir_args /* {
 		}
 			
 		curent.d_fileno = children[curchild].file.cnid;
-		switch (hfsp_catalog_keyed_record_vtype(children+curchild)) {
+		switch (hfs_catalog_keyed_record_vtype(children+curchild)) {
 		case VREG:
 			curent.d_type = DT_REG;
 			break;
@@ -999,7 +999,7 @@ printf("ERROR = %i\n", error);*/
 }
 
 int
-hfsp_vop_readlink(void *v) {
+hfs_vop_readlink(void *v) {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
         	struct uio *a_uio;
@@ -1010,26 +1010,26 @@ hfsp_vop_readlink(void *v) {
 }
 
 int
-hfsp_vop_reclaim(void *v)
+hfs_vop_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp;
-	struct hfspnode *hp;
-	struct hfspmount *hmp;
+	struct hfsnode *hp;
+	struct hfsmount *hmp;
 	
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_reclaim()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_reclaim()\n");
+#endif /* HFS_DEBUG */
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);
 	hmp = hp->h_hmp;
 
-	/* Remove the hfspnode from its hash chain. */
-	hfsp_nhashremove(hp);
+	/* Remove the hfsnode from its hash chain. */
+	hfs_nhashremove(hp);
 
 	/* Purge name lookup cache. */
 	cache_purge(vp);
@@ -1048,17 +1048,17 @@ hfsp_vop_reclaim(void *v)
 }
 
 int
-hfsp_vop_print(void *v)
+hfs_vop_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode	*a_vp;
 	} */ *ap = v;
 	struct vnode	*vp;
-	struct hfspnode	*hp;
+	struct hfsnode	*hp;
 
-#ifdef HFSP_DEBUG
-	printf("VOP = hfsp_vop_print()\n");
-#endif /* HFSP_DEBUG */
+#ifdef HFS_DEBUG
+	printf("VOP = hfs_vop_print()\n");
+#endif /* HFS_DEBUG */
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);

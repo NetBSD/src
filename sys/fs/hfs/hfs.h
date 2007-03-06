@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.1 2007/03/06 00:22:04 dillo Exp $	*/
+/*	$NetBSD: hfs.h,v 1.2 2007/03/06 11:28:47 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */                                     
  
-#ifndef _FS_HFSP_HFSP_H_
-#define _FS_HFSP_HFSP_H_
+#ifndef _FS_HFS_HFS_H_
+#define _FS_HFS_HFS_H_
 
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -38,63 +38,63 @@
 #include <miscfs/genfs/genfs_node.h>
 
 /* XXX remove before release */
-/*#define HFSP_DEBUG*/
+/*#define HFS_DEBUG*/
 
-#ifdef HFSP_DEBUG
+#ifdef HFS_DEBUG
 	#if defined(_KERNEL) && !defined(_LKM)
 		#include "opt_ddb.h"
 	#endif /* defined(_KERNEL_) && !defined(_LKM) */
-#endif /* HFSP_DEBUG */
+#endif /* HFS_DEBUG */
 
-#include <fs/hfsp/libhfsp.h>
+#include <fs/hfs/libhfs.h>
 
 /* XXX: make these mount options */
-#define HFSP_DEFAULT_UID	0
-#define HFSP_DEFAULT_GID	0
-#define HFSP_DEFAULT_DIR_MODE	0755
-#define HFSP_DEFAULT_FILE_MODE	0755
+#define HFS_DEFAULT_UID	0
+#define HFS_DEFAULT_GID	0
+#define HFS_DEFAULT_DIR_MODE	0755
+#define HFS_DEFAULT_FILE_MODE	0755
 
-MALLOC_DECLARE(M_HFSPMNT);	/* defined in hfsp_vfsops.c */
+MALLOC_DECLARE(M_HFSMNT);	/* defined in hfs_vfsops.c */
 
-struct hfsp_args {
+struct hfs_args {
 	char *fspec;		/* block special device to mount */
 	uint64_t offset; /*number of bytes to start of volume from start of device*/
 };
 
-struct hfspmount {
+struct hfsmount {
 	struct mount *hm_mountp;	/* filesystem vfs structure */
 	dev_t hm_dev;				/* device mounted */
 	struct vnode *hm_devvp;		/* block device mounted vnode */
-	hfsp_volume hm_vol;			/* essential volume information */
+	hfs_volume hm_vol;			/* essential volume information */
 	uint64_t offset;		/* number of device bloks to start of volume from start of device*/
 };
 
-struct hfspnode {
+struct hfsnode {
 	struct genfs_node h_gnode;
-	LIST_ENTRY(hfspnode) h_hash;/* hash chain */
+	LIST_ENTRY(hfsnode) h_hash;/* hash chain */
 	struct vnode *h_vnode;		/* vnode associated with this hnode */
-	struct hfspmount *h_hmp;	/* mount point associated with this hnode */
+	struct hfsmount *h_hmp;	/* mount point associated with this hnode */
 	struct vnode *h_devvp;		/* vnode for block I/O */
 	dev_t	h_dev;				/* device associated with this hnode */
 
 	union {
-		hfsp_file_record_t		file;
-		hfsp_folder_record_t	folder;
+		hfs_file_record_t		file;
+		hfs_folder_record_t	folder;
 		struct {
 			int16_t			rec_type;
 			uint16_t		flags;
 			uint32_t		valence;
-			hfsp_cnid_t		cnid;
+			hfs_cnid_t		cnid;
 		}; /* convenience for accessing common record info */
 	} h_rec; /* catalog record for this hnode */
 	
 	/*
 	 * We cache this vnode's parent CNID here upon vnode creation (i.e., during
-	 * hfsp_vop_vget()) for quick access without needing to search the catalog.
+	 * hfs_vop_vget()) for quick access without needing to search the catalog.
 	 * Note, however, that this value must also be updated whenever this file
 	 * is moved.
 	 */
-	hfsp_cnid_t		h_parent;
+	hfs_cnid_t		h_parent;
 
 	uint8_t h_fork;
 
@@ -105,110 +105,110 @@ typedef struct {
 	uint64_t offset; /* offset to start of volume from start of device */
 	struct vnode* devvp; /* vnode for device I/O */
 	size_t devblksz; /* device block size (NOT HFS+ allocation block size)*/
-} hfsp_libcb_data; /* custom data used in hfsp_volume.cbdata */
+} hfs_libcb_data; /* custom data used in hfs_volume.cbdata */
 
 typedef struct {
 	kauth_cred_t cred;
 	struct lwp *l;
 	struct vnode *devvp;
-} hfsp_libcb_argsopen;
+} hfs_libcb_argsopen;
 
 typedef struct {
 	struct lwp *l;
-} hfsp_libcb_argsclose;
+} hfs_libcb_argsclose;
 
 typedef struct {
 	kauth_cred_t cred;
 	struct lwp *l;
-} hfsp_libcb_argsread;
+} hfs_libcb_argsread;
 
 /*
  * Convenience macros
  */
 
-/* Convert mount ptr to hfspmount ptr. */
-#define VFSTOHFSP(mp)    ((struct hfspmount *)((mp)->mnt_data))
+/* Convert mount ptr to hfsmount ptr. */
+#define VFSTOHFS(mp)    ((struct hfsmount *)((mp)->mnt_data))
 
 /* Convert between vnode ptrs and hfsnode ptrs. */
-#define VTOH(vp)    ((struct hfspnode *)(vp)->v_data)
+#define VTOH(vp)    ((struct hfsnode *)(vp)->v_data)
 #define	HTOV(hp)	((hp)->h_vnode)
 
 /* Get volume's allocation block size given a vnode ptr */
-#define HFSP_BLOCKSIZE(vp)    (VTOH(vp)->h_hmp->hm_vol.vh.block_size)
+#define HFS_BLOCKSIZE(vp)    (VTOH(vp)->h_hmp->hm_vol.vh.block_size)
 
 
 /* Convert special device major/minor */
-#define HFSP_CONVERT_RDEV(x)	makedev((x)>>24, (x)&0xffffff)
+#define HFS_CONVERT_RDEV(x)	makedev((x)>>24, (x)&0xffffff)
 
 /*
  * Global variables
  */
 
-extern const struct vnodeopv_desc hfsp_vnodeop_opv_desc;
-extern const struct vnodeopv_desc hfsp_specop_opv_desc;
-extern const struct vnodeopv_desc hfsp_fifoop_opv_desc;
-extern int (**hfsp_specop_p) (void *);
-extern int (**hfsp_fifoop_p) (void *);
+extern const struct vnodeopv_desc hfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc hfs_specop_opv_desc;
+extern const struct vnodeopv_desc hfs_fifoop_opv_desc;
+extern int (**hfs_specop_p) (void *);
+extern int (**hfs_fifoop_p) (void *);
 
 
 /*
  * Function prototypes
  */
 
-/* hfsp_nhash.c */
-void hfsp_nhashinit (void);
-void hfsp_nhashdone (void);
-struct vnode *hfsp_nhashget (dev_t, hfsp_cnid_t, uint8_t, int);
-void hfsp_nhashinsert (struct hfspnode *);
-void hfsp_nhashremove (struct hfspnode *);
+/* hfs_nhash.c */
+void hfs_nhashinit (void);
+void hfs_nhashdone (void);
+struct vnode *hfs_nhashget (dev_t, hfs_cnid_t, uint8_t, int);
+void hfs_nhashinsert (struct hfsnode *);
+void hfs_nhashremove (struct hfsnode *);
 
-/* hfsp_subr.c */
-void hfsp_vinit (struct mount *, int (**)(void *), int (**)(void *),
+/* hfs_subr.c */
+void hfs_vinit (struct mount *, int (**)(void *), int (**)(void *),
 		 struct vnode **);
-int hfsp_pread(struct vnode*, void*, size_t, uint64_t, uint64_t, kauth_cred_t);
-char* hfsp_unicode_to_ascii(const unichar_t*, uint8_t, char*);
-unichar_t* hfsp_ascii_to_unicode(const char*, uint8_t, unichar_t*);
+int hfs_pread(struct vnode*, void*, size_t, uint64_t, uint64_t, kauth_cred_t);
+char* hfs_unicode_to_ascii(const unichar_t*, uint8_t, char*);
+unichar_t* hfs_ascii_to_unicode(const char*, uint8_t, unichar_t*);
 
-void hfsp_time_to_timespec(uint32_t, struct timespec *);
-enum vtype hfsp_catalog_keyed_record_vtype(const hfsp_catalog_keyed_record_t *);
+void hfs_time_to_timespec(uint32_t, struct timespec *);
+enum vtype hfs_catalog_keyed_record_vtype(const hfs_catalog_keyed_record_t *);
 
-void hfsp_libcb_error(const char*, const char*, int, va_list);
-void* hfsp_libcb_malloc(size_t, hfsp_callback_args*);
-void* hfsp_libcb_realloc(void*, size_t, hfsp_callback_args*);
-void hfsp_libcb_free(void*, hfsp_callback_args*);
-int hfsp_libcb_opendev(hfsp_volume*, const char*, uint64_t,hfsp_callback_args*);
-void hfsp_libcb_closedev(hfsp_volume*, hfsp_callback_args*);
-int hfsp_libcb_read(hfsp_volume*, void*, uint64_t, uint64_t,
-	hfsp_callback_args*);
+void hfs_libcb_error(const char*, const char*, int, va_list);
+void* hfs_libcb_malloc(size_t, hfs_callback_args*);
+void* hfs_libcb_realloc(void*, size_t, hfs_callback_args*);
+void hfs_libcb_free(void*, hfs_callback_args*);
+int hfs_libcb_opendev(hfs_volume*, const char*, uint64_t,hfs_callback_args*);
+void hfs_libcb_closedev(hfs_volume*, hfs_callback_args*);
+int hfs_libcb_read(hfs_volume*, void*, uint64_t, uint64_t,
+	hfs_callback_args*);
 
 uint16_t be16tohp(void**);
 uint32_t be32tohp(void**);
 uint64_t be64tohp(void**);
 
 
-/* hfsp_vfsops.c */
-int hfsp_mount (struct mount *, const char *, void *, struct nameidata *,
+/* hfs_vfsops.c */
+int hfs_mount (struct mount *, const char *, void *, struct nameidata *,
 	struct lwp *);
-int hfsp_mountfs (struct vnode *, struct mount *, struct lwp *,
+int hfs_mountfs (struct vnode *, struct mount *, struct lwp *,
 	const char *, uint64_t);
-int hfsp_start (struct mount *, int, struct lwp *);
-int hfsp_unmount (struct mount *, int, struct lwp *);
-int hfsp_root (struct mount *, struct vnode **);
-int hfsp_quotactl (struct mount *, int, uid_t, void *, struct lwp *);
-int hfsp_statvfs (struct mount *, struct statvfs *, struct lwp *);
-int hfsp_sync (struct mount *, int, kauth_cred_t , struct lwp *);
-int hfsp_vget (struct mount *, ino_t, struct vnode **);
-int hfsp_vget_internal(struct mount *, ino_t, uint8_t, struct vnode **);
-int hfsp_fhtovp (struct mount *, struct fid *, struct vnode **);
-int hfsp_vptofh (struct vnode *, struct fid *, size_t *);
-void hfsp_init (void);
-void hfsp_reinit (void);
-void hfsp_done (void);
-int hfsp_mountroot (void);
-int hfsp_extattrctl (struct mount *, int, struct vnode *, int, const char *,
+int hfs_start (struct mount *, int, struct lwp *);
+int hfs_unmount (struct mount *, int, struct lwp *);
+int hfs_root (struct mount *, struct vnode **);
+int hfs_quotactl (struct mount *, int, uid_t, void *, struct lwp *);
+int hfs_statvfs (struct mount *, struct statvfs *, struct lwp *);
+int hfs_sync (struct mount *, int, kauth_cred_t , struct lwp *);
+int hfs_vget (struct mount *, ino_t, struct vnode **);
+int hfs_vget_internal(struct mount *, ino_t, uint8_t, struct vnode **);
+int hfs_fhtovp (struct mount *, struct fid *, struct vnode **);
+int hfs_vptofh (struct vnode *, struct fid *, size_t *);
+void hfs_init (void);
+void hfs_reinit (void);
+void hfs_done (void);
+int hfs_mountroot (void);
+int hfs_extattrctl (struct mount *, int, struct vnode *, int, const char *,
 		     struct lwp *);
 
-/* hfsp_vnops.c */
-extern int (**hfsp_vnodeop_p) (void *);
+/* hfs_vnops.c */
+extern int (**hfs_vnodeop_p) (void *);
 
-#endif /* !_FS_HFSP_HFSP_H_ */
+#endif /* !_FS_HFS_HFS_H_ */
