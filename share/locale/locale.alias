@@ -1,4 +1,4 @@
-# $NetBSD: locale.alias,v 1.5 2006/03/28 14:44:01 tnozaki Exp $
+# $NetBSD: locale.alias,v 1.6 2007/03/06 15:50:45 tnozaki Exp $
 
 #
 # Locale aliases
@@ -51,6 +51,7 @@ sr_YU.UTF-8/LC_CTYPE		en_US.UTF-8
 sv_SE.UTF-8/LC_CTYPE		en_US.UTF-8
 uk_UA.UTF-8/LC_CTYPE		en_US.UTF-8
 zh_CN.UTF-8/LC_CTYPE		en_US.UTF-8
+zh_HK.UTF-8/LC_CTYPE		en_US.UTF-8
 zh_TW.UTF-8/LC_CTYPE		en_US.UTF-8
 
 
@@ -101,6 +102,7 @@ sr_YU.UTF-8/LC_MESSAGES		/FORCE
 sv_SE.UTF-8/LC_MESSAGES		/FORCE
 uk_UA.UTF-8/LC_MESSAGES		/FORCE
 zh_CN.UTF-8/LC_MESSAGES		/FORCE
+zh_HK.UTF-8/LC_MESSAGES		/FORCE
 zh_TW.UTF-8/LC_MESSAGES		/FORCE
 
 # Pig locale
@@ -111,3 +113,6 @@ zh_TW.BIG5			zh_TW.Big5
 
 # Linux/FreeBSD compatibility, EUC-CN == GB2312
 zh_CN.GB2312			zh_CN.eucCN
+
+# FreeBSD compatibility.
+zh_HK.Big5HKSCS			zh_HK.Big5-HKSCS
