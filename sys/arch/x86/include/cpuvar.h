@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.7 2007/03/05 16:51:02 drochner Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.8 2007/03/06 12:32:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  * SUCH DAMAGE.
  */
 
+#ifndef _X86_CPUVAR_H_
+#define	_X86_CPUVAR_H_
+
 struct cpu_functions {
 	int (*start)(struct cpu_info *);
 	int (*stop)(struct cpu_info *);
@@ -106,3 +109,5 @@ void cpu_init(struct cpu_info *);
 void cpu_init_first(void);
 
 #endif
+
+#endif /* !_X86_CPUVAR_H_ */
