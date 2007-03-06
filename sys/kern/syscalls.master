@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.167 2007/03/04 06:03:10 christos Exp $
+	$NetBSD: syscalls.master,v 1.168 2007/03/06 16:09:21 drochner Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -132,7 +132,7 @@
 41	STD		{ int sys_dup(int fd); }
 42	STD		{ int sys_pipe(void); }
 43	STD MPSAFE	{ gid_t sys_getegid(void); }
-44	STD MPSAFE	{ int sys_profil(void *samples, size_t size, \
+44	STD MPSAFE	{ int sys_profil(char *samples, size_t size, \
 			    u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
 45	STD		{ int sys_ktrace(const char *fname, int ops, \
