@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.22 2007/03/04 06:00:13 christos Exp $ */
+/* $NetBSD: sbmac.c,v 1.23 2007/03/06 00:43:50 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.22 2007/03/04 06:00:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.23 2007/03/06 00:43:50 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -660,7 +660,7 @@ sbdma_add_txbuffer(sbmacdma_t *d, struct mbuf *m)
 				len -= next_len;
 
 				if (addr + len ==
-				    KVTOPHYS(mtod(m_temp, void *) + len)) {
+				    KVTOPHYS(mtod(m_temp, char *) + len)) {
 					SBMAC_EVCNT_INCR(sc->sbm_ev_txkeep);
 					len += next_len;
 					next_len = 0;
@@ -702,7 +702,7 @@ again:
 			num_mbufs++;
 
 			if (next_len != 0) {
-				addr = KVTOPHYS(mtod(m_temp, void *) + len);
+				addr = KVTOPHYS(mtod(m_temp, char *) + len);
 				len = next_len;
 
 				next_len = 0;
