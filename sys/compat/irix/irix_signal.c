@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.37 2007/03/04 06:01:18 christos Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.38 2007/03/06 12:43:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.37 2007/03/04 06:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.38 2007/03/06 12:43:09 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -299,7 +299,7 @@ irix_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		sp = (void *)((void *)l->l_sigstk.ss_sp
+		sp = (void *)((char *)l->l_sigstk.ss_sp
 		    + l->l_sigstk.ss_size);
 	else
 		/* cast for _MIPS_BSD_API == _MIPS_BSD_API_LP32_64CLEAN case */
