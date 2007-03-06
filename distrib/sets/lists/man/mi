@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.5 2007/03/04 14:17:09 bouyer Exp $
+# $NetBSD: mi,v 1.955.2.6 2007/03/06 20:43:47 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1193,6 +1193,8 @@
 ./usr/share/man/cat4/ppi.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ppp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pppoe.0			man-sys-catman		.cat
+./usr/share/man/cat4/prep/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/prep/nvram.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pss.0			man-obsolete		obsolete
 ./usr/share/man/cat4/ptm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pty.0			man-sys-catman		.cat
