@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.13 2007/02/23 18:31:42 yamt Exp $
+#	$NetBSD: ROADMAP,v 1.14 2007/03/06 01:45:55 rmind Exp $
 
 A high-level roadmap for NetBSD
 
@@ -142,7 +142,7 @@ aj. PTHREAD_CONCURRENCY > 1 support
 ak. AIO support
     POSIX aio_*() with full support for Asynchronous I/O (AIO) in the
     kernel.
-	Responsible: briggs
+	Responsible: rmind
 	ETA: 5.0?
 
 al. Modern parallel port support
@@ -216,7 +216,7 @@ av. iSCSI initiator support
 aw. Run-time changeable limits to SysV IPC
     Some of the limits for SysV IPC are hardcoded in the kernel
     configuration--these should be changable via sysctl.
-	Responsible: TBD
+	Responsible: rmind
 	ETA: 4.0
 
 2. Platform independent userland
