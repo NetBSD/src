@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfsp.h,v 1.1.1.1 2007/03/06 00:10:39 dillo Exp $	*/
+/*	$NetBSD: libhfs.h,v 1.1 2007/03/06 00:22:06 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.

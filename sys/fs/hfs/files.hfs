@@ -1,4 +1,4 @@
-#	$NetBSD: files.hfsp,v 1.1.1.1 2007/03/06 00:10:34 dillo Exp $
+#	$NetBSD: files.hfs,v 1.1 2007/03/06 00:22:04 dillo Exp $
 
 deffs	HFSP
 
