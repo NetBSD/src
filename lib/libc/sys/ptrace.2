@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.28 2006/03/11 12:03:03 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.29 2007/03/06 16:07:22 drochner Exp $
 .\"
 .\" This file is in the public domain.
 .Dd March 6, 2006
@@ -13,7 +13,7 @@
 .In sys/types.h
 .In sys/ptrace.h
 .Ft int
-.Fn ptrace "int request" "pid_t pid" "caddr_t addr" "int data"
+.Fn ptrace "int request" "pid_t pid" "void *addr" "int data"
 .Sh DESCRIPTION
 .Fn ptrace
 provides tracing and debugging facilities.
