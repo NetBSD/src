@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.35 2007/03/04 05:59:41 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.36 2007/03/06 14:42:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ typedef u_long	bus_size_t;
  * Access methods for bus resources and address space.
  */
 typedef struct atari_bus_space	*bus_space_tag_t;
-typedef void *			bus_space_handle_t;
+typedef u_long			bus_space_handle_t;
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
 #define	BUS_SPACE_MAP_LINEAR		0x02
