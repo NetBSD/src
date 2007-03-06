@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.28 2007/03/04 05:59:36 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.29 2007/03/06 13:54:44 he Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.28 2007/03/04 05:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.29 2007/03/06 13:54:44 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,7 @@ loop:
 		}
 #endif
 		read = (bp->b_flags & B_READ) != 0;
-		FDCDMA_START(fdc, bp->b_data + fd->sc_skip,
+		FDCDMA_START(fdc, (char *)bp->b_data + fd->sc_skip,
 		    fd->sc_nbytes, read);
 		bus_space_write_1(iot, ioh, FDCTL, type->rate);
 #ifdef FD_DEBUG
