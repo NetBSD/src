@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.54 2007/03/06 14:10:07 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.55 2007/03/06 14:45:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.54 2007/03/06 14:10:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.55 2007/03/06 14:45:31 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -328,6 +328,7 @@ fdcprobe(parent, cfp, aux)
 {
 	static int	fdc_matched = 0;
 	bus_space_tag_t mb_tag;
+	bus_space_handle_t handle;
 
 	/* Match only once */
 	if(strcmp("fdc", aux) || fdc_matched)
@@ -339,12 +340,12 @@ fdcprobe(parent, cfp, aux)
 	if ((mb_tag = mb_alloc_bus_space_tag()) == NULL)
 		return 0;
 
-	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0,
-				(void **)(void *)&fdio_addr)) {
+	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0, &handle)) {
 		printf("fdcprobe: cannot map io-area\n");
 		mb_free_bus_space_tag(mb_tag);
 		return (0);
 	}
+	fdio_addr = bus_space_vaddr(mb_tag, handle);	/* XXX */
 
 #ifdef FD_DEBUG
 	printf("fdcprobe: I/O mapping done va: %p\n", fdio_addr);
@@ -365,8 +366,7 @@ fdcprobe(parent, cfp, aux)
 
  out:
 	if (fdc_matched == 0) {
-		bus_space_unmap(mb_tag, (void *)__UNVOLATILE(fdio_addr),
-		    FD_IOSIZE);
+		bus_space_unmap(mb_tag, handle, FD_IOSIZE);
 		mb_free_bus_space_tag(mb_tag);
 	}
 
