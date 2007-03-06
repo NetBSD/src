@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.44 2007/03/06 13:54:45 he Exp $	*/
+/*	$NetBSD: bus.c,v 1.45 2007/03/06 14:42:44 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.44 2007/03/06 13:54:45 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.45 2007/03/06 14:42:44 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,7 @@ bus_space_handle_t	*bshp;
 		va = bootm_alloc(pa, endpa - pa, flags);
 		if (va == 0)
 			return (ENOMEM);
-		*bshp = (void *)(va + (bpa & PGOFSET));
+		*bshp = va + (bpa & PGOFSET);
 		return (0);
 	}
 
@@ -268,7 +268,7 @@ bus_space_handle_t	*bshp;
 	if (va == 0)
 		return (ENOMEM);
 
-	*bshp = (void *)(va + (bpa & PGOFSET));
+	*bshp = va + (bpa & PGOFSET);
 
 	for(; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 		u_int	*ptep, npte;
@@ -338,7 +338,7 @@ bus_space_handle_t	memh;
 bus_size_t		off, sz;
 bus_space_handle_t	*mhp;
 {
-	*mhp = (char *)memh + off;
+	*mhp = memh + off;
 	return 0;
 }
 
