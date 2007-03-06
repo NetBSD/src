@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.13 2007/03/04 06:02:16 christos Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.14 2007/03/06 01:09:42 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -32,7 +32,7 @@
 #define _PCI_AGPVAR_H_
 
 #include <sys/mallocvar.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 
 struct agpbus_attach_args {
 	char	*_apa_busname; /* XXX placeholder */
@@ -144,7 +144,7 @@ struct agp_softc {
 #if 0
 	dev_t			as_devnode;	/* from make_dev */
 #endif
-	struct lock		as_lock;	/* lock for access to GATT */
+	kmutex_t		as_mtx;		/* mutex for access to GATT */
 	struct agp_methods	*as_methods;	/* chipset-dependent API */
 	void			*as_chipc;	/* chipset-dependent state */
 	pci_chipset_tag_t	as_pc;
