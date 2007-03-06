@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2006/11/18 20:15:59 dsl Exp $
+#	$NetBSD: Makefile,v 1.4 2007/03/06 21:52:45 bouyer Exp $
 
 SUBDIR=
 SUBDIR+=	bootcd
 SUBDIR+=	bootcd-com
-SUBDIR+=	bootcd-laptop
-#SUBDIR+=	installcd
+SUBDIR+=	installcd
 
-TARGETS+=       release
+TARGETS+=       release iso_image
 
 .include <bsd.subdir.mk>
