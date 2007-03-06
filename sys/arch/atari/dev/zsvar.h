@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.10 2007/03/04 05:59:41 christos Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.11 2007/03/06 14:13:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,7 +155,7 @@ struct zs_chanstate {
 	 * also be stopped for ^S; this sets TS_TTSTOP in tp->t_state.
 	 */
 	int	cs_tbc;			/* transmit byte count */
-	void *	cs_tba;			/* transmit buffer address */
+	uint8_t *cs_tba;		/* transmit buffer address */
 	int	cs_heldtbc;		/* held tbc while xmission stopped */
 
 	/*
