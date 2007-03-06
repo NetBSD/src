@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2007/03/04 06:00:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 2007/03/06 22:31:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2007/03/04 06:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2007/03/06 22:31:36 simonb Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -200,7 +200,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	const char *bootinfo_msg;
 	u_long first, last;
 	int i;
-	void *kernend;
+	char *kernend;
 #if NKSYMS || defined(DDB) || defined(LKM)
 	void *ssym = 0;
 	struct btinfo_symtab *bi_syms;
@@ -332,7 +332,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(esym - ssym, ssym, esym);
+		ksyms_init((char *)esym - (char *)ssym, ssym, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
