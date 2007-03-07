@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.18 2007/03/04 06:00:13 christos Exp $	*/
+/*	$NetBSD: asc.c,v 1.19 2007/03/07 22:35:22 he Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.18 2007/03/04 06:00:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.19 2007/03/07 22:35:22 he Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -472,7 +472,7 @@ asc_dma_intr(struct ncr53c9x_softc *sc)
 			  : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(esc->sc_dmat, esc->sc_dmamap);
 
-	*esc->sc_dmaaddr += trans;
+	*esc->sc_dmaaddr = (char *)*esc->dmaaddr + trans;
 	*esc->sc_dmalen  -= trans;
 
 	esc->sc_flags = DMA_IDLE;
