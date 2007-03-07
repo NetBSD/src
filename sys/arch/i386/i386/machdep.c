@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.600 2007/03/04 05:59:57 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.600 2007/03/04 05:59:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.601 2007/03/07 21:43:43 thorpej Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -469,19 +469,19 @@ cpu_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+				   VM_PHYS_SIZE, 0, false, NULL);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -2035,7 +2035,7 @@ init386(paddr_t first_avail)
 #if defined(MULTIBOOT)
 		loaded = multiboot_ksyms_init();
 #else
-		loaded = FALSE;
+		loaded = false;
 #endif
 		if (!loaded) {
 		    symtab = lookup_bootinfo(BTINFO_SYMTAB);
