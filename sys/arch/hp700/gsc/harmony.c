@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.6 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: harmony.c,v 1.7 2007/03/07 09:24:46 he Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -1104,7 +1104,7 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	c->c_intrarg = intrarg;
 	c->c_blksz = blksize;
 	c->c_current = d;
-	c->c_segsz = (void *)end - (void *)start;
+	c->c_segsz = (char *)end - (char *)start;
 	c->c_cnt = 0;
 	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr;
 
@@ -1199,7 +1199,7 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 	c->c_intrarg = intrarg;
 	c->c_blksz = blksize;
 	c->c_current = d;
-	c->c_segsz = (void *)end - (void *)start;
+	c->c_segsz = (char *)end - (char *)start;
 	c->c_cnt = 0;
 	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr;
 
