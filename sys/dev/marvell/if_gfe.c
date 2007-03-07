@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.21 2007/03/04 06:02:14 christos Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.22 2007/03/07 09:15:21 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.21 2007/03/04 06:02:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.22 2007/03/07 09:15:21 he Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1120,7 +1120,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	intrmask = sc->sc_intrmask;
 
 	m_copydata(m, 0, m->m_pkthdr.len,
-	    txq->txq_buf_mem.gdm_kva + txq->txq_outptr);
+	    (char *)txq->txq_buf_mem.gdm_kva + (int)txq->txq_outptr);
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
 	    txq->txq_outptr, buflen, BUS_DMASYNC_PREWRITE);
 	txd->ed_bufptr = htogt32(txq->txq_buf_busaddr + txq->txq_outptr);
