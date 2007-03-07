@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.1 2007/01/18 16:29:21 ginsbach Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.2 2007/03/07 15:13:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 int
 main(int argc, char *argv[])
 {
-	size_t len, lineno;
+	size_t len, lineno = 0;
 	char *line, *eptr, *longopt, *ptr, *optstring = NULL, *result = NULL;
 	char buf[1024];
 	char *args[128];
