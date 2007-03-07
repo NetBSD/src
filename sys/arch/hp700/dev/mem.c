@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.14 2007/03/07 11:29:46 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.13 2007/03/04 05:59:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14 2007/03/07 11:29:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = v & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((void *)vmmap + o, c, uio);
+			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());

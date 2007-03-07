@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2007/03/07 11:29:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2007/03/04 05:59:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2007/03/07 11:29:46 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -472,7 +472,7 @@ hppa_init(paddr_t start)
 	p = &os_hpmc;
 	if (pdc_call((iodcio_t)pdc, 0, PDC_INSTR, PDC_INSTR_DFLT, p))
 		*p = 0x08000240;
-	p[7] = ((void *) &os_hpmc_cont_end) - ((void *) &os_hpmc_cont);
+	p[7] = ((char *) &os_hpmc_cont_end) - ((char *) &os_hpmc_cont);
 	p[6] = (u_int) &os_hpmc_cont;
 	p[5] = -(p[0] + p[1] + p[2] + p[3] + p[4] + p[6] + p[7]);
 	p = &os_hpmc_cont;
@@ -755,7 +755,7 @@ do {									\
 
 	/* Install the OS_TOC handler. */
 	PAGE0->ivec_toc = os_toc;
-	PAGE0->ivec_toclen = ((void *) &os_toc_end) - ((void *) &os_toc);
+	PAGE0->ivec_toclen = ((char *) &os_toc_end) - ((char *) &os_toc);
 
 	pmap_bootstrap(&vstart, &vend);
 
@@ -1603,7 +1603,7 @@ dumpsys(void)
 {
 	const struct bdevsw *bdev;
 	int psize, bytes, i, n;
-	void *maddr;
+	char *maddr;
 	daddr_t blkno;
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
