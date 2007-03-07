@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.67 2007/03/04 06:03:15 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.68 2007/03/07 22:20:05 liamjfoy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.67 2007/03/04 06:03:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.68 2007/03/07 22:20:05 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -651,6 +651,10 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
+#ifdef GATEWAY  
+			if (ip6flow_fastforward(m))
+				return;
+#endif
 			schednetisr(NETISR_IPV6);
 			inq = &ip6intrq;
 			break;
