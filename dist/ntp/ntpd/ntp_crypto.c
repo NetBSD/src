@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.11 2007/01/06 19:45:22 kardel Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.12 2007/03/07 03:18:53 dogcow Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -3615,7 +3615,7 @@ crypto_key(
 	if (debug)
 		printf("crypto_key: %s\n", statstr);
 	if (debug > 1) {
-		if (EVP_MD_type(pkey) == EVP_PKEY_DSA)
+		if (host_pkey->type == EVP_PKEY_DSA)
 			DSA_print_fp(stdout, pkey->pkey.dsa, 0);
 		else
 			RSA_print_fp(stdout, pkey->pkey.rsa, 0);
@@ -3945,7 +3945,7 @@ crypto_setup(void)
 	sign_pkey = pkey;
 	sstamp = fstamp;
 	hostval.fstamp = htonl(fstamp);
-	if (EVP_MD_type(host_pkey) != EVP_PKEY_RSA) {
+	if (host_pkey->type != EVP_PKEY_RSA) {
 		msyslog(LOG_ERR,
 		    "crypto_setup: host key is not RSA key type");
 		exit (-1);
