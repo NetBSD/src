@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.63 2007/03/05 21:05:01 dogcow Exp $	*/
+/*	$NetBSD: macrom.c,v 1.64 2007/03/07 13:57:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.63 2007/03/05 21:05:01 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.64 2007/03/07 13:57:30 tsutsui Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -174,7 +174,7 @@ void
 mrg_DTInstall(void)
 {
 	void *ptr, *prev;
-	void **cptr, *cprev;
+	void **cptr, **cprev;
 
 	__asm volatile ("movl %%a0,%0" : "=g" (ptr));
 
@@ -220,10 +220,10 @@ mrg_VBLQueue(void)
 #define vblAddr 6
 #define vblCount 10
 #define vblPhase 12
-	void *vbltask;
-	void *last_vbltask;
+	char *vbltask;
+	char *last_vbltask;
 	
-	last_vbltask = (void *)&VBLQueue_head;
+	last_vbltask = (char *)&VBLQueue_head;
 	vbltask = VBLQueue_head;
 	while (0 != vbltask) {
 		if (0 != *((u_int16_t *)(vbltask + vblPhase)))
@@ -242,7 +242,7 @@ mrg_VBLQueue(void)
 			"	jbsr	%%a1@		\n"
 			"	movml	%%sp@+,#0x7fff"
 				: : "g" (vbltask),
-				    "g" (*((void *)(vbltask + vblAddr)))
+				    "g" (*((char *)(vbltask + vblAddr)))
 				: "a0","a1");
 #if defined(MRG_DEBUG)
 			printf("mrg: mrg_VBLQueue: back from VBL task\n");
@@ -307,7 +307,7 @@ Count_Resources(u_int32_t rsrc_type)
 #endif
 		if (rsrc_type == 0 || (rsrc_type == rsrc->name))
 			count++;
-		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
+		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + (char *)ROMBase);
 	}
 
 #if defined(MRG_DEBUG)
@@ -339,14 +339,14 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 				for (i = 0;
 				    i < sizeof(ResHndls) / sizeof(void *); i++)
 					if ((ResHndls[i] == 0) ||
-					    (ResHndls[i] == (void *)(rsrc->next + ROMBase))) {
-						ResHndls[i] = (void *)(rsrc->body + ROMBase);
+					    (ResHndls[i] == (void *)(rsrc->next + (char *)ROMBase))) {
+						ResHndls[i] = (void *)(rsrc->body + (char *)ROMBase);
 						return (void **)&ResHndls[i];
 					}
 				panic("ResHndls table too small!");
 			}
 		}
-		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
+		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + (char *)ROMBase);
 	}
 	return (void **)0;
 }
@@ -487,7 +487,7 @@ mrg_NewPtr(void)
 	int result = noErr;
 	u_int numbytes;
 /*	u_int32_t trapword; */
-	void *ptr;
+	char *ptr;
 
 	__asm volatile ("movl	%%d0,%0" : "=g" (numbytes) : : "d0");
 
@@ -522,7 +522,7 @@ int
 mrg_DisposPtr(void)
 {
 	int result = noErr;
-	void *ptr;
+	char *ptr;
 
 	__asm volatile("movl	%%a0,%0" : "=g" (ptr) : : "a0");
 
@@ -541,7 +541,7 @@ mrg_DisposPtr(void)
 int
 mrg_GetPtrSize(void)
 {
-	void *ptr;
+	char *ptr;
 
 	__asm volatile("movl	%%a0,%0" : "=g" (ptr) : : "a0");
 
@@ -949,11 +949,13 @@ mrg_init(void)
 	/* probably very dangerous */
 	jADBOp = (void (*)(void))mrg_OStraps[0x7c];
 
-	mrg_VIA2 = (void *)((void *)__UNVOLATILE(Via1Base) + 
+	mrg_VIA2 = (void *)((char *)__UNVOLATILE(Via1Base) + 
 	    VIA2 * 0x2000);	/* see via.h */
 	SCCRd = (void *)__UNVOLATILE(sccA);/* ser.c ; we run before serinit */
 
 	jDTInstall = (void *)mrg_DTInstall;
+	dtmgr_softintr_cookie = softintr_establish(IPL_SOFT,
+	    (void (*)(void *))mrg_execute_deferred, NULL);
 
 	/* AV ROMs want this low memory vector to point to a jump table */
 	InitEgretJTVec = (u_int32_t **)(void *)&mrg_AVInitEgretJT;
@@ -1156,12 +1158,12 @@ mrg_fixupROMBase(void *obase, void *nbase)
 		    (long)mrg_ADBIntrPtr);
 	} else
 		mrg_romadbintr = rom->adbintr == 0 ?
-		    0 : rom->adbintr - oldbase + newbase;
+		    0 : (char *)rom->adbintr - oldbase + newbase;
 
 	mrg_rompmintr = rom->pmintr == 0 ?
-	    0 : rom->pmintr - oldbase + newbase;
+	    0 : (char *)rom->pmintr - oldbase + newbase;
 	mrg_ADBAlternateInit = rom->ADBAlternateInit == 0 ?
-	    0 : rom->ADBAlternateInit - oldbase + newbase;
+	    0 : (char *)rom->ADBAlternateInit - oldbase + newbase;
 
 	/*
 	 * mrg_adbstore becomes ADBBase
@@ -1170,41 +1172,41 @@ mrg_fixupROMBase(void *obase, void *nbase)
 	    0 : (u_int32_t) rom->adb130intr - oldbase + newbase;
 
 	mrg_OStraps[0x77] = rom->CountADBs == 0 ?
-	    0 : rom->CountADBs - oldbase + newbase;
+	    0 : (char *)rom->CountADBs - oldbase + newbase;
 	mrg_OStraps[0x78] = rom->GetIndADB == 0 ?
-	    0 : rom->GetIndADB - oldbase + newbase;
+	    0 : (char *)rom->GetIndADB - oldbase + newbase;
 	mrg_OStraps[0x79] = rom-> GetADBInfo == 0 ?
-	    0 : rom->GetADBInfo - oldbase + newbase;
+	    0 : (char *)rom->GetADBInfo - oldbase + newbase;
 	mrg_OStraps[0x7a] = rom->SetADBInfo == 0 ?
-	    0 : rom->SetADBInfo - oldbase + newbase;
+	    0 : (char *)rom->SetADBInfo - oldbase + newbase;
 	mrg_OStraps[0x7b] = rom->ADBReInit == 0 ?
-	    0 : rom->ADBReInit - oldbase + newbase;
+	    0 : (char *)rom->ADBReInit - oldbase + newbase;
 	mrg_OStraps[0x7c] = rom->ADBOp == 0 ?
-	    0 : rom->ADBOp - oldbase + newbase;
+	    0 : (char *)rom->ADBOp - oldbase + newbase;
 	mrg_OStraps[0x85] = rom->PMgrOp == 0 ?
-	    0 : rom->PMgrOp - oldbase + newbase;
+	    0 : (char *)rom->PMgrOp - oldbase + newbase;
 	mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
-	    0 : rom->ReadXPRam - oldbase + newbase;
+	    0 : (char *)rom->ReadXPRam - oldbase + newbase;
 	mrg_OStraps[0x38] = rom->WriteParam == 0 ?
-	    0 : rom->WriteParam - oldbase + newbase;/* WriteParam*/
+	    0 : (char *)rom->WriteParam - oldbase + newbase;/* WriteParam*/
 	mrg_OStraps[0x3a] = rom->SetDateTime == 0 ?
-	    0 : rom->SetDateTime - oldbase + newbase;/*SetDateTime*/
+	    0 : (char *)rom->SetDateTime - oldbase + newbase;/*SetDateTime*/
 	mrg_OStraps[0x3f] = rom->InitUtil == 0 ?
-	    0 : rom->InitUtil - oldbase + newbase;  /* InitUtil */
+	    0 : (char *)rom->InitUtil - oldbase + newbase;  /* InitUtil */
 	mrg_OStraps[0x51] = rom->ReadXPRam == 0 ?
-	    0 : rom->ReadXPRam - oldbase + newbase; /* ReadXPRam */
+	    0 : (char *)rom->ReadXPRam - oldbase + newbase; /* ReadXPRam */
 	mrg_OStraps[0x52] = rom->WriteXPRam == 0 ?
-	    0 : rom->WriteXPRam - oldbase + newbase;/* WriteXPRam */
+	    0 : (char *)rom->WriteXPRam - oldbase + newbase;/* WriteXPRam */
 
 	if (rom->Egret == 0) {
 		jEgret = 0;
 		mrg_OStraps[0x92] = 0;
 	} else {
-		jEgret = (void (*))(rom->Egret - oldbase + newbase);
-		mrg_OStraps[0x92] = rom->Egret - oldbase + newbase;
+		jEgret = (void (*))((char *)rom->Egret - oldbase + newbase);
+		mrg_OStraps[0x92] = (char *)rom->Egret - oldbase + newbase;
 	}
 	mrg_InitEgret = rom->InitEgret == 0 ?
-	    0 : rom->InitEgret - oldbase + newbase;
+	    0 : (char *)rom->InitEgret - oldbase + newbase;
 
 	if (rom->jClkNoMem == 0) {
 		printf("WARNING: don't have a value for jClkNoMem, ");
@@ -1212,7 +1214,7 @@ mrg_fixupROMBase(void *obase, void *nbase)
 		printf("Can't read RTC without it. Using MacOS boot time.\n");
 		jClkNoMem = 0;
 	} else
-		jClkNoMem = (void (*))(rom->jClkNoMem - oldbase + newbase);
+		jClkNoMem = (void (*))((char *)rom->jClkNoMem - oldbase + newbase);
 	/*
 	 * Get the ToolBox Routines we may need.  These are
 	 * used in the ADB Initialization of some systems.
@@ -1222,9 +1224,9 @@ mrg_fixupROMBase(void *obase, void *nbase)
 	 * what we'll need to complete initialization on the system.
 	 */
 	mrg_ToolBoxtraps[0x04d] = rom->FixDiv == 0 ?
-	    (void *)mrg_FixDiv : rom->FixDiv - oldbase + newbase;
+	    (void *)mrg_FixDiv : (char *)rom->FixDiv - oldbase + newbase;
 	mrg_ToolBoxtraps[0x068] = rom->FixMul == 0 ?
-	    (void *)mrg_FixMul : rom->FixMul - oldbase + newbase;
+	    (void *)mrg_FixMul : (char *)rom->FixMul - oldbase + newbase;
 
 	/*
 	 * Some systems also require this to be setup for use in
@@ -1251,7 +1253,7 @@ mrg_fixupROMBase(void *obase, void *nbase)
 	 * in the ROM which will be mapped in mrg_InitResources.
 	 */
 	ROMResourceMap = rom->ROMResourceMap == 0 ?
-	    0 : (void (*))(rom->ROMResourceMap - oldbase + newbase);
+	    0 : (void (*))((char *)rom->ROMResourceMap - oldbase + newbase);
 
 	for (i = 0; i < sizeof(mrg_AVInitEgretJT) / sizeof(mrg_AVInitEgretJT[0]); i++)
 		mrg_AVInitEgretJT[i] = mrg_AVInitEgretJT[i] == 0 ?
