@@ -1,4 +1,4 @@
-/* $NetBSD: sec.c,v 1.7 2007/03/05 17:37:06 he Exp $ */
+/* $NetBSD: sec.c,v 1.8 2007/03/07 23:17:01 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2006 Ben Harris
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.7 2007/03/05 17:37:06 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sec.c,v 1.8 2007/03/07 23:17:01 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -407,7 +407,7 @@ sec_dmago(struct wd33c93_softc *sc_sbic)
 	struct sec_softc *sc = (struct sec_softc *)sc_sbic;
 
 	dmac_write(sc, NEC71071_MASK, 0xe);
-	sc->sc_dmaactive = TRUE;
+	sc->sc_dmaactive = true;
 	if (!sc->sc_dmain && sc->sc_dmalen > SEC_DMABLK)
 		sec_copyoutblk(sc, 1);
 	return sc->sc_dmalen;
@@ -421,7 +421,7 @@ sec_dmastop(struct wd33c93_softc *sc_sbic)
 	dmac_write(sc, NEC71071_MASK, 0xf);
 	if (sc->sc_dmaactive && sc->sc_dmain)
 		sec_copyinblk(sc, sc->sc_dmablk);
-	sc->sc_dmaactive = FALSE;
+	sc->sc_dmaactive = false;
 }
 
 /*
@@ -479,7 +479,7 @@ sec_dmatc(struct sec_softc *sc)
 			sec_copyoutblk(sc, sc->sc_dmablk + 1);
 	} else {
 		/* All blocks fully processed. */
-		sc->sc_dmaactive = FALSE;
+		sc->sc_dmaactive = false;
 	}
 	if (sc->sc_dmain)
 		sec_copyinblk(sc, sc->sc_dmablk - 1);
