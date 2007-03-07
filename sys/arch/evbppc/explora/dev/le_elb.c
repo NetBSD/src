@@ -1,4 +1,4 @@
-/*	$NetBSD: le_elb.c,v 1.5 2007/03/04 05:59:46 christos Exp $	*/
+/*	$NetBSD: le_elb.c,v 1.6 2007/03/07 11:49:00 he Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.5 2007/03/04 05:59:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.6 2007/03/07 11:49:00 he Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -269,7 +269,7 @@ le_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
 	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
 
-	memcpy(buf, from, len);
+	memcpy(__UNVOLATILE(buf), from, len);
 
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_PREWRITE);
@@ -287,7 +287,7 @@ le_copyfrombuf(struct lance_softc *sc, void *to, int boff, int len)
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-	memcpy(to, buf, len);
+	memcpy(to, __UNVOLATILE(buf), len);
 }
 
 /*
@@ -299,7 +299,7 @@ le_zerobuf(struct lance_softc *sc, int boff, int len)
 	struct le_elb_softc *msc = (struct le_elb_softc *)sc;
 	volatile void *buf = (void *)((u_char *)sc->sc_mem+boff);
 
-	memset(buf, 0, len);
+	memset(__UNVOLATILE(buf), 0, len);
 
 	bus_dmamap_sync(msc->sc_dmat, msc->sc_dmam, boff, len,
 	    BUS_DMASYNC_PREWRITE);
