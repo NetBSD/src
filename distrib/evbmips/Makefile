@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.3 2007/03/06 21:56:59 bouyer Exp $
+#	$NetBSD: Makefile,v 1.4 2007/03/07 19:42:02 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
+SUBDIR=		cdroms
 .if ${MACHINE_ARCH} == "mipsel"
-SUBDIR=		instkernel
+SUBDIR+=	instkernel
 .endif
-TARGETS+=	release cdroms
+TARGETS+=	release
 
 iso_image:
 	${MAKEDIRTARGET} cdroms iso_image
