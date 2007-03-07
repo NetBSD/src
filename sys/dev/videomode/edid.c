@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.3 2006/05/13 00:39:19 gdamore Exp $ */
+/* $NetBSD: edid.c,v 1.4 2007/03/07 18:49:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.3 2006/05/13 00:39:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.4 2007/03/07 18:49:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,6 +537,7 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 	edid->edid_chroma.ec_whitey = EDID_CHROMA_WHITEY(data);
 
 	/* lookup established modes */
+	edid->edid_nmodes = 0;
 	estmodes = EDID_EST_TIMING(data);
 	for (i = 0; i < 16; i++) {
 		if (estmodes & (1 << i)) {
