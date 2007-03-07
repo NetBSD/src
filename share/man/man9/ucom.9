@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.13 2005/12/26 19:48:13 perry Exp $
+.\"	$NetBSD: ucom.9,v 1.14 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,7 @@ struct ucom_methods {
 #define UCOM_SET_BREAK 3
 	int (*ucom_param)(void *sc, int portno, struct termios *);
 	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
-			  caddr_t data, int flag, struct lwp *l);
+			  void *data, int flag, struct lwp *l);
 	int (*ucom_open)(void *sc, int portno);
 	void (*ucom_close)(void *sc, int portno);
 	void (*ucom_read)(void *sc, int portno, u_char **ptr,
@@ -162,7 +162,7 @@ Set the speed, number of data bit, stop bits, and parity of a port
 according to the
 .Xr termios 4
 struct.
-.It Fn "int (*ucom_ioctl)" "void *sc, int portno, u_long cmd, caddr_t data, int flag, struct lwp *l"
+.It Fn "int (*ucom_ioctl)" "void *sc, int portno, u_long cmd, void *data, int flag, struct lwp *l"
 implements any non-standard
 .Xr ioctl 2
 that a device needs.

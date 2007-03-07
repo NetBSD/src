@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.81 2007/02/17 08:49:39 wiz Exp $
+.\"	$NetBSD: uvm.9,v 1.82 2007/03/07 00:41:18 dogcow Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -882,11 +882,11 @@ and should match what was used for previous call to
 .Pp
 .Ft boolean_t
 .br
-.Fn uvm_chgkprot "caddr_t addr" "size_t len" "int rw" ;
+.Fn uvm_chgkprot "void *addr" "size_t len" "int rw" ;
 .Pp
 .Ft void
 .br
-.Fn uvm_kernacc "caddr_t addr" "size_t len" "int rw" ;
+.Fn uvm_kernacc "void *addr" "size_t len" "int rw" ;
 .Pp
 .Ft int
 .br

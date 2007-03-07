@@ -1,4 +1,4 @@
-.\"	$NetBSD: netintro.4,v 1.21 2006/09/10 21:11:01 wiz Exp $
+.\"	$NetBSD: netintro.4,v 1.22 2007/03/07 00:41:16 dogcow Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -192,7 +192,7 @@ struct	ifreq {
         struct    sockaddr ifru_broadaddr;
         short     ifru_flags;
         int       ifru_metric;
-        caddr_t   ifru_data;
+        void   *ifru_data;
     } ifr_ifru;
 #define ifr_addr      ifr_ifru.ifru_addr    /* address */
 #define ifr_dstaddr   ifr_ifru.ifru_dstaddr /* other end of p-to-p link */
@@ -317,7 +317,7 @@ struct ifaliasreq {
 struct ifconf {
     int   ifc_len;		/* size of associated buffer */
     union {
-        caddr_t    ifcu_buf;
+        void    *ifcu_buf;
         struct     ifreq *ifcu_req;
     } ifc_ifcu;
 #define ifc_buf ifc_ifcu.ifcu_buf /* buffer address */

@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.26 2003/06/30 12:14:34 wiz Exp $
+.\" $NetBSD: extent.9,v 1.27 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,7 +51,7 @@
 .In sys/malloc.h
 .In sys/extent.h
 .Ft struct extent *
-.Fn extent_create "char *name" "u_long start" "u_long end" "int mtype" "caddr_t storage" "size_t storagesize" "int flags"
+.Fn extent_create "char *name" "u_long start" "u_long end" "int mtype" "void *storage" "size_t storagesize" "int flags"
 .Ft void
 .Fn extent_destroy "struct extent *ex"
 .Ft int

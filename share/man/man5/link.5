@@ -1,4 +1,4 @@
-.\"	$NetBSD: link.5,v 1.20 2004/10/04 19:12:52 rumble Exp $
+.\"	$NetBSD: link.5,v 1.21 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -287,14 +287,14 @@ These structures are only used at run-time and do not occur within
 the text or data segment of an executable or shared library.
 .Bd -literal -offset indent
 struct so_map {
-	caddr_t	som_addr;
+	void	*som_addr;
 	char 	*som_path;
 	struct	so_map *som_next;
 	struct	sod *som_sod;
-	caddr_t som_sodbase;
+	void *som_sodbase;
 	u_int	som_write : 1;
 	struct	_dynamic *som_dynamic;
-	caddr_t	som_spd;
+	void	*som_spd;
 };
 .Ed
 .Bl -tag -width som_dynamic
@@ -397,7 +397,7 @@ struct rt_symbol {
 	struct nzlist		*rt_sp;
 	struct rt_symbol	*rt_next;
 	struct rt_symbol	*rt_link;
-	caddr_t			rt_srcaddr;
+	void			*rt_srcaddr;
 	struct so_map		*rt_smp;
 };
 .Ed
@@ -492,7 +492,7 @@ struct crt_ldso {
 	int		crt_ldfd;
 	struct _dynamic	*crt_dp;
 	char		**crt_ep;
-	caddr_t		crt_bp;
+	void		*crt_bp;
 	char		*crt_prog;
 	char		*crt_ldso;
 	char		*crt_ldentry;

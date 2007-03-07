@@ -1,4 +1,4 @@
-.\"     $NetBSD: file.9,v 1.9 2006/10/04 11:35:47 pooka Exp $
+.\"     $NetBSD: file.9,v 1.10 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 2002, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,9 +83,9 @@ struct file {
 			struct uio *uio, kauth_cred_t cred, int flags);
                 int (*fo_write)(struct file *fp, off_t *offset,
                         struct uio *uio, kauth_cred_t cred, int flags);
-                int (*fo_ioctl)(struct file *fp, u_long com, caddr_t data,
+                int (*fo_ioctl)(struct file *fp, u_long com, void *data,
 			struct lwp *l);
-                int (*fo_fcntl)(struct file *fp, u_int com, caddr_t data,
+                int (*fo_fcntl)(struct file *fp, u_int com, void *data,
 			struct lwp *l);
                 int (*fo_poll)(struct file *fp, int events,
 			struct lwp *l);
@@ -94,7 +94,7 @@ struct file {
                 int (*fo_close)(struct file *fp, struct lwp *l);
         } *f_ops;
         off_t           f_offset;
-        caddr_t         f_data;         /* descriptor data */
+        void         *f_data;         /* descriptor data */
 };
 .Ed
 .Pp
