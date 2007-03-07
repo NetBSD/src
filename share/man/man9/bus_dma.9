@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.42 2007/03/04 15:57:39 tsutsui Exp $
+.\" $NetBSD: bus_dma.9,v 1.43 2007/03/07 22:40:24 rmind Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -341,14 +341,13 @@ This is a variation of
 which maps buffers pointed to by
 .Fa uio
 for DMA transfers.
-The value of
-.Fa "uio-\*[Gt]uio_segflg"
-will
-determine if the buffers are in user or kernel virtual address space.
-If the buffers are in user address space, the buffers are assumed to be
-in
-.Fa "uio-\*[Gt]uio_procp" Ap s
-address space.
+Determination if the buffers are in user or kernel virtual address space
+is done internally, according to
+.Fa "uio-\*[Gt]uio_vmspace" . See
+.Xr uiomove 9
+for details of the
+.Dv uio
+structure.
 .It Fn bus_dmamap_load_raw "tag" "dmam" "segs" "nsegs" "size" "flags"
 This is a variation of
 .Fn bus_dmamap_load
