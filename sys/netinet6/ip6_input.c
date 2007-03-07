@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.97 2007/03/04 06:03:26 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.98 2007/03/07 22:20:04 liamjfoy Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.97 2007/03/04 06:03:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.98 2007/03/07 22:20:04 liamjfoy Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -182,6 +182,9 @@ ip6_init()
 	ip6_desync_factor = arc4random() % MAX_TEMP_DESYNC_FACTOR;
 
 	ip6_init2((void *)0);
+#ifdef GATEWAY
+	ip6flow_init();
+#endif
 
 #ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
@@ -323,6 +326,17 @@ ip6_input(struct mbuf *m)
 		in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
 		goto bad;
 	}
+
+#if defined(IPSEC)
+	/* IPv6 fast forwarding is not compatible with IPsec. */
+	m->m_flags &= ~M_CANFASTFWD;
+#else
+	/*
+	 * Assume that we can create a fast-forward IP flow entry
+	 * based on this packet.
+	 */
+	m->m_flags |= M_CANFASTFWD;
+#endif
 
 #ifdef PFIL_HOOKS
 	/*
@@ -1591,6 +1605,28 @@ ip6_delaux(m)
 		m_tag_delete(m, mtag);
 }
 
+#ifdef GATEWAY
+/* 
+ * sysctl helper routine for net.inet.ip6.maxflows. Since
+ * we could reduce this value, call ip6flow_reap();
+ */
+static int
+sysctl_net_inet_ip6_maxflows(SYSCTLFN_ARGS)
+{  
+        int s;
+  
+        s = sysctl_lookup(SYSCTLFN_CALL(rnode));
+        if (s)
+                return (s);
+ 
+        s = splsoftnet();
+        ip6flow_reap(0);
+        splx(s);
+ 
+        return (0);
+}
+#endif /* GATEWAY */
+
 /*
  * System control for IP6
  */
@@ -1874,4 +1910,13 @@ SYSCTL_SETUP(sysctl_net_inet6_ip6_setup, "sysctl net.inet6.ip6 subtree setup")
 		       NULL, 0, &ip6_mcast_pmtu, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
+#ifdef GATEWAY 
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "maxflows",
+			SYSCTL_DESCR("Number of flows for fast forwarding (IPv6)"),
+			sysctl_net_inet_ip6_maxflows, 0, &ip6_maxflows, 0,
+			CTL_NET, PF_INET6, IPPROTO_IPV6,
+			CTL_CREATE, CTL_EOL);
+#endif
 }
