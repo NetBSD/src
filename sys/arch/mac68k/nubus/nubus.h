@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.63 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: nubus.h,v 1.64 2007/03/07 13:54:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -376,9 +376,9 @@ void	nubus_get_dir_from_rsrc(nubus_slot *, nubus_dirent *, nubus_dir *);
 int	nubus_find_rsrc(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
 	    nubus_dir *, u_int8_t, nubus_dirent *);
 int	nubus_get_ind_data(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
-	    nubus_dirent *, void *, int);
+	    nubus_dirent *, char *, int);
 int	nubus_get_c_string(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
-	    nubus_dirent *, void *, int);
+	    nubus_dirent *, char *, int);
 int	nubus_get_smem_addr_rangelist(bus_space_tag_t, bus_space_handle_t,
     	    nubus_slot *, nubus_dirent *, void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.61 2007/03/04 06:00:09 christos Exp $	*/
+/*	$NetBSD: nubus.c,v 1.62 2007/03/07 13:54:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.61 2007/03/04 06:00:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.62 2007/03/07 13:54:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -644,7 +644,7 @@ nubus_find_rsrc(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
 
 int
 nubus_get_ind_data(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
-    nubus_dirent *dirent, void *data_return, int nbytes)
+    nubus_dirent *dirent, char *data_return, int nbytes)
 {
 	u_long loc;
 	u_int8_t lanes = fmt->bytelanes;
@@ -668,7 +668,7 @@ nubus_get_ind_data(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
 
 int
 nubus_get_c_string(bus_space_tag_t bst, bus_space_handle_t bsh, nubus_slot *fmt,
-    nubus_dirent *dirent, void *data_return, int max_bytes)
+    nubus_dirent *dirent, char *data_return, int max_bytes)
 {
 	u_long loc;
 	u_int8_t lanes = fmt->bytelanes;
