@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.23 2007/03/06 00:43:50 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.24 2007/03/07 17:24:38 christos Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.23 2007/03/06 00:43:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.24 2007/03/07 17:24:38 christos Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1031,9 +1031,9 @@ sbdma_tx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 		d->sbdma_ctxtable[curidx] = NULL;
 
 		/*
-		 * for transmits, we just free buffers.
+		 * for transmits we just free buffers and count packets.
 		 */
-
+		ifp->if_opackets++;
 		m_freem(m);
 
 		/*
