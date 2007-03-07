@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.29 2007/02/16 17:23:59 hannken Exp $
+.\"     $NetBSD: vnsubr.9,v 1.30 2007/03/07 00:41:18 dogcow Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@
 .Fn vn_open "struct nameidata *ndp" "int fmode" "int cmode"
 .Ft int
 .Fo vn_rdwr
-.Fa "enum uio_rw rw" "struct vnode *vp" "caddr_t base"
+.Fa "enum uio_rw rw" "struct vnode *vp" "void *base"
 .Fa "int len" "off_t offset" "enum uio_seg segflg" "int ioflg"
 .Fa "kauth_cred_t cred" "size_t *aresid" "struct lwp *l"
 .Fc

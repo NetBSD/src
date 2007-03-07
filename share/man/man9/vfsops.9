@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.28 2007/01/21 15:42:36 hannken Exp $
+.\"     $NetBSD: vfsops.9,v 1.29 2007/03/07 00:41:18 dogcow Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@
 .Fn VFS_ROOT "struct mount *mp" "struct vnode **vpp"
 .Ft int
 .Fn VFS_QUOTACTL "struct mount *mp" "int cmds" "uid_t uid" \
-"caddr_t arg" "struct lwp *l"
+"void *arg" "struct lwp *l"
 .Ft int
 .Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp" "struct lwp *l"
 .Ft int
