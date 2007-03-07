@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.8 2007/03/04 05:59:50 christos Exp $	*/
+/*	$NetBSD: ite.c,v 1.9 2007/03/07 09:10:20 he Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -173,7 +173,7 @@ iteconfig(void)
 		ip->fbbase = (void *)(*((u_char *)ip->regbase + fboff) << 16);
 		/* DIO II: FB offset is relative to select code space */
 		if (ip->regbase >= (void *)DIOIIBASE)
-			ip->fbbase += (int)ip->regbase;
+			ip->fbbase = (char*)ip->fbbase + (int)ip->regbase;
 		ip->fbwidth  = gr->gr_fbwidth_h << 8 | gr->gr_fbwidth_l;
 		ip->fbheight = gr->gr_fbheight_h << 8 | gr->gr_fbheight_l;
 		ip->dwidth   = gr->gr_dwidth_h << 8 | gr->gr_dwidth_l;
