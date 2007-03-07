@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.10 2007/03/03 10:55:34 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.11 2007/03/07 18:00:20 njoly Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10 2007/03/03 10:55:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11 2007/03/07 18:00:20 njoly Exp $");
 
 #include "opt_powernow_k8.h"
 
@@ -60,6 +60,7 @@ identifycpu(struct cpu_info *ci)
 	char buf[512];
 	u_int32_t brand[12];
 	int vendor;
+	const char *feature_str[3];
 
 	CPUID(1, ci->ci_signature, val, dummy, ci->ci_feature_flags);
 	CPUID(0x80000001, dummy, dummy, dummy, val);
@@ -90,19 +91,29 @@ identifycpu(struct cpu_info *ci)
 		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
 	printf("\n");
 
+	if (vendor == CPUVENDOR_INTEL) {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_FLAGS2;
+		feature_str[2] = CPUID_FLAGS3;
+	} else {
+		feature_str[0] = CPUID_FLAGS1;
+		feature_str[1] = CPUID_EXT_FLAGS2;
+		feature_str[2] = CPUID_EXT_FLAGS3;
+	}
+
 	if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
-		    CPUID_FLAGS1, buf, sizeof(buf));
+		    feature_str[0], buf, sizeof(buf));
 		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
-		    CPUID_EXT_FLAGS2, buf, sizeof(buf));
+		    feature_str[1], buf, sizeof(buf));
 		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
 	}
 	if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
 		bitmask_snprintf(ci->ci_feature_flags,
-		    CPUID_EXT_FLAGS3, buf, sizeof(buf));
+		    feature_str[2], buf, sizeof(buf));
 		printf("%s: features: %s\n", ci->ci_dev->dv_xname, buf);
 	}
 
