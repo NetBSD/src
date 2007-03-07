@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.813 2007/03/06 21:47:46 bouyer Exp $
+# $NetBSD: GENERIC,v 1.814 2007/03/07 22:23:14 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.813 $"
+#ident 		"GENERIC-$Revision: 1.814 $"
 
 maxusers	32		# estimated number of users
 
@@ -234,7 +234,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-#options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
+options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
@@ -335,14 +335,12 @@ ioapic* at mainbus?
 # To use the I/O APIC(s), enable the ioapic line above.
 #options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 #options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
-#options 	ACPI_SCANPCI	# find PCI roots using ACPI
+options 	ACPI_SCANPCI	# find PCI roots using ACPI
 
 acpi0 		at mainbus0
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
-options		ACPIVERBOSE
-options		ACPI_SCANPCI
 
 # ACPI devices
 acpiacad* 	at acpi?		# ACPI AC Adapter
