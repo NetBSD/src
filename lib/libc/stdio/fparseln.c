@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.5 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.6 2007/03/07 15:12:01 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.5 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.6 2007/03/07 15:12:01 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -79,7 +79,7 @@ isescaped(const char *sp, const char *p, int esc)
 
 	/* No escape character */
 	if (esc == '\0')
-		return 1;
+		return 0;
 
 	/* Count the number of escape characters that precede ours */
 	for (ne = 0, cp = p; --cp >= sp && *cp == esc; ne++)
@@ -160,7 +160,7 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3], int flags)
 			}
 		}
 
-		if (s == 0 && buf != NULL)
+		if (s == 0 && buf == NULL && cnt)
 			continue;
 
 		if ((cp = realloc(buf, len + s + 1)) == NULL) {
