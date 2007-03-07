@@ -1,5 +1,5 @@
 .\"	$OpenBSD: crypto.9,v 1.25 2003/07/11 13:47:41 jmc Exp $
-.\"	$NetBSD: opencrypto.9,v 1.3 2004/04/23 11:00:06 keihan Exp $
+.\"	$NetBSD: opencrypto.9,v 1.4 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -68,7 +68,7 @@ struct cryptoini {
 	int                cri_alg;
 	int                cri_klen;
 	int                cri_rnd;
-	caddr_t            cri_key;
+	void            *cri_key;
 	u_int8_t           cri_iv[EALG_MAX_BLOCK_LEN];
 	struct cryptoini  *cri_next;
 };
@@ -89,15 +89,15 @@ struct cryptop {
 	int                crp_olen;
 	int                crp_etype;
 	int                crp_flags;
-	caddr_t            crp_buf;
-	caddr_t            crp_opaque;
+	void            *crp_buf;
+	void            *crp_opaque;
 	struct cryptodesc *crp_desc;
 	int              (*crp_callback)(struct cryptop *);
-	caddr_t            crp_mac;
+	void            *crp_mac;
 };
 
 struct crparam {
-        caddr_t         crp_p;
+        void         *crp_p;
         u_int           crp_nbits;
 };
 

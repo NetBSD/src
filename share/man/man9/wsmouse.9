@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsmouse.9,v 1.14 2006/11/19 00:20:02 wiz Exp $
+.\"     $NetBSD: wsmouse.9,v 1.15 2007/03/07 00:41:19 dogcow Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -71,7 +71,7 @@ child device.
 It has the following members:
 .Bd -literal
 	int	(*enable)(void *);
-	int	(*ioctl)(void *v, u_long cmd, caddr_t data,
+	int	(*ioctl)(void *v, u_long cmd, void *data,
 			int flag, struct lwp *l);
 	void	(*disable)(void *);
 .Ed
