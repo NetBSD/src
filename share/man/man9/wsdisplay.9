@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.19 2006/04/15 17:54:34 jmmv Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.20 2007/03/07 00:41:18 dogcow Exp $
 .\"
 .\" Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,7 +110,7 @@ child device.
 It has the following members:
 .Bd -literal
 	int	(*ioctl)(void *v, void *vs, u_long cmd,
-			caddr_t data, int flag, struct lwp *l);
+			void *data, int flag, struct lwp *l);
 	paddr_t	(*mmap)(void *v, void *vs, off_t off, int prot);
 	int	(*alloc_screen)(void *,
 			const struct wsscreen_descr *, void **,

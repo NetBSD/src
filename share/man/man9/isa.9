@@ -1,4 +1,4 @@
-.\"     $NetBSD: isa.9,v 1.15 2006/01/29 03:09:19 rpaulo Exp $
+.\"     $NetBSD: isa.9,v 1.16 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,9 +91,9 @@
 "bus_size_t size"
 .Ft int
 .Fn isa_dmamem_map "isa_chipset_tag_t ic" "int chan" "bus_addr_t addr" \
-"bus_size_t size" "caddr_t *kvap" "int flags"
+"bus_size_t size" "void **kvap" "int flags"
 .Ft void
-.Fn isa_dmamem_unmap "isa_chipset_tag_t ic" "int chan" "caddr_t kva" \
+.Fn isa_dmamem_unmap "isa_chipset_tag_t ic" "int chan" "void *kva" \
 "size_t size"
 .Ft void *
 .Fn isa_malloc "isa_chipset_tag_t ic" "int chan" "size_t size" \

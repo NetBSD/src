@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.36 2006/03/11 11:52:17 wiz Exp $
+.\"	$NetBSD: audio.9,v 1.37 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -504,7 +504,7 @@ should be called with the argument
 Once started the transfer may be stopped using
 .Va halt_input .
 Return 0 on success, otherwise an error code.
-.It Dv int dev_ioctl(void *hdl, u_long cmd, caddr_t addr,
+.It Dv int dev_ioctl(void *hdl, u_long cmd, void *addr,
 .Pp
 .Dv "int flag, struct lwp *l)"
 .Pp

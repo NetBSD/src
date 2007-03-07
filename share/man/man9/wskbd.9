@@ -1,4 +1,4 @@
-.\"     $NetBSD: wskbd.9,v 1.12 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: wskbd.9,v 1.13 2007/03/07 00:41:18 dogcow Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -87,7 +87,7 @@ It has the following members:
 .Bd -literal
 	int	(*enable)(void *, int);
 	void	(*set_leds)(void *, int);
-	int	(*ioctl)(void *v, u_long cmd, caddr_t data,
+	int	(*ioctl)(void *v, u_long cmd, void *data,
 			int flag, struct lwp *l);
 .Ed
 .Pp

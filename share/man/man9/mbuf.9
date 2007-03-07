@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.43 2006/07/30 00:25:24 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.44 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,11 +91,11 @@
 .Ft struct mbuf *
 .Fn m_copypacket "struct mbuf *m" "int how"
 .Ft void
-.Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
+.Fn m_copydata "struct mbuf *m" "int off" "int len" "void *cp"
 .Ft void
-.Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
+.Fn m_copyback "struct mbuf *m0" "int off" "int len" "void *cp"
 .Ft struct mbuf *
-.Fn m_copyback_cow "struct mbuf *m0" "int off" "int len" "caddr_t cp" "int how"
+.Fn m_copyback_cow "struct mbuf *m0" "int off" "int len" "void *cp" "int how"
 .Ft int
 .Fn m_makewritable "struct mbuf **mp" "int off" "int len" "int how"
 .Ft void
@@ -127,7 +127,7 @@
 .Ft void
 .Fn MEXTMALLOC "struct mbuf *m" "int len" "int how"
 .Ft void
-.Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
+.Fn MEXTADD "struct mbuf *m" "void *buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
 .Ft void
 .Fn MCLGET "struct mbuf *m" "int how"
 .Ft void
@@ -314,7 +314,7 @@ from caller.
 Copies an entire packet, including header (which must be present).
 This function is an optimization of the common case
 .Li m_copym(m, 0, Dv M_COPYALL, Fa how ) .
-.It Fn m_copydata "struct mbuf *m" "int off" "int len" "caddr_t cp"
+.It Fn m_copydata "struct mbuf *m" "int off" "int len" "void *cp"
 Copies
 .Fa len
 bytes data from mbuf chain
@@ -324,7 +324,7 @@ into the buffer
 starting
 .Fa off
 bytes from the beginning.
-.It Fn m_copyback "struct mbuf *m0" "int off" "int len" "caddr_t cp"
+.It Fn m_copyback "struct mbuf *m0" "int off" "int len" "void *cp"
 Copies
 .Fa len
 bytes data from buffer
@@ -341,7 +341,7 @@ by checking the resulting length of the chain in that case.
 It is an error to use
 .Fn m_copyback
 on read-only mbufs.
-.It Fn m_copyback_cow "struct mbuf *m0" "int off" "int len" "caddr_t cp" \
+.It Fn m_copyback_cow "struct mbuf *m0" "int off" "int len" "void *cp" \
 "int how"
 Copies
 .Fa len
@@ -586,7 +586,7 @@ The flag
 .Dv M_EXT
 is set upon success.
 Implemented as a macro.
-.It Fn MEXTADD "struct mbuf *m" "caddr_t buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
+.It Fn MEXTADD "struct mbuf *m" "void *buf" "int size" "int type" "void (*free)(struct mbuf *, caddr_t, size_t, void *)" "void *arg"
 Adds pre-allocated external storage
 .Fa buf
 to a normal mbuf

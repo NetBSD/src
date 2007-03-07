@@ -1,4 +1,4 @@
-.\" $NetBSD: ieee80211_ioctl.9,v 1.4 2006/09/17 12:13:02 wiz Exp $
+.\" $NetBSD: ieee80211_ioctl.9,v 1.5 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -38,11 +38,11 @@
 .In net80211/ieee80211_proto.h
 .In net80211/ieee80211_ioctl.h
 .Ft int
-.Fn ieee80211_cfgget "struct ieee80211com *ic" "u_long cmd" "caddr_t data"
+.Fn ieee80211_cfgget "struct ieee80211com *ic" "u_long cmd" "void *data"
 .Ft int
-.Fn ieee80211_cfgset "struct ieee80211com *ic" "u_long cmd" "caddr_t data"
+.Fn ieee80211_cfgset "struct ieee80211com *ic" "u_long cmd" "void *data"
 .Ft int
-.Fn ieee80211_ioctl "struct ieee80211com *ic" "u_long cmd" "caddr_t data"
+.Fn ieee80211_ioctl "struct ieee80211com *ic" "u_long cmd" "void *data"
 .Sh DESCRIPTION
 These
 functions are typically invoked by drivers in response to requests

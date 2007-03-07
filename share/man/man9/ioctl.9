@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.23 2006/09/17 15:00:07 plunky Exp $
+.\" $NetBSD: ioctl.9,v 1.24 2007/03/07 00:41:17 dogcow Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -263,7 +263,7 @@ error = ioctl(s, FOOICTL, \*[Am]a);
 .Pp
 Within the ioctl()-routine of the driver, it can be then accessed like
 .Bd -literal -offset indent
-driver_ioctl(..., u_long cmd, caddr_t data)
+driver_ioctl(..., u_long cmd, void *data)
 {
 	...
 	switch (cmd) {

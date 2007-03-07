@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.4,v 1.14 2006/11/24 19:46:58 christos Exp $
+.\"	$NetBSD: systrace.4,v 1.15 2007/03/07 00:41:16 dogcow Exp $
 .\"	$OpenBSD: systrace.4,v 1.2 2002/06/03 15:44:17 mpech Exp $
 .\"
 .\" Copyright (c) 2002 CubeSoft Communications, Inc.
@@ -293,7 +293,7 @@ struct systrace_replace {
 	uint16_t strr_seqnr;
 	int16_t reserved;
 	int32_t strr_nrepl;	/* # of arguments to replace */
-	caddr_t strr_base;	/* Base user memory */
+	void *strr_base;	/* Base user memory */
 	size_t strr_len;	/* Length of memory */
 	int32_t strr_argind[SYSTR_MAXARGS]; /* Argument indexes */
 	size_t strr_off[SYSTR_MAXARGS];	/* Argumen offsets */
