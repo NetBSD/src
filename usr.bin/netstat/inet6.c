@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.41 2007/01/17 00:21:43 hubertf Exp $	*/
+/*	$NetBSD: inet6.c,v 1.42 2007/03/07 22:22:50 liamjfoy Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.41 2007/01/17 00:21:43 hubertf Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.42 2007/03/07 22:22:50 liamjfoy Exp $");
 #endif
 #endif /* not lint */
 
@@ -615,6 +615,8 @@ ip6_stats(off, name)
 	p(ip6s_reassembled, "\t%llu packet%s reassembled ok\n");
 	p(ip6s_delivered, "\t%llu packet%s for this host\n");
 	p(ip6s_forward, "\t%llu packet%s forwarded\n");
+	p(ip6s_fastforward, "\t%llu packet%s fast forwarded\n");
+	p1(ip6s_fastforwardflows, "\t%llu fast forward flows\n");	
 	p(ip6s_cantforward, "\t%llu packet%s not forwardable\n");
 	p(ip6s_redirectsent, "\t%llu redirect%s sent\n");
 	p(ip6s_localout, "\t%llu packet%s sent from this host\n");
