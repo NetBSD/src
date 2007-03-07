@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.13 2007/03/04 05:59:51 christos Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.14 2007/03/07 11:29:46 skrll Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.13 2007/03/04 05:59:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.14 2007/03/07 11:29:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ ie_gsc_read16(struct ie_softc *sc, int offset)
 	"	ldh	0(%1), %0	\n"
 	"	fdc	%%r0(%1)	\n"
 	: "=&r" (val)
-	: "r" ((void *)sc->sc_maddr + offset));
+	: "r" ((char *)sc->sc_maddr + offset));
 	return (val);
 }
 
@@ -263,7 +263,7 @@ ie_gsc_write16(struct ie_softc *sc, int offset, uint16_t v)
 	"	sth	%0, 0(%1)	\n"
 	"	fdc	%%r0(%1)	\n"
 	: /* no outputs */
-	: "r" (v), "r" ((void *)sc->sc_maddr + offset));
+	: "r" (v), "r" ((char *)sc->sc_maddr + offset));
 }
 
 void
@@ -283,7 +283,7 @@ ie_gsc_write24(struct ie_softc *sc, int offset, int addr)
 	"	fdc	%%r0(%1)		\n"
 	"	fdc	%%r21(%1)		\n"
 	: /* No outputs */
-	: "r" (addr), "r" ((void *)sc->sc_maddr + offset)
+	: "r" (addr), "r" ((char *)sc->sc_maddr + offset)
 	: "r21", "r22");
 }
 
@@ -292,7 +292,7 @@ ie_gsc_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	memcpy(p, (void *)sc->sc_maddr + offset, size);
+	memcpy(p, (char *)sc->sc_maddr + offset, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREREAD);
 	hp700_led_blink(HP700_LED_NETRCV);
@@ -303,7 +303,7 @@ ie_gsc_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
-	memcpy((void *)sc->sc_maddr + offset, p, size);
+	memcpy((char *)sc->sc_maddr + offset, p, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	hp700_led_blink(HP700_LED_NETSND);
@@ -356,8 +356,8 @@ i82596_probe(struct ie_softc *sc)
 
 #if I82596_DEBUG
 	printf (": test %x:%x\n%s",
-		*((volatile int32_t *)((void *)sc->sc_maddr + 0)),
-		*((volatile int32_t *)((void *)sc->sc_maddr + 4)),
+		*((volatile int32_t *)((char *)sc->sc_maddr + 0)),
+		*((volatile int32_t *)((char *)sc->sc_maddr + 4)),
 		sc->sc_dev.dv_xname);
 #endif
 	return 1;
