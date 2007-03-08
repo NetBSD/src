@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.18 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.19 2007/03/08 12:54:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -25,10 +25,12 @@
  * binary, all structures have to be accessed using macros which can
  * adjust the offsets appropriately.
  */
-#define	SWO(m, a, o, x)	(m ? (*(u_int32_t *)((u_int32_t *)(a) + (o)) = (x)) : \
-			     (*(u_int16_t *)((u_int16_t *)(a) + (o)) = (x)))
-#define	SRO(m, a, o)	(m ? (*(u_int32_t *)((u_int32_t *)(a) + (o)) & 0xffff) : \
-			     (*(u_int16_t *)((u_int16_t *)(a) + (o)) & 0xffff))
+#define	SWO(m, a, o, x)	(m ?						\
+    (*(volatile u_int32_t *)((u_int32_t *)(a) + (o)) = (x)) :		\
+    (*(volatile u_int16_t *)((u_int16_t *)(a) + (o)) = (x)))
+#define	SRO(m, a, o) (m ?						\
+    (*(volatile u_int32_t *)((u_int32_t *)(a) + (o)) & 0xffff) :	\
+    (*(volatile u_int16_t *)((u_int16_t *)(a) + (o)) & 0xffff))
 
 /*
  * Register access macros. We use bus_space_* to talk to the Sonic
