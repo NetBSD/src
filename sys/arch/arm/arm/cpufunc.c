@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.79 2007/03/04 14:47:18 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.80 2007/03/08 20:42:48 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.79 2007/03/04 14:47:18 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.80 2007/03/08 20:42:48 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1137,8 +1137,7 @@ get_cachetype_table()
 int
 set_cpufuncs()
 {
-
-	if (cputype != 0) {
+	if (cputype == 0) {
 		cputype = cpufunc_id();
 		cputype &= CPU_ID_CPU_MASK;
 	}
