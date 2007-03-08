@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.92 2007/03/08 18:59:57 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.93 2007/03/08 23:35:34 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1873,4 +1873,8 @@ sys/arch/macppc/include/bus.h			1.22
 	shuffle #includes, add a bus_space_tag
 	Fix build on netbsd-4.
 	[macallan, ticket #495]
+
+sys/arch/macppc/conf/INSTALL			1.103
+	Add "pseudo-device openfirm", required to build this kernel.
+	[macallan, ticket #496]
 
