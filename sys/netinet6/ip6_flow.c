@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.1 2007/03/07 22:20:04 liamjfoy Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.2 2007/03/08 17:09:15 liamjfoy Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ ip6flow_lookup(struct ip6_hdr *ip6)
 
 	hash = ip6flow_hash(ip6);
 
-	LIST_FOREACH(ip6f, &ip6flowlist, ip6f_list) {
+	LIST_FOREACH(ip6f, &ip6flowtable[hash], ip6f_hash) {
 		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &ip6f->ip6f_dst)
 		    && IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &ip6f->ip6f_src)
 		    && ip6f->ip6f_flow == ip6->ip6_flow) {
