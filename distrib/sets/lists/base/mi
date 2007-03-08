@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.694 2007/03/06 15:50:45 tnozaki Exp $
+# $NetBSD: mi,v 1.695 2007/03/08 16:26:26 tnozaki Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2403,6 +2403,10 @@
 ./usr/share/locale/nl_NL.ISO8859-15/LC_CTYPE	base-locale-nl		nls
 ./usr/share/locale/nn				base-locale-share
 ./usr/share/locale/nn/LC_MESSAGES		base-locale-share
+./usr/share/locale/nn_NO.ISO8859-1		base-locale-nn
+./usr/share/locale/nn_NO.ISO8859-1/LC_CTYPE	base-locale-nn		nls
+./usr/share/locale/nn_NO.ISO8859-15		base-locale-nn
+./usr/share/locale/nn_NO.ISO8859-15/LC_CTYPE	base-locale-nn		nls
 ./usr/share/locale/no				base-locale-no
 ./usr/share/locale/no/LC_MESSAGES		base-locale-no
 ./usr/share/locale/no/LC_MESSAGES/grep.mo	base-locale-no		nls
