@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.22 2007/03/04 06:00:25 christos Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.23 2007/03/08 22:08:50 he Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.22 2007/03/04 06:00:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.23 2007/03/08 22:08:50 he Exp $");
 
 #include "opt_inet.h"
 
@@ -579,7 +579,7 @@ sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 
 	if (totlen < ETHERMIN + ETHER_HDR_LEN) {
 		int pad = ETHERMIN + ETHER_HDR_LEN - totlen;
-		memset(mtdp->mtd_buf + totlen, 0, pad);
+		memset((char *)mtdp->mtd_buf + totlen, 0, pad);
 		totlen = ETHERMIN + ETHER_HDR_LEN;
 	}
 
@@ -769,17 +769,17 @@ static void
 initialise_rda(struct sn_softc *sc)
 {
 	int		i;
-	void *		p_rda = 0;
+	char 		*p_rda = 0;
 	uint32_t	v_rda = 0;
 
 	/* link the RDA's together into a circular list */
 	for (i = 0; i < (sc->sc_nrda - 1); i++) {
-		p_rda = sc->p_rda + (i * RXPKT_SIZE(sc));
+		p_rda = (char *)sc->p_rda + (i * RXPKT_SIZE(sc));
 		v_rda = sc->v_rda + ((i+1) * RXPKT_SIZE(sc));
 		SWO(bitmode, p_rda, RXPKT_RLINK, LOWER(v_rda));
 		SWO(bitmode, p_rda, RXPKT_INUSE, 1);
 	}
-	p_rda = sc->p_rda + ((sc->sc_nrda - 1) * RXPKT_SIZE(sc));
+	p_rda = (char *)sc->p_rda + ((sc->sc_nrda - 1) * RXPKT_SIZE(sc));
 	SWO(bitmode, p_rda, RXPKT_RLINK, LOWER(sc->v_rda) | EOL);
 	SWO(bitmode, p_rda, RXPKT_INUSE, 1);
 
@@ -975,7 +975,7 @@ sonicrxint(struct sn_softc *sc)
 	int	rdamark;
 	uint16_t rxpkt_ptr;
 
-	rda = sc->p_rda + (sc->sc_rxmark * RXPKT_SIZE(sc));
+	rda = (char *)sc->p_rda + (sc->sc_rxmark * RXPKT_SIZE(sc));
 
 	while (SRO(bitmode, rda, RXPKT_INUSE) == 0) {
 		u_int status = SRO(bitmode, rda, RXPKT_STATUS);
@@ -985,7 +985,8 @@ sonicrxint(struct sn_softc *sc)
 		len = SRO(bitmode, rda, RXPKT_BYTEC) - FCSSIZE;
 		if (status & RCR_PRX) {
 			void *pkt =
-			    sc->rbuf[orra & RBAMASK] + (rxpkt_ptr & PGOFSET);
+			    (char *)sc->rbuf[orra & RBAMASK] +
+				 (rxpkt_ptr & PGOFSET);
 			if (sonic_read(sc, pkt, len))
 				sc->sc_if.if_ipackets++;
 			else
@@ -1038,15 +1039,16 @@ sonicrxint(struct sn_softc *sc)
 		SWO(bitmode, rda, RXPKT_INUSE, 1);
 		SWO(bitmode, rda, RXPKT_RLINK,
 		    SRO(bitmode, rda, RXPKT_RLINK) | EOL);
-		SWO(bitmode, (sc->p_rda + (rdamark * RXPKT_SIZE(sc))),
+		SWO(bitmode, ((char *)sc->p_rda + (rdamark * RXPKT_SIZE(sc))),
 		    RXPKT_RLINK,
-		    SRO(bitmode, (sc->p_rda + (rdamark * RXPKT_SIZE(sc))),
+		    SRO(bitmode, ((char *)sc->p_rda +
+			(rdamark * RXPKT_SIZE(sc))),
 		    RXPKT_RLINK) & ~EOL);
 		sc->sc_rdamark = sc->sc_rxmark;
 
 		if (++sc->sc_rxmark >= sc->sc_nrda)
 			sc->sc_rxmark = 0;
-		rda = sc->p_rda + (sc->sc_rxmark * RXPKT_SIZE(sc));
+		rda = (char *)sc->p_rda + (sc->sc_rxmark * RXPKT_SIZE(sc));
 	}
 }
 
@@ -1125,8 +1127,9 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 		}
 
 		if (mp == &top) {
-			void *newdata = (void *)
-			    ALIGN(m->m_data + sizeof(struct ether_header)) -
+			char *newdata = (char *)
+			    ALIGN((char *)m->m_data + 
+				sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data; 
 			m->m_data = newdata;
@@ -1135,7 +1138,7 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 		m->m_len = len = min(datalen, len);
 
 		memcpy(mtod(m, void *), pkt, (unsigned) len);
-		pkt += len;
+		pkt = (char *)pkt + len;
 		datalen -= len;
 		*mp = m;
 		mp = &m->m_next;
