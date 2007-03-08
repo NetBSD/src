@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.42 2007/03/08 00:33:53 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.43 2007/03/08 15:20:18 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -32,7 +32,7 @@
 .Nd a utility for creating software package distributions
 .Sh SYNOPSIS
 .Nm
-.Op Fl EhlORUVv
+.Op Fl ElORUVv
 .Bk -words
 .Op Fl B Ar build-info-file
 .Ek
@@ -169,9 +169,6 @@ if
 is a
 .Cm -
 (dash).
-.It Fl h
-Force tar to follow symbolic links, so that the files they point to
-are dumped, rather than the links themselves.
 .It Fl I Ar realprefix
 Provide the real prefix, as opposed to the staging prefix, for use in
 staged installations of packages.
