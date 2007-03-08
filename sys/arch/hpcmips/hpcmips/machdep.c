@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2007/03/04 05:59:53 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2007/03/08 06:57:14 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2007/03/04 05:59:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2007/03/08 06:57:14 he Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -289,14 +289,14 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 				    (sh->sh_offset + sh->sh_size) > symbolsz)
 					symbolsz = sh->sh_offset + sh->sh_size;
 		}
-		esym += symbolsz;
+		esym = (char*)esym + symbolsz;
 		kernend = (void *)mips_round_page(esym);
 		bzero(edata, end - edata);
 	} else
 #endif /* NKSYMS || defined(DDB) || defined(LKM) */
 	{
 		kernend = (void *)mips_round_page(end);
-		memset(edata, 0, kernend - edata);
+		memset(edata, 0, (char *)kernend - edata);
 	}
 
 #if defined(BOOT_STANDALONE)
@@ -441,9 +441,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		size_t fssz;
 		fssz = round_page(mfs_initminiroot(kernend));
 #ifdef MEMORY_DISK_DYNAMIC
-		md_root_setconf((void *)kernend, fssz);
+		md_root_setconf(kernend, fssz);
 #endif /* MEMORY_DISK_DYNAMIC */
-		kernend += fssz;
+		kernend = (char *)kernend + fssz;
 	}
 #endif /* MFS */
 
@@ -457,12 +457,12 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 */
 	lwp0.l_addr = proc0paddr = (struct user *)kernend;
 	lwp0.l_md.md_regs =
-	    (struct frame *)((void *)kernend + UPAGES * PAGE_SIZE) - 1;
+	    (struct frame *)((char *)kernend + UPAGES * PAGE_SIZE) - 1;
 	memset(kernend, 0, UPAGES * PAGE_SIZE);
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
-	kernend += UPAGES * PAGE_SIZE;
+	kernend = (char *)kernend + UPAGES * PAGE_SIZE;
 
 	/* Initialize console and KGDB serial port. */
 	(*platform.cons_init)();
