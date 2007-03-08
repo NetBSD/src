@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.52 2007/03/04 06:00:07 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.53 2007/03/08 02:24:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.52 2007/03/04 06:00:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.53 2007/03/08 02:24:40 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mac68k.h"
@@ -217,7 +217,6 @@ CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
 extern struct cfdriver zsc_cd;
 
 int zshard(void *);
-int zssoft(void *);
 
 /*
  * Is the zs chip present?
@@ -383,6 +382,8 @@ zsc_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		intr_establish(zshard, zsc, ZSHARD_PRI);
 	}
+	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	    (void (*)(void *))zsc_intr_soft, zsc);
 
 	/* Now safe to enable interrupts. */
 
@@ -438,8 +439,6 @@ zsmd_setclock(struct zs_chanstate *cs)
 	via_set_modem((xcs->cs_pclk_flag & ZSC_EXTERN) ? 1 : 0);
 }
 
-static int zssoftpending;
-
 /*
  * Do the minimum work to pull data off of the chip and queue it up
  * for later processing.
@@ -455,44 +454,10 @@ zshard(void *arg)
 
 	rval = zsc_intr_hard(zsc);
 	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq)) {
-		/* zsc_req_softint(zsc); */
-		/* We are at splzs here, so no need to lock. */
-		if (zssoftpending == 0) {
-			zssoftpending = 1;
-			setsoftserial();
-		}
+		softintr_schedule(zsc->zsc_softintr_cookie);
 	}
 	return (rval);
 }
-
-/*
- * Look at all of the zsc softint queues.
- */
-int
-zssoft(void *arg)
-{
-	struct zsc_softc *zsc;
-	int unit;
-
-	/* This is not the only ISR on this IPL. */
-	if (zssoftpending == 0)
-		return (0);
-
-	/*
-	 * The soft intr. bit will be set by zshard only if
-	 * the variable zssoftpending is zero.
-	 */
-	zssoftpending = 0;
-
-	for (unit = 0; unit < zsc_cd.cd_ndevs; ++unit) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		(void) zsc_intr_soft(zsc);
-	}
-	return (1);
-}
-
 
 #ifndef ZS_TOLERANCE
 #define ZS_TOLERANCE 51

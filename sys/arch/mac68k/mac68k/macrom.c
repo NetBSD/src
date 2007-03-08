@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.65 2007/03/07 18:00:49 tsutsui Exp $	*/
+/*	$NetBSD: macrom.c,v 1.66 2007/03/08 02:24:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.65 2007/03/07 18:00:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.66 2007/03/08 02:24:40 tsutsui Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -133,6 +133,8 @@ void *	ResHndls[] = {
 };
 #endif
 
+void *dtmgr_softintr_cookie;
+
 /*
  * Last straw functions; we didn't set them up, so freak out!
  * When someone sees these called, we can finally go back and
@@ -185,7 +187,7 @@ mrg_DTInstall(void)
 	cprev = (void **)prev;
 	*cptr = NULL;
 	*cprev = ptr;
-	setsoftdtmgr();
+	softintr_schedule(dtmgr_softintr_cookie);
 
 	__asm volatile ("clrl %%d0" : : : "d0");
 }
@@ -954,6 +956,8 @@ mrg_init(void)
 	SCCRd = (void *)__UNVOLATILE(sccA);/* ser.c ; we run before serinit */
 
 	jDTInstall = (void *)mrg_DTInstall;
+	dtmgr_softintr_cookie = softintr_establish(IPL_SOFT,
+	    (void (*)(void *))mrg_execute_deferred, NULL);
 
 	/* AV ROMs want this low memory vector to point to a jump table */
 	InitEgretJTVec = (u_int32_t **)(void *)&mrg_AVInitEgretJT;
