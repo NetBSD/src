@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.72 2007/03/04 06:02:10 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.73 2007/03/08 23:23:45 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2007/03/04 06:02:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.73 2007/03/08 23:23:45 jnemeth Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -124,6 +124,8 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.72 2007/03/04 06:02:10 christos Exp $");
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
+
+#include <prop/proplib.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -254,6 +256,7 @@ void fdcretry(struct fdc_softc *fdc);
 void fdfinish(struct fd_softc *fd, struct buf *bp);
 inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
+static void fd_set_properties(struct fd_softc *fd);
 
 void	fd_mountroot_hook(struct device *);
 
@@ -513,6 +516,8 @@ fdattach(parent, self, aux)
 	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
+
+	fd_set_properties(fd);
 }
 
 #if defined(i386)
@@ -831,6 +836,8 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	fd->sc_type = &fd->sc_type_copy;
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
+
+	fd_set_properties(fd);
 
 	return 0;
 }
@@ -1567,4 +1574,65 @@ fd_mountroot_hook(struct device *dev)
 		}
 	}
 	cnpollc(0);
+}
+
+static void
+fd_set_properties(struct fd_softc *fd)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+	const struct fd_type *fdt;
+	int secsize;
+
+	fdt = fd->sc_type;
+	if (fdt == NULL) {
+		fdt = fd->sc_deftype;
+		if (fdt == NULL)
+			return;
+	}
+
+	disk_info = prop_dictionary_create();
+
+	geom = prop_dictionary_create();
+
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+	    fdt->size);
+
+	switch (fdt->secsize) {
+	case 2:
+		secsize = 512;
+		break;
+	case 3:
+		secsize = 1024;
+		break;
+	default:
+		secsize = 0;
+	}
+
+	prop_dictionary_set_uint32(geom, "sector-size",
+	    secsize);
+
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+	    fdt->sectrac);
+
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+	    fdt->heads);
+
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	    fdt->cyls);
+
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+
+	prop_dictionary_set(device_properties(&fd->sc_dev),
+	    "disk-info", disk_info);
+
+	/*
+	 * Don't release disk_info here; we keep a reference to it.
+	 * disk_detach() will release it when we go away.
+	 */
+
+	odisk_info = fd->sc_dk.dk_info;
+	fd->sc_dk.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
 }
