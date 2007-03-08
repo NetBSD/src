@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.38 2007/03/04 06:02:15 christos Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.39 2007/03/08 20:52:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.38 2007/03/04 06:02:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.39 2007/03/08 20:52:21 matt Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -245,7 +245,7 @@ ofnet_read(struct ofnet_softc *of)
 			 * XXX then so does other code in this driver.
 			 */
 			if (head == NULL) {
-				void *newdata = (void *)ALIGN(m->m_data +
+				char *newdata = (char *)ALIGN(m->m_data +
 				      sizeof(struct ether_header)) -
 				    sizeof(struct ether_header);
 				l -= newdata - m->m_data;
