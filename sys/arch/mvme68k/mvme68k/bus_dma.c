@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.32 2007/03/04 06:00:14 christos Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.33 2007/03/08 07:11:53 he Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 2007/03/04 06:00:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2007/03/08 07:11:53 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -797,7 +797,7 @@ _bus_dmamem_unmap(t, kva, size)
 	void *kva;
 	size_t size;
 {
-	void *va;
+	vaddr_t va;
 	size_t s;
 
 #ifdef DIAGNOSTIC
@@ -812,8 +812,9 @@ _bus_dmamem_unmap(t, kva, size)
 	 * XXXSCW: There should be some way to indicate that the pages
 	 * were mapped DMA_MAP_COHERENT in the first place...
 	 */
-	for (s = 0, va = kva; s < size; s += PAGE_SIZE, va += PAGE_SIZE)
-		_pmap_set_page_cacheable(pmap_kernel(), (vaddr_t)va);
+	for (s = 0, va = (vaddr_t)kva; s < size;
+	     s += PAGE_SIZE, va += PAGE_SIZE)
+		_pmap_set_page_cacheable(pmap_kernel(), va);
 
 	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
 	pmap_update(pmap_kernel());
@@ -853,7 +854,7 @@ _bus_dmamem_mmap(t, segs, nsegs, off, prot, flags)
 		 * XXXSCW: What about BUS_DMA_COHERENT ??
 		 */
 
-		return (m68k_btop((void *)segs[i]._ds_cpuaddr + off));
+		return (m68k_btop((char *)segs[i]._ds_cpuaddr + off));
 	}
 
 	/* Page not found. */
