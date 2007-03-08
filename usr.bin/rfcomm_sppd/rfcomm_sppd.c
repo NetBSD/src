@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_sppd.c,v 1.4 2007/03/08 19:10:49 plunky Exp $	*/
+/*	$NetBSD: rfcomm_sppd.c,v 1.5 2007/03/08 19:13:14 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert\n"
 	    "@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "@(#) Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: rfcomm_sppd.c,v 1.4 2007/03/08 19:10:49 plunky Exp $");
+__RCSID("$NetBSD: rfcomm_sppd.c,v 1.5 2007/03/08 19:13:14 plunky Exp $");
 
 #include <bluetooth.h>
 #include <ctype.h>
@@ -321,7 +321,7 @@ open_client(bdaddr_t *laddr, bdaddr_t *raddr, const char *service)
 
 	for (s = services ; ; s++) {
 		if (s->name == NULL) {
-			channel = strtoul(optarg, &ep, 10);
+			channel = strtoul(service, &ep, 10);
 			if (*ep != '\0' || channel < 1 || channel > 30)
 				errx(EXIT_FAILURE, "Invalid service: %s", service);
 
