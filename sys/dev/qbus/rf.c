@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.13 2007/03/04 06:02:30 christos Exp $	*/
+/*	$NetBSD: rf.c,v 1.14 2007/03/08 23:56:45 he Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.13 2007/03/04 06:02:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.14 2007/03/08 23:56:45 he Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -735,7 +735,8 @@ rfc_intr(void *intarg)
 			}
 			if (rfc_sc->sc_bytesleft > i) {
 				rfc_sc->sc_bytesleft -= i;
-				rfc_sc->sc_bufidx += i;
+				rfc_sc->sc_bufidx =
+				    (char *)rfc_sc->sc_bufidx + i;
 			} else {
 				biodone(rfc_sc->sc_curbuf);
 				rf_sc = get_new_buf( rfc_sc);
@@ -777,7 +778,8 @@ rfc_intr(void *intarg)
 			}
 			if (rfc_sc->sc_bytesleft > i) {
 				rfc_sc->sc_bytesleft -= i;
-				rfc_sc->sc_bufidx += i;
+				rfc_sc->sc_bufidx =
+				    (char *)rfc_sc->sc_bufidx + i;
 			} else {
 				biodone(rfc_sc->sc_curbuf);
 				rf_sc = get_new_buf( rfc_sc);

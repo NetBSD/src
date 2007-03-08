@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.31 2007/03/04 06:02:30 christos Exp $	*/
+/*	$NetBSD: rl.c,v 1.32 2007/03/09 00:02:53 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.31 2007/03/04 06:02:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.32 2007/03/09 00:02:53 he Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -702,7 +702,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 	RL_WREG(RL_BA, (sc->sc_dmam->dm_segs[0].ds_addr & 0xffff));
 
 	/* Count up vars */
-	sc->sc_bufaddr += (blks*DEV_BSIZE);
+	sc->sc_bufaddr = (char*)sc->sc_bufaddr + (blks*DEV_BSIZE);
 	sc->sc_diskblk += blks;
 	sc->sc_bytecnt -= (blks*DEV_BSIZE);
 
