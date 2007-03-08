@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.7 2007/03/04 06:00:14 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8 2007/03/08 07:10:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2007/03/04 06:00:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8 2007/03/08 07:10:22 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ _bus_space_map(cookie, addr, size, flags, bushp)
 	/*
 	 * The handle is really the virtual address we just mapped
 	 */
-	*bushp = (bus_space_handle_t) (va + m68k_page_offset(addr));
+	*bushp = (bus_space_handle_t) ((char *)va + m68k_page_offset(addr));
 
 	return (0);
 }
