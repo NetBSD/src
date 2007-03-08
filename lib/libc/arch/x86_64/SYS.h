@@ -30,11 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.8 2004/03/09 20:21:22 drochner Exp $
- */
-
-/*
- * XXXfvdl change to use syscall/sysret.
+ *	$NetBSD: SYS.h,v 1.9 2007/03/08 13:46:31 ad Exp $
  */
 
 #include <machine/asm.h>
