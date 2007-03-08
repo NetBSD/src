@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.47 2007/03/04 05:59:54 christos Exp $	*/
+/*	$NetBSD: vr.c,v 1.48 2007/03/08 07:14:41 he Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.47 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48 2007/03/08 07:14:41 he Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -343,7 +343,7 @@ void
 vr_find_dram(paddr_t addr, paddr_t end)
 {
 	int n;
-	void *page;
+	char *page;
 #ifdef NARLY_MEMORY_PROBE
 	int x, i;
 #endif
@@ -355,7 +355,7 @@ vr_find_dram(paddr_t addr, paddr_t end)
 	n = mem_cluster_cnt;
 	for (; addr < end; addr += PAGE_SIZE) {
 
-		page = (void *)MIPS_PHYS_TO_KSEG1(addr);
+		page = (char *)MIPS_PHYS_TO_KSEG1(addr);
 		if (badaddr(page, 4))
 			goto bad;
 
