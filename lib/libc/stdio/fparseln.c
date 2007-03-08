@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.6 2007/03/07 15:12:01 drochner Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.7 2007/03/08 19:57:53 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.6 2007/03/07 15:12:01 drochner Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.7 2007/03/08 19:57:53 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -155,13 +155,19 @@ fparseln(FILE *fp, size_t *size, size_t *lineno, const char str[3], int flags)
 			cp = &ptr[s - 1];
 
 			if (*cp == con && !isescaped(ptr, cp, esc)) {
-				s--;	/* forget escape */
+				s--;	/* forget continuation char */
 				cnt = 1;
 			}
 		}
 
-		if (s == 0 && buf == NULL && cnt)
-			continue;
+		if (s == 0) {
+			/*
+			 * nothing to add, skip realloc except in case
+			 * we need a minimal buf to return an empty line
+			 */
+			if (cnt || buf != NULL)
+				continue;
+		}
 
 		if ((cp = realloc(buf, len + s + 1)) == NULL) {
 			FUNLOCKFILE(fp);
