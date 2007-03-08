@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.93 2007/03/08 23:35:34 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.94 2007/03/08 23:41:46 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1877,4 +1877,14 @@ sys/arch/macppc/include/bus.h			1.22
 sys/arch/macppc/conf/INSTALL			1.103
 	Add "pseudo-device openfirm", required to build this kernel.
 	[macallan, ticket #496]
+
+sys/dev/usb/uftdi.c				1.30
+sys/dev/usb/usbdevs				1.461
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add FTDI "Serial 2232C" product ID
+	Match the FTDI "Serial 2232C" chip;  this allows a 16-port usb->serial
+	device from SerialGear I have to work.
+	[riz, ticket #497]
 
