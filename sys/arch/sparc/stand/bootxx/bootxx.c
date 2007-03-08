@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.18 2007/03/04 06:00:47 christos Exp $ */
+/*	$NetBSD: bootxx.c,v 1.19 2007/03/08 17:14:16 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct shared_bbinfo bbinfo = {
 };
 
 int	main(void);
-void	loadboot(struct open_file *, void *);
+void	loadboot(struct open_file *, char *);
 
 int
 main(void)
