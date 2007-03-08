@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.8 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.9 2007/03/08 22:08:50 he Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -77,7 +77,7 @@ wbflush(void)
 typedef struct mtd {
 	void		*mtd_txp;
 	uint32_t	mtd_vtxp;
-	void *		mtd_buf;
+	void 		*mtd_buf;
 	uint32_t	mtd_vbuf;
 	struct mbuf	*mtd_mbuf;
 } mtd_t;
@@ -107,10 +107,10 @@ struct sn_softc {
 	int		sc_rxmark;	/* current hw pos in rda ring */
 	int		sc_rdamark;	/* current sw pos in rda ring */
 	int		sc_nrda;	/* total number of RDAs */
-	void *		p_rda;
+	void		*p_rda;
 	uint32_t	v_rda;
 
-	void *		rbuf[NRBA];
+	void 		*rbuf[NRBA];
 
 	struct mtd	mtda[NTDA];
 	int		mtd_hw;		/* idx of first mtd given to hw */
