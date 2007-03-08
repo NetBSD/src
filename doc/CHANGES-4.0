@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.90 2007/03/06 20:44:25 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.91 2007/03/08 18:31:03 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1857,4 +1857,13 @@ distrib/sets/lists/man/mi			1.980
 	Add man4/prep, cat4/prep, html4/prep directories, and a couple of
 	missed cat4/prep manpages.
 	[jdc, ticket #492]
+
+share/man/man4/njata.4				1.5
+sys/dev/ic/ninjaata32.c				1.6
+sys/dev/ic/ninjaata32reg.h			1.3
+
+	Fix bus_dmamap_sync() usage.
+	Fix a typo in comment.
+	Fix release in man page.
+	[itohy, ticket #493]
 
