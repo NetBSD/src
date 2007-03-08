@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.25 2007/03/04 06:00:51 christos Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.26 2007/03/08 22:35:53 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.25 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.26 2007/03/08 22:35:53 he Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -165,7 +165,7 @@ sunos_sendsig(ksi, mask)
 	    printf("sunos_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	kwin = (struct rwindow32 *)(((void *)tf)-CCFSZ);
+	kwin = (struct rwindow32 *)(((char *)tf)-CCFSZ);
 	error = (rwindow_save(l) || 
 	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
 	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
