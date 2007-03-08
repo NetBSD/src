@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2006/06/27 23:33:21 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2007/03/08 00:33:53 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2006/06/27 23:33:21 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2007/03/08 00:33:53 joerg Exp $");
 #endif
 #endif
 
@@ -32,7 +32,7 @@ __RCSID("$NetBSD: main.c,v 1.29 2006/06/27 23:33:21 hubertf Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "B:C:D:EFI:K:L:OP:RS:UVX:b:c:d:f:hi:k:lm:n:p:r:s:t:v";
+static const char Options[] = "B:C:D:EFI:K:L:OP:RS:UVb:c:d:f:hi:k:lm:n:p:r:s:t:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -42,7 +42,6 @@ char   *Install = NULL;
 char   *DeInstall = NULL;
 char   *Contents = NULL;
 char   *Require = NULL;
-char   *ExcludeFrom = NULL;
 char   *Mtree = NULL;
 char   *Pkgdeps = NULL;
 char   *Pkgcfl = NULL;
@@ -72,7 +71,7 @@ usage(void)
             "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir] [-m mtreefile]\n"
             "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
             "                  [-S size-all-file] [-s size-pkg-file] [-t template]\n"
-            "                  [-X excludefile] -c comment -d description -f packlist\n"
+            "                  -c comment -d description -f packlist\n"
             "                  pkg-name\n");
 	exit(1);
 }
@@ -161,10 +160,6 @@ main(int argc, char **argv)
 
 		case 't':
 			strlcpy(PlayPen, optarg, sizeof(PlayPen));
-			break;
-
-		case 'X':
-			ExcludeFrom = optarg;
 			break;
 
 		case 'h':

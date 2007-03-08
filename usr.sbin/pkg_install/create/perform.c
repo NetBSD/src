@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.44 2006/05/11 23:50:15 mrg Exp $	*/
+/*	$NetBSD: perform.c,v 1.45 2007/03/08 00:33:53 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.44 2006/05/11 23:50:15 mrg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.45 2007/03/08 00:33:53 joerg Exp $");
 #endif
 #endif
 
@@ -85,10 +85,6 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 		args[nargs++] = "-z";
 	if (Dereference)
 		args[nargs++] = "-h";
-	if (ExcludeFrom) {
-		args[nargs++] = "-X";
-		args[nargs++] = ExcludeFrom;
-	}
 	args[nargs++] = "-T";	/* Take filenames from file instead of args. */
 	args[nargs++] = "-";	/* Use stdin for the file. */
 	args[nargs] = NULL;

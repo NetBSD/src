@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.41 2007/03/02 11:36:38 wiz Exp $
+.\" $NetBSD: pkg_create.1,v 1.42 2007/03/08 00:33:53 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -24,7 +24,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd March 2, 2007
+.Dd March 8, 2007
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -83,9 +83,6 @@
 .Ek
 .Bk -words
 .Op Fl t Ar template
-.Ek
-.Bk -words
-.Op Fl X Ar excludefile
 .Ek
 .Bk -words
 .Fl c Ar comment
@@ -312,17 +309,6 @@ Do not update the package file database with any file information.
 Print version number and exit.
 .It Fl v
 Turn on verbose output.
-.It Fl X Ar excludefile
-Pass
-.Ar excludefile
-as a
-.Fl -exclude-from
-argument to
-.Cm tar
-when creating final package.
-See
-.Xr tar 1
-for further information on using this flag.
 .El
 .Sh PACKING LIST DETAILS
 The
