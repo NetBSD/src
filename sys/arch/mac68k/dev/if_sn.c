@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.44 2007/03/05 21:31:30 he Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.45 2007/03/08 12:57:20 tsutsui Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.44 2007/03/05 21:31:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.45 2007/03/08 12:57:20 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -848,16 +848,25 @@ void
 snintr(void *arg)
 {
 	struct sn_softc *sc = (struct sn_softc *)arg;
-	int isr;
+	int isr, handled, wantinit;
 
-	while ((isr = (NIC_GET(sc, SNR_ISR) & ISR_ALL)) != 0) {
+	handled = 0;
+	wantinit = 0;
+	while (wantinit == 0) {
+		isr = NIC_GET(sc, SNR_ISR) & ISR_ALL;
+		if (isr == 0)
+			break;
 		/* scrub the interrupts that we are going to service */
 		NIC_PUT(sc, SNR_ISR, isr);
 		wbflush();
 
-		if (isr & (ISR_BR | ISR_LCD | ISR_TC))
+		handled = 1;
+
+		if (isr & (ISR_BR | ISR_LCD | ISR_TC)) {
 			printf("%s: unexpected interrupt status 0x%x\n",
 			    sc->sc_dev.dv_xname, isr);
+			wantinit = 1;
+		}
 
 		if (isr & (ISR_TXDN | ISR_TXER | ISR_PINT))
 			sonictxint(sc);
@@ -876,18 +885,26 @@ snintr(void *arg)
 				 * problem.
 				 */
 				;
-			if (isr & ISR_RDE)
+			if (isr & ISR_RDE) {
 				printf("%s: receive descriptors exhausted\n",
 				    sc->sc_dev.dv_xname);
-			if (isr & ISR_RBE)
+				wantinit = 1;
+			}
+			if (isr & ISR_RBE) {
 				printf("%s: receive buffers exhausted\n",
 				    sc->sc_dev.dv_xname);
-			if (isr & ISR_RBAE)
+				wantinit = 1;
+			}
+			if (isr & ISR_RBAE) {
 				printf("%s: receive buffer area exhausted\n",
 				    sc->sc_dev.dv_xname);
-			if (isr & ISR_RFO)
+				wantinit = 1;
+			}
+			if (isr & ISR_RFO) {
 				printf("%s: receive FIFO overrun\n",
 				    sc->sc_dev.dv_xname);
+				wantinit = 1;
+			}
 		}
 		if (isr & (ISR_CRC | ISR_FAE | ISR_MP)) {
 #ifdef notdef
@@ -899,9 +916,13 @@ snintr(void *arg)
 				sc->sc_mptally++;
 #endif
 		}
+	}
+
+	if (handled) {
+		if (wantinit)
+			snreset(sc);
 		snstart(&sc->sc_if);
 	}
-	return;
 }
 
 /*
