@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.20 2007/03/04 06:00:26 christos Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.21 2007/03/08 22:28:41 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.20 2007/03/04 06:00:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.21 2007/03/08 22:28:41 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,9 +158,9 @@ zs_get_chan_addr(int zs_unit, int channel)
 	if (addr == NULL)
 		return NULL;
 	if (channel == 0) {
-		zc = (void *)(addr + PORTA_OFFSET);
+		zc = (void *)((char *)addr + PORTA_OFFSET);
 	} else {
-		zc = (void *)(addr + PORTB_OFFSET);
+		zc = (void *)((char *)addr + PORTB_OFFSET);
 	}
 	return zc;
 }
