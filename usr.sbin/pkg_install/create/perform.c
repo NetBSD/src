@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.46 2007/03/08 00:52:04 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.47 2007/03/08 15:36:57 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.46 2007/03/08 00:52:04 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.47 2007/03/08 15:36:57 joerg Exp $");
 #endif
 #endif
 
@@ -99,9 +99,6 @@ make_dist(const char *home, const char *pkg, const char *suffix, const package_t
 	}
 	if (DeInstall) {
 		fprintf(totar, "%s\n", DEINSTALL_FNAME);
-	}
-	if (Require) {
-		fprintf(totar, "%s\n", REQUIRE_FNAME);
 	}
 	if (Display) {
 		fprintf(totar, "%s\n", DISPLAY_FNAME);
@@ -340,11 +337,6 @@ pkg_perform(lpkg_head_t *pkgs)
 		copy_file(Home, DeInstall, DEINSTALL_FNAME);
 		add_plist(&plist, PLIST_IGNORE, NULL);
 		add_plist(&plist, PLIST_FILE, DEINSTALL_FNAME);
-	}
-	if (Require) {
-		copy_file(Home, Require, REQUIRE_FNAME);
-		add_plist(&plist, PLIST_IGNORE, NULL);
-		add_plist(&plist, PLIST_FILE, REQUIRE_FNAME);
 	}
 	if (Display) {
 		copy_file(Home, Display, DISPLAY_FNAME);
