@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.29 2007/03/04 06:01:45 christos Exp $ */
+/*	$NetBSD: if_ni.c,v 1.30 2007/03/08 23:17:56 he Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.29 2007/03/04 06:01:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.30 2007/03/08 23:17:56 he Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -353,7 +353,7 @@ niattach(parent, self, aux)
 	/* Set up message free queue */
 	ni_getpgs(sc, NMSGBUF * 512, &va, 0);
 	for (i = 0; i < NMSGBUF; i++) {
-		msg = (void *)(va + i * 512);
+		msg = (void *)((char *)va + i * 512);
 		res = INSQTI(msg, &fqb->nf_mforw);
 	}
 	WAITREG(NI_PCR, PCR_OWN);
@@ -365,7 +365,7 @@ niattach(parent, self, aux)
 	for (i = 0; i < NTXBUF; i++) {
 		struct ni_dg *data;
 
-		data = (void *)(va + i * 512);
+		data = (void *)((char *)va + i * 512);
 		data->nd_status = 0;
 		data->nd_len = TXADD;
 		data->nd_ptdbidx = 1;
@@ -389,7 +389,7 @@ niattach(parent, self, aux)
 		struct ni_dg *data;
 		int idx;
 
-		data = (void *)(va + i * 512);
+		data = (void *)((char *)va + i * 512);
 		data->nd_len = RXADD;
 		data->nd_opcode = BVP_DGRAMRX;
 		data->nd_ptdbidx = 2;
