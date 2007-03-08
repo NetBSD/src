@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjaata32.c,v 1.5 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: ninjaata32.c,v 1.5.2.1 2007/03/08 18:29:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 ITOH Yasufumi <itohy@NetBSD.org>.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.5 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ninjaata32.c,v 1.5.2.1 2007/03/08 18:29:16 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -542,6 +542,7 @@ njata32_dma_finish(void *v, int channel, int drive,
 		   int force)
 {
 	struct njata32_softc *sc = v;
+	struct njata32_device *dev = &sc->sc_dev[drive];
 	int bm;
 	int error = 0;
 
@@ -550,8 +551,8 @@ njata32_dma_finish(void *v, int channel, int drive,
 		NJATA32_REG_BM)));
 
 	KASSERT(channel == 0);
-	KASSERT(sc->sc_dev[drive].d_flags & NJATA32_DEV_DMA_MAPPED);
-	KASSERT(sc->sc_dev[drive].d_flags & NJATA32_DEV_DMA_STARTED);
+	KASSERT(dev->d_flags & NJATA32_DEV_DMA_MAPPED);
+	KASSERT(dev->d_flags & NJATA32_DEV_DMA_STARTED);
 
 	bm = bus_space_read_1(NJATA32_REGT(sc), NJATA32_REGH(sc),
 	    NJATA32_REG_BM);
@@ -564,6 +565,11 @@ njata32_dma_finish(void *v, int channel, int drive,
 	    bus_space_read_4(NJATA32_REGT(sc), NJATA32_REGH(sc), 0x18),
 	    bus_space_read_1(NJATA32_REGT(sc), NJATA32_REGH(sc), 0x1c));
 #endif
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_sgt,
+	    (char *)dev->d_sgt - (char *)sc->sc_sgtpg,
+	    sizeof(struct njata32_sgtable) * sc->sc_piobm_nsegs,
+	    BUS_DMASYNC_POSTWRITE);
 
 	/* check if DMA is active */
 	if (bm & NJATA32_BM_GO) {
@@ -626,7 +632,7 @@ njata32_dma_finish(void *v, int channel, int drive,
 	sc->sc_devflags = 0;
 
 #ifdef DIAGNOSTIC
-	sc->sc_dev[drive].d_flags &= ~NJATA32_DEV_DMA_STARTED;
+	dev->d_flags &= ~NJATA32_DEV_DMA_STARTED;
 #endif
 
 	return error;
@@ -648,21 +654,11 @@ njata32_piobm_done(void *v, int channel, int drive)
 	KASSERT(dev->d_flags & NJATA32_DEV_DMA_MAPPED);
 	KASSERT((dev->d_flags & NJATA32_DEV_DMA_STARTED) == 0);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_sgt,
-	    (char *)dev->d_sgt - (char *)sc->sc_sgtpg,
-	    sizeof(struct njata32_sgtable) * sc->sc_piobm_nsegs,
-	    BUS_DMASYNC_POSTWRITE);
-
 	/* unload dma map */
 	bus_dmamap_sync(sc->sc_dmat, dev->d_dmamap_xfer,
 	    0, dev->d_dmamap_xfer->dm_mapsize,
 	    (dev->d_flags & NJATA32_DEV_DMA_READ) ?
 		BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_sgt,
-	    (char *)dev->d_sgt - (char *)sc->sc_sgtpg,
-	    sizeof(struct njata32_sgtable) * NJATA32_NUM_SG,
-	    BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_unload(sc->sc_dmat, dev->d_dmamap_xfer);
 	dev->d_flags &= ~NJATA32_DEV_DMA_MAPPED;
