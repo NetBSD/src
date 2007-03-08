@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.8 2007/03/04 22:12:44 mrg Exp $	*/
+/*	$NetBSD: dbri.c,v 1.9 2007/03/08 21:15:20 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.8 2007/03/04 22:12:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.9 2007/03/08 21:15:20 macallan Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -330,8 +330,10 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 
 	/* map the registers into memory */
 
-	sc->sc_dma = (struct dbri_dma *)sc->sc_membase;		/* kernel virtual address of DMA buffer */
-	sc->sc_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;	/* physical address of DMA buffer */
+	/* kernel virtual address of DMA buffer */
+	sc->sc_dma = (struct dbri_dma *)sc->sc_membase;
+	/* physical address of DMA buffer */
+	sc->sc_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 	sc->sc_bufsiz = size;
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
@@ -365,13 +367,14 @@ dbri_set_power(struct dbri_softc *sc, int state)
 		s = splhigh();
 		*AUXIO4M_REG |= (AUXIO4M_MMX);
 		splx(s);
-		DELAY(1000);
-		DPRINTF(("done\n"));	/* more delay... */
+		delay(10000);
+		DPRINTF(("done (%02x})\n", *AUXIO4M_REG));
 	} else {
 		DPRINTF(("%s: powering down\n", sc->sc_dev.dv_xname));
 		s = splhigh();
 		*AUXIO4M_REG &= ~AUXIO4M_MMX;
 		splx(s);
+		DPRINTF(("done (%02x})\n", *AUXIO4M_REG));
 	}
 	sc->sc_powerstate = state;
 }
@@ -406,8 +409,10 @@ void
 dbri_config_interrupts(struct device *dev)
 {
 	struct dbri_softc *sc = (struct dbri_softc *)dev;
+
 	dbri_init(sc);
 	mmcodec_init(sc);
+	
 	/* Attach ourselves to the high level audio interface */
 	audio_attach_mi(&dbri_hw_if, sc, &sc->sc_dev);
 
@@ -491,6 +496,7 @@ dbri_init(struct dbri_softc *sc)
 	/* Disable all SBus bursts */
 	/* XXX 16 byte bursts cause errors, the rest works */
 	reg = bus_space_read_4(iot, ioh, DBRI_REG0);
+
 	/*reg &= ~(DBRI_BURST_4 | DBRI_BURST_8 | DBRI_BURST_16);*/
 	reg |= (DBRI_BURST_4 | DBRI_BURST_8);
 	bus_space_write_4(iot, ioh, DBRI_REG0, reg);
@@ -568,9 +574,10 @@ dbri_command_send(struct dbri_softc *sc, volatile u_int32_t *cmd)
 			printf("%s: chip never completed command buffer\n",
 			    sc->sc_dev.dv_xname);
 		} else {
-#ifdef DBRI_DEBUG
-			printf("%s: command completed\n",sc->sc_dev.dv_xname);
-#endif
+
+			DPRINTF(("%s: command completed\n",
+			    sc->sc_dev.dv_xname));
+
 			while ((--maxloops) > 0 && (!sc->sc_waitseen))
 				dbri_process_interrupt_buffer(sc);
 			if (maxloops == 0) {
@@ -690,11 +697,12 @@ dbri_process_interrupt(struct dbri_softc *sc, int32_t i)
 		dbri_command_send(sc, cmd);
 		break;
 	}
+	case DBRI_INTR_CMDI:
+		break;
 	default:
-#if 0
-		printf("%s: unknown interrupt code %d\n",
-		    sc->sc_dev.dv_xname, code);
-#endif
+
+		DPRINTF(("%s: unknown interrupt code %d\n",
+		    sc->sc_dev.dv_xname, code));
 		break;
 	}
 
@@ -711,6 +719,7 @@ mmcodec_init(struct dbri_softc *sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	bus_space_tag_t iot = sc->sc_iot;
 	u_int32_t reg2;
+	int bail;
 
 	reg2 = bus_space_read_4(iot, ioh, DBRI_REG2);
 	DPRINTF(("mmcodec_init: PIO reads %x\n", reg2));
@@ -746,10 +755,21 @@ mmcodec_init(struct dbri_softc *sc)
 
 	sc->sc_mm.offset = sc->sc_mm.onboard ? 0 : 8;
 
-	if (mmcodec_setcontrol(sc) == -1 || sc->sc_version == 0xff) {
-		printf("%s: cs4215 probe failed at offset %d\n",
-		    sc->sc_dev.dv_xname, sc->sc_mm.offset);
-		return (-1);
+	/* 
+	 * mmcodec_setcontrol() sometimes fails right after powerup
+	 * so we just try again until we either get a useful response or run
+	 * out of time
+	 */
+	bail = 0;
+	while (mmcodec_setcontrol(sc) == -1 || sc->sc_version == 0xff) {
+
+		bail++;
+		if (bail > 100) {
+			printf("%s: cs4215 probe failed at offset %d\n",
+		    	    sc->sc_dev.dv_xname, sc->sc_mm.offset);
+			return (-1);
+		}
+		delay(10000);
 	}
 
 	printf("%s: cs4215 ver %d found at offset %d\n",
@@ -835,10 +855,10 @@ mmcodec_default(struct dbri_softc *sc)
 	 * speaker, line and headphone enable. set gain to half.
 	 * input is mic
 	 */
-	mm->data[0] = sc->sc_latt = 0x20 | CS4215_HE | CS4215_LE;
-	mm->data[1] = sc->sc_ratt = 0x20 | CS4215_SE;
-	mm->data[2] = CS4215_LG(0x08) | CS4215_IS | CS4215_PIO0 | CS4215_PIO1;
-	mm->data[3] = CS4215_RG(0x08) | CS4215_MA(0x0f);
+	mm->d.bdata[0] = sc->sc_latt = 0x20 | CS4215_HE | CS4215_LE;
+	mm->d.bdata[1] = sc->sc_ratt = 0x20 | CS4215_SE;
+	mm->d.bdata[2] = CS4215_LG(0x08) | CS4215_IS | CS4215_PIO0 | CS4215_PIO1;
+	mm->d.bdata[3] = CS4215_RG(0x08) | CS4215_MA(0x0f);
 
 	/*
 	 * control time slots 1-4
@@ -848,10 +868,10 @@ mmcodec_default(struct dbri_softc *sc)
 	 * 2: serial enable, CHI master, 128 bits per frame, clock 1
 	 * 3: tests disabled
 	 */
-	mm->control[0] = CS4215_RSRVD_1 | CS4215_MLB;
-	mm->control[1] = CS4215_DFR_ULAW | CS4215_FREQ[0].csval;
-	mm->control[2] = CS4215_XCLK | CS4215_BSEL_128 | CS4215_FREQ[0].xtal;
-	mm->control[3] = 0;
+	mm->c.bcontrol[0] = CS4215_RSRVD_1 | CS4215_MLB;
+	mm->c.bcontrol[1] = CS4215_DFR_ULAW | CS4215_FREQ[0].csval;
+	mm->c.bcontrol[2] = CS4215_XCLK | CS4215_BSEL_128 | CS4215_FREQ[0].xtal;
+	mm->c.bcontrol[3] = 0;
 
 	return;
 }
@@ -861,8 +881,8 @@ mmcodec_setgain(struct dbri_softc *sc, int mute)
 {
 	if (mute) {
 		/* disable all outputs, max. attenuation */
-		sc->sc_mm.data[0] = sc->sc_latt | 63;
-		sc->sc_mm.data[1] = sc->sc_ratt | 63;
+		sc->sc_mm.d.bdata[0] = sc->sc_latt | 63;
+		sc->sc_mm.d.bdata[1] = sc->sc_ratt | 63;
 	} else {
 		/*
 		 * We should be setting the proper output here.. for now,
@@ -874,13 +894,13 @@ mmcodec_setgain(struct dbri_softc *sc, int mute)
 		 *  Speaker:
 		 *   data[1] |= CS4215_SE;
 		 */
-		sc->sc_mm.data[0] = sc->sc_latt;
-		sc->sc_mm.data[1] = sc->sc_ratt;
+		sc->sc_mm.d.bdata[0] = sc->sc_latt;
+		sc->sc_mm.d.bdata[1] = sc->sc_ratt;
 	}
 
 	if (sc->sc_powerstate == 0)
 		return;
-	pipe_transmit_fixed(sc, 20, *(u_int32_t *)__UNVOLATILE(sc->sc_mm.data));
+	pipe_transmit_fixed(sc, 20, sc->sc_mm.d.ldata);
 
 	/* give the chip some time to execure the command */
 	delay(250);
@@ -904,7 +924,7 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	 * happens. This avoids clicking noises.
 	 */
 	mmcodec_setgain(sc, 1);
-	//DELAY(125);
+	delay(125);
 
 	/* enable control mode */
 	val = DBRI_PIO_ENABLE_ALL | DBRI_PIO1;	/* was PIO1 */
@@ -914,7 +934,7 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 
 	bus_space_write_4(iot, ioh, DBRI_REG2, val);
 
-	DELAY(34);
+	delay(34);
 
 	/*
 	 * in control mode, the cs4215 is the slave device, so the
@@ -935,8 +955,8 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	pipe_ts_link(sc, 19, PIPEinput, 16, 8, sc->sc_mm.offset + 48);
 
 	/* wait for the chip to echo back CLB as zero */
-	sc->sc_mm.control[0] &= ~CS4215_CLB;
-	pipe_transmit_fixed(sc, 17, *(int *)__UNVOLATILE(sc->sc_mm.control));
+	sc->sc_mm.c.bcontrol[0] &= ~CS4215_CLB;
+	pipe_transmit_fixed(sc, 17, sc->sc_mm.c.lcontrol);
 
 	tmp = bus_space_read_4(iot, ioh, DBRI_REG0);
 	tmp |= DBRI_CHI_ACTIVATE;
@@ -961,14 +981,14 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 #endif
 
 	/* copy the version information before it becomes unreadable again */
-	sc->sc_version=sc->sc_mm.version;
+	sc->sc_version = sc->sc_mm.version;
 
 	/* terminate cs4215 control mode */
-	sc->sc_mm.control[0] |= CS4215_CLB;
-	pipe_transmit_fixed(sc, 17, *(int *)__UNVOLATILE(sc->sc_mm.control));
+	sc->sc_mm.c.bcontrol[0] |= CS4215_CLB;
+	pipe_transmit_fixed(sc, 17, sc->sc_mm.c.lcontrol);
 
 	/* two frames of control info @ 8kHz frame rate = 250us delay */
-	DELAY(250);
+	delay(250);
 
 	mmcodec_setgain(sc, 0);
 
@@ -1456,54 +1476,54 @@ dbri_set_params(void *hdl, int setmode, int usemode,
 		return (EINVAL);
 
 	/* set frequency */
-	sc->sc_mm.control[1] &= ~0x38;
-	sc->sc_mm.control[1] |= CS4215_FREQ[i].csval;
-	sc->sc_mm.control[2] &= ~0x70;
-	sc->sc_mm.control[2] |= CS4215_FREQ[i].xtal;
+	sc->sc_mm.c.bcontrol[1] &= ~0x38;
+	sc->sc_mm.c.bcontrol[1] |= CS4215_FREQ[i].csval;
+	sc->sc_mm.c.bcontrol[2] &= ~0x70;
+	sc->sc_mm.c.bcontrol[2] |= CS4215_FREQ[i].xtal;
 
 	/*play->factor = 1;
 	play->sw_code = NULL;*/
 
 	switch (play->encoding) {
 	case AUDIO_ENCODING_ULAW:
-		sc->sc_mm.control[1] &= ~3;
-		sc->sc_mm.control[1] |= CS4215_DFR_ULAW;
+		sc->sc_mm.c.bcontrol[1] &= ~3;
+		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_ULAW;
 		break;
 	case AUDIO_ENCODING_ALAW:
-		sc->sc_mm.control[1] &= ~3;
-		sc->sc_mm.control[1] |= CS4215_DFR_ALAW;
+		sc->sc_mm.c.bcontrol[1] &= ~3;
+		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_ALAW;
 		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (play->precision == 16) {
 			/* XXX this surely needs some changes elsewhere */
 			/*play->sw_code = swap_bytes;*/
-			sc->sc_mm.control[1] &= ~3;
-			sc->sc_mm.control[1] |= CS4215_DFR_LINEAR16;
+			sc->sc_mm.c.bcontrol[1] &= ~3;
+			sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR16;
 		}
 		break;
 	case AUDIO_ENCODING_ULINEAR:
 	case AUDIO_ENCODING_SLINEAR:
-		sc->sc_mm.control[1] &= ~3;
+		sc->sc_mm.c.bcontrol[1] &= ~3;
 		if (play->precision == 8) {
-			sc->sc_mm.control[1] |= CS4215_DFR_LINEAR8;
+			sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR8;
 		} else {
-			sc->sc_mm.control[1] |= CS4215_DFR_LINEAR16;
+			sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR16;
 		}
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
 	case AUDIO_ENCODING_SLINEAR_BE:
-		sc->sc_mm.control[1] &= ~3;
-		sc->sc_mm.control[1] |= CS4215_DFR_LINEAR16;
+		sc->sc_mm.c.bcontrol[1] &= ~3;
+		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_LINEAR16;
 		break;
 	}
 
 	switch (play->channels) {
 	case 1:
-		sc->sc_mm.control[1] &= ~CS4215_DFR_STEREO;
+		sc->sc_mm.c.bcontrol[1] &= ~CS4215_DFR_STEREO;
 		break;
 	case 2:
-		sc->sc_mm.control[1] |= CS4215_DFR_STEREO;
+		sc->sc_mm.c.bcontrol[1] |= CS4215_DFR_STEREO;
 		break;
 	}
 
