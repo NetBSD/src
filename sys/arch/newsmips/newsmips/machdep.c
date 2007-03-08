@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2007/03/05 21:05:01 dogcow Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2007/03/08 22:17:47 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2007/03/05 21:05:01 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2007/03/08 22:17:47 he Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -243,7 +243,7 @@ void
 mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 {
 	u_long first, last;
-	void *kernend, *v;
+	char *kernend, *v;
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
@@ -324,10 +324,10 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTDEV_ADDR)) = x_bootdev;
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTSW_ADDR)) = x_boothowto;
 
-	kernend = (void *)mips_round_page(end);
+	kernend = (char *)mips_round_page(end);
 #if NKSYMS || defined(DDB) || defined(LKM)
 	if (nsym)
-		kernend = (void *)mips_round_page(esym);
+		kernend = (char *)mips_round_page(esym);
 #endif
 
 	/*
@@ -399,7 +399,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 	/*
 	 * Allocate space for lwp0's USPACE.
 	 */
-	v = (void *)uvm_pageboot_alloc(USPACE);
+	v = (char *)uvm_pageboot_alloc(USPACE);
 	lwp0.l_addr = proc0paddr = (struct user *)v;
 	lwp0.l_md.md_regs = (struct frame *)(v + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
