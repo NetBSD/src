@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.29 2007/03/04 06:00:43 christos Exp $       */
+/*      $NetBSD: pccons.c,v 1.30 2007/03/08 20:48:40 matt Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.29 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.30 2007/03/08 20:48:40 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -163,6 +163,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.29 2007/03/04 06:00:43 christos Exp $")
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 #include <machine/pio.h>
 
 #include <machine/pccons.h>

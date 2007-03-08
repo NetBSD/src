@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2007/02/19 21:38:37 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2007/03/08 20:48:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2007/02/19 21:38:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2007/03/08 20:48:39 matt Exp $");
 
 #include "opt_md.h"
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2007/02/19 21:38:37 matt Exp $");
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 
 #include "isa.h"
 
