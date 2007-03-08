@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.42 2007/03/06 20:45:59 drochner Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.43 2007/03/08 19:35:44 drochner Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.42 2007/03/06 20:45:59 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.43 2007/03/08 19:35:44 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -211,8 +211,13 @@ CFATTACH_DECL(irframet, sizeof(struct irframet_softc),
 void
 irframettyattach(int n)
 {
+	extern struct cfdriver irframe_cd;
 
 	(void) ttyldisc_attach(&irframet_disc);
+
+	/* XXX might fail if "real" attachments have pulled this in */
+	/* XXX should not be done here */
+	config_cfdriver_attach(&irframe_cd);
 
 	config_cfattach_attach("irframe", &irframet_ca);
 }
