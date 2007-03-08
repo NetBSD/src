@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.43 2007/03/08 15:20:18 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.44 2007/03/08 15:36:57 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -71,9 +71,6 @@
 .Ek
 .Bk -words
 .Op Fl p Ar prefix
-.Ek
-.Bk -words
-.Op Fl r Ar rscript
 .Ek
 .Bk -words
 .Op Fl S Ar size-all-file
@@ -260,15 +257,6 @@ the package.
 Re-order any directories in the pkg/PLIST file into reverse alphabetic
 order, so that child directories will automatically be removed before
 parent directories.
-.It Fl r Ar rscript
-Set
-.Ar rscript
-to be the
-.Pq requirements
-procedure for the package.
-This can be any executable program (or shell script).
-It will be invoked automatically at installation/deinstallation time to
-determine whether or not installation/deinstallation should proceed.
 .It Fl S Ar size-all-file
 Store the given file for later querying with the
 .Xr pkg_info 1
