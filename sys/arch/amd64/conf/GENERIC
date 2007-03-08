@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.131 2007/03/07 18:58:48 bouyer Exp $
+# $NetBSD: GENERIC,v 1.132 2007/03/08 15:16:04 njoly Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.131 $"
+#ident 		"GENERIC-$Revision: 1.132 $"
 
 maxusers	32		# estimated number of users
 
@@ -251,6 +251,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 # Mainboard devices
 #com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
+#hpet*		at acpi?		# High Precision Event Timer
 #joy*		at acpi?		# Joystick/Game port
 #lpt* 		at acpi?		# Parallel port
 #mpu*		at acpi?		# Roland MPU-401 MIDI UART
@@ -286,6 +287,9 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
+#amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+#hpet* 	at amdpcib?
+
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
 #agp* 	at pchb?
@@ -295,6 +299,7 @@ aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 # ISA bus support
 isa0	at mainbus?
 isa0	at pcib?
+#isa0 	at amdpcib?
 
 # CardBus bridge support
 #cbb*		at pci? dev ? function ?
