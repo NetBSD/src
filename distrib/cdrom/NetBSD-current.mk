@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-current.mk,v 1.5 2006/09/17 03:56:03 tsutsui Exp $
+# $NetBSD: NetBSD-current.mk,v 1.6 2007/03/08 13:51:51 bouyer Exp $
 #
 # Configuration file for NetBSD-current.
 
@@ -16,11 +16,17 @@ INTFILES.cats=		netbsd.cats:cats/binary/kernel/netbsd.aout-INSTALL.gz
 
 # BOOTFILE.i386 is relative to CD staging root
 BOOTFILE.i386=		boot.i386
-INTFILES.i386=		boot.i386:i386/installation/floppy/boot-big.fs,link
+INTFILES.i386=		boot.i386:i386/binary/sets/base.tgz,./usr/mdec/bootxx_cd9660 \
+			boot:i386/binary/sets/base.tgz,./usr/mdec/boot \
+			netbsd:i386/binary/kernel/netbsd-INSTALL_LARGE.gz,link \
+			nblaptop:i386/binary/kernel/netbsd-INSTALL_LAPTOP.gz,link \
+			nbnoacpi:i386/binary/kernel/netbsd-INSTALL.gz,link
 
 # BOOTFILE.amd64 is relative to CD staging root
 BOOTFILE.amd64=		boot.amd64
-INTFILES.amd64=		boot.amd64:amd64/installation/floppy/boot-big.fs,link
+INTFILES.amd64=		boot.amd64:amd64/binary/sets/base.tgz,./usr/mdec/bootxx_cd9660 \
+			boot:amd64/binary/sets/base.tgz,./usr/mdec/boot \
+			netbsd:amd64/binary/kernel/netbsd-INSTALL.gz,link
 
 # macppc has external bootblock generation tool
 EXTFILES.macppc=	macppc.bootxx:macppc/binary/sets/base.tgz,./usr/mdec/bootxx \
