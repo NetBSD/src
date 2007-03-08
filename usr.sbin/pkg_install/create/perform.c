@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.47 2007/03/08 15:36:57 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.48 2007/03/08 18:20:20 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.47 2007/03/08 15:36:57 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.48 2007/03/08 18:20:20 joerg Exp $");
 #endif
 #endif
 
@@ -258,6 +258,27 @@ pkg_perform(lpkg_head_t *pkgs)
 				add_plist(&plist, PLIST_PKGDEP, cp);
 				if (Verbose && !PlistOnly)
 					printf(" %s", cp);
+			}
+		}
+		if (Verbose && !PlistOnly)
+			printf(".\n");
+	}
+
+	/*
+	 * Put the build dependencies after the dependencies.
+	 * This works due to the evaluation order in pkg_add.
+	 */
+	if (BuildPkgdeps) {
+		if (Verbose && !PlistOnly)
+			printf("Registering build depends:");
+		while (BuildPkgdeps) {
+			cp = strsep(&BuildPkgdeps, " \t\n");
+			if (*cp) {
+				if (findmatchingname(_pkgdb_getPKGDB_DIR(), cp, note_whats_installed, installed) > 0) {
+					add_plist(&plist, PLIST_BLDDEP, installed);
+					if (Verbose && !PlistOnly)
+						printf(" %s", cp);
+				}
 			}
 		}
 		if (Verbose && !PlistOnly)
