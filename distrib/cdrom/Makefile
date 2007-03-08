@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2007/03/04 04:59:41 tsutsui Exp $
+# $NetBSD: Makefile,v 1.34 2007/03/08 13:51:37 bouyer Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -218,13 +218,25 @@ BASE_PORTS.${image}:=	${bports:O:u}
 # i386
 
 .if !empty(ports:Mi386)
+.if empty(INTFILES.i386:Mbootxx_cd9660)
+# non-emulation boot
+MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.i386} -c boot.catalog -no-emul-boot
+.else
+#2.88MB emulation boot
 MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.i386} -c boot.catalog
+.endif
 .endif
 
 # amd64
 
 .if !empty(ports:Mamd64)
+.if empty(INTFILES.amd64:Mbootxx_cd9660)
+# non-emulation boot
+MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.amd64} -c boot.catalog -no-emul-boot
+.else
+#2.88MB emulation boot
 MKISOFS_ARGS.${image}+= -b ${BOOTFILE.amd64} -c boot.catalog
+.endif
 .endif
         
 # Mac (mac68k, macppc)
