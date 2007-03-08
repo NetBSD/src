@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 2005/12/11 12:18:06 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8.24.1 2007/03/08 18:59:18 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -34,6 +34,8 @@
 #ifndef _MACHINE_AUTOCONF_H_
 #define _MACHINE_AUTOCONF_H_
 
+#include <machine/bus.h>	/* for bus_space_tag_t */
+
 struct confargs {
 	const char *ca_name;
 	u_int ca_node;
@@ -43,7 +45,7 @@ struct confargs {
 	int *ca_intr;
 
 	u_int ca_baseaddr;
-	/* bus_space_tag_t ca_tag; */
+	bus_space_tag_t ca_tag;
 };
 
 /* there are in locore.S */
@@ -77,6 +79,7 @@ const char *intr_typename __P((int));
 /* these are in dev/akbd.c */
 int kbd_intr __P((void *));
 int akbd_cnattach __P((void));
+int adbkbd_cnattach(void);
 
 /* these are in dev/ofb.c */
 int ofb_is_console __P((void));
@@ -89,5 +92,8 @@ int zssoft __P((void *));
 /* these are in ../../dev/ic/com.c */
 void comsoft __P((void));
 #endif
+
+extern int console_node;
+extern int console_instance;
 
 #endif /* _MACHINE_AUTOCONF_H_ */
