@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.70 2006/07/01 19:31:23 dillo Exp $	*/
+/*	$NetBSD: perform.c,v 1.71 2007/03/08 15:36:58 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70 2006/07/01 19:31:23 dillo Exp $");
+__RCSID("$NetBSD: perform.c,v 1.71 2007/03/08 15:36:58 joerg Exp $");
 #endif
 #endif
 
@@ -276,9 +276,12 @@ pkg_do(char *pkg)
 			show_file(pkg, "De-Install script:\n",
 				  DEINSTALL_FNAME, TRUE);
 		}
-		if ((Flags & SHOW_REQUIRE) && fexists(REQUIRE_FNAME)) {
-			show_file(pkg, "Require script:\n",
-				  REQUIRE_FNAME, TRUE);
+		if (fexists(REQUIRE_FNAME)) {
+			warnx("package %s uses obsoleted require scripts", pkg);
+			if (Flags & SHOW_REQUIRE) {
+				show_file(pkg, "Require script:\n",
+					  REQUIRE_FNAME, TRUE);
+			}
 		}
 		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
 			show_file(pkg, "mtree file:\n", MTREE_FNAME, TRUE);
