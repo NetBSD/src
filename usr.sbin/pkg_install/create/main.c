@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.32 2007/03/08 15:36:57 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.33 2007/03/08 18:20:20 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: main.c,v 1.17 1997/10/08 07:46:23 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.32 2007/03/08 15:36:57 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.33 2007/03/08 18:20:20 joerg Exp $");
 #endif
 #endif
 
@@ -32,7 +32,7 @@ __RCSID("$NetBSD: main.c,v 1.32 2007/03/08 15:36:57 joerg Exp $");
 #include "lib.h"
 #include "create.h"
 
-static const char Options[] = "B:C:D:EFI:K:L:OP:RS:UVb:c:d:f:i:k:lm:n:p:r:s:t:v";
+static const char Options[] = "B:C:D:EFI:K:L:OP:RS:T:UVb:c:d:f:i:k:lm:n:p:r:s:t:v";
 
 char   *Prefix = NULL;
 char   *Comment = NULL;
@@ -43,6 +43,7 @@ char   *DeInstall = NULL;
 char   *Contents = NULL;
 char   *Mtree = NULL;
 char   *Pkgdeps = NULL;
+char   *BuildPkgdeps = NULL;
 char   *Pkgcfl = NULL;
 char   *BuildVersion = NULL;
 char   *BuildInfo = NULL;
@@ -69,7 +70,7 @@ usage(void)
             "                  [-K pkg_dbdir] [-k dscript] [-L SrcDir] [-m mtreefile]\n"
             "                  [-n preserve-file] [-P dpkgs] [-p prefix] [-r rscript]\n"
             "                  [-S size-all-file] [-s size-pkg-file] [-t template]\n"
-            "                  -c comment -d description -f packlist\n"
+            "                  [-T buildpkgs] -c comment -d description -f packlist\n"
             "                  pkg-name\n");
 	exit(1);
 }
@@ -170,6 +171,10 @@ main(int argc, char **argv)
 
 		case 'P':
 			Pkgdeps = optarg;
+			break;
+
+		case 'T':
+			BuildPkgdeps = optarg;
 			break;
 
 		case 'C':

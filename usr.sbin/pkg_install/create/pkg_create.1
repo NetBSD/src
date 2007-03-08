@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.44 2007/03/08 15:36:57 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.45 2007/03/08 18:20:20 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -68,6 +68,9 @@
 .Ek
 .Bk -words
 .Op Fl P Ar dpkgs
+.Ek
+.Bk -words
+.Op Fl T Ar buildpkgs
 .Ek
 .Bk -words
 .Op Fl p Ar prefix
@@ -246,6 +249,16 @@ In addition, the exact versions of the packages referred to in the
 list will be added to the packing list in the form of
 .Cm @blddep
 directives.
+.It Fl T Ar buildpkgs
+This is assumed to be a whitespace separated list of package names.
+The exact versions of the packages referred to in the
+.Ar buildpkgs
+list will be added to the packing list in the form of
+.Cm @blddep
+directives.
+This directives are stored after those created by the
+.Fl P
+option.
 .It Fl p Ar prefix
 Set
 .Ar prefix

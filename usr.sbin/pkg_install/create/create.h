@@ -1,4 +1,4 @@
-/* $NetBSD: create.h,v 1.21 2007/03/08 15:36:57 joerg Exp $ */
+/* $NetBSD: create.h,v 1.22 2007/03/08 18:20:20 joerg Exp $ */
 
 /* from FreeBSD Id: create.h,v 1.13 1997/10/08 07:46:19 charnier Exp */
 
@@ -34,6 +34,7 @@ extern char *DeInstall;
 extern char *Contents;
 extern char *Mtree;
 extern char *Pkgdeps;
+extern char *BuildPkgdeps;
 extern char *Pkgcfl;
 extern char *BuildVersion;
 extern char *BuildInfo;
