@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.37 2007/02/23 05:53:36 mrg Exp $	*/
+/*	$NetBSD: ofw.c,v 1.38 2007/03/08 20:48:39 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.37 2007/02/23 05:53:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.38 2007/03/08 20:48:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.37 2007/02/23 05:53:36 mrg Exp $");
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>
