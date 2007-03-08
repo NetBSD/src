@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2007/03/04 06:00:27 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2007/03/08 16:37:44 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2007/03/04 06:00:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2007/03/08 16:37:44 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -220,12 +220,6 @@ int mmupid = -1;
 #define MDB_ISPID(p)	((p) == mmupid)
 #endif
 
-
-#define NSIR	32
-void (*sir_routines[NSIR])(void *);
-void *sir_args[NSIR];
-int next_sir;
-
 /*
  * trap and syscall both need the following work done before returning
  * to user mode.
@@ -315,7 +309,6 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 	ksiginfo_t ksi;
 	int s;
 	u_quad_t sticks = 0 /* XXX initialiser works around compiler bug */;
-	int bit;
 	static int panicking = 0;
 
 	uvmexp.traps++;
@@ -585,13 +578,9 @@ trap(int type, unsigned code, unsigned v, struct frame frame)
 
 	case T_SSIR:		/* software interrupt */
 	case T_SSIR|T_USER:
-		while ((bit = ffs(ssir))) {
-			--bit;
-			ssir &= ~(1 << bit);
-			uvmexp.softs++;
-			if (sir_routines[bit])
-				sir_routines[bit](sir_args[bit]);
-		}
+
+		softintr_dispatch();
+
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
@@ -1039,29 +1028,3 @@ dumpwb(int num, u_short s, u_int a, u_int d)
 }
 #endif
 #endif
-
-/*
- * Allocation routines for software interrupts.
- */
-u_long
-allocate_sir(void (*proc)(void *), void *arg)
-{
-	int bit;
-
-	if( next_sir >= NSIR )
-		panic("allocate_sir: none left");
-	bit = next_sir++;
-	sir_routines[bit] = proc;
-	sir_args[bit] = arg;
-	return (1 << bit);
-}
-
-void
-init_sir(void)
-{
-	extern void netintr(void);
-
-	sir_routines[0] = (void (*)(void *))netintr;
-	sir_routines[1] = softclock;
-	next_sir = 2;
-}
