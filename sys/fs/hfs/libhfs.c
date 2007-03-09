@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.2 2007/03/06 11:28:48 dillo Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.3 2007/03/09 22:14:09 dillo Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -151,19 +151,16 @@ hfslib_open_volume(
 	hfs_volume* out_vol,
 	hfs_callback_args* cbargs)
 {
-	hfs_node_descriptor_t nd; /* node descriptor for some node we're reading */
 	hfs_catalog_key_t		rootkey;
 	hfs_thread_record_t	rootthread;
-	uint16_t*	node_rec_sizes;
+	uint16_t	node_rec_sizes[1];
+	void*		node_recs[1];
 	void*		buffer;
 	void*		buffer2;	/* used as temporary pointer for realloc() */
-	void**		node_recs;
 	int			result;
 	
 	result = 1;
 	buffer = NULL;
-	node_recs = NULL;
-	node_rec_sizes = NULL;
 
 	if(in_device==NULL || out_vol==NULL)
 		return 1;
@@ -213,27 +210,23 @@ hfslib_open_volume(
 	/*
 	 *	Read the catalog header.
 	 */
-	buffer2 = hfslib_realloc(buffer,
-		out_vol->vh.catalog_file.extents[0].block_count *
-		out_vol->vh.block_size, cbargs);
+	buffer2 = hfslib_realloc(buffer, 512, cbargs);
 	if(buffer2==NULL)
 		HFS_LIBERR("could not allocate catalog header node");
 	buffer = buffer2;
 	
-	/*	We don't use hfslib_readd_with_extents() here because we don't know
-	 *	the size of this node ahead of time. Besides, we only need the first
-	 *	extent in order to get the header and root nodes. */
-	if(hfslib_readd(out_vol, buffer,
-		out_vol->vh.catalog_file.extents[0].block_count*out_vol->vh.block_size,
-		out_vol->vh.catalog_file.extents[0].start_block*out_vol->vh.block_size,
+	/*
+	  We are only interested in the node header, so read the first
+	  512 bytes and construct the node descriptor by hand.
+	*/
+	if(hfslib_readd(out_vol, buffer, 512,
+	       out_vol->vh.catalog_file.extents[0].start_block
+	       *(uint64_t)out_vol->vh.block_size,
 		cbargs) != 0)
 		HFS_LIBERR("could not read catalog header node");
-	
-	if(hfslib_reada_node(buffer, &nd, &node_recs, &node_rec_sizes,
-		HFS_CATALOG_FILE, out_vol, cbargs)==0)
-		HFS_LIBERR("could not read catalog header node");
-
-	if(hfslib_read_header_node(node_recs, node_rec_sizes, nd.num_recs,
+	node_recs[0] = (char *)buffer+14;
+	node_rec_sizes[0] = 120;
+	if(hfslib_read_header_node(node_recs, node_rec_sizes, 1,
 		&out_vol->chr, NULL, NULL)==0)
 		HFS_LIBERR("could not parse catalog header node");
 	
@@ -248,34 +241,33 @@ hfslib_open_volume(
 		else
 			HFS_LIBERR("undefined key compare method");
 	}
-	
+
+	out_vol->catkeysizefieldsize
+	    = (out_vol->chr.attributes & HFS_BIG_KEYS_MASK) ?
+	    sizeof(uint16_t) : sizeof(uint8_t);
+
 	/*
 	 *	Read the extent overflow header.
 	 */
-	buffer2 = hfslib_realloc(buffer,
-		out_vol->vh.extents_file.extents[0].block_count *
-		out_vol->vh.block_size, cbargs);
-	if(buffer2==NULL)
-		HFS_LIBERR("could not allocate extent header node");
-	buffer = buffer2;
-
-	/*	We don't use hfslib_readd_with_extents() here because we don't know
-	 *	the size of this node ahead of time. Besides, we only need the first
-	 *	extent in order to get the header and root nodes. */
-	if(hfslib_readd(out_vol, buffer,
-		out_vol->vh.extents_file.extents[0].block_count*out_vol->vh.block_size,
-		out_vol->vh.extents_file.extents[0].start_block*out_vol->vh.block_size,
+	/*
+	  We are only interested in the node header, so read the first
+	  512 bytes and construct the node descriptor by hand.
+	  buffer is already 512 bytes long.
+	*/
+	if(hfslib_readd(out_vol, buffer, 512,
+	       out_vol->vh.extents_file.extents[0].start_block
+	       *(uint64_t)out_vol->vh.block_size,
 		cbargs) != 0)
 		HFS_LIBERR("could not read extent header node");
 	
-	if(hfslib_reada_node(buffer, &nd, &node_recs, &node_rec_sizes,
-		HFS_EXTENTS_FILE, out_vol, cbargs)==0)
-		HFS_LIBERR("could not read extent header node");
-
-	if(hfslib_read_header_node(node_recs, node_rec_sizes, nd.num_recs,
+	node_recs[0] = (char *)buffer+14;
+	node_rec_sizes[0] = 120;
+	if(hfslib_read_header_node(node_recs, node_rec_sizes, 1,
 		&out_vol->ehr, NULL, NULL)==0)
 		HFS_LIBERR("could not parse extent header node");
-		
+	out_vol->extkeysizefieldsize
+	    = (out_vol->ehr.attributes & HFS_BIG_KEYS_MASK) ?
+	    sizeof(uint16_t):sizeof(uint8_t);
 	/*
 	 * Read the journal info block and journal header (if volume journaled).
 	 */
@@ -343,8 +335,6 @@ error:
 	if(buffer!=NULL)
 		hfslib_free(buffer, cbargs);
 
-	hfslib_free_recs(&node_recs, &node_rec_sizes, &nd.num_recs, cbargs);
-		
 	return result;
 }
 
