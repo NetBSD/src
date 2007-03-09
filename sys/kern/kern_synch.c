@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.13 2007/03/09 15:16:25 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.14 2007/03/09 17:15:58 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.13 2007/03/09 15:16:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.14 2007/03/09 17:15:58 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -350,8 +350,7 @@ updatertime(struct lwp *l, struct schedstate_percpu *spc)
 }
 
 /*
- * The machine independent parts of context switch.  Switch to "new"
- * if non-NULL, otherwise let cpu_switch choose the next lwp.
+ * The machine independent parts of context switch.
  *
  * Returns 1 if another process was actually run.
  */
@@ -414,8 +413,11 @@ mi_switch(struct lwp *l)
 		mutex_enter(&sched_mutex);
 	}
 #endif
-
-	/* Please note that sched_switch() will enqueue the LWP */
+	/*
+	 * Let sched_switch() select the LWP to run the CPU next. 
+	 * If no LWP is runnable, switch to the idle LWP.
+	 * Please note that sched_switch() will enqueue the LWP.
+	 */
 	newl = sched_switch(l);
 	if (newl == NULL) {
 		newl = l->l_cpu->ci_data.cpu_idlelwp;
