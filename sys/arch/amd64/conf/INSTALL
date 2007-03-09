@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.60.2.4 2007/02/08 22:53:25 bouyer Exp $
+# $NetBSD: INSTALL,v 1.60.2.5 2007/03/09 06:59:25 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.60.2.4 $"
+#ident 		"INSTALL-$Revision: 1.60.2.5 $"
 
 maxusers	32		# estimated number of users
 
@@ -163,7 +163,10 @@ config		netbsd	root on ? type ?
 
 mainbus0 at root
 
-options MPBIOS
+# ACPI will be used if present. If not it will fall back to MPBIOS
+acpi0	at mainbus0
+options ACPI_SCANPCI
+options MPBIOS				
 options MPBIOS_SCANPCI
 cpu* 	at mainbus0
 ioapic* at mainbus0

@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2006/06/02 22:11:52 hubertf Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2007/03/09 06:59:24 riz Exp $
 
 SUBDIR=		
 SUBDIR+=	bootfloppy
-SUBDIR+=	bootfloppy-big
 SUBDIR+=	bootfloppy-com
 
 TARGETS+=	release

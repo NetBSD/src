@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.246 2006/09/07 03:51:44 dbj Exp $
+#	$NetBSD: Makefile,v 1.246.2.1 2007/03/09 06:59:37 riz Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -314,6 +314,7 @@ release snapshot: .PHONY .MAKE
 #
 
 iso-image: .PHONY
+	${MAKEDIRTARGET} distrib iso_image
 	${MAKEDIRTARGET} etc iso-image
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date

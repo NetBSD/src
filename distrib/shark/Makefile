@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2002/04/12 00:13:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.18.1 2007/03/09 06:59:42 riz Exp $
 
-SUBDIR=		instkernel
+SUBDIR=		instkernel cdroms
 TARGETS+=	release
+
+iso_image:
+	${MAKEDIRTARGET} cdroms iso_image
 
 .include <bsd.subdir.mk>

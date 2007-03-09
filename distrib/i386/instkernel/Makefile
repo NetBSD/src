@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/11/19 11:17:51 dsl Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2007/03/09 06:59:39 riz Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -15,7 +15,8 @@ ${V}DIR!=	cd ${.CURDIR}/../ramdisks/${F} && ${PRINTOBJDIR}
 ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
-MDSETTARGETS=	INSTALL			${RAMDISK_B}	-
+MDSETTARGETS=	INSTALL_LARGE		${RAMDISK_B}	-
+MDSETTARGETS+=	INSTALL			${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_LAPTOP		${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN2_DOMU	${RAMDISK_B}	-
 MDSETTARGETS+=	INSTALL_XEN3_DOMU	${RAMDISK_B}	-

@@ -1,0 +1,18 @@
+#	$NetBSD: INSTALL_LARGE,v 1.1.2.2 2007/03/09 06:59:20 riz Exp $
+#
+#	INSTALL_LARGE -- INSTALL suitable for modern machines
+#
+
+include "arch/i386/conf/INSTALL"
+
+acpi0 		at mainbus0
+
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+options		ACPIVERBOSE
+options		ACPI_SCANPCI
+
+ioapic* 	at mainbus?
+bnx* 	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
+txp*	at pci? dev ? function ?	# 3com 3cr990
+vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
