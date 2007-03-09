@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.79 2007/03/03 06:36:01 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.80 2007/03/09 13:57:54 dsl Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1801,7 +1801,7 @@ create_mfs_dev()
 	mount_mfs -b 4096 -f 512 -s $fs_size -n $ninode -p 07555 -o union swap $dev_mountpoint
       
 	cd $dev_mountpoint
-	mknod -m 600 -g 0 -u 0 temp_console c %cons_chr% 0
+	mknod -m 600 -g 0 -u 0 temp_console c %CONSOLE_CMAJOR% 0
 	exec >temp_console 2>&1
 	rm temp_console
 	echo "Created mfs $dev_mountpoint ($fs_size blocks, $ninode inodes)"
