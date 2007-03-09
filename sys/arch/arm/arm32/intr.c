@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.20 2007/02/20 04:14:23 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2007/02/20 04:14:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21 2007/03/09 06:45:19 thorpej Exp $");
 
 #include "opt_irqstats.h"
 
@@ -204,12 +204,17 @@ static const int ipl_to_spl_map[] = {
 };
 
 int
-ipl_to_spl(int ipl)
+ipl_to_spl(ipl_t ipl)
 {
+	int spl;
+
 	KASSERT(ipl < __arraycount(ipl_to_spl_map));
 	KASSERT(ipl_to_spl_map[ipl]);
 
-	return ipl_to_spl_map[ipl] - 1;
+	spl = ipl_to_spl_map[ipl] - 1;
+	KASSERT(spl < 0x100);
+
+	return spl;
 }
 
 #ifdef DIAGNOSTIC

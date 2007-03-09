@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 2007/02/18 07:48:20 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.10 2007/03/09 06:45:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -104,9 +104,9 @@ extern int current_spl_level;
 
 extern u_int spl_masks[_SPL_LEVELS + 1];
 
-typedef int ipl_t;
+typedef uint8_t ipl_t;
 typedef struct {
-	int _spl;
+	uint8_t _spl;
 } ipl_cookie_t;
 
 int ipl_to_spl(ipl_t);
@@ -115,7 +115,7 @@ static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._spl = ipl_to_spl(ipl)};
+	return (ipl_cookie_t){._spl = (uint8_t)ipl_to_spl(ipl)};
 }
 
 static inline int
