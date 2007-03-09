@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.29 2007/02/16 20:25:33 hubertf Exp $	*/
+/*	$NetBSD: tip.h,v 1.30 2007/03/09 23:45:21 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,6 @@
 #include <err.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <libgen.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <setjmp.h>
