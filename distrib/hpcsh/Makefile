@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/19 08:07:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.5.16.1 2007/03/09 06:59:23 riz Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
+SUBDIR=		cdroms
+
+iso_image:
+	${MAKEDIRTARGET} cdroms iso_image
+
+.include <bsd.subdir.mk>
 .include <bsd.kernobj.mk>
 
 MINIROOTOBJ!=	cd ${.CURDIR}/../miniroot && ${PRINTOBJDIR}
@@ -27,6 +33,7 @@ hpcboot-sh4.exe.uue:
 	cp ${HPCBOOT_SH4}/hpcboot.exe.uue hpcboot-sh4.exe.uue
 
 release:: check_RELEASEDIR .WAIT hpcboot-sh3.exe hpcboot-sh4.exe
+	${MAKEDIRTARGET} cdroms release
 	cp hpcboot-sh3.exe ${RELEASEDIR}/${MACHINE}/installation; \
 	chmod ${NONBINMODE} ${RELEASEDIR}/${MACHINE}/installation/hpcboot-sh3.exe
 	cp hpcboot-sh4.exe ${RELEASEDIR}/${MACHINE}/installation; \
