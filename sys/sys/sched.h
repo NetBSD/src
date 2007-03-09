@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.30.2.7 2007/02/27 17:20:53 yamt Exp $ */
+/* $NetBSD: sched.h,v 1.30.2.8 2007/03/09 15:16:26 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -119,6 +119,7 @@ struct sched_param {
  * Per-CPU scheduler state.
  */
 struct schedstate_percpu {
+	void *spc_sched_info;	/* Scheduler-specific structure */
 	struct timeval spc_runtime;	/* time curproc started running */
 	volatile int spc_flags;	/* flags; see below */
 	u_int spc_schedticks;		/* ticks for schedclock() */
@@ -173,8 +174,8 @@ void sched_tick(struct cpu_info *); /* Maybe resched after spc_ticks hardclock()
 void sched_clock(struct lwp *); /* Called from statclock(), e.g. to handle priority adjustment */
 
 /* Runqueue-related functions */
-inline boolean_t sched_curcpu_runnable_p(void); /* Indicate runnable processes on current CPU */
-struct lwp * sched_nextlwp(void);		/* Select LWP to run on the CPU next */
+inline bool sched_curcpu_runnable_p(void); /* Indicate runnable processes on current CPU */
+struct lwp *sched_switch(struct lwp *);	/* Select LWP to run on the CPU next */
 void sched_enqueue(struct lwp *);	/* Place a process on its runqueue */
 void sched_dequeue(struct lwp *);	/* Remove a process from its runqueue */
 
@@ -184,8 +185,11 @@ void sched_nice(struct proc *, int);		/* Recalc priority according to its nice v
 /* General helper functions */
 void sched_proc_fork(struct proc *, struct proc *);	/* Inherit scheduling history */
 void sched_proc_exit(struct proc *, struct proc *);	/* Chargeback parents */
-void sched_print_runqueue(void (*pr)(const char *, ...));	/* Print runqueues in DDB */
+void sched_lwp_fork(struct lwp *);
+void sched_lwp_exit(struct lwp *);
+void sched_slept(struct lwp *);
 void sched_setrunnable(struct lwp *);	/* Scheduler-specific actions for setrunnable() */
+void sched_print_runqueue(void (*pr)(const char *, ...));	/* Print runqueues in DDB */
 
 /* Functions common to all scheduler implementations */
 void sched_wakeup(volatile const void *);
@@ -194,7 +198,7 @@ pri_t sched_kpri(struct lwp *);
 inline void resched_cpu(struct lwp *); /* Arrange reschedule */
 void setrunnable(struct lwp *);
 void preempt(void);
-int mi_switch(struct lwp *, struct lwp *);
+int mi_switch(struct lwp *);
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */
