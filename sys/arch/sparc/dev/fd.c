@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.129 2007/03/04 22:12:43 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.130 2007/03/09 08:59:00 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.129 2007/03/04 22:12:43 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.130 2007/03/09 08:59:00 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2341,7 +2341,7 @@ fd_read_md_image(size_t	*sizep, void *	*addrp)
 		if (bp->b_resid != 0)
 			break;
 
-		addr += DEV_BSIZE;
+		addr = (char *)addr + DEV_BSIZE;
 		offset += DEV_BSIZE;
 		if (offset + DEV_BSIZE > FDMICROROOTSIZE)
 			break;
