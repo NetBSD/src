@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.1 2007/02/18 07:24:52 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2 2007/03/09 05:40:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -91,9 +91,10 @@ struct kmutex {
 
 struct kmutex {
 	volatile uintptr_t	mtx_owner;		/* 0-3 */
-	__cpu_simple_lock_t	mtx_interlock;		/* 4-7 */
+	__cpu_simple_lock_t	mtx_interlock;		/* 4 */
+	__cpu_simple_lock_t	mtx_lock;		/* 5 */
+	uint8_t			mtx_pad[2];		/* 6-7 XXX */
 	ipl_cookie_t		mtx_ipl;		/* 8-11 */
-	__cpu_simple_lock_t	mtx_lock;		/* 12-15 */
 	uint32_t		mtx_id;			/* 16-19 */
 };
 
