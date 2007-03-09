@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5 2007/03/09 07:13:06 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6 2007/03/09 11:30:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * to interrupts.
  *
  * SMP for spin mutexes is easy - we don't need to know who owns the lock.
- * For adaptive mutexes, we need an aditional interlock.
+ * For adaptive mutexes, we need an additional interlock.
  *
  * Unfortunately, not all ARM kernels are linked at the same address,
  * meaning we cannot safely overlay the interlock with the MSB of the
