@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5 2007/02/19 03:06:46 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6 2007/03/09 21:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 		"clrl %1;"
 		"bbssi $31,%0,1f;"
 		"incl %1;"
-		"insv %2,%0,$31,%0;"
+		"insv %2,$0,$31,%0;"
 		"1:"
 	    : "=m"(mtx->mtx_owner), "=r"(rv)
 	    : "g"(curthread));
