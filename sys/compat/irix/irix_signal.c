@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.38 2007/03/06 12:43:09 tsutsui Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.39 2007/03/09 14:11:28 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.38 2007/03/06 12:43:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.39 2007/03/09 14:11:28 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -897,17 +897,17 @@ irix_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	error = find_stopped_child(parent, SCARG(uap,pid), options, &child,
 	    &status);
 	stat = child->p_stat;	/* XXXSMP */
 	if (error != 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return error;
 	}
 	*retval = 0;
 	if (child == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return irix_wait_siginfo(NULL, 0, stat, SCARG(uap, info));
 	}
 
@@ -917,7 +917,7 @@ irix_sys_waitsys(l, v, retval)
 #endif
 		if ((error = irix_wait_siginfo(child, status, stat,
 		    SCARG(uap, info))) != 0) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return error;
 		}
 
@@ -925,7 +925,7 @@ irix_sys_waitsys(l, v, retval)
 #ifdef DEBUG_IRIX
 			printf(("irix_sys_wait(): Don't wait\n"));
 #endif
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return 0;
 		}
 
@@ -943,7 +943,7 @@ irix_sys_waitsys(l, v, retval)
 #ifdef DEBUG_IRIX
 	printf("jobcontrol %d\n", child->p_pid);
 #endif
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return irix_wait_siginfo(child, W_STOPCODE(status), stat,
 	    SCARG(uap, info));
 }
