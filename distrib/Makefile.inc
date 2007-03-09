@@ -1,3 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/05/02 18:02:14 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8.18.1 2007/03/09 06:59:46 riz Exp $
 
 .include "../Makefile.inc"
+
+iso_image: .PHONY

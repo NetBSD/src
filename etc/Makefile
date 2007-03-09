@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.337 2006/09/18 22:39:37 hubertf Exp $
+#	$NetBSD: Makefile,v 1.337.2.1 2007/03/09 06:59:41 riz Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -52,7 +52,9 @@ DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrtools
 # Note: At least mkisofs 2.0 should be used.
 #
-MKISOFS?=	mkisofs
+.if !defined(MKISOFS)
+MKISOFS!=       (which mkisofs || echo true)
+.endif
 DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
 ISO_VOLID!=	echo NETBSD_${DISTRIBREV} | tr a-z A-Z
@@ -407,6 +409,7 @@ release snapshot: .PHONY .MAKE check_DESTDIR check_RELEASEDIR snap_md_post
 # iso-image --
 #	Standalone target to create a CDROM image after the release
 #	was composed.  Should be run after "make release" in src and xsrc.
+#	The do-iso-image is to be called from etc.$MACHINE/Makefile.inc
 #
 #	Note: At least mkisofs 2.0 should be used.
 #
@@ -415,9 +418,16 @@ CDROM.image=${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom/netbsd-${MACHI
 CDROM.dir=	${.OBJDIR}/cdrom.dir
 CDROM.pathlist=	${.OBJDIR}/cdrom.pathlist
 
-iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
+iso-image:
+
+.if ${MKISOFS} != true
+do-iso-image: .PHONY check_DESTDIR check_RELEASEDIR iso-image-md-post
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/cdrom '*.iso'
 	@echo "iso-image created as: ${CDROM.image}"
+.else
+do-iso-image:
+	@echo iso-image: mkisofs not found
+.endif
 
 iso-image-setup: .PHONY check_RELEASEDIR
 	rm -f ${CDROM.pathlist}

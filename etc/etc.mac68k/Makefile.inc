@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2004/06/26 16:09:09 fredb Exp $
+#	$NetBSD: Makefile.inc,v 1.17.10.1 2007/03/09 06:59:24 riz Exp $
 #
 #	etc.mac68k/Makefile.inc -- mac68k-specific etc Makefile targets
 #
@@ -17,3 +17,5 @@ snap_md_post:
 # mkisofs arguments to create a hybrid (HFS/Rockridge) CD-ROM image.
 MKISOFS_FLAGS+=	-hfs --macbin \
 	-map ${RELEASEDIR}/${MACHINE}/installation/misc/extensions.map
+
+iso-image: do-iso-image

@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.2 2005/12/30 11:48:15 rjs Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2007/03/09 06:59:45 riz Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
+SUBDIR=		cdroms
+
+iso_image:
+	${MAKEDIRTARGET} cdroms iso_image
+
+.include <bsd.subdir.mk>
 .include <bsd.kernobj.mk>
 
 MINIROOTOBJ!=	cd ${.CURDIR}/../miniroot && ${PRINTOBJDIR}
@@ -22,10 +28,10 @@ UUDECODE_FILES_RENAME_${HPCBOOT}= ${HPCBOOT}
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
 release:: check_RELEASEDIR .WAIT ${HPCBOOT}
+	${MAKEDIRTARGET} cdroms release
 	${INSTALL} -c -m ${NONBINMODE} \
 		hpcboot.exe ${RELEASEDIR}/${MACHINE}/installation
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation '*.gz' '*.exe'
 
 .include <bsd.files.mk>
 .include <bsd.prog.mk>
-
