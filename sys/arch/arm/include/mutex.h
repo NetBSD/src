@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.6 2007/03/09 11:30:28 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7 2007/03/09 19:21:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -41,155 +41,68 @@
 
 /*
  * The ARM mutex implementation is troublesome, because pre-v6 ARM lacks a
- * compare-and-set operation.  However, there aren't any MP pre-v6 ARM
+ * compare-and-swap operation.  However, there aren't any MP pre-v6 ARM
  * systems to speak of.  We are mostly concerned with atomicity with respect
  * to interrupts.
  *
- * SMP for spin mutexes is easy - we don't need to know who owns the lock.
- * For adaptive mutexes, we need an additional interlock.
+ * ARMv6, however, does have ldrex/strex, and can thus implement an MP-safe
+ * compare-and-swap.
  *
- * Unfortunately, not all ARM kernels are linked at the same address,
- * meaning we cannot safely overlay the interlock with the MSB of the
- * owner field.
- *
- * For a mutex acquisition, we first grab the interlock and then set the
- * owner field.
- *
- * There is room in the owners field for a waiters bit, but we don't do
- * that because it would be hard to synchronize using one without a CAS
- * operation.  Because the waiters bit is only needed for adaptive mutexes,
- * we instead use the lock that is normally used by spin mutexes to indicate
- * waiters.
- *
- * Spin mutexes are initialized with the interlock held to cause the
- * assembly stub to go through mutex_vector_enter().
- *
- * When releasing an adaptive mutex, we first clear the owners field, and
- * then check to see if the waiters byte is set.  This ensures that there
- * will always be someone to wake any sleeping waiters up (even it the mutex
- * is acquired immediately after we release it, or if we are preempted
- * immediatley after clearing the owners field).  The setting or clearing of
- * the waiters byte is serialized by the turnstile chain lock associated
- * with the mutex.
- *
- * See comments in kern_mutex.c about releasing adaptive mutexes without
- * an interlocking step.
+ * So, what we have done is impement simple mutexes using a compare-and-swap.
+ * We support pre-ARMv6 by implementing _lock_cas() as a restartable atomic
+ * sequence that is checked by the IRQ vector.  MP-safe ARMv6 support will
+ * be added later.
  */
 
 #ifndef __MUTEX_PRIVATE
 
 struct kmutex {
 	uintptr_t	mtx_pad1;
-	uint32_t	mtx_pad2[2];
+	uint32_t	mtx_pad2;
 };
 
 #else	/* __MUTEX_PRIVATE */
 
 struct kmutex {
-	volatile uintptr_t	mtx_owner;		/* 0-3 */
-	__cpu_simple_lock_t	mtx_interlock;		/* 4 */
-	__cpu_simple_lock_t	mtx_lock;		/* 5 */
-	ipl_cookie_t		mtx_ipl;		/* 6 */
-	uint8_t			mtx_pad;		/* 7 */
-	uint32_t		mtx_id;			/* 8-11 */
+	union {
+		/* Adaptive mutex */
+		volatile uintptr_t	mtxa_owner;	/* 0-3 */
+
+		/* Spin mutex */
+		struct {
+			volatile uint8_t	mtxs_dummy;
+			ipl_cookie_t		mtxs_ipl;
+			__cpu_simple_lock_t	mtxs_lock;
+			volatile uint8_t	mtxs_unused;
+		} s;
+	} u;
+	volatile uint32_t	mtx_id;			/* 4-7 */
 };
 
+#define	mtx_owner		u.mtxa_owner
+#define	mtx_ipl			u.s.mtxs_ipl
+#define	mtx_lock		u.s.mtxs_lock
+
 #if 0
-#define	__HAVE_MUTEX_STUBS	1
-#define	__HAVE_SPIN_MUTEX_STUBS	1
+#define	__HAVE_MUTEX_STUBS		1
+#define	__HAVE_SPIN_MUTEX_STUBS		1
 #endif
+#define	__HAVE_SIMPLE_MUTEXES		1
 
-static inline uintptr_t
-MUTEX_OWNER(uintptr_t owner)
-{
-	return owner;
-}
+/*
+ * MUTEX_RECEIVE: no memory barrier required; we're synchronizing against
+ * interrupts, not multiple processors.
+ */
+#define	MUTEX_RECEIVE(mtx)		/* nothing */
 
-static inline int
-MUTEX_OWNED(uintptr_t owner)
-{
-	return owner != 0;
-}
+/*
+ * MUTEX_GIVE: no memory barrier required; same reason.
+ */
+#define	MUTEX_GIVE(mtx)			/* nothing */
 
-static inline int
-MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
-{
-	(void)__cpu_simple_lock_try(&mtx->mtx_lock);
- 	return mtx->mtx_owner != 0;
-}
+bool	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 
-static inline void
-MUTEX_CLEAR_WAITERS(kmutex_t *mtx)
-{
-	__cpu_simple_unlock(&mtx->mtx_lock);
-}
-
-static inline int
-MUTEX_HAS_WAITERS(volatile kmutex_t *mtx)
-{
-	if (mtx->mtx_owner == 0)
-		return 0;
-	return mtx->mtx_lock == __SIMPLELOCK_LOCKED;
-}
-
-static inline void
-MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, u_int id, int ipl)
-{
-	mtx->mtx_id = (id << 1) | 1;
-	mtx->mtx_ipl = makeiplcookie(ipl);
-	mtx->mtx_interlock = __SIMPLELOCK_LOCKED;
-	__cpu_simple_lock_init(&mtx->mtx_lock);
-}
-
-static inline void
-MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, u_int id)
-{
-	mtx->mtx_id = (id << 1) | 0;
-	__cpu_simple_lock_init(&mtx->mtx_interlock);
-	__cpu_simple_lock_init(&mtx->mtx_lock);
-}
-
-static inline void
-MUTEX_DESTROY(kmutex_t *mtx)
-{
-	mtx->mtx_owner = (uintptr_t)-1L;
-	mtx->mtx_id = ~0;
-}
-
-static inline u_int
-MUTEX_GETID(kmutex_t *mtx)
-{
-	return mtx->mtx_id >> 1;
-}
-
-static inline bool
-MUTEX_SPIN_P(volatile kmutex_t *mtx)
-{
-	return (mtx->mtx_id & 1) == 1;
-}
-
-static inline bool
-MUTEX_ADAPTIVE_P(volatile kmutex_t *mtx)
-{
-	return (mtx->mtx_id & 1) == 0;
-}
-
-static inline int
-MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
-{
-	if (!__cpu_simple_lock_try(&mtx->mtx_interlock))
-		return 0;
-	mtx->mtx_owner = curthread;
-	return 1;
-}
-
-static inline void
-MUTEX_RELEASE(kmutex_t *mtx)
-{
-	mtx->mtx_owner = 0;
-	__cpu_simple_unlock(&mtx->mtx_lock);
-	__cpu_simple_unlock(&mtx->mtx_interlock);
-}
+#define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
 
 #endif	/* __MUTEX_PRIVATE */
 
