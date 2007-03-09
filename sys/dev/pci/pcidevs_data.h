@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.869 2007/03/03 23:50:40 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.870 2007/03/09 22:11:07 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.870 2007/03/03 23:49:49 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.871 2007/03/09 22:10:40 xtraeme Exp
  */
 
 /*
@@ -4402,6 +4402,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_S,
 	    "Radeon X700 Pro Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300,
+	    "Radeon X1300 Series (RV515)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_S,
+	    "Radeon X1300 Series (RV515) Secondary",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7834,
@@ -12820,4 +12828,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2611;
+const int pci_nproducts = 2613;
