@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.13 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.14 2007/03/09 18:20:51 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.13 2007/03/08 20:48:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.14 2007/03/09 18:20:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,15 +306,19 @@ irq_calculatemasks()
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
+	irqmasks[IPL_SOFT] &= irqmasks[IPL_NONE];
+	irqmasks[IPL_SOFTCLOCK] &= irqmasks[IPL_SOFT];
+	irqmasks[IPL_SOFTNET] &= irqmasks[IPL_SOFTCLOCK];
+	irqmasks[IPL_BIO] &= irqmasks[IPL_SOFTNET];
 	irqmasks[IPL_NET] &= irqmasks[IPL_BIO];
-	irqmasks[IPL_TTY] &= irqmasks[IPL_NET];
-
+	irqmasks[IPL_SOFTSERIAL] &= irqmasks[IPL_NET];
+	irqmasks[IPL_TTY] &= irqmasks[IPL_SOFTSERIAL];
+	
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
 	irqmasks[IPL_VM] &= irqmasks[IPL_TTY];
-
 	irqmasks[IPL_AUDIO] &= irqmasks[IPL_VM];
 
 	/*
@@ -322,11 +326,12 @@ irq_calculatemasks()
 	 * network, and disk drivers, statclock > (tty | net | bio).
 	 */
 	irqmasks[IPL_CLOCK] &= irqmasks[IPL_AUDIO];
+	irqmasks[IPL_STATCLOCK] &= irqmasks[IPL_CLOCK];
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
-	irqmasks[IPL_HIGH] &= irqmasks[IPL_CLOCK];
+	irqmasks[IPL_HIGH] &= irqmasks[IPL_STATCLOCK];
 
 	/*
 	 * We need serial drivers to run at the absolute highest priority to
