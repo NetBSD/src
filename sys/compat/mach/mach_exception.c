@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.9 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.9.2.1 2007/03/09 15:16:23 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.9 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.9.2.1 2007/03/09 15:16:23 rmind Exp $");
 
 #include "opt_compat_darwin.h"
 
@@ -166,7 +166,7 @@ mach_exception(exc_l, exc, code)
 		exc_l->l_stat = LSSTOP;
 		p->p_nrlwps--;
 		KERNEL_UNLOCK_ALL(exc_l, &exc_l->l_biglocks);
-		mi_switch(exc_l, NULL);
+		mi_switch(exc_l);
 		KERNEL_LOCK(exc_l->l_biglocks, exc_l);
 	}
 

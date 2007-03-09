@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.96.2.1 2007/02/27 16:54:16 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.96.2.2 2007/03/09 15:16:23 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.1 2007/02/27 16:54:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.96.2.2 2007/03/09 15:16:23 rmind Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -328,7 +328,6 @@ SYSCTL_SETUP(sysctl_root_setup, "sysctl base setup")
 SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 {
 	extern int kern_logsigexit;	/* defined in kern/kern_sig.c */
-	extern fixpt_t ccpu;		/* defined in kern/kern_synch.c */
 	extern int dumponpanic;		/* defined in kern/subr_prf.c */
 	const struct sysctlnode *rnode;
 
@@ -642,12 +641,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Kernel fixed-point scale factor"),
 		       NULL, FSCALE, NULL, 0,
 		       CTL_KERN, KERN_FSCALE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "ccpu",
-		       SYSCTL_DESCR("Scheduler exponential decay value"),
-		       NULL, 0, &ccpu, 0,
-		       CTL_KERN, KERN_CCPU, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "cp_time",

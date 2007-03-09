@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.177.2.12 2007/03/03 15:37:41 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.177.2.13 2007/03/09 15:16:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.12 2007/03/03 15:37:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.177.2.13 2007/03/09 15:16:25 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -267,7 +267,7 @@ yield(void)
 		l->l_priority = l->l_usrpri;
 	}
 	l->l_nvcsw++;
-	mi_switch(l, NULL);
+	mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 
@@ -287,7 +287,7 @@ preempt(void)
 		l->l_priority = l->l_usrpri;
 	}
 	l->l_nivcsw++;
-	(void)mi_switch(l, NULL);
+	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 
@@ -356,9 +356,10 @@ updatertime(struct lwp *l, struct schedstate_percpu *spc)
  * Returns 1 if another process was actually run.
  */
 int
-mi_switch(struct lwp *l, struct lwp *newl)
+mi_switch(struct lwp *l)
 {
 	struct schedstate_percpu *spc;
+	struct lwp *newl;
 	int retval, oldspl;
 
 	LOCK_ASSERT(lwp_locked(l, NULL));
@@ -392,19 +393,6 @@ mi_switch(struct lwp *l, struct lwp *newl)
 #endif
 
 	/*
-	 * If on the CPU and we have gotten this far, then we must yield.
-	 */
-	KASSERT(l->l_stat != LSRUN);
-	if (l->l_stat == LSONPROC) {
-		KASSERT(lwp_locked(l, &sched_mutex));
-		l->l_stat = LSRUN;
-		if ((l->l_flag & LW_IDLE) == 0) {
-			sched_enqueue(l);
-		}
-	}
-	uvmexp.swtch++;
-
-	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
 	 */
@@ -427,15 +415,13 @@ mi_switch(struct lwp *l, struct lwp *newl)
 	}
 #endif
 
+	/* Please note that sched_switch() will enqueue the LWP */
+	newl = sched_switch(l);
 	if (newl == NULL) {
-		newl = sched_nextlwp();
-	}
-	if (newl != NULL) {
-		KASSERT(lwp_locked(newl, &sched_mutex));
-		sched_dequeue(newl);
-	} else {
 		newl = l->l_cpu->ci_data.cpu_idlelwp;
 		KASSERT(newl != NULL);
+	} else {
+		sched_dequeue(newl);
 	}
 	KASSERT(lwp_locked(newl, &sched_mutex));
 	newl->l_stat = LSONPROC;

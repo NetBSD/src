@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.8 2007/02/27 16:54:26 yamt Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.9 2007/03/09 15:16:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.8 2007/02/27 16:54:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.9 2007/03/09 15:16:25 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.8 2007/02/27 16:54:26 yamt Exp 
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
+#include <sys/sysctl.h>
 #include <sys/kauth.h>
 #include <sys/lockdebug.h>
 
@@ -459,7 +460,7 @@ sched_setrunnable(struct lwp *l)
  		updatepri(l);
 }
 
-boolean_t
+bool
 sched_curcpu_runnable_p(void)
 {
 
@@ -668,7 +669,7 @@ checkrunqueue(int whichq, struct lwp *l)
 void
 sched_enqueue(struct lwp *l)
 {
-	struct prochd*rq;
+	struct prochd *rq;
 	struct lwp *prev;
 	const int whichq = lwp_eprio(l) / PPQ;
 
@@ -730,11 +731,21 @@ sched_dequeue(struct lwp *l)
 }
 
 struct lwp *
-sched_nextlwp(void)
+sched_switch(struct lwp *l)
 {
 	const struct prochd *rq;
-	struct lwp *l;
 	int whichq;
+
+	KASSERT(l != NULL);
+	KASSERT(l->l_stat != LSRUN);
+
+	if (l->l_stat == LSONPROC) {
+		KASSERT(lwp_locked(l, &sched_mutex));
+		l->l_stat = LSRUN;
+		if ((l->l_flag & LW_IDLE) == 0) {
+			sched_enqueue(l);
+		}
+	}
 
 	if (sched_whichqs == 0) {
 		return NULL;
@@ -749,11 +760,53 @@ sched_nextlwp(void)
 	whichq = ffs(sched_whichqs) - 1;
 #endif
 	rq = &sched_qs[whichq];
-	l = rq->ph_link;
-	return l;
+	return rq->ph_link;
 }
 
 #endif /* !defined(__HAVE_MD_RUNQUEUE) */
+
+/* Dummy */
+void sched_lwp_fork(struct lwp *l)
+{
+
+}
+
+void sched_lwp_exit(struct lwp *l)
+{
+
+}
+
+void sched_slept(struct lwp *l)
+{
+
+}
+
+/* SysCtl */
+
+SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup") {
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "kern", NULL,
+		NULL, 0, NULL, 0,
+		CTL_KERN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "sched",
+		SYSCTL_DESCR("Scheduler options"),
+		NULL, 0, NULL, 0,
+		CTL_KERN, KERN_SCHED, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_STRING, "name", NULL,
+		NULL, 0, __UNCONST("4.4BSD"), 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_INT, "ccpu",
+		SYSCTL_DESCR("Scheduler exponential decay value"),
+		NULL, 0, &ccpu, 0,
+		CTL_KERN, KERN_SCHED, CTL_CREATE, CTL_EOL);
+}
 
 #if defined(DDB)
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166.2.3 2007/02/27 16:54:20 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166.2.4 2007/03/09 15:16:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.3 2007/02/27 16:54:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.4 2007/03/09 15:16:23 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -230,7 +230,7 @@ exit1(struct lwp *l, int rv)
 		p->p_nrlwps--;
 		l->l_stat = LSSTOP;
 		mutex_exit(&p->p_smutex);
-		mi_switch(l, NULL);
+		mi_switch(l);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else
 		mutex_exit(&p->p_smutex);
