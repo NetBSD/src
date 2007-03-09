@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.94 2007/03/08 23:41:46 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.95 2007/03/09 07:10:42 riz Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -1887,4 +1887,172 @@ sys/dev/usb/usbdevs_data.h			regen
 	Match the FTDI "Serial 2232C" chip;  this allows a 16-port usb->serial
 	device from SerialGear I have to work.
 	[riz, ticket #497]
+
+Makefile					1.247
+distrib/Makefile				1.14
+distrib/Makefile.inc				1.9
+distrib/acorn26/Makefile			1.4
+distrib/acorn26/cdroms/Makefile			1.1
+distrib/acorn26/cdroms/installcd/Makefile	1.1
+distrib/acorn32/Makefile			1.18
+distrib/acorn32/cdroms/Makefile			1.1
+distrib/acorn32/cdroms/installcd/Makefile	1.1
+distrib/alpha/Makefile				1.22
+distrib/alpha/cdroms/Makefile			1.1
+distrib/alpha/cdroms/installcd/Makefile		1.1
+distrib/amd64/Makefile				1.4
+distrib/amd64/cdroms/Makefile			1.3
+distrib/amd64/cdroms/Makefile.cdrom		1.1
+distrib/amd64/cdroms/bootcd-com/Makefile	1.2
+distrib/amd64/cdroms/bootcd/Makefile		1.2
+distrib/amd64/cdroms/installcd/Makefile		1.2
+distrib/amd64/floppies/Makefile			1.3
+distrib/amd64/floppies/bootfloppy-com/Makefile	1.5
+distrib/amd64/floppies/bootfloppy/Makefile	1.4
+distrib/amd64/instkernel/Makefile		1.2
+distrib/amiga/Makefile				1.3
+distrib/amiga/cdroms/Makefile			1.1
+distrib/amiga/cdroms/installcd/Makefile		1.1
+distrib/arc/Makefile				1.3
+distrib/arc/cdroms/Makefile			1.1
+distrib/arc/cdroms/installcd/Makefile		1.1
+distrib/atari/Makefile				1.6
+distrib/atari/cdroms/Makefile			1.1
+distrib/atari/cdroms/installcd/Makefile		1.1
+distrib/cats/Makefile				1.3
+distrib/cats/cdroms/Makefile			1.1
+distrib/cats/cdroms/installcd/Makefile		1.1
+distrib/common/Makefile.bootcd			1.8 via patch
+distrib/dreamcast/Makefile			1.2
+distrib/dreamcast/cdroms/Makefile		1.1
+distrib/dreamcast/cdroms/installcd/Makefile	1.1
+distrib/evbarm/Makefile				1.8
+distrib/evbarm/cdroms/Makefile			1.1
+distrib/evbarm/cdroms/installcd/Makefile	1.1
+distrib/evbmips/Makefile			1.3-1.4
+distrib/evbmips/cdroms/Makefile			1.1
+distrib/evbmips/cdroms/installcd/Makefile	1.1
+distrib/evbppc/Makefile				1.2
+distrib/evbppc/cdroms/Makefile			1.1
+distrib/evbppc/cdroms/installcd/Makefile	1.1
+distrib/ews4800mips/Makefile			1.2
+distrib/ews4800mips/cdroms/Makefile		1.1
+distrib/ews4800mips/cdroms/installcd/Makefile	1.1
+distrib/hp300/Makefile				1.17
+distrib/hp300/cdroms/Makefile			1.1
+distrib/hp300/cdroms/installcd/Makefile		1.1
+distrib/hp700/Makefile				1.2
+distrib/hp700/cdroms/Makefile			1.1
+distrib/hp700/cdroms/installcd/Makefile		1.1
+distrib/hpcarm/Makefile				1.3
+distrib/hpcarm/cdroms/Makefile			1.1
+distrib/hpcarm/cdroms/installcd/Makefile	1.1
+distrib/hpcmips/Makefile			1.28
+distrib/hpcmips/cdroms/Makefile			1.1
+distrib/hpcmips/cdroms/installcd/Makefile	1.1
+distrib/hpcsh/Makefile				1.6
+distrib/hpcsh/cdroms/Makefile			1.1
+distrib/hpcsh/cdroms/installcd/Makefile		1.1
+distrib/i386/Makefile				1.5
+distrib/i386/cdroms/Makefile			1.4
+distrib/i386/cdroms/Makefile.cdrom		1.1-1.2
+distrib/i386/cdroms/bootcd-com/Makefile		1.2-1.3
+distrib/i386/cdroms/bootcd-laptop/Makefile	delete
+distrib/i386/cdroms/bootcd/Makefile		1.2-1.3
+distrib/i386/cdroms/installcd/Makefile		1.2-1.3
+distrib/i386/instkernel/Makefile		1.6
+distrib/ibmnws/Makefile				1.2
+distrib/ibmnws/cdroms/Makefile			1.1
+distrib/ibmnws/cdroms/installcd/Makefile	1.1
+distrib/macppc/Makefile				1.15
+distrib/macppc/cdroms/Makefile			1.1
+distrib/macppc/cdroms/installcd/Makefile	1.1
+distrib/mipsco/Makefile				1.4
+distrib/mipsco/cdroms/Makefile			1.1
+distrib/mipsco/cdroms/installcd/Makefile	1.1
+distrib/mvme68k/Makefile			1.4
+distrib/mvme68k/cdroms/Makefile			1.1
+distrib/mvme68k/cdroms/installcd/Makefile	1.1
+distrib/mvmeppc/Makefile			1.3
+distrib/mvmeppc/cdroms/Makefile			1.1
+distrib/mvmeppc/cdroms/installcd/Makefile	1.1
+distrib/news68k/Makefile			1.4
+distrib/news68k/cdroms/Makefile			1.1
+distrib/news68k/cdroms/installcd/Makefile	1.1
+distrib/newsmips/Makefile			1.4
+distrib/newsmips/cdroms/Makefile		1.1
+distrib/newsmips/cdroms/installcd/Makefile	1.1
+distrib/ofppc/Makefile				1.2
+distrib/ofppc/cdroms/Makefile			1.1
+distrib/ofppc/cdroms/installcd/Makefile		1.1
+distrib/pc532/Makefile				1.4
+distrib/pc532/cdroms/Makefile			1.1
+distrib/pc532/cdroms/installcd/Makefile		1.1
+distrib/playstation2/Makefile			1.13
+distrib/playstation2/cdroms/Makefile		1.1
+distrib/playstation2/cdroms/installcd/Makefile	1.1
+distrib/pmax/Makefile				1.4
+distrib/pmax/cdroms/Makefile			1.1
+distrib/pmax/cdroms/installcd/Makefile		1.1
+distrib/pmppc/Makefile				1.2
+distrib/pmppc/cdroms/Makefile			1.1
+distrib/pmppc/cdroms/installcd/Makefile		1.1
+distrib/prep/Makefile				1.3
+distrib/prep/cdroms/Makefile			1.1
+distrib/prep/cdroms/installcd/Makefile		1.1
+distrib/sandpoint/Makefile			1.4
+distrib/sandpoint/cdroms/Makefile		1.1
+distrib/sandpoint/cdroms/installcd/Makefile	1.1
+distrib/sgimips/Makefile			1.2
+distrib/sgimips/cdroms/Makefile			1.1
+distrib/sgimips/cdroms/installcd/Makefile	1.1
+distrib/shark/Makefile				1.3-1.4
+distrib/shark/cdroms/Makefile			1.1
+distrib/shark/cdroms/installcd/Makefile		1.1
+distrib/sparc/Makefile				1.7
+distrib/sparc/cdroms/Makefile			1.1
+distrib/sparc/cdroms/installcd/Makefile		1.1
+distrib/sparc64/Makefile			1.7
+distrib/sparc64/cdroms/Makefile			1.1
+distrib/sparc64/cdroms/installcd/Makefile	1.1
+distrib/sun2/Makefile				1.8
+distrib/sun2/cdroms/Makefile			1.1
+distrib/sun2/cdroms/installcd/Makefile		1.1
+distrib/sun3/Makefile				1.9
+distrib/sun3/cdroms/Makefile			1.1
+distrib/sun3/cdroms/installcd/Makefile		1.1
+distrib/vax/Makefile				1.17
+distrib/vax/cdroms/Makefile			1.1
+distrib/vax/cdroms/installcd/Makefile		1.1
+distrib/x68k/Makefile				1.5-1.6
+distrib/x68k/cdroms/Makefile			1.1
+distrib/x68k/cdroms/installcd/Makefile		1.1
+doc/CHANGES					1.804 via patch
+etc/Makefile					1.341
+etc/etc.amd64/Makefile.inc			1.7
+etc/etc.i386/Makefile.inc			1.49
+etc/etc.mac68k/Makefile.inc			1.18
+sys/arch/amd64/conf/GENERIC			1.130-1.131
+sys/arch/amd64/conf/GENERIC_ACPI		delete
+sys/arch/amd64/conf/INSTALL			1.66
+sys/arch/amd64/conf/INSTALL_ACPI		delete
+sys/arch/i386/conf/GENERIC			1.813-1.814
+sys/arch/i386/conf/GENERIC.MP			1.9
+sys/arch/i386/conf/GENERIC.MPACPI		delete
+sys/arch/i386/conf/INSTALL_LARGE		1.1
+
+	Switch i386 and amd64 to the 'no-emulation' eltorito boot method.
+	Make it possible to install different bootable kernels on the CD image 
+	Remove amd64's bootfloppy-big and bump the number of 1.44M boot
+	floppies to 3
+	Add an INSTALL_LARGE i386 kernel to use as default boot kernel on
+	cdroms, which is not restricted in size by the 2.88MB limit.
+	INSTALL_LAPTOP and INSTALL are bootable from cd using
+	'boot nblaptop' and 'boot nbnoacpi' respectively
+	Add ACPI support i386/amd64 default CD boot kernel and GENERIC.
+	Switch all ports but mac68k to builds iso from
+	distrib/common/Makefile.bootcd, using in-tree tools. Descend in
+	distrib for the 'iso-image target'; restrict 'iso-image'
+	in etc/ to mac68k.
+	[bouyer, ticket #494]
 
