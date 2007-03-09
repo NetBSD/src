@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.33 2007/03/04 06:03:10 christos Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.34 2007/03/09 14:11:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.33 2007/03/04 06:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.34 2007/03/09 14:11:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,13 +127,13 @@ cttyioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	if (cmd == TIOCSCTTY)		/* XXX */
 		return (EINVAL);
 	if (cmd == TIOCNOTTY) {
-		rw_enter(&proclist_lock, RW_WRITER);
+		mutex_enter(&proclist_lock);
 		if (!SESS_LEADER(l->l_proc)) {
 			l->l_proc->p_lflag &= ~PL_CONTROLT;
 			rv = 0;
 		} else
 			rv = EINVAL;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (rv);
 	}
 	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, l));

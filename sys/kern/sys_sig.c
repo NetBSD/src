@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.6 2007/02/27 15:19:54 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.7 2007/03/09 14:11:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.6 2007/02/27 15:19:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.7 2007/03/09 14:11:27 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -289,7 +289,7 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 			mutex_exit(&proclist_mutex);
 		}
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (error);
 	}
 	switch (SCARG(uap, pid)) {

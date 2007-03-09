@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.297 2007/03/04 06:03:03 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.298 2007/03/09 14:11:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.297 2007/03/04 06:03:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.298 2007/03/09 14:11:23 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -565,7 +565,7 @@ main(void)
 	mono_time = time;
 #endif
 	boottime = time;
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
 		mutex_enter(&p->p_smutex);
@@ -578,7 +578,7 @@ main(void)
 		}
 		mutex_exit(&p->p_smutex);
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
