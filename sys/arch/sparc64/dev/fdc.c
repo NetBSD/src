@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.8 2007/03/06 02:30:16 dogcow Exp $	*/
+/*	$NetBSD: fdc.c,v 1.9 2007/03/09 21:02:30 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.8 2007/03/06 02:30:16 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.9 2007/03/09 21:02:30 jnemeth Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -299,7 +299,7 @@ struct fd_type {
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-	{ 18,2,36,2,0xff,0xcf,0x1b,0x54,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 	{  8,2,16,3,0xff,0xdf,0x35,0x74,77,1232,1,FDC_500KBPS,0xf6,1, "1.2MB/NEC" } /* 1.2 MB japanese format */
@@ -1050,9 +1050,9 @@ fdstrategy(struct buf *bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d\n",
+	    printf("fdstrategy: b_blkno %lld b_bcount %d blkno %lld cylin %d sz %d\n",
 		    (long long)bp->b_blkno, bp->b_bcount,
-		    (long long)fd->sc_blkno, bp->b_cylinder);
+		    (long long)fd->sc_blkno, bp->b_cylinder, sz);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
