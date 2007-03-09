@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.870 2007/03/03 23:50:40 jmcneill Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.871 2007/03/09 22:11:06 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.870 2007/03/03 23:49:49 jmcneill Exp
+ *	NetBSD: pcidevs,v 1.871 2007/03/09 22:10:40 xtraeme Exp
  */
 
 /*
@@ -1209,6 +1209,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_X850XT_S	0x5d72		/* Radeon X850 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X700	0x5e4b		/* Radeon X700 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_X700_S	0x5e6b		/* Radeon X700 Pro Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_X1300	0x7146		/* Radeon X1300 Series (RV515) */
+#define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7834	0x7834		/* Radeon 9100 PRO IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7835	0x7835		/* Radeon 9200 IGP */
 
