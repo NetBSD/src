@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2007/03/09 06:45:20 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2007/03/09 07:11:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -40,33 +40,28 @@
 #define	_ARM_MUTEX_H_
 
 /*
- * The arm mutex implementation is troublesome, because arm lacks a
- * compare-and-set operation.  However, there aren't MP arms.
- * SMP for spin mutexes is easy - we don't need
- * to know who owns the lock.  For adaptive mutexes, we need an aditional
- * interlock.
+ * The ARM mutex implementation is troublesome, because ARM (< v6) lacks a
+ * compare-and-set operation.  However, there aren't any MP pre-v6 ARM
+ * systems to speak of.
  *
- * The locked byte set by the sparc 'ldstub' instruction is 0xff.  sparc
- * kernels are always loaded above 0xe0000000, and the low 5 bits of any
- * "struct lwp *" are always zero.  So, to record the lock owner, we only
- * need 23 bits of space.  mtxa_owner contains the mutex owner's address
- * shifted right by 5: the top three bits of which will always be 0xe,
- * overlapping with the interlock at the top byte, which is always 0xff
- * when the mutex is held.
+ * SMP for spin mutexes is easy - we don't need to know who owns the lock.
+ * For adaptive mutexes, we need an aditional interlock.
  *
- * For a mutex acquisition, the owner field is set in two steps: first,
- * acquire the interlock (top byte), and then test the owner's address. 
- * Once the owner field is non zero, it will appear that the mutex is held,
- * by which LWP it does not matter: other LWPs competing for the lock will
- * fall through to mutex_vector_enter(), and either spin or sleep.
+ * Unfortunately, not all ARM kernels are linked at the same address,
+ * meaning we cannot safely overlay the interlock with the MSB of the
+ * owner field.
  *
- * As a result there is no space for a waiters bit in the owner field.  No
- * problem, because it would be hard to synchronise using one without a CAS
- * operation.  Note that in order to do unlocked release of adaptive
- * mutexes, we need the effect of MUTEX_SET_WAITERS() to be immediatley
- * visible on the bus.  So, adaptive mutexes share the spin lock byte with
- * spin mutexes (set with ldstub), but it is not treated as a lock in its
- * own right, rather as a flag that can be atomically set or cleared.
+ * For a mutex acquisition, we first grab the interlock and then set the
+ * owner field.
+ *
+ * There is room in the owners field for a waiters bit, but we don't do
+ * that because it would be hard to synchronize using one without a CAS
+ * operation.  Because the waiters bit is only needed for adaptive mutexes,
+ * we instead use the lock that is normally used by spin mutexes to indicate
+ * waiters.
+ *
+ * Spin mutexes are initialized with the interlock held to cause the
+ * assembly stub to go through mutex_vector_enter().
  *
  * When releasing an adaptive mutex, we first clear the owners field, and
  * then check to see if the waiters byte is set.  This ensures that there
