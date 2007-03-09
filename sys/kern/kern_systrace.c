@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.69 2007/03/04 06:03:06 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.70 2007/03/09 14:11:26 ad Exp $	*/
 
 /*
  * Copyright 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.69 2007/03/04 06:03:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.70 2007/03/09 14:11:26 ad Exp $");
 
 #include "opt_systrace.h"
 
@@ -496,9 +496,9 @@ systracef_close(struct file *fp, struct lwp *l)
 		struct proc *q = strp->proc;
 
 		systrace_detach(strp);
-		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
+		mutex_enter(&proclist_lock);	/* XXXSMP */
 		psignal(q, SIGKILL);
-		rw_exit(&proclist_lock);		/* XXXSMP */
+		mutex_exit(&proclist_lock);		/* XXXSMP */
 	}
 
 	/* Clean up fork and exit messages */
@@ -590,22 +590,22 @@ systrace_find(struct str_process *strp)
 	struct proc *proc;
 	int error;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	if ((proc = p_find(strp->pid, PFIND_LOCKED)) == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (NULL);
 	}
 
 	mutex_enter(&proc->p_mutex);
 	if (proc != strp->proc || !ISSET(proc->p_flag, PK_SYSTRACE)) {
 		mutex_exit(&proc->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (NULL);
 	}
 	error = proc_addref(proc);
 	mutex_exit(&proc->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return (error ? NULL : proc);
 }
@@ -652,9 +652,9 @@ systrace_sys_fork(struct proc *oldproc, struct proc *p)
 
 	if (systrace_insert_process(fst, p, &strp)) {
 		/* We need to kill the child */
-		rw_enter(&proclist_lock, RW_READER);	/* XXXSMP */
+		mutex_enter(&proclist_lock);	/* XXXSMP */
 		psignal(p, SIGKILL);
-		rw_exit(&proclist_lock);		/* XXXSMP */
+		mutex_exit(&proclist_lock);		/* XXXSMP */
 		goto out;
 	}
 
@@ -1228,16 +1228,16 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	int error = 0;
 	struct proc *proc, *p = curproc;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	if ((proc = p_find(pid, PFIND_LOCKED)) == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (ESRCH);
 	}
 
 	mutex_enter(&proc->p_mutex);
 	error = proc_addref(proc);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (error != 0) {
 		mutex_exit(&proc->p_mutex);

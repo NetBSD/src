@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.118 2007/03/04 06:03:03 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.119 2007/03/09 14:11:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.118 2007/03/04 06:03:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.119 2007/03/09 14:11:24 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -161,7 +161,7 @@ ktd_wakeup(struct ktr_desc *ktd)
 {
 
 	callout_stop(&ktd->ktd_wakch);
-	cv_broadcast(&ktd->ktd_cv);
+	cv_wakeup(&ktd->ktd_cv);		/* XXXSMP */
 }
 
 static void
@@ -178,7 +178,7 @@ ktd_logerr(struct proc *p, int error)
 {
 	struct ktr_desc *ktd;
 
-	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
+	KASSERT(mutex_owned(&ktrace_mutex));
 
 	ktd = p->p_tracep;
 	if (ktd == NULL)
@@ -222,7 +222,7 @@ void
 ktdrel(struct ktr_desc *ktd)
 {
 
-	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
+	KASSERT(mutex_owned(&ktrace_mutex));
 
 	KDASSERT(ktd->ktd_ref != 0);
 	KASSERT(ktd->ktd_ref > 0);
@@ -236,7 +236,7 @@ void
 ktdref(struct ktr_desc *ktd)
 {
 
-	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
+	KASSERT(mutex_owned(&ktrace_mutex));
 
 	ktd->ktd_ref++;
 }
@@ -246,7 +246,7 @@ ktd_lookup(struct file *fp)
 {
 	struct ktr_desc *ktd;
 
-	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
+	KASSERT(mutex_owned(&ktrace_mutex));
 
 	for (ktd = TAILQ_FIRST(&ktdq); ktd != NULL;
 	    ktd = TAILQ_NEXT(ktd, ktd_list)) {
@@ -399,7 +399,7 @@ ktrderef(struct proc *p)
 {
 	struct ktr_desc *ktd = p->p_tracep;
 
-	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
+	KASSERT(mutex_owned(&ktrace_mutex));
 
 	p->p_traceflag = 0;
 	if (ktd == NULL)
@@ -415,7 +415,7 @@ ktradref(struct proc *p)
 {
 	struct ktr_desc *ktd = p->p_tracep;
 
-	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
+	KASSERT(mutex_owned(&ktrace_mutex));
 
 	ktdref(ktd);
 }
@@ -427,7 +427,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 	struct proc *p;
 	int error = 0;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		if (p->p_tracep != ktd)
 			continue;
@@ -442,7 +442,7 @@ ktrderefall(struct ktr_desc *ktd, int auth)
 		mutex_exit(&ktrace_mutex);
 		mutex_exit(&p->p_mutex);
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return error;
 }
@@ -934,7 +934,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 	/*
 	 * do it
 	 */
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if (pid < 0) {
 		/*
 		 * by process group
@@ -965,7 +965,7 @@ ktrace_common(struct lwp *curl, int ops, int facs, int pid, struct file *fp)
 		else
 			ret |= ktrops(curl, p, ops, facs, ktd);
 	}
-	rw_exit(&proclist_lock);	/* taken by p{g}_find */
+	mutex_exit(&proclist_lock);	/* taken by p{g}_find */
 	if (error == 0 && !ret)
 		error = EPERM;
 done:
@@ -1162,7 +1162,7 @@ ktrsetchildren(struct lwp *curl, struct proc *top, int ops, int facs,
 	struct proc *p;
 	int ret = 0;
 
-	LOCK_ASSERT(rw_lock_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	p = top;
 	for (;;) {
@@ -1337,8 +1337,8 @@ ktrace_thread(void *arg)
 int
 ktrcanset(struct lwp *calll, struct proc *targetp)
 {
-	LOCK_ASSERT(mutex_owned(&targetp->p_mutex));
-	LOCK_ASSERT(mutex_owned(&ktrace_mutex));
+	KASSERT(mutex_owned(&targetp->p_mutex));
+	KASSERT(mutex_owned(&ktrace_mutex));
 
 	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_CANKTRACE,
 	    targetp, NULL, NULL, NULL) == 0)

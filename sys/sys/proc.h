@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.242 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.243 2007/03/09 14:11:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -480,7 +480,7 @@ extern int		nprocs, maxproc; /* Current and max number of procs */
 #define	vmspace_kernel()	(proc0.p_vmspace)
 
 /* Process list locks; see kern_proc.c for locking protocol details */
-extern krwlock_t	proclist_lock;
+extern kmutex_t		proclist_lock;
 extern kmutex_t		proclist_mutex;
 
 extern struct proclist	allproc;	/* List of all processes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.42 2007/03/04 07:54:09 christos Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.43 2007/03/09 14:11:29 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.42 2007/03/04 07:54:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.43 2007/03/09 14:11:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1221,16 +1221,16 @@ svr4_32_sys_waitsys(l, v, retval)
 	if (SCARG(uap, options) & (SVR4_WSTOPPED|SVR4_WCONTINUED))
 		options |= WUNTRACED;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	error = find_stopped_child(parent, SCARG(uap, id), options, &child,
 	    &status);
 	if (error != 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return error;
 	}
 	*retval = 0;
 	if (child == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return svr4_32_setinfo(NULL, 0, SCARG(uap, info));
 	}
 
@@ -1238,12 +1238,12 @@ svr4_32_sys_waitsys(l, v, retval)
 		DPRINTF(("found %d\n", child->p_pid));
 		error = svr4_32_setinfo(child, status, SCARG(uap,info));
 		if (error) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return error;
 		}
 
 		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			DPRINTF(("Don't wait\n"));
 			return 0;
 		}
@@ -1254,7 +1254,7 @@ svr4_32_sys_waitsys(l, v, retval)
 	}
 
 	DPRINTF(("jobcontrol %d\n", child->p_pid));
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return svr4_32_setinfo(child, W_STOPCODE(status), SCARG(uap, info));
 }
 

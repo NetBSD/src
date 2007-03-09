@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.49 2007/03/04 06:01:14 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.50 2007/03/09 14:11:28 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.49 2007/03/04 06:01:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.50 2007/03/09 14:11:28 ad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -648,7 +648,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	pd = proclists;
 again:
@@ -726,7 +726,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (where != NULL) {
 		*oldlenp = (char *)dp - where;
@@ -738,7 +738,7 @@ again:
 	}
 	return (0);
  cleanup:
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (error);
 }
 

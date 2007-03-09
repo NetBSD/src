@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.250 2007/03/05 20:29:14 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.251 2007/03/09 14:11:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.250 2007/03/05 20:29:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.251 2007/03/09 14:11:25 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
@@ -808,7 +808,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 	pc = l->l_cred;
 	nfound = 0;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if (all) {
 		/*
 		 * broadcast
@@ -862,7 +862,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 		}
 	}
   out:
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (nfound ? 0 : ESRCH);
 }
 

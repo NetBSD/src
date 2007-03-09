@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.116 2007/03/04 06:03:07 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.117 2007/03/09 14:11:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.116 2007/03/04 06:03:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.117 2007/03/09 14:11:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -137,7 +137,7 @@ settime(struct proc *p, struct timespec *ts)
 	if (ts->tv_sec > INT_MAX - 365*24*60*60) {
 		struct proc *pp;
 
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		pp = p->p_pptr;
 		mutex_enter(&pp->p_mutex);
 		log(LOG_WARNING, "pid %d (%s) "
@@ -146,7 +146,7 @@ settime(struct proc *p, struct timespec *ts)
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
 		mutex_exit(&pp->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (EPERM);
 	}
 	TIMESPEC_TO_TIMEVAL(&tv, ts);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.304 2007/03/01 10:02:31 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.305 2007/03/09 14:11:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.304 2007/03/01 10:02:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.305 2007/03/09 14:11:27 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -493,7 +493,7 @@ checkdirs(struct vnode *olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
 		if (!cwdi)
@@ -509,7 +509,7 @@ checkdirs(struct vnode *olddp)
 			cwdi->cwdi_rdir = newdp;
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.241 2007/03/05 04:59:20 dogcow Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.242 2007/03/09 14:11:24 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.241 2007/03/05 04:59:20 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.242 2007/03/09 14:11:24 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -769,12 +769,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_sflag & PS_PPWAIT) != 0) {
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		mutex_enter(&p->p_smutex);
 		p->p_sflag &= ~PS_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(&p->p_smutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 	}
 
 	/*
@@ -1161,7 +1161,7 @@ emul_unregister(const char *name)
 	 * emul_unregister() is running quite sendomly, it's better
 	 * to do expensive check here than to use any locking.
 	 */
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
 		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
@@ -1170,7 +1170,7 @@ emul_unregister(const char *name)
 			}
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (error)
 		goto out;

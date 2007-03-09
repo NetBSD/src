@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.135 2007/03/04 06:03:03 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.136 2007/03/09 14:11:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.135 2007/03/04 06:03:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.136 2007/03/09 14:11:24 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -440,7 +440,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * It's now safe for the scheduler and other processes to see the
 	 * child process.
 	 */
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_lflag & PL_CONTROLT)
 		p2->p_lflag |= PL_CONTROLT;
@@ -453,7 +453,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	mutex_exit(&proclist_mutex);
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 #ifdef SYSTRACE
 	/* Tell systrace what's happening. */

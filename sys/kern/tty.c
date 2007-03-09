@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.192 2007/03/04 06:03:10 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.193 2007/03/09 14:11:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.192 2007/03/04 06:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193 2007/03/09 14:11:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,7 +321,7 @@ ttyclose(struct tty *tp)
 	TTY_UNLOCK(tp);
 	splx(s);
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	s = spltty();
 	TTY_LOCK(tp);
 	if (tp->t_session != NULL) {
@@ -330,7 +330,7 @@ ttyclose(struct tty *tp)
 	}
 	TTY_UNLOCK(tp);
 	splx(s);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return (0);
 }
@@ -1160,13 +1160,13 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 	case TIOCSCTTY:			/* become controlling tty */
-		rw_enter(&proclist_lock, RW_WRITER);
+		mutex_enter(&proclist_lock);
 
 		/* Session ctty vnode pointer set in vnode layer. */
 		if (!SESS_LEADER(p) ||
 		    ((p->p_session->s_ttyvp || tp->t_session) &&
 		    (tp->t_session != p->p_session))) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (EPERM);
 		}
 
@@ -1183,7 +1183,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		tp->t_pgrp = p->p_pgrp;
 		p->p_session->s_ttyp = tp;
 		p->p_lflag |= PL_CONTROLT;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		break;
 	case FIOSETOWN: {		/* set pgrp of tty */
 		pid_t pgid = *(int *)data;
@@ -1192,7 +1192,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		if (tp->t_session != NULL && !isctty(p, tp))
 			return (ENOTTY);
 
-		rw_enter(&proclist_lock, RW_READER); 
+		mutex_enter(&proclist_lock); 
 
 		if (pgid < 0) {
 			pgrp = pg_find(-pgid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
@@ -1207,11 +1207,11 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 
 		if (pgrp->pg_session != p->p_session) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (EPERM);
 		}
 		tp->t_pgrp = pgrp;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		break;
 	}
 	case TIOCSPGRP: {		/* set pgrp of tty */
@@ -1219,16 +1219,16 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 
 		if (!isctty(p, tp))
 			return (ENOTTY);
-		rw_enter(&proclist_lock, RW_READER); 
+		mutex_enter(&proclist_lock); 
 		pgrp = pg_find(*(int *)data, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 		if (pgrp == NULL)
 			return (EINVAL);
 		if (pgrp->pg_session != p->p_session) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (EPERM);
 		}
 		tp->t_pgrp = pgrp;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		break;
 	}
 	case TIOCSTAT:			/* get load avg stats */

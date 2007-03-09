@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.97 2007/02/17 22:31:42 pavel Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.98 2007/03/09 14:11:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.97 2007/02/17 22:31:42 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.98 2007/03/09 14:11:23 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -1708,10 +1708,10 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 	elem_size = name[1];
 	elem_count = name[2];
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	p = p_find(pid, PFIND_LOCKED);
 	if (p == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (ESRCH);
 	}
 	mutex_enter(&p->p_smutex);	
@@ -1739,7 +1739,7 @@ sysctl_kern_lwp(SYSCTLFN_ARGS)
 		needed += elem_size;
 	}
 	mutex_exit(&p->p_smutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (where != NULL) {
 		*oldlenp = dp - where;
@@ -1917,7 +1917,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg < -1)
 			/* -1 means all processes */
 			return (EINVAL);
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		PROCLIST_FOREACH(p, &allproc) {
 			if (p->p_stat == SIDL)
 				/* skip embryonic processes */
@@ -1950,7 +1950,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				}
 			}
 		}
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		break;
 	default:
 		return (EINVAL);
@@ -2051,7 +2051,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		eproc = NULL;
 		kproc2 = malloc(sizeof(*kproc2), M_TEMP, M_WAITOK);
 	}
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	pd = proclists;
 again:
@@ -2167,7 +2167,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (where != NULL) {
 		if (type == KERN_PROC)
@@ -2188,7 +2188,7 @@ again:
 		free(eproc, M_TEMP);
 	return 0;
  cleanup:
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
  out:
 	if (kproc2)
 		free(kproc2, M_TEMP);
@@ -2237,7 +2237,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		return (EINVAL);
 	}
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	/* check pid */
 	if ((p = p_find(pid, PFIND_LOCKED)) == NULL) {
@@ -2303,7 +2303,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	vmspace = p->p_vmspace;
 	vmspace->vm_refcnt++;	/* XXX */
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/*
 	 * Allocate a temporary buffer to hold the arguments.
@@ -2440,7 +2440,7 @@ done:
 	return error;
 
 out_locked:
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return error;
 }
 
