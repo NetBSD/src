@@ -1,4 +1,4 @@
-/*	$NetBSD: hpf1275a_tty.c,v 1.20 2007/03/04 06:01:47 christos Exp $ */
+/*	$NetBSD: hpf1275a_tty.c,v 1.21 2007/03/09 15:41:02 drochner Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.20 2007/03/04 06:01:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpf1275a_tty.c,v 1.21 2007/03/09 15:41:02 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 
@@ -304,7 +304,7 @@ hpf1275a_open(dev_t dev, struct tty *tp)
 	static struct cfdata hpf1275a_cfdata = {
 		.cf_name = "hpf1275a",
 		.cf_atname = "hpf1275a",
-		.cf_unit = DVUNIT_ANY,
+		.cf_unit = 0,
 		.cf_fstate = FSTATE_STAR,
 	};
 	struct lwp *l = curlwp;		/* XXX */
