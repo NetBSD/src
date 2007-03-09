@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_debug_log.c,v 1.2 2004/12/12 08:18:43 christos Exp $	*/
+/*	$NetBSD: pam_debug_log.c,v 1.3 2007/03/09 23:44:50 hubertf Exp $	*/
 
 /*-
  * Copyright 2001 Mark R V Murray
@@ -30,10 +30,9 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/libpam/pam_debug_log.c,v 1.8 2002/04/14 16:44:04 des Exp $");
 #else
-__RCSID("$NetBSD: pam_debug_log.c,v 1.2 2004/12/12 08:18:43 christos Exp $");
+__RCSID("$NetBSD: pam_debug_log.c,v 1.3 2007/03/09 23:44:50 hubertf Exp $");
 #endif
 
-#include <libgen.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
