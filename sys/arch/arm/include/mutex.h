@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4 2007/03/09 07:11:10 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5 2007/03/09 07:13:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -40,9 +40,10 @@
 #define	_ARM_MUTEX_H_
 
 /*
- * The ARM mutex implementation is troublesome, because ARM (< v6) lacks a
+ * The ARM mutex implementation is troublesome, because pre-v6 ARM lacks a
  * compare-and-set operation.  However, there aren't any MP pre-v6 ARM
- * systems to speak of.
+ * systems to speak of.  We are mostly concerned with atomicity with respect
+ * to interrupts.
  *
  * SMP for spin mutexes is easy - we don't need to know who owns the lock.
  * For adaptive mutexes, we need an aditional interlock.
