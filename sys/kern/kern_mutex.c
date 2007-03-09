@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.9 2007/03/04 21:06:13 mrg Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.10 2007/03/09 14:08:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.9 2007/03/04 21:06:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.10 2007/03/09 14:08:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -376,15 +376,12 @@ mutex_onproc(uintptr_t owner, struct cpu_info **cip)
 		return 0;
 	l = (struct lwp *)MUTEX_OWNER(owner);
 
-	if ((ci = *cip) != NULL && ci->ci_curlwp == l) {
-		mb_read(); /* XXXSMP Very expensive, necessary? */
+	if ((ci = *cip) != NULL && ci->ci_curlwp == l)
 		return ci->ci_biglock_wanted != l;
-	}
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci->ci_curlwp == l) {
 			*cip = ci;
-			mb_read(); /* XXXSMP Very expensive, necessary? */
 			return ci->ci_biglock_wanted != l;
 		}
 	}
