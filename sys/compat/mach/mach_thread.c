@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.39 2007/02/09 21:55:22 ad Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.39.2.1 2007/03/09 15:16:23 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.39 2007/02/09 21:55:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.39.2.1 2007/03/09 15:16:23 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,7 +126,7 @@ mach_sys_swtch_pri(struct lwp *l, void *v, register_t *retval)
 		l->l_priority = l->l_usrpri;
 		l->l_proc->p_stats->p_ru.ru_nivcsw++;	/* XXXSMP */
 	}
-	*retval = mi_switch(l, NULL);
+	*retval = mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 
 	return 0;

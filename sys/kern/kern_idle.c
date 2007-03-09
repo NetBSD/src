@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.1.2.3 2007/02/27 16:54:21 yamt Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.1.2.4 2007/03/09 15:16:24 rmind Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.3 2007/02/27 16:54:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.1.2.4 2007/03/09 15:16:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -76,7 +76,7 @@ idle_loop(void *dummy)
 schedule:
 		KASSERT(l->l_mutex == &sched_mutex);
 		lwp_lock(l);
-		mi_switch(l, NULL);
+		mi_switch(l);
 		KASSERT(curlwp == l);
 		KASSERT(l->l_stat == LSONPROC);
 	}
@@ -88,7 +88,7 @@ create_idle_lwp(struct cpu_info *ci)
 	struct proc *p = &proc0;
 	struct lwp *l;
 	vaddr_t uaddr;
-	boolean_t inmem;
+	bool inmem;
 	int error;
 
 	KASSERT(ci->ci_data.cpu_idlelwp == NULL);

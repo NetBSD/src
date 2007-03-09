@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.48.2.4 2007/02/27 16:55:15 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.48.2.5 2007/03/09 15:16:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ struct	lwp {
 	/* Scheduling and overall state */
 	struct lwp	*l_forw;	/* s: run queue */
 	struct lwp	*l_back;	/* s: run queue */
+	void		*l_sched_info;	/* s: Scheduler-specific structure */
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	struct user	*l_addr;	/* l: KVA of u-area (PROC ONLY) */

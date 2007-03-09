@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.120.2.1 2007/02/27 16:54:30 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.120.2.2 2007/03/09 15:16:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.120.2.1 2007/02/27 16:54:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.120.2.2 2007/03/09 15:16:25 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -930,7 +930,7 @@ process_stoptrace(struct lwp *l)
 	mutex_exit(&p->p_smutex);
 	mutex_exit(&proclist_mutex);
 	lwp_lock(l);
-	mi_switch(l, NULL);
+	mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 #endif	/* KTRACE || PTRACE */

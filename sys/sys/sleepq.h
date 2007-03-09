@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.2.2.2 2007/02/27 16:55:17 yamt Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.2.2.3 2007/03/09 15:16:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -155,6 +155,7 @@ sleepq_enter(sleepq_t *sq, struct lwp *l)
 	 * code (selwakeup()?) uses setrunnable() to synchronise.
 	 */
 	lwp_lock(l);
+	sched_slept(l);
 	lwp_unlock_to(l, sq->sq_mutex);
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 #endif

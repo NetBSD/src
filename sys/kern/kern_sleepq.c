@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.4.2.4 2007/02/27 16:54:24 yamt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.4.2.5 2007/03/09 15:16:25 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.4 2007/02/27 16:54:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.4.2.5 2007/03/09 15:16:25 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -268,7 +268,7 @@ sleepq_switch(int timo, int catch)
 	if (timo)
 		callout_reset(&l->l_tsleep_ch, timo, sleepq_timeout, l);
 
-	mi_switch(l, NULL);
+	mi_switch(l);
 	l->l_cpu->ci_schedstate.spc_curpriority = l->l_usrpri;
 
 	/*

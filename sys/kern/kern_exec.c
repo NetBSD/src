@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.237.2.1 2007/02/27 16:54:20 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.237.2.2 2007/03/09 15:16:23 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.237.2.1 2007/02/27 16:54:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.237.2.2 2007/03/09 15:16:23 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -946,7 +946,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		p->p_nrlwps--;
 		mutex_exit(&p->p_smutex);
 		mutex_exit(&proclist_mutex);
-		mi_switch(l, NULL);
+		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
 		KERNEL_LOCK(l->l_biglocks, l);
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.166.2.1 2007/02/27 16:55:18 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.166.2.2 2007/03/09 15:16:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -239,7 +239,7 @@ struct ctlname {
 #define	KERN_PROC2		47	/* struct: process entries */
 #define	KERN_PROC_ARGS		48	/* struct: process argv/env */
 #define	KERN_FSCALE		49	/* int: fixpt FSCALE */
-#define	KERN_CCPU		50	/* int: fixpt ccpu */
+#define	KERN_CCPU		50	/* old: fixpt ccpu */
 #define	KERN_CP_TIME		51	/* struct: CPU time counters */
 #define	KERN_OLDSYSVIPC_INFO	52	/* old: number of valid kern ids */
 #define	KERN_MSGBUF		53	/* kernel message buffer */
@@ -273,6 +273,7 @@ struct ctlname {
 #define	KERN_ARND		81	/* void *buf, size_t siz random */
 #define	KERN_SYSVIPC		82	/* node: SysV IPC parameters */
 #define	KERN_MAXID		83	/* number of valid kern ids */
+#define	KERN_SCHED		84	/* node: Scheduler parameters */
 
 
 #define	CTL_KERN_NAMES { \
@@ -326,7 +327,7 @@ struct ctlname {
 	{ "proc2", CTLTYPE_STRUCT }, \
 	{ "proc_args", CTLTYPE_STRING }, \
 	{ "fscale", CTLTYPE_INT }, \
-	{ "ccpu", CTLTYPE_INT }, \
+	{ 0, 0 }, \
 	{ "cp_time", CTLTYPE_STRUCT }, \
 	{ 0, 0 }, \
 	{ "msgbuf", CTLTYPE_STRUCT }, \

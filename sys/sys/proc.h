@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.4 2007/02/27 16:55:16 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.5 2007/03/09 15:16:26 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -266,6 +266,7 @@ struct proc {
 	struct lwp	*p_zomblwp;	/* s: detached LWP to be reaped */
 
 	/* scheduling */
+	void		*p_sched_info;	/* s: Scheduler-specific structure */
 	fixpt_t		p_estcpu;	/* t: Time averaged value of p_cpticks XXX belongs in p_startcopy section */
 	fixpt_t		p_estcpu_inherited;
 	unsigned int	p_forktime;
