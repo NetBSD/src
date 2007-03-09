@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.11 2007/03/02 21:06:27 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.12 2007/03/09 05:00:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.11 2007/03/02 21:06:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.12 2007/03/09 05:00:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -564,7 +564,7 @@ sys__lwp_unpark(struct lwp *l, void *v, register_t *retval)
 			LWP_COUNT(lwp_ev_park_raced, 1);
 		} else {
 			/*
-			 * It many not have parked yet, or is parked
+			 * It may not have parked yet, or is parked
 			 * on a different user sync object.  The
 			 * latter is an application error.
 			 */
@@ -686,7 +686,7 @@ sys__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
 			unparked++;
 		} else {
 			/*
-			 * It many not have parked yet, or is parked
+			 * It may not have parked yet, or is parked
 			 * on a different user sync object.  The
 			 * latter is an application error.
 			 */
