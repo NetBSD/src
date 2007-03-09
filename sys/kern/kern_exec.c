@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.242 2007/03/09 14:11:24 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.243 2007/03/09 22:25:56 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.242 2007/03/09 14:11:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.243 2007/03/09 22:25:56 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -586,7 +586,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
 
+#ifdef STACKLALIGN	/* arm, etc. */
+	len = STACKALIGN(len);	/* make the stack "safely" aligned */
+#else
 	len = ALIGN(len);	/* make the stack "safely" aligned */
+#endif
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
 		error = ENOMEM;
