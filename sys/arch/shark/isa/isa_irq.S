@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.6 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.7 2007/03/09 19:21:59 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -289,6 +289,8 @@ nextirq:
 	sub	r1, r1, #1
 	str	r1, [r0]
 
+	LOCK_CAS_CHECK
+
 	DO_AST_AND_RESTORE_ALIGNMENT_FAULTS
 	PULLFRAMEFROMSVCANDEXIT
 
@@ -300,6 +302,8 @@ Lspl_mask:
 
 Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
+
+LOCK_CAS_CHECK_LOCALS
 
 AST_ALIGNMENT_FAULT_LOCALS
 
