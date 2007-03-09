@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.17 2003/08/07 16:42:09 agc Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.18 2007/03/09 14:30:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.17 2003/08/07 16:42:09 agc Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.18 2007/03/09 14:30:56 ad Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -61,7 +61,7 @@ ENTRY(_sbrk)
 	movl	(%edx),%eax
 	addl	%eax,%ecx
 	movl	%ecx,4(%esp)
-	SYSTRAP(break)
+	OSYSTRAP(break)	/* don't clobber %ecx */
 	jc	err
 	PIC_PROLOGUE
 	movl	PIC_GOT(CURBRK),%edx
@@ -78,7 +78,7 @@ err:
 	movl	4(%esp),%ecx
 	movl	CURBRK,%eax
 	addl	%eax,4(%esp)
-	SYSTRAP(break)
+	OSYSTRAP(break)	/* don't clobber %ecx */
 	jc	err
 	movl	CURBRK,%eax
 	addl	%ecx,CURBRK

@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.7 2003/08/07 16:42:08 agc Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.8 2007/03/09 14:30:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __vfork14.S,v 1.7 2003/08/07 16:42:08 agc Exp $")
+	RCSID("$NetBSD: __vfork14.S,v 1.8 2007/03/09 14:30:48 ad Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -49,8 +49,8 @@
  *
  */
 ENTRY(__vfork14)
-	popl	%ecx		/* my rta into ecx */
-	SYSTRAP(__vfork14)
+	popl	%ecx		/* my rta into %ecx */
+	OSYSTRAP(__vfork14)	/* don't clobber %ecx */
 	jc	err
 	decl	%edx
 	andl	%edx,%eax
