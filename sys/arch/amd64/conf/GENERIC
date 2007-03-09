@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.132 2007/03/08 15:16:04 njoly Exp $
+# $NetBSD: GENERIC,v 1.133 2007/03/09 21:12:13 xtraeme Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.132 $"
+#ident 		"GENERIC-$Revision: 1.133 $"
 
 maxusers	32		# estimated number of users
 
@@ -75,8 +75,8 @@ options 	POWERNOW_K8
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
-#options 	BUFQ_READPRIO
-#options 	BUFQ_PRIOCSCAN
+options 	BUFQ_READPRIO
+options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -123,13 +123,14 @@ file-system 	NULLFS		# loopback file system
 file-system 	OVERLAY		# overlay file system
 file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
+file-system 	SMBFS		# experimental - SMB/CIFS file-system
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcoda (below)
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system
-#file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
-#file-system	HFS		# experimental - Apple HFS+ (read-only)
+file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
+file-system	HFS		# experimental - Apple HFS+ (read-only)
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -137,7 +138,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -147,12 +148,12 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
-#options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+options 	IPSEC_NAT_T	# IPsec NAT traversal (NAT-T)
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MROUTING	# IP multicast routing
-#options 	PIM		# Protocol Independent Multicast
+options 	MROUTING	# IP multicast routing
+options 	PIM		# Protocol Independent Multicast
 options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
@@ -287,14 +288,12 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
-#amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
-#hpet* 	at amdpcib?
+amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
+hpet* 	at amdpcib?
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
 
-#agp* 	at pchb?
-
-#
+agp* 	at pchb?
 
 # ISA bus support
 isa0	at mainbus?
@@ -367,20 +366,20 @@ lpt1	at isa? port 0x278
 # Hardware monitors
 
 # LM7[89] and compatible hardware monitors
-#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
+lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
-#iic*	at amdpm?			# sensors below are on this bus
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E            # Tyan S2882-D
+iic*	at amdpm?			# sensors below are on this bus
+adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
+adt7463c* at iic? addr 0x2D		# Tyan S2881
+adt7463c* at iic? addr 0x2E            # Tyan S2882-D
 
 # iTE IT87xxF and compatible hardware monitors
-#it0 	at isa? port 0x290 		# other ports: 0xc00, 0xd00.
+it0 	at isa? port 0x290 		# other ports: 0xc00, 0xd00.
 
 # Abit uGuru Hardware system monitor
-#ug0	at isa? port 0xe0
+ug0	at isa? port 0xe0
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -879,7 +878,7 @@ pseudo-device	swcrypto		# software crypto implementation
 
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	cgd		4	# cryptographic disk devices
+pseudo-device	cgd		4	# cryptographic disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #Options to enable various other RAIDframe RAID types.
@@ -894,11 +893,11 @@ pseudo-device	fss		4	# file system snapshot device
 
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd			# disk-like interface to files
-#options 	VND_COMPRESSION		# compressed vnd(4)
+options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
-#pseudo-device	carp			# Common Address Redundancy Protocol
+pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
@@ -910,11 +909,11 @@ pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
-#pseudo-device	faith			# IPv[46] tcp relay translation i/f
+pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+options		BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
@@ -924,13 +923,16 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-#pseudo-device	pf			# PF packet filter
-#pseudo-device	pflog			# PF log if
+pseudo-device	pf			# PF packet filter
+pseudo-device	pflog			# PF log if
 pseudo-device	lockstat		# lock profiling
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
