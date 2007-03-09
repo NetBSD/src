@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.122 2007/03/04 06:03:09 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.123 2007/03/09 14:11:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -93,7 +93,7 @@
 #include "opt_ktrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.122 2007/03/04 06:03:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.123 2007/03/09 14:11:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	 * If attaching or detaching, we need to get a write hold on the
 	 * proclist lock so that we can re-parent the target process.
 	 */
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	/* "A foolish consistency..." XXX */
 	if (req == PT_TRACE_ME)
@@ -154,7 +154,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	else {
 		/* Find the process we're supposed to be operating on. */
 		if ((t = p_find(SCARG(uap, pid), PFIND_LOCKED)) == NULL) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (ESRCH);
 		}
 
@@ -162,7 +162,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
 		    t, NULL, NULL, NULL);
 		if (error) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return (ESRCH);
 		}
 	}
@@ -175,7 +175,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	error = proc_addref(t);
 	if (error != 0) {
 		mutex_exit(&t->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return error;
 	}
 
@@ -319,7 +319,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		    NULL, NULL);
 
 	if (error != 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		proc_delref(t);
 		mutex_exit(&t->p_mutex);
 		return error;
@@ -340,7 +340,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		pheld = 1;
 		break;
 	default:
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		mutex_exit(&t->p_mutex);
 		pheld = 0;
 		break;
@@ -743,7 +743,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	if (pheld) {
 		proc_delref(t);
 		mutex_exit(&t->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 	} else {
 		mutex_enter(&t->p_mutex);
 		proc_delref(t);
@@ -914,6 +914,9 @@ process_stoptrace(struct lwp *l)
 {
 	struct proc *p = l->l_proc, *pp;
 
+	/* XXXSMP proc_stop -> child_psignal -> kpsignal2 -> pool_get */ 
+	KERNEL_LOCK(1, l);
+
 	mutex_enter(&proclist_mutex);
 	mutex_enter(&p->p_smutex);
 	pp = p->p_pptr;
@@ -921,6 +924,7 @@ process_stoptrace(struct lwp *l)
 		CLR(p->p_slflag, PSL_SYSCALL);	/* XXXSMP */
 		mutex_exit(&p->p_smutex);
 		mutex_exit(&proclist_mutex);
+		KERNEL_UNLOCK_ONE(l);
 		return;
 	}
 
@@ -931,6 +935,6 @@ process_stoptrace(struct lwp *l)
 	mutex_exit(&proclist_mutex);
 	lwp_lock(l);
 	mi_switch(l, NULL);
-	KERNEL_LOCK(l->l_biglocks, l);
+	KERNEL_LOCK(l->l_biglocks - 1, l);
 }
 #endif	/* KTRACE || PTRACE */

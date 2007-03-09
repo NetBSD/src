@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.93 2007/03/04 06:01:23 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.94 2007/03/09 14:11:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.93 2007/03/04 06:01:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.94 2007/03/09 14:11:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ linux_nptl_proc_exit(p)
 {
 	struct linux_emuldata *e = p->p_emuldata;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	/* 
 	 * Check if we are a thread group leader victim of another 
@@ -367,7 +367,7 @@ linux_nptl_proc_exit(p)
 		cv_broadcast(&initproc->p_waitcv);
 	}
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/* Emulate LINUX_CLONE_CHILD_CLEARTID */
 	if (e->clear_tid != NULL) {

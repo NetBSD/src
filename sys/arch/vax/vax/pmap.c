@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2007/03/04 19:21:55 christos Exp $	   */
+/*	$NetBSD: pmap.c,v 1.147 2007/03/09 14:11:22 ad Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2007/03/04 19:21:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2007/03/09 14:11:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -689,7 +689,7 @@ pmap_rmproc(struct pmap *pm)
 
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		if (!swappable(l, pm))
 			continue;
@@ -716,7 +716,7 @@ pmap_rmproc(struct pmap *pm)
 			continue;
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (didswap == 0) {
 		if ((l = outl) == NULL)
 			l = outl2;

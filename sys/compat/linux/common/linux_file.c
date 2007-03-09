@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.79 2007/03/04 06:01:23 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.80 2007/03/09 14:11:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.79 2007/03/04 06:01:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.80 2007/03/09 14:11:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ linux_sys_fcntl(l, v, retval)
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			return 0;
 		}
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		if ((long)arg <= 0) {
 			pgid = -(long)arg;
 		} else {
@@ -472,11 +472,11 @@ linux_sys_fcntl(l, v, retval)
 		}
 		pgrp = pg_find(pgid, PFIND_LOCKED);
 		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return EPERM;
 		}
 		tp->t_pgrp = pgrp;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return 0;
 
 	default:

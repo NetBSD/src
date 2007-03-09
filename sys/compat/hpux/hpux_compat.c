@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.89 2007/03/04 06:01:15 christos Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.90 2007/03/09 14:11:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.89 2007/03/04 06:01:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.90 2007/03/09 14:11:28 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -549,7 +549,7 @@ hpux_sys_rtprio(struct lwp *lp, void *v, register_t *retval)
 	    SCARG(uap, prio) != RTPRIO_RTOFF)
 		return (EINVAL);
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if (SCARG(uap, pid) == 0)
 		p = lp->l_proc;
 	else {
@@ -567,7 +567,7 @@ hpux_sys_rtprio(struct lwp *lp, void *v, register_t *retval)
 	switch (SCARG(uap, prio)) {
 
 	case RTPRIO_NOCHG:
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return 0;
 
 	case RTPRIO_RTOFF:
@@ -583,7 +583,7 @@ hpux_sys_rtprio(struct lwp *lp, void *v, register_t *retval)
 	mutex_enter(&p->p_mutex);
 	error = donice(lp, p, nice);
 	mutex_exit(&p->p_mutex);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (error == EACCES)
 		error = EPERM;
 	return (error);
@@ -896,10 +896,10 @@ hpux_sys_getpgrp2(struct lwp *lp, void *v, register_t *retval)
 	if (SCARG(uap, pid) == 0)
 		SCARG(uap, pid) = cp->p_pid;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	p = p_find(SCARG(uap, pid), PFIND_LOCKED);
 	if (p == 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (ESRCH);
 	}
 	mutex_enter(&p->p_mutex);
@@ -907,12 +907,12 @@ hpux_sys_getpgrp2(struct lwp *lp, void *v, register_t *retval)
 	    kauth_cred_geteuid(p->p_cred) != kauth_cred_geteuid(lp->l_cred) &&
 	    !inferior(p, cp)) {
 		mutex_exit(&p->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (EPERM);
 	}
 	mutex_exit(&p->p_mutex);
 	*retval = p->p_pgid;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (0);
 }
 
