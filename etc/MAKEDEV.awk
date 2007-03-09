@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.16 2005/06/14 20:47:46 he Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.17 2007/03/09 13:57:54 dsl Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,6 +91,11 @@ BEGIN {
 			}
 		}
 		close(file)
+	}
+	CONSOLE_CMAJOR = chr["cons"]
+	if (CONSOLE_CMAJOR == "") {
+		print "ERROR: no entry for 'cons' in majors file" > "/dev/stderr"
+		exit 1
 	}
 
 	# read MD config file for MD device targets
@@ -214,7 +219,7 @@ BEGIN {
 	print "# Generated from:"
 
 	# MAKEDEV.awk (this script) RCS Id
-	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.16 2005/06/14 20:47:46 he Exp $"
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.17 2007/03/09 13:57:54 dsl Exp $"
 	gsub(/\$/, "", ARCSID)
 	print "#	" ARCSID
 	
@@ -264,6 +269,7 @@ BEGIN {
 	sub(/%DISKMINOROFFSET%/, DISKMINOROFFSET)
 	sub(/%RAWDISK_OFF%/, RAWDISK_OFF)
 	sub(/%RAWDISK_NAME%/, RAWDISK_NAME)
+	sub(/%CONSOLE_CMAJOR%/, CONSOLE_CMAJOR)
 	parsed = ""
 	line = $0
 	while (match(line, /%[gu]id_[a-z]*%/)) {
