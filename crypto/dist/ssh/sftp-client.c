@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.26 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.74 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.27 2007/03/10 22:52:09 christos Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.76 2007/01/22 11:32:50 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -22,7 +22,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.26 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.27 2007/03/10 22:52:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -1129,10 +1129,13 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 			if (status != SSH2_FX_OK) {
 				error("Couldn't write to remote file \"%s\": %s",
 				    remote_path, fx2txt(status));
+				if (showprogress)
+					stop_progress_meter();
 				do_close(conn, handle, handle_len);
 				close(local_fd);
 				xfree(data);
 				xfree(ack);
+				status = -1;
 				goto done;
 			}
 			debug3("In write loop, ack for %u %u bytes at %llu",
