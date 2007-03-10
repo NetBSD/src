@@ -1,5 +1,5 @@
-/*	$NetBSD: dns.c,v 1.4 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: dns.c,v 1.23 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: dns.c,v 1.5 2007/03/10 22:52:05 christos Exp $	*/
+/* $OpenBSD: dns.c,v 1.24 2007/01/03 03:01:40 stevesk Exp $ */
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.4 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: dns.c,v 1.5 2007/03/10 22:52:05 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -219,7 +219,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 	if (fingerprints->rri_nrdatas)
 		*flags |= DNS_VERIFY_FOUND;
 
-	for (counter = 0; counter < fingerprints->rri_nrdatas; counter++)  {
+	for (counter = 0; counter < fingerprints->rri_nrdatas; counter++) {
 		/*
 		 * Extract the key from the answer. Ignore any badly
 		 * formatted fingerprints.

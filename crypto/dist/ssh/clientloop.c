@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.30 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.175 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: clientloop.c,v 1.31 2007/03/10 22:52:05 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.178 2007/02/20 10:25:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -61,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.30 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.31 2007/03/10 22:52:05 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -460,8 +460,10 @@ client_global_request_reply(int type, u_int32_t seq, void *ctxt)
 static void
 server_alive_check(void)
 {
-	if (++server_alive_timeouts > options.server_alive_count_max)
-		packet_disconnect("Timeout, server not responding.");
+	if (++server_alive_timeouts > options.server_alive_count_max) {
+		logit("Timeout, server not responding.");
+		cleanup_exit(255);
+	}
 	packet_start(SSH2_MSG_GLOBAL_REQUEST);
 	packet_put_cstring("keepalive@openssh.com");
 	packet_put_char(1);     /* boolean: want reply */
@@ -701,7 +703,7 @@ client_process_control(fd_set *readset)
 {
 	Buffer m;
 	Channel *c;
-	int client_fd, new_fd[3], ver, allowed;
+	int client_fd, new_fd[3], ver, allowed, window, packetmax;
 	socklen_t addrlen;
 	struct sockaddr_storage addr;
 	struct confirm_ctx *cctx;
@@ -894,9 +896,15 @@ client_process_control(fd_set *readset)
 
 	set_nonblock(client_fd);
 
+	window = CHAN_SES_WINDOW_DEFAULT;
+	packetmax = CHAN_SES_PACKET_DEFAULT;
+	if (cctx->want_tty) {
+		window >>= 1;
+		packetmax >>= 1;
+	}
+	
 	c = channel_new("session", SSH_CHANNEL_OPENING,
-	    new_fd[0], new_fd[1], new_fd[2],
-	    CHAN_SES_WINDOW_DEFAULT, CHAN_SES_PACKET_DEFAULT,
+	    new_fd[0], new_fd[1], new_fd[2], window, packetmax,
 	    CHAN_EXTENDED_WRITE, "client-session", /*nonblock*/0);
 
 	/* XXX */
@@ -1751,7 +1759,7 @@ client_request_agent(const char *request_type, int rchan)
 		error("Warning: this is probably a break-in attempt by a malicious server.");
 		return NULL;
 	}
-	sock =  ssh_get_authentication_socket();
+	sock = ssh_get_authentication_socket();
 	if (sock < 0)
 		return NULL;
 	c = channel_new("authentication agent connection",

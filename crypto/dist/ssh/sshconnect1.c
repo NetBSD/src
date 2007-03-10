@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect1.c,v 1.31 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sshconnect1.c,v 1.69 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sshconnect1.c,v 1.32 2007/03/10 22:52:10 christos Exp $	*/
+/* $OpenBSD: sshconnect1.c,v 1.70 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect1.c,v 1.31 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.32 2007/03/10 22:52:10 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -1007,14 +1007,20 @@ ssh_kex(char *host, struct sockaddr *hostaddr)
 	 * the first 16 bytes of the session id.
 	 */
 	if ((key = BN_new()) == NULL)
-		fatal("respond_to_rsa_challenge: BN_new failed");
-	BN_set_word(key, 0);
+		fatal("ssh_kex: BN_new failed");
+	if (BN_set_word(key, 0) == 0)
+		fatal("ssh_kex: BN_set_word failed");
 	for (i = 0; i < SSH_SESSION_KEY_LENGTH; i++) {
-		BN_lshift(key, key, 8);
-		if (i < 16)
-			BN_add_word(key, session_key[i] ^ session_id[i]);
-		else
-			BN_add_word(key, session_key[i]);
+		if (BN_lshift(key, key, 8) == 0)
+			fatal("ssh_kex: BN_lshift failed");
+		if (i < 16) {
+			if (BN_add_word(key, session_key[i] ^ session_id[i])
+			    == 0)
+				fatal("ssh_kex: BN_add_word failed");
+		} else {
+			if (BN_add_word(key, session_key[i]) == 0)
+				fatal("ssh_kex: BN_add_word failed");
+		}
 	}
 
 	/*

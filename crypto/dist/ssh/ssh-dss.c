@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-dss.c,v 1.15 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: ssh-dss.c,v 1.23 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: ssh-dss.c,v 1.16 2007/03/10 22:52:09 christos Exp $	*/
+/* $OpenBSD: ssh-dss.c,v 1.24 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.15 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.16 2007/03/10 22:52:09 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -161,8 +161,9 @@ ssh_dss_verify(const Key *key, const u_char *signature, u_int signaturelen,
 		fatal("ssh_dss_verify: BN_new failed");
 	if ((sig->s = BN_new()) == NULL)
 		fatal("ssh_dss_verify: BN_new failed");
-	BN_bin2bn(sigblob, INTBLOB_LEN, sig->r);
-	BN_bin2bn(sigblob+ INTBLOB_LEN, INTBLOB_LEN, sig->s);
+	if ((BN_bin2bn(sigblob, INTBLOB_LEN, sig->r) == NULL) ||
+	    (BN_bin2bn(sigblob+ INTBLOB_LEN, INTBLOB_LEN, sig->s) == NULL))
+		fatal("ssh_dss_verify: BN_bin2bn failed");
 
 	/* clean up */
 	memset(sigblob, 0, len);

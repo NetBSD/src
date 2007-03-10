@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.26 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.144 2006/09/16 19:53:37 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.27 2007/03/10 22:52:07 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.145 2006/09/19 21:14:08 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.26 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.27 2007/03/10 22:52:07 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -686,6 +686,9 @@ packet_enable_delayed_compress(void)
 	 */
 	after_authentication = 1;
 	for (mode = 0; mode < MODE_MAX; mode++) {
+		/* protocol error: USERAUTH_SUCCESS received before NEWKEYS */
+		if (newkeys[mode] == NULL)
+			continue;
 		comp = &newkeys[mode]->comp;
 		if (comp && !comp->enabled && comp->type == COMP_DELAYED) {
 			packet_init_compression();

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.40 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.347 2006/08/18 09:15:20 markus Exp $ */
+/*	$NetBSD: sshd.c,v 1.41 2007/03/10 22:52:10 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.349 2007/02/21 11:00:05 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.40 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.41 2007/03/10 22:52:10 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -292,6 +292,7 @@ sighup_restart(void)
 	logit("Received SIGHUP; restarting.");
 	close_listen_socks();
 	close_startup_pipes();
+	alarm(0);  /* alarm timer persists across exec */
 	execv(saved_argv[0], saved_argv);
 	logit("RESTART FAILED: av[0]='%.100s', error: %.100s.", saved_argv[0],
 	    strerror(errno));
@@ -1915,10 +1916,10 @@ do_ssh1_kex(void)
 	 * key is in the highest bits.
 	 */
 	if (!rsafail) {
-		BN_mask_bits(session_key_int, sizeof(session_key) * 8);
+		(void) BN_mask_bits(session_key_int, sizeof(session_key) * 8);
 		len = BN_num_bytes(session_key_int);
 		if (len < 0 || (u_int)len > sizeof(session_key)) {
-			error("do_connection: bad session key len from %s: "
+			error("do_ssh1_kex: bad session key len from %s: "
 			    "session_key_int %d > sizeof(session_key) %lu",
 			    get_remote_ipaddr(), len, (u_long)sizeof(session_key));
 			rsafail++;

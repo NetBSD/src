@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.24 2006/11/14 21:52:09 adrianp Exp $	*/
-/* $OpenBSD: monitor.c,v 1.88 2006/08/12 20:46:46 miod Exp $ */
+/*	$NetBSD: monitor.c,v 1.25 2007/03/10 22:52:07 christos Exp $	*/
+/* $OpenBSD: monitor.c,v 1.90 2007/02/19 10:45:58 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.24 2006/11/14 21:52:09 adrianp Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.25 2007/03/10 22:52:07 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -629,6 +629,9 @@ mm_answer_pwnamallow(int sock, Buffer *m)
 	buffer_put_cstring(m, pwent->pw_class);
 	buffer_put_cstring(m, pwent->pw_dir);
 	buffer_put_cstring(m, pwent->pw_shell);
+	buffer_put_string(m, &options, sizeof(options));
+	if (options.banner != NULL)
+		buffer_put_cstring(m, options.banner);
 
  out:
 	debug3("%s: sending MONITOR_ANS_PWNAM: %d", __func__, allowed);

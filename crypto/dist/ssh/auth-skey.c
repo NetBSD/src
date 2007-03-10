@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-skey.c,v 1.11 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: auth-skey.c,v 1.26 2006/08/05 08:28:24 dtucker Exp $ */
+/*	$NetBSD: auth-skey.c,v 1.12 2007/03/10 22:52:05 christos Exp $	*/
+/* $OpenBSD: auth-skey.c,v 1.27 2007/01/21 01:41:54 stevesk Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: auth-skey.c,v 1.11 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: auth-skey.c,v 1.12 2007/03/10 22:52:05 christos Exp $");
 
 #ifdef SKEY
 
@@ -64,8 +64,8 @@ skey_query(void *ctx, char **name, char **infotxt,
 	if (skeychallenge(&skey, authctxt->user, challenge, sizeof(challenge)) == -1)
 		return -1;
 
-	*name  = xstrdup("");
-	*infotxt  = xstrdup("");
+	*name = xstrdup("");
+	*infotxt = xstrdup("");
 	*numprompts = 1;
 	*prompts = xcalloc(*numprompts, sizeof(char *));
 	*echo_on = xcalloc(*numprompts, sizeof(u_int));
