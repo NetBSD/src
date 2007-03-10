@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.31 2007/03/10 22:52:08 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.32 2007/03/10 23:05:25 christos Exp $	*/
 /* $OpenBSD: readconf.c,v 1.161 2007/01/21 01:45:35 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.31 2007/03/10 22:52:08 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.32 2007/03/10 23:05:25 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -726,7 +726,7 @@ parse_int:
 		break;
 
 	case oLogLevel:
-		intptr = (int *) &options->log_level;
+		intptr = (int *)(void *)&options->log_level;
 		arg = strdelim(&s);
 		value = log_level_number(arg);
 		if (value == SYSLOG_LEVEL_NOT_SET)
