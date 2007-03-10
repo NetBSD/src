@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.16 2005/06/02 09:20:37 lukem Exp $	*/
+/*	$NetBSD: rdate.c,v 1.17 2007/03/10 01:19:55 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,7 +39,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.16 2005/06/02 09:20:37 lukem Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.17 2007/03/10 01:19:55 hubertf Exp $");
 #endif /* lint */
 
 #include <sys/types.h>
@@ -48,7 +48,6 @@ __RCSID("$NetBSD: rdate.c,v 1.16 2005/06/02 09:20:37 lukem Exp $");
 
 #include <netinet/in.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <netdb.h>
 #include <stdio.h>
