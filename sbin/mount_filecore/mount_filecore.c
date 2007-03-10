@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.14 2006/10/16 03:37:42 christos Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.15 2007/03/10 00:30:36 hubertf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -82,7 +82,6 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #include <sys/param.h>
 #include <sys/mount.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <grp.h>
 #include <pwd.h>

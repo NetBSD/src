@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.16 2007/01/17 21:59:49 hubertf Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.17 2007/03/10 00:30:37 hubertf Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,14 +35,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.16 2007/01/17 21:59:49 hubertf Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.17 2007/03/10 00:30:37 hubertf Exp $");
 #endif
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <ntfs/ntfsmount.h>
-#include <ctype.h>
 #include <err.h>
 #include <grp.h>
 #include <pwd.h>
