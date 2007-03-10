@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.20 2005/12/03 15:16:19 yamt Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.20.4.1 2007/03/10 18:36:47 bouyer Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.20 2005/12/03 15:16:19 yamt Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.20.4.1 2007/03/10 18:36:47 bouyer Exp $");
 #endif
 #endif
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: clnt_dg.c,v 1.20 2005/12/03 15:16:19 yamt Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
-#include <sys/event.h>
+#include <sys/poll.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -135,8 +135,7 @@ struct cu_data {
 	u_int			cu_sendsz;	/* send size */
 	char			*cu_outbuf;
 	u_int			cu_recvsz;	/* recv size */
-	struct kevent		cu_kin;
-	int			cu_kq;
+	struct pollfd		cu_pfdp;
 	char			cu_inbuf[1];
 };
 
@@ -279,13 +278,13 @@ clnt_dg_create(fd, svcaddr, program, version, sendsz, recvsz)
 	 */
 	cu->cu_closeit = FALSE;
 	cu->cu_fd = fd;
+	cu->cu_pfdp.fd = cu->cu_fd;
+	cu->cu_pfdp.events = POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND;
 	cl->cl_ops = clnt_dg_ops();
 	cl->cl_private = (caddr_t)(void *)cu;
 	cl->cl_auth = authnone_create();
 	cl->cl_tp = NULL;
 	cl->cl_netid = NULL;
-	cu->cu_kq = -1;
-	EV_SET(&cu->cu_kin, cu->cu_fd, EVFILT_READ, EV_ADD, 0, 0, 0);
 	return (cl);
 err1:
 	warnx(mem_err_clnt_dg);
@@ -320,14 +319,14 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	struct timeval timeout;
 	struct timeval retransmit_time;
 	struct timeval next_sendtime, starttime, time_waited, tv;
-	struct kevent kv;
 #ifdef _REENTRANT
-	sigset_t mask;
+	sigset_t mask, *maskp = &mask;
+#else
+	sigset_t *maskp = NULL;
 #endif
 	sigset_t newmask;
 	ssize_t recvlen = 0;
 	struct timespec ts;
-	size_t kin_len;
 	int n;
 
 	_DIAGASSERT(cl != NULL);
@@ -351,16 +350,6 @@ clnt_dg_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	time_waited.tv_usec = 0;
 	retransmit_time = next_sendtime = cu->cu_wait;
 	gettimeofday(&starttime, NULL);
-
-	/* Clean up in case the last call ended in a longjmp(3) call. */
-	if (cu->cu_kq >= 0)
-		(void)close(cu->cu_kq);
-	if ((cu->cu_kq = kqueue()) < 0) {
-		cu->cu_error.re_errno = errno;
-		cu->cu_error.re_status = RPC_CANTSEND;
-		goto out;
-	}
-	kin_len = 1;
 
 call_again:
 	xdrs = &(cu->cu_outxdrs);
@@ -414,16 +403,8 @@ send_again:
 			tv.tv_sec = tv.tv_usec = 0;
 		TIMEVAL_TO_TIMESPEC(&tv, &ts);
 
-		n = kevent(cu->cu_kq, &cu->cu_kin, kin_len, &kv, 1, &ts);
-		/* We don't need to register the event again. */
-		kin_len = 0;
-
+		n = pollts(&cu->cu_pfdp, 1, &ts, maskp);
 		if (n == 1) {
-			if (kv.flags & EV_ERROR) {
-				cu->cu_error.re_errno = (int)kv.data;
-				cu->cu_error.re_status = RPC_CANTRECV;
-				goto out;
-			}
 			/* We have some data now */
 			do {
 				recvlen = recvfrom(cu->cu_fd, cu->cu_inbuf,
@@ -512,9 +493,6 @@ send_again:
 
 	}
 out:
-	if (cu->cu_kq >= 0)
-		(void)close(cu->cu_kq);
-	cu->cu_kq = -1;
 	release_fd_lock(cu->cu_fd, mask);
 	return (cu->cu_error.re_status);
 }
@@ -737,8 +715,6 @@ clnt_dg_destroy(cl)
 		cond_wait(&dg_cv[cu_fd], &clnt_fd_lock);
 	if (cu->cu_closeit)
 		(void) close(cu_fd);
-	if (cu->cu_kq >= 0)
-		(void)close(cu->cu_kq);
 	XDR_DESTROY(&(cu->cu_outxdrs));
 	mem_free(cu, (sizeof (*cu) + cu->cu_sendsz + cu->cu_recvsz));
 	if (cl->cl_netid && cl->cl_netid[0])
