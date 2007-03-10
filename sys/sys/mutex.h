@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.8 2007/03/09 04:50:36 thorpej Exp $	*/
+/*	$NetBSD: mutex.h,v 1.9 2007/03/10 16:01:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -152,11 +152,16 @@
 #include <sys/inttypes.h>
 #endif
 
+/*
+ * MUTEX_NODEBUG disables most LOCKDEBUG checks for the lock.  It should
+ * not be used.
+ */
 typedef enum kmutex_type_t {
 	MUTEX_SPIN = 0,
 	MUTEX_ADAPTIVE = 1,
 	MUTEX_DEFAULT = 2,
-	MUTEX_DRIVER = 3
+	MUTEX_DRIVER = 3,
+	MUTEX_NODEBUG = 4
 } kmutex_type_t;
 
 typedef struct kmutex kmutex_t;
