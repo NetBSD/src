@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.10 2007/03/09 14:08:26 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.11 2007/03/10 16:01:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.10 2007/03/09 14:08:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11 2007/03/10 16:01:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -313,6 +313,11 @@ mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
 		type = (ipl == IPL_NONE ? MUTEX_ADAPTIVE : MUTEX_SPIN);
 
 	switch (type) {
+	case MUTEX_NODEBUG:
+		KASSERT(ipl == IPL_NONE);
+		id = LOCKDEBUG_ALLOC(mtx, NULL);
+		MUTEX_INITIALIZE_ADAPTIVE(mtx, id);
+		break;
 	case MUTEX_ADAPTIVE:
 	case MUTEX_DEFAULT:
 		KASSERT(ipl == IPL_NONE);
@@ -687,7 +692,7 @@ mutex_vector_exit(kmutex_t *mtx)
 		return;
 	}
 
-	if (__predict_false(panicstr != NULL) || __predict_false(cold)) {
+	if (__predict_false((uintptr_t)panicstr | cold)) {
 		MUTEX_UNLOCKED(mtx);
 		MUTEX_RELEASE(mtx);
 		return;
