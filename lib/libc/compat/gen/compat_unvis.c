@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_unvis.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_unvis.c,v 1.2 2007/03/10 01:13:14 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_unvis.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_unvis.c,v 1.2 2007/03/10 01:13:14 hubertf Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -44,7 +44,6 @@ __RCSID("$NetBSD: compat_unvis.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
 #include <sys/types.h>
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <vis.h>
 #include <compat/include/vis.h>
@@ -59,10 +58,7 @@ __warn_references(unvis,
 #endif
 
 int
-unvis(cp, c, astate, flag)
-	char *cp;
-	int c;
-	int *astate, flag;
+unvis(char *cp, int c, int *astate, int flag)
 {
 	return __unvis13(cp, c, astate, flag);
 }
