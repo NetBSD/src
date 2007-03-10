@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.2 2005/06/24 23:21:09 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.3 2007/03/10 01:19:55 hubertf Exp $	*/
 /*	$OpenBSD: alias.c,v 1.4 2002/07/30 05:55:08 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -41,7 +41,6 @@
 #include <grp.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <ctype.h>
 #include <err.h>
 
 #include "intercept.h"
