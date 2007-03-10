@@ -1139,10 +1139,12 @@ md_assemble (instruction_string)
 			       * say use 0x00. OK --- but this
 			       * assembler needs ANOTHER rewrite to
 			       * cope properly with this bug.  */
-			      md_number_to_chars (p + 1, this_add_number, min (4, nbytes));
-			      if (nbytes > 4)
+			      md_number_to_chars (p + 1, this_add_number,
+						  min (sizeof(valueT), nbytes));
+			      if (nbytes > sizeof(valueT))
 				{
-				  memset (p + 5, '\0', nbytes - 4);
+				  memset (p + 1 + sizeof(valueT), '\0',
+					  nbytes - sizeof(valueT));
 				}
 			    }
 			  else
