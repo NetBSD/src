@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.57 2007/03/05 15:13:25 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.58 2007/03/10 11:53:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2961,4 +2961,25 @@ sys/dev/pci/if_bgereg.h				1.40
 
 	Fix bge(4) on architectures where bus_dmamap_sync() isn't a noop.
 	[bouyer, ticket #1671]
+
+sys/dev/usb/uftdi.c				1.30
+sys/dev/usb/usbdevs				1.461
+sys/dev/usb/usbdevs.h				regen
+sys/dev/usb/usbdevs_data.h			regen
+
+	Add FTDI "Serial 2232C" product ID
+	Match the FTDI "Serial 2232C" chip;  this allows a 16-port usb->serial
+	device from SerialGear I have to work.
+	[riz, ticket #1677]
+
+sys/dev/audio.c					1.221
+
+	return information about playing buffer, not recording bufer,
+	for AUDIO_WSEEK. Fix PR#35171.
+	[kent, ticket #1678]
+
+share/man/man5/fstab.5				1.33
+
+	lfs filesystems work with fstab(5), sync man page.
+	[mjf, ticket #1679]
 
