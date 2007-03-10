@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.143.2.2 2007/02/17 23:27:53 tron Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.143.2.3 2007/03/10 18:40:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.143.2.2 2007/02/17 23:27:53 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.143.2.3 2007/03/10 18:40:49 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1700,10 +1700,13 @@ ufs_readdir(void *v)
 	error = uiomove(ndbuf, count, uio);
 out:
 	if (ap->a_cookies) {
-		if (error)
+		if (error) {
 			free(*(ap->a_cookies), M_TEMP);
-		else
+			*(ap->a_cookies) = NULL;
+			*(ap->a_ncookies) = 0;
+		} else {
 			*ap->a_ncookies = ccp - *(ap->a_cookies);
+		}
 	}
 	uio->uio_offset = off;
 	free(ndbuf, M_TEMP);
