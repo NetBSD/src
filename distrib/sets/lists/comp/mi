@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1015 2007/03/06 11:28:44 dillo Exp $
+#	$NetBSD: mi,v 1.1016 2007/03/10 00:53:44 dbj Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2245,6 +2245,7 @@
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
 ./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/apmlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/badsect.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/brconfig.debug		comp-netutil-debug	debug
@@ -2254,6 +2255,7 @@
 ./usr/libdata/debug/sbin/dhclient.debug		comp-dhclient-debug	debug
 ./usr/libdata/debug/sbin/disklabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dkctl.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/dkscan_bsdlabel.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dmesg.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/drvctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/dump.debug		comp-sysutil-debug	debug
@@ -2281,6 +2283,7 @@
 ./usr/libdata/debug/sbin/mount_fdesc.debug	comp-miscfs-debug	debug
 ./usr/libdata/debug/sbin/mount_ffs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_filecore.debug	comp-filecorefs-debug	debug
+./usr/libdata/debug/sbin/mount_hfs.debug	comp-hfs-debug		debug
 ./usr/libdata/debug/sbin/mount_kernfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_lfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_msdos.debug	comp-sysutil-debug	debug
@@ -2797,6 +2800,7 @@
 ./usr/libdata/debug/usr/sbin/btcontrol.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/btdevctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/bthcid.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/btuartd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/catman.debug	comp-man-debug		debug
 ./usr/libdata/debug/usr/sbin/chat.debug		comp-ppp-debug		debug
 ./usr/libdata/debug/usr/sbin/chown.debug	comp-sysutil-debug	debug
