@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.1.1.23 2006/09/28 21:15:20 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.219 2006/08/29 10:40:19 djm Exp $ */
+/*	$NetBSD: session.c,v 1.1.1.24 2007/03/10 22:35:37 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.221 2007/01/21 01:41:54 stevesk Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -764,7 +764,7 @@ do_setup_env(Session *s, const char *shell)
 
 	/* Initialize the environment. */
 	envsize = 100;
-	env = xmalloc(envsize * sizeof(char *));
+	env = xcalloc(envsize, sizeof(char *));
 	env[0] = NULL;
 
 #ifdef GSSAPI
@@ -1599,7 +1599,7 @@ session_input_channel_req(Channel *c, const char *rtype)
 		} else if (strcmp(rtype, "exec") == 0) {
 			success = session_exec_req(s);
 		} else if (strcmp(rtype, "pty-req") == 0) {
-			success =  session_pty_req(s);
+			success = session_pty_req(s);
 		} else if (strcmp(rtype, "x11-req") == 0) {
 			success = session_x11_req(s);
 		} else if (strcmp(rtype, "auth-agent-req@openssh.com") == 0) {
@@ -1724,7 +1724,7 @@ session_close_single_x11(int id, void *arg)
 
 	debug3("session_close_single_x11: channel %d", id);
 	channel_cancel_cleanup(id);
-	if ((s  = session_by_x11_channel(id)) == NULL)
+	if ((s = session_by_x11_channel(id)) == NULL)
 		fatal("session_close_single_x11: no x11 channel %d", id);
 	for (i = 0; s->x11_chanids[i] != -1; i++) {
 		debug("session_close_single_x11: session %d: "

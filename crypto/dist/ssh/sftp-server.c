@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-server.c,v 1.1.1.17 2006/09/28 21:15:22 christos Exp $	*/
-/* $OpenBSD: sftp-server.c,v 1.70 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sftp-server.c,v 1.1.1.18 2007/03/10 22:35:47 christos Exp $	*/
+/* $OpenBSD: sftp-server.c,v 1.71 2007/01/03 07:22:36 stevesk Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -659,7 +659,7 @@ process_fstat(void)
 	debug("request %u: fstat \"%s\" (handle %u)",
 	    id, handle_to_name(handle), handle);
 	fd = handle_to_fd(handle);
-	if (fd  >= 0) {
+	if (fd >= 0) {
 		ret = fstat(fd, &st);
 		if (ret < 0) {
 			status = errno_to_portable(errno);

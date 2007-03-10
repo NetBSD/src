@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh.c,v 1.1.1.22 2006/09/28 21:15:28 christos Exp $	*/
-/* $OpenBSD: ssh.c,v 1.293 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: ssh.c,v 1.1.1.23 2007/03/10 22:35:53 christos Exp $	*/
+/* $OpenBSD: ssh.c,v 1.295 2007/01/03 03:01:40 stevesk Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -42,6 +42,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -601,7 +602,7 @@ main(int ac, char **av)
 		if (!read_config_file(config, host, &options, 0))
 			fatal("Can't open user config file %.100s: "
 			    "%.100s", config, strerror(errno));
-	} else  {
+	} else {
 		snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir,
 		    _PATH_SSH_USER_CONFFILE);
 		(void)read_config_file(buf, host, &options, 1);

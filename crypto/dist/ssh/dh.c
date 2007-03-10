@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.c,v 1.1.1.11 2006/09/28 21:15:07 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.42 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: dh.c,v 1.1.1.12 2007/03/10 22:35:35 christos Exp $	*/
+/* $OpenBSD: dh.c,v 1.44 2006/11/07 13:02:07 markus Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
