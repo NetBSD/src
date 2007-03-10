@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.157 2007/02/27 13:42:35 apb Exp $
+$NetBSD: UPDATING,v 1.158 2007/03/10 00:10:15 dbj Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20070210: 
+        src/sys/sys/{sa.h,savar.h} were removed.
+          find ${OBJDIR} \( -name .depend -o -name '*.d' \) -print \
+              | xargs egrep -l '/sa.h|/savar.h' | xargs rm
+        will allow dependencies on those files to get get rebuilt
 
 20070209:
         The threading model was changed when the newlock2 branch
