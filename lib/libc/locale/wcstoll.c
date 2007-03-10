@@ -1,4 +1,4 @@
-/* $NetBSD: wcstoll.c,v 1.2 2004/06/21 21:20:43 itojun Exp $ */
+/* $NetBSD: wcstoll.c,v 1.3 2007/03/10 00:12:23 hubertf Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,11 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcstoll.c,v 1.2 2004/06/21 21:20:43 itojun Exp $");
+__RCSID("$NetBSD: wcstoll.c,v 1.3 2007/03/10 00:12:23 hubertf Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
-#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdlib.h>
