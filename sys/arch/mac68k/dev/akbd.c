@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.20 2007/03/05 21:06:24 he Exp $	*/
+/*	$NetBSD: akbd.c,v 1.21 2007/03/10 16:35:14 hauke Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.20 2007/03/05 21:06:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.21 2007/03/10 16:35:14 hauke Exp $");
 
 #include "opt_adb.h"
 
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.20 2007/03/05 21:06:24 he Exp $");
  */
 static int	akbdmatch(struct device *, struct cfdata *, void *);
 static void	akbdattach(struct device *, struct device *, void *);
-void		kbd_adbcomplete(void *, void *, int);
 static void	kbd_processevent(adb_event_t *, struct akbd_softc *);
 #ifdef notyet
 static u_char	getleds(int);
@@ -273,7 +272,7 @@ akbdattach(struct device *parent, struct device *self, void *aux)
  * an ADB event record.
  */
 void 
-kbd_adbcomplete(void *buffer, void *data_area, int adb_command)
+kbd_adbcomplete(uint8_t *buffer, void *data_area, int adb_command)
 {
 	adb_event_t event;
 	struct akbd_softc *ksc;
@@ -291,8 +290,8 @@ kbd_adbcomplete(void *buffer, void *data_area, int adb_command)
 	event.addr = adbaddr;
 	event.hand_id = ksc->handler_id;
 	event.def_addr = ksc->origaddr;
-	event.byte_count = ((uint8_t*)buffer)[0];
-	memcpy(event.bytes, (char*)buffer + 1, event.byte_count);
+	event.byte_count = buffer[0];
+	memcpy(event.bytes, buffer + 1, event.byte_count);
 
 #ifdef ADB_DEBUG
 	if (adb_debug) {
