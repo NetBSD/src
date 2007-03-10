@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.799.2.3 2007/01/28 20:05:41 tron Exp $
+# $NetBSD: GENERIC,v 1.799.2.4 2007/03/10 19:23:41 riz Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.799.2.3 $"
+#ident 		"GENERIC-$Revision: 1.799.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -227,7 +227,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-#options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
+options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
@@ -301,7 +301,7 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 cpu* at mainbus?
-#ioapic* at mainbus?
+ioapic* at mainbus?
 
 # Doesn't do anything yet.
 #p64h2apic* at pci? dev? function?	# P64H2 IOxAPIC
@@ -328,43 +328,43 @@ cpu* at mainbus?
 # To use the I/O APIC(s), enable the ioapic line above.
 #options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 #options 	MPBIOS_SCANPCI	# find PCI roots using MPBIOS
-#options 	ACPI_SCANPCI	# find PCI roots using ACPI
+options 	ACPI_SCANPCI	# find PCI roots using ACPI
 
-#acpi0 		at mainbus0
+acpi0 		at mainbus0
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
-#acpiacad* 	at acpi?		# ACPI AC Adapter
-#acpibat* 	at acpi?		# ACPI Battery
-#acpibut* 	at acpi?		# ACPI Button
-#acpiec* 	at acpi?		# ACPI Embedded Controller
-#acpilid* 	at acpi?		# ACPI Lid Switch
-#acpitz* 	at acpi?		# ACPI Thermal Zone
+acpiacad* 	at acpi?		# ACPI AC Adapter
+acpibat* 	at acpi?		# ACPI Battery
+acpibut* 	at acpi?		# ACPI Button
+acpiec* 	at acpi?		# ACPI Embedded Controller
+acpilid* 	at acpi?		# ACPI Lid Switch
+acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-#attimer*	at acpi?		# AT Timer
-#com* 		at acpi?		# Serial communications interface
-#fdc* 		at acpi?		# Floppy disk controller
-#joy*		at acpi?		# Joystick/Game port
-#lpt* 		at acpi?		# Parallel port
-#mpu*		at acpi?		# Roland MPU-401 MIDI UART
-#npx*		at acpi?		# Math coprocessor
-#pckbc*  	at acpi?		# PC keyboard controller
-#pcppi*		at acpi?                # AT-style speaker sound
-#wss* 		at acpi?		# NeoMagic 256AV in wss mode
-#ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
+attimer*	at acpi?		# AT Timer
+com* 		at acpi?		# Serial communications interface
+fdc* 		at acpi?		# Floppy disk controller
+joy*		at acpi?		# Joystick/Game port
+lpt* 		at acpi?		# Parallel port
+mpu*		at acpi?		# Roland MPU-401 MIDI UART
+npx*		at acpi?		# Math coprocessor
+pckbc*  	at acpi?		# PC keyboard controller
+pcppi*		at acpi?                # AT-style speaker sound
+wss* 		at acpi?		# NeoMagic 256AV in wss mode
+ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
 
 # Sony Vaio jog dial
-#spic* 		at acpi?		# Sony Programmable I/O Controller
-#wsmouse* 	at spic?
+spic* 		at acpi?		# Sony Programmable I/O Controller
+wsmouse* 	at spic?
 
 # Sony LCD brightness etc.
-#sony* 		at acpi?		# Sony Miscellaneous Controller
+sony* 		at acpi?		# Sony Miscellaneous Controller
 
 # Toshiba Libretto devices
-#vald* at acpi?
+vald* at acpi?
 
 # Plug-and-Play BIOS and attached devices
 
