@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.215 2006/11/16 01:32:44 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.215.2.1 2007/03/10 12:06:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.215 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.215.2.1 2007/03/10 12:06:05 bouyer Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2105,7 +2105,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	 * sample of what we write next?
 	 */
 	case AUDIO_WSEEK:
-		*(u_long *)addr = audio_stream_get_used(sc->sc_rustream);
+		*(u_long *)addr = audio_stream_get_used(sc->sc_pustream);
 		break;
 
 	case AUDIO_SETINFO:
