@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.8 2007/01/20 14:03:11 bouyer Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.78.2.9 2007/03/10 12:18:34 bouyer Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.8 2007/01/20 14:03:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.78.2.9 2007/03/10 12:18:34 bouyer Exp $");
 
 #include "opt_veriexec.h"
 
@@ -792,17 +792,19 @@ veriexec_clear(void *data, int file_specific)
  * Invalidate a Veriexec file entry.
  * XXX: This should be updated when per-page fingerprints are added.
  */
-void
-veriexec_purge(struct vnode *vp)
+static void
+veriexec_file_purge(struct veriexec_file_entry *vfe)
 {
-	struct veriexec_file_entry *vfe;
-
-	vfe = veriexec_get(vp);
-
 	if (vfe == NULL)
 		return;
 
 	vfe->status = FINGERPRINT_NOTEVAL;
+}
+
+void
+veriexec_purge(struct vnode *vp)
+{
+	veriexec_file_purge(veriexec_get(vp));
 }
 
 /*
@@ -921,7 +923,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 			result = KAUTH_RESULT_DEFER;
 
 			fileassoc_table_run(bvp->v_mount, veriexec_hook,
-			    (fileassoc_cb_t)veriexec_purge);
+			    (fileassoc_cb_t)veriexec_file_purge);
 
 			break;
 		case VERIEXEC_IPS:
