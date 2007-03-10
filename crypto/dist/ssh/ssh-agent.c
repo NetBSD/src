@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.28 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.152 2006/08/04 20:46:05 stevesk Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.29 2007/03/10 22:52:09 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.154 2007/02/28 00:55:30 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,14 +36,14 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.28 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.29 2007/03/10 22:52:09 christos Exp $");
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/resource.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/time.h>
 #include <sys/param.h>
 
 #include <openssl/evp.h>
@@ -424,6 +424,7 @@ reaper(void)
 		for (id = TAILQ_FIRST(&tab->idlist); id; id = nxt) {
 			nxt = TAILQ_NEXT(id, next);
 			if (id->death != 0 && now >= id->death) {
+				debug("expiring key '%s'", id->comment);
 				TAILQ_REMOVE(&tab->idlist, id, next);
 				free_identity(id);
 				tab->nentries--;
@@ -687,9 +688,6 @@ process_message(SocketEntry *e)
 {
 	u_int msg_len, type;
 	u_char *cp;
-
-	/* kill dead keys */
-	reaper();
 
 	if (buffer_len(&e->input) < 5)
 		return;		/* Incomplete message. */
@@ -1006,7 +1004,7 @@ int
 main(int ac, char **av)
 {
 	int c_flag = 0, d_flag = 0, k_flag = 0, s_flag = 0;
-	int sock, fd, ch;
+	int sock, fd, ch, result, saved_errno;
 	u_int nalloc;
 	char *shell, *format, *pidstr, *agentsocket = NULL;
 	fd_set *readsetp = NULL, *writesetp = NULL;
@@ -1016,6 +1014,7 @@ main(int ac, char **av)
 	extern char *optarg;
 	pid_t pid;
 	char pidstrbuf[1 + 3 * sizeof pid];
+	struct timeval tv;
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
@@ -1215,13 +1214,18 @@ skip:
 	nalloc = 0;
 
 	while (1) {
+		tv.tv_sec = 10;
+		tv.tv_usec = 0;
 		prepare_select(&readsetp, &writesetp, &max_fd, &nalloc);
-		if (select(max_fd + 1, readsetp, writesetp, NULL, NULL) < 0) {
-			if (errno == EINTR)
+		result = select(max_fd + 1, readsetp, writesetp, NULL, &tv);
+		saved_errno = errno;
+		reaper();	/* remove expired keys */
+		if (result < 0) {
+			if (saved_errno == EINTR)
 				continue;
-			fatal("select: %s", strerror(errno));
-		}
-		after_select(readsetp, writesetp);
+			fatal("select: %s", strerror(saved_errno));
+		} else if (result > 0)
+			after_select(readsetp, writesetp);
 	}
 	/* NOTREACHED */
 }

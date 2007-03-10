@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.21 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.91 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: sftp.c,v 1.22 2007/03/10 22:52:09 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.96 2007/01/03 04:09:15 stevesk Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.21 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.22 2007/03/10 22:52:09 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
@@ -157,6 +157,7 @@ static const struct CMD cmds[] = {
 
 int interactive_loop(int fd_in, int fd_out, char *file1, char *file2);
 
+/* ARGSUSED */
 static void
 killchild(int signo)
 {
@@ -168,6 +169,7 @@ killchild(int signo)
 	_exit(1);
 }
 
+/* ARGSUSED */
 static void
 cmd_interrupt(int signo)
 {
@@ -289,11 +291,11 @@ static char *
 path_append(char *p1, char *p2)
 {
 	char *ret;
-	int len = strlen(p1) + strlen(p2) + 2;
+	size_t len = strlen(p1) + strlen(p2) + 2;
 
 	ret = xmalloc(len);
 	strlcpy(ret, p1, len);
-	if (p1[strlen(p1) - 1] != '/')
+	if (p1[0] != '\0' && p1[strlen(p1) - 1] != '/')
 		strlcat(ret, "/", len);
 	strlcat(ret, p2, len);
 
@@ -484,7 +486,7 @@ is_dir(char *path)
 	if (stat(path, &sb) == -1)
 		return(0);
 
-	return(sb.st_mode & S_IFDIR);
+	return(S_ISDIR(sb.st_mode));
 }
 
 static int
@@ -508,7 +510,7 @@ remote_is_dir(struct sftp_conn *conn, char *path)
 		return(0);
 	if (!(a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS))
 		return(0);
-	return(a->perm & S_IFDIR);
+	return(S_ISDIR(a->perm));
 }
 
 static int
@@ -970,6 +972,7 @@ parse_args(const char **cpp, int *pflag, int *lflag, int *iflag,
 	case I_CHOWN:
 	case I_CHGRP:
 		/* Get numeric arg (mandatory) */
+		errno = 0;
 		l = strtol(cp, &cp2, base);
 		if (cp2 == cp || ((l == LONG_MIN || l == LONG_MAX) &&
 		    errno == ERANGE) || l < 0) {
@@ -1537,7 +1540,7 @@ main(int argc, char **argv)
 				fprintf(stderr, "Missing username\n");
 				usage();
 			}
-			addargs(&args, "-l%s",userhost);
+			addargs(&args, "-l%s", userhost);
 		}
 
 		if ((cp = colon(host)) != NULL) {

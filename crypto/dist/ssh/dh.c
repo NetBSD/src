@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.c,v 1.15 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.42 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: dh.c,v 1.16 2007/03/10 22:52:05 christos Exp $	*/
+/* $OpenBSD: dh.c,v 1.44 2006/11/07 13:02:07 markus Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.15 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: dh.c,v 1.16 2007/03/10 22:52:05 christos Exp $");
 
 #include <sys/param.h>
 

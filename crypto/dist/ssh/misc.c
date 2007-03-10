@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.18 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.64 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: misc.c,v 1.19 2007/03/10 22:52:06 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.65 2006/11/23 01:35:11 ray Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005,2006 Damien Miller.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.18 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.19 2007/03/10 22:52:06 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -611,6 +611,8 @@ read_keyfile_line(FILE *f, const char *filename, char *buf, size_t bufsz,
    u_long *lineno)
 {
 	while (fgets(buf, bufsz, f) != NULL) {
+		if (buf[0] == '\0')
+			continue;
 		(*lineno)++;
 		if (buf[strlen(buf) - 1] == '\n' || feof(f)) {
 			return 0;

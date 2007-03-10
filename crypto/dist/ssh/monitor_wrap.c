@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.16 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.54 2006/08/12 20:46:46 miod Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.17 2007/03/10 22:52:07 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.55 2007/02/19 10:45:58 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.16 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.17 2007/03/10 22:52:07 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.16 2006/09/28 21:22:14 christos Exp $");
 
 #include "channels.h"
 #include "session.h"
+#include "servconf.h"
 
 /* Imports */
 extern int compat20;
@@ -78,9 +79,7 @@ extern z_stream outgoing_stream;
 extern struct monitor *pmonitor;
 extern Buffer input, output;
 extern Buffer loginmsg;
-#ifdef USE_PAM
 extern ServerOptions options;
-#endif
 
 int
 mm_is_monitor(void)
@@ -205,7 +204,8 @@ mm_getpwnamallow(const char *username)
 {
 	Buffer m;
 	struct passwd *pw;
-	u_int pwlen;
+	u_int len;
+	ServerOptions *newopts;
 
 	debug3("%s entering", __func__);
 
@@ -221,8 +221,8 @@ mm_getpwnamallow(const char *username)
 		buffer_free(&m);
 		return (NULL);
 	}
-	pw = buffer_get_string(&m, &pwlen);
-	if (pwlen != sizeof(struct passwd))
+	pw = buffer_get_string(&m, &len);
+	if (len != sizeof(struct passwd))
 		fatal("%s: struct passwd size mismatch", __func__);
 	pw->pw_name = buffer_get_string(&m, NULL);
 	pw->pw_passwd = buffer_get_string(&m, NULL);
@@ -230,6 +230,16 @@ mm_getpwnamallow(const char *username)
 	pw->pw_class = buffer_get_string(&m, NULL);
 	pw->pw_dir = buffer_get_string(&m, NULL);
 	pw->pw_shell = buffer_get_string(&m, NULL);
+
+	/* copy options block as a Match directive may have changed some */
+	newopts = buffer_get_string(&m, &len);
+	if (len != sizeof(*newopts))
+		fatal("%s: option block size mismatch", __func__);
+	if (newopts->banner != NULL)
+		newopts->banner = buffer_get_string(&m, NULL);
+	copy_set_server_options(&options, newopts, 1);
+	xfree(newopts);
+
 	buffer_free(&m);
 
 	return (pw);
@@ -720,6 +730,7 @@ mm_do_pam_account(void)
 {
 	Buffer m;
 	u_int ret;
+	char *msg;
 
 	debug3("%s entering", __func__);
 	if (!options.use_pam)
@@ -731,6 +742,9 @@ mm_do_pam_account(void)
 	mm_request_receive_expect(pmonitor->m_recvfd,
 	    MONITOR_ANS_PAM_ACCOUNT, &m);
 	ret = buffer_get_int(&m);
+	msg = buffer_get_string(&m, NULL);
+	buffer_append(&loginmsg, msg, strlen(msg));
+	xfree(msg);
 
 	buffer_free(&m);
 
@@ -766,7 +780,8 @@ mm_sshpam_query(void *ctx, char **name, char **info,
     u_int *num, char ***prompts, u_int **echo_on)
 {
 	Buffer m;
-	int i, ret;
+	u_int i;
+	int ret;
 
 	debug3("%s", __func__);
 	buffer_init(&m);
@@ -778,8 +793,11 @@ mm_sshpam_query(void *ctx, char **name, char **info,
 	*name = buffer_get_string(&m, NULL);
 	*info = buffer_get_string(&m, NULL);
 	*num = buffer_get_int(&m);
-	*prompts = xmalloc((*num + 1) * sizeof(char *));
-	*echo_on = xmalloc((*num + 1) * sizeof(u_int));
+	if (*num > PAM_MAX_NUM_MSG)
+		fatal("%s: received %u PAM messages, expected <= %u",
+		    __func__, *num, PAM_MAX_NUM_MSG);
+	*prompts = xcalloc((*num + 1), sizeof(char *));
+	*echo_on = xcalloc((*num + 1), sizeof(u_int));
 	for (i = 0; i < *num; ++i) {
 		(*prompts)[i] = buffer_get_string(&m, NULL);
 		(*echo_on)[i] = buffer_get_int(&m);
@@ -792,7 +810,8 @@ int
 mm_sshpam_respond(void *ctx, u_int num, char **resp)
 {
 	Buffer m;
-	int i, ret;
+	u_int i;
+	int ret;
 
 	debug3("%s", __func__);
 	buffer_init(&m);
