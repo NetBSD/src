@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.45 2007/03/04 06:02:17 christos Exp $	*/
+/*	$NetBSD: azalia.c,v 1.46 2007/03/10 16:39:37 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.45 2007/03/04 06:02:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.46 2007/03/10 16:39:37 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1231,7 +1231,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 	const convgroup_t *group;
 	uint32_t bits_rates;
 	int prev_dac, prev_adc;
-	int pvariation, rvariation;
+	int variation;
 	int nbits, c, chan, i, err;
 	nid_t nid;
 
@@ -1255,7 +1255,7 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		    XNAME(this->az), bits_rates);
 		return -1;
 	}
-	pvariation = group->nconv * nbits;
+	variation = group->nconv * nbits;
 
 	prev_adc = this->adcs.cur;
 	this->adcs.cur = newadc;
@@ -1277,13 +1277,13 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		    XNAME(this->az), bits_rates);
 		return -1;
 	}
-	rvariation = group->nconv * nbits;
+	variation += group->nconv * nbits;
 
 	if (this->formats != NULL)
 		free(this->formats, M_DEVBUF);
 	this->nformats = 0;
-	this->formats = malloc(sizeof(struct audio_format) *
-	    (pvariation + rvariation), M_DEVBUF, M_ZERO | M_NOWAIT);
+	this->formats = malloc(sizeof(struct audio_format) * variation,
+	    M_DEVBUF, M_ZERO | M_NOWAIT);
 	if (this->formats == NULL) {
 		aprint_error("%s: out of memory in %s\n",
 		    XNAME(this->az), __func__);
@@ -1326,6 +1326,15 @@ azalia_codec_construct_format(codec_t *this, int newdac, int newadc)
 		snprintf(flagbuf, FLAGBUFLEN, "%s: recording: ", XNAME(this->az));
 		azalia_widget_print_audio(&this->w[group->conv[0]], flagbuf, chan);
 	}
+
+#ifdef DIAGNOSTIC
+	if (this->nformats > variation) {
+		aprint_error("%s: Internal error: the format buffer is too small: "
+		    "nformats=%d variation=%d\n", XNAME(this->az),
+		    this->nformats, variation);
+		return ENOMEM;
+	}
+#endif
 
 	err = auconv_create_encodings(this->formats, this->nformats,
 	    &this->encodings);
@@ -1383,6 +1392,7 @@ azalia_codec_add_format(codec_t *this, int chan, int valid, int prec,
 	default:
 		f->channel_mask = 0;
 	}
+	f->frequency_type = 0;
 	if (rates & COP_PCM_R80)
 		f->frequency[f->frequency_type++] = 8000;
 	if (rates & COP_PCM_R110)
