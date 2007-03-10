@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.19 2007/03/10 17:47:21 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.20 2007/03/10 18:30:45 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.19 2007/03/10 17:47:21 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.20 2007/03/10 18:30:45 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -164,7 +164,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 			rtime = rbuf;
 			for (rp = rbuf; *rp; rp++)
 				if (*rp == '_')
-					rp[-1] = ' ';
+					*rp = ' ';
 		}
 		else
 			rtime = "1 month";
