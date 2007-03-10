@@ -1,4 +1,4 @@
-/*	$NetBSD: stdethers.c,v 1.15 2002/11/30 03:10:59 lukem Exp $	*/
+/*	$NetBSD: stdethers.c,v 1.16 2007/03/10 01:21:08 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdethers.c,v 1.15 2002/11/30 03:10:59 lukem Exp $");
+__RCSID("$NetBSD: stdethers.c,v 1.16 2007/03/10 01:21:08 hubertf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -42,7 +42,6 @@ __RCSID("$NetBSD: stdethers.c,v 1.15 2002/11/30 03:10:59 lukem Exp $");
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <netinet/in.h>
-#include <ctype.h>
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
@@ -92,7 +91,7 @@ main(int argc, char *argv[])
 			    (unsigned long)line_no, p);
 	}
 
-	exit(0);
+	return 0;
 }
 
 void
