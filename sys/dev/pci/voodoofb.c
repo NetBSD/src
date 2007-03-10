@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.5 2006/05/04 02:18:11 simonb Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.5.20.1 2007/03/10 18:43:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5 2006/05/04 02:18:11 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5.20.1 2007/03/10 18:43:43 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.5 2006/05/04 02:18:11 simonb Exp $");
 #include <dev/wsfont/wsfont.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wscons/wsdisplay_vconsvar.h>
+#include <machine/autoconf.h>
 
 #include "opt_wsemul.h"
 
