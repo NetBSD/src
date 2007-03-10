@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.95 2007/03/09 07:10:42 riz Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.96 2007/03/10 12:07:46 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2055,4 +2055,23 @@ sys/arch/i386/conf/INSTALL_LARGE		1.1
 	distrib for the 'iso-image target'; restrict 'iso-image'
 	in etc/ to mac68k.
 	[bouyer, ticket #494]
+
+sys/arch/m68k/m68k/vm_machdep.c			1.18
+
+	Kernel threads were running at splhigh on m68k systems because
+	the status register was inherited from proc0.  Set the new
+	process's status register to PSL_LOWIPL.  Raidframe reconstruction
+	no longer causes my Amiga to lose time.
+	[mhitch, ticket #498]
+
+sys/dev/audio.c					1.221
+
+	return information about playing buffer, not recording bufer,
+	for AUDIO_WSEEK. Fix PR#35171.
+	[kent, ticket #499]
+
+share/man/man5/fstab.5				1.33
+
+	lfs filesystems work with fstab(5), sync man page.
+	[mjf, ticket #500]
 
