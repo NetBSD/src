@@ -1,5 +1,5 @@
-/*	$NetBSD: kexdhc.c,v 1.6 2006/09/28 21:22:14 christos Exp $	*/
-/* $OpenBSD: kexdhc.c,v 1.9 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: kexdhc.c,v 1.7 2007/03/10 22:52:06 christos Exp $	*/
+/* $OpenBSD: kexdhc.c,v 1.11 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexdhc.c,v 1.6 2006/09/28 21:22:14 christos Exp $");
+__RCSID("$NetBSD: kexdhc.c,v 1.7 2007/03/10 22:52:06 christos Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -50,7 +50,8 @@ kexdh_client(Kex *kex)
 	Key *server_host_key;
 	u_char *server_host_key_blob = NULL, *signature = NULL;
 	u_char *kbuf, *hash;
-	u_int klen, kout, slen, sbloblen, hashlen;
+	u_int klen, slen, sbloblen, hashlen;
+	int kout;
 
 	/* generate and send 'e', client DH public key */
 	switch (kex->kex_type) {
@@ -112,13 +113,15 @@ kexdh_client(Kex *kex)
 
 	klen = DH_size(dh);
 	kbuf = xmalloc(klen);
-	kout = DH_compute_key(kbuf, dh_server_pub, dh);
+	if ((kout = DH_compute_key(kbuf, dh_server_pub, dh)) < 0)
+		fatal("DH_compute_key: failed");
 #ifdef DEBUG_KEXDH
 	dump_digest("shared secret", kbuf, kout);
 #endif
 	if ((shared_secret = BN_new()) == NULL)
 		fatal("kexdh_client: BN_new failed");
-	BN_bin2bn(kbuf, kout, shared_secret);
+	if (BN_bin2bn(kbuf, kout, shared_secret) == NULL)
+		fatal("kexdh_client: BN_bin2bn failed");
 	memset(kbuf, 0, klen);
 	xfree(kbuf);
 

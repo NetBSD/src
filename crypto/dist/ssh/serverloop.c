@@ -1,5 +1,5 @@
-/*	$NetBSD: serverloop.c,v 1.28 2006/09/28 21:22:15 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.144 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: serverloop.c,v 1.29 2007/03/10 22:52:09 christos Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.145 2006/10/11 12:38:03 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.28 2006/09/28 21:22:15 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.29 2007/03/10 22:52:09 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -245,8 +245,10 @@ client_alive_check(void)
 	int channel_id;
 
 	/* timeout, check to see how many we have had */
-	if (++client_alive_timeouts > options.client_alive_count_max)
-		packet_disconnect("Timeout, your session not responding.");
+	if (++client_alive_timeouts > options.client_alive_count_max) {
+		logit("Timeout, client not responding.");
+		cleanup_exit(255);
+	}
 
 	/*
 	 * send a bogus global/channel request with "wantreply",
