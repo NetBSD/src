@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2005/01/19 20:00:45 xtraeme Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,12 +35,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.17 2005/01/19 20:00:45 xtraeme Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>

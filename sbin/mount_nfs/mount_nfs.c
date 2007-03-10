@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.57 2006/12/27 12:43:10 yamt Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.58 2007/03/10 00:30:37 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.57 2006/12/27 12:43:10 yamt Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.58 2007/03/10 00:30:37 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,6 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.57 2006/12/27 12:43:10 yamt Exp $");
 
 #include <arpa/inet.h>
 
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
