@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.98 2007/03/01 21:30:50 martin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.99 2007/03/10 16:42:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -306,11 +306,11 @@ x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
 
-#ifndef OMIT_DKTYPENUMS
+#ifndef _LOCORE
 #define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
 enum { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };
 #undef	DKTYPE_NUMS
-#endif /* OMIT_DKTYPENUMS */
+#endif
 
 #ifdef DKTYPENAMES
 #define	DKTYPE_NAMES(tag, number, name) ARRAY_INIT(number,name),
@@ -350,11 +350,11 @@ x(VINUM,   23, "vinum",      NULL,    NULL)   /* Vinum */ \
 x(UDF,     24, "UDF",        NULL,   "udf")  /* UDF */ \
 x(SYSVBFS, 25, "SysVBFS",    NULL,  "sysvbfs")/* System V boot file system */ \
 
-#ifndef OMIT_FSTYPENUMS
+#ifndef _LOCORE
 #define	FS_TYPENUMS(tag, number, name, fsck, mount) __CONCAT(FS_,tag=number),
 enum { FSTYPE_DEFN(FS_TYPENUMS) FSMAXTYPES };
 #undef	FS_TYPENUMS
-#endif /* OMIT_FSTYPENUMS */
+#endif
 
 #ifdef	FSTYPENAMES
 #define	FS_TYPENAMES(tag, number, name, fsck, mount) ARRAY_INIT(number,name),
