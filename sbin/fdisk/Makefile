@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.36 2006/05/12 01:18:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.37 2007/03/10 18:22:04 apb Exp $
 
+WARS=	4
 PROG=	fdisk 
 SRCS=	fdisk.c
 
