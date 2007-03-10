@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.96 2007/03/10 12:07:46 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.97 2007/03/10 12:18:57 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2074,4 +2074,12 @@ share/man/man5/fstab.5				1.33
 
 	lfs filesystems work with fstab(5), sync man page.
 	[mjf, ticket #500]
+
+sys/kern/kern_verifiedexec.c			patch
+sys/uvm/uvm_mmap.c				1.104
+
+	If Veriexec prevents indirect execution of the binary, in addition
+	to just blocking the mmap() if exec bit is requested, also strip
+	exec bit from maxprot for further mprotect() calls.
+	[elad, ticket #407]
 
