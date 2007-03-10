@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor_wrap.c,v 1.17 2007/03/10 22:52:07 christos Exp $	*/
+/*	$NetBSD: monitor_wrap.c,v 1.18 2007/03/10 23:05:25 christos Exp $	*/
 /* $OpenBSD: monitor_wrap.c,v 1.55 2007/02/19 10:45:58 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_wrap.c,v 1.17 2007/03/10 22:52:07 christos Exp $");
+__RCSID("$NetBSD: monitor_wrap.c,v 1.18 2007/03/10 23:05:25 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: monitor_wrap.c,v 1.17 2007/03/10 22:52:07 christos Exp $");
 #include "monitor_fdpass.h"
 #ifdef USE_PAM
 #include "servconf.h"
+#include <security/pam_appl.h>
 #endif
 #include "misc.h"
 
