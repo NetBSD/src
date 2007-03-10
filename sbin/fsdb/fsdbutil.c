@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.16 2005/08/19 02:07:19 christos Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.17 2007/03/10 01:16:17 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.16 2005/08/19 02:07:19 christos Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.17 2007/03/10 01:16:17 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: fsdbutil.c,v 1.16 2005/08/19 02:07:19 christos Exp $");
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/mount.h>
-#include <ctype.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
