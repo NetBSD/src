@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.1.2.9 2007/03/09 15:16:25 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.1.2.10 2007/03/10 13:40:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.9 2007/03/09 15:16:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.1.2.10 2007/03/10 13:40:49 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -799,7 +799,7 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup") {
 		CTLFLAG_PERMANENT,
 		CTLTYPE_STRING, "name", NULL,
 		NULL, 0, __UNCONST("4.4BSD"), 0,
-		CTL_CREATE, CTL_EOL);
+		CTL_KERN, KERN_SCHED, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT,
 		CTLTYPE_INT, "ccpu",
