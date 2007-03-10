@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.23 2004/11/05 13:53:29 scw Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.23.10.1 2007/03/10 11:44:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.23 2004/11/05 13:53:29 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.23.10.1 2007/03/10 11:44:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,7 @@ USB_MATCH(uftdi)
 	if (uaa->vendor == USB_VENDOR_FTDI &&
 	    (uaa->product == USB_PRODUCT_FTDI_SERIAL_8U100AX ||
 	     uaa->product == USB_PRODUCT_FTDI_SERIAL_8U232AM ||
+	     uaa->product == USB_PRODUCT_FTDI_SERIAL_2232C ||
 	     uaa->product == USB_PRODUCT_FTDI_SEMC_DSS20 ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_LK202_24_USB ||
 	     uaa->product == USB_PRODUCT_FTDI_LCD_MX200_USB ||
