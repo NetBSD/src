@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.58 2007/03/10 11:53:20 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.59 2007/03/10 18:54:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -2982,4 +2982,10 @@ share/man/man5/fstab.5				1.33
 
 	lfs filesystems work with fstab(5), sync man page.
 	[mjf, ticket #1679]
+
+sys/dev/pci/if_re_pci.c				1.25-1.26
+
+	Add an entry to match hwrev RTK_HWREV_8100E_SPIN2 too.
+	Also check both I/O and memory space on unmap. Pointer out by yamt.
+	[tsutsui, ticket #1680]
 
