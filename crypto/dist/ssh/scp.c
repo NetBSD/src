@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.1.1.20 2006/09/28 21:15:17 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.155 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: scp.c,v 1.1.1.21 2007/03/10 22:35:44 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.156 2007/01/22 13:06:21 djm Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -368,7 +368,7 @@ main(int argc, char **argv)
 	if ((pwd = getpwuid(userid = getuid())) == NULL)
 		fatal("unknown user %u", (u_int) userid);
 
-	if (!isatty(STDERR_FILENO))
+	if (!isatty(STDOUT_FILENO))
 		showprogress = 0;
 
 	remin = STDIN_FILENO;

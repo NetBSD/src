@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-chall.c,v 1.1.1.14 2006/09/28 21:15:00 christos Exp $	*/
-/* $OpenBSD: auth2-chall.c,v 1.31 2006/08/05 08:28:24 dtucker Exp $ */
+/*	$NetBSD: auth2-chall.c,v 1.1.1.15 2007/03/10 22:35:28 christos Exp $	*/
+/* $OpenBSD: auth2-chall.c,v 1.32 2007/01/03 03:01:40 stevesk Exp $ */
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2001 Per Allansson.  All rights reserved.
@@ -174,7 +174,7 @@ auth2_challenge_stop(Authctxt *authctxt)
 {
 	/* unregister callback */
 	dispatch_set(SSH2_MSG_USERAUTH_INFO_RESPONSE, NULL);
-	if (authctxt->kbdintctxt != NULL)  {
+	if (authctxt->kbdintctxt != NULL) {
 		kbdint_free(authctxt->kbdintctxt);
 		authctxt->kbdintctxt = NULL;
 	}

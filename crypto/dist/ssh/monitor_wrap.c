@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.c,v 1.1.1.8 2006/09/28 21:15:13 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.c,v 1.54 2006/08/12 20:46:46 miod Exp $ */
+/*	$NetBSD: monitor_wrap.c,v 1.1.1.9 2007/03/10 22:35:41 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.c,v 1.55 2007/02/19 10:45:58 dtucker Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -64,6 +64,7 @@
 
 #include "channels.h"
 #include "session.h"
+#include "servconf.h"
 
 /* Imports */
 extern int compat20;
@@ -73,6 +74,7 @@ extern z_stream outgoing_stream;
 extern struct monitor *pmonitor;
 extern Buffer input, output;
 extern Buffer loginmsg;
+extern ServerOptions options;
 
 int
 mm_is_monitor(void)
@@ -197,7 +199,8 @@ mm_getpwnamallow(const char *username)
 {
 	Buffer m;
 	struct passwd *pw;
-	u_int pwlen;
+	u_int len;
+	ServerOptions *newopts;
 
 	debug3("%s entering", __func__);
 
@@ -213,8 +216,8 @@ mm_getpwnamallow(const char *username)
 		buffer_free(&m);
 		return (NULL);
 	}
-	pw = buffer_get_string(&m, &pwlen);
-	if (pwlen != sizeof(struct passwd))
+	pw = buffer_get_string(&m, &len);
+	if (len != sizeof(struct passwd))
 		fatal("%s: struct passwd size mismatch", __func__);
 	pw->pw_name = buffer_get_string(&m, NULL);
 	pw->pw_passwd = buffer_get_string(&m, NULL);
@@ -222,6 +225,16 @@ mm_getpwnamallow(const char *username)
 	pw->pw_class = buffer_get_string(&m, NULL);
 	pw->pw_dir = buffer_get_string(&m, NULL);
 	pw->pw_shell = buffer_get_string(&m, NULL);
+
+	/* copy options block as a Match directive may have changed some */
+	newopts = buffer_get_string(&m, &len);
+	if (len != sizeof(*newopts))
+		fatal("%s: option block size mismatch", __func__);
+	if (newopts->banner != NULL)
+		newopts->banner = buffer_get_string(&m, NULL);
+	copy_set_server_options(&options, newopts, 1);
+	xfree(newopts);
+
 	buffer_free(&m);
 
 	return (pw);

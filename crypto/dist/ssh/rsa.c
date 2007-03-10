@@ -1,5 +1,5 @@
-/*	$NetBSD: rsa.c,v 1.1.1.7 2006/09/28 21:15:16 christos Exp $	*/
-/* $OpenBSD: rsa.c,v 1.28 2006/08/03 03:34:42 deraadt Exp $ */
+/*	$NetBSD: rsa.c,v 1.1.1.8 2007/03/10 22:35:43 christos Exp $	*/
+/* $OpenBSD: rsa.c,v 1.29 2006/11/06 21:25:28 markus Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -89,7 +89,8 @@ rsa_public_encrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	    RSA_PKCS1_PADDING)) <= 0)
 		fatal("rsa_public_encrypt() failed");
 
-	BN_bin2bn(outbuf, len, out);
+	if (BN_bin2bn(outbuf, len, out) == NULL)
+		fatal("rsa_public_encrypt: BN_bin2bn failed");
 
 	memset(outbuf, 0, olen);
 	memset(inbuf, 0, ilen);
@@ -114,7 +115,8 @@ rsa_private_decrypt(BIGNUM *out, BIGNUM *in, RSA *key)
 	    RSA_PKCS1_PADDING)) <= 0) {
 		error("rsa_private_decrypt() failed");
 	} else {
-		BN_bin2bn(outbuf, len, out);
+		if (BN_bin2bn(outbuf, len, out) == NULL)
+			fatal("rsa_private_decrypt: BN_bin2bn failed");
 	}
 	memset(outbuf, 0, olen);
 	memset(inbuf, 0, ilen);
@@ -135,11 +137,11 @@ rsa_generate_additional_parameters(RSA *rsa)
 	if ((ctx = BN_CTX_new()) == NULL)
 		fatal("rsa_generate_additional_parameters: BN_CTX_new failed");
 
-	BN_sub(aux, rsa->q, BN_value_one());
-	BN_mod(rsa->dmq1, rsa->d, aux, ctx);
-
-	BN_sub(aux, rsa->p, BN_value_one());
-	BN_mod(rsa->dmp1, rsa->d, aux, ctx);
+	if ((BN_sub(aux, rsa->q, BN_value_one()) == 0) ||
+	    (BN_mod(rsa->dmq1, rsa->d, aux, ctx) == 0) ||
+	    (BN_sub(aux, rsa->p, BN_value_one()) == 0) ||
+	    (BN_mod(rsa->dmp1, rsa->d, aux, ctx) == 0))
+		fatal("rsa_generate_additional_parameters: BN_sub/mod failed");
 
 	BN_clear_free(aux);
 	BN_CTX_free(ctx);
