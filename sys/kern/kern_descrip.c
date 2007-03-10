@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.152 2007/03/09 14:11:24 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.153 2007/03/10 16:50:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.152 2007/03/09 14:11:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.153 2007/03/10 16:50:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,6 +715,27 @@ sys_close(struct lwp *l, void *v, register_t *retval)
 
 /*
  * Return status information about a file descriptor.
+ * Common function for compat code.
+ */
+int
+do_sys_fstat(struct lwp *l, int fd, struct stat *sb)
+{
+	struct file	*fp;
+	int		error;
+
+	fp = fd_getfile(l->l_proc->p_fd, fd);
+	if (fp == NULL)
+		return EBADF;
+
+	FILE_USE(fp);
+	error = (*fp->f_ops->fo_stat)(fp, sb, l);
+	FILE_UNUSE(fp, l);
+
+	return error;
+}
+
+/*
+ * Return status information about a file descriptor.
  */
 /* ARGSUSED */
 int
@@ -724,26 +745,13 @@ sys___fstat30(struct lwp *l, void *v, register_t *retval)
 		syscallarg(int)			fd;
 		syscallarg(struct stat *)	sb;
 	} */ *uap = v;
-	int		fd;
-	struct filedesc	*fdp;
-	struct file	*fp;
-	struct proc	*p;
-	struct stat	ub;
+	struct stat	sb;
 	int		error;
 
-	p = l->l_proc;
-	fd = SCARG(uap, fd);
-	fdp = p->p_fd;
-
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
-		return (EBADF);
-
-	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
-	FILE_UNUSE(fp, l);
+	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
 
 	if (error == 0)
-		error = copyout(&ub, SCARG(uap, sb), sizeof(ub));
+		error = copyout(&sb, SCARG(uap, sb), sizeof(sb));
 
 	return (error);
 }
