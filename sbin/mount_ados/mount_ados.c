@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.24 2007/01/17 21:59:49 hubertf Exp $ */
+/* $NetBSD: mount_ados.c,v 1.25 2007/03/10 00:30:36 hubertf Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,13 +36,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.24 2007/01/17 21:59:49 hubertf Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.25 2007/03/10 00:30:36 hubertf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <ctype.h>
 #include <err.h>
 #include <grp.h>
 #include <pwd.h>
