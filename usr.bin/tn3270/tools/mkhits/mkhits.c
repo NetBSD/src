@@ -1,4 +1,4 @@
-/*	$NetBSD: mkhits.c,v 1.9 2003/08/07 11:16:42 agc Exp $	*/
+/*	$NetBSD: mkhits.c,v 1.10 2007/03/10 00:22:57 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,7 +31,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 
 #if defined(__COPYRIGHT) && !defined(lint)
 __COPYRIGHT(
@@ -43,7 +42,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)mkhits.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkhits.c,v 1.9 2003/08/07 11:16:42 agc Exp $");
+__RCSID("$NetBSD: mkhits.c,v 1.10 2007/03/10 00:22:57 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,9 +71,7 @@ __RCSID("$NetBSD: mkhits.c,v 1.9 2003/08/07 11:16:42 agc Exp $");
 int main(int, char *[]);
 
 int
-main(argc, argv)
-int	argc;
-char	*argv[];
+main(int argc, char *argv[])
 {
     int scancode;
     int empty;
