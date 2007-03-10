@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_krb5.8,v 1.6 2005/02/28 10:32:13 wiz Exp $
+.\" $NetBSD: pam_krb5.8,v 1.7 2007/03/10 17:47:21 christos Exp $
 .\" $FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.8,v 1.6 2001/11/24 23:41:32 dd Exp $
 .Dd February 27, 2005
 .Dt PAM_KRB5 8
@@ -80,6 +80,11 @@ This option is similar to the
 .Cm use_first_pass
 option, except that if the previously obtained password fails, the
 user is prompted for another password.
+.It Cm renewable Ns = Ns Ar timeperiod
+Obtain renewanle Kerberos credentials for the user.
+The renewable time can be specified, or it defaults to one month.
+Since spaces are not allowed in the pam configuration time, underscores
+are used to form parseable times (eg.  1_month).
 .It Cm forwardable
 Obtain forwardable Kerberos credentials for the user.
 .It Cm no_ccache

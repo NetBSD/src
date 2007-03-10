@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.18 2006/11/03 18:55:40 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.19 2007/03/10 17:47:21 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.18 2006/11/03 18:55:40 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.19 2007/03/10 17:47:21 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,6 +69,7 @@ __RCSID("$NetBSD: pam_krb5.c,v 1.18 2006/11/03 18:55:40 christos Exp $");
 
 #include <krb5/krb5.h>
 #include <krb5/com_err.h>
+#include <krb5/parse_time.h>
 
 #define	PAM_SM_AUTH
 #define	PAM_SM_ACCOUNT
@@ -94,6 +95,7 @@ static void	compat_free_data_contents(krb5_context, krb5_data *);
 #define PAM_OPT_CCACHE		"ccache"
 #define PAM_OPT_DEBUG		"debug"
 #define PAM_OPT_FORWARDABLE	"forwardable"
+#define PAM_OPT_RENEWABLE	"renewable"
 #define PAM_OPT_NO_CCACHE	"no_ccache"
 #define PAM_OPT_REUSE_CCACHE	"reuse_ccache"
 
@@ -118,6 +120,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	char *principal, *princ_name, *ccache_name, luser[32], *srvdup;
 	char password_prompt[80];
 	char pwbuf[1024];
+	const char *rtime;
 
 	princ_name = NULL;
 	retval = pam_get_user(pamh, &user, USER_PROMPT);
@@ -151,6 +154,25 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 
 	if (openpam_get_option(pamh, PAM_OPT_FORWARDABLE))
 		krb5_get_init_creds_opt_set_forwardable(&opts, 1);
+
+	if ((rtime = openpam_get_option(pamh, PAM_OPT_RENEWABLE)) != NULL) {
+		krb5_deltat renew;
+		char rbuf[80], *rp;
+
+		if (*rtime) {
+			(void)strlcpy(rbuf, rtime, sizeof(rbuf));
+			rtime = rbuf;
+			for (rp = rbuf; *rp; rp++)
+				if (*rp == '_')
+					rp[-1] = ' ';
+		}
+		else
+			rtime = "1 month";
+		renew = parse_time(rtime, "s");
+		krb5_get_init_creds_opt_set_renew_life(&opts, renew);
+	}
+
+
 
 	PAM_LOG("Credentials initialised");
 
