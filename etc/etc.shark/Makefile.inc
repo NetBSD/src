@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2003/01/03 15:34:39 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2007/03/10 17:57:41 jmmv Exp $
 #
 #	etc.shark/Makefile.inc -- shark-specific etc Makefile targets
 #
@@ -11,4 +11,6 @@ BUILD_KERNELS=		INSTALL
 INSTALLATION_DIRS+=	installation/instkernel
 
 snap_md_post:
+	cd ${NETBSDSRCDIR}/distrib/shark/instkernel/instkernel && \
+	    ${MAKE} release-aout-instkernel
 	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/instkernel '*.gz'
