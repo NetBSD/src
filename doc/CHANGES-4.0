@@ -1,4 +1,4 @@
-#       $NetBSD: CHANGES-4.0,v 1.1.4.97 2007/03/10 12:18:57 bouyer Exp $
+#       $NetBSD: CHANGES-4.0,v 1.1.4.98 2007/03/10 18:44:18 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 4.0 branch on
 1 December 2006 until the 4.0 release:
@@ -2082,4 +2082,46 @@ sys/uvm/uvm_mmap.c				1.104
 	to just blocking the mmap() if exec bit is requested, also strip
 	exec bit from maxprot for further mprotect() calls.
 	[elad, ticket #407]
+
+sys/dev/pci/if_re_pci.c				1.25-1.26
+
+	Add an entry to match hwrev RTK_HWREV_8100E_SPIN2 too.
+	Check both I/O and memory space on unmap. Pointer out by yamt.
+	[tsutsui, ticket #502]
+
+common/lib/libc/string/strsep.c			1.2
+
+	don't do the weak symbol thing in kernel context.
+	[chs, ticket #504]
+
+lib/libc/rpc/clnt_dg.c				1.21
+
+	switch from kqueue() back to pollts() so that signals will be unblocked
+	while we're sleeping.  keep the new timeout logic, though.
+	as discussed on source-changes some 15 months ago.
+	[chs, ticket #505]
+
+sys/nfs/nfs_serv.c				1.124
+
+	After freeing cookies, set the pointer to NULL to prevent
+	dangling reuse.
+	[chs, ticket #506]
+
+sys/arch/vax/include/pmap.h			1.69
+
+	in pmap_extract(), check for the PTE being valid in addition to
+	the PTP being valid when deciding if a user mapping exists.
+	[chs, ticket #507]
+
+sys/ufs/ufs/ufs_vnops.c				1.150
+
+	In readdir, in case cookies was already allocated but is later free'd
+	due to an error, reset value of cookies to NULL to avoid confusing
+	callers.  should fix kern/35728
+	[chs, ticket #508]
+
+sys/dev/pci/voodoofb.c				patch
+
+	Add missing include; should fix macppc build.
+	[macallan, ticket #503]
 
