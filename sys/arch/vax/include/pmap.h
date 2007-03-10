@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.68 2006/07/08 00:26:21 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.68.8.1 2007/03/10 18:39:35 bouyer Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -164,10 +164,11 @@ extern	struct pmap kernel_pmap_store;
 __inline static boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 {
-	paddr_t pa = 0;
 	int	*pte, sva;
 
 	if (va & KERNBASE) {
+		paddr_t pa;
+
 		pa = kvtophys(va); /* Is 0 if not mapped */
 		if (pap)
 			*pap = pa;
@@ -186,7 +187,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			goto fail;
 		pte = (int *)pmap->pm_p1br;
 	}
-	if (kvtopte(&pte[sva])->pg_pfn) {
+	if (kvtopte(&pte[sva])->pg_pfn && pte[sva]) {
 		if (pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
 		return (TRUE);
