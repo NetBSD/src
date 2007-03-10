@@ -1,4 +1,4 @@
-/*	$NetBSD: firepower_intr.c,v 1.9 2006/11/24 21:20:05 wiz Exp $	*/
+/*	$NetBSD: firepower_intr.c,v 1.10 2007/03/10 14:15:48 jmmv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.9 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firepower_intr.c,v 1.10 2007/03/10 14:15:48 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,11 +749,9 @@ firepower_pciide_compat_intr_establish(void *v, struct device *dev,
 void
 firepower_do_softnet()
 {
-	int pisr, s;
+	int s;
 
 	s = splsoftnet();
-	pisr = netisr;
-	netisr = 0;
-	softnet(pisr);
+	softintr__run(IPL_SOFTNET);
 	splx(s);
 }
