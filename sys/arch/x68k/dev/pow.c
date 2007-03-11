@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.15 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: pow.c,v 1.16 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.15 2007/03/04 06:01:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.16 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ const struct cdevsw pow_cdevsw = {
 };
 
 /* ARGSUSED */
-void 
+void
 powattach(int num)
 {
 	int minor;
@@ -121,7 +121,7 @@ powattach(int num)
 }
 
 /*ARGSUSED*/
-int 
+int
 powopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
@@ -142,7 +142,7 @@ powopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int 
+int
 powclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
@@ -157,7 +157,7 @@ powclose(dev_t dev, int flags, int mode, struct lwp *l)
 #define SRAMINT(offset)	(*((volatile int *) (&sramtop[offset])))
 #define RTCWAIT DELAY(100)
 
-static int 
+static int
 setalarm(struct x68k_alarminfo *bp)
 {
 	int s, ontime;
@@ -224,7 +224,7 @@ setalarm(struct x68k_alarminfo *bp)
 
 
 /*ARGSUSED*/
-int 
+int
 powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
@@ -283,7 +283,7 @@ powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return 0;
 }
 
-void 
+void
 powintr(void)
 {
 	int sw;
@@ -301,7 +301,7 @@ powintr(void)
 	splx(s);
 }
 
-static void 
+static void
 pow_check_switch(void *dummy)
 {
 	extern int power_switch_is_off;
