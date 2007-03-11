@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.20 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.21 2007/03/11 08:09:25 isaki Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.20 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.21 2007/03/11 08:09:25 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp (ia->ia_name, "rtc") != 0)
+	if (strcmp(ia->ia_name, "rtc") != 0)
 		return (0);
 	if (rtc_attached)
 		return (0);
@@ -97,10 +97,10 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	rtc_attached = 1;
 
 	ia->ia_size = 0x20;
-	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
+	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 	if (r)
-		panic ("IO map for RTC corruption??");
+		panic("IO map for RTC corruption??");
 #endif
 
 
@@ -112,7 +112,7 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = rtsettod;
 	todr_attach(&sc->sc_todr);
 
-	printf (": RP5C15\n");
+	printf(": RP5C15\n");
 }
 
 static int
