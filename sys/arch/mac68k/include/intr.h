@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2007/03/08 02:24:40 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2007/03/11 05:22:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -78,7 +78,7 @@ extern unsigned short mac68k_ipls[];
 
 typedef int ipl_t;
 typedef struct {
-	ipl_t _ipl;
+	uint16_t _ipl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
