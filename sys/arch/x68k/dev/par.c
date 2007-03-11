@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.27 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: par.c,v 1.28 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.27 2007/03/04 06:01:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.28 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -128,7 +128,7 @@ const struct cdevsw par_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-int 
+int
 parmatch(struct device *pdp, struct cfdata *cfp, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -152,7 +152,7 @@ parmatch(struct device *pdp, struct cfdata *cfp, void *aux)
 	return 1;
 }
 
-void 
+void
 parattach(struct device *pdp, struct device *dp, void *aux)
 {
 	struct par_softc *sc = (struct par_softc *)dp;
@@ -189,7 +189,7 @@ parattach(struct device *pdp, struct device *dp, void *aux)
 	callout_init(&sc->sc_start_ch);
 }
 
-int 
+int
 paropen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
@@ -215,7 +215,7 @@ paropen(dev_t dev, int flags, int mode, struct lwp *l)
 	return(0);
 }
 
-int 
+int
 parclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int unit = UNIT(dev);
@@ -233,7 +233,7 @@ parclose(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-void 
+void
 parstart(void *arg)
 {
 	struct par_softc *sc = arg;
@@ -245,7 +245,7 @@ parstart(void *arg)
 	wakeup(sc);
 }
 
-void 
+void
 partimo(void *arg)
 {
 	struct par_softc *sc = arg;
@@ -257,7 +257,7 @@ partimo(void *arg)
 	wakeup(sc);
 }
 
-int 
+int
 parwrite(dev_t dev, struct uio *uio, int flag)
 {
 	
@@ -268,7 +268,7 @@ parwrite(dev_t dev, struct uio *uio, int flag)
 	return (parrw(dev, uio));
 }
 
-int 
+int
 parrw(dev_t dev, struct uio *uio)
 {
 	int unit = UNIT(dev);
@@ -399,7 +399,7 @@ parrw(dev_t dev, struct uio *uio)
 	return (error);
 }
 
-int 
+int
 parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct par_softc *sc = par_cd.cd_devs[UNIT(dev)];
@@ -432,7 +432,7 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return (error);
 }
 
-int 
+int
 parhztoms(int h)
 {
 	extern int hz;
@@ -443,7 +443,7 @@ parhztoms(int h)
 	return(m);
 }
 
-int 
+int
 parmstohz(int m)
 {
 	extern int hz;
@@ -463,7 +463,7 @@ parmstohz(int m)
 int partimeout_pending;
 int parsend_pending;
 
-void 
+void
 parintr(void *arg)
 {
 	int s, mask;

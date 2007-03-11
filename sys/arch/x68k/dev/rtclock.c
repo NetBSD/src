@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock.c,v 1.19 2006/09/14 01:18:11 gdamore Exp $	*/
+/*	$NetBSD: rtclock.c,v 1.20 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.19 2006/09/14 01:18:11 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtclock.c,v 1.20 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
 
 static int rtc_attached;
 
-static int 
+static int
 rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -87,7 +87,7 @@ rtc_match(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-static void 
+static void
 rtc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtc_softc *sc = (struct rtc_softc *)self;
