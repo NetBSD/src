@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: t_sizes,v 1.5 2006/11/09 16:20:06 jmmv Exp $
+# $NetBSD: t_sizes,v 1.6 2007/03/11 10:09:17 pooka Exp $
 #
 # Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -81,6 +81,15 @@ test_run() {
 	f_bused=$((${f_blocks} - ${f_bfree}))
 	[ ${f_bused} -ge ${of_bused} -a ${f_bused} -le $((${of_bused} + 1)) ] \
 	    || die
+
+	test_name "Write to middle of a file does not change size"
+	dd if=/dev/zero of=a bs=1024 count=10 >/dev/null 2>&1 || die
+	sync
+	dd if=/dev/zero of=a bs=1024 conv=notrunc seek=1 count=1	\
+	     >/dev/null 2>&1 || die
+	sync
+	eval $(stat -s a)
+	[ ${st_size} -eq 10240 ] || die
 
 	test_unmount
 }
