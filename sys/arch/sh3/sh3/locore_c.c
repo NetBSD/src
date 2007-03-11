@@ -1,7 +1,7 @@
-/*	$NetBSD: locore_c.c,v 1.16 2007/03/04 10:41:59 tsutsui Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.17 2007/03/11 20:09:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.16 2007/03/04 10:41:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.17 2007/03/11 20:09:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,6 @@ struct lwp *
 cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 {
 
-	sched_lock_idle();
 	nlwp->l_stat = LSONPROC;
 	sched_unlock_idle();
 
@@ -179,7 +178,6 @@ cpu_switch_search(struct lwp *olwp)
 
 	curlwp = NULL;
 
-	sched_lock_idle();
 	while (sched_whichqs == 0) {
 		sched_unlock_idle();
 		idle();
@@ -190,7 +188,6 @@ cpu_switch_search(struct lwp *olwp)
 	l = q->ph_link;
 	remrunqueue(l);
 	want_resched = 0;
-	sched_unlock_idle();
 
 	return (cpu_switch_prepare(olwp, l));
 }
