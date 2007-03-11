@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.32 2007/03/11 13:41:18 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.33 2007/03/11 15:42:00 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.32 2007/03/11 13:41:18 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.33 2007/03/11 15:42:00 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -110,12 +110,17 @@ static int	alc260_mixer_init(codec_t *);
 static int	alc260_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_get_port(codec_t *, mixer_ctrl_t *);
 static int	alc260_unsol_event(codec_t *, int);
+static int	alc861_init_dacgroup(codec_t *);
+static int	alc861vdgr_init_dacgroup(codec_t *);
 static int	alc880_init_dacgroup(codec_t *);
 static int	alc880_mixer_init(codec_t *);
 static int	alc882_init_dacgroup(codec_t *);
 static int	alc882_mixer_init(codec_t *);
 static int	alc882_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc882_get_port(codec_t *, mixer_ctrl_t *);
+static int	alc883_init_dacgroup(codec_t *);
+static int	alc885_init_dacgroup(codec_t *);
+static int	alc888_init_dacgroup(codec_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 static int	ad1981hd_mixer_init(codec_t *);
 static int	ad1988_init_dacgroup(codec_t *);
@@ -156,6 +161,20 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->unsol_event = alc260_unsol_event;
 		extra_size = 1;
 		break;
+	case 0x10ec0262:
+		this->name = "Realtek ALC262";
+		break;
+	case 0x10ec0268:
+		this->name = "Realtek ALC268";
+		break;
+	case 0x10ec0861:
+		this->name = "Realtek ALC861";
+		this->init_dacgroup = alc861_init_dacgroup;
+		break;
+	case 0x10ec0862:
+		this->name = "Realtek ALC861-VD-GR";
+		this->init_dacgroup = alc861vdgr_init_dacgroup;
+		break;
 	case 0x10ec0880:
 		this->name = "Realtek ALC880";
 		this->init_dacgroup = alc880_init_dacgroup;
@@ -167,6 +186,18 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->mixer_init = alc882_mixer_init;
 		this->get_port = alc882_get_port;
 		this->set_port = alc882_set_port;
+		break;
+	case 0x10ec0883:
+		this->name = "Realtek ALC883";
+		this->init_dacgroup = alc883_init_dacgroup;
+		break;
+	case 0x10ec0885:
+		this->name = "Realtek ALC885";
+		this->init_dacgroup = alc885_init_dacgroup;
+		break;
+	case 0x10ec0888:
+		this->name = "Realtek ALC888";
+		this->init_dacgroup = alc888_init_dacgroup;
 		break;
 	case 0x11d41981:
 		/* http://www.analog.com/en/prod/0,2877,AD1981HD,00.html */
@@ -1935,6 +1966,46 @@ alc260_unsol_event(codec_t *this, int tag)
 }
 
 /* ----------------------------------------------------------------
+ * Realtek ALC861
+ * ---------------------------------------------------------------- */
+
+static int
+alc861_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x03, 0x04, 0x05, 0x06}}, /* analog 8ch */
+		 {1, {0x07}}}};	/* digital */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{1, {0x08}}}};	/* analog 2ch */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC861-VD-GR
+ * ---------------------------------------------------------------- */
+
+static int
+alc861vdgr_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}}}};	/* digital */
+	static const convgroupset_t adcs = {
+		-1, 1,
+		{{1, {0x09}}}};	/* analog 2ch */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
  * Realtek ALC880
  * ---------------------------------------------------------------- */
 
@@ -2366,6 +2437,73 @@ alc882_get_port(codec_t *this, mixer_ctrl_t *mc)
 		return 0;
 	}
 	return generic_mixer_get(this, m->nid, m->target, mc);
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC883
+ * ---------------------------------------------------------------- */
+
+static int
+alc883_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}}}};	/* digital */
+		/* don't support for 0x25 dac */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09}},	/* analog 4ch */
+		 {1, {0x0a}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC885
+ * ---------------------------------------------------------------- */
+
+static int
+alc885_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}}}};	/* digital */
+		/* don't support for 0x25 dac */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{3, {0x07, 0x08, 0x09}},	/* analog 6ch */
+		 {1, {0x0a}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
+ * Realtek ALC888
+ * ---------------------------------------------------------------- */
+
+static int
+alc888_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{4, {0x02, 0x03, 0x04, 0x05}}, /* analog 8ch */
+		 {1, {0x06}}}};	/* digital */
+		/* don't support for 0x25 dac */
+		/* ALC888S has another SPDIF-out 0x10 */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09}},	/* analog 4ch */
+		 {1, {0x0a}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
 }
 
 /* ----------------------------------------------------------------
