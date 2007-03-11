@@ -1,4 +1,4 @@
-#	$NetBSD: ROADMAP,v 1.14 2007/03/06 01:45:55 rmind Exp $
+#	$NetBSD: ROADMAP,v 1.15 2007/03/11 21:05:57 rmind Exp $
 
 A high-level roadmap for NetBSD
 
@@ -74,13 +74,17 @@ FOR MORE INFORMATION.
 
 1. Platform independent kernel
 ==============================
-aa. Modular scheduler supporting CPU affinity and some soft RT features.
-    The BSD scheduler is good for a wide variety of operating conditions,
-    but some applications really want some soft real-time capabilities and
-    multi-processor systems could benefit from taking processor affinity
-    into account (including support for HT CPUs).
-	Responsible: matt (possibly)
-	ETA: ?  yamt-idlelwp branch is a first step of this.
+aa. Scheduler works
+    Separation of context switching and thread scheduling.
+	Responsible: yamt
+	ETA: 5.0? (yamt-idlelwp branch)
+    Generic scheduler API for modular implementations.
+	Responsible: Daniel Sieger
+	ETA: 5.0? (merged in yamt-idlelwp branch)
+    New scheduler supporting POSIX Real-time features, CPU affinity and
+    having a better support for MP systems.
+	Responsible: rmind
+	ETA: 5.0?
 
 ab. Reduction of the giant lock
     There are several proposals for the best way forward on this, but
