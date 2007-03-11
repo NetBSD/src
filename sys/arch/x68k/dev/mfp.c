@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.17 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: mfp.c,v 1.18 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.17 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.18 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ CFATTACH_DECL(mfp, sizeof(struct mfp_softc),
 
 static int mfp_attached;
 
-static int 
+static int
 mfp_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -91,7 +91,7 @@ mfp_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 
-static void 
+static void
 mfp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mfp_softc *sc = (struct mfp_softc *)self;
@@ -198,7 +198,7 @@ mfp_wait_for_hsync(void)
  * USART is attached to the keyboard.
  * might be called before realconfig.
  */
-int 
+int
 mfp_send_usart(int command)
 {
 	while (!(mfp_get_tsr() & MFP_TSR_BE));

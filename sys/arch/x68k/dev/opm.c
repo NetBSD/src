@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.16 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: opm.c,v 1.17 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.16 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.17 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static void opm_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(opm, sizeof (struct opm_softc),
     opm_match, opm_attach, NULL, NULL);
 
-static int 
+static int
 opm_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -84,7 +84,7 @@ opm_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 1;
 }
 
-static void 
+static void
 opm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct opm_softc *sc = (struct opm_softc *)self;
@@ -127,7 +127,7 @@ void opm_key_off(u_char);
 int opmopen(dev_t, int, int);
 int opmclose(dev_t);
 
-inline static void 
+inline static void
 writeopm(int reg, int dat)
 {
 	while (bus_space_read_1 (opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
@@ -137,7 +137,7 @@ writeopm(int reg, int dat)
 	opm0->sc_regs[reg] = dat;
 }
 
-inline static int 
+inline static int
 readopm(int reg)
 {
 	return opm0->sc_regs[reg];
@@ -176,7 +176,7 @@ opm_key_off(u_char channel)
 	writeopm(0x08, channel);
 }
 
-void 
+void
 opm_set_voice(int channel, struct opm_voice *voice)
 {
 	memcpy(&opm0->sc_vdata[channel], voice, sizeof(struct opm_voice));
@@ -189,7 +189,7 @@ opm_set_voice(int channel, struct opm_voice *voice)
 		 (voice->con & 0x7));
 }
 
-void 
+void
 opm_set_voice_sub(int reg, struct opm_operator *op)
 {
 	/* DT1/MUL */
@@ -211,7 +211,7 @@ opm_set_voice_sub(int reg, struct opm_operator *op)
 	writeopm(reg + 0xa0, (op->d1l & 0xf) << 4 | (op->rr & 0xf));
 }
 
-void 
+void
 opm_set_volume(int channel, int volume)
 {
 	int value;
@@ -236,7 +236,7 @@ opm_set_volume(int channel, int volume)
 	}
 }
 
-void 
+void
 opm_set_key(int channel, int tone)
 {
 	writeopm(0x28 + channel, tone >> 8);
@@ -244,14 +244,14 @@ opm_set_key(int channel, int tone)
 }
 
 /*ARGSUSED*/
-int 
+int
 opmopen(dev_t dev, int flag, int mode)
 {
 	return 0;
 }
 
 /*ARGSUSED*/
-int 
+int
 opmclose(dev_t dev)
 {
 	return 0;

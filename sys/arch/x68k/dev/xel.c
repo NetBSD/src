@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.11 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: xel.c,v 1.12 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.11 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.12 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ static paddr_t xel_addrs[] = { 0xec0000, 0xec4000, 0xec8000, 0xecc000 };
 #define XEL_RAM_ADDR_HIGHER	0xfc0000
 
 
-static paddr_t 
+static paddr_t
 xel_addr(struct device *parent, struct cfdata *match,
     struct intio_attach_args *ia)
 {
@@ -119,7 +119,7 @@ xel_addr(struct device *parent, struct cfdata *match,
 
 extern int *nofault;
 
-static int 
+static int
 xel_probe(paddr_t addr)
 {
 	u_int32_t b1, b2;
@@ -176,7 +176,7 @@ xel_probe(paddr_t addr)
 	return 1;
 }
 
-static int 
+static int
 xel_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -194,7 +194,7 @@ xel_match(struct device *parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
-static void 
+static void
 xel_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xel_softc *sc = (void*)self;
