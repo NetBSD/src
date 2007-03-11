@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.31 2007/03/11 13:34:40 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.32 2007/03/11 13:41:18 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.31 2007/03/11 13:34:40 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.32 2007/03/11 13:41:18 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -395,6 +395,8 @@ generic_codec_find_dac(const codec_t *this, int index, int depth)
  * Generic mixer functions
  * ---------------------------------------------------------------- */
 
+#define GMIDPRINTF(x)	do {} while (0/*CONSTCOND*/)
+
 static int
 generic_mixer_init(codec_t *this)
 {
@@ -478,7 +480,7 @@ generic_mixer_init(codec_t *this)
 		/* selector */
 		if (w->type != COP_AWTYPE_AUDIO_MIXER && w->nconnections >= 2) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: selector %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: selector %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.source", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -492,7 +494,7 @@ generic_mixer_init(codec_t *this)
 			for (j = 0, k = 0; j < w->nconnections && k < 32; j++) {
 				if (!VALID_WIDGET_NID(w->connections[j], this))
 					continue;
-				DPRINTF(("%s: selector %d=%s\n", __func__, j,
+				GMIDPRINTF(("%s: selector %d=%s\n", __func__, j,
 				    this->w[w->connections[j]].name));
 				d->un.e.member[k].ord = j;
 				strlcpy(d->un.e.member[k].label.name,
@@ -508,7 +510,7 @@ generic_mixer_init(codec_t *this)
 		if (w->widgetcap & COP_AWCAP_OUTAMP &&
 		    w->outamp_cap & COP_AMPCAP_MUTE) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: output mute %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: output mute %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.mute", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -535,7 +537,7 @@ generic_mixer_init(codec_t *this)
 		if (w->widgetcap & COP_AWCAP_OUTAMP
 		    && COP_AMPCAP_NUMSTEPS(w->outamp_cap)) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: output gain %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: output gain %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s", w->name);
 			d->type = AUDIO_MIXER_VALUE;
@@ -563,7 +565,7 @@ generic_mixer_init(codec_t *this)
 		/* input mute */
 		if (w->widgetcap & COP_AWCAP_INAMP &&
 		    w->inamp_cap & COP_AMPCAP_MUTE) {
-			DPRINTF(("%s: input mute %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: input mute %s\n", __func__, w->name));
 			if (w->type != COP_AWTYPE_AUDIO_SELECTOR &&
 			    w->type != COP_AWTYPE_AUDIO_MIXER) {
 				MIXER_REG_PROLOG;
@@ -590,7 +592,7 @@ generic_mixer_init(codec_t *this)
 					MIXER_REG_PROLOG;
 					if (!VALID_WIDGET_NID(w->connections[j], this))
 						continue;
-					DPRINTF(("%s: input mute %s.%s\n", __func__,
+					GMIDPRINTF(("%s: input mute %s.%s\n", __func__,
 					    w->name, this->w[w->connections[j]].name));
 					snprintf(d->label.name, sizeof(d->label.name),
 					    "%s.%s.mute", w->name,
@@ -618,7 +620,7 @@ generic_mixer_init(codec_t *this)
 		/* input gain */
 		if (w->widgetcap & COP_AWCAP_INAMP
 		    && COP_AMPCAP_NUMSTEPS(w->inamp_cap)) {
-			DPRINTF(("%s: input gain %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: input gain %s\n", __func__, w->name));
 			if (w->type != COP_AWTYPE_AUDIO_SELECTOR &&
 			    w->type != COP_AWTYPE_AUDIO_MIXER) {
 				MIXER_REG_PROLOG;
@@ -648,7 +650,7 @@ generic_mixer_init(codec_t *this)
 					MIXER_REG_PROLOG;
 					if (!VALID_WIDGET_NID(w->connections[j], this))
 						continue;
-					DPRINTF(("%s: input gain %s.%s\n", __func__,
+					GMIDPRINTF(("%s: input gain %s.%s\n", __func__,
 					    w->name, this->w[w->connections[j]].name));
 					snprintf(d->label.name, sizeof(d->label.name),
 					    "%s.%s", w->name,
@@ -681,7 +683,7 @@ generic_mixer_init(codec_t *this)
 		    w->d.pin.cap & COP_PINCAP_OUTPUT &&
 		    w->d.pin.cap & COP_PINCAP_INPUT) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: pin dir %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: pin dir %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.dir", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -701,7 +703,7 @@ generic_mixer_init(codec_t *this)
 		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
 		    w->d.pin.cap & COP_PINCAP_HEADPHONE) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: hpboost %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: hpboost %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.boost", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -720,7 +722,7 @@ generic_mixer_init(codec_t *this)
 		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
 		    w->d.pin.cap & COP_PINCAP_EAPD) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: eapd %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: eapd %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.eapd", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -739,7 +741,7 @@ generic_mixer_init(codec_t *this)
 		if (w->type == COP_AWTYPE_PIN_COMPLEX &&
 		    w->d.pin.cap & COP_PINCAP_BALANCE) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: balance %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: balance %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.balance", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -762,7 +764,7 @@ generic_mixer_init(codec_t *this)
 
 		if (w->widgetcap & COP_AWCAP_LRSWAP) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: lrswap %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: lrswap %s\n", __func__, w->name));
 			snprintf(d->label.name, sizeof(d->label.name),
 			    "%s.lrswap", w->name);
 			d->type = AUDIO_MIXER_ENUM;
@@ -787,7 +789,7 @@ generic_mixer_init(codec_t *this)
 		if (w->type == COP_AWTYPE_VOLUME_KNOB &&
 		    w->d.volume.cap & COP_VKCAP_DELTA) {
 			MIXER_REG_PROLOG;
-			DPRINTF(("%s: volume knob %s\n", __func__, w->name));
+			GMIDPRINTF(("%s: volume knob %s\n", __func__, w->name));
 			strlcpy(d->label.name, w->name, sizeof(d->label.name));
 			d->type = AUDIO_MIXER_VALUE;
 			d->mixer_class = AZ_CLASS_OUTPUT;
@@ -803,7 +805,7 @@ generic_mixer_init(codec_t *this)
 	/* if the codec has multiple DAC groups, create "playback.mode" */
 	if (this->dacs.ngroups > 1) {
 		MIXER_REG_PROLOG;
-		DPRINTF(("%s: create playback.mode\n", __func__));
+		GMIDPRINTF(("%s: create playback.mode\n", __func__));
 		strlcpy(d->label.name, AudioNmode, sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_PLAYBACK;
@@ -825,7 +827,7 @@ generic_mixer_init(codec_t *this)
 	/* if the codec has multiple ADC groups, create "record.mode" */
 	if (this->adcs.ngroups > 1) {
 		MIXER_REG_PROLOG;
-		DPRINTF(("%s: create record.mode\n", __func__));
+		GMIDPRINTF(("%s: create record.mode\n", __func__));
 		strlcpy(d->label.name, AudioNmode, sizeof(d->label.name));
 		d->type = AUDIO_MIXER_ENUM;
 		d->mixer_class = AZ_CLASS_RECORD;
