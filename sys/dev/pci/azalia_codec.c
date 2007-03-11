@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.29 2007/02/21 23:00:00 thorpej Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.30 2007/03/11 13:31:36 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.29 2007/02/21 23:00:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.30 2007/03/11 13:31:36 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -122,6 +122,7 @@ static int	cmi9880_init_dacgroup(codec_t *);
 static int	cmi9880_mixer_init(codec_t *);
 static int	stac9221_init_dacgroup(codec_t *);
 static int	stac9221_mixer_init(codec_t *);
+static int	stac9221_gpio_unmute(codec_t *, int);
 static int	stac9220_mixer_init(codec_t *);
 
 
@@ -2539,22 +2540,29 @@ stac9221_mixer_init(codec_t *this)
 	err = generic_mixer_init(this);
 	if (err)
 		return err;
-#if 0
-	if (this->subid == STAC9221_MAC) {
-		uint32_t data, mask, dir;
-		this->comresp(this, 0, CORB_GET_GPIO_DATA, 0, &data);
-		this->comresp(this, 0, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
-		this->comresp(this, 0, CORB_GET_GPIO_DIRECTION, 0, &dir);
-		data |= 0x3;
-		mask |= 0x3;
-		dir |= 0x3;
-		this->comresp(this, 0, 0x7e7, 0, NULL);
-		this->comresp(this, 0, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
-		this->comresp(this, 0, CORB_SET_GPIO_DIRECTION, dir, NULL);
-		DELAY(1000);
-		this->comresp(this, 0, CORB_SET_GPIO_DATA, data, NULL);
+	if (false && this->subid == STAC9221_MAC) {
+		stac9221_gpio_unmute(this, 0);
+		stac9221_gpio_unmute(this, 1);
 	}
-#endif
+	return 0;
+}
+
+static int
+stac9221_gpio_unmute(codec_t *this, int pin)
+{
+	uint32_t data, mask, dir;
+
+	this->comresp(this, 0, CORB_GET_GPIO_DATA, 0, &data);
+	this->comresp(this, 0, CORB_GET_GPIO_ENABLE_MASK, 0, &mask);
+	this->comresp(this, 0, CORB_GET_GPIO_DIRECTION, 0, &dir);
+	data &= ~(1 << pin);
+	mask |= 1 << pin;
+	dir |= 1 << pin;
+	this->comresp(this, 0, 0x7e7, 0, NULL);
+	this->comresp(this, 0, CORB_SET_GPIO_ENABLE_MASK, mask, NULL);
+	this->comresp(this, 0, CORB_SET_GPIO_DIRECTION, dir, NULL);
+	DELAY(1000);
+	this->comresp(this, 0, CORB_SET_GPIO_DATA, data, NULL);
 	return 0;
 }
 
@@ -2632,6 +2640,5 @@ stac9220_mixer_init(codec_t *this)
 	mc.un.value.level[0] = generic_mixer_max(this, 0x0c, MI_TARGET_OUTAMP);
 	mc.un.value.level[1] = mc.un.value.level[0];
 	generic_mixer_set(this, 0x0c, MI_TARGET_OUTAMP, &mc);
-
 	return 0;
 }
