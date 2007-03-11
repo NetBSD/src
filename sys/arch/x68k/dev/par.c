@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.28 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: par.c,v 1.29 2007/03/11 08:09:25 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.28 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.29 2007/03/11 08:09:25 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -140,7 +140,7 @@ parmatch(struct device *pdp, struct cfdata *cfp, void *aux)
 	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
 		ia->ia_addr = 0xe8c000;
 	ia->ia_size = 0x2000;
-	if (intio_map_allocate_region (pdp, ia, INTIO_MAP_TESTONLY))
+	if (intio_map_allocate_region(pdp, ia, INTIO_MAP_TESTONLY))
 		return 0;
 	if (ia->ia_intr == INTIOCF_INTR_DEFAULT)
 		ia->ia_intr = 99;
@@ -164,26 +164,26 @@ parattach(struct device *pdp, struct device *dp, void *aux)
 	sc->sc_flags = PARF_ALIVE;
 	printf(": parallel port (write only, interrupt)\n");
 	ia->ia_size = 0x2000;
-	r = intio_map_allocate_region (pdp, ia, INTIO_MAP_ALLOCATE);
+	r = intio_map_allocate_region(pdp, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 	if (r)
-		panic ("IO map for PAR corruption??");
+		panic("IO map for PAR corruption??");
 #endif
 	sc->sc_bst = ia->ia_bst;
-	r = bus_space_map (sc->sc_bst,
+	r = bus_space_map(sc->sc_bst,
 			   ia->ia_addr, ia->ia_size,
 			   BUS_SPACE_MAP_SHIFTED,
 			   &sc->sc_bsh);
 #ifdef DIAGNOSTIC
 	if (r)
-		panic ("Cannot map IO space for PAR.");
+		panic("Cannot map IO space for PAR.");
 #endif
 
 	intio_set_sicilian_intr(intio_get_sicilian_intr() &
 				~SICILIAN_INTR_PAR);
 
 	intio_intr_establish(ia->ia_intr, "par",
-			     (intio_intr_handler_t) parintr, (void*) 1);
+			     (intio_intr_handler_t)parintr, (void *)1);
 
 	callout_init(&sc->sc_timo_ch);
 	callout_init(&sc->sc_start_ch);
@@ -302,7 +302,7 @@ parrw(dev_t dev, struct uio *uio)
 				break;
 		}
 	      again:
-	      	s = splsoftclock();
+		s = splsoftclock();
 		/*
 		 * Check if we timed out during sleep or uiomove
 		 */
@@ -407,7 +407,7 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error = 0;
 	
 	switch (cmd) {
-	      case PARIOCGPARAM:
+	case PARIOCGPARAM:
 		pp = &sc->sc_param;
 		upp = (struct parparam *)data;
 		upp->burst = pp->burst;
@@ -415,7 +415,7 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		upp->delay = parhztoms(pp->delay);
 		break;
 		
-	      case PARIOCSPARAM:
+	case PARIOCSPARAM:
 		pp = &sc->sc_param;
 		upp = (struct parparam *)data;
 		if (upp->burst < PAR_BURST_MIN || upp->burst > PAR_BURST_MAX ||
@@ -426,7 +426,7 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		pp->delay = parmstohz(upp->delay);
 		break;
 		
-	      default:
+	default:
 		return(EINVAL);
 	}
 	return (error);
@@ -476,7 +476,7 @@ parintr(void *arg)
 
 #ifdef DEBUG
 	if (pardebug & PDB_INTERRUPT)
-		printf ("parintr %d(%s)\n", mask, mask ? "FLG" : "tout");
+		printf("parintr %d(%s)\n", mask, mask ? "FLG" : "tout");
 #endif
 	/* if invoked from timeout handler, mask will be 0,
 	 * if from interrupt, it will contain the cia-icr mask,
@@ -493,7 +493,7 @@ parintr(void *arg)
 	partimeout_pending = 0;
 	
 	wakeup(parintr);
-	splx (s);
+	splx(s);
 }
 
 int
@@ -508,47 +508,47 @@ parsendch(struct par_softc *sc, u_char ch)
 	while (!error 
 	       && (parsend_pending 
 		   || !(intio_get_sicilian_intr() & SICILIAN_STAT_PAR)))
-		{
-			extern int hz;
-			
-			/* wait a second, and try again */
-			callout_reset(&intr_callout, hz, parintr, 0);
-			partimeout_pending = 1;
-			/* this is essentially a flipflop to have us wait for the
-			   first character being transmitted when trying to transmit
-			   the second, etc. */
-			parsend_pending = 0;
-			/* it's quite important that a parallel putc can be
-			   interrupted, given the possibility to lock a printer
-			   in an offline condition.. */
-			if ((error = tsleep (parintr, PCATCH|(PZERO-1), "parsendch", 0))) {
+	{
+		extern int hz;
+
+		/* wait a second, and try again */
+		callout_reset(&intr_callout, hz, parintr, 0);
+		partimeout_pending = 1;
+		/* this is essentially a flipflop to have us wait for the
+		   first character being transmitted when trying to transmit
+		   the second, etc. */
+		parsend_pending = 0;
+		/* it's quite important that a parallel putc can be
+		   interrupted, given the possibility to lock a printer
+		   in an offline condition.. */
+		if ((error = tsleep(parintr, PCATCH|(PZERO-1), "parsendch", 0))) {
 #ifdef DEBUG
-				if (pardebug & PDB_INTERRUPT)
-					printf ("parsendch interrupted, error = %d\n", error);
+			if (pardebug & PDB_INTERRUPT)
+				printf("parsendch interrupted, error = %d\n", error);
 #endif
-				if (partimeout_pending)
-					callout_stop(&intr_callout);
-				
-				partimeout_pending = 0;
-			}
+			if (partimeout_pending)
+				callout_stop(&intr_callout);
+
+			partimeout_pending = 0;
 		}
-	
+	}
+
 	if (!error) {
 #ifdef DEBUG
 		if (pardebug & PDB_INTERRUPT)
-			printf ("#%d", ch);
+			printf("#%d", ch);
 #endif
-		bus_space_write_1 (sc->sc_bst, sc->sc_bsh, PAR_DATA, ch);
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, PAR_DATA, ch);
 		DELAY(1);	/* (DELAY(1) == 1us) > 0.5us */
-		bus_space_write_1 (sc->sc_bst, sc->sc_bsh, PAR_STROBE, 0);
-		intio_set_sicilian_intr (intio_get_sicilian_intr() |
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, PAR_STROBE, 0);
+		intio_set_sicilian_intr(intio_get_sicilian_intr() |
 					 SICILIAN_INTR_PAR);
 		DELAY(1);
-		bus_space_write_1 (sc->sc_bst, sc->sc_bsh, PAR_STROBE, 1);
+		bus_space_write_1(sc->sc_bst, sc->sc_bsh, PAR_STROBE, 1);
 		parsend_pending = 1;
 	}
 	
-	splx (s);
+	splx(s);
 	
 	return error;
 }
@@ -560,7 +560,7 @@ parsend(struct par_softc *sc, u_char *buf, int len)
 	int err, orig_len = len;
 	
 	for (; len; len--, buf++)
-		if ((err = parsendch (sc, *buf)))
+		if ((err = parsendch(sc, *buf)))
 			return err < 0 ? -EINTR : -err;
 	
 	/* either all or nothing.. */
