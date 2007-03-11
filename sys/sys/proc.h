@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.243 2007/03/09 14:11:23 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.244 2007/03/11 21:36:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -522,8 +522,8 @@ void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	resetprocpriority(struct proc *);
 void	suspendsched(void);
-int	ltsleep(wchan_t, pri_t, const char *, int,
-	    volatile struct simplelock *);
+int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
+int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
