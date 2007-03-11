@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.81 2007/03/09 19:16:47 dsl Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.82 2007/03/11 15:52:30 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -300,12 +300,6 @@
 # MAKEDEV" from MAKEDEV.local).
 #
 
-get_opts() {
-	opts="$*"
-	shift $((${OPTIND}-1))
-	opts="${opts%$*}"
-}
-
 usage()
 {
 	cat 1>&2 << _USAGE_
@@ -354,19 +348,38 @@ setup()
 {
 	PATH=/sbin:/usr/sbin:/bin:/usr/bin:/rescue
 
+	do_create_mfs=false
 	do_force=false
+	do_pax=false
+	do_redirect=false
 	do_specfile=false
-	while getopts fm:s ch; do
+	opts=
+	while getopts Mfm:p:s ch; do
+		# Options that should not be passed through to
+		# MAKEDEV.local are not added to $opts.
 		case ${ch} in
-		f)	do_force=true ;;
-		m)	TOOL_MKNOD=${OPTARG} ;;
-		s)	do_specfile=true ;;
+		M)	
+			# "-M" sets do_create_mfs;
+			# "-M -M" also sets do_redirect
+			do_redirect=$do_create_mfs
+			do_create_mfs=true
+			;;
+		f)	do_force=true
+			opts="${opts} -f"
+			;;
+		m)	TOOL_MKNOD=${OPTARG}
+			opts="${opts} -m ${OPTARG}"
+			;;
+		p)	TOOL_PAX="${OPTARG}"
+			do_pax=true
+			;;
+		s)	do_specfile=true
+			opts="${opts} -s"
+			;;
 		*)	usage ;;
 		esac
 	done
 
-	opts=
-	get_opts "$@"
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
 
@@ -400,8 +413,9 @@ setup()
 		nofdesc=true
 	fi
 
-	if $do_specfile; then
-		echo ". type=dir"
+	if $do_pax && ! $do_specfile; then
+		do_specfile=true
+		opts="${opts} -s"
 	fi
 }
 
@@ -465,6 +479,16 @@ makedir()
 warn()
 {
 	echo 1>&2 "$0: $*"
+}
+
+# wrap_makedev makedev ...
+wrap_makedev()
+{
+	if $do_specfile; then
+		# "optional" tells pax(1) not to create the directory itself.
+		echo ". type=dir optional"
+	fi
+	eval "$@"
 }
 
 # makedev special [...]
@@ -1791,24 +1815,20 @@ create_mfs_dev()
 	ninode=$((${1-1200} * 11 / 10))
 	fs_size=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
 	fs_size=$((fs_size/512))
+	[ "$fs_size" -lt 80 ] && fs_size=80
 	
 	dev_mountpoint=${PWD:-/dev}
 	mount_mfs -b 4096 -f 512 -s $fs_size -n $ninode -p 07555 -o union swap $dev_mountpoint
       
 	cd $dev_mountpoint
-	mknod -m 600 -g 0 -u 0 temp_console c %CONSOLE_CMAJOR% 0
-	exec >temp_console 2>&1
-	rm temp_console
+	if $do_redirect; then
+		# Redirect stdout and stderr to console
+		mknod -m 600 -g 0 -u 0 temp_console c 0 0
+		exec >temp_console 2>&1
+		rm temp_console
+	fi
 	echo "Created mfs $dev_mountpoint ($fs_size blocks, $ninode inodes)"
 }       
-
-# We don't want to pass -M to MAKEDEV.local
-if [ "$1" = -M ]; then
-        do_create_mfs=true
-        shift
-else
-        do_create_mfs=false
-fi
 
 #
 # MAIN: If MAKEDEV_AS_LIBRARY is set, then we are being used as a
@@ -1822,10 +1842,17 @@ setup ${1+"$@"}
 shift $((${OPTIND}-1))
 
 if $do_create_mfs; then
+	# Count inodes and create mfs file system
 	count_nodes=0
 	makedev ${1+"$@"}
 	create_mfs_dev $count_nodes
 	unset count_nodes
 fi
 
-makedev ${1+"$@"}
+if $do_pax ; then
+	# wrap_makedev will print an mtree specification;
+	# pax will create device nodes.
+	wrap_makedev makedev ${1+"$@"} | ${TOOL_PAX} -r -w -M .
+else
+	wrap_makedev makedev ${1+"$@"}
+fi
