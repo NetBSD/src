@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.11 2007/03/11 00:36:57 macallan Exp $	*/
+/*	$NetBSD: dbri.c,v 1.12 2007/03/11 08:52:12 macallan Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.11 2007/03/11 00:36:57 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.12 2007/03/11 08:52:12 macallan Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -279,7 +279,7 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 	pwr = prom_getpropint(sa->sa_node,"pwr-on-auxio",0);
 	printf(": rev %s\n", ver);
 
-	if(pwr) {
+	if (pwr) {
 		/*
 		 * we can control DBRI power via auxio and we're initially
 		 * powered down
@@ -356,8 +356,8 @@ dbri_attach_sbus(struct device *parent, struct device *self, void *aux)
 
 	sbus_establish(&sc->sc_sd, &sc->sc_dev);
 
-	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_AUDIO, /*0,*/
-	    dbri_intr, sc);
+	bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_AUDIO, dbri_intr,
+	    sc);
 
 	sc->sc_locked = 0;
 	sc->sc_desc_used = 0;
@@ -507,8 +507,8 @@ dbri_init(struct dbri_softc *sc)
 	for (n = 0; n < DBRI_PIPE_MAX; n++)
 		sc->sc_pipe[n].desc = sc->sc_pipe[n].next = -1;
 
-	for(n=1;n<DBRI_INT_BLOCKS;n++) {
-		sc->sc_dma->intr[n]=0;
+	for (n = 1; n < DBRI_INT_BLOCKS; n++) {
+		sc->sc_dma->intr[n] = 0;
 	}
 
 	/* Disable all SBus bursts */
@@ -531,7 +531,8 @@ dbri_init(struct dbri_softc *sc)
 static int
 dbri_reset(struct dbri_softc *sc)
 {
-	int bail=0;
+	int bail = 0;
+
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -567,7 +568,6 @@ dbri_command_send(struct dbri_softc *sc, volatile u_int32_t *cmd)
 	int x;
 
 	x = splaudio();
-	//x = splhigh();
 
 	sc->sc_locked--;
 
@@ -819,14 +819,14 @@ mmcodec_init_data(struct dbri_softc *sc)
 
 	/* switch CS4215 to data mode - set PIO3 to 1 */
 	tmp = DBRI_PIO_ENABLE_ALL | DBRI_PIO1 | DBRI_PIO3;
-/* XXX */
+
+	/* XXX */
 	tmp |= (sc->sc_mm.onboard ? DBRI_PIO0 : DBRI_PIO2);
 
 	bus_space_write_4(iot, ioh, DBRI_REG2, tmp);
 	chi_reset(sc, CHIslave, 128);
 
-	data_width = sc->sc_params.channels
-		* sc->sc_params.precision;
+	data_width = sc->sc_params.channels * sc->sc_params.precision;
 	pipe_ts_link(sc, 20, PIPEoutput, 16, 32, sc->sc_mm.offset + 32);
 	pipe_ts_link(sc, 4, PIPEoutput, 16, data_width, sc->sc_mm.offset);
 	pipe_ts_link(sc, 6, PIPEinput, 16, data_width, sc->sc_mm.offset);
@@ -948,7 +948,7 @@ mmcodec_setcontrol(struct dbri_softc *sc)
 	/* enable control mode */
 	val = DBRI_PIO_ENABLE_ALL | DBRI_PIO1;	/* was PIO1 */
 
-/* XXX */
+	/* XXX */
 	val |= (sc->sc_mm.onboard ? DBRI_PIO0 : DBRI_PIO2);
 
 	bus_space_write_4(iot, ioh, DBRI_REG2, val);
@@ -1138,10 +1138,10 @@ pipe_reset(struct dbri_softc *sc, int pipe)
 
 	dd->busy = 0;
 
-	#if 0
+#if 0
 	if (dd->callback)
 		(*dd->callback)(dd->callback_args);
-	#endif
+#endif
 
 	sc->sc_pipe[pipe].desc = -1;
 
@@ -1153,8 +1153,8 @@ pipe_receive_fixed(struct dbri_softc *sc, int pipe, volatile u_int32_t *prec)
 {
 
 	if (pipe < DBRI_PIPE_MAX / 2 || pipe >= DBRI_PIPE_MAX) {
-		aprint_error("%s: illegal pipe number %d\n", sc->sc_dev.dv_xname,
-		    pipe);
+		aprint_error("%s: illegal pipe number %d\n",
+		    sc->sc_dev.dv_xname, pipe);
 		return;
 	}
 
@@ -1181,25 +1181,26 @@ pipe_transmit_fixed(struct dbri_softc *sc, int pipe, u_int32_t data)
 	volatile u_int32_t *cmd;
 
 	if (pipe < DBRI_PIPE_MAX / 2 || pipe >= DBRI_PIPE_MAX) {
-		aprint_error("%s: illegal pipe number %d\n", sc->sc_dev.dv_xname,
-		    pipe);
+		aprint_error("%s: illegal pipe number %d\n",
+		    sc->sc_dev.dv_xname, pipe);
 		return;
 	}
 
 	if (DBRI_SDP_MODE(sc->sc_pipe[pipe].sdp) == 0) {
-		aprint_error("%s: uninitialized pipe %d\n", sc->sc_dev.dv_xname,
-		    pipe);
+		aprint_error("%s: uninitialized pipe %d\n",
+		    sc->sc_dev.dv_xname, pipe);
 		return;
 	}
 
 	if (DBRI_SDP_MODE(sc->sc_pipe[pipe].sdp) != DBRI_SDP_FIXED) {
-		aprint_error("%s: non-fixed pipe %d\n", sc->sc_dev.dv_xname, pipe);
+		aprint_error("%s: non-fixed pipe %d\n", sc->sc_dev.dv_xname,
+		    pipe);
 		return;
 	}
 
 	if (!(sc->sc_pipe[pipe].sdp & DBRI_SDP_TO_SER)) {
-		aprint_error("%s: called on receive pipe %d\n", sc->sc_dev.dv_xname,
-		    pipe);
+		aprint_error("%s: called on receive pipe %d\n",
+		    sc->sc_dev.dv_xname, pipe);
 		return;
 	}
 
@@ -1230,14 +1231,14 @@ setup_ring(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	td_first = td_last = -1;
 
 	if (pipe < 0 || pipe >= DBRI_PIPE_MAX / 2) {
-		aprint_error("%s: illegal pipe number %d\n", sc->sc_dev.dv_xname,
-		    pipe);
+		aprint_error("%s: illegal pipe number %d\n",
+		    sc->sc_dev.dv_xname, pipe);
 		return;
 	}
 
 	if (sc->sc_pipe[pipe].sdp == 0) {
-		aprint_error("%s: uninitialized pipe %d\n", sc->sc_dev.dv_xname,
-		    pipe);
+		aprint_error("%s: uninitialized pipe %d\n",
+		    sc->sc_dev.dv_xname, pipe);
 		return;
 	}
 
@@ -1269,8 +1270,8 @@ setup_ring(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	sc->sc_dma->desc[i].nda = dmabase + dbri_dma_off(desc, 0);
 	sc->sc_dma->desc[i].status = 0;
 
-	dd->callback = callback; //sc->intr;
-	dd->callback_args = callback_args; //sc->intrarg;
+	dd->callback = callback;
+	dd->callback_args = callback_args;
 
 	x = splaudio();
 
@@ -1278,7 +1279,7 @@ setup_ring(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 	if (pipe_active(sc, pipe)) {
 		aprint_error("pipe active (CDP)\n");
 		/* pipe is already active */
-		#if 0
+#if 0
 		td_last = sc->sc_pipe[pipe].desc;
 		while (sc->sc_desc[td_last].next != -1)
 			td_last = sc->sc_desc[td_last].next;
@@ -1290,7 +1291,7 @@ setup_ring(struct dbri_softc *sc, int pipe, int which, int num, int blksz,
 		cmd = dbri_command_lock(sc);
 		*(cmd++) = DBRI_CMD(DBRI_COMMAND_CDP, 0, pipe);
 		dbri_command_send(sc, cmd);
-		#endif
+#endif
 	} else {
 		/*
 		 * pipe isn't active - issue an SDP command to start our
@@ -1751,8 +1752,7 @@ static int
 dbri_get_props(void *hdl)
 {
 
-	return (AUDIO_PROP_MMAP/* | AUDIO_PROP_INDEPENDENT*/);
-	//return (0);
+	return AUDIO_PROP_MMAP;
 }
 
 static int
