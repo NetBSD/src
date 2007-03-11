@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.82 2007/03/11 15:52:30 apb Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.83 2007/03/11 16:08:11 apb Exp $
 #
 # Copyright (c) 2003,2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -371,7 +371,12 @@ setup()
 			opts="${opts} -m ${OPTARG}"
 			;;
 		p)	TOOL_PAX="${OPTARG}"
-			do_pax=true
+			if ( echo "" | "${TOOL_PAX}" -w -M ); then
+				do_pax=true
+			else
+				warn "Ignored -p option:" \
+					"${TOOL_PAX} is missing or broken"
+			fi
 			;;
 		s)	do_specfile=true
 			opts="${opts} -s"
