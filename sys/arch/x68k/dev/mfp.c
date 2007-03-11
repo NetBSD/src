@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.18 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: mfp.c,v 1.19 2007/03/11 08:09:24 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.18 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.19 2007/03/11 08:09:24 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ mfp_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct intio_attach_args *ia = aux;
 
 	/* mfp0 */
-	if (strcmp (ia->ia_name, "mfp") != 0)
+	if (strcmp(ia->ia_name, "mfp") != 0)
 		return 0;
 	if (mfp_attached)
 		return (0);
@@ -97,27 +97,27 @@ mfp_attach(struct device *parent, struct device *self, void *aux)
 	struct mfp_softc *sc = (struct mfp_softc *)self;
 	struct intio_attach_args *ia = aux;
 
-	mfp_init ();
+	mfp_init();
 
 	if (sc != NULL) {
 		/* realconfig */
 		int r;
 
-		printf ("\n");
+		printf("\n");
 
 		mfp_attached = 1;
 		sc->sc_bst = ia->ia_bst;
 		sc->sc_intr = ia->ia_intr;
 		ia->ia_size = 0x30;
-		r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
+		r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 		if (r)
-			panic ("IO map for MFP corruption??");
+			panic("IO map for MFP corruption??");
 #endif
 		bus_space_map(ia->ia_bst, ia->ia_addr, 0x2000, 0, &sc->sc_bht);
-		config_found (self, __UNCONST("kbd"), NULL);
-		config_found (self, __UNCONST("clock"), NULL);
-		config_found (self, __UNCONST("pow"), NULL);
+		config_found(self, __UNCONST("kbd"), NULL);
+		config_found(self, __UNCONST("clock"), NULL);
+		config_found(self, __UNCONST("pow"), NULL);
 	} else {
 		/*
 		 * Called from config_console;

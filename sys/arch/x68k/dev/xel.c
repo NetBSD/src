@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.12 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: xel.c,v 1.13 2007/03/11 08:09:26 isaki Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.12 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.13 2007/03/11 08:09:26 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ struct xel_softc {
 	bus_space_handle_t sc_bh;
 };
 
-CFATTACH_DECL(xel, sizeof (struct xel_softc),
+CFATTACH_DECL(xel, sizeof(struct xel_softc),
     xel_match, xel_attach, NULL, NULL);
 
 static paddr_t xel_addrs[] = { 0xec0000, 0xec4000, 0xec8000, 0xecc000 };
@@ -123,9 +123,9 @@ static int
 xel_probe(paddr_t addr)
 {
 	u_int32_t b1, b2;
-	volatile u_int16_t *start = (volatile void*) INTIO_ADDR(addr);
+	volatile u_int16_t *start = (volatile void *)INTIO_ADDR(addr);
 	label_t	faultbuf;
-	volatile u_int32_t *sram = (volatile void*) INTIO_ADDR(XEL_RAM_ADDR_HIGHER);
+	volatile u_int32_t *sram = (volatile void *)INTIO_ADDR(XEL_RAM_ADDR_HIGHER);
 
 	if (badaddr(start))
 		return 0;
@@ -181,13 +181,13 @@ xel_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
-	if (strcmp (ia->ia_name, "xel") != 0)
+	if (strcmp(ia->ia_name, "xel") != 0)
 		return 0;
 
 	if (xel_addr(parent, match, ia)) {
 #ifdef DIAGNOSTIC
 		if (cputype != CPU_68030)
-			panic ("Non-030 Xellent???");
+			panic("Non-030 Xellent???");
 #endif
 		return 1;
 	}
@@ -197,7 +197,7 @@ xel_match(struct device *parent, struct cfdata *match, void *aux)
 static void
 xel_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct xel_softc *sc = (void*)self;
+	struct xel_softc *sc = (void *)self;
 	struct intio_attach_args *ia = aux;
 	struct cfdata *cf = device_cfdata(self);
 	paddr_t addr;
@@ -207,12 +207,12 @@ xel_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bst = ia->ia_bst;
 	ia->ia_addr = (int) addr;
 	ia->ia_size = 0x4000;
-	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
+	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 	if (r)
-		panic ("IO map for Xellent30 corruption??");
+		panic("IO map for Xellent30 corruption??");
 #endif
-	printf (": Xellent30 MPU Accelerator.\n");
+	printf(": Xellent30 MPU Accelerator.\n");
 
 	return;
 }

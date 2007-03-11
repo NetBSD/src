@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.17 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: opm.c,v 1.18 2007/03/11 08:09:25 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.17 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.18 2007/03/11 08:09:25 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ struct opm_softc	*opm0;	/* XXX */
 static int opm_match(struct device *, struct cfdata *, void *);
 static void opm_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(opm, sizeof (struct opm_softc),
+CFATTACH_DECL(opm, sizeof(struct opm_softc),
     opm_match, opm_attach, NULL, NULL);
 
 static int
@@ -78,7 +78,7 @@ opm_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
 		ia->ia_addr = 0xe90000;
 	ia->ia_size = 0x2000;
-	if (intio_map_allocate_region (parent, ia, INTIO_MAP_TESTONLY))
+	if (intio_map_allocate_region(parent, ia, INTIO_MAP_TESTONLY))
 		return 0;
 
 	return 1;
@@ -91,22 +91,22 @@ opm_attach(struct device *parent, struct device *self, void *aux)
 	struct intio_attach_args *ia = aux;
 	int r;
 
-	printf ("\n");
+	printf("\n");
 	ia->ia_size = 0x2000;
-	r = intio_map_allocate_region (parent, ia, INTIO_MAP_ALLOCATE);
+	r = intio_map_allocate_region(parent, ia, INTIO_MAP_ALLOCATE);
 #ifdef DIAGNOSTIC
 	if (r)
-		panic ("IO map for OPM corruption??");
+		panic("IO map for OPM corruption??");
 #endif
 
 	sc->sc_bst = ia->ia_bst;
-	r = bus_space_map (sc->sc_bst,
+	r = bus_space_map(sc->sc_bst,
 			   ia->ia_addr, ia->ia_size,
 			   BUS_SPACE_MAP_SHIFTED,
 			   &sc->sc_bht);
 #ifdef DIAGNOSTIC
 	if (r)
-		panic ("Cannot map IO space for OPM.");
+		panic("Cannot map IO space for OPM.");
 #endif
 
 	/* XXX device_unit() abuse */
@@ -130,10 +130,10 @@ int opmclose(dev_t);
 inline static void
 writeopm(int reg, int dat)
 {
-	while (bus_space_read_1 (opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
-	bus_space_write_1 (opm0->sc_bst, opm0->sc_bht, OPM_REG, reg);
-	while (bus_space_read_1 (opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
-	bus_space_write_1 (opm0->sc_bst, opm0->sc_bht, OPM_DATA, dat);
+	while (bus_space_read_1(opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
+	bus_space_write_1(opm0->sc_bst, opm0->sc_bht, OPM_REG, reg);
+	while (bus_space_read_1(opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
+	bus_space_write_1(opm0->sc_bst, opm0->sc_bht, OPM_DATA, dat);
 	opm0->sc_regs[reg] = dat;
 }
 

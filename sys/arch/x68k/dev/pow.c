@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.16 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: pow.c,v 1.17 2007/03/11 08:09:25 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.16 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.17 2007/03/11 08:09:25 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,18 +102,18 @@ powattach(int num)
 
 		printf("pow%d: started by ", minor);
 		if (sw & POW_EXTERNALSW)
-			printf ("external power switch.\n");
+			printf("external power switch.\n");
 		else if (sw & POW_FRONTSW)
-			printf ("front power switch.\n");
+			printf("front power switch.\n");
 		/* XXX: I don't know why POW_ALARMSW should not be checked */
 #if 0
 		else if ((sw & POW_ALARMSW) && sramtop[0x26] == 0)
-			printf ("RTC alarm.\n");
+			printf("RTC alarm.\n");
 		else
-			printf ("???.\n");
+			printf("???.\n");
 #else
 		else
-			printf ("RTC alarm.\n");
+			printf("RTC alarm.\n");
 #endif
 	}
 
@@ -162,13 +162,13 @@ setalarm(struct x68k_alarminfo *bp)
 {
 	int s, ontime;
 
-	s = splclock ();
+	s = splclock();
 
 	sysport.sramwp = 0x31;
 	if (bp->al_enable) {
-		SRAMINT (0x1e) = bp->al_dowhat;
-		SRAMINT (0x22) = bp->al_ontime;
-		SRAMINT (0x14) = (bp->al_offtime / 60) - 1;
+		SRAMINT(0x1e) = bp->al_dowhat;
+		SRAMINT(0x22) = bp->al_ontime;
+		SRAMINT(0x14) = (bp->al_offtime / 60) - 1;
 		sramtop[0x26] = 0;
 	} else {
 		sramtop[0x26] = 7;
@@ -238,8 +238,8 @@ powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			bp->pow_switch_boottime = sc->sw;
 			bp->pow_switch_current = ~mfp.gpip & 7;
 			bp->pow_boottime = boottime.tv_sec;
-			bp->pow_bootcount = SRAMINT (0x44);
-			bp->pow_usedtotal = SRAMINT (0x40) * 60;
+			bp->pow_bootcount = SRAMINT(0x44);
+			bp->pow_usedtotal = SRAMINT(0x40) * 60;
 		}
 		break;
 
@@ -249,9 +249,9 @@ powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			if (!(sc->rw & FREAD))
 				return EBADF;
 			bp->al_enable = (sramtop[0x26] == 0);
-			bp->al_ontime = SRAMINT (0x22);
-			bp->al_dowhat = SRAMINT (0x1e);
-			bp->al_offtime = (SRAMINT (0x14) + 1) * 60;
+			bp->al_ontime = SRAMINT(0x22);
+			bp->al_dowhat = SRAMINT(0x1e);
+			bp->al_offtime = (SRAMINT(0x14) + 1) * 60;
 		}
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.16 2007/03/11 06:01:05 isaki Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.17 2007/03/11 08:09:25 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.16 2007/03/11 06:01:05 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.17 2007/03/11 08:09:25 isaki Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -194,49 +194,49 @@ bellioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	switch (cmd) {
 	case BELLIOCGPARAM:
 	  {
-	      struct bell_info *bp = (struct bell_info *)addr;
-	      if (!(sc->sc_flags & FREAD))
-		  return EBADF;
+		struct bell_info *bp = (struct bell_info *)addr;
+		if (!(sc->sc_flags & FREAD))
+			return EBADF;
 
-	      bp->volume = sc->volume;
-	      bp->pitch = sc->pitch;
-	      bp->msec = sc->msec;
-	      break;
+		bp->volume = sc->volume;
+		bp->pitch = sc->pitch;
+		bp->msec = sc->msec;
+		break;
 	  }
 
 	case BELLIOCSPARAM:
 	  {
-	      struct bell_info *bp = (struct bell_info *)addr;
+		struct bell_info *bp = (struct bell_info *)addr;
 
-	      if (!(sc->sc_flags & FWRITE))
-		  return EBADF;
+		if (!(sc->sc_flags & FWRITE))
+			return EBADF;
 
-	      return opm_bell_setup(bp);
+		return opm_bell_setup(bp);
 	  }
 
 	case BELLIOCGVOICE:
-	    if (!(sc->sc_flags & FREAD))
-		return EBADF;
+		if (!(sc->sc_flags & FREAD))
+			return EBADF;
 
-	    if (addr == NULL)
-		return EFAULT;
+		if (addr == NULL)
+			return EFAULT;
 
-	    memcpy(addr, &vtab[unit], sizeof(struct opm_voice));
-	    break;
+		memcpy(addr, &vtab[unit], sizeof(struct opm_voice));
+		break;
 
 	case BELLIOCSVOICE:
-	    if (!(sc->sc_flags & FWRITE))
-		return EBADF;
+		if (!(sc->sc_flags & FWRITE))
+			return EBADF;
 
-	    if (addr == NULL)
-		return EFAULT;
+		if (addr == NULL)
+			return EFAULT;
 
-	    memcpy(&vtab[unit], addr, sizeof(struct opm_voice));
-	    opm_set_voice(sc->ch, &vtab[unit]);
-	    break;
+		memcpy(&vtab[unit], addr, sizeof(struct opm_voice));
+		opm_set_voice(sc->ch, &vtab[unit]);
+		break;
 
 	default:
-	    return EINVAL;
+		return EINVAL;
 	}
 	return 0;
 }
