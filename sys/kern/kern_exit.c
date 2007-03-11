@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.169 2007/03/09 14:11:24 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.170 2007/03/11 23:19:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.169 2007/03/09 14:11:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.170 2007/03/11 23:19:49 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -304,13 +304,6 @@ exit1(struct lwp *l, int rv)
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
 
-	/*
-	 * Finalize the last LWP's specificdata, as well as the
-	 * specificdata for the proc itself.
-	 */
-	lwp_finispecific(l);
-	proc_finispecific(p);
-
 	/* Collect child u-areas. */
 	uvm_uarea_drain(false);
 
@@ -323,6 +316,13 @@ exit1(struct lwp *l, int rv)
 	 * anymore.
 	 */
 	uvm_proc_exit(p);
+
+	/*
+	 * Finalize the last LWP's specificdata, as well as the
+	 * specificdata for the proc itself.
+	 */
+	lwp_finispecific(l);
+	proc_finispecific(p);
 
 	/*
 	 * Stop profiling.
