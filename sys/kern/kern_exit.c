@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.170 2007/03/11 23:19:49 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.171 2007/03/11 23:40:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.170 2007/03/11 23:19:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.171 2007/03/11 23:40:58 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -318,13 +318,6 @@ exit1(struct lwp *l, int rv)
 	uvm_proc_exit(p);
 
 	/*
-	 * Finalize the last LWP's specificdata, as well as the
-	 * specificdata for the proc itself.
-	 */
-	lwp_finispecific(l);
-	proc_finispecific(p);
-
-	/*
 	 * Stop profiling.
 	 */
 	if ((p->p_stflag & PST_PROFIL) != 0) {
@@ -409,6 +402,13 @@ exit1(struct lwp *l, int rv)
 	mutex_enter(&proclist_mutex);
 	fixjobc(p, p->p_pgrp, 0);
 	mutex_exit(&proclist_mutex);
+
+	/*
+	 * Finalize the last LWP's specificdata, as well as the
+	 * specificdata for the proc itself.
+	 */
+	lwp_finispecific(l);
+	proc_finispecific(p);
 
 	/*
 	 * Notify interested parties of our demise.
