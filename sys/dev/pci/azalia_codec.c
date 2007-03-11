@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.30 2007/03/11 13:31:36 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.31 2007/03/11 13:34:40 kent Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.30 2007/03/11 13:31:36 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.31 2007/03/11 13:34:40 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,12 +118,16 @@ static int	alc882_set_port(codec_t *, mixer_ctrl_t *);
 static int	alc882_get_port(codec_t *, mixer_ctrl_t *);
 static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 static int	ad1981hd_mixer_init(codec_t *);
+static int	ad1988_init_dacgroup(codec_t *);
 static int	cmi9880_init_dacgroup(codec_t *);
 static int	cmi9880_mixer_init(codec_t *);
 static int	stac9221_init_dacgroup(codec_t *);
 static int	stac9221_mixer_init(codec_t *);
 static int	stac9221_gpio_unmute(codec_t *, int);
 static int	stac9220_mixer_init(codec_t *);
+static int	stac9220_set_port(codec_t *, mixer_ctrl_t *);
+static int	stac9220_get_port(codec_t *, mixer_ctrl_t *);
+static int	stac9220_unsol_event(codec_t *, int);
 
 
 int
@@ -174,6 +178,16 @@ azalia_codec_init_vtbl(codec_t *this)
 		/* http://www.analog.com/en/prod/0,2877,AD1983,00.html */
 		this->name = "Analog Devices AD1983";
 		break;
+	case 0x11d41988:
+		/* http://www.analog.com/en/prod/0,2877,AD1988A,00.html */
+		this->name = "Analog Devices AD1988A";
+		this->init_dacgroup = ad1988_init_dacgroup;
+		break;
+	case 0x11d4198b:
+		/* http://www.analog.com/en/prod/0,2877,AD1988B,00.html */
+		this->name = "Analog Devices AD1988B";
+		this->init_dacgroup = ad1988_init_dacgroup;
+		break;
 	case 0x434d4980:
 		this->name = "CMedia CMI9880";
 		this->init_dacgroup = cmi9880_init_dacgroup;
@@ -191,6 +205,9 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x83847690:
 		this->name = "Sigmatel STAC9220";
 		this->mixer_init = stac9220_mixer_init;
+		this->set_port = stac9220_set_port;
+		this->unsol_event = stac9220_unsol_event;
+		extra_size = 1;
 		break;
 	}
 	if (extra_size > 0) {
@@ -2412,6 +2429,28 @@ ad1981hd_mixer_init(codec_t *this)
 }
 
 /* ----------------------------------------------------------------
+ * Analog Devices AD1988A/AD1988B
+ * ---------------------------------------------------------------- */
+
+static int
+ad1988_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 3,
+		{{4, {0x03, 0x04, 0x05, 0x06}},	/* analog 8ch */
+		 {1, {0x02}},	/* digital */
+		 {1, {0x0a}}}};	/* another analog */
+	static const convgroupset_t adcs = {
+		-1, 2,
+		{{2, {0x08, 0x09, 0x0f}}, /* analog 6ch */
+		 {1, {0x07}}}};	/* digital */
+
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+/* ----------------------------------------------------------------
  * CMedia CMI9880
  * ---------------------------------------------------------------- */
 
@@ -2614,6 +2653,7 @@ static int
 stac9220_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
+	uint32_t value;
 
 	this->nmixers = sizeof(stac9220_mixer_items) / sizeof(mixer_item_t);
 	this->mixers = malloc(sizeof(mixer_item_t) * this->nmixers,
@@ -2640,5 +2680,111 @@ stac9220_mixer_init(codec_t *this)
 	mc.un.value.level[0] = generic_mixer_max(this, 0x0c, MI_TARGET_OUTAMP);
 	mc.un.value.level[1] = mc.un.value.level[0];
 	generic_mixer_set(this, 0x0c, MI_TARGET_OUTAMP, &mc);
+
+#define STAC9220_DELL_INSPIRON9400_ID	0x01cd1028
+#define STAC9220_DELL_640M_ID		0x01d81028
+#define STAC9220_EVENT_HP	0
+#define STAC9220_EXTRA_MASTER	0
+#define STAC9220_NID_MASTER	0x0b
+#define STAC9220_NID_HP		0x0d
+	if (false && (this->subid == STAC9220_DELL_INSPIRON9400_ID ||
+		      this->subid == STAC9220_DELL_640M_ID)) {
+		/* setup a unsolicited event for the headphones */
+		this->comresp(this, STAC9220_NID_HP, CORB_SET_UNSOLICITED_RESPONSE,
+		    CORB_UNSOL_ENABLE | STAC9220_EVENT_HP, NULL);
+		this->extra[STAC9220_EXTRA_MASTER] = 0; /* unmute */
+		/* If the headphone presents, mute the internal speaker */
+		this->comresp(this, STAC9220_NID_HP, CORB_GET_PIN_SENSE, 0, &value);
+		mc.un.ord = value & CORB_PS_PRESENSE ? 1 : 0;
+		generic_mixer_set(this, STAC9220_NID_MASTER, MI_TARGET_OUTAMP, &mc);
+		this->get_port = stac9220_get_port;
+	}
+	return 0;
+}
+
+static int
+stac9220_set_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+	uint32_t value;
+	int err;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	if (mc->type != m->devinfo.type)
+		return EINVAL;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if ((this->subid == STAC9220_DELL_INSPIRON9400_ID ||
+	     this->subid == STAC9220_DELL_640M_ID) &&
+	    m->nid == STAC9220_NID_MASTER &&
+	    m->target == MI_TARGET_OUTAMP && mc->type == AUDIO_MIXER_ENUM) {
+		if (mc->un.ord != 0 && mc->un.ord != 1)
+			return EINVAL;
+		this->extra[STAC9220_EXTRA_MASTER] = mc->un.ord;
+		err = this->comresp(this, STAC9220_NID_HP,
+		    CORB_GET_PIN_SENSE, 0, &value);
+		if (err)
+			return err;
+		if (!(value & CORB_PS_PRESENSE)) {
+			return generic_mixer_set(this, m->nid, m->target, mc);
+		}
+		return 0;
+	}
+	return generic_mixer_set(this, m->nid, m->target, mc);
+}
+
+static int
+stac9220_get_port(codec_t *this, mixer_ctrl_t *mc)
+{
+	const mixer_item_t *m;
+
+	if (mc->dev >= this->nmixers)
+		return ENXIO;
+	m = &this->mixers[mc->dev];
+	mc->type = m->devinfo.type;
+	if (mc->type == AUDIO_MIXER_CLASS)
+		return 0;
+	if ((this->subid == STAC9220_DELL_INSPIRON9400_ID ||
+	     this->subid == STAC9220_DELL_640M_ID) &&
+	    m->nid == STAC9220_NID_MASTER &&
+	    m->target == MI_TARGET_OUTAMP && mc->type == AUDIO_MIXER_ENUM) {
+		mc->un.ord = this->extra[STAC9220_EXTRA_MASTER];
+		return 0;
+	}
+	return generic_mixer_get(this, m->nid, m->target, mc);
+}
+
+static int
+stac9220_unsol_event(codec_t *this, int tag)
+{
+	int err;
+	uint32_t value;
+	mixer_ctrl_t mc;
+
+	switch (tag) {
+	case STAC9220_EVENT_HP:
+		err = this->comresp(this, STAC9220_NID_HP,
+		    CORB_GET_PIN_SENSE, 0, &value);
+		if (err)
+			break;
+		mc.dev = -1;
+		mc.type = AUDIO_MIXER_ENUM;
+		if (value & CORB_PS_PRESENSE) {
+			DPRINTF(("%s: headphone has been inserted.\n", __func__));
+			mc.un.ord = 1; /* mute */
+			generic_mixer_set(this, STAC9220_NID_MASTER,
+			    MI_TARGET_OUTAMP, &mc);
+		} else {
+			DPRINTF(("%s: headphone has been pulled out.\n", __func__));
+			mc.un.ord = this->extra[ALC260_EXTRA_MASTER];
+			generic_mixer_set(this, STAC9220_NID_MASTER,
+			    MI_TARGET_OUTAMP, &mc);
+		}
+		break;
+	default:
+		printf("%s: unknown tag: %d\n", __func__, tag);
+	}
 	return 0;
 }
