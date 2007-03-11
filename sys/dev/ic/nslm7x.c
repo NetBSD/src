@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.31 2007/03/11 21:23:22 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.32 2007/03/11 22:25:48 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.31 2007/03/11 21:23:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.32 2007/03/11 22:25:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ static struct lm_sensor lm78_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, lm_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, lm_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor w83627hf_sensors[] = {
@@ -168,7 +168,7 @@ static struct lm_sensor w83627hf_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 /*
@@ -201,7 +201,7 @@ static struct lm_sensor w83627ehf_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor w83627dhg_sensors[] = {
@@ -231,7 +231,7 @@ static struct lm_sensor w83627dhg_sensors[] = {
 	{ "CPU Fan", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
 	{ "Aux Fan", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor w83637hf_sensors[] = {
@@ -254,7 +254,7 @@ static struct lm_sensor w83637hf_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor w83697hf_sensors[] = {
@@ -276,7 +276,7 @@ static struct lm_sensor w83697hf_sensors[] = {
 	{ "Fan0", ENVSYS_SFANRPM, 0, 0x28, wb_refresh_fanrpm, 0 },
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 /*
@@ -304,7 +304,7 @@ static struct lm_sensor w83781d_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, lm_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, lm_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor w83782d_sensors[] = {
@@ -329,7 +329,7 @@ static struct lm_sensor w83782d_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor w83783s_sensors[] = {
@@ -350,7 +350,7 @@ static struct lm_sensor w83783s_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, wb_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, wb_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor w83791d_sensors[] = {
@@ -378,7 +378,7 @@ static struct lm_sensor w83791d_sensors[] = {
 	{ "Fan3", ENVSYS_SFANRPM, 0, 0xba, wb_refresh_fanrpm, 0 },
 	{ "Fan4", ENVSYS_SFANRPM, 0, 0xbb, wb_refresh_fanrpm, 0 },
 
-        { NULL }
+        { .desc = NULL }
 };
 
 static struct lm_sensor w83792d_sensors[] = {
@@ -407,7 +407,7 @@ static struct lm_sensor w83792d_sensors[] = {
 	{ "Fan5", ENVSYS_SFANRPM, 0, 0xba, wb_w83792d_refresh_fanrpm, 0 },
 	{ "Fan6", ENVSYS_SFANRPM, 0, 0xbe, wb_w83792d_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static struct lm_sensor as99127f_sensors[] = {
@@ -430,7 +430,7 @@ static struct lm_sensor as99127f_sensors[] = {
 	{ "Fan1", ENVSYS_SFANRPM, 0, 0x29, lm_refresh_fanrpm, 0 },
 	{ "Fan2", ENVSYS_SFANRPM, 0, 0x2a, lm_refresh_fanrpm, 0 },
 
-	{ NULL }
+	{ .desc = NULL }
 };
 
 static void
