@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.2 2007/03/11 05:22:25 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.3 2007/03/11 16:46:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ _C_LABEL(_lock_cas_ras_start):
 	movl	%a0@,%d0
 	cmpl	%sp@(8),%d0
 	jne	1f
-	movl	%sp@(8),%a0@
+	movl	%sp@(12),%a0@
 	.globl	_C_LABEL(_lock_cas_ras_end)
 _C_LABEL(_lock_cas_ras_end):
 
