@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2007/03/11 05:22:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2007/03/11 06:25:08 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -176,15 +176,15 @@ _getsr(void)
  * initialization, and later at spl0, so we have to 
  * use splraise to avoid enabling interrupts early.
  */
-#define splvm()         _splraise(PSL_S|PSL_IPL4)
+#define splvm()         splraise4()
 
 /* Intersil or Am9513 clock hardware interrupts (hard-wired at 5) */
 #define splclock()      splraise5()
 #define splstatclock()  splclock()
 
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
-#define splzs()		spl6()
-#define	splserial()	spl6()
+#define splzs()		splraise6()
+#define splserial()	splraise6()
 
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
