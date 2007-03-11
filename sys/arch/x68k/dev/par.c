@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.29 2007/03/11 08:09:25 isaki Exp $	*/
+/*	$NetBSD: par.c,v 1.30 2007/03/11 08:22:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.29 2007/03/11 08:09:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.30 2007/03/11 08:22:33 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: par.c,v 1.29 2007/03/11 08:09:25 isaki Exp $");
 #include <sys/callout.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/kernel.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -435,7 +436,6 @@ parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 int
 parhztoms(int h)
 {
-	extern int hz;
 	int m = h;
 	
 	if (m > 0)
@@ -446,7 +446,6 @@ parhztoms(int h)
 int
 parmstohz(int m)
 {
-	extern int hz;
 	int h = m;
 	
 	if (h > 0) {
@@ -509,8 +508,6 @@ parsendch(struct par_softc *sc, u_char ch)
 	       && (parsend_pending 
 		   || !(intio_get_sicilian_intr() & SICILIAN_STAT_PAR)))
 	{
-		extern int hz;
-
 		/* wait a second, and try again */
 		callout_reset(&intr_callout, hz, parintr, 0);
 		partimeout_pending = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.17 2007/03/11 08:09:25 isaki Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.18 2007/03/11 08:22:33 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.17 2007/03/11 08:09:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.18 2007/03/11 08:22:33 isaki Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.17 2007/03/11 08:09:25 isaki Exp $");
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/event.h>
+#include <sys/kernel.h>
 
 #include <machine/opmbellio.h>
 
@@ -496,7 +497,6 @@ opm_bell_setup(struct bell_info *data)
 int
 bellmstohz(int m)
 {
-	extern int hz;
 	int h = m;
 
 	if (h > 0) {
