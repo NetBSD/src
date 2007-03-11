@@ -1,4 +1,4 @@
-.\" $NetBSD: MAKEDEV.8.template,v 1.11 2007/03/03 08:10:09 dsl Exp $
+.\" $NetBSD: MAKEDEV.8.template,v 1.12 2007/03/11 15:54:10 apb Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,12 +45,8 @@
 .Op Fl M
 .Op Fl fs
 .Op Fl m Ar mknod
-.Ar special Op Ar ...
-.Pp
-.Nm
-.Op Fl fs
-.Op Fl m Ar mknod
-.Ar device Op Ar ...
+.Op Fl p Ar pax
+.Bro Ar special | device Brc Op Ar ...
 .Sh DESCRIPTION
 .Nm
 is used to create system and device special files.
@@ -96,11 +92,27 @@ This is used by
 when
 .Pa /dev/console
 does not exit.
+If the
+.Fl M
+flag is specified more than once, then
+.Nm
+will also redirect its output to the system console.
 .It Fl m Ar mknod
 Name of
 .Xr mknod 8
 program.
 [Usually, $TOOL_MKNOD or mknod.]
+.It Fl p Ar pax
+Name of
+.Xr pax 1
+program.
+If this is specified, then instead of creating device nodes
+one by one using
+.Xr mknod 8 ,
+.Nm
+will create device nodes all at once using
+.Xr pax 1 .
+This is more efficient when many device nodes are involved.
 .It Fl s
 Generate
 .Xr mtree 8
