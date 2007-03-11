@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.10 2007/01/28 10:47:36 pooka Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.11 2007/03/11 10:08:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -222,7 +222,7 @@ dtfs_freenode(struct puffs_node *pn)
 }
 
 void
-dtfs_setsize(struct puffs_node *pn, off_t newsize, int lazyextend)
+dtfs_setsize(struct puffs_node *pn, off_t newsize)
 {
 	struct dtfs_file *df = DTFS_PTOF(pn);
 	struct dtfs_mount *dtm;
@@ -241,7 +241,7 @@ dtfs_setsize(struct puffs_node *pn, off_t newsize, int lazyextend)
 		allocsize = newsize;
 	}
 
-	if ((needalloc && !lazyextend) || shrinks) {
+	if (needalloc || shrinks) {
 		df->df_data = erealloc(df->df_data, allocsize);
 		/*
 		 * if extended, set storage to zero
