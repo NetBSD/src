@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.14 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.15 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.14 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsirom.c,v 1.15 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ static void scsirom_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(scsirom, sizeof(struct scsirom_softc),
     scsirom_match, scsirom_attach, NULL, NULL);
 
-static int 
+static int
 scsirom_find(struct device *parent, struct intio_attach_args *ia)
 {
 	bus_space_handle_t ioh;
@@ -108,7 +108,7 @@ scsirom_find(struct device *parent, struct intio_attach_args *ia)
 	return r;
 }
 
-static int 
+static int
 scsirom_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -133,7 +133,7 @@ scsirom_match(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 }
 
-static void 
+static void
 scsirom_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct scsirom_softc *sc = (struct scsirom_softc *)self;

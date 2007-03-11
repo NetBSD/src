@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.30 2006/02/23 05:37:49 thorpej Exp $	*/
+/*	$NetBSD: spc.c,v 1.31 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.30 2006/02/23 05:37:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.31 2007/03/11 06:01:05 isaki Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,7 +66,7 @@ static void spc_intio_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(spc_intio, sizeof (struct spc_softc),
     spc_intio_match, spc_intio_attach, NULL, NULL);
 
-static int 
+static int
 spc_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -89,7 +89,7 @@ spc_intio_match(struct device *parent, struct cfdata *cf, void *aux)
 	return 1;
 }
 
-static void 
+static void
 spc_intio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spc_softc *sc = (struct spc_softc *)self;

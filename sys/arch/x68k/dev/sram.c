@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.14 2007/03/04 06:01:07 christos Exp $	*/
+/*	$NetBSD: sram.c,v 1.15 2007/03/11 06:01:05 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.14 2007/03/04 06:01:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.15 2007/03/11 06:01:05 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,7 +83,7 @@ sramattach(int num)
  */
 
 /*ARGSUSED*/
-int 
+int
 sramopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sram_softc *su = &sram_softc;
@@ -110,7 +110,7 @@ sramopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int 
+int
 sramclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct sram_softc *su = &sram_softc;
@@ -129,7 +129,7 @@ sramclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int 
+int
 sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
