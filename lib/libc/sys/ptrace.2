@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.29 2007/03/06 16:07:22 drochner Exp $
+.\"	$NetBSD: ptrace.2,v 1.30 2007/03/12 12:50:42 skrll Exp $
 .\"
 .\" This file is in the public domain.
-.Dd March 6, 2006
+.Dd March 12, 2007
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -266,7 +266,7 @@ argument should contain a
 .Dq Li "struct ptrace_lwpinfo"
 defined as:
 .Bd -literal -offset indent
-struct ptrace_io_desc {
+struct ptrace_lwpinfo {
 	lwpid_t pl_lwpid;
 	int pl_event;
 };
