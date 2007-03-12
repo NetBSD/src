@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.80 2007/03/12 16:20:53 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.81 2007/03/12 19:05:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.80 2007/03/12 16:20:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.81 2007/03/12 19:05:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ static void pipe_loan_free(struct pipe *);
 #endif /* PIPE_NODIRECT */
 
 static POOL_INIT(pipe_pool, sizeof(struct pipe), 0, 0, 0, "pipepl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
