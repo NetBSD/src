@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2005/08/26 16:32:33 xtraeme Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2007/03/12 11:19:37 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -80,3 +80,26 @@ Compensación en %s):
 
 message set_kernel_1
 {Núcleo (GENERIC)}
+
+message setbootdevice
+{Para conseguir que el sistema arranque automaticamente desde el sistema
+de ficheros del disco, necesita configura manualmente OpenFirmware para
+indicarle desde dónde debe cargar el núcleo del sistema.
+
+OpenFirmware puede cargar un núcleo a.out de NetBSD (perdone, pero ELF no está soportado) directamente desde una partición FFS del disco local.  Así que, para
+configurarlo para que arranque desde disco deberá ejecutar manualmente el
+siguiente comando desde la interfaz de OpenFirmware:
+
+setenv boot-device disk:\\netbsd.aout
+
+Sólo tiene que ejecutar esto una vez y sólamente si la propiedad
+'boot-device' no contenía el valor mostrado arriba.
+}
+
+message badclearmbr
+{Ha ocurrido un error al intentar borrar el primer sector del disco.  Si el
+firmware no puede verlo, pruebe a ejecutar el siguiente comando manualmente
+desde la linea de comandos de la utilidad de instalación:
+
+dd if=/dev/zero of=%s bs=512 count=1
+}

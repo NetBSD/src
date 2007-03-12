@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.19 2006/04/05 16:55:07 garbled Exp $	*/
+/*	$NetBSD: md.c,v 1.20 2007/03/12 11:19:37 jmmv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -53,6 +53,31 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+/*
+ * Clears the disk's first sector by writing all zeros over it.
+ * Returns 0 on success, -1 on failure.  Leaves the disk's path in
+ * the output diskpath buffer for further usage in error messages.
+ */
+static int
+clear_mbr(const char *disk, char *diskpath, size_t diskpathlen)
+{
+	int fd;
+	char sector[512];
+
+	fd = opendisk(disk, O_WRONLY, diskpath, diskpathlen, 0);
+	if (fd < 0)
+		return -1;
+
+	memset(sector, 0, sizeof(sector));
+	if (pwrite(fd, &sector, sizeof(sector), 0) < 0) {
+		close(fd);
+		return -1;
+	}
+
+	close(fd);
+	return 0;
+}
+
 int
 md_get_info(void)
 {
@@ -103,6 +128,13 @@ md_get_info(void)
 int
 md_pre_disklabel(void)
 {
+	char diskpath[MAXPATHLEN];
+
+	if (clear_mbr(diskdev, diskpath, sizeof(diskpath)) == -1) {
+		msg_display(MSG_badclearmbr, diskpath);
+		process_menu(MENU_ok, NULL);
+	}
+
 	return 0;
 }
 
@@ -178,5 +210,9 @@ md_init(void)
 int
 md_post_extract(void)
 {
+
+	msg_display(MSG_setbootdevice);
+	process_menu(MENU_ok, NULL);
+
 	return 0;
 }
