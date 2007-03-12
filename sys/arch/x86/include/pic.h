@@ -1,10 +1,10 @@
-/*	$NetBSD: pic.h,v 1.2 2006/07/04 00:30:22 christos Exp $	*/
+/*	$NetBSD: pic.h,v 1.3 2007/03/12 18:34:22 ad Exp $	*/
 
 #ifndef _X86_PIC_H
 #define _X86_PIC_H
 
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 struct cpu_info;
 
