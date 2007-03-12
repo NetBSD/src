@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.13 2007/03/11 05:22:26 thorpej Exp $	*/
+/*	$NetBSD: isr.c,v 1.14 2007/03/12 02:51:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.13 2007/03/11 05:22:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.14 2007/03/12 02:51:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,21 +91,6 @@ void *get_vector_entry(int);
  */
 void isr_autovec (struct clockframe);
 void isr_vectored(struct clockframe);
-
-#if defined(__mc68010__)
-extern char	_lock_cas_ras_start;
-extern char	_lock_cas_ras_end;
-
-#define	LOCK_CAS_CHECK(cfp)						\
-do {									\
-	if ((cfp)->cf_pc < (u_long)&_lock_cas_ras_end &&		\
-	    (cfp)->cf_pc > (u_long)&_lock_cas_ras_start) {		\
-	    	(cfp)->cf_pc = (u_long)&_lock_cas_ras_start;		\
-	}								\
-} while (/*CONSTCOND*/0)
-#else /* ! __mc68010__ */
-#define	LOCK_CAS_CHECK(cfp)	/* nothing */
-#endif /* __mc68010__ */
 
 void 
 isr_add_custom(int level, void *handler)
