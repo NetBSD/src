@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/06/12 11:20:13 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2007/03/12 11:19:38 jmmv Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -80,3 +80,26 @@ message arm32fspart
 message set_kernel_1
 {Kernel (GENERIC)}
 
+message setbootdevice
+{In order to make your system boot automatically from the on-disk file
+system, you need to manually configure OpenFirmware to tell it where to
+load the kernel from.
+
+OpenFirmware can load a NetBSD a.out kernel (sorry, ELF is not supported)
+straight from a FFS partition on the local hard disk.  So, to configure it
+to boot the just-installed kernel, run the following command from
+OpenFirmware's shell:
+
+setenv boot-device disk:\\netbsd.aout
+
+You only need to run this once and only if the 'boot-device' property did
+not already contain the value shown above.
+}
+
+message badclearmbr
+{Failed to clear the disk's first sector.  If OpenFirmware cannot see the
+disk, try to run the following command manually from the installer's shell
+utility:
+
+dd if=/dev/zero of=%s bs=512 count=1
+}
