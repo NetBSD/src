@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5 2007/02/16 17:24:00 hannken Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.6 2007/03/12 18:18:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5 2007/02/16 17:24:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.6 2007/03/12 18:18:35 ad Exp $");
 
 /*
  * File system transaction operations.
@@ -76,7 +76,7 @@ static specificdata_key_t mount_data_key;
 static kmutex_t vfs_suspend_lock;	/* Serialize suspensions. */
 
 POOL_INIT(fstrans_pl, sizeof(struct fstrans_lwp_info), 0, 0, 0,
-    "fstrans", NULL);
+    "fstrans", NULL, IPL_NONE);
 
 static void fstrans_lwp_dtor(void *);
 static void fstrans_mount_dtor(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.193 2007/03/09 14:11:27 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.194 2007/03/12 18:18:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.193 2007/03/09 14:11:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.194 2007/03/12 18:18:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ struct ttylist_head ttylist = TAILQ_HEAD_INITIALIZER(ttylist);
 int tty_count;
 
 POOL_INIT(tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-    &pool_allocator_nointr);
+    &pool_allocator_nointr, IPL_NONE);
 
 uint64_t tk_cancc;
 uint64_t tk_nin;
