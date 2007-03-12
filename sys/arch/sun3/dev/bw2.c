@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.31 2007/03/04 06:00:52 christos Exp $	*/
+/*	$NetBSD: bw2.c,v 1.32 2007/03/12 12:03:18 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.31 2007/03/04 06:00:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bw2.c,v 1.32 2007/03/12 12:03:18 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ bw2match(struct device *parent, struct cfdata *cf, void *args)
 		return (1);
 	default:
 #ifdef	DEBUG
-		printf("bwtwo at 0x%x match p4id=0x%x fails\n",
+		printf("bwtwo at 0x%lx match p4id=0x%x fails\n",
 			   ca->ca_paddr, p4id & 0xFF);
 #endif
 		break;
