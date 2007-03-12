@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.5 2007/03/07 22:24:31 liamjfoy Exp $
+.\"	$NetBSD: sysctl.7,v 1.6 2007/03/12 14:37:28 liamjfoy Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1391,6 +1391,7 @@ IPv6 Fast Forwarding is enabled by default.
 If set to 0, IPv6 Fast Forwarding is disabled.
 .Li ip6.maxflows
 controls the maximum amount of flows which can be created.
+The default value is 256.
 .It Li ip6.maxfragpackets
 The maximum number of fragmented packets the node will accept.
 0 means that the node will not accept any fragmented packets.
