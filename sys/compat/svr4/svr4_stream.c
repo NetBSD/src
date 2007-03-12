@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.61 2007/02/09 21:55:24 ad Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.61.2.1 2007/03/12 05:52:46 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.61 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.61.2.1 2007/03/12 05:52:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,19 +98,19 @@ static void netaddr_to_sockaddr_un __P((struct sockaddr_un *,
 
 /* stream ioctls */
 static int i_nread __P((struct file *, struct lwp *, register_t *, int,
-    u_long, caddr_t));
+    u_long, void *));
 static int i_fdinsert __P((struct file *, struct lwp *, register_t *, int,
-    u_long, caddr_t));
+    u_long, void *));
 static int i_str __P((struct file *, struct lwp *, register_t *, int,
-    u_long, caddr_t));
+    u_long, void *));
 static int i_setsig __P((struct file *, struct lwp *, register_t *, int,
-    u_long, caddr_t));
+    u_long, void *));
 static int i_getsig __P((struct file *, struct lwp *, register_t *, int,
-    u_long, caddr_t));
+    u_long, void *));
 static int _i_bind_rsvd __P((struct file *, struct lwp *, register_t *, int,
-    u_long, caddr_t));
+    u_long, void *));
 static int _i_rele_rsvd __P((struct file *, struct lwp *, register_t *, int,
-    u_long, caddr_t));
+    u_long, void *));
 
 /* i_str sockmod calls */
 static int sockmod       __P((struct file *, int, struct svr4_strioctl *,
@@ -283,7 +283,7 @@ clean_pipe(l, path)
 	register_t retval;
 	struct stat st;
 	int error;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	size_t len = strlen(path) + 1;
 	void *tpath;
 
@@ -756,7 +756,7 @@ ti_bind(fp, fd, ioc, l)
 	struct sockaddr_in sain;
 	struct sockaddr_un saun;
 	register_t retval;
-	caddr_t sg;
+	void *sg;
 	void *skp, *sup = NULL;
 	int sasize;
 	struct svr4_strmcmd bnd;
@@ -889,7 +889,7 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 	register_t *retval;
 	int fd;
 	u_long cmd;
-	caddr_t dat;
+	void *dat;
 {
 	struct proc *p = l->l_proc;
 	struct svr4_strbuf skb, *sub = (struct svr4_strbuf *) dat;
@@ -900,7 +900,7 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 	struct sockaddr_un saun;
 	struct svr4_strmcmd sc;
 	int sasize;
-	caddr_t sg;
+	void *sg;
 	int *lenp;
 
 	if (st == NULL)
@@ -1027,7 +1027,7 @@ svr4_stream_ti_ioctl(fp, l, retval, fd, cmd, dat)
 
 static int
 i_nread(struct file *fp, struct lwp *l, register_t *retval, int fd,
-    u_long cmd, caddr_t dat)
+    u_long cmd, void *dat)
 {
 	int error;
 	int nread = 0;
@@ -1040,7 +1040,7 @@ i_nread(struct file *fp, struct lwp *l, register_t *retval, int fd,
 	 * message waiting for us.
 	 */
 	if ((error = (*fp->f_ops->fo_ioctl)(fp, FIONREAD,
-	    (caddr_t) &nread, l)) != 0)
+	    (void *) &nread, l)) != 0)
 		return error;
 
 	if (nread != 0)
@@ -1053,7 +1053,7 @@ i_nread(struct file *fp, struct lwp *l, register_t *retval, int fd,
 
 static int
 i_fdinsert(struct file *fp, struct lwp *l, register_t *retval, int fd,
-    u_long cmd, caddr_t dat)
+    u_long cmd, void *dat)
 {
 	/*
 	 * Major hack again here. We assume that we are using this to
@@ -1110,7 +1110,7 @@ i_fdinsert(struct file *fp, struct lwp *l, register_t *retval, int fd,
 
 static int
 _i_bind_rsvd(struct file *fp, struct lwp *l, register_t *retval,
-    int fd, u_long cmd, caddr_t dat)
+    int fd, u_long cmd, void *dat)
 {
 	struct sys_mknod_args ap;
 
@@ -1129,7 +1129,7 @@ _i_bind_rsvd(struct file *fp, struct lwp *l, register_t *retval,
 
 static int
 _i_rele_rsvd(struct file *fp, struct lwp *l, register_t *retval,
-    int fd, u_long cmd, caddr_t dat)
+    int fd, u_long cmd, void *dat)
 {
 	struct sys_unlink_args ap;
 
@@ -1144,7 +1144,7 @@ _i_rele_rsvd(struct file *fp, struct lwp *l, register_t *retval,
 
 static int
 i_str(struct file *fp, struct lwp *l, register_t *retval, int fd,
-    u_long cmd, caddr_t dat)
+    u_long cmd, void *dat)
 {
 	int			 error;
 	struct svr4_strioctl	 ioc;
@@ -1189,7 +1189,7 @@ i_str(struct file *fp, struct lwp *l, register_t *retval, int fd,
 
 static int
 i_setsig(struct file *fp, struct lwp *l, register_t *retval, int fd,
-    u_long cmd, caddr_t dat)
+    u_long cmd, void *dat)
 {
 	/*
 	 * This is the best we can do for now; we cannot generate
@@ -1251,7 +1251,7 @@ i_setsig(struct file *fp, struct lwp *l, register_t *retval, int fd,
 
 static int
 i_getsig(struct file *fp, struct lwp *l, register_t *retval,
-    int fd, u_long cmd, caddr_t dat)
+    int fd, u_long cmd, void *dat)
 {
 	int error;
 
@@ -1278,7 +1278,7 @@ svr4_stream_ioctl(fp, l, retval, fd, cmd, dat)
 	register_t *retval;
 	int fd;
 	u_long cmd;
-	caddr_t dat;
+	void *dat;
 {
 	*retval = 0;
 
@@ -1464,7 +1464,7 @@ svr4_sys_putmsg(l, v, retval)
 	int sasize;
 	struct svr4_strm *st;
 	int error;
-	caddr_t sg;
+	void *sg;
 
 #ifdef DEBUG_SVR4
 	show_msg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
@@ -1590,7 +1590,7 @@ svr4_sys_putmsg(l, v, retval)
 			struct msghdr msg;
 			struct iovec aiov;
 
-			msg.msg_name = (caddr_t) sup;
+			msg.msg_name = (void *) sup;
 			msg.msg_namelen = sasize;
 			msg.msg_iov = &aiov;
 			msg.msg_iovlen = 1;
@@ -1636,7 +1636,7 @@ svr4_sys_getmsg(l, v, retval)
 	struct svr4_strm *st;
 	int *flen;
 	int fl;
-	caddr_t sg;
+	void *sg;
 
 	memset(&sc, 0, sizeof(sc));
 
@@ -1856,7 +1856,7 @@ svr4_sys_getmsg(l, v, retval)
 			return ENOSYS;
 		}
 
-		msg.msg_name = (caddr_t) sup;
+		msg.msg_name = (void *) sup;
 		msg.msg_namelen = sasize;
 		msg.msg_iov = &aiov;
 		msg.msg_iovlen = 1;
@@ -1865,7 +1865,7 @@ svr4_sys_getmsg(l, v, retval)
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = recvit(l, SCARG(uap, fd), &msg, (caddr_t) flen,
+		error = recvit(l, SCARG(uap, fd), &msg, (void *) flen,
 		    retval);
 
 		if (error) {

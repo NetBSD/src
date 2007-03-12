@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.11 2006/11/16 01:32:50 christos Exp $ */
+/* $NetBSD: gpio.c,v 1.11.4.1 2007/03/12 05:53:21 rmind Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.11 2006/11/16 01:32:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.11.4.1 2007/03/12 05:53:21 rmind Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -283,7 +283,7 @@ gpioclose(dev_t dev, int flag, int mode,
 }
 
 int
-gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+gpioioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct gpio_softc *sc;

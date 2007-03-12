@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.10 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.10.26.1 2007/03/12 05:53:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.10 2005/12/11 12:21:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.10.26.1 2007/03/12 05:53:39 rmind Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -139,7 +139,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	bus_dma_segment_t reply_seg, request_seg;
 	int reply_rseg, request_rseg;
 	bus_addr_t pptr, end;
-	caddr_t vptr;
+	char *vptr;
 	size_t len;
 	int error, i;
 
@@ -171,7 +171,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	}
 
 	error = bus_dmamem_map(mpt->sc_dmat, &reply_seg, reply_rseg, PAGE_SIZE,
-	    (caddr_t *) &mpt->reply, BUS_DMA_COHERENT/*XXX*/);
+	    (void **) &mpt->reply, BUS_DMA_COHERENT/*XXX*/);
 	if (error) {
 		aprint_error("%s: unable to map reply area, error = %d\n",
 		    mpt->sc_dev.dv_xname, error);
@@ -207,7 +207,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	}
 
 	error = bus_dmamem_map(mpt->sc_dmat, &request_seg, request_rseg,
-	    MPT_REQ_MEM_SIZE(mpt), (caddr_t *) &mpt->request, 0);
+	    MPT_REQ_MEM_SIZE(mpt), (void **) &mpt->request, 0);
 	if (error) {
 		aprint_error("%s: unable to map request area, error = %d\n",
 		    mpt->sc_dev.dv_xname, error);
@@ -232,7 +232,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
 	mpt->request_phys = mpt->request_dmap->dm_segs[0].ds_addr;
 
 	pptr = mpt->request_phys;
-	vptr = (caddr_t) mpt->request;
+	vptr = (void *) mpt->request;
 	end = pptr + MPT_REQ_MEM_SIZE(mpt);
 
 	for (i = 0; pptr < end; i++) {
@@ -270,7 +270,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
  fail_7:
 	bus_dmamap_destroy(mpt->sc_dmat, mpt->request_dmap);
  fail_6:
-	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->request, PAGE_SIZE);
+	bus_dmamem_unmap(mpt->sc_dmat, (void *)mpt->request, PAGE_SIZE);
  fail_5:
 	bus_dmamem_free(mpt->sc_dmat, &request_seg, request_rseg);
  fail_4:
@@ -278,7 +278,7 @@ mpt_dma_mem_alloc(mpt_softc_t *mpt)
  fail_3:
 	bus_dmamap_destroy(mpt->sc_dmat, mpt->reply_dmap);
  fail_2:
-	bus_dmamem_unmap(mpt->sc_dmat, (caddr_t)mpt->reply, PAGE_SIZE);
+	bus_dmamem_unmap(mpt->sc_dmat, (void *)mpt->reply, PAGE_SIZE);
  fail_1:
 	bus_dmamem_free(mpt->sc_dmat, &reply_seg, reply_rseg);
  fail_0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdvar.h,v 1.2 2006/09/08 13:48:12 tsutsui Exp $	*/
+/*	$NetBSD: sbdvar.h,v 1.2.6.1 2007/03/12 05:47:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ void x ## _cache_config(void);						\
 void x ## _wbflush(void);						\
 void x ## _mem_init(void *, void *);					\
 void x ## _intr_init(void);						\
-void * x ## _intr_establish(int, int (*)(void *), void *);		\
+void *x ## _intr_establish(int, int (*)(void *), void *);		\
 void x ## _intr_disestablish(void *);					\
 void x ## _intr(uint32_t, uint32_t, uint32_t, uint32_t);		\
 void x ## _initclocks(void);						\

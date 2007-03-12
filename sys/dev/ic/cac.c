@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.39 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.39.2.1 2007/03/12 05:53:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.39 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.39.2.1 2007/03/12 05:53:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&sc->sc_ccbs,
+	    (void **)&sc->sc_ccbs,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
@@ -520,7 +520,8 @@ cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 
 	LOCK_ASSERT(mutex_owned(&sc->sc_mutex));
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, (caddr_t)ccb - sc->sc_ccbs,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+	    (char *)ccb - (char *)sc->sc_ccbs,
 	    sizeof(struct cac_ccb), BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	cac_outl(sc, CAC_REG_CMD_FIFO, ccb->ccb_paddr);
 }
@@ -541,7 +542,7 @@ cac_l0_completed(struct cac_softc *sc)
 		    sc->sc_dv.dv_xname, (long)off);
 
 	off = (off & ~3) - sc->sc_ccbs_paddr;
-	ccb = (struct cac_ccb *)(sc->sc_ccbs + off);
+	ccb = (struct cac_ccb *)((char *)sc->sc_ccbs + off);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, off, sizeof(struct cac_ccb),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.33.2.1 2007/02/27 16:53:25 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.33.2.2 2007/03/12 05:51:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33.2.1 2007/02/27 16:53:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33.2.2 2007/03/12 05:51:46 rmind Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -599,7 +599,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	bus_size_t minlen, resid;
 	struct vmspace *vm;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 	struct x86_bus_dma_cookie *cookie = map->_dm_cookie;
 
 	/*
@@ -621,7 +621,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
 		    vm, flags);
@@ -798,7 +798,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				memcpy(mtod(m, caddr_t) + moff,
+				memcpy(mtod(m, char *) + moff,
 				    (char *)cookie->id_bouncebuf + offset,
 				    minlen);
 
@@ -895,7 +895,7 @@ _bus_dma_alloc_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map,
 		goto out;
 	error = _bus_dmamem_map(t, cookie->id_bouncesegs,
 	    cookie->id_nbouncesegs, cookie->id_bouncebuflen,
-	    (caddr_t *)&cookie->id_bouncebuf, flags);
+	    (void **)&cookie->id_bouncebuf, flags);
 
  out:
 	if (error) {
@@ -1010,7 +1010,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  */
 int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -1032,7 +1032,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -1070,7 +1070,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  */
 
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 	pt_entry_t *pte;
 	vaddr_t va, endva;

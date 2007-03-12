@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.68 2006/12/29 19:16:30 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.68.2.1 2007/03/12 05:48:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.68 2006/12/29 19:16:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.68.2.1 2007/03/12 05:48:23 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_freebsd.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.68 2006/12/29 19:16:30 ad Exp $");
 #define	DEV_IO	14		/* iopl for compat_10 */
 
 extern char *vmmap;            /* poor name! */
-caddr_t zeropage;
+void *zeropage;
 
 dev_type_open(mmopen);
 dev_type_read(mmrw);
@@ -160,7 +160,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
-			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
+			error = tsleep((void *)&physlock, PZERO | PCATCH,
 			    "mmrw", 0);
 			if (error)
 				return (error);
@@ -190,7 +190,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
+			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
@@ -199,10 +199,10 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		case DEV_KMEM:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (!uvm_kernacc((caddr_t)v, c,
+			if (!uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 				return (EFAULT);
-			error = uiomove((caddr_t)v, c, uio);
+			error = uiomove((void *)v, c, uio);
 			break;
 
 		case DEV_NULL:
@@ -216,7 +216,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				return (0);
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+				zeropage = (void *)
 				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
 				memset(zeropage, 0, PAGE_SIZE);
 			}
@@ -230,7 +230,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	}
 	if (minor(dev) == DEV_MEM) {
 		if (physlock > 1)
-			wakeup((caddr_t)&physlock);
+			wakeup((void *)&physlock);
 		physlock = 0;
 	}
 	return (error);

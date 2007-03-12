@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2007/02/16 02:53:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50.2.1 2007/03/12 05:47:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -214,7 +214,7 @@ extern int machineid;
 /*
  * Prototypes from atari_init.c
  */
-int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
+int	cpu_dump __P((int (*)(dev_t, daddr_t, void *, size_t), daddr_t *));
 int	cpu_dumpsize __P((void));
 
 /*
@@ -236,13 +236,13 @@ int	fpu_probe __P((void));
 /*
  * Prototypes from vm_machdep.c
  */
-int	badbaddr __P((caddr_t, int));
+int	badbaddr __P((void *, int));
 void	consinit __P((void));
 void	dumpconf __P((void));
-int	kvtop __P((caddr_t));
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-void	setredzone __P((u_int *, caddr_t));
+int	kvtop __P((void *));
+void	physaccess __P((void *, void *, int, int));
+void	physunaccess __P((void *, int));
+void	setredzone __P((u_int *, void *));
 
 /*
  * Prototypes from locore.s
@@ -260,7 +260,7 @@ void	physcopyseg __P((paddr_t, paddr_t));
 u_int	probeva __P((u_int, u_int));
 void	proc_trampoline __P((void));
 void	savectx __P((struct pcb *));
-int	suline __P((caddr_t, caddr_t));
+int	suline __P((void *, void *));
 void	switch_exit __P((struct lwp *));
 void	switch_lwp_exit __P((struct lwp *));
 
@@ -285,7 +285,7 @@ int	nvram_uio __P((struct uio *));
  * Prototypes from sys_machdep.c:
  */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((caddr_t, int));
+int	dma_cachectl __P((void *, int));
 
 /*
  * Prototypes from pci_machdep.c

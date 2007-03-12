@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.18 2006/10/20 21:55:56 elad Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.18.4.1 2007/03/12 05:45:02 rmind Exp $	*/
 /*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.18 2006/10/20 21:55:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.18.4.1 2007/03/12 05:45:02 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -199,7 +199,7 @@ altqclose(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 int
-altqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag, struct lwp *l)
+altqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 

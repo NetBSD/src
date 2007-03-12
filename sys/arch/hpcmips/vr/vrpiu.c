@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpiu.c,v 1.38 2006/11/12 19:00:42 plunky Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.38.4.1 2007/03/12 05:48:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 TAKEMURA Shin All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.38 2006/11/12 19:00:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpiu.c,v 1.38.4.1 2007/03/12 05:48:16 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,7 @@ static void	vrpiu_dump_cntreg(unsigned int);
 #endif
 
 static int	vrpiu_tp_enable(void *);
-static int	vrpiu_tp_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	vrpiu_tp_ioctl(void *, u_long, void *, int, struct lwp *);
 static void	vrpiu_tp_disable(void *);
 static void	vrpiu_tp_up(struct vrpiu_softc *);
 static void	vrpiu_tp_timeout(void *);
@@ -302,7 +302,7 @@ vrpiu_init(struct vrpiu_softc *sc, void *aux)
 				break;
 		}
 		tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		    (caddr_t)__UNCONST(&calibrations[i].coords), 0, 0);
+		    (void *)__UNCONST(&calibrations[i].coords), 0, 0);
 	}
 #endif
 
@@ -515,7 +515,7 @@ vrpiu_tp_disable(void *v)
 }
 
 int
-vrpiu_tp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+vrpiu_tp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vrpiu_softc *sc = v;
 

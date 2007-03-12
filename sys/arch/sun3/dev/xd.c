@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.55 2007/01/04 17:50:00 elad Exp $	*/
+/*	$NetBSD: xd.c,v 1.55.2.1 2007/03/12 05:51:07 rmind Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.55 2007/01/04 17:50:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.55.2.1 2007/03/12 05:51:07 rmind Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -231,7 +231,7 @@ int	xdc_piodriver(struct xdc_softc *, int, int);
 int	xdc_remove_iorq(struct xdc_softc *);
 int	xdc_reset(struct xdc_softc *, int, int, int, struct xd_softc *);
 inline void xdc_rqinit(struct xd_iorq *, struct xdc_softc *, struct xd_softc *,
-	    int, u_long, int, caddr_t, struct buf *);
+	    int, u_long, int, void *, struct buf *);
 void	xdc_rqtopb(struct xd_iorq *, struct xd_iopb *, int, int);
 void	xdc_start(struct xdc_softc *, int);
 int	xdc_startbuf(struct xdc_softc *, struct xd_softc *, struct buf *);
@@ -764,7 +764,7 @@ xdclose(dev_t dev, int flag, int fmt, struct lwp *l)
  * xddump: crash dump system
  */
 int 
-xddump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
+xddump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 {
 	int     unit, part;
 	struct xd_softc *xd;
@@ -799,7 +799,7 @@ xddump(dev_t dev, daddr_t blkno, caddr_t va, size_t sz)
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
 int 
-xdioctl(dev_t dev, u_long command, caddr_t addr, int flag, struct lwp *l)
+xdioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 {
 	struct xd_softc *xd;
 	struct xd_iocmd *xio;
@@ -1124,7 +1124,7 @@ xdcintr(void *v)
 
 inline void 
 xdc_rqinit(struct xd_iorq *rq, struct xdc_softc *xdc, struct xd_softc *xd,
-    int md, u_long blk, int cnt, caddr_t db, struct buf *bp)
+    int md, u_long blk, int cnt, void *db, struct buf *bp)
 {
 	rq->xdc = xdc;
 	rq->xd = xd;
@@ -1317,7 +1317,7 @@ xdc_startbuf(struct xdc_softc *xdcsc, struct xd_softc *xdsc, struct buf *bp)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 	u_long  block;
-	caddr_t dbuf;
+	void *dbuf;
 
 	if (!xdcsc->nfree)
 		panic("xdc_startbuf free");
@@ -2079,7 +2079,7 @@ xdc_ioctlcmd(struct xd_softc *xd, dev_t dev, struct xd_iocmd *xio)
 
 {
 	int     s, err, rqno;
-	caddr_t dvmabuf = NULL;
+	void *dvmabuf = NULL;
 	struct xdc_softc *xdcsc;
 
 	/* check sanity of requested command */

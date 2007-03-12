@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.9 2005/12/11 12:19:36 christos Exp $ */
+/*	$NetBSD: cmi.c,v 1.9.26.1 2007/03/12 05:51:15 rmind Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.9 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.9.26.1 2007/03/12 05:51:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -84,7 +84,7 @@ cmi_attach(struct device *parent, struct device *self, void *aux)
 	for (sa.sa_nexnum = 0; sa.sa_nexnum < 4; sa.sa_nexnum++) {
 		sa.sa_ioh = vax_map_physmem(NEX750 +
 		    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
-		if (badaddr((caddr_t)sa.sa_ioh, 4)) {
+		if (badaddr((void *)sa.sa_ioh, 4)) {
 			vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 		} else {
 			sa.sa_type = NEX_MEM16;
@@ -98,7 +98,7 @@ cmi_attach(struct device *parent, struct device *self, void *aux)
 	for (sa.sa_nexnum = 4; sa.sa_nexnum < 7; sa.sa_nexnum++) {
 		sa.sa_ioh = vax_map_physmem(NEX750 +
 		    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
-		if (badaddr((caddr_t)sa.sa_ioh, 4)) {
+		if (badaddr((void *)sa.sa_ioh, 4)) {
 			vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 		} else {
 			sa.sa_type = NEX_MBA;
@@ -119,7 +119,7 @@ cmi_attach(struct device *parent, struct device *self, void *aux)
 	sa.sa_ioh = vax_map_physmem(NEX750 +
 	    sizeof(struct nexus) * sa.sa_nexnum, NEXPAGES);
 	sa.sa_type = NEX_UBA1;
-	if (badaddr((caddr_t)sa.sa_ioh, 4))
+	if (badaddr((void *)sa.sa_ioh, 4))
 		vax_unmap_physmem((vaddr_t)sa.sa_ioh, NEXPAGES);
 	else
 		config_found(self, (void*)&sa, cmi_print);

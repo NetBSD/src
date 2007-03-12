@@ -1,4 +1,4 @@
-/*	$NetBSD: setnetimage.c,v 1.4 2002/07/20 08:36:19 grant Exp $	*/
+/*	$NetBSD: setnetimage.c,v 1.4.60.1 2007/03/12 05:49:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ main(argc, argv)
 		errx(1, "%s too big to map", bootfile);
 
 	if ((mappedbfile = mmap(NULL, osb.st_size, PROT_READ | PROT_WRITE,
-	    MAP_FILE | MAP_SHARED, ofd, 0)) == (caddr_t)-1)
+	    MAP_FILE | MAP_SHARED, ofd, 0)) == (void *)-1)
 		err(1, "mmap %s", bootfile);
 	printf("mapped %s\n", bootfile);
 

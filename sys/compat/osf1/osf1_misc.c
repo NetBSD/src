@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.74 2007/02/09 21:55:23 ad Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.74.2.1 2007/03/12 05:52:39 rmind Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.74 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.74.2.1 2007/03/12 05:52:39 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -384,7 +384,7 @@ osf1_sys_uname(l, v, retval)
                 *dp++ = *cp;
         *dp = '\0';
         strncpy(u.machine, MACHINE, sizeof(u.machine));
-        return (copyout((caddr_t)&u, (caddr_t)SCARG(uap, name), sizeof u));
+        return (copyout((void *)&u, (void *)SCARG(uap, name), sizeof u));
 }
 
 int
@@ -395,9 +395,9 @@ osf1_sys_usleep_thread(l, v, retval)
 {
 	struct osf1_sys_usleep_thread_args *uap = v;
 	struct osf1_timeval otv, endotv;
-	struct timeval tv, endtv;
+	struct timeval tv, ntv, endtv;
 	u_long ticks;
-	int error, s;
+	int error;
 
 	if ((error = copyin(SCARG(uap, sleep), &otv, sizeof otv)))
 		return (error);
@@ -408,16 +408,13 @@ osf1_sys_usleep_thread(l, v, retval)
 	if (ticks == 0)
 		ticks = 1;
 
-	s = splclock();
-	tv = time;
-	splx(s);
+	getmicrotime(&tv);
 
 	tsleep(l, PUSER|PCATCH, "uslpthrd", ticks);	/* XXX */
 
 	if (SCARG(uap, slept) != NULL) {
-		s = splclock();
-		timersub(&time, &tv, &endtv);
-		splx(s);
+		getmicrotime(&ntv);
+		timersub(&ntv, &tv, &endtv);
 		if (endtv.tv_sec < 0 || endtv.tv_usec < 0)
 			endtv.tv_sec = endtv.tv_usec = 0;
 
@@ -440,7 +437,7 @@ osf1_sys_wait4(l, v, retval)
 	struct osf1_rusage osf1_rusage;
 	struct rusage netbsd_rusage;
 	unsigned long leftovers;
-	caddr_t sg;
+	void *sg;
 	int error;
 
 	SCARG(&a, pid) = SCARG(uap, pid);
@@ -462,13 +459,13 @@ osf1_sys_wait4(l, v, retval)
 	error = sys_wait4(l, &a, retval);
 
 	if (error == 0 && SCARG(&a, rusage) != NULL) {
-		error = copyin((caddr_t)SCARG(&a, rusage),
-		    (caddr_t)&netbsd_rusage, sizeof netbsd_rusage);
+		error = copyin((void *)SCARG(&a, rusage),
+		    (void *)&netbsd_rusage, sizeof netbsd_rusage);
 		if (error == 0) {
 			osf1_cvt_rusage_from_native(&netbsd_rusage,
 			    &osf1_rusage);
-			error = copyout((caddr_t)&osf1_rusage,
-			    (caddr_t)SCARG(uap, rusage), sizeof osf1_rusage);
+			error = copyout((void *)&osf1_rusage,
+			    (void *)SCARG(uap, rusage), sizeof osf1_rusage);
 		}
 	}
 

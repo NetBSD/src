@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.122 2007/02/09 21:55:18 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.122.2.1 2007/03/12 05:52:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.122 2007/02/09 21:55:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.122.2.1 2007/03/12 05:52:15 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -288,7 +288,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_rt_sigframe *)((caddr_t)sas->ss_sp +
+		fp = (struct linux_rt_sigframe *)((char *)sas->ss_sp +
 		    sas->ss_size);
 	else
 		fp = (struct linux_rt_sigframe *)tf->tf_esp;
@@ -398,7 +398,7 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct linux_sigframe *) ((caddr_t)sas->ss_sp +
+		fp = (struct linux_sigframe *) ((char *)sas->ss_sp +
 		    sas->ss_size);
 	else
 		fp = (struct linux_sigframe *)tf->tf_esp;
@@ -496,7 +496,7 @@ linux_sys_sigreturn(l, v, retval)
 	 * It is unsafe to keep track of it ourselves, in the event that a
 	 * program jumps out of a signal handler.
 	 */
-	if ((error = copyin((caddr_t)scp, &context, sizeof(*scp))) != 0)
+	if ((error = copyin((void *)scp, &context, sizeof(*scp))) != 0)
 		return error;
 	return linux_restore_sigcontext(l, &context, retval);
 }
@@ -565,8 +565,7 @@ linux_restore_sigcontext(struct lwp *l, struct linux_sigcontext *scp,
 	 * to save the onstack flag.
 	 */
 	mutex_enter(&p->p_smutex);
-	ss_gap = (ssize_t)
-	    ((caddr_t) scp->sc_esp_at_signal - (caddr_t) sas->ss_sp);
+	ss_gap = (ssize_t)((char *)scp->sc_esp_at_signal - (char *)sas->ss_sp);
 	if (ss_gap >= 0 && ss_gap < sas->ss_size)
 		sas->ss_flags |= SS_ONSTACK;
 	else
@@ -596,7 +595,7 @@ linux_read_ldt(l, uap, retval)
 	struct proc *p = l->l_proc;
 	struct i386_get_ldt_args gl;
 	int error;
-	caddr_t sg;
+	void *sg;
 	char *parms;
 
 	DPRINTF(("linux_read_ldt!"));
@@ -645,7 +644,7 @@ linux_write_ldt(l, uap, retval)
 	struct segment_descriptor sd;
 	struct i386_set_ldt_args sl;
 	int error;
-	caddr_t sg;
+	void *sg;
 	char *parms;
 	int oldmode = (int)retval[0];
 
@@ -898,14 +897,14 @@ linux_machdepioctl(l, v, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
 	int error, error1;
 #if (NWSDISPLAY > 0)
 	struct vt_mode lvt;
-	caddr_t bvtp, sg;
+	void *bvtp, *sg;
 	struct kbentry kbe;
 #endif
 	struct linux_hd_geometry hdg;
@@ -943,11 +942,11 @@ linux_machdepioctl(l, v, retval)
 	case LINUX_KDSKBMODE:
 		com = KDSKBMODE;
 		if ((unsigned)SCARG(uap, data) == LINUX_K_MEDIUMRAW)
-			SCARG(&bia, data) = (caddr_t)K_RAW;
+			SCARG(&bia, data) = (void *)K_RAW;
 		break;
 	case LINUX_KIOCSOUND:
 		SCARG(&bia, data) =
-		    (caddr_t)(((unsigned long)SCARG(&bia, data)) & 0xffff);
+		    (void *)(((unsigned long)SCARG(&bia, data)) & 0xffff);
 		/* fall through */
 	case LINUX_KDMKTONE:
 		com = KDMKTONE;
@@ -979,18 +978,18 @@ linux_machdepioctl(l, v, retval)
 		/* XXX NJWLWP */
 		if ((error = sys_ioctl(curlwp, &bia, retval)))
 			goto out;
-		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
+		if ((error = copyin(SCARG(uap, data), (void *)&lvt,
 		    sizeof (struct vt_mode))))
 			goto out;
 		lvt.relsig = native_to_linux_signo[lvt.relsig];
 		lvt.acqsig = native_to_linux_signo[lvt.acqsig];
 		lvt.frsig = native_to_linux_signo[lvt.frsig];
-		error = copyout((caddr_t)&lvt, SCARG(uap, data),
+		error = copyout((void *)&lvt, SCARG(uap, data),
 		    sizeof (struct vt_mode));
 		goto out;
 	case LINUX_VT_SETMODE:
 		com = VT_SETMODE;
-		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
+		if ((error = copyin(SCARG(uap, data), (void *)&lvt,
 		    sizeof (struct vt_mode))))
 			goto out;
 		lvt.relsig = linux_to_native_signo[lvt.relsig];
@@ -1057,8 +1056,8 @@ linux_machdepioctl(l, v, retval)
 		 */
 		bip = fd2biosinfo(p, fp);
 		ioctlf = fp->f_ops->fo_ioctl;
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (void *)&label, l);
+		error1 = ioctlf(fp, DIOCGPART, (void *)&partp, l);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			goto out;
@@ -1108,7 +1107,7 @@ linux_machdepioctl(l, v, retval)
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, l);
+		error = ioctlf(fp, PTIOCLINUX, (void *)&pt, l);
 		if (error == EJUSTRETURN) {
 			retval[0] = (register_t)pt.data;
 			error = 0;

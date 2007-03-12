@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.56 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: zbus.c,v 1.56.26.1 2007/03/12 05:46:45 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.56 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.56.26.1 2007/03/12 05:46:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -54,7 +54,7 @@ struct aconfdata {
 struct preconfdata {
 	int manid;
 	int prodid;
-	caddr_t vaddr;
+	void *vaddr;
 };
 
 vaddr_t		ZTWOROMADDR;
@@ -223,7 +223,7 @@ static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 void zbusattach(struct device *, struct device *, void *);
 int zbusprint(void *, const char *);
 int zbusmatch(struct device *, struct cfdata *, void *);
-caddr_t zbusmap(caddr_t, u_int);
+void *zbusmap(void *, u_int);
 static const char *aconflookup(int, int);
 
 /*
@@ -356,8 +356,8 @@ zbusprint(void *auxp, const char *pnp)
  * Zorro devices) to have enough kva-space available, so there is no extra
  * range check done here.
  */
-caddr_t
-zbusmap(caddr_t pa, u_int size)
+void *
+zbusmap(void *pa, u_int size)
 {
 	static vaddr_t nextkva = 0;
 	vaddr_t kva;
@@ -376,12 +376,12 @@ zbusmap(caddr_t pa, u_int size)
 #if defined(__powerpc__)
 /*
  * XXX we use direct constant mapping, so no need for:
- * physaccess((caddr_t)kva, (caddr_t)pa, size, PTE_RW|PTE_I);
+ * physaccess((void *)kva, (void *)pa, size, PTE_RW|PTE_I);
  */
 #elif defined(__m68k__)
-	physaccess((caddr_t)kva, (caddr_t)pa, size, PG_RW|PG_CI);
+	physaccess((void *)kva, (void *)pa, size, PG_RW|PG_CI);
 #else
 ERROR no support for this target CPU yet.
 #endif
-	return((caddr_t)kva);
+	return((void *)kva);
 }

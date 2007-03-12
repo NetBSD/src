@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.11 2006/08/04 02:05:12 mhitch Exp $ */
+/* $NetBSD: nextkbd.c,v 1.11.10.1 2007/03/12 05:49:43 rmind Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.11 2006/08/04 02:05:12 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.11.10.1 2007/03/12 05:49:43 rmind Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -90,7 +90,7 @@ CFATTACH_DECL(nextkbd, sizeof(struct nextkbd_softc),
 
 int	nextkbd_enable(void *, int);
 void	nextkbd_set_leds(void *, int);
-int	nextkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	nextkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wskbd_accessops nextkbd_accessops = {
 	nextkbd_enable,
@@ -227,7 +227,7 @@ nextkbd_set_leds(void *v, int leds)
 }
 
 int
-nextkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+nextkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct nextkbd_softc *sc = v;
 		 

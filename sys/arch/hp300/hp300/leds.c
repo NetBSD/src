@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.17 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: leds.c,v 1.17.26.1 2007/03/12 05:47:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.17 2005/12/24 20:07:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.17.26.1 2007/03/12 05:47:55 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.17 2005/12/24 20:07:03 perry Exp $");
 
 #include <hp300/hp300/leds.h>
 
-extern caddr_t	ledbase;	/* kva of LED page */
+extern void *	ledbase;	/* kva of LED page */
 uint8_t		*ledaddr;	/* actual address of LEDs */
 static volatile uint8_t currentleds; /* current LED status */
 

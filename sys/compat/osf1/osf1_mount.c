@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mount.c,v 1.31 2007/02/09 21:55:23 ad Exp $	*/
+/*	$NetBSD: osf1_mount.c,v 1.31.2.1 2007/03/12 05:52:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.31 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mount.c,v 1.31.2.1 2007/03/12 05:52:39 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -150,14 +150,14 @@ osf1_sys_getfsstat(l, v, retval)
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct osf1_statfs osfs;
-	caddr_t osf_sfsp;
+	char *osf_sfsp;
 	long count, maxcount, error;
 
 	if (SCARG(uap, flags) & ~OSF1_GETFSSTAT_FLAGS)
 		return (EINVAL);
 
 	maxcount = SCARG(uap, bufsize) / sizeof(struct osf1_statfs);
-	osf_sfsp = (caddr_t)SCARG(uap, buf);
+	osf_sfsp = (void *)SCARG(uap, buf);
 	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	    mp = nmp) {
 		nmp = mp->mnt_list.cqe_next;
@@ -278,7 +278,7 @@ osf1_mount_mfs(p, osf_argp, bsd_argp)
 {
 	struct osf1_mfs_args osf_ma;
 	struct mfs_args bsd_ma;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int error, len;
 	static const char mfs_name[] = MOUNT_MFS;
 
@@ -311,7 +311,7 @@ osf1_mount_nfs(p, osf_argp, bsd_argp)
 {
 	struct osf1_nfs_args osf_na;
 	struct nfs_args bsd_na;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int error, len;
 	static const char nfs_name[] = MOUNT_NFS;
 	unsigned long leftovers;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.63 2006/11/24 22:04:23 wiz Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.63.4.1 2007/03/12 05:49:38 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.63 2006/11/24 22:04:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.63.4.1 2007/03/12 05:49:38 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -454,7 +454,7 @@ initarm(void *arg)
 	 * early versions of NeTTrom fill this in with bogus values,
 	 * so we need to sanity check it.
 	 */
-	memcpy(&nwbootinfo, (caddr_t)(KERNEL_BASE + 0x100),
+	memcpy(&nwbootinfo, (void *)(KERNEL_BASE + 0x100),
 	    sizeof(nwbootinfo));
 #ifdef VERBOSE_INIT_ARM
 	printf("NeTTrom boot info:\n");

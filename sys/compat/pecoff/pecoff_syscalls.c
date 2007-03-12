@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_syscalls.c,v 1.27 2007/02/09 21:55:24 ad Exp $ */
+/* $NetBSD: pecoff_syscalls.c,v 1.27.2.1 2007/03/12 05:52:42 rmind Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.27 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_syscalls.c,v 1.27.2.1 2007/03/12 05:52:42 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -118,13 +118,13 @@ const char *const pecoff_syscallnames[] = {
 	"#62 (excluded { int sys_fstat ( int fd , struct stat43 * sb ) ; } fstat43)",		/* 62 = excluded { int sys_fstat ( int fd , struct stat43 * sb ) ; } fstat43 */
 	"#63 (excluded { int sys_getkerninfo ( int op , char * where , int * size , int arg ) ; } ogetkerninfo)",		/* 63 = excluded { int sys_getkerninfo ( int op , char * where , int * size , int arg ) ; } ogetkerninfo */
 	"#64 (excluded { int sys_getpagesize ( void ) ; } ogetpagesize)",		/* 64 = excluded { int sys_getpagesize ( void ) ; } ogetpagesize */
-	"#65 (excluded { int sys_msync ( caddr_t addr , size_t len ) ; })",		/* 65 = excluded { int sys_msync ( caddr_t addr , size_t len ) ; } */
+	"#65 (excluded { int sys_msync ( void *addr , size_t len ) ; })",		/* 65 = excluded { int sys_msync ( void *addr , size_t len ) ; } */
 	"vfork",			/* 66 = vfork */
 	"#67 (obsolete vread)",		/* 67 = obsolete vread */
 	"#68 (obsolete vwrite)",		/* 68 = obsolete vwrite */
 	"sbrk",			/* 69 = sbrk */
 	"sstk",			/* 70 = sstk */
-	"#71 (excluded { int sys_mmap ( caddr_t addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap)",		/* 71 = excluded { int sys_mmap ( caddr_t addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap */
+	"#71 (excluded { int sys_mmap ( void *addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap)",		/* 71 = excluded { int sys_mmap ( void *addr , size_t len , int prot , int flags , int fd , long pos ) ; } ommap */
 	"vadvise",			/* 72 = vadvise */
 	"munmap",			/* 73 = munmap */
 	"mprotect",			/* 74 = mprotect */
@@ -152,10 +152,10 @@ const char *const pecoff_syscallnames[] = {
 	"setpriority",			/* 96 = setpriority */
 	"socket",			/* 97 = socket */
 	"connect",			/* 98 = connect */
-	"#99 (excluded { int sys_accept ( int s , caddr_t name , int * anamelen ) ; } oaccept)",		/* 99 = excluded { int sys_accept ( int s , caddr_t name , int * anamelen ) ; } oaccept */
+	"#99 (excluded { int sys_accept ( int s , void *name , int * anamelen ) ; } oaccept)",		/* 99 = excluded { int sys_accept ( int s , void *name , int * anamelen ) ; } oaccept */
 	"getpriority",			/* 100 = getpriority */
-	"#101 (excluded { int sys_send ( int s , caddr_t buf , int len , int flags ) ; } osend)",		/* 101 = excluded { int sys_send ( int s , caddr_t buf , int len , int flags ) ; } osend */
-	"#102 (excluded { int sys_recv ( int s , caddr_t buf , int len , int flags ) ; } orecv)",		/* 102 = excluded { int sys_recv ( int s , caddr_t buf , int len , int flags ) ; } orecv */
+	"#101 (excluded { int sys_send ( int s , void *buf , int len , int flags ) ; } osend)",		/* 101 = excluded { int sys_send ( int s , void *buf , int len , int flags ) ; } osend */
+	"#102 (excluded { int sys_recv ( int s , void *buf , int len , int flags ) ; } orecv)",		/* 102 = excluded { int sys_recv ( int s , void *buf , int len , int flags ) ; } orecv */
 	"#103 (excluded { int sys_sigreturn ( struct sigcontext13 * sigcntxp ) ; } sigreturn13)",		/* 103 = excluded { int sys_sigreturn ( struct sigcontext13 * sigcntxp ) ; } sigreturn13 */
 	"bind",			/* 104 = bind */
 	"setsockopt",			/* 105 = setsockopt */
@@ -167,7 +167,7 @@ const char *const pecoff_syscallnames[] = {
 	"#111 (excluded { int sys_sigsuspend ( int mask ) ; } sigsuspend13)",		/* 111 = excluded { int sys_sigsuspend ( int mask ) ; } sigsuspend13 */
 	"#112 (excluded { int sys_sigstack ( struct sigstack * nss , struct sigstack * oss ) ; } osigstack)",		/* 112 = excluded { int sys_sigstack ( struct sigstack * nss , struct sigstack * oss ) ; } osigstack */
 	"#113 (excluded { int sys_recvmsg ( int s , struct omsghdr * msg , int flags ) ; } orecvmsg)",		/* 113 = excluded { int sys_recvmsg ( int s , struct omsghdr * msg , int flags ) ; } orecvmsg */
-	"#114 (excluded { int sys_sendmsg ( int s , caddr_t msg , int flags ) ; } osendmsg)",		/* 114 = excluded { int sys_sendmsg ( int s , caddr_t msg , int flags ) ; } osendmsg */
+	"#114 (excluded { int sys_sendmsg ( int s , void *msg , int flags ) ; } osendmsg)",		/* 114 = excluded { int sys_sendmsg ( int s , void *msg , int flags ) ; } osendmsg */
 	"#115 (obsolete vtrace)",		/* 115 = obsolete vtrace */
 	"gettimeofday",			/* 116 = gettimeofday */
 	"getrusage",			/* 117 = getrusage */
@@ -178,7 +178,7 @@ const char *const pecoff_syscallnames[] = {
 	"settimeofday",			/* 122 = settimeofday */
 	"fchown",			/* 123 = fchown */
 	"fchmod",			/* 124 = fchmod */
-	"#125 (excluded { int sys_recvfrom ( int s , caddr_t buf , size_t len , int flags , caddr_t from , int * fromlenaddr ) ; } orecvfrom)",		/* 125 = excluded { int sys_recvfrom ( int s , caddr_t buf , size_t len , int flags , caddr_t from , int * fromlenaddr ) ; } orecvfrom */
+	"#125 (excluded { int sys_recvfrom ( int s , void *buf , size_t len , int flags , void *from , int * fromlenaddr ) ; } orecvfrom)",		/* 125 = excluded { int sys_recvfrom ( int s , void *buf , size_t len , int flags , void *from , int * fromlenaddr ) ; } orecvfrom */
 	"setreuid",			/* 126 = setreuid */
 	"setregid",			/* 127 = setregid */
 	"rename",			/* 128 = rename */
@@ -194,7 +194,7 @@ const char *const pecoff_syscallnames[] = {
 	"utimes",			/* 138 = utimes */
 	"#139 (obsolete 4.2 sigreturn)",		/* 139 = obsolete 4.2 sigreturn */
 	"adjtime",			/* 140 = adjtime */
-	"#141 (excluded { int sys_getpeername ( int fdes , caddr_t asa , int * alen ) ; } ogetpeername)",		/* 141 = excluded { int sys_getpeername ( int fdes , caddr_t asa , int * alen ) ; } ogetpeername */
+	"#141 (excluded { int sys_getpeername ( int fdes , void *asa , int * alen ) ; } ogetpeername)",		/* 141 = excluded { int sys_getpeername ( int fdes , void *asa , int * alen ) ; } ogetpeername */
 	"#142 (excluded { int32_t sys_gethostid ( void ) ; } ogethostid)",		/* 142 = excluded { int32_t sys_gethostid ( void ) ; } ogethostid */
 	"#143 (excluded { int sys_sethostid ( int32_t hostid ) ; } osethostid)",		/* 143 = excluded { int sys_sethostid ( int32_t hostid ) ; } osethostid */
 	"#144 (excluded { int sys_getrlimit ( int which , struct orlimit * rlp ) ; } ogetrlimit)",		/* 144 = excluded { int sys_getrlimit ( int which , struct orlimit * rlp ) ; } ogetrlimit */
@@ -203,7 +203,7 @@ const char *const pecoff_syscallnames[] = {
 	"setsid",			/* 147 = setsid */
 	"quotactl",			/* 148 = quotactl */
 	"#149 (excluded { int sys_quota ( void ) ; } oquota)",		/* 149 = excluded { int sys_quota ( void ) ; } oquota */
-	"#150 (excluded { int sys_getsockname ( int fdec , caddr_t asa , int * alen ) ; } ogetsockname)",		/* 150 = excluded { int sys_getsockname ( int fdec , caddr_t asa , int * alen ) ; } ogetsockname */
+	"#150 (excluded { int sys_getsockname ( int fdec , void *asa , int * alen ) ; } ogetsockname)",		/* 150 = excluded { int sys_getsockname ( int fdec , void *asa , int * alen ) ; } ogetsockname */
 	"#151 (unimplemented)",		/* 151 = unimplemented */
 	"#152 (unimplemented)",		/* 152 = unimplemented */
 	"#153 (unimplemented)",		/* 153 = unimplemented */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.7 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.7.4.1 2007/03/12 05:51:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.7.4.1 2007/03/12 05:51:46 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,10 +88,10 @@ x86_bus_space_init()
 	 * and end of ISA hole -> end of RAM).
 	 */
 	ioport_ex = extent_create("ioport", 0x0, 0xffff, M_DEVBUF,
-	    (caddr_t)ioport_ex_storage, sizeof(ioport_ex_storage),
+	    (void *)ioport_ex_storage, sizeof(ioport_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
-	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
+	    (void *)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
 }
 

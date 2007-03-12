@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.12 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.12.2.1 2007/03/12 05:50:16 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.12 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.12.2.1 2007/03/12 05:50:16 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -132,10 +132,10 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* This cannot fail, as copyargs() has already used copyout() on it */
 #ifdef DIAGNOSTIC
-	if (copyin((caddr_t)(uintptr_t)sstack, &argc, sizeof(argc)) != 0)
+	if (copyin((void *)(uintptr_t)sstack, &argc, sizeof(argc)) != 0)
 		panic("setregs: argc copyin failed!");
 #else
-	(void) copyin((caddr_t)(uintptr_t)sstack, &argc, sizeof(argc));
+	(void) copyin((void *)(uintptr_t)sstack, &argc, sizeof(argc));
 #endif
 
 	memset(tf, 0, sizeof(*tf));

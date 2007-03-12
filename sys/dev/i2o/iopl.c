@@ -1,4 +1,4 @@
-/*	$NetBSD: iopl.c,v 1.23 2007/01/13 19:43:20 cube Exp $	*/
+/*	$NetBSD: iopl.c,v 1.23.2.1 2007/03/12 05:53:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.23 2007/01/13 19:43:20 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopl.c,v 1.23.2.1 2007/03/12 05:53:23 rmind Exp $");
 
 #include "opt_i2o.h"
 #include "opt_inet.h"
@@ -121,7 +121,7 @@ static void	iopl_munge_ether(struct mbuf *, u_int8_t *);
 static void	iopl_munge_fddi(struct mbuf *, u_int8_t *);
 
 static int	iopl_init(struct ifnet *);
-static int	iopl_ioctl(struct ifnet *, u_long, caddr_t);
+static int	iopl_ioctl(struct ifnet *, u_long, void *);
 static void	iopl_start(struct ifnet *);
 static void	iopl_stop(struct ifnet *, int);
 
@@ -992,7 +992,7 @@ iopl_intr_rx(struct device *dv, struct iop_msg *im, void *reply)
 					continue;
 				}
 				m0->m_data += sc->sc_rx_prepad;
-				m_copydata(m, 0, len, mtod(m0, caddr_t) + off);
+				m_copydata(m, 0, len, mtod(m0, void *) + off);
 				off = 0;
 			} else if (!first) {
 				/*
@@ -1870,7 +1870,7 @@ iopl_filter_generic(struct iopl_softc *sc, u_int64_t *tbl)
  * Handle control operations.
  */
 static int
-iopl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+iopl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iopl_softc *sc;
 	struct ifaddr *ifa;

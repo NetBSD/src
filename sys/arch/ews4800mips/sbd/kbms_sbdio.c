@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.2.4.1 2007/02/27 16:50:21 yamt Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.2.4.2 2007/03/12 05:47:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.2.4.1 2007/02/27 16:50:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.2.4.2 2007/03/12 05:47:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,11 +87,11 @@ CFATTACH_DECL(kbms_sbdio, sizeof(struct kbms_softc),
 
 int kbd_enable(void *, int);
 void kbd_set_leds(void *, int);
-int kbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int kbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 int mouse_enable(void *);
 void mouse_disable(void *);
-int mouse_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int mouse_ioctl(void *, u_long, void *, int, struct lwp *);
 
 bool kbd_init(struct kbms_softc *);
 bool kbd_reset(struct kbms_softc *, int);
@@ -400,7 +400,7 @@ kbd_set_leds(void *arg, int leds)
 }
 
 int
-kbd_ioctl(void *arg, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kbd_ioctl(void *arg, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kbms_softc *sc = arg;
 
@@ -488,7 +488,7 @@ mouse_disable(void *arg)
 }
 
 int
-mouse_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mouse_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	return EPASSTHROUGH;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.74 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.74.4.1 2007/03/12 05:54:49 rmind Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.74 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.74.4.1 2007/03/12 05:54:49 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -144,7 +144,7 @@ struct iy_softc {
 };
 
 void iywatchdog(struct ifnet *);
-int iyioctl(struct ifnet *, u_long, caddr_t);
+int iyioctl(struct ifnet *, u_long, void *);
 int iyintr(void *);
 void iyinit(struct iy_softc *);
 void iystop(struct iy_softc *);
@@ -644,7 +644,7 @@ struct ifnet *ifp;
 	u_int len, pad, last, end;
 	u_int llen, residual;
 	int avail;
-	caddr_t data;
+	char *data;
 	unsigned temp;
 	u_int16_t resval, stat;
 	bus_space_tag_t iot;
@@ -761,7 +761,7 @@ struct ifnet *ifp;
 		residual = resval = 0;
 
 		while ((m = m0)!=0) {
-			data = mtod(m, caddr_t);
+			data = mtod(m, void *);
 			llen = m->m_len;
 			if (residual) {
 #ifdef IYDEBUG
@@ -1063,7 +1063,7 @@ iyget(sc, iot, ioh, rxlen)
 #ifdef IYDEBUG
 			printf("%s: received odd mbuf\n", sc->sc_dev.dv_xname);
 #endif
-			*(mtod(m, caddr_t)) = bus_space_read_stream_2(iot, ioh,
+			*(mtod(m, char *)) = bus_space_read_stream_2(iot, ioh,
 			    MEM_PORT_REG);
 		}
 		m->m_len = len;
@@ -1196,7 +1196,7 @@ int
 iyioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct iy_softc *sc;
 	struct ifaddr *ifa;

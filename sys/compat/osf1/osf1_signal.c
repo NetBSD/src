@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.28.2.1 2007/02/27 16:53:41 yamt Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.28.2.2 2007/03/12 05:52:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.28.2.1 2007/02/27 16:53:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_signal.c,v 1.28.2.2 2007/03/12 05:52:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ osf1_sys_sigaltstack(l, v, retval)
 	struct osf1_sigaltstack *noss, *ooss, tmposs;
 	struct sigaltstack *nbss, *obss, tmpbss;
 	struct sys___sigaltstack14_args sa;
-	caddr_t sg;
+	void *sg;
 	int error;
 
 	sg = stackgap_init(p, 0);
@@ -171,7 +171,7 @@ osf1_sys_signal(l, v, retval)
 	struct proc *p = l->l_proc;
 	int signum;
 	int error;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	if (SCARG(uap, signum) < 0 || SCARG(uap, signum) > OSF1_NSIG)
 		return EINVAL;

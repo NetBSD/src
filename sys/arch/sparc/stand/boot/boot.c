@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2006/07/13 20:03:34 uwe Exp $ */
+/*	$NetBSD: boot.c,v 1.23.10.1 2007/03/12 05:50:45 rmind Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -62,7 +62,7 @@ u_long	loadaddrmask = -1UL;
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
 int	main(void);
-typedef void (*entry_t)(caddr_t, int, int, int, long, long);
+typedef void (*entry_t)(void *, int, int, int, long, long);
 
 /*
  * Boot device is derived from ROM provided information, or if there is none,
@@ -322,7 +322,7 @@ main(void)
 
 	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(u_long) - 1)) &
 	    (-sizeof(u_long));
-	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
+	arg = (prom_version() == PROM_OLDMON) ? (void *)PROM_LOADADDR : romp;
 
 	/* Setup boot info structure at the end of the kernel image */
 	bootinfo = bi_init(marks[MARK_END] & loadaddrmask);

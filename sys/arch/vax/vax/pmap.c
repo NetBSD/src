@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.141.2.2 2007/02/27 16:53:22 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.141.2.3 2007/03/12 05:51:19 rmind Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141.2.2 2007/02/27 16:53:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.141.2.3 2007/03/12 05:51:19 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -106,7 +106,7 @@ struct	extent *ptemap;
 #define PTMAPSZ EXTENT_FIXED_STORAGE_SIZE(100)
 char	ptmapstorage[PTMAPSZ];
 
-extern	caddr_t msgbufaddr;
+extern	void *msgbufaddr;
 
 #define IOSPACE(p)	(((u_long)(p)) & 0xe0000000)
 #define NPTEPROCSPC	0x1000	/* # of virtual PTEs per process space */
@@ -349,7 +349,7 @@ pmap_bootstrap()
 
 	/* Init SCB and set up stray vectors. */
 	avail_start = scb_init(avail_start);
-	*(struct rpb *) 0 = *(struct rpb *) ((caddr_t)proc0paddr + REDZONEADDR);
+	*(struct rpb *) 0 = *(struct rpb *) ((char *)proc0paddr + REDZONEADDR);
 
 	if (dep_call->cpu_steal_pages)
 		(*dep_call->cpu_steal_pages)();
@@ -398,10 +398,12 @@ pmap_bootstrap()
 	/* cpu_info struct */
 	pcb->SSP = scratch + VAX_NBPG;
 	mtpr(pcb->SSP, PR_SSP);
-	bzero((caddr_t)pcb->SSP,
+	bzero((void *)pcb->SSP,
 	    sizeof(struct cpu_info) + sizeof(struct device));
 	curcpu()->ci_exit = scratch;
-	curcpu()->ci_mtx_count = 1;
+#ifdef MUTEX_COUNT_BIAS
+	curcpu()->ci_mtx_count = MUTEX_COUNT_BIAS;
+#endif
 	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
 #if defined(MULTIPROCESSOR)
 	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
@@ -465,7 +467,7 @@ pmap_steal_memory(size, vstartp, vendp)
 	v = (vm_physmem[0].avail_start << PGSHIFT) | KERNBASE;
 	vm_physmem[0].avail_start += npgs;
 	vm_physmem[0].start += npgs;
-	bzero((caddr_t)v, size);
+	bzero((void *)v, size);
 	return v;
 }
 
@@ -689,7 +691,7 @@ pmap_rmproc(struct pmap *pm)
 
 	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		if (!swappable(l, pm))
 			continue;
@@ -716,7 +718,7 @@ pmap_rmproc(struct pmap *pm)
 			continue;
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (didswap == 0) {
 		if ((l = outl) == NULL)
 			l = outl2;

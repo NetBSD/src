@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.32 2006/02/25 17:32:43 thorpej Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.32.20.1 2007/03/12 05:45:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.32 2006/02/25 17:32:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.32.20.1 2007/03/12 05:45:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ dec_kn300_cons_init()
 	ccp = &mcpcia_console_configuration;
 	/* It's already initialized. */
 
-	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
+	ctb = (struct ctb *)(((char *)hwrpb) + hwrpb->rpb_ctb_off);
 
 	switch (ctb->ctb_term_type) {
 	case CTB_PRINTERPORT: 

@@ -1,4 +1,4 @@
-/*	$NetBSD: par.c,v 1.33 2007/02/16 14:00:17 ad Exp $ */
+/*	$NetBSD: par.c,v 1.33.2.1 2007/03/12 05:46:44 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.33 2007/02/16 14:00:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: par.c,v 1.33.2.1 2007/03/12 05:46:44 rmind Exp $");
 
 /*
  * parallel port interface
@@ -431,7 +431,7 @@ again:
 }
 
 int
-parioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+parioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
   struct par_softc *sc = getparsp(UNIT(dev));
   struct parparam *pp, *upp;

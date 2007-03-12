@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.12 2006/11/16 01:32:51 christos Exp $ */
+/* $NetBSD: mtd803.c,v 1.12.4.1 2007/03/12 05:53:39 rmind Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.12 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.12.4.1 2007/03/12 05:53:39 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -122,7 +122,7 @@ void mtd_mii_statchg(struct device *);
 
 void mtd_start(struct ifnet *);
 void mtd_stop(struct ifnet *, int);
-int mtd_ioctl(struct ifnet *, u_long, caddr_t);
+int mtd_ioctl(struct ifnet *, u_long, void *);
 void mtd_setmulti(struct mtd_softc *);
 void mtd_watchdog(struct ifnet *);
 int mtd_mediachange(struct ifnet *);
@@ -275,7 +275,7 @@ mtd_init_desc(sc)
 
 	/* Map memory to kernel addressable space */
 	if ((err = bus_dmamem_map(sc->dma_tag, &seg, 1, size,
-		(caddr_t *)&sc->desc, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		(void **)&sc->desc, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map DMA buffer, error = %d\n",
 			sc->dev.dv_xname, err);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
@@ -287,7 +287,7 @@ mtd_init_desc(sc)
 		size, 0, BUS_DMA_NOWAIT, &sc->desc_dma_map)) != 0) {
 		printf("%s: unable to create DMA map, error = %d\n",
 			sc->dev.dv_xname, err);
-		bus_dmamem_unmap(sc->dma_tag, (caddr_t)sc->desc, size);
+		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
 	}
@@ -298,7 +298,7 @@ mtd_init_desc(sc)
 		printf("%s: unable to load DMA map, error = %d\n",
 			sc->dev.dv_xname, err);
 		bus_dmamap_destroy(sc->dma_tag, sc->desc_dma_map);
-		bus_dmamem_unmap(sc->dma_tag, (caddr_t)sc->desc, size);
+		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
 	}
@@ -315,7 +315,7 @@ mtd_init_desc(sc)
 		/* Undo DMA map for descriptors */
 		bus_dmamap_unload(sc->dma_tag, sc->desc_dma_map);
 		bus_dmamap_destroy(sc->dma_tag, sc->desc_dma_map);
-		bus_dmamem_unmap(sc->dma_tag, (caddr_t)sc->desc, size);
+		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
 	}
@@ -330,7 +330,7 @@ mtd_init_desc(sc)
 		/* Undo DMA map for descriptors */
 		bus_dmamap_unload(sc->dma_tag, sc->desc_dma_map);
 		bus_dmamap_destroy(sc->dma_tag, sc->desc_dma_map);
-		bus_dmamem_unmap(sc->dma_tag, (caddr_t)sc->desc, size);
+		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
 	}
@@ -346,7 +346,7 @@ mtd_init_desc(sc)
 		/* Undo DMA map for descriptors */
 		bus_dmamap_unload(sc->dma_tag, sc->desc_dma_map);
 		bus_dmamap_destroy(sc->dma_tag, sc->desc_dma_map);
-		bus_dmamem_unmap(sc->dma_tag, (caddr_t)sc->desc, size);
+		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
 	}
@@ -363,7 +363,7 @@ mtd_init_desc(sc)
 		/* Undo DMA map for descriptors */
 		bus_dmamap_unload(sc->dma_tag, sc->desc_dma_map);
 		bus_dmamap_destroy(sc->dma_tag, sc->desc_dma_map);
-		bus_dmamem_unmap(sc->dma_tag, (caddr_t)sc->desc, size);
+		bus_dmamem_unmap(sc->dma_tag, (void *)sc->desc, size);
 		bus_dmamem_free(sc->dma_tag, &seg, rseg);
 		return 1;
 	}
@@ -447,7 +447,7 @@ mtd_put(sc, index, m)
 	struct mbuf *m;
 {
 	int len, tlen;
-	caddr_t buf = sc->buf + MTD_NUM_RXD * MTD_RXBUF_SIZE
+	char *buf = (char *)sc->buf + MTD_NUM_RXD * MTD_RXBUF_SIZE
 			+ index * MTD_TXBUF_SIZE;
 	struct mbuf *n;
 
@@ -463,7 +463,7 @@ mtd_put(sc, index, m)
 			MFREE(m, n);
 			continue;
 		}
-		memcpy(buf, mtod(m, caddr_t), len);
+		memcpy(buf, mtod(m, void *), len);
 		buf += len;
 		tlen += len;
 		MFREE(m, n);
@@ -580,7 +580,7 @@ int
 mtd_ioctl(ifp, cmd, data)
 	struct ifnet * ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct mtd_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -626,7 +626,7 @@ mtd_get(sc, index, totlen)
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	struct mbuf *m, *m0, *newm;
 	int len;
-	caddr_t buf = sc->buf + index * MTD_RXBUF_SIZE;
+	char *buf = (char *)sc->buf + index * MTD_RXBUF_SIZE;
 
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == NULL)
@@ -648,7 +648,7 @@ mtd_get(sc, index, totlen)
 		}
 
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 				ALIGN(m->m_data + sizeof(struct ether_header)) -
 				sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -656,7 +656,7 @@ mtd_get(sc, index, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, caddr_t), buf, len);
+		memcpy(mtod(m, void *), buf, len);
 		buf += len;
 
 		totlen -= len;

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.50 2007/02/09 21:55:18 ad Exp $
+	$NetBSD: syscalls.master,v 1.50.2.1 2007/03/12 05:52:13 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -77,7 +77,7 @@
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys___posix_chown(char *path, int uid, \
 			    int gid); } chown
-17	STD		{ int irix_sys_break(caddr_t nsize); }
+17	STD		{ int irix_sys_break(void *nsize); }
 18	OBSOL		stat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
@@ -133,7 +133,7 @@
 53	UNIMPL		semsys
 #endif
 54	STD		{ int irix_sys_ioctl(int fd, u_long com, \
-			    caddr_t data); }
+			    void *data); }
 55	UNIMPL		uadmin
 56	STD		{ int irix_sys_sysmp(int cmd, void *arg1, void *arg2, \
 			    void *arg3, void *arg4); }
@@ -195,7 +195,7 @@
 95	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, int *avalsize); }
 96	NOARGS		{ int sys_listen(int s, int backlog); }
-97	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+97	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); }
 98	NOARGS		{ ssize_t compat_43_sys_recvfrom(int s, void *buf, \
 			    size_t len, int flags, struct sockaddr *from, \
@@ -204,7 +204,7 @@
 			    struct msghdr *msg, int flags); }
 100	NOARGS		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
-101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); }
 102	NOARGS		{ ssize_t compat_43_sys_sendmsg(int s, \
 			    const struct msghdr *msg, int flags); }
@@ -253,7 +253,7 @@
 			    void *arg1); }
 131	STD		{ int irix_sys_procblk(int cmd, pid_t pid, int count); }
 132	STD		{ irix_pid_t irix_sys_sprocsp(void *entry, \
-			    unsigned int inh, void *arg, caddr_t sp, \
+			    unsigned int inh, void *arg, void *sp, \
 			    irix_size_t len); }
 133	UNIMPL		sgigsc
 134	STD		{ void *irix_sys_mmap(void *addr, irix_size_t len, \
@@ -367,7 +367,7 @@
 			    int *eof); }
 209	UNIMPL		sgi_sesmgr
 210	STD		{ irix_pid_t irix_sys_pidsprocsp(void *entry, \
-			    unsigned int inh, void *arg, caddr_t sp, \
+			    unsigned int inh, void *arg, void *sp, \
 			    irix_size_t len, irix_pid_t pid); }
 211	UNIMPL		rexec
 212	UNIMPL		timer_create

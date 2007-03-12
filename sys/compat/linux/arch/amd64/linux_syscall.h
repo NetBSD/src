@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.16 2006/09/01 21:19:45 matt Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.16.8.1 2007/03/12 05:52:15 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -43,7 +43,7 @@
 /* syscall: "mprotect" ret: "int" args: "const void *" "unsigned long" "int" */
 #define	LINUX_SYS_mprotect	10
 
-/* syscall: "munmap" ret: "int" args: "caddr_t" "int" */
+/* syscall: "munmap" ret: "int" args: "void *" "int" */
 #define	LINUX_SYS_munmap	11
 
 /* syscall: "brk" ret: "int" args: "char *" */
@@ -58,7 +58,7 @@
 /* syscall: "rt_sigreturn" ret: "int" args: */
 #define	LINUX_SYS_rt_sigreturn	15
 
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	LINUX_SYS_ioctl	16
 
 /* syscall: "pread" ret: "int" args: "int" "char *" "size_t" "linux_off_t" */
@@ -88,7 +88,7 @@
 /* syscall: "mremap" ret: "void *" args: "void *" "size_t" "size_t" "u_long" */
 #define	LINUX_SYS_mremap	25
 
-/* syscall: "msync" ret: "int" args: "caddr_t" "int" "int" */
+/* syscall: "msync" ret: "int" args: "void *" "int" "int" */
 #define	LINUX_SYS_msync	26
 
 /* syscall: "mincore" ret: "int" args: "void *" "size_t" "char *" */
@@ -163,7 +163,7 @@
 /* syscall: "listen" ret: "int" args: "int" "int" */
 #define	LINUX_SYS_listen	50
 
-/* syscall: "getsockname" ret: "int" args: "int" "caddr_t" "int *" */
+/* syscall: "getsockname" ret: "int" args: "int" "void *" "int *" */
 #define	LINUX_SYS_getsockname	51
 
 /* syscall: "getpeername" ret: "int" args: "int" "struct sockaddr *" "unsigned int *" */
@@ -448,10 +448,10 @@
 /* syscall: "sched_get_priority_min" ret: "int" args: "int" */
 #define	LINUX_SYS_sched_get_priority_min	147
 
-/* syscall: "mlock" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "mlock" ret: "int" args: "void *" "size_t" */
 #define	LINUX_SYS_mlock	149
 
-/* syscall: "munlock" ret: "int" args: "caddr_t" "size_t" */
+/* syscall: "munlock" ret: "int" args: "void *" "size_t" */
 #define	LINUX_SYS_munlock	150
 
 /* syscall: "mlockall" ret: "int" args: "int" */

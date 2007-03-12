@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.54 2007/01/20 21:42:12 he Exp $	*/
+/*	$NetBSD: ofb.c,v 1.54.2.1 2007/03/12 05:49:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.54 2007/01/20 21:42:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.54.2.1 2007/03/12 05:49:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -97,7 +97,7 @@ struct wsscreen_list ofb_screenlist = {
 	sizeof(_ofb_scrlist) / sizeof(struct wsscreen_descr *), _ofb_scrlist
 };
 
-static int	ofb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	ofb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	ofb_mmap(void *, void *, off_t, int);
 
 static void	ofb_init_screen(void *, struct vcons_screen *, int, long *);
@@ -164,7 +164,7 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 			sub = OF_peer(sub);
 		}
 		if (sub == console_node) {
-			console = TRUE;
+			console = true;
 		}
 	}
 	
@@ -229,7 +229,7 @@ ofb_init_screen(void *cookie, struct vcons_screen *scr,
 }
 
 static int
-ofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct ofb_softc *sc = vd->cookie;
@@ -265,7 +265,7 @@ ofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if (ms != NULL) {
 			gm = (void *)data;
 			memset(gm, 0, sizeof(struct grfinfo));
-			gm->gd_fbaddr = (caddr_t)sc->sc_fbaddr;
+			gm->gd_fbaddr = (void *)sc->sc_fbaddr;
 			gm->gd_fbrowbytes = ms->scr_ri.ri_stride;
 			return 0;
 		} else

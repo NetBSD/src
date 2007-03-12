@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31 2007/02/09 21:55:16 ad Exp $
+	$NetBSD: syscalls.master,v 1.31.2.1 2007/03/12 05:51:57 rmind Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -106,7 +106,7 @@
 #endif
 25	NOARGS		{ uid_t sys_geteuid(void); }
 26	STD		{ int darwin_sys_ptrace(int req, pid_t pid, \
-			    caddr_t addr, int data); }
+			    void *addr, int data); }
 27	NOARGS		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
 28	NOARGS		{ ssize_t sys_sendmsg(int s, \
@@ -135,7 +135,7 @@
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	NOARGS		{ gid_t sys_getegid(void); }
-44	NOARGS		{ int sys_profil(caddr_t samples, size_t size, \
+44	NOARGS		{ int sys_profil(void *samples, size_t size, \
 			    u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
 45	NOARGS		{ int sys_ktrace(const char *fname, int ops, \
@@ -176,13 +176,13 @@
 			    struct stat43 *sb); } fstat43
 63	UNIMPL
 64	NOARGS    	{ int compat_43_sys_getpagesize(void); } ogetpagesize
-65	NOARGS    	{ int compat_12_sys_msync(caddr_t addr, size_t len); }
+65	NOARGS    	{ int compat_12_sys_msync(void *addr, size_t len); }
 66	STD		{ int darwin_sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
-71	NOARGS    	{ int sys_mmap(caddr_t addr, size_t len, int prot, \
+71	NOARGS    	{ int sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
 72	NOARGS		{ int sys_ovadvise(int anom); } vadvise
 73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
@@ -226,12 +226,12 @@
 98	STD		{ int darwin_sys_connect(int s, \
 			    const struct sockaddr *name, \
 			    unsigned int namelen); }
-99	NOARGS    	{ int compat_43_sys_accept(int s, caddr_t name, \
+99	NOARGS    	{ int compat_43_sys_accept(int s, void *name, \
 			    int *anamelen); } oaccept
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS    	{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	NOARGS    	{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); } osend
-102	NOARGS    	{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+102	NOARGS    	{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); } orecv
 103	STD	    	{ int darwin_sys_sigreturn_x2(struct \
 			    darwin_ucontext *uctx); }
@@ -252,7 +252,7 @@
 			    struct sigstack *oss); } osigstack
 113	NOARGS    	{ int compat_43_sys_recvmsg(int s, \
 			    struct omsghdr *msg, int flags); } orecvmsg
-114	NOARGS    	{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
+114	NOARGS    	{ int compat_43_sys_sendmsg(int s, void *msg, \
 			    int flags); } osendmsg
 115	UNIMPL
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
@@ -269,8 +269,8 @@
 			    const struct timezone *tzp); }
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
-125	NOARGS    	{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
-			    size_t len, int flags, caddr_t from, \
+125	NOARGS    	{ int compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); } orecvfrom
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
@@ -298,7 +298,7 @@
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
 141	NOARGS    	{ int compat_43_sys_getpeername(int fdes, \
-			    caddr_t asa, int *alen); } ogetpeername
+			    void *asa, int *alen); } ogetpeername
 142	NOARGS    	{ int32_t compat_43_sys_gethostid(void); } ogethostid
 143	UNIMPL
 144	NOARGS    	{ int compat_43_sys_getrlimit(int which, \
@@ -311,7 +311,7 @@
 148	UNIMPL
 149	UNIMPL
 150	NOARGS    	{ int compat_43_sys_getsockname(int fdec, \
-			    caddr_t asa, int *alen); } ogetsockname
+			    void *asa, int *alen); } ogetsockname
 151	UNIMPL		getpgid
 152	UNIMPL		setprivexec
 153	UNIMPL		pread
@@ -410,7 +410,7 @@
 218	UNIMPL
 219	UNIMPL
 220	STD		{ int darwin_sys_getattrlist(const char *path, \
-			    struct darwin_attrlist *alist, void * attributes, \
+			    struct darwin_attrlist *alist, void *attributes, \
 			    size_t buflen, unsigned long options); }
 221	UNIMPL		setattrlist
 222	UNIMPL		getdirentriesattr
@@ -488,7 +488,7 @@
 294	UNIMPL
 295	UNIMPL
 296	STD		{ int darwin_sys_load_shared_file(char *filename, \
-			    caddr_t addr, u_long len, caddr_t *base, \
+			    void *addr, u_long len, void **base, \
 			    int count, mach_sf_mapping_t *mappings, \
 			    int *flags); }
 297	UNIMPL		reset_shared_file

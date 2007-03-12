@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.32 2007/02/09 21:55:19 ad Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.32.2.1 2007/03/12 05:52:24 rmind Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.32.2.1 2007/03/12 05:52:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	if (onstack) {
 		fp = (register_t)
-		    ((caddr_t)l->l_sigstk.ss_sp +
+		    ((char *)l->l_sigstk.ss_sp +
 		    l->l_sigstk.ss_size);
 	} else {
 		fp = tf->fixreg[1];
@@ -213,7 +213,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	sendsig_reset(l, sig);
 	mutex_exit(&p->p_smutex);
-	error = copyout(&frame, (caddr_t)fp, sizeof (frame) - LINUX_ABIGAP);
+	error = copyout(&frame, (void *)fp, sizeof (frame) - LINUX_ABIGAP);
 
 	if (error != 0) {
 		/*
@@ -229,7 +229,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Add a sigcontext on the stack
 	 */
 	fp -= sizeof(struct linux_sigcontext);
-	error = copyout(&sc, (caddr_t)fp, sizeof (struct linux_sigcontext));
+	error = copyout(&sc, (void *)fp, sizeof (struct linux_sigcontext));
 	mutex_enter(&p->p_smutex);
 
 	if (error != 0) {
@@ -303,13 +303,13 @@ linux_sys_rt_sigreturn(l, v, retval)
 	/*
 	 * Get the context from user stack
 	 */
-	if (copyin((caddr_t)scp, &sigframe, sizeof(*scp)))
+	if (copyin((void *)scp, &sigframe, sizeof(*scp)))
 		return (EFAULT);
 
 	/*
 	 *  Restore register context.
 	 */
-	if (copyin((caddr_t)sigframe.luc.luc_context.lregs,
+	if (copyin((void *)sigframe.luc.luc_context.lregs,
 		   &sregs, sizeof(sregs)))
 		return (EFAULT);
 	lregs = (struct linux_pt_regs *)&sregs.lgp_regs;
@@ -336,7 +336,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	 */
 	save_fpu_lwp(curlwp, FPU_DISCARD);
 
-	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
+	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
 	mutex_enter(&p->p_smutex);
@@ -402,7 +402,7 @@ linux_sys_sigreturn(l, v, retval)
 	/*
 	 *  Restore register context.
 	 */
-	if (copyin((caddr_t)context.lregs, &sregs, sizeof(sregs)))
+	if (copyin((void *)context.lregs, &sregs, sizeof(sregs)))
 		return (EFAULT);
 	lregs = (struct linux_pt_regs *)&sregs.lgp_regs;
 
@@ -429,7 +429,7 @@ linux_sys_sigreturn(l, v, retval)
 	 */
 	save_fpu_lwp(curlwp, FPU_DISCARD);
 
-	memcpy(curpcb->pcb_fpu.fpreg, (caddr_t)&sregs.lfp_regs,
+	memcpy(curpcb->pcb_fpu.fpreg, (void *)&sregs.lfp_regs,
 	       sizeof(curpcb->pcb_fpu.fpreg));
 
 	mutex_enter(&p->p_smutex);
@@ -500,7 +500,7 @@ linux_machdepioctl(l, v, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;

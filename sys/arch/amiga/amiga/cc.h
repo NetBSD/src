@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.14 2002/04/25 09:20:26 aymeric Exp $	*/
+/*	$NetBSD: cc.h,v 1.14.64.1 2007/03/12 05:46:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -165,7 +165,7 @@ struct mem_node {
 #define CM_BLOCKSIZE 0x4
 #define CM_BLOCKMASK (~(CM_BLOCKSIZE - 1))
 #define MNODES_MEM(mn) ((u_char *)(&mn[1]))
-#define PREP_DMA_MEM(mem) (void *)((caddr_t)mem - CHIPMEMADDR)
+#define PREP_DMA_MEM(mem) (void *)((char*)(mem) - CHIPMEMADDR)
 
 extern vaddr_t CHIPMEMADDR;
 extern vaddr_t chipmem_start;
@@ -206,7 +206,7 @@ void play_sample(u_short, u_short *, u_short, u_short, u_short, u_long);
 void audio_handler(void);
 /* chipmem */
 void cc_init_chipmem(void);
-void * alloc_chipmem(u_long);
+void *alloc_chipmem(u_long);
 void free_chipmem(void *);
 u_long avail_chipmem(int);
 u_long sizeof_chipmem(void *);

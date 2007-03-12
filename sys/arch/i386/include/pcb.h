@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.38 2006/05/02 19:03:24 drochner Exp $	*/
+/*	$NetBSD: pcb.h,v 1.38.14.1 2007/03/12 05:48:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,10 +92,11 @@
 
 struct pcb {
 	struct	i386tss pcb_tss;
-#define	pcb_cr3	pcb_tss.tss_cr3
-#define	pcb_esp	pcb_tss.tss_esp
-#define	pcb_ebp	pcb_tss.tss_ebp
-#define	pcb_cs	pcb_tss.__tss_cs
+#define	pcb_cr3		pcb_tss.tss_cr3
+#define	pcb_esp		pcb_tss.tss_esp
+#define	pcb_esp0	pcb_tss.tss_esp0
+#define	pcb_ebp		pcb_tss.tss_ebp
+#define	pcb_cs		pcb_tss.__tss_cs
 #define	pcb_ldt_sel	pcb_tss.tss_ldt
 	int	pcb_cr0;		/* saved image of CR0 */
 	int	pcb_cr2;		/* page fault address (CR2) */
@@ -104,7 +105,7 @@ struct pcb {
 /*
  * Software pcb (extension)
  */
-	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
+	void *	pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */

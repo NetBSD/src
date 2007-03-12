@@ -1,4 +1,4 @@
-/*	$NetBSD: zlcd.c,v 1.4 2007/02/02 02:10:24 ober Exp $	*/
+/*	$NetBSD: zlcd.c,v 1.4.2.1 2007/03/12 05:51:50 rmind Exp $	*/
 /*	$OpenBSD: zaurus_lcd.c,v 1.20 2006/06/02 20:50:14 miod Exp $	*/
 /* NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp */
 
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.4 2007/02/02 02:10:24 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlcd.c,v 1.4.2.1 2007/03/12 05:51:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ static const struct wsscreen_list lcd_screen_list = {
 	.screens = lcd_scr_descr,
 };
 
-static int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	lcd_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static int	lcd_param(struct pxa2x0_lcd_softc *, u_long,
 		    struct wsdisplay_param *);
 static int	lcd_show_screen(void *, void *, int,
@@ -201,7 +201,7 @@ lcd_cnattach(void)
  * wsdisplay accessops overrides
  */
 static int
-lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)v;
 	int res = EINVAL;

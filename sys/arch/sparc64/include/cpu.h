@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2007/02/16 02:53:51 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.61.2.1 2007/03/12 05:50:47 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -296,7 +296,7 @@ void	intr_establish(int level, struct intrhand *);
 struct dkbad;
 int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
-caddr_t	reserve_dumppages(caddr_t);
+void *	reserve_dumppages(void *);
 /* clock.c */
 struct timeval;
 int	tickintr(void *);	/* level 10 (tick) interrupt code */

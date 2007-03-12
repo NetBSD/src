@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.47.2.1 2007/02/27 16:53:33 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.47.2.2 2007/03/12 05:51:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.47.2.1 2007/02/27 16:53:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.47.2.2 2007/03/12 05:51:56 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -648,7 +648,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 
 	pd = proclists;
 again:
@@ -715,7 +715,7 @@ again:
 		}
 		if (buflen >= sizeof(struct darwin_kinfo_proc)) {
 			darwin_fill_kproc(p, &kproc);
-			error = copyout((caddr_t)&kproc, dp, sizeof(kproc));
+			error = copyout((void *)&kproc, dp, sizeof(kproc));
 			if (error)
 				goto cleanup;
 			dp++;
@@ -726,10 +726,10 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (where != NULL) {
-		*oldlenp = (caddr_t)dp - where;
+		*oldlenp = (char *)dp - where;
 		if (needed > *oldlenp)
 			return (ENOMEM);
 	} else {
@@ -738,7 +738,7 @@ again:
 	}
 	return (0);
  cleanup:
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (error);
 }
 

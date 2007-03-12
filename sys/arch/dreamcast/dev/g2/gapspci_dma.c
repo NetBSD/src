@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_dma.c,v 1.13 2006/08/07 17:36:53 tsutsui Exp $	*/
+/*	$NetBSD: gapspci_dma.c,v 1.13.10.1 2007/03/12 05:47:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.13 2006/08/07 17:36:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_dma.c,v 1.13.10.1 2007/03/12 05:47:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ int	gaps_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    int nsegs, int *rsegs, int flags);
 void	gaps_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs);
 int	gaps_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
-	    size_t size, caddr_t *kvap, int flags);
-void	gaps_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
+	    size_t size, void **kvap, int flags);
+void	gaps_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size);
 paddr_t	gaps_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs, int nsegs,
 	    off_t off, int prot, int flags);
 
@@ -568,7 +568,7 @@ gaps_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 
 int
 gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -581,7 +581,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * TLB thrashing.
 	 */
 	if (nsegs == 1) {
-		*kvap = (caddr_t)SH3_PHYS_TO_P2SEG(segs[0].ds_addr);
+		*kvap = (void *)SH3_PHYS_TO_P2SEG(segs[0].ds_addr);
 		return 0;
 	}
 
@@ -592,7 +592,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return ENOMEM;
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -610,7 +610,7 @@ gaps_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 }
 
 void
-gaps_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+gaps_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -621,8 +621,8 @@ gaps_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 	/*
 	 * Nothing to do if we mapped it with P2SEG.
 	 */
-	if (kva >= (caddr_t)SH3_P2SEG_BASE &&
-	    kva <= (caddr_t)SH3_P2SEG_END)
+	if (kva >= (void *)SH3_P2SEG_BASE &&
+	    kva <= (void *)SH3_P2SEG_END)
 		return;
 
 	size = round_page(size);

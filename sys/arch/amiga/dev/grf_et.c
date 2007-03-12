@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_et.c,v 1.22 2006/11/24 22:04:21 wiz Exp $ */
+/*	$NetBSD: grf_et.c,v 1.22.4.1 2007/03/12 05:46:40 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -37,7 +37,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.22 2006/11/24 22:04:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_et.c,v 1.22.4.1 2007/03/12 05:46:40 rmind Exp $");
 
 #include "grfet.h"
 #if NGRFET > 0
@@ -107,7 +107,7 @@ static int et_getDACType(struct grf_softc *gp);
 int	grfetmatch(struct device *, struct cfdata *, void *);
 void	grfetattach(struct device *, struct device *, void *);
 int	grfetprint(void *, const char *);
-void	et_memset(unsigned char *d, unsigned char c, int l);
+void	et_memset(volatile unsigned char *d, unsigned char c, int l);
 
 /*
  * Graphics display definitions.
@@ -295,8 +295,8 @@ grfetattach(struct device *pdp, struct device *dp, void *auxp)
 		bcopy(&congrf.g_display, &gp->g_display,
 		    (char *) &gp[1] - (char *) &gp->g_display);
 	} else {
-		gp->g_regkva = (volatile caddr_t) et_regaddr;
-		gp->g_fbkva = (volatile caddr_t) et_fbaddr;
+		gp->g_regkva = (volatile void *) et_regaddr;
+		gp->g_fbkva = (volatile void *) et_fbaddr;
 
 		gp->g_unit = GRF_ET4000_UNIT;
 		gp->g_mode = et_mode;
@@ -376,7 +376,7 @@ grfetprint(void *auxp, const char *pnp)
 void
 et_boardinit(struct grf_softc *gp)
 {
-	unsigned char *ba = gp->g_regkva;
+	volatile unsigned char *ba = gp->g_regkva;
 	int     x;
 
 	/* wakeup board and flip passthru OFF */
@@ -538,7 +538,8 @@ et_boardinit(struct grf_softc *gp)
 				et_fbsize = 0x100000;		/* 1 MB */
 		}
 		/* ZorroII can map 2 MB max ... */
-		if (!iszthreepa(kvtop(gp->g_fbkva)) && et_fbsize == 0x400000)
+		if (!iszthreepa(kvtop(__UNVOLATILE(gp->g_fbkva))) &&
+		    et_fbsize == 0x400000)
 			et_fbsize = 0x200000;
 		etctype = ETW32;
 		etdtype = MERLINDAC;
@@ -1066,11 +1067,11 @@ et_load_mon(struct grf_softc *gp, struct grfettext_mode *md)
 	ba = gp->g_regkva;
 
 	/* provide all needed information in grf device-independent locations */
-	gp->g_data = (caddr_t) gv;
+	gp->g_data = (void *) gv;
 	gi = &gp->g_display;
-	gi->gd_regaddr = (caddr_t) ztwopa(ba);
+	gi->gd_regaddr = (void *) ztwopa(ba);
 	gi->gd_regsize = 64 * 1024;
-	gi->gd_fbaddr = (caddr_t) kvtop(gp->g_fbkva);
+	gi->gd_fbaddr = (void *) kvtop(__UNVOLATILE(gp->g_fbkva));
 	gi->gd_fbsize = et_fbsize;
 	gi->gd_colors = 1 << gv->depth;
 	gi->gd_planes = gv->depth;
@@ -1398,8 +1399,9 @@ et_inittextmode(struct grf_softc *gp)
 {
 	struct grfettext_mode *tm = (struct grfettext_mode *) gp->g_data;
 	volatile unsigned char *ba = gp->g_regkva;
-	unsigned char *fb = gp->g_fbkva;
-	unsigned char *c, *f, y;
+	volatile unsigned char *fb = gp->g_fbkva;
+	volatile unsigned char *c;
+	unsigned char *f, y;
 	unsigned short z;
 
 
@@ -1410,7 +1412,7 @@ et_inittextmode(struct grf_softc *gp)
 
 	SetTextPlane(ba, 0x02);
         et_memset(fb, 0, 256 * 32);
-	c = (unsigned char *) (fb) + (32 * tm->fdstart);
+	c = fb + (32 * tm->fdstart);
 	f = tm->fdata;
 	for (z = tm->fdstart; z <= tm->fdend; z++, c += (32 - tm->fy))
 		for (y = 0; y < tm->fy; y++)
@@ -1425,8 +1427,8 @@ et_inittextmode(struct grf_softc *gp)
 
 	/* print out a little init msg */
 
-	c = (unsigned char *) (fb) + (tm->cols - 16);
-	strcpy(c, "TSENG");
+	c = fb + (tm->cols - 16);
+	strcpy(__UNVOLATILE(c), "TSENG");
 	c[5] = 0x20;
 
 	/* set colors (B&W) */
@@ -1460,7 +1462,7 @@ et_inittextmode(struct grf_softc *gp)
 
 
 void
-et_memset(unsigned char *d, unsigned char c, int l)
+et_memset(volatile unsigned char *d, unsigned char c, int l)
 {
 	for (; l > 0; l--)
 		*d++ = c;
@@ -1470,9 +1472,9 @@ et_memset(unsigned char *d, unsigned char c, int l)
 static int
 et_getControllerType(struct grf_softc *gp)
 {
-	unsigned char *ba = gp->g_regkva; /* register base */
-	unsigned char *mem = gp->g_fbkva; /* memory base */
-	unsigned char *mmu = mem + MMU_APERTURE0; /* MMU aperture 0 base */
+	volatile unsigned char *ba = gp->g_regkva; /* register base */
+	volatile unsigned char *mem = gp->g_fbkva; /* memory base */
+	volatile unsigned char *mmu = mem + MMU_APERTURE0; /* MMU aperture 0 base */
 
 	*mem = 0;
 
@@ -1485,7 +1487,7 @@ et_getControllerType(struct grf_softc *gp)
 
 	WIma(ba, IMA_PORTCONTROL, 0x01);
 
-	*((unsigned long *)mmu) = 0;
+	*((volatile unsigned long *)mmu) = 0;
 	*(mem + 0x13) = 0x38;
 
 	*mmu = 0xff;
@@ -1505,7 +1507,7 @@ et_getControllerType(struct grf_softc *gp)
 static int
 et_getDACType(struct grf_softc *gp)
 {
-	unsigned char *ba = gp->g_regkva;
+	volatile unsigned char *ba = gp->g_regkva;
 	union {
 		int  tt;
 		char cc[4];

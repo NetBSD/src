@@ -1,4 +1,4 @@
-/* $NetBSD: smdk2410_kbd.c,v 1.3 2006/03/26 04:27:57 thorpej Exp $ */
+/* $NetBSD: smdk2410_kbd.c,v 1.3.14.1 2007/03/12 05:47:38 rmind Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.3 2006/03/26 04:27:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_kbd.c,v 1.3.14.1 2007/03/12 05:47:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ CFATTACH_DECL(sskbd, sizeof(struct sskbd_softc),
 
 static  int	sskbd_enable(void *, int);
 static  void	sskbd_set_leds(void *, int);
-static  int	sskbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static  int	sskbd_ioctl(void *, u_long, void *, int, struct lwp *);
 static	int	sskbd_atn_intr(void *);
 static	int	sskbd_spi_intr(void *);
 static	void	sskbd_soft_intr(void *);
@@ -468,7 +468,7 @@ sskbd_set_leds(void *v, int leds)
 }
 
 static int
-sskbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sskbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	/*struct sskbd_softc *sc = v;*/
 

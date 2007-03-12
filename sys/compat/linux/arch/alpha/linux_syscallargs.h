@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.60 2006/09/01 21:19:44 matt Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.60.8.1 2007/03/12 05:52:14 rmind Exp $ */
 
 /*
  * System call argument lists.
@@ -71,7 +71,7 @@ struct osf1_sys_mount_args {
 	syscallarg(int) type;
 	syscallarg(const char *) path;
 	syscallarg(int) flags;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct linux_sys_ptrace_args {
@@ -92,9 +92,9 @@ struct linux_sys_kill_args {
 };
 
 struct osf1_sys_set_program_attributes_args {
-	syscallarg(caddr_t) taddr;
+	syscallarg(void *) taddr;
 	syscallarg(unsigned long) tsize;
-	syscallarg(caddr_t) daddr;
+	syscallarg(void *) daddr;
 	syscallarg(unsigned long) dsize;
 };
 
@@ -111,7 +111,7 @@ struct linux_sys_sigpending_args {
 struct linux_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct linux_sys_symlink_args {
@@ -197,14 +197,14 @@ struct linux_sys_getpriority_args {
 
 struct linux_sys_send_args {
 	syscallarg(int) s;
-	syscallarg(caddr_t) buf;
+	syscallarg(void *) buf;
 	syscallarg(int) len;
 	syscallarg(int) flags;
 };
 
 struct linux_sys_recv_args {
 	syscallarg(int) s;
-	syscallarg(caddr_t) buf;
+	syscallarg(void *) buf;
 	syscallarg(int) len;
 	syscallarg(int) flags;
 };
@@ -228,7 +228,7 @@ struct linux_sys_setsockopt_args {
 };
 
 struct linux_sys_sigsuspend_args {
-	syscallarg(caddr_t) restart;
+	syscallarg(void *) restart;
 	syscallarg(int) oldmask;
 	syscallarg(int) mask;
 };
@@ -319,7 +319,7 @@ struct osf1_sys_utimes_args {
 
 struct linux_sys_getpeername_args {
 	syscallarg(int) fdes;
-	syscallarg(caddr_t) asa;
+	syscallarg(void *) asa;
 	syscallarg(int *) alen;
 };
 
@@ -335,7 +335,7 @@ struct linux_sys_setrlimit_args {
 
 struct linux_sys_getsockname_args {
 	syscallarg(int) fdec;
-	syscallarg(caddr_t) asa;
+	syscallarg(void *) asa;
 	syscallarg(int *) alen;
 };
 
@@ -387,7 +387,7 @@ struct linux_sys_shmget_args {
 #endif
 
 struct linux_sys_msync_args {
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(int) len;
 	syscallarg(int) fl;
 };
@@ -409,17 +409,17 @@ struct osf1_sys_usleep_thread_args {
 
 struct osf1_sys_getsysinfo_args {
 	syscallarg(u_long) op;
-	syscallarg(caddr_t) buffer;
+	syscallarg(void *) buffer;
 	syscallarg(u_long) nbytes;
-	syscallarg(caddr_t) arg;
+	syscallarg(void *) arg;
 	syscallarg(u_long) flag;
 };
 
 struct osf1_sys_setsysinfo_args {
 	syscallarg(u_long) op;
-	syscallarg(caddr_t) buffer;
+	syscallarg(void *) buffer;
 	syscallarg(u_long) nbytes;
-	syscallarg(caddr_t) arg;
+	syscallarg(void *) arg;
 	syscallarg(u_long) flag;
 };
 

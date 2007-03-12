@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.14 2006/05/10 06:24:03 skrll Exp $	*/
+/*	$NetBSD: emul.c,v 1.14.14.1 2007/03/12 05:50:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.14 2006/05/10 06:24:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.14.14.1 2007/03/12 05:50:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ fixalign(struct lwp *l, struct trapframe *tf)
 	int error;
 
 	/* fetch and check the instruction that caused the fault */
-	error = copyin((caddr_t) tf->tf_pc, &code.i_int, sizeof(code.i_int));
+	error = copyin((void *) tf->tf_pc, &code.i_int, sizeof(code.i_int));
 	if (error != 0) {
 		DPRINTF(("fixalign: Bad instruction fetch\n"));
 		return EINVAL;
@@ -331,13 +331,13 @@ fixalign(struct lwp *l, struct trapframe *tf)
 		}
 
 		if (size == 2)
-			return copyout(&data.s[1], (caddr_t) rs1, size);
+			return copyout(&data.s[1], (void *) rs1, size);
 		else
-			return copyout(&data.d, (caddr_t) rs1, size);
+			return copyout(&data.d, (void *) rs1, size);
 	}
 	else { /* load */
 		if (size == 2) {
-			error = copyin((caddr_t) rs1, &data.s[1], size);
+			error = copyin((void *) rs1, &data.s[1], size);
 			if (error)
 				return error;
 
@@ -348,7 +348,7 @@ fixalign(struct lwp *l, struct trapframe *tf)
 				data.s[0] = 0;
 		}
 		else
-			error = copyin((caddr_t) rs1, &data.d, size);
+			error = copyin((void *) rs1, &data.d, size);
 
 		if (error)
 			return error;
@@ -388,7 +388,7 @@ emulinstr(int pc, struct trapframe *tf)
 	int error;
 
 	/* fetch and check the instruction that caused the fault */
-	error = copyin((caddr_t) pc, &code.i_int, sizeof(code.i_int));
+	error = copyin((void *) pc, &code.i_int, sizeof(code.i_int));
 	if (error != 0) {
 		DPRINTF(("emulinstr: Bad instruction fetch\n"));
 		return SIGILL;

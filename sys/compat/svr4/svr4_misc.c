@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.123 2007/02/16 00:39:16 ad Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.123.2.1 2007/03/12 05:52:45 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.123 2007/02/16 00:39:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.123.2.1 2007/03/12 05:52:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ svr4_sys_wait(l, v, retval)
 	SCARG(&w4, options) = 0;
 
 	if (SCARG(uap, status) == NULL) {
-		caddr_t sg = stackgap_init(p, 0);
+		void *sg = stackgap_init(p, 0);
 
 		SCARG(&w4, status) = stackgap_alloc(p, &sg, sz);
 	}
@@ -187,7 +187,7 @@ svr4_sys_execv(l, v, retval)
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	caddr_t sg;
+	void *sg;
 
 	sg = stackgap_init(l->l_proc, 0);
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
@@ -212,7 +212,7 @@ svr4_sys_execve(l, v, retval)
 		syscallarg(char **) envp;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	caddr_t sg;
+	void *sg;
 
 	sg = stackgap_init(l->l_proc, 0);
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
@@ -259,9 +259,9 @@ svr4_sys_getdents64(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, tbuf;	/* BSD-format */
+	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* SVR4-format */
+	char *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
 	struct file *fp;
 	struct uio auio;
@@ -347,7 +347,7 @@ again:
 		idb.d_off = (svr4_off64_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
 		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
-		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
+		if ((error = copyout((void *)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
@@ -384,9 +384,9 @@ svr4_sys_getdents(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, tbuf;	/* BSD-format */
+	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* SVR4-format */
+	char *outp;		/* SVR4-format */
 	int resid, svr4_reclen;	/* SVR4-format */
 	struct file *fp;
 	struct uio auio;
@@ -473,7 +473,7 @@ again:
 		idb.d_off = (svr4_off_t)off;
 		idb.d_reclen = (u_short)svr4_reclen;
 		strlcpy(idb.d_name, bdp->d_name, sizeof(idb.d_name));
-		if ((error = copyout((caddr_t)&idb, outp, svr4_reclen)))
+		if ((error = copyout((void *)&idb, outp, svr4_reclen)))
 			goto out;
 		/* advance past this real entry */
 		inp += reclen;
@@ -586,7 +586,7 @@ svr4_mknod(l, retval, path, mode, dev)
 	svr4_mode_t mode;
 	svr4_dev_t dev;
 {
-	caddr_t sg = stackgap_init(l->l_proc, 0);
+	void *sg = stackgap_init(l->l_proc, 0);
 
 	CHECK_ALT_CREAT(l, &sg, path);
 
@@ -837,7 +837,7 @@ svr4_sys_times(l, v, retval)
 	struct rusage		 r;
 	struct sys_getrusage_args 	 ga;
 
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	ru = stackgap_alloc(p, &sg, sizeof(struct rusage));
 
 	SCARG(&ga, who) = RUSAGE_SELF;
@@ -892,7 +892,7 @@ svr4_sys_ulimit(l, v, retval)
 			int error;
 			struct sys_setrlimit_args srl;
 			struct rlimit krl;
-			caddr_t sg = stackgap_init(p, 0);
+			void *sg = stackgap_init(p, 0);
 			struct rlimit *url = (struct rlimit *)
 				stackgap_alloc(p, &sg, sizeof *url);
 
@@ -1187,17 +1187,17 @@ svr4_sys_waitsys(l, v, retval)
 	         SCARG(uap, grp), SCARG(uap, id),
 		 SCARG(uap, info), SCARG(uap, options)));
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	error = find_stopped_child(parent, SCARG(uap, id), options, &child,
 	    &status);
 	if (error != 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return error;
 	}
 	*retval = 0;
 	if (child == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		svr4_setinfo(NULL, 0, &i);
 		return copyout(&i, SCARG(uap, info), sizeof(i));
 	}
@@ -1208,7 +1208,7 @@ svr4_sys_waitsys(l, v, retval)
 
 		if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 			DPRINTF(("Don't wait\n"));
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return 0;
 		}
 
@@ -1220,7 +1220,7 @@ svr4_sys_waitsys(l, v, retval)
 	DPRINTF(("jobcontrol %d\n", child->p_pid));
 
 	svr4_setinfo(child, W_STOPCODE(status), &i);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return copyout(&i, SCARG(uap, info), sizeof(i));
 }
 
@@ -1322,7 +1322,7 @@ svr4_sys_statvfs(l, v, retval)
 	struct svr4_sys_statvfs_args *uap = v;
 	struct sys_statvfs1_args	fs_args;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
@@ -1347,7 +1347,7 @@ svr4_sys_fstatvfs(l, v, retval)
 	struct svr4_sys_fstatvfs_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_fstatvfs1_args	fs_args;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
@@ -1371,7 +1371,7 @@ svr4_sys_statvfs64(l, v, retval)
 	struct svr4_sys_statvfs64_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_statvfs1_args	fs_args;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
@@ -1396,7 +1396,7 @@ svr4_sys_fstatvfs64(l, v, retval)
 	struct svr4_sys_fstatvfs64_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_fstatvfs1_args	fs_args;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct statvfs *fs = stackgap_alloc(p, &sg, sizeof(struct statvfs));
 	int error;
 
@@ -1423,7 +1423,7 @@ svr4_sys_alarm(l, v, retval)
 	int error;
         struct itimerval *ntp, *otp, tp;
 	struct sys_setitimer_args sa;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
         ntp = stackgap_alloc(p, &sg, sizeof(struct itimerval));
         otp = stackgap_alloc(p, &sg, sizeof(struct itimerval));

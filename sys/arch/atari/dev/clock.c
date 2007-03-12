@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.37 2005/12/24 20:06:58 perry Exp $	*/
+/*	$NetBSD: clock.c,v 1.37.26.1 2007/03/12 05:47:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37 2005/12/24 20:06:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.37.26.1 2007/03/12 05:47:19 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -376,7 +376,7 @@ int	n;
  * Assumes it is called with clock interrupts blocked.
  */
 profclock(pc, ps)
-	caddr_t pc;
+	void *pc;
 	int ps;
 {
 	/*
@@ -564,7 +564,7 @@ rtcread(dev, uio, flags)
 	if (length > uio->uio_resid)
 		length = uio->uio_resid;
 
-	return(uiomove((caddr_t)buffer, length, uio));
+	return(uiomove((void *)buffer, length, uio));
 }
 
 static int
@@ -599,7 +599,7 @@ rtcwrite(dev, uio, flags)
 	  && length != sizeof(buffer - 1)))
 		return(EINVAL);
 	
-	if ((error = uiomove((caddr_t)buffer, sizeof(buffer), uio)))
+	if ((error = uiomove((void *)buffer, sizeof(buffer), uio)))
 		return(error);
 
 	if (length == sizeof(buffer) && buffer[sizeof(buffer) - 1] != '\n')

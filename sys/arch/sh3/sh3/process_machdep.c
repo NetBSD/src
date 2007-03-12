@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.12 2006/01/21 04:12:22 uwe Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.12.24.1 2007/03/12 05:50:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12 2006/01/21 04:12:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12.24.1 2007/03/12 05:50:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ process_sstep(struct lwp *l, int sstep)
 }
 
 int
-process_set_pc(struct lwp *l, caddr_t addr)
+process_set_pc(struct lwp *l, void *addr)
 {
 	struct trapframe *tf = process_frame(l);
 

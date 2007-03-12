@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.39 2007/02/16 13:41:45 ad Exp $ */
+/*	$NetBSD: kdb.c,v 1.39.2.1 2007/03/12 05:53:08 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.39 2007/02/16 13:41:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.39.2.1 2007/03/12 05:53:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.39 2007/02/16 13:41:45 ad Exp $");
 struct	kdb_softc {
 	struct	device sc_dev;		/* Autoconfig info */
 	struct	evcnt sc_intrcnt;	/* Interrupt counting */
-	caddr_t	sc_kdb;			/* Struct for kdb communication */
+	void *	sc_kdb;			/* Struct for kdb communication */
 	struct	mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_cmap;		/* Control structures */

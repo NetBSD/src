@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.8 2005/12/24 23:24:01 perry Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.8.26.1 2007/03/12 05:49:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.8 2005/12/24 23:24:01 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.8.26.1 2007/03/12 05:49:49 rmind Exp $");
 
 #include "debug_playstation2.h"
 
@@ -143,7 +143,7 @@ STATIC void smap_rxeof(void *);
 STATIC void smap_txeof(void *);
 STATIC void smap_start(struct ifnet *);
 STATIC void smap_watchdog(struct ifnet *);
-STATIC int smap_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int smap_ioctl(struct ifnet *, u_long, void *);
 STATIC int smap_init(struct ifnet *);
 STATIC void smap_stop(struct ifnet *, int);
 
@@ -274,7 +274,7 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-smap_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+smap_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct smap_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -423,7 +423,7 @@ smap_rxeof(void *arg)
 		m->m_data += 2; /* for alignment */
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = sz;
-		memcpy(mtod(m, caddr_t), (caddr_t)sc->rx_buf, sz);
+		memcpy(mtod(m, void *), (void *)sc->rx_buf, sz);
 
 	next_packet:
 		ifp->if_ipackets++;
@@ -548,7 +548,7 @@ smap_start(struct ifnet *ifp)
 		q = p + sz;
 		/* copy to temporary buffer area */
 		for (m = m0; m != 0; m = m->m_next) {
-			memcpy(p, mtod(m, caddr_t), m->m_len);
+			memcpy(p, mtod(m, void *), m->m_len);
 			p += m->m_len;
 		}
 		m_freem(m0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.28 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.28.26.1 2007/03/12 05:51:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.28 2005/12/11 12:19:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.28.26.1 2007/03/12 05:51:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -236,15 +236,11 @@ le_ibus_attach(parent, self, aux)
  */
 
 void
-lance_copytobuf_gap2(sc, fromv, boff, len)
-	struct lance_softc *sc;
-	void *fromv;
-	int boff;
-	register int len;
+lance_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;
+	volatile void *buf = sc->sc_mem;
+	char *from = fromv;
+	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -265,15 +261,12 @@ lance_copytobuf_gap2(sc, fromv, boff, len)
 }
 
 void
-lance_copyfrombuf_gap2(sc, tov, boff, len)
-	struct lance_softc *sc;
-	void *tov;
-	int boff, len;
+lance_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
+	volatile void *buf = sc->sc_mem;
+	char *to = tov;
+	volatile u_int16_t *bptr;
+	u_int16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -299,7 +292,7 @@ lance_zerobuf_gap2(sc, boff, len)
 	struct lance_softc *sc;
 	int boff, len;
 {
-	volatile caddr_t buf = sc->sc_mem;
+	volatile void *buf = sc->sc_mem;
 	register volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {

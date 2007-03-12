@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.20 2006/11/16 01:32:44 christos Exp $ */
+/*      $NetBSD: clockctl.c,v 1.20.4.1 2007/03/12 05:53:03 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.20 2006/11/16 01:32:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.20.4.1 2007/03/12 05:53:03 rmind Exp $");
 
 #include "opt_ntp.h"
 
@@ -72,7 +72,7 @@ int
 clockctlioctl(
     dev_t dev,
     u_long cmd,
-    caddr_t data,
+    void *data,
     int flags,
     struct lwp *l)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.117 2007/02/15 15:40:51 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.117.2.1 2007/03/12 05:53:02 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.117 2007/02/15 15:40:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.117.2.1 2007/03/12 05:53:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ static void	ccdintr(struct ccd_softc *, struct buf *);
 static int	ccdinit(struct ccd_softc *, char **, struct vnode **,
 		    struct lwp *);
 static struct ccdbuf *ccdbuffer(struct ccd_softc *, struct buf *,
-		    daddr_t, caddr_t, long);
+		    daddr_t, void *, long);
 static void	ccdgetdefaultlabel(struct ccd_softc *, struct disklabel *);
 static void	ccdgetdisklabel(dev_t);
 static void	ccdmakedisklabel(struct ccd_softc *);
@@ -713,7 +713,7 @@ ccdstart(struct ccd_softc *cs)
 	long bcount, rcount;
 	struct buf *bp;
 	struct ccdbuf *cbp;
-	caddr_t addr;
+	char *addr;
 	daddr_t bn;
 	SIMPLEQ_HEAD(, ccdbuf) cbufq;
 
@@ -775,7 +775,7 @@ ccdstart(struct ccd_softc *cs)
  * Build a component buffer header.
  */
 static struct ccdbuf *
-ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, caddr_t addr,
+ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
     long bcount)
 {
 	struct ccdcinfo *ci;
@@ -985,7 +985,7 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = ccdunit(dev);
 	int s, i, j, lookedup = 0, error = 0;
@@ -1345,7 +1345,7 @@ ccdsize(dev_t dev)
 }
 
 static int
-ccddump(dev_t dev, daddr_t blkno, caddr_t va,
+ccddump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 

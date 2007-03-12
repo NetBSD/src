@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.62 2006/12/06 21:21:12 hauke Exp $	*/
+/*	$NetBSD: nubus.h,v 1.62.2.1 2007/03/12 05:49:01 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -330,7 +330,7 @@ typedef struct _NUBUS_DRIVER {
 
 typedef struct _NUBUS_BLOCK {
 	u_int32_t	size;		/* Size of block of data	*/
-	caddr_t		data;		/* Pointer to data		*/
+	void *		data;		/* Pointer to data		*/
 } NUBUS_BLOCK;
 
 typedef struct _NUBUS_EXEC_BLOCK {
@@ -338,7 +338,7 @@ typedef struct _NUBUS_EXEC_BLOCK {
 	u_int8_t	revision;	/* Always 0x2			*/
 	u_int8_t	cpu;		/* Which processor?		*/
 	u_int32_t	code_offset;	/* Offset base to start of code	*/
-	caddr_t		code;		/* pointer to base of code.	*/
+	void *		code;		/* pointer to base of code.	*/
 } NUBUS_EXEC_BLOCK;
 
 #define NUBUS_EXEC_CPU_68000	1
@@ -376,11 +376,11 @@ void	nubus_get_dir_from_rsrc(nubus_slot *, nubus_dirent *, nubus_dir *);
 int	nubus_find_rsrc(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
 	    nubus_dir *, u_int8_t, nubus_dirent *);
 int	nubus_get_ind_data(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
-	    nubus_dirent *, caddr_t, int);
+	    nubus_dirent *, char *, int);
 int	nubus_get_c_string(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
-	    nubus_dirent *, caddr_t, int);
+	    nubus_dirent *, char *, int);
 int	nubus_get_smem_addr_rangelist(bus_space_tag_t, bus_space_handle_t,
-    	    nubus_slot *, nubus_dirent *, caddr_t);
+    	    nubus_slot *, nubus_dirent *, void *);
 
 const char	*nubus_get_vendor(bus_space_tag_t, bus_space_handle_t, nubus_slot *,
 	    int);

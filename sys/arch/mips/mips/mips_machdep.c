@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.192 2007/02/09 21:55:06 ad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.192.2.1 2007/03/12 05:49:22 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192 2007/02/09 21:55:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.192.2.1 2007/03/12 05:49:22 rmind Exp $");
 
 #include "opt_cputype.h"
 
@@ -212,7 +212,7 @@ struct	lwp  *fpcurlwp;
 struct	pcb  *curpcb;
 struct	segtab *segbase;
 
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -1243,7 +1243,7 @@ cpu_dump_mempagecnt(void)
 int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -1295,7 +1295,7 @@ cpu_dump(void)
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
 }
 
 /*
@@ -1357,7 +1357,7 @@ dumpsys(void)
 	int psize;
 	daddr_t blkno;
 	const struct bdevsw *bdev;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	/* Save registers. */
@@ -1415,7 +1415,7 @@ dumpsys(void)
 				n = BYTES_PER_DUMP;
 
 			error = (*dump)(dumpdev, blkno,
-			    (caddr_t)MIPS_PHYS_TO_KSEG0(maddr), n);
+			    (void *)MIPS_PHYS_TO_KSEG0(maddr), n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -1475,7 +1475,7 @@ mips_init_msgbuf(void)
 
 	vps->end -= atop(sz);
 	vps->avail_end -= atop(sz);
-	msgbufaddr = (caddr_t) MIPS_PHYS_TO_KSEG0(ptoa(vps->end));
+	msgbufaddr = (void *) MIPS_PHYS_TO_KSEG0(ptoa(vps->end));
 	initmsgbuf(msgbufaddr, sz);
 
 	/* Remove the last segment if it now has no pages. */
@@ -1687,7 +1687,7 @@ cpu_getmcontext(l, mcp, flags)
 	gr[_REG_SR]    = f->f_regs[_R_SR];
 
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) gr[_REG_EPC])) != -1)
+	    (void *) gr[_REG_EPC])) != -1)
 		gr[_REG_EPC] = ras_pc;
 
 	*flags |= _UC_CPU;

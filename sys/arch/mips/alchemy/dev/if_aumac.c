@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.18 2006/09/20 05:37:22 gdamore Exp $ */
+/* $NetBSD: if_aumac.c,v 1.18.4.1 2007/03/12 05:49:20 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.18 2006/09/20 05:37:22 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.18.4.1 2007/03/12 05:49:20 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.18 2006/09/20 05:37:22 gdamore Exp $"
 #define	AUMAC_BUFSIZE		(MAC_BUFLEN * (AUMAC_NTXDESC + AUMAC_NRXDESC))
 
 struct aumac_buf {
-	caddr_t buf_vaddr;		/* virtual address of buffer */
+	vaddr_t buf_vaddr;		/* virtual address of buffer */
 	bus_addr_t buf_paddr;		/* DMA address of buffer */
 };
 
@@ -140,7 +140,7 @@ struct aumac_softc {
 	/* Transmit and receive buffers */
 	struct aumac_buf sc_txbufs[AUMAC_NTXDESC];
 	struct aumac_buf sc_rxbufs[AUMAC_NRXDESC];
-	caddr_t sc_bufaddr;
+	void *sc_bufaddr;
 
 	int sc_txfree;			/* number of free Tx descriptors */
 	int sc_txnext;			/* next Tx descriptor to use */
@@ -180,7 +180,7 @@ do {									\
 
 static void	aumac_start(struct ifnet *);
 static void	aumac_watchdog(struct ifnet *);
-static int	aumac_ioctl(struct ifnet *, u_long, caddr_t);
+static int	aumac_ioctl(struct ifnet *, u_long, void *);
 static int	aumac_init(struct ifnet *);
 static void	aumac_stop(struct ifnet *, int);
 
@@ -234,7 +234,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct pglist pglist;
 	paddr_t bufaddr;
-	caddr_t vbufaddr;
+	vaddr_t vbufaddr;
 	int i;
 
 	callout_init(&sc->sc_tick_ch);
@@ -297,7 +297,7 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	bufaddr = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
-	vbufaddr = (void *)MIPS_PHYS_TO_KSEG0(bufaddr);
+	vbufaddr = MIPS_PHYS_TO_KSEG0(bufaddr);
 
 	for (i = 0; i < AUMAC_NTXDESC; i++) {
 		int offset = AUMAC_TXBUF_OFFSET + (i * MAC_BUFLEN);
@@ -437,11 +437,11 @@ aumac_start(struct ifnet *ifp)
 		 */
 
 		m_copydata(m, 0, m->m_pkthdr.len,
-		    sc->sc_txbufs[nexttx].buf_vaddr);
+		    (void *)sc->sc_txbufs[nexttx].buf_vaddr);
 
 		/* Zero out the remainder of any short packets. */
 		if (m->m_pkthdr.len < (ETHER_MIN_LEN - ETHER_CRC_LEN))
-			memset(sc->sc_txbufs[nexttx].buf_vaddr +
+			memset((char *)sc->sc_txbufs[nexttx].buf_vaddr +
 			    m->m_pkthdr.len, 0,
 			    ETHER_MIN_LEN - ETHER_CRC_LEN - m->m_pkthdr.len);
 
@@ -499,7 +499,7 @@ aumac_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-aumac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+aumac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct aumac_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -737,8 +737,8 @@ aumac_rxintr(struct aumac_softc *sc)
 		}
 
 		m->m_data += 2;		/* align payload */
-		memcpy(mtod(m, caddr_t),
-		    sc->sc_rxbufs[i].buf_vaddr, len);
+		memcpy(mtod(m, void *),
+		    (void *)sc->sc_rxbufs[i].buf_vaddr, len);
 		AUMAC_INIT_RXDESC(sc, i);
 
 		m->m_pkthdr.rcvif = ifp;

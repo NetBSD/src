@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.31.2.1 2007/02/27 16:52:54 yamt Exp $ */
+/* $NetBSD: machdep.c,v 1.31.2.2 2007/03/12 05:50:10 rmind Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31.2.1 2007/02/27 16:52:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31.2.2 2007/03/12 05:50:10 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -149,7 +149,7 @@ void	mach_init(long, long, long, long);
  */
 int	safepri = MIPS_INT_MASK | MIPS_SR_INT_IE;
 
-extern caddr_t esym;
+extern void *esym;
 extern struct user *proc0paddr;
 
 /*
@@ -158,7 +158,7 @@ extern struct user *proc0paddr;
 void
 mach_init(long fwhandle, long magic, long bootdata, long reserved)
 {
-	caddr_t kernend, p0;
+	void *kernend, *p0;
 	u_long first, last;
 	extern char edata[], end[];
 	int i;
@@ -192,12 +192,12 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 		bootinfo.esym = (vaddr_t)end;
 	}
 
-	kernend = (caddr_t)mips_round_page(end);
+	kernend = (void *)mips_round_page(end);
 #if NKSYMS || defined(DDB) || defined(LKM)
 	if (magic == BOOTINFO_MAGIC) {
 		ksym_start = (void *)bootinfo.ssym;
 		ksym_end   = (void *)bootinfo.esym;
-		kernend = (caddr_t)mips_round_page((vaddr_t)ksym_end);
+		kernend = (void *)mips_round_page((vaddr_t)ksym_end);
 	}
 #endif
 
@@ -320,9 +320,9 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	/*
 	 * Allocate space for proc0's USPACE
 	 */
-	p0 = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL);
+	p0 = (void *)pmap_steal_memory(USPACE, NULL, NULL);
 	lwp0.l_addr = proc0paddr = (struct user *)p0;
-	lwp0.l_md.md_regs = (struct frame *)(p0 + USPACE) - 1;
+	lwp0.l_md.md_regs = (struct frame *)((char *)p0 + USPACE) - 1;
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 

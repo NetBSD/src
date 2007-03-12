@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.12 2006/11/12 19:00:42 plunky Exp $ */
+/* $NetBSD: lunaws.c,v 1.12.4.1 2007/03/12 05:48:42 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.12 2006/11/12 19:00:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.12.4.1 2007/03/12 05:48:42 rmind Exp $");
 
 #include "wsmouse.h"
 
@@ -81,7 +81,7 @@ static void omkbd_input __P((void *, int));
 static int  omkbd_decode __P((void *, int, u_int *, int *));
 static int  omkbd_enable __P((void *, int));
 static void omkbd_set_leds __P((void *, int));
-static int  omkbd_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+static int  omkbd_ioctl __P((void *, u_long, void *, int, struct lwp *));
 
 struct wscons_keydesc omkbd_keydesctab[];
 
@@ -105,7 +105,7 @@ static const struct wskbd_consops ws_consops = {
 
 #if NWSMOUSE > 0
 static int  omms_enable __P((void *));
-static int  omms_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+static int  omms_ioctl __P((void *, u_long, void *, int, struct lwp *));
 static void omms_disable __P((void *));
 
 static const struct wsmouse_accessops omms_accessops = {
@@ -444,7 +444,7 @@ static int
 omkbd_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -478,7 +478,7 @@ static int
 omms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

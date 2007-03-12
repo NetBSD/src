@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.21.26.1 2007/02/27 16:50:46 yamt Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.21.26.2 2007/03/12 05:47:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -175,7 +175,7 @@ void	pollon(struct hil_dev *);
 #endif
 
 #ifdef COMPAT_HPUX
-int	hpuxhilioctl(dev_t, int, caddr_t, int);
+int	hpuxhilioctl(dev_t, int, void *, int);
 int	hildevno(dev_t);
 #endif /* COMPAT_HPUX */
 #endif /* _KERNEL */

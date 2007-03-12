@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.4 2005/12/11 12:17:11 christos Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.4.26.1 2007/03/12 05:47:38 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.4 2005/12/11 12:17:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.4.26.1 2007/03/12 05:47:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,10 +245,10 @@ isa_io_init(isa_io_addr, isa_mem_addr)
 	isa_mem_bs_tag.bs_cookie = (void *)isa_mem_addr;
 
 	isaio_ex = extent_create("isaio", 0x0, 0xffff, M_DEVBUF, 
-		(caddr_t)isaio_ex_storage, sizeof(isaio_ex_storage),
+		(void *)isaio_ex_storage, sizeof(isaio_ex_storage),
 		EX_NOWAIT|EX_NOCOALESCE);
 	isamem_ex = extent_create("isamem", 0x0, 0xfffff, M_DEVBUF, 
-		(caddr_t)isamem_ex_storage, sizeof(isamem_ex_storage),
+		(void *)isamem_ex_storage, sizeof(isamem_ex_storage),
 		EX_NOWAIT|EX_NOCOALESCE);
 	if (isaio_ex == NULL || isamem_ex == NULL)
 		panic("isa_io_init(): can't alloc extent maps");

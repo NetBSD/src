@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.3 2006/05/10 06:24:03 skrll Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.3.16.1 2007/03/12 05:54:45 rmind Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -80,7 +80,7 @@ __FBSDID("$FreeBSD: src/sys/dev/firewire/fwcrom.c,v 1.12 2004/08/29 13:45:55 sim
 #endif
 
 #define MAX_ROM (1024 - sizeof(uint32_t) * 5)
-#define CROM_END(cc) ((vm_offset_t)(cc)->stack[0].dir + MAX_ROM - 1)
+#define CROM_END(cc) ((char *)(cc)->stack[0].dir + MAX_ROM - 1)
 
 void
 crom_init_context(struct crom_context *cc, uint32_t *p)
@@ -140,7 +140,7 @@ again:
 	ptr->index ++;
 check:
 	if (ptr->index < ptr->dir->crc_len &&
-			(vm_offset_t)crom_get(cc) <= CROM_END(cc))
+			(char *)crom_get(cc) <= CROM_END(cc))
 		return;
 
 	if (ptr->index < ptr->dir->crc_len)
@@ -210,13 +210,13 @@ crom_parse_text(struct crom_context *cc, char *buf, int len)
 
 	reg = crom_get(cc);
 	if (reg->key != CROM_TEXTLEAF ||
-			(vm_offset_t)(reg + reg->val) > CROM_END(cc)) {
+			(char *)(reg + reg->val) > CROM_END(cc)) {
 		strncpy(buf, nullstr, len);
 		return;
 	}
 	textleaf = (struct csrtext *)(reg + reg->val);
 
-	if ((vm_offset_t)textleaf + textleaf->crc_len > CROM_END(cc)) {
+	if ((char *)textleaf + textleaf->crc_len > CROM_END(cc)) {
 		strncpy(buf, nullstr, len);
 		return;
 	}

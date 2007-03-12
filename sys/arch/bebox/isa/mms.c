@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.13 2005/12/11 12:17:03 christos Exp $	*/
+/*	$NetBSD: mms.c,v 1.13.26.1 2007/03/12 05:47:23 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.13 2005/12/11 12:17:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.13.26.1 2007/03/12 05:47:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -206,7 +206,7 @@ mmsread(dev, uio, flag)
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= MMS_ASLP;
-		error = tsleep((caddr_t)sc, PZERO | PCATCH, "mmsrea", 0);
+		error = tsleep((void *)sc, PZERO | PCATCH, "mmsrea", 0);
 		if (error) {
 			sc->sc_state &= ~MMS_ASLP;
 			splx(s);
@@ -237,7 +237,7 @@ int
 mmsioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct proc *p;
 {
@@ -343,7 +343,7 @@ mmsintr(arg)
 
 		if (sc->sc_state & MMS_ASLP) {
 			sc->sc_state &= ~MMS_ASLP;
-			wakeup((caddr_t)sc);
+			wakeup((void *)sc);
 		}
 		selnotify(&sc->sc_rsel, 0);
 	}

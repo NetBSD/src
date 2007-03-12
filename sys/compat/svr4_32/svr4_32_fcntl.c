@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.16 2007/02/09 21:55:26 ad Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.16.2.1 2007/03/12 05:52:47 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.16 2007/02/09 21:55:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.16.2.1 2007/03/12 05:52:47 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,7 +372,7 @@ svr4_32_sys_open(l, v, retval)
 	int			error;
 	struct sys_open_args	cup;
 
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	SCARG(&cup, flags) = svr4_32_to_bsd_flags(SCARG(uap, flags));
 
@@ -398,7 +398,7 @@ svr4_32_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, l);
+			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (void *) 0, l);
 	}
 	return 0;
 }
@@ -424,7 +424,7 @@ svr4_32_sys_creat(l, v, retval)
 	struct proc *p = l->l_proc;
 	struct sys_open_args cup;
 
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
@@ -478,7 +478,7 @@ svr4_32_sys_access(l, v, retval)
 	struct sys_access_args cup;
 	struct proc *p = l->l_proc;
 
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
@@ -633,7 +633,7 @@ svr4_32_sys_fcntl(l, v, retval)
 		{
 			struct svr4_32_flock	 ifl;
 			struct flock		*flp, fl;
-			caddr_t sg = stackgap_init(p, 0);
+			void *sg = stackgap_init(p, 0);
 
 			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 			SCARG(&fa, arg) = (void *) flp;
@@ -697,7 +697,7 @@ svr4_32_sys_fcntl(l, v, retval)
 			{
 				struct svr4_32_flock64	 ifl;
 				struct flock		*flp, fl;
-				caddr_t sg = stackgap_init(p, 0);
+				void *sg = stackgap_init(p, 0);
 
 				flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 				SCARG(&fa, arg) = (void *) flp;

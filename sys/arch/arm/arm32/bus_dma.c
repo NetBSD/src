@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.49 2006/04/10 03:07:40 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49.14.1 2007/03/12 05:47:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2006/04/10 03:07:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.14.1 2007/03/12 05:47:01 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -416,7 +416,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	int i, error;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -438,7 +438,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
 		    uio->uio_vmspace, flags);
@@ -817,7 +817,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  */
 int
 _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-    size_t size, caddr_t *kvap, int flags)
+    size_t size, void **kvap, int flags)
 {
 	vaddr_t va;
 	bus_addr_t addr;
@@ -837,7 +837,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -885,7 +885,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DEBUG_DMA

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.4 2006/10/01 22:02:55 bjh21 Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.4.6.1 2007/03/12 05:53:48 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -135,7 +135,7 @@ struct wd33c93_softc {
 
 
 	/* Data about the current nexus (updated for every cmd switch) */
-	caddr_t	sc_daddr;		/* Current data pointer */
+	void *	sc_daddr;		/* Current data pointer */
 	size_t	sc_dleft;		/* Data left to transfer */
 	ssize_t	sc_tcnt;		/* number of bytes transfered */
 
@@ -174,7 +174,7 @@ struct wd33c93_softc {
 	uint8_t	sc_maxoffset;		/* Maximum sync ofset (bytes) */
 	uint8_t	sc_syncperiods[7];	/* Sync transfer periods (4ns units) */
 
-	int  (*sc_dmasetup) (struct wd33c93_softc *, caddr_t *,
+	int  (*sc_dmasetup) (struct wd33c93_softc *, void **,
 					    size_t *, int, size_t *);
 	int  (*sc_dmago) (struct wd33c93_softc *);
 	void (*sc_dmastop) (struct wd33c93_softc *);

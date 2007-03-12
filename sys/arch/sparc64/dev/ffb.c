@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.31 2006/10/15 19:55:32 martin Exp $	*/
+/*	$NetBSD: ffb.c,v 1.31.4.1 2007/03/12 05:50:46 rmind Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.31 2006/10/15 19:55:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.31.4.1 2007/03/12 05:50:46 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,7 @@ struct wsscreen_list ffb_screenlist = {
 
 static struct vcons_screen ffb_console_screen;
 
-int	ffb_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int	ffb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static int ffb_blank(struct ffb_softc *, u_long, u_int *);
 paddr_t ffb_mmap(void *, void *, off_t, int);
 void	ffb_ras_fifo_wait(struct ffb_softc *, int);
@@ -253,7 +253,7 @@ ffb_attach(struct ffb_softc *sc)
 }
 
 int
-ffb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flags, struct lwp *l)
+ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct ffb_softc *sc = vd->cookie;
@@ -677,7 +677,7 @@ ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-ffbfb_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+ffbfb_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct ffb_softc *sc = ffb_cd.cd_devs[minor(dev)];
 

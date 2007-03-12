@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.65 2006/11/20 19:58:38 hauke Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.65.4.1 2007/03/12 05:49:00 rmind Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.65 2006/11/20 19:58:38 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.65.4.1 2007/03/12 05:49:00 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -92,7 +92,7 @@ extern u_int32_t	videorowbytes;
 extern u_int32_t	videosize;
 static u_int32_t	newvideoaddr;
 
-extern caddr_t	ROMBase;
+extern void *	ROMBase;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -102,8 +102,9 @@ extern caddr_t	ROMBase;
  *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	msgbufaddr:	kernel message buffer
  */
-caddr_t		CADDR1, CADDR2, vmmap;
-extern caddr_t	msgbufaddr;
+void *CADDR1, *CADDR2;
+char *vmmap;
+void *msgbufaddr;
 
 void	pmap_bootstrap(paddr_t, paddr_t);
 void	bootstrap_mac68k(int);
@@ -398,7 +399,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	}
 
 	protopte = (pt_entry_t)ROMBase | PG_RO | PG_V;
-	ROMBase = (caddr_t)PTE2VA(pte);
+	ROMBase = (void *)PTE2VA(pte);
 	epte = &pte[ROMMAPSIZE];
 	while (pte < epte) {
 		*pte++ = protopte;
@@ -544,13 +545,13 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	{
 		vaddr_t va = virtual_avail;
 
-		CADDR1 = (caddr_t)va;
+		CADDR1 = (void *)va;
 		va += PAGE_SIZE;
-		CADDR2 = (caddr_t)va;
+		CADDR2 = (void *)va;
 		va += PAGE_SIZE;
-		vmmap = (caddr_t)va;
+		vmmap = (void *)va;
 		va += PAGE_SIZE;
-		msgbufaddr = (caddr_t)va;
+		msgbufaddr = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);
 		virtual_avail = va;
 	}
@@ -564,7 +565,7 @@ bootstrap_mac68k(int tc)
 #endif
 	extern int *esym;
 	paddr_t nextpa;
-	caddr_t oldROMBase;
+	void *oldROMBase;
 
 	if (mac68k_machine.do_graybars)
 		printf("Bootstrapping NetBSD/mac68k.\n");

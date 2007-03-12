@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.20 2006/03/29 04:16:45 thorpej Exp $ */
+/*	$NetBSD: bzivsc.c,v 1.20.14.1 2007/03/12 05:46:37 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.20 2006/03/29 04:16:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bzivsc.c,v 1.20.14.1 2007/03/12 05:46:37 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,7 +82,7 @@ void	bzivsc_write_reg(struct ncr53c9x_softc *, int, u_char);
 int	bzivsc_dma_isintr(struct ncr53c9x_softc *);
 void	bzivsc_dma_reset(struct ncr53c9x_softc *);
 int	bzivsc_dma_intr(struct ncr53c9x_softc *);
-int	bzivsc_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+int	bzivsc_dma_setup(struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *);
 void	bzivsc_dma_go(struct ncr53c9x_softc *);
 void	bzivsc_dma_stop(struct ncr53c9x_softc *);
@@ -139,7 +139,7 @@ bzivscmatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (!is_a1200())
 		return(0);			/* And not A1200 */
 	regs = &((volatile u_char *)zap->va)[0x8000];
-	if (badaddr((caddr_t)__UNVOLATILE(regs)))
+	if (badaddr((void *)__UNVOLATILE(regs)))
 		return(0);
 	regs[NCR_CFG1 * 4] = 0;
 	regs[NCR_CFG1 * 4] = NCRCFG1_PARENB | 7;
@@ -328,7 +328,7 @@ bzivsc_dma_intr(struct ncr53c9x_softc *sc)
 }
 
 int
-bzivsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+bzivsc_dma_setup(struct ncr53c9x_softc *sc, void **addr, size_t *len,
                  int datain, size_t *dmasize)
 {
 	struct bzivsc_softc *bsc = (struct bzivsc_softc *)sc;
@@ -336,7 +336,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	u_char *ptr;
 	size_t xfer;
 
-	bsc->sc_dmaaddr = addr;
+	bsc->sc_dmaaddr = (char **)addr;
 	bsc->sc_pdmalen = len;
 	bsc->sc_datain = datain;
 	bsc->sc_dmasize = *dmasize;
@@ -367,7 +367,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	 * If unaligned address, read unaligned bytes into alignment buffer
 	 */
 	else if ((int)ptr & 1) {
-		pa = kvtop((caddr_t)&bsc->sc_alignbuf);
+		pa = kvtop((void *)&bsc->sc_alignbuf);
 		xfer = bsc->sc_dmasize = min(xfer, sizeof (bsc->sc_alignbuf));
 		NCR_DMA(("bzivsc_dma_setup: align read by %d bytes\n", xfer));
 		bsc->sc_xfr_align = 1;
@@ -375,7 +375,7 @@ bzivsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 ++bzivsc_cnt_dma;		/* number of DMA operations */
 
 	while (xfer < bsc->sc_dmasize) {
-		if ((pa + xfer) != kvtop(*addr + xfer))
+		if ((pa + xfer) != kvtop((char*)*addr + xfer))
 			break;
 		if ((bsc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = bsc->sc_dmasize;

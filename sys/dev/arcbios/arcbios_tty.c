@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios_tty.c,v 1.15 2006/10/01 19:28:43 elad Exp $	*/
+/*	$NetBSD: arcbios_tty.c,v 1.15.4.1 2007/03/12 05:53:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.15 2006/10/01 19:28:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcbios_tty.c,v 1.15.4.1 2007/03/12 05:53:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -156,7 +156,7 @@ arcbios_ttypoll(dev_t dev, int events, struct lwp *l)
 }
 
 int
-arcbios_ttyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+arcbios_ttyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = minor(dev);
 	struct tty *tp = arcbios_tty[unit];
@@ -187,7 +187,7 @@ arcbios_tty_start(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

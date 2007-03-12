@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.7.26.1 2007/03/12 05:48:01 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -110,7 +110,7 @@ void exec_hp700(char *, u_long, int);
 int tgets(char *);
 void _rtt(void);
 
-typedef void (*startfuncp)(int, int, int, int, int, int, caddr_t)
+typedef void (*startfuncp)(int, int, int, int, int, int, void *)
     __attribute__ ((noreturn));
 
 int howto;
@@ -212,7 +212,7 @@ exec_hp700(char *file, u_long loadaddr, int boot_howto)
 	int i;
 #endif
 	size_t ac = BOOTARG_LEN;
-	caddr_t av = (caddr_t)BOOTARG_OFF;
+	void *av = (void *)BOOTARG_OFF;
 #define	BOOTARG_APIVER 2
 	u_long marks[MARK_MAX];
 	int fd;

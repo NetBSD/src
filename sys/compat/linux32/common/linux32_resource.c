@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.3 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.3.2.1 2007/03/12 05:52:29 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.3 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.3.2.1 2007/03/12 05:52:29 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ linux32_sys_getrlimit(l, v, retval)
 		syscallarg(netbsd32_orlimitp_t) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct orlimit orl;
 	struct rlimit rl;
@@ -115,7 +115,7 @@ linux32_sys_setrlimit(l, v, retval)
 		syscallarg(netbsd32_orlimitp_t) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
 	struct orlimit orl;

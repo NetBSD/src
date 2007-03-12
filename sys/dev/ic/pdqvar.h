@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.36 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.36.26.1 2007/03/12 05:53:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -85,7 +85,7 @@ enum _pdq_type_t {
 #define	PDQ_OS_PAGESIZE			NBPG
 #endif
 #define	PDQ_OS_USEC_DELAY(n)		DELAY(n)
-#define	PDQ_OS_MEMZERO(p, n)		memset((caddr_t)(p), 0, (n))
+#define	PDQ_OS_MEMZERO(p, n)		memset((void *)(p), 0, (n))
 #if defined(__NetBSD__) && !defined(PDQ_NO_BUS_DMA)
 #define PDQ_BUS_DMA
 #endif
@@ -287,7 +287,7 @@ extern void pdq_os_databuf_free(struct _pdq_os_ctx_t *, struct mbuf *);
 #endif
 
 #ifndef PDQ_OS_IFP_TO_SOFTC
-#define	PDQ_OS_IFP_TO_SOFTC(ifp)	((pdq_softc_t *) ((caddr_t) ifp - offsetof(pdq_softc_t, sc_ac.ac_if)))
+#define	PDQ_OS_IFP_TO_SOFTC(ifp)	((pdq_softc_t *) ((void *) ifp - offsetof(pdq_softc_t, sc_ac.ac_if)))
 #endif
 
 
@@ -332,7 +332,7 @@ typedef struct _pdq_os_ctx_t {
 #if !defined(__bsdi__) || _BSDI_VERSION >= 199401
 #define	sc_bpf		sc_if.if_bpf
 #else
-    caddr_t sc_bpf;
+    void *sc_bpf;
 #endif
 #if defined(PDQ_BUS_DMA)
 #if !defined(__NetBSD__)
@@ -349,7 +349,7 @@ extern void pdq_ifreset(pdq_softc_t *);
 extern void pdq_ifinit(pdq_softc_t *);
 extern void pdq_ifwatchdog(struct ifnet *);
 extern ifnet_ret_t pdq_ifstart(struct ifnet *);
-extern int pdq_ifioctl(struct ifnet *, ioctl_cmd_t, caddr_t);
+extern int pdq_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
 extern void pdq_ifattach(pdq_softc_t *, ifnet_ret_t (*ifwatchdog)(int));
 #endif /* !PDQ_HWSUPPORT */
 
@@ -366,10 +366,10 @@ extern void pdq_ifattach(pdq_softc_t *, ifnet_ret_t (*ifwatchdog)(int));
 
 #define	PDQ_OS_PAGESIZE			PAGESIZE
 #define	PDQ_OS_USEC_DELAY(n)		drv_usecwait(n)
-#define	PDQ_OS_MEMZERO(p, n)		bzero((caddr_t)(p), (n))
-#define	PDQ_OS_VA_TO_BUSPA(pdq, p)		vtop((caddr_t)p, NULL)
+#define	PDQ_OS_MEMZERO(p, n)		bzero((void *)(p), (n))
+#define	PDQ_OS_VA_TO_BUSPA(pdq, p)		vtop((void *)p, NULL)
 #define	PDQ_OS_MEMALLOC(n)		kmem_zalloc(n, KM_NOSLEEP)
-#define	PDQ_OS_MEMFREE(p, n)		kmem_free((caddr_t) p, n)
+#define	PDQ_OS_MEMFREE(p, n)		kmem_free((void *) p, n)
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	kmem_zalloc_physreq(n, decfddiphysreq_db, KM_NOSLEEP)
 #define	PDQ_OS_MEMFREE_CONTIG(p, n)	PDQ_OS_MEMFREE(p, n)
 

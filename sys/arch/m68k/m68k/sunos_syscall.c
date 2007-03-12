@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.14 2006/07/22 06:58:17 tsutsui Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.14.10.1 2007/03/12 05:48:55 rmind Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.14 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.14.10.1 2007/03/12 05:48:55 rmind Exp $");
 
 #include "opt_execfmt.h"
 
@@ -150,7 +150,7 @@ static void
 sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 {
 	struct proc *p = l->l_proc;
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -166,7 +166,7 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	 * code assumes the kernel pops the syscall argument the
 	 * glue pushed on the stack. Sigh...
 	 */
-	code = fuword((caddr_t)frame->f_regs[SP]);
+	code = fuword((void *)frame->f_regs[SP]);
 
 	/*
 	 * XXX
@@ -185,7 +185,7 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	} else
 		l->l_md.md_flags &= ~MDL_STACKADJ;
 
-	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
 	case SUNOS_SYS_syscall:
@@ -206,7 +206,7 @@ sunos_syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}
@@ -255,7 +255,7 @@ static void
 sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 {
 	struct proc *p = l->l_proc;
-	caddr_t params;
+	char *params;
 	const struct sysent *callp;
 	int error, nsys;
 	size_t argsize;
@@ -271,7 +271,7 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	 * code assumes the kernel pops the syscall argument the
 	 * glue pushed on the stack. Sigh...
 	 */
-	code = fuword((caddr_t)frame->f_regs[SP]);
+	code = fuword((void *)frame->f_regs[SP]);
 
 	/*
 	 * XXX
@@ -290,7 +290,7 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 	} else
 		l->l_md.md_flags &= ~MDL_STACKADJ;
 
-	params = (caddr_t)frame->f_regs[SP] + sizeof(int);
+	params = (char *)frame->f_regs[SP] + sizeof(int);
 
 	switch (code) {
 	case SUNOS_SYS_syscall:
@@ -311,7 +311,7 @@ sunos_syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 
 	argsize = callp->sy_argsize;
 	if (argsize) {
-		error = copyin(params, (caddr_t)args, argsize);
+		error = copyin(params, (void *)args, argsize);
 		if (error)
 			goto bad;
 	}

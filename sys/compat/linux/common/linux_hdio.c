@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.11 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.11.2.1 2007/03/12 05:52:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.11 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.11.2.1 2007/03/12 05:52:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 	struct proc *p = l->l_proc;
 	u_long com;
 	int error, error1;
-	caddr_t sg;
+	void *sg;
 	struct filedesc *fdp;
 	struct file *fp;
 	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
@@ -101,10 +101,10 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 
 		req.flags = ATACMD_READ;
 		req.command = WDCC_IDENTIFY;
-		req.databuf = (caddr_t)atap;
+		req.databuf = (void *)atap;
 		req.datalen = DEV_BSIZE;
 		req.timeout = 1000;
-		error = ioctlf(fp, ATAIOCCOMMAND, (caddr_t)&req, l);
+		error = ioctlf(fp, ATAIOCCOMMAND, (void *)&req, l);
 		if (error != 0)
 			break;
 		if (req.retsts != ATACMD_OK)
@@ -123,8 +123,8 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		error = linux_machdepioctl(l, uap, retval);
 		if (error == 0)
 			break;
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (void *)&label, l);
+		error1 = ioctlf(fp, DIOCGPART, (void *)&partp, l);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			break;
@@ -141,8 +141,8 @@ linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
 		if (error == 0)
 			break;
 	case LINUX_HDIO_GETGEO_BIG_RAW:
-		error = ioctlf(fp, DIOCGDEFLABEL, (caddr_t)&label, l);
-		error1 = ioctlf(fp, DIOCGPART, (caddr_t)&partp, l);
+		error = ioctlf(fp, DIOCGDEFLABEL, (void *)&label, l);
+		error1 = ioctlf(fp, DIOCGPART, (void *)&partp, l);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			break;

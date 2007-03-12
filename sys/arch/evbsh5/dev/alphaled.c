@@ -1,4 +1,4 @@
-/*	$NetBSD: alphaled.c,v 1.3 2005/12/11 12:17:13 christos Exp $	*/
+/*	$NetBSD: alphaled.c,v 1.3.26.1 2007/03/12 05:47:40 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alphaled.c,v 1.3 2005/12/11 12:17:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alphaled.c,v 1.3.26.1 2007/03/12 05:47:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ alphaled_write(dev_t dev, struct uio *uio, int flags)
 
 /*ARGSUSED*/
 int
-alphaled_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+alphaled_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct alphaled_softc *sc;
 	u_int8_t rv;

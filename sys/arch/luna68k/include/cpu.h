@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.14 2007/02/16 02:53:48 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.14.2.1 2007/03/12 05:48:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -158,22 +158,6 @@ struct clockframe {
 extern int	astpending;	/* need to trap before returning to user mode */
 extern int	want_resched;	/* resched() was called */
 
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define siron(x)	\
-	__asm volatile ("orb %0,%1" : : "di" ((u_char)(x)), "g" (ssir))
-#define siroff(x)	\
-	__asm volatile ("andb %0,%1" : : "di" ((u_char)~(x)), "g" (ssir))
-
-#define setsoftnet()	siron(SIR_NET)
-#define setsoftclock()	siron(SIR_CLOCK)
-
 #endif /* _KERNEL */
 
 /*
@@ -205,7 +189,7 @@ void	dumpsys __P((void));
 /* locore.s functions */
 struct pcb;
 struct fpframe;
-int	suline __P((caddr_t, caddr_t));
+int	suline __P((void *, void *));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct lwp *));
 void	switch_lwp_exit __P((struct lwp *));
@@ -215,16 +199,16 @@ void	m68881_save __P((struct fpframe *));
 void	m68881_restore __P((struct fpframe *));
 
 /* machdep.c functions */
-int	badaddr __P((caddr_t, int));
+int	badaddr __P((void *, int));
 
 /* sys_machdep.c functions */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((caddr_t, int));
+int	dma_cachectl __P((void *, int));
 
 /* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
+void	physaccess __P((void *, void *, int, int));
+void	physunaccess __P((void *, int));
+int	kvtop __P((void *));
 
 #endif
 

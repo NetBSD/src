@@ -1,4 +1,4 @@
-/* 	$NetBSD: tft_ll.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: tft_ll.c,v 1.1.8.1 2007/03/12 05:47:40 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tft_ll.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tft_ll.c,v 1.1.8.1 2007/03/12 05:47:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ ll_tft_attach(struct device *parent, struct device *self, void *aux)
 	}
 	if ((error = bus_dmamem_map(lsc->lsc_dmat, &lsc->lsc_seg, nseg,
 	    sizeof(struct ll_tft_control) + sc->sc_size,
-	    (caddr_t *)&lsc->lsc_cd, BUS_DMA_COHERENT)) != 0) {
+	    (void **)&lsc->lsc_cd, BUS_DMA_COHERENT)) != 0) {
 	    	printf("%s: could not map framebuffer\n",
 		    device_xname(self));
 		goto fail_3;
@@ -186,7 +186,7 @@ ll_tft_attach(struct device *parent, struct device *self, void *aux)
  fail_5:
  	bus_dmamap_destroy(lsc->lsc_dmat, lsc->lsc_dmap);
  fail_4:
- 	bus_dmamem_unmap(lsc->lsc_dmat, (caddr_t)lsc->lsc_cd,
+ 	bus_dmamem_unmap(lsc->lsc_dmat, (void *)lsc->lsc_cd,
  	    sizeof(struct ll_tft_control) + sc->sc_size);
  fail_3:
  	bus_dmamem_free(lsc->lsc_dmat, &lsc->lsc_seg, nseg);

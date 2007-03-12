@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_bus_mem_chipdep.c,v 1.4 2005/12/24 20:07:24 perry Exp $	*/
+/*	$NetBSD: pci_bus_mem_chipdep.c,v 1.4.26.1 2007/03/12 05:49:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: pci_bus_mem_chipdep.c,v 1.4 2005/12/24 20:07:24 perry Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pci_bus_mem_chipdep.c,v 1.4.26.1 2007/03/12 05:49:46 rmind Exp $");
 
 #include <sys/extent.h>
 
@@ -307,7 +307,7 @@ __C(CHIP,_bus_mem_init)(t, v)
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	ex = extent_create(__S(__C(CHIP,_bus_mem)), 0x0UL, 0xffffffffUL,
-	    M_DEVBUF, (caddr_t)CHIP_MEM_EX_STORE(v), CHIP_MEM_EX_STORE_SIZE(v),
+	    M_DEVBUF, (void *)CHIP_MEM_EX_STORE(v), CHIP_MEM_EX_STORE_SIZE(v),
 	    EX_NOWAIT);
 	extent_alloc_region(ex, 0, 0xffffffffUL, EX_NOWAIT);
 

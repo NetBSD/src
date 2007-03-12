@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.30 2006/09/07 02:40:32 dogcow Exp $ */
+/* $NetBSD: lemac.c,v 1.30.8.1 2007/03/12 05:53:37 rmind Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.30 2006/09/07 02:40:32 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.30.8.1 2007/03/12 05:53:37 rmind Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -300,13 +300,13 @@ lemac_input(
 	}
     }
     m->m_data += 2;
-    memcpy(m->m_data, (caddr_t)&eh, sizeof(eh));
+    memcpy(m->m_data, (void *)&eh, sizeof(eh));
     if (LEMAC_USE_PIO_MODE(sc)) {
 	LEMAC_INSB(sc, LEMAC_REG_DAT, length - sizeof(eh),
-		   mtod(m, caddr_t) + sizeof(eh));
+		   mtod(m, char *) + sizeof(eh));
     } else {
 	LEMAC_GETBUF16(sc, offset + sizeof(eh), (length - sizeof(eh)) / 2,
-		      (void *) (mtod(m, caddr_t) + sizeof(eh)));
+		      (void *)(mtod(m, char *) + sizeof(eh)));
 	if (length & 1)
 	    m->m_data[length - 1] = LEMAC_GET8(sc, offset + length - 1);
     }
@@ -748,7 +748,7 @@ static int
 lemac_ifioctl(
     struct ifnet *ifp,
     u_long cmd,
-    caddr_t data)
+    void *data)
 {
     lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
     int s;

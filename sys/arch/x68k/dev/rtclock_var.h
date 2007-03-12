@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock_var.h,v 1.8 2006/09/14 01:18:11 gdamore Exp $	*/
+/*	$NetBSD: rtclock_var.h,v 1.8.6.1 2007/03/12 05:51:40 rmind Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -97,8 +97,4 @@ struct rtc_softc {
 #define	range_test0(n, h)	if ((unsigned)(n) > (h)) return(0)
 				/* cast to unsigned in case n is signed */
 
-#ifdef _KERNEL
-extern time_t (*gettod)(void);
-extern int (*settod)(long);
-#endif
 #endif /* _RTCLOCKVAR_H_ */

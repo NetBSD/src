@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.26 2005/12/11 12:17:52 christos Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.26.26.1 2007/03/12 05:48:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,8 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.26 2005/12/11 12:17:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.26.26.1 2007/03/12 05:48:45 rmind Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/systm.h>
@@ -924,7 +925,8 @@ fpu_emul_arith(fe, insn)
 	       fpregs[regnum*3], fpregs[regnum*3+1],
 	       fpregs[regnum*3+2], regnum);
     } else if (sig == 0) {
-	static char *class_name[] = { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
+	static const char *class_name[] =
+	    { "SNAN", "QNAN", "ZERO", "NUM", "INF" };
 	printf("fpu_emul_arith: result(%s,%c,%d,%08x,%08x,%08x) discarded\n",
 	       class_name[res->fp_class + 2],
 	       res->fp_sign ? '-' : '+', res->fp_exp,

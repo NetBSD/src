@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2007/02/16 02:53:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37.2.1 2007/03/12 05:51:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -202,7 +202,7 @@ void	dumpsys(void);
 /* locore.s functions */
 struct pcb;
 struct fpframe;
-int	suline(caddr_t, caddr_t);
+int	suline(void *, void *);
 void	savectx(struct pcb *);
 void	switch_exit(struct lwp *);
 void	switch_lwp_exit(struct lwp *);
@@ -217,12 +217,12 @@ int	badbaddr(volatile void*);
 
 /* sys_machdep.c functions */
 int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
-int	dma_cachectl(caddr_t, int);
+int	dma_cachectl(void *, int);
 
 /* vm_machdep.c functions */
-void	physaccess(caddr_t, caddr_t, int, int);
-void	physunaccess(caddr_t, int);
-int	kvtop(caddr_t);
+void	physaccess(void *, void *, int, int);
+void	physunaccess(void *, int);
+int	kvtop(void *);
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.41 2006/04/12 19:38:23 jmmv Exp $ */
+/*	$NetBSD: smg.c,v 1.41.14.1 2007/03/12 05:51:35 rmind Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.41 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.41.14.1 2007/03/12 05:51:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.41 2006/04/12 19:38:23 jmmv Exp $");
 #define	CUR_YBIAS	33
 
 #define	WRITECUR(addr, val)	*(volatile short *)(curaddr + (addr)) = (val)
-static	caddr_t	curaddr;
+static	char *curaddr;
 static	short curcmd, curx, cury, hotX, hotY;
 static	int bgmask, fgmask; 
 
@@ -154,7 +154,7 @@ const struct wsscreen_list smg_screenlist = {
 	_smg_scrlist,
 };
 
-static	caddr_t	sm_addr;
+static	char *sm_addr;
 
 static  u_char *qf;
 
@@ -164,7 +164,7 @@ static  u_char *qf;
 	sm_addr[col + (row * SM_CHEIGHT * SM_COLS) + line * SM_COLS]
 
 
-static int	smg_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	smg_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	smg_mmap(void *, void *, off_t, int);
 static int	smg_alloc_screen(void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *);
@@ -233,8 +233,8 @@ smg_attach(struct device *parent, struct device *self, void *aux)
 	int fcookie;
 
 	printf("\n");
-	sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
-	curaddr = (caddr_t)vax_map_physmem(KA420_CUR_BASE, 1);
+	sm_addr = (void *)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
+	curaddr = (void *)vax_map_physmem(KA420_CUR_BASE, 1);
 	if (sm_addr == 0) {
 		printf("%s: Couldn't alloc graphics memory.\n", self->dv_xname);
 		return;
@@ -465,7 +465,7 @@ setcursor(struct wsdisplay_cursor *v)
 }
 
 int
-smg_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+smg_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct wsdisplay_fbinfo *fb = (void *)data;
 	static short curc;
@@ -632,7 +632,7 @@ smgcnprobe(cndev)
 		if ((vax_confdata & KA420_CFG_L3CON) ||
 		    (vax_confdata & KA420_CFG_MULTU))
 			break; /* doesn't use graphics console */
-		sm_addr = (caddr_t)virtual_avail;
+		sm_addr = (void *)virtual_avail;
 		virtual_avail += SMSIZE;
 		ioaccess((vaddr_t)sm_addr, SMADDR, (SMSIZE/VAX_NBPG));
 		cndev->cn_pri = CN_INTERNAL;

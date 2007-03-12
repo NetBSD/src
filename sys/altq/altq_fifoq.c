@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.15 2006/11/16 01:32:37 christos Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.15.4.1 2007/03/12 05:45:02 rmind Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.12 2003/07/10 12:07:48 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.15 2006/11/16 01:32:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.15.4.1 2007/03/12 05:45:02 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -119,7 +119,7 @@ fifoqclose(dev_t dev, int flag, int fmt,
 }
 
 int
-fifoqioctl(dev_t dev, ioctlcmd_t cmd, caddr_t addr, int flag,
+fifoqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
     struct lwp *l)
 {
 	fifoq_state_t *q;

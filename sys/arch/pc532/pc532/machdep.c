@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.166.2.1 2007/02/27 16:52:22 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.166.2.2 2007/03/12 05:49:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166.2.1 2007/02/27 16:52:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166.2.2 2007/03/12 05:49:47 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -202,7 +202,7 @@ cpu_startup(void)
 		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ | VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
 
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
 	printf("%s%s", copyright, version);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
@@ -273,7 +273,7 @@ getframe(struct lwp *l, int sig, int *onstack)
 
 	/* Allocate space for the signal handler context. */
 	if (*onstack)
-		return (caddr_t)ss->ss_sp + ss->ss_size;
+		return (void *)ss->ss_sp + ss->ss_size;
 	else
 		return (void *)l->l_md.md_regs->r_sp;
 }
@@ -548,7 +548,7 @@ static int
 cpu_dump(void)
 {
 	const struct bdevsw *bdev;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 	cpu_kcore_hdr_t	*cpuhdrp;
@@ -576,7 +576,7 @@ cpu_dump(void)
 	cpuhdrp->core_seg.start = 0;
 	cpuhdrp->core_seg.size = ctob(physmem);
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
 }
 
 /*
@@ -647,7 +647,7 @@ dumpsys(void)
 	unsigned bytes, i, n;
 	int maddr, psize;
 	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	if (dumpdev == NODEV)
@@ -698,7 +698,7 @@ dumpsys(void)
 			n =  BYTES_PER_DUMP;
 
 		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
-		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+		error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 		if (error)
 			break;
 		maddr += n;
@@ -774,7 +774,7 @@ alloc_pages(int pages)
 {
 	paddr_t p = avail_start;
 	avail_start += pages * PAGE_SIZE;
-	memset((caddr_t) p, 0, pages * PAGE_SIZE);
+	memset((void *) p, 0, pages * PAGE_SIZE);
 	return(p);
 }
 

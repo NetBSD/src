@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_pcic.c,v 1.1 2006/12/17 16:03:33 peter Exp $	*/
+/*	$NetBSD: pxa2x0_pcic.c,v 1.1.8.1 2007/03/12 05:47:09 rmind Exp $	*/
 /*	$OpenBSD: pxa2x0_pcic.c,v 1.17 2005/12/14 15:08:51 uwe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.1 2006/12/17 16:03:33 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_pcic.c,v 1.1.8.1 2007/03/12 05:47:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ pxapcic_event_thread(void *arg)
 		(void) tsleep(sock, PWAIT, "pxapcicev", 0);
 
 		/* sleep .25s to avoid chattering interrupts */
-		(void) tsleep((caddr_t)sock, PWAIT, "pxapcicss", hz/4);
+		(void) tsleep((void *)sock, PWAIT, "pxapcicss", hz/4);
 
 		cs = (*sock->pcictag->read)(sock, PXAPCIC_CARD_STATUS);
 		present = sock->flags & PXAPCIC_FLAG_CARDP;

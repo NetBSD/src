@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.19 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.19.2.1 2007/03/12 05:51:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.19 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.19.2.1 2007/03/12 05:51:54 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.19 2007/02/09 21:55:16 ad Exp 
 #include <sys/dirent.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/vfs_syscalls.h>
 
 #include <sys/syscallargs.h>
 
@@ -102,14 +103,8 @@ compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
 	struct stat sb;
 	struct stat13 osb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return error;
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
@@ -132,14 +127,8 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 	struct stat sb;
 	struct stat13 osb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return error;
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
@@ -234,9 +223,9 @@ compat_30_sys_getdents(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t inp, tbuf;	/* BSD-format */
+	char *inp, *tbuf;	/* BSD-format */
 	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* NetBSD-3.0-format */
+	char *outp;		/* NetBSD-3.0-format */
 	int resid;	
 	struct file *fp;
 	struct uio auio;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.200.2.1 2007/02/27 16:48:55 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.200.2.2 2007/03/12 05:46:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200.2.1 2007/02/27 16:48:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200.2.2 2007/03/12 05:46:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
-caddr_t	msgbufaddr;
+void *	msgbufaddr;
 paddr_t msgbufpa;
 
 int	machineid;
@@ -657,7 +657,7 @@ dumpsys()
 	unsigned bytes, i, n, seg;
 	int     maddr, psize;
 	daddr_t blkno;
-	int     (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int     (*dump)(dev_t, daddr_t, void *, size_t);
 	int     error = 0;
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
@@ -710,7 +710,7 @@ dumpsys()
 	seg = 0;
 	blkno = dumplo;
 	dump = bdev->d_dump;
-	error = (*dump) (dumpdev, blkno, (caddr_t)dump_hdr, sizeof(dump_hdr));
+	error = (*dump) (dumpdev, blkno, (void *)dump_hdr, sizeof(dump_hdr));
 	blkno += btodb(sizeof(dump_hdr));
 	for (i = 0; i < bytes && error == 0; i += n) {
 		/* Print out how many MBs we have to go. */
@@ -729,7 +729,7 @@ dumpsys()
 			++blkno;	/* XXX skip physical page 0 */
 		}
 		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
-		error = (*dump) (dumpdev, blkno, (caddr_t) dumpspace, n);
+		error = (*dump) (dumpdev, blkno, (void *) dumpspace, n);
 		if (error)
 			break;
 		maddr += n;
@@ -944,7 +944,7 @@ int	*nofault;
 
 int
 badaddr(addr)
-	register caddr_t addr;
+	register void *addr;
 {
 	register int i;
 	label_t	faultbuf;
@@ -964,7 +964,7 @@ badaddr(addr)
 
 int
 badbaddr(addr)
-	register caddr_t addr;
+	register void *addr;
 {
 	register int i;
 	label_t	faultbuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.20 2006/03/08 23:46:23 lukem Exp $	*/
+/*	$NetBSD: esp.c,v 1.20.16.1 2007/03/12 05:49:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20 2006/03/08 23:46:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.20.16.1 2007/03/12 05:49:05 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,7 +126,7 @@ void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
 int	esp_dma_isintr __P((struct ncr53c9x_softc *));
 void	esp_dma_reset __P((struct ncr53c9x_softc *));
 int	esp_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
+int	esp_dma_setup __P((struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *));
 void	esp_dma_go __P((struct ncr53c9x_softc *));
 void	esp_dma_stop __P((struct ncr53c9x_softc *));
@@ -317,7 +317,7 @@ esp_dma_intr(sc)
 int
 esp_dma_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
+	void **addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;
@@ -348,7 +348,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		int rest = PAGE_SIZE - offset;	/* the rest of the page */
 
 		if (count > rest) {		/* if continues to next page */
-			DBDMA_BUILD(cmdp, cmd, 0, rest, kvtop((caddr_t)va),
+			DBDMA_BUILD(cmdp, cmd, 0, rest, kvtop((void *)va),
 				DBDMA_INT_NEVER, DBDMA_WAIT_NEVER,
 				DBDMA_BRANCH_NEVER);
 			count -= rest;
@@ -359,7 +359,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	/* now va is page-aligned */
 	while (count > PAGE_SIZE) {
-		DBDMA_BUILD(cmdp, cmd, 0, PAGE_SIZE, kvtop((caddr_t)va),
+		DBDMA_BUILD(cmdp, cmd, 0, PAGE_SIZE, kvtop((void *)va),
 			DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		count -= PAGE_SIZE;
 		va += PAGE_SIZE;
@@ -368,7 +368,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 
 	/* the last page (count <= PAGE_SIZE here) */
 	cmd = datain ? DBDMA_CMD_IN_LAST : DBDMA_CMD_OUT_LAST;
-	DBDMA_BUILD(cmdp, cmd , 0, count, kvtop((caddr_t)va),
+	DBDMA_BUILD(cmdp, cmd , 0, count, kvtop((void *)va),
 		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	cmdp++;
 
@@ -511,7 +511,7 @@ espdmaintr(sc)
 #endif
 
 	*sc->sc_dmalen -= trans;
-	*sc->sc_dmaaddr += trans;
+	*sc->sc_dmaaddr = (char *)*sc->sc_dmaaddr + trans;
 
 #if 0	/* this is not normal operation just yet */
 	if (*sc->sc_dmalen == 0 ||

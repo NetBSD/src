@@ -1,4 +1,4 @@
-/* $NetBSD: haltwovar.h,v 1.3 2005/12/11 12:18:53 christos Exp $ */
+/* $NetBSD: haltwovar.h,v 1.3.26.1 2007/03/12 05:50:11 rmind Exp $ */
 
 /*
  * Copyright (c) 2003 Ilpo Ruotsalainen
@@ -44,7 +44,7 @@ struct haltwo_dmabuf {
 	bus_dma_segment_t dma_segs[HALTWO_MAX_DMASEGS];
 	int dma_segcount;
 	size_t size;
-	caddr_t kern_addr;
+	void *kern_addr;
 
 	struct haltwo_dmabuf *next;
 };

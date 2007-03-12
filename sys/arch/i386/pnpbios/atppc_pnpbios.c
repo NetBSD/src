@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_pnpbios.c,v 1.3 2005/12/26 19:24:00 perry Exp $ */
+/* $NetBSD: atppc_pnpbios.c,v 1.3.26.1 2007/03/12 05:48:38 rmind Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.3 2005/12/26 19:24:00 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_pnpbios.c,v 1.3.26.1 2007/03/12 05:48:38 rmind Exp $");
 
 #include "opt_atppc.h"
 
@@ -77,9 +77,9 @@ static int atppc_pnpbios_dma_start(struct atppc_softc *, void *, u_int,
 	uint8_t);
 static int atppc_pnpbios_dma_finish(struct atppc_softc *);
 static int atppc_pnpbios_dma_abort(struct atppc_softc *);
-static int atppc_pnpbios_dma_malloc(struct device *, caddr_t *, bus_addr_t *, 
+static int atppc_pnpbios_dma_malloc(struct device *, void **, bus_addr_t *, 
 	bus_size_t);
-static void atppc_pnpbios_dma_free(struct device *, caddr_t *, bus_addr_t *, 
+static void atppc_pnpbios_dma_free(struct device *, void **, bus_addr_t *, 
 	bus_size_t);
 
 /*
@@ -175,7 +175,7 @@ atppc_pnpbios_dma_abort(struct atppc_softc * lsc)
 
 /* Allocate memory for DMA over ISA bus */ 
 int
-atppc_pnpbios_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr,
+atppc_pnpbios_dma_malloc(struct device * dev, void ** buf, bus_addr_t * bus_addr,
 	bus_size_t size)
 {
 	struct atppc_pnpbios_softc * sc = (struct atppc_pnpbios_softc *) dev;
@@ -185,7 +185,7 @@ atppc_pnpbios_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * bus_ad
 
 /* Free memory allocated by atppc_isa_dma_malloc() */ 
 void 
-atppc_pnpbios_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * bus_addr, 
+atppc_pnpbios_dma_free(struct device * dev, void ** buf, bus_addr_t * bus_addr, 
 	bus_size_t size)
 {
 	struct atppc_pnpbios_softc * sc = (struct atppc_pnpbios_softc *) dev;

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 2006/11/25 11:59:56 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.22.4.1 2007/03/12 05:50:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22 2006/11/25 11:59:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.22.4.1 2007/03/12 05:50:14 rmind Exp $");
 
 #include "opt_mbr.h"
 
@@ -257,12 +257,13 @@ mbr_findslice(struct mbr_partition *dp, struct buf *bp)
 	int i;
 
 	/* Note: Magic number is little-endian. */
-	mbrmagicp = (uint16_t *)(bp->b_data + MBR_MAGIC_OFFSET);
+	mbrmagicp = (uint16_t *)((char *)bp->b_data + MBR_MAGIC_OFFSET);
 	if (le16toh(*mbrmagicp) != MBR_MAGIC)
 		return (NO_MBR_SIGNATURE);
 
 	/* XXX how do we check veracity/bounds of this? */
-	memcpy(dp, bp->b_data + MBR_PART_OFFSET, MBR_PART_COUNT * sizeof(*dp));
+	memcpy(dp, (char *)bp->b_data + MBR_PART_OFFSET,
+		MBR_PART_COUNT * sizeof(*dp));
 
 	/* look for NetBSD partition */
 	for (i = 0; i < MBR_PART_COUNT; i++) {
@@ -419,7 +420,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		goto done;
 	}
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize -
+		sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
 			/* disklabel is written in host's endian */
@@ -639,7 +641,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize -
+		sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dlp->d_npartitions <= MAXPARTITIONS &&

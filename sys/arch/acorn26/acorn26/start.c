@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.7 2005/12/11 12:16:03 christos Exp $ */
+/* $NetBSD: start.c,v 1.7.26.1 2007/03/12 05:45:11 rmind Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.7 2005/12/11 12:16:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: start.c,v 1.7.26.1 2007/03/12 05:45:11 rmind Exp $");
 
 #include <sys/msgbuf.h>
 #include <sys/user.h>
@@ -131,7 +131,8 @@ start(initbootconfig)
 	/* Set up kernel message buffer */
 	/* XXX Should be in cpu_startup, yesno? */
 	/* Probably not actually -- the sooner it's run, the better. */
-	initmsgbuf(MEMC_PHYS_BASE + MSGBUF_PHYSADDR, MSGBUFSIZE);
+	initmsgbuf((void*)((paddr_t)MEMC_PHYS_BASE + MSGBUF_PHYSADDR),
+		MSGBUFSIZE);
 
 #ifdef DIAGNOSTIC
 	/*

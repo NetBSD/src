@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.96 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: mcd.c,v 1.96.4.1 2007/03/12 05:54:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.96 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.96.4.1 2007/03/12 05:54:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -552,7 +552,7 @@ mcdwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-mcdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int error;
@@ -800,7 +800,7 @@ mcdsize(dev_t dev)
 }
 
 int
-mcddump(dev_t dev, daddr_t blkno, caddr_t va,
+mcddump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 
@@ -1252,7 +1252,7 @@ mcdintr(arg)
 		/* Data is ready. */
 		bus_space_write_1(iot, ioh, MCD_CTL2, 0x04);	/* XXX */
 		bus_space_read_multi_1(iot, ioh, MCD_RDATA,
-		    bp->b_data + mbx->skip, mbx->sz);
+		    (char *)bp->b_data + mbx->skip, mbx->sz);
 		bus_space_write_1(iot, ioh, MCD_CTL2, 0x0c);	/* XXX */
 		mbx->blkno += 1;
 		mbx->skip += mbx->sz;

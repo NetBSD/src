@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.3 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: dz_ibus.c,v 1.3.26.1 2007/03/12 05:49:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.3 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.3.26.1 2007/03/12 05:49:50 rmind Exp $");
 
 #include "dzkbd.h"
 #include "dzms.h"
@@ -152,7 +152,7 @@ dz_ibus_match(struct device *parent, struct cfdata *cf, void *aux)
 	    strcmp(iba->ia_name, "dc7085") != 0)
 		return (0);
 
-	if (badaddr((caddr_t)iba->ia_addr, 2))
+	if (badaddr((void *)iba->ia_addr, 2))
 		return (0);
 
 	return (1);

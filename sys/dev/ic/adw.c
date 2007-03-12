@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.46 2005/12/11 12:21:25 christos Exp $	 */
+/* $NetBSD: adw.c,v 1.46.26.1 2007/03/12 05:53:24 rmind Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.46 2005/12/11 12:21:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.46.26.1 2007/03/12 05:53:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ adw_alloc_controls(ADW_SOFTC *sc)
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-		   sizeof(struct adw_control), (caddr_t *) & sc->sc_control,
+		   sizeof(struct adw_control), (void **) & sc->sc_control,
 				 BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control structures, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -174,7 +174,7 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
-			(caddr_t *) &sc->sc_control->carriers,
+			(void **) &sc->sc_control->carriers,
 			BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map carrier structures,"
 			" error = %d\n", sc->sc_dev.dv_xname, error);

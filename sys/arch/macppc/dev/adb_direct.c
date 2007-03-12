@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.36 2007/01/24 13:08:12 hubertf Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.36.2.1 2007/03/12 05:49:03 rmind Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.36 2007/01/24 13:08:12 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.36.2.1 2007/03/12 05:49:03 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,7 +242,7 @@ int	send_adb_cuda __P((u_char *, u_char *, adbComp *, volatile void *, int));
 void	adb_intr_cuda_test __P((void));
 void	adb_cuda_tickle __P((void));
 void	adb_pass_up __P((struct adbCommand *));
-void	adb_op_comprout __P((caddr_t, volatile int *, int));
+void	adb_op_comprout __P((void *, volatile int *, int));
 void	adb_reinit __P((void));
 int	count_adbs __P((void));
 int	get_ind_adb_info __P((ADBDataBlock *, int));
@@ -1355,7 +1355,7 @@ adb_op_sync(Ptr buffer, adbComp *compRout, Ptr data, short command)
  * function is done.
  */
 void
-adb_op_comprout(caddr_t buffer, volatile int *compdata, int cmd)
+adb_op_comprout(void *buffer, volatile int *compdata, int cmd)
 {
 	volatile int *p = compdata;
 

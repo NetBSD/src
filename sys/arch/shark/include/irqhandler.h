@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.1.74.1 2007/02/27 16:53:04 yamt Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.1.74.2 2007/03/12 05:50:25 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -94,8 +94,12 @@
 #define IRQ_ETHERNET    0x05
 #define IRQ_FLOPPY      0x06
 #define IRQ_PARALLEL    0x07
+#endif
 
+#if defined(SHARK) || defined(OFWGENCFG)
 #define IRQ_RTC         0x08  /* hardwired to the sequoia RTC */
+#endif
+#ifdef SHARK
 #define IRQ_CODEC1      0x09
 #define IRQ_UMI1        0x0A  /* isa or pci */
 #define IRQ_UMI2        0x0B  /* isa or pci */
@@ -104,14 +108,6 @@
 #define IRQ_FERR        0x0D  /* FERR# pin on sequoia needs to be connected */
 #define IRQ_IDE         0x0E  /* hardwired to the IDE connector */
 #define IRQ_CODEC2      0x0F  /* special interrupt on codec */
-
-/* XXX should this go into isa_machdep.h.  Somewhere else? */
-/* Interrupt sharing types. */
-#define	IST_NONE	0	/* none */
-#define	IST_PULSE	1	/* pulsed */
-#define	IST_EDGE	2	/* edge-triggered */
-#define	IST_LEVEL	3	/* level-triggered */
-
 #endif /* SHARK */
 
 #define IRQ_VSYNC	IRQ_FLYBACK	/* Aliased */
@@ -124,7 +120,7 @@
 
 #ifndef _LOCORE
 typedef struct irqhandler {
-	int (*ih_func) __P((void *arg));/* handler function */
+	int (*ih_func)(void *arg);	/* handler function */
 	void *ih_arg;			/* Argument to handler */
 	int ih_level;			/* Interrupt level */
 	int ih_num;			/* Interrupt number (for accounting) */
@@ -133,21 +129,21 @@ typedef struct irqhandler {
 	u_int ih_maskbits;		/* interrupt bit for expansion cards */
 	struct irqhandler *ih_next;	/* next handler */
 	struct evcnt ih_ev;		/* evcnt structure */
-	char ih_evname[8];		/* name buffer */
 } irqhandler_t;
 
 #ifdef _KERNEL
 extern u_int irqmasks[IPL_LEVELS];
 extern irqhandler_t *irqhandlers[NIRQS];
 
-void irq_init __P((void));
-int irq_claim __P((int, irqhandler_t *));
-int irq_release __P((int, irqhandler_t *));
-void *intr_claim __P((int irq, int level, const char *name, int (*func) __P((void *)), void *arg));
-int intr_release __P((void *ih));
-void irq_setmasks __P((void));
-void disable_irq __P((int));
-void enable_irq __P((int));
+void irq_init(void);
+int irq_claim(int, irqhandler_t *, const char *group, const char *name);
+int irq_release(int, irqhandler_t *);
+void *intr_claim(int irq, int level, int (*func)(void *), void *arg,
+	const char *group, const char *name);
+int intr_release(void *ih);
+void irq_setmasks(void);
+void disable_irq(int);
+void enable_irq(int);
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
 

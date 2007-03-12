@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.221 2006/03/29 04:16:47 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.221.14.1 2007/03/12 05:50:41 rmind Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.221 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.221.14.1 2007/03/12 05:50:41 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -311,7 +311,7 @@ bootstrap(void)
 	 * bytes available for the buffer at this location (see the
 	 * comment in locore.s at the top of the .text segment).
 	 */
-	initmsgbuf((caddr_t)KERNBASE, 8192);
+	initmsgbuf((void *)KERNBASE, 8192);
 #endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)

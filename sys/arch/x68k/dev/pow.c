@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.14 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: pow.c,v 1.14.26.1 2007/03/12 05:51:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.14 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.14.26.1 2007/03/12 05:51:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ const struct cdevsw pow_cdevsw = {
 };
 
 /* ARGSUSED */
-void 
+void
 powattach(int num)
 {
 	int minor;
@@ -102,18 +102,18 @@ powattach(int num)
 
 		printf("pow%d: started by ", minor);
 		if (sw & POW_EXTERNALSW)
-			printf ("external power switch.\n");
+			printf("external power switch.\n");
 		else if (sw & POW_FRONTSW)
-			printf ("front power switch.\n");
+			printf("front power switch.\n");
 		/* XXX: I don't know why POW_ALARMSW should not be checked */
 #if 0
 		else if ((sw & POW_ALARMSW) && sramtop[0x26] == 0)
-			printf ("RTC alarm.\n");
+			printf("RTC alarm.\n");
 		else
-			printf ("???.\n");
+			printf("???.\n");
 #else
 		else
-			printf ("RTC alarm.\n");
+			printf("RTC alarm.\n");
 #endif
 	}
 
@@ -121,7 +121,7 @@ powattach(int num)
 }
 
 /*ARGSUSED*/
-int 
+int
 powopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
@@ -142,7 +142,7 @@ powopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 /*ARGSUSED*/
-int 
+int
 powclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
@@ -157,18 +157,18 @@ powclose(dev_t dev, int flags, int mode, struct lwp *l)
 #define SRAMINT(offset)	(*((volatile int *) (&sramtop[offset])))
 #define RTCWAIT DELAY(100)
 
-static int 
+static int
 setalarm(struct x68k_alarminfo *bp)
 {
 	int s, ontime;
 
-	s = splclock ();
+	s = splclock();
 
 	sysport.sramwp = 0x31;
 	if (bp->al_enable) {
-		SRAMINT (0x1e) = bp->al_dowhat;
-		SRAMINT (0x22) = bp->al_ontime;
-		SRAMINT (0x14) = (bp->al_offtime / 60) - 1;
+		SRAMINT(0x1e) = bp->al_dowhat;
+		SRAMINT(0x22) = bp->al_ontime;
+		SRAMINT(0x14) = (bp->al_offtime / 60) - 1;
 		sramtop[0x26] = 0;
 	} else {
 		sramtop[0x26] = 7;
@@ -224,8 +224,8 @@ setalarm(struct x68k_alarminfo *bp)
 
 
 /*ARGSUSED*/
-int 
-powioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+int
+powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct pow_softc *sc = &pows[minor(dev)];
 
@@ -238,8 +238,8 @@ powioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 			bp->pow_switch_boottime = sc->sw;
 			bp->pow_switch_current = ~mfp.gpip & 7;
 			bp->pow_boottime = boottime.tv_sec;
-			bp->pow_bootcount = SRAMINT (0x44);
-			bp->pow_usedtotal = SRAMINT (0x40) * 60;
+			bp->pow_bootcount = SRAMINT(0x44);
+			bp->pow_usedtotal = SRAMINT(0x40) * 60;
 		}
 		break;
 
@@ -249,9 +249,9 @@ powioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 			if (!(sc->rw & FREAD))
 				return EBADF;
 			bp->al_enable = (sramtop[0x26] == 0);
-			bp->al_ontime = SRAMINT (0x22);
-			bp->al_dowhat = SRAMINT (0x1e);
-			bp->al_offtime = (SRAMINT (0x14) + 1) * 60;
+			bp->al_ontime = SRAMINT(0x22);
+			bp->al_dowhat = SRAMINT(0x1e);
+			bp->al_offtime = (SRAMINT(0x14) + 1) * 60;
 		}
 		break;
 
@@ -283,7 +283,7 @@ powioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	return 0;
 }
 
-void 
+void
 powintr(void)
 {
 	int sw;
@@ -301,7 +301,7 @@ powintr(void)
 	splx(s);
 }
 
-static void 
+static void
 pow_check_switch(void *dummy)
 {
 	extern int power_switch_is_off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.32 2006/10/01 20:31:50 elad Exp $	*/
+/*	$NetBSD: ser.c,v 1.32.4.1 2007/03/12 05:47:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.32 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.32.4.1 2007/03/12 05:47:21 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -570,7 +570,7 @@ int
 serioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

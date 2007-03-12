@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.16 2006/09/01 21:19:45 matt Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.16.8.1 2007/03/12 05:52:15 rmind Exp $ */
 
 /*
  * System call argument lists.
@@ -75,7 +75,7 @@ struct linux_sys_rt_sigprocmask_args {
 struct linux_sys_ioctl_args {
 	syscallarg(int) fd;
 	syscallarg(u_long) com;
-	syscallarg(caddr_t) data;
+	syscallarg(void *) data;
 };
 
 struct linux_sys_pread_args {
@@ -117,7 +117,7 @@ struct linux_sys_mremap_args {
 };
 
 struct linux_sys_msync_args {
-	syscallarg(caddr_t) addr;
+	syscallarg(void *) addr;
 	syscallarg(int) len;
 	syscallarg(int) fl;
 };
@@ -197,7 +197,7 @@ struct linux_sys_bind_args {
 
 struct linux_sys_getsockname_args {
 	syscallarg(int) fdec;
-	syscallarg(caddr_t) asa;
+	syscallarg(void *) asa;
 	syscallarg(int *) alen;
 };
 

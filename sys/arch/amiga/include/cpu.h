@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2007/02/16 02:53:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62.2.1 2007/03/12 05:46:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -246,8 +246,8 @@ void	switch_lwp_exit __P((struct lwp *));
 /*
  * Prototypes from machdep.c
  */
-int	badaddr __P((caddr_t));
-int	badbaddr __P((caddr_t));
+int	badaddr __P((void *));
+int	badbaddr __P((void *));
 void	bootsync __P((void));
 void	dumpconf __P((void));
 
@@ -255,15 +255,15 @@ void	dumpconf __P((void));
  * Prototypes from sys_machdep.c:
  */
 int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((caddr_t, int));
+int	dma_cachectl __P((void *, int));
 
 /*
  * Prototypes from vm_machdep.c
  */
-int	kvtop __P((caddr_t));
-void	physaccess __P((caddr_t,  caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-void	setredzone __P((u_int *, caddr_t));
+int	kvtop __P((void *));
+void	physaccess __P((void *,  void *, int, int));
+void	physunaccess __P((void *, int));
+void	setredzone __P((u_int *, void *));
 
 /*
  * Prototypes from pmap.c:

@@ -1,4 +1,4 @@
-/* $NetBSD: irix_syscall.h,v 1.55 2005/12/11 12:20:12 christos Exp $ */
+/* $NetBSD: irix_syscall.h,v 1.55.26.1 2007/03/12 05:52:13 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -54,7 +54,7 @@
 /* syscall: "chown" ret: "int" args: "char *" "int" "int" */
 #define	IRIX_SYS_chown	16
 
-/* syscall: "break" ret: "int" args: "caddr_t" */
+/* syscall: "break" ret: "int" args: "void *" */
 #define	IRIX_SYS_break	17
 
 				/* 18 is obsolete stat */
@@ -134,7 +134,7 @@
 
 #else
 #endif
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	IRIX_SYS_ioctl	54
 
 /* syscall: "sysmp" ret: "int" args: "int" "void *" "void *" "void *" "void *" */
@@ -223,7 +223,7 @@
 /* syscall: "listen" ret: "int" args: "int" "int" */
 #define	IRIX_SYS_listen	96
 
-/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "recv" ret: "int" args: "int" "void *" "int" "int" */
 #define	IRIX_SYS_recv	97
 
 /* syscall: "recvfrom" ret: "ssize_t" args: "int" "void *" "size_t" "int" "struct sockaddr *" "int *" */
@@ -235,7 +235,7 @@
 /* syscall: "select" ret: "int" args: "int" "fd_set *" "fd_set *" "fd_set *" "struct timeval *" */
 #define	IRIX_SYS_select	100
 
-/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "send" ret: "int" args: "int" "void *" "int" "int" */
 #define	IRIX_SYS_send	101
 
 /* syscall: "sendmsg" ret: "ssize_t" args: "int" "const struct msghdr *" "int" */
@@ -310,7 +310,7 @@
 /* syscall: "procblk" ret: "int" args: "int" "pid_t" "int" */
 #define	IRIX_SYS_procblk	131
 
-/* syscall: "sprocsp" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" "caddr_t" "irix_size_t" */
+/* syscall: "sprocsp" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" "void *" "irix_size_t" */
 #define	IRIX_SYS_sprocsp	132
 
 /* syscall: "mmap" ret: "void *" args: "void *" "irix_size_t" "int" "int" "int" "irix_off_t" */
@@ -427,7 +427,7 @@
 /* syscall: "ngetdents64" ret: "int" args: "int" "irix_dirent64_t *" "unsigned short" "int *" */
 #define	IRIX_SYS_ngetdents64	208
 
-/* syscall: "pidsprocsp" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" "caddr_t" "irix_size_t" "irix_pid_t" */
+/* syscall: "pidsprocsp" ret: "irix_pid_t" args: "void *" "unsigned int" "void *" "void *" "irix_size_t" "irix_pid_t" */
 #define	IRIX_SYS_pidsprocsp	210
 
 /* syscall: "usync_cntl" ret: "int" args: "int" "void *" */

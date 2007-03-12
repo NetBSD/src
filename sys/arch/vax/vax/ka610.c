@@ -1,4 +1,4 @@
-/*	$NetBSD: ka610.c,v 1.5 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka610.c,v 1.5.8.1 2007/03/12 05:51:17 rmind Exp $	*/
 /*
  * Copyright (c) 2001 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.5 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.5.8.1 2007/03/12 05:51:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.5 2006/09/05 19:32:57 matt Exp $");
 
 static void ka610_conf(void);
 static void ka610_memerr(void);
-static int ka610_mchk(caddr_t);
+static int ka610_mchk(void *);
 static void ka610_halt(void);
 static void ka610_reboot(int);
  
@@ -84,7 +84,7 @@ ka610_memerr()
 }
 
 int
-ka610_mchk(caddr_t addr)
+ka610_mchk(void *addr)
 {
 	panic("Machine check");
 	return 0;

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.12.4.1 2007/02/27 16:48:37 yamt Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.12.4.2 2007/03/12 05:45:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12.4.1 2007/02/27 16:48:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12.4.2 2007/03/12 05:45:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -221,7 +221,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(taddr + off);
+	bp->b_data = (void *)(taddr + off);
 	len = atop(len);
 	prot = bp->b_flags & B_READ ? VM_PROT_READ | VM_PROT_WRITE :
 				      VM_PROT_READ;

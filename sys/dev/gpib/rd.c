@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.14 2007/01/13 18:46:37 cube Exp $ */
+/*	$NetBSD: rd.c,v 1.14.2.1 2007/03/12 05:53:21 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.14 2007/01/13 18:46:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.14.2.1 2007/03/12 05:53:21 rmind Exp $");
 
 #include "rnd.h"
 
@@ -535,7 +535,7 @@ rdopen(dev, flags, mode, l)
 		sc->sc_flags |= RDF_OPENING;
 		error = rdgetinfo(sc);
 		sc->sc_flags &= ~RDF_OPENING;
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 		if (error)
 			return (error);
 	}
@@ -601,7 +601,7 @@ rdclose(dev, flag, mode, l)
 		}
 		splx(s);
 		sc->sc_flags &= ~(RDF_CLOSING | RDF_WLABEL);
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 	}
 	return (0);
 }
@@ -721,7 +721,7 @@ rdfinish(sc, bp)
 	sc->sc_active = 0;
 	if (sc->sc_flags & RDF_WANTED) {
 		sc->sc_flags &= ~RDF_WANTED;
-		wakeup((caddr_t)&sc->sc_tab);
+		wakeup((void *)&sc->sc_tab);
 	}
 	return (NULL);
 }
@@ -1035,7 +1035,7 @@ int
 rdioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -1106,7 +1106,7 @@ rdgetdefaultlabel(sc, lp)
 {
 	int type = sc->sc_type;
 
-	memset((caddr_t)lp, 0, sizeof(struct disklabel));
+	memset((void *)lp, 0, sizeof(struct disklabel));
 
 	lp->d_type = DTYPE_GPIB;
 	lp->d_secsize = DEV_BSIZE;
@@ -1171,7 +1171,7 @@ int
 rddump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 	struct rd_softc *sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rtreg.h,v 1.14 2005/12/24 20:06:47 perry Exp $	*/
+/*	$NetBSD: grf_rtreg.h,v 1.14.26.1 2007/03/12 05:46:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -183,7 +183,7 @@ extern unsigned char NCRStdPalette[];
 /* The prototypes for C
    with a little explanation
 
-	unsigned char * InitNCR(volatile void * BoardAddress, struct MonDef * md = &MON_640_512_60);
+	unsigned char * InitNCR(volatile void *BoardAddress, struct MonDef * md = &MON_640_512_60);
 
    This routine initialises the Retina hardware, opens a
    text- or gfx-mode screen, depending on the value of MonDef.DEP,
@@ -502,22 +502,22 @@ extern unsigned char NCRStdPalette[];
 #define Map(m) \
 	do { WGfx(ba, GCT_ID_READ_MAP_SELECT, m & 3 ); WSeq(ba, SEQ_ID_MAP_MASK, (1 << (m & 3))); } while (0)
 
-static inline unsigned char RAttr(volatile void * ba, short idx) {
+static inline unsigned char RAttr(volatile void *ba, short idx) {
 	vgaw (ba, ACT_ADDRESS, idx);
 	return vgar (ba, ACT_ADDRESS_R);
 }
 
-static inline unsigned char RSeq(volatile void * ba, short idx) {
+static inline unsigned char RSeq(volatile void *ba, short idx) {
 	vgaw (ba, SEQ_ADDRESS, idx);
 	return vgar (ba, SEQ_ADDRESS_R);
 }
 
-static inline unsigned char RCrt(volatile void * ba, short idx) {
+static inline unsigned char RCrt(volatile void *ba, short idx) {
 	vgaw (ba, CRT_ADDRESS, idx);
 	return vgar (ba, CRT_ADDRESS_R);
 }
 
-static inline unsigned char RGfx(volatile void * ba, short idx) {
+static inline unsigned char RGfx(volatile void *ba, short idx) {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar (ba, GCT_ADDRESS_R);
 }

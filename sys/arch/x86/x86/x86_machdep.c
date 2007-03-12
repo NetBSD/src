@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.6.2.1 2007/02/27 16:53:26 yamt Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.6.2.2 2007/03/12 05:51:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.6.2.1 2007/02/27 16:53:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.6.2.2 2007/03/12 05:51:47 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -99,11 +99,6 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 	extern int mem_cluster_cnt;
 	int i;
 
-	if (kauth_authorize_machdep(kauth_cred_get(),
-	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) == 0) {
-		return 0;
-	}
-
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		const phys_ram_seg_t *seg = &mem_clusters[i];
 		paddr_t lstart = seg->start;
@@ -113,7 +108,8 @@ check_pa_acc(paddr_t pa, vm_prot_t prot)
 		}
 	}
 
-	return EPERM;
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }
 
 /*

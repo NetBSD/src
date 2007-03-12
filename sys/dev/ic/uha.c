@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.38 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: uha.c,v 1.38.4.1 2007/03/12 05:53:47 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.38 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha.c,v 1.38.4.1 2007/03/12 05:53:47 rmind Exp $");
 
 #undef UHADEBUG
 #ifdef DDB
@@ -159,7 +159,7 @@ uha_attach(sc, upd)
 		return;
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    MSCPSIZE, (caddr_t *)&sc->sc_mscps,
+	    MSCPSIZE, (void **)&sc->sc_mscps,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map mscps, error = %d\n",
 		    sc->sc_dev.dv_xname, error);

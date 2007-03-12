@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 2007/02/09 21:55:09 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.81.2.1 2007/03/12 05:49:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2007/02/09 21:55:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81.2.1 2007/03/12 05:49:48 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -406,7 +406,7 @@ trap(struct trapframe frame)
 		/* Fault the original page in. */
 		rv = uvm_fault(map, va, ftype);
 		if (rv == 0) {
-			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
 
 			if (type == T_ABT)

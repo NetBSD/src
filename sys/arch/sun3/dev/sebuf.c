@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.14 2005/12/11 12:19:20 christos Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.14.26.1 2007/03/12 05:51:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.14 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.14.26.1 2007/03/12 05:51:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ sebuf_match(struct device *parent, struct cfdata *cf, void *args)
 	sreg = bus_tmapin(ca->ca_bustype, pa);
 	/* Write some bits that are wired to zero. */
 	sreg->se_csr = 0xFFF3;
-	x = peek_word((caddr_t)(&sreg->se_csr));
+	x = peek_word((void *)(&sreg->se_csr));
 	bus_tmapout(sreg);
 	if ((x == -1) || (x & 0xFCF0)) {
 #ifdef	DEBUG
@@ -124,7 +124,7 @@ sebuf_match(struct device *parent, struct cfdata *cf, void *args)
 	ereg = bus_tmapin(ca->ca_bustype, pa);
 	/* Write some bits that are wired to zero. */
 	ereg->ie_csr = 0x0FFF;
-	x = peek_word((caddr_t)(&ereg->ie_csr));
+	x = peek_word((void *)(&ereg->ie_csr));
 	bus_tmapout(ereg);
 	if ((x == -1) || (x & 0xFFF)) {
 #ifdef	DEBUG

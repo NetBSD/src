@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.30 2007/02/09 21:55:19 ad Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.30.2.1 2007/03/12 05:52:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30.2.1 2007/03/12 05:52:16 rmind Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -83,9 +83,9 @@ extern int sigpid;
 #endif
 
 void setup_linux_sigframe __P((struct frame *frame, int sig,
-    const sigset_t *mask, caddr_t usp));
+    const sigset_t *mask, void *usp));
 void setup_linux_rt_sigframe __P((struct frame *frame, int sig,
-    const sigset_t *mask, caddr_t usp, struct lwp *l));
+    const sigset_t *mask, void *usp, struct lwp *l));
 
 /*
  * Deal with some m68k-specific things in the Linux emulation code.
@@ -112,7 +112,7 @@ setup_linux_sigframe(frame, sig, mask, usp)
 	struct frame *frame;
 	int sig;
 	const sigset_t *mask;
-	caddr_t usp;
+	void *usp;
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -279,7 +279,7 @@ setup_linux_rt_sigframe(frame, sig, mask, usp, l)
 	struct frame *frame;
 	int sig;
 	const sigset_t *mask;
-	caddr_t usp;
+	void *usp;
 	struct lwp *l;
 {
 	struct proc *p = l->l_proc;
@@ -472,7 +472,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	int onstack;
 	/* user stack for signal context */
-	caddr_t usp = getframe(l, sig, &onstack);
+	void *usp = getframe(l, sig, &onstack);
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	/* Setup the signal frame (and part of the trapframe). */
@@ -537,11 +537,11 @@ linux_sys_sigreturn(l, v, retval)
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("linux_sys_sigreturn: pid %d, usp %p\n",
-			p->p_pid, (caddr_t) usp);
+			p->p_pid, (void *) usp);
 #endif
 
 	/* Grab whole of the sigcontext. */
-	if (copyin((caddr_t) usp, &tsigc2, sizeof tsigc2)) {
+	if (copyin((void *) usp, &tsigc2, sizeof tsigc2)) {
 bad:
 		mutex_enter(&p->p_smutex);
 		sigexit(l, SIGSEGV);
@@ -689,7 +689,8 @@ linux_sys_rt_sigreturn(l, v, retval)
 	 * usp + 8 is a pointer to ucontext structure.
 	 */
 	frame = (struct frame *) l->l_md.md_regs;
-	error = copyin((caddr_t) frame->f_regs[SP] + 8, (void *) &ucp, sizeof(void *));
+	error = copyin((char *)frame->f_regs[SP] + 8, (void *)&ucp,
+	    sizeof(void *));
 	if (error || (int) ucp & 1)
 		goto bad;		/* error or odd address */
 
@@ -917,7 +918,7 @@ linux_machdepioctl(l, v, retval)
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
+		syscallarg(void *) data;
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;

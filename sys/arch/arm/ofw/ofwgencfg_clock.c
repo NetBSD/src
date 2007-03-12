@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.6 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.6.26.1 2007/03/12 05:47:06 rmind Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.6 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.6.26.1 2007/03/12 05:47:06 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.6 2005/12/11 12:16:51 christos
 #include <sys/time.h>
 
 #include <machine/intr.h>
+#include <machine/irqhandler.h>
 #include <arm/cpufunc.h>
 #include <machine/cpu.h>
 #include <machine/ofw.h>
@@ -94,10 +95,8 @@ statclockhandler(frame)
  */
 
 void
-setstatclockrate(hz)
-	int hz;
+setstatclockrate(int arg)
 {
-
 #ifdef	OFWGENCFG
 	printf("Not setting statclock: OFW generic has only one clock.\n");
 #endif
@@ -123,8 +122,8 @@ cpu_initclocks()
 
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
-        clockirq = intr_claim(IRQ_TIMER0, IPL_CLOCK, "tmr0 hard clk",
-            (int (*)(void *))clockhandler, 0);
+        clockirq = intr_claim(IRQ_TIMER0, IPL_CLOCK,
+            (int (*)(void *))clockhandler, 0, "clock", "hard intr");
         if (clockirq == NULL)
                 panic("Cannot installer timer 0 IRQ handler");
 

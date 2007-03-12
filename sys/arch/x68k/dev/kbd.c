@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26 2007/01/24 13:08:11 hubertf Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26.2.1 2007/03/12 05:51:39 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26 2007/01/24 13:08:11 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.26.2.1 2007/03/12 05:51:39 rmind Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -67,11 +67,12 @@ struct kbd_softc {
 
 	int sc_event_mode;	/* if true, collect events, else pass to ite */
 	struct evvar sc_events; /* event queue state */
+	void *sc_softintr_cookie;
 };
 
 void	kbdenable(int);
-int	kbdintr (void *);
-void	kbdsoftint(void);
+int	kbdintr(void *);
+void	kbdsoftint(void *);
 void	kbd_bell(int);
 int	kbdcngetc(void);
 void	kbd_setLED(void);
@@ -98,7 +99,7 @@ const struct cdevsw kbd_cdevsw = {
 	nostop, notty, kbdpoll, nommap, kbdkqfilter,
 };
 
-static int 
+static int
 kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
@@ -110,11 +111,11 @@ kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 	return (1);
 }
 
-static void 
+static void
 kbdattach(struct device *parent, struct device *self, void *aux)
 {
-	struct kbd_softc *k = (void*) self;
-	struct mfp_softc *mfp = (void*) parent;
+	struct kbd_softc *sc = (void *)self;
+	struct mfp_softc *mfp = (void *)parent;
 	int s;
 
 	kbd_attached = 1;
@@ -122,11 +123,12 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 	s = spltty();
 
 	/* MFP interrupt #12 is for USART receive buffer full */
-	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, self);
+	intio_intr_establish(mfp->sc_intr + 12, "kbd", kbdintr, sc);
+	sc->sc_softintr_cookie = softintr_establish(IPL_SOFT, kbdsoftint, sc);
 
 	kbdenable(1);
-	k->sc_event_mode = 0;
-	k->sc_events.ev_io = 0;
+	sc->sc_event_mode = 0;
+	sc->sc_events.ev_io = 0;
 	splx(s);
 
 	printf("\n");
@@ -137,7 +139,7 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 #define KEY_CODE(c)  ((c) & 0x7f)
 #define KEY_UP(c)    ((c) & 0x80)
 
-void 
+void
 kbdenable(int mode)	/* 1: interrupt, 0: poll */
 {
 
@@ -169,7 +171,7 @@ kbdenable(int mode)	/* 1: interrupt, 0: poll */
 
 extern struct cfdriver kbd_cd;
 
-int 
+int
 kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k;
@@ -189,7 +191,7 @@ kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
-int 
+int
 kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
@@ -203,7 +205,7 @@ kbdclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 
-int 
+int
 kbdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
@@ -218,8 +220,8 @@ void opm_bell_on(void);
 void opm_bell_off(void);
 #endif
 
-int 
-kbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+int
+kbdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct kbd_softc *k = kbd_cd.cd_devs[minor(dev)];
 	int cmd_data;
@@ -290,7 +292,7 @@ kbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 
-int 
+int
 kbdpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct kbd_softc *k;
@@ -314,11 +316,11 @@ static u_char kbdbuf[KBDBUFSIZ];
 static int kbdputoff = 0;
 static int kbdgetoff = 0;
 
-int 
+int
 kbdintr(void *arg)
 {
 	u_char c, st;
-	struct kbd_softc *k = arg; /* XXX */
+	struct kbd_softc *sc = arg;
 	struct firm_event *fe;
 	int put;
 
@@ -331,9 +333,9 @@ kbdintr(void *arg)
 		return 0;	/* intr caused by an err -- no char received */
 
 	/* if not in event mode, deliver straight to ite to process key stroke */
-	if (! k->sc_event_mode) {
+	if (!sc->sc_event_mode) {
 		kbdbuf[kbdputoff++ & KBDBUFMASK] = c;
-		setsoftkbd();
+		softintr_schedule(sc->sc_softintr_cookie);
 		return 0;
 	}
 
@@ -341,24 +343,24 @@ kbdintr(void *arg)
 	   event and put it in the queue.  If the queue is full, the
 	   keystroke is lost (sorry!). */
 
-	put = k->sc_events.ev_put;
-	fe = &k->sc_events.ev_q[put];
+	put = sc->sc_events.ev_put;
+	fe = &sc->sc_events.ev_q[put];
 	put = (put + 1) % EV_QSIZE;
-	if (put == k->sc_events.ev_get) {
+	if (put == sc->sc_events.ev_get) {
 		log(LOG_WARNING, "keyboard event queue overflow\n"); /* ??? */
 		return 0;
 	}
 	fe->id = KEY_CODE(c);
 	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
 	getmicrotime(&fe->time);
-	k->sc_events.ev_put = put;
-	EV_WAKEUP(&k->sc_events);
+	sc->sc_events.ev_put = put;
+	EV_WAKEUP(&sc->sc_events);
 
 	return 0;
 }
 
-void 
-kbdsoftint(void)			/* what if ite is not configured? */
+void
+kbdsoftint(void *arg)			/* what if ite is not configured? */
 {
 	int s;
 
@@ -371,7 +373,7 @@ kbdsoftint(void)			/* what if ite is not configured? */
 	splx(s);
 }
 
-void 
+void
 kbd_bell(int mode)
 {
 #if NBELL > 0
@@ -384,13 +386,13 @@ kbd_bell(int mode)
 
 unsigned char kbdled;
 
-void 
+void
 kbd_setLED(void)
 {
         mfp_send_usart(~kbdled | 0x80);
 }
 
-int 
+int
 kbd_send_command(int cmd)
 {
 	switch (cmd) {

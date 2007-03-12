@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.44 2006/03/28 17:38:28 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.44.14.1 2007/03/12 05:51:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.44 2006/03/28 17:38:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.44.14.1 2007/03/12 05:51:12 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -146,7 +146,7 @@ int	dematch __P((struct device *, struct cfdata *, void *));
 void	deattach __P((struct device *, struct device *, void *));
 int	dewait __P((struct de_softc *, char *));
 void	deinit __P((struct de_softc *));
-int	deioctl __P((struct ifnet *, u_long, caddr_t));
+int	deioctl __P((struct ifnet *, u_long, void *));
 void	dereset __P((int));
 void	destart __P((struct ifnet *));
 void	deread __P((struct de_softc *, struct ifrw *, int));
@@ -219,7 +219,7 @@ deattach(parent, self, aux)
 	(void)dewait(ds, "read addr ");
 
 	ubarelse((void *)device_parent(&ds->ds_dev), &ds->ds_ubaddr);
-	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
+	bcopy((void *)&ds->ds_pcbb.pcbb2, myaddr, sizeof (myaddr));
 	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
 		ether_sprintf(myaddr));
 	ifp->if_ioctl = deioctl;
@@ -603,7 +603,7 @@ int
 deioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	u_long	cmd;
-	caddr_t data;
+	void *data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	register struct de_softc *ds = ifp->if_softc;
@@ -670,12 +670,12 @@ de_setaddr(physaddr, ds)
 	if (! (ds->ds_flags & DSF_RUNNING))
 		return;
 		
-	bcopy((caddr_t) physaddr, (caddr_t) &ds->ds_pcbb.pcbb2, 6);
+	bcopy((void *) physaddr, (void *) &ds->ds_pcbb.pcbb2, 6);
 	ds->ds_pcbb.pcbb0 = FC_WTPHYAD;
 	addr->pclow = PCSR0_INTE|CMD_GETCMD;
 	if (dewait(ds, "address change") == 0) {
 		ds->ds_flags |= DSF_SETADDR;
-		bcopy((caddr_t) physaddr, LLADDR(ds->ds_if.if_sadl), 6);
+		bcopy((void *) physaddr, LLADDR(ds->ds_if.if_sadl), 6);
 	}
 }
 

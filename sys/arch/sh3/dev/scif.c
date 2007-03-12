@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.49 2006/10/01 20:31:50 elad Exp $ */
+/*	$NetBSD: scif.c,v 1.49.4.1 2007/03/12 05:50:13 rmind Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.49 2006/10/01 20:31:50 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.49.4.1 2007/03/12 05:50:13 rmind Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -903,7 +903,7 @@ sciftty(dev_t dev)
 }
 
 int
-scifioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+scifioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct scif_softc *sc = scif_cd.cd_devs[SCIFUNIT(dev)];
 	struct tty *tp = sc->sc_tty;

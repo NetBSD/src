@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.11 2006/11/16 01:32:48 christos Exp $	*/
+/*	$NetBSD: btsco.c,v 1.11.6.1 2007/03/12 05:53:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.11 2006/11/16 01:32:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.11.6.1 2007/03/12 05:53:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -157,7 +157,7 @@ static int btsco_query_devinfo(void *, mixer_devinfo_t *);
 static void *btsco_allocm(void *, int, size_t, struct malloc_type *, int);
 static void btsco_freem(void *, void *, struct malloc_type *);
 static int btsco_get_props(void *);
-static int btsco_dev_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int btsco_dev_ioctl(void *, u_long, void *, int, struct lwp *);
 
 static const struct audio_hw_if btsco_if = {
 	btsco_open,		/* open */
@@ -244,7 +244,7 @@ static const struct btproto btsco_sco_proto = {
 #define BTSCO_TIMEOUT		(30 * hz)
 
 /* misc btsco functions */
-static void btsco_extfree(struct mbuf *, caddr_t, size_t, void *);
+static void btsco_extfree(struct mbuf *, void *, size_t, void *);
 static void btsco_intr(void *);
 
 
@@ -1065,7 +1065,7 @@ btsco_get_props(void *hdl)
  * to the device and mixer.
  */
 static int
-btsco_dev_ioctl(void *hdl, u_long cmd, caddr_t addr, int flag,
+btsco_dev_ioctl(void *hdl, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct btsco_softc *sc = hdl;
@@ -1157,7 +1157,7 @@ btsco_intr(void *arg)
  * that we dont release it before its free.
  */
 static void
-btsco_extfree(struct mbuf *m, caddr_t addr, size_t size,
+btsco_extfree(struct mbuf *m, void *addr, size_t size,
     void *arg)
 {
 	struct btsco_softc *sc = arg;

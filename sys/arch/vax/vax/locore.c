@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.71 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: locore.c,v 1.71.26.1 2007/03/12 05:51:19 rmind Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.71 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.71.26.1 2007/03/12 05:51:19 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -314,17 +314,17 @@ _start(struct rpb *prpb)
 	 */
 #if defined(COMPAT_14)
 	if (prpb == 0) {
-		bzero((caddr_t)proc0paddr + REDZONEADDR, sizeof(struct rpb));
+		memset((char *)proc0paddr + REDZONEADDR, 0, sizeof(struct rpb));
 		prpb = (struct rpb *)(proc0paddr + REDZONEADDR);
 		prpb->pfncnt = avail_end >> VAX_PGSHIFT;
 		prpb->rpb_base = (void *)-1;	/* RPB is fake */
 	} else
 #endif
-	bcopy(prpb, (caddr_t)proc0paddr + REDZONEADDR, sizeof(struct rpb));
+	memcpy((char *)proc0paddr + REDZONEADDR, prpb, sizeof(struct rpb));
 	if (prpb->pfncnt)
 		avail_end = prpb->pfncnt << VAX_PGSHIFT;
 	else
-		while (badaddr((caddr_t)avail_end, 4) == 0)
+		while (badaddr((void *)avail_end, 4) == 0)
 			avail_end += VAX_NBPG * 128;
 	boothowto = prpb->rpb_bootr5;
 

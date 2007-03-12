@@ -35,14 +35,14 @@
  *	i4b_avm_a1.c - AVM A1/Fritz passive card driver for isdn4bsd
  *	------------------------------------------------------------
  *
- *	$Id: isic_isa_avm_a1.c,v 1.8 2005/12/11 12:22:03 christos Exp $
+ *	$Id: isic_isa_avm_a1.c,v 1.8.26.1 2007/03/12 05:54:50 rmind Exp $
  *
  *      last edit-date: [Fri Jan  5 11:37:22 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.8 2005/12/11 12:22:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_avm_a1.c,v 1.8.26.1 2007/03/12 05:54:50 rmind Exp $");
 
 #include "opt_isicisa.h"
 #ifdef ISICISA_AVM_A1
@@ -287,10 +287,10 @@ isic_probe_avma1(struct isa_device *dev)
 
 	/* setup ISAC and HSCX base addr */
 
-	ISAC_BASE = (caddr_t)dev->id_iobase + 0x1400 - 0x20;
+	ISAC_BASE = (void *)dev->id_iobase + 0x1400 - 0x20;
 
-	HSCX_A_BASE = (caddr_t)dev->id_iobase + 0x400 - 0x20;
-	HSCX_B_BASE = (caddr_t)dev->id_iobase + 0xc00 - 0x20;
+	HSCX_A_BASE = (void *)dev->id_iobase + 0x400 - 0x20;
+	HSCX_B_BASE = (void *)dev->id_iobase + 0xc00 - 0x20;
 
 	/*
 	 * Read HSCX A/B VSTR.

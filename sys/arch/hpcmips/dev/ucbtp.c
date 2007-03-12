@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbtp.c,v 1.16 2006/11/12 19:00:42 plunky Exp $ */
+/*	$NetBSD: ucbtp.c,v 1.16.4.1 2007/03/12 05:48:04 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.16 2006/11/12 19:00:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbtp.c,v 1.16.4.1 2007/03/12 05:48:04 rmind Exp $");
 
 #include "opt_use_poll.h"
 
@@ -171,7 +171,7 @@ int	ucbtp_input(struct ucbtp_softc *);
 int	ucbtp_busy(void *);
 
 int	ucbtp_enable(void *);
-int	ucbtp_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	ucbtp_ioctl(void *, u_long, void *, int, struct lwp *);
 void	ucbtp_disable(void *);
 
 CFATTACH_DECL(ucbtp, sizeof(struct ucbtp_softc),
@@ -272,7 +272,7 @@ ucbtp_calibration(struct ucbtp_softc *sc)
 
 	sc->sc_calibrated = 
 	    tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		(caddr_t)cs, 0, 0) == 0 ? 1 : 0;
+		(void *)cs, 0, 0) == 0 ? 1 : 0;
 
 	if (!sc->sc_calibrated)
 		printf("not ");
@@ -716,7 +716,7 @@ ucbtp_disable(void *v)
 }
 
 int
-ucbtp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ucbtp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ucbtp_softc *sc = v;
 

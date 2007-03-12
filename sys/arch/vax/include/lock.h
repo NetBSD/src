@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.22.2.1 2007/02/27 16:53:21 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.22.2.2 2007/03/12 05:51:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -80,6 +80,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *__alp)
 }
 
 #ifdef _KERNEL
+#if defined(MULTIPROCESSOR)
 #define	VAX_LOCK_CHECKS ((1 << IPI_SEND_CNCHAR) | (1 << IPI_DDB))
 #define	__cpu_simple_lock(__alp)					\
 do {									\
@@ -95,6 +96,14 @@ do {									\
 		}							\
 	}								\
 } while (/*CONSTCOND*/0)
+#else /* MULTIPROCESSOR */
+#define __cpu_simple_lock(__alp)					\
+do {									\
+	while (__cpu_simple_lock_try(__alp) == 0) {			\
+		;							\
+	}								\
+} while (/*CONSTCOND*/0)
+#endif
 #else
 static __inline void __cpu_simple_lock(__cpu_simple_lock_t *);
 static __inline void

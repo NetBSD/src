@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.19.8.1 2007/02/27 16:52:02 yamt Exp $ */
+/* $NetBSD: db_machdep.h,v 1.19.8.2 2007/03/12 05:49:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -52,14 +52,14 @@ extern db_regs_t	ddb_regs;	/* register state */
 #define	PC_REGS(regs)	((regs)->f_regs[_R_PC])
 
 #define PC_ADVANCE(regs) do {						\
-	if ((db_get_value((regs)->f_regs[_R_PC], sizeof(int), FALSE) &\
+	if ((db_get_value((regs)->f_regs[_R_PC], sizeof(int), false) &\
 	     0xfc00003f) == 0xd)					\
 		(regs)->f_regs[_R_PC] += BKPT_SIZE;			\
 } while(0)
 
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
 #define PC_BREAK_ADVANCE(regs) do {					 \
-	if (db_get_value((regs)->f_regs[_R_PC], sizeof(int), FALSE) == 0xd) \
+	if (db_get_value((regs)->f_regs[_R_PC], sizeof(int), false) == 0xd) \
 		(regs)->f_regs[_R_PC] += BKPT_SIZE;			 \
 } while(0)
 

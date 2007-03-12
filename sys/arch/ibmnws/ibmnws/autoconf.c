@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2006/10/31 14:04:29 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.4.1 2007/03/12 05:48:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -145,7 +145,7 @@ device_register(device_t dev, void *aux)
 		if (BUILTIN_ETHERNET_P(pa)) {
 			if (! prop_dictionary_set_bool(device_properties(dev),
 						       "am79c970-no-eeprom",
-						       TRUE)) {
+						       true)) {
 				printf("WARNING: unable to set "
 				       "am79c970-no-eeprom property for %s\n",
 				       dev->dv_xname);

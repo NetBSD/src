@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.16 2006/10/26 22:42:00 bjh21 Exp $ */
+/* $NetBSD: if_ie.c,v 1.16.4.1 2007/03/12 05:45:23 rmind Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.16 2006/10/26 22:42:00 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.16.4.1 2007/03/12 05:45:23 rmind Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -164,7 +164,7 @@ static void ie2host  __P(( struct ie_softc *sc, u_long src, void *dest, int size
 static void iezero   __P(( struct ie_softc *sc, u_long p, int size ));
 void        iereset  __P(( struct ie_softc *sc ));
 void        iewatchdog __P(( struct ifnet *ifp ));
-int         ieioctl  __P(( struct ifnet *ifp, u_long cmd, caddr_t data ));
+int         ieioctl  __P(( struct ifnet *ifp, u_long cmd, void *data ));
 void        iestart  __P(( struct ifnet *ifp ));
 int 	    iestop   __P(( struct ie_softc *sc ));
 int         ieinit   __P(( struct ie_softc *sc ));
@@ -376,7 +376,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	{
 		struct ie_sys_conf_ptr scp;
 		bzero (&scp, sizeof(scp) );
-		scp.ie_iscp_ptr = (caddr_t)IE_ISCP_ADDR;
+		scp.ie_iscp_ptr = (void *)IE_ISCP_ADDR;
 		host2ie(sc, &scp, IE_SCP_ADDR, sizeof (scp) );
 	}
 
@@ -385,7 +385,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 		struct ie_int_sys_conf_ptr iscp;
 		bzero ( &iscp, sizeof(iscp) );
 		iscp.ie_busy = 1;
-		iscp.ie_base = (caddr_t)IE_IBASE;
+		iscp.ie_base = (void *)IE_IBASE;
 		iscp.ie_scb_offset = IE_SCB_OFF;
 		host2ie(sc, &iscp, IE_ISCP_ADDR, sizeof(iscp) );
 	}
@@ -617,7 +617,7 @@ int
 ieioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
     struct ie_softc *sc = ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *)data;
@@ -822,7 +822,7 @@ setup_rfa(sc, ptr)
 	{
 	    sc->rbuffs[i] = ptr;
 	    rbd.ie_rbd_length = IE_RXBUF_SIZE;
-	    rbd.ie_rbd_buffer = (caddr_t)(ptr + sizeof rbd);
+	    rbd.ie_rbd_buffer = (void *)(ptr + sizeof rbd);
 	    rbd.ie_rbd_next = (u_short)(ptr + sizeof rbd + IE_RXBUF_SIZE);
 	    host2ie(sc, &rbd, ptr, sizeof rbd);
 	    ptr+=sizeof rbd;
@@ -922,7 +922,7 @@ ieinit(sc)
     iasetup_cmd.com.ie_cmd_cmd = IE_CMD_IASETUP | IE_CMD_LAST;
     iasetup_cmd.com.ie_cmd_link = 0xffff;
 
-    bcopy ( LLADDR(ifp->if_sadl), (caddr_t) &iasetup_cmd.ie_address,
+    bcopy ( LLADDR(ifp->if_sadl), (void *) &iasetup_cmd.ie_address,
 	 	sizeof (iasetup_cmd.ie_address) );
 
     if ( command_and_wait(sc, IE_CU_START, &scb, &iasetup_cmd, ptr, sizeof cmd,
@@ -1141,7 +1141,7 @@ ieget(struct ie_softc *sc, int *to_bpf )
     head = sc->rbhead;
 
     /* Read the ethernet header */
-    ie2host ( sc, sc->cbuffs[head], (caddr_t)&eh, sizeof eh );
+    ie2host ( sc, sc->cbuffs[head], (void *)&eh, sizeof eh );
 
     /* Check if the packet is for us */
 
@@ -1177,7 +1177,7 @@ ieget(struct ie_softc *sc, int *to_bpf )
 	}
 
 	if (mp == &top) {
-		caddr_t newdata = (caddr_t)
+		void *newdata = (void *)
 		    ALIGN(m->m_data + sizeof(struct ether_header)) -
 		    sizeof(struct ether_header);
 		len -= newdata - m->m_data; 
@@ -1197,7 +1197,7 @@ ieget(struct ie_softc *sc, int *to_bpf )
     /*
      * Copy the Ethernet header into the mbuf chain.
      */
-    memcpy(mtod(m, caddr_t), &eh, sizeof(struct ether_header));
+    memcpy(mtod(m, void *), &eh, sizeof(struct ether_header));
     thismboff = sizeof(struct ether_header);
     thisrboff = sizeof(struct ether_header);
     resid -= sizeof(struct ether_header);
@@ -1212,19 +1212,19 @@ ieget(struct ie_softc *sc, int *to_bpf )
 	    thismblen = m->m_len - thismboff;
 	len = min(thisrblen, thismblen);
 
-/*      bcopy((caddr_t)(sc->cbuffs[head] + thisrboff),
-	    mtod(m, caddr_t) + thismboff, (u_int)len);	 */
+/*      bcopy((void *)(sc->cbuffs[head] + thisrboff),
+	    mtod(m, void *) + thismboff, (u_int)len);	 */
 
 
 	if ( len&1 )
 	{
  	    ie2host(sc, sc->cbuffs[head]+thisrboff,
-		mtod(m, caddr_t) + thismboff, (u_int)len+1);
+		mtod(m, void *) + thismboff, (u_int)len+1);
   	}
 	else
 	{
  	    ie2host(sc, sc->cbuffs[head]+thisrboff,
-		mtod(m, caddr_t) + thismboff, (u_int)len);
+		mtod(m, void *) + thismboff, (u_int)len);
 	}
 
 	resid -= len;
@@ -1482,7 +1482,7 @@ iexmit(sc)
     ie2host(sc, sc->xmit_buffs[sc->xctail], (char *)&xb, sizeof xb );
     xb.ie_xmit_flags |= IE_XMIT_LAST;
     xb.ie_xmit_next = 0xffff;
-    xb.ie_xmit_buf = (caddr_t)sc->xmit_cbuffs[sc->xctail];
+    xb.ie_xmit_buf = (void *)sc->xmit_cbuffs[sc->xctail];
     host2ie(sc, &xb, sc->xmit_buffs[sc->xctail], sizeof xb );
 
     bzero ( &xc, sizeof xc );
@@ -1542,7 +1542,7 @@ iestart(ifp)
 
 		for (m0 = m; m && (len + m->m_len) < IE_TXBUF_SIZE;
 		     m = m->m_next) {
-			bcopy(mtod(m, caddr_t), buffer, m->m_len);
+			bcopy(mtod(m, void *), buffer, m->m_len);
 			buffer += m->m_len;
 			len += m->m_len;
 		}

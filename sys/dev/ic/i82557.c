@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.100 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: i82557.c,v 1.100.4.1 2007/03/12 05:53:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.100 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.100.4.1 2007/03/12 05:53:34 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -183,7 +183,7 @@ int	fxp_80c24_mediachange(struct ifnet *);
 void	fxp_80c24_mediastatus(struct ifnet *, struct ifmediareq *);
 
 void	fxp_start(struct ifnet *);
-int	fxp_ioctl(struct ifnet *, u_long, caddr_t);
+int	fxp_ioctl(struct ifnet *, u_long, void *);
 void	fxp_watchdog(struct ifnet *);
 int	fxp_init(struct ifnet *);
 void	fxp_stop(struct ifnet *, int);
@@ -311,7 +311,7 @@ fxp_attach(struct fxp_softc *sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct fxp_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct fxp_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -480,7 +480,7 @@ fxp_attach(struct fxp_softc *sc)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct fxp_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -954,7 +954,7 @@ fxp_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -1382,8 +1382,8 @@ fxp_rxintr(struct fxp_softc *sc)
 			if (m0 == NULL)
 				goto dropit;
 			MCLAIM(m0, &sc->sc_ethercom.ec_rx_mowner);
-			memcpy(mtod(m0, caddr_t),
-			    mtod(m, caddr_t), len);
+			memcpy(mtod(m0, void *),
+			    mtod(m, void *), len);
 			m0->m_pkthdr.csum_flags = m->m_pkthdr.csum_flags;
 			m0->m_pkthdr.csum_data = m->m_pkthdr.csum_data;
 			FXP_INIT_RFABUF(sc, m);
@@ -2115,7 +2115,7 @@ fxp_mdi_write(struct device *self, int phy, int reg, int value)
 }
 
 int
-fxp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+fxp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct fxp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -2468,7 +2468,7 @@ fxp_detach(struct fxp_softc *sc)
 
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct fxp_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
 

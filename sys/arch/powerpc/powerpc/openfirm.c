@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.17 2006/01/22 22:53:56 ross Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.17.24.1 2007/03/12 05:50:08 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.17 2006/01/22 22:53:56 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.17.24.1 2007/03/12 05:50:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,6 +192,38 @@ OF_getprop(int handle, const char *prop, void *buf, int buflen)
 		args.size = buflen;
 	if (args.size > 0)
 		ofbcopy(OF_buf, buf, args.size);
+	return args.size;
+}
+
+int
+OF_setprop(int handle, const char *prop, const void *buf, int buflen)
+{
+	struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		const char *prop;
+		const void *buf;
+		int buflen;
+		int size;
+	} args = {
+		"setprop", 
+		4,
+		1
+	};
+	ofw_stack();
+
+	if (buflen > NBPG)
+		return -1;
+
+	ofbcopy(buf, OF_buf, buflen);
+	args.phandle = handle;
+	args.prop = prop;
+	args.buf = OF_buf;
+	args.buflen = buflen;
+	if (openfirmware(&args) == -1)
+		return -1;
 	return args.size;
 }
 

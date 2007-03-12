@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.35 2005/11/14 03:30:49 uwe Exp $ */
+/*	$NetBSD: auxreg.c,v 1.35.28.1 2007/03/12 05:50:41 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.35 2005/11/14 03:30:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxreg.c,v 1.35.28.1 2007/03/12 05:50:41 rmind Exp $");
 
 #include "opt_blink.h"
 
@@ -165,7 +165,7 @@ auxregattach(struct device *self)
 
 	printf("\n");
 #ifdef BLINK
-	blink((caddr_t)0);
+	blink((void *)0);
 #else
 	LED_ON;
 #endif

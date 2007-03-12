@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.26 2006/03/29 04:16:49 thorpej Exp $	*/
+/*	$NetBSD: osiop.c,v 1.26.14.1 2007/03/12 05:53:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.26 2006/03/29 04:16:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.26.14.1 2007/03/12 05:53:41 rmind Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -199,7 +199,7 @@ osiop_attach(struct osiop_softc *sc)
 		return;
 	}
 	err = bus_dmamem_map(sc->sc_dmat, &seg, nseg, PAGE_SIZE,
-	    (caddr_t *)&sc->sc_script, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    (void **)&sc->sc_script, BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err) {
 		printf(": failed to map script memory, err=%d\n", err);
 		return;
@@ -235,7 +235,7 @@ osiop_attach(struct osiop_softc *sc)
 		return;
 	}
 	err = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
-	    sizeof(struct osiop_ds) * OSIOP_NACB, (caddr_t *)&sc->sc_ds,
+	    sizeof(struct osiop_ds) * OSIOP_NACB, (void **)&sc->sc_ds,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err) {
 		printf(": failed to map ds memory, err=%d\n", err);

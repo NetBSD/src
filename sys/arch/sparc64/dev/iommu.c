@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.80 2006/09/01 09:21:18 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.80.8.1 2007/03/12 05:50:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.80 2006/09/01 09:21:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.80.8.1 2007/03/12 05:50:46 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -994,7 +994,7 @@ iommu_dvmamem_free(bus_dma_tag_t t, struct strbuf_ctl *sb,
  */
 int
 iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
-	bus_dma_segment_t *segs, int nsegs, size_t size, caddr_t *kvap,
+	bus_dma_segment_t *segs, int nsegs, size_t size, void **kvap,
 	int flags)
 {
 	struct vm_page *pg;
@@ -1017,7 +1017,7 @@ iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	/*
 	 * digest flags:
@@ -1052,7 +1052,7 @@ iommu_dvmamem_map(bus_dma_tag_t t, struct strbuf_ctl *sb,
  * Unmap DVMA mappings from kernel
  */
 void
-iommu_dvmamem_unmap(bus_dma_tag_t t, struct strbuf_ctl *sb, caddr_t kva,
+iommu_dvmamem_unmap(bus_dma_tag_t t, struct strbuf_ctl *sb, void *kva,
 	size_t size)
 {
 

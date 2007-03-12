@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.70 2006/11/26 12:30:05 cube Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.70.4.1 2007/03/12 05:48:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.70 2006/11/26 12:30:05 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.70.4.1 2007/03/12 05:48:23 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 			struct cpu_attach_args caa;
 
 			memset(&caa, 0, sizeof(caa));
-			caa.caa_name = "cpu";
 			caa.cpu_number = 0;
 			caa.cpu_role = CPU_ROLE_SP;
 			caa.cpu_func = 0;

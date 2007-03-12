@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2007/02/16 02:53:48 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.2.1 2007/03/12 05:48:59 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -42,23 +42,28 @@
  */
 extern unsigned short mac68k_ipls[];
 
-#define	MAC68K_IPL_NONE		0
-#define	MAC68K_IPL_SOFT		1
-#define	MAC68K_IPL_BIO		2
-#define	MAC68K_IPL_NET		3
-#define	MAC68K_IPL_TTY		4
-#define	MAC68K_IPL_IMP		5
-#define	MAC68K_IPL_AUDIO	6
-#define	MAC68K_IPL_SERIAL	7
-#define	MAC68K_IPL_ADB		8
-#define	MAC68K_IPL_CLOCK	9
-#define	MAC68K_IPL_STATCLOCK	10
-#define	MAC68K_IPL_SCHED	11
-#define	MAC68K_IPL_HIGH		12
-#define	MAC68K_NIPLS		13
+#define	IPL_NONE	0
+#define	IPL_SOFTCLOCK	1
+#define	IPL_SOFTNET	2
+#define	IPL_SOFTSERIAL	3
+#define	IPL_SOFT	4
+#define	IPL_BIO		5
+#define	IPL_NET		6
+#define	IPL_TTY		7
+#define	IPL_VM		8
+#define	IPL_AUDIO	9
+#define	IPL_ADB		10
+#define	IPL_STATCLOCK	11
+#define	IPL_CLOCK	12
+#define	IPL_SCHED	13
+#define	IPL_SERIAL	14
+#define	IPL_HIGH	15
+#define	IPL_LOCK	IPL_HIGH
+#define	NIPL		16
 
 /* These spl calls are _not_ to be used by machine-independent code. */
-#define	spladb()	_splraise(mac68k_ipls[MAC68K_IPL_ADB])
+#define	splsoft()	splraise1()
+#define	spladb()	_splraise(mac68k_ipls[IPL_ADB])
 #define	splzs()		splserial()
 
 /*
@@ -70,24 +75,10 @@ extern unsigned short mac68k_ipls[];
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
-#define	IPL_NONE	MAC68K_IPL_NONE
-#define	IPL_SOFTCLOCK	MAC68K_IPL_SOFT
-#define	IPL_SOFTNET	MAC68K_IPL_SOFT
-#define	IPL_BIO		MAC68K_IPL_BIO
-#define	IPL_NET		MAC68K_IPL_NET
-#define	IPL_TTY		MAC68K_IPL_TTY
-#define	IPL_VM		MAC68K_IPL_IMP
-#define	IPL_AUDIO	MAC68K_IPL_AUDIO
-#define	IPL_CLOCK	MAC68K_IPL_CLOCK
-#define	IPL_STATCLOCK	MAC68K_IPL_STATCLOCK
-#define	IPL_SCHED	MAC68K_IPL_SCHED
-#define	IPL_HIGH	MAC68K_IPL_HIGH
-#define	IPL_LOCK	MAC68K_IPL_HIGH
-#define	IPL_SERIAL	MAC68K_IPL_SERIAL
 
 typedef int ipl_t;
 typedef struct {
-	ipl_t _ipl;
+	uint16_t _ipl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
@@ -106,27 +97,7 @@ splraiseipl(ipl_cookie_t icookie)
 
 #include <sys/spl.h>
 
-/*
- * simulated software interrupt register
- */
-extern volatile u_int8_t ssir;
-
-#define	SIR_NET		0x01
-#define	SIR_CLOCK	0x02
-#define	SIR_SERIAL	0x04
-#define SIR_DTMGR	0x08
-#define SIR_ADB		0x10
-
-#define	siron(mask)	\
-	__asm volatile ( "orb %1,%0" : "=m" (ssir) : "i" (mask))
-#define	siroff(mask)	\
-	__asm volatile ( "andb %1,%0" : "=m" (ssir) : "ir" (~(mask)));
-
-#define	setsoftnet()	siron(SIR_NET)
-#define	setsoftclock()	siron(SIR_CLOCK)
-#define	setsoftserial()	siron(SIR_SERIAL)
-#define	setsoftdtmgr()	siron(SIR_DTMGR)
-#define	setsoftadb()	siron(SIR_ADB)
+#include <m68k/softintr.h>
 
 /* intr.c */
 void	intr_init(void);

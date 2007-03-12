@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.8 2007/01/10 21:18:44 cube Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.8.2.1 2007/03/12 05:53:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.8 2007/01/10 21:18:44 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.8.2.1 2007/03/12 05:53:21 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,7 @@ cs80status(v, slave, punit, css)
 	rs.c_sram = CS80CMD_SRAM;
 	rs.c_param = 0;		/* single vector (i.e. sector number) */
 	rs.c_cmd = CS80CMD_STATUS;
-	memset((caddr_t)css, 0, sizeof(*css));
+	memset((void *)css, 0, sizeof(*css));
 	(void) gpibsend(sc->sc_ic, slave, CS80CMD_SCMD, &rs, sizeof(rs));
 	(void) gpibrecv(sc->sc_ic, slave, CS80CMD_EXEC, css, sizeof(*css));
 	(void) gpibrecv(sc->sc_ic, slave, CS80CMD_QSTAT, &stat, 1);

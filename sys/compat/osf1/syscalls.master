@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 2007/02/09 21:55:23 ad Exp $
+	$NetBSD: syscalls.master,v 1.44.2.1 2007/03/12 05:52:41 rmind Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -75,7 +75,7 @@
 			    int whence); }
 20	NOARGS		{ pid_t sys_getpid_with_ppid(void); }
 21	STD		{ int osf1_sys_mount(int type, const char *path, \
-			    int flags, caddr_t data); }
+			    int flags, void *data); }
 22	STD		{ int osf1_sys_unmount(const char *path, int flags); }
 23	STD		{ int osf1_sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
@@ -100,8 +100,8 @@
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	STD		{ int osf1_sys_set_program_attributes( \
-                          caddr_t taddr, unsigned long tsize, \
-                          caddr_t daddr, unsigned long dsize); }
+                          void *taddr, unsigned long tsize, \
+                          void *daddr, unsigned long dsize); }
 44	UNIMPL		profil
 45	STD		{ int osf1_sys_open(const char *path, int flags, \
 			    int mode); }
@@ -116,7 +116,7 @@
 52	UNIMPL		sigpending
 53	STD		{ int osf1_sys_classcntl(int opcode, int arg1, \
 			    int arg2, int arg3); }
-54	STD		{ int osf1_sys_ioctl(int fd, int com, caddr_t data); }
+54	STD		{ int osf1_sys_ioctl(int fd, int com, void *data); }
 55	STD		{ int osf1_sys_reboot(int opt); }
 56	NOARGS		{ int sys_revoke(const char *path); }
 57	NOARGS		{ int sys_symlink(const char *path, \
@@ -138,10 +138,10 @@
 			    struct osf1_stat *ub); }
 69	UNIMPL		sbrk
 70	UNIMPL		sstk
-71	STD		{ caddr_t osf1_sys_mmap(caddr_t addr, size_t len, \
+71	STD		{ void *osf1_sys_mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, off_t pos); }
 72	UNIMPL		ovadvise
-73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
+73	NOARGS		{ int sys_munmap(void *addr, size_t len); }
 74	STD		{ int osf1_sys_mprotect(void *addr, size_t len, \
 			    int prot); }
 75	STD		{ int osf1_sys_madvise(void *addr, size_t len, \
@@ -177,19 +177,19 @@
 96	NOARGS		{ int sys_setpriority(int which, int who, int prio); }
 97	STD		{ int osf1_sys_socket(int domain, int type, \
 			    int protocol); }
-98	NOARGS		{ int sys_connect(int s, caddr_t name, int namelen); }
-99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+98	NOARGS		{ int sys_connect(int s, void *name, int namelen); }
+99	NOARGS		{ int compat_43_sys_accept(int s, void *name, \
 			    int *anamelen); }
 100	NOARGS		{ int sys_getpriority(int which, int who); }
-101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); }
-102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+102	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); }
 103	NOARGS		{ int compat_13_sys_sigreturn(\
 			    struct sigcontext13 *sigcntxp); }
-104	NOARGS		{ int sys_bind(int s, caddr_t name, int namelen); }
+104	NOARGS		{ int sys_bind(int s, void *name, int namelen); }
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
-			    caddr_t val, int valsize); }
+			    void *val, int valsize); }
 106	NOARGS		{ int sys_listen(int s, int backlog); }
 107	UNIMPL		plock
 108	UNIMPL		old sigvec
@@ -207,7 +207,7 @@
 			    struct osf1_rusage *rusage); }
 ; XXX
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
-			    caddr_t val, int *avalsize); }
+			    void *val, int *avalsize); }
 119	UNIMPL
 120	STD		{ int osf1_sys_readv(int fd, \
 			    struct osf1_iovec *iovp, u_int iovcnt); }
@@ -217,8 +217,8 @@
 			    struct osf1_timezone *tzp); }
 123	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
-125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
-			    size_t len, int flags, caddr_t from, \
+125	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); }
 126	NOARGS		{ int sys_setreuid(uid_t ruid, uid_t euid); }
 127	NOARGS		{ int sys_setregid(gid_t rgid, gid_t egid); }
@@ -229,7 +229,7 @@
 130	STD		{ int osf1_sys_ftruncate(int fd, off_t length); }
 131	NOARGS		{ int sys_flock(int fd, int operation); }
 132	STD		{ int osf1_sys_setgid(gid_t gid); }
-133	STD		{ int osf1_sys_sendto(int s, caddr_t buf, size_t len, \
+133	STD		{ int osf1_sys_sendto(int s, void *buf, size_t len, \
 			    int flags, struct sockaddr *to, int tolen); }
 134	NOARGS		{ int sys_shutdown(int s, int how); }
 135	STD		{ int osf1_sys_socketpair(int domain, int type, \
@@ -241,7 +241,7 @@
 139	OBSOL		4.2 sigreturn
 140	UNIMPL		adjtime
 141	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
-			    caddr_t asa, int *alen); }
+			    void *asa, int *alen); }
 142	NOARGS		{ int32_t compat_43_sys_gethostid(void); }
 143	NOARGS		{ int compat_43_sys_sethostid(int32_t hostid); }
 ; XXX
@@ -255,7 +255,7 @@
 148	UNIMPL		quotactl
 149	NOARGS		{ int compat_43_sys_quota(void); }
 150	NOARGS		{ int compat_43_sys_getsockname(int fdec, \
-			    caddr_t asa, int *alen); }
+			    void *asa, int *alen); }
 151	UNIMPL		pread
 152	UNIMPL		pwrite
 153	UNIMPL		pid_block
@@ -379,10 +379,10 @@
 253	UNIMPL		audgen
 254	UNIMPL		sysfs
 255	UNIMPL		subsys_info
-256	STD		{ int osf1_sys_getsysinfo(u_long op, caddr_t buffer, \
-			    u_long nbytes, caddr_t arg, u_long flag); }
-257	STD		{ int osf1_sys_setsysinfo(u_long op, caddr_t buffer, \
-			    u_long nbytes, caddr_t arg, u_long flag); }
+256	STD		{ int osf1_sys_getsysinfo(u_long op, void *buffer, \
+			    u_long nbytes, void *arg, u_long flag); }
+257	STD		{ int osf1_sys_setsysinfo(u_long op, void *buffer, \
+			    u_long nbytes, void *arg, u_long flag); }
 258	UNIMPL		afs_syscall
 259	UNIMPL		swapctl
 260	UNIMPL		memcntl

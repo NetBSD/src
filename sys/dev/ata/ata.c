@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.85 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: ata.c,v 1.85.2.1 2007/03/12 05:53:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.85 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.85.2.1 2007/03/12 05:53:07 rmind Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -1412,7 +1412,7 @@ atabusclose(dev_t dev, int flag, int fmt,
 }
 
 int
-atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];

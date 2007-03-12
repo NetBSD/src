@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.84 2007/01/29 07:08:09 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.84.2.1 2007/03/12 05:53:44 rmind Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.84 2007/01/29 07:08:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.84.2.1 2007/03/12 05:53:44 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -1619,7 +1619,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 			rr->rr_antsignal = rssi;
 			rr->rr_barker_lock = htole16(sq);
 
-			bpf_mtap2(sc->sc_radiobpf, (caddr_t)rr,
+			bpf_mtap2(sc->sc_radiobpf, (void *)rr,
 			    sizeof(sc->sc_rxtapu), m);
 		}
 #endif /* NPBFILTER > 0 */
@@ -2913,7 +2913,7 @@ rtw_led_attach(struct rtw_led_state *ls, void *arg)
 }
 
 static int
-rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+rtw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int rc = 0, s;
 	struct rtw_softc *sc = ifp->if_softc;
@@ -3153,7 +3153,7 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 				break;
 			}
 		}
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 		m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 		m_freem(m0);
 		m0 = m;
@@ -3347,7 +3347,7 @@ rtw_start(struct ifnet *ifp)
 
 #if NBPFILTER > 0
 		if (ic->ic_rawbpf != NULL)
-			bpf_mtap((caddr_t)ic->ic_rawbpf, m0);
+			bpf_mtap((void *)ic->ic_rawbpf, m0);
 
 		if (sc->sc_radiobpf != NULL) {
 			struct rtw_tx_radiotap_header *rt = &sc->sc_txtap;
@@ -3355,7 +3355,7 @@ rtw_start(struct ifnet *ifp)
 			rt->rt_flags = 0;
 			rt->rt_rate = rate;
 
-			bpf_mtap2(sc->sc_radiobpf, (caddr_t)rt,
+			bpf_mtap2(sc->sc_radiobpf, (void *)rt,
 			    sizeof(sc->sc_txtapu), m0);
 		}
 #endif /* NPBFILTER > 0 */
@@ -4039,7 +4039,7 @@ rtw_attach(struct rtw_softc *sc)
 
 	rc = bus_dmamem_map(sc->sc_dmat, &sc->sc_desc_segs,
 	    sc->sc_desc_nsegs, sizeof(struct rtw_descs),
-	    (caddr_t*)&sc->sc_descs, BUS_DMA_COHERENT);
+	    (void **)&sc->sc_descs, BUS_DMA_COHERENT);
 
 	if (rc != 0) {
 		printf("%s: could not map hw descriptors, error %d\n",
@@ -4259,7 +4259,7 @@ rtw_detach(struct rtw_softc *sc)
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_desc_dmamap);
 		/*FALLTHROUGH*/
 	case FINISH_DESC_MAP:
-		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_descs,
+		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_descs,
 		    sizeof(struct rtw_descs));
 		/*FALLTHROUGH*/
 	case FINISH_DESC_ALLOC:

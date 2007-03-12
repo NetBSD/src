@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 2005/12/11 12:18:29 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.45.26.1 2007/03/12 05:49:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -1017,8 +1017,6 @@ Lintrhand_exit:
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
-
-BSS(ssir,1)
 
 ASENTRY_NOPROFILE(rei)
 	tstl	_C_LABEL(astpending)	| AST pending?

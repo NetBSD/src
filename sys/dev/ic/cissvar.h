@@ -1,4 +1,4 @@
-/*	$NetBSD: cissvar.h,v 1.1 2006/03/21 20:42:14 he Exp $	*/
+/*	$NetBSD: cissvar.h,v 1.1.30.1 2007/03/12 05:53:29 rmind Exp $	*/
 /*	$OpenBSD: cissvar.h,v 1.2 2005/09/07 04:00:16 mickey Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ struct ciss_softc {
 
 	bus_dmamap_t		cmdmap;
 	bus_dma_segment_t	cmdseg[1];
-	caddr_t			ccbs;
+	void *			ccbs;
 	void			*scratch;
 
 	bus_space_handle_t	cfg_ioh;

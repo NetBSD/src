@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.13 2007/02/09 21:55:16 ad Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.13.2.1 2007/03/12 05:51:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.13 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.13.2.1 2007/03/12 05:51:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.13 2007/02/09 21:55:16 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/syscallargs.h>
+#include <sys/vfs_syscalls.h>
 #include <sys/kauth.h>
 
 #include <compat/sys/signal.h>
@@ -113,14 +114,12 @@ darwin_sys_getattrlist(l, v, retval)
 	size_t shift = 0;
 	int null = 0;
 	int error = 0;
-	int follow = 0;
+	int follow = NOFOLLOW;
 	u_long *whole_len_p = NULL;
 	darwin_attrreference_t *cmn_name_p = NULL;
 	darwin_attrreference_t *vol_mountpoint_p = NULL;
 	darwin_attrreference_t *vol_name_p = NULL;
 	darwin_attrreference_t *vol_mounteddevice_p = NULL;
-	struct sys___stat30_args cup1;
-	struct stat *ust;
 	struct stat st;
 	struct compat_20_sys_statfs_args cup2;
 	struct statfs12 *uf;
@@ -129,7 +128,7 @@ darwin_sys_getattrlist(l, v, retval)
 	struct vnode *vp;
 	kauth_cred_t cred;
 	const char *path;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 	int fl;
 
 	if ((error = copyin(SCARG(uap, alist), &kalist, sizeof(kalist))) != 0)
@@ -155,25 +154,15 @@ darwin_sys_getattrlist(l, v, retval)
 	 * Lookup emulation shadow tree once
 	 */
 	fl = CHECK_ALT_FL_EXISTS;
-	if (follow == 0)
+	if (follow == NOFOLLOW)
 		fl |= CHECK_ALT_FL_SYMLINK;
 	(void)emul_find(l, &sg, p->p_emul->e_path, SCARG(uap, path), &path, fl);
 
 	/*
 	 * Get the informations for path: file related info
 	 */
-	ust = stackgap_alloc(p, &sg, sizeof(st));
-	SCARG(&cup1, path) = path;
-	SCARG(&cup1, ub) = ust;
-	if (follow) {
-		if ((error = sys___stat30(l, &cup1, retval)) != 0)
-			return error;
-	} else {
-		if ((error = sys___lstat30(l, &cup1, retval)) != 0)
-			return error;
-	}
-
-	if ((error = copyin(ust, &st, sizeof(st))) != 0)
+	error = do_sys_stat(l, path, follow, &st);
+	if (error != 0)
 		return error;
 
 	/*

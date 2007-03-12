@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_etreg.h,v 1.1 1996/10/04 07:27:53 leo Exp $	*/
+/*	$NetBSD: grf_etreg.h,v 1.1.116.1 2007/03/12 05:47:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Tobias Abt
@@ -215,24 +215,24 @@
 		vgaw(ba, ACT_ADDRESS_W, val);	\
 	} while (0)
 
-static inline u_char RAttr(volatile void * ba, short idx) {
+static inline u_char RAttr(volatile void *ba, short idx) {
 	if(vgar(ba, GREG_STATUS1_R))
 		;
 	vgaw(ba, ACT_ADDRESS_W, idx);
 	return vgar(ba, ACT_ADDRESS_R);
 }
 
-static inline u_char RSeq(volatile void * ba, short idx) {
+static inline u_char RSeq(volatile void *ba, short idx) {
 	vgaw(ba, SEQ_ADDRESS, idx);
 	return vgar(ba, SEQ_ADDRESS_R);
 }
 
-static inline u_char RCrt(volatile void * ba, short idx) {
+static inline u_char RCrt(volatile void *ba, short idx) {
 	vgaw(ba, CRT_ADDRESS, idx);
 	return vgar(ba, CRT_ADDRESS_R);
 }
 
-static inline u_char RGfx(volatile void * ba, short idx) {
+static inline u_char RGfx(volatile void *ba, short idx) {
 	vgaw(ba, GCT_ADDRESS, idx);
 	return vgar(ba, GCT_ADDRESS_R);
 }

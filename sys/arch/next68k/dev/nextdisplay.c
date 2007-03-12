@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.19 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.19.14.1 2007/03/12 05:49:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.19 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.19.14.1 2007/03/12 05:49:43 rmind Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -106,7 +106,7 @@ const struct wsscreen_list nextdisplay_screenlist_color = {
 	_nextdisplay_scrlist_color
 };
 
-static int	nextdisplay_ioctl(void *, void *, u_long, caddr_t, int,
+static int	nextdisplay_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	nextdisplay_mmap(void *, void *, off_t, int);
 static int	nextdisplay_alloc_screen(void *, const struct wsscreen_descr *,
@@ -298,7 +298,7 @@ nextdisplay_intr(void *arg)
 }
 
 int
-nextdisplay_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+nextdisplay_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct nextdisplay_softc *sc = v;

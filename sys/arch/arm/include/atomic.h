@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.5.26.1 2007/02/27 16:49:34 yamt Exp $ */
+/* $NetBSD: atomic.h,v 1.5.26.2 2007/03/12 05:47:04 rmind Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -38,7 +38,7 @@
 
 #ifndef ATOMIC_SET_BIT_NONINLINE_REQUIRED
 
-#if defined(__PROG26) || defined(ATOMIC_SET_BIT_NOINLINE)
+#ifdef ATOMIC_SET_BIT_NOINLINE
 #define	ATOMIC_SET_BIT_NONINLINE_REQUIRED
 #endif
 
@@ -46,7 +46,7 @@
 
 
 #ifndef _LOCORE
-
+#ifdef _KERNEL
 #include <sys/types.h>
 #include <arm/armreg.h>			/* I32_bit */
 
@@ -75,6 +75,27 @@ bool atomic_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 			: "r" (cpsr_save)	\
 			: "cc" );		\
 	} while(0)
+#else /* __PROG26 */
+#define __with_interrupts_disabled(expr)				\
+	do {						\
+		u_int r15_save, tmp;			\
+							\
+		__asm volatile(				\
+			"mov  %0, r15;"			\
+			"orr  %1, %0, %2;"		\
+			"teqp %1, #0;"			\
+			: "=r" (r15_save), "=r" (tmp)	\
+			: "I" (R15_IRQ_DISABLE)		\
+		        : "cc" );		\
+		(expr);				\
+		 __asm volatile(		\
+			"teqp  %0, #0"		\
+			: /* no output */	\
+			: "r" (r15_save)	\
+			: "cc" );		\
+	} while(0)
+#endif /* __PROG26 */
+
 
 static __inline void
 inline_atomic_set_bit( u_int *address, u_int setmask )
@@ -105,9 +126,8 @@ inline_atomic_cas(volatile uintptr_t *cell, uintptr_t old, uintptr_t new)
 
 #endif
 
-#endif /* __PROG32 */
-
 #undef __with_interrupts_disabled
 
+#endif /* _KERNEL */
 #endif /* _LOCORE */
 #endif /* _ARM_ATOMIC_H_ */

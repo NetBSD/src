@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.75 2006/10/01 20:31:49 elad Exp $ */
+/*	$NetBSD: ser.c,v 1.75.4.1 2007/03/12 05:46:44 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.75 2006/10/01 20:31:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.75.4.1 2007/03/12 05:46:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ sermint(int unit)
 }
 
 int
-serioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+serioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	register struct tty *tp;
 	register int error;
@@ -926,7 +926,7 @@ serstart(struct tty *tp)
 	if (cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t) & tp->t_outq);
+			wakeup((void *) & tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

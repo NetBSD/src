@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.76.4.1 2007/02/27 16:52:15 yamt Exp $ */
+/*	$NetBSD: scn.c,v 1.76.4.2 2007/03/12 05:49:46 rmind Exp $ */
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.76.4.1 2007/02/27 16:52:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scn.c,v 1.76.4.2 2007/03/12 05:49:46 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1171,7 +1171,7 @@ scnopen(dev_t dev, int flag, int mode, struct lwp *l)
 				 * carrier up
 				 */
 			}
-			error = ttysleep(tp, (caddr_t) & tp->t_rawq,
+			error = ttysleep(tp, (void *) & tp->t_rawq,
 			    TTIPRI | PCATCH, ttopen, 0);
 			if (error) {
 				/* XXX should turn off chip if we're the only
@@ -1219,7 +1219,7 @@ scnclose(dev_t dev, int flag, int mode, struct lwp *l)
 	if ((tp->t_cflag & HUPCL) && (sc->sc_swflags & SCN_SW_SOFTCAR) == 0) {
 		SCN_OP_BIC(sc, sc->sc_op_dtr);
 		/* hold low for 1 second */
-		(void) tsleep((caddr_t)sc, TTIPRI, ttclos, hz);
+		(void) tsleep((void *)sc, TTIPRI, ttclos, hz);
 	}
 	SCN_CLRDIALOUT(sc);
 	ttyclose(tp);
@@ -1625,7 +1625,7 @@ opbits(struct scn_softc *sc, int tioc_bits)
 }
 
 int
-scnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+scnioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = DEV_UNIT(dev);
 	struct scn_softc *sc = SOFTC(unit);
@@ -1843,7 +1843,7 @@ scnstart(struct tty *tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t) & tp->t_outq);
+			wakeup((void *) & tp->t_outq);
 		}
 		if (tp->t_outq.c_cc == 0)	/* plb 11/8/95 - from
 						 * isa/com.c */

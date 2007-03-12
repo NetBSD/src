@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.h,v 1.1 2002/02/10 01:57:08 thorpej Exp $	*/
+/*	$NetBSD: beep.h,v 1.1.74.1 2007/03/12 05:50:25 rmind Exp $	*/
 
 /*
  * Copyright (c) Mark Brinicombe 1995 All rights reserved
@@ -32,7 +32,7 @@
 #include <sys/types.h>
 
 struct wavebuffer {
-	caddr_t addr;
+	void *addr;
 	int size;
 };
 

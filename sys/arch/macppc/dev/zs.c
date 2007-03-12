@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.41 2006/11/24 22:04:23 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.41.4.1 2007/03/12 05:49:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.41 2006/11/24 22:04:23 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.41.4.1 2007/03/12 05:49:06 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -417,7 +417,7 @@ zsc_print(void *aux, const char *name)
 }
 
 int
-zsmdioctl(struct zs_chanstate *cs, u_long cmd, caddr_t data)
+zsmdioctl(struct zs_chanstate *cs, u_long cmd, void *data)
 {
 	switch (cmd) {
 	default:
@@ -480,7 +480,7 @@ zs_txdma_int(void *arg)
 }
 
 void
-zs_dma_setup(struct zs_chanstate *cs, caddr_t pa, int len)
+zs_dma_setup(struct zs_chanstate *cs, void *pa, int len)
 {
 	struct zsc_softc *zsc;
 	dbdma_command_t *cmdp;

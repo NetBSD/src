@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16.4.1 2007/02/27 16:50:12 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16.4.2 2007/03/12 05:47:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.4.1 2007/02/27 16:50:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16.4.2 2007/03/12 05:47:39 rmind Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -315,7 +315,7 @@ cpu_startup(void)
 	/*
 	 * Initialize error message buffer (before start of kernel)
 	 */
-	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));
 
 	printf("%s%s", copyright, version);
 	printf("NCD Explora451\n");

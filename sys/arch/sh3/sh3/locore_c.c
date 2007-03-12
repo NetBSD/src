@@ -1,7 +1,7 @@
-/*	$NetBSD: locore_c.c,v 1.14 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.14.2.1 2007/03/12 05:50:14 rmind Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14.2.1 2007/03/12 05:50:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14 2007/02/09 21:55:12 ad Exp $");
 #include <sys/proc.h>
 #include <sys/ras.h>
 
+#include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
 #include <sh3/locore.h>
@@ -128,11 +129,27 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.14 2007/02/09 21:55:12 ad Exp $");
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-void (*__sh_switch_resume)(struct lwp *);
+void cpu_do_exit(struct lwp *) __attribute__((noreturn));
+
 struct lwp *cpu_switch_search(struct lwp *);
 struct lwp *cpu_switch_prepare(struct lwp *, struct lwp *);
 void idle(void);
+
+void (*__sh_switch_resume)(struct lwp *);
 int want_resched;
+
+
+/*
+ * Switch away into oblivion.
+ */
+void
+cpu_exit(struct lwp *l)
+{
+
+    (void)splsched();
+    sched_lock_idle();
+    cpu_do_exit(l);
+}
 
 /*
  * Prepare context switch from olwp to nlwp.
@@ -142,7 +159,6 @@ struct lwp *
 cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 {
 
-	sched_lock_idle();
 	nlwp->l_stat = LSONPROC;
 	sched_unlock_idle();
 
@@ -154,11 +170,11 @@ cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 
 		/* Check for Restartable Atomic Sequences. */
 		if (!LIST_EMPTY(&p->p_raslist)) {
-			caddr_t pc;
+			void *pc;
 
 			pc = ras_lookup(p,
-				(caddr_t)nlwp->l_md.md_regs->tf_spc);
-			if (pc != (caddr_t) -1)
+				(void *)nlwp->l_md.md_regs->tf_spc);
+			if (pc != (void *) -1)
 				nlwp->l_md.md_regs->tf_spc = (int) pc;
 		}
 	}
@@ -178,7 +194,6 @@ cpu_switch_search(struct lwp *olwp)
 
 	curlwp = NULL;
 
-	sched_lock_idle();
 	while (sched_whichqs == 0) {
 		sched_unlock_idle();
 		idle();
@@ -189,7 +204,6 @@ cpu_switch_search(struct lwp *olwp)
 	l = q->ph_link;
 	remrunqueue(l);
 	want_resched = 0;
-	sched_unlock_idle();
 
 	return (cpu_switch_prepare(olwp, l));
 }
@@ -204,7 +218,8 @@ idle()
 {
 
 	spl0();
-	uvm_pageidlezero();
+	if (uvm.page_idle_zero)
+		uvm_pageidlezero();
 	__asm volatile("sleep");
 	splsched();
 }
@@ -269,7 +284,7 @@ sh4_switch_setup(struct lwp *l)
 #endif /* !P1_STACK */
 
 /*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
+ * copystr(void *from, void *to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long.  Return the
  * number of characters copied (including the NUL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.

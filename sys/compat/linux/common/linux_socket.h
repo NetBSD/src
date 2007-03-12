@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.13 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.13.26.1 2007/03/12 05:52:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -161,11 +161,11 @@
 #define LINUX_CMSG_DATA(cmsg)	\
 	((u_char *)(void *)(cmsg) + __CMSG_ALIGN(sizeof(struct cmsghdr)))
 #define	LINUX_CMSG_NXTHDR(mhdr, cmsg)	\
-	(((__caddr_t)(cmsg) + LINUX_CMSG_ALIGN((cmsg)->cmsg_len) + \
+	(((char *)(cmsg) + LINUX_CMSG_ALIGN((cmsg)->cmsg_len) + \
 			    LINUX_CMSG_ALIGN(sizeof(struct cmsghdr)) > \
-	    (((__caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
+	    (((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)NULL : \
-	    (struct cmsghdr *)((__caddr_t)(cmsg) + \
+	    (struct cmsghdr *)((char *)(cmsg) + \
 	        LINUX_CMSG_ALIGN((cmsg)->cmsg_len)))
 #define LINUX_CMSG_ALIGNDIFF	\
 	(CMSG_ALIGN(sizeof(struct cmsghdr)) - LINUX_CMSG_ALIGN(sizeof(struct cmsghdr)))

@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.5.4.1 2007/02/27 16:52:53 yamt Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.5.4.2 2007/03/12 05:50:09 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.5.4.1 2007/02/27 16:52:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.5.4.2 2007/03/12 05:50:09 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -366,7 +366,7 @@ nvramgetstr(int len, char *user, char **cpp)
 }
 
 int
-prep_nvramioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+prep_nvramioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	int len, error;
 	struct pnviocdesc *pnv;

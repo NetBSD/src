@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
+/* $NetBSD: siovar.h,v 1.1.84.1 2007/03/12 05:48:43 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 struct sio_softc {
 	struct device scp_dev;
-	caddr_t scp_ctl;
+	void *scp_ctl;
 	void (*scp_intr[2]) __P((int));
 };
 

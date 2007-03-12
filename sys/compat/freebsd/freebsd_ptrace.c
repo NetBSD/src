@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.13 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.13.2.1 2007/03/12 05:51:57 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.13 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.13.2.1 2007/03/12 05:51:57 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -110,12 +110,12 @@ freebsd_sys_ptrace(l, v, retval)
 	struct freebsd_sys_ptrace_args /* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	int error;
-	caddr_t sg;
+	void *sg;
 	struct {
 		struct reg regs;
 		struct fpreg fpregs;
@@ -152,14 +152,14 @@ freebsd_sys_ptrace(l, v, retval)
 #ifdef PT_GETREGS
 		SCARG(&npa, req) = PT_GETREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
-		SCARG(&npa, addr) = (caddr_t)&nrp->regs;
+		SCARG(&npa, addr) = (void *)&nrp->regs;
 		if ((error = sys_ptrace(l, &npa, retval)) != 0)
 			return error;
 #endif
 #ifdef PT_GETFPREGS
 		SCARG(&npa, req) = PT_GETFPREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
-		SCARG(&npa, addr) = (caddr_t)&nrp->fpregs;
+		SCARG(&npa, addr) = (void *)&nrp->fpregs;
 		if ((error = sys_ptrace(l, &npa, retval)) != 0)
 			return error;
 #endif
@@ -179,14 +179,14 @@ freebsd_sys_ptrace(l, v, retval)
 #ifdef PT_SETREGS
 			SCARG(&npa, req) = PT_SETREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
-			SCARG(&npa, addr) = (caddr_t)&nrp->regs;
+			SCARG(&npa, addr) = (void *)&nrp->regs;
 			if ((error = sys_ptrace(l, &npa, retval)) != 0)
 				return error;
 #endif
 #ifdef PT_SETFPREGS
 			SCARG(&npa, req) = PT_SETFPREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
-			SCARG(&npa, addr) = (caddr_t)&nrp->fpregs;
+			SCARG(&npa, addr) = (void *)&nrp->fpregs;
 			if ((error = sys_ptrace(l, &npa, retval)) != 0)
 				return error;
 #endif

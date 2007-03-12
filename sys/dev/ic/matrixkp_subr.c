@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.4 2005/12/12 01:20:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: matrixkp_subr.c,v 1.4.26.1 2007/03/12 05:53:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,7 +194,7 @@ mxkp_set_leds(void *v, int leds)
 }
 
 int
-mxkp_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mxkp_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd) {
 	case WSKBDIO_GTYPE:

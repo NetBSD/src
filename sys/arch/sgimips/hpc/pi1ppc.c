@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.1 2005/12/28 08:31:09 kurahone Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.1.28.1 2007/03/12 05:50:11 rmind Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.1 2005/12/28 08:31:09 kurahone Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.1.28.1 2007/03/12 05:50:11 rmind Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -139,7 +139,7 @@ static u_int8_t pi1ppc_get_intr_mask(struct pi1ppc_softc * const);
 
 static int pi1ppc_poll_str(struct pi1ppc_softc * const, const u_int8_t,
 	const u_int8_t);
-static int pi1ppc_wait_interrupt(struct pi1ppc_softc * const, const caddr_t,
+static int pi1ppc_wait_interrupt(struct pi1ppc_softc * const, const void *,
 	const u_int8_t);
 
 static int pi1ppc_poll_interrupt_stat(struct pi1ppc_softc * const, 
@@ -1515,7 +1515,7 @@ pi1ppc_poll_str(struct pi1ppc_softc * const pi1ppc, const u_int8_t status,
 
 /* Wait for interrupt for MAXBUSYWAIT: returns 0 if acknowledge received. */
 static int
-pi1ppc_wait_interrupt(struct pi1ppc_softc * const pi1ppc, const caddr_t where,
+pi1ppc_wait_interrupt(struct pi1ppc_softc * const pi1ppc, const void *where,
 	const u_int8_t irqstat)
 {
 	int error = EIO;

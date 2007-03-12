@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.31.2.1 2007/03/03 15:42:49 yamt Exp $
+#	$NetBSD: files.amd64,v 1.31.2.2 2007/03/12 05:46:35 rmind Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -90,7 +90,7 @@ file	arch/amd64/amd64/bios32.c		bios32 needs-flag
 #
 
 # XXX BIOS32 only if something that uses it is configured!
-device	mainbus: isabus, pcibus, bios32, acpibus, cpubus
+device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 
@@ -118,7 +118,14 @@ file	arch/x86/pci/pchb_rnd.c			pchb & rnd
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/amd64/pci/pcib.c			pcib
+file	arch/amd64/pci/pcib.c			pcib | amdpcib
+
+device 	amdpcib {} : isabus
+attach 	amdpcib at pci
+file 	arch/amd64/pci/amdpcib.c		amdpcib
+
+attach 	hpet at amdpcib with amdpcib_hpet
+file 	arch/amd64/pci/amdpcib_hpet.c		amdpcib_hpet
 
 device 	aapic
 attach 	aapic at pci

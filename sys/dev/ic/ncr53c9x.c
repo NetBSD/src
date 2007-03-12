@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.125 2007/01/09 12:53:12 itohy Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.125.2.1 2007/03/12 05:53:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.125 2007/01/09 12:53:12 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.125.2.1 2007/03/12 05:53:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ int ncr53c9x_notag = 0;
 /*static*/ void ncr53c9x_dequeue(struct ncr53c9x_softc *,
 				struct ncr53c9x_ecb *);
 /*static*/ int	ncr53c9x_ioctl(struct scsipi_channel *, u_long,
-			       caddr_t, int, struct proc *);
+			       void *, int, struct proc *);
 
 void ncr53c9x_sense(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
 void ncr53c9x_free_ecb(struct ncr53c9x_softc *, struct ncr53c9x_ecb *);
@@ -726,7 +726,7 @@ ncr53c9x_select(sc, ecb)
 			/* setup DMA transfer for command */
 			dmasize = clen = ecb->clen;
 			sc->sc_cmdlen = clen;
-			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
+			sc->sc_cmdp = (void *)&ecb->cmd.cmd;
 
 			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0,
 			    &dmasize);
@@ -1052,7 +1052,7 @@ ncr53c9x_poll(sc, xs, count)
 }
 
 int
-ncr53c9x_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
+ncr53c9x_ioctl(struct scsipi_channel *chan, u_long cmd, void *arg,
     int flag, struct proc *p)
 {
 	struct ncr53c9x_softc *sc = (void *)chan->chan_adapter->adapt_dev;
@@ -2757,7 +2757,7 @@ msgin:
 			/* setup DMA transfer for command */
 			size = ecb->clen;
 			sc->sc_cmdlen = size;
-			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
+			sc->sc_cmdp = (void *)&ecb->cmd.cmd;
 			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen,
 			    0, &size);
 			/* Program the SCSI counter */

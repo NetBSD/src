@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.60 2007/01/05 16:38:13 elad Exp $	*/
+/*	$NetBSD: rnd.c,v 1.60.2.1 2007/03/12 05:53:06 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.60 2007/01/05 16:38:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.60.2.1 2007/03/12 05:53:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -434,7 +434,7 @@ rndread(dev_t dev, struct uio *uio, int ioflag)
 		 * If an error occurs, or this is a partial
 		 * read, bail out.
 		 */
-		ret = uiomove((caddr_t)bf, nread, uio);
+		ret = uiomove((void *)bf, nread, uio);
 		if (ret != 0 || nread != n)
 			goto out;
 	}
@@ -463,7 +463,7 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 	while (uio->uio_resid > 0) {
 		n = min(RND_TEMP_BUFFER_SIZE, uio->uio_resid);
 
-		ret = uiomove((caddr_t)bf, n, uio);
+		ret = uiomove((void *)bf, n, uio);
 		if (ret != 0)
 			break;
 
@@ -482,7 +482,7 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+rndioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	rndsource_element_t *rse;

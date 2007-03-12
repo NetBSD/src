@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.20 2006/06/07 22:38:50 kardel Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.20.12.1 2007/03/12 05:50:44 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.20 2006/06/07 22:38:50 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.20.12.1 2007/03/12 05:50:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,26 +84,11 @@ CFATTACH_DECL(timer_msiiep, sizeof(struct device),
 static void	timer_init_msiiep(void);
 static int	clockintr_msiiep(void *);
 static int	statintr_msiiep(void *);
+static u_int	timer_get_timecount(struct timecounter *);
+
 
 static struct intrhand level10 = { .ih_fun = clockintr_msiiep };
 static struct intrhand level14 = { .ih_fun = statintr_msiiep  };
-
-
-/*
- * ms-IIep counters tick every 4 CPU clocks @100MHz.
- * counter is reset to 1 when new limit is written.
- */
-#define	tmr_ustolimIIep(n)	((n) * 25 + 1)
-
-static int
-timermatch_msiiep(struct device *parent, struct cfdata *cf, void *aux)
-{
-	struct msiiep_attach_args *msa = aux;
-
-	return (strcmp(msa->msa_name, "timer") == 0);
-}
-
-static u_int timer_get_timecount(struct timecounter *);
 
 /*
  * timecounter local state
@@ -116,16 +101,32 @@ static struct counter {
 /*
  * define timecounter
  */
-
 static struct timecounter counter_timecounter = {
-	timer_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	~0u,			/* counter_mask */
-	25000000,               /* frequency */
-	"timer-counter",	/* name */
-	100,			/* quality */
-	&cntr			/* private reference */
+	.tc_get_timecount	= timer_get_timecount,
+	.tc_poll_pps		= NULL,
+	.tc_counter_mask	= ~0u,
+	.tc_frequency		= 25000000, /* Hz */
+	.tc_name		= "timer-counter",
+	.tc_quality		= 100,
+	.tc_priv		= &cntr,
 };
+
+
+/*
+ * ms-IIep counters tick every 4 CPU clocks @100MHz.
+ * counter is reset to 1 when new limit is written.
+ */
+#define	tmr_ustolimIIep(n)	((n) * 25 + 1)
+
+
+static int
+timermatch_msiiep(struct device *parent, struct cfdata *cf, void *aux)
+{
+	struct msiiep_attach_args *msa = aux;
+
+	return (strcmp(msa->msa_name, "timer") == 0);
+}
+
 
 /*
  * Attach system and processor counters (kernel hard and stat clocks)
@@ -201,6 +202,7 @@ timer_init_msiiep(void)
 	tc_init(&counter_timecounter);
 }
 
+
 /*
  * timer_get_timecount provide current counter value
  */
@@ -208,33 +210,25 @@ static u_int
 timer_get_timecount(struct timecounter *tc)
 {
 	struct counter *ctr = (struct counter *)tc->tc_priv;
-
-	u_int c, res, r;
+	u_int c, res;
 	int s;
 
 	s = splhigh();
 
-	/*
-	 * XXX
-	 *    consider re-reading until increment
-	 * is detected
-	 */
-	res = c = mspcic_read_4(pcic_sccr);
+	/* XXX: consider re-reading until increment is detected */
+	c = mspcic_read_4(pcic_sccr);
 
-	res &= 0x7FFFFFFF;
+	res = c & ~MSIIEP_COUNTER_LIMIT;
+	if (res != c)
+		res += ctr->limit;
 
-	if (c != res) {
-		r = ctr->limit;
-	} else {
-		r = 0;
-	}
-	
-	res += r + ctr->offset;
+	res += ctr->offset;
 
 	splx(s);
 
 	return res;
 }
+
 
 /*
  * Level 10 (clock) interrupts from system counter.
@@ -243,13 +237,25 @@ static int
 clockintr_msiiep(void *cap)
 {
 	volatile uint32_t junk;
-	
+
 	junk = mspcic_read_4(pcic_sclr); /* clear the interrupt */
-	if (timecounter->tc_get_timecount == timer_get_timecount) {
+
+	/*
+	 * XXX this needs to be fixed in a more general way
+	 * problem is that the kernel enables interrupts and THEN
+	 * sets up clocks. In between there's an opportunity to catch
+	 * a timer interrupt - if we call hardclock() at that point we'll
+	 * panic
+	 * so for now just bail when cold
+	 */
+	if (__predict_false(cold))
+		return 0;
+
+	if (timecounter->tc_get_timecount == timer_get_timecount)
 		cntr.offset += cntr.limit;
-	}
+
 	hardclock((struct clockframe *)cap);
-	return (1);
+	return 1;
 }
 
 
@@ -262,7 +268,7 @@ statintr_msiiep(void *cap)
 	struct clockframe *frame = cap;
 	u_long newint;
 	volatile uint32_t junk;
-	
+
 	junk = mspcic_read_4(pcic_pclr); /* clear the interrupt */
 
 	statclock(frame);
@@ -297,5 +303,5 @@ statintr_msiiep(void *cap)
 		}
 	}
 
-	return (1);
+	return 1;
 }

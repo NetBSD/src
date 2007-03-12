@@ -1,4 +1,4 @@
-/*	$NetBSD: zbusvar.h,v 1.6 2003/04/09 01:54:44 thorpej Exp $	*/
+/*	$NetBSD: zbusvar.h,v 1.6.56.1 2007/03/12 05:46:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -58,10 +58,10 @@ extern u_int		ZBUSAVAIL;	/* bytes of Zorro bus I/O space left */
 #if defined(__m68k__)
 #define ztwomap(pa) \
     ((volatile void *)((u_int)ZTWOROMADDR - ZTWOROMBASE + (u_int)(pa)))
-#define ztwopa(va) ((caddr_t)(ZTWOROMBASE + (u_int)(va) - (u_int)ZTWOROMADDR))
+#define ztwopa(va) ((void *)(ZTWOROMBASE + (u_int)(va) - (u_int)ZTWOROMADDR))
 #else
 #define ztwomap(pa) (volatile void *)(pa)
-#define ztwopa(va) (caddr_t)(va)
+#define ztwopa(va) (void *)(va)
 #endif
 
 /*

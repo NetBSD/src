@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.31 2005/12/11 12:16:21 christos Exp $ */
+/* $NetBSD: tlsb.c,v 1.31.26.1 2007/03/12 05:46:15 rmind Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.31 2005/12/11 12:16:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.31.26.1 2007/03/12 05:46:15 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.31 2005/12/11 12:16:21 christos Exp $");
 
 #include "locators.h"
 
-#define KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define KV(_addr)	((void *)ALPHA_PHYS_TO_K0SEG((_addr)))
 
 static int	tlsbmatch __P((struct device *, struct cfdata *, void *));
 static void	tlsbattach __P((struct device *, struct device *, void *));

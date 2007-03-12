@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.16 2007/02/09 21:55:24 ad Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.16.2.1 2007/03/12 05:52:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.16 2007/02/09 21:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.16.2.1 2007/03/12 05:52:42 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -68,7 +68,7 @@ pecoff_sys_open(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_open_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 #if 0
 	if (SCARG(uap, flags) & O_CREAT)
@@ -89,7 +89,7 @@ pecoff_sys_link(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_link_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #if 0
@@ -108,7 +108,7 @@ pecoff_sys_unlink(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_unlink_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -124,7 +124,7 @@ pecoff_sys_chdir(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_chdir_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -140,7 +140,7 @@ pecoff_sys_chmod(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_chmod_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -156,7 +156,7 @@ pecoff_sys_chown(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_chown_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -172,7 +172,7 @@ pecoff_sys_unmount(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_unmount_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -188,7 +188,7 @@ pecoff_sys_access(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_access_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -204,7 +204,7 @@ pecoff_sys_chflags(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_chflags_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -221,7 +221,7 @@ pecoff_compat_43_sys_stat(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_compat_43_sys_stat_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -237,7 +237,7 @@ pecoff_compat_43_sys_lstat(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_compat_43_sys_lstat_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -254,7 +254,7 @@ pecoff_sys_revoke(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_revoke_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -270,7 +270,7 @@ pecoff_sys_symlink(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_symlink_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 #if 0
@@ -289,7 +289,7 @@ pecoff_sys_readlink(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_readlink_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
@@ -305,7 +305,7 @@ pecoff_sys_execve(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_execve_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -321,7 +321,7 @@ pecoff_sys_chroot(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_chroot_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -337,7 +337,7 @@ pecoff_sys_rename(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_rename_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
 #if 0
@@ -357,7 +357,7 @@ pecoff_compat_43_sys_truncate(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_compat_43_sys_truncate_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -374,7 +374,7 @@ pecoff_sys_rmdir(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_rmdir_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -390,7 +390,7 @@ pecoff_sys_utimes(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_utimes_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -406,7 +406,7 @@ pecoff_sys_statfs(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_statfs_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -423,7 +423,7 @@ pecoff_compat_30_sys_getfh(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_compat_30_sys_getfh_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, fname));
 
@@ -439,7 +439,7 @@ pecoff_sys___getfh30(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___getfh30_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, fname));
 
@@ -456,7 +456,7 @@ pecoff_compat_12_sys_stat(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_compat_12_sys_stat_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -472,7 +472,7 @@ pecoff_compat_12_sys_lstat(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_compat_12_sys_lstat_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -488,7 +488,7 @@ pecoff_sys_pathconf(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_pathconf_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -504,7 +504,7 @@ pecoff_sys_truncate(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_truncate_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -520,7 +520,7 @@ pecoff_sys_undelete(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_undelete_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -536,7 +536,7 @@ pecoff_sys___posix_rename(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___posix_rename_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, from));
 #if 0
@@ -555,7 +555,7 @@ pecoff_sys_lchmod(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_lchmod_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
@@ -571,7 +571,7 @@ pecoff_sys_lchown(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_lchown_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
@@ -587,7 +587,7 @@ pecoff_sys_lutimes(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_lutimes_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
@@ -603,7 +603,7 @@ pecoff_sys___stat13(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___stat13_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -619,7 +619,7 @@ pecoff_sys___lstat13(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___lstat13_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
@@ -635,7 +635,7 @@ pecoff_sys___stat30(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___stat30_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -651,7 +651,7 @@ pecoff_sys___lstat30(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___lstat30_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
@@ -667,7 +667,7 @@ pecoff_sys___posix_chown(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___posix_chown_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
@@ -683,7 +683,7 @@ pecoff_sys___posix_lchown(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys___posix_lchown_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 
@@ -699,7 +699,7 @@ pecoff_sys_lchflags(l, v, retval)
 {
 	struct proc *p = l->l_proc;
 	struct pecoff_sys_lchflags_args *uap = v;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(l, &sg, SCARG(uap, path));
 

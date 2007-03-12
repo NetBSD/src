@@ -1,4 +1,4 @@
-/*	$NetBSD: fwmem.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: fwmem.h,v 1.2.28.1 2007/03/12 05:54:46 rmind Exp $	*/
 /*-
  * Copyright (C) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -35,13 +35,13 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwmem.h,v 1.8 2005/01/06 01:42:41 imp Exp $
  */
 
-struct fw_xfer *fwmem_read_quad(struct fw_device *, caddr_t, uint8_t,
+struct fw_xfer *fwmem_read_quad(struct fw_device *, void *, uint8_t,
 	uint16_t, uint32_t, void *, void (*)(struct fw_xfer *));
-struct fw_xfer *fwmem_write_quad(struct fw_device *, caddr_t, uint8_t,
+struct fw_xfer *fwmem_write_quad(struct fw_device *, void *, uint8_t,
 	uint16_t, uint32_t, void *, void (*)(struct fw_xfer *));
-struct fw_xfer *fwmem_read_block(struct fw_device *, caddr_t, uint8_t,
+struct fw_xfer *fwmem_read_block(struct fw_device *, void *, uint8_t,
 	uint16_t, uint32_t, int, void *, void (*)(struct fw_xfer *));
-struct fw_xfer *fwmem_write_block(struct fw_device *, caddr_t, uint8_t,
+struct fw_xfer *fwmem_write_block(struct fw_device *, void *, uint8_t,
 	uint16_t, uint32_t, int, void *, void (*)(struct fw_xfer *));
 
 #if defined(__FreeBSD__)

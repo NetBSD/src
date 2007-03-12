@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.9 2006/11/16 01:32:45 christos Exp $	*/
+/*	$NetBSD: mm.c,v 1.9.4.1 2007/03/12 05:53:05 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.9 2006/11/16 01:32:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.9.4.1 2007/03/12 05:53:05 rmind Exp $");
 
 /*
  * Memory special file
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.9 2006/11/16 01:32:45 christos Exp $");
 dev_type_ioctl(mmioctl);
 
 int
-mmioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+mmioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	switch (minor(dev)) {

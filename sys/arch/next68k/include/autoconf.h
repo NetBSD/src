@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.5 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.5.26.1 2007/03/12 05:49:43 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,6 +51,6 @@ void	setconf(void);
 
 /* machdep.c */
 void	cpu_dumpconf(void);
-int	badbaddr(caddr_t);
-int	badwaddr(caddr_t);
-int	badladdr(caddr_t);
+int	badbaddr(void *);
+int	badwaddr(void *);
+int	badladdr(void *);

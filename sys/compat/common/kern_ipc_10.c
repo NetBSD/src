@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.19 2007/02/09 21:55:16 ad Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.19.2.1 2007/03/12 05:51:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.19 2007/02/09 21:55:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.19.2.1 2007/03/12 05:51:53 rmind Exp $");
 
 #include "opt_sysv.h"
 
@@ -81,7 +81,7 @@ compat_10_sys_semsys(l, v, retval)
 		syscallarg(int) flag;
 	} */ semconfig_args;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	void *sg = stackgap_init(p, 0);
 
 	switch (SCARG(uap, which)) {
 	case 0:						/* __semctl() */

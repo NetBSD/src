@@ -1,4 +1,4 @@
-/*	$NetBSD: zkbd.c,v 1.2 2006/12/17 16:07:11 peter Exp $	*/
+/*	$NetBSD: zkbd.c,v 1.2.8.1 2007/03/12 05:51:50 rmind Exp $	*/
 /* $OpenBSD: zaurus_kbd.c,v 1.28 2005/12/21 20:36:03 deraadt Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.2 2006/12/17 16:07:11 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zkbd.c,v 1.2.8.1 2007/03/12 05:51:50 rmind Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "lcd.h"
@@ -138,7 +138,7 @@ int zkbd_modstate;
 
 static int	zkbd_enable(void *, int);
 static void	zkbd_set_leds(void *, int);
-static int	zkbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	zkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 static void	zkbd_rawrepeat(void *v);
 #endif
@@ -538,7 +538,7 @@ zkbd_set_leds(void *v, int on)
 }
 
 static int
-zkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+zkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct zkbd_softc *sc = (struct zkbd_softc *)v;

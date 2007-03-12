@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.14 2006/04/12 19:38:23 jmmv Exp $ */
+/* $NetBSD: lunafb.c,v 1.14.14.1 2007/03/12 05:48:42 rmind Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.14 2006/04/12 19:38:23 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.14.14.1 2007/03/12 05:48:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ static const struct wsscreen_list omfb_screenlist = {
 	sizeof(_omfb_scrlist) / sizeof(struct wsscreen_descr *), _omfb_scrlist
 };
 
-static int   omfbioctl __P((void *, void *, u_long, caddr_t, int,
+static int   omfbioctl __P((void *, void *, u_long, void *, int,
 		            struct lwp *));
 static paddr_t omfbmmap __P((void *, void *, off_t, int));
 static int   omfb_alloc_screen __P((void *, const struct wsscreen_descr *,
@@ -175,7 +175,7 @@ omfbmatch(parent, cf, aux)
 	if (strcmp(ma->ma_name, fb_cd.cd_name))
 		return (0);
 #if 0	/* XXX badaddr() bombs if no framebuffer is installed */
-	if (badaddr((caddr_t)ma->ma_addr, 4))
+	if (badaddr((void *)ma->ma_addr, 4))
 		return (0);
 #else
 	if (hwplanemask == 0)
@@ -235,7 +235,7 @@ omfbioctl(v, vs, cmd, data, flag, l)
 	void *v;
 	void *vs;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

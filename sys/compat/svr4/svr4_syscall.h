@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_syscall.h,v 1.75 2006/05/29 09:46:54 drochner Exp $ */
+/* $NetBSD: svr4_syscall.h,v 1.75.12.1 2007/03/12 05:52:46 rmind Exp $ */
 
 /*
  * System call numbers.
@@ -61,7 +61,7 @@
 /* syscall: "chown" ret: "int" args: "char *" "int" "int" */
 #define	SVR4_SYS_chown	16
 
-/* syscall: "break" ret: "int" args: "caddr_t" */
+/* syscall: "break" ret: "int" args: "void *" */
 #define	SVR4_SYS_break	17
 
 /* syscall: "stat" ret: "int" args: "const char *" "struct svr4_stat *" */
@@ -145,7 +145,7 @@
 
 #else
 #endif
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "caddr_t" */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "void *" */
 #define	SVR4_SYS_ioctl	54
 
 /* syscall: "utssys" ret: "int" args: "void *" "void *" "int" "void *" */
@@ -464,7 +464,7 @@
 /* syscall: "shutdown" ret: "int" args: "int" "int" */
 #define	SVR4_SYS_shutdown	236
 
-/* syscall: "recv" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "recv" ret: "int" args: "int" "void *" "int" "int" */
 #define	SVR4_SYS_recv	237
 
 /* syscall: "recvfrom" ret: "ssize_t" args: "int" "void *" "size_t" "int" "struct sockaddr *" "int *" */
@@ -473,7 +473,7 @@
 /* syscall: "recvmsg" ret: "ssize_t" args: "int" "struct msghdr *" "int" */
 #define	SVR4_SYS_recvmsg	239
 
-/* syscall: "send" ret: "int" args: "int" "caddr_t" "int" "int" */
+/* syscall: "send" ret: "int" args: "int" "void *" "int" "int" */
 #define	SVR4_SYS_send	240
 
 /* syscall: "sendmsg" ret: "ssize_t" args: "int" "const struct msghdr *" "int" */

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.21.2.1 2007/03/12 05:50:17 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.21.2.1 2007/03/12 05:50:17 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -213,7 +213,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 		copyargs[5] = tf->tf_caller.r7;
 		copyargs[6] = tf->tf_caller.r8;
 		copyargs[7] = tf->tf_caller.r9;
-		error = copyin((caddr_t)(uintptr_t)tf->tf_caller.r15,
+		error = copyin((void *)(uintptr_t)tf->tf_caller.r15,
 		    &copyargs[8], (nargs - 8) * sizeof(register_t));
 		if (error)
 			goto bad;
@@ -306,7 +306,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 		copyargs[5] = tf->tf_caller.r7;
 		copyargs[6] = tf->tf_caller.r8;
 		copyargs[7] = tf->tf_caller.r9;
-		error = copyin((caddr_t)(uintptr_t)tf->tf_caller.r15,
+		error = copyin((void *)(uintptr_t)tf->tf_caller.r15,
 		    &copyargs[8], (nargs - 8) * sizeof(register_t));
 		if (error)
 			goto bad;

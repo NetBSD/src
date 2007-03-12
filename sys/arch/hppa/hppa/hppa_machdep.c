@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.7 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.7.2.1 2007/03/12 05:48:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.7 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.7.2.1 2007/03/12 05:48:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 #endif
 
 	ras_pc = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t)(gr[_REG_PCOQH] & ~HPPA_PC_PRIV_MASK));
+	    (void *)(gr[_REG_PCOQH] & ~HPPA_PC_PRIV_MASK));
 	if (ras_pc != -1) {
 		ras_pc |= HPPA_PC_PRIV_USER;
 		gr[_REG_PCOQH] = ras_pc;
@@ -269,7 +269,7 @@ hppa_ras(struct lwp *l)
 
 	p = l->l_proc;
 	tf = l->l_md.md_regs;
-	rasaddr = (intptr_t)ras_lookup(p, (caddr_t)tf->tf_iioq_head);
+	rasaddr = (intptr_t)ras_lookup(p, (void *)tf->tf_iioq_head);
 	if (rasaddr != -1) {
 		rasaddr |= HPPA_PC_PRIV_USER;
 		tf->tf_iioq_head = rasaddr;

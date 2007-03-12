@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.8 2006/11/16 16:10:43 jdolecek Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.8.4.1 2007/03/12 05:54:45 rmind Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -422,7 +422,7 @@ readloop:
 			err = EIO;
 			return err;
 		}
-		err = uiomove((caddr_t)fp,
+		err = uiomove((void *)fp,
 			fp->mode.stream.len + sizeof(uint32_t), uio);
 		ir->queued ++;
 		if(ir->queued >= ir->bnpacket){
@@ -449,10 +449,10 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	int err;
 
 	bzero(&pkt, sizeof(struct fw_pkt));
-	if ((err = uiomove((caddr_t)&pkt, sizeof(uint32_t), uio)))
+	if ((err = uiomove((void *)&pkt, sizeof(uint32_t), uio)))
 		return (err);
 	tinfo = &d->fc->tcode[pkt.mode.hdr.tcode];
-	if ((err = uiomove((caddr_t)&pkt + sizeof(uint32_t),
+	if ((err = uiomove((char *)&pkt + sizeof(uint32_t),
 	    tinfo->hdr_len - sizeof(uint32_t), uio)))
 		return (err);
 
@@ -463,7 +463,7 @@ fw_write_async(struct fw_drv1 *d, struct uio *uio, int ioflag)
 	bcopy(&pkt, &xfer->send.hdr, sizeof(struct fw_pkt));
 	xfer->send.pay_len = uio->uio_resid;
 	if (uio->uio_resid > 0) {
-		if ((err = uiomove((caddr_t)&xfer->send.payload[0],
+		if ((err = uiomove((void *)&xfer->send.payload[0],
 		    uio->uio_resid, uio)))
 			goto out;
 	}
@@ -538,8 +538,8 @@ isoloop:
 	}
 	fp = (struct fw_pkt *)fwdma_v_addr(it->buf,
 			it->stproc->poffset + it->queued);
-	err = uiomove((caddr_t)fp, sizeof(struct fw_isohdr), uio);
-	err = uiomove((caddr_t)fp->mode.stream.payload,
+	err = uiomove((void *)fp, sizeof(struct fw_isohdr), uio);
+	err = uiomove((void *)fp->mode.stream.payload,
 				fp->mode.stream.len, uio);
 	it->queued ++;
 	if (it->queued >= it->bnpacket) {

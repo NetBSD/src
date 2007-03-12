@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.8 2006/06/25 17:40:14 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.8.10.1 2007/03/12 05:47:59 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -164,7 +164,7 @@ sdgetinfo(struct sd_softc *ss)
 	int err, savepart;
 	size_t i;
 
-	memset((caddr_t)lp, 0, sizeof *lp);
+	memset((void *)lp, 0, sizeof *lp);
 	lp->d_secsize = (DEV_BSIZE << ss->sc_blkshift);
 
 	/* Disklabel is always from RAW_PART. */

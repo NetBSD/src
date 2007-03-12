@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.81.2.1 2007/02/27 16:51:31 yamt Exp $
+# $NetBSD: ALL,v 1.81.2.2 2007/03/12 05:48:19 rmind Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.81.2.1 $"
+#ident 		"ALL-$Revision: 1.81.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -173,6 +173,7 @@ file-system	PTYFS		# /dev/ptm support
 file-system	TMPFS		# Efficient memory file-system
 file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 file-system	PUFFS		# experimental - Userspace file system support
+file-system	HFS		# experimental - Apple HFS+ file system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -1262,6 +1263,7 @@ ubt* at uhub? port ? configuration ? interface ?
 
 # Bluetooth Device Hub
 bthub* at bt3c?
+bthub* at btuart?
 bthub* at ubt?
 
 # Bluetooth HID support
@@ -1387,6 +1389,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 options 	RND_COM			# use "com" randomness as well (BROKEN)
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.

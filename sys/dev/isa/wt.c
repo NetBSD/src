@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.74 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: wt.c,v 1.74.4.1 2007/03/12 05:54:51 rmind Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.74 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.74.4.1 2007/03/12 05:54:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -330,7 +330,7 @@ ok:
 }
 
 static int
-wtdump(dev_t dev, daddr_t blkno, caddr_t va,
+wtdump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 
@@ -485,7 +485,7 @@ done:
  * ioctl(int fd, WTQICMD, int qicop)		-- do QIC op
  */
 static int
-wtioctl(dev_t dev, unsigned long cmd, caddr_t addr, int flag,
+wtioctl(dev_t dev, unsigned long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
@@ -697,7 +697,7 @@ wtintr(void *arg)
 			   "rewind busy?\n" : "rewind finished\n"));
 		sc->flags &= ~TPREW;		/* rewind finished */
 		wtsense(sc, 1, TP_WRP);
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 		return 1;
 	}
 
@@ -711,7 +711,7 @@ wtintr(void *arg)
 		if ((x & sc->regs.NOEXCEP) == 0)	/* operation failed */
 			wtsense(sc, 1, (sc->flags & TPRMARK) ? TP_WRP : 0);
 		sc->flags &= ~(TPRMARK | TPWMARK); /* operation finished */
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 		return 1;
 	}
 
@@ -747,7 +747,7 @@ wtintr(void *arg)
 			sc->flags |= TPVOL;	/* end of file */
 		else
 			sc->flags |= TPEXCEP;	/* i/o error */
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 		return 1;
 	}
 
@@ -761,7 +761,7 @@ wtintr(void *arg)
 	if (sc->dmacount > sc->dmatotal)	/* short last block */
 		sc->dmacount = sc->dmatotal;
 	/* Wake up user level. */
-	wakeup((caddr_t)sc);
+	wakeup((void *)sc);
 	WTDBPRINT(("i/o finished, %d\n", sc->dmacount));
 	return 1;
 }
@@ -812,7 +812,7 @@ static int
 wtwritefm(struct wt_softc *sc)
 {
 
-	tsleep((caddr_t)wtwritefm, WTPRI, "wtwfm", hz);
+	tsleep((void *)wtwritefm, WTPRI, "wtwfm", hz);
 	sc->flags &= ~(TPRO | TPWO);
 	if (!wtcmd(sc, QIC_WRITEFM)) {
 		wtsense(sc, 1, 0);
@@ -852,7 +852,7 @@ wtsoft(struct wt_softc *sc, int mask, int bits)
 		x = bus_space_read_1(iot, ioh, sc->regs.STATPORT);
 		if ((x & mask) != bits)
 			return x;
-		tsleep((caddr_t)wtsoft, WTPRI, "wtsoft", 1);
+		tsleep((void *)wtsoft, WTPRI, "wtsoft", 1);
 	}
 }
 
@@ -904,7 +904,7 @@ wtwait(struct wt_softc *sc, int catch, const char *msg)
 
 	WTDBPRINT(("wtwait() `%s'\n", msg));
 	while (sc->flags & (TPACTIVE | TPREW | TPRMARK | TPWMARK))
-		if ((error = tsleep((caddr_t)sc, WTPRI | catch, msg, 0)) != 0)
+		if ((error = tsleep((void *)sc, WTPRI | catch, msg, 0)) != 0)
 			return error;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.19 2006/11/16 01:32:38 christos Exp $ */
+/* $NetBSD: vesafb.c,v 1.19.4.1 2007/03/12 05:48:18 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.19 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.19.4.1 2007/03/12 05:48:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ struct wsscreen_descr vesafb_stdscreen = {
 	NULL,	/* modecookie */
 };
 
-static int	vesafb_ioctl(void *, void *, u_long, caddr_t, int,
+static int	vesafb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	vesafb_mmap(void *, void *, off_t, int);
 
@@ -317,7 +317,7 @@ out:
 }
 
 static int
-vesafb_ioctl(void *v, void *vs, u_long cmd, caddr_t data,
+vesafb_ioctl(void *v, void *vs, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	struct vcons_data *vd;

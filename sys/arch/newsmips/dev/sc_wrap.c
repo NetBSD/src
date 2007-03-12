@@ -1,11 +1,11 @@
-/*	$NetBSD: sc_wrap.c,v 1.28.26.1 2007/02/27 16:52:12 yamt Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.28.26.2 2007/03/12 05:49:41 rmind Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.28.26.1 2007/02/27 16:52:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sc_wrap.c,v 1.28.26.2 2007/03/12 05:49:41 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -428,7 +428,7 @@ sc_intr(void *v)
  */
 void
 scop_rsense(int intr, struct scsi *sc_param, int lun, int ie, int count,
-    caddr_t param)
+    void *param)
 {
 
 	memset(sc_param, 0, sizeof(struct scsi));

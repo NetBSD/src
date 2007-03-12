@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.52 2007/02/15 18:33:26 reinoud Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.52.2.1 2007/03/12 05:47:20 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.52 2007/02/15 18:33:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.52.2.1 2007/03/12 05:47:20 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -148,7 +148,7 @@ volatile u_char	*fdio_addr;
  * Interface to the pseudo-DMA handler
  */
 void	fddma_intr(void);
-caddr_t	fddmaaddr  = NULL;
+void *	fddmaaddr  = NULL;
 int	fddmalen   = 0;
 
 extern void	mfp_hdfd_nf __P((void)), mfp_hdfd_fifo __P((void));
@@ -328,6 +328,7 @@ fdcprobe(parent, cfp, aux)
 {
 	static int	fdc_matched = 0;
 	bus_space_tag_t mb_tag;
+	bus_space_handle_t handle;
 
 	/* Match only once */
 	if(strcmp("fdc", aux) || fdc_matched)
@@ -339,12 +340,12 @@ fdcprobe(parent, cfp, aux)
 	if ((mb_tag = mb_alloc_bus_space_tag()) == NULL)
 		return 0;
 
-	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0,
-				(caddr_t*)(void *)&fdio_addr)) {
+	if (bus_space_map(mb_tag, FD_IOBASE, FD_IOSIZE, 0, &handle)) {
 		printf("fdcprobe: cannot map io-area\n");
 		mb_free_bus_space_tag(mb_tag);
 		return (0);
 	}
+	fdio_addr = bus_space_vaddr(mb_tag, handle);	/* XXX */
 
 #ifdef FD_DEBUG
 	printf("fdcprobe: I/O mapping done va: %p\n", fdio_addr);
@@ -365,8 +366,7 @@ fdcprobe(parent, cfp, aux)
 
  out:
 	if (fdc_matched == 0) {
-		bus_space_unmap(mb_tag, (caddr_t)__UNVOLATILE(fdio_addr),
-		    FD_IOSIZE);
+		bus_space_unmap(mb_tag, handle, FD_IOSIZE);
 		mb_free_bus_space_tag(mb_tag);
 	}
 
@@ -1090,7 +1090,7 @@ loop:
 		/*
 		 * Setup pseudo-DMA address & count
 		 */
-		fddmaaddr = bp->b_data + fd->sc_skip;
+		fddmaaddr = (char *)bp->b_data + fd->sc_skip;
 		fddmalen  = fd->sc_nbytes;
 
 		wrt_fdc_reg(fdctl, type->rate);
@@ -1335,7 +1335,7 @@ int
 fdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct lwp *l;
 {
@@ -1551,7 +1551,7 @@ fdformat(dev, finfo, p)
 		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
 
 	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
-	bp->b_data = (caddr_t)finfo;
+	bp->b_data = (void *)finfo;
 
 #ifdef DEBUG
 	printf("fdformat: blkno %x count %lx\n", bp->b_blkno, bp->b_bcount);
@@ -1563,7 +1563,7 @@ fdformat(dev, finfo, p)
 	/* ...and wait for it to complete */
 	s = splbio();
 	while(!(bp->b_flags & B_DONE)) {
-		rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 20 * hz);
+		rv = tsleep((void *)bp, PRIBIO, "fdform", 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}

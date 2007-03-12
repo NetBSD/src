@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.69 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.69.2.1 2007/03/12 05:50:42 rmind Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct module_info {
 
 	void (*get_syncflt)(void);
 	int  (*get_asyncflt)(u_int *, u_int *);
-	void (*cache_flush)(caddr_t, u_int);
+	void (*cache_flush)(void *, u_int);
 	void (*sp_vcache_flush_page)(int, int);
 	void (*ft_vcache_flush_page)(int, int);
 	void (*sp_vcache_flush_segment)(int, int, int);
@@ -235,7 +235,7 @@ struct cpu_info {
 	 * all processor modules.
 	 * The `ft_' versions are fast trap cache flush handlers.
 	 */
-	void	(*cache_flush)(caddr_t, u_int);
+	void	(*cache_flush)(void *, u_int);
 	void	(*vcache_flush_page)(int, int);
 	void	(*sp_vcache_flush_page)(int, int);
 	void	(*ft_vcache_flush_page)(int, int);
@@ -262,7 +262,7 @@ struct cpu_info {
 	void	(*copy_page)(paddr_t, paddr_t);
 
 	/* Virtual addresses for use in pmap copy_page/zero_page */
-	caddr_t	vpage[2];
+	void *	vpage[2];
 	int	*vpage_pte[2];		/* pte location of vpage[] */
 
 	void	(*cache_enable)(void);

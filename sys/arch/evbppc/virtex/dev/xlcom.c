@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.1 2006/12/02 22:18:47 freza Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.1.8.1 2007/03/12 05:47:40 rmind Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -32,7 +32,7 @@
 /* TODO: kgdb support */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.1 2006/12/02 22:18:47 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.1.8.1 2007/03/12 05:47:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -485,7 +485,7 @@ xlcom_tty(dev_t dev)
 }
 
 static int
-xlcom_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+xlcom_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct xlcom_softc 	*sc;
 	struct tty 		*tp;

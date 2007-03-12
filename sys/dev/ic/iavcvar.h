@@ -1,4 +1,4 @@
-/*	$NetBSD: iavcvar.h,v 1.3 2005/12/11 12:21:27 christos Exp $	*/
+/*	$NetBSD: iavcvar.h,v 1.3.26.1 2007/03/12 05:53:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -72,8 +72,8 @@ typedef struct iavc_softc {
 
     u_int32_t		sc_csr;
 
-    caddr_t		sc_sendbuf;
-    caddr_t		sc_recvbuf;
+    void *		sc_sendbuf;
+    void *		sc_recvbuf;
 
     u_int32_t		sc_recv1;
 

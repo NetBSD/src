@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.52 2006/03/29 04:16:47 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.52.14.1 2007/03/12 05:50:28 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.52 2006/03/29 04:16:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwo.c,v 1.52.14.1 2007/03/12 05:50:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ cgtwoattach(struct device *parent, struct device *self, void *aux)
 				  &bt, &bh, &resc) != 0)
 			panic("cgtwo: vme_map pixels");
 
-		fb->fb_pixels = (caddr_t)bh; /* XXX */
+		fb->fb_pixels = (void *)bh; /* XXX */
 		printf(" (console)\n");
 #ifdef RASTERCONSOLE
 		fbrcons_init(fb);
@@ -231,7 +231,7 @@ cgtwoopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-cgtwoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+cgtwoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 	register struct fbgattr *fba;

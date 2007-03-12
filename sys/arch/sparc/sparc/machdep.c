@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.267.2.1 2007/02/27 16:53:11 yamt Exp $ */
+/*	$NetBSD: machdep.c,v 1.267.2.2 2007/03/12 05:50:43 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267.2.1 2007/02/27 16:53:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267.2.2 2007/03/12 05:50:43 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -202,7 +202,7 @@ cpu_startup(void)
 	/*
 	 * Re-initialize the message buffer.
 	 */
-	initmsgbuf((caddr_t)MSGBUF_VA, size);
+	initmsgbuf((void *)MSGBUF_VA, size);
 #else /* MSGBUFSIZE */
 	{
 	struct pglist mlist;
@@ -254,7 +254,7 @@ cpu_startup(void)
 	/*
 	 * Re-initialize the message buffer.
 	 */
-	initmsgbuf((caddr_t)va0, size);
+	initmsgbuf((void *)va0, size);
 	}
 #endif /* MSGBUFSIZE */
 
@@ -395,7 +395,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
-	bzero((caddr_t)tf, sizeof *tf);
+	bzero((void *)tf, sizeof *tf);
 	tf->tf_psr = psr;
 	tf->tf_global[1] = (int)l->l_proc->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
@@ -520,7 +520,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (onstack)
 		fp = (struct sigframe_sigcontext *)
-			((caddr_t)l->l_sigstk.ss_sp +
+			((char *)l->l_sigstk.ss_sp +
 			 l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe_sigcontext *)oldsp;
@@ -576,7 +576,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	mutex_exit(&p->p_smutex);
 	newsp = (int)fp - sizeof(struct rwindow);
 	write_user_windows();
-	error = (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) ||
+	error = (rwindow_save(l) || copyout((void *)&sf, (void *)fp, sizeof sf) ||
 	    suword(&((struct rwindow *)newsp)->rw_in[6], oldsp));
 	mutex_enter(&p->p_smutex);
 
@@ -672,7 +672,7 @@ void sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (onstack)
 		fp = (struct sigframe *)
-			((caddr_t)l->l_sigstk.ss_sp +
+			((char *)l->l_sigstk.ss_sp +
 				  l->l_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)oldsp;
@@ -1161,12 +1161,12 @@ cpu_dumpconf(void)
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
 static vaddr_t dumpspace;
 
-caddr_t
-reserve_dumppages(caddr_t p)
+void *
+reserve_dumppages(void *p)
 {
 
 	dumpspace = (vaddr_t)p;
-	return (p + BYTES_PER_DUMP);
+	return ((char *)p + BYTES_PER_DUMP);
 }
 
 /*
@@ -1178,7 +1178,7 @@ dumpsys(void)
 	const struct bdevsw *bdev;
 	int psize;
 	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error = 0;
 	struct memarr *mp;
 	int nmem;
@@ -1244,7 +1244,7 @@ dumpsys(void)
 			(void) pmap_map(dumpspace, maddr, maddr + n,
 					VM_PROT_READ);
 			error = (*dump)(dumpdev, blkno,
-					(caddr_t)dumpspace, (int)n);
+					(void *)dumpspace, (int)n);
 			pmap_kremove(dumpspace, n);
 			pmap_update(pmap_kernel());
 			if (error)
@@ -1371,7 +1371,7 @@ oldmon_w_cmd(u_long va, char *ar)
 #endif /* SUN4 */
 
 int
-ldcontrolb(caddr_t addr)
+ldcontrolb(void *addr)
 {
 	struct pcb *xpcb;
 	extern struct user *proc0paddr;
@@ -1392,7 +1392,7 @@ ldcontrolb(caddr_t addr)
 
 	saveonfault = (u_long)xpcb->pcb_onfault;
         res = xldcontrolb(addr, xpcb);
-	xpcb->pcb_onfault = (caddr_t)saveonfault;
+	xpcb->pcb_onfault = (void *)saveonfault;
 
 	splx(s);
 	return (res);
@@ -1643,7 +1643,7 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
  * bus-specific DMA memory unmapping functions.
  */
 void
-_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
+_bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 
 #ifdef DIAGNOSTIC
@@ -1744,7 +1744,7 @@ int	sun4_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 				bus_dma_segment_t *, int, bus_size_t, int);
 void	sun4_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 int	sun4_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *,
-				int, size_t, caddr_t *, int);
+				int, size_t, void **, int);
 
 /*
  * sun4/sun4c: load DMA map with a linear buffer.
@@ -1974,7 +1974,7 @@ sun4_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
  */
 int
 sun4_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
-		size_t size, caddr_t *kvap, int flags)
+		size_t size, void **kvap, int flags)
 {
 	struct vm_page *m;
 	vaddr_t va;
@@ -1992,7 +1992,7 @@ sun4_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		return (ENOMEM);
 
 	segs[0]._ds_va = va;
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	mlist = segs[0]._ds_mlist;
 	TAILQ_FOREACH(m, mlist, pageq) {
@@ -2227,14 +2227,14 @@ bus_space_probe(bus_space_tag_t tag, bus_addr_t paddr, bus_size_t size,
 		int (*callback)(void *, void *), void *arg)
 {
 	bus_space_handle_t bh;
-	caddr_t tmp;
+	void *tmp;
 	int result;
 
 	if (bus_space_map2(tag, paddr, size, flags, TMPMAP_VA, &bh) != 0)
 		return (0);
 
-	tmp = (caddr_t)bh;
-	result = (probeget(tmp + offset, size) != -1);
+	tmp = (void *)bh;
+	result = (probeget((char *)tmp + offset, size) != -1);
 	if (result && callback != NULL)
 		result = (*callback)(tmp, arg);
 	bus_space_unmap(tag, bh, size);

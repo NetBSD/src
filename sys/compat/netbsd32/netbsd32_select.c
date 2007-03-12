@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.9 2005/12/11 12:20:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.9.26.1 2007/03/12 05:52:32 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.9 2005/12/11 12:20:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.9.26.1 2007/03/12 05:52:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ netbsd32_select(struct lwp *l, void *v, register_t *retval)
 
 	if (SCARG(uap, tv)) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, tv)),
-		    (caddr_t)&tv32, sizeof(tv32))) != 0)
+		    (void *)&tv32, sizeof(tv32))) != 0)
 			return error;
 		netbsd32_to_timeval(&tv32, &atv);
 		tv = &atv;
@@ -101,7 +101,7 @@ netbsd32_pselect(l, v, retval)
 
 	if (SCARG(uap, ts)) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)),
-		    (caddr_t)&ts32, sizeof(ts32))) != 0)
+		    (void *)&ts32, sizeof(ts32))) != 0)
 			return error;
 		netbsd32_to_timespec(&ts32, &ts);
 		atv.tv_sec = ts.tv_sec;
@@ -110,7 +110,7 @@ netbsd32_pselect(l, v, retval)
 	}
 	if (SCARG(uap, mask)) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, mask)),
-		    (caddr_t)&amask, sizeof(amask))) != 0)
+		    (void *)&amask, sizeof(amask))) != 0)
 			return error;
 		mask = &amask;
 	}
@@ -140,7 +140,7 @@ netbsd32_pollts(l, v, retval)
 
 	if (SCARG(uap, ts)) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, ts)),
-		    (caddr_t)&ts32, sizeof(ts32))) != 0)
+		    (void *)&ts32, sizeof(ts32))) != 0)
 			return error;
 		netbsd32_to_timespec(&ts32, &ts);
 		atv.tv_sec = ts.tv_sec;
@@ -149,7 +149,7 @@ netbsd32_pollts(l, v, retval)
 	}
 	if (SCARG(uap, mask)) {
 		if ((error = copyin(NETBSD32PTR64(SCARG(uap, mask)),
-		    (caddr_t)&amask, sizeof(amask))) != 0)
+		    (void *)&amask, sizeof(amask))) != 0)
 			return error;
 		mask = &amask;
 	}

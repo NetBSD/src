@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2007/02/15 15:14:57 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.39.2.1 2007/03/12 05:49:52 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 2007/02/15 15:14:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39.2.1 2007/03/12 05:49:52 rmind Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 2007/02/15 15:14:57 ad Exp $");
 /* These definitions should probably be somewhere else			XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
 #define	NARGREG		8		/* 8 args are in registers */
-#define	MOREARGS(sp)	((caddr_t)((int)(sp) + 8)) /* more args go here */
+#define	MOREARGS(sp)	((void *)((int)(sp) + 8)) /* more args go here */
 
 static int fix_unaligned __P((struct lwp *l, struct trapframe *frame));
 

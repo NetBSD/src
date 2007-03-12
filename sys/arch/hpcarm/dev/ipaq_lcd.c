@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_lcd.c,v 1.15 2006/09/28 09:03:46 rjs Exp $	*/
+/*	$NetBSD: ipaq_lcd.c,v 1.15.4.1 2007/03/12 05:48:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.15 2006/09/28 09:03:46 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipaq_lcd.c,v 1.15.4.1 2007/03/12 05:48:03 rmind Exp $");
 
 #define IPAQ_LCD_DEBUG
 
@@ -78,7 +78,7 @@ static int	ipaqlcd_match(struct device *, struct cfdata *, void *);
 static void	ipaqlcd_attach(struct device *, struct device *, void *);
 static void	ipaqlcd_init(struct ipaqlcd_softc *);
 static int	ipaqlcd_fbinit(struct ipaqlcd_softc *);
-static int	ipaqlcd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+static int	ipaqlcd_ioctl(void *, u_long, void *, int, struct lwp *);
 static paddr_t	ipaqlcd_mmap(void *, off_t, int);
 
 #if defined __mips__ || defined __sh__ || defined __arm__
@@ -271,7 +271,7 @@ ipaqlcd_fbinit(struct ipaqlcd_softc *sc)
 }
 
 int
-ipaqlcd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ipaqlcd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ipaqlcd_softc *sc = (struct ipaqlcd_softc *)v;
 	struct hpcfb_fbconf *fbconf;

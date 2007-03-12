@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.25 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: view.c,v 1.25.26.1 2007/03/12 05:46:45 rmind Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25.26.1 2007/03/12 05:46:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ viewclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 /*ARGSUSED*/
 int
-viewioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+viewioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct view_softc *vu;
 	bmap_t *bm;

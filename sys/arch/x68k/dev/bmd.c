@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.5 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: bmd.c,v 1.5.26.1 2007/03/12 05:51:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.5 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.5.26.1 2007/03/12 05:51:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ bmdstrategy(struct buf *bp)
 	struct bmd_softc *sc;
 	int offset, disksize, resid;
 	int page, pg_offset, pg_resid;
-	caddr_t data;
+	void *data;
 
 	if (unit >= bmd_cd.cd_ndevs) {
 		bp->b_error = ENXIO;
@@ -308,7 +308,7 @@ bmdstrategy(struct buf *bp)
 				pg_offset, data, pg_resid);
 		}
 
-		data += pg_resid;
+		data = (char *)data + pg_resid;
 		offset += pg_resid;
 		resid -= pg_resid;
 		bp->b_resid -= pg_resid;
@@ -326,7 +326,7 @@ bmdstrategy(struct buf *bp)
 }
 
 int
-bmdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+bmdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int unit = BMD_UNIT(dev);
 	struct bmd_softc *sc;
@@ -364,7 +364,7 @@ bmdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-bmddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+bmddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 
 	DPRINTF(("%s%d ", __FUNCTION__, BMD_UNIT(dev)));

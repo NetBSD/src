@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.41 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.41.4.1 2007/03/12 05:53:45 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.41 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.41.4.1 2007/03/12 05:53:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ siop_common_attach(sc)
 			return error;
 		}
 		error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, PAGE_SIZE,
-		    (caddr_t *)&sc->sc_script,
+		    (void **)&sc->sc_script,
 		    BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 		if (error) {
 			aprint_error("%s: unable to map script DMA memory, "
@@ -708,7 +708,7 @@ siop_minphys(bp)
 }
 
 int
-siop_ioctl(struct scsipi_channel *chan, u_long cmd, caddr_t arg,
+siop_ioctl(struct scsipi_channel *chan, u_long cmd, void *arg,
     int flag, struct proc *p)
 {
 	struct siop_common_softc *sc = (void *)chan->chan_adapter->adapt_dev;

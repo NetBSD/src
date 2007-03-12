@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.c,v 1.25 2007/02/09 21:55:13 ad Exp $	 */
+/*	$NetBSD: svr4_32_machdep.c,v 1.25.2.1 2007/03/12 05:50:50 rmind Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.25 2007/02/09 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.25.2.1 2007/03/12 05:50:50 rmind Exp $");
 
 #ifndef _LKM
 #include "opt_ddb.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_machdep.c,v 1.25 2007/02/09 21:55:13 ad Exp 
 #include <machine/vmparam.h>
 #include <machine/svr4_machdep.h>
 
-static void svr4_32_getsiginfo(union svr4_32_siginfo *, int, u_long, caddr_t);
+static void svr4_32_getsiginfo(union svr4_32_siginfo *, int, u_long, void *);
 
 void
 svr4_32_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
@@ -334,7 +334,7 @@ svr4_32_setmcontext(struct lwp *l, struct svr4_32_mcontext *mc,
  */
 static void
 svr4_32_getsiginfo(union svr4_32_siginfo *si, int sig, u_long code,
-	caddr_t addr)
+	void *addr)
 {
 	si->si_signo = native_to_svr4_signo[sig];
 	si->si_errno = 0;
@@ -483,7 +483,7 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Allocate space for the signal handler context.
 	 */
 	if (onstack)
-		fp = (struct svr4_32_sigframe *)((caddr_t)l->l_sigstk.ss_sp +
+		fp = (struct svr4_32_sigframe *)((char *)l->l_sigstk.ss_sp +
 						l->l_sigstk.ss_size);
 	else
 		fp = (struct svr4_32_sigframe *)oldsp;
@@ -503,7 +503,7 @@ svr4_32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * Build the argument list for the signal handler.
 	 */
 	svr4_32_getsiginfo(&frame.sf_si, sig, ksi->ksi_trap,
-	    (caddr_t)(u_long)tf->tf_pc);
+	    (void *)(u_long)tf->tf_pc);
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_signum = frame.sf_si.si_signo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.26 2006/03/01 12:38:12 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.26.20.1 2007/03/12 05:51:15 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26 2006/03/01 12:38:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.26.20.1 2007/03/12 05:51:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	int seg, i, error, first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
-	caddr_t addr;
+	void *addr;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
@@ -292,7 +292,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		 * until we have exhausted the residual count.
 		 */
 		minlen = resid < iov[i].iov_len ? resid : iov[i].iov_len;
-		addr = (caddr_t)iov[i].iov_base;
+		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
 		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
@@ -435,7 +435,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	bus_dma_segment_t *segs;
 	int nsegs;
 	size_t size;
-	caddr_t *kvap;
+	void **kvap;
 	int flags;
 {
 	vaddr_t va;
@@ -451,7 +451,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	 * in the beginning of kernel virtual memory.
 	 */
 	if (nsegs == 1) {
-		*kvap = (caddr_t)(segs[0].ds_addr | KERNBASE);
+		*kvap = (void *)(segs[0].ds_addr | KERNBASE);
 		/*
 		 * KA43 (3100/m76) must have its DMA-safe memory accessed
 		 * through DIAGMEM. Remap it here.
@@ -469,7 +469,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 	if (va == 0)
 		return (ENOMEM);
 
-	*kvap = (caddr_t)va;
+	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
 		for (addr = segs[curseg].ds_addr;
@@ -495,7 +495,7 @@ _bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 void
 _bus_dmamem_unmap(t, kva, size)
 	bus_dma_tag_t t;
-	caddr_t kva;
+	void *kva;
 	size_t size;
 {
 
@@ -508,7 +508,7 @@ _bus_dmamem_unmap(t, kva, size)
 #endif	/* DIAGNOSTIC */
 
 	/* Avoid free'ing if not mapped */
-	if (kva < (caddr_t)virtual_avail)
+	if (kva < (void *)virtual_avail)
 		return;
 
 	size = round_page(size);

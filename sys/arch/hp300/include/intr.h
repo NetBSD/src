@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2007/02/16 02:53:46 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.2.1 2007/03/12 05:47:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -69,20 +69,6 @@
 #define	IPL_LOCK	IPL_HIGH
 #define	NIPL		12
 
-#define	SI_SOFTSERIAL	0	/* serial software interrupts */
-#define	SI_SOFTNET	1	/* network software interrupts */
-#define	SI_SOFTCLOCK	2	/* clock software interrupts */
-#define	SI_SOFT		3	/* other software interrupts */
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"serial",							\
-	"net",								\
-	"clock",							\
-	"misc",								\
-}
-
 /*
  * Convert PSL values to m68k CPU IPLs and vice-versa.
  * Note: CPU IPL values are different from IPL_* used by splraiseipl().
@@ -90,13 +76,11 @@
 #define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
-#ifdef _KERNEL
-
 extern u_short hp300_ipl2psl[];
 
 typedef int ipl_t;
 typedef struct {
-	int _psl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
@@ -150,42 +134,7 @@ struct hp300_intr {
 	struct evcnt hi_evcnt;
 };
 
-/*
- * Software Interrupts.
- */
-
-struct hp300_soft_intrhand {
-	LIST_ENTRY(hp300_soft_intrhand) sih_q;
-	struct hp300_soft_intr *sih_intrhead;
-	void (*sih_fn)(void *);
-	void *sih_arg;
-	volatile int sih_pending;
-};
-
-struct hp300_soft_intr {
-	LIST_HEAD(, hp300_soft_intrhand) hsi_q;
-	struct evcnt hsi_evcnt;
-	uint8_t hsi_ipl;
-};
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(void);
-
-extern volatile uint8_t ssir;
-#define setsoft(x)	ssir |= (1<<(x))
-
-#define softintr_schedule(arg)				\
-do {							\
-	struct hp300_soft_intrhand *__sih = (arg);	\
-	__sih->sih_pending = 1;				\
-	setsoft(__sih->sih_intrhead->hsi_ipl);		\
-} while (0)
-
-/* XXX For legacy software interrupts */
-extern struct hp300_soft_intrhand *softnet_intrhand;
-#define setsoftnet()	softintr_schedule(softnet_intrhand)
+#include <m68k/softintr.h>
 
 /* locore.s */
 int	spl0(void);
@@ -196,8 +145,5 @@ void	*intr_establish(int (*)(void *), void *, int, int);
 void	intr_disestablish(void *);
 void	intr_dispatch(int);
 void	intr_printlevels(void);
-void	netintr(void);
-
-#endif /* _KERNEL */
 
 #endif /* _HP300_INTR_H_ */

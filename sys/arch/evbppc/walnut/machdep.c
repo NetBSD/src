@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:16 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.2 2007/03/12 05:47:40 rmind Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.1 2007/02/27 16:50:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33.2.2 2007/03/12 05:47:40 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -385,9 +385,9 @@ cpu_startup(void)
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa(msgbuf_vaddr + i * PAGE_SIZE,
 		    msgbuf_paddr + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE);
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf_vaddr, round_page(MSGBUFSIZE));
 #else
-	initmsgbuf((caddr_t)msgbuf, round_page(MSGBUFSIZE));
+	initmsgbuf((void *)msgbuf, round_page(MSGBUFSIZE));
 #endif
 
 	printf("%s%s", copyright, version);

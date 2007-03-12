@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppcvar.h,v 1.1 2005/12/28 08:31:09 kurahone Exp $ */
+/* $NetBSD: pi1ppcvar.h,v 1.1.28.1 2007/03/12 05:50:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -96,7 +96,7 @@ extern int pi1ppc_verbose;
 /* Single softintr callback entry */
 struct pi1ppc_handler_node {
 	void (*func)(void *);
-	void * arg;
+	void *arg;
 	SLIST_ENTRY(pi1ppc_handler_node) entries;
 };
 
@@ -121,7 +121,7 @@ struct pi1ppc_softc {
 	struct device * child;
 
         /* Opaque handle used for interrupt handler establishment */
-	void * sc_ieh;
+	void *sc_ieh;
 
 	/* List of soft interrupts to call */
 	SLIST_HEAD(handler_list, pi1ppc_handler_node) sc_handler_listhead;
@@ -142,9 +142,9 @@ struct pi1ppc_softc {
 	int (*sc_dma_start)(struct pi1ppc_softc *, void *, u_int, u_int8_t);
 	int (*sc_dma_finish)(struct pi1ppc_softc *);
 	int (*sc_dma_abort)(struct pi1ppc_softc *);
-	int (*sc_dma_malloc)(struct device *, caddr_t *, bus_addr_t *,
+	int (*sc_dma_malloc)(struct device *, void **, bus_addr_t *,
 		bus_size_t);
-	void (*sc_dma_free)(struct device *, caddr_t *, bus_addr_t *,
+	void (*sc_dma_free)(struct device *, void **, bus_addr_t *,
 		bus_size_t);
 
 	/* Microsequence related members */

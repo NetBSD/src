@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.27 2006/04/15 08:49:47 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.27.14.1 2007/03/12 05:46:49 rmind Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.27 2006/04/15 08:49:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.27.14.1 2007/03/12 05:46:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,7 @@ loop:
 		}
 #endif
 		read = (bp->b_flags & B_READ) != 0;
-		FDCDMA_START(fdc, bp->b_data + fd->sc_skip,
+		FDCDMA_START(fdc, (char *)bp->b_data + fd->sc_skip,
 		    fd->sc_nbytes, read);
 		bus_space_write_1(iot, ioh, FDCTL, type->rate);
 #ifdef FD_DEBUG
@@ -1064,7 +1064,7 @@ fdcretry(struct fdc_softc *fdc)
 }
 
 int
-fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 	struct disklabel buffer;

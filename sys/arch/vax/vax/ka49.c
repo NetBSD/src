@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.15 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.15.8.1 2007/03/12 05:51:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka49.c,v 1.15 2006/09/05 19:32:57 matt Exp $");
 
 static	void	ka49_conf(void);
 static	void	ka49_memerr(void);
-static	int	ka49_mchk(caddr_t);
+static	int	ka49_mchk(void *);
 static	void	ka49_halt(void);
 static	void	ka49_reboot(int);
 static	void	ka49_softmem(void *);
@@ -206,7 +206,7 @@ ka49_memerr()
 }
 
 int
-ka49_mchk(caddr_t addr)
+ka49_mchk(void *addr)
 {
 	panic("Machine check");
 	return 0;

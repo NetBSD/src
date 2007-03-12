@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.20 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.20.26.1 2007/03/12 05:51:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.20 2005/12/11 12:19:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.20.26.1 2007/03/12 05:51:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ if_ubaminit(ifu, uh, hlen, nmr, ifr, nr, ifw, nw)
 	register struct ifrw *ifr;
 	register struct ifxmt *ifw;
 {
-	register caddr_t p;
-	caddr_t cp;
+	register void *p;
+	void *cp;
 	int i, nclbytes, off;
 
 	if (hlen)
@@ -93,7 +93,7 @@ if_ubaminit(ifu, uh, hlen, nmr, ifr, nr, ifw, nw)
 	if (ifr[0].ifrw_addr)
 		cp = ifr[0].ifrw_addr - off;
 	else {
-		cp = (caddr_t)malloc((u_long)((nr + nw) * nclbytes), M_DEVBUF,
+		cp = (void *)malloc((u_long)((nr + nw) * nclbytes), M_DEVBUF,
 		    M_NOWAIT);
 		if (cp == 0)
 			return (0);
@@ -188,7 +188,7 @@ if_ubaget(ifu, ifr, totlen, ifp)
 {
 	struct mbuf *top, **mp;
 	register struct mbuf *m;
-	register caddr_t cp = ifr->ifrw_addr + ifu->iff_hlen, pp;
+	register void *cp = ifr->ifrw_addr + ifu->iff_hlen, pp;
 	register int len;
 	top = 0;
 	mp = &top;
@@ -242,7 +242,7 @@ if_ubaget(ifu, ifr, totlen, ifp)
 				*ip++ = cpte++->pg_pfn|ifr->ifrw_proto;
 				mtpr(cp,PR_TBIS);
 				cp += VAX_NBPG;
-				mtpr((caddr_t)pp,PR_TBIS);
+				mtpr((void *)pp,PR_TBIS);
 				pp += VAX_NBPG;
 			}
 			goto nocopy;
@@ -258,7 +258,7 @@ nopage:
 		} else
 			len = m->m_len;
 copy:
-		bcopy(cp, mtod(m, caddr_t), (unsigned)len);
+		bcopy(cp, mtod(m, void *), (unsigned)len);
 		cp += len;
 nocopy:
 		*mp = m;
@@ -298,7 +298,7 @@ rcv_xmtbuf(ifw)
 			mprev = &m->m_next;
 		if (m == NULL)
 			break;
-		bcopy(mtod(m, caddr_t), cp, MCLBYTES);
+		bcopy(mtod(m, void *), cp, MCLBYTES);
 		(void) m_free(m);
 		*mprev = NULL;
 	}
@@ -335,7 +335,7 @@ if_ubaput(ifu, ifw, m)
 	register struct mbuf *m;
 {
 	register struct mbuf *mp;
-	register caddr_t cp, dp;
+	register void *cp, dp;
 	register int i;
 	int xswapd = 0;
 	int x, cc, t;
@@ -359,7 +359,7 @@ if_ubaput(ifu, ifw, m)
 			ifw->ifw_xtofree = m;
 			cp += m->m_len;
 		} else {
-			bcopy(mtod(m, caddr_t), cp, (unsigned)m->m_len);
+			bcopy(mtod(m, void *), cp, (unsigned)m->m_len);
 			cp += m->m_len;
 			MFREE(m, mp);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.18 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.18.26.1 2007/03/12 05:53:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -300,8 +300,8 @@ struct hme_xd {
 };
 #endif
 #define HME_XD_SIZE			8
-#define HME_XD_FLAGS(base, index)	((base) + ((index) * HME_XD_SIZE) + 0)
-#define HME_XD_ADDR(base, index)	((base) + ((index) * HME_XD_SIZE) + 4)
+#define HME_XD_FLAGS(b, i)		((char *)(b) + ((i) * HME_XD_SIZE) + 0)
+#define HME_XD_ADDR(b, i)		((char *)(b) + ((i) * HME_XD_SIZE) + 4)
 #define HME_XD_GETFLAGS(p, b, i)					\
 	(p) ? le32toh(*((u_int32_t *)HME_XD_FLAGS(b,i))) :		\
 		(*((u_int32_t *)HME_XD_FLAGS(b,i)))

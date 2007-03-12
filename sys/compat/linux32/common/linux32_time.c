@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.7 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.7.2.1 2007/03/12 05:52:30 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.7 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.7.2.1 2007/03/12 05:52:30 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,7 +89,7 @@ linux32_sys_gettimeofday(l, v, retval)
 		microtime(&tv);
 		netbsd32_from_timeval(&tv, &tv32);
 		if ((error = copyout(&tv32, 
-		    (caddr_t)NETBSD32PTR64(SCARG(uap, tp)), 
+		    (void *)NETBSD32PTR64(SCARG(uap, tp)), 
 		    sizeof(tv32))) != 0)
 			return error;
 	}
@@ -97,7 +97,7 @@ linux32_sys_gettimeofday(l, v, retval)
 	/* timezone size does not change */
 	if (NETBSD32PTR64(SCARG(uap, tzp)) != NULL) {
 		if ((error = copyout(&linux_sys_tz,
-		    (caddr_t)NETBSD32PTR64(SCARG(uap, tzp)), 
+		    (void *)NETBSD32PTR64(SCARG(uap, tzp)), 
 		    sizeof(linux_sys_tz))) != 0)
 			return error;
 	}
@@ -163,7 +163,7 @@ linux32_sys_times(l, v, retval)
 	struct linux_tms ltms;
 	struct linux_tms *ltmsp;
 	struct linux_sys_times_args ua;
-	caddr_t sg = stackgap_init(l->l_proc, 0);
+	void *sg = stackgap_init(l->l_proc, 0);
 	int error;
 
 	ltmsp = stackgap_alloc(l->l_proc, &sg, sizeof(*ltmsp));
@@ -226,7 +226,7 @@ linux32_sys_utime(l, v, retval)
 		syscallarg(linux32_utimbufp_t) times;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-        caddr_t sg = stackgap_init(p, 0);
+        void *sg = stackgap_init(p, 0);
         struct sys_utimes_args ua;
         struct timeval tv[2], *tvp;
         struct linux32_utimbuf lut;

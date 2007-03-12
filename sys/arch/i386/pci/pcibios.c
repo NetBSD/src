@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.33 2007/02/05 07:48:20 dyoung Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.33.2.1 2007/03/12 05:48:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.33 2007/02/05 07:48:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.33.2.1 2007/03/12 05:48:38 rmind Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -231,14 +231,14 @@ pcibios_pir_init(void)
 {
 	char *devinfo;
 	paddr_t pa;
-	caddr_t p;
+	char *p;
 	unsigned char cksum;
 	uint16_t tablesize;
 	uint8_t rev_maj, rev_min;
 	int i;
 
 	for (pa = PCI_IRQ_TABLE_START; pa < PCI_IRQ_TABLE_END; pa += 16) {
-		p = (caddr_t)ISA_HOLE_VADDR(pa);
+		p = (void *)ISA_HOLE_VADDR(pa);
 		if (*(int *)p != BIOS32_MAKESIG('$', 'P', 'I', 'R')) {
 			/*
 			 * XXX: Some laptops (Toshiba/Libretto L series)
@@ -403,12 +403,12 @@ pcibios_get_intr_routing(struct pcibios_intr_routing *table,
 	int rv;
 	struct {
 		uint16_t size;
-		caddr_t offset;
+		void *offset;
 		uint16_t segment;
 	} __attribute__((__packed__)) args;
 
 	args.size = *nentries * sizeof(*table);
-	args.offset = (caddr_t)table;
+	args.offset = (void *)table;
 	args.segment = GSEL(GDATA_SEL, SEL_KPL);
 
 	memset(table, 0, args.size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: qdioctl.h,v 1.4 2006/10/09 17:04:36 christos Exp $	*/
+/*	$NetBSD: qdioctl.h,v 1.4.4.1 2007/03/12 05:51:14 rmind Exp $	*/
 /*-
  * Copyright (c) 1982, 1986
  *	The Regents of the University of California.  All rights reserved.
@@ -100,15 +100,15 @@
 #define QD_PRGTABLET	_IOW('g', 7, char) 	/* program tablet */
 #define QD_PRGKBD	_IOW('g', 8, struct prgkbd) /* program LK201 kbd */
 #define QD_MAPDEVICE	_IOR('g', 9, struct qdmap) /* map device to user */
-#define QD_MAPIOBUF 	_IOWR('g', 10, caddr_t)     /* map DMA iobuf to user */
-#define QD_MAPEVENT	_IOR('g', 11, caddr_t)     /* map event queue to user */
+#define QD_MAPIOBUF 	_IOWR('g', 10, void *)     /* map DMA iobuf to user */
+#define QD_MAPEVENT	_IOR('g', 11, void *)     /* map event queue to user */
 #define QD_PRGCURSOR	_IOW('g', 12, struct prg_cursor) /* program cursor */
 #define QD_RESET	_IO('g', 13)  	    /* set device & driver defaults */
 #define QD_POSCURSOR	_IOW('g', 14, struct _vs_cursor) /* position cursor */
 #define QD_SET		_IO('g', 15)  	    /* set DUART & driver defaults */
-#define QD_MAPSCROLL    _IOR('g', 16, caddr_t)  /* map scroll param area */
+#define QD_MAPSCROLL    _IOR('g', 16, void *)  /* map scroll param area */
 #define QD_UNMAPSCROLL  _IO('g', 17)            /* unmap scroll param area */
-#define QD_MAPCOLOR     _IOR('g', 18, caddr_t)  /* map color map write buf */
+#define QD_MAPCOLOR     _IOR('g', 18, void *)  /* map color map write buf */
 #define QD_UNMAPCOLOR   _IO('g', 19)            /* unmap color map write buf */
 #define QD_KERN_LOOP    _IO('g', 20)       /* detour kernel console output */
 #define QD_KERN_UNLOOP  _IO('g', 21)       /* un-detour kernel console output */

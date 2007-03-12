@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.10 2006/09/05 19:32:57 matt Exp $	*/
+/*	$NetBSD: ka88.c,v 1.10.8.1 2007/03/12 05:51:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.10 2006/09/05 19:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.10.8.1 2007/03/12 05:51:18 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.10 2006/09/05 19:32:57 matt Exp $");
 
 static void ka88_memerr(void);
 static void ka88_conf(void);
-static int ka88_mchk(caddr_t);
+static int ka88_mchk(void *);
 static void ka88_steal_pages(void);
 static int ka88_gettime(volatile struct timeval *);
 static void ka88_settime(volatile struct timeval *);
@@ -221,7 +221,7 @@ struct mc88frame {
 };
 
 static int
-ka88_mchk(caddr_t cmcf)
+ka88_mchk(void *cmcf)
 {
 	return (MCHK_PANIC);
 }

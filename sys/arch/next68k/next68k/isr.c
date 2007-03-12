@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.22 2005/12/11 12:18:29 christos Exp $ */
+/*	$NetBSD: isr.c,v 1.22.26.1 2007/03/12 05:49:44 rmind Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.22 2005/12/11 12:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.22.26.1 2007/03/12 05:49:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,36 +386,6 @@ isrdispatch_vectored(int ipl, struct clockframe *frame)
 		isr->isr_evcnt->ev_count++;
 }
 
-/*
- * netisr junk...
- * should use an array of chars instead of
- * a bitmask to avoid atomicity locking issues.
- */
-
-void
-netintr(void)
-{
-	int n, s;
-
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-
-#define DONETISR(bit, fn) do {		\
-		if (n & (1 << bit))	\
-			fn();		\
-		} while (0)
-
-	s = splsoftnet();
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-	splx(s);
-}
-
 #if 0
 /* ARGSUSED */
 static int
@@ -425,3 +395,25 @@ spurintr(void *arg)
 	return (1);
 }
 #endif
+
+const int ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_IPL1,
+	[IPL_SOFT]       = PSL_IPL1,
+	[IPL_BIO]        = PSL_IPL3,
+	[IPL_NET]        = PSL_IPL3,
+	[IPL_TTY]        = PSL_IPL3,
+	[IPL_SERIAL]     = PSL_IPL5,
+	[IPL_VM]         = PSL_IPL6,
+	[IPL_CLOCK]      = PSL_IPL3,	/* ??? */
+	[IPL_HIGH]       = PSL_IPL7,
+};
+
+ipl_cookie_t
+makeiplcookie(ipl_t ipl)
+{
+
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
+}

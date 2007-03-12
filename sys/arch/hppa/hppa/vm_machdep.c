@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21.2.1 2007/02/27 16:51:08 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21.2.2 2007/03/12 05:48:18 rmind Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21.2.1 2007/02/27 16:51:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.21.2.2 2007/03/12 05:48:18 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ cpu_swapin(struct lwp *l)
 	 * Stash the physical for the pcb of U for later perusal
 	 */
 	l->l_addr->u_pcb.pcb_uva = (vaddr_t)l->l_addr;
-	tf->tf_cr30 = kvtop((caddr_t)l->l_addr);
+	tf->tf_cr30 = kvtop((void *)l->l_addr);
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sizeof(l->l_addr->u_pcb));
 
 #ifdef HPPA_REDZONE
@@ -268,7 +268,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	size = round_page(off + len);
 	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(kva + off);
+	bp->b_data = (void *)(kva + off);
 	npf = btoc(size);
 	while (npf--) {
 		if (pmap_extract(upmap, uva, &pa) == false)

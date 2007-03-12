@@ -1,4 +1,4 @@
-/* $NetBSD: lubbock_lcd.c,v 1.6 2006/12/18 15:30:56 nonaka Exp $ */
+/* $NetBSD: lubbock_lcd.c,v 1.6.2.1 2007/03/12 05:47:38 rmind Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  *   LCD panel geometry
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.6 2006/12/18 15:30:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_lcd.c,v 1.6.2.1 2007/03/12 05:47:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ const struct wsscreen_list lcd_screen_list = {
 	lcd_scr_descr
 };
 
-int	lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int	lcd_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 
 int	lcd_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);
@@ -217,7 +217,7 @@ void lcd_attach( struct device *parent, struct device *self, void *aux )
 #if NWSDISPLAY > 0
 
 int
-lcd_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lcd_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct obio_softc *osc = 
 	    (struct obio_softc *) device_parent((struct device *)v);
@@ -283,7 +283,7 @@ lcdmmap( dev_t dev, off_t offset, int size )
 }
 
 int
-lcdioctl( dev_t dev, u_long cmd, caddr_t data,
+lcdioctl( dev_t dev, u_long cmd, void *data,
 	    int fflag, struct lwp *l )
 {
 	return EOPNOTSUPP;

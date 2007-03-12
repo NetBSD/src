@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.8 2002/09/11 01:46:35 mycroft Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.8.60.1 2007/03/12 05:49:44 rmind Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -155,7 +155,7 @@ struct mon_global {
 	char mg_inetntoa[18];
 	char mg_inputline[LMAX];
 	struct mon_region mg_region[N_SIMM];
-	caddr_t mg_alloc_base, mg_alloc_brk;
+	void *mg_alloc_base, mg_alloc_brk;
 	char *mg_boot_dev, *mg_boot_arg, *mg_boot_info, *mg_boot_file;
 	char mg_bootfile[NBOOTFILE];
 	enum SIO_ARGS mg_boot_how;
@@ -179,7 +179,7 @@ struct mon_global {
 	u_int	cursor_save[2][32];
 	int (*mg_getc)(), (*mg_try_getc)(), (*mg_putc)();
 	int (*mg_alert)(), (*mg_alert_confirm)();
-	caddr_t (*mg_alloc)();
+	void *(*mg_alloc)();
 	int (*mg_boot_slider)();
 	volatile u_char *eventc_latch;
 	volatile u_int event_high;
@@ -212,7 +212,7 @@ struct mon_global {
 };
 
 struct mon_global *restore_mg();
-caddr_t mon_alloc();
+void *mon_alloc();
 
 #endif /* if 0 */
 

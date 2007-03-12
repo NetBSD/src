@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18.2.1 2007/02/27 16:51:59 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18.2.2 2007/03/12 05:48:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.1 2007/02/27 16:51:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.2 2007/03/12 05:48:55 rmind Exp $");
 
 #include "opt_coredump.h"
 
@@ -246,7 +246,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 			return error;
 	} else {
 		/* Make sure these are clear. */
-		memset((caddr_t)&md_core.freg, 0, sizeof(md_core.freg));
+		memset((void *)&md_core.freg, 0, sizeof(md_core.freg));
 	}
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
@@ -284,7 +284,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
 	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(kva + off);
+	bp->b_data = (void *)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(phys_map);
@@ -342,7 +342,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
  * are specified by `prot'.
  */
 void
-physaccess(caddr_t vaddr, caddr_t paddr, int size, int prot)
+physaccess(void *vaddr, void *paddr, int size, int prot)
 {
 	pt_entry_t *pte;
 	u_int page;
@@ -357,7 +357,7 @@ physaccess(caddr_t vaddr, caddr_t paddr, int size, int prot)
 }
 
 void
-physunaccess(caddr_t vaddr, int size)
+physunaccess(void *vaddr, int size)
 {
 	pt_entry_t *pte;
 
@@ -371,7 +371,7 @@ physunaccess(caddr_t vaddr, int size)
  * Convert kernel VA to physical address
  */
 int
-kvtop(caddr_t addr)
+kvtop(void *addr)
 {
 	paddr_t pa;
 

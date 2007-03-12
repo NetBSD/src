@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.36 2006/11/16 01:33:00 christos Exp $	*/
+/*	$NetBSD: irframe.c,v 1.36.4.1 2007/03/12 05:54:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.36 2006/11/16 01:33:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe.c,v 1.36.4.1 2007/03/12 05:54:47 rmind Exp $");
 
 #include "irframe.h"
 
@@ -79,9 +79,7 @@ const struct cdevsw irframe_cdevsw = {
 };
 
 int irframe_match(struct device *parent, struct cfdata *match, void *aux);
-void irframe_attach(struct device *parent, struct device *self, void *aux);
 int irframe_activate(struct device *self, enum devact act);
-int irframe_detach(struct device *self, int flags);
 
 Static int irf_set_params(struct irframe_softc *sc, struct irda_params *p);
 Static int irf_reset_params(struct irframe_softc *sc);
@@ -339,7 +337,7 @@ irf_reset_params(struct irframe_softc *sc)
 }
 
 int
-irframeioctl(dev_t dev, u_long cmd, caddr_t addr, int flag,
+irframeioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
 	struct irframe_softc *sc;
@@ -405,61 +403,4 @@ irframekqfilter(dev_t dev, struct knote *kn)
 		return (1);
 
 	return (sc->sc_methods->im_kqfilter(sc->sc_handle, kn));
-}
-
-
-/*********/
-
-
-struct device *
-irframe_alloc(size_t size, const struct irframe_methods *m, void *h)
-{
-	struct cfdriver *cd = &irframe_cd;
-	struct device *dev;
-	struct ir_attach_args ia;
-	int unit;
-
-	/*
-	 * XXXJRT This is wrong -- needs to be done using regular
-	 * XXXJRT autoconfiguration code.
-	 */
-
-	for (unit = 0; unit < cd->cd_ndevs; unit++)
-		if (cd->cd_devs[unit] == NULL)
-			break;
-	dev = malloc(size, M_DEVBUF, M_WAITOK|M_ZERO);
-	snprintf(dev->dv_xname, sizeof dev->dv_xname, "irframe%d", unit);
-	dev->dv_unit = unit;
-	dev->dv_flags = DVF_ACTIVE;	/* always initially active */
-
-	config_makeroom(unit, cd);
-	cd->cd_devs[unit] = dev;
-
-	ia.ia_methods = m;
-	ia.ia_handle = h;
-	printf("%s", dev->dv_xname);
-	irframe_attach(NULL, dev, &ia);
-
-	return (dev);
-}
-
-void
-irframe_dealloc(struct device *dev)
-{
-	struct cfdriver *cd = &irframe_cd;
-	int unit;
-
-	/*
-	 * XXXJRT This is wrong -- needs to be done using regular
-	 * XXXJRT autoconfiguration code.
-	 */
-
-	for (unit = 0; unit < cd->cd_ndevs; unit++) {
-		if (cd->cd_devs[unit] == dev) {
-			cd->cd_devs[unit] = NULL;
-			free(dev, M_DEVBUF);
-			return;
-		}
-	}
-	panic("irframe_dealloc: device not found");
 }

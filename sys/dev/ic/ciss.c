@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.6 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: ciss.c,v 1.6.4.1 2007/03/12 05:53:29 rmind Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.6 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.6.4.1 2007/03/12 05:53:29 rmind Exp $");
 
 /* #define CISS_DEBUG */
 
@@ -67,7 +67,7 @@ int ciss_debug = 0
 static void	ciss_scsi_cmd(struct scsipi_channel *chan,
 			scsipi_adapter_req_t req, void *arg);
 static int	ciss_scsi_ioctl(struct scsipi_channel *chan, u_long cmd,
-	    caddr_t addr, int flag, struct proc *p);
+	    void *addr, int flag, struct proc *p);
 static void	cissminphys(struct buf *bp);
 
 #if 0
@@ -76,7 +76,7 @@ static void	ciss_scsi_raw_cmd(struct scsipi_channel *chan,
 #endif
 
 #if NBIO > 0
-static int	ciss_ioctl(struct device *, u_long, caddr_t);
+static int	ciss_ioctl(struct device *, u_long, void *);
 #endif
 static int	ciss_sync(struct ciss_softc *sc);
 static void	ciss_heartbeat(void *v);
@@ -210,7 +210,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, sc->cmdseg, rseg, total,
-	    (caddr_t *)&sc->ccbs, BUS_DMA_NOWAIT))) {
+	    (void **)&sc->ccbs, BUS_DMA_NOWAIT))) {
 		printf(": cannot map CCBs (%d)\n", error);
 		return -1;
 	}
@@ -237,7 +237,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	maxfer = sc->maxsg * PAGE_SIZE;
 	for (i = 0; total > 0 && i < sc->maxcmd; i++, total -= sc->ccblen) {
-		ccb = (struct ciss_ccb *) (sc->ccbs + i * sc->ccblen);
+		ccb = (struct ciss_ccb *) ((char *)sc->ccbs + i * sc->ccblen);
 		cmd = &ccb->ccb_cmd;
 		pa = sc->cmdseg[0].ds_addr + i * sc->ccblen;
 
@@ -278,7 +278,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, seg, rseg, PAGE_SIZE,
-	    (caddr_t *)&sc->scratch, BUS_DMA_NOWAIT))) {
+	    (void **)&sc->scratch, BUS_DMA_NOWAIT))) {
 		printf(": cannot map scratch buffer (%d)\n", error);
 		return -1;
 	}
@@ -516,7 +516,7 @@ ciss_cmd(struct ciss_ccb *ccb, int flags, int wait)
 
 				CISS_DPRINTF(CISS_D_CMD, ("got=0x%x ", id));
 				ccb1 = (struct ciss_ccb *)
-					(sc->ccbs + (id >> 2) * sc->ccblen);
+					((char *)sc->ccbs + (id >> 2) * sc->ccblen);
 				ccb1->ccb_cmd.id = htole32(id);
 			}
 
@@ -943,7 +943,7 @@ ciss_intr(void *v)
 	while ((id = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_OUTQ)) !=
 	    0xffffffff) {
 
-		ccb = (struct ciss_ccb *) (sc->ccbs + (id >> 2) * sc->ccblen);
+		ccb = (struct ciss_ccb *) ((char *)sc->ccbs + (id >> 2) * sc->ccblen);
 		ccb->ccb_cmd.id = htole32(id);
 		if (ccb->ccb_state == CISS_CCB_POLL) {
 			ccb->ccb_state = CISS_CCB_ONQ;
@@ -996,7 +996,7 @@ ciss_kthread(void *v)
 
 static int
 ciss_scsi_ioctl(struct scsipi_channel *chan, u_long cmd,
-    caddr_t addr, int flag, struct proc *p)
+    void *addr, int flag, struct proc *p)
 {
 #if NBIO > 0
 	return ciss_ioctl(chan->chan_adapter->adapt_dev, cmd, addr);
@@ -1007,7 +1007,7 @@ ciss_scsi_ioctl(struct scsipi_channel *chan, u_long cmd,
 
 #if NBIO > 0
 static int
-ciss_ioctl(struct device *dev, u_long cmd, caddr_t addr)	/* TODO */
+ciss_ioctl(struct device *dev, u_long cmd, void *addr)	/* TODO */
 {
 	/* struct ciss_softc *sc = (struct ciss_softc *)dev; */
 	ciss_lock_t lock;

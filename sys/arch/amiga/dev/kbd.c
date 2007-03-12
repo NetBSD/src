@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.48 2005/12/11 12:16:28 christos Exp $ */
+/*	$NetBSD: kbd.c,v 1.48.26.1 2007/03/12 05:46:43 rmind Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.48 2005/12/11 12:16:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.48.26.1 2007/03/12 05:46:43 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.48 2005/12/11 12:16:28 christos Exp $");
 /* accessops */
 int     kbd_enable(void *, int);
 void    kbd_set_leds(void *, int);
-int     kbd_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int     kbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
 /* console ops */
 void    kbd_getc(void *, u_int *, int *);
@@ -474,7 +474,7 @@ kbdread(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag,
+kbdioctl(dev_t dev, u_long cmd, register void *data, int flag,
          struct lwp *l)
 {
 	register struct kbd_softc *k = &kbd_softc;
@@ -772,7 +772,7 @@ kbd_set_leds(void *c, int leds)
 }
 
 int
-kbd_ioctl(void *c, u_long cmd, caddr_t data, int flag, struct lwp *l)
+kbd_ioctl(void *c, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	switch (cmd)
 	{

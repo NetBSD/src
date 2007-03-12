@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_locore.S,v 1.6 2006/10/07 14:44:22 tsutsui Exp $	*/
+/*	$NetBSD: 4xx_locore.S,v 1.6.4.1 2007/03/12 05:49:52 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@ _C_LABEL(bcopy):
 	/* FALLTHROUGH */
 
 /*
- * void * memcpy(void *dst (%r3), const void *src (%r4), size_t len (%r5));
+ * void *memcpy(void *dst (%r3), const void *src (%r4), size_t len (%r5));
  *
  * Copy memory (obviously)
  *

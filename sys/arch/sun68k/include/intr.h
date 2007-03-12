@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12 2007/02/16 02:53:51 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.2.1 2007/03/12 05:51:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -71,7 +71,7 @@
 
 typedef int ipl_t;
 typedef struct {
-	int _psl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 ipl_cookie_t makeiplcookie(ipl_t ipl);
@@ -176,15 +176,15 @@ _getsr(void)
  * initialization, and later at spl0, so we have to 
  * use splraise to avoid enabling interrupts early.
  */
-#define splvm()         _splraise(PSL_S|PSL_IPL4)
+#define splvm()         splraise4()
 
 /* Intersil or Am9513 clock hardware interrupts (hard-wired at 5) */
 #define splclock()      splraise5()
 #define splstatclock()  splclock()
 
 /* Zilog Serial hardware interrupts (hard-wired at 6) */
-#define splzs()		spl6()
-#define	splserial()	spl6()
+#define splzs()		splraise6()
+#define splserial()	splraise6()
 
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()

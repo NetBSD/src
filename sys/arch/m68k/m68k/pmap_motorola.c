@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.22.2.1 2007/02/27 16:51:58 yamt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.22.2.2 2007/03/12 05:48:54 rmind Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.22.2.1 2007/02/27 16:51:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.22.2.2 2007/03/12 05:48:54 rmind Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -268,8 +268,6 @@ int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #if defined(M68040) || defined(M68060)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
-
-extern caddr_t	CADDR1, CADDR2;
 
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
 pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
@@ -2607,15 +2605,15 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 	{
 		if (*ste == SG_NV) {
 			int ix;
-			caddr_t addr;
+			void *addr;
 
 			ix = bmtol2(pmap->pm_stfree);
 			if (ix == -1)
 				panic("enter: out of address space"); /* XXX */
 			pmap->pm_stfree &= ~l2tobm(ix);
-			addr = (caddr_t)&pmap->pm_stab[ix*SG4_LEV2SIZE];
+			addr = (void *)&pmap->pm_stab[ix*SG4_LEV2SIZE];
 			memset(addr, 0, SG4_LEV2SIZE*sizeof(st_entry_t));
-			addr = (caddr_t)&pmap->pm_stpa[ix*SG4_LEV2SIZE];
+			addr = (void *)&pmap->pm_stpa[ix*SG4_LEV2SIZE];
 			*ste = (u_int)addr | SG_RW | SG_U | SG_V;
 
 			PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
@@ -2662,7 +2660,7 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
 		ptpa = kpt->kpt_pa;
-		memset((caddr_t)kpt->kpt_va, 0, PAGE_SIZE);
+		memset((void *)kpt->kpt_va, 0, PAGE_SIZE);
 		pmap_enter(pmap, va, ptpa, VM_PROT_READ | VM_PROT_WRITE,
 		    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		pmap_update(pmap);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47.2.2 2007/03/03 15:42:48 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47.2.3 2007/03/12 05:46:16 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47.2.2 2007/03/03 15:42:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47.2.3 2007/03/12 05:46:16 rmind Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
@@ -265,7 +265,7 @@ cpu_startup(void)
 			  
 	pmap_update(pmap_kernel());
 
-	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(sz));
+	initmsgbuf((void *)msgbuf_vaddr, round_page(sz));
 
 	printf("%s%s", copyright, version);
 
@@ -323,7 +323,7 @@ x86_64_proc0_tss_ldt_init(void)
 	pcb = &l->l_addr->u_pcb;
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_iobase =
-	    (u_int16_t)((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss);
+	    (u_int16_t)((char *)pcb->pcb_iomap - (char *)&pcb->pcb_tss);
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
@@ -440,9 +440,9 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		sp = ((caddr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
+		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
 	else
-		sp = (caddr_t)tf->tf_rsp - 128;
+		sp = (char *)tf->tf_rsp - 128;
 
 	sp -= sizeof(struct sigframe_siginfo);
 	/*
@@ -614,7 +614,7 @@ cpu_dump_mempagecnt(void)
 int
 cpu_dump(void)
 {
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	char buf[dbtob(1)];
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
@@ -654,7 +654,7 @@ cpu_dump(void)
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (caddr_t)buf, dbtob(1)));
+	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
 }
 
 /*
@@ -727,7 +727,7 @@ dumpsys(void)
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
+	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
 
 	/* Save registers. */
@@ -785,7 +785,7 @@ dumpsys(void)
 			(void) pmap_map(dumpspace, maddr, maddr + n,
 			    VM_PROT_READ);
 
-			error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, n);
+			error = (*dump)(dumpdev, blkno, (void *)dumpspace, n);
 			if (error)
 				goto err;
 			maddr += n;
@@ -1531,7 +1531,7 @@ cpu_reset(void)
 	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 
-	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
+	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
 
 #if 0
@@ -1539,7 +1539,7 @@ cpu_reset(void)
 	 * Try to cause a triple fault and watchdog reset by unmapping the
 	 * entire address space and doing a TLB flush.
 	 */
-	memset((caddr_t)PTD, 0, PAGE_SIZE);
+	memset((void *)PTD, 0, PAGE_SIZE);
 	tlbflush(); 
 #endif
 
@@ -1583,7 +1583,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	memcpy(mcp->__gregs, tf, sizeof *tf);
 
 	if ((ras_rip = (__greg_t)ras_lookup(l->l_proc,
-	    (caddr_t) mcp->__gregs[_REG_RIP])) != -1)
+	    (void *) mcp->__gregs[_REG_RIP])) != -1)
 		mcp->__gregs[_REG_RIP] = ras_rip;
 
 	*flags |= _UC_CPU;

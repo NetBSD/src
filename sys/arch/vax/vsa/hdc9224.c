@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.37 2006/05/14 21:57:13 elad Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.37.14.1 2007/03/12 05:51:35 rmind Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.37 2006/05/14 21:57:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.37.14.1 2007/03/12 05:51:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,9 @@ struct	hdcsoftc {
 	struct buf *sc_active;
 	struct hdc9224_UDCreg sc_creg;	/* (command) registers to be written */
 	struct hdc9224_UDCreg sc_sreg;	/* (status) registers being read */
-	caddr_t	sc_dmabase;		/* */
+	void *	sc_dmabase;		/* */
 	int	sc_dmasize;
-	caddr_t sc_bufaddr;		/* Current in-core address */
+	void *sc_bufaddr;		/* Current in-core address */
 	int sc_diskblk;			/* Current block on disk */
 	int sc_bytecnt;			/* How much left to transfer */
 	int sc_xfer;			/* Current transfer size */
@@ -284,7 +284,7 @@ hdcattach(struct device *parent, struct device *self, void *aux)
 	    self->dv_xname, "intr");
 
 	sc->sc_regs = vax_map_physmem(va->va_paddr, 1);
-	sc->sc_dmabase = (caddr_t)va->va_dmaaddr;
+	sc->sc_dmabase = (void *)va->va_dmaaddr;
 	sc->sc_dmasize = va->va_dmasize;
 	sc->sc_intbit = va->va_maskno;
 	rd_dmasize = min(MAXPHYS, sc->sc_dmasize); /* Used in rd_minphys */
@@ -419,7 +419,7 @@ hdcintr(void *arg)
 	}
 	sc->sc_diskblk += (sc->sc_xfer/DEV_BSIZE);
 	sc->sc_bytecnt -= sc->sc_xfer;
-	sc->sc_bufaddr += sc->sc_xfer;
+	sc->sc_bufaddr = (char *)sc->sc_bufaddr + sc->sc_xfer;
 
 	if (sc->sc_bytecnt == 0) { /* Finished transfer */
 		biodone(bp);
@@ -689,7 +689,7 @@ rdclose(dev_t dev, int flag, int fmt, struct lwp *l)
  *
  */
 int
-rdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+rdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct rdsoftc *rd = rd_cd.cd_devs[DISKUNIT(dev)];
 	struct disklabel *lp = rd->sc_disk.dk_label;

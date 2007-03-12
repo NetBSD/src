@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.41 2007/01/09 13:41:30 cube Exp $
+#	$NetBSD: files.acpi,v 1.41.2.1 2007/03/12 05:53:07 rmind Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -95,3 +95,8 @@ file	dev/acpi/attimer_acpi.c		attimer_acpi
 # Yamaha OPL3-SAx
 attach	ym at acpinodebus with ym_acpi
 file	dev/acpi/ym_acpi.c		ym_acpi
+
+# High Precision Event Timer
+attach 	hpet at acpinodebus with hpet_acpi
+file 	dev/acpi/hpet_acpi.c		hpet_acpi
+

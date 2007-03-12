@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.47 2006/11/16 01:32:52 christos Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.47.4.1 2007/03/12 05:53:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.47 2006/11/16 01:32:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.47.4.1 2007/03/12 05:53:41 rmind Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -417,7 +417,7 @@ int
 pdq_ifioctl(
     struct ifnet *ifp,
     ioctl_cmd_t cmd,
-    caddr_t data)
+    void *data)
 {
     pdq_softc_t *sc = PDQ_OS_IFP_TO_SOFTC(ifp);
     int s, error = 0;
@@ -448,8 +448,8 @@ pdq_ifioctl(
 	}
 	case SIOCGIFADDR: {
 	    struct ifreq *ifr = (struct ifreq *)data;
-	    memcpy((caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		(caddr_t) PDQ_LANADDR(sc), 6);
+	    memcpy((void *) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		(void *) PDQ_LANADDR(sc), 6);
 	    break;
 	}
 
@@ -551,7 +551,7 @@ pdq_ifattach(
 
     if_attach(ifp);
 #if defined(__NetBSD__)
-    fddi_ifattach(ifp, (caddr_t)&sc->sc_pdq->pdq_hwaddr);
+    fddi_ifattach(ifp, (void *)&sc->sc_pdq->pdq_hwaddr);
 #else
     fddi_ifattach(ifp);
 #endif
@@ -579,7 +579,7 @@ pdq_os_memalloc_contig(
     if (!not_ok) {
 	steps = 1;
 	not_ok = bus_dmamem_map(sc->sc_dmatag, db_segs, db_nsegs,
-				sizeof(*pdq->pdq_dbp), (caddr_t *) &pdq->pdq_dbp,
+				sizeof(*pdq->pdq_dbp), (void **) &pdq->pdq_dbp,
 				BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
@@ -604,7 +604,7 @@ pdq_os_memalloc_contig(
 	steps = 5;
 	not_ok = bus_dmamem_map(sc->sc_dmatag, ui_segs, ui_nsegs,
 			    PDQ_OS_PAGESIZE,
-			    (caddr_t *) &pdq->pdq_unsolicited_info.ui_events,
+			    (void **) &pdq->pdq_unsolicited_info.ui_events,
 			    BUS_DMA_NOWAIT);
     }
     if (!not_ok) {
@@ -631,7 +631,7 @@ pdq_os_memalloc_contig(
 #else
 	not_ok = bus_dmamem_map(sc->sc_dmatag, cb_segs, 1,
 				sizeof(*pdq->pdq_cbp),
-				(caddr_t *)&pdq->pdq_cbp,
+				(void **)&pdq->pdq_cbp,
 				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 #endif
     }
@@ -662,7 +662,7 @@ pdq_os_memalloc_contig(
 	}
 	case 9: {
 	    bus_dmamem_unmap(sc->sc_dmatag,
-			     (caddr_t)pdq->pdq_cbp, sizeof(*pdq->pdq_cbp));
+			     (void *)pdq->pdq_cbp, sizeof(*pdq->pdq_cbp));
 	    /* FALL THROUGH */
 	}
 	case 8: {
@@ -675,7 +675,7 @@ pdq_os_memalloc_contig(
 	}
 	case 6: {
 	    bus_dmamem_unmap(sc->sc_dmatag,
-			     (caddr_t) pdq->pdq_unsolicited_info.ui_events,
+			     (void *) pdq->pdq_unsolicited_info.ui_events,
 			     PDQ_OS_PAGESIZE);
 	    /* FALL THROUGH */
 	}
@@ -693,7 +693,7 @@ pdq_os_memalloc_contig(
 	}
 	case 2: {
 	    bus_dmamem_unmap(sc->sc_dmatag,
-			     (caddr_t) pdq->pdq_dbp,
+			     (void *) pdq->pdq_dbp,
 			     sizeof(*pdq->pdq_dbp));
 	    /* FALL THROUGH */
 	}

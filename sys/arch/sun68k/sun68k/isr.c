@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.11.2.1 2007/02/27 16:53:21 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.11.2.2 2007/03/12 05:51:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.11.2.1 2007/02/27 16:53:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.11.2.2 2007/03/12 05:51:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,6 @@ void *get_vector_entry(int);
  */
 void isr_autovec (struct clockframe);
 void isr_vectored(struct clockframe);
-
 
 void 
 isr_add_custom(int level, void *handler)
@@ -153,7 +152,7 @@ isr_autovec(struct clockframe cf)
 	if (isr == NULL) {
 		if (n == 0)
 			printf("isr_autovec: ipl %d unexpected\n", ipl);
-		return;
+		goto out;
 	}
 
 	/* Give all the handlers a chance. */
@@ -164,6 +163,9 @@ isr_autovec(struct clockframe cf)
 	}
 	if (n == 0)
 		printf("isr_autovec: ipl %d not claimed\n", ipl);
+
+ out:
+	LOCK_CAS_CHECK(&cf);
 }
 
 /*
@@ -213,18 +215,21 @@ isr_vectored(struct clockframe cf)
 
 	if (vec < 64 || vec >= 256) {
 		printf("isr_vectored: vector=0x%x (invalid)\n", vec);
-		return;
+		goto out;
 	}
 	vh = &isr_vector_handlers[vec - 64];
 	if (vh->func == NULL) {
 		printf("isr_vectored: vector=0x%x (nul func)\n", vec);
 		set_vector_entry(vec, (void *)badtrap);
-		return;
+		goto out;
 	}
 
 	/* OK, call the isr function. */
 	if ((*vh->func)(vh->arg) == 0)
 		printf("isr_vectored: vector=0x%x (not claimed)\n", vec);
+
+ out:
+	LOCK_CAS_CHECK(&cf);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_som.c,v 1.2 2002/11/28 05:38:42 chs Exp $	*/
+/*	$NetBSD: exec_som.c,v 1.2.60.1 2007/03/12 05:48:02 rmind Exp $	*/
 
 /*	$OpenBSD: exec_som.c,v 1.1 1999/12/23 04:10:30 mickey Exp $	*/
 
@@ -61,8 +61,8 @@ som_load(int fd, struct x_param *xp)
 
 	xp->xp_entry = x.a_entry;
 
-	xp->text.size = hppa_round_page(x.a_tsize);
-	xp->data.size = hppa_round_page(x.a_dsize);
+	xp->text.size = round_page(x.a_tsize);
+	xp->data.size = round_page(x.a_dsize);
 	xp->bss.size = x.a_bsize;
 	xp->sym.size = xf->sym_total * sizeof(struct som_sym);
 	xp->str.size = xf->strings_size;

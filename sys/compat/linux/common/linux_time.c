@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.15 2007/02/09 21:55:19 ad Exp $ */
+/*	$NetBSD: linux_time.c,v 1.15.2.1 2007/03/12 05:52:29 rmind Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.15 2007/02/09 21:55:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.15.2.1 2007/03/12 05:52:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -183,7 +183,7 @@ linux_sys_clock_gettime(l, v, retval)
 		syscallarg(clockid_t) which;
 		syscallarg(struct linux_timespec *)tp;
 	} */ *uap = v;
-	caddr_t sg;
+	void *sg;
 	struct proc *p = l->l_proc;
 	struct timespec *tp, ts;
 	struct linux_timespec lts;
@@ -223,7 +223,7 @@ linux_sys_clock_settime(l, v, retval)
 		syscallarg(clockid_t) which;
 		syscallarg(struct linux_timespec *)tp;
 	} */ *uap = v;
-	caddr_t sg;
+	void *sg;
 	struct proc *p = l->l_proc;
 	struct timespec *tp, ts;
 	struct linux_timespec lts;
@@ -263,7 +263,7 @@ linux_sys_clock_getres(l, v, retval)
 		syscallarg(clockid_t) which;
 		syscallarg(struct linux_timespec *)tp;
 	} */ *uap = v;
-	caddr_t sg;
+	void *sg;
 	struct proc *p = l->l_proc;
 	struct timespec *tp, ts;
 	struct linux_timespec lts;
@@ -312,7 +312,7 @@ linux_sys_clock_nanosleep(l, v, retval)
 		syscallarg(struct linux_timespec) *rqtp;
 		syscallarg(struct linux_timespec) *rmtp;
 	} */ *uap = v;
-	caddr_t sg;
+	void *sg;
 	struct proc *p = l->l_proc;
 	struct timespec *rqtp, *rmtp;
 	struct linux_timespec lrqts, lrmts;

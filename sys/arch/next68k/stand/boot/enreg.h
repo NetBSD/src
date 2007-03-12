@@ -1,4 +1,4 @@
-/*	$NetBSD: enreg.h,v 1.3 2002/09/11 02:17:15 mycroft Exp $	*/
+/*	$NetBSD: enreg.h,v 1.3.60.1 2007/03/12 05:49:45 rmind Exp $	*/
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -38,10 +38,10 @@
 #define	SLOT_ID_BMAP	0x00100000
 #endif
 
-#define P_ENETX_CSR     ((caddr_t)(SLOT_ID+0x02000110))
-#define P_ENETR_CSR     ((caddr_t)(SLOT_ID+0x02000150))
-#define P_ENET          ((caddr_t)(SLOT_ID_BMAP+0x02006000))
-#define	P_BMAP		((caddr_t)(SLOT_ID+0x020c0000))
+#define P_ENETX_CSR     ((void *)(SLOT_ID+0x02000110))
+#define P_ENETR_CSR     ((void *)(SLOT_ID+0x02000150))
+#define P_ENET          ((void *)(SLOT_ID_BMAP+0x02006000))
+#define	P_BMAP		((void *)(SLOT_ID+0x020c0000))
 
 #define ENETX_DMA_INTR	(1<<28)	/* I_BIT(I_ENETX_DMA) */
 #define ENETR_DMA_INTR	(1<<27)	/* I_BIT(I_ENETR_DMA) */

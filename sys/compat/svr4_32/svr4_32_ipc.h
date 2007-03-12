@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_ipc.h,v 1.3 2005/12/11 12:20:26 christos Exp $	*/
+/*	$NetBSD: svr4_32_ipc.h,v 1.3.26.1 2007/03/12 05:52:48 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ typedef netbsd32_caddr_t svr4_32_msginfop;
 struct svr4_32_shmid_ds {
 	struct svr4_32_ipc_perm	shm_perm;
 	int			shm_segsz;
-	netbsd32_caddr_t	shm_amp;
+	netbsd32_caddr_t 	shm_amp;
 	u_short			shm_lkcnt;
 	svr4_32_pid_t		shm_lpid;
 	svr4_32_pid_t		shm_cpid;

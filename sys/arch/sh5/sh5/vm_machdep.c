@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.14.8.1 2007/02/27 16:53:03 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.14.8.2 2007/03/12 05:50:17 rmind Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14.8.1 2007/02/27 16:53:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14.8.2 2007/03/12 05:50:17 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	len = sh5_round_page(off + len);
 	kva = uvm_km_alloc(phys_map, len, 0, UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	bp->b_data = (caddr_t)(kva + off);
+	bp->b_data = (void *)(kva + off);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	do {

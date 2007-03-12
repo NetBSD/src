@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.105 2006/12/22 03:26:51 kiyohara Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.105.2.1 2007/03/12 05:54:46 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -58,7 +58,7 @@
 #include <sys/ktr.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.105 2006/12/22 03:26:51 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.105.2.1 2007/03/12 05:54:46 rmind Exp $");
 
 #if defined(__DragonFly__) || __FreeBSD_version < 500000
 #include <machine/clock.h>		/* for DELAY() */
@@ -1037,7 +1037,7 @@ again:
 				if (m0 != NULL) {
 					m_copydata(xfer->mbuf, 0,
 						xfer->mbuf->m_pkthdr.len,
-						mtod(m0, caddr_t));
+						mtod(m0, void *));
 					m0->m_len = m0->m_pkthdr.len =
 						xfer->mbuf->m_pkthdr.len;
 					m_freem(xfer->mbuf);
@@ -1353,10 +1353,10 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 		if (dbch->xferq.flag & FWXFERQ_EXTBUF) {
 			if (idb % dbch->xferq.bnpacket == 0)
 				dbch->xferq.bulkxfer[idb / dbch->xferq.bnpacket
-						].start = (caddr_t)db_tr;
+						].start = (void *)db_tr;
 			if ((idb + 1) % dbch->xferq.bnpacket == 0)
 				dbch->xferq.bulkxfer[idb / dbch->xferq.bnpacket
-						].end = (caddr_t)db_tr;
+						].end = (void *)db_tr;
 		}
 		db_tr++;
 	}
@@ -2661,7 +2661,7 @@ device_printf(sc->fc.dev, "DB %08x %08x %08x\n", bulkxfer, db_tr->bus_addr, fdb_
 		FWOHCI_DMA_SET(db[0].db.desc.depend, dbch->ndesc);
 		FWOHCI_DMA_SET(db[dbch->ndesc - 1].db.desc.depend, dbch->ndesc);
 #endif
-		bulkxfer->end = (caddr_t)db_tr;
+		bulkxfer->end = (void *)db_tr;
 		db_tr = STAILQ_NEXT(db_tr, link);
 	}
 	db = ((struct fwohcidb_tr *)bulkxfer->end)->db;
@@ -2870,7 +2870,7 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch, int count)
 	u_int spd;
 	int len, plen, hlen, pcnt, offset;
 	int s;
-	caddr_t buf;
+	void *buf;
 	int resCount;
 
 	CTR0(KTR_DEV, "fwohci_arv");
@@ -2917,7 +2917,7 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch, int count)
 				offset = dbch->buf_offset;
 				if (offset < 0)
 					offset = - offset;
-				buf = dbch->pdb_tr->buf + offset;
+				buf = (char *)dbch->pdb_tr->buf + offset;
 				rlen = dbch->xferq.psize - offset;
 				if (firewire_debug)
 					printf("rlen=%d, offset=%d\n",

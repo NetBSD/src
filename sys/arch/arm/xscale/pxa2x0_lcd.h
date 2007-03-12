@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.h,v 1.7 2006/12/18 15:30:56 nonaka Exp $ */
+/* $NetBSD: pxa2x0_lcd.h,v 1.7.2.1 2007/03/12 05:47:09 rmind Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -144,7 +144,7 @@ int	pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *,
 int	pxa2x0_lcd_alloc_screen(void *, const struct wsscreen_descr *,
 	    void **, int *, int *, long *);
 void	pxa2x0_lcd_free_screen(void *, void *);
-int	pxa2x0_lcd_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+int	pxa2x0_lcd_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 paddr_t	pxa2x0_lcd_mmap(void *, void *, off_t, int);
 int	pxa2x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);

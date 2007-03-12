@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.14 2007/02/15 15:40:51 ad Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.14.2.1 2007/03/12 05:53:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct fss_cache {
 	struct fss_softc *fc_softc;	/* Backlink to our softc */
 	volatile int	fc_xfercount;	/* Number of outstanding transfers */
 	u_int32_t	fc_cluster;	/* Cluster number of this entry */
-	caddr_t		fc_data;	/* Data */
+	void *		fc_data;	/* Data */
 };
 
 struct fss_softc {

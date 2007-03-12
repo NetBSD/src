@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 2007/02/09 21:55:16 ad Exp $
+	$NetBSD: syscalls.master,v 1.22.2.1 2007/03/12 05:51:52 rmind Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -108,7 +108,7 @@
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
 25	NOARGS		{ uid_t sys_geteuid(void); }
-26	NOARGS		{ int sys_ptrace(int req, pid_t pid, caddr_t addr, \
+26	NOARGS		{ int sys_ptrace(int req, pid_t pid, void *addr, \
 			    int data); }
 27	NOARGS		{ ssize_t sys_recvmsg(int s, struct msghdr *msg, \
 			    int flags); }
@@ -144,7 +144,7 @@
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int sys_pipe(void); }
 43	NOARGS		{ gid_t sys_getegid(void); }
-44	NOARGS		{ int sys_profil(caddr_t samples, size_t size, \
+44	NOARGS		{ int sys_profil(void *samples, size_t size, \
 			    u_long offset, u_int scale); }
 #if defined(KTRACE) || !defined(_KERNEL)
 45	NOARGS		{ int sys_ktrace(const char *fname, int ops, \
@@ -205,7 +205,7 @@
 64	EXCL		compat_43_sys_getpagesize
 #endif
 #if defined(COMPAT_12) || !defined(_KERNEL)
-65	NOARGS		{ int compat_12_sys_msync(caddr_t addr, size_t len); }
+65	NOARGS		{ int compat_12_sys_msync(void *addr, size_t len); }
 #else
 65	EXCL		compat_12_sys_msync
 #endif
@@ -216,7 +216,7 @@
 69	NOARGS		{ int sys_sbrk(intptr_t incr); }
 70	NOARGS		{ int sys_sstk(int incr); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
-71	NOARGS		{ int compat_43_sys_mmap(caddr_t addr, size_t len, \
+71	NOARGS		{ int compat_43_sys_mmap(void *addr, size_t len, \
 			    int prot, int flags, int fd, long pos); } ommap
 #else
 71	EXCL		compat_43_sys_mmap
@@ -229,7 +229,7 @@
 			    int behav); }
 76	OBSOL		vhangup
 77	OBSOL		vlimit
-78	NOARGS		{ int sys_mincore(caddr_t addr, size_t len, \
+78	NOARGS		{ int sys_mincore(void *addr, size_t len, \
 			    char *vec); }
 79	NOARGS		{ int sys_getgroups(int gidsetsize, \
 			    gid_t *gidset); }
@@ -276,16 +276,16 @@
 98	NOARGS		{ int sys_connect(int s, const struct sockaddr *name, \
 			    int namelen); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
-99	NOARGS		{ int compat_43_sys_accept(int s, caddr_t name, \
+99	NOARGS		{ int compat_43_sys_accept(int s, void *name, \
 			    int *anamelen); } oaccept
 #else
 99	EXCL		compat_43_sys_accept
 #endif
 100	NOARGS		{ int sys_getpriority(int which, int who); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
-101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
+101	NOARGS		{ int compat_43_sys_send(int s, void *buf, int len, \
 			    int flags); } osend
-102	NOARGS		{ int compat_43_sys_recv(int s, caddr_t buf, int len, \
+102	NOARGS		{ int compat_43_sys_recv(int s, void *buf, int len, \
 			    int flags); } orecv
 #else
 101	EXCL		compat_43_sys_send
@@ -323,7 +323,7 @@
 			    struct sigstack *oss); } osigstack
 113	NOARGS		{ int compat_43_sys_recvmsg(int s, \
 			    struct omsghdr *msg, int flags); } orecvmsg
-114	NOARGS		{ int compat_43_sys_sendmsg(int s, caddr_t msg, \
+114	NOARGS		{ int compat_43_sys_sendmsg(int s, void *msg, \
 			    int flags); } osendmsg
 #else
 112	EXCL		compat_43_sys_sigstack
@@ -346,8 +346,8 @@
 123	NOARGS		{ int sys_fchown(int fd, uid_t uid, gid_t gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
-125	NOARGS		{ int compat_43_sys_recvfrom(int s, caddr_t buf, \
-			    size_t len, int flags, caddr_t from, \
+125	NOARGS		{ int compat_43_sys_recvfrom(int s, void *buf, \
+			    size_t len, int flags, void *from, \
 			    int *fromlenaddr); } orecvfrom
 #else
 125	EXCL		compat_43_sys_recvfrom
@@ -380,7 +380,7 @@
 140	NOARGS		{ int sys_adjtime(const struct timeval *delta, \
 			    struct timeval *olddelta); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
-141	NOARGS		{ int compat_43_sys_getpeername(int fdes, caddr_t asa, \
+141	NOARGS		{ int compat_43_sys_getpeername(int fdes, void *asa, \
 			    int *alen); } ogetpeername
 142	NOARGS		{ int32_t compat_43_sys_gethostid(void); } ogethostid
 143	NOARGS		{ int compat_43_sys_sethostid(int32_t hostid); } \
@@ -401,10 +401,10 @@
 #endif
 147	NOARGS		{ int sys_setsid(void); }
 148	NOARGS		{ int sys_quotactl(const char *path, \
-			    int cmd, int uid, caddr_t arg); }
+			    int cmd, int uid, void *arg); }
 #if defined(COMPAT_43) || !defined(_KERNEL)
 149	NOARGS		{ int compat_43_sys_quota(void); } oquota
-150	NOARGS		{ int compat_43_sys_getsockname(int fdec, caddr_t asa, \
+150	NOARGS		{ int compat_43_sys_getsockname(int fdec, void *asa, \
 			    int *alen); } ogetsockname
 #else
 149	EXCL		compat_43_sys_quota

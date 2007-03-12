@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.57 2006/03/29 04:43:56 thorpej Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.57.14.1 2007/03/12 05:53:36 rmind Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -251,7 +251,7 @@ default:							\
 	((void *)(xs)->xs_periph->periph_channel->chan_adapter->adapt_dev)
 #define	XS_LUN(xs)		((int) (xs)->xs_periph->periph_lun)
 #define	XS_TGT(xs)		((int) (xs)->xs_periph->periph_target)
-#define	XS_CDBP(xs)		((caddr_t) (xs)->cmd)
+#define	XS_CDBP(xs)		((char *) (xs)->cmd)
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
 #define	XS_XFRLEN(xs)		(xs)->datalen
 #define	XS_TIME(xs)		(xs)->timeout

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81 2006/12/11 15:24:28 yamt Exp $
+# $NetBSD: GENERIC,v 1.81.2.1 2007/03/12 05:50:45 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81 $"
+#ident 		"GENERIC-$Revision: 1.81.2.1 $"
 
 maxusers	64
 
@@ -787,6 +787,7 @@ ubt* at uhub? port ? configuration ? interface ?
 
 ## Bluetooth Device Hub
 #bthub* at bt3c?
+#bthub* at btuart?
 bthub* at ubt?
 
 ## Bluetooth HID support
@@ -882,6 +883,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 options		FILEASSOC		# fileassoc(9) - required for Veriexec 
 
