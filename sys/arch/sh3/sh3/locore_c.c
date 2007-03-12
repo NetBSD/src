@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.17 2007/03/11 20:09:03 ad Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.18 2007/03/12 00:12:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.17 2007/03/11 20:09:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.18 2007/03/12 00:12:29 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,11 +129,13 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.17 2007/03/11 20:09:03 ad Exp $");
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-void (*__sh_switch_resume)(struct lwp *);
 struct lwp *cpu_switch_search(struct lwp *);
 struct lwp *cpu_switch_prepare(struct lwp *, struct lwp *);
 void idle(void);
+
+void (*__sh_switch_resume)(struct lwp *);
 int want_resched;
+
 
 /*
  * Prepare context switch from olwp to nlwp.
