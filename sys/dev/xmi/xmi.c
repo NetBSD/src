@@ -1,4 +1,4 @@
-/*	$NetBSD: xmi.c,v 1.7 2005/12/11 12:24:20 christos Exp $	*/
+/*	$NetBSD: xmi.c,v 1.7.26.1 2007/03/12 05:57:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.7 2005/12/11 12:24:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmi.c,v 1.7.26.1 2007/03/12 05:57:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ xmi_attach(struct xmi_softc *sc)
 			    nodenr);
 			return;
 		}
-		if (badaddr((caddr_t)xa.xa_ioh, 4)) {
+		if (badaddr((void *)xa.xa_ioh, 4)) {
 			bus_space_unmap(sc->sc_iot, xa.xa_ioh, PAGE_SIZE);
 			continue;
 		}

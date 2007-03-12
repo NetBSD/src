@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for Creatix PnP cards
  *	============================================================
  *
- *	$Id: isic_isapnp_ctx_s0P.c,v 1.9 2007/01/29 01:52:45 hubertf Exp $
+ *	$Id: isic_isapnp_ctx_s0P.c,v 1.9.2.1 2007/03/12 05:55:06 rmind Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.9 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_ctx_s0P.c,v 1.9.2.1 2007/03/12 05:55:06 rmind Exp $");
 
 #include "opt_isicpnp.h"
 #if ISICPNP_CRTX_S0_P
@@ -286,9 +286,9 @@ isic_probe_Cs0P(struct isa_device *dev, unsigned int iobase2)
 
 	/* setup ISAC and HSCX base addr */
 
-	ISAC_BASE   = (caddr_t) dev->id_iobase - 0x20;
-	HSCX_A_BASE = (caddr_t) iobase2 - 0x20;
-	HSCX_B_BASE = (caddr_t) iobase2;
+	ISAC_BASE   = (void *) dev->id_iobase - 0x20;
+	HSCX_A_BASE = (void *) iobase2 - 0x20;
+	HSCX_B_BASE = (void *) iobase2;
 
 	/*
 	 * Read HSCX A/B VSTR.  Expected value for the Creatix PnP card is

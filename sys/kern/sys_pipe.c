@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.78 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.78.2.1 2007/03/12 05:58:42 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.78 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.78.2.1 2007/03/12 05:58:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	retval[0] = fd;
 	rf->f_flag = FREAD;
 	rf->f_type = DTYPE_PIPE;
-	rf->f_data = (caddr_t)rpipe;
+	rf->f_data = (void *)rpipe;
 	rf->f_ops = &pipeops;
 
 	error = falloc(l, &wf, &fd);
@@ -235,7 +235,7 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 	retval[1] = fd;
 	wf->f_flag = FWRITE;
 	wf->f_type = DTYPE_PIPE;
-	wf->f_data = (caddr_t)wpipe;
+	wf->f_data = (void *)wpipe;
 	wf->f_ops = &pipeops;
 
 	rpipe->pipe_peer = wpipe;
@@ -266,12 +266,12 @@ free2:
 static int
 pipespace(struct pipe *pipe, int size)
 {
-	caddr_t buffer;
+	void *buffer;
 	/*
 	 * Allocate pageable virtual address space. Physical memory is
 	 * allocated on demand.
 	 */
-	buffer = (caddr_t) uvm_km_alloc(kernel_map, round_page(size), 0,
+	buffer = (void *) uvm_km_alloc(kernel_map, round_page(size), 0,
 	    UVM_KMF_PAGEABLE);
 	if (buffer == NULL)
 		return (ENOMEM);
@@ -430,7 +430,7 @@ again:
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
 
-			error = uiomove(&bp->buffer[bp->out], size, uio);
+			error = uiomove((char *)bp->buffer + bp->out, size, uio);
 			if (error)
 				break;
 
@@ -455,7 +455,7 @@ again:
 			/*
 			 * Direct copy, bypassing a kernel buffer.
 			 */
-			caddr_t	va;
+			void *	va;
 
 			KASSERT(rpipe->pipe_state & PIPE_DIRECTW);
 
@@ -463,8 +463,7 @@ again:
 			if (size > uio->uio_resid)
 				size = uio->uio_resid;
 
-			va = (caddr_t) rpipe->pipe_map.kva +
-			    rpipe->pipe_map.pos;
+			va = (char *)rpipe->pipe_map.kva + rpipe->pipe_map.pos;
 			error = uiomove(va, size, uio);
 			if (error)
 				break;
@@ -930,7 +929,8 @@ retry:
 				segsize = size;
 
 			/* Transfer first segment */
-			error = uiomove(&bp->buffer[bp->in], segsize, uio);
+			error = uiomove((char *)bp->buffer + bp->in, segsize,
+			    uio);
 
 			if (error == 0 && segsize < size) {
 				/*
@@ -943,8 +943,8 @@ retry:
 					panic("Expected pipe buffer wraparound disappeared");
 #endif
 
-				error = uiomove(&bp->buffer[0],
-						size - segsize, uio);
+				error = uiomove(bp->buffer,
+				    size - segsize, uio);
 			}
 			if (error)
 				break;
@@ -1192,7 +1192,7 @@ pipe_stat(struct file *fp, struct stat *ub, struct lwp *l)
 {
 	struct pipe *pipe = (struct pipe *)fp->f_data;
 
-	memset((caddr_t)ub, 0, sizeof(*ub));
+	memset((void *)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
 	ub->st_blksize = pipe->pipe_buffer.size;
 	if (ub->st_blksize == 0 && pipe->pipe_peer)

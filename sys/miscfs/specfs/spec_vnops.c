@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.97 2006/11/26 20:27:27 elad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.97.4.1 2007/03/12 05:59:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.97 2006/11/26 20:27:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.97.4.1 2007/03/12 05:59:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -177,7 +177,7 @@ spec_open(v)
 	dev_t dev = (dev_t)vp->v_rdev;
 	int error;
 	struct partinfo pi;
-	int (*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
+	int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
 	enum kauth_device_req req;
 
 	/*
@@ -244,7 +244,7 @@ spec_open(v)
 
 	if (error)
 		return error;
-	if (!(*d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&pi, FREAD, curlwp))
+	if (!(*d_ioctl)(vp->v_rdev, DIOCGPART, (void *)&pi, FREAD, curlwp))
 		vp->v_size = (voff_t)pi.disklab->d_secsize * pi.part->p_size;
 	return 0;
 }
@@ -303,7 +303,7 @@ spec_read(v)
 		bsize = BLKDEV_IOSIZE;
 		bdev = bdevsw_lookup(vp->v_rdev);
 		if (bdev != NULL &&
-		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
+		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (void *)&dpart,
 				     FREAD, l) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
@@ -386,7 +386,7 @@ spec_write(v)
 		bsize = BLKDEV_IOSIZE;
 		bdev = bdevsw_lookup(vp->v_rdev);
 		if (bdev != NULL &&
-		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
+		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (void *)&dpart,
 				    FREAD, l) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)

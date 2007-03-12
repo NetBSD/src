@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.h,v 1.1 2002/02/12 20:38:48 scw Exp $	*/
+/*	$NetBSD: mvmebus.h,v 1.1.74.1 2007/03/12 05:55:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -150,8 +150,8 @@ int	mvmebus_dmamem_alloc(void *, vme_size_t, vme_am_t, vme_datasize_t,
 	    vme_swap_t, bus_dma_segment_t *, int, int *, int);
 void	mvmebus_dmamem_free(void *, bus_dma_segment_t *, int);
 int	mvmebus_dmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int,
-	    size_t, caddr_t *, int);
-void	mvmebus_dmamem_unmap(bus_dma_tag_t, caddr_t, size_t);
+	    size_t, void **, int);
+void	mvmebus_dmamem_unmap(bus_dma_tag_t, void *, size_t);
 paddr_t	mvmebus_dmamem_mmap(bus_dma_tag_t, bus_dma_segment_t *, int,
 	    off_t, int, int);
 

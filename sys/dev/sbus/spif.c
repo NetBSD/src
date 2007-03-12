@@ -1,4 +1,4 @@
-/*	$NetBSD: spif.c,v 1.9 2006/10/01 20:31:51 elad Exp $	*/
+/*	$NetBSD: spif.c,v 1.9.4.1 2007/03/12 05:57:08 rmind Exp $	*/
 /*	$OpenBSD: spif.c,v 1.12 2003/10/03 16:44:51 miod Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.9 2006/10/01 20:31:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spif.c,v 1.9.4.1 2007/03/12 05:57:08 rmind Exp $");
 
 #include "spif.h"
 #if NSPIF > 0
@@ -442,7 +442,7 @@ int
 stty_ioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {
@@ -1135,7 +1135,7 @@ int
 sbpp_ioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {

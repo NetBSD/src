@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.4 2006/12/15 21:18:52 joerg Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.4.6.1 2007/03/12 05:59:10 rmind Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -157,7 +157,7 @@ extern struct cfdriver etherip_cd;
 static void etherip_start(struct ifnet *);
 static void etherip_stop(struct ifnet *, int);
 static int  etherip_init(struct ifnet *);
-static int  etherip_ioctl(struct ifnet *, u_long, caddr_t);
+static int  etherip_ioctl(struct ifnet *, u_long, void *);
 
 static int  etherip_mediachange(struct ifnet *);
 static void etherip_mediastatus(struct ifnet *, struct ifmediareq *);
@@ -404,7 +404,7 @@ etheripintr(void *arg)
 }
 
 static int
-etherip_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

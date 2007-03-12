@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.22 2006/04/14 23:53:53 christos Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.22.14.1 2007/03/12 06:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.22 2006/04/14 23:53:53 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: iso_chksum.c,v 1.22.14.1 2007/03/12 06:00:30 rmind Exp $");
 
 #include "opt_iso.h"
 
@@ -363,8 +363,8 @@ m_compress(struct mbuf *in, struct mbuf **out)
 				printf("m_compress copying len %d\n", len);
 			}
 #endif
-			bcopy(mtod(in, caddr_t), mtod((*out), caddr_t) + (*out)->m_len,
-			      (unsigned) len);
+			memcpy(mtod((*out), char *) + (*out)->m_len,
+			    mtod(in, void *), (unsigned) len);
 
 			(*out)->m_len += len;
 			in->m_len -= len;

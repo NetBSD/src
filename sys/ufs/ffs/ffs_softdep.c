@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.82.2.1 2007/02/27 16:55:21 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.82.2.2 2007/03/12 06:00:58 rmind Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.82.2.1 2007/02/27 16:55:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.82.2.2 2007/03/12 06:00:58 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -358,7 +358,7 @@ sema_get(semap, interlock)
 	if (semap->value++ > 0) {
 		if (interlock != NULL)
 			s = FREE_LOCK_INTERLOCKED(interlock);
-		tsleep((caddr_t)semap, semap->prio, semap->name, semap->timo);
+		tsleep((void *)semap, semap->prio, semap->name, semap->timo);
 		if (interlock != NULL) {
 			ACQUIRE_LOCK_INTERLOCKED(interlock, s);
 			FREE_LOCK(interlock);
@@ -2805,9 +2805,9 @@ softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 void
 softdep_change_directoryentry_offset(dp, base, oldloc, newloc, entrysize)
 	struct inode *dp;	/* inode for directory */
-	caddr_t base;		/* address of dp->i_offset */
-	caddr_t oldloc;		/* address of old directory location */
-	caddr_t newloc;		/* address of new directory location */
+	void *base;		/* address of dp->i_offset */
+	void *oldloc;		/* address of old directory location */
+	void *newloc;		/* address of new directory location */
 	int entrysize;		/* size of directory entry */
 {
 	int offset, oldoffset, newoffset;
@@ -2820,8 +2820,8 @@ softdep_change_directoryentry_offset(dp, base, oldloc, newloc, entrysize)
 	offset = blkoff(dp->i_fs, dp->i_offset);
 	if (pagedep_lookup(dp, lbn, 0, &pagedep) == 0)
 		goto done;
-	oldoffset = offset + (oldloc - base);
-	newoffset = offset + (newloc - base);
+	oldoffset = offset + ((char *)oldloc - (char *)base);
+	newoffset = offset + ((char *)newloc - (char *)base);
 	for (dap = LIST_FIRST(&pagedep->pd_diraddhd[DIRADDHASH(oldoffset)]);
 	     dap; dap = LIST_NEXT(dap, da_pdlist)) {
 		if (dap->da_offset != oldoffset)
@@ -3552,7 +3552,7 @@ initiate_write_inodeblock_ufs1(inodedep, bp)
 		inodedep->id_savedino1 = inodedep_allocdino(inodedep, bp,
 		    sizeof(struct ufs1_dinode));
 		*inodedep->id_savedino1 = *dp;
-		bzero((caddr_t)dp, sizeof(struct ufs1_dinode));
+		bzero((void *)dp, sizeof(struct ufs1_dinode));
 		return;
 	}
 	dp->di_size = ufs_rw64(dp->di_size, needswap);
@@ -3692,7 +3692,7 @@ initiate_write_inodeblock_ufs2(inodedep, bp)
 		inodedep->id_savedino2 = inodedep_allocdino(inodedep, bp,
 		    sizeof(struct ufs2_dinode));
 		*inodedep->id_savedino2 = *dp;
-		bzero((caddr_t)dp, sizeof(struct ufs2_dinode));
+		bzero((void *)dp, sizeof(struct ufs2_dinode));
 		return;
 	}
 	dp->di_size = ufs_rw64(dp->di_size, needswap);
@@ -5417,7 +5417,7 @@ request_cleanup(resource, islocked)
 		callout_reset(&pause_timer_ch,
 		    tickdelay > 2 ? tickdelay : 2, pause_timer, NULL);
 	s = FREE_LOCK_INTERLOCKED(&lk);
-	(void) tsleep((caddr_t)&proc_waiting, PPAUSE, "softupdate", 0);
+	(void) tsleep((void *)&proc_waiting, PPAUSE, "softupdate", 0);
 	ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	if (--proc_waiting)
 		callout_reset(&pause_timer_ch,
@@ -5727,7 +5727,7 @@ drain_output(vp, islocked)
 
 		vp->v_flag |= VBWAIT;
 		s = FREE_LOCK_INTERLOCKED(&lk);
-		ltsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
+		ltsleep((void *)&vp->v_numoutput, PRIBIO + 1, "drainvp", 0,
 			&global_v_numoutput_slock);
 		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.146.2.1 2007/02/27 16:54:36 yamt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.146.2.2 2007/03/12 05:59:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.146.2.1 2007/02/27 16:54:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.146.2.2 2007/03/12 05:59:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ genfs_fcntl(void *v)
 	struct vop_fcntl_args /* {
 		struct vnode *a_vp;
 		u_int a_command;
-		caddr_t a_data;
+		void *a_data;
 		int a_fflag;
 		kauth_cred_t a_cred;
 		struct lwp *a_l;
@@ -1870,7 +1870,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 		if (error) {
 			break;
 		}
-		iov->iov_base = (caddr_t)iov->iov_base + len;
+		iov->iov_base = (char *)iov->iov_base + len;
 		iov->iov_len -= len;
 		uio->uio_offset += len;
 		uio->uio_resid -= len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.46 2005/12/11 12:25:28 christos Exp $	*/
+/*	$NetBSD: inode.h,v 1.46.26.1 2007/03/12 06:01:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -249,7 +249,7 @@ struct inode {
 
 #define  SHORTLINK(ip) \
 	(((ip)->i_ump->um_fstype == UFS1) ? \
-	(caddr_t)(ip)->i_ffs1_db : (caddr_t)(ip)->i_ffs2_db)
+	(void *)(ip)->i_ffs1_db : (void *)(ip)->i_ffs2_db)
 
 
 /*

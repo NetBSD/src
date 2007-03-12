@@ -1,4 +1,4 @@
-/*	$NetBSD: softdep.h,v 1.10 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: softdep.h,v 1.10.26.1 2007/03/12 06:00:58 rmind Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -364,7 +364,7 @@ struct allocdirect {
 struct indirdep {
 	struct	worklist ir_list;	/* buffer holding indirect block */
 #	define	ir_state ir_list.wk_state /* indirect block pointer state */
-	caddr_t	ir_saveddata;		/* buffer cache contents */
+	void *	ir_saveddata;		/* buffer cache contents */
 	struct	buf *ir_savebp;		/* buffer holding safe copy */
 	struct	allocindirhd ir_donehd;	/* done waiting to update safecopy */
 	struct	allocindirhd ir_deplisthd; /* allocindir deps for this block */

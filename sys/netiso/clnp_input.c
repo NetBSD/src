@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.34 2006/12/10 12:34:42 is Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.34.2.1 2007/03/12 06:00:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.34 2006/12/10 12:34:42 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_input.c,v 1.34.2.1 2007/03/12 06:00:28 rmind Exp $");
 
 #include "opt_iso.h"
 
@@ -185,32 +185,34 @@ next:
 		m_freem(m);
 		goto next;
 	}
-	bzero((caddr_t) & sh, sizeof(sh));
+	memset(&sh, 0, sizeof(sh));
 	sh.snh_flags = m->m_flags & (M_MCAST | M_BCAST);
 	switch ((sh.snh_ifp = m->m_pkthdr.rcvif)->if_type) {
 	case IFT_EON:
-		bcopy(mtod(m, caddr_t), (caddr_t) sh.snh_dhost, sizeof(u_long));
-		bcopy(sizeof(u_long) + mtod(m, caddr_t),
-		      (caddr_t) sh.snh_shost, sizeof(u_long));
+		(void)memcpy(sh.snh_dhost, mtod(m, char *), sizeof(u_long));
+		(void)memcpy(sh.snh_shost, sizeof(u_long) + mtod(m, char *),
+		     sizeof(u_long));
 		sh.snh_dhost[4] = mtod(m, u_char *)[sizeof(struct ip) +
 				     offsetof(struct eon_hdr, eonh_class)];
 		m_adj(m, EONIPLEN);
 		break;
 	case IFT_ETHER:
-		bcopy((caddr_t) (mtod(m, struct ether_header *)->ether_dhost),
-		  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
+		(void)memcpy(sh.snh_dhost,
+		    mtod(m, struct ether_header *)->ether_dhost,
+		    2 * sizeof(sh.snh_dhost));
 		m_adj(m, sizeof(struct ether_header) + LLC_UFRAMELEN);
 		break;
 	case IFT_FDDI:
-		bcopy((caddr_t) (mtod(m, struct fddi_header *)->fddi_dhost),
-		  (caddr_t) sh.snh_dhost, 2 * sizeof(sh.snh_dhost));
+		(void)memcpy(sh.snh_dhost,
+		    mtod(m, struct fddi_header *)->fddi_dhost,
+		    2 * sizeof(sh.snh_dhost));
 		m_adj(m, sizeof(struct fddi_header) + LLC_UFRAMELEN);
 		break;
 	case IFT_PTPSERIAL:
 	case IFT_GIF:
 		/* nothing extra to get from the mbuf */
-		bzero((caddr_t)sh.snh_dhost, sizeof(sh.snh_dhost));
-		bzero((caddr_t)sh.snh_shost, sizeof(sh.snh_shost));
+		memset(sh.snh_dhost, 0, sizeof(sh.snh_dhost));
+		memset(sh.snh_shost, 0, sizeof(sh.snh_shost));
 		break;
 	default:
 		break;
@@ -299,8 +301,8 @@ clnp_input(struct mbuf *m, ...)
 	struct sockaddr_iso target;	/* destination address of pkt */
 #define src	source.siso_addr
 #define dst	target.siso_addr
-	caddr_t         hoff;	/* current offset in packet */
-	caddr_t         hend;	/* address of end of header info */
+	char *hoff;	/* current offset in packet */
+	char *hend;	/* address of end of header info */
 	struct clnp_segment seg_part;	/* segment part of hdr */
 	int             seg_off = 0;	/* offset of segment part of hdr */
 	int             seg_len;/* length of packet data&hdr in bytes */
@@ -354,7 +356,7 @@ clnp_input(struct mbuf *m, ...)
 		struct mbuf    *mhead;
 		int             total_len = 0;
 		printf("clnp_input: clnp header:\n");
-		dump_buf(mtod(m, caddr_t), clnp->cnf_hdr_len);
+		dump_buf(mtod(m, void *), clnp->cnf_hdr_len);
 		printf("clnp_input: mbuf chain:\n");
 		for (mhead = m; mhead != NULL; mhead = mhead->m_next) {
 			printf("m %p, len %d\n", mhead, mhead->m_len);
@@ -386,22 +388,22 @@ clnp_input(struct mbuf *m, ...)
 		return;
 
 	clnp = mtod(m, struct clnp_fixed *);
-	hend = (caddr_t) clnp + clnp->cnf_hdr_len;
+	hend = (char *) clnp + clnp->cnf_hdr_len;
 
 	/*
 	 * extract the source and destination address drop packet on failure
 	 */
 	source = target = blank_siso;
 
-	hoff = (caddr_t) clnp + sizeof(struct clnp_fixed);
+	hoff = (char *)clnp + sizeof(struct clnp_fixed);
 	CLNP_EXTRACT_ADDR(dst, hoff, hend);
-	if (hoff == (caddr_t) 0) {
+	if (hoff == NULL) {
 		INCSTAT(cns_badaddr);
 		clnp_discard(m, GEN_INCOMPLETE);
 		return;
 	}
 	CLNP_EXTRACT_ADDR(src, hoff, hend);
-	if (hoff == (caddr_t) 0) {
+	if (hoff == NULL) {
 		INCSTAT(cns_badaddr);
 		clnp_discard(m, GEN_INCOMPLETE);
 		return;
@@ -424,13 +426,13 @@ clnp_input(struct mbuf *m, ...)
 			clnp_discard(m, GEN_INCOMPLETE);
 			return;
 		} else {
-			(void) bcopy(hoff, (caddr_t) & seg_part,
-				     sizeof(struct clnp_segment));
+			(void)memcpy(&seg_part, hoff,
+			    sizeof(struct clnp_segment));
 			/* make sure segmentation fields are in host order */
 			seg_part.cng_id = ntohs(seg_part.cng_id);
 			seg_part.cng_off = ntohs(seg_part.cng_off);
 			seg_part.cng_tot_len = ntohs(seg_part.cng_tot_len);
-			seg_off = hoff - (caddr_t) clnp;
+			seg_off = hoff - (char *)clnp;
 			hoff += sizeof(struct clnp_segment);
 		}
 	}
@@ -458,7 +460,7 @@ clnp_input(struct mbuf *m, ...)
 #ifdef	DECBIT
 		/* check if the congestion experienced bit is set */
 		if (oidxp->cni_qos_formatp) {
-			caddr_t         qosp = CLNP_OFFTOOPT(m, oidxp->cni_qos_formatp);
+			char *         qosp = CLNP_OFFTOOPT(m, oidxp->cni_qos_formatp);
 			u_char          qos = *qosp;
 
 			need_afrin = ((qos & (CLNPOVAL_GLOBAL | CLNPOVAL_CONGESTED)) ==

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.23.26.1 2007/02/27 16:55:11 yamt Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.23.26.2 2007/03/12 06:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -144,10 +144,10 @@ extern struct callout esis_config_ch;
 int iso_addrmatch1 (const struct iso_addr *, const struct iso_addr *);
 int iso_addrmatch (const struct sockaddr_iso *, const struct sockaddr_iso *);
 int iso_netmatch (const struct sockaddr_iso *, const struct sockaddr_iso *);
-u_long iso_hashchar (caddr_t, int);
+u_long iso_hashchar (void *, int);
 int iso_hash (struct sockaddr_iso *, struct afhash *);
-int iso_netof (struct iso_addr *, caddr_t);
-int iso_control (struct socket *, u_long, caddr_t, struct ifnet *,
+int iso_netof (struct iso_addr *, void *);
+int iso_control (struct socket *, u_long, void *, struct ifnet *,
 		     struct lwp *);
 void iso_purgeaddr (struct ifaddr *, struct ifnet *);
 void iso_purgeif (struct ifnet *);
@@ -158,7 +158,7 @@ struct ifaddr *iso_ifwithidi (struct sockaddr *);
 int iso_ck_addr (struct iso_addr *);
 int iso_eqtype (struct iso_addr *, struct iso_addr *);
 struct iso_ifaddr *iso_localifa (struct sockaddr_iso *);
-int iso_nlctloutput (int, int, caddr_t, struct mbuf *);
+int iso_nlctloutput (int, int, void *, struct mbuf *);
 void dump_isoaddr(const struct sockaddr_iso *);
 
 /* iso_chksum.c */
@@ -171,14 +171,14 @@ int m_compress (struct mbuf *, struct mbuf **);
 void llc_rtrequest (int, struct rtentry *, struct rt_addrinfo *);
 void iso_setmcasts (struct ifnet *, int);
 int iso_snparesolve(struct ifnet *, const struct sockaddr_iso *,
-			 caddr_t, int *);
+			 void *, int *);
 void snpac_free (struct llinfo_llc *);
-int snpac_add (struct ifnet *, struct iso_addr *, caddr_t, int,
+int snpac_add (struct ifnet *, struct iso_addr *, void *, int,
 		   u_short, int);
-int snpac_ioctl (struct socket *, u_long, caddr_t, struct lwp *);
+int snpac_ioctl (struct socket *, u_long, void *, struct lwp *);
 void snpac_logdefis (struct rtentry *);
 void snpac_age (void *);
-int snpac_ownmulti (caddr_t, u_int);
+int snpac_ownmulti (void *, u_int);
 void snpac_flushifp (struct ifnet *);
 void snpac_rtrequest (int, struct iso_addr *, struct iso_addr *,
 			 struct iso_addr *, int, struct rtentry **);

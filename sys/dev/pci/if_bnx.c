@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.2 2007/02/15 19:24:47 bouyer Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.2.2.1 2007/03/12 05:55:17 rmind Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.21 2006/08/21 03:32:11 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.2 2007/02/15 19:24:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.2.2.1 2007/03/12 05:55:17 rmind Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -331,7 +331,7 @@ void	bnx_free_tx_chain(struct bnx_softc *);
 int	bnx_tx_encap(struct bnx_softc *, struct mbuf *, u_int16_t *,
 	    u_int16_t *, u_int32_t *);
 void	bnx_start(struct ifnet *);
-int	bnx_ioctl(struct ifnet *, u_long, caddr_t);
+int	bnx_ioctl(struct ifnet *, u_long, void *);
 void	bnx_watchdog(struct ifnet *);
 int	bnx_ifmedia_upd(struct ifnet *);
 void	bnx_ifmedia_sts(struct ifnet *, struct ifmediareq *);
@@ -1883,7 +1883,7 @@ bnx_dma_free(struct bnx_softc *sc)
 	/* Destroy the status block. */
 	if (sc->status_block != NULL && sc->status_map != NULL) {
 		bus_dmamap_unload(sc->bnx_dmatag, sc->status_map);
-		bus_dmamem_unmap(sc->bnx_dmatag, (caddr_t)sc->status_block,
+		bus_dmamem_unmap(sc->bnx_dmatag, (void *)sc->status_block,
 		    BNX_STATUS_BLK_SZ);		
 		bus_dmamem_free(sc->bnx_dmatag, &sc->status_seg,
 		    sc->status_rseg);
@@ -1895,7 +1895,7 @@ bnx_dma_free(struct bnx_softc *sc)
 	/* Destroy the statistics block. */
 	if (sc->stats_block != NULL && sc->stats_map != NULL) {
 		bus_dmamap_unload(sc->bnx_dmatag, sc->stats_map);
-		bus_dmamem_unmap(sc->bnx_dmatag, (caddr_t)sc->stats_block,
+		bus_dmamem_unmap(sc->bnx_dmatag, (void *)sc->stats_block,
 		    BNX_STATS_BLK_SZ);		
 		bus_dmamem_free(sc->bnx_dmatag, &sc->stats_seg,
 		    sc->stats_rseg);
@@ -1911,7 +1911,7 @@ bnx_dma_free(struct bnx_softc *sc)
 			bus_dmamap_unload(sc->bnx_dmatag,
 			    sc->tx_bd_chain_map[i]);
 			bus_dmamem_unmap(sc->bnx_dmatag,
-			    (caddr_t)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ);
+			    (void *)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ);
 			bus_dmamem_free(sc->bnx_dmatag, &sc->tx_bd_chain_seg[i],
 			    sc->tx_bd_chain_rseg[i]);
 			bus_dmamap_destroy(sc->bnx_dmatag,
@@ -1936,7 +1936,7 @@ bnx_dma_free(struct bnx_softc *sc)
 			bus_dmamap_unload(sc->bnx_dmatag,
 			    sc->rx_bd_chain_map[i]);
 			bus_dmamem_unmap(sc->bnx_dmatag,
-			    (caddr_t)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
+			    (void *)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ);
 			bus_dmamem_free(sc->bnx_dmatag, &sc->rx_bd_chain_seg[i],
 			    sc->rx_bd_chain_rseg[i]);
 
@@ -2112,7 +2112,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	if (bus_dmamem_map(sc->bnx_dmatag, &sc->status_seg, sc->status_rseg,
-	    BNX_STATUS_BLK_SZ, (caddr_t *)&sc->status_block, BUS_DMA_NOWAIT)) {
+	    BNX_STATUS_BLK_SZ, (void **)&sc->status_block, BUS_DMA_NOWAIT)) {
 		aprint_error("%s: Could not map status block DMA memory!\n",
 		    sc->bnx_dev.dv_xname);
 		rc = ENOMEM;
@@ -2156,7 +2156,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 	}
 
 	if (bus_dmamem_map(sc->bnx_dmatag, &sc->stats_seg, sc->stats_rseg,
-	    BNX_STATS_BLK_SZ, (caddr_t *)&sc->stats_block, BUS_DMA_NOWAIT)) {
+	    BNX_STATS_BLK_SZ, (void **)&sc->stats_block, BUS_DMA_NOWAIT)) {
 		aprint_error("%s: Could not map stats block DMA memory!\n",
 		    sc->bnx_dev.dv_xname);
 		rc = ENOMEM;
@@ -2205,7 +2205,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 
 		if (bus_dmamem_map(sc->bnx_dmatag, &sc->tx_bd_chain_seg[i],
 		    sc->tx_bd_chain_rseg[i], BNX_TX_CHAIN_PAGE_SZ,
-		    (caddr_t *)&sc->tx_bd_chain[i], BUS_DMA_NOWAIT)) {
+		    (void **)&sc->tx_bd_chain[i], BUS_DMA_NOWAIT)) {
 			aprint_error(
 			    "%s: Could not map TX desc %d DMA memory!\n",
 			    sc->bnx_dev.dv_xname, i);
@@ -2214,7 +2214,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		}
 
 		if (bus_dmamap_load(sc->bnx_dmatag, sc->tx_bd_chain_map[i],
-		    (caddr_t)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ, NULL,
+		    (void *)sc->tx_bd_chain[i], BNX_TX_CHAIN_PAGE_SZ, NULL,
 		    BUS_DMA_NOWAIT)) {
 			aprint_error(
 			    "%s: Could not load TX desc %d DMA memory!\n",
@@ -2275,7 +2275,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 
 		if (bus_dmamem_map(sc->bnx_dmatag, &sc->rx_bd_chain_seg[i],
 		    sc->rx_bd_chain_rseg[i], BNX_RX_CHAIN_PAGE_SZ,
-		    (caddr_t *)&sc->rx_bd_chain[i], BUS_DMA_NOWAIT)) {
+		    (void **)&sc->rx_bd_chain[i], BUS_DMA_NOWAIT)) {
 			aprint_error(
 			    "%s: Could not map Rx desc %d DMA memory!\n",
 			    sc->bnx_dev.dv_xname, i);
@@ -2284,7 +2284,7 @@ bnx_dma_alloc(struct bnx_softc *sc)
 		}
 
 		if (bus_dmamap_load(sc->bnx_dmatag, sc->rx_bd_chain_map[i],
-		    (caddr_t)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ, NULL,
+		    (void *)sc->rx_bd_chain[i], BNX_RX_CHAIN_PAGE_SZ, NULL,
 		    BUS_DMA_NOWAIT)) {
 			aprint_error(
 			    "%s: Could not load Rx desc %d DMA memory!\n",
@@ -3930,7 +3930,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 					m_freem(m);
 					goto bnx_rx_int_next_rx;
 				}
-				m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
+				m_copydata(m, 0, ETHER_HDR_LEN, (void *)&vh);
 				vh.evl_proto = vh.evl_encap_proto;
 				vh.evl_tag = l2fhdr->l2_fhdr_vlan_tag >> 16;
 				vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
@@ -4428,7 +4428,7 @@ bnx_start_locked_exit:
 /*   0 for success, positive value for failure.                             */
 /****************************************************************************/
 int
-bnx_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct bnx_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;

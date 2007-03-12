@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.25 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.25.4.1 2007/03/12 05:58:44 rmind Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.25 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf2.c,v 1.25.4.1 2007/03/12 05:58:44 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	 */
 	if ((off == 0 || offp) && M_TRAILINGSPACE(n) >= tlen &&
 	    !sharedcluster) {
-		m_copydata(n->m_next, 0, tlen, mtod(n, caddr_t) + n->m_len);
+		m_copydata(n->m_next, 0, tlen, mtod(n, char *) + n->m_len);
 		n->m_len += tlen;
 		m_adj(n->m_next, tlen);
 		goto ok;
@@ -181,7 +181,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	    !sharedcluster && n->m_next->m_len >= tlen) {
 		n->m_next->m_data -= hlen;
 		n->m_next->m_len += hlen;
-		memcpy(mtod(n->m_next, caddr_t), mtod(n, caddr_t) + off, hlen);
+		memcpy(mtod(n->m_next, void *), mtod(n, char *) + off, hlen);
 		n->m_len -= hlen;
 		n = n->m_next;
 		off = 0;
@@ -206,10 +206,10 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 	/* get hlen from <n, off> into <o, 0> */
 	o->m_len = hlen;
-	memcpy(mtod(o, caddr_t), mtod(n, caddr_t) + off, hlen);
+	memcpy(mtod(o, void *), mtod(n, char *) + off, hlen);
 	n->m_len -= hlen;
 	/* get tlen from <n->m_next, 0> into <o, hlen> */
-	m_copydata(n->m_next, 0, tlen, mtod(o, caddr_t) + o->m_len);
+	m_copydata(n->m_next, 0, tlen, mtod(o, char *) + o->m_len);
 	o->m_len += tlen;
 	m_adj(n->m_next, tlen);
 	o->m_next = n->m_next;

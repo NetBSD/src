@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet6,v 1.6 2006/11/25 18:41:36 yamt Exp $
+#	$NetBSD: files.netinet6,v 1.6.4.1 2007/03/12 05:59:56 rmind Exp $
 
 defflag	opt_inet6.h	RFC2292	
 
@@ -14,6 +14,7 @@ file	netinet6/in6_offload.c		inet6
 file	netinet6/in6_pcb.c		inet6
 file	netinet6/in6_proto.c		inet6
 file	netinet6/in6_src.c		inet6
+file	netinet6/ip6_flow.c		inet6
 file	netinet6/ip6_forward.c		inet6
 file	netinet6/ip6_id.c		inet6
 file	netinet6/ip6_input.c		inet6

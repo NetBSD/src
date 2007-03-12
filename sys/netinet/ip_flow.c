@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.39.2.1 2007/02/27 16:54:55 yamt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.39.2.2 2007/03/12 05:59:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39.2.1 2007/02/27 16:54:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.39.2.2 2007/03/12 05:59:37 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,10 +157,10 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * IP header with no option and valid version and length
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, caddr_t)))
+	if (IP_HDR_ALIGNED_P(mtod(m, void *)))
 		ip = mtod(m, struct ip *);
 	else {
-		memcpy(&ip_store, mtod(m, caddr_t), sizeof(ip_store));
+		memcpy(&ip_store, mtod(m, void *), sizeof(ip_store));
 		ip = &ip_store;
 	}
 	iplen = ntohs(ip->ip_len);
@@ -232,8 +232,8 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * Done modifying the header; copy it back, if necessary.
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, caddr_t)) == 0)
-		memcpy(mtod(m, caddr_t), &ip_store, sizeof(ip_store));
+	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0)
+		memcpy(mtod(m, void *), &ip_store, sizeof(ip_store));
 
 	/*
 	 * Trim the packet in case it's too long..

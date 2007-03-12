@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.123.2.1 2007/02/27 16:53:59 yamt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.123.2.2 2007/03/12 05:55:16 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.123.2.1 2007/02/27 16:53:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.123.2.2 2007/03/12 05:55:16 rmind Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -194,7 +194,7 @@ static int	bge_encap(struct bge_softc *, struct mbuf *, u_int32_t *);
 
 static int	bge_intr(void *);
 static void	bge_start(struct ifnet *);
-static int	bge_ioctl(struct ifnet *, u_long, caddr_t);
+static int	bge_ioctl(struct ifnet *, u_long, void *);
 static int	bge_init(struct ifnet *);
 static void	bge_stop(struct bge_softc *);
 static void	bge_watchdog(struct ifnet *);
@@ -210,7 +210,7 @@ static int	bge_alloc_jumbo_mem(struct bge_softc *);
 static void	bge_free_jumbo_mem(struct bge_softc *);
 #endif
 static void	*bge_jalloc(struct bge_softc *);
-static void	bge_jfree(struct mbuf *, caddr_t, size_t, void *);
+static void	bge_jfree(struct mbuf *, void *, size_t, void *);
 static int	bge_newbuf_std(struct bge_softc *, int, struct mbuf *,
 			       bus_dmamap_t);
 static int	bge_newbuf_jumbo(struct bge_softc *, int, struct mbuf *);
@@ -465,10 +465,11 @@ bge_eeprom_getbyte(struct bge_softc *sc, int addr, u_int8_t *dest)
  * Read a sequence of bytes from the EEPROM.
  */
 static int
-bge_read_eeprom(struct bge_softc *sc, caddr_t dest, int off, int cnt)
+bge_read_eeprom(struct bge_softc *sc, void *destv, int off, int cnt)
 {
 	int err = 0, i;
 	u_int8_t byte = 0;
+	char *dest = destv;
 
 	for (i = 0; i < cnt; i++) {
 		err = bge_eeprom_getbyte(sc, off + i, &byte);
@@ -682,7 +683,7 @@ bge_handle_events(struct bge_softc *sc)
 static int
 bge_alloc_jumbo_mem(struct bge_softc *sc)
 {
-	caddr_t			ptr, kva;
+	char *ptr, *kva;
 	bus_dma_segment_t	seg;
 	int		i, rseg, state, error;
 	struct bge_jpool_entry   *entry;
@@ -697,7 +698,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	}
 
 	state = 1;
-	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg, BGE_JMEM, &kva,
+	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg, BGE_JMEM, (void **)&kva,
 	    BUS_DMA_NOWAIT)) {
 		printf("%s: can't map DMA buffers (%d bytes)\n",
 		    sc->bge_dev.dv_xname, (int)BGE_JMEM);
@@ -722,7 +723,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 	}
 
 	state = 4;
-	sc->bge_cdata.bge_jumbo_buf = (caddr_t)kva;
+	sc->bge_cdata.bge_jumbo_buf = (void *)kva;
 	DPRINTFN(1,("bge_jumbo_buf = %p\n", sc->bge_cdata.bge_jumbo_buf));
 
 	SLIST_INIT(&sc->bge_jfree_listhead);
@@ -794,7 +795,7 @@ bge_jalloc(struct bge_softc *sc)
  * Release a jumbo buffer.
  */
 static void
-bge_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+bge_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	struct bge_jpool_entry *entry;
 	struct bge_softc *sc;
@@ -808,8 +809,8 @@ bge_jfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
 
 	/* calculate the slot this buffer belongs to */
 
-	i = ((caddr_t)buf
-	     - (caddr_t)sc->bge_cdata.bge_jumbo_buf) / BGE_JLEN;
+	i = ((char *)buf
+	     - (char *)sc->bge_cdata.bge_jumbo_buf) / BGE_JLEN;
 
 	if ((i < 0) || (i >= BGE_JSLOTS))
 		panic("bge_jfree: asked to free buffer that we don't manage!");
@@ -899,7 +900,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 {
 	struct mbuf *m_new = NULL;
 	struct bge_rx_bd *r;
-	caddr_t buf = NULL;
+	void *buf = NULL;
 
 	if (m == NULL) {
 
@@ -931,7 +932,7 @@ bge_newbuf_jumbo(struct bge_softc *sc, int i, struct mbuf *m)
 	if (!sc->bge_rx_alignment_bug)
 	    m_adj(m_new, ETHER_ALIGN);
 	bus_dmamap_sync(sc->bge_dmatag, sc->bge_cdata.bge_rx_jumbo_map,
-	    mtod(m_new, caddr_t) - sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
+	    mtod(m_new, char *) - (char *)sc->bge_cdata.bge_jumbo_buf, BGE_JLEN,
 	    BUS_DMASYNC_PREREAD);
 	/* Set up the descriptor. */
 	r = &sc->bge_rdata->bge_rx_jumbo_ring[i];
@@ -2338,7 +2339,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	u_int32_t		mac_addr = 0;
 	u_int32_t		command;
 	struct ifnet		*ifp;
-	caddr_t			kva;
+	void *			kva;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		memtype;
 	bus_addr_t		memaddr;
@@ -2461,7 +2462,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		eaddr[3] = (u_char)(mac_addr >> 16);
 		eaddr[4] = (u_char)(mac_addr >> 8);
 		eaddr[5] = (u_char)(mac_addr >> 0);
-	} else if (bge_read_eeprom(sc, (caddr_t)eaddr,
+	} else if (bge_read_eeprom(sc, (void *)eaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
 		aprint_error("%s: failed to read station address\n",
 		    sc->bge_dev.dv_xname);
@@ -2601,7 +2602,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	if (bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_SIG) == BGE_MAGIC_NUMBER) {
 		hwcfg = bge_readmem_ind(sc, BGE_SOFTWARE_GENCOMM_NICCFG);
 	} else {
-		bge_read_eeprom(sc, (caddr_t)&hwcfg,
+		bge_read_eeprom(sc, (void *)&hwcfg,
 		    BGE_EE_HWCFG_OFFSET, sizeof(hwcfg));
 		hwcfg = be32toh(hwcfg);
 	}
@@ -2925,7 +2926,7 @@ bge_rxeof(struct bge_softc *sc)
 			jumbocnt++;
 			bus_dmamap_sync(sc->bge_dmatag,
 			    sc->bge_cdata.bge_rx_jumbo_map,
-			    mtod(m, caddr_t) - sc->bge_cdata.bge_jumbo_buf,
+			    mtod(m, char *) - (char *)sc->bge_cdata.bge_jumbo_buf,
 			    BGE_JLEN, BUS_DMASYNC_POSTREAD);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
 				ifp->if_ierrors++;
@@ -2970,7 +2971,7 @@ bge_rxeof(struct bge_softc *sc)
                  * If our CPU requires alignment, re-align by copying.
                  */
 		if (sc->bge_rx_alignment_bug) {
-			memmove(mtod(m, caddr_t) + ETHER_ALIGN, m->m_data,
+			memmove(mtod(m, char *) + ETHER_ALIGN, m->m_data,
                                 cur_rx->bge_len);
 			m->m_data += ETHER_ALIGN;
 		}
@@ -3344,7 +3345,7 @@ bge_cksum_pad(struct mbuf *pkt)
 	KDASSERT(M_TRAILINGSPACE(last) >= padlen);
 
 	/* Now zero the pad area, to avoid the bge cksum-assist bug */
-	memset(mtod(last, caddr_t) + last->m_len, 0, padlen);
+	memset(mtod(last, char *) + last->m_len, 0, padlen);
 	last->m_len += padlen;
 	pkt->m_pkthdr.len += padlen;
 	return 0;
@@ -3607,8 +3608,8 @@ doit:
 			return ENOBUFS;
 #endif
 		} else {
-			ip = (struct ip *) (mtod(m0, caddr_t) + offset);
-			th = (struct tcphdr *) (mtod(m0, caddr_t) + hlen);
+			ip = (struct ip *) (mtod(m0, char *) + offset);
+			th = (struct tcphdr *) (mtod(m0, char *) + hlen);
 			ip_tcp_hlen = iphl +  (th->th_off << 2);
 
 			/* Total IP/TCP options, in 32-bit words */
@@ -3998,7 +3999,7 @@ bge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static int
-bge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;

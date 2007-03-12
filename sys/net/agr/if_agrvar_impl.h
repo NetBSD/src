@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrvar_impl.h,v 1.4.4.1 2007/02/27 16:54:50 yamt Exp $	*/
+/*	$NetBSD: if_agrvar_impl.h,v 1.4.4.2 2007/03/12 05:59:32 rmind Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@ struct agr_port {
 	struct ifnet *port_agrifp;
 	struct ifnet *port_ifp;
 	TAILQ_ENTRY(agr_port) port_q;
-	int (*port_ioctl)(struct ifnet *, u_long, caddr_t);
+	int (*port_ioctl)(struct ifnet *, u_long, void *);
 	void *port_iftprivate;
 	int port_flags;
 	u_int port_media;
@@ -127,7 +127,7 @@ void agr_unlock(struct agr_softc *, int);
 void agr_ioctl_lock(struct agr_softc *);
 void agr_ioctl_unlock(struct agr_softc *);
 
-int agrport_ioctl(struct agr_port *, u_long, caddr_t);
+int agrport_ioctl(struct agr_port *, u_long, void *);
 
 struct agr_softc *agr_alloc_softc(void);
 void agr_free_softc(struct agr_softc *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.42 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.42.2.1 2007/03/12 05:58:35 rmind Exp $	*/
 #include <sys/types.h> 	/* XXX to get __HAVE_TIMECOUNTER, remove
 			   after all ports are converted. */
 #ifdef __HAVE_TIMECOUNTER
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.42 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.42.2.1 2007/03/12 05:58:35 rmind Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -242,7 +242,7 @@ sys_ntp_adjtime(l, v, retval)
 	struct timex ntv;
 	int error = 0;
 
-	error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv, sizeof(ntv));
+	error = copyin((void *)SCARG(uap, tp), (void *)&ntv, sizeof(ntv));
 	if (error != 0)
 		return (error);
 
@@ -253,7 +253,7 @@ sys_ntp_adjtime(l, v, retval)
 
 	ntp_adjtime1(&ntv);
 
-	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
+	error = copyout((void *)&ntv, (void *)SCARG(uap, tp), sizeof(ntv));
 	if (!error)
 		*retval = ntp_timestatus();
 
@@ -903,7 +903,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.42 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.42.2.1 2007/03/12 05:58:35 rmind Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -1011,7 +1011,7 @@ sys_ntp_adjtime(l, v, retval)
 	struct timex ntv;
 	int error = 0;
 
-	error = copyin((caddr_t)SCARG(uap, tp), (caddr_t)&ntv, sizeof(ntv));
+	error = copyin((void *)SCARG(uap, tp), (void *)&ntv, sizeof(ntv));
 	if (error != 0)
 		return (error);
 
@@ -1022,7 +1022,7 @@ sys_ntp_adjtime(l, v, retval)
 
 	ntp_adjtime1(&ntv);
 
-	error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, tp), sizeof(ntv));
+	error = copyout((void *)&ntv, (void *)SCARG(uap, tp), sizeof(ntv));
 	if (error == 0)
 		*retval = ntp_timestatus();
 
@@ -1154,7 +1154,7 @@ sys___ntp_gettime30(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, ntvp)) {
 		ntp_gettime(&ntv);
 
-		error = copyout((caddr_t)&ntv, (caddr_t)SCARG(uap, ntvp),
+		error = copyout((void *)&ntv, (void *)SCARG(uap, ntvp),
 				sizeof(ntv));
 	}
 	if (!error) {
@@ -1180,7 +1180,7 @@ compat_30_sys_ntp_gettime(struct lwp *l, void *v, register_t *retval)
 		ontv.maxerror = ntv.maxerror;
 		ontv.esterror = ntv.esterror;
 
-		error = copyout((caddr_t)&ontv, (caddr_t)SCARG(uap, ntvp),
+		error = copyout((void *)&ontv, (void *)SCARG(uap, ntvp),
 				sizeof(ontv));
  	}
 	if (!error)

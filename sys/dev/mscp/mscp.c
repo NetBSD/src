@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.24 2006/03/25 23:20:18 thorpej Exp $	*/
+/*	$NetBSD: mscp.c,v 1.24.14.1 2007/03/12 05:55:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.24 2006/03/25 23:20:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.24.14.1 2007/03/12 05:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -189,7 +189,7 @@ loop:
 		mi->mi_rsp.mri_next = nextrsp;
 		if (mi->mi_wantcredits && mi->mi_credits > MSCP_MINCREDITS) {
 			mi->mi_wantcredits = 0;
-			wakeup((caddr_t) &mi->mi_wantcredits);
+			wakeup((void *) &mi->mi_wantcredits);
 		}
 		return;
 	}

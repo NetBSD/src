@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.63 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.63.4.1 2007/03/12 05:56:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.63 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.63.4.1 2007/03/12 05:56:46 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -305,7 +305,7 @@ static void ray_if_start(struct ifnet *);
 static int ray_init(struct ray_softc *);
 static int ray_intr(void *);
 static void ray_intr_start(struct ray_softc *);
-static int ray_ioctl(struct ifnet *, u_long, caddr_t);
+static int ray_ioctl(struct ifnet *, u_long, void *);
 static int ray_issue_cmd(struct ray_softc *, bus_size_t, u_int);
 static int ray_match(struct device *, struct cfdata *, void *);
 static int ray_media_change(struct ifnet *);
@@ -918,7 +918,7 @@ static int
 ray_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ieee80211_nwid nwid;
 	struct ray_param_req pr;
@@ -1363,7 +1363,7 @@ ray_recv(sc, ccs)
 #ifdef RAY_DEBUG
 	/* have a look if you want to see how the card rx works :) */
 	if (ray_debug && ray_debug_dump_desc)
-		hexdump((caddr_t)sc->sc_memh + RAY_RCS_BASE, 0x400,
+		hexdump((char *)sc->sc_memh + RAY_RCS_BASE, 0x400,
 		    16, 4, 0);
 #endif
 
@@ -1573,14 +1573,14 @@ done:
 	 */
 	if (issnap) {
 		/* create an ether_header over top of the 802.11+SNAP header */
-		eh = (struct ether_header *)((caddr_t)(frame + 1) - 6);
+		eh = (struct ether_header *)((char *)(frame + 1) - 6);
 		memcpy(eh->ether_shost, src, ETHER_ADDR_LEN);
 		memcpy(eh->ether_dhost, frame->i_addr1, ETHER_ADDR_LEN);
 	} else {
 		/* this is the weird e2 in 802.11 encapsulation */
 		eh = (struct ether_header *)(frame + 1);
 	}
-	m_adj(m, (caddr_t)eh - (caddr_t)frame);
+	m_adj(m, (char *)eh - (char *)frame);
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);

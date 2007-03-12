@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.12 2006/07/08 20:26:06 christos Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.12.10.1 2007/03/12 05:57:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -80,7 +80,7 @@ struct sysmon_envsys {
 
 int	sysmonopen_envsys(dev_t, int, int, struct lwp *);
 int	sysmonclose_envsys(dev_t, int, int, struct lwp *);
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct lwp *);
+int	sysmonioctl_envsys(dev_t, u_long, void *, int, struct lwp *);
 
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
@@ -105,7 +105,7 @@ struct sysmon_wdog {
 
 int	sysmonopen_wdog(dev_t, int, int, struct lwp *);
 int	sysmonclose_wdog(dev_t, int, int, struct lwp *);
-int	sysmonioctl_wdog(dev_t, u_long, caddr_t, int, struct lwp *);
+int	sysmonioctl_wdog(dev_t, u_long, void *, int, struct lwp *);
 
 int     sysmon_wdog_register(struct sysmon_wdog *);
 void    sysmon_wdog_unregister(struct sysmon_wdog *);
@@ -126,7 +126,7 @@ int	sysmonclose_power(dev_t, int, int, struct lwp *);
 int	sysmonread_power(dev_t, struct uio *, int);
 int	sysmonpoll_power(dev_t, int, struct lwp *);
 int	sysmonkqfilter_power(dev_t, struct knote *);
-int	sysmonioctl_power(dev_t, u_long, caddr_t, int, struct lwp *);
+int	sysmonioctl_power(dev_t, u_long, void *, int, struct lwp *);
 
 void	sysmon_power_settype(const char *);
 
@@ -135,6 +135,6 @@ void	sysmon_pswitch_unregister(struct sysmon_pswitch *);
 
 void	sysmon_pswitch_event(struct sysmon_pswitch *, int);
  
-int	sysmonioctl_envsys(dev_t, u_long, caddr_t, int, struct lwp *);
+int	sysmonioctl_envsys(dev_t, u_long, void *, int, struct lwp *);
 
 #endif /* _DEV_SYSMON_SYSMONVAR_H_ */

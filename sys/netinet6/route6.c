@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.16 2006/11/16 01:33:46 christos Exp $	*/
+/*	$NetBSD: route6.c,v 1.16.4.1 2007/03/12 06:00:02 rmind Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.16 2006/11/16 01:33:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.16.4.1 2007/03/12 06:00:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -94,7 +94,7 @@ route6_input(struct mbuf **mp, int *offp, int proto)
 		}
 		ip6stat.ip6s_badoptions++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-			    (caddr_t)&rh->ip6r_type - (caddr_t)ip6);
+			    (char *)&rh->ip6r_type - (char *)ip6);
 		return (IPPROTO_DONE);
 	}
 
@@ -133,14 +133,14 @@ ip6_rthdr0(m, ip6, rh0)
 		 */
 		ip6stat.ip6s_badoptions++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-			    (caddr_t)&rh0->ip6r0_len - (caddr_t)ip6);
+			    (char *)&rh0->ip6r0_len - (char *)ip6);
 		return (-1);
 	}
 
 	if ((addrs = rh0->ip6r0_len / 2) < rh0->ip6r0_segleft) {
 		ip6stat.ip6s_badoptions++;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-			    (caddr_t)&rh0->ip6r0_segleft - (caddr_t)ip6);
+			    (char *)&rh0->ip6r0_segleft - (char *)ip6);
 		return (-1);
 	}
 

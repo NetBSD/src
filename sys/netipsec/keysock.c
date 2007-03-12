@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.11 2006/10/13 20:53:59 christos Exp $	*/
+/*	$NetBSD: keysock.c,v 1.11.4.1 2007/03/12 06:00:10 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11 2006/10/13 20:53:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.11.4.1 2007/03/12 06:00:10 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -284,7 +284,7 @@ key_sendup(so, msg, len, target)
 	}
 	m->m_pkthdr.len = len;
 	m->m_pkthdr.rcvif = NULL;
-	m_copyback(m, 0, len, (caddr_t)msg);
+	m_copyback(m, 0, len, msg);
 
 	/* avoid duplicated statistics */
 	pfkeystat.in_total--;
@@ -468,12 +468,12 @@ key_attach(struct socket *so, int proto, struct proc *td)
 	 * eliminate the spl.
 	 */
 	s = splnet();	/* FreeBSD */
-	so->so_pcb = (caddr_t)kp;
+	so->so_pcb = kp;
 	error = raw_usrreqs.pru_attach(so, proto, td);
 	kp = (struct keycb *)sotorawcb(so);
 	if (error) {
 		free(kp, M_PCB);
-		so->so_pcb = (caddr_t) 0;
+		so->so_pcb = NULL;
 		splx(s);
 		return error;
 	}
@@ -634,7 +634,7 @@ key_usrreq(so, req, m, nam, control, l)
 	s = splsoftnet();
 	if (req == PRU_ATTACH) {
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB, M_WAITOK);
-		so->so_pcb = (caddr_t)kp;
+		so->so_pcb = kp;
 		if (so->so_pcb)
 			bzero(so->so_pcb, sizeof(*kp));
 	}
@@ -654,8 +654,8 @@ key_usrreq(so, req, m, nam, control, l)
 		int af = kp->kp_raw.rcb_proto.sp_protocol;
 		if (error) {
 			pfkeystat.sockerr++;
-			free((caddr_t)kp, M_PCB);
-			so->so_pcb = (caddr_t) 0;
+			free(kp, M_PCB);
+			so->so_pcb = NULL;
 			splx(s);
 			return (error);
 		}
@@ -709,7 +709,7 @@ struct protosw keysw[] = {
 static void
 key_init0(void)
 {
-	bzero((caddr_t)&key_cb, sizeof(key_cb));
+	bzero(&key_cb, sizeof(key_cb));
 	key_init();
 }
 

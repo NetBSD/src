@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.26 2006/12/15 21:18:56 joerg Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.26.2.1 2007/03/12 06:00:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.26 2006/12/15 21:18:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.26.2.1 2007/03/12 06:00:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -212,7 +212,7 @@ rclnp_ctloutput(
 		    op, level, optname);
 		if (*m != NULL) {
 			printf("rclnp_ctloutput: %d bytes of mbuf data\n", (*m)->m_len);
-			dump_buf(mtod((*m), caddr_t), (*m)->m_len);
+			dump_buf(mtod((*m), void *), (*m)->m_len);
 		}
 	}
 #endif
@@ -255,7 +255,7 @@ rclnp_ctloutput(
 				break;
 			rp->risop_isop.isop_optindex = m_get(M_WAIT, MT_SOOPTS);
 			(void) clnp_opt_sanity(rp->risop_isop.isop_options,
-				 mtod(rp->risop_isop.isop_options, caddr_t),
+				 mtod(rp->risop_isop.isop_options, void *),
 					 rp->risop_isop.isop_options->m_len,
 					  mtod(rp->risop_isop.isop_optindex,
 					       struct clnp_optidx *));
@@ -373,6 +373,6 @@ clnp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	error = raw_usrreq(so, req, m, nam, control, l);
 
 	if (error && req == PRU_ATTACH && so->so_pcb)
-		free((caddr_t) rp, M_PCB);
+		free((void *) rp, M_PCB);
 	return (error);
 }

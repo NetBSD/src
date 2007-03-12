@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.77.2.1 2007/02/27 16:54:23 yamt Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.77.2.2 2007/03/12 05:58:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.77.2.1 2007/02/27 16:54:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.77.2.2 2007/03/12 05:58:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +419,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			bp = NULL;
 
 			iovp->iov_len -= todo;
-			iovp->iov_base = (caddr_t)iovp->iov_base + todo;
+			iovp->iov_base = (char *)iovp->iov_base + todo;
 			uio->uio_offset += todo;
 			uio->uio_resid -= todo;
 		}

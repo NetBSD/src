@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.15 2006/05/14 21:31:52 elad Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.15.14.1 2007/03/12 05:58:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -129,7 +129,7 @@ struct smbfs_fctx {
 /*
  * smb level
  */
-int  smbfs_smb_lock(struct smbnode *np, int op, caddr_t id,
+int  smbfs_smb_lock(struct smbnode *np, int op, void *id,
 	off_t start, off_t end,	struct smb_cred *scred);
 int  smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	struct smb_cred *scred);

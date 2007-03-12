@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.12 2006/11/16 01:33:26 christos Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.12.4.1 2007/03/12 05:57:29 rmind Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.12.4.1 2007/03/12 05:57:29 rmind Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -108,7 +108,7 @@ Static int	 cdce_encap(struct cdce_softc *, struct mbuf *, int);
 Static void	 cdce_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	 cdce_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void	 cdce_start(struct ifnet *);
-Static int	 cdce_ioctl(struct ifnet *, u_long, caddr_t);
+Static int	 cdce_ioctl(struct ifnet *, u_long, void *);
 Static void	 cdce_init(void *);
 Static void	 cdce_watchdog(struct ifnet *);
 Static void	 cdce_stop(struct cdce_softc *);
@@ -444,7 +444,7 @@ cdce_stop(struct cdce_softc *sc)
 }
 
 Static int
-cdce_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct cdce_softc	*sc = ifp->if_softc;
 	struct ifaddr		*ifa = (struct ifaddr *)data;

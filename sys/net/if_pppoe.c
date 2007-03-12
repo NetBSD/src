@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.76 2006/11/16 01:33:40 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.76.4.1 2007/03/12 05:59:12 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.76 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.76.4.1 2007/03/12 05:59:12 rmind Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -155,7 +155,7 @@ struct ifqueue ppoediscinq = { .ifq_maxlen = IFQ_MAXLEN };
 struct ifqueue ppoeinq = { .ifq_maxlen = IFQ_MAXLEN };
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-void * pppoe_softintr = NULL;
+void *pppoe_softintr = NULL;
 static void pppoe_softintr_handler(void *);
 #else
 struct callout pppoe_softintr = CALLOUT_INITIALIZER;
@@ -175,7 +175,7 @@ void pppoeattach(int);
 static int pppoe_connect(struct pppoe_softc *);
 static int pppoe_disconnect(struct pppoe_softc *);
 static void pppoe_abort_connect(struct pppoe_softc *);
-static int pppoe_ioctl(struct ifnet *, unsigned long, caddr_t);
+static int pppoe_ioctl(struct ifnet *, unsigned long, void *);
 static void pppoe_tls(struct sppp *);
 static void pppoe_tlf(struct sppp *);
 static void pppoe_start(struct ifnet *);
@@ -461,7 +461,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		m = NULL;
 		goto done;
 	}
-	ph = (struct pppoehdr *)(mtod(n, caddr_t) + noff);
+	ph = (struct pppoehdr *)(mtod(n, char *) + noff);
 	if (ph->vertype != PPPOE_VERTYPE) {
 		printf("pppoe: unknown version/type packet: 0x%x\n",
 		    ph->vertype);
@@ -487,7 +487,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			m = NULL;
 			goto done;
 		}
-		pt = (struct pppoetag *)(mtod(n, caddr_t) + noff);
+		pt = (struct pppoetag *)(mtod(n, char *) + noff);
 		tag = ntohs(pt->tag);
 		len = ntohs(pt->len);
 		if (off + len > m->m_pkthdr.len) {
@@ -512,10 +512,10 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				break;
 			}
 #ifdef PPPOE_SERVER
-			hunique = mtod(n, caddr_t) + noff;
+			hunique = mtod(n, void *) + noff;
 			hunique_len = len;
 #endif
-			sc = pppoe_find_softc_by_hunique(mtod(n, caddr_t) + noff,
+			sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
 			    len, m->m_pkthdr.rcvif);
 			if (sc != NULL)
 				devname = sc->sc_sppp.pp_if.if_xname;
@@ -529,7 +529,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 					m = NULL;
 					break;
 				}
-				ac_cookie = mtod(n, caddr_t) + noff;
+				ac_cookie = mtod(n, char *) + noff;
 				ac_cookie_len = len;
 			}
 			break;
@@ -554,7 +554,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				    &noff);
 				if (n && error) {
 					strncpy(error, 
-					    mtod(n, caddr_t) + noff, len);
+					    mtod(n, char *) + noff, len);
 					error[len] = '\0';
 				}
 			}
@@ -847,7 +847,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 }
 
 static int
-pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
+pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct lwp *l = curlwp;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc*)ifp;

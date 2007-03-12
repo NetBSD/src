@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.19 2006/11/16 01:33:49 christos Exp $
+ *	$Id: i4b_rbch.c,v 1.19.4.1 2007/03/12 06:00:13 rmind Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.19 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.19.4.1 2007/03/12 06:00:13 rmind Exp $");
 
 #include "isdnbchan.h"
 
@@ -179,7 +179,7 @@ int isdnbchanopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdnbchanclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdnbchanread __P((dev_t dev, struct uio *uio, int ioflag));
 int isdnbchanwrite __P((dev_t dev, struct uio *uio, int ioflag));
-int isdnbchanioctl __P((dev_t dev, IOCTL_CMD_T cmd, caddr_t arg, int flag, struct lwp* l));
+int isdnbchanioctl __P((dev_t dev, IOCTL_CMD_T cmd, void *arg, int flag, struct lwp* l));
 #ifdef OS_USES_POLL
 int isdnbchanpoll __P((dev_t dev, int events, struct lwp *l));
 int isdnbchankqfilter __P((dev_t dev, struct knote *kn));
@@ -457,7 +457,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 		{
 			NDBGL4(L4_RBCHDBG, "unit %d, wait read init", unit);
 
-			if((error = tsleep((caddr_t) &rbch_softc[unit],
+			if((error = tsleep((void *) &rbch_softc[unit],
 					   TTIPRI | PCATCH,
 					   "rrrbch", 0 )) != 0)
 			{
@@ -478,7 +478,7 @@ isdnbchanread(dev_t dev, struct uio *uio, int ioflag)
 
 			NDBGL4(L4_RBCHDBG, "unit %d, wait read data", unit);
 
-			if((error = tsleep((caddr_t) &sc->sc_ilt->rx_queue,
+			if((error = tsleep((void *) &sc->sc_ilt->rx_queue,
 					   TTIPRI | PCATCH,
 					   "rrbch", 0 )) != 0)
 			{
@@ -555,7 +555,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 		{
 			NDBGL4(L4_RBCHDBG, "unit %d, write wait init", unit);
 
-			error = tsleep((caddr_t) &rbch_softc[unit],
+			error = tsleep((void *) &rbch_softc[unit],
 						   TTIPRI | PCATCH,
 						   "wrrbch", 0 );
 			if(error == ERESTART) {
@@ -574,7 +574,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 				NDBGL4(L4_RBCHDBG, "unit %d, error %d tsleep init", unit, error);
 				return(error);
 			}
-			tsleep((caddr_t) &rbch_softc[unit], TTIPRI | PCATCH, "xrbch", (hz*1));
+			tsleep((void *) &rbch_softc[unit], TTIPRI | PCATCH, "xrbch", (hz*1));
 		}
 
 		while(IF_QFULL(sc->sc_ilt->tx_queue) && (sc->sc_devstate & ST_ISOPEN))
@@ -583,7 +583,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
 
 			NDBGL4(L4_RBCHDBG, "unit %d, write queue full", unit);
 
-			if ((error = tsleep((caddr_t) &sc->sc_ilt->tx_queue,
+			if ((error = tsleep((void *) &sc->sc_ilt->tx_queue,
 					    TTIPRI | PCATCH,
 					    "wrbch", 0)) != 0) {
 				sc->sc_devstate &= ~ST_WRWAITEMPTY;
@@ -648,7 +648,7 @@ isdnbchanwrite(dev_t dev, struct uio * uio, int ioflag)
  *	rbch device ioctl handlibg
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, caddr_t data, int flag,
+isdnbchanioctl(dev_t dev, IOCTL_CMD_T cmd, void *data, int flag,
 	struct lwp *l)
 {
 	int error = 0;
@@ -1014,7 +1014,7 @@ rbch_connect(void *softc, void *cdp)
 			cd->channelid, cd->isdnif);
 		sc->sc_devstate |= ST_CONNECTED;
 		sc->sc_cd = cdp;
-		wakeup((caddr_t)sc);
+		wakeup((void *)sc);
 		selwakeup(&sc->selp);
 	}
 }
@@ -1114,7 +1114,7 @@ rbch_rx_data_rdy(void *softc)
 	{
 		NDBGL4(L4_RBCHDBG, "(minor=%d) wakeup", sc->sc_unit);
 		sc->sc_devstate &= ~ST_RDWAITDATA;
-		wakeup((caddr_t) &sc->sc_ilt->rx_queue);
+		wakeup((void *) &sc->sc_ilt->rx_queue);
 	}
 	else
 	{
@@ -1137,7 +1137,7 @@ rbch_tx_queue_empty(void *softc)
 	{
 		NDBGL4(L4_RBCHDBG, "(minor=%d): wakeup", sc->sc_unit);
 		sc->sc_devstate &= ~ST_WRWAITEMPTY;
-		wakeup((caddr_t) &sc->sc_ilt->tx_queue);
+		wakeup((void *) &sc->sc_ilt->tx_queue);
 	}
 	else
 	{

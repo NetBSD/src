@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.26 2007/01/29 01:52:45 hubertf Exp $ */
+/*	$NetBSD: fb.c,v 1.26.2.1 2007/03/12 05:57:12 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.26 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.26.2.1 2007/03/12 05:57:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ int
 fbioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {
@@ -425,7 +425,7 @@ fbrcons_init(fb)
 	/* Set up what rasops needs to know about */
 	bzero(ri, sizeof *ri);
 	ri->ri_stride = fb->fb_linebytes;
-	ri->ri_bits = (caddr_t)fb->fb_pixels;
+	ri->ri_bits = (void *)fb->fb_pixels;
 	ri->ri_depth = fb->fb_type.fb_depth;
 	ri->ri_width = fb->fb_type.fb_width;
 	ri->ri_height = fb->fb_type.fb_height;

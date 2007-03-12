@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.4 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.4.14.1 2007/03/12 05:57:54 rmind Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -34,7 +34,7 @@
 #include "opt_ipfilter.h"
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.4 2006/04/04 16:17:19 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.4.14.1 2007/03/12 05:57:54 rmind Exp $");
 
 #define IPF_H323_PROXY
 
@@ -53,12 +53,12 @@ static	frentry_t	h323_fr;
 
 int	h323_proxy_init = 0;
 
-static int find_port __P((int, caddr_t, int datlen, int *, u_short *));
+static int find_port __P((int, void *, int datlen, int *, u_short *));
 
 
 static int find_port(ipaddr, data, datlen, off, port)
 int ipaddr;
-caddr_t data;
+void *data;
 int datlen, *off;
 unsigned short *port;
 {
@@ -142,7 +142,7 @@ ap_session_t *aps;
 			 * We are lucky here because this function is not
 			 * called with ipf_nat locked.
 			 */
-			if (fr_nat_ioctl((caddr_t)ipn, SIOCRMNAT, NAT_SYSSPACE|
+			if (fr_nat_ioctl((void *)ipn, SIOCRMNAT, NAT_SYSSPACE|
 				         NAT_LOCKHELD|FWRITE) == -1) {
 				/*EMPTY*/;
 				/* log the error */
@@ -164,7 +164,7 @@ nat_t *nat;
 {
 	int ipaddr, off, datlen;
 	unsigned short port;
-	caddr_t data;
+	void *data;
 	tcphdr_t *tcp;
 	ip_t *ip;
 
@@ -172,7 +172,7 @@ nat_t *nat;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = ip->ip_src.s_addr;
 	
-	data = (caddr_t)tcp + (TCP_OFF(tcp) << 2);
+	data = (char *)tcp + (TCP_OFF(tcp) << 2);
 	datlen = fin->fin_dlen - (TCP_OFF(tcp) << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
 		ipnat_t *ipn;
@@ -187,7 +187,7 @@ nat_t *nat;
 			return -1;
 		}
 		ipn = (ipnat_t *)&newarray[aps->aps_psiz];
-		bcopy((caddr_t)nat->nat_ptr, (caddr_t)ipn, sizeof(ipnat_t));
+		bcopy((void *)nat->nat_ptr, (void *)ipn, sizeof(ipnat_t));
 		(void) strncpy(ipn->in_plabel, "h245", APR_LABELLEN);
 		
 		ipn->in_inip = nat->nat_inip.s_addr;
@@ -206,7 +206,7 @@ nat_t *nat;
 		 * of calling fr_nat_ioctl(), we add the nat rule ourself.
 		 */
 		RWLOCK_EXIT(&ipf_nat);
-		if (fr_nat_ioctl((caddr_t)ipn, SIOCADNAT,
+		if (fr_nat_ioctl((void *)ipn, SIOCADNAT,
 				 NAT_SYSSPACE|FWRITE) == -1) {
 			READ_ENTER(&ipf_nat);
 			return -1;
@@ -244,7 +244,7 @@ nat_t *nat;
 {
 	int ipaddr, off, datlen;
 	tcphdr_t *tcp;
-	caddr_t data;
+	void *data;
 	u_short port;
 	ip_t *ip;
 
@@ -253,7 +253,7 @@ nat_t *nat;
 	ip = fin->fin_ip;
 	tcp = (tcphdr_t *)fin->fin_dp;
 	ipaddr = nat->nat_inip.s_addr;
-	data = (caddr_t)tcp + (TCP_OFF(tcp) << 2);
+	data = (char *)tcp + (TCP_OFF(tcp) << 2);
 	datlen = fin->fin_dlen - (TCP_OFF(tcp) << 2);
 	if (find_port(ipaddr, data, datlen, &off, &port) == 0) {
 		fr_info_t fi;
@@ -266,7 +266,7 @@ nat_t *nat;
 			struct ip newip;
 			struct udphdr udp;
 			
-			bcopy((caddr_t)ip, (caddr_t)&newip, sizeof(newip));
+			bcopy((void *)ip, (void *)&newip, sizeof(newip));
 			newip.ip_len = fin->fin_hlen + sizeof(udp);
 			newip.ip_p = IPPROTO_UDP;
 			newip.ip_src = nat->nat_inip;
@@ -274,7 +274,7 @@ nat_t *nat;
 			bzero((char *)&udp, sizeof(udp));
 			udp.uh_sport = port;
 			
-			bcopy((caddr_t)fin, (caddr_t)&fi, sizeof(fi));
+			memcpy(&fi, fin, sizeof(fi));
 			fi.fin_fi.fi_p = IPPROTO_UDP;
 			fi.fin_data[0] = port;
 			fi.fin_data[1] = 0;
@@ -291,10 +291,8 @@ nat_t *nat;
 #ifdef	IPFILTER_LOG
 				nat_log(nat2, (u_int)(nat->nat_ptr->in_redir));
 #endif
-				bcopy((caddr_t)&ip->ip_src.s_addr,
-				      data + off, 4);
-				bcopy((caddr_t)&nat2->nat_outport,
-				      data + off + 4, 2);
+				memcpy((char *)data + off, &ip->ip_src.s_addr, 4);
+				memcpy((char *)data + off + 4, &nat2->nat_outport, 2);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.18 2005/12/11 12:25:20 christos Exp $ */
+/* $NetBSD: pipe.h,v 1.18.26.1 2007/03/12 06:00:53 rmind Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -69,7 +69,7 @@ struct pipebuf {
 	u_int	in;		/* in pointer */
 	u_int	out;		/* out pointer */
 	size_t	size;		/* size of buffer */
-	caddr_t	buffer;		/* kva of buffer */
+	void *	buffer;		/* kva of buffer */
 };
 
 /*

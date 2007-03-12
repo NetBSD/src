@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.37 2006/11/16 01:33:26 christos Exp $ */
+/*	$NetBSD: ses.c,v 1.37.4.1 2007/03/12 05:57:10 rmind Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.37 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.37.4.1 2007/03/12 05:57:10 rmind Exp $");
 
 #include "opt_scsi.h"
 
@@ -354,7 +354,7 @@ sesclose(dev_t dev, int flags, int fmt,
 }
 
 static int
-sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
+sesioctl(dev_t dev, u_long cmd, void *arg_addr, int flag, struct lwp *l)
 {
 	ses_encstat tmp;
 	ses_objstat objs;
@@ -365,7 +365,7 @@ sesioctl(dev_t dev, u_long cmd, caddr_t arg_addr, int flag, struct lwp *l)
 
 
 	if (arg_addr)
-		addr = *((caddr_t *) arg_addr);
+		addr = *((void **) arg_addr);
 	else
 		addr = NULL;
 
@@ -946,7 +946,7 @@ ses_getconfig(ses_softc_t *ssc)
 	maxima = cf.Nsubenc + 1;
 	cdp = (SesEncDesc *) storage;
 	for (ntype = i = 0; i < maxima; i++) {
-		MEMZERO((caddr_t)cdp, sizeof (*cdp));
+		MEMZERO((void *)cdp, sizeof (*cdp));
 		if (ses_enchdr((uint8_t *) sdata, amt, i, &hd)) {
 			SES_LOG(ssc, "Cannot Extract Enclosure Header %d\n", i);
 			SES_FREE(sdata, SCSZ);

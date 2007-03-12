@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.23 2006/05/14 21:32:45 elad Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.23.14.1 2007/03/12 06:01:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,7 +49,7 @@ __BEGIN_DECLS
 
 /* mfs_vfsops.c */
 int	mfs_mountroot(void);
-int	mfs_initminiroot(caddr_t);
+int	mfs_initminiroot(void *);
 int	mfs_mount(struct mount *, const char *, void *,
 			     struct nameidata *, struct lwp *);
 int	mfs_start(struct mount *, int, struct lwp *);
@@ -62,7 +62,7 @@ void	mfs_done(void);
 /* mfs_vnops.c */
 int	mfs_open(void *);
 int	mfs_strategy(void *);
-void	mfs_doio(struct buf *, caddr_t);
+void	mfs_doio(struct buf *, void *);
 int	mfs_bmap(void *);
 int	mfs_close(void *);
 int	mfs_inactive(void *);

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.6 2005/12/11 12:23:28 christos Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.6.26.1 2007/03/12 05:56:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -53,9 +53,9 @@ typedef int (*PARPORT_READ_T)(struct device *, char *, int, int, size_t *);
 typedef int (*PARPORT_WRITE_T)(struct device *, char *, int, int, size_t *);
 typedef int (*PARPORT_READ_IVAR_T)(struct device *, int, unsigned int *);
 typedef int (*PARPORT_WRITE_IVAR_T)(struct device *, int, unsigned int *);
-typedef int (*PARPORT_DMA_MALLOC_T)(struct device *, caddr_t *, bus_addr_t *,
+typedef int (*PARPORT_DMA_MALLOC_T)(struct device *, void **, bus_addr_t *,
 	bus_size_t);
-typedef void (*PARPORT_DMA_FREE_T)(struct device *, caddr_t *, bus_addr_t *,
+typedef void (*PARPORT_DMA_FREE_T)(struct device *, void **, bus_addr_t *,
 	bus_size_t);
 typedef int (*PARPORT_ADD_HANDLER_T)(struct device *, void (*)(void *),
 	void *);

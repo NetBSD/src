@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.114.2.1 2007/02/27 16:55:03 yamt Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.114.2.2 2007/03/12 05:59:58 rmind Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.114.2.1 2007/02/27 16:55:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.114.2.2 2007/03/12 05:59:58 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -132,7 +132,7 @@ static int ip6_setpktopt __P((int, u_char *, int, struct ip6_pktopts *, int,
 	int, int, int));
 static int ip6_setmoptions __P((int, struct ip6_moptions **, struct mbuf *));
 static int ip6_getmoptions __P((int, struct ip6_moptions *, struct mbuf **));
-static int ip6_copyexthdr __P((struct mbuf **, caddr_t, int));
+static int ip6_copyexthdr __P((struct mbuf **, void *, int));
 static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **));
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
@@ -227,7 +227,7 @@ ip6_output(
     do {								\
 	if (hp) {							\
 		struct ip6_ext *eh = (struct ip6_ext *)(hp);		\
-		error = ip6_copyexthdr((mp), (caddr_t)(hp), 		\
+		error = ip6_copyexthdr((mp), (void *)(hp), 		\
 		    ((eh)->ip6e_len + 1) << 3);				\
 		if (error)						\
 			goto freehdrs;					\
@@ -1225,7 +1225,7 @@ bad:
 static int
 ip6_copyexthdr(mp, hdr, hlen)
 	struct mbuf **mp;
-	caddr_t hdr;
+	void *hdr;
 	int hlen;
 {
 	struct mbuf *m;
@@ -1246,7 +1246,7 @@ ip6_copyexthdr(mp, hdr, hlen)
 	}
 	m->m_len = hlen;
 	if (hdr)
-		bcopy(hdr, mtod(m, caddr_t), hlen);
+		bcopy(hdr, mtod(m, void *), hlen);
 
 	*mp = m;
 	return (0);
@@ -1275,7 +1275,7 @@ in6_delayed_cksum(struct mbuf *m)
 	if ((offset + sizeof(csum)) > m->m_len) {
 		m_copyback(m, offset, sizeof(csum), &csum);
 	} else {
-		*(uint16_t *)(mtod(m, caddr_t) + offset) = csum;
+		*(uint16_t *)(mtod(m, char *) + offset) = csum;
 	}
 }
 
@@ -1343,7 +1343,7 @@ ip6_insert_jumboopt(exthdrs, plen)
 			if (!n)
 				return (ENOBUFS);
 			n->m_len = oldoptlen + JUMBOOPTLEN;
-			bcopy(mtod(mopt, caddr_t), mtod(n, caddr_t),
+			bcopy(mtod(mopt, void *), mtod(n, void *),
 			    oldoptlen);
 			optbuf = mtod(n, u_int8_t *) + oldoptlen;
 			m_freem(mopt);
@@ -1403,7 +1403,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 	if ((mlast->m_flags & M_EXT) == 0 &&
 	    M_TRAILINGSPACE(mlast) >= sizeof(struct ip6_frag)) {
 		/* use the trailing space of the last mbuf for the fragment hdr */
-		*frghdrp = (struct ip6_frag *)(mtod(mlast, caddr_t) +
+		*frghdrp = (struct ip6_frag *)(mtod(mlast, char *) +
 		    mlast->m_len);
 		mlast->m_len += sizeof(struct ip6_frag);
 		m->m_pkthdr.len += sizeof(struct ip6_frag);
@@ -1881,10 +1881,10 @@ do { 						\
 #if defined(IPSEC) || defined(FAST_IPSEC)
 			case IPV6_IPSEC_POLICY:
 			{
-				caddr_t req = NULL;
+				void *req = NULL;
 				size_t len = 0;
 				if (m) {
-					req = mtod(m, caddr_t);
+					req = mtod(m, void *);
 					len = m->m_len;
 				}
 				error = ipsec6_set_policy(in6p, optname, req,
@@ -2087,10 +2087,10 @@ do { 						\
 #if defined(IPSEC) || defined(FAST_IPSEC)
 			case IPV6_IPSEC_POLICY:
 			    {
-				caddr_t req = NULL;
+				void *req = NULL;
 				size_t len = 0;
 				if (m) {
-					req = mtod(m, caddr_t);
+					req = mtod(m, void *);
 					len = m->m_len;
 				}
 				error = ipsec6_get_policy(in6p, req, len, mp);
@@ -3387,7 +3387,7 @@ ip6_splithdr(m, exthdrs)
 		mh->m_next = m;
 		m = mh;
 		m->m_len = sizeof(*ip6);
-		bcopy((caddr_t)ip6, mtod(m, caddr_t), sizeof(*ip6));
+		bcopy((void *)ip6, mtod(m, void *), sizeof(*ip6));
 	}
 	exthdrs->ip6e_ip6 = m;
 	return 0;

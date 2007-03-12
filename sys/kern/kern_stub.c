@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.1 2007/02/10 11:32:21 ad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.1.2.1 2007/03/12 05:58:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.1 2007/02/10 11:32:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.1.2.1 2007/03/12 05:58:37 rmind Exp $");
 
 #include "opt_ptrace.h"
 
@@ -53,20 +53,20 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.1 2007/02/10 11:32:21 ad Exp $");
  * error in case process won't see signal immediately (blocked or ignored).
  */
 #ifndef PTRACE
-__weak_alias(sys_ptrace, sys_nosys);
+__weak_alias(sys_ptrace,sys_nosys);
 #endif
 
 /*
  * Scheduler activations system calls.  These need to remain until libc's
  * major version is bumped.
  */
-__strong_alias(sys_sa_register, sys_nosys);
-__strong_alias(sys_sa_stacks, sys_nosys);
-__strong_alias(sys_sa_enable, sys_nosys);
-__strong_alias(sys_sa_setconcurrency, sys_nosys);
-__strong_alias(sys_sa_yield, sys_nosys);
-__strong_alias(sys_sa_preempt, sys_nosys);
-__strong_alias(sys_sa_unblockyield, sys_nosys);
+__strong_alias(sys_sa_register,sys_nosys);
+__strong_alias(sys_sa_stacks,sys_nosys);
+__strong_alias(sys_sa_enable,sys_nosys);
+__strong_alias(sys_sa_setconcurrency,sys_nosys);
+__strong_alias(sys_sa_yield,sys_nosys);
+__strong_alias(sys_sa_preempt,sys_nosys);
+__strong_alias(sys_sa_unblockyield,sys_nosys);
 
 /* ARGSUSED */
 int

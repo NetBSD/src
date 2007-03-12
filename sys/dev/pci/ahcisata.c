@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata.c,v 1.3 2007/01/03 18:58:26 bouyer Exp $	*/
+/*	$NetBSD: ahcisata.c,v 1.3.4.1 2007/03/12 05:55:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.3 2007/01/03 18:58:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata.c,v 1.3.4.1 2007/03/12 05:55:10 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -72,7 +72,7 @@ struct ahci_softc {
 	bus_space_tag_t sc_ahcit; /* ahci registers mapping */
 	bus_space_handle_t sc_ahcih;
 	bus_dma_tag_t sc_dmat; /* DMA memory mappings: */
-	caddr_t sc_cmd_hdr; /* command tables and received FIS */
+	void *sc_cmd_hdr; /* command tables and received FIS */
 	bus_dmamap_t sc_cmd_hdrd;
 
 	int sc_ncmds; /* number of command slots */
@@ -100,10 +100,10 @@ struct ahci_softc {
 
 #define AHCI_CMDH_SYNC(sc, achp, cmd, op) bus_dmamap_sync((sc)->sc_dmat, \
     (sc)->sc_cmd_hdrd, \
-    (caddr_t)(&(achp)->ahcic_cmdh[(cmd)]) - (sc)->sc_cmd_hdr, \
+    (char *)(&(achp)->ahcic_cmdh[(cmd)]) - (char *)(sc)->sc_cmd_hdr, \
     sizeof(struct ahci_cmd_header), (op))
 #define AHCI_RFIS_SYNC(sc, achp, op) bus_dmamap_sync((sc)->sc_dmat, \
-    (sc)->sc_cmd_hdrd, (caddr_t)(achp)->ahcic_rfis - (sc)->sc_cmd_hdr, \
+    (sc)->sc_cmd_hdrd, (void *)(achp)->ahcic_rfis - (sc)->sc_cmd_hdr, \
     AHCI_RFIS_SIZE, (op))
 #define AHCI_CMDTBL_SYNC(sc, achp, cmd, op) bus_dmamap_sync((sc)->sc_dmat, \
     (achp)->ahcic_cmd_tbld, AHCI_CMDTBL_SIZE * (cmd), \
@@ -202,8 +202,8 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	int rseg;
 	int dmasize;
-	caddr_t cmdhp;
-	caddr_t cmdtblp;
+	void *cmdhp;
+	void *cmdtblp;
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	void *ih;
@@ -364,11 +364,11 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 			break;
 		}
 		achp->ahcic_cmdh  = (struct ahci_cmd_header *)
-		    (cmdhp + AHCI_CMDH_SIZE * port);
+		    ((char *)cmdhp + AHCI_CMDH_SIZE * port);
 		achp->ahcic_bus_cmdh = sc->sc_cmd_hdrd->dm_segs[0].ds_addr +
 		    AHCI_CMDH_SIZE * port;
 		achp->ahcic_rfis = (struct ahci_r_fis *)
-		    (cmdhp + 
+		    ((char *)cmdhp + 
 		     AHCI_CMDH_SIZE * sc->sc_atac.atac_nchannels + 
 		     AHCI_RFIS_SIZE * port);
 		achp->ahcic_bus_rfis = sc->sc_cmd_hdrd->dm_segs[0].ds_addr +
@@ -381,7 +381,7 @@ ahci_attach(struct device *parent, struct device *self, void *aux)
 		    
 		for (j = 0; j < sc->sc_ncmds; j++) {
 			achp->ahcic_cmd_tbl[j] = (struct ahci_cmd_tbl *)
-			    (cmdtblp + AHCI_CMDTBL_SIZE * j);
+			    ((char *)cmdtblp + AHCI_CMDTBL_SIZE * j);
 			achp->ahcic_bus_cmd_tbl[j] =
 			     achp->ahcic_cmd_tbld->dm_segs[0].ds_addr +
 			     AHCI_CMDTBL_SIZE * j;

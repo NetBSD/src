@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.24 2006/12/25 18:39:48 wiz Exp $ */
+/*	$NetBSD: if_atu.c,v 1.24.2.1 2007/03/12 05:57:29 rmind Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.24 2006/12/25 18:39:48 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.24.2.1 2007/03/12 05:57:29 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -175,7 +175,7 @@ int	atu_newbuf(struct atu_softc *, struct atu_chain *, struct mbuf *);
 void	atu_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void	atu_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 void	atu_start(struct ifnet *);
-int	atu_ioctl(struct ifnet *, u_long, caddr_t);
+int	atu_ioctl(struct ifnet *, u_long, void *);
 int	atu_init(struct ifnet *);
 void	atu_stop(struct ifnet *, int);
 void	atu_watchdog(struct ifnet *);
@@ -2087,7 +2087,7 @@ atu_debug_print(struct atu_softc *sc)
 #endif /* ATU_DEBUG */
 
 int
-atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+atu_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct atu_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;

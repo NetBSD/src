@@ -1,4 +1,4 @@
-/* $NetBSD: spiflash.c,v 1.2 2006/10/20 06:41:47 gdamore Exp $ */
+/* $NetBSD: spiflash.c,v 1.2.10.1 2007/03/12 05:57:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.2 2006/10/20 06:41:47 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spiflash.c,v 1.2.10.1 2007/03/12 05:57:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -290,7 +290,7 @@ spiflash_write(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-spiflash_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+spiflash_ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	spiflash_handle_t sc;
 

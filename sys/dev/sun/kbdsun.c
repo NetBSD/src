@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdsun.c,v 1.9 2005/12/11 12:23:56 christos Exp $	*/
+/*	$NetBSD: kbdsun.c,v 1.9.26.1 2007/03/12 05:57:12 rmind Exp $	*/
 /*	NetBSD: kbd.c,v 1.29 2001/11/13 06:54:32 lukem Exp	*/
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.9 2005/12/11 12:23:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbdsun.c,v 1.9.26.1 2007/03/12 05:57:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ kbd_sun_open(kbd)
 
 	/* the wakeup for this is in kbd_sun_was_reset(). */
 	for (ntries = 30; ntries; ntries--) {
-		error = tsleep((caddr_t)&ks->kbd_id, PZERO | PCATCH, devopn,
+		error = tsleep((void *)&ks->kbd_id, PZERO | PCATCH, devopn,
 				hz/10);
 		if (ks->kbd_id)
 			break;
@@ -164,7 +164,7 @@ kbd_sun_open(kbd)
 
 		/* the wakeup for this is in kbd_sun_new_layout() */
 		for (ntries = 200; ntries; ntries--) {
-			error = tsleep((caddr_t)&ks->kbd_layout, PZERO | PCATCH,
+			error = tsleep((void *)&ks->kbd_layout, PZERO | PCATCH,
 					devopn, hz);
 			if (ks->kbd_layout != 0xff || error)
 				break;
@@ -468,7 +468,7 @@ kbd_sun_was_reset(k)
 	 * On first identification, wake up anyone waiting for type
 	 * and set up the table pointers.
 	 */
-	wakeup((caddr_t)&ks->kbd_id);
+	wakeup((void *)&ks->kbd_id);
 
 	/* Restore keyclick, if necessary */
 	switch (ks->kbd_id) {
@@ -517,7 +517,7 @@ kbd_sun_new_layout(k)
 	 * On first identification, wake up anyone waiting for type
 	 * and set up the table pointers.
 	 */
-	wakeup((caddr_t)&ks->kbd_layout);
+	wakeup((void *)&ks->kbd_layout);
 
 	/* XXX: switch decoding tables? */
 }

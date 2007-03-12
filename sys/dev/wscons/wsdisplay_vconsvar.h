@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.5 2006/09/22 15:16:03 elad Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.5.4.1 2007/03/12 05:57:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -86,7 +86,7 @@ struct vcons_data {
 	    long *);
 
 	/* accessops */
-	int (*ioctl)(void *, void *, u_long, caddr_t, int, struct lwp *);
+	int (*ioctl)(void *, void *, u_long, void *, int, struct lwp *);
 
 	/* rasops */
 	void (*copycols)(void *, int, int, int, int);

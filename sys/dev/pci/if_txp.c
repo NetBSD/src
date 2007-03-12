@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.18 2006/11/16 01:33:09 christos Exp $ */
+/* $NetBSD: if_txp.c,v 1.18.4.1 2007/03/12 05:55:22 rmind Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.18 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.18.4.1 2007/03/12 05:55:22 rmind Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -92,7 +92,7 @@ void txp_attach(struct device *, struct device *, void *);
 int txp_intr(void *);
 void txp_tick(void *);
 void txp_shutdown(void *);
-int txp_ioctl(struct ifnet *, u_long, caddr_t);
+int txp_ioctl(struct ifnet *, u_long, void *);
 void txp_start(struct ifnet *);
 void txp_stop(struct txp_softc *);
 void txp_init(struct txp_softc *);
@@ -1259,7 +1259,7 @@ int
 txp_ioctl(ifp, command, data)
 	struct ifnet *ifp;
 	u_long command;
-	caddr_t data;
+	void *data;
 {
 	struct txp_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1445,7 +1445,7 @@ txp_start(ifp)
 					goto oactive1;
 				}
 			}
-			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, void *));
 			mnew->m_pkthdr.len = mnew->m_len = m->m_pkthdr.len;
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);

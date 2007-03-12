@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.4 2006/11/16 01:33:09 christos Exp $ */
+/*      $NetBSD: if_xge.c,v 1.4.4.1 2007/03/12 05:55:23 rmind Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.4 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.4.4.1 2007/03/12 05:55:23 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -190,7 +190,7 @@ static void xge_stop(struct ifnet *, int);
 static int xge_add_rxbuf(struct xge_softc *, int);
 static void xge_mcast_filter(struct xge_softc *sc);
 static int xge_setup_xgxs(struct xge_softc *sc);
-static int xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
+static int xge_ioctl(struct ifnet *ifp, u_long cmd, void *data);
 static int xge_init(struct ifnet *ifp);
 static void xge_ifmedia_status(struct ifnet *, struct ifmediareq *);
 static int xge_xgmii_mediachange(struct ifnet *);
@@ -831,7 +831,7 @@ xge_intr(void *pv)
 }
 
 int 
-xge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct xge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -1014,7 +1014,7 @@ xge_alloc_txmem(struct xge_softc *sc)
 	struct txd *txp;
 	bus_dma_segment_t seg;
 	bus_addr_t txdp;
-	caddr_t kva;
+	void *kva;
 	int i, rseg, state;
 
 #define TXMAPSZ (NTXDESCS*NTXFRAGS*sizeof(struct txd))
@@ -1068,7 +1068,7 @@ xge_alloc_rxmem(struct xge_softc *sc)
 {
 	struct rxd_4k *rxpp;
 	bus_dma_segment_t seg;
-	caddr_t kva;
+	void *kva;
 	int i, rseg, state;
 
 	/* sanity check */

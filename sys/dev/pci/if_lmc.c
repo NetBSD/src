@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.32.4.1 2007/02/27 16:53:59 yamt Exp $ */
+/* $NetBSD: if_lmc.c,v 1.32.4.2 2007/03/12 05:55:18 rmind Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -2654,7 +2654,7 @@ static struct stack netgraph_stack =
   };
 
 static int  /* context: process */
-netgraph_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+netgraph_ioctl(softc_t *sc, u_long cmd, void *data)
   {
   if (sc->config.debug)
     printf("%s: netgraph_ioctl() was called\n", NAME_UNIT);
@@ -3130,7 +3130,7 @@ static struct stack p2p_stack =
   };
 
 static int  /* context: process */
-p2p_stack_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+p2p_stack_ioctl(softc_t *sc, u_long cmd, void *data)
   {
   return p2p_ioctl(sc->ifp, cmd, data);
   }
@@ -3279,7 +3279,7 @@ p2p_stack_detach(softc_t *sc)
 /* Callout from P2P: */
 /* Get the state of DCD (Data Carrier Detect). */
 static int  /* never fails */
-p2p_getmdm(struct p2pcom *p2p, caddr_t result)
+p2p_getmdm(struct p2pcom *p2p, void *result)
   {
   softc_t *sc = IFP2SC(&p2p->p2p_if);
 
@@ -3327,7 +3327,7 @@ static struct stack sppp_stack =
 # endif
 
 static int  /* context: process */
-sppp_stack_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+sppp_stack_ioctl(softc_t *sc, u_long cmd, void *data)
   {
   return sppp_ioctl(sc->ifp, cmd, data);
   }
@@ -3537,7 +3537,7 @@ static struct stack rawip_stack =
 #if IFNET
 
 static int  /* context: process */
-rawip_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+rawip_ioctl(softc_t *sc, u_long cmd, void *data)
   {
   struct ifreq *ifr = (struct ifreq *) data;
   int error = 0;
@@ -3788,7 +3788,7 @@ ifnet_output(struct ifnet *ifp, struct mbuf *m,
   }
 
 static int  /* context: process */
-ifnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ifnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
   {
   softc_t *sc = IFP2SC(ifp);
   struct ifreq *ifr = (struct ifreq *) data;
@@ -4939,7 +4939,7 @@ create_ring(softc_t *sc, struct desc_ring *ring, int num_descs)
 
   /* Map physical address to kernel virtual address. */
   if ((error = bus_dmamem_map(ring->tag, ring->segs, ring->nsegs,
-   size_descs, (caddr_t *)&ring->first, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)))
+   size_descs, (void **)&ring->first, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)))
     {
     printf("%s: bus_dmamem_map(): error %d\n", NAME_UNIT, error);
     return error;
@@ -5058,7 +5058,7 @@ destroy_ring(softc_t *sc, struct desc_ring *ring)
     bus_dmamap_destroy(ring->tag, ring->map);
   /* Unmap kernel address for DMA descriptor array. */
   if (ring->first)
-    bus_dmamem_unmap(ring->tag, (caddr_t)ring->first, ring->size_descs);
+    bus_dmamem_unmap(ring->tag, (void *)ring->first, ring->size_descs);
   /* Free kernel memory for DMA descriptor array. */
   if (ring->segs[0].ds_addr)
     bus_dmamem_free(ring->tag, ring->segs, ring->nsegs);
@@ -6239,7 +6239,7 @@ attach_stack(softc_t *sc, struct config *config)
  * Always called with top_lock held.
  */
 static int  /* context: process */
-lmc_ioctl(softc_t *sc, u_long cmd, caddr_t data)
+lmc_ioctl(softc_t *sc, u_long cmd, void *data)
   {
   struct iohdr  *iohdr  = (struct iohdr  *) data;
   struct ioctl  *ioctl  = (struct ioctl  *) data;

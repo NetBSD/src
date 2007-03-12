@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ioasic.c,v 1.27 2006/03/31 17:39:33 thorpej Exp $	*/
+/*	$NetBSD: if_le_ioasic.c,v 1.27.14.1 2007/03/12 05:57:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.27 2006/03/31 17:39:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ioasic.c,v 1.27.14.1 2007/03/12 05:57:14 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -113,7 +113,7 @@ le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 	tc_addr_t tca;
 	u_int32_t ssr;
 	int rseg;
-	caddr_t le_iomem;
+	void *le_iomem;
 
 	ioasic_bst = iosc->sc_bst;
 	ioasic_bsh = iosc->sc_bsh;
@@ -190,8 +190,8 @@ le_ioasic_attach(struct device *parent, struct device *self, void *aux)
 void
 le_ioasic_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t from = fromv;
+	volatile void *buf = sc->sc_mem;
+	char *from = fromv;
 	volatile u_int16_t *bptr;
 
 	if (boff & 0x1) {
@@ -215,8 +215,8 @@ le_ioasic_copytobuf_gap2(struct lance_softc *sc, void *fromv, int boff, int len)
 void
 le_ioasic_copyfrombuf_gap2(struct lance_softc *sc, void *tov, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t to = tov;
+	volatile void *buf = sc->sc_mem;
+	char *to = tov;
 	volatile u_int16_t *bptr;
 	u_int16_t tmp;
 
@@ -249,9 +249,9 @@ void
 le_ioasic_copytobuf_gap16(struct lance_softc *sc, void *fromv, int boff,
     int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t from = fromv;
-	caddr_t bptr;
+	char *buf = (char *)sc->sc_mem;
+	char *from = fromv;
+	char *bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -331,9 +331,9 @@ void
 le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
     int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t to = tov;
-	caddr_t bptr;
+	char *buf = sc->sc_mem;
+	char *to = tov;
+	char *bptr;
 
 	bptr = buf + ((boff << 1) & ~0x1f);
 	boff &= 0xf;
@@ -404,8 +404,8 @@ le_ioasic_copyfrombuf_gap16(struct lance_softc *sc, void *tov, int boff,
 void
 le_ioasic_zerobuf_gap16(struct lance_softc *sc, int boff, int len)
 {
-	volatile caddr_t buf = sc->sc_mem;
-	caddr_t bptr;
+	char *buf = sc->sc_mem;
+	char *bptr;
 	int xfer;
 
 	bptr = buf + ((boff << 1) & ~0x1f);

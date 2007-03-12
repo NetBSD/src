@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.h,v 1.5 2005/12/03 17:34:43 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.h,v 1.5.26.1 2007/03/12 05:58:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -59,7 +59,7 @@ struct ntvattr {
 			cn_t *		cl;
 			u_long		cnt;
 		} vrun;
-		caddr_t		datap;
+		void *		datap;
 		struct attr_name *name;
 		struct attr_indexroot *iroot;
 		struct attr_indexalloc *ialloc;
@@ -73,7 +73,7 @@ struct ntvattr {
 #define va_a_iroot	va_d.iroot
 #define va_a_ialloc	va_d.ialloc
 
-int ntfs_procfixups(struct ntfsmount *, u_int32_t, caddr_t, size_t);
+int ntfs_procfixups(struct ntfsmount *, u_int32_t, void *, size_t);
 int ntfs_parserun(cn_t *, cn_t *, u_int8_t *, u_long, u_long *);
 int ntfs_runtocn(cn_t *, struct ntfsmount *, u_int8_t *, u_long, cn_t);
 int ntfs_readntvattr_plain(struct ntfsmount *, struct ntnode *,
@@ -91,7 +91,7 @@ int ntfs_ntreaddir(struct ntfsmount *, struct fnode *, u_int32_t,
 int ntfs_runtovrun(cn_t **, cn_t **, u_long *, u_int8_t *);
 int ntfs_attrtontvattr(struct ntfsmount *, struct ntvattr **, struct attr *);
 void ntfs_freentvattr(struct ntvattr *);
-int ntfs_loadntvattrs(struct ntfsmount *, struct vnode *, caddr_t,
+int ntfs_loadntvattrs(struct ntfsmount *, struct vnode *, void *,
 	struct ntvattr **);
 struct ntvattr * ntfs_findntvattr(struct ntfsmount *, struct ntnode *,
 	u_int32_t, cn_t);

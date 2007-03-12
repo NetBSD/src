@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.31 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.31.4.1 2007/03/12 06:00:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.31 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.31.4.1 2007/03/12 06:00:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ restart:
 	/* Assuming at most one xpd tpdu is in the buffer at once */
 	while (n != NULL) {
 		m->m_len += n->m_len;
-		bcopy(mtod(n, caddr_t), mtod(m, caddr_t), (unsigned) n->m_len);
+		bcopy(mtod(n, void *), mtod(m, void *), (unsigned) n->m_len);
 		m->m_data += n->m_len;	/* so mtod() in bcopy() above gives
 					 * right addr */
 		n = n->m_next;
@@ -440,7 +440,7 @@ tp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 				tp_detach(tpcb);
 			}
-			free((caddr_t) tpcb, M_PCB);
+			free((void *) tpcb, M_PCB);
 			tpcb = 0;
 		}
 		break;

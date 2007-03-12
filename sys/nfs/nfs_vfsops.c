@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.172.2.1 2007/02/28 09:35:40 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.172.2.2 2007/03/12 06:00:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.172.2.1 2007/02/28 09:35:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.172.2.2 2007/03/12 06:00:37 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -143,10 +143,10 @@ nfs_statvfs(mp, sbp, l)
 {
 	struct vnode *vp;
 	struct nfs_statfs *sfp;
-	caddr_t cp;
+	char *cp;
 	u_int32_t *tl;
 	int32_t t1, t2;
-	caddr_t bpos, dpos, cp2;
+	char *bpos, *dpos, *cp2;
 	struct nfsmount *nmp = VFSTONFS(mp);
 	int error = 0, retattr;
 #ifdef NFS_V2_ONLY
@@ -239,10 +239,10 @@ nfs_fsinfo(nmp, vp, cred, l)
 	struct lwp *l;
 {
 	struct nfsv3_fsinfo *fsp;
-	caddr_t cp;
+	char *cp;
 	int32_t t1, t2;
 	u_int32_t *tl, pref, xmax;
-	caddr_t bpos, dpos, cp2;
+	char *bpos, *dpos, *cp2;
 	int error = 0, retattr;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	u_int64_t maxfsize;
@@ -345,7 +345,7 @@ nfs_mountroot()
 	 * Side effect:  Finds and configures a network interface.
 	 */
 	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
-	memset((caddr_t)nd, 0, sizeof(*nd));
+	memset((void *)nd, 0, sizeof(*nd));
 	error = nfs_boot_init(nd, l);
 	if (error) {
 		free(nd, M_NFSMNT);
@@ -419,7 +419,7 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, l)
 	if (m == NULL)
 		panic("nfs_mountroot: mget soname for %s", mntname);
 	MCLAIM(m, &nfs_mowner);
-	memcpy(mtod(m, caddr_t), (caddr_t)ndmntp->ndm_args.addr,
+	memcpy(mtod(m, void *), (void *)ndmntp->ndm_args.addr,
 	      (m->m_len = ndmntp->ndm_args.addr->sa_len));
 
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
@@ -560,7 +560,7 @@ nfs_decode_args(nmp, argp, l)
 		if (nmp->nm_sotype == SOCK_DGRAM)
 			while (nfs_connect(nmp, (struct nfsreq *)0, l)) {
 				printf("nfs_args: retrying connect\n");
-				(void) tsleep((caddr_t)&lbolt,
+				(void) tsleep((void *)&lbolt,
 					      PSOCK, "nfscn3", 0);
 			}
 	}
@@ -591,7 +591,7 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	size_t len;
 	u_char *nfh;
 
-	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
+	error = copyin(data, (void *)&args, sizeof (struct nfs_args));
 	if (error)
 		return (error);
 
@@ -651,7 +651,7 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
 		return (EINVAL);
 	MALLOC(nfh, u_char *, NFSX_V3FHMAX, M_TEMP, M_WAITOK);
-	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
+	error = copyin((void *)args.fh, (void *)nfh, args.fhsize);
 	if (error)
 		return (error);
 	MALLOC(pth, char *, MNAMELEN, M_TEMP, M_WAITOK);
@@ -665,7 +665,7 @@ nfs_mount(struct mount *mp, const char *path, void *data, struct nameidata *ndp,
 		goto free_pth;
 	memset(&hst[len], 0, MNAMELEN - len);
 	/* sockargs() call must be after above copyin() calls */
-	error = sockargs(&nam, (caddr_t)args.addr, args.addrlen, MT_SONAME);
+	error = sockargs(&nam, (void *)args.addr, args.addrlen, MT_SONAME);
 	if (error)
 		goto free_hst;
 	MCLAIM(nam, &nfs_mowner);
@@ -719,7 +719,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	} else {
 		MALLOC(nmp, struct nfsmount *, sizeof (struct nfsmount),
 		    M_NFSMNT, M_WAITOK);
-		memset((caddr_t)nmp, 0, sizeof (struct nfsmount));
+		memset((void *)nmp, 0, sizeof (struct nfsmount));
 		mp->mnt_data = nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
@@ -818,7 +818,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 bad:
 	nfs_disconnect(nmp);
 	rw_destroy(&nmp->nm_writeverflock);
-	free((caddr_t)nmp, M_NFSMNT);
+	free((void *)nmp, M_NFSMNT);
 	m_freem(nam);
 	return (error);
 }

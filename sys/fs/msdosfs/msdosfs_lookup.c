@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.11 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.11.2.1 2007/03/12 05:58:11 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.11 2006/12/09 16:11:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.11.2.1 2007/03/12 05:58:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ msdosfs_lookup(v)
 		for (blkoff = 0; blkoff < blsize;
 		     blkoff += sizeof(struct direntry),
 		     diroff += sizeof(struct direntry)) {
-			dep = (struct direntry *)(bp->b_data + blkoff);
+			dep = (struct direntry *)((char *)bp->b_data + blkoff);
 			/*
 			 * If the slot is empty and we are still looking
 			 * for an empty then remember this one.  If the
@@ -804,7 +804,7 @@ dosdirempty(dep)
 			return (0);
 		}
 		for (dentp = (struct direntry *)bp->b_data;
-		     (char *)dentp < bp->b_data + blsize;
+		     (char *)dentp < (char *)bp->b_data + blsize;
 		     dentp++) {
 			if (dentp->deName[0] != SLOT_DELETED &&
 			    (dentp->deAttributes & ATTR_VOLUME) == 0) {
@@ -1102,7 +1102,7 @@ uniqdosname(dep, cnp, cp)
 				return error;
 			}
 			for (dentp = (struct direntry *)bp->b_data;
-			     (char *)dentp < bp->b_data + blsize;
+			     (char *)dentp < (char *)bp->b_data + blsize;
 			     dentp++) {
 				if (dentp->deName[0] == SLOT_EMPTY) {
 					/*
@@ -1153,7 +1153,7 @@ findwin95(dep)
 			return 0;
 		}
 		for (dentp = (struct direntry *)bp->b_data;
-		     (char *)dentp < bp->b_data + blsize;
+		     (char *)dentp < (char *)bp->b_data + blsize;
 		     dentp++) {
 			if (dentp->deName[0] == SLOT_EMPTY) {
 				/*

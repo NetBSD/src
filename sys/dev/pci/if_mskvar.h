@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_mskvar.h,v 1.3 2006/12/28 16:34:42 kettenis Exp $	*/
-/*	$NetBSD: if_mskvar.h,v 1.3 2007/01/30 11:58:10 msaitoh Exp $	*/
+/*	$NetBSD: if_mskvar.h,v 1.3.2.1 2007/03/12 05:55:19 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ struct msk_chain_data {
 	int			sk_rx_cons;
 	int			sk_rx_cnt;
 	/* Stick the jumbo mem management stuff here too. */
-	caddr_t			sk_jslots[MSK_JSLOTS];
+	void *			sk_jslots[MSK_JSLOTS];
 	void			*sk_jumbo_buf;
 };
 

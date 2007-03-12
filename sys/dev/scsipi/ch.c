@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.76 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: ch.c,v 1.76.4.1 2007/03/12 05:57:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.76 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.76.4.1 2007/03/12 05:57:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ chmatch(struct device *parent, struct cfdata *match,
 	int priority;
 
 	(void)scsipi_inqmatch(&sa->sa_inqbuf,
-	    (caddr_t)ch_patterns, sizeof(ch_patterns) / sizeof(ch_patterns[0]),
+	    (void *)ch_patterns, sizeof(ch_patterns) / sizeof(ch_patterns[0]),
 	    sizeof(ch_patterns[0]), &priority);
 
 	return (priority);
@@ -343,7 +343,7 @@ chread(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
-chioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+chioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct ch_softc *sc = ch_cd.cd_devs[CHUNIT(dev)];
 	int error = 0;
@@ -722,7 +722,7 @@ ch_ousergetelemstatus(struct ch_softc *sc, int chet, u_int8_t *uptr)
 	struct read_element_status_page_header *pg_hdrp;
 	struct read_element_status_descriptor *desc;
 	size_t size, desclen;
-	caddr_t data;
+	void *data;
 	int avail, i, error = 0;
 	u_int8_t user_data;
 
@@ -813,7 +813,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 	struct changer_volume_tag *avol, *pvol;
 	size_t size, desclen, stddesclen, offset;
 	int first, avail, i, error = 0;
-	caddr_t data;
+	void *data;
 	void *uvendptr;
 	struct changer_element_status ces;
 
@@ -899,7 +899,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 		}
 
 		desc = (struct read_element_status_descriptor *)
-		    (data + offset);
+		    ((char *)data + offset);
 		stddesclen = sizeof(struct read_element_status_descriptor);
 		offset += desclen;
 

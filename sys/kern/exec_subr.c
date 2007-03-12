@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.50.4.1 2007/02/27 16:54:16 yamt Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.50.4.2 2007/03/12 05:58:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.50.4.1 2007/02/27 16:54:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.50.4.2 2007/03/12 05:58:31 rmind Exp $");
 
 #include "opt_pax.h"
 
@@ -252,7 +252,7 @@ vmcmd_readvn(struct lwp *l, struct exec_vmcmd *cmd)
 	int error;
 	vm_prot_t prot, maxprot;
 
-	error = vn_rdwr(UIO_READ, cmd->ev_vp, (caddr_t)cmd->ev_addr,
+	error = vn_rdwr(UIO_READ, cmd->ev_vp, (void *)cmd->ev_addr,
 	    cmd->ev_len, cmd->ev_offset, UIO_USERSPACE, IO_UNIT,
 	    l->l_cred, NULL, l);
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.13 2005/12/11 12:22:49 christos Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.13.26.1 2007/03/12 05:55:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -123,7 +123,7 @@
 
 struct esm_dma {
 	bus_dmamap_t		map;
-	caddr_t			addr;
+	void *			addr;
 	bus_dma_segment_t	segs[1];
 	int			nsegs;
 	size_t			size;
@@ -135,7 +135,7 @@ struct esm_dma {
 
 struct esm_chinfo {
 	uint32_t		base;		/* DMA base */
-	caddr_t			buffer;		/* upper layer buffer */
+	void *			buffer;		/* upper layer buffer */
 	uint32_t		offset;		/* offset into buffer */
 	uint32_t		blocksize;	/* block size in bytes */
 	uint32_t		bufsize;	/* buffer size in bytes */

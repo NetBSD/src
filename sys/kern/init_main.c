@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.294.2.3 2007/02/27 16:54:16 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.294.2.4 2007/03/12 05:58:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.3 2007/02/27 16:54:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.4 2007/03/12 05:58:31 rmind Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_kcont.h"
@@ -158,7 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.294.2.3 2007/02/27 16:54:16 yamt Exp
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-#include <sys/lockdebug.h>
 #include <sys/debug.h>
 #include <sys/kauth.h>
 #include <net80211/ieee80211_netbsd.h>
@@ -219,7 +218,7 @@ __stack_chk_fail(void)
 #endif
 
 void __secmodel_none(void);
-__weak_alias(secmodel_start, __secmodel_none);
+__weak_alias(secmodel_start,__secmodel_none);
 void
 __secmodel_none(void)
 {
@@ -260,10 +259,6 @@ main(void)
 	l->l_cpu = curcpu();
 	l->l_proc = &proc0;
 	l->l_lid = 1;
-
-#ifdef LOCKDEBUG
-	lockdebug_init();
-#endif
 
 	/*
 	 * Attempt to find console and initialize
@@ -570,7 +565,7 @@ main(void)
 	mono_time = time;
 #endif
 	boottime = time;
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
 		KASSERT((p->p_flag & PK_MARKER) == 0);
 		mutex_enter(&p->p_smutex);
@@ -583,7 +578,7 @@ main(void)
 		}
 		mutex_exit(&p->p_smutex);
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
@@ -708,7 +703,7 @@ start_init(void *arg)
 		    UVM_ADV_NORMAL,
                     UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
 		panic("init: couldn't allocate argument space");
-	p->p_vmspace->vm_maxsaddr = (caddr_t)STACK_MAX(addr, PAGE_SIZE);
+	p->p_vmspace->vm_maxsaddr = (void *)STACK_MAX(addr, PAGE_SIZE);
 
 	ipx = 0;
 	while (1) {
@@ -763,7 +758,7 @@ start_init(void *arg)
 #endif
 			arg1 = STACK_ALLOC(ucp, i);
 			ucp = STACK_MAX(arg1, i);
-			(void)copyout((caddr_t)flags, arg1, i);
+			(void)copyout((void *)flags, arg1, i);
 		}
 
 		/*
@@ -783,20 +778,20 @@ start_init(void *arg)
 		/*
 		 * Move out the arg pointers.
 		 */
-		ucp = (caddr_t)STACK_ALIGN(ucp, ALIGNBYTES);
+		ucp = (void *)STACK_ALIGN(ucp, ALIGNBYTES);
 		uap = (char **)STACK_ALLOC(ucp, sizeof(char *) * 3);
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;
 		SCARG(&args, envp) = NULL;
 		slash = strrchr(path, '/');
 		if (slash)
-			(void)suword((caddr_t)uap++,
+			(void)suword((void *)uap++,
 			    (long)arg0 + (slash + 1 - path));
 		else
-			(void)suword((caddr_t)uap++, (long)arg0);
+			(void)suword((void *)uap++, (long)arg0);
 		if (options != 0)
-			(void)suword((caddr_t)uap++, (long)arg1);
-		(void)suword((caddr_t)uap++, 0);	/* terminator */
+			(void)suword((void *)uap++, (long)arg1);
+		(void)suword((void *)uap++, 0);	/* terminator */
 
 		/*
 		 * Now try to exec the program.  If can't for any reason

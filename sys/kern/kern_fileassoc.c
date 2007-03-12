@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.24 2007/02/08 16:06:58 elad Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.24.2.1 2007/03/12 05:58:34 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.24 2007/02/08 16:06:58 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.24.2.1 2007/03/12 05:58:34 rmind Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -59,6 +59,7 @@ static struct fileassoc_table *fileassoc_table_resize(struct fileassoc_table *);
 
 static specificdata_domain_t fileassoc_domain;
 static specificdata_key_t fileassoc_mountspecific_key;
+static ONCE_DECL(control);
 
 /*
  * Hook entry.
@@ -196,7 +197,6 @@ fileassoc_register(const char *name, fileassoc_cleanup_cb_t cleanup_cb,
 	int error;
 	specificdata_key_t key;
 	struct fileassoc *assoc;
-	static ONCE_DECL(control);
 
 	error = RUN_ONCE(&control, fileassoc_init);
 	if (error) {
@@ -236,7 +236,12 @@ fileassoc_deregister(fileassoc_t assoc)
 static struct fileassoc_table *
 fileassoc_table_lookup(struct mount *mp)
 {
+	int error;
 
+	error = RUN_ONCE(&control, fileassoc_init);
+	if (error) {
+		return NULL;
+	}
 	return mount_getspecific(mp, fileassoc_mountspecific_key);
 }
 

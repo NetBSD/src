@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.125.2.1 2007/02/27 16:55:25 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.125.2.2 2007/03/12 06:01:11 rmind Exp $	*/
 
 /*
  *
@@ -481,7 +481,7 @@ struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
 	int	vm_refcnt;	/* number of references *
 				 * note: protected by vm_map.ref_lock */
-	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
+	void *	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
 #define vm_startcopy vm_rssize
 	segsz_t vm_rssize;	/* current resident set size in pages */
@@ -489,10 +489,10 @@ struct vmspace {
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
 	segsz_t vm_ssize;	/* stack size (pages) */
-	caddr_t	vm_taddr;	/* user virtual address of text XXX */
-	caddr_t	vm_daddr;	/* user virtual address of data XXX */
-	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
-	caddr_t vm_minsaddr;	/* user VA at top of stack */
+	void *	vm_taddr;	/* user virtual address of text XXX */
+	void *	vm_daddr;	/* user virtual address of data XXX */
+	void *vm_maxsaddr;	/* user VA at max stack growth */
+	void *vm_minsaddr;	/* user VA at top of stack */
 };
 #define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
@@ -564,7 +564,7 @@ int		uvm_fault_internal(struct vm_map *, vaddr_t, vm_prot_t, int);
 
 /* uvm_glue.c */
 #if defined(KGDB)
-void			uvm_chgkprot(caddr_t, size_t, int);
+void			uvm_chgkprot(void *, size_t, int);
 #endif
 void			uvm_proc_fork(struct proc *, struct proc *, bool);
 void			uvm_lwp_fork(struct lwp *, struct lwp *,
@@ -576,7 +576,7 @@ int			uvm_coredump_walkmap(struct proc *,
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
 void			uvm_init_limits(struct proc *);
-bool			uvm_kernacc(caddr_t, size_t, int);
+bool			uvm_kernacc(void *, size_t, int);
 __dead void		uvm_scheduler(void) __attribute__((noreturn));
 void			uvm_kick_scheduler(void);
 void			uvm_swapin(struct lwp *);

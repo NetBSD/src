@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.27 2006/05/10 21:53:19 mrg Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.27.14.1 2007/03/12 06:00:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.27 2006/05/10 21:53:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.27.14.1 2007/03/12 06:00:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,7 +602,7 @@ smb_smb_readx(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 	mb_put_uint8(mbp, 0xff);	/* no secondary command */
 	mb_put_uint8(mbp, 0);		/* MBZ */
 	mb_put_uint16le(mbp, 0);	/* offset to secondary */
-	mb_put_mem(mbp, (caddr_t)&fid, sizeof(fid), MB_MSYSTEM);
+	mb_put_mem(mbp, (void *)&fid, sizeof(fid), MB_MSYSTEM);
 	mb_put_uint32le(mbp, uio->uio_offset);
 	*len = min(SSTOVC(ssp)->vc_rxmax, *len);
 	mb_put_uint16le(mbp, *len);	/* MaxCount */
@@ -682,7 +682,7 @@ smb_smb_writex(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid
 	mb_put_uint8(mbp, 0xff);	/* no secondary command */
 	mb_put_uint8(mbp, 0);		/* MBZ */
 	mb_put_uint16le(mbp, 0);	/* offset to secondary */
-	mb_put_mem(mbp, (caddr_t)&fid, sizeof(fid), MB_MSYSTEM);
+	mb_put_mem(mbp, (void *)&fid, sizeof(fid), MB_MSYSTEM);
 	mb_put_uint32le(mbp, uio->uio_offset);
 	mb_put_uint32le(mbp, 0);	/* MBZ (timeout) */
 	mb_put_uint16le(mbp, 0);	/* !write-thru */
@@ -744,7 +744,7 @@ smb_smb_read(struct smb_share *ssp, u_int16_t fid,
 
 	smb_rq_getrequest(rqp, &mbp);
 	smb_rq_wstart(rqp);
-	mb_put_mem(mbp, (caddr_t)&fid, sizeof(fid), MB_MSYSTEM);
+	mb_put_mem(mbp, (void *)&fid, sizeof(fid), MB_MSYSTEM);
 	mb_put_uint16le(mbp, rlen);
 	mb_put_uint32le(mbp, uio->uio_offset);
 	mb_put_uint16le(mbp, min(uio->uio_resid, 0xffff));
@@ -831,7 +831,7 @@ smb_smb_write(struct smb_share *ssp, u_int16_t fid, size_t *len, size_t *rresid,
 		return error;
 	smb_rq_getrequest(rqp, &mbp);
 	smb_rq_wstart(rqp);
-	mb_put_mem(mbp, (caddr_t)&fid, sizeof(fid), MB_MSYSTEM);
+	mb_put_mem(mbp, (void *)&fid, sizeof(fid), MB_MSYSTEM);
 	mb_put_uint16le(mbp, resid);
 	mb_put_uint32le(mbp, uio->uio_offset);
 	mb_put_uint16le(mbp, min(uio->uio_resid, 0xffff));

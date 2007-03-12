@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_socket.c,v 1.3 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: rfcomm_socket.c,v 1.3.4.1 2007/03/12 05:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.3 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_socket.c,v 1.3.4.1 2007/03/12 05:59:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -259,8 +259,11 @@ rfcomm_ctloutput(int req, struct socket *so, int level,
 
 	DPRINTFN(2, "%s\n", prcorequests[req]);
 
+	if (pcb == NULL)
+		return EINVAL;
+
 	if (level != BTPROTO_RFCOMM)
-		return 0;	// err?
+		return ENOPROTOOPT;
 
 	switch(req) {
 	case PRCO_GETOPT:
@@ -269,7 +272,7 @@ rfcomm_ctloutput(int req, struct socket *so, int level,
 		if (m->m_len == 0) {
 			m_freem(m);
 			m = NULL;
-			err = EINVAL;
+			err = ENOPROTOOPT;
 		}
 		*opt = m;
 		break;
@@ -282,7 +285,7 @@ rfcomm_ctloutput(int req, struct socket *so, int level,
 		break;
 
 	default:
-		err = EINVAL;
+		err = ENOPROTOOPT;
 		break;
 	}
 

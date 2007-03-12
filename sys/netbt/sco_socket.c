@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_socket.c,v 1.5 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: sco_socket.c,v 1.5.4.1 2007/03/12 05:59:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.5 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_socket.c,v 1.5.4.1 2007/03/12 05:59:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -251,7 +251,7 @@ sco_ctloutput(int req, struct socket *so, int level,
 		return EINVAL;
 
 	if (level != BTPROTO_SCO)
-		return 0;
+		return ENOPROTOOPT;
 
 	switch(req) {
 	case PRCO_GETOPT:
@@ -260,7 +260,7 @@ sco_ctloutput(int req, struct socket *so, int level,
 		if (m->m_len == 0) {
 			m_freem(m);
 			m = NULL;
-			err = EINVAL;
+			err = ENOPROTOOPT;
 		}
 		*opt = m;
 		break;
@@ -273,7 +273,7 @@ sco_ctloutput(int req, struct socket *so, int level,
 		break;
 
 	default:
-		err = EINVAL;
+		err = ENOPROTOOPT;
 		break;
 	}
 

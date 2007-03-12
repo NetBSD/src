@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.30 2006/11/16 01:33:49 christos Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.30.4.1 2007/03/12 06:00:12 rmind Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.30 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.30.4.1 2007/03/12 06:00:12 rmind Exp $");
 
 #include "isdn.h"
 
@@ -114,7 +114,7 @@ PDEVSTATIC void isdnattach __P((void));
 PDEVSTATIC int isdnopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
 PDEVSTATIC int isdnclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
 PDEVSTATIC int isdnread __P((dev_t dev, struct uio *uio, int ioflag));
-PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l));
+PDEVSTATIC int isdnioctl __P((dev_t dev, u_long cmd, void *data, int flag, struct lwp *l));
 
 #ifdef OS_USES_POLL
 PDEVSTATIC int isdnpoll __P((dev_t dev, int events, struct lwp *l));
@@ -312,7 +312,7 @@ isdnread(dev_t dev, struct uio *uio, int ioflag)
 	while(IF_QEMPTY(&i4b_rdqueue))
 	{
 		readflag = 1;
-		error = tsleep((caddr_t) &i4b_rdqueue, (PZERO + 1) | PCATCH, "bird", 0);
+		error = tsleep((void *) &i4b_rdqueue, (PZERO + 1) | PCATCH, "bird", 0);
 		if (error != 0) {
 			splx(x);
 			return error;
@@ -338,7 +338,7 @@ isdnread(dev_t dev, struct uio *uio, int ioflag)
  *	i4bioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+isdnioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct isdn_l3_driver *d;
@@ -571,7 +571,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 		{
 			const struct isdn_l4_driver_functions *drv;
 			msg_dialout_resp_t *mdrsp;
-			void * l4_softc;
+			void *l4_softc;
 
 			mdrsp = (msg_dialout_resp_t *)data;
 			drv = isdn_l4_get_driver(mdrsp->driver, mdrsp->driver_unit);
@@ -665,7 +665,7 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 		{
 			msg_updown_ind_t *mui;
 			const struct isdn_l4_driver_functions *drv;
-			void * l4_softc;
+			void *l4_softc;
 
 			mui = (msg_updown_ind_t *)data;
 			drv = isdn_l4_get_driver(mui->driver, mui->driver_unit);
@@ -1049,7 +1049,7 @@ i4bputqueue(struct mbuf *m)
 	if(readflag)
 	{
 		readflag = 0;
-		wakeup((caddr_t) &i4b_rdqueue);
+		wakeup((void *) &i4b_rdqueue);
 	}
 
 	if(selflag)
@@ -1090,7 +1090,7 @@ i4bputqueue_hipri(struct mbuf *m)
 	if(readflag)
 	{
 		readflag = 0;
-		wakeup((caddr_t) &i4b_rdqueue);
+		wakeup((void *) &i4b_rdqueue);
 	}
 
 	if(selflag)

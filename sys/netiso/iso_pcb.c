@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.36.2.1 2007/02/27 16:55:11 yamt Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.36.2.2 2007/03/12 06:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.36.2.1 2007/02/27 16:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.36.2.2 2007/03/12 06:00:30 rmind Exp $");
 
 #include "opt_iso.h"
 
@@ -213,11 +213,11 @@ iso_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 		isop->isop_mladdr = nam;
 		isop->isop_laddr = mtod(nam, struct sockaddr_iso *);
 	}
-	bcopy((caddr_t) siso, (caddr_t) isop->isop_laddr, siso->siso_len);
+	bcopy((void *) siso, (void *) isop->isop_laddr, siso->siso_len);
 	if (siso->siso_tlen == 0)
 		goto noname;
 	if ((isop->isop_socket->so_options & SO_REUSEADDR) == 0 &&
-	    iso_pcblookup(head, 0, (caddr_t) 0, isop->isop_laddr))
+	    iso_pcblookup(head, 0, (void *) 0, isop->isop_laddr))
 		return EADDRINUSE;
 	if (siso->siso_tlen <= 2) {
 		bcopy(TSEL(siso), suf.data, sizeof(suf.data));
@@ -243,7 +243,7 @@ noname:
 			suf.s = htons(head->isop_lport);
 			cp[0] = suf.data[0];
 			cp[1] = suf.data[1];
-		} while (iso_pcblookup(head, 0, (caddr_t) 0, isop->isop_laddr));
+		} while (iso_pcblookup(head, 0, (void *) 0, isop->isop_laddr));
 	}
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
@@ -301,8 +301,8 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			memmove(tmp + nlen, TSEL(siso),
 			    siso->siso_plen + siso->siso_tlen +
 			    siso->siso_slen);
-			bcopy((caddr_t) & ia->ia_addr.siso_addr,
-			      (caddr_t) & siso->siso_addr, nlen + 1);
+			bcopy((void *) & ia->ia_addr.siso_addr,
+			      (void *) & siso->siso_addr, nlen + 1);
 			/* includes siso->siso_nlen = nlen; */
 		} else
 			return EADDRNOTAVAIL;
@@ -406,7 +406,7 @@ iso_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			isop->isop_faddr = mtod(m, struct sockaddr_iso *);
 		}
 	}
-	bcopy((caddr_t) siso, (caddr_t) isop->isop_faddr, siso->siso_len);
+	bcopy((void *) siso, (void *) isop->isop_faddr, siso->siso_len);
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_ISO]) {
 		printf("in iso_pcbconnect after bcopy isop %p isop->sock %p\n",
@@ -553,7 +553,7 @@ iso_pcbdetach(void *v)
 #endif
 	if (isop->isop_laddr && (isop->isop_laddr != &isop->isop_sladdr))
 		m_freem(isop->isop_mladdr);
-	free((caddr_t) isop, M_PCB);
+	free((void *) isop, M_PCB);
 }
 
 
@@ -629,7 +629,7 @@ struct isopcb  *
 iso_pcblookup(
 	struct isopcb  *head,
 	int             fportlen,
-	caddr_t         fport,
+	void *        fport,
 	const struct sockaddr_iso *laddr)
 {
 	struct isopcb *isop;

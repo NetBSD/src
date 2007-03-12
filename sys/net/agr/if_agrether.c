@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.3.26.2 2007/03/12 05:59:32 rmind Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.3.26.1 2007/02/27 16:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.3.26.2 2007/03/12 05:59:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -169,7 +169,7 @@ agrether_portinit(struct agr_softc *sc, struct agr_port *port)
 	memcpy(&ifr.ifr_addr.sa_data,
 	    &ethermulticastaddr_slowprotocols, 
 	    sizeof(ethermulticastaddr_slowprotocols));
-	error = agrport_ioctl(port, SIOCADDMULTI, (caddr_t)&ifr);
+	error = agrport_ioctl(port, SIOCADDMULTI, (void *)&ifr);
 	if (error) {
 		free(port->port_iftprivate, M_DEVBUF);
 		port->port_iftprivate = NULL;
@@ -199,7 +199,7 @@ agrether_portfini(struct agr_softc *sc, struct agr_port *port)
 	memcpy(&ifr.ifr_addr.sa_data,
 	    &ethermulticastaddr_slowprotocols, 
 	    sizeof(ethermulticastaddr_slowprotocols));
-	error = agrport_ioctl(port, SIOCDELMULTI, (caddr_t)&ifr);
+	error = agrport_ioctl(port, SIOCDELMULTI, (void *)&ifr);
 	if (error) {
 		return error;
 	}

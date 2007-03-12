@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.154.2.1 2007/02/27 16:54:57 yamt Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.154.2.2 2007/03/12 05:59:39 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.154.2.1 2007/02/27 16:54:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.154.2.2 2007/03/12 05:59:39 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -520,7 +520,7 @@ tcp_build_datapkt(struct tcpcb *tp, struct socket *so, int off,
 	off = tp->t_inoff;
 
 	if (len <= M_TRAILINGSPACE(m)) {
-		m_copydata(m0, off, (int) len, mtod(m, caddr_t) + hdrlen);
+		m_copydata(m0, off, (int) len, mtod(m, char *) + hdrlen);
 		m->m_len += len;
 		TCP_OUTPUT_COUNTER_INCR(&tcp_output_copysmall);
 	} else {
@@ -1268,7 +1268,7 @@ send:
 		panic("tcp_output");
 	if (tp->t_template->m_len < iphdrlen)
 		panic("tcp_output");
-	bcopy(mtod(tp->t_template, caddr_t), mtod(m, caddr_t), iphdrlen);
+	bcopy(mtod(tp->t_template, void *), mtod(m, void *), iphdrlen);
 
 	/*
 	 * If we are starting a connection, send ECN setup
@@ -1347,7 +1347,7 @@ send:
 	}
 	th->th_ack = htonl(tp->rcv_nxt);
 	if (optlen) {
-		bcopy((caddr_t)opt, (caddr_t)(th + 1), optlen);
+		bcopy((void *)opt, (void *)(th + 1), optlen);
 		th->th_off = (sizeof (struct tcphdr) + optlen) >> 2;
 	}
 	th->th_flags = flags;
@@ -1391,8 +1391,8 @@ send:
 		}
 
 		m->m_pkthdr.len = hdrlen + len;
-		sigp = (caddr_t)th + sizeof(*th) + sigoff;
-		tcp_signature(m, th, (caddr_t)th - mtod(m, caddr_t), sav, sigp);
+		sigp = (void *)th + sizeof(*th) + sigoff;
+		tcp_signature(m, th, (void *)th - mtod(m, void *), sav, sigp);
 
 		key_sa_recordxfer(sav, m);
 #ifdef FAST_IPSEC

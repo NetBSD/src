@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.43 2006/12/02 03:10:43 elad Exp $	*/
+/*	$NetBSD: amr.c,v 1.43.2.1 2007/03/12 05:55:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.43 2006/12/02 03:10:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.43.2.1 2007/03/12 05:55:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	amr->amr_flags |= AMRF_DMA_ALLOC;
 
 	if ((rv = bus_dmamem_map(amr->amr_dmat, &amr->amr_dmaseg, rseg, size,
-	    (caddr_t *)&amr->amr_mbox,
+	    (void **)&amr->amr_mbox,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map buffer, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
@@ -398,7 +398,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	amr->amr_mbox_paddr = amr->amr_dmamap->dm_segs[0].ds_addr;
 	amr->amr_sgls_paddr = (amr->amr_mbox_paddr + 0x1fff) & ~0x1fff;
-	amr->amr_sgls = (struct amr_sgentry *)((caddr_t)amr->amr_mbox +
+	amr->amr_sgls = (struct amr_sgentry *)((char *)amr->amr_mbox +
 	    amr->amr_sgls_paddr - amr->amr_dmamap->dm_segs[0].ds_addr);
 
 	/*
@@ -523,7 +523,7 @@ amr_teardown(struct amr_softc *amr)
 	if ((fl & AMRF_DMA_LOAD) != 0)
 		bus_dmamap_unload(amr->amr_dmat, amr->amr_dmamap);
 	if ((fl & AMRF_DMA_MAP) != 0)
-		bus_dmamem_unmap(amr->amr_dmat, (caddr_t)amr->amr_mbox,
+		bus_dmamem_unmap(amr->amr_dmat, (void *)amr->amr_mbox,
 		    amr->amr_dmasize);
 	if ((fl & AMRF_DMA_ALLOC) != 0)
 		bus_dmamem_free(amr->amr_dmat, &amr->amr_dmaseg, 1);
@@ -1077,7 +1077,7 @@ amr_ccb_map(struct amr_softc *amr, struct amr_ccb *ac, void *data, int size,
 		mb->mb_nsgelem = nsegs;
 		mb->mb_physaddr = htole32(amr->amr_sgls_paddr + sgloff);
 
-		sge = (struct amr_sgentry *)((caddr_t)amr->amr_sgls + sgloff);
+		sge = (struct amr_sgentry *)((char *)amr->amr_sgls + sgloff);
 		for (i = 0; i < nsegs; i++, sge++) {
 			sge->sge_addr = htole32(xfer->dm_segs[i].ds_addr);
 			sge->sge_count = htole32(xfer->dm_segs[i].ds_len);
@@ -1356,7 +1356,7 @@ amrclose(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 static int
-amrioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+amrioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct amr_softc *amr;

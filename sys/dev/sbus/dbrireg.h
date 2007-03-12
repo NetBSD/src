@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrireg.h,v 1.4 2006/03/09 20:44:18 macallan Exp $	*/
+/*	$NetBSD: dbrireg.h,v 1.4.18.1 2007/03/12 05:57:06 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -77,6 +77,7 @@
 
 /* interrupts */
 #define DBRI_INTR_BRDY		1	/* buffer ready for processing */
+#define DBRI_INTR_CMDI		6	/* command has been read */
 #define DBRI_INTR_XCMP		8	/* transmission of frame complete */
 #define DBRI_INTR_SBRI		9	/* BRI status change info */
 #define DBRI_INTR_FXDT		10	/* fixed data change */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.87 2006/09/01 19:41:28 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.87.8.1 2007/03/12 06:01:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -216,7 +216,7 @@ void lfs_wakeup_cleaner(struct lfs *);
 
 /* lfs_syscalls.c */
 int lfs_fastvget(struct mount *, ino_t, daddr_t, struct vnode **, struct ufs1_dinode *);
-struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
+struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
 int lfs_do_segclean(struct lfs *, unsigned long);
 int lfs_segwait(fsid_t *, struct timeval *);
 int lfs_bmapv(struct proc *, fsid_t *, struct block_info *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.7 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: uep.c,v 1.7.4.1 2007/03/12 05:57:31 rmind Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.7 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.7.4.1 2007/03/12 05:57:31 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ Static void uep_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static int	uep_enable(void *);
 Static void	uep_disable(void *);
-Static int	uep_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+Static int	uep_ioctl(void *, u_long, void *, int, struct lwp *);
 
 const struct wsmouse_accessops uep_accessops = {
 	uep_enable,
@@ -215,7 +215,7 @@ USB_ATTACH(uep)
 
 	tpcalib_init(&sc->sc_tpcalib);
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
-		(caddr_t)&default_calib, 0, 0);
+		(void *)&default_calib, 0, 0);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -322,7 +322,7 @@ uep_disable(void *v)
 }
 
 Static int
-uep_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+uep_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct uep_softc *sc = v;
 	struct wsmouse_id *id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.31.2.1 2007/02/27 16:54:12 yamt Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.31.2.2 2007/03/12 05:58:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.31.2.1 2007/02/27 16:54:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.31.2.2 2007/03/12 05:58:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,7 +374,8 @@ ntfs_strategy(void *v)
 				bp->b_flags |= B_ERROR;
 			}
 
-			bzero(bp->b_data + toread, bp->b_bcount - toread);
+			memset((char *)bp->b_data + toread, 0,
+			    bp->b_bcount - toread);
 		}
 	} else {
 		size_t tmp;
@@ -707,7 +708,7 @@ ntfs_readdir(void *v)
 		    uio->uio_iovcnt != 1)
 			panic("ntfs_readdir: unexpected uio from NFS server");
 		dpStart = (struct dirent *)
-		     ((caddr_t)uio->uio_iov->iov_base -
+		     ((char *)uio->uio_iov->iov_base -
 			 (uio->uio_offset - off));
 #if defined(__FreeBSD__)
 		MALLOC(cookies, u_long *, ncookies * sizeof(u_long),
@@ -717,7 +718,7 @@ ntfs_readdir(void *v)
 #endif
 		for (dp = dpStart, cookiep = cookies, i=0;
 		     i < ncookies;
-		     dp = (struct dirent *)((caddr_t) dp + dp->d_reclen), i++) {
+		     dp = (struct dirent *)((char *) dp + dp->d_reclen), i++) {
 			off += dp->d_reclen;
 			*cookiep++ = (u_int) off;
 		}

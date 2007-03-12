@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.27 2007/02/09 21:55:29 ad Exp $ */
+/*	$NetBSD: bpp.c,v 1.27.2.1 2007/03/12 05:57:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.27 2007/02/09 21:55:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.27.2.1 2007/03/12 05:57:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -95,7 +95,7 @@ struct bpp_softc {
 	struct sbusdev	sc_sd;			/* sbus device */
 
 	size_t		sc_bufsz;		/* temp buffer */
-	caddr_t		sc_buf;
+	void *		sc_buf;
 
 	int		sc_error;		/* bottom-half error */
 	int		sc_flags;
@@ -345,7 +345,7 @@ bppwrite(dev, uio, flags)
 	 * and start DMA.
 	 */
 	while (uio->uio_resid > 0) {
-		caddr_t bp = sc->sc_buf;
+		void *bp = sc->sc_buf;
 		size_t len = min(sc->sc_bufsz, uio->uio_resid);
 
 		if ((error = uiomove(bp, len, uio)) != 0)
@@ -359,8 +359,10 @@ bppwrite(dev, uio, flags)
 #ifdef DEBUG
 			if (bppdebug) {
 				int i;
+				unsigned char *b = bp;
 				printf("bpp: writing %ld : ", len);
-				for (i=0; i<len; i++) printf("%c(0x%x)", bp[i], bp[i]);
+				for (i=0; i<len; i++) printf("%c(0x%x)", b[i],
+				    b[i]);
 				printf("\n");
 			}
 #endif
@@ -412,7 +414,7 @@ int
 bppioctl(dev, cmd, data, flag, l)
 	dev_t	dev;
 	u_long	cmd;
-	caddr_t	data;
+	void *	data;
 	int	flag;
 	struct	lwp *l;
 {

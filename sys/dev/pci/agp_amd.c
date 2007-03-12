@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.17 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.17.4.1 2007/03/12 05:55:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.17 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.17.4.1 2007/03/12 05:55:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 	u_int32_t entries = apsize >> AGP_PAGE_SHIFT;
 	struct agp_amd_gatt *gatt;
 	int i, npages;
-	caddr_t vdir;
+	void *vdir;
 
 	gatt = malloc(sizeof(struct agp_amd_gatt), M_AGP, M_NOWAIT);
 	if (!gatt)
@@ -119,7 +119,7 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 
 	gatt->ag_vdir = (u_int32_t *)vdir;
 	gatt->ag_entries = entries;
-	gatt->ag_virtual = (u_int32_t *)(vdir + AGP_PAGE_SIZE);
+	gatt->ag_virtual = (u_int32_t *)((char *)vdir + AGP_PAGE_SIZE);
 	gatt->ag_physical = gatt->ag_pdir + AGP_PAGE_SIZE;
 	gatt->ag_size = AGP_PAGE_SIZE + entries * sizeof(u_int32_t);
 
@@ -148,7 +148,7 @@ static void
 agp_amd_free_gatt(struct agp_softc *sc, struct agp_amd_gatt *gatt)
 {
 	agp_free_dmamem(sc->as_dmat, gatt->ag_size,
-	    gatt->ag_dmamap, (caddr_t)gatt->ag_virtual, &gatt->ag_dmaseg,
+	    gatt->ag_dmamap, (void *)gatt->ag_virtual, &gatt->ag_dmaseg,
 	    gatt->ag_nseg);
 	free(gatt, M_AGP);
 }

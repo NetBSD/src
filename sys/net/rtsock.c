@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.91.4.1 2007/02/27 16:54:46 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.91.4.2 2007/03/12 05:59:16 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.91.4.1 2007/02/27 16:54:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.91.4.2 2007/03/12 05:59:16 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -96,14 +96,14 @@ struct walkarg {
 	int	w_arg;
 	int	w_given;
 	int	w_needed;
-	caddr_t	w_where;
+	void *	w_where;
 	int	w_tmemsize;
 	int	w_tmemneeded;
-	caddr_t	w_tmem;
+	void *	w_tmem;
 };
 
-static struct mbuf *rt_msg1(int, struct rt_addrinfo *, caddr_t, int);
-static int rt_msg2(int, struct rt_addrinfo *, caddr_t, struct walkarg *, int *);
+static struct mbuf *rt_msg1(int, struct rt_addrinfo *, void *, int);
+static int rt_msg2(int, struct rt_addrinfo *, void *, struct walkarg *, int *);
 static int rt_xaddrs(u_char, const char *, const char *, struct rt_addrinfo *);
 static struct mbuf *rt_makeifannouncemsg(struct ifnet *, int, int,
     struct rt_addrinfo *);
@@ -181,7 +181,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
 		if (error) {
-			free((caddr_t)rp, M_PCB);
+			free((void *)rp, M_PCB);
 			splx(s);
 			return (error);
 		}
@@ -233,7 +233,7 @@ route_output(struct mbuf *m, ...)
 		dst = 0;
 		senderr(ENOBUFS);
 	}
-	m_copydata(m, 0, len, (caddr_t)rtm);
+	m_copydata(m, 0, len, (void *)rtm);
 	if (rtm->rtm_version != RTM_VERSION) {
 		dst = 0;
 		senderr(EPROTONOSUPPORT);
@@ -241,7 +241,7 @@ route_output(struct mbuf *m, ...)
 	rtm->rtm_pid = curproc->p_pid;
 	memset(&info, 0, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
-	if (rt_xaddrs(rtm->rtm_type, (caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
+	if (rt_xaddrs(rtm->rtm_type, (void *)(rtm + 1), len + (char *)rtm, &info))
 		senderr(EINVAL);
 	info.rti_flags = rtm->rtm_flags;
 #ifdef RTSOCK_DEBUG
@@ -362,7 +362,7 @@ route_output(struct mbuf *m, ...)
 				ifpaddr = 0;
 				ifaaddr = 0;
 			}
-			(void)rt_msg2(rtm->rtm_type, &info, (caddr_t)0,
+			(void)rt_msg2(rtm->rtm_type, &info, (void *)0,
 			    (struct walkarg *)0, &len);
 			if (len > rtm->rtm_msglen) {
 				struct rt_msghdr *new_rtm;
@@ -372,7 +372,7 @@ route_output(struct mbuf *m, ...)
 				Bcopy(rtm, new_rtm, rtm->rtm_msglen);
 				Free(rtm); rtm = new_rtm;
 			}
-			(void)rt_msg2(rtm->rtm_type, &info, (caddr_t)rtm,
+			(void)rt_msg2(rtm->rtm_type, &info, (void *)rtm,
 			    (struct walkarg *)0, 0);
 			rtm->rtm_flags = rt->rt_flags;
 			rtm->rtm_rmx = rt->rt_rmx;
@@ -458,7 +458,7 @@ flush:
 		rp = sotorawcb(so);
 	}
 	if (rtm) {
-		m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+		m_copyback(m, 0, rtm->rtm_msglen, (void *)rtm);
 		if (m->m_pkthdr.len < rtm->rtm_msglen) {
 			m_freem(m);
 			m = NULL;
@@ -535,7 +535,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 }
 
 static struct mbuf *
-rt_msg1(int type, struct rt_addrinfo *rtinfo, caddr_t data, int datalen)
+rt_msg1(int type, struct rt_addrinfo *rtinfo, void *data, int datalen)
 {
 	struct rt_msghdr *rtm;
 	struct mbuf *m;
@@ -622,12 +622,12 @@ rt_msg1(int type, struct rt_addrinfo *rtinfo, caddr_t data, int datalen)
  *	if the allocation fails ENOBUFS is returned.
  */
 static int
-rt_msg2(int type, struct rt_addrinfo *rtinfo, caddr_t cp, struct walkarg *w,
+rt_msg2(int type, struct rt_addrinfo *rtinfo, void *cpv, struct walkarg *w,
 	int *lenp)
 {
 	int i;
 	int len, dlen, second_time = 0;
-	caddr_t cp0;
+	char *cp0, *cp = cpv;
 
 	rtinfo->rti_addrs = 0;
 again:
@@ -673,7 +673,7 @@ again:
 			if (rw->w_tmemsize < len) {
 				if (rw->w_tmem)
 					free(rw->w_tmem, M_RTABLE);
-				rw->w_tmem = (caddr_t) malloc(len, M_RTABLE,
+				rw->w_tmem = (void *) malloc(len, M_RTABLE,
 				    M_NOWAIT);
 				if (rw->w_tmem)
 					rw->w_tmemsize = len;
@@ -718,7 +718,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, int error)
 	memset(&rtm, 0, sizeof(rtm));
 	rtm.rtm_flags = RTF_DONE | flags;
 	rtm.rtm_errno = error;
-	m = rt_msg1(type, rtinfo, (caddr_t)&rtm, sizeof(rtm));
+	m = rt_msg1(type, rtinfo, (void *)&rtm, sizeof(rtm));
 	if (m == 0)
 		return;
 	mtod(m, struct rt_msghdr *)->rtm_addrs = rtinfo->rti_addrs;
@@ -748,7 +748,7 @@ rt_ifmsg(struct ifnet *ifp)
 	ifm.ifm_flags = ifp->if_flags;
 	ifm.ifm_data = ifp->if_data;
 	ifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_IFINFO, &info, (caddr_t)&ifm, sizeof(ifm));
+	m = rt_msg1(RTM_IFINFO, &info, (void *)&ifm, sizeof(ifm));
 	if (m == 0)
 		return;
 	route_proto.sp_protocol = 0;
@@ -777,7 +777,7 @@ rt_ifmsg(struct ifnet *ifp)
 	oifm.ifm_data.ifi_noproto = ifp->if_data.ifi_noproto;
 	oifm.ifm_data.ifi_lastchange = ifp->if_data.ifi_lastchange;
 	oifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_OIFINFO, &info, (caddr_t)&oifm, sizeof(oifm));
+	m = rt_msg1(RTM_OIFINFO, &info, (void *)&oifm, sizeof(oifm));
 	if (m == 0)
 		return;
 	route_proto.sp_protocol = 0;
@@ -819,7 +819,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			ifam.ifam_index = ifp->if_index;
 			ifam.ifam_metric = ifa->ifa_metric;
 			ifam.ifam_flags = ifa->ifa_flags;
-			m = rt_msg1(ncmd, &info, (caddr_t)&ifam, sizeof(ifam));
+			m = rt_msg1(ncmd, &info, (void *)&ifam, sizeof(ifam));
 			if (m == NULL)
 				continue;
 			mtod(m, struct ifa_msghdr *)->ifam_addrs =
@@ -838,7 +838,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			rtm.rtm_index = ifp->if_index;
 			rtm.rtm_flags |= rt->rt_flags;
 			rtm.rtm_errno = error;
-			m = rt_msg1(cmd, &info, (caddr_t)&rtm, sizeof(rtm));
+			m = rt_msg1(cmd, &info, (void *)&rtm, sizeof(rtm));
 			if (m == NULL)
 				continue;
 			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
@@ -859,7 +859,7 @@ rt_makeifannouncemsg(struct ifnet *ifp, int type, int what,
 	ifan.ifan_index = ifp->if_index;
 	strlcpy(ifan.ifan_name, ifp->if_xname, sizeof(ifan.ifan_name));
 	ifan.ifan_what = what;
-	return rt_msg1(type, info, (caddr_t)&ifan, sizeof(ifan));
+	return rt_msg1(type, info, (void *)&ifan, sizeof(ifan));
 }
 
 /*
@@ -969,7 +969,7 @@ sysctl_dumpentry(struct radix_node *rn, void *v)
 		if ((error = copyout(rtm, w->w_where, size)) != 0)
 			w->w_where = NULL;
 		else
-			w->w_where += size;
+			w->w_where = (char *)w->w_where + size;
 	}
 	return (error);
 }
@@ -993,12 +993,12 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 		switch (type) {
 		case NET_RT_IFLIST:
 			error =
-			    rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w, &len);
+			    rt_msg2(RTM_IFINFO, &info, (void *)0, w, &len);
 			break;
 #ifdef COMPAT_14
 		case NET_RT_OIFLIST:
 			error =
-			    rt_msg2(RTM_OIFINFO, &info, (caddr_t)0, w, &len);
+			    rt_msg2(RTM_OIFINFO, &info, (void *)0, w, &len);
 			break;
 #endif
 		default:
@@ -1020,7 +1020,7 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 				error = copyout(ifm, w->w_where, len);
 				if (error)
 					return (error);
-				w->w_where += len;
+				w->w_where = (char *)w->w_where + len;
 				break;
 			}
 
@@ -1069,7 +1069,7 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 				error = copyout(ifm, w->w_where, len);
 				if (error)
 					return (error);
-				w->w_where += len;
+				w->w_where = (char *)w->w_where + len;
 				break;
 			}
 #endif
@@ -1096,7 +1096,7 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 				error = copyout(w->w_tmem, w->w_where, len);
 				if (error)
 					return (error);
-				w->w_where += len;
+				w->w_where = (char *)w->w_where + len;
 			}
 		}
 		ifaaddr = netmask = brdaddr = 0;
@@ -1129,7 +1129,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 again:
 	/* we may return here if a later [re]alloc of the t_mem buffer fails */
 	if (w.w_tmemneeded) {
-		w.w_tmem = (caddr_t) malloc(w.w_tmemneeded, M_RTABLE, M_WAITOK);
+		w.w_tmem = (void *) malloc(w.w_tmemneeded, M_RTABLE, M_WAITOK);
 		w.w_tmemsize = w.w_tmemneeded;
 		w.w_tmemneeded = 0;
 	}
@@ -1170,7 +1170,7 @@ again:
 		free(w.w_tmem, M_RTABLE);
 	w.w_needed += w.w_given;
 	if (where) {
-		*given = w.w_where - (caddr_t) where;
+		*given = (char *)w.w_where - (char *)where;
 		if (*given < w.w_needed)
 			return (ENOMEM);
 	} else {

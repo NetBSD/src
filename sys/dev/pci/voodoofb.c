@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.7 2007/01/20 21:42:12 he Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.7.2.1 2007/03/12 05:55:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.7 2007/01/20 21:42:12 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.7.2.1 2007/03/12 05:55:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ struct wsscreen_list voodoofb_screenlist = {
 	sizeof(_voodoofb_scrlist) / sizeof(struct wsscreen_descr *), _voodoofb_scrlist
 };
 
-static int	voodoofb_ioctl(void *, void *, u_long, caddr_t, int,
+static int	voodoofb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	voodoofb_mmap(void *, void *, off_t, int);
 
@@ -856,7 +856,7 @@ voodoofb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 static int
-voodoofb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+voodoofb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;

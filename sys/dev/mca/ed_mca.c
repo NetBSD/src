@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.34 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.34.4.1 2007/03/12 05:55:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.34 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.34.4.1 2007/03/12 05:55:07 rmind Exp $");
 
 #include "rnd.h"
 
@@ -477,7 +477,7 @@ int
 edmcaioctl(dev, xfer, addr, flag, l)
 	dev_t dev;
 	u_long xfer;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct lwp *l;
 {
@@ -663,7 +663,7 @@ int
 edmcadump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 	struct ed_softc *ed;	/* disk unit to do the I/O */
@@ -719,7 +719,7 @@ edmcadump(dev, blkno, va, size)
 		/* update block count */
 		nblks -= min(nblks, eddumpmulti);
 		blkno += min(nblks, eddumpmulti);
-		va += min(nblks, eddumpmulti) * lp->d_secsize;
+		va = (char *)va + min(nblks, eddumpmulti) * lp->d_secsize;
 	}
 
 	eddoingadump = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.47 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.47.2.1 2007/03/12 05:57:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.47 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.47.2.1 2007/03/12 05:57:50 rmind Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -110,8 +110,8 @@ static int wsmux_evsrc_set_display(struct device *, struct wsevsrc *);
 #endif
 
 static int wsmux_do_displayioctl(struct device *dev, u_long cmd,
-				 caddr_t data, int flag, struct lwp *l);
-static int wsmux_do_ioctl(struct device *, u_long, caddr_t,int,struct lwp *);
+				 void *data, int flag, struct lwp *l);
+static int wsmux_do_ioctl(struct device *, u_long, void *,int,struct lwp *);
 
 static int wsmux_add_mux(int, struct wsmux_softc *);
 
@@ -390,7 +390,7 @@ wsmuxread(dev_t dev, struct uio *uio, int flags)
  * ioctl of the pseudo device from device table.
  */
 int
-wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+wsmuxioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int u = WSMUXDEV(minor(dev));
 
@@ -401,7 +401,7 @@ wsmuxioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
  * ioctl of a mux via the parent mux, continuation of wsmuxioctl().
  */
 int
-wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+wsmux_do_ioctl(struct device *dv, u_long cmd, void *data, int flag,
 	       struct lwp *lwp)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
@@ -758,7 +758,7 @@ wsmux_detach_sc(struct wsevsrc *me)
  * Display ioctl() of a mux via the parent mux.
  */
 int
-wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+wsmux_do_displayioctl(struct device *dv, u_long cmd, void *data, int flag,
 		      struct lwp *l)
 {
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;

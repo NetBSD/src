@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.82.2.1 2007/02/27 16:55:00 yamt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.82.2.2 2007/03/12 05:59:56 rmind Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.82.2.1 2007/02/27 16:55:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.82.2.2 2007/03/12 05:59:56 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -158,7 +158,7 @@ in6_pcballoc(so, v)
 	splx(s);
 	if (in6p == NULL)
 		return (ENOBUFS);
-	bzero((caddr_t)in6p, sizeof(*in6p));
+	bzero((void *)in6p, sizeof(*in6p));
 	in6p->in6p_af = AF_INET6;
 	in6p->in6p_table = table;
 	in6p->in6p_socket = so;
@@ -182,7 +182,7 @@ in6_pcballoc(so, v)
 	splx(s);
 	if (ip6_v6only)
 		in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
-	so->so_pcb = (caddr_t)in6p;
+	so->so_pcb = (void *)in6p;
 	return (0);
 }
 
@@ -484,7 +484,7 @@ void
 in6_pcbdisconnect(in6p)
 	struct in6pcb *in6p;
 {
-	bzero((caddr_t)&in6p->in6p_faddr, sizeof(in6p->in6p_faddr));
+	bzero((void *)&in6p->in6p_faddr, sizeof(in6p->in6p_faddr));
 	in6p->in6p_fport = 0;
 	in6_pcbstate(in6p, IN6P_BOUND);
 	in6p->in6p_flowinfo &= ~IPV6_FLOWLABEL_MASK;
@@ -542,7 +542,7 @@ in6_setsockaddr(in6p, nam)
 
 	nam->m_len = sizeof(*sin6);
 	sin6 = mtod(nam, struct sockaddr_in6 *);
-	bzero((caddr_t)sin6, sizeof(*sin6));
+	bzero((void *)sin6, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_port = in6p->in6p_lport;
@@ -562,7 +562,7 @@ in6_setpeeraddr(in6p, nam)
 
 	nam->m_len = sizeof(*sin6);
 	sin6 = mtod(nam, struct sockaddr_in6 *);
-	bzero((caddr_t)sin6, sizeof(*sin6));
+	bzero((void *)sin6, sizeof(*sin6));
 	sin6->sin6_family = AF_INET6;
 	sin6->sin6_len = sizeof(struct sockaddr_in6);
 	sin6->sin6_port = in6p->in6p_fport;
@@ -621,7 +621,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 	if (PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) {
 		fport = 0;
 		lport = 0;
-		bzero((caddr_t)&sa6_src.sin6_addr, sizeof(sa6_src.sin6_addr));
+		bzero((void *)&sa6_src.sin6_addr, sizeof(sa6_src.sin6_addr));
 
 		if (cmd != PRC_HOSTDEAD)
 			notify = in6_rtchange;

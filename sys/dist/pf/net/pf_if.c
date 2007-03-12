@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.10 2005/12/11 12:24:25 christos Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.10.26.1 2007/03/12 05:58:09 rmind Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
@@ -532,9 +532,9 @@ pfi_address_add(struct sockaddr *sa, int af, int net)
 	}
 	/* mask network address bits */
 	if (net < 128)
-		((caddr_t)p)[p->pfra_net/8] &= ~(0xFF >> (p->pfra_net%8));
+		((char *)p)[p->pfra_net/8] &= ~(0xFF >> (p->pfra_net%8));
 	for (i = (p->pfra_net+7)/8; i < sizeof(p->pfra_u); i++)
-		((caddr_t)p)[i] = 0;
+		((char *)p)[i] = 0;
 }
 
 void

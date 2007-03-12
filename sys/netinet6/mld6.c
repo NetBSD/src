@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.36 2006/11/29 03:05:12 dyoung Exp $	*/
+/*	$NetBSD: mld6.c,v 1.36.4.1 2007/03/12 05:59:59 rmind Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.36 2006/11/29 03:05:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.36.4.1 2007/03/12 05:59:59 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -181,7 +181,7 @@ mld_init()
 	hbh_buf[3] = 0;
 	hbh_buf[4] = IP6OPT_RTALERT;
 	hbh_buf[5] = IP6OPT_RTALERT_LEN - 2;
-	bcopy((caddr_t)&rtalert_code, &hbh_buf[6], sizeof(u_int16_t));
+	bcopy((void *)&rtalert_code, &hbh_buf[6], sizeof(u_int16_t));
 
 	ip6_opts.ip6po_hbh = hbh;
 	/* We will specify the hoplimit by a multicast option. */
@@ -690,7 +690,7 @@ in6_addmulti(maddr6, ifp, errorp, timer)
 			*errorp = ENXIO; /* XXX: appropriate? */
 		else
 			*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI,
-			    (caddr_t)&ifr);
+			    (void *)&ifr);
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			/* leaks in6m_timer_ch */
@@ -770,7 +770,7 @@ in6_delmulti(in6m)
 		ifr.ifr_addr.sin6_len = sizeof(struct sockaddr_in6);
 		ifr.ifr_addr.sin6_addr = in6m->in6m_addr;
 		(*in6m->in6m_ifp->if_ioctl)(in6m->in6m_ifp,
-		    SIOCDELMULTI, (caddr_t)&ifr);
+		    SIOCDELMULTI, (void *)&ifr);
 		free(in6m->in6m_timer_ch, M_IPMADDR);
 		free(in6m, M_IPMADDR);
 	}

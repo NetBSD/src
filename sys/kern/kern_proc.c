@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.100.2.2 2007/02/27 16:54:23 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.100.2.3 2007/03/12 05:58:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.2 2007/02/27 16:54:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.100.2.3 2007/03/12 05:58:36 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -112,14 +112,15 @@ struct proclist zombproc;	/* resources have been freed */
 /*
  * There are two locks on global process state.
  *
- * 1. proclist_lock is a reader/writer lock and is used when modifying or
- * examining process state from a process context.  It protects our internal
- * tables, all of the process lists, and a number of members of struct lwp
- * and struct proc.
-
+ * 1. proclist_lock is an adaptive mutex and is used when modifying
+ * or examining process state from a process context.  It protects
+ * the internal tables, all of the process lists, and a number of
+ * members of struct proc.
+ *
  * 2. proclist_mutex is used when allproc must be traversed from an
- * interrupt context, or when we must signal processes from an interrupt
- * context.  The proclist_lock should always be used in preference.
+ * interrupt context, or when changing the state of processes.  The
+ * proclist_lock should always be used in preference.  In some cases,
+ * both locks need to be held.
  *
  *	proclist_lock	proclist_mutex	structure
  *	--------------- --------------- -----------------
@@ -138,13 +139,23 @@ struct proclist zombproc;	/* resources have been freed */
  *
  * The lock order for processes and LWPs is approximately as following:
  *
- * kernel_mutex
+ * kernel_lock
  * -> proclist_lock
- *    -> proclist_mutex
- *	-> proc::p_mutex
+ *   -> proc::p_mutex
+ *      -> proclist_mutex
  *         -> proc::p_smutex
+ *           -> proc::p_stmutex
+ *
+ * XXX p_smutex can be run at IPL_VM once audio drivers on the x86
+ * platform are made MP safe.  Currently it blocks interrupts at
+ * IPL_SCHED and below.
+ *
+ * XXX The two process locks (p_smutex + p_mutex), and the two global
+ * state locks (proclist_lock + proclist_mutex) should be merged
+ * together.  However, to do so requires interrupts that interrupts
+ * be run with LWP context.
  */
-krwlock_t	proclist_lock;
+kmutex_t	proclist_lock;
 kmutex_t	proclist_mutex;
 
 /*
@@ -250,11 +261,7 @@ procinit(void)
 	for (pd = proclists; pd->pd_list != NULL; pd++)
 		LIST_INIT(pd->pd_list);
 
-	/*
-	 * XXX p_smutex can be IPL_VM except for audio drivers
-	 * XXX proclist_lock must die
-	 */
-	rw_init(&proclist_lock);
+	mutex_init(&proclist_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&proclist_mutex, MUTEX_SPIN, IPL_SCHED);
 
 	pid_table = malloc(INITIAL_PID_TABLE_SIZE * sizeof *pid_table,
@@ -301,11 +308,16 @@ proc0_init(void)
 	sess = &session0;
 	l = &lwp0;
 
-	/* XXX p_smutex can be IPL_VM except for audio drivers */
+	/*
+	 * XXX p_rasmutex is run at IPL_SCHED, because of lock order
+	 * issues (kernel_lock -> p_rasmutex).  Ideally ras_lookup
+	 * should operate "lock free".
+	 */
 	mutex_init(&p->p_smutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_stmutex, MUTEX_SPIN, IPL_STATCLOCK);
-	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_NONE);
+	mutex_init(&p->p_rasmutex, MUTEX_SPIN, IPL_SCHED);
 	mutex_init(&p->p_mutex, MUTEX_DEFAULT, IPL_NONE);
+
 	cv_init(&p->p_refcv, "drainref");
 	cv_init(&p->p_waitcv, "wait");
 	cv_init(&p->p_lwpcv, "lwpwait");
@@ -438,9 +450,9 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 {
 	struct pgrp *pgrp;
 	struct session *session;
+	int error;
 
-	rw_enter(&proclist_lock, RW_READER);
-
+	mutex_enter(&proclist_lock);
 	if (pg_id < 0) {
 		struct proc *p1 = p_find(-pg_id, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 		if (p1 == NULL)
@@ -452,10 +464,13 @@ pgid_in_session(struct proc *p, pid_t pg_id)
 			return EINVAL;
 	}
 	session = pgrp->pg_session;
-	rw_exit(&proclist_lock);
 	if (session != p->p_pgrp->pg_session)
-		return EPERM;
-	return 0;
+		error = EPERM;
+	else
+		error = 0;
+	mutex_exit(&proclist_lock);
+
+	return error;
 }
 
 /*
@@ -483,7 +498,7 @@ p_find(pid_t pid, uint flags)
 	char stat;
 
 	if (!(flags & PFIND_LOCKED))
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 
 	p = pid_table[pid & pid_tbl_mask].pt_proc;
 
@@ -493,11 +508,11 @@ p_find(pid_t pid, uint flags)
 	    stat == SSTOP || ((flags & PFIND_ZOMBIE) &&
 	    (stat == SZOMB || stat == SDEAD || stat == SDYING)))) {
 		if (flags & PFIND_UNLOCK_OK)
-			 rw_exit(&proclist_lock);
+			 mutex_exit(&proclist_lock);
 		return p;
 	}
 	if (flags & PFIND_UNLOCK_FAIL)
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 	return NULL;
 }
 
@@ -511,7 +526,7 @@ pg_find(pid_t pgid, uint flags)
 	struct pgrp *pg;
 
 	if (!(flags & PFIND_LOCKED))
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 	pg = pid_table[pgid & pid_tbl_mask].pt_pgrp;
 	/*
 	 * Can't look up a pgrp that only exists because the session
@@ -519,12 +534,12 @@ pg_find(pid_t pgid, uint flags)
 	 */
 	if (pg == NULL || pg->pg_id != pgid || LIST_EMPTY(&pg->pg_members)) {
 		if (flags & PFIND_UNLOCK_FAIL)
-			 rw_exit(&proclist_lock);
+			 mutex_exit(&proclist_lock);
 		return NULL;
 	}
 
 	if (flags & PFIND_UNLOCK_OK)
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 	return pg;
 }
 
@@ -540,10 +555,10 @@ expand_pid_table(void)
 
 	new_pt = malloc(pt_size * 2 * sizeof *new_pt, M_PROC, M_WAITOK);
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		FREE(new_pt, M_PROC);
 		return;
 	}
@@ -604,7 +619,7 @@ expand_pid_table(void)
 	} else
 		pid_alloc_lim <<= 1;	/* doubles number of free slots... */
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	FREE(n_pt, M_PROC);
 }
 
@@ -626,7 +641,7 @@ proc_alloc(void)
 		if (__predict_false(pid_alloc_cnt >= pid_alloc_lim))
 			/* ensure pids cycle through 2000+ values */
 			continue;
-		rw_enter(&proclist_lock, RW_WRITER);
+		mutex_enter(&proclist_lock);
 		pt = &pid_table[next_free_pt];
 #ifdef DIAGNOSTIC
 		if (__predict_false(P_VALID(pt->pt_proc) || pt->pt_pgrp))
@@ -636,7 +651,7 @@ proc_alloc(void)
 		if (nxt & pid_tbl_mask)
 			break;
 		/* Table full - expand (NB last entry not used....) */
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 	}
 
 	/* pid is 'saved use count' + 'size' + entry */
@@ -652,7 +667,7 @@ proc_alloc(void)
 	mutex_exit(&proclist_mutex);
 	pid_alloc_cnt++;
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return p;
 }
@@ -660,7 +675,7 @@ proc_alloc(void)
 /*
  * Free last resources of a process - called from proc_free (in kern_exit.c)
  *
- * Called with the proclist_lock write held, and releases upon exit.
+ * Called with the proclist_lock held, and releases upon exit.
  */
 void
 proc_free_mem(struct proc *p)
@@ -668,7 +683,7 @@ proc_free_mem(struct proc *p)
 	pid_t pid = p->p_pid;
 	struct pid_table *pt;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	pt = &pid_table[pid & pid_tbl_mask];
 #ifdef DIAGNOSTIC
@@ -691,7 +706,7 @@ proc_free_mem(struct proc *p)
 	mutex_exit(&proclist_mutex);
 
 	nprocs--;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	pool_put(&proc_pool, p);
 }
@@ -717,21 +732,19 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	int rval;
 	pid_t pg_id = NO_PGID;
 
-	/* Allocate data areas we might need before doing any validity checks */
-	rw_enter(&proclist_lock, RW_READER);		/* Because pid_table might change */
-	if (pid_table[pgid & pid_tbl_mask].pt_pgrp == 0) {
-		rw_exit(&proclist_lock);
-		new_pgrp = pool_get(&pgrp_pool, PR_WAITOK);
-	} else {
-		rw_exit(&proclist_lock);
-		new_pgrp = NULL;
-	}
 	if (mksess)
 		sess = pool_get(&session_pool, PR_WAITOK);
 	else
 		sess = NULL;
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	/* Allocate data areas we might need before doing any validity checks */
+	mutex_enter(&proclist_lock);		/* Because pid_table might change */
+	if (pid_table[pgid & pid_tbl_mask].pt_pgrp == 0) {
+		mutex_exit(&proclist_lock);
+		new_pgrp = pool_get(&pgrp_pool, PR_WAITOK);
+		mutex_enter(&proclist_lock);
+	} else
+		new_pgrp = NULL;
 	rval = EPERM;	/* most common error (to save typing) */
 
 	/* Check pgrp exists or can be created */
@@ -872,7 +885,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
     done:
 	if (pg_id != NO_PGID)
 		pg_delete(pg_id);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (sess != NULL)
 		pool_put(&session_pool, sess);
 	if (new_pgrp != NULL)
@@ -887,14 +900,14 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 
 /*
  * Remove a process from its process group.  Must be called with the
- * proclist_lock write held.
+ * proclist_lock held.
  */
 void
 leavepgrp(struct proc *p)
 {
 	struct pgrp *pgrp;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	/*
 	 * If there's a controlling terminal for the session, we have to
@@ -924,7 +937,7 @@ leavepgrp(struct proc *p)
 }
 
 /*
- * Free a process group.  Must be called with the proclist_lock write held.
+ * Free a process group.  Must be called with the proclist_lock held.
  */
 static void
 pg_free(pid_t pg_id)
@@ -932,7 +945,7 @@ pg_free(pid_t pg_id)
 	struct pgrp *pgrp;
 	struct pid_table *pt;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	pt = &pid_table[pg_id & pid_tbl_mask];
 	pgrp = pt->pt_pgrp;
@@ -961,8 +974,7 @@ pg_free(pid_t pg_id)
 }
 
 /*
- * Delete a process group.  Must be called with the proclist_lock write
- * held.
+ * Delete a process group.  Must be called with the proclist_lock held.
  */
 static void
 pg_delete(pid_t pg_id)
@@ -972,7 +984,7 @@ pg_delete(pid_t pg_id)
 	struct session *ss;
 	int is_pgrp_leader;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	pgrp = pid_table[pg_id & pid_tbl_mask].pt_pgrp;
 	if (pgrp == NULL || pgrp->pg_id != pg_id ||
@@ -1006,13 +1018,13 @@ pg_delete(pid_t pg_id)
 
 /*
  * Delete session - called from SESSRELE when s_count becomes zero.
- * Must be called with the proclist_lock write held.
+ * Must be called with the proclist_lock held.
  */
 void
 sessdelete(struct session *ss)
 {
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	/*
 	 * We keep the pgrp with the same id as the session in
@@ -1034,7 +1046,7 @@ sessdelete(struct session *ss)
  * entering == 0 => p is leaving specified group.
  * entering == 1 => p is entering specified group.
  *
- * Call with proclist_lock write held.
+ * Call with proclist_lock held.
  */
 void
 fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
@@ -1043,8 +1055,8 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	struct session *mysession = pgrp->pg_session;
 	struct proc *child;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
-	LOCK_ASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(mutex_owned(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_mutex));
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
@@ -1086,7 +1098,7 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
  * if there are any stopped processes in the group,
  * hang-up all process in that group.
  *
- * Call with proclist_lock write held.
+ * Call with proclist_lock held.
  */
 static void
 orphanpg(struct pgrp *pg)
@@ -1094,8 +1106,8 @@ orphanpg(struct pgrp *pg)
 	struct proc *p;
 	int doit;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
-	LOCK_ASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(mutex_owned(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_mutex));
 
 	doit = 0;
 
@@ -1184,7 +1196,7 @@ kstack_setup_magic(const struct lwp *l)
 	 * so that later modification on it can be detected.
 	 */
 	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	end = (uint32_t *)((void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++) {
 		*ip = KSTACK_MAGIC;
 	}
@@ -1204,17 +1216,17 @@ kstack_check_magic(const struct lwp *l)
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/* stack grows upwards (eg. hppa) */
-	ip = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	ip = (uint32_t *)((void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	end = (uint32_t *)KSTACK_LOWEST_ADDR(l);
 	for (ip--; ip >= end; ip--)
 		if (*ip != KSTACK_MAGIC)
 			break;
 
-	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (caddr_t)ip;
+	stackleft = (void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (void *)ip;
 #else /* __MACHINE_STACK_GROWS_UP */
 	/* stack grows downwards (eg. i386) */
 	ip = (uint32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (uint32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
+	end = (uint32_t *)((void *)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++)
 		if (*ip != KSTACK_MAGIC)
 			break;
@@ -1253,7 +1265,7 @@ proclist_foreach_call(struct proclist *list,
 
 	marker.p_flag = PK_MARKER;
 	PHOLD(l);
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	for (p = LIST_FIRST(list); ret == 0 && p != NULL;) {
 		if (p->p_flag & PK_MARKER) {
 			p = LIST_NEXT(p, p_list);
@@ -1261,11 +1273,11 @@ proclist_foreach_call(struct proclist *list,
 		}
 		LIST_INSERT_AFTER(p, &marker, p_list);
 		ret = (*callback)(p, arg);
-		KASSERT(rw_read_held(&proclist_lock));
+		KASSERT(mutex_owned(&proclist_lock));
 		p = LIST_NEXT(&marker, p_list);
 		LIST_REMOVE(&marker, p_list);
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	PRELE(l);
 
 	return ret;
@@ -1382,7 +1394,7 @@ int
 proc_addref(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_mutex));
+	KASSERT(mutex_owned(&p->p_mutex));
 
 	if (p->p_refcnt <= 0)
 		return EAGAIN;
@@ -1398,7 +1410,7 @@ void
 proc_delref(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_mutex));
+	KASSERT(mutex_owned(&p->p_mutex));
 
 	if (p->p_refcnt < 0) {
 		if (++p->p_refcnt == 0)
@@ -1417,7 +1429,7 @@ void
 proc_drainrefs(struct proc *p)
 {
 
-	LOCK_ASSERT(mutex_owned(&p->p_mutex));
+	KASSERT(mutex_owned(&p->p_mutex));
 	KASSERT(p->p_refcnt > 0);
 
 	/*

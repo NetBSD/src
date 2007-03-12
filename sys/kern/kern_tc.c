@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.18 2007/02/09 21:55:31 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.18.2.1 2007/03/12 05:58:38 rmind Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.18 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.18.2.1 2007/03/12 05:58:38 rmind Exp $");
 
 #include "opt_ntp.h"
 
@@ -700,7 +700,7 @@ SYSCTL_PROC(_kern_timecounter, OID_AUTO, choice, CTLTYPE_STRING | CTLFLAG_RD,
  */
 
 int
-pps_ioctl(u_long cmd, caddr_t data, struct pps_state *pps)
+pps_ioctl(u_long cmd, void *data, struct pps_state *pps)
 {
 	pps_params_t *app;
 	pps_info_t *pipi;

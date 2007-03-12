@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.36 2006/03/28 17:38:34 thorpej Exp $	*/
+/*	$NetBSD: qd.c,v 1.36.14.1 2007/03/12 05:56:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.36 2006/03/28 17:38:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.36.14.1 2007/03/12 05:56:49 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -166,7 +166,7 @@ volatile struct pte *QVmap[NQD];
 int Qbus_unmap[NQD];		/* Qbus mapper release code */
 struct qdmap qdmap[NQD];	/* QDSS register map structure */
 struct qdflags qdflags[NQD];	/* QDSS register map structure */
-caddr_t qdbase[NQD];		/* base address of each QDSS unit */
+void *qdbase[NQD];		/* base address of each QDSS unit */
 struct buf qdbuf[NQD];		/* buf structs used by strategy */
 short qdopened[NQD];		/* graphics device is open exclusive use */
 
@@ -423,7 +423,7 @@ qdearly()
 #define	QIOPAGE	0x20000000	/* XXX */
 #define	UBAIOPAGES 16
 	tmp = QIOPAGE + ubdevreg(QDSSCSR);
-	if (badaddr((caddr_t)tmp, sizeof(short)))
+	if (badaddr((void *)tmp, sizeof(short)))
 		return;
 
 	MAPVIRT(qvmem[0], 64 * 1024 * NQD / VAX_NBPG);
@@ -462,7 +462,7 @@ void
 qdcninit(cndev)
 	struct  consdev *cndev;
 {
-	caddr_t phys_adr;		/* physical QDSS base adrs */
+	void *phys_adr;		/* physical QDSS base adrs */
 	u_int mapix;			/* index into QVmap[] array */
 	int unit;
 
@@ -496,7 +496,7 @@ qdcninit(cndev)
 	/*
 	 * load qdmap struct with the virtual addresses of the QDSS elements
 	 */
-	qdbase[unit] = (caddr_t) (qvmem[0]);
+	qdbase[unit] = (void *) (qvmem[0]);
 	qdmap[unit].template = qdbase[unit] + TMPSTART;
 	qdmap[unit].adder = qdbase[unit] + ADDER;
 	qdmap[unit].dga = qdbase[unit] + DGA;
@@ -562,7 +562,7 @@ qd_match(parent, match, aux)
 	int vector;
 #ifdef notdef
 	int *ptep;			/* page table entry pointer */
-	caddr_t phys_adr;		/* physical QDSS base adrs */
+	void *phys_adr;		/* physical QDSS base adrs */
 	u_int mapix;
 #endif
 
@@ -608,7 +608,7 @@ qd_match(parent, match, aux)
 			* find an empty 64kb adrs boundary
 			*/
 
-			qdbase[unit] = (caddr_t) (qvmem[0] + QMEMSIZE - CHUNK);
+			qdbase[unit] = (void *) (qvmem[0] + QMEMSIZE - CHUNK);
 
 			/*
 			* find the cpusw entry that matches this machine.
@@ -622,7 +622,7 @@ qd_match(parent, match, aux)
 			*/
 			mapix = (int) (VTOP(qdbase[unit]) - VTOP(qvmem[0]));
 			ptep = (int *) QVmap[0] + mapix;
-			phys_adr = (caddr_t)(((int)*ptep&0x001FFFFF)<<VAX_PGSHIFT);
+			phys_adr = (void *)(((int)*ptep&0x001FFFFF)<<VAX_PGSHIFT);
 			*(u_short *)reg = (u_short) ((int)phys_adr >> 16);
 
 			/*
@@ -675,7 +675,7 @@ qd_match(parent, match, aux)
 			 qdaddr = (void *)reg;
 
 			 /* Lame probe for QDSS.  Should be ok for qd0 */
-			 if (badaddr((caddr_t)qdaddr, sizeof(short)))
+			 if (badaddr((void *)qdaddr, sizeof(short)))
 				 return 0;
 
 			 qdcninit(NULL);
@@ -1078,7 +1078,7 @@ int
 qdioctl(dev, cmd, datap, flags, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t datap;
+	void *datap;
 	int flags;
 	struct proc *p;
 {
@@ -1122,7 +1122,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		s = spl5();
 		GETEND(eq_header[unit]);
 		splx(s);
-		bcopy((caddr_t)event, datap, sizeof(struct _vs_event));
+		bcopy((void *)event, datap, sizeof(struct _vs_event));
 		break;
 
 	case QD_RESET:
@@ -1241,7 +1241,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		/*
 		 * stuff qdmap structure in return buffer
 		 */
-		bcopy((caddr_t)qd, datap, sizeof(struct qdmap));
+		bcopy((void *)qd, datap, sizeof(struct qdmap));
 
 		break;
 
@@ -1267,7 +1267,7 @@ qdioctl(dev, cmd, datap, flags, p)
 		* set up QBUS map registers for DMA
 		*/
 		DMAheader[unit]->QBAreg =
-		    uballoc(uh, (caddr_t)DMAheader[unit], DMAbuf_size, 0);
+		    uballoc(uh, (void *)DMAheader[unit], DMAbuf_size, 0);
 		if (DMAheader[unit]->QBAreg == 0)
 		    printf("qd%d: qdioctl: QBA setup error\n", unit);
 		Qbus_unmap[unit] = DMAheader[unit]->QBAreg;
@@ -1815,7 +1815,7 @@ void qdstart(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state & TS_ASLEEP){
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t) &tp->t_outq);
+			wakeup((void *) &tp->t_outq);
 		}
 	}
 
@@ -2102,7 +2102,7 @@ qddint(arg)
 	*/
 	if (qdflags[unit].user_dma) {
 		qdflags[unit].user_dma = 0;
-		wakeup((caddr_t)&qdflags[unit].user_dma);
+		wakeup((void *)&qdflags[unit].user_dma);
 		return;
 	}
 

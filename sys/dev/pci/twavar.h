@@ -1,4 +1,4 @@
-/*	$NetBSD: twavar.h,v 1.6 2006/08/17 17:11:28 christos Exp $ */
+/*	$NetBSD: twavar.h,v 1.6.10.1 2007/03/12 05:55:28 rmind Exp $ */
 /*	$wasabi: twavar.h,v 1.12 2006/05/01 15:16:59 simonb Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ struct twa_softc {
 	bus_dma_tag_t		twa_dma_tag;	/* data buffer DMA tag */
 	bus_dmamap_t		twa_cmd_map;	/* DMA map for the array of cmd pkts */
 	void			*twa_ih;	/* interrupt handle cookie */
-	caddr_t			twa_cmds;
+	void *			twa_cmds;
 	bus_addr_t		twa_cmd_pkt_phys;/* phys addr of first of array of cmd pkts */
 
 	pci_chipset_tag_t 	pc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.194 2006/11/16 01:33:26 christos Exp $ */
+/*	$NetBSD: st.c,v 1.194.4.1 2007/03/12 05:57:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.194 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.194.4.1 2007/03/12 05:57:11 rmind Exp $");
 
 #include "opt_scsi.h"
 
@@ -99,9 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.194 2006/11/16 01:33:26 christos Exp $");
 #define NOREW_MODE	1
 #define EJECT_MODE	2
 #define CTRL_MODE	3
-
-#define	FALSE		0
-#define	TRUE		1
 
 #ifndef		ST_MOUNT_DELAY
 #define		ST_MOUNT_DELAY		0
@@ -1178,7 +1175,7 @@ ststart(struct scsipi_periph *periph)
 		/* if a special awaits, let it proceed first */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -1390,7 +1387,7 @@ stwrite(dev_t dev, struct uio *uio, int iomode)
  * knows about the internals of this device
  */
 static int
-stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
+stioctl(dev_t dev, u_long cmd, void *arg, int flag, struct lwp *l)
 {
 	int error = 0;
 	int unit;
@@ -1481,7 +1478,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
 		case MTBSR:	/* backward space record */
 			number = -number;
 		case MTFSR:	/* forward space record */
-			error = st_check_eod(st, TRUE, &nmarks, flags);
+			error = st_check_eod(st, true, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number, SP_BLKS, flags);
 			break;
@@ -2398,7 +2395,7 @@ bad:			free(bf, M_TEMP);
 }
 
 static int
-stdump(dev_t dev, daddr_t blkno, caddr_t va,
+stdump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 

@@ -27,14 +27,14 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_drn_ngo.c,v 1.8 2005/12/11 12:22:16 christos Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.8.26.1 2007/03/12 05:55:06 rmind Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.8 2005/12/11 12:22:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.8.26.1 2007/03/12 05:55:06 rmind Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DRN_NGO
@@ -419,9 +419,9 @@ isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 
 	/* setup ISAC and HSCX base addr */
 
-	ISAC_BASE   = (caddr_t)dev->id_iobase;
-	HSCX_A_BASE = (caddr_t)(((u_int)dev->id_iobase) | HSCX_ABIT);
-	HSCX_B_BASE = (caddr_t)(((u_int)dev->id_iobase) | HSCX_BBIT);
+	ISAC_BASE   = (void *)dev->id_iobase;
+	HSCX_A_BASE = (void *)(((u_int)dev->id_iobase) | HSCX_ABIT);
+	HSCX_B_BASE = (void *)(((u_int)dev->id_iobase) | HSCX_BBIT);
 
 	/*
 	 * Read HSCX A/B VSTR.  Expected value for Dr. Neuhaus Niccy GO@ based

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.9 2006/03/29 07:07:41 thorpej Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.9.14.1 2007/03/12 05:55:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.9 2006/03/29 07:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.9.14.1 2007/03/12 05:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ ie_pcctwo_attach(parent, self, args)
 		return;
 	}
 	if (bus_dmamem_map(pa->pa_dmat, &seg, rseg, ether_data_buff_size,
-	    (caddr_t *) & sc->sc_maddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
+	    (void **) & sc->sc_maddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) {
 		printf("%s: Failed to map ether buffer\n", self->dv_xname);
 		bus_dmamem_free(pa->pa_dmat, &seg, rseg);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.17.4.1 2007/02/27 16:55:06 yamt Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.17.4.2 2007/03/12 06:00:03 rmind Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -287,8 +287,8 @@ int ipsec_copy_policy
 u_int ipsec_get_reqlevel (struct ipsecrequest *);
 int ipsec_in_reject (struct secpolicy *, struct mbuf *);
 
-int ipsec4_set_policy (struct inpcb *, int, caddr_t, size_t, int);
-int ipsec4_get_policy (struct inpcb *, caddr_t, size_t, struct mbuf **);
+int ipsec4_set_policy (struct inpcb *, int, void *, size_t, int);
+int ipsec4_get_policy (struct inpcb *, void *, size_t, struct mbuf **);
 int ipsec4_delete_pcbpolicy (struct inpcb *);
 int ipsec4_in_reject (struct mbuf *, struct inpcb *);
 /*
@@ -336,7 +336,7 @@ struct mbuf *ipsec_copypkt (struct mbuf *);
 void m_checkalignment(const char* , struct mbuf *, int, int);
 struct mbuf *m_clone(struct mbuf *);
 struct mbuf *m_makespace(struct mbuf *, int, int, int *);
-caddr_t m_pad(struct mbuf *, int );
+void *m_pad(struct mbuf *, int );
 int m_striphdr(struct mbuf *, int, int);
 
 /* Per-socket caching of IPsec output policy */
@@ -350,9 +350,9 @@ int ipsec_clear_socket_cache(struct mbuf *m)
 #endif /* _KERNEL */
 
 #ifndef _KERNEL
-caddr_t ipsec_set_policy (char *, int);
-int ipsec_get_policylen (caddr_t);
-char *ipsec_dump_policy (caddr_t, char *);
+void *ipsec_set_policy (char *, int);
+int ipsec_get_policylen (void *);
+char *ipsec_dump_policy (void *, char *);
 
 const char *ipsec_strerror (void);
 #endif /* !_KERNEL */

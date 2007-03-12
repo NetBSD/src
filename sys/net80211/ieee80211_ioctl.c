@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.44 2007/01/06 05:53:17 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.44.2.1 2007/03/12 05:59:32 rmind Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.44 2007/01/06 05:53:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.44.2.1 2007/03/12 05:59:32 rmind Exp $");
 #endif
 
 /*
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.44 2007/01/06 05:53:17 dyoung 
 struct wi_read_ap_args {
 	int	i;		/* result count */
 	struct wi_apinfo *ap;	/* current entry in result buffer */
-	caddr_t	max;		/* result buffer bound */
+	void *	max;		/* result buffer bound */
 };
 
 static void
@@ -103,7 +103,7 @@ wi_read_ap_result(void *arg, struct ieee80211_node *ni)
 	struct ieee80211_rateset *rs;
 	int j;
 
-	if ((caddr_t)(ap + 1) > sa->max)
+	if ((void *)(ap + 1) > sa->max)
 		return;
 	memset(ap, 0, sizeof(struct wi_apinfo));
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP) {
@@ -137,7 +137,7 @@ wi_read_ap_result(void *arg, struct ieee80211_node *ni)
 struct wi_read_prism2_args {
 	int	i;		/* result count */
 	struct wi_scan_res *res;/* current entry in result buffer */
-	caddr_t	max;		/* result buffer bound */
+	void *	max;		/* result buffer bound */
 };
 
 #if 0
@@ -148,7 +148,7 @@ wi_read_prism2_result(void *arg, struct ieee80211_node *ni)
 	struct wi_read_prism2_args *sa = arg;
 	struct wi_scan_res *res = sa->res;
 
-	if ((caddr_t)(res + 1) > sa->max)
+	if ((void *)(res + 1) > sa->max)
 		return;
 	res->wi_chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 	res->wi_noise = 0;
@@ -173,7 +173,7 @@ wi_read_prism2_result(void *arg, struct ieee80211_node *ni)
 struct wi_read_sigcache_args {
 	int	i;		/* result count */
 	struct wi_sigcache *wsc;/* current entry in result buffer */
-	caddr_t	max;		/* result buffer bound */
+	void *	max;		/* result buffer bound */
 };
 
 static void
@@ -183,7 +183,7 @@ wi_read_sigcache(void *arg, struct ieee80211_node *ni)
 	struct wi_read_sigcache_args *sa = arg;
 	struct wi_sigcache *wsc = sa->wsc;
 
-	if ((caddr_t)(wsc + 1) > sa->max)
+	if ((void *)(wsc + 1) > sa->max)
 		return;
 	memset(wsc, 0, sizeof(struct wi_sigcache));
 	IEEE80211_ADDR_COPY(wsc->macsrc, ni->ni_macaddr);
@@ -195,7 +195,7 @@ wi_read_sigcache(void *arg, struct ieee80211_node *ni)
 #endif
 
 int
-ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, caddr_t data)
+ieee80211_cfgget(struct ieee80211com *ic, u_long cmd, void *data)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	int i, j, error;
@@ -494,7 +494,7 @@ ieee80211_setupscan(struct ieee80211com *ic, const u_int8_t chanlist[])
 }
 
 int
-ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, caddr_t data)
+ieee80211_cfgset(struct ieee80211com *ic, u_long cmd, void *data)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	int i, j, len, error, rate;
@@ -2497,7 +2497,7 @@ ieee80211_ioctl_set80211(struct ieee80211com *ic, u_long cmd,
 
 #ifdef __FreeBSD__
 int
-ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
+ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	int error = 0;
@@ -2572,8 +2572,8 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
 				ina->x_host = *(union ipx_host *)
 				    IFP2ENADDR(ifp);
 			else
-				bcopy((caddr_t) ina->x_host.c_host,
-				      (caddr_t) IFP2ENADDR(ifp),
+				bcopy((void *) ina->x_host.c_host,
+				      (void *) IFP2ENADDR(ifp),
 				      ETHER_ADDR_LEN);
 			/* fall thru... */
 		}
@@ -2618,7 +2618,7 @@ ieee80211_get_ostats(struct ieee80211_ostats *ostats,
 
 #ifdef __NetBSD__
 int
-ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, caddr_t data)
+ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 {
 	struct ifnet *ifp = ic->ic_ifp;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.83 2006/11/25 11:59:58 scw Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.83.4.1 2007/03/12 05:58:39 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.83 2006/11/25 11:59:58 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.83.4.1 2007/03/12 05:58:39 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,11 +92,17 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.83 2006/11/25 11:59:58 scw Exp $");
 u_int
 dkcksum(struct disklabel *lp)
 {
+	return dkcksum_sized(lp, lp->d_npartitions);
+}
+
+u_int
+dkcksum_sized(struct disklabel *lp, size_t npartitions)
+{
 	u_short *start, *end;
 	u_short sum = 0;
 
 	start = (u_short *)lp;
-	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
+	end = (u_short *)&lp->d_partitions[npartitions];
 	while (start < end)
 		sum ^= *start++;
 	return (sum);
@@ -429,7 +435,7 @@ bad:
  *	Generic disk ioctl handling.
  */
 int
-disk_ioctl(struct disk *diskp, u_long cmd, caddr_t data, int flag,
+disk_ioctl(struct disk *diskp, u_long cmd, void *data, int flag,
 	   struct lwp *l)
 {
 	int error;

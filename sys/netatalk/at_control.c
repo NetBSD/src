@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.16.4.1 2007/02/27 16:54:50 yamt Exp $	 */
+/*	$NetBSD: at_control.c,v 1.16.4.2 2007/03/12 05:59:33 rmind Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.16.4.1 2007/02/27 16:54:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.16.4.2 2007/03/12 05:59:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static void aa_clean __P((void));
 int
 at_control(cmd, data, ifp, l)
 	u_long          cmd;
-	caddr_t         data;
+	void *        data;
 	struct ifnet   *ifp;
 	struct lwp     *l;
 {
@@ -595,7 +595,7 @@ at_ifinit(ifp, aa, sat)
 	 * interface about it, just in case it needs to adjust something.
 	 */
 	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl) (ifp, SIOCSIFADDR, (caddr_t) aa))) {
+	    (error = (*ifp->if_ioctl) (ifp, SIOCSIFADDR, (void *) aa))) {
 		/*
 		 * of course this could mean that it objects violently
 		 * so if it does, we back out again..

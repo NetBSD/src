@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.4 2005/12/11 12:22:48 christos Exp $*/
+/* $NetBSD: auixpvar.h,v 1.4.26.1 2007/03/12 05:55:11 rmind Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -64,7 +64,7 @@ static const struct audio_format auixp_formats[AUIXP_NFORMATS] = {
 struct auixp_dma {
 	/* bus mappings */
 	bus_dmamap_t		 map;
-	caddr_t			 addr;
+	void *			 addr;
 	bus_dma_segment_t	 segs[1];
 	int			 nsegs;
 	size_t			 size;

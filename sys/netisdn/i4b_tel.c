@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.19 2007/01/24 13:08:15 hubertf Exp $
+ *	$Id: i4b_tel.c,v 1.19.2.1 2007/03/12 06:00:13 rmind Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.19 2007/01/24 13:08:15 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_tel.c,v 1.19.2.1 2007/03/12 06:00:13 rmind Exp $");
 
 #include "isdntel.h"
 
@@ -176,7 +176,7 @@ static u_char sinetab[];
 #ifndef __FreeBSD__
 #define	PDEVSTATIC	/* - not static - */
 PDEVSTATIC void isdntelattach __P((void));
-PDEVSTATIC int isdntelioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l));
+PDEVSTATIC int isdntelioctl __P((dev_t dev, u_long cmd, void *data, int flag, struct lwp *l));
 
 int isdntelopen __P((dev_t dev, int flag, int fmt, struct lwp *l));
 int isdntelclose __P((dev_t dev, int flag, int fmt, struct lwp *l));
@@ -438,7 +438,7 @@ isdntelclose(dev_t dev, int flag, int fmt,
 		{
 			sc->devstate |= ST_WRWAITEMPTY;
 
-			if((error = tsleep((caddr_t) &sc->isdn_linktab->tx_queue,
+			if((error = tsleep((void *) &sc->isdn_linktab->tx_queue,
 					TTIPRI | PCATCH, "wtcl", 0)) != 0)
 			{
 				break;
@@ -449,7 +449,7 @@ isdntelclose(dev_t dev, int flag, int fmt,
 
 	sc->devstate &= ~ST_ISOPEN;
 	splx(x);
-	wakeup((caddr_t) &sc->tones);
+	wakeup((void *) &sc->tones);
 
 	return(error);
 }
@@ -458,7 +458,7 @@ isdntelclose(dev_t dev, int flag, int fmt,
  *	i4btelioctl - device driver ioctl routine
  *---------------------------------------------------------------------------*/
 PDEVSTATIC int
-isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+isdntelioctl(dev_t dev, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	int unit = UNIT(dev);
@@ -536,7 +536,7 @@ isdntelioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 				s = splnet();
 				while ((sc->devstate & ST_TONE) &&
 				    sc->tones.duration[sc->toneidx] != 0) {
-					if((error = tsleep((caddr_t) &sc->tones,
+					if((error = tsleep((void *) &sc->tones,
 					    TTIPRI | PCATCH, "rtone", 0 )) != 0) {
 					    	splx(s);
 						return(error);
@@ -606,7 +606,7 @@ isdntelread(dev_t dev, struct uio *uio, int ioflag)
 
 			NDBGL4(L4_TELDBG, "i4btel%d, queue empty!", unit);
 
-			if((error = tsleep((caddr_t) &sc->isdn_linktab->rx_queue,
+			if((error = tsleep((void *) &sc->isdn_linktab->rx_queue,
 						TTIPRI | PCATCH,
 						"rtel", 0 )) != 0)
 			{
@@ -666,7 +666,7 @@ isdntelread(dev_t dev, struct uio *uio, int ioflag)
 		{
 			sc->devstate |= ST_RDWAITDATA;
 
-			if((error = tsleep((caddr_t) &sc->result,
+			if((error = tsleep((void *) &sc->result,
 						TTIPRI | PCATCH,
 						"rtel1", 0 )) != 0)
 			{
@@ -730,7 +730,7 @@ isdntelwrite(dev_t dev, struct uio * uio, int ioflag)
 		{
 			sc->devstate |= ST_WRWAITEMPTY;
 
-			if((error = tsleep((caddr_t) &sc->isdn_linktab->tx_queue,
+			if((error = tsleep((void *) &sc->isdn_linktab->tx_queue,
 					TTIPRI | PCATCH, "wtel", 0)) != 0)
 			{
 				sc->devstate &= ~ST_WRWAITEMPTY;
@@ -848,7 +848,7 @@ tel_tone(tel_sc_t *sc)
 					sc->tonefreq = sc->tones.frequency[sc->toneidx];
 				}
 				if (sc->tones.duration[sc->toneidx] == 0) {
-					wakeup((caddr_t) &sc->tones);
+					wakeup((void *) &sc->tones);
 				}
 			}
 		}
@@ -1164,7 +1164,7 @@ tel_connect(void *softc, void *cdp)
 		if(sc->devstate & ST_RDWAITDATA)
 		{
 			sc->devstate &= ~ST_RDWAITDATA;
-			wakeup((caddr_t) &sc->result);
+			wakeup((void *) &sc->result);
 		}
 		selnotify(&sc->selp, 0);
 	}
@@ -1185,13 +1185,13 @@ tel_disconnect(void *softc, void *cdp)
 	if(sc->devstate & ST_RDWAITDATA)
 	{
 		sc->devstate &= ~ST_RDWAITDATA;
-		wakeup((caddr_t) &sc->isdn_linktab->rx_queue);
+		wakeup((void *) &sc->isdn_linktab->rx_queue);
 	}
 
 	if(sc->devstate & ST_WRWAITEMPTY)
 	{
 		sc->devstate &= ~ST_WRWAITEMPTY;
-		wakeup((caddr_t) &sc->isdn_linktab->tx_queue);
+		wakeup((void *) &sc->isdn_linktab->tx_queue);
 	}
 
 	/* dialer device */
@@ -1205,13 +1205,13 @@ tel_disconnect(void *softc, void *cdp)
 		if(sc->devstate & ST_RDWAITDATA)
 		{
 			sc->devstate &= ~ST_RDWAITDATA;
-			wakeup((caddr_t) &sc->result);
+			wakeup((void *) &sc->result);
 		}
 		selnotify(&sc->selp, 0);
 
 		if (sc->devstate & ST_TONE) {
 			sc->devstate &= ~ST_TONE;
-			wakeup((caddr_t) &sc->tones);
+			wakeup((void *) &sc->tones);
 		}
 	}
 }
@@ -1233,7 +1233,7 @@ tel_dialresponse(void *softc, int status, cause_t cause)
 		if(sc->devstate & ST_RDWAITDATA)
 		{
 			sc->devstate &= ~ST_RDWAITDATA;
-			wakeup((caddr_t) &sc->result);
+			wakeup((void *) &sc->result);
 		}
 		selnotify(&sc->selp, 0);
 	}
@@ -1260,7 +1260,7 @@ tel_rx_data_rdy(void *softc)
 	if(sc->devstate & ST_RDWAITDATA)
 	{
 		sc->devstate &= ~ST_RDWAITDATA;
-		wakeup((caddr_t) &sc->isdn_linktab->rx_queue);
+		wakeup((void *) &sc->isdn_linktab->rx_queue);
 	}
 	selnotify(&sc->selp, 0);
 }
@@ -1278,7 +1278,7 @@ tel_tx_queue_empty(void *softc)
 	if(sc->devstate & ST_WRWAITEMPTY)
 	{
 		sc->devstate &= ~ST_WRWAITEMPTY;
-		wakeup((caddr_t) &sc->isdn_linktab->tx_queue);
+		wakeup((void *) &sc->isdn_linktab->tx_queue);
 	}
 	if(sc->devstate & ST_TONE) {
 		tel_tone(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.16 2006/11/16 01:33:10 christos Exp $ */
+/*	$NetBSD: twa.c,v 1.16.4.1 2007/03/12 05:55:27 rmind Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.16 2006/11/16 01:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.16.4.1 2007/03/12 05:55:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -846,7 +846,7 @@ twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
 	}
 
 	if ((rv = bus_dmamem_map(sc->twa_dma_tag,
-		&seg, rseg, size, (caddr_t *)&sc->twa_cmds,
+		&seg, rseg, size, (void **)&sc->twa_cmds,
 		BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 			aprint_error("%s: unable to map commands, rv = %d\n",
 				sc->twa_dv.dv_xname, rv);
@@ -1065,7 +1065,7 @@ twa_start(struct twa_request *tr)
 			error = EBUSY;
 	} else {
 	   	bus_dmamap_sync(sc->twa_dma_tag, sc->twa_cmd_map,
-			(caddr_t)tr->tr_command - sc->twa_cmds,
+			(char *)tr->tr_command - (char *)sc->twa_cmds,
 			sizeof(struct twa_command_packet),
 			BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
@@ -2155,7 +2155,7 @@ twaclose(dev_t dev, int flag, int mode,
  *			non-zero-- failure
  */
 static int
-twaioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+twaioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct twa_softc *sc;

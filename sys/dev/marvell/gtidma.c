@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.9 2006/03/29 06:55:32 thorpej Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.9.14.1 2007/03/12 05:55:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.9 2006/03/29 06:55:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.9.14.1 2007/03/12 05:55:06 rmind Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -150,7 +150,7 @@ _mftb()
 #define IDMA_LIST_SYNC_POST(c, p)	idma_list_sync_post(c, p)
 
 static inline void
-idma_cache_flush(void * p)
+idma_cache_flush(void *p)
 {
 	KASSERT(((unsigned int)p & (CACHELINESIZE-1)) == 0);
         __asm volatile ("eieio; dcbf 0,%0; eieio; lwz %0,0(%0); sync;"
@@ -158,7 +158,7 @@ idma_cache_flush(void * p)
 }
 
 static inline void
-idma_cache_invalidate(void * const p)
+idma_cache_invalidate(void *const p)
 {
 	KASSERT(((unsigned int)p & (CACHELINESIZE-1)) == 0);
 	__asm volatile ("eieio; dcbi 0,%0; sync;" :: "r"(p));
@@ -267,7 +267,7 @@ STATIC int
 idma_match(
 	struct device * const parent,
 	struct cfdata * const self,
-	void * const aux)
+	void *const aux)
 {
 	struct gt_attach_args * const ga = (struct gt_attach_args *)aux;
 
@@ -281,7 +281,7 @@ STATIC void
 idma_attach(
 	struct device * const parent,
 	struct device * const self,
-	void * const aux)
+	void *const aux)
 {
 	struct gt_softc * const gtsc = device_private(parent);
 	idma_softc_t * const sc = device_private(self);
@@ -433,7 +433,7 @@ idma_chan_t *
 idma_chan_alloc(
 	const unsigned int ndesc,
 	int (* const callback)(void *, idma_desch_t *, u_int32_t),
-	void * const arg)
+	void *const arg)
 {
 	idma_softc_t * const sc = idma_sc;	/* XXX */
 	idma_chan_t *idcp;
@@ -1214,7 +1214,7 @@ idma_done(
 }
 
 STATIC int
-idma_intr0_1(void * const arg)
+idma_intr0_1(void *const arg)
 {
 	unsigned int reg = IDMA_CAUSE_REG(0);
 	unsigned int shift = IDMA_MASK_SHIFT(0);
@@ -1225,7 +1225,7 @@ idma_intr0_1(void * const arg)
 }
 
 STATIC int
-idma_intr2_3(void * const arg)
+idma_intr2_3(void *const arg)
 {
 	unsigned int reg = IDMA_CAUSE_REG(2);
 	unsigned int shift = IDMA_MASK_SHIFT(2);
@@ -1236,7 +1236,7 @@ idma_intr2_3(void * const arg)
 }
 
 STATIC int
-idma_intr4_5(void * const arg)
+idma_intr4_5(void *const arg)
 {
 	unsigned int reg = IDMA_CAUSE_REG(4);
 	unsigned int shift = IDMA_MASK_SHIFT(4);
@@ -1247,7 +1247,7 @@ idma_intr4_5(void * const arg)
 }
 
 STATIC int
-idma_intr6_7(void * const arg)
+idma_intr6_7(void *const arg)
 {
 	unsigned int reg = IDMA_CAUSE_REG(6);
 	unsigned int shift = IDMA_MASK_SHIFT(6);
@@ -1363,7 +1363,7 @@ next:
 }
 
 STATIC void
-idma_time(void * const arg)
+idma_time(void *const arg)
 {
 	idma_softc_t * const sc = (idma_softc_t *)arg;
 	idma_chan_t *idcp;

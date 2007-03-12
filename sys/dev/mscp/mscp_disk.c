@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.53 2006/03/29 07:06:24 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.53.14.1 2007/03/12 05:55:08 rmind Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.53 2006/03/29 07:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.53.14.1 2007/03/12 05:55:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -283,7 +283,7 @@ raopen(dev, flag, fmt, l)
 	 */
 #if notyet
 	while (ra->ra_state != DK_OPEN)
-		if ((error = tsleep((caddr_t)ra, (PZERO + 1) | PCATCH,
+		if ((error = tsleep((void *)ra, (PZERO + 1) | PCATCH,
 		    devopn, 0))) {
 			splx(s);
 			return (error);
@@ -439,7 +439,7 @@ int
 raioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -586,7 +586,7 @@ int
 radump(dev, blkno, va, size)
 	dev_t	dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t	size;
 {
 	return ENXIO;
@@ -876,7 +876,7 @@ int
 rxioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {
@@ -916,7 +916,7 @@ int
 rxdump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 
@@ -1019,7 +1019,7 @@ rronline(usc, mp)
 	struct rx_softc *rx = (struct rx_softc *)usc;
 	struct disklabel *dl;
 
-	wakeup((caddr_t)&rx->ra_state);
+	wakeup((void *)&rx->ra_state);
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to bring on line failed: ", usc->dv_xname);
 		mscp_printevent(mp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.31 2006/11/26 16:31:48 tsutsui Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.31.4.1 2007/03/12 05:55:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.31 2006/11/26 16:31:48 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.31.4.1 2007/03/12 05:55:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,8 @@ CFATTACH_DECL(brgphy, sizeof(struct mii_softc),
 
 static int	brgphy_service(struct mii_softc *, struct mii_data *, int);
 static void	brgphy_status(struct mii_softc *);
+static int	brgphy_mii_phy_auto(struct mii_softc *);
+static void	brgphy_loop(struct mii_softc *);
 
 static void	brgphy_5401_reset(struct mii_softc *);
 static void	brgphy_5411_reset(struct mii_softc *);
@@ -210,6 +212,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
@@ -286,7 +289,7 @@ static int
 brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	int reg, speed, gig;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -314,9 +317,50 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		if (sc->mii_funcs != &brgphy_5705_funcs)
-			mii_phy_reset(sc);    /* XXX hardware bug work-around */
-		mii_phy_setmedia(sc);
+		PHY_RESET(sc); /* XXX hardware bug work-around */
+
+		switch (IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_AUTO:
+			(void) brgphy_mii_phy_auto(sc);
+			break;
+		case IFM_1000_T:
+			speed = BMCR_S1000;
+			goto setit;
+		case IFM_100_TX:
+			speed = BMCR_S100;
+			goto setit;
+		case IFM_10_T:
+			speed = BMCR_S10;
+setit:
+			brgphy_loop(sc);
+			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
+				speed |= BMCR_FDX;
+				gig = GTCR_ADV_1000TFDX;
+			} else {
+				gig = GTCR_ADV_1000THDX;
+			}
+
+			PHY_WRITE(sc, MII_100T2CR, 0);
+			PHY_WRITE(sc, MII_BMCR, speed);
+			PHY_WRITE(sc, MII_ANAR, ANAR_CSMA);
+
+			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
+				break;
+
+			PHY_WRITE(sc, MII_100T2CR, gig);
+			PHY_WRITE(sc, MII_BMCR,
+			    speed|BMCR_AUTOEN|BMCR_STARTNEG);
+
+			if (sc->mii_mpd_model != MII_MODEL_BROADCOM_BCM5701)
+ 				break;
+
+			if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
+				gig |= GTCR_MAN_MS | GTCR_ADV_MS;
+			PHY_WRITE(sc, MII_100T2CR, gig);
+			break;
+		default:
+			return (EINVAL);
+		}
 		break;
 
 	case MII_TICK:
@@ -339,8 +383,8 @@ brgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	mii_phy_status(sc);
 
 	/*
-	 * Callback if something changed.  Note that we need to poke
-	 * the DSP on the Broadcom PHYs if the media changes.
+	 * Callback if something changed. Note that we need to poke the DSP on
+	 * the Broadcom PHYs if the media changes.
 	 */
 	if (sc->mii_media_active != mii->mii_media_active ||
 	    sc->mii_media_status != mii->mii_media_status ||
@@ -433,6 +477,47 @@ brgphy_status(struct mii_softc *sc)
 			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+int
+brgphy_mii_phy_auto(struct mii_softc *sc)
+{
+	int anar, ktcr = 0;
+
+	brgphy_loop(sc);
+	PHY_RESET(sc);
+	ktcr = GTCR_ADV_1000TFDX|GTCR_ADV_1000THDX;
+	if (sc->mii_mpd_model == MII_MODEL_BROADCOM_BCM5701)
+		ktcr |= GTCR_MAN_MS|GTCR_ADV_MS;
+	PHY_WRITE(sc, MII_100T2CR, ktcr);
+	ktcr = PHY_READ(sc, MII_100T2CR);
+	DELAY(1000);
+	anar = BMSR_MEDIA_TO_ANAR(sc->mii_capabilities) | ANAR_CSMA;
+	if (sc->mii_flags & MIIF_DOPAUSE)
+		anar |= ANAR_FC| ANAR_X_PAUSE_ASYM;
+
+	PHY_WRITE(sc, MII_ANAR, anar);
+	DELAY(1000);
+	PHY_WRITE(sc, MII_BMCR,
+	    BMCR_AUTOEN | BMCR_STARTNEG);
+	PHY_WRITE(sc, BRGPHY_MII_IMR, 0xFF00);
+
+	return (EJUSTRETURN);
+}
+
+void
+brgphy_loop(struct mii_softc *sc)
+{
+	u_int32_t bmsr;
+	int i;
+
+	PHY_WRITE(sc, MII_BMCR, BMCR_LOOP);
+ 	for (i = 0; i < 15000; i++) {
+		bmsr = PHY_READ(sc, MII_BMSR);
+		if (!(bmsr & BMSR_LINK))
+			break;
+		DELAY(10);
+	}
 }
 
 static void

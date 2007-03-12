@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.21.4.1 2007/02/27 16:54:11 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.21.4.2 2007/03/12 05:58:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.21.4.1 2007/02/27 16:54:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.21.4.2 2007/03/12 05:58:10 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -339,7 +339,7 @@ adosfs_read(v)
 		printf(" %" PRId64 "+%ld-%" PRId64 "+%ld", lbn, on, lbn, n);
 #endif
 		n = MIN(n, size - bp->b_resid);
-		error = uiomove(bp->b_data + on +
+		error = uiomove((char *)bp->b_data + on +
 				amp->bsize - amp->dbsize, (int)n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);

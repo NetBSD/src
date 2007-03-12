@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.31 2006/04/15 01:25:54 christos Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.31.14.1 2007/03/12 06:00:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.31 2006/04/15 01:25:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.31.14.1 2007/03/12 06:00:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ krpc_call(sa, prog, vers, func, data, from_p, l)
 	 */
 	nam = m_get(M_WAIT, MT_SONAME);
 	sin = mtod(nam, struct sockaddr_in *);
-	memcpy((caddr_t)sin, (caddr_t)sa,
+	memcpy((void *)sin, (void *)sa,
 		  (nam->m_len = sa->sin_len));
 
 	/*
@@ -291,7 +291,7 @@ krpc_call(sa, prog, vers, func, data, from_p, l)
 	mhead->m_next = *data;
 	call = mtod(mhead, struct rpc_call *);
 	mhead->m_len = sizeof(*call);
-	memset((caddr_t)call, 0, sizeof(*call));
+	memset((void *)call, 0, sizeof(*call));
 	/* rpc_call part */
 	xid++;
 	call->rp_xid = txdr_unsigned(xid);

@@ -1,4 +1,4 @@
-/*	$NetBSD: extent.h,v 1.14 2006/03/08 04:43:00 thorpej Exp $	*/
+/*	$NetBSD: extent.h,v 1.14.16.1 2007/03/12 06:00:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ struct extent_fixed {
 	struct extent	fex_extent;	/* MUST BE FIRST */
 					/* freelist of region descriptors */
 	LIST_HEAD(, extent_region) fex_freelist;
-	caddr_t		fex_storage;	/* storage space for descriptors */
+	void *		fex_storage;	/* storage space for descriptors */
 	size_t		fex_storagesize; /* size of storage space */
 };
 
@@ -105,7 +105,7 @@ struct extent_fixed {
 struct malloc_type;
 
 struct	extent *extent_create(const char *, u_long, u_long,
-	    struct malloc_type *, caddr_t, size_t, int);
+	    struct malloc_type *, void *, size_t, int);
 void	extent_destroy(struct extent *);
 int	extent_alloc_subregion1(struct extent *, u_long, u_long,
 	    u_long, u_long, u_long, u_long, int, u_long *);

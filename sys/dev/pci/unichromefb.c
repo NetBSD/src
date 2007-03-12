@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.5 2007/01/12 04:20:33 ober Exp $ */
+/* $NetBSD: unichromefb.c,v 1.5.2.1 2007/03/12 05:55:28 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.5 2007/01/12 04:20:33 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.5.2.1 2007/03/12 05:55:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ struct wsscreen_descr unichromefb_stdscreen = {
 	WSSCREEN_WSCOLORS, NULL,
 };
 
-static int	unichromefb_ioctl(void *, void *, u_long, caddr_t, int,
+static int	unichromefb_ioctl(void *, void *, u_long, void *, int,
 				  struct lwp *);
 static paddr_t	unichromefb_mmap(void *, void *, off_t, int);
 
@@ -294,7 +294,7 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 		    sc->sc_fbaddr, sc->sc_fbsize);
 		return;
 	}
-	sc->sc_fbbase = (caddr_t)bus_space_vaddr(sc->sc_memt, ap_memh);
+	sc->sc_fbbase = (void *)bus_space_vaddr(sc->sc_memt, ap_memh);
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_memh, &mmiobase, &mmiosize)) {
@@ -352,7 +352,7 @@ unichromefb_attach(struct device *parent, struct device *self, void *opaque)
 }
 
 static int
-unichromefb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		  struct lwp *l)
 {
 	struct vcons_data *vd;

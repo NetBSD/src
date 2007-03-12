@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.83.2.1 2007/02/27 16:54:42 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.83.2.2 2007/03/12 05:59:11 rmind Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83.2.1 2007/02/27 16:54:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.83.2.2 2007/03/12 05:59:11 rmind Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -134,7 +134,7 @@ static struct if_clone gre_cloner =
 
 static int	gre_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, struct rtentry *);
-static int	gre_ioctl(struct ifnet *, u_long, caddr_t);
+static int	gre_ioctl(struct ifnet *, u_long, void *);
 
 static int	gre_compute_route(struct gre_softc *sc);
 
@@ -234,7 +234,7 @@ gre_clone_destroy(struct ifnet *ifp)
 }
 
 static void
-gre_receive(struct socket *so, caddr_t arg, int waitflag)
+gre_receive(struct socket *so, void *arg, int waitflag)
 {
 	struct gre_softc *sc = (struct gre_softc *)arg;
 
@@ -244,7 +244,7 @@ gre_receive(struct socket *so, caddr_t arg, int waitflag)
 }
 
 static void
-gre_upcall_add(struct socket *so, caddr_t arg)
+gre_upcall_add(struct socket *so, void *arg)
 {
 	/* XXX What if the kernel already set an upcall? */
 	so->so_upcallarg = arg;
@@ -299,7 +299,7 @@ gre_socreate1(struct gre_softc *sc, struct lwp *l, struct gre_soparm *sp,
 
 	so = *sop;
 
-	gre_upcall_add(so, (caddr_t)sc);
+	gre_upcall_add(so, (void *)sc);
 	if ((m = gre_getsockmbuf(so)) == NULL) {
 		rc = ENOBUFS;
 		goto out;
@@ -406,7 +406,7 @@ gre_thread1(struct gre_softc *sc, struct lwp *l)
 
 			if (sc->sc_fp != NULL) {
 				so = (struct socket *)sc->sc_fp->f_data;
-				gre_upcall_add(so, (caddr_t)sc);
+				gre_upcall_add(so, (void *)sc);
 				sp = sc->sc_soparm;
 				FILE_USE(sp.sp_fp);
 			} else if (gre_socreate1(sc, l, &sp, &so) != 0)
@@ -672,9 +672,9 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			 * M_PREPEND.  In practice, that's true, but
 			 * that's in M_PREPEND's contract.
 			 */
-			memmove(mtod(m, caddr_t), ip, sizeof(*ip));
+			memmove(mtod(m, void *), ip, sizeof(*ip));
 			ip = mtod(m, struct ip *);
-			memcpy((caddr_t)(ip + 1), &mob_h, (unsigned)msiz);
+			memcpy((void *)(ip + 1), &mob_h, (unsigned)msiz);
 			ip->ip_len = htons(ntohs(ip->ip_len) + msiz);
 		} else {  /* AF_INET */
 			IF_DROP(&ifp->if_snd);
@@ -885,7 +885,7 @@ out:
 }
 
 static int
-gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+gre_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	u_char oproto;
 	struct file *fp, *ofp;

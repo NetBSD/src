@@ -37,14 +37,14 @@
  *	Siemens I-Surf 2.0 PnP specific routines for isic driver
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_siemens_isurf.c,v 1.9 2007/01/29 01:52:45 hubertf Exp $
+ *	$Id: isic_isapnp_siemens_isurf.c,v 1.9.2.1 2007/03/12 05:55:06 rmind Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.9 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_siemens_isurf.c,v 1.9.2.1 2007/03/12 05:55:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -425,10 +425,10 @@ isic_attach_siemens_isurf(struct isa_device *dev, unsigned int iobase2)
 
 	/* setup ISAC and HSCX base addr */
 
-	ISAC_BASE   = (caddr_t) ((u_int)sc->sc_port | SIE_ISURF_IDISAC);
-	HSCX_A_BASE = (caddr_t) ((u_int)sc->sc_port | SIE_ISURF_IDHSCXA);
-	HSCX_B_BASE = (caddr_t) ((u_int)sc->sc_port | SIE_ISURF_IDHSCXB);
-	IPAC_BASE   = (caddr_t) ((u_int)sc->sc_port | SIE_ISURF_IDIPAC);
+	ISAC_BASE   = (void *) ((u_int)sc->sc_port | SIE_ISURF_IDISAC);
+	HSCX_A_BASE = (void *) ((u_int)sc->sc_port | SIE_ISURF_IDHSCXA);
+	HSCX_B_BASE = (void *) ((u_int)sc->sc_port | SIE_ISURF_IDHSCXB);
+	IPAC_BASE   = (void *) ((u_int)sc->sc_port | SIE_ISURF_IDIPAC);
 
 	/* enable hscx/isac irq's */
 	IPAC_WRITE(IPAC_MASK, (IPAC_MASK_INT1 | IPAC_MASK_INT0));

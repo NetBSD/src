@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.261 2007/01/14 09:29:24 martin Exp $	*/
+/*	$NetBSD: cd.c,v 1.261.2.1 2007/03/12 05:57:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.261 2007/01/14 09:29:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.261.2.1 2007/03/12 05:57:09 rmind Exp $");
 
 #include "rnd.h"
 
@@ -766,7 +766,7 @@ cdstart(struct scsipi_periph *periph)
 		 */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -920,7 +920,7 @@ cdbounce(struct buf *bp)
 	}
 	if (obp->b_flags & B_READ) {
 		/* Copy data to the final destination and free the buf. */
-		memcpy(obp->b_data, bp->b_data+obp->b_rawblkno,
+		memcpy(obp->b_data, (char *)bp->b_data+obp->b_rawblkno,
 			obp->b_bcount);
 	} else {
 		/*
@@ -933,7 +933,7 @@ cdbounce(struct buf *bp)
 			int s;
 
 			/* Read part of RMW complete. */
-			memcpy(bp->b_data+obp->b_rawblkno, obp->b_data,
+			memcpy((char *)bp->b_data+obp->b_rawblkno, obp->b_data,
 				obp->b_bcount);
 
 			/* We need to alloc a new buf. */
@@ -1185,7 +1185,7 @@ cdcachesync(struct scsipi_periph *periph, int flags) {
  * Knows about the internals of this device
  */
 static int
-cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+cdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct cd_softc *cd = cd_cd.cd_devs[CDUNIT(dev)];
 	struct scsipi_periph *periph = cd->sc_periph;
@@ -2014,7 +2014,7 @@ cdsize(dev_t dev)
 }
 
 static int
-cddump(dev_t dev, daddr_t blkno, caddr_t va,
+cddump(dev_t dev, daddr_t blkno, void *va,
     size_t size)
 {
 

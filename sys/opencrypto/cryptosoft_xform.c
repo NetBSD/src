@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.4 2006/11/16 01:33:51 christos Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.4.4.1 2007/03/12 06:00:50 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.4 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.4.4.1 2007/03/12 06:00:50 rmind Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -63,8 +63,8 @@ struct swcr_auth_hash {
 
 struct swcr_enc_xform {
 	struct enc_xform *enc_xform;
-	void (*encrypt)(caddr_t, uint8_t *);
-	void (*decrypt)(caddr_t, uint8_t *);
+	void (*encrypt)(void *, uint8_t *);
+	void (*decrypt)(void *, uint8_t *);
 	int  (*setkey)(uint8_t **, const uint8_t *, int len);
 	void (*zerokey)(uint8_t **);
 };
@@ -75,8 +75,8 @@ struct swcr_comp_algo {
 	uint32_t (*decompress)(uint8_t *, uint32_t, uint8_t **);
 };
 
-static void null_encrypt(caddr_t, u_int8_t *);
-static void null_decrypt(caddr_t, u_int8_t *);
+static void null_encrypt(void *, u_int8_t *);
+static void null_decrypt(void *, u_int8_t *);
 static int null_setkey(u_int8_t **, const u_int8_t *, int);
 static void null_zerokey(u_int8_t **);
 
@@ -86,18 +86,18 @@ static	int blf_setkey(u_int8_t **, const u_int8_t *, int);
 static	int cast5_setkey(u_int8_t **, const u_int8_t *, int);
 static  int skipjack_setkey(u_int8_t **, const u_int8_t *, int);
 static  int rijndael128_setkey(u_int8_t **, const u_int8_t *, int);
-static	void des1_encrypt(caddr_t, u_int8_t *);
-static	void des3_encrypt(caddr_t, u_int8_t *);
-static	void blf_encrypt(caddr_t, u_int8_t *);
-static	void cast5_encrypt(caddr_t, u_int8_t *);
-static	void skipjack_encrypt(caddr_t, u_int8_t *);
-static	void rijndael128_encrypt(caddr_t, u_int8_t *);
-static	void des1_decrypt(caddr_t, u_int8_t *);
-static	void des3_decrypt(caddr_t, u_int8_t *);
-static	void blf_decrypt(caddr_t, u_int8_t *);
-static	void cast5_decrypt(caddr_t, u_int8_t *);
-static	void skipjack_decrypt(caddr_t, u_int8_t *);
-static	void rijndael128_decrypt(caddr_t, u_int8_t *);
+static	void des1_encrypt(void *, u_int8_t *);
+static	void des3_encrypt(void *, u_int8_t *);
+static	void blf_encrypt(void *, u_int8_t *);
+static	void cast5_encrypt(void *, u_int8_t *);
+static	void skipjack_encrypt(void *, u_int8_t *);
+static	void rijndael128_encrypt(void *, u_int8_t *);
+static	void des1_decrypt(void *, u_int8_t *);
+static	void des3_decrypt(void *, u_int8_t *);
+static	void blf_decrypt(void *, u_int8_t *);
+static	void cast5_decrypt(void *, u_int8_t *);
+static	void skipjack_decrypt(void *, u_int8_t *);
+static	void rijndael128_decrypt(void *, u_int8_t *);
 static	void des1_zerokey(u_int8_t **);
 static	void des3_zerokey(u_int8_t **);
 static	void blf_zerokey(u_int8_t **);
@@ -266,11 +266,11 @@ static const struct swcr_comp_algo swcr_comp_algo_deflate = {
  * Encryption wrapper routines.
  */
 static void
-null_encrypt(caddr_t key, u_int8_t *blk)
+null_encrypt(void *key, u_int8_t *blk)
 {
 }
 static void
-null_decrypt(caddr_t key, u_int8_t *blk)
+null_decrypt(void *key, u_int8_t *blk)
 {
 }
 static int
@@ -286,7 +286,7 @@ null_zerokey(u_int8_t **sched)
 }
 
 static void
-des1_encrypt(caddr_t key, u_int8_t *blk)
+des1_encrypt(void *key, u_int8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -295,7 +295,7 @@ des1_encrypt(caddr_t key, u_int8_t *blk)
 }
 
 static void
-des1_decrypt(caddr_t key, u_int8_t *blk)
+des1_decrypt(void *key, u_int8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -330,7 +330,7 @@ des1_zerokey(u_int8_t **sched)
 }
 
 static void
-des3_encrypt(caddr_t key, u_int8_t *blk)
+des3_encrypt(void *key, u_int8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -339,7 +339,7 @@ des3_encrypt(caddr_t key, u_int8_t *blk)
 }
 
 static void
-des3_decrypt(caddr_t key, u_int8_t *blk)
+des3_decrypt(void *key, u_int8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -376,7 +376,7 @@ des3_zerokey(u_int8_t **sched)
 }
 
 static void
-blf_encrypt(caddr_t key, u_int8_t *blk)
+blf_encrypt(void *key, u_int8_t *blk)
 {
 
 #if defined(__NetBSD__)
@@ -387,7 +387,7 @@ blf_encrypt(caddr_t key, u_int8_t *blk)
 }
 
 static void
-blf_decrypt(caddr_t key, u_int8_t *blk)
+blf_decrypt(void *key, u_int8_t *blk)
 {
 
 #if defined(__NetBSD__)
@@ -432,13 +432,13 @@ blf_zerokey(u_int8_t **sched)
 }
 
 static void
-cast5_encrypt(caddr_t key, u_int8_t *blk)
+cast5_encrypt(void *key, u_int8_t *blk)
 {
 	cast128_encrypt((cast128_key *) key, blk, blk);
 }
 
 static void
-cast5_decrypt(caddr_t key, u_int8_t *blk)
+cast5_decrypt(void *key, u_int8_t *blk)
 {
 	cast128_decrypt((cast128_key *) key, blk, blk);
 }
@@ -468,13 +468,13 @@ cast5_zerokey(u_int8_t **sched)
 }
 
 static void
-skipjack_encrypt(caddr_t key, u_int8_t *blk)
+skipjack_encrypt(void *key, u_int8_t *blk)
 {
 	skipjack_forwards(blk, blk, (u_int8_t **) key);
 }
 
 static void
-skipjack_decrypt(caddr_t key, u_int8_t *blk)
+skipjack_decrypt(void *key, u_int8_t *blk)
 {
 	skipjack_backwards(blk, blk, (u_int8_t **) key);
 }
@@ -519,13 +519,13 @@ skipjack_zerokey(u_int8_t **sched)
 }
 
 static void
-rijndael128_encrypt(caddr_t key, u_int8_t *blk)
+rijndael128_encrypt(void *key, u_int8_t *blk)
 {
 	rijndael_encrypt((rijndael_ctx *) key, (u_char *) blk, (u_char *) blk);
 }
 
 static void
-rijndael128_decrypt(caddr_t key, u_int8_t *blk)
+rijndael128_decrypt(void *key, u_int8_t *blk)
 {
 	rijndael_decrypt((rijndael_ctx *) key, (u_char *) blk,
 	    (u_char *) blk);

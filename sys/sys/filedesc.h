@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.36 2006/07/23 22:06:14 ad Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.36.10.1 2007/03/12 06:00:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -157,6 +157,9 @@ int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
 
 int	closef(struct file *, struct lwp *);
 int	getsock(struct filedesc *, int, struct file **);
+
+struct stat;
+int	do_sys_fstat(struct lwp *, int, struct stat *);
 #endif /* _KERNEL */
 
 #endif /* !_SYS_FILEDESC_H_ */

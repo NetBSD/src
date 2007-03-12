@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.25 2006/02/16 20:17:19 perry Exp $	*/
+/*	$NetBSD: twevar.h,v 1.25.20.1 2007/03/12 05:55:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct twe_softc {
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dmamap;
 	void			*sc_ih;
-	caddr_t			sc_cmds;
+	void *			sc_cmds;
 	bus_addr_t		sc_cmds_paddr;
 	int			sc_nccbs;
 	struct twe_ccb		*sc_ccbs;

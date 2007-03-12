@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.69 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: ss.c,v 1.69.4.1 2007/03/12 05:57:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.69 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.69.4.1 2007/03/12 05:57:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,7 +490,7 @@ ssstart(struct scsipi_periph *periph)
 		/* if a special awaits, let it proceed first */
 		if (periph->periph_flags & PERIPH_WAITING) {
 			periph->periph_flags &= ~PERIPH_WAITING;
-			wakeup((caddr_t)periph);
+			wakeup((void *)periph);
 			return;
 		}
 
@@ -537,7 +537,7 @@ ssdone(struct scsipi_xfer *xs, int error)
  * knows about the internals of this device
  */
 int
-ssioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+ssioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;

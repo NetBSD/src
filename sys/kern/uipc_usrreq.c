@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.94 2006/11/01 11:37:59 cbiere Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.94.4.1 2007/03/12 05:58:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.94 2006/11/01 11:37:59 cbiere Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.94.4.1 2007/03/12 05:58:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ unp_setsockaddr(struct unpcb *unp, struct mbuf *nam)
 	nam->m_len = sun->sun_len;
 	if (nam->m_len > MLEN)
 		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
-	memcpy(mtod(nam, caddr_t), sun, (size_t)nam->m_len);
+	memcpy(mtod(nam, void *), sun, (size_t)nam->m_len);
 }
 
 void
@@ -191,7 +191,7 @@ unp_setpeeraddr(struct unpcb *unp, struct mbuf *nam)
 	nam->m_len = sun->sun_len;
 	if (nam->m_len > MLEN)
 		MEXTMALLOC(nam, nam->m_len, M_WAITOK);
-	memcpy(mtod(nam, caddr_t), sun, (size_t)nam->m_len);
+	memcpy(mtod(nam, void *), sun, (size_t)nam->m_len);
 }
 
 /*ARGSUSED*/
@@ -561,7 +561,7 @@ unp_attach(struct socket *so)
 	unp = malloc(sizeof(*unp), M_PCB, M_NOWAIT);
 	if (unp == NULL)
 		return (ENOBUFS);
-	memset((caddr_t)unp, 0, sizeof(*unp));
+	memset((void *)unp, 0, sizeof(*unp));
 	unp->unp_socket = so;
 	so->so_pcb = unp;
 	nanotime(&unp->unp_ctime);
@@ -623,7 +623,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	 */
 	addrlen = nam->m_len + 1;
 	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (caddr_t)sun);
+	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
 restart:
@@ -691,7 +691,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct lwp *l)
 	 */
 	addrlen = nam->m_len + 1;
 	sun = malloc(addrlen, M_SONAME, M_WAITOK);
-	m_copydata(nam, 0, nam->m_len, (caddr_t)sun);
+	m_copydata(nam, 0, nam->m_len, (void *)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, l);
@@ -1271,7 +1271,7 @@ unp_gc(void)
 		FILE_USE(fp);
 		(void) closef(fp, (struct lwp *)0);
 	}
-	free((caddr_t)extra_ref, M_FILE);
+	free((void *)extra_ref, M_FILE);
 	unp_gcing = 0;
 }
 

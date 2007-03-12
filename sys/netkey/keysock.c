@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.43 2006/09/02 06:44:59 christos Exp $	*/
+/*	$NetBSD: keysock.c,v 1.43.8.1 2007/03/12 06:00:34 rmind Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43 2006/09/02 06:44:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.43.8.1 2007/03/12 06:00:34 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -122,7 +122,7 @@ key_usrreq(so, req, m, nam, control, l)
 	if (req == PRU_ATTACH) {
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB,
 		    M_WAITOK|M_ZERO);
-		so->so_pcb = (caddr_t)kp;
+		so->so_pcb = (void *)kp;
 		kp->kp_receive = so->so_receive;
 		so->so_receive = key_receive;
 	}
@@ -151,8 +151,8 @@ key_usrreq(so, req, m, nam, control, l)
 		int af = kp->kp_raw.rcb_proto.sp_protocol;
 		if (error) {
 			pfkeystat.sockerr++;
-			free((caddr_t)kp, M_PCB);
-			so->so_pcb = (caddr_t) 0;
+			free((void *)kp, M_PCB);
+			so->so_pcb = (void *) 0;
 			splx(s);
 			return (error);
 		}

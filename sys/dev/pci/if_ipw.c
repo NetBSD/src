@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.31 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.31.4.1 2007/03/12 05:55:18 rmind Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.31 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.31.4.1 2007/03/12 05:55:18 rmind Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -116,7 +116,7 @@ static int	ipw_tx_start(struct ifnet *, struct mbuf *,
     struct ieee80211_node *);
 static void	ipw_start(struct ifnet *);
 static void	ipw_watchdog(struct ifnet *);
-static int	ipw_ioctl(struct ifnet *, u_long, caddr_t);
+static int	ipw_ioctl(struct ifnet *, u_long, void *);
 static int	ipw_get_table1(struct ipw_softc *, uint32_t *);
 static int	ipw_get_radio(struct ipw_softc *, int *);
 static void	ipw_stop_master(struct ipw_softc *);
@@ -417,7 +417,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->tbd_seg, nsegs, IPW_TBD_SZ,
-	    (caddr_t *)&sc->tbd_list, BUS_DMA_NOWAIT);
+	    (void **)&sc->tbd_list, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map tbd dma memory\n",
 		    sc->sc_dev.dv_xname);
@@ -454,7 +454,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->rbd_seg, nsegs, IPW_RBD_SZ,
-	    (caddr_t *)&sc->rbd_list, BUS_DMA_NOWAIT);
+	    (void **)&sc->rbd_list, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map rbd dma memory\n",
 		    sc->sc_dev.dv_xname);
@@ -491,7 +491,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->status_seg, nsegs,
-	    IPW_STATUS_SZ, (caddr_t *)&sc->status_list, BUS_DMA_NOWAIT);
+	    IPW_STATUS_SZ, (void **)&sc->status_list, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map status dma memory\n",
 		    sc->sc_dev.dv_xname);
@@ -528,7 +528,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->cmd_seg, nsegs,
-	    sizeof (struct ipw_cmd), (caddr_t *)&sc->cmd, BUS_DMA_NOWAIT);
+	    sizeof (struct ipw_cmd), (void **)&sc->cmd, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map cmd dma memory\n",
 		    sc->sc_dev.dv_xname);
@@ -567,7 +567,7 @@ ipw_dma_alloc(struct ipw_softc *sc)
 	}
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->hdr_seg, nsegs,
-	    IPW_NDATA * sizeof(struct ipw_hdr), (caddr_t *)&sc->hdr_list,
+	    IPW_NDATA * sizeof(struct ipw_hdr), (void **)&sc->hdr_list,
 	    BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map hdr memory\n",
@@ -697,7 +697,7 @@ ipw_release(struct ipw_softc *sc)
 	if (sc->tbd_map != NULL) {
 		if (sc->tbd_list != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, sc->tbd_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->tbd_list,
+			bus_dmamem_unmap(sc->sc_dmat, (void *)sc->tbd_list,
 			    IPW_TBD_SZ);
 			bus_dmamem_free(sc->sc_dmat, &sc->tbd_seg, 1);
 		}
@@ -707,7 +707,7 @@ ipw_release(struct ipw_softc *sc)
 	if (sc->rbd_map != NULL) {
 		if (sc->rbd_list != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, sc->rbd_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rbd_list,
+			bus_dmamem_unmap(sc->sc_dmat, (void *)sc->rbd_list,
 			    IPW_RBD_SZ);
 			bus_dmamem_free(sc->sc_dmat, &sc->rbd_seg, 1);
 		}
@@ -717,7 +717,7 @@ ipw_release(struct ipw_softc *sc)
 	if (sc->status_map != NULL) {
 		if (sc->status_list != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, sc->status_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->status_list,
+			bus_dmamem_unmap(sc->sc_dmat, (void *)sc->status_list,
 			    IPW_RBD_SZ);
 			bus_dmamem_free(sc->sc_dmat, &sc->status_seg, 1);
 		}
@@ -732,7 +732,7 @@ ipw_release(struct ipw_softc *sc)
 
  	if (sc->hdr_list != NULL) {
  		bus_dmamap_unload(sc->sc_dmat, sc->hdr_map);
- 		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->hdr_list,
+ 		bus_dmamem_unmap(sc->sc_dmat, (void *)sc->hdr_list,
  		    IPW_NDATA * sizeof(struct ipw_hdr));
  	}
  	if (sc->hdr_map != NULL) {
@@ -1496,7 +1496,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni)
 				return ENOMEM;
 			}
 		}
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, void *));
 		m_freem(m0);
 		mnew->m_len = mnew->m_pkthdr.len;
 		m0 = mnew;
@@ -1708,7 +1708,7 @@ ipw_get_radio(struct ipw_softc *sc, int *ret)
 }
 
 static int
-ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 #define	IS_RUNNING(ifp) \
 	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))

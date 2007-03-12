@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.300.2.1 2007/02/27 16:54:35 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.300.2.2 2007/03/12 05:58:46 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.300.2.1 2007/02/27 16:54:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.300.2.2 2007/03/12 05:58:46 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.300.2.1 2007/02/27 16:54:35 yamt 
 #include <sys/dirent.h>
 #include <sys/sysctl.h>
 #include <sys/syscallargs.h>
+#include <sys/vfs_syscalls.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -493,7 +494,7 @@ checkdirs(struct vnode *olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	PROCLIST_FOREACH(p, &allproc) {
 		cwdi = p->p_cwdi;
 		if (!cwdi)
@@ -509,7 +510,7 @@ checkdirs(struct vnode *olddp)
 			cwdi->cwdi_rdir = newdp;
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);
@@ -995,7 +996,11 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 		error = ENOTDIR;
 	else
 		error = VOP_ACCESS(vp, VEXEC, l->l_cred, l);
-	while (!error && (mp = vp->v_mountedhere) != NULL) {
+	if (error) {
+		vput(vp);
+		goto out;
+	}
+	while ((mp = vp->v_mountedhere) != NULL) {
 		if (vfs_busy(mp, 0, 0))
 			continue;
 
@@ -1003,11 +1008,8 @@ sys_fchdir(struct lwp *l, void *v, register_t *retval)
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp);
 		if (error)
-			break;
+			goto out;
 		vp = tdp;
-	}
-	if (error) {
-		goto out;
 	}
 	VOP_UNLOCK(vp, 0);
 
@@ -1635,11 +1637,23 @@ sys___fhopen40(struct lwp *l, void *v, register_t *retval)
 	    SCARG(uap, flags), retval);
 }
 
+/* XXX: temp (mar '07) for LKM compat */
 int
 dofhstat(struct lwp *l, const void *ufhp, size_t fhsize, struct stat *sbp,
     register_t *retval)
 {
+	int error;
 	struct stat sb;
+
+	error = do_fhstat(l, ufhp, fhsize, &sb);
+	if (error == 0)
+		error = copyout(&sb, sbp, sizeof(sb));
+	return error;
+}
+
+int
+do_fhstat(struct lwp *l, const void *ufhp, size_t fhsize, struct stat *sb)
+{
 	int error;
 	fhandle_t *fh;
 	struct vnode *vp;
@@ -1652,21 +1666,16 @@ dofhstat(struct lwp *l, const void *ufhp, size_t fhsize, struct stat *sbp,
 		return (error);
 
 	error = vfs_copyinfh_alloc(ufhp, fhsize, &fh);
-	if (error != 0) {
-		goto bad;
-	}
+	if (error != 0)
+		return error;
+
 	error = vfs_fhtovp(fh, &vp);
-	if (error != 0) {
-		goto bad;
-	}
-	error = vn_stat(vp, &sb, l);
-	vput(vp);
-	if (error) {
-		goto bad;
-	}
-	error = copyout(&sb, sbp, sizeof(sb));
-bad:
 	vfs_copyinfh_free(fh);
+	if (error != 0)
+		return error;
+
+	error = vn_stat(vp, sb, l);
+	vput(vp);
 	return error;
 }
 
@@ -1680,16 +1689,34 @@ sys___fhstat40(struct lwp *l, void *v, register_t *retval)
 		syscallarg(size_t) fh_size;
 		syscallarg(struct stat *) sb;
 	} */ *uap = v;
+	struct stat sb;
+	int error;
 
-	return dofhstat(l, SCARG(uap, fhp), SCARG(uap, fh_size), SCARG(uap, sb),
-	    retval);
+	error = do_fhstat(l, SCARG(uap, fhp), SCARG(uap, fh_size), &sb);
+	if (error)
+		return error;
+	return copyout(&sb, SCARG(uap, sb), sizeof(sb));
 }
 
+/* XXX: temp (mar '07) for LKM compat */
 int
 dofhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *buf,
     int flags, register_t *retval)
 {
-	struct statvfs *sb = NULL;
+	struct statvfs *sb = STATVFSBUF_GET();
+	int error;
+
+	error = do_fhstatvfs(l, ufhp, fhsize, sb, flags);
+	if (error == 0)
+		error = copyout(sb, buf, sizeof(*sb));
+	STATVFSBUF_PUT(sb);
+	return error;
+}
+
+int
+do_fhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *sb,
+    int flags)
+{
 	fhandle_t *fh;
 	struct mount *mp;
 	struct vnode *vp;
@@ -1703,26 +1730,17 @@ dofhstatvfs(struct lwp *l, const void *ufhp, size_t fhsize, struct statvfs *buf,
 		return error;
 
 	error = vfs_copyinfh_alloc(ufhp, fhsize, &fh);
-	if (error != 0) {
-		goto out;
-	}
+	if (error != 0)
+		return error;
+
 	error = vfs_fhtovp(fh, &vp);
-	if (error != 0) {
-		goto out;
-	}
-	mp = vp->v_mount;
-	sb = STATVFSBUF_GET();
-	if ((error = dostatvfs(mp, sb, l, flags, 1)) != 0) {
-		vput(vp);
-		goto out;
-	}
-	vput(vp);
-	error = copyout(sb, buf, sizeof(*sb));
-out:
-	if (sb != NULL) {
-		STATVFSBUF_PUT(sb);
-	}
 	vfs_copyinfh_free(fh);
+	if (error != 0)
+		return error;
+
+	mp = vp->v_mount;
+	error = dostatvfs(mp, sb, l, flags, 1);
+	vput(vp);
 	return error;
 }
 
@@ -1736,9 +1754,15 @@ sys___fhstatvfs140(struct lwp *l, void *v, register_t *retval)
 		syscallarg(struct statvfs *) buf;
 		syscallarg(int)	flags;
 	} */ *uap = v;
+	struct statvfs *sb = STATVFSBUF_GET();
+	int error;
 
-	return dofhstatvfs(l, SCARG(uap, fhp), SCARG(uap, fh_size),
-	    SCARG(uap, buf), SCARG(uap, flags), retval);
+	error = do_fhstatvfs(l, SCARG(uap, fhp), SCARG(uap, fh_size), sb,
+	    SCARG(uap, flags));
+	if (error == 0)
+		error = copyout(sb, SCARG(uap, buf), sizeof(*sb));
+	STATVFSBUF_PUT(sb);
+	return error;
 }
 
 /*
@@ -2460,6 +2484,25 @@ out:
 }
 
 /*
+ * Common code for all sys_stat functions, including compat versions.
+ */
+int
+do_sys_stat(struct lwp *l, const char *path, unsigned int nd_flags,
+    struct stat *sb)
+{
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, nd_flags | LOCKLEAF, UIO_USERSPACE, path, l);
+	error = namei(&nd);
+	if (error != 0)
+		return error;
+	error = vn_stat(nd.ni_vp, sb, l);
+	vput(nd.ni_vp);
+	return error;
+}
+
+/*
  * Get file status; this version follows links.
  */
 /* ARGSUSED */
@@ -2472,18 +2515,11 @@ sys___stat30(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct stat sb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
 	if (error)
-		return (error);
-	error = copyout(&sb, SCARG(uap, ub), sizeof(sb));
-	return (error);
+		return error;
+	return copyout(&sb, SCARG(uap, ub), sizeof(sb));
 }
 
 /*
@@ -2499,18 +2535,11 @@ sys___lstat30(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct stat sb;
 	int error;
-	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
-	vput(nd.ni_vp);
+	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
-		return (error);
-	error = copyout(&sb, SCARG(uap, ub), sizeof(sb));
-	return (error);
+		return error;
+	return copyout(&sb, SCARG(uap, ub), sizeof(sb));
 }
 
 /*

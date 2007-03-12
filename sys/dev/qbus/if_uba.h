@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.h,v 1.14 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_uba.h,v 1.14.26.1 2007/03/12 05:56:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -82,7 +82,7 @@ struct ifrw {
  */
 struct ifxmt {
 	struct	ifrw ifrw;
-	caddr_t	ifw_vaddr;			/* DMA memory virtual addr */
+	void *	ifw_vaddr;			/* DMA memory virtual addr */
 	int	ifw_size;			/* Size of this DMA block */
 };
 #define	ifrw_addr	ifrw_mbuf->m_data

@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.12 2006/03/25 03:44:35 thorpej Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.12.14.1 2007/03/12 05:56:47 rmind Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.12 2006/03/25 03:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.12.14.1 2007/03/12 05:56:47 rmind Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -144,13 +144,13 @@ ppbus_poll_bus(struct device * dev, int maxp, char mask, char status,
 		switch (how) {
 		case PPBUS_NOINTR:
 			/* wait 10 ms */
-			tsleep((caddr_t)dev, PPBUSPRI, "ppbuspoll", hz/100);
+			tsleep((void *)dev, PPBUSPRI, "ppbuspoll", hz/100);
 			break;
 
 		case PPBUS_INTR:
 		default:
 			/* wait 10 ms */
-			if (((error = tsleep((caddr_t)dev, PPBUSPRI | PCATCH,
+			if (((error = tsleep((void *)dev, PPBUSPRI | PCATCH,
 			    "ppbuspoll", hz/100)) != EWOULDBLOCK) != 0) {
 				return (error);
 			}
@@ -286,7 +286,7 @@ ppbus_ecp_sync(struct device * dev)
 
 /* Allocate DMA for use with ppbus */
 int
-ppbus_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * addr,
+ppbus_dma_malloc(struct device * dev, void ** buf, bus_addr_t * addr,
 	bus_size_t size)
 {
 	struct ppbus_softc * ppbus = (struct ppbus_softc *) dev;
@@ -300,7 +300,7 @@ ppbus_dma_malloc(struct device * dev, caddr_t * buf, bus_addr_t * addr,
 
 /* Free memory allocated with ppbus_dma_malloc() */
 int
-ppbus_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * addr,
+ppbus_dma_free(struct device * dev, void ** buf, bus_addr_t * addr,
 	bus_size_t size)
 {
 	struct ppbus_softc * ppbus = (struct ppbus_softc *) dev;
@@ -315,7 +315,7 @@ ppbus_dma_free(struct device * dev, caddr_t * buf, bus_addr_t * addr,
 }
 
 /* Install a handler to be called by hardware interrupt handler */
-int ppbus_add_handler(struct device * dev, void (*func)(void *), void * arg)
+int ppbus_add_handler(struct device * dev, void (*func)(void *), void *arg)
 {
 	struct ppbus_softc * bus = (struct ppbus_softc *) dev;
 

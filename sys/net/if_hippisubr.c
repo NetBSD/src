@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.25.4.1 2007/02/27 16:54:42 yamt Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.25.4.2 2007/03/12 05:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.25.4.1 2007/02/27 16:54:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.25.4.2 2007/03/12 05:59:12 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -191,7 +191,7 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		l->llc_dsap = l->llc_ssap = LLC_SNAP_LSAP;
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] =
 			l->llc_snap.org_code[2] = 0;
-		bcopy((caddr_t) &htype, (caddr_t) &l->llc_snap.ether_type,
+		bcopy((void *) &htype, (void *) &l->llc_snap.ether_type,
 		      sizeof(u_int16_t));
 	}
 
@@ -219,7 +219,7 @@ hippi_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	if (d2_len % 8 != 0) {
 		static u_int32_t buffer[2] = {0, 0};
-		m_copyback(m, m->m_pkthdr.len, 8 - d2_len % 8, (caddr_t) buffer);
+		m_copyback(m, m->m_pkthdr.len, 8 - d2_len % 8, (void *) buffer);
 	}
 
 	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
@@ -330,7 +330,7 @@ hippi_ip_input(struct ifnet *ifp, struct mbuf *m)
  * Perform common duties while attaching to interface list
  */
 void
-hippi_ifattach(struct ifnet *ifp, caddr_t lla)
+hippi_ifattach(struct ifnet *ifp, void *lla)
 {
 
 	ifp->if_type = IFT_HIPPI;

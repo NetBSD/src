@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.65.2.1 2007/02/27 16:54:41 yamt Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.65.2.2 2007/03/12 05:59:11 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.65.2.1 2007/02/27 16:54:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.65.2.2 2007/03/12 05:59:11 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -279,7 +279,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
                 	memcpy(edst, fddibroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr,
-			    (caddr_t)edst);
+			    (char *)edst);
 		} else if (!arpresolve(ifp, rt, m, dst, edst))
 			return (0);	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
@@ -304,7 +304,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		if (m->m_flags & M_BCAST)
                 	memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
-			caddr_t tha = ar_tha(ah);
+			void *tha = ar_tha(ah);
 
 			KASSERT(tha);
 			memcpy(edst, tha, sizeof(edst));
@@ -370,7 +370,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			memcpy(llc.llc_snap_org_code, at_org_code,
 			    sizeof(at_org_code));
 			llc.llc_snap_ether_type = htons(ETHERTYPE_ATALK);
-			memcpy(mtod(m, caddr_t), &llc, sizeof(struct llc));
+			memcpy(mtod(m, void *), &llc, sizeof(struct llc));
 			etype = 0;
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
@@ -565,7 +565,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	} else if ((ifp->if_flags & IFF_PROMISC)
-	    && memcmp(FDDIADDR(ifp), (caddr_t)fh->fddi_dhost,
+	    && memcmp(FDDIADDR(ifp), (void *)fh->fddi_dhost,
 		    sizeof(fh->fddi_dhost)) != 0) {
 		m_freem(m);
 		return;
@@ -651,6 +651,10 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
+#ifdef GATEWAY  
+			if (ip6flow_fastforward(m))
+				return;
+#endif
 			schednetisr(NETISR_IPV6);
 			inq = &ip6intrq;
 			break;
@@ -758,7 +762,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
  * Perform common duties while attaching to interface list
  */
 void
-fddi_ifattach(struct ifnet *ifp, caddr_t lla)
+fddi_ifattach(struct ifnet *ifp, void *lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 

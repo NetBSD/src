@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.122 2006/10/24 19:18:33 drochner Exp $	*/
+/*	$NetBSD: if_de.c,v 1.122.4.1 2007/03/12 05:55:17 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.122 2006/10/24 19:18:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.122.4.1 2007/03/12 05:55:17 rmind Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -2509,7 +2509,7 @@ tulip_srom_decode(
     /*
      * Save the hardware address.
      */
-    memcpy((caddr_t) sc->tulip_enaddr, shp->sh_ieee802_address,
+    memcpy((void *) sc->tulip_enaddr, shp->sh_ieee802_address,
 	ETHER_ADDR_LEN);
     /*
      * If this is a multiple port card, add the adapter index to the last
@@ -3072,7 +3072,7 @@ tulip_read_macaddr(
      * Check for various boards based on OUI.  Did I say braindead?
      */
     for (idx = 0; tulip_vendors[idx].vendor_identify_nic != NULL; idx++) {
-	if (memcmp((caddr_t) sc->tulip_enaddr,
+	if (memcmp((void *) sc->tulip_enaddr,
 		 tulip_vendors[idx].vendor_oui, 3) == 0) {
 	    (*tulip_vendors[idx].vendor_identify_nic)(sc);
 	    break;
@@ -3629,7 +3629,7 @@ tulip_rx_intr(
 #if NBPFILTER > 0
 	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
-		    TULIP_BPF_TAP(sc, mtod(ms, caddr_t), total_len);
+		    TULIP_BPF_TAP(sc, mtod(ms, void *), total_len);
 		else
 		    TULIP_BPF_MTAP(sc, ms);
 	    }
@@ -3747,7 +3747,7 @@ tulip_rx_intr(
 #error BIG_PACKET is incompatible with TULIP_COPY_RXDATA
 #endif
 		m0->m_data += 2;	/* align data after header */
-		m_copydata(ms, 0, total_len, mtod(m0, caddr_t));
+		m_copydata(ms, 0, total_len, mtod(m0, void *));
 		m0->m_len = m0->m_pkthdr.len = total_len;
 		m0->m_pkthdr.rcvif = ifp;
 #if defined(__NetBSD__)
@@ -3810,7 +3810,7 @@ tulip_rx_intr(
 	    }
 	    TULIP_RXDESC_POSTSYNC(sc, nextout, sizeof(*nextout));
 #else /* TULIP_BUS_DMA */
-	    nextout->d_addr1 = TULIP_KVATOPHYS(sc, mtod(ms, caddr_t));
+	    nextout->d_addr1 = TULIP_KVATOPHYS(sc, mtod(ms, void *));
 	    nextout->d_length1 = TULIP_RX_BUFLEN;
 #endif /* TULIP_BUS_DMA */
 	    nextout->d_status = TULIP_DSTS_OWNER;
@@ -4282,7 +4282,7 @@ tulip_mbuf_compress(
 		return NULL;
 	    }
 	}
-	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, caddr_t));
+	m_copydata(m, 0, m->m_pkthdr.len, mtod(m0, void *));
 	m0->m_pkthdr.len = m0->m_len = m->m_pkthdr.len;
     }
 #else
@@ -4313,7 +4313,7 @@ tulip_mbuf_compress(
 	    (*mp)->m_len = len <= mlen ? len : mlen;
 	}
 	m_copydata(m, m->m_pkthdr.len - len,
-		   (*mp)->m_len, mtod((*mp), caddr_t));
+		   (*mp)->m_len, mtod((*mp), void *));
 	len -= (*mp)->m_len;
 	mp = &(*mp)->m_next;
 	mlen = MLEN;
@@ -4472,7 +4472,7 @@ tulip_txput(
 
     do {
 	int len = m0->m_len;
-	caddr_t addr = mtod(m0, caddr_t);
+	void *addr = mtod(m0, void *);
 	unsigned clsize = PAGE_SIZE - (((u_long) addr) & PAGE_MASK);
 
 	while (len > 0) {
@@ -4581,12 +4581,12 @@ tulip_txput(
 #if defined(TULIP_BUS_MAP) && !defined(TULIP_BUS_DMA_NOTX)
     if (eop < ri->ri_nextout) {
 	TULIP_TXDESC_PRESYNC(sc, ri->ri_nextout,
-			     (caddr_t) ri->ri_last - (caddr_t) ri->ri_nextout);
+			     (void *) ri->ri_last - (void *) ri->ri_nextout);
 	TULIP_TXDESC_PRESYNC(sc, ri->ri_first,
-			     (caddr_t) (eop + 1) - (caddr_t) ri->ri_first);
+			     (void *) (eop + 1) - (void *) ri->ri_first);
     } else {
 	TULIP_TXDESC_PRESYNC(sc, ri->ri_nextout,
-			     (caddr_t) (eop + 1) - (caddr_t) ri->ri_nextout);
+			     (void *) (eop + 1) - (void *) ri->ri_nextout);
     }
 #endif
     ri->ri_nextout->d_status = TULIP_DSTS_OWNER;
@@ -4747,7 +4747,7 @@ static int
 tulip_ifioctl(
     struct ifnet * ifp,
     ioctl_cmd_t cmd,
-    caddr_t data)
+    void *data)
 {
     TULIP_PERFSTART(ifioctl)
     tulip_softc_t * const sc = TULIP_IFP_TO_SOFTC(ifp);
@@ -4782,8 +4782,8 @@ tulip_ifioctl(
 	    break;
 	}
 	case SIOCGIFADDR: {
-	    memcpy((caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		(caddr_t) sc->tulip_enaddr, ETHER_ADDR_LEN);
+	    memcpy((void *) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		(void *) sc->tulip_enaddr, ETHER_ADDR_LEN);
 	    break;
 	}
 
@@ -5316,7 +5316,7 @@ tulip_initring(
     ri->ri_max = ndescs;
     ri->ri_first = descs;
     ri->ri_last = ri->ri_first + ri->ri_max;
-    memset((caddr_t) ri->ri_first, 0, sizeof(ri->ri_first[0]) * ri->ri_max);
+    memset((void *) ri->ri_first, 0, sizeof(ri->ri_first[0]) * ri->ri_max);
     ri->ri_last[-1].d_flag = TULIP_DFLAG_ENDRING;
 }
 
@@ -5342,7 +5342,7 @@ static const int tulip_eisa_irqs[4] = { IRQ5, IRQ9, IRQ10, IRQ11 };
 #if defined(__FreeBSD__)
 
 #define	TULIP_PCI_ATTACH_ARGS	pcici_t config_id, int unit
-#define	TULIP_SHUTDOWN_ARGS	int howto, void * arg
+#define	TULIP_SHUTDOWN_ARGS	int howto, void *arg
 
 #if defined(TULIP_DEVCONF)
 static void tulip_shutdown(TULIP_SHUTDOWN_ARGS);
@@ -5407,7 +5407,7 @@ DATA_SET (pcidevice_set, dedevice);
 #endif /* __FreeBSD__ */
 
 #if defined(__bsdi__)
-#define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void * const aux
+#define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void *const aux
 #define	TULIP_SHUTDOWN_ARGS	void *arg
 
 static int
@@ -5465,7 +5465,7 @@ tulip_probe(
 	/* Disable memory space access */
 	pci_outl(pa, PCI_COMMAND, pci_inl(pa, PCI_COMMAND) & ~2);
 #else
-	ia->ia_maddr = (caddr_t) (pci_inl(pa, PCI_CBMA) & ~7);
+	ia->ia_maddr = (void *) (pci_inl(pa, PCI_CBMA) & ~7);
 	pci_outl(pa, PCI_CBMA, 0xFFFFFFFF);
 	ia->ia_msize = ((~pci_inl(pa, PCI_CBMA)) | 7) + 1;
 	pci_outl(pa, PCI_CBMA, (int) ia->ia_maddr);
@@ -5553,7 +5553,7 @@ struct cfdriver decd = {
 #endif /* __bsdi__ */
 
 #if defined(__NetBSD__)
-#define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void * const aux
+#define	TULIP_PCI_ATTACH_ARGS	struct device * const parent, struct device * const self, void *const aux
 #define	TULIP_SHUTDOWN_ARGS	void *arg
 static int
 tulip_pci_probe(
@@ -5774,7 +5774,7 @@ tulip_pci_attach(
     retval = pci_map_mem(config_id, PCI_CBMA, (vaddr_t *) &csr_base, &pa_csrs);
 #endif
     if (!retval) {
-	free((caddr_t) sc, M_DEVBUF);
+	free((void *) sc, M_DEVBUF);
 	return;
     }
     tulips[unit] = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.30 2006/03/29 18:17:36 thorpej Exp $	*/
+/*	$NetBSD: rl.c,v 1.30.14.1 2007/03/12 05:56:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.30 2006/03/29 18:17:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.30.14.1 2007/03/12 05:56:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -440,7 +440,7 @@ done:	biodone(bp);
 }
 
 int
-rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct rl_softc *rc = rl_cd.cd_devs[DISKUNIT(dev)];
 	struct disklabel *lp = rc->rc_disk.dk_label;
@@ -564,7 +564,7 @@ rlsize(dev_t dev)
 }
 
 int
-rldump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+rldump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	/* Not likely... */
 	return 0;
@@ -702,7 +702,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 	RL_WREG(RL_BA, (sc->sc_dmam->dm_segs[0].ds_addr & 0xffff));
 
 	/* Count up vars */
-	sc->sc_bufaddr += (blks*DEV_BSIZE);
+	sc->sc_bufaddr = (char *)sc->sc_bufaddr + (blks*DEV_BSIZE);
 	sc->sc_diskblk += blks;
 	sc->sc_bytecnt -= (blks*DEV_BSIZE);
 
