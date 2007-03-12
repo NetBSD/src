@@ -1,4 +1,4 @@
-/*	$NetBSD: hntest.c,v 1.3 2005/01/19 14:13:21 kleink Exp $	*/
+/*	$NetBSD: hntest.c,v 1.4 2007/03/12 03:38:21 enami Exp $	*/
 
 #include <err.h>
 #include <inttypes.h>
@@ -50,6 +50,18 @@ const struct hnopts {
 	 * Truncated output.  Rev. 1.7 produces "1.0 K".
 	 */
 	{ 6, 1000, "A", HN_AUTOSCALE, HN_DECIMAL, -1, "" },
+
+	/*
+	 * Failure case reported by Greg Troxel <gdt@NetBSD.org>.
+	 * It incorrectly returns 5 with filling the buffer with "1000".
+	 */
+	{ 5, 1048258238, "",
+	  HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL, 4, "1.0G" },
+	/* Similar case it prints 1000 where it shouldn't */
+	{ 5, 1023488, "",
+	  HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL, 4, "1.0M" },
+	{ 5, 1023999, "",
+	  HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL, 4, "1.0M" },
 };
 
 struct hnflags {
