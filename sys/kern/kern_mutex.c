@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.11 2007/03/10 16:01:13 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.12 2007/03/12 02:19:14 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.11 2007/03/10 16:01:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.12 2007/03/12 02:19:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -120,6 +120,9 @@ do {								\
 /*
  * Spin mutex SPL save / restore.
  */
+#ifndef MUTEX_COUNT_BIAS
+#define	MUTEX_COUNT_BIAS	0
+#endif
 
 #define	MUTEX_SPIN_SPLRAISE(mtx)					\
 do {									\
@@ -127,7 +130,7 @@ do {									\
 	int x__cnt, s;							\
 	x__cnt = x__ci->ci_mtx_count--;					\
 	s = splraiseipl(mtx->mtx_ipl);					\
-	if (x__cnt == 0)						\
+	if (x__cnt == MUTEX_COUNT_BIAS)					\
 		x__ci->ci_mtx_oldspl = (s);				\
 } while (/* CONSTCOND */ 0)
 
@@ -136,7 +139,7 @@ do {									\
 	struct cpu_info *x__ci = curcpu();				\
 	int s = x__ci->ci_mtx_oldspl;					\
 	__insn_barrier();						\
-	if (++(x__ci->ci_mtx_count) == 0)				\
+	if (++(x__ci->ci_mtx_count) == MUTEX_COUNT_BIAS)		\
 		splx(s);						\
 } while (/* CONSTCOND */ 0)
 
