@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.3 2006/05/13 00:39:19 gdamore Exp $ */
+/* $NetBSD: edid.c,v 1.3.24.1 2007/03/12 05:57:48 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.3 2006/05/13 00:39:19 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.3.24.1 2007/03/12 05:57:48 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -482,6 +482,8 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 	const struct videomode	*vmp;
 	int			i;
 	const char		*name;
+	int max_dotclock = 0;
+	int mhz;
 
 	if (edid_is_valid(data) != 0)
 		return -1;
@@ -537,6 +539,8 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 	edid->edid_chroma.ec_whitey = EDID_CHROMA_WHITEY(data);
 
 	/* lookup established modes */
+	edid->edid_nmodes = 0;
+	edid->edid_preferred_mode = NULL;
 	estmodes = EDID_EST_TIMING(data);
 	for (i = 0; i < 16; i++) {
 		if (estmodes & (1 << i)) {
@@ -545,6 +549,11 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 				edid->edid_modes[edid->edid_nmodes] = *vmp;
 				edid->edid_nmodes++;
 			}
+#ifdef DIAGNOSTIC
+			  else
+				printf("no data for est. mode %s\n",
+				    _edid_modes[i]);
+#endif
 		}
 	}
 
@@ -568,6 +577,30 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 	edid_strchomp(edid->edid_productname);
 	edid_strchomp(edid->edid_serial);
 	edid_strchomp(edid->edid_comment);
+
+	/*
+	 * XXX
+	 * some monitors lie about their maximum supported dot clock
+	 * by claiming to support modes which need a higher dot clock
+	 * than the stated maximum.
+	 * For sanity's sake we bump it to the highest dot clock we find
+	 * in the list of supported modes
+	 */
+	for (i = 0; i < edid->edid_nmodes; i++)
+		if (edid->edid_modes[i].dot_clock > max_dotclock)
+			max_dotclock = edid->edid_modes[i].dot_clock;
+
+	aprint_verbose("max_dotclock according to supported modes: %d\n",
+	    max_dotclock);
+
+	mhz = (max_dotclock + 999) / 1000;
+
+	if (edid->edid_have_range) {
+
+		if (mhz > edid->edid_range.er_max_clock)
+			edid->edid_range.er_max_clock = mhz;
+	} else
+		edid->edid_range.er_max_clock = mhz;
 
 	return 0;
 }

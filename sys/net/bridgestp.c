@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.10 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.10.4.1 2007/03/12 05:59:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.10 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.10.4.1 2007/03/12 05:59:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,7 @@ bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 	memcpy(eh->ether_dhost, bstp_etheraddr, ETHER_ADDR_LEN);
 	eh->ether_type = htons(sizeof(bpdu));
 
-	memcpy(mtod(m, caddr_t) + sizeof(*eh), &bpdu, sizeof(bpdu));
+	memcpy(mtod(m, char *) + sizeof(*eh), &bpdu, sizeof(bpdu));
 
 	s = splnet();
 	bridge_enqueue(sc, ifp, m, 0);
@@ -385,7 +385,7 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 	bpdu.tbu_protover = 0;
 	bpdu.tbu_bpdutype = BSTP_MSGTYPE_TCN;
 
-	memcpy(mtod(m, caddr_t) + sizeof(*eh), &bpdu, sizeof(bpdu));
+	memcpy(mtod(m, char *) + sizeof(*eh), &bpdu, sizeof(bpdu));
 
 	s = splnet();
 	bridge_enqueue(sc, ifp, m, 0);
@@ -614,7 +614,7 @@ bstp_input(struct ifnet *ifp, struct mbuf *m)
 	    (m = m_pullup(m, sizeof(tpdu))) == NULL)
 		goto out;
 
-	memcpy(&tpdu, mtod(m, caddr_t), sizeof(tpdu));
+	memcpy(&tpdu, mtod(m, void *), sizeof(tpdu));
 
 	if (tpdu.tbu_dsap != LLC_8021D_LSAP ||
 	    tpdu.tbu_ssap != LLC_8021D_LSAP ||
@@ -632,7 +632,7 @@ bstp_input(struct ifnet *ifp, struct mbuf *m)
 		if (m->m_len < sizeof(cpdu) &&
 		    (m = m_pullup(m, sizeof(cpdu))) == NULL)
 			goto out;
-		memcpy(&cpdu, mtod(m, caddr_t), sizeof(cpdu));
+		memcpy(&cpdu, mtod(m, void *), sizeof(cpdu));
 
 		cu.cu_rootid =
 		    (((uint64_t)ntohs(cpdu.cbu_rootpri)) << 48) |

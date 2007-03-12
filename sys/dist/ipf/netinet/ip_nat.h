@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.7 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.7.14.1 2007/03/12 05:57:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -443,7 +443,7 @@ extern	natstat_t	nat_stats;
 #if defined(__OpenBSD__)
 extern	void	nat_ifdetach __P((void *));
 #endif
-extern	int	fr_nat_ioctl __P((caddr_t, ioctlcmd_t, int));
+extern	int	fr_nat_ioctl __P((void *, ioctlcmd_t, int));
 extern	int	fr_natinit __P((void));
 extern	nat_t	*nat_new __P((fr_info_t *, ipnat_t *, nat_t **, u_int, int));
 extern	nat_t	*nat_outlookup __P((fr_info_t *, u_int, u_int, struct in_addr,

@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.42 2006/04/12 19:38:24 jmmv Exp $ */
+/* $NetBSD: xcfb.c,v 1.42.14.1 2007/03/12 05:57:15 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.42 2006/04/12 19:38:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.42.14.1 2007/03/12 05:57:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ CFATTACH_DECL(xcfb, sizeof(struct xcfb_softc),
 static tc_addr_t xcfb_consaddr;
 static struct rasops_info xcfb_console_ri;
 static void xcfb_common_init(struct rasops_info *);
-static void xcfbhwinit(caddr_t);
+static void xcfbhwinit(void *);
 int xcfb_cnattach(void);
 
 struct wsscreen_descr xcfb_stdscreen = {
@@ -123,7 +123,7 @@ static const struct wsscreen_list xcfb_screenlist = {
 	sizeof(_xcfb_scrlist) / sizeof(struct wsscreen_descr *), _xcfb_scrlist
 };
 
-static int	xcfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	xcfbioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	xcfbmmap(void *, void *, off_t, int);
 
 static int	xcfb_alloc_screen(void *, const struct wsscreen_descr *,
@@ -280,14 +280,14 @@ xcfb_common_init(struct rasops_info *ri)
 	int cookie;
 
 	/* initialize colormap and cursor hardware */
-	xcfbhwinit((caddr_t)ri->ri_hw);
+	xcfbhwinit((void *)ri->ri_hw);
 
 	ri->ri_flg = RI_CENTER;
 	ri->ri_depth = 8;
 	ri->ri_width = 1024;
 	ri->ri_height = 768;
 	ri->ri_stride = 1024;
-	ri->ri_bits = (caddr_t)MIPS_PHYS_TO_KSEG1(XCFB_FB_BASE);
+	ri->ri_bits = (void *)MIPS_PHYS_TO_KSEG1(XCFB_FB_BASE);
 
 	/* clear the screen */
 	memset(ri->ri_bits, 0, ri->ri_stride * ri->ri_height);
@@ -335,13 +335,13 @@ xcfb_cnattach(void)
 }
 
 static void
-xcfbhwinit(caddr_t base)
+xcfbhwinit(void *base)
 {
 	volatile u_int32_t *csr;
 	u_int32_t i;
 	const u_int8_t *p;
 
-	csr = (volatile u_int32_t *)(base + IOASIC_CSR);
+	csr = (volatile u_int32_t *)((char *)base + IOASIC_CSR);
 	i = *csr;
 	i &= ~XINE_CSR_VDAC_ENABLE;
 	*csr = i;
@@ -393,7 +393,7 @@ xcfbhwinit(caddr_t base)
 }
 
 static int
-xcfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+xcfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct xcfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -523,7 +523,7 @@ xcfbintr(void *v)
 	struct xcfb_softc *sc = v;
 	u_int32_t *intr, i;
 
-	intr = (u_int32_t *)((caddr_t)sc->sc_ri->ri_hw + IOASIC_INTR);
+	intr = (u_int32_t *)((char *)sc->sc_ri->ri_hw + IOASIC_INTR);
 	i = *intr;
 	i &= ~XINE_INTR_VINT;
 	*intr = i;
@@ -753,8 +753,8 @@ ims332_load_curshape(struct xcfb_softc *sc)
 static void
 ims332_write_reg(int regno, u_int32_t val)
 {
-	caddr_t high8 = (caddr_t)(ioasic_base + IMS332_HIGH);
-	caddr_t low16 = (caddr_t)(ioasic_base + IMS332_WLOW) + (regno << 4);
+	void *high8 = (void *)(ioasic_base + IMS332_HIGH);
+	void *low16 = (void *)(ioasic_base + IMS332_WLOW + (regno << 4));
 
 	*(volatile u_int16_t *)high8 = (val & 0xff0000) >> 8;
 	*(volatile u_int16_t *)low16 = val;
@@ -764,8 +764,8 @@ ims332_write_reg(int regno, u_int32_t val)
 static u_int32_t
 ims332_read_reg(int regno)
 {
-	caddr_t high8 = (caddr_t)(ioasic_base + IMS332_HIGH);
-	caddr_t low16 = (caddr_t)(ioasic_base + IMS332_RLOW) + (regno << 4);
+	void *high8 = (void *)(ioasic_base + IMS332_HIGH);
+	void *low16 = (void *)(ioasic_base + IMS332_RLOW) + (regno << 4);
 	u_int v0, v1;
 
 	v1 = *(volatile u_int16_t *)high8;

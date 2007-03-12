@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.26 2007/01/07 12:57:20 mlelstv Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.26.2.1 2007/03/12 05:55:21 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.26 2007/01/07 12:57:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.26.2.1 2007/03/12 05:55:21 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -206,7 +206,7 @@ do {									\
 
 static void	ste_start(struct ifnet *);
 static void	ste_watchdog(struct ifnet *);
-static int	ste_ioctl(struct ifnet *, u_long, caddr_t);
+static int	ste_ioctl(struct ifnet *, u_long, void *);
 static int	ste_init(struct ifnet *);
 static void	ste_stop(struct ifnet *, int);
 
@@ -397,7 +397,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct ste_control_data), (caddr_t *)&sc->sc_control_data,
+	    sizeof(struct ste_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -544,7 +544,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct ste_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -652,7 +652,7 @@ ste_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -798,7 +798,7 @@ ste_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-ste_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ste_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ste_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1040,8 +1040,8 @@ ste_rxintr(struct ste_softc *sc)
 			if (m == NULL)
 				goto dropit;
 			m->m_data += 2;
-			memcpy(mtod(m, caddr_t),
-			    mtod(ds->ds_mbuf, caddr_t), len);
+			memcpy(mtod(m, void *),
+			    mtod(ds->ds_mbuf, void *), len);
 			STE_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize,

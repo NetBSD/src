@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.39 2007/01/19 14:49:09 hannken Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.39.2.1 2007/03/12 05:58:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.39 2007/01/19 14:49:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.39.2.1 2007/03/12 05:58:10 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -784,7 +784,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 			printf("fhtovp: bread error %d\n",error);
 			return (error);
 		}
-		isodir = (struct iso_directory_record *)(bp->b_data + off);
+		isodir = (struct iso_directory_record *)((char *)bp->b_data + off);
 
 		if (off + isonum_711(isodir->length) >
 		    imp->logical_block_size) {

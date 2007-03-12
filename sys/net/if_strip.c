@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.70.2.1 2007/02/27 16:54:44 yamt Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.70.2.2 2007/03/12 05:59:14 rmind Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.70.2.1 2007/02/27 16:54:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.70.2.2 2007/03/12 05:59:14 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -333,12 +333,12 @@ void	strip_timeout(void *x);
 
 static int	stripclose(struct tty *, int);
 static int	stripinput(int, struct tty *);
-static int	stripioctl(struct ifnet *, u_long, caddr_t);
+static int	stripioctl(struct ifnet *, u_long, void *);
 static int	stripopen(dev_t, struct tty *);
 static int	stripoutput(struct ifnet *,
 		    struct mbuf *, const struct sockaddr *, struct rtentry *);
 static int	stripstart(struct tty *);
-static int	striptioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+static int	striptioctl(struct tty *, u_long, void *, int, struct lwp *);
 
 static struct linesw strip_disc = {
 	.l_name = "strip",
@@ -501,7 +501,7 @@ stripopen(dev_t dev, struct tty *tp)
 #endif
 				return (ENOBUFS);
 			}
-			tp->t_sc = (caddr_t)sc;
+			tp->t_sc = (void *)sc;
 			sc->sc_ttyp = tp;
 			sc->sc_if.if_baudrate = tp->t_ospeed;
 			ttyflush(tp, FREAD | FWRITE);
@@ -594,11 +594,11 @@ stripclose(struct tty *tp, int flag)
 		IF_PURGE(&sc->sc_inq);
 
 		/* XXX */
-		free((caddr_t)(sc->sc_rxbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
+		free((void *)(sc->sc_rxbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
 		sc->sc_rxbuf = NULL;
 
 		/* XXX */
-		free((caddr_t)(sc->sc_txbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
+		free((void *)(sc->sc_txbuf - SLBUFSIZE + SLMAX), M_DEVBUF);
 		sc->sc_txbuf = NULL;
 
 		if (sc->sc_flags & SC_TIMEOUT) {
@@ -627,7 +627,7 @@ stripclose(struct tty *tp, int flag)
  */
 /* ARGSUSED */
 int
-striptioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
+striptioctl(struct tty *tp, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct strip_softc *sc = (struct strip_softc *)tp->t_sc;
@@ -1267,7 +1267,7 @@ stripintr(void *arg)
 			}
 		}
 #endif
-		m->m_data = (caddr_t) pktstart;
+		m->m_data = (void *) pktstart;
 		m->m_pkthdr.len = m->m_len = len;
 #if NPBFILTER > 0
 		if (sc->sc_if.if_bpf) {
@@ -1288,7 +1288,7 @@ stripintr(void *arg)
 			MGETHDR(n, M_DONTWAIT, MT_DATA);
 			pktlen = m->m_pkthdr.len;
 			M_MOVE_PKTHDR(n, m);
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t), pktlen);
+			memcpy(mtod(n, void *), mtod(m, void *), pktlen);
 			n->m_len = m->m_len;
 			m_freem(m);
 			m = n;
@@ -1317,7 +1317,7 @@ stripintr(void *arg)
  * Process an ioctl request.
  */
 int
-stripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_usr.c,v 1.13 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: smb_usr.c,v 1.13.4.1 2007/03/12 06:00:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.13 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_usr.c,v 1.13.4.1 2007/03/12 06:00:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -278,7 +278,7 @@ bad:
 }
 
 static int
-smb_cpdatain(struct mbchain *mbp, int len, caddr_t data)
+smb_cpdatain(struct mbchain *mbp, int len, void *data)
 {
 	int error;
 

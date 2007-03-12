@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.82 2006/12/02 03:10:43 elad Exp $	*/
+/*	$NetBSD: twe.c,v 1.82.2.1 2007/03/12 05:55:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.82 2006/12/02 03:10:43 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.82.2.1 2007/03/12 05:55:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,7 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((rv = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
-	    (caddr_t *)&sc->sc_cmds,
+	    (void **)&sc->sc_cmds,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map commands, rv = %d\n",
 		    sc->sc_dv.dv_xname, rv);
@@ -1308,7 +1308,7 @@ twe_poll(struct twe_softc *sc)
 		ccb->ccb_flags ^= TWE_CCB_COMPLETE | TWE_CCB_ACTIVE;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-		    (caddr_t)ccb->ccb_cmd - sc->sc_cmds,
+		    (char *)ccb->ccb_cmd - (char *)sc->sc_cmds,
 		    sizeof(struct twe_cmd),
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -1690,7 +1690,8 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
 
 	if ((status & TWE_STS_CMD_QUEUE_FULL) == 0) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
-		    (caddr_t)ccb->ccb_cmd - sc->sc_cmds, sizeof(struct twe_cmd),
+		    (char *)ccb->ccb_cmd - (char *)sc->sc_cmds,
+		    sizeof(struct twe_cmd),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 #ifdef DIAGNOSTIC
 		if ((ccb->ccb_flags & TWE_CCB_ALLOCED) == 0)
@@ -1752,7 +1753,7 @@ twe_ccb_wait_handler(struct twe_ccb *ccb, int error)
  * Handle control operations.
  */
 static int
-tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+tweioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct twe_softc *twe;

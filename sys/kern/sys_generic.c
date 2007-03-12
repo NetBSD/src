@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.98.2.1 2007/02/27 16:54:30 yamt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.98.2.2 2007/03/12 05:58:41 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.98.2.1 2007/02/27 16:54:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.98.2.2 2007/03/12 05:58:41 rmind Exp $");
 
 #include "opt_ktrace.h"
 
@@ -123,7 +123,7 @@ dofileread(struct lwp *l, int fd, struct file *fp, void *buf, size_t nbyte,
 		goto out;
 	}
 
-	aiov.iov_base = (caddr_t)buf;
+	aiov.iov_base = (void *)buf;
 	aiov.iov_len = nbyte;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -269,7 +269,7 @@ dofilereadv(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
+		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -501,7 +501,7 @@ dofilewritev(struct lwp *l, int fd, struct file *fp, const struct iovec *iovp,
 	 */
 	if (KTRPOINT(p, KTR_GENIO))  {
 		ktriov = malloc(iovlen, M_TEMP, M_WAITOK);
-		memcpy((caddr_t)ktriov, (caddr_t)auio.uio_iov, iovlen);
+		memcpy((void *)ktriov, (void *)auio.uio_iov, iovlen);
 	}
 #endif
 	cnt = auio.uio_resid;
@@ -544,7 +544,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	struct sys_ioctl_args /* {
 		syscallarg(int)		fd;
 		syscallarg(u_long)	com;
-		syscallarg(caddr_t)	data;
+		syscallarg(void *)	data;
 	} */ *uap = v;
 	struct file	*fp;
 	struct proc	*p;
@@ -552,7 +552,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	u_long		com;
 	int		error;
 	u_int		size;
-	caddr_t		data, memp;
+	void 		*data, *memp;
 #define	STK_PARAMS	128
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
 
@@ -592,10 +592,10 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 	}
 	memp = NULL;
 	if (size > sizeof(stkbuf)) {
-		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		memp = malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
 	} else
-		data = (caddr_t)stkbuf;
+		data = (void *)stkbuf;
 	if (com&IOC_IN) {
 		if (size) {
 			error = copyin(SCARG(uap, data), data, size);
@@ -614,7 +614,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 			}
 #endif
 		} else
-			*(caddr_t *)data = SCARG(uap, data);
+			*(void **)data = SCARG(uap, data);
 	} else if ((com&IOC_OUT) && size)
 		/*
 		 * Zero the buffer so the user always
@@ -622,7 +622,7 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		 */
 		memset(data, 0, size);
 	else if (com&IOC_VOID)
-		*(caddr_t *)data = SCARG(uap, data);
+		*(void **)data = SCARG(uap, data);
 
 	switch (com) {
 
@@ -763,7 +763,7 @@ sys_select(struct lwp *l, void *v, register_t *retval)
 	int error;
 
 	if (SCARG(uap, tv)) {
-		error = copyin(SCARG(uap, tv), (caddr_t)&atv,
+		error = copyin(SCARG(uap, tv), (void *)&atv,
 			sizeof(atv));
 		if (error)
 			return error;
@@ -781,7 +781,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 	char		smallbits[howmany(FD_SETSIZE, NFDBITS) *
 			    sizeof(fd_mask) * 6];
 	struct proc	* const p = l->l_proc;
-	caddr_t		bits;
+	char 		*bits;
 	int		s, ncoll, error, timo;
 	size_t		ni;
 	sigset_t	oldmask;
@@ -842,7 +842,7 @@ selcommon(struct lwp *l, register_t *retval, int nd, fd_set *u_in,
 		goto retry;
 	}
 	l->l_flag &= ~LW_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "select", timo);
+	error = tsleep((void *)&selwait, PSOCK | PCATCH, "select", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
@@ -981,7 +981,7 @@ pollcommon(struct lwp *l, register_t *retval,
 {
 	char		smallbits[32 * sizeof(struct pollfd)];
 	struct proc	* const p = l->l_proc;
-	caddr_t		bits;
+	void *		bits;
 	sigset_t	oldmask;
 	int		s, ncoll, error, timo;
 	size_t		ni;
@@ -1030,7 +1030,7 @@ pollcommon(struct lwp *l, register_t *retval,
 		goto retry;
 	}
 	l->l_flag &= ~LW_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK | PCATCH, "poll", timo);
+	error = tsleep((void *)&selwait, PSOCK | PCATCH, "poll", timo);
 	splx(s);
 	if (error == 0)
 		goto retry;
@@ -1120,7 +1120,7 @@ selrecord(struct lwp *selector, struct selinfo *sip)
 		mutex_enter(&p->p_smutex);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			if (l->l_wchan == (caddr_t)&selwait &&
+			if (l->l_wchan == (void *)&selwait &&
 			    l->l_stat == LSSLEEP) {
 				sip->sel_collision = 1;
 				lwp_unlock(l);
@@ -1152,7 +1152,7 @@ selwakeup(sip)
 		sip->sel_pid = 0;
 		nselcoll++;
 		sip->sel_collision = 0;
-		wakeup((caddr_t)&selwait);
+		wakeup((void *)&selwait);
 		return;
 	}
 

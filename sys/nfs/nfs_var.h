@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.64.2.1 2007/02/28 09:35:40 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.64.2.2 2007/03/12 06:00:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -186,9 +186,9 @@ int nfs_send(struct socket *, struct mbuf *, struct mbuf *, struct nfsreq *,
 int nfs_receive(struct nfsreq *, struct mbuf **, struct mbuf **, struct lwp *);
 int nfs_reply(struct nfsreq *, struct lwp *);
 int nfs_request(struct nfsnode *, struct mbuf *, int, struct lwp *,
-	kauth_cred_t, struct mbuf **, struct mbuf **, caddr_t *, int *);
+	kauth_cred_t, struct mbuf **, struct mbuf **, char **, int *);
 int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *,
-	int, int, u_quad_t *, struct mbuf **, struct mbuf **, caddr_t *);
+	int, int, u_quad_t *, struct mbuf **, struct mbuf **, char **);
 void nfs_timer(void *);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
 int nfs_sndlock(int *, struct nfsreq *);
@@ -198,7 +198,7 @@ int nfs_rcvlock(struct nfsreq *);
 void nfs_rcvunlock(struct nfsmount *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_msg(struct lwp *, const char *, const char *);
-void nfsrv_rcv(struct socket *, caddr_t, int);
+void nfsrv_rcv(struct socket *, void *, int);
 int nfsrv_getstream(struct nfssvc_sock *, int);
 int nfsrv_dorec(struct nfssvc_sock *, struct nfsd *, struct nfsrv_descript **);
 void nfsrv_wakenfsd(struct nfssvc_sock *);
@@ -218,13 +218,13 @@ void nfsrv_updatecache(struct nfsrv_descript *, int, struct mbuf *);
 void nfsrv_cleancache(void);
 
 /* nfs_subs.c */
-struct mbuf *nfsm_reqh(struct nfsnode *, u_long, int, caddr_t *);
+struct mbuf *nfsm_reqh(struct nfsnode *, u_long, int, char **);
 struct mbuf *nfsm_rpchead(kauth_cred_t, int, int, int, int, char *, int,
 	char *, struct mbuf *, int, struct mbuf **, u_int32_t *);
-int nfsm_mbuftouio(struct mbuf **, struct uio *, int, caddr_t *);
-int nfsm_uiotombuf(struct uio *, struct mbuf **, int, caddr_t *);
-int nfsm_disct(struct mbuf **, caddr_t *, int, int, caddr_t *);
-int nfs_adv(struct mbuf **, caddr_t *, int, int);
+int nfsm_mbuftouio(struct mbuf **, struct uio *, int, char **);
+int nfsm_uiotombuf(struct uio *, struct mbuf **, int, char **);
+int nfsm_disct(struct mbuf **, char **, int, int, char **);
+int nfs_adv(struct mbuf **, char **, int, int);
 int nfsm_strtmbuf(struct mbuf **, char **, const char *, long);
 u_long nfs_dirhash(off_t);
 void nfs_initdircache(struct vnode *);
@@ -237,7 +237,7 @@ void nfs_invaldircache(struct vnode *, int);
 #define	NFS_INVALDIRCACHE_FORCE		1
 #define	NFS_INVALDIRCACHE_KEEPEOF	2
 void nfs_init __P((void));
-int nfsm_loadattrcache(struct vnode **, struct mbuf **, caddr_t *,
+int nfsm_loadattrcache(struct vnode **, struct mbuf **, char **,
 	struct vattr *, int flags);
 int nfs_loadattrcache(struct vnode **, struct nfs_fattr *, struct vattr *,
 	int flags);
@@ -246,7 +246,7 @@ void nfs_delayedtruncate(struct vnode *);
 int nfs_check_wccdata(struct nfsnode *, const struct timespec *,
 	struct timespec *, bool);
 int nfs_namei(struct nameidata *, nfsrvfh_t *, uint32_t, struct nfssvc_sock *,
-	struct mbuf *, struct mbuf **, caddr_t *, struct vnode **, struct lwp *,
+	struct mbuf *, struct mbuf **, char **, struct vnode **, struct lwp *,
 	int, int);
 void nfs_zeropad(struct mbuf *, int, int);
 void nfsm_srvwcc(struct nfsrv_descript *, int, struct vattr *, int,
@@ -285,7 +285,7 @@ void nfsrv_copyfh(nfsrvfh_t *, const nfsrvfh_t *);
 int sys_getfh(struct lwp *, void *, register_t *);
 int sys_nfssvc(struct lwp *, void *, register_t *);
 int nfssvc_addsock(struct file *, struct mbuf *);
-int nfssvc_nfsd(struct nfsd_srvargs *, caddr_t, struct lwp *);
+int nfssvc_nfsd(struct nfsd_srvargs *, void *, struct lwp *);
 void nfsrv_zapsock(struct nfssvc_sock *);
 void nfsrv_slpderef(struct nfssvc_sock *);
 void nfsrv_init(int);

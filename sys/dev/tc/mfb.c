@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.47 2006/04/12 19:38:24 jmmv Exp $ */
+/* $NetBSD: mfb.c,v 1.47.14.1 2007/03/12 05:57:14 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.47 2006/04/12 19:38:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.47.14.1 2007/03/12 05:57:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ static const struct wsscreen_list mfb_screenlist = {
 	sizeof(_mfb_scrlist) / sizeof(struct wsscreen_descr *), _mfb_scrlist
 };
 
-static int	mfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	mfbioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	mfbmmap(void *, void *, off_t, int);
 
 static int	mfb_alloc_screen(void *, const struct wsscreen_descr *,
@@ -170,7 +170,7 @@ static const struct wsdisplay_accessops mfb_accessops = {
 
 int  mfb_cnattach(tc_addr_t);
 static int  mfbintr(void *);
-static void mfbhwinit(caddr_t);
+static void mfbhwinit(void *);
 
 static int  set_cursor(struct mfb_softc *, struct wsdisplay_cursor *);
 static int  get_cursor(struct mfb_softc *, struct wsdisplay_cursor *);
@@ -261,9 +261,9 @@ mfbattach(struct device *parent, struct device *self, void *aux)
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, mfbintr, sc);
 
 	/* clear any pending interrupts */
-	*(u_int8_t *)((caddr_t)ri->ri_hw + MX_IREQ_OFFSET) = 0;
-	junk = *(u_int8_t *)((caddr_t)ri->ri_hw + MX_IREQ_OFFSET);
-	*(u_int8_t *)((caddr_t)ri->ri_hw + MX_IREQ_OFFSET) = 1;
+	*(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 0;
+	junk = *(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET);
+	*(u_int8_t *)((char *)ri->ri_hw + MX_IREQ_OFFSET) = 1;
 
 	waa.console = console;
 	waa.scrdata = &mfb_screenlist;
@@ -276,10 +276,10 @@ mfbattach(struct device *parent, struct device *self, void *aux)
 static void
 mfb_common_init(struct rasops_info *ri)
 {
-	caddr_t base;
+	char *base;
 	int cookie;
 
-	base = (caddr_t)ri->ri_hw;
+	base = (void *)ri->ri_hw;
 
 	/* initialize colormap and cursor hardware */
 	mfbhwinit(base);
@@ -322,7 +322,7 @@ mfb_common_init(struct rasops_info *ri)
 }
 
 static int
-mfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -466,11 +466,11 @@ static int
 mfbintr(void *arg)
 {
 	struct mfb_softc *sc = arg;
-	caddr_t base, vdac, curs;
+	char *base, *vdac, *curs;
 	int v;
 	volatile register int junk;
 
-	base = (caddr_t)sc->sc_ri->ri_hw;
+	base = (void *)sc->sc_ri->ri_hw;
 	junk = *(u_int8_t *)(base + MX_IREQ_OFFSET);
 #if 0
 	*(u_int8_t *)(base + MX_IREQ_OFFSET) = 0;
@@ -557,13 +557,13 @@ mfbintr(void *arg)
 }
 
 static void
-mfbhwinit(caddr_t mfbbase)
+mfbhwinit(void *mfbbase)
 {
-	caddr_t vdac, curs;
+	char *vdac, *curs;
 	int i;
 
-	vdac = mfbbase + MX_BT455_OFFSET;
-	curs = mfbbase + MX_BT431_OFFSET;
+	vdac = (char *)mfbbase + MX_BT455_OFFSET;
+	curs = (char *)mfbbase + MX_BT431_OFFSET;
 	SELECT431(curs, BT431_REG_COMMAND);
 	REGWRITE32(curs, bt_ctl, 0x0404);
 	REGWRITE32(curs, bt_ctl, 0); /* XLO */

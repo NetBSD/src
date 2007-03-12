@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.121 2007/02/15 15:40:54 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.121.2.1 2007/03/12 06:01:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.121 2007/02/15 15:40:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.121.2.1 2007/03/12 06:01:08 rmind Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.121 2007/02/15 15:40:54 ad Exp $"
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
+struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, void *);
 int lfs_fasthashget(dev_t, ino_t, struct vnode **);
 
 pid_t lfs_cleaner_pid = 0;
@@ -1176,7 +1176,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
  * Make up a "fake" cleaner buffer, copy the data from userland into it.
  */
 struct buf *
-lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
+lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, void *uaddr)
 {
 	struct buf *bp;
 	int error;

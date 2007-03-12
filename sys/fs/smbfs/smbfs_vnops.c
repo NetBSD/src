@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.58 2007/01/04 17:26:12 elad Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.58.2.1 2007/03/12 05:58:13 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.58 2007/01/04 17:26:12 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.58.2.1 2007/03/12 05:58:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1115,7 +1115,7 @@ smbfs_advlock(v)
 		 * SMB header in later write requests, otherwise SMB server
 		 * returns EDEADLK. See also smb_rq_new() on SMB header setup.
 		 */
-		error = smbfs_smb_lock(np, lkop,(caddr_t)1, start, end, &scred);
+		error = smbfs_smb_lock(np, lkop,(void *)1, start, end, &scred);
 		if (error) {
 			ap->a_op = F_UNLCK;
 			lf_advlock(ap, &np->n_lockf, size);

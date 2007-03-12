@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.7 2005/12/24 19:01:28 perry Exp $	*/
+/*	$NetBSD: ras.h,v 1.7.26.1 2007/03/12 06:00:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 
 struct ras {
 	LIST_ENTRY(ras) ras_list;
-	caddr_t ras_startaddr;
-	caddr_t ras_endaddr;
+	void *ras_startaddr;
+	void *ras_endaddr;
 	int ras_hits;
 };
 
@@ -58,7 +58,7 @@ struct ras {
 struct pool;
 struct proc;
 
-caddr_t ras_lookup(struct proc *, caddr_t);
+void *ras_lookup(struct proc *, void *);
 
 int ras_fork(struct proc *, struct proc *);
 int ras_purgeall(struct proc *);
@@ -93,7 +93,7 @@ extern void __CONCAT(name,_ras_start(void)), __CONCAT(name,_ras_end(void))
 				  (uintptr_t) __CONCAT(name,_ras_start)))
 
 __BEGIN_DECLS
-int rasctl(caddr_t, size_t, int);
+int rasctl(void *, size_t, int);
 __END_DECLS
 
 #endif /* _KERNEL */

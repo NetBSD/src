@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.122.2.1 2007/02/27 16:54:59 yamt Exp $	*/
+/*	$NetBSD: in6.c,v 1.122.2.2 2007/03/12 05:59:56 rmind Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.122.2.1 2007/02/27 16:54:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.122.2.2 2007/03/12 05:59:56 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -136,7 +136,7 @@ const struct in6_addr in6mask128 = IN6MASK128;
 const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
 				     0, 0, IN6ADDR_ANY_INIT, 0};
 
-static int in6_lifaddr_ioctl(struct socket *, u_long, caddr_t,
+static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *, struct lwp *);
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	struct sockaddr_in6 *, int);
@@ -350,7 +350,7 @@ in6_mask2len(mask, lim0)
 #define ia62ifa(ia6)	(&((ia6)->ia_ifa))
 
 static int
-in6_control1(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
+in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
     struct lwp *l, int privileged)
 {
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
@@ -788,7 +788,7 @@ in6_control1(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
 }
 
 int
-in6_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp,
+in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
     struct lwp *l)
 {
 	int error, privileged, s;
@@ -958,7 +958,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    M_NOWAIT);
 		if (ia == NULL)
 			return ENOBUFS;
-		bzero((caddr_t)ia, sizeof(*ia));
+		bzero((void *)ia, sizeof(*ia));
 		LIST_INIT(&ia->ia6_memberships);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
@@ -1513,7 +1513,7 @@ static int
 in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 	struct socket *so;
 	u_long cmd;
-	caddr_t	data;
+	void *	data;
 	struct ifnet *ifp;
 	struct lwp *l;
 {
@@ -1624,7 +1624,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 		ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
 		ifra.ifra_flags = iflr->flags & ~IFLR_PREFIX;
-		return in6_control(so, SIOCAIFADDR_IN6, (caddr_t)&ifra, ifp, l);
+		return in6_control(so, SIOCAIFADDR_IN6, (void *)&ifra, ifp, l);
 	    }
 	case SIOCGLIFADDR:
 	case SIOCDLIFADDR:
@@ -1736,7 +1736,7 @@ in6_lifaddr_ioctl(so, cmd, data, ifp, l)
 			    ia->ia_prefixmask.sin6_len);
 
 			ifra.ifra_flags = ia->ia6_flags;
-			return in6_control(so, SIOCDIFADDR_IN6, (caddr_t)&ifra,
+			return in6_control(so, SIOCDIFADDR_IN6, (void *)&ifra,
 			    ifp, l);
 		}
 	    }
@@ -1776,7 +1776,7 @@ in6_ifinit(ifp, ia, sin6, newhost)
 	ia->ia_addr = *sin6;
 
 	if (ifacount <= 1 && ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (caddr_t)ia))) {
+	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia))) {
 		splx(s);
 		return error;
 	}

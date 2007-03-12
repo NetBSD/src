@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.113.2.2 2007/02/27 16:54:24 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.113.2.3 2007/03/12 05:58:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.113.2.2 2007/02/27 16:54:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.113.2.3 2007/03/12 05:58:36 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 	int low = NZERO + PRIO_MAX + 1;
 	int who = SCARG(uap, who);
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		if (who == 0)
@@ -121,10 +121,10 @@ sys_getpriority(struct lwp *l, void *v, register_t *retval)
 		break;
 
 	default:
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (EINVAL);
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (low == NZERO + PRIO_MAX + 1)
 		return (ESRCH);
@@ -145,7 +145,7 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 	int found = 0, error = 0;
 	int who = SCARG(uap, who);
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	switch (SCARG(uap, which)) {
 	case PRIO_PROCESS:
 		if (who == 0)
@@ -194,7 +194,7 @@ sys_setpriority(struct lwp *l, void *v, register_t *retval)
 		error = EINVAL;
 		break;
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	if (found == 0)
 		return (ESRCH);
 	return (error);
@@ -606,11 +606,11 @@ pstatscopy(struct pstats *ps)
 	newps = pool_get(&pstats_pool, PR_WAITOK);
 
 	memset(&newps->pstat_startzero, 0,
-	(unsigned) ((caddr_t)&newps->pstat_endzero -
-		    (caddr_t)&newps->pstat_startzero));
+	(unsigned) ((char *)&newps->pstat_endzero -
+		    (char *)&newps->pstat_startzero));
 	memcpy(&newps->pstat_startcopy, &ps->pstat_startcopy,
-	((caddr_t)&newps->pstat_endcopy -
-	 (caddr_t)&newps->pstat_startcopy));
+	((char *)&newps->pstat_endcopy -
+	 (char *)&newps->pstat_startcopy));
 
 	return (newps);
 

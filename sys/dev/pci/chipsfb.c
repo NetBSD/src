@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.8 2007/01/22 00:12:24 macallan Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.8.2.1 2007/03/12 05:55:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.8 2007/01/22 00:12:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.8.2.1 2007/03/12 05:55:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ struct wsscreen_list chipsfb_screenlist = {
 	sizeof(_chipsfb_scrlist) / sizeof(struct wsscreen_descr *), _chipsfb_scrlist
 };
 
-static int	chipsfb_ioctl(void *, void *, u_long, caddr_t, int,
+static int	chipsfb_ioctl(void *, void *, u_long, void *, int,
 		    struct lwp *);
 static paddr_t	chipsfb_mmap(void *, void *, off_t, int);
 static void	chipsfb_clearscreen(struct chipsfb_softc *);
@@ -808,7 +808,7 @@ chipsfb_restore_palette(struct chipsfb_softc *sc)
  */
 
 static int
-chipsfb_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+chipsfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;

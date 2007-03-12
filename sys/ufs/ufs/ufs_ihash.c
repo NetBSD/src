@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ihash.c,v 1.21 2007/02/15 15:40:55 ad Exp $	*/
+/*	$NetBSD: ufs_ihash.c,v 1.21.2.1 2007/03/12 06:01:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.21 2007/02/15 15:40:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_ihash.c,v 1.21.2.1 2007/03/12 06:01:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,8 @@ void
 ufs_ihashdone(void)
 {
 	hashdone(ihashtbl, M_UFSMNT);
+	mutex_destroy(&ufs_hashlock);
+	mutex_destroy(&ufs_ihash_lock);
 }
 
 /*

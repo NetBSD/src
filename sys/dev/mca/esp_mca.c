@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.14 2006/11/16 01:33:05 christos Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.14.4.1 2007/03/12 05:55:07 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.14 2006/11/16 01:33:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.14.4.1 2007/03/12 05:55:07 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,7 @@ static void	esp_write_reg(struct ncr53c9x_softc *, int, u_char);
 static int	esp_dma_isintr(struct ncr53c9x_softc *);
 static void	esp_dma_reset(struct ncr53c9x_softc *);
 static int	esp_dma_intr(struct ncr53c9x_softc *);
-static int	esp_dma_setup(struct ncr53c9x_softc *, caddr_t *,
+static int	esp_dma_setup(struct ncr53c9x_softc *, void **,
 	    size_t *, int, size_t *);
 static void	esp_dma_go(struct ncr53c9x_softc *);
 static void	esp_dma_stop(struct ncr53c9x_softc *);
@@ -374,7 +374,7 @@ esp_dma_intr(sc)
 static int
 esp_dma_setup(
 	struct ncr53c9x_softc *sc,
-	caddr_t *addr,
+	void **addr,
 	size_t *len,
 	int datain,
 	size_t *dmasize

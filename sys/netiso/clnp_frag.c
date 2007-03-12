@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.18 2005/12/11 12:25:12 christos Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.18.26.1 2007/03/12 06:00:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.18 2005/12/11 12:25:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.18.26.1 2007/03/12 06:00:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,8 @@ clnp_fragment(
 
 
 		INCSTAT(cns_fragmented);
-		(void) bcopy(segoff + mtod(m, caddr_t), (caddr_t) & seg_part,
-			     sizeof(seg_part));
+		(void)memmove(&seg_part, segoff + mtod(m, char *),
+		    sizeof(seg_part));
 		frag_base = ntohs(seg_part.cng_off);
 		/*
 		 *	Duplicate header, and remove from packet
@@ -221,9 +221,9 @@ clnp_fragment(
 			m_cat(frag_hdr, frag_data);
 
 			/* insert segmentation part; updated below */
-			bcopy((caddr_t) & seg_part,
-			      mtod(frag_hdr, caddr_t) + segoff,
-			      sizeof(struct clnp_segment));
+			(void)memmove(mtod(frag_hdr, char *) + segoff,
+			    &seg_part,
+			    sizeof(struct clnp_segment));
 
 			{
 				int             derived_len = hdr_len + frag_size;
@@ -436,8 +436,8 @@ clnp_newpkt(
 		return (0);
 	}
 	/* Fill in rest of fragl structure */
-	bcopy((caddr_t) src, (caddr_t) & cfh->cfl_src, sizeof(struct iso_addr));
-	bcopy((caddr_t) dst, (caddr_t) & cfh->cfl_dst, sizeof(struct iso_addr));
+	bcopy((void *) src, (void *) & cfh->cfl_src, sizeof(struct iso_addr));
+	bcopy((void *) dst, (void *) & cfh->cfl_dst, sizeof(struct iso_addr));
 	cfh->cfl_id = seg->cng_id;
 	cfh->cfl_ttl = clnp->cnf_ttl;
 	cfh->cfl_last = (seg->cng_tot_len - clnp->cnf_hdr_len) - 1;
@@ -794,7 +794,7 @@ clnp_comp_pdu(
 		printf("clnp_comp_pdu: data for frag:\n");
 		while (mdump != NULL) {
 			printf("mbuf %p, m_len %d\n", mdump, mdump->m_len);
-			/* dump_buf(mtod(mdump, caddr_t), mdump->m_len); */
+			/* dump_buf(mtod(mdump, void *), mdump->m_len); */
 			mdump = mdump->m_next;
 		}
 	}
@@ -830,7 +830,7 @@ clnp_comp_pdu(
 				printf("mbuf %p, m_len %d\n",
 				       mdump, mdump->m_len);
 #if 0
-				dump_buf(mtod(mdump, caddr_t), mdump->m_len);
+				dump_buf(mtod(mdump, void *), mdump->m_len);
 #endif
 				mdump = mdump->m_next;
 			}

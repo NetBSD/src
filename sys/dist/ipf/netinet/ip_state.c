@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.c,v 1.16 2006/12/24 02:31:16 darrenr Exp $	*/
+/*	$NetBSD: ip_state.c,v 1.16.2.1 2007/03/12 05:57:57 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -110,7 +110,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.16 2006/12/24 02:31:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_state.c,v 1.16.2.1 2007/03/12 05:57:57 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_state.c	1.8 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_state.c,v 2.186.2.41 2006/04/01 10:16:28 darrenr Exp";
@@ -132,7 +132,7 @@ static ipstate_t *fr_checkicmpmatchingstate __P((fr_info_t *));
 static int fr_state_flush __P((int, int));
 static ips_stat_t *fr_statetstats __P((void));
 static void fr_delstate __P((ipstate_t *, int));
-static int fr_state_remove __P((caddr_t));
+static int fr_state_remove __P((void *));
 static void fr_ipsmove __P((ipstate_t *, u_int));
 static int fr_tcpstate __P((fr_info_t *, tcphdr_t *, ipstate_t *));
 static int fr_tcpoptions __P((fr_info_t *, tcphdr_t *, tcpdata_t *));
@@ -141,8 +141,8 @@ static void fr_fixinisn __P((fr_info_t *, ipstate_t *));
 static void fr_fixoutisn __P((fr_info_t *, ipstate_t *));
 static void fr_checknewisn __P((fr_info_t *, ipstate_t *));
 
-int fr_stputent __P((caddr_t));
-int fr_stgetent __P((caddr_t));
+int fr_stputent __P((void *));
+int fr_stgetent __P((void *));
 
 #define	ONE_DAY		IPF_TTLVAL(1 * 86400)	/* 1 day */
 #define	FIVE_DAYS	(5 * ONE_DAY)
@@ -384,7 +384,7 @@ static ips_stat_t *fr_statetstats()
 /* the IP addresses and other protocol specific information.                */
 /* ------------------------------------------------------------------------ */
 static int fr_state_remove(data)
-caddr_t data;
+void *data;
 {
 	ipstate_t *sp, st;
 	int error;
@@ -397,11 +397,11 @@ caddr_t data;
 	WRITE_ENTER(&ipf_state);
 	for (sp = ips_list; sp; sp = sp->is_next)
 		if ((sp->is_p == st.is_p) && (sp->is_v == st.is_v) &&
-		    !bcmp((caddr_t)&sp->is_src, (caddr_t)&st.is_src,
+		    !bcmp((void *)&sp->is_src, (void *)&st.is_src,
 			  sizeof(st.is_src)) &&
-		    !bcmp((caddr_t)&sp->is_dst, (caddr_t)&st.is_src,
+		    !bcmp((void *)&sp->is_dst, (void *)&st.is_src,
 			  sizeof(st.is_dst)) &&
-		    !bcmp((caddr_t)&sp->is_ps, (caddr_t)&st.is_ps,
+		    !bcmp((void *)&sp->is_ps, (void *)&st.is_ps,
 			  sizeof(st.is_ps))) {
 			fr_delstate(sp, ISL_REMOVE);
 			RWLOCK_EXIT(&ipf_state);
@@ -422,7 +422,7 @@ caddr_t data;
 /* Processes an ioctl call made to operate on the IP Filter state device.   */
 /* ------------------------------------------------------------------------ */
 int fr_state_ioctl(data, cmd, mode)
-caddr_t data;
+void *data;
 ioctlcmd_t cmd;
 int mode;
 {
@@ -558,7 +558,7 @@ int mode;
 /* state entries, the retrieval fails.                                      */
 /* ------------------------------------------------------------------------ */
 int fr_stgetent(data)
-caddr_t data;
+void *data;
 {
 	ipstate_t *is, *isn;
 	ipstate_save_t ips;
@@ -612,7 +612,7 @@ caddr_t data;
 /* output.                                                                  */
 /* ------------------------------------------------------------------------ */
 int fr_stputent(data)
-caddr_t data;
+void *data;
 {
 	ipstate_t *is, *isn;
 	ipstate_save_t ips;

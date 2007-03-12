@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.24 2006/12/01 20:56:42 drochner Exp $	*/
+/*	$NetBSD: if_url.c,v 1.24.4.1 2007/03/12 05:57:30 rmind Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24 2006/12/01 20:56:42 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.24.4.1 2007/03/12 05:57:30 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -102,7 +102,7 @@ Static void url_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void url_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void url_tick(void *);
 Static void url_tick_task(void *);
-Static int url_ioctl(struct ifnet *, u_long, caddr_t);
+Static int url_ioctl(struct ifnet *, u_long, void *);
 Static void url_stop_task(struct url_softc *);
 Static void url_stop(struct ifnet *, int);
 Static void url_watchdog(struct ifnet *);
@@ -1094,7 +1094,7 @@ Static void url_intr()
 #endif
 
 Static int
-url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+url_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct url_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.h,v 1.11 2006/08/06 16:21:11 jmcneill Exp $	*/
+/*	$NetBSD: cs428x.h,v 1.11.10.1 2007/03/12 05:55:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -48,8 +48,8 @@
 /* DMA */
 struct cs428x_dma {
 	bus_dmamap_t map;
-	caddr_t addr;		/* real DMA buffer */
-	caddr_t dum;		/* dummy buffer for audio driver */
+	void *addr;		/* real DMA buffer */
+	void *dum;		/* dummy buffer for audio driver */
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.22 2006/05/14 21:33:39 elad Exp $	*/
+/*	$NetBSD: quota.h,v 1.22.14.1 2007/03/12 06:01:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -182,12 +182,12 @@ void	dqref(struct dquot *);
 void	dqrele(struct vnode *, struct dquot *);
 int	dqsync(struct vnode *, struct dquot *);
 int	getinoquota(struct inode *);
-int	getquota(struct mount *, u_long, int, caddr_t);
+int	getquota(struct mount *, u_long, int, void *);
 int	qsync(struct mount *mp);
 int	quotaoff(struct lwp *, struct mount *, int);
-int	quotaon(struct lwp *, struct mount *, int, caddr_t);
-int	setquota(struct mount *, u_long, int, caddr_t);
-int	setuse(struct mount *, u_long, int, caddr_t);
+int	quotaon(struct lwp *, struct mount *, int, void *);
+int	setquota(struct mount *, u_long, int, void *);
+int	setuse(struct mount *, u_long, int, void *);
 int	ufs_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
 __END_DECLS
 

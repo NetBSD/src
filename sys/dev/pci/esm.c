@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.41 2006/11/16 01:33:08 christos Exp $      */
+/*      $NetBSD: esm.c,v 1.41.4.1 2007/03/12 05:55:14 rmind Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.41 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.41.4.1 2007/03/12 05:55:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -685,7 +685,7 @@ esm_init_output (void *sc, void *start, int size)
 
 	ess = sc;
 	p = &ess->sc_dma;
-	if ((caddr_t)start != p->addr + MAESTRO_PLAYBUF_OFF) {
+	if ((char *)start != (char *)p->addr + MAESTRO_PLAYBUF_OFF) {
 		printf("%s: esm_init_output: bad addr %p\n",
 		    ess->sc_dev.dv_xname, start);
 		return EINVAL;
@@ -707,7 +707,7 @@ esm_init_input (void *sc, void *start, int size)
 
 	ess = sc;
 	p = &ess->sc_dma;
-	if ((caddr_t)start != p->addr + MAESTRO_RECBUF_OFF) {
+	if ((char *)start != (char *)p->addr + MAESTRO_RECBUF_OFF) {
 		printf("%s: esm_init_input: bad addr %p\n",
 		    ess->sc_dev.dv_xname, start);
 		return EINVAL;
@@ -762,7 +762,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	ess->sc_pintr = intr;
 	ess->sc_parg = arg;
 	p = &ess->sc_dma;
-	if ((caddr_t)start != p->addr + MAESTRO_PLAYBUF_OFF) {
+	if ((char *)start != (char *)p->addr + MAESTRO_PLAYBUF_OFF) {
 		printf("%s: esm_trigger_output: bad addr %p\n",
 		    ess->sc_dev.dv_xname, start);
 		return EINVAL;
@@ -772,7 +772,7 @@ esm_trigger_output(void *sc, void *start, void *end, int blksize,
 	ess->pch.apublk = blksize >> 1;
 	ess->pactive = 1;
 
-	size = (size_t)(((caddr_t)end - (caddr_t)start) >> 1);
+	size = (size_t)(((char *)end - (char *)start) >> 1);
 	choffset = MAESTRO_PLAYBUF_OFF;
 	offset = choffset >> 1;
 	wpwa = APU_USE_SYSMEM | ((offset >> 8) & APU_64KPAGE_MASK);
@@ -878,20 +878,20 @@ esm_trigger_input(void *sc, void *start, void *end, int blksize,
 	ess->sc_rintr = intr;
 	ess->sc_rarg = arg;
 	p = &ess->sc_dma;
-	if ((caddr_t)start != p->addr + MAESTRO_RECBUF_OFF) {
+	if ((char *)start != (char *)p->addr + MAESTRO_RECBUF_OFF) {
 		printf("%s: esm_trigger_input: bad addr %p\n",
 		    ess->sc_dev.dv_xname, start);
 		return EINVAL;
 	}
 
-	ess->rch.buffer = (caddr_t)start;
+	ess->rch.buffer = (void *)start;
 	ess->rch.offset = 0;
 	ess->rch.blocksize = blksize;
-	ess->rch.bufsize = ((caddr_t)end - (caddr_t)start);
+	ess->rch.bufsize = ((char *)end - (char *)start);
 	ess->rch.apublk = blksize >> 1;
 	ess->ractive = 1;
 
-	size = (size_t)(((caddr_t)end - (caddr_t)start) >> 1);
+	size = (size_t)(((char *)end - (char *)start) >> 1);
 	choffset = MAESTRO_RECBUF_OFF;
 	switch (ch->aputype) {
 	case APUTYPE_16BITSTEREO:
@@ -1149,15 +1149,15 @@ esmch_combine_input(struct esm_softc *ess, struct esm_chinfo *ch)
 	while (resid > 0) {
 
 		/* The 32-bit words for the left channel. */
-		left32s = (const uint32_t *)(ess->sc_dma.addr +
+		left32s = (const uint32_t *)((char *)ess->sc_dma.addr +
 		    MAESTRO_RECBUF_L_OFF + offset / 2);
 
 		/* The 32-bit words for the right channel. */
-		right32s = (const uint32_t *)(ess->sc_dma.addr +
+		right32s = (const uint32_t *)((char *)ess->sc_dma.addr +
 		    MAESTRO_RECBUF_R_OFF + offset / 2);
 
 		/* The pointer to the 32-bit words we will write. */
-		dst32s = (uint32_t *)(ch->buffer + offset);
+		dst32s = (uint32_t *)((char *)ch->buffer + offset);
 
 		/* Get the number of bytes we will combine now. */
 		count = ch->bufsize - offset;
@@ -1336,9 +1336,9 @@ esm_malloc(void *sc, int direction, size_t size,
 	off = (direction == AUMODE_PLAY ?
 		MAESTRO_PLAYBUF_OFF : MAESTRO_RECBUF_OFF);
 	DPRINTF(ESM_DEBUG_DMA, (" = %p (DMAADDR 0x%x)\n",
-				ess->sc_dma.addr + off,
+				(char *)ess->sc_dma.addr + off,
 				(int)DMAADDR(&ess->sc_dma) + off));
-	return ess->sc_dma.addr + off;
+	return (char *)ess->sc_dma.addr + off;
 }
 
 void
@@ -1350,9 +1350,9 @@ esm_free(void *sc, void *ptr, struct malloc_type *pool)
 	    ("esm_free(%p, %p, %p)\n",
 	    sc, ptr, pool));
 	ess = sc;
-	if ((caddr_t)ptr == ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
+	if ((char *)ptr == (char *)ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
 		ess->rings_alloced &= ~AUMODE_PLAY;
-	else if ((caddr_t)ptr == ess->sc_dma.addr + MAESTRO_RECBUF_OFF)
+	else if ((char *)ptr == (char *)ess->sc_dma.addr + MAESTRO_RECBUF_OFF)
 		ess->rings_alloced &= ~AUMODE_RECORD;
 }
 
@@ -1379,9 +1379,9 @@ esm_mappage(void *sc, void *mem, off_t off, int prot)
 	if (off < 0)
 		return -1;
 
-	if ((caddr_t)mem == ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
+	if ((char *)mem == (char *)ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
 		off += MAESTRO_PLAYBUF_OFF;
-	else if ((caddr_t)mem == ess->sc_dma.addr + MAESTRO_RECBUF_OFF)
+	else if ((char *)mem == (char *)ess->sc_dma.addr + MAESTRO_RECBUF_OFF)
 		off += MAESTRO_RECBUF_OFF;
 	else
 		return -1;

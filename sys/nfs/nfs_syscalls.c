@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.105.2.1 2007/02/28 09:35:40 yamt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.105.2.2 2007/03/12 06:00:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.105.2.1 2007/02/28 09:35:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.105.2.2 2007/03/12 06:00:37 rmind Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -145,7 +145,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_nfssvc_args /* {
 		syscallarg(int) flag;
-		syscallarg(caddr_t) argp;
+		syscallarg(void *) argp;
 	} */ *uap = v;
 	int error;
 #ifdef NFSSERVER
@@ -193,7 +193,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 #ifndef NFSSERVER
 		error = ENOSYS;
 #else
-		error = copyin(SCARG(uap, argp), (caddr_t)&nfsdarg,
+		error = copyin(SCARG(uap, argp), (void *)&nfsdarg,
 		    sizeof(nfsdarg));
 		if (error)
 			return (error);
@@ -246,7 +246,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 #ifndef NFSSERVER
 		error = ENOSYS;
 #else
-		error = copyin(SCARG(uap, argp), (caddr_t)nsd, sizeof (*nsd));
+		error = copyin(SCARG(uap, argp), (void *)nsd, sizeof (*nsd));
 		if (error)
 			return (error);
 		if ((SCARG(uap, flag) & NFSSVC_AUTHIN) &&
@@ -284,7 +284,7 @@ sys_nfssvc(struct lwp *l, void *v, register_t *retval)
 				nuidp = (struct nfsuid *)0;
 			    if ((slp->ns_flag & SLP_VALID) == 0) {
 				if (nuidp)
-				    free((caddr_t)nuidp, M_NFSUID);
+				    free((void *)nuidp, M_NFSUID);
 			    } else {
 				if (nuidp == (struct nfsuid *)0) {
 				    nuidp = TAILQ_FIRST(&slp->ns_uidlruhead);
@@ -469,7 +469,7 @@ nfssvc_addsock(fp, mynam)
 	fp->f_count++;
 	slp->ns_fp = fp;
 	s = splsoftnet();
-	so->so_upcallarg = (caddr_t)slp;
+	so->so_upcallarg = (void *)slp;
 	so->so_upcall = nfsrv_rcv;
 	so->so_rcv.sb_flags |= SB_UPCALL;
 	slp->ns_flag = (SLP_VALID | SLP_NEEDQ);
@@ -485,7 +485,7 @@ nfssvc_addsock(fp, mynam)
 int
 nfssvc_nfsd(nsd, argp, l)
 	struct nfsd_srvargs *nsd;
-	caddr_t argp;
+	void *argp;
 	struct lwp *l;
 {
 	struct timeval tv;
@@ -506,7 +506,7 @@ nfssvc_nfsd(nsd, argp, l)
 	if (nfsd == (struct nfsd *)0) {
 		nsd->nsd_nfsd = nfsd = (struct nfsd *)
 			malloc(sizeof (struct nfsd), M_NFSD, M_WAITOK);
-		memset((caddr_t)nfsd, 0, sizeof (struct nfsd));
+		memset((void *)nfsd, 0, sizeof (struct nfsd));
 		nfsd->nfsd_procp = p;
 		simple_lock(&nfsd_slock);
 		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
@@ -787,7 +787,7 @@ done:
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	simple_unlock(&nfsd_slock);
 	splx(s);
-	free((caddr_t)nfsd, M_NFSD);
+	free((void *)nfsd, M_NFSD);
 	nsd->nsd_nfsd = (struct nfsd *)0;
 	if (--nfs_numnfsd == 0)
 		nfsrv_init(true);	/* Reinitialize everything */
@@ -847,7 +847,7 @@ nfsrv_zapsock(slp)
 		TAILQ_REMOVE(&slp->ns_uidlruhead, nuidp, nu_lru);
 		if (nuidp->nu_flag & NU_NAM)
 			m_freem(nuidp->nu_nam);
-		free((caddr_t)nuidp, M_NFSUID);
+		free((void *)nuidp, M_NFSUID);
 	}
 	s = splsoftclock();
 	for (nwp = LIST_FIRST(&slp->ns_tq); nwp; nwp = nnwp) {
@@ -1154,7 +1154,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 
 	while ((nmp->nm_iflag & NFSMNT_WAITAUTH) == 0) {
 		nmp->nm_iflag |= NFSMNT_WANTAUTH;
-		(void) tsleep((caddr_t)&nmp->nm_authtype, PSOCK,
+		(void) tsleep((void *)&nmp->nm_authtype, PSOCK,
 			"nfsauth1", 2 * hz);
 		error = nfs_sigintr(nmp, rep, rep->r_lwp);
 		if (error) {
@@ -1168,13 +1168,13 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	nmp->nm_verfstr = verf_str;
 	nmp->nm_verflen = *verf_len;
 	nmp->nm_authuid = kauth_cred_geteuid(cred);
-	wakeup((caddr_t)&nmp->nm_authstr);
+	wakeup((void *)&nmp->nm_authstr);
 
 	/*
 	 * And wait for mount_nfs to do its stuff.
 	 */
 	while ((nmp->nm_iflag & NFSMNT_HASAUTH) == 0 && error == 0) {
-		(void) tsleep((caddr_t)&nmp->nm_authlen, PSOCK,
+		(void) tsleep((void *)&nmp->nm_authlen, PSOCK,
 			"nfsauth2", 2 * hz);
 		error = nfs_sigintr(nmp, rep, rep->r_lwp);
 	}
@@ -1183,7 +1183,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 		error = EAUTH;
 	}
 	if (error)
-		free((caddr_t)*auth_str, M_TEMP);
+		free((void *)*auth_str, M_TEMP);
 	else {
 		*auth_len = nmp->nm_authlen;
 		*verf_len = nmp->nm_verflen;
@@ -1193,7 +1193,7 @@ nfs_getauth(nmp, rep, cred, auth_str, auth_len, verf_str, verf_len, key)
 	nmp->nm_iflag |= NFSMNT_WAITAUTH;
 	if (nmp->nm_iflag & NFSMNT_WANTAUTH) {
 		nmp->nm_iflag &= ~NFSMNT_WANTAUTH;
-		wakeup((caddr_t)&nmp->nm_authtype);
+		wakeup((void *)&nmp->nm_authtype);
 	}
 	return (error);
 }

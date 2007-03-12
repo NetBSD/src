@@ -1,4 +1,4 @@
-$NetBSD: ediddevs,v 1.1 2006/05/11 01:49:53 gdamore Exp $
+$NetBSD: ediddevs,v 1.1.26.1 2007/03/12 05:57:48 rmind Exp $
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,6 +70,7 @@ vendor	NAN	Nanao
 vendor	NEC	NEC
 vendor	NOK	Nokia Data
 vendor	PHL	Philips
+vendor	REL	Relisys
 vendor	SAM	Samsung
 vendor	SGI	SGI
 vendor	SNY	Sony

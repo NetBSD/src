@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.151.2.1 2007/02/27 16:54:25 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.151.2.2 2007/03/12 05:58:37 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.151.2.1 2007/02/27 16:54:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.151.2.2 2007/03/12 05:58:37 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -188,7 +188,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		if (error) {
 			break;
 		}
-		iov->iov_base = (caddr_t)iov->iov_base + cnt;
+		iov->iov_base = (char *)iov->iov_base + cnt;
 		iov->iov_len -= cnt;
 		uio->uio_resid -= cnt;
 		uio->uio_offset += cnt;
@@ -242,7 +242,7 @@ again:
 	} else {
 		*(char *)iov->iov_base = c;
 	}
-	iov->iov_base = (caddr_t)iov->iov_base + 1;
+	iov->iov_base = (char *)iov->iov_base + 1;
 	iov->iov_len--;
 	uio->uio_resid--;
 	uio->uio_offset++;
@@ -1384,8 +1384,13 @@ trace_enter(struct lwp *l, register_t code,
 #endif
 
 #ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE))
-		return systrace_enter(l, code, args);
+	if (ISSET(p->p_flag, PK_SYSTRACE)) {
+		int error;
+		KERNEL_LOCK(1, l);
+		error = systrace_enter(l, code, args);
+		KERNEL_UNLOCK_ONE(l);
+		return error;
+	}
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
 	return 0;
@@ -1424,7 +1429,7 @@ trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
 	if (ISSET(p->p_flag, PK_SYSTRACE)) {
 		KERNEL_LOCK(1, l);
 		systrace_exit(l, code, args, rval, error);
-		KERNEL_UNLOCK_LAST(l);
+		KERNEL_UNLOCK_ONE(l);
 	}
 #endif
 #endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.61 2006/03/29 18:17:36 thorpej Exp $ */
+/*      $NetBSD: if_qe.c,v 1.61.14.1 2007/03/12 05:56:49 rmind Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.61 2006/03/29 18:17:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.61.14.1 2007/03/12 05:56:49 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -110,7 +110,7 @@ static	void	qeattach(struct device *, struct device *, void *);
 static	void	qeinit(struct qe_softc *);
 static	void	qestart(struct ifnet *);
 static	void	qeintr(void *);
-static	int	qeioctl(struct ifnet *, u_long, caddr_t);
+static	int	qeioctl(struct ifnet *, u_long, void *);
 static	int	qe_add_rxbuf(struct qe_softc *, int);
 static	void	qe_setup(struct qe_softc *);
 static	void	qetimeout(struct ifnet *);
@@ -163,7 +163,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	 * so that the DEQNA has a reason to interrupt.
 	 */
 	ui.ui_size = PROBESIZE;
-	ui.ui_vaddr = (caddr_t)&ring[0];
+	ui.ui_vaddr = (void *)&ring[0];
 	if ((error = uballoc((void *)parent, &ui, UBA_CANTWAIT)))
 		return 0;
 
@@ -646,7 +646,7 @@ qeintr(void *arg)
  * Process an ioctl request.
  */
 int
-qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.69.2.1 2007/02/27 16:55:05 yamt Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.69.2.2 2007/03/12 06:00:01 rmind Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.69.2.1 2007/02/27 16:55:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.69.2.2 2007/03/12 06:00:01 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -356,7 +356,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	struct ip6_moptions im6o;
 	int icmp6len;
 	int maxlen;
-	caddr_t mac;
+	void *mac;
 	struct route_in6 ro;
 
 	memset(&ro, 0, sizeof(ro));
@@ -511,10 +511,10 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((caddr_t)nd_opt, optlen);
+		bzero((void *)nd_opt, optlen);
 		nd_opt->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (caddr_t)(nd_opt + 1), ifp->if_addrlen);
+		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
 	}
 
 	ip6->ip6_plen = htons((u_int16_t)icmp6len);
@@ -867,7 +867,7 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	struct sockaddr_in6 dst_sa;
 	struct in6_addr *src, daddr6;
 	int icmp6len, maxlen, error;
-	caddr_t mac;
+	void *mac;
 	struct route_in6 ro;
 
 	mac = NULL;
@@ -985,10 +985,10 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
-		bzero((caddr_t)nd_opt, optlen);
+		bzero((void *)nd_opt, optlen);
 		nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
 		nd_opt->nd_opt_len = optlen >> 3;
-		bcopy(mac, (caddr_t)(nd_opt + 1), ifp->if_addrlen);
+		bcopy(mac, (void *)(nd_opt + 1), ifp->if_addrlen);
 	} else
 		flags &= ~ND_NA_FLAG_OVERRIDE;
 
@@ -1013,7 +1013,7 @@ nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
 	return;
 }
 
-caddr_t
+void *
 nd6_ifptomac(ifp)
 	struct ifnet *ifp;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.7 2005/11/25 16:16:46 thorpej Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.7.26.1 2007/03/12 06:00:50 rmind Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -111,9 +111,9 @@ struct session_op {
 	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
 
 	u_int32_t	keylen;		/* cipher key */
-	caddr_t		key;
+	void *		key;
 	int		mackeylen;	/* mac key */
-	caddr_t		mackey;
+	void *		mackey;
 
   	u_int32_t	ses;		/* returns: session # */
 };
@@ -126,16 +126,16 @@ struct crypt_op {
 	u_int16_t	flags;
 #define	COP_F_BATCH 	0x0008		/* Dispatch as quickly as possible */
 	u_int		len;
-	caddr_t		src, dst;	/* become iov[] inside kernel */
-	caddr_t		mac;		/* must be big enough for chosen MAC */
-	caddr_t		iv;
+	void *		src, *dst;	/* become iov[] inside kernel */
+	void *		mac;		/* must be big enough for chosen MAC */
+	void *		iv;
 };
 
 #define CRYPTO_MAX_MAC_LEN	20
 
 /* bignum parameter, in packed bytes, ... */
 struct crparam {
-	caddr_t		crp_p;
+	void *		crp_p;
 	u_int		crp_nbits;
 };
 
@@ -211,7 +211,7 @@ struct cryptoini {
 	int		cri_alg;	/* Algorithm to use */
 	int		cri_klen;	/* Key length, in bits */
 	int		cri_rnd;	/* Algorithm rounds, where relevant */
-	caddr_t		cri_key;	/* key to use */
+	char	       *cri_key;	/* key to use */
 	u_int8_t	cri_iv[EALG_MAX_BLOCK_LEN];	/* IV to use */
 	struct cryptoini *cri_next;
 };
@@ -268,13 +268,13 @@ struct cryptop {
 #define	CRYPTO_F_DONE		0x0020	/* Operation completed */
 #define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
 
-	caddr_t		crp_buf;	/* Data to be processed */
-	caddr_t		crp_opaque;	/* Opaque pointer, passed along */
+	void *		crp_buf;	/* Data to be processed */
+	void *		crp_opaque;	/* Opaque pointer, passed along */
 	struct cryptodesc *crp_desc;	/* Linked list of processing descriptors */
 
 	int (*crp_callback)(struct cryptop *); /* Callback function */
 
-	caddr_t		crp_mac;
+	void *		crp_mac;
 	struct timespec	crp_tstamp;	/* performance time stamp */
 };
 
@@ -367,10 +367,10 @@ extern	void crypto_done(struct cryptop *crp);
 extern	void crypto_kdone(struct cryptkop *);
 extern	int crypto_getfeat(int *);
 
-void	cuio_copydata(struct uio *, int, int, caddr_t);
-void	cuio_copyback(struct uio *, int, int, caddr_t);
+void	cuio_copydata(struct uio *, int, int, void *);
+void	cuio_copyback(struct uio *, int, int, void *);
 int	cuio_apply(struct uio *, int, int,
-	    int (*f)(caddr_t, caddr_t, unsigned int), caddr_t);
+	    int (*f)(void *, void *, unsigned int), void *);
 
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
@@ -399,8 +399,8 @@ struct mbuf;
 struct	mbuf	*m_getptr(struct mbuf *, int, int *);
 
 struct uio;
-extern	void cuio_copydata(struct uio* uio, int off, int len, caddr_t cp);
-extern	void cuio_copyback(struct uio* uio, int off, int len, caddr_t cp);
+extern	void cuio_copydata(struct uio* uio, int off, int len, void *cp);
+extern	void cuio_copyback(struct uio* uio, int off, int len, void *cp);
 #ifdef __FreeBSD__
 extern struct iovec *cuio_getptr(struct uio *uio, int loc, int *off);
 #else
@@ -409,7 +409,7 @@ extern int	cuio_getptr(struct uio *, int loc, int *off);
 
 #ifdef __FreeBSD__	/* Standalone m_apply()/m_getptr() */
 extern  int m_apply(struct mbuf *m, int off, int len,
-                    int (*f)(caddr_t, caddr_t, unsigned int), caddr_t fstate);
+                    int (*f)(void *, void *, unsigned int), void *fstate);
 extern  struct mbuf * m_getptr(struct mbuf *m, int loc, int *off);
 #endif	/* Standalone m_apply()/m_getptr() */
 

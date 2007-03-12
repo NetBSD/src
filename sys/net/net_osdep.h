@@ -1,4 +1,4 @@
-/*	$NetBSD: net_osdep.h,v 1.16 2007/01/04 19:07:03 elad Exp $	*/
+/*	$NetBSD: net_osdep.h,v 1.16.2.1 2007/03/12 05:59:15 rmind Exp $	*/
 /*	$KAME: net_osdep.h,v 1.51 2001/07/06 06:21:43 itojun Exp $	*/
 
 /*
@@ -104,7 +104,7 @@
  *
  * - bpf:
  *	OpenBSD, NetBSD 1.5, BSDI [34]
- *		need caddr_t * (= if_bpf **) and struct ifnet *
+ *		need void ** (= if_bpf **) and struct ifnet *
  *	FreeBSD 2, FreeBSD 3, NetBSD post-1.5N
  *		need only struct ifnet * as argument
  *

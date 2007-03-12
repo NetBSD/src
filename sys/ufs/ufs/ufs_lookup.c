@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.87 2007/02/09 21:55:42 ad Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.87.2.1 2007/03/12 06:01:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.87 2007/02/09 21:55:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.87.2.1 2007/03/12 06:01:11 rmind Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -803,8 +803,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			}
 		}
 		blkoff = dp->i_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
-		memcpy((caddr_t)bp->b_data + blkoff, (caddr_t)dirp,
-		    newentrysize);
+		memcpy((char *)bp->b_data + blkoff, dirp, newentrysize);
 #ifdef UFS_DIRHASH
 		if (dp->i_dirhash != NULL) {
 			ufsdirhash_newblk(dp, dp->i_offset);
@@ -823,7 +822,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 			blkoff += dirblksiz;
 			while (blkoff < bp->b_bcount) {
 				((struct direct *)
-				   (bp->b_data + blkoff))->d_reclen = dirblksiz;
+				   ((char *)bp->b_data + blkoff))->d_reclen = dirblksiz;
 				blkoff += dirblksiz;
 			}
 			if (softdep_setup_directory_add(bp, dp, dp->i_offset,
@@ -935,9 +934,9 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 #endif
 		if (DOINGSOFTDEP(dvp))
 			softdep_change_directoryentry_offset(dp, dirbuf,
-			    (caddr_t)nep, (caddr_t)ep, dsize);
+			    (void *)nep, (void *)ep, dsize);
 		else
-			memcpy((caddr_t)ep, (caddr_t)nep, dsize);
+			memcpy((void *)ep, (void *)nep, dsize);
 	}
 	/*
 	 * Here, `ep' points to a directory entry containing `dsize' in-use
@@ -979,7 +978,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 	    dirp->d_reclen == spacefree))
 		ufsdirhash_add(dp, dirp, dp->i_offset + ((char *)ep - dirbuf));
 #endif
-	memcpy((caddr_t)ep, (caddr_t)dirp, (u_int)newentrysize);
+	memcpy((void *)ep, (void *)dirp, (u_int)newentrysize);
 #ifdef UFS_DIRHASH
 	if (dp->i_dirhash != NULL)
 		ufsdirhash_checkblock(dp, dirbuf -
@@ -988,7 +987,7 @@ ufs_direnter(struct vnode *dvp, struct vnode *tvp, struct direct *dirp,
 #endif
 	if (DOINGSOFTDEP(dvp)) {
 		softdep_setup_directory_add(bp, dp,
-		    dp->i_offset + (caddr_t)ep - dirbuf,
+		    dp->i_offset + (char *)ep - dirbuf,
 			ufs_rw32(dirp->d_ino, needswap), newdirbp, 0);
 		bdwrite(bp);
 	} else {
@@ -1187,7 +1186,7 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 
 	for (off = 0; off < ip->i_size;
 	    off += ufs_rw16(dp->d_reclen, needswap)) {
-		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
+		error = vn_rdwr(UIO_READ, ITOV(ip), (void *)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, NULL);
 		/*
 		 * Since we read MINDIRSIZ, residual must
@@ -1261,7 +1260,7 @@ ufs_checkpath(struct inode *source, struct inode *target, kauth_cred_t cred)
 			error = ENOTDIR;
 			break;
 		}
-		error = vn_rdwr(UIO_READ, vp, (caddr_t)&dirbuf,
+		error = vn_rdwr(UIO_READ, vp, (void *)&dirbuf,
 		    sizeof (struct dirtemplate), (off_t)0, UIO_SYSSPACE,
 		    IO_NODELOCKED, cred, NULL, NULL);
 		if (error != 0)

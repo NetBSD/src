@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.13 2006/11/16 01:33:31 christos Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.13.4.1 2007/03/12 05:57:51 rmind Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.13 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.13.4.1 2007/03/12 05:57:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ wsfontclose(dev_t dev, int flag, int mode,
 }
 
 static int
-wsfontioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
+wsfontioctl(dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	char nbuf[16];

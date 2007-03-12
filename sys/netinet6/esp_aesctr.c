@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_aesctr.c,v 1.5 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: esp_aesctr.c,v 1.5.4.1 2007/03/12 05:59:55 rmind Exp $	*/
 /*	$KAME: esp_aesctr.c,v 1.2 2003/07/20 00:29:37 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.5 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_aesctr.c,v 1.5.4.1 2007/03/12 05:59:55 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ esp_aesctr_decrypt(m, off, sav, algo, ivlen)
 			sp = mtod(s, u_int8_t *) + sn;
 		} else {
 			/* body is non-continuous */
-			m_copydata(s, sn, blocklen, (caddr_t)sbuf);
+			m_copydata(s, sn, blocklen, (void *)sbuf);
 			sp = sbuf;
 		}
 
@@ -387,7 +387,7 @@ esp_aesctr_encrypt(
 			sp = mtod(s, u_int8_t *) + sn;
 		} else {
 			/* body is non-continuous */
-			m_copydata(s, sn, blocklen, (caddr_t)sbuf);
+			m_copydata(s, sn, blocklen, (void *)sbuf);
 			sp = sbuf;
 		}
 

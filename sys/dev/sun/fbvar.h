@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.10 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: fbvar.h,v 1.10.26.1 2007/03/12 05:57:12 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@ struct fbdriver {
 	void	(*fbd_unblank)(struct device *);
 	int	(*fbd_open)(dev_t, int, int, struct lwp *);
 	int	(*fbd_close)(dev_t, int, int, struct lwp *);
-	int	(*fbd_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
+	int	(*fbd_ioctl)(dev_t, u_long, void *, int, struct lwp *);
 	int	(*fbd_poll)(dev_t, int, struct lwp *);
 	paddr_t	(*fbd_mmap)(dev_t, off_t, int);
 	int	(*fbd_kqfilter)(dev_t, struct knote *);
@@ -74,7 +74,7 @@ struct fbdriver {
 struct fbdevice {
 	int	fb_major;		/* XXX */
 	struct	fbtype fb_type;		/* what it says */
-	caddr_t	fb_pixels;		/* display RAM */
+	void *	fb_pixels;		/* display RAM */
 	int	fb_linebytes;		/* bytes per display line */
 
 	struct	fbdriver *fb_driver;	/* pointer to driver */

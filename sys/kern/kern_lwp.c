@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.55.2.6 2007/03/09 15:16:24 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.55.2.7 2007/03/12 05:58:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.6 2007/03/09 15:16:24 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.55.2.7 2007/03/12 05:58:35 rmind Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -1121,10 +1121,11 @@ lwp_userret(struct lwp *l)
 	while ((l->l_flag & LW_USERRET) != 0) {
 		/*
 		 * Process pending signals first, unless the process
-		 * is dumping core, where we will instead enter the 
-		 * L_WSUSPEND case below.
+		 * is dumping core or exiting, where we will instead
+		 * enter the L_WSUSPEND case below.
 		 */
-		if ((l->l_flag & (LW_PENDSIG | LW_WCORE)) == LW_PENDSIG) {
+		if ((l->l_flag & (LW_PENDSIG | LW_WCORE | LW_WEXIT)) ==
+		    LW_PENDSIG) {
 			KERNEL_LOCK(1, l);	/* XXXSMP pool_put() below */
 			mutex_enter(&p->p_smutex);
 			while ((sig = issignal(l)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.260.2.1 2007/02/27 16:54:56 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.260.2.2 2007/03/12 05:59:38 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.260.2.1 2007/02/27 16:54:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.260.2.2 2007/03/12 05:59:38 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -804,7 +804,7 @@ tcp6_input(struct mbuf **mp, int *offp, int proto)
 		}
 		ip6 = mtod(m, struct ip6_hdr *);
 		icmp6_error(m, ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR,
-		    (caddr_t)&ip6->ip6_dst - (caddr_t)ip6);
+		    (char *)&ip6->ip6_dst - (char *)ip6);
 		return IPPROTO_DONE;
 	}
 
@@ -1372,7 +1372,7 @@ findpcb:
 				MCLAIM(m, &tcp_mowner);
 				tcp_saveti->m_len = iphlen;
 				m_copydata(m, 0, iphlen,
-				    mtod(tcp_saveti, caddr_t));
+				    mtod(tcp_saveti, void *));
 			}
 
 			if (M_TRAILINGSPACE(tcp_saveti) < sizeof(struct tcphdr)) {
@@ -1380,7 +1380,7 @@ findpcb:
 				tcp_saveti = NULL;
 			} else {
 				tcp_saveti->m_len += sizeof(struct tcphdr);
-				bcopy(th, mtod(tcp_saveti, caddr_t) + iphlen,
+				memcpy(mtod(tcp_saveti, char *) + iphlen, th,
 				    sizeof(struct tcphdr));
 			}
 	nosave:;
@@ -2727,7 +2727,7 @@ drop:
 
 #ifdef TCP_SIGNATURE
 int
-tcp_signature_apply(void *fstate, caddr_t data, u_int len)
+tcp_signature_apply(void *fstate, void *data, u_int len)
 {
 
 	MD5Update(fstate, (u_char *)data, len);
@@ -2777,12 +2777,12 @@ tcp_signature_getsav(struct mbuf *m, struct tcphdr *th)
 	sav = KEY_ALLOCSA(&dst, IPPROTO_TCP, htonl(TCP_SIG_SPI));
 #else
 	if (ip)
-		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
-		    (caddr_t)&ip->ip_dst, IPPROTO_TCP,
+		sav = key_allocsa(AF_INET, (void *)&ip->ip_src,
+		    (void *)&ip->ip_dst, IPPROTO_TCP,
 		    htonl(TCP_SIG_SPI), 0, 0);
 	else
-		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
-		    (caddr_t)&ip6->ip6_dst, IPPROTO_TCP,
+		sav = key_allocsa(AF_INET6, (void *)&ip6->ip6_src,
+		    (void *)&ip6->ip6_dst, IPPROTO_TCP,
 		    htonl(TCP_SIG_SPI), 0, 0);
 #endif
 
@@ -2867,7 +2867,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 	u_int16_t mss;
 	int opt, optlen = 0;
 #ifdef TCP_SIGNATURE
-	caddr_t sigp = NULL;
+	void *sigp = NULL;
 	char sigbuf[TCP_SIGLEN];
 	struct secasvar *sav = NULL;
 #endif
@@ -3066,7 +3066,7 @@ tcp_pulloutofband(struct socket *so, struct tcphdr *th,
 
 	while (cnt >= 0) {
 		if (m->m_len > cnt) {
-			char *cp = mtod(m, caddr_t) + cnt;
+			char *cp = mtod(m, char *) + cnt;
 			struct tcpcb *tp = sototcpcb(so);
 
 			tp->t_iobc = *cp;
@@ -3646,7 +3646,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 		goto resetandabort;
 	MCLAIM(am, &tcp_mowner);
 	am->m_len = src->sa_len;
-	bcopy(src, mtod(am, caddr_t), src->sa_len);
+	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
 		if (in_pcbconnect(inp, am, NULL)) {
 			(void) m_free(am);

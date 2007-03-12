@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.108 2006/11/26 05:01:09 itohy Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.108.4.1 2007/03/12 05:57:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ struct scsipi_adapter {
 		    scsipi_adapter_req_t, void *);
 	void	(*adapt_minphys)(struct buf *);
 	int	(*adapt_ioctl)(struct scsipi_channel *, u_long,
-		    caddr_t, int, struct proc *);
+		    void *, int, struct proc *);
 	int	(*adapt_enable)(struct device *, int);
 	int	(*adapt_getgeom)(struct scsipi_periph *,
 			struct disk_parms *, u_long);
@@ -663,7 +663,7 @@ int	scsipi_thread_call_callback(struct scsipi_channel *,
 	    void *);
 void	scsipi_async_event(struct scsipi_channel *,
 	    scsipi_async_event_t, void *);
-int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, caddr_t,
+int	scsipi_do_ioctl(struct scsipi_periph *, dev_t, u_long, void *,
 	    int, struct lwp *);
 
 void	scsipi_print_xfer_mode(struct scsipi_periph *);

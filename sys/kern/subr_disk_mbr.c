@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.23.2.1 2007/02/27 16:54:27 yamt Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.23.2.2 2007/03/12 05:58:40 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.23.2.1 2007/02/27 16:54:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.23.2.2 2007/03/12 05:58:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,13 +432,13 @@ validate_label(mbr_args_t *a, uint label_sector)
 	 * the disk sector, and (IIRC) labels within 8k of the disk start.
 	 */
 	dlp = (void *)a->bp->b_data;
-	dlp_lim = a->bp->b_data + a->bp->b_bcount - sizeof *dlp;
+	dlp_lim = (char *)a->bp->b_data + a->bp->b_bcount - sizeof *dlp;
 	for (;; dlp = (void *)((char *)dlp + sizeof(long))) {
 		if ((char *)dlp > dlp_lim) {
 			if (a->action != WRITE_LABEL)
 				return SCAN_CONTINUE;
 			/* Write at arch. dependant default location */
-			dlp_byte = a->bp->b_data + LABELOFFSET;
+			dlp_byte = (char *)a->bp->b_data + LABELOFFSET;
 			if (label_sector)
 				dlp_byte += MBR_LABELSECTOR * a->lp->d_secsize;
 			else

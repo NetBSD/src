@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.19 2006/03/29 04:16:50 thorpej Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.19.14.1 2007/03/12 05:57:06 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.19 2006/03/29 04:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.19.14.1 2007/03/12 05:57:06 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map pixels\n", self->dv_xname);
 		return;
 	}
-	sc->sc_fb.fb_pixels = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh);
+	sc->sc_fb.fb_pixels = (void *)bus_space_vaddr(sa->sa_bustag, bh);
 
 	cg6attach(sc, name, isconsole);
 }

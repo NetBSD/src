@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l2.c,v 1.21 2007/01/24 13:08:15 hubertf Exp $ */
+/* $NetBSD: i4b_l2.c,v 1.21.2.1 2007/03/12 06:00:13 rmind Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *      i4b_l2.c - ISDN layer 2 (Q.921)
  *	-------------------------------
  *
- *	$Id: i4b_l2.c,v 1.21 2007/01/24 13:08:15 hubertf Exp $
+ *	$Id: i4b_l2.c,v 1.21.2.1 2007/03/12 06:00:13 rmind Exp $
  *
  * $FreeBSD$
  *
@@ -38,7 +38,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.21 2007/01/24 13:08:15 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2.c,v 1.21.2.1 2007/03/12 06:00:13 rmind Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"
@@ -280,7 +280,7 @@ isdn_layer2_status_ind(l2_softc_t *l2sc, struct isdn_l3_driver *drv, int status,
 /*---------------------------------------------------------------------------*
  *	MDL_COMMAND_REQ from layer 3
  *---------------------------------------------------------------------------*/
-int i4b_mdl_command_req(struct isdn_l3_driver *drv, int command, void * parm)
+int i4b_mdl_command_req(struct isdn_l3_driver *drv, int command, void *parm)
 {
 	struct l2_softc *sc = (l2_softc_t*)drv->l1_token;
 

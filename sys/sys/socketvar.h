@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.92 2006/12/08 00:23:08 christos Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.92.2.1 2007/03/12 06:00:54 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -122,8 +122,8 @@ struct socket {
 	struct sockbuf	so_rcv;		/* receive buffer */
 
 	void		*so_internal;	/* Space for svr4 stream data */
-	void		(*so_upcall) (struct socket *, caddr_t, int);
-	caddr_t		so_upcallarg;	/* Arg for above */
+	void		(*so_upcall) (struct socket *, void *, int);
+	void *		so_upcallarg;	/* Arg for above */
 	int		(*so_send) (struct socket *, struct mbuf *,
 					struct uio *, struct mbuf *,
 					struct mbuf *, int, struct lwp *);
@@ -236,7 +236,7 @@ do {									\
 	(sb)->sb_flags &= ~SB_LOCK;					\
 	if ((sb)->sb_flags & SB_WANT) {					\
 		(sb)->sb_flags &= ~SB_WANT;				\
-		wakeup((caddr_t)&(sb)->sb_flags);			\
+		wakeup((void *)&(sb)->sb_flags);			\
 	}								\
 } while (/* CONSTCOND */ 0)
 
@@ -291,7 +291,7 @@ void	sbappendrecord(struct sockbuf *, struct mbuf *);
 void	sbcheck(struct sockbuf *);
 void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);
 struct mbuf *
-	sbcreatecontrol(caddr_t, int, int, int);
+	sbcreatecontrol(void *, int, int, int);
 void	sbdrop(struct sockbuf *, int);
 void	sbdroprecord(struct sockbuf *);
 void	sbflush(struct sockbuf *);
@@ -336,7 +336,7 @@ void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
 int	sendit(struct lwp *, int, struct msghdr *, int, register_t *);
-int	recvit(struct lwp *, int, struct msghdr *, caddr_t, register_t *);
+int	recvit(struct lwp *, int, struct msghdr *, void *, register_t *);
 
 #ifdef SOCKBUF_DEBUG
 /*
@@ -359,7 +359,7 @@ void	sblastmbufchk(struct sockbuf *, const char *);
 /* sosend loan */
 vaddr_t	sokvaalloc(vsize_t, struct socket *);
 void	sokvafree(vaddr_t, vsize_t);
-void	soloanfree(struct mbuf *, caddr_t, size_t, void *);
+void	soloanfree(struct mbuf *, void *, size_t, void *);
 
 /*
  * Values for socket-buffer-append priority argument to sbappendaddrchain().

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.h,v 1.4 2001/10/04 15:58:55 oster Exp $	*/
+/*	$NetBSD: rf_paritylog.h,v 1.4.72.1 2007/03/12 05:56:54 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,7 +54,7 @@ struct RF_CommonLogData_s {
 	void   *wakeArg;
 	RF_AccTraceEntry_t *tracerec;
 	RF_Etimer_t startTime;
-	caddr_t bufPtr;
+	void *bufPtr;
 	RF_ParityRecordType_t operation;
 	RF_CommonLogData_t *next;
 };
@@ -84,7 +84,7 @@ struct RF_ParityLog_s {
 	int     numRecords;
 	int     diskOffset;
 	RF_ParityLogRecord_t *records;
-	caddr_t bufPtr;
+	void *bufPtr;
 	RF_ParityLog_t *next;
 };
 
@@ -101,7 +101,7 @@ struct RF_RegionBufferQueue_s {
 	int     availableBuffers;	/* num available 'buffers' */
 	int     emptyBuffersIndex;	/* stick next freed buffer here */
 	int     availBuffersIndex;	/* grab next buffer from here */
-	caddr_t *buffers;	/* array buffers used to hold parity */
+	void **buffers;	/* array buffers used to hold parity */
 };
 #define RF_PLOG_CREATED   (1<<0)/* thread is created */
 #define RF_PLOG_RUNNING   (1<<1)/* thread is running */
@@ -165,7 +165,7 @@ struct RF_RegionInfo_s {
 
 RF_ParityLogData_t *
 rf_CreateParityLogData(RF_ParityRecordType_t operation,
-    RF_PhysDiskAddr_t * pda, caddr_t bufPtr, RF_Raid_t * raidPtr,
+    RF_PhysDiskAddr_t * pda, void *bufPtr, RF_Raid_t * raidPtr,
     int (*wakeFunc) (RF_DagNode_t * node, int status),
     void *wakeArg, RF_AccTraceEntry_t * tracerec,
     RF_Etimer_t startTime);

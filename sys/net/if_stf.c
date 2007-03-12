@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.56.2.1 2007/02/27 16:54:44 yamt Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.56.2.2 2007/03/12 05:59:14 rmind Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.56.2.1 2007/02/27 16:54:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.56.2.2 2007/03/12 05:59:14 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -178,7 +178,7 @@ static int stf_checkaddr4(struct stf_softc *, const struct in_addr *,
 static int stf_checkaddr6(struct stf_softc *, const struct in6_addr *,
 	struct ifnet *);
 static void stf_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
-static int stf_ioctl(struct ifnet *, u_long, caddr_t);
+static int stf_ioctl(struct ifnet *, u_long, void *);
 
 /* ARGSUSED */
 void
@@ -266,7 +266,7 @@ stf_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	if (proto != IPPROTO_IPV6)
 		return 0;
 
-	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (void *)&ip);
 
 	if (ip.ip_v != 4)
 		return 0;
@@ -686,7 +686,7 @@ stf_rtrequest(int cmd, struct rtentry *rt,
 }
 
 static int
-stf_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp		*l = curlwp;	/* XXX */
 	struct ifaddr		*ifa;

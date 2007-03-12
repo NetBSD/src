@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfsmount.h,v 1.12 2006/11/25 12:17:30 scw Exp $	*/
+/*	$NetBSD: msdosfsmount.h,v 1.12.4.1 2007/03/12 05:58:11 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -160,7 +160,7 @@ struct msdosfsmount {
  * Convert pointer to buffer -> pointer to direntry
  */
 #define	bptoep(pmp, bp, dirofs) \
-	((struct direntry *)(((bp)->b_data)	\
+	((struct direntry *)(((char *)(bp)->b_data)	\
 	 + ((dirofs) & (pmp)->pm_crbomask)))
 
 /*

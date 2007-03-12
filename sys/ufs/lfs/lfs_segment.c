@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.196.2.1 2007/02/27 16:55:22 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.196.2.2 2007/03/12 06:01:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196.2.1 2007/02/27 16:55:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.196.2.2 2007/03/12 06:01:08 rmind Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1335,11 +1335,11 @@ lfs_gather(struct lfs *fs, struct segment *sp, struct vnode *vp,
 #ifndef LFS_NO_BACKBUF_HACK
 /* This is a hack to see if ordering the blocks in LFS makes a difference. */
 # define	BUF_OFFSET	\
-	(((caddr_t)&LIST_NEXT(bp, b_vnbufs)) - (caddr_t)bp)
+	(((char *)&LIST_NEXT(bp, b_vnbufs)) - (char *)bp)
 # define	BACK_BUF(BP)	\
-	((struct buf *)(((caddr_t)(BP)->b_vnbufs.le_prev) - BUF_OFFSET))
+	((struct buf *)(((char *)(BP)->b_vnbufs.le_prev) - BUF_OFFSET))
 # define	BEG_OF_LIST	\
-	((struct buf *)(((caddr_t)&LIST_FIRST(&vp->v_dirtyblkhd)) - BUF_OFFSET))
+	((struct buf *)(((char *)&LIST_FIRST(&vp->v_dirtyblkhd)) - BUF_OFFSET))
 
 loop:
 	/* Find last buffer. */
@@ -1796,7 +1796,7 @@ lfs_initseg(struct lfs *fs)
 	ssp->ss_magic = SS_MAGIC;
 
 	/* Set pointer to first FINFO, initialize it. */
-	sp->fip = (struct finfo *)((caddr_t)sp->segsum + SEGSUM_SIZE(fs));
+	sp->fip = (struct finfo *)((char *)sp->segsum + SEGSUM_SIZE(fs));
 	sp->fip->fi_nblocks = 0;
 	sp->start_lbp = &sp->fip->fi_blocks[0];
 	sp->fip->fi_lastlength = 0;
@@ -2002,11 +2002,11 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 
 #ifdef DEBUG
 	/* Check for zero-length and zero-version FINFO entries. */
-	fip = (struct finfo *)((caddr_t)ssp + SEGSUM_SIZE(fs));
+	fip = (struct finfo *)((char *)ssp + SEGSUM_SIZE(fs));
 	for (findex = 0; findex < ssp->ss_nfinfo; findex++) {
 		KDASSERT(fip->fi_nblocks > 0);
 		KDASSERT(fip->fi_version > 0);
-		fip = (FINFO *)((caddr_t)fip + FINFOSIZE +
+		fip = (FINFO *)((char *)fip + FINFOSIZE +
 			sizeof(int32_t) * fip->fi_nblocks);
 	}
 #endif /* DEBUG */
@@ -2082,7 +2082,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			changed = 0;
 			/* XXX ondisk32 */
 			for (daddrp = (int32_t *)(newbp->b_data);
-			     daddrp < (int32_t *)(newbp->b_data +
+			     daddrp < (int32_t *)((char *)newbp->b_data +
 						  newbp->b_bcount); daddrp++) {
 				if (*daddrp == UNWRITTEN) {
 					++changed;
@@ -2145,7 +2145,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 #ifdef LFS_USE_B_INVAL
 			if (((*bpp)->b_flags & (B_CALL | B_INVAL)) ==
 			    (B_CALL | B_INVAL)) {
-				if (copyin((caddr_t)(*bpp)->b_saveaddr +
+				if (copyin((void *)(*bpp)->b_saveaddr +
 					   byteoffset, dp, el_size)) {
 					panic("lfs_writeseg: copyin failed [1]:"
 						" ino %d blk %" PRId64,
@@ -2155,7 +2155,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			} else
 #endif /* LFS_USE_B_INVAL */
 			{
-				sum = lfs_cksum_part(
+				sum = lfs_cksum_part((char *)
 				    (*bpp)->b_data + byteoffset, el_size, sum);
 			}
 		}
@@ -2341,7 +2341,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	fs->lfs_cksum = lfs_sb_cksum(&(fs->lfs_dlfs));
 	bp = lfs_newbuf(fs, devvp,
 	    fsbtodb(fs, daddr), LFS_SBPAD, LFS_NB_SBLOCK);
-	memset(bp->b_data + sizeof(struct dlfs), 0,
+	memset((char *)bp->b_data + sizeof(struct dlfs), 0,
 	    LFS_SBPAD - sizeof(struct dlfs));
 	*(struct dlfs *)bp->b_data = fs->lfs_dlfs;
 
@@ -2832,7 +2832,7 @@ lfs_release_finfo(struct lfs *fs)
 	struct segment *sp = fs->lfs_sp;
 
 	if (sp->fip->fi_nblocks != 0) {
-		sp->fip = (FINFO*)((caddr_t)sp->fip + FINFOSIZE +
+		sp->fip = (FINFO*)((char *)sp->fip + FINFOSIZE +
 			sizeof(int32_t) * sp->fip->fi_nblocks);
 		sp->start_lbp = &sp->fip->fi_blocks[0];
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.12 2006/03/29 18:17:36 thorpej Exp $	*/
+/*	$NetBSD: rf.c,v 1.12.14.1 2007/03/12 05:56:49 rmind Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.12 2006/03/29 18:17:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.12.14.1 2007/03/12 05:56:49 rmind Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -151,7 +151,7 @@ struct rfc_softc {
 	bus_space_handle_t sc_ioh;	/* bus_space I/O handle */
 	bus_dma_tag_t sc_dmat;		/* bus_dma DMA tag */
 	bus_dmamap_t sc_dmam;		/* bus_dma DMA map */
-	caddr_t sc_bufidx;		/* current position in buffer data */
+	void *sc_bufidx;		/* current position in buffer data */
 	int sc_curchild;		/* child whos bufq is in work */
 	int sc_bytesleft;		/* bytes left to transfer */
 	u_int8_t type;			/* controller type, 1 or 2 */
@@ -735,7 +735,8 @@ rfc_intr(void *intarg)
 			}
 			if (rfc_sc->sc_bytesleft > i) {
 				rfc_sc->sc_bytesleft -= i;
-				rfc_sc->sc_bufidx += i;
+				rfc_sc->sc_bufidx =
+				    (char *)rfc_sc->sc_bufidx + i;
 			} else {
 				biodone(rfc_sc->sc_curbuf);
 				rf_sc = get_new_buf( rfc_sc);
@@ -777,7 +778,8 @@ rfc_intr(void *intarg)
 			}
 			if (rfc_sc->sc_bytesleft > i) {
 				rfc_sc->sc_bytesleft -= i;
-				rfc_sc->sc_bufidx += i;
+				rfc_sc->sc_bufidx =
+				    (char *)rfc_sc->sc_bufidx + i;
 			} else {
 				biodone(rfc_sc->sc_curbuf);
 				rf_sc = get_new_buf( rfc_sc);
@@ -938,7 +940,7 @@ rfc_intr(void *intarg)
 
 
 int
-rfdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+rfdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 
 	/* A 0.5MB floppy is much to small to take a system dump... */
@@ -1090,7 +1092,7 @@ rfwrite(dev_t dev, struct uio *uio, int ioflag)
 
 
 int
-rfioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
 	struct rf_softc *rf_sc;
 	int unit;

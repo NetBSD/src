@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.39 2007/02/09 21:55:30 ad Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.39.2.1 2007/03/12 05:57:49 rmind Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.39 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.39.2.1 2007/03/12 05:57:49 rmind Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -289,7 +289,7 @@ usl_attachtimeout(void *arg)
 }
 
 int
-wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
+wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	int idx, maxidx;
@@ -360,7 +360,7 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 
 int
 wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
-		     u_long cmd, caddr_t data, int flag, struct lwp *l)
+		     u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	int intarg = 0, res;

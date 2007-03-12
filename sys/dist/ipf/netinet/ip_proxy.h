@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.h,v 1.4 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_proxy.h,v 1.4.14.1 2007/03/12 05:57:56 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed.
@@ -455,6 +455,6 @@ extern	void	aps_free __P((ap_session_t *));
 extern	int	appr_check __P((fr_info_t *, struct nat *));
 extern	aproxy_t	*appr_lookup __P((u_int, char *));
 extern	int	appr_new __P((fr_info_t *, struct nat *));
-extern	int	appr_ioctl __P((caddr_t, ioctlcmd_t, int));
+extern	int	appr_ioctl __P((void *, ioctlcmd_t, int));
 
 #endif /* _NETINET_IP_PROXY_H_ */

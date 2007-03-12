@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.95.2.1 2007/02/27 16:54:45 yamt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.95.2.2 2007/03/12 05:59:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.95.2.1 2007/02/27 16:54:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.95.2.2 2007/03/12 05:59:14 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -71,7 +71,7 @@ static LIST_HEAD(, tun_softc) tun_softc_list;
 static LIST_HEAD(, tun_softc) tunz_softc_list;
 static struct simplelock tun_softc_lock;
 
-static int	tun_ioctl(struct ifnet *, u_long, caddr_t);
+static int	tun_ioctl(struct ifnet *, u_long, void *);
 static int	tun_output(struct ifnet *, struct mbuf *,
 			const struct sockaddr *, struct rtentry *rt);
 static int	tun_clone_create(struct if_clone *, int);
@@ -242,7 +242,7 @@ tun_clone_destroy(struct ifnet *ifp)
 
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
-		wakeup((caddr_t)tp);
+		wakeup((void *)tp);
 	}
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
@@ -420,7 +420,7 @@ tuninit(struct tun_softc *tp)
  * Process an ioctl request.
  */
 static int
-tun_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int		error = 0, s;
 	struct tun_softc *tp = (struct tun_softc *)(ifp->if_softc);
@@ -582,7 +582,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 	if (tp->tun_flags & TUN_RWAIT) {
 		tp->tun_flags &= ~TUN_RWAIT;
-		wakeup((caddr_t)tp);
+		wakeup((void *)tp);
 	}
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_IN, POLLIN|POLLRDNORM,
@@ -599,7 +599,7 @@ out:
  * the cdevsw interface is now pretty minimal.
  */
 int
-tunioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+tunioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct tun_softc *tp;
 	int s, error = 0;
@@ -743,7 +743,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 				goto out;
 			}
 			tp->tun_flags |= TUN_RWAIT;
-			if (ltsleep((caddr_t)tp, PZERO|PCATCH|PNORELOCK,
+			if (ltsleep((void *)tp, PZERO|PCATCH|PNORELOCK,
 					"tunread", 0, &tp->tun_lock) != 0) {
 				error = EINTR;
 				goto out_nolock;
@@ -774,7 +774,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 	while (m0 && uio->uio_resid > 0 && error == 0) {
 		len = min(uio->uio_resid, m0->m_len);
 		if (len != 0)
-			error = uiomove(mtod(m0, caddr_t), len, uio);
+			error = uiomove(mtod(m0, void *), len, uio);
 		MFREE(m0, m);
 		m0 = m;
 	}
@@ -831,7 +831,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 			error = EIO;
 			goto out0;
 		}
-		error = uiomove((caddr_t)&dst, sizeof(dst), uio);
+		error = uiomove((void *)&dst, sizeof(dst), uio);
 		if (dst.sa_len > sizeof(dst)) {
 			/* Duh.. */
 			char discard;
@@ -846,7 +846,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 			error = EIO;
 			goto out0;
 		}
-		error = uiomove((caddr_t)&family, sizeof(family), uio);
+		error = uiomove((void *)&family, sizeof(family), uio);
 		dst.sa_family = ntohl(family);
 	} else {
 #ifdef INET
@@ -893,7 +893,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	mp = &top;
 	while (error == 0 && uio->uio_resid > 0) {
 		m->m_len = min(mlen, uio->uio_resid);
-		error = uiomove(mtod(m, caddr_t), m->m_len, uio);
+		error = uiomove(mtod(m, void *), m->m_len, uio);
 		*mp = m;
 		mp = &m->m_next;
 		if (error == 0 && uio->uio_resid > 0) {
@@ -968,7 +968,7 @@ tunstart(struct ifnet *ifp)
 	if (!IF_IS_EMPTY(&ifp->if_snd)) {
 		if (tp->tun_flags & TUN_RWAIT) {
 			tp->tun_flags &= ~TUN_RWAIT;
-			wakeup((caddr_t)tp);
+			wakeup((void *)tp);
 		}
 		if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 			fownsignal(tp->tun_pgid, SIGIO, POLL_OUT,

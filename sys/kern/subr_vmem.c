@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.24.6.1 2007/02/27 16:54:30 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.24.6.2 2007/03/12 05:58:41 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24.6.1 2007/02/27 16:54:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.24.6.2 2007/03/12 05:58:41 rmind Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -497,6 +497,7 @@ qc_init(vmem_t *vm, size_t qcache_max)
 		    prevqc->qc_pool.pr_itemsperpage) {
 			pool_destroy(&qc->qc_pool);
 			vm->vm_qcache[i - 1] = prevqc;
+			continue;
 		}
 		pool_cache_init(&qc->qc_cache, &qc->qc_pool, NULL, NULL, NULL);
 		vm->vm_qcache[i - 1] = qc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_log.c,v 1.5 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_log.c,v 1.5.14.1 2007/03/12 05:57:55 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.5 2006/04/04 16:17:19 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_log.c,v 1.5.14.1 2007/03/12 05:57:55 rmind Exp $");
 
 #include <sys/param.h>
 #if defined(KERNEL) || defined(_KERNEL)
@@ -421,7 +421,7 @@ void **items;
 size_t *itemsz;
 int *types, cnt;
 {
-	caddr_t buf, ptr;
+	char *buf, *ptr;
 	iplog_t *ipl;
 	size_t len;
 	int i;
@@ -458,7 +458,7 @@ int *types, cnt;
 	 * check that we have space to record this information and can
 	 * allocate that much.
 	 */
-	KMALLOCS(buf, caddr_t, len);
+	KMALLOCS(buf, void *, len);
 	if (buf == NULL)
 		return -1;
 	SPL_NET(s);
@@ -495,7 +495,7 @@ int *types, cnt;
 	 */
 	for (i = 0, ptr = buf + sizeof(*ipl); i < cnt; i++) {
 		if (types[i] == 0) {
-			bcopy(items[i], ptr, itemsz[i]);
+			memcpy(ptr, items[i], itemsz[i]);
 		} else if (types[i] == 1) {
 			COPYDATA(items[i], 0, itemsz[i], ptr);
 		}
@@ -622,7 +622,7 @@ struct uio *uio;
 		iplused[unit] -= dlen;
 		MUTEX_EXIT(&ipl_mutex);
 		SPL_X(s);
-		error = UIOMOVE((caddr_t)ipl, dlen, UIO_READ, uio);
+		error = UIOMOVE((void *)ipl, dlen, UIO_READ, uio);
 		if (error) {
 			SPL_NET(s);
 			MUTEX_ENTER(&ipl_mutex);
@@ -632,7 +632,7 @@ struct uio *uio;
 			break;
 		}
 		MUTEX_ENTER(&ipl_mutex);
-		KFREES((caddr_t)ipl, dlen);
+		KFREES((void *)ipl, dlen);
 		SPL_NET(s);
 	}
 	if (!iplt[unit]) {
@@ -665,7 +665,7 @@ minor_t unit;
 	MUTEX_ENTER(&ipl_mutex);
 	while ((ipl = iplt[unit]) != NULL) {
 		iplt[unit] = ipl->ipl_next;
-		KFREES((caddr_t)ipl, ipl->ipl_dsize);
+		KFREES((void *)ipl, ipl->ipl_dsize);
 	}
 	iplh[unit] = &iplt[unit];
 	ipll[unit] = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.108 2007/02/15 15:40:53 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.108.2.1 2007/03/12 06:00:56 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.108 2007/02/15 15:40:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.108.2.1 2007/03/12 06:00:56 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -472,7 +472,7 @@ ext2fs_reload(struct mount *mountp, kauth_cred_t cred, struct lwp *l)
 	struct ext2fs *newfs;
 	struct partinfo dpart;
 	int i, size, error;
-	caddr_t cp;
+	void *cp;
 
 	if ((mountp->mnt_flag & MNT_RDONLY) == 0)
 		return (EINVAL);
@@ -577,7 +577,7 @@ loop:
 			vput(vp);
 			return (error);
 		}
-		cp = (caddr_t)bp->b_data +
+		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
 		brelse(bp);
@@ -932,7 +932,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	struct vnode *vp;
 	dev_t dev;
 	int error;
-	caddr_t cp;
+	void *cp;
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
@@ -994,7 +994,7 @@ ext2fs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	cp = (caddr_t)bp->b_data +
+	cp = (char *)bp->b_data +
 	    (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE);
 	ip->i_din.e2fs_din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
 	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);

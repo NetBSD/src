@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.12 2007/01/04 16:55:30 elad Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.12.2.1 2007/03/12 06:01:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.12 2007/01/04 16:55:30 elad Exp $");
+__RCSID("$NetBSD: ufs_extattr.c,v 1.12.2.1 2007/03/12 06:01:10 rmind Exp $");
 
 #include "opt_ffs.h"
 
@@ -605,7 +605,7 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	aiov.iov_base = (caddr_t) &attribute->uele_fileheader;
+	aiov.iov_base = (void *) &attribute->uele_fileheader;
 	aiov.iov_len = sizeof(struct ufs_extattr_fileheader);
 	auio.uio_resid = sizeof(struct ufs_extattr_fileheader);
 	auio.uio_offset = (off_t) 0;

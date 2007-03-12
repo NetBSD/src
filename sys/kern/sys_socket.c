@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.49 2006/11/01 10:17:59 yamt Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.49.4.1 2007/03/12 05:58:42 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.49 2006/11/01 10:17:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.49.4.1 2007/03/12 05:58:42 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ soo_stat(struct file *fp, struct stat *ub, struct lwp *l)
 {
 	struct socket *so = (struct socket *)fp->f_data;
 
-	memset((caddr_t)ub, 0, sizeof(*ub));
+	memset((void *)ub, 0, sizeof(*ub));
 	ub->st_mode = S_IFSOCK;
 	return ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, (struct mbuf *)0, (struct mbuf *)0, l));

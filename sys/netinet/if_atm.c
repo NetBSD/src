@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.c,v 1.21.4.1 2007/02/27 16:54:52 yamt Exp $       */
+/*      $NetBSD: if_atm.c,v 1.21.4.2 2007/03/12 05:59:35 rmind Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.21.4.1 2007/02/27 16:54:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atm.c,v 1.21.4.2 2007/03/12 05:59:35 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_natm.h"
@@ -153,7 +153,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		npcb->npcb_flags |= NPCB_IP;
 		npcb->ipaddr.s_addr = sin->sin_addr.s_addr;
 		/* XXX: move npcb to llinfo when ATM ARP is ready */
-		rt->rt_llinfo = (caddr_t) npcb;
+		rt->rt_llinfo = (void *) npcb;
 		rt->rt_flags |= RTF_LLINFO;
 #endif
 		/*
@@ -162,7 +162,7 @@ atm_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
 		api.rxhand = NULL;
 		if (rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMENA,
-							(caddr_t)&api) != 0) {
+							(void *)&api) != 0) {
 			printf("atm: couldn't add VC\n");
 			goto failed;
 		}
@@ -205,7 +205,7 @@ failed:
 		bcopy(LLADDR(SDL(gate)), &api.aph, sizeof(api.aph));
 		api.rxhand = NULL;
 		(void)rt->rt_ifp->if_ioctl(rt->rt_ifp, SIOCATMDIS,
-							(caddr_t)&api);
+							(void *)&api);
 
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.18 2006/05/14 21:45:00 elad Exp $ */
+/*	$NetBSD: ts.c,v 1.18.14.1 2007/03/12 05:56:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.18 2006/05/14 21:45:00 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.18.14.1 2007/03/12 05:56:50 rmind Exp $");
 
 #undef	TSDEBUG
 
@@ -363,7 +363,7 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 		return;
 	biowait(bp);
 	if (bp->b_flags & B_WANTED)
-		wakeup((caddr_t)bp);
+		wakeup((void *)bp);
 	bp->b_flags &= B_ERROR;
 }
 
@@ -924,7 +924,7 @@ int
 tsioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct proc *p;
 {
@@ -1066,7 +1066,7 @@ int
 tsdump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 	return EIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmavar.h,v 1.4 2005/12/11 12:22:16 christos Exp $	*/
+/*	$NetBSD: gtidmavar.h,v 1.4.26.1 2007/03/12 05:55:06 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
 #define IDMA_DMSEG_MAX 1
 typedef struct idma_dmamem {
 	bus_dmamap_t idm_map;		/* dmamem'ed memory */
-	caddr_t idm_kva;		/* kva of dmamem memory */
+	void *idm_kva;		/* kva of dmamem memory */
 	int idm_nsegs;			/* # of segment in idm_segs */
 	int idm_maxsegs;		/* maximum # of segments allowed */
 	size_t idm_size;		/* size of memory region */

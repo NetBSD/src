@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.3 2007/01/13 09:39:06 degroote Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.3.2.1 2007/03/12 05:55:23 rmind Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -57,7 +57,7 @@ struct wpi_dma_info {
 	bus_dmamap_t		map;
 	bus_dma_segment_t	seg;
 	bus_addr_t		paddr;
-	caddr_t			vaddr;
+	void *			vaddr;
 	bus_size_t		size;
 };
 
@@ -85,7 +85,7 @@ struct wpi_softc;
 
 struct wpi_rbuf {
 	struct wpi_softc	*sc;
-	caddr_t			vaddr;
+	void *			vaddr;
 	bus_addr_t		paddr;
 	SLIST_ENTRY(wpi_rbuf)	next;
 };
@@ -149,7 +149,7 @@ struct wpi_softc {
 	void			*powerhook;
 
 #if NBPFILTER > 0
-	caddr_t			sc_drvbpf;
+	void *			sc_drvbpf;
 
 	union {
 		struct wpi_rx_radiotap_header th;

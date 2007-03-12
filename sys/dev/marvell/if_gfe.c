@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.20 2006/03/29 06:55:32 thorpej Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.20.14.1 2007/03/12 05:55:07 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.20 2006/03/29 06:55:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.20.14.1 2007/03/12 05:55:07 rmind Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -151,7 +151,7 @@ STATIC int gfe_dmamem_alloc(struct gfe_softc *, struct gfe_dmamem *, int,
 	size_t, int);
 STATIC void gfe_dmamem_free(struct gfe_softc *, struct gfe_dmamem *);
 
-STATIC int gfe_ifioctl (struct ifnet *, u_long, caddr_t);
+STATIC int gfe_ifioctl (struct ifnet *, u_long, void *);
 STATIC void gfe_ifstart (struct ifnet *);
 STATIC void gfe_ifwatchdog (struct ifnet *);
 
@@ -426,7 +426,7 @@ gfe_dmamem_free(struct gfe_softc *sc, struct gfe_dmamem *gdm)
 }
 
 int
-gfe_ifioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct gfe_softc * const sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -1120,7 +1120,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	intrmask = sc->sc_intrmask;
 
 	m_copydata(m, 0, m->m_pkthdr.len,
-	    txq->txq_buf_mem.gdm_kva + txq->txq_outptr);
+	    (char *)txq->txq_buf_mem.gdm_kva + (int)txq->txq_outptr);
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_buf_mem.gdm_map,
 	    txq->txq_outptr, buflen, BUS_DMASYNC_PREWRITE);
 	txd->ed_bufptr = htogt32(txq->txq_buf_busaddr + txq->txq_outptr);

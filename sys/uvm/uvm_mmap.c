@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.105.2.1 2007/02/27 16:55:27 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.105.2.2 2007/03/12 06:01:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105.2.1 2007/02/27 16:55:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.105.2.2 2007/03/12 06:01:12 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -282,7 +282,7 @@ sys_mmap(l, v, retval)
 	register_t *retval;
 {
 	struct sys_mmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 		syscallarg(int) flags;
@@ -546,7 +546,7 @@ int
 sys___msync13(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___msync13_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
@@ -638,7 +638,7 @@ int
 sys_munmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_munmap_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
@@ -708,7 +708,7 @@ int
 sys_mprotect(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_mprotect_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) prot;
 	} */ *uap = v;
@@ -748,7 +748,7 @@ int
 sys_minherit(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_minherit_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(int) len;
 		syscallarg(int) inherit;
 	} */ *uap = v;
@@ -787,7 +787,7 @@ int
 sys_madvise(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_madvise_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(int) behav;
 	} */ *uap = v;

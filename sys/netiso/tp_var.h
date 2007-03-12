@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.13.10.1 2007/02/27 16:55:12 yamt Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.13.10.2 2007/03/12 06:00:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -70,12 +70,12 @@ int tp_driver   (struct tp_pcb *, struct tp_event *);
 int tp_emit (int, struct tp_pcb *, SeqNum, u_int, struct mbuf *);
 int tp_error_emit (int, u_long, struct sockaddr_iso *,
 		       struct sockaddr_iso *, struct mbuf *, int,
-		       struct tp_pcb *, caddr_t,
+		       struct tp_pcb *, void *,
 		       int (*) (struct mbuf *, ...));
 
 /* tp_inet.c */
-void in_getsufx  (void *, u_short *, caddr_t, int);
-void in_putsufx (void *, caddr_t, int, int);
+void in_getsufx  (void *, u_short *, void *, int);
+void in_putsufx (void *, void *, int, int);
 void in_recycle_tsuffix (void *);
 void in_putnetaddr (void *, struct sockaddr *, int);
 int in_cmpnetaddr (void *, struct sockaddr *, int);
@@ -95,8 +95,8 @@ void tp_input   (struct mbuf *, ...);
 int tp_headersize (int, struct tp_pcb *);
 
 /* tp_iso.c */
-void iso_getsufx (void *, u_short *, caddr_t, int);
-void iso_putsufx (void *, caddr_t, int, int);
+void iso_getsufx (void *, u_short *, void *, int);
+void iso_putsufx (void *, void *, int, int);
 void iso_recycle_tsuffix (void *);
 void iso_putnetaddr (void *, struct sockaddr *, int);
 int iso_cmpnetaddr (void *, struct sockaddr *, int);
@@ -155,7 +155,7 @@ void tp_quench  (struct inpcb *, int);
 void tp_netcmd   (struct tp_pcb *, int);
 int tp_mask_to_num (u_char);
 void tp_mss     (struct tp_pcb *, int);
-int tp_route_to (struct mbuf *, struct tp_pcb *, caddr_t);
+int tp_route_to (struct mbuf *, struct tp_pcb *, void *);
 void tp0_stash  (struct tp_pcb *, struct tp_event *);
 void tp0_openflow (struct tp_pcb *);
 int tp_setup_perf (struct tp_pcb *);

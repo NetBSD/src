@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.168.2.1 2007/02/27 16:54:34 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.168.2.2 2007/03/12 05:58:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -82,7 +82,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.168.2.1 2007/02/27 16:54:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.168.2.2 2007/03/12 05:58:45 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,8 @@ static int buf_lotsfree(void);
 static int buf_canrelease(void);
 static inline u_long buf_mempoolidx(u_long);
 static inline u_long buf_roundsize(u_long);
-static inline caddr_t buf_malloc(size_t);
-static void buf_mrelease(caddr_t, size_t);
+static inline void *buf_malloc(size_t);
+static void buf_mrelease(void *, size_t);
 static inline void binsheadfree(struct buf *, struct bqueue *);
 static inline void binstailfree(struct buf *, struct bqueue *);
 int count_lock_queue(void); /* XXX */
@@ -527,11 +527,11 @@ buf_roundsize(u_long size)
 	return (1 << (buf_mempoolidx(size) + MEMPOOL_INDEX_OFFSET));
 }
 
-static inline caddr_t
+static inline void *
 buf_malloc(size_t size)
 {
 	u_int n = buf_mempoolidx(size);
-	caddr_t addr;
+	void *addr;
 	int s;
 
 	while (1) {
@@ -556,7 +556,7 @@ buf_malloc(size_t size)
 }
 
 static void
-buf_mrelease(caddr_t addr, size_t size)
+buf_mrelease(void *addr, size_t size)
 {
 
 	pool_put(&bmempools[buf_mempoolidx(size)], addr);
@@ -1132,7 +1132,7 @@ void
 allocbuf(struct buf *bp, int size, int preserve)
 {
 	vsize_t oldsize, desired_size;
-	caddr_t addr;
+	void *addr;
 	int s, delta;
 
 	desired_size = buf_roundsize(size);
@@ -1834,7 +1834,7 @@ nestiobuf_setup(struct buf *mbp, struct buf *bp, int offset, size_t size)
 	bp->b_vp = vp;
 	bp->b_flags = B_BUSY | B_CALL | B_ASYNC | b_read;
 	bp->b_iodone = nestiobuf_iodone;
-	bp->b_data = mbp->b_data + offset;
+	bp->b_data = (char *)mbp->b_data + offset;
 	bp->b_resid = bp->b_bcount = size;
 	bp->b_bufsize = bp->b_bcount;
 	bp->b_private = mbp;

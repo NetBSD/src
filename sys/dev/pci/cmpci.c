@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.34 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.34.4.1 2007/03/12 05:55:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.34 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.34.4.1 2007/03/12 05:55:12 rmind Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -120,11 +120,11 @@ static int cmpci_intr(void *);
  * DMA stuffs
  */
 static int cmpci_alloc_dmamem(struct cmpci_softc *, size_t,
-	struct malloc_type *, int, caddr_t *);
-static int cmpci_free_dmamem(struct cmpci_softc *, caddr_t,
+	struct malloc_type *, int, void **);
+static int cmpci_free_dmamem(struct cmpci_softc *, void *,
 	struct malloc_type *);
 static struct cmpci_dmanode * cmpci_find_dmamem(struct cmpci_softc *,
-	caddr_t);
+	void *);
 
 
 /*
@@ -1011,7 +1011,7 @@ cmpci_query_devinfo(void *handle, mixer_devinfo_t *dip)
 
 static int
 cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, struct malloc_type *type,
-		   int flags, caddr_t *r_addr)
+		   int flags, void **r_addr)
 {
 	int error;
 	struct cmpci_dmanode *n;
@@ -1066,7 +1066,7 @@ cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, struct malloc_type *type
 }
 
 static int
-cmpci_free_dmamem(struct cmpci_softc *sc, caddr_t addr, struct malloc_type *type)
+cmpci_free_dmamem(struct cmpci_softc *sc, void *addr, struct malloc_type *type)
 {
 	struct cmpci_dmanode **nnp;
 
@@ -1086,7 +1086,7 @@ cmpci_free_dmamem(struct cmpci_softc *sc, caddr_t addr, struct malloc_type *type
 }
 
 static struct cmpci_dmanode *
-cmpci_find_dmamem(struct cmpci_softc *sc, caddr_t addr)
+cmpci_find_dmamem(struct cmpci_softc *sc, void *addr)
 {
 	struct cmpci_dmanode *p;
 
@@ -1113,7 +1113,7 @@ static void *
 cmpci_allocm(void *handle, int direction, size_t size,
 	     struct malloc_type *type, int flags)
 {
-	caddr_t addr;
+	void *addr;
 
 	addr = NULL;	/* XXX gcc */
 
@@ -1691,7 +1691,7 @@ cmpci_trigger_output(void *handle, void *start, void *end, int blksize,
 	    DMAADDR(p));
 	delay(10);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, CMPCI_REG_DMA0_BYTES,
-	    ((caddr_t)end - (caddr_t)start + 1) / bps - 1);
+	    ((char *)end - (char *)start + 1) / bps - 1);
 	delay(10);
 
 	/* set interrupt count */
@@ -1730,7 +1730,7 @@ cmpci_trigger_input(void *handle, void *start, void *end, int blksize,
 	    DMAADDR(p));
 	delay(10);
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, CMPCI_REG_DMA1_BYTES,
-	    ((caddr_t)end - (caddr_t)start + 1) / bps - 1);
+	    ((char *)end - (char *)start + 1) / bps - 1);
 	delay(10);
 
 	/* set interrupt count */

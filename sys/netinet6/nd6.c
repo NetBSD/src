@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.109.4.1 2007/02/27 16:55:04 yamt Exp $	*/
+/*	$NetBSD: nd6.c,v 1.109.4.2 2007/03/12 05:59:59 rmind Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.109.4.1 2007/02/27 16:55:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.109.4.2 2007/03/12 05:59:59 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -275,7 +275,7 @@ nd6_option(ndopts)
 	nd_opt = ndopts->nd_opts_search;
 
 	/* make sure nd_opt_len is inside the buffer */
-	if ((caddr_t)&nd_opt->nd_opt_len >= (caddr_t)ndopts->nd_opts_last) {
+	if ((void *)&nd_opt->nd_opt_len >= (void *)ndopts->nd_opts_last) {
 		bzero(ndopts, sizeof(*ndopts));
 		return NULL;
 	}
@@ -290,7 +290,7 @@ nd6_option(ndopts)
 		return NULL;
 	}
 
-	ndopts->nd_opts_search = (struct nd_opt_hdr *)((caddr_t)nd_opt + olen);
+	ndopts->nd_opts_search = (struct nd_opt_hdr *)((char *)nd_opt + olen);
 	if (ndopts->nd_opts_search > ndopts->nd_opts_last) {
 		/* option overruns the end of buffer, invalid */
 		bzero(ndopts, sizeof(*ndopts));
@@ -1258,7 +1258,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * add with a LL address.
 		 */
 		R_Malloc(ln, struct llinfo_nd6 *, sizeof(*ln));
-		rt->rt_llinfo = (caddr_t)ln;
+		rt->rt_llinfo = (void *)ln;
 		if (ln == NULL) {
 			log(LOG_DEBUG, "nd6_rtrequest: malloc failed\n");
 			break;
@@ -1298,7 +1298,7 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(rt->rt_ifp,
 		    &SIN6(rt_key(rt))->sin6_addr);
 		if (ifa) {
-			caddr_t macp = nd6_ifptomac(ifp);
+			void *macp = nd6_ifptomac(ifp);
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
@@ -1373,14 +1373,14 @@ nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 		clear_llinfo_pqueue(ln);
-		Free((caddr_t)ln);
+		Free((void *)ln);
 	}
 }
 
 int
 nd6_ioctl(cmd, data, ifp)
 	u_long cmd;
-	caddr_t	data;
+	void *	data;
 	struct ifnet *ifp;
 {
 	struct in6_drlist *drl = (struct in6_drlist *)data;
@@ -2249,7 +2249,7 @@ fill_drlist(oldp, oldlenp, ol)
 
 	if (oldp) {
 		d = (struct in6_defrouter *)oldp;
-		de = (struct in6_defrouter *)((caddr_t)oldp + *oldlenp);
+		de = (struct in6_defrouter *)((char *)oldp + *oldlenp);
 	}
 	l = 0;
 
@@ -2282,7 +2282,7 @@ fill_drlist(oldp, oldlenp, ol)
 			error = ENOMEM;
 	}
 	if (oldlenp)
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
+		*oldlenp = l;	/* (void *)d - (void *)oldp */
 
 	splx(s);
 
@@ -2304,7 +2304,7 @@ fill_prlist(oldp, oldlenp, ol)
 
 	if (oldp) {
 		p = (struct in6_prefix *)oldp;
-		pe = (struct in6_prefix *)((caddr_t)oldp + *oldlenp);
+		pe = (struct in6_prefix *)((char *)oldp + *oldlenp);
 	}
 	l = 0;
 
@@ -2381,11 +2381,11 @@ fill_prlist(oldp, oldlenp, ol)
 		advance = sizeof(*p) + sizeof(*sin6) * advrtrs;
 		l += advance;
 		if (p)
-			p = (struct in6_prefix *)((caddr_t)p + advance);
+			p = (struct in6_prefix *)((char *)p + advance);
 	}
 
 	if (oldp) {
-		*oldlenp = l;	/* (caddr_t)d - (caddr_t)oldp */
+		*oldlenp = l;	/* (void *)d - (void *)oldp */
 		if (l > ol)
 			error = ENOMEM;
 	} else

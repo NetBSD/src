@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.241.4.1 2007/02/27 16:54:03 yamt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.241.4.2 2007/03/12 05:57:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.241.4.1 2007/02/27 16:54:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.241.4.2 2007/03/12 05:57:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1007,7 +1007,7 @@ scsibusclose(dev_t dev, int flag, int fmt,
 }
 
 static int
-scsibusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+scsibusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 	struct scsipi_channel *chan = sc->sc_channel;

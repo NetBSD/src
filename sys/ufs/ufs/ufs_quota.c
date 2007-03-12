@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.43 2007/01/04 16:55:30 elad Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.43.2.1 2007/03/12 06:01:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.43 2007/01/04 16:55:30 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.43.2.1 2007/03/12 06:01:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -339,7 +339,7 @@ chkdquot(struct inode *ip)
  * Q_QUOTAON - set up a quota file for a particular file system.
  */
 int
-quotaon(struct lwp *l, struct mount *mp, int type, caddr_t fname)
+quotaon(struct lwp *l, struct mount *mp, int type, void *fname)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct vnode *vp, **vpp;
@@ -465,14 +465,14 @@ again:
  * Q_GETQUOTA - return current values in a dqblk structure.
  */
 int
-getquota(struct mount *mp, u_long id, int type, caddr_t addr)
+getquota(struct mount *mp, u_long id, int type, void *addr)
 {
 	struct dquot *dq;
 	int error;
 
 	if ((error = dqget(NULLVP, id, VFSTOUFS(mp), type, &dq)) != 0)
 		return (error);
-	error = copyout((caddr_t)&dq->dq_dqb, addr, sizeof (struct dqblk));
+	error = copyout((void *)&dq->dq_dqb, addr, sizeof (struct dqblk));
 	dqrele(NULLVP, dq);
 	return (error);
 }
@@ -481,7 +481,7 @@ getquota(struct mount *mp, u_long id, int type, caddr_t addr)
  * Q_SETQUOTA - assign an entire dqblk structure.
  */
 int
-setquota(struct mount *mp, u_long id, int type, caddr_t addr)
+setquota(struct mount *mp, u_long id, int type, void *addr)
 {
 	struct dquot *dq;
 	struct dquot *ndq;
@@ -489,7 +489,7 @@ setquota(struct mount *mp, u_long id, int type, caddr_t addr)
 	struct dqblk newlim;
 	int error;
 
-	error = copyin(addr, (caddr_t)&newlim, sizeof (struct dqblk));
+	error = copyin(addr, (void *)&newlim, sizeof (struct dqblk));
 	if (error)
 		return (error);
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
@@ -537,7 +537,7 @@ setquota(struct mount *mp, u_long id, int type, caddr_t addr)
  * Q_SETUSE - set current inode and block usage.
  */
 int
-setuse(struct mount *mp, u_long id, int type, caddr_t addr)
+setuse(struct mount *mp, u_long id, int type, void *addr)
 {
 	struct dquot *dq;
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -545,7 +545,7 @@ setuse(struct mount *mp, u_long id, int type, caddr_t addr)
 	struct dqblk usage;
 	int error;
 
-	error = copyin(addr, (caddr_t)&usage, sizeof (struct dqblk));
+	error = copyin(addr, (void *)&usage, sizeof (struct dqblk));
 	if (error)
 		return (error);
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
@@ -767,7 +767,7 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	dq->dq_type = type;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	aiov.iov_base = (caddr_t)&dq->dq_dqb;
+	aiov.iov_base = (void *)&dq->dq_dqb;
 	aiov.iov_len = sizeof (struct dqblk);
 	auio.uio_resid = sizeof (struct dqblk);
 	auio.uio_offset = (off_t)(id * sizeof (struct dqblk));
@@ -775,11 +775,11 @@ dqget(struct vnode *vp, u_long id, struct ufsmount *ump, int type,
 	UIO_SETUP_SYSSPACE(&auio);
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);
 	if (auio.uio_resid == sizeof(struct dqblk) && error == 0)
-		memset((caddr_t)&dq->dq_dqb, 0, sizeof(struct dqblk));
+		memset((void *)&dq->dq_dqb, 0, sizeof(struct dqblk));
 	if (vp != dqvp)
 		VOP_UNLOCK(dqvp, 0);
 	if (dq->dq_flags & DQ_WANT)
-		wakeup((caddr_t)dq);
+		wakeup((void *)dq);
 	dq->dq_flags = 0;
 	/*
 	 * I/O error in reading quota file, release
@@ -872,7 +872,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 	dq->dq_flags |= DQ_LOCK;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
-	aiov.iov_base = (caddr_t)&dq->dq_dqb;
+	aiov.iov_base = (void *)&dq->dq_dqb;
 	aiov.iov_len = sizeof (struct dqblk);
 	auio.uio_resid = sizeof (struct dqblk);
 	auio.uio_offset = (off_t)(dq->dq_id * sizeof (struct dqblk));
@@ -882,7 +882,7 @@ dqsync(struct vnode *vp, struct dquot *dq)
 	if (auio.uio_resid && error == 0)
 		error = EIO;
 	if (dq->dq_flags & DQ_WANT)
-		wakeup((caddr_t)dq);
+		wakeup((void *)dq);
 	dq->dq_flags &= ~(DQ_MOD|DQ_LOCK|DQ_WANT);
 	if (vp != dqvp)
 		VOP_UNLOCK(dqvp, 0);

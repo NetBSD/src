@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.31 2006/11/06 13:35:35 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.31.4.1 2007/03/12 05:58:34 rmind Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.31 2006/11/06 13:35:35 jmmv Exp $")
 static int ksymsinited = 0;
 
 #if NKSYMS
-static void ksyms_hdr_init(caddr_t hdraddr);
+static void ksyms_hdr_init(void *hdraddr);
 static void ksyms_sizes_calc(void);
 static int ksyms_isopen;
 static int ksyms_maxlen;
@@ -106,7 +106,7 @@ struct symtab {
 	CIRCLEQ_ENTRY(symtab) sd_queue;
 	const char *sd_name;	/* Name of this table */
 	Elf_Sym *sd_symstart;	/* Address of symbol table */
-	caddr_t sd_strstart;	/* Adderss of corresponding string table */
+	char *sd_strstart;	/* Address of corresponding string table */
 	int sd_usroffset;	/* Real address for userspace */
 	int sd_symsize;		/* Size in bytes of symbol table */
 	int sd_strsize;		/* Size of string table */
@@ -132,8 +132,8 @@ static int16_t baseidx;
 static int treex = 1;
 
 #define	P_BIT(key, bit) ((key[bit >> 3] >> (bit & 7)) & 1)
-#define	STRING(idx) kernel_symtab.sd_symstart[idx].st_name + \
-			kernel_symtab.sd_strstart
+#define	STRING(idx) (kernel_symtab.sd_symstart[idx].st_name + \
+			kernel_symtab.sd_strstart)
 
 /*
  * Walk down the tree until a terminal node is found.
@@ -260,7 +260,7 @@ findsym(const char *name, struct symtab *table)
 	Elf_Sym *start = table->sd_symstart;
 	int i, sz = table->sd_symsize/sizeof(Elf_Sym);
 	char *np;
-	caddr_t realstart = table->sd_strstart - table->sd_usroffset;
+	char *realstart = table->sd_strstart - table->sd_usroffset;
 
 #ifdef USE_PTREE
 	if (table == &kernel_symtab && (i = ptree_find(name)) != 0)
@@ -306,12 +306,12 @@ ksymsattach(int arg)
  */
 static void
 addsymtab(const char *name,
-    caddr_t symstart, size_t symsize,
-    caddr_t strstart, size_t strsize,
+    void *symstart, size_t symsize,
+    void *strstart, size_t strsize,
     struct symtab *tab,
-    caddr_t newstart)
+    void *newstart)
 {
-	caddr_t send;
+	void *send;
 	Elf_Sym *sym, *nsym;
 	int i, n, g;
 	char *str;
@@ -390,7 +390,7 @@ addsymtab(const char *name,
 	 * Remove left-over strings.
 	 */
 	sym = tab->sd_symstart;
-	str = (caddr_t)tab->sd_symstart + tab->sd_symsize;
+	str = (void *)tab->sd_symstart + tab->sd_symsize;
 	str[0] = 0;
 	n = 1;
 	for (i = 1; i < tab->sd_symsize/sizeof(Elf_Sym); i++) {
@@ -425,9 +425,9 @@ static void
 addsymtab_elf(const char *name, Elf_Ehdr *ehdr, struct symtab *tab)
 {
 	int i, j;
-	caddr_t start = (caddr_t)ehdr;
+	char *start = (char *)ehdr;
 	Elf_Shdr *shdr;
-	caddr_t symstart = NULL, strstart = NULL;
+	char *symstart = NULL, *strstart = NULL;
 	size_t symsize = 0, strsize = 0;
 
 	/* Find the symbol table and the corresponding string table. */
@@ -521,11 +521,11 @@ ksyms_init(int symsize, void *start, void *end)
  * otherwise use ksyms_init with an ELF image.
  * We need to pass a minimal ELF header which will later be completed by
  * ksyms_hdr_init and handed off to userland through /dev/ksyms.  We use
- * a caddr_t rather than a pointer to avoid exposing the Elf_Ehdr type.
+ * a void *rather than a pointer to avoid exposing the Elf_Ehdr type.
  */
 void
-ksyms_init_explicit(caddr_t ehdr, caddr_t symstart, size_t symsize,
-    caddr_t strstart, size_t strsize)
+ksyms_init_explicit(void *ehdr, void *symstart, size_t symsize,
+    void *strstart, size_t strsize)
 {
 
 	KASSERT(symstart != NULL);
@@ -1021,7 +1021,7 @@ static struct ksyms_hdr {
 
 
 static void
-ksyms_hdr_init(caddr_t hdraddr)
+ksyms_hdr_init(void *hdraddr)
 {
 
 	/* Copy the loaded elf exec header */
@@ -1181,7 +1181,7 @@ ksymswrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-ksymsioctl(dev_t dev, u_long cmd, caddr_t data, int fflag, struct lwp *l)
+ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
 	struct symtab *st;

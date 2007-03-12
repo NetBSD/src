@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.50 2006/04/12 19:38:24 jmmv Exp $ */
+/* $NetBSD: cfb.c,v 1.50.14.1 2007/03/12 05:57:14 rmind Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.50 2006/04/12 19:38:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.50.14.1 2007/03/12 05:57:14 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ static const struct wsscreen_list cfb_screenlist = {
 	sizeof(_cfb_scrlist) / sizeof(struct wsscreen_descr *), _cfb_scrlist
 };
 
-static int	cfbioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	cfbioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	cfbmmap(void *, void *, off_t, int);
 
 static int	cfb_alloc_screen(void *, const struct wsscreen_descr *,
@@ -183,7 +183,7 @@ static const struct wsdisplay_accessops cfb_accessops = {
 
 int  cfb_cnattach(tc_addr_t);
 static int  cfbintr(void *);
-static void cfbhwinit(caddr_t);
+static void cfbhwinit(void *);
 static void cfb_cmap_init(struct cfb_softc *);
 
 static int  get_cmap(struct cfb_softc *, struct wsdisplay_cmap *);
@@ -284,7 +284,7 @@ cfbattach(struct device *parent, struct device *self, void *aux)
 	tc_intr_establish(parent, ta->ta_cookie, IPL_TTY, cfbintr, sc);
 
 	/* clear any pending interrupts */
-	*(volatile u_int8_t *)((caddr_t)ri->ri_hw + CX_OFFSET_IREQ) = 0;
+	*(volatile u_int8_t *)((char *)ri->ri_hw + CX_OFFSET_IREQ) = 0;
 
 	waa.console = console;
 	waa.scrdata = &cfb_screenlist;
@@ -313,10 +313,10 @@ cfb_cmap_init(struct cfb_softc *sc)
 static void
 cfb_common_init(struct rasops_info *ri)
 {
-	caddr_t base;
+	char *base;
 	int cookie;
 
-	base = (caddr_t)ri->ri_hw;
+	base = (void *)ri->ri_hw;
 
 	/* initialize colormap and cursor hardware */
 	cfbhwinit(base);
@@ -359,7 +359,7 @@ cfb_common_init(struct rasops_info *ri)
 }
 
 static int
-cfbioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct cfb_softc *sc = v;
 	struct rasops_info *ri = sc->sc_ri;
@@ -503,10 +503,10 @@ static int
 cfbintr(void *arg)
 {
 	struct cfb_softc *sc = arg;
-	caddr_t base, vdac;
+	char *base, *vdac;
 	int v;
 
-	base = (caddr_t)sc->sc_ri->ri_hw;
+	base = (void *)sc->sc_ri->ri_hw;
 	*(u_int8_t *)(base + CX_OFFSET_IREQ) = 0;
 	if (sc->sc_changed == 0)
 		return (1);
@@ -595,9 +595,9 @@ cfbintr(void *arg)
 }
 
 static void
-cfbhwinit(caddr_t cfbbase)
+cfbhwinit(void *cfbbase)
 {
-	caddr_t vdac = cfbbase + CX_BT459_OFFSET;
+	char *vdac = (char *)cfbbase + CX_BT459_OFFSET;
 	const u_int8_t *p;
 	int i;
 

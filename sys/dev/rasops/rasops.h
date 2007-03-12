@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.20 2007/02/02 02:10:24 ober Exp $ */
+/* 	$NetBSD: rasops.h,v 1.20.2.1 2007/03/12 05:56:55 rmind Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct rasops_info {
 #endif
 };
 
-#define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
+#define DELTA(p, d, cast) ((p) = (cast)((char *)(p) + (d)))
 
 #define CHAR_IN_FONT(c,font) 					\
        ((c) >= (font)->firstchar && 				\

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.99 2007/01/13 19:01:55 cube Exp $ */
+/* $NetBSD: isp_pci.c,v 1.99.2.1 2007/03/12 05:55:24 rmind Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.99 2007/01/13 19:01:55 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.99.2.1 2007/03/12 05:55:24 rmind Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -988,13 +988,13 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	if (bus_dmamem_alloc(dmat, len, PAGE_SIZE, 0, &sg, 1, &rs,
 			     BUS_DMA_NOWAIT) ||
 	    bus_dmamem_map(isp->isp_dmatag, &sg, rs, len,
-	    (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    (void **)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 
 	if (bus_dmamap_create(dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
 	    &isp->isp_rqdmap) || bus_dmamap_load(dmat, isp->isp_rqdmap,
-	    (caddr_t)isp->isp_rquest, len, NULL,
+	    (void *)isp->isp_rquest, len, NULL,
 	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
@@ -1006,13 +1006,13 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	len = ISP_QUEUE_SIZE(RESULT_QUEUE_LEN(isp));
 	if (bus_dmamem_alloc(dmat, len, PAGE_SIZE, 0, &sg, 1, &rs,
 			     BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(dmat, &sg, rs, len, (caddr_t *)&isp->isp_result,
+	    bus_dmamem_map(dmat, &sg, rs, len, (void **)&isp->isp_result,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 	if (bus_dmamap_create(dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
 	    &isp->isp_rsdmap) || bus_dmamap_load(isp->isp_dmatag,
-	    isp->isp_rsdmap, (caddr_t)isp->isp_result, len, NULL,
+	    isp->isp_rsdmap, (void *)isp->isp_result, len, NULL,
 	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}
@@ -1026,13 +1026,13 @@ isp_pci_mbxdma(struct ispsoftc *isp)
 	len = ISP2100_SCRLEN;
 	if (bus_dmamem_alloc(dmat, len, PAGE_SIZE, 0, &sg, 1, &rs,
 			     BUS_DMA_NOWAIT) ||
-	    bus_dmamem_map(dmat, &sg, rs, len, (caddr_t *)&fcp->isp_scratch,
+	    bus_dmamem_map(dmat, &sg, rs, len, (void **)&fcp->isp_scratch,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 	if (bus_dmamap_create(dmat, len, 1, len, 0, BUS_DMA_NOWAIT,
 	    &isp->isp_scdmap) || bus_dmamap_load(dmat,
-	    isp->isp_scdmap, (caddr_t)fcp->isp_scratch, len, NULL,
+	    isp->isp_scdmap, (void *)fcp->isp_scratch, len, NULL,
 	    BUS_DMA_NOWAIT)) {
 		goto dmafail;
 	}

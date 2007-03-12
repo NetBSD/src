@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.48.2.1 2007/02/27 16:55:02 yamt Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.48.2.2 2007/03/12 05:59:57 rmind Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ struct	in6_ifreq {
 		short	ifru_flags;
 		int	ifru_flags6;
 		int	ifru_metric;
-		caddr_t	ifru_data;
+		void *	ifru_data;
 		struct in6_addrlifetime ifru_lifetime;
 		struct in6_ifstat ifru_stat;
 		struct icmp6_ifstat ifru_icmp6stat;
@@ -624,7 +624,7 @@ struct in6_multi_mship *in6_joingroup(struct ifnet *, struct in6_addr *,
 	int *, int);
 int	in6_leavegroup(struct in6_multi_mship *);
 int	in6_mask2len(struct in6_addr *, u_char *);
-int	in6_control(struct socket *, u_long, caddr_t, struct ifnet *,
+int	in6_control(struct socket *, u_long, void *, struct ifnet *,
 	struct lwp *);
 int	in6_update_ifa(struct ifnet *, struct in6_aliasreq *,
 	struct in6_ifaddr *, int);
@@ -650,7 +650,9 @@ int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
 void	in6_prefixlen2mask(struct in6_addr *, int);
 void	in6_purgeprefix(struct ifnet *);
 
-int in6_src_ioctl(u_long, caddr_t);
+int	ip6flow_fastforward(struct mbuf *); /* IPv6 fast forward routine */
+
+int in6_src_ioctl(u_long, void *);
 int	in6_is_addr_deprecated(struct sockaddr_in6 *);
 struct in6pcb;
 #endif /* _KERNEL */

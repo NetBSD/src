@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.133.4.1 2007/02/27 16:55:15 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.133.4.2 2007/03/12 06:00:52 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ struct mowner {
 struct m_hdr {
 	struct	mbuf *mh_next;		/* next buffer in chain */
 	struct	mbuf *mh_nextpkt;	/* next chain in queue/record */
-	caddr_t	mh_data;		/* location of data */
+	char   *mh_data;		/* location of data */
 	struct	mowner *mh_owner;	/* mbuf owner */
 	int	mh_len;			/* amount of data in this mbuf */
 	int	mh_flags;		/* flags; see below */
@@ -218,11 +218,11 @@ struct	pkthdr {
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
 struct _m_ext {
-	caddr_t	ext_buf;		/* start of buffer */
-	void	(*ext_free)		/* free routine if not the usual */
-		(struct mbuf *, caddr_t, size_t, void *);
-	void	*ext_arg;		/* argument for ext_free */
-	size_t	ext_size;		/* size of buffer, for ext_free */
+	char  *ext_buf;		/* start of buffer */
+	void (*ext_free)		/* free routine if not the usual */
+	       (struct mbuf *, void *, size_t, void *);
+	void  *ext_arg;		/* argument for ext_free */
+	size_t ext_size;		/* size of buffer, for ext_free */
 	struct malloc_type *ext_type;	/* malloc type */
 	struct mbuf *ext_nextref;
 	struct mbuf *ext_prevref;
@@ -578,7 +578,7 @@ do {									\
 #define	MEXTMALLOC(m, size, how)					\
 do {									\
 	(m)->m_ext.ext_buf =						\
-	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how));	\
+	    (void *)malloc((size), mbtypes[(m)->m_type], (how));	\
 	if ((m)->m_ext.ext_buf != NULL) {				\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
@@ -594,7 +594,7 @@ do {									\
 
 #define	MEXTADD(m, buf, size, type, free, arg)				\
 do {									\
-	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf);		\
+	(m)->m_data = (m)->m_ext.ext_buf = (void *)(buf);		\
 	(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) | M_EXT;	\
 	(m)->m_ext.ext_size = (size);					\
 	(m)->m_ext.ext_free = (free);					\
@@ -913,7 +913,7 @@ struct	mbuf *m_split(struct mbuf *,int, int);
 struct	mbuf *m_getptr(struct mbuf *, int, int *);
 void	m_adj(struct mbuf *, int);
 int	m_apply(struct mbuf *, int, int,
-		int (*)(void *, caddr_t, unsigned int), void *);
+		int (*)(void *, void *, unsigned int), void *);
 void	m_cat(struct mbuf *,struct mbuf *);
 #ifdef MBUFTRACE
 void	m_claimm(struct mbuf *, struct mowner *);

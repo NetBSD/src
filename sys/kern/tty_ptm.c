@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.16 2006/12/27 18:45:30 alc Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.16.2.1 2007/03/12 05:58:44 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.16 2006/12/27 18:45:30 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.16.2.1 2007/03/12 05:58:44 rmind Exp $");
 
 #include "opt_ptm.h"
 
@@ -365,7 +365,7 @@ ptmclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 static int
 /*ARGSUSED*/
-ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 	dev_t newdev;

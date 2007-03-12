@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5.2.1 2007/02/27 16:55:15 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5.2.2 2007/03/12 06:00:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -98,10 +98,10 @@
  *	MUTEX_SPIN_P(mtx)
  *		Evaluates to true if the mutex is a spin mutex.
  *
- *	MUTEX_OWNED(owner)
+ *	MUTEX_OWNER(owner)
  *		Returns the owner of the adaptive mutex (LWP address).
  *
- *	MUTEX_OWNER(owner)
+ *	MUTEX_OWNED(owner)
  *		Returns non-zero if an adaptive mutex is currently
  *		held by an LWP.
  *
@@ -152,11 +152,16 @@
 #include <sys/inttypes.h>
 #endif
 
+/*
+ * MUTEX_NODEBUG disables most LOCKDEBUG checks for the lock.  It should
+ * not be used.
+ */
 typedef enum kmutex_type_t {
 	MUTEX_SPIN = 0,
 	MUTEX_ADAPTIVE = 1,
 	MUTEX_DEFAULT = 2,
-	MUTEX_DRIVER = 3
+	MUTEX_DRIVER = 3,
+	MUTEX_NODEBUG = 4
 } kmutex_type_t;
 
 typedef struct kmutex kmutex_t;

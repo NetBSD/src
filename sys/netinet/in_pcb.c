@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.113.2.1 2007/02/27 16:54:53 yamt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.113.2.2 2007/03/12 05:59:36 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.113.2.1 2007/02/27 16:54:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.113.2.2 2007/03/12 05:59:36 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -190,7 +190,7 @@ in_pcballoc(struct socket *so, void *v)
 	splx(s);
 	if (inp == NULL)
 		return (ENOBUFS);
-	bzero((caddr_t)inp, sizeof(*inp));
+	bzero((void *)inp, sizeof(*inp));
 	inp->inp_af = AF_INET;
 	inp->inp_table = table;
 	inp->inp_socket = so;
@@ -516,7 +516,7 @@ in_setsockaddr(struct inpcb *inp, struct mbuf *nam)
 
 	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((caddr_t)sin, sizeof (*sin));
+	bzero((void *)sin, sizeof (*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_port = inp->inp_lport;
@@ -533,7 +533,7 @@ in_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
 
 	nam->m_len = sizeof (*sin);
 	sin = mtod(nam, struct sockaddr_in *);
-	bzero((caddr_t)sin, sizeof (*sin));
+	bzero((void *)sin, sizeof (*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_port = inp->inp_fport;

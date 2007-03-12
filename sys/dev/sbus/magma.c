@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.38 2006/10/01 20:31:51 elad Exp $	*/
+/*	$NetBSD: magma.c,v 1.38.4.1 2007/03/12 05:57:07 rmind Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.38 2006/10/01 20:31:51 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.38.4.1 2007/03/12 05:57:07 rmind Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -404,11 +404,11 @@ magma_attach(parent, self, aux)
 	}
 
 	/* the SVCACK* lines are daisychained */
-	sc->ms_svcackr = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackr = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackr;
-	sc->ms_svcackt = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackt = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackt;
-	sc->ms_svcackm = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+	sc->ms_svcackm = (char *)bus_space_vaddr(sa->sa_bustag, bh)
 		+ card->mb_svcackm;
 
 	/*
@@ -430,7 +430,7 @@ magma_attach(parent, self, aux)
 		struct cd1400 *cd = &sc->ms_cd1400[chip];
 
 		cd->cd_clock = cd_clock;
-		cd->cd_reg = (caddr_t)bh + card->mb_cd1400[chip];
+		cd->cd_reg = (char *)bh + card->mb_cd1400[chip];
 
 		/* prom_getpropstring(node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
@@ -469,7 +469,7 @@ magma_attach(parent, self, aux)
 	for( chip = 0 ; chip < card->mb_ncd1190 ; chip++ ) {
 		struct cd1190 *cd = &sc->ms_cd1190[chip];
 
-		cd->cd_reg = (caddr_t)bh + card->mb_cd1190[chip];
+		cd->cd_reg = (char *)bh + card->mb_cd1190[chip];
 
 		/* XXX don't know anything about these chips yet */
 		printf("%s: CD1190 %d addr %p (unsupported)\n",
@@ -1104,7 +1104,7 @@ int
 mttyioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {
@@ -1572,7 +1572,7 @@ int
 mbppioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flags;
 	struct lwp *l;
 {
@@ -1624,7 +1624,7 @@ mbpp_rw(dev, uio, flag)
 	int port = MAGMA_PORT(dev);
 	struct mbpp_softc *ms = mbpp_cd.cd_devs[card];
 	struct mbpp_port *mp = &ms->ms_port[port];
-	caddr_t buffer, ptr;
+	char *buffer, *ptr;
 	int buflen, cnt, len;
 	int s, error = 0;
 	int gotdata = 0;
@@ -1757,7 +1757,7 @@ mbpp_start(arg)
 int
 mbpp_send(mp, ptr, len)
 	struct mbpp_port *mp;
-	caddr_t ptr;
+	void *ptr;
 	int len;
 {
 	int s;
@@ -1803,7 +1803,7 @@ mbpp_send(mp, ptr, len)
 int
 mbpp_recv(mp, ptr, len)
 	struct mbpp_port *mp;
-	caddr_t ptr;
+	void *ptr;
 	int len;
 {
 	int s;

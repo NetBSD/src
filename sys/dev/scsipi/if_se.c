@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.63 2007/01/13 18:42:45 cube Exp $	*/
+/*	$NetBSD: if_se.c,v 1.63.2.1 2007/03/12 05:57:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.63 2007/01/13 18:42:45 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.63.2.1 2007/03/12 05:57:09 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -201,7 +201,7 @@ static void	se_ifstart(struct ifnet *);
 static void	sestart(struct scsipi_periph *);
 
 static void	sedone(struct scsipi_xfer *, int);
-static int	se_ioctl(struct ifnet *, u_long, caddr_t);
+static int	se_ioctl(struct ifnet *, u_long, void *);
 static void	sewatchdog(struct ifnet *);
 
 static inline u_int16_t ether_cmp(void *, void *);
@@ -606,7 +606,7 @@ se_get(sc, data, totlen)
 		}
 
 		if (m == m0) {
-			caddr_t newdata = (caddr_t)
+			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;
@@ -614,7 +614,7 @@ se_get(sc, data, totlen)
 		}
 
 		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, caddr_t), data, len);
+		memcpy(mtod(m, void *), data, len);
 		data += len;
 
 		totlen -= len;
@@ -973,7 +973,7 @@ static int
 se_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct se_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -1181,7 +1181,7 @@ int
 seioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t addr;
+	void *addr;
 	int flag;
 	struct lwp *l;
 {

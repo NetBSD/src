@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.32.8.1 2007/02/27 16:55:12 yamt Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.32.8.2 2007/03/12 06:00:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.32.8.1 2007/02/27 16:55:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.32.8.2 2007/03/12 06:00:32 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -273,7 +273,7 @@ struct nl_protosw nl_protosw[] = {
 		iso_pcbdisconnect, iso_pcbdetach,
 		iso_pcballoc,
 		tpclnp_output, tpclnp_output_dg, iso_nlctloutput,
-		(caddr_t) & tp_isopcb,
+		(void *) & tp_isopcb,
 	},
 #else
 	{ .nlp_afamily = 0, },
@@ -287,7 +287,7 @@ struct nl_protosw nl_protosw[] = {
 		in_pcbdisconnect, in_pcbdetach,
 		in_pcballoc,
 		tpip_output, tpip_output_dg, /* nl_ctloutput */ NULL,
-		(caddr_t) & tp_inpcb,
+		(void *) & tp_inpcb,
 	},
 #else
 	{ .nlp_afamily = 0, },
@@ -301,7 +301,7 @@ struct nl_protosw nl_protosw[] = {
 		iso_pcbdisconnect, iso_pcbdetach,
 		iso_pcballoc,
 		tpcons_output, tpcons_output, iso_nlctloutput,
-		(caddr_t) & tp_isopcb,
+		(void *) & tp_isopcb,
 	},
 #else
 	{ .nlp_afamily = 0, },
@@ -348,7 +348,7 @@ tp_init(void)
 	tp_start_win = 2;
 
 	tp_timerinit();
-	bzero((caddr_t) & tp_stat, sizeof(struct tp_stat));
+	bzero((void *) & tp_stat, sizeof(struct tp_stat));
 }
 
 /*
@@ -382,9 +382,9 @@ tp_soisdisconnecting(struct socket *so)
 		u_int           fsufx, lsufx;
 		struct timeval	now;
 
-		bcopy((caddr_t) tpcb->tp_fsuffix, (caddr_t) &fsufx,
+		bcopy((void *) tpcb->tp_fsuffix, (void *) &fsufx,
 		      sizeof(u_int));
-		bcopy((caddr_t) tpcb->tp_lsuffix, (caddr_t) &lsufx,
+		bcopy((void *) tpcb->tp_lsuffix, (void *) &lsufx,
 		      sizeof(u_int));
 
 		getmicrotime(&now);
@@ -433,9 +433,9 @@ tp_soisdisconnected(struct tp_pcb *tpcb)
 		struct timeval	now;
 
 		/* CHOKE */
-		bcopy((caddr_t) ttpcb->tp_fsuffix, (caddr_t) &fsufx,
+		bcopy((void *) ttpcb->tp_fsuffix, (void *) &fsufx,
 		      sizeof(u_int));
-		bcopy((caddr_t) ttpcb->tp_lsuffix, (caddr_t) &lsufx,
+		bcopy((void *) ttpcb->tp_lsuffix, (void *) &lsufx,
 		      sizeof(u_int));
 
 		getmicrotime(&now);
@@ -533,7 +533,7 @@ tp_getref(struct tp_pcb *tpcb)
 {
 	struct tp_ref *r, *rlim;
 	int    i;
-	caddr_t         obase;
+	void *        obase;
 	unsigned        size;
 
 	if (++tp_refinfo.tpr_numopen < tp_refinfo.tpr_size)
@@ -543,17 +543,17 @@ tp_getref(struct tp_pcb *tpcb)
 				goto got_one;
 	/* else have to allocate more space */
 
-	obase = (caddr_t) tp_refinfo.tpr_base;
+	obase = (void *) tp_refinfo.tpr_base;
 	size = tp_refinfo.tpr_size * sizeof(struct tp_ref);
 	r = (struct tp_ref *) malloc(size + size, M_PCB, M_NOWAIT);
 	if (r == 0)
 		return (--tp_refinfo.tpr_numopen, TP_ENOREF);
 	tp_refinfo.tpr_base = tp_ref = r;
 	tp_refinfo.tpr_size *= 2;
-	bcopy(obase, (caddr_t) r, size);
+	memcpy(r, obase, size);
 	free(obase, M_PCB);
-	r = (struct tp_ref *) (size + (caddr_t) r);
-	bzero((caddr_t) r, size);
+	r = (struct tp_ref *)(size + (char *)r);
+	bzero((void *) r, size);
 
 got_one:
 	r->tpr_pcb = tpcb;
@@ -703,7 +703,7 @@ tp_attach(struct socket *so, int protocol)
 	if (dom == AF_INET) {
 		/* tp_set_npcb sets it */
 		KASSERT(so->so_pcb != NULL);
-		sotoinpcb(so)->inp_ppcb = (caddr_t) tpcb;
+		sotoinpcb(so)->inp_ppcb = (void *) tpcb;
 	}
 
 	return 0;
@@ -723,7 +723,7 @@ bad3:
 	}
 #endif
 
-	free((caddr_t) tpcb, M_PCB);	/* never a cluster  */
+	free((void *) tpcb, M_PCB);	/* never a cluster  */
 
 bad2:
 #ifdef ARGO_DEBUG
@@ -883,7 +883,7 @@ tp_detach(struct tp_pcb *tpcb)
 		printf("end of detach, NOT single, tpcb %p\n", tpcb);
 	}
 #endif
-	/* free((caddr_t)tpcb, M_PCB); WHere to put this ? */
+	/* free((void *)tpcb, M_PCB); WHere to put this ? */
 }
 
 struct que {
@@ -956,7 +956,7 @@ tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 #endif
 #ifdef INET
 		case AF_INET:
-			tsel = (caddr_t) & tutil;
+			tsel = (void *) & tutil;
 			if ((tutil = satosin(siso)->sin_port) != 0)
 				tlen = 2;
 			if (satosin(siso)->sin_addr.s_addr == 0)
@@ -970,7 +970,7 @@ tp_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 				  tpcb->tp_sock->so_options & SO_REUSEADDR))
 				return (EINVAL);
 		} else {
-			for (tsel = (caddr_t) & tutil, tlen = 2;;) {
+			for (tsel = (void *) & tutil, tlen = 2;;) {
 				if (tp_unique++ < ISO_PORT_RESERVED ||
 				    tp_unique > ISO_PORT_USERRESERVED) {
 					if (wrapped++)

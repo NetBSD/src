@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.84 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.84.4.1 2007/03/12 05:55:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.84 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.84.4.1 2007/03/12 05:55:22 rmind Exp $");
 
 #include "rnd.h"
 
@@ -315,7 +315,7 @@ static void	vr_rxeoc(struct vr_softc *);
 static void	vr_txeof(struct vr_softc *);
 static int	vr_intr(void *);
 static void	vr_start(struct ifnet *);
-static int	vr_ioctl(struct ifnet *, u_long, caddr_t);
+static int	vr_ioctl(struct ifnet *, u_long, void *);
 static int	vr_init(struct ifnet *);
 static void	vr_stop(struct ifnet *, int);
 static void	vr_rxdrain(struct vr_softc *);
@@ -714,8 +714,8 @@ vr_rxeof(struct vr_softc *sc)
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL)
 				goto dropit;
-			memcpy(mtod(m, caddr_t),
-			    mtod(ds->ds_mbuf, caddr_t), total_len);
+			memcpy(mtod(m, void *),
+			    mtod(ds->ds_mbuf, void *), total_len);
 			VR_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize,
@@ -762,7 +762,7 @@ vr_rxeof(struct vr_softc *sc)
 		 * Note that we use clusters for incoming frames, so the
 		 * buffer is virtually contiguous.
 		 */
-		memcpy(mtod(m, caddr_t), mtod(ds->ds_mbuf, caddr_t),
+		memcpy(mtod(m, void *), mtod(ds->ds_mbuf, void *),
 		    total_len);
 
 		/* Allow the receive descriptor to continue using its mbuf. */
@@ -1061,14 +1061,14 @@ vr_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			/*
 			 * The Rhine doesn't auto-pad, so we have to do this
 			 * ourselves.
 			 */
 			if (m0->m_pkthdr.len < VR_MIN_FRAMELEN) {
-				memset(mtod(m, caddr_t) + m0->m_pkthdr.len,
+				memset(mtod(m, char *) + m0->m_pkthdr.len,
 				    0, VR_MIN_FRAMELEN - m0->m_pkthdr.len);
 				m->m_pkthdr.len = m->m_len = VR_MIN_FRAMELEN;
 			}
@@ -1312,7 +1312,7 @@ vr_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 }
 
 static int
-vr_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+vr_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1665,7 +1665,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->vr_dmat, &seg, rseg,
-	    sizeof(struct vr_control_data), (caddr_t *)&sc->vr_control_data,
+	    sizeof(struct vr_control_data), (void **)&sc->vr_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->vr_dev.dv_xname, error);
@@ -1778,7 +1778,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->vr_dmat, sc->vr_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->vr_dmat, (caddr_t)sc->vr_control_data,
+	bus_dmamem_unmap(sc->vr_dmat, (void *)sc->vr_control_data,
 	    sizeof(struct vr_control_data));
  fail_1:
 	bus_dmamem_free(sc->vr_dmat, &seg, rseg);

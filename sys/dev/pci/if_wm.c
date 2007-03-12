@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.131.4.1 2007/02/27 16:54:02 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.131.4.2 2007/03/12 05:55:23 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.4.1 2007/02/27 16:54:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.131.4.2 2007/03/12 05:55:23 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -470,7 +470,7 @@ do {									\
 
 static void	wm_start(struct ifnet *);
 static void	wm_watchdog(struct ifnet *);
-static int	wm_ioctl(struct ifnet *, u_long, caddr_t);
+static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
 
@@ -1096,7 +1096,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, cdata_size,
-				    (caddr_t *)&sc->sc_control_data, 0)) != 0) {
+				    (void **)&sc->sc_control_data, 0)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
@@ -1533,7 +1533,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    cdata_size);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -1689,8 +1689,8 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 
 			if (v4) {
 				struct ip *ip =
-				    (void *)(mtod(m0, caddr_t) + offset);
-				th = (void *)(mtod(m0, caddr_t) + hlen);
+				    (void *)(mtod(m0, char *) + offset);
+				th = (void *)(mtod(m0, char *) + hlen);
 
 				ip->ip_len = 0;
 				th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
@@ -2234,7 +2234,7 @@ wm_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-wm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;

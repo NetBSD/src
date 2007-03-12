@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.41.2.1 2007/02/27 16:55:11 yamt Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.41.2.2 2007/03/12 06:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.41.2.1 2007/02/27 16:55:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.41.2.2 2007/03/12 06:00:30 rmind Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -225,7 +225,7 @@ llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 				break;
 			}
 			R_Malloc(lc, struct llinfo_llc *, sizeof(*lc));
-			rt->rt_llinfo = (caddr_t) lc;
+			rt->rt_llinfo = (void *) lc;
 			if (lc == 0) {
 				log(LOG_DEBUG, "llc_rtrequest: malloc failed\n");
 				break;
@@ -279,11 +279,11 @@ iso_setmcasts(struct ifnet *ifp, int req)
 	for (cpp = addrlist; *cpp; cpp++) {
 		(void)memcpy(ifr.ifr_addr.sa_data, *cpp, 6);
 		if (req == RTM_ADD && (ifp->if_ioctl == 0 ||
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr) != 0))
+		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)&ifr) != 0))
 			printf("iso_setmcasts: %s unable to add mcast\n",
 			    ifp->if_xname);
 		else if (req == RTM_DELETE && (ifp->if_ioctl == 0 ||
-		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr) != 0))
+		    (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)&ifr) != 0))
 			printf("iso_setmcasts: %s unable to delete mcast\n",
 			    ifp->if_xname);
 	}
@@ -315,7 +315,7 @@ int
 iso_snparesolve(
 	struct ifnet   *ifp,		/* outgoing interface */
 	const struct sockaddr_iso *dest,	/* destination */
-	caddr_t         snpa,		/* RESULT: snpa to be used */
+	void *        snpa,		/* RESULT: snpa to be used */
 	int            *snpa_len)	/* RESULT: length of snpa */
 {
 	struct llinfo_llc *sc;	/* ptr to snpa table entry */
@@ -412,7 +412,7 @@ int
 snpac_add(
 	struct ifnet   *ifp,		/* interface info is related to */
 	struct iso_addr *nsap,		/* nsap to add */
-	caddr_t         snpa,		/* translation */
+	void *        snpa,		/* translation */
 	int             type,		/* SNPA_IS or SNPA_ES */
 	u_short         ht,		/* holding time (in seconds) */
 	int             nsellength)	/* nsaps may differ only in trailing
@@ -532,7 +532,7 @@ int
 snpac_ioctl(
 	struct socket *so,
 	u_long cmd,		/* ioctl to process */
-	caddr_t data,		/* data for the cmd */
+	void *data,		/* data for the cmd */
 	struct lwp *l)
 {
 	struct systype_req *rq = (struct systype_req *) data;
@@ -668,7 +668,7 @@ snpac_age(void *v)
  *			real multicast addresses can be configured
  */
 int
-snpac_ownmulti(caddr_t snpa, u_int len)
+snpac_ownmulti(void *snpa, u_int len)
 {
 	return (((iso_systype & SNPA_ES) &&
 		 (!memcmp(snpa, all_es_snpa, len))) ||

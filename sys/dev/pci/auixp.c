@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.21 2006/11/16 01:33:08 christos Exp $ */
+/* $NetBSD: auixp.c,v 1.21.4.1 2007/03/12 05:55:11 rmind Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.21 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.21.4.1 2007/03/12 05:55:11 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -775,7 +775,7 @@ auixp_trigger_output(void *hdl, void *start, void *end, int blksize,
 	 * NOTE, we can assume its in one block since we asked for it to be in
 	 * one contiguous blob; XXX change this? XXX
 	 */
-	blocks = (size_t) (((caddr_t) end) - ((caddr_t) start)) / blksize;
+	blocks = (size_t) (((char *) end) - ((char *) start)) / blksize;
 
 	/* lookup `start' address in our list of DMA area's */
 	SLIST_FOREACH(sound_dma, &sc->sc_dma_list, dma_chain) {
@@ -850,7 +850,7 @@ auixp_trigger_input(void *hdl, void *start, void *end, int blksize,
 	 * NOTE, we can assume its in one block since we asked for it to be in
 	 * one contiguous blob; XXX change this? XXX
 	 */
-	blocks = (size_t) (((caddr_t) end) - ((caddr_t) start)) / blksize;
+	blocks = (size_t) (((char *) end) - ((char *) start)) / blksize;
 
 	/* lookup `start' address in our list of DMA area's */
 	SLIST_FOREACH(sound_dma, &sc->sc_dma_list, dma_chain) {

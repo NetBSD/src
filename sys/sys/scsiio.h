@@ -1,4 +1,4 @@
-/*     $NetBSD: scsiio.h,v 1.11 2002/07/10 21:56:42 wiz Exp $        */
+/*     $NetBSD: scsiio.h,v 1.11.60.1 2007/03/12 06:00:54 rmind Exp $        */
 
 #ifndef _SYS_SCSIIO_H_
 #define _SYS_SCSIIO_H_
@@ -14,7 +14,7 @@ typedef struct	scsireq {
 	u_long	timeout;
 	u_char	cmd[16];	/* 12 is actually the max */
 	u_char	cmdlen;
-	caddr_t	databuf;	/* address in user space of buffer */
+	void *	databuf;	/* address in user space of buffer */
 	u_long	datalen;	/* size of user buffer (request) */
 	u_long	datalen_used;	/* size of user buffer (used)*/
 	u_char	sense[SENSEBUFLEN]; /* returned sense will be in here */

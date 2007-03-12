@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.7.2.1 2007/02/27 16:54:00 yamt Exp $
+ * $NetBSD: if_lmc.h,v 1.7.2.2 2007/03/12 05:55:19 rmind Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1248,7 +1248,7 @@ struct card				/* an object */
 struct stack				/* an object */
   {
 #if IFNET || NETGRAPH
-  int (*ioctl) (softc_t *, u_long, caddr_t);
+  int (*ioctl) (softc_t *, u_long, void *);
   void (*input) (softc_t *, struct mbuf *);
   void (*output) (softc_t *);
 #elif NETDEV
@@ -1491,7 +1491,7 @@ static void t1_attach(softc_t *, struct config *);
 static void t1_detach(softc_t *);
 
 #if NETGRAPH
-static int netgraph_ioctl(softc_t *, u_long, caddr_t);
+static int netgraph_ioctl(softc_t *, u_long, void *);
 static void netgraph_input(softc_t *, struct mbuf *);
 static void netgraph_output(softc_t *);
 static void netgraph_watchdog(softc_t *);
@@ -1523,19 +1523,19 @@ static int gen_hdlc_card_params(struct net_device *, unsigned short,
 #endif /* GEN_HDLC */
 
 #if P2P
-static int p2p_stack_ioctl(softc_t *, u_long, caddr_t);
+static int p2p_stack_ioctl(softc_t *, u_long, void *);
 static void p2p_stack_input(softc_t *, struct mbuf *);
 static void p2p_stack_output(softc_t *);
 static void p2p_stack_watchdog(softc_t *);
 static int p2p_stack_open(softc_t *, struct config *);
 static int p2p_stack_attach(softc_t *, struct config *);
 static int p2p_stack_detach(softc_t *);
-static int p2p_getmdm(struct p2pcom *, caddr_t);
+static int p2p_getmdm(struct p2pcom *, void *);
 static int p2p_mdmctl(struct p2pcom *, int);
 #endif /* P2P */
 
 #if SPPP
-static int sppp_stack_ioctl(softc_t *, u_long, caddr_t);
+static int sppp_stack_ioctl(softc_t *, u_long, void *);
 static void sppp_stack_input(softc_t *, struct mbuf *);
 static void sppp_stack_output(softc_t *);
 static void sppp_stack_watchdog(softc_t *);
@@ -1547,7 +1547,7 @@ static void sppp_tlf(struct sppp *);
 #endif /* SPPP */
 
 #if IFNET
-static int rawip_ioctl(softc_t *, u_long, caddr_t);
+static int rawip_ioctl(softc_t *, u_long, void *);
 static void rawip_input(softc_t *, struct mbuf *);
 static void rawip_output(softc_t *);
 #elif NETDEV
@@ -1564,7 +1564,7 @@ static int rawip_detach(softc_t *);
 static void ifnet_input(struct ifnet *, struct mbuf *);
 static int ifnet_output(struct ifnet *, struct mbuf *,
 			const struct sockaddr *, struct rtentry *);
-static int ifnet_ioctl(struct ifnet *, u_long, caddr_t);
+static int ifnet_ioctl(struct ifnet *, u_long, void *);
 static void ifnet_start(struct ifnet *);
 static void ifnet_watchdog(struct ifnet *);
 
@@ -1647,7 +1647,7 @@ static irqreturn_t linux_interrupt(int, void *, struct pt_regs *);
 static int open_proto(softc_t *, struct config *);
 static int attach_stack(softc_t *, struct config *);
 
-static int lmc_ioctl(softc_t *, u_long, caddr_t);
+static int lmc_ioctl(softc_t *, u_long, void *);
 static void lmc_watchdog(softc_t *);
 
 static void set_ready(softc_t *, int);

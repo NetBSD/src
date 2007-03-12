@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.14.2.1 2007/02/27 16:54:42 yamt Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.14.2.2 2007/03/12 05:59:11 rmind Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ void	gifattach0(struct gif_softc *);
 void	gif_input(struct mbuf *, int, struct ifnet *);
 int	gif_output(struct ifnet *, struct mbuf *,
 		   const struct sockaddr *, struct rtentry *);
-int	gif_ioctl(struct ifnet *, u_long, caddr_t);
+int	gif_ioctl(struct ifnet *, u_long, void *);
 int	gif_set_tunnel(struct ifnet *, struct sockaddr *, struct sockaddr *);
 void	gif_delete_tunnel(struct ifnet *);
 #ifdef GIF_ENCAPCHECK

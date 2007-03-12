@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.5 2005/12/11 12:24:44 christos Exp $ */
+/*	$NetBSD: memset.S,v 1.5.26.1 2007/03/12 05:59:07 rmind Exp $ */
 
 /*-
  * Copyright (C) 2003	Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
 /*----------------------------------------------------------------------*/
 /*
      void bzero(void *b r3, size_t len r4);
-     void * memset(void *b r3, int c r4, size_t len r5);
+     void *memset(void *b r3, int c r4, size_t len r5);
 */
 /*----------------------------------------------------------------------*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.30 2006/12/15 21:18:52 joerg Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.30.2.1 2007/03/12 05:57:54 rmind Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -506,7 +506,7 @@ struct proc *p;
 #endif
 dev_t dev;
 u_long cmd;
-caddr_t data;
+void *data;
 int mode;
 {
 	int s;
@@ -548,7 +548,7 @@ int mode;
 	{
 	case FIONREAD :
 #ifdef IPFILTER_LOG
-		BCOPYOUT(&iplused[IPL_LOGIPF], (caddr_t)data,
+		BCOPYOUT(&iplused[IPL_LOGIPF], (void *)data,
 			 sizeof(iplused[IPL_LOGIPF]));
 #endif
 		break;
@@ -1222,7 +1222,7 @@ frdest_t *fdp;
 	 * Route packet.
 	 */
 	ro = &iproute;
-	bzero((caddr_t)ro, sizeof (*ro));
+	bzero((void *)ro, sizeof (*ro));
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
 	dst->sin_addr = ip->ip_dst;
@@ -1466,7 +1466,7 @@ frdest_t *fdp;
 	error = 0;
 	ro = &ip6route;
 	fr = fin->fin_fr;
-	bzero((caddr_t)ro, sizeof(*ro));
+	bzero((void *)ro, sizeof(*ro));
 	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
 	dst6->sin6_family = AF_INET6;
 	dst6->sin6_len = sizeof(struct sockaddr_in6);

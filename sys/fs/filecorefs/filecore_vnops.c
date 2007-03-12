@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.18 2006/05/15 01:29:02 christos Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.18.14.1 2007/03/12 05:58:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.18 2006/05/15 01:29:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.18.14.1 2007/03/12 05:58:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ filecore_read(v)
 			return (error);
 		}
 
-		error = uiomove(bp->b_data + on, (int)n, uio);
+		error = uiomove((char *)(bp->b_data) + on, (int)n, uio);
 #ifdef FILECORE_DEBUG_BR
 		printf("brelse(%p) vn2\n", bp);
 #endif

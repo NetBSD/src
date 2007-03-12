@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.34 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: qec.c,v 1.34.26.1 2007/03/12 05:57:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.34 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.34.26.1 2007/03/12 05:57:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ qecattach(parent, self, aux)
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_buffer = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh);
+	sc->sc_buffer = (void *)bus_space_vaddr(sa->sa_bustag, bh);
 	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].oa_size;
 
 	/* Get number of on-board channels */
@@ -326,7 +326,7 @@ qec_meminit(qr, pktbufsz)
 {
 	bus_addr_t txbufdma, rxbufdma;
 	bus_addr_t dma;
-	caddr_t p;
+	void *p;
 	unsigned int ntbuf, nrbuf, i;
 
 	p = qr->rb_membase;
@@ -340,7 +340,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_txd = (struct qec_xd *)p;
 	qr->rb_txddma = dma;
-	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	p = (char *)p + QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 
 	/*
@@ -348,7 +348,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_rxd = (struct qec_xd *)p;
 	qr->rb_rxddma = dma;
-	p += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
+	p = (char *)p + QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 	dma += QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd);
 
 
@@ -357,7 +357,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_txbuf = p;
 	txbufdma = dma;
-	p += ntbuf * pktbufsz;
+	p = (char *)p + ntbuf * pktbufsz;
 	dma += ntbuf * pktbufsz;
 
 	/*
@@ -365,7 +365,7 @@ qec_meminit(qr, pktbufsz)
 	 */
 	qr->rb_rxbuf = p;
 	rxbufdma = dma;
-	p += nrbuf * pktbufsz;
+	p = (char *)p + nrbuf * pktbufsz;
 	dma += nrbuf * pktbufsz;
 
 	/*

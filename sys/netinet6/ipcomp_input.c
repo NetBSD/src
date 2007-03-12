@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_input.c,v 1.30 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: ipcomp_input.c,v 1.30.4.1 2007/03/12 05:59:58 rmind Exp $	*/
 /*	$KAME: ipcomp_input.c,v 1.29 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.30 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipcomp_input.c,v 1.30.4.1 2007/03/12 05:59:58 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -149,8 +149,8 @@ ipcomp4_input(m, va_alist)
 	cpi = ntohs(ipcomp->comp_cpi);
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
-		sav = key_allocsa(AF_INET, (caddr_t)&ip->ip_src,
-			(caddr_t)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi), 
+		sav = key_allocsa(AF_INET, (void *)&ip->ip_src,
+			(void *)&ip->ip_dst, IPPROTO_IPCOMP, htonl(cpi), 
 			sport, dport);
 		if (sav != NULL &&
 		    (sav->state == SADB_SASTATE_MATURE ||
@@ -292,8 +292,8 @@ ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 	cpi = ntohs(ipcomp->comp_cpi);
 
 	if (cpi >= IPCOMP_CPI_NEGOTIATE_MIN) {
-		sav = key_allocsa(AF_INET6, (caddr_t)&ip6->ip6_src,
-			(caddr_t)&ip6->ip6_dst, IPPROTO_IPCOMP, 
+		sav = key_allocsa(AF_INET6, (void *)&ip6->ip6_src,
+			(void *)&ip6->ip6_dst, IPPROTO_IPCOMP, 
 			htonl(cpi), 0, 0);
 		if (sav != NULL &&
 		    (sav->state == SADB_SASTATE_MATURE ||

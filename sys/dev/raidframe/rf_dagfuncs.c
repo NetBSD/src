@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.28 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.28.4.1 2007/03/12 05:56:51 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.28 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.28.4.1 2007/03/12 05:56:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -168,7 +168,7 @@ int
 rf_ParityLogUpdateFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t bf = (caddr_t) node->params[1].p;
+	void *bf = (void *) node->params[1].p;
 	RF_ParityLogData_t *logData;
 #if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -205,7 +205,7 @@ int
 rf_ParityLogOverwriteFunc(RF_DagNode_t *node)
 {
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t bf = (caddr_t) node->params[1].p;
+	void *bf = (void *) node->params[1].p;
 	RF_ParityLogData_t *logData;
 #if RF_ACC_TRACE > 0
 	RF_AccTraceEntry_t *tracerec = node->dagHdr->tracerec;
@@ -272,7 +272,7 @@ rf_DiskReadFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t bf = (caddr_t) node->params[1].p;
+	void *bf = (void *) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);
@@ -311,7 +311,7 @@ rf_DiskWriteFuncForThreads(RF_DagNode_t *node)
 {
 	RF_DiskQueueData_t *req;
 	RF_PhysDiskAddr_t *pda = (RF_PhysDiskAddr_t *) node->params[0].p;
-	caddr_t bf = (caddr_t) node->params[1].p;
+	void *bf = (void *) node->params[1].p;
 	RF_StripeNum_t parityStripeID = (RF_StripeNum_t) node->params[2].v;
 	unsigned priority = RF_EXTRACT_PRIORITY(node->params[3].v);
 	unsigned which_ru = RF_EXTRACT_RU(node->params[3].v);

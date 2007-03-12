@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.58 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.58.4.1 2007/03/12 05:57:29 rmind Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.58 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.58.4.1 2007/03/12 05:57:29 rmind Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -189,7 +189,7 @@ Static int kue_open_pipes(struct kue_softc *);
 Static void kue_rxeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void kue_txeof(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static void kue_start(struct ifnet *);
-Static int kue_ioctl(struct ifnet *, u_long, caddr_t);
+Static int kue_ioctl(struct ifnet *, u_long, void *);
 Static void kue_init(void *);
 Static void kue_stop(struct kue_softc *);
 Static void kue_watchdog(struct ifnet *);
@@ -1058,7 +1058,7 @@ kue_open_pipes(struct kue_softc *sc)
 }
 
 Static int
-kue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
+kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct kue_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;

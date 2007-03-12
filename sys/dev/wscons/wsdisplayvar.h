@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.41 2006/11/06 19:51:12 macallan Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.41.4.1 2007/03/12 05:57:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -111,7 +111,7 @@ struct wsdisplay_char;
  * with these functions, which is passed to them when they are invoked.
  */
 struct wsdisplay_accessops {
-	int	(*ioctl)(void *, void *, u_long, caddr_t, int, struct lwp *);
+	int	(*ioctl)(void *, void *, u_long, void *, int, struct lwp *);
 	paddr_t	(*mmap)(void *, void *, off_t, int);
 	int	(*alloc_screen)(void *, const struct wsscreen_descr *,
 				void **, int *, int *, long *);
@@ -196,18 +196,18 @@ int wsdisplay_getactivescreen(struct wsdisplay_softc *);
 int wsscreen_switchwait(struct wsdisplay_softc *, int);
 
 int wsdisplay_internal_ioctl(struct wsdisplay_softc *, struct wsscreen *,
-			     u_long, caddr_t, int, struct lwp *);
+			     u_long, void *, int, struct lwp *);
 
 int wsdisplay_usl_ioctl1(struct wsdisplay_softc *,
-			 u_long, caddr_t, int, struct lwp *);
+			 u_long, void *, int, struct lwp *);
 
 int wsdisplay_usl_ioctl2(struct wsdisplay_softc *, struct wsscreen *,
-			 u_long, caddr_t, int, struct lwp *);
+			 u_long, void *, int, struct lwp *);
 
-int wsdisplay_stat_ioctl(struct wsdisplay_softc *, u_long, caddr_t,
+int wsdisplay_stat_ioctl(struct wsdisplay_softc *, u_long, void *,
 			 int, struct lwp *);
 
-int wsdisplay_cfg_ioctl(struct wsdisplay_softc *, u_long, caddr_t,
+int wsdisplay_cfg_ioctl(struct wsdisplay_softc *, u_long, void *,
 			int, struct lwp *);
 
 #ifdef WSDISPLAY_SCROLLSUPPORT

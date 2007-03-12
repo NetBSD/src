@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.77.2.1 2007/02/27 16:55:03 yamt Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.77.2.2 2007/03/12 05:59:58 rmind Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.77.2.1 2007/02/27 16:55:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.77.2.2 2007/03/12 05:59:58 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -369,7 +369,7 @@ ip6_mrouter_get(cmd, so, m)
 int
 mrt6_ioctl(cmd, data)
 	int cmd;
-	caddr_t data;
+	void *data;
 {
 
 	switch (cmd) {
@@ -485,8 +485,8 @@ ip6_mrouter_init(so, v, cmd)
 	ip6_mrouter = so;
 	ip6_mrouter_ver = cmd;
 
-	bzero((caddr_t)mf6ctable, sizeof(mf6ctable));
-	bzero((caddr_t)n6expire, sizeof(n6expire));
+	bzero((void *)mf6ctable, sizeof(mf6ctable));
+	bzero((void *)n6expire, sizeof(n6expire));
 
 	pim6 = 0;/* used for stubbing out/in pim stuff */
 
@@ -541,15 +541,15 @@ ip6_mrouter_done()
 				ifr.ifr_addr.sin6_addr= in6addr_any;
 				ifp = mif6table[mifi].m6_ifp;
 				(*ifp->if_ioctl)(ifp, SIOCDELMULTI,
-						 (caddr_t)&ifr);
+						 (void *)&ifr);
 			}
 		}
 	}
 #ifdef notyet
-	bzero((caddr_t)qtable, sizeof(qtable));
-	bzero((caddr_t)tbftable, sizeof(tbftable));
+	bzero((void *)qtable, sizeof(qtable));
+	bzero((void *)tbftable, sizeof(tbftable));
 #endif
-	bzero((caddr_t)mif6table, sizeof(mif6table));
+	bzero((void *)mif6table, sizeof(mif6table));
 	nummifs = 0;
 
 	pim6 = 0; /* used to stub out/in pim specific code */
@@ -577,7 +577,7 @@ ip6_mrouter_done()
 		}
 	}
 
-	bzero((caddr_t)mf6ctable, sizeof(mf6ctable));
+	bzero((void *)mf6ctable, sizeof(mf6ctable));
 
 	/*
 	 * Reset register interface
@@ -690,7 +690,7 @@ add_m6if(mifcp)
 		 */
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6addr_any;
-		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
+		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)&ifr);
 		splx(s);
 		if (error)
 			return error;
@@ -753,7 +753,7 @@ del_m6if(mifip)
 
 		ifr.ifr_addr.sin6_family = AF_INET6;
 		ifr.ifr_addr.sin6_addr = in6addr_any;
-		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)&ifr);
 	} else {
 		if (reg_mif_num != (mifi_t)-1) {
 			if_detach(&multicast_register_if6);
@@ -762,10 +762,10 @@ del_m6if(mifip)
 	}
 
 #ifdef notyet
-	bzero((caddr_t)qtable[*mifip], sizeof(qtable[*mifip]));
-	bzero((caddr_t)mifp->m6_tbf, sizeof(*(mifp->m6_tbf)));
+	bzero((void *)qtable[*mifip], sizeof(qtable[*mifip]));
+	bzero((void *)mifp->m6_tbf, sizeof(*(mifp->m6_tbf)));
 #endif
-	bzero((caddr_t)mifp, sizeof (*mifp));
+	bzero((void *)mifp, sizeof (*mifp));
 
 	/* Adjust nummifs down */
 	for (mifi = nummifs; mifi > 0; mifi--)

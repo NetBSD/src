@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.34 2006/11/12 19:00:43 plunky Exp $	*/
+/*	$NetBSD: ms.c,v 1.34.4.1 2007/03/12 05:57:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.34 2006/11/12 19:00:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.34.4.1 2007/03/12 05:57:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ int
 msioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

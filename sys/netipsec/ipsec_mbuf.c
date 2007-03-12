@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_mbuf.c,v 1.7 2005/12/11 12:25:05 christos Exp $	*/
+/*	$NetBSD: ipsec_mbuf.c,v 1.7.26.1 2007/03/12 06:00:06 rmind Exp $	*/
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.7 2005/12/11 12:25:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_mbuf.c,v 1.7.26.1 2007/03/12 06:00:06 rmind Exp $");
 
 /*
  * IPsec-specific mbuf routines.
@@ -90,8 +90,8 @@ m_clone(struct mbuf *m0)
 			if (mprev && (mprev->m_flags & M_EXT) &&
 			    m->m_len <= M_TRAILINGSPACE(mprev)) {
 				/* XXX: this ignores mbuf types */
-				memcpy(mtod(mprev, caddr_t) + mprev->m_len,
-				       mtod(m, caddr_t), m->m_len);
+				memcpy(mtod(mprev, char *) + mprev->m_len,
+				       mtod(m, char *), m->m_len);
 				mprev->m_len += m->m_len;
 				mprev->m_next = m->m_next;	/* unlink from chain */
 				m_free(m);			/* reclaim mbuf */
@@ -124,8 +124,8 @@ m_clone(struct mbuf *m0)
 		if (mprev != NULL && (mprev->m_flags & M_EXT) &&
 		    m->m_len <= M_TRAILINGSPACE(mprev)) {
 			/* XXX: this ignores mbuf types */
-			memcpy(mtod(mprev, caddr_t) + mprev->m_len,
-			       mtod(m, caddr_t), m->m_len);
+			memcpy(mtod(mprev, char *) + mprev->m_len,
+			       mtod(m, char *), m->m_len);
 			mprev->m_len += m->m_len;
 			mprev->m_next = m->m_next;	/* unlink from chain */
 			m_free(m);			/* reclaim mbuf */
@@ -177,7 +177,7 @@ m_clone(struct mbuf *m0)
 		mlast = NULL;
 		for (;;) {
 			int cc = min(len, MCLBYTES);
-			memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + off, cc);
+			memcpy(mtod(n, char *), mtod(m, char *) + off, cc);
 			n->m_len = cc;
 			if (mlast != NULL)
 				mlast->m_next = n;
@@ -261,8 +261,8 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 			 * the remainder; just do the copy to the new
 			 * mbuf and we're good to go.
 			 */
-			memcpy(mtod(n, caddr_t),
-			       mtod(m, caddr_t) + skip, remain);
+			memcpy(mtod(n, char *),
+			       mtod(m, char *) + skip, remain);
 			n->m_len = remain;
 			m->m_len = skip + hlen;
 			*off = skip;
@@ -282,16 +282,16 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 				if (n2 == NULL)
 					return (NULL);
 				n2->m_len = 0;
-				memcpy(mtod(n2, caddr_t),
-				       mtod(m, caddr_t) + skip, remain);
+				memcpy(mtod(n2, char *),
+				       mtod(m, char *) + skip, remain);
 				n2->m_len = remain;
 				/* splice in second mbuf */
 				n2->m_next = n->m_next;
 				n->m_next = n2;
 				newipsecstat.ips_mbinserted++;
 			} else {
-				memcpy(mtod(n, caddr_t) + hlen,
-				       mtod(m, caddr_t) + skip, remain);
+				memcpy(mtod(n, char *) + hlen,
+				       mtod(m, char *) + skip, remain);
 				n->m_len += remain;
 			}
 			m->m_len -= remain;
@@ -305,8 +305,8 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 		 * so there's space to write the new header.
 		 */
 		/* XXX can this be memcpy? does it handle overlap? */
-		ovbcopy(mtod(m, caddr_t) + skip,
-			mtod(m, caddr_t) + skip + hlen, remain);
+		ovbcopy(mtod(m, char *) + skip,
+			mtod(m, char *) + skip + hlen, remain);
 		m->m_len += hlen;
 		*off = skip;
 	}
@@ -319,12 +319,12 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
  * length is updated, and a pointer to the first byte of the padding
  * (which is guaranteed to be all in one mbuf) is returned.
  */
-caddr_t
+void *
 m_pad(struct mbuf *m, int n)
 {
 	register struct mbuf *m0, *m1;
 	register int len, pad;
-	caddr_t retval;
+	void *retval;
 
 	if (n <= 0) {  /* No stupid arguments. */
 		DPRINTF(("m_pad: pad length invalid (%d)\n", n));
@@ -461,12 +461,12 @@ m_checkalignment(const char* where, struct mbuf *m0, int off, int len)
 {
 	int roff;
 	struct mbuf *m = m_getptr(m0, off, &roff);
-	caddr_t addr;
+	void *addr;
 
 	if (m == NULL)
 		return;
 	printf("%s (off %u len %u): ", where, off, len);
-	addr = mtod(m, caddr_t) + roff;
+	addr = mtod(m, char *) + roff;
 	do {
 		int mlen;
 
@@ -483,9 +483,9 @@ m_checkalignment(const char* where, struct mbuf *m0, int off, int len)
 			break;
 		}
 		m = m->m_next;
-		addr = m ? mtod(m, caddr_t) : NULL;
+		addr = m ? mtod(m, void *) : NULL;
 	} while (m && len > 0);
 	for (m = m0; m; m = m->m_next)
-		printf(" [%p:%u]", mtod(m, caddr_t), m->m_len);
+		printf(" [%p:%u]", mtod(m, void *), m->m_len);
 	printf("\n");
 }

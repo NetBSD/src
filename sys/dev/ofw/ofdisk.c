@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.34 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.34.2.1 2007/03/12 05:55:09 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.34 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.34.2.1 2007/03/12 05:55:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -339,7 +339,7 @@ ofdisk_write(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct ofdisk_softc *of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
 	int error;
@@ -466,7 +466,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-ofdisk_dump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
+ofdisk_dump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
 	return EINVAL;
 }

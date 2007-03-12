@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.75.10.1 2007/02/27 16:55:06 yamt Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.75.10.2 2007/03/12 06:00:02 rmind Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.75.10.1 2007/02/27 16:55:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.75.10.2 2007/03/12 06:00:02 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -194,7 +194,7 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		}
 
 		bzero(&uh, sizeof(uh));
-		m_copydata(m, off, sizeof(*uhp), (caddr_t)&uh);
+		m_copydata(m, off, sizeof(*uhp), (void *)&uh);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
@@ -271,7 +271,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 	 *  and AF_INET6 socket for AF_INET6 addrs.
 	 */
 	if (req == PRU_CONTROL)
-		return (in6_control(so, (u_long)m, (caddr_t)addr6,
+		return (in6_control(so, (u_long)m, (void *)addr6,
 				   (struct ifnet *)control, l));
 
 	if (req == PRU_PURGEIF) {
@@ -350,7 +350,7 @@ udp6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr6,
 		}
 		s = splsoftnet();
 		in6_pcbdisconnect(in6p);
-		bzero((caddr_t)&in6p->in6p_laddr, sizeof(in6p->in6p_laddr));
+		bzero((void *)&in6p->in6p_laddr, sizeof(in6p->in6p_laddr));
 		splx(s);
 		so->so_state &= ~SS_ISCONNECTED;		/* XXX */
 		in6_pcbstate(in6p, IN6P_BOUND);		/* XXX */

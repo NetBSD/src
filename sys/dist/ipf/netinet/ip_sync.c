@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sync.c,v 1.5 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_sync.c,v 1.5.14.1 2007/03/12 05:57:58 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
@@ -301,7 +301,7 @@ struct uio *uio;
 
 		if (uio->uio_resid >= sizeof(sh)) {
 
-			err = UIOMOVE((caddr_t)&sh, sizeof(sh), UIO_WRITE, uio);
+			err = UIOMOVE((void *)&sh, sizeof(sh), UIO_WRITE, uio);
 
 			if (err) {
 				if (ipf_sync_debug > 2)
@@ -373,7 +373,7 @@ struct uio *uio;
 
 		if (uio->uio_resid >= sh.sm_len) {
 
-			err = UIOMOVE((caddr_t)data, sh.sm_len, UIO_WRITE, uio);
+			err = UIOMOVE((void *)data, sh.sm_len, UIO_WRITE, uio);
 
 			if (err) {
 				if (ipf_sync_debug > 2)
@@ -473,7 +473,7 @@ struct uio *uio;
 	READ_ENTER(&ipf_syncstate);
 	while ((sl_tail < sl_idx)  && (uio->uio_resid > sizeof(*sl))) {
 		sl = synclog + sl_tail++;
-		err = UIOMOVE((caddr_t)sl, sizeof(*sl), UIO_READ, uio);
+		err = UIOMOVE((void *)sl, sizeof(*sl), UIO_READ, uio);
 		if (err != 0)
 			break;
 	}
@@ -481,7 +481,7 @@ struct uio *uio;
 	while ((su_tail < su_idx)  && (uio->uio_resid > sizeof(*su))) {
 		su = syncupd + su_tail;
 		su_tail++;
-		err = UIOMOVE((caddr_t)su, sizeof(*su), UIO_READ, uio);
+		err = UIOMOVE((void *)su, sizeof(*su), UIO_READ, uio);
 		if (err != 0)
 			break;
 		if (su->sup_hdr.sm_sl != NULL)
@@ -998,7 +998,7 @@ synclist_t *sl;
 /* EINVAL on all occasions.                                                 */
 /* ------------------------------------------------------------------------ */
 int fr_sync_ioctl(data, cmd, mode)
-caddr_t data;
+void *data;
 ioctlcmd_t cmd;
 int mode;
 {

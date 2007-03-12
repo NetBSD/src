@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.77 2007/02/09 21:55:42 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.77.2.1 2007/03/12 06:01:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.77 2007/02/09 21:55:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.77.2.1 2007/03/12 06:01:09 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.77 2007/02/09 21:55:42 ad Exp $");
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
 
-caddr_t	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
+void *	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
 u_long	mfs_rootsize;	/* size of mini-root in bytes */
 
 static	int mfs_minor;	/* used for building internal dev_t */
@@ -220,9 +220,9 @@ mfs_mountroot(void)
  * of the mini-root.
  */
 int
-mfs_initminiroot(caddr_t base)
+mfs_initminiroot(void *base)
 {
-	struct fs *fs = (struct fs *)(base + SBLOCK_UFS1);
+	struct fs *fs = (struct fs *)((char *)base + SBLOCK_UFS1);
 
 	/* check for valid super block */
 	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
@@ -286,7 +286,7 @@ mfs_mount(struct mount *mp, const char *path, void *data,
 	mp->mnt_flag &= ~MNT_ASYNC;
 	mp->mnt_flag |= MNT_SYNCHRONOUS;
 
-	error = copyin(data, (caddr_t)&args, sizeof (struct mfs_args));
+	error = copyin(data, (void *)&args, sizeof (struct mfs_args));
 	if (error)
 		return (error);
 
@@ -362,7 +362,7 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct proc *p;
 	struct buf *bp;
-	caddr_t base;
+	void *base;
 	int sleepreturn = 0;
 	ksiginfoq_t kq;
 
@@ -370,7 +370,7 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
 	while (mfsp->mfs_shutdown != 1) {
 		while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
 			mfs_doio(bp, base);
-			wakeup((caddr_t)bp);
+			wakeup((void *)bp);
 		}
 		/*
 		 * If a non-ignored signal is received, try to unmount.

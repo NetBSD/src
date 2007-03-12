@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.36 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: piixide.c,v 1.36.2.1 2007/03/12 05:55:26 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.36 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.36.2.1 2007/03/12 05:55:26 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
+static int piix_dma_init(void *, int, int, void *, size_t, int);
 
 static void piixide_powerhook(int, void *);
 static int  piixide_match(struct device *, struct cfdata *, void *);
@@ -309,6 +310,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
+		/* Do all revisions require DMA alignment workaround? */
+		sc->sc_wdcdev.dma_init = piix_dma_init;
 		switch(sc->sc_pp->ide_product) {
 		case PCI_PRODUCT_INTEL_82371AB_IDE:
 		case PCI_PRODUCT_INTEL_82440MX_IDE:
@@ -807,6 +810,8 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA | ATAC_CAP_UDMA;
 		sc->sc_wdcdev.irqack = pciide_irqack;
+		/* Do all revisions require DMA alignment workaround? */
+		sc->sc_wdcdev.dma_init = piix_dma_init;
 		sc->sc_wdcdev.sc_atac.atac_dma_cap = 2;
 		sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 	}
@@ -835,4 +840,16 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
 	}
+}
+
+static int
+piix_dma_init(void *v, int channel, int drive, void *databuf,
+    size_t datalen, int flags)
+{
+
+	/* use PIO for unaligned transfer */
+	if (((uintptr_t)databuf) & 0x1)
+		return EINVAL;
+
+	return pciide_dma_init(v, channel, drive, databuf, datalen, flags);
 }

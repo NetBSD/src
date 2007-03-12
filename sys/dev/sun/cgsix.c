@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.33 2006/10/16 22:27:16 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.33.4.1 2007/03/12 05:57:11 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.33 2006/10/16 22:27:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.33.4.1 2007/03/12 05:57:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ struct wsscreen_descr cgsix_defaultscreen = {
 	NULL	/* modecookie */
 };
 
-static int 	cgsix_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int 	cgsix_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	cgsix_mmap(void *, void *, off_t, int);
 static void	cgsix_init_screen(void *, struct vcons_screen *, int, long *);
 
@@ -704,7 +704,7 @@ cgsixclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-cgsixioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+cgsixioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	union cursor_cmap tcm;
@@ -1128,7 +1128,7 @@ cg6_setup_palette(struct cgsix_softc *sc)
 }
 
 int
-cgsix_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+cgsix_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	/* we'll probably need to add more stuff here */

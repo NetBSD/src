@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.125 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.125.4.1 2007/03/12 05:59:09 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.125 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.125.4.1 2007/03/12 05:59:09 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1010,7 +1010,7 @@ bpf_setif(struct bpf_d *d, struct ifreq *ifr)
 		    strcmp(ifp->if_xname, ifr->ifr_name) != 0)
 			continue;
 		/* skip additional entry */
-		if ((caddr_t *)bp->bif_driverp != &ifp->if_bpf)
+		if ((void **)bp->bif_driverp != &ifp->if_bpf)
 			continue;
 		/*
 		 * We found the requested interface.
@@ -1445,7 +1445,7 @@ catchpacket(struct bpf_d *d, u_char *pkt, u_int pktlen, u_int snaplen,
 	/*
 	 * Append the bpf header.
 	 */
-	hp = (struct bpf_hdr *)(d->bd_sbuf + curlen);
+	hp = (struct bpf_hdr *)((char *)d->bd_sbuf + curlen);
 	hp->bh_tstamp = *tv;
 	hp->bh_datalen = pktlen;
 	hp->bh_hdrlen = hdrlen;
@@ -1602,7 +1602,7 @@ bpf_change_type(struct ifnet *ifp, u_int dlt, u_int hdrlen)
 	struct bpf_if *bp;
 
 	for (bp = bpf_iflist; bp != NULL; bp = bp->bif_next) {
-		if ((caddr_t *)bp->bif_driverp == &ifp->if_bpf)
+		if ((void **)bp->bif_driverp == &ifp->if_bpf)
 			break;
 	}
 	if (bp == NULL)

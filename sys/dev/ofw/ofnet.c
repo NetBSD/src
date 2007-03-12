@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.37 2006/05/14 21:42:28 elad Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.37.14.1 2007/03/12 05:55:09 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.37 2006/05/14 21:42:28 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.37.14.1 2007/03/12 05:55:09 rmind Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -96,7 +96,7 @@ static void ofnet_init (struct ofnet_softc *);
 static void ofnet_stop (struct ofnet_softc *);
 
 static void ofnet_start (struct ifnet *);
-static int ofnet_ioctl (struct ifnet *, u_long, caddr_t);
+static int ofnet_ioctl (struct ifnet *, u_long, void *);
 static void ofnet_watchdog (struct ifnet *);
 
 static int
@@ -245,7 +245,7 @@ ofnet_read(struct ofnet_softc *of)
 			 * XXX then so does other code in this driver.
 			 */
 			if (head == NULL) {
-				caddr_t newdata = (caddr_t)ALIGN(m->m_data +
+				char *newdata = (char *)ALIGN(m->m_data +
 				      sizeof(struct ether_header)) -
 				    sizeof(struct ether_header);
 				l -= newdata - m->m_data;
@@ -366,7 +366,7 @@ ofnet_start(struct ifnet *ifp)
 }
 
 static int
-ofnet_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ofnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ofnet_softc *of = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

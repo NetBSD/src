@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.3 2007/01/07 19:08:05 jmcneill Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.3.4.1 2007/03/12 05:57:35 rmind Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.3 2007/01/07 19:08:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.3.4.1 2007/03/12 05:57:35 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static void xboxcontroller_intr(usbd_xfer_handle, usbd_private_handle,
 				usbd_status);
 
 static int xboxcontroller_wsmouse_enable(void *);
-static int xboxcontroller_wsmouse_ioctl(void *, u_long, caddr_t, int,
+static int xboxcontroller_wsmouse_ioctl(void *, u_long, void *, int,
 					struct lwp *);
 static void xboxcontroller_wsmouse_disable(void *);
 
@@ -319,7 +319,7 @@ xboxcontroller_wsmouse_disable(void *opaque)
 }
 
 static int
-xboxcontroller_wsmouse_ioctl(void *opaque, u_long cmd, caddr_t data, int flag,
+xboxcontroller_wsmouse_ioctl(void *opaque, u_long cmd, void *data, int flag,
 			     struct lwp *l)
 {
 

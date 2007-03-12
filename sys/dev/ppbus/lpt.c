@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.18 2006/10/24 19:16:50 drochner Exp $ */
+/* $NetBSD: lpt.c,v 1.18.4.1 2007/03/12 05:56:47 rmind Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.18 2006/10/24 19:16:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.18.4.1 2007/03/12 05:56:47 rmind Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -125,14 +125,14 @@ static int lpt_logstatus(const struct device * const, const unsigned char);
  * lpt_probe()
  */
 static int
-lpt_probe(struct device * parent, struct cfdata * match, void * aux)
+lpt_probe(struct device * parent, struct cfdata * match, void *aux)
 {
 	/* Test ppbus's capability */
 	return lpt_detect(parent);
 }
 
 static void
-lpt_attach(struct device * parent, struct device * self, void * aux)
+lpt_attach(struct device * parent, struct device * self, void *aux)
 {
 	struct lpt_softc * sc = device_private(self);
 	struct ppbus_device_softc * ppbdev = &(sc->ppbus_dev);
@@ -457,7 +457,7 @@ lptopen(dev_t dev_id, int flags, int fmt, struct lwp *l)
 				break;
 			/* wait LPT_STEP ticks, give up if we get a signal */
 			else {
-				err = tsleep((caddr_t)lpt, LPPRI|PCATCH,
+				err = tsleep((void *)lpt, LPPRI|PCATCH,
 					"lptinit", LPT_STEP);
 				if((err) && (err != EWOULDBLOCK)) {
 					lpt->sc_state &= ~LPTINIT;
@@ -608,7 +608,7 @@ lptwrite(dev_t dev_id, struct uio * uio, int ioflag)
 
 /* Printer ioctl */
 int
-lptioctl(dev_t dev_id, u_long cmd, caddr_t data, int flags, struct lwp *l)
+lptioctl(dev_t dev_id, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct device *dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
 	struct lpt_softc *sc = (struct lpt_softc *) dev;

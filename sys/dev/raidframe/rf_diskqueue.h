@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.21 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.21.26.1 2007/03/12 05:56:52 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@ struct RF_DiskQueueData_s {
 	RF_SectorNum_t sectorOffset;	/* sector offset into the disk */
 	RF_SectorCount_t numSector;	/* number of sectors to read/write */
 	RF_IoType_t type;	/* read/write/nop */
-	caddr_t buf;		/* buffer pointer */
+	void *buf;		/* buffer pointer */
 	RF_StripeNum_t parityStripeID;	/* the RAID parity stripe ID this
 					 * access is for */
 	RF_ReconUnitNum_t which_ru;	/* which RU within this parity stripe */
@@ -154,7 +154,7 @@ void rf_DiskIOEnqueue(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
 void rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
 int rf_DiskIOPromote(RF_DiskQueue_t *, RF_StripeNum_t,  RF_ReconUnitNum_t);
 RF_DiskQueueData_t *rf_CreateDiskQueueData(RF_IoType_t, RF_SectorNum_t,
-					   RF_SectorCount_t , caddr_t,
+					   RF_SectorCount_t , void *,
 					   RF_StripeNum_t, RF_ReconUnitNum_t,
 					   int (*wakeF) (void *, int),
 					   void *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.42 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.42.4.1 2007/03/12 05:59:54 rmind Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.42 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.42.4.1 2007/03/12 05:59:54 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -754,7 +754,7 @@ ah_hmac_sha2_256_loop(state, addr, len)
 		panic("ah_hmac_sha2_256_loop: what?");
 
 	ctxt = (SHA256_CTX *)(((u_char *)state->foo) + 128);
-	SHA256_Update(ctxt, (caddr_t)addr, (size_t)len);
+	SHA256_Update(ctxt, (void *)addr, (size_t)len);
 }
 
 static void
@@ -775,12 +775,12 @@ ah_hmac_sha2_256_result(state, addr, l)
 	opad = (u_char *)(ipad + 64);
 	ctxt = (SHA256_CTX *)(opad + 64);
 
-	SHA256_Final((caddr_t)digest, ctxt);
+	SHA256_Final((void *)digest, ctxt);
 
 	SHA256_Init(ctxt);
 	SHA256_Update(ctxt, opad, 64);
-	SHA256_Update(ctxt, (caddr_t)digest, sizeof(digest));
-	SHA256_Final((caddr_t)digest, ctxt);
+	SHA256_Update(ctxt, (void *)digest, sizeof(digest));
+	SHA256_Final((void *)digest, ctxt);
 
 	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
 
@@ -855,7 +855,7 @@ ah_hmac_sha2_384_loop(state, addr, len)
 		panic("ah_hmac_sha2_384_loop: what?");
 
 	ctxt = (SHA384_CTX *)(((u_char *)state->foo) + 128);
-	SHA384_Update(ctxt, (caddr_t)addr, (size_t)len);
+	SHA384_Update(ctxt, (void *)addr, (size_t)len);
 }
 
 static void
@@ -876,12 +876,12 @@ ah_hmac_sha2_384_result(state, addr, l)
 	opad = (u_char *)(ipad + 64);
 	ctxt = (SHA384_CTX *)(opad + 64);
 
-	SHA384_Final((caddr_t)digest, ctxt);
+	SHA384_Final((void *)digest, ctxt);
 
 	SHA384_Init(ctxt);
 	SHA384_Update(ctxt, opad, 64);
-	SHA384_Update(ctxt, (caddr_t)digest, sizeof(digest));
-	SHA384_Final((caddr_t)digest, ctxt);
+	SHA384_Update(ctxt, (void *)digest, sizeof(digest));
+	SHA384_Final((void *)digest, ctxt);
 
 	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
 
@@ -956,7 +956,7 @@ ah_hmac_sha2_512_loop(state, addr, len)
 		panic("ah_hmac_sha2_512_loop: what?");
 
 	ctxt = (SHA512_CTX *)(((u_char *)state->foo) + 128);
-	SHA512_Update(ctxt, (caddr_t)addr, (size_t)len);
+	SHA512_Update(ctxt, (void *)addr, (size_t)len);
 }
 
 static void
@@ -977,12 +977,12 @@ ah_hmac_sha2_512_result(state, addr, l)
 	opad = (u_char *)(ipad + 64);
 	ctxt = (SHA512_CTX *)(opad + 64);
 
-	SHA512_Final((caddr_t)digest, ctxt);
+	SHA512_Final((void *)digest, ctxt);
 
 	SHA512_Init(ctxt);
 	SHA512_Update(ctxt, opad, 64);
-	SHA512_Update(ctxt, (caddr_t)digest, sizeof(digest));
-	SHA512_Final((caddr_t)digest, ctxt);
+	SHA512_Update(ctxt, (void *)digest, sizeof(digest));
+	SHA512_Final((void *)digest, ctxt);
 
 	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
 
@@ -1057,7 +1057,7 @@ ah_hmac_ripemd160_loop(state, addr, len)
 		panic("ah_hmac_ripemd160_loop: what?");
 
 	ctxt = (RMD160_CTX *)(((u_char *)state->foo) + 128);
-	RMD160Update(ctxt, (caddr_t)addr, (size_t)len);
+	RMD160Update(ctxt, (void *)addr, (size_t)len);
 }
 
 static void
@@ -1078,12 +1078,12 @@ ah_hmac_ripemd160_result(state, addr, l)
 	opad = (u_char *)(ipad + 64);
 	ctxt = (RMD160_CTX *)(opad + 64);
 
-	RMD160Final((caddr_t)digest, ctxt);
+	RMD160Final((void *)digest, ctxt);
 
 	RMD160Init(ctxt);
 	RMD160Update(ctxt, opad, 64);
-	RMD160Update(ctxt, (caddr_t)digest, sizeof(digest));
-	RMD160Final((caddr_t)digest, ctxt);
+	RMD160Update(ctxt, (void *)digest, sizeof(digest));
+	RMD160Final((void *)digest, ctxt);
 
 	bcopy(digest, addr, sizeof(digest) > l ? l : sizeof(digest));
 
@@ -1188,7 +1188,7 @@ again:
 		struct ip iphdr;
 		size_t hlen;
 
-		m_copydata(m, off, sizeof(iphdr), (caddr_t)&iphdr);
+		m_copydata(m, off, sizeof(iphdr), (void *)&iphdr);
 		hlen = iphdr.ip_hl << 2;
 		iphdr.ip_ttl = 0;
 		iphdr.ip_sum = htons(0);
@@ -1217,7 +1217,7 @@ again:
 				error = ENOBUFS;
 				goto fail;
 			}
-			m_copydata(m, off, hlen, mtod(n, caddr_t));
+			m_copydata(m, off, hlen, mtod(n, void *));
 
 			/*
 			 * IP options processing.
@@ -1304,7 +1304,7 @@ again:
 		int hdrsiz;
 		int totlen;
 
-		m_copydata(m, off, sizeof(ah), (caddr_t)&ah);
+		m_copydata(m, off, sizeof(ah), (void *)&ah);
 		hdrsiz = (sav->flags & SADB_X_EXT_OLD)
 				? sizeof(struct ah)
 				: sizeof(struct newah);
@@ -1332,7 +1332,7 @@ again:
 				error = ENOBUFS;
 				goto fail;
 			}
-			m_copydata(m, off, totlen, mtod(n, caddr_t));
+			m_copydata(m, off, totlen, mtod(n, void *));
 			n->m_len = totlen;
 			bzero(mtod(n, u_int8_t *) + hdrsiz, siz);
 			(algo->update)(&algos, mtod(n, u_int8_t *), n->m_len);
@@ -1434,7 +1434,7 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 				goto fail;
 			}
 
-			m_copydata(m, off, newoff - off, (caddr_t)&ip6copy);
+			m_copydata(m, off, newoff - off, (void *)&ip6copy);
 			/* RFC2402 */
 			ip6copy.ip6_flow = 0;
 			ip6copy.ip6_vfc &= ~IPV6_VERSION_MASK;
@@ -1481,7 +1481,7 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 				error = ENOBUFS;
 				goto fail;
 			}
-			m_copydata(m, off, newoff - off, mtod(n, caddr_t));
+			m_copydata(m, off, newoff - off, mtod(n, void *));
 			n->m_len = newoff - off;
 			bzero(mtod(n, u_int8_t *) + hdrsiz, siz);
 			(algo->update)(&algos, mtod(n, u_int8_t *), n->m_len);
@@ -1516,7 +1516,7 @@ ah6_calccksum(m, ahdat, len, algo, sav)
 			error = ENOBUFS;
 			goto fail;
 		}
-		m_copydata(m, off, newoff - off, mtod(n, caddr_t));
+		m_copydata(m, off, newoff - off, mtod(n, void *));
 		n->m_len = newoff - off;
 
 		ip6e = mtod(n, struct ip6_ext *);

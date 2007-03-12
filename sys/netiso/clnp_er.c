@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.20 2006/12/15 21:18:56 joerg Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.20.2.1 2007/03/12 06:00:28 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.20 2006/12/15 21:18:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.20.2.1 2007/03/12 06:00:28 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -250,8 +250,8 @@ clnp_emit_er(m, reason)
 	struct ifnet   *ifp;
 	struct sockaddr *first_hop;
 	struct iso_addr src, dst, *our_addr;
-	caddr_t         hoff, hend;
-	int             total_len;	/* total len of dg */
+	char *hoff, *hend;
+	int total_len;	/* total len of dg */
 	struct iso_ifaddr *ia = 0;
 
 #ifdef ARGO_DEBUG
@@ -261,7 +261,7 @@ clnp_emit_er(m, reason)
 	}
 #endif
 
-	bzero((caddr_t) & route, sizeof(route));
+	bzero((void *) & route, sizeof(route));
 
 	/*
 	 * If header length is incorrect, or entire header is not contained
@@ -273,14 +273,14 @@ clnp_emit_er(m, reason)
 		goto bad;
 
 	/* extract src, dest address */
-	hend = (caddr_t) clnp + clnp->cnf_hdr_len;
-	hoff = (caddr_t) clnp + sizeof(struct clnp_fixed);
+	hend = (char *)clnp + clnp->cnf_hdr_len;
+	hoff = (char *)clnp + sizeof(struct clnp_fixed);
 	CLNP_EXTRACT_ADDR(dst, hoff, hend);
-	if (hoff == (caddr_t) 0) {
+	if (hoff == (void *) 0) {
 		goto bad;
 	}
 	CLNP_EXTRACT_ADDR(src, hoff, hend);
-	if (hoff == (caddr_t) 0) {
+	if (hoff == (void *) 0) {
 		goto bad;
 	}
 	/*
@@ -341,7 +341,7 @@ clnp_emit_er(m, reason)
 
 	/* setup src/dst on er pdu */
 	/* NOTE REVERSAL OF SRC/DST */
-	hoff = (caddr_t) er + sizeof(struct clnp_fixed);
+	hoff = (char *)er + sizeof(struct clnp_fixed);
 	CLNP_INSERT_ADDR(hoff, src);
 	CLNP_INSERT_ADDR(hoff, *our_addr);
 
@@ -357,7 +357,7 @@ clnp_emit_er(m, reason)
 	*hoff++ = 0;		/* error localization = not specified */
 
 	/* set length */
-	er->cnf_hdr_len = (u_char) (hoff - (caddr_t) er);
+	er->cnf_hdr_len = (u_char) (hoff - (char *)er);
 	total_len = m->m_pkthdr.len;
 	HTOC(er->cnf_seglen_msb, er->cnf_seglen_lsb, total_len);
 

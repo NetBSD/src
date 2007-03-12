@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.132.2.1 2007/02/27 16:54:34 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.132.2.2 2007/03/12 05:58:45 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.1 2007/02/27 16:54:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.132.2.2 2007/03/12 05:58:45 rmind Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -255,7 +255,7 @@ sokvafree(vaddr_t sva, vsize_t len)
 }
 
 static void
-sodoloanfree(struct vm_page **pgs, caddr_t buf, size_t size)
+sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 {
 	vaddr_t va, sva, eva;
 	vsize_t len;
@@ -342,7 +342,7 @@ sodopendfreel()
 }
 
 void
-soloanfree(struct mbuf *m, caddr_t buf, size_t size, void *arg)
+soloanfree(struct mbuf *m, void *buf, size_t size, void *arg)
 {
 	int s;
 
@@ -416,12 +416,12 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	lva += (vaddr_t) iov->iov_base & PAGE_MASK;
 
-	MEXTADD(m, (caddr_t) lva, space, M_MBUF, soloanfree, so);
+	MEXTADD(m, (void *) lva, space, M_MBUF, soloanfree, so);
 	m->m_flags |= M_EXT_PAGES | M_EXT_ROMAP;
 
 	uio->uio_resid -= space;
 	/* uio_offset not updated, not set/used for write(2) */
-	uio->uio_iov->iov_base = (caddr_t) uio->uio_iov->iov_base + space;
+	uio->uio_iov->iov_base = (char *)uio->uio_iov->iov_base + space;
 	uio->uio_iov->iov_len -= space;
 	if (uio->uio_iov->iov_len == 0) {
 		uio->uio_iov++;
@@ -498,7 +498,7 @@ socreate(int dom, struct socket **aso, int type, int proto, struct lwp *l)
 		return (EPROTOTYPE);
 	s = splsoftnet();
 	so = pool_get(&socket_pool, PR_WAITOK);
-	memset((caddr_t)so, 0, sizeof(*so));
+	memset((void *)so, 0, sizeof(*so));
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
 	so->so_type = type;
@@ -624,7 +624,7 @@ soclose(struct socket *so)
 			    (so->so_state & SS_NBIO))
 				goto drop;
 			while (so->so_state & SS_ISCONNECTED) {
-				error = tsleep((caddr_t)&so->so_timeo,
+				error = tsleep((void *)&so->so_timeo,
 					       PSOCK | PCATCH, netcls,
 					       so->so_linger * hz);
 				if (error)
@@ -892,7 +892,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					if (atomic && top == 0 && len < mlen)
 						MH_ALIGN(m, len);
 				}
-				error = uiomove(mtod(m, caddr_t), (int)len,
+				error = uiomove(mtod(m, void *), (int)len,
 				    uio);
  have_data:
 				resid = uio->uio_resid;
@@ -998,7 +998,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if (error)
 			goto bad;
 		do {
-			error = uiomove(mtod(m, caddr_t),
+			error = uiomove(mtod(m, void *),
 			    (int) min(uio->uio_resid, m->m_len), uio);
 			m = m_free(m);
 		} while (uio->uio_resid && error == 0 && m);
@@ -1212,7 +1212,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive uiomove");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			splx(s);
-			error = uiomove(mtod(m, caddr_t) + moff, (int)len, uio);
+			error = uiomove(mtod(m, char *) + moff, (int)len, uio);
 			s = splsoftnet();
 			if (error) {
 				/*

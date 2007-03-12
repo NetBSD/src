@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.31 2007/01/04 19:07:04 elad Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.31.2.1 2007/03/12 06:00:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.31 2007/01/04 19:07:04 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.31.2.1 2007/03/12 06:00:32 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -392,7 +392,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 	struct lwp *l = curlwp;		/* XXX */
 	struct tp_pcb  *tpcb = sototpcb(so);
 	int             s = splsoftnet();
-	caddr_t         value;
+	void *        value;
 	unsigned        val_len;
 	int             error = 0;
 
@@ -491,7 +491,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 			goto done;
 		}
 	}
-	value = mtod(*mp, caddr_t);	/* it's aligned, don't worry, but
+	value = mtod(*mp, void *);	/* it's aligned, don't worry, but
 					 * lint complains about it */
 	val_len = (*mp)->m_len;
 
@@ -544,7 +544,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 	case TPOPT_MY_TSEL:
 		if (cmd == PRCO_GETOPT) {
 			ASSERT(tpcb->tp_lsuffixlen <= MAX_TSAP_SEL_LEN);
-			bcopy((caddr_t) tpcb->tp_lsuffix, value, tpcb->tp_lsuffixlen);
+			bcopy((void *) tpcb->tp_lsuffix, value, tpcb->tp_lsuffixlen);
 			(*mp)->m_len = tpcb->tp_lsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
@@ -552,7 +552,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
-				bcopy(value, (caddr_t) tpcb->tp_lsuffix, val_len);
+				bcopy(value, (void *) tpcb->tp_lsuffix, val_len);
 				tpcb->tp_lsuffixlen = val_len;
 			}
 		}
@@ -561,7 +561,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 	case TPOPT_PEER_TSEL:
 		if (cmd == PRCO_GETOPT) {
 			ASSERT(tpcb->tp_fsuffixlen <= MAX_TSAP_SEL_LEN);
-			bcopy((caddr_t) tpcb->tp_fsuffix, value, tpcb->tp_fsuffixlen);
+			bcopy((void *) tpcb->tp_fsuffix, value, tpcb->tp_fsuffixlen);
 			(*mp)->m_len = tpcb->tp_fsuffixlen;
 		} else {	/* cmd == PRCO_SETOPT  */
 			if ((val_len > MAX_TSAP_SEL_LEN) || (val_len <= 0)) {
@@ -569,7 +569,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 				    val_len, (*mp));
 				error = EINVAL;
 			} else {
-				bcopy(value, (caddr_t) tpcb->tp_fsuffix, val_len);
+				bcopy(value, (void *) tpcb->tp_fsuffix, val_len);
 				tpcb->tp_fsuffixlen = val_len;
 			}
 		}
@@ -581,7 +581,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 			printf("%s TPOPT_FLAGS value %p *value 0x%x, flags 0x%x \n",
 			       cmd == PRCO_GETOPT ? "GET" : "SET",
 			       value,
-			       *value,
+			       *(unsigned char *)value,
 			       tpcb->tp_flags);
 		}
 #endif

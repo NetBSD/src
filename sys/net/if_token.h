@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.12 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_token.h,v 1.12.26.1 2007/03/12 05:59:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -120,7 +120,7 @@ struct token_rif {
 #define	token_delmulti		ether_delmulti
 #define	token_sprintf		ether_sprintf
 
-void    token_ifattach(struct ifnet *, caddr_t);
+void    token_ifattach(struct ifnet *, void *);
 void    token_ifdetach(struct ifnet *);
 #endif
 

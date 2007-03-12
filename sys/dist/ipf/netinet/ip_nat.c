@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.20 2006/12/27 18:28:54 alc Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.20.2.1 2007/03/12 05:57:55 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -181,9 +181,9 @@ static	void	nat_addrdr __P((struct ipnat *));
 static	void	nat_delete __P((struct nat *, int));
 static	void	nat_delrdr __P((struct ipnat *));
 static	void	nat_delnat __P((struct ipnat *));
-static	int	fr_natgetent __P((caddr_t));
-static	int	fr_natgetsz __P((caddr_t));
-static	int	fr_natputent __P((caddr_t, int));
+static	int	fr_natgetent __P((void *));
+static	int	fr_natgetsz __P((void *));
+static	int	fr_natputent __P((void *, int));
 static	void	nat_tabmove __P((nat_t *));
 static	int	nat_match __P((fr_info_t *, ipnat_t *));
 static	INLINE	int nat_newmap __P((fr_info_t *, nat_t *, natinfo_t *));
@@ -616,7 +616,7 @@ u_32_t n;
 /* ------------------------------------------------------------------------ */
 int fr_nat_ioctl(data, cmd, mode)
 ioctlcmd_t cmd;
-caddr_t data;
+void *data;
 int mode;
 {
 	ipnat_t *nat, *nt, *n = NULL, **np = NULL;
@@ -1098,7 +1098,7 @@ int getlock;
 /* structure is copied back to the user.                                    */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetsz(data)
-caddr_t data;
+void *data;
 {
 	ap_session_t *aps;
 	nat_t *nat, *n;
@@ -1157,7 +1157,7 @@ caddr_t data;
 /* proxy is also copied, as to is the NAT rule which was responsible for it */
 /* ------------------------------------------------------------------------ */
 static int fr_natgetent(data)
-caddr_t data;
+void *data;
 {
 	int error, outsize;
 	ap_session_t *aps;
@@ -1269,7 +1269,7 @@ finished:
 /* firewall rule data structures, if pointers to them indicate so.          */
 /* ------------------------------------------------------------------------ */
 static int fr_natputent(data, getlock)
-caddr_t data;
+void *data;
 int getlock;
 {
 	nat_save_t *ipn, *ipnn;

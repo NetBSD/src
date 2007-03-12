@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.36.4.1 2007/02/27 16:54:00 yamt Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.36.4.2 2007/03/12 05:55:20 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.36.4.1 2007/02/27 16:54:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.36.4.2 2007/03/12 05:55:20 rmind Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -394,7 +394,7 @@ do {									\
 
 static void	pcn_start(struct ifnet *);
 static void	pcn_watchdog(struct ifnet *);
-static int	pcn_ioctl(struct ifnet *, u_long, caddr_t);
+static int	pcn_ioctl(struct ifnet *, u_long, void *);
 static int	pcn_init(struct ifnet *);
 static void	pcn_stop(struct ifnet *, int);
 
@@ -722,7 +722,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	     sizeof(struct pcn_control_data), (caddr_t *)&sc->sc_control_data,
+	     sizeof(struct pcn_control_data), (void **)&sc->sc_control_data,
 	     BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -891,7 +891,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
  fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct pcn_control_data));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
@@ -982,7 +982,7 @@ pcn_start(struct ifnet *ifp)
 					break;
 				}
 			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, void *));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
@@ -1186,7 +1186,7 @@ pcn_watchdog(struct ifnet *ifp)
  *	Handle control requests from the operator.
  */
 static int
-pcn_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+pcn_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct pcn_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -1535,8 +1535,8 @@ pcn_rxintr(struct pcn_softc *sc)
 			if (m == NULL)
 				goto dropit;
 			m->m_data += 2;
-			memcpy(mtod(m, caddr_t),
-			    mtod(rxs->rxs_mbuf, caddr_t), len);
+			memcpy(mtod(m, void *),
+			    mtod(rxs->rxs_mbuf, void *), len);
 			PCN_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize,

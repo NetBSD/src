@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.4 2006/11/16 01:33:45 christos Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.4.4.1 2007/03/12 05:59:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.4 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.4.4.1 2007/03/12 05:59:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -654,7 +654,7 @@ rfcomm_session_recv_sabm(struct rfcomm_session *rs, int dlci)
 
 	msc.address = RFCOMM_MKADDRESS(1, dlc->rd_dlci);
 	msc.modem = dlc->rd_lmodem & 0xfe;	/* EA = 0 */
-	msc.brk =	0x00	| 0x01;	/* EA = 1 */
+	msc.brk =	0x00	| 0x01;		/* EA = 1 */
 	rfcomm_session_send_mcc(rs, 1, RFCOMM_MCC_MSC, &msc, sizeof(msc));
 	callout_schedule(&dlc->rd_timeout, rfcomm_mcc_timeout * hz);
 

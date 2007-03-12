@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.50.2.1 2007/02/27 16:55:23 yamt Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.50.2.2 2007/03/12 06:01:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -138,11 +138,11 @@ int	chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
 int	chkiq(struct inode *, int32_t, kauth_cred_t, int);
 int	chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
 void	chkdquot(struct inode *);
-int	quotaon(struct lwp *, struct mount *, int, caddr_t);
+int	quotaon(struct lwp *, struct mount *, int, void *);
 int	quotaoff(struct lwp *, struct mount *, int);
-int	getquota(struct mount *, u_long, int, caddr_t);
-int	setquota(struct mount *, u_long, int, caddr_t);
-int	setuse(struct mount *, u_long, int, caddr_t);
+int	getquota(struct mount *, u_long, int, void *);
+int	setquota(struct mount *, u_long, int, void *);
+int	setuse(struct mount *, u_long, int, void *);
 int	qsync(struct mount *);
 int	dqget(struct vnode *, u_long, struct ufsmount *, int, struct dquot **);
 void	dqref(struct dquot *);
@@ -178,8 +178,8 @@ void	ffs_snapgone(struct inode *);
  */
 int   softdep_setup_directory_add(struct buf *, struct inode *, off_t,
 				  ino_t, struct buf *, int);
-void  softdep_change_directoryentry_offset(struct inode *, caddr_t,
-					   caddr_t, caddr_t, int);
+void  softdep_change_directoryentry_offset(struct inode *, void *,
+					   void *, void *, int);
 void  softdep_setup_remove(struct buf *, struct inode *, struct inode *, int);
 void  softdep_setup_directory_change(struct buf *, struct inode *,
 				     struct inode *, ino_t, int);

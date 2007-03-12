@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.15 2007/02/10 09:43:05 degroote Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.15.2.1 2007/03/12 06:00:12 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.15 2007/02/10 09:43:05 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.15.2.1 2007/03/12 06:00:12 rmind Exp $");
 
 /*
  * IP-inside-IP processing
@@ -499,7 +499,7 @@ ipip_output(
 			/* Save ECN notification */
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip, ip_tos),
-			    sizeof(u_int8_t), (caddr_t) &itos);
+			    sizeof(u_int8_t), &itos);
 
 			ipo->ip_p = IPPROTO_IPIP;
 
@@ -509,7 +509,7 @@ ipip_output(
 			 */
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip, ip_off),
-			    sizeof(u_int16_t), (caddr_t) &ipo->ip_off);
+			    sizeof(u_int16_t), &ipo->ip_off);
 			ipo->ip_off = ntohs(ipo->ip_off);
 			ipo->ip_off &= ~(IP_DF | IP_MF | IP_OFFMASK);
 			ipo->ip_off = htons(ipo->ip_off);
@@ -521,7 +521,7 @@ ipip_output(
 			/* Save ECN notification. */
 			m_copydata(m, sizeof(struct ip) +
 			    offsetof(struct ip6_hdr, ip6_flow),
-			    sizeof(u_int32_t), (caddr_t) &itos32);
+			    sizeof(u_int32_t), &itos32);
 			itos = ntohl(itos32) >> 20;
 			ipo->ip_p = IPPROTO_IPV6;
 			ipo->ip_off = 0;
@@ -581,7 +581,7 @@ ipip_output(
 			/* Save ECN notification */
 			m_copydata(m, sizeof(struct ip6_hdr) +
 			    offsetof(struct ip, ip_tos), sizeof(u_int8_t),
-			    (caddr_t) &itos);
+			    &itos);
 
 			/* This is really IPVERSION. */
 			ip6o->ip6_nxt = IPPROTO_IPIP;
@@ -593,7 +593,7 @@ ipip_output(
 				/* Save ECN notification. */
 				m_copydata(m, sizeof(struct ip6_hdr) +
 				    offsetof(struct ip6_hdr, ip6_flow),
-				    sizeof(u_int32_t), (caddr_t) &itos32);
+				    sizeof(u_int32_t), &itos32);
 				itos = ntohl(itos32) >> 20;
 
 				ip6o->ip6_nxt = IPPROTO_IPV6;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.29 2006/04/15 02:49:25 christos Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.29.14.1 2007/03/12 06:00:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.29 2006/04/15 02:49:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.29.14.1 2007/03/12 06:00:36 rmind Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -174,7 +174,7 @@ nfs_bootparam(nd, lwp)
 	 * is used for all subsequent booptaram RPCs.
 	 */
 	sin = &bp_sin;
-	memset((caddr_t)sin, 0, sizeof(*sin));
+	memset((void *)sin, 0, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_BROADCAST;
@@ -200,7 +200,7 @@ nfs_bootparam(nd, lwp)
 
 #ifndef NFS_BOOTPARAM_NOGATEWAY
 	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
-	memset((caddr_t)gw_ndm, 0, sizeof(*gw_ndm));
+	memset((void *)gw_ndm, 0, sizeof(*gw_ndm));
 	error = bp_getfile(sin, "gateway", gw_ndm, lwp);
 	if (error) {
 		/* No gateway supplied. No error, but try fallback. */
@@ -460,7 +460,7 @@ bp_getfile(bpsin, key, ndm, l)
 	 * The strings become "server:pathname"
 	 */
 	sin = (struct sockaddr_in *) &ndm->ndm_saddr;
-	memset((caddr_t)sin, 0, sizeof(*sin));
+	memset((void *)sin, 0, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr = inaddr;

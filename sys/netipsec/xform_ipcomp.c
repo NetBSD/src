@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.9.2.1 2007/02/27 16:55:07 yamt Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.9.2.2 2007/03/12 06:00:12 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.9.2.1 2007/02/27 16:55:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.9.2.2 2007/03/12 06:00:12 rmind Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #include "opt_inet.h"
@@ -182,10 +182,10 @@ ipcomp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_input_cb;
 	crp->crp_sid = sav->tdb_cryptoid;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = tc;
 
 	/* These are passed as-is to the callback */
 	tc->tc_spi = sav->spi;
@@ -225,7 +225,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	struct secasindex *saidx;
 	int s, hlen = IPCOMP_HLENGTH, error, clen;
 	u_int8_t nproto;
-	caddr_t addr;
+	void *addr;
 
 	crd = crp->crp_desc;
 
@@ -295,7 +295,7 @@ ipcomp_input_cb(struct cryptop *crp)
 	}
 
 	/* Keep the next protocol field */
-	addr = (caddr_t) mtod(m, struct ip *) + skip;
+	addr =  mtod(m, struct ip *) + skip;
 	nproto = ((struct ipcomp *) addr)->comp_nxt;
 
 	/* Remove the IPCOMP header */
@@ -454,9 +454,9 @@ ipcomp_output(
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
+	crp->crp_buf = m;
 	crp->crp_callback = ipcomp_output_cb;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = tc;
 	crp->crp_sid = sav->tdb_cryptoid;
 
 	return crypto_dispatch(crp);
@@ -537,7 +537,7 @@ ipcomp_output_cb(struct cryptop *crp)
 			error = ENOBUFS;
 			goto bad;
 		}
-		ipcomp = (struct ipcomp *)(mtod(mo, caddr_t) + roff);
+		ipcomp = (struct ipcomp *)(mtod(mo, char *) + roff);
 
 		/* Initialize the IPCOMP header */
 		/* XXX alignment always correct? */

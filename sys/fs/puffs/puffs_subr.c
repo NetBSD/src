@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.20.2.1 2007/02/27 16:54:13 yamt Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.20.2.2 2007/03/12 05:58:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.1 2007/02/27 16:54:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.20.2.2 2007/03/12 05:58:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -481,15 +481,44 @@ puffs_userdead(struct puffs_mount *pmp)
 
 	/* and wakeup processes waiting for a reply from userspace */
 	TAILQ_FOREACH(park, &pmp->pmp_req_replywait, park_entries) {
-		park->park_preq->preq_rv = ENXIO;
+		if (park->park_preq)
+			park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_replywait, park, park_entries);
 		wakeup(park);
 	}
 
 	/* wakeup waiters for completion of vfs/vnode requests */
 	TAILQ_FOREACH(park, &pmp->pmp_req_touser, park_entries) {
-		park->park_preq->preq_rv = ENXIO;
+		if (park->park_preq)
+			park->park_preq->preq_rv = ENXIO;
 		TAILQ_REMOVE(&pmp->pmp_req_touser, park, park_entries);
 		wakeup(park);
 	}
+}
+
+/*
+ * Converts a non-FAF op to a FAF.  This simply involves making copies
+ * of the park and request structures and tagging the request as a FAF.
+ * It is safe to block here, since the original op is not a FAF.
+ */
+struct puffs_park *
+puffs_reqtofaf(struct puffs_park *ppark)
+{
+	struct puffs_park *newpark;
+	struct puffs_req *newpreq;
+
+	KASSERT((ppark->park_preq->preq_opclass & PUFFSOPFLAG_FAF) == 0);
+
+	MALLOC(newpark, struct puffs_park *, sizeof(struct puffs_park),
+	    M_PUFFS, M_ZERO | M_WAITOK);
+	MALLOC(newpreq, struct puffs_req *, sizeof(struct puffs_req),
+	    M_PUFFS, M_ZERO | M_WAITOK);
+
+	memcpy(newpark, ppark, sizeof(struct puffs_park));
+	memcpy(newpreq, ppark->park_preq, sizeof(struct puffs_req));
+
+	newpark->park_preq = newpreq;
+	newpark->park_preq->preq_opclass |= PUFFSOPFLAG_FAF;
+
+	return newpark;
 }

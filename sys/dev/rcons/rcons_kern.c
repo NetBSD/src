@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_kern.c,v 1.17 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: rcons_kern.c,v 1.17.26.1 2007/03/12 05:56:56 rmind Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.17 2005/12/11 12:23:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rcons_kern.c,v 1.17.26.1 2007/03/12 05:56:56 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -108,7 +108,7 @@ rcons_output(tp)
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
+			wakeup((void *)&tp->t_outq);
 		}
 		selwakeup(&tp->t_wsel);
 	}

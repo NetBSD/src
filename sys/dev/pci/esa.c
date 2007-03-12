@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.40 2006/11/16 01:33:08 christos Exp $ */
+/* $NetBSD: esa.c,v 1.40.4.1 2007/03/12 05:55:13 rmind Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.40 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.40.4.1 2007/03/12 05:55:13 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -600,7 +600,7 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	vc->play.pos = 0;
 	vc->play.count = 0;
 	vc->play.buf = start;
-	vc->play.bufsize = size = (size_t)(((caddr_t)end - (caddr_t)start));
+	vc->play.bufsize = size = (size_t)(((char *)end - (char *)start));
 	vc->play.blksize = blksize;
 	bufaddr = DMAADDR(p);
 	vc->play.start = bufaddr;
@@ -740,7 +740,7 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 	vc->rec.pos = 0;
 	vc->rec.count = 0;
 	vc->rec.buf = start;
-	vc->rec.bufsize = size = (size_t)(((caddr_t)end - (caddr_t)start));
+	vc->rec.bufsize = size = (size_t)(((char *)end - (char *)start));
 	vc->rec.blksize = blksize;
 	bufaddr = DMAADDR(p);
 	vc->rec.start = bufaddr;

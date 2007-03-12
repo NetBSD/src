@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.32 2006/09/02 06:41:16 christos Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.32.8.1 2007/03/12 06:00:34 rmind Exp $	*/
 /*	$KAME: key_debug.c,v 1.36 2003/06/27 06:46:01 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.32 2006/09/02 06:41:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.32.8.1 2007/03/12 06:00:34 rmind Exp $");
 
 #ifdef _KERNEL
 #include "opt_inet.h"
@@ -195,7 +195,7 @@ kdebug_sadb(base)
 	    base->sadb_msg_seq, base->sadb_msg_pid);
 
 	tlen = PFKEY_UNUNIT64(base->sadb_msg_len) - sizeof(struct sadb_msg);
-	ext = (struct sadb_ext *)((caddr_t)base + sizeof(struct sadb_msg));
+	ext = (struct sadb_ext *)((char *)base + sizeof(struct sadb_msg));
 
 	while (tlen > 0) {
 		printf("sadb_ext{ len=%u type=%s }\n",
@@ -264,7 +264,7 @@ kdebug_sadb(base)
 
 		extlen = PFKEY_UNUNIT64(ext->sadb_ext_len);
 		tlen -= extlen;
-		ext = (struct sadb_ext *)((caddr_t)ext + extlen);
+		ext = (struct sadb_ext *)((char *)ext + extlen);
 	}
 
 	return;
@@ -340,7 +340,7 @@ kdebug_sadb_identity(ext)
 			id->sadb_ident_type, (u_long)id->sadb_ident_id);
 		if (len) {
 #ifdef _KERNEL
-			ipsec_hexdump((caddr_t)(id + 1), len); /*XXX cast ?*/
+			ipsec_hexdump((void *)(id + 1), len); /*XXX cast ?*/
 #else
 			unsigned char *p, *ep;
 			printf("\n  str=\"");
@@ -444,7 +444,7 @@ kdebug_sadb_address(ext)
 	    ((u_char *)&addr->sadb_address_reserved)[0],
 	    ((u_char *)&addr->sadb_address_reserved)[1]);
 
-	kdebug_sockaddr((struct sockaddr *)((caddr_t)ext + sizeof(*addr)));
+	kdebug_sockaddr((struct sockaddr *)((char *)ext + sizeof(*addr)));
 
 	return;
 }
@@ -471,7 +471,7 @@ kdebug_sadb_key(ext)
 			(long)PFKEY_UNUNIT64(key->sadb_key_len) - sizeof(struct sadb_key));
 	}
 
-	ipsec_hexdump((caddr_t)key + sizeof(struct sadb_key),
+	ipsec_hexdump((char *)key + sizeof(struct sadb_key),
 	              key->sadb_key_bits >> 3);
 	printf(" }\n");
 	return;
@@ -546,7 +546,7 @@ kdebug_sadb_x_policy(ext)
 			if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
 				addr = (struct sockaddr *)(xisr + 1);
 				kdebug_sockaddr(addr);
-				addr = (struct sockaddr *)((caddr_t)addr
+				addr = (struct sockaddr *)((char *)addr
 							+ addr->sa_len);
 				kdebug_sockaddr(addr);
 			}
@@ -566,7 +566,7 @@ kdebug_sadb_x_policy(ext)
 
 			tlen -= xisr->sadb_x_ipsecrequest_len;
 
-			xisr = (struct sadb_x_ipsecrequest *)((caddr_t)xisr
+			xisr = (struct sadb_x_ipsecrequest *)((char *)xisr
 			                + xisr->sadb_x_ipsecrequest_len);
 		}
 
@@ -640,10 +640,10 @@ kdebug_secpolicyindex(spidx)
 	printf("secpolicyindex{ prefs=%u prefd=%u ul_proto=%u\n",
 		spidx->prefs, spidx->prefd, spidx->ul_proto);
 
-	ipsec_hexdump((caddr_t)&spidx->src,
+	ipsec_hexdump((void *)&spidx->src,
 		((struct sockaddr *)&spidx->src)->sa_len);
 	printf("\n");
-	ipsec_hexdump((caddr_t)&spidx->dst,
+	ipsec_hexdump((void *)&spidx->dst,
 		((struct sockaddr *)&spidx->dst)->sa_len);
 	printf("}\n");
 
@@ -661,10 +661,10 @@ kdebug_secasindex(saidx)
 	printf("secasindex{ mode=%u proto=%u\n",
 		saidx->mode, saidx->proto);
 
-	ipsec_hexdump((caddr_t)&saidx->src,
+	ipsec_hexdump((void *)&saidx->src,
 		((struct sockaddr *)&saidx->src)->sa_len);
 	printf("\n");
-	ipsec_hexdump((caddr_t)&saidx->dst,
+	ipsec_hexdump((void *)&saidx->dst,
 		((struct sockaddr *)&saidx->dst)->sa_len);
 	printf("\n");
 
@@ -810,7 +810,7 @@ kdebug_sockaddr(addr)
 	case AF_INET:
 		sin4 = (struct sockaddr_in *)addr;
 		printf(" port=%u\n", ntohs(sin4->sin_port));
-		ipsec_hexdump((caddr_t)&sin4->sin_addr, sizeof(sin4->sin_addr));
+		ipsec_hexdump((void *)&sin4->sin_addr, sizeof(sin4->sin_addr));
 		break;
 #ifdef INET6
 	case AF_INET6:
@@ -818,7 +818,7 @@ kdebug_sockaddr(addr)
 		printf(" port=%u\n", ntohs(sin6->sin6_port));
 		printf("  flowinfo=0x%08x, scope_id=0x%08x\n",
 		    sin6->sin6_flowinfo, sin6->sin6_scope_id);
-		ipsec_hexdump((caddr_t)&sin6->sin6_addr,
+		ipsec_hexdump((void *)&sin6->sin6_addr,
 		    sizeof(sin6->sin6_addr));
 		break;
 #endif
@@ -830,10 +830,11 @@ kdebug_sockaddr(addr)
 }
 
 void
-ipsec_bindump(buf, len)
-	caddr_t buf;
+ipsec_bindump(bufv, len)
+	void *bufv;
 	int len;
 {
+	char *buf = bufv;
 	int i;
 
 	for (i = 0; i < len; i++)
@@ -844,10 +845,11 @@ ipsec_bindump(buf, len)
 
 
 void
-ipsec_hexdump(buf, len)
-	caddr_t buf;
+ipsec_hexdump(bufv, len)
+	void *bufv;
 	int len;
 {
+	char *buf = bufv;
 	int i;
 
 	for (i = 0; i < len; i++) {

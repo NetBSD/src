@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.60 2007/01/23 15:02:50 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.60.2.1 2007/03/12 05:55:18 rmind Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.60 2007/01/23 15:02:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.60.2.1 2007/03/12 05:55:18 rmind Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -143,7 +143,7 @@ static void	iwi_free_unr(struct iwi_softc *, int);
 
 static int	iwi_get_table0(struct iwi_softc *, uint32_t *);
 
-static int	iwi_ioctl(struct ifnet *, u_long, caddr_t);
+static int	iwi_ioctl(struct ifnet *, u_long, void *);
 static void	iwi_stop_master(struct iwi_softc *);
 static int	iwi_reset(struct iwi_softc *);
 static int	iwi_load_ucode(struct iwi_softc *, void *, int);
@@ -535,7 +535,7 @@ iwi_alloc_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring,
 
 	error = bus_dmamem_map(sc->sc_dmat, &sc->cmdq.desc_seg, nsegs,
 	    IWI_CMD_DESC_SIZE * count,
-	    (caddr_t *)&sc->cmdq.desc, BUS_DMA_NOWAIT);
+	    (void **)&sc->cmdq.desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map command ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -584,7 +584,7 @@ iwi_free_cmd_ring(struct iwi_softc *sc, struct iwi_cmd_ring *ring)
 	if (ring->desc_map != NULL) {
 		if (ring->desc != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, ring->desc_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+			bus_dmamem_unmap(sc->sc_dmat, (void *)ring->desc,
 			    IWI_CMD_DESC_SIZE * ring->count);
 			bus_dmamem_free(sc->sc_dmat, &ring->desc_seg, 1);
 		}
@@ -628,7 +628,7 @@ iwi_alloc_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring,
 
 	error = bus_dmamem_map(sc->sc_dmat, &ring->desc_seg, nsegs,
 	    IWI_TX_DESC_SIZE * count,
-	    (caddr_t *)&ring->desc, BUS_DMA_NOWAIT);
+	    (void **)&ring->desc, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		aprint_error("%s: could not map tx ring DMA memory\n",
 		    sc->sc_dev.dv_xname);
@@ -708,7 +708,7 @@ iwi_free_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 	if (ring->desc_map != NULL) {
 		if (ring->desc != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, ring->desc_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)ring->desc,
+			bus_dmamem_unmap(sc->sc_dmat, (void *)ring->desc,
 			    IWI_TX_DESC_SIZE * ring->count);
 			bus_dmamem_free(sc->sc_dmat, &ring->desc_seg, 1);
 		}
@@ -1687,7 +1687,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 	desc = &txq->desc[txq->cur];
 
 	/* save and trim IEEE802.11 header */
-	m_copydata(m0, 0, hdrlen, (caddr_t)&desc->wh);
+	m_copydata(m0, 0, hdrlen, (void *)&desc->wh);
 	m_adj(m0, hdrlen);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
@@ -1718,7 +1718,7 @@ iwi_tx_start(struct ifnet *ifp, struct mbuf *m0, struct ieee80211_node *ni,
 				return ENOMEM;
 			}
 		}
-		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, caddr_t));
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(mnew, void *));
 		m_freem(m0);
 		mnew->m_len = mnew->m_pkthdr.len;
 		m0 = mnew;
@@ -1908,7 +1908,7 @@ iwi_get_table0(struct iwi_softc *sc, uint32_t *tbl)
 }
 
 static int
-iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+iwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 #define	IS_RUNNING(ifp) \
 	((ifp->if_flags & IFF_UP) && (ifp->if_flags & IFF_RUNNING))
@@ -2296,7 +2296,7 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	}
 
 	hdr = (const struct iwi_firmware_hdr *)sc->sc_blob;
-	printf("firmware version = %d\n", le32toh(hdr->version));
+	DPRINTF(("firmware version = %d\n", le32toh(hdr->version)));
 	if ((IWI_FW_GET_MAJOR(le32toh(hdr->version)) != IWI_FW_REQ_MAJOR) ||
 	    (IWI_FW_GET_MINOR(le32toh(hdr->version)) != IWI_FW_REQ_MINOR)) {
 		aprint_error("%s: version for '%s' %d.%d != %d.%d\n",

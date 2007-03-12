@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.47.8.1 2007/02/28 09:35:41 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.47.8.2 2007/03/12 06:00:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -77,7 +77,7 @@
 			mb->m_next = mb2; \
 			mb = mb2; \
 			mb->m_len = 0; \
-			bpos = mtod(mb, caddr_t); \
+			bpos = mtod(mb, char *); \
 		} \
 		(a) = (c)(bpos); \
 		mb->m_len += (s); \
@@ -86,7 +86,7 @@
 #define nfsm_aligned(p) ALIGNED_POINTER(p,u_int32_t)
 
 #define	nfsm_dissect(a, c, s) \
-		{ t1 = mtod(md, caddr_t)+md->m_len-dpos; \
+		{ t1 = mtod(md, char *) + md->m_len-dpos; \
 		if (t1 >= (s) && nfsm_aligned(dpos)) { \
 			(a) = (c)(dpos); \
 			dpos += (s); \
@@ -105,18 +105,16 @@
 				nfsm_build(tl, u_int32_t *, t2); \
 				*tl++ = txdr_unsigned((n)->n_fhsize); \
 				*(tl + ((t2>>2) - 2)) = 0; \
-				memcpy((caddr_t)tl,(caddr_t)(n)->n_fhp, \
-					(n)->n_fhsize); \
+				memcpy(tl,(n)->n_fhp, (n)->n_fhsize); \
 			} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, \
-				(caddr_t)(n)->n_fhp, \
-				  (n)->n_fhsize)) != 0) { \
+				(void *)(n)->n_fhp, (n)->n_fhsize)) != 0) { \
 				error = t2; \
 				m_freem(mreq); \
 				goto nfsmout; \
 			} \
 		} else { \
-			nfsm_build(cp, caddr_t, NFSX_V2FH); \
-			memcpy(cp, (caddr_t)(n)->n_fhp, NFSX_V2FH); \
+			nfsm_build(cp, void *, NFSX_V2FH); \
+			memcpy(cp, (n)->n_fhp, NFSX_V2FH); \
 		} }
 
 #define nfsm_srvfhtom(f, v3) \
@@ -127,7 +125,7 @@
 			memcpy(tl, NFSRVFH_DATA(f), NFSRVFH_SIZE(f)); \
 		} else { \
 			KASSERT(NFSRVFH_SIZE(f) == NFSX_V2FH); \
-			nfsm_build(cp, caddr_t, NFSX_V2FH); \
+			nfsm_build(cp, void *, NFSX_V2FH); \
 			memcpy(cp, NFSRVFH_DATA(f), NFSX_V2FH); \
 		} }
 
@@ -420,7 +418,7 @@
 			nfsm_build(tl,u_int32_t *,t2); \
 			*tl++ = txdr_unsigned(s); \
 			*(tl+((t2>>2)-2)) = 0; \
-			memcpy((caddr_t)tl, (const char *)(a), (s)); \
+			memcpy(tl, (const char *)(a), (s)); \
 		} else if ((t2 = nfsm_strtmbuf(&mb, &bpos, (a), (s))) != 0) { \
 			error = t2; \
 			m_freem(mreq); \
@@ -462,7 +460,7 @@
 		}
 
 #define	nfsm_adv(s) \
-		{ t1 = mtod(md, caddr_t)+md->m_len-dpos; \
+		{ t1 = mtod(md, char *) + md->m_len - dpos; \
 		if (t1 >= (s)) { \
 			dpos += (s); \
 		} else if ((t1 = nfs_adv(&md, &dpos, (s), t1)) != 0) { \
@@ -501,7 +499,7 @@
 			mp->m_len = NFSMSIZ(mp); \
 			mp2->m_next = mp; \
 			mp2 = mp; \
-			bp = mtod(mp, caddr_t); \
+			bp = mtod(mp, char *); \
 			be = bp+mp->m_len; \
 		} \
 		tl = (u_int32_t *)bp

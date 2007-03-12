@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.125.2.1 2007/02/27 16:54:27 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.125.2.2 2007/03/12 05:58:41 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.125.2.1 2007/02/27 16:54:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.125.2.2 2007/03/12 05:58:41 rmind Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -112,7 +112,7 @@ struct pool_item_header {
 				ph_pagelist;	/* pool page list */
 	SPLAY_ENTRY(pool_item_header)
 				ph_node;	/* Off-page page headers */
-	caddr_t			ph_page;	/* this page's address */
+	void *			ph_page;	/* this page's address */
 	struct timeval		ph_time;	/* last referenced */
 	union {
 		/* !PR_NOTOUCH */
@@ -184,7 +184,7 @@ static void	pool_cache_reclaim(struct pool_cache *, struct pool_pagelist *,
 static void	pcg_grouplist_free(struct pool_cache_grouplist *);
 
 static int	pool_catchup(struct pool *);
-static void	pool_prime_page(struct pool *, caddr_t,
+static void	pool_prime_page(struct pool *, void *,
 		    struct pool_item_header *);
 static void	pool_update_curpage(struct pool *);
 
@@ -326,7 +326,7 @@ pr_item_notouch_index(const struct pool *pp, const struct pool_item_header *ph,
 	int idx;
 
 	KASSERT(pp->pr_roflags & PR_NOTOUCH);
-	idx = (cp - ph->ph_page - ph->ph_off) / pp->pr_size;
+	idx = (cp - (char *)ph->ph_page - ph->ph_off) / pp->pr_size;
 	KASSERT(idx < pp->pr_itemsperpage);
 	return idx;
 }
@@ -359,7 +359,7 @@ pr_item_notouch_get(const struct pool *pp, struct pool_item_header *ph)
 	ph->ph_firstfree = freelist[idx];
 	freelist[idx] = PR_INDEX_USED;
 
-	return ph->ph_page + ph->ph_off + idx * pp->pr_size;
+	return (char *)ph->ph_page + ph->ph_off + idx * pp->pr_size;
 }
 
 static inline int
@@ -391,7 +391,7 @@ pr_find_pagehead(struct pool *pp, void *v)
 	struct pool_item_header *ph, tmp;
 
 	if ((pp->pr_roflags & PR_NOALIGN) != 0) {
-		tmp.ph_page = (caddr_t)(uintptr_t)v;
+		tmp.ph_page = (void *)(uintptr_t)v;
 		ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
 		if (ph == NULL) {
 			ph = SPLAY_ROOT(&pp->pr_phtree);
@@ -401,11 +401,11 @@ pr_find_pagehead(struct pool *pp, void *v)
 			KASSERT(ph == NULL || phtree_compare(&tmp, ph) < 0);
 		}
 	} else {
-		caddr_t page =
-		    (caddr_t)((uintptr_t)v & pp->pr_alloc->pa_pagemask);
+		void *page =
+		    (void *)((uintptr_t)v & pp->pr_alloc->pa_pagemask);
 
 		if ((pp->pr_roflags & PR_PHINPAGE) != 0) {
-			ph = (void *)(page + pp->pr_phoffset);
+			ph = (struct pool_item_header *)((char *)page + pp->pr_phoffset);
 		} else {
 			tmp.ph_page = page;
 			ph = SPLAY_FIND(phtree, &pp->pr_phtree, &tmp);
@@ -413,8 +413,8 @@ pr_find_pagehead(struct pool *pp, void *v)
 	}
 
 	KASSERT(ph == NULL || ((pp->pr_roflags & PR_PHINPAGE) != 0) ||
-	    (ph->ph_page <= (char *)v &&
-	    (char *)v < ph->ph_page + pp->pr_alloc->pa_pagesz));
+	    ((char *)ph->ph_page <= (char *)v &&
+	    (char *)v < (char *)ph->ph_page + pp->pr_alloc->pa_pagesz));
 	return ph;
 }
 
@@ -887,7 +887,7 @@ pool_set_drain_hook(struct pool *pp, void (*fn)(void *, int), void *arg)
 }
 
 static struct pool_item_header *
-pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
+pool_alloc_item_header(struct pool *pp, void *storage, int flags)
 {
 	struct pool_item_header *ph;
 	int s;
@@ -895,7 +895,7 @@ pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
 	LOCK_ASSERT(simple_lock_held(&pp->pr_slock) == 0);
 
 	if ((pp->pr_roflags & PR_PHINPAGE) != 0)
-		ph = (struct pool_item_header *) (storage + pp->pr_phoffset);
+		ph = (struct pool_item_header *) ((char *)storage + pp->pr_phoffset);
 	else {
 		s = splvm();
 		ph = pool_get(pp->pr_phpool, flags);
@@ -1170,7 +1170,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	/*
 	 * Check if we're freeing a locked simple lock.
 	 */
-	simple_lock_freecheck((caddr_t)pi, ((caddr_t)pi) + pp->pr_size);
+	simple_lock_freecheck(pi, (char *)pi + pp->pr_size);
 #endif
 
 	/*
@@ -1208,7 +1208,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 		pp->pr_flags &= ~PR_WANTED;
 		if (ph->ph_nmissing == 0)
 			pp->pr_nidle++;
-		wakeup((caddr_t)pp);
+		wakeup((void *)pp);
 		return;
 	}
 
@@ -1370,10 +1370,10 @@ pool_prime(struct pool *pp, int n)
  * Note, we must be called with the pool descriptor LOCKED.
  */
 static void
-pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
+pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
-	caddr_t cp = storage;
+	void *cp = storage;
 	const unsigned int align = pp->pr_align;
 	const unsigned int ioff = pp->pr_itemoffset;
 	int n;
@@ -1402,7 +1402,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	/*
 	 * Color this page.
 	 */
-	cp = (caddr_t)(cp + pp->pr_curcolor);
+	cp = (char *)cp + pp->pr_curcolor;
 	if ((pp->pr_curcolor += align) > pp->pr_maxcolor)
 		pp->pr_curcolor = 0;
 
@@ -1410,7 +1410,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 	 * Adjust storage to apply aligment to `pr_itemoffset' in each item.
 	 */
 	if (ioff != 0)
-		cp = (caddr_t)(cp + (align - ioff));
+		cp = (char *)cp + align - ioff;
 
 	KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
 
@@ -1424,7 +1424,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 		pool_item_freelist_t *freelist = PR_FREELIST(ph);
 		int i;
 
-		ph->ph_off = cp - storage;
+		ph->ph_off = (char *)cp - (char *)storage;
 		ph->ph_firstfree = 0;
 		for (i = 0; i < n - 1; i++)
 			freelist[i] = i + 1;
@@ -1440,7 +1440,7 @@ pool_prime_page(struct pool *pp, caddr_t storage, struct pool_item_header *ph)
 #ifdef DIAGNOSTIC
 			pi->pi_magic = PI_MAGIC;
 #endif
-			cp = (caddr_t)(cp + pp->pr_size);
+			cp = (char *)cp + pp->pr_size;
 
 			KASSERT((((vaddr_t)cp + ioff) & (align - 1)) == 0);
 		}
@@ -1843,11 +1843,11 @@ static int
 pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 {
 	struct pool_item *pi;
-	caddr_t page;
+	void *page;
 	int n;
 
 	if ((pp->pr_roflags & PR_NOALIGN) == 0) {
-		page = (caddr_t)((uintptr_t)ph & pp->pr_alloc->pa_pagemask);
+		page = (void *)((uintptr_t)ph & pp->pr_alloc->pa_pagemask);
 		if (page != ph->ph_page &&
 		    (pp->pr_roflags & PR_PHINPAGE) != 0) {
 			if (label != NULL)
@@ -1881,7 +1881,7 @@ pool_chk_page(struct pool *pp, const char *label, struct pool_item_header *ph)
 		if ((pp->pr_roflags & PR_NOALIGN) != 0) {
 			continue;
 		}
-		page = (caddr_t)((uintptr_t)pi & pp->pr_alloc->pa_pagemask);
+		page = (void *)((uintptr_t)pi & pp->pr_alloc->pa_pagemask);
 		if (page == ph->ph_page)
 			continue;
 

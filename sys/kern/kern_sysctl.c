@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.208 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.208.2.1 2007/03/12 05:58:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.208 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.208.2.1 2007/03/12 05:58:38 rmind Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_ktrace.h"
@@ -153,7 +153,7 @@ __link_set_decl(sysctl_funcs, sysctl_setup_func);
  * from anywhere.
  */
 krwlock_t sysctl_treelock;
-caddr_t sysctl_memaddr;
+void *sysctl_memaddr;
 size_t sysctl_memsize;
 
 /*
@@ -1860,7 +1860,7 @@ sysctl_describe(SYSCTLFN_ARGS)
 		d->descr_num = node[i].sysctl_num;
 		d->descr_ver = node[i].sysctl_ver;
 		d->descr_len = sz; /* includes trailing nul */
-		sz = (caddr_t)NEXT_DESCR(d) - (caddr_t)d;
+		sz = (char *)NEXT_DESCR(d) - (char *)d;
 		if (oldp != NULL && left >= sz) {
 			error = sysctl_copyout(l, d, oldp, sz);
 			if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.34 2006/09/24 03:54:00 jmcneill Exp $ */
+/*	$NetBSD: p9100.c,v 1.34.4.1 2007/03/12 05:57:08 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.34 2006/09/24 03:54:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.34.4.1 2007/03/12 05:57:08 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,7 @@ static int	p9100_allocattr(void *, int, int, int, long *);
 
 static int	p9100_putcmap(struct p9100_softc *, struct wsdisplay_cmap *);
 static int 	p9100_getcmap(struct p9100_softc *, struct wsdisplay_cmap *);
-static int	p9100_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int	p9100_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	p9100_mmap(void *, void *, off_t, int);
 
 /*static int	p9100_load_font(void *, void *, struct wsdisplay_font *);*/
@@ -347,7 +347,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	}
 
 	if (sa->sa_npromvaddrs != 0)
-		fb->fb_pixels = (caddr_t)sa->sa_promvaddrs[0];
+		fb->fb_pixels = (void *)sa->sa_promvaddrs[0];
 
 	if (fb->fb_pixels == NULL) {
 		if (sbus_bus_map(sc->sc_bustag,
@@ -514,7 +514,7 @@ p9100open(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-p9100ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+p9100ioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;
@@ -1120,7 +1120,7 @@ p9100_putchar(void *cookie, int row, int col, u_int c, long attr)
  */
 
 int
-p9100_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+p9100_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;

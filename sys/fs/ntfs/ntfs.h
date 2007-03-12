@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.15 2006/12/09 16:11:51 chs Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.15.2.1 2007/03/12 05:58:11 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -274,7 +274,7 @@ struct ntfsmount {
 #define	ntm_spc		ntm_bootfile.bf_spc
 #define	ntm_bps		ntm_bootfile.bf_bps
 
-#define	NTFS_NEXTREC(s, type) ((type)(((caddr_t) s) + (s)->reclen))
+#define	NTFS_NEXTREC(s, type) ((type)(((char *) s) + (s)->reclen))
 
 /* Convert mount ptr to ntfsmount ptr. */
 #define VFSTONTFS(mp)	((struct ntfsmount *)((mp)->mnt_data))

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.97.2.1 2007/02/27 16:54:23 yamt Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.97.2.2 2007/03/12 05:58:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.97.2.1 2007/02/27 16:54:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.97.2.2 2007/03/12 05:58:36 rmind Exp $");
 
 #include "opt_compat_43.h"
 
@@ -88,9 +88,9 @@ sys_getpid_with_ppid(struct lwp *l, void *v, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	retval[0] = p->p_pid;
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	retval[1] = p->p_pptr->p_pid;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (0);
 }
 
@@ -100,9 +100,9 @@ sys_getppid(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	*retval = p->p_pptr->p_pid;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (0);
 }
 
@@ -112,9 +112,9 @@ sys_getpgrp(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	*retval = p->p_pgrp->pg_id;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (0);
 }
 
@@ -132,14 +132,14 @@ sys_getsid(struct lwp *l, void *v, register_t *retval)
 	struct proc *p;
 	int error = 0;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if (pid == 0)
 		*retval = l->l_proc->p_session->s_sid;
 	else if ((p = p_find(pid, PFIND_LOCKED)) != NULL)
 		*retval = p->p_session->s_sid;
 	else
 		error = ESRCH;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return error;
 }
@@ -154,14 +154,14 @@ sys_getpgid(struct lwp *l, void *v, register_t *retval)
 	struct proc *p;
 	int error = 0;
 
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if (pid == 0)
 		*retval = l->l_proc->p_pgid;
 	else if ((p = p_find(pid, PFIND_LOCKED)) != NULL)
 		*retval = p->p_pgid;
 	else
 		error = ESRCH;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	return error;
 }
@@ -251,7 +251,7 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 
 	grbuf = malloc(ngrp * sizeof(*grbuf), M_TEMP, M_WAITOK);
 	kauth_cred_getgroups(cred, grbuf, ngrp);
-	error = copyout(grbuf, (caddr_t)SCARG(uap, gidset),
+	error = copyout(grbuf, (void *)SCARG(uap, gidset),
 			ngrp * sizeof(gid_t));
 	free(grbuf, M_TEMP);
 	if (error)
@@ -670,9 +670,9 @@ sys___getlogin(struct lwp *l, void *v, register_t *retval)
 
 	if (namelen > sizeof(login))
 		namelen = sizeof(login);
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	memcpy(login, p->p_session->s_login, namelen);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (copyout(login, (void *)SCARG(uap, namebuf), namelen));
 }
 
@@ -698,7 +698,7 @@ sys___setlogin(struct lwp *l, void *v, register_t *retval)
 	if (error != 0)
 		return (error == ENAMETOOLONG ? EINVAL : error);
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 	sp = p->p_session;
 	if (sp->s_flags & S_LOGIN_SET && p->p_pid != sp->s_sid &&
 	    strncmp(newname, sp->s_login, sizeof sp->s_login) != 0)
@@ -707,7 +707,7 @@ sys___setlogin(struct lwp *l, void *v, register_t *retval)
 		    (int)sizeof sp->s_login, sp->s_login, newname);
 	sp->s_flags |= S_LOGIN_SET;
 	strncpy(sp->s_login, newname, sizeof sp->s_login);
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 	return (0);
 }
 

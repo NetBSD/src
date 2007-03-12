@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_upper.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $	*/
+/*	$NetBSD: l2cap_upper.c,v 1.1.20.1 2007/03/12 05:59:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.1 2006/06/19 15:44:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_upper.c,v 1.1.20.1 2007/03/12 05:59:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -435,7 +435,7 @@ l2cap_setopt(struct l2cap_channel *chan, int opt, void *addr)
 		//break;
 
 	default:
-		err = EINVAL;
+		err = ENOPROTOOPT;
 		break;
 	}
 

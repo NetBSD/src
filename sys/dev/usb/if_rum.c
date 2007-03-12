@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.4.2.1 2007/02/27 16:54:04 yamt Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.4.2.2 2007/03/12 05:57:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.4.2.1 2007/02/27 16:54:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.4.2.2 2007/03/12 05:57:29 rmind Exp $");
 
 #include "bpfilter.h"
 
@@ -146,7 +146,7 @@ Static int		rum_tx_data(struct rum_softc *, struct mbuf *,
 			    struct ieee80211_node *);
 Static void		rum_start(struct ifnet *);
 Static void		rum_watchdog(struct ifnet *);
-Static int		rum_ioctl(struct ifnet *, u_long, caddr_t);
+Static int		rum_ioctl(struct ifnet *, u_long, void *);
 Static void		rum_eeprom_read(struct rum_softc *, uint16_t, void *,
 			    int);
 Static uint32_t		rum_read(struct rum_softc *, uint16_t);
@@ -860,7 +860,7 @@ rum_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	/* finalize mbuf */
 	m->m_pkthdr.rcvif = ifp;
-	m->m_data = (caddr_t)(desc + 1);
+	m->m_data = (void *)(desc + 1);
 	m->m_pkthdr.len = m->m_len = (le32toh(desc->flags) >> 16) & 0xfff;
 
 	s = splnet();
@@ -1128,8 +1128,8 @@ rum_tx_mgt(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if ((xferlen % 64) == 0)
 		xferlen += 4;
 
-	DPRINTFN(10, ("sending msg frame len=%lu rate=%u xfer len=%u\n",
-	    (long unsigned int)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
+	DPRINTFN(10, ("sending msg frame len=%zu rate=%u xfer len=%u\n",
+	    (size_t)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
 	    rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
@@ -1219,8 +1219,8 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if ((xferlen % 64) == 0)
 		xferlen += 4;
 
-	DPRINTFN(10, ("sending data frame len=%lu rate=%u xfer len=%u\n",
-	    (long unsigned int)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
+	DPRINTFN(10, ("sending data frame len=%zu rate=%u xfer len=%u\n",
+	    (size_t)m0->m_pkthdr.len + RT2573_TX_DESC_SIZE,
 	    rate, xferlen));
 
 	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
@@ -1332,7 +1332,7 @@ rum_watchdog(struct ifnet *ifp)
 }
 
 Static int
-rum_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;

@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci.c,v 1.21 2006/11/16 01:33:09 christos Exp $	*/
+/* $NetBSD: ifpci.c,v 1.21.4.1 2007/03/12 05:55:23 rmind Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci.c,v 1.21 2006/11/16 01:33:09 christos Exp $
+ *	$Id: ifpci.c,v 1.21.4.1 2007/03/12 05:55:23 rmind Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.21 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci.c,v 1.21.4.1 2007/03/12 05:55:23 rmind Exp $");
 
 
 #include <sys/param.h>
@@ -914,7 +914,7 @@ avma1pp_disable(struct isic_softc *sc)
 }
 
 static int
-avma1pp_intr(void * parm)
+avma1pp_intr(void *parm)
 {
 	struct isic_softc *sc = parm;
 	int ret = 0;

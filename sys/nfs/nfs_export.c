@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.26 2007/02/05 16:03:53 chs Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.26.2.1 2007/03/12 06:00:36 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.26 2007/02/05 16:03:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.26.2.1 2007/03/12 06:00:36 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -519,7 +519,7 @@ hang_addrlist(struct mount *mp, struct netexport *nep,
 	if (sacheck(saddr) == -1)
 		return EINVAL;
 	if (argp->ex_masklen) {
-		smask = (struct sockaddr *)((caddr_t)saddr + argp->ex_addrlen);
+		smask = (struct sockaddr *)((char *)saddr + argp->ex_addrlen);
 		error = copyin(argp->ex_mask, smask, argp->ex_masklen);
 		if (error)
 			goto out;
@@ -815,7 +815,7 @@ netcred_lookup(struct netexport *ne, struct mbuf *nam)
 		rnh = ne->ne_rtable[saddr->sa_family];
 		if (rnh != NULL) {
 			np = (struct netcred *)
-				(*rnh->rnh_matchaddr)((caddr_t)saddr,
+				(*rnh->rnh_matchaddr)((void *)saddr,
 						      rnh);
 			if (np && np->netc_rnodes->rn_flags & RNF_ROOT)
 				np = NULL;

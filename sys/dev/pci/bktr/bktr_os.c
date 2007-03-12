@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.45 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.45.4.1 2007/03/12 05:56:45 rmind Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.45 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.45.4.1 2007/03/12 05:56:45 rmind Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -739,7 +739,7 @@ bktr_write(dev_t dev, struct uio *uio, int ioflag)
  *
  */
 int
-bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct proc* pr)
+bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, void *arg, int flag, struct proc* pr)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1211,7 +1211,7 @@ bktr_write(dev_t dev, struct uio *uio, int ioflag)
  *
  */
 int
-bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag, struct proc* pr)
+bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, void *arg, int flag, struct proc* pr)
 {
 	bktr_ptr_t	bktr;
 	int		unit;
@@ -1557,7 +1557,7 @@ get_bktr_mem(bktr, dmapp, size)
         bus_dma_segment_t seg;
         bus_size_t align;
         int rseg;
-        caddr_t kva;
+        void *kva;
 
         /*
          * Allocate a DMA area
@@ -1621,9 +1621,9 @@ free_bktr_mem(bktr, dmap, kva)
         bus_dma_tag_t dmat = bktr->dmat;
 
 #ifdef __NetBSD__
-        bus_dmamem_unmap(dmat, (caddr_t)kva, dmap->dm_mapsize);
+        bus_dmamem_unmap(dmat, (void *)kva, dmap->dm_mapsize);
 #else
-        bus_dmamem_unmap(dmat, (caddr_t)kva, bktr->dm_mapsize);
+        bus_dmamem_unmap(dmat, (void *)kva, bktr->dm_mapsize);
 #endif
         bus_dmamem_free(dmat, dmap->dm_segs, 1);
         bus_dmamap_destroy(dmat, dmap);
@@ -1743,7 +1743,7 @@ bktr_write(dev_t dev, struct uio *uio, int ioflag)
  *
  */
 int
-bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, caddr_t arg, int flag,
+bktr_ioctl(dev_t dev, ioctl_cmd_t cmd, void *arg, int flag,
     struct lwp *l)
 {
 	bktr_ptr_t	bktr;

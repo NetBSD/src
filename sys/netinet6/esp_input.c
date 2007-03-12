@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.41.4.1 2007/02/27 16:54:58 yamt Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.41.4.2 2007/03/12 05:59:55 rmind Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.41.4.1 2007/02/27 16:54:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.41.4.2 2007/03/12 05:59:55 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -159,7 +159,7 @@ esp4_input(m, va_alist)
 	spi = esp->esp_spi;
 
 	if ((sav = key_allocsa(AF_INET,
-	                      (caddr_t)&ip->ip_src, (caddr_t)&ip->ip_dst,
+	                      (void *)&ip->ip_src, (void *)&ip->ip_dst,
 	                      IPPROTO_ESP, spi, sport, dport)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv4 ESP input: no key association found for spi %u\n",
@@ -239,7 +239,7 @@ esp4_input(m, va_alist)
 		goto bad;
 	}
 
-	m_copydata(m, m->m_pkthdr.len - siz, siz, (caddr_t)&sum0[0]);
+	m_copydata(m, m->m_pkthdr.len - siz, siz, (void *)&sum0[0]);
 
 	if (esp_auth(m, off, m->m_pkthdr.len - off - siz, sav, sum)) {
 		ipseclog((LOG_WARNING, "auth fail in IPv4 ESP input: %s %s\n",
@@ -337,7 +337,7 @@ noreplaycheck:
 	 * find the trailer of the ESP.
 	 */
 	m_copydata(m, m->m_pkthdr.len - sizeof(esptail), sizeof(esptail),
-	     (caddr_t)&esptail);
+	     (void *)&esptail);
 	nxt = esptail.esp_nxt;
 	taillen = esptail.esp_padlen + sizeof(esptail);
 
@@ -383,7 +383,7 @@ noreplaycheck:
 		/* ECN consideration. */
 		ip_ecn_egress(ip4_ipsec_ecn, &tos, &ip->ip_tos);
 		if (!key_checktunnelsanity(sav, AF_INET,
-			    (caddr_t)&ip->ip_src, (caddr_t)&ip->ip_dst)) {
+			    (void *)&ip->ip_src, (void *)&ip->ip_dst)) {
 			ipseclog((LOG_ERR, "ipsec tunnel address mismatch "
 			    "in IPv4 ESP input: %s %s\n",
 			    ipsec4_logpacketstr(ip, spi), ipsec_logsastr(sav)));
@@ -420,7 +420,7 @@ noreplaycheck:
 		stripsiz = esplen + ivlen;
 
 		ip = mtod(m, struct ip *);
-		ovbcopy((caddr_t)ip, (caddr_t)(((u_char *)ip) + stripsiz), off);
+		ovbcopy((void *)ip, (void *)(((u_char *)ip) + stripsiz), off);
 		m->m_data += stripsiz;
 		m->m_len -= stripsiz;
 		m->m_pkthdr.len -= stripsiz;
@@ -492,10 +492,10 @@ esp4_ctlinput(cmd, sa, v)
 		 * Check to see if we have a valid SA corresponding to
 		 * the address in the ICMP message payload.
 		 */
-		esp = (struct esp *)((caddr_t)ip + (ip->ip_hl << 2));
+		esp = (struct esp *)((char *)ip + (ip->ip_hl << 2));
 		if ((sav = key_allocsa(AF_INET,
-				       (caddr_t) &ip->ip_src,
-				       (caddr_t) &ip->ip_dst,
+				       (void *) &ip->ip_src,
+				       (void *) &ip->ip_dst,
 				       IPPROTO_ESP, esp->esp_spi,
 				       0, 0)) == NULL)
 			return NULL;
@@ -515,7 +515,7 @@ esp4_ctlinput(cmd, sa, v)
 		 * ICMP header, recalculate the new MTU, and create the
 		 * corresponding routing entry.
 		 */
-		icp = (struct icmp *)((caddr_t)ip -
+		icp = (struct icmp *)((char *)ip -
 		    offsetof(struct icmp, icmp_ip));
 		icmp_mtudisc(icp, ip->ip_dst);
 
@@ -571,7 +571,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 	spi = esp->esp_spi;
 
 	if ((sav = key_allocsa(AF_INET6,
-	                      (caddr_t)&ip6->ip6_src, (caddr_t)&ip6->ip6_dst,
+	                      (void *)&ip6->ip6_src, (void *)&ip6->ip6_dst,
 	                      IPPROTO_ESP, spi, 0, 0)) == 0) {
 		ipseclog((LOG_WARNING,
 		    "IPv6 ESP input: no key association found for spi %u\n",
@@ -651,7 +651,7 @@ esp6_input(struct mbuf **mp, int *offp, int proto)
 		goto bad;
 	}
 
-	m_copydata(m, m->m_pkthdr.len - siz, siz, (caddr_t)&sum0[0]);
+	m_copydata(m, m->m_pkthdr.len - siz, siz, (void *)&sum0[0]);
 
 	if (esp_auth(m, off, m->m_pkthdr.len - off - siz, sav, sum)) {
 		ipseclog((LOG_WARNING, "auth fail in IPv6 ESP input: %s %s\n",
@@ -744,7 +744,7 @@ noreplaycheck:
 	 * find the trailer of the ESP.
 	 */
 	m_copydata(m, m->m_pkthdr.len - sizeof(esptail), sizeof(esptail),
-	     (caddr_t)&esptail);
+	     (void *)&esptail);
 	nxt = esptail.esp_nxt;
 	taillen = esptail.esp_padlen + sizeof(esptail);
 
@@ -785,7 +785,7 @@ noreplaycheck:
 		/* ECN consideration. */
 		ip6_ecn_egress(ip6_ipsec_ecn, &flowinfo, &ip6->ip6_flow);
 		if (!key_checktunnelsanity(sav, AF_INET6,
-			    (caddr_t)&ip6->ip6_src, (caddr_t)&ip6->ip6_dst)) {
+			    (void *)&ip6->ip6_src, (void *)&ip6->ip6_dst)) {
 			ipseclog((LOG_ERR, "ipsec tunnel address mismatch "
 			    "in IPv6 ESP input: %s %s\n",
 			    ipsec6_logpacketstr(ip6, spi),
@@ -831,7 +831,7 @@ noreplaycheck:
 
 		ip6 = mtod(m, struct ip6_hdr *);
 		if (m->m_len >= stripsiz + off) {
-			ovbcopy((caddr_t)ip6, ((caddr_t)ip6) + stripsiz, off);
+			(void)memmove((char *)ip6 + stripsiz, ip6, off);
 			m->m_data += stripsiz;
 			m->m_len -= stripsiz;
 			m->m_pkthdr.len -= stripsiz;
@@ -948,10 +948,10 @@ esp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 			 * this should be rare case,
 			 * so we compromise on this copy...
 			 */
-			m_copydata(m, off, sizeof(esp), (caddr_t)&esp);
+			m_copydata(m, off, sizeof(esp), (void *)&esp);
 			espp = &esp;
 		} else
-			espp = (struct newesp*)(mtod(m, caddr_t) + off);
+			espp = (struct newesp*)(mtod(m, char *) + off);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;

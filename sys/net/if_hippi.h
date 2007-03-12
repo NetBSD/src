@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippi.h,v 1.9 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_hippi.h,v 1.9.26.1 2007/03/12 05:59:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ struct hippi_header {
 
 
 #ifdef _KERNEL
-void    hippi_ifattach(struct ifnet *, caddr_t);
+void    hippi_ifattach(struct ifnet *, void *);
 void    hippi_ip_input(struct ifnet *, struct mbuf *);
 #endif /* _KERNEL */
 #endif /* !_NET_IF_HIPPI_H_ */

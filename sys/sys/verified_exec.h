@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.h,v 1.53.2.1 2007/02/27 16:55:19 yamt Exp $	*/
+/*	$NetBSD: verified_exec.h,v 1.53.2.2 2007/03/12 06:00:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -96,7 +96,7 @@ extern int veriexec_strict;
 void	veriexecattach(struct device *, struct device *, void *);
 int     veriexecopen(dev_t, int, int, struct lwp *);
 int     veriexecclose(dev_t, int, int, struct lwp *);
-int     veriexecioctl(dev_t, u_long, caddr_t, int, struct lwp *);
+int     veriexecioctl(dev_t, u_long, void *, int, struct lwp *);
 
 void veriexec_init(void);
 int veriexec_fpops_add(const char *, size_t, size_t, veriexec_fpop_init_t,

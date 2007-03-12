@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_state.h,v 1.5 2006/04/04 16:17:19 martti Exp $	*/
+/*	$NetBSD: ip_state.h,v 1.5.14.1 2007/03/12 05:57:58 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -250,7 +250,7 @@ extern	int	fr_tcpinwindow __P((struct fr_info *, struct tcpdata *,
 				    struct tcpdata *, tcphdr_t *, int));
 extern	void	fr_stateunload __P((void));
 extern	void	ipstate_log __P((struct ipstate *, u_int));
-extern	int	fr_state_ioctl __P((caddr_t, ioctlcmd_t, int));
+extern	int	fr_state_ioctl __P((void *, ioctlcmd_t, int));
 extern	void	fr_stinsert __P((struct ipstate *, int));
 extern	void	fr_sttab_init __P((struct ipftq *));
 extern	void	fr_sttab_destroy __P((struct ipftq *));

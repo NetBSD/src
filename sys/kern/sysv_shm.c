@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.96.2.1 2007/02/27 16:54:33 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.96.2.2 2007/03/12 05:58:43 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.96.2.1 2007/02/27 16:54:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.96.2.2 2007/03/12 05:58:43 rmind Exp $");
 
 #define SYSVSHM
 
@@ -235,7 +235,7 @@ shmmap_getprivate(struct proc *p)
 	memset(shmmap_s, 0, sizeof(struct shmmap_state));
 	shmmap_s->nrefs = 1;
 	SLIST_INIT(&shmmap_s->entries);
-	p->p_vmspace->vm_shm = (caddr_t)shmmap_s;
+	p->p_vmspace->vm_shm = (void *)shmmap_s;
 
 	if (!oshmmap_s)
 		return (shmmap_s);
@@ -534,7 +534,7 @@ shmget_existing(struct lwp *l, struct sys_shmget_args *uap, int mode,
 		 * allocation failed or it was freed).
 		 */
 		shmseg->shm_perm.mode |= SHMSEG_WANTED;
-		error = tsleep((caddr_t)shmseg, PLOCK | PCATCH, "shmget", 0);
+		error = tsleep((void *)shmseg, PLOCK | PCATCH, "shmget", 0);
 		if (error)
 			return error;
 		return EAGAIN;
@@ -609,7 +609,7 @@ shmget_allocate_segment(struct lwp *l, struct sys_shmget_args *uap, int mode,
 		 * them up now.
 		 */
 		shmseg->shm_perm.mode &= ~SHMSEG_WANTED;
-		wakeup((caddr_t)shmseg);
+		wakeup((void *)shmseg);
 	}
 
 	/* Lock the memory */

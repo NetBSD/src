@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.24.4.1 2007/02/27 16:55:07 yamt Exp $
+ *	$Id: i4b_ipr.c,v 1.24.4.2 2007/03/12 06:00:12 rmind Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.24.4.1 2007/02/27 16:55:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.24.4.2 2007/03/12 06:00:12 rmind Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -245,10 +245,10 @@ enum ipr_states {
 #endif
 PDEVSTATIC void iripattach(void *);
 PSEUDO_SET(iripattach, i4b_ipr);
-static int irpioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, caddr_t data);
+static int irpioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, void *data);
 #else
 PDEVSTATIC void iripattach __P((void));
-static int iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data);
+static int iripioctl(struct ifnet *ifp, u_long cmd, void *data);
 #endif
 
 #ifdef __bsdi__
@@ -562,10 +562,10 @@ iripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
  *---------------------------------------------------------------------------*/
 #ifdef __FreeBSD__
 static int
-iripioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, caddr_t data)
+iripioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, void *data)
 #else
 static int
-iripioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+iripioctl(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 {
 #if defined(__FreeBSD__) || defined(__bsdi__)

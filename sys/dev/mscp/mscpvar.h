@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.14 2005/12/11 12:22:47 christos Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.14.26.1 2007/03/12 05:55:08 rmind Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -262,7 +262,7 @@ struct mscp_softc {
 #define MSCP_DOCMD(mi) { \
 	if ((mi)->mi_wantcmd) { \
 		(mi)->mi_wantcmd = 0; \
-		wakeup((caddr_t) &(mi)->mi_wantcmd); \
+		wakeup((void *) &(mi)->mi_wantcmd); \
 	} \
 }
 

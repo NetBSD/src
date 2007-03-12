@@ -1,4 +1,4 @@
-/*	$NetBSD: eonvar.h,v 1.14.26.1 2007/02/27 16:55:08 yamt Exp $	*/
+/*	$NetBSD: eonvar.h,v 1.14.26.2 2007/03/12 06:00:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -178,7 +178,7 @@ struct eon_llinfo {
 #ifdef _KERNEL
 void eonprotoinit (void);
 void eonattach   (void);
-int eonioctl    (struct ifnet *, u_long, caddr_t);
+int eonioctl    (struct ifnet *, u_long, void *);
 void eoniphdr    (struct eon_iphdr *, const void *, struct route *, int, int);
 void eonrtrequest (int, struct rtentry *, struct rt_addrinfo *);
 int eonoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,

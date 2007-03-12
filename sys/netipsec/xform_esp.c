@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.12 2006/11/16 01:33:49 christos Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.12.4.1 2007/03/12 06:00:11 rmind Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.12 2006/11/16 01:33:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.12.4.1 2007/03/12 06:00:11 rmind Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -204,7 +204,7 @@ esp_init(struct secasvar *sav, struct xformsw *xsp)
 	 *      compromise is to force it to zero here.
 	 */
 	sav->ivlen = (txform == &enc_xform_null ? 0 : txform->blocksize);
-	sav->iv = (caddr_t) malloc(sav->ivlen, M_SECA, M_WAITOK);
+	sav->iv = malloc(sav->ivlen, M_SECA, M_WAITOK);
 	if (sav->iv == NULL) {
 		DPRINTF(("esp_init: no memory for IV\n"));
 		return EINVAL;
@@ -378,7 +378,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		return ENOBUFS;
 	}
 
-	tc->tc_ptr = (caddr_t) mtag;
+	tc->tc_ptr = mtag;
 
 	if (esph) {
 		struct cryptodesc *crda = crp->crp_desc;
@@ -397,7 +397,7 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 		/* Copy the authenticator */
 		if (mtag == NULL)
 			m_copydata(m, m->m_pkthdr.len - alen, alen,
-				   (caddr_t) (tc + 1));
+				      (tc + 1));
 
 		/* Chain authentication request */
 		crde = crda->crd_next;
@@ -408,10 +408,10 @@ esp_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
+	crp->crp_buf = m;
 	crp->crp_callback = esp_input_cb;
 	crp->crp_sid = sav->tdb_cryptoid;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = tc;
 
 	/* These are passed as-is to the callback */
 	tc->tc_spi = sav->spi;
@@ -468,7 +468,7 @@ esp_input_cb(struct cryptop *crp)
 	struct m_tag *mtag;
 	struct secasvar *sav;
 	struct secasindex *saidx;
-	caddr_t ptr;
+	void *ptr;
 
 	crd = crp->crp_desc;
 	IPSEC_ASSERT(crd != NULL, ("esp_input_cb: null crypto descriptor!"));
@@ -541,7 +541,7 @@ esp_input_cb(struct cryptop *crp)
 			m_copydata(m, m->m_pkthdr.len - esph->authsize,
 				esph->authsize, aalg);
 
-			ptr = (caddr_t) (tc + 1);
+			ptr = (tc + 1);
 
 			/* Verify authenticator */
 			if (bcmp(ptr, aalg, esph->authsize) != 0) {
@@ -575,7 +575,7 @@ esp_input_cb(struct cryptop *crp)
 		u_int32_t seq;
 
 		m_copydata(m, skip + offsetof(struct newesp, esp_seq),
-		    sizeof (seq), (caddr_t) &seq);
+		    sizeof (seq), &seq);
 		if (ipsec_updatereplay(ntohl(seq), sav)) {
 			DPRINTF(("%s: packet replay check for %s\n", __func__,
 			    ipsec_logsastr(sav)));
@@ -776,7 +776,7 @@ esp_output(
 	}
 
 	/* Initialize ESP header. */
-	bcopy((caddr_t) &sav->spi, mtod(mo, caddr_t) + roff, sizeof(u_int32_t));
+	bcopy(&sav->spi, mtod(mo, char *) + roff, sizeof(u_int32_t));
 	if (sav->replay) {
 		u_int32_t replay;
 
@@ -787,8 +787,8 @@ esp_output(
 			sav->replay->count++;
 
 		replay = htonl(sav->replay->count);
-		bcopy((caddr_t) &replay,
-		    mtod(mo, caddr_t) + roff + sizeof(u_int32_t),
+		bcopy(&replay,
+		    mtod(mo,char *) + roff + sizeof(u_int32_t),
 		    sizeof(u_int32_t));
 	}
 
@@ -877,9 +877,9 @@ esp_output(
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
 	crp->crp_flags = CRYPTO_F_IMBUF;
-	crp->crp_buf = (caddr_t) m;
+	crp->crp_buf = m;
 	crp->crp_callback = esp_output_cb;
-	crp->crp_opaque = (caddr_t) tc;
+	crp->crp_opaque = tc;
 	crp->crp_sid = sav->tdb_cryptoid;
 
 	if (esph) {

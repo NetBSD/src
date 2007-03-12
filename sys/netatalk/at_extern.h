@@ -1,4 +1,4 @@
-/*	$NetBSD: at_extern.h,v 1.13.8.1 2007/02/27 16:54:50 yamt Exp $	*/
+/*	$NetBSD: at_extern.h,v 1.13.8.2 2007/03/12 05:59:33 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -48,7 +48,7 @@ int	aarpresolve(struct ifnet *, struct mbuf *, const struct sockaddr_at *,
 void	aarpinput(struct ifnet *, struct mbuf *);
 int	at_broadcast(const struct sockaddr_at *);
 void	aarp_clean(void);
-int	at_control(u_long, caddr_t, struct ifnet *, struct lwp *);
+int	at_control(u_long, void *, struct ifnet *, struct lwp *);
 int	at_inithead(void **, int);
 void	at_purgeaddr(struct ifaddr *, struct ifnet *);
 void	at_purgeif(struct ifnet *);

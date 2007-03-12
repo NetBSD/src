@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.38 2006/11/28 17:58:10 elad Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.38.4.1 2007/03/12 06:00:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -128,7 +128,7 @@ int	process_read_regs(struct lwp *, struct reg *);
 #define process_read_regs64	process_read_regs
 #endif
 #endif
-int	process_set_pc(struct lwp *, caddr_t);
+int	process_set_pc(struct lwp *, void *);
 int	process_sstep(struct lwp *, int);
 #ifdef PT_SETFPREGS
 int	process_write_fpregs(struct lwp *, const struct fpreg *);
@@ -139,7 +139,7 @@ int	process_write_regs(struct lwp *, const struct reg *);
 
 #ifdef __HAVE_PROCFS_MACHDEP
 int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
-	    caddr_t, int);
+	    void *, int);
 #endif
 
 #ifndef FIX_SSTEP
@@ -151,7 +151,7 @@ int	ptrace_machdep_dorequest(struct lwp *, struct lwp *, int,
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	ptrace(int _request, pid_t _pid, caddr_t _addr, int _data);
+int	ptrace(int _request, pid_t _pid, void *_addr, int _data);
 __END_DECLS
 
 #endif /* !_KERNEL */

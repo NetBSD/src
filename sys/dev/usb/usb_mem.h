@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.23 2005/12/11 12:24:01 christos Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.23.26.1 2007/03/12 05:57:33 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 typedef struct usb_dma_block {
 	bus_dma_tag_t tag;
 	bus_dmamap_t map;
-        caddr_t kaddr;
+        void *kaddr;
         bus_dma_segment_t segs[1];
         int nsegs;
         size_t size;
@@ -55,7 +55,7 @@ typedef struct usb_dma_block {
 
 #define DMAADDR(dma, o) ((dma)->block->map->dm_segs[0].ds_addr + (dma)->offs + (o))
 #define KERNADDR(dma, o) \
-	((void *)((char *)((dma)->block->kaddr + (dma)->offs) + (o)))
+	((void *)((char *)(dma)->block->kaddr + (dma)->offs + (o)))
 
 usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
 void		usb_freemem(usbd_bus_handle, usb_dma_t *);
@@ -66,7 +66,7 @@ struct extent;
 struct usb_dma_reserve {
 	bus_dma_tag_t dtag;
 	bus_dmamap_t map;
-	caddr_t vaddr;
+	void *vaddr;
 	bus_addr_t paddr;
 	size_t size;
 	struct extent *extent;

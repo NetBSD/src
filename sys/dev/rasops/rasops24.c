@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops24.c,v 1.22 2006/01/29 21:42:41 dsl Exp $	*/
+/* 	$NetBSD: rasops24.c,v 1.22.24.1 2007/03/12 05:56:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.22 2006/01/29 21:42:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops24.c,v 1.22.24.1 2007/03/12 05:56:55 rmind Exp $");
 
 #include "opt_rasops.h"
 
@@ -80,7 +80,7 @@ static int	stamp_mutex;	/* XXX see note in readme */
  */
 #define STAMP_SHIFT(fb,n)	((n*4-4) >= 0 ? (fb)>>(n*4-4):(fb)<<-(n*4-4))
 #define STAMP_MASK		(0xf << 4)
-#define STAMP_READ(o)		(*(int32_t *)((caddr_t)stamp + (o)))
+#define STAMP_READ(o)		(*(int32_t *)((char *)stamp + (o)))
 
 /*
  * Initialize rasops_info struct for this colordepth.

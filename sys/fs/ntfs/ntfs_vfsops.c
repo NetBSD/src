@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.48 2007/01/19 14:49:09 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.48.2.1 2007/03/12 05:58:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.48 2007/01/19 14:49:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.48.2.1 2007/03/12 05:58:12 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ MALLOC_DEFINE(M_NTFSFNODE,"NTFS fnode",  "NTFS fnode information");
 MALLOC_DEFINE(M_NTFSDIR,"NTFS dir",  "NTFS dir buffer");
 
 #if defined(__FreeBSD__)
-static int	ntfs_mount(struct mount *, char *, caddr_t,
+static int	ntfs_mount(struct mount *, char *, void *,
 				struct nameidata *, struct proc *);
 #else
 static int	ntfs_mount(struct mount *, const char *, void *,
@@ -229,7 +229,7 @@ ntfs_mount (
 	struct mount *mp,
 #if defined(__FreeBSD__)
 	char *path,
-	caddr_t data,
+	void *data,
 #else
 	const char *path,
 	void *data,

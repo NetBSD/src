@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.96 2006/10/02 02:59:38 chs Exp $	*/
+/*	$NetBSD: malloc.h,v 1.96.4.1 2007/03/12 06:00:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -81,8 +81,8 @@ MALLOC_DECLARE(M_1394DATA);
  * Set of buckets for each size of memory block that is retained
  */
 struct kmembuckets {
-	caddr_t kb_next;	/* list of free blocks */
-	caddr_t kb_last;	/* last free block */
+	void *kb_next;	/* list of free blocks */
+	void *kb_last;	/* last free block */
 	long	kb_calls;	/* total calls to allocate this size */
 	long	kb_total;	/* total number of blocks allocated */
 	long	kb_totalfree;	/* # of free elements in this bucket */
@@ -94,7 +94,7 @@ struct kmembuckets {
 #ifdef _KERNEL
 #define	MALLOC(space, cast, size, type, flags) \
 	(space) = (cast)malloc((u_long)(size), (type), (flags))
-#define	FREE(addr, type) free((caddr_t)(addr), (type))
+#define	FREE(addr, type) free((void *)(addr), (type))
 
 #ifdef MALLOCLOG
 void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);

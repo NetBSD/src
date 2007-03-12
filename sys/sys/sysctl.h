@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.166.2.2 2007/03/09 15:16:26 rmind Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.166.2.3 2007/03/12 06:00:55 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -650,6 +650,8 @@ struct kinfo_lwp {
 	char	l_wmesg[KI_WMESGLEN];	/* wchan message */
 	uint64_t l_wchan;		/* PTR: sleep address. */
 	uint64_t l_cpuid;		/* LONG: CPU id */
+	uint32_t l_rtime_sec;		/* STRUCT TIMEVAL: Real time. */
+	uint32_t l_rtime_usec;		/* STRUCT TIMEVAL: Real time. */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.210.2.1 2007/02/27 16:54:57 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.210.2.2 2007/03/12 05:59:39 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.210.2.1 2007/02/27 16:54:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.210.2.2 2007/03/12 05:59:39 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -487,9 +487,9 @@ tcp_template(struct tcpcb *tp)
 		m->m_pkthdr.len = m->m_len = hlen + sizeof(struct tcphdr);
 	}
 
-	bzero(mtod(m, caddr_t), m->m_len);
+	bzero(mtod(m, void *), m->m_len);
 
-	n = (struct tcphdr *)(mtod(m, caddr_t) + hlen);
+	n = (struct tcphdr *)(mtod(m, char *) + hlen);
 
 	switch (tp->t_family) {
 	case AF_INET:
@@ -664,7 +664,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 			tlen = 0;
 
 		m->m_data += max_linkhdr;
-		bcopy(mtod(template, caddr_t), mtod(m, caddr_t),
+		bcopy(mtod(template, void *), mtod(m, void *),
 			template->m_len);
 		switch (family) {
 		case AF_INET:
@@ -726,7 +726,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 			tlen = th0->th_off << 2;
 
 		if (m->m_len > hlen + tlen && (m->m_flags & M_EXT) == 0 &&
-		    mtod(m, caddr_t) + hlen == (caddr_t)th0) {
+		    mtod(m, char *) + hlen == (char *)th0) {
 			m->m_len = hlen + tlen;
 			m_freem(m->m_next);
 			m->m_next = NULL;
@@ -755,8 +755,8 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 			MCLAIM(n, &tcp_tx_mowner);
 			n->m_data += max_linkhdr;
 			n->m_len = hlen + tlen;
-			m_copyback(n, 0, hlen, mtod(m, caddr_t));
-			m_copyback(n, hlen, tlen, (caddr_t)th0);
+			m_copyback(n, 0, hlen, mtod(m, void *));
+			m_copyback(n, hlen, tlen, (void *)th0);
 
 			m_freem(m);
 			m = n;
@@ -1011,7 +1011,7 @@ tcp_newtcpcb(int family, void *aux)
 		struct inpcb *inp = (struct inpcb *)aux;
 
 		inp->inp_ip.ip_ttl = ip_defttl;
-		inp->inp_ppcb = (caddr_t)tp;
+		inp->inp_ppcb = (void *)tp;
 
 		tp->t_inpcb = inp;
 		tp->t_mtudisc = ip_mtudisc;
@@ -1025,7 +1025,7 @@ tcp_newtcpcb(int family, void *aux)
 		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
 			in6p->in6p_route.ro_rt ? in6p->in6p_route.ro_rt->rt_ifp
 					       : NULL);
-		in6p->in6p_ppcb = (caddr_t)tp;
+		in6p->in6p_ppcb = (void *)tp;
 
 		tp->t_in6pcb = in6p;
 		/* for IPv6, always try to run path MTU discovery */
@@ -1355,7 +1355,7 @@ tcp_notify(struct inpcb *inp, int error)
 		so->so_error = error;
 	else
 		tp->t_softerror = error;
-	wakeup((caddr_t) &so->so_timeo);
+	wakeup((void *) &so->so_timeo);
 	sorwakeup(so);
 	sowwakeup(so);
 }
@@ -1383,7 +1383,7 @@ tcp6_notify(struct in6pcb *in6p, int error)
 		so->so_error = error;
 	else
 		tp->t_softerror = error;
-	wakeup((caddr_t) &so->so_timeo);
+	wakeup((void *) &so->so_timeo);
 	sorwakeup(so);
 	sowwakeup(so);
 }
@@ -1450,7 +1450,7 @@ tcp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		}
 
 		bzero(&th, sizeof(th));
-		m_copydata(m, off, sizeof(th), (caddr_t)&th);
+		m_copydata(m, off, sizeof(th), (void *)&th);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;
@@ -1540,7 +1540,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 *
 		 * Boundary check is made in icmp_input(), with ICMP_ADVLENMIN.
 		 */
-		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		th = (struct tcphdr *)((char *)ip + (ip->ip_hl << 2));
 #ifdef INET6
 		memset(&src6, 0, sizeof(src6));
 		memset(&dst6, 0, sizeof(dst6));
@@ -1569,7 +1569,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 		 * ICMP header, recalculate the new MTU, and create the
 		 * corresponding routing entry.
 		 */
-		icp = (struct icmp *)((caddr_t)ip -
+		icp = (struct icmp *)((char *)ip -
 		    offsetof(struct icmp, icmp_ip));
 		if (inp) {
 			if ((tp = intotcpcb(inp)) == NULL)
@@ -1625,7 +1625,7 @@ tcp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 	else if (errno == 0)
 		return NULL;
 	if (ip && ip->ip_v == 4 && sa->sa_family == AF_INET) {
-		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		th = (struct tcphdr *)((char *)ip + (ip->ip_hl << 2));
 		nmatch = in_pcbnotify(&tcbtable, satocsin(sa)->sin_addr,
 		    th->th_dport, ip->ip_src, th->th_sport, errno, notify);
 		if (nmatch == 0 && syn_cache_count &&

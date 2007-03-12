@@ -1,4 +1,4 @@
-/*	$NetBSD: ydsvar.h,v 1.7 2006/06/19 13:55:41 jmcneill Exp $	*/
+/*	$NetBSD: ydsvar.h,v 1.7.10.1 2007/03/12 05:55:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -37,7 +37,7 @@
  */
 struct yds_dma {
 	bus_dmamap_t map;
-	caddr_t addr;			/* VA */
+	void *addr;			/* VA */
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.18.2.1 2007/02/27 16:55:06 yamt Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.18.2.2 2007/03/12 06:00:07 rmind Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.18.2.1 2007/02/27 16:55:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.18.2.2 2007/03/12 06:00:07 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -110,7 +110,7 @@ ah4_ctlinput(cmd, sa, v)
 		 * Check to see if we have a valid SA corresponding to
 		 * the address in the ICMP message payload.
 		 */
-		ah = (struct ah *)((caddr_t)ip + (ip->ip_hl << 2));
+		ah = (struct ah *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
 					   	IPPROTO_AH, ah->ah_spi);
 
@@ -125,7 +125,7 @@ ah4_ctlinput(cmd, sa, v)
 				 * recalculate the new MTU, and create the
 		 		 * corresponding routing entry.
 		 		 */
-				icp = (struct icmp *)((caddr_t)ip - 
+				icp = (struct icmp *)((char *)ip - 
 									  offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 
@@ -161,7 +161,7 @@ esp4_ctlinput(cmd, sa, v)
 		 * Check to see if we have a valid SA corresponding to
 		 * the address in the ICMP message payload.
 		 */
-		esp = (struct esp *)((caddr_t)ip + (ip->ip_hl << 2));
+		esp = (struct esp *)((char *)ip + (ip->ip_hl << 2));
 		sav = KEY_ALLOCSA((const union sockaddr_union *)sa,
 					   	IPPROTO_ESP, esp->esp_spi);
 
@@ -177,7 +177,7 @@ esp4_ctlinput(cmd, sa, v)
 		 		 * corresponding routing entry.
 		 		 */
 
-				icp = (struct icmp *)((caddr_t)ip - 
+				icp = (struct icmp *)((char *)ip - 
 									   offsetof(struct icmp, icmp_ip));
 				icmp_mtudisc(icp, ip->ip_dst);
 
@@ -236,10 +236,10 @@ ah6_ctlinput(cmd, sa, d)
                         * this should be rare case,
                         * so we compromise on this copy...
                         */
-                       m_copydata(m, off, sizeof(ah), (caddr_t)&ah);
+                       m_copydata(m, off, sizeof(ah), &ah);
                        ahp = &ah;
                } else
-                       ahp = (struct newah *)(mtod(m, caddr_t) + off);
+                       ahp = (struct newah *)(mtod(m, char *) + off);
 
                if (cmd == PRC_MSGSIZE) {
                        int valid = 0;
@@ -326,7 +326,7 @@ esp6_ctlinput(cmd, sa, d)
 		 */
 		memset(&ip6cp1, 0, sizeof(ip6cp1));
 		ip6cp1.ip6c_src = ip6cp->ip6c_src;
-		pfctlinput2(cmd, sa, (void *)&ip6cp1);
+		pfctlinput2(cmd, sa, &ip6cp1);
 
 		/*
 		 * Then go to special cases that need ESP header information.
@@ -343,10 +343,10 @@ esp6_ctlinput(cmd, sa, d)
 			 * this should be rare case,
 			 * so we compromise on this copy...
 			 */
-			m_copydata(m, off, sizeof(esp), (caddr_t)&esp);
+			m_copydata(m, off, sizeof(esp), &esp);
 			espp = &esp;
 		} else
-			espp = (struct newesp*)(mtod(m, caddr_t) + off);
+			espp = (struct newesp*)(mtod(m, char *) + off);
 
 		if (cmd == PRC_MSGSIZE) {
 			int valid = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raster.h,v 1.7 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: raster.h,v 1.7.26.1 2007/03/12 05:56:56 rmind Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -84,7 +84,7 @@ struct raster {
     int depth;		/* bits per pixel - 1, 2, or 8 */
     int linelongs;	/* longs from one line to the next - for padding */
     u_int32_t *pixels;	/* pointer to the actual bits */
-    caddr_t data;	/* special pointer for frame buffers and subregions */
+    void *data;	/* special pointer for frame buffers and subregions */
     };
 
 /* Colormap struct. */

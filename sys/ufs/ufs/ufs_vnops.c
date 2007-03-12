@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.149.2.1 2007/02/27 16:55:24 yamt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.149.2.2 2007/03/12 06:01:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.149.2.1 2007/02/27 16:55:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.149.2.2 2007/03/12 06:01:11 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1428,7 +1428,7 @@ ufs_mkdir(void *v)
 	DIP_ASSIGN(ip, size, dirblksiz);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, ip->i_size);
-	memcpy((caddr_t)bp->b_data, (caddr_t)&dirtemplate, sizeof dirtemplate);
+	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
 	if (DOINGSOFTDEP(tvp)) {
 		/*
 		 * Ensure that the entire newly allocated block is a
@@ -1439,7 +1439,7 @@ ufs_mkdir(void *v)
 		blkoff = dirblksiz;
 		while (blkoff < bp->b_bcount) {
 			((struct direct *)
-			  (bp->b_data + blkoff))->d_reclen = dirblksiz;
+			  ((char *)bp->b_data + blkoff))->d_reclen = dirblksiz;
 			blkoff += dirblksiz;
 		}
 	}
@@ -2083,7 +2083,7 @@ ufs_advlock(void *v)
 {
 	struct vop_advlock_args /* {
 		struct vnode	*a_vp;
-		caddr_t		a_id;
+		void *		a_id;
 		int		a_op;
 		struct flock	*a_fl;
 		int		a_flags;

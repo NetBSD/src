@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.114.2.1 2007/02/27 16:54:25 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.114.2.2 2007/03/12 05:58:38 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.114.2.1 2007/02/27 16:54:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.114.2.2 2007/03/12 05:58:38 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -137,7 +137,7 @@ settime(struct proc *p, struct timespec *ts)
 	if (ts->tv_sec > INT_MAX - 365*24*60*60) {
 		struct proc *pp;
 
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		pp = p->p_pptr;
 		mutex_enter(&pp->p_mutex);
 		log(LOG_WARNING, "pid %d (%s) "
@@ -146,7 +146,7 @@ settime(struct proc *p, struct timespec *ts)
 		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
 		    pp->p_pid, pp->p_comm, (long)ts->tv_sec);
 		mutex_exit(&pp->p_mutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return (EPERM);
 	}
 	TIMESPEC_TO_TIMEVAL(&tv, ts);
@@ -356,7 +356,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 		if (rmt.tv_sec < 0)
 			timespecclear(&rmt);
 
-		error1 = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
+		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
 			sizeof(rmt));
 		if (error1)
 			return (error1);
@@ -409,7 +409,7 @@ sys_nanosleep(struct lwp *l, void *v, register_t *retval)
 			timerclear(&utv);
 
 		TIMEVAL_TO_TIMESPEC(&utv,&rmt);
-		error1 = copyout((caddr_t)&rmt, (caddr_t)SCARG(uap,rmtp),
+		error1 = copyout((void *)&rmt, (void *)SCARG(uap,rmtp),
 			sizeof(rmt));
 		if (error1)
 			return (error1);

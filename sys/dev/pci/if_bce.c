@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.12.4.1 2007/02/27 16:53:58 yamt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.12.4.2 2007/03/12 05:55:16 rmind Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -160,7 +160,7 @@ do {									\
 
 static	int	bce_probe(struct device *, struct cfdata *, void *);
 static	void	bce_attach(struct device *, struct device *, void *);
-static	int	bce_ioctl(struct ifnet *, u_long, caddr_t);
+static	int	bce_ioctl(struct ifnet *, u_long, void *);
 static	void	bce_start(struct ifnet *);
 static	void	bce_watchdog(struct ifnet *);
 static	int	bce_intr(void *);
@@ -276,7 +276,7 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char     *intrstr = NULL;
-	caddr_t         kva;
+	void *        kva;
 	bus_dma_segment_t seg;
 	int             rseg;
 	u_int32_t       command;
@@ -420,7 +420,7 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	}
 	/* save the ring space in softc */
 	sc->bce_rx_ring = (struct bce_dma_slot *) kva;
-	sc->bce_tx_ring = (struct bce_dma_slot *) (kva + PAGE_SIZE);
+	sc->bce_tx_ring = (struct bce_dma_slot *) ((char *)kva + PAGE_SIZE);
 
 	/* Create the transmit buffer DMA maps. */
 	for (i = 0; i < BCE_NTXDESC; i++) {
@@ -505,7 +505,7 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 
 /* handle media, and ethernet requests */
 static int
-bce_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+bce_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct bce_softc *sc = ifp->if_softc;
 	struct ifreq   *ifr = (struct ifreq *) data;
@@ -819,8 +819,8 @@ bce_rxintr(struct bce_softc *sc)
 			if (m == NULL)
 				goto dropit;
 			m->m_data += 2;
-			memcpy(mtod(m, caddr_t),
-			 mtod(sc->bce_cdata.bce_rx_chain[i], caddr_t), len);
+			memcpy(mtod(m, void *),
+			 mtod(sc->bce_cdata.bce_rx_chain[i], void *), len);
 			sc->bce_cdata.bce_rx_chain[i]->m_data -= 30;	/* MAGIC */
 		} else {
 			m = sc->bce_cdata.bce_rx_chain[i];

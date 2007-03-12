@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.224 2006/11/30 23:01:50 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.224.4.1 2007/03/12 05:56:53 rmind Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224 2006/11/30 23:01:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224.4.1 2007/03/12 05:56:53 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -209,7 +209,7 @@ MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 /* prototypes */
 static void KernelWakeupFunc(struct buf *);
 static void InitBP(struct buf *, struct vnode *, unsigned,
-    dev_t, RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*) (struct buf *),
+    dev_t, RF_SectorNum_t, RF_SectorCount_t, void *, void (*) (struct buf *),
     void *, int, struct proc *);
 static void raidinit(RF_Raid_t *);
 
@@ -451,7 +451,9 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	int retcode;
 	int raidID;
 	int rootID;
+	int col;
 	int num_root;
+	char *devname;
 
 	rootID = 0;
 	num_root = 0;
@@ -500,8 +502,48 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	if (num_root == 1) {
 		booted_device = raid_softc[rootID].sc_dev;
 	} else if (num_root > 1) {
-		/* we can't guess.. require the user to answer... */
-		boothowto |= RB_ASKNAME;
+
+		/* 
+		 * Maybe the MD code can help. If it cannot, then
+		 * setroot() will discover that we have no
+		 * booted_device and will ask the user if nothing was
+		 * hardwired in the kernel config file 
+		 */
+
+		if (booted_device == NULL)
+			cpu_rootconf();
+		if (booted_device == NULL) 
+			return;
+
+		num_root = 0;
+		for (raidID = 0; raidID < numraid; raidID++) {
+			if (raidPtrs[raidID]->valid == 0)
+				continue;
+
+			if (raidPtrs[raidID]->root_partition == 0)
+				continue;
+
+			for (col = 0; col < raidPtrs[raidID]->numCol; col++) {
+				devname = raidPtrs[raidID]->Disks[col].devname;
+				devname += sizeof("/dev/") - 1;
+				if (strncmp(devname, booted_device->dv_xname, 
+					    strlen(booted_device->dv_xname)) != 0)
+					continue;
+#ifdef DEBUG
+				printf("raid%d includes boot device %s\n",
+				       raidID, devname);
+#endif
+				num_root++;
+				rootID = raidID;
+			}
+		}
+ 
+		if (num_root == 1) {
+			booted_device = raid_softc[rootID].sc_dev;
+		} else {
+			/* we can't guess.. require the user to answer... */
+			boothowto |= RB_ASKNAME;
+		}
 	}
 }
 
@@ -542,7 +584,7 @@ raidsize(dev_t dev)
 }
 
 int
-raiddump(dev_t dev, daddr_t blkno, caddr_t va,
+raiddump(dev_t dev, daddr_t blkno, void *va,
     size_t  size)
 {
 	/* Not implemented. */
@@ -803,7 +845,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 }
 
 int
-raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int     unit = raidunit(dev);
 	int     error = 0;
@@ -2035,7 +2077,7 @@ KernelWakeupFunc(struct buf *bp)
  */
 static void
 InitBP(struct buf *bp, struct vnode *b_vp, unsigned rw_flag, dev_t dev,
-       RF_SectorNum_t startSect, RF_SectorCount_t numSect, caddr_t bf,
+       RF_SectorNum_t startSect, RF_SectorCount_t numSect, void *bf,
        void (*cbFunc) (struct buf *), void *cbArg, int logBytesPerSector,
        struct proc *b_proc)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.156.4.1 2007/02/27 16:54:57 yamt Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.156.4.2 2007/03/12 05:59:40 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.156.4.1 2007/02/27 16:54:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.156.4.2 2007/03/12 05:59:40 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -983,7 +983,7 @@ udp_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 	else if (errno == 0)
 		return NULL;
 	if (ip) {
-		uh = (struct udphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		uh = (struct udphdr *)((char *)ip + (ip->ip_hl << 2));
 		in_pcbnotify(&udbtable, satocsin(sa)->sin_addr, uh->uh_dport,
 		    ip->ip_src, uh->uh_sport, errno, notify);
 
@@ -1175,7 +1175,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	int error = 0;
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (long)m, (caddr_t)nam,
+		return (in_control(so, (long)m, (void *)nam,
 		    (struct ifnet *)control, l));
 
 	s = splsoftnet();
@@ -1417,7 +1417,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
     struct socket *so)
 {
 	size_t len;
-	caddr_t data;
+	void *data;
 	struct inpcb *inp;
 	size_t skip = 0;
 	size_t minlen;
@@ -1446,11 +1446,11 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	}
 
 	len = m->m_len - off;
-	data = mtod(m, caddr_t) + off;
+	data = mtod(m, char *) + off;
 	inp = sotoinpcb(so);
 
 	/* Ignore keepalive packets */
-	if ((len == 1) && (data[0] == '\xff')) {
+	if ((len == 1) && (*(unsigned char *)data == 0xff)) {
 		return 1;
 	}
 
@@ -1482,7 +1482,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	 * Get the UDP ports. They are handled in network 
 	 * order everywhere in IPSEC_NAT_T code.
 	 */
-	udphdr = (struct udphdr *)(data - skip);
+	udphdr = (struct udphdr *)((char *)data - skip);
 	sport = udphdr->uh_sport;
 	dport = udphdr->uh_dport;
 
@@ -1502,7 +1502,7 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	 *   <-skip->
 	 */
 	iphdrlen = off - sizeof(struct udphdr);
-	memmove(mtod(m, caddr_t) + skip, mtod(m, caddr_t), iphdrlen);
+	memmove(mtod(m, char *) + skip, mtod(m, void *), iphdrlen);
 	m_adj(m, skip);
 
 	ip = mtod(m, struct ip *);

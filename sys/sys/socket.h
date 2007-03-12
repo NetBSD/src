@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.82.10.1 2007/02/27 16:55:17 yamt Exp $	*/
+/*	$NetBSD: socket.h,v 1.82.10.2 2007/03/12 06:00:54 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -498,11 +498,11 @@ struct cmsghdr {
 
 /* given pointer to struct cmsghdr, return pointer to next cmsghdr */
 #define	CMSG_NXTHDR(mhdr, cmsg)	\
-	(((__caddr_t)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
+	(((char *)(cmsg) + __CMSG_ALIGN((cmsg)->cmsg_len) + \
 			    __CMSG_ALIGN(sizeof(struct cmsghdr)) > \
-	    (((__caddr_t)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
+	    (((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct cmsghdr *)0 : \
-	    (struct cmsghdr *)((__caddr_t)(cmsg) + \
+	    (struct cmsghdr *)((char *)(cmsg) + \
 	        __CMSG_ALIGN((cmsg)->cmsg_len)))
 
 /*
@@ -545,10 +545,10 @@ int	bind(int, const struct sockaddr *, socklen_t);
 int	connect(int, const struct sockaddr *, socklen_t);
 int	getpeername(int, struct sockaddr * __restrict, socklen_t * __restrict);
 int	getsockname(int, struct sockaddr * __restrict, socklen_t * __restrict);
-int	getsockopt(int, int, int, void * __restrict, socklen_t * __restrict);
+int	getsockopt(int, int, int, void *__restrict, socklen_t * __restrict);
 int	listen(int, int);
 ssize_t	recv(int, void *, size_t, int);
-ssize_t	recvfrom(int, void * __restrict, size_t, int,
+ssize_t	recvfrom(int, void *__restrict, size_t, int,
 	    struct sockaddr * __restrict, socklen_t * __restrict);
 ssize_t	recvmsg(int, struct msghdr *, int);
 ssize_t	send(int, const void *, size_t, int);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.73 2006/11/16 01:33:09 christos Exp $ */
+/* $NetBSD: if_ti.c,v 1.73.4.1 2007/03/12 05:55:21 rmind Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.73 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.73.4.1 2007/03/12 05:55:21 rmind Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -162,7 +162,7 @@ static int ti_encap_tigon2(struct ti_softc *, struct mbuf *, u_int32_t *);
 
 static int ti_intr(void *);
 static void ti_start(struct ifnet *);
-static int ti_ioctl(struct ifnet *, u_long, caddr_t);
+static int ti_ioctl(struct ifnet *, u_long, void *);
 static void ti_init(void *);
 static void ti_init2(struct ti_softc *);
 static void ti_stop(struct ti_softc *);
@@ -172,7 +172,7 @@ static void ti_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static u_int32_t ti_eeprom_putbyte(struct ti_softc *, int);
 static u_int8_t	ti_eeprom_getbyte(struct ti_softc *, int, u_int8_t *);
-static int ti_read_eeprom(struct ti_softc *, caddr_t, int, int);
+static int ti_read_eeprom(struct ti_softc *, void *, int, int);
 
 static void ti_add_mcast(struct ti_softc *, struct ether_addr *);
 static void ti_del_mcast(struct ti_softc *, struct ether_addr *);
@@ -181,11 +181,11 @@ static void ti_setmulti(struct ti_softc *);
 static void ti_mem(struct ti_softc *, u_int32_t, u_int32_t, const void *);
 static void ti_loadfw(struct ti_softc *);
 static void ti_cmd(struct ti_softc *, struct ti_cmd_desc *);
-static void ti_cmd_ext(struct ti_softc *, struct ti_cmd_desc *, caddr_t, int);
+static void ti_cmd_ext(struct ti_softc *, struct ti_cmd_desc *, void *, int);
 static void ti_handle_events(struct ti_softc *);
 static int ti_alloc_jumbo_mem(struct ti_softc *);
 static void *ti_jalloc(struct ti_softc *);
-static void ti_jfree(struct mbuf *, caddr_t, size_t, void *);
+static void ti_jfree(struct mbuf *, void *, size_t, void *);
 static int ti_newbuf_std(struct ti_softc *, int, struct mbuf *, bus_dmamap_t);
 static int ti_newbuf_mini(struct ti_softc *, int, struct mbuf *, bus_dmamap_t);
 static int ti_newbuf_jumbo(struct ti_softc *, int, struct mbuf *);
@@ -202,7 +202,7 @@ static int ti_64bitslot_war(struct ti_softc *);
 static int ti_chipinit(struct ti_softc *);
 static int ti_gibinit(struct ti_softc *);
 
-static int ti_ether_ioctl(struct ifnet *, u_long, caddr_t);
+static int ti_ether_ioctl(struct ifnet *, u_long, void *);
 
 CFATTACH_DECL(ti, sizeof(struct ti_softc),
     ti_probe, ti_attach, NULL, NULL);
@@ -330,14 +330,15 @@ static u_int8_t ti_eeprom_getbyte(sc, addr, dest)
 /*
  * Read a sequence of bytes from the EEPROM.
  */
-static int ti_read_eeprom(sc, dest, off, cnt)
+static int ti_read_eeprom(sc, destv, off, cnt)
 	struct ti_softc		*sc;
-	caddr_t			dest;
+	void *			destv;
 	int			off;
 	int			cnt;
 {
-	int			err = 0, i;
-	u_int8_t		byte = 0;
+	char *dest = destv;
+	int err = 0, i;
+	u_int8_t byte = 0;
 
 	for (i = 0; i < cnt; i++) {
 		err = ti_eeprom_getbyte(sc, off + i, &byte);
@@ -472,12 +473,13 @@ static void ti_cmd(sc, cmd)
  * Send the NIC an extended command. The 'len' parameter specifies the
  * number of command slots to include after the initial command.
  */
-static void ti_cmd_ext(sc, cmd, arg, len)
+static void ti_cmd_ext(sc, cmd, argv, len)
 	struct ti_softc		*sc;
 	struct ti_cmd_desc	*cmd;
-	caddr_t			arg;
+	void 			*argv;
 	int			len;
 {
+	char *arg = argv;
 	u_int32_t		index;
 	int		i;
 
@@ -581,8 +583,8 @@ static void ti_handle_events(sc)
 static int ti_alloc_jumbo_mem(sc)
 	struct ti_softc		*sc;
 {
-	caddr_t			ptr;
-	int		i;
+	char *ptr;
+	int i;
 	struct ti_jpool_entry   *entry;
 	bus_dma_segment_t dmaseg;
 	int error, dmanseg;
@@ -597,7 +599,7 @@ static int ti_alloc_jumbo_mem(sc)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &dmaseg, dmanseg,
-	    TI_JMEM, (caddr_t *)&sc->ti_cdata.ti_jumbo_buf,
+	    TI_JMEM, (void **)&sc->ti_cdata.ti_jumbo_buf,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map jumbo buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -673,7 +675,7 @@ static void *ti_jalloc(sc)
 /*
  * Release a jumbo buffer.
  */
-static void ti_jfree(struct mbuf *m, caddr_t tbuf, size_t size,
+static void ti_jfree(struct mbuf *m, void *tbuf, size_t size,
     void *arg)
 {
 	struct ti_softc		*sc;
@@ -688,8 +690,8 @@ static void ti_jfree(struct mbuf *m, caddr_t tbuf, size_t size,
 
 	/* calculate the slot this buffer belongs to */
 
-	i = ((caddr_t)tbuf
-	     - (caddr_t)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
+	i = ((char *)tbuf
+	     - (char *)sc->ti_cdata.ti_jumbo_buf) / TI_JLEN;
 
 	if ((i < 0) || (i >= TI_JSLOTS))
 		panic("ti_jfree: asked to free buffer that we don't manage!");
@@ -753,7 +755,7 @@ static int ti_newbuf_std(sc, i, m, dmamap)
 		m_adj(m_new, ETHER_ALIGN);
 
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
-				mtod(m_new, caddr_t), m_new->m_len, NULL,
+				mtod(m_new, void *), m_new->m_len, NULL,
 				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: can't load recv map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
@@ -822,7 +824,7 @@ static int ti_newbuf_mini(sc, i, m, dmamap)
 		m_adj(m_new, ETHER_ALIGN);
 
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
-				mtod(m_new, caddr_t), m_new->m_len, NULL,
+				mtod(m_new, void *), m_new->m_len, NULL,
 				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: can't load recv map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
@@ -866,7 +868,7 @@ static int ti_newbuf_jumbo(sc, i, m)
 	struct ti_rx_desc	*r;
 
 	if (m == NULL) {
-		caddr_t			tbuf = NULL;
+		void *			tbuf = NULL;
 
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
@@ -901,8 +903,7 @@ static int ti_newbuf_jumbo(sc, i, m)
 	r = &sc->ti_rdata->ti_rx_jumbo_ring[i];
 	sc->ti_cdata.ti_rx_jumbo_chain[i] = m_new;
 	TI_HOSTADDR(r->ti_addr) = sc->jumbo_dmaaddr +
-		((caddr_t)mtod(m_new, caddr_t)
-		 - (caddr_t)sc->ti_cdata.ti_jumbo_buf);
+		(mtod(m_new, char *) - (char *)sc->ti_cdata.ti_jumbo_buf);
 	r->ti_type = TI_BDTYPE_RECV_JUMBO_BD;
 	r->ti_flags = TI_BDFLAG_JUMBO_RING;
 	if (sc->ethercom.ec_if.if_capenable & IFCAP_CSUM_IPv4_Rx)
@@ -1122,7 +1123,7 @@ void ti_add_mcast(sc, addr)
 	case TI_HWREV_TIGON_II:
 		ext[0] = htons(m[0]);
 		ext[1] = (htons(m[1]) << 16) | htons(m[2]);
-		TI_DO_CMD_EXT(TI_CMD_EXT_ADD_MCAST, 0, 0, (caddr_t)&ext, 2);
+		TI_DO_CMD_EXT(TI_CMD_EXT_ADD_MCAST, 0, 0, (void *)&ext, 2);
 		break;
 	default:
 		printf("%s: unknown hwrev\n", sc->sc_dev.dv_xname);
@@ -1151,7 +1152,7 @@ void ti_del_mcast(sc, addr)
 	case TI_HWREV_TIGON_II:
 		ext[0] = htons(m[0]);
 		ext[1] = (htons(m[1]) << 16) | htons(m[2]);
-		TI_DO_CMD_EXT(TI_CMD_EXT_DEL_MCAST, 0, 0, (caddr_t)&ext, 2);
+		TI_DO_CMD_EXT(TI_CMD_EXT_DEL_MCAST, 0, 0, (void *)&ext, 2);
 		break;
 	default:
 		printf("%s: unknown hwrev\n", sc->sc_dev.dv_xname);
@@ -1757,7 +1758,7 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 	 * the NIC). This means the MAC address is actually preceded
 	 * by two zero bytes. We need to skip over those.
 	 */
-	if (ti_read_eeprom(sc, (caddr_t)&eaddr,
+	if (ti_read_eeprom(sc, (void *)&eaddr,
 				TI_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
 		printf("%s: failed to read station address\n", self->dv_xname);
 		goto fail2;
@@ -1781,7 +1782,7 @@ ti_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &dmaseg, dmanseg,
-	    sizeof(struct ti_ring_data), (caddr_t *)&sc->ti_rdata,
+	    sizeof(struct ti_ring_data), (void **)&sc->ti_rdata,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: can't map ring buffer, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
@@ -2746,7 +2747,7 @@ static int
 ti_ether_ioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ti_softc *sc = ifp->if_softc;
@@ -2780,7 +2781,7 @@ ti_ether_ioctl(ifp, cmd, data)
 static int ti_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
-	caddr_t			data;
+	void *			data;
 {
 	struct ti_softc		*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;

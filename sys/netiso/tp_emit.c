@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_emit.c,v 1.25 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: tp_emit.c,v 1.25.8.1 2007/03/12 06:00:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.25 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_emit.c,v 1.25.8.1 2007/03/12 06:00:30 rmind Exp $");
 
 #include "opt_iso.h"
 
@@ -207,7 +207,7 @@ tp_emit(
 	m->m_nextpkt = NULL;
 
 	hdr = mtod(m, struct tpdu *);
-	bzero((caddr_t) hdr, sizeof(struct tpdu));
+	bzero((void *) hdr, sizeof(struct tpdu));
 
 	{
 		hdr->tpdu_type = dutype;
@@ -650,9 +650,9 @@ tp_emit(
 				subseq = htons(tpcb->tp_r_subseq);
 				fcredit = htons(tpcb->tp_fcredit);
 
-				bcopy((caddr_t) & lwe, (caddr_t) & bogus[0], sizeof(SeqNum));
-				bcopy((caddr_t) & subseq, (caddr_t) & bogus[2], sizeof(u_short));
-				bcopy((caddr_t) & fcredit, (caddr_t) & bogus[3], sizeof(u_short));
+				bcopy((void *) & lwe, (void *) & bogus[0], sizeof(SeqNum));
+				bcopy((void *) & subseq, (void *) & bogus[2], sizeof(u_short));
+				bcopy((void *) & fcredit, (void *) & bogus[3], sizeof(u_short));
 
 #ifdef TPPT
 				if (tp_traceflags[D_ACKSEND]) {
@@ -759,7 +759,7 @@ tp_emit(
 	if (argo_debug[D_EMIT]) {
 		printf("tp_emit before tpxxx_output tpcb %p, dutype 0x%x, datalen 0x%x\n",
 		       tpcb, dutype, datalen);
-		dump_buf(mtod(m, caddr_t), datalen);
+		dump_buf(mtod(m, void *), datalen);
 	}
 #endif
 
@@ -856,7 +856,7 @@ tp_error_emit(
 	struct mbuf    *erdata,
 	int             erlen,
 	struct tp_pcb  *tpcb,
-	caddr_t         cons_channel,
+	void *        cons_channel,
         int 	      (*dgout_routine)(struct mbuf *, ...))
 {
 	int             dutype;
@@ -962,7 +962,7 @@ tp_error_emit(
 
 	if (dutype == ER_TPDU_type) {
 		/* copy the errant tpdu into another 'variable part' */
-		caddr_t P;
+		void *P;
 
 #ifdef TPPT
 		if (tp_traceflags[D_ERROR_EMIT]) {
@@ -981,7 +981,7 @@ tp_error_emit(
 			erlen = TP_MAX_HEADER_LEN - hdr->tpdu_li - 2;
 
 		/* add the "invalid tpdu" parameter : required in class 0 */
-		P = (caddr_t) hdr + (int) (hdr->tpdu_li);
+		P = (char *) hdr + (int) (hdr->tpdu_li);
 		vbptr(P)->tpv_code = TPP_invalid_tpdu;	/* parameter code */
 		vbptr(P)->tpv_len = erlen;	/* parameter length */
 		m->m_len = hdr->tpdu_li + 2;	/* 1 for code, 1 for length */
@@ -1083,7 +1083,7 @@ tp_error_emit(
 		return (*tpcb->tp_nlproto->nlp_dgoutput) (m, datalen,
 							 &laddr->siso_addr,
 							 &faddr->siso_addr,
-		        /* no route */ (caddr_t) 0, !tpcb->tp_use_checksum);
+		        /* no route */ (void *) 0, !tpcb->tp_use_checksum);
 	} else if (dgout_routine) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {
@@ -1094,7 +1094,7 @@ tp_error_emit(
 		}
 #endif
 		return (*dgout_routine) (m, datalen, &laddr->siso_addr, &faddr->siso_addr,
-				        (caddr_t) 0, /* nochecksum==false */ 0);
+				        (void *) 0, /* nochecksum==false */ 0);
 	} else {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ERROR_EMIT]) {

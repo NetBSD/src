@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.106.2.1 2007/02/27 16:54:22 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.106.2.2 2007/03/12 05:58:35 rmind Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.1 2007/02/27 16:54:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.106.2.2 2007/03/12 05:58:35 rmind Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -172,7 +172,7 @@ static void *malloc_freecheck;
 /*
  * Turn virtual addresses into kmem map indicies
  */
-#define	btokup(addr)	(&kmemusage[((caddr_t)(addr) - kmembase) >> PGSHIFT])
+#define	btokup(addr)	(&kmemusage[((char *)(addr) - kmembase) >> PGSHIFT])
 
 struct malloc_type *kmemstatistics;
 
@@ -272,11 +272,11 @@ struct freelist {
 	uint32_t spare1;		/* explicit padding */
 #endif
 	struct malloc_type *type;
-	caddr_t	next;
+	void *	next;
 };
 #else /* !DIAGNOSTIC */
 struct freelist {
-	caddr_t	next;
+	void *	next;
 };
 #endif /* DIAGNOSTIC */
 
@@ -321,7 +321,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 	struct freelist *freep;
 	long indx, npg, allocsize;
 	int s;
-	caddr_t va, cp, savedlist;
+	char *va, *cp, *savedlist;
 #ifdef DIAGNOSTIC
 	uint32_t *end, *lp;
 	int copysize;
@@ -351,7 +351,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		}
 		if (ksp->ks_limblocks < 65535)
 			ksp->ks_limblocks++;
-		ltsleep((caddr_t)ksp, PSWP+2, ksp->ks_shortdesc, 0,
+		ltsleep((void *)ksp, PSWP+2, ksp->ks_shortdesc, 0,
 			&malloc_slock);
 	}
 	ksp->ks_size |= 1 << indx;
@@ -367,7 +367,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			allocsize = 1 << indx;
 		npg = btoc(allocsize);
 		simple_unlock(&malloc_slock);
-		va = (caddr_t) uvm_km_alloc(kmem_map,
+		va = (void *) uvm_km_alloc(kmem_map,
 		    (vsize_t)ctob(npg), 0,
 		    ((flags & M_NOWAIT) ? UVM_KMF_NOWAIT : 0) |
 		    ((flags & M_CANFAIL) ? UVM_KMF_CANFAIL : 0) |
@@ -431,7 +431,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		}
 		freep->next = savedlist;
 		if (kbp->kb_last == NULL)
-			kbp->kb_last = (caddr_t)freep;
+			kbp->kb_last = (void *)freep;
 	}
 	va = kbp->kb_next;
 	kbp->kb_next = ((struct freelist *)va)->next;
@@ -536,7 +536,7 @@ free(void *addr, struct malloc_type *ksp)
 	long size;
 	int s;
 #ifdef DIAGNOSTIC
-	caddr_t cp;
+	void *cp;
 	int32_t *end, *lp;
 	long alloc, copysize;
 #endif
@@ -590,7 +590,7 @@ free(void *addr, struct malloc_type *ksp)
 		kup->ku_pagecnt = 0;
 		if (ksp->ks_memuse + size >= ksp->ks_limit &&
 		    ksp->ks_memuse < ksp->ks_limit)
-			wakeup((caddr_t)ksp);
+			wakeup((void *)ksp);
 #ifdef DIAGNOSTIC
 		if (ksp->ks_inuse == 0)
 			panic("free 1: inuse 0, probable double free");
@@ -633,7 +633,7 @@ free(void *addr, struct malloc_type *ksp)
 	 * when the object is reallocated.
 	 */
 	copysize = size < MAX_COPY ? size : MAX_COPY;
-	end = (int32_t *)&((caddr_t)addr)[copysize];
+	end = (int32_t *)&((char *)addr)[copysize];
 	for (lp = (int32_t *)addr; lp < end; lp++)
 		*lp = WEIRD_ADDR;
 	freep->type = ksp;
@@ -650,7 +650,7 @@ free(void *addr, struct malloc_type *ksp)
 	ksp->ks_memuse -= size;
 	if (ksp->ks_memuse + size >= ksp->ks_limit &&
 	    ksp->ks_memuse < ksp->ks_limit)
-		wakeup((caddr_t)ksp);
+		wakeup((void *)ksp);
 #ifdef DIAGNOSTIC
 	if (ksp->ks_inuse == 0)
 		panic("free 2: inuse 0, probable double free");

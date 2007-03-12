@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.27.2.1 2007/02/27 16:55:05 yamt Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.27.2.2 2007/03/12 06:00:02 rmind Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.27.2.1 2007/02/27 16:55:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.27.2.2 2007/03/12 06:00:02 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -332,7 +332,7 @@ udp6_output(in6p, m, addr6, control, l)
 	/*
 	 * Stuff checksum and output datagram.
 	 */
-	udp6 = (struct udphdr *)(mtod(m, caddr_t) + hlen);
+	udp6 = (struct udphdr *)(mtod(m, char *) + hlen);
 	udp6->uh_sport = in6p->in6p_lport; /* lport is always set in the PCB */
 	udp6->uh_dport = fport;
 	if (plen <= 0xffff)

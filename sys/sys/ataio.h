@@ -1,4 +1,4 @@
-/*	$NetBSD: ataio.h,v 1.7 2005/12/11 12:25:20 christos Exp $	*/
+/*	$NetBSD: ataio.h,v 1.7.26.1 2007/03/12 06:00:50 rmind Exp $	*/
 
 #ifndef _SYS_ATAIO_H_
 #define _SYS_ATAIO_H_
@@ -15,7 +15,7 @@ typedef struct	atareq {
 	u_char	head;		/* head number */
 	u_short	cylinder;	/* cylinder/lba address */
 
-	caddr_t	databuf;	/* Pointer to I/O data buffer */
+	void *	databuf;	/* Pointer to I/O data buffer */
 	u_long	datalen;	/* length of data buffer */
 	int	timeout;	/* Command timeout */
 	u_char	retsts;		/* the return status for the command */

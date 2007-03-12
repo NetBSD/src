@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.63 2006/03/01 12:38:32 yamt Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.63.20.1 2007/03/12 06:00:35 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.63 2006/03/01 12:38:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.63.20.1 2007/03/12 06:00:35 rmind Exp $");
 
 #include "opt_nfs.h"
 #include "opt_nfs_boot.h"
@@ -208,7 +208,7 @@ nfs_boot_ifupdown(ifp, lwp, up)
 	 * Get the old interface flags and or IFF_UP into them so
 	 * things like media selection flags are not clobbered.
 	 */
-	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, lwp);
+	error = ifioctl(so, SIOCGIFFLAGS, (void *)&ireq, lwp);
 	if (error) {
 		printf("ifupdown: GIFFLAGS, error=%d\n", error);
 		goto out;
@@ -217,7 +217,7 @@ nfs_boot_ifupdown(ifp, lwp, up)
 		ireq.ifr_flags |= IFF_UP;
 	else
 		ireq.ifr_flags &= ~IFF_UP;
-	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, lwp);
+	error = ifioctl(so, SIOCSIFFLAGS, (void *)&ireq, lwp);
 	if (error) {
 		printf("ifupdown: SIFFLAGS, error=%d\n", error);
 		goto out;
@@ -277,7 +277,7 @@ nfs_boot_setaddress(ifp, lwp, addr, netmask, braddr)
 		sin->sin_addr.s_addr = braddr;
 	} /* else leave broadcast addr unspecified (len=0) */
 
-	error = ifioctl(so, SIOCAIFADDR, (caddr_t)&iareq, lwp);
+	error = ifioctl(so, SIOCAIFADDR, (void *)&iareq, lwp);
 	if (error) {
 		printf("setaddress, error=%d\n", error);
 		goto out;
@@ -319,7 +319,7 @@ nfs_boot_deladdress(ifp, lwp, addr)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = addr;
 
-	error = ifioctl(so, SIOCDIFADDR, (caddr_t)&ireq, lwp);
+	error = ifioctl(so, SIOCDIFADDR, (void *)&ireq, lwp);
 	if (error) {
 		printf("deladdress, error=%d\n", error);
 		goto out;
@@ -504,11 +504,11 @@ nfs_boot_defrt(gw_ip)
 	int error;
 
 	/* Destination: (default) */
-	memset((caddr_t)&dst, 0, sizeof(dst));
+	memset((void *)&dst, 0, sizeof(dst));
 	dst.sa_len = sizeof(dst);
 	dst.sa_family = AF_INET;
 	/* Gateway: */
-	memset((caddr_t)&gw, 0, sizeof(gw));
+	memset((void *)&gw, 0, sizeof(gw));
 	sin = (struct sockaddr_in *)&gw;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
@@ -572,7 +572,7 @@ nfs_boot_getfh(ndm, l)
 	args = &ndm->ndm_args;
 
 	/* Initialize mount args. */
-	memset((caddr_t) args, 0, sizeof(*args));
+	memset((void *) args, 0, sizeof(*args));
 	args->addr     = &ndm->ndm_saddr;
 	args->addrlen  = args->addr->sa_len;
 #ifdef NFS_BOOT_TCP

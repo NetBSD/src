@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.37.26.1 2007/02/27 16:54:40 yamt Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.37.26.2 2007/03/12 05:59:10 rmind Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.37.26.1 2007/02/27 16:54:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.37.26.2 2007/03/12 05:59:10 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -297,6 +297,10 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 #endif /* INET */
 #ifdef INET6
 	  case ETHERTYPE_IPV6:
+#ifdef GATEWAY  
+		if (ip6flow_fastforward(m))
+			return;
+#endif
 		  schednetisr(NETISR_IPV6);
 		  inq = &ip6intrq;
 		  break;

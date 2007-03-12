@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.10 2005/12/11 12:23:23 christos Exp $
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.10.26.1 2007/03/12 05:56:46 rmind Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.10 2005/12/11 12:23:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.10.26.1 2007/03/12 05:56:46 rmind Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1
@@ -347,10 +347,10 @@ isic_probe_avma1_pcmcia(struct isa_device *dev)
 	 */
 
 	PCMCIA_IO_BASE = dev->id_iobase;
-	ISAC_BASE      = (caddr_t)0x20;
+	ISAC_BASE      = (void *)0x20;
 
-	HSCX_A_BASE    = (caddr_t)0xA0;
-	HSCX_B_BASE    = (caddr_t)0xE0;
+	HSCX_A_BASE    = (void *)0xA0;
+	HSCX_B_BASE    = (void *)0xE0;
 
 	/*
 	 * Read HSCX A/B VSTR.

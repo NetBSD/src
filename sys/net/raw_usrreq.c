@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.30.4.1 2007/02/27 16:54:46 yamt Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.30.4.2 2007/03/12 05:59:15 rmind Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.30.4.1 2007/02/27 16:54:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.30.4.2 2007/03/12 05:59:15 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -103,7 +103,7 @@ raw_input(struct mbuf *m0, ...)
 		 * the comparison will fail at the first byte.
 		 */
 #define	equal(a1, a2) \
-  (bcmp((caddr_t)(a1), (caddr_t)(a2), a1->sa_len) == 0)
+  (bcmp((void *)(a1), (void *)(a2), a1->sa_len) == 0)
 		if (rp->rcb_laddr && !equal(rp->rcb_laddr, dst))
 			continue;
 		if (rp->rcb_faddr && !equal(rp->rcb_faddr, src))
@@ -151,7 +151,7 @@ raw_setsockaddr(struct rawcb *rp, struct mbuf *nam)
 {
 
 	nam->m_len = rp->rcb_laddr->sa_len;
-	bcopy(rp->rcb_laddr, mtod(nam, caddr_t), (size_t)nam->m_len);
+	bcopy(rp->rcb_laddr, mtod(nam, void *), (size_t)nam->m_len);
 }
 
 void
@@ -159,7 +159,7 @@ raw_setpeeraddr(struct rawcb *rp, struct mbuf *nam)
 {
 
 	nam->m_len = rp->rcb_faddr->sa_len;
-	bcopy(rp->rcb_faddr, mtod(nam, caddr_t), (size_t)nam->m_len);
+	bcopy(rp->rcb_faddr, mtod(nam, void *), (size_t)nam->m_len);
 }
 
 /*ARGSUSED*/

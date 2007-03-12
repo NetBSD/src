@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.868 2007/02/16 01:35:53 markd Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.868.2.1 2007/03/12 05:55:25 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.868 2007/02/16 01:35:04 markd Exp
+ *	NetBSD: pcidevs,v 1.872 2007/03/10 21:08:16 christos Exp
  */
 
 /*
@@ -826,6 +826,7 @@
 #define	PCI_PRODUCT_ADP2_PERC_2QC	0x1364		/* Dell PERC 2/QC */
 /* XXX guess */
 #define	PCI_PRODUCT_ADP2_PERC_3QC	0x1365		/* Dell PERC 3/QC */
+#define	PCI_PRODUCT_ADP2_HP_M110_G2	0x3227		/* HP M110 G2 / ASR-2610SA */
 
 /* Addtron Products */
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */
@@ -1209,6 +1210,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_X850XT_S	0x5d72		/* Radeon X850 XT Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_X700	0x5e4b		/* Radeon X700 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_X700_S	0x5e6b		/* Radeon X700 Pro Secondary */
+#define	PCI_PRODUCT_ATI_RADEON_X1300	0x7146		/* Radeon X1300 Series (RV515) */
+#define	PCI_PRODUCT_ATI_RADEON_X1300_S	0x7166		/* Radeon X1300 Series (RV515) Secondary */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7834	0x7834		/* Radeon 9100 PRO IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS300_7835	0x7835		/* Radeon 9200 IGP */
 
@@ -1521,6 +1524,10 @@
 #define	PCI_PRODUCT_CONEXANT_SOFTK56	0x2443		/* SoftK56 PCI Software Modem */
 #define	PCI_PRODUCT_CONEXANT_56KFAXMODEM	0x1085		/* HW 56K Fax Modem */
 #define	PCI_PRODUCT_CONEXANT_LANFINITY	0x1803		/* LANfinity MiniPCI 10/100 Ethernet */
+#define	PCI_PRODUCT_CONEXANT_CX2388X	0x8800		/* CX23880/1/2/3 PCI Video/Audio Decoder */
+#define	PCI_PRODUCT_CONEXANT_CX2388XAUDIO	0x8801		/* CX23880/1/2/3 PCI Audio Port */
+#define	PCI_PRODUCT_CONEXANT_CX2388XMPEG	0x8802		/* CX23880/1/2/3 PCI MPEG Port */
+#define	PCI_PRODUCT_CONEXANT_CX2388XIR	0x8804		/* CX23880/1/2/3 PCI IR Port */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB Bridge */
@@ -2944,6 +2951,7 @@
 
 /* pcHDTV products */
 #define	PCI_PRODUCT_PCHDTV_HD2000	0x2000		/* HD-2000 HDTV video capture */
+#define	PCI_PRODUCT_PCHDTV_HD5500	0x5500		/* HD-5500 HDTV video capture */
 
 /* PC Tech products */
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */

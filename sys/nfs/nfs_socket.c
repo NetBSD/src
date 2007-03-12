@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.145.2.1 2007/02/28 09:35:39 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.145.2.2 2007/03/12 06:00:36 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.145.2.1 2007/02/28 09:35:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.145.2.2 2007/03/12 06:00:36 rmind Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -267,7 +267,7 @@ nfs_connect(nmp, rep, l)
 		 */
 		s = splsoftnet();
 		while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
-			(void) tsleep((caddr_t)&so->so_timeo, PSOCK,
+			(void) tsleep((void *)&so->so_timeo, PSOCK,
 				"nfscn1", 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
@@ -369,7 +369,7 @@ nfs_reconnect(rep, l)
 	while ((error = nfs_connect(nmp, rep, l)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
-		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfscn2", 0);
+		(void) tsleep((void *)&lbolt, PSOCK, "nfscn2", 0);
 	}
 
 	/*
@@ -622,7 +622,7 @@ tryagain:
 		}
 		nfs_sndunlock(&rep->r_nmp->nm_iflag);
 		if (sotype == SOCK_STREAM) {
-			aio.iov_base = (caddr_t) &len;
+			aio.iov_base = (void *) &len;
 			aio.iov_len = sizeof(u_int32_t);
 			auio.uio_iov = &aio;
 			auio.uio_iovcnt = 1;
@@ -783,7 +783,7 @@ nfs_reply(myrep, lwp)
 	int32_t t1;
 	struct mbuf *mrep, *nam, *md;
 	u_int32_t rxid, *tl;
-	caddr_t dpos, cp2;
+	char *dpos, *cp2;
 	int error;
 
 	/*
@@ -840,7 +840,7 @@ nfs_reply(myrep, lwp)
 		 * Get the xid and check that it is an rpc reply
 		 */
 		md = mrep;
-		dpos = mtod(md, caddr_t);
+		dpos = mtod(md, void *);
 		nfsm_dissect(tl, u_int32_t *, 2*NFSX_UNSIGNED);
 		rxid = *tl++;
 		if (*tl != rpc_reply) {
@@ -955,7 +955,7 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	kauth_cred_t cred;
 	struct mbuf **mrp;
 	struct mbuf **mdp;
-	caddr_t *dposp;
+	char **dposp;
 	int *rexmitp;
 {
 	struct mbuf *m, *mrep;
@@ -966,7 +966,7 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	struct mbuf *md, *mheadend;
 	char nickv[RPCX_NICKVERF];
 	time_t waituntil;
-	caddr_t dpos, cp2;
+	char *dpos, *cp2;
 	int t1, s, error = 0, mrest_len, auth_len, auth_type;
 	int trylater_delay = NFS_TRYLATERDEL, failed_auth = 0;
 	int verf_len, verf_type;
@@ -1007,13 +1007,13 @@ kerbauth:
 		verf_str = nickv;
 		verf_len = sizeof (nickv);
 		auth_type = RPCAUTH_KERB4;
-		memset((caddr_t)key, 0, sizeof (key));
+		memset((void *)key, 0, sizeof (key));
 		if (failed_auth || nfs_getnickauth(nmp, cred, &auth_str,
 			&auth_len, verf_str, verf_len)) {
 			error = nfs_getauth(nmp, rep, cred, &auth_str,
 				&auth_len, verf_str, &verf_len, key);
 			if (error) {
-				free((caddr_t)rep, M_NFSREQ);
+				free((void *)rep, M_NFSREQ);
 				m_freem(mrest);
 				KASSERT(kauth_cred_getrefcnt(acred) == 1);
 				kauth_cred_free(acred);
@@ -1407,7 +1407,7 @@ nfsmout:
 	KASSERT(kauth_cred_getrefcnt(acred) == 1);
 	kauth_cred_free(acred);
 	m_freem(rep->r_mreq);
-	free((caddr_t)rep, M_NFSREQ);
+	free((void *)rep, M_NFSREQ);
 	m_freem(mrest_backup);
 	return (error);
 }
@@ -1427,11 +1427,11 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 	u_quad_t *frev;
 	struct mbuf **mrq;
 	struct mbuf **mbp;
-	caddr_t *bposp;
+	char **bposp;
 {
 	u_int32_t *tl;
 	struct mbuf *mreq;
-	caddr_t bpos;
+	char *bpos;
 	struct mbuf *mb;
 
 	mreq = m_gethdr(M_WAIT, MT_DATA);
@@ -1448,7 +1448,7 @@ nfs_rephead(siz, nd, slp, err, cache, frev, mrq, mbp, bposp)
 		mreq->m_data += max_hdr;
 	tl = mtod(mreq, u_int32_t *);
 	mreq->m_len = 6 * NFSX_UNSIGNED;
-	bpos = ((caddr_t)tl) + mreq->m_len;
+	bpos = ((char *)tl) + mreq->m_len;
 	*tl++ = txdr_unsigned(nd->nd_retxid);
 	*tl++ = rpc_reply;
 	if (err == ERPCMISMATCH || (err & NFSERR_AUTHERR)) {
@@ -1753,7 +1753,7 @@ nfs_sndlock(flagp, rep)
 		if (rep && nfs_sigintr(rep->r_nmp, rep, l))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTSND;
-		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsndlck",
+		(void) tsleep((void *)flagp, slpflag | (PZERO - 1), "nfsndlck",
 			slptimeo);
 		if (slpflag == PCATCH) {
 			slpflag = 0;
@@ -1777,7 +1777,7 @@ nfs_sndunlock(flagp)
 	*flagp &= ~NFSMNT_SNDLOCK;
 	if (*flagp & NFSMNT_WANTSND) {
 		*flagp &= ~NFSMNT_WANTSND;
-		wakeup((caddr_t)flagp);
+		wakeup((void *)flagp);
 	}
 }
 
@@ -1848,7 +1848,7 @@ nfs_rcvunlock(nmp)
 	*flagp &= ~NFSMNT_RCVLOCK;
 	if (*flagp & NFSMNT_WANTRCV) {
 		*flagp &= ~NFSMNT_WANTRCV;
-		wakeup((caddr_t)flagp);
+		wakeup((void *)flagp);
 	}
 	simple_unlock(&nmp->nm_slock);
 }
@@ -1869,7 +1869,7 @@ nfs_getreq(nd, nfsd, has_header)
 	int32_t t1;
 	struct uio uio;
 	struct iovec iov;
-	caddr_t dpos, cp2, cp;
+	char *dpos, *cp2, *cp;
 	u_int32_t nfsvers, auth_type;
 	uid_t nickuid;
 	int error = 0, ticklen;
@@ -2000,7 +2000,7 @@ nfs_getreq(nd, nfsd, has_header)
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			UIO_SETUP_SYSSPACE(&uio);
-			iov.iov_base = (caddr_t)&nfsd->nfsd_authstr[4];
+			iov.iov_base = (void *)&nfsd->nfsd_authstr[4];
 			iov.iov_len = RPCAUTH_MAXSIZ - 4;
 			nfsm_mtouio(&uio, uio.uio_resid);
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
@@ -2011,7 +2011,7 @@ nfs_getreq(nd, nfsd, has_header)
 				nd->nd_procnum = NFSPROC_NOOP;
 				return (0);
 			}
-			nfsm_dissect(cp, caddr_t, 4 * NFSX_UNSIGNED);
+			nfsm_dissect(cp, void *, 4 * NFSX_UNSIGNED);
 			tl = (u_int32_t *)cp;
 			if (fxdr_unsigned(int, *tl) != RPCAKN_FULLNAME) {
 				printf("Not fullname kerb verifier\n");
@@ -2152,14 +2152,14 @@ int (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
 
 /*
  * Socket upcall routine for the nfsd sockets.
- * The caddr_t arg is a pointer to the "struct nfssvc_sock".
+ * The void *arg is a pointer to the "struct nfssvc_sock".
  * Essentially do as much as possible non-blocking, else punt and it will
  * be called with M_WAIT from an nfsd.
  */
 void
 nfsrv_rcv(so, arg, waitflag)
 	struct socket *so;
-	caddr_t arg;
+	void *arg;
 	int waitflag;
 {
 	struct nfssvc_sock *slp = (struct nfssvc_sock *)arg;
@@ -2368,7 +2368,7 @@ nfsrv_getstream(slp, waitflag)
 				break;
 			}
 			m = slp->ns_raw;
-			m_copydata(m, 0, NFSX_UNSIGNED, (caddr_t)&recmark);
+			m_copydata(m, 0, NFSX_UNSIGNED, (void *)&recmark);
 			m_adj(m, NFSX_UNSIGNED);
 			slp->ns_cc -= NFSX_UNSIGNED;
 			recmark = ntohl(recmark);
@@ -2469,7 +2469,7 @@ nfsrv_dorec(slp, nfsd, ndp)
 	nd = nfsdreq_alloc();
 	nd->nd_md = nd->nd_mrep = m;
 	nd->nd_nam2 = nam;
-	nd->nd_dpos = mtod(m, caddr_t);
+	nd->nd_dpos = mtod(m, void *);
 	error = nfs_getreq(nd, nfsd, true);
 	if (error) {
 		m_freem(nam);

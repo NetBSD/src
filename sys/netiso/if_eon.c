@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.55.2.1 2007/02/27 16:55:10 yamt Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.55.2.2 2007/03/12 06:00:29 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.55.2.1 2007/02/27 16:55:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.55.2.2 2007/03/12 06:00:29 rmind Exp $");
 
 #include "opt_eon.h"
 
@@ -154,7 +154,7 @@ eonattach(void)
 	ifp->if_flags = IFF_BROADCAST;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
-	eonioctl(ifp, SIOCSIFADDR, (caddr_t) ifp->if_addrlist.tqh_first);
+	eonioctl(ifp, SIOCSIFADDR, (void *) ifp->if_addrlist.tqh_first);
 	eon_llinfo.el_qhdr.link =
 		eon_llinfo.el_qhdr.rlink = &(eon_llinfo.el_qhdr);
 
@@ -178,7 +178,7 @@ eonattach(void)
  * RETURNS:			nothing
  */
 int
-eonioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+eonioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int    s = splnet();
 	int    error = 0;
@@ -238,7 +238,7 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro,
 	hdr->ei_eh.eonh_class = class;
 	hdr->ei_eh.eonh_vers = EON_VERSION;
 	hdr->ei_eh.eonh_csum = 0;
-	mhead.m_data = (caddr_t)&hdr->ei_eh;
+	mhead.m_data = (void *)&hdr->ei_eh;
 	mhead.m_len = sizeof(struct eon_hdr);
 	mhead.m_next = NULL;
 #ifdef ARGO_DEBUG
@@ -284,7 +284,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	case RTM_RESOLVE:
 		rt->rt_rmx.rmx_mtu = lo0ifp->if_mtu;	/* unless better below */
 		R_Malloc(el, struct eon_llinfo *, sizeof(*el));
-		rt->rt_llinfo = (caddr_t) el;
+		rt->rt_llinfo = (void *) el;
 		if (el == NULL)
 			return;
 		memset(el, 0, sizeof(*el));
@@ -558,7 +558,7 @@ eoninput(struct mbuf *m, ...)
 			printf(
 			    "%p enqueued on clnp Q: m_len 0x%x m_type 0x%x m_data %p\n",
 			    m, m->m_len, m->m_type, m->m_data);
-			dump_buf(mtod(m, caddr_t), m->m_len);
+			dump_buf(mtod(m, void *), m->m_len);
 		}
 #endif
 		schednetisr(NETISR_ISO);

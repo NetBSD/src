@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.236.2.5 2007/03/09 15:16:26 rmind Exp $	*/
+/*	$NetBSD: proc.h,v 1.236.2.6 2007/03/12 06:00:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -483,7 +483,7 @@ extern int		nprocs, maxproc; /* Current and max number of procs */
 #define	vmspace_kernel()	(proc0.p_vmspace)
 
 /* Process list locks; see kern_proc.c for locking protocol details */
-extern krwlock_t	proclist_lock;
+extern kmutex_t		proclist_lock;
 extern kmutex_t		proclist_mutex;
 
 extern struct proclist	allproc;	/* List of all processes */
@@ -524,8 +524,8 @@ void	yield(void);
 void	pgdelete(struct pgrp *);
 void	procinit(void);
 void	suspendsched(void);
-int	ltsleep(wchan_t, pri_t, const char *, int,
-	    volatile struct simplelock *);
+int	ltsleep(wchan_t, pri_t, const char *, int, volatile struct simplelock *);
+int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
 void	wakeup(wchan_t);
 void	wakeup_one(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
@@ -612,7 +612,7 @@ void kstack_check_magic(const struct lwp *);
  */
 /* the lowest address of kernel stack */
 #ifndef KSTACK_LOWEST_ADDR
-#define	KSTACK_LOWEST_ADDR(l)	((caddr_t)ALIGN((l)->l_addr + 1))
+#define	KSTACK_LOWEST_ADDR(l)	((void *)ALIGN((l)->l_addr + 1))
 #endif
 /* size of kernel stack */
 #ifndef KSTACK_SIZE

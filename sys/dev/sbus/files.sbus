@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.26 2006/11/24 13:23:32 martin Exp $
+#	$NetBSD: files.sbus,v 1.26.4.1 2007/03/12 05:57:07 rmind Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -124,14 +124,14 @@ attach	zx at sbus
 file	dev/sbus/zx.c			zx
 
 # Tadpole 3GX/3GS (P9100 -- P Nine One Zero Zero -> pnozz)
-device	pnozz: fb, bt_dac, rasops8, rasops16, rasops32, wsemuldisplaydev, vcons
+device	pnozz: fb, rasops8, bt_dac, wsemuldisplaydev, vcons
 attach	pnozz at sbus
 file	dev/sbus/p9100.c		pnozz needs-flag
 
 # SUNW,DBRI audio
 defflag	opt_sbus_dbri.h	DBRI_DEBUG
 defflag	opt_sbus_dbri.h	DBRI_BIG_BUFFER
-device	dbri { }: audiobus, auconv, mulaw
+device	dbri { }: audiobus, auconv
 attach	dbri at sbus
 file	dev/sbus/dbri.c			dbri
 

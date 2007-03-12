@@ -1,4 +1,4 @@
-/*	$NetBSD: dbrivar.h,v 1.4 2006/03/09 20:44:18 macallan Exp $	*/
+/*	$NetBSD: dbrivar.h,v 1.4.18.1 2007/03/12 05:57:06 rmind Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -86,8 +86,8 @@ struct dbri_pipe {
 
 struct dbri_desc {
 	int		busy;
-	caddr_t		buf;		/* cpu view of buffer */
-	caddr_t		buf_dvma;	/* device view */
+	void *		buf;		/* cpu view of buffer */
+	void *		buf_dvma;	/* device view */
 	bus_addr_t	dmabase;
 	bus_dma_segment_t dmaseg;
 	bus_dmamap_t	dmamap;
@@ -118,7 +118,7 @@ struct dbri_softc {
 	int		sc_burst;	/* DVMA burst size in effect */
 	
 	bus_addr_t	sc_dmabase;	/* VA of buffer we provide */
-	caddr_t		sc_membase;
+	void *		sc_membase;
 	int		sc_bufsiz;	/* size of the buffer */
 	int		sc_locked;
 	int		sc_irqp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.9 2006/11/16 01:33:31 christos Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.9.4.1 2007/03/12 05:57:49 rmind Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.9 2006/11/16 01:33:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.9.4.1 2007/03/12 05:57:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.9 2006/11/16 01:33:31 christos
 static void vcons_dummy_init_screen(void *, struct vcons_screen *, int, 
 	    long *);
 
-static int  vcons_ioctl(void *, void *, u_long, caddr_t, int, struct lwp *);
+static int  vcons_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static int  vcons_alloc_screen(void *, const struct wsscreen_descr *, void **, 
 	    int *, int *, long *);
 static void vcons_free_screen(void *, void *);
@@ -367,7 +367,7 @@ vcons_redraw_screen(struct vcons_screen *scr)
 }
 
 static int
-vcons_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+vcons_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;

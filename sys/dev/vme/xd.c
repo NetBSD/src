@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.65 2007/01/04 18:44:46 elad Exp $	*/
+/*	$NetBSD: xd.c,v 1.65.2.1 2007/03/12 05:57:48 rmind Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.65 2007/01/04 18:44:46 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.65.2.1 2007/03/12 05:57:48 rmind Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -224,7 +224,7 @@ int	xdc_remove_iorq(struct xdc_softc *);
 int	xdc_reset(struct xdc_softc *, int, int, int, struct xd_softc *);
 inline void xdc_rqinit(struct xd_iorq *, struct xdc_softc *,
 			struct xd_softc *, int, u_long, int,
-			caddr_t, struct buf *);
+			void *, struct buf *);
 void	xdc_rqtopb(struct xd_iorq *, struct xd_iopb *, int, int);
 void	xdc_start(struct xdc_softc *, int);
 int	xdc_startbuf(struct xdc_softc *, struct xd_softc *, struct buf *);
@@ -232,9 +232,9 @@ int	xdc_submit_iorq(struct xdc_softc *, int, int);
 void	xdc_tick(void *);
 void	xdc_xdreset(struct xdc_softc *, struct xd_softc *);
 int	xd_dmamem_alloc(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
-			int *, bus_size_t, caddr_t *, bus_addr_t *);
+			int *, bus_size_t, void **, bus_addr_t *);
 void	xd_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
-			int, bus_size_t, caddr_t);
+			int, bus_size_t, void *);
 
 
 /* machine interrupt hook */
@@ -399,7 +399,7 @@ xd_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
 	bus_dma_segment_t	*seg;
 	int			*nsegp;
 	bus_size_t		len;
-	caddr_t			*kvap;
+	void *			*kvap;
 	bus_addr_t		*dmap;
 {
 	int nseg;
@@ -437,7 +437,7 @@ xd_dmamem_free(tag, map, seg, nseg, len, kva)
 	bus_dma_segment_t	*seg;
 	int			nseg;
 	bus_size_t		len;
-	caddr_t			kva;
+	void *			kva;
 {
 
 	bus_dmamap_unload(tag, map);
@@ -584,7 +584,7 @@ xdcattach(parent, self, aux)
 	/* Get DMA buffer for iorq descriptors */
 	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->iopmap, &seg, &rseg,
 				     XDC_MAXIOPB * sizeof(struct xd_iopb),
-				     (caddr_t *)&xdc->iopbase,
+				     (void **)&xdc->iopbase,
 				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xdc->sc_dev.dv_xname, error);
@@ -736,8 +736,8 @@ xdattach(parent, self, aux)
 	int			rseg, error;
 	bus_dma_segment_t	seg;
 	bus_addr_t		busaddr;
-	caddr_t			dmaddr;
-	caddr_t			buf;
+	void *			dmaddr;
+	char *			buf;
 
 	/*
 	 * Always re-initialize the disk structure.  We want statistics
@@ -780,13 +780,13 @@ xdattach(parent, self, aux)
 	buf = NULL;
 	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->auxmap, &seg, &rseg,
 				     XDFM_BPS,
-				     (caddr_t *)&buf,
+				     (void **)&buf,
 				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xdc->sc_dev.dv_xname, error);
 		return;
 	}
-	dmaddr = (caddr_t)(u_long)BUS_ADDR_PADDR(busaddr);
+	dmaddr = (void *)(u_long)BUS_ADDR_PADDR(busaddr);
 
 	/* first try and reset the drive */
 
@@ -971,7 +971,7 @@ int
 xddump(dev, blkno, va, size)
 	dev_t dev;
 	daddr_t blkno;
-	caddr_t va;
+	void *va;
 	size_t size;
 {
 	int     unit, part;
@@ -1010,7 +1010,7 @@ int
 xdioctl(dev, command, addr, flag, l)
 	dev_t   dev;
 	u_long  command;
-	caddr_t addr;
+	void *addr;
 	int     flag;
 	struct lwp *l;
 
@@ -1392,7 +1392,7 @@ xdc_rqinit(rq, xdc, xd, md, blk, cnt, db, bp)
 	int     md;
 	u_long  blk;
 	int     cnt;
-	caddr_t db;
+	void *db;
 	struct buf *bp;
 {
 	rq->xdc = xdc;
@@ -1594,7 +1594,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
 	u_long  block;
-/*	caddr_t dbuf;*/
+/*	void *dbuf;*/
 	int error;
 
 	if (!xdcsc->nfree)
@@ -1648,7 +1648,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/* init iorq and load iopb from it */
 	xdc_rqinit(iorq, xdcsc, xdsc, XD_SUB_NORM | XD_MODE_VERBO, block,
 		   bp->b_bcount / XDFM_BPS,
-		   (caddr_t)(u_long)iorq->dmamap->dm_segs[0].ds_addr,
+		   (void *)(u_long)iorq->dmamap->dm_segs[0].ds_addr,
 		   bp);
 
 	xdc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XDCMD_RD : XDCMD_WR, 0);
@@ -2393,7 +2393,7 @@ xdc_ioctlcmd(xd, dev, xio)
 
 {
 	int     s, rqno, dummy;
-	caddr_t dvmabuf = NULL, buf = NULL;
+	char *dvmabuf = NULL, *buf = NULL;
 	struct xdc_softc *xdcsc;
 	int			rseg, error;
 	bus_dma_segment_t	seg;
@@ -2484,11 +2484,11 @@ xdc_ioctlcmd(xd, dev, xio)
 
 		if ((error = xd_dmamem_alloc(xdcsc->dmatag, xdcsc->auxmap,
 					     &seg, &rseg,
-					     xio->dlen, &buf,
+					     xio->dlen, (void **)&buf,
 					     &busbuf)) != 0) {
 			return (error);
 		}
-		dvmabuf = (caddr_t)(u_long)BUS_ADDR_PADDR(busbuf);
+		dvmabuf = (void *)(u_long)BUS_ADDR_PADDR(busbuf);
 
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {

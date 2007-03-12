@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.237.2.2 2007/03/09 15:16:23 rmind Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.237.2.3 2007/03/12 05:58:33 rmind Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.237.2.2 2007/03/09 15:16:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.237.2.3 2007/03/12 05:58:33 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -586,7 +586,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		    szsigcode + sizeof(struct ps_strings) + STACK_PTHREADSPACE)
 		    - argp;
 
+#ifdef STACKLALIGN	/* arm, etc. */
+	len = STACKALIGN(len);	/* make the stack "safely" aligned */
+#else
 	len = ALIGN(len);	/* make the stack "safely" aligned */
+#endif
 
 	if (len > pack.ep_ssize) { /* in effect, compare to initial limit */
 		error = ENOMEM;
@@ -626,13 +630,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Now map address space */
 	vm = p->p_vmspace;
-	vm->vm_taddr = (caddr_t) pack.ep_taddr;
+	vm->vm_taddr = (void *)pack.ep_taddr;
 	vm->vm_tsize = btoc(pack.ep_tsize);
-	vm->vm_daddr = (caddr_t) pack.ep_daddr;
+	vm->vm_daddr = (void*)pack.ep_daddr;
 	vm->vm_dsize = btoc(pack.ep_dsize);
 	vm->vm_ssize = btoc(pack.ep_ssize);
-	vm->vm_maxsaddr = (caddr_t) pack.ep_maxsaddr;
-	vm->vm_minsaddr = (caddr_t) pack.ep_minsaddr;
+	vm->vm_maxsaddr = (void *)pack.ep_maxsaddr;
+	vm->vm_minsaddr = (void *)pack.ep_minsaddr;
 
 	/* create the new process's VM space by running the vmcmds */
 #ifdef DIAGNOSTIC
@@ -769,12 +773,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * exited and exec()/exit() are the only places it will be cleared.
 	 */
 	if ((p->p_sflag & PS_PPWAIT) != 0) {
-		rw_enter(&proclist_lock, RW_READER);
+		mutex_enter(&proclist_lock);
 		mutex_enter(&p->p_smutex);
 		p->p_sflag &= ~PS_PPWAIT;
 		cv_broadcast(&p->p_pptr->p_waitcv);
 		mutex_exit(&p->p_smutex);
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 	}
 
 	/*
@@ -1161,7 +1165,7 @@ emul_unregister(const char *name)
 	 * emul_unregister() is running quite sendomly, it's better
 	 * to do expensive check here than to use any locking.
 	 */
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
 		PROCLIST_FOREACH(ptmp, pd->pd_list) {
 			if (ptmp->p_emul == it->el_emul) {
@@ -1170,7 +1174,7 @@ emul_unregister(const char *name)
 			}
 		}
 	}
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	if (error)
 		goto out;

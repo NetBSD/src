@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.166.2.4 2007/03/09 15:16:23 rmind Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.166.2.5 2007/03/12 05:58:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.4 2007/03/09 15:16:23 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.166.2.5 2007/03/12 05:58:33 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -304,13 +304,6 @@ exit1(struct lwp *l, int rv)
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
 
-	/*
-	 * Finalize the last LWP's specificdata, as well as the
-	 * specificdata for the proc itself.
-	 */
-	lwp_finispecific(l);
-	proc_finispecific(p);
-
 	/* Collect child u-areas. */
 	uvm_uarea_drain(false);
 
@@ -338,7 +331,7 @@ exit1(struct lwp *l, int rv)
 	 * wake up the parent early to avoid deadlock.  We can do this once
 	 * the VM resources are released.
 	 */
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	mutex_enter(&p->p_smutex);
 	if (p->p_sflag & PS_PPWAIT) {
@@ -374,9 +367,9 @@ exit1(struct lwp *l, int rv)
 				TTY_UNLOCK(tp);
 				splx(s);
 				SESSRELE(sp);
-				rw_exit(&proclist_lock);
+				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
-				rw_enter(&proclist_lock, RW_WRITER);
+				mutex_enter(&proclist_lock);
 
 				/*
 				 * The tty could have been revoked
@@ -398,17 +391,24 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 
 		if (vprevoke != NULL || vprele != NULL) {
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			if (vprevoke != NULL)
 				VOP_REVOKE(vprevoke, REVOKEALL);
 			if (vprele != NULL)
 				vrele(vprele);
-			rw_enter(&proclist_lock, RW_WRITER);
+			mutex_enter(&proclist_lock);
 		}
 	}
 	mutex_enter(&proclist_mutex);
 	fixjobc(p, p->p_pgrp, 0);
 	mutex_exit(&proclist_mutex);
+
+	/*
+	 * Finalize the last LWP's specificdata, as well as the
+	 * specificdata for the proc itself.
+	 */
+	lwp_finispecific(l);
+	proc_finispecific(p);
 
 	/*
 	 * Notify interested parties of our demise.
@@ -562,7 +562,7 @@ exit1(struct lwp *l, int rv)
 	/*
 	 * Signal the parent to collect us, and drop the proclist lock.
 	 */
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/* Verify that we hold no locks other than the kernel lock. */
 #ifdef MULTIPROCESSOR
@@ -675,16 +675,16 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 	if (SCARG(uap, options) & ~(WUNTRACED|WNOHANG|WALTSIG|WALLSIG))
 		return (EINVAL);
 
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	error = find_stopped_child(parent, SCARG(uap,pid), SCARG(uap,options),
 	    &child, &status);
 	if (error != 0) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		return error;
 	}
 	if (child == NULL) {
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		*retval = 0;
 		return 0;
 	}
@@ -706,7 +706,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
 		return error;
 	}
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/* Child state must have been SSTOP. */
 	if (SCARG(uap, status)) {
@@ -721,7 +721,7 @@ sys_wait4(struct lwp *l, void *v, register_t *retval)
  * Scan list of child processes for a child process that has stopped or
  * exited.  Used by sys_wait4 and 'compat' equivalents.
  *
- * Must be called with the proclist_lock write held, and may release
+ * Must be called with the proclist_lock held, and may release
  * while waiting.
  */
 int
@@ -731,7 +731,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 	struct proc *child, *dead;
 	int error;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	for (;;) {
 		error = ECHILD;
@@ -815,10 +815,10 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 		/*
 		 * Wait for another child process to stop.
 		 */
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		error = cv_wait_sig(&parent->p_waitcv, &proclist_mutex);
 		mutex_exit(&proclist_mutex);
-		rw_enter(&proclist_lock, RW_WRITER);
+		mutex_enter(&proclist_lock);
 
 		if (error != 0)
 			return error;
@@ -827,7 +827,7 @@ find_stopped_child(struct proc *parent, pid_t pid, int options,
 
 /*
  * Free a process after parent has taken all the state info.  Must be called
- * with the proclist lock write held, and will release before returning.
+ * with the proclist lock held, and will release before returning.
  *
  * *ru is returned to the caller, and must be freed by the caller.
  */
@@ -844,8 +844,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	struct vnode *vp;
 	uid_t uid;
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
-
+	KASSERT(mutex_owned(&proclist_lock));
 	KASSERT(p->p_nlwps == 1);
 	KASSERT(p->p_nzlwps == 1);
 	KASSERT(p->p_nrlwps == 0);
@@ -880,7 +879,7 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 				mutex_exit(&proclist_mutex);
 			}
 			cv_wakeup(&parent->p_waitcv);	/* XXXSMP */
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			return;
 		}
 	}
@@ -925,12 +924,12 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 	 */
 	if (l->l_cpu->ci_curlwp == l) {
 		int count;
-		rw_exit(&proclist_lock);
+		mutex_exit(&proclist_lock);
 		KERNEL_UNLOCK_ALL(l, &count);
 		while (l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
 		KERNEL_LOCK(count, l);
-		rw_enter(&proclist_lock, RW_WRITER);
+		mutex_enter(&proclist_lock);
 	}
 #endif
 
@@ -988,13 +987,13 @@ proc_free(struct proc *p, struct rusage *caller_ru)
 /*
  * make process 'parent' the new parent of process 'child'.
  *
- * Must be called with proclist_lock write locked held.
+ * Must be called with proclist_lock lock held.
  */
 void
 proc_reparent(struct proc *child, struct proc *parent)
 {
 
-	LOCK_ASSERT(rw_write_held(&proclist_lock));
+	KASSERT(mutex_owned(&proclist_lock));
 
 	if (child->p_pptr == parent)
 		return;

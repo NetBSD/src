@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.64.4.1 2007/02/27 16:54:42 yamt Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.64.4.2 2007/03/12 05:59:11 rmind Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.64.4.1 2007/02/27 16:54:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.64.4.2 2007/03/12 05:59:11 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -236,7 +236,7 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	if (m->m_pkthdr.len < sizeof(ip))
 		return 0;
 
-	m_copydata(m, 0, sizeof(ip), (caddr_t)&ip);
+	m_copydata(m, 0, sizeof(ip), (void *)&ip);
 
 	switch (ip.ip_v) {
 #ifdef INET
@@ -498,7 +498,7 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 
 /* XXX how should we handle IPv6 scope on SIOC[GS]IFPHYADDR? */
 int
-gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp *l = curlwp;	/* XXX */
 	struct gif_softc *sc  = (struct gif_softc*)ifp;
@@ -689,7 +689,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+		bcopy((void *)src, (void *)dst, src->sa_len);
 		break;
 
 	case SIOCGIFPDSTADDR:
@@ -721,7 +721,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+		bcopy((void *)src, (void *)dst, src->sa_len);
 		break;
 
 	case SIOCGLIFPHYADDR:
@@ -737,7 +737,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		size = sizeof(((struct if_laddrreq *)data)->addr);
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+		bcopy((void *)src, (void *)dst, src->sa_len);
 
 		/* copy dst */
 		src = sc->gif_pdst;
@@ -746,7 +746,7 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		size = sizeof(((struct if_laddrreq *)data)->dstaddr);
 		if (src->sa_len > size)
 			return EINVAL;
-		bcopy((caddr_t)src, (caddr_t)dst, src->sa_len);
+		bcopy((void *)src, (void *)dst, src->sa_len);
 		break;
 
 	case SIOCSIFFLAGS:
@@ -825,12 +825,12 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	osrc = sc->gif_psrc;
 	sa = (struct sockaddr *)malloc(src->sa_len, M_IFADDR, M_WAITOK);
-	bcopy((caddr_t)src, (caddr_t)sa, src->sa_len);
+	bcopy((void *)src, (void *)sa, src->sa_len);
 	sc->gif_psrc = sa;
 
 	odst = sc->gif_pdst;
 	sa = (struct sockaddr *)malloc(dst->sa_len, M_IFADDR, M_WAITOK);
-	bcopy((caddr_t)dst, (caddr_t)sa, dst->sa_len);
+	bcopy((void *)dst, (void *)sa, dst->sa_len);
 	sc->gif_pdst = sa;
 
 	switch (sc->gif_psrc->sa_family) {
@@ -850,17 +850,17 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	}
 	if (error) {
 		/* rollback */
-		free((caddr_t)sc->gif_psrc, M_IFADDR);
-		free((caddr_t)sc->gif_pdst, M_IFADDR);
+		free((void *)sc->gif_psrc, M_IFADDR);
+		free((void *)sc->gif_pdst, M_IFADDR);
 		sc->gif_psrc = osrc;
 		sc->gif_pdst = odst;
 		goto bad;
 	}
 
 	if (osrc)
-		free((caddr_t)osrc, M_IFADDR);
+		free((void *)osrc, M_IFADDR);
 	if (odst)
-		free((caddr_t)odst, M_IFADDR);
+		free((void *)odst, M_IFADDR);
 
 	if (sc->gif_psrc && sc->gif_pdst)
 		ifp->if_flags |= IFF_RUNNING;
@@ -901,11 +901,11 @@ gif_delete_tunnel(struct ifnet *ifp)
 	}
 #endif
 	if (sc->gif_psrc) {
-		free((caddr_t)sc->gif_psrc, M_IFADDR);
+		free((void *)sc->gif_psrc, M_IFADDR);
 		sc->gif_psrc = NULL;
 	}
 	if (sc->gif_pdst) {
-		free((caddr_t)sc->gif_pdst, M_IFADDR);
+		free((void *)sc->gif_pdst, M_IFADDR);
 		sc->gif_pdst = NULL;
 	}
 	/* it is safe to detach from both */
@@ -952,7 +952,7 @@ gif_eon_encap(struct mbuf *m)
 		struct mbuf mhead;
 		memset(&mhead, 0, sizeof(mhead));
 		ehdr->cksum = 0;
-		mhead.m_data = (caddr_t)ehdr;
+		mhead.m_data = (void *)ehdr;
 		mhead.m_len = sizeof(*ehdr);
 		mhead.m_next = 0;
 		iso_gen_csum(&mhead, offsetof(struct eonhdr, cksum),

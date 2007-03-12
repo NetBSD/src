@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.144.2.1 2007/02/27 16:54:41 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.144.2.2 2007/03/12 05:59:11 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.144.2.1 2007/02/27 16:54:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.144.2.2 2007/03/12 05:59:11 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -294,7 +294,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		if (m->m_flags & M_BCAST)
                 	(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else {
-			caddr_t tha = ar_tha(ah);
+			void *tha = ar_tha(ah);
 
 			KASSERT(tha);
 			memcpy(edst, tha, sizeof(edst));
@@ -356,7 +356,7 @@ ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 			memcpy(llc.llc_snap_org_code, at_org_code,
 			    sizeof(llc.llc_snap_org_code));
 			llc.llc_snap_ether_type = htons(ETHERTYPE_ATALK);
-			memcpy(mtod(m, caddr_t), &llc, sizeof(struct llc));
+			memcpy(mtod(m, void *), &llc, sizeof(struct llc));
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
 		}
@@ -524,7 +524,7 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 	struct ether_header *eh;
 	u_int16_t ether_type;
 	int hlen, af, hdrsize;
-	caddr_t hdr;
+	void *hdr;
 
 	hlen = ETHER_HDR_LEN;
 	eh = mtod(m, struct ether_header *);
@@ -584,7 +584,7 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
 	m->m_data += hlen;
 	m->m_len -= hlen;
 
-	hdr = mtod(m, caddr_t);
+	hdr = mtod(m, void *);
 
 	if (ALTQ_NEEDS_CLASSIFY(ifq))
 		pktattr->pattr_class =
@@ -880,6 +880,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 #ifdef INET6
 		case ETHERTYPE_IPV6:
+#ifdef GATEWAY  
+			if (ip6flow_fastforward(m))
+				return;
+#endif
 			schednetisr(NETISR_IPV6);
 			inq = &ip6intrq;
 			break;
@@ -1437,7 +1441,7 @@ ether_delmulti(struct ifreq *ifr, struct ethercom *ec)
  * called at splnet().
  */
 int
-ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ethercom *ec = (void *) ifp;
 	struct ifreq *ifr = (struct ifreq *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.88 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.88.4.1 2007/03/12 05:55:13 rmind Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.88 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.88.4.1 2007/03/12 05:55:13 rmind Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -107,7 +107,7 @@ static int	eap_intr(void *);
 
 struct eap_dma {
 	bus_dmamap_t map;
-	caddr_t addr;
+	void *addr;
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	size_t size;

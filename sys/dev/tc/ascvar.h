@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.10 2005/12/11 12:24:00 christos Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.10.26.1 2007/03/12 05:57:14 rmind Exp $	*/
 
 
 /*
@@ -61,7 +61,7 @@ struct asc_softc {
 	/* Start DMA routine */
 	int  (*dma_start)(struct asc_softc *asc,
 				struct scsi_state *state,
-				caddr_t cp, int flag, int len, int off);
+				void *cp, int flag, int len, int off);
 	/* End DMA routine */
 	void	(*dma_end)(struct asc_softc *asc,
 				struct scsi_state *state, int flag);

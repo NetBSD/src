@@ -1,4 +1,4 @@
-/* $NetBSD: kcont.h,v 1.4 2005/12/11 12:25:20 christos Exp $ */
+/* $NetBSD: kcont.h,v 1.4.26.1 2007/03/12 06:00:52 rmind Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 typedef struct kc {
 	SIMPLEQ_ENTRY(kc) kc_next;	/* next kc in object's callback list */
 
-	void (*kc_fn) (void * /*obj*/, void * /*env_arg*/, int /*status*/);
+	void (*kc_fn) (void */*obj*/, void */*env_arg*/, int /*status*/);
 
 	void *kc_env_arg;	/* caller-supplied continuation argument */
 	void *kc_obj;		/* saved object, used for deferred calls */
@@ -108,8 +108,8 @@ typedef SIMPLEQ_HEAD(kcqueue, kc) kcq_t;
  * Prepare a struct kc continuation using caller-supplied memory
  */
 struct kc *kcont(struct kc *,
-	    void (* /*fn*/)(void * /*obj*/, void */*arg*/, int /*sts*/),
-	    void * /*env_arg*/, int /*continue_ipl*/);
+	    void (* /*fn*/)(void */*obj*/, void */*arg*/, int /*sts*/),
+	    void */*env_arg*/, int /*continue_ipl*/);
 
 /*
  * Prepare a struct kc continuation using malloc'ed memory.
@@ -117,8 +117,8 @@ struct kc *kcont(struct kc *,
  * is finally called.
  */
 struct kc *kcont_malloc(int /*allocmflags*/,
-	    void (* /*fn*/)(void * /*obj*/, void */*arg*/, int /*sts*/),
-	    void * /*env_arg*/, int /*continue_ipl*/);
+	    void (* /*fn*/)(void */*obj*/, void */*arg*/, int /*sts*/),
+	    void */*env_arg*/, int /*continue_ipl*/);
 
 
 /*
@@ -126,7 +126,7 @@ struct kc *kcont_malloc(int /*allocmflags*/,
  * from the current context to some lower interrupt priority.
  * Caller must supply the preallocated kcont (possibly via kcont_malloc()).
  */
-void	kcont_defer(struct kc * /*kc*/, void * /*obj*/,
+void	kcont_defer(struct kc * /*kc*/, void */*obj*/,
 	    int /*status*/);
 /*
  * Use a kcont to defer execution from the current context to some
@@ -134,9 +134,9 @@ void	kcont_defer(struct kc * /*kc*/, void * /*obj*/,
  * kcont_malloc().  Deprecated; use kcont_defer() and kcont_malloc().
  */
 void	kcont_defer_malloc(int, /* mallocflags */
-	    void (* /*fn*/)(void * /*obj*/, void */*arg*/, int /*sts*/),
-	    void * /*obj*/,
-	    void * /*env_arg*/, int /*status*/, int /*continue_ipl*/);
+	    void (* /*fn*/)(void */*obj*/, void */*arg*/, int /*sts*/),
+	    void */*obj*/,
+	    void */*env_arg*/, int /*status*/, int /*continue_ipl*/);
 
 /*
  * Enqueue a struct kc * into the kc_queue* field of some kernel struct.
@@ -158,7 +158,7 @@ void	kcont_enqueue(kcq_t * /*kcqueue*/, struct kc * /*kc*/);
  * with the given object and status; or saving the object and status
  * and deferring the kconts to a software-interrupt priority kc_queue.
  */
-void	kcont_run(kcq_t * /*kcq*/, void * /*obj*/,
+void	kcont_run(kcq_t * /*kcq*/, void */*obj*/,
 	    int /*status*/, int /*cur_ipl*/);
 
 

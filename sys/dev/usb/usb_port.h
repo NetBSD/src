@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.73 2006/11/16 01:33:27 christos Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.73.4.1 2007/03/12 05:57:33 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -418,7 +418,7 @@ MALLOC_DECLARE(M_USBHC);
 #define USBDEVPTRNAME(bdev) device_get_nameunit(bdev)
 #define USBGETSOFTC(bdev) (device_get_softc(bdev))
 
-#define DECLARE_USB_DMA_T typedef void * usb_dma_t
+#define DECLARE_USB_DMA_T typedef void *usb_dma_t
 
 typedef struct proc *usb_proc_ptr;
 

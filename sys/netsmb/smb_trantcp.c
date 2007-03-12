@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.27.4.1 2007/02/27 16:55:14 yamt Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.27.4.2 2007/03/12 06:00:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.27.4.1 2007/02/27 16:55:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.27.4.2 2007/03/12 06:00:34 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ nbssn_rselect(struct nbpcb *nbp, const struct timeval *tv, int events,
 		goto retry;
 	}
 	l->l_flag &= ~LW_SELECT;
-	error = tsleep((caddr_t)&selwait, PSOCK, "smbsel", timo);
+	error = tsleep((void *)&selwait, PSOCK, "smbsel", timo);
 	splx(s);
 
 	if (error == 0)
@@ -214,7 +214,7 @@ nb_intr(struct nbpcb *nbp, struct lwp *l)
 }
 
 static void
-nb_upcall(struct socket *so, caddr_t arg, int waitflag)
+nb_upcall(struct socket *so, void *arg, int waitflag)
 {
 	struct nbpcb *nbp = (void *)arg;
 
@@ -267,7 +267,7 @@ nb_connect_in(struct nbpcb *nbp, struct sockaddr_in *to, struct lwp *l)
 	if (error)
 		return error;
 	nbp->nbp_tso = so;
-	so->so_upcallarg = (caddr_t)nbp;
+	so->so_upcallarg = (void *)nbp;
 	so->so_upcall = nb_upcall;
 	so->so_rcv.sb_flags |= SB_UPCALL;
 	so->so_rcv.sb_timeo = NB_SNDTIMEO;
@@ -371,7 +371,7 @@ nbssn_rq_request(struct nbpcb *nbp, struct lwp *l)
 			error = ECONNABORTED;
 			break;
 		}
-		md_get_mem(mdp, (caddr_t)&sin.sin_addr, 4, MB_MSYSTEM);
+		md_get_mem(mdp, (void *)&sin.sin_addr, 4, MB_MSYSTEM);
 		md_get_uint16(mdp, &port);
 		sin.sin_port = port;
 		nbp->nbp_state = NBST_RETARGET;
@@ -399,7 +399,7 @@ nbssn_recvhdr(struct nbpcb *nbp, int *lenp,
 	u_int32_t len;
 	int error;
 
-	aio.iov_base = (caddr_t)&len;
+	aio.iov_base = (void *)&len;
 	aio.iov_len = sizeof(len);
 	auio.uio_iov = &aio;
 	auio.uio_iovcnt = 1;

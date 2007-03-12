@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.131.2.3 2007/02/27 16:54:21 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.131.2.4 2007/03/12 05:58:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.3 2007/02/27 16:54:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.131.2.4 2007/03/12 05:58:34 rmind Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -287,9 +287,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * then copy the section that is copied directly from the parent.
 	 */
 	memset(&p2->p_startzero, 0,
-	    (unsigned) ((caddr_t)&p2->p_endzero - (caddr_t)&p2->p_startzero));
+	    (unsigned) ((char *)&p2->p_endzero - (char *)&p2->p_startzero));
 	memcpy(&p2->p_startcopy, &p1->p_startcopy,
-	    (unsigned) ((caddr_t)&p2->p_endcopy - (caddr_t)&p2->p_startcopy));
+	    (unsigned) ((char *)&p2->p_endcopy - (char *)&p2->p_startcopy));
 
 	CIRCLEQ_INIT(&p2->p_sigpend.sp_info);
 
@@ -440,7 +440,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * It's now safe for the scheduler and other processes to see the
 	 * child process.
 	 */
-	rw_enter(&proclist_lock, RW_WRITER);
+	mutex_enter(&proclist_lock);
 
 	if (p1->p_session->s_ttyvp != NULL && p1->p_lflag & PL_CONTROLT)
 		p2->p_lflag |= PL_CONTROLT;
@@ -453,7 +453,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 	mutex_exit(&proclist_mutex);
 
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 #ifdef SYSTRACE
 	/* Tell systrace what's happening. */

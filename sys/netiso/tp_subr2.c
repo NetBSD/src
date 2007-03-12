@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.33 2006/11/16 01:33:51 christos Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.33.4.1 2007/03/12 06:00:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,7 +66,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.33 2006/11/16 01:33:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.33.4.1 2007/03/12 06:00:32 rmind Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -326,8 +326,8 @@ void
 tp_recycle_tsuffix(void *v)
 {
 	struct tp_pcb  *tpcb = v;
-	bzero((caddr_t) tpcb->tp_lsuffix, sizeof(tpcb->tp_lsuffix));
-	bzero((caddr_t) tpcb->tp_fsuffix, sizeof(tpcb->tp_fsuffix));
+	bzero((void *) tpcb->tp_lsuffix, sizeof(tpcb->tp_lsuffix));
+	bzero((void *) tpcb->tp_fsuffix, sizeof(tpcb->tp_fsuffix));
 	tpcb->tp_fsuffixlen = tpcb->tp_lsuffixlen = 0;
 
 	(tpcb->tp_nlproto->nlp_recycle_suffix) (tpcb->tp_npcb);
@@ -479,7 +479,7 @@ copyQOSparms(const struct tp_conn_param *src, struct tp_conn_params *dst)
 	/* copy all but the bits stuff at the end */
 #define COPYSIZE (12 * sizeof(short))
 
-	bcopy((caddr_t) src, (caddr_t) dst, COPYSIZE);
+	bcopy((void *) src, (void *) dst, COPYSIZE);
 	dst->p_tpdusize = src->p_tpdusize;
 	dst->p_ack_strat = src->p_ack_strat;
 	dst->p_rx_strat = src->p_rx_strat;
@@ -621,7 +621,7 @@ punt_route:
  *	 based on information cached on the route.
  */
 int
-tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, caddr_t channel)
+tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, void *channel)
 {
 	struct sockaddr_iso *siso;	/* NOTE: this may be a
 						 * sockaddr_in */
@@ -643,7 +643,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, caddr_t channel)
 		printf("tp_route_to( m %p, channel %p, tpcb %p netserv 0x%x)\n",
 		       m, channel, tpcb, tpcb->tp_netservice);
 		printf("m->mlen x%x, m->m_data:\n", m->m_len);
-		dump_buf(mtod(m, caddr_t), m->m_len);
+		dump_buf(mtod(m, void *), m->m_len);
 	}
 #endif
 	if (channel) {
@@ -658,7 +658,7 @@ tp_route_to(struct mbuf *m, struct tp_pcb *tpcb, caddr_t channel)
 		 */
 		remque(isop_new);
 		free(isop_new, M_PCB);
-		tpcb->tp_npcb = (caddr_t) isop;
+		tpcb->tp_npcb = (void *) isop;
 		tpcb->tp_netservice = ISO_CONS;
 		tpcb->tp_nlproto = nl_protosw + ISO_CONS;
 		if (isop->isop_refcnt++ == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.4 2007/02/15 15:40:52 ad Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.4.2.1 2007/03/12 05:58:11 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.4 2007/02/15 15:40:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.4.2.1 2007/03/12 05:58:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,8 @@ void
 ntfs_nthashdone()
 {
 	hashdone(ntfs_nthashtbl, M_NTFSNTHASH);
+	mutex_destroy(&ntfs_hashlock);
+	mutex_destroy(&ntfs_nthash_lock);
 }
 
 /*

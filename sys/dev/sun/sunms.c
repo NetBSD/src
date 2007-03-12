@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.25 2007/01/29 01:52:45 hubertf Exp $	*/
+/*	$NetBSD: sunms.c,v 1.25.2.1 2007/03/12 05:57:13 rmind Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.25 2007/01/29 01:52:45 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.25.2.1 2007/03/12 05:57:13 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ struct linesw sunms_disc = {
 };
 
 int	sunms_enable(void *);
-int	sunms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	sunms_ioctl(void *, u_long, void *, int, struct lwp *);
 void	sunms_disable(void *);
 
 const struct wsmouse_accessops	sunms_accessops = {
@@ -241,7 +241,7 @@ int
 sunms_ioctl(v, cmd, data, flag, l)
 	void *v;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 	int flag;
 	struct lwp *l;
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_sbus.c,v 1.66 2006/10/15 20:50:29 martin Exp $ */
+/* $NetBSD: isp_sbus.c,v 1.66.4.1 2007/03/12 05:57:07 rmind Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.66 2006/10/15 20:50:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_sbus.c,v 1.66.4.1 2007/03/12 05:57:07 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,7 +430,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	}
 	progress++;
 	if (bus_dmamem_map(isp->isp_dmatag, &reqseg, reqrs, len,
-	    (caddr_t *)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    (void **)&isp->isp_rquest, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 	progress++;
@@ -453,7 +453,7 @@ isp_sbus_mbxdma(struct ispsoftc *isp)
 	}
 	progress++;
 	if (bus_dmamem_map(isp->isp_dmatag, &rspseg, rsprs, len,
-	    (caddr_t *)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
+	    (void **)&isp->isp_result, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
 		goto dmafail;
 	}
 	progress++;

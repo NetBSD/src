@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.152 2007/01/19 14:49:11 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.152.2.1 2007/03/12 06:00:53 rmind Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -85,6 +85,7 @@
 #define MOUNT_UDF	"udf"		/* UDF CD/DVD filesystem */
 #define	MOUNT_SYSVBFS	"sysvbfs"	/* System V Boot Filesystem */
 #define MOUNT_PUFFS	"puffs"		/* Pass-to-Userspace filesystem */
+#define MOUNT_HFS	"hfs"		/* Apple HFS+ Filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
@@ -343,19 +344,6 @@ void 	mount_initspecific(struct mount *);
 void 	mount_finispecific(struct mount *);
 void *	mount_getspecific(struct mount *, specificdata_key_t);
 void	mount_setspecific(struct mount *, specificdata_key_t, void *);
-
-/*
- * syscall helpers
- */
-
-int	vfs_copyinfh_alloc(const void *, size_t, fhandle_t **);
-void	vfs_copyinfh_free(fhandle_t *);
-
-struct stat;
-int dofhopen(struct lwp *, const void *, size_t, int, register_t *);
-int dofhstat(struct lwp *, const void *, size_t, struct stat *, register_t *);
-int dofhstatvfs(struct lwp *, const void *, size_t, struct statvfs *, int,
-    register_t *);
 
 LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.81.2.1 2007/02/27 16:55:05 yamt Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.81.2.2 2007/03/12 06:00:02 rmind Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.81.2.1 2007/02/27 16:55:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.81.2.2 2007/03/12 06:00:02 rmind Exp $");
 
 #include "opt_ipsec.h"
 
@@ -532,14 +532,14 @@ rip6_output(m, va_alist)
 		off += sizeof(struct ip6_hdr);
 
 		sum = 0;
-		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		m = m_copyback_cow(m, off, sizeof(sum), (void *)&sum,
 		    M_DONTWAIT);
 		if (m == NULL) {
 			error = ENOBUFS;
 			goto bad;
 		}
 		sum = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
-		m = m_copyback_cow(m, off, sizeof(sum), (caddr_t)&sum,
+		m = m_copyback_cow(m, off, sizeof(sum), (void *)&sum,
 		    M_DONTWAIT);
 		if (m == NULL) {
 			error = ENOBUFS;
@@ -639,7 +639,7 @@ rip6_usrreq(so, req, m, nam, control, l)
 		priv++;
 
 	if (req == PRU_CONTROL)
-		return in6_control(so, (u_long)m, (caddr_t)nam,
+		return in6_control(so, (u_long)m, (void *)nam,
 		    (struct ifnet *)control, l);
 
 	if (req == PRU_PURGEIF) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.49 2007/01/11 22:56:49 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.49.2.1 2007/03/12 05:55:14 rmind Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.49 2007/01/11 22:56:49 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.49.2.1 2007/03/12 05:55:14 rmind Exp $");
 
 #include "mpu.h"
 
@@ -83,7 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.49 2007/01/11 22:56:49 kleink Exp $");
 struct eso_dma {
 	bus_dma_tag_t		ed_dmat;
 	bus_dmamap_t		ed_map;
-	caddr_t			ed_kva;
+	void *			ed_kva;
 	bus_dma_segment_t	ed_segs[1];
 	int			ed_nsegs;
 	size_t			ed_size;
@@ -206,7 +206,7 @@ static void	eso_write_mixreg(struct eso_softc *, uint8_t, uint8_t);
 static int	eso_allocmem(struct eso_softc *, size_t, size_t, size_t,
 		    int, int, struct eso_dma *);
 static void	eso_freemem(struct eso_dma *);
-static struct eso_dma *	eso_kva2dma(const struct eso_softc *, const caddr_t);
+static struct eso_dma *	eso_kva2dma(const struct eso_softc *, const void *);
 
 
 static int
@@ -1513,7 +1513,7 @@ eso_freemem(struct eso_dma *ed)
 }
 
 static struct eso_dma *
-eso_kva2dma(const struct eso_softc *sc, const caddr_t kva)
+eso_kva2dma(const struct eso_softc *sc, const void *kva)
 {
 	struct eso_dma *p;
 

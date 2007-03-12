@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.39.8.1 2007/02/27 16:55:16 yamt Exp $	*/
+/*	$NetBSD: protosw.h,v 1.39.8.2 2007/03/12 06:00:53 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -173,7 +173,7 @@ const char * const prurequests[] = {
  * The arguments to the ctlinput routine are
  *	(*protosw[].pr_ctlinput)(cmd, sa, arg);
  * where cmd is one of the commands below, sa is a pointer to a sockaddr,
- * and arg is an optional caddr_t argument used within a protocol family.
+ * and arg is an optional void *argument used within a protocol family.
  */
 #define	PRC_IFDOWN		0	/* interface transition */
 #define	PRC_ROUTEDEAD		1	/* select new route if possible ??? */

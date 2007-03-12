@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.11 2006/05/11 01:07:01 mrg Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.11.14.1 2007/03/12 05:57:53 rmind Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -238,11 +238,11 @@ typedef unsigned int	u_32_t;
 #  define	MUTEX_DESTROY(x)	mutex_destroy(&(x)->ipf_lk)
 #  define	MUTEX_NUKE(x)		bzero((x), sizeof(*(x)))
 #  define	MUTEX_EXIT(x)		mutex_exit(&(x)->ipf_lk)
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYIN(a,b,c)	(void) copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYOUT(a,b,c)	(void) copyout((caddr_t)(a), (caddr_t)(b), (c))
-#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
+#  define	BCOPYIN(a,b,c)	(void) copyin((void *)(a), (void *)(b), (c))
+#  define	BCOPYOUT(a,b,c)	(void) copyout((void *)(a), (void *)(b), (c))
+#  define	UIOMOVE(a,b,c,d)	uiomove((void *)a,b,c,d)
 #  define	KFREE(x)	kmem_free((char *)(x), sizeof(*(x)))
 #  define	KFREES(x,s)	kmem_free((char *)(x), (s))
 #  define	SPL_NET(x)	;
@@ -379,7 +379,7 @@ typedef	struct	iplog_select_s {
 					  MUTEX_EXIT(&ipf_rw); }
 #  endif
 #  define	ip_cksum		ip_csuma
-#  define	memcpy(a,b,c)		bcopy((caddr_t)b, (caddr_t)a, c)
+#  define	memcpy(a,b,c)		bcopy((void *)b, (void *)a, c)
 #  define	USE_MUTEXES
 #  define	MUTEX_INIT(x, y)	initlock(&(x)->ipf_lk, 0, 0, (y))
 #  define	MUTEX_ENTER(x)		spinlock(&(x)->ipf_lk)
@@ -415,14 +415,14 @@ typedef	struct	iplog_select_s {
 #   define	RWLOCK_EXIT(x)		MUTEX_EXIT(x)
 #  endif
 #  define	RW_DESTROY(x)
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
 #  if HPUXREV >= 1111
-#   define	BCOPYIN(a,b,c)	0; bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#   define	BCOPYOUT(a,b,c)	0; bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#   define	BCOPYIN(a,b,c)	0; bcopy((void *)(a), (void *)(b), (c))
+#   define	BCOPYOUT(a,b,c)	0; bcopy((void *)(a), (void *)(b), (c))
 #  else
-#   define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#   define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#   define	BCOPYIN(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#   define	BCOPYOUT(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
 #  endif
 #  define	SPL_NET(x)	;
 #  define	SPL_IMP(x)	;
@@ -434,12 +434,12 @@ extern	void	*get_unit __P((char *, int));
 #  define	COPYIFNAME(x, b) \
 				(void) strncpy(b, ((qif_t *)x)->qf_name, \
 					       LIFNAMSIZ)
-#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
-#  define	SLEEP(id, n)	{ lock_t *_l = get_sleep_lock((caddr_t)id); \
+#  define	UIOMOVE(a,b,c,d)	uiomove((void *)a,b,c,d)
+#  define	SLEEP(id, n)	{ lock_t *_l = get_sleep_lock((void *)id); \
 				  sleep(id, PZERO+1); \
 				  spinunlock(_l); \
 				}
-#  define	WAKEUP(id,x)	{ lock_t *_l = get_sleep_lock((caddr_t)id); \
+#  define	WAKEUP(id,x)	{ lock_t *_l = get_sleep_lock((void *)id); \
 				  wakeup(id + x); \
 				  spinunlock(_l); \
 				}
@@ -469,7 +469,7 @@ typedef	unsigned char uchar_t;
 
 #  ifndef	_SYS_STREAM_INCLUDED
 typedef char * mblk_t;
-typedef void * queue_t;
+typedef void *queue_t;
 typedef	u_long ulong;
 #  endif
 #  include <netinet/ip_info.h>
@@ -574,11 +574,11 @@ typedef struct {
 #  define	MUTEX_NUKE(x)		bzero((x), sizeof(*(x)))
 #  define	FREE_MB_T(m)	m_freem(m)
 #  define	MTOD(m,t)	mtod(m,t)
-#  define	COPYIN(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
-#  define	COPYOUT(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
-#  define	BCOPYIN(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
-#  define	BCOPYOUT(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
-#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
+#  define	COPYIN(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
+#  define	COPYOUT(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
+#  define	BCOPYIN(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
+#  define	BCOPYOUT(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
+#  define	UIOMOVE(a,b,c,d)	uiomove((void *)a,b,c,d)
 #  define	SLEEP(id, n)	sleep((id), PZERO+1)
 #  define	WAKEUP(id,x)	wakeup(id+x)
 #  define	POLLWAKEUP(x)	;
@@ -594,8 +594,8 @@ typedef struct {
 #  define	SPL_IMP(x)	(x) = splimp()
 #  define	SPL_NET(x)	(x) = splnet()
 #  define	SPL_X(x)	(void) splx(x)
-extern	void	m_copydata __P((struct mbuf *, int, int, caddr_t));
-extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
+extern	void	m_copydata __P((struct mbuf *, int, int, void *));
+extern	void	m_copyback __P((struct mbuf *, int, int, void *));
 #  define	MSGDSIZE(x)	mbufchainlen(x)
 #  define	M_LEN(x)	(x)->m_len
 #  define	M_DUPLICATE(x)	m_copy((x), 0, M_COPYALL)
@@ -657,17 +657,17 @@ typedef struct mbuf mb_t;
 #  define	SPL_IMP(x)		;
 #  undef	SPL_X
 #  define	SPL_X(x)		;
-#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a, b, d)
+#  define	UIOMOVE(a,b,c,d)	uiomove((void *)a, b, d)
 #  define	FREE_MB_T(m)		m_freem(m)
 #  define	MTOD(m,t)		mtod(m,t)
 #  define	GETIFP(n, v)		ifunit(n)
 #  define	GET_MINOR		getminor
 #  define	WAKEUP(id,x)		wakeup(id + x)
 #  define	POLLWAKEUP(x)		;
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
+#  define	BCOPYIN(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#  define	BCOPYOUT(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
 #  define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_PFILT, M_NOWAIT)
 #  define	KMALLOCS(a, b, c) (a) = (b)malloc((c), M_PFILT, \
 					    ((c) > 4096) ? M_WAITOK : M_NOWAIT)
@@ -739,10 +739,10 @@ typedef unsigned int    u_32_t;
 #  define	M_DUPLICATE(x)	m_copy((x), 0, M_COPYALL)
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
+#  define	BCOPYIN(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#  define	BCOPYOUT(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
 typedef struct mbuf mb_t;
 # endif /* _KERNEL */
 # if (NetBSD <= 1991011) && (NetBSD >= 199606)
@@ -796,10 +796,10 @@ typedef	u_int32_t	u_32_t;
 #  if !defined(IPFILTER_LKM) && (__FreeBSD_version >= 300000)
 #   include "opt_ipfilter.h"
 #  endif
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
+#  define	BCOPYIN(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#  define	BCOPYOUT(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
 
 #  if (__FreeBSD_version >= 500043)
 #   define NETBSD_PF
@@ -955,10 +955,10 @@ typedef	u_int32_t	u_32_t;
 #  if (OpenBSD >= 200012)
 #   define HAVE_M_PULLDOWN 1
 #  endif
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
+#  define	BCOPYIN(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#  define	BCOPYOUT(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
 #  define	GETKTIME(x)	microtime((struct timeval *)x)
 #  define	MSGDSIZE(x)	mbufchainlen(x)
 #  define	M_LEN(x)	(x)->m_len
@@ -1035,11 +1035,11 @@ typedef	u_int32_t	u_32_t;
 #  define	SLEEP(id, n)	sleep((id), PZERO+1)
 #  define	WAKEUP(id,x)	wakeup(id + x)
 #  define	POLLWAKEUP(x)	;
-#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
+#  define	UIOMOVE(a,b,c,d)	uiomove((void *)a,b,c,d)
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
 
-extern	void	m_copydata __P((struct mbuf *, int, int, caddr_t));
-extern	void	m_copyback __P((struct mbuf *, int, int, caddr_t));
+extern	void	m_copydata __P((struct mbuf *, int, int, void *));
+extern	void	m_copyback __P((struct mbuf *, int, int, void *));
 
 typedef struct mbuf mb_t;
 # endif
@@ -1073,10 +1073,10 @@ struct ip6_ext {
 
 # ifdef _KERNEL
 #  define	IPF_PANIC(x,y)	if (x) { printf y; panic("ipf_panic"); }
-#  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYIN(a,b,c)	copy_from_user((caddr_t)(b), (caddr_t)(a), (c))
-#  define	COPYOUT(a,b,c)	copy_to_user((caddr_t)(b), (caddr_t)(a), (c))
+#  define	BCOPYIN(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#  define	BCOPYOUT(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#  define	COPYIN(a,b,c)	copy_from_user((void *)(b), (void *)(a), (c))
+#  define	COPYOUT(a,b,c)	copy_to_user((void *)(b), (void *)(a), (c))
 #  define	FREE_MB_T(m)	kfree_skb(m)
 #  define	GETKTIME(x)	do_gettimeofday((struct timeval *)x)
 #  define	SLEEP(x,s)	0, interruptible_sleep_on(x##_linux)
@@ -1120,8 +1120,8 @@ struct ip6_ext {
 #  define	CACHE_HASH(x)	((IFNAME(fin->fin_ifp)[0] + \
 			  ((struct net_device *)fin->fin_ifp)->ifindex) & 7)
 typedef	struct	sk_buff	mb_t;
-extern	void	m_copydata __P((mb_t *, int, int, caddr_t));
-extern	void	m_copyback __P((mb_t *, int, int, caddr_t));
+extern	void	m_copydata __P((mb_t *, int, int, void *));
+extern	void	m_copyback __P((mb_t *, int, int, void *));
 extern	void	m_adj __P((mb_t *, int));
 extern	mb_t	*m_pullup __P((mb_t *, int));
 #  define	mbuf	sk_buff
@@ -1197,7 +1197,7 @@ typedef	struct uio {
 	int	uio_rw;
 } uio_t;
 
-extern	int	uiomove __P((caddr_t, size_t, int, struct uio *));
+extern	int	uiomove __P((void *, size_t, int, struct uio *));
 
 # define	UIO_READ	1
 # define	UIO_WRITE	2
@@ -1266,17 +1266,17 @@ typedef u_int32_t 	u_32_t;
 #  define	SPL_IMP(x)		x = splimp()
 #  undef	SPL_X
 #  define	SPL_X(x)		splx(x)
-#  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,c,d)
+#  define	UIOMOVE(a,b,c,d)	uiomove((void *)a,b,c,d)
 extern void* getifp __P((char *, int));
 #  define	GETIFP(n, v)		getifp(n, v)
 #  define	GET_MINOR		minor
 #  define	SLEEP(id, n)	sleepx((id), PZERO+1, 0)
 #  define	WAKEUP(id,x)	wakeup(id)
 #  define	POLLWAKEUP(x)	;
-#  define	COPYIN(a,b,c)	copyin((caddr_t)(a), (caddr_t)(b), (c))
-#  define	COPYOUT(a,b,c)	copyout((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYIN(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
-#  define	BCOPYOUT(a,b,c)	bcopy((caddr_t)(a), (caddr_t)(b), (c))
+#  define	COPYIN(a,b,c)	copyin((void *)(a), (void *)(b), (c))
+#  define	COPYOUT(a,b,c)	copyout((void *)(a), (void *)(b), (c))
+#  define	BCOPYIN(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
+#  define	BCOPYOUT(a,b,c)	bcopy((void *)(a), (void *)(b), (c))
 #  define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), M_TEMP, M_NOWAIT)
 #  define	KMALLOCS(a, b, c)	MALLOC((a), b, (c), M_TEMP, \
 					    ((c) > 4096) ? M_WAITOK : M_NOWAIT)
@@ -1458,8 +1458,8 @@ typedef	struct	mb_s	{
 					      MTOD((mb_t *)m, char *) + (o), \
 					      (l))
 # define	UIOMOVE(a,b,c,d)	ipfuiomove(a,b,c,d)
-extern	void	m_copydata __P((mb_t *, int, int, caddr_t));
-extern	int	ipfuiomove __P((caddr_t, int, int, struct uio *));
+extern	void	m_copydata __P((mb_t *, int, int, void *));
+extern	int	ipfuiomove __P((void *, int, int, struct uio *));
 extern	int	bcopywrap __P((void *, void *, size_t));
 # ifndef CACHE_HASH
 #  define	CACHE_HASH(x)	((IFNAME(fin->fin_ifp)[0] + \
@@ -1616,10 +1616,10 @@ MALLOC_DECLARE(M_IPFILTER);
 # endif
 
 # ifndef COPYIN
-#  define	COPYIN(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
-#  define	COPYOUT(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
-#  define	BCOPYIN(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
-#  define	BCOPYOUT(a,b,c)	(bcopy((caddr_t)(a), (caddr_t)(b), (c)), 0)
+#  define	COPYIN(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
+#  define	COPYOUT(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
+#  define	BCOPYIN(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
+#  define	BCOPYOUT(a,b,c)	(bcopy((void *)(a), (void *)(b), (c)), 0)
 # endif
 
 # ifndef KMALLOC

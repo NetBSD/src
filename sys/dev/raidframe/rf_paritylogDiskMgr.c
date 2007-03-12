@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.21 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.21.4.1 2007/03/12 05:56:54 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.21 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.21.4.1 2007/03/12 05:56:54 rmind Exp $");
 
 #include "rf_archs.h"
 
@@ -57,13 +57,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.21 2006/11/16 01:33:23 chr
 
 #include "rf_paritylogDiskMgr.h"
 
-static caddr_t AcquireReintBuffer(RF_RegionBufferQueue_t *);
+static void *AcquireReintBuffer(RF_RegionBufferQueue_t *);
 
-static caddr_t
+static void *
 AcquireReintBuffer(pool)
 	RF_RegionBufferQueue_t *pool;
 {
-	caddr_t bufPtr = NULL;
+	void *bufPtr = NULL;
 
 	/* Return a region buffer from the free list (pool). If the free list
 	 * is empty, WAIT. BLOCKING */
@@ -87,7 +87,7 @@ AcquireReintBuffer(pool)
 static void
 ReleaseReintBuffer(
     RF_RegionBufferQueue_t * pool,
-    caddr_t bufPtr)
+    void *bufPtr)
 {
 	/* Insert a region buffer (bufPtr) into the free list (pool).
 	 * NON-BLOCKING */
@@ -109,7 +109,7 @@ static void
 ReadRegionLog(
     RF_RegionId_t regionID,
     RF_MCPair_t * rrd_mcpair,
-    caddr_t regionBuffer,
+    void *regionBuffer,
     RF_Raid_t * raidPtr,
     RF_DagHeader_t ** rrd_dag_h,
     RF_AllocListElem_t ** rrd_alloclist,
@@ -215,7 +215,7 @@ static void
 ReadRegionParity(
     RF_RegionId_t regionID,
     RF_MCPair_t * prd_mcpair,
-    caddr_t parityBuffer,
+    void *parityBuffer,
     RF_Raid_t * raidPtr,
     RF_DagHeader_t ** prd_dag_h,
     RF_AllocListElem_t ** prd_alloclist,
@@ -272,7 +272,7 @@ static void
 WriteRegionParity(
     RF_RegionId_t regionID,
     RF_MCPair_t * pwr_mcpair,
-    caddr_t parityBuffer,
+    void *parityBuffer,
     RF_Raid_t * raidPtr,
     RF_DagHeader_t ** pwr_dag_h,
     RF_AllocListElem_t ** pwr_alloclist,
@@ -382,7 +382,7 @@ ReintegrateRegion(
 	RF_DagHeader_t *rrd_dag_h = NULL, *prd_dag_h, *pwr_dag_h;
 	RF_AllocListElem_t *rrd_alloclist = NULL, *prd_alloclist, *pwr_alloclist;
 	RF_PhysDiskAddr_t *rrd_pda = NULL, *prd_pda, *pwr_pda;
-	caddr_t parityBuffer, regionBuffer = NULL;
+	void *parityBuffer, *regionBuffer = NULL;
 
 	/* Reintegrate a region (regionID).
 	 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.17 2006/08/28 02:58:16 christos Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.17.8.1 2007/03/12 05:56:52 rmind Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.17 2006/08/28 02:58:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.17.8.1 2007/03/12 05:56:52 rmind Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -786,7 +786,7 @@ rf_EvenOddDoubleRecoveryFunc(node)
 				continue;
 		for (prm = 0; prm < ndataParam; prm++)
 			if (suoff[prm] <= sector && sector < suend[prm])
-				buf[(prmToCol[prm])] = ((RF_PhysDiskAddr_t *) node->params[prm].p)->bufPtr +
+				buf[(prmToCol[prm])] = (char *)((RF_PhysDiskAddr_t *) node->params[prm].p)->bufPtr +
 				    rf_RaidAddressToByte(raidPtr, sector - suoff[prm]);
 		/* find out if sector is in the shadow of any accessed failed
 		 * SU. If yes, assign dest[0], dest[1] to point at suitable
@@ -795,21 +795,21 @@ rf_EvenOddDoubleRecoveryFunc(node)
 		 * destination of decoding. */
 		RF_ASSERT(nresults == 1 || nresults == 2);
 		if (nresults == 1) {
-			dest[0] = ((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
+			dest[0] = (char *)((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
 			/* Always malloc temp buffer to dest[1]  */
 			RF_Malloc(dest[1], bytesPerSector, (char *));
 			memset(dest[1], 0, bytesPerSector);
 			mallc_two = 1;
 		} else {
 			if (fsuoff[0] <= sector && sector < fsuend[0])
-				dest[0] = ((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
+				dest[0] = (char *)((RF_PhysDiskAddr_t *) node->results[0])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[0]);
 			else {
 				RF_Malloc(dest[0], bytesPerSector, (char *));
 				memset(dest[0], 0, bytesPerSector);
 				mallc_one = 1;
 			}
 			if (fsuoff[1] <= sector && sector < fsuend[1])
-				dest[1] = ((RF_PhysDiskAddr_t *) node->results[1])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[1]);
+				dest[1] = (char *)((RF_PhysDiskAddr_t *) node->results[1])->bufPtr + rf_RaidAddressToByte(raidPtr, sector - fsuoff[1]);
 			else {
 				RF_Malloc(dest[1], bytesPerSector, (char *));
 				memset(dest[1], 0, bytesPerSector);
@@ -817,8 +817,8 @@ rf_EvenOddDoubleRecoveryFunc(node)
 			}
 			RF_ASSERT(mallc_one == 0 || mallc_two == 0);
 		}
-		pbuf = ppda->bufPtr + rf_RaidAddressToByte(raidPtr, sector - psuoff);
-		ebuf = epda->bufPtr + rf_RaidAddressToByte(raidPtr, sector - esuoff);
+		pbuf = (char *)ppda->bufPtr + rf_RaidAddressToByte(raidPtr, sector - psuoff);
+		ebuf = (char *)epda->bufPtr + rf_RaidAddressToByte(raidPtr, sector - esuoff);
 		/*
 	         * After finish finding all needed sectors, call doubleEOdecode function for decoding
 	         * one sector to destination.

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.39 2006/09/07 02:40:33 dogcow Exp $	*/
+/*	$NetBSD: qe.c,v 1.39.8.1 2007/03/12 05:57:08 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.39 2006/09/07 02:40:33 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.39.8.1 2007/03/12 05:57:08 rmind Exp $");
 
 #define QEDEBUG
 
@@ -163,7 +163,7 @@ void	qeinit(struct qe_softc *);
 void	qestart(struct ifnet *);
 void	qestop(struct qe_softc *);
 void	qewatchdog(struct ifnet *);
-int	qeioctl(struct ifnet *, u_long, caddr_t);
+int	qeioctl(struct ifnet *, u_long, void *);
 void	qereset(struct qe_softc *);
 
 int	qeintr(void *);
@@ -346,9 +346,9 @@ qe_get(sc, idx, totlen)
 	struct mbuf *m;
 	struct mbuf *top, **mp;
 	int len, pad, boff = 0;
-	caddr_t bp;
+	void *bp;
 
-	bp = sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * QE_PKT_BUF_SZ;
+	bp = (char *)sc->sc_rb.rb_rxbuf + (idx % sc->sc_rb.rb_nrbuf) * QE_PKT_BUF_SZ;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -376,7 +376,7 @@ qe_get(sc, idx, totlen)
 				len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
-		bcopy(bp + boff, mtod(m, caddr_t), len);
+		memcpy(mtod(m, void *), (char *)bp + boff, len);
 		boff += len;
 		totlen -= len;
 		*mp = m;
@@ -398,9 +398,9 @@ qe_put(sc, idx, m)
 {
 	struct mbuf *n;
 	int len, tlen = 0, boff = 0;
-	caddr_t bp;
+	void *bp;
 
-	bp = sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * QE_PKT_BUF_SZ;
+	bp = (char *)sc->sc_rb.rb_txbuf + (idx % sc->sc_rb.rb_ntbuf) * QE_PKT_BUF_SZ;
 
 	for (; m; m = n) {
 		len = m->m_len;
@@ -408,7 +408,7 @@ qe_put(sc, idx, m)
 			MFREE(m, n);
 			continue;
 		}
-		bcopy(mtod(m, caddr_t), bp+boff, len);
+		memcpy((char *)bp + boff, mtod(m, void *), len);
 		boff += len;
 		tlen += len;
 		MFREE(m, n);
@@ -919,7 +919,7 @@ int
 qeioctl(ifp, cmd, data)
 	struct ifnet *ifp;
 	u_long cmd;
-	caddr_t data;
+	void *data;
 {
 	struct qe_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;

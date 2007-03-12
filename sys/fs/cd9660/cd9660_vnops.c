@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.24.4.1 2007/02/27 16:54:11 yamt Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.24.4.2 2007/03/12 05:58:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.24.4.1 2007/02/27 16:54:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.24.4.2 2007/03/12 05:58:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ cd9660_read(v)
 			return (error);
 		}
 
-		error = uiomove(bp->b_data + on, (int)n, uio);
+		error = uiomove((char *)bp->b_data + on, (int)n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 
@@ -658,7 +658,7 @@ cd9660_readlink(v)
 	/*
 	 * Setup the directory pointer for this inode
 	 */
-	dirp = (ISODIR *)(bp->b_data + (ip->i_number & imp->im_bmask));
+	dirp = (ISODIR *)((char *)bp->b_data + (ip->i_number & imp->im_bmask));
 
 	/*
 	 * Just make sure, we have a right one....

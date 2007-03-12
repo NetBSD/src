@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.24 2007/02/15 12:14:34 pooka Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.24.2.1 2007/03/12 05:58:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -65,13 +65,21 @@ extern struct pool puffs_pnpool;
  */
 struct puffs_park {
 	struct puffs_req	*park_preq;	/* req followed by buf	*/
-	size_t			park_copylen;	/* userspace copylength	*/
+	uint64_t		park_id;	/* duplicate of preq_id */
 
+	size_t			park_copylen;	/* userspace copylength	*/
 	size_t 			park_maxlen;	/* max size, only for "adj" */
-						/* ^ XXX: overloaded */
+
+	int			park_flags;
 
 	TAILQ_ENTRY(puffs_park) park_entries;
 };
+#define PUFFS_PARKFLAG_PROCESSING	0x01
+#define PUFFS_PARKFLAG_RQUEUE		0x02
+#define PUFFS_PARKFLAG_RECVREPLY	0x04
+#define PUFFS_PARKFLAG_DONE		0x08
+#define PUFFS_PARKFLAG_WAITERGONE	0x10
+#define PUFFS_PARKFLAG_ADJUSTABLE	0x20
 
 #define PUFFS_SIZEOPREQ_UIO_IN 1
 #define PUFFS_SIZEOPREQ_UIO_OUT 2
@@ -206,8 +214,9 @@ void	puffs_updatevpsize(struct vnode *);
 int	puffs_setpmp(pid_t, int, struct puffs_mount *);
 void	puffs_nukebypmp(struct puffs_mount *);
 
-uint64_t	puffs_getreqid(struct puffs_mount *);
-void		puffs_userdead(struct puffs_mount *);
+uint64_t		puffs_getreqid(struct puffs_mount *);
+void			puffs_userdead(struct puffs_mount *);
+struct puffs_park *	puffs_reqtofaf(struct puffs_park *);
 
 /* get/put called by ioctl handler */
 int	puffs_getop(struct puffs_mount *, struct puffs_reqh_get *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.133 2007/02/16 17:24:00 hannken Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.133.2.1 2007/03/12 05:58:47 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.133 2007/02/16 17:24:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.133.2.1 2007/03/12 05:58:47 rmind Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -309,7 +309,7 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
  * Package up an I/O request on a vnode into a uio and do it.
  */
 int
-vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base, int len, off_t offset,
+vn_rdwr(enum uio_rw rw, struct vnode *vp, void *base, int len, off_t offset,
     enum uio_seg segflg, int ioflg, kauth_cred_t cred, size_t *aresid,
     struct lwp *l)
 {
@@ -638,10 +638,10 @@ vn_ioctl(struct file *fp, u_long com, void *data, struct lwp *l)
 		    l->l_cred, l);
 		if (error == 0 && com == TIOCSCTTY) {
 			VREF(vp);
-			rw_enter(&proclist_lock, RW_WRITER);
+			mutex_enter(&proclist_lock);
 			ovp = p->p_session->s_ttyvp;
 			p->p_session->s_ttyvp = vp;
-			rw_exit(&proclist_lock);
+			mutex_exit(&proclist_lock);
 			if (ovp != NULL)
 				vrele(ovp);
 		}

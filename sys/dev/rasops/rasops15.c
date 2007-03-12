@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops15.c,v 1.14 2006/02/18 13:57:33 jmcneill Exp $	*/
+/* 	$NetBSD: rasops15.c,v 1.14.20.1 2007/03/12 05:56:55 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.14 2006/02/18 13:57:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops15.c,v 1.14.20.1 2007/03/12 05:56:55 rmind Exp $");
 
 #include "opt_rasops.h"
 
@@ -75,7 +75,7 @@ static int	stamp_mutex;	/* XXX see note in readme */
  */
 #define STAMP_SHIFT(fb,n)	((n*4-3) >= 0 ? (fb)>>(n*4-3):(fb)<<-(n*4-3))
 #define STAMP_MASK		(15 << 3)
-#define STAMP_READ(o)		(*(int32_t *)((caddr_t)stamp + (o)))
+#define STAMP_READ(o)		(*(int32_t *)((char *)stamp + (o)))
 #endif
 
 /*

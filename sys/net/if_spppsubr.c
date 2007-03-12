@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.102.4.1 2007/02/27 16:54:44 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.102.4.2 2007/03/12 05:59:13 rmind Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.102.4.1 2007/02/27 16:54:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.102.4.2 2007/03/12 05:59:13 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -724,7 +724,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			    m->m_len >= sizeof(struct ip) + (ip->ip_hl << 2) +
 			    sizeof(struct tcphdr)) {
 				th = (struct tcphdr *)
-				    ((caddr_t)ip + (ip->ip_hl << 2));
+				    ((char *)ip + (ip->ip_hl << 2));
 			}
 		} else
 			ip = NULL;

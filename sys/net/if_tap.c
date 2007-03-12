@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.24.4.1 2007/02/27 16:54:45 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.24.4.2 2007/03/12 05:59:14 rmind Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.24.4.1 2007/02/27 16:54:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.24.4.2 2007/03/12 05:59:14 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -130,7 +130,7 @@ extern struct cfdriver tap_cd;
 static int	tap_dev_close(struct tap_softc *);
 static int	tap_dev_read(int, struct uio *, int);
 static int	tap_dev_write(int, struct uio *, int);
-static int	tap_dev_ioctl(int, u_long, caddr_t, struct lwp *);
+static int	tap_dev_ioctl(int, u_long, void *, struct lwp *);
 static int	tap_dev_poll(int, int, struct lwp *);
 static int	tap_dev_kqfilter(int, struct knote *);
 
@@ -164,7 +164,7 @@ static int	tap_cdev_open(dev_t, int, int, struct lwp *);
 static int	tap_cdev_close(dev_t, int, int, struct lwp *);
 static int	tap_cdev_read(dev_t, struct uio *, int);
 static int	tap_cdev_write(dev_t, struct uio *, int);
-static int	tap_cdev_ioctl(dev_t, u_long, caddr_t, int, struct lwp *);
+static int	tap_cdev_ioctl(dev_t, u_long, void *, int, struct lwp *);
 static int	tap_cdev_poll(dev_t, int, struct lwp *);
 static int	tap_cdev_kqfilter(dev_t, struct knote *);
 
@@ -199,7 +199,7 @@ static void	tap_mediastatus(struct ifnet *, struct ifmediareq *);
 static void	tap_start(struct ifnet *);
 static void	tap_stop(struct ifnet *, int);
 static int	tap_init(struct ifnet *);
-static int	tap_ioctl(struct ifnet *, u_long, caddr_t);
+static int	tap_ioctl(struct ifnet *, u_long, void *);
 
 /* This is an internal function to keep tap_ioctl readable */
 static int	tap_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
@@ -483,7 +483,7 @@ tap_start(struct ifnet *ifp)
  * called under splnet().
  */
 static int
-tap_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct tap_softc *sc = (struct tap_softc *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -588,11 +588,6 @@ tap_clone_create(struct if_clone *ifc, int unit)
  *     interface cloning API, and call tap_clone_create above.
  *   opening the cloning device node, whose minor number is TAP_CLONER.
  *     See below for an explanation on how this part work.
- *
- * config_attach_pseudo can be called with unit = DVUNIT_ANY to have
- * autoconf(9) choose a unit number for us.  This is what happens when
- * the cloner is openend, while the ifcloner interface creates a device
- * with a specific unit number.
  */
 static struct tap_softc *
 tap_clone_creator(int unit)
@@ -602,8 +597,14 @@ tap_clone_creator(int unit)
 	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
 	cf->cf_name = tap_cd.cd_name;
 	cf->cf_atname = tap_ca.ca_name;
-	cf->cf_unit = unit;
-	cf->cf_fstate = FSTATE_STAR;
+	if (unit == -1) {
+		/* let autoconf find the first free one */
+		cf->cf_unit = 0;
+		cf->cf_fstate = FSTATE_STAR;
+	} else {
+		cf->cf_unit = unit;
+		cf->cf_fstate = FSTATE_NOTFOUND;
+	}
 
 	return (struct tap_softc *)config_attach_pseudo(cf);
 }
@@ -706,7 +707,7 @@ tap_dev_cloner(struct lwp *l)
 	if ((error = falloc(l, &fp, &fd)) != 0)
 		return (error);
 
-	if ((sc = tap_clone_creator(DVUNIT_ANY)) == NULL) {
+	if ((sc = tap_clone_creator(-1)) == NULL) {
 		FILE_UNUSE(fp, l);
 		ffree(fp);
 		return (ENXIO);
@@ -890,7 +891,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	 * One read is one packet.
 	 */
 	do {
-		error = uiomove(mtod(m, caddr_t),
+		error = uiomove(mtod(m, void *),
 		    min(m->m_len, uio->uio_resid), uio);
 		MFREE(m, n);
 		m = n;
@@ -950,7 +951,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 			}
 		}
 		(*mp)->m_len = min(MHLEN, uio->uio_resid);
-		error = uiomove(mtod(*mp, caddr_t), (*mp)->m_len, uio);
+		error = uiomove(mtod(*mp, void *), (*mp)->m_len, uio);
 		mp = &(*mp)->m_next;
 	}
 	if (error) {
@@ -974,7 +975,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 }
 
 static int
-tap_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
+tap_cdev_ioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
 	return tap_dev_ioctl(minor(dev), cmd, data, l);
@@ -983,11 +984,11 @@ tap_cdev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 static int
 tap_fops_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 {
-	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, (caddr_t)data, l);
+	return tap_dev_ioctl((intptr_t)fp->f_data, cmd, (void *)data, l);
 }
 
 static int
-tap_dev_ioctl(int unit, u_long cmd, caddr_t data, struct lwp *l)
+tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 {
 	struct tap_softc *sc =
 	    (struct tap_softc *)device_lookup(&tap_cd, unit);

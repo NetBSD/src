@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.13 2007/02/09 21:55:31 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.13.2.1 2007/03/12 05:58:40 rmind Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.13 2007/02/09 21:55:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.13.2.1 2007/03/12 05:58:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -182,7 +182,9 @@ kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	*resultsize = size = round_page(size);
 	va = uvm_km_alloc(kernel_map, size, 0,
 	    uflags | UVM_KMF_WIRED | UVM_KMF_CANFAIL);
-	kmem_poison_fill((void *)va, size);
+	if (va != 0) {
+		kmem_poison_fill((void *)va, size);
+	}
 	return (vmem_addr_t)va;
 }
 

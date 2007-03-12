@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.96 2007/02/09 21:55:30 ad Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.96.2.1 2007/03/12 05:58:34 rmind Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.96 2007/02/09 21:55:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.96.2.1 2007/03/12 05:58:34 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -169,7 +169,7 @@ lkmopen(dev_t dev, int flag, int devtype, struct lwp *l)
 		 * Sleep pending unlock; we use tsleep() to allow
 		 * an alarm out of the open.
 		 */
-		error = tsleep((caddr_t)&lkm_v, TTIPRI|PCATCH, "lkmopn", 0);
+		error = tsleep((void *)&lkm_v, TTIPRI|PCATCH, "lkmopn", 0);
 		if (error)
 			return (error);
 	}
@@ -326,14 +326,14 @@ lkmclose(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	lkm_v &= ~LKM_ALLOC;
-	wakeup((caddr_t)&lkm_v);	/* thundering herd "problem" here */
+	wakeup((void *)&lkm_v);	/* thundering herd "problem" here */
 
 	return (0);		/* pseudo-device closed */
 }
 
 /*ARGSUSED*/
 int
-lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+lkmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int i, error = 0;
 	struct lmc_resrv *resrvp;
@@ -414,7 +414,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		/* copy in buffer full of data */
 		error = copyin(loadbufp->data,
-			       (caddr_t)curp->area + curp->offset, i);
+			       (char *)curp->area + curp->offset, i);
 		if (error)
 			break;
 
@@ -448,7 +448,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		/* copy in buffer full of data*/
 		if ((error = copyin(loadbufp->data,
-				   (caddr_t)(curp->syms) + curp->sym_offset,
+				   (char *)(curp->syms) + curp->sym_offset,
 				   i)) != 0)
 			break;
 
@@ -498,7 +498,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 		if (curp->size - curp->offset > 0) {
 			/* The remainder must be bss, so we clear it */
-			memset((caddr_t)curp->area + curp->offset, 0,
+			memset((char *)curp->area + curp->offset, 0,
 			       curp->size - curp->offset);
 		}
 

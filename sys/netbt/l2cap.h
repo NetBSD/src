@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.2 2006/10/01 06:08:08 plunky Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.2.4.1 2007/03/12 05:59:34 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.2 2006/10/01 06:08:08 plunky Exp $
+ * $Id: l2cap.h,v 1.2.4.1 2007/03/12 05:59:34 rmind Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -431,7 +431,6 @@ struct socket;
 struct mbuf;
 
 /* l2cap_lower.c */
-void l2cap_acl_open_cfm(struct l2cap_channel *, int);
 void l2cap_close(struct l2cap_channel *, int);
 void l2cap_recv_frame(struct mbuf *, struct hci_link *);
 int l2cap_start(struct l2cap_channel *);

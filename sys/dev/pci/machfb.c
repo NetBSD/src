@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.48 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.48.4.1 2007/03/12 05:55:24 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.48 2006/11/16 01:33:09 christos Exp $");
+	"$NetBSD: machfb.c,v 1.48.4.1 2007/03/12 05:55:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,8 @@ struct mach64_softc {
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_regh;
 	bus_space_handle_t sc_memh;
-	caddr_t sc_aperture;		/* mapped aperture vaddr */
-	caddr_t sc_registers;		/* mapped registers vaddr */
+	void *sc_aperture;		/* mapped aperture vaddr */
+	void *sc_registers;		/* mapped registers vaddr */
 	
 	uint32_t sc_nbus, sc_ndev, sc_nfunc;
 	size_t memsize;
@@ -279,7 +279,7 @@ static void	mach64_feed_bytes(struct mach64_softc *, int, uint8_t *);
 static void	mach64_showpal(struct mach64_softc *);
 #endif
 
-static void	set_address(struct rasops_info *, caddr_t);
+static void	set_address(struct rasops_info *, void *);
 static void	machfb_blank(struct mach64_softc *, int);
 
 #if 0
@@ -369,7 +369,7 @@ static struct wsscreen_list mach64_screenlist = {
 	_mach64_scrlist
 };
 
-static int	mach64_ioctl(void *, void *, u_long, caddr_t, int,
+static int	mach64_ioctl(void *, void *, u_long, void *, int,
 		             struct lwp *);
 static paddr_t	mach64_mmap(void *, void *, off_t, int);
 
@@ -725,12 +725,12 @@ mach64_init(struct mach64_softc *sc)
 		BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
 		panic("%s: failed to map aperture", sc->sc_dev.dv_xname);
 	}
-	sc->sc_aperture = (caddr_t)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+	sc->sc_aperture = (void *)bus_space_vaddr(sc->sc_memt, sc->sc_memh);
 
 	sc->sc_regt = sc->sc_memt;
 	bus_space_subregion(sc->sc_regt, sc->sc_memh, MACH64_REG_OFF,
 	    sc->sc_regsize, &sc->sc_regh);
-	sc->sc_registers = sc->sc_aperture + 0x7ffc00;
+	sc->sc_registers = (char *)sc->sc_aperture + 0x7ffc00;
 
 	/*
 	 * Test wether the aperture is byte swapped or not
@@ -744,7 +744,7 @@ mach64_init(struct mach64_softc *sc)
 	else
 		need_swap = 1;
 	if (need_swap) {
-		sc->sc_aperture += 0x800000;
+		sc->sc_aperture = (char *)sc->sc_aperture + 0x800000;
 		sc->sc_aperbase += 0x800000;
 		sc->sc_apersize -= 0x800000;
 	}
@@ -1584,7 +1584,7 @@ mach64_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
  */
 
 static int
-mach64_ioctl(void *v, void *vs, u_long cmd, caddr_t data, int flag,
+mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct lwp *l)
 {
 	struct vcons_data *vd = v;
@@ -1710,12 +1710,12 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 
 /* set ri->ri_bits according to fb, ri_xorigin and ri_yorigin */
 static void
-set_address(struct rasops_info *ri, caddr_t fb)
+set_address(struct rasops_info *ri, void *fb)
 {
 #ifdef notdef
 	printf(" %d %d %d\n", ri->ri_xorigin, ri->ri_yorigin, ri->ri_stride);
 #endif
-	ri->ri_bits = (void *)(fb + ri->ri_stride * ri->ri_yorigin + 
+	ri->ri_bits = (void *)((char *)fb + ri->ri_stride * ri->ri_yorigin + 
 	    ri->ri_xorigin);
 }
 
@@ -1816,7 +1816,7 @@ machfb_fbclose(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 int
-machfb_fbioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
+machfb_fbioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	struct mach64_softc *sc = machfb_cd.cd_devs[minor(dev)];
 

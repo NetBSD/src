@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.125 2006/11/04 09:30:00 elad Exp $	*/
+/*	$NetBSD: conf.h,v 1.125.4.1 2007/03/12 06:00:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,8 +67,8 @@ struct bdevsw {
 	int		(*d_open)(dev_t, int, int, struct lwp *);
 	int		(*d_close)(dev_t, int, int, struct lwp *);
 	void		(*d_strategy)(struct buf *);
-	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
-	int		(*d_dump)(dev_t, daddr_t, caddr_t, size_t);
+	int		(*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
+	int		(*d_dump)(dev_t, daddr_t, void *, size_t);
 	int		(*d_psize)(dev_t);
 	int		d_type;
 };
@@ -81,7 +81,7 @@ struct cdevsw {
 	int		(*d_close)(dev_t, int, int, struct lwp *);
 	int		(*d_read)(dev_t, struct uio *, int);
 	int		(*d_write)(dev_t, struct uio *, int);
-	int		(*d_ioctl)(dev_t, u_long, caddr_t, int, struct lwp *);
+	int		(*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
 	void		(*d_stop)(struct tty *, int);
 	struct tty *	(*d_tty)(dev_t);
 	int		(*d_poll)(dev_t, int, struct lwp *);
@@ -113,13 +113,13 @@ int cdevsw_lookup_major(const struct cdevsw *);
 #define	dev_type_read(n)	int n (dev_t, struct uio *, int)
 #define	dev_type_write(n)	int n (dev_t, struct uio *, int)
 #define	dev_type_ioctl(n) \
-		int n (dev_t, u_long, caddr_t, int, struct lwp *)
+		int n (dev_t, u_long, void *, int, struct lwp *)
 #define	dev_type_stop(n)	void n (struct tty *, int)
 #define	dev_type_tty(n)		struct tty * n (dev_t)
 #define	dev_type_poll(n)	int n (dev_t, int, struct lwp *)
 #define	dev_type_mmap(n)	paddr_t n (dev_t, off_t, int)
 #define	dev_type_strategy(n)	void n (struct buf *)
-#define	dev_type_dump(n)	int n (dev_t, daddr_t, caddr_t, size_t)
+#define	dev_type_dump(n)	int n (dev_t, daddr_t, void *, size_t)
 #define	dev_type_size(n)	int n (dev_t)
 #define	dev_type_kqfilter(n)	int n (dev_t, struct knote *)
 
@@ -167,7 +167,7 @@ struct linesw {
 	int	(*l_close)	(struct tty *, int);
 	int	(*l_read)	(struct tty *, struct uio *, int);
 	int	(*l_write)	(struct tty *, struct uio *, int);
-	int	(*l_ioctl)	(struct tty *, u_long, caddr_t, int,
+	int	(*l_ioctl)	(struct tty *, u_long, void *, int,
 				    struct lwp *);
 	int	(*l_rint)	(int, struct tty *);
 	int	(*l_start)	(struct tty *);
@@ -191,7 +191,7 @@ void	       ttyldisc_release(struct linesw *);
 #define	ttyerrstart ((int (*)(struct tty *))enodev)
 
 int	ttyerrpoll (struct tty *, int, struct lwp *);
-int	ttynullioctl(struct tty *, u_long, caddr_t, int, struct lwp *);
+int	ttynullioctl(struct tty *, u_long, void *, int, struct lwp *);
 
 int	iskmemdev(dev_t);
 #endif

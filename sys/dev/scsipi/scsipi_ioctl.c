@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.61 2006/04/14 17:33:10 christos Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.61.14.1 2007/03/12 05:57:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.61 2006/04/14 17:33:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.61.14.1 2007/03/12 05:57:10 rmind Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -299,7 +299,7 @@ bad:
  */
 int
 scsipi_do_ioctl(struct scsipi_periph *periph, dev_t dev, u_long cmd,
-    caddr_t addr, int flag, struct lwp *l)
+    void *addr, int flag, struct lwp *l)
 {
 	int error;
 

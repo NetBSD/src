@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.180.2.1 2007/02/27 16:54:39 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.180.2.2 2007/03/12 05:59:09 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.180.2.1 2007/02/27 16:54:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.180.2.2 2007/03/12 05:59:09 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -226,7 +226,7 @@ if_nullstart(struct ifnet *ifp)
 }
 
 int
-if_nullioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+if_nullioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 
 	return (ENXIO);
@@ -298,7 +298,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	socksize = ROUNDUP(socksize);
 	ifasize = sizeof(*ifa) + 2 * socksize;
 	ifa = (struct ifaddr *)malloc(ifasize, M_IFADDR, M_WAITOK);
-	memset((caddr_t)ifa, 0, ifasize);
+	memset((void *)ifa, 0, ifasize);
 	sdl = (struct sockaddr_dl *)(ifa + 1);
 	sdl->sdl_len = socksize;
 	sdl->sdl_family = AF_LINK;
@@ -315,7 +315,7 @@ if_alloc_sadl(struct ifnet *ifp)
 	IFAREF(ifa);
 	ifa->ifa_addr = (struct sockaddr *)sdl;
 	ifp->if_sadl = sdl;
-	sdl = (struct sockaddr_dl *)(socksize + (caddr_t)sdl);
+	sdl = (struct sockaddr_dl *)(socksize + (char *)sdl);
 	ifa->ifa_netmask = (struct sockaddr *)sdl;
 	sdl->sdl_len = masklen;
 	while (namelen != 0)
@@ -409,7 +409,7 @@ if_attach(struct ifnet *ifp)
 	if (ifnet_addrs == 0 || ifindex2ifnet == 0 ||
 	    ifp->if_index >= if_indexlim) {
 		size_t m, n, oldlim;
-		caddr_t q;
+		void *q;
 
 		oldlim = if_indexlim;
 		while (ifp->if_index >= if_indexlim)
@@ -418,22 +418,22 @@ if_attach(struct ifnet *ifp)
 		/* grow ifnet_addrs */
 		m = oldlim * sizeof(struct ifaddr *);
 		n = if_indexlim * sizeof(struct ifaddr *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
+		q = (void *)malloc(n, M_IFADDR, M_WAITOK);
 		memset(q, 0, n);
 		if (ifnet_addrs) {
-			bcopy((caddr_t)ifnet_addrs, q, m);
-			free((caddr_t)ifnet_addrs, M_IFADDR);
+			bcopy((void *)ifnet_addrs, q, m);
+			free((void *)ifnet_addrs, M_IFADDR);
 		}
 		ifnet_addrs = (struct ifaddr **)q;
 
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
-		q = (caddr_t)malloc(n, M_IFADDR, M_WAITOK);
+		q = (void *)malloc(n, M_IFADDR, M_WAITOK);
 		memset(q, 0, n);
 		if (ifindex2ifnet) {
-			bcopy((caddr_t)ifindex2ifnet, q, m);
-			free((caddr_t)ifindex2ifnet, M_IFADDR);
+			bcopy((void *)ifindex2ifnet, q, m);
+			free((void *)ifindex2ifnet, M_IFADDR);
 		}
 		ifindex2ifnet = (struct ifnet **)q;
 	}
@@ -1031,8 +1031,8 @@ ifa_ifwithnet(const struct sockaddr *addr)
 				}
 			}
 			if (ifa_maybe == 0 ||
-			    rn_refines((caddr_t)ifa->ifa_netmask,
-			    (caddr_t)ifa_maybe->ifa_netmask))
+			    rn_refines((void *)ifa->ifa_netmask,
+			    (void *)ifa_maybe->ifa_netmask))
 				ifa_maybe = ifa;
 		}
 	}
@@ -1270,7 +1270,7 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	}
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_flags = ifp->if_flags;
-	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t) &ifr);
+	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (void *) &ifr);
 	/* Restore interface state if not successful. */
 	if (ret != 0) {
 		ifp->if_pcount = pcount;
@@ -1323,7 +1323,7 @@ ifunit(const char *name)
  * Interface ioctls.
  */
 int
-ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
+ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
@@ -1497,7 +1497,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
 			 */
 			if (ifp->if_flags & IFF_UP)
 				(void) (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
-				    (caddr_t) &ifrq);
+				    (void *) &ifrq);
 		}
 		splx(s);
 		break;
@@ -1596,7 +1596,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct lwp *l)
  */
 /*ARGSUSED*/
 int
-ifconf(u_long cmd, caddr_t data)
+ifconf(u_long cmd, void *data)
 {
 	struct ifconf *ifc = (struct ifconf *)data;
 	struct ifnet *ifp;
@@ -1666,7 +1666,7 @@ ifconf(u_long cmd, caddr_t data)
 					}
 					ifrp = (struct ifreq *)
 						(sa->sa_len +
-						 (caddr_t)&ifrp->ifr_addr);
+						 (char *)&ifrp->ifr_addr);
 				}
 			}
 			if (error)

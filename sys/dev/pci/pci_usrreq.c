@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.13 2006/11/16 01:33:09 christos Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.13.4.1 2007/03/12 05:55:24 rmind Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.13 2006/11/16 01:33:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.13.4.1 2007/03/12 05:55:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -71,7 +71,7 @@ pciopen(dev_t dev, int flags, int mode,
 }
 
 static int
-pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pci_softc *sc = device_lookup(&pci_cd, minor(dev));
 	struct pciio_bdf_cfgreg *bdfr = (void *) data;
@@ -140,7 +140,7 @@ const struct cdevsw pci_cdevsw = {
  *	PCI ioctls that can be performed on devices directly.
  */
 int
-pci_devioctl(pci_chipset_tag_t pc, pcitag_t tag, u_long cmd, caddr_t data,
+pci_devioctl(pci_chipset_tag_t pc, pcitag_t tag, u_long cmd, void *data,
     int flag, struct lwp *l)
 {
 	struct pciio_cfgreg *r = (void *) data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.70.2.1 2007/02/27 16:54:18 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.70.2.2 2007/03/12 05:58:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.70.2.1 2007/02/27 16:54:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.70.2.2 2007/03/12 05:58:32 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,12 +443,12 @@ acct_process(struct lwp *l)
 	acct.ac_gid = kauth_cred_getgid(l->l_cred);
 
 	/* (7) The terminal from which the process was started */
-	rw_enter(&proclist_lock, RW_READER);
+	mutex_enter(&proclist_lock);
 	if ((p->p_lflag & PL_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)
 		acct.ac_tty = p->p_pgrp->pg_session->s_ttyp->t_dev;
 	else
 		acct.ac_tty = NODEV;
-	rw_exit(&proclist_lock);
+	mutex_exit(&proclist_lock);
 
 	/* (8) The boolean flags that tell how the process terminated, etc. */
 	acct.ac_flag = p->p_acflag;
@@ -457,7 +457,7 @@ acct_process(struct lwp *l)
 	 * Now, just write the accounting information to the file.
 	 */
 	VOP_LEASE(acct_vp, l, l->l_cred, LEASE_WRITE);
-	error = vn_rdwr(UIO_WRITE, acct_vp, (caddr_t)&acct,
+	error = vn_rdwr(UIO_WRITE, acct_vp, (void *)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
 	    acct_cred, NULL, NULL);
 	if (error != 0)
